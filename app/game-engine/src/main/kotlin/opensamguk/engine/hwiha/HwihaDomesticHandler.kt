@@ -45,6 +45,7 @@ class HwihaDomesticHandler(
             HwihaDomesticInput.WORK -> {
                 val request = HwihaDomesticInput.parseWork(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
+                infrastructureTargetError(request, state)?.let { return deny("INVALID_INFRASTRUCTURE_SITE", it) }
                 HwihaDomesticRules.assessWork(request, state).also {
                     if (it is DomesticAssessment.Eligible) storeWork(command.requestId, request, now)
                 }
@@ -100,9 +101,40 @@ class HwihaDomesticHandler(
     private fun storeWork(requestId: String, request: WorkRequest, now: HwihaPhase) {
         val city = checkNotNull(world.getCityById(request.countyId))
         val current = HwihaCountyWorks.read(city.meta)
-        val next = HwihaCountyWorks(HwihaDomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now),
+        val next = HwihaCountyWorks(HwihaDomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now,
+            request.edgeId, request.row, request.col),
             current?.completed.orEmpty())
         world.updateCityMeta(recorder, city.id, city.meta.withKey(HwihaCountyWorks.META_KEY, next.toMetaValue()))
+    }
+
+    private fun infrastructureTargetError(request: WorkRequest, state: HwihaDomesticProjection): String? {
+        if (context.roadGates.isEmpty() || request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
+        val gate = context.roadGates.singleOrNull { it.edgeId == request.edgeId }
+            ?: return "지도에 등록된 도로 접경을 골라 주세요."
+        val provinceId = state.county(request.countyId)?.provinceId
+            ?: return "공사할 현의 지도 구역을 찾을 수 없습니다."
+        val topology = context.topology ?: return "도로 위상 자료를 읽을 수 없습니다."
+        val edge = topology.traversalEdges.singleOrNull { it.id == gate.edgeId }
+            ?: return "도로 접경의 위상 자료를 읽을 수 없습니다."
+        if (listOf(edge.from, edge.to).none { it is opensamguk.logic.world.StrategicNodeRef.LandProvince && it.id == provinceId })
+            return "해당 현에 닿는 도로만 공사할 수 있습니다."
+        val passage = try { HwihaLandPassageState.read(world.getState().meta, topology) }
+            catch (_: IllegalArgumentException) { null } ?: return "도로 통행 상태를 읽을 수 없습니다."
+        val active = passage.edgeStates[gate.edgeId]?.active ?: return "도로 통행 상태가 비어 있습니다."
+        if (request.work == DomesticWork.ROAD) {
+            if (!gate.buildable) return "성 자리와 이어지지 않는 접경입니다. 나루나 별도 도하가 필요합니다."
+            if (request.row != null || request.col != null) return "도로 개척에는 접경만 지정해 주세요."
+            if (active) return "이미 열린 도로입니다."
+        } else {
+            if (!active) return "보루는 개통된 도로에만 세울 수 있습니다."
+            if (request.row == null || request.col == null || gate.fortCells.none {
+                    it.provinceId == provinceId && it.row == request.row && it.col == request.col
+                }) return "보루는 자기 현의 도로 칸 또는 인접한 마른땅 칸에 세워야 합니다."
+            val forts = try { HwihaRoadFortState.read(world.getState().meta) }
+                catch (_: IllegalArgumentException) { return "보루 상태를 읽을 수 없습니다." }
+            if (forts.any { it.row == request.row && it.col == request.col }) return "이미 보루가 있는 칸입니다."
+        }
+        return null
     }
 
     private fun kindOf(inputId: String) = when (inputId) {

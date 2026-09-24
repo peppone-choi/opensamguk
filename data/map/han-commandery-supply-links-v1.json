@@ -12,8 +12,8 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 130,
-  "medianKm": 114.3,
+  "linkCount": 124,
+  "medianKm": 122.8,
   "p90Km": 257.0,
   "maxKm": 1049.3
  },
@@ -21,7 +21,7 @@
   {
    "canonicalGroup": "RIVER_ROUTE",
    "fromProvinceIndex": 50,
-   "toProvinceIndex": 1305,
+   "toProvinceIndex": 1279,
    "fromCityName": "건업",
    "toCityName": "유수구",
    "distanceKm": 122.8,
@@ -39,7 +39,7 @@
   {
    "canonicalGroup": "RIVER_ROUTE",
    "fromProvinceIndex": 270,
-   "toProvinceIndex": 1270,
+   "toProvinceIndex": 1244,
    "fromCityName": "사선",
    "toCityName": "번구",
    "distanceKm": 55.9,
@@ -65,8 +65,8 @@
   },
   {
    "canonicalGroup": "RIVER_ROUTE",
-   "fromProvinceIndex": 1270,
-   "toProvinceIndex": 1305,
+   "fromProvinceIndex": 1244,
+   "toProvinceIndex": 1279,
    "fromCityName": "번구",
    "toCityName": "유수구",
    "distanceKm": 309.6,
@@ -84,20 +84,20 @@
   {
    "canonicalGroup": "SEA_ROUTE",
    "fromProvinceIndex": 44,
-   "toProvinceIndex": 1043,
-   "fromCityName": "오(吳郡)",
-   "toCityName": "답씨",
-   "distanceKm": 914.2,
-   "source": "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"
-  },
-  {
-   "canonicalGroup": "SEA_ROUTE",
-   "fromProvinceIndex": 44,
-   "toProvinceIndex": 1260,
+   "toProvinceIndex": 1234,
    "fromCityName": "오(吳郡)",
    "toCityName": "안평구",
    "distanceKm": 1049.3,
    "source": "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"
+  },
+  {
+   "canonicalGroup": "SEA_ROUTE",
+   "fromProvinceIndex": 44,
+   "toProvinceIndex": 1286,
+   "fromCityName": "오(吳郡)",
+   "toCityName": "답진",
+   "distanceKm": 828.2,
+   "source": "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"
   },
   {
    "canonicalGroup": "SEA_ROUTE",
@@ -129,10 +129,10 @@
   {
    "canonicalGroup": "SEA_ROUTE",
    "fromProvinceIndex": 715,
-   "toProvinceIndex": 1043,
+   "toProvinceIndex": 1286,
    "fromCityName": "황",
-   "toCityName": "답씨",
-   "distanceKm": 228.5,
+   "toCityName": "답진",
+   "distanceKm": 134.8,
    "source": "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"
   },
   {
@@ -192,7 +192,7 @@
   {
    "canonicalGroup": "上郡",
    "fromProvinceIndex": 1078,
-   "toProvinceIndex": 1535,
+   "toProvinceIndex": 1509,
    "fromCityName": "구자속국",
    "toCityName": "부시",
    "distanceKm": 153.4
@@ -200,31 +200,31 @@
   {
    "canonicalGroup": "上郡",
    "fromProvinceIndex": 1078,
-   "toProvinceIndex": 1536,
+   "toProvinceIndex": 1510,
    "fromCityName": "구자속국",
    "toCityName": "백토",
    "distanceKm": 72.9
   },
   {
    "canonicalGroup": "上郡",
-   "fromProvinceIndex": 1536,
-   "toProvinceIndex": 1540,
+   "fromProvinceIndex": 1510,
+   "toProvinceIndex": 1514,
    "fromCityName": "백토",
    "toCityName": "고노",
    "distanceKm": 114.3
   },
   {
    "canonicalGroup": "上郡",
-   "fromProvinceIndex": 1537,
-   "toProvinceIndex": 1538,
+   "fromProvinceIndex": 1511,
+   "toProvinceIndex": 1512,
    "fromCityName": "칠원",
    "toCityName": "사연",
    "distanceKm": 137.8
   },
   {
    "canonicalGroup": "上郡",
-   "fromProvinceIndex": 1539,
-   "toProvinceIndex": 1540,
+   "fromProvinceIndex": 1513,
+   "toProvinceIndex": 1514,
    "fromCityName": "정림",
    "toCityName": "고노",
    "distanceKm": 109.8
@@ -247,8 +247,8 @@
   },
   {
    "canonicalGroup": "下邳國",
-   "fromProvinceIndex": 1311,
-   "toProvinceIndex": 1445,
+   "fromProvinceIndex": 1285,
+   "toProvinceIndex": 1419,
    "fromCityName": "사구(下邳國)",
    "toCityName": "동성",
    "distanceKm": 38.5
@@ -264,7 +264,7 @@
   {
    "canonicalGroup": "北地郡",
    "fromProvinceIndex": 496,
-   "toProvinceIndex": 1513,
+   "toProvinceIndex": 1487,
    "fromCityName": "염",
    "toCityName": "영주",
    "distanceKm": 163.2
@@ -280,7 +280,7 @@
   {
    "canonicalGroup": "北海國",
    "fromProvinceIndex": 693,
-   "toProvinceIndex": 1448,
+   "toProvinceIndex": 1422,
    "fromCityName": "동안평",
    "toCityName": "평창",
    "distanceKm": 155.8
@@ -296,7 +296,7 @@
   {
    "canonicalGroup": "南郡",
    "fromProvinceIndex": 276,
-   "toProvinceIndex": 1453,
+   "toProvinceIndex": 1427,
    "fromCityName": "주릉",
    "toCityName": "중로",
    "distanceKm": 150.6
@@ -304,7 +304,7 @@
   {
    "canonicalGroup": "南郡",
    "fromProvinceIndex": 287,
-   "toProvinceIndex": 1291,
+   "toProvinceIndex": 1265,
    "fromCityName": "화용",
    "toCityName": "육구",
    "distanceKm": 92.4
@@ -320,7 +320,7 @@
   {
    "canonicalGroup": "合浦郡",
    "fromProvinceIndex": 194,
-   "toProvinceIndex": 1609,
+   "toProvinceIndex": 1583,
    "fromCityName": "고량",
    "toCityName": "임원(合浦郡)",
    "distanceKm": 77.5
@@ -335,8 +335,8 @@
   },
   {
    "canonicalGroup": "國內城",
-   "fromProvinceIndex": 1612,
-   "toProvinceIndex": 1613,
+   "fromProvinceIndex": 1586,
+   "toProvinceIndex": 1587,
    "fromCityName": "주나",
    "toCityName": "개마",
    "distanceKm": 137.5
@@ -352,26 +352,18 @@
   {
    "canonicalGroup": "安定郡",
    "fromProvinceIndex": 514,
-   "toProvinceIndex": 1366,
+   "toProvinceIndex": 1340,
    "fromCityName": "음반",
    "toCityName": "임경",
    "distanceKm": 215.5
   },
   {
    "canonicalGroup": "安定郡",
-   "fromProvinceIndex": 1510,
-   "toProvinceIndex": 1512,
+   "fromProvinceIndex": 1484,
+   "toProvinceIndex": 1486,
    "fromCityName": "삼수",
    "toCityName": "순고",
    "distanceKm": 89.0
-  },
-  {
-   "canonicalGroup": "巴西郡",
-   "fromProvinceIndex": 339,
-   "toProvinceIndex": 340,
-   "fromCityName": "서충국",
-   "toCityName": "남충국",
-   "distanceKm": 20.2
   },
   {
    "canonicalGroup": "平原郡",
@@ -392,15 +384,15 @@
   {
    "canonicalGroup": "廣漢屬國",
    "fromProvinceIndex": 938,
-   "toProvinceIndex": 1482,
+   "toProvinceIndex": 1456,
    "fromCityName": "광무(廣漢屬國)",
    "toCityName": "전저도(廣漢屬國)",
    "distanceKm": 162.8
   },
   {
    "canonicalGroup": "廣漢屬國",
-   "fromProvinceIndex": 1481,
-   "toProvinceIndex": 1483,
+   "fromProvinceIndex": 1455,
+   "toProvinceIndex": 1457,
    "fromCityName": "음평도",
    "toCityName": "강저도",
    "distanceKm": 189.8
@@ -408,7 +400,7 @@
   {
    "canonicalGroup": "廣陵郡",
    "fromProvinceIndex": 223,
-   "toProvinceIndex": 1346,
+   "toProvinceIndex": 1320,
    "fromCityName": "능",
    "toCityName": "동양(廣陵郡)",
    "distanceKm": 86.0
@@ -416,7 +408,7 @@
   {
    "canonicalGroup": "敦煌郡",
    "fromProvinceIndex": 483,
-   "toProvinceIndex": 1527,
+   "toProvinceIndex": 1501,
    "fromCityName": "용륵",
    "toCityName": "엄지",
    "distanceKm": 294.9
@@ -432,7 +424,7 @@
   {
    "canonicalGroup": "朔方郡",
    "fromProvinceIndex": 1065,
-   "toProvinceIndex": 1577,
+   "toProvinceIndex": 1551,
    "fromCityName": "임융",
    "toCityName": "삼봉(朔方郡)",
    "distanceKm": 187.3
@@ -440,7 +432,7 @@
   {
    "canonicalGroup": "朔方郡",
    "fromProvinceIndex": 1065,
-   "toProvinceIndex": 1580,
+   "toProvinceIndex": 1554,
    "fromCityName": "임융",
    "toCityName": "엄목",
    "distanceKm": 212.4
@@ -448,23 +440,23 @@
   {
    "canonicalGroup": "朔方郡",
    "fromProvinceIndex": 1065,
-   "toProvinceIndex": 1581,
+   "toProvinceIndex": 1555,
    "fromCityName": "임융",
    "toCityName": "대성",
    "distanceKm": 102.2
   },
   {
    "canonicalGroup": "朔方郡",
-   "fromProvinceIndex": 1578,
-   "toProvinceIndex": 1581,
+   "fromProvinceIndex": 1552,
+   "toProvinceIndex": 1555,
    "fromCityName": "삭방",
    "toCityName": "대성",
    "distanceKm": 190.1
   },
   {
    "canonicalGroup": "朔方郡",
-   "fromProvinceIndex": 1579,
-   "toProvinceIndex": 1581,
+   "fromProvinceIndex": 1553,
+   "toProvinceIndex": 1555,
    "fromCityName": "옥야",
    "toCityName": "대성",
    "distanceKm": 202.9
@@ -480,7 +472,7 @@
   {
    "canonicalGroup": "東萊郡",
    "fromProvinceIndex": 735,
-   "toProvinceIndex": 1451,
+   "toProvinceIndex": 1425,
    "fromCityName": "불기",
    "toCityName": "갈로",
    "distanceKm": 51.7
@@ -503,64 +495,64 @@
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1367,
-   "toProvinceIndex": 1521,
+   "fromProvinceIndex": 1341,
+   "toProvinceIndex": 1495,
    "fromCityName": "고장(武威郡)",
    "toCityName": "전음",
    "distanceKm": 79.0
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1368,
-   "toProvinceIndex": 1520,
+   "fromProvinceIndex": 1342,
+   "toProvinceIndex": 1494,
    "fromCityName": "선위",
    "toCityName": "창송",
    "distanceKm": 103.3
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1514,
-   "toProvinceIndex": 1523,
+   "fromProvinceIndex": 1488,
+   "toProvinceIndex": 1497,
    "fromCityName": "장액",
    "toCityName": "좌기(武威郡)",
    "distanceKm": 88.2
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1515,
-   "toProvinceIndex": 1519,
+   "fromProvinceIndex": 1489,
+   "toProvinceIndex": 1493,
    "fromCityName": "무위",
    "toCityName": "오위",
    "distanceKm": 103.3
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1516,
-   "toProvinceIndex": 1520,
+   "fromProvinceIndex": 1490,
+   "toProvinceIndex": 1494,
    "fromCityName": "휴도",
    "toCityName": "창송",
    "distanceKm": 104.5
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1516,
-   "toProvinceIndex": 1523,
+   "fromProvinceIndex": 1490,
+   "toProvinceIndex": 1497,
    "fromCityName": "휴도",
    "toCityName": "좌기(武威郡)",
    "distanceKm": 93.6
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1517,
-   "toProvinceIndex": 1521,
+   "fromProvinceIndex": 1491,
+   "toProvinceIndex": 1495,
    "fromCityName": "서차",
    "toCityName": "전음",
    "distanceKm": 81.9
   },
   {
    "canonicalGroup": "武威郡",
-   "fromProvinceIndex": 1519,
-   "toProvinceIndex": 1522,
+   "fromProvinceIndex": 1493,
+   "toProvinceIndex": 1496,
    "fromCityName": "오위",
    "toCityName": "조려",
    "distanceKm": 99.9
@@ -574,14 +566,6 @@
    "distanceKm": 141.9
   },
   {
-   "canonicalGroup": "汝南郡",
-   "fromProvinceIndex": 536,
-   "toProvinceIndex": 1339,
-   "fromCityName": "여양(汝南郡)",
-   "toCityName": "고시",
-   "distanceKm": 36.1
-  },
-  {
    "canonicalGroup": "沛國",
    "fromProvinceIndex": 217,
    "toProvinceIndex": 395,
@@ -592,47 +576,39 @@
   {
    "canonicalGroup": "河南尹",
    "fromProvinceIndex": 631,
-   "toProvinceIndex": 1387,
+   "toProvinceIndex": 1361,
    "fromCityName": "구씨",
    "toCityName": "공(河南尹)",
    "distanceKm": 36.6
   },
   {
-   "canonicalGroup": "河南尹",
-   "fromProvinceIndex": 1295,
-   "toProvinceIndex": 1319,
-   "fromCityName": "맹진",
-   "toCityName": "소평진",
-   "distanceKm": 17.5
-  },
-  {
    "canonicalGroup": "漁陽郡",
-   "fromProvinceIndex": 1593,
-   "toProvinceIndex": 1596,
+   "fromProvinceIndex": 1567,
+   "toProvinceIndex": 1570,
    "fromCityName": "어양",
    "toCityName": "치해",
    "distanceKm": 98.9
   },
   {
    "canonicalGroup": "漁陽郡",
-   "fromProvinceIndex": 1594,
-   "toProvinceIndex": 1597,
+   "fromProvinceIndex": 1568,
+   "toProvinceIndex": 1571,
    "fromCityName": "천주",
    "toCityName": "광평(漁陽郡)",
    "distanceKm": 82.8
   },
   {
    "canonicalGroup": "漁陽郡",
-   "fromProvinceIndex": 1595,
-   "toProvinceIndex": 1597,
+   "fromProvinceIndex": 1569,
+   "toProvinceIndex": 1571,
    "fromCityName": "평곡",
    "toCityName": "광평(漁陽郡)",
    "distanceKm": 92.3
   },
   {
    "canonicalGroup": "漁陽郡",
-   "fromProvinceIndex": 1596,
-   "toProvinceIndex": 1597,
+   "fromProvinceIndex": 1570,
+   "toProvinceIndex": 1571,
    "fromCityName": "치해",
    "toCityName": "광평(漁陽郡)",
    "distanceKm": 85.8
@@ -656,7 +632,7 @@
   {
    "canonicalGroup": "牂牁郡",
    "fromProvinceIndex": 957,
-   "toProvinceIndex": 1466,
+   "toProvinceIndex": 1440,
    "fromCityName": "무렴",
    "toCityName": "평이",
    "distanceKm": 163.8
@@ -664,15 +640,15 @@
   {
    "canonicalGroup": "牂牁郡",
    "fromProvinceIndex": 960,
-   "toProvinceIndex": 1467,
+   "toProvinceIndex": 1441,
    "fromCityName": "폐",
    "toCityName": "동병",
    "distanceKm": 147.7
   },
   {
    "canonicalGroup": "牂牁郡",
-   "fromProvinceIndex": 1468,
-   "toProvinceIndex": 1469,
+   "fromProvinceIndex": 1442,
+   "toProvinceIndex": 1443,
    "fromCityName": "누강",
    "toCityName": "진승",
    "distanceKm": 115.9
@@ -680,7 +656,7 @@
   {
    "canonicalGroup": "犍為屬國",
    "fromProvinceIndex": 412,
-   "toProvinceIndex": 1485,
+   "toProvinceIndex": 1459,
    "fromCityName": "주제",
    "toCityName": "한양",
    "distanceKm": 133.0
@@ -688,7 +664,7 @@
   {
    "canonicalGroup": "犍為郡",
    "fromProvinceIndex": 946,
-   "toProvinceIndex": 1298,
+   "toProvinceIndex": 1272,
    "fromCityName": "무양(犍為郡)",
    "toCityName": "남안협구",
    "distanceKm": 78.0
@@ -696,7 +672,7 @@
   {
    "canonicalGroup": "益州郡",
    "fromProvinceIndex": 425,
-   "toProvinceIndex": 1478,
+   "toProvinceIndex": 1452,
    "fromCityName": "분고",
    "toCityName": "무절",
    "distanceKm": 190.5
@@ -704,31 +680,31 @@
   {
    "canonicalGroup": "益州郡",
    "fromProvinceIndex": 425,
-   "toProvinceIndex": 1479,
+   "toProvinceIndex": 1453,
    "fromCityName": "분고",
    "toCityName": "농동(益州郡)",
    "distanceKm": 185.8
   },
   {
    "canonicalGroup": "益州郡",
-   "fromProvinceIndex": 1476,
-   "toProvinceIndex": 1479,
+   "fromProvinceIndex": 1450,
+   "toProvinceIndex": 1453,
    "fromCityName": "성휴",
    "toCityName": "농동(益州郡)",
    "distanceKm": 189.5
   },
   {
    "canonicalGroup": "益州郡",
-   "fromProvinceIndex": 1477,
-   "toProvinceIndex": 1479,
+   "fromProvinceIndex": 1451,
+   "toProvinceIndex": 1453,
    "fromCityName": "율고",
    "toCityName": "농동(益州郡)",
    "distanceKm": 186.6
   },
   {
    "canonicalGroup": "益州郡",
-   "fromProvinceIndex": 1478,
-   "toProvinceIndex": 1480,
+   "fromProvinceIndex": 1452,
+   "toProvinceIndex": 1454,
    "fromCityName": "무절",
    "toCityName": "진장",
    "distanceKm": 155.9
@@ -736,15 +712,15 @@
   {
    "canonicalGroup": "蜀郡",
    "fromProvinceIndex": 941,
-   "toProvinceIndex": 1465,
+   "toProvinceIndex": 1439,
    "fromCityName": "광유",
    "toCityName": "팔릉",
    "distanceKm": 198.0
   },
   {
    "canonicalGroup": "蜀郡",
-   "fromProvinceIndex": 1464,
-   "toProvinceIndex": 1465,
+   "fromProvinceIndex": 1438,
+   "toProvinceIndex": 1439,
    "fromCityName": "전저도(蜀郡)",
    "toCityName": "팔릉",
    "distanceKm": 198.4
@@ -752,66 +728,58 @@
   {
    "canonicalGroup": "蜀郡屬國",
    "fromProvinceIndex": 950,
-   "toProvinceIndex": 1484,
+   "toProvinceIndex": 1458,
    "fromCityName": "한가",
    "toCityName": "모우",
    "distanceKm": 257.0
   },
   {
    "canonicalGroup": "襄陽郡",
-   "fromProvinceIndex": 1265,
-   "toProvinceIndex": 1268,
+   "fromProvinceIndex": 1239,
+   "toProvinceIndex": 1242,
    "fromCityName": "등새",
    "toCityName": "번성",
    "distanceKm": 5.3
   },
   {
    "canonicalGroup": "西河郡",
-   "fromProvinceIndex": 1541,
-   "toProvinceIndex": 1547,
+   "fromProvinceIndex": 1515,
+   "toProvinceIndex": 1521,
    "fromCityName": "평정",
    "toCityName": "익란",
    "distanceKm": 70.0
   },
   {
    "canonicalGroup": "西河郡",
-   "fromProvinceIndex": 1542,
-   "toProvinceIndex": 1551,
+   "fromProvinceIndex": 1516,
+   "toProvinceIndex": 1525,
    "fromCityName": "미직",
    "toCityName": "엄연",
    "distanceKm": 48.8
   },
   {
    "canonicalGroup": "西河郡",
-   "fromProvinceIndex": 1543,
-   "toProvinceIndex": 1547,
+   "fromProvinceIndex": 1517,
+   "toProvinceIndex": 1521,
    "fromCityName": "악가",
    "toCityName": "익란",
    "distanceKm": 73.5
   },
   {
    "canonicalGroup": "西河郡",
-   "fromProvinceIndex": 1545,
-   "toProvinceIndex": 1551,
+   "fromProvinceIndex": 1519,
+   "toProvinceIndex": 1525,
    "fromCityName": "평주",
    "toCityName": "엄연",
    "distanceKm": 49.4
   },
   {
    "canonicalGroup": "西河郡",
-   "fromProvinceIndex": 1547,
-   "toProvinceIndex": 1549,
+   "fromProvinceIndex": 1521,
+   "toProvinceIndex": 1523,
    "fromCityName": "익란",
    "toCityName": "인",
    "distanceKm": 63.1
-  },
-  {
-   "canonicalGroup": "西河郡",
-   "fromProvinceIndex": 1549,
-   "toProvinceIndex": 1551,
-   "fromCityName": "인",
-   "toCityName": "엄연",
-   "distanceKm": 54.7
   },
   {
    "canonicalGroup": "豫章郡",
@@ -824,7 +792,7 @@
   {
    "canonicalGroup": "越巂郡",
    "fromProvinceIndex": 20,
-   "toProvinceIndex": 1474,
+   "toProvinceIndex": 1448,
    "fromCityName": "착진",
    "toCityName": "대작",
    "distanceKm": 136.7
@@ -832,31 +800,31 @@
   {
    "canonicalGroup": "越巂郡",
    "fromProvinceIndex": 409,
-   "toProvinceIndex": 1475,
+   "toProvinceIndex": 1449,
    "fromCityName": "수구",
    "toCityName": "고복",
    "distanceKm": 136.8
   },
   {
    "canonicalGroup": "越巂郡",
-   "fromProvinceIndex": 1471,
-   "toProvinceIndex": 1473,
+   "fromProvinceIndex": 1445,
+   "toProvinceIndex": 1447,
    "fromCityName": "영소도",
    "toCityName": "소시",
    "distanceKm": 175.7
   },
   {
    "canonicalGroup": "越巂郡",
-   "fromProvinceIndex": 1472,
-   "toProvinceIndex": 1475,
+   "fromProvinceIndex": 1446,
+   "toProvinceIndex": 1449,
    "fromCityName": "삼봉(越巂郡)",
    "toCityName": "고복",
    "distanceKm": 135.4
   },
   {
    "canonicalGroup": "越巂郡",
-   "fromProvinceIndex": 1473,
-   "toProvinceIndex": 1474,
+   "fromProvinceIndex": 1447,
+   "toProvinceIndex": 1448,
    "fromCityName": "소시",
    "toCityName": "대작",
    "distanceKm": 138.1
@@ -864,7 +832,7 @@
   {
    "canonicalGroup": "遼東屬國",
    "fromProvinceIndex": 968,
-   "toProvinceIndex": 1602,
+   "toProvinceIndex": 1576,
    "fromCityName": "요동속국",
    "toCityName": "험독(遼東屬國)",
    "distanceKm": 298.5
@@ -872,7 +840,7 @@
   {
    "canonicalGroup": "遼東郡",
    "fromProvinceIndex": 1040,
-   "toProvinceIndex": 1260,
+   "toProvinceIndex": 1234,
    "fromCityName": "서안평",
    "toCityName": "안평구",
    "distanceKm": 5.8
@@ -888,47 +856,31 @@
   {
    "canonicalGroup": "酒泉郡",
    "fromProvinceIndex": 485,
-   "toProvinceIndex": 1525,
+   "toProvinceIndex": 1499,
    "fromCityName": "연천",
    "toCityName": "건제",
    "distanceKm": 207.1
   },
   {
    "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1330,
-   "toProvinceIndex": 1373,
-   "fromCityName": "좌성",
-   "toCityName": "안미",
-   "distanceKm": 32.8
-  },
-  {
-   "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1369,
-   "toProvinceIndex": 1371,
-   "fromCityName": "표씨",
-   "toCityName": "회수",
-   "distanceKm": 56.6
-  },
-  {
-   "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1370,
-   "toProvinceIndex": 1373,
+   "fromProvinceIndex": 1344,
+   "toProvinceIndex": 1347,
    "fromCityName": "낙관",
    "toCityName": "안미",
    "distanceKm": 22.6
   },
   {
    "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1371,
-   "toProvinceIndex": 1373,
+   "fromProvinceIndex": 1345,
+   "toProvinceIndex": 1347,
    "fromCityName": "회수",
    "toCityName": "안미",
    "distanceKm": 49.2
   },
   {
    "canonicalGroup": "酒泉郡",
-   "fromProvinceIndex": 1524,
-   "toProvinceIndex": 1525,
+   "fromProvinceIndex": 1498,
+   "toProvinceIndex": 1499,
    "fromCityName": "복록",
    "toCityName": "건제",
    "distanceKm": 177.9
@@ -936,31 +888,31 @@
   {
    "canonicalGroup": "金城郡",
    "fromProvinceIndex": 499,
-   "toProvinceIndex": 1506,
+   "toProvinceIndex": 1480,
    "fromCityName": "임강(金城郡)",
    "toCityName": "영거",
    "distanceKm": 145.9
   },
   {
    "canonicalGroup": "金城郡",
-   "fromProvinceIndex": 1329,
-   "toProvinceIndex": 1507,
+   "fromProvinceIndex": 1303,
+   "toProvinceIndex": 1481,
    "fromCityName": "전음구",
    "toCityName": "지양(金城郡)",
    "distanceKm": 108.5
   },
   {
    "canonicalGroup": "金城郡",
-   "fromProvinceIndex": 1504,
-   "toProvinceIndex": 1505,
+   "fromProvinceIndex": 1478,
+   "toProvinceIndex": 1479,
    "fromCityName": "윤오",
    "toCityName": "호미",
    "distanceKm": 183.4
   },
   {
    "canonicalGroup": "金城郡",
-   "fromProvinceIndex": 1504,
-   "toProvinceIndex": 1506,
+   "fromProvinceIndex": 1478,
+   "toProvinceIndex": 1480,
    "fromCityName": "윤오",
    "toCityName": "영거",
    "distanceKm": 144.3
@@ -984,7 +936,7 @@
   {
    "canonicalGroup": "隴西郡",
    "fromProvinceIndex": 456,
-   "toProvinceIndex": 1489,
+   "toProvinceIndex": 1463,
    "fromCityName": "임도",
    "toCityName": "하소",
    "distanceKm": 129.0
@@ -992,15 +944,15 @@
   {
    "canonicalGroup": "隴西郡",
    "fromProvinceIndex": 461,
-   "toProvinceIndex": 1488,
+   "toProvinceIndex": 1462,
    "fromCityName": "포한",
    "toCityName": "대하",
    "distanceKm": 154.3
   },
   {
    "canonicalGroup": "隴西郡",
-   "fromProvinceIndex": 1487,
-   "toProvinceIndex": 1489,
+   "fromProvinceIndex": 1461,
+   "toProvinceIndex": 1463,
    "fromCityName": "저도",
    "toCityName": "하소",
    "distanceKm": 131.8
@@ -1016,7 +968,7 @@
   {
    "canonicalGroup": "鬱林郡",
    "fromProvinceIndex": 295,
-   "toProvinceIndex": 1606,
+   "toProvinceIndex": 1580,
    "fromCityName": "안광",
    "toCityName": "임진(鬱林郡)",
    "distanceKm": 196.2
@@ -1024,31 +976,31 @@
   {
    "canonicalGroup": "鬱林郡",
    "fromProvinceIndex": 300,
-   "toProvinceIndex": 1608,
+   "toProvinceIndex": 1582,
    "fromCityName": "영방",
    "toCityName": "증식",
    "distanceKm": 177.5
   },
   {
    "canonicalGroup": "鬱林郡",
-   "fromProvinceIndex": 1604,
-   "toProvinceIndex": 1607,
+   "fromProvinceIndex": 1578,
+   "toProvinceIndex": 1581,
    "fromCityName": "엄욱",
    "toCityName": "정주",
    "distanceKm": 196.7
   },
   {
    "canonicalGroup": "鬱林郡",
-   "fromProvinceIndex": 1605,
-   "toProvinceIndex": 1608,
+   "fromProvinceIndex": 1579,
+   "toProvinceIndex": 1582,
    "fromCityName": "계림",
    "toCityName": "증식",
    "distanceKm": 171.5
   },
   {
    "canonicalGroup": "鬱林郡",
-   "fromProvinceIndex": 1607,
-   "toProvinceIndex": 1608,
+   "fromProvinceIndex": 1581,
+   "toProvinceIndex": 1582,
    "fromCityName": "정주",
    "toCityName": "증식",
    "distanceKm": 165.6
@@ -1064,15 +1016,15 @@
   {
    "canonicalGroup": "魯國",
    "fromProvinceIndex": 380,
-   "toProvinceIndex": 1418,
+   "toProvinceIndex": 1392,
    "fromCityName": "번(魯國)",
    "toCityName": "노국(魯國)",
    "distanceKm": 42.0
   },
   {
    "canonicalGroup": "鴈門郡",
-   "fromProvinceIndex": 1572,
-   "toProvinceIndex": 1573,
+   "fromProvinceIndex": 1546,
+   "toProvinceIndex": 1547,
    "fromCityName": "누번",
    "toCityName": "무주",
    "distanceKm": 161.9

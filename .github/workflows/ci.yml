@@ -197,6 +197,9 @@ jobs:
       - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
         if: '!cancelled()'
         run: python3 tools/map/check_han_tiles_coupled.py --check
+      - name: Verify city growth clearance and province escape routes
+        if: '!cancelled()'
+        run: python3 tools/map/audit_province_clearance.py --check
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
         # (authored table fields -> derived numeric fields, same file) --

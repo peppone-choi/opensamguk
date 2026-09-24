@@ -3,12 +3,15 @@ package opensamguk.gameapi.controller
 import opensamguk.gameapi.read.StrategicTopologyReadSource
 import opensamguk.gameapi.read.WaterControlReadRepository
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
+import opensamguk.gameapi.read.GameKvReadRepository
 import opensamguk.gameapi.dto.StrategicTopologyBinding
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 import opensamguk.gameapi.read.ActiveWorldMap
 import opensamguk.gameapi.dto.StrategicTopologyResponse
 import opensamguk.gameapi.dto.StrategicWaterControlDto
+import opensamguk.logic.input.HwihaLandPassageState
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.dao.DataAccessException
 import org.springframework.http.CacheControl
 import org.springframework.http.ResponseEntity
@@ -26,6 +29,7 @@ class MapStrategicTopologyController(
     private val worlds: ActiveWorldArtifactResolver,
     private val controls: WaterControlReadRepository,
     private val source: StrategicTopologyReadSource,
+    private val gameKv: GameKvReadRepository? = null,
 ) {
     /** Public immutable geography; until water FOW exists, only verified administrators read control. */
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -48,9 +52,20 @@ class MapStrategicTopologyController(
                 state?.controllingNationId?.toString(), state?.contestingNationIds?.map(Long::toString).orEmpty(),
                 state?.revision?.toString())
         }
+        val roadGates = projection.presentation?.roadGates.orEmpty()
+        val roads = if (roadGates.isNotEmpty()) {
+            val raw = gameKv?.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY)?.value
+            val state = if (raw == null) null else {
+                val decoded = ObjectMapper().readValue(raw, Map::class.java)
+                HwihaLandPassageState.read(mapOf(HwihaLandPassageState.META_KEY to decoded), projection.topology)
+            }
+            (state?.edgeStates?.filter { it.value.active }?.keys ?: roadGates
+                .filter { it.initiallyBuilt }.map { it.edgeId }).sorted()
+        } else null
         return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(StrategicTopologyResponse(
             binding, if (knownTopologyHash == binding.topologyHash) null else source.presentationFor(projection),
             if (mayReadControl) "VISIBLE" else "REDACTED", rows,
+            roads,
         ))
     }
 }

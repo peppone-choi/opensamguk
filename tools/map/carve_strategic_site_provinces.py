@@ -71,12 +71,16 @@ GAP_PREFIX = "gc-"
 GAP_KIND = "COUNTY"
 SITE_KIND = "STRATEGIC_SITE"
 ROLE_LEVEL = {"FERRY": 1, "FORT": 2, "PASS": 3}
-FOOTPRINT = 8
+FOOTPRINT = 9
 # 기증 縣 省이 가는 띠 모양이면 8칸을 떼는 순간 나머지가 끊긴다(河陰縣 20칸 — 孟津).
 # 그때만 발자국을 이 크기까지 줄여 다시 시도한다. 거점을 모양 탓으로 빼지 않기 위한 규칙이다.
 MINIMUM_FOOTPRINT = 4
+# 沓津 is an attested coastal landing with a reviewed 東萊 sea route. Its
+# second movement exit is that route, so a single dry-land neighbour suffices.
+# The other 72 sites still require two independent land neighbours.
+SEA_SUPPORTED_LANDING = "tajin"
 DONOR_JURISDICTION_KINDS = frozenset({"COUNTY", "EXTERNAL_SETTLEMENT"})
-MINIMUM_AREA = 8
+MINIMUM_AREA = 9
 # 런타임 보급망이 잇는 지형 이름(HanStrategicTopologyJson dryNames 와 같은 집합). 코드는 terrainLegend 로 푼다.
 DRY_TERRAIN_NAMES = frozenset({"PLAIN", "MOUNTAIN", "DESERT", "PLATEAU", "BASIN", "HILL"})
 TILE_PLACE_LEVEL = 5  # han-tiles cities[].level 은 CHGIS 계층값이다. 게임 등급은 build_han_world 가 정한다.
@@ -186,6 +190,44 @@ def _anchor_candidates(owner: np.ndarray, donor: int, cell: tuple[int, int], tak
     return sorted(candidates, key=lambda rc: ((rc[0] - cell[0]) ** 2 + (rc[1] - cell[1]) ** 2, rc))
 
 
+def _boundary_core_candidates(before: np.ndarray, provinces: list[dict],
+                              protected: set[tuple[int, int]], size: int = 3,
+                              min_land_neighbours: int = 2) -> dict[str, list[tuple[int, int]]]:
+    """Square interiors beside another land province, indexed by their 郡.
+
+    A 2×2 square becomes 8×8 cells at the approved 4× display resolution and
+    therefore still contains a complete 7×7 future capital footprint.
+    """
+    rows, cols = before.shape
+    result: dict[str, list[tuple[int, int]]] = {}
+    for r, c in np.argwhere(before >= 0):
+        r, c = int(r), int(c)
+        margin = 2 if size == 3 else 1
+        if r < margin or c < margin or r >= rows - margin or c >= cols - margin:
+            continue
+        donor = int(before[r, c])
+        start_r, start_c = (r - 1, c - 1) if size == 3 else (r, c)
+        core = before[start_r:start_r + size, start_c:start_c + size]
+        if (core < 0).any():
+            continue
+        parent_id = provinces[donor]["parentRegionId"]
+        if any(provinces[int(other)]["parentRegionId"] != parent_id for other in np.unique(core)):
+            continue
+        if any((rr, cc) in protected for rr in range(start_r, start_r + size)
+               for cc in range(start_c, start_c + size)):
+            continue
+        ring = before[start_r - 1:start_r + size + 1, start_c - 1:start_c + size + 1]
+        exterior = np.concatenate((ring[0], ring[-1], ring[1:-1, 0], ring[1:-1, -1]))
+        if len({int(other) for other in exterior if other >= 0}) < min_land_neighbours:
+            continue
+        result.setdefault(parent_id, []).append((r, c))
+    return result
+
+
+def _sorted_boundary_candidates(candidates: list[tuple[int, int]], cell: tuple[int, int]):
+    return sorted(candidates, key=lambda rc: ((rc[0] - cell[0]) ** 2 + (rc[1] - cell[1]) ** 2, rc))
+
+
 def _components(cells: set[tuple[int, int]], rows: int, cols: int) -> int:
     seen: set[tuple[int, int]] = set()
     count = 0
@@ -211,43 +253,63 @@ def _dry_codes(document: dict) -> frozenset[str]:
 
 def _shares_dry_border(carved: set[tuple[int, int]], remainder: set[tuple[int, int]], terrain: list[str],
                        dry: frozenset[str], rows: int, cols: int) -> bool:
-    return any(terrain[cell[0]][cell[1]] in dry and nxt in remainder and terrain[nxt[0]][nxt[1]] in dry
-               for cell in carved for nxt in neighbours(cell[0], cell[1], rows, cols))
+    return any(terrain[r][c] in dry and (nr, nc) in remainder and terrain[nr][nc] in dry
+               for r, c in carved for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))
+               for nr, nc in ((r + dr, c + dc),)
+               if 0 <= nr < rows and 0 <= nc < cols)
 
 
 def _carve(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: set[tuple[int, int]],
            footprint: int = FOOTPRINT, terrain: list[str] | None = None, dry: frozenset[str] = frozenset(),
-           reserve: int = 0):
-    """앵커에서 거리 순으로 FOOTPRINT 칸. 기증 省의 조각 수를 늘리지 않고 최소 면적을 지킨다.
+           reserve: int = 0, provinces: list[dict] | None = None,
+           min_land_neighbours: int = 2):
+    """Reserve a complete 3×3 interior at a donor boundary for a city marker.
 
     기증 省이 원래 여러 조각이면(섬·월경지 — territory-disconnection 원장이 판정한 것) 그 조각 수
     그대로를 지키면 된다. 「한 덩어리」를 요구하면 이미 갈라진 省에서는 한 칸도 못 뗀다.
     """
+    if footprint not in (FOOTPRINT, MINIMUM_FOOTPRINT):
+        raise ValueError("city carve footprint must provide a square growth interior")
     rows, cols = owner.shape
-    donor_cells = {(int(r), int(c)) for r, c in np.argwhere(owner == donor)}
-    # reserve = 같은 기증 省에서 아직 설 거점들의 최소 발자국 합. 앞 거점이 8칸을 다 가져가 뒤 거점이
-    # DONOR_TOO_SMALL 로 빠지는 것을 막는다(사용자 결정 2026-09-18: 빼지 말고 발자국을 줄여 세운다).
-    if len(donor_cells) - footprint < MINIMUM_AREA + reserve:
+    ar, ac = anchor
+    size = 3 if footprint == FOOTPRINT else 2
+    start_r, start_c = (ar - 1, ac - 1) if size == 3 else (ar, ac)
+    if not (1 <= start_r and 1 <= start_c and start_r + size < rows and start_c + size < cols):
         return None
-    pieces = _components(donor_cells, rows, cols)
-    carved = {anchor}
-    remainder = donor_cells - carved
-    if _components(remainder, rows, cols) > pieces:
+    carved = {(r, c) for r in range(start_r, start_r + size) for c in range(start_c, start_c + size)}
+    if carved & protected:
         return None
-    while len(carved) < footprint:
-        frontier = sorted(
-            {cell for taken in carved for cell in neighbours(taken[0], taken[1], rows, cols)
-             if cell in remainder and cell not in protected},
-            key=lambda cell: ((cell[0] - anchor[0]) ** 2 + (cell[1] - anchor[1]) ** 2, cell),
-        )
-        for candidate in frontier:
-            if _components(remainder - {candidate}, rows, cols) <= pieces:
-                carved.add(candidate)
-                remainder.discard(candidate)
-                break
-        else:
+    contributors = {int(owner[cell]) for cell in carved}
+    if -1 in contributors or donor not in contributors:
+        return None
+    if provinces is None and contributors != {donor}:
+        return None
+    if provinces is not None:
+        parent_id = provinces[donor]["parentRegionId"]
+        if any(other >= len(provinces) or provinces[other]["parentRegionId"] != parent_id
+               for other in contributors):
             return None
-    if terrain is not None and not _shares_dry_border(carved, remainder, terrain, dry, rows, cols):
+        if any(provinces[other]["geometryBasis"] in {"STRATEGIC_SITE_LOCAL_CARVE", "GAP_COUNTY_LOCAL_CARVE"}
+               for other in contributors):
+            return None
+    # The campaign land graph uses shared sides. A diagonal-only touch would
+    # still leave the new site as a game dead end even though the visual
+    # eight-neighbour audit called it connected.
+    exterior = {int(owner[nr, nc]) for r, c in carved for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))
+                for nr, nc in ((r + dr, c + dc),)
+                if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in carved and owner[nr, nc] >= 0}
+    if len(exterior) < min_land_neighbours:
+        return None
+    remainders = set()
+    for other in contributors:
+        donor_cells = {(int(r), int(c)) for r, c in np.argwhere(owner == other)}
+        remainder = donor_cells - carved
+        if len(remainder) < MINIMUM_AREA + (reserve if other == donor else 0):
+            return None
+        if _components(remainder, rows, cols) > _components(donor_cells, rows, cols):
+            return None
+        remainders.update(remainder)
+    if terrain is not None and not _shares_dry_border(carved, remainders, terrain, dry, rows, cols):
         return None
     return carved
 
@@ -312,9 +374,16 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
     owner = expand(document["owner"], rows, cols)
     before = owner.copy()
     provinces = document["provinceRecords"]
+    original_province_count = len(provinces)
     jurisdictions = {row["id"]: row for row in document["jurisdictionRecords"]}
     commanderies = {row["id"]: row for row in document["commanderyRecords"]}
     point_cells = {(row["row"], row["col"]) for row in document["cities"]}
+    boundary_candidates = _boundary_core_candidates(before, provinces, point_cells)
+    minimum_boundary_candidates = _boundary_core_candidates(before, provinces, point_cells, size=2)
+    landing_candidates = _boundary_core_candidates(before, provinces, point_cells,
+                                                    min_land_neighbours=1)
+    minimum_landing_candidates = _boundary_core_candidates(before, provinces, point_cells, size=2,
+                                                            min_land_neighbours=1)
     terrain, dry = document["terrain"], _dry_codes(document)
     placements, excluded = [], []
     pending = _pending_by_donor(before, sites, projection, rows, cols)
@@ -344,25 +413,36 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
         anchor, carved = None, None
         pending[donor].remove(site["id"])
         reserve = MINIMUM_FOOTPRINT * len(pending[donor])
-        for footprint in range(FOOTPRINT, MINIMUM_FOOTPRINT - 1, -1):
-            for candidate in _anchor_candidates(owner, donor, cell, point_cells):
-                carved = _carve(owner, donor, candidate, point_cells, footprint, terrain, dry, reserve)
-                if carved is not None:
-                    anchor = candidate
-                    break
+        # A nearby 2×2 core is preferable to moving a ferry or pass several
+        # geographic cells merely to obtain a 3×3 core. Both grow to at least
+        # 8×8 fine cells and thus support the same maximum 7×7 city footprint.
+        site_candidates = ((FOOTPRINT, landing_candidates),
+                           (MINIMUM_FOOTPRINT, minimum_landing_candidates)) if site["id"] == SEA_SUPPORTED_LANDING else (
+                           (FOOTPRINT, boundary_candidates), (MINIMUM_FOOTPRINT, minimum_boundary_candidates))
+        choices = [(candidate, footprint)
+                   for footprint, candidates in site_candidates
+                   for candidate in candidates.get(donor_record["parentRegionId"], [])]
+        choices.sort(key=lambda item: ((item[0][0] - cell[0]) ** 2 + (item[0][1] - cell[1]) ** 2,
+                                       -item[1], item[0]))
+        for candidate, footprint in choices:
+            if (candidate[0] - cell[0]) ** 2 + (candidate[1] - cell[1]) ** 2 > 6.1 ** 2:
+                continue
+            candidate_donor = int(owner[candidate])
+            if candidate_donor < 0 or candidate_donor >= original_province_count:
+                continue
+            candidate_record = provinces[candidate_donor]
+            if candidate_record["parentRegionId"] != donor_record["parentRegionId"]:
+                continue
+            candidate_jurisdiction = jurisdictions[candidate_record["jurisdictionId"]]
+            if candidate_jurisdiction["kind"] not in DONOR_JURISDICTION_KINDS:
+                continue
+            carved = _carve(owner, candidate_donor, candidate, point_cells, footprint, terrain, dry,
+                            reserve if candidate_donor == donor else 0, provinces,
+                            1 if site["id"] == SEA_SUPPORTED_LANDING else 2)
             if carved is not None:
+                anchor = candidate
+                donor, donor_record, jurisdiction = candidate_donor, candidate_record, candidate_jurisdiction
                 break
-        if carved is None:
-            # 사용자 결정(2026-09-18, GH #806): 기증 縣이 작아 못 서는 거점은 빼지 않고 발자국을 더 줄여 세운다.
-            # 기증 省의 최소 넓이·연결·마른땅 경계 조건은 그대로다. 줄어든 크기는 carvedCellCount 에 남는다.
-            for footprint in range(MINIMUM_FOOTPRINT, 0, -1):
-                for candidate in _anchor_candidates(owner, donor, cell, point_cells):
-                    carved = _carve_exhaustive(owner, donor, candidate, point_cells, footprint, terrain, dry, reserve)
-                    if carved is not None:
-                        anchor = candidate
-                        break
-                if carved is not None:
-                    break
         if carved is None:
             excluded.append({**base, "reason": "DONOR_TOO_SMALL", "donorProvinceId": donor_record["id"],
                              "donorCellCount": int((owner == donor).sum())})
@@ -456,23 +536,27 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
                                     "jurisdictionKind": jurisdiction["kind"]})
             continue
         anchor, carved = None, None
-        for footprint in range(FOOTPRINT, MINIMUM_FOOTPRINT - 1, -1):
-            for candidate in _anchor_candidates(owner, donor, cell, point_cells):
-                carved = _carve(owner, donor, candidate, point_cells, footprint, terrain, dry, 0)
-                if carved is not None:
-                    anchor = candidate
-                    break
+        choices = [(candidate, footprint)
+                   for footprint, candidates in ((FOOTPRINT, boundary_candidates),
+                                                  (MINIMUM_FOOTPRINT, minimum_boundary_candidates))
+                   for parent_id in target_parents for candidate in candidates.get(parent_id, [])]
+        choices.sort(key=lambda item: ((item[0][0] - cell[0]) ** 2 + (item[0][1] - cell[1]) ** 2,
+                                       -item[1], item[0]))
+        for candidate, footprint in choices:
+            candidate_donor = int(owner[candidate])
+            if candidate_donor < 0 or candidate_donor >= original_province_count:
+                continue
+            candidate_record = provinces[candidate_donor]
+            if candidate_record["parentRegionId"] not in target_parents:
+                continue
+            candidate_jurisdiction = jurisdictions[candidate_record["jurisdictionId"]]
+            if candidate_jurisdiction["kind"] not in DONOR_JURISDICTION_KINDS:
+                continue
+            carved = _carve(owner, candidate_donor, candidate, point_cells, footprint, terrain, dry, 0, provinces)
             if carved is not None:
+                anchor = candidate
+                donor, donor_record, jurisdiction = candidate_donor, candidate_record, candidate_jurisdiction
                 break
-        if carved is None:
-            for footprint in range(MINIMUM_FOOTPRINT, 0, -1):
-                for candidate in _anchor_candidates(owner, donor, cell, point_cells):
-                    carved = _carve_exhaustive(owner, donor, candidate, point_cells, footprint, terrain, dry, 0)
-                    if carved is not None:
-                        anchor = candidate
-                        break
-                if carved is not None:
-                    break
         if carved is None:
             county_excluded.append({**base, "reason": "DONOR_TOO_SMALL", "donorProvinceId": donor_record["id"],
                                     "donorCellCount": int((owner == donor).sum())})

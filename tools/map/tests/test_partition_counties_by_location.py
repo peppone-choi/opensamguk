@@ -246,7 +246,8 @@ class InvariantRedProbeTest(unittest.TestCase):
         parent = self.grid() * 0 + pcl.expand(self.document["parentOwner"], 5, 12)
         parent[0, 5] = 1
         tampered = {**self.document, "parentOwner": pcl.encode(parent)}
-        self.assertEqual(pcl.check_parent_unchanged(self.source, tampered), ["Q2 parentOwner changed"])
+        self.assertEqual(pcl.check_parent_unchanged(self.source, tampered),
+                         ["Q2 parentOwner differs from reviewed boundary transfers"])
 
     def test_red_probe_q3_orphan_land(self):
         owner = self.grid()
@@ -388,7 +389,7 @@ class CommittedStageTest(unittest.TestCase):
 
     def test_measured_baseline(self):
         stage = self.ledger["geometry"]["stages"][0]
-        self.assertEqual(stage["counts"]["provinces"], 1258)
+        self.assertEqual(stage["counts"]["provinces"], 1232)
         self.assertEqual(len(self.ledger["seedExceptions"]), 41)  # 40 + 陽安 성분 재배치(규칙 1c)
         rows = [r for r in measure(self.staged) if r.get("area")]
         exceptions = frozenset(row["jurisdictionId"] for row in self.ledger["seedExceptions"])
@@ -405,12 +406,15 @@ class CommittedStageTest(unittest.TestCase):
     def test_red_probe_q4_exception_rows_must_match_exactly(self):
         decisions = json.loads(pcl.DECISIONS.read_text(encoding="utf-8"))
         violations = self.ledger["areaViolations"]
+        self.assertEqual(violations, [])
+        self.assertEqual(decisions["areaExceptions"], [])
         self.assertEqual(pcl.area_exception_problems(violations, decisions), [])
-        missing = {**decisions, "areaExceptions": decisions["areaExceptions"][1:]}
-        self.assertTrue(any("has no exception row" in p for p in pcl.area_exception_problems(violations, missing)))
-        self.assertTrue(any("no longer violates" in p for p in pcl.area_exception_problems(violations[1:], decisions)))
-        drift = [{**violations[0], "cells": violations[0]["cells"] + 1}, *violations[1:]]
-        self.assertTrue(any("pins" in p for p in pcl.area_exception_problems(drift, decisions)))
+        injected = [{"provinceId": "probe", "cells": 3, "class": "BELOW_MIN"}]
+        self.assertTrue(any("has no exception row" in p for p in pcl.area_exception_problems(injected, decisions)))
+        stale = {**decisions, "areaExceptions": [{"provinceId": "probe", "cells": 3}]}
+        self.assertTrue(any("no longer violates" in p for p in pcl.area_exception_problems([], stale)))
+        self.assertTrue(any("pins" in p for p in pcl.area_exception_problems(injected, {**stale,
+            "areaExceptions": [{"provinceId": "probe", "cells": 4}]})))
 
     def test_committed_tiles_q4_and_red_probe(self):
         committed = json.loads(self.committed_text)
@@ -425,7 +429,7 @@ class CommittedStageTest(unittest.TestCase):
             owner[cell] = other
         committed["owner"] = pcl.encode(owner)
         [problem] = pcl.committed_area_problems(committed)
-        self.assertIn("邺县 area 7", problem)
+        self.assertIn("area 7", problem)
 
     def test_blob_reproducibility_ignores_compressor_bytes_but_not_content(self):
         """다른 zlib(CI ubuntu)이 낸 압축 바이트는 통과, 내용이 다르면 적색 — 압축 수준만 바꿔 흉내 낸다."""

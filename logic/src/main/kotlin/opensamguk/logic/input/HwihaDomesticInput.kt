@@ -89,8 +89,17 @@ data class PolicyRequest(val actorId: Int, val target: PolicyTarget, val policy:
     }
 }
 
-data class WorkRequest(val actorId: Int, val countyId: Int, val work: DomesticWork) {
-    init { require(actorId > 0 && countyId > 0) }
+data class WorkRequest(
+    val actorId: Int, val countyId: Int, val work: DomesticWork,
+    val edgeId: String? = null, val row: Int? = null, val col: Int? = null,
+) {
+    init {
+        require(actorId > 0 && countyId > 0)
+        require(edgeId == null || (work == DomesticWork.ROAD || work == DomesticWork.FORTIFICATION) &&
+            HwihaDomesticIds.order(edgeId))
+        require((row == null) == (col == null) && (row == null ||
+            (work == DomesticWork.FORTIFICATION && edgeId != null && row >= 0 && col!! >= 0)))
+    }
 }
 
 internal object HwihaDomesticIds {
@@ -161,9 +170,17 @@ object HwihaDomesticInput {
     }
 
     fun parseWork(actorId: Int, raw: String?): WorkRequest? = parse(actorId, raw) { fields ->
-        if (fields.keys != setOf("countyId", "work")) return@parse null
-        WorkRequest(actorId, positiveId(fields["countyId"]) ?: return@parse null,
-            enumOf<DomesticWork>(fields["work"]) ?: return@parse null)
+        val work = enumOf<DomesticWork>(fields["work"]) ?: return@parse null
+        val keys = when (work) {
+            DomesticWork.ROAD -> setOf("countyId", "work", "edgeId")
+            DomesticWork.FORTIFICATION -> setOf("countyId", "work", "edgeId", "row", "col")
+            else -> setOf("countyId", "work")
+        }
+        if (fields.keys != keys && fields.keys != setOf("countyId", "work")) return@parse null
+        val row = if ("row" in fields) nonnegativeId(fields["row"]) ?: return@parse null else null
+        val col = if ("col" in fields) nonnegativeId(fields["col"]) ?: return@parse null else null
+        WorkRequest(actorId, positiveId(fields["countyId"]) ?: return@parse null, work,
+            text(fields["edgeId"]), row, col)
     }
 
     fun canonicalJson(request: PlacementRequest): String = buildJsonObject {
@@ -189,6 +206,9 @@ object HwihaDomesticInput {
     fun canonicalJson(request: WorkRequest): String = buildJsonObject {
         put("countyId", request.countyId)
         put("work", request.work.name)
+        request.edgeId?.let { put("edgeId", it) }
+        request.row?.let { put("row", it) }
+        request.col?.let { put("col", it) }
     }.toString()
 
     const val NONE = "NONE"
@@ -201,6 +221,12 @@ object HwihaDomesticInput {
     private fun positiveId(value: JsonElement?): Int? {
         val primitive = value as? JsonPrimitive ?: return null
         if (primitive.isString || !Regex("[1-9][0-9]*").matches(primitive.content)) return null
+        return primitive.content.toIntOrNull()
+    }
+
+    private fun nonnegativeId(value: JsonElement?): Int? {
+        val primitive = value as? JsonPrimitive ?: return null
+        if (primitive.isString || !Regex("(0|[1-9][0-9]*)").matches(primitive.content)) return null
         return primitive.content.toIntOrNull()
     }
 

@@ -35,17 +35,19 @@ object HwihaRecordKind {
     const val DEPARTURE_JUDGED = "retinue.departureJudged"
     /** 코스트 상한 초과로 이탈 판정을 받은 인물 본인 앞. 이탈은 배신이 아니다 — 명망 사건이 아니다(2026-09-23). */
     const val RETINUE_DEPARTED = "retinue.departed"
+    const val ROAD_FORT_SIEGE = "roadFort.siege"
 
     // 세력
     const val INCOME_MONTHLY = "income.monthly"
     const val COUNTY_CAPTURED = "county.captured"
     const val COUNTY_LOST = "county.lost"
+    const val ROAD_FORT_CAPTURED = "roadFort.captured"
 
     // 세계
     const val YUEDAN_ANNOUNCED = "yuedan.announced"
 
     /** 세력 요약에 싣는 세력 앞 기록 — 縣 점령·상실은 지도에 드러나는 공개 사건이다. */
-    val NATION_SUMMARY_KINDS: Set<String> = setOf(COUNTY_CAPTURED, COUNTY_LOST)
+    val NATION_SUMMARY_KINDS: Set<String> = setOf(COUNTY_CAPTURED, COUNTY_LOST, ROAD_FORT_CAPTURED)
 
     /** 세력 요약에 싣는 세계 공개 기록 — 월단평 발표(§2.8). */
     val WORLD_SUMMARY_KINDS: Set<String> = setOf(YUEDAN_ANNOUNCED)

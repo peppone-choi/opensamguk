@@ -164,6 +164,9 @@ class MapStrategicTopologyControllerTest {
             `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map {
                 CityReadEntity(id = it, worldId = 7)
             })
+            `when`(pins.readPins(7)).thenReturn(if (variant == HanWorldVariant.V3_1447_MAP4) listOf(
+                opensamguk.infra.seed.HanWorldTopologyPin("province_control",
+                    selected.projection.topology.topologyRevision, selected.projection.topology.contentHash)) else emptyList())
             jdbc.rows = listOf(row(hash = selected.projection.topology.contentHash,
                 topologyRevision = selected.projection.topology.topologyRevision))
             client.perform(get("/api/map/strategic-topology")

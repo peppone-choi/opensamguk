@@ -9,13 +9,15 @@ import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import java.util.Optional
+import com.fasterxml.jackson.databind.ObjectMapper
 
 class HwihaDeployPrecheckServiceTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val retainers = mock(RetainerReadRepository::class.java)
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
-    private val service = HwihaDeployPrecheckService(generals, retainers, resolver, spatial)
+    private val service = HwihaDeployPrecheckService(generals, retainers, resolver, spatial,
+        mock(GameKvReadRepository::class.java), mock(DiplomacyReadRepository::class.java), ObjectMapper())
     private val pin = "a".repeat(64)
     private val a = StrategicNodeRef.LandProvince("A")
     private val b = StrategicNodeRef.LandProvince("B")

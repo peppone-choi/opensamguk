@@ -6,7 +6,7 @@ import SiegePage from '@/app/game/hwiha/siege/page';
 import OrdersPage from '@/app/game/hwiha/orders/page';
 
 const mock = vi.hoisted(() => ({
-    hwihaSieges: vi.fn(), hwihaRetinue: vi.fn(), hwihaWarehouses: vi.fn(),
+    hwihaSieges: vi.fn(), hwihaRoadForts: vi.fn(), hwihaRetinue: vi.fn(), hwihaWarehouses: vi.fn(),
     reservedCommands: vi.fn(), command: vi.fn(), courtReward: vi.fn(),
     submit: vi.fn(), refresh: vi.fn(),
 }));
@@ -16,7 +16,8 @@ vi.mock('@/lib/hwiha-session', () => ({ useHwihaSession: () => ({
     generalId: 9, isHwihaWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
 }) }));
 vi.mock('@/lib/api', () => ({ api: {
-    hwihaSieges: mock.hwihaSieges, hwihaRetinue: mock.hwihaRetinue, hwihaWarehouses: mock.hwihaWarehouses,
+    hwihaSieges: mock.hwihaSieges, hwihaRoadForts: mock.hwihaRoadForts,
+    hwihaRetinue: mock.hwihaRetinue, hwihaWarehouses: mock.hwihaWarehouses,
     reservedCommands: mock.reservedCommands, command: mock.command, courtReward: mock.courtReward,
 } }));
 vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: mock.submit }));
@@ -34,6 +35,7 @@ describe('휘하 공성·상사 화면', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         mock.hwihaSieges.mockResolvedValue({ status: 'READY', sieges: [siege] });
+        mock.hwihaRoadForts.mockResolvedValue({ status: 'READY', roadMode: true, forts: [], gates: [] });
         mock.reservedCommands.mockResolvedValue({ slots: [{ turnIdx: 0 }] });
         mock.command.mockResolvedValue({ status: 'AVAILABLE', requestId: 'r1' });
         mock.courtReward.mockResolvedValue({ status: 'AVAILABLE', requestId: 'r2' });
@@ -53,6 +55,18 @@ describe('휘하 공성·상사 화면', () => {
         expect(screen.getByText('가능')).toBeInTheDocument();
         await userEvent.click(screen.getByRole('button', { name: '강공 예약' }));
         await waitFor(() => expect(mock.command).toHaveBeenCalledWith('action.assault', {}, 9, 1));
+    });
+
+    it('reserves a separate siege against a hostile roadside fort', async () => {
+        mock.hwihaRoadForts.mockResolvedValueOnce({ status: 'READY', roadMode: true, gates: [], forts: [{
+            id: 'land-boundary:gate@12,34', edgeId: 'land-boundary:gate', provinceId: 'p1',
+            row: 12, col: 34, ownerNationId: 2, wall: 80, garrison: 30,
+            besiegerGeneralId: null, siegeProgress: 0, canBesiege: true,
+        }] });
+        render(<SiegePage />);
+        await userEvent.click(await screen.findByRole('button', { name: '보루 포위 예약' }));
+        await waitFor(() => expect(mock.command).toHaveBeenCalledWith('action.siegeRoadFort',
+            { fortId: 'land-boundary:gate@12,34' }, 9, 1));
     });
 
     it('disables orders for a noncommander and shows a server execution rejection', async () => {

@@ -12,9 +12,16 @@ class HanWorldArtifactsResolverTest {
         val mapPath = Path.of("src/main/resources/map/han-world-v3.json")
         val map = com.fasterxml.jackson.databind.ObjectMapper().readTree(java.nio.file.Files.readAllBytes(mapPath))
         val ids = map.path("cities").map { it.path("id").asInt() }
-        val selected = resolver.resolve(ids, emptyList())
+        val selected = resolver.artifacts(HanWorldVariant.V3_1447_MAP4)
         assertEquals(ids.toSet(), selected.cityConst.all().keys)
         assertEquals(ids.toSet(), selected.projection.bindingsByCityId.keys)
+        val roadGates = requireNotNull(selected.projection.presentation).roadGates
+        val topologyRoads = selected.projection.topology.traversalEdges.associateBy { it.id }
+        assertEquals(4284, roadGates.size)
+        assertEquals(656, roadGates.count { it.overviewTrunk })
+        assertEquals(12, roadGates.count { !it.buildable })
+        assertTrue(roadGates.all { gate -> topologyRoads.getValue(gate.edgeId).initiallyOpen == gate.initiallyBuilt })
+        assertTrue(roadGates.filterNot { it.buildable }.none { it.initiallyBuilt })
         assertContentEquals(java.nio.file.Files.readAllBytes(mapPath),
             selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json"))
         for (path in listOf("data/map/han-scenario-province-ownership-v1.json",
@@ -28,6 +35,11 @@ class HanWorldArtifactsResolverTest {
         assertFailsWith<IllegalArgumentException> {
             resolver.resolve(ids, listOf(HanWorldTopologyPin("province_control", prior.topologyRevision, prior.contentHash)))
         }
+        val currentPin = selected.projection.topology.let {
+            HanWorldTopologyPin("province_control", it.topologyRevision, it.contentHash)
+        }
+        assertEquals(HanWorldVariant.V3_1447_MAP4, resolver.resolve(ids, listOf(currentPin)).variant)
+        assertEquals(HanWorldVariant.V3_1447, resolver.resolve(ids, emptyList()).variant)
     }
 
     @Test fun `complete old and current rosters select distinct verified bundles without persisted pins`() {

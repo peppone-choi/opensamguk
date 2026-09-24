@@ -4,6 +4,7 @@ import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.read.*
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.input.*
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.retainer.RetainerRules
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -15,7 +16,8 @@ class DeployReadForbidden : RuntimeException()
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
 class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
     private val retainers: RetainerReadRepository, private val artifacts: ActiveWorldArtifactResolver,
-    private val spatial: SpatialStateReadRepository) {
+    private val spatial: SpatialStateReadRepository, private val gameKv: GameKvReadRepository,
+    private val diplomacy: DiplomacyReadRepository, private val mapper: ObjectMapper) {
     fun requireOwner(actorId: Int, ownerUserId: Long) {
         val actor = generals.findById(actorId).orElse(null)
         if (ownerUserId <= 0 || ownerUserId > Int.MAX_VALUE || actor?.userId?.toLongOrNull() != ownerUserId)
@@ -27,8 +29,26 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         val snapshot = snapshot()
         snapshot.failure?.let { return DeploymentAssessment.Rejected(it) }
         val ready = requireNotNull(snapshot.ready)
-        return HwihaDeployRules.assess(request, ready.state, ready.bundle.projection.topology,
-            ready.selected.world.meta, ready.bundle.landMarchMetrics)
+        val topology = ready.bundle.projection.topology
+        val passage = try {
+            val base = HwihaLandPassageState.read(ready.selected.world.meta, topology)
+                ?: return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
+            if (ready.bundle.projection.presentation?.roadGates.isNullOrEmpty()) base else {
+                val raw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaRoadFortState.META_KEY)?.value
+                val forts = raw?.let { HwihaRoadFortState.read(mapOf(HwihaRoadFortState.META_KEY to
+                    mapper.readValue(it, Map::class.java))) }.orEmpty()
+                val hostile = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
+                    when (ready.people.single { it.id == request.actorId }.nationId) {
+                        relation.srcNationId -> relation.destNationId
+                        relation.destNationId -> relation.srcNationId
+                        else -> null
+                    }
+                }.toSet()
+                HwihaRoadFortState.forNation(base, forts, hostile)
+            }
+        } catch (_: RuntimeException) { return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) }
+        return HwihaDeployRules.assess(request, ready.state, topology,
+            ready.selected.world.meta, ready.bundle.landMarchMetrics, passage)
     }
 
     fun options(actorId: Int, ownerUserId: Long): HwihaDeployOptions {

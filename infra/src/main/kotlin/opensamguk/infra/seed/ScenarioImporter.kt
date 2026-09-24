@@ -386,6 +386,15 @@ class ScenarioImporter(
     private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
     private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }
 
+    /** A fresh 1447 seed uses the reviewed fourfold grid; old worlds are
+     * selected independently from their stored topology pins on boot. */
+    private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedHanWorldArtifacts {
+        val resolver = HanWorldArtifactsResolver(artifactsRoot)
+        return if (ids.size == 1447 && ids.toSet() == (1..1447).toSet())
+            resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
+        else resolver.resolve(ids, emptyList())
+    }
+
     /**
      * 시나리오가 城을 가리키는 토큰 하나를 城 id 로 푼다. 숫자면 id, 아니면 이름이다.
      *
@@ -409,7 +418,7 @@ class ScenarioImporter(
         require(scenario.nations.all { it.gold == 0 && it.rice == 0 }) {
             "Explicit county inventory requires zero legacy national gold/rice; declare all treasury stock in counties"
         }
-        val projection = HanWorldArtifactsResolver(artifactsRoot).resolve(cities.map { it.id }, emptyList()).projection
+        val projection = freshWorldArtifacts(cities.map { it.id }).projection
         require(seed.topologyRevision == projection.topology.topologyRevision &&
             seed.topologyHash == projection.topology.contentHash) { "Warehouse seed topology pin mismatch" }
         require(seed.warehouses.keys == projection.administrativeCountyIds) {
@@ -551,7 +560,7 @@ class ScenarioImporter(
 
     private fun insertGeneralPositions(jdbc: JdbcTemplate, worldId: WorldId): Int {
         val cityIds = jdbc.queryForList("SELECT id FROM city WHERE world_id = ?", Int::class.java, worldId.value)
-        val projection = HanWorldArtifactsResolver(artifactsRoot).resolve(cityIds, emptyList()).projection
+        val projection = freshWorldArtifacts(cityIds).projection
         val topology = projection.topology
         val rows = jdbc.query("SELECT id, city_id FROM general WHERE world_id = ? ORDER BY id", { rs, _ -> rs.getInt(1) to rs.getInt(2) }, worldId.value)
         val batch = rows.map { (generalId, cityId) ->

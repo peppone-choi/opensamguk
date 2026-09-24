@@ -9,9 +9,9 @@
       "id": "GOGURYEO",
       "name": "고구려",
       "cityCount": 10,
-      "landCells": 5456,
-      "cellsPerCity": 545.6,
-      "largestJurisdictionCells": 1651,
+      "landCells": 87104,
+      "cellsPerCity": 8710.4,
+      "largestJurisdictionCells": 26416,
       "members": [
         {
           "jurisdictionId": "X028",
@@ -20,7 +20,7 @@
           "nameCh": "國內城",
           "longitude": 126.18146,
           "latitude": 41.12313,
-          "landCells": 762,
+          "landCells": 12192,
           "spatialProvinceCount": 2,
           "connectionCount": 9,
           "runtimeParentName": "國內城"
@@ -32,7 +32,7 @@
           "nameCh": "卒本",
           "longitude": 125.35028,
           "latitude": 41.26703,
-          "landCells": 336,
+          "landCells": 5440,
           "spatialProvinceCount": 2,
           "connectionCount": 6,
           "runtimeParentName": "卒本"
@@ -44,7 +44,7 @@
           "nameCh": "沸流",
           "longitude": 125.94705,
           "latitude": 41.73015,
-          "landCells": 293,
+          "landCells": 4688,
           "spatialProvinceCount": 2,
           "connectionCount": 5,
           "runtimeParentName": "國內城"
@@ -56,7 +56,7 @@
           "nameCh": "藻那",
           "longitude": 126.6414,
           "latitude": 41.4608,
-          "landCells": 180,
+          "landCells": 2880,
           "spatialProvinceCount": 2,
           "connectionCount": 4,
           "runtimeParentName": "國內城"
@@ -68,7 +68,7 @@
           "nameCh": "朱那",
           "longitude": 126.895,
           "latitude": 41.65472,
-          "landCells": 1651,
+          "landCells": 26416,
           "spatialProvinceCount": 6,
           "connectionCount": 7,
           "runtimeParentName": "國內城"
@@ -80,7 +80,7 @@
           "nameCh": "蓋馬",
           "longitude": 128.38639,
           "latitude": 41.12278,
-          "landCells": 471,
+          "landCells": 7536,
           "spatialProvinceCount": 2,
           "connectionCount": 3,
           "runtimeParentName": "國內城"
@@ -92,7 +92,7 @@
           "nameCh": "句茶",
           "longitude": 128.16667,
           "latitude": 40.75,
-          "landCells": 352,
+          "landCells": 5632,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "東沃沮"
@@ -104,7 +104,7 @@
           "nameCh": "荇人",
           "longitude": 129.33889,
           "latitude": 42.07056,
-          "landCells": 547,
+          "landCells": 8752,
           "spatialProvinceCount": 2,
           "connectionCount": 3,
           "runtimeParentName": "北沃沮"
@@ -116,7 +116,7 @@
           "nameCh": "梁貊",
           "longitude": 125.03078,
           "latitude": 41.72873,
-          "landCells": 531,
+          "landCells": 8496,
           "spatialProvinceCount": 2,
           "connectionCount": 5,
           "runtimeParentName": "卒本"
@@ -128,7 +128,7 @@
           "nameCh": "小水貊",
           "longitude": 124.78,
           "latitude": 40.72664,
-          "landCells": 333,
+          "landCells": 5072,
           "spatialProvinceCount": 2,
           "connectionCount": 8,
           "runtimeParentName": "遼東郡"
@@ -139,9 +139,9 @@
       "id": "OKJEO",
       "name": "옥저",
       "cityCount": 2,
-      "landCells": 1940,
-      "cellsPerCity": 970.0,
-      "largestJurisdictionCells": 1709,
+      "landCells": 31040,
+      "cellsPerCity": 15520.0,
+      "largestJurisdictionCells": 27344,
       "members": [
         {
           "jurisdictionId": "X030",
@@ -150,7 +150,7 @@
           "nameCh": "北沃沮",
           "longitude": 130.35845,
           "latitude": 42.86788,
-          "landCells": 1709,
+          "landCells": 27344,
           "spatialProvinceCount": 4,
           "connectionCount": 4,
           "runtimeParentName": "北沃沮"
@@ -162,7 +162,7 @@
           "nameCh": "東沃沮",
           "longitude": 127.48861,
           "latitude": 39.96556,
-          "landCells": 231,
+          "landCells": 3696,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "東沃沮"
@@ -173,9 +173,9 @@
       "id": "YILOU",
       "name": "읍루",
       "cityCount": 1,
-      "landCells": 3823,
-      "cellsPerCity": 3823.0,
-      "largestJurisdictionCells": 3823,
+      "landCells": 61168,
+      "cellsPerCity": 61168.0,
+      "largestJurisdictionCells": 61168,
       "members": [
         {
           "jurisdictionId": "X039",
@@ -184,7 +184,7 @@
           "nameCh": "挹婁",
           "longitude": 131.95,
           "latitude": 43.8,
-          "landCells": 3823,
+          "landCells": 61168,
           "spatialProvinceCount": 7,
           "connectionCount": 1,
           "runtimeParentName": "挹婁"
@@ -195,9 +195,9 @@
       "id": "BUYEO",
       "name": "부여",
       "cityCount": 1,
-      "landCells": 5590,
-      "cellsPerCity": 5590.0,
-      "largestJurisdictionCells": 5590,
+      "landCells": 89440,
+      "cellsPerCity": 89440.0,
+      "largestJurisdictionCells": 89440,
       "members": [
         {
           "jurisdictionId": "X036",
@@ -206,7 +206,7 @@
           "nameCh": "夫餘",
           "longitude": 126.56157,
           "latitude": 43.8461,
-          "landCells": 5590,
+          "landCells": 89440,
           "spatialProvinceCount": 10,
           "connectionCount": 9,
           "runtimeParentName": "夫餘"
@@ -217,9 +217,9 @@
       "id": "YE",
       "name": "예",
       "cityCount": 4,
-      "landCells": 1125,
-      "cellsPerCity": 281.2,
-      "largestJurisdictionCells": 509,
+      "landCells": 18000,
+      "cellsPerCity": 4500.0,
+      "largestJurisdictionCells": 8144,
       "members": [
         {
           "jurisdictionId": "X038",
@@ -228,7 +228,7 @@
           "nameCh": "濊",
           "longitude": 128.89611,
           "latitude": 37.75556,
-          "landCells": 509,
+          "landCells": 8144,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "濊"
@@ -240,7 +240,7 @@
           "nameCh": "貊",
           "longitude": 127.73416666667,
           "latitude": 37.874722222222,
-          "landCells": 381,
+          "landCells": 6096,
           "spatialProvinceCount": 2,
           "connectionCount": 4,
           "runtimeParentName": "伯濟國"
@@ -252,7 +252,7 @@
           "nameCh": "不耐",
           "longitude": 127.52539,
           "latitude": 39.04323,
-          "landCells": 101,
+          "landCells": 1616,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "樂浪郡"
@@ -264,7 +264,7 @@
           "nameCh": "華麗",
           "longitude": 127.29194444444,
           "latitude": 39.543055555556,
-          "landCells": 134,
+          "landCells": 2144,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "樂浪郡"
@@ -275,9 +275,9 @@
       "id": "MAHAN",
       "name": "마한",
       "cityCount": 17,
-      "landCells": 1519,
-      "cellsPerCity": 89.4,
-      "largestJurisdictionCells": 575,
+      "landCells": 24304,
+      "cellsPerCity": 1429.6,
+      "largestJurisdictionCells": 9200,
       "members": [
         {
           "jurisdictionId": "X040",
@@ -286,7 +286,7 @@
           "nameCh": "目支國",
           "longitude": 126.95444,
           "latitude": 35.94389,
-          "landCells": 100,
+          "landCells": 1600,
           "spatialProvinceCount": 1,
           "connectionCount": 9,
           "runtimeParentName": "目支國"
@@ -298,7 +298,7 @@
           "nameCh": "辟卑離國",
           "longitude": 126.88889,
           "latitude": 35.80167,
-          "landCells": 20,
+          "landCells": 320,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "辟卑離國"
@@ -310,7 +310,7 @@
           "nameCh": "伯濟國",
           "longitude": 126.99,
           "latitude": 37.56,
-          "landCells": 575,
+          "landCells": 9200,
           "spatialProvinceCount": 2,
           "connectionCount": 9,
           "runtimeParentName": "伯濟國"
@@ -322,7 +322,7 @@
           "nameCh": "古爰",
           "longitude": 126.845,
           "latitude": 36.679166666667,
-          "landCells": 33,
+          "landCells": 528,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "目支國"
@@ -334,7 +334,7 @@
           "nameCh": "冉路",
           "longitude": 126.91666666667,
           "latitude": 36.35,
-          "landCells": 53,
+          "landCells": 848,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "目支國"
@@ -346,7 +346,7 @@
           "nameCh": "監奚卑離",
           "longitude": 126.66277777778,
           "latitude": 36.599444444444,
-          "landCells": 31,
+          "landCells": 496,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "目支國"
@@ -358,7 +358,7 @@
           "nameCh": "致利鞠",
           "longitude": 126.45222222222,
           "latitude": 36.781666666667,
-          "landCells": 23,
+          "landCells": 368,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "目支國"
@@ -370,8 +370,8 @@
           "nameCh": "臣蘇塗國",
           "longitude": 126.29777777778,
           "latitude": 36.756388888889,
-          "landCells": 24,
-          "spatialProvinceCount": 2,
+          "landCells": 384,
+          "spatialProvinceCount": 1,
           "connectionCount": 1,
           "runtimeParentName": "目支國"
         },
@@ -382,7 +382,7 @@
           "nameCh": "不雲",
           "longitude": 127.12472222222,
           "latitude": 36.455555555556,
-          "landCells": 93,
+          "landCells": 1488,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "目支國"
@@ -394,7 +394,7 @@
           "nameCh": "支半",
           "longitude": 126.73194444444,
           "latitude": 35.728055555556,
-          "landCells": 22,
+          "landCells": 352,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "辟卑離國"
@@ -406,7 +406,7 @@
           "nameCh": "古臘",
           "longitude": 127.38583333333,
           "latitude": 35.41,
-          "landCells": 103,
+          "landCells": 1648,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "辟卑離國"
@@ -418,7 +418,7 @@
           "nameCh": "楚山塗卑離",
           "longitude": 126.85611111111,
           "latitude": 35.565277777778,
-          "landCells": 50,
+          "landCells": 800,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "辟卑離國"
@@ -430,7 +430,7 @@
           "nameCh": "牟盧卑離",
           "longitude": 126.7,
           "latitude": 35.433333333333,
-          "landCells": 53,
+          "landCells": 848,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "辟卑離國"
@@ -442,7 +442,7 @@
           "nameCh": "不斯濆邪",
           "longitude": 127.1475,
           "latitude": 35.82388888888889,
-          "landCells": 43,
+          "landCells": 688,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "辟卑離國"
@@ -454,7 +454,7 @@
           "nameCh": "萬盧",
           "longitude": 126.71138888889,
           "latitude": 35.978611111111,
-          "landCells": 23,
+          "landCells": 368,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "目支國"
@@ -466,7 +466,7 @@
           "nameCh": "不彌",
           "longitude": 126.7175,
           "latitude": 35.028333333333,
-          "landCells": 144,
+          "landCells": 2304,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "辟卑離國"
@@ -478,8 +478,8 @@
           "nameCh": "忱彌多禮",
           "longitude": 126.5975,
           "latitude": 34.574166666667,
-          "landCells": 129,
-          "spatialProvinceCount": 2,
+          "landCells": 2064,
+          "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "辟卑離國"
         }
@@ -489,9 +489,9 @@
       "id": "JINHAN",
       "name": "진한",
       "cityCount": 11,
-      "landCells": 1238,
-      "cellsPerCity": 112.5,
-      "largestJurisdictionCells": 453,
+      "landCells": 19808,
+      "cellsPerCity": 1800.7,
+      "largestJurisdictionCells": 7248,
       "members": [
         {
           "jurisdictionId": "X032",
@@ -500,7 +500,7 @@
           "nameCh": "悉直國",
           "longitude": 129.17083,
           "latitude": 37.44056,
-          "landCells": 106,
+          "landCells": 1696,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "悉直國"
@@ -512,7 +512,7 @@
           "nameCh": "押督國",
           "longitude": 128.73333,
           "latitude": 35.81667,
-          "landCells": 46,
+          "landCells": 736,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "押督國"
@@ -524,7 +524,7 @@
           "nameCh": "召文國",
           "longitude": 128.68333,
           "latitude": 36.35,
-          "landCells": 254,
+          "landCells": 4064,
           "spatialProvinceCount": 1,
           "connectionCount": 7,
           "runtimeParentName": "召文國"
@@ -536,7 +536,7 @@
           "nameCh": "斯盧國",
           "longitude": 129.21667,
           "latitude": 35.85,
-          "landCells": 60,
+          "landCells": 960,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "斯盧國"
@@ -548,7 +548,7 @@
           "nameCh": "古冬攬",
           "longitude": 128.17955,
           "latitude": 36.57011,
-          "landCells": 453,
+          "landCells": 7248,
           "spatialProvinceCount": 1,
           "connectionCount": 9,
           "runtimeParentName": "古冬攬"
@@ -560,7 +560,7 @@
           "nameCh": "骨伐",
           "longitude": 128.93861111111,
           "latitude": 35.973333333333,
-          "landCells": 20,
+          "landCells": 320,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "押督國"
@@ -572,7 +572,7 @@
           "nameCh": "伊西",
           "longitude": 128.74305555556,
           "latitude": 35.643611111111,
-          "landCells": 33,
+          "landCells": 528,
           "spatialProvinceCount": 1,
           "connectionCount": 8,
           "runtimeParentName": "押督國"
@@ -584,7 +584,7 @@
           "nameCh": "甘文",
           "longitude": 128.11527777778,
           "latitude": 36.119166666667,
-          "landCells": 73,
+          "landCells": 1168,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "本彼"
@@ -596,7 +596,7 @@
           "nameCh": "優由",
           "longitude": 129.38333333333,
           "latitude": 36.983333333333,
-          "landCells": 91,
+          "landCells": 1456,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "悉直國"
@@ -608,7 +608,7 @@
           "nameCh": "勤耆",
           "longitude": 129.365,
           "latitude": 36.032222222222,
-          "landCells": 64,
+          "landCells": 1024,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "斯盧國"
@@ -620,7 +620,7 @@
           "nameCh": "于尸山",
           "longitude": 129.31666666667,
           "latitude": 35.55,
-          "landCells": 38,
+          "landCells": 608,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "斯盧國"
@@ -631,9 +631,9 @@
       "id": "BYEONHAN",
       "name": "변한",
       "cityCount": 9,
-      "landCells": 674,
-      "cellsPerCity": 74.9,
-      "largestJurisdictionCells": 248,
+      "landCells": 10784,
+      "cellsPerCity": 1198.2,
+      "largestJurisdictionCells": 3968,
       "members": [
         {
           "jurisdictionId": "X031",
@@ -642,7 +642,7 @@
           "nameCh": "安邪國",
           "longitude": 128.42139,
           "latitude": 35.23694,
-          "landCells": 105,
+          "landCells": 1680,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "安邪國"
@@ -654,7 +654,7 @@
           "nameCh": "狗邪國",
           "longitude": 128.88111,
           "latitude": 35.23417,
-          "landCells": 29,
+          "landCells": 464,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "狗邪國"
@@ -666,8 +666,8 @@
           "nameCh": "古資彌凍國",
           "longitude": 128.28244,
           "latitude": 35.01478,
-          "landCells": 248,
-          "spatialProvinceCount": 2,
+          "landCells": 3968,
+          "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "古資彌凍國"
         },
@@ -678,7 +678,7 @@
           "nameCh": "大伽耶",
           "longitude": 128.26889,
           "latitude": 35.73028,
-          "landCells": 66,
+          "landCells": 1056,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "大伽耶"
@@ -690,7 +690,7 @@
           "nameCh": "本彼",
           "longitude": 128.28583,
           "latitude": 35.91778,
-          "landCells": 49,
+          "landCells": 784,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "本彼"
@@ -702,7 +702,7 @@
           "nameCh": "彌離彌凍",
           "longitude": 128.74888888889,
           "latitude": 35.493333333333,
-          "landCells": 24,
+          "landCells": 384,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "狗邪國"
@@ -714,7 +714,7 @@
           "nameCh": "瀆盧",
           "longitude": 129.075,
           "latitude": 35.18,
-          "landCells": 43,
+          "landCells": 688,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "狗邪國"
@@ -726,7 +726,7 @@
           "nameCh": "接塗",
           "longitude": 128.68111111111,
           "latitude": 35.228055555556,
-          "landCells": 14,
+          "landCells": 224,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "狗邪國"
@@ -738,7 +738,7 @@
           "nameCh": "多羅",
           "longitude": 128.15944444444,
           "latitude": 35.565555555556,
-          "landCells": 96,
+          "landCells": 1536,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "大伽耶"
@@ -749,9 +749,9 @@
       "id": "USAN",
       "name": "우산국",
       "cityCount": 1,
-      "landCells": 23,
-      "cellsPerCity": 23.0,
-      "largestJurisdictionCells": 23,
+      "landCells": 368,
+      "cellsPerCity": 368.0,
+      "largestJurisdictionCells": 368,
       "members": [
         {
           "jurisdictionId": "X035",
@@ -760,8 +760,8 @@
           "nameCh": "于山國",
           "longitude": 130.9,
           "latitude": 37.48333,
-          "landCells": 23,
-          "spatialProvinceCount": 2,
+          "landCells": 368,
+          "spatialProvinceCount": 1,
           "connectionCount": 1,
           "runtimeParentName": "于山國"
         }
@@ -771,9 +771,9 @@
       "id": "JUHO",
       "name": "주호",
       "cityCount": 1,
-      "landCells": 82,
-      "cellsPerCity": 82.0,
-      "largestJurisdictionCells": 82,
+      "landCells": 1312,
+      "cellsPerCity": 1312.0,
+      "largestJurisdictionCells": 1312,
       "members": [
         {
           "jurisdictionId": "X043",
@@ -782,7 +782,7 @@
           "nameCh": "州胡",
           "longitude": 126.52194,
           "latitude": 33.50972,
-          "landCells": 82,
+          "landCells": 1312,
           "spatialProvinceCount": 1,
           "connectionCount": 1,
           "runtimeParentName": "州胡"
@@ -793,9 +793,9 @@
       "id": "WUHUAN",
       "name": "오환",
       "cityCount": 1,
-      "landCells": 4030,
-      "cellsPerCity": 4030.0,
-      "largestJurisdictionCells": 4030,
+      "landCells": 64480,
+      "cellsPerCity": 64480.0,
+      "largestJurisdictionCells": 64480,
       "members": [
         {
           "jurisdictionId": "X062",
@@ -804,7 +804,7 @@
           "nameCh": "烏桓",
           "longitude": 118.8825,
           "latitude": 42.255,
-          "landCells": 4030,
+          "landCells": 64480,
           "spatialProvinceCount": 7,
           "connectionCount": 10,
           "runtimeParentName": "烏桓"
@@ -815,9 +815,9 @@
       "id": "XIANBEI",
       "name": "선비",
       "cityCount": 1,
-      "landCells": 1515,
-      "cellsPerCity": 1515.0,
-      "largestJurisdictionCells": 1515,
+      "landCells": 24240,
+      "cellsPerCity": 24240.0,
+      "largestJurisdictionCells": 24240,
       "members": [
         {
           "jurisdictionId": "X063",
@@ -826,9 +826,9 @@
           "nameCh": "鮮卑",
           "longitude": 114.88114,
           "latitude": 40.81078,
-          "landCells": 1515,
+          "landCells": 24240,
           "spatialProvinceCount": 3,
-          "connectionCount": 10,
+          "connectionCount": 9,
           "runtimeParentName": "鮮卑"
         }
       ]
@@ -837,9 +837,9 @@
       "id": "PARENT-0093",
       "name": "요서군",
       "cityCount": 6,
-      "landCells": 1161,
-      "cellsPerCity": 193.5,
-      "largestJurisdictionCells": 515,
+      "landCells": 18576,
+      "cellsPerCity": 3096.0,
+      "largestJurisdictionCells": 8304,
       "members": [
         {
           "jurisdictionId": "87468",
@@ -848,7 +848,7 @@
           "nameCh": "海阳县",
           "longitude": 118.67431,
           "latitude": 39.68349,
-          "landCells": 221,
+          "landCells": 3536,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "遼西郡"
@@ -860,7 +860,7 @@
           "nameCh": "临渝县",
           "longitude": 119.55477,
           "latitude": 39.91299,
-          "landCells": 515,
+          "landCells": 8304,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼西郡"
@@ -872,9 +872,9 @@
           "nameCh": "令支县",
           "longitude": 118.66396,
           "latitude": 39.9989,
-          "landCells": 140,
+          "landCells": 2224,
           "spatialProvinceCount": 1,
-          "connectionCount": 6,
+          "connectionCount": 7,
           "runtimeParentName": "遼西郡"
         },
         {
@@ -884,7 +884,7 @@
           "nameCh": "肥如县",
           "longitude": 118.8816,
           "latitude": 40.00867,
-          "landCells": 269,
+          "landCells": 4304,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼西郡"
@@ -896,7 +896,7 @@
           "nameCh": "凡城",
           "longitude": 118.70127,
           "latitude": 41.01102,
-          "landCells": 8,
+          "landCells": 144,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "遼西郡"
@@ -908,7 +908,7 @@
           "nameCh": "阳乐縣",
           "longitude": 120.0688072,
           "latitude": 40.9783941,
-          "landCells": 8,
+          "landCells": 64,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "遼西郡"
@@ -919,9 +919,9 @@
       "id": "PARENT-0094",
       "name": "요동군",
       "cityCount": 14,
-      "landCells": 2318,
-      "cellsPerCity": 165.6,
-      "largestJurisdictionCells": 353,
+      "landCells": 37088,
+      "cellsPerCity": 2649.1,
+      "largestJurisdictionCells": 5712,
       "members": [
         {
           "jurisdictionId": "JURISDICTION-PARENT-0094-SEAT",
@@ -930,7 +930,7 @@
           "nameCh": "襄平縣",
           "longitude": 123.1772,
           "latitude": 41.26432,
-          "landCells": 219,
+          "landCells": 3504,
           "spatialProvinceCount": 1,
           "connectionCount": 7,
           "runtimeParentName": "遼東郡"
@@ -942,7 +942,7 @@
           "nameCh": "新昌縣",
           "longitude": 122.95277,
           "latitude": 41.07035,
-          "landCells": 121,
+          "landCells": 1936,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼東郡"
@@ -954,7 +954,7 @@
           "nameCh": "無慮縣",
           "longitude": 121.82245,
           "latitude": 41.48977,
-          "landCells": 111,
+          "landCells": 1776,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼東郡"
@@ -966,7 +966,7 @@
           "nameCh": "安市縣",
           "longitude": 122.6179,
           "latitude": 40.80142,
-          "landCells": 87,
+          "landCells": 1376,
           "spatialProvinceCount": 1,
           "connectionCount": 7,
           "runtimeParentName": "遼東郡"
@@ -978,7 +978,7 @@
           "nameCh": "平郭縣",
           "longitude": 122.36578,
           "latitude": 40.40111,
-          "landCells": 246,
+          "landCells": 3936,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼東郡"
@@ -990,7 +990,7 @@
           "nameCh": "西安平縣",
           "longitude": 124.47495,
           "latitude": 40.19671,
-          "landCells": 247,
+          "landCells": 4192,
           "spatialProvinceCount": 2,
           "connectionCount": 9,
           "runtimeParentName": "遼東郡"
@@ -1002,9 +1002,9 @@
           "nameCh": "汶縣",
           "longitude": 122.65474,
           "latitude": 40.54297,
-          "landCells": 166,
+          "landCells": 2656,
           "spatialProvinceCount": 1,
-          "connectionCount": 4,
+          "connectionCount": 5,
           "runtimeParentName": "遼東郡"
         },
         {
@@ -1014,7 +1014,7 @@
           "nameCh": "番汗縣",
           "longitude": 123.74679,
           "latitude": 40.02095,
-          "landCells": 289,
+          "landCells": 4624,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "遼東郡"
@@ -1026,9 +1026,9 @@
           "nameCh": "沓氏縣",
           "longitude": 121.6582,
           "latitude": 39.5046,
-          "landCells": 353,
+          "landCells": 5712,
           "spatialProvinceCount": 1,
-          "connectionCount": 4,
+          "connectionCount": 2,
           "runtimeParentName": "遼東郡"
         },
         {
@@ -1038,7 +1038,7 @@
           "nameCh": "險瀆縣",
           "longitude": 122.51595,
           "latitude": 41.3317,
-          "landCells": 122,
+          "landCells": 1952,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼東郡"
@@ -1050,9 +1050,9 @@
           "nameCh": "安平口",
           "longitude": 124.53899,
           "latitude": 40.2141,
-          "landCells": 8,
+          "landCells": 144,
           "spatialProvinceCount": 1,
-          "connectionCount": 2,
+          "connectionCount": 3,
           "runtimeParentName": "遼東郡"
         },
         {
@@ -1062,9 +1062,9 @@
           "nameCh": "遼口",
           "longitude": 122.51668,
           "latitude": 40.77132,
-          "landCells": 8,
+          "landCells": 144,
           "spatialProvinceCount": 1,
-          "connectionCount": 1,
+          "connectionCount": 2,
           "runtimeParentName": "遼東郡"
         },
         {
@@ -1074,9 +1074,9 @@
           "nameCh": "沓津",
           "longitude": 121.13278,
           "latitude": 38.76237,
-          "landCells": 8,
+          "landCells": 64,
           "spatialProvinceCount": 1,
-          "connectionCount": 1,
+          "connectionCount": 3,
           "runtimeParentName": "遼東郡"
         },
         {
@@ -1086,7 +1086,7 @@
           "nameCh": "小水貊",
           "longitude": 124.78,
           "latitude": 40.72664,
-          "landCells": 333,
+          "landCells": 5072,
           "spatialProvinceCount": 2,
           "connectionCount": 8,
           "runtimeParentName": "遼東郡"
@@ -1097,9 +1097,9 @@
       "id": "PARENT-0095",
       "name": "현도군",
       "cityCount": 7,
-      "landCells": 2100,
-      "cellsPerCity": 300.0,
-      "largestJurisdictionCells": 1191,
+      "landCells": 33600,
+      "cellsPerCity": 4800.0,
+      "largestJurisdictionCells": 19056,
       "members": [
         {
           "jurisdictionId": "JURISDICTION-PARENT-0095-SEAT",
@@ -1108,7 +1108,7 @@
           "nameCh": "高句驪縣",
           "longitude": 123.89173,
           "latitude": 41.87085,
-          "landCells": 521,
+          "landCells": 8336,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "玄菟郡"
@@ -1120,7 +1120,7 @@
           "nameCh": "望平縣",
           "longitude": 123.60954,
           "latitude": 42.1162,
-          "landCells": 1191,
+          "landCells": 19056,
           "spatialProvinceCount": 2,
           "connectionCount": 6,
           "runtimeParentName": "玄菟郡"
@@ -1132,7 +1132,7 @@
           "nameCh": "西蓋馬縣",
           "longitude": 125.00278,
           "latitude": 40.5044,
-          "landCells": 8,
+          "landCells": 144,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "玄菟郡"
@@ -1144,7 +1144,7 @@
           "nameCh": "上殷台縣",
           "longitude": 124.31611,
           "latitude": 40.63848,
-          "landCells": 109,
+          "landCells": 1728,
           "spatialProvinceCount": 1,
           "connectionCount": 8,
           "runtimeParentName": "玄菟郡"
@@ -1156,7 +1156,7 @@
           "nameCh": "高顯縣",
           "longitude": 123.43453,
           "latitude": 41.60318,
-          "landCells": 89,
+          "landCells": 1424,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "玄菟郡"
@@ -1168,7 +1168,7 @@
           "nameCh": "候城縣",
           "longitude": 123.66851,
           "latitude": 41.82015,
-          "landCells": 49,
+          "landCells": 784,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "玄菟郡"
@@ -1180,7 +1180,7 @@
           "nameCh": "遼陽縣",
           "longitude": 122.92814,
           "latitude": 41.53592,
-          "landCells": 133,
+          "landCells": 2128,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "玄菟郡"
@@ -1191,9 +1191,9 @@
       "id": "PARENT-0096",
       "name": "낙랑군",
       "cityCount": 13,
-      "landCells": 1210,
-      "cellsPerCity": 93.1,
-      "largestJurisdictionCells": 179,
+      "landCells": 19360,
+      "cellsPerCity": 1489.2,
+      "largestJurisdictionCells": 2864,
       "members": [
         {
           "jurisdictionId": "JURISDICTION-PARENT-0096-SEAT",
@@ -1202,7 +1202,7 @@
           "nameCh": "朝鮮縣",
           "longitude": 125.7475,
           "latitude": 39.01667,
-          "landCells": 65,
+          "landCells": 1040,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
@@ -1214,7 +1214,7 @@
           "nameCh": "浿水縣",
           "longitude": 126.02502,
           "latitude": 39.86992,
-          "landCells": 179,
+          "landCells": 2864,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
@@ -1226,7 +1226,7 @@
           "nameCh": "占蟬縣",
           "longitude": 125.25723,
           "latitude": 38.86008,
-          "landCells": 45,
+          "landCells": 720,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
@@ -1238,7 +1238,7 @@
           "nameCh": "遂城縣",
           "longitude": 126.12192,
           "latitude": 39.26227,
-          "landCells": 120,
+          "landCells": 1920,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
@@ -1250,7 +1250,7 @@
           "nameCh": "增地縣",
           "longitude": 125.6587,
           "latitude": 39.61897,
-          "landCells": 144,
+          "landCells": 2368,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
@@ -1262,9 +1262,9 @@
           "nameCh": "駟望縣",
           "longitude": 125.50904,
           "latitude": 39.40332,
-          "landCells": 143,
+          "landCells": 2352,
           "spatialProvinceCount": 1,
-          "connectionCount": 7,
+          "connectionCount": 8,
           "runtimeParentName": "樂浪郡"
         },
         {
@@ -1274,7 +1274,7 @@
           "nameCh": "屯有縣",
           "longitude": 125.86294,
           "latitude": 38.78307,
-          "landCells": 28,
+          "landCells": 448,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "樂浪郡"
@@ -1286,7 +1286,7 @@
           "nameCh": "鏤方縣",
           "longitude": 126.18098,
           "latitude": 38.99804,
-          "landCells": 137,
+          "landCells": 2192,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "樂浪郡"
@@ -1298,7 +1298,7 @@
           "nameCh": "渾彌縣",
           "longitude": 125.965,
           "latitude": 39.6138,
-          "landCells": 98,
+          "landCells": 1568,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "樂浪郡"
@@ -1310,7 +1310,7 @@
           "nameCh": "𧦦邯縣",
           "longitude": 124.347976,
           "latitude": 39.8994708,
-          "landCells": 8,
+          "landCells": 64,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "樂浪郡"
@@ -1322,7 +1322,7 @@
           "nameCh": "乐都縣",
           "longitude": 125.1063097,
           "latitude": 40.0401999,
-          "landCells": 8,
+          "landCells": 64,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "樂浪郡"
@@ -1334,7 +1334,7 @@
           "nameCh": "不耐",
           "longitude": 127.52539,
           "latitude": 39.04323,
-          "landCells": 101,
+          "landCells": 1616,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "樂浪郡"
@@ -1346,7 +1346,7 @@
           "nameCh": "華麗",
           "longitude": 127.29194444444,
           "latitude": 39.543055555556,
-          "landCells": 134,
+          "landCells": 2144,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "樂浪郡"
@@ -1357,9 +1357,9 @@
       "id": "PARENT-0097",
       "name": "요동속국",
       "cityCount": 5,
-      "landCells": 2350,
-      "cellsPerCity": 470.0,
-      "largestJurisdictionCells": 1663,
+      "landCells": 37600,
+      "cellsPerCity": 7520.0,
+      "largestJurisdictionCells": 26672,
       "members": [
         {
           "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT",
@@ -1368,7 +1368,7 @@
           "nameCh": "昌遼縣",
           "longitude": 121.2349,
           "latitude": 41.53247,
-          "landCells": 1663,
+          "landCells": 26672,
           "spatialProvinceCount": 3,
           "connectionCount": 9,
           "runtimeParentName": "遼東屬國"
@@ -1380,7 +1380,7 @@
           "nameCh": "賓徒縣",
           "longitude": 120.85823,
           "latitude": 41.06742,
-          "landCells": 399,
+          "landCells": 6384,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼東屬國"
@@ -1392,7 +1392,7 @@
           "nameCh": "徒河縣",
           "longitude": 121.23808,
           "latitude": 41.01857,
-          "landCells": 92,
+          "landCells": 1472,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "遼東屬國"
@@ -1404,7 +1404,7 @@
           "nameCh": "房縣",
           "longitude": 121.98654,
           "latitude": 41.02235,
-          "landCells": 188,
+          "landCells": 3008,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "遼東屬國"
@@ -1416,7 +1416,7 @@
           "nameCh": "险渎縣",
           "longitude": 121.9646415,
           "latitude": 44.1682544,
-          "landCells": 8,
+          "landCells": 64,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "遼東屬國"
@@ -1427,9 +1427,9 @@
       "id": "PARENT-0130",
       "name": "대방군",
       "cityCount": 8,
-      "landCells": 596,
-      "cellsPerCity": 74.5,
-      "largestJurisdictionCells": 193,
+      "landCells": 9536,
+      "cellsPerCity": 1192.0,
+      "largestJurisdictionCells": 3072,
       "members": [
         {
           "jurisdictionId": "JURISDICTION-PARENT-0130-SEAT",
@@ -1438,7 +1438,7 @@
           "nameCh": "帶方縣",
           "longitude": 125.75871,
           "latitude": 38.50198,
-          "landCells": 48,
+          "landCells": 768,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "帶方郡"
@@ -1450,7 +1450,7 @@
           "nameCh": "含資縣",
           "longitude": 125.58951,
           "latitude": 38.53897,
-          "landCells": 36,
+          "landCells": 576,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "帶方郡"
@@ -1462,7 +1462,7 @@
           "nameCh": "海冥縣",
           "longitude": 125.09306,
           "latitude": 38.24951,
-          "landCells": 113,
+          "landCells": 1808,
           "spatialProvinceCount": 1,
           "connectionCount": 3,
           "runtimeParentName": "帶方郡"
@@ -1474,7 +1474,7 @@
           "nameCh": "列口縣",
           "longitude": 125.11155,
           "latitude": 38.52651,
-          "landCells": 28,
+          "landCells": 448,
           "spatialProvinceCount": 1,
           "connectionCount": 4,
           "runtimeParentName": "帶方郡"
@@ -1486,7 +1486,7 @@
           "nameCh": "長岑縣",
           "longitude": 125.79218,
           "latitude": 38.23799,
-          "landCells": 124,
+          "landCells": 1984,
           "spatialProvinceCount": 1,
           "connectionCount": 6,
           "runtimeParentName": "帶方郡"
@@ -1498,7 +1498,7 @@
           "nameCh": "昭明縣",
           "longitude": 125.463,
           "latitude": 38.40806,
-          "landCells": 46,
+          "landCells": 736,
           "spatialProvinceCount": 1,
           "connectionCount": 5,
           "runtimeParentName": "帶方郡"
@@ -1510,7 +1510,7 @@
           "nameCh": "提奚縣",
           "longitude": 126.22751,
           "latitude": 38.42327,
-          "landCells": 193,
+          "landCells": 3072,
           "spatialProvinceCount": 1,
           "connectionCount": 7,
           "runtimeParentName": "帶方郡"
@@ -1522,7 +1522,7 @@
           "nameCh": "崎離營",
           "longitude": 126.03701,
           "latitude": 38.25753,
-          "landCells": 8,
+          "landCells": 144,
           "spatialProvinceCount": 1,
           "connectionCount": 2,
           "runtimeParentName": "帶方郡"

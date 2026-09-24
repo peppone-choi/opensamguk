@@ -181,7 +181,8 @@ object HwihaDomesticRules {
         val works = HwihaCountyWorks.read(county.meta)
         when {
             works?.active != null -> reject(DomesticFailure.WORK_IN_PROGRESS)
-            works?.completed?.any { it.work == request.work } == true -> reject(DomesticFailure.WORK_COMPLETED)
+            works?.completed?.any { it.work == request.work && it.edgeId == request.edgeId &&
+                it.row == request.row && it.col == request.col } == true -> reject(DomesticFailure.WORK_COMPLETED)
             else -> DomesticAssessment.Eligible(person = actor)
         }
     }

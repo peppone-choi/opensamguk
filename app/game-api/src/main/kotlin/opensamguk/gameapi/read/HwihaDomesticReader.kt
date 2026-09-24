@@ -225,7 +225,7 @@ object HwihaDomesticViews {
                         (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) },
                         stock(spec.cost), spec.requiredProgress, HwihaDomesticEffects.remainingPhases(design, preview, seat))
                 }
-                HwihaCountyWorksDto(county.id, snapshot.countyNames[county.id] ?: county.name,
+                HwihaCountyWorksDto(county.id, county.provinceId, snapshot.countyNames[county.id] ?: county.name,
                     county.commanderyId?.let { snapshot.commanderyNames[it] ?: it }, snapshot.warehouseStocks[county.id]?.let(::stock),
                     active, works?.completed.orEmpty().map { HwihaCompletedWorkDto(it.work.name, it.work.label, it.completedAt) }, startable)
             }

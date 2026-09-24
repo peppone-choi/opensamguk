@@ -59,6 +59,7 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
         else if (it == HanWorldVariant.V3_1168) Han1168Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1224) Han1224Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1447) Han1447Artifacts.load(root)
+        else if (it == HanWorldVariant.V3_1447_MAP4) Han1447Map4Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1194) Han1194Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1341) Han1341Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1141) Han1141Artifacts.load(root)
@@ -71,8 +72,18 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
         val ids = completeCityIds.toSet()
         require(ids.size == completeCityIds.size) { "Duplicate world city identities" }
         val candidates = HanWorldVariant.entries.filter { CityConstRegistry.hanWorld(it).all().keys == ids }
-        require(candidates.size == 1) { "World city identities do not select a unique registered Han artifact set" }
-        val selected = artifacts(candidates.single())
+        require(candidates.isNotEmpty()) { "World city identities do not select a registered Han artifact set" }
+        val selected = if (candidates.size == 1) {
+            artifacts(candidates.single())
+        } else {
+            // Both 1447 releases have the same city identities. Stored topology
+            // pins identify their grid; unpinned old worlds keep the old release.
+            if (pins.isEmpty()) artifacts(HanWorldVariant.V3_1447)
+            else candidates.map(::artifacts).singleOrNull { candidate ->
+                pins.all { pin -> pin.revision == candidate.projection.topology.topologyRevision &&
+                    pin.hash == candidate.projection.topology.contentHash }
+            } ?: throw IllegalArgumentException("World spatial pins do not select one 1447 release")
+        }
         val topology = selected.projection.topology
         pins.forEach { pin ->
             require(pin.channel in setOf("water_zone_control", "province_control", "general_spatial_position")) {

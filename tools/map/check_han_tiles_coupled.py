@@ -57,6 +57,11 @@ COUPLED: tuple[Coupled, ...] = (
             ("data/map/han-tiles.json", "data/curated/han/county-location-partition-v1.json",
              "data/curated/han/county-location-partition-v1.input.json.gz"),
             _t("tools/map/partition_counties_by_location.py", "--check"), None),
+    Coupled("province-clearance", ("data/map/han-tiles.json", "data/curated/han/province-dead-end-dispositions-v1.json"),
+            _t("tools/map/audit_province_clearance.py", "--check"), None),
+    Coupled("land-roads", ("data/map/han-land-roads-v1.json",),
+            _t("tools/map/build_han_land_roads.py", "--check"),
+            _t("tools/map/build_han_land_roads.py")),
     # Q1(城의 실제 칸 ∈ 제 관할)·Q1b(실제 칸이 저지면 제 省에 저지 ≥ 1칸). 예외는 원장 행뿐이다.
     Coupled("tiles-seat-in-place-q1", ("data/map/han-tiles.json",),
             _t("tools/map/measure_province_seat_offset.py", "--check", "--exceptions",
@@ -174,6 +179,11 @@ COUPLED: tuple[Coupled, ...] = (
     # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
     Coupled("release-1447-bundle", ("data/map/han-world-v3-1447-artifacts-v1/catalog.json",),
             _t("tools/map/build_han_1447_bundle.py", "--check"), None),
+    Coupled("province-relocations-map4", ("data/curated/han/province-relocations-map4-v1.json",),
+            _t("tools/map/build_province_relocations.py", "--check"),
+            _t("tools/map/build_province_relocations.py", "--write")),
+    Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
+            _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
 )
 
 

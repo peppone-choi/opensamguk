@@ -8,6 +8,7 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicTopologySnapshot
+import opensamguk.logic.world.StrategicRoadGate
 
 /**
  * 휘하 내정 입력이 읽는 고정 자료. [geography] 가 없으면 郡 방침과 향당 보너스를 판정할 수 없고(STATE_UNAVAILABLE·보너스 없음),
@@ -19,6 +20,7 @@ class HwihaDomesticContext(
     val nativeCounties: HwihaNativeCountyLedger? = null,
     val topology: StrategicTopologySnapshot? = null,
     val metrics: LandMarchMetricSnapshot? = null,
+    val roadGates: List<StrategicRoadGate> = emptyList(),
     val merit: HwihaGovernanceMeritSink = HwihaGovernanceMeritSink.NONE,
 ) {
     /** 현재 월드 상태의 공유 판정 투영(API 와 같은 규칙). */

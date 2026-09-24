@@ -34,6 +34,7 @@ class StrategicTopologyReadSource(private val loader: () -> HanStrategicRoutePro
             topology.traversalEdges.sortedBy { it.id }.map { edge -> StrategicTraversalEdgeDto(
                 edge.id, edge.from.canonicalKey, edge.to.canonicalKey, edge.mode.name,
                 edge.movementCost, edge.capacity, edge.seasonalAvailability.name, edge.supplyAllowed,
+                edge.initiallyOpen, edge.routeWeightPermille,
             ) },
             topology.riverBarriers.sortedBy { it.id }.map { StrategicRiverBarrierDto(it.id, it.firstLandProvinceId, it.secondLandProvinceId) },
             topology.traversalEdges.filter { it.mode in setOf(TraversalMode.EMBARK, TraversalMode.DISEMBARK) }
@@ -43,6 +44,7 @@ class StrategicTopologyReadSource(private val loader: () -> HanStrategicRoutePro
                     StrategicPortDto(edge.id, land.id, water.id)
                 },
             projection.activationBlockerCodes.sorted(),
+            display.roadGates,
         )
     }
 }

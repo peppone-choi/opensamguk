@@ -13,19 +13,19 @@
   },
   "provenance": {
     "generator": "tools/scenario/build_province_city_attribution.py",
-    "tilesSha256": "ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312",
+    "tilesSha256": "99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f",
     "selectionSha256": "5f0440cf2054ab3fecbfb6b9445cf4a17de60ef1a7b25ac9d79f1d5f56a6ac90"
   },
   "summary": {
-    "provinceCount": 1653,
+    "provinceCount": 1627,
     "basisCounts": {
-      "OWN_COUNTY_SEAT": 1653,
+      "OWN_COUNTY_SEAT": 1627,
       "SAME_COMMANDERY_SEAT": 0,
       "SAME_COMMANDERY_NEAREST": 0,
       "ADJACENT_COMMANDERY_NEAREST": 0,
       "COMMANDERY_HAS_NO_CITY": 0
     },
-    "attributedProvinceCount": 1653,
+    "attributedProvinceCount": 1627,
     "distinctRouteNodeCount": 1447,
     "commanderiesWithoutCity": []
   },
@@ -13051,7 +13051,7 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-40165-39a88c0543b5",
+      "provinceId": "SUB-40165-cd0c5fe403f0",
       "provinceIndex": 1085,
       "jurisdictionId": "40165",
       "commanderyId": "PARENT-0053",
@@ -13063,20 +13063,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-40165-cd0c5fe403f0",
-      "provinceIndex": 1086,
-      "jurisdictionId": "40165",
-      "commanderyId": "PARENT-0053",
-      "commanderyNameCh": "豫章郡",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 956,
-      "routeNodeKey": null,
-      "cityPlaceId": "40165",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-40303-c0ef2fc6bd2a",
-      "provinceIndex": 1087,
+      "provinceIndex": 1086,
       "jurisdictionId": "40303",
       "commanderyId": "PARENT-0053",
       "commanderyNameCh": "豫章郡",
@@ -13087,32 +13075,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-40426-900f77eff5b7",
-      "provinceIndex": 1088,
-      "jurisdictionId": "40426",
-      "commanderyId": "PARENT-0052",
-      "commanderyNameCh": "吳郡",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 517,
-      "routeNodeKey": null,
-      "cityPlaceId": "40426",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-40740-3a5b5675f605",
-      "provinceIndex": 1089,
-      "jurisdictionId": "40740",
-      "commanderyId": "PARENT-0051",
-      "commanderyNameCh": "會稽郡",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 548,
-      "routeNodeKey": null,
-      "cityPlaceId": "40740",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-40861-943d5b328520",
-      "provinceIndex": 1090,
+      "provinceIndex": 1087,
       "jurisdictionId": "40861",
       "commanderyId": "PARENT-0053",
       "commanderyNameCh": "豫章郡",
@@ -13124,7 +13088,7 @@
     },
     {
       "provinceId": "SUB-41194-9ed479cc6a6f",
-      "provinceIndex": 1091,
+      "provinceIndex": 1088,
       "jurisdictionId": "41194",
       "commanderyId": "PARENT-0053",
       "commanderyNameCh": "豫章郡",
@@ -13136,7 +13100,7 @@
     },
     {
       "provinceId": "SUB-41886-98af86c9348f",
-      "provinceIndex": 1092,
+      "provinceIndex": 1089,
       "jurisdictionId": "41886",
       "commanderyId": "PARENT-0046",
       "commanderyNameCh": "武陵郡",
@@ -13148,7 +13112,7 @@
     },
     {
       "provinceId": "SUB-42073-4b5cb42c79a0",
-      "provinceIndex": 1093,
+      "provinceIndex": 1090,
       "jurisdictionId": "42073",
       "commanderyId": "PARENT-0046",
       "commanderyNameCh": "武陵郡",
@@ -13160,7 +13124,7 @@
     },
     {
       "provinceId": "SUB-42147-4df391b0b4dd",
-      "provinceIndex": 1094,
+      "provinceIndex": 1091,
       "jurisdictionId": "42147",
       "commanderyId": "PARENT-0098",
       "commanderyNameCh": "南海郡",
@@ -13172,7 +13136,7 @@
     },
     {
       "provinceId": "SUB-42147-e37a13e909c6",
-      "provinceIndex": 1095,
+      "provinceIndex": 1092,
       "jurisdictionId": "42147",
       "commanderyId": "PARENT-0098",
       "commanderyNameCh": "南海郡",
@@ -13184,7 +13148,7 @@
     },
     {
       "provinceId": "SUB-42184-c77be1e5106f",
-      "provinceIndex": 1096,
+      "provinceIndex": 1093,
       "jurisdictionId": "42184",
       "commanderyId": "PARENT-0098",
       "commanderyNameCh": "南海郡",
@@ -13195,32 +13159,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-42301-7104ff31657a",
-      "provinceIndex": 1097,
-      "jurisdictionId": "42301",
-      "commanderyId": "PARENT-0169",
-      "commanderyNameCh": "高涼郡",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1023,
-      "routeNodeKey": null,
-      "cityPlaceId": "42301",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-42444-b95f085a12a8",
-      "provinceIndex": 1098,
-      "jurisdictionId": "42444",
-      "commanderyId": "PARENT-0101",
-      "commanderyNameCh": "合浦郡",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 744,
-      "routeNodeKey": null,
-      "cityPlaceId": "42444",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-42524-46d8b1b4b707",
-      "provinceIndex": 1099,
+      "provinceIndex": 1094,
       "jurisdictionId": "42524",
       "commanderyId": "PARENT-0101",
       "commanderyNameCh": "合浦郡",
@@ -13232,7 +13172,7 @@
     },
     {
       "provinceId": "SUB-42524-622c0a56ef76",
-      "provinceIndex": 1100,
+      "provinceIndex": 1095,
       "jurisdictionId": "42524",
       "commanderyId": "PARENT-0101",
       "commanderyNameCh": "合浦郡",
@@ -13243,20 +13183,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-43252-2d3b29ad3f33",
-      "provinceIndex": 1101,
-      "jurisdictionId": "43252",
-      "commanderyId": "PARENT-0034",
-      "commanderyNameCh": "下邳國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 305,
-      "routeNodeKey": null,
-      "cityPlaceId": "43252",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-43783-b333191e0422",
-      "provinceIndex": 1102,
+      "provinceIndex": 1096,
       "jurisdictionId": "43783",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13268,7 +13196,7 @@
     },
     {
       "provinceId": "SUB-43783-c1ac1182539d",
-      "provinceIndex": 1103,
+      "provinceIndex": 1097,
       "jurisdictionId": "43783",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13280,7 +13208,7 @@
     },
     {
       "provinceId": "SUB-43860-7133d7ade7eb",
-      "provinceIndex": 1104,
+      "provinceIndex": 1098,
       "jurisdictionId": "43860",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13292,7 +13220,7 @@
     },
     {
       "provinceId": "SUB-44055-32a4c860abc2",
-      "provinceIndex": 1105,
+      "provinceIndex": 1099,
       "jurisdictionId": "44055",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13304,7 +13232,7 @@
     },
     {
       "provinceId": "SUB-44055-485bec6228d4",
-      "provinceIndex": 1106,
+      "provinceIndex": 1100,
       "jurisdictionId": "44055",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13316,7 +13244,7 @@
     },
     {
       "provinceId": "SUB-44055-657c37816fec",
-      "provinceIndex": 1107,
+      "provinceIndex": 1101,
       "jurisdictionId": "44055",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13328,7 +13256,7 @@
     },
     {
       "provinceId": "SUB-44055-68a415b3bbf7",
-      "provinceIndex": 1108,
+      "provinceIndex": 1102,
       "jurisdictionId": "44055",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13340,7 +13268,7 @@
     },
     {
       "provinceId": "SUB-44055-69338dd8b99e",
-      "provinceIndex": 1109,
+      "provinceIndex": 1103,
       "jurisdictionId": "44055",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -13352,7 +13280,7 @@
     },
     {
       "provinceId": "SUB-44580-4cf3b7cc1de8",
-      "provinceIndex": 1110,
+      "provinceIndex": 1104,
       "jurisdictionId": "44621",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
@@ -13364,7 +13292,7 @@
     },
     {
       "provinceId": "SUB-45372-16ea1bc09518",
-      "provinceIndex": 1111,
+      "provinceIndex": 1105,
       "jurisdictionId": "45372",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -13376,7 +13304,7 @@
     },
     {
       "provinceId": "SUB-45412-001111a894e0",
-      "provinceIndex": 1112,
+      "provinceIndex": 1106,
       "jurisdictionId": "45412",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -13388,7 +13316,7 @@
     },
     {
       "provinceId": "SUB-45412-eafb17a674da",
-      "provinceIndex": 1113,
+      "provinceIndex": 1107,
       "jurisdictionId": "45412",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -13400,7 +13328,7 @@
     },
     {
       "provinceId": "SUB-45445-f609ebbe6624",
-      "provinceIndex": 1114,
+      "provinceIndex": 1108,
       "jurisdictionId": "45445",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -13412,7 +13340,7 @@
     },
     {
       "provinceId": "SUB-45453-676003b83f5e",
-      "provinceIndex": 1115,
+      "provinceIndex": 1109,
       "jurisdictionId": "45453",
       "commanderyId": "PARENT-0065",
       "commanderyNameCh": "犍為屬國",
@@ -13424,7 +13352,7 @@
     },
     {
       "provinceId": "SUB-45532-2a1550395049",
-      "provinceIndex": 1116,
+      "provinceIndex": 1110,
       "jurisdictionId": "45532",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -13436,7 +13364,7 @@
     },
     {
       "provinceId": "SUB-45572-413aec930582",
-      "provinceIndex": 1117,
+      "provinceIndex": 1111,
       "jurisdictionId": "45572",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -13448,7 +13376,7 @@
     },
     {
       "provinceId": "SUB-45603-04207c289927",
-      "provinceIndex": 1118,
+      "provinceIndex": 1112,
       "jurisdictionId": "45603",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -13460,7 +13388,7 @@
     },
     {
       "provinceId": "SUB-45603-41bf797e85bb",
-      "provinceIndex": 1119,
+      "provinceIndex": 1113,
       "jurisdictionId": "45603",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -13472,7 +13400,7 @@
     },
     {
       "provinceId": "SUB-45603-6baf0a18f890",
-      "provinceIndex": 1120,
+      "provinceIndex": 1114,
       "jurisdictionId": "45603",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -13484,7 +13412,7 @@
     },
     {
       "provinceId": "SUB-45603-f15c31f7e747",
-      "provinceIndex": 1121,
+      "provinceIndex": 1115,
       "jurisdictionId": "45603",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -13496,7 +13424,7 @@
     },
     {
       "provinceId": "SUB-45949-a70e8f2f6545",
-      "provinceIndex": 1122,
+      "provinceIndex": 1116,
       "jurisdictionId": "45949",
       "commanderyId": "PARENT-0054",
       "commanderyNameCh": "漢中郡",
@@ -13508,7 +13436,7 @@
     },
     {
       "provinceId": "SUB-70079-3bc45493ea23",
-      "provinceIndex": 1123,
+      "provinceIndex": 1117,
       "jurisdictionId": "70079",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -13520,7 +13448,7 @@
     },
     {
       "provinceId": "SUB-70126-5aba6cfc921e",
-      "provinceIndex": 1124,
+      "provinceIndex": 1118,
       "jurisdictionId": "70126",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -13532,7 +13460,7 @@
     },
     {
       "provinceId": "SUB-70126-e1c2482583bd",
-      "provinceIndex": 1125,
+      "provinceIndex": 1119,
       "jurisdictionId": "70126",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -13544,7 +13472,7 @@
     },
     {
       "provinceId": "SUB-70156-4cfa055add88",
-      "provinceIndex": 1126,
+      "provinceIndex": 1120,
       "jurisdictionId": "70156",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -13556,7 +13484,7 @@
     },
     {
       "provinceId": "SUB-70418-1cb3cbaa1322",
-      "provinceIndex": 1127,
+      "provinceIndex": 1121,
       "jurisdictionId": "70418",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -13568,7 +13496,7 @@
     },
     {
       "provinceId": "SUB-70418-5e6932ff8284",
-      "provinceIndex": 1128,
+      "provinceIndex": 1122,
       "jurisdictionId": "70418",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -13580,7 +13508,7 @@
     },
     {
       "provinceId": "SUB-70418-ed39b6a1f977",
-      "provinceIndex": 1129,
+      "provinceIndex": 1123,
       "jurisdictionId": "70418",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -13592,7 +13520,7 @@
     },
     {
       "provinceId": "SUB-70459-1f1edc3a5794",
-      "provinceIndex": 1130,
+      "provinceIndex": 1124,
       "jurisdictionId": "70459",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13604,7 +13532,7 @@
     },
     {
       "provinceId": "SUB-70459-93772c534560",
-      "provinceIndex": 1131,
+      "provinceIndex": 1125,
       "jurisdictionId": "70459",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13616,7 +13544,7 @@
     },
     {
       "provinceId": "SUB-70459-beb7592f772e",
-      "provinceIndex": 1132,
+      "provinceIndex": 1126,
       "jurisdictionId": "70459",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13628,7 +13556,7 @@
     },
     {
       "provinceId": "SUB-70459-c86c8fbee593",
-      "provinceIndex": 1133,
+      "provinceIndex": 1127,
       "jurisdictionId": "70459",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13640,7 +13568,7 @@
     },
     {
       "provinceId": "SUB-70500-0ecad3c38eaa",
-      "provinceIndex": 1134,
+      "provinceIndex": 1128,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13652,7 +13580,7 @@
     },
     {
       "provinceId": "SUB-70500-2f6d7fb3561f",
-      "provinceIndex": 1135,
+      "provinceIndex": 1129,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13664,7 +13592,7 @@
     },
     {
       "provinceId": "SUB-70500-56a1f9fafe71",
-      "provinceIndex": 1136,
+      "provinceIndex": 1130,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13676,7 +13604,7 @@
     },
     {
       "provinceId": "SUB-70500-7683fbdb4ff5",
-      "provinceIndex": 1137,
+      "provinceIndex": 1131,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13688,7 +13616,7 @@
     },
     {
       "provinceId": "SUB-70500-792bd4647bc0",
-      "provinceIndex": 1138,
+      "provinceIndex": 1132,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13700,7 +13628,7 @@
     },
     {
       "provinceId": "SUB-70500-b152a7a56550",
-      "provinceIndex": 1139,
+      "provinceIndex": 1133,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13712,7 +13640,7 @@
     },
     {
       "provinceId": "SUB-70500-b3a99dd79c6d",
-      "provinceIndex": 1140,
+      "provinceIndex": 1134,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13724,7 +13652,7 @@
     },
     {
       "provinceId": "SUB-70500-c1535a6e0b27",
-      "provinceIndex": 1141,
+      "provinceIndex": 1135,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13736,7 +13664,7 @@
     },
     {
       "provinceId": "SUB-70500-e0b8556d8eee",
-      "provinceIndex": 1142,
+      "provinceIndex": 1136,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13748,7 +13676,7 @@
     },
     {
       "provinceId": "SUB-70500-f6f6b95675a7",
-      "provinceIndex": 1143,
+      "provinceIndex": 1137,
       "jurisdictionId": "70500",
       "commanderyId": "PARENT-0077",
       "commanderyNameCh": "張掖居延屬國",
@@ -13760,7 +13688,7 @@
     },
     {
       "provinceId": "SUB-70524-3f80f5c46aa8",
-      "provinceIndex": 1144,
+      "provinceIndex": 1138,
       "jurisdictionId": "70524",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
@@ -13772,7 +13700,7 @@
     },
     {
       "provinceId": "SUB-70524-fd46f346c5e3",
-      "provinceIndex": 1145,
+      "provinceIndex": 1139,
       "jurisdictionId": "70524",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
@@ -13784,7 +13712,7 @@
     },
     {
       "provinceId": "SUB-70595-196a89abc300",
-      "provinceIndex": 1146,
+      "provinceIndex": 1140,
       "jurisdictionId": "70595",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13796,7 +13724,7 @@
     },
     {
       "provinceId": "SUB-70595-74ff8611faf4",
-      "provinceIndex": 1147,
+      "provinceIndex": 1141,
       "jurisdictionId": "70595",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13808,7 +13736,7 @@
     },
     {
       "provinceId": "SUB-70596-0eeaf75274d1",
-      "provinceIndex": 1148,
+      "provinceIndex": 1142,
       "jurisdictionId": "70596",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13820,7 +13748,7 @@
     },
     {
       "provinceId": "SUB-70596-53e532b29f95",
-      "provinceIndex": 1149,
+      "provinceIndex": 1143,
       "jurisdictionId": "70596",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13832,7 +13760,7 @@
     },
     {
       "provinceId": "SUB-70596-55c1d351e2fe",
-      "provinceIndex": 1150,
+      "provinceIndex": 1144,
       "jurisdictionId": "70596",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13844,7 +13772,7 @@
     },
     {
       "provinceId": "SUB-70596-9b45e76dff16",
-      "provinceIndex": 1151,
+      "provinceIndex": 1145,
       "jurisdictionId": "70596",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13856,7 +13784,7 @@
     },
     {
       "provinceId": "SUB-70596-eca101b8280f",
-      "provinceIndex": 1152,
+      "provinceIndex": 1146,
       "jurisdictionId": "70596",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13868,7 +13796,7 @@
     },
     {
       "provinceId": "SUB-70597-157c10243e76",
-      "provinceIndex": 1153,
+      "provinceIndex": 1147,
       "jurisdictionId": "70597",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13880,7 +13808,7 @@
     },
     {
       "provinceId": "SUB-70597-6dc278837bda",
-      "provinceIndex": 1154,
+      "provinceIndex": 1148,
       "jurisdictionId": "70597",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -13892,7 +13820,7 @@
     },
     {
       "provinceId": "SUB-70598-1e2f6d4bcbcc",
-      "provinceIndex": 1155,
+      "provinceIndex": 1149,
       "jurisdictionId": "70598",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13904,7 +13832,7 @@
     },
     {
       "provinceId": "SUB-70598-1e73ba49a901",
-      "provinceIndex": 1156,
+      "provinceIndex": 1150,
       "jurisdictionId": "70598",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13916,7 +13844,7 @@
     },
     {
       "provinceId": "SUB-70599-35cdd28d8799",
-      "provinceIndex": 1157,
+      "provinceIndex": 1151,
       "jurisdictionId": "70599",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -13928,7 +13856,7 @@
     },
     {
       "provinceId": "SUB-70601-ad89c6725f1b",
-      "provinceIndex": 1158,
+      "provinceIndex": 1152,
       "jurisdictionId": "70601",
       "commanderyId": "PARENT-0073",
       "commanderyNameCh": "張掖郡",
@@ -13940,7 +13868,7 @@
     },
     {
       "provinceId": "SUB-70601-bf56138b5f55",
-      "provinceIndex": 1159,
+      "provinceIndex": 1153,
       "jurisdictionId": "70601",
       "commanderyId": "PARENT-0073",
       "commanderyNameCh": "張掖郡",
@@ -13952,7 +13880,7 @@
     },
     {
       "provinceId": "SUB-70605-2e0bd099ed00",
-      "provinceIndex": 1160,
+      "provinceIndex": 1154,
       "jurisdictionId": "70605",
       "commanderyId": "PARENT-0073",
       "commanderyNameCh": "張掖郡",
@@ -13964,7 +13892,7 @@
     },
     {
       "provinceId": "SUB-70609-079630df9832",
-      "provinceIndex": 1161,
+      "provinceIndex": 1155,
       "jurisdictionId": "70609",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -13976,7 +13904,7 @@
     },
     {
       "provinceId": "SUB-70609-3f8ffd723061",
-      "provinceIndex": 1162,
+      "provinceIndex": 1156,
       "jurisdictionId": "70609",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -13988,7 +13916,7 @@
     },
     {
       "provinceId": "SUB-70609-b6d2a81666e0",
-      "provinceIndex": 1163,
+      "provinceIndex": 1157,
       "jurisdictionId": "70609",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -14000,7 +13928,7 @@
     },
     {
       "provinceId": "SUB-70609-d9474bd4e2b5",
-      "provinceIndex": 1164,
+      "provinceIndex": 1158,
       "jurisdictionId": "70609",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -14012,7 +13940,7 @@
     },
     {
       "provinceId": "SUB-70610-497954194305",
-      "provinceIndex": 1165,
+      "provinceIndex": 1159,
       "jurisdictionId": "70610",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
@@ -14024,7 +13952,7 @@
     },
     {
       "provinceId": "SUB-70610-5e83485d75d5",
-      "provinceIndex": 1166,
+      "provinceIndex": 1160,
       "jurisdictionId": "70610",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
@@ -14036,7 +13964,7 @@
     },
     {
       "provinceId": "SUB-70617-292322bb693c",
-      "provinceIndex": 1167,
+      "provinceIndex": 1161,
       "jurisdictionId": "70617",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -14048,7 +13976,7 @@
     },
     {
       "provinceId": "SUB-70617-4f8d724f5d32",
-      "provinceIndex": 1168,
+      "provinceIndex": 1162,
       "jurisdictionId": "70617",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -14060,7 +13988,7 @@
     },
     {
       "provinceId": "SUB-70617-715dbe4ca817",
-      "provinceIndex": 1169,
+      "provinceIndex": 1163,
       "jurisdictionId": "70617",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -14072,7 +14000,7 @@
     },
     {
       "provinceId": "SUB-71009-21563362207d",
-      "provinceIndex": 1170,
+      "provinceIndex": 1164,
       "jurisdictionId": "71009",
       "commanderyId": "PARENT-0054",
       "commanderyNameCh": "漢中郡",
@@ -14084,7 +14012,7 @@
     },
     {
       "provinceId": "SUB-80004-1387877b5f15",
-      "provinceIndex": 1171,
+      "provinceIndex": 1165,
       "jurisdictionId": "80004",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -14096,7 +14024,7 @@
     },
     {
       "provinceId": "SUB-80004-46c39011c030",
-      "provinceIndex": 1172,
+      "provinceIndex": 1166,
       "jurisdictionId": "80004",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -14108,7 +14036,7 @@
     },
     {
       "provinceId": "SUB-80004-672163562ff4",
-      "provinceIndex": 1173,
+      "provinceIndex": 1167,
       "jurisdictionId": "80004",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -14120,7 +14048,7 @@
     },
     {
       "provinceId": "SUB-80004-691a0362249c",
-      "provinceIndex": 1174,
+      "provinceIndex": 1168,
       "jurisdictionId": "80004",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -14132,7 +14060,7 @@
     },
     {
       "provinceId": "SUB-80004-c62bfe326632",
-      "provinceIndex": 1175,
+      "provinceIndex": 1169,
       "jurisdictionId": "80004",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -14144,7 +14072,7 @@
     },
     {
       "provinceId": "SUB-80004-ff66fb09b9b7",
-      "provinceIndex": 1176,
+      "provinceIndex": 1170,
       "jurisdictionId": "80004",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -14156,7 +14084,7 @@
     },
     {
       "provinceId": "SUB-85217-f84e793192be",
-      "provinceIndex": 1177,
+      "provinceIndex": 1171,
       "jurisdictionId": "85217",
       "commanderyId": "PARENT-0038",
       "commanderyNameCh": "北海國",
@@ -14168,7 +14096,7 @@
     },
     {
       "provinceId": "SUB-87436-60dc0a419aba",
-      "provinceIndex": 1178,
+      "provinceIndex": 1172,
       "jurisdictionId": "87436",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -14180,7 +14108,7 @@
     },
     {
       "provinceId": "SUB-87436-eaa97d5acbea",
-      "provinceIndex": 1179,
+      "provinceIndex": 1173,
       "jurisdictionId": "87436",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -14192,7 +14120,7 @@
     },
     {
       "provinceId": "SUB-95016-8fe5094a94a1",
-      "provinceIndex": 1180,
+      "provinceIndex": 1174,
       "jurisdictionId": "95016",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -14204,7 +14132,7 @@
     },
     {
       "provinceId": "SUB-96006-05359103bff1",
-      "provinceIndex": 1181,
+      "provinceIndex": 1175,
       "jurisdictionId": "96006",
       "commanderyId": "PARENT-0063",
       "commanderyNameCh": "廣漢屬國",
@@ -14216,7 +14144,7 @@
     },
     {
       "provinceId": "SUB-96006-231126899383",
-      "provinceIndex": 1182,
+      "provinceIndex": 1176,
       "jurisdictionId": "96006",
       "commanderyId": "PARENT-0063",
       "commanderyNameCh": "廣漢屬國",
@@ -14228,7 +14156,7 @@
     },
     {
       "provinceId": "SUB-96055-ca002cdb2917",
-      "provinceIndex": 1183,
+      "provinceIndex": 1177,
       "jurisdictionId": "96055",
       "commanderyId": "PARENT-0057",
       "commanderyNameCh": "蜀郡",
@@ -14240,7 +14168,7 @@
     },
     {
       "provinceId": "SUB-96055-e7455bf2be99",
-      "provinceIndex": 1184,
+      "provinceIndex": 1178,
       "jurisdictionId": "96055",
       "commanderyId": "PARENT-0057",
       "commanderyNameCh": "蜀郡",
@@ -14252,7 +14180,7 @@
     },
     {
       "provinceId": "SUB-96382-b27bb7170dae",
-      "provinceIndex": 1185,
+      "provinceIndex": 1179,
       "jurisdictionId": "96382",
       "commanderyId": "PARENT-0064",
       "commanderyNameCh": "蜀郡屬國",
@@ -14264,7 +14192,7 @@
     },
     {
       "provinceId": "SUB-96436-d9189d736ccb",
-      "provinceIndex": 1186,
+      "provinceIndex": 1180,
       "jurisdictionId": "96436",
       "commanderyId": "PARENT-0057",
       "commanderyNameCh": "蜀郡",
@@ -14276,7 +14204,7 @@
     },
     {
       "provinceId": "SUB-99004-7111de80f5c0",
-      "provinceIndex": 1187,
+      "provinceIndex": 1181,
       "jurisdictionId": "99004",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -14288,7 +14216,7 @@
     },
     {
       "provinceId": "SUB-99034-ea5190449915",
-      "provinceIndex": 1188,
+      "provinceIndex": 1182,
       "jurisdictionId": "99034",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -14300,7 +14228,7 @@
     },
     {
       "provinceId": "SUB-99041-e346165bb7f8",
-      "provinceIndex": 1189,
+      "provinceIndex": 1183,
       "jurisdictionId": "99041",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -14312,7 +14240,7 @@
     },
     {
       "provinceId": "SUB-99350-2e8dd74cb67c",
-      "provinceIndex": 1190,
+      "provinceIndex": 1184,
       "jurisdictionId": "99350",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -14324,7 +14252,7 @@
     },
     {
       "provinceId": "SUB-99350-e0c75633ff40",
-      "provinceIndex": 1191,
+      "provinceIndex": 1185,
       "jurisdictionId": "99350",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -14336,7 +14264,7 @@
     },
     {
       "provinceId": "SUB-JURISDICTION-PARENT-0097-SEAT-bfcd2758df52",
-      "provinceIndex": 1192,
+      "provinceIndex": 1186,
       "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT",
       "commanderyId": "PARENT-0097",
       "commanderyNameCh": "遼東屬國",
@@ -14348,7 +14276,7 @@
     },
     {
       "provinceId": "SUB-JURISDICTION-PARENT-0097-SEAT-e4ac85458411",
-      "provinceIndex": 1193,
+      "provinceIndex": 1187,
       "jurisdictionId": "JURISDICTION-PARENT-0097-SEAT",
       "commanderyId": "PARENT-0097",
       "commanderyNameCh": "遼東屬國",
@@ -14360,7 +14288,7 @@
     },
     {
       "provinceId": "SUB-X028-10fc23deade6",
-      "provinceIndex": 1194,
+      "provinceIndex": 1188,
       "jurisdictionId": "X067",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -14372,7 +14300,7 @@
     },
     {
       "provinceId": "SUB-X028-7238a630ea3c",
-      "provinceIndex": 1195,
+      "provinceIndex": 1189,
       "jurisdictionId": "X067",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -14384,7 +14312,7 @@
     },
     {
       "provinceId": "SUB-X028-87bd17c68185",
-      "provinceIndex": 1196,
+      "provinceIndex": 1190,
       "jurisdictionId": "X067",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -14396,7 +14324,7 @@
     },
     {
       "provinceId": "SUB-X028-f3fe8f1dec91",
-      "provinceIndex": 1197,
+      "provinceIndex": 1191,
       "jurisdictionId": "X065",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -14408,7 +14336,7 @@
     },
     {
       "provinceId": "SUB-X028-febacb66851d",
-      "provinceIndex": 1198,
+      "provinceIndex": 1192,
       "jurisdictionId": "X028",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -14420,7 +14348,7 @@
     },
     {
       "provinceId": "SUB-X029-d36cd99b5619",
-      "provinceIndex": 1199,
+      "provinceIndex": 1193,
       "jurisdictionId": "X029",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
@@ -14432,7 +14360,7 @@
     },
     {
       "provinceId": "SUB-X029-f447e36b3ebd",
-      "provinceIndex": 1200,
+      "provinceIndex": 1194,
       "jurisdictionId": "fc-liaodong-008",
       "commanderyId": "PARENT-0094",
       "commanderyNameCh": "遼東郡",
@@ -14444,7 +14372,7 @@
     },
     {
       "provinceId": "SUB-X030-08358a2fe5ab",
-      "provinceIndex": 1201,
+      "provinceIndex": 1195,
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
@@ -14456,7 +14384,7 @@
     },
     {
       "provinceId": "SUB-X030-6d3574d62d97",
-      "provinceIndex": 1202,
+      "provinceIndex": 1196,
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
@@ -14468,7 +14396,7 @@
     },
     {
       "provinceId": "SUB-X030-b78cb489a20c",
-      "provinceIndex": 1203,
+      "provinceIndex": 1197,
       "jurisdictionId": "X030",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
@@ -14479,20 +14407,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-X035-ba000ebf76e2",
-      "provinceIndex": 1204,
-      "jurisdictionId": "X035",
-      "commanderyId": "PARENT-0108",
-      "commanderyNameCh": "于山國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1104,
-      "routeNodeKey": null,
-      "cityPlaceId": "X035",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-X036-0ee440c65661",
-      "provinceIndex": 1205,
+      "provinceIndex": 1198,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14504,7 +14420,7 @@
     },
     {
       "provinceId": "SUB-X036-104424383cd8",
-      "provinceIndex": 1206,
+      "provinceIndex": 1199,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14516,7 +14432,7 @@
     },
     {
       "provinceId": "SUB-X036-229fb91a60c4",
-      "provinceIndex": 1207,
+      "provinceIndex": 1200,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14528,7 +14444,7 @@
     },
     {
       "provinceId": "SUB-X036-33a7e8bc321f",
-      "provinceIndex": 1208,
+      "provinceIndex": 1201,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14540,7 +14456,7 @@
     },
     {
       "provinceId": "SUB-X036-578c4df54077",
-      "provinceIndex": 1209,
+      "provinceIndex": 1202,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14552,7 +14468,7 @@
     },
     {
       "provinceId": "SUB-X036-73aa8f0335b6",
-      "provinceIndex": 1210,
+      "provinceIndex": 1203,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14564,7 +14480,7 @@
     },
     {
       "provinceId": "SUB-X036-784243d0441c",
-      "provinceIndex": 1211,
+      "provinceIndex": 1204,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14576,7 +14492,7 @@
     },
     {
       "provinceId": "SUB-X036-d12fe29247d1",
-      "provinceIndex": 1212,
+      "provinceIndex": 1205,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14588,7 +14504,7 @@
     },
     {
       "provinceId": "SUB-X036-f6e11d803313",
-      "provinceIndex": 1213,
+      "provinceIndex": 1206,
       "jurisdictionId": "X036",
       "commanderyId": "PARENT-0122",
       "commanderyNameCh": "夫餘",
@@ -14600,7 +14516,7 @@
     },
     {
       "provinceId": "SUB-X039-31118ce39dd7",
-      "provinceIndex": 1214,
+      "provinceIndex": 1207,
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0172",
       "commanderyNameCh": "挹婁",
@@ -14612,7 +14528,7 @@
     },
     {
       "provinceId": "SUB-X039-3308dbdbf3b3",
-      "provinceIndex": 1215,
+      "provinceIndex": 1208,
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0172",
       "commanderyNameCh": "挹婁",
@@ -14624,7 +14540,7 @@
     },
     {
       "provinceId": "SUB-X039-47461cb1eca5",
-      "provinceIndex": 1216,
+      "provinceIndex": 1209,
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0172",
       "commanderyNameCh": "挹婁",
@@ -14636,7 +14552,7 @@
     },
     {
       "provinceId": "SUB-X039-b3708f5c90ac",
-      "provinceIndex": 1217,
+      "provinceIndex": 1210,
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0172",
       "commanderyNameCh": "挹婁",
@@ -14648,7 +14564,7 @@
     },
     {
       "provinceId": "SUB-X039-d0231c52975d",
-      "provinceIndex": 1218,
+      "provinceIndex": 1211,
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0172",
       "commanderyNameCh": "挹婁",
@@ -14660,7 +14576,7 @@
     },
     {
       "provinceId": "SUB-X039-eb19171011e9",
-      "provinceIndex": 1219,
+      "provinceIndex": 1212,
       "jurisdictionId": "X039",
       "commanderyId": "PARENT-0172",
       "commanderyNameCh": "挹婁",
@@ -14671,32 +14587,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-X040-541a9c6ebb19",
-      "provinceIndex": 1220,
-      "jurisdictionId": "X078",
-      "commanderyId": "PARENT-0156",
-      "commanderyNameCh": "目支國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1147,
-      "routeNodeKey": null,
-      "cityPlaceId": "X078",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X041-17b9700aed53",
-      "provinceIndex": 1221,
-      "jurisdictionId": "X089",
-      "commanderyId": "PARENT-0164",
-      "commanderyNameCh": "辟卑離國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1158,
-      "routeNodeKey": null,
-      "cityPlaceId": "X089",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-X042-1f00b3225ad9",
-      "provinceIndex": 1222,
+      "provinceIndex": 1213,
       "jurisdictionId": "X042",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
@@ -14707,212 +14599,8 @@
       "adjacencyHops": null
     },
     {
-      "provinceId": "SUB-X046-763d3a08775b",
-      "provinceIndex": 1223,
-      "jurisdictionId": "X046",
-      "commanderyId": "PARENT-0116",
-      "commanderyNameCh": "古資彌凍國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1115,
-      "routeNodeKey": null,
-      "cityPlaceId": "X046",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X051-81bd3bc269dc",
-      "provinceIndex": 1224,
-      "jurisdictionId": "X051",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1120,
-      "routeNodeKey": null,
-      "cityPlaceId": "X051",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X052-9097a8854a1f",
-      "provinceIndex": 1225,
-      "jurisdictionId": "X052",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1121,
-      "routeNodeKey": null,
-      "cityPlaceId": "X052",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X052-e2019b23588b",
-      "provinceIndex": 1226,
-      "jurisdictionId": "X052",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1121,
-      "routeNodeKey": null,
-      "cityPlaceId": "X052",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X054-00d863f2c44d",
-      "provinceIndex": 1227,
-      "jurisdictionId": "X054",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1123,
-      "routeNodeKey": null,
-      "cityPlaceId": "X054",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X054-05d9b93dfd00",
-      "provinceIndex": 1228,
-      "jurisdictionId": "X054",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1123,
-      "routeNodeKey": null,
-      "cityPlaceId": "X054",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X055-0deaa9deddaa",
-      "provinceIndex": 1229,
-      "jurisdictionId": "X055",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1124,
-      "routeNodeKey": null,
-      "cityPlaceId": "X055",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X055-42319b3daf6c",
-      "provinceIndex": 1230,
-      "jurisdictionId": "X055",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1124,
-      "routeNodeKey": null,
-      "cityPlaceId": "X055",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X055-d476e28be9f5",
-      "provinceIndex": 1231,
-      "jurisdictionId": "X055",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1124,
-      "routeNodeKey": null,
-      "cityPlaceId": "X055",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X055-f9c61192fa78",
-      "provinceIndex": 1232,
-      "jurisdictionId": "X055",
-      "commanderyId": "PARENT-0165",
-      "commanderyNameCh": "邪馬壹國",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1124,
-      "routeNodeKey": null,
-      "cityPlaceId": "X055",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X056-4430d4dd8ab9",
-      "provinceIndex": 1233,
-      "jurisdictionId": "X056",
-      "commanderyId": "PARENT-0123",
-      "commanderyNameCh": "夷洲",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1125,
-      "routeNodeKey": null,
-      "cityPlaceId": "X056",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X056-b6a5311503ef",
-      "provinceIndex": 1234,
-      "jurisdictionId": "X056",
-      "commanderyId": "PARENT-0123",
-      "commanderyNameCh": "夷洲",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1125,
-      "routeNodeKey": null,
-      "cityPlaceId": "X056",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X056-c4d35e38f118",
-      "provinceIndex": 1235,
-      "jurisdictionId": "X056",
-      "commanderyId": "PARENT-0123",
-      "commanderyNameCh": "夷洲",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1125,
-      "routeNodeKey": null,
-      "cityPlaceId": "X056",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X057-583a342f4480",
-      "provinceIndex": 1236,
-      "jurisdictionId": "X057",
-      "commanderyId": "PARENT-0149",
-      "commanderyNameCh": "流求",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1126,
-      "routeNodeKey": null,
-      "cityPlaceId": "X057",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X057-6e514a3d0138",
-      "provinceIndex": 1237,
-      "jurisdictionId": "X057",
-      "commanderyId": "PARENT-0149",
-      "commanderyNameCh": "流求",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1126,
-      "routeNodeKey": null,
-      "cityPlaceId": "X057",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X057-ef85eaeea522",
-      "provinceIndex": 1238,
-      "jurisdictionId": "X057",
-      "commanderyId": "PARENT-0149",
-      "commanderyNameCh": "流求",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1126,
-      "routeNodeKey": null,
-      "cityPlaceId": "X057",
-      "adjacencyHops": null
-    },
-    {
-      "provinceId": "SUB-X057-f6cdaf119bf2",
-      "provinceIndex": 1239,
-      "jurisdictionId": "X057",
-      "commanderyId": "PARENT-0149",
-      "commanderyNameCh": "流求",
-      "basis": "OWN_COUNTY_SEAT",
-      "routeNodeId": 1126,
-      "routeNodeKey": null,
-      "cityPlaceId": "X057",
-      "adjacencyHops": null
-    },
-    {
       "provinceId": "SUB-X060-1103daaa3f88",
-      "provinceIndex": 1240,
+      "provinceIndex": 1214,
       "jurisdictionId": "X060",
       "commanderyId": "PARENT-0118",
       "commanderyNameCh": "哀牢",
@@ -14924,7 +14612,7 @@
     },
     {
       "provinceId": "SUB-X062-0ab4257ac8db",
-      "provinceIndex": 1241,
+      "provinceIndex": 1215,
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
@@ -14936,7 +14624,7 @@
     },
     {
       "provinceId": "SUB-X062-3ed7b6463dbe",
-      "provinceIndex": 1242,
+      "provinceIndex": 1216,
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
@@ -14948,7 +14636,7 @@
     },
     {
       "provinceId": "SUB-X062-3f5123892643",
-      "provinceIndex": 1243,
+      "provinceIndex": 1217,
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
@@ -14960,7 +14648,7 @@
     },
     {
       "provinceId": "SUB-X062-81bb0094180f",
-      "provinceIndex": 1244,
+      "provinceIndex": 1218,
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
@@ -14972,7 +14660,7 @@
     },
     {
       "provinceId": "SUB-X062-dec5a673b46f",
-      "provinceIndex": 1245,
+      "provinceIndex": 1219,
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
@@ -14984,7 +14672,7 @@
     },
     {
       "provinceId": "SUB-X062-e1487188b5ec",
-      "provinceIndex": 1246,
+      "provinceIndex": 1220,
       "jurisdictionId": "X062",
       "commanderyId": "PARENT-0152",
       "commanderyNameCh": "烏桓",
@@ -14996,7 +14684,7 @@
     },
     {
       "provinceId": "SUB-X063-4315e222b987",
-      "provinceIndex": 1247,
+      "provinceIndex": 1221,
       "jurisdictionId": "X063",
       "commanderyId": "PARENT-0170",
       "commanderyNameCh": "鮮卑",
@@ -15008,7 +14696,7 @@
     },
     {
       "provinceId": "SUB-X063-cdb59eb30adb",
-      "provinceIndex": 1248,
+      "provinceIndex": 1222,
       "jurisdictionId": "X063",
       "commanderyId": "PARENT-0170",
       "commanderyNameCh": "鮮卑",
@@ -15020,7 +14708,7 @@
     },
     {
       "provinceId": "SUB-X064-20352fd2adc9",
-      "provinceIndex": 1249,
+      "provinceIndex": 1223,
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
@@ -15032,7 +14720,7 @@
     },
     {
       "provinceId": "SUB-X064-2e9934419db1",
-      "provinceIndex": 1250,
+      "provinceIndex": 1224,
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
@@ -15044,7 +14732,7 @@
     },
     {
       "provinceId": "SUB-X064-9c3e27185734",
-      "provinceIndex": 1251,
+      "provinceIndex": 1225,
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
@@ -15056,7 +14744,7 @@
     },
     {
       "provinceId": "SUB-X064-a58cdcc5d3e6",
-      "provinceIndex": 1252,
+      "provinceIndex": 1226,
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
@@ -15068,7 +14756,7 @@
     },
     {
       "provinceId": "SUB-X064-ad2562bfc358",
-      "provinceIndex": 1253,
+      "provinceIndex": 1227,
       "jurisdictionId": "X064",
       "commanderyId": "PARENT-0114",
       "commanderyNameCh": "南匈奴",
@@ -15080,7 +14768,7 @@
     },
     {
       "provinceId": "SUB-fc-jiuzhen-003-242acaac2596",
-      "provinceIndex": 1254,
+      "provinceIndex": 1228,
       "jurisdictionId": "fc-jiuzhen-003",
       "commanderyId": "PARENT-0103",
       "commanderyNameCh": "九真郡",
@@ -15092,7 +14780,7 @@
     },
     {
       "provinceId": "SUB-fc-liaodong-004-f95be14ca690",
-      "provinceIndex": 1255,
+      "provinceIndex": 1229,
       "jurisdictionId": "fc-liaodong-004",
       "commanderyId": "PARENT-0095",
       "commanderyNameCh": "玄菟郡",
@@ -15104,7 +14792,7 @@
     },
     {
       "provinceId": "SUB-fc-rinan-004-198f62c3a01a",
-      "provinceIndex": 1256,
+      "provinceIndex": 1230,
       "jurisdictionId": "fc-rinan-004",
       "commanderyId": "PARENT-0104",
       "commanderyNameCh": "日南郡",
@@ -15116,7 +14804,7 @@
     },
     {
       "provinceId": "SUB-fc-rinan-004-aae95487b514",
-      "provinceIndex": 1257,
+      "provinceIndex": 1231,
       "jurisdictionId": "fc-rinan-004",
       "commanderyId": "PARENT-0104",
       "commanderyNameCh": "日南郡",
@@ -15128,7 +14816,7 @@
     },
     {
       "provinceId": "ss-ancheng",
-      "provinceIndex": 1258,
+      "provinceIndex": 1232,
       "jurisdictionId": "ss-ancheng",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -15140,7 +14828,7 @@
     },
     {
       "provinceId": "ss-anfengjin",
-      "provinceIndex": 1259,
+      "provinceIndex": 1233,
       "jurisdictionId": "ss-anfengjin",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -15152,7 +14840,7 @@
     },
     {
       "provinceId": "ss-anpingkou",
-      "provinceIndex": 1260,
+      "provinceIndex": 1234,
       "jurisdictionId": "ss-anpingkou",
       "commanderyId": "PARENT-0094",
       "commanderyNameCh": "遼東郡",
@@ -15164,7 +14852,7 @@
     },
     {
       "provinceId": "ss-boluojin",
-      "provinceIndex": 1261,
+      "provinceIndex": 1235,
       "jurisdictionId": "ss-boluojin",
       "commanderyId": "PARENT-0017",
       "commanderyNameCh": "安平國",
@@ -15176,7 +14864,7 @@
     },
     {
       "provinceId": "ss-cangtingjin",
-      "provinceIndex": 1262,
+      "provinceIndex": 1236,
       "jurisdictionId": "ss-cangtingjin",
       "commanderyId": "PARENT-0023",
       "commanderyNameCh": "東郡",
@@ -15188,7 +14876,7 @@
     },
     {
       "provinceId": "ss-dadu",
-      "provinceIndex": 1263,
+      "provinceIndex": 1237,
       "jurisdictionId": "ss-dadu",
       "commanderyId": "PARENT-0056",
       "commanderyNameCh": "廣漢郡",
@@ -15200,7 +14888,7 @@
     },
     {
       "provinceId": "ss-danglikou",
-      "provinceIndex": 1264,
+      "provinceIndex": 1238,
       "jurisdictionId": "ss-danglikou",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -15212,7 +14900,7 @@
     },
     {
       "provinceId": "ss-dengsai",
-      "provinceIndex": 1265,
+      "provinceIndex": 1239,
       "jurisdictionId": "ss-dengsai",
       "commanderyId": "PARENT-0160",
       "commanderyNameCh": "襄陽郡",
@@ -15224,7 +14912,7 @@
     },
     {
       "provinceId": "ss-dongpu",
-      "provinceIndex": 1266,
+      "provinceIndex": 1240,
       "jurisdictionId": "ss-dongpu",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -15236,7 +14924,7 @@
     },
     {
       "provinceId": "ss-doujin",
-      "provinceIndex": 1267,
+      "provinceIndex": 1241,
       "jurisdictionId": "ss-doujin",
       "commanderyId": "PARENT-0003",
       "commanderyNameCh": "弘農郡",
@@ -15248,7 +14936,7 @@
     },
     {
       "provinceId": "ss-fancheng",
-      "provinceIndex": 1268,
+      "provinceIndex": 1242,
       "jurisdictionId": "ss-fancheng",
       "commanderyId": "PARENT-0160",
       "commanderyNameCh": "襄陽郡",
@@ -15260,7 +14948,7 @@
     },
     {
       "provinceId": "ss-fancheng-liaoxi",
-      "provinceIndex": 1269,
+      "provinceIndex": 1243,
       "jurisdictionId": "ss-fancheng-liaoxi",
       "commanderyId": "PARENT-0093",
       "commanderyNameCh": "遼西郡",
@@ -15272,7 +14960,7 @@
     },
     {
       "provinceId": "ss-fankou",
-      "provinceIndex": 1270,
+      "provinceIndex": 1244,
       "jurisdictionId": "ss-fankou",
       "commanderyId": "PARENT-0043",
       "commanderyNameCh": "江夏郡",
@@ -15284,7 +14972,7 @@
     },
     {
       "provinceId": "ss-guandu",
-      "provinceIndex": 1271,
+      "provinceIndex": 1245,
       "jurisdictionId": "ss-guandu",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -15296,7 +14984,7 @@
     },
     {
       "provinceId": "ss-guokou",
-      "provinceIndex": 1272,
+      "provinceIndex": 1246,
       "jurisdictionId": "ss-guokou",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -15308,7 +14996,7 @@
     },
     {
       "provinceId": "ss-guoshiwu",
-      "provinceIndex": 1273,
+      "provinceIndex": 1247,
       "jurisdictionId": "ss-guoshiwu",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -15320,7 +15008,7 @@
     },
     {
       "provinceId": "ss-hanguguan",
-      "provinceIndex": 1274,
+      "provinceIndex": 1248,
       "jurisdictionId": "ss-hanguguan",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -15332,7 +15020,7 @@
     },
     {
       "provinceId": "ss-hanjin",
-      "provinceIndex": 1275,
+      "provinceIndex": 1249,
       "jurisdictionId": "ss-hanjin",
       "commanderyId": "PARENT-0043",
       "commanderyNameCh": "江夏郡",
@@ -15344,7 +15032,7 @@
     },
     {
       "provinceId": "ss-hengjiangjin",
-      "provinceIndex": 1276,
+      "provinceIndex": 1250,
       "jurisdictionId": "ss-hengjiangjin",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -15356,7 +15044,7 @@
     },
     {
       "provinceId": "ss-huangbaicheng",
-      "provinceIndex": 1277,
+      "provinceIndex": 1251,
       "jurisdictionId": "ss-huangbaicheng",
       "commanderyId": "PARENT-0005",
       "commanderyNameCh": "左馮翊",
@@ -15368,7 +15056,7 @@
     },
     {
       "provinceId": "ss-hukouguan",
-      "provinceIndex": 1278,
+      "provinceIndex": 1252,
       "jurisdictionId": "ss-hukouguan",
       "commanderyId": "PARENT-0078",
       "commanderyNameCh": "上黨郡",
@@ -15380,7 +15068,7 @@
     },
     {
       "provinceId": "ss-hulaoguan",
-      "provinceIndex": 1279,
+      "provinceIndex": 1253,
       "jurisdictionId": "ss-hulaoguan",
       "commanderyId": "PARENT-0001",
       "commanderyNameCh": "河內郡",
@@ -15392,7 +15080,7 @@
     },
     {
       "provinceId": "ss-jiange",
-      "provinceIndex": 1280,
+      "provinceIndex": 1254,
       "jurisdictionId": "ss-jiange",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
@@ -15404,7 +15092,7 @@
     },
     {
       "provinceId": "ss-jiaoqiucheng",
-      "provinceIndex": 1281,
+      "provinceIndex": 1255,
       "jurisdictionId": "ss-jiaoqiucheng",
       "commanderyId": "PARENT-0053",
       "commanderyNameCh": "豫章郡",
@@ -15416,7 +15104,7 @@
     },
     {
       "provinceId": "ss-jingcheng",
-      "provinceIndex": 1282,
+      "provinceIndex": 1256,
       "jurisdictionId": "ss-jingcheng",
       "commanderyId": "PARENT-0033",
       "commanderyNameCh": "廣陵郡",
@@ -15428,7 +15116,7 @@
     },
     {
       "provinceId": "ss-jingcheng-dangyang",
-      "provinceIndex": 1283,
+      "provinceIndex": 1257,
       "jurisdictionId": "ss-jingcheng-dangyang",
       "commanderyId": "PARENT-0042",
       "commanderyNameCh": "南郡",
@@ -15440,7 +15128,7 @@
     },
     {
       "provinceId": "ss-jukou",
-      "provinceIndex": 1284,
+      "provinceIndex": 1258,
       "jurisdictionId": "ss-jukou",
       "commanderyId": "PARENT-0043",
       "commanderyNameCh": "江夏郡",
@@ -15452,7 +15140,7 @@
     },
     {
       "provinceId": "ss-lankou",
-      "provinceIndex": 1285,
+      "provinceIndex": 1259,
       "jurisdictionId": "ss-lankou",
       "commanderyId": "PARENT-0001",
       "commanderyNameCh": "河內郡",
@@ -15464,7 +15152,7 @@
     },
     {
       "provinceId": "ss-liangkou",
-      "provinceIndex": 1286,
+      "provinceIndex": 1260,
       "jurisdictionId": "ss-liangkou",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
@@ -15476,7 +15164,7 @@
     },
     {
       "provinceId": "ss-liaokou",
-      "provinceIndex": 1287,
+      "provinceIndex": 1261,
       "jurisdictionId": "ss-liaokou",
       "commanderyId": "PARENT-0094",
       "commanderyNameCh": "遼東郡",
@@ -15488,7 +15176,7 @@
     },
     {
       "provinceId": "ss-licheng",
-      "provinceIndex": 1288,
+      "provinceIndex": 1262,
       "jurisdictionId": "ss-licheng",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -15500,7 +15188,7 @@
     },
     {
       "provinceId": "ss-lieliucheng",
-      "provinceIndex": 1289,
+      "provinceIndex": 1263,
       "jurisdictionId": "ss-lieliucheng",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -15512,7 +15200,7 @@
     },
     {
       "provinceId": "ss-lucheng",
-      "provinceIndex": 1290,
+      "provinceIndex": 1264,
       "jurisdictionId": "ss-lucheng",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -15524,7 +15212,7 @@
     },
     {
       "provinceId": "ss-lukou",
-      "provinceIndex": 1291,
+      "provinceIndex": 1265,
       "jurisdictionId": "ss-lukou",
       "commanderyId": "PARENT-0042",
       "commanderyNameCh": "南郡",
@@ -15536,7 +15224,7 @@
     },
     {
       "provinceId": "ss-lulongsai",
-      "provinceIndex": 1292,
+      "provinceIndex": 1266,
       "jurisdictionId": "ss-lulongsai",
       "commanderyId": "PARENT-0092",
       "commanderyNameCh": "右北平郡",
@@ -15548,7 +15236,7 @@
     },
     {
       "provinceId": "ss-maicheng",
-      "provinceIndex": 1293,
+      "provinceIndex": 1267,
       "jurisdictionId": "ss-maicheng",
       "commanderyId": "PARENT-0042",
       "commanderyNameCh": "南郡",
@@ -15560,7 +15248,7 @@
     },
     {
       "provinceId": "ss-maocheng",
-      "provinceIndex": 1294,
+      "provinceIndex": 1268,
       "jurisdictionId": "ss-maocheng",
       "commanderyId": "PARENT-0013",
       "commanderyNameCh": "魏郡",
@@ -15572,7 +15260,7 @@
     },
     {
       "provinceId": "ss-mengjin",
-      "provinceIndex": 1295,
+      "provinceIndex": 1269,
       "jurisdictionId": "ss-mengjin",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -15584,7 +15272,7 @@
     },
     {
       "provinceId": "ss-mobeiying",
-      "provinceIndex": 1296,
+      "provinceIndex": 1270,
       "jurisdictionId": "ss-mobeiying",
       "commanderyId": "PARENT-0007",
       "commanderyNameCh": "潁川郡",
@@ -15596,7 +15284,7 @@
     },
     {
       "provinceId": "ss-mulansai",
-      "provinceIndex": 1297,
+      "provinceIndex": 1271,
       "jurisdictionId": "ss-mulansai",
       "commanderyId": "PARENT-0054",
       "commanderyNameCh": "漢中郡",
@@ -15608,7 +15296,7 @@
     },
     {
       "provinceId": "ss-nanan-xiakou",
-      "provinceIndex": 1298,
+      "provinceIndex": 1272,
       "jurisdictionId": "ss-nanan-xiakou",
       "commanderyId": "PARENT-0058",
       "commanderyNameCh": "犍為郡",
@@ -15620,7 +15308,7 @@
     },
     {
       "provinceId": "ss-niuzhuying",
-      "provinceIndex": 1299,
+      "provinceIndex": 1273,
       "jurisdictionId": "ss-niuzhuying",
       "commanderyId": "PARENT-0049",
       "commanderyNameCh": "丹陽郡",
@@ -15632,7 +15320,7 @@
     },
     {
       "provinceId": "ss-oukou",
-      "provinceIndex": 1300,
+      "provinceIndex": 1274,
       "jurisdictionId": "ss-oukou",
       "commanderyId": "PARENT-0047",
       "commanderyNameCh": "長沙郡",
@@ -15644,7 +15332,7 @@
     },
     {
       "provinceId": "ss-pubanjin",
-      "provinceIndex": 1301,
+      "provinceIndex": 1275,
       "jurisdictionId": "ss-pubanjin",
       "commanderyId": "PARENT-0002",
       "commanderyNameCh": "河東郡",
@@ -15656,7 +15344,7 @@
     },
     {
       "provinceId": "ss-qikou",
-      "provinceIndex": 1302,
+      "provinceIndex": 1276,
       "jurisdictionId": "ss-qikou",
       "commanderyId": "PARENT-0042",
       "commanderyNameCh": "南郡",
@@ -15668,7 +15356,7 @@
     },
     {
       "provinceId": "ss-qiliying",
-      "provinceIndex": 1303,
+      "provinceIndex": 1277,
       "jurisdictionId": "ss-qiliying",
       "commanderyId": "PARENT-0130",
       "commanderyNameCh": "帶方郡",
@@ -15680,7 +15368,7 @@
     },
     {
       "provinceId": "ss-qucheng",
-      "provinceIndex": 1304,
+      "provinceIndex": 1278,
       "jurisdictionId": "ss-qucheng",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -15692,7 +15380,7 @@
     },
     {
       "provinceId": "ss-ruxukou",
-      "provinceIndex": 1305,
+      "provinceIndex": 1279,
       "jurisdictionId": "ss-ruxukou",
       "commanderyId": "PARENT-0049",
       "commanderyNameCh": "丹陽郡",
@@ -15704,7 +15392,7 @@
     },
     {
       "provinceId": "ss-shangchangcheng",
-      "provinceIndex": 1306,
+      "provinceIndex": 1280,
       "jurisdictionId": "ss-shangchangcheng",
       "commanderyId": "PARENT-0043",
       "commanderyNameCh": "江夏郡",
@@ -15716,7 +15404,7 @@
     },
     {
       "provinceId": "ss-shanjin",
-      "provinceIndex": 1307,
+      "provinceIndex": 1281,
       "jurisdictionId": "ss-shanjin",
       "commanderyId": "PARENT-0003",
       "commanderyNameCh": "弘農郡",
@@ -15728,7 +15416,7 @@
     },
     {
       "provinceId": "ss-shitoucheng",
-      "provinceIndex": 1308,
+      "provinceIndex": 1282,
       "jurisdictionId": "ss-shitoucheng",
       "commanderyId": "PARENT-0049",
       "commanderyNameCh": "丹陽郡",
@@ -15740,7 +15428,7 @@
     },
     {
       "provinceId": "ss-shiying",
-      "provinceIndex": 1309,
+      "provinceIndex": 1283,
       "jurisdictionId": "ss-shiying",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -15752,7 +15440,7 @@
     },
     {
       "provinceId": "ss-shukou",
-      "provinceIndex": 1310,
+      "provinceIndex": 1284,
       "jurisdictionId": "ss-shukou",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -15764,7 +15452,7 @@
     },
     {
       "provinceId": "ss-sikou",
-      "provinceIndex": 1311,
+      "provinceIndex": 1285,
       "jurisdictionId": "ss-sikou",
       "commanderyId": "PARENT-0034",
       "commanderyNameCh": "下邳國",
@@ -15776,7 +15464,7 @@
     },
     {
       "provinceId": "ss-tajin",
-      "provinceIndex": 1312,
+      "provinceIndex": 1286,
       "jurisdictionId": "ss-tajin",
       "commanderyId": "PARENT-0094",
       "commanderyNameCh": "遼東郡",
@@ -15788,7 +15476,7 @@
     },
     {
       "provinceId": "ss-wakou",
-      "provinceIndex": 1313,
+      "provinceIndex": 1287,
       "jurisdictionId": "ss-wakou",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
@@ -15800,7 +15488,7 @@
     },
     {
       "provinceId": "ss-wankou",
-      "provinceIndex": 1314,
+      "provinceIndex": 1288,
       "jurisdictionId": "ss-wankou",
       "commanderyId": "PARENT-0049",
       "commanderyNameCh": "丹陽郡",
@@ -15812,7 +15500,7 @@
     },
     {
       "provinceId": "ss-wansuiwu",
-      "provinceIndex": 1315,
+      "provinceIndex": 1289,
       "jurisdictionId": "ss-wansuiwu",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -15824,7 +15512,7 @@
     },
     {
       "provinceId": "ss-wuguan",
-      "provinceIndex": 1316,
+      "provinceIndex": 1290,
       "jurisdictionId": "ss-wuguan",
       "commanderyId": "PARENT-0004",
       "commanderyNameCh": "京兆尹",
@@ -15836,7 +15524,7 @@
     },
     {
       "provinceId": "ss-wuqiangkou",
-      "provinceIndex": 1317,
+      "provinceIndex": 1291,
       "jurisdictionId": "ss-wuqiangkou",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -15848,7 +15536,7 @@
     },
     {
       "provinceId": "ss-xiakou",
-      "provinceIndex": 1318,
+      "provinceIndex": 1292,
       "jurisdictionId": "ss-xiakou",
       "commanderyId": "PARENT-0126",
       "commanderyNameCh": "宜都郡",
@@ -15860,7 +15548,7 @@
     },
     {
       "provinceId": "ss-xiaopingjin",
-      "provinceIndex": 1319,
+      "provinceIndex": 1293,
       "jurisdictionId": "ss-xiaopingjin",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -15872,7 +15560,7 @@
     },
     {
       "provinceId": "ss-xiaoyaojin",
-      "provinceIndex": 1320,
+      "provinceIndex": 1294,
       "jurisdictionId": "ss-xiaoyaojin",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -15884,7 +15572,7 @@
     },
     {
       "provinceId": "ss-xieguguan",
-      "provinceIndex": 1321,
+      "provinceIndex": 1295,
       "jurisdictionId": "ss-xieguguan",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -15896,7 +15584,7 @@
     },
     {
       "provinceId": "ss-xingguocheng",
-      "provinceIndex": 1322,
+      "provinceIndex": 1296,
       "jurisdictionId": "ss-xingguocheng",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -15908,7 +15596,7 @@
     },
     {
       "provinceId": "ss-xisai",
-      "provinceIndex": 1323,
+      "provinceIndex": 1297,
       "jurisdictionId": "ss-xisai",
       "commanderyId": "PARENT-0159",
       "commanderyNameCh": "蘄春郡",
@@ -15920,7 +15608,7 @@
     },
     {
       "provinceId": "ss-xunkou",
-      "provinceIndex": 1324,
+      "provinceIndex": 1298,
       "jurisdictionId": "ss-xunkou",
       "commanderyId": "PARENT-0042",
       "commanderyNameCh": "南郡",
@@ -15932,7 +15620,7 @@
     },
     {
       "provinceId": "ss-yanganguan",
-      "provinceIndex": 1325,
+      "provinceIndex": 1299,
       "jurisdictionId": "ss-yanganguan",
       "commanderyId": "PARENT-0054",
       "commanderyNameCh": "漢中郡",
@@ -15944,7 +15632,7 @@
     },
     {
       "provinceId": "ss-yangpingguan",
-      "provinceIndex": 1326,
+      "provinceIndex": 1300,
       "jurisdictionId": "ss-yangpingguan",
       "commanderyId": "PARENT-0054",
       "commanderyNameCh": "漢中郡",
@@ -15956,7 +15644,7 @@
     },
     {
       "provinceId": "ss-yanjin",
-      "provinceIndex": 1327,
+      "provinceIndex": 1301,
       "jurisdictionId": "ss-yanjin",
       "commanderyId": "PARENT-0023",
       "commanderyNameCh": "東郡",
@@ -15968,7 +15656,7 @@
     },
     {
       "provinceId": "ss-yiquanwu",
-      "provinceIndex": 1328,
+      "provinceIndex": 1302,
       "jurisdictionId": "ss-yiquanwu",
       "commanderyId": "PARENT-0003",
       "commanderyNameCh": "弘農郡",
@@ -15980,7 +15668,7 @@
     },
     {
       "provinceId": "ss-zhanyinkou",
-      "provinceIndex": 1329,
+      "provinceIndex": 1303,
       "jurisdictionId": "ss-zhanyinkou",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -15992,7 +15680,7 @@
     },
     {
       "provinceId": "ss-zuocheng",
-      "provinceIndex": 1330,
+      "provinceIndex": 1304,
       "jurisdictionId": "ss-zuocheng",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -16004,7 +15692,7 @@
     },
     {
       "provinceId": "gc-g0000-003",
-      "provinceIndex": 1331,
+      "provinceIndex": 1305,
       "jurisdictionId": "gc-g0000-003",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -16016,7 +15704,7 @@
     },
     {
       "provinceId": "gc-g0002-002",
-      "provinceIndex": 1332,
+      "provinceIndex": 1306,
       "jurisdictionId": "gc-g0002-002",
       "commanderyId": "PARENT-0002",
       "commanderyNameCh": "河東郡",
@@ -16028,7 +15716,7 @@
     },
     {
       "provinceId": "gc-g0005-012",
-      "provinceIndex": 1333,
+      "provinceIndex": 1307,
       "jurisdictionId": "gc-g0005-012",
       "commanderyId": "PARENT-0005",
       "commanderyNameCh": "左馮翊",
@@ -16040,7 +15728,7 @@
     },
     {
       "provinceId": "gc-g0006-013",
-      "provinceIndex": 1334,
+      "provinceIndex": 1308,
       "jurisdictionId": "gc-g0006-013",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16052,7 +15740,7 @@
     },
     {
       "provinceId": "gc-g0008-009",
-      "provinceIndex": 1335,
+      "provinceIndex": 1309,
       "jurisdictionId": "gc-g0008-009",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16064,7 +15752,7 @@
     },
     {
       "provinceId": "gc-g0008-016",
-      "provinceIndex": 1336,
+      "provinceIndex": 1310,
       "jurisdictionId": "gc-g0008-016",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16076,7 +15764,7 @@
     },
     {
       "provinceId": "gc-g0008-019",
-      "provinceIndex": 1337,
+      "provinceIndex": 1311,
       "jurisdictionId": "gc-g0008-019",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16088,7 +15776,7 @@
     },
     {
       "provinceId": "gc-g0008-034",
-      "provinceIndex": 1338,
+      "provinceIndex": 1312,
       "jurisdictionId": "gc-g0008-034",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16100,7 +15788,7 @@
     },
     {
       "provinceId": "gc-g0008-035",
-      "provinceIndex": 1339,
+      "provinceIndex": 1313,
       "jurisdictionId": "gc-g0008-035",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16112,7 +15800,7 @@
     },
     {
       "provinceId": "gc-g0009-006",
-      "provinceIndex": 1340,
+      "provinceIndex": 1314,
       "jurisdictionId": "gc-g0009-006",
       "commanderyId": "PARENT-0009",
       "commanderyNameCh": "梁國",
@@ -16124,7 +15812,7 @@
     },
     {
       "provinceId": "gc-g0009-009",
-      "provinceIndex": 1341,
+      "provinceIndex": 1315,
       "jurisdictionId": "gc-g0009-009",
       "commanderyId": "PARENT-0009",
       "commanderyNameCh": "梁國",
@@ -16136,7 +15824,7 @@
     },
     {
       "provinceId": "gc-g0010-017",
-      "provinceIndex": 1342,
+      "provinceIndex": 1316,
       "jurisdictionId": "gc-g0010-017",
       "commanderyId": "PARENT-0010",
       "commanderyNameCh": "沛國",
@@ -16148,7 +15836,7 @@
     },
     {
       "provinceId": "gc-g0015-007",
-      "provinceIndex": 1343,
+      "provinceIndex": 1317,
       "jurisdictionId": "gc-g0015-007",
       "commanderyId": "PARENT-0015",
       "commanderyNameCh": "常山國",
@@ -16160,7 +15848,7 @@
     },
     {
       "provinceId": "gc-g0022-008",
-      "provinceIndex": 1344,
+      "provinceIndex": 1318,
       "jurisdictionId": "gc-g0022-008",
       "commanderyId": "PARENT-0022",
       "commanderyNameCh": "陳留郡",
@@ -16172,7 +15860,7 @@
     },
     {
       "provinceId": "gc-g0028-002",
-      "provinceIndex": 1345,
+      "provinceIndex": 1319,
       "jurisdictionId": "gc-g0028-002",
       "commanderyId": "PARENT-0028",
       "commanderyNameCh": "山陽郡",
@@ -16184,7 +15872,7 @@
     },
     {
       "provinceId": "gc-g0033-006",
-      "provinceIndex": 1346,
+      "provinceIndex": 1320,
       "jurisdictionId": "gc-g0033-006",
       "commanderyId": "PARENT-0033",
       "commanderyNameCh": "廣陵郡",
@@ -16196,7 +15884,7 @@
     },
     {
       "provinceId": "gc-g0041-032",
-      "provinceIndex": 1347,
+      "provinceIndex": 1321,
       "jurisdictionId": "gc-g0041-032",
       "commanderyId": "PARENT-0041",
       "commanderyNameCh": "南陽郡",
@@ -16208,7 +15896,7 @@
     },
     {
       "provinceId": "gc-g0041-036",
-      "provinceIndex": 1348,
+      "provinceIndex": 1322,
       "jurisdictionId": "gc-g0041-036",
       "commanderyId": "PARENT-0041",
       "commanderyNameCh": "南陽郡",
@@ -16220,7 +15908,7 @@
     },
     {
       "provinceId": "gc-g0048-001",
-      "provinceIndex": 1349,
+      "provinceIndex": 1323,
       "jurisdictionId": "gc-g0048-001",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -16232,7 +15920,7 @@
     },
     {
       "provinceId": "gc-g0048-007",
-      "provinceIndex": 1350,
+      "provinceIndex": 1324,
       "jurisdictionId": "gc-g0048-007",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -16244,7 +15932,7 @@
     },
     {
       "provinceId": "gc-g0048-008",
-      "provinceIndex": 1351,
+      "provinceIndex": 1325,
       "jurisdictionId": "gc-g0048-008",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -16256,7 +15944,7 @@
     },
     {
       "provinceId": "gc-g0048-009",
-      "provinceIndex": 1352,
+      "provinceIndex": 1326,
       "jurisdictionId": "gc-g0048-009",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -16268,7 +15956,7 @@
     },
     {
       "provinceId": "gc-g0048-010",
-      "provinceIndex": 1353,
+      "provinceIndex": 1327,
       "jurisdictionId": "gc-g0048-010",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -16280,7 +15968,7 @@
     },
     {
       "provinceId": "gc-g0048-011",
-      "provinceIndex": 1354,
+      "provinceIndex": 1328,
       "jurisdictionId": "gc-g0048-011",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -16292,7 +15980,7 @@
     },
     {
       "provinceId": "gc-g0049-011",
-      "provinceIndex": 1355,
+      "provinceIndex": 1329,
       "jurisdictionId": "gc-g0049-011",
       "commanderyId": "PARENT-0049",
       "commanderyNameCh": "丹陽郡",
@@ -16304,7 +15992,7 @@
     },
     {
       "provinceId": "gc-g0050-001",
-      "provinceIndex": 1356,
+      "provinceIndex": 1330,
       "jurisdictionId": "gc-g0050-001",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -16316,7 +16004,7 @@
     },
     {
       "provinceId": "gc-g0050-005",
-      "provinceIndex": 1357,
+      "provinceIndex": 1331,
       "jurisdictionId": "gc-g0050-005",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -16328,7 +16016,7 @@
     },
     {
       "provinceId": "gc-g0050-006",
-      "provinceIndex": 1358,
+      "provinceIndex": 1332,
       "jurisdictionId": "gc-g0050-006",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -16340,7 +16028,7 @@
     },
     {
       "provinceId": "gc-g0050-007",
-      "provinceIndex": 1359,
+      "provinceIndex": 1333,
       "jurisdictionId": "gc-g0050-007",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -16352,7 +16040,7 @@
     },
     {
       "provinceId": "gc-g0060-006",
-      "provinceIndex": 1360,
+      "provinceIndex": 1334,
       "jurisdictionId": "gc-g0060-006",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -16364,7 +16052,7 @@
     },
     {
       "provinceId": "gc-g0060-008",
-      "provinceIndex": 1361,
+      "provinceIndex": 1335,
       "jurisdictionId": "gc-g0060-008",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -16376,7 +16064,7 @@
     },
     {
       "provinceId": "gc-g0061-003",
-      "provinceIndex": 1362,
+      "provinceIndex": 1336,
       "jurisdictionId": "gc-g0061-003",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -16388,7 +16076,7 @@
     },
     {
       "provinceId": "gc-g0062-005",
-      "provinceIndex": 1363,
+      "provinceIndex": 1337,
       "jurisdictionId": "gc-g0062-005",
       "commanderyId": "PARENT-0062",
       "commanderyNameCh": "永昌郡",
@@ -16400,7 +16088,7 @@
     },
     {
       "provinceId": "gc-g0067-006",
-      "provinceIndex": 1364,
+      "provinceIndex": 1338,
       "jurisdictionId": "gc-g0067-006",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -16412,7 +16100,7 @@
     },
     {
       "provinceId": "gc-g0067-012",
-      "provinceIndex": 1365,
+      "provinceIndex": 1339,
       "jurisdictionId": "gc-g0067-012",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -16424,7 +16112,7 @@
     },
     {
       "provinceId": "gc-g0070-001",
-      "provinceIndex": 1366,
+      "provinceIndex": 1340,
       "jurisdictionId": "gc-g0070-001",
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
@@ -16436,7 +16124,7 @@
     },
     {
       "provinceId": "gc-g0072-001",
-      "provinceIndex": 1367,
+      "provinceIndex": 1341,
       "jurisdictionId": "gc-g0072-001",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -16448,7 +16136,7 @@
     },
     {
       "provinceId": "gc-g0072-009",
-      "provinceIndex": 1368,
+      "provinceIndex": 1342,
       "jurisdictionId": "gc-g0072-009",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -16460,7 +16148,7 @@
     },
     {
       "provinceId": "gc-g0074-002",
-      "provinceIndex": 1369,
+      "provinceIndex": 1343,
       "jurisdictionId": "gc-g0074-002",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -16472,7 +16160,7 @@
     },
     {
       "provinceId": "gc-g0074-003",
-      "provinceIndex": 1370,
+      "provinceIndex": 1344,
       "jurisdictionId": "gc-g0074-003",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -16484,7 +16172,7 @@
     },
     {
       "provinceId": "gc-g0074-005",
-      "provinceIndex": 1371,
+      "provinceIndex": 1345,
       "jurisdictionId": "gc-g0074-005",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -16496,7 +16184,7 @@
     },
     {
       "provinceId": "gc-g0074-006",
-      "provinceIndex": 1372,
+      "provinceIndex": 1346,
       "jurisdictionId": "gc-g0074-006",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -16508,7 +16196,7 @@
     },
     {
       "provinceId": "gc-g0074-007",
-      "provinceIndex": 1373,
+      "provinceIndex": 1347,
       "jurisdictionId": "gc-g0074-007",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -16520,7 +16208,7 @@
     },
     {
       "provinceId": "gc-g0079-006",
-      "provinceIndex": 1374,
+      "provinceIndex": 1348,
       "jurisdictionId": "gc-g0079-006",
       "commanderyId": "PARENT-0079",
       "commanderyNameCh": "太原郡",
@@ -16532,7 +16220,7 @@
     },
     {
       "provinceId": "gc-g0081-005",
-      "provinceIndex": 1375,
+      "provinceIndex": 1349,
       "jurisdictionId": "gc-g0081-005",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -16544,7 +16232,7 @@
     },
     {
       "provinceId": "gc-g0082-002",
-      "provinceIndex": 1376,
+      "provinceIndex": 1350,
       "jurisdictionId": "gc-g0082-002",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -16556,7 +16244,7 @@
     },
     {
       "provinceId": "gc-g0085-001",
-      "provinceIndex": 1377,
+      "provinceIndex": 1351,
       "jurisdictionId": "gc-g0085-001",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -16568,7 +16256,7 @@
     },
     {
       "provinceId": "gc-g0085-002",
-      "provinceIndex": 1378,
+      "provinceIndex": 1352,
       "jurisdictionId": "gc-g0085-002",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -16580,7 +16268,7 @@
     },
     {
       "provinceId": "gc-g0085-007",
-      "provinceIndex": 1379,
+      "provinceIndex": 1353,
       "jurisdictionId": "gc-g0085-007",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -16592,7 +16280,7 @@
     },
     {
       "provinceId": "gc-g0085-010",
-      "provinceIndex": 1380,
+      "provinceIndex": 1354,
       "jurisdictionId": "gc-g0085-010",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -16604,7 +16292,7 @@
     },
     {
       "provinceId": "gc-g0089-001",
-      "provinceIndex": 1381,
+      "provinceIndex": 1355,
       "jurisdictionId": "gc-g0089-001",
       "commanderyId": "PARENT-0089",
       "commanderyNameCh": "代郡",
@@ -16616,7 +16304,7 @@
     },
     {
       "provinceId": "gc-g0090-005",
-      "provinceIndex": 1382,
+      "provinceIndex": 1356,
       "jurisdictionId": "gc-g0090-005",
       "commanderyId": "PARENT-0090",
       "commanderyNameCh": "上谷郡",
@@ -16628,7 +16316,7 @@
     },
     {
       "provinceId": "gc-g0091-002",
-      "provinceIndex": 1383,
+      "provinceIndex": 1357,
       "jurisdictionId": "gc-g0091-002",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -16640,7 +16328,7 @@
     },
     {
       "provinceId": "gc-g0091-004",
-      "provinceIndex": 1384,
+      "provinceIndex": 1358,
       "jurisdictionId": "gc-g0091-004",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -16652,7 +16340,7 @@
     },
     {
       "provinceId": "gc-g0091-007",
-      "provinceIndex": 1385,
+      "provinceIndex": 1359,
       "jurisdictionId": "gc-g0091-007",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -16664,7 +16352,7 @@
     },
     {
       "provinceId": "gc-g0098-003",
-      "provinceIndex": 1386,
+      "provinceIndex": 1360,
       "jurisdictionId": "gc-g0098-003",
       "commanderyId": "PARENT-0098",
       "commanderyNameCh": "南海郡",
@@ -16676,7 +16364,7 @@
     },
     {
       "provinceId": "gc-g0000-014",
-      "provinceIndex": 1387,
+      "provinceIndex": 1361,
       "jurisdictionId": "gc-g0000-014",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -16688,7 +16376,7 @@
     },
     {
       "provinceId": "gc-g0000-018",
-      "provinceIndex": 1388,
+      "provinceIndex": 1362,
       "jurisdictionId": "gc-g0000-018",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -16700,7 +16388,7 @@
     },
     {
       "provinceId": "gc-g0000-021",
-      "provinceIndex": 1389,
+      "provinceIndex": 1363,
       "jurisdictionId": "gc-g0000-021",
       "commanderyId": "PARENT-0000",
       "commanderyNameCh": "河南尹",
@@ -16712,7 +16400,7 @@
     },
     {
       "provinceId": "gc-g0002-011",
-      "provinceIndex": 1390,
+      "provinceIndex": 1364,
       "jurisdictionId": "gc-g0002-011",
       "commanderyId": "PARENT-0002",
       "commanderyNameCh": "河東郡",
@@ -16724,7 +16412,7 @@
     },
     {
       "provinceId": "gc-g0002-018",
-      "provinceIndex": 1391,
+      "provinceIndex": 1365,
       "jurisdictionId": "gc-g0002-018",
       "commanderyId": "PARENT-0002",
       "commanderyNameCh": "河東郡",
@@ -16736,7 +16424,7 @@
     },
     {
       "provinceId": "gc-g0004-002",
-      "provinceIndex": 1392,
+      "provinceIndex": 1366,
       "jurisdictionId": "gc-g0004-002",
       "commanderyId": "PARENT-0004",
       "commanderyNameCh": "京兆尹",
@@ -16748,7 +16436,7 @@
     },
     {
       "provinceId": "gc-g0004-010",
-      "provinceIndex": 1393,
+      "provinceIndex": 1367,
       "jurisdictionId": "gc-g0004-010",
       "commanderyId": "PARENT-0004",
       "commanderyNameCh": "京兆尹",
@@ -16760,7 +16448,7 @@
     },
     {
       "provinceId": "gc-g0005-001",
-      "provinceIndex": 1394,
+      "provinceIndex": 1368,
       "jurisdictionId": "gc-g0005-001",
       "commanderyId": "PARENT-0005",
       "commanderyNameCh": "左馮翊",
@@ -16772,7 +16460,7 @@
     },
     {
       "provinceId": "gc-g0005-004",
-      "provinceIndex": 1395,
+      "provinceIndex": 1369,
       "jurisdictionId": "gc-g0005-004",
       "commanderyId": "PARENT-0005",
       "commanderyNameCh": "左馮翊",
@@ -16784,7 +16472,7 @@
     },
     {
       "provinceId": "gc-g0005-005",
-      "provinceIndex": 1396,
+      "provinceIndex": 1370,
       "jurisdictionId": "gc-g0005-005",
       "commanderyId": "PARENT-0005",
       "commanderyNameCh": "左馮翊",
@@ -16796,7 +16484,7 @@
     },
     {
       "provinceId": "gc-g0005-007",
-      "provinceIndex": 1397,
+      "provinceIndex": 1371,
       "jurisdictionId": "gc-g0005-007",
       "commanderyId": "PARENT-0005",
       "commanderyNameCh": "左馮翊",
@@ -16808,7 +16496,7 @@
     },
     {
       "provinceId": "gc-g0006-002",
-      "provinceIndex": 1398,
+      "provinceIndex": 1372,
       "jurisdictionId": "gc-g0006-002",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16820,7 +16508,7 @@
     },
     {
       "provinceId": "gc-g0006-003",
-      "provinceIndex": 1399,
+      "provinceIndex": 1373,
       "jurisdictionId": "gc-g0006-003",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16832,7 +16520,7 @@
     },
     {
       "provinceId": "gc-g0006-004",
-      "provinceIndex": 1400,
+      "provinceIndex": 1374,
       "jurisdictionId": "gc-g0006-004",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16844,7 +16532,7 @@
     },
     {
       "provinceId": "gc-g0006-009",
-      "provinceIndex": 1401,
+      "provinceIndex": 1375,
       "jurisdictionId": "gc-g0006-009",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16856,7 +16544,7 @@
     },
     {
       "provinceId": "gc-g0006-011",
-      "provinceIndex": 1402,
+      "provinceIndex": 1376,
       "jurisdictionId": "gc-g0006-011",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16868,7 +16556,7 @@
     },
     {
       "provinceId": "gc-g0006-015",
-      "provinceIndex": 1403,
+      "provinceIndex": 1377,
       "jurisdictionId": "gc-g0006-015",
       "commanderyId": "PARENT-0006",
       "commanderyNameCh": "右扶風",
@@ -16880,7 +16568,7 @@
     },
     {
       "provinceId": "gc-g0007-002",
-      "provinceIndex": 1404,
+      "provinceIndex": 1378,
       "jurisdictionId": "gc-g0007-002",
       "commanderyId": "PARENT-0007",
       "commanderyNameCh": "潁川郡",
@@ -16892,7 +16580,7 @@
     },
     {
       "provinceId": "gc-g0007-013",
-      "provinceIndex": 1405,
+      "provinceIndex": 1379,
       "jurisdictionId": "gc-g0007-013",
       "commanderyId": "PARENT-0007",
       "commanderyNameCh": "潁川郡",
@@ -16904,7 +16592,7 @@
     },
     {
       "provinceId": "gc-g0008-002",
-      "provinceIndex": 1406,
+      "provinceIndex": 1380,
       "jurisdictionId": "gc-g0008-002",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16916,7 +16604,7 @@
     },
     {
       "provinceId": "gc-g0008-010",
-      "provinceIndex": 1407,
+      "provinceIndex": 1381,
       "jurisdictionId": "gc-g0008-010",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16928,7 +16616,7 @@
     },
     {
       "provinceId": "gc-g0008-011",
-      "provinceIndex": 1408,
+      "provinceIndex": 1382,
       "jurisdictionId": "gc-g0008-011",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16940,7 +16628,7 @@
     },
     {
       "provinceId": "gc-g0008-025",
-      "provinceIndex": 1409,
+      "provinceIndex": 1383,
       "jurisdictionId": "gc-g0008-025",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16952,7 +16640,7 @@
     },
     {
       "provinceId": "gc-g0008-028",
-      "provinceIndex": 1410,
+      "provinceIndex": 1384,
       "jurisdictionId": "gc-g0008-028",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16964,7 +16652,7 @@
     },
     {
       "provinceId": "gc-g0008-030",
-      "provinceIndex": 1411,
+      "provinceIndex": 1385,
       "jurisdictionId": "gc-g0008-030",
       "commanderyId": "PARENT-0008",
       "commanderyNameCh": "汝南郡",
@@ -16976,7 +16664,7 @@
     },
     {
       "provinceId": "gc-g0009-004",
-      "provinceIndex": 1412,
+      "provinceIndex": 1386,
       "jurisdictionId": "gc-g0009-004",
       "commanderyId": "PARENT-0009",
       "commanderyNameCh": "梁國",
@@ -16988,7 +16676,7 @@
     },
     {
       "provinceId": "gc-g0009-007",
-      "provinceIndex": 1413,
+      "provinceIndex": 1387,
       "jurisdictionId": "gc-g0009-007",
       "commanderyId": "PARENT-0009",
       "commanderyNameCh": "梁國",
@@ -17000,7 +16688,7 @@
     },
     {
       "provinceId": "gc-g0010-011",
-      "provinceIndex": 1414,
+      "provinceIndex": 1388,
       "jurisdictionId": "gc-g0010-011",
       "commanderyId": "PARENT-0010",
       "commanderyNameCh": "沛國",
@@ -17012,7 +16700,7 @@
     },
     {
       "provinceId": "gc-g0010-013",
-      "provinceIndex": 1415,
+      "provinceIndex": 1389,
       "jurisdictionId": "gc-g0010-013",
       "commanderyId": "PARENT-0010",
       "commanderyNameCh": "沛國",
@@ -17024,7 +16712,7 @@
     },
     {
       "provinceId": "gc-g0010-020",
-      "provinceIndex": 1416,
+      "provinceIndex": 1390,
       "jurisdictionId": "gc-g0010-020",
       "commanderyId": "PARENT-0010",
       "commanderyNameCh": "沛國",
@@ -17036,7 +16724,7 @@
     },
     {
       "provinceId": "gc-g0011-003",
-      "provinceIndex": 1417,
+      "provinceIndex": 1391,
       "jurisdictionId": "gc-g0011-003",
       "commanderyId": "PARENT-0011",
       "commanderyNameCh": "陳國",
@@ -17048,7 +16736,7 @@
     },
     {
       "provinceId": "gc-g0012-001",
-      "provinceIndex": 1418,
+      "provinceIndex": 1392,
       "jurisdictionId": "gc-g0012-001",
       "commanderyId": "PARENT-0012",
       "commanderyNameCh": "魯國",
@@ -17060,7 +16748,7 @@
     },
     {
       "provinceId": "gc-g0012-002",
-      "provinceIndex": 1419,
+      "provinceIndex": 1393,
       "jurisdictionId": "gc-g0012-002",
       "commanderyId": "PARENT-0012",
       "commanderyNameCh": "魯國",
@@ -17072,7 +16760,7 @@
     },
     {
       "provinceId": "gc-g0013-011",
-      "provinceIndex": 1420,
+      "provinceIndex": 1394,
       "jurisdictionId": "gc-g0013-011",
       "commanderyId": "PARENT-0013",
       "commanderyNameCh": "魏郡",
@@ -17084,7 +16772,7 @@
     },
     {
       "provinceId": "gc-g0014-001",
-      "provinceIndex": 1421,
+      "provinceIndex": 1395,
       "jurisdictionId": "gc-g0014-001",
       "commanderyId": "PARENT-0014",
       "commanderyNameCh": "鉅鹿郡",
@@ -17096,7 +16784,7 @@
     },
     {
       "provinceId": "gc-g0014-015",
-      "provinceIndex": 1422,
+      "provinceIndex": 1396,
       "jurisdictionId": "gc-g0014-015",
       "commanderyId": "PARENT-0014",
       "commanderyNameCh": "鉅鹿郡",
@@ -17108,7 +16796,7 @@
     },
     {
       "provinceId": "gc-g0015-003",
-      "provinceIndex": 1423,
+      "provinceIndex": 1397,
       "jurisdictionId": "gc-g0015-003",
       "commanderyId": "PARENT-0015",
       "commanderyNameCh": "常山國",
@@ -17120,7 +16808,7 @@
     },
     {
       "provinceId": "gc-g0017-012",
-      "provinceIndex": 1424,
+      "provinceIndex": 1398,
       "jurisdictionId": "gc-g0017-012",
       "commanderyId": "PARENT-0017",
       "commanderyNameCh": "安平國",
@@ -17132,7 +16820,7 @@
     },
     {
       "provinceId": "gc-g0018-003",
-      "provinceIndex": 1425,
+      "provinceIndex": 1399,
       "jurisdictionId": "gc-g0018-003",
       "commanderyId": "PARENT-0018",
       "commanderyNameCh": "河閒國",
@@ -17144,7 +16832,7 @@
     },
     {
       "provinceId": "gc-g0021-008",
-      "provinceIndex": 1426,
+      "provinceIndex": 1400,
       "jurisdictionId": "gc-g0021-008",
       "commanderyId": "PARENT-0021",
       "commanderyNameCh": "勃海郡",
@@ -17156,7 +16844,7 @@
     },
     {
       "provinceId": "gc-g0022-010",
-      "provinceIndex": 1427,
+      "provinceIndex": 1401,
       "jurisdictionId": "gc-g0022-010",
       "commanderyId": "PARENT-0022",
       "commanderyNameCh": "陳留郡",
@@ -17168,7 +16856,7 @@
     },
     {
       "provinceId": "gc-g0022-013",
-      "provinceIndex": 1428,
+      "provinceIndex": 1402,
       "jurisdictionId": "gc-g0022-013",
       "commanderyId": "PARENT-0022",
       "commanderyNameCh": "陳留郡",
@@ -17180,7 +16868,7 @@
     },
     {
       "provinceId": "gc-g0023-001",
-      "provinceIndex": 1429,
+      "provinceIndex": 1403,
       "jurisdictionId": "gc-g0023-001",
       "commanderyId": "PARENT-0023",
       "commanderyNameCh": "東郡",
@@ -17192,7 +16880,7 @@
     },
     {
       "provinceId": "gc-g0023-014",
-      "provinceIndex": 1430,
+      "provinceIndex": 1404,
       "jurisdictionId": "gc-g0023-014",
       "commanderyId": "PARENT-0023",
       "commanderyNameCh": "東郡",
@@ -17204,7 +16892,7 @@
     },
     {
       "provinceId": "gc-g0024-003",
-      "provinceIndex": 1431,
+      "provinceIndex": 1405,
       "jurisdictionId": "gc-g0024-003",
       "commanderyId": "PARENT-0024",
       "commanderyNameCh": "東平國",
@@ -17216,7 +16904,7 @@
     },
     {
       "provinceId": "gc-g0026-006",
-      "provinceIndex": 1432,
+      "provinceIndex": 1406,
       "jurisdictionId": "gc-g0026-006",
       "commanderyId": "PARENT-0026",
       "commanderyNameCh": "泰山郡",
@@ -17228,7 +16916,7 @@
     },
     {
       "provinceId": "gc-g0028-010",
-      "provinceIndex": 1433,
+      "provinceIndex": 1407,
       "jurisdictionId": "gc-g0028-010",
       "commanderyId": "PARENT-0028",
       "commanderyNameCh": "山陽郡",
@@ -17240,7 +16928,7 @@
     },
     {
       "provinceId": "gc-g0029-007",
-      "provinceIndex": 1434,
+      "provinceIndex": 1408,
       "jurisdictionId": "gc-g0029-007",
       "commanderyId": "PARENT-0029",
       "commanderyNameCh": "濟陰郡",
@@ -17252,7 +16940,7 @@
     },
     {
       "provinceId": "gc-g0030-001",
-      "provinceIndex": 1435,
+      "provinceIndex": 1409,
       "jurisdictionId": "gc-g0030-001",
       "commanderyId": "PARENT-0030",
       "commanderyNameCh": "東海郡",
@@ -17264,7 +16952,7 @@
     },
     {
       "provinceId": "gc-g0030-008",
-      "provinceIndex": 1436,
+      "provinceIndex": 1410,
       "jurisdictionId": "gc-g0030-008",
       "commanderyId": "PARENT-0030",
       "commanderyNameCh": "東海郡",
@@ -17276,7 +16964,7 @@
     },
     {
       "provinceId": "gc-g0030-010",
-      "provinceIndex": 1437,
+      "provinceIndex": 1411,
       "jurisdictionId": "gc-g0030-010",
       "commanderyId": "PARENT-0030",
       "commanderyNameCh": "東海郡",
@@ -17288,7 +16976,7 @@
     },
     {
       "provinceId": "gc-g0031-005",
-      "provinceIndex": 1438,
+      "provinceIndex": 1412,
       "jurisdictionId": "gc-g0031-005",
       "commanderyId": "PARENT-0031",
       "commanderyNameCh": "琅邪國",
@@ -17300,7 +16988,7 @@
     },
     {
       "provinceId": "gc-g0032-006",
-      "provinceIndex": 1439,
+      "provinceIndex": 1413,
       "jurisdictionId": "gc-g0032-006",
       "commanderyId": "PARENT-0032",
       "commanderyNameCh": "彭城國",
@@ -17312,7 +17000,7 @@
     },
     {
       "provinceId": "gc-g0032-007",
-      "provinceIndex": 1440,
+      "provinceIndex": 1414,
       "jurisdictionId": "gc-g0032-007",
       "commanderyId": "PARENT-0032",
       "commanderyNameCh": "彭城國",
@@ -17324,7 +17012,7 @@
     },
     {
       "provinceId": "gc-g0033-009",
-      "provinceIndex": 1441,
+      "provinceIndex": 1415,
       "jurisdictionId": "gc-g0033-009",
       "commanderyId": "PARENT-0033",
       "commanderyNameCh": "廣陵郡",
@@ -17336,7 +17024,7 @@
     },
     {
       "provinceId": "gc-g0034-008",
-      "provinceIndex": 1442,
+      "provinceIndex": 1416,
       "jurisdictionId": "gc-g0034-008",
       "commanderyId": "PARENT-0034",
       "commanderyNameCh": "下邳國",
@@ -17348,7 +17036,7 @@
     },
     {
       "provinceId": "gc-g0034-009",
-      "provinceIndex": 1443,
+      "provinceIndex": 1417,
       "jurisdictionId": "gc-g0034-009",
       "commanderyId": "PARENT-0034",
       "commanderyNameCh": "下邳國",
@@ -17360,7 +17048,7 @@
     },
     {
       "provinceId": "gc-g0034-010",
-      "provinceIndex": 1444,
+      "provinceIndex": 1418,
       "jurisdictionId": "gc-g0034-010",
       "commanderyId": "PARENT-0034",
       "commanderyNameCh": "下邳國",
@@ -17372,7 +17060,7 @@
     },
     {
       "provinceId": "gc-g0034-013",
-      "provinceIndex": 1445,
+      "provinceIndex": 1419,
       "jurisdictionId": "gc-g0034-013",
       "commanderyId": "PARENT-0034",
       "commanderyNameCh": "下邳國",
@@ -17384,7 +17072,7 @@
     },
     {
       "provinceId": "gc-g0036-007",
-      "provinceIndex": 1446,
+      "provinceIndex": 1420,
       "jurisdictionId": "gc-g0036-007",
       "commanderyId": "PARENT-0036",
       "commanderyNameCh": "平原郡",
@@ -17396,7 +17084,7 @@
     },
     {
       "provinceId": "gc-g0037-006",
-      "provinceIndex": 1447,
+      "provinceIndex": 1421,
       "jurisdictionId": "gc-g0037-006",
       "commanderyId": "PARENT-0037",
       "commanderyNameCh": "樂安國",
@@ -17408,7 +17096,7 @@
     },
     {
       "provinceId": "gc-g0038-007",
-      "provinceIndex": 1448,
+      "provinceIndex": 1422,
       "jurisdictionId": "gc-g0038-007",
       "commanderyId": "PARENT-0038",
       "commanderyNameCh": "北海國",
@@ -17420,7 +17108,7 @@
     },
     {
       "provinceId": "gc-g0038-015",
-      "provinceIndex": 1449,
+      "provinceIndex": 1423,
       "jurisdictionId": "gc-g0038-015",
       "commanderyId": "PARENT-0038",
       "commanderyNameCh": "北海國",
@@ -17432,7 +17120,7 @@
     },
     {
       "provinceId": "gc-g0039-003",
-      "provinceIndex": 1450,
+      "provinceIndex": 1424,
       "jurisdictionId": "gc-g0039-003",
       "commanderyId": "PARENT-0039",
       "commanderyNameCh": "東萊郡",
@@ -17444,7 +17132,7 @@
     },
     {
       "provinceId": "gc-g0039-012",
-      "provinceIndex": 1451,
+      "provinceIndex": 1425,
       "jurisdictionId": "gc-g0039-012",
       "commanderyId": "PARENT-0039",
       "commanderyNameCh": "東萊郡",
@@ -17456,7 +17144,7 @@
     },
     {
       "provinceId": "gc-g0041-034",
-      "provinceIndex": 1452,
+      "provinceIndex": 1426,
       "jurisdictionId": "gc-g0041-034",
       "commanderyId": "PARENT-0041",
       "commanderyNameCh": "南陽郡",
@@ -17468,7 +17156,7 @@
     },
     {
       "provinceId": "gc-g0042-004",
-      "provinceIndex": 1453,
+      "provinceIndex": 1427,
       "jurisdictionId": "gc-g0042-004",
       "commanderyId": "PARENT-0042",
       "commanderyNameCh": "南郡",
@@ -17480,7 +17168,7 @@
     },
     {
       "provinceId": "gc-g0048-003",
-      "provinceIndex": 1454,
+      "provinceIndex": 1428,
       "jurisdictionId": "gc-g0048-003",
       "commanderyId": "PARENT-0048",
       "commanderyNameCh": "九江郡",
@@ -17492,7 +17180,7 @@
     },
     {
       "provinceId": "gc-g0050-004",
-      "provinceIndex": 1455,
+      "provinceIndex": 1429,
       "jurisdictionId": "gc-g0050-004",
       "commanderyId": "PARENT-0050",
       "commanderyNameCh": "廬江郡",
@@ -17504,7 +17192,7 @@
     },
     {
       "provinceId": "gc-g0051-014",
-      "provinceIndex": 1456,
+      "provinceIndex": 1430,
       "jurisdictionId": "gc-g0051-014",
       "commanderyId": "PARENT-0051",
       "commanderyNameCh": "會稽郡",
@@ -17516,7 +17204,7 @@
     },
     {
       "provinceId": "gc-g0052-009",
-      "provinceIndex": 1457,
+      "provinceIndex": 1431,
       "jurisdictionId": "gc-g0052-009",
       "commanderyId": "PARENT-0052",
       "commanderyNameCh": "吳郡",
@@ -17528,7 +17216,7 @@
     },
     {
       "provinceId": "gc-g0053-005",
-      "provinceIndex": 1458,
+      "provinceIndex": 1432,
       "jurisdictionId": "gc-g0053-005",
       "commanderyId": "PARENT-0053",
       "commanderyNameCh": "豫章郡",
@@ -17540,7 +17228,7 @@
     },
     {
       "provinceId": "gc-g0055-008",
-      "provinceIndex": 1459,
+      "provinceIndex": 1433,
       "jurisdictionId": "gc-g0055-008",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
@@ -17552,7 +17240,7 @@
     },
     {
       "provinceId": "gc-g0055-012",
-      "provinceIndex": 1460,
+      "provinceIndex": 1434,
       "jurisdictionId": "gc-g0055-012",
       "commanderyId": "PARENT-0055",
       "commanderyNameCh": "巴郡",
@@ -17564,7 +17252,7 @@
     },
     {
       "provinceId": "gc-g0056-007",
-      "provinceIndex": 1461,
+      "provinceIndex": 1435,
       "jurisdictionId": "gc-g0056-007",
       "commanderyId": "PARENT-0056",
       "commanderyNameCh": "廣漢郡",
@@ -17576,7 +17264,7 @@
     },
     {
       "provinceId": "gc-g0056-008",
-      "provinceIndex": 1462,
+      "provinceIndex": 1436,
       "jurisdictionId": "gc-g0056-008",
       "commanderyId": "PARENT-0056",
       "commanderyNameCh": "廣漢郡",
@@ -17588,7 +17276,7 @@
     },
     {
       "provinceId": "gc-g0056-010",
-      "provinceIndex": 1463,
+      "provinceIndex": 1437,
       "jurisdictionId": "gc-g0056-010",
       "commanderyId": "PARENT-0056",
       "commanderyNameCh": "廣漢郡",
@@ -17600,7 +17288,7 @@
     },
     {
       "provinceId": "gc-g0057-007",
-      "provinceIndex": 1464,
+      "provinceIndex": 1438,
       "jurisdictionId": "gc-g0057-007",
       "commanderyId": "PARENT-0057",
       "commanderyNameCh": "蜀郡",
@@ -17612,7 +17300,7 @@
     },
     {
       "provinceId": "gc-g0057-009",
-      "provinceIndex": 1465,
+      "provinceIndex": 1439,
       "jurisdictionId": "gc-g0057-009",
       "commanderyId": "PARENT-0057",
       "commanderyNameCh": "蜀郡",
@@ -17624,7 +17312,7 @@
     },
     {
       "provinceId": "gc-g0059-002",
-      "provinceIndex": 1466,
+      "provinceIndex": 1440,
       "jurisdictionId": "gc-g0059-002",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -17636,7 +17324,7 @@
     },
     {
       "provinceId": "gc-g0059-007",
-      "provinceIndex": 1467,
+      "provinceIndex": 1441,
       "jurisdictionId": "gc-g0059-007",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -17648,7 +17336,7 @@
     },
     {
       "provinceId": "gc-g0059-009",
-      "provinceIndex": 1468,
+      "provinceIndex": 1442,
       "jurisdictionId": "gc-g0059-009",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -17660,7 +17348,7 @@
     },
     {
       "provinceId": "gc-g0059-015",
-      "provinceIndex": 1469,
+      "provinceIndex": 1443,
       "jurisdictionId": "gc-g0059-015",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -17672,7 +17360,7 @@
     },
     {
       "provinceId": "gc-g0059-016",
-      "provinceIndex": 1470,
+      "provinceIndex": 1444,
       "jurisdictionId": "gc-g0059-016",
       "commanderyId": "PARENT-0059",
       "commanderyNameCh": "牂牁郡",
@@ -17684,7 +17372,7 @@
     },
     {
       "provinceId": "gc-g0060-003",
-      "provinceIndex": 1471,
+      "provinceIndex": 1445,
       "jurisdictionId": "gc-g0060-003",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -17696,7 +17384,7 @@
     },
     {
       "provinceId": "gc-g0060-007",
-      "provinceIndex": 1472,
+      "provinceIndex": 1446,
       "jurisdictionId": "gc-g0060-007",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -17708,7 +17396,7 @@
     },
     {
       "provinceId": "gc-g0060-011",
-      "provinceIndex": 1473,
+      "provinceIndex": 1447,
       "jurisdictionId": "gc-g0060-011",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -17720,7 +17408,7 @@
     },
     {
       "provinceId": "gc-g0060-012",
-      "provinceIndex": 1474,
+      "provinceIndex": 1448,
       "jurisdictionId": "gc-g0060-012",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -17732,7 +17420,7 @@
     },
     {
       "provinceId": "gc-g0060-014",
-      "provinceIndex": 1475,
+      "provinceIndex": 1449,
       "jurisdictionId": "gc-g0060-014",
       "commanderyId": "PARENT-0060",
       "commanderyNameCh": "越巂郡",
@@ -17744,7 +17432,7 @@
     },
     {
       "provinceId": "gc-g0061-002",
-      "provinceIndex": 1476,
+      "provinceIndex": 1450,
       "jurisdictionId": "gc-g0061-002",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -17756,7 +17444,7 @@
     },
     {
       "provinceId": "gc-g0061-004",
-      "provinceIndex": 1477,
+      "provinceIndex": 1451,
       "jurisdictionId": "gc-g0061-004",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -17768,7 +17456,7 @@
     },
     {
       "provinceId": "gc-g0061-006",
-      "provinceIndex": 1478,
+      "provinceIndex": 1452,
       "jurisdictionId": "gc-g0061-006",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -17780,7 +17468,7 @@
     },
     {
       "provinceId": "gc-g0061-016",
-      "provinceIndex": 1479,
+      "provinceIndex": 1453,
       "jurisdictionId": "gc-g0061-016",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -17792,7 +17480,7 @@
     },
     {
       "provinceId": "gc-g0061-017",
-      "provinceIndex": 1480,
+      "provinceIndex": 1454,
       "jurisdictionId": "gc-g0061-017",
       "commanderyId": "PARENT-0061",
       "commanderyNameCh": "益州郡",
@@ -17804,7 +17492,7 @@
     },
     {
       "provinceId": "gc-g0063-001",
-      "provinceIndex": 1481,
+      "provinceIndex": 1455,
       "jurisdictionId": "gc-g0063-001",
       "commanderyId": "PARENT-0063",
       "commanderyNameCh": "廣漢屬國",
@@ -17816,7 +17504,7 @@
     },
     {
       "provinceId": "gc-g0063-002",
-      "provinceIndex": 1482,
+      "provinceIndex": 1456,
       "jurisdictionId": "gc-g0063-002",
       "commanderyId": "PARENT-0063",
       "commanderyNameCh": "廣漢屬國",
@@ -17828,7 +17516,7 @@
     },
     {
       "provinceId": "gc-g0063-003",
-      "provinceIndex": 1483,
+      "provinceIndex": 1457,
       "jurisdictionId": "gc-g0063-003",
       "commanderyId": "PARENT-0063",
       "commanderyNameCh": "廣漢屬國",
@@ -17840,7 +17528,7 @@
     },
     {
       "provinceId": "gc-g0064-004",
-      "provinceIndex": 1484,
+      "provinceIndex": 1458,
       "jurisdictionId": "gc-g0064-004",
       "commanderyId": "PARENT-0064",
       "commanderyNameCh": "蜀郡屬國",
@@ -17852,7 +17540,7 @@
     },
     {
       "provinceId": "gc-g0065-002",
-      "provinceIndex": 1485,
+      "provinceIndex": 1459,
       "jurisdictionId": "gc-g0065-002",
       "commanderyId": "PARENT-0065",
       "commanderyNameCh": "犍為屬國",
@@ -17864,7 +17552,7 @@
     },
     {
       "provinceId": "gc-g0066-002",
-      "provinceIndex": 1486,
+      "provinceIndex": 1460,
       "jurisdictionId": "gc-g0066-002",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -17876,7 +17564,7 @@
     },
     {
       "provinceId": "gc-g0066-003",
-      "provinceIndex": 1487,
+      "provinceIndex": 1461,
       "jurisdictionId": "gc-g0066-003",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -17888,7 +17576,7 @@
     },
     {
       "provinceId": "gc-g0066-005",
-      "provinceIndex": 1488,
+      "provinceIndex": 1462,
       "jurisdictionId": "gc-g0066-005",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -17900,7 +17588,7 @@
     },
     {
       "provinceId": "gc-g0066-011",
-      "provinceIndex": 1489,
+      "provinceIndex": 1463,
       "jurisdictionId": "gc-g0066-011",
       "commanderyId": "PARENT-0066",
       "commanderyNameCh": "隴西郡",
@@ -17912,7 +17600,7 @@
     },
     {
       "provinceId": "gc-g0067-002",
-      "provinceIndex": 1490,
+      "provinceIndex": 1464,
       "jurisdictionId": "gc-g0067-002",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17924,7 +17612,7 @@
     },
     {
       "provinceId": "gc-g0067-003",
-      "provinceIndex": 1491,
+      "provinceIndex": 1465,
       "jurisdictionId": "gc-g0067-003",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17936,7 +17624,7 @@
     },
     {
       "provinceId": "gc-g0067-004",
-      "provinceIndex": 1492,
+      "provinceIndex": 1466,
       "jurisdictionId": "gc-g0067-004",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17948,7 +17636,7 @@
     },
     {
       "provinceId": "gc-g0067-005",
-      "provinceIndex": 1493,
+      "provinceIndex": 1467,
       "jurisdictionId": "gc-g0067-005",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17960,7 +17648,7 @@
     },
     {
       "provinceId": "gc-g0067-007",
-      "provinceIndex": 1494,
+      "provinceIndex": 1468,
       "jurisdictionId": "gc-g0067-007",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17972,7 +17660,7 @@
     },
     {
       "provinceId": "gc-g0067-008",
-      "provinceIndex": 1495,
+      "provinceIndex": 1469,
       "jurisdictionId": "gc-g0067-008",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17984,7 +17672,7 @@
     },
     {
       "provinceId": "gc-g0067-009",
-      "provinceIndex": 1496,
+      "provinceIndex": 1470,
       "jurisdictionId": "gc-g0067-009",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -17996,7 +17684,7 @@
     },
     {
       "provinceId": "gc-g0067-010",
-      "provinceIndex": 1497,
+      "provinceIndex": 1471,
       "jurisdictionId": "gc-g0067-010",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -18008,7 +17696,7 @@
     },
     {
       "provinceId": "gc-g0067-011",
-      "provinceIndex": 1498,
+      "provinceIndex": 1472,
       "jurisdictionId": "gc-g0067-011",
       "commanderyId": "PARENT-0067",
       "commanderyNameCh": "漢陽郡",
@@ -18020,7 +17708,7 @@
     },
     {
       "provinceId": "gc-g0068-001",
-      "provinceIndex": 1499,
+      "provinceIndex": 1473,
       "jurisdictionId": "gc-g0068-001",
       "commanderyId": "PARENT-0068",
       "commanderyNameCh": "武都郡",
@@ -18032,7 +17720,7 @@
     },
     {
       "provinceId": "gc-g0068-002",
-      "provinceIndex": 1500,
+      "provinceIndex": 1474,
       "jurisdictionId": "gc-g0068-002",
       "commanderyId": "PARENT-0068",
       "commanderyNameCh": "武都郡",
@@ -18044,7 +17732,7 @@
     },
     {
       "provinceId": "gc-g0068-003",
-      "provinceIndex": 1501,
+      "provinceIndex": 1475,
       "jurisdictionId": "gc-g0068-003",
       "commanderyId": "PARENT-0068",
       "commanderyNameCh": "武都郡",
@@ -18056,7 +17744,7 @@
     },
     {
       "provinceId": "gc-g0068-005",
-      "provinceIndex": 1502,
+      "provinceIndex": 1476,
       "jurisdictionId": "gc-g0068-005",
       "commanderyId": "PARENT-0068",
       "commanderyNameCh": "武都郡",
@@ -18068,7 +17756,7 @@
     },
     {
       "provinceId": "gc-g0068-007",
-      "provinceIndex": 1503,
+      "provinceIndex": 1477,
       "jurisdictionId": "gc-g0068-007",
       "commanderyId": "PARENT-0068",
       "commanderyNameCh": "武都郡",
@@ -18080,7 +17768,7 @@
     },
     {
       "provinceId": "gc-g0069-001",
-      "provinceIndex": 1504,
+      "provinceIndex": 1478,
       "jurisdictionId": "gc-g0069-001",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -18092,7 +17780,7 @@
     },
     {
       "provinceId": "gc-g0069-002",
-      "provinceIndex": 1505,
+      "provinceIndex": 1479,
       "jurisdictionId": "gc-g0069-002",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -18104,7 +17792,7 @@
     },
     {
       "provinceId": "gc-g0069-003",
-      "provinceIndex": 1506,
+      "provinceIndex": 1480,
       "jurisdictionId": "gc-g0069-003",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -18116,7 +17804,7 @@
     },
     {
       "provinceId": "gc-g0069-004",
-      "provinceIndex": 1507,
+      "provinceIndex": 1481,
       "jurisdictionId": "gc-g0069-004",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -18128,7 +17816,7 @@
     },
     {
       "provinceId": "gc-g0069-010",
-      "provinceIndex": 1508,
+      "provinceIndex": 1482,
       "jurisdictionId": "gc-g0069-010",
       "commanderyId": "PARENT-0069",
       "commanderyNameCh": "金城郡",
@@ -18140,7 +17828,7 @@
     },
     {
       "provinceId": "gc-g0070-004",
-      "provinceIndex": 1509,
+      "provinceIndex": 1483,
       "jurisdictionId": "gc-g0070-004",
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
@@ -18152,7 +17840,7 @@
     },
     {
       "provinceId": "gc-g0070-005",
-      "provinceIndex": 1510,
+      "provinceIndex": 1484,
       "jurisdictionId": "gc-g0070-005",
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
@@ -18164,7 +17852,7 @@
     },
     {
       "provinceId": "gc-g0070-007",
-      "provinceIndex": 1511,
+      "provinceIndex": 1485,
       "jurisdictionId": "gc-g0070-007",
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
@@ -18176,7 +17864,7 @@
     },
     {
       "provinceId": "gc-g0070-008",
-      "provinceIndex": 1512,
+      "provinceIndex": 1486,
       "jurisdictionId": "gc-g0070-008",
       "commanderyId": "PARENT-0070",
       "commanderyNameCh": "安定郡",
@@ -18188,7 +17876,7 @@
     },
     {
       "provinceId": "gc-g0071-006",
-      "provinceIndex": 1513,
+      "provinceIndex": 1487,
       "jurisdictionId": "gc-g0071-006",
       "commanderyId": "PARENT-0071",
       "commanderyNameCh": "北地郡",
@@ -18200,7 +17888,7 @@
     },
     {
       "provinceId": "gc-g0072-002",
-      "provinceIndex": 1514,
+      "provinceIndex": 1488,
       "jurisdictionId": "gc-g0072-002",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18212,7 +17900,7 @@
     },
     {
       "provinceId": "gc-g0072-003",
-      "provinceIndex": 1515,
+      "provinceIndex": 1489,
       "jurisdictionId": "gc-g0072-003",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18224,7 +17912,7 @@
     },
     {
       "provinceId": "gc-g0072-004",
-      "provinceIndex": 1516,
+      "provinceIndex": 1490,
       "jurisdictionId": "gc-g0072-004",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18236,7 +17924,7 @@
     },
     {
       "provinceId": "gc-g0072-005",
-      "provinceIndex": 1517,
+      "provinceIndex": 1491,
       "jurisdictionId": "gc-g0072-005",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18248,7 +17936,7 @@
     },
     {
       "provinceId": "gc-g0072-006",
-      "provinceIndex": 1518,
+      "provinceIndex": 1492,
       "jurisdictionId": "gc-g0072-006",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18260,7 +17948,7 @@
     },
     {
       "provinceId": "gc-g0072-008",
-      "provinceIndex": 1519,
+      "provinceIndex": 1493,
       "jurisdictionId": "gc-g0072-008",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18272,7 +17960,7 @@
     },
     {
       "provinceId": "gc-g0072-010",
-      "provinceIndex": 1520,
+      "provinceIndex": 1494,
       "jurisdictionId": "gc-g0072-010",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18284,7 +17972,7 @@
     },
     {
       "provinceId": "gc-g0072-011",
-      "provinceIndex": 1521,
+      "provinceIndex": 1495,
       "jurisdictionId": "gc-g0072-011",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18296,7 +17984,7 @@
     },
     {
       "provinceId": "gc-g0072-012",
-      "provinceIndex": 1522,
+      "provinceIndex": 1496,
       "jurisdictionId": "gc-g0072-012",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18308,7 +17996,7 @@
     },
     {
       "provinceId": "gc-g0072-014",
-      "provinceIndex": 1523,
+      "provinceIndex": 1497,
       "jurisdictionId": "gc-g0072-014",
       "commanderyId": "PARENT-0072",
       "commanderyNameCh": "武威郡",
@@ -18320,7 +18008,7 @@
     },
     {
       "provinceId": "gc-g0074-001",
-      "provinceIndex": 1524,
+      "provinceIndex": 1498,
       "jurisdictionId": "gc-g0074-001",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -18332,7 +18020,7 @@
     },
     {
       "provinceId": "gc-g0074-008",
-      "provinceIndex": 1525,
+      "provinceIndex": 1499,
       "jurisdictionId": "gc-g0074-008",
       "commanderyId": "PARENT-0074",
       "commanderyNameCh": "酒泉郡",
@@ -18344,7 +18032,7 @@
     },
     {
       "provinceId": "gc-g0075-004",
-      "provinceIndex": 1526,
+      "provinceIndex": 1500,
       "jurisdictionId": "gc-g0075-004",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -18356,7 +18044,7 @@
     },
     {
       "provinceId": "gc-g0075-005",
-      "provinceIndex": 1527,
+      "provinceIndex": 1501,
       "jurisdictionId": "gc-g0075-005",
       "commanderyId": "PARENT-0075",
       "commanderyNameCh": "敦煌郡",
@@ -18368,7 +18056,7 @@
     },
     {
       "provinceId": "gc-g0076-002",
-      "provinceIndex": 1528,
+      "provinceIndex": 1502,
       "jurisdictionId": "gc-g0076-002",
       "commanderyId": "PARENT-0076",
       "commanderyNameCh": "張掖屬國",
@@ -18380,7 +18068,7 @@
     },
     {
       "provinceId": "gc-g0076-003",
-      "provinceIndex": 1529,
+      "provinceIndex": 1503,
       "jurisdictionId": "gc-g0076-003",
       "commanderyId": "PARENT-0076",
       "commanderyNameCh": "張掖屬國",
@@ -18392,7 +18080,7 @@
     },
     {
       "provinceId": "gc-g0076-004",
-      "provinceIndex": 1530,
+      "provinceIndex": 1504,
       "jurisdictionId": "gc-g0076-004",
       "commanderyId": "PARENT-0076",
       "commanderyNameCh": "張掖屬國",
@@ -18404,7 +18092,7 @@
     },
     {
       "provinceId": "gc-g0076-005",
-      "provinceIndex": 1531,
+      "provinceIndex": 1505,
       "jurisdictionId": "gc-g0076-005",
       "commanderyId": "PARENT-0076",
       "commanderyNameCh": "張掖屬國",
@@ -18416,7 +18104,7 @@
     },
     {
       "provinceId": "gc-g0079-001",
-      "provinceIndex": 1532,
+      "provinceIndex": 1506,
       "jurisdictionId": "gc-g0079-001",
       "commanderyId": "PARENT-0079",
       "commanderyNameCh": "太原郡",
@@ -18428,7 +18116,7 @@
     },
     {
       "provinceId": "gc-g0079-005",
-      "provinceIndex": 1533,
+      "provinceIndex": 1507,
       "jurisdictionId": "gc-g0079-005",
       "commanderyId": "PARENT-0079",
       "commanderyNameCh": "太原郡",
@@ -18440,7 +18128,7 @@
     },
     {
       "provinceId": "gc-g0079-010",
-      "provinceIndex": 1534,
+      "provinceIndex": 1508,
       "jurisdictionId": "gc-g0079-010",
       "commanderyId": "PARENT-0079",
       "commanderyNameCh": "太原郡",
@@ -18452,7 +18140,7 @@
     },
     {
       "provinceId": "gc-g0080-001",
-      "provinceIndex": 1535,
+      "provinceIndex": 1509,
       "jurisdictionId": "gc-g0080-001",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -18464,7 +18152,7 @@
     },
     {
       "provinceId": "gc-g0080-002",
-      "provinceIndex": 1536,
+      "provinceIndex": 1510,
       "jurisdictionId": "gc-g0080-002",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -18476,7 +18164,7 @@
     },
     {
       "provinceId": "gc-g0080-003",
-      "provinceIndex": 1537,
+      "provinceIndex": 1511,
       "jurisdictionId": "gc-g0080-003",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -18488,7 +18176,7 @@
     },
     {
       "provinceId": "gc-g0080-004",
-      "provinceIndex": 1538,
+      "provinceIndex": 1512,
       "jurisdictionId": "gc-g0080-004",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -18500,7 +18188,7 @@
     },
     {
       "provinceId": "gc-g0080-006",
-      "provinceIndex": 1539,
+      "provinceIndex": 1513,
       "jurisdictionId": "gc-g0080-006",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -18512,7 +18200,7 @@
     },
     {
       "provinceId": "gc-g0080-008",
-      "provinceIndex": 1540,
+      "provinceIndex": 1514,
       "jurisdictionId": "gc-g0080-008",
       "commanderyId": "PARENT-0080",
       "commanderyNameCh": "上郡",
@@ -18524,7 +18212,7 @@
     },
     {
       "provinceId": "gc-g0081-002",
-      "provinceIndex": 1541,
+      "provinceIndex": 1515,
       "jurisdictionId": "gc-g0081-002",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18536,7 +18224,7 @@
     },
     {
       "provinceId": "gc-g0081-003",
-      "provinceIndex": 1542,
+      "provinceIndex": 1516,
       "jurisdictionId": "gc-g0081-003",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18548,7 +18236,7 @@
     },
     {
       "provinceId": "gc-g0081-004",
-      "provinceIndex": 1543,
+      "provinceIndex": 1517,
       "jurisdictionId": "gc-g0081-004",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18560,7 +18248,7 @@
     },
     {
       "provinceId": "gc-g0081-006",
-      "provinceIndex": 1544,
+      "provinceIndex": 1518,
       "jurisdictionId": "gc-g0081-006",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18572,7 +18260,7 @@
     },
     {
       "provinceId": "gc-g0081-007",
-      "provinceIndex": 1545,
+      "provinceIndex": 1519,
       "jurisdictionId": "gc-g0081-007",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18584,7 +18272,7 @@
     },
     {
       "provinceId": "gc-g0081-008",
-      "provinceIndex": 1546,
+      "provinceIndex": 1520,
       "jurisdictionId": "gc-g0081-008",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18596,7 +18284,7 @@
     },
     {
       "provinceId": "gc-g0081-009",
-      "provinceIndex": 1547,
+      "provinceIndex": 1521,
       "jurisdictionId": "gc-g0081-009",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18608,7 +18296,7 @@
     },
     {
       "provinceId": "gc-g0081-010",
-      "provinceIndex": 1548,
+      "provinceIndex": 1522,
       "jurisdictionId": "gc-g0081-010",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18620,7 +18308,7 @@
     },
     {
       "provinceId": "gc-g0081-011",
-      "provinceIndex": 1549,
+      "provinceIndex": 1523,
       "jurisdictionId": "gc-g0081-011",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18632,7 +18320,7 @@
     },
     {
       "provinceId": "gc-g0081-012",
-      "provinceIndex": 1550,
+      "provinceIndex": 1524,
       "jurisdictionId": "gc-g0081-012",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18644,7 +18332,7 @@
     },
     {
       "provinceId": "gc-g0081-013",
-      "provinceIndex": 1551,
+      "provinceIndex": 1525,
       "jurisdictionId": "gc-g0081-013",
       "commanderyId": "PARENT-0081",
       "commanderyNameCh": "西河郡",
@@ -18656,7 +18344,7 @@
     },
     {
       "provinceId": "gc-g0082-003",
-      "provinceIndex": 1552,
+      "provinceIndex": 1526,
       "jurisdictionId": "gc-g0082-003",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18668,7 +18356,7 @@
     },
     {
       "provinceId": "gc-g0082-004",
-      "provinceIndex": 1553,
+      "provinceIndex": 1527,
       "jurisdictionId": "gc-g0082-004",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18680,7 +18368,7 @@
     },
     {
       "provinceId": "gc-g0082-006",
-      "provinceIndex": 1554,
+      "provinceIndex": 1528,
       "jurisdictionId": "gc-g0082-006",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18692,7 +18380,7 @@
     },
     {
       "provinceId": "gc-g0082-007",
-      "provinceIndex": 1555,
+      "provinceIndex": 1529,
       "jurisdictionId": "gc-g0082-007",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18704,7 +18392,7 @@
     },
     {
       "provinceId": "gc-g0082-008",
-      "provinceIndex": 1556,
+      "provinceIndex": 1530,
       "jurisdictionId": "gc-g0082-008",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18716,7 +18404,7 @@
     },
     {
       "provinceId": "gc-g0082-009",
-      "provinceIndex": 1557,
+      "provinceIndex": 1531,
       "jurisdictionId": "gc-g0082-009",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18728,7 +18416,7 @@
     },
     {
       "provinceId": "gc-g0082-010",
-      "provinceIndex": 1558,
+      "provinceIndex": 1532,
       "jurisdictionId": "gc-g0082-010",
       "commanderyId": "PARENT-0082",
       "commanderyNameCh": "五原郡",
@@ -18740,7 +18428,7 @@
     },
     {
       "provinceId": "gc-g0083-002",
-      "provinceIndex": 1559,
+      "provinceIndex": 1533,
       "jurisdictionId": "gc-g0083-002",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18752,7 +18440,7 @@
     },
     {
       "provinceId": "gc-g0083-003",
-      "provinceIndex": 1560,
+      "provinceIndex": 1534,
       "jurisdictionId": "gc-g0083-003",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18764,7 +18452,7 @@
     },
     {
       "provinceId": "gc-g0083-004",
-      "provinceIndex": 1561,
+      "provinceIndex": 1535,
       "jurisdictionId": "gc-g0083-004",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18776,7 +18464,7 @@
     },
     {
       "provinceId": "gc-g0083-005",
-      "provinceIndex": 1562,
+      "provinceIndex": 1536,
       "jurisdictionId": "gc-g0083-005",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18788,7 +18476,7 @@
     },
     {
       "provinceId": "gc-g0083-006",
-      "provinceIndex": 1563,
+      "provinceIndex": 1537,
       "jurisdictionId": "gc-g0083-006",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18800,7 +18488,7 @@
     },
     {
       "provinceId": "gc-g0083-007",
-      "provinceIndex": 1564,
+      "provinceIndex": 1538,
       "jurisdictionId": "gc-g0083-007",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18812,7 +18500,7 @@
     },
     {
       "provinceId": "gc-g0083-008",
-      "provinceIndex": 1565,
+      "provinceIndex": 1539,
       "jurisdictionId": "gc-g0083-008",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18824,7 +18512,7 @@
     },
     {
       "provinceId": "gc-g0083-010",
-      "provinceIndex": 1566,
+      "provinceIndex": 1540,
       "jurisdictionId": "gc-g0083-010",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18836,7 +18524,7 @@
     },
     {
       "provinceId": "gc-g0083-011",
-      "provinceIndex": 1567,
+      "provinceIndex": 1541,
       "jurisdictionId": "gc-g0083-011",
       "commanderyId": "PARENT-0083",
       "commanderyNameCh": "雲中郡",
@@ -18848,7 +18536,7 @@
     },
     {
       "provinceId": "gc-g0084-002",
-      "provinceIndex": 1568,
+      "provinceIndex": 1542,
       "jurisdictionId": "gc-g0084-002",
       "commanderyId": "PARENT-0084",
       "commanderyNameCh": "定襄郡",
@@ -18860,7 +18548,7 @@
     },
     {
       "provinceId": "gc-g0084-003",
-      "provinceIndex": 1569,
+      "provinceIndex": 1543,
       "jurisdictionId": "gc-g0084-003",
       "commanderyId": "PARENT-0084",
       "commanderyNameCh": "定襄郡",
@@ -18872,7 +18560,7 @@
     },
     {
       "provinceId": "gc-g0084-004",
-      "provinceIndex": 1570,
+      "provinceIndex": 1544,
       "jurisdictionId": "gc-g0084-004",
       "commanderyId": "PARENT-0084",
       "commanderyNameCh": "定襄郡",
@@ -18884,7 +18572,7 @@
     },
     {
       "provinceId": "gc-g0084-005",
-      "provinceIndex": 1571,
+      "provinceIndex": 1545,
       "jurisdictionId": "gc-g0084-005",
       "commanderyId": "PARENT-0084",
       "commanderyNameCh": "定襄郡",
@@ -18896,7 +18584,7 @@
     },
     {
       "provinceId": "gc-g0085-003",
-      "provinceIndex": 1572,
+      "provinceIndex": 1546,
       "jurisdictionId": "gc-g0085-003",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -18908,7 +18596,7 @@
     },
     {
       "provinceId": "gc-g0085-004",
-      "provinceIndex": 1573,
+      "provinceIndex": 1547,
       "jurisdictionId": "gc-g0085-004",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -18920,7 +18608,7 @@
     },
     {
       "provinceId": "gc-g0085-005",
-      "provinceIndex": 1574,
+      "provinceIndex": 1548,
       "jurisdictionId": "gc-g0085-005",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -18932,7 +18620,7 @@
     },
     {
       "provinceId": "gc-g0085-009",
-      "provinceIndex": 1575,
+      "provinceIndex": 1549,
       "jurisdictionId": "gc-g0085-009",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -18944,7 +18632,7 @@
     },
     {
       "provinceId": "gc-g0085-014",
-      "provinceIndex": 1576,
+      "provinceIndex": 1550,
       "jurisdictionId": "gc-g0085-014",
       "commanderyId": "PARENT-0085",
       "commanderyNameCh": "鴈門郡",
@@ -18956,7 +18644,7 @@
     },
     {
       "provinceId": "gc-g0086-002",
-      "provinceIndex": 1577,
+      "provinceIndex": 1551,
       "jurisdictionId": "gc-g0086-002",
       "commanderyId": "PARENT-0086",
       "commanderyNameCh": "朔方郡",
@@ -18968,7 +18656,7 @@
     },
     {
       "provinceId": "gc-g0086-003",
-      "provinceIndex": 1578,
+      "provinceIndex": 1552,
       "jurisdictionId": "gc-g0086-003",
       "commanderyId": "PARENT-0086",
       "commanderyNameCh": "朔方郡",
@@ -18980,7 +18668,7 @@
     },
     {
       "provinceId": "gc-g0086-004",
-      "provinceIndex": 1579,
+      "provinceIndex": 1553,
       "jurisdictionId": "gc-g0086-004",
       "commanderyId": "PARENT-0086",
       "commanderyNameCh": "朔方郡",
@@ -18992,7 +18680,7 @@
     },
     {
       "provinceId": "gc-g0086-005",
-      "provinceIndex": 1580,
+      "provinceIndex": 1554,
       "jurisdictionId": "gc-g0086-005",
       "commanderyId": "PARENT-0086",
       "commanderyNameCh": "朔方郡",
@@ -19004,7 +18692,7 @@
     },
     {
       "provinceId": "gc-g0086-006",
-      "provinceIndex": 1581,
+      "provinceIndex": 1555,
       "jurisdictionId": "gc-g0086-006",
       "commanderyId": "PARENT-0086",
       "commanderyNameCh": "朔方郡",
@@ -19016,7 +18704,7 @@
     },
     {
       "provinceId": "gc-g0088-001",
-      "provinceIndex": 1582,
+      "provinceIndex": 1556,
       "jurisdictionId": "gc-g0088-001",
       "commanderyId": "PARENT-0088",
       "commanderyNameCh": "廣陽郡",
@@ -19028,7 +18716,7 @@
     },
     {
       "provinceId": "gc-g0088-002",
-      "provinceIndex": 1583,
+      "provinceIndex": 1557,
       "jurisdictionId": "gc-g0088-002",
       "commanderyId": "PARENT-0088",
       "commanderyNameCh": "廣陽郡",
@@ -19040,7 +18728,7 @@
     },
     {
       "provinceId": "gc-g0088-003",
-      "provinceIndex": 1584,
+      "provinceIndex": 1558,
       "jurisdictionId": "gc-g0088-003",
       "commanderyId": "PARENT-0088",
       "commanderyNameCh": "廣陽郡",
@@ -19052,7 +18740,7 @@
     },
     {
       "provinceId": "gc-g0088-004",
-      "provinceIndex": 1585,
+      "provinceIndex": 1559,
       "jurisdictionId": "gc-g0088-004",
       "commanderyId": "PARENT-0088",
       "commanderyNameCh": "廣陽郡",
@@ -19064,7 +18752,7 @@
     },
     {
       "provinceId": "gc-g0089-003",
-      "provinceIndex": 1586,
+      "provinceIndex": 1560,
       "jurisdictionId": "gc-g0089-003",
       "commanderyId": "PARENT-0089",
       "commanderyNameCh": "代郡",
@@ -19076,7 +18764,7 @@
     },
     {
       "provinceId": "gc-g0089-005",
-      "provinceIndex": 1587,
+      "provinceIndex": 1561,
       "jurisdictionId": "gc-g0089-005",
       "commanderyId": "PARENT-0089",
       "commanderyNameCh": "代郡",
@@ -19088,7 +18776,7 @@
     },
     {
       "provinceId": "gc-g0089-006",
-      "provinceIndex": 1588,
+      "provinceIndex": 1562,
       "jurisdictionId": "gc-g0089-006",
       "commanderyId": "PARENT-0089",
       "commanderyNameCh": "代郡",
@@ -19100,7 +18788,7 @@
     },
     {
       "provinceId": "gc-g0089-009",
-      "provinceIndex": 1589,
+      "provinceIndex": 1563,
       "jurisdictionId": "gc-g0089-009",
       "commanderyId": "PARENT-0089",
       "commanderyNameCh": "代郡",
@@ -19112,7 +18800,7 @@
     },
     {
       "provinceId": "gc-g0090-003",
-      "provinceIndex": 1590,
+      "provinceIndex": 1564,
       "jurisdictionId": "gc-g0090-003",
       "commanderyId": "PARENT-0090",
       "commanderyNameCh": "上谷郡",
@@ -19124,7 +18812,7 @@
     },
     {
       "provinceId": "gc-g0090-006",
-      "provinceIndex": 1591,
+      "provinceIndex": 1565,
       "jurisdictionId": "gc-g0090-006",
       "commanderyId": "PARENT-0090",
       "commanderyNameCh": "上谷郡",
@@ -19136,7 +18824,7 @@
     },
     {
       "provinceId": "gc-g0090-008",
-      "provinceIndex": 1592,
+      "provinceIndex": 1566,
       "jurisdictionId": "gc-g0090-008",
       "commanderyId": "PARENT-0090",
       "commanderyNameCh": "上谷郡",
@@ -19148,7 +18836,7 @@
     },
     {
       "provinceId": "gc-g0091-001",
-      "provinceIndex": 1593,
+      "provinceIndex": 1567,
       "jurisdictionId": "gc-g0091-001",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -19160,7 +18848,7 @@
     },
     {
       "provinceId": "gc-g0091-005",
-      "provinceIndex": 1594,
+      "provinceIndex": 1568,
       "jurisdictionId": "gc-g0091-005",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -19172,7 +18860,7 @@
     },
     {
       "provinceId": "gc-g0091-006",
-      "provinceIndex": 1595,
+      "provinceIndex": 1569,
       "jurisdictionId": "gc-g0091-006",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -19184,7 +18872,7 @@
     },
     {
       "provinceId": "gc-g0091-008",
-      "provinceIndex": 1596,
+      "provinceIndex": 1570,
       "jurisdictionId": "gc-g0091-008",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -19196,7 +18884,7 @@
     },
     {
       "provinceId": "gc-g0091-009",
-      "provinceIndex": 1597,
+      "provinceIndex": 1571,
       "jurisdictionId": "gc-g0091-009",
       "commanderyId": "PARENT-0091",
       "commanderyNameCh": "漁陽郡",
@@ -19208,7 +18896,7 @@
     },
     {
       "provinceId": "gc-g0092-004",
-      "provinceIndex": 1598,
+      "provinceIndex": 1572,
       "jurisdictionId": "gc-g0092-004",
       "commanderyId": "PARENT-0092",
       "commanderyNameCh": "右北平郡",
@@ -19220,7 +18908,7 @@
     },
     {
       "provinceId": "gc-g0093-001",
-      "provinceIndex": 1599,
+      "provinceIndex": 1573,
       "jurisdictionId": "gc-g0093-001",
       "commanderyId": "PARENT-0093",
       "commanderyNameCh": "遼西郡",
@@ -19232,7 +18920,7 @@
     },
     {
       "provinceId": "gc-g0096-002",
-      "provinceIndex": 1600,
+      "provinceIndex": 1574,
       "jurisdictionId": "gc-g0096-002",
       "commanderyId": "PARENT-0096",
       "commanderyNameCh": "樂浪郡",
@@ -19244,7 +18932,7 @@
     },
     {
       "provinceId": "gc-g0096-018",
-      "provinceIndex": 1601,
+      "provinceIndex": 1575,
       "jurisdictionId": "gc-g0096-018",
       "commanderyId": "PARENT-0096",
       "commanderyNameCh": "樂浪郡",
@@ -19256,7 +18944,7 @@
     },
     {
       "provinceId": "gc-g0097-005",
-      "provinceIndex": 1602,
+      "provinceIndex": 1576,
       "jurisdictionId": "gc-g0097-005",
       "commanderyId": "PARENT-0097",
       "commanderyNameCh": "遼東屬國",
@@ -19268,7 +18956,7 @@
     },
     {
       "provinceId": "gc-g0099-011",
-      "provinceIndex": 1603,
+      "provinceIndex": 1577,
       "jurisdictionId": "gc-g0099-011",
       "commanderyId": "PARENT-0099",
       "commanderyNameCh": "蒼梧郡",
@@ -19280,7 +18968,7 @@
     },
     {
       "provinceId": "gc-g0100-004",
-      "provinceIndex": 1604,
+      "provinceIndex": 1578,
       "jurisdictionId": "gc-g0100-004",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -19292,7 +18980,7 @@
     },
     {
       "provinceId": "gc-g0100-006",
-      "provinceIndex": 1605,
+      "provinceIndex": 1579,
       "jurisdictionId": "gc-g0100-006",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -19304,7 +18992,7 @@
     },
     {
       "provinceId": "gc-g0100-008",
-      "provinceIndex": 1606,
+      "provinceIndex": 1580,
       "jurisdictionId": "gc-g0100-008",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -19316,7 +19004,7 @@
     },
     {
       "provinceId": "gc-g0100-009",
-      "provinceIndex": 1607,
+      "provinceIndex": 1581,
       "jurisdictionId": "gc-g0100-009",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -19328,7 +19016,7 @@
     },
     {
       "provinceId": "gc-g0100-010",
-      "provinceIndex": 1608,
+      "provinceIndex": 1582,
       "jurisdictionId": "gc-g0100-010",
       "commanderyId": "PARENT-0100",
       "commanderyNameCh": "鬱林郡",
@@ -19340,7 +19028,7 @@
     },
     {
       "provinceId": "gc-g0101-004",
-      "provinceIndex": 1609,
+      "provinceIndex": 1583,
       "jurisdictionId": "gc-g0101-004",
       "commanderyId": "PARENT-0101",
       "commanderyNameCh": "合浦郡",
@@ -19352,7 +19040,7 @@
     },
     {
       "provinceId": "KOR-X065-X028",
-      "provinceIndex": 1610,
+      "provinceIndex": 1584,
       "jurisdictionId": "X065",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19364,7 +19052,7 @@
     },
     {
       "provinceId": "KOR-X066-X028",
-      "provinceIndex": 1611,
+      "provinceIndex": 1585,
       "jurisdictionId": "X066",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19376,7 +19064,7 @@
     },
     {
       "provinceId": "KOR-X067-X028",
-      "provinceIndex": 1612,
+      "provinceIndex": 1586,
       "jurisdictionId": "X067",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19388,7 +19076,7 @@
     },
     {
       "provinceId": "KOR-X068-SUB-X028-7238a630ea3c",
-      "provinceIndex": 1613,
+      "provinceIndex": 1587,
       "jurisdictionId": "X068",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19400,7 +19088,7 @@
     },
     {
       "provinceId": "KOR-X066-SUB-X028-f3fe8f1dec91",
-      "provinceIndex": 1614,
+      "provinceIndex": 1588,
       "jurisdictionId": "X066",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19412,7 +19100,7 @@
     },
     {
       "provinceId": "KOR-X067-SUB-X028-f3fe8f1dec91",
-      "provinceIndex": 1615,
+      "provinceIndex": 1589,
       "jurisdictionId": "X067",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19424,7 +19112,7 @@
     },
     {
       "provinceId": "KOR-X067-SUB-X028-febacb66851d",
-      "provinceIndex": 1616,
+      "provinceIndex": 1590,
       "jurisdictionId": "X067",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19436,7 +19124,7 @@
     },
     {
       "provinceId": "KOR-X068-SUB-X028-febacb66851d",
-      "provinceIndex": 1617,
+      "provinceIndex": 1591,
       "jurisdictionId": "X068",
       "commanderyId": "PARENT-0120",
       "commanderyNameCh": "國內城",
@@ -19448,7 +19136,7 @@
     },
     {
       "provinceId": "KOR-X069-X037",
-      "provinceIndex": 1618,
+      "provinceIndex": 1592,
       "jurisdictionId": "X069",
       "commanderyId": "PARENT-0143",
       "commanderyNameCh": "東沃沮",
@@ -19460,7 +19148,7 @@
     },
     {
       "provinceId": "KOR-X070-X030",
-      "provinceIndex": 1619,
+      "provinceIndex": 1593,
       "jurisdictionId": "X070",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
@@ -19472,7 +19160,7 @@
     },
     {
       "provinceId": "KOR-X070-SUB-X030-b78cb489a20c",
-      "provinceIndex": 1620,
+      "provinceIndex": 1594,
       "jurisdictionId": "X070",
       "commanderyId": "PARENT-0111",
       "commanderyNameCh": "北沃沮",
@@ -19484,7 +19172,7 @@
     },
     {
       "provinceId": "KOR-X071-X029",
-      "provinceIndex": 1621,
+      "provinceIndex": 1595,
       "jurisdictionId": "X071",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
@@ -19496,7 +19184,7 @@
     },
     {
       "provinceId": "KOR-X071-SUB-X029-d36cd99b5619",
-      "provinceIndex": 1622,
+      "provinceIndex": 1596,
       "jurisdictionId": "X071",
       "commanderyId": "PARENT-0112",
       "commanderyNameCh": "卒本",
@@ -19508,7 +19196,7 @@
     },
     {
       "provinceId": "KOR-X072-fc-liaodong-008",
-      "provinceIndex": 1623,
+      "provinceIndex": 1597,
       "jurisdictionId": "X072",
       "commanderyId": "PARENT-0094",
       "commanderyNameCh": "遼東郡",
@@ -19520,7 +19208,7 @@
     },
     {
       "provinceId": "KOR-X072-SUB-X029-f447e36b3ebd",
-      "provinceIndex": 1624,
+      "provinceIndex": 1598,
       "jurisdictionId": "X072",
       "commanderyId": "PARENT-0094",
       "commanderyNameCh": "遼東郡",
@@ -19532,7 +19220,7 @@
     },
     {
       "provinceId": "KOR-X073-X040",
-      "provinceIndex": 1625,
+      "provinceIndex": 1599,
       "jurisdictionId": "X073",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19544,7 +19232,7 @@
     },
     {
       "provinceId": "KOR-X075-X040",
-      "provinceIndex": 1626,
+      "provinceIndex": 1600,
       "jurisdictionId": "X075",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19556,7 +19244,7 @@
     },
     {
       "provinceId": "KOR-X076-X040",
-      "provinceIndex": 1627,
+      "provinceIndex": 1601,
       "jurisdictionId": "X076",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19568,7 +19256,7 @@
     },
     {
       "provinceId": "KOR-X077-X040",
-      "provinceIndex": 1628,
+      "provinceIndex": 1602,
       "jurisdictionId": "X077",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19580,7 +19268,7 @@
     },
     {
       "provinceId": "KOR-X078-X040",
-      "provinceIndex": 1629,
+      "provinceIndex": 1603,
       "jurisdictionId": "X078",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19592,7 +19280,7 @@
     },
     {
       "provinceId": "KOR-X080-X040",
-      "provinceIndex": 1630,
+      "provinceIndex": 1604,
       "jurisdictionId": "X080",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19604,7 +19292,7 @@
     },
     {
       "provinceId": "KOR-X086-X040",
-      "provinceIndex": 1631,
+      "provinceIndex": 1605,
       "jurisdictionId": "X086",
       "commanderyId": "PARENT-0156",
       "commanderyNameCh": "目支國",
@@ -19616,7 +19304,7 @@
     },
     {
       "provinceId": "KOR-X081-X041",
-      "provinceIndex": 1632,
+      "provinceIndex": 1606,
       "jurisdictionId": "X081",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19628,7 +19316,7 @@
     },
     {
       "provinceId": "KOR-X082-X041",
-      "provinceIndex": 1633,
+      "provinceIndex": 1607,
       "jurisdictionId": "X082",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19640,7 +19328,7 @@
     },
     {
       "provinceId": "KOR-X083-X041",
-      "provinceIndex": 1634,
+      "provinceIndex": 1608,
       "jurisdictionId": "X083",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19652,7 +19340,7 @@
     },
     {
       "provinceId": "KOR-X084-X041",
-      "provinceIndex": 1635,
+      "provinceIndex": 1609,
       "jurisdictionId": "X084",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19664,7 +19352,7 @@
     },
     {
       "provinceId": "KOR-X085-X041",
-      "provinceIndex": 1636,
+      "provinceIndex": 1610,
       "jurisdictionId": "X085",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19676,7 +19364,7 @@
     },
     {
       "provinceId": "KOR-X087-X041",
-      "provinceIndex": 1637,
+      "provinceIndex": 1611,
       "jurisdictionId": "X087",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19688,7 +19376,7 @@
     },
     {
       "provinceId": "KOR-X089-X041",
-      "provinceIndex": 1638,
+      "provinceIndex": 1612,
       "jurisdictionId": "X089",
       "commanderyId": "PARENT-0164",
       "commanderyNameCh": "辟卑離國",
@@ -19700,7 +19388,7 @@
     },
     {
       "provinceId": "KOR-X096-X033",
-      "provinceIndex": 1639,
+      "provinceIndex": 1613,
       "jurisdictionId": "X096",
       "commanderyId": "PARENT-0136",
       "commanderyNameCh": "押督國",
@@ -19712,7 +19400,7 @@
     },
     {
       "provinceId": "KOR-X097-X033",
-      "provinceIndex": 1640,
+      "provinceIndex": 1614,
       "jurisdictionId": "X097",
       "commanderyId": "PARENT-0136",
       "commanderyNameCh": "押督國",
@@ -19724,7 +19412,7 @@
     },
     {
       "provinceId": "KOR-X098-X048",
-      "provinceIndex": 1641,
+      "provinceIndex": 1615,
       "jurisdictionId": "X098",
       "commanderyId": "PARENT-0142",
       "commanderyNameCh": "本彼",
@@ -19736,7 +19424,7 @@
     },
     {
       "provinceId": "KOR-X099-X032",
-      "provinceIndex": 1642,
+      "provinceIndex": 1616,
       "jurisdictionId": "X099",
       "commanderyId": "PARENT-0135",
       "commanderyNameCh": "悉直國",
@@ -19748,7 +19436,7 @@
     },
     {
       "provinceId": "KOR-X100-X044",
-      "provinceIndex": 1643,
+      "provinceIndex": 1617,
       "jurisdictionId": "X100",
       "commanderyId": "PARENT-0137",
       "commanderyNameCh": "斯盧國",
@@ -19760,7 +19448,7 @@
     },
     {
       "provinceId": "KOR-X101-X044",
-      "provinceIndex": 1644,
+      "provinceIndex": 1618,
       "jurisdictionId": "X101",
       "commanderyId": "PARENT-0137",
       "commanderyNameCh": "斯盧國",
@@ -19772,7 +19460,7 @@
     },
     {
       "provinceId": "KOR-X102-X045",
-      "provinceIndex": 1645,
+      "provinceIndex": 1619,
       "jurisdictionId": "X102",
       "commanderyId": "PARENT-0153",
       "commanderyNameCh": "狗邪國",
@@ -19784,7 +19472,7 @@
     },
     {
       "provinceId": "KOR-X103-X045",
-      "provinceIndex": 1646,
+      "provinceIndex": 1620,
       "jurisdictionId": "X103",
       "commanderyId": "PARENT-0153",
       "commanderyNameCh": "狗邪國",
@@ -19796,7 +19484,7 @@
     },
     {
       "provinceId": "KOR-X104-X045",
-      "provinceIndex": 1647,
+      "provinceIndex": 1621,
       "jurisdictionId": "X104",
       "commanderyId": "PARENT-0153",
       "commanderyNameCh": "狗邪國",
@@ -19808,7 +19496,7 @@
     },
     {
       "provinceId": "KOR-X105-X047",
-      "provinceIndex": 1648,
+      "provinceIndex": 1622,
       "jurisdictionId": "X105",
       "commanderyId": "PARENT-0121",
       "commanderyNameCh": "大伽耶",
@@ -19820,7 +19508,7 @@
     },
     {
       "provinceId": "KOR-X106-X042",
-      "provinceIndex": 1649,
+      "provinceIndex": 1623,
       "jurisdictionId": "X106",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
@@ -19832,7 +19520,7 @@
     },
     {
       "provinceId": "KOR-X106-SUB-X042-1f00b3225ad9",
-      "provinceIndex": 1650,
+      "provinceIndex": 1624,
       "jurisdictionId": "X106",
       "commanderyId": "PARENT-0109",
       "commanderyNameCh": "伯濟國",
@@ -19844,7 +19532,7 @@
     },
     {
       "provinceId": "KOR-X107-fc-lelang-015",
-      "provinceIndex": 1651,
+      "provinceIndex": 1625,
       "jurisdictionId": "X107",
       "commanderyId": "PARENT-0096",
       "commanderyNameCh": "樂浪郡",
@@ -19856,7 +19544,7 @@
     },
     {
       "provinceId": "KOR-X108-fc-lelang-006",
-      "provinceIndex": 1652,
+      "provinceIndex": 1626,
       "jurisdictionId": "X108",
       "commanderyId": "PARENT-0096",
       "commanderyNameCh": "樂浪郡",

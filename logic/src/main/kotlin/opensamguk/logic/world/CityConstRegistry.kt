@@ -19,6 +19,8 @@ import opensamguk.common.constants.HanWorldV31224CityConst
 import opensamguk.common.constants.HanWorldV31224GateIndex
 import opensamguk.common.constants.HanWorldV31447CityConst
 import opensamguk.common.constants.HanWorldV31447GateIndex
+import opensamguk.common.constants.HanWorldV31447Map4CityConst
+import opensamguk.common.constants.HanWorldV31447Map4GateIndex
 import opensamguk.common.constants.HanWorldV31194CityConst
 import opensamguk.common.constants.HanWorldV31194GateIndex
 import opensamguk.common.constants.HanWorldV31341CityConst
@@ -383,6 +385,10 @@ private val historicalHanWorlds: Map<HanWorldVariant, CityConstVariant> by lazy 
         ),
         HanWorldVariant.V3_1447 to HanCityConstVariant(
             HAN_WORLD_V3_MAP_NAME, HanWorldV31447CityConst.initCity, HanWorldV31447GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        HanWorldVariant.V3_1447_MAP4 to HanCityConstVariant(
+            HAN_WORLD_V3_MAP_NAME, HanWorldV31447Map4CityConst.initCity, HanWorldV31447Map4GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         HanWorldVariant.V3_1194 to HanCityConstVariant(

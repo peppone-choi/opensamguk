@@ -74,9 +74,11 @@ object HwihaDomesticEffects {
         return HwihaPolicyOutcome(next, credit, debit)
     }
 
-    fun newWork(design: HwihaDomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): HwihaActiveWork {
+    fun newWork(design: HwihaDomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase,
+        edgeId: String? = null, row: Int? = null, col: Int? = null): HwihaActiveWork {
         val spec = design.works.getValue(work)
-        return HwihaActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null)
+        return HwihaActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null,
+            edgeId, row, col)
     }
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
@@ -90,7 +92,7 @@ object HwihaDomesticEffects {
         if (next == work.required) {
             var after = levels
             for (effect in design.works.getValue(work.work).completion) after = add(after, effect.indicator, effect.amount.toLong())
-            return HwihaWorkStep.Completed(HwihaCompletedWork(work.work, now), due, after)
+            return HwihaWorkStep.Completed(HwihaCompletedWork(work.work, now, work.edgeId, work.row, work.col), due, after)
         }
         return HwihaWorkStep.Advanced(work.copy(progress = next, charged = work.charged.credit(due), lastProgressAt = now,
             stopReason = null), due)

@@ -1,0 +1,17 @@
+{
+  "variantId": "han-world-v3-1447-map4",
+  "files": [
+    {
+      "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",
+      "sourceSha256": "793a12c81b1e25ffbf843341628c3db360f7127c9033bfb173326ce3bce5dcd8",
+      "snapshot": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV31447Map4CityConst.kt",
+      "snapshotSha256": "b7b8ea3f27b63dc65dd7a8b8a41d703105fbade05c93522e1e81cbf3ce00b271"
+    },
+    {
+      "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt",
+      "sourceSha256": "ddcf53040c54e4a77923f62f0885743ffc2ea7bf31f744edcf4e4a9df4551eb7",
+      "snapshot": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV31447Map4GateIndex.kt",
+      "snapshotSha256": "cf6201bbf52da23c19617e8447690d4a0180edaa74c1362b9ed92f2d311ed298"
+    }
+  ]
+}

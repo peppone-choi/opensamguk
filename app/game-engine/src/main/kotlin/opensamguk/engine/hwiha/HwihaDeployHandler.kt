@@ -27,7 +27,12 @@ class HwihaDeployHandler(private val world: InMemoryTurnWorld, private val recor
         val metrics = metrics ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
         val executor = HwihaDeploymentExecutor(world,recorder,topology,metrics)
         val projection = executor.projection() ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
-        val assessed = HwihaDeployRules.assess(input,projection,topology,world.getState().meta,metrics)
+        val meta = world.getState().meta
+        val passage = try { HwihaLandPassageState.read(meta, topology)?.let {
+            HwihaRoadFortPassage.forNation(world, it, checkNotNull(world.getGeneralById(actorId)).nationId)
+        } } catch (_: IllegalArgumentException) { null }
+        val assessed = if (passage == null) DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) else
+            HwihaDeployRules.assess(input,projection,topology,meta,metrics,passage)
         if (assessed is DeploymentAssessment.Rejected) return reject(assessed.reason)
         val order = HwihaCorpsOrder(requestId,actorId,actorId,input.destination,topology.topologyRevision,topology.contentHash)
         return when (val result = executor.deploy(requestId,input.deploymentRequest())) {

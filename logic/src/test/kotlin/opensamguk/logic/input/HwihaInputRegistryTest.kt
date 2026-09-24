@@ -16,6 +16,7 @@ class HwihaInputRegistryTest {
     private var enlistCalls = 0
     private fun handlers(enlist: InputHandler) = mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
+        "action.siegeRoadFort" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))

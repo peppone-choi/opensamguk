@@ -38,7 +38,8 @@ class HwihaAssignmentMarchTurn(
         if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (HwihaCountyAssignment.META_KEY !in actor.meta) return
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) }
+        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology)
+            ?.let { HwihaRoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
         val refs = assignmentRefs(actor.meta)
         if (edges == null) {

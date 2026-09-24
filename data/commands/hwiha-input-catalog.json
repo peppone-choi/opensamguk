@@ -9,6 +9,7 @@
     {"inputId": "action.scout", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_첩보"]},
     {"inputId": "action.assault", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
     {"inputId": "action.demandSurrender", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
+    {"inputId": "action.siegeRoadFort", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
     {"inputId": "court.dispatch", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_발령"]},
     {"inputId": "court.dispatchReply", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
     {"inputId": "court.reward", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_포상"]},

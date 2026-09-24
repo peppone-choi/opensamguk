@@ -189,6 +189,11 @@ class CommandReserveService(
             (hwihaScoutAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode == opensamguk.logic.input.HwihaRoadFortSiegeInput.INPUT_ID) {
+            if (ownerUserId == null || ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            val fortId = opensamguk.logic.input.HwihaRoadFortSiegeInput.parse(argJson)
+                ?: throw HwihaAdmissionDenied("INVALID_REQUEST", "점령할 보루를 골라 주세요.")
+            "{\"fortId\":\"$fortId\"}"
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
             // 강공·항복 권고는 인자가 없다. 포위 여부는 실행 턴에 다시 본다(§4 — 조건이 안 맞으면 비용 없이 무효).
             if (ownerUserId == null || ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
@@ -272,7 +277,8 @@ class CommandReserveService(
                     actionCode = actionCode,
                     argJson = canonicalArgs,
                     brief = when (actionCode) { "action.enlist" -> "출사"; "action.deploy" -> "출병"; "action.scout" -> "첩보";
-                        "action.assault" -> "강공"; "action.demandSurrender" -> "항복 권고"; else -> registry.resolve(actionCode).name },
+                        "action.assault" -> "강공"; "action.demandSurrender" -> "항복 권고";
+                        "action.siegeRoadFort" -> "보루 포위"; else -> registry.resolve(actionCode).name },
                     requestId = requestId,
                 )
                 commandResults.insertTerminalResult(
@@ -415,7 +421,8 @@ class CommandReserveService(
         val HWIHA_SIEGE_ACTIONS: Set<String> = setOf("action.assault", "action.demandSurrender")
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
-        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") + HWIHA_SIEGE_ACTIONS
+        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout",
+            opensamguk.logic.input.HwihaRoadFortSiegeInput.INPUT_ID) + HWIHA_SIEGE_ACTIONS
     }
 }
 

@@ -80,7 +80,7 @@ data class HwihaStartableWorkDto(val work: String, val label: String, val availa
     val cost: HwihaStockDto, val requiredProgress: Int, val estimatedPhases: Int)
 
 data class HwihaCountyWorksDto(
-    val countyId: Int, val name: String, val commanderyName: String?, val warehouse: HwihaStockDto?,
+    val countyId: Int, val provinceId: String?, val name: String, val commanderyName: String?, val warehouse: HwihaStockDto?,
     val active: HwihaActiveWorkDto?, val completed: List<HwihaCompletedWorkDto>, val startable: List<HwihaStartableWorkDto>,
 )
 

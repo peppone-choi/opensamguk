@@ -70,6 +70,7 @@ class HwihaCorpsRations(
             val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
             val network = HwihaWarehouseNetwork(world, recorder)
             for (corps in projection.deployed.sortedBy { it.orderId }) {
+                val nationEdges = HwihaRoadFortPassage.forNation(world, edges, corps.nationId) ?: continue
                 // 자국 縣에 있으면 월 보충(HwihaUnitResupply)이 맡는다.
                 val here = cityAt(world, corps.commanderGeneralId)
                 if (here != null && world.getCityById(here)?.nationId == corps.nationId) continue
@@ -80,7 +81,7 @@ class HwihaCorpsRations(
                     val city = world.getCityById(countyId)?.takeIf { it.nationId == corps.nationId && it.supplyState != 0 }
                         ?: return@mapNotNull null
                     val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
-                    val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(node, target, 1), edges, metrics)
+                    val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(node, target, 1), nationEdges, metrics)
                         as? LandMarchPathResult.Resolved)?.path ?: return@mapNotNull null
                     // 보급선 차단: 도착 省 앞의 경로가 적 군단이 있는 省을 지나면 보내지 못한다.
                     if (path.nodeKeys.dropLast(1).any { it.removePrefix("land:") in blocked }) return@mapNotNull null

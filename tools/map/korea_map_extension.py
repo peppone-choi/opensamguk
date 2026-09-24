@@ -54,6 +54,25 @@ def apply(document, owner, decision):
 def base_frame(document):
     """Return the retained original cells for old, explicitly frozen witnesses."""
     doc=copy.deepcopy(document)
+    factor=doc['_meta'].get('resolutionScale',1)
+    if factor>1:
+        rows,cols=doc['_meta']['rows'],doc['_meta']['cols']
+        doc['terrain']=[row[::factor] for row in doc['terrain'][::factor]]
+        for key in ('owner','parentOwner','seatOwner'):
+            if key in doc:
+                grid=expand_rle(doc[key],rows,cols)
+                doc[key]=_encode_runs(grid[::factor,::factor])
+        for group in ('cities','juns','regions'):
+            for row in doc.get(group,[]):
+                row['col']//=factor
+                row['row']//=factor
+                if group=='regions':row['cells']//=(factor*factor)
+        doc['_meta']['rows']=rows//factor
+        doc['_meta']['cols']=cols//factor
+        doc['_meta']['projection']['rows']=rows//factor
+        doc['_meta']['projection']['cols']=cols//factor
+        doc['_meta']['projection']['cell']*=factor
+        doc['_meta'].pop('resolutionScale',None)
     if doc['_meta']['projection']['rows']==669:return doc
     artifact=json.loads(RASTER.read_text());p=artifact['baseProjection'];r,c=p['rows'],p['cols']
     doc['terrain']=[row[:c] for row in doc['terrain'][NORTH_ROWS:NORTH_ROWS+r]]

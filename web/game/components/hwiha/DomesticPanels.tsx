@@ -221,9 +221,14 @@ export function PolicyPanel({ onToast, refreshKey, onDone }: { onToast: Toast; r
 /** 공사 — 현마다 하나씩, 순 경계마다 진척하며 그 현 창고의 자원을 나눠 쓴다. */
 export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; refreshKey: number; onDone: () => void }) {
     const read = useHwihaRead((id, signal) => api.hwihaWorks(id, signal), [refreshKey]);
+    const roads = useHwihaRead((id, signal) => api.hwihaRoadForts(id, signal), [refreshKey]);
     const { busy, submit } = useDomesticSubmit(onToast, onDone);
+    const [roadChoice, setRoadChoice] = useState<Record<number, string>>({});
+    const [fortChoice, setFortChoice] = useState<Record<number, string>>({});
     const notice = hwihaReadNotice(read, read.data?.status);
     const counties = read.data?.counties ?? [];
+    const gates = roads.data?.gates ?? [];
+    const roadMode = roads.data?.roadMode === true;
     return (
         <Panel style={{ padding: 12 }}>
             <SectionHeader title="공사" sub="순 경계마다 진척" />
@@ -252,7 +257,45 @@ export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; re
                             </div>
                         ) : (
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                                {c.startable.map((w) => (
+                                {c.startable.map((w) => w.work === 'ROAD' && roadMode ? (() => {
+                                    const choices = gates.filter((gate) => gate.buildable && !gate.active &&
+                                        (gate.fromProvinceId === c.provinceId || gate.toProvinceId === c.provinceId));
+                                    const chosen = choices.find((choice) => choice.edgeId === roadChoice[c.countyId])?.edgeId ?? choices[0]?.edgeId;
+                                    return <span key={w.work} style={{ display: 'inline-flex', gap: 4 }}>
+                                        <select aria-label={`${c.name} 도로 접경`} value={chosen ?? ''}
+                                            onChange={(event) => setRoadChoice((prev) => ({ ...prev, [c.countyId]: event.target.value }))}>
+                                            {choices.length === 0 && <option value="">개척할 접경 없음</option>}
+                                            {choices.map((gate) => <option key={gate.edgeId} value={gate.edgeId}>
+                                                {gate.historicalRouteIds.length ? `${gate.historicalRouteIds.join(', ')} · ` : ''}{gate.edgeId}
+                                            </option>)}
+                                        </select>
+                                        <button type="button" className="os-button os-button--ghost os-button--sm"
+                                            disabled={busy || !w.available || !chosen}
+                                            onClick={() => void submit('work', { countyId: c.countyId, work: w.work, edgeId: chosen },
+                                                `${c.name}의 도로 개척을 접수했습니다.`)}>도로 개척</button>
+                                    </span>;
+                                })() : w.work === 'FORTIFICATION' && roadMode ? (() => {
+                                    const choices = gates.filter((gate) => gate.active)
+                                        .flatMap((gate) => gate.fortCells.filter((cell) => cell.provinceId === c.provinceId)
+                                            .filter((cell) => !roads.data?.forts.some((fort) => fort.row === cell.row && fort.col === cell.col))
+                                            .map((cell) => ({ value: `${gate.edgeId}|${cell.row}|${cell.col}`,
+                                                label: `${gate.historicalRouteIds.join(', ') || '길목'} · ${cell.row}, ${cell.col}` })));
+                                    const chosen = choices.find((choice) => choice.value === fortChoice[c.countyId])?.value ?? choices[0]?.value;
+                                    return <span key={w.work} style={{ display: 'inline-flex', gap: 4 }}>
+                                        <select aria-label={`${c.name} 보루 위치`} value={chosen ?? ''}
+                                            onChange={(event) => setFortChoice((prev) => ({ ...prev, [c.countyId]: event.target.value }))}>
+                                            {choices.length === 0 && <option value="">건설할 길목 없음</option>}
+                                            {choices.map((choice) => <option key={choice.value} value={choice.value}>{choice.label}</option>)}
+                                        </select>
+                                        <button type="button" className="os-button os-button--ghost os-button--sm"
+                                            disabled={busy || !w.available || !chosen}
+                                            onClick={() => {
+                                                const [edgeId, row, col] = chosen.split('|');
+                                                void submit('work', { countyId: c.countyId, work: w.work, edgeId,
+                                                    row: Number(row), col: Number(col) }, `${c.name}의 보루 건설을 접수했습니다.`);
+                                            }}>보루 건설</button>
+                                    </span>;
+                                })() : (
                                     <button
                                         key={w.work}
                                         type="button"

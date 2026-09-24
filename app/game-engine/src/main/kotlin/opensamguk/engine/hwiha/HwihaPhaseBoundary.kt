@@ -4,6 +4,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.HwihaLandPassageState
 import opensamguk.logic.world.*
 import org.slf4j.LoggerFactory
 
@@ -35,6 +36,7 @@ class HwihaPhaseBoundary(
         HwihaCorpsRations(world, recorder, topology, metrics).deliver()
         val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
         siege.settleBoundary()
+        HwihaRoadFortSiegeService(world, recorder, topology, metrics).settleBoundary()
         recomputeSupply(world, recorder, siege.besiegedCountyIds())
     }
 
@@ -53,7 +55,21 @@ class HwihaPhaseBoundary(
         val supplied = try {
             val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
             val network = spatialSupplyNetwork()
-            if (network != null) computeSuppliedCitiesWithSpatialNetwork(cities, capitals, cityConst, network)
+            if (state.hanWorldVariant == HanWorldVariant.V3_1447_MAP4) {
+                val spatial = requireNotNull(network) { "Map4 supply network is missing" }
+                val strategic = requireNotNull(spatial.strategicSupply) { "Map4 strategic supply network is missing" }
+                val passage = requireNotNull(HwihaLandPassageState.read(state.meta, topology)) {
+                    "Map4 land passage state is missing"
+                }
+                val nations = owned.map { it.nationId }.toSet().sorted()
+                val states = nations.associateWith { nationId ->
+                    requireNotNull(HwihaRoadFortPassage.forNation(world, passage, nationId)) {
+                        "Map4 road fort state is invalid"
+                    }
+                }
+                computeSuppliedCitiesWithSpatialNetwork(cities, capitals, cityConst,
+                    spatial.copy(strategicSupply = strategic.withEdgeStates(states)))
+            } else if (network != null) computeSuppliedCitiesWithSpatialNetwork(cities, capitals, cityConst, network)
             else computeSuppliedCities(cities, capitals, cityConst)
         } catch (error: RuntimeException) {
             log.warn("hwiha_phase_supply_unavailable world={} reason={}", world.worldId.value, error.message)

@@ -6,8 +6,8 @@
  "counts": {
   "rows": 67,
   "humanDecisionRequired": 15,
-  "currentExact": 52,
-  "currentChanged": 11,
+  "currentExact": 35,
+  "currentChanged": 28,
   "currentAbsent": 4
  },
  "rows": [
@@ -23,9 +23,9 @@
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-40165-39a88c0543b5"
+    "40165"
    ],
    "currentCellCount": 9,
    "status": "HUMAN_DECISION_REQUIRED",
@@ -46,9 +46,9 @@
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-40426-900f77eff5b7"
+    "40426"
    ],
    "currentCellCount": 39,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -79,9 +79,9 @@
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-40740-3a5b5675f605"
+    "40740"
    ],
    "currentCellCount": 30,
    "status": "HUMAN_DECISION_REQUIRED",
@@ -158,9 +158,9 @@
    "draftVerdict": "PARENT_MISASSIGNMENT",
    "sourceReviewState": "CORRECTED_BY_2_REFUTERS",
    "sourceConfidence": "LOW",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-42301-7104ff31657a"
+    "42301"
    ],
    "currentCellCount": 16,
    "status": "HUMAN_DECISION_REQUIRED",
@@ -210,7 +210,7 @@
    "currentMemberIds": [
     "SUB-42524-622c0a56ef76"
    ],
-   "currentCellCount": 59,
+   "currentCellCount": 63,
    "status": "DRAFT_RECHECK_GEOMETRY",
    "decision": null,
    "evidenceRefs": [
@@ -247,7 +247,7 @@
    "currentMemberIds": [
     "43138"
    ],
-   "currentCellCount": 30,
+   "currentCellCount": 34,
    "status": "HUMAN_DECISION_REQUIRED",
    "decision": null,
    "evidenceRefs": [
@@ -266,9 +266,9 @@
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-43252-2d3b29ad3f33"
+    "43252"
    ],
    "currentCellCount": 9,
    "status": "HUMAN_DECISION_REQUIRED",
@@ -566,7 +566,7 @@
     "gc-g0014-001",
     "gc-g0014-015"
    ],
-   "currentCellCount": 165,
+   "currentCellCount": 163,
    "status": "DRAFT_RECHECK_GEOMETRY",
    "decision": null,
    "evidenceRefs": [
@@ -1701,9 +1701,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "UPHELD",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X046-763d3a08775b"
+    "X046"
    ],
    "currentCellCount": 22,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -1757,9 +1757,9 @@
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X052-9097a8854a1f"
+    "X052"
    ],
    "currentCellCount": 20,
    "status": "HUMAN_DECISION_REQUIRED",
@@ -1780,9 +1780,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X052-e2019b23588b"
+    "X052"
    ],
    "currentCellCount": 8,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -1886,9 +1886,9 @@
    "draftVerdict": "WATER_SEPARATED",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X054-05d9b93dfd00"
+    "X054"
    ],
    "currentCellCount": 480,
    "status": "HUMAN_DECISION_REQUIRED",
@@ -1937,9 +1937,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X055-0deaa9deddaa"
+    "X055"
    ],
    "currentCellCount": 41,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -1965,9 +1965,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X055-f9c61192fa78"
+    "X055"
    ],
    "currentCellCount": 19,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -1993,9 +1993,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X055-42319b3daf6c"
+    "X055"
    ],
    "currentCellCount": 28,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -2021,9 +2021,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X056-c4d35e38f118"
+    "X056"
    ],
    "currentCellCount": 15,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -2053,9 +2053,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X057-6e514a3d0138"
+    "X057"
    ],
    "currentCellCount": 19,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -2081,9 +2081,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X057-f6cdaf119bf2"
+    "X057"
    ],
    "currentCellCount": 11,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -2109,9 +2109,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X057-583a342f4480"
+    "X057"
    ],
    "currentCellCount": 12,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -2137,9 +2137,9 @@
    "draftVerdict": "EXTERNAL_POLITY",
    "sourceReviewState": "INHERITED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "EXACT",
+   "currentGeometry": "CHANGED",
    "currentMemberIds": [
-    "SUB-X057-ef85eaeea522"
+    "X057"
    ],
    "currentCellCount": 42,
    "status": "DRAFT_RECHECK_GEOMETRY",
