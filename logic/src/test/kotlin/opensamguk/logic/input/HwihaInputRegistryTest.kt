@@ -136,9 +136,14 @@ class HwihaInputRegistryTest {
     private val legacy70 = legacy70Slots.distinct()
 
     private fun row(inputId: String, kind: String, legacy: String) =
-        """{"inputId":"$inputId","kind":"$kind","layer":1,"deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
+        """{"inputId":"$inputId","kind":"$kind","layer":1,"actor":"GENERAL","authorityRule":"SUBJECT_OWNER",
+            "targetSchema":{"status":"PLANNED"},"costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
+            "timing":{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
+            "replayContract":{"status":"PLANNED"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
+            "deliveryState":"PLANNED","legacyCommands":[$legacy]}"""
 
-    private fun ledger(vararg rows: String) = HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[${rows.joinToString(",")}]}""")
+    private fun ledger(vararg rows: String) = HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+        "inputs":[${rows.joinToString(",")}],"retiredLegacyCommands":[],"retiredLegacyReasons":{}}""")
 
     @Test
     fun `legacyCommands names only commands the SAMMO registry really has`() {
@@ -177,6 +182,30 @@ class HwihaInputRegistryTest {
     }
 
     @Test
+    fun `all direct legacy actions have a GENERAL_ACTION row`() {
+        val direct = listOf(
+            "농지개간", "상업투자", "수비강화", "성벽보수", "치안강화", "정착장려", "주민선정",
+            "징병", "모병", "훈련", "사기진작", "출병", "집합", "소집해제", "첩보",
+            "이동", "강행", "인재탐색", "등용", "귀환", "임관", "랜덤임관", "장수대상임관",
+            "견문", "단련", "요양", "은퇴", "증여", "헌납", "하야", "거병", "건국", "선양", "해산",
+        ).map { "che_$it" }
+        assertEquals(34, direct.size)
+        assertEquals(emptyList(), direct.filter { name -> catalog.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
+        val mutated = ledger(row("policy.farm", "POLICY", "\"che_농지개간\""))
+        assertEquals(listOf("che_농지개간"), direct.filter { name -> name == "che_농지개간" && mutated.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
+    }
+
+    @Test
+    fun `all 70 legacy menu slots are either live or retired`() {
+        assertEquals(emptyList(), catalog.invalidLegacyCoverage(legacy70))
+        assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
+        assertTrue(catalog.entries.all { it.legacyCommands.size <= 1 }, "기존 명령은 명령별 한 행으로 둔다")
+        assertEquals(73, catalog.entries.size)
+        val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
+        assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
+    }
+
+    @Test
     fun `stale replacesLegacy field and in-row duplicates fail closed`() {
         val stale = """{"schemaVersion":1,"inputs":[{"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","replacesLegacy":[]}]}"""
         assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(stale) }
@@ -185,13 +214,12 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `duplicate or unknown ledger fields fail closed`() {
-        val dup = """{"schemaVersion":1,"inputs":[
-            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]},
-            {"inputId":"action.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}"""
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(dup) }
+        assertFailsWith<IllegalArgumentException> { ledger(row("action.a", "GENERAL_ACTION", ""), row("action.a", "GENERAL_ACTION", "")) }
+        val dup = row("action.a", "GENERAL_ACTION", "")
         val badState = dup.replace("\"PLANNED\"", "\"DONE\"")
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(badState) }
-        val badKind = """{"schemaVersion":1,"inputs":[{"inputId":"policy.a","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}"""
-        assertFailsWith<IllegalArgumentException> { HwihaInputCatalog.parse(badKind) }
+        assertFailsWith<IllegalArgumentException> { ledger(badState) }
+        assertFailsWith<IllegalArgumentException> { ledger(row("policy.a", "GENERAL_ACTION", "")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"aiPolicyId\":\"ai.test\",", "")) }
+        assertFailsWith<IllegalArgumentException> { ledger(dup.replace("\"actor\":\"GENERAL\"", "\"actor\":\"GENERAL\",\"actor\":\"GENERAL\"")) }
     }
 }

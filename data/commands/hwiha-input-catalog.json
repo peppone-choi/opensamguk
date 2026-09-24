@@ -1,20 +1,3287 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "catalogId": "hwiha-input-catalog",
   "status": "DRAFT",
-  "note": "「장수·휘하」 월드(ruleProfile=HWIHA)의 입력 원장. 계약: docs/superpowers/specs/2026-09-17-input-registry-contract.md. deliveryState PLANNED 는 핸들러가 아직 없다는 뜻이며, 그런 입력은 registry 가 NOT_DELIVERED 로 거절한다(휴식·성공으로 떨어지지 않는다).",
+  "note": "휘하 입력 원장. PLANNED 행은 구현 아님. null 비용과 PLANNED 계약은 후속 슬라이스에서 확정하며 NOT_DELIVERED 로 거절한다. 기존 명령 역참조는 직접 행동과 위임의 중복을 허용한다.",
   "inputs": [
-    {"inputId": "action.enlist", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_임관", "che_랜덤임관", "che_장수대상임관"]},
-    {"inputId": "action.deploy", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_출병"]},
-    {"inputId": "action.scout", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_첩보"]},
-    {"inputId": "action.assault", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
-    {"inputId": "action.demandSurrender", "kind": "GENERAL_ACTION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
-    {"inputId": "court.dispatch", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_발령"]},
-    {"inputId": "court.dispatchReply", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
-    {"inputId": "court.reward", "kind": "COURT_DECISION", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": ["che_포상"]},
-    {"inputId": "placement.assign", "kind": "PLACEMENT", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
-    {"inputId": "policy.set", "kind": "POLICY", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
-    {"inputId": "work.start", "kind": "WORK", "layer": 1, "deliveryState": "HANDLER_READY", "legacyCommands": []},
-    {"inputId": "stratagem.play", "kind": "STRATAGEM", "layer": 1, "deliveryState": "PLANNED", "legacyCommands": []}
-  ]
+    {
+      "inputId": "action.enlist",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.enlist argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.enlist rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "ACTOR_NOT_FOUND",
+        "ALREADY_SERVING",
+        "ALREADY_BOUND",
+        "INVALID_RETINUE",
+        "HUMAN_RETAINER_REQUIRES_LORD",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_LORD",
+        "TARGET_NOT_ACCEPTING",
+        "INSUFFICIENT_RENOWN",
+        "NO_ELIGIBLE_NATION",
+        "DUPLICATE_RETAINER_NAME",
+        "POLICY_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.enlist",
+      "helpTopicId": "commands.action.enlist",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_임관"
+      ],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.deploy",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.deploy argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.deploy rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "MOVE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "INVALID_INPUT",
+        "OWNER_UNAVAILABLE",
+        "COMMANDER_UNAVAILABLE",
+        "DIFFERENT_NATION",
+        "POSITION_UNAVAILABLE",
+        "MUST_ASSEMBLE",
+        "BATTLE_PENDING",
+        "UNIT_UNAVAILABLE",
+        "COMMANDER_CHANGED",
+        "ALREADY_DEPLOYED",
+        "STATE_UNAVAILABLE",
+        "INVALID_DESTINATION",
+        "NO_ROUTE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.deploy",
+      "helpTopicId": "commands.action.deploy",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_출병"
+      ],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.scout",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.scout argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.scout rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "INVALID_INPUT",
+        "POSITION_UNAVAILABLE",
+        "UNKNOWN_COMMANDERY",
+        "NOT_ADJACENT",
+        "STATE_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.scout",
+      "helpTopicId": "commands.action.scout",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_첩보"
+      ],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.assault",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.assault argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.assault rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "SIEGE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_BESIEGING",
+        "STATE_UNAVAILABLE",
+        "BATTLEFIELD_UNAVAILABLE",
+        "UNIT_UNAVAILABLE",
+        "ASSAULT_NOT_READY",
+        "REFUSED",
+        "BATTLE_PENDING"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.assault",
+      "helpTopicId": "commands.action.assault",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.demandSurrender",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.demandSurrender argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.demandSurrender rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "SIEGE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_BESIEGING",
+        "STATE_UNAVAILABLE",
+        "BATTLEFIELD_UNAVAILABLE",
+        "UNIT_UNAVAILABLE",
+        "ASSAULT_NOT_READY",
+        "REFUSED",
+        "BATTLE_PENDING"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.demandSurrender",
+      "helpTopicId": "commands.action.demandSurrender",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.dispatch",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "LORD",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side court.dispatch argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side court.dispatch rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_LORD",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "NOT_DIRECT_RETAINER",
+        "DIFFERENT_NATION",
+        "INVALID_COUNTY",
+        "COUNTY_OCCUPIED",
+        "ALREADY_PENDING",
+        "NO_DISPATCH",
+        "ALREADY_QUEUED",
+        "ALREADY_RESOLVED",
+        "NOT_RECIPIENT",
+        "RELATION_CHANGED",
+        "POLICY_UNAVAILABLE",
+        "STATE_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.dispatch",
+      "helpTopicId": "commands.court.dispatch",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_발령"
+      ],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.dispatchReply",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side court.dispatchReply argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side court.dispatchReply rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "ACTOR_NOT_FOUND",
+        "NOT_LORD",
+        "TARGET_NOT_FOUND",
+        "TARGET_NOT_HUMAN",
+        "NOT_DIRECT_RETAINER",
+        "DIFFERENT_NATION",
+        "INVALID_COUNTY",
+        "COUNTY_OCCUPIED",
+        "ALREADY_PENDING",
+        "NO_DISPATCH",
+        "ALREADY_QUEUED",
+        "ALREADY_RESOLVED",
+        "NOT_RECIPIENT",
+        "RELATION_CHANGED",
+        "POLICY_UNAVAILABLE",
+        "STATE_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.dispatchReply",
+      "helpTopicId": "commands.court.dispatchReply",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.reward",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "LORD",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side court.reward argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side court.reward rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "CARD_UNAVAILABLE",
+        "TOO_SMALL",
+        "INSUFFICIENT_STOCK"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.reward",
+      "helpTopicId": "commands.court.reward",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_포상"
+      ],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "placement.assign",
+      "kind": "PLACEMENT",
+      "layer": 1,
+      "actor": "LORD",
+      "authorityRule": "DIRECT_RETAINER_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side placement.assign argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side placement.assign rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "NEXT_CARD_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DIRECT_RETAINER",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "ACTOR_NOT_FOUND",
+        "CARD_NOT_FOUND",
+        "CARD_NOT_ON_MAP",
+        "HUMAN_CARD",
+        "DIFFERENT_NATION",
+        "CARD_DEPLOYED",
+        "CARD_IN_BATTLE",
+        "NOT_LORD",
+        "NOT_RULER",
+        "INVALID_COUNTY",
+        "COUNTY_OCCUPIED",
+        "INVALID_PROVINCE",
+        "INVALID_NATION",
+        "NOT_LIEUTENANT",
+        "NO_PLACEMENT",
+        "UNCHANGED",
+        "INVALID_COMMANDERY",
+        "NOT_COUNTY_AUTHORITY",
+        "UPPER_POLICY_IN_FORCE",
+        "CORPS_NOT_FOUND",
+        "NOTHING_TO_CLEAR",
+        "WAREHOUSE_NOT_READY",
+        "WORK_IN_PROGRESS",
+        "WORK_COMPLETED",
+        "STATE_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.placement.assign",
+      "helpTopicId": "commands.placement.assign",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "policy.set",
+      "kind": "POLICY",
+      "layer": 1,
+      "actor": "LORD",
+      "authorityRule": "DIRECT_RETAINER_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side policy.set argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side policy.set rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "NEXT_CARD_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "ASSIGNED_JURISDICTION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "ACTOR_NOT_FOUND",
+        "CARD_NOT_FOUND",
+        "CARD_NOT_ON_MAP",
+        "HUMAN_CARD",
+        "DIFFERENT_NATION",
+        "CARD_DEPLOYED",
+        "CARD_IN_BATTLE",
+        "NOT_LORD",
+        "NOT_RULER",
+        "INVALID_COUNTY",
+        "COUNTY_OCCUPIED",
+        "INVALID_PROVINCE",
+        "INVALID_NATION",
+        "NOT_LIEUTENANT",
+        "NO_PLACEMENT",
+        "UNCHANGED",
+        "INVALID_COMMANDERY",
+        "NOT_COUNTY_AUTHORITY",
+        "UPPER_POLICY_IN_FORCE",
+        "CORPS_NOT_FOUND",
+        "NOTHING_TO_CLEAR",
+        "WAREHOUSE_NOT_READY",
+        "WORK_IN_PROGRESS",
+        "WORK_COMPLETED",
+        "STATE_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.policy.set",
+      "helpTopicId": "commands.policy.set",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "work.start",
+      "kind": "WORK",
+      "layer": 1,
+      "actor": "OFFICE_HOLDER",
+      "authorityRule": "JURISDICTION_OFFICE",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side work.start argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side work.start rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "NEXT_PHASE_BOUNDARY",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "TARGET_COUNTY",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "ACTOR_NOT_FOUND",
+        "CARD_NOT_FOUND",
+        "CARD_NOT_ON_MAP",
+        "HUMAN_CARD",
+        "DIFFERENT_NATION",
+        "CARD_DEPLOYED",
+        "CARD_IN_BATTLE",
+        "NOT_LORD",
+        "NOT_RULER",
+        "INVALID_COUNTY",
+        "COUNTY_OCCUPIED",
+        "INVALID_PROVINCE",
+        "INVALID_NATION",
+        "NOT_LIEUTENANT",
+        "NO_PLACEMENT",
+        "UNCHANGED",
+        "INVALID_COMMANDERY",
+        "NOT_COUNTY_AUTHORITY",
+        "UPPER_POLICY_IN_FORCE",
+        "CORPS_NOT_FOUND",
+        "NOTHING_TO_CLEAR",
+        "WAREHOUSE_NOT_READY",
+        "WORK_IN_PROGRESS",
+        "WORK_COMPLETED",
+        "STATE_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.work.start",
+      "helpTopicId": "commands.work.start",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_증축"
+      ],
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "stratagem.play",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.play argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.play rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.play",
+      "helpTopicId": "commands.stratagem.play",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_선동"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.farm",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.farm argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.farm",
+      "helpTopicId": "commands.action.farm",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_농지개간"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.commerce",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.commerce argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.commerce",
+      "helpTopicId": "commands.action.commerce",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_상업투자"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.fortify",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.fortify argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.fortify",
+      "helpTopicId": "commands.action.fortify",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_수비강화"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.repairWall",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.repairWall argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.repairWall",
+      "helpTopicId": "commands.action.repairWall",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_성벽보수"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.security",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.security argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.security",
+      "helpTopicId": "commands.action.security",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_치안강화"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.settle",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.settle argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.settle",
+      "helpTopicId": "commands.action.settle",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_정착장려"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.selectResidents",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.selectResidents argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "data/curated/han/hwiha-domestic-v1.json",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.selectResidents",
+      "helpTopicId": "commands.action.selectResidents",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_주민선정"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.conscript",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.conscript argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.conscript rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.conscript",
+      "helpTopicId": "commands.action.conscript",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_징병"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.raiseVolunteers",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.raiseVolunteers argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.raiseVolunteers rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.raiseVolunteers",
+      "helpTopicId": "commands.action.raiseVolunteers",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_모병"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.train",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.train argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.train rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.train",
+      "helpTopicId": "commands.action.train",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_훈련"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.boostMorale",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.boostMorale argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.boostMorale rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.boostMorale",
+      "helpTopicId": "commands.action.boostMorale",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_사기진작"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.demobilize",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.demobilize argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.demobilize rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.demobilize",
+      "helpTopicId": "commands.action.demobilize",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_소집해제"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.search",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.search argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.search rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.search",
+      "helpTopicId": "commands.action.search",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_인재탐색"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.employ",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.employ argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.employ rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.employ",
+      "helpTopicId": "commands.action.employ",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_등용"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.travel",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.travel argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.travel rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.travel",
+      "helpTopicId": "commands.action.travel",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_견문"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.selfTrain",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.selfTrain argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.selfTrain rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.selfTrain",
+      "helpTopicId": "commands.action.selfTrain",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_단련"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.recuperate",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.recuperate argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.recuperate rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.recuperate",
+      "helpTopicId": "commands.action.recuperate",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_요양"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.gift",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.gift argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.gift rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.gift",
+      "helpTopicId": "commands.action.gift",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_증여"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.donate",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.donate argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.donate rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.donate",
+      "helpTopicId": "commands.action.donate",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_헌납"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.muster",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.muster argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.muster rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "MOVE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.muster",
+      "helpTopicId": "commands.action.muster",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_집합"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.move",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.move argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.move rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "MOVE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.move",
+      "helpTopicId": "commands.action.move",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_이동"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.forcedMarch",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.forcedMarch argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.forcedMarch rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "MOVE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.forcedMarch",
+      "helpTopicId": "commands.action.forcedMarch",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_강행"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.return",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.return argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.return rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "MOVE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.return",
+      "helpTopicId": "commands.action.return",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_귀환"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.retire",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.retire argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.retire rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.retire",
+      "helpTopicId": "commands.action.retire",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_은퇴"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.resign",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.resign argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.resign rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.resign",
+      "helpTopicId": "commands.action.resign",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_하야"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.rise",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.rise argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.rise rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.rise",
+      "helpTopicId": "commands.action.rise",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_거병"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.foundState",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.foundState argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.foundState rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.foundState",
+      "helpTopicId": "commands.action.foundState",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_건국"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.abdicate",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.abdicate argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.abdicate rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.abdicate",
+      "helpTopicId": "commands.action.abdicate",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_선양"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.dissolve",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.dissolve argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.dissolve rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.dissolve",
+      "helpTopicId": "commands.action.dissolve",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_해산"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.tour",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.tour argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.tour rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.tour",
+      "helpTopicId": "commands.action.tour",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.persuadeCaptive",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.persuadeCaptive argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.persuadeCaptive rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.persuadeCaptive",
+      "helpTopicId": "commands.action.persuadeCaptive",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.oath",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.oath argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.oath rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.oath",
+      "helpTopicId": "commands.action.oath",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.independence",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.independence argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.independence rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.independence",
+      "helpTopicId": "commands.action.independence",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.randomEnlist",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.randomEnlist argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.randomEnlist rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.randomEnlist",
+      "helpTopicId": "commands.action.randomEnlist",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_랜덤임관"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.targetEnlist",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.targetEnlist argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.targetEnlist rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "POLITICS",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.targetEnlist",
+      "helpTopicId": "commands.action.targetEnlist",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_장수대상임관"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.convertProficiency",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.convertProficiency argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.convertProficiency rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.convertProficiency",
+      "helpTopicId": "commands.action.convertProficiency",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_숙련전환"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.tradeEquipment",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.tradeEquipment argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.tradeEquipment rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.tradeEquipment",
+      "helpTopicId": "commands.action.tradeEquipment",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_장비매매"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.tradeGrain",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.tradeGrain argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.tradeGrain rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.tradeGrain",
+      "helpTopicId": "commands.action.tradeGrain",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_군량매매"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.transport",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.transport argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side action.transport rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "FIELD",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.transport",
+      "helpTopicId": "commands.action.transport",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_물자조달"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.releaseCorps",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "LORD",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.releaseCorps argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.releaseCorps rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.releaseCorps",
+      "helpTopicId": "commands.court.releaseCorps",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_부대탈퇴지시"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.diplomacy",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.diplomacy argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.diplomacy rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.diplomacy",
+      "helpTopicId": "commands.court.diplomacy",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_물자원조"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.abandonCounty",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.abandonCounty argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.abandonCounty rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.abandonCounty",
+      "helpTopicId": "commands.court.abandonCounty",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_초토화"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.institution",
+      "kind": "COURT_DECISION",
+      "layer": 3,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.institution argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.institution rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.institution",
+      "helpTopicId": "commands.court.institution",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_기술연구"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.moveCapital",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.moveCapital argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.moveCapital rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.moveCapital",
+      "helpTopicId": "commands.court.moveCapital",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_천도"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.confiscate",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "LORD",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.confiscate argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.confiscate rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.confiscate",
+      "helpTopicId": "commands.court.confiscate",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_몰수"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.nonAggression",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.nonAggression argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.nonAggression rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.nonAggression",
+      "helpTopicId": "commands.court.nonAggression",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_불가침제의"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.declareWar",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.declareWar argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.declareWar rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.declareWar",
+      "helpTopicId": "commands.court.declareWar",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_선전포고"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.offerPeace",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.offerPeace argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.offerPeace rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.offerPeace",
+      "helpTopicId": "commands.court.offerPeace",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_종전제의"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.breakNonAggression",
+      "kind": "COURT_DECISION",
+      "layer": 1,
+      "actor": "RULER",
+      "authorityRule": "DECISION_AUTHORITY",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.breakNonAggression argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side court.breakNonAggression rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "DECISION_TURN",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "DECISION_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.court.breakNonAggression",
+      "helpTopicId": "commands.court.breakNonAggression",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_불가침파기제의"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "work.reduce",
+      "kind": "WORK",
+      "layer": 1,
+      "actor": "OFFICE_HOLDER",
+      "authorityRule": "JURISDICTION_OFFICE",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side work.reduce argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side work.reduce rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "NEXT_PHASE_BOUNDARY",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "TARGET_COUNTY",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.work.reduce",
+      "helpTopicId": "commands.work.reduce",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_감축"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.steal",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.steal argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.steal rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.steal",
+      "helpTopicId": "commands.stratagem.steal",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_탈취"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.sabotage",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.sabotage argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.sabotage rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.sabotage",
+      "helpTopicId": "commands.stratagem.sabotage",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_파괴"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.fire",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.fire argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.fire rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.fire",
+      "helpTopicId": "commands.stratagem.fire",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_화계"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.lastStand",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.lastStand argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.lastStand rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.lastStand",
+      "helpTopicId": "commands.stratagem.lastStand",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_필사즉생"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.mobilizePeople",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.mobilizePeople argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.mobilizePeople rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.mobilizePeople",
+      "helpTopicId": "commands.stratagem.mobilizePeople",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_백성동원"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.flood",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.flood argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.flood rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.flood",
+      "helpTopicId": "commands.stratagem.flood",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_수몰"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.falseReport",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.falseReport argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.falseReport rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.falseReport",
+      "helpTopicId": "commands.stratagem.falseReport",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_허보"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.raiseMilitia",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.raiseMilitia argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.raiseMilitia rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.raiseMilitia",
+      "helpTopicId": "commands.stratagem.raiseMilitia",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_의병모집"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.provokeRivalry",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.provokeRivalry argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.provokeRivalry rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.provokeRivalry",
+      "helpTopicId": "commands.stratagem.provokeRivalry",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_이호경식"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.raid",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.raid argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.raid rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.raid",
+      "helpTopicId": "commands.stratagem.raid",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_급습"
+      ],
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.reciprocity",
+      "kind": "STRATAGEM",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "CARD_OWNER",
+      "targetSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.reciprocity argument contract"
+      },
+      "costSchema": {
+        "status": "PLANNED",
+        "source": "server-side stratagem.reciprocity rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "CARD_TRIGGER",
+        "turnSlots": null,
+        "perPhaseLimit": null
+      },
+      "effectScope": "CARD_TARGET",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "NOT_DELIVERED"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "PLANNED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.stratagem.reciprocity",
+      "helpTopicId": "commands.stratagem.reciprocity",
+      "tutorialObjectiveId": "N/A",
+      "legacyCommands": [
+        "che_피장파장"
+      ],
+      "deliveryState": "PLANNED"
+    }
+  ],
+  "retiredLegacyCommands": [
+    "휴식",
+    "che_내정특기초기화",
+    "che_전투특기초기화",
+    "che_국기변경",
+    "che_국호변경"
+  ],
+  "retiredLegacyReasons": {
+    "휴식": "빈 순이 휴식",
+    "che_내정특기초기화": "카드 특기 고정",
+    "che_전투특기초기화": "카드 특기 고정",
+    "che_국기변경": "명령이 아닌 설정",
+    "che_국호변경": "명령이 아닌 설정"
+  }
 }

@@ -25,6 +25,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    private fun catalogFor(inputId: String, kind: String, state: String) =
+        opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
+            "retiredLegacyCommands":[],"retiredLegacyReasons":{},"inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
+            "actor":"GENERAL","authorityRule":"SUBJECT_OWNER","targetSchema":{"status":"PLANNED"},
+            "costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
+            "timing":{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
+            "replayContract":{"status":"PLANNED"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
+            "deliveryState":"$state","legacyCommands":[]}]}""")
     private fun worlds(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
         val repo = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
         `when`(repo.findProcessWorld()).thenReturn(config?.let { opensamguk.gameapi.read.WorldStateReadEntity(config = it) })
@@ -59,9 +67,7 @@ class CommandReserveServiceTest {
         `when`(generals.findById(10)).thenReturn(java.util.Optional.of(actor))
         val request = opensamguk.logic.input.EnlistmentRequest(10, opensamguk.logic.input.EnlistmentMode.NATION, 3)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
-        val catalog = opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[
-            {"inputId":"action.enlist","kind":"GENERAL_ACTION","layer":1,"deliveryState":"HANDLER_READY","legacyCommands":[]}
-        ]}""")
+        val catalog = catalogFor("action.enlist", "GENERAL_ACTION", "HANDLER_READY")
         val admission = HwihaEnlistmentAdmission(generals, precheck, catalog)
         for (failure in opensamguk.logic.input.EnlistmentFailure.entries) {
             `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Rejected(failure))
@@ -74,9 +80,7 @@ class CommandReserveServiceTest {
         val malformed = assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(10, 42, 0, "{}") }
         assertEquals(opensamguk.logic.input.EnlistmentFailure.INVALID_REQUEST.message, malformed.message)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
-        val plannedCatalog = opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[
-            {"inputId":"action.enlist","kind":"GENERAL_ACTION","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}
-        ]}""")
+        val plannedCatalog = catalogFor("action.enlist", "GENERAL_ACTION", "PLANNED")
         assertEquals("NOT_DELIVERED", assertFailsWith<HwihaAdmissionDenied> {
             HwihaEnlistmentAdmission(generals, precheck, plannedCatalog).canonicalArguments(10, 42, 0,
                 """{"mode":"NATION","targetId":3}""")
@@ -173,8 +177,7 @@ class CommandReserveServiceTest {
         }
         assertEquals(1, inbox.accepted.size)
         // A ledger that still says PLANNED keeps the input undelivered even when the rules pass.
-        val planned = opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":1,"inputs":[
-            {"inputId":"policy.set","kind":"POLICY","layer":1,"deliveryState":"PLANNED","legacyCommands":[]}]}""")
+        val planned = catalogFor("policy.set", "POLICY", "PLANNED")
         assertEquals("NOT_DELIVERED", assertFailsWith<HwihaAdmissionDenied> {
             HwihaDomesticAdmission(reader, planned).canonicalArguments(10, 42, "policy.set",
                 """{"scope":"COUNTY","countyId":7,"policy":"COMMERCE"}""")
