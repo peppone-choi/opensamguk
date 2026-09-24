@@ -882,6 +882,18 @@ export interface HwihaLegacyCourtOptions {
     inputId:HwihaLegacyCourtId;available:boolean;code?:string|null;reason?:string|null;
     choices:HwihaLegacyCourtChoice[];
 }
+export type HwihaLegacyStratagemId = 'stratagem.play' | 'stratagem.steal'
+    | 'stratagem.sabotage' | 'stratagem.fire' | 'stratagem.lastStand'
+    | 'stratagem.mobilizePeople' | 'stratagem.flood' | 'stratagem.falseReport'
+    | 'stratagem.raiseMilitia' | 'stratagem.provokeRivalry' | 'stratagem.raid'
+    | 'stratagem.reciprocity';
+export interface HwihaLegacyStratagemChoice {
+    label:string;arguments:Record<string,number>;available:boolean;code?:string|null;reason?:string|null;
+}
+export interface HwihaLegacyStratagemOptions {
+    inputId:HwihaLegacyStratagemId;available:boolean;code?:string|null;reason?:string|null;
+    choices:HwihaLegacyStratagemChoice[];
+}
 export interface HwihaTransferOptions {
     inputId: HwihaTransferActionId; available: boolean; code?: string | null; reason?: string | null;
     resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;

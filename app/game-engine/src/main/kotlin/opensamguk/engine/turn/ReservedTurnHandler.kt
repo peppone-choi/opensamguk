@@ -328,6 +328,11 @@ class ReservedTurnHandler(
                     handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
                 }
             }
+            for (inputId in opensamguk.logic.input.HwihaLegacyStratagemInput.INPUT_IDS) {
+                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                    handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
+                }
+            }
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId,
                     npcSelected = !reserved.rowExists)

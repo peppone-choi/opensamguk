@@ -584,7 +584,7 @@ export default function CommandModal({
 
     return (
         <Modal
-            ariaLabel={courtMode ? '발령·응답' : pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
+            ariaLabel={courtMode ? '발령·조정·계책' : pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
             className="modal-content"
             overlayClassName="modal-overlay"
             onClose={onClose}
@@ -596,7 +596,7 @@ export default function CommandModal({
                         </div>
                     )}
                     <div className="cmd-header__text">
-                        <h2 className="os-serif">{courtMode ? '발령·응답' : '명령'}</h2>
+                        <h2 className="os-serif">{courtMode ? '발령·조정·계책' : '명령'}</h2>
                         {hero?.name && <span className="cmd-header__who">{hero.name}{!courtMode && turnIdx != null ? ` · ${turnIdx + 1}순` : ''}</span>}
                     </div>
                     <button type="button" className="os-button os-button--ghost os-button--sm cmd-close" onClick={onClose} aria-label="닫기">×</button>

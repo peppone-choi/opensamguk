@@ -1,6 +1,8 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
+import opensamguk.logic.diplomacy.DiplomacyConst
+import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.input.*
 
 /** Queued on submission; replayed exactly once at the issuer's next turn. */
@@ -86,14 +88,20 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
                 val forward = world.getDiplomacy(nation.id, other) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
                 val backward = world.getDiplomacy(other, nation.id) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
                 val nextState = when (inputId) {
-                    HwihaDiplomacyInput.NON_AGGRESSION -> 7
-                    HwihaDiplomacyInput.DECLARE_WAR -> 1
-                    HwihaDiplomacyInput.OFFER_PEACE, HwihaDiplomacyInput.BREAK_NON_AGGRESSION -> 0
+                    HwihaDiplomacyInput.NON_AGGRESSION -> DiplomacyState.NON_AGGRESSION
+                    HwihaDiplomacyInput.DECLARE_WAR -> DiplomacyState.DECLARATION
+                    HwihaDiplomacyInput.OFFER_PEACE -> DiplomacyState.TRADE
+                    HwihaDiplomacyInput.BREAK_NON_AGGRESSION -> DiplomacyState.WAR
                     else -> return reject(HwihaLegacyCourtFailure.INVALID_INPUT)
                 }
                 for (pre in listOf(forward, backward)) {
                     val next = world.updateDiplomacy(pre.fromNationId, pre.toNationId, nextState,
-                        if (nextState == 7) 12 else 0) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
+                        when (nextState) {
+                            DiplomacyState.NON_AGGRESSION -> DiplomacyConst.MIN_NON_AGGRESSION_MONTHS
+                            DiplomacyState.DECLARATION -> DiplomacyConst.DEFAULT_DECLARE_WAR_TERM
+                            DiplomacyState.WAR -> DiplomacyConst.DEFAULT_WAR_TERM
+                            else -> 0
+                        }) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
                     recorder.diffDiplomacy(pre, next)
                 }
             }

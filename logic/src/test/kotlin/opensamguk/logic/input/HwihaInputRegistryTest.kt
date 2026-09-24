@@ -43,7 +43,8 @@ class HwihaInputRegistryTest {
         "court.abandonCounty" to InputHandler {}, "court.institution" to InputHandler {},
         "court.moveCapital" to InputHandler {}, "court.confiscate" to InputHandler {},
         "court.nonAggression" to InputHandler {}, "court.declareWar" to InputHandler {},
-        "court.offerPeace" to InputHandler {}, "court.breakNonAggression" to InputHandler {})
+        "court.offerPeace" to InputHandler {}, "court.breakNonAggression" to InputHandler {}) +
+        HwihaLegacyStratagemInput.INPUT_IDS.associateWith { InputHandler {} }
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -94,8 +95,11 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `catalogued input without a handler is NOT_DELIVERED, not success`() {
-        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, "stratagem.play"))
+    fun `all old stratagems have registered handlers`() {
+        for (id in HwihaLegacyStratagemInput.INPUT_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+        }
     }
 
     @Test

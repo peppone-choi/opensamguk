@@ -1,6 +1,7 @@
 package opensamguk.logic.input
 
 import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.diplomacy.DiplomacyState
 
 /** The eleven old court orders use one strict input and one pure admission/execution gate. */
 object HwihaLegacyCourtInput {
@@ -107,9 +108,12 @@ object HwihaLegacyCourtRules {
                     val current = state.diplomacy.singleOrNull { it.fromNationId == nation.id && it.toNationId == target.id }
                         ?: return fail(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
                     when (inputId) {
-                        HwihaDiplomacyInput.DECLARE_WAR -> if (current.state == 1) return fail(HwihaLegacyCourtFailure.ALREADY_AT_WAR)
-                        HwihaDiplomacyInput.OFFER_PEACE -> if (current.state != 1) return fail(HwihaLegacyCourtFailure.NOT_AT_WAR)
-                        HwihaDiplomacyInput.BREAK_NON_AGGRESSION -> if (current.state != 7) return fail(HwihaLegacyCourtFailure.AGREEMENT_UNAVAILABLE)
+                        HwihaDiplomacyInput.DECLARE_WAR -> if (current.state == DiplomacyState.WAR ||
+                            current.state == DiplomacyState.DECLARATION) return fail(HwihaLegacyCourtFailure.ALREADY_AT_WAR)
+                        HwihaDiplomacyInput.OFFER_PEACE -> if (current.state !in setOf(
+                            DiplomacyState.WAR, DiplomacyState.DECLARATION)) return fail(HwihaLegacyCourtFailure.NOT_AT_WAR)
+                        HwihaDiplomacyInput.BREAK_NON_AGGRESSION -> if (current.state != DiplomacyState.NON_AGGRESSION)
+                            return fail(HwihaLegacyCourtFailure.AGREEMENT_UNAVAILABLE)
                     }
                     eligible(targetNation = target)
                 }

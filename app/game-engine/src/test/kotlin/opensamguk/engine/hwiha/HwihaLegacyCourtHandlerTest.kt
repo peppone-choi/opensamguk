@@ -56,6 +56,8 @@ class HwihaLegacyCourtHandlerTest {
                 Nation(2, "N2", "#222222", capitalCityId = route.destinationCounty)),
             retainers = listOf(Retainer(51, 501, "TEST", 502, plainEnvoy.name, "guest")))
         val handler = HwihaCourtHandler(world, ChangeRecorder())
+        world.updateDiplomacy(1, 2, 2, 0)
+        world.updateDiplomacy(2, 1, 2, 0)
         assertEquals(HwihaLegacyCourtFailure.ENVOY_REQUIRED.name,
             handler.handle(input("court.declareWar", """{"targetNationId":2}""", "without-envoy")).code)
         val order = HwihaPlacementOrder("envoy-51", 501, 51, PlacementPost.ENVOY, PlacementTarget.Nation(2), now)

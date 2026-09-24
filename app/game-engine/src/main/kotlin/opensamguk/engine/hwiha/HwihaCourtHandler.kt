@@ -16,6 +16,7 @@ class HwihaCourtHandler(
     private val executor = HwihaDispatchExecutor(world, recorder)
     private val domestic by lazy { HwihaDomesticHandler(world, recorder, domesticContext) }
     private val legacy by lazy { HwihaLegacyCourtExecutor(world, recorder, domesticContext) }
+    private val stratagem by lazy { HwihaLegacyStratagemExecutor(world, recorder, domesticContext) }
     private val executions = mutableListOf<HwihaCourtExecution>()
 
     fun handle(command: HwihaCourtInput): CommandLifecycleResult {
@@ -48,6 +49,11 @@ class HwihaCourtHandler(
         for (legacyId in HwihaLegacyCourtInput.INPUT_IDS) {
             if (HwihaInputCatalog.load()[legacyId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[legacyId] = InputHandler { outcome = handleKnown(command) }
+            }
+        }
+        for (stratagemId in HwihaLegacyStratagemInput.INPUT_IDS) {
+            if (HwihaInputCatalog.load()[stratagemId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[stratagemId] = InputHandler { outcome = handleKnown(command) }
             }
         }
         for (fieldId in HwihaFieldInput.INPUT_IDS) {
@@ -152,6 +158,22 @@ class HwihaCourtHandler(
                 updateMeta(actor, actor.meta + (HwihaQueuedLegacyCourt.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
+            in HwihaLegacyStratagemInput.INPUT_IDS -> {
+                val request = HwihaLegacyStratagemInput.parse(actor.id, command.inputId, command.argJson)
+                    ?: return deny(HwihaLegacyStratagemFailure.INVALID_INPUT.name, HwihaLegacyStratagemFailure.INVALID_INPUT.message)
+                val existing = try { HwihaQueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) {
+                    return deny(HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.name, HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.message)
+                }
+                if (existing != null) return deny(HwihaLegacyStratagemFailure.ALREADY_QUEUED.name,
+                    HwihaLegacyStratagemFailure.ALREADY_QUEUED.message)
+                val assessment = stratagem.assess(request)
+                if (assessment is HwihaLegacyStratagemAssessment.Rejected)
+                    return deny(assessment.reason.name, assessment.reason.message)
+                val queued = HwihaQueuedLegacyStratagem(command.requestId, command.ownerUserId, command.inputId,
+                    HwihaLegacyStratagemInput.canonicalJson(request))
+                updateMeta(actor, actor.meta + (HwihaQueuedLegacyStratagem.META_KEY to queued.toMetaValue()))
+                result(actor.id, command.inputId, true, type = "reservationAccepted")
+            }
             else -> deny("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }
     }
@@ -161,6 +183,7 @@ class HwihaCourtHandler(
         if (world.ruleProfile != RuleProfile.HWIHA) return
         runQueuedReward(generalId)
         runQueuedLegacy(generalId)
+        runQueuedStratagem(generalId)
         val actor = world.getGeneralById(generalId) ?: return
         val queued = HwihaQueuedDispatch.read(actor.meta)
         if (queued == null) {
@@ -209,7 +232,29 @@ class HwihaCourtHandler(
             else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
         }
         val current = world.getGeneralById(generalId) ?: return
-        updateMeta(current, current.meta - HwihaQueuedLegacyCourt.META_KEY)
+        updateMeta(current, (current.meta - HwihaQueuedLegacyCourt.META_KEY) +
+            ("hwihaLegacyCourtLastExecution" to mapOf("requestId" to queued.requestId,
+                "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
+        executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, resolved)
+    }
+
+    private fun runQueuedStratagem(generalId: Int) {
+        val actor = world.getGeneralById(generalId) ?: return
+        val queued = try { HwihaQueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) { null } ?: return
+        val request = HwihaLegacyStratagemInput.parse(generalId, queued.inputId, queued.argJson)
+        val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
+            result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
+        } else if (request == null) {
+            result(generalId, queued.inputId, false, HwihaLegacyStratagemFailure.INVALID_INPUT.name,
+                HwihaLegacyStratagemFailure.INVALID_INPUT.message)
+        } else when (val rejected = stratagem.execute(request)) {
+            null -> result(generalId, queued.inputId, true)
+            else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
+        }
+        val current = world.getGeneralById(generalId) ?: return
+        updateMeta(current, (current.meta - HwihaQueuedLegacyStratagem.META_KEY) +
+            ("hwihaLegacyStratagemLastExecution" to mapOf("requestId" to queued.requestId,
+                "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }
 
@@ -221,7 +266,7 @@ class HwihaCourtHandler(
     fun takeExecutions(): List<HwihaCourtExecution> = executions.toList().also { executions.clear() }
 
     fun rejectPersonalReservation(generalId: Int, inputId: String) =
-        HwihaTurnOutcome.Rejected(inputId, "INVALID_INPUT_CHANNEL", "발령과 응답은 개인 행동 예약으로 실행할 수 없습니다.")
+        HwihaTurnOutcome.Rejected(inputId, "INVALID_INPUT_CHANNEL", "이 입력은 별도 조정·계책 채널에서 제출해야 합니다.")
 
     private fun updateMeta(before: TurnGeneral, meta: Map<String, Any?>) {
         val after = before.copy(meta = meta)
@@ -230,6 +275,7 @@ class HwihaCourtHandler(
     }
     private fun result(generalId: Int, inputId: String, ok: Boolean, code: String? = null, reason: String? = null,
         type: String = if (ok) "executionApplied" else "executionRejected") =
-        CommandLifecycleResult(type = type, ok = ok, commandKind = "COURT_DECISION", actionCode = inputId,
+        CommandLifecycleResult(type = type, ok = ok,
+            commandKind = if (inputId in HwihaLegacyStratagemInput.INPUT_IDS) "STRATAGEM" else "COURT_DECISION", actionCode = inputId,
             generalId = generalId, code = code, reason = reason)
 }

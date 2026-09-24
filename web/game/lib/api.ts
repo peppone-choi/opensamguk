@@ -494,6 +494,10 @@ export const api = {
         get<import('./types').HwihaLegacyCourtOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
     courtLegacy: (inputId: import('./types').HwihaLegacyCourtId, generalId: number, args: Record<string,string|number>) =>
         post<IntakeOutcome>(`/api/commands/court/${inputId.slice(6)}?generalId=${generalId}`, args),
+    legacyStratagemOptions: (inputId: import('./types').HwihaLegacyStratagemId, generalId: number) =>
+        get<import('./types').HwihaLegacyStratagemOptions>(`/api/commands/legacy-stratagem-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
+    playLegacyStratagem: (inputId: import('./types').HwihaLegacyStratagemId, generalId: number, args: Record<string,number>) =>
+        post<IntakeOutcome>(`/api/commands/stratagem/${inputId.slice(10)}?generalId=${generalId}`, args),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
