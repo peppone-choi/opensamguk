@@ -1,15 +1,26 @@
 # 입력 6종 registry 계약
 
 > 작성일: 2026-09-17
-> 상태: **초안(제안).** 교차 비평·사용자 승인 전. 이슈 #779 / OPENSAM-259.
+> 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 4건: #249·#892 (#779 상위).**
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §4·§5·§12, ADR-LITE-057, ADR-LITE-049 개정(2026-09-17 사용자 결정, `.ai/decisions.md`에 반영됨)
-> 범위: 계약만 정한다. 구현·수치는 이 문서에 없다.
+> 범위: 휘하 입력 계약. 구현 근거와 남은 차이는 아래 대조표에 기록한다.
+
+## 2026-09-24 구현 대조와 처리
+
+| 차이 | 2026-09-24 구현 근거 | 처리 |
+|---|---|---|
+| 제품 기본 프로필은 아직 SAMMO | `ScenarioImporter`의 누락 기본값과 `RuleProfile.fromWorldConfig`가 SAMMO, 일부 game-api 조회도 동일 | ADR-LITE-065에 따라 B단계에서 HWIHA 기본으로 바꾼다. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
+| 원장 스키마의 actor·authorityRule·targetSchema·costSchema·timing·effectScope·failureReasons·resultType·replayContract·aiPolicyId·helpTopicId·tutorialObjectiveId가 아직 없음 | `HwihaInputEntry`는 `inputId`·`kind`·`layer`·`deliveryState`·`legacyCommands`만 읽는다 | 계약은 유지하고 단계별 원장 필드를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+| 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+| 70개 기존 명령 전환과 계책 입력이 미완 | 원장은 12행 중 11행 HANDLER_READY, `stratagem.play`만 PLANNED이며 `legacyCommands`는 일부 행만 참조 | 제품 전환표와 직접 행동·위임 대응을 완성한다. 계책 효과는 후속 구현. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+
+이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. 현재 원장 12행 중 11행은 핸들러 단계이며 UI·AI·도움말·튜토리얼·리플레이 완료를 뜻하지 않는다. SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다.
 
 ## 2026-09-20 기반 결정
 
 사용자의 게임 기획 위임에 따라 `ruleProfile` 저장 자리는 현행 구현대로 **`world_state.config["ruleProfile"]`** 하나로 확정한다. `ScenarioImporter`가 시나리오 선언을 적고 엔진은 `TurnWorldState.ruleProfile`로 읽는다. 누락만 SAMMO 기본값이며 알 수 없는 값과 문자열 아닌 값은 거절한다. meta에 복제하거나 런타임 프로필 전환 경로를 추가하지 않는다.
 
-2026-09-23 현재 원장은 출사 `action.enlist`·출병 `action.deploy`·첩보 `action.scout`(직접 행동, [휘하 시야·첩보 계약](./2026-09-23-hwiha-vision-contract.md) §6)와 발령 `court.dispatch`·응답 `court.dispatchReply`가 HANDLER_READY이고 배치·방침·공사·계책 4행은 PLANNED다.
+2026-09-24 현재 원장은 12행 중 계책 `stratagem.play`만 PLANNED이고 나머지 11행이 HANDLER_READY다(`data/commands/hwiha-input-catalog.json`). 확정 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)를 따른다.
 
 2026-09-21 현재 원장은 출사 `action.enlist`와 발령 `court.dispatch`·응답 `court.dispatchReply`가 HANDLER_READY이고 나머지4행은 PLANNED다. 이 결정은 입력 기능 완료나 계약 전체의 승격이 아니다. actor·권한·효과 봉투는 출사 소비자의 접수·실행 계약을 따르며, 아래 WORK·UI·이전 관련 미결을 기반 구현 완료로 포장하지 않는다.
 
@@ -22,7 +33,7 @@
 | 새 결과 타입을 직렬화기 집합에 안 넣으면 턴 루프 전체가 멈춘다 | `TurnDaemonCommandResultSerializer` `else -> throw` 전례(2026-09-06 boardRead) | 입력이 늘수록 같은 사고가 난다 — 등록을 한 곳에서 강제해야 한다 |
 | 제품 범위 정본이 알파 카탈로그 124행(기존 별칭 70) | `data/commands/public-alpha-command-catalog.json`, `PublicCommandCatalogIndex` | ADR-LITE-057 이 정본 지위를 거뒀다. 새 원장이 필요하다 |
 
-현재는 `HwihaInputRegistry`와 출사·발령·응답 HANDLER_READY·나머지4행 PLANNED 원장이 구현돼 있다. 아래 관측은 기존 경로의 출발점이며, 남은 작업은 새 입력의 실제 소비자 연결이다.
+현재는 `HwihaInputRegistry`와 12행 중 11행의 핸들러가 구현돼 있다. 아래 관측은 옛 경로의 출발점이며, 남은 작업은 위 구현 대조표와 [#779](https://github.com/peppone-choi/opensamguk/issues/779)가 추적한다.
 
 ## 2. 식별과 종류
 
