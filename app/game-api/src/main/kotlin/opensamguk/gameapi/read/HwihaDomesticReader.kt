@@ -1,6 +1,8 @@
 package opensamguk.gameapi.read
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.*
+import opensamguk.infra.seed.HwihaCountyGeographyJson
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.input.*
@@ -15,6 +17,7 @@ class HwihaDomesticForbidden : RuntimeException()
 data class HwihaDomesticSnapshot(
     val state: HwihaDomesticProjection? = null,
     val failure: String? = null,
+    val infrastructure: HwihaInfrastructureSiteState? = null,
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, HwihaResources> = emptyMap(),
@@ -34,6 +37,8 @@ class HwihaDomesticReader(
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
     private val geography: HwihaCityGeography,
+    private val gameKv: GameKvReadRepository,
+    private val mapper: ObjectMapper,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
         if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw HwihaDomesticForbidden()
@@ -56,6 +61,14 @@ class HwihaDomesticReader(
                 val places = geography.places(bundle)
                 val admin = bundle.projection.administrativeCountyIds
                 val counties = selected.cities.filter { it.id in admin }.sortedBy { it.id }
+                val countyGeography = HwihaCountyGeographyJson.load(bundle)
+                fun gameEnvMeta(key: String): Map<String, Any?> {
+                    val raw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", key)?.value
+                    if (raw == null) return selected.world.meta
+                    @Suppress("UNCHECKED_CAST")
+                    val value = mapper.readValue(raw, Map::class.java) as Map<String, Any?>
+                    return selected.world.meta + (key to value)
+                }
                 HwihaDomesticSnapshot(
                     state = HwihaDomesticProjection(
                         profile = profile,
@@ -73,7 +86,12 @@ class HwihaDomesticReader(
                         },
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
                         landProvinceIds = topology.landProvinceIds,
+                        provinceIdsByCounty = admin.associateWith(countyGeography::provincesOfCounty),
                     ),
+                    infrastructure = HwihaInfrastructureSiteState(topology,
+                        bundle.projection.presentation?.roadGates.orEmpty(),
+                        HwihaLandPassageState.read(gameEnvMeta(HwihaLandPassageState.META_KEY), topology),
+                        HwihaRoadFortState.read(gameEnvMeta(HwihaRoadFortState.META_KEY))),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->
                         val place = places[c.id] ?: return@mapNotNull null

@@ -141,7 +141,8 @@ class CommandReserveServiceTest {
             listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.input.DomesticCard(5, 10, 20, "staff")),
             listOf(opensamguk.logic.input.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
             listOf(opensamguk.logic.input.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
-        `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state))
+        `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state,
+            infrastructure = opensamguk.logic.input.HwihaInfrastructureSiteState(null, emptyList(), null, emptyList())))
         val catalog = opensamguk.logic.input.HwihaInputCatalog.load()
         val court = HwihaCourtAdmission(mock(opensamguk.gameapi.precheck.HwihaDispatchPrecheckService::class.java),
             HwihaDomesticAdmission(reader, catalog), catalog)
@@ -164,7 +165,9 @@ class CommandReserveServiceTest {
         for ((input, body, code) in listOf(
             Triple("placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":8}""", "INVALID_COUNTY"),
             Triple("policy.set", """{"scope":"COUNTY","countyId":7,"policy":"NONE"}""", "NOTHING_TO_CLEAR"),
-            Triple("work.start", """{"countyId":7,"work":"ROAD"}""", "WAREHOUSE_NOT_READY"),
+            Triple("work.start", """{"countyId":7,"work":"ROAD"}""", "INVALID_INFRASTRUCTURE_SITE"),
+            Triple("work.start", """{"countyId":7,"work":"FORTIFICATION","edgeId":"remote","row":0,"col":0}""",
+                "INVALID_INFRASTRUCTURE_SITE"),
             Triple("work.start", """{"countyId":7,"work":"ROAD","x":1}""", "INVALID_REQUEST"),
         )) {
             assertEquals(code, assertFailsWith<HwihaAdmissionDenied> {

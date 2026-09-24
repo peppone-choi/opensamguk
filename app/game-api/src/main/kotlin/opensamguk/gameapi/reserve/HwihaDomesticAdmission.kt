@@ -38,6 +38,15 @@ class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
             "WRONG_RULE_PROFILE" -> deny(InputRejection.WRONG_RULE_PROFILE.name, InputRejection.WRONG_RULE_PROFILE.message)
             else -> deny(DomesticFailure.STATE_UNAVAILABLE.name, DomesticFailure.STATE_UNAVAILABLE.message)
         }
+        if (inputId == HwihaDomesticInput.WORK) {
+            val request = HwihaDomesticInput.parseWork(actorId, raw)
+                ?: deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
+            val infrastructure = snapshot.infrastructure ?: deny(DomesticFailure.STATE_UNAVAILABLE.name,
+                DomesticFailure.STATE_UNAVAILABLE.message)
+            HwihaInfrastructureSiteRules.error(request, state, infrastructure)?.let {
+                deny("INVALID_INFRASTRUCTURE_SITE", it)
+            }
+        }
         val assessment = assess(state)
         if (assessment is DomesticAssessment.Rejected) deny(assessment.reason.name, assessment.reason.message)
         if (catalog[inputId]?.deliveryState?.hasHandler != true) deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)

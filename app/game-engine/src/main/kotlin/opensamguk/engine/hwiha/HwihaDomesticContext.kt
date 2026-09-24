@@ -49,6 +49,8 @@ class HwihaDomesticContext(
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
             }.toMap(),
+            provinceIdsByCounty = if (geography == null) emptyMap() else world.administrativeCountyIds
+                .associateWith(geography::provincesOfCounty),
         )
     }
 }

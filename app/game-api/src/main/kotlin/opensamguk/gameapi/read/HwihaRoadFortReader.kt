@@ -46,8 +46,11 @@ class HwihaRoadFortReader(
                 else -> null
             }
         }.toSet()
+        val geography = opensamguk.infra.seed.HwihaCountyGeographyJson.load(bundle)
         val ownedProvinces = selected.cities.filter { it.nationId == actor.nationId }
-            .mapNotNull { bundle.projection.bindingsByCityId[it.id]?.landProvinceId }.toSet()
+            .flatMap { city -> geography.provincesOfCounty(city.id).ifEmpty {
+                setOfNotNull(bundle.projection.bindingsByCityId[city.id]?.landProvinceId)
+            } }.toSet()
         val passageRaw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY)?.value
         val passage = try {
             passageRaw?.let { serialized ->

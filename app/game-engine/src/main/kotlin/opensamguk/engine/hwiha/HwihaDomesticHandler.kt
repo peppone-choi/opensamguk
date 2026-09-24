@@ -108,36 +108,12 @@ class HwihaDomesticHandler(
     }
 
     private fun infrastructureTargetError(request: WorkRequest, state: HwihaDomesticProjection): String? {
-        if (request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
-        if (request.work == DomesticWork.FORTIFICATION && request.edgeId == null &&
-            request.row == null && request.col == null) return null // County wall, independent of a road fort.
-        if (context.roadGates.isEmpty()) return "이 지도에는 도로 공사 자리가 없습니다."
-        val gate = context.roadGates.singleOrNull { it.edgeId == request.edgeId }
-            ?: return "지도에 등록된 도로 접경을 골라 주세요."
-        val provinceId = state.county(request.countyId)?.provinceId
-            ?: return "공사할 현의 지도 구역을 찾을 수 없습니다."
-        val topology = context.topology ?: return "도로 위상 자료를 읽을 수 없습니다."
-        val edge = topology.traversalEdges.singleOrNull { it.id == gate.edgeId }
-            ?: return "도로 접경의 위상 자료를 읽을 수 없습니다."
-        if (listOf(edge.from, edge.to).none { it is opensamguk.logic.world.StrategicNodeRef.LandProvince && it.id == provinceId })
-            return "해당 현에 닿는 도로만 공사할 수 있습니다."
-        val passage = try { HwihaLandPassageState.read(world.getState().meta, topology) }
-            catch (_: IllegalArgumentException) { null } ?: return "도로 통행 상태를 읽을 수 없습니다."
-        val active = passage.edgeStates[gate.edgeId]?.active ?: return "도로 통행 상태가 비어 있습니다."
-        if (request.work == DomesticWork.ROAD) {
-            if (!gate.buildable) return "성 자리와 이어지지 않는 접경입니다. 나루나 별도 도하가 필요합니다."
-            if (request.row != null || request.col != null) return "도로 개척에는 접경만 지정해 주세요."
-            if (active) return "이미 열린 도로입니다."
-        } else {
-            if (!active) return "보루는 개통된 도로에만 세울 수 있습니다."
-            if (request.row == null || request.col == null || gate.fortCells.none {
-                    it.provinceId == provinceId && it.row == request.row && it.col == request.col
-                }) return "보루는 자기 현의 도로 칸 또는 인접한 마른땅 칸에 세워야 합니다."
-            val forts = try { HwihaRoadFortState.read(world.getState().meta) }
-                catch (_: IllegalArgumentException) { return "보루 상태를 읽을 수 없습니다." }
-            if (forts.any { it.row == request.row && it.col == request.col }) return "이미 보루가 있는 칸입니다."
-        }
-        return null
+        val passage = try { context.topology?.let { HwihaLandPassageState.read(world.getState().meta, it) } }
+            catch (_: IllegalArgumentException) { null }
+        val forts = try { HwihaRoadFortState.read(world.getState().meta) }
+            catch (_: IllegalArgumentException) { return "보루 상태를 읽을 수 없습니다." }
+        return HwihaInfrastructureSiteRules.error(request, state,
+            HwihaInfrastructureSiteState(context.topology, context.roadGates, passage, forts))
     }
 
     private fun kindOf(inputId: String) = when (inputId) {

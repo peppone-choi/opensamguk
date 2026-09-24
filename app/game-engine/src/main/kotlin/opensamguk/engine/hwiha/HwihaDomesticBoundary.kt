@@ -114,6 +114,15 @@ class HwihaDomesticBoundary(
                 WorkResult.ADVANCED
             }
             is HwihaWorkStep.Completed -> {
+                val fortProvinceId = if (step.completed.work == DomesticWork.FORTIFICATION &&
+                    step.completed.edgeId != null) {
+                    val edgeId = step.completed.edgeId
+                    val row = step.completed.row
+                    val col = step.completed.col
+                    context.roadGates.singleOrNull { it.edgeId == edgeId }?.fortCells
+                        ?.singleOrNull { it.row == row && it.col == col }?.provinceId
+                        ?: return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                } else null
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
                 val done = HwihaCountyWorks(null, (works.completed + step.completed).sortedWith(
@@ -140,7 +149,7 @@ class HwihaDomesticBoundary(
                     val col = checkNotNull(step.completed.col)
                     val fort = HwihaRoadFort(
                         HwihaRoadFort.siteId(edgeId, row, col),
-                        edgeId, checkNotNull(state.county(countyId)?.provinceId),
+                        edgeId, checkNotNull(fortProvinceId),
                         row, col, city.nationId, wall = 100, garrison = 0,
                     )
                     val value = HwihaRoadFortState.toMetaValue(HwihaRoadFortState.read(world.getState().meta) + fort)

@@ -17,7 +17,8 @@ data class HwihaCountyPlace(val countyId: Int, val commanderyId: String, val com
     init { require(countyId > 0 && HwihaDomesticIds.commandery(commanderyId)) }
 }
 
-class HwihaCountyGeography(places: Collection<HwihaCountyPlace>) {
+class HwihaCountyGeography(places: Collection<HwihaCountyPlace>,
+    private val provinceIdsByJurisdiction: Map<String, Set<String>> = emptyMap()) {
     val byCounty: Map<Int, HwihaCountyPlace> = places.sortedBy { it.countyId }.associateBy { it.countyId }.also {
         require(it.size == places.size) { "duplicate county geography" }
     }
@@ -27,6 +28,9 @@ class HwihaCountyGeography(places: Collection<HwihaCountyPlace>) {
     fun commanderyOf(countyId: Int): String? = byCounty[countyId]?.commanderyId
     fun countiesOf(commanderyId: String): List<Int> = byCounty.values.filter { it.commanderyId == commanderyId }.map { it.countyId }
     fun commanderyName(commanderyId: String): String? = byCounty.values.firstOrNull { it.commanderyId == commanderyId }?.commanderyName
+    /** Every 省 in this 縣's jurisdiction, including pieces without a 城 seat. */
+    fun provincesOfCounty(countyId: Int): Set<String> =
+        byCounty[countyId]?.jurisdictionId?.let(provinceIdsByJurisdiction::get).orEmpty()
 
     /** 관할 id 가 정확히 한 縣治 城에 닿을 때만 그 城. */
     fun countyOfJurisdiction(jurisdictionId: String): Int? = countyByJurisdiction[jurisdictionId]

@@ -35,6 +35,12 @@ object HwihaCountyGeographyJson {
                 ?.let { (provinces[it] as? Map<*, *>)?.get("jurisdictionId") as? String }?.takeIf { it.isNotBlank() }
             HwihaCountyPlace(id, commandery, (meta["jun"] as? String)?.takeIf { it.isNotBlank() }, jurisdiction)
         }
-        return HwihaCountyGeography(places)
+        val provinceIdsByJurisdiction = provinces.mapNotNull { raw ->
+            val province = raw as? Map<*, *> ?: error("han-tiles province is not an object")
+            val jurisdictionId = province["jurisdictionId"] as? String ?: return@mapNotNull null
+            val provinceId = province["id"] as? String ?: error("han-tiles province id missing")
+            jurisdictionId to provinceId
+        }.groupBy({ it.first }, { it.second }).mapValues { it.value.toSet() }
+        return HwihaCountyGeography(places, provinceIdsByJurisdiction)
     }
 }
