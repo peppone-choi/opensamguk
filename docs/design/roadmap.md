@@ -2,7 +2,7 @@
 
 > 마지막 검토: 2026-09-24
 >
-> 상태: 사용자 승인 기준선 — ADR-LITE-057·065 반영. 3단계 통과; 제품 컷오버·pep 전환은 진행 전.
+> 상태: 사용자 승인 기준선 — ADR-LITE-057·065 반영. 3단계 통과; 컷오버 A단계 문서 정리 진행 중. B단계 코드 교체와 pep 전환은 시작 전.
 > 일정 정책: 날짜를 약속하지 않고 단계별 출시 관문을 통과하는 즉시 다음 단계로 승격한다.
 > 정본 설계: [장수·휘하 캠페인 재설계](../superpowers/specs/2026-09-17-general-and-retinue-campaign-redesign.md)
 > 실행 계획: [2026-09-17 포트폴리오 계획](../superpowers/plans/2026-09-17-general-retinue-portfolio-plan.md) — 단계별 GitHub·Jira 이슈 배치

@@ -8,7 +8,7 @@
 |---|---|
 | ADR-LITE-057의 `direction-approved`·「게임 수치는 전부 proposed」, 재설계 상단의 방향 승인 | ADR-LITE-065와 #872에 맞춰 accepted·확정 원장 3개로 고침 |
 | 입력 registry·위치 권위·개인 턴 스펙의 `초안` | 정식 상태와 실제 구현 차이 표로 교체. 차이는 #779·#787·#249가 추적 |
-| S3 종료 스펙의 초안·PROVISIONAL·별도 승인 | 문서 상단에 최종 통과 근거와 확정 결정, 현재 pep 실행 조건을 넣음. 아래 W0–W5 본문은 2026-09-23 계획의 역사적 증거이므로 보존 |
+| S3 종료 스펙의 초안·PROVISIONAL·별도 승인 | 문서 상단에 최종 통과 근거와 확정 결정을 넣음. pep 런북은 선행 PR 각각의 승인·병합과 최신 main CI 초록 뒤 추가 승인 없이 실행하도록 현행화. 아래 W0–W5 본문은 2026-09-23 계획의 역사적 증거이므로 보존 |
 | `HwihaNpcDeploySelector`의 「임시」, 운영 문서의 「HWIHA 반응 기록 임시 규칙」 | #872·#874의 확정·구현에 맞춰 고침 |
 | `docs/admin/hwiha-pep-transition.md`의 `scenario_990002` 병력·재고·장수 `PROVISIONAL`, `tools/e2e/fixtures/hwiha-yuzhou/README.md` | **유지.** #872는 공성·군량·내정·시야의 규칙 수치를 확정했다. QA 시나리오의 합성 시작값은 별도 선택이며 12–24순 목표 대비 실제 3순 함락이므로 pep 전환 기록에서 검토해야 한다 |
 | `hwiha-s3-provisional-v1.json` 파일명, `HwihaS3Provisional` 클래스·테스트·참조 | **유지.** 최초 원장의 안정 식별자/코드 경로다. JSON 내부 `status`와 수치는 `CONFIRMED`이며 이름만으로 수치가 미승인이라는 뜻이 아니다. 일괄 개명은 런타임·테스트·문서 참조를 함께 바꾸는 별도 작업이다 |
