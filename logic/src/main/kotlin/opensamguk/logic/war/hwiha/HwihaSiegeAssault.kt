@@ -41,9 +41,10 @@ object HwihaSiegeAssault {
         val wall: Boolean, val startTroops: Int)
 
     fun resolve(layout: HwihaBattlefieldLayout, attackers: List<Attacker>, leadership: Int, garrison: Int,
-        garrisonMorale: Int, wallBonusPercent: Int): Result {
+        garrisonMorale: Int, wallBonusPercent: Int,
+        garrisonTraining: Int = HwihaS3Provisional.ASSAULT_GARRISON_TRAINING): Result {
         require(attackers.isNotEmpty() && attackers.map { it.bugokId }.distinct().size == attackers.size)
-        require(garrison >= 0 && garrisonMorale in 0..100 && leadership >= 0)
+        require(garrison >= 0 && garrisonMorale in 0..100 && garrisonTraining in 0..100 && leadership >= 0)
         require(wallBonusPercent in 0..HwihaS3Provisional.ASSAULT_MAX_WALL_BONUS_PERCENT)
         val order = compareBy<Position> { it.row }.thenBy { it.col }
         val attackerCells = layout.attackerZone.sortedWith(compareBy<Position> { layout.distancesFromEntry.getValue(it) }.then(order))
@@ -64,7 +65,7 @@ object HwihaSiegeAssault {
         while (outcome == null) {
             rounds++
             move(layout, army, walls, byId, order)
-            exchange(layout, army, walls, byId, leadership, wallBonusPercent)
+            exchange(layout, army, walls, byId, leadership, wallBonusPercent, garrisonTraining)
             val remaining = army.sumOf { it.troops.toLong() }
             val weightedMorale = army.sumOf { it.troops.toLong() * it.morale }
             outcome = when {
@@ -126,7 +127,7 @@ object HwihaSiegeAssault {
     }
 
     private fun exchange(layout: HwihaBattlefieldLayout, army: List<Token>, walls: List<Token>, byId: Map<Int, Attacker>,
-        leadership: Int, wallBonusPercent: Int) {
+        leadership: Int, wallBonusPercent: Int, garrisonTraining: Int) {
         fun nearest(from: Position, candidates: List<Token>, range: Int) = candidates
             .filter { it.troops > 0 && it.position != null && HwihaGridReach.canStrike(layout, from, it.position!!, range) }
             .minWithOrNull(compareBy<Token> { kotlin.math.abs(from.col.toLong() - it.position!!.col) +
@@ -140,7 +141,7 @@ object HwihaSiegeAssault {
             val profile = byId.getValue(unit.id).profile
             val target = nearest(at, walls, profile.attackRange) ?: continue
             val damage = damage(unit.troops, profile.attackPower, byId.getValue(unit.id).training, unit.morale, unit.fatigue,
-                leadership, HwihaS3Provisional.ASSAULT_GARRISON_DEFENCE, HwihaS3Provisional.ASSAULT_GARRISON_TRAINING,
+                leadership, HwihaS3Provisional.ASSAULT_GARRISON_DEFENCE, garrisonTraining,
                 HwihaS3Provisional.ASSAULT_GARRISON_LEADERSHIP, 100 + wallBonusPercent, target.troops)
             losses.merge(target.id, damage.toBigInteger(), BigInteger::add); active += unit.id
         }
@@ -150,7 +151,7 @@ object HwihaSiegeAssault {
             val target = nearest(at, army, HwihaS3Provisional.ASSAULT_GARRISON_RANGE) ?: continue
             val targetProfile = byId.getValue(target.id)
             val damage = damage(wall.troops, HwihaS3Provisional.ASSAULT_GARRISON_ATTACK,
-                HwihaS3Provisional.ASSAULT_GARRISON_TRAINING, wall.morale, wall.fatigue,
+                garrisonTraining, wall.morale, wall.fatigue,
                 HwihaS3Provisional.ASSAULT_GARRISON_LEADERSHIP, targetProfile.profile.defencePower, targetProfile.training,
                 leadership, 100, target.troops)
             losses.merge(target.id, damage.toBigInteger(), BigInteger::add); active += wall.id

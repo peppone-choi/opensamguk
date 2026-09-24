@@ -90,10 +90,13 @@ class HwihaDomesticReader(
                         c.agriculture, c.agricultureMax, c.commerce, c.commerceMax, c.security, c.securityMax,
                         c.trust, c.defense, c.defenseMax, c.wall, c.wallMax) },
                     cityMilitaryStates = counties.mapNotNull { c ->
-                        try { c.id to HwihaCityMilitaryState.read(c.meta) }
+                        try { c.id to HwihaCityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)) }
                         catch (_: IllegalArgumentException) { null }
                     }.toMap(),
-                    cityMilitaryTroops = counties.associate { it.id to it.defense },
+                    cityMilitaryTroops = counties.mapNotNull { c ->
+                        try { c.id to HwihaCityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)).troops }
+                        catch (_: IllegalArgumentException) { null }
+                    }.toMap(),
                 )
             }
         }

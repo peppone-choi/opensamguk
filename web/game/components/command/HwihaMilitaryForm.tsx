@@ -49,6 +49,13 @@ export default function HwihaMilitaryForm({inputId,generalId,turnIdx,refreshKey,
         {!data&&!reason&&<p role="status">군사 행동 정보를 불러오는 중입니다.</p>}
         {data&&!data.available&&<p role="status">{data.reason??'현재 실행할 수 없습니다.'}</p>}
         {data?.available&&<p>{inputId==='action.muster'?`집결 대상 부곡: ${data.gatheringCorps??0}`:`대상 縣: ${data.countyName} · 도시 병력 ${data.troops??0}`}</p>}
+        {data?.available&&inputId!=='action.muster'&&<p>
+            도시 병력 {data.troops??0} → {data.troopsAfter??data.troops??0} · 호구 {data.populationAfter??'—'} ·
+            훈련 {data.training??0} → {data.trainingAfter??data.training??0} ·
+            사기 {data.morale??0} → {data.moraleAfter??data.morale??0}
+            {(data.grainCost??0)>0?` · 곡물 ${data.grainCost} 소모`:''}
+            {(data.moneyCost??0)>0?` · 전 ${data.moneyCost} 소모`:''}
+        </p>}
         {reason&&<p role="alert">{reason}</p>}
         <button type="button" className="cmd-submit os-button os-button--primary" disabled={busy||!data?.available} onClick={()=>void reserve()}>
             {busy?'처리 중...':`${militaryLabels[inputId]} 예약`}

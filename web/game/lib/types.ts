@@ -847,6 +847,9 @@ export interface HwihaMilitaryOptions {
     inputId: HwihaMilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null; troops?: number | null;
     training?: number | null; morale?: number | null; gatheringCorps?: number | null;
+    troopsAfter?: number | null; populationAfter?: number | null;
+    trainingAfter?: number | null; moraleAfter?: number | null;
+    grainCost?: number | null; moneyCost?: number | null;
 }
 export interface HwihaFieldOptions {
     inputId: HwihaFieldActionId; available: boolean; code?: string | null; reason?: string | null;

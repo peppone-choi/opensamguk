@@ -21,7 +21,7 @@ class HwihaMilitaryRulesTest {
     }
 
     @Test fun `city conscription moves households to troops with one phase warehouse cost`() {
-        assertEquals("PROPOSED", design.status)
+        assertEquals(HwihaMilitaryDesign.CONFIRMED, design.status)
         val request = HwihaMilitaryRequest(7, HwihaMilitaryInput.CONSCRIPT)
         val result = HwihaMilitaryRules.assessCity(request, state, 1000, 2000, 100,
             HwihaCityMilitaryState.INITIAL, HwihaResources(grain = 15_000), design)
@@ -32,6 +32,15 @@ class HwihaMilitaryRulesTest {
         assertEquals(HwihaMilitaryFailure.INSUFFICIENT_STOCK,
             assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(request, state,
                 1000, 2000, 100, HwihaCityMilitaryState.INITIAL, HwihaResources(grain = 14_999), design)).reason)
+    }
+
+    @Test fun `city troops migrate once from legacy garrison and remain separate from fortification`() {
+        val migrated = HwihaCityMilitaryState.read(emptyMap(), 100)
+        assertEquals(100, migrated.troops)
+        assertEquals(100, HwihaCityMilitaryState.read(mapOf(HwihaCityMilitaryState.META_KEY to migrated.toMetaValue()), 900).troops)
+        assertFailsWith<IllegalArgumentException> {
+            HwihaCityMilitaryState.read(mapOf(HwihaCityMilitaryState.META_KEY to migrated.toMetaValue() + ("troops" to -1)))
+        }
     }
 
     @Test fun `train morale and demobilize operate on separate city state and bounded households`() {

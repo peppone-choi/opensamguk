@@ -48,7 +48,8 @@ class HwihaMusterHandlerTest {
         val route = fixture.route()
         val owner = fixture.person(706, 1, route.startCity, userId = "42")
         val world = fixture.world(listOf(owner to route.start))
-        val result = HwihaMusterHandler(world, ChangeRecorder(), fixture.topology, fixture.metrics)
+        val result = HwihaMusterHandler(world, ChangeRecorder(), fixture.topology, fixture.metrics,
+            HwihaMilitaryDesign.CANON.copy(status = "PROPOSED"))
             .handle(owner.id, "{}", "unconfirmed", 42)
         assertEquals("NOT_DELIVERED", assertIs<HwihaTurnOutcome.Rejected>(result).code)
     }

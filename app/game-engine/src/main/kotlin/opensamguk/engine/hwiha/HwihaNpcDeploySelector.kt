@@ -76,7 +76,8 @@ class HwihaNpcDeploySelector(
             val city = world.getCityById(countyId) ?: return@mapNotNull null
             val hostile = city.nationId != actor.nationId && (city.nationId == 0 ||
                 (actor.nationId to city.nationId) in wars || (city.nationId to actor.nationId) in wars)
-            if (!hostile || troops < city.defence.coerceAtLeast(0).toLong() * HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO) return@mapNotNull null
+            val garrison = HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)).troops
+            if (!hostile || troops < garrison.toLong() * HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO) return@mapNotNull null
             (city.nationId != 0) to Triple(hops.getValue(node.id), countyId, node)
         }
         // The neutral buffer in the full 1224-county scenario otherwise consumes every NPC

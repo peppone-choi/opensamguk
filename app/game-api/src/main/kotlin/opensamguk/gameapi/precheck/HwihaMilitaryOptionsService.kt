@@ -10,7 +10,9 @@ data class HwihaMilitaryOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
     val countyId: Int? = null, val countyName: String? = null,
     val troops: Int? = null, val training: Int? = null, val morale: Int? = null,
-    val gatheringCorps: Int? = null)
+    val gatheringCorps: Int? = null, val troopsAfter: Int? = null, val populationAfter: Int? = null,
+    val trainingAfter: Int? = null, val moraleAfter: Int? = null,
+    val grainCost: Long? = null, val moneyCost: Long? = null)
 
 @Service
 class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
@@ -41,12 +43,16 @@ class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
             levels?.population, levels?.populationMax, snapshot.cityMilitaryTroops[county.id],
             snapshot.cityMilitaryStates[county.id], snapshot.warehouseStocks[county.id], design)
         if (check is HwihaCityMilitaryAssessment.Rejected) return blocked(inputId, check.reason)
+        val plan = (check as HwihaCityMilitaryAssessment.Eligible).plan
         if (design.status != HwihaMilitaryDesign.CONFIRMED || catalog[inputId]?.deliveryState?.hasHandler != true)
             return HwihaMilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         return HwihaMilitaryOptions(inputId, true, countyId = county.id,
             countyName = snapshot.countyNames[county.id] ?: county.name, troops = snapshot.cityMilitaryTroops[county.id],
             training = snapshot.cityMilitaryStates[county.id]?.training,
-            morale = snapshot.cityMilitaryStates[county.id]?.morale)
+            morale = snapshot.cityMilitaryStates[county.id]?.morale,
+            troopsAfter = plan.troops, populationAfter = plan.population,
+            trainingAfter = plan.condition.training, moraleAfter = plan.condition.morale,
+            grainCost = plan.debit.grain, moneyCost = plan.debit.money)
     }
 
     private fun blocked(inputId: String, reason: HwihaMilitaryFailure) =
