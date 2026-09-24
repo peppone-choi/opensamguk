@@ -105,6 +105,27 @@ class HwihaTravelHandlerTest {
     }
 
     @Test
+    fun `captured lone traveler remains with the captor for later persuasion`() {
+        val fixture = HwihaCampaignWorldFixture()
+        val route = fixture.route()
+        val base = fixture.person(210, 1, route.startCity, userId = "42",
+            stats = GeneralStats(10, 10, 70, 70, 70))
+        val actor = base.copy(meta = base.meta + (HwihaPersonalTravelCondition.META_KEY to
+            HwihaPersonalTravelCondition(0, 20).toMetaValue()))
+        val enemy = fixture.person(211, 2, route.startCity, stats = GeneralStats(100, 100, 70, 70, 70))
+        val world = fixture.world(listOf(actor to route.start, enemy to route.first),
+            bugoks = listOf(fixture.unit(1211, enemy.id, 100)))
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, enemy.id, listOf(1211), route.destination)
+        val raw = HwihaTravelInput.canonicalJson(HwihaTravelRequest(actor.id, HwihaTravelInput.MOVE, route.destination))
+        assertIs<HwihaTurnOutcome.Applied>(HwihaTravelHandler(world, recorder, fixture.topology,
+            fixture.metrics).handle(HwihaTravelInput.MOVE, actor.id, raw, "move-210", 42))
+        assertEquals("CAPTURED", (world.getGeneralById(actor.id)!!.meta[HwihaPersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
+        assertEquals(route.first, world.positionOf(actor.id))
+        assertEquals(enemy.id, (world.getGeneralById(actor.id)!!.meta[HwihaEncounterResolver.CAPTIVE_KEY] as Map<*, *>)["captorGeneralId"])
+    }
+
+    @Test
     fun `interceptor entering the province becomes the personal encounter defender`() {
         val fixture = HwihaCampaignWorldFixture()
         val route = fixture.route()

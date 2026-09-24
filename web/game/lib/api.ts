@@ -472,6 +472,13 @@ export const api = {
         };
         return get<import('./types').HwihaPersonalOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
+    peopleOptions: (inputId: import('./types').HwihaPeopleActionId, generalId: number) => {
+        const names: Record<import('./types').HwihaPeopleActionId, string> = {
+            'action.search': 'search', 'action.employ': 'employ',
+            'action.persuadeCaptive': 'persuade-captive',
+        };
+        return get<import('./types').HwihaPeopleOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+    },
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),

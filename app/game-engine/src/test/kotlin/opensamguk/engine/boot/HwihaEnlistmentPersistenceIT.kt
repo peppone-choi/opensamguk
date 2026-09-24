@@ -1,6 +1,8 @@
 package opensamguk.engine.boot
 
 import kotlin.test.*
+import opensamguk.common.rng.LiteHashDrbg
+import opensamguk.common.rng.RandUtil
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
@@ -60,6 +62,46 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(expected.generalPositionSnapshot!!.topologyRevision, actual.generalPositionSnapshot!!.topologyRevision)
         assertEquals(expected, actual.copy(waterControlSnapshot = expected.waterControlSnapshot,
             provinceControlSnapshot = expected.provinceControlSnapshot, generalPositionSnapshot = expected.generalPositionSnapshot))
+    }
+
+    @Test fun `talent discovery and consenting retainer survive separate cold reloads`() {
+        val id = 691
+        seed(id)
+        val initial = InMemoryTurnWorld(load(id))
+        val countyId = initial.administrativeCountyIds.sorted().first { initial.landNodeOfCity(it) != null }
+        val province = initial.landNodeOfCity(countyId) as opensamguk.logic.world.StrategicNodeRef.LandProvince
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        jdbc.update("UPDATE general SET nation_id=1,user_id=42,city_id=? WHERE world_id=? AND id=1", countyId, id)
+        jdbc.update("UPDATE general SET city_id=? WHERE world_id=? AND id=2", countyId, id)
+        jdbc.update("UPDATE general_spatial_position SET node_id=? WHERE world_id=? AND general_id IN (1,2)",
+            province.id, id)
+        jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND commander_retainer_id=4", id)
+        jdbc.update("DELETE FROM general_retainers WHERE world_id=? AND id=4", id)
+        val design = HwihaPeopleDesign.CANON.copy(status = HwihaPeopleDesign.CONFIRMED)
+        var world = InMemoryTurnWorld(load(id))
+        var recorder = ChangeRecorder()
+        val search = HwihaPeopleHandler(world, recorder, HwihaDomesticContext(), "test", design) {
+            error("single free person needs no random draw")
+        }
+        assertIs<HwihaTurnOutcome.Applied>(search.handle(HwihaPeopleInput.SEARCH, 1, "{}", "search-691", 42))
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        jdbc.update("UPDATE general SET turn_time='0200-01-01T01:00:00Z' WHERE world_id=? AND id=1", id)
+        world = InMemoryTurnWorld(load(id))
+        assertEquals(setOf(2), HwihaTalentDiscovery.read(world.getGeneralById(1)!!.meta))
+        recorder = ChangeRecorder()
+        val recruit = HwihaPeopleHandler(world, recorder, HwihaDomesticContext(), "test", design) { seed ->
+            object : RandUtil(LiteHashDrbg(seed)) {
+                override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
+            }
+        }
+        assertIs<HwihaTurnOutcome.Applied>(recruit.handle(HwihaPeopleInput.EMPLOY, 1,
+            """{"targetGeneralId":2}""", "employ-691", 42))
+        flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
+        val after = load(id)
+        assertEquals(1, after.generals.single { it.id == 2 }.nationId)
+        assertEquals(1, after.retainers.single().masterGeneralId)
+        assertEquals(2, after.retainers.single().generalId)
+        assertEquals(design.experience * 2, after.generals.single { it.id == 1 }.experience)
     }
 
     @Test fun `real HWIHA snapshot enlistment flush and cold reload preserve personal assets and prevent duplicate relation`() {

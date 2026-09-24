@@ -848,6 +848,12 @@ export interface HwihaPersonalOptions {
     inputId: HwihaPersonalActionId; available: boolean; code?: string | null; reason?: string | null;
     stats: Array<{stat: string; available: boolean; code?: string | null; reason?: string | null}>;
 }
+export type HwihaPeopleActionId = 'action.search' | 'action.employ' | 'action.persuadeCaptive';
+export interface HwihaPeopleOptions {
+    inputId: HwihaPeopleActionId; available: boolean; code?: string | null; reason?: string | null;
+    undiscoveredCount?: number | null;
+    targets: {generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}[];
+}
 export interface HwihaMilitaryOptions {
     inputId: HwihaMilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null; troops?: number | null;

@@ -88,6 +88,7 @@ class CommandReserveService(
     private val hwihaFieldAdmission: HwihaFieldAdmission? = null,
     private val hwihaMilitaryAdmission: HwihaMilitaryAdmission? = null,
     private val hwihaPersonalAdmission: HwihaPersonalAdmission? = null,
+    private val hwihaPeopleAdmission: HwihaPeopleAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -205,6 +206,10 @@ class CommandReserveService(
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS) {
             (hwihaPersonalAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
+            (hwihaPeopleAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
@@ -436,7 +441,8 @@ class CommandReserveService(
         val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") +
             opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.input.HwihaFieldInput.INPUT_IDS +
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
-            opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS + HWIHA_SIEGE_ACTIONS
+            opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
+            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
     }
 }
 

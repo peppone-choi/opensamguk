@@ -192,7 +192,8 @@ class TurnDaemonLifecycle(
                 val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
                     (reserved.actionCode in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS ||
                         reserved.actionCode in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS)
+                        reserved.actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS)
                 if (fieldAction) hwihaMovementOf(g.id, reserved, null)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
