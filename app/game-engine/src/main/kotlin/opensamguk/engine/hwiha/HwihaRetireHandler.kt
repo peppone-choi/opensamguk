@@ -37,12 +37,15 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
             ?: return reject(HwihaRetireFailure.SUCCESSOR_NOT_RETAINER)
         if (cards.any { it.generalId != null && world.getGeneralById(it.generalId)?.nationId != actor.nationId })
             return reject(HwihaRetireFailure.STATE_UNAVAILABLE)
-        val nextGold: Int
-        val nextRice: Int
-        try {
-            nextGold = Math.addExact(successor.gold, actor.gold)
-            nextRice = Math.addExact(successor.rice, actor.rice)
-        } catch (_: ArithmeticException) { return reject(HwihaRetireFailure.STATE_UNAVAILABLE) }
+        val transferred = try {
+            val from = HwihaPortableStock.read(actor.meta, actor.gold, actor.rice)
+            val to = HwihaPortableStock.read(successor.meta, successor.gold, successor.rice)
+            to.credit(from).also {
+                HwihaPortableStock.checkedColumn(it.money)
+                HwihaPortableStock.checkedColumn(it.grain)
+            }
+        } catch (_: IllegalArgumentException) { return reject(HwihaRetireFailure.STATE_UNAVAILABLE) }
+          catch (_: ArithmeticException) { return reject(HwihaRetireFailure.STATE_UNAVAILABLE) }
         val nation = if (ready.wasLord) world.getNationById(actor.nationId)
             ?: return reject(HwihaRetireFailure.STATE_UNAVAILABLE) else null
         if (nation != null && nation.chiefGeneralId != null && nation.chiefGeneralId != actorId)
@@ -52,12 +55,15 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
         val stamp = mapOf("turn" to turnToken, "requestId" to requestId, "ownerUserId" to ownerUserId,
             "successorGeneralId" to request.successorGeneralId, "effects" to effects)
         val retired = actor.copy(userId = null, npcState = 5, officerLevel = 1, gold = 0, rice = 0,
-            meta = actor.meta + (HwihaLordStatus.META_KEY to false) + ("hwihaRetired" to true) + (LAST_TURN_KEY to stamp))
+            meta = HwihaPortableStock.withStock(actor.meta, opensamguk.logic.economy.HwihaResources()) +
+                (HwihaLordStatus.META_KEY to false) + ("hwihaRetired" to true) + (LAST_TURN_KEY to stamp))
         val inherited = successor.copy(userId = actor.userId ?: successor.userId,
             npcState = if (actor.userId != null) 0 else successor.npcState,
             officerLevel = if (ready.wasLord) 12 else successor.officerLevel,
-            gold = nextGold, rice = nextRice,
-            meta = if (ready.wasLord) successor.meta + (HwihaLordStatus.META_KEY to true) else successor.meta)
+            gold = HwihaPortableStock.checkedColumn(transferred.money),
+            rice = HwihaPortableStock.checkedColumn(transferred.grain),
+            meta = HwihaPortableStock.withStock(successor.meta, transferred) +
+                (HwihaLordStatus.META_KEY to ready.wasLord))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(retired))
         world.applyGeneralDirtyFree(retired)
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(successor), PerTurnOverlay.toLogicGeneral(inherited))

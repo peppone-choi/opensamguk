@@ -18,4 +18,11 @@ class HwihaPoliticalOptionsController(private val service: HwihaPoliticalOptions
         return try { ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.options(generalId, userId)) }
         catch (_: HwihaDomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
     }
+
+    @GetMapping("/api/commands/political-consent-options")
+    fun consentOptions(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> {
+        if (userId == null || userId <= 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
+        return try { ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.consentOptions(generalId, userId)) }
+        catch (_: HwihaDomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
+    }
 }

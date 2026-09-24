@@ -227,6 +227,8 @@ class ReservedTurnHandler(
         hwihaDomesticContext, hiddenSeed) }
     private val politicalHandler by lazy { opensamguk.engine.hwiha.HwihaPoliticalHandler(world, recorder,
         hwihaDomesticContext) }
+    private val transferHandler by lazy { opensamguk.engine.hwiha.HwihaTransferHandler(world, recorder,
+        hwihaDomesticContext) }
     private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
 
@@ -305,6 +307,9 @@ class ReservedTurnHandler(
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
                 "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
+                opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {
+                    applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID)
+                },
             )
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
                 handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
@@ -367,6 +372,14 @@ class ReservedTurnHandler(
                 if (hwihaCatalog[politicalId]?.deliveryState?.hasHandler == true) {
                     handlers[politicalId] = InputHandler {
                         applied = politicalHandler.handle(politicalId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (transferId in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
+                if (hwihaCatalog[transferId]?.deliveryState?.hasHandler == true) {
+                    handlers[transferId] = InputHandler {
+                        applied = transferHandler.handle(transferId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }
