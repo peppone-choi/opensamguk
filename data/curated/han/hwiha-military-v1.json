@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "hwiha-military-v1",
+  "status": "PROPOSED",
+  "note": "2026-09-24 도시 소유 병력과 별도 훈련·사기 상태가 사용자 승인되었다. 직접 행동 1순 수치의 사용자 답변을 기다리며 이 절의 배달은 닫는다.",
+  "conscriptHouseholdPermille": 50,
+  "volunteerHouseholdPermille": 30,
+  "grainPerTroop": 300,
+  "moneyPerVolunteer": 100,
+  "trainingGain": 10,
+  "moraleGain": 10,
+  "demobilizeTroopPermille": 100,
+  "experience": 10,
+  "dedication": 1
+}

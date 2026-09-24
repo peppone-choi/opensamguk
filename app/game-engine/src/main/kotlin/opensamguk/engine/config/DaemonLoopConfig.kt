@@ -526,8 +526,9 @@ class DaemonLoopConfig {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
                 val deploy = opensamguk.engine.hwiha.HwihaNpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)
                 val field = opensamguk.engine.hwiha.HwihaNpcFieldSelector(domesticContext)
+                val muster = opensamguk.engine.hwiha.HwihaNpcMusterSelector(artifacts.projection.topology, artifacts.landMarchMetrics)
                 val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn = { generalId, reserved ->
-                    field.select(world, generalId, deploy.select(world, generalId, reserved))
+                    field.select(world, generalId, muster.select(world, generalId, deploy.select(world, generalId, reserved)))
                 }
                 select
             } else { _, reserved -> reserved },

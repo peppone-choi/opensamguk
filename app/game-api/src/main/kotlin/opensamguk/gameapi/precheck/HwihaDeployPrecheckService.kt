@@ -31,6 +31,18 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
             ready.selected.world.meta, ready.bundle.landMarchMetrics)
     }
 
+    fun assessMuster(actorId: Int, ownerUserId: Long): HwihaMusterAssessment {
+        requireOwner(actorId, ownerUserId)
+        val snapshot = snapshot()
+        snapshot.failure?.let { failure ->
+            return HwihaMusterAssessment.Rejected(if (failure == DeploymentFailure.WRONG_RULE_PROFILE)
+                HwihaMilitaryFailure.WRONG_RULE_PROFILE else HwihaMilitaryFailure.STATE_UNAVAILABLE)
+        }
+        val ready = requireNotNull(snapshot.ready)
+        return HwihaMusterRules.assess(actorId, ready.state, ready.bundle.projection.topology,
+            ready.bundle.landMarchMetrics, ready.selected.world.meta)
+    }
+
     fun options(actorId: Int, ownerUserId: Long): HwihaDeployOptions {
         requireOwner(actorId, ownerUserId)
         val snapshot = snapshot()
