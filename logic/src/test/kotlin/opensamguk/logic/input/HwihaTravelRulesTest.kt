@@ -12,7 +12,7 @@ class HwihaTravelRulesTest {
         val catalog = HwihaInputCatalog.load()
         for (id in HwihaTravelInput.INPUT_IDS) {
             assertEquals(expected, catalog[id]!!.failureReasons.toSet(), id)
-            assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState)
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
         }
     }
 
