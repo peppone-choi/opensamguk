@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "status": "IMPLEMENTED_PROVISIONAL",
+  "source": "2026-09-24 PR #906 initial deterministic personal encounter design; review follow-up 2026-09-25",
+  "power": {"strengthWeight": 2, "leadershipWeight": 1, "moraleDivisor": 4, "fatigueDivisor": 2, "injuryWeight": 1, "floor": 10},
+  "damage": {"attackDivisor": 9, "defenseDivisor": 24, "defenderAdvantage": 3, "floor": 4},
+  "roundLimit": 8,
+  "capture": {"moraleAtMost": 40, "injuryAtLeast": 50},
+  "injury": {"attackerDivisor": 5, "defenderDivisor": 6},
+  "condition": {"fatiguePerRound": 3, "moraleOnWin": 5, "moraleLossPerRound": 4,
+    "restFatigueRecovery": 10, "restMoraleRecovery": 5}
+}

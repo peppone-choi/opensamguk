@@ -8,8 +8,14 @@ import opensamguk.logic.input.HwihaTravelInput
 import opensamguk.logic.input.HwihaTravelRequest
 import opensamguk.logic.input.HwihaTravelState
 import opensamguk.logic.input.HwihaPersonalTravelCondition
+import opensamguk.logic.input.HwihaCountyAssignment
+import opensamguk.logic.input.HwihaMarchState
 import opensamguk.logic.world.LandMarchEntry
 import opensamguk.logic.world.LandMarchStop
+import opensamguk.logic.input.HwihaPhase
+import kotlin.test.assertNull
+import kotlin.test.assertNotNull
+import opensamguk.engine.turn.PerTurnOverlay
 
 class HwihaTravelExecutorTest {
     @Test
@@ -58,5 +64,31 @@ class HwihaTravelExecutorTest {
         assertIs<HwihaTravelExecution.AlreadyProcessed>(
             executor.start("forced-102", request, route.destination, 45_000_000) { LandMarchEntry.CLEAR })
         assertEquals(condition, HwihaPersonalTravelCondition.read(world.getGeneralById(actor.id)!!.meta))
+    }
+
+    @Test
+    fun `direct movement clears an aligned assignment march before the next projection`() {
+        val fixture = HwihaCampaignWorldFixture()
+        val route = fixture.route()
+        val actor = fixture.person(103, 1, route.startCity)
+        val world = fixture.world(listOf(actor to route.start))
+        val recorder = ChangeRecorder()
+        val executor = HwihaTravelExecutor(world, recorder, fixture.topology, fixture.metrics)
+        val request = HwihaTravelRequest(actor.id, HwihaTravelInput.MOVE, route.destination)
+        val initial = assertIs<HwihaTravelExecution.Applied>(
+            executor.start("travel-103", request, route.destination, 1) { LandMarchEntry.CLEAR })
+        val before = world.getGeneralById(actor.id)!!
+        val march = HwihaMarchState(HwihaCountyAssignment("dispatch-103", route.destinationCounty, 1, 1),
+            initial.state.checkpoint.path, initial.state.checkpoint.cursor, HwihaPhase(200, 1, 1),
+            LandMarchStop.BUDGET_EXHAUSTED)
+        val withMarch = before.copy(meta = before.meta + (HwihaMarchState.META_KEY to march.toMetaValue()))
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(withMarch))
+        world.applyGeneralDirtyFree(withMarch)
+        fixture.nextPhase(world)
+
+        assertIs<HwihaTravelExecution.Applied>(executor.resume(actor.id,
+            fixture.metrics.edgesById.getValue(initial.state.checkpoint.path.edgeIds.first()).costMm) { LandMarchEntry.CLEAR })
+        assertNull(HwihaMarchState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
+        assertNotNull(HwihaDeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection())
     }
 }

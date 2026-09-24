@@ -1367,15 +1367,15 @@ class ChangeRecorder(
 
     /**
      * Deep-diff `meta` at the key level. Returns ONLY the changed/added keys, walking the
-     * post-state in its insertion order (so the patch — and the jsonb it flushes — preserves PHP
-     * `Json::encode` key order). Removed keys are not expected in the P1 slice (the che resolver
-     * only sets/bumps keys), so they are not modeled here.
+     * post-state in its insertion order. A removed key is represented by a null marker so a
+     * deletion alone still marks the full post-state row dirty for the flush executor.
      */
     private fun diffMeta(pre: Map<String, Any?>, post: Map<String, Any?>): Map<String, Any?> {
         val out = LinkedHashMap<String, Any?>()
         for ((k, v) in post) {
             if (!pre.containsKey(k) || pre[k] != v) out[k] = v
         }
+        for (key in pre.keys) if (key !in post) out[key] = null
         return out
     }
 }

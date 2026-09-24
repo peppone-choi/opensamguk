@@ -14,6 +14,7 @@ import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.read.GeneralReadRepository
+import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.reserve.CommandQueueService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.persistence.CommandInboxRepository
@@ -70,7 +71,7 @@ class CommandResultLookupTest {
         .standaloneSetup(
             CommandController(
                 precheck, reserve, resolver, queue, generals, commandResults, commandInbox, redis,
-                ObjectMapper(), profile, GameApiProcessWorld(1),
+                ObjectMapper(), profile, GameApiProcessWorld(1), mock(WorldStateReadRepository::class.java),
             ),
         )
         .setCustomArgumentResolvers(AuthenticationPrincipalArgumentResolver())
