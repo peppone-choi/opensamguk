@@ -14,6 +14,10 @@ internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
         val actor = world.getGeneralById(actorId) ?: return reserved
         if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId }) return reserved
+        // An ongoing corps march owns this turn's movement. A new county action would stop it before encounter.
+        val deployed = try { HwihaDeploymentState.read(actor.meta)?.corps.orEmpty() }
+            catch (_: IllegalArgumentException) { return reserved }
+        if (deployed.isNotEmpty() || HwihaCorpsOrder.META_KEY in actor.meta) return reserved
         val state = context.projection(world)
         val available = HwihaFieldRules.assess(HwihaFieldRequest(actorId, HwihaFieldInput.FARM), state)
             as? HwihaFieldAssessment.Eligible ?: return reserved

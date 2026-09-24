@@ -197,7 +197,17 @@ class InMemoryTurnWorld(
             generals[general.id] = general
             generalIdentityTokens[general.id] = ++nextGeneralIdentityToken
         }
-        for (city in snapshot.cities) cities[city.id] = city
+        for (city in snapshot.cities) {
+            if (snapshot.state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
+                city.id in administrativeCountyIds &&
+                (opensamguk.logic.input.HwihaCityMilitaryState.META_KEY !in city.meta ||
+                    (city.meta[opensamguk.logic.input.HwihaCityMilitaryState.META_KEY] as? Map<*, *>)?.get("version") == 1)) {
+                val military = opensamguk.logic.input.HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0))
+                cities[city.id] = city.copy(meta = city.meta +
+                    (opensamguk.logic.input.HwihaCityMilitaryState.META_KEY to military.toMetaValue()))
+                dirtyCityIds += city.id
+            } else cities[city.id] = city
+        }
         for (nation in snapshot.nations) nations[nation.id] = nation
         for (troop in snapshot.troops) troops[troop.id] = troop
         for (entry in snapshot.diplomacy) {

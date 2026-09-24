@@ -74,7 +74,8 @@ class HwihaSiegeServiceTest {
         val garrison = minOf(city.defenceMax * HwihaS3Provisional.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
             1000 * HwihaS3Provisional.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
         assertTrue(garrison > 0)
-        assertEquals(garrison, city.defence, "the captor leaves a garrison")
+        assertEquals(garrison, HwihaCityMilitaryState.read(city.meta).troops, "the captor leaves a garrison")
+        assertEquals(100, city.defence, "capture leaves the fortification score intact")
         assertEquals(1000 - garrison, world.getBugokById(7)!!.troops, "taken from the besieging unit")
         assertEquals(HwihaResources(), HwihaCountyWarehouse.read(city.meta, county)!!.stock, "warehouse stays in the county")
         assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta), "the expedition ends at its objective")
@@ -169,7 +170,7 @@ class HwihaSiegeServiceTest {
         val (world, recorder) = besieged(reverse = true)
         boundary(world, recorder, 4)
         assertEquals(1, world.getCityById(county)!!.nationId)
-        assertTrue(world.getCityById(county)!!.defence > 0)
+        assertTrue(HwihaCityMilitaryState.read(world.getCityById(county)!!.meta).troops > 0)
         recorder.moveGeneral(world, 1, route.first)
         fixture.deploy(world, recorder, 2, listOf(8), route.destination)
         fixture.nextPhase(world)
@@ -183,7 +184,9 @@ class HwihaSiegeServiceTest {
     @Test fun `red probe removing the occupation garrison restores immediate recapture`() {
         val (world, recorder) = besieged(reverse = true)
         boundary(world, recorder, 4)
-        world.updateCity(world.getCityById(county)!!.copy(defence = 0))
+        val occupied = world.getCityById(county)!!
+        world.updateCity(occupied.copy(meta = occupied.meta +
+            (HwihaCityMilitaryState.META_KEY to HwihaCityMilitaryState.read(occupied.meta).copy(troops = 0).toMetaValue())))
         recorder.moveGeneral(world, 1, route.first)
         fixture.deploy(world, recorder, 2, listOf(8), route.destination)
         fixture.nextPhase(world)
