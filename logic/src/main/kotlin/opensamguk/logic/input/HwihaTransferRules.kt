@@ -30,6 +30,8 @@ object HwihaTransferRules {
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaTransferFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaTransferInput.INPUT_IDS || request.amount <= 0)
             return reject(HwihaTransferFailure.INVALID_INPUT)
+        if (request.resource !in setOf(HwihaTransferResource.MONEY, HwihaTransferResource.GRAIN))
+            return reject(HwihaTransferFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(HwihaTransferFailure.ACTOR_NOT_FOUND)
         if (actor.inBattle) return reject(HwihaTransferFailure.BATTLE_PENDING)
         val node = actor.node ?: return reject(HwihaTransferFailure.POSITION_UNAVAILABLE)

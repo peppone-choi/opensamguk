@@ -38,7 +38,7 @@ data class DomesticCounty(val id: Int, val name: String, val nationId: Int, val 
     val meta: Map<String, Any?>)
 
 data class DomesticNation(val id: Int, val name: String, val capitalCityId: Int?, val meta: Map<String, Any?>,
-    val level: Int = 0, val gold: Int = 0, val rice: Int = 0)
+    val level: Int = 0, val gold: Int = 0, val rice: Int = 0, val chiefGeneralId: Int? = null)
 
 /** API 와 엔진이 같은 규칙을 쓰도록 공유하는 투영. [landProvinceIds] 가 null 이면 지도 핀을 확인하지 못한 것이다. */
 data class HwihaDomesticProjection(

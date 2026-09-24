@@ -5,7 +5,8 @@ import opensamguk.logic.input.*
 
 /** Nation-changing personal orders are resolved at the political stage before movement. */
 class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext) {
+    private val context: HwihaDomesticContext,
+    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
         npcSelected: Boolean = false): HwihaTurnOutcome {
         fun reject(reason: HwihaPoliticalFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
@@ -16,6 +17,8 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
             return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = HwihaPoliticalInput.parse(actorId, inputId, rawJson)
             ?: return reject(HwihaPoliticalFailure.INVALID_INPUT)
+        if (catalog[inputId]?.deliveryState?.hasHandler != true)
+            return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (previous?.get("turn") == turnToken) {
@@ -31,9 +34,11 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
         if (inputId in setOf(HwihaPoliticalInput.RISE, HwihaPoliticalInput.INDEPENDENCE) && county == null)
             return reject(HwihaPoliticalFailure.COUNTY_UNAVAILABLE)
         val formerNation = actor.nationId
-        val subtree = if (inputId == HwihaPoliticalInput.DISSOLVE) emptyList() else retinueTree(actorId)
+        val movingRetinue = inputId in setOf(HwihaPoliticalInput.RESIGN, HwihaPoliticalInput.RISE,
+            HwihaPoliticalInput.INDEPENDENCE)
+        val subtree = (if (movingRetinue) retinueTree(actorId) else emptyList())
             ?: return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
-        if (subtree.any { world.getGeneralById(it)?.nationId != formerNation })
+        if (movingRetinue && subtree.any { world.getGeneralById(it)?.nationId != formerNation })
             return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
         val oldNation = if (formerNation > 0) world.getNationById(formerNation) else null
         if (formerNation > 0 && oldNation == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
@@ -61,8 +66,10 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
                 val others = world.listNations().map { it.id }
                 world.createNation(nation)
                 for (other in others) {
-                    world.createDiplomacy(TurnDiplomacy(newNationId, other, 0, 0))
-                    world.createDiplomacy(TurnDiplomacy(other, newNationId, 0, 0))
+                    world.createDiplomacy(TurnDiplomacy(newNationId, other,
+                        HwihaPoliticalDesign.CANON.initialDiplomacyState, 0))
+                    world.createDiplomacy(TurnDiplomacy(other, newNationId,
+                        HwihaPoliticalDesign.CANON.initialDiplomacyState, 0))
                 }
                 val nextSeat = seat.copy(nationId = newNationId)
                 recorder.diffCity(PerTurnOverlay.toLogicCity(seat), PerTurnOverlay.toLogicCity(nextSeat))

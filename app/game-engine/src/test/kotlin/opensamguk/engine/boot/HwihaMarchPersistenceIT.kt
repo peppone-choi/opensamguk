@@ -160,7 +160,7 @@ class HwihaMarchPersistenceIT {
         assertEquals(1, world.getNationById(nationId)!!.level)
     }
 
-    @Test fun `donation persists five resource personal stock and recipient treasury after cold reload`() {
+    @Test fun `undelivered donation cannot move money into unused nation treasury`() {
         val id = 693
         val seeded = seed(id)
         val countyId = seeded.administrativeCountyIds.sorted().first {
@@ -178,16 +178,13 @@ class HwihaMarchPersistenceIT {
         recorder = ChangeRecorder()
         val before = world.getNationById(1)!!.gold
         val json = """{"resource":"MONEY","amount":25}"""
-        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaTransferHandler(world, recorder, HwihaDomesticContext())
-            .handle(HwihaTransferInput.DONATE, 1, json, "donate-$id", 42))
-        save(world, recorder)
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(HwihaTransferHandler(world, recorder, HwihaDomesticContext())
+                .handle(HwihaTransferInput.DONATE, 1, json, "donate-$id", 42)).code)
+        assertFalse(recorder.isDirty)
         world = cold(id)
-        assertEquals(75, world.getGeneralById(1)!!.gold)
-        assertEquals(75L, HwihaPortableStock.read(world.getGeneralById(1)!!.meta,
-            world.getGeneralById(1)!!.gold, world.getGeneralById(1)!!.rice).money)
-        assertEquals(before + 25, world.getNationById(1)!!.gold)
-        assertEquals(first, HwihaTransferHandler(world, ChangeRecorder(), HwihaDomesticContext())
-            .handle(HwihaTransferInput.DONATE, 1, json, "donate-$id", 42))
+        assertEquals(100, world.getGeneralById(1)!!.gold)
+        assertEquals(before, world.getNationById(1)!!.gold)
     }
 
     @Test fun `recipient consent and oath survive separate cold reloads`() {

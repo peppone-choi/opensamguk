@@ -23,6 +23,8 @@ class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
         reader.requireOwner(actorId, userId)
         if (inputId !in HwihaTransferInput.INPUT_IDS) return HwihaTransferOptions(inputId, false,
             HwihaTransferFailure.INVALID_INPUT.name, HwihaTransferFailure.INVALID_INPUT.message)
+        if (catalog[inputId]?.deliveryState?.hasHandler != true) return HwihaTransferOptions(inputId, false,
+            InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = reader.snapshot().state ?: return HwihaTransferOptions(inputId, false,
             HwihaTransferFailure.STATE_UNAVAILABLE.name, HwihaTransferFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return HwihaTransferOptions(inputId, false,
@@ -35,12 +37,13 @@ class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
         fun assess(resource: HwihaTransferResource, targetId: Int?): HwihaTransferAssessment =
             HwihaTransferRules.assess(HwihaTransferRequest(actorId, inputId, resource, 1, targetId), state)
         val targets = candidates.map { target ->
-            val success = HwihaTransferResource.entries.any { assess(it, target.id) is HwihaTransferAssessment.Eligible }
+            val success = listOf(HwihaTransferResource.MONEY, HwihaTransferResource.GRAIN)
+                .any { assess(it, target.id) is HwihaTransferAssessment.Eligible }
             val failure = if (success) null else (assess(HwihaTransferResource.MONEY, target.id)
                 as? HwihaTransferAssessment.Rejected)?.reason
             HwihaTransferTargetOption(target.id, target.name, success, failure?.name, failure?.message)
         }
-        val resources = HwihaTransferResource.entries.map { resource ->
+        val resources = listOf(HwihaTransferResource.MONEY, HwihaTransferResource.GRAIN).map { resource ->
             val max = when (resource) {
                 HwihaTransferResource.MONEY -> stock.money
                 HwihaTransferResource.GRAIN -> stock.grain
@@ -56,10 +59,8 @@ class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
                     HwihaTransferFailure.TARGET_UNAVAILABLE else null
             HwihaTransferResourceOption(resource.name, success, max, failure?.name, failure?.message)
         }
-        val delivered = catalog[inputId]?.deliveryState?.hasHandler == true
-        val available = delivered && resources.any { it.available }
+        val available = resources.any { it.available }
         val failure = when {
-            !delivered -> InputRejection.NOT_DELIVERED.name to InputRejection.NOT_DELIVERED.message
             !available -> resources.firstNotNullOfOrNull { option ->
                 if (option.code != null && option.reason != null) option.code to option.reason else null
             }

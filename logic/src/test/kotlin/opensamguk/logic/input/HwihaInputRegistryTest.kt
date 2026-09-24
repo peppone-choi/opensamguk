@@ -31,10 +31,8 @@ class HwihaInputRegistryTest {
         "action.persuadeCaptive" to InputHandler {}, "action.travel" to InputHandler {},
         "action.selfTrain" to InputHandler {}, "action.recuperate" to InputHandler {},
         HwihaRetireInput.INPUT_ID to InputHandler {},
-        "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
         "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
-        "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {},
-        "action.gift" to InputHandler {}, "action.donate" to InputHandler {})
+        "action.gift" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -141,27 +139,37 @@ class HwihaInputRegistryTest {
     }
 
     @Test
-    fun `delivered political actions have exactly the shared failure vocabulary and a handler`() {
+    fun `political actions expose only delivered handlers`() {
         for (id in HwihaPoliticalRules.SUPPORTED_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaPoliticalFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
-            assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+            if (id in setOf(HwihaPoliticalInput.FOUND_STATE, HwihaPoliticalInput.ABDICATE, HwihaPoliticalInput.OATH)) {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+                assertFailsWith<IllegalArgumentException>(id) {
+                    HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                }
+            } else {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
             }
         }
     }
 
     @Test
-    fun `delivered transfers have exactly the shared failure vocabulary and a handler`() {
+    fun `gift is delivered and donation waits for a warehouse destination`() {
         for (id in HwihaTransferInput.INPUT_IDS) {
-            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaTransferFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            if (id == HwihaTransferInput.GIFT) {
+                assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+            } else {
+                assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
+                assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
+            }
         }
     }
 
@@ -310,7 +318,7 @@ class HwihaInputRegistryTest {
         assertEquals(emptyList(), catalog.invalidLegacyCoverage(legacy70))
         assertTrue(catalog.retiredLegacyCommands.all { it in legacy70 }, "폐지 목록이 기존 명령 70개 밖을 가리킨다")
         assertTrue(catalog.entries.all { it.legacyCommands.size <= 1 }, "기존 명령은 명령별 한 행으로 둔다")
-        assertTrue(catalog.entries.size >= 73, "70개 역참조 외 보조 입력은 허용한다")
+        assertEquals(74, catalog.entries.size, "70개 역참조와 명시된 보조 입력만 허용한다")
         val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
         assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
     }

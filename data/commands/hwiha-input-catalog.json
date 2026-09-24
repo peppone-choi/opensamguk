@@ -1803,7 +1803,7 @@
       "legacyCommands": [
         "che_헌납"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.muster",
@@ -2148,7 +2148,7 @@
       "legacyCommands": [
         "che_하야"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.rise",
@@ -2215,7 +2215,7 @@
       "legacyCommands": [
         "che_거병"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.foundState",
@@ -2416,7 +2416,7 @@
       "legacyCommands": [
         "che_해산"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.tour",
@@ -2660,7 +2660,7 @@
       "helpTopicId": "commands.action.independence",
       "tutorialObjectiveId": "N/A",
       "legacyCommands": [],
-      "deliveryState": "UI_READY"
+      "deliveryState": "PLANNED"
     },
     {
       "inputId": "action.randomEnlist",

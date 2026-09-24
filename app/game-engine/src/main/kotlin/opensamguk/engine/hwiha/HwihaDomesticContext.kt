@@ -44,7 +44,7 @@ class HwihaDomesticContext(
                     geography?.commanderyOf(c.id), c.meta)
             },
             nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
-                it.level, it.gold, it.rice) },
+                it.level, it.gold, it.rice, it.chiefGeneralId) },
             landProvinceIds = positions?.knownLandProvinceIds,
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
