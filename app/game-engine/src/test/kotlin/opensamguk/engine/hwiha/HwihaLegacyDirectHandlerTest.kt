@@ -21,7 +21,8 @@ class HwihaLegacyDirectHandlerTest {
         val actor = fixture.person(4011, 1, route.startCity, userId = "42")
         val unit = fixture.unit(71, actor.id, 1000)
         val nextType = HwihaUnitProfilesJson.loadDefault().profiles.first { it.crewTypeId != unit.crewTypeId }.crewTypeId
-        val world = fixture.world(listOf(actor to route.start), bugoks = listOf(unit))
+        val world = fixture.world(listOf(actor to route.start), bugoks = listOf(unit),
+            cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
         val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
         val json = """{"bugokId":${unit.id},"crewTypeId":$nextType}"""
         val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaLegacyDirectInput.CONVERT,
@@ -46,7 +47,7 @@ class HwihaLegacyDirectHandlerTest {
         assertEquals(0, after.grain)
     }
 
-    @Test fun `only issuance confirmed treasure can be bought and later sold`() {
+    @Test fun `treasure trade remains unavailable until card effects are delivered`() {
         val route = fixture.route()
         val card = HwihaItemCatalogJson.CANON.treasures.first { it.issuedCopies == 1 && it.purchaseCost > 0 }
         val actor = fixture.person(4031, 1, route.startCity, userId = "42").copy(gold = card.purchaseCost)
@@ -54,13 +55,9 @@ class HwihaLegacyDirectHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id)) else city
         })
         val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaLegacyDirectInput.EQUIPMENT, actor.id,
+        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaLegacyDirectInput.EQUIPMENT, actor.id,
             """{"treasureId":${card.sourceRowIndex},"side":"BUY"}""", "buy-4031", 42))
-        assertEquals(setOf(card.header.id), HwihaTreasureInventory.read(world.getGeneralById(actor.id)!!.meta))
-        val current = world.getGeneralById(actor.id)!!
-        world.applyGeneralDirtyFree(current.copy(turnTime = current.turnTime.plusSeconds(3600)))
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaLegacyDirectInput.EQUIPMENT, actor.id,
-            """{"treasureId":${card.sourceRowIndex},"side":"SELL"}""", "sell-4031", 42))
+        assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
         assertEquals(emptySet(), HwihaTreasureInventory.read(world.getGeneralById(actor.id)!!.meta))
         assertEquals(card.purchaseCost, world.getGeneralById(actor.id)!!.gold)
     }

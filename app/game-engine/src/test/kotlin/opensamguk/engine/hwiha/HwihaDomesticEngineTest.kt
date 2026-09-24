@@ -82,7 +82,7 @@ class HwihaDomesticEngineTest {
         assertEquals(world.positionOf(3), b, "intake never moves the card")
         assertEquals("FORBIDDEN", submit(world, recorder, "policy.set", """{"scope":"COUNTY","countyId":10,"policy":"COMMERCE"}""", owner = 43).code)
         assertEquals("INVALID_REQUEST", submit(world, recorder, "work.start", """{"countyId":10,"work":"망루봉화"}""").code)
-        assertEquals("INVALID_INPUT", submit(world, recorder, "stratagem.play", "{}").code)
+        assertEquals(InputRejection.NOT_DELIVERED.name, submit(world, recorder, "stratagem.play", "{}").code)
         // A second card cannot claim the same county seat while the first order is pending.
         assertEquals(DomesticFailure.COUNTY_OCCUPIED.name,
             submit(world, recorder, "placement.assign", """{"cardId":4,"post":"MAGISTRATE","countyId":10}""").code)
@@ -239,22 +239,16 @@ class HwihaDomesticEngineTest {
         }
     }
 
-    @Test fun `completed fortification can be reduced once without changing warehouse stock`() {
+    @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
         val world = world(HwihaResources(money = 1000)); val recorder = ChangeRecorder()
         val city = world.getCityById(10)!!
         val completed = HwihaCountyWorks(null, listOf(HwihaCompletedWork(DomesticWork.FORTIFICATION, HwihaPhase(200, 1, 1))))
         world.applyCityDirtyFree(city.copy(meta = city.meta + (HwihaCountyWorks.META_KEY to completed.toMetaValue())))
         val before = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         val reduced = submit(world, recorder, "work.reduce", """{"countyId":10,"work":"FORTIFICATION"}""")
-        assertTrue(reduced.ok, reduced.toString())
-        assertEquals("executionApplied", reduced.type)
-        assertEquals(InputResolved("work.reduce", "WORK", true), reduced.inputResolved)
-        assertEquals(0, world.getCityById(10)!!.defence)
-        assertEquals(0, world.getCityById(10)!!.wall)
-        assertTrue(HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.completed.isEmpty())
+        assertEquals(InputRejection.NOT_DELIVERED.name, reduced.code)
+        assertEquals(1, HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.completed.size)
         assertEquals(before, HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
-        assertEquals(DomesticFailure.WORK_NOT_COMPLETED.name,
-            submit(world, recorder, "work.reduce", """{"countyId":10,"work":"FORTIFICATION"}""").code)
     }
 
     @Test fun `corps reaction policies populate the march reaction inventory on the commander's turn`() {

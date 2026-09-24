@@ -12,24 +12,18 @@ class HwihaLegacyCourtHandlerTest {
     private fun input(id: String, args: String, requestId: String = "court-test") =
         TurnDaemonCommand.HwihaCourtInput(requestId, 501, 42, id, args)
 
-    @Test fun `institution queues then spends treasury and improves technology once`() {
+    @Test fun `institution is rejected without a defined treasury model`() {
         val route = fixture.route()
         val ruler = fixture.person(501, 1, route.startCity, userId = "42")
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity, gold = 100, tech = 20.0),
             Nation(2, "N2", "#222222")))
         val handler = HwihaCourtHandler(world, ChangeRecorder())
-        assertTrue(handler.handle(input("court.institution", "{}")).ok)
+        assertEquals(InputRejection.NOT_DELIVERED.name, handler.handle(input("court.institution", "{}")).code)
+        handler.onIssuerTurn(501)
         assertEquals(20.0, world.getNationById(1)!!.tech)
-        handler.onIssuerTurn(501)
-        assertEquals(30.0, world.getNationById(1)!!.tech)
-        assertEquals(0, world.getNationById(1)!!.gold)
-        val execution = handler.takeExecutions().single().result
-        assertTrue(execution.ok)
-        assertEquals("court.institution", execution.inputResolved?.inputId)
-        assertEquals("COURT_DECISION", execution.inputResolved?.kind)
-        handler.onIssuerTurn(501)
-        assertEquals(30.0, world.getNationById(1)!!.tech)
+        assertEquals(100, world.getNationById(1)!!.gold)
+        assertTrue(handler.takeExecutions().isEmpty())
     }
 
     @Test fun `capital relocation and county abandonment use owned administrative counties`() {
@@ -49,29 +43,21 @@ class HwihaLegacyCourtHandlerTest {
         assertTrue(handler.takeExecutions().single().result.ok)
     }
 
-    @Test fun `war requires an arrived envoy and transitions both diplomacy directions`() {
+    @Test fun `war is rejected before an envoy or diplomacy state can be consumed`() {
         val route = fixture.route()
-        val now = HwihaPhase(200, 1, 1)
         val ruler = fixture.person(501, 1, route.startCity, userId = "42")
-        val plainEnvoy = fixture.person(502, 1, route.destinationCounty, lord = false)
-        val world = fixture.world(listOf(ruler to route.start, plainEnvoy to route.destination),
-            nations = listOf(Nation(1, "N1", "#111111", capitalCityId = route.startCity),
-                Nation(2, "N2", "#222222", capitalCityId = route.destinationCounty)),
-            retainers = listOf(Retainer(51, 501, "TEST", 502, plainEnvoy.name, "guest")))
+        val world = fixture.world(listOf(ruler to route.start), nations = listOf(
+            Nation(1, "N1", "#111111", capitalCityId = route.startCity),
+            Nation(2, "N2", "#222222", capitalCityId = route.destinationCounty)))
         val handler = HwihaCourtHandler(world, ChangeRecorder())
         world.updateDiplomacy(1, 2, 2, 0)
         world.updateDiplomacy(2, 1, 2, 0)
-        assertEquals(HwihaLegacyCourtFailure.ENVOY_REQUIRED.name,
-            handler.handle(input("court.declareWar", """{"targetNationId":2}""", "without-envoy")).code)
-        val order = HwihaPlacementOrder("envoy-51", 501, 51, PlacementPost.ENVOY, PlacementTarget.Nation(2), now)
-        val envoy = world.getGeneralById(502)!!
-        world.applyGeneralDirtyFree(envoy.copy(meta = envoy.meta + (HwihaPlacementState.META_KEY to
-            HwihaPlacementState(HwihaActivePlacement(order, now, now), null).toMetaValue())))
-        assertTrue(handler.handle(input("court.declareWar", """{"targetNationId":2}""", "with-envoy")).ok)
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            handler.handle(input("court.declareWar", """{"targetNationId":2}""", "war")).code)
         handler.onIssuerTurn(501)
-        assertEquals(1, world.getDiplomacy(1, 2)!!.state)
-        assertEquals(1, world.getDiplomacy(2, 1)!!.state)
-        assertTrue(handler.takeExecutions().single().result.ok)
+        assertEquals(2, world.getDiplomacy(1, 2)!!.state)
+        assertEquals(2, world.getDiplomacy(2, 1)!!.state)
+        assertTrue(handler.takeExecutions().isEmpty())
     }
 
     @Test fun `corps release persists metadata removal for owner and commander`() {

@@ -37,37 +37,28 @@ class HwihaLegacyStratagemHandlerTest {
         else -> """{"targetCountyId":$targetId}"""
     }
 
-    @Test fun `every legacy stratagem mode resolves through one queue and consumes its named card`() {
+    @Test fun `all twelve stratagems reject before card ownership is implemented`() {
         for (inputId in HwihaLegacyStratagemInput.INPUT_IDS.sorted()) {
             val world = world()
             val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
             val submitted = handler.handle(TurnDaemonCommand.HwihaCourtInput("play-$inputId", 501, 42, inputId, args(inputId)))
-            assertTrue(submitted.ok, "$inputId: ${submitted.code}/${submitted.reason}")
+            assertEquals(InputRejection.NOT_DELIVERED.name, submitted.code, inputId)
             handler.onIssuerTurn(501)
-            val execution = handler.takeExecutions().single()
-            assertTrue(execution.result.ok, "$inputId: ${execution.result.code}/${execution.result.reason}")
-            assertEquals("STRATAGEM", execution.result.commandKind)
-            assertEquals(inputId, execution.result.inputResolved?.inputId)
-            assertEquals("STRATAGEM", execution.result.inputResolved?.kind)
-            val actor = world.getGeneralById(501)!!
-            assertFalse(HwihaLegacyStratagemStock.forPhase(actor.meta, HwihaPhase(200, 1, 1)).available(inputId))
-            val again = handler.handle(TurnDaemonCommand.HwihaCourtInput("again-$inputId", 501, 42, inputId, args(inputId)))
-            assertEquals(HwihaLegacyStratagemFailure.CARD_UNAVAILABLE.name, again.code, inputId)
+            assertTrue(handler.takeExecutions().isEmpty(), inputId)
+            assertTrue(HwihaLegacyStratagemStock.forPhase(world.getGeneralById(501)!!.meta,
+                HwihaPhase(200, 1, 1)).available(inputId), inputId)
         }
     }
 
-    @Test fun `steal transfers money after local card cost and failed target pays nothing`() {
+    @Test fun `rejected steal does not move money`() {
         val world = world()
         val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
-        val invalid = handler.handle(TurnDaemonCommand.HwihaCourtInput("bad-target", 501, 42,
-            "stratagem.steal", """{"targetCountyId":$sourceId}"""))
-        assertEquals(HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE.name, invalid.code)
-        assertEquals(1000, HwihaCountyWarehouse.read(world.getCityById(sourceId)!!.meta, sourceId)!!.stock.money)
-        assertTrue(handler.handle(TurnDaemonCommand.HwihaCourtInput("steal", 501, 42,
-            "stratagem.steal", args("stratagem.steal"))).ok)
+        val rejected = handler.handle(TurnDaemonCommand.HwihaCourtInput("steal", 501, 42,
+            "stratagem.steal", args("stratagem.steal")))
+        assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
         handler.onIssuerTurn(501)
-        assertTrue(handler.takeExecutions().single().result.ok)
         assertEquals(1000, HwihaCountyWarehouse.read(world.getCityById(sourceId)!!.meta, sourceId)!!.stock.money)
-        assertEquals(900, HwihaCountyWarehouse.read(world.getCityById(targetId)!!.meta, targetId)!!.stock.money)
+        assertEquals(1000, HwihaCountyWarehouse.read(world.getCityById(targetId)!!.meta, targetId)!!.stock.money)
+        assertTrue(handler.takeExecutions().isEmpty())
     }
 }

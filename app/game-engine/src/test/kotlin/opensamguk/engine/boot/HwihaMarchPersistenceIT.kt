@@ -85,61 +85,25 @@ class HwihaMarchPersistenceIT {
         return cold(id)
     }
 
-    @Test fun `queued court institution survives reload and settles once on the ruler turn`() {
+    @Test fun `planned court and stratagem inputs never persist a queue`() {
         val id = 699
         seed(id)
         jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=10", id)
         var world = cold(id)
-        var recorder = ChangeRecorder()
         val before = world.getNationById(1)!!
-        val handler = HwihaCourtHandler(world, recorder)
-        assertTrue(handler.handle(TurnDaemonCommand.HwihaCourtInput("institution-$id", 10, 42,
-            HwihaLegacyCourtInput.INSTITUTION, "{}")).ok)
-        save(world, recorder)
-        world = cold(id)
-        assertNotNull(HwihaQueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
-        recorder = ChangeRecorder()
-        val resumed = HwihaCourtHandler(world, recorder)
-        resumed.onIssuerTurn(10)
-        assertTrue(resumed.takeExecutions().single().result.ok)
-        save(world, recorder)
-        world = cold(id)
-        assertEquals(before.tech + 10.0, world.getNationById(1)!!.tech)
-        assertEquals(before.gold - 100, world.getNationById(1)!!.gold)
+        val court = HwihaCourtHandler(world, ChangeRecorder())
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            court.handle(TurnDaemonCommand.HwihaCourtInput("institution-$id", 10, 42,
+                HwihaLegacyCourtInput.INSTITUTION, "{}")).code)
         assertNull(HwihaQueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
-        HwihaCourtHandler(world, ChangeRecorder()).onIssuerTurn(10)
-        assertEquals(before.tech + 10.0, cold(id).getNationById(1)!!.tech)
-    }
-
-    @Test fun `legacy stratagem card and local warehouse cost survive cold reload`() {
-        val id = 700
-        var world = seed(id)
-        val sourceId = world.administrativeCountyIds.single { world.landNodeOfCity(it) == world.positionOf(1) }
-        val stock = opensamguk.logic.economy.HwihaCountyWarehouse(sourceId, 0,
-            opensamguk.logic.economy.HwihaResources(money = 1000))
-        jdbc.update("UPDATE city SET nation_id=1, meta=meta || ?::jsonb WHERE world_id=? AND id=?",
-            MetaJson.encode(mapOf(opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to stock.toMetaValue())), id, sourceId)
+        val stratagem = HwihaCourtHandler(world, ChangeRecorder())
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            stratagem.handle(TurnDaemonCommand.HwihaCourtInput("last-stand-$id", 10, 42,
+                HwihaLegacyStratagemInput.LAST_STAND, "{}")).code)
+        assertNull(HwihaQueuedLegacyStratagem.read(world.getGeneralById(10)!!.meta))
         world = cold(id)
-        var recorder = ChangeRecorder()
-        val handler = HwihaCourtHandler(world, recorder)
-        assertTrue(handler.handle(TurnDaemonCommand.HwihaCourtInput("last-stand-$id", 1, 42,
-            HwihaLegacyStratagemInput.LAST_STAND, "{}")).ok)
-        save(world, recorder)
-        world = cold(id)
-        assertNotNull(HwihaQueuedLegacyStratagem.read(world.getGeneralById(1)!!.meta))
-        recorder = ChangeRecorder()
-        val resumed = HwihaCourtHandler(world, recorder)
-        resumed.onIssuerTurn(1)
-        assertTrue(resumed.takeExecutions().single().result.ok)
-        save(world, recorder)
-        world = cold(id)
-        val actor = world.getGeneralById(1)!!
-        assertNull(HwihaQueuedLegacyStratagem.read(actor.meta))
-        assertFalse(HwihaLegacyStratagemStock.forPhase(actor.meta, world.hwihaNow())
-            .available(HwihaLegacyStratagemInput.LAST_STAND))
-        assertEquals(10, HwihaPersonalTravelCondition.read(actor.meta)!!.fatigue)
-        assertEquals(900, opensamguk.logic.economy.HwihaCountyWarehouse.read(
-            world.getCityById(sourceId)!!.meta, sourceId)!!.stock.money)
+        assertEquals(before.tech, world.getNationById(1)!!.tech)
+        assertEquals(before.gold, world.getNationById(1)!!.gold)
     }
 
     @Test fun `direct county action survives flush cold reload and duplicate execution has no second effect`() {
