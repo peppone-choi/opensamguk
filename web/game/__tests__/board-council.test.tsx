@@ -5,7 +5,6 @@ import BoardPage from '@/app/game/board/page';
 import type { BoardResponse } from '@/lib/types';
 
 const nav = vi.hoisted(() => ({ query: 'secret=1' }));
-const modalSpy = vi.hoisted(() => ({ latest: null as null | { pinnedCommand: string; extraArgs?: Record<string, unknown> } }));
 const mocks = vi.hoisted(() => ({
     board: vi.fn(),
     frontInfo: vi.fn(),
@@ -20,12 +19,6 @@ vi.mock('@/components/RichTextEditor', () => ({
     RichTextEditor: ({ value, onChange, ariaLabel }: { value: string; onChange: (v: string) => void; ariaLabel: string }) => (
         <textarea aria-label={ariaLabel} value={value} onChange={(e) => onChange(e.target.value)} />
     ),
-}));
-vi.mock('@/components/CommandModal', () => ({
-    default: (props: { pinnedCommand: string; extraArgs?: Record<string, unknown> }) => {
-        modalSpy.latest = props;
-        return <div data-testid="command-modal">{props.pinnedCommand}</div>;
-    },
 }));
 vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: mocks.submit }));
 vi.mock('@/lib/api', () => ({ api: { board: mocks.board, frontInfo: mocks.frontInfo, command: mocks.command, votes: mocks.votes } }));
@@ -67,7 +60,6 @@ const SECRET: BoardResponse = {
 
 describe('BoardPage (14 회의실·기밀실)', () => {
     beforeEach(() => {
-        modalSpy.latest = null;
         mocks.board.mockReset();
         mocks.frontInfo.mockReset();
         mocks.command.mockReset();
@@ -115,8 +107,10 @@ describe('BoardPage (14 회의실·기밀실)', () => {
         fireEvent.change(kind, { target: { value: 'operation' } });
         fireEvent.change(screen.getByPlaceholderText('제목'), { target: { value: '낙양 공략' } });
         fireEvent.click(screen.getByRole('button', { name: '등록' }));
-        await waitFor(() => expect(screen.getByTestId('command-modal')).toHaveTextContent('boardArticle'));
-        expect(modalSpy.latest?.extraArgs).toEqual({ isSecret: false, title: '낙양 공략', text: '', kind: 'operation' });
+        expect(await screen.findByText('등록하시겠습니까?')).toBeInTheDocument();
         expect(mocks.command).not.toHaveBeenCalled();
+        fireEvent.click(screen.getAllByRole('button', { name: '등록' }).at(-1)!);
+        await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('boardArticle',
+            { isSecret: false, title: '낙양 공략', text: '', kind: 'operation' }, 77));
     });
 });

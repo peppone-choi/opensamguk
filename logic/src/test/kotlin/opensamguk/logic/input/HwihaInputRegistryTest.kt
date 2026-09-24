@@ -73,6 +73,14 @@ class HwihaInputRegistryTest {
     }
 
     @Test
+    fun `catalog classification is shared by engine dispatch and API precheck`() {
+        for (id in listOf("che_요양", "action.ghost", "stratagem.play", "invalid")) {
+            assertEquals(reject(RuleProfile.HWIHA, id), catalog.rejectionFor(RuleProfile.HWIHA, id), id)
+        }
+        assertEquals(null, catalog.rejectionFor(RuleProfile.HWIHA, "court.dispatch"))
+    }
+
+    @Test
     fun `domestic standing inputs are handler ready and must be wired`() {
         for (id in listOf("placement.assign", "policy.set", "work.start")) {
             assertEquals(InputDeliveryState.HANDLER_READY, catalog[id]!!.deliveryState, id)
