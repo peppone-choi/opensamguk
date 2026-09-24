@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "hwiha-political-v1",
+  "status": "PARTIAL",
+  "note": "2026-09-24 사용자 확정: 거병·독립은 명망 50과 현재 縣 기준, 선양은 같은 세력의 동의한 주공, 해산은 세력 해산, 결의는 현재 省의 동의한 인물 1명. 증여·헌납의 장수 자원 저장 위치만 추가 확인 중이다.",
+  "riseMinimumRenown": 50,
+  "independenceMinimumRenown": 50
+}
