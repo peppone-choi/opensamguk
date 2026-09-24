@@ -12,7 +12,7 @@ import opensamguk.logic.world.*
  * NPC 출병 선택기(#792 일부) — 사람 소유가 아닌 장수가 예약 없이 턴을 맞으면 `action.deploy` 를 골라 준다.
  * 입력만 고르고 실행·기록은 기존 출병 핸들러가 한다(출사 선택기와 같은 방식).
  *
- * 고르는 규칙(임시, `hwiha-s3-provisional-v1.json` npcDeploy): 세력에 속했고, 출전·조우·포위 중이 아니며,
+ * 고르는 규칙(2026-09-23 확정, `hwiha-s3-provisional-v1.json` npcDeploy): 세력에 속했고, 출전·조우·포위 중이 아니며,
  * 직속(부장 지휘 아님) 부곡이 있는 NPC 가 현재 省에서 간선 [HwihaS3Provisional.NPC_DEPLOY_MAX_EDGES] 개 이내의
  * 적대(교전 중 또는 무주) 縣治 가운데 병력이 수비병 × [HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO] 이상인 곳을
  * 교전 세력 縣을 무주 縣보다 먼저 보고, 각 묶음에서는 가까운 간선 고리(省 hop)부터,

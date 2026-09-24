@@ -1079,7 +1079,7 @@
 
 ## ADR-LITE-057 — 삼모 명령 체계를 「장수·휘하」 캠페인 설계로 교체한다 (2026-09-17)
 
-- Status: direction-approved (사용자 명시 2026-09-17 기획 대화). 게임 수치는 전부 proposed — 시뮬레이션·플레이테스트로 정한다.
+- Status: accepted (2026-09-24 사용자 승인). S3 게임 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)에서 확정했다. 정본은 `data/curated/han/hwiha-s3-provisional-v1.json`·`hwiha-domestic-v1.json`·`hwiha-vision-rules-v1.json`이며, 그 밖의 미정 수치는 각 원장 상태를 따른다.
 - Context: 지도는 城 1,133 · 省 1,594 의 면(面) 세계가 됐지만(ADR-LITE-055·056) 규칙은 삼모전의 점(點) 구조다.
   시나리오 1020 개시 활성 장수는 231명(확장 299, `seedContract.activeGenerals`)이라 1,133城에서 城당 약 0.20명이다.
   이동은 인접 城 1칸이 1턴이고 이동 비용에 지형 계수가 없다. 지형은 전투·명령 코드에서 참조되지 않고 보급·경로 위상에 물/마른땅
@@ -1307,3 +1307,19 @@
 - 대가: 폰트 바이트가 `node_modules`(= npm 레지스트리)에 남는다. `pnpm install` 은 빌드 전에 이미 필요하고 lockfile 로 버전이 고정되니 새 의존이 아니다. 패밀리명이 `... Variable` 로 바뀌어 tokens.css 를 함께 고쳐야 했다. 가변 폰트라 700/900 고정 대신 200–900(serif)·100–800(mono) 전 구간을 쓸 수 있다.
 - 검증(적색 프로브): CI·배포와 같은 `docker/web-*.Dockerfile` 의 build 스테이지를 `RUN pnpm build` 직전까지 이미지로 굽고, `docker run --network none` 으로 `pnpm build` 를 돌린다. 수정 전에는 이 프로브가 gstatic 실패로 **빨갛고**, 수정 후에는 두 앱 모두 통과해야 한다.
 - 뒤집기: `layout.tsx` 의 CSS import 3줄을 `next/font/google` 호출로 되돌리고 tokens.css 의 패밀리명을 변수 주입으로 되돌리면 된다. 되돌리면 빌드가 다시 Google CDN 에 의존한다.
+
+## ADR-LITE-065 — 휘하 컷오버: 유일한 제품 규칙으로 승격한다 (2026-09-24)
+
+- Date: 2026-09-24
+- Status: approved (2026-09-24 사용자 명시 결정). 구현·pep 전환 완료를 뜻하지 않는다.
+- Context: [S3 豫州 슬라이스](../docs/superpowers/specs/2026-09-23-hwiha-s3-exit-yuzhou-slice.md)가 [PR #869](https://github.com/peppone-choi/opensamguk/pull/869)에서 통과했고 [#872](https://github.com/peppone-choi/opensamguk/issues/872)의 수치가 확정됐다. 현재 제품 기본 시나리오·프로필·일부 라우트와 API는 삼모를 가리켜 기획과 제품이 갈라져 있다. `hwiha-map-unify`가 main에 머지되기 전에는 겹치는 지도·화면 코드를 바꾸지 않는다.
+- Decision:
+  1. **휘하가 유일한 제품 규칙**이다. 휘하 월드/비휘하 월드 선택 UI와 분기를 두지 않는다. 시나리오 시드·API 기본 해석·웹 제품 경로의 기본값은 HWIHA다.
+  2. 삼모 명령·알파 카탈로그·엔진 코드는 제품 화면·라우트·메뉴·기본값·제품 API에서 제거한다. 엔진 코드와 골든은 ADR-LITE-057 결정 1 및 ADR-LITE-042의 **동결 회귀 기준선**으로 보존한다. registry 밖 입력은 명시적으로 실패한다.
+  3. 현재 `/game/<서버>/hwiha/*` 화면을 해당 서버의 메인 제품 경로로 승격하고 옛 주소는 새 주소로 리다이렉트한다. 메인 작전실은 휘하 작전실이다. 전체 지도 역사 시나리오는 S4([#596](https://github.com/peppone-choi/opensamguk/issues/596)) 몫이므로, 컷오버 기본 시나리오는 런북의 `scenario_990002`다.
+  4. 삼모 복귀 env 스위치는 **한 시즌**만 둔다. 기본은 꺼 두고 스위치 제거 이슈를 시즌 종료에 연결한다. 롤백 검증 뒤 다시 끈다.
+  5. 구현 PR들이 각각 승인되어 main에 머지되고 main CI가 초록이면 [pep 전환 런북](../docs/admin/hwiha-pep-transition.md)에 따라 백업 → 월드 초기화 → 휘하 시나리오 → 엔진 포함 승격을 **추가 승인 없이** 실행한다. 런북 중단 조건은 그대로 적용한다.
+  6. **main 머지는 PR마다 사용자 허가**를 받는다. CI 필수 검사 전부 초록, 최신 main 반영, 리뷰 지적 처리 뒤 PR 번호·head SHA·CI·반영 리뷰·위험을 「머지 대기」로 보고하고 멈춘다. 포괄 허가는 그 말을 들을 때 열려 있던 PR에만 적용한다.
+- Supersedes: ADR-LITE-057 Consequences의 「라이브 서버와 기존 코드는 새 체계 활성화 전까지 그대로 운영」, ADR-LITE-049의 현행 메뉴·게이팅과 월드 프로필별 제품 분기 중 이 결정에 충돌하는 부분, [#249](https://github.com/peppone-choi/opensamguk/issues/249)의 RTK/devsam 기본 시나리오·제품 복귀 AC. 각 문서의 과거 경과와 동결 기준선 의무는 보존한다.
+- Consequences: 전환 중에는 문서·구현·pep 운영 시점이 다르다. 문서 정식화만으로 운영이 전환됐다고 표기하지 않는다. 지도 통일 작업이 main에 머지된 뒤 코드 PR을 순서대로 진행한다. pep은 위 승인된 PR이 모두 머지되기 전에는 바꾸지 않는다.
+- Reversal: 컷오버 뒤 한 시즌 안에 중단 조건 또는 운영 결함이 발생하면 런북의 검증된 백업 복원 경로와 단일 env 스위치로 SAMMO 제품 경로를 임시 복구하고 턴 시계·데이터 일관성을 확인한다. 이 ADR을 superseded로 표시하고 복귀 사유·대상 SHA·복원 결과를 새 결정에 기록한다. 시즌 종료 후 스위치 제거 시에는 새 마이그레이션·복원 계획을 먼저 승인받아야 하며, 동결 골든은 어느 경우에도 삭제하지 않는다.
