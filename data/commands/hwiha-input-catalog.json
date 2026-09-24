@@ -285,6 +285,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "NOT_LORD",
         "TARGET_NOT_FOUND",
@@ -343,6 +345,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "NOT_LORD",
         "TARGET_NOT_FOUND",
@@ -444,6 +448,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "CARD_NOT_FOUND",
         "CARD_NOT_ON_MAP",
@@ -509,6 +515,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "CARD_NOT_FOUND",
         "CARD_NOT_ON_MAP",
@@ -574,6 +582,8 @@
       "failureReasons": [
         "WRONG_RULE_PROFILE",
         "UNKNOWN_INPUT",
+        "INVALID_REQUEST",
+        "INVALID_INPUT_CHANNEL",
         "ACTOR_NOT_FOUND",
         "CARD_NOT_FOUND",
         "CARD_NOT_ON_MAP",
