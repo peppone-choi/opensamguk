@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isOwnedNationVisual } from './nationVisual';
 import { loadProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
-import { mapCityToTile, parseTerrainEtagHash } from './HanMapCanvas';
+import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './HanMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
-import type { HanTiles, IsoCityOverlay } from './HanMapCanvas';
+import type { HanTiles, IsoCityOverlay, IsoMarkerPosition } from './HanMapCanvas';
 import { cityBadgesById } from './worldCityBadges';
 
 export const WORLD_MAP_CODE = 'han-world-v3';
@@ -51,7 +51,7 @@ export type WorldMapState<P extends WorldMapPreview> =
     readonly provinceMap: ProvinceIdentityMap | null;
     readonly provinceCenter: (provinceId: string) => { col: number; row: number } | undefined;
     readonly cities: readonly IsoCityOverlay[];
-    readonly markerPositions: ReadonlyMap<number, { col: number; row: number }>;
+    readonly markerPositions: ReadonlyMap<number, IsoMarkerPosition>;
     readonly commanderies: readonly HwihaCommanderyCell[];
     readonly legend: readonly HwihaLegendEntry[];
     readonly sourceSize: { width: number; height: number };
@@ -93,19 +93,15 @@ export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesBy
 }
 
 /**
- * 城 아이콘을 칸 중앙에 앉힌다 — 칸이 게임 단위인 화면이다. 격자 크기는 받은 지형의 `_meta` 에서,
- * 원본 좌표계는 미리보기의 width/height 에서 읽는다(두 좌표계, 축마다 배율이 다르다).
+ * 城 아이콘을 자기 省의 치소 칸에 앉힌다. 省 색인이 없을 때만 원본 좌표의 칸을 쓴다.
  */
 export function buildMarkerPositions(
     cities: readonly IsoCityOverlay[],
     tiles: HanTiles,
     sourceSize: { width: number; height: number },
-): Map<number, { col: number; row: number }> {
-    const grid = { cols: tiles._meta.cols, rows: tiles._meta.rows };
-    return new Map(cities.map((city) => {
-        const tile = mapCityToTile(city, grid, sourceSize);
-        return [city.id, { col: Math.round(tile.col), row: Math.round(tile.row) }] as const;
-    }));
+    provinceMap: ProvinceIdentityMap | null = null,
+): Map<number, IsoMarkerPosition> {
+    return buildCanonicalMarkerPositions(tiles, cities, sourceSize, provinceMap);
 }
 
 /**
@@ -269,7 +265,7 @@ export function useWorldMap<P extends WorldMapPreview>({
     return {
       kind: 'ready', preview, refreshError: raw.refreshError, tiles, tilesSha256: hash ?? undefined, provinceMap,
       provinceCenter: buildProvinceCenters(tiles, provinceMap), cities,
-      markerPositions: buildMarkerPositions(cities, tiles, sourceSize),
+      markerPositions: buildMarkerPositions(cities, tiles, sourceSize, provinceMap),
       commanderies: buildCommanderies(tiles, preview), legend: buildLegend(preview), sourceSize,
       administrativeOwnership: preview.provinceOccupancy?.length && preview.jurisdictionOwnership?.length
         && preview.commanderyControl?.length

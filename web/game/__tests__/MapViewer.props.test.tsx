@@ -115,7 +115,7 @@ describe('MapViewer data props', () => {
     expect(mocks.props?.strategicTopology).toBeUndefined();
     await waitFor(() => expect(onBinding).toHaveBeenLastCalledWith(null));
     expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText('수역 데이터를 갱신하지 못했습니다.')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('지도를 갱신하지 못했습니다.')).toBeInTheDocument());
   });
 
   it('drops a topology response if the proxy server cookie changed while it was pending', async () => {

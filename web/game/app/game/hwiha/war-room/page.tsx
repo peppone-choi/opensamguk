@@ -14,8 +14,9 @@ import StandingBar from '@/components/hwiha/StandingBar';
 import TurnList from '@/components/hwiha/TurnList';
 import WarRoomMap from '@/components/hwiha/WarRoomMap';
 import { useToast } from '@/hooks/useToast';
-import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
+import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
+import { reserveHwihaScout } from '@/lib/hwiha-scout';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 /**
@@ -62,20 +63,9 @@ export default function WarRoomPage() {
         if (generalId == null || !option) return;
         setScoutPending(true);
         try {
-            const reserved = await api.reservedCommands(generalId);
-            const used = new Set(reserved.slots.map((slot) => slot.turnIdx));
-            const turnIdx = Array.from({ length: 12 }, (_, i) => i).find((i) => !used.has(i));
-            if (turnIdx === undefined) {
-                show('명령 목록 12순이 모두 찼습니다.', 'error');
-                return;
-            }
-            const out = await api.command('action.scout', { commanderyId: option.id }, generalId, turnIdx);
-            if (isIntakeQueued(out)) {
-                show(`${option.name}에 첩보를 ${turnIdx + 1}순에 예약했습니다.`, 'success');
-                bump();
-            } else if (isIntakeDenied(out)) show(out.reason ?? '첩보를 예약할 수 없습니다.', 'error');
-        } catch (e) {
-            show(e instanceof Error ? e.message : '첩보를 예약하지 못했습니다.', 'error');
+            const result = await reserveHwihaScout(generalId, option);
+            show(result.message, result.ok ? 'success' : 'error');
+            if (result.ok) bump();
         } finally {
             setScoutPending(false);
         }
@@ -95,6 +85,7 @@ export default function WarRoomPage() {
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     {/* 안개는 서버 시야 투영(군국 단위)만 따른다. */}
                     <WarRoomMap
+                        refreshKey={refreshKey}
                         homeCityId={frontInfo?.city?.id ?? null}
                         visibility={visibility}
                         intelAge={intelAge}

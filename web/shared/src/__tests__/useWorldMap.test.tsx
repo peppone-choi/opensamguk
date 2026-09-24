@@ -61,6 +61,24 @@ describe('useWorldMap common served board', () => {
     expect(mocks.fetch.mock.calls.filter(([url]) => String(url).includes('/terrain?'))).toHaveLength(1);
   });
 
+  it('seats a 城 in its own 省 even when its projected point is in a neighbor', async () => {
+    const province = { width: 3, height: 1, provinces: new Int16Array([0, 0, 1]),
+      commanderies: new Int16Array([0, 0, 0]), provinceEdges: [], commanderyEdges: [] };
+    mocks.province.mockResolvedValue(province);
+    mocks.fetch.mockImplementation(async (url: string) => String(url).includes('/terrain?')
+      ? { ok: true, headers: { get: () => `"sha256-${SHA}"` }, json: async () => ({
+        _meta: { cols: 3, rows: 1 }, cities: [{ col: 0, row: 0 }, { col: 2, row: 0 }],
+        juns: [{ name: '甲郡', col: 0, row: 0 }],
+      }) }
+      : { ok: false });
+    const loadPreview = vi.fn(async () => ({ ...preview, width: 3, height: 1,
+      cities: [{ ...preview.cities[0], x: 0, y: 0, provinceId: 1 }] }));
+    const { result } = renderHook(() => useWorldMap({ loadPreview }));
+    await waitFor(() => expect(result.current.kind).toBe('ready'));
+    if (result.current.kind !== 'ready') throw new Error('not ready');
+    expect(result.current.markerPositions.get(7)).toEqual({ col: 2, row: 0, provinceId: 1 });
+  });
+
   it('shows an unsupported board error without requesting another terrain', async () => {
     const loadPreview = vi.fn(async () => ({ ...preview, mapCode: 'old-board' }));
     const { result } = renderHook(() => useWorldMap({ loadPreview }));

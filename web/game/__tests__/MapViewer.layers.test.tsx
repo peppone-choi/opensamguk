@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
@@ -12,7 +12,9 @@ const mocks = vi.hoisted(() => ({
 const PREVIEW: MapPreviewResponse = {
   serverName: '테스트', year: 200, month: 5, mapCode: 'han-world-v3', width: 700, height: 610,
   cities: [{ id: 7, name: '甲縣', level: 5, nationId: 1, x: 350, y: 305, state: 0, supply: true,
-    isCapital: false, commanderyName: '甲郡' }],
+    isCapital: false, commanderyName: '甲郡' },
+  { id: 8, name: '乙縣', level: 5, nationId: 1, x: 360, y: 305, state: 0, supply: true,
+    isCapital: false, commanderyName: '乙郡' }],
   nations: [{ id: 1, name: '魏', color: '#ff0000' }],
 };
 vi.mock('@/lib/api', () => ({ api: {
@@ -27,7 +29,8 @@ vi.mock('@opensamguk/ui', async () => {
       tiles: { _meta: { cols: 768, rows: 669 } }, tilesSha256: 'test', provinceMap: null,
       provinceCenter: (id: string) => id === 'P1' ? { col: 10, row: 20 } : undefined,
       cities: actual.buildWorldCities(PREVIEW), markerPositions: new Map([[7, { col: 384, row: 334 }]]),
-      commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 }],
+      commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 },
+        { no: 2, name: '乙郡', col: 394, row: 334, focusCityId: 8 }],
       sourceSize: { width: 700, height: 610 }, administrativeOwnership: undefined }),
     HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
       mocks.props = props; return <div data-testid="main-map" />;
@@ -72,5 +75,13 @@ describe('MapViewer Hwiha layers', () => {
     expect(screen.getByText('군단을 불러오지 못해 군단 레이어를 비웠습니다.')).toBeInTheDocument();
     expect(mocks.props?.commanderyVisibility).toBeNull();
     expect(mocks.props?.corps).toEqual([]);
+  });
+
+  it('moves the camera to a neighboring 郡 without moving the current 城 marker', async () => {
+    render(<MapViewer mapData={PREVIEW} hwihaLayers="full" currentCityId={7} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: '동 — 乙郡' })).toBeEnabled());
+    fireEvent.click(screen.getByRole('button', { name: '동 — 乙郡' }));
+    expect(mocks.props?.currentCityId).toBe(7);
+    expect(mocks.props?.cameraFocusCityId).toBe(8);
   });
 });

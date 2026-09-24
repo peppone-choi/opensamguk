@@ -97,6 +97,7 @@ export interface MapViewerProps {
     hwihaLayers?: MapLayerScope;
     disallowClick?: boolean;
     currentCityId?: number | null;
+    generalId?: number | null;
     initialFocus?: InitialFocusProfile;
     live?: boolean;
     showMe?: 0 | 1;
@@ -150,6 +151,7 @@ export default function MapViewer({
     hwihaLayers,
     disallowClick,
     currentCityId,
+    generalId,
     initialFocus,
     live = false,
     showMe = 1,
@@ -188,7 +190,7 @@ export default function MapViewer({
         return merged.data;
     }, [live, showMe]);
     const layerScope = hwihaLayers ?? (mapData != null ? 'none' : 'full');
-    const layers = useMapLayers(layerScope, refreshKey);
+    const layers = useMapLayers(layerScope, refreshKey, generalId);
     const map = useWorldMap({ loadPreview, mapData, refreshKey, cacheScope: readServerCookie(),
         works: layers.works, sieges: layers.sieges });
     const ready = map.kind === 'ready' ? map : null;
@@ -210,10 +212,6 @@ export default function MapViewer({
         setStrategicTopology(null);
         bindingCallback.current?.(null);
     }, [refreshKey, mapData]);
-
-    useEffect(() => {
-        if (ready?.refreshError) setStrategicError('수역 데이터를 갱신하지 못했습니다.');
-    }, [ready?.refreshError]);
 
     // 2026-09-17: 메인 지도의 전장(장판·관도) 표식과 전장 선택 줄을 뺐다(사용자 결정).
 
@@ -346,7 +344,8 @@ export default function MapViewer({
                     corps={corpsOverlay}
                     commanderyVisibility={layerScope !== 'none' ? layers.visibility : null}
                     fogMode="dim"
-                    currentCityId={focusCityId ?? currentCityId ?? liveMyCity}
+                    currentCityId={currentCityId ?? liveMyCity}
+                    cameraFocusCityId={focusCityId ?? currentCityId ?? liveMyCity}
                     initialFocus={focus ? 'current-commandery' : initialFocus}
                     selectedCityId={selectedCityId}
                     strategicTopology={strategicTopology ?? undefined}
@@ -369,8 +368,9 @@ export default function MapViewer({
                     overlayInfo
                     visibility={layers.visibility} intelAge={layers.intelAge} scoutable={layers.scoutable}
                     onScout={layers.canScout ? (no) => void layers.sendScout(no) : undefined} scoutPending={layers.scoutPending} />}
-                {(strategicError || layers.visibilityError || layers.corpsError || layers.badgeError || layers.scoutError || layers.scoutMessage) &&
+                {(ready?.refreshError || strategicError || layers.visibilityError || layers.corpsError || layers.badgeError || layers.scoutError || layers.scoutMessage) &&
                     <div className="map-layer-notices" aria-live="polite">
+                        {ready?.refreshError && <p role="status">지도를 갱신하지 못했습니다.</p>}
                         {strategicError && <p role="status">{strategicError}</p>}
                         {layers.visibilityError && <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p>}
                         {layers.corpsError && <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p>}

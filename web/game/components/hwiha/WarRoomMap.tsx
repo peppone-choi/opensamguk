@@ -10,6 +10,7 @@ import { CommanderyNavigator } from './CommanderyNavigator';
 import { HwihaEmpty } from './HwihaStates';
 
 export interface WarRoomMapProps {
+    readonly refreshKey?: unknown;
     readonly homeCityId: number | null;
     readonly visibility: ReadonlyMap<number, CommanderyVisibility> | null;
     readonly onScout?: (commanderyNo: number) => void;
@@ -21,9 +22,9 @@ export interface WarRoomMapProps {
     readonly sieges?: HwihaSieges | null;
 }
 
-export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending, scoutable,
+export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
     intelAge, corps, works, sieges }: WarRoomMapProps) {
-    const map = useHwihaWorldMap(0, works, sieges);
+    const map = useHwihaWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
     const ready = map.kind === 'ready' ? map : null;
