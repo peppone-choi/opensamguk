@@ -145,62 +145,6 @@ export {
   type CompactMapTooltipMetaInput,
 } from './nationVisual';
 export {
-  TERRAIN,
-  TERRAIN_ASSET_NAME,
-  RASTER_GROUP,
-  MAX_LEVEL,
-  TILE_SCREEN_WIDTH,
-  TILE_SCREEN_HEIGHT,
-  STEP_SCREEN_PIXELS,
-  SEAT_ONLY_TILE_PIXELS,
-  isWater,
-  pickTileAtScreen,
-  downsampleTerrain,
-  levelsFromImageData,
-  fillSeaEnclosedGaps,
-  terrainFromElevation,
-  relaxCornerLattice,
-  buildCornerLattice,
-  buildTileHeights,
-  buildIsoTileGrid,
-  landUnderSeats,
-  type SeatCells,
-  tileToScreen,
-  expandRunLength,
-  downsampleOwner,
-  stampSeatOwners,
-  sourceCellToTile,
-  type TerrainCode,
-  type TerrainTiles,
-  type TileHeights,
-  type IsoTileGrid,
-} from './isoTileGrid';
-
-// ── 지도 격자와 2D 자산 유틸리티 ──────────────────────────────────────────
-export {
-  useIsoTileGrid,
-  buildProvinceSeatCells,
-  LEVEL_PNG_URL,
-  ELEVATION_MANIFEST_URL,
-  type IsoMapData,
-  type IsoCity,
-  type ProvinceSeatCells,
-  type ElevationManifest,
-} from './iso/useIsoTileGrid';
-export {
-  placeGameCities,
-  isExternalPlace,
-  firstPickableCity,
-  fitCityFootprints,
-  fitFootprintsInTile,
-  placeBattlefields,
-  gameXyToSourceCell,
-  type GameCityInput,
-  type PlacedCity,
-  type PlaceGameCitiesOptions,
-  type IsoBattlefieldMarker,
-} from './iso/placeGameCities';
-export {
   normaliseNationColor,
   bannerColor,
   isAchromaticNationColor,
@@ -234,20 +178,6 @@ export {
   type PlaceNameWithGlossProps,
 } from './iso/countyNameGloss';
 export {
-  externalPlaceLevel,
-  type ExternalPlaceInput,
-} from './iso/externalPlaceTier';
-
-export {
-  cityIconLevel,
-  type CityIconInput,
-} from './iso/cityIconLevel';
-export {
-  CITY_SEED_RESEATS,
-  applyCitySeedReseats,
-  type CitySeedReseat,
-} from './iso/citySeedReseat';
-export {
   drawSeaRoute,
   type IsoSeaRoute,
   drawBattlefieldMark,
@@ -263,21 +193,14 @@ export {
 } from './iso/marker';
 export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
   type JuIndexResponse, type JuLayer, type MapLod } from './iso/juLod';
-export {
-  SPRITE_ROOF_TOP_PX,
-  SPRITE_GROUND_CENTER_Y,
-  spriteRoofLift,
-  cityFlagBase,
-} from './iso/buildingRoof';
-export {
-  SPRITE_SILHOUETTE_PX,
-  cellFootprintInTiles,
-  spriteFootprintFit,
-  type TileFootprint,
-  type SpriteFit,
-} from './iso/buildingFit';
-export { IsoMap2D, type IsoMap2DProps } from './iso/IsoMap2D';
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
+export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
+export {
+  WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
+  buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,
+  type WorldMapPreview, type WorldMapOptions, type WorldMapState,
+  type HwihaCommanderyCell, type HwihaLegendEntry,
+} from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';

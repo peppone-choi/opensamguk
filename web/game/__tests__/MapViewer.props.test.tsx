@@ -12,12 +12,18 @@ const mocks = vi.hoisted(() => ({
   frontInfo: vi.fn(),
   hwihaWorks: vi.fn(),
   hwihaSieges: vi.fn(),
+  hwihaVisibility: vi.fn(),
+  hwihaCorps: vi.fn(),
+  hwihaScoutOptions: vi.fn(),
   props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  fetch: vi.fn(),
 }));
 
 vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: mocks.worldMap,
   strategicTopology: mocks.strategicTopology, frontInfo: mocks.frontInfo,
-  hwihaWorks: mocks.hwihaWorks, hwihaSieges: mocks.hwihaSieges } }));
+  hwihaWorks: mocks.hwihaWorks, hwihaSieges: mocks.hwihaSieges,
+  hwihaVisibility: mocks.hwihaVisibility, hwihaCorps: mocks.hwihaCorps,
+  hwihaScoutOptions: mocks.hwihaScoutOptions } }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
   return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
@@ -29,12 +35,12 @@ import MapViewer, { mapTitleClass, mapTitleTooltip, seasonOf } from '@/component
 
 const MAP: MapPreviewResponse = {
   serverName: '테스트섭', startYear: 200, year: 200, month: 5, turnPhase: 1, turnPhaseText: '상순',
-  mapCode: 'han', width: 700, height: 610,
+  mapCode: 'han-world-v3', width: 700, height: 610,
   cities: [{ id: 11, name: '낙양', level: 8, nationId: 1, x: 300, y: 250, state: 0, supply: true, isCapital: true }],
   nations: [{ id: 1, name: '위', color: '#ff0000' }],
 };
 const WORLD: WorldMapResponse = {
-  result: true, version: 4, mapName: 'han', startYear: 180, year: 201, month: 7, turnPhase: 3, turnPhaseText: '하순',
+  result: true, version: 4, mapName: 'han-world-v3', startYear: 180, year: 201, month: 7, turnPhase: 3, turnPhaseText: '하순',
   cityList: [[11, 6, 9, 2, 0, 0]], nationList: [[2, '오', '#0000ff', 11]], spyList: {}, shownByGeneralList: [],
   myCity: 11, myNation: 2,
 };
@@ -42,12 +48,20 @@ const WORLD: WorldMapResponse = {
 beforeEach(() => {
   document.cookie = 'sam_server=; Max-Age=0; path=/';
   mocks.props = null;
+  mocks.fetch.mockReset().mockImplementation(async (input: string) =>
+    input.includes('/terrain?') ? { ok: true, headers: { get: () => null },
+      json: async () => ({ _meta: { cols: 768, rows: 669, year: 200, terrainLegend: {} }, juns: [] }) }
+      : { ok: false, status: 404 });
+  vi.stubGlobal('fetch', mocks.fetch);
   mocks.mapPreview.mockReset().mockResolvedValue(MAP);
   mocks.worldMap.mockReset().mockResolvedValue(WORLD);
   mocks.strategicTopology.mockReset().mockResolvedValue(STRATEGIC_TOPOLOGY);
   mocks.frontInfo.mockReset().mockResolvedValue({ general: { generalId: null } });
   mocks.hwihaWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
   mocks.hwihaSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
+  mocks.hwihaVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [] });
+  mocks.hwihaCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [] });
+  mocks.hwihaScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
   vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
   vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
   Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
@@ -72,22 +86,23 @@ describe('MapViewer pure title contracts', () => {
 });
 
 describe('MapViewer data props', () => {
-  it('requests fresh terrain only when the V3 base byte pin changes, not during control refresh', async () => {
-    mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: STRATEGIC_BINDING });
+  it('loads the pinned terrain once and reuses it until the base byte pin changes', async () => {
+    mocks.mapPreview.mockResolvedValue({ ...MAP, strategicTopology: STRATEGIC_BINDING });
     const { rerender } = render(<MapViewer />);
     await waitFor(() => expect(mocks.props?.strategicTopology).toEqual(STRATEGIC_TOPOLOGY));
-    const firstUrl = mocks.props?.terrainUrl as (mapCode: string) => string;
-    expect(firstUrl('han-world-v3')).toContain(`baseTilesSha256=${STRATEGIC_BINDING.baseTilesSha256}`);
+    const terrainCalls = () => mocks.fetch.mock.calls.filter(([url]) => String(url).includes('/terrain?'));
+    expect(terrainCalls()).toHaveLength(1);
+    expect(terrainCalls()[0][0]).toContain(`baseTilesSha256=${STRATEGIC_BINDING.baseTilesSha256}`);
     rerender(<MapViewer refreshKey={1} />);
     await waitFor(() => expect(mocks.strategicTopology).toHaveBeenCalledTimes(2));
-    expect(mocks.props?.terrainUrl).toBe(firstUrl);
+    expect(terrainCalls()).toHaveLength(1);
     const nextBinding = { ...STRATEGIC_BINDING, baseTilesSha256: 'e'.repeat(64), topologyHash: 'f'.repeat(64) };
-    mocks.mapPreview.mockResolvedValue({ ...MAP, mapCode: 'han-world-v3', strategicTopology: nextBinding });
+    mocks.mapPreview.mockResolvedValue({ ...MAP, strategicTopology: nextBinding });
     mocks.strategicTopology.mockResolvedValue({ ...STRATEGIC_TOPOLOGY, binding: nextBinding });
     rerender(<MapViewer refreshKey={2} />);
     await waitFor(() => expect(mocks.props?.strategicTopology?.binding).toEqual(nextBinding));
-    expect((mocks.props?.terrainUrl as (mapCode: string) => string)('han-world-v3'))
-      .toContain(`baseTilesSha256=${nextBinding.baseTilesSha256}`);
+    expect(terrainCalls()).toHaveLength(2);
+    expect(terrainCalls()[1][0]).toContain(`baseTilesSha256=${nextBinding.baseTilesSha256}`);
   });
 
   it('immediately hides old control and clears the route binding if a refresh fails', async () => {
@@ -100,7 +115,7 @@ describe('MapViewer data props', () => {
     expect(mocks.props?.strategicTopology).toBeUndefined();
     await waitFor(() => expect(onBinding).toHaveBeenLastCalledWith(null));
     expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
-    expect(screen.getByRole('status')).toHaveTextContent('수역 데이터를 갱신하지 못했습니다.');
+    await waitFor(() => expect(screen.getByText('수역 데이터를 갱신하지 못했습니다.')).toBeInTheDocument());
   });
 
   it('drops a topology response if the proxy server cookie changed while it was pending', async () => {
@@ -137,33 +152,29 @@ describe('MapViewer data props', () => {
     expect(mocks.strategicTopology).not.toHaveBeenCalled();
   });
 
-  it('mapData skips self-fetch and renders the title above the default 2D map', () => {
+  it('mapData skips preview fetch and renders the title above the default 2D map', async () => {
     render(<MapViewer mapData={MAP} />);
+    await screen.findByTestId('shared-iso-map');
     expect(screen.getByText('200년 5월 상순')).toBeInTheDocument();
     expect(screen.getByTestId('shared-iso-map')).toBeInTheDocument();
     expect(mocks.mapPreview).not.toHaveBeenCalled();
   });
 
-  it('self-fetch loads preview data and hands the 2D map the encoded terrain url', async () => {
-    const mapCode = 'ha n&?';
-    mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode });
+  it('rejects another map board before requesting terrain', async () => {
+    mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode: 'old-board' });
     render(<MapViewer />);
-    await screen.findByTestId('shared-iso-map');
-    expect(mocks.mapPreview).toHaveBeenCalledTimes(1);
-    expect((mocks.props?.terrainUrl as (mapCode: string) => string)(mapCode))
-      .toBe('/api/game/api/map/terrain?mapCode=ha%20n%26%3F');
+    expect(await screen.findByText('지원하지 않는 지도 판: old-board')).toBeInTheDocument();
+    expect(mocks.fetch).not.toHaveBeenCalled();
   });
 
-  it('기본 2D 지도가 province PNG 까지 그대로 받는다', async () => {
-    const mapCode = 'ha n&?';
-    mocks.mapPreview.mockResolvedValueOnce({ ...MAP, mapCode });
+  it('loads the served terrain and province PNG through the common map hook', async () => {
     render(<MapViewer />);
     await screen.findByTestId('shared-iso-map');
-    expect(mocks.props?.mapCode).toBe(mapCode);
-    const provinceUrl = typeof mocks.props?.provinceUrl === 'function'
-      ? mocks.props.provinceUrl(mapCode)
-      : mocks.props?.provinceUrl;
-    expect(provinceUrl).toBe('/api/game/api/map/provinces?mapCode=ha%20n%26%3F');
+    expect(mocks.props?.mapCode).toBe('han-world-v3');
+    expect(mocks.props?.tiles?._meta.cols).toBe(768);
+    expect(mocks.props?.markerPositions?.has(11)).toBe(true);
+    expect(mocks.props?.terrainUrl).toBeUndefined();
+    expect(mocks.fetch.mock.calls.map(([url]) => url)).toContain('/api/game/api/map/provinces?mapCode=han-world-v3');
   });
 
   it('live mode merges state, owner, supply, capital and my city', async () => {
@@ -207,14 +218,15 @@ describe('MapViewer data props', () => {
     ]));
   });
 
-  it('forwards the optional initial focus profile unchanged', () => {
+  it('forwards the optional initial focus profile unchanged', async () => {
     render(<MapViewer mapData={MAP} initialFocus="current-city-close" />);
+    await screen.findByTestId('shared-iso-map');
     expect(mocks.props?.initialFocus).toBe('current-city-close');
   });
 
   it('empty and failed previews remain fail-visible', async () => {
     const { unmount } = render(<MapViewer mapData={{ ...MAP, cities: [] }} />);
-    expect(screen.getByText('지도 데이터 준비 중입니다.')).toBeInTheDocument();
+    expect(await screen.findByText('지도 데이터 준비 중입니다.')).toBeInTheDocument();
     unmount();
     mocks.mapPreview.mockRejectedValueOnce(new Error('offline'));
     render(<MapViewer />);

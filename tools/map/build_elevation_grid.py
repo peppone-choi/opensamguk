@@ -2,8 +2,8 @@
 """후한 지도 격자의 표고(DEM)를 만든다 — NOAA ETOPO1 → han-world 투영.
 
 지형 분류(build_terrain_grid.py)는 Natural Earth 지리구역 폴리곤에서 나오므로
-표고값이 없다. 2D 아이소 스프라이트 격자는 타일당 정수 단차를
-요구한다. 이 도구가 그 단차의 유일한 출처다.
+표고값이 없다. 이 도구는 기존 높이 격자의 정수 단차를 만든다.
+현재 2D 지도는 이 격자를 그리지 않는다. 데이터 재생성은 별도 변경에서 다룬다.
 
 출처: NOAA NCEI ETOPO1 (Ice Surface), ERDDAP griddap `etopo180`.
       미국 연방정부 저작물로 퍼블릭 도메인이다. 제3자 게임 에셋이 아니다.
@@ -56,8 +56,8 @@ SOURCE_STEP_DEG = SOURCE_STRIDE / 60.0
 # 화북 평원 1, 황토고원 3, 티베트 6 이 되도록 잡았다.
 LEVEL_LADDER = [0, 200, 500, 1000, 2000, 3500]
 
-#: 타일 하나에 묶을 원본 셀 배수. web/shared/src/isoTileGrid.ts 와 같은 값이어야 한다.
-#: 매니페스트의 rasterGroup 이 그 계약을 런타임으로 나른다.
+#: Legacy elevation output grouping. Keep the committed raster bytes stable until
+#: the elevation coupling is removed in a separately reviewed data change.
 RASTER_GROUP = 2
 
 CACHE_DIR = 'data/map/dem-cache'
@@ -184,9 +184,8 @@ def sample_projection(lats, lons, grid, proj):
 def block_reduce_mean(array, group):
     """rasterGroup 배수로 평균낸다.
 
-    남는 가장자리 행·열은 버린다. iso2d 애셋 매니페스트가 tileGrid 를
-    384×334 로 못박아 뒀고 669/2 = 334.5 이므로, 마지막 부분 행을 채워 335 로
-    만들면 렌더러 인덱스가 한 줄씩 어긋난다. 버리는 쪽이 계약과 맞다.
+    남는 가장자리 행·열은 버린다. 기존 높이 격자는 384×334 칸으로
+    고정돼 있다(669/2 = 334.5). 이 작업에서는 데이터 바이트를 바꾸지 않는다.
     """
     rows, cols = array.shape
     out_rows = rows // group
@@ -251,8 +250,7 @@ def main():
     parser.add_argument('--offline', action='store_true',
                         help='캐시만 쓰고 네트워크를 타지 않는다')
     parser.add_argument('--raster-group', type=int, default=RASTER_GROUP,
-                        help='타일 하나에 묶을 원본 셀 배수 '
-                             '(web/shared/src/isoTileGrid.ts 의 RASTER_GROUP 과 같아야 한다)')
+                        help='기존 높이 격자의 원본 셀 묶음 배수')
     parser.add_argument('--from-metres', action='store_true',
                         help='커밋된 metres.png 를 되읽어 레벨·매니페스트만 다시 낸다')
     args = parser.parse_args()

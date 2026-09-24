@@ -381,7 +381,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     expect(canvas.width).toBe(Math.round(320 * dpr));
     expect(canvas.height).toBe(Math.round(480 * dpr));
     expect(canvas.style.height).toBe('480px');
@@ -407,7 +407,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
 
     measuredWidth = 1000;
     measuredHeight = 500;
@@ -552,7 +552,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     );
 
     await waitFor(() => {
-      const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
       const sources = recordFor(canvas).drawImages
         .filter((source): source is LoadedImage => source instanceof LoadedImage)
         .map((source) => source.src);
@@ -596,7 +596,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(politicalCompositions()).toBe(1);
     expect(politicalPathConstructions()).toBe(3);
     expect(fetchMock).not.toHaveBeenCalled();
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
     const initialDraws = main.drawImages.length;
     const initial = views.at(-1)!;
@@ -806,7 +806,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
     }
 
-    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'han 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
     const castle = main.fillRectCalls.find(({ style }) => style === '#8b8172');
     const [expectedX, expectedY] = cellToScreen(3, 3, views.at(-1)!);
@@ -846,7 +846,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
     const selfLabel = main.fillTextCalls.findLast(({ value }) => value === '내 위치');
 
@@ -918,7 +918,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'han 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
     expect(main.fillRects).not.toContain('#8b8172');
     expect(main.fills).toContain('#8b8172');
@@ -960,7 +960,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     expect(recordFor(canvas).fillTexts).not.toContain('내 위치');
   });
 
@@ -987,7 +987,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       />,
     );
 
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
     const initialFrames = main.operations.filter((operation) => operation === 'clearRect').length;
     expect(main.fillTexts).toContain('내 위치');
@@ -1029,7 +1029,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
     expect(intervals).toContain(1_200);
     expect(intervals).not.toContain(500);
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
     const initialFrames = main.operations.filter((operation) => operation === 'clearRect').length;
 
@@ -1047,7 +1047,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const zoomed = views.at(-1)!;
     expect(zoomed.scale).toBeGreaterThan(initial.scale);
 
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' });
     fireEvent.pointerDown(canvas, { clientX: 100, clientY: 100, pointerId: 1 });
     fireEvent.pointerMove(canvas, { clientX: 130, clientY: 115, pointerId: 1 });
     expect(views.at(-1)).not.toEqual(zoomed);
@@ -1121,7 +1121,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(county).toHaveAttribute('aria-pressed', 'false');
     expect(commandery).toHaveAttribute('aria-pressed', 'true');
 
-    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'han 2D 지도' });
     const [canvasX, canvasY] = cellToScreen(2, 1, views.at(-1)!);
     fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
     expect(onCountyHover).toHaveBeenLastCalledWith(
@@ -1163,7 +1163,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' });
     const [canvasX, canvasY] = cellToScreen(2, 1, views.at(-1)!);
 
     fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
@@ -1217,7 +1217,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'han 2D 지도' });
     const view = views.at(-1)!;
     const [cityX, cityY] = cellToScreen(0, 0, view);
     const hit = cityFallbackHitBox(cityX, cityY, cityMarkerRadius(8, 2));
@@ -1286,7 +1286,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'han 2D 지도' });
     const [canvasX, canvasY] = cellToScreen(0, 0, views.at(-1)!);
 
     fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
@@ -1355,7 +1355,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'han 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'han 2D 지도' });
     const [canvasX, canvasY] = cellToScreen(0, 0, views.at(-1)!);
 
     fireEvent.pointerMove(canvas, { clientX: canvasX / 2, clientY: canvasY / 2, pointerId: 1 });
@@ -1401,7 +1401,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const views: IsoView[] = [];
     render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
 
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' });
     const initial = views.at(-1)!;
     const beforePinch = screenToCell(200, 100, initial);
     fireEvent.pointerDown(canvas, { clientX: 60, clientY: 50, pointerId: 1, pointerType: 'touch' });
@@ -1439,7 +1439,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' });
     fireEvent.wheel(canvas, { clientX: 100, clientY: 53, deltaY: -1 });
     fireEvent.wheel(canvas, { clientX: 100, clientY: 53, deltaY: -1 });
     const before = views.at(-1)!;
@@ -1478,7 +1478,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const { unmount } = render(
       <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
     );
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     expect(canvas.width).toBe(200);
     expect(resolutionListener).toBeTypeOf('function');
 
@@ -1506,7 +1506,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onViewChange={(view) => views.push({ ...view })}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     expect(canvas.width).toBe(160);
     const pointerCss = { x: 75, y: 53 };
     const pointer = {
@@ -1550,7 +1550,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const onMissing = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const rejected = render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} onMissing={onMissing} />);
-    const rejectedCanvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const rejectedCanvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/game/api/map/provinces?mapCode=che'));
     await waitFor(() => expect(recordFor(rejectedCanvas).drawImages.length).toBeGreaterThan(0));
@@ -1568,7 +1568,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         cities={CHE_OVERLAYS_FIXTURE}
       />,
     );
-    const mismatchCanvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' }) as HTMLCanvasElement;
+    const mismatchCanvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     expect(recordFor(mismatchCanvas).drawImages.length).toBeGreaterThan(0);
     expect(new Set(recordFor(mismatchCanvas).drawImages).size).toBe(1);
     expect(politicalCompositions()).toBe(0);
@@ -1631,7 +1631,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         onCityActivate={onCityActivate}
       />,
     );
-    const canvas = screen.getByRole('img', { name: 'che 아이소 타일 지도' });
+    const canvas = screen.getByRole('img', { name: 'che 2D 지도' });
     fireEvent.focus(canvas);
     fireEvent.keyDown(canvas, { key: 'Enter' });
     expect(onCityActivate).toHaveBeenCalledWith(

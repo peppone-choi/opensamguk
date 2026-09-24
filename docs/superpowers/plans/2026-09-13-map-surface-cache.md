@@ -21,7 +21,7 @@
 - [x] 실제 지형·정치색을 이용해 변경 전 드래그 렌더 비용을 측정한다.
 - [x] `web/shared/src/__tests__/mapSurfaceCache.test.ts`에 이동 재사용, 경계 이탈, 배율/DPR/크기 변경, 메모리 제한, 해제, 컨텍스트 실패 검사를 추가한다. 미구현 모듈 import 실패를 확인한다.
 - [x] `web/shared/src/iso/mapSurfaceCache.ts`에 한 개의 제한된 캐시와 `get(view, render)`/`dispose()`를 구현한다.
-- [x] `web/shared/src/iso/IsoMap2D.tsx`에서 정적 렌더를 분리하고 캐시를 사용한다. 도시·깃발·hit target은 직접 렌더로 유지한다.
+- [x] `web/shared/src/iso/retired sprite renderer`에서 정적 렌더를 분리하고 캐시를 사용한다. 도시·깃발·hit target은 직접 렌더로 유지한다.
 - [x] 캐시 내 드래그를 동일 절차로 재측정한다.
 - [x] 기존/수정 렌더의 전체 보기·확대·이동·색 갱신 이미지를 비교한다. 소수 좌표/DPR 차이를 검사한다.
 - [x] 공통 UI 전체 테스트와 타입 검사 후 독립 리뷰 결과를 반영한다.

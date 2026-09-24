@@ -234,7 +234,7 @@
 | #531 | OPENSAM-249 | 완료 종료 | 현 data/map/han-tiles.json commanderyRecords 에 PARENT-0010 沛國(KINGDOM, 관할 17), PARENT-0017 安平國(KINGDOM, 14), PARENT-0019 清河國(KINGDOM, 5)이 있고 … |
 | #598 | OPENSAM-236 | 완료 종료 | 범위(절대 상·하한, 군국 중앙값 편차, 비플레이 권역, 형태 예외, 재균형 도구)가 PR #599(9/1 병합, a1162a0e 「regularize playable province geometry」)로 main 에 들어갔다: tools/map/re… |
 | #636 | OPENSAM-246 | 완료 종료 | 구현(Docker #53, Gateway #637, #644)이 병합된 뒤 실제 PEP 에서 selector 가 쓰였다. #465 9/13 20:54 댓글에 「실제 SCENARIO_DIR 빈값으로 이미지 내부 scenario_1020 사용 확인」(84… |
-| #650 | OPENSAM-244 | 완료 종료 | PR #683(9/9)로 게임창 지도가 IsoWorldMap 의 3D/2D 토글(IsoMap3D glTF · IsoMap2D 스프라이트)로 바뀌었고, 城 집기가 게임 도시 번호를 그대로 넘긴다(onPickCity). 저폴리 에셋은 tools/asset… |
+| #650 | OPENSAM-244 | 완료 종료 | PR #683(9/9)로 게임창 지도가 IsoWorldMap 의 3D/2D 토글(IsoMap3D glTF · retired sprite map)로 바뀌었고, 城 집기가 게임 도시 번호를 그대로 넘긴다(onPickCity). 저폴리 에셋은 tools/asset… |
 
 ## 7. 대체한 계획
 

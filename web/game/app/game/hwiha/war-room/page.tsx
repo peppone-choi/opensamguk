@@ -37,10 +37,11 @@ export default function WarRoomPage() {
         refresh();
     };
 
-    // 시야·군단·첩보 — 서버 투영이 정한다. 휘하 규칙이 아니면 안개가 없다(null).
+    // 시야·군단·첩보 — 서버 투영이 정한다. 조회 실패 시 레이어를 비운다.
     const vision = useHwihaRead((id, signal) => api.hwihaVisibility(id, signal), [refreshKey]);
     const corps = useHwihaRead((id, signal) => api.hwihaCorps(id, signal), [refreshKey]);
     const sieges = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
+    const works = useHwihaRead((id, signal) => api.hwihaWorks(id, signal), [refreshKey]);
     const scout = useHwihaRead((id, signal) => api.hwihaScoutOptions(id, signal), [refreshKey]);
     const visibility = useMemo(() => {
         const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
@@ -92,17 +93,20 @@ export default function WarRoomPage() {
                 }}
             >
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
-                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다 — 휘하 월드가 아니면 없다. */}
+                    {/* 안개는 서버 시야 투영(군국 단위)만 따른다. */}
                     <WarRoomMap
                         homeCityId={frontInfo?.city?.id ?? null}
                         visibility={visibility}
                         intelAge={intelAge}
                         corps={corps.data?.corps}
-                        sieges={sieges.data?.status === 'READY' ? sieges.data.sieges : undefined}
+                        works={works.data}
+                        sieges={sieges.data}
                         scoutable={scoutable}
-                        onScout={isHwihaWorld ? (no) => void sendScout(no) : undefined}
+                        onScout={generalId != null ? (no) => void sendScout(no) : undefined}
                         scoutPending={scoutPending}
                     />
+                    {vision.error || vision.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p> : null}
+                    {corps.error || corps.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p> : null}
                     {isHwihaWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
                         요격·회피 반응은 현재 기록만 남으며 이동이나 전투에 효과가 없습니다.
                     </p>}

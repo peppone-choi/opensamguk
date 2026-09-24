@@ -2600,7 +2600,7 @@ export function HanMapCanvas({
         ref={canvasRef}
         className="os-iso-map__canvas"
         role="img"
-        aria-label={ariaLabel ?? (loadedTiles ? `${mapCode} 아이소 타일 지도` : '지도 불러오는 중')}
+        aria-label={ariaLabel ?? (loadedTiles ? `${mapCode} 2D 지도` : '지도 불러오는 중')}
         tabIndex={0}
         onPointerDown={(event) => {
           pointerTypeRef.current = event.pointerType || 'mouse';

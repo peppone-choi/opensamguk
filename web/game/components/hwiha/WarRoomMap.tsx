@@ -1,222 +1,80 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Chip, HanMapCanvas, Panel, SectionHeader, type CommanderyVisibility, type IsoCityOverlay, type MapCorpsOverlay } from '@opensamguk/ui';
-import { HWIHA_DIRECTIONS, commanderyOfCity, neighborInDirection } from '@/lib/hwiha-fog';
+import { Chip, HanMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
+import { commanderyOfCity } from '@/lib/hwiha-fog';
 import { HWIHA_MAP_CODE, HWIHA_PROVINCES_URL, useHwihaWorldMap } from '@/lib/hwiha-map';
-import type { HwihaCorps, HwihaSiege } from '@/lib/hwiha-reads';
+import { buildVisibleCorps } from '@/lib/map-corps';
+import type { HwihaCorps, HwihaSieges, HwihaWorks } from '@/lib/hwiha-reads';
+import { CommanderyNavigator } from './CommanderyNavigator';
 import { HwihaEmpty } from './HwihaStates';
 
-/** 3×3 배치 — 가운데는 「여기」다. */
-const ARROW_CELLS = ['NW', 'N', 'NE', 'W', null, 'E', 'SW', 'S', 'SE'] as const;
-
-const ARROW_GLYPH: Record<string, string> = {
-    N: '↑', NE: '↗', E: '→', SE: '↘', S: '↓', SW: '↙', W: '←', NW: '↖',
-};
-
-const VISIBILITY_LABEL: Record<CommanderyVisibility, string> = {
-    FULL: '완전 시야',
-    INTEL: '첩보 시야',
-    FOG: '안개',
-};
-
-const VISIBILITY_TONE: Record<CommanderyVisibility, 'moss' | 'info' | 'rust'> = {
-    FULL: 'moss',
-    INTEL: 'info',
-    FOG: 'rust',
-};
-
-export function citiesWithSiegeBadges(cities: readonly IsoCityOverlay[], sieges: readonly HwihaSiege[] | undefined): IsoCityOverlay[] {
-    const active = new Set(sieges?.filter((row) => row.status === 'ACTIVE').map((row) => row.countyId) ?? []);
-    return cities.map((city) => {
-        const otherBadges = (city.statusBadges ?? []).filter((badge) => badge !== 'besieged');
-        return { ...city, statusBadges: active.has(city.id) ? [...otherBadges, 'besieged' as const] : otherBadges };
-    });
-}
-
 export interface WarRoomMapProps {
-    /** 내 장수가 선 城. 없으면(재야 이동 중 등) 첫 초점은 지도 기본값이다. */
     readonly homeCityId: number | null;
-    /**
-     * 군국 번호 → 시야. null 이면 안개가 없다(전부 보인다) — 휘하 규칙 월드가 아니거나 시야 조회가
-     * 아직 없을 때다. 안개를 지어내지 않는다.
-     */
     readonly visibility: ReadonlyMap<number, CommanderyVisibility> | null;
-    /** 안개·첩보 군국에서 「첩보 보내기」를 눌렀을 때. 없으면 버튼을 보이지 않는다. */
     readonly onScout?: (commanderyNo: number) => void;
     readonly scoutPending?: boolean;
-    /** 첩보를 보낼 수 있는 군국 번호(지금 선 군국과 맞닿은 곳). 없으면 모든 안개 군국에 버튼. */
     readonly scoutable?: ReadonlySet<number>;
-    /** 첩보 시야의 「N순 전」. */
     readonly intelAge?: ReadonlyMap<number, number>;
-    /** 서버 시야 투영이 허락한 군단만 온다(#343). */
     readonly corps?: readonly HwihaCorps[];
-    /** 공성 화면과 같은 조회 응답에서 온 진행 중 포위만 배지로 보인다. */
-    readonly sieges?: readonly HwihaSiege[];
+    readonly works?: HwihaWorks | null;
+    readonly sieges?: HwihaSieges | null;
 }
 
-/**
- * 작전실 지도 — 실제 지형·구역·세력. 군국 하나가 화면을 채우는 배율로 열고, 화살표로 이웃 군국에
- * 옮긴다. 칸이 게임 단위이므로 칸 경계선과 성내 칸을 그린다.
- */
-export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending, scoutable, intelAge, corps, sieges }: WarRoomMapProps) {
-    const map = useHwihaWorldMap();
+export default function WarRoomMap({ homeCityId, visibility, onScout, scoutPending, scoutable,
+    intelAge, corps, works, sieges }: WarRoomMapProps) {
+    const map = useHwihaWorldMap(0, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
-
+    const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
     const ready = map.kind === 'ready' ? map : null;
-    const cities = useMemo(() => ready ? citiesWithSiegeBadges(ready.cities, sieges) : undefined, [ready, sieges]);
     const home = useMemo(() => {
         if (!ready || homeCityId == null) return undefined;
-        const city = ready.preview.cities.find((c) => c.id === homeCityId);
+        const city = ready.preview.cities.find((entry) => entry.id === homeCityId);
         return commanderyOfCity(ready.commanderies, city?.commanderyName);
     }, [homeCityId, ready]);
-    const focus = ready
-        ? ready.commanderies.find((c) => c.no === focusNo) ?? home ?? ready.commanderies.find((c) => c.focusCityId != null)
-        : undefined;
+    const focus = ready ? ready.commanderies.find((entry) => entry.no === focusNo)
+        ?? home ?? ready.commanderies.find((entry) => entry.focusCityId != null) : undefined;
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
-    const tier: CommanderyVisibility | null = visibility && focus ? visibility.get(focus.no) ?? 'FOG' : null;
-    const corpsOverlay = useMemo<MapCorpsOverlay[]>(() => {
-        if (!ready || !corps) return [];
-        return corps.flatMap((c) => {
-            const at = ready.provinceCenter(c.provinceId);
-            if (!at) return [];
-            const path = c.marchPath?.map((id) => ready.provinceCenter(id)).filter((p): p is { col: number; row: number } => p != null);
-            return [{
-                id: c.corpsId,
-                col: at.col,
-                row: at.row,
-                label: c.commanderName ?? c.ownerName ?? '군단',
-                troopsLabel: c.troops != null ? `${c.troops.toLocaleString('ko-KR')}명` : c.troopsBand?.label,
-                color: c.nationColor,
-                own: c.own,
-                stale: c.visibility === 'INTEL',
-                path,
-            } satisfies MapCorpsOverlay];
-        });
-    }, [corps, ready]);
+    const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
+        [corps, ready, visibility]);
 
-    return (
-        <Panel style={{ padding: 12 }}>
-            <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
-            {map.kind === 'loading' ? <HwihaEmpty>지도를 불러오는 중입니다.</HwihaEmpty> : null}
-            {map.kind === 'error' ? <HwihaEmpty>{`지도를 불러오지 못했습니다 — ${map.message}`}</HwihaEmpty> : null}
-            {map.kind === 'unsupported' ? (
-                <HwihaEmpty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${HWIHA_MAP_CODE})가 아닙니다.`}</HwihaEmpty>
-            ) : null}
-            {ready && focus ? (
-                <>
-                    <div style={{ position: 'relative', marginTop: 8 }}>
-                        <HanMapCanvas
-                            key={focus.no}
-                            mapCode={HWIHA_MAP_CODE}
-                            tiles={ready.tiles}
-                            tilesSha256={ready.tilesSha256}
-                            provinceMap={ready.provinceMap ?? undefined}
-                            provinceUrl={ready.provinceMap ? undefined : HWIHA_PROVINCES_URL}
-                            corps={corpsOverlay}
-                            cities={cities ?? ready.cities}
-                            administrativeOwnership={ready.administrativeOwnership}
-                            sourceSize={ready.sourceSize}
-                            markerPositions={ready.markerPositions}
-                            currentCityId={focusCityId ?? undefined}
-                            initialFocus="current-commandery"
-                            showCellGrid
-                            showCityFootprint
-                            commanderyVisibility={visibility}
-                            fogMode="dim"
-                            politicalStyle="tint"
-                            ariaLabel={`천하 형세 — ${focus.name}`}
-                            style={{ width: '100%', height: 560 }}
-                        />
-                        <div
-                            style={{
-                                position: 'absolute',
-                                right: 8,
-                                top: 8,
-                                display: 'grid',
-                                gridTemplateColumns: 'repeat(3, 44px)',
-                                gridTemplateRows: 'repeat(3, 44px)',
-                                gap: 2,
-                                background: 'rgba(12,15,14,0.72)',
-                                padding: 4,
-                                borderRadius: 4,
-                            }}
-                        >
-                            {ARROW_CELLS.map((cell) => {
-                                if (cell === null) {
-                                    const atHome = home != null && focus.no === home.no;
-                                    return (
-                                        <button
-                                            key="center"
-                                            type="button"
-                                            className="os-button os-button--ghost os-button--sm"
-                                            style={{ minWidth: 0, padding: 0, fontSize: 11, color: 'var(--bronze)' }}
-                                            onClick={home ? () => setFocusNo(home.no) : undefined}
-                                            disabled={!home || atHome}
-                                            title={home ? `내 자리 — ${home.name}` : '내 자리를 모릅니다'}
-                                        >
-                                            여기
-                                        </button>
-                                    );
-                                }
-                                const dir = HWIHA_DIRECTIONS.find((d) => d.key === cell)!;
-                                const next = neighborInDirection(ready.commanderies, focus, dir);
-                                return (
-                                    <button
-                                        key={dir.key}
-                                        type="button"
-                                        className="os-button os-button--ghost os-button--sm"
-                                        style={{ minWidth: 0, padding: 0 }}
-                                        onClick={next ? () => setFocusNo(next.no) : undefined}
-                                        disabled={!next}
-                                        aria-label={next ? `${dir.label} — ${next.name}` : `${dir.label} — 지도 끝`}
-                                        title={next ? `${dir.label} — ${next.name}` : `${dir.label} — 지도 끝`}
-                                    >
-                                        {ARROW_GLYPH[dir.key]}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 10, flexWrap: 'wrap' }}>
-                        <span style={{ fontWeight: 700, whiteSpace: 'nowrap' }}>{focus.name}</span>
-                        {home && focus.no === home.no ? <Chip tone="info">지금 여기</Chip> : null}
-                        {tier ? <Chip tone={VISIBILITY_TONE[tier]}>{VISIBILITY_LABEL[tier]}</Chip> : null}
-                        {tier === 'INTEL' && intelAge?.get(focus.no) != null ? (
-                            <span style={{ fontSize: 12, color: 'var(--muted)' }}>{`${intelAge.get(focus.no)}순 전 정보`}</span>
-                        ) : null}
-                        {tier && tier !== 'FULL' && onScout && (!scoutable || scoutable.has(focus.no)) ? (
-                            <button
-                                type="button"
-                                className="os-button os-button--primary os-button--sm"
-                                onClick={() => onScout(focus.no)}
-                                disabled={scoutPending}
-                            >
-                                첩보 보내기
-                            </button>
-                        ) : null}
-                    </div>
-
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
-                        {ready.legend.slice(0, 12).map((l) => (
-                            <span
-                                key={l.nationId}
-                                style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, whiteSpace: 'nowrap' }}
-                            >
-                                <span
-                                    aria-hidden
-                                    style={{ width: 10, height: 10, borderRadius: 2, background: l.color, display: 'inline-block' }}
-                                />
-                                {l.name}
-                                <span style={{ color: 'var(--muted)' }}>{l.cities}</span>
-                            </span>
-                        ))}
-                        {ready.legend.length > 12 ? <Chip>{`외 ${ready.legend.length - 12}개 세력`}</Chip> : null}
-                        <Chip>무주</Chip>
-                    </div>
-                </>
-            ) : null}
-        </Panel>
-    );
+    return <Panel style={{ padding: 12 }}>
+        <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
+        {map.kind === 'loading' ? <HwihaEmpty>지도를 불러오는 중입니다.</HwihaEmpty> : null}
+        {map.kind === 'error' ? <HwihaEmpty>{`지도를 불러오지 못했습니다 — ${map.message}`}</HwihaEmpty> : null}
+        {map.kind === 'unsupported' ? <HwihaEmpty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${HWIHA_MAP_CODE})가 아닙니다.`}</HwihaEmpty> : null}
+        {ready && focus ? <>
+            <div style={{ position: 'relative', marginTop: 8 }}>
+                <HanMapCanvas key={focus.no} mapCode={HWIHA_MAP_CODE} tiles={ready.tiles}
+                    tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
+                    provinceUrl={ready.provinceMap ? undefined : HWIHA_PROVINCES_URL}
+                    corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
+                    sourceSize={ready.sourceSize} markerPositions={ready.markerPositions}
+                    currentCityId={focusCityId ?? undefined} initialFocus="current-commandery"
+                    showCellGrid showCityFootprint commanderyVisibility={visibility} fogMode="dim"
+                    politicalStyle="tint" ariaLabel={`천하 형세 — ${focus.name}`}
+                    onCityHover={(city, point) => setHover(city && point ? { city, x: point.x, y: point.y } : null)}
+                    style={{ width: '100%', height: 560 }} />
+                {hover && <div role="status" style={{ position: 'absolute', zIndex: 3, pointerEvents: 'none',
+                    left: hover.x + 12, top: hover.y + 12, padding: '5px 7px', background: 'rgba(12,15,14,0.9)',
+                    color: '#fff', fontSize: 12 }}>
+                    <strong>{hover.city.commanderyName ? `${hover.city.commanderyName} ${hover.city.name}` : hover.city.name}</strong>
+                    {hover.city.cityBadges?.map((badge, index) =>
+                        <div key={`${badge.kind}-${index}`}>{cityBadgeLabel(badge)}</div>)}
+                </div>}
+                <CommanderyNavigator commanderies={ready.commanderies} focus={focus} home={home}
+                    onFocus={setFocusNo} visibility={visibility} intelAge={intelAge}
+                    scoutable={scoutable} onScout={onScout} scoutPending={scoutPending} />
+            </div>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
+                {ready.legend.slice(0, 12).map((entry) => <span key={entry.nationId}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, whiteSpace: 'nowrap' }}>
+                    <span aria-hidden style={{ width: 10, height: 10, borderRadius: 2, background: entry.color, display: 'inline-block' }} />
+                    {entry.name}<span style={{ color: 'var(--muted)' }}>{entry.cities}</span>
+                </span>)}
+                {ready.legend.length > 12 ? <Chip>{`외 ${ready.legend.length - 12}개 세력`}</Chip> : null}
+                <Chip>무주</Chip>
+            </div>
+        </> : null}
+    </Panel>;
 }

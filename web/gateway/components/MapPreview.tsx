@@ -5,13 +5,14 @@ import {
     HanMapCanvas,
     cityDisplayName,
     cityBadgeLabel,
-    citySnapshotBadges,
     isUprisingNation,
     WATERWAY_SITE_ROLES,
-    isOwnedNationVisual,
+    useWorldMap,
+    worldProvincesUrl,
     type IsoCityOverlay,
+    type StrategicTopologyBinding,
 } from '@opensamguk/ui';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
 interface MapCity {
@@ -53,6 +54,7 @@ export interface MapData {
     height: number;
     cities: MapCity[];
     nations: MapNation[];
+    strategicTopology?: StrategicTopologyBinding | null;
     provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
     jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
     commanderyControl?: { commanderyId: string; nationId: number }[];
@@ -86,78 +88,31 @@ export default function MapPreview({
     showMe: _showMe,
     refreshKey = 0,
 }: MapPreviewProps = {}) {
-    const [data, setData] = useState<MapData | null>(null);
-    const [failed, setFailed] = useState(false);
+    const loadPreview = useCallback(async (signal: AbortSignal): Promise<MapData> => {
+        const response = await fetch(`/api/server-map/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal });
+        if (!response.ok) throw new Error(String(response.status));
+        return response.json() as Promise<MapData>;
+    }, [serverId]);
+    const map = useWorldMap({ loadPreview, mapData, serverId, refreshKey });
+    const ready = map.kind === 'ready' ? map : null;
+    const data = ready?.preview ?? null;
     const [hideCityName, setHideCityName] = useState(false);
     const [picked, setPicked] = useState<IsoCityOverlay | null>(null);
-    // 마우스를 얹은 城. 툴팁은 이걸로 뜬다 — 눌러야 나오는 건 지도가 아니다.
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
-
-    useEffect(() => {
-        if (mapData != null) {
-            setData(mapData);
-            setFailed(false);
-            return;
-        }
-        let active = true;
-        setData(null);
-        setFailed(false);
-        fetch(`/api/server-map/${serverId}`, { cache: 'no-store' })
-            .then((response) => response.ok ? response.json() : Promise.reject(new Error(String(response.status))))
-            .then((next: MapData) => {
-                if (active) setData(next);
-            })
-            .catch(() => {
-                if (active) setFailed(true);
-            });
-        return () => {
-            active = false;
-        };
-    }, [mapData, refreshKey, serverId]);
 
     useEffect(() => {
         setHideCityName(window.localStorage.getItem(LS_HIDE_CITYNAME) === 'yes');
     }, []);
 
-    const nationById = useMemo(() => {
-        const result = new Map<number, { name: string; color: string }>();
-        data?.nations.forEach((nation) => result.set(nation.id, { name: nation.name, color: nation.color }));
-        return result;
-    }, [data]);
-
-    const sourceSize = useMemo(() => ({
-        width: data?.width || 700,
-        height: data?.height || 610,
-    }), [data?.height, data?.width]);
-
-    const cities = useMemo<IsoCityOverlay[]>(() => (data?.cities ?? []).map((city) => {
-        const nation = nationById.get(city.nationId);
-        const owned = isOwnedNationVisual(city.nationId, nation?.color);
-        return { ...city, nationName: owned ? nation?.name : undefined,
-            nationColor: owned ? nation?.color : undefined,
-            cityBadges: citySnapshotBadges(city).filter((badge) => badge.kind === 'supply') };
-    }), [data, nationById]);
-    const ownership = useMemo(() => data ? ({
-        provinceOccupancy: (data.provinceOccupancy ?? []).map((owner) => ({ ...owner,
-            nationName: nationById.get(owner.nationId)?.name,
-            nationColor: nationById.get(owner.nationId)?.color })),
-        jurisdictionOwnership: (data.jurisdictionOwnership ?? []).map((owner) => ({ ...owner,
-            nationName: nationById.get(owner.nationId)?.name,
-            nationColor: nationById.get(owner.nationId)?.color })),
-        commanderyControl: (data.commanderyControl ?? []).map((owner) => ({ ...owner,
-            nationName: nationById.get(owner.nationId)?.name,
-            nationColor: nationById.get(owner.nationId)?.color })),
-    }) : undefined, [data, nationById]);
     const handlePickCity = useCallback((city: IsoCityOverlay) => setPicked(city), []);
-    const handleMissing = useCallback(() => setFailed(true), []);
     const handleHoverCity = useCallback((city: IsoCityOverlay | null, at?: { x: number; y: number }) => {
         setHover(city && at ? { city, x: at.x, y: at.y } : null);
     }, []);
 
-    if (failed || (data && data.cities.length === 0)) {
+    if (map.kind === 'error' || map.kind === 'unsupported' || (data && data.cities.length === 0)) {
         return (
             <div className="map-preview" aria-label="서버 지도 프리뷰">
-                <div className="map-preview-ph">맵 프리뷰 (준비 중)</div>
+                <div className="map-preview-ph">{map.kind === 'unsupported' ? `지원하지 않는 지도 판: ${map.mapCode}` : '맵 프리뷰 (준비 중)'}</div>
             </div>
         );
     }
@@ -175,11 +130,14 @@ export default function MapPreview({
                 <HanMapCanvas
                     className="map-preview-han"
                     mapCode={data.mapCode}
-                    terrainUrl={`/api/game/api/map/terrain?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(data.mapCode)}`}
-                    provinceUrl={`/api/game/api/map/provinces?server=${encodeURIComponent(serverId)}&mapCode=${encodeURIComponent(data.mapCode)}`}
-                    cities={cities}
-                    administrativeOwnership={ownership}
-                    sourceSize={sourceSize}
+                    tiles={ready!.tiles}
+                    tilesSha256={ready!.tilesSha256}
+                    provinceMap={ready!.provinceMap ?? undefined}
+                    provinceUrl={ready!.provinceMap ? undefined : worldProvincesUrl(serverId)}
+                    cities={ready!.cities}
+                    administrativeOwnership={ready!.administrativeOwnership}
+                    sourceSize={ready!.sourceSize}
+                    markerPositions={ready!.markerPositions}
                     currentCityId={currentCityId}
                     selectedCityId={picked?.id ?? null}
                     hideCityNames={hideCityName}
@@ -187,7 +145,6 @@ export default function MapPreview({
                     showCityFootprint
                     onCityActivate={handlePickCity}
                     onCityHover={handleHoverCity}
-                    onMissing={handleMissing}
                     ariaLabel={`${data.mapCode} 서버 지도`}
                 />
                 <div className="map-btn-stack">
@@ -223,12 +180,10 @@ export default function MapPreview({
                                     : ''}
                             </div>
                         )}
-                        {citySnapshotBadges((hover?.city ?? picked)!).map((badge, index) => (
+                        {((hover?.city ?? picked)!.cityBadges ?? []).map((badge, index) => (
                             <div className="map-preview-tooltip-meta" key={`state-${index}`}>{cityBadgeLabel(badge)}</div>
                         ))}
-                        {(data.mapCode === 'han-world-v3'
-                            ? WATERWAY_SITE_ROLES[(hover?.city ?? picked)!.id] ?? []
-                            : []).map((feature) => (
+                        {(WATERWAY_SITE_ROLES[(hover?.city ?? picked)!.id] ?? []).map((feature) => (
                             <div className="map-preview-tooltip-meta" key={feature}>{feature === 'port' ? '항구' : '나루'}</div>
                         ))}
                     </div>
