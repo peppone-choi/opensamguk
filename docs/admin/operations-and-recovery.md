@@ -184,9 +184,9 @@ pending 조우는 공격 지휘관의 다음 개인 턴 시작(`HwihaAssignmentM
 
 HWIHA 순 경계마다 포위 정산 뒤 세력 수도에서 보급 BFS 를 다시 돌려 縣 `supply_state` 만 고친다(감쇠·중립화는 기존 월간 `UpdateCitySupply`). 포위 중인 縣은 외부 보급이 끊긴다. 보급망을 계산할 수 없으면 경고만 남기고 이전 값을 유지한다(턴 루프를 멈추지 않는다). 월 경계는 징세 → 녹봉(`HwihaMonthlySalary`, 도장 `hwihaSalaryMonth`) → 부곡 군량 보충(`HwihaUnitResupply`, 도장 `hwihaUnitResupplyMonth`, 자국 縣에 있는 부곡만 창고 곡으로 병력×2개월까지) → 월단평 순이다. 적지의 포위군은 보충받지 못해 군량이 떨어지면 포위를 풀고 원정을 멈춘다. `RetainerMonthlyService` 는 HWIHA 에서 부곡 급여·가신 유지비 30/30 의 재정 효과를 적용하지 않는다. 상사(`court.reward`)는 발령처럼 결정권자 meta `hwihaQueuedReward` 에 한 건 대기했다가 그 장수의 턴에 실행한다.
 
-### HWIHA 반응 기록 임시 규칙
+### HWIHA 반응 기록 확정 규칙
 
-`hwihaMarchReactions` 에 틀이 맞는 기록(버전 1, 세 목록)이 쌓여도 해석기(`HwihaMarchReactionPolicy`)가 연결되기 전에는 행군 진입과 출병 입력을 막지 않는다. 키가 없거나 틀이 깨졌으면 기존처럼 판정 불가로 멈춘다. 이 기본값에서는 요격·회피 효과가 적용되지 않는다. 요격 범위 후보는 `data/curated/han/hwiha-s3-provisional-v1.json` reactions 에 있다.
+`hwihaMarchReactions` 기록(버전 1, 세 목록)은 `HwihaMarchReactionInterpreter`가 행군 진입에서 해석한다. 설치 계책·FULL 시야·1省 요격·회피 철수는 PR #874에서 연결됐고, 틀이 깨지면 판정 불가로 처리한다. 요격 범위 1省은 #872 확정값이며 `data/curated/han/hwiha-s3-provisional-v1.json`의 `reactions`가 정본이다.
 
 ### Han V3 수역 상태와 보급 복구
 
