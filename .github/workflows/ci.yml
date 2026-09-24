@@ -220,6 +220,9 @@ jobs:
       - name: Verify game server recovery behavioral guards
         if: '!cancelled()'
         run: python3 tools/ops/test_game_server_recovery.py
+      - name: Verify main CI red/recovery alert decisions
+        if: '!cancelled()'
+        run: python3 tools/ops/test_main_ci_alert.py
       - name: Verify game-server reset workflow contract
         if: '!cancelled()'
         run: bash tools/ops/wait_deployer_operation_contract_test.sh
