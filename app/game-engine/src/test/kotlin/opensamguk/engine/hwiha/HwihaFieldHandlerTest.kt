@@ -84,4 +84,15 @@ class HwihaFieldHandlerTest {
             .handle(selected.actionCode, actor.id, selected.argJson, null, null, npcSelected = true))
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
     }
+
+    @Test fun `autonomous NPC preserves an active corps march instead of choosing county work`() {
+        val route = fixture.route()
+        val actor = fixture.person(505, 1, route.startCity, userId = null)
+        val world = fixture.world(listOf(actor to route.start), bugoks = listOf(fixture.unit(506, actor.id, 100)),
+            cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
+        fixture.deploy(world, ChangeRecorder(), actor.id, listOf(506), route.destination)
+        val reserved = ReservedTurn("휴식", "{}", rowExists = false)
+        assertEquals(reserved, HwihaNpcFieldSelector(HwihaDomesticContext(design = design))
+            .select(world, actor.id, reserved))
+    }
 }
