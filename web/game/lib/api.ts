@@ -469,6 +469,7 @@ export const api = {
     personalOptions: (inputId: import('./types').HwihaPersonalActionId, generalId: number) => {
         const names: Record<import('./types').HwihaPersonalActionId, string> = {
             'action.travel': 'travel', 'action.selfTrain': 'self-train', 'action.recuperate': 'recuperate',
+            'action.retire': 'retire',
         };
         return get<import('./types').HwihaPersonalOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },

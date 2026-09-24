@@ -11,12 +11,13 @@ data class HwihaPoliticalRequest(val actorId: Int, val inputId: String, val targ
 object HwihaPoliticalInput {
     const val RESIGN = "action.resign"
     const val RISE = "action.rise"
+    const val FOUND_STATE = "action.foundState"
     const val ABDICATE = "action.abdicate"
     const val DISSOLVE = "action.dissolve"
     const val OATH = "action.oath"
     const val INDEPENDENCE = "action.independence"
 
-    val NO_ARGUMENT_IDS = linkedSetOf(RESIGN, RISE, DISSOLVE, INDEPENDENCE)
+    val NO_ARGUMENT_IDS = linkedSetOf(RESIGN, RISE, FOUND_STATE, DISSOLVE, INDEPENDENCE)
     val TARGET_IDS = linkedSetOf(ABDICATE, OATH)
     val INPUT_IDS = NO_ARGUMENT_IDS + TARGET_IDS
 
