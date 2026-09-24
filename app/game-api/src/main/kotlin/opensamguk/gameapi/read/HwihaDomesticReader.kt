@@ -37,6 +37,7 @@ class HwihaDomesticReader(
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
     private val geography: HwihaCityGeography,
+    private val sieges: HwihaSiegeReadRepository,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
         if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw HwihaDomesticForbidden()
@@ -76,6 +77,7 @@ class HwihaDomesticReader(
                         },
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
                         landProvinceIds = topology.landProvinceIds,
+                        activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->

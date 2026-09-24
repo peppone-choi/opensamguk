@@ -47,6 +47,7 @@ class HwihaDomesticContext(
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
             }.toMap(),
+            activeSiegeCountyIds = world.listHwihaSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
         )
     }
 }

@@ -29,10 +29,11 @@ internal class HwihaNpcCityMilitarySelector(
         val stock = try { HwihaCountyWarehouse.read(city.meta, city.id)?.stock }
             catch (_: IllegalArgumentException) { null }
         val preferred = when {
-            state.troops < 50 -> listOf(HwihaMilitaryInput.CONSCRIPT, HwihaMilitaryInput.RAISE_VOLUNTEERS)
-            state.training < 40 -> listOf(HwihaMilitaryInput.TRAIN)
-            state.morale < 40 -> listOf(HwihaMilitaryInput.BOOST_MORALE)
-            city.population < 100 && state.troops > 100 -> listOf(HwihaMilitaryInput.DEMOBILIZE)
+            state.troops < design.npcPolicy.minimumTroops -> listOf(HwihaMilitaryInput.CONSCRIPT, HwihaMilitaryInput.RAISE_VOLUNTEERS)
+            state.training < design.npcPolicy.minimumTraining -> listOf(HwihaMilitaryInput.TRAIN)
+            state.morale < design.npcPolicy.minimumMorale -> listOf(HwihaMilitaryInput.BOOST_MORALE)
+            city.population < design.npcPolicy.demobilizeBelowPopulation &&
+                state.troops > design.npcPolicy.demobilizeAboveTroops -> listOf(HwihaMilitaryInput.DEMOBILIZE)
             else -> emptyList()
         }
         val chosen = preferred.firstOrNull { inputId ->

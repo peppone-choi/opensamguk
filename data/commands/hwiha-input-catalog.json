@@ -1082,6 +1082,8 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "BESIEGED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
@@ -1141,6 +1143,8 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "BESIEGED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
@@ -1200,6 +1204,8 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "BESIEGED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
@@ -1259,6 +1265,8 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "BESIEGED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
@@ -1318,6 +1326,8 @@
         "ACTOR_NOT_FOUND",
         "POSITION_UNAVAILABLE",
         "BATTLE_PENDING",
+        "CORPS_DEPLOYED",
+        "BESIEGED",
         "COUNTY_UNAVAILABLE",
         "FOREIGN_COUNTY",
         "STATE_UNAVAILABLE",
@@ -1326,6 +1336,7 @@
         "NO_HOUSEHOLDS",
         "NO_CITY_TROOPS",
         "ALREADY_MAX",
+        "POPULATION_FULL",
         "ALREADY_PROCESSED"
       ],
       "resultType": "InputResolved",
@@ -1698,7 +1709,7 @@
       "legacyCommands": [
         "che_집합"
       ],
-      "deliveryState": "UI_READY"
+      "deliveryState": "HANDLER_READY"
     },
     {
       "inputId": "action.move",
