@@ -194,7 +194,7 @@ HWIHA 세계의 기존 단건 legacy 예약도 서버 접수 경계에서 거절
 
 ### 출사 화면의 읽기 계약
 
-`front-info.global.ruleProfile`은 저장된 세계 규칙을 표시한다. 세계가 존재하고 키가 없으면 HWIHA이며, 복원 스위치가 켜졌을 때만 SAMMO다. 세계 부재·명시 null·오염 값은 확인 불가(null)다. 클라이언트가 관직·도시·시나리오 이름으로 규칙을 추정하지 않는다.
+`front-info.global.ruleProfile`은 저장된 세계 규칙을 표시한다. 세계가 존재해도 키가 없으면 복원 스위치가 꺼진 경우 확인 불가(null)이며, 켜진 경우에만 SAMMO다. 세계 부재·명시 null·오염 값도 확인 불가(null)다. 클라이언트가 관직·도시·시나리오 이름으로 규칙을 추정하지 않는다.
 
 `GET /api/commands/enlistment-options?generalId=<소유 장수>`는 인증된 소유자만 읽는다. 한 REPEATABLE_READ 스냅샷에서 세력·장수 후보를 모으고, 예약과 같은 공통 출사 판정으로 각 옵션의 가용 여부·실패 코드·사유를 만든다. 응답은 inputId, maxReservedTurns=12, options(mode, targetId, label, availability)이며 RANDOM에는 targetId를 생략한다. 비용·주공 수용량·휘하 하위 관계·서버 정책 원문을 반환하지 않는다. 정책 확인이 불가능해도 설명 없는 빈 목록 대신 사유가 있는 RANDOM 거절 행을 반환한다. 읽기 성공은 예약 또는 실행 성공이 아니며, 접수와 실행은 최신 상태에서 다시 검사한다.
 
