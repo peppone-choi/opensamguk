@@ -252,7 +252,7 @@ class HwihaMarchPersistenceIT {
     }
 
     @Test fun `direct personal training survives flush cold reload and duplicate execution`() {
-        val id = 692
+        val id = 695
         seed(id)
         var world = cold(id)
         var recorder = ChangeRecorder()
@@ -272,7 +272,7 @@ class HwihaMarchPersistenceIT {
     }
 
     @Test fun `named retirement transfers control retinue and bugok through cold reload`() {
-        val id = 693
+        val id = 696
         seed(id)
         jdbc.update("UPDATE general SET nation_id=1 WHERE world_id=? AND id=2", id)
         var world = cold(id)
