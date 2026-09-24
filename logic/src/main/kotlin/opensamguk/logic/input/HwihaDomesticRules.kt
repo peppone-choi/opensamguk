@@ -39,6 +39,7 @@ data class DomesticCounty(val id: Int, val name: String, val nationId: Int, val 
 
 data class DomesticNation(val id: Int, val name: String, val capitalCityId: Int?, val meta: Map<String, Any?>,
     val level: Int = 0, val gold: Int = 0, val rice: Int = 0)
+data class DomesticBugok(val id: Int, val masterGeneralId: Int, val crewTypeId: Int, val training: Int)
 
 /** API 와 엔진이 같은 규칙을 쓰도록 공유하는 투영. [landProvinceIds] 가 null 이면 지도 핀을 확인하지 못한 것이다. */
 data class HwihaDomesticProjection(
@@ -51,6 +52,9 @@ data class HwihaDomesticProjection(
     val landProvinceIds: Set<String>?,
     /** 원장이 있을 때만 향당 보너스를 판정한다. 장수 id → 본관 縣治 城 id. */
     val homeCountyByGeneral: Map<Int, Int> = emptyMap(),
+    val bugoks: List<DomesticBugok> = emptyList(),
+    val countyAdjacency: Map<Int, Set<Int>> = emptyMap(),
+    val supportedCrewTypeIds: Set<Int> = emptySet(),
 ) {
     private val peopleById = people.associateBy { it.id }
     private val countyById = counties.associateBy { it.id }

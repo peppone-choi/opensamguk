@@ -8,6 +8,8 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicTopologySnapshot
+import opensamguk.logic.world.CityConstVariant
+import opensamguk.infra.seed.HwihaUnitProfilesJson
 
 /**
  * 휘하 내정 입력이 읽는 고정 자료. [geography] 가 없으면 郡 방침과 향당 보너스를 판정할 수 없고(STATE_UNAVAILABLE·보너스 없음),
@@ -20,7 +22,9 @@ class HwihaDomesticContext(
     val topology: StrategicTopologySnapshot? = null,
     val metrics: LandMarchMetricSnapshot? = null,
     val merit: HwihaGovernanceMeritSink = HwihaGovernanceMeritSink.NONE,
+    val cityConst: CityConstVariant? = null,
 ) {
+    private val supportedCrewTypeIds by lazy { HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet() }
     /** 현재 월드 상태의 공유 판정 투영(API 와 같은 규칙). */
     fun projection(world: InMemoryTurnWorld): HwihaDomesticProjection {
         val positions = world.generalPositionSnapshot()
@@ -46,6 +50,11 @@ class HwihaDomesticContext(
             nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
                 it.level, it.gold, it.rice) },
             landProvinceIds = positions?.knownLandProvinceIds,
+            bugoks = world.listBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
+            countyAdjacency = world.administrativeCountyIds.associateWith { countyId ->
+                cityConst?.byId(countyId)?.path?.keys?.filter { it in world.administrativeCountyIds }?.toSet() ?: emptySet()
+            },
+            supportedCrewTypeIds = supportedCrewTypeIds,
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
             }.toMap(),

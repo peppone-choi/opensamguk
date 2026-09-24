@@ -92,6 +92,7 @@ class CommandReserveService(
     private val hwihaPeopleAdmission: HwihaPeopleAdmission? = null,
     private val hwihaPoliticalAdmission: HwihaPoliticalAdmission? = null,
     private val hwihaTransferAdmission: HwihaTransferAdmission? = null,
+    private val hwihaLegacyDirectAdmission: HwihaLegacyDirectAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -225,6 +226,10 @@ class CommandReserveService(
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
             (hwihaTransferAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS) {
+            (hwihaLegacyDirectAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
@@ -458,7 +463,10 @@ class CommandReserveService(
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
             opensamguk.logic.input.HwihaRetireInput.INPUT_ID +
-            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
+            opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaPoliticalInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaTransferInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
     }
 }
 

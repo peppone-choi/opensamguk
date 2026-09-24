@@ -81,7 +81,8 @@ object HwihaItemCatalogJson {
                 header.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet(),
             )
             require(cardHeader.id == "treasure:$sourceCode")
-            HwihaTreasureDefinition(cardHeader, sourceCode, slot, copies)
+            HwihaTreasureDefinition(cardHeader, sourceCode, slot, copies,
+                legacy.getValue("cost").jsonPrimitive.int, row.getValue("sourceRowIndex").jsonPrimitive.int)
         }
         val equipment = equipmentRoot.getValue("equipment").jsonArray.map { node ->
             val row = node.jsonObject

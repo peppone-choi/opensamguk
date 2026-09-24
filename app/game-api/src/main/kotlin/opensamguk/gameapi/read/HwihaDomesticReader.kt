@@ -5,6 +5,7 @@ import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.infra.seed.HwihaUnitProfilesJson
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -78,6 +79,11 @@ class HwihaDomesticReader(
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
                             it.level, it.gold, it.rice) },
                         landProvinceIds = topology.landProvinceIds,
+                        bugoks = retainers.allBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
+                        countyAdjacency = admin.associateWith { countyId ->
+                            bundle.cityConst.byId(countyId)?.path?.keys?.filter { it in admin }?.toSet() ?: emptySet()
+                        },
+                        supportedCrewTypeIds = HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet(),
                     ),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->

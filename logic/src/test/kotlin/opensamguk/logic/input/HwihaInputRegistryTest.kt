@@ -34,7 +34,9 @@ class HwihaInputRegistryTest {
         "action.resign" to InputHandler {}, "action.rise" to InputHandler {},
         "action.foundState" to InputHandler {}, "action.abdicate" to InputHandler {}, "action.oath" to InputHandler {},
         "action.independence" to InputHandler {}, "action.dissolve" to InputHandler {},
-        "action.gift" to InputHandler {}, "action.donate" to InputHandler {})
+        "action.gift" to InputHandler {}, "action.donate" to InputHandler {},
+        "action.convertProficiency" to InputHandler {}, "action.tradeEquipment" to InputHandler {},
+        "action.tradeGrain" to InputHandler {}, "action.transport" to InputHandler {})
     private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
@@ -159,6 +161,17 @@ class HwihaInputRegistryTest {
         for (id in HwihaTransferInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertEquals(HwihaTransferFailure.entries.map { it.name }.toSet(),
+                catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
+                    "FORBIDDEN", "INVALID_TURN_SLOT"), id)
+            assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
+        }
+    }
+
+    @Test
+    fun `the four legacy direct actions are delivered through the common executor`() {
+        for (id in HwihaLegacyDirectInput.INPUT_IDS) {
+            assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
+            assertEquals(HwihaLegacyDirectFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
