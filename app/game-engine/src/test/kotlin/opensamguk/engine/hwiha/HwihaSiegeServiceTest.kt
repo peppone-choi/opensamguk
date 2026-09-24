@@ -15,7 +15,8 @@ class HwihaSiegeServiceTest {
     private val county = route.destinationCounty
 
     private fun besieged(troops: Int = 1000, provisions: Int = 100_000, grain: Long = 0, userId: String? = "42",
-        trust: Double = 50.0, defence: Int = 100, reverse: Boolean = false): Pair<InMemoryTurnWorld, ChangeRecorder> {
+        trust: Double = 50.0, defence: Int = 100, reverse: Boolean = false,
+        defenderCondition: HwihaCityMilitaryState? = null): Pair<InMemoryTurnWorld, ChangeRecorder> {
         val reserveCounty = fixture.bundle.projection.administrativeCountyIds.first { it != county }
         val people = listOf(fixture.person(1, 1, route.startCity, userId = userId) to route.first) +
             if (reverse) listOf(fixture.person(2, 2, route.startCity, userId = "43") to route.first) else emptyList()
@@ -28,7 +29,8 @@ class HwihaSiegeServiceTest {
             cityChanges = { city -> if (reverse && city.id == reserveCounty) city.copy(nationId = 2)
                 else if (city.id != county) city else city.copy(nationId = 2, defence = defence,
                 meta = city.meta + mapOf("trust" to trust,
-                    HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(county, 0, HwihaResources(grain = grain)).toMetaValue())) })
+                    HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(county, 0, HwihaResources(grain = grain)).toMetaValue()) +
+                    (defenderCondition?.let { mapOf(HwihaCityMilitaryState.META_KEY to it.toMetaValue()) } ?: emptyMap())) })
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.nextPhase(world)
@@ -60,7 +62,7 @@ class HwihaSiegeServiceTest {
     }
 
     @Test fun `a starved county surrenders on the fourth boundary and keeps its warehouse in the county`() {
-        val (world, recorder) = besieged()
+        val (world, recorder) = besieged(defenderCondition = HwihaCityMilitaryState(100, 0, 100))
         boundary(world, recorder, 3)
         assertEquals(listOf(7500, 5000, 2500), world.getHwihaSiege(county)!!.timeline.filter { it["event"] == "TURN" }.map { it["morale"] })
         assertEquals(2, world.getCityById(county)!!.nationId)
@@ -74,7 +76,10 @@ class HwihaSiegeServiceTest {
         val garrison = minOf(city.defenceMax * HwihaS3Provisional.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
             1000 * HwihaS3Provisional.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
         assertTrue(garrison > 0)
-        assertEquals(garrison, city.defence, "the captor leaves a garrison")
+        assertEquals(garrison, HwihaCityMilitaryState.read(city.meta).troops, "the captor leaves a garrison")
+        assertEquals(HwihaCityMilitaryState.INITIAL.copy(troops = garrison), HwihaCityMilitaryState.read(city.meta),
+            "the replacement garrison starts with fresh training and morale")
+        assertEquals(100, city.defence, "capture leaves the fortification score intact")
         assertEquals(1000 - garrison, world.getBugokById(7)!!.troops, "taken from the besieging unit")
         assertEquals(HwihaResources(), HwihaCountyWarehouse.read(city.meta, county)!!.stock, "warehouse stays in the county")
         assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta), "the expedition ends at its objective")
@@ -82,6 +87,15 @@ class HwihaSiegeServiceTest {
         boundary(world, recorder)
         assertEquals(4, world.getHwihaSiege(county)!!.turns, "a fallen siege is not settled again")
         assertEquals(1, outcomes.captures.size)
+    }
+
+    @Test fun `corrupt city military state lifts a siege without stopping the phase`() {
+        val (world, recorder) = besieged()
+        val city = world.getCityById(county)!!
+        world.applyCityDirtyFree(city.copy(meta = city.meta +
+            (HwihaCityMilitaryState.META_KEY to mapOf("version" to 2, "troops" to "bad"))))
+        boundary(world, recorder)
+        assertEquals("STATE_UNAVAILABLE", world.getHwihaSiege(county)?.endReason)
     }
 
     @Test fun `a fed garrison eats from its warehouse through the settlement boundary`() {
@@ -169,7 +183,7 @@ class HwihaSiegeServiceTest {
         val (world, recorder) = besieged(reverse = true)
         boundary(world, recorder, 4)
         assertEquals(1, world.getCityById(county)!!.nationId)
-        assertTrue(world.getCityById(county)!!.defence > 0)
+        assertTrue(HwihaCityMilitaryState.read(world.getCityById(county)!!.meta).troops > 0)
         recorder.moveGeneral(world, 1, route.first)
         fixture.deploy(world, recorder, 2, listOf(8), route.destination)
         fixture.nextPhase(world)
@@ -183,7 +197,9 @@ class HwihaSiegeServiceTest {
     @Test fun `red probe removing the occupation garrison restores immediate recapture`() {
         val (world, recorder) = besieged(reverse = true)
         boundary(world, recorder, 4)
-        world.updateCity(world.getCityById(county)!!.copy(defence = 0))
+        val occupied = world.getCityById(county)!!
+        world.updateCity(occupied.copy(meta = occupied.meta +
+            (HwihaCityMilitaryState.META_KEY to HwihaCityMilitaryState.read(occupied.meta).copy(troops = 0).toMetaValue())))
         recorder.moveGeneral(world, 1, route.first)
         fixture.deploy(world, recorder, 2, listOf(8), route.destination)
         fixture.nextPhase(world)

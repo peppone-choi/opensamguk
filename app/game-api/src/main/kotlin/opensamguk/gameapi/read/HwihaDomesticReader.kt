@@ -21,6 +21,9 @@ data class HwihaDomesticSnapshot(
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, HwihaResources> = emptyMap(),
+    val countyLevels: Map<Int, HwihaCountyLevels> = emptyMap(),
+    val cityMilitaryStates: Map<Int, HwihaCityMilitaryState> = emptyMap(),
+    val cityMilitaryTroops: Map<Int, Int> = emptyMap(),
 )
 
 /**
@@ -39,6 +42,7 @@ class HwihaDomesticReader(
     private val geography: HwihaCityGeography,
     private val gameKv: GameKvReadRepository,
     private val mapper: ObjectMapper,
+    private val sieges: HwihaSiegeReadRepository,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
         if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw HwihaDomesticForbidden()
@@ -77,16 +81,19 @@ class HwihaDomesticReader(
                             val position = positions.stateFor(g.id)
                             DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
                                 g.leadership, g.strength, g.intel, g.politics, g.charm,
-                                (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta)
+                                (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta, g.injury,
+                                g.gold, g.rice)
                         },
-                        cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) },
+                        cards = cards.sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
                         counties = counties.map { c ->
                             DomesticCounty(c.id, c.name, c.nationId, bundle.projection.bindingsByCityId[c.id]?.landProvinceId,
                                 places[c.id]?.commanderyHanja, c.meta)
                         },
-                        nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
+                        nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
+                            it.level, it.gold, it.rice) },
                         landProvinceIds = topology.landProvinceIds,
                         provinceIdsByCounty = admin.associateWith(countyGeography::provincesOfCounty),
+                        activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
                     infrastructure = HwihaInfrastructureSiteState(topology,
                         bundle.projection.presentation?.roadGates.orEmpty(),
@@ -100,6 +107,17 @@ class HwihaDomesticReader(
                     }.toMap(),
                     warehouseStocks = counties.mapNotNull { c ->
                         try { HwihaCountyWarehouse.read(c.meta, c.id)?.let { c.id to it.stock } } catch (_: IllegalArgumentException) { null }
+                    }.toMap(),
+                    countyLevels = counties.associate { c -> c.id to HwihaCountyLevels(c.population, c.populationMax,
+                        c.agriculture, c.agricultureMax, c.commerce, c.commerceMax, c.security, c.securityMax,
+                        c.trust, c.defense, c.defenseMax, c.wall, c.wallMax) },
+                    cityMilitaryStates = counties.mapNotNull { c ->
+                        try { c.id to HwihaCityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)) }
+                        catch (_: IllegalArgumentException) { null }
+                    }.toMap(),
+                    cityMilitaryTroops = counties.mapNotNull { c ->
+                        try { c.id to HwihaCityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)).troops }
+                        catch (_: IllegalArgumentException) { null }
                     }.toMap(),
                 )
             }

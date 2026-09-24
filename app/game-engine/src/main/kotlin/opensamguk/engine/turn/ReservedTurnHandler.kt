@@ -200,6 +200,7 @@ class ReservedTurnHandler(
     private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
     /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
     private val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener = opensamguk.engine.hwiha.HwihaWarOutcomeListener.NONE,
+    private val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = opensamguk.engine.hwiha.HwihaMarchReactionPolicy.NON_BLOCKING,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
@@ -216,6 +217,20 @@ class ReservedTurnHandler(
     private val scoutHandler by lazy { opensamguk.engine.hwiha.HwihaScoutHandler(world, recorder, hwihaVisionContext) }
     private val siegeHandler by lazy { opensamguk.engine.hwiha.HwihaSiegeHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
+    private val travelHandler by lazy { opensamguk.engine.hwiha.HwihaTravelHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
+    private val fieldHandler by lazy { opensamguk.engine.hwiha.HwihaFieldHandler(world, recorder, hwihaDomesticContext) }
+    private val cityMilitaryHandler by lazy { opensamguk.engine.hwiha.HwihaCityMilitaryHandler(world, recorder, hwihaDomesticContext) }
+    private val personalHandler by lazy { opensamguk.engine.hwiha.HwihaPersonalHandler(world, recorder, hwihaDomesticContext) }
+    private val retireHandler by lazy { opensamguk.engine.hwiha.HwihaRetireHandler(world, recorder, hwihaDomesticContext) }
+    private val peopleHandler by lazy { opensamguk.engine.hwiha.HwihaPeopleHandler(world, recorder,
+        hwihaDomesticContext, hiddenSeed) }
+    private val politicalHandler by lazy { opensamguk.engine.hwiha.HwihaPoliticalHandler(world, recorder,
+        hwihaDomesticContext) }
+    private val transferHandler by lazy { opensamguk.engine.hwiha.HwihaTransferHandler(world, recorder,
+        hwihaDomesticContext) }
+    private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -292,6 +307,9 @@ class ReservedTurnHandler(
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
                 "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
+                opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {
+                    applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID)
+                },
             )
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
                 handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
@@ -319,6 +337,72 @@ class ReservedTurnHandler(
             }
             handlers[opensamguk.logic.input.HwihaScoutInput.INPUT_ID] = InputHandler {
                 applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)
+            }
+            for (travelId in opensamguk.logic.input.HwihaTravelInput.INPUT_IDS) {
+                handlers[travelId] = InputHandler {
+                    applied = travelHandler.handle(travelId, generalId, reserved.argJson, reserved.requestId,
+                        reserved.reservationOwnerUserId)
+                }
+            }
+            for (fieldId in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS) {
+                if (hwihaCatalog[fieldId]?.deliveryState?.hasHandler == true) {
+                    handlers[fieldId] = InputHandler {
+                        applied = fieldHandler.handle(fieldId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (militaryId in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS) {
+                if (hwihaCatalog[militaryId]?.deliveryState?.hasHandler == true) {
+                    handlers[militaryId] = InputHandler {
+                        applied = cityMilitaryHandler.handle(militaryId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (personalId in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS) {
+                if (hwihaCatalog[personalId]?.deliveryState?.hasHandler == true) {
+                    handlers[personalId] = InputHandler {
+                        applied = personalHandler.handle(personalId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            if (hwihaCatalog[opensamguk.logic.input.HwihaRetireInput.INPUT_ID]?.deliveryState?.hasHandler == true) {
+                handlers[opensamguk.logic.input.HwihaRetireInput.INPUT_ID] = InputHandler {
+                    applied = retireHandler.handle(generalId, reserved.argJson, reserved.requestId,
+                        reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                }
+            }
+            for (peopleId in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
+                if (hwihaCatalog[peopleId]?.deliveryState?.hasHandler == true) {
+                    handlers[peopleId] = InputHandler {
+                        applied = peopleHandler.handle(peopleId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (politicalId in opensamguk.logic.input.HwihaPoliticalRules.SUPPORTED_IDS) {
+                if (hwihaCatalog[politicalId]?.deliveryState?.hasHandler == true) {
+                    handlers[politicalId] = InputHandler {
+                        applied = politicalHandler.handle(politicalId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (transferId in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
+                if (hwihaCatalog[transferId]?.deliveryState?.hasHandler == true) {
+                    handlers[transferId] = InputHandler {
+                        applied = transferHandler.handle(transferId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            if (hwihaCatalog[opensamguk.logic.input.HwihaMilitaryInput.MUSTER]?.deliveryState?.hasHandler == true) {
+                handlers[opensamguk.logic.input.HwihaMilitaryInput.MUSTER] = InputHandler {
+                    applied = musterHandler.handle(generalId, reserved.argJson, reserved.requestId,
+                        reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                }
             }
             val inputs = HwihaInputRegistry(hwihaCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {

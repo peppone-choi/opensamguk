@@ -40,6 +40,7 @@ class HwihaS3ProvisionalTest {
         assertEquals(p.ASSAULT_GARRISON_DEFENCE.toLong(), long("siege", "assaultGarrisonDefence"))
         assertEquals(p.ASSAULT_GARRISON_RANGE.toLong(), long("siege", "assaultGarrisonRange"))
         assertEquals(p.ASSAULT_MAX_WALL_BONUS_PERCENT.toLong(), long("siege", "assaultMaxWallBonusPercent"))
+        assertEquals(p.ASSAULT_MAX_DEFENCE_BONUS_PERCENT.toLong(), long("siege", "assaultMaxDefenceBonusPercent"))
         assertEquals(p.NPC_ASSAULT_MIN_RATIO.toLong(), long("siege", "npcAssaultMinRatio"))
         assertEquals(p.SIEGE_TIMELINE_MAX.toLong(), long("siege", "siegeTimelineMax"))
         assertEquals(p.SALARY_MONEY_PER_RENOWN_COST, long("salary", "salaryMoneyPerRenownCost"))

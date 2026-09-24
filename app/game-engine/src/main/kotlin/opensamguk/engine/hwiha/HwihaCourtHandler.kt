@@ -19,7 +19,7 @@ class HwihaCourtHandler(
 
     fun handle(command: HwihaCourtInput): CommandLifecycleResult {
         var outcome: CommandLifecycleResult? = null
-        val registry = HwihaInputRegistry(HwihaInputCatalog.load(), mapOf(
+        val channelHandlers = mutableMapOf<String, InputHandler>(
             "action.enlist" to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "출사는 개인 행동 예약으로 입력해야 합니다.") },
             HwihaDeployInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
@@ -35,11 +35,48 @@ class HwihaCourtHandler(
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
             HwihaRewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
+            HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
             // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
             HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
             HwihaDomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
-        ))
+        )
+        for (travelId in HwihaTravelInput.INPUT_IDS) {
+            channelHandlers[travelId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                "INVALID_INPUT_CHANNEL", "직접 이동은 개인 행동 예약으로 입력해야 합니다.") }
+        }
+        for (fieldId in HwihaFieldInput.INPUT_IDS) {
+            channelHandlers[fieldId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                "INVALID_INPUT_CHANNEL", "현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
+        }
+        for (militaryId in HwihaMilitaryInput.INPUT_IDS) {
+            if (HwihaInputCatalog.load()[militaryId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[militaryId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "직접 군사 행동은 개인 행동 예약으로 입력해야 합니다.") }
+            }
+        }
+        for (personalId in HwihaPersonalInput.FIELD_IDS) {
+            if (HwihaInputCatalog.load()[personalId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[personalId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "개인 현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
+            }
+        }
+        for (peopleId in HwihaPeopleInput.INPUT_IDS) {
+            if (HwihaInputCatalog.load()[peopleId]?.deliveryState?.hasHandler == true) {
+                channelHandlers[peopleId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "인물 직접 행동은 개인 행동 예약으로 입력해야 합니다.") }
+            }
+        }
+        // 이 즉시 입력 채널에도 배달된 직접 행동의 명시적 오채널 응답이 있어야 원장/핸들러
+        // 전수 검사에 걸리지 않는다. 새 직접 행동이 추가될 때 이 지도가 누락되지 않게 한다.
+        val catalog = HwihaInputCatalog.load()
+        for (entry in catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION && it.deliveryState.hasHandler }) {
+            channelHandlers.putIfAbsent(entry.inputId, InputHandler {
+                outcome = result(command.generalId, command.inputId, false,
+                    "INVALID_INPUT_CHANNEL", "직접 행동은 개인 행동 예약으로 입력해야 합니다.")
+            })
+        }
+        val registry = HwihaInputRegistry(catalog, channelHandlers)
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,
                 resolution.reason.name, resolution.reason.message)
@@ -85,6 +122,16 @@ class HwihaCourtHandler(
                 val queued = HwihaQueuedReward(command.requestId, command.ownerUserId, request.retainerId, request.money)
                 updateMeta(actor, actor.meta + (HwihaQueuedReward.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
+            }
+            HwihaPoliticalConsent.COURT_INPUT_ID -> {
+                val consent = HwihaPoliticalConsent.parse(actor.id, command.argJson)
+                    ?: return deny(HwihaPoliticalFailure.INVALID_INPUT.name, HwihaPoliticalFailure.INVALID_INPUT.message)
+                val state = domesticContext.projection(world)
+                HwihaPoliticalRules.assessConsent(actor.id, consent, state)?.let {
+                    return deny(it.name, it.message)
+                }
+                updateMeta(actor, actor.meta + (HwihaPoliticalConsent.META_KEY to consent.toMetaValue()))
+                result(actor.id, command.inputId, true)
             }
             else -> deny("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }

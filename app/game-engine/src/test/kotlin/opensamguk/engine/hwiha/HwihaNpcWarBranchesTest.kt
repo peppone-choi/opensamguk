@@ -107,7 +107,8 @@ class HwihaNpcWarBranchesTest {
         val expected = minOf(city.defenceMax * HwihaS3Provisional.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
             800 * HwihaS3Provisional.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
         assertEquals(HwihaSiegeService.FALLEN, world.getHwihaSiege(city.id)?.status)
-        assertEquals(expected, city.defence)
+        assertEquals(expected, HwihaCityMilitaryState.read(city.meta, city.defence).troops)
+        assertEquals(100, city.defence, "captured troops must not increase the fortification score")
         assertEquals(500 - expected * 500 / 800, world.getBugokById(7)!!.troops)
         assertEquals(300 - expected * 300 / 800, world.getBugokById(8)!!.troops)
         assertEquals(1, world.getBugokById(9)!!.troops)

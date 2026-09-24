@@ -28,6 +28,14 @@ fun interface HwihaMarchReactionPolicy {
     /** A ranged interceptor can become the defender once the mover reaches this province. */
     fun interceptsAt(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): Boolean = false
 
+    /** Direct travel also exposes a lone general to interception; other marches retain their existing policy. */
+    fun directEntryHazard(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): LandMarchEntry =
+        entryHazard(world, actorId, node)
+    fun directInterceptsAt(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): Boolean =
+        interceptsAt(world, actorId, node)
+    fun onDirectEntered(world: InMemoryTurnWorld, recorder: ChangeRecorder, actorId: Int,
+        node: StrategicNodeRef.LandProvince) = onEntered(world, recorder, actorId, node)
+
     companion object {
         val NON_BLOCKING = HwihaMarchReactionPolicy { world, _, _ ->
             when (HwihaMarchReactions.presence(world.getState().meta)) {

@@ -54,8 +54,26 @@ object HwihaDomesticEffects {
 
     fun applyPolicy(design: HwihaDomesticDesign, policy: CountyPolicy, levels: HwihaCountyLevels, seat: HwihaSeatStats?): HwihaPolicyOutcome {
         val effect = design.countyPolicies.getValue(policy)
+        return applyEffects(design, effect.indicators, effect.resources, levels, seat)
+    }
+
+    /** One direct action uses the acting general's stats and the same one-phase effect arithmetic as a policy. */
+    fun applyDirect(design: HwihaDomesticDesign, inputId: String, levels: HwihaCountyLevels,
+        actor: HwihaSeatStats): HwihaPolicyOutcome {
+        val action = design.directActions.getValue(inputId)
+        val base = applyEffects(design, action.indicators, action.resources, levels, actor)
+        val rate = multiplier(design, action.costStat, actor)
+        fun scaled(value: Long) = Math.multiplyExact(value, rate) / 1000L
+        val fixed = action.fixedCost.let { HwihaResources(scaled(it.money), scaled(it.grain), scaled(it.iron),
+            scaled(it.timber), scaled(it.horses)) }
+        return base.copy(debit = base.debit.credit(fixed))
+    }
+
+    private fun applyEffects(design: HwihaDomesticDesign, indicators: List<HwihaDomesticDesign.IndicatorEffect>,
+        resources: List<HwihaDomesticDesign.ResourceFlow>, levels: HwihaCountyLevels,
+        seat: HwihaSeatStats?): HwihaPolicyOutcome {
         var next = levels
-        for (entry in effect.indicators) {
+        for (entry in indicators) {
             val base = when (entry.unit) {
                 HwihaDomesticDesign.Unit.ABSOLUTE -> entry.amount.toLong()
                 HwihaDomesticDesign.Unit.PERMILLE_OF_CURRENT -> current(levels, entry.indicator) * entry.amount / 1000
@@ -65,7 +83,7 @@ object HwihaDomesticEffects {
         val households = HwihaCountyIncome.households(levels.population)
         var credit = HwihaResources()
         var debit = HwihaResources()
-        for (flow in effect.resources) {
+        for (flow in resources) {
             val amount = Math.multiplyExact(households, flow.perHouseholdPermille.toLong()) / 1000 *
                 multiplier(design, flow.stat, seat) / 1000
             val resources = resource(flow.resource, amount)

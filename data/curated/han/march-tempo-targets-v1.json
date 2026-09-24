@@ -24,12 +24,20 @@
    "fatigue",
    "morale"
   ],
-  "costMagnitude": "UNDECIDED"
+  "costMagnitude": {
+   "status": "OWNER_DELEGATED_DECISION",
+   "authorization": "2026-09-24 사용자: 이동 거리 비례 수치 지정, 너가 정해.",
+   "distanceKm": 30,
+   "personalFatigueGain": 10,
+   "personalMoraleLoss": 5,
+   "distanceBasis": "실제 간선 거리(distanceMm). 험지 보정이 들어간 이동 비용(costMm)은 속도에만 반영한다.",
+   "rounding": "장수의 강행 누적 실제 거리에서 정수 몫의 차이만 매 순 차감한다. 남은 거리는 다음 강행 명령으로 이월한다. 피로 상한 100, 사기 하한 0."
+  }
  },
  "notes": [
   "평지 30 km/순의 승인 당시 근거는 2026-09-17 지도 중원 간선 711개 중앙값 약 32 km였다. 이 관측은 지도 재분할 전 값이며 현재 지도 통계가 아니다. 2026-09-24 현 판은 1,653省·1,577城이며 중원 간선 796개 중앙값 29.9 km다. 최신 재산출은 docs/superpowers/research/2026-09-17-march-tempo-baseline.md 를 참조한다. 승인 속도는 유지한다. 2026-09-20 사용자 결정으로 省 경계에서 잔여 이동량을 이어 쓰며 중단 없는 경로는 전체 비용 합산 후 올림한다.",
   "험지 계수는 간선 비용 = km × (1 + (계수−1) × 두 省 험지 비율 평균)으로 적용한다(tools/sim/march_tempo.py).",
-  "도로·강·관문·계절·보급 소모, 강행의 피로·사기 소모량은 미정이다. 시험 속도(분/턴)와 공개 속도(시간/순)에서 같은 km/순을 쓴다고 가정한다(미확정)."
+  "도로·강·관문·계절·보급 소모는 미정이다. 강행의 개인 피로·사기 소모는 2026-09-24 사용자 위임에 따라 30km당 +10/−5로 결정했다. 시험 속도(분/턴)와 공개 속도(시간/순)에서 같은 km/순을 쓴다고 가정한다(미확정)."
  ],
  "siegeTarget": {
   "status": "OWNER_APPROVED_TARGET",

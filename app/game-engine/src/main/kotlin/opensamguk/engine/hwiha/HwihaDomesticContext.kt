@@ -37,20 +37,23 @@ class HwihaDomesticContext(
                 val position = positions?.stateFor(g.id)
                 DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
                     g.stats.leadership, g.stats.strength, g.stats.intelligence, g.stats.politics, g.stats.charm,
-                    (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta)
+                    (position?.node as? StrategicNodeRef.LandProvince)?.id, position?.battlefield != null, g.meta, g.injury,
+                    g.gold, g.rice)
             },
-            cards = world.listRetainers().sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) },
+            cards = world.listRetainers().sortedBy { it.id }.map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) },
             counties = world.listCities().filter { it.id in world.administrativeCountyIds }.sortedBy { it.id }.map { c ->
                 DomesticCounty(c.id, c.name, c.nationId, (world.landNodeOfCity(c.id) as? StrategicNodeRef.LandProvince)?.id,
                     geography?.commanderyOf(c.id), c.meta)
             },
-            nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta) },
+            nations = world.listNations().sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
+                it.level, it.gold, it.rice, it.chiefGeneralId) },
             landProvinceIds = positions?.knownLandProvinceIds,
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
             }.toMap(),
             provinceIdsByCounty = if (geography == null) emptyMap() else world.administrativeCountyIds
                 .associateWith(geography::provincesOfCounty),
+            activeSiegeCountyIds = world.listHwihaSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
         )
     }
 }
@@ -86,7 +89,7 @@ internal fun Map<String, Any?>.withKey(key: String, value: Any?): Map<String, An
 /** 정찰 배치의 공개 투영(주인 meta `hwihaScoutPosts`)을 정본 배치에서 다시 쓴다. 시야 스트림이 이 키를 읽는다. */
 internal fun InMemoryTurnWorld.syncScoutPosts(recorder: ChangeRecorder, ownerId: Int) {
     val owner = getGeneralById(ownerId) ?: return
-    val cards = listRetainers().map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation) }
+    val cards = listRetainers().map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) }
     val projected = HwihaScoutPosts.project(ownerId, cards) { getGeneralById(it)?.meta }
     updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaScoutPosts.META_KEY, projected))
 }

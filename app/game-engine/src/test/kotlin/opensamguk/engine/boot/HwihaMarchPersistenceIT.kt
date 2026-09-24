@@ -10,7 +10,9 @@ import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
+import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
@@ -81,6 +83,239 @@ class HwihaMarchPersistenceIT {
         assertIs<DispatchExecution.Applied>(court.reply(DispatchReplyRequest(1,"march-$id",true)))
         save(world,recorder)
         return cold(id)
+    }
+
+    @Test fun `direct county action survives flush cold reload and duplicate execution has no second effect`() {
+        val id = 690
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val before = world.getCityById(countyId)!!.agriculture
+        val handler = HwihaFieldHandler(world, recorder, HwihaDomesticContext())
+        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertTrue(world.getCityById(countyId)!!.agriculture > before)
+        assertEquals(10, world.getGeneralById(1)!!.experience)
+        assertEquals(1, world.getGeneralById(1)!!.dedication)
+        assertEquals(first, HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
+        assertEquals(10, cold(id).getGeneralById(1)!!.experience)
+    }
+
+    @Test fun `planned independence leaves nation county and lord unchanged through cold reload`() {
+        val id = 692
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        val actor = world.getGeneralById(1)!!
+        val policy = HwihaPersonPolicyState(50, true, "test", "1", actor.id)
+        val ready = actor.copy(meta = actor.meta + (HwihaPersonPolicyState.META_KEY to policy.toMetaValue()))
+        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(ready))
+        world.applyGeneralDirtyFree(ready)
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val generalBefore = world.getGeneralById(1)!!
+        val countyBefore = world.getCityById(countyId)!!
+        val nationCountBefore = world.listNations().size
+        val first = assertIs<HwihaTurnOutcome.Rejected>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+            .handle(HwihaPoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
+        assertEquals(InputRejection.NOT_DELIVERED.name, first.code)
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(generalBefore.nationId, world.getGeneralById(1)!!.nationId)
+        assertEquals(generalBefore.officerLevel, world.getGeneralById(1)!!.officerLevel)
+        assertEquals(HwihaLordStatus.read(generalBefore.meta), HwihaLordStatus.read(world.getGeneralById(1)!!.meta))
+        assertEquals(countyBefore.nationId, world.getCityById(countyId)!!.nationId)
+        assertEquals(nationCountBefore, world.listNations().size)
+        assertEquals(first, HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(HwihaPoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
+    }
+
+    @Test fun `undelivered donation cannot move money into unused nation treasury`() {
+        val id = 693
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?", id, countyId)
+        jdbc.update("UPDATE general SET gold=100 WHERE world_id=? AND id=1", id)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val before = world.getNationById(1)!!.gold
+        val json = """{"resource":"MONEY","amount":25}"""
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(HwihaTransferHandler(world, recorder, HwihaDomesticContext())
+                .handle(HwihaTransferInput.DONATE, 1, json, "donate-$id", 42)).code)
+        assertFalse(recorder.isDirty)
+        world = cold(id)
+        assertEquals(100, world.getGeneralById(1)!!.gold)
+        assertEquals(before, world.getNationById(1)!!.gold)
+    }
+
+    @Test fun `recipient consent and oath survive separate cold reloads`() {
+        val id = 694
+        seed(id)
+        jdbc.update("UPDATE general SET user_id='43' WHERE world_id=? AND id=10", id)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        val actorNode = assertIs<StrategicNodeRef.LandProvince>(world.positionOf(1))
+        if (world.positionOf(10) != actorNode)
+            assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 10, actorNode))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val consent = HwihaCourtHandler(world, recorder).handle(TurnDaemonCommand.HwihaCourtInput(
+            "consent-$id", 10, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
+            """{"issuerGeneralId":1,"inputId":"action.oath","accepted":true}"""))
+        assertTrue(consent.ok)
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(HwihaPoliticalConsent(1, HwihaPoliticalInput.OATH, true),
+            HwihaPoliticalConsent.read(world.getGeneralById(10)!!.meta))
+        recorder = ChangeRecorder()
+        assertIs<HwihaTurnOutcome.Applied>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+            .handle(HwihaPoliticalInput.OATH, 1, """{"targetGeneralId":10}""", "oath-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(setOf(10), HwihaOathBonds.read(world.getGeneralById(1)!!.meta))
+        assertEquals(setOf(1), HwihaOathBonds.read(world.getGeneralById(10)!!.meta))
+        assertNull(HwihaPoliticalConsent.read(world.getGeneralById(10)!!.meta))
+    }
+
+    @Test fun `city military troops survive cold reload independently of fortification`() {
+        val id = 691
+        val seeded = seed(id)
+        val countyId = seeded.administrativeCountyIds.sorted().first {
+            seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
+                seeded.landNodeOfCity(it) != seeded.positionOf(1)
+        }
+        val stock = opensamguk.logic.economy.HwihaCountyWarehouse(countyId, 0,
+            opensamguk.logic.economy.HwihaResources(grain = 100_000_000))
+        jdbc.update("UPDATE city SET nation_id=1, meta=meta || ?::jsonb WHERE world_id=? AND id=?",
+            MetaJson.encode(mapOf(opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to stock.toMetaValue())), id, countyId)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,
+            assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(countyId))))
+        save(world, recorder)
+        world = cold(id)
+        recorder = ChangeRecorder()
+        val before = world.getCityById(countyId)!!
+        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaCityMilitaryHandler(world, recorder)
+            .handle(HwihaMilitaryInput.CONSCRIPT, 1, "{}", "military-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        val after = world.getCityById(countyId)!!
+        assertEquals(before.defence, after.defence)
+        assertTrue(HwihaCityMilitaryState.read(after.meta).troops > HwihaCityMilitaryState.read(before.meta).troops)
+        assertEquals(first, HwihaCityMilitaryHandler(world, ChangeRecorder())
+            .handle(HwihaMilitaryInput.CONSCRIPT, 1, "{}", "military-$id", 42))
+        assertEquals(after, cold(id).getCityById(countyId))
+    }
+
+    @Test fun `direct personal training survives flush cold reload and duplicate execution`() {
+        val id = 695
+        seed(id)
+        var world = cold(id)
+        var recorder = ChangeRecorder()
+        val before = world.getGeneralById(1)!!
+        val design = HwihaPersonalDesign.CANON.copy(status = HwihaPersonalDesign.CONFIRMED)
+        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaPersonalHandler(world, recorder,
+            HwihaDomesticContext(), design).handle(HwihaPersonalInput.SELF_TRAIN, 1,
+            """{"stat":"strength"}""", "personal-$id", 42))
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(before.stats.strength + design.trainingStatGain, world.getGeneralById(1)!!.stats.strength)
+        assertEquals(design.trainingFatigueGain,
+            HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta)!!.fatigue)
+        assertEquals(first, HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(), design)
+            .handle(HwihaPersonalInput.SELF_TRAIN, 1, """{"stat":"strength"}""", "personal-$id", 42))
+        assertEquals(before.stats.strength + design.trainingStatGain, cold(id).getGeneralById(1)!!.stats.strength)
+    }
+
+    @Test fun `planned retirement cannot transfer control retinue or bugok through cold reload`() {
+        val id = 696
+        seed(id)
+        jdbc.update("UPDATE general SET nation_id=1 WHERE world_id=? AND id=2", id)
+        var world = cold(id)
+        val before = world.getGeneralById(1)!!
+        val successorBefore = world.getGeneralById(2)!!
+        val bugoksBefore = world.listBugoks()
+        val retainersBefore = world.listRetainers()
+        val recorder = ChangeRecorder()
+        val handler = HwihaRetireHandler(world, recorder, HwihaDomesticContext())
+        val args = """{"successorGeneralId":2}"""
+        val first = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(1, args, "retire-$id", 42))
+        assertEquals(InputRejection.NOT_DELIVERED.name, first.code)
+        save(world, recorder)
+        world = cold(id)
+        assertEquals(before.userId, world.getGeneralById(1)!!.userId)
+        assertNull(world.getGeneralById(1)!!.meta["hwihaRetired"])
+        assertEquals(successorBefore.userId, world.getGeneralById(2)!!.userId)
+        assertEquals(bugoksBefore, world.listBugoks())
+        assertEquals(retainersBefore, world.listRetainers())
+        assertEquals(first, HwihaRetireHandler(world, ChangeRecorder(), HwihaDomesticContext())
+            .handle(1, args, "retire-$id", 42))
+    }
+
+    @Test fun `direct forced travel and personal condition survive flush cold reload without duplicate movement`() {
+        val id = 618
+        var world = personalMarchFixture(id)
+        val assignment = HwihaCountyAssignment.read(world.getGeneralById(1)!!.meta)!!
+        val destination = assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(assignment.countyId))
+        var recorder = ChangeRecorder()
+        val started = HwihaTravelExecutor(world, recorder, topology, metrics)
+            .start("forced-$id", HwihaTravelRequest(1, HwihaTravelInput.FORCED_MARCH, destination), destination,
+                45_000_000L) { LandMarchEntry.CLEAR }
+        val first = assertIs<HwihaTravelExecution.Applied>(started, "direct travel start: $started")
+        val beforeCondition = HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta)
+        assertEquals(first.condition, beforeCondition)
+        save(world, recorder)
+        world = cold(id)
+        val saved = HwihaTravelState.read(world.getGeneralById(1)!!.meta, topology, metrics)!!
+        assertEquals(first.state.orderId, saved.orderId)
+        assertEquals(first.state.checkpoint.cursor, saved.checkpoint.cursor)
+        assertEquals(first.state.assignmentIdAtStart, saved.assignmentIdAtStart)
+        assertEquals(beforeCondition, HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta))
+        val beforePosition = world.positionOf(1)
+        assertIs<HwihaTravelExecution.AlreadyProcessed>(HwihaTravelExecutor(world, ChangeRecorder(), topology, metrics)
+            .start("forced-$id", HwihaTravelRequest(1, HwihaTravelInput.FORCED_MARCH, destination), destination,
+                45_000_000L) { error("duplicate must not re-enter") })
+        assertEquals(beforePosition, world.positionOf(1))
+        if (saved.checkpoint.stop != LandMarchStop.ARRIVED) {
+            nextPhase(world); recorder = ChangeRecorder()
+            val resumed = assertIs<HwihaTravelExecution.Applied>(HwihaTravelExecutor(world, recorder, topology, metrics)
+                .resume(1, 45_000_000L) { LandMarchEntry.CLEAR })
+            save(world, recorder); world = cold(id)
+            assertEquals(resumed.state.checkpoint.cursor,
+                HwihaTravelState.read(world.getGeneralById(1)!!.meta, topology, metrics)!!.checkpoint.cursor)
+            assertEquals(resumed.condition, HwihaPersonalTravelCondition.read(world.getGeneralById(1)!!.meta))
+        }
     }
 
     @Test fun `stale position flush rolls back march metadata and phase together`() {

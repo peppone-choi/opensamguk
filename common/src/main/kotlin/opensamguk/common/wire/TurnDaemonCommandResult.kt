@@ -182,6 +182,15 @@ data class ReadLatestMessageResult(
 ) : TurnDaemonCommandResult()
 
 @Serializable
+data class InputResolved(
+    val inputId: String,
+    val kind: String,
+    val ok: Boolean,
+    val reason: String? = null,
+    val effects: List<String> = emptyList(),
+)
+
+@Serializable
 data class CommandLifecycleResult(
     override val type: String,
     override val ok: Boolean,
@@ -194,6 +203,7 @@ data class CommandLifecycleResult(
     val canonicalCommandId: String? = null,
     val replayEvent: String? = null,
     val routeRevision: Long? = null,
+    val inputResolved: InputResolved? = null,
 ) : TurnDaemonCommandResult()
 
 @Serializable

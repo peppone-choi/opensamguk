@@ -30,11 +30,29 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/hwiha-domestic-v1.json")) {
         into("hwiha")
     }
+    from(rootProject.file("data/curated/han/hwiha-military-v1.json")) {
+        into("hwiha")
+    }
+    from(rootProject.file("data/curated/han/hwiha-personal-v1.json")) {
+        into("hwiha")
+    }
+    from(rootProject.file("data/curated/han/hwiha-people-v1.json")) {
+        into("hwiha")
+    }
+    from(rootProject.file("data/curated/han/hwiha-political-v1.json")) {
+        into("hwiha")
+    }
     // 보물 카드와 무제한 장비는 추출 원본에서 나눈 정본 원장을 그대로 싣는다.
     from(rootProject.file("data/curated/han/hwiha-treasure-cards-v1.json")) {
         into("hwiha")
     }
     from(rootProject.file("data/curated/han/hwiha-equipment-v1.json")) {
+        into("hwiha")
+    }
+    from(rootProject.file("data/curated/han/hwiha-personal-encounter-v1.json")) {
+        into("hwiha")
+    }
+    from(rootProject.file("data/curated/han/march-tempo-targets-v1.json")) {
         into("hwiha")
     }
 }

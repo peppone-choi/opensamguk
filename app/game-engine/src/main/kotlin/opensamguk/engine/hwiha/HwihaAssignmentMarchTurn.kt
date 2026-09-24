@@ -26,7 +26,8 @@ class HwihaAssignmentMarchTurn(
         }
         // A future field action must not run alongside automatic personal movement.
         val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
-        if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment) return
+        val startsMuster = reserved.actionCode == HwihaMilitaryInput.MUSTER && outcome is HwihaTurnOutcome.Applied
+        if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment && !startsMuster) return
         if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
             // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
             val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
@@ -34,6 +35,7 @@ class HwihaAssignmentMarchTurn(
             if (isUnowned(generalId)) { if (besieging) siege.npcAct(generalId) else siege.npcEndIfStranded(generalId) }
             return
         }
+        if (HwihaTravelTurn(world, recorder, topology, metrics, reactions, outcomes).onTurn(generalId)) return
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
         if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return

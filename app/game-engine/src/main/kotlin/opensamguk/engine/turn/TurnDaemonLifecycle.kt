@@ -114,7 +114,8 @@ class TurnDaemonLifecycle(
             .sortedWith(compareBy({ it.turnTime }, { it.id }))
 
     private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =
-        world.ruleProfile != RuleProfile.HWIHA || HwihaPersonalTurn.eligible(general.meta, world.getState())
+        world.ruleProfile != RuleProfile.HWIHA ||
+            (general.meta["hwihaRetired"] != true && HwihaPersonalTurn.eligible(general.meta, world.getState()))
 
     class GeneralDrainCohort internal constructor(
         internal val identityTokens: Map<Int, Long>,
@@ -188,9 +189,17 @@ class TurnDaemonLifecycle(
                 handler.courtHandler.onIssuerTurn(g.id)
                 val reserved = hwihaNpcInputOf(g.id,
                     opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
+                // §5.1 현장 행동은 이동·조우 단계가 지난 뒤 현재 위치에서 실행한다.
+                val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
+                    (reserved.actionCode in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS)
+                if (fieldAction) hwihaMovementOf(g.id, reserved, null)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
-                if (world.ruleProfile == RuleProfile.HWIHA) hwihaMovementOf(g.id, reserved, result.hwihaOutcome)
+                if (world.ruleProfile == RuleProfile.HWIHA && !fieldAction) hwihaMovementOf(g.id, reserved, result.hwihaOutcome)
                 handled.add(result)
                 observeHandledTurn(result)
                 pullGeneralTurnOf(g.id)

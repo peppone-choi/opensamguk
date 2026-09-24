@@ -837,3 +837,53 @@ export interface HwihaDeployOptions {
     destinations: {provinceId:string;name:string}[];
     order?: {orderId:string;destinationProvinceId:string;stop?:string|null}|null;
 }
+
+export type HwihaTravelActionId = 'action.move' | 'action.forcedMarch' | 'action.return';
+export type HwihaFieldActionId = 'action.farm' | 'action.commerce' | 'action.fortify' | 'action.repairWall'
+    | 'action.security' | 'action.settle' | 'action.selectResidents' | 'action.tour';
+export type HwihaMilitaryActionId = 'action.conscript' | 'action.raiseVolunteers' | 'action.train'
+    | 'action.boostMorale' | 'action.muster' | 'action.demobilize';
+export type HwihaPersonalActionId = 'action.travel' | 'action.selfTrain' | 'action.recuperate' | 'action.retire';
+export interface HwihaPersonalOptions {
+    inputId: HwihaPersonalActionId; available: boolean; code?: string | null; reason?: string | null;
+    stats?: Array<{stat: string; available: boolean; code?: string | null; reason?: string | null}>;
+    successors?: Array<{generalId: number; name: string; available: boolean; code?: string | null; reason?: string | null}>;
+}
+export type HwihaPeopleActionId = 'action.search' | 'action.employ' | 'action.persuadeCaptive';
+export type HwihaPoliticalActionId = 'action.resign' | 'action.rise' | 'action.foundState'
+    | 'action.independence' | 'action.dissolve' | 'action.abdicate' | 'action.oath';
+export interface HwihaPoliticalOption {
+    inputId: HwihaPoliticalActionId; available: boolean; code?: string | null; reason?: string | null;
+    targets?: Array<{generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}>;
+}
+export interface HwihaPoliticalConsentOption {
+    inputId:'action.abdicate'|'action.oath';issuerGeneralId:number;issuerName:string;available:boolean;
+    accepted?:boolean|null;code?:string|null;reason?:string|null;
+}
+export type HwihaTransferActionId = 'action.gift' | 'action.donate';
+export interface HwihaTransferOptions {
+    inputId: HwihaTransferActionId; available: boolean; code?: string | null; reason?: string | null;
+    resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;
+    targets: Array<{generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}>;
+}
+export interface HwihaPeopleOptions {
+    inputId: HwihaPeopleActionId; available: boolean; code?: string | null; reason?: string | null;
+    undiscoveredCount?: number | null;
+    targets: {generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}[];
+}
+export interface HwihaMilitaryOptions {
+    inputId: HwihaMilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
+    countyId?: number | null; countyName?: string | null; troops?: number | null;
+    training?: number | null; morale?: number | null; gatheringCorps?: number | null;
+    troopsAfter?: number | null; populationAfter?: number | null;
+    trainingAfter?: number | null; moraleAfter?: number | null;
+    grainCost?: number | null; moneyCost?: number | null;
+}
+export interface HwihaFieldOptions {
+    inputId: HwihaFieldActionId; available: boolean; code?: string | null; reason?: string | null;
+    countyId?: number | null; countyName?: string | null;
+}
+export interface HwihaTravelOptions {
+    inputId: HwihaTravelActionId; available: boolean; code?: string | null; reason?: string | null;
+    destinations: {provinceId:string;name:string;available:boolean;code?:string|null;reason?:string|null}[];
+}

@@ -9,8 +9,10 @@ class HwihaDomesticEffectsTest {
     private val levels = HwihaCountyLevels(50_000, 100_000, 1000, 1200, 1000, 1010, 500, 600, 80.0, 900, 1000, 900, 1000)
     private fun seat(stat: Int, hometown: Boolean = false) = HwihaSeatStats(stat, stat, stat, stat, stat, hometown)
 
-    @Test fun `design file is the provisional ledger with every catalogued policy and work`() {
+    @Test fun `design file confirms policy work and direct action rates`() {
         assertEquals(HwihaDomesticDesign.CONFIRMED, design.status)
+        assertEquals(HwihaDomesticDesign.CONFIRMED, design.directActionStatus)
+        assertEquals(HwihaFieldInput.INPUT_IDS, design.directActions.keys)
         assertEquals(CountyPolicy.entries.toSet(), design.countyPolicies.keys)
         assertEquals(DomesticWork.entries.toSet(), design.works.keys)
         assertEquals(CountyPolicy.AGRICULTURE, design.defaultCountyPolicy)
@@ -18,11 +20,27 @@ class HwihaDomesticEffectsTest {
         assertEquals(setOf(HwihaDomesticDesign.Indicator.DEFENCE, HwihaDomesticDesign.Indicator.WALL),
             design.works.getValue(DomesticWork.FORTIFICATION).completion.map { it.indicator }.toSet())
         assertTrue(design.works.getValue(DomesticWork.WAREHOUSE).completion.isEmpty())
-        // Every row declares its own provisional status: no silent design numbers.
+        // Every row declares its status: no silent design numbers.
         val raw = javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
         val statuses = Regex("\"status\": \"([^\"]+)\"").findAll(raw).map { it.groupValues[1] }.toList()
         assertTrue(statuses.size >= 1 + 1 + 1 + CountyPolicy.entries.size + CorpsPolicy.entries.size + 1)
-        assertTrue(statuses.all { it == HwihaDomesticDesign.CONFIRMED }, statuses.toString())
+        assertEquals(0, statuses.count { it == "PROPOSED" }, statuses.toString())
+        assertTrue(statuses.all { it in setOf(HwihaDomesticDesign.CONFIRMED, "PROPOSED") }, statuses.toString())
+    }
+
+    @Test fun `direct actions use one phase policy magnitude and cost`() {
+        val actor = seat(50)
+        for ((inputId, policy) in listOf(HwihaFieldInput.FARM to CountyPolicy.AGRICULTURE,
+            HwihaFieldInput.COMMERCE to CountyPolicy.COMMERCE, HwihaFieldInput.SETTLE to CountyPolicy.RELIEF)) {
+            assertEquals(HwihaDomesticEffects.applyPolicy(design, policy, levels, actor),
+                HwihaDomesticEffects.applyDirect(design, inputId, levels, actor), inputId)
+        }
+        val fortify = HwihaDomesticEffects.applyDirect(design, HwihaFieldInput.FORTIFY, levels, actor)
+        assertEquals(950, fortify.levels.defence)
+        assertEquals(HwihaResources(money = 5_000, timber = 250), fortify.debit)
+        val wall = HwihaDomesticEffects.applyDirect(design, HwihaFieldInput.REPAIR_WALL, levels, actor)
+        assertEquals(950, wall.levels.wall)
+        assertEquals(fortify.debit, wall.debit)
     }
 
     @Test fun `malformed design fails instead of defaulting`() {

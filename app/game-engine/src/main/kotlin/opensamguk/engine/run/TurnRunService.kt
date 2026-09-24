@@ -161,6 +161,7 @@ open class TurnRunService(
      * handlers — the world is per-run state, not a Spring bean). 결과는 W0-4부터
      * [RealtimePublisher.publishCommandResultPayload]로 per-requestId 회신된다(위 헤더 참조).
      */
+    private val hwihaInputCatalog by lazy { opensamguk.logic.input.HwihaInputCatalog.load() }
     private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null && boardPostRepository != null) {
         TurnDaemonCommandDispatcher(
             world, handler.recorder, auctionRepository, auctionBidRepository, boardPostRepository,
@@ -700,6 +701,11 @@ open class TurnRunService(
             turnIdx = 0,
             reason = rejected?.reason ?: handled.denyReason,
             code = rejected?.code,
+            inputResolved = hwiha?.let { outcome ->
+                opensamguk.common.wire.InputResolved(outcome.inputId,
+                    hwihaInputCatalog[outcome.inputId]?.kind?.name ?: "UNKNOWN",
+                    ok, rejected?.reason, (outcome as? opensamguk.engine.hwiha.HwihaTurnOutcome.Applied)?.effects.orEmpty())
+            },
         )
         val sentAt = Instant.now()
         val envelope = TurnDaemonEventEnvelope(
