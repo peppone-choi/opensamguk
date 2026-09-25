@@ -9,7 +9,7 @@ import kotlin.test.assertTrue
 
 class ImperialEdictTest {
     private val office = CentralOfficeGrant("office.taiwei", 77)
-    private val proposal = ImperialEdictProposal("edict-1", "later_han", 50, 1, 8, office)
+    private val proposal = ImperialEdictProposal("edict-1", "later_han", 50, 1, 8, "詔", office)
     private val catalog = setOf(office.officeId)
 
     private fun reviewed(decision: EmperorEdictDecision = EmperorEdictDecision.APPROVE) =

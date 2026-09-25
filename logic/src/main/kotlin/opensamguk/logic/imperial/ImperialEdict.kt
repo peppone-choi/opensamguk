@@ -7,10 +7,11 @@ data class ImperialEdictProposal(
     val proposerId: Int,
     val emperorId: Int,
     val recipientFactionId: Int,
+    val proposedText: String,
     val requestedOffice: CentralOfficeGrant? = null,
 ) {
     init {
-        require(id.isNotBlank() && imperialLineCode.isNotBlank())
+        require(id.isNotBlank() && imperialLineCode.isNotBlank() && proposedText.isNotBlank())
         require(proposerId > 0 && emperorId > 0 && recipientFactionId > 0)
     }
 }
