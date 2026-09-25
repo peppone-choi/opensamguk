@@ -112,3 +112,4 @@
 - CI의 다른 실패는 부모 관할 조정 및 성 귀속 원장의 입력 해시 드리프트, map4 상수 원장의 이전 해시, 물 위상 테스트의 이전 타일 해시, 생산량 테스트의 이전 현 수 단언이었다. 원장 둘을 재생성하고 테스트를 현재 원장과 비교하도록 수정했다.
 - 로컬 통과: `HanStrategicSupplyProviderTest`, `HanSpatialSupplyProviderTest`, `HanRuntimeConstantsIntegrityTest`, `HanStrategicTopologyJsonTest`, `HwihaCountyProductionJsonTest`, 부모 관할 원장 검사, 도로 생성물 검사, 성 귀속 원장 검사, 지도 여유·막다른 길 감사. 지도 감사 결과 전략 막다른 거점 0, 도로 기준 전략 막다른 거점 0, 완전 포위 관할 0이다. S3 전체 48순 통합 검증과 PR 전체 CI는 푸시 후 확인한다.
 - 최신 main의 정찰·시야 도메인 이동을 병합하며 보루 점령 예약 명령과 새 정찰 입력 코덱을 함께 보존했다. 병합 후 이름 검사 기준은 제품 식별자 10,807건, 경로 543건으로 갱신했고 네 검사 모두 통과했다.
+- 결합 검사에서 성 귀속 원장 재생성에 따른 `han-world-v3` manifest 해시 변경을 찾아 manifest와 map4 묶음·카탈로그 핀을 다시 생성했다. 고정된 이전 1447 묶음은 그대로 유지되며 자체 검사에 통과했다.
