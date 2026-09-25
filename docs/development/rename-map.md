@@ -67,6 +67,13 @@
 | `opensamguk.logic.input.HwihaCountyIndicators` | `opensamguk.logic.domestic.CountyIndicators` | 이 PR | 縣 지표 기록 |
 | `opensamguk.logic.input.HwihaCountyMonthly` | `opensamguk.logic.domestic.CountyMonthly` | 이 PR | 지난달 지표 |
 | `logic/input/HwihaDomesticStateTest.kt` | `logic/domestic/DomesticStateTest.kt` | 이 PR | 상태 codec 테스트 파일·타입·패키지 개명 |
+| `opensamguk.logic.input.HwihaFieldInput` (`logic/input/HwihaFieldInput.kt`) | `opensamguk.logic.domestic.FieldInput` (`logic/domestic/FieldInput.kt`) | 이 PR | 현장 직접 행동 입력·파일·패키지 개명 |
+| `opensamguk.logic.input.HwihaFieldRequest` | `opensamguk.logic.domestic.FieldRequest` | 이 PR | 현장 행동 요청 |
+| `opensamguk.logic.input.HwihaFieldFailure` | `opensamguk.logic.domestic.FieldFailure` | 이 PR | 현장 행동 거절 |
+| `opensamguk.logic.input.HwihaFieldAssessment` | `opensamguk.logic.domestic.FieldAssessment` | 이 PR | 현장 행동 판정 |
+| `opensamguk.logic.input.HwihaFieldRules` | `opensamguk.logic.domestic.FieldRules` | 이 PR | 현장 행동 규칙 |
+| `opensamguk.logic.input.HwihaFieldEconomyAssessment` | `opensamguk.logic.domestic.FieldEconomyAssessment` | 이 PR | 현장 행동 자원 판정 |
+| `logic/input/HwihaFieldInputTest.kt` | `logic/domestic/FieldInputTest.kt` | 이 PR | 현장 행동 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
