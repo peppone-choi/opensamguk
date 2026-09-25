@@ -140,7 +140,7 @@ class EnlistmentApiIT {
                 bundle.landMarchMetrics) as? opensamguk.logic.world.LandMarchPathResult.Resolved
             node.takeIf { path != null && path.path.totalCostMm in 30_000_001L..120_000_000L }
         }
-        mvc.perform(get("/api/hwiha/deploy/options").param("generalId","1"))
+        mvc.perform(get("/api/deploy/options").param("generalId","1"))
             .andExpect(status().isOk).andExpect(jsonPath("$.available").value(true))
             .andExpect(jsonPath("$.bugoks[0].id").value(7))
         val deployResponse = mvc.perform(post("/api/command/action.deploy").param("generalId","1").param("turnIdx","0")
@@ -164,7 +164,7 @@ class EnlistmentApiIT {
         mvc.perform(get("/api/command/result/{requestId}",deployId)).andExpect(status().isOk)
             .andExpect(jsonPath("$.type").value("executionApplied"))
             .andExpect(jsonPath("$.result.actionCode").value("action.deploy"))
-        mvc.perform(get("/api/hwiha/deploy/options").param("generalId","1"))
+        mvc.perform(get("/api/deploy/options").param("generalId","1"))
             .andExpect(status().isOk).andExpect(jsonPath("$.available").value(false))
             .andExpect(jsonPath("$.order.orderId").value(deployId))
         assertTrue(fixture.service(WorldId(1),deployedCold,deploymentPublished,movement=true).runDueGeneralTurns(deployDue).handled.isEmpty())

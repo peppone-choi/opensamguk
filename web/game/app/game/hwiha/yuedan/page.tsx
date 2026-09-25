@@ -21,7 +21,7 @@ function stampLabel(stamp: string | null): string | null {
  * 월단평 — 시안 Yuedan.
  *
  * 매월 상순 명망을 갱신하고 순위를 발표한다(정본 설계 §2.8·§5.2). 순위는 월 경계의
- * `MonthlyAssessment` 가 남긴 것을 `GET /api/hwiha/yuedan` 으로 읽는다.
+ * `MonthlyAssessment` 가 남긴 것을 `GET /api/yuedan` 으로 읽는다.
  */
 export default function YuedanPage() {
     const yuedan = useHwihaRead((id, signal) => api.hwihaYuedan(id, signal));

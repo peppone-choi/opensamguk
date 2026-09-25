@@ -1,7 +1,7 @@
 package opensamguk.gameapi.dto
 
 /**
- * `/api/hwiha/sieges?generalId=` 응답. 부드러운 상태는 [SiegesResponse.status] 로 알린다
+ * `/api/sieges?generalId=` 응답. 부드러운 상태는 [SiegesResponse.status] 로 알린다
  * (`READY` · `UNAVAILABLE` · `WRONG_RULE_PROFILE`). 사기는 정수 10000 = 100% 그대로 낸다.
  */
 data class SiegePartyDto(val generalId: Int, val name: String?, val nationId: Int, val nationName: String?)

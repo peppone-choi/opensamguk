@@ -134,20 +134,20 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   await expect.poll(() => Number(sql(`SELECT current_year FROM world_state WHERE id=${worldId};`)),
     { timeout: 3_000_000, intervals: [10_000] }).toBeGreaterThanOrEqual(191);
   type Yuedan = { status: string; stamp: string | null; ranking: unknown[] };
-  await expect.poll(async () => (await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`)).status,
+  await expect.poll(async () => (await read<Yuedan>(page, `/api/yuedan?generalId=${generalId}`)).status,
     { timeout: 600_000, intervals: [5000] }).toBe('READY');
 
   const screens = ['court', 'hand', 'orders', 'posts', 'retinue', 'siege', 'supply', 'war-room', 'yuedan'];
   const paths: Record<string, string[]> = {
     court: ['/api/map/preview', dispatchPath],
     hand: [`/api/commands/stratagem-hand?generalId=${generalId}`],
-    orders: [`/api/hwiha/retinue?generalId=${generalId}`, `/api/hwiha/warehouses?generalId=${generalId}`],
-    posts: [`/api/hwiha/posts?generalId=${generalId}`],
-    retinue: [`/api/hwiha/retinue?generalId=${generalId}`],
-    siege: [`/api/hwiha/sieges?generalId=${generalId}`],
-    supply: [`/api/hwiha/warehouses?generalId=${generalId}`],
-    'war-room': [`/api/hwiha/visibility?generalId=${generalId}`, `/api/hwiha/corps?generalId=${generalId}`, `/api/hwiha/sieges?generalId=${generalId}`],
-    yuedan: [`/api/hwiha/yuedan?generalId=${generalId}`],
+    orders: [`/api/retinue?generalId=${generalId}`, `/api/warehouses?generalId=${generalId}`],
+    posts: [`/api/posts?generalId=${generalId}`],
+    retinue: [`/api/retinue?generalId=${generalId}`],
+    siege: [`/api/sieges?generalId=${generalId}`],
+    supply: [`/api/warehouses?generalId=${generalId}`],
+    'war-room': [`/api/visibility?generalId=${generalId}`, `/api/corps?generalId=${generalId}`, `/api/sieges?generalId=${generalId}`],
+    yuedan: [`/api/yuedan?generalId=${generalId}`],
   };
   const cdp = await context.newCDPSession(page);
   for (const screen of screens) {
@@ -210,7 +210,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   await testInfo.attach('phase-evidence', { body: JSON.stringify({ generalId, nationId, dispatch, march: marchState(),
     siege: siegeSummary(), npcBattles: npcBattles(), liveEncounterCount: encounterIds.size,
     repeatedNeutralCaptures, abandonedWithGarrison, activeWarAfterFirstBoundary, activeWarRelations,
-    yuedan: await read<Yuedan>(page, `/api/hwiha/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
+    yuedan: await read<Yuedan>(page, `/api/yuedan?generalId=${generalId}`) }, null, 2), contentType: 'application/json' });
   const logs = compose(['logs', '--no-color', 'game-engine']);
   expect((logs.match(/tick failed/gi) ?? []).length, 'engine tick failed').toBe(0);
 });

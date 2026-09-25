@@ -50,7 +50,7 @@ function StatBars({ stats }: { stats: Partial<FiveStats> | null | undefined }) {
 
 /**
  * 장수 — 나와 내 휘하. 작전실 오른쪽 열의 맨 위, samnet 의 장수 카드 열과 같은 자리·같은 모양이다.
- * 나는 `front-info`, 휘하 인물은 `GET /api/hwiha/retinue`. 휘하 카드를 누르면 휘하 편성 상세로 간다.
+ * 나는 `front-info`, 휘하 인물은 `GET /api/retinue`. 휘하 카드를 누르면 휘하 편성 상세로 간다.
  */
 export default function GeneralRoster() {
     const { frontInfo, serverId, isHwihaWorld, generalId } = useHwihaSession();

@@ -12,7 +12,7 @@ const fmt = new Intl.NumberFormat('ko-KR');
  * 보급망 · 창고 — 시안 Supply.
  *
  * 창고는 다섯 자원을 모두 실물로 들고 있고, 국고는 수도 창고 안에 있다 — 수도가 함락되면 국고를
- * 빼앗긴다. 재고는 `GET /api/hwiha/warehouses`, 끊김은 월 보급이 매기는 城 보급 상태다.
+ * 빼앗긴다. 재고는 `GET /api/warehouses`, 끊김은 월 보급이 매기는 城 보급 상태다.
  */
 export default function SupplyPage() {
     const read = useHwihaRead((id, signal) => api.warehouses(id, signal));

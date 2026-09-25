@@ -24,7 +24,7 @@ export interface StratagemHand {
     readonly canUse: boolean;
 }
 
-// ── 월단평 (`GET /api/hwiha/yuedan`) ─────────────────────────────────────────
+// ── 월단평 (`GET /api/yuedan`) ─────────────────────────────────────────
 export interface YuedanRow {
     readonly rank: number;
     readonly generalId: number;
@@ -50,7 +50,7 @@ export interface Yuedan {
     readonly selfPendingEvents?: readonly RenownPendingEvent[];
 }
 
-// ── 창고 (`GET /api/hwiha/warehouses`) ───────────────────────────────────────
+// ── 창고 (`GET /api/warehouses`) ───────────────────────────────────────
 export interface Stock {
     readonly money: number;
     readonly grain: number;
@@ -72,7 +72,7 @@ export interface Warehouses {
     readonly invalidCount?: number;
 }
 
-// ── 현 특산 (`GET /api/hwiha/county/{cityId}`) ───────────────────────────────
+// ── 현 특산 (`GET /api/county/{cityId}`) ───────────────────────────────
 export interface County {
     readonly status: ReadStatus;
     readonly cityId: number;
@@ -81,7 +81,7 @@ export interface County {
     readonly specialties: readonly { resource: string; label: string; monthly: number | null; ledgerMonthly?: number | null }[];
 }
 
-// ── 휘하 인물 카드 (`GET /api/hwiha/retinue`) ────────────────────────────────
+// ── 휘하 인물 카드 (`GET /api/retinue`) ────────────────────────────────
 export interface FiveStats {
     readonly leadership: number;
     readonly strength: number;
@@ -144,7 +144,7 @@ export interface Retinue {
     readonly units: readonly UnitCard[];
 }
 
-// ── 공성 (`GET /api/hwiha/sieges`) ───────────────────────────────────────────
+// ── 공성 (`GET /api/sieges`) ───────────────────────────────────────────
 export interface Siege {
     readonly countyId: number;
     readonly countyName: string | null;
@@ -254,7 +254,7 @@ export const HWIHA_RESOURCE_LABELS: ReadonlyArray<{ key: keyof Stock; label: str
     { key: 'horses', label: '말' },
 ];
 
-// ── 지난 순 (`GET /api/hwiha/last-turns`) ────────────────────────────────────
+// ── 지난 순 (`GET /api/last-turns`) ────────────────────────────────────
 export interface LastTurnEntry {
     readonly kind: string;
     readonly text: string;
@@ -295,7 +295,7 @@ export interface RenownPendingEvent {
     readonly amount: number;
 }
 
-// ── 시야 (`GET /api/hwiha/visibility` · `corps` · `scout-options`) ─────────────
+// ── 시야 (`GET /api/visibility` · `corps` · `scout-options`) ─────────────
 export interface Stamp {
     readonly year: number;
     readonly month: number;
@@ -357,7 +357,7 @@ export interface ScoutOptions {
     readonly options?: readonly ScoutOption[];
 }
 
-// ── 배치·방침·공사 (`GET /api/hwiha/posts` · `policies` · `works`) ──────────────
+// ── 배치·방침·공사 (`GET /api/posts` · `policies` · `works`) ──────────────
 export interface CodeLabel {
     readonly code: string;
     readonly label: string;

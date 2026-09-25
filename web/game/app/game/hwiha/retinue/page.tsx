@@ -103,7 +103,7 @@ function PersonDetail({ person }: { person: PersonCard }) {
  * 휘하 편성 — 시안 Main.
  *
  * 명망은 거느릴 수 있는 휘하 코스트의 상한이다(설계 §2.8·§6.6). 삼모의 「장수 코스트 201/420」과
- * 같은 자리이므로 `⚖ 합 / 상한` 표기를 쓴다. 값은 `GET /api/hwiha/retinue` 에서 온다.
+ * 같은 자리이므로 `⚖ 합 / 상한` 표기를 쓴다. 값은 `GET /api/retinue` 에서 온다.
  */
 export default function RetinuePage() {
     const read = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal));

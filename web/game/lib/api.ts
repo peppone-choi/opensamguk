@@ -445,7 +445,7 @@ export const api = {
         post<IntakeOutcome>(`/api/commands/court/dispatch?generalId=${generalId}`, args),
     courtDispatchReply: (generalId: number, args: {dispatchId: string; accept: boolean}) =>
         post<IntakeOutcome>(`/api/commands/court/dispatchReply?generalId=${generalId}`, args),
-    deployOptions: (generalId: number) => get<import('./types').DeployOptions>(`/api/hwiha/deploy/options?generalId=${generalId}`),
+    deployOptions: (generalId: number) => get<import('./types').DeployOptions>(`/api/deploy/options?generalId=${generalId}`),
     travelOptions: (inputId: import('./types').TravelActionId, generalId: number) => {
         const name = inputId === 'action.move' ? 'move' : inputId === 'action.forcedMarch' ? 'forced-march' : 'return';
         return get<import('./types').TravelOptions>(`/api/commands/${name}-options?generalId=${generalId}`);
@@ -502,33 +502,33 @@ export const api = {
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
         get<import('./hwiha-reads').StratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
     hwihaYuedan: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Yuedan>(`/api/hwiha/yuedan?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
     warehouses: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Warehouses>(`/api/hwiha/warehouses?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
     hwihaCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').County>(`/api/hwiha/county/${cityId}?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').County>(`/api/county/${cityId}?generalId=${generalId}`, signal),
     hwihaRetinue: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Retinue>(`/api/hwiha/retinue?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Retinue>(`/api/retinue?generalId=${generalId}`, signal),
     hwihaSieges: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Sieges>(`/api/hwiha/sieges?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Sieges>(`/api/sieges?generalId=${generalId}`, signal),
     roadForts: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').RoadForts>(`/api/hwiha/road-forts?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').RoadForts>(`/api/road-forts?generalId=${generalId}`, signal),
     courtReward: (generalId: number, args: {retainerId: number; money: number}) =>
         post<IntakeOutcome>(`/api/commands/court/reward?generalId=${generalId}`, args),
     hwihaLastTurns: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').LastTurns>(`/api/hwiha/last-turns?generalId=${generalId}&limit=12`, signal),
+        get<import('./hwiha-reads').LastTurns>(`/api/last-turns?generalId=${generalId}&limit=12`, signal),
     hwihaVisibility: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Visibility>(`/api/hwiha/visibility?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Visibility>(`/api/visibility?generalId=${generalId}`, signal),
     hwihaCorps: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').CorpsList>(`/api/hwiha/corps?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').CorpsList>(`/api/corps?generalId=${generalId}`, signal),
     hwihaScoutOptions: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').ScoutOptions>(`/api/hwiha/scout-options?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').ScoutOptions>(`/api/scout-options?generalId=${generalId}`, signal),
     hwihaPosts: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Posts>(`/api/hwiha/posts?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Posts>(`/api/posts?generalId=${generalId}`, signal),
     hwihaPolicies: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Policies>(`/api/hwiha/policies?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Policies>(`/api/policies?generalId=${generalId}`, signal),
     hwihaWorks: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').Works>(`/api/hwiha/works?generalId=${generalId}`, signal),
+        get<import('./hwiha-reads').Works>(`/api/works?generalId=${generalId}`, signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
     hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
         post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),
