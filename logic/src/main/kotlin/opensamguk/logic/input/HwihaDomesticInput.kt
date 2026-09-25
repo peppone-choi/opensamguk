@@ -119,7 +119,8 @@ object HwihaDomesticInput {
     const val PLACEMENT = "placement.assign"
     const val POLICY = "policy.set"
     const val WORK = "work.start"
-    val INPUT_IDS = setOf(PLACEMENT, POLICY, WORK)
+    const val REDUCE = "work.reduce"
+    val INPUT_IDS = setOf(PLACEMENT, POLICY, WORK, REDUCE)
 
     fun parsePlacement(actorId: Int, raw: String?): PlacementRequest? = parse(actorId, raw) { fields ->
         val post = enumOf<PlacementPost>(fields["post"]) ?: return@parse null

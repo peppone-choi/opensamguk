@@ -7,6 +7,7 @@ import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.infra.seed.HwihaUnitProfilesJson
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -42,6 +43,7 @@ class HwihaDomesticReader(
     private val geography: HwihaCityGeography,
     private val gameKv: GameKvReadRepository,
     private val mapper: ObjectMapper,
+    private val diplomacy: DiplomacyReadRepository,
     private val sieges: HwihaSiegeReadRepository,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
@@ -90,9 +92,15 @@ class HwihaDomesticReader(
                                 places[c.id]?.commanderyHanja, c.meta)
                         },
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
-                            it.level, it.gold, it.rice) },
+                            it.level, it.gold, it.rice, it.tech) },
                         landProvinceIds = topology.landProvinceIds,
                         provinceIdsByCounty = admin.associateWith(countyGeography::provincesOfCounty),
+                        bugoks = retainers.allBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
+                        countyAdjacency = admin.associateWith { countyId ->
+                            bundle.cityConst.byId(countyId)?.path?.keys?.filter { it in admin }?.toSet() ?: emptySet()
+                        },
+                        supportedCrewTypeIds = HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet(),
+                        diplomacy = diplomacy.findAll().map { DomesticDiplomacy(it.srcNationId, it.destNationId, it.stateCode, it.term) },
                         activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
                     infrastructure = HwihaInfrastructureSiteState(topology,

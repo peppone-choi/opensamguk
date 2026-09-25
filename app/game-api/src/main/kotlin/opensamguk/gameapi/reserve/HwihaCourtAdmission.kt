@@ -45,6 +45,38 @@ class HwihaCourtAdmission(private val precheck: HwihaDispatchPrecheckService,
                 }
                 null to HwihaPoliticalConsent.canonicalJson(consent)
             }
+            in HwihaLegacyCourtInput.INPUT_IDS -> {
+                try { reader?.requireOwner(actorId, ownerUserId.toLong())
+                    ?: throw HwihaAdmissionDenied(HwihaLegacyCourtFailure.STATE_UNAVAILABLE.name,
+                        HwihaLegacyCourtFailure.STATE_UNAVAILABLE.message) }
+                catch (_: HwihaDomesticForbidden) { throw HwihaAdmissionDenied("FORBIDDEN", "자신의 장수만 결정할 수 있습니다.") }
+                val json = HwihaLegacyCourtInput.canonical(actorId, inputId, raw)
+                    ?: throw HwihaAdmissionDenied(HwihaLegacyCourtFailure.INVALID_INPUT.name,
+                        HwihaLegacyCourtFailure.INVALID_INPUT.message)
+                val state = reader?.snapshot()?.state
+                    ?: throw HwihaAdmissionDenied(HwihaLegacyCourtFailure.STATE_UNAVAILABLE.name,
+                        HwihaLegacyCourtFailure.STATE_UNAVAILABLE.message)
+                when (val result = HwihaLegacyCourtRules.assess(actorId, inputId, json, state)) {
+                    is HwihaLegacyCourtAssessment.Rejected -> throw HwihaAdmissionDenied(result.reason.name, result.reason.message)
+                    is HwihaLegacyCourtAssessment.Eligible -> null to json
+                }
+            }
+            in HwihaLegacyStratagemInput.INPUT_IDS -> {
+                try { reader?.requireOwner(actorId, ownerUserId.toLong())
+                    ?: throw HwihaAdmissionDenied(HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.name,
+                        HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.message) }
+                catch (_: HwihaDomesticForbidden) { throw HwihaAdmissionDenied("FORBIDDEN", "자신의 장수만 계책을 낼 수 있습니다.") }
+                val request = HwihaLegacyStratagemInput.parse(actorId, inputId, raw)
+                    ?: throw HwihaAdmissionDenied(HwihaLegacyStratagemFailure.INVALID_INPUT.name,
+                        HwihaLegacyStratagemFailure.INVALID_INPUT.message)
+                val state = reader?.snapshot()?.state
+                    ?: throw HwihaAdmissionDenied(HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.name,
+                        HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.message)
+                when (val result = HwihaLegacyStratagemRules.assess(request, state)) {
+                    is HwihaLegacyStratagemAssessment.Rejected -> throw HwihaAdmissionDenied(result.reason.name, result.reason.message)
+                    is HwihaLegacyStratagemAssessment.Eligible -> null to HwihaLegacyStratagemInput.canonicalJson(request)
+                }
+            }
             else -> throw HwihaAdmissionDenied("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
         }
         if (assessment is DispatchAssessment.Rejected) throw HwihaAdmissionDenied(assessment.reason.name, assessment.reason.message)

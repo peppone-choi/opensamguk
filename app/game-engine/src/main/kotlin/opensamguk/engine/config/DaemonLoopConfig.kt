@@ -324,6 +324,7 @@ class DaemonLoopConfig {
                 metrics = artifacts.landMarchMetrics,
                 roadGates = artifacts.projection.presentation?.roadGates.orEmpty(),
                 merit = opensamguk.engine.hwiha.HwihaGovernanceMeritRenownSink(world, recorder),
+                cityConst = artifacts.cityConst,
             )
         } else opensamguk.engine.hwiha.HwihaDomesticContext()
 

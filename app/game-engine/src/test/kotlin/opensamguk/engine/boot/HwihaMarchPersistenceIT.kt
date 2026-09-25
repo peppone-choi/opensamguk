@@ -85,6 +85,27 @@ class HwihaMarchPersistenceIT {
         return cold(id)
     }
 
+    @Test fun `planned court and stratagem inputs never persist a queue`() {
+        val id = 699
+        seed(id)
+        jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=10", id)
+        var world = cold(id)
+        val before = world.getNationById(1)!!
+        val court = HwihaCourtHandler(world, ChangeRecorder())
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            court.handle(TurnDaemonCommand.HwihaCourtInput("institution-$id", 10, 42,
+                HwihaLegacyCourtInput.INSTITUTION, "{}")).code)
+        assertNull(HwihaQueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
+        val stratagem = HwihaCourtHandler(world, ChangeRecorder())
+        assertEquals(InputRejection.NOT_DELIVERED.name,
+            stratagem.handle(TurnDaemonCommand.HwihaCourtInput("last-stand-$id", 10, 42,
+                HwihaLegacyStratagemInput.LAST_STAND, "{}")).code)
+        assertNull(HwihaQueuedLegacyStratagem.read(world.getGeneralById(10)!!.meta))
+        world = cold(id)
+        assertEquals(before.tech, world.getNationById(1)!!.tech)
+        assertEquals(before.gold, world.getNationById(1)!!.gold)
+    }
+
     @Test fun `direct county action survives flush cold reload and duplicate execution has no second effect`() {
         val id = 690
         val seeded = seed(id)

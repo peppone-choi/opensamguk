@@ -4,6 +4,21 @@ import kotlinx.serialization.json.*
 
 /** Flat enlistment arguments only. Actor identity always comes from the authenticated caller. */
 object HwihaEnlistmentInput {
+    const val RANDOM = "action.randomEnlist"
+    const val TARGET = "action.targetEnlist"
+    val INPUT_IDS = setOf("action.enlist", RANDOM, TARGET)
+
+    fun parse(actorId: Int, inputId: String, rawJson: String?): EnlistmentRequest? {
+        val request = parse(actorId, rawJson) ?: return null
+        return request.takeIf {
+            when (inputId) {
+                "action.enlist" -> true
+                RANDOM -> it.mode == EnlistmentMode.RANDOM
+                TARGET -> it.mode == EnlistmentMode.GENERAL
+                else -> false
+            }
+        }
+    }
     fun parse(actorId: Int, rawJson: String?): EnlistmentRequest? {
         if (actorId <= 0 || rawJson == null) return null
         return try {

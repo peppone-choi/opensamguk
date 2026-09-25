@@ -229,6 +229,8 @@ class ReservedTurnHandler(
         hwihaDomesticContext) }
     private val transferHandler by lazy { opensamguk.engine.hwiha.HwihaTransferHandler(world, recorder,
         hwihaDomesticContext) }
+    private val legacyDirectHandler by lazy { opensamguk.engine.hwiha.HwihaLegacyDirectHandler(world, recorder,
+        hwihaDomesticContext) }
     private val musterHandler by lazy { opensamguk.engine.hwiha.HwihaMusterHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
 
@@ -311,8 +313,27 @@ class ReservedTurnHandler(
                     applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID)
                 },
             )
+            for (enlistId in opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS - HwihaEnlistmentHandler.INPUT_ID) {
+                if (hwihaCatalog[enlistId]?.deliveryState?.hasHandler == true) {
+                    handlers[enlistId] = InputHandler {
+                        applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month, enlistId)
+                    }
+                }
+            }
             for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
-                handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
+                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                    handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
+                }
+            }
+            for (inputId in opensamguk.logic.input.HwihaLegacyCourtInput.INPUT_IDS) {
+                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                    handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
+                }
+            }
+            for (inputId in opensamguk.logic.input.HwihaLegacyStratagemInput.INPUT_IDS) {
+                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                    handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
+                }
             }
             handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId,
@@ -394,6 +415,14 @@ class ReservedTurnHandler(
                 if (hwihaCatalog[transferId]?.deliveryState?.hasHandler == true) {
                     handlers[transferId] = InputHandler {
                         applied = transferHandler.handle(transferId, generalId, reserved.argJson, reserved.requestId,
+                            reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
+                    }
+                }
+            }
+            for (directId in opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS) {
+                if (hwihaCatalog[directId]?.deliveryState?.hasHandler == true) {
+                    handlers[directId] = InputHandler {
+                        applied = legacyDirectHandler.handle(directId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }

@@ -18,14 +18,15 @@ class HwihaEnlistmentHandler(
 ) {
     private val executor = HwihaEnlistmentExecutor(world, recorder)
 
-    fun handle(actorId: Int, argJson: String?, year: Int, month: Int): HwihaTurnOutcome {
-        fun reject(reason: EnlistmentFailure) = HwihaTurnOutcome.Rejected(INPUT_ID, reason.name, reason.message)
+    fun handle(actorId: Int, argJson: String?, year: Int, month: Int,
+        inputId: String = INPUT_ID): HwihaTurnOutcome {
+        fun reject(reason: EnlistmentFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(EnlistmentFailure.WRONG_RULE_PROFILE)
-        val request = HwihaEnlistmentInput.parse(actorId, argJson) ?: return reject(EnlistmentFailure.INVALID_REQUEST)
+        val request = HwihaEnlistmentInput.parse(actorId, inputId, argJson) ?: return reject(EnlistmentFailure.INVALID_REQUEST)
         // Construct and consume RNG only after fresh assessment yields multiple eligible choices.
-        val rng by lazy { rngFactory(world.personalTurnSeed(hiddenSeed, "generalCommand", year, month, actorId, INPUT_ID)) }
+        val rng by lazy { rngFactory(world.personalTurnSeed(hiddenSeed, "generalCommand", year, month, actorId, inputId)) }
         return when (val result = executor.execute(request) { count -> rng.nextInt(0, count) }) {
-            is EnlistmentExecution.Applied -> HwihaTurnOutcome.Applied(INPUT_ID)
+            is EnlistmentExecution.Applied -> HwihaTurnOutcome.Applied(inputId)
             is EnlistmentExecution.Rejected -> reject(result.reason)
         }
     }
