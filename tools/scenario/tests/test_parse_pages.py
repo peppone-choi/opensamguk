@@ -8,7 +8,7 @@ from pathlib import Path
 SCENARIO_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SCENARIO_DIR))
 
-from parse_pages import PageCollectionError, collect_pages, main, parse_officer_page, parse_roster
+from parse_pages import PageCollectionError, _scenario_rows, collect_pages, main, parse_officer_page, parse_roster
 
 
 STATUSES = (
@@ -55,6 +55,7 @@ def officer_html() -> str:
         "  <tr><th><strong>生年</strong></th><th><strong>没年</strong></th></tr>\n"
         "  <tr><td>161年</td><td>229年</td></tr>\n"
         "</table>\n"
+        "<table><tr><th><strong>登場</strong></th></tr><tr><td>184年</td></tr></table>\n"
         "<table>\n"
         "  <tr>\n"
         "    <th><strong>シナリオ</strong></th><th><strong>年齢</strong></th><th><strong>身分</strong></th>\n"
@@ -104,6 +105,7 @@ class ParsePagesTest(unittest.TestCase):
             },
         )
         self.assertEqual([row["status"] for row in record["scenarios"]], list(STATUSES))
+        self.assertEqual(record["appearanceYear"], 184)
         self.assertEqual(record["scenarios"][0], {
             "year_month": "184.1",
             "status": "君主",
@@ -114,6 +116,10 @@ class ParsePagesTest(unittest.TestCase):
         serialized = json.dumps(record, ensure_ascii=False)
         self.assertNotIn("列伝", serialized)
         self.assertNotIn("wiki-authored", serialized)
+
+    def test_office_column_is_not_confused_with_loyalty(self) -> None:
+        rows = _scenario_rows([{"史実": "190年1月 sample|36|一般|襄陽|劉表|仮官|100"}])
+        self.assertEqual(rows[0]["office"], "仮官")
 
     def test_collect_pages_uses_cache_and_fails_closed_for_missing_pages(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
