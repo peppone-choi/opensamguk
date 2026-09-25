@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "xu196.hhs.court-move",
+      "claim": "建安元年의 조정은 許로 천도하고 황제가 曹操의 영에 갔다.",
+      "scenarioEventKey": "xu196.history.court-move",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷009",
+          "section": "帝紀第九 孝獻帝 建安元年",
+          "quote": "庚申，遷都許。己巳，幸曹操營。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "xu196.sgz.grand-general",
+      "claim": "曹操가 천자를 許로 맞은 뒤 천자가 그를 大將軍으로 임명했다고 기록한다.",
+      "scenarioEventKey": "xu196.history.grand-general-grant",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷10",
+          "section": "魏書·荀彧荀攸賈詡傳",
+          "quote": "太祖遂至洛陽，奉迎天子都許。天子拜太祖大將軍",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "xu196.romance.court-move",
+      "claim": "董昭의 許 이동 건의에 황제가 두려워하며 따랐다고 서술한다.",
+      "scenarioEventKey": "xu196.romance.court-move",
+      "grade": "ROMANCE",
+      "sources": [
+        {
+          "book": "三國演義",
+          "volume": "卷014",
+          "section": "第十四回 曹孟德移駕幸許都 呂奉先乘夜襲徐郡",
+          "quote": "帝不敢不從；群臣皆懼操勢，亦莫敢有異議。",
+          "grade": "ROMANCE"
+        }
+      ]
+    },
+    {
+      "id": "xu196.romance.self-appointment",
+      "claim": "조조가 스스로 大將軍 武平侯를 칭했다고 서술한다.",
+      "scenarioEventKey": "xu196.romance.self-appointment",
+      "grade": "ROMANCE",
+      "sources": [
+        {
+          "book": "三國演義",
+          "volume": "卷014",
+          "section": "第十四回 曹孟德移駕幸許都 呂奉先乘夜襲徐郡",
+          "quote": "操自封為大將軍武平侯",
+          "grade": "ROMANCE"
+        }
+      ]
+    }
+  ]
+}
