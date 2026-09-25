@@ -1,5 +1,11 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+import opensamguk.logic.domestic.FieldEconomyAssessment
+
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
@@ -20,16 +26,16 @@ internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
             catch (_: IllegalArgumentException) { return reserved }
         if (deployed.isNotEmpty() || HwihaCorpsOrder.META_KEY in actor.meta) return reserved
         val state = context.projection(world)
-        val available = HwihaFieldRules.assess(HwihaFieldRequest(actorId, HwihaFieldInput.FARM), state)
-            as? HwihaFieldAssessment.Eligible ?: return reserved
+        val available = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
+            as? FieldAssessment.Eligible ?: return reserved
         val city = world.getCityById(available.county.id) ?: return reserved
         val levels = HwihaDomesticCountyEffects.levelsOf(city)
         val stock = try { HwihaCountyWarehouse.read(city.meta, city.id)?.stock }
             catch (_: IllegalArgumentException) { null }
-        val candidates = HwihaFieldInput.INPUT_IDS.toList().mapIndexedNotNull { index, inputId ->
+        val candidates = FieldInput.INPUT_IDS.toList().mapIndexedNotNull { index, inputId ->
             if (catalog[inputId]?.deliveryState?.hasHandler != true) return@mapIndexedNotNull null
-            val economy = HwihaFieldRules.assessEconomy(inputId, available.person, city.id, levels, stock, context.design)
-                as? HwihaFieldEconomyAssessment.Eligible ?: return@mapIndexedNotNull null
+            val economy = FieldRules.assessEconomy(inputId, available.person, city.id, levels, stock, context.design)
+                as? FieldEconomyAssessment.Eligible ?: return@mapIndexedNotNull null
             val after = economy.outcome.levels
             fun gap(before: Int, next: Int, max: Int) = if (max <= 0) 0L else (next - before).coerceAtLeast(0).toLong() * 1000 / max
             val score = gap(levels.population, after.population, levels.populationMax) +

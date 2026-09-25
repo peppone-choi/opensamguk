@@ -14,7 +14,7 @@ import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.domestic.CorpsPolicy
 import opensamguk.logic.domestic.CountyPolicy
 import opensamguk.logic.domestic.DomesticWork
-import opensamguk.logic.input.HwihaFieldInput
+import opensamguk.logic.domestic.FieldInput
 
 /**
  * 휘하 내정 입력의 확정 수치(`data/curated/han/hwiha-domestic-v1.json`, classpath `hwiha/`).
@@ -117,7 +117,7 @@ class DomesticDesign internal constructor(
                     HwihaResources(fixed.long("money"), fixed.long("grain"), fixed.long("iron"), fixed.long("timber"), fixed.long("horses")),
                     row.stat("costStat"), row.int("experience"), row.int("dedication"))
             }
-            require(directActions.map { it.inputId } == HwihaFieldInput.INPUT_IDS.toList()) {
+            require(directActions.map { it.inputId } == FieldInput.INPUT_IDS.toList()) {
                 "every direct domestic action must be designed exactly once, in order"
             }
             val corps = root.getValue("corpsPolicies").jsonArray.map { CorpsPolicy.valueOf(it.jsonObject.text("code")) }

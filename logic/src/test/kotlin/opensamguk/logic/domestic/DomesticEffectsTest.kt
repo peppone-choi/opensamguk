@@ -2,7 +2,7 @@ package opensamguk.logic.domestic
 
 import kotlin.test.*
 import opensamguk.logic.economy.HwihaResources
-import opensamguk.logic.input.HwihaFieldInput
+import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.input.HwihaPhase
 
 class DomesticEffectsTest {
@@ -14,7 +14,7 @@ class DomesticEffectsTest {
     @Test fun `design file confirms policy work and direct action rates`() {
         assertEquals(DomesticDesign.CONFIRMED, design.status)
         assertEquals(DomesticDesign.CONFIRMED, design.directActionStatus)
-        assertEquals(HwihaFieldInput.INPUT_IDS, design.directActions.keys)
+        assertEquals(FieldInput.INPUT_IDS, design.directActions.keys)
         assertEquals(CountyPolicy.entries.toSet(), design.countyPolicies.keys)
         assertEquals(DomesticWork.entries.toSet(), design.works.keys)
         assertEquals(CountyPolicy.AGRICULTURE, design.defaultCountyPolicy)
@@ -32,15 +32,15 @@ class DomesticEffectsTest {
 
     @Test fun `direct actions use one phase policy magnitude and cost`() {
         val actor = seat(50)
-        for ((inputId, policy) in listOf(HwihaFieldInput.FARM to CountyPolicy.AGRICULTURE,
-            HwihaFieldInput.COMMERCE to CountyPolicy.COMMERCE, HwihaFieldInput.SETTLE to CountyPolicy.RELIEF)) {
+        for ((inputId, policy) in listOf(FieldInput.FARM to CountyPolicy.AGRICULTURE,
+            FieldInput.COMMERCE to CountyPolicy.COMMERCE, FieldInput.SETTLE to CountyPolicy.RELIEF)) {
             assertEquals(DomesticEffects.applyPolicy(design, policy, levels, actor),
                 DomesticEffects.applyDirect(design, inputId, levels, actor), inputId)
         }
-        val fortify = DomesticEffects.applyDirect(design, HwihaFieldInput.FORTIFY, levels, actor)
+        val fortify = DomesticEffects.applyDirect(design, FieldInput.FORTIFY, levels, actor)
         assertEquals(950, fortify.levels.defence)
         assertEquals(HwihaResources(money = 5_000, timber = 250), fortify.debit)
-        val wall = DomesticEffects.applyDirect(design, HwihaFieldInput.REPAIR_WALL, levels, actor)
+        val wall = DomesticEffects.applyDirect(design, FieldInput.REPAIR_WALL, levels, actor)
         assertEquals(950, wall.levels.wall)
         assertEquals(fortify.debit, wall.debit)
     }

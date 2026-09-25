@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.domestic.FieldInput
+
 import opensamguk.logic.domestic.DomesticInput
 
 import opensamguk.engine.hwiha.HwihaTurnOutcome
@@ -353,7 +355,7 @@ class ReservedTurnHandler(
                         reserved.reservationOwnerUserId)
                 }
             }
-            for (fieldId in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS) {
+            for (fieldId in opensamguk.logic.domestic.FieldInput.INPUT_IDS) {
                 if (hwihaCatalog[fieldId]?.deliveryState?.hasHandler == true) {
                     handlers[fieldId] = InputHandler {
                         applied = fieldHandler.handle(fieldId, generalId, reserved.argJson, reserved.requestId,

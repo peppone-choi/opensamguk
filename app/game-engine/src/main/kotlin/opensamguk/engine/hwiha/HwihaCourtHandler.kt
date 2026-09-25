@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.FieldInput
+
 import opensamguk.logic.domestic.DomesticInput
 
 import opensamguk.common.wire.CommandLifecycleResult
@@ -61,7 +63,7 @@ class HwihaCourtHandler(
                 channelHandlers[stratagemId] = InputHandler { outcome = handleKnown(command) }
             }
         }
-        for (fieldId in HwihaFieldInput.INPUT_IDS) {
+        for (fieldId in FieldInput.INPUT_IDS) {
             channelHandlers[fieldId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
         }

@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldFailure
+
 import opensamguk.logic.domestic.DomesticInput
 
 import kotlin.test.Test
@@ -127,9 +130,9 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `every direct field action is UI ready and has a handler`() {
-        for (id in HwihaFieldInput.INPUT_IDS) {
+        for (id in FieldInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
-            assertEquals(HwihaFieldFailure.entries.map { it.name }.toSet(),
+            assertEquals(FieldFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))

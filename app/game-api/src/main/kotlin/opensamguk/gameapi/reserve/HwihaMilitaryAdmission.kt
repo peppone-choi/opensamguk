@@ -1,5 +1,10 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+
 import opensamguk.gameapi.precheck.DeployReadForbidden
 import opensamguk.gameapi.precheck.HwihaDeployPrecheckService
 import opensamguk.gameapi.read.HwihaDomesticForbidden
@@ -32,10 +37,10 @@ class HwihaMilitaryAdmission(private val reader: HwihaDomesticReader,
             val state = snapshot.state ?: deny(
                 if (snapshot.failure == "WRONG_RULE_PROFILE") HwihaMilitaryFailure.WRONG_RULE_PROFILE.name
                 else HwihaMilitaryFailure.STATE_UNAVAILABLE.name, "현재 군사 상태를 확인할 수 없습니다.")
-            val geography = HwihaFieldRules.assess(HwihaFieldRequest(actorId, HwihaFieldInput.FARM), state)
-            if (geography is HwihaFieldAssessment.Rejected)
+            val geography = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
+            if (geography is FieldAssessment.Rejected)
                 deny(geography.reason.name, geography.reason.message)
-            val county = (geography as HwihaFieldAssessment.Eligible).county
+            val county = (geography as FieldAssessment.Eligible).county
             val levels = snapshot.countyLevels[county.id]
             val check = HwihaMilitaryRules.assessCity(request, state, levels?.population,
                 levels?.populationMax, snapshot.cityMilitaryTroops[county.id],

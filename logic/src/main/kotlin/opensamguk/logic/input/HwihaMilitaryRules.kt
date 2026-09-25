@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+
 import opensamguk.logic.domestic.DomesticProjection
 
 import opensamguk.logic.economy.HwihaResources
@@ -45,10 +50,10 @@ object HwihaMilitaryRules {
         if (request.inputId == HwihaMilitaryInput.MUSTER || request.inputId !in HwihaMilitaryInput.INPUT_IDS)
             return reject(HwihaMilitaryFailure.INVALID_INPUT)
         // The shared field geography rule owns county lookup; its input vocabulary is domestic-only.
-        val shared = HwihaFieldRules.assess(HwihaFieldRequest(request.actorId, HwihaFieldInput.FARM), projection)
-        if (shared is HwihaFieldAssessment.Rejected)
+        val shared = FieldRules.assess(FieldRequest(request.actorId, FieldInput.FARM), projection)
+        if (shared is FieldAssessment.Rejected)
             return reject(HwihaMilitaryFailure.valueOf(shared.reason.name))
-        val county = (shared as HwihaFieldAssessment.Eligible).county
+        val county = (shared as FieldAssessment.Eligible).county
         if (county.id in projection.activeSiegeCountyIds) return reject(HwihaMilitaryFailure.BESIEGED)
         if (population == null || populationMax == null || troops == null || condition == null ||
             population < 0 || populationMax < population || troops < 0)

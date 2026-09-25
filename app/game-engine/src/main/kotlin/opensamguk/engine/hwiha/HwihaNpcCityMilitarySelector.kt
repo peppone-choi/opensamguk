@@ -1,5 +1,10 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.economy.HwihaCountyWarehouse
@@ -21,8 +26,8 @@ internal class HwihaNpcCityMilitarySelector(
             catch (_: IllegalArgumentException) { return reserved }
         if (deployed.isNotEmpty()) return reserved
         val projection = context.projection(world)
-        val geographic = HwihaFieldRules.assess(HwihaFieldRequest(actorId, HwihaFieldInput.FARM), projection)
-            as? HwihaFieldAssessment.Eligible ?: return reserved
+        val geographic = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), projection)
+            as? FieldAssessment.Eligible ?: return reserved
         val city = world.getCityById(geographic.county.id) ?: return reserved
         val state = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
             catch (_: IllegalArgumentException) { return reserved }

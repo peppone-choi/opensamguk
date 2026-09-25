@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.FieldInput
+
 import opensamguk.logic.domestic.PlacementState
 import opensamguk.logic.domestic.PlacementMarch
 import opensamguk.logic.domestic.PolicyApplication
@@ -83,7 +85,7 @@ class HwihaDomesticEngineTest {
 
     @Test fun `direct county actions are routed only through personal reservations`() {
         val world = world(); val recorder = ChangeRecorder()
-        for (inputId in HwihaFieldInput.INPUT_IDS) {
+        for (inputId in FieldInput.INPUT_IDS) {
             val result = submit(world, recorder, inputId, "{}")
             assertEquals("INVALID_INPUT_CHANNEL", result.code, inputId)
         }
