@@ -15,12 +15,14 @@
 |---|---:|---:|
 | 현재 성 그림에 비해 좁은 구역 | 415 | 0 |
 | 최대 7×7 증축 공간이 없는 성 | 원래 804곳이 49칸 미만 | 0 |
-| 완전 포위 구역 | 41 | 0 |
-| 막다른 전략 거점 | 19 | 0 |
+| 省 기준 완전 포위 구역 | 41 | 0 |
+| 관할 단위 완전 포위 구역 | 미측정 | 20 (미해결) |
+| 전체 인접 그래프의 막다른 전략 거점 | 19 | 0 |
+| 초기 개통 도로의 막다른 전략 거점 | 미측정 | 16 (미해결) |
 | 가치 없는 빈 막다른 구역 | 25 | 0 |
 | 꼭짓점으로만 닿는 구역 쌍 | 159 | 135 |
 
-막다른 일반 성 구역 6곳(주애·우산국·주호·이주·유구·신소도)은 해안 또는 섬의 기존 성·항로·방어 가치를 `province-dead-end-dispositions-v1.json`에 기록했다. 근거 없는 바닷길은 만들지 않았다. 국소 경계 이전 15칸, 빈 막다른 구역 합침 25곳이다. 치소·거점 이전 253건은 `province-relocations-map4-v1.json`에 등급·전후 좌표·거리·전략 이유·이웃 변화를 기록했다(수 26·진 16·관 7·성 204; 기존 격자 거리 중앙값 1.41, 최댓값 19.92칸). 이동 그래프에서 길목이 새로 된 곳은 11곳이다. 현재도 이웃 쌍의 길목이 아닌 수·진·관은 각각 29·23·8곳이다. 길목 여부는 참고 측정이며 금지 게이트는 아니다.
+막다른 일반 성 구역 6곳(주애·우산국·주호·이주·유구·신소도)은 해안 또는 섬의 기존 성·항로·방어 가치를 `province-dead-end-dispositions-v1.json`에 기록했다. 근거 없는 바닷길은 만들지 않았다. 국소 경계 이전 15칸, 빈 막다른 구역 합침 25곳이다. 치소·거점 이전 253건은 `province-relocations-map4-v1.json`에 등급·전후 좌표·거리·전략 이유·이웃 변화를 기록했다(수 26·진 16·관 7·성 204; 기존 격자 거리 중앙값 1.41, 최댓값 19.92칸). 이동 그래프에서 길목이 새로 된 곳은 11곳이다. 현재도 이웃 쌍의 길목이 아닌 수·진·관은 각각 29·23·8곳이다. 길목 여부는 참고 측정이며 금지 게이트는 아니다. 관할 단위와 초기 개통 도로의 미해결 건은 `audit_province_clearance.py --check` 실패로 드러나며, 이 상태에서는 PR을 머지할 수 없다.
 
 생성 규칙은 국소 절단의 7×7 중심, 공여 구역 연결성, 외부 탈출 경계를 요구한다. `provinceClearance.baseline.test.ts`는 Python 감사와 TypeScript 런타임 여유 칸을 전체 구역별로 대조한다. 좁은 띠·포위·막다른 거점 적색 입력도 검사한다.
 
@@ -43,7 +45,7 @@
 
 ## 검증 현황
 
-- 통과: 전체 구역 여유 칸 감사, 도로 단위 검사, 새 번들 재생성과 해시 대조, web/shared·web/game 타입 검사, JVM 컴파일.
+- 통과: 전체 구역 여유 칸 측정, 도로 단위 검사, 새 번들 재생성과 해시 대조, web/shared·web/game 타입 검사, JVM 컴파일. `audit_province_clearance.py --check`는 관할 포위 20곳과 초기 개통 도로 막다른 거점 16곳으로 실패한다.
 - 통과: web/shared Vitest 141건, web/game Vitest 779건, web/gateway Vitest 263건과 세 패키지 타입 검사. 지도 Python 대상 테스트 67건(의도된 skip 1건). 대상 game-api JVM 테스트 93건, 대상 infra JVM 테스트 15건, V2 운송 회귀 테스트.
 - 통과: `HanWorldArtifactsResolverTest`, `HanRuntimeConstantsIntegrityTest`, `MapStrategicTopologyControllerTest`, `HwihaDeployPrecheckServiceTest`, `HwihaRoadFortStateTest`, `HwihaDomesticInputTest` 대상 JVM 테스트.
 - 통과: `audit_territory_disconnections.py --check`가 재귀 단계 검사 뒤 이탈 조각 124건 모두에 기존 검토 판정을 이어 붙였다. 새 판에서 새로 생긴 미심의 조각은 0건이다. 판정은 외부 세력 45·격자 결함 47·역사적 비지 8·부모 귀속 오류 8·물길 분리 16건이다.
