@@ -43,7 +43,7 @@ object CourtSettlementCodec {
     private fun Any?.readEvent(): CourtSettlementEvent {
         val r = record(setOf("requestId", "turn", "from", "to"))
         return CourtSettlementEvent(r.text("requestId"), r.long("turn"),
-            r.optionalText("from")?.let { enumValueOf(it) }, enumValueOf(r.text("to")))
+            r.optionalText("from")?.let { enumValueOf<CourtSettlementStance>(it) }, enumValueOf(r.text("to")))
     }
 
     private fun Any?.record(fields: Set<String>): Map<*, *> {
