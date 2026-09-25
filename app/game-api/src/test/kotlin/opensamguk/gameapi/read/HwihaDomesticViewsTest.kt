@@ -1,5 +1,6 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
@@ -51,7 +52,7 @@ class HwihaDomesticViewsTest {
         assertTrue(view.counties.all { it.settable && it.effective!!.source == "DEFAULT" && it.effective!!.policy == "AGRICULTURE" })
         assertEquals(listOf("甲郡"), view.commanderies.map { it.commanderyId })
         assertEquals(listOf(7, 8), view.commanderies.single().countyIds)
-        assertEquals(HwihaDomesticDesign.CONFIRMED, view.provisional)
+        assertEquals(DomesticDesign.CONFIRMED, view.provisional)
         assertEquals(6, view.countyOptions.size); assertEquals(5, view.corpsOptions.size)
         // A human seat holder sees only its own county; a stranger sees none.
         val assigned = mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d1", 10, 1, 8).toMetaValue())
@@ -62,7 +63,7 @@ class HwihaDomesticViewsTest {
     }
 
     @Test fun `works show startable costs and active progress with stop reasons`() {
-        val active = HwihaDomesticEffects.newWork(HwihaDomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
+        val active = HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
             .copy(progress = 150, charged = HwihaResources(money = 10_000, timber = 500), stopReason = HwihaDomesticEffects.INSUFFICIENT_STOCK)
         val counties = listOf(DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse + (HwihaCountyWorks.META_KEY to
             HwihaCountyWorks(active, listOf(HwihaCompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())),
@@ -82,7 +83,7 @@ class HwihaDomesticViewsTest {
         assertEquals(DomesticFailure.WAREHOUSE_NOT_READY.name, c8.startable.first().blocked!!.code)
         assertEquals(listOf("IRRIGATION", "MILITARY_FARM", "FORTIFICATION", "ROAD", "POST_STATION", "WAREHOUSE",
             "WATCHTOWER_BEACON", "BARRACKS", "MARKET_WATERWAY"), c8.startable.map { it.work })
-        assertEquals(HwihaDomesticDesign.CANON.works.getValue(DomesticWork.FORTIFICATION).cost.timber,
+        assertEquals(DomesticDesign.CANON.works.getValue(DomesticWork.FORTIFICATION).cost.timber,
             c8.startable.single { it.work == "FORTIFICATION" }.cost.timber)
     }
 

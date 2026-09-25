@@ -1,5 +1,6 @@
 package opensamguk.gameapi.precheck
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.gameapi.read.HwihaDomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
@@ -13,7 +14,7 @@ data class HwihaFieldOptions(val inputId: String, val available: Boolean,
 @Service
 class HwihaFieldOptionsService(private val reader: HwihaDomesticReader,
     private val catalog: HwihaInputCatalog = HwihaInputCatalog.load(),
-    private val design: HwihaDomesticDesign = HwihaDomesticDesign.CANON) {
+    private val design: DomesticDesign = DomesticDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(inputId: String, actorId: Int, ownerUserId: Long): HwihaFieldOptions {
         reader.requireOwner(actorId, ownerUserId)
@@ -24,7 +25,7 @@ class HwihaFieldOptionsService(private val reader: HwihaDomesticReader,
         return when (val check = HwihaFieldRules.assess(HwihaFieldRequest(actorId, inputId), state)) {
             is HwihaFieldAssessment.Rejected -> blocked(inputId, check.reason)
             is HwihaFieldAssessment.Eligible -> {
-                if (design.directActionStatus != HwihaDomesticDesign.CONFIRMED ||
+                if (design.directActionStatus != DomesticDesign.CONFIRMED ||
                     catalog[inputId]?.deliveryState?.hasHandler != true)
                     HwihaFieldOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
                 else when (val economy = HwihaFieldRules.assessEconomy(inputId, check.person, check.county.id,
