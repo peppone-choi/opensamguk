@@ -3,7 +3,7 @@ package opensamguk.engine.boot
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.read.LiveCityOwnership
 import opensamguk.gameapi.read.MapAdministrativeOwnership
-import opensamguk.engine.world.HanSpatialSupplyProvider
+import opensamguk.engine.world.SpatialSupplyProvider
 import opensamguk.engine.world.SpatialSupplyCity
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
@@ -136,7 +136,7 @@ class HanExpandedCityCommandRoundTripIT {
         val bundle = artifacts.artifacts(assertNotNull(baseline.state.hanWorldVariant))
         val mapper = ObjectMapper()
         val apiOwnership = MapAdministrativeOwnership(mapper, "unused", "unused", "unused")
-        val supplyProvider = HanSpatialSupplyProvider(mapper, "unused", "unused")
+        val supplyProvider = SpatialSupplyProvider(mapper, "unused", "unused")
         val coords = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
             .toString(Charsets.UTF_8)).cities.associateBy { it.id }
         val provinces = mapper.readTree(bundle.artifactBytes("data/map/han-tiles.json")).path("provinceRecords")

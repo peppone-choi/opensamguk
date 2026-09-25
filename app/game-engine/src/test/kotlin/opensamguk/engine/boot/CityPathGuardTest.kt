@@ -3,7 +3,7 @@ package opensamguk.engine.boot
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ReservedTurnHandler
-import opensamguk.engine.world.HanSpatialSupplyProvider
+import opensamguk.engine.world.SpatialSupplyProvider
 import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.seed.HanWorldArtifactsResolver
@@ -60,7 +60,7 @@ class CityPathGuardTest {
         val classes = ExpandedCityCommandCases.keys.map { registry.resolve(it).javaClass } + listOf(
             CommandRegistry::class.java, ReservedTurnHandler::class.java, DatabaseHooks::class.java,
             JdbcFlushExecutor::class.java, WorldSnapshotLoader::class.java,
-            MapAdministrativeOwnership::class.java, HanSpatialSupplyProvider::class.java,
+            MapAdministrativeOwnership::class.java, SpatialSupplyProvider::class.java,
             HanStrategicRouteProjection::class.java, CalcCityDistance::class.java,
             HanStrategicTopologyJson::class.java,
         )

@@ -55,7 +55,7 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.util.numberFormat
 import opensamguk.engine.world.WorldEventContextFactory
-import opensamguk.engine.world.HanSpatialSupplyProvider
+import opensamguk.engine.world.SpatialSupplyProvider
 import opensamguk.engine.world.SpatialSupplyCity
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
@@ -217,7 +217,7 @@ class DaemonLoopConfig {
         commandInboxRepository: CommandInboxRepository,
         commandOutboxRelay: CommandOutboxRelay,
         daemonPauseGate: DaemonPauseGate,
-        hanSpatialSupplyProvider: HanSpatialSupplyProvider,
+        spatialSupplyProvider: SpatialSupplyProvider,
         // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
         v2CityLedgerProvider: ObjectProvider<opensamguk.engine.v2.V2CityLedgerStore>,
@@ -267,7 +267,7 @@ class DaemonLoopConfig {
             scenarioCode = scenario,
             liveCityNations = { world.listCities().map { it.id to it.nationId } },
             loadNetwork = { mapName, scenarioCode, liveCities ->
-                val network = hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
+                val network = spatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
                 if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                     val artifacts = requireNotNull(supplyArtifacts) { "HWIHA military supply requires pinned Han artifacts" }
                     opensamguk.engine.campaign.MilitaryPresenceProvider(world, artifacts.projection.topology,

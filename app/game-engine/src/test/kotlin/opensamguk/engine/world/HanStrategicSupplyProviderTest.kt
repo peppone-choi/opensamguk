@@ -12,7 +12,7 @@ class HanStrategicSupplyProviderTest {
     private val mapper = ObjectMapper()
     private val projection by lazy { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
     private val provider by lazy {
-        HanSpatialSupplyProvider(mapper, "../../data/map/han-tiles.json",
+        SpatialSupplyProvider(mapper, "../../data/map/han-tiles.json",
             "../../data/map/han-scenario-province-ownership-v1.json")
     }
     private fun cities(owners: Map<Int, Int> = emptyMap()) =
@@ -23,9 +23,9 @@ class HanStrategicSupplyProviderTest {
 
     @Test fun `historical supply uses frozen ownership links and policies without runtime files`() {
         val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
-        val policy = HanSupplyDisconnectionPolicyLoader(mapper, "/missing/legacy", "/missing/tiles", "/missing/map", "/missing/source",
+        val policy = SupplyDisconnectionPolicyLoader(mapper, "/missing/legacy", "/missing/tiles", "/missing/map", "/missing/source",
             "/missing/v3policy", "/missing/v3map")
-        val historicalProvider = HanSpatialSupplyProvider(mapper, "/missing/tiles", "/missing/owners", policy,
+        val historicalProvider = SpatialSupplyProvider(mapper, "/missing/tiles", "/missing/owners", policy,
             CommanderySupplyLinkLoader(mapper, "/missing/links"))
         for (variant in HanWorldVariant.entries) {
             val bundle = artifacts.artifacts(variant)
