@@ -302,7 +302,12 @@ data class TurnWorldState(
     /** Temporary adapter for input handlers until the retired profile type is removed. */
     val ruleProfile: opensamguk.logic.input.RuleProfile
         get() {
-            opensamguk.logic.world.WorldFormat.require(config, meta)
+            // The loader validates the full config/meta tree once. This getter runs for every
+            // general and must only check the already validated format marker.
+            require(config[opensamguk.logic.world.WorldFormat.CONFIG_KEY] ==
+                opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name) {
+                "unsupported worldFormat in runtime world config"
+            }
             return opensamguk.logic.input.RuleProfile.HWIHA
         }
 }

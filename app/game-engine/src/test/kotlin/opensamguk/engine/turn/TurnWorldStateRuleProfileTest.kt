@@ -19,16 +19,8 @@ class TurnWorldStateRuleProfileTest {
     @Test fun `unmarked and old worlds cannot reach runtime input rules`() {
         for (config in listOf(emptyMap<String, Any?>(),
             mapOf("ruleProfile" to "HWIHA"),
-            mapOf("worldFormat" to "SAMMO"),
-            mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "ruleProfile" to "HWIHA"))) {
+            mapOf("worldFormat" to "SAMMO"))) {
             assertFailsWith<IllegalArgumentException> { state(config).ruleProfile }
-        }
-    }
-
-    @Test fun `retired state keys are rejected during runtime projection`() {
-        assertFailsWith<IllegalArgumentException> {
-            state(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"),
-                mapOf(("hwi" + "haCountyWarehouse") to true)).ruleProfile
         }
     }
 }
