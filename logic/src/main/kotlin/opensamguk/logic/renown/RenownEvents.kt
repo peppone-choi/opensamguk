@@ -192,7 +192,7 @@ object RenownEvents {
 
 /**
  * 다른 흐름(조우 판정·縣 점령 — hwiha-s3-core)이 부르는 월단평 훅. **순수 함수**다: 장수 meta 를 받아
- * 바뀐 meta 만 돌려준다. 저장·로그는 호출부 몫이다(엔진 어댑터 `HwihaRenownEventRecorder`).
+ * 바뀐 meta 만 돌려준다. 저장·로그는 호출부 몫이다(엔진 어댑터 `RenownEventRecorder`).
  *
  * 결과는 장수 id 오름차순이다 — 같은 입력이 같은 순서로 쓰여야 리플레이가 갈라지지 않는다.
  * 같은 달 같은 종류가 이미 있는 장수는 결과에 없다([RenownEvents.recordRenownEvent]).

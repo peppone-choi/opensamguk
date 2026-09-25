@@ -20,13 +20,13 @@ import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicTopologySnapshot
 import opensamguk.logic.world.CityConstVariant
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 
 /**
  * 휘하 내정 입력이 읽는 고정 자료. [geography] 가 없으면 郡 방침과 향당 보너스를 판정할 수 없고(STATE_UNAVAILABLE·보너스 없음),
  * [topology]·[metrics] 가 없으면 배치 부임 행군을 하지 않는다. [merit] 은 치적 사건을 받는 자리(기본은 버림).
  */
-class HwihaDomesticContext(
+class DomesticContext(
     val design: DomesticDesign = DomesticDesign.CANON,
     val geography: CountyGeography? = null,
     val nativeCounties: NativeCountyLedger? = null,
@@ -35,7 +35,7 @@ class HwihaDomesticContext(
     val merit: GovernanceMeritSink = GovernanceMeritSink.NONE,
     val cityConst: CityConstVariant? = null,
 ) {
-    private val supportedCrewTypeIds by lazy { HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet() }
+    private val supportedCrewTypeIds by lazy { UnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet() }
     /** 현재 월드 상태의 공유 판정 투영(API 와 같은 규칙). */
     fun projection(world: InMemoryTurnWorld): DomesticProjection {
         val positions = world.generalPositionSnapshot()

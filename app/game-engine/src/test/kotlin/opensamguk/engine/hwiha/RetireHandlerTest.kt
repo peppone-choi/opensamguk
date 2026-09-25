@@ -5,8 +5,8 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.InputRejection
 
-class HwihaRetireHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class RetireHandlerTest {
+    private val fixture = CampaignWorldFixture()
 
     @Test fun `retirement stays unavailable until succession state is complete`() {
         val route = fixture.route()
@@ -17,9 +17,9 @@ class HwihaRetireHandlerTest {
         world.createRetainer(Retainer(11, actor.id, "EXISTING", heir.id, heir.name, "guest"))
         world.createRetainer(Retainer(12, actor.id, "EXISTING", follower.id, follower.name, "guest"))
         val recorder = ChangeRecorder()
-        val handler = HwihaRetireHandler(world, recorder, HwihaDomesticContext())
+        val handler = RetireHandler(world, recorder, DomesticContext())
         val args = """{"successorGeneralId":942}"""
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(actor.id, args, "retire-941", 42))
+        val rejected = assertIs<TurnOutcome.Rejected>(handler.handle(actor.id, args, "retire-941", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
         assertEquals(actor, world.getGeneralById(actor.id))
         assertEquals(heir, world.getGeneralById(heir.id))
@@ -32,8 +32,8 @@ class HwihaRetireHandlerTest {
         val actor = fixture.person(951, 1, route.startCity, userId = "42", lord = true)
         val heir = fixture.person(952, 1, route.startCity, lord = false)
         val world = fixture.world(listOf(actor to route.start, heir to route.start))
-        val result = assertIs<HwihaTurnOutcome.Rejected>(HwihaRetireHandler(world, ChangeRecorder(),
-            HwihaDomesticContext()).handle(actor.id, """{"successorGeneralId":952}""", "retire-951", 42))
+        val result = assertIs<TurnOutcome.Rejected>(RetireHandler(world, ChangeRecorder(),
+            DomesticContext()).handle(actor.id, """{"successorGeneralId":952}""", "retire-951", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, result.code)
         assertEquals(actor, world.getGeneralById(actor.id))
     }
@@ -44,8 +44,8 @@ class HwihaRetireHandlerTest {
         val heir = fixture.person(962, 1, route.startCity, lord = false)
         val world = fixture.world(listOf(actor to route.start, heir to route.start),
             retainers = listOf(Retainer(13, actor.id, "EXISTING", heir.id, heir.name, "guest")))
-        val chosen = HwihaNpcRetireSelector(HwihaDomesticContext()).select(world, actor.id,
-            HwihaCampaignWorldFixture.NO_INPUT)
-        assertEquals(HwihaCampaignWorldFixture.NO_INPUT, chosen)
+        val chosen = NpcRetireSelector(DomesticContext()).select(world, actor.id,
+            CampaignWorldFixture.NO_INPUT)
+        assertEquals(CampaignWorldFixture.NO_INPUT, chosen)
     }
 }

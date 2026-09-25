@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isOwnedNationVisual } from './nationVisual';
 import { loadProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
-import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './HanMapCanvas';
+import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
-import type { HanTiles, IsoCityOverlay, IsoMarkerPosition } from './HanMapCanvas';
+import type { WorldTiles, IsoCityOverlay, IsoMarkerPosition } from './WorldMapCanvas';
 import { cityBadgesById } from './worldCityBadges';
 
 export const WORLD_MAP_CODE = 'han-world-v3';
@@ -23,7 +23,7 @@ export interface WorldMapPreview {
   commanderyControl?: { commanderyId: string; nationId: number }[];
 }
 
-export interface HwihaCommanderyCell {
+export interface CommanderyCell {
   readonly no: number;
   readonly name: string;
   readonly col: number;
@@ -31,7 +31,7 @@ export interface HwihaCommanderyCell {
   readonly focusCityId: number | null;
 }
 
-export interface HwihaLegendEntry {
+export interface LegendEntry {
   readonly nationId: number;
   readonly name: string;
   readonly color: string;
@@ -46,14 +46,14 @@ export type WorldMapState<P extends WorldMapPreview> =
     readonly kind: 'ready';
     readonly preview: P;
     readonly refreshError?: string;
-    readonly tiles: HanTiles;
+    readonly tiles: WorldTiles;
     readonly tilesSha256: string | undefined;
     readonly provinceMap: ProvinceIdentityMap | null;
     readonly provinceCenter: (provinceId: string) => { col: number; row: number } | undefined;
     readonly cities: readonly IsoCityOverlay[];
     readonly markerPositions: ReadonlyMap<number, IsoMarkerPosition>;
-    readonly commanderies: readonly HwihaCommanderyCell[];
-    readonly legend: readonly HwihaLegendEntry[];
+    readonly commanderies: readonly CommanderyCell[];
+    readonly legend: readonly LegendEntry[];
     readonly sourceSize: { width: number; height: number };
     readonly administrativeOwnership: {
       provinceOccupancy: NonNullable<WorldMapPreview['provinceOccupancy']>;
@@ -97,7 +97,7 @@ export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesBy
 */
 export function buildMarkerPositions(
   cities: readonly IsoCityOverlay[],
-  tiles: HanTiles,
+  tiles: WorldTiles,
   sourceSize: { width: number; height: number },
   provinceMap: ProvinceIdentityMap | null = null,
 ): Map<number, IsoMarkerPosition> {
@@ -108,7 +108,7 @@ export function buildMarkerPositions(
 * 지형의 juns → 군국 표. 초점 城 은 미리보기에서 **이름이 같은 군국의 치소**를 먼저, 없으면 그
 * 군국의 아무 城 이나 id 가 가장 작은 것을 고른다. 城 없는 군국은 초점이 null 이다 — 지어내지 않는다.
 */
-export function buildCommanderies(tiles: HanTiles, preview: WorldMapPreview): HwihaCommanderyCell[] {
+export function buildCommanderies(tiles: WorldTiles, preview: WorldMapPreview): CommanderyCell[] {
   const byCommandery = new Map<string, { seat: number | null; first: number }>();
   for (const city of [...preview.cities].sort((a, b) => a.id - b.id)) {
     const name = city.commanderyName;
@@ -129,7 +129,7 @@ export function buildCommanderies(tiles: HanTiles, preview: WorldMapPreview): Hw
 * 구역의 무게중심은 밖에 떨어질 수 있다. 처음 물을 때 한 번 훑고 담아 둔다.
 */
 export function buildProvinceCenters(
-  tiles: HanTiles,
+  tiles: WorldTiles,
   provinceMap: ProvinceIdentityMap | null,
 ): (provinceId: string) => { col: number; row: number } | undefined {
   const records = tiles.provinceRecords ?? [];
@@ -171,7 +171,7 @@ export function buildProvinceCenters(
   };
 }
 
-export function buildLegend(preview: WorldMapPreview): HwihaLegendEntry[] {
+export function buildLegend(preview: WorldMapPreview): LegendEntry[] {
   const counts = new Map<number, number>();
   for (const city of preview.cities) counts.set(city.nationId, (counts.get(city.nationId) ?? 0) + 1);
   return preview.nations
@@ -196,12 +196,12 @@ export function useWorldMap<P extends WorldMapPreview>({
   loadPreview, mapData, refreshKey = 0, serverId, cacheScope, works = null, sieges = null,
 }: WorldMapOptions<P>): WorldMapState<P> {
   const terrainCache = useRef<{ base: string; scope: string | undefined; serverId: string | undefined;
-    tiles: HanTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null } | null>(null);
+    tiles: WorldTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null } | null>(null);
   const [raw, setRaw] = useState<
     | { kind: 'loading' }
     | { kind: 'error'; message: string }
     | { kind: 'unsupported'; mapCode: string }
-    | { kind: 'loaded'; preview: P; tiles: HanTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null; refreshError?: string }
+    | { kind: 'loaded'; preview: P; tiles: WorldTiles; hash: string | null; provinceMap: ProvinceIdentityMap | null; refreshError?: string }
   >({ kind: 'loading' });
 
   useEffect(() => {
@@ -224,7 +224,7 @@ export function useWorldMap<P extends WorldMapPreview>({
       const response = await fetch(terrainUrl, { signal: controller.signal });
       if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
       const hash = parseTerrainEtagHash(response.headers.get('etag'));
-      const tiles = (await response.json()) as HanTiles;
+      const tiles = (await response.json()) as WorldTiles;
       // Province identity is loaded before the optional Ju index. A missing PNG only disables overlays.
       const provinceMap = await loadProvinceIdentityMap(worldProvincesUrl(serverId)).catch(() => null);
       if (controller.signal.aborted) return;

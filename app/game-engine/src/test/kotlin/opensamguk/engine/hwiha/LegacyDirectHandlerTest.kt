@@ -2,16 +2,16 @@ package opensamguk.engine.hwiha
 
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.logic.content.ItemCatalogJson
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaLegacyDirectHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
-    private fun context() = HwihaDomesticContext(cityConst = fixture.bundle.cityConst)
+class LegacyDirectHandlerTest {
+    private val fixture = CampaignWorldFixture()
+    private fun context() = DomesticContext(cityConst = fixture.bundle.cityConst)
     private fun stock(id: Int, money: Long = 0, grain: Long = 0) = mapOf(
         CountyWarehouse.META_KEY to CountyWarehouse(id, 0,
             Resources(money = money, grain = grain)).toMetaValue())
@@ -20,12 +20,12 @@ class HwihaLegacyDirectHandlerTest {
         val route = fixture.route()
         val actor = fixture.person(4011, 1, route.startCity, userId = "42")
         val unit = fixture.unit(71, actor.id, 1000)
-        val nextType = HwihaUnitProfilesJson.loadDefault().profiles.first { it.crewTypeId != unit.crewTypeId }.crewTypeId
+        val nextType = UnitProfilesJson.loadDefault().profiles.first { it.crewTypeId != unit.crewTypeId }.crewTypeId
         val world = fixture.world(listOf(actor to route.start), bugoks = listOf(unit),
             cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
-        val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
+        val handler = LegacyDirectHandler(world, ChangeRecorder(), context())
         val json = """{"bugokId":${unit.id},"crewTypeId":$nextType}"""
-        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(DirectInput.CONVERT,
+        val first = assertIs<TurnOutcome.Applied>(handler.handle(DirectInput.CONVERT,
             actor.id, json, "convert-4011", 42))
         assertEquals(nextType, world.getBugokById(unit.id)!!.crewTypeId)
         assertEquals(40, world.getBugokById(unit.id)!!.training)
@@ -38,7 +38,7 @@ class HwihaLegacyDirectHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id, grain = 300)) else city
         })
-        assertIs<HwihaTurnOutcome.Applied>(HwihaLegacyDirectHandler(world, ChangeRecorder(), context()).handle(
+        assertIs<TurnOutcome.Applied>(LegacyDirectHandler(world, ChangeRecorder(), context()).handle(
             DirectInput.GRAIN, actor.id, """{"side":"BUY","amount":1}""", "grain-4021", 42))
         assertEquals(0, world.getGeneralById(actor.id)!!.gold)
         assertEquals(300, world.getGeneralById(actor.id)!!.rice)
@@ -54,8 +54,8 @@ class HwihaLegacyDirectHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id)) else city
         })
-        val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(DirectInput.EQUIPMENT, actor.id,
+        val handler = LegacyDirectHandler(world, ChangeRecorder(), context())
+        val rejected = assertIs<TurnOutcome.Rejected>(handler.handle(DirectInput.EQUIPMENT, actor.id,
             """{"treasureId":${card.sourceRowIndex},"side":"BUY"}""", "buy-4031", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
         assertEquals(emptySet(), TreasureInventory.read(world.getGeneralById(actor.id)!!.meta))
@@ -73,11 +73,11 @@ class HwihaLegacyDirectHandlerTest {
             targetId -> city.copy(nationId = 1, meta = city.meta + stock(city.id))
             else -> city
         } })
-        val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
+        val handler = LegacyDirectHandler(world, ChangeRecorder(), context())
         assertEquals(DirectFailure.INVALID_INPUT.name,
-            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(DirectInput.TRANSPORT,
+            assertIs<TurnOutcome.Rejected>(handler.handle(DirectInput.TRANSPORT,
                 actor.id, """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1001}""", "too-much", 42)).code)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(DirectInput.TRANSPORT, actor.id,
+        assertIs<TurnOutcome.Applied>(handler.handle(DirectInput.TRANSPORT, actor.id,
             """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1000}""", "transport-4041", 42))
         assertEquals(500, CountyWarehouse.read(world.getCityById(sourceId)!!.meta, sourceId)!!.stock.grain)
         assertEquals(1000, CountyWarehouse.read(world.getCityById(targetId)!!.meta, targetId)!!.stock.grain)

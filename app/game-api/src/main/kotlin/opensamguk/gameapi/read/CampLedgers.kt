@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
  * - `officer-native-county-v1.json` — 인물 본관 縣. `method == DIRECT` 행만 쓴다.
  */
 @Component
-class HwihaCampLedgers(private val objectMapper: ObjectMapper) {
+class CampLedgers(private val objectMapper: ObjectMapper) {
     data class Specialty(val resource: String, val ledgerMonthly: Long)
 
     /** 본관 한 건 — 원장의 郡·縣 한자와(있으면) han-tiles 관할 id. */
@@ -59,7 +59,7 @@ class HwihaCampLedgers(private val objectMapper: ObjectMapper) {
     }
 
     private fun read(resource: String): ByteArray =
-        checkNotNull(HwihaCampLedgers::class.java.classLoader.getResourceAsStream(resource)) {
+        checkNotNull(CampLedgers::class.java.classLoader.getResourceAsStream(resource)) {
             "HWIHA ledger resource is missing: $resource"
         }.use { it.readBytes() }
 
@@ -122,7 +122,7 @@ class HwihaCampLedgers(private val objectMapper: ObjectMapper) {
  * 郡 이름은 런타임 지도 `meta.jun`(`MapJson.commanderyName` 과 같은 값)이다.
  */
 @Component
-class HwihaCityGeography(private val objectMapper: ObjectMapper, private val ledgers: HwihaCampLedgers) {
+class CityGeography(private val objectMapper: ObjectMapper, private val ledgers: CampLedgers) {
     data class Place(
         val commanderyName: String?,
         val jurisdictionId: String?,
@@ -140,7 +140,7 @@ class HwihaCityGeography(private val objectMapper: ObjectMapper, private val led
         private val byPair: Map<Pair<String, String>, List<String>>,
         private val fold: HanPlaceNameFold,
     ) {
-        fun korean(native: HwihaCampLedgers.NativeCounty): String? {
+        fun korean(native: CampLedgers.NativeCounty): String? {
             val hits = if (native.jurisdictionId != null) byJurisdiction[native.jurisdictionId]
                 else byPair[fold.group(native.commandery) to fold.county(native.county)]
             return hits?.singleOrNull()

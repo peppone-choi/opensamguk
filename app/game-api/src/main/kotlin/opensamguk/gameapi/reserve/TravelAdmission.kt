@@ -1,6 +1,6 @@
 package opensamguk.gameapi.reserve
 
-import opensamguk.gameapi.precheck.HwihaTravelPrecheckService
+import opensamguk.gameapi.precheck.TravelPrecheckService
 import opensamguk.gameapi.precheck.TravelReadForbidden
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class HwihaTravelAdmission(private val precheck: HwihaTravelPrecheckService,
+class TravelAdmission(private val precheck: TravelPrecheckService,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(inputId: String, generalId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
@@ -25,5 +25,5 @@ class HwihaTravelAdmission(private val precheck: HwihaTravelPrecheckService,
         return TravelInput.canonicalJson(request)
     }
 
-    private fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
+    private fun deny(code: String, reason: String): Nothing = throw AdmissionDenied(code, reason)
 }

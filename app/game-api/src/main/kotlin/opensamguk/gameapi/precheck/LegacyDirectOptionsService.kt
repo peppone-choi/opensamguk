@@ -1,30 +1,30 @@
 package opensamguk.gameapi.precheck
 
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.content.ItemCatalogJson
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class HwihaLegacyDirectChoice(val label: String, val arguments: Map<String, Any>,
+data class LegacyDirectChoice(val label: String, val arguments: Map<String, Any>,
     val available: Boolean, val code: String? = null, val reason: String? = null,
     val maxAmount: Int? = null)
-data class HwihaLegacyDirectOptions(val inputId: String, val available: Boolean,
+data class LegacyDirectOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<HwihaLegacyDirectChoice> = emptyList())
+    val choices: List<LegacyDirectChoice> = emptyList())
 
 @Service
-class HwihaLegacyDirectOptionsService(private val reader: HwihaDomesticReader,
+class LegacyDirectOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(actorId: Int, userId: Long, inputId: String): HwihaLegacyDirectOptions {
+    fun options(actorId: Int, userId: Long, inputId: String): LegacyDirectOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in DirectInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaLegacyDirectOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return HwihaLegacyDirectOptions(inputId, false,
+            return LegacyDirectOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val state = reader.snapshot().state ?: return LegacyDirectOptions(inputId, false,
             DirectFailure.STATE_UNAVAILABLE.name, DirectFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return HwihaLegacyDirectOptions(inputId, false,
+        val actor = state.person(actorId) ?: return LegacyDirectOptions(inputId, false,
             DirectFailure.ACTOR_NOT_FOUND.name, DirectFailure.ACTOR_NOT_FOUND.message)
         val requests: List<Pair<String, DirectRequest>> = when (inputId) {
             DirectInput.CONVERT -> state.bugoks.filter { it.masterGeneralId == actorId }.flatMap { unit ->
@@ -73,12 +73,12 @@ class HwihaLegacyDirectOptionsService(private val reader: HwihaDomesticReader,
                     Cargo.IRON -> stock.iron; Cargo.TIMBER -> stock.timber; Cargo.HORSES -> stock.horses
                 }).toInt()
             } else null
-            HwihaLegacyDirectChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
+            LegacyDirectChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
         }
         val first = choices.firstOrNull { it.available }
         val failure = if (first == null) choices.firstOrNull()?.let { it.code to it.reason }
             ?: (DirectFailure.STATE_UNAVAILABLE.name to DirectFailure.STATE_UNAVAILABLE.message)
             else null
-        return HwihaLegacyDirectOptions(inputId, first != null, failure?.first, failure?.second, choices)
+        return LegacyDirectOptions(inputId, first != null, failure?.first, failure?.second, choices)
     }
 }

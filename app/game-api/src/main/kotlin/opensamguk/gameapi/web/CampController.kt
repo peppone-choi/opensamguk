@@ -1,7 +1,7 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.read.HwihaCampForbidden
-import opensamguk.gameapi.read.HwihaCampReader
+import opensamguk.gameapi.read.CampForbidden
+import opensamguk.gameapi.read.CampReader
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController
  * principal 없음·범위 밖이면 401, `?generalId=` 가 본인 장수가 아니면 403, 그 밖의 상태는 200 + `status`.
  */
 @RestController
-class HwihaCampController(private val reader: HwihaCampReader) {
+class CampController(private val reader: CampReader) {
     @GetMapping("/api/hwiha/yuedan")
     fun yuedan(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.yuedan(generalId, it) }
@@ -37,7 +37,7 @@ class HwihaCampController(private val reader: HwihaCampReader) {
 }
 
 /**
- * 휘하 조회 공통 응답 규칙: principal 없음·범위 밖 401, 남의 장수 403([HwihaCampForbidden]), 없는 대상 404,
+ * 휘하 조회 공통 응답 규칙: principal 없음·범위 밖 401, 남의 장수 403([CampForbidden]), 없는 대상 404,
  * 그 밖은 200 — 모두 `Cache-Control: no-store`(200·404). 부드러운 상태는 본문 `status` 로 알린다.
  */
 internal fun hwihaGuarded(userId: Long?, read: (Long) -> Any?): ResponseEntity<Any> {
@@ -46,7 +46,7 @@ internal fun hwihaGuarded(userId: Long?, read: (Long) -> Any?): ResponseEntity<A
     return try {
         val body = read(userId) ?: return ResponseEntity.status(HttpStatus.NOT_FOUND).cacheControl(CacheControl.noStore()).build()
         ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(body)
-    } catch (_: HwihaCampForbidden) {
+    } catch (_: CampForbidden) {
         ResponseEntity.status(HttpStatus.FORBIDDEN).build()
     }
 }

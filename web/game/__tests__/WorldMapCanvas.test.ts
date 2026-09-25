@@ -8,10 +8,10 @@ import {
     completeJurisdictionOverlays,
     screenBoxInsideProvince, screenBoxInsideVisualClearance, seatLabel,
     terrainColorFor, TIER2_LABEL_ZOOM, TIER2_MARKER_ZOOM, tierZoom,
-    type CountyAdministrativeIndex, type HanTiles, type IsoCityOverlay, type IsoSceneOptions, type ProvinceIdentityMap,
+    type CountyAdministrativeIndex, type WorldTiles, type IsoCityOverlay, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 
-const hanTiles: HanTiles = JSON.parse(
+const hanTiles: WorldTiles = JSON.parse(
     readFileSync(resolve(__dirname, '../../../data/map/han-tiles.json'), 'utf8'),
 );
 const grid = { cols: hanTiles._meta.cols, rows: hanTiles._meta.rows };
@@ -65,7 +65,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         const tiles = {
             _meta: { cols: 5, rows: 3, year: 220, terrainLegend: {} },
             terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
         const options = {
             markerPlacement: { provinceMap, countyIndex },
         } as IsoSceneOptions & {
@@ -90,7 +90,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         const tiles = {
             _meta: { cols: 5, rows: 3, year: 220, terrainLegend: {} },
             terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
         const options = {
             markerPositions: new Map([[1, { col: 2, row: 0 }]]),
         } as IsoSceneOptions & { markerPositions: ReadonlyMap<number, { col: number; row: number }> };
@@ -124,7 +124,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         const tiles = {
             _meta: { cols: 5, rows: 3, year: 220, terrainLegend: {} },
             terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
         const city = { id: 1, name: '내륙현', level: 5, nationId: 1, x: 30, y: 30, commanderyName: 'A군' };
         const scene = buildIsoScene(tiles, [city], { width: 100, height: 60 }, {
             markerPlacement: { provinceMap, countyIndex },
@@ -151,7 +151,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         const tiles = {
             _meta: { cols: 3, rows: 1, year: 220, terrainLegend: {} },
             terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
 
         const scene = buildIsoScene(
             tiles,
@@ -185,7 +185,7 @@ describe('지도 아이콘 배율과 앵커', () => {
                 { id: 'P0', displayName: '오현', nameCh: '誤縣', parentRegionId: 'A', kind: 'COUNTY', administrativeSystem: 'HAN_COMMANDERY', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST' },
                 { id: 'P1', displayName: '장안현', nameCh: '長安縣', parentRegionId: 'A', kind: 'COUNTY', administrativeSystem: 'HAN_COMMANDERY', cityIndex: null, geometryBasis: 'TEST', confidence: 'TEST' },
             ],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
 
         const scene = buildIsoScene(
             tiles,
@@ -217,7 +217,7 @@ describe('지도 아이콘 배율과 앵커', () => {
                 administrativeSystem: 'HAN_COMMANDERY',
             }],
             adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
 
         const scene = buildIsoScene(
             tiles,
@@ -255,7 +255,7 @@ describe('지도 아이콘 배율과 앵커', () => {
             parentRegions: [{ id: 'R1', displayName: 'A군', nameCh: '', administrativeSystem: 'HAN_COMMANDERY' }],
             adjacency: { county: [], commandery: [] }, regions: [],
             cities: [{ id: 'P1', name: 'A현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
 
         const overlays = completeJurisdictionOverlays(
             tiles,
@@ -330,7 +330,7 @@ describe('지도 아이콘 배율과 앵커', () => {
                 { id: 'P1', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 },
                 { id: 'P2', name: '노현', nameCh: '', level: 5, kind: 'COUNTY', seat: false, col: 1, row: 0, lat: 0, lon: 0 },
             ],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
 
         expect(() => completeJurisdictionOverlays(
             tiles,
@@ -468,7 +468,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         const tiles = {
             _meta: { cols: 1, rows: 1, year: 220, terrainLegend: {} },
             terrain: [], owner: [], juns: [], adjacency: { county: [], commandery: [] }, regions: [], cities: [],
-        } satisfies HanTiles;
+        } satisfies WorldTiles;
         const scene = buildIsoScene(tiles, [
             { id: 10, name: '군치', level: 8, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, isCapital: true },
             { id: 11, name: '현', level: 10, nationId: 1, nationColor: '#aa0000', x: 0, y: 0, provinceId: 4 },
@@ -605,7 +605,7 @@ describe('보급 깃발 형태', () => {
     });
 });
 
-describe('HanMapCanvas 격자 해제', () => {
+describe('WorldMapCanvas 격자 해제', () => {
     it('런렝스를 셀 배열로 되돌린다', () => {
         expect(Array.from(expandOwner([[-1, 2], [7, 3]], 5))).toEqual([-1, -1, 7, 7, 7]);
     });

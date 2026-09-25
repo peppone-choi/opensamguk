@@ -11,7 +11,7 @@ sealed interface DeploymentExecution {
 }
 
 /** Transition boundary only; the personal-turn caller owns command consumption and result recording. */
-class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+class DeploymentExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot) {
     fun assess(request: DeploymentRequest): DeploymentAssessment = projection()?.let {
         DeploymentRules.assess(request, it)
@@ -34,7 +34,7 @@ class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val 
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(owner), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
         // 출병 적재: 출발지 창고망의 곡으로 휴대 군량을 채운다(2026-09-23 확정 군량).
-        HwihaCorpsRations(world, recorder, topology, metrics).load(corps)
+        CorpsRations(world, recorder, topology, metrics).load(corps)
         return DeploymentExecution.Applied(corps)
     }
 

@@ -23,16 +23,16 @@ import org.slf4j.LoggerFactory
  * 순 경계의 내정 진행(§5.2 3단계). 월세입(4단계) 앞에서 한 순에 한 번 돈다 — 도장 [STAMP_KEY] 과 변경이 같은 flush 에 실린다.
  *
  * 1. 郡 방침 대기를 현행으로 올린다(郡에는 카드가 하나가 아니라 순 경계를 효력 시점으로 쓴다).
- * 2. 공사: 다음 순 경계부터 진척한다(§4). 縣 id 순으로 그 縣 창고에서 진척만큼 나눠 낸다(창고 정산 경계 [HwihaWarehouseSettlement]).
+ * 2. 공사: 다음 순 경계부터 진척한다(§4). 縣 id 순으로 그 縣 창고에서 진척만큼 나눠 낸다(창고 정산 경계 [WarehouseSettlement]).
  *    모자라면 진척 없이 멈춤 사유를 남기고, 縣 주인이 바뀌면 공사를 거둔다.
  * 3. 縣 방침: 縣 id 순으로 유효 방침을 한 번 적용한다(앉은 縣令 능력치, 빈자리는 기본 방침).
  * 4. 반응 목록을 다시 쓴다(출전이 끝난 군단의 요격·회피를 뺀다).
  * 5. 월 경계(상순)면 縣令으로 배치된 카드가 앉은 縣의 지표를 지난달과 비교해 오른 것이 있으면 치적 사건을 낸다.
  */
-class HwihaDomesticBoundary(
+class DomesticBoundary(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+    private val context: DomesticContext,
 ) {
     data class Outcome(val stamp: String, val alreadyStamped: Boolean, val worksAdvanced: Int = 0, val worksCompleted: Int = 0,
         val worksStopped: Int = 0, val meritEvents: Int = 0)
@@ -55,9 +55,9 @@ class HwihaDomesticBoundary(
             }
         }
         val state = context.projection(world)
-        val effects = HwihaDomesticCountyEffects(world, recorder, context)
+        val effects = DomesticCountyEffects(world, recorder, context)
         for (county in state.counties) effects.apply(county.id, state)
-        HwihaReactionInventory(world, recorder).rebuild()
+        ReactionInventory(world, recorder).rebuild()
         val events = if (now.phase == 1 && !meritClosedBeforeMonthlyEvents) monthlyMerit(now, compare = true, open = false) else 0
         if (now.phase == 1) monthlyMerit(now, compare = false, open = true)
         world.setGameEnvValue(STAMP_KEY, stamp)
@@ -100,7 +100,7 @@ class HwihaDomesticBoundary(
             SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
                 state.homeCountyByGeneral[person.id] == countyId)
         }
-        val levels = HwihaDomesticCountyEffects.levelsOf(city)
+        val levels = DomesticCountyEffects.levelsOf(city)
         return when (val step = DomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels, seat)) {
             is WorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
             is WorkStep.Advanced -> {
@@ -117,7 +117,7 @@ class HwihaDomesticBoundary(
                     compareBy({ it.completedAt }, { it.work.ordinal })))
                 val trust = opensamguk.engine.turn.ReservedTurnHandler.materializeMariaDbFloat(step.levels.trust)
                 var meta = after.meta.withKey(CountyWorks.META_KEY, done.toMetaValue())
-                if (trust != HwihaDomesticCountyEffects.trustOf(after)) meta = meta.withKey("trust", trust)
+                if (trust != DomesticCountyEffects.trustOf(after)) meta = meta.withKey("trust", trust)
                 val next = after.copy(population = step.levels.population, agriculture = step.levels.agriculture,
                     commerce = step.levels.commerce, security = step.levels.security, defence = step.levels.defence,
                     wall = step.levels.wall, meta = meta)
@@ -137,8 +137,8 @@ class HwihaDomesticBoundary(
             is WorkStep.Stopped -> return false
         }
         if (debit == opensamguk.logic.economy.Resources()) return true
-        return HwihaWarehouseSettlement(world, recorder).settle(countyId, nationId, revision, debit) ==
-            HwihaWarehouseSettlement.Result.APPLIED
+        return WarehouseSettlement(world, recorder).settle(countyId, nationId, revision, debit) ==
+            WarehouseSettlement.Result.APPLIED
     }
 
     private fun stop(countyId: Int, works: CountyWorks, work: ActiveWork, now: Phase, reason: String): WorkResult {
@@ -167,7 +167,7 @@ class HwihaDomesticBoundary(
                 continue
             }
             if (previous?.stamp == month) continue
-            val current = HwihaDomesticCountyEffects.levelsOf(city).indicators()
+            val current = DomesticCountyEffects.levelsOf(city).indicators()
             val risen = previous?.indicators?.let { current.risenSince(it) }.orEmpty()
             if (compare && previous != null && risen.isNotEmpty()) {
                 val retainerId = seat.retainerId
@@ -204,7 +204,7 @@ class HwihaDomesticBoundary(
     }
 
     companion object {
-        private val logger = LoggerFactory.getLogger(HwihaDomesticBoundary::class.java)
+        private val logger = LoggerFactory.getLogger(DomesticBoundary::class.java)
         const val STAMP_KEY = "hwihaDomesticPhase"
         fun stampOf(phase: Phase): String = "%04d-%02d-%d".format(phase.year, phase.month, phase.phase)
     }

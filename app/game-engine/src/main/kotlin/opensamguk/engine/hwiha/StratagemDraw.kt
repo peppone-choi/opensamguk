@@ -8,7 +8,7 @@ import opensamguk.logic.input.StratagemHand
 import opensamguk.logic.input.RuleProfile
 
 /** Actual personal-turn supply, persisted with the action and phase stamp by the existing flush. */
-class HwihaStratagemDraw(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class StratagemDraw(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     fun onTurn(generalId:Int) {
         if(world.ruleProfile!=RuleProfile.HWIHA)return
         val before=requireNotNull(world.getGeneralById(generalId))
@@ -25,7 +25,7 @@ class HwihaStratagemDraw(private val world: InMemoryTurnWorld, private val recor
         val phase=Phase(state.currentYear,state.currentMonth,state.currentPhase)
         val current=StratagemHand.read(before.meta,generalId)
         val next=(current ?: StratagemHand.initial(generalId,phase))
-            .withContributions(HwihaPersonDeckProjection.forHolder(world, generalId)).advance(phase)
+            .withContributions(PersonDeckProjection.forHolder(world, generalId)).advance(phase)
         if(next===current)return
         val after=before.copy(meta=before.meta+(StratagemHand.META_KEY to next.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before),PerTurnOverlay.toLogicGeneral(after))

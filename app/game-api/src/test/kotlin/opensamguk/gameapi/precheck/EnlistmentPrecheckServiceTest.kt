@@ -5,12 +5,12 @@ import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
 import opensamguk.logic.input.*
 
-class HwihaEnlistmentPrecheckServiceTest {
+class EnlistmentPrecheckServiceTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val retainers = mock(RetainerReadRepository::class.java)
     private val worlds = mock(WorldStateReadRepository::class.java)
-    private val service = HwihaEnlistmentPrecheckService(generals, nations, retainers, worlds)
+    private val service = EnlistmentPrecheckService(generals, nations, retainers, worlds)
     private val request = EnlistmentRequest(1, EnlistmentMode.NATION, 1)
     private fun general(id: Int, lord: Boolean = false, cap: Int = 30) = GeneralReadEntity(
         id = id, worldId = 1, name = "G$id", nationId = if (lord) 1 else 0, officerLevel = if (lord) 12 else 0,

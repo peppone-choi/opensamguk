@@ -1,28 +1,28 @@
 package opensamguk.gameapi.precheck
 
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class HwihaLegacyStratagemChoice(val label: String, val arguments: Map<String, Int>,
+data class LegacyStratagemChoice(val label: String, val arguments: Map<String, Int>,
     val available: Boolean, val code: String? = null, val reason: String? = null)
-data class HwihaLegacyStratagemOptions(val inputId: String, val available: Boolean,
+data class LegacyStratagemOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<HwihaLegacyStratagemChoice> = emptyList())
+    val choices: List<LegacyStratagemChoice> = emptyList())
 
 @Service
-class HwihaLegacyStratagemOptionsService(private val reader: HwihaDomesticReader,
+class LegacyStratagemOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(actorId: Int, userId: Long, inputId: String): HwihaLegacyStratagemOptions {
+    fun options(actorId: Int, userId: Long, inputId: String): LegacyStratagemOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in StratagemInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaLegacyStratagemOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return HwihaLegacyStratagemOptions(inputId, false,
+            return LegacyStratagemOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val state = reader.snapshot().state ?: return LegacyStratagemOptions(inputId, false,
             StratagemFailure.STATE_UNAVAILABLE.name, StratagemFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return HwihaLegacyStratagemOptions(inputId, false,
+        val actor = state.person(actorId) ?: return LegacyStratagemOptions(inputId, false,
             StratagemFailure.ACTOR_NOT_FOUND.name, StratagemFailure.ACTOR_NOT_FOUND.message)
         val local = state.counties.singleOrNull { it.provinceId == actor.node && it.nationId == actor.nationId }
         val requests: List<Pair<String, StratagemInput.Request>> = when (inputId) {
@@ -51,11 +51,11 @@ class HwihaLegacyStratagemOptionsService(private val reader: HwihaDomesticReader
                     "secondNationId" to request.secondNationId!!)
                 else -> mapOf("targetCountyId" to request.targetCountyId!!)
             }
-            HwihaLegacyStratagemChoice(label, args, failure == null, failure?.name, failure?.message)
+            LegacyStratagemChoice(label, args, failure == null, failure?.name, failure?.message)
         }
         val available = choices.any { it.available }
         val reason = if (available) null else choices.firstOrNull()?.let { it.code to it.reason }
             ?: (StratagemFailure.TARGET_UNAVAILABLE.name to StratagemFailure.TARGET_UNAVAILABLE.message)
-        return HwihaLegacyStratagemOptions(inputId, available, reason?.first, reason?.second, choices)
+        return LegacyStratagemOptions(inputId, available, reason?.first, reason?.second, choices)
     }
 }

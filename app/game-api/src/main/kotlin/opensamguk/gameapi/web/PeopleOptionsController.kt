@@ -1,7 +1,7 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.precheck.HwihaPeopleOptionsService
-import opensamguk.gameapi.read.HwihaDomesticForbidden
+import opensamguk.gameapi.precheck.PeopleOptionsService
+import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.logic.input.PeopleInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class HwihaPeopleOptionsController(private val service: HwihaPeopleOptionsService) {
+class PeopleOptionsController(private val service: PeopleOptionsService) {
     @GetMapping("/api/commands/search-options")
     fun search(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
         options(PeopleInput.SEARCH, generalId, userId)
@@ -29,6 +29,6 @@ class HwihaPeopleOptionsController(private val service: HwihaPeopleOptionsServic
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try { ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.options(inputId, generalId, userId)) }
-        catch (_: HwihaDomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
+        catch (_: DomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
     }
 }

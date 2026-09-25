@@ -11,16 +11,16 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 
 /** Autonomous lords choose only from their own current county, using the human military precheck. */
-internal class HwihaNpcCityMilitarySelector(
-    private val context: HwihaDomesticContext,
+internal class NpcCityMilitarySelector(
+    private val context: DomesticContext,
     private val design: MilitaryDesign = MilitaryDesign.CANON,
     private val catalog: InputCatalog = InputCatalog.load(),
 ) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
-        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
+        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             design.status != MilitaryDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
-        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId } || CorpsOrder.META_KEY in actor.meta) return reserved
         val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reserved }

@@ -6,13 +6,13 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.logic.economy.Resources
 
-class HwihaCountyProductionJsonTest {
+class CountyProductionJsonTest {
     private fun document(rows: String, version: Int = 1) =
         """{"schemaVersion":$version,"counties":[$rows]}"""
 
     @Test
     fun `committed runtime table matches the generated ledger totals`() {
-        val table = HwihaCountyProductionJson.table()
+        val table = CountyProductionJson.table()
         // 결손 縣 223곳을 추가한 현재 생성 원장과 맞춘다.
         assertEquals(1_415, table.size, "생성된 원장의 縣 수와 같아야 한다")
         assertEquals(34_000, table.values.sumOf { it.iron })
@@ -25,7 +25,7 @@ class HwihaCountyProductionJsonTest {
 
     @Test
     fun `목재는 분산이고 철 말은 희소하다`() {
-        val table = HwihaCountyProductionJson.table()
+        val table = CountyProductionJson.table()
         assertTrue(table.count { it.value.timber > 0 } > 1_000, "목재는 거의 모든 縣에서 난다")
         assertEquals(34, table.count { it.value.iron > 0 })
         assertEquals(6, table.count { it.value.horses > 0 })
@@ -33,12 +33,12 @@ class HwihaCountyProductionJsonTest {
 
     @Test
     fun `자원 없는 리소스는 빈 표다`() {
-        assertEquals(emptyMap(), HwihaCountyProductionJson.load("hwiha/not-a-real-resource.json"))
+        assertEquals(emptyMap(), CountyProductionJson.load("hwiha/not-a-real-resource.json"))
     }
 
     @Test
     fun `세 자원만 받는다`() {
-        val parsed = HwihaCountyProductionJson.parse(
+        val parsed = CountyProductionJson.parse(
             document("""{"countyId":7,"monthly":{"iron":1,"timber":2,"horses":3}}""")
         )
         assertEquals(mapOf(7 to Resources(iron = 1, timber = 2, horses = 3)), parsed)
@@ -46,17 +46,17 @@ class HwihaCountyProductionJsonTest {
 
     @Test
     fun `빠진 자원은 0 이다`() {
-        val parsed = HwihaCountyProductionJson.parse(document("""{"countyId":7,"monthly":{"timber":2}}"""))
+        val parsed = CountyProductionJson.parse(document("""{"countyId":7,"monthly":{"timber":2}}"""))
         assertEquals(mapOf(7 to Resources(timber = 2)), parsed)
     }
 
     @Test
     fun `전 곡 을 실으면 거절한다`() {
         assertFailsWith<IllegalArgumentException> {
-            HwihaCountyProductionJson.parse(document("""{"countyId":7,"monthly":{"money":1}}"""))
+            CountyProductionJson.parse(document("""{"countyId":7,"monthly":{"money":1}}"""))
         }
         assertFailsWith<IllegalArgumentException> {
-            HwihaCountyProductionJson.parse(document("""{"countyId":7,"monthly":{"grain":1}}"""))
+            CountyProductionJson.parse(document("""{"countyId":7,"monthly":{"grain":1}}"""))
         }
     }
 
@@ -74,7 +74,7 @@ class HwihaCountyProductionJsonTest {
             document("""{"countyId":7,"monthly":{"iron":1}}""", version = 2),
         )
         for (json in invalid) {
-            assertFailsWith<IllegalArgumentException>(json) { HwihaCountyProductionJson.parse(json) }
+            assertFailsWith<IllegalArgumentException>(json) { CountyProductionJson.parse(json) }
         }
     }
 }

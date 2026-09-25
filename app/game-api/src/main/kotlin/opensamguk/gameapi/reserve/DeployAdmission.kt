@@ -7,7 +7,7 @@ import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class HwihaDeployAdmission(private val precheck: HwihaDeployPrecheckService,
+class DeployAdmission(private val precheck: DeployPrecheckService,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(generalId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
@@ -23,5 +23,5 @@ class HwihaDeployAdmission(private val precheck: HwihaDeployPrecheckService,
             deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         return DeployInputs.canonicalJson(request)
     }
-    private fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
+    private fun deny(code: String, reason: String): Nothing = throw AdmissionDenied(code, reason)
 }

@@ -13,7 +13,7 @@ class DeployReadForbidden : RuntimeException()
 
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
+class DeployPrecheckService(private val generals: GeneralReadRepository,
     private val retainers: RetainerReadRepository, private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository) {
     fun requireOwner(actorId: Int, ownerUserId: Long) {
@@ -43,7 +43,7 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
             ready.bundle.landMarchMetrics, ready.selected.world.meta)
     }
 
-    fun options(actorId: Int, ownerUserId: Long): HwihaDeployOptions {
+    fun options(actorId: Int, ownerUserId: Long): DeployOptions {
         requireOwner(actorId, ownerUserId)
         val snapshot = snapshot()
         snapshot.failure?.let { return unavailable(it) }
@@ -63,11 +63,11 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
             val rows = ready.units.filter { it.masterGeneralId == actorId }.sortedBy { it.id }.map { unit ->
                 val check = DeploymentRules.assess(DeploymentRequest(actorId, null, listOf(unit.id)), ready.state)
                 val failure = (check as? DeploymentAssessment.Rejected)?.reason
-                HwihaDeployBugok(unit.id, unit.name, unit.troops, failure == null, failure?.let(DeployRules::reason))
+                DeployBugok(unit.id, unit.name, unit.troops, failure == null, failure?.let(DeployRules::reason))
             }
             val destinations = ready.selected.cities.sortedBy { it.id }.mapNotNull { city ->
                 ready.bundle.projection.bindingsByCityId[city.id]?.landProvinceId?.let {
-                    HwihaDeployDestination(it, city.name)
+                    DeployDestination(it, city.name)
                 }
             }.distinctBy { it.provinceId }.sortedBy { it.provinceId }
             val blocked = when {
@@ -76,15 +76,15 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
                 destinations.isEmpty() -> DeploymentFailure.INVALID_DESTINATION
                 else -> null
             }
-            HwihaDeployOptions(blocked == null, blocked?.name, blocked?.let(DeployRules::reason),
+            DeployOptions(blocked == null, blocked?.name, blocked?.let(DeployRules::reason),
                 bugoks = rows, destinations = destinations,
-                order = order?.let { HwihaDeployOrder(it.orderId, it.destination.id,
+                order = order?.let { DeployOrder(it.orderId, it.destination.id,
                     if (CorpsEncounter.META_KEY in actor.meta) "ENCOUNTER" else march?.checkpoint?.stop?.name) })
         } catch (_: IllegalArgumentException) { unavailable(DeploymentFailure.STATE_UNAVAILABLE) }
           catch (_: NoSuchElementException) { unavailable(DeploymentFailure.STATE_UNAVAILABLE) }
     }
 
-    private fun unavailable(reason: DeploymentFailure) = HwihaDeployOptions(false, reason.name, DeployRules.reason(reason))
+    private fun unavailable(reason: DeploymentFailure) = DeployOptions(false, reason.name, DeployRules.reason(reason))
     private data class Ready(val state: DeploymentProjection, val selected: ActiveWorldArtifactSnapshot,
         val bundle: ResolvedHanWorldArtifacts, val people: List<GeneralReadEntity>, val units: List<GeneralBugokReadEntity>)
     private data class Snapshot(val ready: Ready? = null, val failure: DeploymentFailure? = null)

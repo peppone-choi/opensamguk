@@ -18,7 +18,7 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaWarehouseSeedIT {
+class WarehouseSeedIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private val root = Path.of("..")
@@ -52,7 +52,7 @@ class HwihaWarehouseSeedIT {
             "stock" to Resources(100L+index, 3_000_000_000L+index, 20, 30, 40).toMetaValue()) },
     )
     private fun scenario(includeProfile: Boolean = true): Scenario {
-        val raw = HwihaSyntheticScenario.root().toMutableMap()
+        val raw = SyntheticScenario.root().toMutableMap()
         if (!includeProfile) raw.remove("ruleProfile")
         raw["nation"] = listOf(listOf("QA 세력", "#123456", 0, 0, "synthetic QA", 0, null, 1, listOf("허창")))
         raw["hwihaWarehouses"] = declaration()

@@ -2,18 +2,18 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaPeopleActionId,HwihaPeopleOptions} from '../../lib/types';
+import type {PeopleActionId,PeopleOptions} from '../../lib/types';
 
-export const peopleLabels:Record<HwihaPeopleActionId,string>={
+export const peopleLabels:Record<PeopleActionId,string>={
     'action.search':'인재탐색','action.employ':'등용','action.persuadeCaptive':'포로 설득',
 };
-export function isPeopleActionId(value:string):value is HwihaPeopleActionId{return value in peopleLabels;}
+export function isPeopleActionId(value:string):value is PeopleActionId{return value in peopleLabels;}
 
-export default function HwihaPeopleForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
-    inputId:HwihaPeopleActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function PeopleForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
+    inputId:PeopleActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }){
-    const [data,setData]=useState<HwihaPeopleOptions|null>(null);
+    const [data,setData]=useState<PeopleOptions|null>(null);
     const [selected,setSelected]=useState<number|null>(null);
     const [reason,setReason]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);

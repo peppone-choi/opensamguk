@@ -9,8 +9,8 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaLegacyStratagemHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class LegacyStratagemHandlerTest {
+    private val fixture = CampaignWorldFixture()
     private val administrative = fixture.bundle.projection.administrativeCountyIds
     private val sourceId = administrative.sorted().first { source ->
         fixture.bundle.cityConst.byId(source)!!.path.keys.any { it in administrative }
@@ -40,7 +40,7 @@ class HwihaLegacyStratagemHandlerTest {
     @Test fun `all twelve stratagems reject before card ownership is implemented`() {
         for (inputId in StratagemInput.INPUT_IDS.sorted()) {
             val world = world()
-            val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
+            val handler = CourtHandler(world, ChangeRecorder(), DomesticContext(cityConst = fixture.bundle.cityConst))
             val submitted = handler.handle(TurnDaemonCommand.ImmediateInput("play-$inputId", 501, 42, inputId, args(inputId)))
             assertEquals(InputRejection.NOT_DELIVERED.name, submitted.code, inputId)
             handler.onIssuerTurn(501)
@@ -52,7 +52,7 @@ class HwihaLegacyStratagemHandlerTest {
 
     @Test fun `rejected steal does not move money`() {
         val world = world()
-        val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
+        val handler = CourtHandler(world, ChangeRecorder(), DomesticContext(cityConst = fixture.bundle.cityConst))
         val rejected = handler.handle(TurnDaemonCommand.ImmediateInput("steal", 501, 42,
             "stratagem.steal", args("stratagem.steal")))
         assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)

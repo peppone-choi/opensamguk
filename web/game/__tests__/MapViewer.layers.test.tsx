@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const mocks = vi.hoisted(() => ({
@@ -32,7 +32,7 @@ vi.mock('@opensamguk/ui', async () => {
       commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 },
         { no: 2, name: '乙郡', col: 394, row: 334, focusCityId: 8 }],
       sourceSize: { width: 700, height: 610 }, administrativeOwnership: undefined }),
-    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
       mocks.props = props; return <div data-testid="main-map" />;
     },
   };

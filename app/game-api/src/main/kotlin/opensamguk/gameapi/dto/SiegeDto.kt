@@ -1,22 +1,22 @@
 package opensamguk.gameapi.dto
 
 /**
- * `/api/hwiha/sieges?generalId=` 응답. 부드러운 상태는 [HwihaSiegesResponse.status] 로 알린다
+ * `/api/hwiha/sieges?generalId=` 응답. 부드러운 상태는 [SiegesResponse.status] 로 알린다
  * (`READY` · `UNAVAILABLE` · `WRONG_RULE_PROFILE`). 사기는 정수 10000 = 100% 그대로 낸다.
  */
-data class HwihaSiegePartyDto(val generalId: Int, val name: String?, val nationId: Int, val nationName: String?)
+data class SiegePartyDto(val generalId: Int, val name: String?, val nationId: Int, val nationName: String?)
 
-data class HwihaSiegePhaseDto(val year: Int, val month: Int, val phase: Int)
+data class SiegePhaseDto(val year: Int, val month: Int, val phase: Int)
 
-data class HwihaSiegeDto(
+data class SiegeDto(
     val countyId: Int,
     val countyName: String?,
     val status: String,
     val endReason: String?,
-    val besieger: HwihaSiegePartyDto,
+    val besieger: SiegePartyDto,
     val defenderNationId: Int,
     val defenderNationName: String?,
-    val startedAt: HwihaSiegePhaseDto,
+    val startedAt: SiegePhaseDto,
     /** 누적 순(포위가 유지된 순 경계 수). */
     val turns: Int,
     /** 성 안 군량 — 縣 창고 곡. 창고가 없거나 읽히지 않으면 null. */
@@ -38,4 +38,4 @@ data class HwihaSiegeDto(
     val timeline: List<Map<String, Any?>>,
 )
 
-data class HwihaSiegesResponse(val status: String, val sieges: List<HwihaSiegeDto> = emptyList())
+data class SiegesResponse(val status: String, val sieges: List<SiegeDto> = emptyList())

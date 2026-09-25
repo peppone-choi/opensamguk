@@ -8,12 +8,12 @@ import java.security.MessageDigest
 import opensamguk.logic.war.UnitProfile
 import opensamguk.logic.war.UnitProfiles
 
-object HwihaUnitProfilesJson {
+object UnitProfilesJson {
     private const val RESOURCE = "battle/hwiha-unit-profiles-v1.json"
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
     fun loadDefault(): UnitProfiles = load(requireNotNull(
-        HwihaUnitProfilesJson::class.java.classLoader.getResourceAsStream(RESOURCE)) {
+        UnitProfilesJson::class.java.classLoader.getResourceAsStream(RESOURCE)) {
         "Missing HWIHA unit profiles resource"
     }.use { it.readBytes() })
 

@@ -1,8 +1,8 @@
 package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.gameapi.dto.HwihaLastTurnsResponse
-import opensamguk.gameapi.web.HwihaLastTurnsController
+import opensamguk.gameapi.dto.LastTurnsResponse
+import opensamguk.gameapi.web.LastTurnsController
 import opensamguk.logic.input.RecordKind
 import org.mockito.ArgumentMatchers.anyCollection
 import org.mockito.ArgumentMatchers.anyInt
@@ -10,13 +10,13 @@ import org.mockito.Mockito.*
 import java.util.Optional
 import kotlin.test.*
 
-class HwihaLastTurnsReaderTest {
+class LastTurnsReaderTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val worlds = mock(WorldStateReadRepository::class.java)
-    private val records = mock(HwihaRecordReadRepository::class.java)
+    private val records = mock(RecordReadRepository::class.java)
     private val mapper = ObjectMapper()
-    private val reader = HwihaLastTurnsReader(generals, worlds, records, mapper)
-    private val controller = HwihaLastTurnsController(reader)
+    private val reader = LastTurnsReader(generals, worlds, records, mapper)
+    private val controller = LastTurnsController(reader)
 
     // 지금: 200년 1월 중순. 12순 창은 199년 9월 상순 … 200년 1월 중순(해를 넘는다).
     private val world = WorldStateReadEntity(id = 1, currentYear = 200, currentMonth = 1, currentPhase = 2,
@@ -25,7 +25,7 @@ class HwihaLastTurnsReaderTest {
     private val other = GeneralReadEntity(id = 9, worldId = 1, name = "남", nationId = 4, userId = "42")
 
     private fun row(id: Long, y: Int, m: Int, p: Int, kind: String, text: String, refs: String? = null) =
-        HwihaRecordRow(id, y, m, p, kind, text, refs)
+        RecordRow(id, y, m, p, kind, text, refs)
 
     private fun setup(profile: String = "HWIHA") {
         world.config = mapOf("ruleProfile" to profile)
@@ -50,20 +50,20 @@ class HwihaLastTurnsReaderTest {
 
     @Test fun `소유 확인이 먼저다 - 남의 장수로는 기록을 읽지 않는다`() {
         setup()
-        assertFailsWith<HwihaCampForbidden> { reader.lastTurns(9, 41, 12) }
+        assertFailsWith<CampForbidden> { reader.lastTurns(9, 41, 12) }
         verifyNoInteractions(records)
     }
 
     @Test fun `휘하 규칙이 아니면 WRONG_RULE_PROFILE 빈 데이터`() {
         setup(profile = "SAMMO")
-        assertEquals(HwihaLastTurnsResponse("WRONG_RULE_PROFILE"), reader.lastTurns(1, 41, 12))
+        assertEquals(LastTurnsResponse("WRONG_RULE_PROFILE"), reader.lastTurns(1, 41, 12))
         verifyNoInteractions(records)
     }
 
     @Test fun `12순 창을 최근 순부터, 빈 순도 칸으로, 같은 순은 기록 순으로 싣는다`() {
         setup()
-        val from = HwihaTurnStamp(199, 9, 3)
-        val now = HwihaTurnStamp(200, 1, 2)
+        val from = TurnStamp(199, 9, 3)
+        val now = TurnStamp(200, 1, 2)
         `when`(records.personal(1, from, now)).thenReturn(listOf(
             row(5, 199, 12, 3, RecordKind.DISPATCH_RECEIVED, "발령이 도착했습니다.", """{"dispatchId":"d-1","countyId":10}"""),
             row(7, 200, 1, 2, RecordKind.MARCH_ASSIGNMENT, "발령지로 행군하고 있습니다.", """{"stop":"BUDGET_EXHAUSTED"}"""),
@@ -108,14 +108,14 @@ class HwihaLastTurnsReaderTest {
     }
 
     @Test fun `순 서수는 해를 넘어 되돌릴 수 있다`() {
-        for (ordinal in listOf(0, 1, 2, 3, 35, 36, 200 * 36 + 1)) assertEquals(ordinal, HwihaTurnStamp.ofOrdinal(ordinal).ordinal)
-        assertEquals(HwihaTurnStamp(199, 12, 3).ordinal + 1, HwihaTurnStamp(200, 1, 1).ordinal)
+        for (ordinal in listOf(0, 1, 2, 3, 35, 36, 200 * 36 + 1)) assertEquals(ordinal, TurnStamp.ofOrdinal(ordinal).ordinal)
+        assertEquals(TurnStamp(199, 12, 3).ordinal + 1, TurnStamp(200, 1, 1).ordinal)
     }
 
     /** Kotlin 비널 인자에 쓰는 Mockito any(). */
     private fun <T> any(): T {
         org.mockito.ArgumentMatchers.any<T>()
         @Suppress("UNCHECKED_CAST")
-        return HwihaTurnStamp(0, 1, 1) as T
+        return TurnStamp(0, 1, 1) as T
     }
 }

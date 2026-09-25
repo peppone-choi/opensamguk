@@ -1,36 +1,36 @@
 package opensamguk.gameapi.precheck
 
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class HwihaTransferTargetOption(val generalId: Int, val name: String, val available: Boolean,
+data class TransferTargetOption(val generalId: Int, val name: String, val available: Boolean,
     val code: String? = null, val reason: String? = null)
-data class HwihaTransferResourceOption(val resource: String, val available: Boolean, val maxAmount: Long,
+data class TransferResourceOption(val resource: String, val available: Boolean, val maxAmount: Long,
     val code: String? = null, val reason: String? = null)
-data class HwihaTransferOptions(val inputId: String, val available: Boolean,
+data class TransferOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val resources: List<HwihaTransferResourceOption> = emptyList(),
-    val targets: List<HwihaTransferTargetOption> = emptyList())
+    val resources: List<TransferResourceOption> = emptyList(),
+    val targets: List<TransferTargetOption> = emptyList())
 
 @Service
-class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
+class TransferOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(inputId: String, actorId: Int, userId: Long): HwihaTransferOptions {
+    fun options(inputId: String, actorId: Int, userId: Long): TransferOptions {
         reader.requireOwner(actorId, userId)
-        if (inputId !in TransferInput.INPUT_IDS) return HwihaTransferOptions(inputId, false,
+        if (inputId !in TransferInput.INPUT_IDS) return TransferOptions(inputId, false,
             TransferFailure.INVALID_INPUT.name, TransferFailure.INVALID_INPUT.message)
-        if (catalog[inputId]?.deliveryState?.hasHandler != true) return HwihaTransferOptions(inputId, false,
+        if (catalog[inputId]?.deliveryState?.hasHandler != true) return TransferOptions(inputId, false,
             InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return HwihaTransferOptions(inputId, false,
+        val state = reader.snapshot().state ?: return TransferOptions(inputId, false,
             TransferFailure.STATE_UNAVAILABLE.name, TransferFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return HwihaTransferOptions(inputId, false,
+        val actor = state.person(actorId) ?: return TransferOptions(inputId, false,
             TransferFailure.ACTOR_NOT_FOUND.name, TransferFailure.ACTOR_NOT_FOUND.message)
         val stock = try { PortableStock.read(actor.meta, actor.gold, actor.rice) }
-            catch (_: IllegalArgumentException) { return HwihaTransferOptions(inputId, false,
+            catch (_: IllegalArgumentException) { return TransferOptions(inputId, false,
                 TransferFailure.STATE_UNAVAILABLE.name, TransferFailure.STATE_UNAVAILABLE.message) }
         val candidates = if (inputId == TransferInput.GIFT)
             state.people.filter { it.id != actorId && it.node == actor.node }.sortedBy { it.id } else emptyList()
@@ -41,7 +41,7 @@ class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
                 .any { assess(it, target.id) is TransferAssessment.Eligible }
             val failure = if (success) null else (assess(TransferResource.MONEY, target.id)
                 as? TransferAssessment.Rejected)?.reason
-            HwihaTransferTargetOption(target.id, target.name, success, failure?.name, failure?.message)
+            TransferTargetOption(target.id, target.name, success, failure?.name, failure?.message)
         }
         val resources = listOf(TransferResource.MONEY, TransferResource.GRAIN).map { resource ->
             val max = when (resource) {
@@ -57,7 +57,7 @@ class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
             val failure = if (success) null else (checks.firstOrNull() as? TransferAssessment.Rejected)?.reason
                 ?: if (candidates.isEmpty() && inputId == TransferInput.GIFT)
                     TransferFailure.TARGET_UNAVAILABLE else null
-            HwihaTransferResourceOption(resource.name, success, max, failure?.name, failure?.message)
+            TransferResourceOption(resource.name, success, max, failure?.name, failure?.message)
         }
         val available = resources.any { it.available }
         val failure = when {
@@ -66,6 +66,6 @@ class HwihaTransferOptionsService(private val reader: HwihaDomesticReader,
             }
             else -> null
         }
-        return HwihaTransferOptions(inputId, available, failure?.first, failure?.second, resources, targets)
+        return TransferOptions(inputId, available, failure?.first, failure?.second, resources, targets)
     }
 }

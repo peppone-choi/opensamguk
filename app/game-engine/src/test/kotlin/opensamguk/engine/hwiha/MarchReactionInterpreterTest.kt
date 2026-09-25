@@ -8,10 +8,10 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Direct reaction branches: a real scheme province, live FULL sight, one-province interception and EVADE retreat. */
-class HwihaMarchReactionInterpreterTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class MarchReactionInterpreterTest {
+    private val fixture = CampaignWorldFixture()
     private val route = fixture.route()
-    private val policy = HwihaMarchReactionInterpreter(fixture.topology, fixture.metrics, fixture.bundle.commanderyIndex)
+    private val policy = MarchReactionInterpreter(fixture.topology, fixture.metrics, fixture.bundle.commanderyIndex)
 
     @Test fun `policy inventory rebuild preserves installed schemes`() {
         val world = fixture.world(listOf(fixture.person(1, 1, route.startCity) to route.start,
@@ -19,7 +19,7 @@ class HwihaMarchReactionInterpreterTest {
         val scheme = InstalledScheme("scheme-1", 2, 2, route.first.id, Phase(200, 1, 1))
         world.setGameEnvValue(MarchReactions.META_KEY,
             MarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
-        assertEquals(HwihaReactionInventory.Result.UNCHANGED, HwihaReactionInventory(world, ChangeRecorder()).rebuild())
+        assertEquals(ReactionInventory.Result.UNCHANGED, ReactionInventory(world, ChangeRecorder()).rebuild())
         assertEquals(listOf(scheme), MarchReactions.read(world.getState().meta)?.installedSchemes)
     }
 
@@ -35,9 +35,9 @@ class HwihaMarchReactionInterpreterTest {
             MarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
         fixture.nextPhase(world)
         assertEquals(LandMarchEntry.ENCOUNTER,
-            HwihaMilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, route.first, policy))
-        HwihaAssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells, reactions = policy)
-            .onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+            MilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, route.first, policy))
+        AssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells, reactions = policy)
+            .onTurn(1, CampaignWorldFixture.NO_INPUT)
         assertEquals(route.first, world.positionOf(1))
         assertEquals(LandMarchStop.ENCOUNTER,
             CorpsMarchState.read(world.getGeneralById(1)!!.meta, fixture.topology, fixture.metrics)?.checkpoint?.stop)
@@ -83,7 +83,7 @@ class HwihaMarchReactionInterpreterTest {
         recorder.moveGeneral(world, 2, from)
         assertEquals(LandMarchEntry.ENCOUNTER, policy.entryHazard(world, 1, target), "FULL sight within one province intercepts")
         assertEquals(LandMarchEntry.ENCOUNTER,
-            HwihaMilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, target, policy))
+            MilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, target, policy))
         policy.onEntered(world, recorder, 1, target)
         assertEquals(target, world.positionOf(2), "interceptor moves only when the target was actually entered")
     }
@@ -131,7 +131,7 @@ class HwihaMarchReactionInterpreterTest {
             MarchReactions.of(emptyList(), listOf(ReactionOrder("order-2", 2, 2, 2,
                 Phase(200, 1, 1)))).toMetaValue())
         assertEquals(LandMarchEntry.CLEAR,
-            HwihaMilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, route.first, policy))
+            MilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, route.first, policy))
         recorder.moveGeneral(world, 1, route.first)
         policy.onEntered(world, recorder, 1, route.first)
         assertEquals(route.destination, world.positionOf(2))
@@ -158,8 +158,8 @@ class HwihaMarchReactionInterpreterTest {
                 emptyList()).toMetaValue())
         fixture.nextPhase(world)
         assertEquals(LandMarchEntry.ENCOUNTER, policy.entryHazard(world, 1, route.first))
-        HwihaAssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells, reactions = policy)
-            .onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        AssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells, reactions = policy)
+            .onTurn(1, CampaignWorldFixture.NO_INPUT)
         assertEquals(route.first, world.positionOf(1))
         assertEquals(route.first, world.positionOf(2))
         assertNotNull(CorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology))

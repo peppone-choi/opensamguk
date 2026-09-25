@@ -5,17 +5,17 @@ import opensamguk.logic.input.*
 
 typealias EnlistmentPolicyUnavailable = RenownBudgetFailure
 
-sealed interface HwihaEnlistmentPolicyResult {
+sealed interface EnlistmentPolicyResult {
     data class Ready(
         val policy: EnlistmentPolicy,
         val unavailableLordReasons: Map<Int, EnlistmentPolicyUnavailable>,
-    ) : HwihaEnlistmentPolicyResult
-    data class Unavailable(val reason: EnlistmentPolicyUnavailable) : HwihaEnlistmentPolicyResult
+    ) : EnlistmentPolicyResult
+    data class Unavailable(val reason: EnlistmentPolicyUnavailable) : EnlistmentPolicyResult
 }
 
 /** Current-world projection only; API and engine share the logic budget authority. */
-class HwihaEnlistmentPolicy(private val world: InMemoryTurnWorld) {
-    fun current(request: EnlistmentRequest): HwihaEnlistmentPolicyResult {
+class EnlistmentPolicyReader(private val world: InMemoryTurnWorld) {
+    fun current(request: EnlistmentRequest): EnlistmentPolicyResult {
         val result = EnlistmentBudget.assess(request.actorId, world.ruleProfile,
             world.listGenerals().map { general ->
                 val stats = general.stats
@@ -25,11 +25,11 @@ class HwihaEnlistmentPolicy(private val world: InMemoryTurnWorld) {
             world.listRetainers().map { DirectPersonCard(it.id, it.masterGeneralId, it.generalId) },
         )
         return when (result) {
-            is RenownBudgetResult.Ready -> HwihaEnlistmentPolicyResult.Ready(
+            is RenownBudgetResult.Ready -> EnlistmentPolicyResult.Ready(
                 EnlistmentPolicy(result.acceptingLordIds, result.freeRenownByLord, result.actorCardCost),
                 result.unavailableLordReasons,
             )
-            is RenownBudgetResult.Unavailable -> HwihaEnlistmentPolicyResult.Unavailable(result.reason)
+            is RenownBudgetResult.Unavailable -> EnlistmentPolicyResult.Unavailable(result.reason)
         }
     }
 }

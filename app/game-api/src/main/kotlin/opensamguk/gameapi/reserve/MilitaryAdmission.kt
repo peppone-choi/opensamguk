@@ -6,25 +6,25 @@ import opensamguk.logic.domestic.FieldAssessment
 import opensamguk.logic.domestic.FieldRules
 
 import opensamguk.gameapi.precheck.DeployReadForbidden
-import opensamguk.gameapi.precheck.HwihaDeployPrecheckService
-import opensamguk.gameapi.read.HwihaDomesticForbidden
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.precheck.DeployPrecheckService
+import opensamguk.gameapi.read.DomesticForbidden
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class HwihaMilitaryAdmission(private val reader: HwihaDomesticReader,
-    private val deploy: HwihaDeployPrecheckService,
+class MilitaryAdmission(private val reader: DomesticReader,
+    private val deploy: DeployPrecheckService,
     private val catalog: InputCatalog = InputCatalog.load(),
     private val design: MilitaryDesign = MilitaryDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(inputId: String, actorId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
-        fun deny(code: String, message: String): Nothing = throw HwihaAdmissionDenied(code, message)
+        fun deny(code: String, message: String): Nothing = throw AdmissionDenied(code, message)
         if (ownerUserId == null || ownerUserId <= 0) deny("UNAUTHORIZED", "제출자 인증이 필요합니다.")
         try { reader.requireOwner(actorId, ownerUserId.toLong()) }
-        catch (_: HwihaDomesticForbidden) { deny("FORBIDDEN", "자신의 장수만 예약할 수 있습니다.") }
+        catch (_: DomesticForbidden) { deny("FORBIDDEN", "자신의 장수만 예약할 수 있습니다.") }
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         val request = MilitaryInput.parse(actorId, inputId, raw)
             ?: deny(MilitaryFailure.INVALID_INPUT.name, MilitaryFailure.INVALID_INPUT.message)

@@ -15,25 +15,25 @@ import opensamguk.logic.world.GeneralPositionChangeResult
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.engine.turn.GeneralStats
 
-class HwihaTravelHandlerTest {
+class TravelHandlerTest {
     @Test
     fun `move starts a saved route and the next empty phase resumes it`() {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val actor = fixture.person(201, 1, route.startCity, userId = "42")
         val world = fixture.world(listOf(actor to route.start))
         val recorder = ChangeRecorder()
-        val handler = HwihaTravelHandler(world, recorder, fixture.topology, fixture.metrics)
+        val handler = TravelHandler(world, recorder, fixture.topology, fixture.metrics)
         val raw = TravelInput.canonicalJson(TravelRequest(actor.id, TravelInput.MOVE, route.destination))
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, "move-201", 42))
+        assertIs<TurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, "move-201", 42))
         val first = assertNotNull(TravelState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
         assertEquals("move-201", first.orderId)
         assertEquals(route.destination, first.destination)
         assertTrue(first.checkpoint.path.totalCostMm > LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
         assertTrue(world.positionOf(actor.id) != route.destination)
         fixture.nextPhase(world)
-        assertEquals(true, HwihaTravelTurn(world, recorder, fixture.topology, fixture.metrics,
-            HwihaMarchReactionPolicy.NON_BLOCKING).onTurn(actor.id))
+        assertEquals(true, TravelTurn(world, recorder, fixture.topology, fixture.metrics,
+            MarchReactionPolicy.NON_BLOCKING).onTurn(actor.id))
         val second = assertNotNull(TravelState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
         assertEquals("move-201", second.orderId)
         assertEquals(route.destination, second.destination)
@@ -42,28 +42,28 @@ class HwihaTravelHandlerTest {
 
     @Test
     fun `return resolves the dispatched county and missing assignment is rejected`() {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val assignment = CountyAssignment("dispatch-202", 99, 1, route.startCity)
         val base = fixture.person(202, 1, fixture.cityIn(route.destination), userId = "42")
         val actor = base.copy(meta = base.meta + (CountyAssignment.META_KEY to assignment.toMetaValue()))
         val world = fixture.world(listOf(actor to route.destination))
-        val handler = HwihaTravelHandler(world, ChangeRecorder(), fixture.topology, fixture.metrics)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(TravelInput.RETURN, actor.id, "{}", "return-202", 42))
+        val handler = TravelHandler(world, ChangeRecorder(), fixture.topology, fixture.metrics)
+        assertIs<TurnOutcome.Applied>(handler.handle(TravelInput.RETURN, actor.id, "{}", "return-202", 42))
         val saved = assertNotNull(TravelState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
         assertEquals(route.start, saved.destination)
         assertEquals("dispatch-202", saved.assignmentIdAtStart)
 
         val unassigned = fixture.person(203, 1, fixture.cityIn(route.destination), userId = "42")
         val other = fixture.world(listOf(unassigned to route.destination))
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(HwihaTravelHandler(other, ChangeRecorder(), fixture.topology,
+        val rejected = assertIs<TurnOutcome.Rejected>(TravelHandler(other, ChangeRecorder(), fixture.topology,
             fixture.metrics).handle(TravelInput.RETURN, unassigned.id, "{}", "return-203", 42))
         assertEquals(TravelFailure.NO_RETURN_ASSIGNMENT.name, rejected.code)
     }
 
     @Test
     fun `lone traveler fights hostile commander without creating troops`() {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val actor = fixture.person(204, 1, route.startCity, userId = "42",
             stats = GeneralStats(100, 100, 70, 70, 70))
@@ -72,22 +72,22 @@ class HwihaTravelHandlerTest {
             bugoks = listOf(fixture.unit(1205, enemy.id, 100)))
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, enemy.id, listOf(1205), route.destination)
-        val handler = HwihaTravelHandler(world, recorder, fixture.topology, fixture.metrics)
+        val handler = TravelHandler(world, recorder, fixture.topology, fixture.metrics)
         val raw = TravelInput.canonicalJson(TravelRequest(actor.id, TravelInput.MOVE, route.destination))
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, "move-204", 42))
+        assertIs<TurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, "move-204", 42))
         val saved = assertNotNull(TravelState.read(world.getGeneralById(actor.id)!!.meta,
             fixture.topology, fixture.metrics))
         assertTrue(saved.checkpoint.stop != LandMarchStop.ENCOUNTER)
         assertEquals(route.first, world.positionOf(actor.id))
         assertEquals(100, world.getBugokById(1205)!!.troops)
-        assertEquals("WON", (world.getGeneralById(actor.id)!!.meta[HwihaPersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, "move-204", 42))
+        assertEquals("WON", (world.getGeneralById(actor.id)!!.meta[PersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
+        assertIs<TurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, "move-204", 42))
         assertEquals(100, world.getBugokById(1205)!!.troops)
     }
 
     @Test
     fun `defeated lone traveler retreats and ends the direct route`() {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val actor = fixture.person(206, 1, route.startCity, userId = "42",
             stats = GeneralStats(10, 10, 70, 70, 70))
@@ -97,7 +97,7 @@ class HwihaTravelHandlerTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, enemy.id, listOf(1207), route.destination)
         val raw = TravelInput.canonicalJson(TravelRequest(actor.id, TravelInput.MOVE, route.destination))
-        assertIs<HwihaTurnOutcome.Applied>(HwihaTravelHandler(world, recorder, fixture.topology,
+        assertIs<TurnOutcome.Applied>(TravelHandler(world, recorder, fixture.topology,
             fixture.metrics).handle(TravelInput.MOVE, actor.id, raw, "move-206", 42))
         assertEquals(route.start, world.positionOf(actor.id))
         assertEquals(null, TravelState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
@@ -106,7 +106,7 @@ class HwihaTravelHandlerTest {
 
     @Test
     fun `captured lone traveler remains with the captor for later persuasion`() {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val base = fixture.person(210, 1, route.startCity, userId = "42",
             stats = GeneralStats(10, 10, 70, 70, 70))
@@ -118,16 +118,16 @@ class HwihaTravelHandlerTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, enemy.id, listOf(1211), route.destination)
         val raw = TravelInput.canonicalJson(TravelRequest(actor.id, TravelInput.MOVE, route.destination))
-        assertIs<HwihaTurnOutcome.Applied>(HwihaTravelHandler(world, recorder, fixture.topology,
+        assertIs<TurnOutcome.Applied>(TravelHandler(world, recorder, fixture.topology,
             fixture.metrics).handle(TravelInput.MOVE, actor.id, raw, "move-210", 42))
-        assertEquals("CAPTURED", (world.getGeneralById(actor.id)!!.meta[HwihaPersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
+        assertEquals("CAPTURED", (world.getGeneralById(actor.id)!!.meta[PersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
         assertEquals(route.first, world.positionOf(actor.id))
-        assertEquals(enemy.id, (world.getGeneralById(actor.id)!!.meta[HwihaEncounterResolver.CAPTIVE_KEY] as Map<*, *>)["captorGeneralId"])
+        assertEquals(enemy.id, (world.getGeneralById(actor.id)!!.meta[EncounterResolver.CAPTIVE_KEY] as Map<*, *>)["captorGeneralId"])
     }
 
     @Test
     fun `interceptor entering the province becomes the personal encounter defender`() {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val actor = fixture.person(208, 1, route.startCity, userId = "42",
             stats = GeneralStats(100, 100, 70, 70, 70))
@@ -136,7 +136,7 @@ class HwihaTravelHandlerTest {
             bugoks = listOf(fixture.unit(1209, enemy.id, 100)))
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, enemy.id, listOf(1209), route.first)
-        val reaction = object : HwihaMarchReactionPolicy {
+        val reaction = object : MarchReactionPolicy {
             override fun entryHazard(world: InMemoryTurnWorld, actorId: Int,
                 node: StrategicNodeRef.LandProvince): LandMarchEntry =
                 if (node == route.first) LandMarchEntry.ENCOUNTER else LandMarchEntry.CLEAR
@@ -155,9 +155,9 @@ class HwihaTravelHandlerTest {
                 node: StrategicNodeRef.LandProvince) = onEntered(world, recorder, actorId, node)
         }
         val raw = TravelInput.canonicalJson(TravelRequest(actor.id, TravelInput.MOVE, route.destination))
-        assertIs<HwihaTurnOutcome.Applied>(HwihaTravelHandler(world, recorder, fixture.topology,
+        assertIs<TurnOutcome.Applied>(TravelHandler(world, recorder, fixture.topology,
             fixture.metrics, reaction).handle(TravelInput.MOVE, actor.id, raw, "move-208", 42))
         assertEquals(route.first, world.positionOf(enemy.id))
-        assertEquals("WON", (world.getGeneralById(actor.id)!!.meta[HwihaPersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
+        assertEquals("WON", (world.getGeneralById(actor.id)!!.meta[PersonalEncounter.REPLAY_KEY] as Map<*, *>)["outcome"])
     }
 }

@@ -5,7 +5,7 @@ import { Chip, Panel, SectionHeader } from '@opensamguk/ui';
 import CommandModal from '@/components/CommandModal';
 import { api } from '@/lib/api';
 import type { ReservedCommandsResponse } from '@/lib/types';
-import { HwihaEmpty } from './HwihaStates';
+import { Empty } from './GameStates';
 
 /** 휘하는 개인 턴 12순이다(정본 설계 §3). */
 const HWIHA_SLOTS = 12;
@@ -54,8 +54,8 @@ export default function TurnList({ generalId, nationId, refreshKey, isHwihaWorld
                 title={`명령 목록 ${HWIHA_SLOTS}순`}
                 sub={data?.turnTime ? `직접 행동 · 한 순에 하나 · 다음 실행 ${data.turnTime}` : '직접 행동 · 한 순에 하나'}
             />
-            {error ? <HwihaEmpty>{`불러오지 못했습니다 — ${error}`}</HwihaEmpty> : null}
-            {!data && !error ? <HwihaEmpty>불러오는 중입니다.</HwihaEmpty> : null}
+            {error ? <Empty>{`불러오지 못했습니다 — ${error}`}</Empty> : null}
+            {!data && !error ? <Empty>불러오는 중입니다.</Empty> : null}
             {data ? (
                 <div style={{ display: 'grid', gap: 4, paddingTop: 8 }}>
                     {slots.map((slot, turnIdx) => {

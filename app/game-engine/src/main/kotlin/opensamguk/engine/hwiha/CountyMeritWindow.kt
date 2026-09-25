@@ -21,7 +21,7 @@ import opensamguk.logic.renown.RenownHooks
  * 창은 `game_env` [KEY] 한 줄이다: `{"stamp":"YYYY-MM","counties":{"<id>":[호구,전답,시장]}}`. 닫으면 지우고
  * 열면 새로 쓴다. 같은 달에 두 번 열거나 닫지 않는다(도장 비교).
  */
-class HwihaCountyMeritWindow(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class CountyMeritWindow(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     /**
      * [year]-[month] 를 여는 월 경계에서, 그 전 달 창을 닫는다.
      * @return 치적이 새로 쌓인 장수 id(오름차순). 창이 없거나 이미 닫혔으면 빈 목록.
@@ -41,7 +41,7 @@ class HwihaCountyMeritWindow(private val world: InMemoryTurnWorld, private val r
             if (!DomesticMerit.risen(open, close, max)) continue
             merited += RenownHooks.countyHolderIds(countyId, city.nationId, metaById)
         }
-        val events = HwihaRenownEventRecorder(world, recorder)
+        val events = RenownEventRecorder(world, recorder)
         val recorded = merited.filter { events.record(it, RenownEventSource.COUNTY_INDICATOR_RISE, window.stamp) }
         world.setGameEnvValue(KEY, null)
         recorder.recordKv("game_env", "game_env", KEY, null)

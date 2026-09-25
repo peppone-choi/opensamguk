@@ -4,15 +4,15 @@ import java.util.Collections
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.RuleProfile
 
-data class HwihaWarehouseSeed(
+data class WarehouseSeed(
     val topologyRevision: String,
     val topologyHash: String,
     val warehouses: Map<Int, Resources>,
 )
 
 /** Explicit game-design inventory only. Map identity and fresh-world checks belong to the importer. */
-object HwihaScenarioWarehouseSeeds {
-    fun decode(root: Map<String, Any?>, profile: RuleProfile?): HwihaWarehouseSeed? {
+object ScenarioWarehouseSeeds {
+    fun decode(root: Map<String, Any?>, profile: RuleProfile?): WarehouseSeed? {
         if ("hwihaWarehouses" !in root) return null
         require(profile == RuleProfile.HWIHA) { "hwihaWarehouses requires HWIHA" }
         val declaration = root["hwihaWarehouses"] as? Map<*, *> ?: invalid()
@@ -33,7 +33,7 @@ object HwihaScenarioWarehouseSeeds {
                 quantity(stock["iron"]), quantity(stock["timber"]), quantity(stock["horses"]))
             require(inventories.put(county, resources) == null) { "Duplicate warehouse county" }
         }
-        return HwihaWarehouseSeed(revision, hash, Collections.unmodifiableMap(inventories.toSortedMap()))
+        return WarehouseSeed(revision, hash, Collections.unmodifiableMap(inventories.toSortedMap()))
     }
 
     private fun quantity(value: Any?): Long = when (value) {

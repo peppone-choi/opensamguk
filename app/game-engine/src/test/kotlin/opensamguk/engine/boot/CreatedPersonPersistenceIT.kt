@@ -22,11 +22,11 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Created game characters on the archived map; no historical provenance or playable scenario claim. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaCreatedPersonPersistenceIT {
+class CreatedPersonPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable,
@@ -38,7 +38,7 @@ class HwihaCreatedPersonPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture = HwihaEnlistmentFixture(jdbc, flush)
+        fixture = EnlistmentFixture(jdbc, flush)
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
@@ -64,7 +64,7 @@ class HwihaCreatedPersonPersistenceIT {
         assertEquals(created.meta[PersonPolicyState.META_KEY], reloaded.meta[PersonPolicyState.META_KEY])
         assertEquals(false, reloaded.meta[LordStatus.META_KEY])
         assertEquals(world.positionOf(created.id), cold.positionOf(created.id))
-        val budget = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(cold)
+        val budget = assertIs<EnlistmentPolicyResult.Ready>(EnlistmentPolicyReader(cold)
             .current(EnlistmentRequest(created.id, EnlistmentMode.RANDOM)))
         val st = created.stats
         assertEquals(RenownRules.personCost(st.leadership, st.strength, st.intelligence, st.politics, st.charm), budget.policy.actorCardCost)

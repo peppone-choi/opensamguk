@@ -1,6 +1,6 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import HwihaTravelForm from '../components/command/HwihaTravelForm';
+import TravelForm from '../components/command/TravelForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
 
@@ -18,7 +18,7 @@ beforeEach(()=>{
 });
 
 test('only a server-approved destination can be reserved',async()=>{
-    render(<HwihaTravelForm {...props}/>);
+    render(<TravelForm {...props}/>);
     expect(screen.getByRole('button',{name:'이동 예약'})).toBeDisabled();
     expect(await screen.findByRole('option',{name:'현재 省 — 이미 목적지에 있습니다.'})).toBeDisabled();
     fireEvent.change(screen.getByLabelText('목적 省'),{target:{value:'B'}});
@@ -30,17 +30,17 @@ test('only a server-approved destination can be reserved',async()=>{
 test('return submits no caller-supplied destination',async()=>{
     vi.mocked(api.travelOptions).mockResolvedValue({inputId:'action.return',available:true,
         destinations:[{provinceId:'B',name:'근무 城',available:true}]});
-    render(<HwihaTravelForm {...props} inputId="action.return"/>);
+    render(<TravelForm {...props} inputId="action.return"/>);
     expect(await screen.findByText('귀환지: 근무 城')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'귀환 예약'}));
     await waitFor(()=>expect(api.command).toHaveBeenCalledWith('action.return',{},1,11));
 });
 
 test('invalid slot and unavailable server state cannot submit',async()=>{
-    const view=render(<HwihaTravelForm {...props} turnIdx={12}/>);
+    const view=render(<TravelForm {...props} turnIdx={12}/>);
     expect(api.travelOptions).not.toHaveBeenCalled();
     vi.mocked(api.travelOptions).mockResolvedValue({inputId:'action.move',available:false,reason:'조우 중',destinations:[]});
-    view.rerender(<HwihaTravelForm {...props}/>);
+    view.rerender(<TravelForm {...props}/>);
     await screen.findByLabelText('목적 省');
     expect(screen.getByRole('button',{name:'이동 예약'})).toBeDisabled();
 });

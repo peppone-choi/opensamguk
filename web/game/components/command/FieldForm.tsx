@@ -2,20 +2,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
-import type { HwihaFieldActionId, HwihaFieldOptions } from '../../lib/types';
+import type { FieldActionId, FieldOptions } from '../../lib/types';
 
-export const fieldLabels: Record<HwihaFieldActionId, string> = {
+export const fieldLabels: Record<FieldActionId, string> = {
     'action.farm': '농지개간', 'action.commerce': '상업투자', 'action.fortify': '수비강화',
     'action.repairWall': '성벽보수', 'action.security': '치안강화', 'action.settle': '정착장려',
     'action.selectResidents': '주민선정', 'action.tour': '순행',
 };
-export function isFieldActionId(value: string): value is HwihaFieldActionId { return value in fieldLabels; }
+export function isFieldActionId(value: string): value is FieldActionId { return value in fieldLabels; }
 
-export default function HwihaFieldForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
-    inputId:HwihaFieldActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function FieldForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
+    inputId:FieldActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }) {
-    const [data,setData]=useState<HwihaFieldOptions|null>(null);
+    const [data,setData]=useState<FieldOptions|null>(null);
     const [reason,setReason]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);
     const generation=useRef(0);const submitting=useRef(false);

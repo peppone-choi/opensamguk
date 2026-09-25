@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { HanTiles } from '@opensamguk/ui';
+import type { WorldTiles } from '@opensamguk/ui';
 import { buildCommanderies, buildHwihaCities, buildLegend, buildMarkerPositions, hwihaTerrainUrl } from '../lib/hwiha-map';
 import { HWIHA_DIRECTIONS, neighborInDirection } from '../lib/hwiha-fog';
 import { hwihaHref, hwihaTabLanding, isHwihaBuilt } from '../lib/hwiha-screens';
@@ -38,7 +38,7 @@ const tiles = {
         { name: '동해군', nameCh: '東海郡', seat: 2, col: 660, row: 330 },
         { name: '성없는군', nameCh: '無城郡', seat: 3, col: 390, row: 500 },
     ],
-} as unknown as HanTiles;
+} as unknown as WorldTiles;
 
 describe('hwiha-map builders', () => {
     it('keeps only nations with a real colour as owners; others read as 공백지', () => {

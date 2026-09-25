@@ -8,7 +8,7 @@ import opensamguk.logic.world.*
 import opensamguk.logic.world.BattlefieldGeometry.Position
 
 /** Measures the selected source bundle; unavailable layouts are evidence, not test failures. */
-class HwihaBattlefieldLayoutArtifactTest {
+class BattlefieldLayoutArtifactTest {
     @Test fun `all selected land edges in both directions retain source geometry and valid deployment zones`() {
         val bundle = HanWorldArtifactsResolver(Path.of("..")).artifacts(HanWorldVariant.V3_1133)
         val topology = bundle.projection.topology

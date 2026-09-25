@@ -11,7 +11,7 @@ import { api } from './api';
 import { useServerId } from './serverGameUrl';
 import type { FrontInfoResponse } from './types';
 
-export interface HwihaSession {
+export interface GameSession {
     readonly loading: boolean;
     readonly error: string | null;
     readonly frontInfo: FrontInfoResponse | null;
@@ -25,7 +25,7 @@ export interface HwihaSession {
     readonly refresh: () => void;
 }
 
-const HwihaSessionContext = createContext<HwihaSession | null>(null);
+const GameSessionContext = createContext<GameSession | null>(null);
 
 export function formatHwihaDate(info: FrontInfoResponse | null): string {
     if (!info) return '';
@@ -33,7 +33,7 @@ export function formatHwihaDate(info: FrontInfoResponse | null): string {
     return `${year}년 ${month}월${turnPhaseText ? ` ${turnPhaseText}` : ''}`;
 }
 
-export function HwihaSessionProvider({ children }: { children: React.ReactNode }) {
+export function GameSessionProvider({ children }: { children: React.ReactNode }) {
     const serverId = useServerId();
     const [frontInfo, setFrontInfo] = useState<FrontInfoResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export function HwihaSessionProvider({ children }: { children: React.ReactNode }
         return () => controller.abort();
     }, [refreshKey]);
 
-    const value = useMemo<HwihaSession>(() => ({
+    const value = useMemo<GameSession>(() => ({
         loading,
         error,
         frontInfo,
@@ -67,11 +67,11 @@ export function HwihaSessionProvider({ children }: { children: React.ReactNode }
         refresh,
     }), [error, frontInfo, loading, refresh, serverId]);
 
-    return <HwihaSessionContext.Provider value={value}>{children}</HwihaSessionContext.Provider>;
+    return <GameSessionContext.Provider value={value}>{children}</GameSessionContext.Provider>;
 }
 
-export function useHwihaSession(): HwihaSession {
-    const session = useContext(HwihaSessionContext);
-    if (!session) throw new Error('useHwihaSession 은 HwihaSessionProvider 안에서만 쓴다');
+export function useHwihaSession(): GameSession {
+    const session = useContext(GameSessionContext);
+    if (!session) throw new Error('useHwihaSession 은 GameSessionProvider 안에서만 쓴다');
     return session;
 }

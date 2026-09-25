@@ -6,33 +6,33 @@ import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.world.*
 
 /** Reissues each commanded corps' durable destination as the owner's current province. */
-class HwihaMusterHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+class MusterHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot?, private val metrics: LandMarchMetricSnapshot?,
     private val design: MilitaryDesign = MilitaryDesign.CANON) {
     fun handle(actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
-        npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: MilitaryFailure) = HwihaTurnOutcome.Rejected(MilitaryInput.MUSTER,
+        npcSelected: Boolean = false): TurnOutcome {
+        fun reject(reason: MilitaryFailure) = TurnOutcome.Rejected(MilitaryInput.MUSTER,
             reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(MilitaryFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(MilitaryFailure.ACTOR_NOT_FOUND)
-        val npc = npcSelected && ownerUserId == null && HwihaNpcDeploySelector.isUnowned(actor.userId) && actor.npcState >= 2
+        val npc = npcSelected && ownerUserId == null && NpcDeploySelector.isUnowned(actor.userId) && actor.npcState >= 2
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
-            return HwihaTurnOutcome.Rejected(MilitaryInput.MUSTER, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
+            return TurnOutcome.Rejected(MilitaryInput.MUSTER, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         if (MilitaryInput.parse(actorId, MilitaryInput.MUSTER, rawJson) == null)
             return reject(MilitaryFailure.INVALID_INPUT)
         if (design.status != MilitaryDesign.CONFIRMED)
-            return HwihaTurnOutcome.Rejected(MilitaryInput.MUSTER,
+            return TurnOutcome.Rejected(MilitaryInput.MUSTER,
                 InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val prior = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (prior?.get("turn") == turnToken) {
-            if (prior["requestId"] == requestId) return HwihaTurnOutcome.Applied(MilitaryInput.MUSTER,
+            if (prior["requestId"] == requestId) return TurnOutcome.Applied(MilitaryInput.MUSTER,
                 (prior["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
             return reject(MilitaryFailure.ALREADY_PROCESSED)
         }
         val topology = topology ?: return reject(MilitaryFailure.STATE_UNAVAILABLE)
         val metrics = metrics ?: return reject(MilitaryFailure.STATE_UNAVAILABLE)
-        val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+        val projection = DeploymentExecutor(world, recorder, topology, metrics).projection()
             ?: return reject(MilitaryFailure.STATE_UNAVAILABLE)
         val check = MusterRules.assess(actorId, projection, topology, metrics, world.getState().meta)
         if (check is MusterAssessment.Rejected) return reject(check.reason)
@@ -62,12 +62,12 @@ class HwihaMusterHandler(private val world: InMemoryTurnWorld, private val recor
             meta = latest.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(stamped))
         world.applyGeneralDirtyFree(stamped)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_MILITARY_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.MUSTER_ORDERED,
+        RenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_MILITARY_ACTION)
+        Records.general(world, actorId, RecordKind.MUSTER_ORDERED,
             "지휘 중인 군단에 현재 省으로 집결하도록 명했습니다.",
             mapOf("destination" to ready.destination.canonicalKey,
                 "commanderIds" to ready.corps.map { it.commanderGeneralId }, "requestId" to requestId))
-        return HwihaTurnOutcome.Applied(MilitaryInput.MUSTER, effects)
+        return TurnOutcome.Applied(MilitaryInput.MUSTER, effects)
     }
 
     companion object { private const val LAST_TURN_KEY = "hwihaMusterLastTurn" }

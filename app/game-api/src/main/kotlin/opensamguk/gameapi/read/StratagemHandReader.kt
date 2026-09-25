@@ -12,7 +12,7 @@ data class OwnedStratagemHand(val status:String, val cards:List<OwnedStratagemCa
     val handLimit:Int = StratagemHand.HAND_LIMIT, val canUse:Boolean = false)
 
 @Service
-class HwihaStratagemHandReader(private val generals:GeneralReadRepository,private val worlds:WorldStateReadRepository) {
+class StratagemHandReader(private val generals:GeneralReadRepository,private val worlds:WorldStateReadRepository) {
     @Transactional(readOnly=true,isolation=Isolation.REPEATABLE_READ)
     fun read(generalId:Int,userId:Long):OwnedStratagemHand {
         val actor=generals.findById(generalId).orElse(null) ?: throw StratagemHandForbidden()

@@ -15,7 +15,7 @@ import opensamguk.logic.input.*
  * 메모리에서는 [InMemoryTurnWorld.setGameEnvValue] 로 반영한다 — 부팅 로더가 world_state.meta 위에 game_env 를 덮어 읽는다.
  * 키가 없거나(기존 월드) 오염된 목록은 빈 목록으로 보충·덮어쓰지 않는다(초기 반응 상태 결정 2026-09-21).
  */
-class HwihaReactionInventory(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class ReactionInventory(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     enum class Result { UNCHANGED, WRITTEN, MISSING, INVALID }
 
     fun rebuild(): Result {

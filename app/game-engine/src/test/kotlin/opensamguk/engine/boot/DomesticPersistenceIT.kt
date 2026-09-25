@@ -34,11 +34,11 @@ import org.testcontainers.containers.PostgreSQLContainer
  * 요격 방침의 game_env 반응 목록. JSON 재로드가 숫자 폭을 바꿔도 codec 이 같은 상태를 읽는지 본다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaDomesticPersistenceIT {
+class DomesticPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable)
@@ -48,7 +48,7 @@ class HwihaDomesticPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture = HwihaEnlistmentFixture(jdbc, flush)
+        fixture = EnlistmentFixture(jdbc, flush)
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
@@ -81,10 +81,10 @@ class HwihaDomesticPersistenceIT {
             MetaJson.encode(mapOf(MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())), id)
         world = cold(id)
 
-        val context = HwihaDomesticContext()
+        val context = DomesticContext()
         var recorder = ChangeRecorder()
         fun submit(inputId: String, body: String) =
-            HwihaCourtHandler(world, recorder, context).handle(ImmediateInput("req-$inputId", 10, 42, inputId, body))
+            CourtHandler(world, recorder, context).handle(ImmediateInput("req-$inputId", 10, 42, inputId, body))
         assertTrue(submit("policy.set", """{"scope":"COUNTY","countyId":$county,"policy":"COMMERCE"}""").ok)
         assertTrue(submit("work.start", """{"countyId":$county,"work":"IRRIGATION"}""").ok)
         assertTrue(submit("policy.set", """{"scope":"CORPS","orderId":"o1","policy":"INTERCEPT"}""").ok)
@@ -98,7 +98,7 @@ class HwihaDomesticPersistenceIT {
 
         // Commander's turn: the corps policy activates and the reaction inventory persists through game_env.
         recorder = ChangeRecorder()
-        HwihaDomesticTurn(world, recorder, context).beforeMovement(11)
+        DomesticTurn(world, recorder, context).beforeMovement(11)
         save(world, recorder)
         world = cold(id)
         assertEquals(listOf("o1"), assertIs<MarchReactions.Inventory>(MarchReactions.read(world.getState().meta))
@@ -107,7 +107,7 @@ class HwihaDomesticPersistenceIT {
         // Next phase boundary: the work advances once, pays its installment, and the stamp blocks a replay after reload.
         recorder = ChangeRecorder()
         world.setCurrentDate(200, 1, 2)
-        assertFalse(HwihaDomesticBoundary(world, recorder, context).run()!!.alreadyStamped)
+        assertFalse(DomesticBoundary(world, recorder, context).run()!!.alreadyStamped)
         save(world, recorder)
         world = cold(id)
         world.setCurrentDate(200, 1, 2)
@@ -115,6 +115,6 @@ class HwihaDomesticPersistenceIT {
         assertTrue(progressed.progress > 0)
         assertEquals(progressed.charged, Resources(1_000_000, 1_000_000, 0, 0, 0)
             .debit(CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock))
-        assertTrue(HwihaDomesticBoundary(world, ChangeRecorder(), context).run()!!.alreadyStamped)
+        assertTrue(DomesticBoundary(world, ChangeRecorder(), context).run()!!.alreadyStamped)
     }
 }

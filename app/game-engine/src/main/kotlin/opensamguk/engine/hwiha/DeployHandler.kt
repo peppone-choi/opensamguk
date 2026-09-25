@@ -5,27 +5,27 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Starts a durable personal order. The single movement stage owns all actual advancement. */
-class HwihaDeployHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+class DeployHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot?, private val metrics: LandMarchMetricSnapshot?) {
     /**
      * @param npcSelected true only for an input the NPC selector synthesized (no reservation row). It is accepted
      *   only for an unowned actor; its order id is derived from (world, actor, phase) since no request exists.
      */
     fun handle(actorId: Int, argJson: String?, requestId: String?, reservationOwnerUserId: Int?,
-        npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: DeploymentFailure) = HwihaTurnOutcome.Rejected(DeployInputs.INPUT_ID,reason.name,DeployRules.reason(reason))
+        npcSelected: Boolean = false): TurnOutcome {
+        fun reject(reason: DeploymentFailure) = TurnOutcome.Rejected(DeployInputs.INPUT_ID,reason.name,DeployRules.reason(reason))
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(DeploymentFailure.WRONG_RULE_PROFILE)
         val npc = npcSelected && reservationOwnerUserId == null && requestId == null &&
-            HwihaNpcDeploySelector.isUnowned(world.getGeneralById(actorId)?.userId)
+            NpcDeploySelector.isUnowned(world.getGeneralById(actorId)?.userId)
         if (!npc && (reservationOwnerUserId == null || reservationOwnerUserId <= 0 ||
             world.getGeneralById(actorId)?.userId?.toLongOrNull() != reservationOwnerUserId.toLong()))
-            return HwihaTurnOutcome.Rejected(DeployInputs.INPUT_ID,"FORBIDDEN","예약한 장수의 소유권이 변경되어 출병할 수 없습니다.")
+            return TurnOutcome.Rejected(DeployInputs.INPUT_ID,"FORBIDDEN","예약한 장수의 소유권이 변경되어 출병할 수 없습니다.")
         val input = DeployInputs.parse(actorId,argJson) ?: return reject(DeploymentFailure.INVALID_INPUT)
-        val requestId = if (npc) HwihaNpcDeploySelector.orderId(world, actorId) else requestId
+        val requestId = if (npc) NpcDeploySelector.orderId(world, actorId) else requestId
         if (requestId.isNullOrBlank() || requestId.length > 128) return reject(DeploymentFailure.INVALID_INPUT)
         val topology = topology ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
         val metrics = metrics ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
-        val executor = HwihaDeploymentExecutor(world,recorder,topology,metrics)
+        val executor = DeploymentExecutor(world,recorder,topology,metrics)
         val projection = executor.projection() ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
         val assessed = DeployRules.assess(input,projection,topology,world.getState().meta,metrics)
         if (assessed is DeploymentAssessment.Rejected) return reject(assessed.reason)
@@ -38,10 +38,10 @@ class HwihaDeployHandler(private val world: InMemoryTurnWorld, private val recor
                 val after = before.copy(meta=before.meta+(CorpsOrder.META_KEY to order.toMetaValue()))
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before),PerTurnOverlay.toLogicGeneral(after))
                 world.applyGeneralDirtyFree(after)
-                HwihaRecords.general(world, actorId, RecordKind.DEPLOY_STARTED, "부대를 거느리고 출병했습니다.",
+                Records.general(world, actorId, RecordKind.DEPLOY_STARTED, "부대를 거느리고 출병했습니다.",
                     linkedMapOf("orderId" to order.orderId, "destination" to order.destination.canonicalKey,
                         "bugokIds" to result.corps.bugokIds), nationId = after.nationId)
-                HwihaTurnOutcome.Applied(DeployInputs.INPUT_ID)
+                TurnOutcome.Applied(DeployInputs.INPUT_ID)
             }
         }
     }

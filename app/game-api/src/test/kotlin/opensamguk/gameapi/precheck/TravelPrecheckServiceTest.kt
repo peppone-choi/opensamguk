@@ -5,17 +5,17 @@ import kotlin.test.*
 import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
 import opensamguk.gameapi.reserve.*
-import opensamguk.gameapi.web.HwihaTravelOptionsController
+import opensamguk.gameapi.web.TravelOptionsController
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
-class HwihaTravelPrecheckServiceTest {
+class TravelPrecheckServiceTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val retainers = mock(RetainerReadRepository::class.java)
     private val artifacts = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
-    private val service = HwihaTravelPrecheckService(generals, retainers, artifacts, spatial)
+    private val service = TravelPrecheckService(generals, retainers, artifacts, spatial)
     private val a = StrategicNodeRef.LandProvince("A")
     private val b = StrategicNodeRef.LandProvince("B")
     private val pin = "a".repeat(64)
@@ -69,15 +69,15 @@ class HwihaTravelPrecheckServiceTest {
 
     @Test fun `admission rejects malformed arguments and controller protects options`() {
         setup()
-        val admission = HwihaTravelAdmission(service)
-        assertEquals("INVALID_TURN_SLOT", assertFailsWith<HwihaAdmissionDenied> {
+        val admission = TravelAdmission(service)
+        assertEquals("INVALID_TURN_SLOT", assertFailsWith<AdmissionDenied> {
             admission.canonicalArguments(TravelInput.MOVE, 1, 41, 12, "{}") }.code)
-        assertEquals("INVALID_INPUT", assertFailsWith<HwihaAdmissionDenied> {
+        assertEquals("INVALID_INPUT", assertFailsWith<AdmissionDenied> {
             admission.canonicalArguments(TravelInput.MOVE, 1, 41, 0,
                 """{"destinationProvinceId":"B","destinationProvinceId":"A"}""") }.code)
         assertEquals("""{"destinationProvinceId":"B"}""", admission.canonicalArguments(TravelInput.MOVE,
             1, 41, 0, """{"destinationProvinceId":"B"}"""))
-        val controller = HwihaTravelOptionsController(service)
+        val controller = TravelOptionsController(service)
         assertEquals(401, controller.move(null, 1).statusCode.value())
         assertEquals(403, controller.move(42, 1).statusCode.value())
         assertEquals(200, controller.move(41, 1).statusCode.value())

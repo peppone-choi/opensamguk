@@ -2,21 +2,21 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaPoliticalActionId,HwihaPoliticalOption,HwihaPoliticalConsentOption} from '../../lib/types';
+import type {PoliticalActionId,PoliticalOption,PoliticalConsentOption} from '../../lib/types';
 
-export const politicalLabels:Record<HwihaPoliticalActionId,string>={
+export const politicalLabels:Record<PoliticalActionId,string>={
     'action.resign':'하야','action.rise':'거병','action.foundState':'건국',
     'action.independence':'독립','action.dissolve':'세력 해산',
     'action.abdicate':'선양','action.oath':'결의',
 };
-export function isPoliticalActionId(value:string):value is HwihaPoliticalActionId{return value in politicalLabels;}
+export function isPoliticalActionId(value:string):value is PoliticalActionId{return value in politicalLabels;}
 
-export default function HwihaPoliticalForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
-    inputId:HwihaPoliticalActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function PoliticalForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
+    inputId:PoliticalActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }){
-    const [data,setData]=useState<HwihaPoliticalOption|null>(null);
-    const [consents,setConsents]=useState<HwihaPoliticalConsentOption[]>([]);
+    const [data,setData]=useState<PoliticalOption|null>(null);
+    const [consents,setConsents]=useState<PoliticalConsentOption[]>([]);
     const [targetId,setTargetId]=useState<number|null>(null);
     const [reason,setReason]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);

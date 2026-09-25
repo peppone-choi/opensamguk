@@ -10,7 +10,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /** Synthetic people on the actual archived map; shared only by database boundary tests. */
-internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private val flush: JdbcFlushExecutor) {
+internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flush: JdbcFlushExecutor) {
     private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
     private val bundle by lazy { artifacts.artifacts(HanWorldVariant.V3_1133) }
     fun seed(id: Int) {
@@ -55,7 +55,7 @@ internal class HwihaEnlistmentFixture(private val jdbc: JdbcTemplate, private va
             recorder=recorder,hwihaDeploymentContext=deploymentContext)
         val lifecycle = TurnDaemonLifecycle(active, handler,
             pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
-            hwihaMovementOf = if (movement) opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(active, handler.recorder,
+            hwihaMovementOf = if (movement) opensamguk.engine.hwiha.AssignmentMarchTurn(active, handler.recorder,
                 bundle.projection.topology, bundle.landMarchMetrics, bundle.provinceCells)::onTurn else { _, _, _ -> },
             reservedActionOf = { reservations.readReserved(id, it, 0) })
         val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {

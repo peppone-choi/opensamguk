@@ -6,13 +6,13 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
-internal data class HwihaQueuedLegacyStratagem(val requestId: String, val ownerUserId: Int,
+internal data class QueuedLegacyStratagem(val requestId: String, val ownerUserId: Int,
     val inputId: String, val argJson: String) {
     fun toMetaValue(): Map<String, Any?> = mapOf("version" to 1, "requestId" to requestId,
         "ownerUserId" to ownerUserId, "inputId" to inputId, "argJson" to argJson)
     companion object {
         const val META_KEY = "hwihaQueuedLegacyStratagem"
-        fun read(meta: Map<String, Any?>): HwihaQueuedLegacyStratagem? {
+        fun read(meta: Map<String, Any?>): QueuedLegacyStratagem? {
             val raw = meta[META_KEY] ?: return null
             val row = raw as? Map<*, *> ?: invalid()
             require(row.keys == setOf("version", "requestId", "ownerUserId", "inputId", "argJson") && row["version"] == 1)
@@ -22,14 +22,14 @@ internal data class HwihaQueuedLegacyStratagem(val requestId: String, val ownerU
             val json = row["argJson"] as? String ?: invalid()
             require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")) && owner > 0 &&
                 inputId in StratagemInput.INPUT_IDS && json.length <= 4096)
-            return HwihaQueuedLegacyStratagem(requestId, owner, inputId, json)
+            return QueuedLegacyStratagem(requestId, owner, inputId, json)
         }
         private fun invalid(): Nothing = throw IllegalArgumentException("invalid queued stratagem")
     }
 }
 
-internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext) {
+internal class LegacyStratagemExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+    private val context: DomesticContext) {
     fun assess(request: StratagemInput.Request) =
         StratagemRules.assess(request, context.projection(world))
 
@@ -109,7 +109,7 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
         val current = world.getGeneralById(request.actorId) ?: return reject(StratagemFailure.ACTOR_NOT_FOUND)
         world.updateGeneralMeta(recorder, current, current.meta + (StratagemStock.META_KEY to
             ready.cardStock.consume(request.inputId).toMetaValue()))
-        HwihaRecords.general(world, request.actorId, RecordKind.PERSONAL_APPLIED,
+        Records.general(world, request.actorId, RecordKind.PERSONAL_APPLIED,
             "${ready.actor.name}의 계책을 펼쳤습니다.", mapOf("inputId" to request.inputId))
         return null
     }

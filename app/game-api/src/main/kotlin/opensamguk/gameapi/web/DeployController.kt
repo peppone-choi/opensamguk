@@ -7,7 +7,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-class HwihaDeployController(private val precheck: HwihaDeployPrecheckService) {
+class DeployController(private val precheck: DeployPrecheckService) {
     @GetMapping("/api/hwiha/deploy/options")
     fun options(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())

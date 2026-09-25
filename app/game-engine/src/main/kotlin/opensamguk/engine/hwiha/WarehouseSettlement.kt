@@ -8,7 +8,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.RuleProfile
 
 /** Internal settlement boundary. Callers must resolve authorized supply access before submitting a debit. */
-class HwihaWarehouseSettlement(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class WarehouseSettlement(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     enum class Result { APPLIED, WRONG_RULE_PROFILE, NOT_COUNTY, OWNER_CHANGED, NOT_READY, INVALID_STATE,
         STALE_REVISION, INSUFFICIENT_STOCK, OVERFLOW }
 

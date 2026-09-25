@@ -18,29 +18,29 @@ import org.slf4j.LoggerFactory
  *    (armyEncirclement.maintenance). 포위보다 **뒤**에 두는 것은 같은 순에 함락된 縣이 새 주인의 망에 들어가야
  *    같은 순 월세입이 새 주인에게 가기 때문이다(captureSettlement.monthlyTax = OWNER_AFTER_CAPTURE).
  *
- * 0. **보급선 도착** — 월 경계에 떠난 군량([HwihaCorpsRations])이 도착 순에 부곡에 실린다.
+ * 0. **보급선 도착** — 월 경계에 떠난 군량([CorpsRations])이 도착 순에 부곡에 실린다.
  *
  * 연결 창고 간 자동 이동·보급 단절 병력 감소(§5.2 1단계의 나머지)는 아직 없다.
  */
-class HwihaPhaseBoundary(
+class PhaseBoundary(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
     private val spatialSupplyNetwork: () -> SpatialSupplyNetwork? = { null },
-    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
     fun run(world: InMemoryTurnWorld, recorder: ChangeRecorder) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         // 0. 보급선 도착 — 포위 급식 판정 전에 도착한 군량을 싣는다.
-        HwihaCorpsRations(world, recorder, topology, metrics).deliver()
-        val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
+        CorpsRations(world, recorder, topology, metrics).deliver()
+        val siege = SiegeService(world, recorder, topology, metrics, cells, outcomes)
         siege.settleBoundary()
         recomputeSupply(world, recorder, siege.besiegedCountyIds())
     }
 
     /** 월 경계 보급선 출발(녹봉·보충 뒤). 경로·지연 계산에 이 경계의 지형을 쓴다. */
     fun dispatchConvoys(world: InMemoryTurnWorld, recorder: ChangeRecorder, year: Int, month: Int): Int? =
-        HwihaCorpsRations(world, recorder, topology, metrics).dispatch(year, month)
+        CorpsRations(world, recorder, topology, metrics).dispatch(year, month)
 
     /** @return 보급 여부가 바뀐 縣 수. 망을 계산할 수 없으면 기존 값을 그대로 두고 -1. */
     fun recomputeSupply(world: InMemoryTurnWorld, recorder: ChangeRecorder, besieged: Set<Int>): Int {
@@ -72,6 +72,6 @@ class HwihaPhaseBoundary(
     }
 
     private companion object {
-        val log = LoggerFactory.getLogger(HwihaPhaseBoundary::class.java)
+        val log = LoggerFactory.getLogger(PhaseBoundary::class.java)
     }
 }

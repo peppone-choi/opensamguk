@@ -5,8 +5,8 @@ import opensamguk.logic.domain.NpcType
 import opensamguk.logic.input.*
 
 /** A first assignment only. Existing dispatch history prevents automatic refusal/cancellation loops. */
-internal object HwihaNpcDispatchSelector {
-    fun select(world: InMemoryTurnWorld, issuerId: Int, executor: HwihaDispatchExecutor): DispatchRequest? {
+internal object NpcDispatchSelector {
+    fun select(world: InMemoryTurnWorld, issuerId: Int, executor: DispatchExecutor): DispatchRequest? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val issuer = world.getGeneralById(issuerId) ?: return null
         if (issuer.npcState != NpcType.NPC_LITE || issuer.nationId <= 0 ||

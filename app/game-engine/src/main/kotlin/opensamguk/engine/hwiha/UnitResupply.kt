@@ -13,12 +13,12 @@ import opensamguk.logic.war.CampaignBalance
  * 들어가도 이전 값으로 남으므로 쓰지 않는다. 위치가 城 없는 省이거나 주인 세력 縣이 아니면(적지 포위군) 채우지 않는다.
  * 도장([STAMP_KEY])으로 한 달에 한 번만 돈다.
  */
-class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class UnitResupply(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     fun resupply(year: Int, month: Int): Int? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val stamp = "%04d-%02d".format(year, month)
         if (world.getState().meta[STAMP_KEY] == stamp) return 0
-        val network = HwihaWarehouseNetwork(world, recorder)
+        val network = WarehouseNetwork(world, recorder)
         val commanderOf = world.listGenerals().flatMap { owner ->
             (try { DeploymentState.read(owner.meta) } catch (_: IllegalArgumentException) { null })?.corps.orEmpty()
         }.flatMap { corps -> corps.bugokIds.map { it to corps.commanderGeneralId } }.toMap()
@@ -28,14 +28,14 @@ class HwihaUnitResupply(private val world: InMemoryTurnWorld, private val record
             val target = (unit.troops.toLong() * CampaignBalance.UNIT_RESUPPLY_TARGET_MONTHS).coerceAtMost(Int.MAX_VALUE.toLong())
             if (unit.provisions >= target) continue
             val holder = world.getGeneralById(commanderOf[unit.id] ?: owner.id) ?: continue
-            val here = HwihaCorpsRations.cityAt(world, holder.id) ?: continue
+            val here = CorpsRations.cityAt(world, holder.id) ?: continue
             val counties = network.countiesFor(owner.nationId, here)
             if (counties.isEmpty()) continue
             val available = network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION
             val add = minOf(target - unit.provisions, available)
             if (add <= 0) continue
             if (!network.payGrain(owner.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
-                HwihaRecords.general(world, owner.id, opensamguk.logic.input.RecordKind.INPUT_REJECTED,
+                Records.general(world, owner.id, opensamguk.logic.input.RecordKind.INPUT_REJECTED,
                     "부곡 ${unit.name}의 군량 보충을 건너뛰었습니다(창고 정산 실패).", mapOf("bugokId" to unit.id))
                 continue
             }

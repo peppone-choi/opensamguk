@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-class HwihaDispatchPrecheckService(
+class DispatchPrecheckService(
     private val generals: GeneralReadRepository,
     private val retainers: RetainerReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,

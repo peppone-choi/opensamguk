@@ -5,14 +5,14 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
 
 /** Unowned lords use their own discovery and captive records; the execution path is shared. */
-internal class HwihaNpcPeopleSelector(private val context: HwihaDomesticContext,
+internal class NpcPeopleSelector(private val context: DomesticContext,
     private val design: PeopleDesign = PeopleDesign.CANON,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
-        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
+        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             design.status != PeopleDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
-        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 || actor.nationId <= 0 ||
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 || actor.nationId <= 0 ||
             !runCatching { LordStatus.read(actor.meta) }.getOrDefault(false) ||
             world.listRetainers().any { it.generalId == actorId } || CorpsOrder.META_KEY in actor.meta) return reserved
         val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }

@@ -1,7 +1,7 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.precheck.HwihaFieldOptionsService
-import opensamguk.gameapi.read.HwihaDomesticForbidden
+import opensamguk.gameapi.precheck.FieldOptionsService
+import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.logic.domestic.FieldInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class HwihaFieldOptionsController(private val service: HwihaFieldOptionsService) {
+class FieldOptionsController(private val service: FieldOptionsService) {
     @GetMapping("/api/commands/farm-options")
     fun farm(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) = options(FieldInput.FARM, generalId, userId)
     @GetMapping("/api/commands/commerce-options")
@@ -34,6 +34,6 @@ class HwihaFieldOptionsController(private val service: HwihaFieldOptionsService)
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try { ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.options(inputId, generalId, userId)) }
-        catch (_: HwihaDomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
+        catch (_: DomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
     }
 }

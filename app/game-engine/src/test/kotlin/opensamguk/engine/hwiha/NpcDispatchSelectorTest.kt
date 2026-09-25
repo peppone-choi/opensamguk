@@ -9,7 +9,7 @@ import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaNpcDispatchSelectorTest {
+class NpcDispatchSelectorTest {
     private fun person(id: Int, nation: Int = 0) = TurnGeneral(
         id = id, name = "G$id", nationId = nation, cityId = 1, troopId = 0,
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
@@ -32,13 +32,13 @@ class HwihaNpcDispatchSelectorTest {
                 positions.withState(GeneralPositionState("r1", "a".repeat(64), person.id, StrategicNodeRef.LandProvince("p1"), 1))
             }, cityLandProvinceById = mapOf(1 to "p1",2 to "p1",3 to "p1")))
     }
-    private fun select(world: InMemoryTurnWorld) = HwihaNpcDispatchSelector.select(world,10,HwihaDispatchExecutor(world,ChangeRecorder()))
+    private fun select(world: InMemoryTurnWorld) = NpcDispatchSelector.select(world,10,DispatchExecutor(world,ChangeRecorder()))
 
     @Test fun `first valid pair is deterministic and generates no human execution result`() {
         for (reverse in listOf(false,true)) {
             val world=world(reverse=reverse)
             assertEquals(DispatchRequest(10,1,1),select(world))
-            val handler=HwihaCourtHandler(world,ChangeRecorder())
+            val handler=CourtHandler(world,ChangeRecorder())
             handler.onIssuerTurn(10)
             assertEquals("npc-dispatch:1:10:1:200:1:1",DispatchState.read(world.getGeneralById(1)!!.meta)!!.dispatchId)
             assertNull(DispatchState.read(world.getGeneralById(2)!!.meta))
@@ -97,14 +97,14 @@ class HwihaNpcDispatchSelectorTest {
     @Test fun `only neutral administrative county means no assignment`() {
         val world=world(countyIds=setOf(3))
         assertNull(select(world))
-        HwihaCourtHandler(world,ChangeRecorder()).onIssuerTurn(10)
+        CourtHandler(world,ChangeRecorder()).onIssuerTurn(10)
         assertTrue(world.peekLogs().isEmpty())
         assertNull(DispatchState.read(world.getGeneralById(1)!!.meta))
     }
     @Test fun `friendly strategic sites without administrative counties mean no assignment`() {
         val world=world(countyIds=emptySet())
         assertNull(select(world))
-        HwihaCourtHandler(world,ChangeRecorder()).onIssuerTurn(10)
+        CourtHandler(world,ChangeRecorder()).onIssuerTurn(10)
         assertTrue(world.peekLogs().isEmpty())
         assertNull(DispatchState.read(world.getGeneralById(1)!!.meta))
     }
@@ -112,7 +112,7 @@ class HwihaNpcDispatchSelectorTest {
         val issuer=person(10,1).copy(meta=person(10,1).meta+(QueuedDispatch.META_KEY to
             QueuedDispatch("human-request",40,1,1).toMetaValue()))
         val world=world(issuer)
-        val handler=HwihaCourtHandler(world,ChangeRecorder())
+        val handler=CourtHandler(world,ChangeRecorder())
         handler.onIssuerTurn(10)
         assertNull(DispatchState.read(world.getGeneralById(1)!!.meta))
         assertEquals("FORBIDDEN",handler.takeExecutions().single().result.code)

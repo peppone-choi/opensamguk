@@ -18,13 +18,13 @@ import opensamguk.logic.world.*
  * 목적지: 縣令 = 그 縣治 城의 省, 사자 = 상대 세력 수도의 省, 정찰 = 지정 省, 군단장 = 주인 장수의 현재 省(주인이 움직이면
  * 다시 경로를 잡는다). 이미 목적지에 서 있으면 행군 없이 도착이다.
  */
-class HwihaPlacementMarchTurn(
+class PlacementMarchTurn(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     /** 반응 기록(요격·회피) 판정 — 군단·발령 행군과 같은 정책을 쓴다. 해석기가 없는 동안은 막지 않는다. */
-    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING,
+    private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING,
 ) {
     /** @return 이 장수의 이동 단계를 배치 행군이 맡았으면 true. */
     fun onTurn(generalId: Int): Boolean {
@@ -67,7 +67,7 @@ class HwihaPlacementMarchTurn(
             is LandMarchPathResult.Resolved -> result.path
             is LandMarchPathResult.Denied -> { log(generalId, "부임지까지 통행 가능한 육상 경로가 없습니다."); return true }
         }
-        val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
+        val military = MilitaryPresenceProvider(world, topology, metrics)
         val movement = when (val result = LandMarchProgress.advance(topology, metrics, edges, path,
             retained?.cursor ?: LandMarchCursor(path.pathHash), position.node, 1, LandMarchMetricSnapshot.NORMAL_BUDGET_MM) { node ->
                 military.entryAt(generalId, node, reactions) }) {

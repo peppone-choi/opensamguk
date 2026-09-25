@@ -6,11 +6,11 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
 
 /** Political-phase retirement transfers the personal retinue to the named direct retainer. */
-class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+    private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
-    fun handle(actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?, npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: RetireFailure) = HwihaTurnOutcome.Rejected(RetireInput.INPUT_ID, reason.name, reason.message)
+    fun handle(actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?, npcSelected: Boolean = false): TurnOutcome {
+        fun reject(reason: RetireFailure) = TurnOutcome.Rejected(RetireInput.INPUT_ID, reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(RetireFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(RetireFailure.ACTOR_NOT_FOUND)
         val request = RetireInput.parse(actorId, rawJson) ?: return reject(RetireFailure.INVALID_INPUT)
@@ -19,15 +19,15 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
         if (previous?.get("turn") == turnToken) {
             if (previous["requestId"] == requestId && previous["ownerUserId"] == ownerUserId &&
                 previous["successorGeneralId"] == request.successorGeneralId)
-                return HwihaTurnOutcome.Applied(RetireInput.INPUT_ID,
+                return TurnOutcome.Applied(RetireInput.INPUT_ID,
                     (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
             return reject(RetireFailure.ALREADY_PROCESSED)
         }
-        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
+        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && NpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
-            return HwihaTurnOutcome.Rejected(RetireInput.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
+            return TurnOutcome.Rejected(RetireInput.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         if (catalog[RetireInput.INPUT_ID]?.deliveryState?.hasHandler != true)
-            return HwihaTurnOutcome.Rejected(RetireInput.INPUT_ID,
+            return TurnOutcome.Rejected(RetireInput.INPUT_ID,
                 InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val assessed = RetireRules.assess(request, context.projection(world))
         if (assessed is RetireAssessment.Rejected) return reject(assessed.reason)
@@ -85,11 +85,11 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
             recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
             world.applyNationDirtyFree(nextNation)
         }
-        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
+        Records.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${actor.name}이 ${successor.name}에게 휘하를 넘기고 은퇴했습니다.",
             mapOf("inputId" to RetireInput.INPUT_ID, "successorGeneralId" to successor.id,
                 "requestId" to requestId))
-        return HwihaTurnOutcome.Applied(RetireInput.INPUT_ID, effects)
+        return TurnOutcome.Applied(RetireInput.INPUT_ID, effects)
     }
 
     companion object { private const val LAST_TURN_KEY = "hwihaRetireLastTurn" }

@@ -4,7 +4,7 @@ import { Chip, Gauge, Panel, SectionHeader } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
 import type { FrontCityInfo } from '@/lib/types';
-import { HwihaEmpty } from './HwihaStates';
+import { Empty } from './GameStates';
 
 /**
  * 내가 선 현 — `front-info.city` 의 실제 값과 특산 조회. 내정·징세·징병은 현 단위다.
@@ -18,7 +18,7 @@ export default function CountyPanel({ city, isHwihaWorld }: { city: FrontCityInf
         return (
             <Panel style={{ padding: 12 }}>
                 <SectionHeader title="지금 선 곳" />
-                <HwihaEmpty>장수가 성에 있지 않습니다.</HwihaEmpty>
+                <Empty>장수가 성에 있지 않습니다.</Empty>
             </Panel>
         );
     }

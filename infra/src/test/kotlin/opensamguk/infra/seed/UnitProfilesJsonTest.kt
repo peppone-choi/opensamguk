@@ -5,10 +5,10 @@ import java.security.MessageDigest
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.logic.war.*
 
-class HwihaUnitProfilesJsonTest {
+class UnitProfilesJsonTest {
     private val raw = """{"version":1,"profiles":[{"crewTypeId":1100,"movementSteps":1,"attackRange":1,"attackPower":100,"defencePower":120,"initiative":20}],"unsupportedCrewTypeIds":[1000]}"""
     @Test fun `packaged explicit identities cover current catalog with delegated values only`() {
-        val profiles = HwihaUnitProfilesJson.loadDefault()
+        val profiles = UnitProfilesJson.loadDefault()
         val catalog = GameUnitConst.all()
         assertEquals(catalog.keys,profiles.profiles.map { it.crewTypeId }.toSet()+profiles.unsupportedCrewTypeIds)
         for ((id, unit) in catalog) {
@@ -35,8 +35,8 @@ class HwihaUnitProfilesJsonTest {
             raw.replace("[1000]","[1100]"),raw.replace("[1000]","[1000,1000]"),raw.replace("[1000]","[-1]"),
             raw.replace("\"initiative\":20","\"initiative\":20,\"unknown\":1"),
             raw.replace("\"initiative\":20","\"initiative\":20,\"initiative\":30"))
-        bad.forEachIndexed { i,s -> assertFailsWith<IllegalArgumentException>("case $i") { HwihaUnitProfilesJson.load(s.toByteArray()) } }
-        assertNotEquals(HwihaUnitProfilesJson.load(raw.toByteArray()).contentHash,HwihaUnitProfilesJson.load((raw+" ").toByteArray()).contentHash)
+        bad.forEachIndexed { i,s -> assertFailsWith<IllegalArgumentException>("case $i") { UnitProfilesJson.load(s.toByteArray()) } }
+        assertNotEquals(UnitProfilesJson.load(raw.toByteArray()).contentHash,UnitProfilesJson.load((raw+" ").toByteArray()).contentHash)
     }
     @Test fun `model owns immutable sorted collections and rejects invalid construction`() {
         val row = UnitProfile(1100,1,1,100,120,20)

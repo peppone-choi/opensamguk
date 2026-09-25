@@ -2,19 +2,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
-import type { HwihaMilitaryActionId, HwihaMilitaryOptions } from '../../lib/types';
+import type { MilitaryActionId, MilitaryOptions } from '../../lib/types';
 
-export const militaryLabels: Record<HwihaMilitaryActionId, string> = {
+export const militaryLabels: Record<MilitaryActionId, string> = {
     'action.conscript': '징병', 'action.raiseVolunteers': '모병', 'action.train': '훈련',
     'action.boostMorale': '사기진작', 'action.muster': '집합', 'action.demobilize': '소집해제',
 };
-export function isMilitaryActionId(value: string): value is HwihaMilitaryActionId { return value in militaryLabels; }
+export function isMilitaryActionId(value: string): value is MilitaryActionId { return value in militaryLabels; }
 
-export default function HwihaMilitaryForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
-    inputId:HwihaMilitaryActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function MilitaryForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
+    inputId:MilitaryActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }) {
-    const [data,setData]=useState<HwihaMilitaryOptions|null>(null);
+    const [data,setData]=useState<MilitaryOptions|null>(null);
     const [reason,setReason]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);
     const generation=useRef(0);const submitting=useRef(false);

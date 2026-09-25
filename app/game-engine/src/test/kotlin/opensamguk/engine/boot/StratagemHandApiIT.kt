@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.HwihaTurnOutcome
+import opensamguk.engine.hwiha.TurnOutcome
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.gameapi.GameApiApplication
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /** Actual personal-turn supply and owner-only read across the database boundary. */
-@org.springframework.context.annotation.Import(HwihaStratagemHandApiIT.Artifacts::class)
+@org.springframework.context.annotation.Import(StratagemHandApiIT.Artifacts::class)
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(classes = [GameApiApplication::class], properties = [
@@ -42,7 +42,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
     "jwt.legacy-secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=",
     "jwt.legacy-accept-until=2099-01-01T00:00:00Z",
 ])
-class HwihaStratagemHandApiIT {
+class StratagemHandApiIT {
     @Autowired private lateinit var context: WebApplicationContext
     @Autowired private lateinit var jdbc: JdbcTemplate
     @Autowired private lateinit var json: ObjectMapper
@@ -52,7 +52,7 @@ class HwihaStratagemHandApiIT {
     @Test fun `only current owner reads committed hand without creating missing cards`() {
         val source=checkNotNull(jdbc.dataSource)
         val flush=JdbcFlushExecutor(NamedParameterJdbcTemplate(source),TransactionTemplate(DataSourceTransactionManager(source)))
-        val fixture=HwihaEnlistmentFixture(jdbc,flush);fixture.seed(1)
+        val fixture=EnlistmentFixture(jdbc,flush);fixture.seed(1)
         jdbc.update("UPDATE general SET user_id='42' WHERE world_id=1 AND id=1")
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=1 AND id<>1")
         val mvc=MockMvcBuilders.webAppContextSetup(context).build()

@@ -6,14 +6,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
-import type { DispatchOptionsResponse, DispatchPendingResponse, HwihaPhase, IntakeOutcome } from '../../lib/types';
-import styles from './HwihaCourtForm.module.css';
-import HwihaLegacyCourtForm from './HwihaLegacyCourtForm';
+import type { DispatchOptionsResponse, DispatchPendingResponse, Phase, IntakeOutcome } from '../../lib/types';
+import styles from './CourtForm.module.css';
+import CourtActionForm from './CourtActionForm';
 
 const statusLabels = { PENDING: '응답 대기', ACCEPTED: '수락', REFUSED: '거절', CANCELLED: '취소' };
-const phaseText = (phase: HwihaPhase) => `${phase.year}년 ${phase.month}월 ${['상순', '중순', '하순'][phase.phase - 1]}`;
+const phaseText = (phase: Phase) => `${phase.year}년 ${phase.month}월 ${['상순', '중순', '하순'][phase.phase - 1]}`;
 
-export default function HwihaCourtForm({ generalId, onReserved, refreshKey = 0 }: {generalId: number; refreshKey?: number; onReserved?: () => void}) {
+export default function CourtForm({ generalId, onReserved, refreshKey = 0 }: {generalId: number; refreshKey?: number; onReserved?: () => void}) {
     const [target, setTarget] = useState<number | undefined>();
     const [county, setCounty] = useState<number | undefined>();
     const [options, setOptions] = useState<DispatchOptionsResponse | null>(null);
@@ -150,7 +150,7 @@ export default function HwihaCourtForm({ generalId, onReserved, refreshKey = 0 }
                 </button>
             </>}
         </section>
-        <HwihaLegacyCourtForm generalId={generalId} refreshKey={refreshKey + refresh} onReserved={onReserved} />
+        <CourtActionForm generalId={generalId} refreshKey={refreshKey + refresh} onReserved={onReserved} />
         <button className="os-button os-button--ghost" disabled={busy} onClick={() => setRefresh(n => n + 1)}>상태 다시 확인</button>
     </div>;
 }

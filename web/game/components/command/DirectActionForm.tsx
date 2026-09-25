@@ -2,19 +2,19 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaLegacyDirectActionId,HwihaLegacyDirectOptions} from '../../lib/types';
+import type {DirectActionActionId,DirectActionOptions} from '../../lib/types';
 
-export const legacyDirectLabels:Record<HwihaLegacyDirectActionId,string>={
+export const legacyDirectLabels:Record<DirectActionActionId,string>={
     'action.convertProficiency':'숙련전환','action.tradeEquipment':'장비매매',
     'action.tradeGrain':'군량매매','action.transport':'물자조달',
 };
-export function isLegacyDirectActionId(value:string):value is HwihaLegacyDirectActionId{return value in legacyDirectLabels;}
+export function isLegacyDirectActionId(value:string):value is DirectActionActionId{return value in legacyDirectLabels;}
 
-export default function HwihaLegacyDirectForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
-    inputId:HwihaLegacyDirectActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function DirectActionForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
+    inputId:DirectActionActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }){
-    const [data,setData]=useState<HwihaLegacyDirectOptions|null>(null);
+    const [data,setData]=useState<DirectActionOptions|null>(null);
     const [choiceIndex,setChoiceIndex]=useState(-1);
     const [amount,setAmount]=useState(1);
     const [reason,setReason]=useState<string|null>(null);

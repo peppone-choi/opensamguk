@@ -7,29 +7,29 @@ import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 
 /** Resolves one field-phase personal action at the general's current land position. */
-class HwihaPersonalHandler(
+class PersonalHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+    private val context: DomesticContext,
     private val design: PersonalDesign = PersonalDesign.CANON,
 ) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
-        npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: PersonalFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
+        npcSelected: Boolean = false): TurnOutcome {
+        fun reject(reason: PersonalFailure) = TurnOutcome.Rejected(inputId, reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(PersonalFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(PersonalFailure.ACTOR_NOT_FOUND)
-        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
+        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && NpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
-            return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
+            return TurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = PersonalInput.parse(actorId, inputId, rawJson)
             ?: return reject(PersonalFailure.INVALID_INPUT)
         if (design.status != PersonalDesign.CONFIRMED)
-            return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+            return TurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val prior = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (prior?.get("turn") == turnToken) {
             if (prior["inputId"] == inputId && prior["requestId"] == requestId)
-                return HwihaTurnOutcome.Applied(inputId, (prior["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
+                return TurnOutcome.Applied(inputId, (prior["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
             return reject(PersonalFailure.ALREADY_PROCESSED)
         }
         val check = PersonalRules.assess(request, context.projection(world))
@@ -79,10 +79,10 @@ class HwihaPersonalHandler(
             meta = next.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        if (exploring) HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_PERSONAL_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
+        if (exploring) RenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_PERSONAL_ACTION)
+        Records.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${actor.name}의 개인 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))
-        return HwihaTurnOutcome.Applied(inputId, effects)
+        return TurnOutcome.Applied(inputId, effects)
     }
 
     companion object { private const val LAST_TURN_KEY = "hwihaPersonalLastTurn" }

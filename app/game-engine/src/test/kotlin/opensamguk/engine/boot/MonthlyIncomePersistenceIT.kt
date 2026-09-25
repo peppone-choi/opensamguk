@@ -2,7 +2,7 @@ package opensamguk.engine.boot
 
 import kotlin.test.*
 import opensamguk.engine.flush.DatabaseHooks
-import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
+import opensamguk.engine.hwiha.MonthlyCountyIncome
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
@@ -26,11 +26,11 @@ import org.testcontainers.containers.PostgreSQLContainer
  * flush 에 실리므로, 재기동 뒤 같은 달을 다시 돌려도 두 번 적립되지 않아야 한다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaMonthlyIncomePersistenceIT {
+class MonthlyIncomePersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable)
@@ -42,7 +42,7 @@ class HwihaMonthlyIncomePersistenceIT {
         flush = JdbcFlushExecutor(
             NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source))
         )
-        fixture = HwihaEnlistmentFixture(jdbc, flush)
+        fixture = EnlistmentFixture(jdbc, flush)
     }
 
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
@@ -71,7 +71,7 @@ class HwihaMonthlyIncomePersistenceIT {
         assertEquals(Resources(money = 5, grain = 7), seeded.stock)
 
         var recorder = ChangeRecorder()
-        val first = assertNotNull(HwihaMonthlyCountyIncome(world, recorder).credit(200, 3))
+        val first = assertNotNull(MonthlyCountyIncome(world, recorder).credit(200, 3))
         assertFalse(first.alreadyStamped)
         assertEquals(1, first.creditedCounties, "창고가 있는 縣 하나만 적립된다")
         save(world, recorder)
@@ -83,14 +83,14 @@ class HwihaMonthlyIncomePersistenceIT {
         assertEquals(1, reloaded.revision)
         assertEquals(17, (world.getCityById(county)!!.meta["keep"] as Number).toInt())
         assertEquals(
-            HwihaMonthlyCountyIncome.stampOf(200, 3),
-            world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
+            MonthlyCountyIncome.stampOf(200, 3),
+            world.getState().meta[MonthlyCountyIncome.STAMP_KEY],
             "도장이 창고와 같은 flush 로 저장됐다",
         )
 
         // 같은 달 재실행은 막힌다 — 재기동 뒤에도 이중 적립이 없다.
         recorder = ChangeRecorder()
-        val retry = assertNotNull(HwihaMonthlyCountyIncome(world, recorder).credit(200, 3))
+        val retry = assertNotNull(MonthlyCountyIncome(world, recorder).credit(200, 3))
         assertTrue(retry.alreadyStamped)
         save(world, recorder)
         world = cold(id)
@@ -98,7 +98,7 @@ class HwihaMonthlyIncomePersistenceIT {
 
         // 다음 달은 다시 들어간다.
         recorder = ChangeRecorder()
-        val next = assertNotNull(HwihaMonthlyCountyIncome(world, recorder).credit(200, 4))
+        val next = assertNotNull(MonthlyCountyIncome(world, recorder).credit(200, 4))
         assertFalse(next.alreadyStamped)
         assertEquals(first.total, next.total)
         save(world, recorder)
@@ -107,8 +107,8 @@ class HwihaMonthlyIncomePersistenceIT {
         assertEquals(seeded.stock.credit(first.total).credit(next.total), after.stock)
         assertEquals(2, after.revision)
         assertEquals(
-            HwihaMonthlyCountyIncome.stampOf(200, 4),
-            world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
+            MonthlyCountyIncome.stampOf(200, 4),
+            world.getState().meta[MonthlyCountyIncome.STAMP_KEY],
         )
     }
 }

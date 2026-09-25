@@ -3,17 +3,17 @@ package opensamguk.gameapi.precheck
 import kotlin.test.*
 import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
-import opensamguk.gameapi.web.HwihaDispatchReadController
+import opensamguk.gameapi.web.DispatchReadController
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.world.HanStrategicRouteProjection
 import java.util.Optional
 
-class HwihaDispatchPrecheckServiceTest {
+class DispatchPrecheckServiceTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val retainers = mock(RetainerReadRepository::class.java)
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
-    private val service = HwihaDispatchPrecheckService(generals, retainers, resolver)
+    private val service = DispatchPrecheckService(generals, retainers, resolver)
     private val now = Phase(200, 1, 1)
     private val dispatch = DispatchState("d1", 1, 2, 1, 7, now, now.plus(12))
     private fun person(id: Int, meta: Map<String, Any?> = emptyMap()) = GeneralReadEntity(
@@ -90,7 +90,7 @@ class HwihaDispatchPrecheckServiceTest {
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(1,41).code)
     }
     @Test fun `controller requires principal and preserves forbidden ownership`() {
-        val controller = HwihaDispatchReadController(service)
+        val controller = DispatchReadController(service)
         assertEquals(401, controller.pending(null,1).statusCode.value())
         assertEquals(403, controller.pending(0,1).statusCode.value())
         setup(true)
@@ -165,7 +165,7 @@ class HwihaDispatchPrecheckServiceTest {
         assertEquals(DispatchFailure.STATE_UNAVAILABLE.message,service.options(1,41).reason)
     }
     @Test fun `options controller checks identity before projection`() {
-        val controller = HwihaDispatchReadController(service)
+        val controller = DispatchReadController(service)
         assertEquals(401,controller.options(null,1,null).statusCode.value())
         assertEquals(403,controller.options(0,1,null).statusCode.value())
         verifyNoInteractions(resolver,retainers)

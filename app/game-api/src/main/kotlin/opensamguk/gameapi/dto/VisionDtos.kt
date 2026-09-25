@@ -7,20 +7,20 @@ import com.fasterxml.jackson.annotation.JsonInclude
  * Every DTO omits null fields: a field the viewer is not entitled to is absent from the bytes, never `null`.
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaStampDto(val year: Int, val month: Int, val phase: Int)
+data class StampDto(val year: Int, val month: Int, val phase: Int)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaVisibilityCommanderyDto(
+data class VisibilityCommanderyDto(
     val no: Int,
     val id: String,
     val name: String,
     val tier: String,
-    val seenAtStamp: HwihaStampDto? = null,
+    val seenAtStamp: StampDto? = null,
     val ageTurns: Int? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaVisionSourceDto(
+data class VisionSourceDto(
     val kind: String,
     val commanderyNo: Int,
     val radius: Int,
@@ -29,20 +29,20 @@ data class HwihaVisionSourceDto(
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaVisibilityResponse(
+data class VisibilityResponse(
     val status: String,
-    val stamp: HwihaStampDto? = null,
-    val commanderies: List<HwihaVisibilityCommanderyDto>? = null,
-    val sources: List<HwihaVisionSourceDto>? = null,
+    val stamp: StampDto? = null,
+    val commanderies: List<VisibilityCommanderyDto>? = null,
+    val sources: List<VisionSourceDto>? = null,
     /** Unreadable optional source rows (scout posts / works) — counted, never turned into vision. */
     val invalidSourceRecords: Int? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaTroopBandDto(val code: String, val label: String)
+data class TroopBandDto(val code: String, val label: String)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaCorpsDto(
+data class CorpsDto(
     val corpsId: String,
     val ownerGeneralId: Int,
     val ownerName: String? = null,
@@ -57,27 +57,27 @@ data class HwihaCorpsDto(
     /** Own corps only. */
     val troops: Int? = null,
     /** Other corps only. */
-    val troopsBand: HwihaTroopBandDto? = null,
+    val troopsBand: TroopBandDto? = null,
     /** Own corps only: remaining land path from the current province (province ids, current first). */
     val marchPath: List<String>? = null,
     val destinationProvinceId: String? = null,
     /** INTEL only. */
-    val lastSeenStamp: HwihaStampDto? = null,
+    val lastSeenStamp: StampDto? = null,
     val ageTurns: Int? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaCorpsResponse(
+data class CorpsResponse(
     val status: String,
-    val stamp: HwihaStampDto? = null,
-    val corps: List<HwihaCorpsDto>? = null,
+    val stamp: StampDto? = null,
+    val corps: List<CorpsDto>? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaResourceCostDto(val money: Long, val grain: Long, val iron: Long, val timber: Long, val horses: Long)
+data class ResourceCostDto(val money: Long, val grain: Long, val iron: Long, val timber: Long, val horses: Long)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaScoutOptionDto(
+data class ScoutOptionDto(
     val no: Int,
     val id: String,
     val name: String,
@@ -85,21 +85,21 @@ data class HwihaScoutOptionDto(
     val available: Boolean,
     val code: String? = null,
     val reason: String? = null,
-    val seenAtStamp: HwihaStampDto? = null,
+    val seenAtStamp: StampDto? = null,
     val ageTurns: Int? = null,
 )
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaScoutOriginDto(val provinceId: String, val commanderyNo: Int, val id: String, val name: String)
+data class ScoutOriginDto(val provinceId: String, val commanderyNo: Int, val id: String, val name: String)
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-data class HwihaScoutOptionsResponse(
+data class ScoutOptionsResponse(
     val status: String,
     val inputId: String = "action.scout",
     val available: Boolean = false,
     val code: String? = null,
     val reason: String? = null,
-    val origin: HwihaScoutOriginDto? = null,
-    val cost: HwihaResourceCostDto? = null,
-    val options: List<HwihaScoutOptionDto>? = null,
+    val origin: ScoutOriginDto? = null,
+    val cost: ResourceCostDto? = null,
+    val options: List<ScoutOptionDto>? = null,
 )

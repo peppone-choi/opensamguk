@@ -31,12 +31,12 @@ import opensamguk.logic.input.*
  * - 그 장수가 카드인 배치의 대기를 현행으로 올리거나(무효면 사유를 남기고 버림), 현행 배치를 재검사한다.
  * - 그 장수가 지휘하는 출전 군단의 방침 대기를 현행으로 올리고 반응 목록(`hwihaMarchReactions`)을 다시 쓴다.
  * - 그 장수가 앉은 縣令이면 縣 방침 대기를 현행으로 올린다.
- * 縣 방침의 지표 효과는 순 경계([HwihaDomesticBoundary])가 돌린다.
+ * 縣 방침의 지표 효과는 순 경계([DomesticBoundary])가 돌린다.
  */
-class HwihaDomesticTurn(
+class DomesticTurn(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+    private val context: DomesticContext,
 ) {
     fun beforeMovement(generalId: Int) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
@@ -123,7 +123,7 @@ class HwihaDomesticTurn(
                 next.takeIf { it.entries.isNotEmpty() }?.toMetaValue()))
             changed = true
         }
-        if (changed) HwihaReactionInventory(world, recorder).rebuild()
+        if (changed) ReactionInventory(world, recorder).rebuild()
     }
 
     private fun activateCountyPolicy(countyId: Int, now: Phase) {
@@ -146,10 +146,10 @@ class HwihaDomesticTurn(
  * 앉은 縣令이 있으면 그 능력치로(§8.2), 없으면 빈자리 배율로 유효 방침을 돌린다. 방침·자리 기록이 있거나 건너뛴 사유가
  * 있을 때만 縣 meta 의 `lastApplied` 를 적는다 — 아무도 손대지 않은 縣은 지표만 바뀐다.
  */
-internal class HwihaDomesticCountyEffects(
+internal class DomesticCountyEffects(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+    private val context: DomesticContext,
 ) {
     fun apply(countyId: Int, state: DomesticProjection) {
         val county = state.county(countyId) ?: return
@@ -175,10 +175,10 @@ internal class HwihaDomesticCountyEffects(
         if (outcome.credit != Resources() || outcome.debit != Resources()) {
             // Resource flows go through the warehouse settlement boundary (owner and revision rechecked).
             val warehouse = try { CountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
-            resultCode = if (warehouse == null) "WAREHOUSE_NOT_READY" else when (val settled = HwihaWarehouseSettlement(world, recorder)
+            resultCode = if (warehouse == null) "WAREHOUSE_NOT_READY" else when (val settled = WarehouseSettlement(world, recorder)
                 .settle(countyId, city.nationId, warehouse.revision, outcome.debit, outcome.credit)) {
-                HwihaWarehouseSettlement.Result.APPLIED -> "APPLIED"
-                HwihaWarehouseSettlement.Result.NOT_READY -> "WAREHOUSE_NOT_READY"
+                WarehouseSettlement.Result.APPLIED -> "APPLIED"
+                WarehouseSettlement.Result.NOT_READY -> "WAREHOUSE_NOT_READY"
                 else -> settled.name
             }
         }

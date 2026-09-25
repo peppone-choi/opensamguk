@@ -7,8 +7,8 @@ import kotlin.test.assertTrue
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Nation
 
-class HwihaCapitalAfterCaptureTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class CapitalAfterCaptureTest {
+    private val fixture = CampaignWorldFixture()
     private val counties = fixture.bundle.projection.administrativeCountyIds.sorted()
 
     @Test fun `lost capital moves to the largest remaining county with id as tie break`() {
@@ -21,10 +21,10 @@ class HwihaCapitalAfterCaptureTest {
                 larger -> city.copy(nationId = 1, population = 9000)
                 else -> city
             } })
-        HwihaCapitalAfterCapture(world, ChangeRecorder()).settle(1, captured)
+        CapitalAfterCapture(world, ChangeRecorder()).settle(1, captured)
         assertEquals(larger, world.getNationById(1)?.capitalCityId)
         assertTrue(world.getCityById(world.getNationById(1)!!.capitalCityId!!)?.nationId == 1)
-        val supply = HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells)
+        val supply = PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells)
         assertTrue(supply.recomputeSupply(world, ChangeRecorder(), emptySet()) >= 0)
         assertEquals(1, world.getCityById(larger)?.supplyState, "the new own capital is the supply root")
     }
@@ -34,7 +34,7 @@ class HwihaCapitalAfterCaptureTest {
         val world = fixture.world(listOf(fixture.person(1, 1, captured) to fixture.route().start),
             nations = listOf(Nation(1, "N1", "#111111", capitalCityId = captured, chiefGeneralId = 1), Nation(2, "N2", "#222222")),
             cityChanges = { city -> if (city.id == captured) city.copy(nationId = 2) else city })
-        HwihaCapitalAfterCapture(world, ChangeRecorder()).settle(1, captured)
+        CapitalAfterCapture(world, ChangeRecorder()).settle(1, captured)
         assertNull(world.getNationById(1))
         assertEquals(0, world.getGeneralById(1)?.nationId)
     }

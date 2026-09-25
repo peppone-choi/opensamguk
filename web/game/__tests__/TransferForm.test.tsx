@@ -1,6 +1,6 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import HwihaTransferForm from '../components/command/HwihaTransferForm';
+import TransferForm from '../components/command/TransferForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
 
@@ -18,7 +18,7 @@ beforeEach(()=>{
 });
 
 test('gift submits a positive amount and selected co-located recipient',async()=>{
-    render(<HwihaTransferForm {...props}/>);
+    render(<TransferForm {...props}/>);
     expect(await screen.findByRole('option',{name:'받는 이'})).toBeInTheDocument();
     fireEvent.change(screen.getByRole('spinbutton',{name:'수량'}),{target:{value:'25'}});
     fireEvent.click(screen.getByRole('button',{name:'증여 예약'}));
@@ -27,7 +27,7 @@ test('gift submits a positive amount and selected co-located recipient',async()=
 });
 
 test('gift rejects an amount beyond personal stock before submission',async()=>{
-    render(<HwihaTransferForm {...props}/>);
+    render(<TransferForm {...props}/>);
     await screen.findByRole('option',{name:'받는 이'});
     fireEvent.change(screen.getByRole('spinbutton',{name:'수량'}),{target:{value:'101'}});
     expect(screen.getByRole('button',{name:'증여 예약'})).toBeDisabled();

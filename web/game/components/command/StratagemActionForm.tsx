@@ -2,19 +2,19 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaLegacyStratagemId,HwihaLegacyStratagemOptions} from '../../lib/types';
+import type {StratagemActionId,StratagemActionOptions} from '../../lib/types';
 
-const labels:Record<HwihaLegacyStratagemId,string>={
+const labels:Record<StratagemActionId,string>={
     'stratagem.play':'유언','stratagem.steal':'탈취','stratagem.sabotage':'파괴',
     'stratagem.fire':'화계','stratagem.lastStand':'필사즉생','stratagem.mobilizePeople':'백성동원',
     'stratagem.flood':'수공','stratagem.falseReport':'허보','stratagem.raiseMilitia':'의병모집',
     'stratagem.provokeRivalry':'이호경식','stratagem.raid':'급습','stratagem.reciprocity':'피장파장',
 };
-const ids=Object.keys(labels) as HwihaLegacyStratagemId[];
+const ids=Object.keys(labels) as StratagemActionId[];
 
-export default function HwihaLegacyStratagemForm({generalId,refreshKey=0,onReserved}:{generalId:number;refreshKey?:number;onReserved?:()=>void}){
-    const [inputId,setInputId]=useState<HwihaLegacyStratagemId>('stratagem.play');
-    const [options,setOptions]=useState<HwihaLegacyStratagemOptions|null>(null);
+export default function StratagemActionForm({generalId,refreshKey=0,onReserved}:{generalId:number;refreshKey?:number;onReserved?:()=>void}){
+    const [inputId,setInputId]=useState<StratagemActionId>('stratagem.play');
+    const [options,setOptions]=useState<StratagemActionOptions|null>(null);
     const [index,setIndex]=useState(-1);
     const [message,setMessage]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);
@@ -68,7 +68,7 @@ export default function HwihaLegacyStratagemForm({generalId,refreshKey=0,onReser
         <h3 id="legacy-stratagem-title">계책 카드</h3>
         <p>각 카드는 한 달에 한 번 사용합니다. 현재 위치의 아군 창고에서 비용을 냅니다.</p>
         <label>계책<select className="os-inset" aria-label="계책 선택" value={inputId}
-            onChange={event=>setInputId(event.target.value as HwihaLegacyStratagemId)} disabled={busy||!!tracking}>
+            onChange={event=>setInputId(event.target.value as StratagemActionId)} disabled={busy||!!tracking}>
             {ids.map(id=><option key={id} value={id}>{labels[id]}</option>)}
         </select></label>
         {options&&<label>대상<select className="os-inset" aria-label="계책 대상" value={index}

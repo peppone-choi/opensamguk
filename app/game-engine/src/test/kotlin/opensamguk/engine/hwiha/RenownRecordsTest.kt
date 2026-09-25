@@ -15,7 +15,7 @@ import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
 /** 월단평 사건 원천(이탈·치적·점령/조우 훅)과 월단평 적용·발표·기록. */
-class HwihaRenownRecordsTest {
+class RenownRecordsTest {
     private val curve = RenownAssessment.CANON
     private val HASH = "b".repeat(64)
 
@@ -56,14 +56,14 @@ class HwihaRenownRecordsTest {
         )
         val world = world(listOf(person(1, extra = meta), person(2)))
         val recorder = ChangeRecorder()
-        val outcome = assertNotNull(HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2))
+        val outcome = assertNotNull(MonthlyAssessment(world, recorder, curve).assess(200, 2))
         assertEquals(30 + 3 - 4, renown(world, 1))
         assertEquals(listOf(RenownEventKind.DEFEAT), entries(world, 1).map { it.kind }, "이번 달 사건은 다음 달로 넘긴다")
         assertEquals(30, renown(world, 2))
         assertEquals(listOf(2, 1), outcome.ranking)
 
         @Suppress("UNCHECKED_CAST")
-        val reasons = world.getState().meta[HwihaMonthlyAssessment.REASONS_KEY] as Map<String, Any?>
+        val reasons = world.getState().meta[MonthlyAssessment.REASONS_KEY] as Map<String, Any?>
         assertEquals("0200-02", reasons["stamp"])
         assertEquals(mapOf("1" to listOf(
             mapOf("kind" to "warMerit", "count" to 1, "amount" to 3),
@@ -78,7 +78,7 @@ class HwihaRenownRecordsTest {
         assertEquals("global", announced.scope); assertNull(announced.generalId)
         assertEquals(listOf(2, 1), (announced.meta!![RecordKind.REFS_META_KEY] as Map<*, *>)["top"])
         // 같은 달 두 번은 막힌다.
-        assertTrue(HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2)!!.alreadyStamped)
+        assertTrue(MonthlyAssessment(world, recorder, curve).assess(200, 2)!!.alreadyStamped)
     }
 
     @Test fun `이탈 판정은 배신이 아니다 - 명망 사건도 배신 사유도 없고 이탈 기록만 남는다`() {
@@ -90,11 +90,11 @@ class HwihaRenownRecordsTest {
         val recorder = ChangeRecorder()
         for ((month, stamp) in listOf(2 to "0200-02", 3 to "0200-03")) {
             world.setCurrentDate(200, month, 1)
-            assertEquals(1, HwihaMonthlyAssessment(world, recorder, curve).assess(200, month)!!.overCap)
+            assertEquals(1, MonthlyAssessment(world, recorder, curve).assess(200, month)!!.overCap)
             assertTrue(entries(world, 3).isEmpty(), "$stamp: 이탈 판정은 월단평 사건을 쌓지 않는다")
             assertEquals(30, renown(world, 3), "$stamp: 이탈은 명망 0 이다")
             @Suppress("UNCHECKED_CAST")
-            val reasons = world.getState().meta[HwihaMonthlyAssessment.REASONS_KEY] as Map<String, Any?>
+            val reasons = world.getState().meta[MonthlyAssessment.REASONS_KEY] as Map<String, Any?>
             assertFalse("betrayal" in reasons.toString(), "$stamp: 월단평 사유에 배신이 없다 — $reasons")
         }
         val logs = world.peekLogs()
@@ -111,7 +111,7 @@ class HwihaRenownRecordsTest {
         val world = world(listOf(person(1), person(2, extra = assign(10)), person(3, extra = assign(11))),
             cities = listOf(county(10), county(11, agriculture = 5_000)))
         val recorder = ChangeRecorder()
-        val window = HwihaCountyMeritWindow(world, recorder)
+        val window = CountyMeritWindow(world, recorder)
         assertEquals(2, window.open(200, 1))
         assertEquals(0, window.open(200, 1), "같은 달은 다시 열지 않는다")
         world.applyCityDirtyFree(world.getCityById(10)!!.copy(agriculture = 5_200))   // 상한의 2%
@@ -121,14 +121,14 @@ class HwihaRenownRecordsTest {
             entries(world, 2), "창을 연 달의 도장이라 같은 경계의 월단평이 적용한다")
         assertTrue(entries(world, 3).isEmpty())
         assertTrue(window.close(200, 2).isEmpty(), "닫은 창은 다시 닫지 않는다")
-        HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2)
+        MonthlyAssessment(world, recorder, curve).assess(200, 2)
         assertEquals(30 + curve.domesticMerit, renown(world, 2))
     }
 
     @Test fun `빼앗긴 縣 은 옛 관할 장수의 치적이 아니다`() {
         val world = world(listOf(person(2, extra = assign(10))))
         val recorder = ChangeRecorder()
-        val window = HwihaCountyMeritWindow(world, recorder)
+        val window = CountyMeritWindow(world, recorder)
         window.open(200, 1)
         world.applyCityDirtyFree(world.getCityById(10)!!.copy(nationId = 2, agriculture = 9_000))
         assertTrue(window.close(200, 2).isEmpty())
@@ -137,7 +137,7 @@ class HwihaRenownRecordsTest {
     @Test fun `縣 점령 훅은 점령·관할 장수에게 사건을, 두 세력에 공개 기록을 남긴다`() {
         val world = world(listOf(person(2, extra = assign(10)), person(5, nationId = 2)))
         val recorder = ChangeRecorder()
-        val events = HwihaRenownEventRecorder(world, recorder)
+        val events = RenownEventRecorder(world, recorder)
         assertEquals(listOf(2, 5), events.onCountyCaptured(10, previousNationId = 1, captorNationId = 2, capturerIds = listOf(5)))
         assertEquals(RenownEventSource.COUNTY_LOSS, entries(world, 2).single().source)
         assertEquals(RenownEventSource.COUNTY_CAPTURE, entries(world, 5).single().source)
@@ -158,7 +158,7 @@ class HwihaRenownRecordsTest {
         val world = world(emptyList(), cities = listOf(county(10).copy(supplyState = 1, meta = mapOf(
             opensamguk.logic.economy.CountyWarehouse.META_KEY to
                 opensamguk.logic.economy.CountyWarehouse(10, 0, opensamguk.logic.economy.Resources()).toMetaValue()))))
-        HwihaMonthlyCountyIncome(world, ChangeRecorder()).credit(200, 2)
+        MonthlyCountyIncome(world, ChangeRecorder()).credit(200, 2)
         val record = world.peekLogs().single()
         assertEquals(RecordKind.INCOME_MONTHLY, record.eventKind)
         assertEquals("nation", record.scope); assertEquals("summary", record.category); assertEquals(1, record.nationId)

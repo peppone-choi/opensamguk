@@ -39,15 +39,15 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-class HwihaDomesticForbidden : RuntimeException()
+class DomesticForbidden : RuntimeException()
 
 /** 한 REPEATABLE_READ 스냅샷에서 만든 공유 판정 투영과 표시 이름. [failure] 가 있으면 투영이 없다. */
-data class HwihaDomesticSnapshot(
+data class DomesticSnapshot(
     val state: DomesticProjection? = null,
     val failure: String? = null,
     val countyNames: Map<Int, String> = emptyMap(),
@@ -61,32 +61,32 @@ data class HwihaDomesticSnapshot(
 /**
  * 휘하 내정 입력의 DB 읽기(접수 사전검사와 세 조회 API 가 같이 쓴다). 쓰기·ChangeRecorder 없음.
  * 엔진과 같은 투영([DomesticProjection])을 DB 행으로 만든다: 위치는 `general_spatial_position`, 郡은 런타임 지도
- * `meta.junCh`([HwihaCityGeography]), 縣은 부팅 판 결속의 행정 縣. 향당 보너스는 조회·접수에 쓰지 않아 비워 둔다.
+ * `meta.junCh`([CityGeography]), 縣은 부팅 판 결속의 행정 縣. 향당 보너스는 조회·접수에 쓰지 않아 비워 둔다.
  */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-class HwihaDomesticReader(
+class DomesticReader(
     private val generals: GeneralReadRepository,
     private val retainers: RetainerReadRepository,
     private val nations: NationReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
-    private val geography: HwihaCityGeography,
+    private val geography: CityGeography,
     private val diplomacy: DiplomacyReadRepository,
-    private val sieges: HwihaSiegeReadRepository,
+    private val sieges: SiegeReadRepository,
 ) {
     fun requireOwner(actorId: Int, userId: Long) {
-        if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw HwihaDomesticForbidden()
-        if (generals.findById(actorId).orElse(null)?.userId?.toLongOrNull() != userId) throw HwihaDomesticForbidden()
+        if (actorId <= 0 || userId <= 0 || userId > Int.MAX_VALUE) throw DomesticForbidden()
+        if (generals.findById(actorId).orElse(null)?.userId?.toLongOrNull() != userId) throw DomesticForbidden()
     }
 
-    fun snapshot(): HwihaDomesticSnapshot = try {
+    fun snapshot(): DomesticSnapshot = try {
         val selected = artifacts.resolve()
-        if (selected == null) HwihaDomesticSnapshot(failure = "UNAVAILABLE")
+        if (selected == null) DomesticSnapshot(failure = "UNAVAILABLE")
         else {
             val config = selected.world.config
             val profile = opensamguk.logic.input.WorldRuleProfile.require(config)
-            if (profile != RuleProfile.HWIHA) HwihaDomesticSnapshot(failure = "WRONG_RULE_PROFILE")
+            if (profile != RuleProfile.HWIHA) DomesticSnapshot(failure = "WRONG_RULE_PROFILE")
             else {
                 val bundle = requireNotNull(selected.artifacts) { "HWIHA requires pinned Han artifacts" }
                 val topology = bundle.projection.topology
@@ -96,7 +96,7 @@ class HwihaDomesticReader(
                 val places = geography.places(bundle)
                 val admin = bundle.projection.administrativeCountyIds
                 val counties = selected.cities.filter { it.id in admin }.sortedBy { it.id }
-                HwihaDomesticSnapshot(
+                DomesticSnapshot(
                     state = DomesticProjection(
                         profile = profile,
                         now = Phase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
@@ -119,7 +119,7 @@ class HwihaDomesticReader(
                         countyAdjacency = admin.associateWith { countyId ->
                             bundle.cityConst.byId(countyId)?.path?.keys?.filter { it in admin }?.toSet() ?: emptySet()
                         },
-                        supportedCrewTypeIds = HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet(),
+                        supportedCrewTypeIds = UnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet(),
                         diplomacy = diplomacy.findAll().map { DomesticDiplomacy(it.srcNationId, it.destNationId, it.stateCode, it.term) },
                         activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
@@ -146,33 +146,33 @@ class HwihaDomesticReader(
                 )
             }
         }
-    } catch (_: IllegalArgumentException) { HwihaDomesticSnapshot(failure = "UNAVAILABLE") }
-      catch (_: IllegalStateException) { HwihaDomesticSnapshot(failure = "UNAVAILABLE") }
-      catch (_: java.io.IOException) { HwihaDomesticSnapshot(failure = "UNAVAILABLE") }
+    } catch (_: IllegalArgumentException) { DomesticSnapshot(failure = "UNAVAILABLE") }
+      catch (_: IllegalStateException) { DomesticSnapshot(failure = "UNAVAILABLE") }
+      catch (_: java.io.IOException) { DomesticSnapshot(failure = "UNAVAILABLE") }
 
-    fun posts(actorId: Int, userId: Long): HwihaPostsResponse {
+    fun posts(actorId: Int, userId: Long): PostsResponse {
         requireOwner(actorId, userId)
-        return HwihaDomesticViews.posts(actorId, snapshot())
+        return DomesticViews.posts(actorId, snapshot())
     }
 
-    fun policies(actorId: Int, userId: Long): HwihaPoliciesResponse {
+    fun policies(actorId: Int, userId: Long): PoliciesResponse {
         requireOwner(actorId, userId)
-        return HwihaDomesticViews.policies(actorId, snapshot())
+        return DomesticViews.policies(actorId, snapshot())
     }
 
-    fun works(actorId: Int, userId: Long): HwihaWorksResponse {
+    fun works(actorId: Int, userId: Long): WorksResponse {
         requireOwner(actorId, userId)
-        return HwihaDomesticViews.works(actorId, snapshot())
+        return DomesticViews.works(actorId, snapshot())
     }
 }
 
 /** 조회 응답 조립(순수). 접수·엔진과 같은 [DomesticRules] 판정만 쓴다. */
-object HwihaDomesticViews {
+object DomesticViews {
     private val design get() = DomesticDesign.CANON
 
-    fun posts(actorId: Int, snapshot: HwihaDomesticSnapshot): HwihaPostsResponse {
-        val state = snapshot.state ?: return HwihaPostsResponse(snapshot.failure ?: "UNAVAILABLE")
-        val actor = state.person(actorId) ?: return HwihaPostsResponse("UNAVAILABLE")
+    fun posts(actorId: Int, snapshot: DomesticSnapshot): PostsResponse {
+        val state = snapshot.state ?: return PostsResponse(snapshot.failure ?: "UNAVAILABLE")
+        val actor = state.person(actorId) ?: return PostsResponse("UNAVAILABLE")
         return try {
             val cards = state.cards.filter { it.masterId == actorId }.sortedBy { it.id }.map { card ->
                 val person = card.generalId?.let(state::person)
@@ -182,38 +182,38 @@ object HwihaDomesticViews {
                     PlacementTarget.Province(state.landProvinceIds?.minOrNull() ?: "none")), state)
                 val blocked = (probe as? DomesticAssessment.Rejected)?.reason
                     ?.takeUnless { it in setOf(DomesticFailure.INVALID_PROVINCE, DomesticFailure.UNCHANGED) }
-                HwihaPlacementCardDto(card.id, card.generalId, person?.name ?: "", card.relation, person?.node,
-                    blocked == null, blocked?.let { HwihaReasonDto(it.name, it.message) },
+                PlacementCardDto(card.id, card.generalId, person?.name ?: "", card.relation, person?.node,
+                    blocked == null, blocked?.let { ReasonDto(it.name, it.message) },
                     placement?.active?.let { active ->
-                        HwihaActivePlacementDto(active.order.post.name, active.order.post.label, target(active.order.target, snapshot),
+                        ActivePlacementDto(active.order.post.name, active.order.post.label, target(active.order.target, snapshot),
                             active.since, active.arrivedAt, if (active.arrivedAt == null) "MOVING" else "ARRIVED")
                     },
                     placement?.pending?.let { order ->
-                        HwihaPlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
+                        PlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
                     })
             }
             val lord = actor.nationId > 0 && LordStatus.read(actor.meta)
-            val notLord = HwihaReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)
+            val notLord = ReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)
             val counties = state.counties.filter { it.nationId == actor.nationId && actor.nationId > 0 }.map { county ->
-                HwihaPostTargetDto(countyId = county.id, name = snapshot.countyNames[county.id] ?: county.name,
+                PostTargetDto(countyId = county.id, name = snapshot.countyNames[county.id] ?: county.name,
                     commanderyName = county.commanderyId?.let { snapshot.commanderyNames[it] ?: it },
                     occupied = DomesticRules.magistracyClaimed(county.id, 0, state))
             }
             val envoys = state.nations.filter { it.id != actor.nationId && it.capitalCityId != null }
-                .map { HwihaPostTargetDto(nationId = it.id, name = it.name) }
-            HwihaPostsResponse("READY", now = state.now, cards = cards, posts = listOf(
-                HwihaPostOptionDto(PlacementPost.MAGISTRATE.name, PlacementPost.MAGISTRATE.label, lord, notLord.takeUnless { lord }, counties),
-                HwihaPostOptionDto(PlacementPost.CORPS_COMMANDER.name, PlacementPost.CORPS_COMMANDER.label, true, null, null),
-                HwihaPostOptionDto(PlacementPost.ENVOY.name, PlacementPost.ENVOY.label, lord, notLord.takeUnless { lord }, envoys),
-                HwihaPostOptionDto(PlacementPost.SCOUT.name, PlacementPost.SCOUT.label, state.landProvinceIds != null, null, null),
-                HwihaPostOptionDto(PlacementPost.NONE.name, PlacementPost.NONE.label, true, null, null),
+                .map { PostTargetDto(nationId = it.id, name = it.name) }
+            PostsResponse("READY", now = state.now, cards = cards, posts = listOf(
+                PostOptionDto(PlacementPost.MAGISTRATE.name, PlacementPost.MAGISTRATE.label, lord, notLord.takeUnless { lord }, counties),
+                PostOptionDto(PlacementPost.CORPS_COMMANDER.name, PlacementPost.CORPS_COMMANDER.label, true, null, null),
+                PostOptionDto(PlacementPost.ENVOY.name, PlacementPost.ENVOY.label, lord, notLord.takeUnless { lord }, envoys),
+                PostOptionDto(PlacementPost.SCOUT.name, PlacementPost.SCOUT.label, state.landProvinceIds != null, null, null),
+                PostOptionDto(PlacementPost.NONE.name, PlacementPost.NONE.label, true, null, null),
             ))
-        } catch (_: IllegalArgumentException) { HwihaPostsResponse("UNAVAILABLE") }
+        } catch (_: IllegalArgumentException) { PostsResponse("UNAVAILABLE") }
     }
 
-    fun policies(actorId: Int, snapshot: HwihaDomesticSnapshot): HwihaPoliciesResponse {
-        val state = snapshot.state ?: return HwihaPoliciesResponse(snapshot.failure ?: "UNAVAILABLE")
-        val actor = state.person(actorId) ?: return HwihaPoliciesResponse("UNAVAILABLE")
+    fun policies(actorId: Int, snapshot: DomesticSnapshot): PoliciesResponse {
+        val state = snapshot.state ?: return PoliciesResponse(snapshot.failure ?: "UNAVAILABLE")
+        val actor = state.person(actorId) ?: return PoliciesResponse("UNAVAILABLE")
         return try {
             val ruler = DomesticRules.rulerOf(actor.nationId, state)?.id == actorId
             val counties = state.counties.filter { it.nationId > 0 && it.nationId == actor.nationId &&
@@ -222,13 +222,13 @@ object HwihaDomesticViews {
                 val effective = DomesticRules.effectivePolicy(county, state, design)
                 val check = DomesticRules.assessPolicy(PolicyRequest(actorId, PolicyTarget.County(county.id),
                     probePolicy(stored?.slot)), state)
-                HwihaCountyPolicyDto(county.id, snapshot.countyNames[county.id] ?: county.name, county.commanderyId,
+                CountyPolicyDto(county.id, snapshot.countyNames[county.id] ?: county.name, county.commanderyId,
                     county.commanderyId?.let { snapshot.commanderyNames[it] ?: it },
                     stored?.slot?.active?.let(::setting), stored?.slot?.pending?.let(::order),
-                    HwihaEffectivePolicyDto(effective.policy.name, effective.policy.label, effective.source.name),
-                    effective.seat?.let { seat -> HwihaSeatDto(seat.personId, state.person(seat.personId)?.name ?: "", seat.placed) },
-                    stored?.lastApplied?.let { HwihaPolicyApplicationDto(it.at, it.policy, CountyPolicy.valueOf(it.policy).label, it.seat, it.result) },
-                    check is DomesticAssessment.Eligible, (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) })
+                    EffectivePolicyDto(effective.policy.name, effective.policy.label, effective.source.name),
+                    effective.seat?.let { seat -> SeatDto(seat.personId, state.person(seat.personId)?.name ?: "", seat.placed) },
+                    stored?.lastApplied?.let { PolicyApplicationDto(it.at, it.policy, CountyPolicy.valueOf(it.policy).label, it.seat, it.result) },
+                    check is DomesticAssessment.Eligible, (check as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) })
             }
             val nation = state.nation(actor.nationId)
             val commanderyPolicies = nation?.let { CommanderyPolicies.read(it.meta) }
@@ -236,27 +236,27 @@ object HwihaDomesticViews {
                 .groupBy { it.commanderyId!! }.toSortedMap().map { (id, members) ->
                     val slot = commanderyPolicies?.get(id)?.slot
                     val check = DomesticRules.assessPolicy(PolicyRequest(actorId, PolicyTarget.Commandery(id), probePolicy(slot)), state)
-                    HwihaCommanderyPolicyDto(id, snapshot.commanderyNames[id], members.map { it.id }.sorted(),
+                    CommanderyPolicyDto(id, snapshot.commanderyNames[id], members.map { it.id }.sorted(),
                         slot?.active?.let(::setting), slot?.pending?.let(::order), check is DomesticAssessment.Eligible,
-                        (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) })
+                        (check as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) })
                 }
             val corpsPolicies = CorpsPolicyAssignments.read(actor.meta)
             val corps = DomesticRules.deployedCorps(state).filter { it.ownerGeneralId == actorId }.map { deployed ->
                 val slot = corpsPolicies?.forOrder(deployed.orderId)?.slot
-                HwihaCorpsPolicyDto(deployed.orderId, deployed.commanderGeneralId, state.person(deployed.commanderGeneralId)?.name,
+                CorpsPolicyDto(deployed.orderId, deployed.commanderGeneralId, state.person(deployed.commanderGeneralId)?.name,
                     slot?.active?.let(::setting), slot?.pending?.let(::order), true, null)
             }
-            HwihaPoliciesResponse("READY", now = state.now,
-                countyOptions = CountyPolicy.entries.map { HwihaCodeLabel(it.name, it.label) },
-                corpsOptions = CorpsPolicy.entries.map { HwihaCodeLabel(it.name, it.label) },
-                defaultPolicy = HwihaCodeLabel(design.defaultCountyPolicy.name, design.defaultCountyPolicy.label),
+            PoliciesResponse("READY", now = state.now,
+                countyOptions = CountyPolicy.entries.map { CodeLabel(it.name, it.label) },
+                corpsOptions = CorpsPolicy.entries.map { CodeLabel(it.name, it.label) },
+                defaultPolicy = CodeLabel(design.defaultCountyPolicy.name, design.defaultCountyPolicy.label),
                 provisional = design.status, counties = counties, commanderies = commanderies, corps = corps)
-        } catch (_: IllegalArgumentException) { HwihaPoliciesResponse("UNAVAILABLE") }
+        } catch (_: IllegalArgumentException) { PoliciesResponse("UNAVAILABLE") }
     }
 
-    fun works(actorId: Int, snapshot: HwihaDomesticSnapshot): HwihaWorksResponse {
-        val state = snapshot.state ?: return HwihaWorksResponse(snapshot.failure ?: "UNAVAILABLE")
-        val actor = state.person(actorId) ?: return HwihaWorksResponse("UNAVAILABLE")
+    fun works(actorId: Int, snapshot: DomesticSnapshot): WorksResponse {
+        val state = snapshot.state ?: return WorksResponse(snapshot.failure ?: "UNAVAILABLE")
+        val actor = state.person(actorId) ?: return WorksResponse("UNAVAILABLE")
         return try {
             val ruler = DomesticRules.rulerOf(actor.nationId, state)?.id == actorId
             val counties = state.counties.filter { it.nationId > 0 && it.nationId == actor.nationId &&
@@ -268,7 +268,7 @@ object HwihaDomesticViews {
                 }
                 val active = works?.active?.let { work ->
                     val remaining = work.cost.debit(work.charged) ?: Resources()
-                    HwihaActiveWorkDto(work.work.name, work.work.label, work.requestedAt, work.progress, work.required,
+                    ActiveWorkDto(work.work.name, work.work.label, work.requestedAt, work.progress, work.required,
                         (work.progress.toLong() * 100 / work.required).toInt(), DomesticEffects.remainingPhases(design, work, seat),
                         stock(work.cost), stock(work.charged), stock(remaining), work.lastProgressAt, work.stopReason,
                         work.stopReason?.let(::stopText), work.requestedAt >= state.now)
@@ -277,27 +277,27 @@ object HwihaDomesticViews {
                     val spec = design.works.getValue(kind)
                     val check = DomesticRules.assessWork(WorkRequest(actorId, county.id, kind), state)
                     val preview = DomesticEffects.newWork(design, kind, "preview", actorId, state.now)
-                    HwihaStartableWorkDto(kind.name, kind.label, check is DomesticAssessment.Eligible,
-                        (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) },
+                    StartableWorkDto(kind.name, kind.label, check is DomesticAssessment.Eligible,
+                        (check as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) },
                         stock(spec.cost), spec.requiredProgress, DomesticEffects.remainingPhases(design, preview, seat))
                 }
-                HwihaCountyWorksDto(county.id, snapshot.countyNames[county.id] ?: county.name,
+                CountyWorksDto(county.id, snapshot.countyNames[county.id] ?: county.name,
                     county.commanderyId?.let { snapshot.commanderyNames[it] ?: it }, snapshot.warehouseStocks[county.id]?.let(::stock),
-                    active, works?.completed.orEmpty().map { HwihaCompletedWorkDto(it.work.name, it.work.label, it.completedAt) }, startable)
+                    active, works?.completed.orEmpty().map { CompletedWorkDto(it.work.name, it.work.label, it.completedAt) }, startable)
             }
-            HwihaWorksResponse("READY", now = state.now, provisional = design.status, counties = counties)
-        } catch (_: IllegalArgumentException) { HwihaWorksResponse("UNAVAILABLE") }
+            WorksResponse("READY", now = state.now, provisional = design.status, counties = counties)
+        } catch (_: IllegalArgumentException) { WorksResponse("UNAVAILABLE") }
     }
 
     /** 권한만 보려고 지금과 다른 방침으로 판정한다(UNCHANGED·NOTHING_TO_CLEAR 를 피한다). */
     private fun probePolicy(slot: PolicySlot?): String =
         CountyPolicy.entries.first { it.name != slot?.active?.policy && it.name != slot?.pending?.policy }.name
 
-    private fun setting(value: PolicySetting) = HwihaPolicySettingDto(value.policy, label(value.policy), value.since)
-    private fun order(value: PolicyOrder) = HwihaPolicyOrderDto(value.policy, value.policy?.let(::label), value.requestedAt)
+    private fun setting(value: PolicySetting) = PolicySettingDto(value.policy, label(value.policy), value.since)
+    private fun order(value: PolicyOrder) = PolicyOrderDto(value.policy, value.policy?.let(::label), value.requestedAt)
     private fun label(code: String): String = CountyPolicy.entries.firstOrNull { it.name == code }?.label
         ?: CorpsPolicy.entries.firstOrNull { it.name == code }?.label ?: code
-    private fun stock(value: Resources) = HwihaStockDto(value.money, value.grain, value.iron, value.timber, value.horses)
+    private fun stock(value: Resources) = StockDto(value.money, value.grain, value.iron, value.timber, value.horses)
     private fun stopText(code: String) = when (code) {
         DomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
         "WAREHOUSE_NOT_READY" -> "현의 창고를 확인할 수 없습니다."
@@ -305,11 +305,11 @@ object HwihaDomesticViews {
         else -> code
     }
 
-    private fun target(target: PlacementTarget, snapshot: HwihaDomesticSnapshot): HwihaPlacementTargetDto = when (target) {
-        is PlacementTarget.County -> HwihaPlacementTargetDto(countyId = target.countyId, label = snapshot.countyNames[target.countyId])
-        is PlacementTarget.Province -> HwihaPlacementTargetDto(provinceId = target.provinceId)
-        is PlacementTarget.Nation -> HwihaPlacementTargetDto(nationId = target.nationId,
+    private fun target(target: PlacementTarget, snapshot: DomesticSnapshot): PlacementTargetDto = when (target) {
+        is PlacementTarget.County -> PlacementTargetDto(countyId = target.countyId, label = snapshot.countyNames[target.countyId])
+        is PlacementTarget.Province -> PlacementTargetDto(provinceId = target.provinceId)
+        is PlacementTarget.Nation -> PlacementTargetDto(nationId = target.nationId,
             label = snapshot.state?.nation(target.nationId)?.name)
-        PlacementTarget.None -> HwihaPlacementTargetDto()
+        PlacementTarget.None -> PlacementTargetDto()
     }
 }

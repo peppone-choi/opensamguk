@@ -4,30 +4,30 @@ import opensamguk.logic.domestic.DomesticRules
 
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class HwihaLegacyCourtChoice(val label: String, val arguments: Map<String, Any>,
+data class LegacyCourtChoice(val label: String, val arguments: Map<String, Any>,
     val available: Boolean, val code: String? = null, val reason: String? = null,
     val maxAmount: Long? = null)
-data class HwihaLegacyCourtOptions(val inputId: String, val available: Boolean,
+data class LegacyCourtOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<HwihaLegacyCourtChoice> = emptyList())
+    val choices: List<LegacyCourtChoice> = emptyList())
 
 @Service
-class HwihaLegacyCourtOptionsService(private val reader: HwihaDomesticReader,
+class LegacyCourtOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(actorId: Int, userId: Long, inputId: String): HwihaLegacyCourtOptions {
+    fun options(actorId: Int, userId: Long, inputId: String): LegacyCourtOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in CourtInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaLegacyCourtOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return HwihaLegacyCourtOptions(inputId, false,
+            return LegacyCourtOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val state = reader.snapshot().state ?: return LegacyCourtOptions(inputId, false,
             CourtFailure.STATE_UNAVAILABLE.name, CourtFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return HwihaLegacyCourtOptions(inputId, false,
+        val actor = state.person(actorId) ?: return LegacyCourtOptions(inputId, false,
             CourtFailure.ACTOR_NOT_FOUND.name, CourtFailure.ACTOR_NOT_FOUND.message)
         val ownedCounties = state.counties.filter { it.nationId == actor.nationId }.sortedBy { it.id }
         val others = state.nations.filter { it.id != actor.nationId }.sortedBy { it.id }
@@ -66,11 +66,11 @@ class HwihaLegacyCourtOptionsService(private val reader: HwihaDomesticReader,
                     "TIMBER" -> stock.timber; "HORSES" -> stock.horses; else -> null
                 }
             }
-            HwihaLegacyCourtChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
+            LegacyCourtChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
         }
         val available = choices.any { it.available }
         val reason = if (available) null else choices.firstOrNull()?.let { it.code to it.reason }
             ?: (CourtFailure.TARGET_UNAVAILABLE.name to CourtFailure.TARGET_UNAVAILABLE.message)
-        return HwihaLegacyCourtOptions(inputId, available, reason?.first, reason?.second, choices)
+        return LegacyCourtOptions(inputId, available, reason?.first, reason?.second, choices)
     }
 }

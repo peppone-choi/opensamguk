@@ -812,111 +812,111 @@ export interface EnlistmentOptionsResponse {
         availability: { status: 'AVAILABLE' | 'BLOCKED'; code?: string; reason?: string } }>;
 }
 
-export interface HwihaPhase { year: number; month: number; phase: number }
+export interface Phase { year: number; month: number; phase: number }
 export interface DispatchQueue { requestId: string; targetGeneralId: number; countyId: number }
 export interface DispatchPendingItem {
     dispatchId: string; issuerId: number; targetId: number; countyId: number;
     issuerLabel?: string | null; targetLabel?: string | null; countyLabel?: string | null;
-    issuedAt: HwihaPhase; dueAt: HwihaPhase;
+    issuedAt: Phase; dueAt: Phase;
     status: 'PENDING' | 'ACCEPTED' | 'REFUSED' | 'CANCELLED'; currentFailure?: string | null;
 }
 export interface DispatchPendingResponse {
-    result: boolean; code?: string | null; now?: HwihaPhase | null;
+    result: boolean; code?: string | null; now?: Phase | null;
     dispatches: DispatchPendingItem[]; queued?: DispatchQueue | null;
 }
 export interface DispatchOptionsResponse {
-    result: boolean; code?: string | null; reason?: string | null; now?: HwihaPhase | null;
+    result: boolean; code?: string | null; reason?: string | null; now?: Phase | null;
     targets: Array<{generalId: number; label: string}>;
     counties: Array<{countyId: number; label: string; available: boolean; code?: string | null; reason?: string | null}>;
     queued?: DispatchQueue | null;
 }
 
-export interface HwihaDeployOptions {
+export interface DeployOptions {
     available: boolean; code?: string | null; reason?: string | null; maxReservedTurns: 12;
     bugoks: {id:number;name:string;troops:number;available:boolean;reason?:string|null}[];
     destinations: {provinceId:string;name:string}[];
     order?: {orderId:string;destinationProvinceId:string;stop?:string|null}|null;
 }
 
-export type HwihaTravelActionId = 'action.move' | 'action.forcedMarch' | 'action.return';
-export type HwihaFieldActionId = 'action.farm' | 'action.commerce' | 'action.fortify' | 'action.repairWall'
+export type TravelActionId = 'action.move' | 'action.forcedMarch' | 'action.return';
+export type FieldActionId = 'action.farm' | 'action.commerce' | 'action.fortify' | 'action.repairWall'
     | 'action.security' | 'action.settle' | 'action.selectResidents' | 'action.tour';
-export type HwihaMilitaryActionId = 'action.conscript' | 'action.raiseVolunteers' | 'action.train'
+export type MilitaryActionId = 'action.conscript' | 'action.raiseVolunteers' | 'action.train'
     | 'action.boostMorale' | 'action.muster' | 'action.demobilize';
-export type HwihaPersonalActionId = 'action.travel' | 'action.selfTrain' | 'action.recuperate' | 'action.retire';
-export interface HwihaPersonalOptions {
-    inputId: HwihaPersonalActionId; available: boolean; code?: string | null; reason?: string | null;
+export type PersonalActionId = 'action.travel' | 'action.selfTrain' | 'action.recuperate' | 'action.retire';
+export interface PersonalOptions {
+    inputId: PersonalActionId; available: boolean; code?: string | null; reason?: string | null;
     stats?: Array<{stat: string; available: boolean; code?: string | null; reason?: string | null}>;
     successors?: Array<{generalId: number; name: string; available: boolean; code?: string | null; reason?: string | null}>;
 }
-export type HwihaPeopleActionId = 'action.search' | 'action.employ' | 'action.persuadeCaptive';
-export type HwihaPoliticalActionId = 'action.resign' | 'action.rise' | 'action.foundState'
+export type PeopleActionId = 'action.search' | 'action.employ' | 'action.persuadeCaptive';
+export type PoliticalActionId = 'action.resign' | 'action.rise' | 'action.foundState'
     | 'action.independence' | 'action.dissolve' | 'action.abdicate' | 'action.oath';
-export interface HwihaPoliticalOption {
-    inputId: HwihaPoliticalActionId; available: boolean; code?: string | null; reason?: string | null;
+export interface PoliticalOption {
+    inputId: PoliticalActionId; available: boolean; code?: string | null; reason?: string | null;
     targets?: Array<{generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}>;
 }
-export interface HwihaPoliticalConsentOption {
+export interface PoliticalConsentOption {
     inputId:'action.abdicate'|'action.oath';issuerGeneralId:number;issuerName:string;available:boolean;
     accepted?:boolean|null;code?:string|null;reason?:string|null;
 }
-export type HwihaTransferActionId = 'action.gift' | 'action.donate';
-export type HwihaLegacyDirectActionId = 'action.convertProficiency' | 'action.tradeEquipment'
+export type TransferActionId = 'action.gift' | 'action.donate';
+export type DirectActionActionId = 'action.convertProficiency' | 'action.tradeEquipment'
     | 'action.tradeGrain' | 'action.transport';
-export interface HwihaLegacyDirectChoice {
+export interface DirectActionChoice {
     label:string;arguments:Record<string,string|number>;available:boolean;
     code?:string|null;reason?:string|null;maxAmount?:number|null;
 }
-export interface HwihaLegacyDirectOptions {
-    inputId:HwihaLegacyDirectActionId;available:boolean;code?:string|null;reason?:string|null;
-    choices:HwihaLegacyDirectChoice[];
+export interface DirectActionOptions {
+    inputId:DirectActionActionId;available:boolean;code?:string|null;reason?:string|null;
+    choices:DirectActionChoice[];
 }
-export type HwihaLegacyCourtId = 'court.releaseCorps' | 'court.diplomacy' | 'court.abandonCounty'
+export type CourtActionId = 'court.releaseCorps' | 'court.diplomacy' | 'court.abandonCounty'
     | 'court.institution' | 'court.moveCapital' | 'court.confiscate' | 'court.nonAggression'
     | 'court.declareWar' | 'court.offerPeace' | 'court.breakNonAggression';
-export interface HwihaLegacyCourtChoice {
+export interface CourtActionChoice {
     label:string;arguments:Record<string,string|number>;available:boolean;
     code?:string|null;reason?:string|null;maxAmount?:number|null;
 }
-export interface HwihaLegacyCourtOptions {
-    inputId:HwihaLegacyCourtId;available:boolean;code?:string|null;reason?:string|null;
-    choices:HwihaLegacyCourtChoice[];
+export interface CourtActionOptions {
+    inputId:CourtActionId;available:boolean;code?:string|null;reason?:string|null;
+    choices:CourtActionChoice[];
 }
-export type HwihaLegacyStratagemId = 'stratagem.play' | 'stratagem.steal'
+export type StratagemActionId = 'stratagem.play' | 'stratagem.steal'
     | 'stratagem.sabotage' | 'stratagem.fire' | 'stratagem.lastStand'
     | 'stratagem.mobilizePeople' | 'stratagem.flood' | 'stratagem.falseReport'
     | 'stratagem.raiseMilitia' | 'stratagem.provokeRivalry' | 'stratagem.raid'
     | 'stratagem.reciprocity';
-export interface HwihaLegacyStratagemChoice {
+export interface StratagemActionChoice {
     label:string;arguments:Record<string,number>;available:boolean;code?:string|null;reason?:string|null;
 }
-export interface HwihaLegacyStratagemOptions {
-    inputId:HwihaLegacyStratagemId;available:boolean;code?:string|null;reason?:string|null;
-    choices:HwihaLegacyStratagemChoice[];
+export interface StratagemActionOptions {
+    inputId:StratagemActionId;available:boolean;code?:string|null;reason?:string|null;
+    choices:StratagemActionChoice[];
 }
-export interface HwihaTransferOptions {
-    inputId: HwihaTransferActionId; available: boolean; code?: string | null; reason?: string | null;
+export interface TransferOptions {
+    inputId: TransferActionId; available: boolean; code?: string | null; reason?: string | null;
     resources: Array<{resource:string;available:boolean;maxAmount:number;code?:string|null;reason?:string|null}>;
     targets: Array<{generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}>;
 }
-export interface HwihaPeopleOptions {
-    inputId: HwihaPeopleActionId; available: boolean; code?: string | null; reason?: string | null;
+export interface PeopleOptions {
+    inputId: PeopleActionId; available: boolean; code?: string | null; reason?: string | null;
     undiscoveredCount?: number | null;
     targets: {generalId:number;name:string;available:boolean;code?:string|null;reason?:string|null}[];
 }
-export interface HwihaMilitaryOptions {
-    inputId: HwihaMilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
+export interface MilitaryOptions {
+    inputId: MilitaryActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null; troops?: number | null;
     training?: number | null; morale?: number | null; gatheringCorps?: number | null;
     troopsAfter?: number | null; populationAfter?: number | null;
     trainingAfter?: number | null; moraleAfter?: number | null;
     grainCost?: number | null; moneyCost?: number | null;
 }
-export interface HwihaFieldOptions {
-    inputId: HwihaFieldActionId; available: boolean; code?: string | null; reason?: string | null;
+export interface FieldOptions {
+    inputId: FieldActionId; available: boolean; code?: string | null; reason?: string | null;
     countyId?: number | null; countyName?: string | null;
 }
-export interface HwihaTravelOptions {
-    inputId: HwihaTravelActionId; available: boolean; code?: string | null; reason?: string | null;
+export interface TravelOptions {
+    inputId: TravelActionId; available: boolean; code?: string | null; reason?: string | null;
     destinations: {provinceId:string;name:string;available:boolean;code?:string|null;reason?:string|null}[];
 }

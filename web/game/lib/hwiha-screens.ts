@@ -20,9 +20,9 @@ export const HWIHA_INPUT_TABS = [
     '조정 결정',
 ] as const;
 
-export type HwihaInputTab = (typeof HWIHA_INPUT_TABS)[number];
+export type InputTab = (typeof HWIHA_INPUT_TABS)[number];
 
-export interface HwihaScreen {
+export interface GameScreen {
     /** 시안 아트보드 파일 이름. 시안과 코드를 잇는 열쇠다. */
     readonly board: string;
     /** URL 조각. `/game/<서버>/hwiha/<slug>` — 기존 게임과 같은 인증 게이트·서버 선택을 쓴다. */
@@ -30,7 +30,7 @@ export interface HwihaScreen {
     /** 시안 제목 그대로. */
     readonly title: string;
     /** 속한 입력 탭. 시안이 지정하지 않았으면 null. */
-    readonly tab: HwihaInputTab | null;
+    readonly tab: InputTab | null;
     /** 작전실 허브에서 바로 갈 수 있는 화면인지. */
     readonly onHub: boolean;
 }
@@ -38,7 +38,7 @@ export interface HwihaScreen {
 /** 작전실 — 허브. 다른 화면의 「← 작전실」이 여기로 돌아온다. */
 export const HWIHA_HUB_SLUG = 'war-room';
 
-export const HWIHA_SCREENS: readonly HwihaScreen[] = [
+export const HWIHA_SCREENS: readonly GameScreen[] = [
     { board: 'WarRoom', slug: 'war-room', title: '작전실', tab: null, onHub: false },
     { board: 'Command', slug: 'command', title: '이번 순에 할 일', tab: null, onHub: true },
 
@@ -86,7 +86,7 @@ export function hwihaHref(slug: string, serverId?: string): string {
     return serverId ? resolveServerGamePath(undefined, serverId, '/game', child) : `/game/${child}`;
 }
 
-export function hwihaScreenOf(slug: string): HwihaScreen | undefined {
+export function hwihaScreenOf(slug: string): GameScreen | undefined {
     return HWIHA_SCREENS.find((s) => s.slug === slug);
 }
 
@@ -111,11 +111,11 @@ export function isHwihaBuilt(slug: string): boolean {
 }
 
 /** 한 입력 탭에 속한 화면들 — 시안 순서를 지킨다. 아직 없는 화면도 포함한다. */
-export function hwihaScreensOfTab(tab: HwihaInputTab): readonly HwihaScreen[] {
+export function hwihaScreensOfTab(tab: InputTab): readonly GameScreen[] {
     return HWIHA_SCREENS.filter((s) => s.tab === tab);
 }
 
 /** 탭을 눌렀을 때 갈 첫 화면 — 페이지가 있는 것 가운데 첫째. 없으면 undefined. */
-export function hwihaTabLanding(tab: HwihaInputTab): HwihaScreen | undefined {
+export function hwihaTabLanding(tab: InputTab): GameScreen | undefined {
     return hwihaScreensOfTab(tab).find((s) => isHwihaBuilt(s.slug));
 }

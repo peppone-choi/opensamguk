@@ -22,7 +22,7 @@ import opensamguk.logic.world.*
  * 장수)과 한 경계에서 함께 돌아도 한 장수는 한 달에 치적 한 건이다. 월 경계 순서는 TurnRunService 와 같다:
  * 치적 창 닫기 → (월간 사건) → 내정 경계 → 월단평 → 치적 창 열기. DB 없음.
  */
-class HwihaGovernanceMeritWiringTest {
+class GovernanceMeritWiringTest {
     private val pin = "a".repeat(64)
     private val a = StrategicNodeRef.LandProvince("A")
     private val b = StrategicNodeRef.LandProvince("B")
@@ -33,9 +33,9 @@ class HwihaGovernanceMeritWiringTest {
     private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
     private val curve = RenownAssessment.CANON
 
-    private fun context(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaDomesticContext(
+    private fun context(world: InMemoryTurnWorld, recorder: ChangeRecorder) = DomesticContext(
         geography = CountyGeography(listOf(CountyPlace(10, "甲郡", "갑군", "j10"), CountyPlace(11, "甲郡", "갑군", "j11"))),
-        topology = topology, metrics = metrics, merit = HwihaGovernanceMeritRenownSink(world, recorder))
+        topology = topology, metrics = metrics, merit = GovernanceMeritRenownSink(world, recorder))
 
     private fun general(id: Int, node: String, human: Boolean = false, meta: Map<String, Any?> = emptyMap()) = TurnGeneral(
         id = id, name = "G$id", nationId = 1, cityId = if (node == "A") 10 else 11, troopId = 0,
@@ -71,13 +71,13 @@ class HwihaGovernanceMeritWiringTest {
     private fun renown(world: InMemoryTurnWorld, id: Int) = PersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
 
     /** TurnRunService 월 경계 순서 그대로(월간 사건은 없다). */
-    private fun monthBoundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, context: HwihaDomesticContext, year: Int, month: Int):
-        Pair<List<Int>, HwihaDomesticBoundary.Outcome> {
-        val closed = HwihaCountyMeritWindow(world, recorder).close(year, month)
+    private fun monthBoundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, context: DomesticContext, year: Int, month: Int):
+        Pair<List<Int>, DomesticBoundary.Outcome> {
+        val closed = CountyMeritWindow(world, recorder).close(year, month)
         world.setCurrentDate(year, month, 1)
-        val outcome = checkNotNull(HwihaDomesticBoundary(world, recorder, context).run())
-        HwihaMonthlyAssessment(world, recorder, curve).assess(year, month)
-        HwihaCountyMeritWindow(world, recorder).open(year, month)
+        val outcome = checkNotNull(DomesticBoundary(world, recorder, context).run())
+        MonthlyAssessment(world, recorder, curve).assess(year, month)
+        CountyMeritWindow(world, recorder).open(year, month)
         return closed to outcome
     }
 
@@ -85,12 +85,12 @@ class HwihaGovernanceMeritWiringTest {
      * G3(카드 5)를 [countyId] 縣令으로 배치하고 부임시킨 뒤 200-02 경계를 넘는다(내정: 첫 달 기록, 기록: 창 열기).
      * 그 달 동안 두 縣 의 전답이 상한의 10% 오른다 — 두 경로 모두의 문턱을 넘는다.
      */
-    private fun seatMagistrate(world: InMemoryTurnWorld, recorder: ChangeRecorder, context: HwihaDomesticContext, countyId: Int) {
-        val placed = HwihaCourtHandler(world, recorder, context).handle(ImmediateInput("req-seat", 1, 42, "placement.assign",
+    private fun seatMagistrate(world: InMemoryTurnWorld, recorder: ChangeRecorder, context: DomesticContext, countyId: Int) {
+        val placed = CourtHandler(world, recorder, context).handle(ImmediateInput("req-seat", 1, 42, "placement.assign",
             """{"cardId":5,"post":"MAGISTRATE","countyId":$countyId}"""))
         assertTrue(placed.ok, "배치 접수: $placed")
-        HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
-        HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
+        DomesticTurn(world, recorder, context).beforeMovement(3)
+        PlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
         monthBoundary(world, recorder, context, 200, 2)
         assertEquals("0200-02", CountyMonthly.read(world.getCityById(countyId)!!.meta)!!.stamp)
         for (id in listOf(10, 11)) {
@@ -100,15 +100,15 @@ class HwihaGovernanceMeritWiringTest {
     }
 
     @Test fun `merit stamp is the month the indicators rose, not the month compared`() {
-        assertEquals("0200-02", HwihaGovernanceMeritRenownSink.meritStamp("0200-03"))
-        assertEquals("0199-12", HwihaGovernanceMeritRenownSink.meritStamp("0200-01"))
-        assertNull(HwihaGovernanceMeritRenownSink.meritStamp("0000-01"))
-        assertNull(HwihaGovernanceMeritRenownSink.meritStamp("garbage"), "월 경계에서 던지지 않는다")
+        assertEquals("0200-02", GovernanceMeritRenownSink.meritStamp("0200-03"))
+        assertEquals("0199-12", GovernanceMeritRenownSink.meritStamp("0200-01"))
+        assertNull(GovernanceMeritRenownSink.meritStamp("0000-01"))
+        assertNull(GovernanceMeritRenownSink.meritStamp("garbage"), "월 경계에서 던지지 않는다")
     }
 
     @Test fun `the sink applies the records merit threshold to domestic events`() {
         val world = world(holder = false); val recorder = ChangeRecorder()
-        val sink = HwihaGovernanceMeritRenownSink(world, recorder)
+        val sink = GovernanceMeritRenownSink(world, recorder)
         val base = CountyIndicators(50_000, 1000, 1000, 500, 80, 500, 500)
         fun event(current: CountyIndicators) = GovernanceMeritEvent(1, 3, 5, 10, "0200-03", base, current,
             current.risenSince(base))
@@ -154,7 +154,7 @@ class HwihaGovernanceMeritWiringTest {
         val world = world(holder = false); val recorder = ChangeRecorder(); val context = context(world, recorder)
         seatMagistrate(world, recorder, context, 10)
         monthBoundary(world, recorder, context, 200, 3)
-        val boundary = HwihaDomesticBoundary(world, recorder, context)
+        val boundary = DomesticBoundary(world, recorder, context)
         assertEquals(0, boundary.closeMonthlyMerit(200, 4), "no direct work in March")
         val before = world.getCityById(10)!!
         world.applyCityDirtyFree(before.copy(agriculture = before.agriculture + 500)) // monthly natural event
@@ -168,7 +168,7 @@ class HwihaGovernanceMeritWiringTest {
             File("src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
             File("app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
         ).firstOrNull { it.isFile }?.readText() ?: error("DaemonLoopConfig.kt source not found from ${File(".").absolutePath}")
-        assertTrue(source.contains("merit = opensamguk.engine.hwiha.HwihaGovernanceMeritRenownSink(world, recorder)"),
+        assertTrue(source.contains("merit = opensamguk.engine.hwiha.GovernanceMeritRenownSink(world, recorder)"),
             "HWIHA 내정 문맥의 치적 사건이 버려지고 있다(GovernanceMeritSink.NONE)")
     }
 }

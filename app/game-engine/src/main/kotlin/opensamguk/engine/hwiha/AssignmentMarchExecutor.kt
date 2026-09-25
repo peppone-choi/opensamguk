@@ -16,7 +16,7 @@ sealed interface AssignmentMarchExecution {
 }
 
 /** Recorder-only persistence adapter. Live edge/encounter authorities must be supplied by the caller. */
-class HwihaAssignmentMarchExecutor(
+class AssignmentMarchExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
@@ -33,7 +33,7 @@ class HwihaAssignmentMarchExecutor(
         val assignment = try { CountyAssignment.read(actor.meta) } catch (_: IllegalArgumentException) {
             return reject(AssignmentMarchFailure.INVALID_STATE)
         } ?: return AssignmentMarchExecution.NoAssignment
-        if (HwihaDispatchExecutor(world, recorder).assessAssignment(generalId, assignment) !is DispatchAssessment.Eligible)
+        if (DispatchExecutor(world, recorder).assessAssignment(generalId, assignment) !is DispatchAssessment.Eligible)
             return reject(AssignmentMarchFailure.INVALID_ASSIGNMENT)
         val positions = world.generalPositionSnapshot() ?: return reject(AssignmentMarchFailure.POSITION_UNAVAILABLE)
         val position = positions.stateFor(generalId) ?: return reject(AssignmentMarchFailure.POSITION_UNAVAILABLE)
@@ -51,7 +51,7 @@ class HwihaAssignmentMarchExecutor(
         if (old?.lastAdvancedAt == now) return AssignmentMarchExecution.AlreadyProcessed
         // Changing an order must never provide an escape from an unresolved encounter.
         if (old?.stop == LandMarchStop.ENCOUNTER) return reject(AssignmentMarchFailure.BATTLE_PENDING)
-        val deployments = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+        val deployments = DeploymentExecutor(world, recorder, topology, metrics).projection()
             ?: return reject(AssignmentMarchFailure.INVALID_STATE)
         if (deployments.deployed.any { it.commanderGeneralId == generalId })
             return reject(AssignmentMarchFailure.CORPS_DEPLOYED)

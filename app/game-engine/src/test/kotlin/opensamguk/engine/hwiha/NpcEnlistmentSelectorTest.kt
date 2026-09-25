@@ -12,7 +12,7 @@ import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaNpcEnlistmentSelectorTest {
+class NpcEnlistmentSelectorTest {
     private val missing = ReservedTurn("휴식", "{}", rowExists = false)
     private fun person(id: Int, nation: Int = 0) = TurnGeneral(
         id = id, name = "G$id", nationId = nation, cityId = 1, troopId = 0,
@@ -33,9 +33,9 @@ class HwihaNpcEnlistmentSelectorTest {
     }
     @Test fun `explicit rows without request ids never become AI inputs`() {
         for (row in listOf(ReservedTurn("휴식", "{}"), ReservedTurn("action.enlist", "{}"))) {
-            assertSame(row, HwihaNpcEnlistmentSelector.select(world(), 1, row))
+            assertSame(row, NpcEnlistmentSelector.select(world(), 1, row))
         }
-        val chosen = HwihaNpcEnlistmentSelector.select(world(), 1, missing)
+        val chosen = NpcEnlistmentSelector.select(world(), 1, missing)
         assertEquals("action.enlist", chosen.actionCode)
         assertNull(chosen.requestId)
         assertFalse(chosen.rowExists)
@@ -45,15 +45,15 @@ class HwihaNpcEnlistmentSelectorTest {
             listOf("42", "opaque-owner").map { person(1).copy(userId = it) } +
             listOf(person(1).copy(meta = person(1).meta + ("hwihaLord" to true)),
                 person(1).copy(meta = person(1).meta - "hwihaLord"), person(1, 1))
-        for (actor in actors) assertSame(missing, HwihaNpcEnlistmentSelector.select(world(actor), 1, missing))
+        for (actor in actors) assertSame(missing, NpcEnlistmentSelector.select(world(actor), 1, missing))
         for (owner in listOf(null, "", "0", "-1"))
-            assertEquals("action.enlist", HwihaNpcEnlistmentSelector.select(world(person(1).copy(userId = owner)), 1, missing).actionCode)
+            assertEquals("action.enlist", NpcEnlistmentSelector.select(world(person(1).copy(userId = owner)), 1, missing).actionCode)
     }
     @Test fun `bound NPC and no eligible nation are untouched`() {
         val bound = world()
         bound.createRetainer(Retainer(id = 1, masterGeneralId = 10, generalId = 1, name = "G1", origin = "EXISTING", relation = "guest"))
-        assertSame(missing, HwihaNpcEnlistmentSelector.select(bound, 1, missing))
-        assertSame(missing, HwihaNpcEnlistmentSelector.select(world(lords = 0), 1, missing))
+        assertSame(missing, NpcEnlistmentSelector.select(bound, 1, missing))
+        assertSame(missing, NpcEnlistmentSelector.select(world(lords = 0), 1, missing))
     }
     @Test fun `one candidate consumes no RNG and overdue lifecycle selects only once per phase`() {
         val world = world()
@@ -64,7 +64,7 @@ class HwihaNpcEnlistmentSelectorTest {
         val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { pulls++ },
             reservedActionOf = { reads++; missing })
         val first = lifecycle.runTick(Instant.EPOCH.plusSeconds(10801)).single()
-        assertIs<HwihaTurnOutcome.Applied>(first.hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(first.hwihaOutcome)
         assertNull(first.requestId)
         assertEquals(1, world.getGeneralById(1)!!.nationId)
         assertTrue(lifecycle.runTick(Instant.EPOCH.plusSeconds(10801)).isEmpty())
@@ -74,8 +74,8 @@ class HwihaNpcEnlistmentSelectorTest {
     @Test fun `multiple candidates preserve deterministic existing handler choice`() {
         fun run(reverse: Boolean): Int {
             val world = world(lords = 2, reverse = reverse)
-            val selected = HwihaNpcEnlistmentSelector.select(world, 1, missing)
-            assertIs<HwihaTurnOutcome.Applied>(HwihaEnlistmentHandler(world, ChangeRecorder(), "fixed")
+            val selected = NpcEnlistmentSelector.select(world, 1, missing)
+            assertIs<TurnOutcome.Applied>(EnlistmentHandler(world, ChangeRecorder(), "fixed")
                 .handle(1, selected.argJson, 200, 1))
             return world.getGeneralById(1)!!.nationId
         }

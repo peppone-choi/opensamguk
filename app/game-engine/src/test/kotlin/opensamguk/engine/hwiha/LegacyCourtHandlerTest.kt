@@ -12,8 +12,8 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 
-class HwihaLegacyCourtHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class LegacyCourtHandlerTest {
+    private val fixture = CampaignWorldFixture()
     private fun input(id: String, args: String, requestId: String = "court-test") =
         TurnDaemonCommand.ImmediateInput(requestId, 501, 42, id, args)
 
@@ -34,7 +34,7 @@ class HwihaLegacyCourtHandlerTest {
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
-        val handler = HwihaCourtHandler(world, ChangeRecorder(),
+        val handler = CourtHandler(world, ChangeRecorder(),
             catalog = catalogWithPlanned("court.dispatch", "HANDLER_READY"))
 
         handler.onIssuerTurn(501)
@@ -48,18 +48,18 @@ class HwihaLegacyCourtHandlerTest {
 
     @Test fun `queued legacy court input is rejected when its catalog row becomes planned`() {
         val route = fixture.route()
-        val queued = HwihaQueuedLegacyCourt("planned-release", 42, "court.releaseCorps", """{"targetGeneralId":502}""")
+        val queued = QueuedLegacyCourt("planned-release", 42, "court.releaseCorps", """{"targetGeneralId":502}""")
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (HwihaQueuedLegacyCourt.META_KEY to queued.toMetaValue()))
+            it.copy(meta = it.meta + (QueuedLegacyCourt.META_KEY to queued.toMetaValue()))
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
-        val handler = HwihaCourtHandler(world, ChangeRecorder(),
+        val handler = CourtHandler(world, ChangeRecorder(),
             catalog = catalogWithPlanned("court.releaseCorps", "UI_READY"))
 
         handler.onIssuerTurn(501)
 
-        assertFalse(HwihaQueuedLegacyCourt.META_KEY in world.getGeneralById(501)!!.meta)
+        assertFalse(QueuedLegacyCourt.META_KEY in world.getGeneralById(501)!!.meta)
         val execution = handler.takeExecutions().single()
         assertEquals("planned-release", execution.requestId)
         assertEquals(InputRejection.NOT_DELIVERED.name, execution.result.code)
@@ -75,7 +75,7 @@ class HwihaLegacyCourtHandlerTest {
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
-        val handler = HwihaCourtHandler(world, ChangeRecorder())
+        val handler = CourtHandler(world, ChangeRecorder())
 
         handler.onIssuerTurn(501)
 
@@ -90,8 +90,8 @@ class HwihaLegacyCourtHandlerTest {
         val route = fixture.route()
         for ((key, inputId) in listOf(
             QueuedReward.META_KEY to RewardInput.INPUT_ID,
-            HwihaQueuedLegacyCourt.META_KEY to "court.releaseCorps",
-            HwihaQueuedLegacyStratagem.META_KEY to "stratagem.lastStand",
+            QueuedLegacyCourt.META_KEY to "court.releaseCorps",
+            QueuedLegacyStratagem.META_KEY to "stratagem.lastStand",
         )) {
             val queued = mapOf("requestId" to "bad-$key", "ownerUserId" to 42,
                 "inputId" to inputId, "invalid" to true)
@@ -100,7 +100,7 @@ class HwihaLegacyCourtHandlerTest {
             }
             val world = fixture.world(listOf(ruler to route.start), nations = listOf(
                 Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
-            val handler = HwihaCourtHandler(world, ChangeRecorder())
+            val handler = CourtHandler(world, ChangeRecorder())
 
             handler.onIssuerTurn(501)
 
@@ -109,7 +109,7 @@ class HwihaLegacyCourtHandlerTest {
             assertEquals("bad-$key", execution.requestId)
             assertEquals("STATE_UNAVAILABLE", execution.result.code)
             assertEquals(inputId, execution.result.actionCode)
-            if (key == HwihaQueuedLegacyStratagem.META_KEY)
+            if (key == QueuedLegacyStratagem.META_KEY)
                 assertEquals("STRATAGEM", execution.result.commandKind)
         }
     }
@@ -117,12 +117,12 @@ class HwihaLegacyCourtHandlerTest {
     @Test fun `malformed stratagem without input id keeps stratagem result kind`() {
         val route = fixture.route()
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (HwihaQueuedLegacyStratagem.META_KEY to mapOf(
+            it.copy(meta = it.meta + (QueuedLegacyStratagem.META_KEY to mapOf(
                 "requestId" to "bad-stratagem", "ownerUserId" to 42, "invalid" to true)))
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
-        val handler = HwihaCourtHandler(world, ChangeRecorder())
+        val handler = CourtHandler(world, ChangeRecorder())
 
         handler.onIssuerTurn(501)
 
@@ -141,7 +141,7 @@ class HwihaLegacyCourtHandlerTest {
         val world = fixture.world(listOf(ruler to route.start, next to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "fixture", 200)
-        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { HwihaCampaignWorldFixture.NO_INPUT })
+        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { CampaignWorldFixture.NO_INPUT })
 
         val handled = lifecycle.runTick(Instant.parse("0200-01-01T03:00:01Z"))
 
@@ -157,7 +157,7 @@ class HwihaLegacyCourtHandlerTest {
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity, gold = 100, tech = 20.0),
             Nation(2, "N2", "#222222")))
-        val handler = HwihaCourtHandler(world, ChangeRecorder())
+        val handler = CourtHandler(world, ChangeRecorder())
         assertEquals(InputRejection.NOT_DELIVERED.name, handler.handle(input("court.institution", "{}")).code)
         handler.onIssuerTurn(501)
         assertEquals(20.0, world.getNationById(1)!!.tech)
@@ -171,7 +171,7 @@ class HwihaLegacyCourtHandlerTest {
         val world = fixture.world(listOf(ruler to route.start),
             nations = listOf(Nation(1, "N1", "#111111", capitalCityId = route.startCity), Nation(2, "N2", "#222222")),
             cityChanges = { city -> if (city.id in setOf(route.startCity, route.destinationCounty)) city.copy(nationId = 1) else city })
-        val handler = HwihaCourtHandler(world, ChangeRecorder())
+        val handler = CourtHandler(world, ChangeRecorder())
         assertTrue(handler.handle(input("court.moveCapital", """{"countyId":${route.destinationCounty}}""", "move-capital")).ok)
         handler.onIssuerTurn(501)
         assertEquals(route.destinationCounty, world.getNationById(1)!!.capitalCityId)
@@ -188,7 +188,7 @@ class HwihaLegacyCourtHandlerTest {
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity),
             Nation(2, "N2", "#222222", capitalCityId = route.destinationCounty)))
-        val handler = HwihaCourtHandler(world, ChangeRecorder())
+        val handler = CourtHandler(world, ChangeRecorder())
         world.updateDiplomacy(1, 2, 2, 0)
         world.updateDiplomacy(2, 1, 2, 0)
         assertEquals(InputRejection.NOT_DELIVERED.name,
@@ -213,7 +213,7 @@ class HwihaLegacyCourtHandlerTest {
             bugoks = listOf(fixture.unit(7, ruler.id, 1000)),
             retainers = listOf(Retainer(51, 501, "TEST", 502, commander.name, "lieutenant")))
         val recorder = ChangeRecorder()
-        val handler = HwihaCourtHandler(world, recorder)
+        val handler = CourtHandler(world, recorder)
         assertTrue(handler.handle(input("court.releaseCorps", """{"targetGeneralId":502}""", "release")).ok)
         handler.onIssuerTurn(501)
         assertTrue(handler.takeExecutions().single().result.ok)

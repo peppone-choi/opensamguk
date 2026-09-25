@@ -10,8 +10,8 @@ const mock = vi.hoisted(() => ({
     reservedCommands: vi.fn(), command: vi.fn(), courtReward: vi.fn(),
     submit: vi.fn(), refresh: vi.fn(),
 }));
-vi.mock('@/components/HwihaShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
-vi.mock('@/components/command/HwihaCourtForm', () => ({ default: () => <div>발령 폼</div> }));
+vi.mock('@/components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
+vi.mock('@/components/command/CourtForm', () => ({ default: () => <div>발령 폼</div> }));
 vi.mock('@/lib/hwiha-session', () => ({ useHwihaSession: () => ({
     generalId: 9, isHwihaWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
 }) }));

@@ -4,31 +4,31 @@ import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
-sealed interface HwihaTravelExecution {
-    data class Rejected(val reason: TravelFailure) : HwihaTravelExecution
-    data object NoOrder : HwihaTravelExecution
-    data object AlreadyProcessed : HwihaTravelExecution
+sealed interface TravelExecution {
+    data class Rejected(val reason: TravelFailure) : TravelExecution
+    data object NoOrder : TravelExecution
+    data object AlreadyProcessed : TravelExecution
     data class Applied(val state: TravelState, val movement: LandMarchAdvance.Advanced,
-        val distanceMm: Long, val condition: PersonalTravelCondition?) : HwihaTravelExecution
+        val distanceMm: Long, val condition: PersonalTravelCondition?) : TravelExecution
 }
 
 /** Advances one personal order through the same pinned land route used by other HWIHA marches. */
-class HwihaTravelExecutor(
+class TravelExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
 ) {
     fun start(orderId: String, request: TravelRequest, destination: StrategicNodeRef.LandProvince,
-        budgetMm: Long, entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): HwihaTravelExecution {
+        budgetMm: Long, entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): TravelExecution {
         if (orderId.isBlank() || orderId.length > 128 || budgetMm <= 0) return reject(TravelFailure.INVALID_INPUT)
         val current = state(request.actorId)
         if (current is ReadState.Failed) return reject(current.reason)
         current as ReadState.Ready
-        if (current.order?.orderId == orderId) return HwihaTravelExecution.AlreadyProcessed
+        if (current.order?.orderId == orderId) return TravelExecution.AlreadyProcessed
         val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
         if (current.order != null && current.order.checkpoint.lastAdvancedAt >= now)
-            return HwihaTravelExecution.AlreadyProcessed
+            return TravelExecution.AlreadyProcessed
         if (current.order?.checkpoint?.stop == LandMarchStop.ENCOUNTER) return reject(TravelFailure.BATTLE_PENDING)
         val assessment = TravelRules.assess(request, destination, current.snapshot, topology, metrics, world.getState().meta)
         if (assessment is TravelAssessment.Rejected) return reject(assessment.reason)
@@ -38,14 +38,14 @@ class HwihaTravelExecutor(
     }
 
     fun resume(actorId: Int, budgetMm: Long,
-        entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): HwihaTravelExecution {
+        entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): TravelExecution {
         if (budgetMm <= 0) return reject(TravelFailure.INVALID_INPUT)
         val current = state(actorId)
         if (current is ReadState.Failed) return reject(current.reason)
         current as ReadState.Ready
-        val order = current.order ?: return HwihaTravelExecution.NoOrder
-        if (order.assignmentIdAtStart != current.assignmentId) return HwihaTravelExecution.NoOrder
-        if (order.checkpoint.stop == LandMarchStop.ARRIVED) return HwihaTravelExecution.NoOrder
+        val order = current.order ?: return TravelExecution.NoOrder
+        if (order.assignmentIdAtStart != current.assignmentId) return TravelExecution.NoOrder
+        if (order.checkpoint.stop == LandMarchStop.ARRIVED) return TravelExecution.NoOrder
         if (order.checkpoint.stop == LandMarchStop.ENCOUNTER) return reject(TravelFailure.BATTLE_PENDING)
         if (current.snapshot.inBattle) return reject(TravelFailure.BATTLE_PENDING)
         if (current.snapshot.commandsCorps) return reject(TravelFailure.CORPS_DEPLOYED)
@@ -56,9 +56,9 @@ class HwihaTravelExecutor(
     private fun advance(actorId: Int, orderId: String, inputId: String, destination: StrategicNodeRef.LandProvince,
         path: ResolvedLandMarchPath, cursor: LandMarchCursor, lastAdvancedAt: Phase?,
         assignmentIdAtStart: String?, budgetMm: Long,
-        entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): HwihaTravelExecution {
+        entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): TravelExecution {
         val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
-        if (lastAdvancedAt != null && lastAdvancedAt >= now) return HwihaTravelExecution.AlreadyProcessed
+        if (lastAdvancedAt != null && lastAdvancedAt >= now) return TravelExecution.AlreadyProcessed
         val positions = world.generalPositionSnapshot() ?: return reject(TravelFailure.POSITION_UNAVAILABLE)
         if (positions.topologyRevision != topology.topologyRevision || positions.topologyHash != topology.contentHash ||
             positions.knownLandProvinceIds != topology.landProvinceIds ||
@@ -95,7 +95,7 @@ class HwihaTravelExecutor(
         val after = before.copy(meta = nextMeta)
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
-        return HwihaTravelExecution.Applied(next, movement, distanceMm, condition)
+        return TravelExecution.Applied(next, movement, distanceMm, condition)
     }
 
     private fun state(actorId: Int): ReadState {
@@ -107,13 +107,13 @@ class HwihaTravelExecutor(
             catch (_: IllegalArgumentException) { return ReadState.Failed(TravelFailure.STATE_UNAVAILABLE) }
         val assignment = try { CountyAssignment.read(actor.meta) }
             catch (_: IllegalArgumentException) { return ReadState.Failed(TravelFailure.STATE_UNAVAILABLE) }
-        val deployments = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+        val deployments = DeploymentExecutor(world, recorder, topology, metrics).projection()
             ?: return ReadState.Failed(TravelFailure.STATE_UNAVAILABLE)
         return ReadState.Ready(order, assignment?.dispatchId, TravelSnapshot(world.ruleProfile, true, position.node,
             position.battlefield != null, deployments.deployed.any { it.commanderGeneralId == actorId }))
     }
 
-    private fun reject(reason: TravelFailure) = HwihaTravelExecution.Rejected(reason)
+    private fun reject(reason: TravelFailure) = TravelExecution.Rejected(reason)
 
     private sealed interface ReadState {
         data class Failed(val reason: TravelFailure) : ReadState

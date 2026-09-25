@@ -8,7 +8,7 @@ import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
-class HwihaDeploymentEditGuardTest {
+class DeploymentEditGuardTest {
     private val now = Instant.parse("0200-01-01T00:00:00Z")
     private val corps = DeployedCorps("deployed",1,2,4,1,listOf(7),Phase(200,1,1))
     private fun world(profile: String = "HWIHA", deployment: Any? = DeploymentState(listOf(corps)).toMetaValue(), absent: Boolean = false): InMemoryTurnWorld {

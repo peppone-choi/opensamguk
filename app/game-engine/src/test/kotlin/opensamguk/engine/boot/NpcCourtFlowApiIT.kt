@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.HwihaTurnOutcome
+import opensamguk.engine.hwiha.TurnOutcome
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.gameapi.GameApiApplication
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /** Synthetic people, actual HTTP inputs and NPC turns. This does not prove a playable Zhou scenario. */
-@org.springframework.context.annotation.Import(HwihaNpcCourtFlowApiIT.Artifacts::class)
+@org.springframework.context.annotation.Import(NpcCourtFlowApiIT.Artifacts::class)
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(classes = [GameApiApplication::class], properties = [
@@ -42,7 +42,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
     "jwt.legacy-secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=",
     "jwt.legacy-accept-until=2099-01-01T00:00:00Z",
 ])
-class HwihaNpcCourtFlowApiIT {
+class NpcCourtFlowApiIT {
     @Autowired private lateinit var context: WebApplicationContext
     @Autowired private lateinit var jdbc: JdbcTemplate
     @Autowired private lateinit var json: ObjectMapper
@@ -51,7 +51,7 @@ class HwihaNpcCourtFlowApiIT {
 
     @Test fun `HTTP enlistment reaches NPC first dispatch and owned acceptance without forced domain transitions`() {
         val dataSource = checkNotNull(jdbc.dataSource)
-        val fixture = HwihaEnlistmentFixture(jdbc, JdbcFlushExecutor(NamedParameterJdbcTemplate(dataSource),
+        val fixture = EnlistmentFixture(jdbc, JdbcFlushExecutor(NamedParameterJdbcTemplate(dataSource),
             TransactionTemplate(DataSourceTransactionManager(dataSource))))
         fixture.seed(1)
         jdbc.update("UPDATE world_state SET config=config || '{\"startYear\":200,\"unitSet\":\"che\"}'::jsonb WHERE id=1")
@@ -69,7 +69,7 @@ class HwihaNpcCourtFlowApiIT {
         val late = Instant.parse("0200-01-01T03:00:01Z")
         val result = fixture.service(WorldId(1),InMemoryTurnWorld(fixture.load(1)),published).runDueGeneralTurns(late)
         assertEquals(listOf(1,10),result.handled.map { it.generalId })
-        assertIs<HwihaTurnOutcome.Applied>(result.handled.first().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(result.handled.first().hwihaOutcome)
         val issued = fixture.load(1)
         val actor = issued.generals.single { it.id==1 }
         val dispatch = assertNotNull(opensamguk.logic.input.DispatchState.read(actor.meta))

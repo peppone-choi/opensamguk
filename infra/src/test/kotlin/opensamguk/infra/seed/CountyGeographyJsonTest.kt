@@ -5,10 +5,10 @@ import kotlin.test.*
 import opensamguk.logic.world.HanWorldVariant
 
 /** Reads the pinned 1133 bundle: every administrative county gets the runtime map's commandery, never an inferred one. */
-class HwihaCountyGeographyJsonTest {
+class CountyGeographyJsonTest {
     @Test fun `administrative counties map to their runtime commandery and a unique jurisdiction`() {
         val bundle = HanWorldArtifactsResolver(Path.of("..")).artifacts(HanWorldVariant.V3_1133)
-        val geography = HwihaCountyGeographyJson.load(bundle)
+        val geography = CountyGeographyJson.load(bundle)
         val admin = bundle.projection.administrativeCountyIds
         assertEquals(admin, geography.byCounty.keys, "every administrative county carries meta.junCh")
         assertTrue(geography.byCounty.values.all { it.jurisdictionId != null })
@@ -27,7 +27,7 @@ class HwihaCountyGeographyJsonTest {
         val map = """{"cities":[{"id":1,"meta":{"junCh":"甲郡","jun":"갑군"},"provinceId":0},
             {"id":2,"meta":{"jun":"을군"},"provinceId":1},{"id":3,"meta":{"junCh":"丙郡"},"provinceId":1}]}""".toByteArray()
         val tiles = """{"provinceRecords":[{"jurisdictionId":"j1"},{"jurisdictionId":"j2"}]}""".toByteArray()
-        val geography = HwihaCountyGeographyJson.parse(map, tiles, setOf(1, 2))
+        val geography = CountyGeographyJson.parse(map, tiles, setOf(1, 2))
         assertEquals(setOf(1), geography.byCounty.keys)
         assertEquals("甲郡", geography.commanderyOf(1))
         assertEquals(1, geography.countyOfJurisdiction("j1"))

@@ -2,20 +2,20 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaLegacyCourtId,HwihaLegacyCourtOptions} from '../../lib/types';
+import type {CourtActionId,CourtActionOptions} from '../../lib/types';
 
-const labels:Record<HwihaLegacyCourtId,string>={
+const labels:Record<CourtActionId,string>={
     'court.releaseCorps':'부대 탈퇴 지시','court.diplomacy':'물자 원조',
     'court.abandonCounty':'현 포기','court.institution':'기술 연구',
     'court.moveCapital':'천도','court.confiscate':'몰수',
     'court.nonAggression':'불가침 제의','court.declareWar':'선전포고',
     'court.offerPeace':'종전 제의','court.breakNonAggression':'불가침 파기 제의',
 };
-const ids:HwihaLegacyCourtId[]=['court.releaseCorps','court.abandonCounty','court.moveCapital'];
+const ids:CourtActionId[]=['court.releaseCorps','court.abandonCounty','court.moveCapital'];
 
-export default function HwihaLegacyCourtForm({generalId,refreshKey=0,onReserved}:{generalId:number;refreshKey?:number;onReserved?:()=>void}){
-    const [inputId,setInputId]=useState<HwihaLegacyCourtId>('court.releaseCorps');
-    const [options,setOptions]=useState<HwihaLegacyCourtOptions|null>(null);
+export default function CourtActionForm({generalId,refreshKey=0,onReserved}:{generalId:number;refreshKey?:number;onReserved?:()=>void}){
+    const [inputId,setInputId]=useState<CourtActionId>('court.releaseCorps');
+    const [options,setOptions]=useState<CourtActionOptions|null>(null);
     const [index,setIndex]=useState(-1);
     const [amount,setAmount]=useState(1);
     const [message,setMessage]=useState<string|null>(null);
@@ -72,7 +72,7 @@ export default function HwihaLegacyCourtForm({generalId,refreshKey=0,onReserved}
     return <section aria-labelledby="legacy-court-title">
         <h3 id="legacy-court-title">조정 결정</h3>
         <label>명령<select className="os-inset" aria-label="조정 명령" value={inputId}
-            onChange={event=>setInputId(event.target.value as HwihaLegacyCourtId)} disabled={busy||!!tracking}>
+            onChange={event=>setInputId(event.target.value as CourtActionId)} disabled={busy||!!tracking}>
             {ids.map(id=><option key={id} value={id}>{labels[id]}</option>)}
         </select></label>
         {options&&<label>대상<select className="os-inset" aria-label="조정 대상" value={index}

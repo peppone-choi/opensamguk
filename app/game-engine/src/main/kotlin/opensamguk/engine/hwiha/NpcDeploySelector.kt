@@ -22,12 +22,12 @@ import opensamguk.logic.world.*
  * (포위 중인 NPC 도 포위를 풀고 구원한다). 부곡이 굶었으면 공격 출병 대신 가장 가까운 자국 縣으로 돌아간다
  * (포위 군단이 있는 省에 들어가면 조우가 일어난다). 같은 입력이면 같은 선택이다 — 난수·벽시계·맵 순회 순서를 쓰지 않는다.
  */
-class HwihaNpcDeploySelector(
+class NpcDeploySelector(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
 ) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
-        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved)) return reserved
+        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved)) return reserved
         val choice = choose(world, actorId) ?: return reserved
         return ReservedTurn(DeployInputs.INPUT_ID, DeployInputs.canonicalJson(choice), brief = "출병", rowExists = false)
     }
@@ -38,8 +38,8 @@ class HwihaNpcDeploySelector(
         // A held NPC card moves through its holder's deployment and standing policy.
         if (world.listRetainers().any { it.generalId == actorId }) return null
         if (CorpsEncounter.META_KEY in actor.meta || CountyAssignment.META_KEY in actor.meta) return null
-        if (world.listHwihaSieges().any { it.status == HwihaSiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
-        val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
+        if (world.listHwihaSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
+        val projection = DeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
         if (projection.deployed.any { it.commanderGeneralId == actorId || it.ownerGeneralId == actorId }) return null
         val units = world.bugoksOf(actorId).filter { it.commanderRetainerId == null && it.troops > 0 }
         if (units.isEmpty()) return null
@@ -61,7 +61,7 @@ class HwihaNpcDeploySelector(
             return DeployInput(actorId, units.map { it.id }.sorted(), home.third)
         }
         val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
-        val claimed = world.listHwihaSieges().filter { it.status == HwihaSiegeService.ACTIVE }.map { it.countyId }.toSet() +
+        val claimed = world.listHwihaSieges().filter { it.status == SiegeService.ACTIVE }.map { it.countyId }.toSet() +
             projection.people.mapNotNull { person ->
                 world.getGeneralById(person.id)?.takeIf { it.nationId == actor.nationId }
                     ?.let { try { CorpsOrder.read(it.meta, topology) } catch (_: IllegalArgumentException) { null } }
@@ -107,7 +107,7 @@ class HwihaNpcDeploySelector(
         val troops = world.bugoksOf(actorId).filter { it.commanderRetainerId == null && it.troops > 0 }.sumOf { it.troops.toLong() }
         if (troops <= 0) return null
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
-        val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
+        val projection = DeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
         val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
             ?: return null
         return reliefTarget(world, actor.nationId, position, troops, projection, edges)
@@ -117,7 +117,7 @@ class HwihaNpcDeploySelector(
     private fun reliefTarget(world: InMemoryTurnWorld, nationId: Int, position: StrategicNodeRef.LandProvince, troops: Long,
         projection: DeploymentProjection, edges: StrategicEdgeStateSnapshot): StrategicNodeRef.LandProvince? {
         val near = provinceHops(position, CampaignBalance.NPC_DEPLOY_MAX_EDGES).keys
-        return world.listHwihaSieges().filter { it.status == HwihaSiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
+        return world.listHwihaSieges().filter { it.status == SiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
             val city = world.getCityById(siege.countyId)?.takeIf { it.nationId == nationId } ?: return@mapNotNull null
             val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (node == position || node.id !in near) return@mapNotNull null

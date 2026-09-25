@@ -5,7 +5,7 @@ import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.renown.RenownRules
 
 /** Explicit synthetic QA inputs. This is not an authority for unverified historical datasets. */
-internal object HwihaScenarioPersonPolicies {
+internal object ScenarioPersonPolicies {
     private val statKeys = listOf("leadership", "strength", "intelligence", "politics", "charm")
     private val tupleIndices = listOf(5, 6, 7, 14, 15)
     private val fields = setOf("name", "statSourceId", "statSourceRevision", "officerId", "acceptsEnlistment", "stats")

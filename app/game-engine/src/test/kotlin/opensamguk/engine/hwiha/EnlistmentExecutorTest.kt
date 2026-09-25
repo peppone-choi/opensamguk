@@ -9,7 +9,7 @@ import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaEnlistmentExecutorTest {
+class EnlistmentExecutorTest {
     private fun general(id: Int, nation: Int = 0, lord: Boolean = false, human: Boolean = false) = TurnGeneral(
         id = id, name = "G$id", nationId = nation, cityId = 10, troopId = 0,
         stats = GeneralStats(80, 70, 60), experience = 300, dedication = 400, officerLevel = if (nation > 0 && lord) 12 else 0,
@@ -47,7 +47,7 @@ class HwihaEnlistmentExecutorTest {
         val before = world.listGenerals().associateBy { it.id }
         val armies = world.listBugoks()
         val positions = before.keys.associateWith(world::positionOf)
-        val result = assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world, recorder) { policy() }.execute(request, noDraw))
+        val result = assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world, recorder) { policy() }.execute(request, noDraw))
         assertEquals(listOf(1, 2), result.plan.joiningGeneralIds)
         assertEquals(before.getValue(1).copy(nationId = 1, meta = LordStatus.afterEnlistment(before.getValue(1).meta)), world.getGeneralById(1))
         assertEquals(before.getValue(2).copy(nationId = 1), world.getGeneralById(2))
@@ -61,7 +61,7 @@ class HwihaEnlistmentExecutorTest {
         assertEquals(mapOf("gennum" to 3, "keep" to 42), world.getNationById(1)!!.meta)
         assertEquals(setOf(1, 2), recorder.generalPatches().map { it.id }.toSet())
         assertEquals(1, recorder.nationPatches().size)
-        val again = assertIs<EnlistmentExecution.Rejected>(HwihaEnlistmentExecutor(world, recorder) { policy() }.execute(request, noDraw))
+        val again = assertIs<EnlistmentExecution.Rejected>(EnlistmentExecutor(world, recorder) { policy() }.execute(request, noDraw))
         assertEquals(EnlistmentFailure.ALREADY_SERVING, again.reason)
         assertEquals(3, world.listRetainers().size)
         assertEquals(result.retainerId, world.getState().meta["maxRetainerId"])
@@ -76,7 +76,7 @@ class HwihaEnlistmentExecutorTest {
     @Test fun `current capacity observes earlier enlistment in the same turn`() {
         val world = world()
         val recorder = ChangeRecorder()
-        val executor = HwihaEnlistmentExecutor(world, recorder) {
+        val executor = EnlistmentExecutor(world, recorder) {
             policy().copy(freeRenownByLord = mapOf(10 to (7 - world.retainersOf(10).size * 7)))
         }
         assertIs<EnlistmentExecution.Applied>(executor.execute(request, noDraw))
@@ -92,7 +92,7 @@ class HwihaEnlistmentExecutorTest {
         val recorder = ChangeRecorder()
         val before = world.listGenerals()
         val initialState = world.getState()
-        val executor = HwihaEnlistmentExecutor(world, recorder) { policy() }
+        val executor = EnlistmentExecutor(world, recorder) { policy() }
         assertEquals(EnlistmentFailure.DUPLICATE_RETAINER_NAME,
             assertIs<EnlistmentExecution.Rejected>(executor.execute(request, noDraw)).reason)
         assertEquals(before, world.listGenerals())
@@ -106,7 +106,7 @@ class HwihaEnlistmentExecutorTest {
     @Test fun `lost lord status is rechecked and does not allocate a card`() {
         val world = world()
         val recorder = ChangeRecorder()
-        val executor = HwihaEnlistmentExecutor(world, recorder) { policy() }
+        val executor = EnlistmentExecutor(world, recorder) { policy() }
         val lord = world.getGeneralById(10)!!
         world.applyGeneralDirtyFree(lord.copy(meta = LordStatus.afterEnlistment(lord.meta)))
         assertEquals(EnlistmentFailure.TARGET_NOT_LORD,
@@ -118,7 +118,7 @@ class HwihaEnlistmentExecutorTest {
 
     @Test fun `sammo is rejected before reading hwiha policy`() {
         val world = world(profile = "SAMMO")
-        val executor = HwihaEnlistmentExecutor(world, ChangeRecorder()) { error("SAMMO policy read") }
+        val executor = EnlistmentExecutor(world, ChangeRecorder()) { error("SAMMO policy read") }
         assertEquals(EnlistmentFailure.WRONG_RULE_PROFILE,
             assertIs<EnlistmentExecution.Rejected>(executor.execute(request, noDraw)).reason)
         assertEquals(0, world.getGeneralById(1)!!.nationId)
@@ -126,7 +126,7 @@ class HwihaEnlistmentExecutorTest {
     @Test fun `general target follows its explicit lord without teleporting`() {
         val world = world(cards = listOf(Retainer(4, 10, "EXISTING", 2, "G2", "guest")))
         world.applyGeneralDirtyFree(world.getGeneralById(2)!!.copy(nationId = 1))
-        val executor = HwihaEnlistmentExecutor(world, ChangeRecorder()) { policy() }
+        val executor = EnlistmentExecutor(world, ChangeRecorder()) { policy() }
         val result = assertIs<EnlistmentExecution.Applied>(executor.execute(
             EnlistmentRequest(1, EnlistmentMode.GENERAL, 2), noDraw))
         assertEquals(10, result.plan.masterId)
@@ -138,7 +138,7 @@ class HwihaEnlistmentExecutorTest {
         fun run(): Pair<Int, Int> {
             val world = world()
             var draws = 0
-            val result = assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world, ChangeRecorder()) { policy() }
+            val result = assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world, ChangeRecorder()) { policy() }
                 .execute(EnlistmentRequest(1, EnlistmentMode.RANDOM)) { bound ->
                     assertEquals(2, bound)
                     draws++
@@ -157,7 +157,7 @@ class HwihaEnlistmentExecutorTest {
             else world.applyGeneralDirtyFree(world.getGeneralById(10)!!.copy(officerLevel = 1))
             val recorder = ChangeRecorder()
             assertEquals(EnlistmentFailure.TARGET_NOT_FOUND,
-                assertIs<EnlistmentExecution.Rejected>(HwihaEnlistmentExecutor(world, recorder) { policy() }
+                assertIs<EnlistmentExecution.Rejected>(EnlistmentExecutor(world, recorder) { policy() }
                     .execute(request, noDraw)).reason)
             assertTrue(world.listRetainers().isEmpty())
             assertTrue(recorder.generalPatches().isEmpty())
@@ -167,7 +167,7 @@ class HwihaEnlistmentExecutorTest {
     @Test fun `explicit vassal lord can accept general mode without sovereign office`() {
         val world = world()
         world.applyGeneralDirtyFree(world.getGeneralById(10)!!.copy(officerLevel = 1))
-        val result = assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world, ChangeRecorder()) { policy() }
+        val result = assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world, ChangeRecorder()) { policy() }
             .execute(EnlistmentRequest(1, EnlistmentMode.GENERAL, 10), noDraw))
         assertEquals(10, result.plan.masterId)
     }

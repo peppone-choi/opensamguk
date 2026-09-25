@@ -1,29 +1,29 @@
 package opensamguk.gameapi.precheck
 
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class HwihaPeopleTargetOption(val generalId: Int, val name: String, val available: Boolean,
+data class PeopleTargetOption(val generalId: Int, val name: String, val available: Boolean,
     val code: String? = null, val reason: String? = null)
-data class HwihaPeopleOptions(val inputId: String, val available: Boolean,
+data class PeopleOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val undiscoveredCount: Int? = null, val targets: List<HwihaPeopleTargetOption> = emptyList())
+    val undiscoveredCount: Int? = null, val targets: List<PeopleTargetOption> = emptyList())
 
 /** Only discovered free people and the actor's own captives are named to the caller. */
 @Service
-class HwihaPeopleOptionsService(private val reader: HwihaDomesticReader,
+class PeopleOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load(),
     private val design: PeopleDesign = PeopleDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(inputId: String, actorId: Int, userId: Long): HwihaPeopleOptions {
+    fun options(inputId: String, actorId: Int, userId: Long): PeopleOptions {
         reader.requireOwner(actorId, userId)
-        fun blocked(reason: PeopleFailure) = HwihaPeopleOptions(inputId, false, reason.name, reason.message)
+        fun blocked(reason: PeopleFailure) = PeopleOptions(inputId, false, reason.name, reason.message)
         if (inputId !in PeopleInput.INPUT_IDS) return blocked(PeopleFailure.INVALID_INPUT)
         if (catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaPeopleOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+            return PeopleOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val projection = reader.snapshot().state ?: return blocked(PeopleFailure.STATE_UNAVAILABLE)
         val actor = projection.person(actorId) ?: return blocked(PeopleFailure.ACTOR_NOT_FOUND)
         val locationCheck = PeopleRules.assess(PeopleRequest(actorId, inputId, null), projection)
@@ -43,8 +43,8 @@ class HwihaPeopleOptionsService(private val reader: HwihaDomesticReader,
         }.sortedBy { it.id }
         val targetOptions = candidates.map { target ->
             when (val check = PeopleRules.assess(PeopleRequest(actorId, inputId, target.id), projection)) {
-                is PeopleAssessment.Eligible -> HwihaPeopleTargetOption(target.id, target.name, true)
-                is PeopleAssessment.Rejected -> HwihaPeopleTargetOption(target.id, target.name, false,
+                is PeopleAssessment.Eligible -> PeopleTargetOption(target.id, target.name, true)
+                is PeopleAssessment.Rejected -> PeopleTargetOption(target.id, target.name, false,
                     check.reason.name, check.reason.message)
             }
         }
@@ -65,7 +65,7 @@ class HwihaPeopleOptionsService(private val reader: HwihaDomesticReader,
                 targetOptions.first().let { it.code to it.reason }
             else -> null
         }
-        return HwihaPeopleOptions(inputId, available, failure?.first, failure?.second,
+        return PeopleOptions(inputId, available, failure?.first, failure?.second,
             (discovery as? PeopleAssessment.Eligible)?.candidateIds?.size, targetOptions)
     }
 }

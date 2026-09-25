@@ -2,12 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { Panel, SectionHeader } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
+import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
-import HwihaDeployForm from '@/components/command/HwihaDeployForm';
-import { PlacementPanel, PolicyPanel, WorksPanel } from '@/components/hwiha/DomesticPanels';
-import { HwihaEmpty } from '@/components/hwiha/HwihaStates';
-import embed from '@/components/hwiha/HwihaEmbed.module.css';
+import DeployForm from '@/components/command/DeployForm';
+import { PlacementPanel, PolicyPanel, WorksPanel } from '@/components/campaign/DomesticPanels';
+import { Empty } from '@/components/campaign/GameStates';
+import embed from '@/components/campaign/GameEmbed.module.css';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
 import { useHwihaSession } from '@/lib/hwiha-session';
@@ -46,7 +46,7 @@ export default function PostsPage() {
     }, [generalId, refreshKey]);
 
     return (
-        <HwihaShell title="배치 · 방침 · 공사" tab="배치">
+        <GameShell title="배치 · 방침 · 공사" tab="배치">
             <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 400px', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     <PlacementPanel onToast={show} refreshKey={refreshKey} onDone={() => setRefreshKey((k) => k + 1)} />
@@ -57,9 +57,9 @@ export default function PostsPage() {
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="출병" sub="명령 목록의 빈 순에 한 건" />
                         {generalId == null ? null : freeSlots == null ? (
-                            <HwihaEmpty>명령 목록을 불러오는 중입니다.</HwihaEmpty>
+                            <Empty>명령 목록을 불러오는 중입니다.</Empty>
                         ) : freeSlots.length === 0 ? (
-                            <HwihaEmpty>명령 목록 12순이 모두 찼습니다. 작전실에서 순을 비운 뒤 예약합니다.</HwihaEmpty>
+                            <Empty>명령 목록 12순이 모두 찼습니다. 작전실에서 순을 비운 뒤 예약합니다.</Empty>
                         ) : (
                             <>
                                 <label style={{ display: 'grid', gap: 4, paddingTop: 8, fontSize: 12, color: 'var(--text-2)' }}>
@@ -77,7 +77,7 @@ export default function PostsPage() {
                                 </label>
                                 {turnIdx != null ? (
                                     <div className={embed.embed}>
-                                    <HwihaDeployForm
+                                    <DeployForm
                                         key={`${turnIdx}:${refreshKey}`}
                                         generalId={generalId}
                                         turnIdx={turnIdx}
@@ -97,6 +97,6 @@ export default function PostsPage() {
                 </div>
             </div>
             <Toast toasts={toasts} onRemove={remove} />
-        </HwihaShell>
+        </GameShell>
     );
 }

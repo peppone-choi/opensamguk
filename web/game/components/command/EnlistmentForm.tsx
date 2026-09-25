@@ -19,7 +19,7 @@ export function useRuleProfile(supplied?: string | null) {
     return value === 'SAMMO' || value === 'HWIHA' ? value : null;
 }
 
-export default function HwihaEnlistmentForm({ inputId = 'action.enlist', generalId, turnIdx, unavailable, onToast, onClose, onReserved }: {
+export default function EnlistmentForm({ inputId = 'action.enlist', generalId, turnIdx, unavailable, onToast, onClose, onReserved }: {
     inputId?: 'action.enlist' | 'action.randomEnlist' | 'action.targetEnlist';
     generalId: number; turnIdx: number; unavailable: boolean;
     onToast: (message: string, type: 'success' | 'error' | 'info') => void;

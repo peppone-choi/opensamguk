@@ -13,7 +13,7 @@ import opensamguk.logic.economy.Resources
  *
  * 파일이 없으면 **빈 표**다. 생산이 0 이 되는 것이 조용히 다른 수치를 만들어 내는 것보다 안전하다.
  */
-object HwihaCountyProductionJson {
+object CountyProductionJson {
     const val RESOURCE = "hwiha/county-production-v1.json"
 
     private val cached: Map<Int, Resources> by lazy { load(RESOURCE) }
@@ -22,7 +22,7 @@ object HwihaCountyProductionJson {
     fun table(): Map<Int, Resources> = cached
 
     internal fun load(resource: String): Map<Int, Resources> {
-        val json = HwihaCountyProductionJson::class.java.classLoader.getResourceAsStream(resource)
+        val json = CountyProductionJson::class.java.classLoader.getResourceAsStream(resource)
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: return emptyMap()
         return parse(json)
     }

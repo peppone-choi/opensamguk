@@ -17,12 +17,12 @@ import opensamguk.logic.world.*
 import opensamguk.logic.war.CampaignBalance
 
 /** Resolves saved scheme and corps-policy reactions against current deployments, sight and pinned geography. */
-class HwihaMarchReactionInterpreter(
+class MarchReactionInterpreter(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val commanderies: HanCommanderyIndex,
     private val visionRules: VisionRules.Rules = VisionRules.CANON,
-) : HwihaMarchReactionPolicy {
+) : MarchReactionPolicy {
     private data class Decision(
         val scheme: Boolean,
         val interceptors: List<Int>,
@@ -80,7 +80,7 @@ class HwihaMarchReactionInterpreter(
             ?: return null
         if (inventory == MarchReactions.Empty) return Decision(false, emptyList(), emptyMap(), emptySet())
         val actor = world.getGeneralById(actorId) ?: return null
-        val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
+        val projection = DeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
         val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
         val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
         fun hostile(nation: Int) = nation > 0 && nation != actor.nationId && actor.nationId > 0 &&

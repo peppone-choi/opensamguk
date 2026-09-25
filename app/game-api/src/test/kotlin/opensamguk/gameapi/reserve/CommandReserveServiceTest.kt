@@ -48,7 +48,7 @@ class CommandReserveServiceTest {
             "v2GarrisonRecruit" to "WRONG_RULE_PROFILE",
             "court.dispatch" to "INVALID_INPUT_CHANNEL",
         )) {
-            assertEquals(expected, assertFailsWith<HwihaAdmissionDenied> {
+            assertEquals(expected, assertFailsWith<AdmissionDenied> {
                 service.reserveForOwner(10, inputId, 0, "{}", 42)
             }.code, inputId)
         }
@@ -58,14 +58,14 @@ class CommandReserveServiceTest {
     }
 
     @Test fun `delivered deploy reaches its reservation admission`() {
-        val deploy = mock(HwihaDeployAdmission::class.java)
+        val deploy = mock(DeployAdmission::class.java)
         `when`(deploy.canonicalArguments(10, 42, 0, "{}"))
-            .thenThrow(HwihaAdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
+            .thenThrow(AdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
         val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
             CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
             worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaDeployAdmission = deploy)
 
-        assertEquals("ADMISSION_REACHED", assertFailsWith<HwihaAdmissionDenied> {
+        assertEquals("ADMISSION_REACHED", assertFailsWith<AdmissionDenied> {
             service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
         }.code)
     }
@@ -93,7 +93,7 @@ class CommandReserveServiceTest {
             val redis = redis()
             val service = CommandReserveService(turns, inbox, results, redis, CommandRegistry(GeneralActionPipeline()),
                 GameApiProcessWorld(1), "fixture", transactions = TestTransactions, worldStates = worlds(config))
-            assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
+            assertFailsWith<AdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
             assertEquals(0, turns.reserves.size)
             assertEquals(0, inbox.accepted.size)
             assertEquals(0, results.rows.size)
@@ -102,33 +102,33 @@ class CommandReserveServiceTest {
         val turns = RecordingReservedTurns()
         val service = CommandReserveService(turns, RecordingInbox(), RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions, worldStates = worlds(emptyMap()))
-        assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
+        assertFailsWith<AdmissionDenied> { service.reserve(10, "che_농지개간", 29) }
         assertEquals(0, turns.reserves.size)
     }
 
     @Test fun `hwiha direct reservation validates authority and stores canonical owned request`() {
         val generals = mock(opensamguk.gameapi.read.GeneralReadRepository::class.java)
-        val precheck = mock(opensamguk.gameapi.precheck.HwihaEnlistmentPrecheckService::class.java)
+        val precheck = mock(opensamguk.gameapi.precheck.EnlistmentPrecheckService::class.java)
         val actor = opensamguk.gameapi.read.GeneralReadEntity(id = 10, userId = "42")
         `when`(generals.findById(10)).thenReturn(java.util.Optional.of(actor))
         val request = opensamguk.logic.input.EnlistmentRequest(10, opensamguk.logic.input.EnlistmentMode.NATION, 3)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
         val catalog = catalogFor("action.enlist", "GENERAL_ACTION", "HANDLER_READY")
-        val admission = HwihaEnlistmentAdmission(generals, precheck, catalog)
+        val admission = EnlistmentAdmission(generals, precheck, catalog)
         for (failure in opensamguk.logic.input.EnlistmentFailure.entries) {
             `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Rejected(failure))
-            val denied = assertFailsWith<HwihaAdmissionDenied> {
+            val denied = assertFailsWith<AdmissionDenied> {
                 admission.canonicalArguments(10, 42, 0, """{"mode":"NATION","targetId":3}""")
             }
             assertEquals(failure.name, denied.code)
             assertEquals(failure.message, denied.message)
         }
-        val malformed = assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(10, 42, 0, "{}") }
+        val malformed = assertFailsWith<AdmissionDenied> { admission.canonicalArguments(10, 42, 0, "{}") }
         assertEquals(opensamguk.logic.input.EnlistmentFailure.INVALID_REQUEST.message, malformed.message)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
         val plannedCatalog = catalogFor("action.enlist", "GENERAL_ACTION", "PLANNED")
-        assertEquals("NOT_DELIVERED", assertFailsWith<HwihaAdmissionDenied> {
-            HwihaEnlistmentAdmission(generals, precheck, plannedCatalog).canonicalArguments(10, 42, 0,
+        assertEquals("NOT_DELIVERED", assertFailsWith<AdmissionDenied> {
+            EnlistmentAdmission(generals, precheck, plannedCatalog).canonicalArguments(10, 42, 0,
                 """{"mode":"NATION","targetId":3}""")
         }.code)
         val turns = RecordingReservedTurns()
@@ -136,17 +136,17 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
-            hwihaAdmission = HwihaEnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
+            hwihaAdmission = EnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
         val raw = """{ "targetId":3, "mode":"NATION" }"""
-        assertEquals("UNAUTHORIZED", assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
-        assertEquals("FORBIDDEN", assertFailsWith<HwihaAdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)
+        assertEquals("UNAUTHORIZED", assertFailsWith<AdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
+        assertEquals("FORBIDDEN", assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)
         for (slot in listOf(-1, 12)) assertEquals("INVALID_TURN_SLOT",
-            assertFailsWith<HwihaAdmissionDenied> { service.reserveForOwner(10, "action.enlist", slot, raw, 42) }.code)
-        assertEquals("INVALID_REQUEST", assertFailsWith<HwihaAdmissionDenied> {
+            assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, "action.enlist", slot, raw, 42) }.code)
+        assertEquals("INVALID_REQUEST", assertFailsWith<AdmissionDenied> {
             service.reserveForOwner(10, "action.enlist", 0, """{"mode":"NATION","mode":"NATION","targetId":3}""", 42)
         }.code)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Rejected(opensamguk.logic.input.EnlistmentFailure.WRONG_RULE_PROFILE))
-        assertEquals("WRONG_RULE_PROFILE", assertFailsWith<HwihaAdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 42) }.code)
+        assertEquals("WRONG_RULE_PROFILE", assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 42) }.code)
         assertEquals(0, inbox.accepted.size)
         assertEquals(0, turns.reserves.size)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
@@ -160,7 +160,7 @@ class CommandReserveServiceTest {
     }
 
     @Test fun `court request collision binds actor owner input and canonical arguments`() {
-        val admission = mock(HwihaCourtAdmission::class.java)
+        val admission = mock(CourtAdmission::class.java)
         val base = opensamguk.common.wire.TurnDaemonCommand.ImmediateInput(
             "client-id", 10, 999, "court.dispatch", "{args}")
         val variants = listOf(base.copy(generalId = 11) to 42,
@@ -183,7 +183,7 @@ class CommandReserveServiceTest {
     }
 
     @Test fun `domestic standing inputs publish canonical immediate commands without a turn slot`() {
-        val reader = mock(opensamguk.gameapi.read.HwihaDomesticReader::class.java)
+        val reader = mock(opensamguk.gameapi.read.DomesticReader::class.java)
         val now = opensamguk.logic.input.Phase(200, 1, 1)
         fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.domestic.DomesticPerson(id, "G$id", 1, human,
             if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("hwihaLord" to lord))
@@ -191,10 +191,10 @@ class CommandReserveServiceTest {
             listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.domestic.DomesticCard(5, 10, 20, "staff")),
             listOf(opensamguk.logic.domestic.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
             listOf(opensamguk.logic.domestic.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
-        `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state))
+        `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.DomesticSnapshot(state))
         val catalog = opensamguk.logic.input.InputCatalog.load()
-        val court = HwihaCourtAdmission(mock(opensamguk.gameapi.precheck.HwihaDispatchPrecheckService::class.java),
-            HwihaDomesticAdmission(reader, catalog), catalog)
+        val court = CourtAdmission(mock(opensamguk.gameapi.precheck.DispatchPrecheckService::class.java),
+            DomesticAdmission(reader, catalog), catalog)
         val inbox = RecordingInbox()
         val turns = RecordingReservedTurns()
         val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
@@ -218,15 +218,15 @@ class CommandReserveServiceTest {
             Triple("work.start", """{"countyId":7,"work":"ROAD"}""", "WAREHOUSE_NOT_READY"),
             Triple("work.start", """{"countyId":7,"work":"ROAD","x":1}""", "INVALID_REQUEST"),
         )) {
-            assertEquals(code, assertFailsWith<HwihaAdmissionDenied> {
+            assertEquals(code, assertFailsWith<AdmissionDenied> {
                 service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("c", 10, 42, input, body), 42)
             }.code, body)
         }
         assertEquals(1, inbox.accepted.size)
         // A ledger that still says PLANNED keeps the input undelivered even when the rules pass.
         val planned = catalogFor("policy.set", "POLICY", "PLANNED")
-        assertEquals("NOT_DELIVERED", assertFailsWith<HwihaAdmissionDenied> {
-            HwihaDomesticAdmission(reader, planned).canonicalArguments(10, 42, "policy.set",
+        assertEquals("NOT_DELIVERED", assertFailsWith<AdmissionDenied> {
+            DomesticAdmission(reader, planned).canonicalArguments(10, 42, "policy.set",
                 """{"scope":"COUNTY","countyId":7,"policy":"COMMERCE"}""")
         }.code)
     }

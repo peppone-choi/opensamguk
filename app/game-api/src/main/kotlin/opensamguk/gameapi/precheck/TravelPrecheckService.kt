@@ -11,16 +11,16 @@ import org.springframework.transaction.annotation.Transactional
 
 class TravelReadForbidden : RuntimeException()
 
-data class HwihaTravelDestinationOption(val provinceId: String, val name: String, val available: Boolean,
+data class TravelDestinationOption(val provinceId: String, val name: String, val available: Boolean,
     val code: String? = null, val reason: String? = null)
-data class HwihaTravelOptions(val inputId: String, val available: Boolean,
+data class TravelOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val destinations: List<HwihaTravelDestinationOption> = emptyList())
+    val destinations: List<TravelDestinationOption> = emptyList())
 
 /** A single MVCC snapshot supplies both options and reservation assessment. */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-class HwihaTravelPrecheckService(
+class TravelPrecheckService(
     private val generals: GeneralReadRepository,
     private val retainers: RetainerReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
@@ -40,13 +40,13 @@ class HwihaTravelPrecheckService(
         }
     }
 
-    fun options(actorId: Int, inputId: String, ownerUserId: Long): HwihaTravelOptions {
+    fun options(actorId: Int, inputId: String, ownerUserId: Long): TravelOptions {
         requireOwner(actorId, ownerUserId)
         if (inputId !in TravelInput.INPUT_IDS)
-            return HwihaTravelOptions(inputId, false, TravelFailure.INVALID_INPUT.name,
+            return TravelOptions(inputId, false, TravelFailure.INVALID_INPUT.name,
                 TravelFailure.INVALID_INPUT.message)
         val result = snapshot(actorId)
-        if (result is Snapshot.Rejected) return HwihaTravelOptions(inputId, false,
+        if (result is Snapshot.Rejected) return TravelOptions(inputId, false,
             result.reason.name, result.reason.message)
         val ready = (result as Snapshot.Ready).value
         if (inputId == TravelInput.RETURN) {
@@ -54,8 +54,8 @@ class HwihaTravelPrecheckService(
             val denied = assessment as? TravelAssessment.Rejected
             val destination = (ready.destinationFor(TravelRequest(actorId, inputId, null)) as?
                 ReturnDestination.Ready)?.node?.id
-            return HwihaTravelOptions(inputId, denied == null, denied?.reason?.name, denied?.reason?.message,
-                destination?.let { listOf(HwihaTravelDestinationOption(it, ready.nameOfProvince(it), denied == null, denied?.reason?.name,
+            return TravelOptions(inputId, denied == null, denied?.reason?.name, denied?.reason?.message,
+                destination?.let { listOf(TravelDestinationOption(it, ready.nameOfProvince(it), denied == null, denied?.reason?.name,
                     denied?.reason?.message)) } ?: emptyList())
         }
         val (reachable, globalFailure) = ready.reachableDestinations()
@@ -66,11 +66,11 @@ class HwihaTravelPrecheckService(
                 id !in reachable -> TravelFailure.NO_ROUTE
                 else -> null
             }
-            HwihaTravelDestinationOption(id, ready.nameOfProvince(id), reason == null, reason?.name, reason?.message)
+            TravelDestinationOption(id, ready.nameOfProvince(id), reason == null, reason?.name, reason?.message)
         }
         val available = destinations.any { it.available }
         val firstFailure = globalFailure ?: if (available) null else TravelFailure.NO_ROUTE
-        return HwihaTravelOptions(inputId, available, firstFailure?.name, firstFailure?.message, destinations)
+        return TravelOptions(inputId, available, firstFailure?.name, firstFailure?.message, destinations)
     }
 
     private data class Ready(val actor: GeneralReadEntity, val selected: ActiveWorldArtifactSnapshot,
@@ -129,7 +129,7 @@ class HwihaTravelPrecheckService(
     }
 
     private sealed interface Snapshot {
-        data class Ready(val value: HwihaTravelPrecheckService.Ready) : Snapshot
+        data class Ready(val value: TravelPrecheckService.Ready) : Snapshot
         data class Rejected(val reason: TravelFailure) : Snapshot
     }
 

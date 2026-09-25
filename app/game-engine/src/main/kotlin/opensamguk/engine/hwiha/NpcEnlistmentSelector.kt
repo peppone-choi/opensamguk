@@ -6,7 +6,7 @@ import opensamguk.logic.domain.NpcType
 import opensamguk.logic.input.*
 
 /** Chooses an input only; the existing handler owns RNG, transition and recording. */
-internal object HwihaNpcEnlistmentSelector {
+internal object NpcEnlistmentSelector {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
@@ -18,7 +18,7 @@ internal object HwihaNpcEnlistmentSelector {
         val request = EnlistmentRequest(actorId, EnlistmentMode.RANDOM)
         val projection = world.enlistmentProjection()
         if (EnlistmentPrecheck.assess(request, projection) !is EnlistmentAssessment.Eligible) return reserved
-        return ReservedTurn(HwihaEnlistmentHandler.INPUT_ID, EnlistmentInput.canonicalJson(request),
+        return ReservedTurn(EnlistmentHandler.INPUT_ID, EnlistmentInput.canonicalJson(request),
             brief = "출사", rowExists = false)
     }
 }

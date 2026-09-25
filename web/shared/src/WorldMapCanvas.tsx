@@ -89,7 +89,7 @@ export function projectBattlefieldTarget(latitude: number, longitude: number,
   return col >= 0 && row >= 0 && col < cols && row < rows ? { col, row } : null;
 }
 
-export interface HanTiles {
+export interface WorldTiles {
   _meta: {
     cols: number;
     rows: number;
@@ -305,13 +305,13 @@ const FOG_INTEL_VEIL = 'rgba(8,10,9,0.34)';
 const FOG_DIM = 'rgba(8,10,9,0.78)';
 const FOG_HIDDEN = '#0c0f0e';
 
-export interface HanMapCanvasProps extends IsoSceneOptions {
+export interface WorldMapCanvasProps extends IsoSceneOptions {
   /** 카메라 초점. 현재 城 표식과 별도로 움직인다. */
   cameraFocusCityId?: number | null;
   battlefieldTargets?: readonly BattlefieldMapTarget[];
   onBattlefieldActivate?: (target: BattlefieldMapTarget) => void;
   mapCode: string;
-  tiles?: HanTiles | null;
+  tiles?: WorldTiles | null;
   /** Strong byte identity for explicitly supplied, already-validated terrain. */
   tilesSha256?: string;
   strategicTopology?: StrategicMapSnapshot;
@@ -501,7 +501,7 @@ export function seatLabel(name: string): string {
   return name.length > 1 && name.endsWith('현') ? name.slice(0, -1) : name;
 }
 
-export function labelledRegions(regions: HanTiles['regions'], minCells = 120) {
+export function labelledRegions(regions: WorldTiles['regions'], minCells = 120) {
   return regions.filter((region) => region.cells >= minCells);
 }
 
@@ -509,7 +509,7 @@ export function initialView(
   width: number,
   height: number,
   grid: GridSize,
-  _tiles: HanTiles,
+  _tiles: WorldTiles,
   dpr = 1,
 ): IsoView {
   const scale = Math.min(fitScale(width, height, grid), maxScaleForDpr(dpr) * 0.9);
@@ -520,7 +520,7 @@ export function initialFocusedView(
   width: number,
   height: number,
   grid: GridSize,
-  tiles: HanTiles,
+  tiles: WorldTiles,
   dpr = 1,
   current?: { col: number; row: number },
   profile?: InitialFocusProfile,
@@ -605,7 +605,7 @@ function cityMarkerTile(
 }
 
 export function buildCanonicalMarkerPositions(
-  tiles: HanTiles,
+  tiles: WorldTiles,
   cities: readonly IsoCityOverlay[],
   sourceSize: IsoSourceSize,
   provinceMap: ProvinceIdentityMap | null,
@@ -630,7 +630,7 @@ export function buildCanonicalMarkerPositions(
 }
 
 export function buildIsoScene(
-  tiles: HanTiles,
+  tiles: WorldTiles,
   cities: readonly IsoCityOverlay[],
   source: IsoSourceSize,
   options: IsoSceneOptions,
@@ -721,7 +721,7 @@ export function buildIsoScene(
 }
 
 export function completeJurisdictionOverlays(
-  tiles: HanTiles,
+  tiles: WorldTiles,
   runtimeCities: readonly IsoCityOverlay[],
   anchors: readonly (ProvinceVisualAnchor | undefined)[],
   source: IsoSourceSize,
@@ -853,7 +853,7 @@ export function sceneGolden(scene: IsoScene): string {
   return lines.join('\n');
 }
 
-function bakeTerrain(tiles: HanTiles): HTMLCanvasElement | null {
+function bakeTerrain(tiles: WorldTiles): HTMLCanvasElement | null {
   const canvas = document.createElement('canvas');
   canvas.width = tiles._meta.cols;
   canvas.height = tiles._meta.rows;
@@ -1767,7 +1767,7 @@ function drawScene(
 }
 
 function resolveTerrainUrl(
-  terrainUrl: HanMapCanvasProps['terrainUrl'],
+  terrainUrl: WorldMapCanvasProps['terrainUrl'],
   mapCode: string,
 ): string {
   if (typeof terrainUrl === 'function') return terrainUrl(mapCode);
@@ -1787,7 +1787,7 @@ export function parseTerrainEtagHash(etag: string | null): string | null {
 }
 
 function resolveProvinceUrl(
-  provinceUrl: HanMapCanvasProps['provinceUrl'],
+  provinceUrl: WorldMapCanvasProps['provinceUrl'],
   mapCode: string,
 ): string {
   if (typeof provinceUrl === 'function') return provinceUrl(mapCode);
@@ -1795,7 +1795,7 @@ function resolveProvinceUrl(
   return `/api/game/api/map/provinces?mapCode=${encodeURIComponent(mapCode)}`;
 }
 
-export function HanMapCanvas({
+export function WorldMapCanvas({
   battlefieldTargets = [],
   onBattlefieldActivate,
   mapCode,
@@ -1830,7 +1830,7 @@ export function HanMapCanvas({
   onCityActivate,
   onMissing,
   onViewChange,
-}: HanMapCanvasProps) {
+}: WorldMapCanvasProps) {
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const terrainRef = useRef<HTMLCanvasElement | null>(null);
@@ -1850,7 +1850,7 @@ export function HanMapCanvas({
   const dragMovedRef = useRef(false);
   const activeCityRef = useRef<IsoCityOverlay | null>(null);
   const pointerTypeRef = useRef('mouse');
-  const [loadedTiles, setLoadedTiles] = useState<HanTiles | null>(suppliedTiles ?? null);
+  const [loadedTiles, setLoadedTiles] = useState<WorldTiles | null>(suppliedTiles ?? null);
   const [terrainIdentity, setTerrainIdentity] = useState<{ mapCode: string; hash: string | null } | null>(null);
   const [showWater, setShowWater] = useState(true);
   const [inspectedWater, setInspectedWater] = useState<string | null>(null);
@@ -1877,7 +1877,7 @@ export function HanMapCanvas({
       .then((response) => {
         if (!response.ok) throw new Error(`terrain fetch failed: ${response.status}`);
         const hash = parseTerrainEtagHash(response.headers?.get('etag') ?? null);
-        return (response.json() as Promise<HanTiles>).then(async (tiles) => {
+        return (response.json() as Promise<WorldTiles>).then(async (tiles) => {
           const juAddress = mapCode === 'han-world-v3' ? juUrlForTerrain(terrainAddress) : null;
           if (juAddress && tiles.parentRegions) {
             try {
@@ -1966,7 +1966,7 @@ export function HanMapCanvas({
     }
     return buildProvinceVisualAnchors(provinceMap, preferredByProvince);
   }, [canonicalMarkerPositions, cities, provinceMap]);
-  const strategicSceneCache = useRef<{ hash: string; tiles: HanTiles; scene: StrategicMapScene } | null>(null);
+  const strategicSceneCache = useRef<{ hash: string; tiles: WorldTiles; scene: StrategicMapScene } | null>(null);
   const strategicScene = useMemo(() => {
     if (!strategicTopology || !loadedTiles) return null;
     try {
@@ -2752,4 +2752,4 @@ export function HanMapCanvas({
   );
 }
 
-export default HanMapCanvas;
+export default WorldMapCanvas;

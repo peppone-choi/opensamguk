@@ -35,10 +35,10 @@ import opensamguk.logic.input.*
  * 공사는 다음 순 경계부터 효력이 생긴다(§4). 결과 봉투의 commandKind 는 PLACEMENT·POLICY·WORK 이고 type 은
  * `reservationAccepted`(대기 저장)다. 효력 시점의 거절은 그 상태 기록과 장수 로그에 남는다.
  */
-class HwihaDomesticHandler(
+class DomesticHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+    private val context: DomesticContext,
 ) {
     fun handle(command: ImmediateInput): CommandLifecycleResult {
         val kind = kindOf(command.inputId)
@@ -93,7 +93,7 @@ class HwihaDomesticHandler(
 
     /** 12순 개인 예약으로 들어온 지속 입력은 채널이 틀렸다(슬롯을 쓰지 않는다, §5.1). */
     fun rejectPersonalReservation(inputId: String) =
-        HwihaTurnOutcome.Rejected(inputId, "INVALID_INPUT_CHANNEL", "배치·방침·공사는 명령 목록에 넣지 않고 따로 입력합니다.")
+        TurnOutcome.Rejected(inputId, "INVALID_INPUT_CHANNEL", "배치·방침·공사는 명령 목록에 넣지 않고 따로 입력합니다.")
 
     private fun storePlacement(requestId: String, request: PlacementRequest, cardGeneralId: Int, now: Phase) {
         val card = checkNotNull(world.getGeneralById(cardGeneralId))

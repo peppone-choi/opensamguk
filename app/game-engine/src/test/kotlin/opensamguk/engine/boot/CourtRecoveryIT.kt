@@ -14,7 +14,7 @@ import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.EnlistmentExecution
-import opensamguk.engine.hwiha.HwihaEnlistmentExecutor
+import opensamguk.engine.hwiha.EnlistmentExecutor
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
@@ -34,13 +34,13 @@ import org.springframework.transaction.support.TransactionTemplate
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 
-/** Real inbox/flush/reload recovery; HTTP admission is covered separately by HwihaCourtApiIT. */
+/** Real inbox/flush/reload recovery; HTTP admission is covered separately by CourtApiIT. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaCourtRecoveryIT {
+class CourtRecoveryIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
     private val late = Instant.parse("0200-01-01T03:00:01Z")
 
     @BeforeAll fun setup() {
@@ -52,7 +52,7 @@ class HwihaCourtRecoveryIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture = HwihaEnlistmentFixture(jdbc, flush)
+        fixture = EnlistmentFixture(jdbc, flush)
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
@@ -60,7 +60,7 @@ class HwihaCourtRecoveryIT {
         fixture.seed(id)
         val world = InMemoryTurnWorld(fixture.load(id))
         val recorder = ChangeRecorder()
-        assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world, recorder)
+        assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world, recorder)
             .execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("direct enlistment") })
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         val county = world.administrativeCountyIds.min()
@@ -163,7 +163,7 @@ class HwihaCourtRecoveryIT {
         val recorder = ChangeRecorder()
         val county = initial.administrativeCountyIds.min()
         assertIs<opensamguk.engine.hwiha.DispatchExecution.Applied>(
-            opensamguk.engine.hwiha.HwihaDispatchExecutor(initial, recorder)
+            opensamguk.engine.hwiha.DispatchExecutor(initial, recorder)
                 .issue("original-103", DispatchRequest(10, 1, county)))
         flush.flush(DatabaseHooks.toFlushPayload(initial, recorder, initial.consumeDirtyState()))
         jdbc.update("""UPDATE world_state SET start_year=200,config=jsonb_set(config,'{startYear}','200'::jsonb),start_time='0200-01-01T00:00:00Z',

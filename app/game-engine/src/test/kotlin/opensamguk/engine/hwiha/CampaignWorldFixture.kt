@@ -13,7 +13,7 @@ import opensamguk.logic.world.*
  * In-memory HWIHA world on the real archived map (no database). Synthetic people and units only; the map,
  * topology, march metrics and province cells are the pinned artifacts the engine uses in production.
  */
-internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorldVariant.V3_1168) {
+internal class CampaignWorldFixture(val variant: HanWorldVariant = HanWorldVariant.V3_1168) {
     val bundle = cache.getOrPut(variant) { HanWorldArtifactsResolver(Path.of("../..")).artifacts(variant) }
     val topology get() = bundle.projection.topology
     val metrics get() = bundle.landMarchMetrics
@@ -110,7 +110,7 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
     /** Deploys [ownerId]'s own units under its own command with a durable order to [destination]. */
     fun deploy(world: InMemoryTurnWorld, recorder: ChangeRecorder, ownerId: Int, bugokIds: List<Int>,
         destination: StrategicNodeRef.LandProvince, orderId: String = "order-$ownerId") {
-        val applied = HwihaDeploymentExecutor(world, recorder, topology, metrics)
+        val applied = DeploymentExecutor(world, recorder, topology, metrics)
             .deploy(orderId, DeploymentRequest(ownerId, null, bugokIds))
         check(applied is DeploymentExecution.Applied) { "deployment rejected: $applied" }
         val before = world.getGeneralById(ownerId)!!
@@ -125,11 +125,11 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
         world.setCurrentDate(next.year, next.month, next.phase)
     }
 
-    fun movement(world: InMemoryTurnWorld, recorder: ChangeRecorder, outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE) =
-        HwihaAssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes)
+    fun movement(world: InMemoryTurnWorld, recorder: ChangeRecorder, outcomes: WarOutcomeListener = WarOutcomeListener.NONE) =
+        AssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes)
 
     /** Captures the war-outcome boundary calls; the renown writer itself belongs to the records stream. */
-    class RecordingOutcomes : HwihaWarOutcomeListener {
+    class RecordingOutcomes : WarOutcomeListener {
         val encounters = mutableListOf<Pair<List<Int>, List<Int>>>()
         val captures = mutableListOf<List<Any>>()
         override fun onEncounterResolved(winnerIds: List<Int>, loserIds: List<Int>) { encounters += winnerIds to loserIds }

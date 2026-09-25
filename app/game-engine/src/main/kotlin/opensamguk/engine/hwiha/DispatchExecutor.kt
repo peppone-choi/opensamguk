@@ -11,7 +11,7 @@ sealed interface DispatchExecution {
 }
 
 /** Daemon transition. The caller owns intake authentication, scheduling and atomic result flush. */
-class HwihaDispatchExecutor(
+class DispatchExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val policy: DispatchPolicy = DispatchPolicy(),
@@ -37,9 +37,9 @@ class HwihaDispatchExecutor(
         updateMeta(world.getGeneralById(request.targetGeneralId)!!,
             assessment.target.meta + (DispatchState.META_KEY to dispatch.toMetaValue()))
         // Only the issuer and the target learn about a dispatch; it is private to both (DispatchState).
-        HwihaRecords.general(world, dispatch.targetId, RecordKind.DISPATCH_RECEIVED,
+        Records.general(world, dispatch.targetId, RecordKind.DISPATCH_RECEIVED,
             targetText ?: "발령이 도착했습니다. 기한 안에 수락하거나 거절할 수 있습니다.", refs(dispatch))
-        if (humanOwned(dispatch.issuerId)) HwihaRecords.general(world, dispatch.issuerId, RecordKind.DISPATCH_ISSUED,
+        if (humanOwned(dispatch.issuerId)) Records.general(world, dispatch.issuerId, RecordKind.DISPATCH_ISSUED,
             "휘하 장수에게 발령을 내렸습니다.", refs(dispatch))
         return DispatchExecution.Applied(dispatch)
     }
@@ -71,7 +71,7 @@ class HwihaDispatchExecutor(
                     return reject(assessment.reason)
                 val cancelled = old.copy(status = DispatchStatus.CANCELLED)
                 updateMeta(target, target.meta + (DispatchState.META_KEY to cancelled.toMetaValue()))
-                HwihaRecords.general(world, target.id, RecordKind.DISPATCH_CANCELLED,
+                Records.general(world, target.id, RecordKind.DISPATCH_CANCELLED,
                     "기한이 되었지만 발령이 더 이상 유효하지 않아 벌점 없이 취소되었습니다.",
                     refs(cancelled) + ("reason" to assessment.reason.name))
             }
@@ -105,13 +105,13 @@ class HwihaDispatchExecutor(
         // A lapsed deadline accepts: the automatic expiry, or a refusal that arrived at or after the deadline.
         val lapsed = automatic || (accept && !request.accept)
         val how = if (lapsed) "기한이 지나 발령을 수락한 것으로 처리되었습니다. 다음 턴부터 부임지로 행군합니다." else null
-        HwihaRecords.general(world, target.id, kind,
+        Records.general(world, target.id, kind,
             how ?: if (accept) "발령을 수락했습니다. 다음 턴부터 부임지로 행군합니다."
                 else "발령을 거절했습니다. 충성이 ${policy.refusalLoyaltyLoss} 줄고 다음 월단평에 발령 거절이 반영됩니다.",
             refs(resolved) + ("lapsed" to lapsed))
-        if (renownRecorded) HwihaRenownEventRecorder.announce(world, target.id, RenownEventSource.DISPATCH_REFUSAL)
+        if (renownRecorded) RenownEventRecorder.announce(world, target.id, RenownEventSource.DISPATCH_REFUSAL)
         // An NPC lord keeps no personal record; its reasoning is already in the target's record.
-        if (humanOwned(old.issuerId)) HwihaRecords.general(world, old.issuerId, kind,
+        if (humanOwned(old.issuerId)) Records.general(world, old.issuerId, kind,
             if (accept) "발령한 장수가 부임을 수락했습니다." else "발령한 장수가 부임을 거절했습니다.",
             refs(resolved) + ("lapsed" to lapsed))
         return DispatchExecution.Applied(resolved)

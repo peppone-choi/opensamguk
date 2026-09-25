@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 
 /** Read-only committed snapshot; execution repeats the identical pure assessment on current state. */
 @Service
-class HwihaEnlistmentPrecheckService(
+class EnlistmentPrecheckService(
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
     private val retainers: RetainerReadRepository,

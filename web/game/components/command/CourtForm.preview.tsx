@@ -1,10 +1,10 @@
 /** Non-production eight-state preview. Every response below is a synthetic UI fixture. */
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import HwihaCourtForm from './HwihaCourtForm';
+import CourtForm from './CourtForm';
 import { api } from '../../lib/api';
 import '../../../shared/src/tokens.css';
-import './HwihaCourtForm.preview.css';
+import './CourtForm.preview.css';
 
 let replied = false;
 const names = ['default','hover','focus','active','disabled','loading','error','success'];
@@ -28,7 +28,7 @@ api.commandResult = async () => ({status:'RESOLVED',ok:true,type:'executionAppli
 createRoot(document.getElementById('root')!).render(<main><h1>발령·응답 — 컴포넌트 검증</h1>
 <p>Mock 응답입니다. 실제 인증·API·엔진 실행 증거가 아닙니다.</p>
 {names.map((name,index)=><section className="preview-state" data-preview-state={name} key={name}>
-<h2>{name}</h2><HwihaCourtForm generalId={21+index}/></section>)}</main>);
+<h2>{name}</h2><CourtForm generalId={21+index}/></section>)}</main>);
 setTimeout(() => {
     for (const name of ['hover','focus','active']) document.querySelector(`[data-preview-state=${name}] button`)?.classList.add(`is-${name}`);
 }, 400);

@@ -25,11 +25,11 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Real HWIHA load/flush boundary; the small character fixture is not a playable Zhou scenario. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaEnlistmentPersistenceIT {
+class EnlistmentPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable,
@@ -41,13 +41,13 @@ class HwihaEnlistmentPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture = HwihaEnlistmentFixture(jdbc, flush)
+        fixture = EnlistmentFixture(jdbc, flush)
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
 
     private fun seed(id: Int) = fixture.seed(id)
     private fun load(id: Int) = fixture.load(id)
-    private fun enlist(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaEnlistmentExecutor(world, recorder).execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("no random draw") }
+    private fun enlist(world: InMemoryTurnWorld, recorder: ChangeRecorder) = EnlistmentExecutor(world, recorder).execute(EnlistmentRequest(1, EnlistmentMode.NATION, 1)) { error("no random draw") }
 
     private fun assertSameSnapshot(expected: WorldSnapshot, actual: WorldSnapshot) {
         // Spatial snapshots are immutable classes without value equality; compare their contents.
@@ -80,21 +80,21 @@ class HwihaEnlistmentPersistenceIT {
         val design = PeopleDesign.CANON.copy(status = PeopleDesign.CONFIRMED)
         var world = InMemoryTurnWorld(load(id))
         var recorder = ChangeRecorder()
-        val search = HwihaPeopleHandler(world, recorder, HwihaDomesticContext(), "test", design) {
+        val search = PeopleHandler(world, recorder, DomesticContext(), "test", design) {
             error("single free person needs no random draw")
         }
-        assertIs<HwihaTurnOutcome.Applied>(search.handle(PeopleInput.SEARCH, 1, "{}", "search-691", 42))
+        assertIs<TurnOutcome.Applied>(search.handle(PeopleInput.SEARCH, 1, "{}", "search-691", 42))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         jdbc.update("UPDATE general SET turn_time='0200-01-01T01:00:00Z' WHERE world_id=? AND id=1", id)
         world = InMemoryTurnWorld(load(id))
         assertEquals(setOf(2), TalentDiscovery.read(world.getGeneralById(1)!!.meta))
         recorder = ChangeRecorder()
-        val recruit = HwihaPeopleHandler(world, recorder, HwihaDomesticContext(), "test", design) { seed ->
+        val recruit = PeopleHandler(world, recorder, DomesticContext(), "test", design) { seed ->
             object : RandUtil(LiteHashDrbg(seed)) {
                 override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
             }
         }
-        assertIs<HwihaTurnOutcome.Applied>(recruit.handle(PeopleInput.EMPLOY, 1,
+        assertIs<TurnOutcome.Applied>(recruit.handle(PeopleInput.EMPLOY, 1,
             """{"targetGeneralId":2}""", "employ-691", 42))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         val after = load(id)
@@ -141,7 +141,7 @@ class HwihaEnlistmentPersistenceIT {
         val rebooted = InMemoryTurnWorld(after)
         assertEquals(PersonPolicyState(30, true, "synthetic-storage-fixture", "fixture-v1", 1),
             PersonPolicyState.read(rebooted.getGeneralById(1)!!.meta))
-        val coldPolicy = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(rebooted)
+        val coldPolicy = assertIs<EnlistmentPolicyResult.Ready>(EnlistmentPolicyReader(rebooted)
             .current(EnlistmentRequest(1, EnlistmentMode.NATION, 1)))
         assertEquals(7, coldPolicy.policy.actorCardCost)
         assertEquals(23, coldPolicy.policy.freeRenownByLord[10])
@@ -186,13 +186,13 @@ class HwihaEnlistmentPersistenceIT {
         val published = mutableListOf<String>()
         val at = java.time.Instant.parse("0200-01-01T00:00:01Z")
         val result = service(id, world, published).runDueGeneralTurns(at).handled.single()
-        assertEquals("NOT_DELIVERED", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
+        assertEquals("NOT_DELIVERED", assertIs<TurnOutcome.Rejected>(result.hwihaOutcome).code)
         assertEquals(listOf("undelivered-request"), published)
         assertEquals("next-request", reservations.readReserved(id, 1, 0).requestId)
         val after = load(4)
         assertEquals(before.generals.map { if (it.id == 1) it.copy(
             turnTime = it.turnTime.plusSeconds(3600),
-            meta = HwihaPersonalTurn.after(it.meta + ("hwihaStratagemHand" to mapOf(
+            meta = PersonalTurn.after(it.meta + ("hwihaStratagemHand" to mapOf(
                 "version" to 1,"ownerGeneralId" to 1,"hand" to listOf(1,2),"drawPile" to listOf(3,4),
                 "discard" to emptyList<Int>(),"lastDrawPhase" to mapOf("year" to 200,"month" to 1,"phase" to 1))), world.getState()),
             initialTurns = it.initialTurns.drop(1),
@@ -228,7 +228,7 @@ class HwihaEnlistmentPersistenceIT {
         val runner = service(id, world, published)
         val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
         val handled = runner.runDueGeneralTurns(late).handled.single()
-        assertIs<HwihaTurnOutcome.Applied>(handled.hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(handled.hwihaOutcome)
         assertNull(handled.definition)
         assertFalse(handled.fellBack)
         assertEquals("enlist-success", handled.requestId)
@@ -257,7 +257,7 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals("action.enlist", result("enlist-success").actionCode)
         cold.setCurrentDate(200, 1, 2)
         val second = service(id, cold, published).runDueGeneralTurns(late).handled.single()
-        assertEquals("ALREADY_SERVING", assertIs<HwihaTurnOutcome.Rejected>(second.hwihaOutcome).code)
+        assertEquals("ALREADY_SERVING", assertIs<TurnOutcome.Rejected>(second.hwihaOutcome).code)
         assertFalse(result("enlist-again").ok)
         assertEquals(2, load(5).retainers.size)
         assertEquals(2, jdbc.queryForObject("SELECT count(*) FROM command_result WHERE world_id=5", Int::class.java))
@@ -310,7 +310,7 @@ class HwihaEnlistmentPersistenceIT {
         val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
         val world = InMemoryTurnWorld(before)
         val handled = service(id, world, published).runDueGeneralTurns(late).handled.single()
-        assertIs<HwihaTurnOutcome.Applied>(handled.hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(handled.hwihaOutcome)
         assertEquals("action.enlist", handled.reservedActionCode)
         assertNull(handled.requestId)
         val after = load(7)
@@ -337,12 +337,12 @@ class HwihaEnlistmentPersistenceIT {
         val published = mutableListOf<String>()
         val late = java.time.Instant.parse("0200-01-01T03:00:01Z")
         val handled = service(id, InMemoryTurnWorld(load(8)), published).runDueGeneralTurns(late).handled.single()
-        assertIs<HwihaTurnOutcome.Rejected>(handled.hwihaOutcome)
+        assertIs<TurnOutcome.Rejected>(handled.hwihaOutcome)
         assertEquals(0, load(8).generals.single { it.id == 1 }.nationId)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=8", Int::class.java))
         val cold = InMemoryTurnWorld(load(8))
         cold.setCurrentDate(200, 1, 2)
-        assertIs<HwihaTurnOutcome.Applied>(service(id, cold, published).runDueGeneralTurns(late).handled.single().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(service(id, cold, published).runDueGeneralTurns(late).handled.single().hwihaOutcome)
         assertEquals(10, load(8).retainers.single { it.generalId == 1 }.masterGeneralId)
         assertTrue(published.isEmpty())
     }

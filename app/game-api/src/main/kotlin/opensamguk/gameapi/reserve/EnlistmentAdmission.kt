@@ -1,17 +1,17 @@
 package opensamguk.gameapi.reserve
 
-import opensamguk.gameapi.precheck.HwihaEnlistmentPrecheckService
+import opensamguk.gameapi.precheck.EnlistmentPrecheckService
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 
-class HwihaAdmissionDenied(val code: String, override val message: String) : IllegalArgumentException(message)
+class AdmissionDenied(val code: String, override val message: String) : IllegalArgumentException(message)
 
 /** Validates direct service calls as well as authenticated HTTP requests. No gameplay effects. */
 @Service
-class HwihaEnlistmentAdmission(
+class EnlistmentAdmission(
     private val generals: GeneralReadRepository,
-    private val precheck: HwihaEnlistmentPrecheckService,
+    private val precheck: EnlistmentPrecheckService,
     private val catalog: InputCatalog = InputCatalog.load(),
 ) {
     @org.springframework.transaction.annotation.Transactional(readOnly = true, isolation = org.springframework.transaction.annotation.Isolation.REPEATABLE_READ)
@@ -32,5 +32,5 @@ class HwihaEnlistmentAdmission(
         }
         return EnlistmentInput.canonicalJson(request)
     }
-    private fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
+    private fun deny(code: String, reason: String): Nothing = throw AdmissionDenied(code, reason)
 }

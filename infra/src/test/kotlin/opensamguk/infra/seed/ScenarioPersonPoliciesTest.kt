@@ -3,7 +3,7 @@ package opensamguk.infra.seed
 import opensamguk.infra.persistence.MetaJson
 import kotlin.test.*
 
-internal object HwihaSyntheticScenario {
+internal object SyntheticScenario {
     fun person(name: String = "QA 주공", nation: Int = 1): List<Any?> = listOf(0, name, null, nation, null, 60, 61, 62, 12, 170, 280, null, null, null, 63, 64)
     fun policy(name: String = "QA 주공", officerId: Int = 1): Map<String, Any?> = linkedMapOf(
         "name" to name, "statSourceId" to "synthetic-qa:court", "statSourceRevision" to "v1",
@@ -17,19 +17,19 @@ internal object HwihaSyntheticScenario {
     fun parse(root: Map<String, Any?> = root()): Scenario = ScenarioJson.loadScenario(MetaJson.encode(root))
 }
 
-class HwihaScenarioPersonPoliciesTest {
+class ScenarioPersonPoliciesTest {
     @Test fun `explicit synthetic declaration binds five stats and initial capacity without fallback`() {
-        val scenario = HwihaSyntheticScenario.parse()
+        val scenario = SyntheticScenario.parse()
         val general = scenario.generals.single()
         val policy = assertNotNull(general.hwihaPersonPolicy)
         assertEquals(30, policy.renownCapacity)
         assertEquals("synthetic-qa:court", policy.statSourceId)
         assertTrue(policy.acceptsEnlistment)
-        HwihaScenarioPersonPolicies.validate(general)
-        assertNull(HwihaSyntheticScenario.parse(HwihaSyntheticScenario.root() - "hwihaPersonPolicies").generals.single().hwihaPersonPolicy)
+        ScenarioPersonPolicies.validate(general)
+        assertNull(SyntheticScenario.parse(SyntheticScenario.root() - "hwihaPersonPolicies").generals.single().hwihaPersonPolicy)
     }
     @Test fun `profile identity duplicates and unsupported historical claims are rejected`() {
-        val root = HwihaSyntheticScenario.root(); val policy = HwihaSyntheticScenario.policy()
+        val root = SyntheticScenario.root(); val policy = SyntheticScenario.policy()
         val invalid = listOf(
             root + ("ruleProfile" to "SAMMO"), root + ("hwihaPersonPolicies" to null),
             root + ("hwihaPersonPolicies" to listOf(policy, policy)),
@@ -37,27 +37,27 @@ class HwihaScenarioPersonPoliciesTest {
             root + ("hwihaPersonPolicies" to listOf(policy + ("statSourceId" to "rtk14:unverified"))),
             root + ("hwihaPersonPolicies" to listOf(policy + ("acceptsEnlistment" to "true"))),
             root + ("hwihaPersonPolicies" to listOf(policy + ("renownCapacity" to 999))),
-            root + ("general" to listOf(HwihaSyntheticScenario.person(), HwihaSyntheticScenario.person())),
+            root + ("general" to listOf(SyntheticScenario.person(), SyntheticScenario.person())),
             root + ("hwihaPersonPolicies" to listOf(policy, policy + ("name" to "second"))),
         )
-        invalid.forEach { assertFailsWith<IllegalArgumentException> { HwihaSyntheticScenario.parse(it) } }
+        invalid.forEach { assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(it) } }
     }
     @Test fun `missing or changed stats never use importer defaults as evidence`() {
-        val root = HwihaSyntheticScenario.root(); val policy = HwihaSyntheticScenario.policy()
+        val root = SyntheticScenario.root(); val policy = SyntheticScenario.policy()
         for (i in listOf(5, 6, 7, 14, 15)) {
-            val tuple = HwihaSyntheticScenario.person().toMutableList(); tuple[i] = null
-            assertFailsWith<IllegalArgumentException> { HwihaSyntheticScenario.parse(root + ("general" to listOf(tuple))) }
+            val tuple = SyntheticScenario.person().toMutableList(); tuple[i] = null
+            assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + ("general" to listOf(tuple))) }
         }
         assertFailsWith<IllegalArgumentException> {
-            HwihaSyntheticScenario.parse(root + ("hwihaPersonPolicies" to listOf(policy + ("stats" to mapOf("leadership" to 60)))))
+            SyntheticScenario.parse(root + ("hwihaPersonPolicies" to listOf(policy + ("stats" to mapOf("leadership" to 60)))))
         }
-        val tuple = HwihaSyntheticScenario.person().toMutableList(); tuple[15] = 65
-        assertFailsWith<IllegalArgumentException> { HwihaSyntheticScenario.parse(root + ("general" to listOf(tuple))) }
-        val general = HwihaSyntheticScenario.parse().generals.single()
-        assertFailsWith<IllegalArgumentException> { HwihaScenarioPersonPolicies.validate(general.copy(charm = 99)) }
+        val tuple = SyntheticScenario.person().toMutableList(); tuple[15] = 65
+        assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + ("general" to listOf(tuple))) }
+        val general = SyntheticScenario.parse().generals.single()
+        assertFailsWith<IllegalArgumentException> { ScenarioPersonPolicies.validate(general.copy(charm = 99)) }
     }
     @Test fun `importer validates selected roster overrides before writes`() {
-        val scenario = HwihaSyntheticScenario.parse()
+        val scenario = SyntheticScenario.parse()
         val altered = scenario.generals.single().copy(charm = 99)
         assertFailsWith<IllegalArgumentException> {
             ScenarioImporter(scenario.copy(generals = emptyList(), baseGenerals = listOf(altered)), emptyList()).validateSeedContract()
@@ -65,7 +65,7 @@ class HwihaScenarioPersonPoliciesTest {
     }
 
     @Test fun `identical selected roster duplicates cannot be removed before uniqueness validation`() {
-        val scenario = HwihaSyntheticScenario.parse()
+        val scenario = SyntheticScenario.parse()
         val person = scenario.generals.single().copy(hwihaLord = false)
         val duplicated = scenario.copy(generals = emptyList(), baseGenerals = listOf(person, person),
             seedContract = ScenarioSeedContract(ActiveGeneralContract(2, 2)))

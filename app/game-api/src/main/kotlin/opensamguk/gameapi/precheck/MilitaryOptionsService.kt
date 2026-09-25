@@ -5,13 +5,13 @@ import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.domestic.FieldAssessment
 import opensamguk.logic.domestic.FieldRules
 
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class HwihaMilitaryOptions(val inputId: String, val available: Boolean,
+data class MilitaryOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
     val countyId: Int? = null, val countyName: String? = null,
     val troops: Int? = null, val training: Int? = null, val morale: Int? = null,
@@ -20,12 +20,12 @@ data class HwihaMilitaryOptions(val inputId: String, val available: Boolean,
     val grainCost: Long? = null, val moneyCost: Long? = null)
 
 @Service
-class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
-    private val deploy: HwihaDeployPrecheckService,
+class MilitaryOptionsService(private val reader: DomesticReader,
+    private val deploy: DeployPrecheckService,
     private val catalog: InputCatalog = InputCatalog.load(),
     private val design: MilitaryDesign = MilitaryDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(inputId: String, actorId: Int, userId: Long): HwihaMilitaryOptions {
+    fun options(inputId: String, actorId: Int, userId: Long): MilitaryOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in MilitaryInput.INPUT_IDS) return blocked(inputId, MilitaryFailure.INVALID_INPUT)
         if (inputId == MilitaryInput.MUSTER) {
@@ -33,8 +33,8 @@ class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
             if (check is MusterAssessment.Rejected) return blocked(inputId, check.reason)
             val ready = check as MusterAssessment.Eligible
             return if (design.status == MilitaryDesign.CONFIRMED && catalog[inputId]?.deliveryState?.hasHandler == true)
-                HwihaMilitaryOptions(inputId, true, gatheringCorps = ready.corps.size)
-            else HwihaMilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+                MilitaryOptions(inputId, true, gatheringCorps = ready.corps.size)
+            else MilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         }
         val snapshot = reader.snapshot()
         val state = snapshot.state ?: return blocked(inputId, if (snapshot.failure == "WRONG_RULE_PROFILE")
@@ -50,8 +50,8 @@ class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
         if (check is CityMilitaryAssessment.Rejected) return blocked(inputId, check.reason)
         val plan = (check as CityMilitaryAssessment.Eligible).plan
         if (design.status != MilitaryDesign.CONFIRMED || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaMilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        return HwihaMilitaryOptions(inputId, true, countyId = county.id,
+            return MilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        return MilitaryOptions(inputId, true, countyId = county.id,
             countyName = snapshot.countyNames[county.id] ?: county.name, troops = snapshot.cityMilitaryTroops[county.id],
             training = snapshot.cityMilitaryStates[county.id]?.training,
             morale = snapshot.cityMilitaryStates[county.id]?.morale,
@@ -61,5 +61,5 @@ class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
     }
 
     private fun blocked(inputId: String, reason: MilitaryFailure) =
-        HwihaMilitaryOptions(inputId, false, reason.name, reason.message)
+        MilitaryOptions(inputId, false, reason.name, reason.message)
 }

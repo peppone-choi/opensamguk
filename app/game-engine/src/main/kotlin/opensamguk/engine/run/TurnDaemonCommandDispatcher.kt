@@ -136,7 +136,7 @@ class TurnDaemonCommandDispatcher(
     v2CityLedger: V2CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
-    hwihaCourtHandler: opensamguk.engine.hwiha.HwihaCourtHandler? = null,
+    hwihaCourtHandler: opensamguk.engine.hwiha.CourtHandler? = null,
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
@@ -358,7 +358,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
-    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder)
+    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.hwiha.CourtHandler(world, recorder)
 
     // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
     private val profileIconSync = ProfileIconSyncHandler(world, recorder)

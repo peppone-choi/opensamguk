@@ -1,7 +1,7 @@
 import { api, isIntakeDenied, isIntakeQueued } from './api';
-import type { HwihaScoutOption } from './hwiha-reads';
+import type { ScoutOption } from './hwiha-reads';
 
-export async function reserveHwihaScout(generalId: number, option: HwihaScoutOption): Promise<{
+export async function reserveHwihaScout(generalId: number, option: ScoutOption): Promise<{
     ok: boolean; message: string;
 }> {
     try {

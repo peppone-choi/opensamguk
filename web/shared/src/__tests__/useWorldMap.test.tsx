@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanTiles } from '../HanMapCanvas';
+import type { WorldTiles } from '../WorldMapCanvas';
 import { useWorldMap, type WorldMapPreview } from '../useWorldMap';
 
 const mocks = vi.hoisted(() => ({ order: [] as string[], province: vi.fn(), fetch: vi.fn() }));
@@ -18,7 +18,7 @@ const preview: WorldMapPreview = {
   nations: [{ id: 1, name: '魏', color: '#ff0000' }],
 };
 const tiles = { _meta: { cols: 768, rows: 669, year: 200, terrainLegend: {} },
-  juns: [{ name: '甲郡', col: 384, row: 334 }], parentRegions: [{ name: '甲郡' }] } as unknown as HanTiles;
+  juns: [{ name: '甲郡', col: 384, row: 334 }], parentRegions: [{ name: '甲郡' }] } as unknown as WorldTiles;
 
 beforeEach(() => {
   mocks.order.length = 0;

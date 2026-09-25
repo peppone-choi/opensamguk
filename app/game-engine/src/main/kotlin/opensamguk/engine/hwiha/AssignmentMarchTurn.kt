@@ -6,38 +6,38 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Production personal-turn movement: both passage and reactions come from the current saved world. */
-class HwihaAssignmentMarchTurn(
+class AssignmentMarchTurn(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
-    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
-    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING,
+    private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
+    private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING,
 ) {
-    fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: HwihaTurnOutcome? = null) {
+    fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: TurnOutcome? = null) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         // §5.1 step 5: a sealed encounter resolves on the attacker's turn whatever it reserved. The battle
         // ends this turn's movement; an unprepared battle stays pending and the march reports it below.
-        when (HwihaEncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)) {
-            is HwihaEncounterResolver.Resolution.Resolved,
-            is HwihaEncounterResolver.Resolution.Disbanded -> return
+        when (EncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)) {
+            is EncounterResolver.Resolution.Resolved,
+            is EncounterResolver.Resolution.Disbanded -> return
             else -> Unit
         }
         // A future field action must not run alongside automatic personal movement.
-        val startsDeployment = reserved.actionCode == DeployInputs.INPUT_ID && outcome is HwihaTurnOutcome.Applied
-        val startsMuster = reserved.actionCode == MilitaryInput.MUSTER && outcome is HwihaTurnOutcome.Applied
-        if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment && !startsMuster) return
-        if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
+        val startsDeployment = reserved.actionCode == DeployInputs.INPUT_ID && outcome is TurnOutcome.Applied
+        val startsMuster = reserved.actionCode == MilitaryInput.MUSTER && outcome is TurnOutcome.Applied
+        if (!PersonalTurn.hasNoInput(reserved) && reserved.actionCode != EnlistmentHandler.INPUT_ID && !startsDeployment && !startsMuster) return
+        if (CorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
             // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
-            val siege = HwihaSiegeService(world, recorder, topology, metrics, cells, outcomes)
+            val siege = SiegeService(world, recorder, topology, metrics, cells, outcomes)
             val besieging = siege.startIfArrived(generalId)
             if (isUnowned(generalId)) { if (besieging) siege.npcAct(generalId) else siege.npcEndIfStranded(generalId) }
             return
         }
-        if (HwihaTravelTurn(world, recorder, topology, metrics, reactions, outcomes).onTurn(generalId)) return
+        if (TravelTurn(world, recorder, topology, metrics, reactions, outcomes).onTurn(generalId)) return
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
-        if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
+        if (PlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (CountyAssignment.META_KEY !in actor.meta) return
         val edges = try { LandPassageState.read(world.getState().meta, topology) }
@@ -49,9 +49,9 @@ class HwihaAssignmentMarchTurn(
         }
         val previous = try { MarchState.read(actor.meta, topology, metrics) }
             catch (_: IllegalArgumentException) { null }
-        val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
+        val military = MilitaryPresenceProvider(world, topology, metrics)
         // One is the minimum positive passage threshold, not one soldier or one unit card.
-        when (val result = HwihaAssignmentMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
+        when (val result = AssignmentMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
             .advance(generalId, edges) { node -> military.entryAt(generalId, node, reactions) }) {
             AssignmentMarchExecution.NoAssignment, AssignmentMarchExecution.AlreadyProcessed -> Unit
             is AssignmentMarchExecution.Rejected -> if (result.reason != AssignmentMarchFailure.CORPS_DEPLOYED) {
@@ -82,7 +82,7 @@ class HwihaAssignmentMarchTurn(
             .let { it.isNullOrBlank() || (it.toLongOrNull()?.let { id -> id <= 0 } == true) }
 
     private fun log(generalId: Int, text: String, refs: Map<String, Any?>) =
-        HwihaRecords.general(world, generalId, RecordKind.MARCH_ASSIGNMENT, text, refs)
+        Records.general(world, generalId, RecordKind.MARCH_ASSIGNMENT, text, refs)
 
     private fun assignmentRefs(meta: Map<String, Any?>): Map<String, Any?> =
         (try { CountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null })

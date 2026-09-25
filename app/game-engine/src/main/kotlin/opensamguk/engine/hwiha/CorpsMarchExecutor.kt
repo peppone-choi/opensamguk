@@ -15,7 +15,7 @@ sealed interface CorpsMarchExecution {
 }
 
 /** One commander's durable movement. Scheduling, entry authorities and command authorization belong to the caller. */
-class HwihaCorpsMarchExecutor(
+class CorpsMarchExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
@@ -29,7 +29,7 @@ class HwihaCorpsMarchExecutor(
         entryAt: (StrategicNodeRef.LandProvince) -> LandMarchEntry): CorpsMarchExecution {
         fun reject(reason: CorpsMarchFailure) = CorpsMarchExecution.Rejected(reason)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(CorpsMarchFailure.WRONG_RULE_PROFILE)
-        val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+        val projection = DeploymentExecutor(world, recorder, topology, metrics).projection()
             ?: return reject(CorpsMarchFailure.INVALID_STATE)
         val corps = projection.deployed.singleOrNull { it.orderId == orderId && it.commanderGeneralId == commanderId }
             ?: return reject(CorpsMarchFailure.NO_DEPLOYMENT)

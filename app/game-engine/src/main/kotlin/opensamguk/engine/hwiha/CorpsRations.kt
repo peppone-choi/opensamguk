@@ -19,7 +19,7 @@ import org.slf4j.LoggerFactory
  *
  * 수송 중인 곡은 [CONVOYS_KEY] 에 담는다(도착 순이 지나면 비운다). 도장 [STAMP_KEY] 로 한 달에 한 번만 보낸다.
  */
-class HwihaCorpsRations(
+class CorpsRations(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
@@ -36,7 +36,7 @@ class HwihaCorpsRations(
     fun load(corps: DeployedCorps): Long {
         if (world.ruleProfile != RuleProfile.HWIHA) return 0
         val here = cityAt(world, corps.commanderGeneralId) ?: return 0
-        val network = HwihaWarehouseNetwork(world, recorder)
+        val network = WarehouseNetwork(world, recorder)
         val counties = network.countiesFor(corps.nationId, here)
         if (counties.isEmpty()) return 0
         var loaded = 0L
@@ -62,15 +62,15 @@ class HwihaCorpsRations(
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val stamp = "%04d-%02d".format(year, month)
         if (world.getState().meta[STAMP_KEY] == stamp) return 0
-        val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+        val projection = DeploymentExecutor(world, recorder, topology, metrics).projection()
         val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
         val inFlight = convoys().toMutableList()
         var sent = 0
         if (projection != null && edges != null) {
             val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
-            val network = HwihaWarehouseNetwork(world, recorder)
+            val network = WarehouseNetwork(world, recorder)
             for (corps in projection.deployed.sortedBy { it.orderId }) {
-                // 자국 縣에 있으면 월 보충(HwihaUnitResupply)이 맡는다.
+                // 자국 縣에 있으면 월 보충(UnitResupply)이 맡는다.
                 val here = cityAt(world, corps.commanderGeneralId)
                 if (here != null && world.getCityById(here)?.nationId == corps.nationId) continue
                 val target = world.positionOf(corps.commanderGeneralId) as? StrategicNodeRef.LandProvince ?: continue
@@ -150,7 +150,7 @@ class HwihaCorpsRations(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(HwihaCorpsRations::class.java)
+        private val log = LoggerFactory.getLogger(CorpsRations::class.java)
         const val STAMP_KEY = "hwihaSupplyConvoyMonth"
         const val CONVOYS_KEY = "hwihaSupplyConvoys"
 

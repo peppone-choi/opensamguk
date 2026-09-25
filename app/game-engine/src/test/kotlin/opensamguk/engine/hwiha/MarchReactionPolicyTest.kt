@@ -6,8 +6,8 @@ import opensamguk.logic.input.MarchReactions
 import opensamguk.logic.world.LandMarchEntry
 
 /** Pending reaction records (요격·회피) must not stall every march until their resolver is wired. */
-class HwihaMarchReactionPolicyTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class MarchReactionPolicyTest {
+    private val fixture = CampaignWorldFixture()
     private val route = fixture.route()
 
     private fun march(reactions: Any): Pair<LandMarchEntry, Boolean> {
@@ -16,9 +16,9 @@ class HwihaMarchReactionPolicyTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.nextPhase(world)
-        val entry = HwihaMilitaryPresenceProvider(world, fixture.topology, fixture.metrics)
-            .entryAt(1, route.first, HwihaMarchReactionPolicy.NON_BLOCKING)
-        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
+        val entry = MilitaryPresenceProvider(world, fixture.topology, fixture.metrics)
+            .entryAt(1, route.first, MarchReactionPolicy.NON_BLOCKING)
+        fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
         return entry to (world.positionOf(1) != route.start)
     }
 
@@ -30,7 +30,7 @@ class HwihaMarchReactionPolicyTest {
     }
 
     @Test fun `domestic corps policies INTERCEPT and EVADE written as reaction orders do not stall marches`() {
-        // 내정 스트림(HwihaReactionInventory)이 군단 방침에서 다시 쓰는 꼴 그대로다.
+        // 내정 스트림(ReactionInventory)이 군단 방침에서 다시 쓰는 꼴 그대로다.
         val since = opensamguk.logic.input.Phase(200, 1, 1)
         val written = MarchReactions.of(
             listOf(opensamguk.logic.input.ReactionOrder("o-intercept", 50, 51, 2, since)),

@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.HwihaTurnOutcome
+import opensamguk.engine.hwiha.TurnOutcome
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.gameapi.GameApiApplication
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /** Real HTTP-controller/JPA intake, durable reservation, engine, reload, and owned result read. */
-@org.springframework.context.annotation.Import(HwihaEnlistmentApiIT.Artifacts::class)
+@org.springframework.context.annotation.Import(EnlistmentApiIT.Artifacts::class)
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(classes = [GameApiApplication::class], properties = [
@@ -42,7 +42,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
     "jwt.legacy-secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=",
     "jwt.legacy-accept-until=2099-01-01T00:00:00Z",
 ])
-class HwihaEnlistmentApiIT {
+class EnlistmentApiIT {
     @Autowired private lateinit var context: WebApplicationContext
     @Autowired private lateinit var jdbc: JdbcTemplate
     @Autowired private lateinit var json: ObjectMapper
@@ -51,7 +51,7 @@ class HwihaEnlistmentApiIT {
 
     @Test fun `owned HTTP enlistment reservation executes once and returns its durable result after cold reload`() {
         val source = checkNotNull(jdbc.dataSource)
-        val fixture = HwihaEnlistmentFixture(jdbc, JdbcFlushExecutor(NamedParameterJdbcTemplate(source),
+        val fixture = EnlistmentFixture(jdbc, JdbcFlushExecutor(NamedParameterJdbcTemplate(source),
             TransactionTemplate(DataSourceTransactionManager(source))))
         fixture.seed(1)
         jdbc.update("UPDATE world_state SET config=config || '{\"startYear\":200,\"unitSet\":\"che\"}'::jsonb WHERE id=1")
@@ -101,7 +101,7 @@ class HwihaEnlistmentApiIT {
         val published = mutableListOf<String>()
         val late = Instant.parse("0200-01-01T03:00:01Z")
         val handled = fixture.service(WorldId(1), world, published).runDueGeneralTurns(late).handled.single()
-        assertIs<HwihaTurnOutcome.Applied>(handled.hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(handled.hwihaOutcome)
         val after = fixture.load(1)
         assertEquals(1, after.generals.single { it.id == 1 }.nationId)
         assertEquals(10, after.retainers.single { it.generalId == 1 }.masterGeneralId)
@@ -152,7 +152,7 @@ class HwihaEnlistmentApiIT {
         val deployDue = Instant.parse("0200-01-01T05:00:00Z")
         val deployWorld = InMemoryTurnWorld(fixture.load(1))
         val deployed = fixture.service(WorldId(1),deployWorld,deploymentPublished,movement=true).runDueGeneralTurns(deployDue)
-        assertIs<HwihaTurnOutcome.Applied>(deployed.handled.single().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(deployed.handled.single().hwihaOutcome)
         val deployedCold = InMemoryTurnWorld(fixture.load(1))
         val order = opensamguk.logic.input.CorpsOrder.read(deployedCold.getGeneralById(1)!!.meta,topology)
         assertEquals(deployId,order?.orderId); assertEquals(target,order?.destination)

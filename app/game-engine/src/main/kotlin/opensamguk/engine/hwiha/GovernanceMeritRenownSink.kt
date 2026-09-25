@@ -10,7 +10,7 @@ import opensamguk.logic.renown.RenownEvents
 
 /**
  * 내정 스트림의 치적 사건([GovernanceMeritEvent] — 縣令 카드가 앉은 縣 의 지표 상승)을 기록 스트림의
- * 월단평 사건(치적, [RenownEventSource.COUNTY_INDICATOR_RISE])으로 잇는다. 쓰기는 [HwihaRenownEventRecorder]
+ * 월단평 사건(치적, [RenownEventSource.COUNTY_INDICATOR_RISE])으로 잇는다. 쓰기는 [RenownEventRecorder]
  * 를 거쳐 ChangeRecorder 경로로만 간다.
  *
  * ### 도장은 비교를 마친 달이 아니라 지표가 오른 달이다
@@ -18,7 +18,7 @@ import opensamguk.logic.renown.RenownEvents
  * 내정 경계는 M+1 월 경계(상순)에서 M 월 경계에 적어 둔 값과 지금 값을 비교하고 [GovernanceMeritEvent.monthStamp]
  * 에 M+1 을 싣는다. 지표가 오른 것은 M 이므로 치적은 M 도장으로 쌓는다. 그래야
  *
- * - 기록 스트림의 치적 창([HwihaCountyMeritWindow], 같은 경계에서 M 도장으로 닫는다)과 같은 달 같은 종류가 되어
+ * - 기록 스트림의 치적 창([CountyMeritWindow], 같은 경계에서 M 도장으로 닫는다)과 같은 달 같은 종류가 되어
  *   「한 달에 종류당 한 번」 규칙이 두 경로의 중복을 한 건으로 접는다 — 발령 관할 장수이면서 縣令 카드 주인인
  *   장수도 그 달 치적은 한 건이다.
  * - 같은 경계 뒤쪽의 월단평(M+1 을 여는 평가는 M 이전 사건을 적용한다)이 바로 적용한다.
@@ -31,7 +31,7 @@ import opensamguk.logic.renown.RenownEvents
  *
  * 월 경계에서 던지면 턴 루프가 영구히 멈추므로 읽을 수 없는 도장·사라진 縣 은 무동작이다.
  */
-class HwihaGovernanceMeritRenownSink(
+class GovernanceMeritRenownSink(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
 ) : GovernanceMeritSink {
@@ -44,7 +44,7 @@ class HwihaGovernanceMeritRenownSink(
             DomesticMerit.Indicators(city.populationMax, city.agricultureMax, city.commerceMax),
         )
         if (!risen) return
-        HwihaRenownEventRecorder(world, recorder).record(event.ownerGeneralId, RenownEventSource.COUNTY_INDICATOR_RISE, stamp)
+        RenownEventRecorder(world, recorder).record(event.ownerGeneralId, RenownEventSource.COUNTY_INDICATOR_RISE, stamp)
     }
 
     companion object {

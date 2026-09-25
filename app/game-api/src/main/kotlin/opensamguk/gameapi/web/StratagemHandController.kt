@@ -1,6 +1,6 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.read.HwihaStratagemHandReader
+import opensamguk.gameapi.read.StratagemHandReader
 import opensamguk.gameapi.read.StratagemHandForbidden
 import org.springframework.http.ResponseEntity
 import org.springframework.http.CacheControl
@@ -8,7 +8,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-class HwihaStratagemHandController(private val reader:HwihaStratagemHandReader) {
+class StratagemHandController(private val reader:StratagemHandReader) {
     @GetMapping("/api/commands/stratagem-hand")
     fun hand(@AuthenticationPrincipal userId:Long?,@RequestParam generalId:Int):ResponseEntity<Any> {
         if(userId==null || userId<=0 || userId>Int.MAX_VALUE)return ResponseEntity.status(401).build()

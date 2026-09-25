@@ -3,12 +3,12 @@ package opensamguk.gameapi.read
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.Optional
 import kotlin.test.*
-import opensamguk.gameapi.dto.HwihaRenownPendingEventDto
-import opensamguk.gameapi.dto.HwihaRenownReasonDto
-import opensamguk.gameapi.dto.HwihaRetinueResponse
-import opensamguk.gameapi.dto.HwihaWarehousesResponse
-import opensamguk.gameapi.dto.HwihaYuedanResponse
-import opensamguk.gameapi.web.HwihaCampController
+import opensamguk.gameapi.dto.RenownPendingEventDto
+import opensamguk.gameapi.dto.RenownReasonDto
+import opensamguk.gameapi.dto.CampRetinueResponse
+import opensamguk.gameapi.dto.WarehousesResponse
+import opensamguk.gameapi.dto.YuedanResponse
+import opensamguk.gameapi.web.CampController
 import opensamguk.infra.entity.GameKvEntity
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.economy.CountyWarehouse
@@ -19,7 +19,7 @@ import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.world.HanWorldVariant
 import org.mockito.Mockito.*
 
-class HwihaCampReaderTest {
+class CampReaderTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val worlds = mock(WorldStateReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
@@ -27,12 +27,12 @@ class HwihaCampReaderTest {
     private val retainers = mock(RetainerReadRepository::class.java)
     private val gameKv = mock(GameKvReadRepository::class.java)
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
-    private val geography = mock(HwihaCityGeography::class.java)
+    private val geography = mock(CityGeography::class.java)
     private val mapper = ObjectMapper()
     // 원장은 진짜 classpath 판(빌드가 data/curated 에서 실은 것)을 읽는다 — 패키징까지 같이 검증한다.
-    private val ledgers = HwihaCampLedgers(mapper)
-    private val reader = HwihaCampReader(generals, worlds, nations, cities, retainers, gameKv, resolver, ledgers, geography, mapper)
-    private val controller = HwihaCampController(reader)
+    private val ledgers = CampLedgers(mapper)
+    private val reader = CampReader(generals, worlds, nations, cities, retainers, gameKv, resolver, ledgers, geography, mapper)
+    private val controller = CampController(reader)
 
     private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"))
     private val bundle = mock(ResolvedHanWorldArtifacts::class.java)
@@ -73,13 +73,13 @@ class HwihaCampReaderTest {
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, worldId = 1, name = "위", color = "#1A4E8C", capitalCityId = 2)))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, emptyList(), bundle))
         `when`(geography.places(bundle)).thenReturn(mapOf(
-            2 to HwihaCityGeography.Place("하내", "40556"),
-            5 to HwihaCityGeography.Place("파군", "200197"),
-            6 to HwihaCityGeography.Place("경조윤", "70623"),
+            2 to CityGeography.Place("하내", "40556"),
+            5 to CityGeography.Place("파군", "200197"),
+            6 to CityGeography.Place("경조윤", "70623"),
         ))
         // 한글 지명 색인: 유비(涿縣, 관할 87307)는 id 로, 조조·하후돈(沛國 譙, id 없음)은 (郡, 縣) 쌍으로 풀린다.
         val fold = ledgers.fold
-        `when`(geography.countyNames(bundle)).thenReturn(HwihaCityGeography.CountyNames(
+        `when`(geography.countyNames(bundle)).thenReturn(CityGeography.CountyNames(
             byJurisdiction = mapOf("87307" to listOf("탁군 탁현")),
             byPair = mapOf((fold.group("沛國") to fold.county("谯县")) to listOf("패국 초현")),
             fold = fold,
@@ -113,17 +113,17 @@ class HwihaCampReaderTest {
 
     @Test fun `소유 확인이 먼저다 - 남의 장수로는 휘하·창고를 읽지 않는다`() {
         setup()
-        assertFailsWith<HwihaCampForbidden> { reader.retinue(1, 42) }
-        assertFailsWith<HwihaCampForbidden> { reader.warehouses(1, 42) }
+        assertFailsWith<CampForbidden> { reader.retinue(1, 42) }
+        assertFailsWith<CampForbidden> { reader.warehouses(1, 42) }
         verifyNoInteractions(retainers, cities, gameKv, resolver)
     }
 
     @Test fun `휘하 규칙이 아닌 월드는 200 WRONG_RULE_PROFILE 빈 데이터`() {
         setup(profile = "SAMMO")
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1, name = "탕거")))
-        assertEquals(HwihaYuedanResponse("WRONG_RULE_PROFILE"), reader.yuedan(1, 41))
-        assertEquals(HwihaWarehousesResponse("WRONG_RULE_PROFILE"), reader.warehouses(1, 41))
-        assertEquals(HwihaRetinueResponse("WRONG_RULE_PROFILE"), reader.retinue(1, 41))
+        assertEquals(YuedanResponse("WRONG_RULE_PROFILE"), reader.yuedan(1, 41))
+        assertEquals(WarehousesResponse("WRONG_RULE_PROFILE"), reader.warehouses(1, 41))
+        assertEquals(CampRetinueResponse("WRONG_RULE_PROFILE"), reader.retinue(1, 41))
         val county = assertNotNull(reader.county(5, 1, 41))
         assertEquals("WRONG_RULE_PROFILE", county.status); assertTrue(county.specialties.isEmpty())
         verifyNoInteractions(retainers, gameKv, resolver)
@@ -166,9 +166,9 @@ class HwihaCampReaderTest {
         kv(RenownAssessment.REASONS_KEY, """{"stamp":"0190-03","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3},
             {"kind":"bogus","count":1,"amount":9}],"1":[{"kind":"defeat","count":2,"amount":-6}]}}""")
         val out = reader.yuedan(1, 41)
-        assertEquals(listOf(HwihaRenownReasonDto("warMerit", "전공", 1, 3)), out.ranking.first { it.generalId == 3 }.reasons)
-        assertEquals(listOf(HwihaRenownReasonDto("defeat", "패전", 2, -6)), out.ranking.first { it.generalId == 1 }.reasons)
-        assertEquals(listOf(HwihaRenownPendingEventDto("dispatchRefusal", "발령 거절", "0190-03", "DISPATCH_REFUSAL", "발령 거절", -4)),
+        assertEquals(listOf(RenownReasonDto("warMerit", "전공", 1, 3)), out.ranking.first { it.generalId == 3 }.reasons)
+        assertEquals(listOf(RenownReasonDto("defeat", "패전", 2, -6)), out.ranking.first { it.generalId == 1 }.reasons)
+        assertEquals(listOf(RenownPendingEventDto("dispatchRefusal", "발령 거절", "0190-03", "DISPATCH_REFUSAL", "발령 거절", -4)),
             out.selfPendingEvents)
         assertFalse("ENCOUNTER_VICTORY" in mapper.writeValueAsString(out), "남의 사건 원인은 새지 않는다")
 
@@ -275,7 +275,7 @@ class HwihaCampReaderTest {
         assertEquals(2, xia.locationCityId, "상사 화면은 카드 인물의 현재 城으로 창고망을 계산한다")
         assertEquals(90, xia.stats?.leadership)
         // 장 90*.6+90*.4=90, 리 60*.7+60*.3=60, 사 60, 사자 70*.6+60*.4=66
-        assertEquals(opensamguk.gameapi.dto.HwihaAptitudesDto(90, 60, 60, 66), xia.aptitudes)
+        assertEquals(opensamguk.gameapi.dto.AptitudesDto(90, 60, 60, 66), xia.aptitudes)
         val bond = xia.bonds.single()
         assertEquals("HYANGDANG", bond.kind); assertEquals("향당", bond.label)
         assertEquals("패국 초현", bond.nativeCountyName, "한글 우선 — 簡體 城 표(谯县)와 繁體 원장(譙)을 같은 정규화로 맞춘다")
@@ -319,10 +319,10 @@ class HwihaCampReaderTest {
     @Test fun `사람이 만든 장수는 이름이 같아도 본관을 받지 않는다`() {
         setup()
         // 이름만 「유비」인 신규 장수 — npc_org 가 없고 정책 출처가 created-general 이다.
-        liubei.meta = mapOf(PersonPolicyState.META_KEY to policy(30, source = HwihaCampLedgers.CREATED_GENERAL_SOURCE))
+        liubei.meta = mapOf(PersonPolicyState.META_KEY to policy(30, source = CampLedgers.CREATED_GENERAL_SOURCE))
         val out = reader.retinue(1, 41)
         assertTrue(out.people[1].bonds.isEmpty())
-        liubei.meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30, source = HwihaCampLedgers.CREATED_GENERAL_SOURCE))
+        liubei.meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30, source = CampLedgers.CREATED_GENERAL_SOURCE))
         assertTrue(reader.retinue(1, 41).people[1].bonds.isEmpty())
     }
 
@@ -360,7 +360,7 @@ class HwihaCampReaderTest {
         val table = ledgers.productionByJurisdiction
         // 縣 수는 지도 판마다 바뀐다 — 박지 않고 모든 행에 목재가 있는지만 본다.
         assertTrue(table.values.all { rows -> rows.any { it.resource == "TIMBER" } })
-        assertEquals(listOf(HwihaCampLedgers.Specialty("IRON", 1000), HwihaCampLedgers.Specialty("TIMBER", 132)), table["200197"])
+        assertEquals(listOf(CampLedgers.Specialty("IRON", 1000), CampLedgers.Specialty("TIMBER", 132)), table["200197"])
         assertTrue(table.values.flatten().all { it.resource in setOf("IRON", "HORSE", "TIMBER") })
         assertEquals(40, table.values.count { rows -> rows.any { it.resource != "TIMBER" } }, "1447 판: 결손 縣 배치 뒤 생산 원장 실측")
     }
@@ -379,10 +379,10 @@ class HwihaCampReaderTest {
         val runtimeMap = checkNotNull(javaClass.classLoader.getResourceAsStream("map/han-world-v3.json")).use { it.readBytes() }
         val root = generateSequence(java.nio.file.Path.of("").toAbsolutePath()) { it.parent }
             .first { java.nio.file.Files.isRegularFile(it.resolve("data/map/han-tiles.json")) }
-        `when`(artifacts.artifactBytes(HwihaCityGeography.RUNTIME_MAP)).thenReturn(runtimeMap)
-        `when`(artifacts.artifactBytes(HwihaCityGeography.TILES)).thenReturn(
+        `when`(artifacts.artifactBytes(CityGeography.RUNTIME_MAP)).thenReturn(runtimeMap)
+        `when`(artifacts.artifactBytes(CityGeography.TILES)).thenReturn(
             java.nio.file.Files.readAllBytes(root.resolve("data/map/han-tiles.json")))
-        val names = HwihaCityGeography(mapper, ledgers).countyNames(artifacts)
+        val names = CityGeography(mapper, ledgers).countyNames(artifacts)
         val table = ledgers.nativeCountyByScenarioName
         fun korean(name: String) = names.korean(assertNotNull(table[name], name))
         assertEquals("패국 초현", korean("조조"), "관할 id 없는 DIRECT 행 — (郡, 縣) 쌍")
@@ -410,8 +410,8 @@ class HwihaCampReaderTest {
     @Test fun `창고 DTO 는 isCapital 이름으로 직렬화된다`() {
         // 운영과 같은 빌더(Spring Boot 가 쓰는 Jackson2ObjectMapperBuilder). Kotlin 모듈은 classpath 에 없다.
         val boot = org.springframework.http.converter.json.Jackson2ObjectMapperBuilder.json().build<ObjectMapper>()
-        val json = boot.writeValueAsString(opensamguk.gameapi.dto.HwihaWarehouseDto(2, "회", null, true, false,
-            opensamguk.gameapi.dto.HwihaStockDto(1, 2, 3, 4, 5)))
+        val json = boot.writeValueAsString(opensamguk.gameapi.dto.WarehouseDto(2, "회", null, true, false,
+            opensamguk.gameapi.dto.StockDto(1, 2, 3, 4, 5)))
         val node = boot.readTree(json)
         assertTrue(node.get("isCapital").asBoolean(), json); assertFalse(node.has("capital"), json)
         assertEquals(listOf("cityId", "commanderyName", "isCapital", "name", "stock", "supplied"), node.fieldNames().asSequence().sorted().toList())
@@ -420,15 +420,15 @@ class HwihaCampReaderTest {
     @Test fun `지리 색인은 런타임 省 index 를 han-tiles 관할 id 로 푼다`() {
         val artifacts = mock(ResolvedHanWorldArtifacts::class.java)
         `when`(artifacts.variant).thenReturn(HanWorldVariant.entries.first())
-        `when`(artifacts.artifactBytes(HwihaCityGeography.RUNTIME_MAP)).thenReturn("""{"width":1,"height":1,"cities":[
+        `when`(artifacts.artifactBytes(CityGeography.RUNTIME_MAP)).thenReturn("""{"width":1,"height":1,"cities":[
             {"id":1,"name":"장안","x":1,"y":1,"provinceId":1,"meta":{"jun":"경조윤","junCh":"京兆尹","nameCh":"长安县","displayName":"경조윤 장안현(长安)"}},
             {"id":2,"name":"떠돌이","x":2,"y":2,"provinceId":9},
             {"id":3,"name":"없음","x":3,"y":3}]}""".toByteArray())
-        `when`(artifacts.artifactBytes(HwihaCityGeography.TILES)).thenReturn(
+        `when`(artifacts.artifactBytes(CityGeography.TILES)).thenReturn(
             """{"provinceRecords":[{"jurisdictionId":"1"},{"jurisdictionId":"70623"}]}""".toByteArray())
-        val places = HwihaCityGeography(mapper, ledgers).places(artifacts)
-        assertEquals(HwihaCityGeography.Place("경조윤", "70623", "京兆尹", "长安县", "경조윤 장안현"), places[1])
-        assertEquals(HwihaCityGeography.Place(null, null), places[2])
-        assertEquals(HwihaCityGeography.Place(null, null), places[3])
+        val places = CityGeography(mapper, ledgers).places(artifacts)
+        assertEquals(CityGeography.Place("경조윤", "70623", "京兆尹", "长安县", "경조윤 장안현"), places[1])
+        assertEquals(CityGeography.Place(null, null), places[2])
+        assertEquals(CityGeography.Place(null, null), places[3])
     }
 }

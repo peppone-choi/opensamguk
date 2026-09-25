@@ -13,13 +13,13 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 
 /** Autonomous county work uses only the NPC's own current county and the human handler. */
-internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
+internal class NpcFieldSelector(private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
-        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
+        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             context.design.directActionStatus != DomesticDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
-        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId }) return reserved
         // An ongoing corps march owns this turn's movement. A new county action would stop it before encounter.
         val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }
@@ -29,7 +29,7 @@ internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
         val available = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
             as? FieldAssessment.Eligible ?: return reserved
         val city = world.getCityById(available.county.id) ?: return reserved
-        val levels = HwihaDomesticCountyEffects.levelsOf(city)
+        val levels = DomesticCountyEffects.levelsOf(city)
         val stock = try { CountyWarehouse.read(city.meta, city.id)?.stock }
             catch (_: IllegalArgumentException) { null }
         val candidates = FieldInput.INPUT_IDS.toList().mapIndexedNotNull { index, inputId ->

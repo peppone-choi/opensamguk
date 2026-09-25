@@ -1,4 +1,4 @@
-import { mapCityToTile, type IsoCityOverlay, type IsoSourceSize } from './HanMapCanvas';
+import { mapCityToTile, type IsoCityOverlay, type IsoSourceSize } from './WorldMapCanvas';
 import type { GridSize } from './isoMap';
 import { isOwnedNationVisual, parseNationColor } from './nationVisual';
 

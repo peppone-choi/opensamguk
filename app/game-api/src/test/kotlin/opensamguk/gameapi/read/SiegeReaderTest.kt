@@ -1,6 +1,6 @@
 package opensamguk.gameapi.read
 
-import opensamguk.gameapi.web.HwihaSiegeController
+import opensamguk.gameapi.web.SiegeController
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.DeployedCorps
@@ -11,15 +11,15 @@ import org.springframework.http.HttpStatus
 import java.util.Optional
 import kotlin.test.*
 
-class HwihaSiegeReaderTest {
+class SiegeReaderTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val worlds = mock(WorldStateReadRepository::class.java)
     private val nations = mock(NationReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val retainers = mock(RetainerReadRepository::class.java)
-    private val sieges = mock(HwihaSiegeReadRepository::class.java)
-    private val reader = HwihaSiegeReader(generals, worlds, nations, cities, retainers, sieges)
-    private val controller = HwihaSiegeController(reader)
+    private val sieges = mock(SiegeReadRepository::class.java)
+    private val reader = SiegeReader(generals, worlds, nations, cities, retainers, sieges)
+    private val controller = SiegeController(reader)
     private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"))
 
     private val corps = DeployedCorps("order-1", 1, 1, null, 1, listOf(21), Phase(190, 1, 1))
@@ -27,7 +27,7 @@ class HwihaSiegeReaderTest {
         meta = mapOf(DeploymentState.META_KEY to DeploymentState(listOf(corps)).toMetaValue()))
     private val defender = GeneralReadEntity(id = 2, worldId = 1, name = "수비", nationId = 2, userId = "42")
     private val stranger = GeneralReadEntity(id = 3, worldId = 1, name = "제삼", nationId = 3, userId = "43")
-    private val row = HwihaSiegeReadRow(77, "ACTIVE", 1, 1, "order-1", 1, 2, 190, 1, 1, turns = 3, morale = 2500,
+    private val row = SiegeReadRow(77, "ACTIVE", 1, 1, "order-1", 1, 2, 190, 1, 1, turns = 3, morale = 2500,
         garrison = 840, endReason = null, timeline = listOf(mapOf("event" to "START")))
 
     private fun setup(profile: String = "HWIHA") {

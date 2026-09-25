@@ -1,6 +1,6 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import HwihaLegacyDirectForm from '../components/command/HwihaLegacyDirectForm';
+import DirectActionForm from '../components/command/DirectActionForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
 
@@ -16,7 +16,7 @@ beforeEach(()=>{
 });
 
 test('transport submits server checked target and chosen amount',async()=>{
-    render(<HwihaLegacyDirectForm {...props}/>);
+    render(<DirectActionForm {...props}/>);
     const amount=await screen.findByRole('spinbutton',{name:'운반량'});
     fireEvent.change(amount,{target:{value:'400'}});
     fireEvent.click(screen.getByRole('button',{name:'물자조달 예약'}));
@@ -25,7 +25,7 @@ test('transport submits server checked target and chosen amount',async()=>{
 });
 
 test('transport over available stock cannot be reserved',async()=>{
-    render(<HwihaLegacyDirectForm {...props}/>);
+    render(<DirectActionForm {...props}/>);
     const amount=await screen.findByRole('spinbutton',{name:'운반량'});
     fireEvent.change(amount,{target:{value:'501'}});
     expect(screen.getByRole('button',{name:'물자조달 예약'})).toBeDisabled();

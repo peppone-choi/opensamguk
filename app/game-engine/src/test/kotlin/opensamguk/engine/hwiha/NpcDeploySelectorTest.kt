@@ -8,10 +8,10 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
 import opensamguk.logic.content.PersonContributionState
 
-class HwihaNpcDeploySelectorTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class NpcDeploySelectorTest {
+    private val fixture = CampaignWorldFixture()
     private val route = fixture.route()
-    private val selector = HwihaNpcDeploySelector(fixture.topology, fixture.metrics)
+    private val selector = NpcDeploySelector(fixture.topology, fixture.metrics)
 
     private fun world(userId: String? = null, troops: Int = 1000, defence: Int = 100): InMemoryTurnWorld =
         fixture.world(listOf(fixture.person(1, 1, route.startCity, userId = userId) to route.first),
@@ -26,7 +26,7 @@ class HwihaNpcDeploySelectorTest {
         val county = w.administrativeCountyIds.first { w.landNodeOfCity(it) == choice.destination }
         assertNotEquals(1, w.getCityById(county)!!.nationId, "the target is hostile")
         assertEquals(choice, selector.choose(world(), 1), "same world, same choice")
-        val reserved = selector.select(w, 1, HwihaCampaignWorldFixture.NO_INPUT)
+        val reserved = selector.select(w, 1, CampaignWorldFixture.NO_INPUT)
         assertEquals(DeployInputs.INPUT_ID, reserved.actionCode); assertFalse(reserved.rowExists); assertNull(reserved.requestId)
     }
 
@@ -50,26 +50,26 @@ class HwihaNpcDeploySelectorTest {
             cityChanges = { city -> city.copy(defence = 100, nationId = if (city.id == route.destinationCounty) 2 else city.nationId) })
         assertNull(selector.choose(held, 1))
         assertNull(selector.reliefFor(held, 1))
-        HwihaStratagemDraw(held, ChangeRecorder()).onTurn(10)
+        StratagemDraw(held, ChangeRecorder()).onTurn(10)
         val ownersHand = assertNotNull(StratagemHand.read(held.getGeneralById(10)!!.meta, 10))
         assertEquals(StratagemCardType.INSIGHT, ownersHand.cardType(ownersHand.extras.single().instanceId))
-        HwihaStratagemDraw(held, ChangeRecorder()).onTurn(1)
+        StratagemDraw(held, ChangeRecorder()).onTurn(1)
         assertNull(StratagemHand.read(held.getGeneralById(1)!!.meta, 1))
         held.removeRetainer(1)
-        HwihaStratagemDraw(held, ChangeRecorder()).onTurn(10)
+        StratagemDraw(held, ChangeRecorder()).onTurn(10)
         assertTrue(StratagemHand.read(held.getGeneralById(10)!!.meta, 10)!!.extras.isEmpty())
     }
 
     @Test fun `the deploy handler accepts a synthesized npc order and still forbids an unowned human reservation`() {
         val w = world()
         val choice = assertNotNull(selector.choose(w, 1))
-        val handler = HwihaDeployHandler(w, ChangeRecorder(), fixture.topology, fixture.metrics)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, DeployInputs.canonicalJson(choice), null, null, npcSelected = true))
+        val handler = DeployHandler(w, ChangeRecorder(), fixture.topology, fixture.metrics)
+        assertIs<TurnOutcome.Applied>(handler.handle(1, DeployInputs.canonicalJson(choice), null, null, npcSelected = true))
         val corps = DeploymentState.read(w.getGeneralById(1)!!.meta)!!.corps.single()
-        assertEquals(HwihaNpcDeploySelector.orderId(w, 1), corps.orderId)
+        assertEquals(NpcDeploySelector.orderId(w, 1), corps.orderId)
         assertEquals(choice.destination, CorpsOrder.read(w.getGeneralById(1)!!.meta, fixture.topology)!!.destination)
         val human = world(userId = "42")
-        assertEquals("FORBIDDEN", assertIs<HwihaTurnOutcome.Rejected>(HwihaDeployHandler(human, ChangeRecorder(),
+        assertEquals("FORBIDDEN", assertIs<TurnOutcome.Rejected>(DeployHandler(human, ChangeRecorder(),
             fixture.topology, fixture.metrics).handle(1, DeployInputs.canonicalJson(choice), null, null, npcSelected = true)).code)
     }
 }

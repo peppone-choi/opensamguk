@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.engine.hwiha.HwihaEncounterResolver
+import opensamguk.engine.hwiha.EncounterResolver
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.seed.HanWorldArtifactsResolver
@@ -44,7 +44,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
             "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration",
     ],
 )
-class HwihaS3PassChainProbeIT {
+class S3PassChainProbeIT {
     @Autowired lateinit var world: InMemoryTurnWorld
     @Autowired lateinit var service: TurnRunService
     @Autowired lateinit var jdbc: JdbcTemplate
@@ -56,7 +56,7 @@ class HwihaS3PassChainProbeIT {
         val failure = assertFailsWith<AssertionError> { PassChainSupport.assertChain(world, jdbc, WORLD) }
         assertTrue(listOf("행군", "조우", "공성").any { failure.message.orEmpty().contains(it) }, "끊긴 고리를 짚는다: ${failure.message}")
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, WORLD))
-        assertTrue(world.listGenerals().none { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta })
+        assertTrue(world.listGenerals().none { EncounterResolver.BATTLE_RECORD_KEY in it.meta })
         // 끊긴 고리 밖은 그대로 돈다 — 게이트가 모든 것을 한꺼번에 빨갛게 만드는 가짜가 아님을 같이 본다.
         assertTrue(world.getGeneralById(PassChainSupport.HUMAN)!!.nationId > 0, "출사는 여전히 된다")
     }

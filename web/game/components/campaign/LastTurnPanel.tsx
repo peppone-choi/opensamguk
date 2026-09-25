@@ -3,9 +3,9 @@
 import { Chip, Panel, SectionHeader } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
-import { HwihaEmpty, hwihaReadNotice } from './HwihaStates';
+import { Empty, hwihaReadNotice } from './GameStates';
 
-/** 사건 종류 → 뱃지 색. 종류 문자열은 서버 `HwihaRecordKind` 정본을 따른다. */
+/** 사건 종류 → 뱃지 색. 종류 문자열은 서버 `RecordKind` 정본을 따른다. */
 function kindTone(kind: string): 'moss' | 'rust' | 'info' | 'bronze' | 'neutral' {
     if (kind.startsWith('encounter') || kind === 'input.rejected' || kind === 'county.lost') return 'rust';
     if (kind.startsWith('court.')) return 'bronze';
@@ -52,8 +52,8 @@ export default function LastTurnPanel() {
     return (
         <Panel style={{ padding: 12 }}>
             <SectionHeader title="지난 순" sub="내 기록 · 세력 요약" />
-            {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
-            {!notice && turns.length === 0 ? <HwihaEmpty>최근 12순에 남은 기록이 없습니다.</HwihaEmpty> : null}
+            {notice ? <Empty>{notice}</Empty> : null}
+            {!notice && turns.length === 0 ? <Empty>최근 12순에 남은 기록이 없습니다.</Empty> : null}
             <div style={{ display: 'grid', gap: 8, paddingTop: 8 }}>
                 {turns.map((t) => (
                     <div key={`${t.year}-${t.month}-${t.phase}`} style={{ borderTop: '1px solid var(--line)', paddingTop: 6 }}>

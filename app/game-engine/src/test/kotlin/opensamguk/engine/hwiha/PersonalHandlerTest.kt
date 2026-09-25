@@ -4,17 +4,17 @@ import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.logic.input.*
 
-class HwihaPersonalHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class PersonalHandlerTest {
+    private val fixture = CampaignWorldFixture()
     private val ready = PersonalDesign.CANON.copy(status = PersonalDesign.CONFIRMED)
 
     @Test fun `self training raises the selected stat and fatigue exactly once`() {
         val route = fixture.route()
         val actor = fixture.person(901, 1, route.startCity, userId = "42")
         val world = fixture.world(listOf(actor to route.start))
-        val handler = HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(), ready)
+        val handler = PersonalHandler(world, ChangeRecorder(), DomesticContext(), ready)
         val args = """{"stat":"strength"}"""
-        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(PersonalInput.SELF_TRAIN,
+        val applied = assertIs<TurnOutcome.Applied>(handler.handle(PersonalInput.SELF_TRAIN,
             actor.id, args, "train-901", 42))
         val after = world.getGeneralById(actor.id)!!
         assertEquals(actor.stats.strength + ready.trainingStatGain, after.stats.strength)
@@ -32,8 +32,8 @@ class HwihaPersonalHandlerTest {
             meta = fixture.person(902, 1, route.startCity, userId = "42").meta +
                 (PersonalTravelCondition.META_KEY to PersonalTravelCondition(15, 60).toMetaValue()))
         val world = fixture.world(listOf(actor to route.start))
-        val handler = HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(), ready)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(PersonalInput.RECUPERATE,
+        val handler = PersonalHandler(world, ChangeRecorder(), DomesticContext(), ready)
+        assertIs<TurnOutcome.Applied>(handler.handle(PersonalInput.RECUPERATE,
             actor.id, "{}", "heal-902", 42))
         val after = world.getGeneralById(actor.id)!!
         assertEquals(10, after.injury)
@@ -44,8 +44,8 @@ class HwihaPersonalHandlerTest {
         val healthy = fixture.person(903, 1, route.startCity, userId = "42")
         val healthyWorld = fixture.world(listOf(healthy to route.start))
         assertEquals(PersonalFailure.ALREADY_HEALTHY.name,
-            assertIs<HwihaTurnOutcome.Rejected>(HwihaPersonalHandler(healthyWorld, ChangeRecorder(),
-                HwihaDomesticContext(), ready).handle(PersonalInput.RECUPERATE, healthy.id,
+            assertIs<TurnOutcome.Rejected>(PersonalHandler(healthyWorld, ChangeRecorder(),
+                DomesticContext(), ready).handle(PersonalInput.RECUPERATE, healthy.id,
                 "{}", "heal-903", 42)).code)
     }
 
@@ -53,10 +53,10 @@ class HwihaPersonalHandlerTest {
         val route = fixture.route()
         val actor = fixture.person(904, 1, route.startCity, userId = "42")
         val world = fixture.world(listOf(actor to route.start))
-        val result = HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(),
+        val result = PersonalHandler(world, ChangeRecorder(), DomesticContext(),
             ready.copy(status = "PROPOSED")).handle(
             PersonalInput.TRAVEL, actor.id, "{}", "travel-904", 42)
-        assertEquals(InputRejection.NOT_DELIVERED.name, assertIs<HwihaTurnOutcome.Rejected>(result).code)
+        assertEquals(InputRejection.NOT_DELIVERED.name, assertIs<TurnOutcome.Rejected>(result).code)
         assertEquals(actor, world.getGeneralById(actor.id))
     }
 }

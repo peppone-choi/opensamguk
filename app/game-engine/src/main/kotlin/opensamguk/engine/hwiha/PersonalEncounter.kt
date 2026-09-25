@@ -5,15 +5,15 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Settles a lone traveler's contact on entry. Only people participate; no bugok is created or changed. */
-class HwihaPersonalEncounter(
+class PersonalEncounter(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val reactions: HwihaMarchReactionPolicy,
-    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val reactions: MarchReactionPolicy,
+    private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
-    fun settle(actorId: Int, applied: HwihaTravelExecution.Applied) {
+    fun settle(actorId: Int, applied: TravelExecution.Applied) {
         val checkpoint = applied.state.checkpoint
         if (checkpoint.stop != LandMarchStop.ENCOUNTER) return
         val province = applied.movement.reachedNodes.last()
@@ -26,7 +26,7 @@ class HwihaPersonalEncounter(
                 else LandMarchStop.BUDGET_EXHAUSTED
             update(actorId) { it.copy(meta = it.meta + (TravelState.META_KEY to
                 applied.state.copy(checkpoint = checkpoint.copy(stop = stop)).toMetaValue())) }
-            HwihaRecords.general(world, actorId, RecordKind.MARCH_DIRECT,
+            Records.general(world, actorId, RecordKind.MARCH_DIRECT,
                 "설치 계책을 만나 행군을 멈췄습니다.", mapOf("orderId" to applied.state.orderId,
                     "province" to province.canonicalKey, "stop" to "SCHEME_CONTACT"))
             return
@@ -42,7 +42,7 @@ class HwihaPersonalEncounter(
                 "Invalid personal encounter state could not retreat"
             }
             update(actorId) { it.copy(meta = it.meta - TravelState.META_KEY) }
-            HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
+            Records.general(world, actorId, RecordKind.INPUT_REJECTED,
                 "개인 조우 상태를 읽을 수 없어 이전 省으로 물러났습니다.",
                 mapOf("inputId" to applied.state.inputId, "code" to "STATE_UNAVAILABLE"))
             return
@@ -72,7 +72,7 @@ class HwihaPersonalEncounter(
                     (PersonalTravelCondition.META_KEY to updatedCondition.toMetaValue()) +
                     (REPLAY_KEY to replay) +
                     (if (battle.outcome == PersonalEncounterBattle.Outcome.CAPTURED)
-                        mapOf(HwihaEncounterResolver.CAPTIVE_KEY to linkedMapOf("version" to 1,
+                        mapOf(EncounterResolver.CAPTIVE_KEY to linkedMapOf("version" to 1,
                             "captorGeneralId" to battle.defenderGeneralId, "encounterId" to encounterId,
                             "capturedAt" to Phase(world.getState().currentYear, world.getState().currentMonth,
                                 world.getState().currentPhase).toMetaValue())) else emptyMap()))
@@ -89,14 +89,14 @@ class HwihaPersonalEncounter(
         val winners = if (won) listOf(actorId) else listOf(battle.defenderGeneralId)
         val losers = if (won) listOf(battle.defenderGeneralId) else listOf(actorId)
         outcomes.onEncounterResolved(winners, losers)
-        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_ENCOUNTER,
+        Records.general(world, actorId, RecordKind.PERSONAL_ENCOUNTER,
             when (battle.outcome) {
                 PersonalEncounterBattle.Outcome.WON -> "개인 조우 전투에서 승리했습니다."
                 PersonalEncounterBattle.Outcome.RETREATED -> "개인 조우 전투에서 패해 이전 省으로 물러났습니다."
                 PersonalEncounterBattle.Outcome.CAPTURED -> "개인 조우 전투에서 패해 사로잡혔습니다."
             }, mapOf("encounterId" to encounterId, "outcome" to battle.outcome.name,
                 "province" to province.canonicalKey, "rounds" to battle.rounds))
-        HwihaRecords.general(world, battle.defenderGeneralId, RecordKind.PERSONAL_ENCOUNTER,
+        Records.general(world, battle.defenderGeneralId, RecordKind.PERSONAL_ENCOUNTER,
             if (won) "진입한 적 장수와의 개인 조우 전투에서 패했습니다."
                 else "진입한 적 장수와의 개인 조우 전투에서 승리했습니다.",
             mapOf("encounterId" to encounterId, "outcome" to if (won) "LOST" else "WON",
@@ -104,8 +104,8 @@ class HwihaPersonalEncounter(
     }
 
     private fun hostileDefenders(actorId: Int, province: StrategicNodeRef.LandProvince): List<DeployedCorps> {
-        val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection() ?: return emptyList()
-        val presence = HwihaMilitaryPresenceProvider(world, topology, metrics).assess(actorId)
+        val projection = DeploymentExecutor(world, recorder, topology, metrics).projection() ?: return emptyList()
+        val presence = MilitaryPresenceProvider(world, topology, metrics).assess(actorId)
             as? MilitaryPresenceAssessment.Ready ?: return emptyList()
         return presence.hostileCorps.filter { corps ->
             projection.people.single { it.id == corps.commanderGeneralId }.node == province &&
@@ -125,8 +125,8 @@ class HwihaPersonalEncounter(
         const val REPLAY_KEY = "hwihaLastPersonalEncounter"
 
         /** A busy defender cannot join another encounter; malformed reaction authority never grants entry. */
-        fun entryAt(world: InMemoryTurnWorld, military: HwihaMilitaryPresenceProvider,
-            reactions: HwihaMarchReactionPolicy, actorId: Int,
+        fun entryAt(world: InMemoryTurnWorld, military: MilitaryPresenceProvider,
+            reactions: MarchReactionPolicy, actorId: Int,
             node: StrategicNodeRef.LandProvince): LandMarchEntry {
             val entry = military.directEntryAt(actorId, node, reactions)
             if (entry != LandMarchEntry.ENCOUNTER) return entry

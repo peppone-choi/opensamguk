@@ -7,8 +7,8 @@ import opensamguk.logic.domestic.FieldRules
 import opensamguk.logic.domestic.FieldEconomyAssessment
 
 import opensamguk.logic.domestic.DomesticDesign
-import opensamguk.gameapi.read.HwihaDomesticReader
-import opensamguk.gameapi.read.HwihaDomesticForbidden
+import opensamguk.gameapi.read.DomesticReader
+import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -16,13 +16,13 @@ import org.springframework.transaction.annotation.Transactional
 
 /** Direct field actions share the domestic read projection and the exact execution rule. */
 @Service
-class HwihaFieldAdmission(private val reader: HwihaDomesticReader,
+class FieldAdmission(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(inputId: String, actorId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
         if (ownerUserId == null || ownerUserId <= 0) deny("UNAUTHORIZED", "제출자 인증이 필요합니다.")
         try { reader.requireOwner(actorId, ownerUserId.toLong()) }
-        catch (_: HwihaDomesticForbidden) { deny("FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.") }
+        catch (_: DomesticForbidden) { deny("FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.") }
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         val request = FieldInput.parse(actorId, inputId, raw)
             ?: deny(FieldFailure.INVALID_INPUT.name, FieldFailure.INVALID_INPUT.message)
@@ -42,5 +42,5 @@ class HwihaFieldAdmission(private val reader: HwihaDomesticReader,
         return FieldInput.canonicalJson(request)
     }
 
-    private fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
+    private fun deny(code: String, reason: String): Nothing = throw AdmissionDenied(code, reason)
 }

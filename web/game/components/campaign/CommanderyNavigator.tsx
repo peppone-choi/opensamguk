@@ -1,6 +1,6 @@
 'use client';
 
-import { Chip, type CommanderyVisibility, type HwihaCommanderyCell } from '@opensamguk/ui';
+import { Chip, type CommanderyVisibility, type CommanderyCell } from '@opensamguk/ui';
 import { HWIHA_DIRECTIONS, neighborInDirection } from '@/lib/hwiha-fog';
 
 const ARROW_CELLS = ['NW', 'N', 'NE', 'W', null, 'E', 'SW', 'S', 'SE'] as const;
@@ -15,9 +15,9 @@ const VISIBILITY_TONE: Record<CommanderyVisibility, 'moss' | 'info' | 'rust'> = 
 };
 
 export interface CommanderyNavigatorProps {
-    commanderies: readonly HwihaCommanderyCell[];
-    focus: HwihaCommanderyCell;
-    home?: HwihaCommanderyCell;
+    commanderies: readonly CommanderyCell[];
+    focus: CommanderyCell;
+    home?: CommanderyCell;
     onFocus: (no: number) => void;
     visibility: ReadonlyMap<number, CommanderyVisibility> | null;
     intelAge?: ReadonlyMap<number, number>;

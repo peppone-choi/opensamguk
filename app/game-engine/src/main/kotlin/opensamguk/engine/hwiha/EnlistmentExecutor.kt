@@ -26,7 +26,7 @@ sealed interface EnlistmentExecution {
  * Policy must recompute free capacity from current direct cards on each call; enlistment
  * occupies capacity by creating a card, rather than spending the lord's renown points.
  */
-class HwihaEnlistmentExecutor(
+class EnlistmentExecutor(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val currentPolicy: ((EnlistmentRequest) -> EnlistmentPolicy)? = null,
@@ -74,9 +74,9 @@ class HwihaEnlistmentExecutor(
         val master = byId[plan.masterId]
         val refs = linkedMapOf<String, Any?>("nationId" to plan.nationId, "masterId" to plan.masterId,
             "generalId" to actor.id, "retainerId" to card.id)
-        HwihaRecords.general(world, actor.id, RecordKind.ENLISTED,
+        Records.general(world, actor.id, RecordKind.ENLISTED,
             "${nation.name}에 출사해 ${master?.name ?: "주공"}의 휘하에 들어갔습니다.", refs, nationId = plan.nationId)
-        if (plan.masterId != actor.id) HwihaRecords.general(world, plan.masterId, RecordKind.RETAINER_JOINED,
+        if (plan.masterId != actor.id) Records.general(world, plan.masterId, RecordKind.RETAINER_JOINED,
             "${JosaUtil.put(actor.name, "이")} 출사해 휘하에 들어왔습니다.", refs, nationId = plan.nationId)
         return EnlistmentExecution.Applied(plan, card.id)
     }

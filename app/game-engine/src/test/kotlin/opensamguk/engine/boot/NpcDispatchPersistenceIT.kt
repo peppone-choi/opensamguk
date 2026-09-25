@@ -21,11 +21,11 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Storage-boundary evidence only: these synthetic people are not a playable scenario. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaNpcDispatchPersistenceIT {
+class NpcDispatchPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable, "Docker unavailable: dispatch storage NOT verified")
         postgres=PostgreSQLContainer("postgres:16-alpine"); postgres.start()
@@ -34,7 +34,7 @@ class HwihaNpcDispatchPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc=JdbcTemplate(source)
         flush=JdbcFlushExecutor(NamedParameterJdbcTemplate(source),TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture=HwihaEnlistmentFixture(jdbc,flush)
+        fixture=EnlistmentFixture(jdbc,flush)
     }
     @AfterAll fun teardown() { if(this::postgres.isInitialized) postgres.stop() }
     private fun save(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
@@ -42,7 +42,7 @@ class HwihaNpcDispatchPersistenceIT {
     private fun seed(id: Int): Int {
         fixture.seed(id)
         val world=InMemoryTurnWorld(fixture.load(id)); val recorder=ChangeRecorder()
-        assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world,recorder)
+        assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world,recorder)
             .execute(EnlistmentRequest(1,EnlistmentMode.NATION,1)) { error("direct enlistment") })
         save(world,recorder)
         jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=1",id)

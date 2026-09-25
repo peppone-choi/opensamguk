@@ -6,7 +6,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.RulerSuccessionHandler
 
 /** Re-root a surviving nation after its capital falls; a landless nation uses the existing extinction cascade. */
-internal class HwihaCapitalAfterCapture(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+internal class CapitalAfterCapture(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     fun settle(previousOwnerId: Int, capturedCountyId: Int) {
         if (previousOwnerId <= 0) return
         val nation = world.getNationById(previousOwnerId) ?: return

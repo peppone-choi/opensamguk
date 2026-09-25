@@ -14,9 +14,9 @@ import org.slf4j.LoggerFactory
  * - 지불자 세력의 縣이지만 보급이 끊겼으면(고립): 그 縣 창고만.
  * - 그 밖(타국·무주 땅, 재야 지불자): 낼 창고가 없다.
  *
- * 전액을 낼 수 있을 때만 차례로 뺀다(부분 지급 없음). 차감은 [HwihaWarehouseSettlement] 로만 한다.
+ * 전액을 낼 수 있을 때만 차례로 뺀다(부분 지급 없음). 차감은 [WarehouseSettlement] 로만 한다.
  */
-class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class WarehouseNetwork(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     fun countiesFor(payerNationId: Int, locationCityId: Int): List<Int> {
         if (payerNationId <= 0) return emptyList()
         val location = world.getCityById(locationCityId)?.takeIf { it.nationId == payerNationId } ?: return emptyList()
@@ -53,8 +53,8 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
             if (remaining == 0L) break
             val take = minOf(remaining, balance(warehouse.stock))
             if (take == 0L) continue
-            val result = HwihaWarehouseSettlement(world, recorder).settle(county, payerNationId, warehouse.revision, debit(take))
-            if (result != HwihaWarehouseSettlement.Result.APPLIED) {
+            val result = WarehouseSettlement(world, recorder).settle(county, payerNationId, warehouse.revision, debit(take))
+            if (result != WarehouseSettlement.Result.APPLIED) {
                 log.warn("hwiha_warehouse_payment_skipped nation={} county={} reason={}", payerNationId, county, result)
                 return false
             }
@@ -72,6 +72,6 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
     }
 
     private companion object {
-        val log = LoggerFactory.getLogger(HwihaWarehouseNetwork::class.java)
+        val log = LoggerFactory.getLogger(WarehouseNetwork::class.java)
     }
 }

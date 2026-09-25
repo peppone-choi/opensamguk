@@ -8,12 +8,12 @@ import opensamguk.logic.world.StrategicNodeRef
 
 /**
  * 행군 진입 판정에서 반응 기록(설치 계책·요격·회피, 재설계 spec §5.1 4단계)이 주는 위험. 적 군단이 그 省에 있어서
- * 생기는 조우는 [HwihaMilitaryPresenceProvider] 가 따로 본다 — 여기는 그 밖의 반응만 판정한다.
+ * 생기는 조우는 [MilitaryPresenceProvider] 가 따로 본다 — 여기는 그 밖의 반응만 판정한다.
  *
- * 운영 배선은 [HwihaMarchReactionInterpreter]가 맡는다. 권위가 없거나 틀이 깨졌으면 판정 불가(UNAVAILABLE),
+ * 운영 배선은 [MarchReactionInterpreter]가 맡는다. 권위가 없거나 틀이 깨졌으면 판정 불가(UNAVAILABLE),
  * 비어 있으면 위험 없음(CLEAR)이다. [NON_BLOCKING]은 이전 호출자를 위한 명시적 호환 정책이다.
  */
-fun interface HwihaMarchReactionPolicy {
+fun interface MarchReactionPolicy {
     fun entryHazard(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince): LandMarchEntry
 
     /** Hostile corps that have a validated retreat and yield this province on actual entry. */
@@ -37,7 +37,7 @@ fun interface HwihaMarchReactionPolicy {
         node: StrategicNodeRef.LandProvince) = onEntered(world, recorder, actorId, node)
 
     companion object {
-        val NON_BLOCKING = HwihaMarchReactionPolicy { world, _, _ ->
+        val NON_BLOCKING = MarchReactionPolicy { world, _, _ ->
             when (MarchReactions.presence(world.getState().meta)) {
                 MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED -> LandMarchEntry.UNAVAILABLE
                 MarchReactions.Presence.EMPTY, MarchReactions.Presence.PENDING -> LandMarchEntry.CLEAR

@@ -3,14 +3,14 @@ package opensamguk.infra.seed
 import kotlin.test.*
 import opensamguk.logic.input.RuleProfile
 
-class HwihaScenarioWarehouseSeedsTest {
+class ScenarioWarehouseSeedsTest {
     private fun stock(): Map<String, Any> = linkedMapOf("money" to 0, "grain" to Long.MAX_VALUE,
         "iron" to 2L, "timber" to 3, "horses" to 4)
     private fun row(id: Any = 42): Map<String, Any> = mapOf("countyId" to id, "stock" to stock())
     private fun declaration(): Map<String, Any> = mapOf("version" to 1, "units" to "game-resource-v1",
         "source" to "GAME_DESIGN", "topologyRevision" to "fixture-v1", "topologyHash" to "a".repeat(64),
         "warehouses" to listOf(row()))
-    private fun decode(value: Any?) = HwihaScenarioWarehouseSeeds.decode(mapOf("hwihaWarehouses" to value), RuleProfile.HWIHA)
+    private fun decode(value: Any?) = ScenarioWarehouseSeeds.decode(mapOf("hwihaWarehouses" to value), RuleProfile.HWIHA)
 
     @Test fun `explicit inventory preserves exact quantities and returns immutable independent map`() {
         val rows = mutableListOf(row(42), row(3))
@@ -29,11 +29,11 @@ class HwihaScenarioWarehouseSeedsTest {
 
     @Test fun `absence differs from malformed and declaration requires HWIHA`() {
         for (profile in listOf(null, RuleProfile.SAMMO, RuleProfile.HWIHA)) {
-            assertNull(HwihaScenarioWarehouseSeeds.decode(emptyMap(), profile))
+            assertNull(ScenarioWarehouseSeeds.decode(emptyMap(), profile))
         }
         for (profile in listOf(null, RuleProfile.SAMMO)) {
             assertFailsWith<IllegalArgumentException> {
-                HwihaScenarioWarehouseSeeds.decode(mapOf("hwihaWarehouses" to declaration()), profile)
+                ScenarioWarehouseSeeds.decode(mapOf("hwihaWarehouses" to declaration()), profile)
             }
         }
         for (bad in listOf(null, "{}", declaration() - "source", declaration() + ("extra" to 1),

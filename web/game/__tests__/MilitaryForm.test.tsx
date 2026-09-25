@@ -1,6 +1,6 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import HwihaMilitaryForm from '../components/command/HwihaMilitaryForm';
+import MilitaryForm from '../components/command/MilitaryForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
 
@@ -15,7 +15,7 @@ beforeEach(()=>{
 });
 
 test('muster reserves a command for the owned corps without caller supplied destination',async()=>{
-    render(<HwihaMilitaryForm {...props}/>);
+    render(<MilitaryForm {...props}/>);
     expect(await screen.findByText('집결 대상 부곡: 2')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'집합 예약'}));
     await waitFor(()=>expect(api.command).toHaveBeenCalledWith('action.muster',{},1,0));
@@ -24,7 +24,7 @@ test('muster reserves a command for the owned corps without caller supplied dest
 test('failed military precheck cannot reserve',async()=>{
     vi.mocked(api.militaryOptions).mockResolvedValue({inputId:'action.muster',available:false,
         code:'NO_COMMANDED_CORPS',reason:'집결시킬 부곡이 없습니다.'});
-    render(<HwihaMilitaryForm {...props}/>);
+    render(<MilitaryForm {...props}/>);
     expect(await screen.findByText('집결시킬 부곡이 없습니다.')).toBeInTheDocument();
     expect(screen.getByRole('button',{name:'집합 예약'})).toBeDisabled();
 });
@@ -33,7 +33,7 @@ test('conscript shows server calculated troops and cost before reservation',asyn
     vi.mocked(api.militaryOptions).mockResolvedValue({inputId:'action.conscript',available:true,
         countyName:'宛縣',troops:100,troopsAfter:150,populationAfter:950,training:50,trainingAfter:50,
         morale:50,moraleAfter:50,grainCost:15000,moneyCost:0});
-    render(<HwihaMilitaryForm {...props} inputId="action.conscript"/>);
+    render(<MilitaryForm {...props} inputId="action.conscript"/>);
     expect(await screen.findByText(/도시 병력 100 → 150/)).toHaveTextContent('곡물 15000 소모');
     fireEvent.click(screen.getByRole('button',{name:'징병 예약'}));
     await waitFor(()=>expect(api.command).toHaveBeenCalledWith('action.conscript',{},1,0));

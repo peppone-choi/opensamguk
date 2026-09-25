@@ -6,12 +6,12 @@ import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.input.*
 
 /** Queued on submission; replayed exactly once at the issuer's next turn. */
-internal data class HwihaQueuedLegacyCourt(val requestId: String, val ownerUserId: Int, val inputId: String, val argJson: String) {
+internal data class QueuedLegacyCourt(val requestId: String, val ownerUserId: Int, val inputId: String, val argJson: String) {
     fun toMetaValue(): Map<String, Any?> = mapOf("version" to 1, "requestId" to requestId,
         "ownerUserId" to ownerUserId, "inputId" to inputId, "argJson" to argJson)
     companion object {
         const val META_KEY = "hwihaQueuedLegacyCourt"
-        fun read(meta: Map<String, Any?>): HwihaQueuedLegacyCourt? {
+        fun read(meta: Map<String, Any?>): QueuedLegacyCourt? {
             val value = meta[META_KEY] ?: return null
             val row = value as? Map<*, *> ?: invalid()
             require(row.keys == setOf("version", "requestId", "ownerUserId", "inputId", "argJson") && row["version"] == 1)
@@ -21,15 +21,15 @@ internal data class HwihaQueuedLegacyCourt(val requestId: String, val ownerUserI
             val json = row["argJson"] as? String ?: invalid()
             require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")) && owner > 0 && inputId in CourtInput.INPUT_IDS)
             require(json.length <= 4096)
-            return HwihaQueuedLegacyCourt(requestId, owner, inputId, json)
+            return QueuedLegacyCourt(requestId, owner, inputId, json)
         }
         private fun invalid(): Nothing = throw IllegalArgumentException("invalid queued legacy court input")
     }
 }
 
 /** One executor and one assessment for every court legacy mode. */
-internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext) {
+internal class LegacyCourtExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+    private val context: DomesticContext) {
     fun assess(actorId: Int, inputId: String, json: String) =
         CourtRules.assess(actorId, inputId, json, context.projection(world))
 
@@ -109,7 +109,7 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
             }
             else -> return reject(CourtFailure.INVALID_INPUT)
         }
-        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
+        Records.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${ready.actor.name}의 조정 결정을 실행했습니다.", mapOf("inputId" to inputId))
         return null
     }

@@ -16,18 +16,18 @@ import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 
 /** Applies one direct county action after the personal movement stage. */
-class HwihaFieldHandler(
+class FieldHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+    private val context: DomesticContext,
 ) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
-        npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(code: String, reason: String) = HwihaTurnOutcome.Rejected(inputId, code, reason)
+        npcSelected: Boolean = false): TurnOutcome {
+        fun reject(code: String, reason: String) = TurnOutcome.Rejected(inputId, code, reason)
         fun reject(reason: FieldFailure) = reject(reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(FieldFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(FieldFailure.ACTOR_NOT_FOUND)
-        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
+        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && NpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
             return reject("FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = FieldInput.parse(actorId, inputId, rawJson) ?: return reject(FieldFailure.INVALID_INPUT)
@@ -35,7 +35,7 @@ class HwihaFieldHandler(
         val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (previous?.get("turn") == turnToken) {
             if (previous["inputId"] == inputId && previous["requestId"] == requestId)
-                return HwihaTurnOutcome.Applied(inputId, (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
+                return TurnOutcome.Applied(inputId, (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
             return reject(FieldFailure.ALREADY_PROCESSED)
         }
         val projection = context.projection(world)
@@ -46,7 +46,7 @@ class HwihaFieldHandler(
         if (design.directActionStatus != DomesticDesign.CONFIRMED)
             return reject("NOT_DELIVERED", "현장 행동의 효과 수치가 확정되지 않았습니다.")
         val city = world.getCityById(eligible.county.id) ?: return reject(FieldFailure.COUNTY_UNAVAILABLE)
-        val levels = HwihaDomesticCountyEffects.levelsOf(city)
+        val levels = DomesticCountyEffects.levelsOf(city)
         val warehouse = try { CountyWarehouse.read(city.meta, city.id) }
             catch (_: IllegalArgumentException) { null }
         val economy = FieldRules.assessEconomy(inputId, eligible.person, city.id, levels, warehouse?.stock, design)
@@ -60,20 +60,20 @@ class HwihaFieldHandler(
             newDedication = Math.addExact(actor.dedication, growth.dedication)
         } catch (_: ArithmeticException) { return reject(FieldFailure.STATE_UNAVAILABLE) }
         if (effect.debit != Resources() || effect.credit != Resources()) {
-            val settled = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, checkNotNull(warehouse).revision,
+            val settled = WarehouseSettlement(world, recorder).settle(city.id, city.nationId, checkNotNull(warehouse).revision,
                 effect.debit, effect.credit)
-            if (settled != HwihaWarehouseSettlement.Result.APPLIED) return reject(when (settled) {
-                HwihaWarehouseSettlement.Result.WRONG_RULE_PROFILE -> FieldFailure.WRONG_RULE_PROFILE
-                HwihaWarehouseSettlement.Result.NOT_COUNTY -> FieldFailure.COUNTY_UNAVAILABLE
-                HwihaWarehouseSettlement.Result.OWNER_CHANGED -> FieldFailure.FOREIGN_COUNTY
-                HwihaWarehouseSettlement.Result.NOT_READY -> FieldFailure.WAREHOUSE_NOT_READY
-                HwihaWarehouseSettlement.Result.INSUFFICIENT_STOCK -> FieldFailure.INSUFFICIENT_STOCK
+            if (settled != WarehouseSettlement.Result.APPLIED) return reject(when (settled) {
+                WarehouseSettlement.Result.WRONG_RULE_PROFILE -> FieldFailure.WRONG_RULE_PROFILE
+                WarehouseSettlement.Result.NOT_COUNTY -> FieldFailure.COUNTY_UNAVAILABLE
+                WarehouseSettlement.Result.OWNER_CHANGED -> FieldFailure.FOREIGN_COUNTY
+                WarehouseSettlement.Result.NOT_READY -> FieldFailure.WAREHOUSE_NOT_READY
+                WarehouseSettlement.Result.INSUFFICIENT_STOCK -> FieldFailure.INSUFFICIENT_STOCK
                 else -> FieldFailure.STATE_UNAVAILABLE
             })
         }
         val current = checkNotNull(world.getCityById(city.id))
         val trust = ReservedTurnHandler.materializeMariaDbFloat(effect.levels.trust)
-        val meta = if (trust == HwihaDomesticCountyEffects.trustOf(current)) current.meta else current.meta.withKey("trust", trust)
+        val meta = if (trust == DomesticCountyEffects.trustOf(current)) current.meta else current.meta.withKey("trust", trust)
         val next = current.copy(population = effect.levels.population, agriculture = effect.levels.agriculture,
             commerce = effect.levels.commerce, security = effect.levels.security, defence = effect.levels.defence,
             wall = effect.levels.wall, meta = meta)
@@ -104,10 +104,10 @@ class HwihaFieldHandler(
             meta = latest.meta.withKey(LAST_TURN_KEY, record))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_COUNTY_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED, "${city.name}에서 현장 행동을 마쳤습니다.",
+        RenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_COUNTY_ACTION)
+        Records.general(world, actorId, RecordKind.FIELD_APPLIED, "${city.name}에서 현장 행동을 마쳤습니다.",
             linkedMapOf("inputId" to inputId, "countyId" to city.id, "requestId" to requestId))
-        return HwihaTurnOutcome.Applied(inputId, effects)
+        return TurnOutcome.Applied(inputId, effects)
     }
 
     companion object { private const val LAST_TURN_KEY = "hwihaFieldLastTurn" }

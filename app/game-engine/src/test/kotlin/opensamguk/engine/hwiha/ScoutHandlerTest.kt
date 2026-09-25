@@ -19,11 +19,11 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
-/** `action.scout` on the pinned 1133 map, in memory (the DB round trip is HwihaScoutPersistenceIT). */
-class HwihaScoutHandlerTest {
+/** `action.scout` on the pinned 1133 map, in memory (the DB round trip is ScoutPersistenceIT). */
+class ScoutHandlerTest {
     private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
     private val index by lazy { bundle.commanderyIndex }
-    private val context by lazy { HwihaVisionContext(bundle.projection.topology, bundle.landMarchMetrics, index) }
+    private val context by lazy { VisionContext(bundle.projection.topology, bundle.landMarchMetrics, index) }
 
     /** A commandery with a neighbour and a non-neighbour, each with a land province. */
     private data class Geo(val home: String, val next: String, val far: String, val nextId: String, val farId: String)
@@ -68,8 +68,8 @@ class HwihaScoutHandlerTest {
 
     @Test fun `scouting a neighbour stores a private banded snapshot through the recorder`() {
         val world = world(); val recorder = ChangeRecorder()
-        val outcome = HwihaScoutHandler(world, recorder, context).handle(1, args(geo.nextId), 42)
-        assertEquals(HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID), outcome)
+        val outcome = ScoutHandler(world, recorder, context).handle(1, args(geo.nextId), 42)
+        assertEquals(TurnOutcome.Applied(ScoutInputCodec.INPUT_ID), outcome)
         val notebook = assertNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
         assertEquals(index.tilesContentHash, notebook.tilesContentHash)
         val report = notebook.reports.single()
@@ -87,33 +87,33 @@ class HwihaScoutHandlerTest {
 
     @Test fun `the step-7 re-check rejects without writing when the target is not next to the actor`() {
         val world = world(); val before = world.getGeneralById(1)
-        val outcome = assertIs<HwihaTurnOutcome.Rejected>(HwihaScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.farId), 42))
+        val outcome = assertIs<TurnOutcome.Rejected>(ScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.farId), 42))
         assertEquals(ScoutFailure.NOT_ADJACENT.name, outcome.code)
         assertEquals(before, world.getGeneralById(1))
-        assertEquals("FORBIDDEN", assertIs<HwihaTurnOutcome.Rejected>(
-            HwihaScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.nextId), 43)).code)
-        assertEquals(ScoutFailure.INVALID_INPUT.name, assertIs<HwihaTurnOutcome.Rejected>(
-            HwihaScoutHandler(world, ChangeRecorder(), context).handle(1, """{"commanderyId":1}""", 42)).code)
-        assertEquals(ScoutFailure.STATE_UNAVAILABLE.name, assertIs<HwihaTurnOutcome.Rejected>(
-            HwihaScoutHandler(world, ChangeRecorder(), null).handle(1, args(geo.nextId), 42)).code)
+        assertEquals("FORBIDDEN", assertIs<TurnOutcome.Rejected>(
+            ScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.nextId), 43)).code)
+        assertEquals(ScoutFailure.INVALID_INPUT.name, assertIs<TurnOutcome.Rejected>(
+            ScoutHandler(world, ChangeRecorder(), context).handle(1, """{"commanderyId":1}""", 42)).code)
+        assertEquals(ScoutFailure.STATE_UNAVAILABLE.name, assertIs<TurnOutcome.Rejected>(
+            ScoutHandler(world, ChangeRecorder(), null).handle(1, args(geo.nextId), 42)).code)
         assertEquals(before, world.getGeneralById(1))
     }
 
     @Test fun `a corrupt notebook is never overwritten and a notebook from other tiles is replaced`() {
         val corrupt = world(extraActorMeta = mapOf(ScoutReports.META_KEY to mapOf("version" to 9)))
-        assertEquals(ScoutFailure.STATE_UNAVAILABLE.name, assertIs<HwihaTurnOutcome.Rejected>(
-            HwihaScoutHandler(corrupt, ChangeRecorder(), context).handle(1, args(geo.nextId), 42)).code)
+        assertEquals(ScoutFailure.STATE_UNAVAILABLE.name, assertIs<TurnOutcome.Rejected>(
+            ScoutHandler(corrupt, ChangeRecorder(), context).handle(1, args(geo.nextId), 42)).code)
         val stale = ScoutReports("0".repeat(64), listOf(ScoutReport("PARENT-OLD", Phase(189, 1, 1), emptyList(), emptyList())))
         val world = world(extraActorMeta = mapOf(ScoutReports.META_KEY to stale.toMetaValue()))
-        assertIs<HwihaTurnOutcome.Applied>(HwihaScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.nextId), 42))
+        assertIs<TurnOutcome.Applied>(ScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.nextId), 42))
         assertEquals(listOf(geo.nextId), ScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.map { it.commanderyId })
     }
 
     @Test fun `scouting again replaces the old snapshot of that commandery only`() {
-        val world = world(); val handler = HwihaScoutHandler(world, ChangeRecorder(), context)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, args(geo.nextId), 42))
+        val world = world(); val handler = ScoutHandler(world, ChangeRecorder(), context)
+        assertIs<TurnOutcome.Applied>(handler.handle(1, args(geo.nextId), 42))
         world.setCurrentDate(190, 4, 1)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, args(geo.nextId), 42))
+        assertIs<TurnOutcome.Applied>(handler.handle(1, args(geo.nextId), 42))
         val report = ScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.single()
         assertEquals(190, report.seenAt.year); assertEquals(4, report.seenAt.month)
     }
@@ -126,7 +126,7 @@ class HwihaScoutHandlerTest {
         val turn = handler.handle(1, opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
             actionCode = ScoutInputCodec.INPUT_ID, argJson = args(geo.nextId), requestId = "r-1", reservationOwnerUserId = 42),
             190, 3, "00:00")
-        assertEquals(HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID), turn.hwihaOutcome)
+        assertEquals(TurnOutcome.Applied(ScoutInputCodec.INPUT_ID), turn.hwihaOutcome)
         assertNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
     }
 }

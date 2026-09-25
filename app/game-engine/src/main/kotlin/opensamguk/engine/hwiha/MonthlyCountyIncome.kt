@@ -6,7 +6,7 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.economy.CountyIncome
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
-import opensamguk.infra.seed.HwihaCountyProductionJson
+import opensamguk.infra.seed.CountyProductionJson
 import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.RuleProfile
 import org.slf4j.LoggerFactory
@@ -23,10 +23,10 @@ import org.slf4j.LoggerFactory
  * 철·목재·말은 이 클래스가 만들지 않는다 — [production] 표가 준다. 기본값은 생성된 런타임 산출물이고,
  * 철·말의 위치는 사료 산지 원장, 목재는 지도 면적 축이다(tools/map/build_hwiha_resource_production.py).
  */
-class HwihaMonthlyCountyIncome(
+class MonthlyCountyIncome(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val production: Map<Int, Resources> = HwihaCountyProductionJson.table(),
+    private val production: Map<Int, Resources> = CountyProductionJson.table(),
 ) {
     data class Outcome(
         val stamp: String,
@@ -87,7 +87,7 @@ class HwihaMonthlyCountyIncome(
         // Nation-internal (warehouses are the nation's own ledger) — recorded, never put in the nation summary.
         for ((nationId, entry) in byNation) {
             val (count, sum) = entry
-            HwihaRecords.nation(world, nationId, RecordKind.INCOME_MONTHLY,
+            Records.nation(world, nationId, RecordKind.INCOME_MONTHLY,
                 "縣 창고 ${count}곳에 월세입이 들어왔습니다.",
                 linkedMapOf("stamp" to stamp, "counties" to count, "money" to sum.money, "grain" to sum.grain,
                     "iron" to sum.iron, "timber" to sum.timber, "horses" to sum.horses))
@@ -99,7 +99,7 @@ class HwihaMonthlyCountyIncome(
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(HwihaMonthlyCountyIncome::class.java)
+        private val log = LoggerFactory.getLogger(MonthlyCountyIncome::class.java)
         const val STAMP_KEY = "hwihaCountyIncomeMonth"
         fun stampOf(year: Int, month: Int): String = "%04d-%02d".format(year, month)
     }

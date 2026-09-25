@@ -1,6 +1,6 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import HwihaFieldForm from '../components/command/HwihaFieldForm';
+import FieldForm from '../components/command/FieldForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
 
@@ -15,7 +15,7 @@ beforeEach(()=>{
 });
 
 test('reserves the current county action without caller supplied target or cost',async()=>{
-    render(<HwihaFieldForm {...props}/>);
+    render(<FieldForm {...props}/>);
     expect(await screen.findByText('현재 縣: 漢縣 (실행 순에 위치·창고 재판정)')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button',{name:'농지개간 예약'}));
     await waitFor(()=>expect(api.command).toHaveBeenCalledWith('action.farm',{},1,11));
@@ -23,11 +23,11 @@ test('reserves the current county action without caller supplied target or cost'
 });
 
 test('invalid slot and failed precheck cannot reserve',async()=>{
-    const view=render(<HwihaFieldForm {...props} turnIdx={12}/>);
+    const view=render(<FieldForm {...props} turnIdx={12}/>);
     expect(api.fieldOptions).not.toHaveBeenCalled();
     vi.mocked(api.fieldOptions).mockResolvedValue({inputId:'action.farm',available:false,
         code:'FOREIGN_COUNTY',reason:'본인 세력의 縣이 아닙니다.'});
-    view.rerender(<HwihaFieldForm {...props}/>);
+    view.rerender(<FieldForm {...props}/>);
     expect(await screen.findByText('본인 세력의 縣이 아닙니다.')).toBeInTheDocument();
     expect(screen.getByRole('button',{name:'농지개간 예약'})).toBeDisabled();
 });

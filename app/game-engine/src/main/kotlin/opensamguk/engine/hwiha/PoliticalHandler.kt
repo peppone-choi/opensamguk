@@ -5,26 +5,26 @@ import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 
 /** Nation-changing personal orders are resolved at the political stage before movement. */
-class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+    private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
-        npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: PoliticalFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
+        npcSelected: Boolean = false): TurnOutcome {
+        fun reject(reason: PoliticalFailure) = TurnOutcome.Rejected(inputId, reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(PoliticalFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(PoliticalFailure.ACTOR_NOT_FOUND)
-        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
+        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && NpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
-            return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
+            return TurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = PoliticalInput.parse(actorId, inputId, rawJson)
             ?: return reject(PoliticalFailure.INVALID_INPUT)
         if (catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+            return TurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (previous?.get("turn") == turnToken) {
             if (previous["inputId"] == inputId && previous["requestId"] == requestId)
-                return HwihaTurnOutcome.Applied(inputId,
+                return TurnOutcome.Applied(inputId,
                     (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
             return reject(PoliticalFailure.ALREADY_PROCESSED)
         }
@@ -79,7 +79,7 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
                     for (card in world.listRetainers().filter { it.generalId == actorId }) world.removeRetainer(card.id)
                 changeAllegiance(listOf(actorId) + subtree, newNationId, lordId = actorId)
                 if (formerNation > 0) {
-                    HwihaCapitalAfterCapture(world, recorder).settle(formerNation, seat.id)
+                    CapitalAfterCapture(world, recorder).settle(formerNation, seat.id)
                     world.getNationById(formerNation)?.let { old ->
                         val next = old.copy(meta = old.meta + ("gennum" to world.listGenerals().count {
                             it.nationId == formerNation && it.npcState != 5 }))
@@ -147,13 +147,13 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(recorded))
         world.applyGeneralDirtyFree(recorded)
         if (inputId == PoliticalInput.OATH) {
-            val renown = HwihaRenownEventRecorder(world, recorder)
+            val renown = RenownEventRecorder(world, recorder)
             renown.record(actorId, RenownEventSource.SWORN_OATH)
             renown.record(checkNotNull(request.targetGeneralId), RenownEventSource.SWORN_OATH)
         }
-        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
+        Records.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${actor.name}의 정치 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))
-        return HwihaTurnOutcome.Applied(inputId, effects)
+        return TurnOutcome.Applied(inputId, effects)
     }
 
     private fun retinueTree(masterId: Int): List<Int>? {

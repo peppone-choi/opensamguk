@@ -7,7 +7,7 @@ import opensamguk.logic.domestic.DomesticFailure
 import opensamguk.logic.domestic.DomesticAssessment
 import opensamguk.logic.domestic.DomesticRules
 
-import opensamguk.gameapi.read.HwihaDomesticReader
+import opensamguk.gameapi.read.DomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -15,11 +15,11 @@ import org.springframework.transaction.annotation.Transactional
 
 /**
  * 배치·방침·공사 접수 사전검사. 원본 JSON 은 정확한 키만 받고(중복·미지 키 거절), 인증된 제출자가 그 장수의 주인이어야 한다
- * (아니면 [opensamguk.gameapi.read.HwihaDomesticForbidden] → 403). 한 REPEATABLE_READ 스냅샷에서 엔진과 같은
+ * (아니면 [opensamguk.gameapi.read.DomesticForbidden] → 403). 한 REPEATABLE_READ 스냅샷에서 엔진과 같은
  * [DomesticRules] 로 판정하고 canonical 인자만 돌려준다. 통과는 접수 가능성일 뿐이며 엔진이 접수 시점에 다시 검사한다.
  */
 @Service
-class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
+class DomesticAdmission(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(actorId: Int, ownerUserId: Int, inputId: String, raw: String): String {
@@ -56,5 +56,5 @@ class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
         return canonical
     }
 
-    private fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
+    private fun deny(code: String, reason: String): Nothing = throw AdmissionDenied(code, reason)
 }

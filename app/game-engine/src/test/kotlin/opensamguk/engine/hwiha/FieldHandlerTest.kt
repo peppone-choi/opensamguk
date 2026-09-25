@@ -9,8 +9,8 @@ import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.input.InputCatalog
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
-class HwihaFieldHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class FieldHandlerTest {
+    private val fixture = CampaignWorldFixture()
     private val design = DomesticDesign.CANON
 
     @Test fun `pinned administrative counties have a unique land province per county`() {
@@ -28,9 +28,9 @@ class HwihaFieldHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1) else city
         })
         val recorder = ChangeRecorder()
-        val handler = HwihaFieldHandler(world, recorder, HwihaDomesticContext(design = design))
+        val handler = FieldHandler(world, recorder, DomesticContext(design = design))
         val before = world.getCityById(route.startCity)!!.agriculture
-        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(FieldInput.FARM, actor.id, "{}", "farm-501", 42))
+        val applied = assertIs<TurnOutcome.Applied>(handler.handle(FieldInput.FARM, actor.id, "{}", "farm-501", 42))
         val first = world.getCityById(route.startCity)!!.agriculture
         assertTrue(first > before)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
@@ -48,10 +48,10 @@ class HwihaFieldHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1,
                 meta = city.meta + (CountyWarehouse.META_KEY to warehouse.toMetaValue())) else city
         })
-        val handler = HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext(design = design))
+        val handler = FieldHandler(world, ChangeRecorder(), DomesticContext(design = design))
         val before = world.getCityById(route.startCity)!!.defence
         // Actor intelligence is 70: cost scales beyond the unscaled 5,000/250 stock.
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(FieldInput.FORTIFY,
+        val rejected = assertIs<TurnOutcome.Rejected>(handler.handle(FieldInput.FORTIFY,
             actor.id, "{}", "fort-502", 42))
         assertEquals("INSUFFICIENT_STOCK", rejected.code)
         assertEquals(before, world.getCityById(route.startCity)!!.defence)
@@ -64,8 +64,8 @@ class HwihaFieldHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 2) else city
         })
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(HwihaFieldHandler(world, ChangeRecorder(),
-            HwihaDomesticContext(design = design)).handle(FieldInput.FARM, actor.id, "{}", "farm-503", 42))
+        val rejected = assertIs<TurnOutcome.Rejected>(FieldHandler(world, ChangeRecorder(),
+            DomesticContext(design = design)).handle(FieldInput.FARM, actor.id, "{}", "farm-503", 42))
         assertEquals("FOREIGN_COUNTY", rejected.code)
         assertEquals(0, world.getGeneralById(actor.id)!!.experience)
     }
@@ -77,10 +77,10 @@ class HwihaFieldHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1) else city
         })
         val catalog = InputCatalog.load()
-        val selected = HwihaNpcFieldSelector(HwihaDomesticContext(design = design), catalog)
+        val selected = NpcFieldSelector(DomesticContext(design = design), catalog)
             .select(world, actor.id, ReservedTurn("휴식", "{}", rowExists = false))
         assertEquals(FieldInput.FARM, selected.actionCode)
-        assertIs<HwihaTurnOutcome.Applied>(HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext(design = design))
+        assertIs<TurnOutcome.Applied>(FieldHandler(world, ChangeRecorder(), DomesticContext(design = design))
             .handle(selected.actionCode, actor.id, selected.argJson, null, null, npcSelected = true))
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
     }
@@ -92,7 +92,7 @@ class HwihaFieldHandlerTest {
             cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
         fixture.deploy(world, ChangeRecorder(), actor.id, listOf(506), route.destination)
         val reserved = ReservedTurn("휴식", "{}", rowExists = false)
-        assertEquals(reserved, HwihaNpcFieldSelector(HwihaDomesticContext(design = design))
+        assertEquals(reserved, NpcFieldSelector(DomesticContext(design = design))
             .select(world, actor.id, reserved))
     }
 }

@@ -12,7 +12,7 @@ import opensamguk.logic.input.RecordKind
  *
  * 누가 무엇을 받는가는 부르는 쪽이 정한다. [general] 은 그 장수가 알아도 되는 것만 싣는다(#343).
  */
-internal object HwihaRecords {
+internal object Records {
     /** 장수 한 명의 개인 기록(`scope=GENERAL`, `category=ACTION`). */
     fun general(
         world: InMemoryTurnWorld,

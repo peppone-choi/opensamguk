@@ -8,7 +8,7 @@ import opensamguk.logic.war.EncounterCombatProfiles
 import opensamguk.logic.war.BattleJournal
 import opensamguk.logic.war.BattlePlayback
 import opensamguk.logic.war.BattlePlans
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
@@ -33,11 +33,11 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Storage boundary only: synthetic people and explicit encounter observations on the real pinned map. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaMarchPersistenceIT {
+class MarchPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
     private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
     private val topology get() = bundle.projection.topology
     private val metrics get() = bundle.landMarchMetrics
@@ -52,14 +52,14 @@ class HwihaMarchPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc=JdbcTemplate(source)
         flush=JdbcFlushExecutor(NamedParameterJdbcTemplate(source),TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture=HwihaEnlistmentFixture(jdbc,flush)
+        fixture=EnlistmentFixture(jdbc,flush)
     }
     @AfterAll fun teardown() { if(this::postgres.isInitialized) postgres.stop() }
     private fun save(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
         flush.flush(DatabaseHooks.toFlushPayload(world,recorder,world.consumeDirtyState()))
     private fun cold(id: Int) = InMemoryTurnWorld(fixture.load(id))
     private fun executor(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
-        HwihaAssignmentMarchExecutor(world,recorder,topology,metrics,requiredCapacity=1)
+        AssignmentMarchExecutor(world,recorder,topology,metrics,requiredCapacity=1)
     private fun stored(world: InMemoryTurnWorld) = MarchState.read(world.getGeneralById(1)!!.meta,topology,metrics)!!
     private fun nextPhase(world: InMemoryTurnWorld) {
         val now=world.getState().let { Phase(it.currentYear,it.currentMonth,it.currentPhase) }.plus(1)
@@ -78,9 +78,9 @@ class HwihaMarchPersistenceIT {
         jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?",id,county)
         jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=1",id)
         val world=cold(id);val recorder=ChangeRecorder()
-        assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world,recorder)
+        assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world,recorder)
             .execute(EnlistmentRequest(1,EnlistmentMode.NATION,1)) { error("direct enlistment") })
-        val court=HwihaDispatchExecutor(world,recorder)
+        val court=DispatchExecutor(world,recorder)
         assertIs<DispatchExecution.Applied>(court.issue("march-$id",DispatchRequest(10,1,county)))
         assertIs<DispatchExecution.Applied>(court.reply(DispatchReplyRequest(1,"march-$id",true)))
         save(world,recorder)
@@ -93,16 +93,16 @@ class HwihaMarchPersistenceIT {
         jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=10", id)
         var world = cold(id)
         val before = world.getNationById(1)!!
-        val court = HwihaCourtHandler(world, ChangeRecorder())
+        val court = CourtHandler(world, ChangeRecorder())
         assertEquals(InputRejection.NOT_DELIVERED.name,
             court.handle(TurnDaemonCommand.ImmediateInput("institution-$id", 10, 42,
                 CourtInput.INSTITUTION, "{}")).code)
-        assertNull(HwihaQueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
-        val stratagem = HwihaCourtHandler(world, ChangeRecorder())
+        assertNull(QueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
+        val stratagem = CourtHandler(world, ChangeRecorder())
         assertEquals(InputRejection.NOT_DELIVERED.name,
             stratagem.handle(TurnDaemonCommand.ImmediateInput("last-stand-$id", 10, 42,
                 StratagemInput.LAST_STAND, "{}")).code)
-        assertNull(HwihaQueuedLegacyStratagem.read(world.getGeneralById(10)!!.meta))
+        assertNull(QueuedLegacyStratagem.read(world.getGeneralById(10)!!.meta))
         world = cold(id)
         assertEquals(before.tech, world.getNationById(1)!!.tech)
         assertEquals(before.gold, world.getNationById(1)!!.gold)
@@ -124,14 +124,14 @@ class HwihaMarchPersistenceIT {
         world = cold(id)
         recorder = ChangeRecorder()
         val before = world.getCityById(countyId)!!.agriculture
-        val handler = HwihaFieldHandler(world, recorder, HwihaDomesticContext())
-        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(FieldInput.FARM, 1, "{}", "field-$id", 42))
+        val handler = FieldHandler(world, recorder, DomesticContext())
+        val first = assertIs<TurnOutcome.Applied>(handler.handle(FieldInput.FARM, 1, "{}", "field-$id", 42))
         save(world, recorder)
         world = cold(id)
         assertTrue(world.getCityById(countyId)!!.agriculture > before)
         assertEquals(10, world.getGeneralById(1)!!.experience)
         assertEquals(1, world.getGeneralById(1)!!.dedication)
-        assertEquals(first, HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext())
+        assertEquals(first, FieldHandler(world, ChangeRecorder(), DomesticContext())
             .handle(FieldInput.FARM, 1, "{}", "field-$id", 42))
         assertEquals(10, cold(id).getGeneralById(1)!!.experience)
     }
@@ -159,7 +159,7 @@ class HwihaMarchPersistenceIT {
         val generalBefore = world.getGeneralById(1)!!
         val countyBefore = world.getCityById(countyId)!!
         val nationCountBefore = world.listNations().size
-        val first = assertIs<HwihaTurnOutcome.Rejected>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+        val first = assertIs<TurnOutcome.Rejected>(PoliticalHandler(world, recorder, DomesticContext())
             .handle(PoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, first.code)
         save(world, recorder)
@@ -169,7 +169,7 @@ class HwihaMarchPersistenceIT {
         assertEquals(LordStatus.read(generalBefore.meta), LordStatus.read(world.getGeneralById(1)!!.meta))
         assertEquals(countyBefore.nationId, world.getCityById(countyId)!!.nationId)
         assertEquals(nationCountBefore, world.listNations().size)
-        assertEquals(first, HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
+        assertEquals(first, PoliticalHandler(world, ChangeRecorder(), DomesticContext())
             .handle(PoliticalInput.INDEPENDENCE, 1, "{}", "independence-$id", 42))
     }
 
@@ -192,7 +192,7 @@ class HwihaMarchPersistenceIT {
         val before = world.getNationById(1)!!.gold
         val json = """{"resource":"MONEY","amount":25}"""
         assertEquals(InputRejection.NOT_DELIVERED.name,
-            assertIs<HwihaTurnOutcome.Rejected>(HwihaTransferHandler(world, recorder, HwihaDomesticContext())
+            assertIs<TurnOutcome.Rejected>(TransferHandler(world, recorder, DomesticContext())
                 .handle(TransferInput.DONATE, 1, json, "donate-$id", 42)).code)
         assertFalse(recorder.isDirty)
         world = cold(id)
@@ -212,7 +212,7 @@ class HwihaMarchPersistenceIT {
         save(world, recorder)
         world = cold(id)
         recorder = ChangeRecorder()
-        val consent = HwihaCourtHandler(world, recorder).handle(TurnDaemonCommand.ImmediateInput(
+        val consent = CourtHandler(world, recorder).handle(TurnDaemonCommand.ImmediateInput(
             "consent-$id", 10, 43, PoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":1,"inputId":"action.oath","accepted":true}"""))
         assertTrue(consent.ok)
@@ -221,7 +221,7 @@ class HwihaMarchPersistenceIT {
         assertEquals(PoliticalConsent(1, PoliticalInput.OATH, true),
             PoliticalConsent.read(world.getGeneralById(10)!!.meta))
         recorder = ChangeRecorder()
-        assertIs<HwihaTurnOutcome.Applied>(HwihaPoliticalHandler(world, recorder, HwihaDomesticContext())
+        assertIs<TurnOutcome.Applied>(PoliticalHandler(world, recorder, DomesticContext())
             .handle(PoliticalInput.OATH, 1, """{"targetGeneralId":10}""", "oath-$id", 42))
         save(world, recorder)
         world = cold(id)
@@ -249,14 +249,14 @@ class HwihaMarchPersistenceIT {
         world = cold(id)
         recorder = ChangeRecorder()
         val before = world.getCityById(countyId)!!
-        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaCityMilitaryHandler(world, recorder)
+        val first = assertIs<TurnOutcome.Applied>(CityMilitaryHandler(world, recorder)
             .handle(MilitaryInput.CONSCRIPT, 1, "{}", "military-$id", 42))
         save(world, recorder)
         world = cold(id)
         val after = world.getCityById(countyId)!!
         assertEquals(before.defence, after.defence)
         assertTrue(CityMilitaryState.read(after.meta).troops > CityMilitaryState.read(before.meta).troops)
-        assertEquals(first, HwihaCityMilitaryHandler(world, ChangeRecorder())
+        assertEquals(first, CityMilitaryHandler(world, ChangeRecorder())
             .handle(MilitaryInput.CONSCRIPT, 1, "{}", "military-$id", 42))
         assertEquals(after, cold(id).getCityById(countyId))
     }
@@ -268,15 +268,15 @@ class HwihaMarchPersistenceIT {
         var recorder = ChangeRecorder()
         val before = world.getGeneralById(1)!!
         val design = PersonalDesign.CANON.copy(status = PersonalDesign.CONFIRMED)
-        val first = assertIs<HwihaTurnOutcome.Applied>(HwihaPersonalHandler(world, recorder,
-            HwihaDomesticContext(), design).handle(PersonalInput.SELF_TRAIN, 1,
+        val first = assertIs<TurnOutcome.Applied>(PersonalHandler(world, recorder,
+            DomesticContext(), design).handle(PersonalInput.SELF_TRAIN, 1,
             """{"stat":"strength"}""", "personal-$id", 42))
         save(world, recorder)
         world = cold(id)
         assertEquals(before.stats.strength + design.trainingStatGain, world.getGeneralById(1)!!.stats.strength)
         assertEquals(design.trainingFatigueGain,
             PersonalTravelCondition.read(world.getGeneralById(1)!!.meta)!!.fatigue)
-        assertEquals(first, HwihaPersonalHandler(world, ChangeRecorder(), HwihaDomesticContext(), design)
+        assertEquals(first, PersonalHandler(world, ChangeRecorder(), DomesticContext(), design)
             .handle(PersonalInput.SELF_TRAIN, 1, """{"stat":"strength"}""", "personal-$id", 42))
         assertEquals(before.stats.strength + design.trainingStatGain, cold(id).getGeneralById(1)!!.stats.strength)
     }
@@ -291,9 +291,9 @@ class HwihaMarchPersistenceIT {
         val bugoksBefore = world.listBugoks()
         val retainersBefore = world.listRetainers()
         val recorder = ChangeRecorder()
-        val handler = HwihaRetireHandler(world, recorder, HwihaDomesticContext())
+        val handler = RetireHandler(world, recorder, DomesticContext())
         val args = """{"successorGeneralId":2}"""
-        val first = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(1, args, "retire-$id", 42))
+        val first = assertIs<TurnOutcome.Rejected>(handler.handle(1, args, "retire-$id", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, first.code)
         save(world, recorder)
         world = cold(id)
@@ -302,7 +302,7 @@ class HwihaMarchPersistenceIT {
         assertEquals(successorBefore.userId, world.getGeneralById(2)!!.userId)
         assertEquals(bugoksBefore, world.listBugoks())
         assertEquals(retainersBefore, world.listRetainers())
-        assertEquals(first, HwihaRetireHandler(world, ChangeRecorder(), HwihaDomesticContext())
+        assertEquals(first, RetireHandler(world, ChangeRecorder(), DomesticContext())
             .handle(1, args, "retire-$id", 42))
     }
 
@@ -312,10 +312,10 @@ class HwihaMarchPersistenceIT {
         val assignment = CountyAssignment.read(world.getGeneralById(1)!!.meta)!!
         val destination = assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(assignment.countyId))
         var recorder = ChangeRecorder()
-        val started = HwihaTravelExecutor(world, recorder, topology, metrics)
+        val started = TravelExecutor(world, recorder, topology, metrics)
             .start("forced-$id", TravelRequest(1, TravelInput.FORCED_MARCH, destination), destination,
                 45_000_000L) { LandMarchEntry.CLEAR }
-        val first = assertIs<HwihaTravelExecution.Applied>(started, "direct travel start: $started")
+        val first = assertIs<TravelExecution.Applied>(started, "direct travel start: $started")
         val beforeCondition = PersonalTravelCondition.read(world.getGeneralById(1)!!.meta)
         assertEquals(first.condition, beforeCondition)
         save(world, recorder)
@@ -326,13 +326,13 @@ class HwihaMarchPersistenceIT {
         assertEquals(first.state.assignmentIdAtStart, saved.assignmentIdAtStart)
         assertEquals(beforeCondition, PersonalTravelCondition.read(world.getGeneralById(1)!!.meta))
         val beforePosition = world.positionOf(1)
-        assertIs<HwihaTravelExecution.AlreadyProcessed>(HwihaTravelExecutor(world, ChangeRecorder(), topology, metrics)
+        assertIs<TravelExecution.AlreadyProcessed>(TravelExecutor(world, ChangeRecorder(), topology, metrics)
             .start("forced-$id", TravelRequest(1, TravelInput.FORCED_MARCH, destination), destination,
                 45_000_000L) { error("duplicate must not re-enter") })
         assertEquals(beforePosition, world.positionOf(1))
         if (saved.checkpoint.stop != LandMarchStop.ARRIVED) {
             nextPhase(world); recorder = ChangeRecorder()
-            val resumed = assertIs<HwihaTravelExecution.Applied>(HwihaTravelExecutor(world, recorder, topology, metrics)
+            val resumed = assertIs<TravelExecution.Applied>(TravelExecutor(world, recorder, topology, metrics)
                 .resume(1, 45_000_000L) { LandMarchEntry.CLEAR })
             save(world, recorder); world = cold(id)
             assertEquals(resumed.state.checkpoint.cursor,
@@ -418,7 +418,7 @@ class HwihaMarchPersistenceIT {
         val stoppedAt=world.positionOf(1);nextPhase(world)
         recorder=ChangeRecorder()
         val county=stored(world).assignment.countyId
-        val replacement=HwihaDispatchExecutor(world,recorder)
+        val replacement=DispatchExecutor(world,recorder)
         assertIs<DispatchExecution.Applied>(replacement.issue("encounter-replacement",DispatchRequest(10,1,county)))
         assertIs<DispatchExecution.Applied>(replacement.reply(DispatchReplyRequest(1,"encounter-replacement",true)))
         save(world,recorder);world=cold(id)
@@ -447,7 +447,7 @@ class HwihaMarchPersistenceIT {
         val old=stored(world);assertTrue(old.cursor.paidMm > 0)
         val origin=world.positionOf(1)!!
         recorder=ChangeRecorder()
-        val court=HwihaDispatchExecutor(world,recorder)
+        val court=DispatchExecutor(world,recorder)
         assertIs<DispatchExecution.Applied>(court.issue("replacement-604",DispatchRequest(10,1,old.assignment.countyId)))
         assertIs<DispatchExecution.Applied>(court.reply(DispatchReplyRequest(1,"replacement-604",true)))
         save(world,recorder);world=cold(id)
@@ -460,7 +460,7 @@ class HwihaMarchPersistenceIT {
         assertEquals(old.path.totalCostMm-completedCost,changed.state.path.totalCostMm)
         save(world,recorder);world=cold(id)
         nextPhase(world);recorder=ChangeRecorder()
-        val nextCourt=HwihaDispatchExecutor(world,recorder)
+        val nextCourt=DispatchExecutor(world,recorder)
         assertIs<DispatchExecution.Applied>(nextCourt.issue("replacement-corrupt",DispatchRequest(10,1,old.assignment.countyId)))
         assertIs<DispatchExecution.Applied>(nextCourt.reply(DispatchReplyRequest(1,"replacement-corrupt",true)))
         val different=topology.landProvinceIds.sorted().first { StrategicNodeRef.LandProvince(it) != world.positionOf(1) }
@@ -473,13 +473,13 @@ class HwihaMarchPersistenceIT {
     }
 
     private fun corpsExecutor(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
-        HwihaCorpsMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
+        CorpsMarchExecutor(world, recorder, topology, metrics, requiredCapacity = 1)
     private fun corpsState(world: InMemoryTurnWorld, commander: Int) =
         CorpsMarchState.read(world.getGeneralById(commander)!!.meta, topology, metrics)!!
     private fun destination(world: InMemoryTurnWorld) =
         assertIs<StrategicNodeRef.LandProvince>(world.landNodeOfCity(CountyAssignment.read(world.getGeneralById(1)!!.meta)!!.countyId))
     private fun deploy(world: InMemoryTurnWorld, recorder: ChangeRecorder, id: Int, deputy: Boolean = false) =
-        assertIs<DeploymentExecution.Applied>(HwihaDeploymentExecutor(world, recorder, topology, metrics)
+        assertIs<DeploymentExecution.Applied>(DeploymentExecutor(world, recorder, topology, metrics)
             .deploy("corps-$id", DeploymentRequest(1, if (deputy) 4 else null, listOf(7)))).corps
 
     @Test fun `corps takes over assignment only next phase and retains partial progress across closure and reload`() {
@@ -610,7 +610,7 @@ class HwihaMarchPersistenceIT {
         val due = java.time.Instant.parse("0200-01-02T00:00:00Z")
         val first = fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
             .runDueGeneralTurns(due).handled.single()
-        assertIs<HwihaTurnOutcome.NoAction>(first.hwihaOutcome)
+        assertIs<TurnOutcome.NoAction>(first.hwihaOutcome)
         assertNull(first.requestId)
         world = cold(id)
         val firstState = stored(world)
@@ -628,7 +628,7 @@ class HwihaMarchPersistenceIT {
                 nextPhase(world)
                 val handled = fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
                     .runDueGeneralTurns(due).handled.single()
-                assertIs<HwihaTurnOutcome.NoAction>(handled.hwihaOutcome)
+                assertIs<TurnOutcome.NoAction>(handled.hwihaOutcome)
                 world = cold(id)
             }
         }
@@ -654,7 +654,7 @@ class HwihaMarchPersistenceIT {
             val due = java.time.Instant.parse("0200-01-02T00:00:00Z")
             val result = fixture.service(opensamguk.common.world.WorldId(id), world, published, movement = true)
                 .runDueGeneralTurns(due).handled.single()
-            assertIs<HwihaTurnOutcome.NoAction>(result.hwihaOutcome)
+            assertIs<TurnOutcome.NoAction>(result.hwihaOutcome)
             world = cold(id)
             assertEquals(position, world.positionOf(1))
             val march = MarchState.read(world.getGeneralById(1)!!.meta, topology, metrics)
@@ -760,7 +760,7 @@ class HwihaMarchPersistenceIT {
         val personal=world.getGeneralById(1)!!;val units=world.listBugoks();val target=destination(world)
         val published=mutableListOf<String>()
         reserveDeployment(id,world,"personal-deploy-641")
-        assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
         world=cold(id)
         val order=assertNotNull(CorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
         assertEquals("personal-deploy-641",order.orderId);assertEquals(target,order.destination)
@@ -783,12 +783,12 @@ class HwihaMarchPersistenceIT {
         opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc)).reserve(
             opensamguk.common.world.WorldId(id),1,0,"stratagem.play","{}",requestId="pause-641")
         nextPhase(world)
-        assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        assertIs<TurnOutcome.Rejected>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
         world=cold(id)
         assertEquals(first.toMetaValue(),corpsState(world,1).checkpoint.toMetaValue())
         reserveDeployment(id,world,"duplicate-deploy-641")
         nextPhase(world)
-        assertEquals(DeploymentFailure.ALREADY_DEPLOYED.name,assertIs<HwihaTurnOutcome.Rejected>(
+        assertEquals(DeploymentFailure.ALREADY_DEPLOYED.name,assertIs<TurnOutcome.Rejected>(
             runDeploymentTurn(id,world,published).handled.single().hwihaOutcome).code)
         world=cold(id)
         assertEquals(first.toMetaValue(),corpsState(world,1).checkpoint.toMetaValue())
@@ -811,7 +811,7 @@ class HwihaMarchPersistenceIT {
         reserveDeployment(id,world,"changed-deploy-642")
         jdbc.update("UPDATE general_bugok SET commander_retainer_id=4 WHERE world_id=? AND id=7",id)
         world=cold(id)
-        val result=assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,mutableListOf()).handled.single().hwihaOutcome)
+        val result=assertIs<TurnOutcome.Rejected>(runDeploymentTurn(id,world,mutableListOf()).handled.single().hwihaOutcome)
         assertEquals(DeploymentFailure.COMMANDER_CHANGED.name,result.code)
         world=cold(id)
         assertNull(DeploymentState.read(world.getGeneralById(1)!!.meta))
@@ -851,7 +851,7 @@ class HwihaMarchPersistenceIT {
             if(id==645) jdbc.update("UPDATE general SET user_id=99 WHERE world_id=? AND id=1",id)
             else jdbc.update("UPDATE command_inbox SET owner_user_id=NULL WHERE world_id=?",id)
             world=cold(id);val position=world.positionOf(1)
-            assertEquals("FORBIDDEN",assertIs<HwihaTurnOutcome.Rejected>(runDeploymentTurn(id,world,mutableListOf()).handled.single().hwihaOutcome).code)
+            assertEquals("FORBIDDEN",assertIs<TurnOutcome.Rejected>(runDeploymentTurn(id,world,mutableListOf()).handled.single().hwihaOutcome).code)
             world=cold(id)
             assertNull(DeploymentState.read(world.getGeneralById(1)!!.meta))
             assertNull(CorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
@@ -882,7 +882,7 @@ class HwihaMarchPersistenceIT {
         val recorder = ChangeRecorder()
         for (enemyId in defenderIds) {
             val orderId = "enemy-$id-$enemyId"
-            assertIs<DeploymentExecution.Applied>(HwihaDeploymentExecutor(world,recorder,topology,metrics)
+            assertIs<DeploymentExecution.Applied>(DeploymentExecutor(world,recorder,topology,metrics)
                 .deploy(orderId,DeploymentRequest(enemyId,null,listOf(1000 + enemyId))))
             val before = world.getGeneralById(enemyId)!!
             val order = CorpsOrder(orderId,enemyId,enemyId,StrategicNodeRef.LandProvince(province),
@@ -899,12 +899,12 @@ class HwihaMarchPersistenceIT {
         val id=647;var world=encounterFixture(id)
         val units=world.listBugoks();val published=mutableListOf<String>()
         reserveDeployment(id,world,"encounter-$id")
-        assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
         world=cold(id)
         val encounter=assertNotNull(CorpsEncounter.read(world.getGeneralById(1)!!.meta,topology))
         assertEquals(listOf(100,101),encounter.defenders.map { it.commanderGeneralId })
         assertEquals("encounter-$id",encounter.attacker.orderId)
-        val projection=assertNotNull(HwihaDeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection())
+        val projection=assertNotNull(DeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection())
         for (commander in listOf(1,100,101)) {
             assertEquals(encounter.toMetaValue(),CorpsEncounter.read(world.getGeneralById(commander)!!.meta,topology)?.toMetaValue())
             assertEquals(EncounterDeployment.Result.InsufficientDefenderCapacity,
@@ -923,7 +923,7 @@ class HwihaMarchPersistenceIT {
             assertEquals(listOf(1,100,101),forces.commanders.map { it.generalId })
             assertEquals(BattlePlans.defaultFor(encounter).toMetaValue(),
                 BattlePlans.read(world.getGeneralById(commander)!!.meta,encounter)?.toMetaValue())
-            val combat=assertNotNull(EncounterCombatProfiles.read(world.getGeneralById(commander)!!.meta,forces,HwihaUnitProfilesJson.loadDefault()))
+            val combat=assertNotNull(EncounterCombatProfiles.read(world.getGeneralById(commander)!!.meta,forces,UnitProfilesJson.loadDefault()))
             assertFalse(combat.ready)
             assertNull(BattleJournal.read(world.getGeneralById(commander)!!.meta))
             assertTrue(combat.unavailable.any { it.crewTypeId==1 && it.reason==EncounterCombatProfiles.Reason.UNKNOWN_CREW_TYPE })
@@ -937,7 +937,7 @@ class HwihaMarchPersistenceIT {
         }
         assertEquals(units,world.listBugoks())
         // A different friendly general cannot enroll the already locked hostile corps into another event.
-        assertNull(HwihaCorpsEncounterRecorder(world,ChangeRecorder(),topology,metrics,bundle.provinceCells).defendersAt(2,encounter.province))
+        assertNull(CorpsEncounterRecorder(world,ChangeRecorder(),topology,metrics,bundle.provinceCells).defendersAt(2,encounter.province))
         val before=world.listGenerals().associate { it.id to world.positionOf(it.id) }
         jdbc.update("UPDATE world_state SET current_phase=current_phase+1 WHERE id=?",id)
         jdbc.update("UPDATE general SET turn_time='0200-01-01T00:00:00Z' WHERE world_id=? AND id IN (100,101)",id)
@@ -947,9 +947,9 @@ class HwihaMarchPersistenceIT {
             CorpsEncounter.read(world.getGeneralById(commander)!!.meta,topology)==null
         }, "unsupported unit profile ends the sealed encounter on the next attacker turn")
         assertTrue(listOf(1,100,101).all { commander ->
-            world.getGeneralById(commander)!!.meta[HwihaEncounterResolver.DISBAND_RECORD_KEY]!=null
+            world.getGeneralById(commander)!!.meta[EncounterResolver.DISBAND_RECORD_KEY]!=null
         }, "the no-battle disband is persisted for every participant")
-        assertTrue(HwihaDeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection()?.people
+        assertTrue(DeploymentExecutor(world,ChangeRecorder(),topology,metrics).projection()?.people
             ?.none { it.id in setOf(1,100,101) && it.inBattle } == true)
         assertEquals(listOf("encounter-$id"),published)
     }
@@ -960,7 +960,7 @@ class HwihaMarchPersistenceIT {
         world=cold(id)
         val units=world.listBugoks();val published=mutableListOf<String>()
         reserveDeployment(id,world,"encounter-$id")
-        assertIs<HwihaTurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(runDeploymentTurn(id,world,published).handled.single().hwihaOutcome)
         world=cold(id)
         val encounter=assertNotNull(CorpsEncounter.read(world.getGeneralById(1)!!.meta,topology))
         val expected=EncounterDeployment.defaultMetaValue(encounter,bundle.provinceCells)
@@ -972,7 +972,7 @@ class HwihaMarchPersistenceIT {
             assertEquals(listOf(7,1100),deployment.tokens.map { it.bugokId }.sorted())
             assertEquals(2,deployment.tokens.mapNotNull { it.position }.distinct().size)
             val forces=assertNotNull(EncounterForces.read(meta,encounter))
-            val combat=assertNotNull(EncounterCombatProfiles.read(meta,forces,HwihaUnitProfilesJson.loadDefault()))
+            val combat=assertNotNull(EncounterCombatProfiles.read(meta,forces,UnitProfilesJson.loadDefault()))
             assertTrue(combat.ready)
             assertEquals(listOf(1100),combat.profiles.map { it.crewTypeId })
             assertEquals(world.getGeneralById(1)!!.meta[EncounterCombatProfiles.META_KEY],combat.toMetaValue())
@@ -1004,7 +1004,7 @@ class HwihaMarchPersistenceIT {
         world=cold(id)
         assertFailsWith<IllegalArgumentException> {
             EncounterCombatProfiles.read(world.getGeneralById(1)!!.meta,
-                EncounterForces.read(world.getGeneralById(1)!!.meta,encounter)!!,HwihaUnitProfilesJson.loadDefault())
+                EncounterForces.read(world.getGeneralById(1)!!.meta,encounter)!!,UnitProfilesJson.loadDefault())
         }
         jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaEncounterCombatProfiles}',?::jsonb) WHERE world_id=? AND id=1",
             com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(storedCombat),id)

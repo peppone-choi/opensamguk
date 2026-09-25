@@ -2,10 +2,10 @@ package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.gameapi.dto.HwihaLastTurnDto
-import opensamguk.gameapi.dto.HwihaLastTurnsResponse
-import opensamguk.gameapi.dto.HwihaNationSummaryEntryDto
-import opensamguk.gameapi.dto.HwihaRecordEntryDto
+import opensamguk.gameapi.dto.LastTurnDto
+import opensamguk.gameapi.dto.LastTurnsResponse
+import opensamguk.gameapi.dto.NationSummaryEntryDto
+import opensamguk.gameapi.dto.RecordEntryDto
 import opensamguk.logic.input.RecordKind
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -24,36 +24,36 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-class HwihaLastTurnsReader(
+class LastTurnsReader(
     private val generals: GeneralReadRepository,
     private val worlds: WorldStateReadRepository,
-    private val records: HwihaRecordReadRepository,
+    private val records: RecordReadRepository,
     private val objectMapper: ObjectMapper,
 ) {
-    fun lastTurns(generalId: Int, userId: Long, limit: Int): HwihaLastTurnsResponse {
+    fun lastTurns(generalId: Int, userId: Long, limit: Int): LastTurnsResponse {
         val actor = ownedHwihaGeneral(generals, generalId, userId)
-        hwihaGate(worlds, actor)?.let { return HwihaLastTurnsResponse(it) }
-        val world = worlds.findProcessWorld() ?: return HwihaLastTurnsResponse("UNAVAILABLE")
-        val now = try { HwihaTurnStamp(world.currentYear, world.currentMonth, world.currentPhase) }
-            catch (_: IllegalArgumentException) { return HwihaLastTurnsResponse("UNAVAILABLE") }
+        hwihaGate(worlds, actor)?.let { return LastTurnsResponse(it) }
+        val world = worlds.findProcessWorld() ?: return LastTurnsResponse("UNAVAILABLE")
+        val now = try { TurnStamp(world.currentYear, world.currentMonth, world.currentPhase) }
+            catch (_: IllegalArgumentException) { return LastTurnsResponse("UNAVAILABLE") }
         val size = limit.coerceIn(1, MAX_LIMIT)
-        val from = HwihaTurnStamp.ofOrdinal(maxOf(0, now.ordinal - (size - 1)))
+        val from = TurnStamp.ofOrdinal(maxOf(0, now.ordinal - (size - 1)))
 
-        val personal = records.personal(actor.id, from, now).groupBy { HwihaTurnStamp(it.year, it.month, it.phase) }
+        val personal = records.personal(actor.id, from, now).groupBy { TurnStamp(it.year, it.month, it.phase) }
         val turns = (now.ordinal downTo from.ordinal).map { ordinal ->
-            val turn = HwihaTurnStamp.ofOrdinal(ordinal)
-            HwihaLastTurnDto(turn.year, turn.month, turn.phase, RecordKind.phaseLabel(turn.phase),
-                personal[turn].orEmpty().map { HwihaRecordEntryDto(it.kind, it.text, refs(it.refsJson)) })
+            val turn = TurnStamp.ofOrdinal(ordinal)
+            LastTurnDto(turn.year, turn.month, turn.phase, RecordKind.phaseLabel(turn.phase),
+                personal[turn].orEmpty().map { RecordEntryDto(it.kind, it.text, refs(it.refsJson)) })
         }
         val summary = records.summary(actor.nationId, RecordKind.NATION_SUMMARY_KINDS,
             RecordKind.WORLD_SUMMARY_KINDS, from, now)
-            .sortedWith(compareByDescending<HwihaRecordRow> { HwihaTurnStamp(it.year, it.month, it.phase).ordinal }
+            .sortedWith(compareByDescending<RecordRow> { TurnStamp(it.year, it.month, it.phase).ordinal }
                 .thenBy { it.id })
             .map {
-                HwihaNationSummaryEntryDto(it.year, it.month, it.phase, RecordKind.phaseLabel(it.phase),
+                NationSummaryEntryDto(it.year, it.month, it.phase, RecordKind.phaseLabel(it.phase),
                     it.kind, it.text, refs(it.refsJson))
             }
-        return HwihaLastTurnsResponse("READY", turns, summary)
+        return LastTurnsResponse("READY", turns, summary)
     }
 
     /** 식별자는 곁들임이다 — 읽을 수 없으면 빈 묶음으로 두고 기록 문장은 그대로 낸다. */

@@ -8,11 +8,11 @@ import opensamguk.logic.war.EncounterCombatProfiles
 import opensamguk.logic.war.BattlePlans
 import opensamguk.logic.war.BattleJournal
 import opensamguk.logic.war.BattlePlayback
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.logic.world.*
 
 /** Reserves the actual participants of a pending encounter; it does not resolve a battle. */
-class HwihaCorpsEncounterRecorder(
+class CorpsEncounterRecorder(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
@@ -20,8 +20,8 @@ class HwihaCorpsEncounterRecorder(
     private val cells: HanProvinceCellIndex,
 ) {
     fun defendersAt(actorId: Int, province: StrategicNodeRef.LandProvince): List<DeployedCorps>? {
-        val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection() ?: return null
-        val presence = HwihaMilitaryPresenceProvider(world, topology, metrics).assess(actorId)
+        val projection = DeploymentExecutor(world, recorder, topology, metrics).projection() ?: return null
+        val presence = MilitaryPresenceProvider(world, topology, metrics).assess(actorId)
             as? MilitaryPresenceAssessment.Ready ?: return null
         val defenders = presence.hostileCorps.filter { corps ->
             projection.people.single { it.id == corps.commanderGeneralId }.node == province
@@ -61,7 +61,7 @@ class HwihaCorpsEncounterRecorder(
         }
         val value = encounter.toMetaValue()
         val deployment = EncounterDeployment.defaultMetaValue(encounter, cells)
-        val projection = requireNotNull(HwihaDeploymentExecutor(world, recorder, topology, metrics).projection())
+        val projection = requireNotNull(DeploymentExecutor(world, recorder, topology, metrics).projection())
         val relations = EncounterRelations.capture(encounter, projection,
             world.listDiplomacy().filter { it.state == 0 }.mapTo(linkedSetOf()) { it.fromNationId to it.toNationId })
         val liveUnits = world.listBugoks().associateBy { it.id }
@@ -79,7 +79,7 @@ class HwihaCorpsEncounterRecorder(
         val battlePlans = plans.toMetaValue()
         val sealedRelations = relations.toMetaValue()
         val sealedForces = forces.toMetaValue()
-        val combat = EncounterCombatProfiles.capture(forces, HwihaUnitProfilesJson.loadDefault())
+        val combat = EncounterCombatProfiles.capture(forces, UnitProfilesJson.loadDefault())
         val combatProfiles = combat.toMetaValue()
         val ready = EncounterDeployment.read(mapOf(EncounterDeployment.META_KEY to deployment),encounter,cells)
             as? EncounterDeployment.Result.Ready
@@ -97,7 +97,7 @@ class HwihaCorpsEncounterRecorder(
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {
                 // A participant may know that it was engaged and where; forces and plans stay sealed (#343).
-                HwihaRecords.general(world, before.id, RecordKind.ENCOUNTER_PENDING,
+                Records.general(world, before.id, RecordKind.ENCOUNTER_PENDING,
                     "군단이 조우하여 전투 처리를 기다리고 있습니다.",
                     linkedMapOf("encounterId" to encounter.encounterId, "province" to encounter.province.canonicalKey),
                     nationId = before.nationId)

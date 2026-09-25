@@ -10,7 +10,7 @@ import opensamguk.logic.world.HanWorldVariant
  * 부팅이 고른 판의 고정 번들에서 縣治 城 → 郡(런타임 지도 `meta.junCh`/`meta.jun`)·관할(`han-tiles provinceRecords[provinceId]
  * .jurisdictionId`)을 푼다. 판마다 한 번만 만든다. 행정 縣이 아닌 城과 `junCh` 가 없는 城은 싣지 않는다.
  */
-object HwihaCountyGeographyJson {
+object CountyGeographyJson {
     const val RUNTIME_MAP = "infra/src/main/resources/map/han-world-v3.json"
     const val TILES = "data/map/han-tiles.json"
     private val cache = ConcurrentHashMap<HanWorldVariant, CountyGeography>()

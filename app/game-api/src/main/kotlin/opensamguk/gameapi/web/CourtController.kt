@@ -3,14 +3,14 @@ package opensamguk.gameapi.web
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.gameapi.precheck.DispatchReadForbidden
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.gameapi.reserve.HwihaAdmissionDenied
+import opensamguk.gameapi.reserve.AdmissionDenied
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-class HwihaCourtController(private val reserve: CommandReserveService) {
+class CourtController(private val reserve: CommandReserveService) {
     @PostMapping("/api/commands/court/{name}")
     fun submit(@AuthenticationPrincipal userId: Long?, @PathVariable name: String,
         @RequestParam generalId: Int, @RequestBody raw: String): ResponseEntity<Any> {
@@ -24,7 +24,7 @@ class HwihaCourtController(private val reserve: CommandReserveService) {
                 "requestId" to accepted.requestId, "inputId" to inputId))
         } catch (_: DispatchReadForbidden) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
-        } catch (denied: HwihaAdmissionDenied) {
+        } catch (denied: AdmissionDenied) {
             ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
         }
     }

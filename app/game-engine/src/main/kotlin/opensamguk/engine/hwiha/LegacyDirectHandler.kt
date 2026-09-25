@@ -6,26 +6,26 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** Direct conversion, treasure/grain trade and one-hop warehouse transport. */
-class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaDomesticContext,
+class LegacyDirectHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+    private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
-        npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: DirectFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
+        npcSelected: Boolean = false): TurnOutcome {
+        fun reject(reason: DirectFailure) = TurnOutcome.Rejected(inputId, reason.name, reason.message)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(DirectFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(DirectFailure.ACTOR_NOT_FOUND)
-        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
+        val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && NpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
-            return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
+            return TurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
         val request = DirectInput.parse(actorId, inputId, rawJson)
             ?: return reject(DirectFailure.INVALID_INPUT)
         if (catalog[inputId]?.deliveryState?.hasHandler != true)
-            return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+            return TurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val previous = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (previous?.get("turn") == turnToken) {
             if (previous["inputId"] == inputId && previous["requestId"] == requestId)
-                return HwihaTurnOutcome.Applied(inputId, (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
+                return TurnOutcome.Applied(inputId, (previous["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
             return reject(DirectFailure.ALREADY_PROCESSED)
         }
         val assessed = DirectRules.assess(request, context.projection(world))
@@ -100,9 +100,9 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
                 (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(next))
         world.applyGeneralDirtyFree(next)
-        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED, "${actor.name}의 직접 행동을 마쳤습니다.",
+        Records.general(world, actorId, RecordKind.FIELD_APPLIED, "${actor.name}의 직접 행동을 마쳤습니다.",
             mapOf("inputId" to inputId, "requestId" to requestId))
-        return HwihaTurnOutcome.Applied(inputId, effects)
+        return TurnOutcome.Applied(inputId, effects)
     }
 
     private fun changeWarehouse(countyId: Int, current: CountyWarehouse, next: Resources) {

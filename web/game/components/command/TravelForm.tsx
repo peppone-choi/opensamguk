@@ -2,17 +2,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
-import type { HwihaTravelActionId, HwihaTravelOptions } from '../../lib/types';
+import type { TravelActionId, TravelOptions } from '../../lib/types';
 
-const labels: Record<HwihaTravelActionId,string> = {
+const labels: Record<TravelActionId,string> = {
     'action.move':'이동', 'action.forcedMarch':'강행', 'action.return':'귀환',
 };
 
-export default function HwihaTravelForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
-    inputId:HwihaTravelActionId; generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function TravelForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
+    inputId:TravelActionId; generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }) {
-    const [data,setData]=useState<HwihaTravelOptions|null>(null);
+    const [data,setData]=useState<TravelOptions|null>(null);
     const [destination,setDestination]=useState('');
     const [reason,setReason]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);

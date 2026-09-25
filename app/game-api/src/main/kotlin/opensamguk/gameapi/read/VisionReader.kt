@@ -26,7 +26,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-class HwihaVisionForbidden : RuntimeException()
+class VisionForbidden : RuntimeException()
 
 /**
  * Server-side vision projection (#785 · #343 · #465). **Read only** — no recorder, no writes.
@@ -40,7 +40,7 @@ class HwihaVisionForbidden : RuntimeException()
  */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-class HwihaVisionReader(
+class VisionReader(
     private val generals: GeneralReadRepository,
     private val worlds: WorldStateReadRepository,
     private val nations: NationReadRepository,
@@ -55,28 +55,28 @@ class HwihaVisionReader(
         retainers: RetainerReadRepository, artifacts: ActiveWorldArtifactResolver, spatial: SpatialStateReadRepository) :
         this(generals, worlds, nations, retainers, artifacts, spatial, MetaVisionSourceReader, VisionRules.CANON)
 
-    fun visibility(generalId: Int, userId: Long): HwihaVisibilityResponse {
+    fun visibility(generalId: Int, userId: Long): VisibilityResponse {
         val frame = when (val built = frame(generalId, userId)) {
-            is Built.Failed -> return HwihaVisibilityResponse(built.status)
+            is Built.Failed -> return VisibilityResponse(built.status)
             is Built.Ready -> built.frame
         }
         val view = frame.view
-        return HwihaVisibilityResponse(
+        return VisibilityResponse(
             status = "READY",
             stamp = stamp(view.now),
             commanderies = frame.index.commanderies.map { commandery ->
                 val entry = requireNotNull(view.entry(commandery.no))
-                HwihaVisibilityCommanderyDto(commandery.no, commandery.id, commandery.name, entry.tier.name,
+                VisibilityCommanderyDto(commandery.no, commandery.id, commandery.name, entry.tier.name,
                     entry.seenAt?.let(::stamp), entry.ageTurns)
             },
-            sources = view.sources.map { HwihaVisionSourceDto(it.kind.name, it.commanderyNo, it.radius, it.provinceId, it.refId) },
+            sources = view.sources.map { VisionSourceDto(it.kind.name, it.commanderyNo, it.radius, it.provinceId, it.refId) },
             invalidSourceRecords = frame.invalidSources,
         )
     }
 
-    fun corps(generalId: Int, userId: Long): HwihaCorpsResponse {
+    fun corps(generalId: Int, userId: Long): CorpsResponse {
         val frame = when (val built = frame(generalId, userId)) {
-            is Built.Failed -> return HwihaCorpsResponse(built.status)
+            is Built.Failed -> return CorpsResponse(built.status)
             is Built.Ready -> built.frame
         }
         val sightings = CorpsVisibility.project(frame.viewer, frame.view, frame.index, frame.projection, rules)
@@ -85,7 +85,7 @@ class HwihaVisionReader(
         val bundle = frame.bundle
         val rows = sightings.map { seen ->
             val path = if (seen.own) ownPath(people[seen.commanderGeneralId], bundle) else null
-            HwihaCorpsDto(
+            CorpsDto(
                 corpsId = seen.orderId ?: seen.corpsKey,
                 ownerGeneralId = seen.ownerGeneralId,
                 ownerName = people[seen.ownerGeneralId]?.name,
@@ -98,24 +98,24 @@ class HwihaVisionReader(
                 visibility = seen.visibility.name,
                 own = seen.own,
                 troops = seen.troops,
-                troopsBand = seen.troopsBand?.let { code -> rules.bandByCode(code)?.let { HwihaTroopBandDto(it.code, it.label) } },
+                troopsBand = seen.troopsBand?.let { code -> rules.bandByCode(code)?.let { TroopBandDto(it.code, it.label) } },
                 marchPath = path?.first,
                 destinationProvinceId = path?.second,
                 lastSeenStamp = seen.seenAt?.let(::stamp),
                 ageTurns = seen.ageTurns,
             )
         }
-        return HwihaCorpsResponse("READY", stamp(frame.view.now), rows)
+        return CorpsResponse("READY", stamp(frame.view.now), rows)
     }
 
-    fun scoutOptions(generalId: Int, userId: Long): HwihaScoutOptionsResponse {
+    fun scoutOptions(generalId: Int, userId: Long): ScoutOptionsResponse {
         val frame = when (val built = frame(generalId, userId)) {
             is Built.Failed -> return blocked(built.status, if (built.status == "WRONG_RULE_PROFILE")
                 ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
             is Built.Ready -> built.frame
         }
         val index = frame.index
-        val cost = rules.scoutCost.let { HwihaResourceCostDto(it.money, it.grain, it.iron, it.timber, it.horses) }
+        val cost = rules.scoutCost.let { ResourceCostDto(it.money, it.grain, it.iron, it.timber, it.horses) }
         val node = frame.viewer.actorNode as? StrategicNodeRef.LandProvince
         val origin = index.commanderyOf(node)
             ?: return blocked("READY", ScoutFailure.POSITION_UNAVAILABLE).copy(cost = cost)
@@ -124,15 +124,15 @@ class HwihaVisionReader(
             val entry = requireNotNull(frame.view.entry(no))
             val check = ScoutRules.assess(RuleProfile.HWIHA, node, commandery.id, index)
             val failure = (check as? ScoutAssessment.Rejected)?.reason
-            HwihaScoutOptionDto(no, commandery.id, commandery.name, entry.tier.name, failure == null,
+            ScoutOptionDto(no, commandery.id, commandery.name, entry.tier.name, failure == null,
                 failure?.name, failure?.let(ScoutRules::reason), entry.seenAt?.let(::stamp), entry.ageTurns)
         }
         val any = options.any { it.available }
-        return HwihaScoutOptionsResponse(
+        return ScoutOptionsResponse(
             status = "READY", available = any,
             code = if (any) null else ScoutFailure.NOT_ADJACENT.name,
             reason = if (any) null else "맞닿은 郡國이 없어 첩보할 수 없습니다.",
-            origin = HwihaScoutOriginDto(requireNotNull(node).id, origin, index.commanderies[origin].id, index.commanderies[origin].name),
+            origin = ScoutOriginDto(requireNotNull(node).id, origin, index.commanderies[origin].id, index.commanderies[origin].name),
             cost = cost, options = options,
         )
     }
@@ -165,13 +165,13 @@ class HwihaVisionReader(
     }
 
     private fun frame(generalId: Int, userId: Long): Built {
-        val actor = generals.findById(generalId).orElse(null) ?: throw HwihaVisionForbidden()
-        if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw HwihaVisionForbidden()
+        val actor = generals.findById(generalId).orElse(null) ?: throw VisionForbidden()
+        if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw VisionForbidden()
         val world = worlds.findProcessWorld() ?: return Built.Failed("UNAVAILABLE")
         if (actor.worldId != world.id) return Built.Failed("UNAVAILABLE")
         if (world.config["ruleProfile"] != "HWIHA") return Built.Failed("WRONG_RULE_PROFILE")
         // resolve() runs in its own transactional proxy: let its failures propagate instead of swallowing them into
-        // a rollback-only outer transaction (see HwihaCampReader.county).
+        // a rollback-only outer transaction (see CampReader.county).
         val selected = artifacts.resolve() ?: return Built.Failed("UNAVAILABLE")
         val bundle = selected.artifacts ?: return Built.Failed("UNAVAILABLE")
         return try {
@@ -241,7 +241,7 @@ class HwihaVisionReader(
     }
 
     private fun blocked(status: String, failure: ScoutFailure) =
-        HwihaScoutOptionsResponse(status = status, available = false, code = failure.name, reason = ScoutRules.reason(failure))
+        ScoutOptionsResponse(status = status, available = false, code = failure.name, reason = ScoutRules.reason(failure))
 
-    private fun stamp(phase: Phase) = HwihaStampDto(phase.year, phase.month, phase.phase)
+    private fun stamp(phase: Phase) = StampDto(phase.year, phase.month, phase.phase)
 }

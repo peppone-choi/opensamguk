@@ -1,6 +1,6 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.precheck.HwihaTravelPrecheckService
+import opensamguk.gameapi.precheck.TravelPrecheckService
 import opensamguk.gameapi.precheck.TravelReadForbidden
 import opensamguk.logic.input.TravelInput
 import org.springframework.http.HttpStatus
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class HwihaTravelOptionsController(private val precheck: HwihaTravelPrecheckService) {
+class TravelOptionsController(private val precheck: TravelPrecheckService) {
     @GetMapping("/api/commands/move-options")
     fun move(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         options(TravelInput.MOVE, generalId, userId)

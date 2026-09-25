@@ -14,7 +14,7 @@ import opensamguk.logic.util.phpRound
  * 결정론으로 만든다. 파일이 없을 때만 새로 쓴다(다시 만들려면 파일을 지우고 이 테스트를 돌린다). 파일이 있으면
  * 커밋된 파일이 생성 결과와 바이트 단위로 같은지 본다. 사람 수치(능력치·병력·창고 재고)는 게임 기획 값이며 사료가 아니다 — README 참조.
  */
-class HwihaYuzhouSliceScenarioTest {
+class YuzhouSliceScenarioTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }
         .first { Files.isDirectory(it.resolve("data/map")) }
     private val file: Path = repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")

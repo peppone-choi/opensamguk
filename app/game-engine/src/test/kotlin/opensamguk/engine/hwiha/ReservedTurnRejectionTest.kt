@@ -11,7 +11,7 @@ import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaReservedTurnRejectionTest {
+class ReservedTurnRejectionTest {
     private fun world(profile: String, interval: Int = 3600) = InMemoryTurnWorld(WorldSnapshot(
         state = TurnWorldState(1, 200, 1, interval, Instant.EPOCH,
             config = mapOf("mapName" to "han-world-v3", "ruleProfile" to profile)),
@@ -37,7 +37,7 @@ class HwihaReservedTurnRejectionTest {
 
     @Test fun `stratagem supply does not touch SAMMO generals`() {
         val world=world("SAMMO");val before=world.getGeneralById(1);val recorder=ChangeRecorder()
-        HwihaStratagemDraw(world,recorder).onTurn(1)
+        StratagemDraw(world,recorder).onTurn(1)
         assertEquals(before,world.getGeneralById(1));assertFalse(recorder.isDirty)
     }
 
@@ -47,14 +47,14 @@ class HwihaReservedTurnRejectionTest {
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
             aiHook = { _, _ -> error("no legacy rest or AI") })
         val absent = handler.handle(1, ReservedTurn("휴식", "{}", rowExists = false), 200, 1, "00:00")
-        assertEquals(HwihaTurnOutcome.NoAction, absent.hwihaOutcome)
+        assertEquals(TurnOutcome.NoAction, absent.hwihaOutcome)
         assertNull(absent.denyReason); assertFalse(absent.fellBack)
         assertEquals(before, world.getGeneralById(1)); assertFalse(handler.recorder.isDirty)
         assertFailsWith<IllegalArgumentException> { absent.copy(requestId = "fabricated") }
         for (reserved in listOf(ReservedTurn("휴식", "{}"),
             ReservedTurn("휴식", "{}", requestId = "explicit", rowExists = false),
             ReservedTurn("action.enlist", "{}", rowExists = false))) {
-            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(1, reserved, 200, 1, "00:00").hwihaOutcome)
+            assertIs<TurnOutcome.Rejected>(handler.handle(1, reserved, 200, 1, "00:00").hwihaOutcome)
         }
     }
 
@@ -66,7 +66,7 @@ class HwihaReservedTurnRejectionTest {
         val result = handler.handle(1, ReservedTurn("stratagem.play", "{}", requestId = "request"), 200, 1, "00:00")
         assertNull(result.definition)
         assertFalse(result.fellBack)
-        assertEquals("NOT_DELIVERED", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
+        assertEquals("NOT_DELIVERED", assertIs<TurnOutcome.Rejected>(result.hwihaOutcome).code)
         assertEquals(opensamguk.logic.input.InputRejection.NOT_DELIVERED.message, result.denyReason)
         assertEquals(before, world.getGeneralById(1))
         assertFalse(handler.recorder.isDirty)
@@ -79,7 +79,7 @@ class HwihaReservedTurnRejectionTest {
             val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
                 aiHook = { _, _ -> error("legacy AI") }, actionRngFactory = { error("court RNG") })
             val result = handler.handle(1, ReservedTurn(input, "{}"), 200, 1, "00:00")
-            assertEquals("INVALID_INPUT_CHANNEL", assertIs<HwihaTurnOutcome.Rejected>(result.hwihaOutcome).code)
+            assertEquals("INVALID_INPUT_CHANNEL", assertIs<TurnOutcome.Rejected>(result.hwihaOutcome).code)
             assertEquals(before, world.getGeneralById(1))
             assertFalse(handler.recorder.isDirty)
             assertNull(result.definition)
@@ -127,7 +127,7 @@ class HwihaReservedTurnRejectionTest {
             assertEquals("blocked-request", result.requestId)
             assertEquals("stratagem.play", result.reservedActionCode)
             assertEquals(original.copy(turnTime = Instant.EPOCH.plusSeconds(interval.toLong()),
-                meta = if (profile == "HWIHA") HwihaPersonalTurn.after(original.meta + ("hwihaStratagemHand" to mapOf(
+                meta = if (profile == "HWIHA") PersonalTurn.after(original.meta + ("hwihaStratagemHand" to mapOf(
                     "version" to 1,"ownerGeneralId" to 1,"hand" to listOf(1,2),"drawPile" to listOf(3,4),
                     "discard" to emptyList<Int>(),"lastDrawPhase" to mapOf("year" to 200,"month" to 1,"phase" to 1))), world.getState()) else original.meta), world.getGeneralById(1))
             assertEquals(1, pulls)
@@ -167,7 +167,7 @@ class HwihaReservedTurnRejectionTest {
     @Test fun `corrupt persisted phase stamp fails before reading or mutating a reservation`() {
         val world = world("HWIHA")
         val general = world.getGeneralById(1)!!
-        world.applyGeneralDirtyFree(general.copy(meta = general.meta + (HwihaPersonalTurn.META_KEY to "corrupt")))
+        world.applyGeneralDirtyFree(general.copy(meta = general.meta + (PersonalTurn.META_KEY to "corrupt")))
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184)
         val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { error("reservation must not be read") })
         assertFailsWith<IllegalStateException> { lifecycle.runTick(Instant.EPOCH.plusSeconds(1)) }

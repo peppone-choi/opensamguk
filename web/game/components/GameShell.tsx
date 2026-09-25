@@ -7,17 +7,17 @@ import {
     HWIHA_HUB_SLUG,
     hwihaHref,
     hwihaTabLanding,
-    type HwihaInputTab,
+    type InputTab,
 } from '../lib/hwiha-screens';
-import { HwihaBlocked, hwihaBlockReason } from './hwiha/HwihaStates';
+import { Blocked, hwihaBlockReason } from './campaign/GameStates';
 import { useHwihaRenown } from '../lib/hwiha-reads';
 import { useHwihaSession } from '../lib/hwiha-session';
-import styles from './HwihaShell.module.css';
+import styles from './GameShell.module.css';
 
-export interface HwihaShellProps {
+export interface GameShellProps {
     readonly title: string;
     /** 켜진 입력 탭. 탭에 속하지 않는 화면은 null. */
-    readonly tab: HwihaInputTab | null;
+    readonly tab: InputTab | null;
     /** 작전실 자신에서는 「← 작전실」을 숨긴다. */
     readonly showBack?: boolean;
     /**
@@ -35,7 +35,7 @@ export interface HwihaShellProps {
  * 탭, 오른쪽에 장수·명망·날짜 칩. 시안의 탭은 정적 `<span>` 이지만 여기서는 진짜 링크로 만든다.
  * 그 탭에 아직 화면이 없으면 숨기지 않고 점선으로 남긴다(표시 원칙).
  */
-export default function HwihaShell({ title, tab, showBack = true, requiresHwiha = true, children }: HwihaShellProps) {
+export default function GameShell({ title, tab, showBack = true, requiresHwiha = true, children }: GameShellProps) {
     const session = useHwihaSession();
     const { frontInfo, serverId } = session;
     const renown = useHwihaRenown();
@@ -89,7 +89,7 @@ export default function HwihaShell({ title, tab, showBack = true, requiresHwiha 
                 </div>
             </div>
             <div className={styles.body}>
-                {requiresHwiha && blocked ? <HwihaBlocked reason={blocked} /> : children}
+                {requiresHwiha && blocked ? <Blocked reason={blocked} /> : children}
             </div>
         </>
     );

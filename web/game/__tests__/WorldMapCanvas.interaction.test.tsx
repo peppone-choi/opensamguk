@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
-  HanMapCanvas,
+  WorldMapCanvas,
   cellToScreen,
   cityFallbackHitBox,
   cityMarkerRadius,
@@ -266,7 +266,7 @@ function pngResponse() {
   return new Response(png, { status: 200, headers: { 'Content-Type': 'image/png' } });
 }
 
-describe('shared HanMapCanvas viewport interaction', () => {
+describe('shared WorldMapCanvas viewport interaction', () => {
   beforeEach(() => {
     records.clear();
     pathRecords.length = 0;
@@ -311,13 +311,13 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const target = { id: 'changban', name: '장판', latitude: 1, longitude: 1, current: true };
     const tiles = { ...CHE_TILES_FIXTURE, _meta: { ...CHE_TILES_FIXTURE._meta,
       projection: { cell: 1, k: 1, x0: 0, y1: 2, pad: 0 } } };
-    const { rerender } = render(<HanMapCanvas mapCode="han-world-v3" tiles={tiles} provinceMap={null}
+    const { rerender } = render(<WorldMapCanvas mapCode="han-world-v3" tiles={tiles} provinceMap={null}
       battlefieldTargets={[target]} onBattlefieldActivate={activate} onCityActivate={cityActivate} />);
     fireEvent.click(screen.getByRole('button', { name: '장판 전장 선택' }));
     expect(activate).toHaveBeenCalledWith(target);
     expect(cityActivate).not.toHaveBeenCalled();
     expect(screen.getByText('◇ 장판 · 주둔')).toBeInTheDocument();
-    rerender(<HanMapCanvas mapCode="han-world-v3" tiles={CHE_TILES_FIXTURE} provinceMap={null} battlefieldTargets={[target]} />);
+    rerender(<WorldMapCanvas mapCode="han-world-v3" tiles={CHE_TILES_FIXTURE} provinceMap={null} battlefieldTargets={[target]} />);
     expect(screen.queryByRole('button', { name: '장판 전장 선택' })).not.toBeInTheDocument();
   });
 
@@ -325,7 +325,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const views: IsoView[] = [];
     const tiles = { ...CHE_TILES_FIXTURE, terrain: ['0110', '1231', '0114'],
       _meta: { ...CHE_TILES_FIXTURE._meta, terrainLegend: { ...CHE_TILES_FIXTURE._meta.terrainLegend, 4: 'LAKE' } } };
-    render(<HanMapCanvas mapCode="han-world-v3" tiles={tiles} provinceMap={null}
+    render(<WorldMapCanvas mapCode="han-world-v3" tiles={tiles} provinceMap={null}
       onViewChange={view => views.push(view)}
       {...{ tilesSha256: STRATEGIC_BINDING.baseTilesSha256, strategicTopology: STRATEGIC_TOPOLOGY }} />);
     expect(screen.getByRole('button', { name: '수역 레이어' })).toHaveAttribute('aria-pressed', 'true');
@@ -347,19 +347,19 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const views: IsoView[] = [];
     const props = { mapCode: 'han-world-v3', tiles, tilesSha256: STRATEGIC_BINDING.baseTilesSha256,
       provinceMap: null, onViewChange: (view: IsoView) => views.push(view) };
-    const { rerender } = render(<HanMapCanvas {...props} strategicTopology={STRATEGIC_TOPOLOGY} />);
+    const { rerender } = render(<WorldMapCanvas {...props} strategicTopology={STRATEGIC_TOPOLOGY} />);
     fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
     const before = views.at(-1);
     const bakedPaths = pathRecords.length;
-    rerender(<HanMapCanvas {...props} />);
-    rerender(<HanMapCanvas {...props} strategicTopology={{ ...STRATEGIC_TOPOLOGY, controlVisibility: 'VISIBLE' }} />);
+    rerender(<WorldMapCanvas {...props} />);
+    rerender(<WorldMapCanvas {...props} strategicTopology={{ ...STRATEGIC_TOPOLOGY, controlVisibility: 'VISIBLE' }} />);
     expect(pathRecords).toHaveLength(bakedPaths);
     expect(views.at(-1)).toEqual(before);
     expect(screen.getAllByText('확인되지 않음')).toHaveLength(2);
   });
 
   it('hides strategic overlays when the terrain byte identity does not match', () => {
-    render(<HanMapCanvas mapCode="han-world-v3" tiles={CHE_TILES_FIXTURE} provinceMap={null}
+    render(<WorldMapCanvas mapCode="han-world-v3" tiles={CHE_TILES_FIXTURE} provinceMap={null}
       {...{ tilesSha256: 'f'.repeat(64), strategicTopology: STRATEGIC_TOPOLOGY }} />);
     expect(screen.getByRole('status')).toHaveTextContent(/수역.*일치하지/);
     expect(screen.queryByRole('button', { name: '수역 레이어' })).not.toBeInTheDocument();
@@ -373,7 +373,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const views: IsoView[] = [];
 
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -400,7 +400,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     Object.defineProperty(window, 'devicePixelRatio', { value: 1.5, configurable: true });
     const views: IsoView[] = [];
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -432,7 +432,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const views: IsoView[] = [];
     const cities = CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }));
     const { rerender } = render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -445,7 +445,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const initial = views.at(-1)!;
 
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -478,13 +478,13 @@ describe('shared HanMapCanvas viewport interaction', () => {
       onViewChange: (view: IsoView) => views.push({ ...view }),
     };
     const { rerender } = render(
-      <HanMapCanvas {...props} cities={CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }))} />,
+      <WorldMapCanvas {...props} cities={CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }))} />,
     );
     const focused = views.at(-1)!;
     const focusEvents = views.length;
 
     rerender(
-      <HanMapCanvas {...props} cities={CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }))} />,
+      <WorldMapCanvas {...props} cities={CHE_OVERLAYS_FIXTURE.map((city) => ({ ...city }))} />,
     );
 
     expect(views).toHaveLength(focusEvents);
@@ -494,7 +494,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
   it('refits an untouched close focus when the viewport actually resizes', () => {
     const views: IsoView[] = [];
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -538,7 +538,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     }
     vi.stubGlobal('Image', LoadedImage);
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -583,7 +583,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const { rerender } = render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={PROVINCE_MAP}
@@ -648,7 +648,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
         : { ...city }
     ));
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={{ ...CHE_TILES_FIXTURE, terrain: [...CHE_TILES_FIXTURE.terrain] }}
         provinceMap={PROVINCE_MAP}
@@ -663,7 +663,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
     const equivalentCities = markerOnly.map((city) => ({ ...city }));
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={{ ...CHE_TILES_FIXTURE, terrain: [...CHE_TILES_FIXTURE.terrain] }}
         provinceMap={PROVINCE_MAP}
@@ -679,7 +679,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       index === 0 ? { ...city, provinceId: 1 } : city
     ));
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={PROVINCE_MAP}
@@ -695,7 +695,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       index === 0 ? { ...city, commanderyName: '예주' } : city
     ));
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={PROVINCE_MAP}
@@ -711,7 +711,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       index === 0 ? { ...city, nationColor: '#00ff00' } : city
     ));
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={PROVINCE_MAP}
@@ -724,7 +724,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     expect(politicalPathConstructions()).toBe(3);
 
     rerender(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={PROVINCE_MAP}
@@ -789,7 +789,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       cities: [{ id: '1', name: '정본현', nameCh: '', level: 5, kind: 'COUNTY', seat: true, col: 0, row: 0, lat: 0, lon: 0 }],
     };
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="han"
         tiles={tiles}
         provinceMap={provinceMap}
@@ -824,7 +824,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const onCityActivate = vi.fn();
     const views: IsoView[] = [];
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -893,7 +893,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       commanderyEdges: [],
     };
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="han"
         tiles={{
           _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
@@ -950,7 +950,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   it('omits the self-location overlay when the current city is absent', () => {
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -977,7 +977,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       dispatchEvent: vi.fn(),
     }));
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -1017,7 +1017,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       dispatchEvent: vi.fn(),
     }));
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -1040,7 +1040,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   it('changes the view for zoom controls and pointer panning', () => {
     const views: IsoView[] = [];
-    render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
+    render(<WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
 
     const initial = views.at(-1)!;
     fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
@@ -1055,7 +1055,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   it('축소 버튼을 우하단 도시명 토글과 겹치지 않게 좌하단에 고정한다', () => {
     const { container } = render(
-      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
+      <WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
     );
 
     const controls = container.querySelector<HTMLElement>('.os-iso-map__controls');
@@ -1091,7 +1091,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       ],
     };
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="han"
         tiles={tiles}
         provinceMap={{
@@ -1139,7 +1139,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const views: IsoView[] = [];
     const onCountyHover = vi.fn();
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={{
           ...CHE_TILES_FIXTURE,
@@ -1192,7 +1192,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       commanderyEdges: [],
     };
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="han"
         tiles={{
           _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
@@ -1261,7 +1261,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       commanderyEdges: [],
     };
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="han"
         tiles={{
           _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
@@ -1314,7 +1314,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
       commanderyEdges: [],
     };
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="han"
         tiles={{
           _meta: { cols: 1, rows: 1, year: 220, terrainLegend: { 1: 'PLAIN' } },
@@ -1374,7 +1374,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
   it('prevents page scrolling while the wheel zooms the map', () => {
     const views: IsoView[] = [];
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -1399,7 +1399,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
   it('pinches around the current midpoint and keeps the remaining pointer panning after end or cancel', () => {
     const views: IsoView[] = [];
-    render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
+    render(<WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} onViewChange={(view) => views.push({ ...view })} />);
 
     const canvas = screen.getByRole('img', { name: 'che 2D 지도' });
     const initial = views.at(-1)!;
@@ -1432,7 +1432,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     Object.defineProperty(window, 'devicePixelRatio', { value: 1, configurable: true });
     const views: IsoView[] = [];
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -1476,7 +1476,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     }));
 
     const { unmount } = render(
-      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
+      <WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} />,
     );
     const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
     expect(canvas.width).toBe(200);
@@ -1499,7 +1499,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     Object.defineProperty(window, 'devicePixelRatio', { value: 0.8, configurable: true });
     const views: IsoView[] = [];
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}
@@ -1549,7 +1549,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404 });
     const onMissing = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    const rejected = render(<HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} onMissing={onMissing} />);
+    const rejected = render(<WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} onMissing={onMissing} />);
     const rejectedCanvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
 
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/api/game/api/map/provinces?mapCode=che'));
@@ -1561,7 +1561,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
 
     records.clear();
     const mismatch = render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={{ ...PROVINCE_MAP, width: 3 }}
@@ -1587,11 +1587,11 @@ describe('shared HanMapCanvas viewport interaction', () => {
       .mockResolvedValueOnce({ width: 4, height: 3, close: firstClose }));
 
     const view = render(
-      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/first" />,
+      <WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/first" />,
     );
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/first'));
     view.rerender(
-      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/second" />,
+      <WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/second" />,
     );
     await waitFor(() => expect(fetchMock).toHaveBeenCalledWith('/second'));
 
@@ -1610,7 +1610,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
     vi.stubGlobal('fetch', vi.fn().mockReturnValue(pending.promise));
     vi.stubGlobal('createImageBitmap', vi.fn().mockResolvedValue({ width: 4, height: 3, close }));
     const view = render(
-      <HanMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/late" />,
+      <WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceUrl="/late" />,
     );
     view.unmount();
 
@@ -1622,7 +1622,7 @@ describe('shared HanMapCanvas viewport interaction', () => {
   it('focuses and activates canvas city markers from the keyboard', () => {
     const onCityActivate = vi.fn();
     render(
-      <HanMapCanvas
+      <WorldMapCanvas
         mapCode="che"
         tiles={CHE_TILES_FIXTURE}
         provinceMap={null}

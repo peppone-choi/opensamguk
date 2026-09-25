@@ -1,6 +1,6 @@
 import {render,screen,fireEvent,waitFor} from '@testing-library/react';
 import {vi,test,expect,beforeEach} from 'vitest';
-import HwihaPoliticalForm from '../components/command/HwihaPoliticalForm';
+import PoliticalForm from '../components/command/PoliticalForm';
 import {api} from '../lib/api';
 import {submitCommandAndAwaitResult} from '../lib/commandSubmit';
 
@@ -20,7 +20,7 @@ test('target general can accept an oath and issuer then reserves that target',as
         targets:[{generalId:8,name:'동료',available:true}]}]);
     vi.mocked(api.politicalConsentOptions).mockResolvedValue([{inputId:'action.oath',issuerGeneralId:9,
         issuerName:'청한 장수',available:true,accepted:null}]);
-    render(<HwihaPoliticalForm {...props} inputId="action.oath"/>);
+    render(<PoliticalForm {...props} inputId="action.oath"/>);
     fireEvent.click(await screen.findByRole('button',{name:'수락'}));
     await waitFor(()=>expect(api.courtPoliticalConsent).toHaveBeenCalledWith(7,
         {issuerGeneralId:9,inputId:'action.oath',accepted:true}));
@@ -29,7 +29,7 @@ test('target general can accept an oath and issuer then reserves that target',as
 test('issuer reserves an explicitly accepted target',async()=>{
     vi.mocked(api.politicalOptions).mockResolvedValue([{inputId:'action.abdicate',available:true,
         targets:[{generalId:8,name:'후계자',available:true}]}]);
-    render(<HwihaPoliticalForm {...props} inputId="action.abdicate"/>);
+    render(<PoliticalForm {...props} inputId="action.abdicate"/>);
     const button=await screen.findByRole('button',{name:'선양 예약'});
     await waitFor(()=>expect(button).toBeEnabled());
     fireEvent.click(button);
@@ -37,7 +37,7 @@ test('issuer reserves an explicitly accepted target',async()=>{
 });
 
 test('independence submits only the server checked actor action',async()=>{
-    render(<HwihaPoliticalForm {...props}/>);
+    render(<PoliticalForm {...props}/>);
     const button=await screen.findByRole('button',{name:'독립 예약'});
     await waitFor(()=>expect(button).toBeEnabled());
     fireEvent.click(button);
@@ -47,7 +47,7 @@ test('independence submits only the server checked actor action',async()=>{
 test('political action remains blocked when current county or renown fails',async()=>{
     vi.mocked(api.politicalOptions).mockResolvedValue([{inputId:'action.independence',available:false,
         code:'INSUFFICIENT_RENOWN',reason:'명망 50이 필요합니다.'}]);
-    render(<HwihaPoliticalForm {...props}/>);
+    render(<PoliticalForm {...props}/>);
     expect(await screen.findByText('명망 50이 필요합니다.')).toBeInTheDocument();
     expect(screen.getByRole('button',{name:'독립 예약'})).toBeDisabled();
 });

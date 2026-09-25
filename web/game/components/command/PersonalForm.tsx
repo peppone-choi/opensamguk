@@ -2,22 +2,22 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaPersonalActionId,HwihaPersonalOptions} from '../../lib/types';
+import type {PersonalActionId,PersonalOptions} from '../../lib/types';
 
-export const personalLabels:Record<HwihaPersonalActionId,string>={
+export const personalLabels:Record<PersonalActionId,string>={
     'action.travel':'견문','action.selfTrain':'단련','action.recuperate':'요양','action.retire':'은퇴',
 };
-export function isPersonalActionId(value:string):value is HwihaPersonalActionId{return value in personalLabels;}
+export function isPersonalActionId(value:string):value is PersonalActionId{return value in personalLabels;}
 
 const statLabels:Record<string,string>={
     leadership:'통솔',strength:'무력',intelligence:'지력',politics:'정치',charm:'매력',
 };
 
-export default function HwihaPersonalForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
-    inputId:HwihaPersonalActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function PersonalForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
+    inputId:PersonalActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }){
-    const [data,setData]=useState<HwihaPersonalOptions|null>(null);
+    const [data,setData]=useState<PersonalOptions|null>(null);
     const [selected,setSelected]=useState<string>('');
     const [reason,setReason]=useState<string|null>(null);
     const [busy,setBusy]=useState(false);

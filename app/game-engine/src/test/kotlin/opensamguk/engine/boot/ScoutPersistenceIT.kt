@@ -27,13 +27,13 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Real database boundary for `action.scout`: the notebook survives flush and a cold reload, and only the actor row changes. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaScoutPersistenceIT {
+class ScoutPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
     private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
-    private val context by lazy { HwihaVisionContext(bundle.projection.topology, bundle.landMarchMetrics, bundle.commanderyIndex) }
+    private val context by lazy { VisionContext(bundle.projection.topology, bundle.landMarchMetrics, bundle.commanderyIndex) }
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable)
@@ -43,7 +43,7 @@ class HwihaScoutPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture = HwihaEnlistmentFixture(jdbc, flush)
+        fixture = EnlistmentFixture(jdbc, flush)
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }
     private fun cold(id: Int) = InMemoryTurnWorld(fixture.load(id))
@@ -57,8 +57,8 @@ class HwihaScoutPersistenceIT {
         val target = index.commanderies[index.neighbours(origin).first()]
         val others = world.listGenerals().filter { it.id != 1 }
         val recorder = ChangeRecorder()
-        assertEquals(HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID),
-            HwihaScoutHandler(world, recorder, context).handle(1, """{"commanderyId":"${target.id}"}""", 77))
+        assertEquals(TurnOutcome.Applied(ScoutInputCodec.INPUT_ID),
+            ScoutHandler(world, recorder, context).handle(1, """{"commanderyId":"${target.id}"}""", 77))
         val written = requireNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         world = cold(id)

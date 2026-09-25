@@ -1,7 +1,7 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.logic.input.*
 import opensamguk.logic.war.*
 import opensamguk.logic.world.*
@@ -16,13 +16,13 @@ import opensamguk.logic.world.*
  * whose combat could not be prepared (unsupported unit, no battlefield) ends without battle; a transient
  * sealed-state mismatch has a bounded retry window. Neither case traps the march forever.
  */
-class HwihaEncounterResolver(
+class EncounterResolver(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
-    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
     sealed interface Resolution {
         data object NotPending : Resolution
@@ -63,7 +63,7 @@ class HwihaEncounterResolver(
     private fun permanentUnavailableReason(meta: Map<String, Any?>, encounter: CorpsEncounter): String? {
         return try {
             val forces = EncounterForces.read(meta, encounter) ?: return null
-            val combat = EncounterCombatProfiles.read(meta, forces, HwihaUnitProfilesJson.loadDefault())
+            val combat = EncounterCombatProfiles.read(meta, forces, UnitProfilesJson.loadDefault())
             if (combat != null && !combat.ready) return "UNIT_PROFILE_UNAVAILABLE"
             when (EncounterDeployment.read(meta, encounter, cells)) {
                 is EncounterDeployment.Result.TerrainUnavailable,
@@ -85,7 +85,7 @@ class HwihaEncounterResolver(
             endDeployment(participant)
             updateMeta(participant.commanderGeneralId) { it - SEALED_KEYS + (DISBAND_RECORD_KEY to record) }
             if (world.getGeneralById(participant.commanderGeneralId) != null) {
-                HwihaRecords.general(world, participant.commanderGeneralId, RecordKind.ENCOUNTER_DISBANDED,
+                Records.general(world, participant.commanderGeneralId, RecordKind.ENCOUNTER_DISBANDED,
                     "조우 전투를 준비할 수 없어 군단이 이 지역에서 행군을 멈췄습니다($reason).",
                     mapOf("encounterId" to encounter.encounterId, "province" to encounter.province.id, "reason" to reason))
             }
@@ -99,7 +99,7 @@ class HwihaEncounterResolver(
     private fun sealedOf(meta: Map<String, Any?>, encounter: CorpsEncounter): Sealed? {
         val forces = EncounterForces.read(meta, encounter) ?: return null
         val relations = EncounterRelations.read(meta, encounter) ?: return null
-        val combat = EncounterCombatProfiles.read(meta, forces, HwihaUnitProfilesJson.loadDefault()) ?: return null
+        val combat = EncounterCombatProfiles.read(meta, forces, UnitProfilesJson.loadDefault()) ?: return null
         if (!combat.ready) return null
         val plans = BattlePlans.read(meta, encounter) ?: return null
         val deployment = (EncounterDeployment.read(meta, encounter, cells) as? EncounterDeployment.Result.Ready)

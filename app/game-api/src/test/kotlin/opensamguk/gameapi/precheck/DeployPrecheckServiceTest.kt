@@ -3,19 +3,19 @@ package opensamguk.gameapi.precheck
 import kotlin.test.*
 import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
-import opensamguk.gameapi.web.HwihaDeployController
+import opensamguk.gameapi.web.DeployController
 import opensamguk.gameapi.reserve.*
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import java.util.Optional
 
-class HwihaDeployPrecheckServiceTest {
+class DeployPrecheckServiceTest {
     private val generals = mock(GeneralReadRepository::class.java)
     private val retainers = mock(RetainerReadRepository::class.java)
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
-    private val service = HwihaDeployPrecheckService(generals, retainers, resolver, spatial)
+    private val service = DeployPrecheckService(generals, retainers, resolver, spatial)
     private val pin = "a".repeat(64)
     private val a = StrategicNodeRef.LandProvince("A")
     private val b = StrategicNodeRef.LandProvince("B")
@@ -109,20 +109,20 @@ class HwihaDeployPrecheckServiceTest {
     }
 
     @Test fun `controller rejects anonymous and other owners without exposing options`() {
-        setup(); val controller = HwihaDeployController(service)
+        setup(); val controller = DeployController(service)
         assertEquals(401, controller.options(null,1).statusCode.value())
         assertEquals(403, controller.options(42,1).statusCode.value())
         assertEquals(200, controller.options(41,1).statusCode.value())
     }
 
     @Test fun `admission validates owner slot strict args and shared reason before delivery gate`() {
-        setup(); val admission = HwihaDeployAdmission(service)
-        assertEquals("UNAUTHORIZED",assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,null,0,"{}") }.code)
-        assertEquals("FORBIDDEN",assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,42,0,"{}") }.code)
-        assertEquals("INVALID_TURN_SLOT",assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,41,12,"{}") }.code)
+        setup(); val admission = DeployAdmission(service)
+        assertEquals("UNAUTHORIZED",assertFailsWith<AdmissionDenied> { admission.canonicalArguments(1,null,0,"{}") }.code)
+        assertEquals("FORBIDDEN",assertFailsWith<AdmissionDenied> { admission.canonicalArguments(1,42,0,"{}") }.code)
+        assertEquals("INVALID_TURN_SLOT",assertFailsWith<AdmissionDenied> { admission.canonicalArguments(1,41,12,"{}") }.code)
         val malformed = """{"bugokIds":[4],"bugokIds":[4],"destinationProvinceId":"B"}"""
-        assertEquals("INVALID_INPUT",assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,41,0,malformed) }.code)
-        val rejected = assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,41,0,
+        assertEquals("INVALID_INPUT",assertFailsWith<AdmissionDenied> { admission.canonicalArguments(1,41,0,malformed) }.code)
+        val rejected = assertFailsWith<AdmissionDenied> { admission.canonicalArguments(1,41,0,
             DeployInputs.canonicalJson(request.copy(bugokIds=listOf(5)))) }
         assertEquals(DeploymentFailure.UNIT_UNAVAILABLE.name,rejected.code)
         assertEquals(DeployRules.reason(DeploymentFailure.UNIT_UNAVAILABLE),rejected.message)

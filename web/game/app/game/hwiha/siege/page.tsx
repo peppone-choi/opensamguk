@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { Chip, KV, Panel, SectionHeader } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
-import { type HwihaSiege, useHwihaRead } from '@/lib/hwiha-reads';
+import { type Siege, useHwihaRead } from '@/lib/hwiha-reads';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 const number = new Intl.NumberFormat('ko-KR');
@@ -43,7 +43,7 @@ export default function SiegePage() {
     const read = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
     const rows = read.data?.sieges ?? [];
     const problem = hwihaReadNotice(read, read.data?.status);
-    const act = async (siege: HwihaSiege, action: 'action.assault' | 'action.demandSurrender') => {
+    const act = async (siege: Siege, action: 'action.assault' | 'action.demandSurrender') => {
         if (generalId == null || !siege.canAct || busy) return;
         setBusy(true); setNotice(null);
         try {
@@ -64,13 +64,13 @@ export default function SiegePage() {
         } finally { setBusy(false); }
     };
 
-    return <HwihaShell title="공성" tab="방침">
+    return <GameShell title="공성" tab="방침">
         <div style={{ padding: 12, display: 'grid', gap: 12 }}>
             <Panel style={{ padding: 12 }}>
                 <SectionHeader title="포위 중인 성" sub="관여한 포위와 지난 결과" actions={<Chip>{`${rows.length}곳`}</Chip>} />
                 {notice && <p role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
-                {problem && <HwihaEmpty>{problem}</HwihaEmpty>}
-                {!problem && rows.length === 0 && <HwihaEmpty>관여한 포위가 없습니다.</HwihaEmpty>}
+                {problem && <Empty>{problem}</Empty>}
+                {!problem && rows.length === 0 && <Empty>관여한 포위가 없습니다.</Empty>}
             </Panel>
             {!problem && rows.map((siege) => <Panel key={siege.countyId} style={{ padding: 12 }}>
                 <SectionHeader title={siege.countyName ?? `縣 ${siege.countyId}`} sub={`${siege.besieger.nationName ?? '포위군'} → ${siege.defenderNationName ?? '수비군'}`}
@@ -97,7 +97,7 @@ export default function SiegePage() {
                     {!siege.canAct && <p style={{ fontSize: 12, color: 'var(--muted)' }}>포위 지휘관만 행동을 예약할 수 있습니다.</p>}
                 </>}
                 <h3 style={{ fontSize: 14, marginTop: 16 }}>포위 기록</h3>
-                {siege.timeline.length === 0 ? <HwihaEmpty>기록이 없습니다.</HwihaEmpty> : <ol style={{ margin: 0, paddingLeft: 22 }}>
+                {siege.timeline.length === 0 ? <Empty>기록이 없습니다.</Empty> : <ol style={{ margin: 0, paddingLeft: 22 }}>
                     {siege.timeline.map((entry, index) => <li key={index} style={{ padding: '4px 0', fontSize: 13 }}>
                         {phase(entry)} · {label(entry.event)}
                         {typeof entry.morale === 'number' ? ` · 사기 ${Math.round(entry.morale / 100)}%` : ''}
@@ -106,5 +106,5 @@ export default function SiegePage() {
                 </ol>}
             </Panel>)}
         </div>
-    </HwihaShell>;
+    </GameShell>;
 }

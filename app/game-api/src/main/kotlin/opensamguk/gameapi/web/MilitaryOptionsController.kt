@@ -1,7 +1,7 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.precheck.HwihaMilitaryOptionsService
-import opensamguk.gameapi.read.HwihaDomesticForbidden
+import opensamguk.gameapi.precheck.MilitaryOptionsService
+import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.logic.input.MilitaryInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class HwihaMilitaryOptionsController(private val service: HwihaMilitaryOptionsService) {
+class MilitaryOptionsController(private val service: MilitaryOptionsService) {
     @GetMapping("/api/commands/conscript-options")
     fun conscript(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
         options(MilitaryInput.CONSCRIPT, generalId, userId)
@@ -36,6 +36,6 @@ class HwihaMilitaryOptionsController(private val service: HwihaMilitaryOptionsSe
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try { ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(service.options(inputId, generalId, userId)) }
-        catch (_: HwihaDomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
+        catch (_: DomesticForbidden) { ResponseEntity.status(HttpStatus.FORBIDDEN).build() }
     }
 }

@@ -5,13 +5,13 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Returns whether a deployed corps owns this commander's movement stage. */
-class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+class CorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
-    private val reactions: HwihaMarchReactionPolicy = HwihaMarchReactionPolicy.NON_BLOCKING) {
+    private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING) {
     fun onTurn(commanderId: Int): Boolean {
         val actor = world.getGeneralById(commanderId) ?: return false
-        val projection = HwihaDeploymentExecutor(world,recorder,topology,metrics).projection()
+        val projection = DeploymentExecutor(world,recorder,topology,metrics).projection()
         val corps = projection?.deployed?.singleOrNull { it.commanderGeneralId == commanderId }
         if (corps == null && CorpsOrder.META_KEY !in actor.meta) return false
         val order = try {
@@ -26,9 +26,9 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
             refs + ("stop" to "PASSAGE_UNAVAILABLE")); return true }
         val before = try { CorpsMarchState.read(actor.meta,topology,metrics) }
             catch (_: IllegalArgumentException) { null }
-        val military = HwihaMilitaryPresenceProvider(world,topology,metrics)
-        val encounters = HwihaCorpsEncounterRecorder(world, recorder, topology, metrics, cells)
-        when (val result = HwihaCorpsMarchExecutor(world,recorder,topology,metrics,1)
+        val military = MilitaryPresenceProvider(world,topology,metrics)
+        val encounters = CorpsEncounterRecorder(world, recorder, topology, metrics, cells)
+        when (val result = CorpsMarchExecutor(world,recorder,topology,metrics,1)
             .advance(order.orderId,commanderId,order.destination,edges) { node ->
                 val entry = military.entryAt(commanderId, node, reactions)
                 if (entry == LandMarchEntry.ENCOUNTER) {
@@ -69,5 +69,5 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         return true
     }
     private fun log(id: Int, text: String, refs: Map<String, Any?>) =
-        HwihaRecords.general(world, id, RecordKind.MARCH_CORPS, text, refs)
+        Records.general(world, id, RecordKind.MARCH_CORPS, text, refs)
 }

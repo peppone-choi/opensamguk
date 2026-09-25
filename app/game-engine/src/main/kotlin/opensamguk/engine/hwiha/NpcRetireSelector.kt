@@ -6,14 +6,14 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
 
 /** An old NPC may name the lowest-id eligible direct successor without hidden information. */
-internal class HwihaNpcRetireSelector(private val context: HwihaDomesticContext,
+internal class NpcRetireSelector(private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists ||
-            !HwihaPersonalTurn.hasNoInput(reserved) ||
+            !PersonalTurn.hasNoInput(reserved) ||
             catalog[RetireInput.INPUT_ID]?.deliveryState?.hasHandler != true) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
-        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState !in 2..4 ||
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.npcState !in 2..4 ||
             actor.age < GameConst.retirementYear) return reserved
         val state = context.projection(world)
         val successor = state.cards.filter { it.masterId == actorId && it.generalId != null }

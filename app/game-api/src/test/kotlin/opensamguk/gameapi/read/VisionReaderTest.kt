@@ -13,10 +13,10 @@ import opensamguk.logic.vision.ScoutCapture
 import opensamguk.logic.vision.VisionRules
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.gameapi.dto.HwihaCorpsResponse
-import opensamguk.gameapi.dto.HwihaScoutOptionsResponse
-import opensamguk.gameapi.dto.HwihaVisibilityResponse
-import opensamguk.gameapi.web.HwihaVisionController
+import opensamguk.gameapi.dto.CorpsResponse
+import opensamguk.gameapi.dto.ScoutOptionsResponse
+import opensamguk.gameapi.dto.VisibilityResponse
+import opensamguk.gameapi.web.VisionController
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
@@ -29,7 +29,7 @@ import kotlin.test.*
  * #343 leak boundary for the vision reads: a FOG corps must not exist in the serialized bytes at all, while a
  * FULL corps in the very same response proves the check is looking at real output (positive control).
  */
-class HwihaVisionReaderTest {
+class VisionReaderTest {
     private val bundle = HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133)
     private val index = bundle.commanderyIndex
     private val topology = bundle.projection.topology
@@ -40,9 +40,9 @@ class HwihaVisionReaderTest {
     private val retainers = mock(RetainerReadRepository::class.java)
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
-    private val reader = HwihaVisionReader(generals, worlds, nations, retainers, resolver, spatial,
+    private val reader = VisionReader(generals, worlds, nations, retainers, resolver, spatial,
         MetaVisionSourceReader, VisionRules.CANON)
-    private val controller = HwihaVisionController(reader)
+    private val controller = VisionController(reader)
     private val json = ObjectMapper().findAndRegisterModules()
 
     // home ─ next (neighbour, scouted in one test) ; far (not adjacent, FOG)
@@ -104,7 +104,7 @@ class HwihaVisionReaderTest {
         assertEquals(403, controller.visibility(41, 99).statusCode.value())
         assertEquals("no-store", controller.visibility(41, 1).headers.cacheControl)
         setup(profile = "SAMMO")
-        assertEquals("WRONG_RULE_PROFILE", (controller.visibility(41, 1).body as HwihaVisibilityResponse).status)
+        assertEquals("WRONG_RULE_PROFILE", (controller.visibility(41, 1).body as VisibilityResponse).status)
         assertEquals("""{"status":"WRONG_RULE_PROFILE"}""", bytes(controller.corps(41, 1).body))
     }
 
@@ -112,7 +112,7 @@ class HwihaVisionReaderTest {
 
     @Test fun `a fog corps is absent from the corps bytes while a full enemy corps is present and banded`() {
         setup()
-        val body = controller.corps(41, 1).body as HwihaCorpsResponse
+        val body = controller.corps(41, 1).body as CorpsResponse
         val text = bytes(body)
         // Positive control: the FULL enemy in the actor's own commandery is in these very bytes.
         assertTrue("보이는장수" in text && ScoutCapture.corpsKey("req-visible-order") in text, text)
@@ -134,13 +134,13 @@ class HwihaVisionReaderTest {
         val notebook = ScoutReports(index.tilesContentHash, listOf(
             ScoutReport(index.commanderies[next].id, Phase(190, 2, 1), listOf(ScoutedCity(500, 3, true)), listOf(seen))))
         setup(actorMeta = mapOf(ScoutReports.META_KEY to notebook.toMetaValue()))
-        val corps = controller.corps(41, 1).body as HwihaCorpsResponse
+        val corps = controller.corps(41, 1).body as CorpsResponse
         val intel = corps.corps!!.single { it.visibility == "INTEL" }
         assertEquals(seen.corpsKey, intel.corpsId); assertEquals("B1", intel.troopsBand!!.code)
         assertEquals(4, intel.ageTurns); assertEquals(2, intel.lastSeenStamp!!.month)
         val text = bytes(corps)
         assertFalse("45000" in text || ScoutCapture.corpsKey("req-next-live") in text, "live INTEL corps leaked: $text")
-        val visibility = controller.visibility(41, 1).body as HwihaVisibilityResponse
+        val visibility = controller.visibility(41, 1).body as VisibilityResponse
         val row = visibility.commanderies!!.single { it.no == next }
         assertEquals("INTEL", row.tier); assertEquals(4, row.ageTurns)
         assertEquals("FULL", visibility.commanderies!!.single { it.no == home }.tier)
@@ -161,7 +161,7 @@ class HwihaVisionReaderTest {
 
     @Test fun `scout options list exactly the neighbours of where the actor stands with a zero provisional cost`() {
         setup()
-        val options = controller.scoutOptions(41, 1).body as HwihaScoutOptionsResponse
+        val options = controller.scoutOptions(41, 1).body as ScoutOptionsResponse
         assertEquals("READY", options.status); assertTrue(options.available)
         assertEquals(home, options.origin!!.commanderyNo)
         assertEquals(index.neighbours(home), options.options!!.map { it.no })
@@ -171,6 +171,6 @@ class HwihaVisionReaderTest {
         assertIs<ScoutAssessment.Eligible>(reader.assessScout(1, 41, index.commanderies[next].id))
         assertEquals(ScoutFailure.NOT_ADJACENT,
             assertIs<ScoutAssessment.Rejected>(reader.assessScout(1, 41, index.commanderies[far].id)).reason)
-        assertFailsWith<HwihaVisionForbidden> { reader.assessScout(1, 42, index.commanderies[next].id) }
+        assertFailsWith<VisionForbidden> { reader.assessScout(1, 42, index.commanderies[next].id) }
     }
 }

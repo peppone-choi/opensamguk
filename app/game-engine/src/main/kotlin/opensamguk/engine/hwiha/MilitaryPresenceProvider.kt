@@ -6,9 +6,9 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Fresh snapshot reader. It never infers deployment from resident generals or legacy crew. */
-class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
+class MilitaryPresenceProvider(private val world: InMemoryTurnWorld,
     private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot) {
-    private fun projection() = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection()
+    private fun projection() = DeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection()
     private fun wars() = world.listDiplomacy().filter { it.state == 0 }.mapTo(linkedSetOf()) {
         it.fromNationId to it.toNationId
     }
@@ -26,14 +26,14 @@ class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
     }
 
     /** Production march entry: reaction records are judged by [reactions] instead of stalling on any record. */
-    fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, reactions: HwihaMarchReactionPolicy): LandMarchEntry {
+    fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince, reactions: MarchReactionPolicy): LandMarchEntry {
         if (world.ruleProfile != RuleProfile.HWIHA) return LandMarchEntry.UNAVAILABLE
         val hazard = reactions.entryHazard(world, actorId, node)
         if (hazard == LandMarchEntry.UNAVAILABLE) return LandMarchEntry.UNAVAILABLE
         return entryAt(actorId, node, hazard, reactions.evadingOrderIds(world, actorId, node))
     }
 
-    fun directEntryAt(actorId: Int, node: StrategicNodeRef.LandProvince, reactions: HwihaMarchReactionPolicy): LandMarchEntry {
+    fun directEntryAt(actorId: Int, node: StrategicNodeRef.LandProvince, reactions: MarchReactionPolicy): LandMarchEntry {
         if (world.ruleProfile != RuleProfile.HWIHA) return LandMarchEntry.UNAVAILABLE
         val hazard = reactions.directEntryHazard(world, actorId, node)
         if (hazard == LandMarchEntry.UNAVAILABLE) return hazard

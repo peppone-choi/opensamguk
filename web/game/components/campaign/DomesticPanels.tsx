@@ -3,16 +3,16 @@
 import { useState } from 'react';
 import { Chip, Panel, SectionHeader, Table } from '@opensamguk/ui';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
-import { HWIHA_RESOURCE_LABELS, useHwihaRead, type HwihaStock } from '@/lib/hwiha-reads';
+import { HWIHA_RESOURCE_LABELS, useHwihaRead, type Stock } from '@/lib/hwiha-reads';
 import { useHwihaSession } from '@/lib/hwiha-session';
-import { HwihaEmpty, hwihaReadNotice } from './HwihaStates';
+import { Empty, hwihaReadNotice } from './GameStates';
 
 type Toast = (msg: string, type: 'success' | 'error' | 'info') => void;
 
 const fmt = new Intl.NumberFormat('ko-KR');
 
 /** 비용 한 줄 — 0 인 자원은 뺀다. */
-function costLine(stock: HwihaStock): string {
+function costLine(stock: Stock): string {
     const parts = HWIHA_RESOURCE_LABELS.filter(({ key }) => stock[key] > 0).map(({ key, label }) => `${label} ${fmt.format(stock[key])}`);
     return parts.length ? parts.join(' · ') : '없음';
 }
@@ -78,8 +78,8 @@ export function PlacementPanel({ onToast, refreshKey, onDone }: { onToast: Toast
     return (
         <Panel style={{ padding: 12 }}>
             <SectionHeader title="배치" sub="카드는 자기 턴마다 지도 위를 실제로 이동해 부임한다" />
-            {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
-            {!notice && cards.length === 0 ? <HwihaEmpty>앉힐 인물 카드가 없습니다.</HwihaEmpty> : null}
+            {notice ? <Empty>{notice}</Empty> : null}
+            {!notice && cards.length === 0 ? <Empty>앉힐 인물 카드가 없습니다.</Empty> : null}
             {cards.length > 0 ? (
                 <Table
                     headers={['인물', '지금 자리', '바꿀 자리', '']}
@@ -141,8 +141,8 @@ export function PolicyPanel({ onToast, refreshKey, onDone }: { onToast: Toast; r
                 sub="자리나 군단에 걸어 두는 지속 규칙"
                 actions={read.data?.defaultPolicy ? <Chip>{`빈자리 기본 · ${read.data.defaultPolicy.label}`}</Chip> : null}
             />
-            {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
-            {!notice && counties.length === 0 && corps.length === 0 ? <HwihaEmpty>방침을 걸 수 있는 현·군단이 없습니다.</HwihaEmpty> : null}
+            {notice ? <Empty>{notice}</Empty> : null}
+            {!notice && counties.length === 0 && corps.length === 0 ? <Empty>방침을 걸 수 있는 현·군단이 없습니다.</Empty> : null}
             {counties.length > 0 ? (
                 <Table
                     headers={['현', '현령', '지금 방침', '바꾸기']}
@@ -227,8 +227,8 @@ export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; re
     return (
         <Panel style={{ padding: 12 }}>
             <SectionHeader title="공사" sub="순 경계마다 진척" />
-            {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
-            {!notice && counties.length === 0 ? <HwihaEmpty>공사를 맡길 현이 없습니다.</HwihaEmpty> : null}
+            {notice ? <Empty>{notice}</Empty> : null}
+            {!notice && counties.length === 0 ? <Empty>공사를 맡길 현이 없습니다.</Empty> : null}
             <div style={{ display: 'grid', gap: 10, paddingTop: 8 }}>
                 {counties.map((c) => (
                     <div key={c.countyId} style={{ borderTop: '1px solid var(--line)', paddingTop: 8, display: 'grid', gap: 6 }}>

@@ -1,4 +1,4 @@
-import type { HanTiles } from './HanMapCanvas';
+import type { WorldTiles } from './WorldMapCanvas';
 
 export interface StrategicTopologyBinding {
   worldId: number;
@@ -117,7 +117,7 @@ export interface StrategicMapScene {
 }
 
 /** Decode only reviewed cells. This is a renderer, never a route search or coastline flood-fill. */
-export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: HanTiles): StrategicMapScene {
+export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: WorldTiles): StrategicMapScene {
   const { cols, rows } = tiles._meta;
   const unique = <T>(values: readonly T[], key: (value: T) => string) => {
     const result = new Map(values.map(value => [key(value), value]));

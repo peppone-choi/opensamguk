@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory
  * 같은 달 같은 종류는 한 번만 쌓인다(순수 규칙). 같은 턴에 두 번 불러도 두 번째는 무동작이다.
  * 쓰기는 호출한 턴의 flush 에 함께 실린다 — 따로 flush 하지 않는다.
  */
-class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
+class RenownEventRecorder(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
     /**
      * 한 장수에게 사건 한 건. @return 새로 쌓였으면 true. 없는 장수·이미 쌓인 달이면 false.
      *
@@ -69,9 +69,9 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
         val name = world.getCityById(countyId)?.name ?: "縣 $countyId"
         val refs = linkedMapOf<String, Any?>("countyId" to countyId, "fromNationId" to previousNationId,
             "toNationId" to captorNationId)
-        if (captorNationId != 0) HwihaRecords.nation(world, captorNationId, RecordKind.COUNTY_CAPTURED,
+        if (captorNationId != 0) Records.nation(world, captorNationId, RecordKind.COUNTY_CAPTURED,
             "${JosaUtil.put(name, "을")} 점령했습니다.", refs)
-        if (previousNationId != 0) HwihaRecords.nation(world, previousNationId, RecordKind.COUNTY_LOST,
+        if (previousNationId != 0) Records.nation(world, previousNationId, RecordKind.COUNTY_LOST,
             "${JosaUtil.put(name, "을")} 잃었습니다.", refs)
         return updated
     }
@@ -103,14 +103,14 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
     }
 
     companion object {
-        private val log = LoggerFactory.getLogger(HwihaRenownEventRecorder::class.java)
+        private val log = LoggerFactory.getLogger(RenownEventRecorder::class.java)
         /** 새로 쌓인 사건을 본인 개인 기록에 남긴다 — 종류·원인은 본인 것이다. */
         internal fun announce(
             world: InMemoryTurnWorld,
             generalId: Int,
             source: RenownEventSource,
             stamp: String = currentStamp(world),
-        ) = HwihaRecords.general(world, generalId, RecordKind.RENOWN_EVENT,
+        ) = Records.general(world, generalId, RecordKind.RENOWN_EVENT,
             "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
             linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
 

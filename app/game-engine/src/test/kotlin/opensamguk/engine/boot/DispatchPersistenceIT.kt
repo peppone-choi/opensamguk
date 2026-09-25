@@ -23,11 +23,11 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Storage-boundary evidence only: these synthetic people are not a playable scenario. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaDispatchPersistenceIT {
+class DispatchPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable, "Docker unavailable: dispatch storage NOT verified")
         postgres=PostgreSQLContainer("postgres:16-alpine"); postgres.start()
@@ -36,7 +36,7 @@ class HwihaDispatchPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc=JdbcTemplate(source)
         flush=JdbcFlushExecutor(NamedParameterJdbcTemplate(source),TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture=HwihaEnlistmentFixture(jdbc,flush)
+        fixture=EnlistmentFixture(jdbc,flush)
     }
     @AfterAll fun teardown() { if(this::postgres.isInitialized) postgres.stop() }
     private fun save(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
@@ -44,7 +44,7 @@ class HwihaDispatchPersistenceIT {
     private fun seed(id: Int): Int {
         fixture.seed(id)
         val world=InMemoryTurnWorld(fixture.load(id)); val recorder=ChangeRecorder()
-        assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world,recorder)
+        assertIs<EnlistmentExecution.Applied>(EnlistmentExecutor(world,recorder)
             .execute(EnlistmentRequest(1,EnlistmentMode.NATION,1)) { error("direct enlistment") })
         save(world,recorder)
         jdbc.update("UPDATE general SET user_id=42 WHERE world_id=? AND id=1",id)
@@ -55,13 +55,13 @@ class HwihaDispatchPersistenceIT {
     @Test fun `pending dispatch cold reload acceptance and repeated reply preserve personal state`() {
         val county=seed(91); val before=fixture.load(91)
         val world=InMemoryTurnWorld(before); val recorder=ChangeRecorder()
-        assertIs<DispatchExecution.Applied>(HwihaDispatchExecutor(world,recorder).issue("dispatch-91",DispatchRequest(10,1,county)))
+        assertIs<DispatchExecution.Applied>(DispatchExecutor(world,recorder).issue("dispatch-91",DispatchRequest(10,1,county)))
         save(world,recorder)
         val pending=fixture.load(91)
         assertEquals(DispatchStatus.PENDING,DispatchState.read(pending.generals.single { it.id==1 }.meta)!!.status)
         assertEquals(before.retainers,pending.retainers)
         val cold=InMemoryTurnWorld(pending); val replyRecorder=ChangeRecorder()
-        assertIs<DispatchExecution.Applied>(HwihaDispatchExecutor(cold,replyRecorder).reply(DispatchReplyRequest(1,"dispatch-91",true)))
+        assertIs<DispatchExecution.Applied>(DispatchExecutor(cold,replyRecorder).reply(DispatchReplyRequest(1,"dispatch-91",true)))
         save(cold,replyRecorder)
         val after=fixture.load(91)
         val actor=after.generals.single { it.id==1 }
@@ -71,16 +71,16 @@ class HwihaDispatchPersistenceIT {
         assertEquals(before.bugoks,after.bugoks); assertEquals(before.retainers,after.retainers)
         val repeated=ChangeRecorder()
         assertEquals(DispatchFailure.ALREADY_RESOLVED,assertIs<DispatchExecution.Rejected>(
-            HwihaDispatchExecutor(InMemoryTurnWorld(after),repeated).reply(DispatchReplyRequest(1,"dispatch-91",false))).reason)
+            DispatchExecutor(InMemoryTurnWorld(after),repeated).reply(DispatchReplyRequest(1,"dispatch-91",false))).reason)
         assertTrue(repeated.generalPatches().isEmpty())
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=91",Int::class.java))
     }
     @Test fun `refusal loyalty renown and terminal state survive cold reload with no second charge`() {
         val county=seed(92); val world=InMemoryTurnWorld(fixture.load(92)); val recorder=ChangeRecorder()
-        assertIs<DispatchExecution.Applied>(HwihaDispatchExecutor(world,recorder).issue("dispatch-92",DispatchRequest(10,1,county)))
+        assertIs<DispatchExecution.Applied>(DispatchExecutor(world,recorder).issue("dispatch-92",DispatchRequest(10,1,county)))
         save(world,recorder)
         val cold=InMemoryTurnWorld(fixture.load(92)); val replyRecorder=ChangeRecorder()
-        assertIs<DispatchExecution.Applied>(HwihaDispatchExecutor(cold,replyRecorder).reply(DispatchReplyRequest(1,"dispatch-92",false)))
+        assertIs<DispatchExecution.Applied>(DispatchExecutor(cold,replyRecorder).reply(DispatchReplyRequest(1,"dispatch-92",false)))
         save(cold,replyRecorder)
         val after=fixture.load(92)
         assertEquals(45,after.retainers.single { it.generalId==1 }.loyalty)
@@ -90,7 +90,7 @@ class HwihaDispatchPersistenceIT {
             RenownEvents.entries(after.generals.single { it.id==1 }.meta).map { it.source })
         assertEquals(DispatchStatus.REFUSED,DispatchState.read(after.generals.single { it.id==1 }.meta)!!.status)
         val repeated=ChangeRecorder()
-        assertIs<DispatchExecution.Rejected>(HwihaDispatchExecutor(InMemoryTurnWorld(after),repeated)
+        assertIs<DispatchExecution.Rejected>(DispatchExecutor(InMemoryTurnWorld(after),repeated)
             .reply(DispatchReplyRequest(1,"dispatch-92",false)))
         assertTrue(repeated.generalPatches().isEmpty())
     }

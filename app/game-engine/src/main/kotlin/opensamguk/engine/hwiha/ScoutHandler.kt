@@ -16,7 +16,7 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Pinned geography the scout action needs; absent outside a Han HWIHA world. */
-data class HwihaVisionContext(
+data class VisionContext(
     val topology: StrategicTopologySnapshot,
     val metrics: LandMarchMetricSnapshot,
     val commanderies: HanCommanderyIndex,
@@ -26,24 +26,24 @@ data class HwihaVisionContext(
 /**
  * `action.scout` — §12.1 direct scouting, resolved at §5.1 step 7 from the actor's current position.
  * A reserved field action suppresses the automatic movement stage for that turn
- * ([HwihaAssignmentMarchTurn.onTurn]), so the position read here is the position of the whole turn.
+ * ([AssignmentMarchTurn.onTurn]), so the position read here is the position of the whole turn.
  *
  * The snapshot is written only to the actor's own meta (`hwihaScoutReports`) through the recorder, together
  * with the personal-turn stamp; it is never shared with the nation (spec §7 has no sharing rule).
  */
-class HwihaScoutHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
-    private val context: HwihaVisionContext?) {
-    fun handle(actorId: Int, argJson: String?, reservationOwnerUserId: Int?): HwihaTurnOutcome {
+class ScoutHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+    private val context: VisionContext?) {
+    fun handle(actorId: Int, argJson: String?, reservationOwnerUserId: Int?): TurnOutcome {
         fun reject(reason: ScoutFailure) =
-            HwihaTurnOutcome.Rejected(ScoutInputCodec.INPUT_ID, reason.name, ScoutRules.reason(reason))
+            TurnOutcome.Rejected(ScoutInputCodec.INPUT_ID, reason.name, ScoutRules.reason(reason))
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(ScoutFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(ScoutFailure.STATE_UNAVAILABLE)
         if (reservationOwnerUserId == null || reservationOwnerUserId <= 0 ||
             actor.userId?.toLongOrNull() != reservationOwnerUserId.toLong())
-            return HwihaTurnOutcome.Rejected(ScoutInputCodec.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되어 첩보할 수 없습니다.")
+            return TurnOutcome.Rejected(ScoutInputCodec.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되어 첩보할 수 없습니다.")
         val input = ScoutInputCodec.parse(actorId, argJson) ?: return reject(ScoutFailure.INVALID_INPUT)
         val context = context ?: return reject(ScoutFailure.STATE_UNAVAILABLE)
-        val projection = HwihaDeploymentExecutor(world, recorder, context.topology, context.metrics).projection()
+        val projection = DeploymentExecutor(world, recorder, context.topology, context.metrics).projection()
             ?: return reject(ScoutFailure.STATE_UNAVAILABLE)
         val assessed = ScoutRules.assess(world.ruleProfile, world.positionOf(actorId), input.commanderyId, context.commanderies)
         if (assessed is ScoutAssessment.Rejected) return reject(assessed.reason)
@@ -66,6 +66,6 @@ class HwihaScoutHandler(private val world: InMemoryTurnWorld, private val record
         world.applyGeneralDirtyFree(after)
         world.pushLog(LogEntryDraft(scope = "general", category = "action",
             text = "${assessed.target.name}의 형세를 몸소 살폈습니다.", generalId = actorId, nationId = after.nationId))
-        return HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID)
+        return TurnOutcome.Applied(ScoutInputCodec.INPUT_ID)
     }
 }

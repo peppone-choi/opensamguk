@@ -9,13 +9,13 @@ import opensamguk.logic.world.*
 import opensamguk.logic.war.CampaignBalance
 
 /** One direct assertion for each NPC war rule. These use the real map and in-memory engine services. */
-class HwihaNpcWarBranchesTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class NpcWarBranchesTest {
+    private val fixture = CampaignWorldFixture()
     private val route = fixture.route()
-    private val selector = HwihaNpcDeploySelector(fixture.topology, fixture.metrics)
+    private val selector = NpcDeploySelector(fixture.topology, fixture.metrics)
 
     private fun siegeService(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
-        HwihaSiegeService(world, recorder, fixture.topology, fixture.metrics, fixture.cells)
+        SiegeService(world, recorder, fixture.topology, fixture.metrics, fixture.cells)
 
     @Test fun `convoy dispatch skips an enemy corps province on its route`() {
         val source = route.startCity
@@ -33,7 +33,7 @@ class HwihaNpcWarBranchesTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.deploy(world, recorder, 2, listOf(8), route.start)
-        val rations = HwihaCorpsRations(world, recorder, fixture.topology, fixture.metrics)
+        val rations = CorpsRations(world, recorder, fixture.topology, fixture.metrics)
         assertEquals(0, rations.dispatch(200, 2))
         assertTrue(rations.convoys().isEmpty())
         assertEquals(1_000_000L, CountyWarehouse.read(world.getCityById(source)!!.meta, source)!!.stock.grain)
@@ -48,11 +48,11 @@ class HwihaNpcWarBranchesTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.nextPhase(world)
-        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
-        assertEquals(HwihaSiegeService.ACTIVE, world.getHwihaSiege(route.destinationCounty)?.status)
+        fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
+        assertEquals(SiegeService.ACTIVE, world.getHwihaSiege(route.destinationCounty)?.status)
         fixture.deploy(world, recorder, 2, listOf(8), route.start)
         val now = world.getState()
-        world.putHwihaSiege(HwihaSiege(route.startCity, HwihaSiegeService.ACTIVE, 2, 2, "order-2", 2, 1,
+        world.putHwihaSiege(HwihaSiege(route.startCity, SiegeService.ACTIVE, 2, 2, "order-2", 2, 1,
             route.first.id, now.currentYear, now.currentMonth, now.currentPhase,
             morale = 10_000, garrison = 100))
         assertEquals(route.start, selector.reliefFor(world, 1))
@@ -101,12 +101,12 @@ class HwihaNpcWarBranchesTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7, 8, 9), route.destination)
         fixture.nextPhase(world)
-        fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
-        repeat(4) { fixture.nextPhase(world); HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder) }
+        fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
+        repeat(4) { fixture.nextPhase(world); PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder) }
         val city = world.getCityById(route.destinationCounty)!!
         val expected = minOf(city.defenceMax * CampaignBalance.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
             800 * CampaignBalance.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
-        assertEquals(HwihaSiegeService.FALLEN, world.getHwihaSiege(city.id)?.status)
+        assertEquals(SiegeService.FALLEN, world.getHwihaSiege(city.id)?.status)
         assertEquals(expected, CityMilitaryState.read(city.meta, city.defence).troops)
         assertEquals(100, city.defence, "captured troops must not increase the fortification score")
         assertEquals(500 - expected * 500 / 800, world.getBugokById(7)!!.troops)

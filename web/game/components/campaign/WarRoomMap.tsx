@@ -1,13 +1,13 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Chip, HanMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
+import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
 import { commanderyOfCity } from '@/lib/hwiha-fog';
 import { HWIHA_MAP_CODE, HWIHA_PROVINCES_URL, useHwihaWorldMap } from '@/lib/hwiha-map';
 import { buildVisibleCorps } from '@/lib/map-corps';
-import type { HwihaCorps, HwihaSieges, HwihaWorks } from '@/lib/hwiha-reads';
+import type { Corps, Sieges, Works } from '@/lib/hwiha-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
-import { HwihaEmpty } from './HwihaStates';
+import { Empty } from './GameStates';
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -17,9 +17,9 @@ export interface WarRoomMapProps {
     readonly scoutPending?: boolean;
     readonly scoutable?: ReadonlySet<number>;
     readonly intelAge?: ReadonlyMap<number, number>;
-    readonly corps?: readonly HwihaCorps[];
-    readonly works?: HwihaWorks | null;
-    readonly sieges?: HwihaSieges | null;
+    readonly corps?: readonly Corps[];
+    readonly works?: Works | null;
+    readonly sieges?: Sieges | null;
 }
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
@@ -41,12 +41,12 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
 
     return <Panel style={{ padding: 12 }}>
         <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
-        {map.kind === 'loading' ? <HwihaEmpty>지도를 불러오는 중입니다.</HwihaEmpty> : null}
-        {map.kind === 'error' ? <HwihaEmpty>{`지도를 불러오지 못했습니다 — ${map.message}`}</HwihaEmpty> : null}
-        {map.kind === 'unsupported' ? <HwihaEmpty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${HWIHA_MAP_CODE})가 아닙니다.`}</HwihaEmpty> : null}
+        {map.kind === 'loading' ? <Empty>지도를 불러오는 중입니다.</Empty> : null}
+        {map.kind === 'error' ? <Empty>{`지도를 불러오지 못했습니다 — ${map.message}`}</Empty> : null}
+        {map.kind === 'unsupported' ? <Empty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${HWIHA_MAP_CODE})가 아닙니다.`}</Empty> : null}
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
-                <HanMapCanvas key={focus.no} mapCode={HWIHA_MAP_CODE} tiles={ready.tiles}
+                <WorldMapCanvas key={focus.no} mapCode={HWIHA_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : HWIHA_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}

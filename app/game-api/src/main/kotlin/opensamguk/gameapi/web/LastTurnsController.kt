@@ -1,6 +1,6 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.read.HwihaLastTurnsReader
+import opensamguk.gameapi.read.LastTurnsReader
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController
  * `limit` 은 1–36순으로 자른다(기본 12 — 명령 목록 12순의 거울).
  */
 @RestController
-class HwihaLastTurnsController(private val reader: HwihaLastTurnsReader) {
+class LastTurnsController(private val reader: LastTurnsReader) {
     @GetMapping("/api/hwiha/last-turns")
     fun lastTurns(
         @AuthenticationPrincipal userId: Long?,

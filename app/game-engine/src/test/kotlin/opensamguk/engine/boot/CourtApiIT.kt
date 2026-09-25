@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.HwihaTurnOutcome
+import opensamguk.engine.hwiha.TurnOutcome
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.gameapi.GameApiApplication
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -33,7 +33,7 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /** Real HTTP-controller/JPA intake, durable reservation, engine, reload, and owned result read. */
-@org.springframework.context.annotation.Import(HwihaCourtApiIT.Artifacts::class)
+@org.springframework.context.annotation.Import(CourtApiIT.Artifacts::class)
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(classes = [GameApiApplication::class], properties = [
@@ -44,7 +44,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
     "jwt.legacy-secret=dGVzdC1zZWNyZXQta2V5LWZvci10ZXN0aW5nLW9ubHktdGVzdC1zZWNyZXQ=",
     "jwt.legacy-accept-until=2099-01-01T00:00:00Z",
 ])
-class HwihaCourtApiIT {
+class CourtApiIT {
     @Autowired private lateinit var context: WebApplicationContext
     @Autowired private lateinit var jdbc: JdbcTemplate
     @Autowired private lateinit var json: ObjectMapper
@@ -54,12 +54,12 @@ class HwihaCourtApiIT {
     @Test fun `HTTP dispatch persists queue then executes on issuer turn and reply never consumes recipient turn`() {
         val source = checkNotNull(jdbc.dataSource)
         val flush = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        val fixture = HwihaEnlistmentFixture(jdbc, flush)
+        val fixture = EnlistmentFixture(jdbc, flush)
         fixture.seed(1)
         val seeded = InMemoryTurnWorld(fixture.load(1))
         val recorder = opensamguk.engine.turn.ChangeRecorder()
         assertIs<opensamguk.engine.hwiha.EnlistmentExecution.Applied>(
-            opensamguk.engine.hwiha.HwihaEnlistmentExecutor(seeded, recorder).execute(
+            opensamguk.engine.hwiha.EnlistmentExecutor(seeded, recorder).execute(
                 opensamguk.logic.input.EnlistmentRequest(1, opensamguk.logic.input.EnlistmentMode.NATION, 1)) { error("no draw") })
         flush.flush(opensamguk.engine.flush.DatabaseHooks.toFlushPayload(seeded, recorder, seeded.consumeDirtyState()))
         val county = seeded.administrativeCountyIds.min()

@@ -8,7 +8,7 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.economy.Resources
 
-class HwihaMonthlyCountyIncomeTest {
+class MonthlyCountyIncomeTest {
     private fun county(
         id: Int, nationId: Int = 1, population: Int = 1_000, supplyState: Int = 1,
         warehouse: CountyWarehouse? = CountyWarehouse(id, 0, Resources()),
@@ -49,7 +49,7 @@ class HwihaMonthlyCountyIncomeTest {
     fun `첫 월 경계가 소유되고 보급된 縣 창고에 세입을 넣는다`() {
         val world = world(county(10))
         val recorder = ChangeRecorder()
-        val outcome = assertNotNull(HwihaMonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3))
+        val outcome = assertNotNull(MonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3))
 
         assertFalse(outcome.alreadyStamped)
         assertEquals("0200-03", outcome.stamp)
@@ -65,11 +65,11 @@ class HwihaMonthlyCountyIncomeTest {
     @Test
     fun `같은 달 재실행은 도장에 막혀 아무것도 바꾸지 않는다`() {
         val world = world(county(10))
-        HwihaMonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3)
+        MonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3)
         val snapshot = world.getCityById(10)!!
 
         val recorder = ChangeRecorder()
-        val again = assertNotNull(HwihaMonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3))
+        val again = assertNotNull(MonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3))
 
         assertTrue(again.alreadyStamped)
         assertEquals(0, again.creditedCounties)
@@ -80,8 +80,8 @@ class HwihaMonthlyCountyIncomeTest {
     @Test
     fun `다음 달은 다시 넣는다`() {
         val world = world(county(10))
-        HwihaMonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3)
-        val next = assertNotNull(HwihaMonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 4))
+        MonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3)
+        val next = assertNotNull(MonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 4))
 
         assertFalse(next.alreadyStamped)
         assertEquals(1, next.creditedCounties)
@@ -94,7 +94,7 @@ class HwihaMonthlyCountyIncomeTest {
     fun `창고 없는 縣 은 손대지 않는다`() {
         val world = world(county(10, warehouse = null))
         val before = world.getCityById(10)!!
-        val outcome = assertNotNull(HwihaMonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3))
+        val outcome = assertNotNull(MonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3))
 
         assertEquals(0, outcome.creditedCounties)
         assertEquals(1, outcome.skippedNoWarehouse)
@@ -106,7 +106,7 @@ class HwihaMonthlyCountyIncomeTest {
         val world = world(county(10, nationId = 0), county(11, supplyState = 0))
         val before10 = world.getCityById(10)!!
         val before11 = world.getCityById(11)!!
-        val outcome = assertNotNull(HwihaMonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3))
+        val outcome = assertNotNull(MonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3))
 
         assertEquals(0, outcome.creditedCounties)
         assertEquals(Resources(), outcome.total)
@@ -120,10 +120,10 @@ class HwihaMonthlyCountyIncomeTest {
         val before = world.getCityById(10)!!
         val recorder = ChangeRecorder()
 
-        assertNull(HwihaMonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3))
+        assertNull(MonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3))
         assertEquals(before, world.getCityById(10)!!)
         assertTrue(recorder.kvDirty().isEmpty())
-        assertNull(world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY])
+        assertNull(world.getState().meta[MonthlyCountyIncome.STAMP_KEY])
     }
 
     @Test
@@ -131,7 +131,7 @@ class HwihaMonthlyCountyIncomeTest {
         val world = world(county(10))
         val production = mapOf(10 to Resources(iron = 1_000, timber = 118, horses = 100))
         val outcome = assertNotNull(
-            HwihaMonthlyCountyIncome(world, ChangeRecorder(), production).credit(200, 3)
+            MonthlyCountyIncome(world, ChangeRecorder(), production).credit(200, 3)
         )
 
         assertEquals(
@@ -145,7 +145,7 @@ class HwihaMonthlyCountyIncomeTest {
     fun `표에 없는 縣 은 전 곡만 받는다`() {
         val world = world(county(10), county(11))
         val production = mapOf(10 to Resources(iron = 7))
-        HwihaMonthlyCountyIncome(world, ChangeRecorder(), production).credit(200, 3)
+        MonthlyCountyIncome(world, ChangeRecorder(), production).credit(200, 3)
 
         assertEquals(Resources(money = 4_000, grain = 40_000, iron = 7), assertNotNull(stored(world, 10)).stock)
         assertEquals(Resources(money = 4_000, grain = 40_000), assertNotNull(stored(world, 11)).stock)
@@ -156,7 +156,7 @@ class HwihaMonthlyCountyIncomeTest {
         val world = world(county(10, supplyState = 0))
         val before = world.getCityById(10)!!
         val outcome = assertNotNull(
-            HwihaMonthlyCountyIncome(world, ChangeRecorder(), mapOf(10 to Resources(iron = 7)))
+            MonthlyCountyIncome(world, ChangeRecorder(), mapOf(10 to Resources(iron = 7)))
                 .credit(200, 3)
         )
 
@@ -168,7 +168,7 @@ class HwihaMonthlyCountyIncomeTest {
     fun `기본 표는 생성된 런타임 산출물이다`() {
         // 표를 넘기지 않으면 커밋된 산출물을 쓴다 — 런타임이 수치를 추정하지 않는다.
         val world = world(county(35))
-        val outcome = assertNotNull(HwihaMonthlyCountyIncome(world, ChangeRecorder()).credit(200, 3))
+        val outcome = assertNotNull(MonthlyCountyIncome(world, ChangeRecorder()).credit(200, 3))
         val produced = assertNotNull(stored(world, 35)).stock
         assertEquals(1_000, produced.iron, "35 縣은 사료 철 산지다")
         assertTrue(produced.timber > 0, "목재는 분산이라 거의 모든 縣에서 난다")
@@ -180,10 +180,10 @@ class HwihaMonthlyCountyIncomeTest {
     fun `도장은 메모리와 kv 채널 양쪽에 남는다`() {
         val world = world(county(10))
         val recorder = ChangeRecorder()
-        HwihaMonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3)
+        MonthlyCountyIncome(world, recorder, emptyMap()).credit(200, 3)
 
-        assertEquals("0200-03", world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY])
-        val stamped = recorder.kvDirty().entries.single { it.key.key == HwihaMonthlyCountyIncome.STAMP_KEY }
+        assertEquals("0200-03", world.getState().meta[MonthlyCountyIncome.STAMP_KEY])
+        val stamped = recorder.kvDirty().entries.single { it.key.key == MonthlyCountyIncome.STAMP_KEY }
         assertEquals("0200-03", stamped.value)
     }
 }

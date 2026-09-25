@@ -9,8 +9,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.engine.hwiha.HwihaMonthlyAssessment
-import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
+import opensamguk.engine.hwiha.MonthlyAssessment
+import opensamguk.engine.hwiha.MonthlyCountyIncome
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -44,9 +44,9 @@ import org.testcontainers.junit.jupiter.Testcontainers
 /**
  * 월 경계 징세가 **프로덕션 배선을 거쳐** 스스로 도는지 본다.
  *
- * 기존 HWIHA 테스트는 전부 [HwihaMonthlyCountyIncome] 을 직접 부른다. 그런데 실제 호출처는
+ * 기존 HWIHA 테스트는 전부 [MonthlyCountyIncome] 을 직접 부른다. 그런데 실제 호출처는
  * TurnRunService 의 월 경계 블록이고, 그 블록은 `pipeline != null && eventDispatcher != null`
- * 일 때만 돈다 — HwihaEnlistmentFixture.service() 는 둘 다 넘기지 않으므로 그 경로를 한 번도
+ * 일 때만 돈다 — EnlistmentFixture.service() 는 둘 다 넘기지 않으므로 그 경로를 한 번도
  * 지나지 않았다. 즉 배선 자체가 미검증이었다. 여기서는 엔진 Spring 컨텍스트를 띄워
  * `@Bean TurnRunService`(파이프라인·이벤트 디스패처가 실제로 물린 것)를 받아 runTick 으로
  * 월 경계를 넘긴다. 관리자 개입은 縣 하나에 창고를 두는 것뿐이고, 징세는 루프가 스스로 한다.
@@ -66,7 +66,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
             "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration",
     ],
 )
-class HwihaMonthBoundaryLoopIT {
+class MonthBoundaryLoopIT {
     @Autowired lateinit var world: InMemoryTurnWorld
     @Autowired lateinit var service: TurnRunService
 
@@ -80,7 +80,7 @@ class HwihaMonthBoundaryLoopIT {
         )
         assertEquals(Resources(), before.stock, "시작 재고는 비어 있다")
         assertNull(
-            world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
+            world.getState().meta[MonthlyCountyIncome.STAMP_KEY],
             "아직 어떤 달도 징세되지 않았다",
         )
 
@@ -88,8 +88,8 @@ class HwihaMonthBoundaryLoopIT {
         service.runTick(Instant.parse("0200-01-01T03:00:00Z"))
 
         assertEquals(
-            HwihaMonthlyCountyIncome.stampOf(200, 2),
-            world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
+            MonthlyCountyIncome.stampOf(200, 2),
+            world.getState().meta[MonthlyCountyIncome.STAMP_KEY],
             "루프가 월 경계를 넘으며 스스로 징세 도장을 찍었다",
         )
         val city = assertNotNull(world.getCityById(county))
@@ -100,8 +100,8 @@ class HwihaMonthBoundaryLoopIT {
 
         // ── 월단평: 같은 월 경계에서 명망이 갱신되고 순위가 발표됐다 ──────────────────────────
         assertEquals(
-            HwihaMonthlyAssessment.stampOf(200, 2),
-            world.getState().meta[HwihaMonthlyAssessment.STAMP_KEY],
+            MonthlyAssessment.stampOf(200, 2),
+            world.getState().meta[MonthlyAssessment.STAMP_KEY],
             "루프가 월단평도 스스로 돌렸다",
         )
         val lord = assertNotNull(world.getGeneralById(1))
@@ -111,7 +111,7 @@ class HwihaMonthBoundaryLoopIT {
             "전공 2건이 명망을 올렸다",
         )
         assertNull(
-            lord.meta[HwihaMonthlyAssessment.TALLY_META_KEY],
+            lord.meta[MonthlyAssessment.TALLY_META_KEY],
             "적용한 집계는 비워야 한다 — 남기면 다음 달에 또 적용된다",
         )
         val peer = assertNotNull(world.getGeneralById(2))
@@ -121,7 +121,7 @@ class HwihaMonthBoundaryLoopIT {
             "사건이 없는 장수는 명망을 보존한다 — 월단평은 초기화하지 않는다",
         )
         @Suppress("UNCHECKED_CAST")
-        val ranking = world.getState().meta[HwihaMonthlyAssessment.RANKING_KEY] as? List<Int>
+        val ranking = world.getState().meta[MonthlyAssessment.RANKING_KEY] as? List<Int>
         assertEquals(
             1, assertNotNull(ranking, "순위가 발표됐다").first(),
             "명망이 가장 높은 장수가 1 위다",
@@ -213,7 +213,7 @@ class HwihaMonthBoundaryLoopIT {
             Flyway.configure().dataSource(source).locations("classpath:db/migration")
                 .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
             val jdbc = JdbcTemplate(source)
-            HwihaEnlistmentFixture(
+            EnlistmentFixture(
                 jdbc,
                 JdbcFlushExecutor(
                     NamedParameterJdbcTemplate(source),

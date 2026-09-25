@@ -11,7 +11,7 @@ import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaEnlistmentHandlerTest {
+class EnlistmentHandlerTest {
     private fun person(id: Int, nation: Int = 0) = TurnGeneral(
         id = id, name = "G$id", nationId = nation, cityId = 10, troopId = 0,
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
@@ -34,12 +34,12 @@ class HwihaEnlistmentHandlerTest {
     }
     @Test fun `direct success and repeated rejection never instantiate RNG`() {
         val world = world()
-        val handler = HwihaEnlistmentHandler(world, ChangeRecorder(), "fixture") { error("unexpected RNG") }
+        val handler = EnlistmentHandler(world, ChangeRecorder(), "fixture") { error("unexpected RNG") }
         val args = """{"mode":"NATION","targetId":1}"""
-        assertEquals(HwihaTurnOutcome.Applied("action.enlist"), handler.handle(1, args, 200, 1))
+        assertEquals(TurnOutcome.Applied("action.enlist"), handler.handle(1, args, 200, 1))
         assertEquals(1, world.getGeneralById(1)!!.nationId)
         assertEquals(10, world.listRetainers().single().masterGeneralId)
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(1, args, 200, 1))
+        val rejected = assertIs<TurnOutcome.Rejected>(handler.handle(1, args, 200, 1))
         assertEquals(EnlistmentFailure.ALREADY_SERVING.name, rejected.code)
         assertEquals(EnlistmentFailure.ALREADY_SERVING.message, rejected.reason)
         assertEquals(1, world.listRetainers().size)
@@ -51,9 +51,9 @@ class HwihaEnlistmentHandlerTest {
             val world = world(profile)
             val before = world.listGenerals()
             val recorder = ChangeRecorder()
-            val result = HwihaEnlistmentHandler(world, recorder, "fixture") { error("unexpected RNG") }
+            val result = EnlistmentHandler(world, recorder, "fixture") { error("unexpected RNG") }
                 .handle(1, args, 200, 1)
-            assertEquals(failure.name, assertIs<HwihaTurnOutcome.Rejected>(result).code)
+            assertEquals(failure.name, assertIs<TurnOutcome.Rejected>(result).code)
             assertEquals(before, world.listGenerals())
             assertTrue(world.listRetainers().isEmpty())
             assertTrue(recorder.generalPatches().isEmpty())
@@ -64,7 +64,7 @@ class HwihaEnlistmentHandlerTest {
             val world = world(reverse = reverse)
             val seeds = mutableListOf<String>()
             val bounds = mutableListOf<Pair<Int, Int>>()
-            val handler = HwihaEnlistmentHandler(world, ChangeRecorder(), "fixture") { seed ->
+            val handler = EnlistmentHandler(world, ChangeRecorder(), "fixture") { seed ->
                 seeds += seed
                 object : RandUtil(LiteHashDrbg(seed)) {
                     override fun nextInt(minInclusive: Int, maxExclusive: Int): Int {
@@ -73,7 +73,7 @@ class HwihaEnlistmentHandlerTest {
                     }
                 }
             }
-            assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, """{"mode":"RANDOM"}""", 200, 1))
+            assertIs<TurnOutcome.Applied>(handler.handle(1, """{"mode":"RANDOM"}""", 200, 1))
             assertEquals(listOf(0 to 2), bounds)
             assertEquals(listOf(world.personalTurnSeed("fixture", "generalCommand", 200, 1, 1, "action.enlist")), seeds)
             assertEquals(20, world.listRetainers().single().masterGeneralId)
@@ -87,24 +87,24 @@ class HwihaEnlistmentHandlerTest {
                 world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (PersonPolicyState.META_KEY to
                     PersonPolicyState(0, true, "synthetic-test", "v1", id).toMetaValue())))
             }
-            val result = HwihaEnlistmentHandler(world, ChangeRecorder(), "fixture") { error("unexpected RNG") }
+            val result = EnlistmentHandler(world, ChangeRecorder(), "fixture") { error("unexpected RNG") }
                 .handle(1, """{"mode":"RANDOM"}""", 200, 1)
             if (candidateCount == 0) {
-                assertEquals(EnlistmentFailure.NO_ELIGIBLE_NATION.name, assertIs<HwihaTurnOutcome.Rejected>(result).code)
+                assertEquals(EnlistmentFailure.NO_ELIGIBLE_NATION.name, assertIs<TurnOutcome.Rejected>(result).code)
                 assertTrue(world.listRetainers().isEmpty())
             } else {
-                assertIs<HwihaTurnOutcome.Applied>(result)
+                assertIs<TurnOutcome.Applied>(result)
                 assertEquals(10, world.listRetainers().single().masterGeneralId)
             }
         }
         val world = world()
         val recorder = ChangeRecorder()
-        val handler = HwihaEnlistmentHandler(world, recorder, "fixture") { error("unexpected RNG") }
+        val handler = EnlistmentHandler(world, recorder, "fixture") { error("unexpected RNG") }
         val lord = world.getGeneralById(10)!!
         world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (PersonPolicyState.META_KEY to
             PersonPolicyState(6, true, "synthetic-test", "v1", 10).toMetaValue())))
         val result = handler.handle(1, """{"mode":"NATION","targetId":1}""", 200, 1)
-        assertEquals(EnlistmentFailure.INSUFFICIENT_RENOWN.name, assertIs<HwihaTurnOutcome.Rejected>(result).code)
+        assertEquals(EnlistmentFailure.INSUFFICIENT_RENOWN.name, assertIs<TurnOutcome.Rejected>(result).code)
         assertEquals(0, world.getGeneralById(1)!!.nationId)
         assertTrue(recorder.generalPatches().isEmpty())
         assertTrue(world.listRetainers().isEmpty())
@@ -112,7 +112,7 @@ class HwihaEnlistmentHandlerTest {
     @Test fun `identical seed input and snapshot reproduce chosen lord`() {
         fun run(): Pair<List<TurnGeneral>, List<Retainer>> {
             val world = world()
-            assertIs<HwihaTurnOutcome.Applied>(HwihaEnlistmentHandler(world, ChangeRecorder(), "fixed")
+            assertIs<TurnOutcome.Applied>(EnlistmentHandler(world, ChangeRecorder(), "fixed")
                 .handle(1, """{"mode":"RANDOM"}""", 200, 1))
             return world.listGenerals() to world.listRetainers()
         }

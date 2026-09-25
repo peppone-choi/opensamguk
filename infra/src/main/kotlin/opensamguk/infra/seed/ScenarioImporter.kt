@@ -532,7 +532,7 @@ class ScenarioImporter(
         require(declaredPolicies.map { it.hwihaPersonPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == declaredPolicies.size) {
             "Duplicate person source identity"
         }
-        declaredPolicies.forEach(HwihaScenarioPersonPolicies::validate)
+        declaredPolicies.forEach(ScenarioPersonPolicies::validate)
 
         val declaredLords = scenario.generals.filter { it.hwihaLord == true }
         require(declaredLords.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {

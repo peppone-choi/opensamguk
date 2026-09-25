@@ -6,20 +6,20 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
 /** Returns true when an existing direct order owns this actor's movement stage. */
-class HwihaTravelTurn(
+class TravelTurn(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val reactions: HwihaMarchReactionPolicy,
-    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val reactions: MarchReactionPolicy,
+    private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
     fun onTurn(actorId: Int): Boolean {
         val actor = world.getGeneralById(actorId) ?: return false
         val state = try { TravelState.read(actor.meta, topology, metrics) }
             catch (_: IllegalArgumentException) {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
+                Records.general(world, actorId, RecordKind.INPUT_REJECTED,
                     TravelFailure.STATE_UNAVAILABLE.message,
                     mapOf("inputId" to "action.move", "code" to TravelFailure.STATE_UNAVAILABLE.name))
                 return false
@@ -27,7 +27,7 @@ class HwihaTravelTurn(
         val assignment = try { CountyAssignment.read(actor.meta) }
             catch (_: IllegalArgumentException) {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
+                Records.general(world, actorId, RecordKind.INPUT_REJECTED,
                     TravelFailure.STATE_UNAVAILABLE.message,
                     mapOf("inputId" to state.inputId, "code" to TravelFailure.STATE_UNAVAILABLE.name))
                 return false
@@ -41,23 +41,23 @@ class HwihaTravelTurn(
             recover(actorId)
             return false
         }
-        val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
+        val military = MilitaryPresenceProvider(world, topology, metrics)
         val budget = if (state.inputId == TravelInput.FORCED_MARCH) ForcedMarchTempo.budgetMm else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
-        when (val result = HwihaTravelExecutor(world, recorder, topology, metrics).resume(actorId, budget) { node ->
-            HwihaPersonalEncounter.entryAt(world, military, reactions, actorId, node)
+        when (val result = TravelExecutor(world, recorder, topology, metrics).resume(actorId, budget) { node ->
+            PersonalEncounter.entryAt(world, military, reactions, actorId, node)
         }) {
-            HwihaTravelExecution.NoOrder -> return false
-            HwihaTravelExecution.AlreadyProcessed -> Unit
-            is HwihaTravelExecution.Rejected -> {
+            TravelExecution.NoOrder -> return false
+            TravelExecution.AlreadyProcessed -> Unit
+            is TravelExecution.Rejected -> {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED, result.reason.message,
+                Records.general(world, actorId, RecordKind.INPUT_REJECTED, result.reason.message,
                     mapOf("inputId" to state.inputId, "code" to result.reason.name))
                 return false
             }
-            is HwihaTravelExecution.Applied -> {
+            is TravelExecution.Applied -> {
                 result.movement.reachedNodes.forEach { reactions.onDirectEntered(world, recorder, actorId, it) }
-                HwihaTravelHandler.record(world, actorId, result)
-                HwihaPersonalEncounter(world, recorder, topology, metrics, reactions, outcomes).settle(actorId, result)
+                TravelHandler.record(world, actorId, result)
+                PersonalEncounter(world, recorder, topology, metrics, reactions, outcomes).settle(actorId, result)
             }
         }
         return true

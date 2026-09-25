@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cityBadgeLabel, formatCompactMapTooltipMeta, HanMapCanvas, isOwnedNationVisual, isUprisingNation, useWorldMap, worldProvincesUrl, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
+import { cityBadgeLabel, formatCompactMapTooltipMeta, WorldMapCanvas, isOwnedNationVisual, isUprisingNation, useWorldMap, worldProvincesUrl, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
@@ -9,7 +9,7 @@ import { getMaxRelativeTechLevel } from '@/lib/utilGame';
 import { useMapLayers, type MapLayerScope } from '@/lib/use-map-layers';
 import { buildVisibleCorps } from '@/lib/map-corps';
 import { commanderyOfCity } from '@/lib/hwiha-fog';
-import { CommanderyNavigator } from '@/components/hwiha/CommanderyNavigator';
+import { CommanderyNavigator } from '@/components/campaign/CommanderyNavigator';
 
 const NEUTRAL_NAME = '공백지';
 const DEFAULT_PHASES_PER_MONTH = 3;
@@ -330,7 +330,7 @@ export default function MapViewer({
                 {title}
             </div>
             <div className="map-viewer-canvas">
-                <HanMapCanvas
+                <WorldMapCanvas
                     key={focus?.no ?? 'world'}
                     mapCode={data.mapCode}
                     tiles={ready!.tiles}

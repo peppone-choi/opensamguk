@@ -2,19 +2,19 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {HwihaTransferActionId,HwihaTransferOptions} from '../../lib/types';
+import type {TransferActionId,TransferOptions} from '../../lib/types';
 
-export const transferLabels:Record<HwihaTransferActionId,string>={
+export const transferLabels:Record<TransferActionId,string>={
     'action.gift':'증여','action.donate':'헌납',
 };
-export function isTransferActionId(value:string):value is HwihaTransferActionId{return value in transferLabels;}
+export function isTransferActionId(value:string):value is TransferActionId{return value in transferLabels;}
 const resourceLabels:Record<string,string>={MONEY:'전',GRAIN:'곡',IRON:'철',TIMBER:'목재',HORSES:'말'};
 
-export default function HwihaTransferForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
-    inputId:HwihaTransferActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+export default function TransferForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
+    inputId:TransferActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }){
-    const [data,setData]=useState<HwihaTransferOptions|null>(null);
+    const [data,setData]=useState<TransferOptions|null>(null);
     const [resource,setResource]=useState('');
     const [target,setTarget]=useState('');
     const [amount,setAmount]=useState(1);

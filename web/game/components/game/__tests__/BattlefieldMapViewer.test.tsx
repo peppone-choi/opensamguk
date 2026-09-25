@@ -3,7 +3,7 @@
 import { render, waitFor } from '@testing-library/react';
 import { beforeEach, it, expect, vi } from 'vitest';
 import type { ComponentProps } from 'react';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 const state = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null }));
 const preview = {serverName:'test',year:208,month:1,mapCode:'han-world-v3',width:700,height:610,
  cities:[{id:405,name:'당양',level:5,nationId:0,x:335,y:286,state:0,supply:true,isCapital:false}],nations:[]};
@@ -12,7 +12,7 @@ vi.mock('@opensamguk/ui', async () => {
  return { ...actual, useWorldMap: () => ({kind:'ready',preview,tiles:{_meta:{cols:768,rows:669}},
     provinceMap:null,provinceCenter:()=>undefined,cities:actual.buildWorldCities(preview),markerPositions:new Map(),
     commanderies:[],sourceSize:{width:700,height:610},administrativeOwnership:undefined}),
-    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
     state.props = props;
     return <div data-testid="main-map" />;
   } };

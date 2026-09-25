@@ -5,14 +5,14 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
 
 /** NPCs use the same current-condition rules as player reservations. */
-internal class HwihaNpcPersonalSelector(private val context: HwihaDomesticContext,
+internal class NpcPersonalSelector(private val context: DomesticContext,
     private val design: PersonalDesign = PersonalDesign.CANON,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
-        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
+        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             design.status != PersonalDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
-        if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId } || CorpsOrder.META_KEY in actor.meta)
             return reserved
         val state = context.projection(world)

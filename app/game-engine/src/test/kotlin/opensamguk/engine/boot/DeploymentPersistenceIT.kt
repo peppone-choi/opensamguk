@@ -24,14 +24,14 @@ import org.testcontainers.containers.PostgreSQLContainer
 
 /** Real database boundary; input scheduling and combat are verified separately. */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HwihaDeploymentPersistenceIT {
+class DeploymentPersistenceIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
-    private lateinit var fixture: HwihaEnlistmentFixture
+    private lateinit var fixture: EnlistmentFixture
     private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
     private fun executor(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
-        HwihaDeploymentExecutor(world,recorder,bundle.projection.topology,bundle.landMarchMetrics)
+        DeploymentExecutor(world,recorder,bundle.projection.topology,bundle.landMarchMetrics)
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(DockerClientFactory.instance().isDockerAvailable)
@@ -41,7 +41,7 @@ class HwihaDeploymentPersistenceIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc=JdbcTemplate(source)
         flush=JdbcFlushExecutor(NamedParameterJdbcTemplate(source),TransactionTemplate(DataSourceTransactionManager(source)))
-        fixture=HwihaEnlistmentFixture(jdbc,flush)
+        fixture=EnlistmentFixture(jdbc,flush)
     }
     @AfterAll fun teardown() { if(this::postgres.isInitialized) postgres.stop() }
     private fun save(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
@@ -93,7 +93,7 @@ class HwihaDeploymentPersistenceIT {
     }
 
     private fun military(world: InMemoryTurnWorld) =
-        HwihaMilitaryPresenceProvider(world,bundle.projection.topology,bundle.landMarchMetrics)
+        MilitaryPresenceProvider(world,bundle.projection.topology,bundle.landMarchMetrics)
 
     @Test fun `live deployed neutral corps blocks march and capital supply after cold reload`() {
         val id=616;fixture.seed(id)

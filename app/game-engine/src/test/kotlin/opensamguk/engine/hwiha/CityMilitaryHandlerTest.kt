@@ -8,8 +8,8 @@ import opensamguk.logic.input.CityMilitaryState
 import opensamguk.logic.input.MilitaryInput
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
-class HwihaCityMilitaryHandlerTest {
-    private val fixture = HwihaCampaignWorldFixture()
+class CityMilitaryHandlerTest {
+    private val fixture = CampaignWorldFixture()
 
     @Test fun `conscript spends county grain and changes troops without raising fortification`() {
         val route = fixture.route()
@@ -19,10 +19,10 @@ class HwihaCityMilitaryHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1,
                 meta = city.meta + (CountyWarehouse.META_KEY to stock.toMetaValue())) else city
         })
-        val handler = HwihaCityMilitaryHandler(world, ChangeRecorder())
+        val handler = CityMilitaryHandler(world, ChangeRecorder())
         val before = world.getCityById(route.startCity)!!
         assertEquals(100, CityMilitaryState.read(before.meta).troops)
-        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(MilitaryInput.CONSCRIPT,
+        val applied = assertIs<TurnOutcome.Applied>(handler.handle(MilitaryInput.CONSCRIPT,
             actor.id, "{}", "conscript-711", 42))
         val after = world.getCityById(route.startCity)!!
         assertEquals(950, after.population)
@@ -40,13 +40,13 @@ class HwihaCityMilitaryHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1) else city
         })
-        val handler = HwihaCityMilitaryHandler(world, ChangeRecorder())
+        val handler = CityMilitaryHandler(world, ChangeRecorder())
         val before = world.getCityById(route.startCity)!!
-        assertEquals("WAREHOUSE_NOT_READY", assertIs<HwihaTurnOutcome.Rejected>(handler.handle(
+        assertEquals("WAREHOUSE_NOT_READY", assertIs<TurnOutcome.Rejected>(handler.handle(
             MilitaryInput.CONSCRIPT, actor.id, "{}", "conscript-712", 42)).code)
         assertEquals(before, world.getCityById(route.startCity))
         world.applyCityDirtyFree(before.copy(nationId = 2))
-        assertEquals("FOREIGN_COUNTY", assertIs<HwihaTurnOutcome.Rejected>(handler.handle(
+        assertEquals("FOREIGN_COUNTY", assertIs<TurnOutcome.Rejected>(handler.handle(
             MilitaryInput.TRAIN, actor.id, "{}", "train-712", 42)).code)
         assertEquals(0, world.getGeneralById(actor.id)!!.experience)
     }
@@ -58,10 +58,10 @@ class HwihaCityMilitaryHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta +
                 (CityMilitaryState.META_KEY to CityMilitaryState(30, 50, 100).toMetaValue())) else city
         })
-        val selected = HwihaNpcCityMilitarySelector(HwihaDomesticContext()).select(world, actor.id,
+        val selected = NpcCityMilitarySelector(DomesticContext()).select(world, actor.id,
             ReservedTurn("휴식", "{}", rowExists = false))
         assertEquals(MilitaryInput.TRAIN, selected.actionCode)
-        assertIs<HwihaTurnOutcome.Applied>(HwihaCityMilitaryHandler(world, ChangeRecorder()).handle(
+        assertIs<TurnOutcome.Applied>(CityMilitaryHandler(world, ChangeRecorder()).handle(
             selected.actionCode, actor.id, selected.argJson, null, null, npcSelected = true))
         assertEquals(40, CityMilitaryState.read(world.getCityById(route.startCity)!!.meta).training)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)

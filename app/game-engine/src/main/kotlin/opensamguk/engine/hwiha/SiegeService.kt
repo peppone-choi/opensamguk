@@ -1,7 +1,7 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
-import opensamguk.infra.seed.HwihaUnitProfilesJson
+import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
@@ -13,20 +13,20 @@ import opensamguk.logic.world.*
  *
  * - **포위 시작**: 출전 군단이 목적지 省에 도착했고 그 省에 적대(교전 중이거나 무주) 縣治가 있으며 적 군단이 없으면
  *   개인 턴 이동 단계 뒤에 포위를 건다. 수비병이 0 이면 지킬 사람이 없어 바로 넘어간다(2026-09-23 확정 규칙).
- * - **순 경계**: 포위 유지(급식 → 병력비 2배)를 보고, 성 안 수비병이 縣 창고 곡을 먹고([HwihaWarehouseSettlement]
+ * - **순 경계**: 포위 유지(급식 → 병력비 2배)를 보고, 성 안 수비병이 縣 창고 곡을 먹고([WarehouseSettlement]
  *   — 첫 실제 차감 호출자), 사기·항복을 정산한다. 유지 실패는 포위 해제, 급식 실패는 원정 종료까지다.
  * - **강공**: 개인 행동 `action.assault` — [SiegeAssault] 격자 전투.
  * - **항복 권고**: 개인 행동 `action.demandSurrender` — 성 안 사기·민심 문턱([SiegeRules.surrenderDemandAccepted]).
  * - **함락**: [CountyCapture] 로 縣 소유를 넘기고 창고는 縣에 남는다(통제만 넘어감). 같은 순 월세입은
  *   순 경계 순서(포위 → 징세)에 따라 새 주인에게 간다.
  */
-class HwihaSiegeService(
+class SiegeService(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val cells: HanProvinceCellIndex,
-    private val outcomes: HwihaWarOutcomeListener = HwihaWarOutcomeListener.NONE,
+    private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
     enum class Failure(val message: String) {
         WRONG_RULE_PROFILE("이 세계에서는 공성 입력을 사용할 수 없습니다."),
@@ -40,7 +40,7 @@ class HwihaSiegeService(
     }
 
     private fun now() = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
-    private fun projection() = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
+    private fun projection() = DeploymentExecutor(world, recorder, topology, metrics).projection()
     private fun wars() = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
     private fun hostile(corpsNation: Int, cityNation: Int) = corpsNation > 0 && cityNation != corpsNation &&
         (cityNation == 0 || (corpsNation to cityNation) in wars() || (cityNation to corpsNation) in wars())
@@ -81,7 +81,7 @@ class HwihaSiegeService(
         val node = world.positionOf(commanderId) as? StrategicNodeRef.LandProvince ?: return false
         val county = countiesIn(node).firstOrNull { id -> world.getCityById(id)?.let { hostile(corps.nationId, it.nationId) } == true }
             ?: return false
-        val presence = HwihaMilitaryPresenceProvider(world, topology, metrics).assess(commanderId)
+        val presence = MilitaryPresenceProvider(world, topology, metrics).assess(commanderId)
         if (presence !is MilitaryPresenceAssessment.Ready) return false
         if (node.id in presence.blockedProvinceIds) {
             log(commanderId, "縣城 앞에 적 군단이 있어 포위를 걸 수 없습니다.")
@@ -134,7 +134,7 @@ class HwihaSiegeService(
         if (started >= now()) return // 포위를 건 턴에는 더 하지 않는다
         // 구원이 먼저다(포위 중에도): 자국 縣이 포위돼 있고 구원할 수 있으면 이 포위를 풀고 출병을 끝낸다.
         // 다음 턴 출병 선택기가 같은 규칙으로 구원 출병을 고른다.
-        if (HwihaNpcDeploySelector(topology, metrics).reliefFor(world, commanderId) != null) {
+        if (NpcDeploySelector(topology, metrics).reliefFor(world, commanderId) != null) {
             corpsOf(commanderId)?.takeIf { it.orderId == siege.besiegerOrderId }?.let(::endDeployment)
             lift(siege, "RELIEF")
             log(commanderId, "자국 縣을 구원하려고 ${world.getCityById(siege.countyId)?.name ?: ""} 縣城 포위를 풀었습니다.")
@@ -195,7 +195,7 @@ class HwihaSiegeService(
         val layout = (BattlefieldLayout.prepare(cells, node.id, siege.approachProvinceId)
             as? BattlefieldLayout.Result.Ready)?.layout ?: return Failure.BATTLEFIELD_UNAVAILABLE
         if (layout.defenderZone.isEmpty() || layout.attackerZone.isEmpty()) return Failure.BATTLEFIELD_UNAVAILABLE
-        val profiles = HwihaUnitProfilesJson.loadDefault()
+        val profiles = UnitProfilesJson.loadDefault()
         val attackers = corps.bugokIds.sorted().map { id ->
             val unit = world.getBugokById(id) ?: return Failure.STATE_UNAVAILABLE
             val profile = profiles.find(unit.crewTypeId) ?: return Failure.UNIT_UNAVAILABLE
@@ -294,9 +294,9 @@ class HwihaSiegeService(
         val grain = warehouse?.stock?.grain ?: 0L
         val settled = SiegeRules.settleTurn(siege.morale, garrison, grain)
         if (warehouse != null && settled.rationServed > 0) {
-            val result = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, warehouse.revision,
+            val result = WarehouseSettlement(world, recorder).settle(city.id, city.nationId, warehouse.revision,
                 Resources(grain = settled.rationServed))
-            if (result != HwihaWarehouseSettlement.Result.APPLIED) {
+            if (result != WarehouseSettlement.Result.APPLIED) {
                 lift(stamped, "GARRISON_RATION_UNAVAILABLE")
                 log(siege.besiegerGeneralId, "${city.name} 縣城의 군량 정산에 실패해 포위를 풀었습니다($result).")
                 return
@@ -336,7 +336,7 @@ class HwihaSiegeService(
             supplyState = 0, frontState = 0), settlement.garrisonTroops + left, resetCondition = true)
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
-        HwihaCapitalAfterCapture(world, recorder).settle(previousOwner, before.id)
+        CapitalAfterCapture(world, recorder).settle(previousOwner, before.id)
         val now = now()
         world.putHwihaSiege(siege.copy(status = FALLEN, endReason = reason, garrison = 0,
             timeline = appendEntry(siege.timeline, entry(now, "FALLEN", siege.morale, 0, "reason" to reason,

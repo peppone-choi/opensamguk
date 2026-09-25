@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Chip, Panel, Portrait } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import { useHwihaRead, useHwihaRenown, type HwihaFiveStats, type HwihaPersonCard } from '@/lib/hwiha-reads';
+import { useHwihaRead, useHwihaRenown, type FiveStats, type PersonCard } from '@/lib/hwiha-reads';
 import { hwihaHref } from '@/lib/hwiha-screens';
 import { useHwihaSession } from '@/lib/hwiha-session';
-import { HwihaEmpty, hwihaReadNotice } from './HwihaStates';
+import { Empty, hwihaReadNotice } from './GameStates';
 import styles from './GeneralRoster.module.css';
 
 const fmt = new Intl.NumberFormat('ko-KR');
@@ -20,7 +20,7 @@ const SORTS: ReadonlyArray<{ key: SortKey; label: string }> = [
     { key: 'loyalty', label: '충성순' },
 ];
 
-const STAT_KEYS: ReadonlyArray<{ key: keyof HwihaFiveStats; label: string }> = [
+const STAT_KEYS: ReadonlyArray<{ key: keyof FiveStats; label: string }> = [
     { key: 'leadership', label: '통' },
     { key: 'strength', label: '무' },
     { key: 'intel', label: '지' },
@@ -29,7 +29,7 @@ const STAT_KEYS: ReadonlyArray<{ key: keyof HwihaFiveStats; label: string }> = [
 ];
 
 /** 능력치 다섯 칸 — 글자·수·막대. samnet 장수 카드의 미니 막대 자리. 100 을 넘으면 막대는 끝까지 찬다. */
-function StatBars({ stats }: { stats: Partial<HwihaFiveStats> | null | undefined }) {
+function StatBars({ stats }: { stats: Partial<FiveStats> | null | undefined }) {
     return (
         <div className={styles.stats}>
             {STAT_KEYS.map(({ key, label }) => {
@@ -81,7 +81,7 @@ export default function GeneralRoster() {
     if (!frontInfo || !me?.hasGeneral) return null;
     const units = retinue.data?.units ?? [];
     const notice = isHwihaWorld ? hwihaReadNotice(retinue, retinue.data?.status) : null;
-    const troopsOf = (p: HwihaPersonCard) => {
+    const troopsOf = (p: PersonCard) => {
         const led = units.filter((u) => u.commanderRetainerId === p.retainerId);
         if (led.length === 0) return null;
         return `${led[0].crewTypeName} ${fmt.format(led.reduce((sum, u) => sum + u.troops, 0))}`;
@@ -129,8 +129,8 @@ export default function GeneralRoster() {
                 </div>
             </div>
 
-            {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
-            {!notice && isHwihaWorld && people.length === 0 ? <HwihaEmpty>거느린 인물이 없습니다.</HwihaEmpty> : null}
+            {notice ? <Empty>{notice}</Empty> : null}
+            {!notice && isHwihaWorld && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
             {people.map((p) => {
                 const troops = troopsOf(p);
                 return (

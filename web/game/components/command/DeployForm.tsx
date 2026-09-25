@@ -2,13 +2,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
-import type { HwihaDeployOptions } from '../../lib/types';
+import type { DeployOptions } from '../../lib/types';
 
-export default function HwihaDeployForm({generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
+export default function DeployForm({generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}: {
     generalId:number; turnIdx:number; refreshKey?:number; unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void; onClose:()=>void; onReserved?:()=>void;
 }) {
-    const [data,setData]=useState<HwihaDeployOptions|null>(null);
+    const [data,setData]=useState<DeployOptions|null>(null);
     const [selected,setSelected]=useState<number[]>([]);
     const [destination,setDestination]=useState('');
     const [reason,setReason]=useState<string|null>(null);

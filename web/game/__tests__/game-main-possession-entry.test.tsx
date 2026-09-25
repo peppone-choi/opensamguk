@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import GameMainPage from '@/app/game/page';
-import { useHwihaSession, type HwihaSession } from '@/lib/hwiha-session';
+import { useHwihaSession, type GameSession } from '@/lib/hwiha-session';
 
 const mocks = vi.hoisted(() => ({
   useSearchParams: vi.fn(),
@@ -16,7 +16,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/lib/hwiha-session', () => ({
-  HwihaSessionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
+  GameSessionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
   useHwihaSession: vi.fn(),
 }));
 
@@ -38,7 +38,7 @@ function setSession(generalId: number | null, global: { npcMode?: number; blockG
     isHwihaWorld: true,
     gameDate: '',
     refresh: mocks.refresh,
-  } as unknown as HwihaSession);
+  } as unknown as GameSession);
 }
 
 describe('main game route after HWIHA cutover', () => {
