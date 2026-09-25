@@ -48,7 +48,7 @@ object HwihaTravelRules {
         if (!topology.containsNode(destination)) return reject(HwihaTravelFailure.INVALID_DESTINATION)
         if (origin == destination) return reject(HwihaTravelFailure.ALREADY_THERE)
         return try {
-            val passage = HwihaLandPassageState.read(worldMeta, topology)
+            val passage = LandPassageState.read(worldMeta, topology)
             if (passage == null || HwihaMarchReactions.presence(worldMeta) in setOf(
                     HwihaMarchReactions.Presence.MISSING, HwihaMarchReactions.Presence.MALFORMED))
                 return reject(HwihaTravelFailure.STATE_UNAVAILABLE)

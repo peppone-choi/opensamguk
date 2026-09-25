@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
@@ -63,14 +65,14 @@ class HwihaCorpsRations(
         val stamp = "%04d-%02d".format(year, month)
         if (world.getState().meta[STAMP_KEY] == stamp) return 0
         val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection()
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
+        val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
         val inFlight = convoys().toMutableList()
         var sent = 0
         if (projection != null && edges != null) {
             val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
             val network = HwihaWarehouseNetwork(world, recorder)
             for (corps in projection.deployed.sortedBy { it.orderId }) {
-                val nationEdges = HwihaRoadFortPassage.forNation(world, edges, corps.nationId) ?: continue
+                val nationEdges = RoadFortPassage.forNation(world, edges, corps.nationId) ?: continue
                 // 자국 縣에 있으면 월 보충(HwihaUnitResupply)이 맡는다.
                 val here = cityAt(world, corps.commanderGeneralId)
                 if (here != null && world.getCityById(here)?.nationId == corps.nationId) continue

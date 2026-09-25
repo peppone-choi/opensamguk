@@ -26,7 +26,7 @@ class HwihaPersonalEncounter(
                 else LandMarchStop.BUDGET_EXHAUSTED
             update(actorId) { it.copy(meta = it.meta + (HwihaTravelState.META_KEY to
                 applied.state.copy(checkpoint = checkpoint.copy(stop = stop)).toMetaValue())) }
-            HwihaRecords.general(world, actorId, HwihaRecordKind.MARCH_DIRECT,
+            HwihaRecords.general(world, actorId, RecordKind.MARCH_DIRECT,
                 "설치 계책을 만나 행군을 멈췄습니다.", mapOf("orderId" to applied.state.orderId,
                     "province" to province.canonicalKey, "stop" to "SCHEME_CONTACT"))
             return
@@ -42,7 +42,7 @@ class HwihaPersonalEncounter(
                 "Invalid personal encounter state could not retreat"
             }
             update(actorId) { it.copy(meta = it.meta - HwihaTravelState.META_KEY) }
-            HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED,
+            HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
                 "개인 조우 상태를 읽을 수 없어 이전 省으로 물러났습니다.",
                 mapOf("inputId" to applied.state.inputId, "code" to "STATE_UNAVAILABLE"))
             return
@@ -89,14 +89,14 @@ class HwihaPersonalEncounter(
         val winners = if (won) listOf(actorId) else listOf(battle.defenderGeneralId)
         val losers = if (won) listOf(battle.defenderGeneralId) else listOf(actorId)
         outcomes.onEncounterResolved(winners, losers)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_ENCOUNTER,
+        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_ENCOUNTER,
             when (battle.outcome) {
                 HwihaPersonalEncounterBattle.Outcome.WON -> "개인 조우 전투에서 승리했습니다."
                 HwihaPersonalEncounterBattle.Outcome.RETREATED -> "개인 조우 전투에서 패해 이전 省으로 물러났습니다."
                 HwihaPersonalEncounterBattle.Outcome.CAPTURED -> "개인 조우 전투에서 패해 사로잡혔습니다."
             }, mapOf("encounterId" to encounterId, "outcome" to battle.outcome.name,
                 "province" to province.canonicalKey, "rounds" to battle.rounds))
-        HwihaRecords.general(world, battle.defenderGeneralId, HwihaRecordKind.PERSONAL_ENCOUNTER,
+        HwihaRecords.general(world, battle.defenderGeneralId, RecordKind.PERSONAL_ENCOUNTER,
             if (won) "진입한 적 장수와의 개인 조우 전투에서 패했습니다."
                 else "진입한 적 장수와의 개인 조우 전투에서 승리했습니다.",
             mapOf("encounterId" to encounterId, "outcome" to if (won) "LOST" else "WON",

@@ -7,7 +7,7 @@ import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.domestic.WorkRequest
 import opensamguk.logic.world.*
 
-class HwihaInfrastructureSiteRulesTest {
+class InfrastructureSiteRulesTest {
     private val topology = StrategicTopologySnapshot("qa", setOf("seat", "piece", "other"), emptyList(), listOf(
         TraversalEdge("road-piece", StrategicNodeRef.LandProvince("piece"), StrategicNodeRef.LandProvince("other"),
             TraversalMode.LAND, false, 1, 7, RiskBand.LOW, SeasonalAvailability.ALWAYS,
@@ -20,32 +20,32 @@ class HwihaInfrastructureSiteRulesTest {
         emptyList(), emptyList(), listOf(county), emptyList(), topology.landProvinceIds,
         provinceIdsByCounty = mapOf(10 to setOf("seat", "piece")))
     private fun infrastructure(active: Boolean, gates: List<StrategicRoadGate> = listOf(gate),
-        forts: List<HwihaRoadFort> = emptyList()) = HwihaInfrastructureSiteState(topology, gates,
+        forts: List<RoadFort> = emptyList()) = InfrastructureSiteState(topology, gates,
         StrategicEdgeStateSnapshot(topology.topologyRevision, topology.contentHash,
             mapOf("road-piece" to StrategicEdgeState(active, false, false, 7))), forts)
 
     @Test fun `a road on a cityless part of the county is buildable only on a mapped grid`() {
         val request = WorkRequest(1, 10, DomesticWork.ROAD, "road-piece")
-        assertNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(false)))
-        assertNotNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(false, emptyList())))
-        assertNotNull(HwihaInfrastructureSiteRules.error(request,
+        assertNull(InfrastructureSiteRules.error(request, state, infrastructure(false)))
+        assertNotNull(InfrastructureSiteRules.error(request, state, infrastructure(false, emptyList())))
+        assertNotNull(InfrastructureSiteRules.error(request,
             state.copy(provinceIdsByCounty = emptyMap()), infrastructure(false)))
-        assertNotNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(true)))
+        assertNotNull(InfrastructureSiteRules.error(request, state, infrastructure(true)))
     }
 
     @Test fun `legacy county road needs no strategic gate but targeted roads still do`() {
         val legacy = infrastructure(false, emptyList())
-        assertNull(HwihaInfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD), state, legacy))
-        assertNotNull(HwihaInfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD, "road-piece"), state, legacy))
-        assertNotNull(HwihaInfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD), state, infrastructure(false)))
+        assertNull(InfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD), state, legacy))
+        assertNotNull(InfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD, "road-piece"), state, legacy))
+        assertNotNull(InfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD), state, infrastructure(false)))
     }
 
     @Test fun `fort uses the county piece and rejects occupied cells`() {
         val request = WorkRequest(1, 10, DomesticWork.FORTIFICATION, "road-piece", 1, 1)
-        assertNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(true)))
-        val fort = HwihaRoadFort(HwihaRoadFort.siteId("road-piece", 1, 1), "road-piece", "piece", 1, 1,
+        assertNull(InfrastructureSiteRules.error(request, state, infrastructure(true)))
+        val fort = RoadFort(RoadFort.siteId("road-piece", 1, 1), "road-piece", "piece", 1, 1,
             1, 100, 0)
-        assertNotNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(true, forts = listOf(fort))))
-        assertNotNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(false)))
+        assertNotNull(InfrastructureSiteRules.error(request, state, infrastructure(true, forts = listOf(fort))))
+        assertNotNull(InfrastructureSiteRules.error(request, state, infrastructure(false)))
     }
 }

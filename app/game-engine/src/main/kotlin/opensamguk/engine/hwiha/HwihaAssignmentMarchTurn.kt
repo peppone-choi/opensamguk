@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
@@ -40,8 +42,8 @@ class HwihaAssignmentMarchTurn(
         if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (HwihaCountyAssignment.META_KEY !in actor.meta) return
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology)
-            ?.let { HwihaRoadFortPassage.forNation(world, it, actor.nationId) } }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
         val refs = assignmentRefs(actor.meta)
         if (edges == null) {
@@ -83,7 +85,7 @@ class HwihaAssignmentMarchTurn(
             .let { it.isNullOrBlank() || (it.toLongOrNull()?.let { id -> id <= 0 } == true) }
 
     private fun log(generalId: Int, text: String, refs: Map<String, Any?>) =
-        HwihaRecords.general(world, generalId, HwihaRecordKind.MARCH_ASSIGNMENT, text, refs)
+        HwihaRecords.general(world, generalId, RecordKind.MARCH_ASSIGNMENT, text, refs)
 
     private fun assignmentRefs(meta: Map<String, Any?>): Map<String, Any?> =
         (try { HwihaCountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null })

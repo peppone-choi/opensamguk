@@ -16,8 +16,8 @@ class HwihaTravelStateTest {
         listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
 
     @Test fun `pinned direct route and progress survive a metadata round trip`() {
-        val passage = HwihaLandPassageState.read(mapOf(HwihaLandPassageState.META_KEY to
-            HwihaLandPassageState.initialMetaValue(topology)), topology)!!
+        val passage = LandPassageState.read(mapOf(LandPassageState.META_KEY to
+            LandPassageState.initialMetaValue(topology)), topology)!!
         val path = (StrategicPathResolver.resolveLandMarch(topology,
             StrategicPathRequest(origin, destination, 1), passage, metrics) as LandMarchPathResult.Resolved).path
         val at = HwihaPhase(190, 1, 1)

@@ -85,7 +85,7 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
             recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
             world.applyNationDirtyFree(nextNation)
         }
-        HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
+        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${actor.name}이 ${successor.name}에게 휘하를 넘기고 은퇴했습니다.",
             mapOf("inputId" to HwihaRetireInput.INPUT_ID, "successorGeneralId" to successor.id,
                 "requestId" to requestId))

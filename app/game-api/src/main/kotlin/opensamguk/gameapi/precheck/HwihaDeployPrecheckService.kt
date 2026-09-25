@@ -31,13 +31,13 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         val ready = requireNotNull(snapshot.ready)
         val topology = ready.bundle.projection.topology
         val passage = try {
-            val passageMeta = HwihaGameEnvStateMeta.overlay(ready.selected.world.meta, gameKv, mapper,
-                HwihaLandPassageState.META_KEY)
-            val base = HwihaLandPassageState.read(passageMeta, topology)
+            val passageMeta = GameEnvStateMeta.overlay(ready.selected.world.meta, gameKv, mapper,
+                LandPassageState.META_KEY)
+            val base = LandPassageState.read(passageMeta, topology)
                 ?: return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
             if (ready.bundle.projection.presentation?.roadGates.isNullOrEmpty()) base else {
-                val forts = HwihaRoadFortState.read(HwihaGameEnvStateMeta.overlay(emptyMap(), gameKv, mapper,
-                    HwihaRoadFortState.META_KEY))
+                val forts = RoadFortState.read(GameEnvStateMeta.overlay(emptyMap(), gameKv, mapper,
+                    RoadFortState.META_KEY))
                 val hostile = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
                     when (ready.people.single { it.id == request.actorId }.nationId) {
                         relation.srcNationId -> relation.destNationId
@@ -45,7 +45,7 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
                         else -> null
                     }
                 }.toSet()
-                HwihaRoadFortState.forNation(base, forts, hostile)
+                RoadFortState.forNation(base, forts, hostile)
             }
         } catch (_: RuntimeException) { return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) }
         return HwihaDeployRules.assess(request, ready.state, topology,
@@ -72,7 +72,7 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         val topology = ready.bundle.projection.topology
         return try {
             // Missing authority is not an implicit clear map, even before a destination is selected.
-            require(HwihaLandPassageState.read(ready.selected.world.meta, topology) != null)
+            require(LandPassageState.read(ready.selected.world.meta, topology) != null)
             require(HwihaMarchReactions.presence(ready.selected.world.meta).let {
                 it == HwihaMarchReactions.Presence.EMPTY || it == HwihaMarchReactions.Presence.PENDING })
             require(ready.state.deployed.filter { it.ownerGeneralId == actorId }.all {

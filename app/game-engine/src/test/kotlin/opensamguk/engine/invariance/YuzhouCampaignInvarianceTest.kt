@@ -65,7 +65,7 @@ class YuzhouCampaignInvarianceTest {
         }
         val state = TurnWorldState(1, 190, 1, 3600, Instant.parse("0190-01-01T00:00:00Z"), currentPhase = 1,
             config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = bundle.variant,
-            meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+            meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                 HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue(), "startYear" to 190))
         val world = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals, cities = cities,
             nations = scenario.nations.map { Nation(it.id, it.name, it.color, capitalCityId = it.cities.first().toInt(), level = it.scale,

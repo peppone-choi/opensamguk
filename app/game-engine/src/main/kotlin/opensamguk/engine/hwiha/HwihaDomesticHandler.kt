@@ -142,12 +142,12 @@ class HwihaDomesticHandler(
     }
 
     private fun infrastructureTargetError(request: WorkRequest, state: DomesticProjection): String? {
-        val passage = try { context.topology?.let { HwihaLandPassageState.read(world.getState().meta, it) } }
+        val passage = try { context.topology?.let { LandPassageState.read(world.getState().meta, it) } }
             catch (_: IllegalArgumentException) { null }
-        val forts = try { HwihaRoadFortState.read(world.getState().meta) }
+        val forts = try { RoadFortState.read(world.getState().meta) }
             catch (_: IllegalArgumentException) { return "보루 상태를 읽을 수 없습니다." }
-        return HwihaInfrastructureSiteRules.error(request, state,
-            HwihaInfrastructureSiteState(context.topology, context.roadGates, passage, forts))
+        return InfrastructureSiteRules.error(request, state,
+            InfrastructureSiteState(context.topology, context.roadGates, passage, forts))
     }
 
     private fun reduceFortification(countyId: Int) {

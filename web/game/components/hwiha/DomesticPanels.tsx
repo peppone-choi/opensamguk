@@ -221,7 +221,7 @@ export function PolicyPanel({ onToast, refreshKey, onDone }: { onToast: Toast; r
 /** 공사 — 현마다 하나씩, 순 경계마다 진척하며 그 현 창고의 자원을 나눠 쓴다. */
 export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; refreshKey: number; onDone: () => void }) {
     const read = useHwihaRead((id, signal) => api.hwihaWorks(id, signal), [refreshKey]);
-    const roads = useHwihaRead((id, signal) => api.hwihaRoadForts(id, signal), [refreshKey]);
+    const roads = useHwihaRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
     const { busy, submit } = useDomesticSubmit(onToast, onDone);
     const [roadChoice, setRoadChoice] = useState<Record<number, string>>({});
     const [fortChoice, setFortChoice] = useState<Record<number, string>>({});

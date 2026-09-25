@@ -53,7 +53,7 @@ class HwihaGovernanceMeritWiringTest {
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
             state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH, currentPhase = 1,
                 config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"),
-                meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+                meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                     HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())),
             generals = listOf(general(1, "A", human = true, meta = lordMeta), general(2, "A", meta = mapOf("hwihaLord" to false)),
                 general(3, "B", meta = mapOf("hwihaLord" to false))),
@@ -127,10 +127,10 @@ class HwihaGovernanceMeritWiringTest {
         // 같은 경계의 월단평이 0200-02 치적을 적용하고 집계에서 뺐다.
         assertEquals(30 + curve.domesticMerit, renown(world, 1))
         assertTrue(entries(world, 1).isEmpty())
-        val logged = world.peekLogs().filter { it.eventKind == HwihaRecordKind.RENOWN_EVENT && it.generalId == 1 }
+        val logged = world.peekLogs().filter { it.eventKind == RecordKind.RENOWN_EVENT && it.generalId == 1 }
         assertEquals(1, logged.size)
         assertEquals(mapOf("kind" to "domesticMerit", "source" to "COUNTY_INDICATOR_RISE", "stamp" to "0200-02"),
-            logged.single().meta!![HwihaRecordKind.REFS_META_KEY])
+            logged.single().meta!![RecordKind.REFS_META_KEY])
         assertTrue(entries(world, 3).isEmpty(), "카드 인물이 아니라 카드 주인이 치적을 받는다")
     }
 
@@ -141,7 +141,7 @@ class HwihaGovernanceMeritWiringTest {
         val (closed, outcome) = monthBoundary(world, recorder, context, 200, 3)
         assertEquals(listOf(1), closed, "기록 스트림 창이 먼저 0200-02 치적을 쌓는다")
         assertEquals(1, outcome.meritEvents, "내정 경로도 사건을 냈다")
-        val logged = world.peekLogs().filter { it.eventKind == HwihaRecordKind.RENOWN_EVENT && it.generalId == 1 }
+        val logged = world.peekLogs().filter { it.eventKind == RecordKind.RENOWN_EVENT && it.generalId == 1 }
         assertEquals(1, logged.size, "두 경로가 같은 달 같은 종류라 한 건으로 접힌다: $logged")
         assertEquals(30 + curve.domesticMerit, renown(world, 1), "치적은 한 번만 적용된다")
     }

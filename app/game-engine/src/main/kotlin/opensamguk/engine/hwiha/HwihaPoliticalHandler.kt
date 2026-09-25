@@ -150,7 +150,7 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
             renown.record(actorId, HwihaRenownEventSource.SWORN_OATH)
             renown.record(checkNotNull(request.targetGeneralId), HwihaRenownEventSource.SWORN_OATH)
         }
-        HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
+        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${actor.name}의 정치 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

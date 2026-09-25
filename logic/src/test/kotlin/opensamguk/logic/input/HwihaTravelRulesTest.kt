@@ -24,7 +24,7 @@ class HwihaTravelRulesTest {
         emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to "a".repeat(64)))
     private val metrics = LandMarchMetricSnapshot(topology, "a".repeat(64),
         listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
-    private val meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+    private val meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
         HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())
     private val snapshot = HwihaTravelSnapshot(RuleProfile.HWIHA, true, origin, false, false)
     private val request = HwihaTravelRequest(1, HwihaTravelInput.MOVE, destination)
@@ -35,10 +35,10 @@ class HwihaTravelRulesTest {
 
     @Test fun `route assessment uses the current land position and executable passage`() {
         assertEquals(listOf("land:A", "land:B"), assertIs<HwihaTravelAssessment.Eligible>(assess()).path.nodeKeys)
-        val closed = HwihaLandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
+        val closed = LandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
             mapOf("active" to true, "seasonOpen" to false, "blockaded" to true, "availableCapacity" to 7)))
         assertEquals(HwihaTravelFailure.NO_ROUTE, assertIs<HwihaTravelAssessment.Rejected>(
-            assess(meta = meta + (HwihaLandPassageState.META_KEY to closed))).reason)
+            assess(meta = meta + (LandPassageState.META_KEY to closed))).reason)
         assertEquals(HwihaTravelFailure.POSITION_UNAVAILABLE, assertIs<HwihaTravelAssessment.Rejected>(
             assess(snapshot = snapshot.copy(actorNode = null))).reason)
     }

@@ -105,7 +105,7 @@ class HwihaFieldHandler(
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
         HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_COUNTY_ACTION)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED, "${city.name}에서 현장 행동을 마쳤습니다.",
+        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED, "${city.name}에서 현장 행동을 마쳤습니다.",
             linkedMapOf("inputId" to inputId, "countyId" to city.id, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.engine.turn.ChangeRecorder
@@ -87,11 +89,11 @@ class HwihaMarchReactionInterpreter(
                 StrategicNodeRef.LandProvince(scheme.provinceId)) || world.getGeneralById(scheme.ownerGeneralId)?.nationId != scheme.nationId }) return null
         val scheme = inventory.installedSchemes.any { it.provinceId == node.id && hostile(it.nationId) }
         val actorIsCorps = projection.deployed.any { it.commanderGeneralId == actorId }
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
+        val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
             ?: return null
         val nationEdges = hashMapOf<Int, StrategicEdgeStateSnapshot?>()
         fun passableFor(nationId: Int): StrategicEdgeStateSnapshot? = nationEdges.getOrPut(nationId) {
-            HwihaRoadFortPassage.forNation(world, edges, nationId)
+            RoadFortPassage.forNation(world, edges, nationId)
         }
         val interceptors = if (!directTravel && !actorIsCorps) emptyList() else inventory.interceptions.filter { hostile(it.nationId) }.mapNotNull { order ->
             val from = world.positionOf(order.commanderGeneralId) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null

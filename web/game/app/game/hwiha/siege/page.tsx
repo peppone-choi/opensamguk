@@ -6,7 +6,7 @@ import HwihaShell from '@/components/HwihaShell';
 import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
-import { type HwihaSiege, type HwihaRoadFort, useHwihaRead } from '@/lib/hwiha-reads';
+import { type HwihaSiege, type RoadFort, useHwihaRead } from '@/lib/hwiha-reads';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 const number = new Intl.NumberFormat('ko-KR');
@@ -41,7 +41,7 @@ export default function SiegePage() {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ kind: 'error' | 'status'; text: string } | null>(null);
     const read = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
-    const roadRead = useHwihaRead((id, signal) => api.hwihaRoadForts(id, signal), [refreshKey]);
+    const roadRead = useHwihaRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
     const rows = read.data?.sieges ?? [];
     const roadForts = roadRead.data?.forts ?? [];
     const problem = hwihaReadNotice(read, read.data?.status);
@@ -65,7 +65,7 @@ export default function SiegePage() {
             setNotice({ kind: 'error', text: error instanceof Error ? error.message : '공성 입력을 제출하지 못했습니다.' });
         } finally { setBusy(false); }
     };
-    const besiegeRoadFort = async (fort: HwihaRoadFort) => {
+    const besiegeRoadFort = async (fort: RoadFort) => {
         if (generalId == null || !fort.canBesiege || busy) return;
         setBusy(true); setNotice(null);
         try {

@@ -85,7 +85,7 @@ class HwihaEncounterResolver(
             endDeployment(participant)
             updateMeta(participant.commanderGeneralId) { it - SEALED_KEYS + (DISBAND_RECORD_KEY to record) }
             if (world.getGeneralById(participant.commanderGeneralId) != null) {
-                HwihaRecords.general(world, participant.commanderGeneralId, HwihaRecordKind.ENCOUNTER_DISBANDED,
+                HwihaRecords.general(world, participant.commanderGeneralId, RecordKind.ENCOUNTER_DISBANDED,
                     "조우 전투를 준비할 수 없어 군단이 이 지역에서 행군을 멈췄습니다($reason).",
                     mapOf("encounterId" to encounter.encounterId, "province" to encounter.province.id, "reason" to reason))
             }

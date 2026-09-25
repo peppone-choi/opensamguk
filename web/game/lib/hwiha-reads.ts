@@ -171,7 +171,7 @@ export interface HwihaSieges {
     readonly sieges: readonly HwihaSiege[];
 }
 
-export interface HwihaRoadFort {
+export interface RoadFort {
     readonly id: string;
     readonly edgeId: string;
     readonly provinceId: string;
@@ -185,10 +185,10 @@ export interface HwihaRoadFort {
     readonly canBesiege: boolean;
 }
 
-export interface HwihaRoadForts {
+export interface RoadForts {
     readonly status: string;
     readonly roadMode: boolean;
-    readonly forts: readonly HwihaRoadFort[];
+    readonly forts: readonly RoadFort[];
     readonly gates: readonly {
         edgeId: string;
         fromProvinceId: string;

@@ -64,7 +64,7 @@ class HwihaDispatchExecutorTest {
         assertIs<DispatchExecution.Applied>(executor.reply(DispatchReplyRequest(2,"dispatch-2",false)))
         assertEquals(40,world.getRetainerById(4)!!.loyalty)
         assertEquals(1,HwihaRenownEvents.entries(world.getGeneralById(2)!!.meta).size)
-        val renownRecords=world.peekLogs().filter { it.eventKind==HwihaRecordKind.RENOWN_EVENT }
+        val renownRecords=world.peekLogs().filter { it.eventKind==RecordKind.RENOWN_EVENT }
         assertEquals(listOf(2),renownRecords.map { it.generalId },"only the newly tallied event is announced")
         // Next month: a new refusal is a new event.
         world.setCurrentDate(201,1,1)
@@ -76,16 +76,16 @@ class HwihaDispatchExecutorTest {
         val world=world(); val recorder=ChangeRecorder(); val executor=HwihaDispatchExecutor(world,recorder)
         world.applyGeneralDirtyFree(world.getGeneralById(1)!!.copy(userId="41"))  // a player lord keeps records
         issue(world,recorder); executor.reply(DispatchReplyRequest(2,"dispatch-1",true))
-        val records=world.peekLogs().map { Triple(it.generalId,it.eventKind,(it.meta?.get(HwihaRecordKind.REFS_META_KEY) as Map<*,*>)["dispatchId"]) }
+        val records=world.peekLogs().map { Triple(it.generalId,it.eventKind,(it.meta?.get(RecordKind.REFS_META_KEY) as Map<*,*>)["dispatchId"]) }
         assertEquals(listOf(
-            Triple(2,HwihaRecordKind.DISPATCH_RECEIVED,"dispatch-1"), Triple(1,HwihaRecordKind.DISPATCH_ISSUED,"dispatch-1"),
-            Triple(2,HwihaRecordKind.DISPATCH_ACCEPTED,"dispatch-1"), Triple(1,HwihaRecordKind.DISPATCH_ACCEPTED,"dispatch-1"),
+            Triple(2,RecordKind.DISPATCH_RECEIVED,"dispatch-1"), Triple(1,RecordKind.DISPATCH_ISSUED,"dispatch-1"),
+            Triple(2,RecordKind.DISPATCH_ACCEPTED,"dispatch-1"), Triple(1,RecordKind.DISPATCH_ACCEPTED,"dispatch-1"),
         ),records)
         assertTrue(world.peekLogs().all { it.scope=="general" && it.category=="action" })
         // The kind reaches the flush row (log_entry.event_kind), refs stay in meta.
         val rows=DatabaseHooks.toFlushPayload(world,recorder,world.consumeDirtyState()).logEntries
         assertEquals(records.map { it.second },rows.map { it.eventKind })
-        assertEquals("dispatch-1",(rows.first().meta[HwihaRecordKind.REFS_META_KEY] as Map<*,*>)["dispatchId"])
+        assertEquals("dispatch-1",(rows.first().meta[RecordKind.REFS_META_KEY] as Map<*,*>)["dispatchId"])
         assertEquals(listOf(12),rows.map { it.month }.distinct()); assertEquals(listOf(1),rows.map { it.phase }.distinct())
     }
     @Test fun `an NPC lord keeps no dispatch record`() {

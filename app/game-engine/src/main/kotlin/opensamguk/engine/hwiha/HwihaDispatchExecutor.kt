@@ -35,9 +35,9 @@ class HwihaDispatchExecutor(
         updateMeta(world.getGeneralById(request.targetGeneralId)!!,
             assessment.target.meta + (HwihaDispatchState.META_KEY to dispatch.toMetaValue()))
         // Only the issuer and the target learn about a dispatch; it is private to both (HwihaDispatchState).
-        HwihaRecords.general(world, dispatch.targetId, HwihaRecordKind.DISPATCH_RECEIVED,
+        HwihaRecords.general(world, dispatch.targetId, RecordKind.DISPATCH_RECEIVED,
             targetText ?: "발령이 도착했습니다. 기한 안에 수락하거나 거절할 수 있습니다.", refs(dispatch))
-        if (humanOwned(dispatch.issuerId)) HwihaRecords.general(world, dispatch.issuerId, HwihaRecordKind.DISPATCH_ISSUED,
+        if (humanOwned(dispatch.issuerId)) HwihaRecords.general(world, dispatch.issuerId, RecordKind.DISPATCH_ISSUED,
             "휘하 장수에게 발령을 내렸습니다.", refs(dispatch))
         return DispatchExecution.Applied(dispatch)
     }
@@ -69,7 +69,7 @@ class HwihaDispatchExecutor(
                     return reject(assessment.reason)
                 val cancelled = old.copy(status = DispatchStatus.CANCELLED)
                 updateMeta(target, target.meta + (HwihaDispatchState.META_KEY to cancelled.toMetaValue()))
-                HwihaRecords.general(world, target.id, HwihaRecordKind.DISPATCH_CANCELLED,
+                HwihaRecords.general(world, target.id, RecordKind.DISPATCH_CANCELLED,
                     "기한이 되었지만 발령이 더 이상 유효하지 않아 벌점 없이 취소되었습니다.",
                     refs(cancelled) + ("reason" to assessment.reason.name))
             }
@@ -99,7 +99,7 @@ class HwihaDispatchExecutor(
         }
         meta = meta + (HwihaDispatchState.META_KEY to resolved.toMetaValue())
         updateMeta(target, meta)
-        val kind = if (accept) HwihaRecordKind.DISPATCH_ACCEPTED else HwihaRecordKind.DISPATCH_REFUSED
+        val kind = if (accept) RecordKind.DISPATCH_ACCEPTED else RecordKind.DISPATCH_REFUSED
         // A lapsed deadline accepts: the automatic expiry, or a refusal that arrived at or after the deadline.
         val lapsed = automatic || (accept && !request.accept)
         val how = if (lapsed) "기한이 지나 발령을 수락한 것으로 처리되었습니다. 다음 턴부터 부임지로 행군합니다." else null

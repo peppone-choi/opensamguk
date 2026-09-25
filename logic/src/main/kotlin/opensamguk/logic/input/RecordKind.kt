@@ -13,7 +13,7 @@ package opensamguk.logic.input
  * - **세력 요약**: [NATION_SUMMARY_KINDS](본인 세력 앞 `scope=NATION`)와 [WORLD_SUMMARY_KINDS]
  *   (`scope=SYSTEM`, 모두 공개)만. 세력 내부 정보(월세입 등)는 기록은 하되 요약에 싣지 않는다.
  */
-object HwihaRecordKind {
+object RecordKind {
     const val REFS_META_KEY = "refs"
 
     // 장수 개인

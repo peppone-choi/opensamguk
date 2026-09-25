@@ -26,7 +26,7 @@ object HwihaMusterRules {
         }
         if (toMove.isEmpty()) return reject(HwihaMilitaryFailure.NO_GATHER_TARGET)
         try {
-            val edges = HwihaLandPassageState.read(worldMeta, topology)
+            val edges = LandPassageState.read(worldMeta, topology)
                 ?: return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE)
             if (HwihaMarchReactions.presence(worldMeta).let {
                     it == HwihaMarchReactions.Presence.MISSING || it == HwihaMarchReactions.Presence.MALFORMED })

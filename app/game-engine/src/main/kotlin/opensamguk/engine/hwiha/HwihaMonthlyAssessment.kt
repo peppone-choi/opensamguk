@@ -5,7 +5,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.input.HwihaPersonPolicyState
-import opensamguk.logic.input.HwihaRecordKind
+import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.HwihaRenownAssessment
 import opensamguk.logic.input.HwihaRenownEntry
 import opensamguk.logic.input.HwihaRenownEvents
@@ -32,8 +32,8 @@ import org.slf4j.LoggerFactory
  *
  * ### 이탈
  *
- * 코스트 상한을 넘은 휘하는 판정해 주인 앞([HwihaRecordKind.DEPARTURE_JUDGED])과 판정된 인물 앞
- * ([HwihaRecordKind.RETINUE_DEPARTED])으로 기록한다. **이탈은 배신이 아니다**(2026-09-23 사용자 결정 「이탈과 배신은
+ * 코스트 상한을 넘은 휘하는 판정해 주인 앞([RecordKind.DEPARTURE_JUDGED])과 판정된 인물 앞
+ * ([RecordKind.RETINUE_DEPARTED])으로 기록한다. **이탈은 배신이 아니다**(2026-09-23 사용자 결정 「이탈과 배신은
  * 구분해야지」): 이탈은 명망 0 이고 월단평 사건을 쌓지 않는다. 배신(−8)은 실제 배반에만 쓴다. **실제 해방은 아직 하지 않는다**: 월드에 해방·이탈 경로가 없고 `releasePolicy`(MASTER_ONLY·MUTUAL)
  * 처리 규칙이 정해지지 않았다.
  */
@@ -111,14 +111,14 @@ class HwihaMonthlyAssessment(
             if (split.applied.isNotEmpty()) {
                 val summary = summarize(split.applied)
                 reasons[general.id.toString()] = summary
-                HwihaRecords.general(world, general.id, HwihaRecordKind.YUEDAN_ASSESSED,
+                HwihaRecords.general(world, general.id, RecordKind.YUEDAN_ASSESSED,
                     "월단평: 명망 $before → ${outcome.renown} (${summary.joinToString("·") { labelOf(it) }})",
                     linkedMapOf("stamp" to stamp, "before" to before, "after" to outcome.renown,
                         "delta" to outcome.delta, "kinds" to summary.map { it["kind"] }),
                     nationId = general.nationId)
             }
             if (outcome.released.isNotEmpty()) {
-                HwihaRecords.general(world, general.id, HwihaRecordKind.DEPARTURE_JUDGED,
+                HwihaRecords.general(world, general.id, RecordKind.DEPARTURE_JUDGED,
                     "월단평 뒤 휘하 코스트가 명망을 넘어 이탈 판정을 받았습니다: ${outcome.released.joinToString()}",
                     linkedMapOf("stamp" to stamp, "retainerIds" to outcome.released, "renown" to outcome.renown,
                         "retainedCost" to outcome.retainedCost),
@@ -127,7 +127,7 @@ class HwihaMonthlyAssessment(
                 val cards = world.listRetainers().associateBy { it.id }
                 for (card in outcome.released) {
                     val person = cards[card]?.generalId?.let { world.getGeneralById(it) } ?: continue
-                    HwihaRecords.general(world, person.id, HwihaRecordKind.RETINUE_DEPARTED,
+                    HwihaRecords.general(world, person.id, RecordKind.RETINUE_DEPARTED,
                         "${general.name}의 명망이 휘하 코스트에 모자라 이탈 판정을 받았습니다. 명망에는 영향이 없습니다.",
                         linkedMapOf("stamp" to stamp, "masterId" to general.id, "retainerId" to card),
                         nationId = person.nationId)
@@ -150,7 +150,7 @@ class HwihaMonthlyAssessment(
     private fun announce(year: Int, month: Int, stamp: String, ranking: List<Int>, renown: Map<Int, Int>) {
         val top = ranking.firstOrNull()?.let { world.getGeneralById(it) }
         val head = top?.let { " 1위 ${it.name}(명망 ${renown[it.id]})" } ?: ""
-        HwihaRecords.world(world, HwihaRecordKind.YUEDAN_ANNOUNCED,
+        HwihaRecords.world(world, RecordKind.YUEDAN_ANNOUNCED,
             "【월단평】 ${year}년 ${month}월 월단평이 발표되었습니다.$head",
             linkedMapOf("stamp" to stamp, "top" to ranking.take(ANNOUNCED_TOP)))
     }

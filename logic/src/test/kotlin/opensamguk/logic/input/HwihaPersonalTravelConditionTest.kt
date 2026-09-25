@@ -19,8 +19,8 @@ class HwihaPersonalTravelConditionTest {
         val metrics = LandMarchMetricSnapshot(topology, "a".repeat(64),
             listOf(LandMarchEdgeMetric("ab", 30_000_000, 45_000_000)))
         val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
-            StrategicPathRequest(a, b, 1), HwihaLandPassageState.read(mapOf(
-                HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology)), topology)!!,
+            StrategicPathRequest(a, b, 1), LandPassageState.read(mapOf(
+                LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology)), topology)!!,
             metrics)).path
         val start = LandMarchCursor(path.pathHash)
         val middle = LandMarchCursor(path.pathHash, 0, 15_000_000)

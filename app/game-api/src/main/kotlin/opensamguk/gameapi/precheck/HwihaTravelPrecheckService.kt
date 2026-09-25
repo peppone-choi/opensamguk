@@ -114,7 +114,7 @@ class HwihaTravelPrecheckService(
             if (metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash)
                 return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
             return try {
-                val passage = HwihaLandPassageState.read(selected.world.meta, topology)
+                val passage = LandPassageState.read(selected.world.meta, topology)
                     ?: return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
                 if (HwihaMarchReactions.presence(selected.world.meta) in setOf(
                         HwihaMarchReactions.Presence.MISSING, HwihaMarchReactions.Presence.MALFORMED))

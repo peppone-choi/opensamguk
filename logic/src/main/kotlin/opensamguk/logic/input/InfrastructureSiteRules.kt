@@ -9,16 +9,16 @@ import opensamguk.logic.world.StrategicRoadGate
 import opensamguk.logic.world.StrategicTopologySnapshot
 
 /** The same road/fort site test is used at reservation and immediately before execution. */
-data class HwihaInfrastructureSiteState(
+data class InfrastructureSiteState(
     val topology: StrategicTopologySnapshot?,
     val roadGates: List<StrategicRoadGate>,
     val passage: StrategicEdgeStateSnapshot?,
-    val forts: List<HwihaRoadFort>,
+    val forts: List<RoadFort>,
 )
 
-object HwihaInfrastructureSiteRules {
+object InfrastructureSiteRules {
     fun error(request: WorkRequest, state: DomesticProjection,
-        infrastructure: HwihaInfrastructureSiteState): String? {
+        infrastructure: InfrastructureSiteState): String? {
         if (request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
         if (request.work == DomesticWork.FORTIFICATION && request.edgeId == null &&
             request.row == null && request.col == null) return null // County wall.

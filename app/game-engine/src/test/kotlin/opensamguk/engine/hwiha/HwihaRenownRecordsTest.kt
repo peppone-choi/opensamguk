@@ -66,12 +66,12 @@ class HwihaRenownRecordsTest {
         )), reasons["byGeneral"])
         assertFalse("COUNTY_CAPTURE" in reasons.toString(), "원인은 발표하지 않는다")
 
-        val assessed = world.peekLogs().single { it.eventKind == HwihaRecordKind.YUEDAN_ASSESSED }
+        val assessed = world.peekLogs().single { it.eventKind == RecordKind.YUEDAN_ASSESSED }
         assertEquals(1, assessed.generalId); assertEquals("general", assessed.scope)
         assertEquals("월단평: 명망 30 → 29 (전공·발령 거절)", assessed.text)
-        val announced = world.peekLogs().single { it.eventKind == HwihaRecordKind.YUEDAN_ANNOUNCED }
+        val announced = world.peekLogs().single { it.eventKind == RecordKind.YUEDAN_ANNOUNCED }
         assertEquals("global", announced.scope); assertNull(announced.generalId)
-        assertEquals(listOf(2, 1), (announced.meta!![HwihaRecordKind.REFS_META_KEY] as Map<*, *>)["top"])
+        assertEquals(listOf(2, 1), (announced.meta!![RecordKind.REFS_META_KEY] as Map<*, *>)["top"])
         // 같은 달 두 번은 막힌다.
         assertTrue(HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2)!!.alreadyStamped)
     }
@@ -93,12 +93,12 @@ class HwihaRenownRecordsTest {
             assertFalse("betrayal" in reasons.toString(), "$stamp: 월단평 사유에 배신이 없다 — $reasons")
         }
         val logs = world.peekLogs()
-        assertEquals(listOf(1, 1), logs.filter { it.eventKind == HwihaRecordKind.DEPARTURE_JUDGED }.map { it.generalId })
-        val departed = logs.filter { it.eventKind == HwihaRecordKind.RETINUE_DEPARTED }
+        assertEquals(listOf(1, 1), logs.filter { it.eventKind == RecordKind.DEPARTURE_JUDGED }.map { it.generalId })
+        val departed = logs.filter { it.eventKind == RecordKind.RETINUE_DEPARTED }
         assertEquals(listOf(3, 3), departed.map { it.generalId }, "판정된 인물 본인 앞 이탈 기록")
         assertEquals(mapOf("stamp" to "0200-02", "masterId" to 1, "retainerId" to 22),
-            departed.first().meta!![HwihaRecordKind.REFS_META_KEY])
-        assertTrue(logs.none { it.eventKind == HwihaRecordKind.RENOWN_EVENT }, "명망 사건 알림도 없다")
+            departed.first().meta!![RecordKind.REFS_META_KEY])
+        assertTrue(logs.none { it.eventKind == RecordKind.RENOWN_EVENT }, "명망 사건 알림도 없다")
         assertTrue(world.getGeneralById(3)!!.meta.keys.none { it.startsWith("hwihaDeparture") }, "이탈 표식을 남기지 않는다")
     }
 
@@ -137,7 +137,7 @@ class HwihaRenownRecordsTest {
         assertEquals(HwihaRenownEventSource.COUNTY_LOSS, entries(world, 2).single().source)
         assertEquals(HwihaRenownEventSource.COUNTY_CAPTURE, entries(world, 5).single().source)
         val nationRecords = world.peekLogs().filter { it.scope == "nation" }
-        assertEquals(listOf(2 to HwihaRecordKind.COUNTY_CAPTURED, 1 to HwihaRecordKind.COUNTY_LOST),
+        assertEquals(listOf(2 to RecordKind.COUNTY_CAPTURED, 1 to RecordKind.COUNTY_LOST),
             nationRecords.map { it.nationId to it.eventKind })
         assertTrue(nationRecords.all { it.category == "history" })
         assertEquals("縣10을 점령했습니다.", nationRecords.first().text)
@@ -146,7 +146,7 @@ class HwihaRenownRecordsTest {
         assertTrue(events.onEncounterResolved(emptyList(), listOf(2)).isEmpty(),
             "패전(조우)은 패전(縣 상실)과 같은 종류라 같은 달엔 한 건이다")
         assertEquals(1, entries(world, 2).size)
-        assertEquals(2, world.peekLogs().count { it.eventKind == HwihaRecordKind.RENOWN_EVENT }, "새로 쌓인 사건만 본인에게 알린다")
+        assertEquals(2, world.peekLogs().count { it.eventKind == RecordKind.RENOWN_EVENT }, "새로 쌓인 사건만 본인에게 알린다")
     }
 
     @Test fun `월세입 기록은 세력 내부 요약으로만 남는다`() {
@@ -155,8 +155,8 @@ class HwihaRenownRecordsTest {
                 opensamguk.logic.economy.HwihaCountyWarehouse(10, 0, opensamguk.logic.economy.HwihaResources()).toMetaValue()))))
         HwihaMonthlyCountyIncome(world, ChangeRecorder()).credit(200, 2)
         val record = world.peekLogs().single()
-        assertEquals(HwihaRecordKind.INCOME_MONTHLY, record.eventKind)
+        assertEquals(RecordKind.INCOME_MONTHLY, record.eventKind)
         assertEquals("nation", record.scope); assertEquals("summary", record.category); assertEquals(1, record.nationId)
-        assertFalse(record.eventKind in HwihaRecordKind.NATION_SUMMARY_KINDS)
+        assertFalse(record.eventKind in RecordKind.NATION_SUMMARY_KINDS)
     }
 }

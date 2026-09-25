@@ -94,14 +94,14 @@ class HwihaDomesticBoundary(
         }
         if (active.work == DomesticWork.ROAD && active.edgeId != null) {
             val topology = context.topology ?: return stop(countyId, works, active, now, "ROAD_TOPOLOGY_MISSING")
-            val passage = try { HwihaLandPassageState.read(world.getState().meta, topology) }
+            val passage = try { LandPassageState.read(world.getState().meta, topology) }
                 catch (_: IllegalArgumentException) { null }
                 ?: return stop(countyId, works, active, now, "ROAD_STATE_MISSING")
             if (passage.edgeStates[active.edgeId]?.active != false)
                 return stop(countyId, works, active, now, "ROAD_ALREADY_OPEN")
         }
         if (active.work == DomesticWork.FORTIFICATION && active.edgeId != null) {
-            val forts = try { HwihaRoadFortState.read(world.getState().meta) }
+            val forts = try { RoadFortState.read(world.getState().meta) }
                 catch (_: IllegalArgumentException) { return stop(countyId, works, active, now, "FORT_STATE_INVALID") }
             if (forts.any { it.row == active.row && it.col == active.col })
                 return stop(countyId, works, active, now, "FORT_SITE_OCCUPIED")
@@ -151,23 +151,23 @@ class HwihaDomesticBoundary(
                 recorder.diffCity(opensamguk.engine.turn.PerTurnOverlay.toLogicCity(after), opensamguk.engine.turn.PerTurnOverlay.toLogicCity(next))
                 if (step.completed.work == DomesticWork.ROAD && step.completed.edgeId != null) {
                     val topology = checkNotNull(context.topology)
-                    val passage = HwihaLandPassageState.activate(world.getState().meta, topology,
+                    val passage = LandPassageState.activate(world.getState().meta, topology,
                         checkNotNull(step.completed.edgeId))
-                    world.setGameEnvValue(HwihaLandPassageState.META_KEY, passage)
-                    recorder.recordKv("game_env", "game_env", HwihaLandPassageState.META_KEY, passage)
+                    world.setGameEnvValue(LandPassageState.META_KEY, passage)
+                    recorder.recordKv("game_env", "game_env", LandPassageState.META_KEY, passage)
                 }
                 if (step.completed.work == DomesticWork.FORTIFICATION && step.completed.edgeId != null) {
                     val edgeId = checkNotNull(step.completed.edgeId)
                     val row = checkNotNull(step.completed.row)
                     val col = checkNotNull(step.completed.col)
-                    val fort = HwihaRoadFort(
-                        HwihaRoadFort.siteId(edgeId, row, col),
+                    val fort = RoadFort(
+                        RoadFort.siteId(edgeId, row, col),
                         edgeId, checkNotNull(fortProvinceId),
                         row, col, city.nationId, wall = 100, garrison = 0,
                     )
-                    val value = HwihaRoadFortState.toMetaValue(HwihaRoadFortState.read(world.getState().meta) + fort)
-                    world.setGameEnvValue(HwihaRoadFortState.META_KEY, value)
-                    recorder.recordKv("game_env", "game_env", HwihaRoadFortState.META_KEY, value)
+                    val value = RoadFortState.toMetaValue(RoadFortState.read(world.getState().meta) + fort)
+                    world.setGameEnvValue(RoadFortState.META_KEY, value)
+                    recorder.recordKv("game_env", "game_env", RoadFortState.META_KEY, value)
                 }
                 log(active.actorId, "${city.name}의 ${active.work.label} 공사를 마쳤습니다.")
                 WorkResult.COMPLETED

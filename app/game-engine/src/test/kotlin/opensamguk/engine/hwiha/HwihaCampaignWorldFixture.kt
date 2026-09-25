@@ -25,8 +25,8 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
     data class Route(val start: StrategicNodeRef.LandProvince, val first: StrategicNodeRef.LandProvince,
         val destination: StrategicNodeRef.LandProvince, val startCity: Int, val destinationCounty: Int)
 
-    fun passage() = HwihaLandPassageState.read(
-        mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology)), topology)!!
+    fun passage() = LandPassageState.read(
+        mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology)), topology)!!
 
     fun route(): Route = routeCache.getOrPut(topology.contentHash) {
         val edges = passage()
@@ -94,7 +94,7 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
         }
         val state = TurnWorldState(1, 200, 1, 3600, Instant.parse("0200-01-01T00:00:00Z"), currentPhase = 1,
             config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = variant,
-            meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+            meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                 HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue(),
                 "startYear" to 200, "startTime" to "0200-01-01T00:00:00Z") + extraStateMeta)
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals.map { it.first },

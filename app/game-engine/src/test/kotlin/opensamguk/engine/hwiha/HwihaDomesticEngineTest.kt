@@ -68,7 +68,7 @@ class HwihaDomesticEngineTest {
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
             state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH, currentPhase = 1,
                 config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"),
-                meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+                meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                     HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())),
             generals = listOf(general(1, "A", human = true, lord = true, level = 12), general(2, "A"), general(3, "B")),
             nations = listOf(Nation(1, "N1", "#000", capitalCityId = 10), Nation(2, "N2", "#fff", capitalCityId = 11)),
@@ -270,7 +270,7 @@ class HwihaDomesticEngineTest {
             roadGates = listOf(StrategicRoadGate("ab", 0, 0, 0, 1, 1, false)))
         val world = world(HwihaResources(money = 1_000_000, timber = 100_000))
         val recorder = ChangeRecorder()
-        world.setGameEnvValue(HwihaLandPassageState.META_KEY, mapOf(
+        world.setGameEnvValue(LandPassageState.META_KEY, mapOf(
             "version" to 1, "topologyRevision" to topology.topologyRevision,
             "topologyHash" to topology.contentHash,
             "edges" to mapOf("ab" to mapOf("active" to false, "seasonOpen" to false,
@@ -278,7 +278,7 @@ class HwihaDomesticEngineTest {
         val result = HwihaCourtHandler(world, recorder, roadContext).handle(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput(
             "req-road", 1, 42, "work.start", """{"countyId":10,"work":"ROAD","edgeId":"ab"}"""))
         assertTrue(result.ok, result.toString())
-        assertFalse(HwihaLandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
+        assertFalse(LandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
         var phase = HwihaPhase(200, 1, 1)
         repeat(12) {
             if (CountyWorks.read(world.getCityById(10)!!.meta)?.active == null) return@repeat
@@ -287,8 +287,8 @@ class HwihaDomesticEngineTest {
             HwihaDomesticBoundary(world, recorder, roadContext).run()
         }
         assertNull(CountyWorks.read(world.getCityById(10)!!.meta)!!.active)
-        assertTrue(HwihaLandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
-        assertTrue(recorder.kvDirty().keys.any { it.key == HwihaLandPassageState.META_KEY })
+        assertTrue(LandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
+        assertTrue(recorder.kvDirty().keys.any { it.key == LandPassageState.META_KEY })
     }
 
     @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {

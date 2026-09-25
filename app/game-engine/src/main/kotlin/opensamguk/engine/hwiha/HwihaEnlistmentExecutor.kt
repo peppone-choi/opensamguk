@@ -74,9 +74,9 @@ class HwihaEnlistmentExecutor(
         val master = byId[plan.masterId]
         val refs = linkedMapOf<String, Any?>("nationId" to plan.nationId, "masterId" to plan.masterId,
             "generalId" to actor.id, "retainerId" to card.id)
-        HwihaRecords.general(world, actor.id, HwihaRecordKind.ENLISTED,
+        HwihaRecords.general(world, actor.id, RecordKind.ENLISTED,
             "${nation.name}에 출사해 ${master?.name ?: "주공"}의 휘하에 들어갔습니다.", refs, nationId = plan.nationId)
-        if (plan.masterId != actor.id) HwihaRecords.general(world, plan.masterId, HwihaRecordKind.RETAINER_JOINED,
+        if (plan.masterId != actor.id) HwihaRecords.general(world, plan.masterId, RecordKind.RETAINER_JOINED,
             "${JosaUtil.put(actor.name, "이")} 출사해 휘하에 들어왔습니다.", refs, nationId = plan.nationId)
         return EnlistmentExecution.Applied(plan, card.id)
     }

@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import kotlin.test.*
 import opensamguk.logic.world.*
 
-class HwihaLandPassageStateTest {
+class LandPassageStateTest {
     private fun n(id: String) = StrategicNodeRef.LandProvince(id)
     private fun edge(id: String, mode: TraversalMode, season: SeasonalAvailability) = TraversalEdge(
         id,n("A"),n("B"),mode,false,1,7,RiskBand.LOW,season,sourceRefs=listOf("qa"),confidence=EvidenceConfidence.REVIEWED)
@@ -11,8 +11,8 @@ class HwihaLandPassageStateTest {
         edge("land",TraversalMode.LAND,SeasonalAvailability.ALWAYS),
         edge("ford",TraversalMode.FORD,SeasonalAvailability.SEASONAL),
         edge("bridge",TraversalMode.BRIDGE,SeasonalAvailability.CLOSED)),emptyList(),mapOf("qa" to "a".repeat(64)))
-    private fun initial() = HwihaLandPassageState.initialMetaValue(topology)
-    private fun read(raw: Any?) = HwihaLandPassageState.read(mapOf(HwihaLandPassageState.META_KEY to raw),topology)
+    private fun initial() = LandPassageState.initialMetaValue(topology)
+    private fun read(raw: Any?) = LandPassageState.read(mapOf(LandPassageState.META_KEY to raw),topology)
     private fun changed(id: String, key: String, value: Any?): Map<String,Any?> {
         val raw=initial();val rows=(raw.getValue("edges") as Map<*,*>).toMutableMap()
         rows[id]=(rows.getValue(id) as Map<*,*>)+ (key to value)
@@ -26,7 +26,7 @@ class HwihaLandPassageStateTest {
         assertEquals(topology.contentHash,state.topologyHash)
     }
     @Test fun `missing schema pin partial extra and malformed authority fail closed`() {
-        assertNull(HwihaLandPassageState.read(emptyMap(),topology))
+        assertNull(LandPassageState.read(emptyMap(),topology))
         val raw=initial();val rows=raw.getValue("edges") as Map<*,*>
         for(bad in listOf(null,raw-"edges",raw+("version" to 2),raw+("version" to "1"),
             raw+("topologyHash" to "f".repeat(64)),raw+("topologyRevision" to "old"),
@@ -48,12 +48,12 @@ class HwihaLandPassageStateTest {
     }
     @Test fun `road completion activates only the selected crossing and survives round trip`() {
         val closed = changed("land", "active", false)
-        val value = HwihaLandPassageState.activate(mapOf(HwihaLandPassageState.META_KEY to closed), topology, "land")
+        val value = LandPassageState.activate(mapOf(LandPassageState.META_KEY to closed), topology, "land")
         val restored = read(value)!!
         assertTrue(restored.edgeStates.getValue("land").active)
         assertFalse(restored.edgeStates.getValue("ford").active)
         assertFailsWith<IllegalArgumentException> {
-            HwihaLandPassageState.activate(mapOf(HwihaLandPassageState.META_KEY to closed), topology, "unknown")
+            LandPassageState.activate(mapOf(LandPassageState.META_KEY to closed), topology, "unknown")
         }
     }
 }

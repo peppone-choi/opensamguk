@@ -4,7 +4,7 @@ import opensamguk.logic.world.StrategicEdgeStateSnapshot
 import opensamguk.logic.world.StrategicEdgeState
 
 /** Roadside forts are independently owned sites; county capture does not transfer them. */
-data class HwihaRoadFort(
+data class RoadFort(
     val id: String,
     val edgeId: String,
     val provinceId: String,
@@ -30,20 +30,20 @@ data class HwihaRoadFort(
     }
 }
 
-object HwihaRoadFortState {
-    const val META_KEY = "hwihaRoadForts"
+object RoadFortState {
+    const val META_KEY = "roadForts"
     private val fields = setOf("version", "forts")
     private val fortFields = setOf("id", "edgeId", "provinceId", "row", "col", "ownerNationId", "wall", "garrison",
         "besiegerNationId", "besiegerGeneralId", "siegeProgress")
 
-    fun read(meta: Map<String, Any?>): List<HwihaRoadFort> {
+    fun read(meta: Map<String, Any?>): List<RoadFort> {
         val raw = meta[META_KEY] ?: return emptyList()
         require(raw is Map<*, *> && raw.keys == fields && raw["version"] == 1) { "Invalid road fort schema" }
         val rows = raw["forts"] as? List<*> ?: invalid()
         val forts = rows.map { item ->
             val row = item as? Map<*, *> ?: invalid()
             require(row.keys == fortFields) { "Invalid road fort fields" }
-            HwihaRoadFort(
+            RoadFort(
                 row["id"] as? String ?: invalid(), row["edgeId"] as? String ?: invalid(),
                 row["provinceId"] as? String ?: invalid(), row["row"] as? Int ?: invalid(),
                 row["col"] as? Int ?: invalid(), row["ownerNationId"] as? Int ?: invalid(),
@@ -59,7 +59,7 @@ object HwihaRoadFortState {
         return forts
     }
 
-    fun toMetaValue(forts: List<HwihaRoadFort>): Map<String, Any> = linkedMapOf(
+    fun toMetaValue(forts: List<RoadFort>): Map<String, Any> = linkedMapOf(
         "version" to 1,
         "forts" to forts.sortedBy { it.id }.map { fort ->
             linkedMapOf<String, Any?>(
@@ -73,7 +73,7 @@ object HwihaRoadFortState {
     )
 
     /** A hostile fort seals its road for this army; the owner can still use it. */
-    fun forNation(passage: StrategicEdgeStateSnapshot, forts: List<HwihaRoadFort>,
+    fun forNation(passage: StrategicEdgeStateSnapshot, forts: List<RoadFort>,
                   hostileNationIds: Set<Int>): StrategicEdgeStateSnapshot {
         val hostileEdges = forts.filter { it.ownerNationId in hostileNationIds }.mapTo(hashSetOf()) { it.edgeId }
         if (hostileEdges.isEmpty()) return passage

@@ -90,7 +90,7 @@ class HwihaCityMilitaryHandler(
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
         HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_MILITARY_ACTION)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED,
+        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED,
             "${city.name}에서 군사 행동을 마쳤습니다.", mapOf("inputId" to inputId, "countyId" to city.id, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

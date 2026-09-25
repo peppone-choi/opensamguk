@@ -42,7 +42,7 @@ class HwihaDeployPrecheckServiceTest {
             HanStrategicRouteBinding(3, "r3", "p3", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"), meta = mapOf(
-            HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+            LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
             HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue()))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, listOf(
             CityReadEntity(id = 3, worldId = 1, name = "후순위"), CityReadEntity(id = 2, worldId = 1, name = "도착지"),
@@ -150,7 +150,7 @@ class HwihaDeployPrecheckServiceTest {
         val encounter = HwihaCorpsEncounter(HwihaEncounterParticipant.from(attacking),
             listOf(HwihaEncounterParticipant.from(defending)),b,a,phase,topology.topologyRevision,topology.contentHash)
         val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
-            StrategicPathRequest(a,b,1),HwihaLandPassageState.read(setupWorldMeta(),topology)!!,metrics)).path
+            StrategicPathRequest(a,b,1),LandPassageState.read(setupWorldMeta(),topology)!!,metrics)).path
         val checkpoint = HwihaMarchCheckpoint(path,LandMarchCursor(path.pathHash,1,0),phase,LandMarchStop.ENCOUNTER)
         fun meta(corps:HwihaDeployedCorps) = mapOf(
             HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue(),
@@ -176,6 +176,6 @@ class HwihaDeployPrecheckServiceTest {
     }
 
     private fun setupWorldMeta(): Map<String,Any> = mapOf(
-        HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology))
+        LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology))
 
 }

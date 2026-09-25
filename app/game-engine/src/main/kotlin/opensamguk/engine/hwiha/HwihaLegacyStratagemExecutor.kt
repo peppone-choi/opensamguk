@@ -109,7 +109,7 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
         val current = world.getGeneralById(request.actorId) ?: return reject(HwihaLegacyStratagemFailure.ACTOR_NOT_FOUND)
         world.updateGeneralMeta(recorder, current, current.meta + (HwihaLegacyStratagemStock.META_KEY to
             ready.cardStock.consume(request.inputId).toMetaValue()))
-        HwihaRecords.general(world, request.actorId, HwihaRecordKind.PERSONAL_APPLIED,
+        HwihaRecords.general(world, request.actorId, RecordKind.PERSONAL_APPLIED,
             "${ready.actor.name}의 계책을 펼쳤습니다.", mapOf("inputId" to request.inputId))
         return null
     }

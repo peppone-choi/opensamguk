@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
@@ -45,8 +47,8 @@ class HwihaNpcDeploySelector(
         if (units.isEmpty()) return null
         val troops = units.sumOf { it.troops.toLong() }
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology)
-            ?.let { HwihaRoadFortPassage.forNation(world, it, actor.nationId) } }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
             ?: return null
         reliefTarget(world, actor.nationId, position, troops, projection, edges)?.let { return DeployInput(actorId, units.map { it.id }.sorted(), it) }
@@ -110,8 +112,8 @@ class HwihaNpcDeploySelector(
         if (troops <= 0) return null
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
         val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology)
-            ?.let { HwihaRoadFortPassage.forNation(world, it, actor.nationId) } }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
             ?: return null
         return reliefTarget(world, actor.nationId, position, troops, projection, edges)

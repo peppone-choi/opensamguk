@@ -38,7 +38,7 @@ class HwihaCourtHandler(
                 "INVALID_INPUT_CHANNEL", "강공은 개인 행동 예약으로 입력해야 합니다.") },
             HwihaSiegeHandler.DEMAND_SURRENDER to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "항복 권고는 개인 행동 예약으로 입력해야 합니다.") },
-            HwihaRoadFortSiegeInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
+            RoadFortSiegeInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "보루 포위는 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
@@ -293,7 +293,7 @@ class HwihaCourtHandler(
         val rejection = catalog.rejectionFor(world.ruleProfile, inputId) ?: return false
         val current = world.getGeneralById(actor.id) ?: return true
         updateMeta(current, current.meta - key)
-        HwihaRecords.general(world, actor.id, HwihaRecordKind.INPUT_REJECTED, rejection.message,
+        HwihaRecords.general(world, actor.id, RecordKind.INPUT_REJECTED, rejection.message,
             linkedMapOf("inputId" to inputId, "code" to rejection.name))
         executions += HwihaCourtExecution(requestId, ownerUserId,
             result(actor.id, inputId, false, rejection.name, rejection.message))
@@ -307,7 +307,7 @@ class HwihaCourtHandler(
         val ownerUserId = (raw?.get("ownerUserId") as? Int)?.takeIf { it > 0 }
         val reason = "저장된 대기 입력을 확인할 수 없습니다."
         updateMeta(actor, actor.meta - key)
-        HwihaRecords.general(world, actor.id, HwihaRecordKind.INPUT_REJECTED, reason,
+        HwihaRecords.general(world, actor.id, RecordKind.INPUT_REJECTED, reason,
             linkedMapOf("inputId" to inputId, "code" to "STATE_UNAVAILABLE"))
         if (requestId != null && ownerUserId != null) {
             executions += HwihaCourtExecution(requestId, ownerUserId,

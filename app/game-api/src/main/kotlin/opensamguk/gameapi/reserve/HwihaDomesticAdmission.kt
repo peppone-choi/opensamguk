@@ -55,7 +55,7 @@ class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
                 ?: deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
             val infrastructure = snapshot.infrastructure ?: deny(DomesticFailure.STATE_UNAVAILABLE.name,
                 DomesticFailure.STATE_UNAVAILABLE.message)
-            HwihaInfrastructureSiteRules.error(request, state, infrastructure)?.let {
+            InfrastructureSiteRules.error(request, state, infrastructure)?.let {
                 deny("INVALID_INFRASTRUCTURE_SITE", it)
             }
         }

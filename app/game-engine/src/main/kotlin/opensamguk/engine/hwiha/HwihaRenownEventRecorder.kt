@@ -4,7 +4,7 @@ import opensamguk.common.josa.JosaUtil
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
-import opensamguk.logic.input.HwihaRecordKind
+import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.HwihaRenownEventSource
 import opensamguk.logic.input.HwihaRenownEvents
 import opensamguk.logic.input.HwihaRenownHooks
@@ -69,9 +69,9 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
         val name = world.getCityById(countyId)?.name ?: "縣 $countyId"
         val refs = linkedMapOf<String, Any?>("countyId" to countyId, "fromNationId" to previousNationId,
             "toNationId" to captorNationId)
-        if (captorNationId != 0) HwihaRecords.nation(world, captorNationId, HwihaRecordKind.COUNTY_CAPTURED,
+        if (captorNationId != 0) HwihaRecords.nation(world, captorNationId, RecordKind.COUNTY_CAPTURED,
             "${JosaUtil.put(name, "을")} 점령했습니다.", refs)
-        if (previousNationId != 0) HwihaRecords.nation(world, previousNationId, HwihaRecordKind.COUNTY_LOST,
+        if (previousNationId != 0) HwihaRecords.nation(world, previousNationId, RecordKind.COUNTY_LOST,
             "${JosaUtil.put(name, "을")} 잃었습니다.", refs)
         return updated
     }
@@ -110,7 +110,7 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
             generalId: Int,
             source: HwihaRenownEventSource,
             stamp: String = currentStamp(world),
-        ) = HwihaRecords.general(world, generalId, HwihaRecordKind.RENOWN_EVENT,
+        ) = HwihaRecords.general(world, generalId, RecordKind.RENOWN_EVENT,
             "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
             linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
 

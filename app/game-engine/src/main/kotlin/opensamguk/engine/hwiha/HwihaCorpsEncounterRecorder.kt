@@ -97,7 +97,7 @@ class HwihaCorpsEncounterRecorder(
             world.applyGeneralDirtyFree(after)
             if (corps.commanderGeneralId != attacker.commanderGeneralId) {
                 // A participant may know that it was engaged and where; forces and plans stay sealed (#343).
-                HwihaRecords.general(world, before.id, HwihaRecordKind.ENCOUNTER_PENDING,
+                HwihaRecords.general(world, before.id, RecordKind.ENCOUNTER_PENDING,
                     "군단이 조우하여 전투 처리를 기다리고 있습니다.",
                     linkedMapOf("encounterId" to encounter.encounterId, "province" to encounter.province.canonicalKey),
                     nationId = before.nationId)

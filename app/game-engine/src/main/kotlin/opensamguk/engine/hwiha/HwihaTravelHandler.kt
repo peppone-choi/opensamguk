@@ -60,7 +60,7 @@ class HwihaTravelHandler(
                 LandMarchStop.ENCOUNTER_UNAVAILABLE -> "진입할 省의 군사·반응 상태를 확인할 수 없어 이동을 멈췄습니다."
                 LandMarchStop.ENCOUNTER -> "조우가 발생해 이동을 멈췄습니다."
             }
-            HwihaRecords.general(world, actorId, HwihaRecordKind.MARCH_DIRECT, text,
+            HwihaRecords.general(world, actorId, RecordKind.MARCH_DIRECT, text,
                 linkedMapOf("inputId" to result.state.inputId, "orderId" to result.state.orderId,
                     "destination" to result.state.destination.canonicalKey, "stop" to result.state.checkpoint.stop.name,
                     "distanceMm" to result.distanceMm,

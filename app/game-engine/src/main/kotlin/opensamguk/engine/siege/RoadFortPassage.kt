@@ -1,10 +1,10 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.siege
 
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.logic.input.HwihaRoadFortState
+import opensamguk.logic.input.RoadFortState
 import opensamguk.logic.world.StrategicEdgeStateSnapshot
 
-internal object HwihaRoadFortPassage {
+internal object RoadFortPassage {
     fun forNation(world: InMemoryTurnWorld, passage: StrategicEdgeStateSnapshot, nationId: Int): StrategicEdgeStateSnapshot? =
         try {
             val hostile = world.listDiplomacy().filter { it.state == 0 }.mapNotNull { war ->
@@ -14,7 +14,7 @@ internal object HwihaRoadFortPassage {
                     else -> null
                 }
             }.toSet()
-            HwihaRoadFortState.forNation(passage, HwihaRoadFortState.read(world.getState().meta), hostile)
+            RoadFortState.forNation(passage, RoadFortState.read(world.getState().meta), hostile)
         }
         catch (_: IllegalArgumentException) { null }
 }

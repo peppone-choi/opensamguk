@@ -4,7 +4,7 @@ import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.*
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.world.HanWorldVariant
-import opensamguk.logic.input.HwihaLandPassageState
+import opensamguk.logic.input.LandPassageState
 import opensamguk.infra.entity.GameKvEntity
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterEach
@@ -56,11 +56,11 @@ class MapStrategicTopologyControllerTest {
         val selected = artifacts.artifacts(HanWorldVariant.V3_1447_MAP4)
         val topology = selected.projection.topology
         val gate = selected.projection.presentation!!.roadGates.first { it.buildable && !it.initiallyBuilt }
-        val initial = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology))
-        val opened = HwihaLandPassageState.activate(initial, topology, gate.edgeId)
+        val initial = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology))
+        val opened = LandPassageState.activate(initial, topology, gate.edgeId)
         val gameKv = mock(GameKvReadRepository::class.java)
-        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY))
-            .thenReturn(GameKvEntity("game_env", "game_env", HwihaLandPassageState.META_KEY,
+        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", LandPassageState.META_KEY))
+            .thenReturn(GameKvEntity("game_env", "game_env", LandPassageState.META_KEY,
                 ObjectMapper().writeValueAsString(opened), 7))
         val client = mvc(gameKv = gameKv)
         `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map { CityReadEntity(id = it, worldId = 7) })

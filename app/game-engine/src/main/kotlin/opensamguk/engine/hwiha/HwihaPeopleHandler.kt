@@ -53,7 +53,7 @@ class HwihaPeopleHandler(
         val rng by lazy { rngFactory(world.personalTurnSeed(hiddenSeed, "generalCommand", now.currentYear,
             now.currentMonth, actorId, inputId)) }
         val effects = mutableListOf<String>()
-        var recordKind = HwihaRecordKind.PEOPLE_SEARCHED
+        var recordKind = RecordKind.PEOPLE_SEARCHED
         var recordText = "현재 지역에서 인재를 탐색했습니다."
         if (inputId == HwihaPeopleInput.SEARCH) {
             val remaining = ready.candidateIds.toMutableList()
@@ -112,13 +112,13 @@ class HwihaPeopleHandler(
                 }
                 effects += "retainerId:${card.id}"
                 effects += "joinedGeneralId:${target.id}"
-                recordKind = HwihaRecordKind.PEOPLE_JOINED
+                recordKind = RecordKind.PEOPLE_JOINED
                 recordText = "${JosaUtil.put(target.name, "이")} 동의하여 휘하에 들어왔습니다."
-                HwihaRecords.general(world, target.id, HwihaRecordKind.RETAINER_JOINED,
+                HwihaRecords.general(world, target.id, RecordKind.RETAINER_JOINED,
                     "${actor.name}의 휘하에 들어갔습니다.", mapOf("masterGeneralId" to actorId, "retainerId" to card.id))
             } else {
                 effects += "resistedGeneralId:${target.id}"
-                recordKind = HwihaRecordKind.PEOPLE_RESISTED
+                recordKind = RecordKind.PEOPLE_RESISTED
                 recordText = "${JosaUtil.put(target.name, "이")} 제안을 거절했습니다."
             }
         }

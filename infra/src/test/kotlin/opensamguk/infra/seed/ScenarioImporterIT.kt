@@ -189,7 +189,7 @@ class ScenarioImporterIT {
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
         val passageMeta = opensamguk.infra.persistence.MetaJson.decode(
             jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
-        assertTrue(opensamguk.logic.input.HwihaLandPassageState.read(passageMeta, topology) != null)
+        assertTrue(opensamguk.logic.input.LandPassageState.read(passageMeta, topology) != null)
         val reactionKey = opensamguk.logic.input.HwihaMarchReactions.META_KEY
         fun reactions() = opensamguk.infra.persistence.MetaJson.decode(
             jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)

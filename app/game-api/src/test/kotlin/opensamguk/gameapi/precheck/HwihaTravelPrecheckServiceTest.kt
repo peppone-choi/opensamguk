@@ -36,7 +36,7 @@ class HwihaTravelPrecheckServiceTest {
             HanStrategicRouteBinding(1, "r1", "p1", "A"), HanStrategicRouteBinding(2, "r2", "p2", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"), meta = mapOf(
-            HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
+            LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
             HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue()))
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
             listOf(CityReadEntity(id = 1, worldId = 1), CityReadEntity(id = 2, worldId = 1)), bundle))

@@ -587,7 +587,7 @@ class HwihaMarchPersistenceIT {
     private fun personalMarchFixture(id: Int, passage: Boolean = true, reactions: Boolean = true): InMemoryTurnWorld {
         seed(id)
         val authority = linkedMapOf<String, Any>()
-        if (passage) authority[HwihaLandPassageState.META_KEY] = HwihaLandPassageState.initialMetaValue(topology)
+        if (passage) authority[LandPassageState.META_KEY] = LandPassageState.initialMetaValue(topology)
         if (reactions) authority[HwihaMarchReactions.META_KEY] = HwihaMarchReactions.Empty.toMetaValue()
         jdbc.update("UPDATE world_state SET meta=meta || ?::jsonb WHERE id=?",
             com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(authority), id)
@@ -864,7 +864,7 @@ class HwihaMarchPersistenceIT {
         val source = world.positionOf(1)!!
         val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
             StrategicPathRequest(source, destination(world), 1),
-            HwihaLandPassageState.read(world.getState().meta, topology)!!, metrics)).path
+            LandPassageState.read(world.getState().meta, topology)!!, metrics)).path
         val province = path.nodeKeys[1].removePrefix("land:")
         assertTrue(metrics.edgesById.getValue(path.edgeIds.first()).costMm <= LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
         for (enemyId in defenderIds) {

@@ -7,7 +7,7 @@ import opensamguk.logic.economy.HwihaCountyIncome
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.infra.seed.HwihaCountyProductionJson
-import opensamguk.logic.input.HwihaRecordKind
+import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.RuleProfile
 import org.slf4j.LoggerFactory
 
@@ -87,7 +87,7 @@ class HwihaMonthlyCountyIncome(
         // Nation-internal (warehouses are the nation's own ledger) — recorded, never put in the nation summary.
         for ((nationId, entry) in byNation) {
             val (count, sum) = entry
-            HwihaRecords.nation(world, nationId, HwihaRecordKind.INCOME_MONTHLY,
+            HwihaRecords.nation(world, nationId, RecordKind.INCOME_MONTHLY,
                 "縣 창고 ${count}곳에 월세입이 들어왔습니다.",
                 linkedMapOf("stamp" to stamp, "counties" to count, "money" to sum.money, "grain" to sum.grain,
                     "iron" to sum.iron, "timber" to sum.timber, "horses" to sum.horses))

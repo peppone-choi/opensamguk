@@ -59,7 +59,7 @@ class HwihaTransferHandler(private val world: InMemoryTurnWorld, private val rec
             meta = HwihaPortableStock.withStock(actor.meta, remaining) + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(nextActor))
         world.applyGeneralDirtyFree(nextActor)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED, "${actor.name}의 자원 이전을 마쳤습니다.",
+        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED, "${actor.name}의 자원 이전을 마쳤습니다.",
             mapOf("inputId" to inputId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

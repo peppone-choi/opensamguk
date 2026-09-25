@@ -66,7 +66,7 @@ class HwihaTravelExecutor(
             return reject(HwihaTravelFailure.STATE_UNAVAILABLE)
         val position = positions.stateFor(actorId) ?: return reject(HwihaTravelFailure.POSITION_UNAVAILABLE)
         if (position.battlefield != null) return reject(HwihaTravelFailure.BATTLE_PENDING)
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) }
+        val edges = try { LandPassageState.read(world.getState().meta, topology) }
             catch (_: IllegalArgumentException) { null } ?: return reject(HwihaTravelFailure.STATE_UNAVAILABLE)
         val movement = when (val result = LandMarchProgress.advance(topology, metrics, edges, path, cursor,
             position.node, 1, budgetMm, entryAt)) {

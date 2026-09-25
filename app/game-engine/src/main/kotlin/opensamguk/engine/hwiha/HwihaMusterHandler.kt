@@ -62,7 +62,7 @@ class HwihaMusterHandler(private val world: InMemoryTurnWorld, private val recor
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(stamped))
         world.applyGeneralDirtyFree(stamped)
         HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_MILITARY_ACTION)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.MUSTER_ORDERED,
+        HwihaRecords.general(world, actorId, RecordKind.MUSTER_ORDERED,
             "지휘 중인 군단에 현재 省으로 집결하도록 명했습니다.",
             mapOf("destination" to ready.destination.canonicalKey,
                 "commanderIds" to ready.corps.map { it.commanderGeneralId }, "requestId" to requestId))

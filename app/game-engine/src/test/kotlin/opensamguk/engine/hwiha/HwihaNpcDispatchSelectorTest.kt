@@ -45,7 +45,7 @@ class HwihaNpcDispatchSelectorTest {
             assertTrue(handler.takeExecutions().isEmpty())
             assertEquals(1,world.peekLogs().single().generalId)
             assertEquals("담당 장수가 없는 아군 현의 첫 부임 대상으로 발령되었습니다.",world.peekLogs().single().text)
-            assertEquals(opensamguk.logic.input.HwihaRecordKind.DISPATCH_RECEIVED,world.peekLogs().single().eventKind)
+            assertEquals(opensamguk.logic.input.RecordKind.DISPATCH_RECEIVED,world.peekLogs().single().eventKind)
         }
     }
     @Test fun `owned special undeclared and landless issuers are excluded`() {

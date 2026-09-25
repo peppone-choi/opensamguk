@@ -192,7 +192,7 @@ class CommandReserveServiceTest {
             listOf(opensamguk.logic.domestic.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
             listOf(opensamguk.logic.domestic.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
         `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state,
-            infrastructure = opensamguk.logic.input.HwihaInfrastructureSiteState(null, emptyList(), null, emptyList())))
+            infrastructure = opensamguk.logic.input.InfrastructureSiteState(null, emptyList(), null, emptyList())))
         val catalog = opensamguk.logic.input.HwihaInputCatalog.load()
         val court = HwihaCourtAdmission(mock(opensamguk.gameapi.precheck.HwihaDispatchPrecheckService::class.java),
             HwihaDomesticAdmission(reader, catalog), catalog)

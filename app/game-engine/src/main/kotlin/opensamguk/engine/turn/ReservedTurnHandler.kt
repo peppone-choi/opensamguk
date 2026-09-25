@@ -346,15 +346,15 @@ class ReservedTurnHandler(
             for (siegeInput in listOf(opensamguk.engine.hwiha.HwihaSiegeHandler.ASSAULT, opensamguk.engine.hwiha.HwihaSiegeHandler.DEMAND_SURRENDER)) {
                 handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
             }
-            handlers[opensamguk.logic.input.HwihaRoadFortSiegeInput.INPUT_ID] = InputHandler {
-                val inputId = opensamguk.logic.input.HwihaRoadFortSiegeInput.INPUT_ID
-                val fortId = opensamguk.logic.input.HwihaRoadFortSiegeInput.parse(reserved.argJson)
+            handlers[opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID] = InputHandler {
+                val inputId = opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID
+                val fortId = opensamguk.logic.input.RoadFortSiegeInput.parse(reserved.argJson)
                 val topology = hwihaDeploymentContext?.first
                 val metrics = hwihaDeploymentContext?.second
                 applied = if (fortId == null || topology == null || metrics == null)
                     HwihaTurnOutcome.Rejected(inputId, "INVALID_INPUT", "점령할 보루를 골라 주세요.")
                 else {
-                    val failure = opensamguk.engine.hwiha.HwihaRoadFortSiegeService(world, recorder, topology, metrics)
+                    val failure = opensamguk.engine.siege.RoadFortSiegeService(world, recorder, topology, metrics)
                         .start(generalId, fortId)
                     if (failure == null) HwihaTurnOutcome.Applied(inputId)
                     else HwihaTurnOutcome.Rejected(inputId, failure.name, failure.message)
@@ -450,7 +450,7 @@ class ReservedTurnHandler(
             // goes to the general's own record so that 「지난 순」 shows why the slot did nothing.
             if (outcome is HwihaTurnOutcome.Rejected && world.ruleProfile == RuleProfile.HWIHA) {
                 opensamguk.engine.hwiha.HwihaRecords.general(world, generalId,
-                    opensamguk.logic.input.HwihaRecordKind.INPUT_REJECTED, outcome.reason,
+                    opensamguk.logic.input.RecordKind.INPUT_REJECTED, outcome.reason,
                     linkedMapOf("inputId" to outcome.inputId, "code" to outcome.code))
             }
             return HandledTurn(generalId, null, false, (outcome as? HwihaTurnOutcome.Rejected)?.reason,

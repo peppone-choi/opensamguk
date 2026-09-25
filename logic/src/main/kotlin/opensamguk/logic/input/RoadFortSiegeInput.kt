@@ -4,7 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-object HwihaRoadFortSiegeInput {
+object RoadFortSiegeInput {
     const val INPUT_ID = "action.siegeRoadFort"
 
     fun parse(argJson: String?): String? = try {

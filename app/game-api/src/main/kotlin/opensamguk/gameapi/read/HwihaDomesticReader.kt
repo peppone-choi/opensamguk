@@ -31,7 +31,7 @@ class HwihaDomesticForbidden : RuntimeException()
 data class HwihaDomesticSnapshot(
     val state: DomesticProjection? = null,
     val failure: String? = null,
-    val infrastructure: HwihaInfrastructureSiteState? = null,
+    val infrastructure: InfrastructureSiteState? = null,
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, HwihaResources> = emptyMap(),
@@ -109,12 +109,12 @@ class HwihaDomesticReader(
                         diplomacy = diplomacy.findAll().map { DomesticDiplomacy(it.srcNationId, it.destNationId, it.stateCode, it.term) },
                         activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
-                    infrastructure = HwihaInfrastructureSiteState(topology,
+                    infrastructure = InfrastructureSiteState(topology,
                         bundle.projection.presentation?.roadGates.orEmpty(),
-                        HwihaLandPassageState.read(HwihaGameEnvStateMeta.overlay(selected.world.meta,
-                            gameKv, mapper, HwihaLandPassageState.META_KEY), topology),
-                        HwihaRoadFortState.read(HwihaGameEnvStateMeta.overlay(selected.world.meta,
-                            gameKv, mapper, HwihaRoadFortState.META_KEY))),
+                        LandPassageState.read(GameEnvStateMeta.overlay(selected.world.meta,
+                            gameKv, mapper, LandPassageState.META_KEY), topology),
+                        RoadFortState.read(GameEnvStateMeta.overlay(selected.world.meta,
+                            gameKv, mapper, RoadFortState.META_KEY))),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->
                         val place = places[c.id] ?: return@mapNotNull null

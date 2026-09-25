@@ -100,7 +100,7 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
                 (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(current), PerTurnOverlay.toLogicGeneral(next))
         world.applyGeneralDirtyFree(next)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED, "${actor.name}의 직접 행동을 마쳤습니다.",
+        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED, "${actor.name}의 직접 행동을 마쳤습니다.",
             mapOf("inputId" to inputId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

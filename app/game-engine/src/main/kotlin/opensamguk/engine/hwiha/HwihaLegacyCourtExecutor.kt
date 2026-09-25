@@ -109,7 +109,7 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
             }
             else -> return reject(HwihaLegacyCourtFailure.INVALID_INPUT)
         }
-        HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
+        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${ready.actor.name}의 조정 결정을 실행했습니다.", mapOf("inputId" to inputId))
         return null
     }

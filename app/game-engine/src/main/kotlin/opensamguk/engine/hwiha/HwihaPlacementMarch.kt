@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.logic.domestic.PlacementOrder
 import opensamguk.logic.domestic.ActivePlacement
 import opensamguk.logic.domestic.PlacementState
@@ -50,8 +52,8 @@ class HwihaPlacementMarchTurn(
         }
         // Away from the post (the corps owner moved, or the card was displaced): not seated until it returns.
         if (active.arrivedAt != null) arrive(generalId, active, null, clearMarch = false)
-        val edges = try { HwihaLandPassageState.read(world.getState().meta, topology)
-            ?.let { HwihaRoadFortPassage.forNation(world, it, card.nationId) } }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, card.nationId) } }
             catch (_: IllegalArgumentException) { null }
         if (edges == null) { log(generalId, "육상 통행 상태를 확인할 수 없어 부임 행군을 멈췄습니다."); return true }
         val old = try { PlacementMarch.read(card.meta, topology, metrics) } catch (_: IllegalArgumentException) {

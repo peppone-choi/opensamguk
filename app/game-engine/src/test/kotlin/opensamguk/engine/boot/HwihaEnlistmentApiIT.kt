@@ -125,7 +125,7 @@ class HwihaEnlistmentApiIT {
             .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
         val topology = bundle.projection.topology
         val authority = mapOf(
-            opensamguk.logic.input.HwihaLandPassageState.META_KEY to opensamguk.logic.input.HwihaLandPassageState.initialMetaValue(topology),
+            opensamguk.logic.input.LandPassageState.META_KEY to opensamguk.logic.input.LandPassageState.initialMetaValue(topology),
             opensamguk.logic.input.HwihaMarchReactions.META_KEY to opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue(),
         )
         jdbc.update("UPDATE world_state SET current_phase=2, meta=meta || ?::jsonb WHERE id=1", json.writeValueAsString(authority))
@@ -136,7 +136,7 @@ class HwihaEnlistmentApiIT {
             val node = departure.landNodeOfCity(city) as? opensamguk.logic.world.StrategicNodeRef.LandProvince ?: return@firstNotNullOf null
             val path = opensamguk.logic.world.StrategicPathResolver.resolveLandMarch(topology,
                 opensamguk.logic.world.StrategicPathRequest(sourceNode,node,1),
-                opensamguk.logic.input.HwihaLandPassageState.read(departure.getState().meta,topology)!!,
+                opensamguk.logic.input.LandPassageState.read(departure.getState().meta,topology)!!,
                 bundle.landMarchMetrics) as? opensamguk.logic.world.LandMarchPathResult.Resolved
             node.takeIf { path != null && path.path.totalCostMm in 30_000_001L..120_000_000L }
         }

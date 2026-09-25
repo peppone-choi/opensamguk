@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
@@ -20,8 +22,8 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         if (order == null) { log(commanderId,"출병 명령 상태를 확인할 수 없어 행군을 멈췄습니다.",
             mapOf("stop" to "ORDER_UNAVAILABLE")); return true }
         val refs = linkedMapOf<String, Any?>("orderId" to order.orderId, "destination" to order.destination.canonicalKey)
-        val edges = try { HwihaLandPassageState.read(world.getState().meta,topology)
-            ?.let { HwihaRoadFortPassage.forNation(world, it, actor.nationId) } }
+        val edges = try { LandPassageState.read(world.getState().meta,topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
         if (edges == null) { log(commanderId,"육상 통행 상태를 확인할 수 없어 출병 행군을 멈췄습니다.",
             refs + ("stop" to "PASSAGE_UNAVAILABLE")); return true }
@@ -70,5 +72,5 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         return true
     }
     private fun log(id: Int, text: String, refs: Map<String, Any?>) =
-        HwihaRecords.general(world, id, HwihaRecordKind.MARCH_CORPS, text, refs)
+        HwihaRecords.general(world, id, RecordKind.MARCH_CORPS, text, refs)
 }

@@ -19,7 +19,7 @@ class HwihaTravelTurn(
         val state = try { HwihaTravelState.read(actor.meta, topology, metrics) }
             catch (_: IllegalArgumentException) {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED,
+                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
                     HwihaTravelFailure.STATE_UNAVAILABLE.message,
                     mapOf("inputId" to "action.move", "code" to HwihaTravelFailure.STATE_UNAVAILABLE.name))
                 return false
@@ -27,7 +27,7 @@ class HwihaTravelTurn(
         val assignment = try { HwihaCountyAssignment.read(actor.meta) }
             catch (_: IllegalArgumentException) {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED,
+                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
                     HwihaTravelFailure.STATE_UNAVAILABLE.message,
                     mapOf("inputId" to state.inputId, "code" to HwihaTravelFailure.STATE_UNAVAILABLE.name))
                 return false
@@ -50,7 +50,7 @@ class HwihaTravelTurn(
             HwihaTravelExecution.AlreadyProcessed -> Unit
             is HwihaTravelExecution.Rejected -> {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED, result.reason.message,
+                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED, result.reason.message,
                     mapOf("inputId" to state.inputId, "code" to result.reason.name))
                 return false
             }

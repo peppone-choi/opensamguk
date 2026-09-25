@@ -1,6 +1,6 @@
 package opensamguk.gameapi.dto
 
-data class HwihaRoadFortDto(
+data class RoadFortDto(
     val id: String,
     val edgeId: String,
     val provinceId: String,
@@ -14,7 +14,7 @@ data class HwihaRoadFortDto(
     val canBesiege: Boolean,
 )
 
-data class HwihaRoadGateDto(
+data class RoadGateDto(
     val edgeId: String,
     val fromProvinceId: String,
     val toProvinceId: String,
@@ -24,9 +24,9 @@ data class HwihaRoadGateDto(
     val fortCells: List<opensamguk.logic.world.StrategicFortCell>,
 )
 
-data class HwihaRoadFortsResponse(
+data class RoadFortsResponse(
     val status: String,
-    val forts: List<HwihaRoadFortDto> = emptyList(),
-    val gates: List<HwihaRoadGateDto> = emptyList(),
+    val forts: List<RoadFortDto> = emptyList(),
+    val gates: List<RoadGateDto> = emptyList(),
     val roadMode: Boolean = false,
 )
