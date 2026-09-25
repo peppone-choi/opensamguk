@@ -41,6 +41,8 @@
 
 첫 writer PR의 소유 파일은 새 `EventRecorder`/row mapper·테스트와 휘하 전용 생산자다. `TurnWorldModel.kt`, `InMemoryTurnWorld.kt`, `DirtyState.kt`, `ChangeRecorder.kt`, `DatabaseHooks.kt`, `JdbcFlushExecutor.kt`, `FlushPayload` 및 월 경계 생산자는 #917 세계 가드 병합 뒤 최신 main에서 수정한다. 공개 연감/행정 오버레이와 이름 핀은 별도 구현과 계약을 맞춘다.
 
+새 `game_event`는 시즌 데이터이므로 `TruncateContract.TRUNCATED`에 추가한다. 실제 운영 리셋 실행은 이 작업에 포함되지 않는다.
+
 ## 쓰기 관문
 
 1. 새 사건용 생산자 파일에서 `text=`, 색 태그, `<1>` 날짜, 임의 문장 합성을 금하는 검사와 일부러 한 줄을 주입해 실패하는 음성 시험.
