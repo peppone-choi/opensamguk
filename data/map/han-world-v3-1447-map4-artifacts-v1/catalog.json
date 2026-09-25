@@ -102,10 +102,10 @@
     },
     {
       "path": "data/map/han-land-roads-v1.json",
-      "sha256": "cf379f77c1d147988fd8cb7471ce2bd5cff025ce5a0c3fbf1ab379886a79a5b7",
-      "bytes": 6365726,
-      "blob": "blobs/cf379f77c1d147988fd8cb7471ce2bd5cff025ce5a0c3fbf1ab379886a79a5b7.json.gz",
-      "compressedSha256": "2fc0c1c420cb0fc1b445310a840e712f93220765bf6c2b2f9992938d6bf64c90"
+      "sha256": "be4223c66f7363217606d1fc3517c23727d3c276fd9c9b3ef1c49472a1cfa14b",
+      "bytes": 6365724,
+      "blob": "blobs/be4223c66f7363217606d1fc3517c23727d3c276fd9c9b3ef1c49472a1cfa14b.json.gz",
+      "compressedSha256": "f3a9e64bb040b8fbcba9b69f3e901c33ea3c54c7056411344fcc5c88e681bc11"
     }
   ],
   "logicalMapName": "han-world-v3",

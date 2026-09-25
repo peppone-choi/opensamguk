@@ -26,6 +26,7 @@ OUTPUT = ROOT / "data/map/han-land-roads-v1.json"
 OWNERSHIP = ROOT / "data/map/han-scenario-province-ownership-v1.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 SCENARIOS = ROOT / "infra/src/main/resources/scenario"
+CAMPAIGN_SCENARIO = ROOT / "tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json"
 DRY_COST = {"PLAIN": 1, "BASIN": 2, "HILL": 3, "PLATEAU": 4, "MOUNTAIN": 6, "DESERT": 7}
 HISTORICAL_CORRIDORS = (
     {"id": "jingxing", "name": "井陘道", "waypointCityIds": ("gc-g0079-001", "87093", "88410"),
@@ -341,12 +342,21 @@ def build(tiles: dict, ownership: dict) -> dict:
     id_index = {province_id: index for index, province_id in enumerate(ids)}
     world_cities = {int(city["id"]): city for city in json.loads(WORLD.read_text())["cities"]}
     supply_links = 0
-    for scenario in sorted(ownership["scenarios"], key=lambda row: row["scenarioCode"]):
-        assignments = scenario["assignments"]
-        if len(assignments) != len(ids) or {row["provinceId"] for row in assignments} != set(ids):
-            raise ValueError(f"incomplete scenario ownership: {scenario['scenarioCode']}")
-        owner_by_index = {id_index[row["provinceId"]]: row["ownerNationId"] for row in assignments}
-        scenario_doc = json.loads((SCENARIOS / f"scenario_{scenario['scenarioCode']}.json").read_text())
+    reviewed_scenarios = [
+        (row["scenarioCode"], row["assignments"], SCENARIOS / f"scenario_{row['scenarioCode']}.json")
+        for row in sorted(ownership["scenarios"], key=lambda row: row["scenarioCode"])
+    ]
+    # The campaign fixture exercises live military blocks against this same
+    # release. Its complete city occupancy supplies the jurisdiction owners.
+    reviewed_scenarios.append((990002, None, CAMPAIGN_SCENARIO))
+    for scenario_code, assignments, scenario_path in reviewed_scenarios:
+        if assignments is not None:
+            if len(assignments) != len(ids) or {row["provinceId"] for row in assignments} != set(ids):
+                raise ValueError(f"incomplete scenario ownership: {scenario_code}")
+            owner_by_index = {id_index[row["provinceId"]]: row["ownerNationId"] for row in assignments}
+        else:
+            owner_by_index = {index: 0 for index in range(len(ids))}
+        scenario_doc = json.loads(scenario_path.read_text())
         occupied_cities = {}
         for nation, nation_row in enumerate(scenario_doc["nation"], start=1):
             for city_id in nation_row[8]:

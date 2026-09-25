@@ -76,14 +76,16 @@ class HanStrategicSupplyProviderTest {
         }
     }
 
-    @Test fun `15 scenarios start with no new supply cuts from built roads`() {
+    @Test fun `reviewed scenarios and the campaign start with no new supply cuts from built roads`() {
         val scenarios = mapper.readTree(Path.of("../../data/map/han-scenario-province-ownership-v1.json").toFile())
             .path("scenarios").map { it.path("scenarioCode").asInt() }
         assertEquals(15, scenarios.size)
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han-world-v3"), emptyMap())
         val newCuts = mutableMapOf<Int, Set<Int>>()
-        for (code in scenarios) {
-            val scenario = ScenarioJson.loadScenario(Path.of("../../infra/src/main/resources/scenario/scenario_$code.json").toFile().readText())
+        for (code in scenarios + 990002) {
+            val path = if (code == 990002) "../../tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json"
+                else "../../infra/src/main/resources/scenario/scenario_$code.json"
+            val scenario = ScenarioJson.loadScenario(Path.of(path).toFile().readText())
             val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
             val live = cities(owners)
             val owned = live.filter { it.nationId > 0 }.map { SupplyCity(it.cityId, it.nationId) }
