@@ -15,7 +15,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * 가중은 정수이고 축마다 합이 `denominator` 와 같아야 한다. 계산은 정수로 하고 0.5 는 올린다
  * (실수 0.6·0.4 로 곱하면 72.5 가 72.4999… 로 떨어져 반올림이 갈린다).
  */
-object HwihaAptitude {
+object Aptitude {
     enum class Stat(val key: String) {
         LEADERSHIP("leadership"), STRENGTH("strength"), INTELLIGENCE("intelligence"),
         POLITICS("politics"), CHARM("charm"),
@@ -54,7 +54,7 @@ object HwihaAptitude {
 
     /** 정본 가중값. classpath 에 없으면 빌드가 잘못된 것이다 — 조용히 기본값으로 가지 않는다. */
     val CANON: Weights by lazy {
-        parse(checkNotNull(HwihaAptitude::class.java.classLoader.getResource(RESOURCE)) {
+        parse(checkNotNull(Aptitude::class.java.classLoader.getResource(RESOURCE)) {
             "hwiha aptitude weights resource is missing: $RESOURCE"
         }.readText())
     }

@@ -1,9 +1,9 @@
 package opensamguk.logic.world
 
 import kotlin.test.*
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldGeometry.Position
 
-class HwihaBattlefieldLayoutTest {
+class BattlefieldLayoutTest {
     private fun source(battle: List<HanProvinceCell>, approach: List<HanProvinceCell>) = HanProvinceCellIndex(
         "qa", "a".repeat(64), "b".repeat(64), 20, 20,
         mapOf('0' to "SEA", '1' to "PLAIN", '2' to "MOUNTAIN", '3' to "RIVER", '4' to "LAKE"),
@@ -11,9 +11,9 @@ class HwihaBattlefieldLayoutTest {
             "approach" to approach.sortedWith(compareBy(HanProvinceCell::row, HanProvinceCell::col))))
     private fun cell(col: Int, row: Int = 1, terrain: Char = '1') = HanProvinceCell(col, row, terrain)
     private fun prepare(battle: List<HanProvinceCell>, approach: List<HanProvinceCell> = listOf(cell(0))) =
-        HwihaBattlefieldLayout.prepare(source(battle, approach), "battle", "approach")
-    private fun ready(result: HwihaBattlefieldLayout.Result) = assertIs<HwihaBattlefieldLayout.Result.Ready>(result).layout
-    private fun reason(result: HwihaBattlefieldLayout.Result) = assertIs<HwihaBattlefieldLayout.Result.Unavailable>(result).reason
+        BattlefieldLayout.prepare(source(battle, approach), "battle", "approach")
+    private fun ready(result: BattlefieldLayout.Result) = assertIs<BattlefieldLayout.Result.Ready>(result).layout
+    private fun reason(result: BattlefieldLayout.Result) = assertIs<BattlefieldLayout.Result.Unavailable>(result).reason
 
     @Test fun `corridor outer thirds leave a separating band and preserve source pins`() {
         val grid = ready(prepare((1..7).map { cell(it) }))
@@ -25,11 +25,11 @@ class HwihaBattlefieldLayoutTest {
     }
 
     @Test fun `both sides of entry must be passable and diagonal contact is insufficient`() {
-        assertEquals(HwihaBattlefieldLayout.Reason.NO_PASSABLE_CONTACT,
+        assertEquals(BattlefieldLayout.Reason.NO_PASSABLE_CONTACT,
             reason(prepare(listOf(cell(1), cell(2)), listOf(cell(0, terrain='2')))))
-        assertEquals(HwihaBattlefieldLayout.Reason.NO_PASSABLE_CONTACT,
+        assertEquals(BattlefieldLayout.Reason.NO_PASSABLE_CONTACT,
             reason(prepare(listOf(cell(1, terrain='2'), cell(2)))))
-        assertEquals(HwihaBattlefieldLayout.Reason.NO_PHYSICAL_CONTACT,
+        assertEquals(BattlefieldLayout.Reason.NO_PHYSICAL_CONTACT,
             reason(prepare(listOf(cell(1), cell(2)), listOf(cell(0, row=0)))))
     }
 
@@ -63,9 +63,9 @@ class HwihaBattlefieldLayoutTest {
     }
 
     @Test fun `empty blocked single cell and one depth cases stay distinct`() {
-        assertEquals(HwihaBattlefieldLayout.Reason.EMPTY_PROVINCE, reason(prepare(emptyList())))
-        assertEquals(HwihaBattlefieldLayout.Reason.NO_PASSABLE_CELLS, reason(prepare(listOf(cell(1, terrain='2')))))
-        assertEquals(HwihaBattlefieldLayout.Reason.INSUFFICIENT_DEPTH, reason(prepare(listOf(cell(1)))))
+        assertEquals(BattlefieldLayout.Reason.EMPTY_PROVINCE, reason(prepare(emptyList())))
+        assertEquals(BattlefieldLayout.Reason.NO_PASSABLE_CELLS, reason(prepare(listOf(cell(1, terrain='2')))))
+        assertEquals(BattlefieldLayout.Reason.INSUFFICIENT_DEPTH, reason(prepare(listOf(cell(1)))))
         val small = ready(prepare(listOf(cell(1), cell(2))))
         assertEquals(listOf(Position(0,0)), small.attackerZone)
         assertEquals(listOf(Position(1,0)), small.defenderZone)
@@ -73,10 +73,10 @@ class HwihaBattlefieldLayoutTest {
 
     @Test fun `unknown terrain rejects and all known land categories are explicit`() {
         for (terrain in listOf("PLAIN", "RIVER", "DESERT", "PLATEAU", "BASIN", "HILL"))
-            assertTrue(HwihaBattlefieldLayout.isLandPassable(terrain))
+            assertTrue(BattlefieldLayout.isLandPassable(terrain))
         for (terrain in listOf("SEA", "LAKE", "MOUNTAIN", "OUT_OF_SCOPE"))
-            assertFalse(HwihaBattlefieldLayout.isLandPassable(terrain))
-        assertFailsWith<IllegalArgumentException> { HwihaBattlefieldLayout.isLandPassable("UNKNOWN") }
+            assertFalse(BattlefieldLayout.isLandPassable(terrain))
+        assertFailsWith<IllegalArgumentException> { BattlefieldLayout.isLandPassable("UNKNOWN") }
     }
 
     @Test fun `layout collections are immutable and invalid province inputs reject`() {
@@ -85,7 +85,7 @@ class HwihaBattlefieldLayoutTest {
         assertFailsWith<UnsupportedOperationException> { (grid.defenderZone as MutableList).clear() }
         assertFailsWith<UnsupportedOperationException> { (grid.distancesFromEntry as MutableMap).clear() }
         val index = source(listOf(cell(1)), listOf(cell(0)))
-        assertFailsWith<IllegalArgumentException> { HwihaBattlefieldLayout.prepare(index, "battle", "battle") }
-        assertFailsWith<IllegalArgumentException> { HwihaBattlefieldLayout.prepare(index, "battle", "missing") }
+        assertFailsWith<IllegalArgumentException> { BattlefieldLayout.prepare(index, "battle", "battle") }
+        assertFailsWith<IllegalArgumentException> { BattlefieldLayout.prepare(index, "battle", "missing") }
     }
 }

@@ -1,7 +1,7 @@
 package opensamguk.logic.input
 
 /** Unattached treasure instances held by one general. Issuance is enforced over every inventory. */
-object HwihaTreasureInventory {
+object TreasureInventory {
     const val META_KEY = "hwihaTreasureInventory"
     fun read(meta: Map<String, Any?>): Set<String> {
         val value = meta[META_KEY] ?: return emptySet()

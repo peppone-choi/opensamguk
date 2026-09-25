@@ -13,18 +13,18 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         val actor = world.getGeneralById(commanderId) ?: return false
         val projection = HwihaDeploymentExecutor(world,recorder,topology,metrics).projection()
         val corps = projection?.deployed?.singleOrNull { it.commanderGeneralId == commanderId }
-        if (corps == null && HwihaCorpsOrder.META_KEY !in actor.meta) return false
+        if (corps == null && CorpsOrder.META_KEY !in actor.meta) return false
         val order = try {
-            HwihaCorpsOrder.read(actor.meta,topology)?.also { it.requireBinding(requireNotNull(corps),commanderId) }
+            CorpsOrder.read(actor.meta,topology)?.also { it.requireBinding(requireNotNull(corps),commanderId) }
         } catch (_: IllegalArgumentException) { null }
         if (order == null) { log(commanderId,"출병 명령 상태를 확인할 수 없어 행군을 멈췄습니다.",
             mapOf("stop" to "ORDER_UNAVAILABLE")); return true }
         val refs = linkedMapOf<String, Any?>("orderId" to order.orderId, "destination" to order.destination.canonicalKey)
-        val edges = try { HwihaLandPassageState.read(world.getState().meta,topology) }
+        val edges = try { LandPassageState.read(world.getState().meta,topology) }
             catch (_: IllegalArgumentException) { null }
         if (edges == null) { log(commanderId,"육상 통행 상태를 확인할 수 없어 출병 행군을 멈췄습니다.",
             refs + ("stop" to "PASSAGE_UNAVAILABLE")); return true }
-        val before = try { HwihaCorpsMarchState.read(actor.meta,topology,metrics) }
+        val before = try { CorpsMarchState.read(actor.meta,topology,metrics) }
             catch (_: IllegalArgumentException) { null }
         val military = HwihaMilitaryPresenceProvider(world,topology,metrics)
         val encounters = HwihaCorpsEncounterRecorder(world, recorder, topology, metrics, cells)
@@ -69,5 +69,5 @@ class HwihaCorpsMarchTurn(private val world: InMemoryTurnWorld, private val reco
         return true
     }
     private fun log(id: Int, text: String, refs: Map<String, Any?>) =
-        HwihaRecords.general(world, id, HwihaRecordKind.MARCH_CORPS, text, refs)
+        HwihaRecords.general(world, id, RecordKind.MARCH_CORPS, text, refs)
 }

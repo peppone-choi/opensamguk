@@ -5,24 +5,24 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
 
-data class HwihaRetireRequest(val actorId: Int, val successorGeneralId: Int)
+data class RetireRequest(val actorId: Int, val successorGeneralId: Int)
 
 /** A retiring general names the successor; the server resolves current retainer ownership. */
-object HwihaRetireInput {
+object RetireInput {
     const val INPUT_ID = "action.retire"
 
-    fun parse(actorId: Int, rawJson: String?): HwihaRetireRequest? {
+    fun parse(actorId: Int, rawJson: String?): RetireRequest? {
         if (actorId <= 0 || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             if (fields.keys != setOf("successorGeneralId")) return null
             val raw = fields["successorGeneralId"] as? JsonPrimitive ?: return null
             val id = if (raw.isString) null else raw.intOrNull
-            if (id == null || id <= 0 || id == actorId) null else HwihaRetireRequest(actorId, id)
+            if (id == null || id <= 0 || id == actorId) null else RetireRequest(actorId, id)
         } catch (_: IllegalArgumentException) { null }
     }
 
-    fun canonicalJson(request: HwihaRetireRequest): String {
+    fun canonicalJson(request: RetireRequest): String {
         require(request.actorId > 0 && request.successorGeneralId > 0 && request.successorGeneralId != request.actorId)
         return buildJsonObject { put("successorGeneralId", request.successorGeneralId) }.toString()
     }

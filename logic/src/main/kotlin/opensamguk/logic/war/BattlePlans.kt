@@ -1,10 +1,10 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.security.MessageDigest
 import java.util.Collections
-import opensamguk.logic.input.HwihaCorpsEncounter
+import opensamguk.logic.input.CorpsEncounter
 
 enum class BattlePlanAction { ADVANCE, HOLD, RETREAT }
 enum class BattlePlanCondition { LOSS_AT_LEAST, MORALE_BELOW, ROUND_AT_LEAST }
@@ -12,7 +12,7 @@ data class BattlePlanCommand(val slot: Int, val condition: BattlePlanCondition, 
     init {
         require(slot in 0..2)
         require(threshold in 1..when(condition) {
-            BattlePlanCondition.ROUND_AT_LEAST -> HwihaBattlePlans.MAX_ROUNDS
+            BattlePlanCondition.ROUND_AT_LEAST -> BattlePlans.MAX_ROUNDS
             else -> 100
         })
     }
@@ -30,13 +30,13 @@ class CommanderBattlePlan(val commanderGeneralId: Int, val initialAction: Battle
 }
 
 /** Sealed plans only; evaluation and once-only command activation belong to the round executor. */
-class HwihaBattlePlans(val encounterId: String, plans: List<CommanderBattlePlan>) {
+class BattlePlans(val encounterId: String, plans: List<CommanderBattlePlan>) {
     val plans: List<CommanderBattlePlan> = Collections.unmodifiableList(plans.sortedBy { it.commanderGeneralId })
     init {
         require(encounterId.matches(Regex("[0-9a-f]{64}")))
         require(this.plans.isNotEmpty() && this.plans.map { it.commanderGeneralId }.distinct().size == this.plans.size)
     }
-    fun requireBinding(encounter: HwihaCorpsEncounter) {
+    fun requireBinding(encounter: CorpsEncounter) {
         require(encounterId == encounter.encounterId && plans.map { it.commanderGeneralId }.toSet() ==
             (listOf(encounter.attacker)+encounter.defenders).map { it.commanderGeneralId }.toSet())
     }
@@ -57,16 +57,16 @@ class HwihaBattlePlans(val encounterId: String, plans: List<CommanderBattlePlan>
     companion object {
         const val META_KEY="hwihaBattlePlans"
         const val MAX_ROUNDS=24
-        fun defaultFor(encounter: HwihaCorpsEncounter): HwihaBattlePlans {
+        fun defaultFor(encounter: CorpsEncounter): BattlePlans {
             val commands=listOf(BattlePlanCommand(0,BattlePlanCondition.LOSS_AT_LEAST,50,BattlePlanAction.RETREAT),
                 BattlePlanCommand(1,BattlePlanCondition.MORALE_BELOW,20,BattlePlanAction.RETREAT),
                 BattlePlanCommand(2,BattlePlanCondition.ROUND_AT_LEAST,MAX_ROUNDS,BattlePlanAction.RETREAT))
-            return HwihaBattlePlans(encounter.encounterId,(listOf(encounter.attacker)+encounter.defenders).map {
+            return BattlePlans(encounter.encounterId,(listOf(encounter.attacker)+encounter.defenders).map {
                 CommanderBattlePlan(it.commanderGeneralId,if(it.commanderGeneralId==encounter.attacker.commanderGeneralId)
                     BattlePlanAction.ADVANCE else BattlePlanAction.HOLD,commands)
             }).also { it.requireBinding(encounter) }
         }
-        fun read(meta: Map<String,Any?>, encounter: HwihaCorpsEncounter): HwihaBattlePlans? {
+        fun read(meta: Map<String,Any?>, encounter: CorpsEncounter): BattlePlans? {
             if(META_KEY !in meta)return null
             val root=meta[META_KEY] as? Map<*,*> ?: invalid()
             require(root.keys==setOf("version","encounterId","snapshotId","plans") && root["version"]==1)
@@ -85,7 +85,7 @@ class HwihaBattlePlans(val encounterId: String, plans: List<CommanderBattlePlan>
                     BattlePlanAction.valueOf(row["initialAction"] as? String ?: invalid()),commands)
             } ?: invalid()
             require(plans.map { it.commanderGeneralId }==plans.map { it.commanderGeneralId }.sorted())
-            return HwihaBattlePlans(root["encounterId"] as? String ?: invalid(),plans).also {
+            return BattlePlans(root["encounterId"] as? String ?: invalid(),plans).also {
                 it.requireBinding(encounter);require(root["snapshotId"]==it.snapshotId)
             }
         }

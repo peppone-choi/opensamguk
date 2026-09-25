@@ -5,12 +5,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import opensamguk.logic.world.*
 
-class HwihaTravelRulesTest {
+class TravelRulesTest {
     @Test fun `travel ledger failure reasons cover admission and execution exactly`() {
-        val expected = HwihaTravelFailure.entries.mapTo(sortedSetOf()) { it.name } +
+        val expected = TravelFailure.entries.mapTo(sortedSetOf()) { it.name } +
             setOf("UNKNOWN_INPUT", "UNAUTHORIZED", "FORBIDDEN", "INVALID_TURN_SLOT")
-        val catalog = HwihaInputCatalog.load()
-        for (id in HwihaTravelInput.INPUT_IDS) {
+        val catalog = InputCatalog.load()
+        for (id in TravelInput.INPUT_IDS) {
             assertEquals(expected, catalog[id]!!.failureReasons.toSet(), id)
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
         }
@@ -24,40 +24,40 @@ class HwihaTravelRulesTest {
         emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to "a".repeat(64)))
     private val metrics = LandMarchMetricSnapshot(topology, "a".repeat(64),
         listOf(LandMarchEdgeMetric("ab", 40_000_000, 40_000_000)))
-    private val meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
-        HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())
-    private val snapshot = HwihaTravelSnapshot(RuleProfile.HWIHA, true, origin, false, false)
-    private val request = HwihaTravelRequest(1, HwihaTravelInput.MOVE, destination)
+    private val meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
+        MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())
+    private val snapshot = TravelSnapshot(RuleProfile.HWIHA, true, origin, false, false)
+    private val request = TravelRequest(1, TravelInput.MOVE, destination)
 
-    private fun assess(request: HwihaTravelRequest = this.request, destination: StrategicNodeRef.LandProvince? = this.destination,
-        snapshot: HwihaTravelSnapshot = this.snapshot, meta: Map<String, Any?> = this.meta) =
-        HwihaTravelRules.assess(request, destination, snapshot, topology, metrics, meta)
+    private fun assess(request: TravelRequest = this.request, destination: StrategicNodeRef.LandProvince? = this.destination,
+        snapshot: TravelSnapshot = this.snapshot, meta: Map<String, Any?> = this.meta) =
+        TravelRules.assess(request, destination, snapshot, topology, metrics, meta)
 
     @Test fun `route assessment uses the current land position and executable passage`() {
-        assertEquals(listOf("land:A", "land:B"), assertIs<HwihaTravelAssessment.Eligible>(assess()).path.nodeKeys)
-        val closed = HwihaLandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
+        assertEquals(listOf("land:A", "land:B"), assertIs<TravelAssessment.Eligible>(assess()).path.nodeKeys)
+        val closed = LandPassageState.initialMetaValue(topology) + ("edges" to mapOf("ab" to
             mapOf("active" to true, "seasonOpen" to false, "blockaded" to true, "availableCapacity" to 7)))
-        assertEquals(HwihaTravelFailure.NO_ROUTE, assertIs<HwihaTravelAssessment.Rejected>(
-            assess(meta = meta + (HwihaLandPassageState.META_KEY to closed))).reason)
-        assertEquals(HwihaTravelFailure.POSITION_UNAVAILABLE, assertIs<HwihaTravelAssessment.Rejected>(
+        assertEquals(TravelFailure.NO_ROUTE, assertIs<TravelAssessment.Rejected>(
+            assess(meta = meta + (LandPassageState.META_KEY to closed))).reason)
+        assertEquals(TravelFailure.POSITION_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
             assess(snapshot = snapshot.copy(actorNode = null))).reason)
     }
 
     @Test fun `shared assessment fails closed on conflict and missing authority`() {
         for ((state, failure) in listOf(
-            snapshot.copy(profile = RuleProfile.SAMMO) to HwihaTravelFailure.WRONG_RULE_PROFILE,
-            snapshot.copy(actorExists = false) to HwihaTravelFailure.ACTOR_NOT_FOUND,
-            snapshot.copy(inBattle = true) to HwihaTravelFailure.BATTLE_PENDING,
-            snapshot.copy(commandsCorps = true) to HwihaTravelFailure.CORPS_DEPLOYED,
-        )) assertEquals(failure, assertIs<HwihaTravelAssessment.Rejected>(assess(snapshot = state)).reason)
-        assertEquals(HwihaTravelFailure.INVALID_DESTINATION, assertIs<HwihaTravelAssessment.Rejected>(
+            snapshot.copy(profile = RuleProfile.SAMMO) to TravelFailure.WRONG_RULE_PROFILE,
+            snapshot.copy(actorExists = false) to TravelFailure.ACTOR_NOT_FOUND,
+            snapshot.copy(inBattle = true) to TravelFailure.BATTLE_PENDING,
+            snapshot.copy(commandsCorps = true) to TravelFailure.CORPS_DEPLOYED,
+        )) assertEquals(failure, assertIs<TravelAssessment.Rejected>(assess(snapshot = state)).reason)
+        assertEquals(TravelFailure.INVALID_DESTINATION, assertIs<TravelAssessment.Rejected>(
             assess(request = request.copy(destination = StrategicNodeRef.LandProvince("missing")),
                 destination = StrategicNodeRef.LandProvince("missing"))).reason)
-        assertEquals(HwihaTravelFailure.ALREADY_THERE, assertIs<HwihaTravelAssessment.Rejected>(
+        assertEquals(TravelFailure.ALREADY_THERE, assertIs<TravelAssessment.Rejected>(
             assess(request = request.copy(destination = origin), destination = origin)).reason)
-        assertEquals(HwihaTravelFailure.INVALID_INPUT, assertIs<HwihaTravelAssessment.Rejected>(
+        assertEquals(TravelFailure.INVALID_INPUT, assertIs<TravelAssessment.Rejected>(
             assess(destination = origin)).reason)
-        assertEquals(HwihaTravelFailure.STATE_UNAVAILABLE, assertIs<HwihaTravelAssessment.Rejected>(
+        assertEquals(TravelFailure.STATE_UNAVAILABLE, assertIs<TravelAssessment.Rejected>(
             assess(meta = emptyMap())).reason)
     }
 }

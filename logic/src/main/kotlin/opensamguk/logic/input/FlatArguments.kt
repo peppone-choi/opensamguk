@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import kotlinx.serialization.json.*
 
 /** Retains decoded keys before insertion, so even escaped duplicate keys cannot overwrite. */
-internal class HwihaFlatArguments(private val raw: String) {
+internal class FlatArguments(private val raw: String) {
     private var at = 0
     private fun spaces() { while (at < raw.length && raw[at] in " \t\r\n") at++ }
     private fun expect(char: Char) {

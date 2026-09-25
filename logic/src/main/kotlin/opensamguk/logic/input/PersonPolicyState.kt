@@ -1,7 +1,7 @@
 package opensamguk.logic.input
 
 /** Metadata supplied by a source-validated seed. This codec does not verify source identity. */
-data class HwihaPersonPolicyState(
+data class PersonPolicyState(
     val renownCapacity: Int,
     val acceptsEnlistment: Boolean,
     val statSourceId: String,
@@ -24,11 +24,11 @@ data class HwihaPersonPolicyState(
         private val fields = setOf("renownCapacity", "acceptsEnlistment", "statSourceId", "statSourceRevision", "officerId")
 
         /** Absence is unavailable, never an implicit initial capacity or acceptance. */
-        fun read(meta: Map<String, Any?>): HwihaPersonPolicyState? {
+        fun read(meta: Map<String, Any?>): PersonPolicyState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: errorValue()
             require(value.keys == fields) { "hwihaPersonPolicy fields must match the contract" }
-            return HwihaPersonPolicyState(
+            return PersonPolicyState(
                 value["renownCapacity"] as? Int ?: errorValue(),
                 value["acceptsEnlistment"] as? Boolean ?: errorValue(),
                 value["statSourceId"] as? String ?: errorValue(),

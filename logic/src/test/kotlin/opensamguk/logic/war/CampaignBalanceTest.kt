@@ -1,4 +1,4 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -6,7 +6,7 @@ import kotlin.test.*
 import kotlinx.serialization.json.*
 
 /** 코드 상수와 확정 수치 정본 파일이 갈라지지 않게 한다 — 한쪽만 고치면 빨개진다. */
-class HwihaS3ProvisionalTest {
+class CampaignBalanceTest {
     private val root: JsonObject by lazy {
         var at: Path? = Path.of("").toAbsolutePath()
         while (at != null && !Files.isDirectory(at.resolve("data/curated"))) at = at.parent
@@ -23,7 +23,7 @@ class HwihaS3ProvisionalTest {
     }
 
     @Test fun `runtime constants equal the confirmed ledger`() {
-        val p = HwihaS3Provisional
+        val p = CampaignBalance
         assertEquals(p.GARRISON_RATION_PER_SOLDIER_TURN, long("siege", "garrisonRationPerSoldierTurn"))
         assertEquals(p.BESIEGER_MIN_PROVISION_MONTHS.toLong(), long("siege", "besiegerMinProvisionMonths"))
         assertEquals(p.SURRENDER_DEMAND_MAX_MORALE.toLong(), long("siege", "surrenderDemandMaxMorale"))
@@ -58,6 +58,6 @@ class HwihaS3ProvisionalTest {
     }
 
     @Test fun `npc deployment never asks for less than the approved encirclement ratio`() {
-        assertTrue(HwihaS3Provisional.NPC_DEPLOY_MIN_RATIO >= HwihaSiegeRules.MINIMUM_ATTACKER_RATIO)
+        assertTrue(CampaignBalance.NPC_DEPLOY_MIN_RATIO >= SiegeRules.MINIMUM_ATTACKER_RATIO)
     }
 }

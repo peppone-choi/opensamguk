@@ -2,21 +2,21 @@ package opensamguk.logic.input
 
 import java.util.Collections
 import opensamguk.logic.world.HanProvinceCellIndex
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
-import opensamguk.logic.world.HwihaBattlefieldLayout
+import opensamguk.logic.world.BattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldLayout
 
 /** Encounter-bound default formation. A reserve has no occupied cell; it is not a lost unit. */
-class HwihaEncounterDeployment private constructor(
+class EncounterDeployment private constructor(
     val encounterId: String,
-    val layout: HwihaBattlefieldLayout,
+    val layout: BattlefieldLayout,
     tokens: List<Token>,
 ) {
     data class Token(val commanderGeneralId: Int, val orderId: String, val bugokId: Int, val position: Position?)
     val tokens: List<Token> = Collections.unmodifiableList(ArrayList(tokens))
 
     sealed interface Result {
-        data class Ready(val deployment: HwihaEncounterDeployment) : Result
-        data class TerrainUnavailable(val reason: HwihaBattlefieldLayout.Reason) : Result
+        data class Ready(val deployment: EncounterDeployment) : Result
+        data class TerrainUnavailable(val reason: BattlefieldLayout.Reason) : Result
         data object InsufficientDefenderCapacity : Result
     }
 
@@ -24,21 +24,21 @@ class HwihaEncounterDeployment private constructor(
         const val RULE_VERSION = 1
         const val META_KEY = "hwihaEncounterDeployment"
 
-        fun defaultMetaValue(encounter: HwihaCorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> =
+        fun defaultMetaValue(encounter: CorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> =
             serialize(prepareDefault(encounter, index), encounter, index)
 
         /** Exact reconstruction also rejects changed pins, extra fields, and tampered occupied cells. */
-        fun read(meta: Map<String, Any?>, encounter: HwihaCorpsEncounter, index: HanProvinceCellIndex): Result? {
+        fun read(meta: Map<String, Any?>, encounter: CorpsEncounter, index: HanProvinceCellIndex): Result? {
             if (META_KEY !in meta) return null
             val result = prepareDefault(encounter, index)
             require(meta[META_KEY] == serialize(result, encounter, index)) { "Invalid sealed encounter deployment" }
             return result
         }
 
-        private fun serialize(result: Result, encounter: HwihaCorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> {
+        private fun serialize(result: Result, encounter: CorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> {
             val value = linkedMapOf<String, Any?>("version" to RULE_VERSION,
-                "geometryVersion" to opensamguk.logic.world.HwihaBattlefieldGeometry.RULE_VERSION,
-                "layoutVersion" to HwihaBattlefieldLayout.RULE_VERSION, "encounterId" to encounter.encounterId,
+                "geometryVersion" to opensamguk.logic.world.BattlefieldGeometry.RULE_VERSION,
+                "layoutVersion" to BattlefieldLayout.RULE_VERSION, "encounterId" to encounter.encounterId,
                 "topologyRevision" to index.topologyRevision, "topologyHash" to index.topologyHash,
                 "tilesContentHash" to index.tilesContentHash)
             when (result) {
@@ -55,15 +55,15 @@ class HwihaEncounterDeployment private constructor(
         }
 
         /** Called at approach, never to accept a new plan after an encounter has been sealed. */
-        fun prepareDefault(encounter: HwihaCorpsEncounter, index: HanProvinceCellIndex): Result {
+        fun prepareDefault(encounter: CorpsEncounter, index: HanProvinceCellIndex): Result {
             require(encounter.topologyRevision == index.topologyRevision && encounter.topologyHash == index.topologyHash) {
                 "Encounter and battlefield pins differ"
             }
-            val result = HwihaBattlefieldLayout.prepare(index, encounter.province.id, encounter.approachFrom.id)
-            if (result is HwihaBattlefieldLayout.Result.Unavailable) return Result.TerrainUnavailable(result.reason)
-            val layout = (result as HwihaBattlefieldLayout.Result.Ready).layout
-            val defenders = encounter.defenders.sortedWith(compareBy(HwihaEncounterParticipant::commanderGeneralId,
-                HwihaEncounterParticipant::ownerGeneralId, HwihaEncounterParticipant::orderId))
+            val result = BattlefieldLayout.prepare(index, encounter.province.id, encounter.approachFrom.id)
+            if (result is BattlefieldLayout.Result.Unavailable) return Result.TerrainUnavailable(result.reason)
+            val layout = (result as BattlefieldLayout.Result.Ready).layout
+            val defenders = encounter.defenders.sortedWith(compareBy(EncounterParticipant::commanderGeneralId,
+                EncounterParticipant::ownerGeneralId, EncounterParticipant::orderId))
             // Each participant needs a real presence. Never silently discard a third-party defender.
             if (layout.defenderZone.size < defenders.size) return Result.InsufficientDefenderCapacity
             val positions = compareBy<Position> { it.row }.thenBy { it.col }
@@ -88,7 +88,7 @@ class HwihaEncounterDeployment private constructor(
                 }
             }
             val canonicalTokens = tokens.sortedWith(compareBy(Token::commanderGeneralId, Token::bugokId))
-            return Result.Ready(HwihaEncounterDeployment(encounter.encounterId, layout, canonicalTokens))
+            return Result.Ready(EncounterDeployment(encounter.encounterId, layout, canonicalTokens))
         }
     }
 }

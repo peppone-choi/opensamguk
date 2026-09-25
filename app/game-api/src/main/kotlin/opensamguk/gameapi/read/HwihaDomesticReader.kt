@@ -54,7 +54,7 @@ data class HwihaDomesticSnapshot(
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, Resources> = emptyMap(),
     val countyLevels: Map<Int, CountyLevels> = emptyMap(),
-    val cityMilitaryStates: Map<Int, HwihaCityMilitaryState> = emptyMap(),
+    val cityMilitaryStates: Map<Int, CityMilitaryState> = emptyMap(),
     val cityMilitaryTroops: Map<Int, Int> = emptyMap(),
 )
 
@@ -99,7 +99,7 @@ class HwihaDomesticReader(
                 HwihaDomesticSnapshot(
                     state = DomesticProjection(
                         profile = profile,
-                        now = HwihaPhase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
+                        now = Phase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
                         people = people.sortedBy { it.id }.map { g ->
                             val position = positions.stateFor(g.id)
                             DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
@@ -136,11 +136,11 @@ class HwihaDomesticReader(
                         c.agriculture, c.agricultureMax, c.commerce, c.commerceMax, c.security, c.securityMax,
                         c.trust, c.defense, c.defenseMax, c.wall, c.wallMax) },
                     cityMilitaryStates = counties.mapNotNull { c ->
-                        try { c.id to HwihaCityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)) }
+                        try { c.id to CityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)) }
                         catch (_: IllegalArgumentException) { null }
                     }.toMap(),
                     cityMilitaryTroops = counties.mapNotNull { c ->
-                        try { c.id to HwihaCityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)).troops }
+                        try { c.id to CityMilitaryState.read(c.meta, c.defense.coerceAtLeast(0)).troops }
                         catch (_: IllegalArgumentException) { null }
                     }.toMap(),
                 )
@@ -192,7 +192,7 @@ object HwihaDomesticViews {
                         HwihaPlacementOrderDto(order.requestId, order.post.name, order.post.label, target(order.target, snapshot), order.requestedAt)
                     })
             }
-            val lord = actor.nationId > 0 && HwihaLordStatus.read(actor.meta)
+            val lord = actor.nationId > 0 && LordStatus.read(actor.meta)
             val notLord = HwihaReasonDto(DomesticFailure.NOT_LORD.name, DomesticFailure.NOT_LORD.message)
             val counties = state.counties.filter { it.nationId == actor.nationId && actor.nationId > 0 }.map { county ->
                 HwihaPostTargetDto(countyId = county.id, name = snapshot.countyNames[county.id] ?: county.name,

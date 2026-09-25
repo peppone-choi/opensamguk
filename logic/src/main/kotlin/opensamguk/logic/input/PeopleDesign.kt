@@ -6,7 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Proposed one-phase values; delivery remains closed until status is CONFIRMED. */
-data class HwihaPeopleDesign(
+data class PeopleDesign(
     val status: String,
     val searchDiscoverCount: Int,
     val employBasePercent: Int,
@@ -34,9 +34,9 @@ data class HwihaPeopleDesign(
     companion object {
         const val CONFIRMED = "CONFIRMED"
         private const val RESOURCE = "hwiha/hwiha-people-v1.json"
-        val CANON by lazy { parse(checkNotNull(HwihaPeopleDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
+        val CANON by lazy { parse(checkNotNull(PeopleDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
 
-        fun parse(payload: String): HwihaPeopleDesign {
+        fun parse(payload: String): PeopleDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note", "searchDiscoverCount",
                 "employBasePercent", "captiveBasePercent", "minimumPercent", "maximumPercent",
@@ -45,7 +45,7 @@ data class HwihaPeopleDesign(
                 root.getValue("ledgerId").jsonPrimitive.content == "hwiha-people-v1" &&
                 root.getValue("note").jsonPrimitive.content.isNotBlank())
             fun number(name: String) = root.getValue(name).jsonPrimitive.int
-            return HwihaPeopleDesign(root.getValue("status").jsonPrimitive.content,
+            return PeopleDesign(root.getValue("status").jsonPrimitive.content,
                 number("searchDiscoverCount"), number("employBasePercent"), number("captiveBasePercent"),
                 number("minimumPercent"), number("maximumPercent"), number("charmDifferencePercentPerPoint"),
                 number("experience"), number("dedication"))

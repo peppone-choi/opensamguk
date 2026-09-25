@@ -14,15 +14,15 @@ import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.constants.GameConst
 
 /** 계약: docs/superpowers/specs/2026-09-17-input-registry-contract.md §2·§5·§8. */
-class HwihaInputRegistryTest {
-    private val catalog = HwihaInputCatalog.load()
+class InputRegistryTest {
+    private val catalog = InputCatalog.load()
     private var enlistCalls = 0
     private fun handlers(enlist: InputHandler) = (mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "work.reduce" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {},
-        HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {},
+        PoliticalConsent.COURT_INPUT_ID to InputHandler {},
         "action.move" to InputHandler {}, "action.forcedMarch" to InputHandler {}, "action.return" to InputHandler {},
         "action.farm" to InputHandler {}, "action.commerce" to InputHandler {}, "action.fortify" to InputHandler {},
         "action.repairWall" to InputHandler {}, "action.security" to InputHandler {}, "action.settle" to InputHandler {},
@@ -42,8 +42,8 @@ class HwihaInputRegistryTest {
         "court.moveCapital" to InputHandler {}, "court.confiscate" to InputHandler {},
         "court.nonAggression" to InputHandler {}, "court.declareWar" to InputHandler {},
         "court.offerPeace" to InputHandler {}, "court.breakNonAggression" to InputHandler {}) +
-        HwihaLegacyStratagemInput.INPUT_IDS.associateWith { InputHandler {} }).filterKeys { catalog[it]?.deliveryState?.hasHandler == true }
-    private val registry = HwihaInputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
+        StratagemInput.INPUT_IDS.associateWith { InputHandler {} }).filterKeys { catalog[it]?.deliveryState?.hasHandler == true }
+    private val registry = InputRegistry(catalog, handlers(InputHandler { enlistCalls++ }))
 
     // 작업 디렉터리가 모듈이든 저장소 루트든(IDE 러너) 같은 파일을 찾는다 — CommandContractMatrixTest 의 관례.
     private fun repoRoot(): java.nio.file.Path {
@@ -94,7 +94,7 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `old stratagems remain planned until card ownership exists`() {
-        for (id in HwihaLegacyStratagemInput.INPUT_IDS + "stratagem.play") {
+        for (id in StratagemInput.INPUT_IDS + "stratagem.play") {
             assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
             assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
@@ -115,7 +115,7 @@ class HwihaInputRegistryTest {
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             // Dropping one handler must break construction: a delivered row cannot fall back to NOT_DELIVERED.
             assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                InputRegistry(catalog, handlers(InputHandler { }) - id)
             }
         }
     }
@@ -129,37 +129,37 @@ class HwihaInputRegistryTest {
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                InputRegistry(catalog, handlers(InputHandler { }) - id)
             }
         }
     }
 
     @Test
     fun `direct military actions expose their delivery state and have a handler`() {
-        for (id in HwihaMilitaryInput.INPUT_IDS) {
-            assertEquals(if (id == HwihaMilitaryInput.MUSTER) InputDeliveryState.HANDLER_READY
+        for (id in MilitaryInput.INPUT_IDS) {
+            assertEquals(if (id == MilitaryInput.MUSTER) InputDeliveryState.HANDLER_READY
                 else InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                InputRegistry(catalog, handlers(InputHandler { }) - id)
             }
         }
     }
 
     @Test
     fun `people actions expose only delivered handlers`() {
-        for (id in HwihaPeopleInput.INPUT_IDS) {
-            assertEquals(HwihaPeopleFailure.entries.map { it.name }.toSet(),
+        for (id in PeopleInput.INPUT_IDS) {
+            assertEquals(PeopleFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id == HwihaPeopleInput.PERSUADE_CAPTIVE) {
+            if (id == PeopleInput.PERSUADE_CAPTIVE) {
                 assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
                 assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
             } else {
                 assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
                 assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
                 assertFailsWith<IllegalArgumentException>(id) {
-                    HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                    InputRegistry(catalog, handlers(InputHandler { }) - id)
                 }
             }
         }
@@ -167,15 +167,15 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `political actions expose only delivered handlers`() {
-        for (id in HwihaPoliticalRules.SUPPORTED_IDS) {
-            assertEquals(HwihaPoliticalFailure.entries.map { it.name }.toSet(),
+        for (id in PoliticalRules.SUPPORTED_IDS) {
+            assertEquals(PoliticalFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id in setOf(HwihaPoliticalInput.FOUND_STATE, HwihaPoliticalInput.ABDICATE, HwihaPoliticalInput.OATH)) {
+            if (id in setOf(PoliticalInput.FOUND_STATE, PoliticalInput.ABDICATE, PoliticalInput.OATH)) {
                 assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
                 assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
                 assertFailsWith<IllegalArgumentException>(id) {
-                    HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                    InputRegistry(catalog, handlers(InputHandler { }) - id)
                 }
             } else {
                 assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
@@ -186,11 +186,11 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `gift is delivered and donation waits for a warehouse destination`() {
-        for (id in HwihaTransferInput.INPUT_IDS) {
-            assertEquals(HwihaTransferFailure.entries.map { it.name }.toSet(),
+        for (id in TransferInput.INPUT_IDS) {
+            assertEquals(TransferFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id == HwihaTransferInput.GIFT) {
+            if (id == TransferInput.GIFT) {
                 assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState)
                 assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             } else {
@@ -202,13 +202,13 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `the four legacy direct actions are delivered through the common executor`() {
-        for (id in HwihaLegacyDirectInput.INPUT_IDS) {
-            assertEquals(if (id == HwihaLegacyDirectInput.EQUIPMENT) InputDeliveryState.PLANNED else InputDeliveryState.UI_READY,
+        for (id in DirectInput.INPUT_IDS) {
+            assertEquals(if (id == DirectInput.EQUIPMENT) InputDeliveryState.PLANNED else InputDeliveryState.UI_READY,
                 catalog[id]!!.deliveryState, id)
-            assertEquals(HwihaLegacyDirectFailure.entries.map { it.name }.toSet(),
+            assertEquals(DirectFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
-            if (id == HwihaLegacyDirectInput.EQUIPMENT)
+            if (id == DirectInput.EQUIPMENT)
                 assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
             else assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
         }
@@ -217,18 +217,18 @@ class HwihaInputRegistryTest {
     @Test
     fun `legacy court and stratagem rows match their shared failure vocabularies`() {
         val channelFailures = setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED", "FORBIDDEN")
-        for (id in HwihaLegacyCourtInput.INPUT_IDS) {
+        for (id in CourtInput.INPUT_IDS) {
             val delivered = id in setOf("court.releaseCorps", "court.abandonCounty", "court.moveCapital")
             assertEquals(if (delivered) InputDeliveryState.UI_READY else InputDeliveryState.PLANNED,
                 catalog[id]!!.deliveryState, id)
-            assertEquals(HwihaLegacyCourtFailure.entries.map { it.name }.toSet(),
+            assertEquals(CourtFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
             if (delivered) assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             else assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
-        for (id in HwihaLegacyStratagemInput.INPUT_IDS) {
+        for (id in StratagemInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState, id)
-            assertEquals(HwihaLegacyStratagemFailure.entries.map { it.name }.toSet(),
+            assertEquals(StratagemFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
             assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
@@ -241,24 +241,24 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `every field personal action is UI ready and has a handler`() {
-        for (id in HwihaPersonalInput.FIELD_IDS) {
+        for (id in PersonalInput.FIELD_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
-            assertEquals(HwihaPersonalFailure.entries.map { it.name }.toSet(),
+            assertEquals(PersonalFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
             assertFailsWith<IllegalArgumentException>(id) {
-                HwihaInputRegistry(catalog, handlers(InputHandler { }) - id)
+                InputRegistry(catalog, handlers(InputHandler { }) - id)
             }
         }
     }
 
     @Test
     fun `retirement remains planned until succession state can be preserved`() {
-        val id = HwihaRetireInput.INPUT_ID
+        val id = RetireInput.INPUT_ID
         assertEquals(InputDeliveryState.PLANNED, catalog[id]!!.deliveryState)
         assertEquals("POLITICS", catalog[id]!!.timing.getValue("phase").jsonPrimitive.content)
-        assertEquals(HwihaRetireFailure.entries.map { it.name }.toSet(),
+        assertEquals(RetireFailure.entries.map { it.name }.toSet(),
             catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                 "FORBIDDEN", "INVALID_TURN_SLOT"))
         assertIs<InputResolution.Rejected>(registry.resolve(RuleProfile.HWIHA, id))
@@ -268,7 +268,7 @@ class HwihaInputRegistryTest {
     fun `input with a registered handler resolves`() {
         var called = false
         val handler = InputHandler { called = true }
-        val wired = HwihaInputRegistry(catalog, handlers(handler))
+        val wired = InputRegistry(catalog, handlers(handler))
         val resolved = assertIs<InputResolution.Resolved>(wired.resolve(RuleProfile.HWIHA, "action.enlist"))
         assertEquals(InputKind.GENERAL_ACTION, resolved.entry.kind)
         assertTrue(resolved.handler === handler)
@@ -280,7 +280,7 @@ class HwihaInputRegistryTest {
     @Test
     fun `handler for an id missing from the ledger fails construction`() {
         assertFailsWith<IllegalArgumentException> {
-            HwihaInputRegistry.forWiringTest(catalog, mapOf("action.ghost" to InputHandler { }))
+            InputRegistry.forWiringTest(catalog, mapOf("action.ghost" to InputHandler { }))
         }
     }
 
@@ -288,7 +288,7 @@ class HwihaInputRegistryTest {
     fun `ledger delivery state and handler wiring must agree`() {
         // PLANNED 인데 핸들러가 있으면(또는 그 반대면) 원장과 코드가 어긋난 것이다.
         assertFailsWith<IllegalArgumentException> {
-            HwihaInputRegistry(catalog, emptyMap())
+            InputRegistry(catalog, emptyMap())
         }
     }
 
@@ -319,11 +319,11 @@ class HwihaInputRegistryTest {
     }
 
     private fun ledger(vararg rows: String) =
-        HwihaInputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
+        InputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
         "inputs":[${rows.joinToString(",")}]}""")
 
-    private fun assertStratagemRows(source: HwihaInputCatalog) {
-        assertEquals(HwihaLegacyStratagemInput.INPUT_IDS,
+    private fun assertStratagemRows(source: InputCatalog) {
+        assertEquals(StratagemInput.INPUT_IDS,
             source.entries.filter { it.kind == InputKind.STRATAGEM && it.inputId != "stratagem.play" }
                 .map { it.inputId }.toSet())
     }
@@ -336,10 +336,10 @@ class HwihaInputRegistryTest {
         assertTrue(direct.all { !it.displayName.isNullOrBlank() })
         assertEquals("농지개간", catalog["action.farm"]?.displayName)
         assertEquals("출사", catalog["action.enlist"]?.displayName)
-        assertEquals(12, HwihaLegacyStratagemInput.INPUT_IDS.size)
+        assertEquals(12, StratagemInput.INPUT_IDS.size)
         assertStratagemRows(catalog)
         val rogue = catalog["stratagem.rumor"]!!.copy(inputId = "stratagem.newCard")
-        val mutated = HwihaInputCatalog(catalog.entries + rogue)
+        val mutated = InputCatalog(catalog.entries + rogue)
         assertFailsWith<AssertionError> { assertStratagemRows(mutated) }
     }
 
@@ -356,7 +356,7 @@ class HwihaInputRegistryTest {
             ledger(direct.replace("\"displayName\":\"테스트\"", "\"displayName\":\"테스트\",\"legacyCommands\":[]"))
         }
         assertFailsWith<IllegalArgumentException> {
-            HwihaInputCatalog.parse(ledgerPayload(direct).replace("\"inputs\":", "\"retiredLegacyCommands\":[],\"inputs\":"))
+            InputCatalog.parse(ledgerPayload(direct).replace("\"inputs\":", "\"retiredLegacyCommands\":[],\"inputs\":"))
         }
     }
 
@@ -403,7 +403,7 @@ class HwihaInputRegistryTest {
             "\"phase\":\"FIELD\"" to "\"phase\":\"NEXT_CARD_TURN\"",
         )) {
             val original = ledgerPayload(valid)
-            assertFailsWith<IllegalArgumentException>("$from -> $to") { HwihaInputCatalog.parse(original.replace(from, to)) }
+            assertFailsWith<IllegalArgumentException>("$from -> $to") { InputCatalog.parse(original.replace(from, to)) }
         }
         assertFailsWith<IllegalArgumentException> {
             ledger(row("policy.a", "POLICY").replace("\"turnSlots\":null", "\"turnSlots\":12"))

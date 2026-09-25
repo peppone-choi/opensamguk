@@ -7,7 +7,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 
 /** One-phase direct military rates from the curated Han design ledger. */
-data class HwihaMilitaryDesign(
+data class MilitaryDesign(
     val status: String,
     val conscriptHouseholdPermille: Int,
     val volunteerHouseholdPermille: Int,
@@ -39,9 +39,9 @@ data class HwihaMilitaryDesign(
     companion object {
         const val RESOURCE = "hwiha/hwiha-military-v1.json"
         const val CONFIRMED = "CONFIRMED"
-        val CANON by lazy { parse(checkNotNull(HwihaMilitaryDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
+        val CANON by lazy { parse(checkNotNull(MilitaryDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
 
-        fun parse(payload: String): HwihaMilitaryDesign {
+        fun parse(payload: String): MilitaryDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note", "conscriptHouseholdPermille",
                 "volunteerHouseholdPermille", "grainPerTroop", "moneyPerVolunteer", "trainingGain", "moraleGain",
@@ -56,7 +56,7 @@ data class HwihaMilitaryDesign(
                 "demobilizeBelowPopulation", "demobilizeAboveTroops"))
             require(npc.getValue("note").jsonPrimitive.content.isNotBlank())
             fun npcCount(name: String) = npc.getValue(name).jsonPrimitive.int
-            return HwihaMilitaryDesign(root.getValue("status").jsonPrimitive.content,
+            return MilitaryDesign(root.getValue("status").jsonPrimitive.content,
                 count("conscriptHouseholdPermille"), count("volunteerHouseholdPermille"),
                 resource("grainPerTroop"), resource("moneyPerVolunteer"), count("trainingGain"), count("moraleGain"),
                 count("demobilizeTroopPermille"), count("experience"), count("dedication"),

@@ -4,7 +4,7 @@ import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicTopologySnapshot
 
 /** Persistent destination intent, stored on the commander even before any movement succeeds. */
-data class HwihaCorpsOrder(
+data class CorpsOrder(
     val orderId: String,
     val ownerGeneralId: Int,
     val commanderGeneralId: Int,
@@ -19,7 +19,7 @@ data class HwihaCorpsOrder(
         require(topologyHash.matches(Regex("[0-9a-f]{64}")))
     }
 
-    fun requireBinding(corps: HwihaDeployedCorps, storageGeneralId: Int) {
+    fun requireBinding(corps: DeployedCorps, storageGeneralId: Int) {
         require(orderId == corps.orderId && ownerGeneralId == corps.ownerGeneralId &&
             commanderGeneralId == corps.commanderGeneralId && storageGeneralId == commanderGeneralId) {
             "Corps destination order binding mismatch"
@@ -37,11 +37,11 @@ data class HwihaCorpsOrder(
         private val fields = setOf("version", "orderId", "ownerGeneralId", "commanderGeneralId",
             "destination", "topologyRevision", "topologyHash")
 
-        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot): HwihaCorpsOrder? {
+        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot): CorpsOrder? {
             if (META_KEY !in meta) return null
             val raw = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(raw.keys == fields && raw["version"] == 1) { "Invalid corps destination order schema" }
-            val order = HwihaCorpsOrder(raw["orderId"] as? String ?: invalid(),
+            val order = CorpsOrder(raw["orderId"] as? String ?: invalid(),
                 raw["ownerGeneralId"] as? Int ?: invalid(), raw["commanderGeneralId"] as? Int ?: invalid(),
                 StrategicNodeRef.LandProvince(raw["destination"] as? String ?: invalid()),
                 raw["topologyRevision"] as? String ?: invalid(), raw["topologyHash"] as? String ?: invalid())

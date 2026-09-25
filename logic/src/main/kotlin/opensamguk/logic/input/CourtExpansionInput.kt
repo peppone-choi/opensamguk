@@ -5,44 +5,44 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
 
-sealed interface HwihaCourtExpansionRequest { val actorId: Int
-    data class County(override val actorId: Int, val inputId: String, val countyId: Int) : HwihaCourtExpansionRequest
-    data class ReleaseCorps(override val actorId: Int, val targetGeneralId: Int) : HwihaCourtExpansionRequest
+sealed interface CourtExpansionRequest { val actorId: Int
+    data class County(override val actorId: Int, val inputId: String, val countyId: Int) : CourtExpansionRequest
+    data class ReleaseCorps(override val actorId: Int, val targetGeneralId: Int) : CourtExpansionRequest
 }
 
 /** County and corps identifiers are requests; mandate, ownership and current state are server decisions. */
-object HwihaCourtExpansionInput {
+object CourtExpansionInput {
     const val RELEASE_CORPS = "court.releaseCorps"
     const val ABANDON_COUNTY = "court.abandonCounty"
     const val MOVE_CAPITAL = "court.moveCapital"
     val INPUT_IDS = linkedSetOf(RELEASE_CORPS, ABANDON_COUNTY, MOVE_CAPITAL)
 
-    fun parse(actorId: Int, inputId: String, rawJson: String?): HwihaCourtExpansionRequest? {
+    fun parse(actorId: Int, inputId: String, rawJson: String?): CourtExpansionRequest? {
         if (actorId <= 0 || inputId !in INPUT_IDS || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             if (inputId == RELEASE_CORPS) {
                 if (fields.keys != setOf("targetGeneralId")) return null
                 val target = fields["targetGeneralId"] as? JsonPrimitive ?: return null
                 val id = target.takeUnless { it.isString }?.intOrNull?.takeIf { it > 0 && it != actorId } ?: return null
-                HwihaCourtExpansionRequest.ReleaseCorps(actorId, id)
+                CourtExpansionRequest.ReleaseCorps(actorId, id)
             } else {
                 if (fields.keys != setOf("countyId")) return null
                 val raw = fields["countyId"] as? JsonPrimitive ?: return null
                 val id = raw.takeUnless { it.isString }?.intOrNull?.takeIf { it > 0 } ?: return null
-                HwihaCourtExpansionRequest.County(actorId, inputId, id)
+                CourtExpansionRequest.County(actorId, inputId, id)
             }
         } catch (_: IllegalArgumentException) { null }
     }
 
-    fun canonicalJson(request: HwihaCourtExpansionRequest): String {
+    fun canonicalJson(request: CourtExpansionRequest): String {
         require(request.actorId > 0)
         return when (request) {
-            is HwihaCourtExpansionRequest.ReleaseCorps -> buildJsonObject {
+            is CourtExpansionRequest.ReleaseCorps -> buildJsonObject {
                 require(request.targetGeneralId > 0 && request.targetGeneralId != request.actorId)
                 put("targetGeneralId", request.targetGeneralId)
             }.toString()
-            is HwihaCourtExpansionRequest.County -> buildJsonObject {
+            is CourtExpansionRequest.County -> buildJsonObject {
                 require(request.inputId == ABANDON_COUNTY || request.inputId == MOVE_CAPITAL)
                 require(request.countyId > 0)
                 put("countyId", request.countyId)

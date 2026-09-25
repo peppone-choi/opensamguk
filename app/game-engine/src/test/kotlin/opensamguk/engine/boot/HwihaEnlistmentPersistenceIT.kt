@@ -77,24 +77,24 @@ class HwihaEnlistmentPersistenceIT {
             province.id, id)
         jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND commander_retainer_id=4", id)
         jdbc.update("DELETE FROM general_retainers WHERE world_id=? AND id=4", id)
-        val design = HwihaPeopleDesign.CANON.copy(status = HwihaPeopleDesign.CONFIRMED)
+        val design = PeopleDesign.CANON.copy(status = PeopleDesign.CONFIRMED)
         var world = InMemoryTurnWorld(load(id))
         var recorder = ChangeRecorder()
         val search = HwihaPeopleHandler(world, recorder, HwihaDomesticContext(), "test", design) {
             error("single free person needs no random draw")
         }
-        assertIs<HwihaTurnOutcome.Applied>(search.handle(HwihaPeopleInput.SEARCH, 1, "{}", "search-691", 42))
+        assertIs<HwihaTurnOutcome.Applied>(search.handle(PeopleInput.SEARCH, 1, "{}", "search-691", 42))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         jdbc.update("UPDATE general SET turn_time='0200-01-01T01:00:00Z' WHERE world_id=? AND id=1", id)
         world = InMemoryTurnWorld(load(id))
-        assertEquals(setOf(2), HwihaTalentDiscovery.read(world.getGeneralById(1)!!.meta))
+        assertEquals(setOf(2), TalentDiscovery.read(world.getGeneralById(1)!!.meta))
         recorder = ChangeRecorder()
         val recruit = HwihaPeopleHandler(world, recorder, HwihaDomesticContext(), "test", design) { seed ->
             object : RandUtil(LiteHashDrbg(seed)) {
                 override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
             }
         }
-        assertIs<HwihaTurnOutcome.Applied>(recruit.handle(HwihaPeopleInput.EMPLOY, 1,
+        assertIs<HwihaTurnOutcome.Applied>(recruit.handle(PeopleInput.EMPLOY, 1,
             """{"targetGeneralId":2}""", "employ-691", 42))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         val after = load(id)
@@ -137,15 +137,15 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(before.generalPositionSnapshot!!.statesByGeneralId, after.generalPositionSnapshot!!.statesByGeneralId)
         assertSameSnapshot(otherWorld, load(2))
         assertEquals(3, after.nations.single().meta["gennum"])
-        assertEquals(false, HwihaLordStatus.read(after.generals.single { it.id == 1 }.meta))
+        assertEquals(false, LordStatus.read(after.generals.single { it.id == 1 }.meta))
         val rebooted = InMemoryTurnWorld(after)
-        assertEquals(HwihaPersonPolicyState(30, true, "synthetic-storage-fixture", "fixture-v1", 1),
-            HwihaPersonPolicyState.read(rebooted.getGeneralById(1)!!.meta))
+        assertEquals(PersonPolicyState(30, true, "synthetic-storage-fixture", "fixture-v1", 1),
+            PersonPolicyState.read(rebooted.getGeneralById(1)!!.meta))
         val coldPolicy = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(rebooted)
             .current(EnlistmentRequest(1, EnlistmentMode.NATION, 1)))
         assertEquals(7, coldPolicy.policy.actorCardCost)
         assertEquals(23, coldPolicy.policy.freeRenownByLord[10])
-        assertEquals(30, HwihaPersonPolicyState.read(rebooted.getGeneralById(10)!!.meta)!!.renownCapacity)
+        assertEquals(30, PersonPolicyState.read(rebooted.getGeneralById(10)!!.meta)!!.renownCapacity)
         assertEquals(EnlistmentFailure.ALREADY_SERVING,
             assertIs<EnlistmentExecution.Rejected>(enlist(rebooted, ChangeRecorder())).reason)
         assertEquals(2, rebooted.listRetainers().size)
@@ -236,7 +236,7 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals(listOf("enlist-success"), published)
         val after = load(5)
         assertEquals(setOf(1), after.generals.map { it.nationId }.toSet())
-        assertFalse(HwihaLordStatus.read(after.generals.single { it.id == 1 }.meta))
+        assertFalse(LordStatus.read(after.generals.single { it.id == 1 }.meta))
         assertEquals(2, after.retainers.size)
         assertEquals(10, after.retainers.single { it.generalId == 1 }.masterGeneralId)
         assertEquals(before.bugoks, after.bugoks)
@@ -314,7 +314,7 @@ class HwihaEnlistmentPersistenceIT {
         assertEquals("action.enlist", handled.reservedActionCode)
         assertNull(handled.requestId)
         val after = load(7)
-        val hand=assertNotNull(opensamguk.logic.input.HwihaStratagemHand.read(after.generals.single { it.id==1 }.meta,1))
+        val hand=assertNotNull(opensamguk.logic.input.StratagemHand.read(after.generals.single { it.id==1 }.meta,1))
         assertEquals(listOf(1,2),hand.hand)
         assertEquals(listOf(3,4),hand.drawPile)
         assertEquals(1, after.generals.single { it.id == 1 }.nationId)

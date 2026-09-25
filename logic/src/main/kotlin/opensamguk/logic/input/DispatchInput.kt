@@ -12,11 +12,11 @@ private fun positiveId(value: JsonElement?): Int? {
 }
 
 /** Actor identity is supplied by the authenticated caller, never by the JSON body. */
-object HwihaDispatchInput {
+object DispatchInput {
     fun parse(actorId: Int, rawJson: String?): DispatchRequest? {
         if (actorId <= 0 || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             if (fields.keys != setOf("targetGeneralId", "countyId")) return null
             DispatchRequest(actorId, positiveId(fields["targetGeneralId"]) ?: return null,
                 positiveId(fields["countyId"]) ?: return null)
@@ -32,13 +32,13 @@ object HwihaDispatchInput {
     }
 }
 
-object HwihaDispatchReplyInput {
+object DispatchReplyInput {
     private val idPattern = Regex("[A-Za-z0-9._:-]{1,128}")
 
     fun parse(actorId: Int, rawJson: String?): DispatchReplyRequest? {
         if (actorId <= 0 || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             if (fields.keys != setOf("dispatchId", "accept")) return null
             val id = fields["dispatchId"] as? JsonPrimitive ?: return null
             if (!id.isString || !idPattern.matches(id.content)) return null

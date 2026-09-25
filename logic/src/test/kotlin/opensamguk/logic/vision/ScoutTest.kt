@@ -47,13 +47,13 @@ class ScoutTest {
             DeploymentPerson(3, 2, false, land("p1"), false)),
         listOf(DeploymentUnit(10, 1, 999, null), DeploymentUnit(20, 2, 12000, null), DeploymentUnit(30, 3, 5000, null)),
         emptyList(),
-        listOf(HwihaDeployedCorps("o1", 1, 1, null, 1, listOf(10), HwihaPhase(190, 1, 1)),
-            HwihaDeployedCorps("o2", 2, 2, null, 2, listOf(20), HwihaPhase(190, 1, 1)),
-            HwihaDeployedCorps("o3", 3, 3, null, 2, listOf(30), HwihaPhase(190, 1, 1))))
+        listOf(DeployedCorps("o1", 1, 1, null, 1, listOf(10), Phase(190, 1, 1)),
+            DeployedCorps("o2", 2, 2, null, 2, listOf(20), Phase(190, 1, 1)),
+            DeployedCorps("o3", 3, 3, null, 2, listOf(30), Phase(190, 1, 1))))
 
     @Test fun `capture records owners, warehouse presence and banded corps of the target only`() {
         val cities = listOf(ScoutCityFact(7, "p2", 2, true), ScoutCityFact(5, "p2", 0, false), ScoutCityFact(9, "p1", 1, true))
-        val report = ScoutCapture.capture(index.commanderies[2], index, cities, projection(), rules, HwihaPhase(190, 2, 1))
+        val report = ScoutCapture.capture(index.commanderies[2], index, cities, projection(), rules, Phase(190, 2, 1))
         assertEquals("PARENT-2", report.commanderyId)
         assertEquals(listOf(ScoutedCity(5, 0, false), ScoutedCity(7, 2, true)), report.cities)
         assertEquals(setOf("o1", "o2").map(ScoutCapture::corpsKey).sorted(), report.corps.map { it.corpsKey })
@@ -64,10 +64,10 @@ class ScoutTest {
     }
 
     @Test fun `notebook round-trips, replaces per commandery and fails closed on any schema drift`() {
-        val first = ScoutCapture.capture(index.commanderies[2], index, emptyList(), projection(), rules, HwihaPhase(190, 2, 1))
+        val first = ScoutCapture.capture(index.commanderies[2], index, emptyList(), projection(), rules, Phase(190, 2, 1))
         val notebook = ScoutReports(hash, emptyList()).with(first)
         assertEquals(notebook, ScoutReports.read(mapOf(ScoutReports.META_KEY to notebook.toMetaValue())))
-        val again = first.copy(seenAt = HwihaPhase(190, 3, 1), corps = emptyList())
+        val again = first.copy(seenAt = Phase(190, 3, 1), corps = emptyList())
         assertEquals(listOf(again), notebook.with(again).reports)
         assertNull(ScoutReports.read(emptyMap()))
         val raw = notebook.toMetaValue()

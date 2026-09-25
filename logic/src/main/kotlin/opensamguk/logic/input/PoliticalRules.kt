@@ -4,7 +4,7 @@ import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticProjection
 
-enum class HwihaPoliticalFailure(val message: String) {
+enum class PoliticalFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 정치 행동을 사용할 수 없습니다."),
     INVALID_INPUT("정치 행동 인자를 확인할 수 없습니다."),
     ACTOR_NOT_FOUND("행동할 장수를 찾을 수 없습니다."),
@@ -29,112 +29,112 @@ enum class HwihaPoliticalFailure(val message: String) {
     ALREADY_PROCESSED("이 순에는 이미 정치 행동을 실행했습니다."),
 }
 
-sealed interface HwihaPoliticalAssessment {
-    data class Eligible(val actor: DomesticPerson, val county: DomesticCounty?, val wasLord: Boolean) : HwihaPoliticalAssessment
-    data class Rejected(val reason: HwihaPoliticalFailure) : HwihaPoliticalAssessment
+sealed interface PoliticalAssessment {
+    data class Eligible(val actor: DomesticPerson, val county: DomesticCounty?, val wasLord: Boolean) : PoliticalAssessment
+    data class Rejected(val reason: PoliticalFailure) : PoliticalAssessment
 }
 
 /** Pure authority and current-county checks for the nation changing direct actions. */
-object HwihaPoliticalRules {
-    val SUPPORTED_IDS = HwihaPoliticalInput.INPUT_IDS
+object PoliticalRules {
+    val SUPPORTED_IDS = PoliticalInput.INPUT_IDS
 
-    fun assess(request: HwihaPoliticalRequest, state: DomesticProjection): HwihaPoliticalAssessment {
-        fun reject(reason: HwihaPoliticalFailure) = HwihaPoliticalAssessment.Rejected(reason)
-        if (state.profile != RuleProfile.HWIHA) return reject(HwihaPoliticalFailure.WRONG_RULE_PROFILE)
+    fun assess(request: PoliticalRequest, state: DomesticProjection): PoliticalAssessment {
+        fun reject(reason: PoliticalFailure) = PoliticalAssessment.Rejected(reason)
+        if (state.profile != RuleProfile.HWIHA) return reject(PoliticalFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in SUPPORTED_IDS ||
-            (request.inputId in HwihaPoliticalInput.NO_ARGUMENT_IDS) != (request.targetGeneralId == null))
-            return reject(HwihaPoliticalFailure.INVALID_INPUT)
-        val actor = state.person(request.actorId) ?: return reject(HwihaPoliticalFailure.ACTOR_NOT_FOUND)
-        if (actor.inBattle) return reject(HwihaPoliticalFailure.BATTLE_PENDING)
-        val lord = try { HwihaLordStatus.read(actor.meta) }
-            catch (_: IllegalArgumentException) { return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE) }
-        val node = actor.node ?: return reject(HwihaPoliticalFailure.POSITION_UNAVAILABLE)
-        if (state.landProvinceIds?.contains(node) != true) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+            (request.inputId in PoliticalInput.NO_ARGUMENT_IDS) != (request.targetGeneralId == null))
+            return reject(PoliticalFailure.INVALID_INPUT)
+        val actor = state.person(request.actorId) ?: return reject(PoliticalFailure.ACTOR_NOT_FOUND)
+        if (actor.inBattle) return reject(PoliticalFailure.BATTLE_PENDING)
+        val lord = try { LordStatus.read(actor.meta) }
+            catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
+        val node = actor.node ?: return reject(PoliticalFailure.POSITION_UNAVAILABLE)
+        if (state.landProvinceIds?.contains(node) != true) return reject(PoliticalFailure.STATE_UNAVAILABLE)
         val counties = state.counties.filter { it.provinceId == node }
-        if (counties.size > 1) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+        if (counties.size > 1) return reject(PoliticalFailure.STATE_UNAVAILABLE)
         val county = counties.singleOrNull()
-        if (request.inputId in setOf(HwihaPoliticalInput.RISE, HwihaPoliticalInput.INDEPENDENCE) && county == null)
-            return reject(HwihaPoliticalFailure.COUNTY_UNAVAILABLE)
-        val renown = try { HwihaPersonPolicyState.read(actor.meta)?.renownCapacity }
-            catch (_: IllegalArgumentException) { return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE) }
+        if (request.inputId in setOf(PoliticalInput.RISE, PoliticalInput.INDEPENDENCE) && county == null)
+            return reject(PoliticalFailure.COUNTY_UNAVAILABLE)
+        val renown = try { PersonPolicyState.read(actor.meta)?.renownCapacity }
+            catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
         when (request.inputId) {
-            HwihaPoliticalInput.RESIGN -> {
-                if (actor.nationId <= 0) return reject(HwihaPoliticalFailure.NOT_A_SUBJECT)
-                if (lord) return reject(HwihaPoliticalFailure.ALREADY_LORD)
+            PoliticalInput.RESIGN -> {
+                if (actor.nationId <= 0) return reject(PoliticalFailure.NOT_A_SUBJECT)
+                if (lord) return reject(PoliticalFailure.ALREADY_LORD)
             }
-            HwihaPoliticalInput.RISE -> {
-                if (actor.nationId != 0) return reject(HwihaPoliticalFailure.NOT_FREE)
-                if (renown == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
-                if (renown < HwihaPoliticalDesign.CANON.riseMinimumRenown)
-                    return reject(HwihaPoliticalFailure.INSUFFICIENT_RENOWN)
-                if (county!!.nationId != 0) return reject(HwihaPoliticalFailure.COUNTY_NOT_AVAILABLE)
+            PoliticalInput.RISE -> {
+                if (actor.nationId != 0) return reject(PoliticalFailure.NOT_FREE)
+                if (renown == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                if (renown < PoliticalDesign.CANON.riseMinimumRenown)
+                    return reject(PoliticalFailure.INSUFFICIENT_RENOWN)
+                if (county!!.nationId != 0) return reject(PoliticalFailure.COUNTY_NOT_AVAILABLE)
             }
-            HwihaPoliticalInput.INDEPENDENCE -> {
-                if (actor.nationId <= 0) return reject(HwihaPoliticalFailure.NOT_A_SUBJECT)
-                if (lord) return reject(HwihaPoliticalFailure.ALREADY_LORD)
-                if (renown == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
-                if (renown < HwihaPoliticalDesign.CANON.independenceMinimumRenown)
-                    return reject(HwihaPoliticalFailure.INSUFFICIENT_RENOWN)
-                if (county!!.nationId != actor.nationId) return reject(HwihaPoliticalFailure.COUNTY_NOT_AVAILABLE)
+            PoliticalInput.INDEPENDENCE -> {
+                if (actor.nationId <= 0) return reject(PoliticalFailure.NOT_A_SUBJECT)
+                if (lord) return reject(PoliticalFailure.ALREADY_LORD)
+                if (renown == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                if (renown < PoliticalDesign.CANON.independenceMinimumRenown)
+                    return reject(PoliticalFailure.INSUFFICIENT_RENOWN)
+                if (county!!.nationId != actor.nationId) return reject(PoliticalFailure.COUNTY_NOT_AVAILABLE)
             }
-            HwihaPoliticalInput.DISSOLVE -> {
-                if (actor.nationId <= 0 || !lord) return reject(HwihaPoliticalFailure.NOT_LORD)
-                if (state.nation(actor.nationId) == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+            PoliticalInput.DISSOLVE -> {
+                if (actor.nationId <= 0 || !lord) return reject(PoliticalFailure.NOT_LORD)
+                if (state.nation(actor.nationId) == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
             }
-            HwihaPoliticalInput.FOUND_STATE -> {
-                if (actor.nationId <= 0 || !lord) return reject(HwihaPoliticalFailure.NOT_LORD)
-                val nation = state.nation(actor.nationId) ?: return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
-                if (nation.level > 0) return reject(HwihaPoliticalFailure.ALREADY_FOUNDED)
-                if (nation.capitalCityId == null) return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE)
+            PoliticalInput.FOUND_STATE -> {
+                if (actor.nationId <= 0 || !lord) return reject(PoliticalFailure.NOT_LORD)
+                val nation = state.nation(actor.nationId) ?: return reject(PoliticalFailure.STATE_UNAVAILABLE)
+                if (nation.level > 0) return reject(PoliticalFailure.ALREADY_FOUNDED)
+                if (nation.capitalCityId == null) return reject(PoliticalFailure.STATE_UNAVAILABLE)
             }
-            HwihaPoliticalInput.ABDICATE, HwihaPoliticalInput.OATH -> {
+            PoliticalInput.ABDICATE, PoliticalInput.OATH -> {
                 val target = state.person(request.targetGeneralId!!)
-                    ?: return reject(HwihaPoliticalFailure.TARGET_NOT_FOUND)
+                    ?: return reject(PoliticalFailure.TARGET_NOT_FOUND)
                 val relation = try { relationFailure(request.inputId, actor, target, state) }
-                    catch (_: IllegalArgumentException) { return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE) }
+                    catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
                 when (val failure = relation) {
                     null -> Unit
                     else -> return reject(failure)
                 }
-                val consent = try { HwihaPoliticalConsent.read(target.meta) }
-                    catch (_: IllegalArgumentException) { return reject(HwihaPoliticalFailure.STATE_UNAVAILABLE) }
+                val consent = try { PoliticalConsent.read(target.meta) }
+                    catch (_: IllegalArgumentException) { return reject(PoliticalFailure.STATE_UNAVAILABLE) }
                 if (consent?.issuerGeneralId != actor.id || consent.inputId != request.inputId)
-                    return reject(HwihaPoliticalFailure.CONSENT_REQUIRED)
-                if (!consent.accepted) return reject(HwihaPoliticalFailure.CONSENT_DECLINED)
+                    return reject(PoliticalFailure.CONSENT_REQUIRED)
+                if (!consent.accepted) return reject(PoliticalFailure.CONSENT_DECLINED)
             }
         }
-        return HwihaPoliticalAssessment.Eligible(actor, county, lord)
+        return PoliticalAssessment.Eligible(actor, county, lord)
     }
 
     /** Used by the recipient's immediate reply, before storing their decision. */
-    fun assessConsent(targetId: Int, consent: HwihaPoliticalConsent, state: DomesticProjection): HwihaPoliticalFailure? {
-        if (state.profile != RuleProfile.HWIHA) return HwihaPoliticalFailure.WRONG_RULE_PROFILE
-        val target = state.person(targetId) ?: return HwihaPoliticalFailure.ACTOR_NOT_FOUND
-        val issuer = state.person(consent.issuerGeneralId) ?: return HwihaPoliticalFailure.TARGET_NOT_FOUND
-        if (target.inBattle || issuer.inBattle) return HwihaPoliticalFailure.BATTLE_PENDING
+    fun assessConsent(targetId: Int, consent: PoliticalConsent, state: DomesticProjection): PoliticalFailure? {
+        if (state.profile != RuleProfile.HWIHA) return PoliticalFailure.WRONG_RULE_PROFILE
+        val target = state.person(targetId) ?: return PoliticalFailure.ACTOR_NOT_FOUND
+        val issuer = state.person(consent.issuerGeneralId) ?: return PoliticalFailure.TARGET_NOT_FOUND
+        if (target.inBattle || issuer.inBattle) return PoliticalFailure.BATTLE_PENDING
         return try { relationFailure(consent.inputId, issuer, target, state) }
-            catch (_: IllegalArgumentException) { HwihaPoliticalFailure.STATE_UNAVAILABLE }
+            catch (_: IllegalArgumentException) { PoliticalFailure.STATE_UNAVAILABLE }
     }
 
     private fun relationFailure(inputId: String, issuer: DomesticPerson, target: DomesticPerson,
-        state: DomesticProjection): HwihaPoliticalFailure? {
-        if (issuer.id == target.id) return HwihaPoliticalFailure.INVALID_INPUT
-        if (!target.userOwned) return HwihaPoliticalFailure.TARGET_NOT_HUMAN
-        if (inputId == HwihaPoliticalInput.ABDICATE) {
-            if (issuer.nationId <= 0 || !HwihaLordStatus.read(issuer.meta)) return HwihaPoliticalFailure.NOT_LORD
-            if (issuer.nationId != target.nationId) return HwihaPoliticalFailure.SAME_NATION_REQUIRED
-            if (target.inBattle) return HwihaPoliticalFailure.BATTLE_PENDING
+        state: DomesticProjection): PoliticalFailure? {
+        if (issuer.id == target.id) return PoliticalFailure.INVALID_INPUT
+        if (!target.userOwned) return PoliticalFailure.TARGET_NOT_HUMAN
+        if (inputId == PoliticalInput.ABDICATE) {
+            if (issuer.nationId <= 0 || !LordStatus.read(issuer.meta)) return PoliticalFailure.NOT_LORD
+            if (issuer.nationId != target.nationId) return PoliticalFailure.SAME_NATION_REQUIRED
+            if (target.inBattle) return PoliticalFailure.BATTLE_PENDING
             val chiefId = state.nation(issuer.nationId)?.chiefGeneralId
             if ((chiefId != null && chiefId != issuer.id) ||
                 state.people.count { it.nationId == issuer.nationId && it.officerLevel == 12 } != 1 ||
-                issuer.officerLevel != 12) return HwihaPoliticalFailure.STATE_UNAVAILABLE
-        } else if (inputId == HwihaPoliticalInput.OATH) {
+                issuer.officerLevel != 12) return PoliticalFailure.STATE_UNAVAILABLE
+        } else if (inputId == PoliticalInput.OATH) {
             if (issuer.node == null || issuer.node !in (state.landProvinceIds ?: emptySet()))
-                return HwihaPoliticalFailure.POSITION_UNAVAILABLE
-            if (issuer.node != target.node) return HwihaPoliticalFailure.SAME_PROVINCE_REQUIRED
-            if (HwihaOathBonds.read(issuer.meta).contains(target.id) || HwihaOathBonds.read(target.meta).contains(issuer.id))
-                return HwihaPoliticalFailure.ALREADY_BOUND
-        } else return HwihaPoliticalFailure.INVALID_INPUT
+                return PoliticalFailure.POSITION_UNAVAILABLE
+            if (issuer.node != target.node) return PoliticalFailure.SAME_PROVINCE_REQUIRED
+            if (OathBonds.read(issuer.meta).contains(target.id) || OathBonds.read(target.meta).contains(issuer.id))
+                return PoliticalFailure.ALREADY_BOUND
+        } else return PoliticalFailure.INVALID_INPUT
         return null
     }
 }

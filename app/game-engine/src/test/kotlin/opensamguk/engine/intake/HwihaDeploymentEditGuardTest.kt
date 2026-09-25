@@ -10,11 +10,11 @@ import opensamguk.logic.world.*
 
 class HwihaDeploymentEditGuardTest {
     private val now = Instant.parse("0200-01-01T00:00:00Z")
-    private val corps = HwihaDeployedCorps("deployed",1,2,4,1,listOf(7),HwihaPhase(200,1,1))
-    private fun world(profile: String = "HWIHA", deployment: Any? = HwihaDeploymentState(listOf(corps)).toMetaValue(), absent: Boolean = false): InMemoryTurnWorld {
+    private val corps = DeployedCorps("deployed",1,2,4,1,listOf(7),Phase(200,1,1))
+    private fun world(profile: String = "HWIHA", deployment: Any? = DeploymentState(listOf(corps)).toMetaValue(), absent: Boolean = false): InMemoryTurnWorld {
         val generals = listOf(1,2,3).map { id -> TurnGeneral(id=id, name="G$id", nationId=1, cityId=10, troopId=0, stats=GeneralStats(70,70,70), experience=0, dedication=0, officerLevel=0,
             npcState=if(id==1) 0 else 2, crew=1000,rice=2000,crewTypeId=1100,turnTime=now,
-            meta=if(id==1 && !absent) mapOf(HwihaDeploymentState.META_KEY to deployment) else emptyMap()) }
+            meta=if(id==1 && !absent) mapOf(DeploymentState.META_KEY to deployment) else emptyMap()) }
         val positions = generals.fold(GeneralPositionSnapshot("qa","a".repeat(64),setOf("p"),emptySet())) { acc,g ->
             acc.withState(GeneralPositionState("qa","a".repeat(64),g.id,StrategicNodeRef.LandProvince("p"),1)) }
         return InMemoryTurnWorld(WorldSnapshot(TurnWorldState(1,200,1,3600,now,
@@ -50,7 +50,7 @@ class HwihaDeploymentEditGuardTest {
         }
     }
     @Test fun `malformed and foreign owner binding cannot become an empty deployment`() {
-        for(raw in listOf(null,emptyMap<String,Any>(),HwihaDeploymentState(listOf(corps.copy(ownerGeneralId=3))).toMetaValue()))
+        for(raw in listOf(null,emptyMap<String,Any>(),DeploymentState(listOf(corps.copy(ownerGeneralId=3))).toMetaValue()))
             operations().forEach { unchanged(world(deployment=raw),it) }
     }
 }

@@ -34,7 +34,7 @@ class HwihaGovernanceMeritWiringTest {
     private val curve = RenownAssessment.CANON
 
     private fun context(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaDomesticContext(
-        geography = HwihaCountyGeography(listOf(HwihaCountyPlace(10, "甲郡", "갑군", "j10"), HwihaCountyPlace(11, "甲郡", "갑군", "j11"))),
+        geography = CountyGeography(listOf(CountyPlace(10, "甲郡", "갑군", "j10"), CountyPlace(11, "甲郡", "갑군", "j11"))),
         topology = topology, metrics = metrics, merit = HwihaGovernanceMeritRenownSink(world, recorder))
 
     private fun general(id: Int, node: String, human: Boolean = false, meta: Map<String, Any?> = emptyMap()) = TurnGeneral(
@@ -50,15 +50,15 @@ class HwihaGovernanceMeritWiringTest {
     /** G1: 사람 주공(카드 5 = G3 의 주인). [holder] 면 縣 10 발령 관할 장수이기도 하다. */
     private fun world(holder: Boolean): InMemoryTurnWorld {
         val lordMeta = mapOf("hwihaLord" to true,
-            HwihaPersonPolicyState.META_KEY to HwihaPersonPolicyState(30, false, "synthetic-test", "1", 1).toMetaValue()) +
-            if (holder) mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d-10", 1, 1, 10).toMetaValue()) else emptyMap()
+            PersonPolicyState.META_KEY to PersonPolicyState(30, false, "synthetic-test", "1", 1).toMetaValue()) +
+            if (holder) mapOf(CountyAssignment.META_KEY to CountyAssignment("d-10", 1, 1, 10).toMetaValue()) else emptyMap()
         val positions = listOf(1 to a, 2 to a, 3 to b).fold(GeneralPositionSnapshot("qa", topology.contentHash, setOf("A", "B"), emptySet())) { s, (id, node) ->
             s.withState(GeneralPositionState("qa", topology.contentHash, id, node, 1)) }
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
             state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH, currentPhase = 1,
                 config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"),
-                meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
-                    HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())),
+                meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
+                    MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())),
             generals = listOf(general(1, "A", human = true, meta = lordMeta), general(2, "A", meta = mapOf("hwihaLord" to false)),
                 general(3, "B", meta = mapOf("hwihaLord" to false))),
             nations = listOf(Nation(1, "N1", "#000", capitalCityId = 10), Nation(2, "N2", "#fff", capitalCityId = 11)),
@@ -68,7 +68,7 @@ class HwihaGovernanceMeritWiringTest {
     }
 
     private fun entries(world: InMemoryTurnWorld, id: Int) = RenownEvents.entries(world.getGeneralById(id)!!.meta)
-    private fun renown(world: InMemoryTurnWorld, id: Int) = HwihaPersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
+    private fun renown(world: InMemoryTurnWorld, id: Int) = PersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
 
     /** TurnRunService 월 경계 순서 그대로(월간 사건은 없다). */
     private fun monthBoundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, context: HwihaDomesticContext, year: Int, month: Int):
@@ -110,7 +110,7 @@ class HwihaGovernanceMeritWiringTest {
         val world = world(holder = false); val recorder = ChangeRecorder()
         val sink = HwihaGovernanceMeritRenownSink(world, recorder)
         val base = CountyIndicators(50_000, 1000, 1000, 500, 80, 500, 500)
-        fun event(current: CountyIndicators) = HwihaGovernanceMeritEvent(1, 3, 5, 10, "0200-03", base, current,
+        fun event(current: CountyIndicators) = GovernanceMeritEvent(1, 3, 5, 10, "0200-03", base, current,
             current.risenSince(base))
         // 치안·민심·방비만 오르거나 전답이 상한(5000)의 2% 미만(99)이면 치적이 아니다.
         sink.onCountyIndicatorsRose(event(base.copy(security = 600, trust = 90, wall = 600)))
@@ -131,10 +131,10 @@ class HwihaGovernanceMeritWiringTest {
         // 같은 경계의 월단평이 0200-02 치적을 적용하고 집계에서 뺐다.
         assertEquals(30 + curve.domesticMerit, renown(world, 1))
         assertTrue(entries(world, 1).isEmpty())
-        val logged = world.peekLogs().filter { it.eventKind == HwihaRecordKind.RENOWN_EVENT && it.generalId == 1 }
+        val logged = world.peekLogs().filter { it.eventKind == RecordKind.RENOWN_EVENT && it.generalId == 1 }
         assertEquals(1, logged.size)
         assertEquals(mapOf("kind" to "domesticMerit", "source" to "COUNTY_INDICATOR_RISE", "stamp" to "0200-02"),
-            logged.single().meta!![HwihaRecordKind.REFS_META_KEY])
+            logged.single().meta!![RecordKind.REFS_META_KEY])
         assertTrue(entries(world, 3).isEmpty(), "카드 인물이 아니라 카드 주인이 치적을 받는다")
     }
 
@@ -145,7 +145,7 @@ class HwihaGovernanceMeritWiringTest {
         val (closed, outcome) = monthBoundary(world, recorder, context, 200, 3)
         assertEquals(listOf(1), closed, "기록 스트림 창이 먼저 0200-02 치적을 쌓는다")
         assertEquals(1, outcome.meritEvents, "내정 경로도 사건을 냈다")
-        val logged = world.peekLogs().filter { it.eventKind == HwihaRecordKind.RENOWN_EVENT && it.generalId == 1 }
+        val logged = world.peekLogs().filter { it.eventKind == RecordKind.RENOWN_EVENT && it.generalId == 1 }
         assertEquals(1, logged.size, "두 경로가 같은 달 같은 종류라 한 건으로 접힌다: $logged")
         assertEquals(30 + curve.domesticMerit, renown(world, 1), "치적은 한 번만 적용된다")
     }
@@ -169,6 +169,6 @@ class HwihaGovernanceMeritWiringTest {
             File("app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
         ).firstOrNull { it.isFile }?.readText() ?: error("DaemonLoopConfig.kt source not found from ${File(".").absolutePath}")
         assertTrue(source.contains("merit = opensamguk.engine.hwiha.HwihaGovernanceMeritRenownSink(world, recorder)"),
-            "HWIHA 내정 문맥의 치적 사건이 버려지고 있다(HwihaGovernanceMeritSink.NONE)")
+            "HWIHA 내정 문맥의 치적 사건이 버려지고 있다(GovernanceMeritSink.NONE)")
     }
 }

@@ -3,7 +3,7 @@ package opensamguk.logic.content
 /** The four existing equipment positions are shared with attached treasure cards. */
 enum class TreasureSlot { HORSE, WEAPON, BOOK, ITEM }
 
-data class HwihaTreasureDefinition(
+data class TreasureDefinition(
     val header: CardHeader,
     val sourceCode: String,
     val slot: TreasureSlot,
@@ -52,9 +52,9 @@ data class TreasureInstance(
  * Pure, replayable ownership boundary. An engine command must persist the returned state in one
  * recorder/flush transaction; this class does not mint cards or alter the legacy equipment slots.
  */
-data class HwihaTreasureState(
+data class TreasureState(
     val people: List<TreasurePerson>,
-    val definitions: List<HwihaTreasureDefinition>,
+    val definitions: List<TreasureDefinition>,
     val instances: List<TreasureInstance>,
     val occupiedEquipmentSlots: Map<Int, Set<TreasureSlot>> = emptyMap(),
 ) {
@@ -99,21 +99,21 @@ data class HwihaTreasureState(
     }
 
     /** Attach to the owner's own person card or a directly held NPC in the same province. */
-    fun attach(instanceId: String, ownerId: Int, bearerId: Int): HwihaTreasureState {
+    fun attach(instanceId: String, ownerId: Int, bearerId: Int): TreasureState {
         val instance = ownedInstance(instanceId, ownerId)
         require(instance.bearerGeneralId == null) { "detach before attaching elsewhere" }
         require(sameKnownProvince(ownerId, bearerId)) { "treasure attachment requires co-location" }
         return replace(instance.copy(bearerGeneralId = bearerId))
     }
 
-    fun detach(instanceId: String, ownerId: Int): HwihaTreasureState {
+    fun detach(instanceId: String, ownerId: Int): TreasureState {
         val instance = ownedInstance(instanceId, ownerId)
         require(instance.bearerGeneralId != null)
         return replace(instance.copy(bearerGeneralId = null))
     }
 
     /** Voluntary movement is inventory-to-inventory between co-located people of one nation. */
-    fun transfer(instanceId: String, fromOwnerId: Int, toOwnerId: Int): HwihaTreasureState {
+    fun transfer(instanceId: String, fromOwnerId: Int, toOwnerId: Int): TreasureState {
         val instance = ownedInstance(instanceId, fromOwnerId)
         require(fromOwnerId != toOwnerId && instance.bearerGeneralId == null)
         val from = person(fromOwnerId)
@@ -123,7 +123,7 @@ data class HwihaTreasureState(
     }
 
     /** Explicit battle seizure: the defeated owner or bearer loses one card; the victor inventories it. */
-    fun seize(instanceId: String, defeatedGeneralId: Int, victorGeneralId: Int): HwihaTreasureState {
+    fun seize(instanceId: String, defeatedGeneralId: Int, victorGeneralId: Int): TreasureState {
         val instance = instances.single { it.instanceId == instanceId }
         require(defeatedGeneralId == (instance.bearerGeneralId ?: instance.ownerGeneralId))
         require(victorGeneralId != instance.ownerGeneralId)
@@ -141,6 +141,6 @@ data class HwihaTreasureState(
         return !a.isNullOrBlank() && a == person(second).provinceId
     }
 
-    private fun replace(updated: TreasureInstance): HwihaTreasureState = copy(
+    private fun replace(updated: TreasureInstance): TreasureState = copy(
         instances = instances.map { if (it.instanceId == updated.instanceId) updated else it })
 }

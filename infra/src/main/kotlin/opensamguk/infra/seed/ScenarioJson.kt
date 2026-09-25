@@ -484,7 +484,7 @@ data class ScenarioGeneral(
     val rawTuple: List<Any?> = emptyList(),
     /** Explicit HWIHA scenario declaration; null preserves SAMMO metadata byte-for-byte. */
     val hwihaLord: Boolean? = null,
-    val hwihaPersonPolicy: opensamguk.logic.input.HwihaPersonPolicyState? = null,
+    val hwihaPersonPolicy: opensamguk.logic.input.PersonPolicyState? = null,
 )
 
 data class ScenarioDiplomacy(

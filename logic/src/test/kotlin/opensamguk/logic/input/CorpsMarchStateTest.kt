@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import kotlin.test.*
 import opensamguk.logic.world.*
 
-class HwihaCorpsMarchStateTest {
+class CorpsMarchStateTest {
     private val pin = "a".repeat(64)
     private val a = StrategicNodeRef.LandProvince("A")
     private val b = StrategicNodeRef.LandProvince("B")
@@ -14,14 +14,14 @@ class HwihaCorpsMarchStateTest {
     private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
     private val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
         StrategicPathRequest(a, b, 1), StrategicEdgeStateSnapshot(topology.topologyRevision, topology.contentHash, emptyMap()), metrics)).path
-    private val phase = HwihaPhase(200, 1, 2)
-    private val corps = HwihaDeployedCorps("order", 1, 2, 3, 1, listOf(4, 5), HwihaPhase(200, 1, 1))
-    private val checkpoint = HwihaMarchCheckpoint(path, LandMarchCursor(path.pathHash, 0, 30), phase, LandMarchStop.BUDGET_EXHAUSTED)
-    private val state = HwihaCorpsMarchState("order", 1, 2, checkpoint)
-    private fun read(raw: Any?) = HwihaCorpsMarchState.read(mapOf(HwihaCorpsMarchState.META_KEY to raw), topology, metrics)
+    private val phase = Phase(200, 1, 2)
+    private val corps = DeployedCorps("order", 1, 2, 3, 1, listOf(4, 5), Phase(200, 1, 1))
+    private val checkpoint = MarchCheckpoint(path, LandMarchCursor(path.pathHash, 0, 30), phase, LandMarchStop.BUDGET_EXHAUSTED)
+    private val state = CorpsMarchState("order", 1, 2, checkpoint)
+    private fun read(raw: Any?) = CorpsMarchState.read(mapOf(CorpsMarchState.META_KEY to raw), topology, metrics)
 
     @Test fun `partial checkpoint restores against the exact deployment without county assignment`() {
-        assertNull(HwihaCorpsMarchState.read(emptyMap(), topology, metrics))
+        assertNull(CorpsMarchState.read(emptyMap(), topology, metrics))
         for (paid in listOf<Any>(30, 30L)) {
             val restored = read(state.toMetaValue() + ("checkpoint" to (checkpoint.toMetaValue() + ("paidMm" to paid))))!!
             restored.requireBinding(corps, 2)
@@ -40,7 +40,7 @@ class HwihaCorpsMarchStateTest {
         assertFailsWith<IllegalArgumentException> { state.requireBinding(corps.copy(orderId = "next"), 2) }
         assertFailsWith<IllegalArgumentException> { state.requireBinding(corps.copy(ownerGeneralId = 9), 2) }
         assertFailsWith<IllegalArgumentException> { state.requireBinding(corps.copy(commanderGeneralId = 9), 2) }
-        assertFailsWith<IllegalArgumentException> { state.requireBinding(corps.copy(startedAt = HwihaPhase(200, 1, 3)), 2) }
+        assertFailsWith<IllegalArgumentException> { state.requireBinding(corps.copy(startedAt = Phase(200, 1, 3)), 2) }
     }
 
     @Test fun `strict schema rejects malformed identity checkpoint overpayment and unknown fields`() {

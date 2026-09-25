@@ -9,7 +9,7 @@ import opensamguk.logic.renown.RenownEvents
  * population, agriculture, commerce, security, trust, defence, wall), [monthStamp] 은 비교한 달 "YYYY-MM".
  * 치적이 명망으로 얼마나 이어지는지는 기록 스트림이 정한다 — 여기서는 사건만 낸다.
  */
-data class HwihaGovernanceMeritEvent(
+data class GovernanceMeritEvent(
     val ownerGeneralId: Int,
     val cardGeneralId: Int,
     val retainerId: Int,
@@ -27,11 +27,11 @@ data class HwihaGovernanceMeritEvent(
  * 병합 때 이 인터페이스의 구현으로 잇는다 — 이 스트림은 그 함수를 직접 부르지 않는다.
  * 엔진은 월 경계(상순의 순 경계 3단계 뒤)에서 縣 id 순으로 한 번씩 부른다. 구현은 ChangeRecorder 경로로만 써야 한다.
  */
-fun interface HwihaGovernanceMeritSink {
-    fun onCountyIndicatorsRose(event: HwihaGovernanceMeritEvent)
+fun interface GovernanceMeritSink {
+    fun onCountyIndicatorsRose(event: GovernanceMeritEvent)
 
     companion object {
         /** 기록 스트림이 연결되기 전의 기본값: 사건을 버린다(명망 변화 없음). */
-        val NONE: HwihaGovernanceMeritSink = HwihaGovernanceMeritSink { }
+        val NONE: GovernanceMeritSink = GovernanceMeritSink { }
     }
 }

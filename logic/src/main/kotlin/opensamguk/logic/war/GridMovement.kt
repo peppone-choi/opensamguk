@@ -1,11 +1,11 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.util.Collections
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
-import opensamguk.logic.world.HwihaBattlefieldLayout
+import opensamguk.logic.world.BattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldLayout
 
 /** One simultaneous orthogonal step. The caller supplies sealed initiative and movement intents. */
-object HwihaGridMovement {
+object GridMovement {
     const val RULE_VERSION = 1
 
     data class UnitPosition(val bugokId: Int, val position: Position?, val initiative: Int) {
@@ -18,7 +18,7 @@ object HwihaGridMovement {
     data class Step(val bugokId: Int, val from: Position?, val to: Position?, val outcome: Outcome)
 
     /** Invalid state/identities reject the batch; an impossible tactical request leaves its unit in place. */
-    fun resolve(layout: HwihaBattlefieldLayout, units: List<UnitPosition>, intents: List<Intent>): List<Step> {
+    fun resolve(layout: BattlefieldLayout, units: List<UnitPosition>, intents: List<Intent>): List<Step> {
         require(units.isNotEmpty() && units.map { it.bugokId }.distinct().size == units.size)
         val byId = units.associateBy { it.bugokId }
         require(intents.map { it.bugokId }.distinct().size == intents.size && intents.all { it.bugokId in byId })

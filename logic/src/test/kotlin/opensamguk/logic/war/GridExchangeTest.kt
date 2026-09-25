@@ -1,37 +1,37 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import kotlin.test.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
-import opensamguk.logic.war.hwiha.HwihaGridExchange.AttackIntent
-import opensamguk.logic.war.hwiha.HwihaGridExchange.Outcome
+import opensamguk.logic.world.BattlefieldGeometry.Position
+import opensamguk.logic.war.GridExchange.AttackIntent
+import opensamguk.logic.war.GridExchange.Outcome
 
-class HwihaGridExchangeTest {
-    private data class Fixture(val exchange: HwihaGridExchange, val encounter: HwihaCorpsEncounter,
-        val forces: HwihaEncounterForces, val relations: HwihaEncounterRelations,
-        val combat: HwihaEncounterCombatProfiles, val deployment: HwihaEncounterDeployment)
+class GridExchangeTest {
+    private data class Fixture(val exchange: GridExchange, val encounter: CorpsEncounter,
+        val forces: EncounterForces, val relations: EncounterRelations,
+        val combat: EncounterCombatProfiles, val deployment: EncounterDeployment)
     private fun fixture(troops: Int = 500, leadership: Int = 70, power: Int = 100, allHostile: Boolean = false, movementSteps: Int = 1): Fixture {
-        val phase = HwihaPhase(200,1,1)
+        val phase = Phase(200,1,1)
         val node = StrategicNodeRef.LandProvince("B")
         val state = DeploymentProjection(RuleProfile.HWIHA,
             (1..3).map { DeploymentPerson(it,it,true,node,true) },
             (1..3).map { DeploymentUnit(it*10,it,troops,null) }, emptyList(),
-            (1..3).map { HwihaDeployedCorps("order-$it",it,it,null,it,listOf(it*10),phase) })
-        val encounter = HwihaCorpsEncounter(HwihaEncounterParticipant.from(state.deployed[0]),
-            state.deployed.drop(1).map(HwihaEncounterParticipant::from), node, StrategicNodeRef.LandProvince("A"),phase,"qa","a".repeat(64))
-        val relations = HwihaEncounterRelations.capture(encounter,state,
+            (1..3).map { DeployedCorps("order-$it",it,it,null,it,listOf(it*10),phase) })
+        val encounter = CorpsEncounter(EncounterParticipant.from(state.deployed[0]),
+            state.deployed.drop(1).map(EncounterParticipant::from), node, StrategicNodeRef.LandProvince("A"),phase,"qa","a".repeat(64))
+        val relations = EncounterRelations.capture(encounter,state,
             if (allHostile) setOf(1 to 2,1 to 3,2 to 3) else setOf(1 to 2,1 to 3))
-        val forces = HwihaEncounterForces(encounter.encounterId,
+        val forces = EncounterForces(encounter.encounterId,
             (1..3).map { EncounterUnitForce(it*10,it,it,1100,troops,50,50,0,troops,null) },
             (1..3).map { EncounterCommanderForce(it,leadership,70,70,70,70) })
-        val rules = HwihaUnitProfiles(1,"c".repeat(64),listOf(HwihaUnitProfile(1100,movementSteps,1,power,120,20)),emptySet())
-        val combat = HwihaEncounterCombatProfiles.capture(forces,rules)
+        val rules = UnitProfiles(1,"c".repeat(64),listOf(UnitProfile(1100,movementSteps,1,power,120,20)),emptySet())
+        val combat = EncounterCombatProfiles.capture(forces,rules)
         val index = HanProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),10,4,mapOf('1' to "PLAIN"),
             mapOf("A" to listOf(HanProvinceCell(0,1,'1')),
                 "B" to (1..2).flatMap { row -> (1..7).map { col -> HanProvinceCell(col,row,'1') } }))
-        val deployment = assertIs<HwihaEncounterDeployment.Result.Ready>(HwihaEncounterDeployment.prepareDefault(encounter,index)).deployment
-        return Fixture(HwihaGridExchange(encounter,forces,relations,combat,deployment),encounter,forces,relations,combat,deployment)
+        val deployment = assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter,index)).deployment
+        return Fixture(GridExchange(encounter,forces,relations,combat,deployment),encounter,forces,relations,combat,deployment)
     }
     private fun positioned(f: Fixture) = f.exchange.initialUnits.mapIndexed { i, unit ->
         unit.copy(position=listOf(Position(0,0),Position(1,0),Position(1,1))[i]) }
@@ -97,12 +97,12 @@ class HwihaGridExchangeTest {
             assertFailsWith<IllegalArgumentException> { f.exchange.resolve(units,bad) }
     }
     @Test fun `wrong frozen force snapshot and unsupported profiles reject before combat`() {
-        val f=fixture();val changed=HwihaEncounterForces(f.forces.encounterId,
+        val f=fixture();val changed=EncounterForces(f.forces.encounterId,
             f.forces.units.map { it.copy(training=51) },f.forces.commanders)
-        assertFailsWith<IllegalArgumentException> { HwihaGridExchange(f.encounter,changed,f.relations,f.combat,f.deployment) }
-        val unsupported=HwihaEncounterCombatProfiles.capture(f.forces,
-            HwihaUnitProfiles(1,"c".repeat(64),listOf(HwihaUnitProfile(1200,1,3,80,80,10)),setOf(1100)))
-        assertFailsWith<IllegalArgumentException> { HwihaGridExchange(f.encounter,f.forces,f.relations,unsupported,f.deployment) }
+        assertFailsWith<IllegalArgumentException> { GridExchange(f.encounter,changed,f.relations,f.combat,f.deployment) }
+        val unsupported=EncounterCombatProfiles.capture(f.forces,
+            UnitProfiles(1,"c".repeat(64),listOf(UnitProfile(1200,1,3,80,80,10)),setOf(1100)))
+        assertFailsWith<IllegalArgumentException> { GridExchange(f.encounter,f.forces,f.relations,unsupported,f.deployment) }
     }
     @Test fun `extreme legal integers cannot overflow casualties or morale and fatigue stays bounded`() {
         val f=fixture(troops=Int.MAX_VALUE,leadership=Int.MAX_VALUE,power=Int.MAX_VALUE)
@@ -120,10 +120,10 @@ class HwihaGridExchangeTest {
             30 -> it.copy(position=Position(6,1))
             else -> it
         } }
-        val path=HwihaGridExchange.MovementPlan(10,listOf(Position(1,0),Position(2,0)))
+        val path=GridExchange.MovementPlan(10,listOf(Position(1,0),Position(2,0)))
         val result=f.exchange.resolveRound(units,listOf(path),listOf(AttackIntent(10,20)))
         assertEquals(listOf(1,2),result.movements.map { it.step })
-        assertTrue(result.movements.all { it.move.outcome==HwihaGridMovement.Outcome.MOVED })
+        assertTrue(result.movements.all { it.move.outcome==GridMovement.Outcome.MOVED })
         assertEquals(Position(2,0),result.exchange.units.first().position)
         assertEquals(Outcome.STRUCK,result.exchange.attacks.single().outcome)
         val invalid=f.exchange.resolveRound(units,listOf(path),listOf(AttackIntent(10,30)))
@@ -136,17 +136,17 @@ class HwihaGridExchangeTest {
     }
     @Test fun `failed step stops remaining path and previous successful steps survive`() {
         val f=fixture(movementSteps=2);val units=positioned(f)
-        val blocked=f.exchange.resolveRound(units,listOf(HwihaGridExchange.MovementPlan(10,
+        val blocked=f.exchange.resolveRound(units,listOf(GridExchange.MovementPlan(10,
             listOf(Position(1,0),Position(0,1)))),emptyList())
         assertEquals(1,blocked.movements.size)
-        assertEquals(HwihaGridMovement.Outcome.OCCUPIED,blocked.movements.single().move.outcome)
+        assertEquals(GridMovement.Outcome.OCCUPIED,blocked.movements.single().move.outcome)
         assertEquals(units,blocked.exchange.units)
-        val held=f.exchange.resolveRound(units,listOf(HwihaGridExchange.MovementPlan(10,
+        val held=f.exchange.resolveRound(units,listOf(GridExchange.MovementPlan(10,
             listOf(Position(0,0),Position(0,1)))),emptyList())
         assertEquals(1,held.movements.size);assertEquals(units,held.exchange.units)
-        val partiallyBlocked=f.exchange.resolveRound(units,listOf(HwihaGridExchange.MovementPlan(10,
+        val partiallyBlocked=f.exchange.resolveRound(units,listOf(GridExchange.MovementPlan(10,
             listOf(Position(0,1),Position(1,1)))),emptyList())
-        assertEquals(listOf(HwihaGridMovement.Outcome.MOVED,HwihaGridMovement.Outcome.OCCUPIED),
+        assertEquals(listOf(GridMovement.Outcome.MOVED,GridMovement.Outcome.OCCUPIED),
             partiallyBlocked.movements.map { it.move.outcome })
         assertEquals(Position(0,1),partiallyBlocked.exchange.units.first().position)
     }
@@ -158,11 +158,11 @@ class HwihaGridExchangeTest {
             else -> it
         } }
         val result=f.exchange.resolveRound(units,listOf(
-            HwihaGridExchange.MovementPlan(10,listOf(Position(1,0))),
-            HwihaGridExchange.MovementPlan(20,listOf(Position(2,0),Position(3,0))),
-            HwihaGridExchange.MovementPlan(30,listOf(Position(1,1)))),emptyList())
-        assertEquals(listOf(HwihaGridMovement.Outcome.OCCUPIED,HwihaGridMovement.Outcome.INACTIVE,
-            HwihaGridMovement.Outcome.RESERVE),result.movements.map { it.move.outcome })
+            GridExchange.MovementPlan(10,listOf(Position(1,0))),
+            GridExchange.MovementPlan(20,listOf(Position(2,0),Position(3,0))),
+            GridExchange.MovementPlan(30,listOf(Position(1,1)))),emptyList())
+        assertEquals(listOf(GridMovement.Outcome.OCCUPIED,GridMovement.Outcome.INACTIVE,
+            GridMovement.Outcome.RESERVE),result.movements.map { it.move.outcome })
         assertEquals(units,result.exchange.units)
     }
     @Test fun `second step uses updated occupancy and round order is canonical`() {
@@ -171,8 +171,8 @@ class HwihaGridExchangeTest {
             30 -> it.copy(position=Position(6,1))
             else -> it
         } }
-        val paths=listOf(HwihaGridExchange.MovementPlan(10,listOf(Position(0,1),Position(1,1))),
-            HwihaGridExchange.MovementPlan(20,listOf(Position(2,1),Position(3,1))))
+        val paths=listOf(GridExchange.MovementPlan(10,listOf(Position(0,1),Position(1,1))),
+            GridExchange.MovementPlan(20,listOf(Position(2,1),Position(3,1))))
         val first=f.exchange.resolveRound(units,paths,emptyList())
         val reverse=f.exchange.resolveRound(units.reversed(),paths.reversed(),emptyList())
         assertEquals(first.movements,reverse.movements)
@@ -186,19 +186,19 @@ class HwihaGridExchangeTest {
             else -> it
         } }
         val result=f.exchange.resolveRound(units,listOf(
-            HwihaGridExchange.MovementPlan(10,listOf(Position(0,1),Position(1,1))),
-            HwihaGridExchange.MovementPlan(20,listOf(Position(2,1),Position(1,1)))),emptyList())
-        assertEquals(HwihaGridMovement.Outcome.CONTESTED,result.movements.last().move.outcome)
+            GridExchange.MovementPlan(10,listOf(Position(0,1),Position(1,1))),
+            GridExchange.MovementPlan(20,listOf(Position(2,1),Position(1,1)))),emptyList())
+        assertEquals(GridMovement.Outcome.CONTESTED,result.movements.last().move.outcome)
         assertEquals(listOf(Position(1,1),Position(2,1),Position(6,1)),result.exchange.units.map { it.position })
     }
     @Test fun `movement budget identities and later attack input validate before the round`() {
         val f=fixture();val units=positioned(f)
-        val valid=HwihaGridExchange.MovementPlan(10,listOf(Position(0,1)))
-        for(paths in listOf(listOf(valid,valid),listOf(HwihaGridExchange.MovementPlan(99,emptyList())),
-            listOf(HwihaGridExchange.MovementPlan(10,listOf(Position(0,1),Position(1,1))))))
+        val valid=GridExchange.MovementPlan(10,listOf(Position(0,1)))
+        for(paths in listOf(listOf(valid,valid),listOf(GridExchange.MovementPlan(99,emptyList())),
+            listOf(GridExchange.MovementPlan(10,listOf(Position(0,1),Position(1,1))))))
             assertFailsWith<IllegalArgumentException> { f.exchange.resolveRound(units,paths,emptyList()) }
         assertFailsWith<IllegalArgumentException> { f.exchange.resolveRound(units,listOf(valid),listOf(AttackIntent(10,99))) }
-        val source=mutableListOf(Position(0,1));val immutable=HwihaGridExchange.MovementPlan(10,source)
+        val source=mutableListOf(Position(0,1));val immutable=GridExchange.MovementPlan(10,source)
         source.clear();assertEquals(listOf(Position(0,1)),immutable.path)
         assertFailsWith<UnsupportedOperationException> { (immutable.path as MutableList<*>).clear() }
     }

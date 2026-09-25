@@ -12,7 +12,7 @@ sealed interface AssignmentMarchExecution {
     data class Rejected(val reason: AssignmentMarchFailure) : AssignmentMarchExecution
     data object NoAssignment : AssignmentMarchExecution
     data object AlreadyProcessed : AssignmentMarchExecution
-    data class Applied(val state: HwihaMarchState, val movement: LandMarchAdvance.Advanced) : AssignmentMarchExecution
+    data class Applied(val state: MarchState, val movement: LandMarchAdvance.Advanced) : AssignmentMarchExecution
 }
 
 /** Recorder-only persistence adapter. Live edge/encounter authorities must be supplied by the caller. */
@@ -30,7 +30,7 @@ class HwihaAssignmentMarchExecutor(
         fun reject(reason: AssignmentMarchFailure) = AssignmentMarchExecution.Rejected(reason)
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(AssignmentMarchFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(generalId) ?: return reject(AssignmentMarchFailure.UNKNOWN_ACTOR)
-        val assignment = try { HwihaCountyAssignment.read(actor.meta) } catch (_: IllegalArgumentException) {
+        val assignment = try { CountyAssignment.read(actor.meta) } catch (_: IllegalArgumentException) {
             return reject(AssignmentMarchFailure.INVALID_STATE)
         } ?: return AssignmentMarchExecution.NoAssignment
         if (HwihaDispatchExecutor(world, recorder).assessAssignment(generalId, assignment) !is DispatchAssessment.Eligible)
@@ -41,12 +41,12 @@ class HwihaAssignmentMarchExecutor(
         if (positions.topologyRevision != topology.topologyRevision || positions.topologyHash != topology.contentHash ||
             positions.knownLandProvinceIds != topology.landProvinceIds ||
             positions.knownWaterZoneIds != topology.waterZones.map { it.id }.toSet()) return reject(AssignmentMarchFailure.STALE_PIN)
-        val old = try { HwihaMarchState.read(actor.meta, topology, metrics) } catch (_: IllegalArgumentException) {
+        val old = try { MarchState.read(actor.meta, topology, metrics) } catch (_: IllegalArgumentException) {
             return reject(AssignmentMarchFailure.INVALID_STATE)
         }
         if (old != null && old.path.nodeKeys[old.cursor.edgeIndex] != position.node.canonicalKey)
             return reject(AssignmentMarchFailure.INVALID_STATE)
-        val now = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+        val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
         if (old != null && old.lastAdvancedAt > now) return reject(AssignmentMarchFailure.INVALID_STATE)
         if (old?.lastAdvancedAt == now) return AssignmentMarchExecution.AlreadyProcessed
         // Changing an order must never provide an escape from an unresolved encounter.
@@ -69,7 +69,7 @@ class HwihaAssignmentMarchExecutor(
             is LandMarchAdvance.Rejected -> return reject(AssignmentMarchFailure.PROGRESS_REJECTED)
         }
         if (position.revision > Long.MAX_VALUE - movement.reachedNodes.size) return reject(AssignmentMarchFailure.INVALID_STATE)
-        val next = HwihaMarchState(assignment, path, movement.cursor, now, movement.stop)
+        val next = MarchState(assignment, path, movement.cursor, now, movement.stop)
         for (node in movement.reachedNodes) {
             check(recorder.moveGeneral(world, generalId, node) is GeneralPositionChangeResult.Changed) {
                 "Validated march position transition was rejected"
@@ -77,7 +77,7 @@ class HwihaAssignmentMarchExecutor(
         }
         // moveGeneral can change the reference city; retain its latest version when applying metadata.
         val before = checkNotNull(world.getGeneralById(generalId))
-        val after = before.copy(meta = before.meta + (HwihaMarchState.META_KEY to next.toMetaValue()))
+        val after = before.copy(meta = before.meta + (MarchState.META_KEY to next.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
         return AssignmentMarchExecution.Applied(next, movement)

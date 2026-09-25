@@ -5,26 +5,26 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import opensamguk.logic.world.StrategicNodeRef
 
-class HwihaTravelReturnTest {
-    private val assignment = HwihaCountyAssignment("dispatch-1", 4, 2, 9)
+class TravelReturnTest {
+    private val assignment = CountyAssignment("dispatch-1", 4, 2, 9)
     private val province = StrategicNodeRef.LandProvince("home")
 
     @Test fun `return uses dispatched county even when current reference city differs`() {
-        val result = HwihaTravelReturn.resolve(mapOf(HwihaCountyAssignment.META_KEY to assignment.toMetaValue()), 2) {
+        val result = TravelReturn.resolve(mapOf(CountyAssignment.META_KEY to assignment.toMetaValue()), 2) {
             assertEquals(9, it)
             province
         }
-        assertEquals(province, assertIs<HwihaReturnDestination.Ready>(result).node)
+        assertEquals(province, assertIs<ReturnDestination.Ready>(result).node)
     }
 
     @Test fun `missing or stale assignment has an explicit reason`() {
-        assertEquals(HwihaTravelFailure.NO_RETURN_ASSIGNMENT,
-            assertIs<HwihaReturnDestination.Rejected>(HwihaTravelReturn.resolve(emptyMap(), 2) { province }).reason)
-        assertEquals(HwihaTravelFailure.NO_RETURN_ASSIGNMENT,
-            assertIs<HwihaReturnDestination.Rejected>(HwihaTravelReturn.resolve(
-                mapOf(HwihaCountyAssignment.META_KEY to assignment.toMetaValue()), 3) { province }).reason)
-        assertEquals(HwihaTravelFailure.STATE_UNAVAILABLE,
-            assertIs<HwihaReturnDestination.Rejected>(HwihaTravelReturn.resolve(
-                mapOf(HwihaCountyAssignment.META_KEY to mapOf("bad" to true)), 2) { province }).reason)
+        assertEquals(TravelFailure.NO_RETURN_ASSIGNMENT,
+            assertIs<ReturnDestination.Rejected>(TravelReturn.resolve(emptyMap(), 2) { province }).reason)
+        assertEquals(TravelFailure.NO_RETURN_ASSIGNMENT,
+            assertIs<ReturnDestination.Rejected>(TravelReturn.resolve(
+                mapOf(CountyAssignment.META_KEY to assignment.toMetaValue()), 3) { province }).reason)
+        assertEquals(TravelFailure.STATE_UNAVAILABLE,
+            assertIs<ReturnDestination.Rejected>(TravelReturn.resolve(
+                mapOf(CountyAssignment.META_KEY to mapOf("bad" to true)), 2) { province }).reason)
     }
 }

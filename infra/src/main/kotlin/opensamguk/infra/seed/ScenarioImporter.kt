@@ -241,8 +241,8 @@ class ScenarioImporter(
             "extended_general" to extendedGeneral,
         )
         if (effectiveProfile == RuleProfile.HWIHA) {
-            meta[opensamguk.logic.input.HwihaMarchReactions.META_KEY] =
-                opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue()
+            meta[opensamguk.logic.input.MarchReactions.META_KEY] =
+                opensamguk.logic.input.MarchReactions.Empty.toMetaValue()
         }
         scenario.hwihaWarehouses?.let { seed ->
             meta["hwihaWarehouseSeed"] = linkedMapOf(
@@ -585,8 +585,8 @@ class ScenarioImporter(
             batch,
         )
         check(jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], ?) WHERE id=?",
-            opensamguk.logic.input.HwihaLandPassageState.META_KEY,
-            jsonb(opensamguk.logic.input.HwihaLandPassageState.initialMetaValue(topology)), worldId.value) == 1)
+            opensamguk.logic.input.LandPassageState.META_KEY,
+            jsonb(opensamguk.logic.input.LandPassageState.initialMetaValue(topology)), worldId.value) == 1)
         return batch.size
     }
 
@@ -756,8 +756,8 @@ class ScenarioImporter(
             meta["rtk14_ideology"] = general.ideology
         }
         if (effectiveProfile == RuleProfile.HWIHA) {
-            meta[opensamguk.logic.input.HwihaLordStatus.META_KEY] = general.hwihaLord ?: false
-            general.hwihaPersonPolicy?.let { meta[opensamguk.logic.input.HwihaPersonPolicyState.META_KEY] = it.toMetaValue() }
+            meta[opensamguk.logic.input.LordStatus.META_KEY] = general.hwihaLord ?: false
+            general.hwihaPersonPolicy?.let { meta[opensamguk.logic.input.PersonPolicyState.META_KEY] = it.toMetaValue() }
         }
         if (general.npcType == IMPERIAL_NPC_TYPE) meta["imperial"] = true
         if (general.text != null) meta["npcmsg"] = general.text

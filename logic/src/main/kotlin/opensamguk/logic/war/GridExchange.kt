@@ -1,17 +1,17 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.math.BigInteger
 import java.util.Collections
 import opensamguk.logic.input.*
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldGeometry.Position
 
 /** One simultaneous exchange of explicit attacks against an immutable encounter context. No live writes. */
-class HwihaGridExchange(
-    encounter: HwihaCorpsEncounter,
-    private val forces: HwihaEncounterForces,
-    private val relations: HwihaEncounterRelations,
-    combat: HwihaEncounterCombatProfiles,
-    private val deployment: HwihaEncounterDeployment,
+class GridExchange(
+    encounter: CorpsEncounter,
+    private val forces: EncounterForces,
+    private val relations: EncounterRelations,
+    combat: EncounterCombatProfiles,
+    private val deployment: EncounterDeployment,
 ) {
     data class UnitState(val bugokId: Int, val troops: Int, val morale: Int, val fatigue: Int, val position: Position?)
     data class AttackIntent(val attackerId: Int, val targetId: Int)
@@ -53,7 +53,7 @@ class HwihaGridExchange(
                 attacker.position == null || target.position == null -> Outcome.RESERVE
                 attackerForce.commanderGeneralId == targetForce.commanderGeneralId ||
                     !relations.isHostile(attackerForce.commanderGeneralId, targetForce.commanderGeneralId) -> Outcome.NOT_HOSTILE
-                !HwihaGridReach.canStrike(deployment.layout, attacker.position, target.position,
+                !GridReach.canStrike(deployment.layout, attacker.position, target.position,
                     profiles.getValue(attackerForce.crewTypeId).attackRange) -> Outcome.OUT_OF_REACH
                 else -> Outcome.STRUCK
             }
@@ -77,7 +77,7 @@ class HwihaGridExchange(
     class MovementPlan(val bugokId: Int, path: List<Position>) {
         val path: List<Position> = Collections.unmodifiableList(ArrayList(path))
     }
-    data class RoundMove(val step: Int, val move: HwihaGridMovement.Step)
+    data class RoundMove(val step: Int, val move: GridMovement.Step)
     class RoundResult(movements: List<RoundMove>, val exchange: Result) {
         val movements: List<RoundMove> = Collections.unmodifiableList(ArrayList(movements))
     }
@@ -98,24 +98,24 @@ class HwihaGridExchange(
             val eligible = requests.filter { plan ->
                 val unit = state.getValue(plan.bugokId)
                 val outcome = when {
-                    unit.troops == 0 || unit.morale == 0 -> HwihaGridMovement.Outcome.INACTIVE
-                    unit.position == null -> HwihaGridMovement.Outcome.RESERVE
+                    unit.troops == 0 || unit.morale == 0 -> GridMovement.Outcome.INACTIVE
+                    unit.position == null -> GridMovement.Outcome.RESERVE
                     else -> null
                 }
                 if (outcome != null) {
                     stopped.add(plan.bugokId)
-                    history.add(RoundMove(step + 1,HwihaGridMovement.Step(plan.bugokId,unit.position,unit.position,outcome)))
+                    history.add(RoundMove(step + 1,GridMovement.Step(plan.bugokId,unit.position,unit.position,outcome)))
                 }
                 outcome == null
             }
-            val result = HwihaGridMovement.resolve(deployment.layout, current.map { unit ->
-                HwihaGridMovement.UnitPosition(unit.bugokId,unit.position,
+            val result = GridMovement.resolve(deployment.layout, current.map { unit ->
+                GridMovement.UnitPosition(unit.bugokId,unit.position,
                     profiles.getValue(original.getValue(unit.bugokId).crewTypeId).initiative)
-            },eligible.map { HwihaGridMovement.Intent(it.bugokId,it.path[step]) })
+            },eligible.map { GridMovement.Intent(it.bugokId,it.path[step]) })
             val requested = eligible.mapTo(hashSetOf()) { it.bugokId }
             for (move in result.filter { it.bugokId in requested }) {
                 history.add(RoundMove(step + 1,move))
-                if (move.outcome != HwihaGridMovement.Outcome.MOVED) stopped.add(move.bugokId)
+                if (move.outcome != GridMovement.Outcome.MOVED) stopped.add(move.bugokId)
             }
             val positions = result.associate { it.bugokId to it.to }
             current = current.map { it.copy(position=positions.getValue(it.bugokId)) }

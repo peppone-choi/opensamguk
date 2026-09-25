@@ -50,7 +50,7 @@ enum class InputDeliveryState {
     val hasHandler: Boolean get() = this >= HANDLER_READY
 }
 
-data class HwihaInputEntry(
+data class InputEntry(
     val inputId: String,
     val kind: InputKind,
     val layer: Int,
@@ -70,11 +70,11 @@ data class HwihaInputEntry(
     val displayName: String?,
 )
 
-class HwihaInputCatalog internal constructor(
-    val entries: List<HwihaInputEntry>,
+class InputCatalog internal constructor(
+    val entries: List<InputEntry>,
 ) {
     private val byId = entries.associateBy { it.inputId }
-    operator fun get(inputId: String): HwihaInputEntry? = byId[inputId]
+    operator fun get(inputId: String): InputEntry? = byId[inputId]
 
     /** Shared syntax, profile, ledger and delivery classification for API precheck and engine dispatch. */
     fun rejectionFor(profile: RuleProfile, rawInputId: String): InputRejection? {
@@ -92,14 +92,14 @@ class HwihaInputCatalog internal constructor(
         private const val RESOURCE = "command-catalog/hwiha-input-catalog.json"
         private val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
 
-        fun load(): HwihaInputCatalog = parse(
-            checkNotNull(HwihaInputCatalog::class.java.classLoader.getResource(RESOURCE)) {
+        fun load(): InputCatalog = parse(
+            checkNotNull(InputCatalog::class.java.classLoader.getResource(RESOURCE)) {
                 "hwiha input catalog resource is missing: $RESOURCE"
             }.readText(),
         )
 
-        fun parse(payload: String): HwihaInputCatalog {
-            HwihaCatalogDuplicateKeys(payload).check()
+        fun parse(payload: String): InputCatalog {
+            CatalogDuplicateKeys(payload).check()
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.requiredInt("schemaVersion") == 3) { "unsupported hwiha input catalog schemaVersion" }
             require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs")) {
@@ -147,7 +147,7 @@ class HwihaInputCatalog internal constructor(
                     }
                 }
                 require(row.requiredText("resultType") == "InputResolved") { "wrong resultType: $inputId" }
-                HwihaInputEntry(
+                InputEntry(
                     inputId = inputId,
                     kind = kind,
                     layer = row.requiredInt("layer").also { require(it in 1..3) { "layer must be 1..3: $inputId" } },
@@ -168,7 +168,7 @@ class HwihaInputCatalog internal constructor(
                 )
             }
             require(entries.map { it.inputId }.toSet().size == entries.size) { "duplicate inputId in hwiha input catalog" }
-            return HwihaInputCatalog(entries)
+            return InputCatalog(entries)
         }
 
         private val ENTRY_FIELDS = setOf("inputId", "kind", "layer", "actor", "authorityRule", "targetSchema",
@@ -236,7 +236,7 @@ fun interface InputHandler {
 }
 
 sealed interface InputResolution {
-    data class Resolved(val entry: HwihaInputEntry, val handler: InputHandler) : InputResolution
+    data class Resolved(val entry: InputEntry, val handler: InputHandler) : InputResolution
     data class Rejected(val reason: InputRejection, val rawInputId: String) : InputResolution
 }
 
@@ -244,13 +244,13 @@ sealed interface InputResolution {
  * 원장 ↔ 코드 일치를 강제한다: 핸들러가 있는 입력은 원장에서 HANDLER_READY 이상이어야 하고,
  * HANDLER_READY 이상인 입력은 핸들러가 있어야 한다.
  */
-class HwihaInputRegistry private constructor(
-    private val catalog: HwihaInputCatalog,
+class InputRegistry private constructor(
+    private val catalog: InputCatalog,
     private val handlers: Map<String, InputHandler>,
     requireDelivered: Boolean,
 ) {
     /** 프로덕션 배선은 이 생성자만 쓴다 — 원장 ↔ 코드 일치 검사를 끌 수 없다. */
-    constructor(catalog: HwihaInputCatalog, handlers: Map<String, InputHandler>) : this(catalog, handlers, true)
+    constructor(catalog: InputCatalog, handlers: Map<String, InputHandler>) : this(catalog, handlers, true)
 
     init {
         val unknown = handlers.keys.filter { catalog[it] == null }
@@ -272,8 +272,8 @@ class HwihaInputRegistry private constructor(
 
     companion object {
         /** 같은 모듈의 테스트만 쓴다: 원장이 아직 PLANNED 인 입력에 핸들러를 물려 resolve 경로를 본다. */
-        internal fun forWiringTest(catalog: HwihaInputCatalog, handlers: Map<String, InputHandler>) =
-            HwihaInputRegistry(catalog, handlers, false)
+        internal fun forWiringTest(catalog: InputCatalog, handlers: Map<String, InputHandler>) =
+            InputRegistry(catalog, handlers, false)
 
     }
 }

@@ -20,8 +20,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
-import opensamguk.logic.input.HwihaLordStatus
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.LordStatus
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.tick.ServerClock
@@ -186,8 +186,8 @@ class MakeGeneralHandler(
             // The actual creation draw is the source, not a historical officer or default stats.
             RenownRules.personCost(drawResult.leadership, drawResult.strength, drawResult.intel,
                 drawResult.politics, drawResult.charm)
-            generalMeta[HwihaLordStatus.META_KEY] = false
-            generalMeta[HwihaPersonPolicyState.META_KEY] = HwihaPersonPolicyState(
+            generalMeta[LordStatus.META_KEY] = false
+            generalMeta[PersonPolicyState.META_KEY] = PersonPolicyState(
                 RenownRules.INITIAL_CAPACITY, false, "opensamguk:created-general", "v1", generalId,
             ).toMetaValue()
         }

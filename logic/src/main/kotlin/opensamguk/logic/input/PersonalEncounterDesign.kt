@@ -7,7 +7,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Versioned source of the implemented personal encounter numbers. */
-data class HwihaPersonalEncounterDesign(
+data class PersonalEncounterDesign(
     val strengthWeight: Int, val leadershipWeight: Int, val moraleDivisor: Int,
     val fatigueDivisor: Int, val injuryWeight: Int, val powerFloor: Int,
     val attackDivisor: Int, val defenseDivisor: Int, val defenderAdvantage: Int, val damageFloor: Int,
@@ -18,11 +18,11 @@ data class HwihaPersonalEncounterDesign(
 ) {
     companion object {
         const val RESOURCE = "hwiha/hwiha-personal-encounter-v1.json"
-        val CANON: HwihaPersonalEncounterDesign by lazy {
-            parse(checkNotNull(HwihaPersonalEncounterDesign::class.java.classLoader.getResource(RESOURCE)).readText())
+        val CANON: PersonalEncounterDesign by lazy {
+            parse(checkNotNull(PersonalEncounterDesign::class.java.classLoader.getResource(RESOURCE)).readText())
         }
 
-        fun parse(payload: String): HwihaPersonalEncounterDesign {
+        fun parse(payload: String): PersonalEncounterDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.keys == setOf("schemaVersion", "status", "source", "power", "damage", "roundLimit",
                 "capture", "injury", "condition"))
@@ -36,7 +36,7 @@ data class HwihaPersonalEncounterDesign(
             val injury = root.getValue("injury").jsonObject.exact("attackerDivisor", "defenderDivisor")
             val condition = root.getValue("condition").jsonObject.exact("fatiguePerRound", "moraleOnWin",
                 "moraleLossPerRound", "restFatigueRecovery", "restMoraleRecovery")
-            return HwihaPersonalEncounterDesign(power.number("strengthWeight"), power.number("leadershipWeight"),
+            return PersonalEncounterDesign(power.number("strengthWeight"), power.number("leadershipWeight"),
                 power.number("moraleDivisor"), power.number("fatigueDivisor"), power.number("injuryWeight"), power.number("floor"),
                 damage.number("attackDivisor"), damage.number("defenseDivisor"), damage.number("defenderAdvantage"),
                 damage.number("floor"), root.number("roundLimit"), capture.number("moraleAtMost"),

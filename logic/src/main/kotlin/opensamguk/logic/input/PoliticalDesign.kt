@@ -6,7 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Proposed rules for nation changing actions; the input ledger keeps those actions closed. */
-data class HwihaPoliticalDesign(val riseMinimumRenown: Int, val independenceMinimumRenown: Int,
+data class PoliticalDesign(val riseMinimumRenown: Int, val independenceMinimumRenown: Int,
     val initialDiplomacyState: Int) {
     init {
         require(riseMinimumRenown >= 0 && independenceMinimumRenown >= 0)
@@ -15,7 +15,7 @@ data class HwihaPoliticalDesign(val riseMinimumRenown: Int, val independenceMini
 
     companion object {
         val CANON by lazy {
-            val resource = checkNotNull(HwihaPoliticalDesign::class.java.classLoader
+            val resource = checkNotNull(PoliticalDesign::class.java.classLoader
                 .getResource("hwiha/hwiha-political-v1.json"))
             val root = Json.parseToJsonElement(resource.readText()).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note",
@@ -23,7 +23,7 @@ data class HwihaPoliticalDesign(val riseMinimumRenown: Int, val independenceMini
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1)
             require(root.getValue("ledgerId").jsonPrimitive.content == "hwiha-political-v1")
             require(root.getValue("status").jsonPrimitive.content == "PROPOSED")
-            HwihaPoliticalDesign(root.getValue("riseMinimumRenown").jsonPrimitive.int,
+            PoliticalDesign(root.getValue("riseMinimumRenown").jsonPrimitive.int,
                 root.getValue("independenceMinimumRenown").jsonPrimitive.int,
                 root.getValue("initialDiplomacyState").jsonPrimitive.int)
         }

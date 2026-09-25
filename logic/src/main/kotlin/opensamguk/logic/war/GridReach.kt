@@ -1,15 +1,15 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
-import opensamguk.logic.world.HwihaBattlefieldLayout
+import opensamguk.logic.world.BattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldLayout
 
 /** Center-to-center supercover visibility; units themselves do not obstruct this geometric query. */
-object HwihaGridReach {
+object GridReach {
     const val RULE_VERSION = 1
-    fun canStrike(layout: HwihaBattlefieldLayout, from: Position, to: Position, range: Int): Boolean {
+    fun canStrike(layout: BattlefieldLayout, from: Position, to: Position, range: Int): Boolean {
         require(range > 0)
         fun allowed(p: Position): Boolean = p in layout.distancesFromEntry &&
-            layout.geometry.cellAt(p)?.let { HwihaBattlefieldLayout.isLandPassable(it.terrain) } == true
+            layout.geometry.cellAt(p)?.let { BattlefieldLayout.isLandPassable(it.terrain) } == true
         if (from == to || !allowed(from) || !allowed(to)) return false
         // Coordinates are validated against the source geometry before subtraction/multiplication.
         val dx = kotlin.math.abs(to.col.toLong() - from.col)

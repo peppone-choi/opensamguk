@@ -1,6 +1,6 @@
 package opensamguk.logic.content
 
-import opensamguk.logic.input.HwihaAptitude
+import opensamguk.logic.input.Aptitude
 import opensamguk.logic.renown.RenownRules
 
 /** §2.7 bonds. Historical scenarios supply links and evidence in #596. */
@@ -26,7 +26,7 @@ data class UnitBond(val kind: UnitBondKind, val sourceId: String, val evidenceId
 }
 
 /** Persisted on the person general, ready for #596's source-backed historical prefill. */
-data class HwihaPersonBondState(val bonds: Set<PersonBond>) {
+data class PersonBondState(val bonds: Set<PersonBond>) {
     init { require(bonds.map { it.kind to it.targetId }.distinct().size == bonds.size) }
     fun toMetaValue(): Map<String, Any> = mapOf("version" to 1, "bonds" to bonds.sortedWith(
         compareBy({ it.kind.name }, { it.targetId })).map { bond -> mapOf(
@@ -35,7 +35,7 @@ data class HwihaPersonBondState(val bonds: Set<PersonBond>) {
     companion object {
         const val META_KEY = "hwihaPersonBonds"
 
-        fun read(meta: Map<String, Any?>): HwihaPersonBondState? {
+        fun read(meta: Map<String, Any?>): PersonBondState? {
             if (META_KEY !in meta) return null
             val row = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(row.keys == setOf("version", "bonds") && row["version"] == 1)
@@ -49,7 +49,7 @@ data class HwihaPersonBondState(val bonds: Set<PersonBond>) {
                 PersonBond(kind, item["targetId"] as? String ?: invalid(), evidence.toSet())
             } ?: invalid()
             require(bonds.distinct().size == bonds.size)
-            return HwihaPersonBondState(bonds.toSet())
+            return PersonBondState(bonds.toSet())
         }
 
         private fun invalid(): Nothing = throw IllegalArgumentException("invalid person bonds")
@@ -91,10 +91,10 @@ data class PersonCardSeason(
 }
 
 /** One card carries the §6.1 header, §6.2 person fields, and current season state. */
-data class HwihaPersonCard(
+data class PersonCard(
     val header: CardHeader,
     val identity: PersonCardIdentity,
-    val stats: HwihaAptitude.Stats,
+    val stats: Aptitude.Stats,
     val bonds: Set<PersonBond>,
     /** Card catalogue ids contributed to the direct holder's deck; count is not fixed here. */
     val stratagemCardIds: Set<String>,
@@ -109,11 +109,11 @@ data class HwihaPersonCard(
             stats.leadership, stats.strength, stats.intelligence, stats.politics, stats.charm))
     }
 
-    val aptitude: HwihaAptitude.Aptitudes get() = HwihaAptitude.compute(stats)
+    val aptitude: Aptitude.Aptitudes get() = Aptitude.compute(stats)
 }
 
 /** Stored on the linked general; #596 can seed historical contributions without changing the hand format. */
-data class HwihaPersonContributionState(val stratagemCardIds: Set<String>) {
+data class PersonContributionState(val stratagemCardIds: Set<String>) {
     init { require(stratagemCardIds.none { it.isBlank() }) }
 
     fun toMetaValue(): Map<String, Any> = mapOf("version" to 1, "stratagemCardIds" to stratagemCardIds.sorted())
@@ -121,20 +121,20 @@ data class HwihaPersonContributionState(val stratagemCardIds: Set<String>) {
     companion object {
         const val META_KEY = "hwihaPersonContribution"
 
-        fun read(meta: Map<String, Any?>): HwihaPersonContributionState? {
+        fun read(meta: Map<String, Any?>): PersonContributionState? {
             if (META_KEY !in meta) return null
             val row = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(row.keys == setOf("version", "stratagemCardIds") && row["version"] == 1)
             val ids = (row["stratagemCardIds"] as? List<*>)?.map { it as? String ?: invalid() } ?: invalid()
             require(ids.distinct().size == ids.size)
-            return HwihaPersonContributionState(ids.toSet())
+            return PersonContributionState(ids.toSet())
         }
 
         private fun invalid(): Nothing = throw IllegalArgumentException("invalid person stratagem contribution")
     }
 }
 
-data class DirectPersonHolding(val holderGeneralId: Int, val card: HwihaPersonCard, val cardIsNpc: Boolean) {
+data class DirectPersonHolding(val holderGeneralId: Int, val card: PersonCard, val cardIsNpc: Boolean) {
     init { require(holderGeneralId > 0) }
 }
 

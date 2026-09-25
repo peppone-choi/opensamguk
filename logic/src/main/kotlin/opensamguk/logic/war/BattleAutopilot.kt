@@ -1,26 +1,26 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import opensamguk.logic.input.*
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldGeometry.Position
 
 /** Generates explicit replay inputs from sealed state; never writes or settles a battle. */
-class HwihaBattleAutopilot(
-    encounter: HwihaCorpsEncounter,
-    forces: HwihaEncounterForces,
-    private val relations: HwihaEncounterRelations,
-    combat: HwihaEncounterCombatProfiles,
-    plans: HwihaBattlePlans,
-    private val deployment: HwihaEncounterDeployment,
+class BattleAutopilot(
+    encounter: CorpsEncounter,
+    forces: EncounterForces,
+    private val relations: EncounterRelations,
+    combat: EncounterCombatProfiles,
+    plans: BattlePlans,
+    private val deployment: EncounterDeployment,
 ) {
-    private val playback=HwihaBattlePlayback(encounter,forces,relations,combat,plans,deployment)
-    private val exchange=HwihaGridExchange(encounter,forces,relations,combat,deployment)
+    private val playback=BattlePlayback(encounter,forces,relations,combat,plans,deployment)
+    private val exchange=GridExchange(encounter,forces,relations,combat,deployment)
     private val original=forces.units.associateBy { it.bugokId }
     private val profiles=combat.profiles.associateBy { it.crewTypeId }
     private val order=compareBy<Position> { it.row }.thenBy { it.col }
 
-    fun next(journal:HwihaBattleJournal):HwihaRoundInput {
+    fun next(journal:BattleJournal):RoundInput {
         val before=playback.replay(journal)
-        require(before.barrier==HwihaBattlePlayback.Barrier.NONE) { "Battle requires resolution before another round" }
+        require(before.barrier==BattlePlayback.Barrier.NONE) { "Battle requires resolution before another round" }
         val occupied=before.units.mapNotNullTo(hashSetOf()) { it.position }
         val moves=before.units.sortedBy { it.bugokId }.mapNotNull { unit ->
             val start=unit.position
@@ -28,7 +28,7 @@ class HwihaBattleAutopilot(
                 before.actions.getValue(original.getValue(unit.bugokId).commanderGeneralId)!=BattlePlanAction.ADVANCE) return@mapNotNull null
             val enemies=enemies(unit,before.units)
             val profile=profiles.getValue(original.getValue(unit.bugokId).crewTypeId)
-            fun inRange(at:Position)=enemies.any { HwihaGridReach.canStrike(deployment.layout,at,it.position!!,profile.attackRange) }
+            fun inRange(at:Position)=enemies.any { GridReach.canStrike(deployment.layout,at,it.position!!,profile.attackRange) }
             if(enemies.isEmpty() || inRange(start))return@mapNotNull null
             val previous=hashMapOf<Position,Position?> (start to null)
             val queue=ArrayDeque<Position>();queue.add(start)
@@ -45,7 +45,7 @@ class HwihaBattleAutopilot(
             if(goal==null)return@mapNotNull null
             val reverse=mutableListOf<Position>();var cell=goal
             while(cell!=start) { reverse.add(cell!!);cell=previous.getValue(cell) }
-            HwihaGridExchange.MovementPlan(unit.bugokId,reverse.asReversed().take(profile.movementSteps))
+            GridExchange.MovementPlan(unit.bugokId,reverse.asReversed().take(profile.movementSteps))
         }
         // Use the same simultaneous movement kernel, including collisions, before choosing targets.
         val moved=exchange.resolveRound(before.units,moves,emptyList()).exchange.units
@@ -53,16 +53,16 @@ class HwihaBattleAutopilot(
             val at=unit.position
             if(at==null || unit.troops==0 || unit.morale==0)return@mapNotNull null
             val range=profiles.getValue(original.getValue(unit.bugokId).crewTypeId).attackRange
-            val target=enemies(unit,moved).filter { HwihaGridReach.canStrike(deployment.layout,at,it.position!!,range) }
-                .minWithOrNull(compareBy<HwihaGridExchange.UnitState> {
+            val target=enemies(unit,moved).filter { GridReach.canStrike(deployment.layout,at,it.position!!,range) }
+                .minWithOrNull(compareBy<GridExchange.UnitState> {
                     kotlin.math.abs(at.col.toLong()-it.position!!.col)+kotlin.math.abs(at.row.toLong()-it.position!!.row)
                 }.thenBy { it.bugokId }) ?: return@mapNotNull null
-            HwihaGridExchange.AttackIntent(unit.bugokId,target.bugokId)
+            GridExchange.AttackIntent(unit.bugokId,target.bugokId)
         }
-        return HwihaRoundInput(before.lastResolvedRound+1,moves,attacks)
+        return RoundInput(before.lastResolvedRound+1,moves,attacks)
     }
 
-    private fun enemies(unit:HwihaGridExchange.UnitState,units:List<HwihaGridExchange.UnitState>) = units.filter {
+    private fun enemies(unit:GridExchange.UnitState,units:List<GridExchange.UnitState>) = units.filter {
         it.troops>0 && it.position!=null && original.getValue(it.bugokId).commanderGeneralId!=original.getValue(unit.bugokId).commanderGeneralId &&
             relations.isHostile(original.getValue(unit.bugokId).commanderGeneralId,original.getValue(it.bugokId).commanderGeneralId)
     }

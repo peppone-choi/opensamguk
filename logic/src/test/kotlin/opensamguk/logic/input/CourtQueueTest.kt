@@ -5,9 +5,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertFailsWith
 
-class HwihaCourtQueueTest {
-    private val queue = HwihaQueuedDispatch("request._:-123", 42, 2, 10)
-    private fun read(value: Any?) = HwihaQueuedDispatch.read(mapOf(HwihaQueuedDispatch.META_KEY to value))
+class CourtQueueTest {
+    private val queue = QueuedDispatch("request._:-123", 42, 2, 10)
+    private fun read(value: Any?) = QueuedDispatch.read(mapOf(QueuedDispatch.META_KEY to value))
 
     @Test fun `round trip preserves owner and target with no actor field`() {
         assertEquals(queue, read(queue.toMetaValue()))
@@ -16,7 +16,7 @@ class HwihaCourtQueueTest {
     }
 
     @Test fun `only absent key is empty queue`() {
-        assertNull(HwihaQueuedDispatch.read(mapOf("unrelated" to 1)))
+        assertNull(QueuedDispatch.read(mapOf("unrelated" to 1)))
         for (value in listOf(null, false, "", 1, emptyList<Any>(), emptyMap<String, Any>())) {
             assertFailsWith<IllegalArgumentException> { read(value) }
         }

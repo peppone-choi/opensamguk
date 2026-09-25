@@ -1,7 +1,7 @@
 package opensamguk.logic.input
 
 /** One private queued decision on its issuer's metadata; actor identity is the containing general. */
-data class HwihaQueuedDispatch(
+data class QueuedDispatch(
     val requestId: String,
     val ownerUserId: Int,
     val targetGeneralId: Int,
@@ -21,11 +21,11 @@ data class HwihaQueuedDispatch(
         const val META_KEY = "hwihaQueuedDispatch"
         private val fields = setOf("requestId", "ownerUserId", "targetGeneralId", "countyId")
 
-        fun read(meta: Map<String, Any?>): HwihaQueuedDispatch? {
+        fun read(meta: Map<String, Any?>): QueuedDispatch? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(value.keys == fields)
-            return HwihaQueuedDispatch(
+            return QueuedDispatch(
                 value["requestId"] as? String ?: invalid(),
                 value["ownerUserId"] as? Int ?: invalid(),
                 value["targetGeneralId"] as? Int ?: invalid(),

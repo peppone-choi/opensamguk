@@ -1,8 +1,8 @@
 package opensamguk.logic.domestic
 
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaMarchCheckpoint
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.MarchCheckpoint
+import opensamguk.logic.input.Phase
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicTopologySnapshot
 
@@ -31,7 +31,7 @@ private fun Map<*, *>.exactLong(key: String, what: String): Long = when (val val
     is Long -> value
     else -> invalid(what)
 }
-private fun Map<*, *>.phaseOrNull(key: String): HwihaPhase? = this[key]?.let { HwihaPhase.read(it) }
+private fun Map<*, *>.phaseOrNull(key: String): Phase? = this[key]?.let { Phase.read(it) }
 private val requestIdPattern = Regex("[A-Za-z0-9._:-]{1,128}")
 
 /** 접수된 배치 한 건. 카드의 다음 턴에 현행이 된다(§4). */
@@ -41,7 +41,7 @@ data class PlacementOrder(
     val retainerId: Int,
     val post: PlacementPost,
     val target: PlacementTarget,
-    val requestedAt: HwihaPhase,
+    val requestedAt: Phase,
 ) {
     init {
         require(requestIdPattern.matches(requestId) && ownerGeneralId > 0 && retainerId > 0)
@@ -61,13 +61,13 @@ data class PlacementOrder(
             val post = PlacementPost.valueOf(value.string("post", "placement post"))
             return PlacementOrder(value.string("requestId", "placement"), value.int("ownerGeneralId", "placement"),
                 value.int("retainerId", "placement"), post, PlacementTarget.read(value["target"]),
-                HwihaPhase.read(value["requestedAt"]))
+                Phase.read(value["requestedAt"]))
         }
     }
 }
 
 /** 현행 배치. [arrivedAt] 이 있으면 자리에 앉은 것이다(행군이 목적지에 닿은 순). */
-data class ActivePlacement(val order: PlacementOrder, val since: HwihaPhase, val arrivedAt: HwihaPhase?) {
+data class ActivePlacement(val order: PlacementOrder, val since: Phase, val arrivedAt: Phase?) {
     init {
         require(order.post != PlacementPost.NONE) { "a release is never an active placement" }
         require(since >= order.requestedAt && (arrivedAt == null || arrivedAt >= since))
@@ -81,7 +81,7 @@ data class ActivePlacement(val order: PlacementOrder, val since: HwihaPhase, val
         fun read(raw: Any?): ActivePlacement {
             val value = raw as? Map<*, *> ?: invalid("active placement")
             require(value.keys == setOf("order", "since", "arrivedAt")) { "invalid HWIHA active placement fields" }
-            return ActivePlacement(PlacementOrder.read(value["order"]), HwihaPhase.read(value["since"]),
+            return ActivePlacement(PlacementOrder.read(value["order"]), Phase.read(value["since"]),
                 value.phaseOrNull("arrivedAt"))
         }
     }
@@ -113,7 +113,7 @@ data class PlacementState(val active: ActivePlacement?, val pending: PlacementOr
 }
 
 /** 배치 부임 행군. [requestId] 가 현행 배치와 다르면 낡은 진행이다. */
-data class PlacementMarch(val requestId: String, val checkpoint: HwihaMarchCheckpoint) {
+data class PlacementMarch(val requestId: String, val checkpoint: MarchCheckpoint) {
     init { require(requestIdPattern.matches(requestId)) }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("version" to 1, "requestId" to requestId, "checkpoint" to checkpoint.toMetaValue())
 
@@ -123,13 +123,13 @@ data class PlacementMarch(val requestId: String, val checkpoint: HwihaMarchCheck
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("placement march")
             require(value.keys == setOf("version", "requestId", "checkpoint") && value["version"] == 1) { "invalid HWIHA placement march schema" }
-            return PlacementMarch(value.string("requestId", "placement march"), HwihaMarchCheckpoint.read(value["checkpoint"], topology, metrics))
+            return PlacementMarch(value.string("requestId", "placement march"), MarchCheckpoint.read(value["checkpoint"], topology, metrics))
         }
     }
 }
 
 /** 걸린 방침. */
-data class PolicySetting(val policy: String, val requestId: String, val actorId: Int, val since: HwihaPhase) {
+data class PolicySetting(val policy: String, val requestId: String, val actorId: Int, val since: Phase) {
     init { require(policy.isNotBlank() && requestIdPattern.matches(requestId) && actorId > 0) }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("policy" to policy, "requestId" to requestId, "actorId" to actorId,
         "since" to since.toMetaValue())
@@ -138,13 +138,13 @@ data class PolicySetting(val policy: String, val requestId: String, val actorId:
             val value = raw as? Map<*, *> ?: invalid("policy setting")
             require(value.keys == setOf("policy", "requestId", "actorId", "since"))
             return PolicySetting(value.string("policy", "policy"), value.string("requestId", "policy"),
-                value.int("actorId", "policy"), HwihaPhase.read(value["since"]))
+                value.int("actorId", "policy"), Phase.read(value["since"]))
         }
     }
 }
 
 /** 접수된 방침 변경. [policy] null 은 거두기다. */
-data class PolicyOrder(val policy: String?, val requestId: String, val actorId: Int, val requestedAt: HwihaPhase) {
+data class PolicyOrder(val policy: String?, val requestId: String, val actorId: Int, val requestedAt: Phase) {
     init { require((policy == null || policy.isNotBlank()) && requestIdPattern.matches(requestId) && actorId > 0) }
     fun toMetaValue(): Map<String, Any?> = linkedMapOf("policy" to policy, "requestId" to requestId, "actorId" to actorId,
         "requestedAt" to requestedAt.toMetaValue())
@@ -154,7 +154,7 @@ data class PolicyOrder(val policy: String?, val requestId: String, val actorId: 
             require(value.keys == setOf("policy", "requestId", "actorId", "requestedAt"))
             val policy = value["policy"]?.let { it as? String ?: invalid("policy order") }
             return PolicyOrder(policy, value.string("requestId", "policy"), value.int("actorId", "policy"),
-                HwihaPhase.read(value["requestedAt"]))
+                Phase.read(value["requestedAt"]))
         }
     }
 }
@@ -165,7 +165,7 @@ data class PolicySlot(val active: PolicySetting?, val pending: PolicyOrder?) {
     fun toMetaValue(): Map<String, Any?> = linkedMapOf("active" to active?.toMetaValue(), "pending" to pending?.toMetaValue())
 
     /** 대기를 현행으로 옮긴다. 거두기면 현행이 사라진다. */
-    fun activate(now: HwihaPhase): PolicySlot {
+    fun activate(now: Phase): PolicySlot {
         val order = pending ?: return this
         return PolicySlot(order.policy?.let { PolicySetting(it, order.requestId, order.actorId, now) }, null)
     }
@@ -180,14 +180,14 @@ data class PolicySlot(val active: PolicySetting?, val pending: PolicyOrder?) {
 }
 
 /** 縣 방침의 마지막 적용(순마다 한 번). [result] 는 APPLIED 이거나 건너뛴 사유 코드다. */
-data class PolicyApplication(val at: HwihaPhase, val policy: String, val seat: String, val result: String) {
+data class PolicyApplication(val at: Phase, val policy: String, val seat: String, val result: String) {
     init { require(policy.isNotBlank() && seat in setOf("SEATED", "EMPTY") && result.isNotBlank()) }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("at" to at.toMetaValue(), "policy" to policy, "seat" to seat, "result" to result)
     companion object {
         fun read(raw: Any?): PolicyApplication {
             val value = raw as? Map<*, *> ?: invalid("policy application")
             require(value.keys == setOf("at", "policy", "seat", "result"))
-            return PolicyApplication(HwihaPhase.read(value["at"]), value.string("policy", "application"),
+            return PolicyApplication(Phase.read(value["at"]), value.string("policy", "application"),
                 value.string("seat", "application"), value.string("result", "application"))
         }
     }
@@ -286,12 +286,12 @@ data class ActiveWork(
     val work: DomesticWork,
     val requestId: String,
     val actorId: Int,
-    val requestedAt: HwihaPhase,
+    val requestedAt: Phase,
     val progress: Int,
     val required: Int,
     val cost: Resources,
     val charged: Resources,
-    val lastProgressAt: HwihaPhase?,
+    val lastProgressAt: Phase?,
     val stopReason: String?,
 ) {
     init {
@@ -313,7 +313,7 @@ data class ActiveWork(
             val value = raw as? Map<*, *> ?: invalid("active work")
             require(value.keys == fields && value["status"] == CountyWorks.IN_PROGRESS) { "invalid HWIHA active work fields" }
             return ActiveWork(DomesticWork.valueOf(value.string("kind", "work")), value.string("requestId", "work"),
-                value.int("actorId", "work"), HwihaPhase.read(value["requestedAt"]), value.int("progress", "work"),
+                value.int("actorId", "work"), Phase.read(value["requestedAt"]), value.int("progress", "work"),
                 value.int("required", "work"), resources(value["cost"]), resources(value["charged"]),
                 value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") })
         }
@@ -327,14 +327,14 @@ data class ActiveWork(
     }
 }
 
-data class CompletedWork(val work: DomesticWork, val completedAt: HwihaPhase) {
+data class CompletedWork(val work: DomesticWork, val completedAt: Phase) {
     fun toMetaValue(): Map<String, Any> = linkedMapOf("kind" to work.name, "status" to CountyWorks.COMPLETE,
         "completedAt" to completedAt.toMetaValue())
     companion object {
         fun read(raw: Any?): CompletedWork {
             val row = raw as? Map<*, *> ?: invalid("completed work")
             require(row.keys == setOf("kind", "status", "completedAt") && row["status"] == CountyWorks.COMPLETE)
-            return CompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), HwihaPhase.read(row["completedAt"]))
+            return CompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), Phase.read(row["completedAt"]))
         }
     }
 }

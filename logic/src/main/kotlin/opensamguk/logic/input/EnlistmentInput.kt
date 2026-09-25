@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import kotlinx.serialization.json.*
 
 /** Flat enlistment arguments only. Actor identity always comes from the authenticated caller. */
-object HwihaEnlistmentInput {
+object EnlistmentInput {
     const val RANDOM = "action.randomEnlist"
     const val TARGET = "action.targetEnlist"
     val INPUT_IDS = setOf("action.enlist", RANDOM, TARGET)
@@ -22,7 +22,7 @@ object HwihaEnlistmentInput {
     fun parse(actorId: Int, rawJson: String?): EnlistmentRequest? {
         if (actorId <= 0 || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             val modeValue = fields["mode"] as? JsonPrimitive ?: return null
             if (!modeValue.isString) return null
             val mode = EnlistmentMode.entries.firstOrNull { it.name == modeValue.content } ?: return null

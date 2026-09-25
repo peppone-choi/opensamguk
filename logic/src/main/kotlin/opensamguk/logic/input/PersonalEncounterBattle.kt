@@ -1,9 +1,9 @@
 package opensamguk.logic.input
 
 /** A lone general fights the hostile commanders encountered on a march, without inventing a bugok. */
-object HwihaPersonalEncounterBattle {
+object PersonalEncounterBattle {
     const val RULE_VERSION = 1
-    private val design get() = HwihaPersonalEncounterDesign.CANON
+    private val design get() = PersonalEncounterDesign.CANON
 
     data class Fighter(val generalId: Int, val leadership: Int, val strength: Int,
         val injury: Int, val fatigue: Int, val morale: Int) {

@@ -2,13 +2,13 @@ package opensamguk.logic.input
 
 import kotlin.test.*
 
-class HwihaRetireInputTest {
+class RetireInputTest {
     @Test fun `retirement requires one chosen successor id`() {
-        val request = HwihaRetireInput.parse(7, """{"successorGeneralId":8}""")!!
-        assertEquals(HwihaRetireRequest(7, 8), request)
-        assertEquals("""{"successorGeneralId":8}""", HwihaRetireInput.canonicalJson(request))
+        val request = RetireInput.parse(7, """{"successorGeneralId":8}""")!!
+        assertEquals(RetireRequest(7, 8), request)
+        assertEquals("""{"successorGeneralId":8}""", RetireInput.canonicalJson(request))
         for (raw in listOf("{}", """{"successorGeneralId":7}""", """{"successorGeneralId":"8"}""",
             """{"successorGeneralId":8,"successorGeneralId":9}""", """{"successorGeneralId":8} tail"""))
-            assertNull(HwihaRetireInput.parse(7, raw), raw)
+            assertNull(RetireInput.parse(7, raw), raw)
     }
 }

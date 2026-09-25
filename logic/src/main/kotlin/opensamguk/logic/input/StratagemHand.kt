@@ -2,20 +2,20 @@ package opensamguk.logic.input
 
 import java.util.Collections
 
-enum class HwihaStratagemCardType { FORTIFY, INSIGHT }
+enum class StratagemCardType { FORTIFY, INSIGHT }
 
 /** A stable instance contributed by a direct NPC person card. Negative IDs cannot collide with the base four. */
-data class ContributedStratagemInstance(val sourceKey: String, val instanceId: Int, val type: HwihaStratagemCardType) {
+data class ContributedStratagemInstance(val sourceKey: String, val instanceId: Int, val type: StratagemCardType) {
     init { require(sourceKey.isNotBlank() && instanceId < 0) }
 }
 
 /** Base four instances stay compatible with v1 metadata; v2 tracks owned NPC contributions. */
-class HwihaStratagemHand(
+class StratagemHand(
     val ownerGeneralId: Int,
     hand: List<Int>,
     drawPile: List<Int>,
     discard: List<Int>,
-    val lastDrawPhase: HwihaPhase,
+    val lastDrawPhase: Phase,
     extras: List<ContributedStratagemInstance> = emptyList(),
 ) {
     val hand: List<Int> = Collections.unmodifiableList(ArrayList(hand))
@@ -32,14 +32,14 @@ class HwihaStratagemHand(
         require(all.size == owned.size && all.toSet() == owned) { "Cards must partition the owned instances" }
     }
 
-    fun cardType(id: Int): HwihaStratagemCardType = when (id) {
-        1, 3 -> HwihaStratagemCardType.FORTIFY
-        2, 4 -> HwihaStratagemCardType.INSIGHT
+    fun cardType(id: Int): StratagemCardType = when (id) {
+        1, 3 -> StratagemCardType.FORTIFY
+        2, 4 -> StratagemCardType.INSIGHT
         else -> extras.singleOrNull { it.instanceId == id }?.type ?: throw IllegalArgumentException("Unknown stratagem instance")
     }
 
     /** Reconcile the direct holder's current NPC cards before drawing; release removes their instances. */
-    fun withContributions(desired: Map<String, HwihaStratagemCardType>): HwihaStratagemHand {
+    fun withContributions(desired: Map<String, StratagemCardType>): StratagemHand {
         require(desired.keys.none { it.isBlank() })
         if (extras.size == desired.size && extras.all { desired[it.sourceKey] == it.type }) return this
         val retained = extras.filter { desired[it.sourceKey] == it.type }
@@ -49,24 +49,24 @@ class HwihaStratagemHand(
         val added = desired.entries.filter { it.key !in retainedKeys }.sortedBy { it.key }.map { (key, type) ->
             ContributedStratagemInstance(key, nextId--, type)
         }
-        return HwihaStratagemHand(ownerGeneralId, hand.filterNot { it in removedIds },
+        return StratagemHand(ownerGeneralId, hand.filterNot { it in removedIds },
             drawPile.filterNot { it in removedIds } + added.map { it.instanceId },
             discard.filterNot { it in removedIds }, lastDrawPhase, retained + added)
     }
 
-    fun advance(phase: HwihaPhase): HwihaStratagemHand {
+    fun advance(phase: Phase): StratagemHand {
         require(phase >= lastDrawPhase) { "Cannot draw in an older phase" }
         if (phase == lastDrawPhase) return this
         val pile = if (drawPile.isEmpty()) discard.sorted() else drawPile
         val remainingDiscard = if (drawPile.isEmpty()) emptyList() else discard
         val drawn = pile.first()
-        return HwihaStratagemHand(ownerGeneralId, if (hand.size < HAND_LIMIT) hand + drawn else hand,
+        return StratagemHand(ownerGeneralId, if (hand.size < HAND_LIMIT) hand + drawn else hand,
             pile.drop(1), if (hand.size < HAND_LIMIT) remainingDiscard else remainingDiscard + drawn, phase, extras)
     }
 
-    fun consume(instanceId: Int): HwihaStratagemHand {
+    fun consume(instanceId: Int): StratagemHand {
         require(instanceId in hand) { "Only an owned hand instance can be consumed" }
-        return HwihaStratagemHand(ownerGeneralId, hand.filter { it != instanceId }, drawPile,
+        return StratagemHand(ownerGeneralId, hand.filter { it != instanceId }, drawPile,
             discard + instanceId, lastDrawPhase, extras)
     }
 
@@ -87,10 +87,10 @@ class HwihaStratagemHand(
         const val HAND_LIMIT = 3
         private val V1_FIELDS = setOf("version", "ownerGeneralId", "hand", "drawPile", "discard", "lastDrawPhase")
 
-        fun initial(owner: Int, phase: HwihaPhase) =
-            HwihaStratagemHand(owner, listOf(1, 2), listOf(3, 4), emptyList(), phase)
+        fun initial(owner: Int, phase: Phase) =
+            StratagemHand(owner, listOf(1, 2), listOf(3, 4), emptyList(), phase)
 
-        fun read(meta: Map<String, Any?>, ownerGeneralId: Int): HwihaStratagemHand? {
+        fun read(meta: Map<String, Any?>, ownerGeneralId: Int): StratagemHand? {
             require(ownerGeneralId > 0)
             if (META_KEY !in meta) return null
             val row = meta[META_KEY] as? Map<*, *> ?: invalid()
@@ -104,14 +104,14 @@ class HwihaStratagemHand(
                 val value = raw as? Map<*, *> ?: invalid()
                 require(value.keys == setOf("sourceKey", "instanceId", "type"))
                 val type = (value["type"] as? String)?.let { name ->
-                    HwihaStratagemCardType.entries.firstOrNull { it.name == name }
+                    StratagemCardType.entries.firstOrNull { it.name == name }
                 } ?: invalid()
                 ContributedStratagemInstance(value["sourceKey"] as? String ?: invalid(),
                     value["instanceId"] as? Int ?: invalid(), type)
             } ?: invalid()
             require(version != 2 || extras.isNotEmpty())
-            return HwihaStratagemHand(owner, ids("hand"), ids("drawPile"), ids("discard"),
-                HwihaPhase.read(row["lastDrawPhase"]), extras)
+            return StratagemHand(owner, ids("hand"), ids("drawPile"), ids("discard"),
+                Phase.read(row["lastDrawPhase"]), extras)
         }
 
         private fun invalid(): Nothing = throw IllegalArgumentException("Invalid stratagem hand")

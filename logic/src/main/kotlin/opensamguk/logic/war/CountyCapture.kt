@@ -1,4 +1,4 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 /**
  * 縣 점령 정산.
@@ -14,9 +14,9 @@ package opensamguk.logic.war.hwiha
  * - **같은 순 월세입은 점령 뒤 소유자에게 귀속한다**(`OWNER_AFTER_CAPTURE`).
  *
  * 기준은 평화 항복이다 — 인구·재고 손실이 없다. 강공 손실·항복군 처우·수송 반송은 범위 밖이다.
- * 항복 판정은 [HwihaSiegeMorale] 가 맡는다.
+ * 항복 판정은 [SiegeMorale] 가 맡는다.
  */
-object HwihaCountyCapture {
+object CountyCapture {
     /**
      * 점령 직전 縣 상태.
      *

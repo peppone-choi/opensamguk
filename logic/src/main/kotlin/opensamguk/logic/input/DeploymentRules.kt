@@ -8,7 +8,7 @@ data class DeploymentPerson(val id: Int, val nationId: Int, val isUnownedNpc: Bo
 data class DeploymentUnit(val id: Int, val ownerId: Int, val troops: Int, val commanderRetainerId: Int?)
 data class DeploymentRetainer(val id: Int, val ownerId: Int, val generalId: Int?, val isLieutenant: Boolean)
 data class DeploymentProjection(val profile: RuleProfile, val people: List<DeploymentPerson>,
-    val units: List<DeploymentUnit>, val retainers: List<DeploymentRetainer>, val deployed: List<HwihaDeployedCorps>)
+    val units: List<DeploymentUnit>, val retainers: List<DeploymentRetainer>, val deployed: List<DeployedCorps>)
 data class DeploymentRequest(val ownerId: Int, val commanderRetainerId: Int?, val bugokIds: List<Int>)
 enum class DeploymentFailure {
     WRONG_RULE_PROFILE, INVALID_INPUT, OWNER_UNAVAILABLE, COMMANDER_UNAVAILABLE, DIFFERENT_NATION,
@@ -22,7 +22,7 @@ sealed interface DeploymentAssessment {
 }
 
 /** No troop count, supplies, or location is copied into deployment metadata. */
-object HwihaDeploymentRules {
+object DeploymentRules {
     fun assess(request: DeploymentRequest, state: DeploymentProjection): DeploymentAssessment {
         val base = relationship(request, state)
         if (base !is DeploymentAssessment.Eligible) return base
@@ -35,7 +35,7 @@ object HwihaDeploymentRules {
     }
 
     /** Recheck current allegiance, cards, and troops; malformed/stale corps never become ordinary residents. */
-    fun assessActive(corps: HwihaDeployedCorps, state: DeploymentProjection): DeploymentAssessment {
+    fun assessActive(corps: DeployedCorps, state: DeploymentProjection): DeploymentAssessment {
         val base = relationship(DeploymentRequest(corps.ownerGeneralId, corps.commanderRetainerId, corps.bugokIds), state)
         if (base !is DeploymentAssessment.Eligible) return base
         if (base.commander.id != corps.commanderGeneralId) return reject(DeploymentFailure.COMMANDER_CHANGED)

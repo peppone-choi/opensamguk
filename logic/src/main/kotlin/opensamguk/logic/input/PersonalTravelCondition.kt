@@ -6,38 +6,38 @@ import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.ResolvedLandMarchPath
 
 /** Personal stamina and spirit used by direct forced march; independent of city troops and bugok. */
-data class HwihaPersonalTravelCondition(val fatigue: Int, val morale: Int,
+data class PersonalTravelCondition(val fatigue: Int, val morale: Int,
     val forcedDistanceRemainderMm: Long = 0) {
     init { require(fatigue in 0..100 && morale in 0..100 &&
-        forcedDistanceRemainderMm in 0 until HwihaForcedMarchTempo.distanceMm) }
+        forcedDistanceRemainderMm in 0 until ForcedMarchTempo.distanceMm) }
 
     fun toMetaValue(): Map<String, Any> = linkedMapOf("version" to 1, "fatigue" to fatigue, "morale" to morale,
         "forcedDistanceRemainderMm" to forcedDistanceRemainderMm)
 
     fun afterForcedMarch(previous: LandMarchCursor, next: LandMarchCursor,
-        path: ResolvedLandMarchPath, metrics: LandMarchMetricSnapshot): HwihaPersonalTravelCondition {
-        val beforeMm = HwihaPersonalTravelDistance.at(path, previous, metrics)
-        val afterMm = HwihaPersonalTravelDistance.at(path, next, metrics)
+        path: ResolvedLandMarchPath, metrics: LandMarchMetricSnapshot): PersonalTravelCondition {
+        val beforeMm = PersonalTravelDistance.at(path, previous, metrics)
+        val afterMm = PersonalTravelDistance.at(path, next, metrics)
         require(afterMm >= beforeMm)
         val cumulative = Math.addExact(forcedDistanceRemainderMm, afterMm - beforeMm)
-        val fatigueGain = HwihaPersonalTravelDistance.points(cumulative, HwihaForcedMarchTempo.fatiguePerDistance) -
-            HwihaPersonalTravelDistance.points(forcedDistanceRemainderMm, HwihaForcedMarchTempo.fatiguePerDistance)
-        val moraleLoss = HwihaPersonalTravelDistance.points(cumulative, HwihaForcedMarchTempo.moralePerDistance) -
-            HwihaPersonalTravelDistance.points(forcedDistanceRemainderMm, HwihaForcedMarchTempo.moralePerDistance)
-        return HwihaPersonalTravelCondition((fatigue.toLong() + fatigueGain).coerceAtMost(100).toInt(),
-            (morale.toLong() - moraleLoss).coerceAtLeast(0).toInt(), cumulative % HwihaForcedMarchTempo.distanceMm)
+        val fatigueGain = PersonalTravelDistance.points(cumulative, ForcedMarchTempo.fatiguePerDistance) -
+            PersonalTravelDistance.points(forcedDistanceRemainderMm, ForcedMarchTempo.fatiguePerDistance)
+        val moraleLoss = PersonalTravelDistance.points(cumulative, ForcedMarchTempo.moralePerDistance) -
+            PersonalTravelDistance.points(forcedDistanceRemainderMm, ForcedMarchTempo.moralePerDistance)
+        return PersonalTravelCondition((fatigue.toLong() + fatigueGain).coerceAtMost(100).toInt(),
+            (morale.toLong() - moraleLoss).coerceAtLeast(0).toInt(), cumulative % ForcedMarchTempo.distanceMm)
     }
 
     /** A phase without direct travel restores the cost of one 30 km forced march. */
-    fun afterRest(): HwihaPersonalTravelCondition = HwihaPersonalEncounterDesign.CANON.let { design -> copy(
+    fun afterRest(): PersonalTravelCondition = PersonalEncounterDesign.CANON.let { design -> copy(
         fatigue = (fatigue - design.restFatigueRecovery).coerceAtLeast(0),
         morale = (morale + design.restMoraleRecovery).coerceAtMost(100)) }
 
     companion object {
         const val META_KEY = "hwihaPersonalTravelCondition"
-        val INITIAL = HwihaPersonalTravelCondition(0, 100)
+        val INITIAL = PersonalTravelCondition(0, 100)
 
-        fun read(meta: Map<String, Any?>): HwihaPersonalTravelCondition? {
+        fun read(meta: Map<String, Any?>): PersonalTravelCondition? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(value.keys == setOf("version", "fatigue", "morale", "forcedDistanceRemainderMm") && value["version"] == 1)
@@ -46,7 +46,7 @@ data class HwihaPersonalTravelCondition(val fatigue: Int, val morale: Int,
                 is Long -> raw
                 else -> invalid()
             }
-            return HwihaPersonalTravelCondition(value["fatigue"] as? Int ?: invalid(),
+            return PersonalTravelCondition(value["fatigue"] as? Int ?: invalid(),
                 value["morale"] as? Int ?: invalid(), remainder)
         }
 
@@ -55,7 +55,7 @@ data class HwihaPersonalTravelCondition(val fatigue: Int, val morale: Int,
 }
 
 /** Cumulative physical distance avoids rounding away short partial steps across phases. */
-object HwihaPersonalTravelDistance {
+object PersonalTravelDistance {
     fun at(path: ResolvedLandMarchPath, cursor: LandMarchCursor, metrics: LandMarchMetricSnapshot): Long {
         require(cursor.pathHash == path.pathHash && cursor.edgeIndex <= path.edgeIds.size)
         val complete = path.edgeIds.take(cursor.edgeIndex).fold(0L) { total, id ->
@@ -72,6 +72,6 @@ object HwihaPersonalTravelDistance {
     fun points(distanceMm: Long, pointsPerThirtyKm: Int): Long {
         require(distanceMm >= 0 && pointsPerThirtyKm >= 0)
         return BigInteger.valueOf(distanceMm).multiply(BigInteger.valueOf(pointsPerThirtyKm.toLong()))
-            .divide(BigInteger.valueOf(HwihaForcedMarchTempo.distanceMm)).longValueExact()
+            .divide(BigInteger.valueOf(ForcedMarchTempo.distanceMm)).longValueExact()
     }
 }

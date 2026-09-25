@@ -1,6 +1,6 @@
 package opensamguk.infra.seed
 
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.renown.RenownRules
 
@@ -10,8 +10,8 @@ internal object HwihaScenarioPersonPolicies {
     private val tupleIndices = listOf(5, 6, 7, 14, 15)
     private val fields = setOf("name", "statSourceId", "statSourceRevision", "officerId", "acceptsEnlistment", "stats")
 
-    data class Declaration(val state: HwihaPersonPolicyState, val stats: List<Int>) {
-        fun bind(general: ScenarioGeneral): HwihaPersonPolicyState {
+    data class Declaration(val state: PersonPolicyState, val stats: List<Int>) {
+        fun bind(general: ScenarioGeneral): PersonPolicyState {
             require(stats == explicitStats(general)) { "Declared five stats disagree with scenario person ${general.name}" }
             require(general.officerNumber == null || general.officerNumber == state.officerId) { "Scenario officer identity mismatch" }
             return state
@@ -31,7 +31,7 @@ internal object HwihaScenarioPersonPolicies {
             fun text(key: String): String = (row[key] as? String)?.takeIf { it.isNotBlank() }
                 ?: throw IllegalArgumentException("Missing person policy $key")
             val name = text("name")
-            val state = HwihaPersonPolicyState(RenownRules.INITIAL_CAPACITY,
+            val state = PersonPolicyState(RenownRules.INITIAL_CAPACITY,
                 row["acceptsEnlistment"] as? Boolean ?: throw IllegalArgumentException("Explicit acceptance required"),
                 text("statSourceId"), text("statSourceRevision"), nonnegative(row["officerId"]))
             requireSynthetic(state)
@@ -59,7 +59,7 @@ internal object HwihaScenarioPersonPolicies {
         }
         return raw
     }
-    private fun requireSynthetic(state: HwihaPersonPolicyState) {
+    private fun requireSynthetic(state: PersonPolicyState) {
         require(state.statSourceId.startsWith("synthetic-qa:") && state.statSourceId.length > "synthetic-qa:".length) {
             "Historical person policy requires a separately verified dataset; only synthetic-qa sources are accepted here"
         }

@@ -3,17 +3,17 @@ package opensamguk.logic.input
 import kotlin.test.*
 import opensamguk.logic.world.*
 
-class HwihaCorpsEncounterTest {
+class CorpsEncounterTest {
     private val topology = StrategicTopologySnapshot("qa",setOf("A","B","C"),emptyList(),emptyList(),emptyList(),
         mapOf("qa.json" to "a".repeat(64)))
-    private val phase = HwihaPhase(200,1,2)
-    private val attackingCorps = HwihaDeployedCorps("attack",1,2,3,1,listOf(10,11),phase)
-    private val attacker = HwihaEncounterParticipant.from(attackingCorps)
-    private val defender = HwihaEncounterParticipant("defend",4,5,0,listOf(20,21))
-    private val second = HwihaEncounterParticipant("third",6,7,3,listOf(30))
-    private val state = HwihaCorpsEncounter(attacker,listOf(defender,second),StrategicNodeRef.LandProvince("B"),
+    private val phase = Phase(200,1,2)
+    private val attackingCorps = DeployedCorps("attack",1,2,3,1,listOf(10,11),phase)
+    private val attacker = EncounterParticipant.from(attackingCorps)
+    private val defender = EncounterParticipant("defend",4,5,0,listOf(20,21))
+    private val second = EncounterParticipant("third",6,7,3,listOf(30))
+    private val state = CorpsEncounter(attacker,listOf(defender,second),StrategicNodeRef.LandProvince("B"),
         StrategicNodeRef.LandProvince("A"),phase,topology.topologyRevision,topology.contentHash)
-    private fun read(raw: Any?) = HwihaCorpsEncounter.read(mapOf(HwihaCorpsEncounter.META_KEY to raw),topology)
+    private fun read(raw: Any?) = CorpsEncounter.read(mapOf(CorpsEncounter.META_KEY to raw),topology)
 
     @Test fun `canonical identity and stored participant order ignore caller list order`() {
         val reversed = state.copy(attacker=attacker.copy(bugokIds=listOf(11,10)),
@@ -22,7 +22,7 @@ class HwihaCorpsEncounterTest {
         assertEquals(state.toMetaValue(),reversed.toMetaValue())
         assertEquals(state.toMetaValue(),assertNotNull(read(reversed.toMetaValue())).toMetaValue())
         assertTrue(state.encounterId.matches(Regex("[0-9a-f]{64}")))
-        assertNull(HwihaCorpsEncounter.read(emptyMap(),topology))
+        assertNull(CorpsEncounter.read(emptyMap(),topology))
     }
 
     @Test fun `participants bind exact live corps and storage accepts commanders only`() {
@@ -78,6 +78,6 @@ class HwihaCorpsEncounterTest {
         assertFailsWith<IllegalArgumentException> { read(raw+("defenders" to listOf(second.toMetaValue(),defender.toMetaValue()))) }
         val wrong = StrategicTopologySnapshot("stale",setOf("A","B","C"),emptyList(),emptyList(),emptyList(),
             mapOf("qa.json" to "a".repeat(64)))
-        assertFailsWith<IllegalArgumentException> { HwihaCorpsEncounter.read(mapOf(HwihaCorpsEncounter.META_KEY to raw),wrong) }
+        assertFailsWith<IllegalArgumentException> { CorpsEncounter.read(mapOf(CorpsEncounter.META_KEY to raw),wrong) }
     }
 }

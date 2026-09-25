@@ -6,7 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** One-phase personal action values. PROPOSED keeps reservation and execution closed. */
-data class HwihaPersonalDesign(
+data class PersonalDesign(
     val status: String,
     val travelExperience: Int,
     val travelDedication: Int,
@@ -28,9 +28,9 @@ data class HwihaPersonalDesign(
     companion object {
         const val CONFIRMED = "CONFIRMED"
         private const val RESOURCE = "hwiha/hwiha-personal-v1.json"
-        val CANON by lazy { parse(checkNotNull(HwihaPersonalDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
+        val CANON by lazy { parse(checkNotNull(PersonalDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
 
-        fun parse(payload: String): HwihaPersonalDesign {
+        fun parse(payload: String): PersonalDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note", "travelExperience",
                 "travelDedication", "trainingStatGain", "trainingStatCap", "trainingFatigueGain",
@@ -39,7 +39,7 @@ data class HwihaPersonalDesign(
                 root.getValue("ledgerId").jsonPrimitive.content == "hwiha-personal-v1" &&
                 root.getValue("note").jsonPrimitive.content.isNotBlank())
             fun number(name: String) = root.getValue(name).jsonPrimitive.int
-            return HwihaPersonalDesign(root.getValue("status").jsonPrimitive.content,
+            return PersonalDesign(root.getValue("status").jsonPrimitive.content,
                 number("travelExperience"), number("travelDedication"), number("trainingStatGain"),
                 number("trainingStatCap"), number("trainingFatigueGain"), number("recuperationInjuryRecovery"),
                 number("recuperationFatigueRecovery"), number("retirementMinimumAge"))

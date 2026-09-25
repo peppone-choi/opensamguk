@@ -14,13 +14,13 @@ class HwihaDispatchPrecheckServiceTest {
     private val retainers = mock(RetainerReadRepository::class.java)
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val service = HwihaDispatchPrecheckService(generals, retainers, resolver)
-    private val now = HwihaPhase(200, 1, 1)
-    private val dispatch = HwihaDispatchState("d1", 1, 2, 1, 7, now, now.plus(12))
+    private val now = Phase(200, 1, 1)
+    private val dispatch = DispatchState("d1", 1, 2, 1, 7, now, now.plus(12))
     private fun person(id: Int, meta: Map<String, Any?> = emptyMap()) = GeneralReadEntity(
         id = id, name = "G$id", worldId = 1, nationId = 1, userId = (40 + id).toString(), npcState = 2,
         meta = mapOf("hwihaLord" to (id == 1)) + meta)
-    private fun setup(pending: Boolean = false, phase: HwihaPhase = now): List<GeneralReadEntity> {
-        val people = listOf(person(1), person(2, if (pending) mapOf(HwihaDispatchState.META_KEY to dispatch.toMetaValue()) else emptyMap()), person(3))
+    private fun setup(pending: Boolean = false, phase: Phase = now): List<GeneralReadEntity> {
+        val people = listOf(person(1), person(2, if (pending) mapOf(DispatchState.META_KEY to dispatch.toMetaValue()) else emptyMap()), person(3))
         people.forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
         `when`(generals.findAll()).thenReturn(people)
         `when`(retainers.findAll()).thenReturn(listOf(GeneralRetainerReadEntity(worldId = 1, id = 5, masterGeneralId = 1, generalId = 2)))
@@ -117,8 +117,8 @@ class HwihaDispatchPrecheckServiceTest {
         assertEquals(DispatchFailure.ALREADY_PENDING,blocked.code)
         assertEquals(blocked.code!!.message,blocked.reason)
         people[1].meta = mapOf("hwihaLord" to false)
-        people[2].meta = mapOf("hwihaLord" to false, HwihaCountyAssignment.META_KEY to
-            HwihaCountyAssignment("other",1,1,7).toMetaValue())
+        people[2].meta = mapOf("hwihaLord" to false, CountyAssignment.META_KEY to
+            CountyAssignment("other",1,1,7).toMetaValue())
         assertEquals(DispatchFailure.COUNTY_OCCUPIED,service.options(1,41,2).counties.single().code)
         val world = resolver.resolve()!!
         world.cities.single { it.id == 7 }.nationId = 2
@@ -141,7 +141,7 @@ class HwihaDispatchPrecheckServiceTest {
     }
     @Test fun `queued request is visible only to submitting current owner and blocks all new county options`() {
         val people = setup()
-        people[0].meta += HwihaQueuedDispatch.META_KEY to HwihaQueuedDispatch("q1",41,2,7).toMetaValue()
+        people[0].meta += QueuedDispatch.META_KEY to QueuedDispatch("q1",41,2,7).toMetaValue()
         assertEquals("q1",service.pending(1,41).queued!!.requestId)
         assertEquals("q1",service.options(1,41,2).queued!!.requestId)
         assertEquals(DispatchFailure.ALREADY_QUEUED,service.options(1,41,2).counties.single().code)
@@ -154,7 +154,7 @@ class HwihaDispatchPrecheckServiceTest {
     }
     @Test fun `options unavailable states stay explicit and corrupt queue never returns successful empty data`() {
         val people = setup()
-        people[0].meta += HwihaQueuedDispatch.META_KEY to null
+        people[0].meta += QueuedDispatch.META_KEY to null
         assertEquals(DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE),
             service.assessDispatch(DispatchRequest(1,2,7),41))
         assertEquals(DispatchFailure.STATE_UNAVAILABLE,service.options(1,41).code)

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 /** `action.scout` reservation admission. The engine re-checks the same rule at the actor's turn (§5 contract). */
 @Service
 class HwihaScoutAdmission(private val vision: HwihaVisionReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     fun canonicalArguments(generalId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
         if (ownerUserId == null || ownerUserId <= 0) deny("UNAUTHORIZED", "제출자 인증이 필요합니다.")
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")

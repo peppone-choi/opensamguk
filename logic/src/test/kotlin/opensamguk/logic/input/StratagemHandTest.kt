@@ -2,14 +2,14 @@ package opensamguk.logic.input
 
 import kotlin.test.*
 
-class HwihaStratagemHandTest {
-    private val phase=HwihaPhase(200,1,1)
-    private fun initial()=HwihaStratagemHand.initial(1,phase)
-    private fun read(raw:Any?,owner:Int=1)=HwihaStratagemHand.read(mapOf(HwihaStratagemHand.META_KEY to raw),owner)
+class StratagemHandTest {
+    private val phase=Phase(200,1,1)
+    private fun initial()=StratagemHand.initial(1,phase)
+    private fun read(raw:Any?,owner:Int=1)=StratagemHand.read(mapOf(StratagemHand.META_KEY to raw),owner)
     @Test fun `opening hand fixed types and one draw per actual later phase survive cold read`() {
         val h=initial()
         assertEquals(listOf(1,2),h.hand);assertEquals(listOf(3,4),h.drawPile);assertTrue(h.discard.isEmpty())
-        assertEquals(listOf(HwihaStratagemCardType.FORTIFY,HwihaStratagemCardType.INSIGHT,HwihaStratagemCardType.FORTIFY,HwihaStratagemCardType.INSIGHT),(1..4).map(h::cardType))
+        assertEquals(listOf(StratagemCardType.FORTIFY,StratagemCardType.INSIGHT,StratagemCardType.FORTIFY,StratagemCardType.INSIGHT),(1..4).map(h::cardType))
         assertSame(h,h.advance(phase))
         val next=h.advance(phase.plus(10))
         assertEquals(listOf(1,2,3),next.hand);assertEquals(listOf(4),next.drawPile)
@@ -30,14 +30,14 @@ class HwihaStratagemHandTest {
     }
     @Test fun `partition and immutable ownership never initialize missing or malformed state`() {
         val hand=mutableListOf(1,2);val pile=mutableListOf(3,4);val discard=mutableListOf<Int>()
-        val h=HwihaStratagemHand(1,hand,pile,discard,phase);hand.clear();pile.clear();discard.add(1)
+        val h=StratagemHand(1,hand,pile,discard,phase);hand.clear();pile.clear();discard.add(1)
         assertEquals(initial().toMetaValue(),h.toMetaValue())
         for(list in listOf(h.hand,h.drawPile,h.discard))assertFailsWith<UnsupportedOperationException> { (list as MutableList<*>).clear() }
-        assertNull(HwihaStratagemHand.read(emptyMap(),1));assertFailsWith<IllegalArgumentException> { read(null) }
+        assertNull(StratagemHand.read(emptyMap(),1));assertFailsWith<IllegalArgumentException> { read(null) }
         assertFailsWith<IllegalArgumentException> { read(h.toMetaValue(),2) }
-        assertFailsWith<IllegalArgumentException> { HwihaStratagemHand(1,listOf(1,2,3,4),emptyList(),emptyList(),phase) }
-        assertFailsWith<IllegalArgumentException> { HwihaStratagemHand(1,listOf(1,1),listOf(3,4),emptyList(),phase) }
-        assertFailsWith<IllegalArgumentException> { HwihaStratagemHand(1,listOf(1,2),listOf(3,5),emptyList(),phase) }
+        assertFailsWith<IllegalArgumentException> { StratagemHand(1,listOf(1,2,3,4),emptyList(),emptyList(),phase) }
+        assertFailsWith<IllegalArgumentException> { StratagemHand(1,listOf(1,1),listOf(3,4),emptyList(),phase) }
+        assertFailsWith<IllegalArgumentException> { StratagemHand(1,listOf(1,2),listOf(3,5),emptyList(),phase) }
         assertFailsWith<IllegalArgumentException> { h.cardType(0) }
     }
     @Test fun `strict metadata rejects numeric coercion missing extra fields and invalid phase`() {
@@ -48,13 +48,13 @@ class HwihaStratagemHandTest {
         for(v in listOf<Any>(1L,1.0,"1",true)) assertFailsWith<IllegalArgumentException> { read(raw+("hand" to listOf(v,2))) }
     }
     @Test fun `NPC contributed instances join and leave the same owned deck across cold reads`() {
-        val joined = initial().withContributions(mapOf("20:hwiha-stratagem-insight" to HwihaStratagemCardType.INSIGHT))
+        val joined = initial().withContributions(mapOf("20:hwiha-stratagem-insight" to StratagemCardType.INSIGHT))
         assertEquals(listOf(3, 4, -1), joined.drawPile)
-        assertEquals(HwihaStratagemCardType.INSIGHT, joined.cardType(-1))
+        assertEquals(StratagemCardType.INSIGHT, joined.cardType(-1))
         val cold = assertNotNull(read(joined.toMetaValue()))
         assertEquals(2, cold.toMetaValue()["version"])
         assertEquals(joined.toMetaValue(), cold.toMetaValue())
-        assertSame(cold, cold.withContributions(mapOf("20:hwiha-stratagem-insight" to HwihaStratagemCardType.INSIGHT)))
+        assertSame(cold, cold.withContributions(mapOf("20:hwiha-stratagem-insight" to StratagemCardType.INSIGHT)))
         val released = cold.withContributions(emptyMap())
         assertEquals(listOf(3, 4), released.drawPile)
         assertEquals(1, released.toMetaValue()["version"])

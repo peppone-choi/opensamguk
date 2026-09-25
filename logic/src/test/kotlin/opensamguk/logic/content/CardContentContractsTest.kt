@@ -4,14 +4,14 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import opensamguk.logic.input.HwihaPhase
-import opensamguk.logic.input.HwihaStratagemCardType
-import opensamguk.logic.input.HwihaStratagemHand
+import opensamguk.logic.input.Phase
+import opensamguk.logic.input.StratagemCardType
+import opensamguk.logic.input.StratagemHand
 
 class CardContentContractsTest {
     private val evidence = ContentEvidence("source-1", CardProvenance.Citation("三國志", "卷18"))
-    private val card = HwihaCommonStratagemCards.header(HwihaStratagemCardType.FORTIFY)
-    private val insight = HwihaCommonStratagemCards.header(HwihaStratagemCardType.INSIGHT)
+    private val card = CommonStratagemCards.header(StratagemCardType.FORTIFY)
+    private val insight = CommonStratagemCards.header(StratagemCardType.INSIGHT)
     private fun bundle(
         claims: List<ContentClaim> = listOf(
             ContentClaim("claim-1", card.id, listOf(evidence.id)),
@@ -25,8 +25,8 @@ class CardContentContractsTest {
         listOf(evidence, ContentEvidence("source-2", CardProvenance.GameTerm)), claims, materializations)
 
     @Test fun `common stratagem hand resolves to cited and game term card headers`() {
-        val hand = HwihaStratagemHand.initial(1, HwihaPhase(200, 1, 1))
-        val headers = (hand.hand + hand.drawPile).map { HwihaCommonStratagemCards.header(hand.cardType(it)) }
+        val hand = StratagemHand.initial(1, Phase(200, 1, 1))
+        val headers = (hand.hand + hand.drawPile).map { CommonStratagemCards.header(hand.cardType(it)) }
         assertTrue(headers.all { it.kind == CardKind.STRATAGEM && it.availability == CardAvailability.COMMON })
         assertEquals(listOf("三國志 卷18", "게임 용어", "三國志 卷18", "게임 용어"), headers.map { it.provenanceBadges.single() })
         assertEquals(emptyList(), CardContentValidator.violations(bundle()))

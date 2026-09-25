@@ -7,7 +7,7 @@ data class DeploymentPersonSource(val id: Int, val nationId: Int, val isUnownedN
     val meta: Map<String, Any?>)
 
 /** Shared API/engine projection. Corruption stays unavailable, never an empty battlefield. */
-object HwihaDeploymentProjection {
+object DeploymentProjector {
     fun build(profile: RuleProfile, people: List<DeploymentPersonSource>, units: List<DeploymentUnit>,
         retainers: List<DeploymentRetainer>, positions: GeneralPositionSnapshot?,
         topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): DeploymentProjection? {
@@ -18,14 +18,14 @@ object HwihaDeploymentProjection {
                 positions.knownWaterZoneIds == topology.waterZones.map { it.id }.toSet())
             val orderedPeople = people.sortedBy { it.id }
             val corps = orderedPeople.flatMap { person ->
-                HwihaDeploymentState.read(person.meta)?.corps.orEmpty().also { rows ->
+                DeploymentState.read(person.meta)?.corps.orEmpty().also { rows ->
                     require(rows.all { it.ownerGeneralId == person.id })
                 }
             }
             require(corps.map { it.orderId }.distinct().size == corps.size)
             require(corps.map { it.commanderGeneralId }.distinct().size == corps.size)
             require(corps.flatMap { it.bugokIds }.distinct().size == corps.sumOf { it.bugokIds.size })
-            val encounters = orderedPeople.associate { it.id to HwihaCorpsEncounter.read(it.meta, topology) }
+            val encounters = orderedPeople.associate { it.id to CorpsEncounter.read(it.meta, topology) }
             for ((storageId, encounter) in encounters) {
                 if (encounter == null) continue
                 encounter.requireParticipant(storageId)
@@ -41,17 +41,17 @@ object HwihaDeploymentProjection {
                     }
                 }
                 val attacker = orderedPeople.single { it.id == encounter.attacker.commanderGeneralId }
-                val checkpoint = requireNotNull(HwihaCorpsMarchState.read(attacker.meta, topology, metrics)).checkpoint
+                val checkpoint = requireNotNull(CorpsMarchState.read(attacker.meta, topology, metrics)).checkpoint
                 require(checkpoint.stop == LandMarchStop.ENCOUNTER && checkpoint.lastAdvancedAt == encounter.phase)
                 require(checkpoint.path.nodeKeys[checkpoint.cursor.edgeIndex] == encounter.province.canonicalKey &&
                     checkpoint.path.nodeKeys[checkpoint.cursor.edgeIndex - 1] == encounter.approachFrom.canonicalKey)
             }
             DeploymentProjection(profile, orderedPeople.map { person ->
                 val position = positions.stateFor(person.id)
-                val march = HwihaMarchState.read(person.meta, topology, metrics)
+                val march = MarchState.read(person.meta, topology, metrics)
                 require(march == null || march.path.nodeKeys[march.cursor.edgeIndex] == position?.node?.canonicalKey)
-                val corpsMarch = HwihaCorpsMarchState.read(person.meta, topology, metrics)
-                val order = HwihaCorpsOrder.read(person.meta, topology)
+                val corpsMarch = CorpsMarchState.read(person.meta, topology, metrics)
+                val order = CorpsOrder.read(person.meta, topology)
                 if (order != null) {
                     val deployed = corps.singleOrNull { it.commanderGeneralId == person.id }
                         ?: throw IllegalArgumentException("Corps destination has no deployment")

@@ -2,7 +2,7 @@ package opensamguk.logic.input
 
 import opensamguk.logic.world.*
 
-data class HwihaTravelSnapshot(
+data class TravelSnapshot(
     val profile: RuleProfile,
     val actorExists: Boolean,
     val actorNode: StrategicNodeRef?,
@@ -10,7 +10,7 @@ data class HwihaTravelSnapshot(
     val commandsCorps: Boolean,
 )
 
-enum class HwihaTravelFailure(val message: String) {
+enum class TravelFailure(val message: String) {
     WRONG_RULE_PROFILE("이 세계에서는 휘하 이동 입력을 사용할 수 없습니다."),
     INVALID_INPUT("이동 목적지를 확인할 수 없습니다."),
     ACTOR_NOT_FOUND("이동할 장수를 찾을 수 없습니다."),
@@ -24,39 +24,39 @@ enum class HwihaTravelFailure(val message: String) {
     NO_ROUTE("목적지까지 통행 가능한 육상 경로가 없습니다."),
 }
 
-sealed interface HwihaTravelAssessment {
-    data class Eligible(val path: ResolvedLandMarchPath) : HwihaTravelAssessment
-    data class Rejected(val reason: HwihaTravelFailure) : HwihaTravelAssessment
+sealed interface TravelAssessment {
+    data class Eligible(val path: ResolvedLandMarchPath) : TravelAssessment
+    data class Rejected(val reason: TravelFailure) : TravelAssessment
 }
 
 /** Both options/admission and the personal-turn executor use this exact assessment. */
-object HwihaTravelRules {
-    fun assess(request: HwihaTravelRequest, destination: StrategicNodeRef.LandProvince?,
-        snapshot: HwihaTravelSnapshot, topology: StrategicTopologySnapshot,
-        metrics: LandMarchMetricSnapshot, worldMeta: Map<String, Any?>): HwihaTravelAssessment {
-        fun reject(reason: HwihaTravelFailure) = HwihaTravelAssessment.Rejected(reason)
-        if (snapshot.profile != RuleProfile.HWIHA) return reject(HwihaTravelFailure.WRONG_RULE_PROFILE)
-        if (request.actorId <= 0 || request.inputId !in HwihaTravelInput.INPUT_IDS || destination == null)
-            return reject(HwihaTravelFailure.INVALID_INPUT)
-        if (request.inputId != HwihaTravelInput.RETURN && request.destination != destination)
-            return reject(HwihaTravelFailure.INVALID_INPUT)
-        if (!snapshot.actorExists) return reject(HwihaTravelFailure.ACTOR_NOT_FOUND)
+object TravelRules {
+    fun assess(request: TravelRequest, destination: StrategicNodeRef.LandProvince?,
+        snapshot: TravelSnapshot, topology: StrategicTopologySnapshot,
+        metrics: LandMarchMetricSnapshot, worldMeta: Map<String, Any?>): TravelAssessment {
+        fun reject(reason: TravelFailure) = TravelAssessment.Rejected(reason)
+        if (snapshot.profile != RuleProfile.HWIHA) return reject(TravelFailure.WRONG_RULE_PROFILE)
+        if (request.actorId <= 0 || request.inputId !in TravelInput.INPUT_IDS || destination == null)
+            return reject(TravelFailure.INVALID_INPUT)
+        if (request.inputId != TravelInput.RETURN && request.destination != destination)
+            return reject(TravelFailure.INVALID_INPUT)
+        if (!snapshot.actorExists) return reject(TravelFailure.ACTOR_NOT_FOUND)
         val origin = snapshot.actorNode as? StrategicNodeRef.LandProvince
-            ?: return reject(HwihaTravelFailure.POSITION_UNAVAILABLE)
-        if (snapshot.inBattle) return reject(HwihaTravelFailure.BATTLE_PENDING)
-        if (snapshot.commandsCorps) return reject(HwihaTravelFailure.CORPS_DEPLOYED)
-        if (!topology.containsNode(destination)) return reject(HwihaTravelFailure.INVALID_DESTINATION)
-        if (origin == destination) return reject(HwihaTravelFailure.ALREADY_THERE)
+            ?: return reject(TravelFailure.POSITION_UNAVAILABLE)
+        if (snapshot.inBattle) return reject(TravelFailure.BATTLE_PENDING)
+        if (snapshot.commandsCorps) return reject(TravelFailure.CORPS_DEPLOYED)
+        if (!topology.containsNode(destination)) return reject(TravelFailure.INVALID_DESTINATION)
+        if (origin == destination) return reject(TravelFailure.ALREADY_THERE)
         return try {
-            val passage = HwihaLandPassageState.read(worldMeta, topology)
-            if (passage == null || HwihaMarchReactions.presence(worldMeta) in setOf(
-                    HwihaMarchReactions.Presence.MISSING, HwihaMarchReactions.Presence.MALFORMED))
-                return reject(HwihaTravelFailure.STATE_UNAVAILABLE)
+            val passage = LandPassageState.read(worldMeta, topology)
+            if (passage == null || MarchReactions.presence(worldMeta) in setOf(
+                    MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
+                return reject(TravelFailure.STATE_UNAVAILABLE)
             when (val route = StrategicPathResolver.resolveLandMarch(topology,
                 StrategicPathRequest(origin, destination, 1), passage, metrics)) {
-                is LandMarchPathResult.Resolved -> HwihaTravelAssessment.Eligible(route.path)
-                is LandMarchPathResult.Denied -> reject(HwihaTravelFailure.NO_ROUTE)
+                is LandMarchPathResult.Resolved -> TravelAssessment.Eligible(route.path)
+                is LandMarchPathResult.Denied -> reject(TravelFailure.NO_ROUTE)
             }
-        } catch (_: IllegalArgumentException) { reject(HwihaTravelFailure.STATE_UNAVAILABLE) }
+        } catch (_: IllegalArgumentException) { reject(TravelFailure.STATE_UNAVAILABLE) }
     }
 }

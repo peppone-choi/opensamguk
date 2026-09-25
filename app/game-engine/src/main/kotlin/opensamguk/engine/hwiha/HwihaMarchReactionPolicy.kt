@@ -2,7 +2,7 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.logic.input.HwihaMarchReactions
+import opensamguk.logic.input.MarchReactions
 import opensamguk.logic.world.LandMarchEntry
 import opensamguk.logic.world.StrategicNodeRef
 
@@ -38,9 +38,9 @@ fun interface HwihaMarchReactionPolicy {
 
     companion object {
         val NON_BLOCKING = HwihaMarchReactionPolicy { world, _, _ ->
-            when (HwihaMarchReactions.presence(world.getState().meta)) {
-                HwihaMarchReactions.Presence.MISSING, HwihaMarchReactions.Presence.MALFORMED -> LandMarchEntry.UNAVAILABLE
-                HwihaMarchReactions.Presence.EMPTY, HwihaMarchReactions.Presence.PENDING -> LandMarchEntry.CLEAR
+            when (MarchReactions.presence(world.getState().meta)) {
+                MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED -> LandMarchEntry.UNAVAILABLE
+                MarchReactions.Presence.EMPTY, MarchReactions.Presence.PENDING -> LandMarchEntry.CLEAR
             }
         }
     }

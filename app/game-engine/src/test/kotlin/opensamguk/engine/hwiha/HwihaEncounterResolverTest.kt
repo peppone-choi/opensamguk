@@ -6,7 +6,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
-import opensamguk.logic.war.hwiha.HwihaBattleJournal
+import opensamguk.logic.war.BattleJournal
 import opensamguk.logic.world.HanProvinceCellIndex
 import opensamguk.logic.world.LandMarchStop
 
@@ -26,9 +26,9 @@ class HwihaEncounterResolverTest {
         fixture.deploy(world, recorder, 100, listOf(1100), route.first)
         fixture.nextPhase(world)
         assertTrue(HwihaCorpsMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells).onTurn(1))
-        for (id in listOf(1, 100)) assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(id)!!.meta, fixture.topology))
+        for (id in listOf(1, 100)) assertNotNull(CorpsEncounter.read(world.getGeneralById(id)!!.meta, fixture.topology))
         if (attackerCrewTypeId == 1100)
-            assertNotNull(HwihaBattleJournal.read(world.getGeneralById(1)!!.meta), "combat was prepared at approach")
+            assertNotNull(BattleJournal.read(world.getGeneralById(1)!!.meta), "combat was prepared at approach")
         assertEquals(route.first, world.positionOf(1))
         return world to recorder
     }
@@ -49,9 +49,9 @@ class HwihaEncounterResolverTest {
             assertEquals("ATTACKER_VICTORY", (meta[HwihaEncounterResolver.BATTLE_RECORD_KEY] as Map<*, *>)["outcome"])
         }
         assertEquals(route.first, world.positionOf(1), "the battle ends this turn's movement")
-        assertNull(HwihaDeploymentState.read(world.getGeneralById(100)!!.meta), "loser defender's corps is dissolved")
+        assertNull(DeploymentState.read(world.getGeneralById(100)!!.meta), "loser defender's corps is dissolved")
         assertTrue(world.getBugokById(1100)!!.troops < 100, "defender took casualties")
-        val march = HwihaCorpsMarchState.read(world.getGeneralById(1)!!.meta, fixture.topology, fixture.metrics)!!
+        val march = CorpsMarchState.read(world.getGeneralById(1)!!.meta, fixture.topology, fixture.metrics)!!
         assertNotEquals(LandMarchStop.ENCOUNTER, march.checkpoint.stop)
         val projection = HwihaDeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection()!!
         assertFalse(projection.people.single { it.id == 1 }.inBattle, "BATTLE_PENDING cleared")
@@ -69,9 +69,9 @@ class HwihaEncounterResolverTest {
         assertEquals("DEFENDER_VICTORY", record["outcome"])
         assertEquals(route.start, world.positionOf(1), "the loser withdraws to where it came from")
         val attacker = world.getGeneralById(1)!!.meta
-        assertNull(HwihaDeploymentState.read(attacker))
-        assertFalse(HwihaCorpsOrder.META_KEY in attacker || HwihaCorpsMarchState.META_KEY in attacker)
-        assertNotNull(HwihaDeploymentState.read(world.getGeneralById(100)!!.meta), "winner defender keeps its corps")
+        assertNull(DeploymentState.read(attacker))
+        assertFalse(CorpsOrder.META_KEY in attacker || CorpsMarchState.META_KEY in attacker)
+        assertNotNull(DeploymentState.read(world.getGeneralById(100)!!.meta), "winner defender keeps its corps")
         assertTrue(world.getBugokById(7)!!.troops < 100)
         assertEquals(listOf(listOf(100) to listOf(1)), outcomes.encounters)
     }
@@ -93,12 +93,12 @@ class HwihaEncounterResolverTest {
         val (world, recorder) = sealed(1000, 100)
         for (id in listOf(1, 100)) {
             val general = world.getGeneralById(id)!!
-            world.applyGeneralDirtyFree(general.copy(meta = general.meta - HwihaBattleJournal.META_KEY))
+            world.applyGeneralDirtyFree(general.copy(meta = general.meta - BattleJournal.META_KEY))
         }
         fixture.nextPhase(world)
         assertEquals(HwihaEncounterResolver.Resolution.Unavailable("BATTLE_NOT_READY"),
             HwihaEncounterResolver(world, recorder, fixture.topology, fixture.metrics, fixture.cells).resolvePending(1))
-        assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology))
+        assertNotNull(CorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology))
         assertEquals(HwihaEncounterResolver.Resolution.NotAttacker,
             HwihaEncounterResolver(world, recorder, fixture.topology, fixture.metrics, fixture.cells).resolvePending(100))
         fixture.nextPhase(world)
@@ -107,7 +107,7 @@ class HwihaEncounterResolverTest {
             val meta = world.getGeneralById(id)!!.meta
             assertTrue(HwihaEncounterResolver.SEALED_KEYS.none { it in meta })
             assertEquals("BATTLE_NOT_READY", (meta[HwihaEncounterResolver.DISBAND_RECORD_KEY] as Map<*, *>)["reason"])
-            assertNull(HwihaDeploymentState.read(meta), "both corps stop in their current province")
+            assertNull(DeploymentState.read(meta), "both corps stop in their current province")
             assertFalse(HwihaEncounterResolver.BATTLE_RECORD_KEY in meta, "no battle result is fabricated")
         }
         assertEquals(route.first, world.positionOf(1))
@@ -121,7 +121,7 @@ class HwihaEncounterResolverTest {
             val meta = world.getGeneralById(id)!!.meta
             assertTrue(HwihaEncounterResolver.SEALED_KEYS.none { it in meta })
             assertEquals("UNIT_PROFILE_UNAVAILABLE", (meta[HwihaEncounterResolver.DISBAND_RECORD_KEY] as Map<*, *>)["reason"])
-            assertNull(HwihaDeploymentState.read(meta))
+            assertNull(DeploymentState.read(meta))
         }
         assertEquals(route.first, world.positionOf(1))
     }

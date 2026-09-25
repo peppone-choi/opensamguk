@@ -5,50 +5,50 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
 
-enum class HwihaTradeSide { BUY, SELL }
-enum class HwihaCargo { MONEY, GRAIN, IRON, TIMBER, HORSES }
+enum class TradeSide { BUY, SELL }
+enum class Cargo { MONEY, GRAIN, IRON, TIMBER, HORSES }
 
-sealed interface HwihaLegacyDirectRequest { val actorId: Int
-    data class Convert(override val actorId: Int, val bugokId: Int, val crewTypeId: Int) : HwihaLegacyDirectRequest
-    data class Equipment(override val actorId: Int, val treasureId: Int, val side: HwihaTradeSide) : HwihaLegacyDirectRequest
-    data class Grain(override val actorId: Int, val side: HwihaTradeSide, val amount: Int) : HwihaLegacyDirectRequest
-    data class Transport(override val actorId: Int, val targetCountyId: Int, val cargo: HwihaCargo,
-        val amount: Int) : HwihaLegacyDirectRequest
+sealed interface DirectRequest { val actorId: Int
+    data class Convert(override val actorId: Int, val bugokId: Int, val crewTypeId: Int) : DirectRequest
+    data class Equipment(override val actorId: Int, val treasureId: Int, val side: TradeSide) : DirectRequest
+    data class Grain(override val actorId: Int, val side: TradeSide, val amount: Int) : DirectRequest
+    data class Transport(override val actorId: Int, val targetCountyId: Int, val cargo: Cargo,
+        val amount: Int) : DirectRequest
 }
 
 /** Server-owned actor, location, prices and stocks never come from the client JSON. */
-object HwihaLegacyDirectInput {
+object DirectInput {
     const val CONVERT = "action.convertProficiency"
     const val EQUIPMENT = "action.tradeEquipment"
     const val GRAIN = "action.tradeGrain"
     const val TRANSPORT = "action.transport"
     val INPUT_IDS = linkedSetOf(CONVERT, EQUIPMENT, GRAIN, TRANSPORT)
 
-    fun parse(actorId: Int, inputId: String, rawJson: String?): HwihaLegacyDirectRequest? {
+    fun parse(actorId: Int, inputId: String, rawJson: String?): DirectRequest? {
         if (actorId <= 0 || inputId !in INPUT_IDS || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             fun positive(key: String): Int? = (fields[key] as? JsonPrimitive)
                 ?.takeUnless { it.isString }?.intOrNull?.takeIf { it > 0 }
-            fun side(): HwihaTradeSide? = (fields["side"] as? JsonPrimitive)
-                ?.takeIf { it.isString }?.content?.let { raw -> HwihaTradeSide.entries.singleOrNull { it.name == raw } }
+            fun side(): TradeSide? = (fields["side"] as? JsonPrimitive)
+                ?.takeIf { it.isString }?.content?.let { raw -> TradeSide.entries.singleOrNull { it.name == raw } }
             when (inputId) {
                 CONVERT -> if (fields.keys == setOf("bugokId", "crewTypeId")) {
                     val bugokId = positive("bugokId") ?: return null
                     val crewTypeId = positive("crewTypeId") ?: return null
-                    HwihaLegacyDirectRequest.Convert(actorId, bugokId, crewTypeId)
+                    DirectRequest.Convert(actorId, bugokId, crewTypeId)
                 } else null
                 EQUIPMENT -> if (fields.keys == setOf("treasureId", "side")) {
-                    HwihaLegacyDirectRequest.Equipment(actorId, positive("treasureId") ?: return null,
+                    DirectRequest.Equipment(actorId, positive("treasureId") ?: return null,
                         side() ?: return null)
                 } else null
                 GRAIN -> if (fields.keys == setOf("side", "amount")) {
-                    HwihaLegacyDirectRequest.Grain(actorId, side() ?: return null, positive("amount") ?: return null)
+                    DirectRequest.Grain(actorId, side() ?: return null, positive("amount") ?: return null)
                 } else null
                 TRANSPORT -> if (fields.keys == setOf("targetCountyId", "cargo", "amount")) {
                     val cargo = (fields["cargo"] as? JsonPrimitive)?.takeIf { it.isString }?.content
-                        ?.let { raw -> HwihaCargo.entries.singleOrNull { it.name == raw } } ?: return null
-                    HwihaLegacyDirectRequest.Transport(actorId, positive("targetCountyId") ?: return null,
+                        ?.let { raw -> Cargo.entries.singleOrNull { it.name == raw } } ?: return null
+                    DirectRequest.Transport(actorId, positive("targetCountyId") ?: return null,
                         cargo, positive("amount") ?: return null)
                 } else null
                 else -> null
@@ -56,22 +56,22 @@ object HwihaLegacyDirectInput {
         } catch (_: IllegalArgumentException) { null }
     }
 
-    fun canonicalJson(request: HwihaLegacyDirectRequest): String {
+    fun canonicalJson(request: DirectRequest): String {
         require(request.actorId > 0)
         return when (request) {
-            is HwihaLegacyDirectRequest.Convert -> buildJsonObject {
+            is DirectRequest.Convert -> buildJsonObject {
                 require(request.bugokId > 0 && request.crewTypeId > 0)
                 put("bugokId", request.bugokId); put("crewTypeId", request.crewTypeId)
             }.toString()
-            is HwihaLegacyDirectRequest.Equipment -> buildJsonObject {
+            is DirectRequest.Equipment -> buildJsonObject {
                 require(request.treasureId > 0)
                 put("treasureId", request.treasureId); put("side", request.side.name)
             }.toString()
-            is HwihaLegacyDirectRequest.Grain -> buildJsonObject {
+            is DirectRequest.Grain -> buildJsonObject {
                 require(request.amount > 0)
                 put("side", request.side.name); put("amount", request.amount)
             }.toString()
-            is HwihaLegacyDirectRequest.Transport -> buildJsonObject {
+            is DirectRequest.Transport -> buildJsonObject {
                 require(request.targetCountyId > 0 && request.amount > 0)
                 put("targetCountyId", request.targetCountyId); put("cargo", request.cargo.name)
                 put("amount", request.amount)

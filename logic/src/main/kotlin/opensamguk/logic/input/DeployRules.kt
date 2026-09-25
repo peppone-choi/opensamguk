@@ -3,17 +3,17 @@ package opensamguk.logic.input
 import opensamguk.logic.world.*
 
 /** Shared admission/execution checks. A new order must have a currently passable land route. */
-object HwihaDeployRules {
+object DeployRules {
     fun assess(request: DeployInput, state: DeploymentProjection, topology: StrategicTopologySnapshot,
         worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot): DeploymentAssessment {
-        val relationship = HwihaDeploymentRules.assess(request.deploymentRequest(), state)
+        val relationship = DeploymentRules.assess(request.deploymentRequest(), state)
         if (relationship !is DeploymentAssessment.Eligible) return relationship
         if (!topology.containsNode(request.destination)) return DeploymentAssessment.Rejected(DeploymentFailure.INVALID_DESTINATION)
         return try {
-            val edges = HwihaLandPassageState.read(worldMeta, topology)
+            val edges = LandPassageState.read(worldMeta, topology)
             // 기록이 쌓인(PENDING) 반응 목록은 출병 입력을 막지 않는다 — 진입 판정이 반응 정책으로 따로 본다.
-            if (edges == null || HwihaMarchReactions.presence(worldMeta).let {
-                    it == HwihaMarchReactions.Presence.MISSING || it == HwihaMarchReactions.Presence.MALFORMED })
+            if (edges == null || MarchReactions.presence(worldMeta).let {
+                    it == MarchReactions.Presence.MISSING || it == MarchReactions.Presence.MALFORMED })
                 DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
             else if (StrategicPathResolver.resolveLandMarch(topology,
                 StrategicPathRequest(relationship.commander.node!!, request.destination, 1), edges, metrics) !is LandMarchPathResult.Resolved)

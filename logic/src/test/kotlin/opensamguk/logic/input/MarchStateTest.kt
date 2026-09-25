@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import kotlin.test.*
 import opensamguk.logic.world.*
 
-class HwihaMarchStateTest {
+class MarchStateTest {
     private val pin="a".repeat(64)
     private val a=StrategicNodeRef.LandProvince("A")
     private val b=StrategicNodeRef.LandProvince("B")
@@ -13,9 +13,9 @@ class HwihaMarchStateTest {
     private val metrics=LandMarchMetricSnapshot(topology,pin,listOf(LandMarchEdgeMetric("ab",40,40)))
     private val path=assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
         StrategicPathRequest(a,b,1),StrategicEdgeStateSnapshot(topology.topologyRevision,topology.contentHash,emptyMap()),metrics)).path
-    private val state=HwihaMarchState(HwihaCountyAssignment("dispatch",1,1,10),path,LandMarchCursor(path.pathHash,0,30),
-        HwihaPhase(200,1,1),LandMarchStop.BUDGET_EXHAUSTED)
-    private fun read(raw: Any?)=HwihaMarchState.read(mapOf(HwihaMarchState.META_KEY to raw),topology,metrics)
+    private val state=MarchState(CountyAssignment("dispatch",1,1,10),path,LandMarchCursor(path.pathHash,0,30),
+        Phase(200,1,1),LandMarchStop.BUDGET_EXHAUSTED)
+    private fun read(raw: Any?)=MarchState.read(mapOf(MarchState.META_KEY to raw),topology,metrics)
 
     @Test fun `assignment wire remains flat version one`() {
         val raw = state.toMetaValue()
@@ -36,7 +36,7 @@ class HwihaMarchStateTest {
             assertEquals(state.path.pathHash,restored.path.pathHash)
             assertEquals(state.lastAdvancedAt,restored.lastAdvancedAt);assertEquals(state.stop,restored.stop)
         }
-        assertNull(HwihaMarchState.read(emptyMap(),topology,metrics))
+        assertNull(MarchState.read(emptyMap(),topology,metrics))
     }
 
     @Test fun `corrupt cursor fields types phase and false terminal state are rejected`() {

@@ -6,7 +6,7 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
-import opensamguk.logic.war.hwiha.HwihaS3Provisional
+import opensamguk.logic.war.CampaignBalance
 
 /** One direct assertion for each NPC war rule. These use the real map and in-memory engine services. */
 class HwihaNpcWarBranchesTest {
@@ -59,7 +59,7 @@ class HwihaNpcWarBranchesTest {
         fixture.nextPhase(world)
         siegeService(world, recorder).npcAct(1)
         assertEquals("RELIEF", world.getHwihaSiege(route.destinationCounty)?.endReason)
-        assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta))
+        assertNull(DeploymentState.read(world.getGeneralById(1)!!.meta))
         fixture.nextPhase(world)
         assertEquals(route.start, selector.choose(world, 1)?.destination)
     }
@@ -74,13 +74,13 @@ class HwihaNpcWarBranchesTest {
         val path = (StrategicPathResolver.resolveLandMarch(fixture.topology,
             StrategicPathRequest(route.start, route.destination, 1), fixture.passage(), fixture.metrics)
             as LandMarchPathResult.Resolved).path
-        val checkpoint = HwihaMarchCheckpoint(path, LandMarchCursor(path.pathHash, path.edgeIds.size, 0),
-            world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }, LandMarchStop.ARRIVED)
-        val state = HwihaCorpsMarchState("order-1", 1, 1, checkpoint)
-        world.applyGeneralDirtyFree(actor.copy(meta = actor.meta + (HwihaCorpsMarchState.META_KEY to state.toMetaValue())))
+        val checkpoint = MarchCheckpoint(path, LandMarchCursor(path.pathHash, path.edgeIds.size, 0),
+            world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }, LandMarchStop.ARRIVED)
+        val state = CorpsMarchState("order-1", 1, 1, checkpoint)
+        world.applyGeneralDirtyFree(actor.copy(meta = actor.meta + (CorpsMarchState.META_KEY to state.toMetaValue())))
         recorder.moveGeneral(world, 1, route.destination)
         assertTrue(siegeService(world, recorder).npcEndIfStranded(1))
-        assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta))
+        assertNull(DeploymentState.read(world.getGeneralById(1)!!.meta))
     }
 
     @Test fun `hungry NPC returns to nearest own county or waits when already home`() {
@@ -104,10 +104,10 @@ class HwihaNpcWarBranchesTest {
         fixture.movement(world, recorder).onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
         repeat(4) { fixture.nextPhase(world); HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder) }
         val city = world.getCityById(route.destinationCounty)!!
-        val expected = minOf(city.defenceMax * HwihaS3Provisional.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
-            800 * HwihaS3Provisional.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
+        val expected = minOf(city.defenceMax * CampaignBalance.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
+            800 * CampaignBalance.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
         assertEquals(HwihaSiegeService.FALLEN, world.getHwihaSiege(city.id)?.status)
-        assertEquals(expected, HwihaCityMilitaryState.read(city.meta, city.defence).troops)
+        assertEquals(expected, CityMilitaryState.read(city.meta, city.defence).troops)
         assertEquals(100, city.defence, "captured troops must not increase the fortification score")
         assertEquals(500 - expected * 500 / 800, world.getBugokById(7)!!.troops)
         assertEquals(300 - expected * 300 / 800, world.getBugokById(8)!!.troops)

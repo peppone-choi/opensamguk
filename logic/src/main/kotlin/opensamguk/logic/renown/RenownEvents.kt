@@ -1,6 +1,6 @@
 package opensamguk.logic.renown
 
-import opensamguk.logic.input.HwihaCountyAssignment
+import opensamguk.logic.input.CountyAssignment
 
 /**
  * 월단평 사건 종류 — 정본 설계 §2.8 의 오르는 경로(전공·치적·관직·결속)와 떨어지는 경로(패전·배신·실정·발령 거절).
@@ -233,12 +233,12 @@ object RenownHooks {
     )
 
     /**
-     * 縣의 관할 장수 — 발령을 수락해 이 縣 을 부임지로 받은 장수([HwihaCountyAssignment])이고, 그 발령
+     * 縣의 관할 장수 — 발령을 수락해 이 縣 을 부임지로 받은 장수([CountyAssignment])이고, 그 발령
      * 세력이 [ownerNationId] 인 사람. 읽을 수 없는 발령 meta 는 관할이 아니다. id 오름차순.
      */
     fun countyHolderIds(countyId: Int, ownerNationId: Int, metaById: Map<Int, Map<String, Any?>>): List<Int> =
         metaById.entries.filter { (_, meta) ->
-            val assignment = try { HwihaCountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null }
+            val assignment = try { CountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null }
             assignment != null && assignment.countyId == countyId && assignment.nationId == ownerNationId
         }.map { it.key }.sorted()
 

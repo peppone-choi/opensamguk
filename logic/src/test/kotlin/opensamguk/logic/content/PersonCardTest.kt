@@ -1,14 +1,14 @@
 package opensamguk.logic.content
 
-import opensamguk.logic.input.HwihaAptitude
+import opensamguk.logic.input.Aptitude
 import kotlin.test.*
 
-class HwihaPersonCardTest {
-    private fun card(id: Int, contribution: Set<String> = emptySet()) = HwihaPersonCard(
+class PersonCardTest {
+    private fun card(id: Int, contribution: Set<String> = emptySet()) = PersonCard(
         CardHeader("person:$id", "인물 $id", CardKind.PERSON, CardAvailability.UNIQUE,
             listOf(CardProvenance.GameTerm), 5, emptySet(), emptySet()),
         PersonCardIdentity(id, 170, 230, "신중", setOf("정찰"), "portraits/$id.png"),
-        HwihaAptitude.Stats(50, 50, 50, 50, 50),
+        Aptitude.Stats(50, 50, 50, 50, 50),
         setOf(PersonBond(PersonBondKind.NATIVE_COUNTY, "county:1", setOf("citation:1"))),
         contribution,
         PersonCardSeason("province:1", "현령", 60, 10, 0, 0, 100, emptyList()),
@@ -22,9 +22,9 @@ class HwihaPersonCardTest {
         assertEquals(5, PersonBondKind.entries.size)
         assertEquals(2, UnitBondKind.entries.size)
         assertFailsWith<IllegalArgumentException> { card(1).copy(header = card(1).header.copy(renownCost = 4)) }
-        val bondState = HwihaPersonBondState(person.bonds)
-        assertEquals(bondState, HwihaPersonBondState.read(mapOf(HwihaPersonBondState.META_KEY to bondState.toMetaValue())))
-        assertFailsWith<IllegalArgumentException> { HwihaPersonBondState.read(mapOf(HwihaPersonBondState.META_KEY to
+        val bondState = PersonBondState(person.bonds)
+        assertEquals(bondState, PersonBondState.read(mapOf(PersonBondState.META_KEY to bondState.toMetaValue())))
+        assertFailsWith<IllegalArgumentException> { PersonBondState.read(mapOf(PersonBondState.META_KEY to
             mapOf("version" to 1, "bonds" to listOf(mapOf("kind" to "UNKNOWN", "targetId" to "county:1", "evidenceIds" to emptyList<String>()))))) }
     }
 
@@ -34,7 +34,7 @@ class HwihaPersonCardTest {
             DirectPersonHolding(1, card(2, setOf("hwiha-stratagem-fortify")), true),
             DirectPersonHolding(10, card(3, setOf("hwiha-stratagem-fortify")), false),
         )
-        val catalogue = HwihaCommonStratagemCards.headers.values
+        val catalogue = CommonStratagemCards.headers.values
         assertEquals(listOf("hwiha-stratagem-insight"), PersonStratagemDeck.contributedIds(10, holdings, catalogue))
         assertEquals(listOf("hwiha-stratagem-fortify"), PersonStratagemDeck.contributedIds(1, holdings, catalogue))
         assertEquals(listOf("hwiha-stratagem-insight", "hwiha-stratagem-insight"), PersonStratagemDeck.contributedIds(10,
@@ -42,7 +42,7 @@ class HwihaPersonCardTest {
         assertFailsWith<IllegalArgumentException> {
             PersonStratagemDeck.contributedIds(10, listOf(DirectPersonHolding(10, card(4, setOf("missing")), true)), catalogue)
         }
-        val state = HwihaPersonContributionState(setOf("hwiha-stratagem-insight"))
-        assertEquals(state, HwihaPersonContributionState.read(mapOf(HwihaPersonContributionState.META_KEY to state.toMetaValue())))
+        val state = PersonContributionState(setOf("hwiha-stratagem-insight"))
+        assertEquals(state, PersonContributionState.read(mapOf(PersonContributionState.META_KEY to state.toMetaValue())))
     }
 }

@@ -23,7 +23,7 @@ import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.logic.v2.command.V2CommandRegistry
 import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.input.HwihaInputCatalog
+import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.RuleProfile
 import opensamguk.gameapi.v2.legacyError
@@ -81,7 +81,7 @@ class CommandController(
     private val worlds: WorldStateReadRepository,
 ) {
     private val worldId = processWorld.worldId
-    private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
+    private val hwihaCatalog by lazy { InputCatalog.load() }
 
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)

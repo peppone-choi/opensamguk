@@ -9,7 +9,7 @@ data class EnlistmentPersonRow(
     val userId: String?,
 )
 data class EnlistmentCardRow(val id: Int, val masterId: Int, val generalId: Int?, val name: String)
-data class HwihaEnlistmentProjection(
+data class EnlistmentProjection(
     val profile: RuleProfile,
     val persons: List<EnlistmentPersonRow>,
     val cards: List<EnlistmentCardRow>,
@@ -17,13 +17,13 @@ data class HwihaEnlistmentProjection(
 )
 
 /** One authority for budget, sovereign selection, human control, bonds and name conflicts. */
-object HwihaEnlistmentPrecheck {
-    fun assess(request: EnlistmentRequest, state: HwihaEnlistmentProjection): EnlistmentAssessment =
-        assess(request, state, HwihaEnlistmentBudget.assess(request.actorId, state.profile,
+object EnlistmentPrecheck {
+    fun assess(request: EnlistmentRequest, state: EnlistmentProjection): EnlistmentAssessment =
+        assess(request, state, EnlistmentBudget.assess(request.actorId, state.profile,
             state.persons.map { it.policy }, state.cards.map { DirectPersonCard(it.id, it.masterId, it.generalId) }))
 
     /** Server-policy injection for transition consumers; never populated from client arguments. */
-    fun assess(request: EnlistmentRequest, state: HwihaEnlistmentProjection, budget: RenownBudgetResult): EnlistmentAssessment {
+    fun assess(request: EnlistmentRequest, state: EnlistmentProjection, budget: RenownBudgetResult): EnlistmentAssessment {
         fun deny(reason: EnlistmentFailure) = EnlistmentAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return deny(EnlistmentFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || (request.mode == EnlistmentMode.RANDOM) != (request.targetId == null) ||
@@ -40,7 +40,7 @@ object HwihaEnlistmentPrecheck {
         if (request.actorId in budget.unavailableOwnerReasons) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)
         val generals = try {
             state.persons.map { person ->
-                EnlistmentGeneral(person.policy.id, person.policy.nationId, HwihaLordStatus.read(person.policy.meta),
+                EnlistmentGeneral(person.policy.id, person.policy.nationId, LordStatus.read(person.policy.meta),
                     person.npcState < 2 || (!person.userId.isNullOrBlank() &&
                         person.userId.toLongOrNull()?.let { it <= 0 } != true))
             }
@@ -55,7 +55,7 @@ object HwihaEnlistmentPrecheck {
             state.cards.filter { it.name == actor.name }.map { it.masterId }.toSet(),
             budget.unavailableLordReasons.keys,
         )
-        val assessed = HwihaEnlistmentRules.assess(request, snapshot)
+        val assessed = EnlistmentRules.assess(request, snapshot)
         if (assessed is EnlistmentAssessment.Eligible && assessed.choices.any { plan ->
                 plan.joiningGeneralIds.any { it in budget.unavailableOwnerReasons }
             }) return deny(EnlistmentFailure.POLICY_UNAVAILABLE)

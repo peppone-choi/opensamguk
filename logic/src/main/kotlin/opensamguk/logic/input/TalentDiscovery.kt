@@ -1,7 +1,7 @@
 package opensamguk.logic.input
 
 /** Actor-private identities of existing free people met through a local talent search. */
-object HwihaTalentDiscovery {
+object TalentDiscovery {
     const val META_KEY = "hwihaTalentDiscovery"
 
     fun read(meta: Map<String, Any?>): Set<Int> {

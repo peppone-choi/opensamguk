@@ -1,48 +1,48 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.security.MessageDigest
 import java.util.Collections
 import opensamguk.logic.input.*
-import opensamguk.logic.world.HwihaBattlefieldGeometry
-import opensamguk.logic.world.HwihaBattlefieldLayout
+import opensamguk.logic.world.BattlefieldGeometry
+import opensamguk.logic.world.BattlefieldLayout
 
 /** Internal tactical input playback. It does not claim card processing, retreat or live resource settlement. */
-class HwihaBattlePlayback(
-    private val encounter: HwihaCorpsEncounter,
-    private val forces: HwihaEncounterForces,
-    relations: HwihaEncounterRelations,
-    combat: HwihaEncounterCombatProfiles,
-    private val plans: HwihaBattlePlans,
-    deployment: HwihaEncounterDeployment,
+class BattlePlayback(
+    private val encounter: CorpsEncounter,
+    private val forces: EncounterForces,
+    relations: EncounterRelations,
+    combat: EncounterCombatProfiles,
+    private val plans: BattlePlans,
+    deployment: EncounterDeployment,
 ) {
     enum class Barrier { NONE, RETREAT_REQUIRED, DESTRUCTION_REQUIRED, ROUND_LIMIT }
-    class Result(val journal: HwihaBattleJournal, units: List<HwihaGridExchange.UnitState>,
-        actions: Map<Int,BattlePlanAction>, triggered: Set<HwihaBattleConditions.CommandKey>,
-        frames: List<HwihaGridExchange.RoundResult>, val barrier: Barrier) {
+    class Result(val journal: BattleJournal, units: List<GridExchange.UnitState>,
+        actions: Map<Int,BattlePlanAction>, triggered: Set<BattleConditions.CommandKey>,
+        frames: List<GridExchange.RoundResult>, val barrier: Barrier) {
         val units = Collections.unmodifiableList(ArrayList(units))
         val actions = Collections.unmodifiableMap(java.util.TreeMap(actions))
         val triggered = Collections.unmodifiableSet(LinkedHashSet(triggered))
         val frames = Collections.unmodifiableList(ArrayList(frames))
         val lastResolvedRound: Int get() = journal.rounds.size
     }
-    private val exchange = HwihaGridExchange(encounter,forces,relations,combat,deployment)
-    private val conditions = HwihaBattleConditions(encounter,forces,plans)
+    private val exchange = GridExchange(encounter,forces,relations,combat,deployment)
+    private val conditions = BattleConditions(encounter,forces,plans)
     private val commanders = forces.units.associate { it.bugokId to it.commanderGeneralId }
     val contextHash: String
     init {
         val bytes=ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             fun text(value:String) { val b=value.toByteArray(Charsets.UTF_8);out.writeInt(b.size);out.write(b) }
-            fun position(value:HwihaBattlefieldGeometry.Position) { out.writeInt(value.col);out.writeInt(value.row) }
+            fun position(value:BattlefieldGeometry.Position) { out.writeInt(value.col);out.writeInt(value.row) }
             text("hwihaBattlePlayback:v1");text(encounter.encounterId);text(forces.snapshotId);text(relations.snapshotId);text(plans.snapshotId)
             out.writeInt(combat.rulesVersion);text(combat.rulesContentHash)
             out.writeInt(combat.profiles.size)
             combat.profiles.forEach { p -> listOf(p.crewTypeId,p.movementSteps,p.attackRange,p.attackPower,p.defencePower,p.initiative).forEach(out::writeInt) }
-            out.writeInt(HwihaBattlefieldGeometry.RULE_VERSION);out.writeInt(HwihaBattlefieldLayout.RULE_VERSION)
-            out.writeInt(HwihaEncounterDeployment.RULE_VERSION);out.writeInt(HwihaGridMovement.RULE_VERSION)
-            out.writeInt(HwihaGridExchange.RULE_VERSION);out.writeInt(HwihaGridReach.RULE_VERSION)
+            out.writeInt(BattlefieldGeometry.RULE_VERSION);out.writeInt(BattlefieldLayout.RULE_VERSION)
+            out.writeInt(EncounterDeployment.RULE_VERSION);out.writeInt(GridMovement.RULE_VERSION)
+            out.writeInt(GridExchange.RULE_VERSION);out.writeInt(GridReach.RULE_VERSION)
             val geometry=deployment.layout.geometry
             text(geometry.provinceId);text(geometry.topologyRevision);text(geometry.topologyHash);text(geometry.tilesContentHash)
             listOf(geometry.originCol,geometry.originRow,geometry.width,geometry.height).forEach(out::writeInt)
@@ -60,18 +60,18 @@ class HwihaBattlePlayback(
         }
         contextHash=MessageDigest.getInstance("SHA-256").digest(bytes.toByteArray()).joinToString("") { "%02x".format(it) }
     }
-    fun initialJournal()=HwihaBattleJournal(encounter.encounterId,contextHash,emptyList())
+    fun initialJournal()=BattleJournal(encounter.encounterId,contextHash,emptyList())
 
-    fun append(journal:HwihaBattleJournal,input:HwihaRoundInput):Result {
+    fun append(journal:BattleJournal,input:RoundInput):Result {
         require(journal.encounterId==encounter.encounterId && journal.contextHash==contextHash)
         return replay(journal.append(input))
     }
-    fun replay(journal:HwihaBattleJournal):Result {
+    fun replay(journal:BattleJournal):Result {
         require(journal.encounterId==encounter.encounterId && journal.contextHash==contextHash) { "Battle journal context differs" }
         var units=exchange.initialUnits
         val actions=plans.plans.associate { it.commanderGeneralId to it.initialAction }.toMutableMap()
-        var triggered:Set<HwihaBattleConditions.CommandKey> = emptySet()
-        val frames=mutableListOf<HwihaGridExchange.RoundResult>()
+        var triggered:Set<BattleConditions.CommandKey> = emptySet()
+        val frames=mutableListOf<GridExchange.RoundResult>()
         var barrier=Barrier.NONE
         for(input in journal.rounds) {
             require(barrier==Barrier.NONE) { "A battle resolution barrier requires handling before another round" }
@@ -90,7 +90,7 @@ class HwihaBattlePlayback(
                 evaluated.activations.forEach { actions[it.commanderGeneralId]=it.action }
                 barrier=when {
                     actions.values.any { it==BattlePlanAction.RETREAT } -> Barrier.RETREAT_REQUIRED
-                    input.round==HwihaBattlePlans.MAX_ROUNDS -> Barrier.ROUND_LIMIT
+                    input.round==BattlePlans.MAX_ROUNDS -> Barrier.ROUND_LIMIT
                     else -> Barrier.NONE
                 }
             }

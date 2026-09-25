@@ -53,7 +53,7 @@ class HwihaScoutHandler(private val world: InMemoryTurnWorld, private val record
             return reject(ScoutFailure.STATE_UNAVAILABLE)
         }
         val state = world.getState()
-        val now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase)
+        val now = Phase(state.currentYear, state.currentMonth, state.currentPhase)
         val cities = world.listCities().sortedBy { it.id }.mapNotNull { city ->
             val province = (world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince)?.id ?: return@mapNotNull null
             ScoutCityFact(city.id, province, city.nationId, CountyWarehouse.META_KEY in city.meta)

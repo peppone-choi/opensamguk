@@ -72,7 +72,7 @@ class HwihaNpcCourtFlowApiIT {
         assertIs<HwihaTurnOutcome.Applied>(result.handled.first().hwihaOutcome)
         val issued = fixture.load(1)
         val actor = issued.generals.single { it.id==1 }
-        val dispatch = assertNotNull(opensamguk.logic.input.HwihaDispatchState.read(actor.meta))
+        val dispatch = assertNotNull(opensamguk.logic.input.DispatchState.read(actor.meta))
         assertEquals(10,dispatch.issuerId)
         assertEquals(county,dispatch.countyId)
         assertEquals(opensamguk.logic.input.DispatchStatus.PENDING,dispatch.status)
@@ -91,9 +91,9 @@ class HwihaNpcCourtFlowApiIT {
         assertEquals(actor,after.copy(meta=actor.meta))
         assertEquals(issued.generalPositionSnapshot!!.statesByGeneralId,accepted.generalPositionSnapshot!!.statesByGeneralId)
         assertEquals(issued.retainers,accepted.retainers)
-        assertEquals(county,opensamguk.logic.input.HwihaCountyAssignment.read(after.meta)!!.countyId)
+        assertEquals(county,opensamguk.logic.input.CountyAssignment.read(after.meta)!!.countyId)
         assertEquals(opensamguk.logic.input.DispatchStatus.ACCEPTED,
-            opensamguk.logic.input.HwihaDispatchState.read(after.meta)!!.status)
+            opensamguk.logic.input.DispatchState.read(after.meta)!!.status)
         mvc.perform(get("/api/command/result/{requestId}",reply)).andExpect(status().isOk)
             .andExpect(jsonPath("$.type").value("executionApplied"))
         assertEquals(0,fixture.service(WorldId(1),InMemoryTurnWorld(accepted),published,intake=true).runIntakeCommands())

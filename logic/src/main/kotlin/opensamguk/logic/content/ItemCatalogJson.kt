@@ -9,7 +9,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
-data class HwihaEquipmentDefinition(
+data class EquipmentDefinition(
     val id: String,
     val sourceCode: String,
     val name: String,
@@ -24,9 +24,9 @@ data class HwihaEquipmentDefinition(
     }
 }
 
-data class HwihaItemCatalog(
-    val treasures: List<HwihaTreasureDefinition>,
-    val equipment: List<HwihaEquipmentDefinition>,
+data class ItemCatalog(
+    val treasures: List<TreasureDefinition>,
+    val equipment: List<EquipmentDefinition>,
 ) {
     init {
         require(treasures.map { it.header.id }.distinct().size == treasures.size)
@@ -37,18 +37,18 @@ data class HwihaItemCatalog(
 }
 
 /** Strict reader for the two active ledgers; the excluded-row audit never enters gameplay. */
-object HwihaItemCatalogJson {
+object ItemCatalogJson {
     private const val TREASURE_RESOURCE = "hwiha/hwiha-treasure-cards-v1.json"
     private const val EQUIPMENT_RESOURCE = "hwiha/hwiha-equipment-v1.json"
 
-    val CANON: HwihaItemCatalog by lazy {
+    val CANON: ItemCatalog by lazy {
         fun read(path: String) = checkNotNull(javaClass.classLoader.getResource(path)) {
             "missing HWIHA item catalogue resource: $path"
         }.readText()
         parse(read(TREASURE_RESOURCE), read(EQUIPMENT_RESOURCE))
     }
 
-    fun parse(treasurePayload: String, equipmentPayload: String): HwihaItemCatalog {
+    fun parse(treasurePayload: String, equipmentPayload: String): ItemCatalog {
         val treasureRoot = Json.parseToJsonElement(treasurePayload).jsonObject
         val equipmentRoot = Json.parseToJsonElement(equipmentPayload).jsonObject
         require(treasureRoot.getValue("schemaVersion").jsonPrimitive.int == 1)
@@ -81,7 +81,7 @@ object HwihaItemCatalogJson {
                 header.getValue("tags").jsonArray.map { it.jsonPrimitive.content }.toSet(),
             )
             require(cardHeader.id == "treasure:$sourceCode")
-            HwihaTreasureDefinition(cardHeader, sourceCode, slot, copies,
+            TreasureDefinition(cardHeader, sourceCode, slot, copies,
                 legacy.getValue("cost").jsonPrimitive.int, row.getValue("sourceRowIndex").jsonPrimitive.int)
         }
         val equipment = equipmentRoot.getValue("equipment").jsonArray.map { node ->
@@ -95,12 +95,12 @@ object HwihaItemCatalogJson {
             require(legacy.getValue("availability").jsonPrimitive.int == 0)
             require(legacy.getValue("inRegistry").jsonPrimitive.boolean && legacy.getValue("buyable").jsonPrimitive.boolean)
             require(row.getValue("supply").jsonPrimitive.content == "UNLIMITED")
-            HwihaEquipmentDefinition(row.getValue("id").jsonPrimitive.content, sourceCode,
+            EquipmentDefinition(row.getValue("id").jsonPrimitive.content, sourceCode,
                 row.getValue("name").jsonPrimitive.content, slot,
                 legacy.getValue("cost").jsonPrimitive.int, legacy.getValue("reqSecu").jsonPrimitive.int,
                 legacy.getValue("consumable").jsonPrimitive.boolean)
         }
-        return HwihaItemCatalog(treasures, equipment)
+        return ItemCatalog(treasures, equipment)
     }
 
     private fun provenance(row: JsonObject): CardProvenance = when (row.getValue("kind").jsonPrimitive.content) {

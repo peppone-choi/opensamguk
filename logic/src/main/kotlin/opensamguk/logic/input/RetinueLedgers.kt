@@ -14,7 +14,7 @@ data class RetinueLedger(
 )
 
 /** Validates the whole graph before computing any budget or allegiance transition. */
-object HwihaRetinueLedger {
+object RetinueLedgers {
     fun assess(people: List<RetinueOwner>, links: List<RetinuePersonLink>, units: List<RetinueNamedUnit> = emptyList()): RetinueLedger {
         require(people.map { it.id }.distinct().size == people.size)
         require(people.all { it.id > 0 && it.nationId >= 0 && it.renownCapacity >= 0 && it.personCardCost > 0 })

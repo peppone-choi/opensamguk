@@ -3,14 +3,14 @@ package opensamguk.logic.input
 import opensamguk.logic.world.*
 
 /** Private durable progress; no phase budget remainder is banked here. */
-data class HwihaMarchState(
-    val assignment: HwihaCountyAssignment,
+data class MarchState(
+    val assignment: CountyAssignment,
     val path: ResolvedLandMarchPath,
     val cursor: LandMarchCursor,
-    val lastAdvancedAt: HwihaPhase,
+    val lastAdvancedAt: Phase,
     val stop: LandMarchStop,
 ) {
-    private val checkpoint = HwihaMarchCheckpoint(path, cursor, lastAdvancedAt, stop)
+    private val checkpoint = MarchCheckpoint(path, cursor, lastAdvancedAt, stop)
 
     fun toMetaValue(): Map<String, Any> = linkedMapOf<String, Any>(
         "version" to 1, "assignment" to assignment.toMetaValue(),
@@ -19,13 +19,13 @@ data class HwihaMarchState(
     companion object {
         const val META_KEY = "hwihaMarch"
         private val fields = setOf("version", "assignment", "path", "edgeIndex", "paidMm", "lastAdvancedAt", "stop")
-        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): HwihaMarchState? {
+        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): MarchState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(value.keys == fields && value["version"] == 1) { "Invalid march metadata schema" }
-            val assignment = HwihaCountyAssignment.read(mapOf(HwihaCountyAssignment.META_KEY to value["assignment"])) ?: invalid()
-            val checkpoint = HwihaMarchCheckpoint.read(value.filterKeys { it in HwihaMarchCheckpoint.fields }, topology, metrics)
-            return HwihaMarchState(assignment, checkpoint.path, checkpoint.cursor, checkpoint.lastAdvancedAt, checkpoint.stop)
+            val assignment = CountyAssignment.read(mapOf(CountyAssignment.META_KEY to value["assignment"])) ?: invalid()
+            val checkpoint = MarchCheckpoint.read(value.filterKeys { it in MarchCheckpoint.fields }, topology, metrics)
+            return MarchState(assignment, checkpoint.path, checkpoint.cursor, checkpoint.lastAdvancedAt, checkpoint.stop)
         }
         private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA march metadata")
     }

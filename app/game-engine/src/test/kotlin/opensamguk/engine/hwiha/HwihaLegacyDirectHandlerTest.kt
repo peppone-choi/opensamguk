@@ -3,7 +3,7 @@ package opensamguk.engine.hwiha
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.seed.HwihaUnitProfilesJson
-import opensamguk.logic.content.HwihaItemCatalogJson
+import opensamguk.logic.content.ItemCatalogJson
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
@@ -25,11 +25,11 @@ class HwihaLegacyDirectHandlerTest {
             cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
         val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
         val json = """{"bugokId":${unit.id},"crewTypeId":$nextType}"""
-        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaLegacyDirectInput.CONVERT,
+        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(DirectInput.CONVERT,
             actor.id, json, "convert-4011", 42))
         assertEquals(nextType, world.getBugokById(unit.id)!!.crewTypeId)
         assertEquals(40, world.getBugokById(unit.id)!!.training)
-        assertEquals(first, handler.handle(HwihaLegacyDirectInput.CONVERT, actor.id, json, "convert-4011", 42))
+        assertEquals(first, handler.handle(DirectInput.CONVERT, actor.id, json, "convert-4011", 42))
     }
 
     @Test fun `grain trade exchanges exact actor and county stocks`() {
@@ -39,7 +39,7 @@ class HwihaLegacyDirectHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id, grain = 300)) else city
         })
         assertIs<HwihaTurnOutcome.Applied>(HwihaLegacyDirectHandler(world, ChangeRecorder(), context()).handle(
-            HwihaLegacyDirectInput.GRAIN, actor.id, """{"side":"BUY","amount":1}""", "grain-4021", 42))
+            DirectInput.GRAIN, actor.id, """{"side":"BUY","amount":1}""", "grain-4021", 42))
         assertEquals(0, world.getGeneralById(actor.id)!!.gold)
         assertEquals(300, world.getGeneralById(actor.id)!!.rice)
         val after = CountyWarehouse.read(world.getCityById(route.startCity)!!.meta, route.startCity)!!.stock
@@ -49,16 +49,16 @@ class HwihaLegacyDirectHandlerTest {
 
     @Test fun `treasure trade remains unavailable until card effects are delivered`() {
         val route = fixture.route()
-        val card = HwihaItemCatalogJson.CANON.treasures.first { it.issuedCopies == 1 && it.purchaseCost > 0 }
+        val card = ItemCatalogJson.CANON.treasures.first { it.issuedCopies == 1 && it.purchaseCost > 0 }
         val actor = fixture.person(4031, 1, route.startCity, userId = "42").copy(gold = card.purchaseCost)
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id)) else city
         })
         val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaLegacyDirectInput.EQUIPMENT, actor.id,
+        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(DirectInput.EQUIPMENT, actor.id,
             """{"treasureId":${card.sourceRowIndex},"side":"BUY"}""", "buy-4031", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
-        assertEquals(emptySet(), HwihaTreasureInventory.read(world.getGeneralById(actor.id)!!.meta))
+        assertEquals(emptySet(), TreasureInventory.read(world.getGeneralById(actor.id)!!.meta))
         assertEquals(card.purchaseCost, world.getGeneralById(actor.id)!!.gold)
     }
 
@@ -74,10 +74,10 @@ class HwihaLegacyDirectHandlerTest {
             else -> city
         } })
         val handler = HwihaLegacyDirectHandler(world, ChangeRecorder(), context())
-        assertEquals(HwihaLegacyDirectFailure.INVALID_INPUT.name,
-            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaLegacyDirectInput.TRANSPORT,
+        assertEquals(DirectFailure.INVALID_INPUT.name,
+            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(DirectInput.TRANSPORT,
                 actor.id, """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1001}""", "too-much", 42)).code)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaLegacyDirectInput.TRANSPORT, actor.id,
+        assertIs<HwihaTurnOutcome.Applied>(handler.handle(DirectInput.TRANSPORT, actor.id,
             """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1000}""", "transport-4041", 42))
         assertEquals(500, CountyWarehouse.read(world.getCityById(sourceId)!!.meta, sourceId)!!.stock.grain)
         assertEquals(1000, CountyWarehouse.read(world.getCityById(targetId)!!.meta, targetId)!!.stock.grain)

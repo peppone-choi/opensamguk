@@ -73,7 +73,7 @@ data class EncounterCommanderForce(
 }
 
 /** Frozen observations, not live resources or approved combat coefficients. */
-class HwihaEncounterForces(
+class EncounterForces(
     val encounterId: String,
     units: List<EncounterUnitForce>,
     commanders: List<EncounterCommanderForce>,
@@ -85,7 +85,7 @@ class HwihaEncounterForces(
         require(this.units.isNotEmpty() && this.units.map { it.bugokId }.distinct().size == this.units.size)
         require(this.commanders.isNotEmpty() && this.commanders.map { it.generalId }.distinct().size == this.commanders.size)
     }
-    fun requireBinding(encounter: HwihaCorpsEncounter) {
+    fun requireBinding(encounter: CorpsEncounter) {
         require(encounterId == encounter.encounterId)
         val participants = listOf(encounter.attacker) + encounter.defenders
         require(units.map { it.bugokId }.toSet() == participants.flatMap { it.bugokIds }.toSet())
@@ -118,13 +118,13 @@ class HwihaEncounterForces(
         "snapshotId" to snapshotId, "units" to units.map { it.toMetaValue() }, "commanders" to commanders.map { it.toMetaValue() })
     companion object {
         const val META_KEY = "hwihaEncounterForces"
-        fun read(meta: Map<String, Any?>, encounter: HwihaCorpsEncounter): HwihaEncounterForces? {
+        fun read(meta: Map<String, Any?>, encounter: CorpsEncounter): EncounterForces? {
             if (META_KEY !in meta) return null
             val row = meta[META_KEY] as? Map<*, *> ?: invalidForce()
             require(row.keys == setOf("version", "encounterId", "snapshotId", "units", "commanders") && row["version"] == 1)
             val units = (row["units"] as? List<*>)?.map(EncounterUnitForce::read) ?: invalidForce()
             val commanders = (row["commanders"] as? List<*>)?.map(EncounterCommanderForce::read) ?: invalidForce()
-            val result = HwihaEncounterForces(row["encounterId"] as? String ?: invalidForce(), units, commanders)
+            val result = EncounterForces(row["encounterId"] as? String ?: invalidForce(), units, commanders)
             require(units == result.units && commanders == result.commanders) { "Noncanonical frozen forces" }
             require(row["snapshotId"] == result.snapshotId) { "Frozen force hash mismatch" }
             result.requireBinding(encounter)

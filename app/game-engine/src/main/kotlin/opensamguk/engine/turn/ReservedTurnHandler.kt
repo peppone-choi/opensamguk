@@ -9,8 +9,8 @@ import opensamguk.logic.domestic.DomesticInput
 import opensamguk.engine.hwiha.HwihaTurnOutcome
 import opensamguk.engine.hwiha.HwihaEnlistmentHandler
 import opensamguk.logic.input.InputHandler
-import opensamguk.logic.input.HwihaInputCatalog
-import opensamguk.logic.input.HwihaInputRegistry
+import opensamguk.logic.input.InputCatalog
+import opensamguk.logic.input.InputRegistry
 import opensamguk.logic.input.InputResolution
 import opensamguk.logic.input.RuleProfile
 import opensamguk.common.constants.GameConst
@@ -213,7 +213,7 @@ class ReservedTurnHandler(
     val hwihaDomesticContext: opensamguk.engine.hwiha.HwihaDomesticContext = opensamguk.engine.hwiha.HwihaDomesticContext(),
 ) {
 
-    private val hwihaCatalog by lazy { HwihaInputCatalog.load() }
+    private val hwihaCatalog by lazy { InputCatalog.load() }
     val courtHandler by lazy { opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder, hwihaDomesticContext) }
     val domesticTurn by lazy { opensamguk.engine.hwiha.HwihaDomesticTurn(world, recorder, hwihaDomesticContext) }
     private val domesticHandler by lazy { opensamguk.engine.hwiha.HwihaDomesticHandler(world, recorder, hwihaDomesticContext) }
@@ -315,11 +315,11 @@ class ReservedTurnHandler(
                 "court.dispatch" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatch") },
                 "court.dispatchReply" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.dispatchReply") },
                 "court.reward" to InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, "court.reward") },
-                opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler {
-                    applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.HwihaPoliticalConsent.COURT_INPUT_ID)
+                opensamguk.logic.input.PoliticalConsent.COURT_INPUT_ID to InputHandler {
+                    applied = courtHandler.rejectPersonalReservation(generalId, opensamguk.logic.input.PoliticalConsent.COURT_INPUT_ID)
                 },
             )
-            for (enlistId in opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS - HwihaEnlistmentHandler.INPUT_ID) {
+            for (enlistId in opensamguk.logic.input.EnlistmentInput.INPUT_IDS - HwihaEnlistmentHandler.INPUT_ID) {
                 if (hwihaCatalog[enlistId]?.deliveryState?.hasHandler == true) {
                     handlers[enlistId] = InputHandler {
                         applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month, enlistId)
@@ -331,17 +331,17 @@ class ReservedTurnHandler(
                     handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
                 }
             }
-            for (inputId in opensamguk.logic.input.HwihaLegacyCourtInput.INPUT_IDS) {
+            for (inputId in opensamguk.logic.input.CourtInput.INPUT_IDS) {
                 if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
                     handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
                 }
             }
-            for (inputId in opensamguk.logic.input.HwihaLegacyStratagemInput.INPUT_IDS) {
+            for (inputId in opensamguk.logic.input.StratagemInput.INPUT_IDS) {
                 if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
                     handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
                 }
             }
-            handlers[opensamguk.logic.input.HwihaDeployInput.INPUT_ID] = InputHandler {
+            handlers[opensamguk.logic.input.DeployInputs.INPUT_ID] = InputHandler {
                 applied = deployHandler.handle(generalId, reserved.argJson, reserved.requestId, reserved.reservationOwnerUserId,
                     npcSelected = !reserved.rowExists)
             }
@@ -351,7 +351,7 @@ class ReservedTurnHandler(
             handlers[ScoutInputCodec.INPUT_ID] = InputHandler {
                 applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)
             }
-            for (travelId in opensamguk.logic.input.HwihaTravelInput.INPUT_IDS) {
+            for (travelId in opensamguk.logic.input.TravelInput.INPUT_IDS) {
                 handlers[travelId] = InputHandler {
                     applied = travelHandler.handle(travelId, generalId, reserved.argJson, reserved.requestId,
                         reserved.reservationOwnerUserId)
@@ -365,7 +365,7 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            for (militaryId in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS) {
+            for (militaryId in opensamguk.logic.input.MilitaryInput.CITY_INPUT_IDS) {
                 if (hwihaCatalog[militaryId]?.deliveryState?.hasHandler == true) {
                     handlers[militaryId] = InputHandler {
                         applied = cityMilitaryHandler.handle(militaryId, generalId, reserved.argJson, reserved.requestId,
@@ -373,7 +373,7 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            for (personalId in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS) {
+            for (personalId in opensamguk.logic.input.PersonalInput.FIELD_IDS) {
                 if (hwihaCatalog[personalId]?.deliveryState?.hasHandler == true) {
                     handlers[personalId] = InputHandler {
                         applied = personalHandler.handle(personalId, generalId, reserved.argJson, reserved.requestId,
@@ -381,13 +381,13 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            if (hwihaCatalog[opensamguk.logic.input.HwihaRetireInput.INPUT_ID]?.deliveryState?.hasHandler == true) {
-                handlers[opensamguk.logic.input.HwihaRetireInput.INPUT_ID] = InputHandler {
+            if (hwihaCatalog[opensamguk.logic.input.RetireInput.INPUT_ID]?.deliveryState?.hasHandler == true) {
+                handlers[opensamguk.logic.input.RetireInput.INPUT_ID] = InputHandler {
                     applied = retireHandler.handle(generalId, reserved.argJson, reserved.requestId,
                         reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                 }
             }
-            for (peopleId in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS) {
+            for (peopleId in opensamguk.logic.input.PeopleInput.INPUT_IDS) {
                 if (hwihaCatalog[peopleId]?.deliveryState?.hasHandler == true) {
                     handlers[peopleId] = InputHandler {
                         applied = peopleHandler.handle(peopleId, generalId, reserved.argJson, reserved.requestId,
@@ -395,7 +395,7 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            for (politicalId in opensamguk.logic.input.HwihaPoliticalRules.SUPPORTED_IDS) {
+            for (politicalId in opensamguk.logic.input.PoliticalRules.SUPPORTED_IDS) {
                 if (hwihaCatalog[politicalId]?.deliveryState?.hasHandler == true) {
                     handlers[politicalId] = InputHandler {
                         applied = politicalHandler.handle(politicalId, generalId, reserved.argJson, reserved.requestId,
@@ -403,7 +403,7 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            for (transferId in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
+            for (transferId in opensamguk.logic.input.TransferInput.INPUT_IDS) {
                 if (hwihaCatalog[transferId]?.deliveryState?.hasHandler == true) {
                     handlers[transferId] = InputHandler {
                         applied = transferHandler.handle(transferId, generalId, reserved.argJson, reserved.requestId,
@@ -411,7 +411,7 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            for (directId in opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS) {
+            for (directId in opensamguk.logic.input.DirectInput.INPUT_IDS) {
                 if (hwihaCatalog[directId]?.deliveryState?.hasHandler == true) {
                     handlers[directId] = InputHandler {
                         applied = legacyDirectHandler.handle(directId, generalId, reserved.argJson, reserved.requestId,
@@ -419,13 +419,13 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            if (hwihaCatalog[opensamguk.logic.input.HwihaMilitaryInput.MUSTER]?.deliveryState?.hasHandler == true) {
-                handlers[opensamguk.logic.input.HwihaMilitaryInput.MUSTER] = InputHandler {
+            if (hwihaCatalog[opensamguk.logic.input.MilitaryInput.MUSTER]?.deliveryState?.hasHandler == true) {
+                handlers[opensamguk.logic.input.MilitaryInput.MUSTER] = InputHandler {
                     applied = musterHandler.handle(generalId, reserved.argJson, reserved.requestId,
                         reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                 }
             }
-            val inputs = HwihaInputRegistry(hwihaCatalog, handlers)
+            val inputs = InputRegistry(hwihaCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {
                 is InputResolution.Rejected -> HwihaTurnOutcome.Rejected(
                     reserved.actionCode, resolution.reason.name, resolution.reason.message)
@@ -438,7 +438,7 @@ class ReservedTurnHandler(
             // goes to the general's own record so that 「지난 순」 shows why the slot did nothing.
             if (outcome is HwihaTurnOutcome.Rejected && world.ruleProfile == RuleProfile.HWIHA) {
                 opensamguk.engine.hwiha.HwihaRecords.general(world, generalId,
-                    opensamguk.logic.input.HwihaRecordKind.INPUT_REJECTED, outcome.reason,
+                    opensamguk.logic.input.RecordKind.INPUT_REJECTED, outcome.reason,
                     linkedMapOf("inputId" to outcome.inputId, "code" to outcome.code))
             }
             return HandledTurn(generalId, null, false, (outcome as? HwihaTurnOutcome.Rejected)?.reason,

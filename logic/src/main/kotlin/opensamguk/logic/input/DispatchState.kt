@@ -7,7 +7,7 @@ package opensamguk.logic.input
  * monthly assessment's `dispatchRefusal` event (-4, `hwiha-renown-assessment-v1.json`), recorded at most once per
  * month (2026-09-23 user decision — the former immediate -1 was removed so that renown moves on one path only).
  */
-data class HwihaDispatchPolicy(
+data class DispatchPolicy(
     val responsePhases: Int = 12,
     val refusalLoyaltyLoss: Int = 5,
 ) {
@@ -15,22 +15,22 @@ data class HwihaDispatchPolicy(
 }
 
 /** Three phases per month, including year transitions. */
-data class HwihaPhase(val year: Int, val month: Int, val phase: Int) : Comparable<HwihaPhase> {
+data class Phase(val year: Int, val month: Int, val phase: Int) : Comparable<Phase> {
     init { require(year >= 0 && month in 1..12 && phase in 1..3) }
     private val ordinal: Long get() = year.toLong() * 36 + (month - 1) * 3 + phase - 1
-    override fun compareTo(other: HwihaPhase): Int = ordinal.compareTo(other.ordinal)
-    fun plus(phases: Int): HwihaPhase {
+    override fun compareTo(other: Phase): Int = ordinal.compareTo(other.ordinal)
+    fun plus(phases: Int): Phase {
         require(phases >= 0)
         val next = ordinal + phases
         require(next / 36 <= Int.MAX_VALUE)
-        return HwihaPhase((next / 36).toInt(), ((next % 36) / 3 + 1).toInt(), (next % 3 + 1).toInt())
+        return Phase((next / 36).toInt(), ((next % 36) / 3 + 1).toInt(), (next % 3 + 1).toInt())
     }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("year" to year, "month" to month, "phase" to phase)
     companion object {
-        fun read(raw: Any?): HwihaPhase {
+        fun read(raw: Any?): Phase {
             val value = raw as? Map<*, *> ?: invalidDispatchState()
             require(value.keys == setOf("year", "month", "phase"))
-            return HwihaPhase(value["year"] as? Int ?: invalidDispatchState(),
+            return Phase(value["year"] as? Int ?: invalidDispatchState(),
                 value["month"] as? Int ?: invalidDispatchState(), value["phase"] as? Int ?: invalidDispatchState())
         }
     }
@@ -39,14 +39,14 @@ data class HwihaPhase(val year: Int, val month: Int, val phase: Int) : Comparabl
 enum class DispatchStatus { PENDING, ACCEPTED, REFUSED, CANCELLED }
 
 /** Private latest dispatch; the previous accepted assignment is stored separately. */
-data class HwihaDispatchState(
+data class DispatchState(
     val dispatchId: String,
     val issuerId: Int,
     val targetId: Int,
     val nationId: Int,
     val countyId: Int,
-    val issuedAt: HwihaPhase,
-    val dueAt: HwihaPhase,
+    val issuedAt: Phase,
+    val dueAt: Phase,
     val status: DispatchStatus = DispatchStatus.PENDING,
 ) {
     init {
@@ -62,20 +62,20 @@ data class HwihaDispatchState(
     companion object {
         const val META_KEY = "hwihaDispatch"
         private val fields = setOf("dispatchId", "issuerId", "targetId", "nationId", "countyId", "issuedAt", "dueAt", "status")
-        fun read(meta: Map<String, Any?>): HwihaDispatchState? {
+        fun read(meta: Map<String, Any?>): DispatchState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalidDispatchState()
             require(value.keys == fields)
             fun int(key: String) = value[key] as? Int ?: invalidDispatchState()
-            return HwihaDispatchState(value["dispatchId"] as? String ?: invalidDispatchState(), int("issuerId"),
-                int("targetId"), int("nationId"), int("countyId"), HwihaPhase.read(value["issuedAt"]),
-                HwihaPhase.read(value["dueAt"]), DispatchStatus.valueOf(value["status"] as? String ?: invalidDispatchState()))
+            return DispatchState(value["dispatchId"] as? String ?: invalidDispatchState(), int("issuerId"),
+                int("targetId"), int("nationId"), int("countyId"), Phase.read(value["issuedAt"]),
+                Phase.read(value["dueAt"]), DispatchStatus.valueOf(value["status"] as? String ?: invalidDispatchState()))
         }
     }
 }
 
 /** A destination for subsequent personal-turn marching, never an immediate position change. */
-data class HwihaCountyAssignment(val dispatchId: String, val issuerId: Int, val nationId: Int, val countyId: Int) {
+data class CountyAssignment(val dispatchId: String, val issuerId: Int, val nationId: Int, val countyId: Int) {
     init {
         require(dispatchId.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
         require(issuerId > 0 && nationId > 0 && countyId > 0)
@@ -84,11 +84,11 @@ data class HwihaCountyAssignment(val dispatchId: String, val issuerId: Int, val 
         "nationId" to nationId, "countyId" to countyId)
     companion object {
         const val META_KEY = "hwihaCountyAssignment"
-        fun read(meta: Map<String, Any?>): HwihaCountyAssignment? {
+        fun read(meta: Map<String, Any?>): CountyAssignment? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalidDispatchState()
             require(value.keys == setOf("dispatchId", "issuerId", "nationId", "countyId"))
-            return HwihaCountyAssignment(value["dispatchId"] as? String ?: invalidDispatchState(),
+            return CountyAssignment(value["dispatchId"] as? String ?: invalidDispatchState(),
                 value["issuerId"] as? Int ?: invalidDispatchState(), value["nationId"] as? Int ?: invalidDispatchState(),
                 value["countyId"] as? Int ?: invalidDispatchState())
         }

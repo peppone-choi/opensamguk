@@ -2,7 +2,7 @@ package opensamguk.gameapi.web
 
 import opensamguk.gameapi.precheck.HwihaTransferOptionsService
 import opensamguk.gameapi.read.HwihaDomesticForbidden
-import opensamguk.logic.input.HwihaTransferInput
+import opensamguk.logic.input.TransferInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,11 +15,11 @@ import org.springframework.web.bind.annotation.RestController
 class HwihaTransferOptionsController(private val service: HwihaTransferOptionsService) {
     @GetMapping("/api/commands/gift-options")
     fun gift(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
-        options(HwihaTransferInput.GIFT, generalId, userId)
+        options(TransferInput.GIFT, generalId, userId)
 
     @GetMapping("/api/commands/donate-options")
     fun donate(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
-        options(HwihaTransferInput.DONATE, generalId, userId)
+        options(TransferInput.DONATE, generalId, userId)
 
     private fun options(inputId: String, generalId: Int, userId: Long?): ResponseEntity<Any> {
         if (userId == null || userId <= 0) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()

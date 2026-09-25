@@ -1,22 +1,22 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import kotlin.test.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef.LandProvince
-import opensamguk.logic.war.hwiha.HwihaBattleConditions.CommandKey
+import opensamguk.logic.war.BattleConditions.CommandKey
 
-class HwihaBattleConditionsTest {
-    private val encounter=HwihaCorpsEncounter(HwihaEncounterParticipant("a",9,9,1,listOf(90,91)),
-        listOf(HwihaEncounterParticipant("c",3,3,3,listOf(30)),HwihaEncounterParticipant("b",2,2,2,listOf(20))),
-        LandProvince("B"),LandProvince("A"),HwihaPhase(200,1,1),"qa","a".repeat(64))
-    private val forces=HwihaEncounterForces(encounter.encounterId,
+class BattleConditionsTest {
+    private val encounter=CorpsEncounter(EncounterParticipant("a",9,9,1,listOf(90,91)),
+        listOf(EncounterParticipant("c",3,3,3,listOf(30)),EncounterParticipant("b",2,2,2,listOf(20))),
+        LandProvince("B"),LandProvince("A"),Phase(200,1,1),"qa","a".repeat(64))
+    private val forces=EncounterForces(encounter.encounterId,
         listOf(20 to 2,30 to 3,90 to 9,91 to 9).map { (id,commander) ->
             EncounterUnitForce(id,commander,commander,1100,100,50,50,0,100,null) },
         listOf(2,3,9).map { EncounterCommanderForce(it,70,70,70,70,70) })
-    private val plans=HwihaBattlePlans.defaultFor(encounter)
-    private val units=forces.units.map { HwihaGridExchange.UnitState(it.bugokId,it.troops,it.morale,it.fatigue,null) }
-    private fun evaluator(p:HwihaBattlePlans=plans)=HwihaBattleConditions(encounter,forces,p)
-    private fun planForNine(commands:List<BattlePlanCommand>)=HwihaBattlePlans(encounter.encounterId,
+    private val plans=BattlePlans.defaultFor(encounter)
+    private val units=forces.units.map { GridExchange.UnitState(it.bugokId,it.troops,it.morale,it.fatigue,null) }
+    private fun evaluator(p:BattlePlans=plans)=BattleConditions(encounter,forces,p)
+    private fun planForNine(commands:List<BattlePlanCommand>)=BattlePlans(encounter.encounterId,
         listOf(CommanderBattlePlan(9,BattlePlanAction.ADVANCE,commands),
             CommanderBattlePlan(2,BattlePlanAction.HOLD,emptyList()),CommanderBattlePlan(3,BattlePlanAction.HOLD,emptyList())))
 
@@ -63,7 +63,7 @@ class HwihaBattleConditionsTest {
         for(round in listOf(0,25)) assertFailsWith<IllegalArgumentException> { evaluator().evaluate(round,units,emptySet()) }
         for(bad in listOf(units.drop(1),units+units[0],units.map { it.copy(troops=101) },units.map { it.copy(morale=-1) }))
             assertFailsWith<IllegalArgumentException> { evaluator().evaluate(1,bad,emptySet()) }
-        assertFailsWith<IllegalArgumentException> { HwihaBattleConditions(encounter,forces,
-            HwihaBattlePlans("b".repeat(64),plans.plans)) }
+        assertFailsWith<IllegalArgumentException> { BattleConditions(encounter,forces,
+            BattlePlans("b".repeat(64),plans.plans)) }
     }
 }

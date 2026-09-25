@@ -56,8 +56,8 @@ class HwihaVisionReaderTest {
         currentYear = 190; currentMonth = 3; currentPhase = 2
     }
 
-    private fun corpsMeta(owner: Int, order: String, unit: Int, nation: Int) = mapOf(HwihaDeploymentState.META_KEY to
-        HwihaDeploymentState(listOf(HwihaDeployedCorps(order, owner, owner, null, nation, listOf(unit), HwihaPhase(190, 1, 1)))).toMetaValue())
+    private fun corpsMeta(owner: Int, order: String, unit: Int, nation: Int) = mapOf(DeploymentState.META_KEY to
+        DeploymentState(listOf(DeployedCorps(order, owner, owner, null, nation, listOf(unit), Phase(190, 1, 1)))).toMetaValue())
 
     private fun setup(profile: String = "HWIHA", actorMeta: Map<String, Any?> = emptyMap(), fullEnemyAtHome: Boolean = true) {
         world.config = mapOf("ruleProfile" to profile)
@@ -132,7 +132,7 @@ class HwihaVisionReaderTest {
     @Test fun `scouted neighbour shows only the snapshot and its age, never the live army there`() {
         val seen = ScoutedCorps(ScoutCapture.corpsKey("req-next-old"), 4, 4, 3, province(next), "B1")
         val notebook = ScoutReports(index.tilesContentHash, listOf(
-            ScoutReport(index.commanderies[next].id, HwihaPhase(190, 2, 1), listOf(ScoutedCity(500, 3, true)), listOf(seen))))
+            ScoutReport(index.commanderies[next].id, Phase(190, 2, 1), listOf(ScoutedCity(500, 3, true)), listOf(seen))))
         setup(actorMeta = mapOf(ScoutReports.META_KEY to notebook.toMetaValue()))
         val corps = controller.corps(41, 1).body as HwihaCorpsResponse
         val intel = corps.corps!!.single { it.visibility == "INTEL" }
@@ -152,7 +152,7 @@ class HwihaVisionReaderTest {
     }
 
     @Test fun `corrupt authority yields nothing rather than a partial map`() {
-        setup(actorMeta = mapOf(HwihaDeploymentState.META_KEY to mapOf("version" to 7)))
+        setup(actorMeta = mapOf(DeploymentState.META_KEY to mapOf("version" to 7)))
         assertEquals("""{"status":"UNAVAILABLE"}""", bytes(controller.corps(41, 1).body))
         assertEquals("""{"status":"UNAVAILABLE"}""", bytes(controller.visibility(41, 1).body))
     }

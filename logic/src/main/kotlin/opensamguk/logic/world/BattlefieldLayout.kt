@@ -1,11 +1,11 @@
 package opensamguk.logic.world
 
 import java.util.Collections
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldGeometry.Position
 
 /** Land-battle setup, without unit placement, alliances, combat coefficients, or outcomes. */
-class HwihaBattlefieldLayout private constructor(
-    val geometry: HwihaBattlefieldGeometry,
+class BattlefieldLayout private constructor(
+    val geometry: BattlefieldGeometry,
     val approachProvinceId: String,
     distances: Map<Position, Int>,
     attackerZone: List<Position>,
@@ -16,7 +16,7 @@ class HwihaBattlefieldLayout private constructor(
     val defenderZone: List<Position> = Collections.unmodifiableList(ArrayList(defenderZone))
 
     sealed interface Result {
-        data class Ready(val layout: HwihaBattlefieldLayout) : Result
+        data class Ready(val layout: BattlefieldLayout) : Result
         data class Unavailable(val reason: Reason) : Result
     }
 
@@ -37,7 +37,7 @@ class HwihaBattlefieldLayout private constructor(
             val source = index.cellsOf(provinceId)
             val approach = index.cellsOf(approachProvinceId)
             if (source.isEmpty()) return Result.Unavailable(Reason.EMPTY_PROVINCE)
-            val geometry = HwihaBattlefieldGeometry.extract(index, provinceId)
+            val geometry = BattlefieldGeometry.extract(index, provinceId)
             val passable = geometry.cells.filter { isLandPassable(it.terrain) }.mapTo(linkedSetOf()) { it.position }
             if (passable.isEmpty()) return Result.Unavailable(Reason.NO_PASSABLE_CELLS)
             val contact = geometry.borderFacing(index, approachProvinceId)
@@ -90,7 +90,7 @@ class HwihaBattlefieldLayout private constructor(
             // Outer thirds leave a separating band whenever the source component permits one.
             val zoneDepth = (depth - 1) / 3
             val orderedDistances = component.associateWith { distances.getValue(it) }
-            return Result.Ready(HwihaBattlefieldLayout(geometry, approachProvinceId, orderedDistances,
+            return Result.Ready(BattlefieldLayout(geometry, approachProvinceId, orderedDistances,
                 component.filter { distances.getValue(it) <= zoneDepth },
                 component.filter { distances.getValue(it) >= depth - zoneDepth }))
         }

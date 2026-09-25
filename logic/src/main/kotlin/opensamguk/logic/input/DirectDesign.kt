@@ -6,7 +6,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Confirmed numeric values shared by precheck and turn execution. */
-data class HwihaLegacyDirectDesign(val conversionTrainingLoss: Int, val grainTradeMoney: Int,
+data class DirectDesign(val conversionTrainingLoss: Int, val grainTradeMoney: Int,
     val grainTradeGrain: Int, val transportMaxAmount: Int) {
     init {
         require(conversionTrainingLoss in 0..100 && grainTradeMoney > 0 && grainTradeGrain > 0 &&
@@ -15,7 +15,7 @@ data class HwihaLegacyDirectDesign(val conversionTrainingLoss: Int, val grainTra
 
     companion object {
         val CANON by lazy {
-            val resource = checkNotNull(HwihaLegacyDirectDesign::class.java.classLoader
+            val resource = checkNotNull(DirectDesign::class.java.classLoader
                 .getResource("hwiha/hwiha-legacy-direct-v1.json"))
             val root = Json.parseToJsonElement(resource.readText()).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note",
@@ -23,7 +23,7 @@ data class HwihaLegacyDirectDesign(val conversionTrainingLoss: Int, val grainTra
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1)
             require(root.getValue("ledgerId").jsonPrimitive.content == "hwiha-legacy-direct-v1")
             require(root.getValue("status").jsonPrimitive.content == "CONFIRMED")
-            HwihaLegacyDirectDesign(root.getValue("conversionTrainingLoss").jsonPrimitive.int,
+            DirectDesign(root.getValue("conversionTrainingLoss").jsonPrimitive.int,
                 root.getValue("grainTradeMoney").jsonPrimitive.int,
                 root.getValue("grainTradeGrain").jsonPrimitive.int,
                 root.getValue("transportMaxAmount").jsonPrimitive.int)

@@ -3,14 +3,14 @@ package opensamguk.logic.input
 import kotlin.test.*
 import opensamguk.logic.world.*
 
-class HwihaCorpsOrderTest {
+class CorpsOrderTest {
     private val topology = StrategicTopologySnapshot("qa",setOf("A"),emptyList(),emptyList(),emptyList(),mapOf("qa" to "a".repeat(64)))
-    private val order = HwihaCorpsOrder("order",1,2,StrategicNodeRef.LandProvince("A"),topology.topologyRevision,topology.contentHash)
-    private val corps = HwihaDeployedCorps("order",1,2,10,1,listOf(20),HwihaPhase(200,1,1))
-    private fun read(raw: Any?) = HwihaCorpsOrder.read(mapOf(HwihaCorpsOrder.META_KEY to raw),topology)
+    private val order = CorpsOrder("order",1,2,StrategicNodeRef.LandProvince("A"),topology.topologyRevision,topology.contentHash)
+    private val corps = DeployedCorps("order",1,2,10,1,listOf(20),Phase(200,1,1))
+    private fun read(raw: Any?) = CorpsOrder.read(mapOf(CorpsOrder.META_KEY to raw),topology)
 
     @Test fun `round trip persists destination before movement and absent stays absent`() {
-        assertNull(HwihaCorpsOrder.read(emptyMap(),topology))
+        assertNull(CorpsOrder.read(emptyMap(),topology))
         assertEquals(order,read(order.toMetaValue()))
         order.requireBinding(corps,2)
         assertEquals(order.toMetaValue().keys.toList(),read(order.toMetaValue())!!.toMetaValue().keys.toList())

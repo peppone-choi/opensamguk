@@ -46,8 +46,8 @@ class HwihaScoutHandlerTest {
         val positions = GeneralPositionSnapshot.fromTopology(topology,
             at.map { (id, province) -> GeneralPositionState(topology.topologyRevision, topology.contentHash, id, StrategicNodeRef.LandProvince(province), 1) })
         val deployed = { owner: Int, order: String, unit: Int ->
-            mapOf(HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(
-                HwihaDeployedCorps(order, owner, owner, null, 2, listOf(unit), HwihaPhase(190, 1, 1)))).toMetaValue())
+            mapOf(DeploymentState.META_KEY to DeploymentState(listOf(
+                DeployedCorps(order, owner, owner, null, 2, listOf(unit), Phase(190, 1, 1)))).toMetaValue())
         }
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
             state = TurnWorldState(1, 190, 3, 3600, Instant.EPOCH, currentPhase = 2,
@@ -73,7 +73,7 @@ class HwihaScoutHandlerTest {
         val notebook = assertNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
         assertEquals(index.tilesContentHash, notebook.tilesContentHash)
         val report = notebook.reports.single()
-        assertEquals(geo.nextId, report.commanderyId); assertEquals(HwihaPhase(190, 3, 2), report.seenAt)
+        assertEquals(geo.nextId, report.commanderyId); assertEquals(Phase(190, 3, 2), report.seenAt)
         assertEquals(listOf(ScoutedCity(20, 2, true)), report.cities)
         val corps = report.corps.single()
         assertEquals(ScoutCapture.corpsKey("req-secret-next"), corps.corpsKey)
@@ -103,7 +103,7 @@ class HwihaScoutHandlerTest {
         val corrupt = world(extraActorMeta = mapOf(ScoutReports.META_KEY to mapOf("version" to 9)))
         assertEquals(ScoutFailure.STATE_UNAVAILABLE.name, assertIs<HwihaTurnOutcome.Rejected>(
             HwihaScoutHandler(corrupt, ChangeRecorder(), context).handle(1, args(geo.nextId), 42)).code)
-        val stale = ScoutReports("0".repeat(64), listOf(ScoutReport("PARENT-OLD", HwihaPhase(189, 1, 1), emptyList(), emptyList())))
+        val stale = ScoutReports("0".repeat(64), listOf(ScoutReport("PARENT-OLD", Phase(189, 1, 1), emptyList(), emptyList())))
         val world = world(extraActorMeta = mapOf(ScoutReports.META_KEY to stale.toMetaValue()))
         assertIs<HwihaTurnOutcome.Applied>(HwihaScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.nextId), 42))
         assertEquals(listOf(geo.nextId), ScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.map { it.commanderyId })

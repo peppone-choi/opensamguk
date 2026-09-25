@@ -1,4 +1,4 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 /**
  * 포위된 縣城 수비 사기와 항복 판정.
@@ -8,9 +8,9 @@ package opensamguk.logic.war.hwiha
  * 부분 급식의 내림이 사기를 공짜로 살려 주지 않게 하려고 실수를 쓰지 않는다.
  *
  * 범위 밖: 병력 0, 민간 소비, 강공·전투 손실, 공격군의 포위 유지 판정, 항복군 처우.
- * 점령 정산은 [HwihaCountyCapture] 가 맡는다.
+ * 점령 정산은 [CountyCapture] 가 맡는다.
  */
-object HwihaSiegeMorale {
+object SiegeMorale {
     /** 정수 사기 상한 — 10000 = 100%. */
     const val MAX_MORALE = 10000
 

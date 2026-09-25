@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class HwihaPoliticalAdmission(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(inputId: String, actorId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
         fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
@@ -19,14 +19,14 @@ class HwihaPoliticalAdmission(private val reader: HwihaDomesticReader,
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         if (catalog[inputId]?.deliveryState?.hasHandler != true)
             deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val request = HwihaPoliticalInput.parse(actorId, inputId, raw)
-            ?: deny(HwihaPoliticalFailure.INVALID_INPUT.name, HwihaPoliticalFailure.INVALID_INPUT.message)
-        val state = reader.snapshot().state ?: deny(HwihaPoliticalFailure.STATE_UNAVAILABLE.name,
-            HwihaPoliticalFailure.STATE_UNAVAILABLE.message)
-        when (val assessed = HwihaPoliticalRules.assess(request, state)) {
-            is HwihaPoliticalAssessment.Rejected -> deny(assessed.reason.name, assessed.reason.message)
-            is HwihaPoliticalAssessment.Eligible -> Unit
+        val request = PoliticalInput.parse(actorId, inputId, raw)
+            ?: deny(PoliticalFailure.INVALID_INPUT.name, PoliticalFailure.INVALID_INPUT.message)
+        val state = reader.snapshot().state ?: deny(PoliticalFailure.STATE_UNAVAILABLE.name,
+            PoliticalFailure.STATE_UNAVAILABLE.message)
+        when (val assessed = PoliticalRules.assess(request, state)) {
+            is PoliticalAssessment.Rejected -> deny(assessed.reason.name, assessed.reason.message)
+            is PoliticalAssessment.Eligible -> Unit
         }
-        return HwihaPoliticalInput.canonicalJson(request)
+        return PoliticalInput.canonicalJson(request)
     }
 }

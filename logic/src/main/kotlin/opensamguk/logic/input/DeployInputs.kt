@@ -8,12 +8,12 @@ data class DeployInput(val actorId: Int, val bugokIds: List<Int>, val destinatio
     fun deploymentRequest() = DeploymentRequest(actorId, null, bugokIds)
 }
 
-object HwihaDeployInput {
+object DeployInputs {
     const val INPUT_ID = "action.deploy"
     fun parse(actorId: Int, rawJson: String?): DeployInput? {
         if (actorId <= 0 || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read(allowIntegerArrays = true)
+            val fields = FlatArguments(rawJson).read(allowIntegerArrays = true)
             if (fields.keys != setOf("bugokIds", "destinationProvinceId")) return null
             val destination = fields["destinationProvinceId"] as? JsonPrimitive ?: return null
             if (!destination.isString || destination.content.isBlank() || destination.content.length > 128) return null

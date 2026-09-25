@@ -40,8 +40,8 @@ class HwihaDeployPrecheckServiceTest {
             HanStrategicRouteBinding(3, "r3", "p3", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"), meta = mapOf(
-            HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
-            HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue()))
+            LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
+            MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue()))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, listOf(
             CityReadEntity(id = 3, worldId = 1, name = "후순위"), CityReadEntity(id = 2, worldId = 1, name = "도착지"),
             CityReadEntity(id = 1, worldId = 1, name = "출발지")), bundle))
@@ -75,7 +75,7 @@ class HwihaDeployPrecheckServiceTest {
 
     @Test fun `missing authorities corrupt metadata and wrong world never become available`() {
         val (actor, world) = setup()
-        actor.meta = mapOf(HwihaDeploymentState.META_KEY to null)
+        actor.meta = mapOf(DeploymentState.META_KEY to null)
         assertEquals("STATE_UNAVAILABLE",service.options(1,41).code)
         actor.meta = emptyMap(); world.meta = emptyMap()
         assertEquals("STATE_UNAVAILABLE",service.options(1,41).code)
@@ -94,15 +94,15 @@ class HwihaDeployPrecheckServiceTest {
         `when`(retainers.allBugoks()).thenReturn(listOf(GeneralBugokReadEntity(worldId=1,id=4,masterGeneralId=1,
             troops=100,commanderRetainerId=7)))
         val row = service.options(1,41).bugoks.single()
-        assertFalse(row.available); assertEquals(HwihaDeployRules.reason(DeploymentFailure.COMMANDER_CHANGED),row.reason)
+        assertFalse(row.available); assertEquals(DeployRules.reason(DeploymentFailure.COMMANDER_CHANGED),row.reason)
     }
 
     @Test fun `owned durable order is visible but blocks another deployment`() {
         val (actor, _) = setup()
-        val corps = HwihaDeployedCorps("order",1,1,null,1,listOf(4),HwihaPhase(200,1,1))
-        val order = HwihaCorpsOrder("order",1,1,b,topology.topologyRevision,topology.contentHash)
-        actor.meta = mapOf(HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue(),
-            HwihaCorpsOrder.META_KEY to order.toMetaValue())
+        val corps = DeployedCorps("order",1,1,null,1,listOf(4),Phase(200,1,1))
+        val order = CorpsOrder("order",1,1,b,topology.topologyRevision,topology.contentHash)
+        actor.meta = mapOf(DeploymentState.META_KEY to DeploymentState(listOf(corps)).toMetaValue(),
+            CorpsOrder.META_KEY to order.toMetaValue())
         val result = service.options(1,41)
         assertFalse(result.available); assertEquals("ALREADY_DEPLOYED",result.code)
         assertEquals("order",result.order!!.orderId); assertEquals("B",result.order!!.destinationProvinceId)
@@ -123,9 +123,9 @@ class HwihaDeployPrecheckServiceTest {
         val malformed = """{"bugokIds":[4],"bugokIds":[4],"destinationProvinceId":"B"}"""
         assertEquals("INVALID_INPUT",assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,41,0,malformed) }.code)
         val rejected = assertFailsWith<HwihaAdmissionDenied> { admission.canonicalArguments(1,41,0,
-            HwihaDeployInput.canonicalJson(request.copy(bugokIds=listOf(5)))) }
+            DeployInputs.canonicalJson(request.copy(bugokIds=listOf(5)))) }
         assertEquals(DeploymentFailure.UNIT_UNAVAILABLE.name,rejected.code)
-        assertEquals(HwihaDeployRules.reason(DeploymentFailure.UNIT_UNAVAILABLE),rejected.message)
+        assertEquals(DeployRules.reason(DeploymentFailure.UNIT_UNAVAILABLE),rejected.message)
         // No fake ready catalog is injected: successful admission is tested after main integrates its handler catalog.
     }
     @Test fun `all bugoks read is scoped to configured process world`() {
@@ -142,22 +142,22 @@ class HwihaDeployPrecheckServiceTest {
     @Test fun `defender options show pending encounter without revealing the attacking roster`() {
         val (defender, _) = setup()
         val attacker = generals.findAll().single { it.id == 2 }
-        val phase = HwihaPhase(200,1,1)
-        val attacking = HwihaDeployedCorps("private-attack-order",2,2,null,2,listOf(5),phase)
-        val defending = HwihaDeployedCorps("my-defense-order",1,1,null,1,listOf(4),phase)
-        val encounter = HwihaCorpsEncounter(HwihaEncounterParticipant.from(attacking),
-            listOf(HwihaEncounterParticipant.from(defending)),b,a,phase,topology.topologyRevision,topology.contentHash)
+        val phase = Phase(200,1,1)
+        val attacking = DeployedCorps("private-attack-order",2,2,null,2,listOf(5),phase)
+        val defending = DeployedCorps("my-defense-order",1,1,null,1,listOf(4),phase)
+        val encounter = CorpsEncounter(EncounterParticipant.from(attacking),
+            listOf(EncounterParticipant.from(defending)),b,a,phase,topology.topologyRevision,topology.contentHash)
         val path = assertIs<LandMarchPathResult.Resolved>(StrategicPathResolver.resolveLandMarch(topology,
-            StrategicPathRequest(a,b,1),HwihaLandPassageState.read(setupWorldMeta(),topology)!!,metrics)).path
-        val checkpoint = HwihaMarchCheckpoint(path,LandMarchCursor(path.pathHash,1,0),phase,LandMarchStop.ENCOUNTER)
-        fun meta(corps:HwihaDeployedCorps) = mapOf(
-            HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue(),
-            HwihaCorpsOrder.META_KEY to HwihaCorpsOrder(corps.orderId,corps.ownerGeneralId,corps.commanderGeneralId,
+            StrategicPathRequest(a,b,1),LandPassageState.read(setupWorldMeta(),topology)!!,metrics)).path
+        val checkpoint = MarchCheckpoint(path,LandMarchCursor(path.pathHash,1,0),phase,LandMarchStop.ENCOUNTER)
+        fun meta(corps:DeployedCorps) = mapOf(
+            DeploymentState.META_KEY to DeploymentState(listOf(corps)).toMetaValue(),
+            CorpsOrder.META_KEY to CorpsOrder(corps.orderId,corps.ownerGeneralId,corps.commanderGeneralId,
                 b,topology.topologyRevision,topology.contentHash).toMetaValue(),
-            HwihaCorpsEncounter.META_KEY to encounter.toMetaValue())
+            CorpsEncounter.META_KEY to encounter.toMetaValue())
         defender.meta = meta(defending)
-        attacker.meta = meta(attacking) + (HwihaCorpsMarchState.META_KEY to
-            HwihaCorpsMarchState(attacking.orderId,2,2,checkpoint).toMetaValue())
+        attacker.meta = meta(attacking) + (CorpsMarchState.META_KEY to
+            CorpsMarchState(attacking.orderId,2,2,checkpoint).toMetaValue())
         `when`(spatial.readSnapshot(1,topology)).thenReturn(SpatialStateReadSnapshot(
             ProvinceControlSnapshot.fromTopology(topology),GeneralPositionSnapshot.fromTopology(topology,
                 listOf(1,2).map { GeneralPositionState(topology.topologyRevision,topology.contentHash,it,b,1) })))
@@ -168,12 +168,12 @@ class HwihaDeployPrecheckServiceTest {
         assertEquals(listOf(4),result.bugoks.map { it.id })
         val rendered = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(result)
         assertFalse(rendered.contains("private-attack-order")); assertFalse(rendered.contains("비공개 상대부대"))
-        attacker.meta = attacker.meta - HwihaCorpsEncounter.META_KEY
+        attacker.meta = attacker.meta - CorpsEncounter.META_KEY
         assertEquals("STATE_UNAVAILABLE",service.options(1,41).code)
         assertNull(service.options(1,41).order)
     }
 
     private fun setupWorldMeta(): Map<String,Any> = mapOf(
-        HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology))
+        LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology))
 
 }

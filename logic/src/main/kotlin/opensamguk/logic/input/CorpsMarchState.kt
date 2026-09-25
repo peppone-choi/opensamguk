@@ -3,11 +3,11 @@ package opensamguk.logic.input
 import opensamguk.logic.world.*
 
 /** Stored on the commander; the deployment owner retains live corps composition and allegiance. */
-data class HwihaCorpsMarchState(
+data class CorpsMarchState(
     val deploymentOrderId: String,
     val ownerGeneralId: Int,
     val commanderGeneralId: Int,
-    val checkpoint: HwihaMarchCheckpoint,
+    val checkpoint: MarchCheckpoint,
 ) {
     init {
         require(deploymentOrderId.isNotBlank() && deploymentOrderId.length <= 128)
@@ -15,7 +15,7 @@ data class HwihaCorpsMarchState(
     }
 
     /** A valid checkpoint cannot be attached to a different or newly issued deployment. */
-    fun requireBinding(corps: HwihaDeployedCorps, storedOnGeneralId: Int) {
+    fun requireBinding(corps: DeployedCorps, storedOnGeneralId: Int) {
         require(storedOnGeneralId == commanderGeneralId && corps.commanderGeneralId == commanderGeneralId)
         require(corps.orderId == deploymentOrderId && corps.ownerGeneralId == ownerGeneralId)
         require(checkpoint.lastAdvancedAt >= corps.startedAt)
@@ -31,13 +31,13 @@ data class HwihaCorpsMarchState(
         const val META_KEY = "hwihaCorpsMarch"
         private val fields = setOf("version", "deploymentOrderId", "ownerGeneralId", "commanderGeneralId", "checkpoint")
 
-        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): HwihaCorpsMarchState? {
+        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): CorpsMarchState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(value.keys == fields && value["version"] == 1) { "Invalid corps march metadata schema" }
-            return HwihaCorpsMarchState(value["deploymentOrderId"] as? String ?: invalid(),
+            return CorpsMarchState(value["deploymentOrderId"] as? String ?: invalid(),
                 value["ownerGeneralId"] as? Int ?: invalid(), value["commanderGeneralId"] as? Int ?: invalid(),
-                HwihaMarchCheckpoint.read(value["checkpoint"], topology, metrics))
+                MarchCheckpoint.read(value["checkpoint"], topology, metrics))
         }
 
         private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA corps march metadata")

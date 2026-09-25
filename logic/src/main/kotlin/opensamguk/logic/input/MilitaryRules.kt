@@ -9,7 +9,7 @@ import opensamguk.logic.domestic.DomesticProjection
 
 import opensamguk.logic.economy.Resources
 
-enum class HwihaMilitaryFailure(val message: String) {
+enum class MilitaryFailure(val message: String) {
     WRONG_RULE_PROFILE("이 세계에서는 휘하 군사 행동을 사용할 수 없습니다."),
     INVALID_INPUT("군사 행동 인자를 확인할 수 없습니다."),
     ACTOR_NOT_FOUND("행동할 장수를 찾을 수 없습니다."),
@@ -33,72 +33,72 @@ enum class HwihaMilitaryFailure(val message: String) {
     ALREADY_PROCESSED("이 순에는 이미 군사 행동을 실행했습니다."),
 }
 
-data class HwihaCityMilitaryPlan(val countyId: Int, val population: Int, val troops: Int,
-    val condition: HwihaCityMilitaryState, val debit: Resources)
+data class CityMilitaryPlan(val countyId: Int, val population: Int, val troops: Int,
+    val condition: CityMilitaryState, val debit: Resources)
 
-sealed interface HwihaCityMilitaryAssessment {
-    data class Eligible(val plan: HwihaCityMilitaryPlan) : HwihaCityMilitaryAssessment
-    data class Rejected(val reason: HwihaMilitaryFailure) : HwihaCityMilitaryAssessment
+sealed interface CityMilitaryAssessment {
+    data class Eligible(val plan: CityMilitaryPlan) : CityMilitaryAssessment
+    data class Rejected(val reason: MilitaryFailure) : CityMilitaryAssessment
 }
 
 /** One precheck for API and engine; county identity comes from the general's spatial pin. */
-object HwihaMilitaryRules {
-    fun assessCity(request: HwihaMilitaryRequest, projection: DomesticProjection,
-        population: Int?, populationMax: Int?, troops: Int?, condition: HwihaCityMilitaryState?, stock: Resources?,
-        design: HwihaMilitaryDesign): HwihaCityMilitaryAssessment {
-        fun reject(reason: HwihaMilitaryFailure) = HwihaCityMilitaryAssessment.Rejected(reason)
-        if (request.inputId == HwihaMilitaryInput.MUSTER || request.inputId !in HwihaMilitaryInput.INPUT_IDS)
-            return reject(HwihaMilitaryFailure.INVALID_INPUT)
+object MilitaryRules {
+    fun assessCity(request: MilitaryRequest, projection: DomesticProjection,
+        population: Int?, populationMax: Int?, troops: Int?, condition: CityMilitaryState?, stock: Resources?,
+        design: MilitaryDesign): CityMilitaryAssessment {
+        fun reject(reason: MilitaryFailure) = CityMilitaryAssessment.Rejected(reason)
+        if (request.inputId == MilitaryInput.MUSTER || request.inputId !in MilitaryInput.INPUT_IDS)
+            return reject(MilitaryFailure.INVALID_INPUT)
         // The shared field geography rule owns county lookup; its input vocabulary is domestic-only.
         val shared = FieldRules.assess(FieldRequest(request.actorId, FieldInput.FARM), projection)
         if (shared is FieldAssessment.Rejected)
-            return reject(HwihaMilitaryFailure.valueOf(shared.reason.name))
+            return reject(MilitaryFailure.valueOf(shared.reason.name))
         val county = (shared as FieldAssessment.Eligible).county
-        if (county.id in projection.activeSiegeCountyIds) return reject(HwihaMilitaryFailure.BESIEGED)
+        if (county.id in projection.activeSiegeCountyIds) return reject(MilitaryFailure.BESIEGED)
         if (population == null || populationMax == null || troops == null || condition == null ||
             population < 0 || populationMax < population || troops < 0)
-            return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE)
+            return reject(MilitaryFailure.STATE_UNAVAILABLE)
         return try {
             val next = when (request.inputId) {
-                HwihaMilitaryInput.CONSCRIPT, HwihaMilitaryInput.RAISE_VOLUNTEERS -> {
-                    if (population == 0) return reject(HwihaMilitaryFailure.NO_HOUSEHOLDS)
-                    val rate = if (request.inputId == HwihaMilitaryInput.CONSCRIPT)
+                MilitaryInput.CONSCRIPT, MilitaryInput.RAISE_VOLUNTEERS -> {
+                    if (population == 0) return reject(MilitaryFailure.NO_HOUSEHOLDS)
+                    val rate = if (request.inputId == MilitaryInput.CONSCRIPT)
                         design.conscriptHouseholdPermille else design.volunteerHouseholdPermille
                     val recruited = maxOf(1, (population.toLong() * rate / 1000).toInt()).coerceAtMost(population)
                     val grain = Math.multiplyExact(recruited.toLong(), design.grainPerTroop)
-                    val money = if (request.inputId == HwihaMilitaryInput.RAISE_VOLUNTEERS)
+                    val money = if (request.inputId == MilitaryInput.RAISE_VOLUNTEERS)
                         Math.multiplyExact(recruited.toLong(), design.moneyPerVolunteer) else 0L
-                    HwihaCityMilitaryPlan(county.id, population - recruited, Math.addExact(troops, recruited),
+                    CityMilitaryPlan(county.id, population - recruited, Math.addExact(troops, recruited),
                         condition, Resources(money = money, grain = grain))
                 }
-                HwihaMilitaryInput.TRAIN -> {
-                    if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
-                    if (condition.training == 100) return reject(HwihaMilitaryFailure.ALREADY_MAX)
-                    HwihaCityMilitaryPlan(county.id, population, troops,
+                MilitaryInput.TRAIN -> {
+                    if (troops == 0) return reject(MilitaryFailure.NO_CITY_TROOPS)
+                    if (condition.training == 100) return reject(MilitaryFailure.ALREADY_MAX)
+                    CityMilitaryPlan(county.id, population, troops,
                         condition.copy(training = (condition.training + design.trainingGain).coerceAtMost(100)), Resources())
                 }
-                HwihaMilitaryInput.BOOST_MORALE -> {
-                    if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
-                    if (condition.morale == 100) return reject(HwihaMilitaryFailure.ALREADY_MAX)
-                    HwihaCityMilitaryPlan(county.id, population, troops,
+                MilitaryInput.BOOST_MORALE -> {
+                    if (troops == 0) return reject(MilitaryFailure.NO_CITY_TROOPS)
+                    if (condition.morale == 100) return reject(MilitaryFailure.ALREADY_MAX)
+                    CityMilitaryPlan(county.id, population, troops,
                         condition.copy(morale = (condition.morale + design.moraleGain).coerceAtMost(100)), Resources())
                 }
-                HwihaMilitaryInput.DEMOBILIZE -> {
-                    if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
+                MilitaryInput.DEMOBILIZE -> {
+                    if (troops == 0) return reject(MilitaryFailure.NO_CITY_TROOPS)
                     val headroom = populationMax - population
-                    if (headroom == 0) return reject(HwihaMilitaryFailure.POPULATION_FULL)
+                    if (headroom == 0) return reject(MilitaryFailure.POPULATION_FULL)
                     val released = maxOf(1, (troops.toLong() * design.demobilizeTroopPermille / 1000).toInt())
                         .coerceAtMost(troops).coerceAtMost(headroom)
-                    HwihaCityMilitaryPlan(county.id, Math.addExact(population, released), troops - released,
+                    CityMilitaryPlan(county.id, Math.addExact(population, released), troops - released,
                         condition, Resources())
                 }
-                else -> return reject(HwihaMilitaryFailure.INVALID_INPUT)
+                else -> return reject(MilitaryFailure.INVALID_INPUT)
             }
             if (next.debit != Resources()) {
-                if (stock == null) return reject(HwihaMilitaryFailure.WAREHOUSE_NOT_READY)
-                if (stock.debit(next.debit) == null) return reject(HwihaMilitaryFailure.INSUFFICIENT_STOCK)
+                if (stock == null) return reject(MilitaryFailure.WAREHOUSE_NOT_READY)
+                if (stock.debit(next.debit) == null) return reject(MilitaryFailure.INSUFFICIENT_STOCK)
             }
-            HwihaCityMilitaryAssessment.Eligible(next)
-        } catch (_: ArithmeticException) { reject(HwihaMilitaryFailure.STATE_UNAVAILABLE) }
+            CityMilitaryAssessment.Eligible(next)
+        } catch (_: ArithmeticException) { reject(MilitaryFailure.STATE_UNAVAILABLE) }
     }
 }

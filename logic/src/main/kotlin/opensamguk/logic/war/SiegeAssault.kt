@@ -1,30 +1,30 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.math.BigInteger
 import java.security.MessageDigest
 import java.util.Collections
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
-import opensamguk.logic.world.HwihaBattlefieldLayout
+import opensamguk.logic.world.BattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldLayout
 
 /**
  * 縣城 강공 — #858 격자 전장 위에서 성벽 칸을 공격하는 결정론 전투(2026-09-23 사용자 결정: 강공 = 격자 전투).
  *
- * 격자는 조우와 같은 省 추출·배치 구역 규칙([HwihaBattlefieldLayout])을 쓴다. 공격 측은 진입 쪽 배치 구역,
- * 수비병은 먼 쪽 배치 구역의 **성벽 패**다. 이동은 [HwihaGridMovement] 한 단계 동시 이동, 사거리·시야는
- * [HwihaGridReach], 피해·사기·피로는 육상 교전 산식 v1(HwihaGridExchange 와 같은 식)이다. 성벽 패는
+ * 격자는 조우와 같은 省 추출·배치 구역 규칙([BattlefieldLayout])을 쓴다. 공격 측은 진입 쪽 배치 구역,
+ * 수비병은 먼 쪽 배치 구역의 **성벽 패**다. 이동은 [GridMovement] 한 단계 동시 이동, 사거리·시야는
+ * [GridReach], 피해·사기·피로는 육상 교전 산식 v1(GridExchange 와 같은 식)이다. 성벽 패는
  * 움직이지 않고, 성벽(wall/wallMax)과 방비(defence/defenceMax) 비율만큼 방어력이 오른다. 회차 상한 24(승인), 공격 측 퇴각 조건은
  * 조우 기본 계획과 같다(손실 50% 이상, 사기 20 미만). 성벽 패가 모두 무너지면 함락이다.
  *
- * 성벽 패 수·수비대 훈련/통솔·성벽 보정 상한은 [HwihaS3Provisional] 의 확정값이다. 순수 계산이며
+ * 성벽 패 수·수비대 훈련/통솔·성벽 보정 상한은 [CampaignBalance] 의 확정값이다. 순수 계산이며
  * 실제 병력·縣 소유 정산은 호출자가 한다.
  */
-object HwihaSiegeAssault {
+object SiegeAssault {
     const val RULE_VERSION = 2
 
     data class Attacker(val bugokId: Int, val troops: Int, val training: Int, val morale: Int, val fatigue: Int,
-        val profile: HwihaUnitProfile) {
+        val profile: UnitProfile) {
         init { require(bugokId > 0 && troops > 0 && training in 0..100 && morale in 0..100 && fatigue in 0..100) }
     }
 
@@ -40,14 +40,14 @@ object HwihaSiegeAssault {
     private data class Token(val id: Int, var troops: Int, var morale: Int, var fatigue: Int, var position: Position?,
         val wall: Boolean, val startTroops: Int)
 
-    fun resolve(layout: HwihaBattlefieldLayout, attackers: List<Attacker>, leadership: Int, garrison: Int,
+    fun resolve(layout: BattlefieldLayout, attackers: List<Attacker>, leadership: Int, garrison: Int,
         garrisonMorale: Int, wallBonusPercent: Int,
-        garrisonTraining: Int = HwihaS3Provisional.ASSAULT_GARRISON_TRAINING,
+        garrisonTraining: Int = CampaignBalance.ASSAULT_GARRISON_TRAINING,
         defenceBonusPercent: Int = 0): Result {
         require(attackers.isNotEmpty() && attackers.map { it.bugokId }.distinct().size == attackers.size)
         require(garrison >= 0 && garrisonMorale in 0..100 && garrisonTraining in 0..100 && leadership >= 0)
-        require(wallBonusPercent in 0..HwihaS3Provisional.ASSAULT_MAX_WALL_BONUS_PERCENT)
-        require(defenceBonusPercent in 0..HwihaS3Provisional.ASSAULT_MAX_DEFENCE_BONUS_PERCENT)
+        require(wallBonusPercent in 0..CampaignBalance.ASSAULT_MAX_WALL_BONUS_PERCENT)
+        require(defenceBonusPercent in 0..CampaignBalance.ASSAULT_MAX_DEFENCE_BONUS_PERCENT)
         val order = compareBy<Position> { it.row }.thenBy { it.col }
         val attackerCells = layout.attackerZone.sortedWith(compareBy<Position> { layout.distancesFromEntry.getValue(it) }.then(order))
         val defenderCells = layout.defenderZone.sortedWith(compareByDescending<Position> { layout.distancesFromEntry.getValue(it) }.then(order))
@@ -55,7 +55,7 @@ object HwihaSiegeAssault {
         val army = attackers.sortedBy { it.bugokId }.mapIndexed { index, unit ->
             Token(unit.bugokId, unit.troops, unit.morale, unit.fatigue, attackerCells.getOrNull(index), false, unit.troops)
         }
-        val wallCount = minOf(defenderCells.size, HwihaS3Provisional.ASSAULT_MAX_WALL_TOKENS, garrison)
+        val wallCount = minOf(defenderCells.size, CampaignBalance.ASSAULT_MAX_WALL_TOKENS, garrison)
         val firstWallId = army.maxOf { it.id } + 1
         val walls = (0 until wallCount).map { index ->
             val troops = garrison / wallCount + if (index < garrison % wallCount) 1 else 0
@@ -75,7 +75,7 @@ object HwihaSiegeAssault {
                 remaining == 0L -> Outcome.REPULSED
                 (initialArmy - remaining) * 100 >= initialArmy * 50 -> Outcome.REPULSED
                 weightedMorale < remaining * 20 -> Outcome.REPULSED
-                rounds == HwihaBattlePlans.MAX_ROUNDS -> Outcome.REPULSED
+                rounds == BattlePlans.MAX_ROUNDS -> Outcome.REPULSED
                 else -> null
             }
         }
@@ -84,7 +84,7 @@ object HwihaSiegeAssault {
         return Result(outcome, rounds, results, garrisonRemaining, hash(outcome, rounds, results, garrisonRemaining))
     }
 
-    private fun move(layout: HwihaBattlefieldLayout, army: List<Token>, walls: List<Token>,
+    private fun move(layout: BattlefieldLayout, army: List<Token>, walls: List<Token>,
         byId: Map<Int, Attacker>, order: Comparator<Position>) {
         val occupied = (army + walls).mapNotNull { it.position }.toHashSet()
         val targets = walls.filter { it.troops > 0 && it.position != null }
@@ -92,7 +92,7 @@ object HwihaSiegeAssault {
             val start = unit.position ?: return@mapNotNull null
             if (unit.troops == 0 || unit.morale == 0 || targets.isEmpty()) return@mapNotNull null
             val profile = byId.getValue(unit.id).profile
-            fun inRange(at: Position) = targets.any { HwihaGridReach.canStrike(layout, at, it.position!!, profile.attackRange) }
+            fun inRange(at: Position) = targets.any { GridReach.canStrike(layout, at, it.position!!, profile.attackRange) }
             if (inRange(start)) return@mapNotNull null
             val previous = hashMapOf<Position, Position?>(start to null)
             val queue = ArrayDeque<Position>().apply { add(start) }
@@ -113,25 +113,25 @@ object HwihaSiegeAssault {
         val stopped = hashSetOf<Int>()
         for (step in 0 until (plans.maxOfOrNull { it.second.size } ?: 0)) {
             val intents = plans.filter { (id, path) -> path.size > step && id !in stopped }
-                .map { (id, path) -> HwihaGridMovement.Intent(id, path[step]) }
+                .map { (id, path) -> GridMovement.Intent(id, path[step]) }
             val all = army + walls
-            val result = HwihaGridMovement.resolve(layout, all.map { token ->
-                HwihaGridMovement.UnitPosition(token.id, token.position,
+            val result = GridMovement.resolve(layout, all.map { token ->
+                GridMovement.UnitPosition(token.id, token.position,
                     if (token.wall) 0 else byId.getValue(token.id).profile.initiative)
             }, intents)
             val requested = intents.mapTo(hashSetOf()) { it.bugokId }
             for (move in result) {
                 if (move.bugokId !in requested) continue
-                if (move.outcome != HwihaGridMovement.Outcome.MOVED) stopped.add(move.bugokId)
+                if (move.outcome != GridMovement.Outcome.MOVED) stopped.add(move.bugokId)
                 army.single { it.id == move.bugokId }.position = move.to
             }
         }
     }
 
-    private fun exchange(layout: HwihaBattlefieldLayout, army: List<Token>, walls: List<Token>, byId: Map<Int, Attacker>,
+    private fun exchange(layout: BattlefieldLayout, army: List<Token>, walls: List<Token>, byId: Map<Int, Attacker>,
         leadership: Int, wallBonusPercent: Int, garrisonTraining: Int, defenceBonusPercent: Int) {
         fun nearest(from: Position, candidates: List<Token>, range: Int) = candidates
-            .filter { it.troops > 0 && it.position != null && HwihaGridReach.canStrike(layout, from, it.position!!, range) }
+            .filter { it.troops > 0 && it.position != null && GridReach.canStrike(layout, from, it.position!!, range) }
             .minWithOrNull(compareBy<Token> { kotlin.math.abs(from.col.toLong() - it.position!!.col) +
                 kotlin.math.abs(from.row.toLong() - it.position!!.row) }.thenBy { it.id })
         val losses = HashMap<Int, BigInteger>()
@@ -143,18 +143,18 @@ object HwihaSiegeAssault {
             val profile = byId.getValue(unit.id).profile
             val target = nearest(at, walls, profile.attackRange) ?: continue
             val damage = damage(unit.troops, profile.attackPower, byId.getValue(unit.id).training, unit.morale, unit.fatigue,
-                leadership, HwihaS3Provisional.ASSAULT_GARRISON_DEFENCE, garrisonTraining,
-                HwihaS3Provisional.ASSAULT_GARRISON_LEADERSHIP, 100 + wallBonusPercent + defenceBonusPercent, target.troops)
+                leadership, CampaignBalance.ASSAULT_GARRISON_DEFENCE, garrisonTraining,
+                CampaignBalance.ASSAULT_GARRISON_LEADERSHIP, 100 + wallBonusPercent + defenceBonusPercent, target.troops)
             losses.merge(target.id, damage.toBigInteger(), BigInteger::add); active += unit.id
         }
         for (wall in walls.sortedBy { it.id }) {
             val at = wall.position ?: continue
             if (wall.troops == 0 || wall.morale == 0) continue
-            val target = nearest(at, army, HwihaS3Provisional.ASSAULT_GARRISON_RANGE) ?: continue
+            val target = nearest(at, army, CampaignBalance.ASSAULT_GARRISON_RANGE) ?: continue
             val targetProfile = byId.getValue(target.id)
-            val damage = damage(wall.troops, HwihaS3Provisional.ASSAULT_GARRISON_ATTACK,
+            val damage = damage(wall.troops, CampaignBalance.ASSAULT_GARRISON_ATTACK,
                 garrisonTraining, wall.morale, wall.fatigue,
-                HwihaS3Provisional.ASSAULT_GARRISON_LEADERSHIP, targetProfile.profile.defencePower, targetProfile.training,
+                CampaignBalance.ASSAULT_GARRISON_LEADERSHIP, targetProfile.profile.defencePower, targetProfile.training,
                 leadership, 100, target.troops)
             losses.merge(target.id, damage.toBigInteger(), BigInteger::add); active += wall.id
         }
@@ -166,7 +166,7 @@ object HwihaSiegeAssault {
                 token.troops -= lost
                 if (token.troops == 0) token.position = null
             }
-            if (token.id in active) token.fatigue = (token.fatigue + HwihaGridExchange.FATIGUE_PER_ATTACK).coerceAtMost(100)
+            if (token.id in active) token.fatigue = (token.fatigue + GridExchange.FATIGUE_PER_ATTACK).coerceAtMost(100)
         }
     }
 
@@ -177,7 +177,7 @@ object HwihaSiegeAssault {
         val numerator = product(troops.toLong(), attack.toLong(), 100L + training, 50L + morale, 200L - fatigue,
             100L + leadership, 100L)
         val denominator = product(defence.toLong(), 100L + defenceTraining, 100L + defenceLeadership,
-            HwihaGridExchange.DAMAGE_DIVISOR.toLong(), 100, 200, defenceScalePercent.toLong())
+            GridExchange.DAMAGE_DIVISOR.toLong(), 100, 200, defenceScalePercent.toLong())
         return numerator.divide(denominator).max(BigInteger.ONE).min(targetTroops.toBigInteger()).toInt()
     }
 

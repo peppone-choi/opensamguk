@@ -20,8 +20,8 @@ class HwihaDispatchPrecheckService(
         snapshot.failure?.let { return DispatchAssessment.Rejected(it) }
         return try {
             val actor = snapshot.state!!.people.single { it.id == request.actorId }
-            if (HwihaQueuedDispatch.read(actor.meta) != null) DispatchAssessment.Rejected(DispatchFailure.ALREADY_QUEUED)
-            else HwihaDispatchRules.assess(request, snapshot.state)
+            if (QueuedDispatch.read(actor.meta) != null) DispatchAssessment.Rejected(DispatchFailure.ALREADY_QUEUED)
+            else DispatchRules.assess(request, snapshot.state)
         } catch (_: IllegalArgumentException) { DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE) }
     }
 
@@ -29,7 +29,7 @@ class HwihaDispatchPrecheckService(
         owned(request.actorId, ownerUserId)
         val snapshot = snapshot()
         return snapshot.failure?.let { DispatchAssessment.Rejected(it) }
-            ?: HwihaDispatchRules.assessReply(request, snapshot.now!!, snapshot.state!!)
+            ?: DispatchRules.assessReply(request, snapshot.now!!, snapshot.state!!)
     }
 
     fun options(actorId: Int, ownerUserId: Long, targetGeneralId: Int? = null): DispatchOptionsResponse {
@@ -41,7 +41,7 @@ class HwihaDispatchPrecheckService(
             ?: return DispatchOptionsResponse(false, DispatchFailure.ACTOR_NOT_FOUND)
         if (!actor.isLord || actor.nationId <= 0) return DispatchOptionsResponse(false, DispatchFailure.NOT_LORD)
         return try {
-            val queue = HwihaQueuedDispatch.read(actor.meta)
+            val queue = QueuedDispatch.read(actor.meta)
             val targets = state.people.filter { person ->
                 person.id != actorId && person.isHuman && !person.isLord && person.nationId == actor.nationId &&
                     state.retainers.filter { it.generalId == person.id }.singleOrNull()?.masterId == actorId
@@ -52,7 +52,7 @@ class HwihaDispatchPrecheckService(
             val counties = if (targetGeneralId == null) emptyList() else state.counties
                 .filter { it.nationId == actor.nationId }.sortedBy { it.id }.map { county ->
                     val failure = if (queue != null) DispatchFailure.ALREADY_QUEUED else
-                        (HwihaDispatchRules.assess(DispatchRequest(actorId, targetGeneralId, county.id), state)
+                        (DispatchRules.assess(DispatchRequest(actorId, targetGeneralId, county.id), state)
                             as? DispatchAssessment.Rejected)?.reason
                     DispatchCountyOption(county.id, snapshot.countyNames.getValue(county.id), failure == null,
                         failure, failure?.message)
@@ -62,7 +62,7 @@ class HwihaDispatchPrecheckService(
         } catch (_: IllegalArgumentException) { DispatchOptionsResponse(false, DispatchFailure.STATE_UNAVAILABLE) }
     }
 
-    private fun ownedQueue(queue: HwihaQueuedDispatch?, ownerUserId: Long): DispatchQueuedItem? =
+    private fun ownedQueue(queue: QueuedDispatch?, ownerUserId: Long): DispatchQueuedItem? =
         queue?.takeIf { it.ownerUserId.toLong() == ownerUserId }?.let {
             DispatchQueuedItem(it.requestId, it.targetGeneralId, it.countyId)
         }
@@ -77,16 +77,16 @@ class HwihaDispatchPrecheckService(
         }.keys
         return try {
             val rows = state.people.filter { it.id == actorId || it.id in direct }.mapNotNull { person ->
-                val dispatch = HwihaDispatchState.read(person.meta) ?: return@mapNotNull null
+                val dispatch = DispatchState.read(person.meta) ?: return@mapNotNull null
                 if (dispatch.targetId != person.id) throw IllegalArgumentException("Dispatch recipient identity mismatch")
                 if (person.id != actorId && dispatch.issuerId != actorId) return@mapNotNull null
-                val assessment = HwihaDispatchRules.assessReply(person.id, dispatch.dispatchId, state)
+                val assessment = DispatchRules.assessReply(person.id, dispatch.dispatchId, state)
                 DispatchPendingItem(dispatch.dispatchId, dispatch.issuerId, dispatch.targetId,
                     dispatch.countyId, dispatch.issuedAt, dispatch.dueAt, dispatch.status,
                     (assessment as? DispatchAssessment.Rejected)?.reason, snapshot.personNames[dispatch.issuerId],
                     snapshot.personNames[dispatch.targetId], snapshot.countyNames[dispatch.countyId])
             }.sortedBy { it.targetId }
-            val queue = HwihaQueuedDispatch.read(state.people.single { it.id == actorId }.meta)
+            val queue = QueuedDispatch.read(state.people.single { it.id == actorId }.meta)
             DispatchPendingResponse(true, now = snapshot.now, dispatches = rows, queued = ownedQueue(queue, ownerUserId))
         } catch (_: IllegalArgumentException) { DispatchPendingResponse(false, DispatchFailure.STATE_UNAVAILABLE) }
     }
@@ -96,7 +96,7 @@ class HwihaDispatchPrecheckService(
         if (generals.findById(actorId).orElse(null)?.userId?.toLongOrNull() != userId) throw DispatchReadForbidden()
     }
 
-    private data class Snapshot(val state: HwihaDispatchProjection? = null, val now: HwihaPhase? = null,
+    private data class Snapshot(val state: DispatchProjection? = null, val now: Phase? = null,
         val failure: DispatchFailure? = null, val personNames: Map<Int, String> = emptyMap(),
         val countyNames: Map<Int, String> = emptyMap())
 
@@ -113,13 +113,13 @@ class HwihaDispatchPrecheckService(
                 val cards = retainers.findAll()
                 require(people.all { it.worldId == selected.world.id } && cards.all { it.worldId == selected.world.id })
                 require(people.map { it.id }.distinct().size == people.size && cards.map { it.id }.distinct().size == cards.size)
-                Snapshot(HwihaDispatchProjection(profile,
-                    people.map { DispatchPerson(it.id, it.nationId, HwihaLordStatus.read(it.meta),
+                Snapshot(DispatchProjection(profile,
+                    people.map { DispatchPerson(it.id, it.nationId, LordStatus.read(it.meta),
                         (it.userId?.toLongOrNull() ?: 0) > 0, it.meta) },
                     cards.mapNotNull { card -> card.generalId?.let { DispatchRetainer(card.id, card.masterGeneralId, it, card.loyalty) } },
                     selected.cities.filter { it.id in resolved.projection.administrativeCountyIds }
                         .map { DispatchCounty(it.id, it.nationId) }),
-                    HwihaPhase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
+                    Phase(selected.world.currentYear, selected.world.currentMonth, selected.world.currentPhase),
                     personNames = people.associate { it.id to it.name },
                     countyNames = selected.cities.associate { it.id to it.name })
             }

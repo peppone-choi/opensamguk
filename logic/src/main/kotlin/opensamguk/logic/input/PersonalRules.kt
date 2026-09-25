@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticProjection
 
-enum class HwihaPersonalFailure(val message: String) {
+enum class PersonalFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 개인 행동을 사용할 수 없습니다."),
     INVALID_INPUT("개인 행동 인자를 확인할 수 없습니다."),
     ACTOR_NOT_FOUND("장수를 찾을 수 없습니다."),
@@ -15,43 +15,43 @@ enum class HwihaPersonalFailure(val message: String) {
     ALREADY_PROCESSED("이 순에는 이미 개인 행동을 실행했습니다."),
 }
 
-sealed interface HwihaPersonalAssessment {
+sealed interface PersonalAssessment {
     data class Eligible(val actor: DomesticPerson,
-        val condition: HwihaPersonalTravelCondition) : HwihaPersonalAssessment
-    data class Rejected(val reason: HwihaPersonalFailure) : HwihaPersonalAssessment
+        val condition: PersonalTravelCondition) : PersonalAssessment
+    data class Rejected(val reason: PersonalFailure) : PersonalAssessment
 }
 
 /** Shared precheck for player reservation, options and immediate execution. */
-object HwihaPersonalRules {
-    fun assess(request: HwihaPersonalRequest, state: DomesticProjection): HwihaPersonalAssessment {
-        fun reject(reason: HwihaPersonalFailure) = HwihaPersonalAssessment.Rejected(reason)
-        if (state.profile != RuleProfile.HWIHA) return reject(HwihaPersonalFailure.WRONG_RULE_PROFILE)
-        if (request.actorId <= 0 || request.inputId !in HwihaPersonalInput.FIELD_IDS ||
-            (request.inputId == HwihaPersonalInput.SELF_TRAIN) != (request.trainingStat != null))
-            return reject(HwihaPersonalFailure.INVALID_INPUT)
-        val actor = state.person(request.actorId) ?: return reject(HwihaPersonalFailure.ACTOR_NOT_FOUND)
-        if (actor.inBattle) return reject(HwihaPersonalFailure.BATTLE_PENDING)
-        val node = actor.node ?: return reject(HwihaPersonalFailure.POSITION_UNAVAILABLE)
-        if (state.landProvinceIds?.contains(node) != true) return reject(HwihaPersonalFailure.STATE_UNAVAILABLE)
-        val condition = try { HwihaPersonalTravelCondition.read(actor.meta) ?: HwihaPersonalTravelCondition.INITIAL }
-            catch (_: IllegalArgumentException) { return reject(HwihaPersonalFailure.STATE_UNAVAILABLE) }
-        if (actor.injury !in 0..100) return reject(HwihaPersonalFailure.STATE_UNAVAILABLE)
+object PersonalRules {
+    fun assess(request: PersonalRequest, state: DomesticProjection): PersonalAssessment {
+        fun reject(reason: PersonalFailure) = PersonalAssessment.Rejected(reason)
+        if (state.profile != RuleProfile.HWIHA) return reject(PersonalFailure.WRONG_RULE_PROFILE)
+        if (request.actorId <= 0 || request.inputId !in PersonalInput.FIELD_IDS ||
+            (request.inputId == PersonalInput.SELF_TRAIN) != (request.trainingStat != null))
+            return reject(PersonalFailure.INVALID_INPUT)
+        val actor = state.person(request.actorId) ?: return reject(PersonalFailure.ACTOR_NOT_FOUND)
+        if (actor.inBattle) return reject(PersonalFailure.BATTLE_PENDING)
+        val node = actor.node ?: return reject(PersonalFailure.POSITION_UNAVAILABLE)
+        if (state.landProvinceIds?.contains(node) != true) return reject(PersonalFailure.STATE_UNAVAILABLE)
+        val condition = try { PersonalTravelCondition.read(actor.meta) ?: PersonalTravelCondition.INITIAL }
+            catch (_: IllegalArgumentException) { return reject(PersonalFailure.STATE_UNAVAILABLE) }
+        if (actor.injury !in 0..100) return reject(PersonalFailure.STATE_UNAVAILABLE)
         when (request.inputId) {
-            HwihaPersonalInput.SELF_TRAIN -> {
+            PersonalInput.SELF_TRAIN -> {
                 val value = when (request.trainingStat) {
-                    HwihaTrainingStat.LEADERSHIP -> actor.leadership
-                    HwihaTrainingStat.STRENGTH -> actor.strength
-                    HwihaTrainingStat.INTELLIGENCE -> actor.intelligence
-                    HwihaTrainingStat.POLITICS -> actor.politics
-                    HwihaTrainingStat.CHARM -> actor.charm
-                    null -> return reject(HwihaPersonalFailure.INVALID_INPUT)
+                    TrainingStat.LEADERSHIP -> actor.leadership
+                    TrainingStat.STRENGTH -> actor.strength
+                    TrainingStat.INTELLIGENCE -> actor.intelligence
+                    TrainingStat.POLITICS -> actor.politics
+                    TrainingStat.CHARM -> actor.charm
+                    null -> return reject(PersonalFailure.INVALID_INPUT)
                 }
-                if (value !in 0..100) return reject(HwihaPersonalFailure.STATE_UNAVAILABLE)
-                if (value >= HwihaPersonalDesign.CANON.trainingStatCap) return reject(HwihaPersonalFailure.TRAINING_MAXED)
+                if (value !in 0..100) return reject(PersonalFailure.STATE_UNAVAILABLE)
+                if (value >= PersonalDesign.CANON.trainingStatCap) return reject(PersonalFailure.TRAINING_MAXED)
             }
-            HwihaPersonalInput.RECUPERATE ->
-                if (actor.injury == 0 && condition.fatigue == 0) return reject(HwihaPersonalFailure.ALREADY_HEALTHY)
+            PersonalInput.RECUPERATE ->
+                if (actor.injury == 0 && condition.fatigue == 0) return reject(PersonalFailure.ALREADY_HEALTHY)
         }
-        return HwihaPersonalAssessment.Eligible(actor, condition)
+        return PersonalAssessment.Eligible(actor, condition)
     }
 }

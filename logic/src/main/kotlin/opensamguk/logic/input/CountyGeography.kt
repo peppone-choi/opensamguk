@@ -15,12 +15,12 @@ import kotlinx.serialization.json.jsonPrimitive
  * 주의: han-tiles `jurisdictionRecords[*].commanderyId` 는 1133 판에서 40 城이 `meta.junCh` 와 다른 郡을 가리킨다
  * (예: 譙 → 汝南郡). 화면이 보여 주는 郡과 방침이 걸리는 郡을 맞추려고 여기서는 `meta.junCh` 를 쓴다.
  */
-data class HwihaCountyPlace(val countyId: Int, val commanderyId: String, val commanderyName: String?, val jurisdictionId: String?) {
+data class CountyPlace(val countyId: Int, val commanderyId: String, val commanderyName: String?, val jurisdictionId: String?) {
     init { require(countyId > 0 && DomesticIds.commandery(commanderyId)) }
 }
 
-class HwihaCountyGeography(places: Collection<HwihaCountyPlace>) {
-    val byCounty: Map<Int, HwihaCountyPlace> = places.sortedBy { it.countyId }.associateBy { it.countyId }.also {
+class CountyGeography(places: Collection<CountyPlace>) {
+    val byCounty: Map<Int, CountyPlace> = places.sortedBy { it.countyId }.associateBy { it.countyId }.also {
         require(it.size == places.size) { "duplicate county geography" }
     }
     private val countyByJurisdiction: Map<String, Int> = places.filter { it.jurisdictionId != null }
@@ -40,15 +40,15 @@ class HwihaCountyGeography(places: Collection<HwihaCountyPlace>) {
  * 하나뿐(동명이인 제외). 여기서는 **`jurisdictionId` 가 있는 행만** 쓴다 — 관할에 못 붙은 행(沛國 譙 등)은 이름 정규화가
  * 필요해 이번 범위에서 향당 보너스를 주지 않는다(추정하지 않는다).
  */
-class HwihaNativeCountyLedger internal constructor(private val jurisdictionByName: Map<String, String>) {
+class NativeCountyLedger internal constructor(private val jurisdictionByName: Map<String, String>) {
     fun jurisdictionOf(scenarioName: String): String? = jurisdictionByName[scenarioName]
 
     /**
      * 장수의 본관 縣治 城. 사람이 만든 장수(시나리오 표지 `npc_org` 없음, 또는 휘하 정책 출처가 신규 창작)는 이름이 같아도 주지 않는다.
      */
-    fun homeCounty(name: String, meta: Map<String, Any?>, geography: HwihaCountyGeography): Int? {
+    fun homeCounty(name: String, meta: Map<String, Any?>, geography: CountyGeography): Int? {
         if ("npc_org" !in meta) return null
-        val policy = try { HwihaPersonPolicyState.read(meta) } catch (_: IllegalArgumentException) { return null }
+        val policy = try { PersonPolicyState.read(meta) } catch (_: IllegalArgumentException) { return null }
         if (policy?.statSourceId == CREATED_GENERAL_SOURCE) return null
         return jurisdictionOf(name)?.let(geography::countyOfJurisdiction)
     }
@@ -57,10 +57,10 @@ class HwihaNativeCountyLedger internal constructor(private val jurisdictionByNam
         const val RESOURCE = "hwiha/officer-native-county-v1.json"
         const val CREATED_GENERAL_SOURCE = "opensamguk:created-general"
 
-        fun load(): HwihaNativeCountyLedger? =
-            HwihaNativeCountyLedger::class.java.classLoader.getResource(RESOURCE)?.readText()?.let(::parse)
+        fun load(): NativeCountyLedger? =
+            NativeCountyLedger::class.java.classLoader.getResource(RESOURCE)?.readText()?.let(::parse)
 
-        fun parse(payload: String): HwihaNativeCountyLedger {
+        fun parse(payload: String): NativeCountyLedger {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.getValue("schemaVersion").jsonPrimitive.content == "1") { "unsupported native county schemaVersion" }
             require(root.getValue("ledgerId").jsonPrimitive.content == "officer-native-county-v1") { "unexpected native county ledgerId" }
@@ -75,7 +75,7 @@ class HwihaNativeCountyLedger internal constructor(private val jurisdictionByNam
                 row.getValue("scenarioNames").jsonArray.map { it.jsonPrimitive.content }
                     .filter { carriers[it] == 1 }.forEach { result[it] = jurisdiction }
             }
-            return HwihaNativeCountyLedger(result)
+            return NativeCountyLedger(result)
         }
 
         private fun kotlinx.serialization.json.JsonObject.text(key: String): String? =

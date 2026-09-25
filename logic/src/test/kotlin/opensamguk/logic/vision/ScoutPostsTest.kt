@@ -1,6 +1,6 @@
 package opensamguk.logic.vision
 
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.Phase
 
 import opensamguk.logic.domestic.PlacementOrder
 import opensamguk.logic.domestic.ActivePlacement
@@ -23,7 +23,7 @@ import kotlin.test.*
  * 항목 키가 정확히 {retainerId(Int), provinceId(String ≤128), status(String)} 이어야 읽고 `ACTIVE` 만 시야로 센다.
  */
 class ScoutPostsTest {
-    private val now = HwihaPhase(200, 1, 1)
+    private val now = Phase(200, 1, 1)
     private fun placed(retainer: Int, owner: Int, post: PlacementPost, arrived: Boolean) = mapOf(PlacementState.META_KEY to
         PlacementState(ActivePlacement(PlacementOrder("r$retainer", owner, retainer, post,
             if (post == PlacementPost.SCOUT) PlacementTarget.Province("p$retainer") else PlacementTarget.County(10), now), now,

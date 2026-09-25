@@ -4,7 +4,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonPrimitive
 
 /** Detects duplicate object keys before kotlinx JsonObject can overwrite an earlier value. */
-internal class HwihaCatalogDuplicateKeys(private val raw: String) {
+internal class CatalogDuplicateKeys(private val raw: String) {
     private var at = 0
 
     fun check() {

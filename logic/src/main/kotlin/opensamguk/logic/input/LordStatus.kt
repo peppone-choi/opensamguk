@@ -1,7 +1,7 @@
 package opensamguk.logic.input
 
 /** Event-owned status in general.meta. Offices and county ownership are not evidence of lordship. */
-object HwihaLordStatus {
+object LordStatus {
     const val META_KEY = "hwihaLord"
 
     /** A newly created unmarked general is not a lord; malformed persisted state is an error. */

@@ -55,14 +55,14 @@ class HwihaCreatedPersonPersistenceIT {
             opensamguk.engine.intake.MakeGeneralHandler(world, recorder,
                 previousPointReader = { 100000.0 }, nowProvider = { snapshot.state.lastTurnTime }).handle(request))
         val created = world.getGeneralById(result.generalId)!!
-        assertEquals(HwihaPersonPolicyState(30, false, "opensamguk:created-general", "v1", created.id),
-            HwihaPersonPolicyState.read(created.meta))
+        assertEquals(PersonPolicyState(30, false, "opensamguk:created-general", "v1", created.id),
+            PersonPolicyState.read(created.meta))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         val cold = InMemoryTurnWorld(fixture.load(81))
         val reloaded = cold.getGeneralById(created.id)!!
         assertEquals(created.stats, reloaded.stats)
-        assertEquals(created.meta[HwihaPersonPolicyState.META_KEY], reloaded.meta[HwihaPersonPolicyState.META_KEY])
-        assertEquals(false, reloaded.meta[HwihaLordStatus.META_KEY])
+        assertEquals(created.meta[PersonPolicyState.META_KEY], reloaded.meta[PersonPolicyState.META_KEY])
+        assertEquals(false, reloaded.meta[LordStatus.META_KEY])
         assertEquals(world.positionOf(created.id), cold.positionOf(created.id))
         val budget = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(cold)
             .current(EnlistmentRequest(created.id, EnlistmentMode.RANDOM)))
@@ -70,7 +70,7 @@ class HwihaCreatedPersonPersistenceIT {
         assertEquals(RenownRules.personCost(st.leadership, st.strength, st.intelligence, st.politics, st.charm), budget.policy.actorCardCost)
 
         // Fixture transition models a prior rejection and released NPC; possession must preserve it.
-        val reduced = HwihaPersonPolicyState.read(reloaded.meta)!!.copy(renownCapacity = 29)
+        val reduced = PersonPolicyState.read(reloaded.meta)!!.copy(renownCapacity = 29)
         jdbc.update("UPDATE general SET user_id=NULL,npc_state=2,meta=jsonb_set(meta,'{hwihaPersonPolicy,renownCapacity}','29') WHERE world_id=81 AND id=?", created.id)
         val claimWorld = InMemoryTurnWorld(fixture.load(81))
         val claimRecorder = ChangeRecorder()
@@ -78,6 +78,6 @@ class HwihaCreatedPersonPersistenceIT {
             opensamguk.common.wire.TurnDaemonCommand.ClaimNpc(generalId = created.id, userId = 78L, userNick = "빙의검증"))
         assertEquals(true, assertIs<opensamguk.common.wire.GeneralBoolResult>(claim).ok)
         flush.flush(DatabaseHooks.toFlushPayload(claimWorld, claimRecorder, claimWorld.consumeDirtyState()))
-        assertEquals(reduced, HwihaPersonPolicyState.read(fixture.load(81).generals.single { it.id == created.id }.meta))
+        assertEquals(reduced, PersonPolicyState.read(fixture.load(81).generals.single { it.id == created.id }.meta))
     }
 }

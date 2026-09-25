@@ -1187,7 +1187,7 @@ class ChangeRecorder(
         requireSpatialWorld(world.worldId)
         if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             require(initialTurns.size <= 12 && initialTurns.all {
-                it.actionCode == "action.enlist" && opensamguk.logic.input.HwihaEnlistmentInput.parse(general.id, it.argJson) != null
+                it.actionCode == "action.enlist" && opensamguk.logic.input.EnlistmentInput.parse(general.id, it.argJson) != null
             }) { "HWIHA initial reservations must contain at most twelve supported inputs" }
         } else require(initialTurns.isEmpty() || initialTurns.size == 30) {
             "created general initial turn ring must be empty (canonical rest) or exactly 30 slots"

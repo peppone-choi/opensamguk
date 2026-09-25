@@ -3,12 +3,12 @@ package opensamguk.logic.input
 import opensamguk.logic.domestic.DomesticIds
 
 /** An installed hostile scheme watches one pinned land province. Its effect is a contact stop, not a fabricated battle. */
-data class HwihaInstalledScheme(
+data class InstalledScheme(
     val orderId: String,
     val ownerGeneralId: Int,
     val nationId: Int,
     val provinceId: String,
-    val since: HwihaPhase,
+    val since: Phase,
 ) {
     init { require(orderId.isNotBlank() && orderId.length <= 128 && ownerGeneralId > 0 && nationId > 0 &&
         provinceId.isNotBlank() && provinceId.length <= 128) }
@@ -18,12 +18,12 @@ data class HwihaInstalledScheme(
 
     companion object {
         private val fields = setOf("orderId", "ownerGeneralId", "nationId", "provinceId", "since")
-        fun read(raw: Any?): HwihaInstalledScheme {
+        fun read(raw: Any?): InstalledScheme {
             val value = raw as? Map<*, *> ?: invalid()
             require(value.keys == fields) { "Invalid installed scheme fields" }
-            return HwihaInstalledScheme(value["orderId"] as? String ?: invalid(),
+            return InstalledScheme(value["orderId"] as? String ?: invalid(),
                 value["ownerGeneralId"] as? Int ?: invalid(), value["nationId"] as? Int ?: invalid(),
-                value["provinceId"] as? String ?: invalid(), HwihaPhase.read(value["since"]))
+                value["provinceId"] as? String ?: invalid(), Phase.read(value["since"]))
         }
         private fun invalid(): Nothing = throw IllegalArgumentException("Invalid installed scheme")
     }
@@ -33,12 +33,12 @@ data class HwihaInstalledScheme(
  * 요격·회피 방침을 건 출전 군단 한 개(군단 방침 `INTERCEPT`/`EVADE` 의 현행). [since] 는 방침이 효력을 얻은 순이다.
  * 이 기록은 「그 군단이 반응 방침을 걸었다」는 사실뿐이다 — 요격 범위·물러나기 판정은 조우 소비자가 정한다.
  */
-data class HwihaReactionOrder(
+data class ReactionOrder(
     val orderId: String,
     val ownerGeneralId: Int,
     val commanderGeneralId: Int,
     val nationId: Int,
-    val since: HwihaPhase,
+    val since: Phase,
 ) {
     init { require(DomesticIds.order(orderId) && ownerGeneralId > 0 && commanderGeneralId > 0 && nationId >= 0) }
 
@@ -47,11 +47,11 @@ data class HwihaReactionOrder(
 
     companion object {
         private val fields = setOf("orderId", "ownerGeneralId", "commanderGeneralId", "nationId", "since")
-        fun read(raw: Any?): HwihaReactionOrder {
+        fun read(raw: Any?): ReactionOrder {
             val value = raw as? Map<*, *> ?: throw IllegalArgumentException("Invalid HWIHA reaction order")
             require(value.keys == fields) { "Invalid HWIHA reaction order fields" }
-            return HwihaReactionOrder(value["orderId"] as? String ?: bad(), value["ownerGeneralId"] as? Int ?: bad(),
-                value["commanderGeneralId"] as? Int ?: bad(), value["nationId"] as? Int ?: bad(), HwihaPhase.read(value["since"]))
+            return ReactionOrder(value["orderId"] as? String ?: bad(), value["ownerGeneralId"] as? Int ?: bad(),
+                value["commanderGeneralId"] as? Int ?: bad(), value["nationId"] as? Int ?: bad(), Phase.read(value["since"]))
         }
         private fun bad(): Nothing = throw IllegalArgumentException("Invalid HWIHA reaction order")
     }
@@ -62,10 +62,10 @@ data class HwihaReactionOrder(
  * 채운다(지휘 장수 id, 명령 id 순). `installedSchemes`는 설치 입력 스트림이 쓴 권위 있는 지역 기록이다.
  * 키가 없거나 꼴·항목이 어긋나면 빈 목록으로 바꿔 읽지 않는다.
  */
-sealed interface HwihaMarchReactions {
-    val installedSchemes: List<HwihaInstalledScheme>
-    val interceptions: List<HwihaReactionOrder>
-    val avoidanceOrders: List<HwihaReactionOrder>
+sealed interface MarchReactions {
+    val installedSchemes: List<InstalledScheme>
+    val interceptions: List<ReactionOrder>
+    val avoidanceOrders: List<ReactionOrder>
 
     fun toMetaValue(): Map<String, Any> = linkedMapOf(
         "version" to 1, "installedSchemes" to installedSchemes.map { it.toMetaValue() },
@@ -73,16 +73,16 @@ sealed interface HwihaMarchReactions {
         "avoidanceOrders" to avoidanceOrders.map { it.toMetaValue() },
     )
 
-    data object Empty : HwihaMarchReactions {
-        override val installedSchemes: List<HwihaInstalledScheme> = emptyList()
-        override val interceptions: List<HwihaReactionOrder> = emptyList()
-        override val avoidanceOrders: List<HwihaReactionOrder> = emptyList()
+    data object Empty : MarchReactions {
+        override val installedSchemes: List<InstalledScheme> = emptyList()
+        override val interceptions: List<ReactionOrder> = emptyList()
+        override val avoidanceOrders: List<ReactionOrder> = emptyList()
     }
 
     /** 반응 방침이 하나 이상 걸린 목록. 조우 소비자가 이 기록을 해결할 수 있어야 통행을 판정할 수 있다. */
-    data class Inventory(override val interceptions: List<HwihaReactionOrder>, override val avoidanceOrders: List<HwihaReactionOrder>,
-        override val installedSchemes: List<HwihaInstalledScheme>) :
-        HwihaMarchReactions {
+    data class Inventory(override val interceptions: List<ReactionOrder>, override val avoidanceOrders: List<ReactionOrder>,
+        override val installedSchemes: List<InstalledScheme>) :
+        MarchReactions {
         init {
             require(interceptions.isNotEmpty() || avoidanceOrders.isNotEmpty() || installedSchemes.isNotEmpty()) { "an empty inventory is Empty" }
             require(installedSchemes == installedSchemes.sortedWith(compareBy({ it.provinceId }, { it.orderId })))
@@ -102,22 +102,22 @@ sealed interface HwihaMarchReactions {
         const val META_KEY = "hwihaMarchReactions"
         private val fields = setOf("version", "installedSchemes", "interceptions", "avoidanceOrders")
 
-        fun of(interceptions: List<HwihaReactionOrder>, avoidanceOrders: List<HwihaReactionOrder>,
-            installedSchemes: List<HwihaInstalledScheme> = emptyList()): HwihaMarchReactions {
-            val order = compareBy<HwihaReactionOrder>({ it.commanderGeneralId }, { it.orderId })
+        fun of(interceptions: List<ReactionOrder>, avoidanceOrders: List<ReactionOrder>,
+            installedSchemes: List<InstalledScheme> = emptyList()): MarchReactions {
+            val order = compareBy<ReactionOrder>({ it.commanderGeneralId }, { it.orderId })
             return if (interceptions.isEmpty() && avoidanceOrders.isEmpty() && installedSchemes.isEmpty()) Empty
             else Inventory(interceptions.sortedWith(order), avoidanceOrders.sortedWith(order),
                 installedSchemes.sortedWith(compareBy({ it.provinceId }, { it.orderId })))
         }
 
-        fun read(meta: Map<String, Any?>): HwihaMarchReactions? {
+        fun read(meta: Map<String, Any?>): MarchReactions? {
             if (META_KEY !in meta) return null
             val raw = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(raw.keys == fields && raw["version"] == 1) { "Unsupported march reaction schema" }
             val schemes = raw["installedSchemes"] as? List<*> ?: invalid()
-            val installed = schemes.map(HwihaInstalledScheme::read)
-            val interceptions = (raw["interceptions"] as? List<*> ?: invalid()).map(HwihaReactionOrder::read)
-            val avoidance = (raw["avoidanceOrders"] as? List<*> ?: invalid()).map(HwihaReactionOrder::read)
+            val installed = schemes.map(InstalledScheme::read)
+            val interceptions = (raw["interceptions"] as? List<*> ?: invalid()).map(ReactionOrder::read)
+            val avoidance = (raw["avoidanceOrders"] as? List<*> ?: invalid()).map(ReactionOrder::read)
             return if (installed.isEmpty() && interceptions.isEmpty() && avoidance.isEmpty()) Empty
                 else Inventory(interceptions, avoidance, installed)
         }

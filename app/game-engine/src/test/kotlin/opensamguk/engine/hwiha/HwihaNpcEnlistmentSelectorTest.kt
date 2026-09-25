@@ -19,8 +19,8 @@ class HwihaNpcEnlistmentSelectorTest {
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
         experience = 0, dedication = 0, officerLevel = if (nation > 0) 12 else 0,
         npcState = 2, userId = null, gold = 100, rice = 200, crew = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to (nation > 0), HwihaPersonPolicyState.META_KEY to
-            HwihaPersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()))
+        meta = mapOf("hwihaLord" to (nation > 0), PersonPolicyState.META_KEY to
+            PersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()))
     private fun world(actor: TurnGeneral = person(1), lords: Int = 1, reverse: Boolean = false): InMemoryTurnWorld {
         val persons = listOf(actor) + (1..lords).map { person(it * 10, it).copy(turnTime = Instant.EPOCH.plusSeconds(99999)) }
         return InMemoryTurnWorld(WorldSnapshot(

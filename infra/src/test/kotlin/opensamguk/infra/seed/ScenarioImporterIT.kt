@@ -151,7 +151,7 @@ class ScenarioImporterIT {
         val importer = regressionImporter(scenario = scenario, cities = mapCitiesOf(scenario),
             scenarioCode = "scenario_990001", artifactsRoot = java.nio.file.Path.of(".."))
         importer.importAll(jdbc, canonicalWorldId)
-        fun stored() = opensamguk.logic.input.HwihaPersonPolicyState.read(opensamguk.infra.persistence.MetaJson.decode(
+        fun stored() = opensamguk.logic.input.PersonPolicyState.read(opensamguk.infra.persistence.MetaJson.decode(
             jdbc.queryForObject("SELECT meta::text FROM general WHERE world_id=1 AND id=1001", String::class.java)!!))!!
         assertEquals(30, stored().renownCapacity)
         assertEquals("synthetic-qa:court", stored().statSourceId)
@@ -179,7 +179,7 @@ class ScenarioImporterIT {
         assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta->>'hwihaLord' = 'true'", Int::class.java))
         assertEquals(generals, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'hwihaLord'", Int::class.java))
         val storedMeta = jdbc.queryForObject("SELECT meta::text FROM general WHERE world_id = 1 AND meta->>'hwihaLord' = 'true'", String::class.java)!!
-        assertTrue(opensamguk.logic.input.HwihaLordStatus.read(opensamguk.infra.persistence.MetaJson.decode(storedMeta)))
+        assertTrue(opensamguk.logic.input.LordStatus.read(opensamguk.infra.persistence.MetaJson.decode(storedMeta)))
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(config.contains("\"ruleProfile\": \"HWIHA\"") || config.contains("\"ruleProfile\":\"HWIHA\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
@@ -189,20 +189,20 @@ class ScenarioImporterIT {
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
         val passageMeta = opensamguk.infra.persistence.MetaJson.decode(
             jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
-        assertTrue(opensamguk.logic.input.HwihaLandPassageState.read(passageMeta, topology) != null)
-        val reactionKey = opensamguk.logic.input.HwihaMarchReactions.META_KEY
+        assertTrue(opensamguk.logic.input.LandPassageState.read(passageMeta, topology) != null)
+        val reactionKey = opensamguk.logic.input.MarchReactions.META_KEY
         fun reactions() = opensamguk.infra.persistence.MetaJson.decode(
             jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
-        assertEquals(opensamguk.logic.input.HwihaMarchReactions.Empty,
-            opensamguk.logic.input.HwihaMarchReactions.read(reactions()))
+        assertEquals(opensamguk.logic.input.MarchReactions.Empty,
+            opensamguk.logic.input.MarchReactions.read(reactions()))
         jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], '{\"version\":99}'::jsonb) WHERE id=1", reactionKey)
         assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) {
             error("existing world must not rerun its seed")
         }.seeded)
-        assertFailsWith<IllegalArgumentException> { opensamguk.logic.input.HwihaMarchReactions.read(reactions()) }
+        assertFailsWith<IllegalArgumentException> { opensamguk.logic.input.MarchReactions.read(reactions()) }
         jdbc.update("UPDATE world_state SET meta=meta - ? WHERE id=1", reactionKey)
         assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) { error("no backfill") }.seeded)
-        assertEquals(null, opensamguk.logic.input.HwihaMarchReactions.read(reactions()))
+        assertEquals(null, opensamguk.logic.input.MarchReactions.read(reactions()))
         // 각 행의 省 = 그 장수의 城이 선 省.
         val mismatched = jdbc.queryForObject(
             """SELECT count(*) FROM general g JOIN general_spatial_position p ON p.world_id = g.world_id AND p.general_id = g.id

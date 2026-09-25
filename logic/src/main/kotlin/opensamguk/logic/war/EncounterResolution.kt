@@ -1,13 +1,13 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.security.MessageDigest
 import java.util.Collections
-import opensamguk.logic.input.HwihaCorpsEncounter
-import opensamguk.logic.input.HwihaEncounterDeployment
-import opensamguk.logic.input.HwihaEncounterForces
-import opensamguk.logic.input.HwihaEncounterRelations
+import opensamguk.logic.input.CorpsEncounter
+import opensamguk.logic.input.EncounterDeployment
+import opensamguk.logic.input.EncounterForces
+import opensamguk.logic.input.EncounterRelations
 
 /**
  * Runs a sealed encounter to its first playback barrier and classifies the result (§5.1.1 phase 5).
@@ -26,16 +26,16 @@ import opensamguk.logic.input.HwihaEncounterRelations
  *   is the provisional minimal captive rule
  *   (`data/curated/han/hwiha-s3-provisional-v1.json` `encounter.captives`).
  */
-object HwihaEncounterResolution {
+object EncounterResolution {
     const val RULE_VERSION = 1
 
     enum class CommanderStatus { HOLDING, RETREATED, DESTROYED }
     enum class Outcome { ATTACKER_VICTORY, DEFENDER_VICTORY }
 
     class Result internal constructor(
-        val journal: HwihaBattleJournal,
-        val barrier: HwihaBattlePlayback.Barrier,
-        units: List<HwihaGridExchange.UnitState>,
+        val journal: BattleJournal,
+        val barrier: BattlePlayback.Barrier,
+        units: List<GridExchange.UnitState>,
         statuses: Map<Int, CommanderStatus>,
         val outcome: Outcome,
         winners: List<Int>,
@@ -43,7 +43,7 @@ object HwihaEncounterResolution {
         captives: Map<Int, Int>,
         val replayHash: String,
     ) {
-        val units: List<HwihaGridExchange.UnitState> = Collections.unmodifiableList(units.sortedBy { it.bugokId })
+        val units: List<GridExchange.UnitState> = Collections.unmodifiableList(units.sortedBy { it.bugokId })
         val statuses: Map<Int, CommanderStatus> = Collections.unmodifiableMap(java.util.TreeMap(statuses))
         val winners: List<Int> = Collections.unmodifiableList(winners.sorted())
         val losers: List<Int> = Collections.unmodifiableList(losers.sorted())
@@ -53,21 +53,21 @@ object HwihaEncounterResolution {
     }
 
     fun resolve(
-        encounter: HwihaCorpsEncounter,
-        forces: HwihaEncounterForces,
-        relations: HwihaEncounterRelations,
-        combat: HwihaEncounterCombatProfiles,
-        plans: HwihaBattlePlans,
-        deployment: HwihaEncounterDeployment,
-        journal: HwihaBattleJournal,
+        encounter: CorpsEncounter,
+        forces: EncounterForces,
+        relations: EncounterRelations,
+        combat: EncounterCombatProfiles,
+        plans: BattlePlans,
+        deployment: EncounterDeployment,
+        journal: BattleJournal,
     ): Result {
-        val playback = HwihaBattlePlayback(encounter, forces, relations, combat, plans, deployment)
-        val autopilot = HwihaBattleAutopilot(encounter, forces, relations, combat, plans, deployment)
+        val playback = BattlePlayback(encounter, forces, relations, combat, plans, deployment)
+        val autopilot = BattleAutopilot(encounter, forces, relations, combat, plans, deployment)
         var current = journal
         var replay = playback.replay(current)
-        while (replay.barrier == HwihaBattlePlayback.Barrier.NONE) {
+        while (replay.barrier == BattlePlayback.Barrier.NONE) {
             // Playback always raises ROUND_LIMIT at the last round, so this loop is bounded by MAX_ROUNDS.
-            check(replay.lastResolvedRound < HwihaBattlePlans.MAX_ROUNDS) { "Battle exceeded the round limit" }
+            check(replay.lastResolvedRound < BattlePlans.MAX_ROUNDS) { "Battle exceeded the round limit" }
             current = current.append(autopilot.next(current))
             replay = playback.replay(current)
         }
@@ -99,8 +99,8 @@ object HwihaEncounterResolution {
             hash(current, replay.barrier, replay.units, statuses, outcome))
     }
 
-    private fun hash(journal: HwihaBattleJournal, barrier: HwihaBattlePlayback.Barrier,
-        units: List<HwihaGridExchange.UnitState>, statuses: Map<Int, CommanderStatus>, outcome: Outcome): String {
+    private fun hash(journal: BattleJournal, barrier: BattlePlayback.Barrier,
+        units: List<GridExchange.UnitState>, statuses: Map<Int, CommanderStatus>, outcome: Outcome): String {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             fun text(value: String) { val b = value.toByteArray(Charsets.UTF_8); out.writeInt(b.size); out.write(b) }

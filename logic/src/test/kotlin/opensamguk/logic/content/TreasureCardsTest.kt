@@ -3,9 +3,9 @@ package opensamguk.logic.content
 import kotlin.test.*
 import org.junit.jupiter.api.Test
 
-class HwihaTreasureCardsTest {
+class TreasureCardsTest {
     @Test fun `packaged active ledgers use the common card header and keep legacy two unissued`() {
-        val catalog = HwihaItemCatalogJson.CANON
+        val catalog = ItemCatalogJson.CANON
         assertTrue(catalog.treasures.isNotEmpty() && catalog.equipment.isNotEmpty())
         assertTrue(catalog.treasures.all { it.header.kind == CardKind.TREASURE &&
             it.header.provenanceBadges == listOf("게임 용어") })
@@ -15,7 +15,7 @@ class HwihaTreasureCardsTest {
             catalog.equipment.map { it.sourceCode }.toSet()).isEmpty())
     }
 
-    private fun card(id: String, slot: TreasureSlot, copies: Int? = 1) = HwihaTreasureDefinition(
+    private fun card(id: String, slot: TreasureSlot, copies: Int? = 1) = TreasureDefinition(
         CardHeader(id, id, CardKind.TREASURE, CardAvailability.UNIQUE,
             listOf(CardProvenance.GameTerm), 0, emptySet(), emptySet()),
         "source:$id", slot, copies)
@@ -30,8 +30,8 @@ class HwihaTreasureCardsTest {
     private val book = card("book", TreasureSlot.BOOK)
     private val item = card("item", TreasureSlot.ITEM)
 
-    private fun state(vararg instances: TreasureInstance, cards: List<HwihaTreasureDefinition> =
-        listOf(horse, weapon, book, item)): HwihaTreasureState = HwihaTreasureState(
+    private fun state(vararg instances: TreasureInstance, cards: List<TreasureDefinition> =
+        listOf(horse, weapon, book, item)): TreasureState = TreasureState(
         listOf(owner, npc, human, enemy, distant), cards, instances.toList())
 
     @Test fun `one treasure per legacy position with four total positions and equipment conflicts`() {
@@ -55,7 +55,7 @@ class HwihaTreasureCardsTest {
         assertFailsWith<IllegalArgumentException> { loose.attach("horse", 1, 4) }
         assertFailsWith<IllegalArgumentException> { loose.attach("horse", 1, 5) }
         assertFailsWith<IllegalArgumentException> {
-            HwihaTreasureState(listOf(owner, npc.copy(provinceId = "province:b")), listOf(horse),
+            TreasureState(listOf(owner, npc.copy(provinceId = "province:b")), listOf(horse),
                 listOf(TreasureInstance("horse", "horse", 1, 2)))
         }
     }

@@ -5,7 +5,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-class HwihaEnlistmentRulesTest {
+class EnlistmentRulesTest {
     private fun state() = EnlistmentSnapshot(
         RuleProfile.HWIHA,
         listOf(
@@ -20,9 +20,9 @@ class HwihaEnlistmentRulesTest {
     )
     private val nation = EnlistmentRequest(1, EnlistmentMode.NATION, 7)
     private fun choices(request: EnlistmentRequest = nation, snapshot: EnlistmentSnapshot = state()) =
-        (HwihaEnlistmentRules.assess(request, snapshot) as EnlistmentAssessment.Eligible).choices
+        (EnlistmentRules.assess(request, snapshot) as EnlistmentAssessment.Eligible).choices
     private fun denied(reason: EnlistmentFailure, snapshot: EnlistmentSnapshot, request: EnlistmentRequest = nation) {
-        assertEquals(EnlistmentAssessment.Rejected(reason), HwihaEnlistmentRules.assess(request, snapshot))
+        assertEquals(EnlistmentAssessment.Rejected(reason), EnlistmentRules.assess(request, snapshot))
     }
 
     @Test fun `NPC lord accepts a human with personal retinue at the price of one card`() {
@@ -38,14 +38,14 @@ class HwihaEnlistmentRulesTest {
         val expected = choices(random)
         assertEquals(listOf(7, 8), expected.map { it.nationId })
         assertEquals(expected, choices(random, state().copy(generals = state().generals.reversed(), bonds = state().bonds.reversed())))
-        assertEquals(expected[1], HwihaEnlistmentRules.select(EnlistmentAssessment.Eligible(expected)) { size ->
+        assertEquals(expected[1], EnlistmentRules.select(EnlistmentAssessment.Eligible(expected)) { size ->
             assertEquals(2, size); 1
         })
-        assertEquals(choices().single(), HwihaEnlistmentRules.select(EnlistmentAssessment.Eligible(choices())) { error("no draw") })
+        assertEquals(choices().single(), EnlistmentRules.select(EnlistmentAssessment.Eligible(choices())) { error("no draw") })
     }
 
     @Test fun `fresh execution recheck rejects removed lord permission and spent renown`() {
-        assertTrue(HwihaEnlistmentRules.assess(nation, state()) is EnlistmentAssessment.Eligible)
+        assertTrue(EnlistmentRules.assess(nation, state()) is EnlistmentAssessment.Eligible)
         denied(EnlistmentFailure.TARGET_NOT_ACCEPTING, state().copy(acceptingLordIds = setOf(20)))
         denied(EnlistmentFailure.INSUFFICIENT_RENOWN, state().copy(freeRenownByLord = mapOf(10 to 0)))
         denied(EnlistmentFailure.TARGET_NOT_LORD, state().copy(generals = state().generals.map { when (it.id) { 10 -> it.copy(isLord = false); 11 -> it.copy(isHuman = false); else -> it } }))

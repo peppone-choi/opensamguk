@@ -6,12 +6,12 @@ import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.logic.input.RewardRequest
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.renown.RenownEventSource
-import opensamguk.logic.war.hwiha.HwihaS3Provisional
+import opensamguk.logic.war.CampaignBalance
 
 /**
  * 상사(賞賜) 실행 — 조정 결정(`court.reward`). 휘하 인물 카드를 직접 거느린 장수가 카드가 있는 곳의 창고망
- * ([HwihaWarehouseNetwork])에서 금을 내리고, 카드 충성을 금 [HwihaS3Provisional.REWARD_MONEY_PER_LOYALTY] 마다 +1
- * (한 번에 최대 [HwihaS3Provisional.REWARD_MAX_LOYALTY_GAIN]) 올리며, 받는 인물에게 결속 사건을 월 1회 기록한다.
+ * ([HwihaWarehouseNetwork])에서 금을 내리고, 카드 충성을 금 [CampaignBalance.REWARD_MONEY_PER_LOYALTY] 마다 +1
+ * (한 번에 최대 [CampaignBalance.REWARD_MAX_LOYALTY_GAIN]) 올리며, 받는 인물에게 결속 사건을 월 1회 기록한다.
  * 보물 상사(#788)는 아직 없다.
  */
 class HwihaRewardExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder) {
@@ -28,8 +28,8 @@ class HwihaRewardExecutor(private val world: InMemoryTurnWorld, private val reco
             ?: return Failure.CARD_UNAVAILABLE
         val person = card.generalId?.let(world::getGeneralById) ?: return Failure.CARD_UNAVAILABLE
         val actor = world.getGeneralById(request.actorId) ?: return Failure.CARD_UNAVAILABLE
-        val gain = minOf(request.money / HwihaS3Provisional.REWARD_MONEY_PER_LOYALTY,
-            HwihaS3Provisional.REWARD_MAX_LOYALTY_GAIN.toLong()).toInt()
+        val gain = minOf(request.money / CampaignBalance.REWARD_MONEY_PER_LOYALTY,
+            CampaignBalance.REWARD_MAX_LOYALTY_GAIN.toLong()).toInt()
         if (gain <= 0) return Failure.TOO_SMALL
         val network = HwihaWarehouseNetwork(world, recorder)
         if (!network.payMoney(actor.nationId, network.countiesFor(actor.nationId, person.cityId), request.money))

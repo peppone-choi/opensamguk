@@ -7,7 +7,7 @@ import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicTopologySnapshot
 
 /** Identity snapshot only: no resource copies and no assertion that defenders are allies. */
-data class HwihaEncounterParticipant(
+data class EncounterParticipant(
     val orderId: String,
     val ownerGeneralId: Int,
     val commanderGeneralId: Int,
@@ -20,7 +20,7 @@ data class HwihaEncounterParticipant(
         require(bugokIds.isNotEmpty() && bugokIds.all { it > 0 } && bugokIds.distinct().size == bugokIds.size)
     }
 
-    fun requireBinding(corps: HwihaDeployedCorps) {
+    fun requireBinding(corps: DeployedCorps) {
         require(orderId == corps.orderId && ownerGeneralId == corps.ownerGeneralId &&
             commanderGeneralId == corps.commanderGeneralId && nationId == corps.nationId &&
             bugokIds.sorted() == corps.bugokIds.sorted()) { "Encounter participant differs from deployed corps" }
@@ -32,15 +32,15 @@ data class HwihaEncounterParticipant(
     )
 
     companion object {
-        fun from(corps: HwihaDeployedCorps) = HwihaEncounterParticipant(corps.orderId, corps.ownerGeneralId,
+        fun from(corps: DeployedCorps) = EncounterParticipant(corps.orderId, corps.ownerGeneralId,
             corps.commanderGeneralId, corps.nationId, corps.bugokIds.sorted())
 
-        internal fun read(raw: Any?): HwihaEncounterParticipant {
+        internal fun read(raw: Any?): EncounterParticipant {
             val row = raw as? Map<*, *> ?: invalid()
             require(row.keys == setOf("orderId", "ownerGeneralId", "commanderGeneralId", "nationId", "bugokIds"))
             val ids = (row["bugokIds"] as? List<*>)?.map { it as? Int ?: invalid() } ?: invalid()
             require(ids == ids.sorted()) { "Encounter unit identities must be canonical" }
-            return HwihaEncounterParticipant(row["orderId"] as? String ?: invalid(),
+            return EncounterParticipant(row["orderId"] as? String ?: invalid(),
                 row["ownerGeneralId"] as? Int ?: invalid(), row["commanderGeneralId"] as? Int ?: invalid(),
                 row["nationId"] as? Int ?: invalid(), ids)
         }
@@ -49,12 +49,12 @@ data class HwihaEncounterParticipant(
 }
 
 /** Pending encounter, not a battle result. The same value is stored on each participating commander. */
-data class HwihaCorpsEncounter(
-    val attacker: HwihaEncounterParticipant,
-    val defenders: List<HwihaEncounterParticipant>,
+data class CorpsEncounter(
+    val attacker: EncounterParticipant,
+    val defenders: List<EncounterParticipant>,
     val province: StrategicNodeRef.LandProvince,
     val approachFrom: StrategicNodeRef.LandProvince,
-    val phase: HwihaPhase,
+    val phase: Phase,
     val topologyRevision: String,
     val topologyHash: String,
 ) {
@@ -70,8 +70,8 @@ data class HwihaCorpsEncounter(
     }
 
     private val orderedDefenders get() = defenders.sortedWith(compareBy(
-        HwihaEncounterParticipant::commanderGeneralId, HwihaEncounterParticipant::ownerGeneralId,
-        HwihaEncounterParticipant::orderId))
+        EncounterParticipant::commanderGeneralId, EncounterParticipant::ownerGeneralId,
+        EncounterParticipant::orderId))
 
     /** Fixed schema plus UTF-8 byte lengths prevents delimiter and participant-boundary collisions. */
     val encounterId: String get() {
@@ -81,7 +81,7 @@ data class HwihaCorpsEncounter(
                 val encoded = value.toByteArray(Charsets.UTF_8)
                 stream.writeInt(encoded.size); stream.write(encoded)
             }
-            fun participant(row: HwihaEncounterParticipant) {
+            fun participant(row: EncounterParticipant) {
                 field(row.orderId); field(row.ownerGeneralId.toString()); field(row.commanderGeneralId.toString())
                 field(row.nationId.toString()); field(row.bugokIds.size.toString())
                 row.bugokIds.sorted().forEach { field(it.toString()) }
@@ -112,14 +112,14 @@ data class HwihaCorpsEncounter(
         private val fields = setOf("version", "encounterId", "attacker", "defenders", "province", "approachFrom",
             "phase", "topologyRevision", "topologyHash")
 
-        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot): HwihaCorpsEncounter? {
+        fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot): CorpsEncounter? {
             if (META_KEY !in meta) return null
             val row = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(row.keys == fields && row["version"] == 1) { "Invalid encounter schema" }
-            val encounter = HwihaCorpsEncounter(HwihaEncounterParticipant.read(row["attacker"]),
-                (row["defenders"] as? List<*>)?.map(HwihaEncounterParticipant::read) ?: invalid(),
+            val encounter = CorpsEncounter(EncounterParticipant.read(row["attacker"]),
+                (row["defenders"] as? List<*>)?.map(EncounterParticipant::read) ?: invalid(),
                 StrategicNodeRef.LandProvince(row["province"] as? String ?: invalid()),
-                StrategicNodeRef.LandProvince(row["approachFrom"] as? String ?: invalid()), HwihaPhase.read(row["phase"]),
+                StrategicNodeRef.LandProvince(row["approachFrom"] as? String ?: invalid()), Phase.read(row["phase"]),
                 row["topologyRevision"] as? String ?: invalid(), row["topologyHash"] as? String ?: invalid())
             require(encounter.topologyRevision == topology.topologyRevision && encounter.topologyHash == topology.contentHash)
             require(topology.containsNode(encounter.province) && topology.containsNode(encounter.approachFrom))

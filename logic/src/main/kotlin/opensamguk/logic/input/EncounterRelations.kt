@@ -6,7 +6,7 @@ import java.security.MessageDigest
 import java.util.Collections
 
 /** Pairwise combat hostility at approach. Non-hostile never implies an alliance. */
-class HwihaEncounterRelations private constructor(val encounterId: String, pairs: List<PairRelation>) {
+class EncounterRelations private constructor(val encounterId: String, pairs: List<PairRelation>) {
     data class PairRelation(val firstCommanderId: Int, val secondCommanderId: Int, val hostile: Boolean) {
         init { require(firstCommanderId > 0 && secondCommanderId > firstCommanderId) }
     }
@@ -34,7 +34,7 @@ class HwihaEncounterRelations private constructor(val encounterId: String, pairs
             it.secondCommanderId == maxOf(first,second) }) { "Unknown encounter pair" }.hostile
     }
 
-    fun requireBinding(encounter: HwihaCorpsEncounter) {
+    fun requireBinding(encounter: CorpsEncounter) {
         require(encounterId == encounter.encounterId)
         val ids = (listOf(encounter.attacker)+encounter.defenders).map { it.commanderGeneralId }.sorted()
         val expected = ids.flatMapIndexed { index, first -> ids.drop(index+1).map { first to it } }
@@ -49,12 +49,12 @@ class HwihaEncounterRelations private constructor(val encounterId: String, pairs
     companion object {
         const val META_KEY = "hwihaEncounterRelations"
 
-        fun capture(encounter: HwihaCorpsEncounter, state: DeploymentProjection, activeWars: Set<Pair<Int, Int>>): HwihaEncounterRelations {
+        fun capture(encounter: CorpsEncounter, state: DeploymentProjection, activeWars: Set<Pair<Int, Int>>): EncounterRelations {
             val participants = (listOf(encounter.attacker)+encounter.defenders).sortedBy { it.commanderGeneralId }
             val hostileByCommander = participants.associate { participant ->
                 participant.requireBinding(requireNotNull(state.deployed.singleOrNull { it.commanderGeneralId == participant.commanderGeneralId }))
                 require(state.people.singleOrNull { it.id == participant.commanderGeneralId }?.node == encounter.province)
-                val assessment = HwihaMilitaryPresence.assess(participant.commanderGeneralId,state,activeWars)
+                val assessment = MilitaryPresence.assess(participant.commanderGeneralId,state,activeWars)
                     as? MilitaryPresenceAssessment.Ready ?: throw IllegalArgumentException("Military relation authority unavailable")
                 participant.commanderGeneralId to assessment.hostileCorps.mapTo(hashSetOf()) { it.commanderGeneralId }
             }
@@ -64,11 +64,11 @@ class HwihaEncounterRelations private constructor(val encounterId: String, pairs
                     second.commanderGeneralId in hostileByCommander.getValue(first.commanderGeneralId) ||
                     first.commanderGeneralId in hostileByCommander.getValue(second.commanderGeneralId))
             } }
-            return HwihaEncounterRelations(encounter.encounterId,pairs).also { it.requireBinding(encounter) }
+            return EncounterRelations(encounter.encounterId,pairs).also { it.requireBinding(encounter) }
         }
 
         /** Frozen relation history does not change when live diplomacy changes later. */
-        fun read(meta: Map<String, Any?>, encounter: HwihaCorpsEncounter): HwihaEncounterRelations? {
+        fun read(meta: Map<String, Any?>, encounter: CorpsEncounter): EncounterRelations? {
             if (META_KEY !in meta) return null
             val raw = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(raw.keys == setOf("version","encounterId","snapshotId","pairs") && raw["version"] == 1)
@@ -78,7 +78,7 @@ class HwihaEncounterRelations private constructor(val encounterId: String, pairs
                 PairRelation(row["firstCommanderId"] as? Int ?: invalid(),row["secondCommanderId"] as? Int ?: invalid(),
                     row["hostile"] as? Boolean ?: invalid())
             } ?: invalid()
-            return HwihaEncounterRelations(raw["encounterId"] as? String ?: invalid(),pairs).also {
+            return EncounterRelations(raw["encounterId"] as? String ?: invalid(),pairs).also {
                 it.requireBinding(encounter)
                 require(it.pairs == pairs && raw["snapshotId"] == it.snapshotId)
             }

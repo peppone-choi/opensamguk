@@ -25,8 +25,8 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
     data class Route(val start: StrategicNodeRef.LandProvince, val first: StrategicNodeRef.LandProvince,
         val destination: StrategicNodeRef.LandProvince, val startCity: Int, val destinationCounty: Int)
 
-    fun passage() = HwihaLandPassageState.read(
-        mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology)), topology)!!
+    fun passage() = LandPassageState.read(
+        mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology)), topology)!!
 
     fun route(): Route = routeCache.getOrPut(topology.contentHash) {
         val edges = passage()
@@ -52,10 +52,10 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
                 if (path.edgeIds.any { metrics.edgesById.getValue(it).costMm > LandMarchMetricSnapshot.NORMAL_BUDGET_MM }) continue
                 val first = StrategicNodeRef.LandProvince(path.nodeKeys[1].removePrefix("land:"))
                 if (first.id in countyProvinces) continue
-                val layout = HwihaBattlefieldLayout.prepare(cells, first.id, start.id) as? HwihaBattlefieldLayout.Result.Ready
+                val layout = BattlefieldLayout.prepare(cells, first.id, start.id) as? BattlefieldLayout.Result.Ready
                     ?: continue
                 if (layout.layout.defenderZone.isEmpty() || layout.layout.attackerZone.isEmpty()) continue
-                val siege = HwihaBattlefieldLayout.prepare(cells, destination.id, first.id) as? HwihaBattlefieldLayout.Result.Ready
+                val siege = BattlefieldLayout.prepare(cells, destination.id, first.id) as? BattlefieldLayout.Result.Ready
                     ?: continue
                 if (siege.layout.defenderZone.size < 2) continue
                 return@getOrPut Route(start, first, destination, startCity, county)
@@ -71,8 +71,8 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
         stats: GeneralStats = GeneralStats(70, 70, 70, 70, 70)) =
         TurnGeneral(id = id, userId = userId, name = "G$id", nationId = nationId, cityId = cityId, troopId = 0,
             stats = stats, experience = 0, dedication = 0, officerLevel = if (lord) 12 else 1, npcState = 2,
-            turnTime = Instant.parse("0200-01-01T00:00:00Z"), meta = mapOf(HwihaLordStatus.META_KEY to lord,
-                HwihaPersonPolicyState.META_KEY to HwihaPersonPolicyState(30, true, "synthetic-test", "1", id).toMetaValue()))
+            turnTime = Instant.parse("0200-01-01T00:00:00Z"), meta = mapOf(LordStatus.META_KEY to lord,
+                PersonPolicyState.META_KEY to PersonPolicyState(30, true, "synthetic-test", "1", id).toMetaValue()))
 
     fun world(
         generals: List<Pair<TurnGeneral, StrategicNodeRef.LandProvince>>,
@@ -94,8 +94,8 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
         }
         val state = TurnWorldState(1, 200, 1, 3600, Instant.parse("0200-01-01T00:00:00Z"), currentPhase = 1,
             config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = variant,
-            meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
-                HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue(),
+            meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
+                MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue(),
                 "startYear" to 200, "startTime" to "0200-01-01T00:00:00Z") + extraStateMeta)
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals.map { it.first },
             cities = cities, nations = nations, bugoks = bugoks, retainers = retainers,
@@ -114,14 +114,14 @@ internal class HwihaCampaignWorldFixture(val variant: HanWorldVariant = HanWorld
             .deploy(orderId, DeploymentRequest(ownerId, null, bugokIds))
         check(applied is DeploymentExecution.Applied) { "deployment rejected: $applied" }
         val before = world.getGeneralById(ownerId)!!
-        val order = HwihaCorpsOrder(orderId, ownerId, ownerId, destination, topology.topologyRevision, topology.contentHash)
-        val after = before.copy(meta = before.meta + (HwihaCorpsOrder.META_KEY to order.toMetaValue()))
+        val order = CorpsOrder(orderId, ownerId, ownerId, destination, topology.topologyRevision, topology.contentHash)
+        val after = before.copy(meta = before.meta + (CorpsOrder.META_KEY to order.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
     }
 
     fun nextPhase(world: InMemoryTurnWorld) {
-        val next = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }.plus(1)
+        val next = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }.plus(1)
         world.setCurrentDate(next.year, next.month, next.phase)
     }
 

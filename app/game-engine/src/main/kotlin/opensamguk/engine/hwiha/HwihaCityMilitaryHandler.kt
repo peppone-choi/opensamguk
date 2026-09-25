@@ -17,60 +17,60 @@ class HwihaCityMilitaryHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val context: HwihaDomesticContext = HwihaDomesticContext(),
-    private val design: HwihaMilitaryDesign = HwihaMilitaryDesign.CANON,
+    private val design: MilitaryDesign = MilitaryDesign.CANON,
 ) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,
         npcSelected: Boolean = false): HwihaTurnOutcome {
-        fun reject(reason: HwihaMilitaryFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
-        if (world.ruleProfile != RuleProfile.HWIHA) return reject(HwihaMilitaryFailure.WRONG_RULE_PROFILE)
-        val actor = world.getGeneralById(actorId) ?: return reject(HwihaMilitaryFailure.ACTOR_NOT_FOUND)
+        fun reject(reason: MilitaryFailure) = HwihaTurnOutcome.Rejected(inputId, reason.name, reason.message)
+        if (world.ruleProfile != RuleProfile.HWIHA) return reject(MilitaryFailure.WRONG_RULE_PROFILE)
+        val actor = world.getGeneralById(actorId) ?: return reject(MilitaryFailure.ACTOR_NOT_FOUND)
         val npc = npcSelected && ownerUserId == null && actor.npcState >= 2 && HwihaNpcDeploySelector.isUnowned(actor.userId)
         if (!npc && (ownerUserId == null || ownerUserId <= 0 || actor.userId?.toLongOrNull() != ownerUserId.toLong()))
             return HwihaTurnOutcome.Rejected(inputId, "FORBIDDEN", "예약한 장수의 소유권이 변경되었습니다.")
-        val request = HwihaMilitaryInput.parse(actorId, inputId, rawJson) ?: return reject(HwihaMilitaryFailure.INVALID_INPUT)
-        if (inputId !in HwihaMilitaryInput.CITY_INPUT_IDS) return reject(HwihaMilitaryFailure.INVALID_INPUT)
-        if (design.status != HwihaMilitaryDesign.CONFIRMED)
+        val request = MilitaryInput.parse(actorId, inputId, rawJson) ?: return reject(MilitaryFailure.INVALID_INPUT)
+        if (inputId !in MilitaryInput.CITY_INPUT_IDS) return reject(MilitaryFailure.INVALID_INPUT)
+        if (design.status != MilitaryDesign.CONFIRMED)
             return HwihaTurnOutcome.Rejected(inputId, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val turnToken = actor.turnTime.toString()
         val prior = actor.meta[LAST_TURN_KEY] as? Map<*, *>
         if (prior?.get("turn") == turnToken) {
             if (prior["inputId"] == inputId && prior["requestId"] == requestId)
                 return HwihaTurnOutcome.Applied(inputId, (prior["effects"] as? List<*>)?.filterIsInstance<String>().orEmpty())
-            return reject(HwihaMilitaryFailure.ALREADY_PROCESSED)
+            return reject(MilitaryFailure.ALREADY_PROCESSED)
         }
         val projection = context.projection(world)
         val geographic = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), projection)
-        if (geographic is FieldAssessment.Rejected) return reject(HwihaMilitaryFailure.valueOf(geographic.reason.name))
+        if (geographic is FieldAssessment.Rejected) return reject(MilitaryFailure.valueOf(geographic.reason.name))
         val county = (geographic as FieldAssessment.Eligible).county
-        val city = world.getCityById(county.id) ?: return reject(HwihaMilitaryFailure.COUNTY_UNAVAILABLE)
-        val condition = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
-            catch (_: IllegalArgumentException) { return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE) }
+        val city = world.getCityById(county.id) ?: return reject(MilitaryFailure.COUNTY_UNAVAILABLE)
+        val condition = try { CityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
+            catch (_: IllegalArgumentException) { return reject(MilitaryFailure.STATE_UNAVAILABLE) }
         val warehouse = try { CountyWarehouse.read(city.meta, city.id) }
             catch (_: IllegalArgumentException) { null }
-        val assessment = HwihaMilitaryRules.assessCity(request, projection, city.population, city.populationMax,
+        val assessment = MilitaryRules.assessCity(request, projection, city.population, city.populationMax,
             condition.troops, condition, warehouse?.stock, design)
-        if (assessment is HwihaCityMilitaryAssessment.Rejected) return reject(assessment.reason)
-        val plan = (assessment as HwihaCityMilitaryAssessment.Eligible).plan
+        if (assessment is CityMilitaryAssessment.Rejected) return reject(assessment.reason)
+        val plan = (assessment as CityMilitaryAssessment.Eligible).plan
         val experience: Int
         val dedication: Int
         try {
             experience = Math.addExact(actor.experience, design.experience)
             dedication = Math.addExact(actor.dedication, design.dedication)
-        } catch (_: ArithmeticException) { return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE) }
+        } catch (_: ArithmeticException) { return reject(MilitaryFailure.STATE_UNAVAILABLE) }
         if (plan.debit != Resources()) {
             val settled = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId,
                 checkNotNull(warehouse).revision, plan.debit)
             if (settled != HwihaWarehouseSettlement.Result.APPLIED) return reject(when (settled) {
-                HwihaWarehouseSettlement.Result.OWNER_CHANGED -> HwihaMilitaryFailure.FOREIGN_COUNTY
-                HwihaWarehouseSettlement.Result.INSUFFICIENT_STOCK -> HwihaMilitaryFailure.INSUFFICIENT_STOCK
-                HwihaWarehouseSettlement.Result.NOT_READY -> HwihaMilitaryFailure.WAREHOUSE_NOT_READY
-                else -> HwihaMilitaryFailure.STATE_UNAVAILABLE
+                HwihaWarehouseSettlement.Result.OWNER_CHANGED -> MilitaryFailure.FOREIGN_COUNTY
+                HwihaWarehouseSettlement.Result.INSUFFICIENT_STOCK -> MilitaryFailure.INSUFFICIENT_STOCK
+                HwihaWarehouseSettlement.Result.NOT_READY -> MilitaryFailure.WAREHOUSE_NOT_READY
+                else -> MilitaryFailure.STATE_UNAVAILABLE
             })
         }
         val current = checkNotNull(world.getCityById(city.id))
         val afterCondition = plan.condition.copy(troops = plan.troops)
         val after = current.copy(population = plan.population,
-            meta = current.meta + (HwihaCityMilitaryState.META_KEY to afterCondition.toMetaValue()))
+            meta = current.meta + (CityMilitaryState.META_KEY to afterCondition.toMetaValue()))
         recorder.diffCity(PerTurnOverlay.toLogicCity(current), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
         val effects = buildList {
@@ -90,7 +90,7 @@ class HwihaCityMilitaryHandler(
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
         HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_MILITARY_ACTION)
-        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED,
+        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED,
             "${city.name}에서 군사 행동을 마쳤습니다.", mapOf("inputId" to inputId, "countyId" to city.id, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

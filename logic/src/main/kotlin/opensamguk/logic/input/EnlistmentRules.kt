@@ -56,7 +56,7 @@ sealed interface EnlistmentAssessment {
 }
 
 /** Pure shared precheck/execution rules. Execution must supply a fresh complete snapshot. */
-object HwihaEnlistmentRules {
+object EnlistmentRules {
     fun assess(request: EnlistmentRequest, state: EnlistmentSnapshot): EnlistmentAssessment {
         fun deny(reason: EnlistmentFailure) = EnlistmentAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return deny(EnlistmentFailure.WRONG_RULE_PROFILE)

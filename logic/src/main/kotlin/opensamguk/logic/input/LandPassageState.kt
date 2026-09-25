@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import opensamguk.logic.world.*
 
 /** Versioned land passability, not a troop or corps count allowance. Callers request capacity one. */
-object HwihaLandPassageState {
+object LandPassageState {
     const val META_KEY = "hwihaLandPassage"
     private val fields = setOf("version", "topologyRevision", "topologyHash", "edges")
     private val edgeFields = setOf("active", "seasonOpen", "blockaded", "availableCapacity")

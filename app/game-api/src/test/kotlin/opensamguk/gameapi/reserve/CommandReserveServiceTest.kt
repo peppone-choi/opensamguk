@@ -71,7 +71,7 @@ class CommandReserveServiceTest {
     }
 
     private fun catalogFor(inputId: String, kind: String, state: String) =
-        opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
+        opensamguk.logic.input.InputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
             "inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
             "actor":"GENERAL","authorityRule":"SUBJECT_OWNER","targetSchema":{"status":"PLANNED","source":"test"},
             "costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
@@ -184,7 +184,7 @@ class CommandReserveServiceTest {
 
     @Test fun `domestic standing inputs publish canonical immediate commands without a turn slot`() {
         val reader = mock(opensamguk.gameapi.read.HwihaDomesticReader::class.java)
-        val now = opensamguk.logic.input.HwihaPhase(200, 1, 1)
+        val now = opensamguk.logic.input.Phase(200, 1, 1)
         fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.domestic.DomesticPerson(id, "G$id", 1, human,
             if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("hwihaLord" to lord))
         val state = opensamguk.logic.domestic.DomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
@@ -192,7 +192,7 @@ class CommandReserveServiceTest {
             listOf(opensamguk.logic.domestic.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
             listOf(opensamguk.logic.domestic.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
         `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state))
-        val catalog = opensamguk.logic.input.HwihaInputCatalog.load()
+        val catalog = opensamguk.logic.input.InputCatalog.load()
         val court = HwihaCourtAdmission(mock(opensamguk.gameapi.precheck.HwihaDispatchPrecheckService::class.java),
             HwihaDomesticAdmission(reader, catalog), catalog)
         val inbox = RecordingInbox()

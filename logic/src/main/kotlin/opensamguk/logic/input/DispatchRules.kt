@@ -7,7 +7,7 @@ data class DispatchPerson(val id: Int, val nationId: Int, val isLord: Boolean, v
 data class DispatchRetainer(val id: Int, val masterId: Int, val generalId: Int, val loyalty: Int)
 data class DispatchCounty(val id: Int, val nationId: Int)
 /** Counties must come from validated administrative classification, not every map city. */
-data class HwihaDispatchProjection(val profile: RuleProfile, val people: List<DispatchPerson>,
+data class DispatchProjection(val profile: RuleProfile, val people: List<DispatchPerson>,
     val retainers: List<DispatchRetainer>, val counties: List<DispatchCounty>)
 
 enum class DispatchFailure(val message: String) {
@@ -28,12 +28,12 @@ sealed interface DispatchAssessment {
 }
 
 /** Shared admission/execution checks. No RNG, mutation, persistence or clock access. */
-object HwihaDispatchRules {
-    fun assess(request: DispatchRequest, state: HwihaDispatchProjection): DispatchAssessment {
+object DispatchRules {
+    fun assess(request: DispatchRequest, state: DispatchProjection): DispatchAssessment {
         val relation = relationship(request.actorId, request.targetGeneralId, request.countyId, state)
         if (relation !is DispatchAssessment.Eligible) return relation
         return try {
-            val pending = HwihaDispatchState.read(relation.target.meta)
+            val pending = DispatchState.read(relation.target.meta)
             when {
                 pending?.status == DispatchStatus.PENDING -> reject(DispatchFailure.ALREADY_PENDING)
                 !countyAvailable(request.countyId, request.targetGeneralId, state) -> reject(DispatchFailure.COUNTY_OCCUPIED)
@@ -43,7 +43,7 @@ object HwihaDispatchRules {
     }
 
     /** Continuing an accepted assignment does not depend on a newer pending dispatch. */
-    fun assessAssignment(actorId: Int, assignment: HwihaCountyAssignment, state: HwihaDispatchProjection): DispatchAssessment {
+    fun assessAssignment(actorId: Int, assignment: CountyAssignment, state: DispatchProjection): DispatchAssessment {
         val relation = relationship(assignment.issuerId, actorId, assignment.countyId, state)
         if (relation !is DispatchAssessment.Eligible) return relation
         if (relation.target.nationId != assignment.nationId) return reject(DispatchFailure.RELATION_CHANGED)
@@ -53,12 +53,12 @@ object HwihaDispatchRules {
     }
 
     /** Shared cost precheck: a refusal at the deadline is already an acceptance. */
-    fun assessReply(request: DispatchReplyRequest, now: HwihaPhase, state: HwihaDispatchProjection): DispatchAssessment {
+    fun assessReply(request: DispatchReplyRequest, now: Phase, state: DispatchProjection): DispatchAssessment {
         val authority = assessReply(request.actorId, request.dispatchId, state)
         if (authority !is DispatchAssessment.Eligible) return authority
-        val dispatch = HwihaDispatchState.read(authority.target.meta)!!
+        val dispatch = DispatchState.read(authority.target.meta)!!
         if (!request.accept && now < dispatch.dueAt) {
-            val policy = try { HwihaPersonPolicyState.read(authority.target.meta) }
+            val policy = try { PersonPolicyState.read(authority.target.meta) }
                 catch (_: IllegalArgumentException) { null }
             if (policy == null) return reject(DispatchFailure.POLICY_UNAVAILABLE)
         }
@@ -66,11 +66,11 @@ object HwihaDispatchRules {
     }
 
     /** Even automatic acceptance must revalidate the original relationship and county. */
-    fun assessReply(actorId: Int, dispatchId: String, state: HwihaDispatchProjection): DispatchAssessment {
+    fun assessReply(actorId: Int, dispatchId: String, state: DispatchProjection): DispatchAssessment {
         if (state.profile != RuleProfile.HWIHA) return reject(DispatchFailure.WRONG_RULE_PROFILE)
         val actor = state.people.singleOrNull { it.id == actorId } ?: return reject(DispatchFailure.ACTOR_NOT_FOUND)
         return try {
-            val dispatch = HwihaDispatchState.read(actor.meta) ?: return reject(DispatchFailure.NO_DISPATCH)
+            val dispatch = DispatchState.read(actor.meta) ?: return reject(DispatchFailure.NO_DISPATCH)
             if (dispatch.dispatchId != dispatchId || dispatch.targetId != actorId) return reject(DispatchFailure.NOT_RECIPIENT)
             if (dispatch.status != DispatchStatus.PENDING) return reject(DispatchFailure.ALREADY_RESOLVED)
             val relation = relationship(dispatch.issuerId, actorId, dispatch.countyId, state)
@@ -81,7 +81,7 @@ object HwihaDispatchRules {
         } catch (_: IllegalArgumentException) { reject(DispatchFailure.STATE_UNAVAILABLE) }
     }
 
-    private fun relationship(issuerId: Int, targetId: Int, countyId: Int, state: HwihaDispatchProjection): DispatchAssessment {
+    private fun relationship(issuerId: Int, targetId: Int, countyId: Int, state: DispatchProjection): DispatchAssessment {
         if (state.profile != RuleProfile.HWIHA) return reject(DispatchFailure.WRONG_RULE_PROFILE)
         val issuer = state.people.singleOrNull { it.id == issuerId } ?: return reject(DispatchFailure.ACTOR_NOT_FOUND)
         if (!issuer.isLord || issuer.nationId <= 0) return reject(DispatchFailure.NOT_LORD)
@@ -95,11 +95,11 @@ object HwihaDispatchRules {
         return DispatchAssessment.Eligible(issuer, target, card)
     }
 
-    private fun countyAvailable(countyId: Int, targetId: Int, state: HwihaDispatchProjection): Boolean =
+    private fun countyAvailable(countyId: Int, targetId: Int, state: DispatchProjection): Boolean =
         state.people.filter { it.id != targetId }.none {
             val owner = state.counties.singleOrNull { county -> county.id == countyId }?.nationId
-            val assignment = HwihaCountyAssignment.read(it.meta)
-            val pending = HwihaDispatchState.read(it.meta)
+            val assignment = CountyAssignment.read(it.meta)
+            val pending = DispatchState.read(it.meta)
             // A card placed (or queued) as this county's magistrate also holds the seat (배치 縣令, #193).
             val placement = PlacementState.read(it.meta)
             (assignment?.countyId == countyId && assignment.nationId == it.nationId && assignment.nationId == owner) ||

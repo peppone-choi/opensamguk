@@ -7,7 +7,7 @@ import opensamguk.logic.domestic.DomesticProjection
 
 import opensamguk.logic.economy.Resources
 
-enum class HwihaTransferFailure(val message: String) {
+enum class TransferFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 자원 이전을 사용할 수 없습니다."),
     INVALID_INPUT("이전할 자원과 수량을 확인할 수 없습니다."),
     ACTOR_NOT_FOUND("행동할 장수를 찾을 수 없습니다."),
@@ -22,63 +22,63 @@ enum class HwihaTransferFailure(val message: String) {
     ALREADY_PROCESSED("이 순에는 이미 자원 이전을 실행했습니다."),
 }
 
-sealed interface HwihaTransferAssessment {
+sealed interface TransferAssessment {
     data class Eligible(val actor: DomesticPerson, val recipient: DomesticPerson? = null,
         val nation: DomesticNation? = null, val county: DomesticCounty? = null,
-        val donorStock: Resources, val receivedStock: Resources) : HwihaTransferAssessment
-    data class Rejected(val reason: HwihaTransferFailure) : HwihaTransferAssessment
+        val donorStock: Resources, val receivedStock: Resources) : TransferAssessment
+    data class Rejected(val reason: TransferFailure) : TransferAssessment
 }
 
-object HwihaTransferRules {
-    fun assess(request: HwihaTransferRequest, state: DomesticProjection): HwihaTransferAssessment {
-        fun reject(reason: HwihaTransferFailure) = HwihaTransferAssessment.Rejected(reason)
-        if (state.profile != RuleProfile.HWIHA) return reject(HwihaTransferFailure.WRONG_RULE_PROFILE)
-        if (request.actorId <= 0 || request.inputId !in HwihaTransferInput.INPUT_IDS || request.amount <= 0)
-            return reject(HwihaTransferFailure.INVALID_INPUT)
-        if (request.resource !in setOf(HwihaTransferResource.MONEY, HwihaTransferResource.GRAIN))
-            return reject(HwihaTransferFailure.INVALID_INPUT)
-        val actor = state.person(request.actorId) ?: return reject(HwihaTransferFailure.ACTOR_NOT_FOUND)
-        if (actor.inBattle) return reject(HwihaTransferFailure.BATTLE_PENDING)
-        val node = actor.node ?: return reject(HwihaTransferFailure.POSITION_UNAVAILABLE)
-        if (state.landProvinceIds?.contains(node) != true) return reject(HwihaTransferFailure.POSITION_UNAVAILABLE)
-        val donorStock = try { HwihaPortableStock.read(actor.meta, actor.gold, actor.rice) }
-            catch (_: IllegalArgumentException) { return reject(HwihaTransferFailure.STATE_UNAVAILABLE) }
+object TransferRules {
+    fun assess(request: TransferRequest, state: DomesticProjection): TransferAssessment {
+        fun reject(reason: TransferFailure) = TransferAssessment.Rejected(reason)
+        if (state.profile != RuleProfile.HWIHA) return reject(TransferFailure.WRONG_RULE_PROFILE)
+        if (request.actorId <= 0 || request.inputId !in TransferInput.INPUT_IDS || request.amount <= 0)
+            return reject(TransferFailure.INVALID_INPUT)
+        if (request.resource !in setOf(TransferResource.MONEY, TransferResource.GRAIN))
+            return reject(TransferFailure.INVALID_INPUT)
+        val actor = state.person(request.actorId) ?: return reject(TransferFailure.ACTOR_NOT_FOUND)
+        if (actor.inBattle) return reject(TransferFailure.BATTLE_PENDING)
+        val node = actor.node ?: return reject(TransferFailure.POSITION_UNAVAILABLE)
+        if (state.landProvinceIds?.contains(node) != true) return reject(TransferFailure.POSITION_UNAVAILABLE)
+        val donorStock = try { PortableStock.read(actor.meta, actor.gold, actor.rice) }
+            catch (_: IllegalArgumentException) { return reject(TransferFailure.STATE_UNAVAILABLE) }
         val debit = request.resource.amount(request.amount.toLong())
-        val remaining = donorStock.debit(debit) ?: return reject(HwihaTransferFailure.INSUFFICIENT_STOCK)
+        val remaining = donorStock.debit(debit) ?: return reject(TransferFailure.INSUFFICIENT_STOCK)
         val county: DomesticCounty?
         val recipient: DomesticPerson?
         val nation: DomesticNation?
-        if (request.inputId == HwihaTransferInput.GIFT) {
+        if (request.inputId == TransferInput.GIFT) {
             county = null
             nation = null
             recipient = request.targetGeneralId?.let(state::person)
                 ?.takeIf { it.id != actor.id && it.node == node && !it.inBattle }
-                ?: return reject(HwihaTransferFailure.TARGET_UNAVAILABLE)
+                ?: return reject(TransferFailure.TARGET_UNAVAILABLE)
         } else {
-            if (request.targetGeneralId != null) return reject(HwihaTransferFailure.INVALID_INPUT)
+            if (request.targetGeneralId != null) return reject(TransferFailure.INVALID_INPUT)
             recipient = null
             val local = state.counties.filter { it.provinceId == node }
-            if (local.size > 1) return reject(HwihaTransferFailure.STATE_UNAVAILABLE)
-            county = local.singleOrNull() ?: return reject(HwihaTransferFailure.COUNTY_UNAVAILABLE)
-            nation = state.nation(county.nationId) ?: return reject(HwihaTransferFailure.NATION_UNAVAILABLE)
+            if (local.size > 1) return reject(TransferFailure.STATE_UNAVAILABLE)
+            county = local.singleOrNull() ?: return reject(TransferFailure.COUNTY_UNAVAILABLE)
+            nation = state.nation(county.nationId) ?: return reject(TransferFailure.NATION_UNAVAILABLE)
         }
         val received = try {
-            if (recipient != null) HwihaPortableStock.read(recipient.meta, recipient.gold, recipient.rice)
-            else HwihaPortableStock.read(nation!!.meta, nation.gold, nation.rice)
-        } catch (_: IllegalArgumentException) { return reject(HwihaTransferFailure.STATE_UNAVAILABLE) }
+            if (recipient != null) PortableStock.read(recipient.meta, recipient.gold, recipient.rice)
+            else PortableStock.read(nation!!.meta, nation.gold, nation.rice)
+        } catch (_: IllegalArgumentException) { return reject(TransferFailure.STATE_UNAVAILABLE) }
         val next = try { received.credit(debit) }
-            catch (_: ArithmeticException) { return reject(HwihaTransferFailure.STOCK_OVERFLOW) }
+            catch (_: ArithmeticException) { return reject(TransferFailure.STOCK_OVERFLOW) }
         if (remaining.money > Int.MAX_VALUE || remaining.grain > Int.MAX_VALUE ||
             next.money > Int.MAX_VALUE || next.grain > Int.MAX_VALUE)
-            return reject(HwihaTransferFailure.STOCK_OVERFLOW)
-        return HwihaTransferAssessment.Eligible(actor, recipient, nation, county, donorStock, received)
+            return reject(TransferFailure.STOCK_OVERFLOW)
+        return TransferAssessment.Eligible(actor, recipient, nation, county, donorStock, received)
     }
 
-    fun HwihaTransferResource.amount(value: Long): Resources = when (this) {
-        HwihaTransferResource.MONEY -> Resources(money = value)
-        HwihaTransferResource.GRAIN -> Resources(grain = value)
-        HwihaTransferResource.IRON -> Resources(iron = value)
-        HwihaTransferResource.TIMBER -> Resources(timber = value)
-        HwihaTransferResource.HORSES -> Resources(horses = value)
+    fun TransferResource.amount(value: Long): Resources = when (this) {
+        TransferResource.MONEY -> Resources(money = value)
+        TransferResource.GRAIN -> Resources(grain = value)
+        TransferResource.IRON -> Resources(iron = value)
+        TransferResource.TIMBER -> Resources(timber = value)
+        TransferResource.HORSES -> Resources(horses = value)
     }
 }

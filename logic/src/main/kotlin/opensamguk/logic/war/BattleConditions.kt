@@ -1,15 +1,15 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import java.math.BigInteger
 import java.util.Collections
-import opensamguk.logic.input.HwihaCorpsEncounter
-import opensamguk.logic.input.HwihaEncounterForces
+import opensamguk.logic.input.CorpsEncounter
+import opensamguk.logic.input.EncounterForces
 
 /** Evaluates a completed-round snapshot. Applying actions, card reveals and settlement belong to the caller. */
-class HwihaBattleConditions(
-    encounter: HwihaCorpsEncounter,
-    private val forces: HwihaEncounterForces,
-    private val plans: HwihaBattlePlans,
+class BattleConditions(
+    encounter: CorpsEncounter,
+    private val forces: EncounterForces,
+    private val plans: BattlePlans,
 ) {
     data class CommandKey(val commanderGeneralId: Int, val slot: Int)
     data class Activation(val commanderGeneralId: Int, val slot: Int, val action: BattlePlanAction)
@@ -21,8 +21,8 @@ class HwihaBattleConditions(
     private val original = forces.units.associateBy { it.bugokId }
     init { forces.requireBinding(encounter); plans.requireBinding(encounter) }
 
-    fun evaluate(round: Int, units: List<HwihaGridExchange.UnitState>, alreadyTriggered: Set<CommandKey>): Evaluation {
-        require(round in 1..HwihaBattlePlans.MAX_ROUNDS)
+    fun evaluate(round: Int, units: List<GridExchange.UnitState>, alreadyTriggered: Set<CommandKey>): Evaluation {
+        require(round in 1..BattlePlans.MAX_ROUNDS)
         require(units.size == original.size && units.map { it.bugokId }.toSet() == original.keys)
         require(units.all { it.troops in 0..original.getValue(it.bugokId).troops && it.morale in 0..100 })
         val known = plans.plans.flatMap { plan -> plan.commands.map { CommandKey(plan.commanderGeneralId,it.slot) } }.toSet()

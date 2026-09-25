@@ -1,31 +1,31 @@
-package opensamguk.logic.war.hwiha
+package opensamguk.logic.war
 
 import kotlin.test.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
-class HwihaBattleAutopilotTest {
-    private fun fixture(width:Int=5, bothAdvance:Boolean=false, morale:Int=50, count:Int=2, rows:Int=1, range:Int=1, allHostile:Boolean=false):Pair<HwihaBattlePlayback,HwihaBattleAutopilot> {
-        val phase=HwihaPhase(200,1,1);val node=StrategicNodeRef.LandProvince("B")
+class BattleAutopilotTest {
+    private fun fixture(width:Int=5, bothAdvance:Boolean=false, morale:Int=50, count:Int=2, rows:Int=1, range:Int=1, allHostile:Boolean=false):Pair<BattlePlayback,BattleAutopilot> {
+        val phase=Phase(200,1,1);val node=StrategicNodeRef.LandProvince("B")
         val state=DeploymentProjection(RuleProfile.HWIHA,(1..count).map { DeploymentPerson(it,it,true,node,true) },
             (1..count).map { DeploymentUnit(it*10,it,100,null) },emptyList(),
-            (1..count).map { HwihaDeployedCorps("order-$it",it,it,null,it,listOf(it*10),phase) })
-        val encounter=HwihaCorpsEncounter(HwihaEncounterParticipant.from(state.deployed[0]),
-            state.deployed.drop(1).map(HwihaEncounterParticipant::from),node,StrategicNodeRef.LandProvince("A"),phase,"qa","a".repeat(64))
-        val forces=HwihaEncounterForces(encounter.encounterId,(1..count).map {
+            (1..count).map { DeployedCorps("order-$it",it,it,null,it,listOf(it*10),phase) })
+        val encounter=CorpsEncounter(EncounterParticipant.from(state.deployed[0]),
+            state.deployed.drop(1).map(EncounterParticipant::from),node,StrategicNodeRef.LandProvince("A"),phase,"qa","a".repeat(64))
+        val forces=EncounterForces(encounter.encounterId,(1..count).map {
             EncounterUnitForce(it*10,it,it,1100,100,50,morale,0,100,null) },
             (1..count).map { EncounterCommanderForce(it,70,70,70,70,70) })
-        val relations=HwihaEncounterRelations.capture(encounter,state,if(allHostile) setOf(1 to 2,1 to 3,2 to 3) else (2..count).map { 1 to it }.toSet())
-        val combat=HwihaEncounterCombatProfiles.capture(forces,HwihaUnitProfiles(1,"c".repeat(64),
-            listOf(HwihaUnitProfile(1100,1,range,100,120,20)),emptySet()))
+        val relations=EncounterRelations.capture(encounter,state,if(allHostile) setOf(1 to 2,1 to 3,2 to 3) else (2..count).map { 1 to it }.toSet())
+        val combat=EncounterCombatProfiles.capture(forces,UnitProfiles(1,"c".repeat(64),
+            listOf(UnitProfile(1100,1,range,100,120,20)),emptySet()))
         val index=HanProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),6,2,mapOf('1' to "PLAIN"),
             mapOf("A" to listOf(HanProvinceCell(0,0,'1')),"B" to (0 until rows).flatMap { row -> (1..width).map { HanProvinceCell(it,row,'1') } }))
-        val deployment=assertIs<HwihaEncounterDeployment.Result.Ready>(HwihaEncounterDeployment.prepareDefault(encounter,index)).deployment
-        val plans=if(bothAdvance) HwihaBattlePlans(encounter.encounterId,(1..count).map {
+        val deployment=assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter,index)).deployment
+        val plans=if(bothAdvance) BattlePlans(encounter.encounterId,(1..count).map {
             CommanderBattlePlan(it,BattlePlanAction.ADVANCE,emptyList())
-        }) else HwihaBattlePlans.defaultFor(encounter)
-        return HwihaBattlePlayback(encounter,forces,relations,combat,plans,deployment) to
-            HwihaBattleAutopilot(encounter,forces,relations,combat,plans,deployment)
+        }) else BattlePlans.defaultFor(encounter)
+        return BattlePlayback(encounter,forces,relations,combat,plans,deployment) to
+            BattleAutopilot(encounter,forces,relations,combat,plans,deployment)
     }
 
     @Test fun `advance closes distance while hold fires only after actual movement reaches range`() {
@@ -47,9 +47,9 @@ class HwihaBattleAutopilotTest {
     }
     @Test fun `cold journal reproduces inputs and automatic play stops at an explicit barrier`() {
         val (playback,auto)=fixture();var journal=playback.initialJournal()
-        while(playback.replay(journal).barrier==HwihaBattlePlayback.Barrier.NONE) {
+        while(playback.replay(journal).barrier==BattlePlayback.Barrier.NONE) {
             val input=auto.next(journal)
-            val cold=assertNotNull(HwihaBattleJournal.read(mapOf(HwihaBattleJournal.META_KEY to journal.toMetaValue())))
+            val cold=assertNotNull(BattleJournal.read(mapOf(BattleJournal.META_KEY to journal.toMetaValue())))
             assertEquals(input.toMetaValue(),fixture().second.next(cold).toMetaValue())
             journal=playback.append(journal,input).journal
         }
@@ -66,7 +66,7 @@ class HwihaBattleAutopilotTest {
         val result=playback.append(playback.initialJournal(),input)
         assertEquals(listOf(1,2),result.units.map { it.position!!.col })
         assertEquals(listOf(96,96),result.units.map { it.troops })
-        assertEquals(HwihaGridMovement.Outcome.CONTESTED,
+        assertEquals(GridMovement.Outcome.CONTESTED,
             result.frames.single().movements.single { it.move.bugokId==20 }.move.outcome)
     }
     @Test fun `zero morale units neither move nor attack`() {

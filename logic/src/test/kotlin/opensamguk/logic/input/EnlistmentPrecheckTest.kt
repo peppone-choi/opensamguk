@@ -2,21 +2,21 @@ package opensamguk.logic.input
 
 import kotlin.test.*
 
-class HwihaEnlistmentPrecheckTest {
+class EnlistmentPrecheckTest {
     private fun person(id: Int, nation: Int = 0, lord: Boolean = false, capacity: Int = 30,
                        npc: Int = 2, user: String? = null) = EnlistmentPersonRow(
         PersonPolicyInput(id, nation, 70, 70, 70, 70, 70, mapOf("hwihaLord" to lord,
-            HwihaPersonPolicyState.META_KEY to HwihaPersonPolicyState(capacity, true, "fixture", "v1", id).toMetaValue())),
+            PersonPolicyState.META_KEY to PersonPolicyState(capacity, true, "fixture", "v1", id).toMetaValue())),
         "G$id", if (lord && nation > 0) 12 else 0, npc, user)
-    private fun state() = HwihaEnlistmentProjection(RuleProfile.HWIHA,
+    private fun state() = EnlistmentProjection(RuleProfile.HWIHA,
         listOf(person(1), person(10, 1, true), person(20, 2, true)), emptyList(), setOf(1, 2))
     private val request = EnlistmentRequest(1, EnlistmentMode.NATION, 1)
-    private fun reason(state: HwihaEnlistmentProjection, request: EnlistmentRequest = this.request) =
-        assertIs<EnlistmentAssessment.Rejected>(HwihaEnlistmentPrecheck.assess(request, state)).reason
+    private fun reason(state: EnlistmentProjection, request: EnlistmentRequest = this.request) =
+        assertIs<EnlistmentAssessment.Rejected>(EnlistmentPrecheck.assess(request, state)).reason
 
     @Test fun `current shared projection selects actual unique sovereign and preserves direct mode semantics`() {
         val state = state()
-        val plan = assertIs<EnlistmentAssessment.Eligible>(HwihaEnlistmentPrecheck.assess(request, state)).choices.single()
+        val plan = assertIs<EnlistmentAssessment.Eligible>(EnlistmentPrecheck.assess(request, state)).choices.single()
         assertEquals(10, plan.masterId)
         assertEquals(7, plan.masterRenownCost)
         assertEquals(EnlistmentFailure.TARGET_NOT_FOUND,
@@ -30,7 +30,7 @@ class HwihaEnlistmentPrecheckTest {
         val missing = base.copy(persons = base.persons.map { if (it.policy.id == 10)
             it.copy(policy = it.policy.copy(meta = mapOf("hwihaLord" to true))) else it })
         assertEquals(EnlistmentFailure.POLICY_UNAVAILABLE, reason(missing))
-        val random = assertIs<EnlistmentAssessment.Eligible>(HwihaEnlistmentPrecheck.assess(
+        val random = assertIs<EnlistmentAssessment.Eligible>(EnlistmentPrecheck.assess(
             EnlistmentRequest(1, EnlistmentMode.RANDOM), missing))
         assertEquals(listOf(20), random.choices.map { it.masterId })
         assertEquals(EnlistmentFailure.INSUFFICIENT_RENOWN,

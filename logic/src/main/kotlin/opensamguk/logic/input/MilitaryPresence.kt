@@ -3,12 +3,12 @@ package opensamguk.logic.input
 import opensamguk.logic.world.StrategicNodeRef
 
 sealed interface MilitaryPresenceAssessment {
-    data class Ready(val hostileCorps: List<HwihaDeployedCorps>, val blockedProvinceIds: Set<String>) : MilitaryPresenceAssessment
+    data class Ready(val hostileCorps: List<DeployedCorps>, val blockedProvinceIds: Set<String>) : MilitaryPresenceAssessment
     data object Unavailable : MilitaryPresenceAssessment
 }
 
 /** Only explicit, currently valid deployments establish military presence. Wars must contain active wars only. */
-object HwihaMilitaryPresence {
+object MilitaryPresence {
     fun assess(actorId: Int, state: DeploymentProjection, wars: Set<Pair<Int, Int>>): MilitaryPresenceAssessment {
         val actor = state.people.singleOrNull { it.id == actorId } ?: return MilitaryPresenceAssessment.Unavailable
         if (actor.id <= 0 || actor.nationId < 0) return MilitaryPresenceAssessment.Unavailable
@@ -43,10 +43,10 @@ object HwihaMilitaryPresence {
         }
         val actorRoot = if (nationId == 0 && actorId != null) root(actorId)
             ?: return MilitaryPresenceAssessment.Unavailable else null
-        val hostile = mutableListOf<HwihaDeployedCorps>()
+        val hostile = mutableListOf<DeployedCorps>()
         val blocked = sortedSetOf<String>()
         for (corps in state.deployed.sortedWith(compareBy({ it.ownerGeneralId }, { it.commanderGeneralId }, { it.orderId }))) {
-            val active = HwihaDeploymentRules.assessActive(corps, state) as? DeploymentAssessment.Eligible
+            val active = DeploymentRules.assessActive(corps, state) as? DeploymentAssessment.Eligible
                 ?: return MilitaryPresenceAssessment.Unavailable
             val corpsRoot = if (corps.nationId == 0) root(corps.ownerGeneralId)
                 ?: return MilitaryPresenceAssessment.Unavailable else null

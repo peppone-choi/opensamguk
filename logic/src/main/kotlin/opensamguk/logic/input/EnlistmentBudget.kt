@@ -33,11 +33,11 @@ sealed interface RenownBudgetResult {
  * Shared API/engine budget calculation. Metadata is supplied by validated seeds, not verified here.
  * Only direct person cards count. Named-unit cards have no model here and remain unsupported.
  */
-object HwihaEnlistmentBudget {
+object EnlistmentBudget {
     private class Invalid(val reason: RenownBudgetFailure) : RuntimeException()
     private fun unavailable(reason: RenownBudgetFailure): Nothing = throw Invalid(reason)
-    private fun person(general: PersonPolicyInput): HwihaPersonPolicyState = try {
-        HwihaPersonPolicyState.read(general.meta)
+    private fun person(general: PersonPolicyInput): PersonPolicyState = try {
+        PersonPolicyState.read(general.meta)
             ?: unavailable(RenownBudgetFailure.MISSING_PERSON_POLICY)
     } catch (_: IllegalArgumentException) {
         unavailable(RenownBudgetFailure.INVALID_PERSON_POLICY)
@@ -58,7 +58,7 @@ object HwihaEnlistmentBudget {
             ?: return RenownBudgetResult.Unavailable(RenownBudgetFailure.ACTOR_NOT_FOUND)
         // The executor reads every general's lord status, including unaffiliated people.
         val lordStatuses = try {
-            generals.mapValues { (_, general) -> HwihaLordStatus.read(general.meta) }
+            generals.mapValues { (_, general) -> LordStatus.read(general.meta) }
         } catch (_: IllegalArgumentException) {
             return RenownBudgetResult.Unavailable(RenownBudgetFailure.INVALID_LORD_STATUS)
         }
