@@ -49,6 +49,16 @@ class NamedUnitTraditionsTest {
     }
 
     @Test
+    fun `Fuling regional units retain MAP4 commandery pin`() {
+        val fuling = units.filter { it.header.id in setOf("unit.chijia-regional", "unit.liannu-regional") }
+        assertEquals(2, fuling.size)
+        fuling.forEach {
+            assertEquals("涪陵郡", it.requiredRegionName)
+            assertEquals("PARENT-0150", it.requiredMapParentRegionId)
+        }
+    }
+
+    @Test
     fun `historical name missing from quotation fails closed`() {
         val broken = payload.replaceFirst("\"historicalName\": \"白馬義從\"", "\"historicalName\": \"虛構兵名\"")
         assertFailsWith<IllegalArgumentException> { NamedUnitTraditions.parse(broken) }

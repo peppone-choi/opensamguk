@@ -31,12 +31,14 @@ data class NamedUnitTradition(
     val attestedPeriod: String,
     val requiredGeneralName: String?,
     val requiredRegionName: String?,
+    val requiredMapParentRegionId: String?,
     val bondRecruitmentKinds: Set<UnitBondKind>,
     val sources: List<UnitSourceCitation>,
 ) {
     init {
         require(header.kind == CardKind.UNIT && historicalName.isNotBlank())
         require(recruitmentSource.isNotBlank() && attestedPeriod.isNotBlank())
+        require(requiredMapParentRegionId == null || (requiredRegionName != null && requiredMapParentRegionId.startsWith("PARENT-")))
         require(sources.isNotEmpty() && sources.any { historicalName in it.quote })
         require(header.provenance.size == sources.size)
     }
@@ -125,6 +127,9 @@ object NamedUnitTraditions {
                 attestedPeriod = row.getValue("attestedPeriod").jsonPrimitive.content,
                 requiredGeneralName = optionalName(requirements, "generalName"),
                 requiredRegionName = optionalName(requirements, "regionName"),
+                requiredMapParentRegionId = requirements["mapParentRegionId"]?.let {
+                    if (it == JsonNull) null else it.jsonPrimitive.content.also { id -> require(id.isNotBlank()) }
+                },
                 bondRecruitmentKinds = row.getValue("bondRecruitmentKinds").jsonArray.map {
                     UnitBondKind.valueOf(it.jsonPrimitive.content)
                 }.toSet(),
