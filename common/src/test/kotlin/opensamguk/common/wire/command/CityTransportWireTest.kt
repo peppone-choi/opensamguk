@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
  * R4가 U9를 닫았으므로 여기서는 "그 결론이 두 번째 variant 에도 성립한다"만 고정한다. 이 테스트가
  * 빨개지면 인테이크→디스패처 라우팅이 통째로 끊긴다(판별자 문자열이 곧 라우팅 키다).
  */
-class V2CityTransportWireTest {
+class CityTransportWireTest {
 
     @Test
     fun `V3 topology pins survive the daemon wire without reusing numeric route revision`() {

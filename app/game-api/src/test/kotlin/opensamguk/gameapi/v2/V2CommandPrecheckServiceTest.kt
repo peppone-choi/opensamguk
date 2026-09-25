@@ -11,9 +11,9 @@ import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.logic.command.V2CityTransportArgs
-import opensamguk.logic.command.V2CommandAvailability
-import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
@@ -34,16 +34,16 @@ import opensamguk.infra.seed.HanStrategicTopologyJson
 import java.nio.file.Path
 
 class V2CommandPrecheckServiceTest {
-    private val transportArgs = V2CityTransportArgs(1, 2, 100, 0, 0, null)
+    private val transportArgs = CityTransportArgs(1, 2, 100, 0, 0, null)
 
     @Test
     fun `deployed actor blocks both immediate city actions and transport preview`() {
         val service = service("han-world-v3", 2000, deployed = true)
-        val recruit = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema,
-            opensamguk.logic.command.V2GarrisonRecruitArgs(1,100))
-        val transport = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, transportArgs)
+        val recruit = CommandAvailability.Available(CommandSchemaCatalog.garrisonRecruitSchema,
+            opensamguk.logic.command.GarrisonRecruitArgs(1,100))
+        val transport = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, transportArgs)
         for (available in listOf(recruit, transport)) {
-            assertEquals("BATTLEFIELD_LOCATION", assertIs<V2CommandAvailability.Blocked>(service.precheck(10, available)).code)
+            assertEquals("BATTLEFIELD_LOCATION", assertIs<CommandAvailability.Blocked>(service.precheck(10, available)).code)
         }
         val preview = service.previewTransport(10, transportArgs)
         assertEquals("BLOCKED", preview.status)
@@ -63,14 +63,14 @@ class V2CommandPrecheckServiceTest {
         assertEquals(1L, route.totalCost)
         assertEquals(1000, route.capacity)
         val pinned = transportArgs.copy(topologyRevision = route.topologyRevision, routePathHash = route.pathHash)
-        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, pinned)
+        val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, pinned)
         assertEquals(available, service.precheck(10, available))
         listOf(
             transportArgs to "TOPOLOGY_REVISION_REQUIRED",
             pinned.copy(topologyRevision = "old") to "TOPOLOGY_REVISION_STALE",
             pinned.copy(routePathHash = "different") to "ROUTE_PATH_HASH_STALE",
         ).forEach { (args, code) ->
-            assertEquals(code, assertIs<V2CommandAvailability.Blocked>(service.precheck(10, available.copy(args = args))).code)
+            assertEquals(code, assertIs<CommandAvailability.Blocked>(service.precheck(10, available.copy(args = args))).code)
         }
     }
 
@@ -120,7 +120,7 @@ class V2CommandPrecheckServiceTest {
 
     @Test
     fun `compatibility map preserves current Han transport allow and deny prechecks`() {
-        val args = V2CityTransportArgs(
+        val args = CityTransportArgs(
             fromCityId = 1,
             toCityId = 2,
             gold = 100,
@@ -128,8 +128,8 @@ class V2CommandPrecheckServiceTest {
             garrison = 0,
             routeRevision = null,
         )
-        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, args)
-        val escortDenied = V2CommandAvailability.Blocked(
+        val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, args)
+        val escortDenied = CommandAvailability.Blocked(
             code = "ESCORT_INSUFFICIENT",
             reason = "수송에는 병사 2000명이 필요합니다.",
         )

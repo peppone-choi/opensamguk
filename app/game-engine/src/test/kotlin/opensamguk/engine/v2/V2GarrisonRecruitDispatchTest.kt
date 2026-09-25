@@ -11,8 +11,8 @@ import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
-import opensamguk.logic.command.V2CommandAvailability
-import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
@@ -133,8 +133,8 @@ class V2GarrisonRecruitDispatchTest {
 
     @Test
     fun `api precheck and daemon execution deny with the same reason`() {
-        val precheck = assertIs<V2CommandAvailability.Blocked>(
-            V2CommandRegistry.precheck("city.garrison.recruit", mapOf("cityId" to 5, "amount" to 99)),
+        val precheck = assertIs<CommandAvailability.Blocked>(
+            CommandSchemaCatalog.precheck("city.garrison.recruit", mapOf("cityId" to 5, "amount" to 99)),
         )
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),

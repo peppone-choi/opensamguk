@@ -54,10 +54,10 @@ import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
-import opensamguk.logic.command.V2CityTransportArgs
-import opensamguk.logic.command.V2CommandAvailability
-import opensamguk.logic.command.V2CommandRegistry
-import opensamguk.logic.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.GarrisonRecruitArgs
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -345,8 +345,8 @@ class VerticalSliceE2EIT {
         seedV2ParityState(crew = 2000, gold = 100_000)
         val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
 
-        val recruitArgs = V2GarrisonRecruitArgs(cityId = 1, amount = 100)
-        val recruitAvailable = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema, recruitArgs)
+        val recruitArgs = GarrisonRecruitArgs(cityId = 1, amount = 100)
+        val recruitAvailable = CommandAvailability.Available(CommandSchemaCatalog.garrisonRecruitSchema, recruitArgs)
         val apiRecruitAllow = jpaTx.execute { api.precheck(10, recruitAvailable) }
         val daemonRecruitAllow = V2GarrisonRecruitHandler(
             buildV2ParityWorld(crew = 2000), ChangeRecorder(), V2CityLedgerStore(jdbc),
@@ -368,8 +368,8 @@ class VerticalSliceE2EIT {
             "UPDATE v2_city_ledger SET gold = 100000 WHERE world_id = 1 AND city_id = 1",
             MapSqlParameterSource(),
         )
-        val transportArgs = V2CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = 7)
-        val transportAvailable = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, transportArgs)
+        val transportArgs = CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = 7)
+        val transportAvailable = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, transportArgs)
         val apiTransportAllow = jpaTx.execute { api.precheck(10, transportAvailable) }
         val daemonTransportAllow = V2CityTransportHandler(
             buildV2ParityWorld(crew = 2000), ChangeRecorder(), V2CityLedgerStore(jdbc),
@@ -399,24 +399,24 @@ class VerticalSliceE2EIT {
     @KTest
     fun `v2 recruit denial matrix keeps real API state and daemon snapshot in parity`() {
         val cases = listOf(
-            RecruitDenialCase("general missing", V2GarrisonRecruitArgs(1, 100), V2ParityState(generalPresent = false), "GENERAL_NOT_FOUND", "장수를 찾을 수 없습니다."),
-            RecruitDenialCase("city missing", V2GarrisonRecruitArgs(99, 100), V2ParityState(), "CITY_NOT_FOUND", "도시를 찾을 수 없습니다."),
-            RecruitDenialCase("actor city mismatch", V2GarrisonRecruitArgs(9, 100), V2ParityState(), "ACTOR_CITY_MISMATCH", "다른 도시의 병사를 보충할 수 없습니다."),
-            RecruitDenialCase("city authority", V2GarrisonRecruitArgs(1, 100), V2ParityState(city1NationId = 2), "CITY_AUTHORITY_DENIED", "자국 도시가 아닙니다."),
-            RecruitDenialCase("minimum amount", V2GarrisonRecruitArgs(1, 99), V2ParityState(), "RECRUIT_AMOUNT_TOO_SMALL", "최소 100명부터 보충할 수 있습니다."),
-            RecruitDenialCase("leadership limit", V2GarrisonRecruitArgs(1, 8_001), V2ParityState(), "RECRUIT_LEADERSHIP_LIMIT", "통솔로 보충할 수 있는 한도를 넘었습니다."),
+            RecruitDenialCase("general missing", GarrisonRecruitArgs(1, 100), V2ParityState(generalPresent = false), "GENERAL_NOT_FOUND", "장수를 찾을 수 없습니다."),
+            RecruitDenialCase("city missing", GarrisonRecruitArgs(99, 100), V2ParityState(), "CITY_NOT_FOUND", "도시를 찾을 수 없습니다."),
+            RecruitDenialCase("actor city mismatch", GarrisonRecruitArgs(9, 100), V2ParityState(), "ACTOR_CITY_MISMATCH", "다른 도시의 병사를 보충할 수 없습니다."),
+            RecruitDenialCase("city authority", GarrisonRecruitArgs(1, 100), V2ParityState(city1NationId = 2), "CITY_AUTHORITY_DENIED", "자국 도시가 아닙니다."),
+            RecruitDenialCase("minimum amount", GarrisonRecruitArgs(1, 99), V2ParityState(), "RECRUIT_AMOUNT_TOO_SMALL", "최소 100명부터 보충할 수 있습니다."),
+            RecruitDenialCase("leadership limit", GarrisonRecruitArgs(1, 8_001), V2ParityState(), "RECRUIT_LEADERSHIP_LIMIT", "통솔로 보충할 수 있는 한도를 넘었습니다."),
             RecruitDenialCase(
-                "population", V2GarrisonRecruitArgs(1, 100),
+                "population", GarrisonRecruitArgs(1, 100),
                 V2ParityState(city1Population = GameConst.minAvailableRecruitPop + 99),
                 "CITY_POPULATION_INSUFFICIENT", "주민이 부족합니다.",
             ),
-            RecruitDenialCase("gold", V2GarrisonRecruitArgs(1, 100), V2ParityState(ledgerGold = 0), "CITY_GOLD_INSUFFICIENT", "도시의 금이 부족합니다."),
+            RecruitDenialCase("gold", GarrisonRecruitArgs(1, 100), V2ParityState(ledgerGold = 0), "CITY_GOLD_INSUFFICIENT", "도시의 금이 부족합니다."),
         )
 
         cases.forEach { case ->
             resetDatabase()
             seedV2ParityState(case.state)
-            val available = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema, case.args)
+            val available = CommandAvailability.Available(CommandSchemaCatalog.garrisonRecruitSchema, case.args)
             val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
             val apiResult = jpaTx.execute { api.precheck(10, available) }
             val daemonResult = V2GarrisonRecruitHandler(
@@ -429,7 +429,7 @@ class VerticalSliceE2EIT {
 
     @KTest
     fun `v2 transport denial matrix keeps real API state and daemon snapshot in parity`() {
-        val base = V2CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = null)
+        val base = CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = null)
         val cases = listOf(
             TransportDenialCase("general missing", base, V2ParityState(generalPresent = false), "GENERAL_NOT_FOUND", "장수를 찾을 수 없습니다."),
             TransportDenialCase("source missing", base.copy(fromCityId = 99, toCityId = 1), V2ParityState(), "FROM_CITY_NOT_FOUND", "출발 도시를 찾을 수 없습니다."),
@@ -452,7 +452,7 @@ class VerticalSliceE2EIT {
         cases.forEach { case ->
             resetDatabase()
             seedV2ParityState(case.state)
-            val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, case.args)
+            val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, case.args)
             val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
             val apiResult = jpaTx.execute { api.precheck(10, available) }
             val daemonResult = V2CityTransportHandler(
@@ -762,7 +762,7 @@ class VerticalSliceE2EIT {
 
     private data class RecruitDenialCase(
         val name: String,
-        val args: V2GarrisonRecruitArgs,
+        val args: GarrisonRecruitArgs,
         val state: V2ParityState,
         val code: String,
         val reason: String,
@@ -770,7 +770,7 @@ class VerticalSliceE2EIT {
 
     private data class TransportDenialCase(
         val name: String,
-        val args: V2CityTransportArgs,
+        val args: CityTransportArgs,
         val state: V2ParityState,
         val code: String,
         val reason: String,
@@ -877,18 +877,18 @@ class VerticalSliceE2EIT {
         )
         emf.cache.evictAll()
         val api = V2CommandPrecheckService(buildRealPrecheckStateFactory(), jdbc, GameApiProcessWorld(1))
-        val args = V2CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = null)
-        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, args)
+        val args = CityTransportArgs(1, 9, gold = 100, rice = 0, garrison = 0, routeRevision = null)
+        val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, args)
 
         val result = jpaTx.execute { api.precheck(10, available) }
 
-        val denied = assertIs<V2CommandAvailability.Blocked>(result)
+        val denied = assertIs<CommandAvailability.Blocked>(result)
         assertEquals("ROUTE_NOT_ADJACENT", denied.code)
         assertEquals("인접한 도시로만 수송할 수 있습니다.", denied.reason)
     }
 
-    private fun assertSameV2Denial(api: V2CommandAvailability?, daemon: CommandLifecycleResult) {
-        val blocked = assertIs<V2CommandAvailability.Blocked>(api)
+    private fun assertSameV2Denial(api: CommandAvailability?, daemon: CommandLifecycleResult) {
+        val blocked = assertIs<CommandAvailability.Blocked>(api)
         assertFalse(daemon.ok)
         assertEquals(blocked.code, daemon.code)
         assertEquals(blocked.reason, daemon.reason)
@@ -898,10 +898,10 @@ class VerticalSliceE2EIT {
         name: String,
         code: String,
         reason: String,
-        api: V2CommandAvailability?,
+        api: CommandAvailability?,
         daemon: opensamguk.common.wire.TurnDaemonCommandResult,
     ) {
-        val blocked = assertIs<V2CommandAvailability.Blocked>(api, name)
+        val blocked = assertIs<CommandAvailability.Blocked>(api, name)
         val terminal = assertIs<CommandLifecycleResult>(daemon, name)
         assertFalse(terminal.ok, name)
         assertEquals(code, blocked.code, name)

@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.logic.command.V2CityTransportArgs
-import opensamguk.logic.command.V2CommandAvailability
-import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import org.mockito.Mockito.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -29,7 +29,7 @@ class V2CityTransportRouteControllerTest {
     private val resolver = mock(GeneralResolver::class.java)
     private val precheck = mock(V2CommandPrecheckService::class.java)
     private val controller = V2CityTransportController(reserve, resolver, precheck, GameApiProcessWorld(8))
-    private val args = V2CityTransportArgs(1, 2, 100, 0, 0, null)
+    private val args = CityTransportArgs(1, 2, 100, 0, 0, null)
     private val json = """{"fromCityId":1,"toCityId":2,"gold":100}"""
 
     init { `when`(resolver.resolveGeneralId(11)).thenReturn(10) }
@@ -98,8 +98,8 @@ class V2CityTransportRouteControllerTest {
 
     @Test
     fun `legacy transport endpoint rejects contextual stale path before reservation`() {
-        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, args)
-        `when`(precheck.precheck(10, available)).thenReturn(V2CommandAvailability.Blocked("ROUTE_PATH_HASH_STALE", "경로가 변경되었습니다."))
+        val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, args)
+        `when`(precheck.precheck(10, available)).thenReturn(CommandAvailability.Blocked("ROUTE_PATH_HASH_STALE", "경로가 변경되었습니다."))
         assertEquals(HttpStatus.UNPROCESSABLE_ENTITY, controller.transport(11, 10, json).statusCode)
         verifyNoInteractions(reserve)
     }
@@ -114,7 +114,7 @@ class V2CityTransportRouteControllerTest {
 
     @Test
     fun `matching preview world preserves accepted not applied acknowledgement`() {
-        val available = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, args)
+        val available = CommandAvailability.Available(CommandSchemaCatalog.cityTransportSchema, args)
         `when`(precheck.precheck(10, available)).thenReturn(available)
         `when`(reserve.reserveForOwner(10, "v2CityTransport", 0, json, 11))
             .thenReturn(CommandReserveService.ReserveResult("request-world-8", 0))

@@ -13,11 +13,11 @@ import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.logic.command.V2CityTransportArgs
-import opensamguk.logic.command.V2CommandArgs
-import opensamguk.logic.command.V2CommandRegistry
-import opensamguk.logic.command.V2CommandSchema
-import opensamguk.logic.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CommandArgs
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.CommandSchema
+import opensamguk.logic.command.GarrisonRecruitArgs
 
 /**
  * F-INTAKE seam — maps a `POST /api/command/{code}` `{code, argJson, generalId}` onto the EXISTING
@@ -162,14 +162,14 @@ object CommandWireMapper {
     fun isIntakeCommand(code: String): Boolean = code in intakeCodes
 
     fun toV2Command(
-        schema: V2CommandSchema,
-        args: V2CommandArgs,
+        schema: CommandSchema,
+        args: CommandArgs,
         generalId: Int,
         requestId: String,
         expiresAt: String,
     ): TurnDaemonCommand = when (args) {
-        is V2GarrisonRecruitArgs -> {
-            require(schema === V2CommandRegistry.garrisonRecruitSchema)
+        is GarrisonRecruitArgs -> {
+            require(schema === CommandSchemaCatalog.garrisonRecruitSchema)
             CityGarrisonRecruit(
                 requestId = requestId,
                 generalId = generalId,
@@ -178,8 +178,8 @@ object CommandWireMapper {
                 expiresAt = expiresAt,
             )
         }
-        is V2CityTransportArgs -> {
-            require(schema === V2CommandRegistry.cityTransportSchema)
+        is CityTransportArgs -> {
+            require(schema === CommandSchemaCatalog.cityTransportSchema)
             CityTransport(
                 requestId = requestId,
                 generalId = generalId,

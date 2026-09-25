@@ -1,7 +1,7 @@
 package opensamguk.engine.v2
 
-import opensamguk.logic.command.V2GarrisonRecruitArgs
-import opensamguk.logic.command.V2GarrisonRecruitContext
+import opensamguk.logic.command.GarrisonRecruitArgs
+import opensamguk.logic.command.GarrisonRecruitContext
 import opensamguk.logic.command.decideGarrisonRecruit
 
 /**
@@ -15,7 +15,7 @@ sealed interface V2RecruitDecision {
 }
 
 /** 100명당 금 9(che_징병 GameUnitConstBase보병 cost=9) → 1명당 0.09. 기술 계수는 곱하지 않는다 — divergence, 아래 함수 KDoc 참고. */
-const val GOLD_PER_CREW: Double = opensamguk.logic.command.V2_GARRISON_GOLD_PER_CREW
+const val GOLD_PER_CREW: Double = opensamguk.logic.command.GARRISON_GOLD_PER_CREW
 
 /**
  * che_징병 판정 순서 그대로: 하한(:107) → 통솔 상한(:95-96, v1은 clamp 하지만 우리는 deny) →
@@ -34,8 +34,8 @@ fun recruitDecision(
 ): V2RecruitDecision {
     return when (
         val decision = decideGarrisonRecruit(
-            V2GarrisonRecruitArgs(cityId = 1, amount = amount),
-            V2GarrisonRecruitContext(
+            GarrisonRecruitArgs(cityId = 1, amount = amount),
+            GarrisonRecruitContext(
                 generalCityId = 1,
                 generalNationId = 1,
                 leadership = leadership,
@@ -46,8 +46,8 @@ fun recruitDecision(
             ),
         )
     ) {
-        is opensamguk.logic.command.V2GarrisonRecruitDecision.Denied -> V2RecruitDecision.Denied(decision.reason)
-        is opensamguk.logic.command.V2GarrisonRecruitDecision.Applied -> V2RecruitDecision.Applied(
+        is opensamguk.logic.command.GarrisonRecruitDecision.Denied -> V2RecruitDecision.Denied(decision.reason)
+        is opensamguk.logic.command.GarrisonRecruitDecision.Applied -> V2RecruitDecision.Applied(
             decision.goldCost,
             decision.amount,
             decision.popAfter,

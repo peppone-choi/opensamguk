@@ -1,7 +1,7 @@
 package opensamguk.engine.v2
 
-import opensamguk.logic.command.V2CityTransportArgs
-import opensamguk.logic.command.V2CityTransportContext
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CityTransportContext
 import opensamguk.logic.command.decideCityTransport
 
 /**
@@ -20,10 +20,10 @@ sealed interface V2TransportDecision {
 }
 
 /** 묘섭 원문 값 — 금·병량 각각 5만(`:364`). */
-const val TRANSPORT_MAX_GOLD: Long = opensamguk.logic.command.V2_TRANSPORT_MAX_GOLD
+const val TRANSPORT_MAX_GOLD: Long = opensamguk.logic.command.TRANSPORT_MAX_GOLD
 
 /** 묘섭 원문 값 — 금·병량 각각 5만(`:364`). */
-const val TRANSPORT_MAX_RICE: Long = opensamguk.logic.command.V2_TRANSPORT_MAX_RICE
+const val TRANSPORT_MAX_RICE: Long = opensamguk.logic.command.TRANSPORT_MAX_RICE
 
 /**
  * **묘섭 미명시 · 임시값(U6 UNKNOWN)** — 도시병사 수송 상한.
@@ -31,7 +31,7 @@ const val TRANSPORT_MAX_RICE: Long = opensamguk.logic.command.V2_TRANSPORT_MAX_R
  * 원문 `:364`는 금·병량의 상한만 적고 도시병사 상한은 말하지 않는다. 지어내지 않고, 같은 문장이 정한
  * 5만을 **임시로** 쓴 뒤 v2 밸런싱에서 확정한다(설계안 §11 U6). 값이 바뀌어도 구조는 불변이다.
  */
-const val TRANSPORT_MAX_GARRISON: Int = opensamguk.logic.command.V2_TRANSPORT_MAX_GARRISON
+const val TRANSPORT_MAX_GARRISON: Int = opensamguk.logic.command.TRANSPORT_MAX_GARRISON
 
 /**
  * 묘섭 원문 값 — "수송에 필요한 최소병사량은 2000명"(`:364`).
@@ -41,7 +41,7 @@ const val TRANSPORT_MAX_GARRISON: Int = opensamguk.logic.command.V2_TRANSPORT_MA
  * 때문이다. 다른 갈래("도시병사를 수송할 때 한 번에 2000명 이상")도 문장상 가능하며, 그쪽이 맞다고
  * 판명되면 판정 한 줄의 대상만 바뀐다. 리뷰 문서에 이 모호성을 남긴다.
  */
-const val TRANSPORT_MIN_ESCORT_CREW: Int = opensamguk.logic.command.V2_TRANSPORT_MIN_ESCORT_CREW
+const val TRANSPORT_MIN_ESCORT_CREW: Int = opensamguk.logic.command.TRANSPORT_MIN_ESCORT_CREW
 
 /**
  * 수송 판정 — 순수 함수, draw 0.
@@ -60,8 +60,8 @@ fun transportDecision(
 ): V2TransportDecision {
     return when (
         val decision = decideCityTransport(
-            V2CityTransportArgs(1, 2, gold, rice, garrison, null),
-            V2CityTransportContext(
+            CityTransportArgs(1, 2, gold, rice, garrison, null),
+            CityTransportContext(
                 generalCityId = 1,
                 generalNationId = 1,
                 escortCrew = escortCrew,
@@ -74,8 +74,8 @@ fun transportDecision(
             ),
         )
     ) {
-        is opensamguk.logic.command.V2CityTransportDecision.Denied -> V2TransportDecision.Denied(decision.reason)
-        is opensamguk.logic.command.V2CityTransportDecision.Applied ->
+        is opensamguk.logic.command.CityTransportDecision.Denied -> V2TransportDecision.Denied(decision.reason)
+        is opensamguk.logic.command.CityTransportDecision.Applied ->
             V2TransportDecision.Applied(decision.gold, decision.rice, decision.garrison)
     }
 }

@@ -4,56 +4,56 @@ import java.math.BigDecimal
 import java.time.Duration
 import opensamguk.common.wire.CommandLifecycleResult
 
-object V2CommandRegistry {
-    val garrisonRecruitSchema = V2CommandSchema(
+object CommandSchemaCatalog {
+    val garrisonRecruitSchema = CommandSchema(
         canonicalId = "city.garrison.recruit",
         legacyAliases = setOf("v2GarrisonRecruit"),
-        layer = V2CommandLayer.STRATEGIC,
-        sourceRing = V2CommandSourceRing.NONE,
-        subjectType = V2CommandSubjectType.CITY,
-        target = V2CommandTarget.CITY,
-        actor = V2CommandActor.GENERAL,
-        authority = V2CommandAuthority.OWNED_CITY,
-        authorityPolicyId = V2AuthorityPolicyId.SUBJECT_OWNER,
+        layer = CommandLayer.STRATEGIC,
+        sourceRing = CommandSourceRing.NONE,
+        subjectType = CommandSubjectType.CITY,
+        target = CommandTarget.CITY,
+        actor = CommandActor.GENERAL,
+        authority = CommandAuthority.OWNED_CITY,
+        authorityPolicyId = AuthorityPolicyId.SUBJECT_OWNER,
         authorityContextVersion = 1,
         payloadVersion = 1,
         adapter = "v2-city-garrison-recruit",
-        parityStatus = V2CommandParityStatus.ADAPTED,
-        argsType = V2GarrisonRecruitArgs::class,
+        parityStatus = CommandParityStatus.ADAPTED,
+        argsType = GarrisonRecruitArgs::class,
         resultType = CommandLifecycleResult::class,
-        idempotency = V2IdempotencyPolicy.NOT_SUPPORTED,
+        idempotency = IdempotencyPolicy.NOT_SUPPORTED,
         expiry = Duration.ofHours(1),
         replayEvent = "CityGarrisonRecruited",
-        routeRevision = V2RouteRevisionPolicy.NOT_APPLICABLE,
+        routeRevision = RouteRevisionPolicy.NOT_APPLICABLE,
         parse = ::parseRecruit,
     )
 
-    val cityTransportSchema = V2CommandSchema(
+    val cityTransportSchema = CommandSchema(
         canonicalId = "city.resources.transport",
         legacyAliases = setOf("v2CityTransport"),
-        layer = V2CommandLayer.STRATEGIC,
-        sourceRing = V2CommandSourceRing.NONE,
-        subjectType = V2CommandSubjectType.CITY,
-        target = V2CommandTarget.CITY_ROUTE,
-        actor = V2CommandActor.GENERAL,
-        authority = V2CommandAuthority.OWNED_CITY,
-        authorityPolicyId = V2AuthorityPolicyId.SUBJECT_OWNER,
+        layer = CommandLayer.STRATEGIC,
+        sourceRing = CommandSourceRing.NONE,
+        subjectType = CommandSubjectType.CITY,
+        target = CommandTarget.CITY_ROUTE,
+        actor = CommandActor.GENERAL,
+        authority = CommandAuthority.OWNED_CITY,
+        authorityPolicyId = AuthorityPolicyId.SUBJECT_OWNER,
         authorityContextVersion = 1,
         payloadVersion = 1,
         adapter = "v2-city-transport",
-        parityStatus = V2CommandParityStatus.ADAPTED,
-        argsType = V2CityTransportArgs::class,
+        parityStatus = CommandParityStatus.ADAPTED,
+        argsType = CityTransportArgs::class,
         resultType = CommandLifecycleResult::class,
-        idempotency = V2IdempotencyPolicy.NOT_SUPPORTED,
+        idempotency = IdempotencyPolicy.NOT_SUPPORTED,
         expiry = Duration.ofHours(1),
         replayEvent = "CityResourcesTransported",
-        routeRevision = V2RouteRevisionPolicy.PASSTHROUGH,
+        routeRevision = RouteRevisionPolicy.PASSTHROUGH,
         parse = ::parseTransport,
     )
 
-    val schemas: List<V2CommandSchema> = listOf(garrisonRecruitSchema, cityTransportSchema)
+    val schemas: List<CommandSchema> = listOf(garrisonRecruitSchema, cityTransportSchema)
 
-    private val byId: Map<String, V2CommandSchema> = buildMap {
+    private val byId: Map<String, CommandSchema> = buildMap {
         schemas.forEach { schema ->
             check(put(schema.canonicalId, schema) == null) { "duplicate v2 canonical command: ${schema.canonicalId}" }
             schema.legacyAliases.forEach { alias ->
@@ -62,35 +62,35 @@ object V2CommandRegistry {
         }
     }
 
-    fun resolve(id: String): V2CommandSchema? = byId[id]
+    fun resolve(id: String): CommandSchema? = byId[id]
 
-    fun precheck(id: String, rawArgs: Map<String, Any?>): V2CommandAvailability {
-        val schema = resolve(id) ?: return V2CommandAvailability.Unknown()
+    fun precheck(id: String, rawArgs: Map<String, Any?>): CommandAvailability {
+        val schema = resolve(id) ?: return CommandAvailability.Unknown()
         return when (val parsed = schema.parse(rawArgs)) {
-            is V2CommandAvailability.Available -> parsed.copy(schema = schema)
-            is V2CommandAvailability.NeedsInput -> parsed
-            is V2CommandAvailability.Blocked -> parsed
-            is V2CommandAvailability.Unknown -> error("registered v2 parser returned UNKNOWN: ${schema.canonicalId}")
+            is CommandAvailability.Available -> parsed.copy(schema = schema)
+            is CommandAvailability.NeedsInput -> parsed
+            is CommandAvailability.Blocked -> parsed
+            is CommandAvailability.Unknown -> error("registered v2 parser returned UNKNOWN: ${schema.canonicalId}")
         }
     }
 
-    private fun parseRecruit(args: Map<String, Any?>): V2CommandAvailability {
+    private fun parseRecruit(args: Map<String, Any?>): CommandAvailability {
         if (args.keys.any { it !in RECRUIT_ARGUMENTS }) return invalidArgs()
         val missing = required(args, "cityId", "amount")
-        if (missing.isNotEmpty()) return V2CommandAvailability.NeedsInput(missing)
+        if (missing.isNotEmpty()) return CommandAvailability.NeedsInput(missing)
         val cityId = args.int("cityId") ?: return invalidArgs()
         val amount = args.int("amount") ?: return invalidArgs()
-        if (cityId <= 0) return V2CommandAvailability.Blocked("CITY_ID_INVALID", "도시를 찾을 수 없습니다.")
+        if (cityId <= 0) return CommandAvailability.Blocked("CITY_ID_INVALID", "도시를 찾을 수 없습니다.")
         if (amount < 100) {
-            return V2CommandAvailability.Blocked("RECRUIT_AMOUNT_TOO_SMALL", "최소 100명부터 보충할 수 있습니다.")
+            return CommandAvailability.Blocked("RECRUIT_AMOUNT_TOO_SMALL", "최소 100명부터 보충할 수 있습니다.")
         }
-        return V2CommandAvailability.Available(garrisonRecruitSchema, V2GarrisonRecruitArgs(cityId, amount))
+        return CommandAvailability.Available(garrisonRecruitSchema, GarrisonRecruitArgs(cityId, amount))
     }
 
-    private fun parseTransport(args: Map<String, Any?>): V2CommandAvailability {
+    private fun parseTransport(args: Map<String, Any?>): CommandAvailability {
         if (args.keys.any { it !in TRANSPORT_ARGUMENTS }) return invalidArgs()
         val missing = required(args, "fromCityId", "toCityId")
-        if (missing.isNotEmpty()) return V2CommandAvailability.NeedsInput(missing)
+        if (missing.isNotEmpty()) return CommandAvailability.NeedsInput(missing)
         val fromCityId = args.int("fromCityId") ?: return invalidArgs()
         val toCityId = args.int("toCityId") ?: return invalidArgs()
         val gold = args.optionalLong("gold") ?: return invalidArgs()
@@ -102,17 +102,17 @@ object V2CommandRegistry {
         if (("topologyRevision" in args && topologyRevision.isNullOrBlank()) ||
             ("routePathHash" in args && routePathHash.isNullOrBlank())
         ) return invalidArgs()
-        if (fromCityId <= 0 || toCityId <= 0) return V2CommandAvailability.Blocked("CITY_ID_INVALID", "도시를 찾을 수 없습니다.")
+        if (fromCityId <= 0 || toCityId <= 0) return CommandAvailability.Blocked("CITY_ID_INVALID", "도시를 찾을 수 없습니다.")
         if (gold < 0 || rice < 0 || garrison < 0) {
-            return V2CommandAvailability.Blocked("TRANSPORT_AMOUNT_NEGATIVE", "수송량은 음수일 수 없습니다.")
+            return CommandAvailability.Blocked("TRANSPORT_AMOUNT_NEGATIVE", "수송량은 음수일 수 없습니다.")
         }
         if (gold == 0L && rice == 0L && garrison == 0) {
-            return V2CommandAvailability.Blocked("TRANSPORT_AMOUNT_EMPTY", "수송할 자원을 지정해야 합니다.")
+            return CommandAvailability.Blocked("TRANSPORT_AMOUNT_EMPTY", "수송할 자원을 지정해야 합니다.")
         }
         if (routeRevision != null && routeRevision < 0) return invalidArgs()
-        return V2CommandAvailability.Available(
+        return CommandAvailability.Available(
             cityTransportSchema,
-            V2CityTransportArgs(fromCityId, toCityId, gold, rice, garrison, routeRevision, topologyRevision, routePathHash),
+            CityTransportArgs(fromCityId, toCityId, gold, rice, garrison, routeRevision, topologyRevision, routePathHash),
         )
     }
 
@@ -149,8 +149,8 @@ object V2CommandRegistry {
 
     private data class ParsedNullableLong(val value: Long?)
 
-    private fun invalidArgs(): V2CommandAvailability.Blocked =
-        V2CommandAvailability.Blocked("INVALID_ARGUMENTS", "명령 인자 형식이 올바르지 않습니다.")
+    private fun invalidArgs(): CommandAvailability.Blocked =
+        CommandAvailability.Blocked("INVALID_ARGUMENTS", "명령 인자 형식이 올바르지 않습니다.")
 
     private val RECRUIT_ARGUMENTS = setOf("cityId", "amount")
     private val TRANSPORT_ARGUMENTS = setOf(

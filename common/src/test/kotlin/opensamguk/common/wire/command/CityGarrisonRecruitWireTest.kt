@@ -18,7 +18,7 @@ import kotlin.test.assertTrue
  *
  * 이 테스트가 그린이면 대안 (a)는 불필요하다 — 즉 이 파일은 U9의 답 그 자체다.
  */
-class V2CityGarrisonRecruitWireTest {
+class CityGarrisonRecruitWireTest {
 
     private val sample = CityGarrisonRecruit(
         requestId = "req-1",

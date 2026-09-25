@@ -6,13 +6,13 @@ import opensamguk.infra.v2.V2SandboxGate
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.logic.constraints.RequirementKey
 import opensamguk.logic.domain.City
-import opensamguk.logic.command.V2CityTransportArgs
-import opensamguk.logic.command.V2CityTransportContext
-import opensamguk.logic.command.V2CityTransportDecision
-import opensamguk.logic.command.V2CommandAvailability
-import opensamguk.logic.command.V2GarrisonRecruitArgs
-import opensamguk.logic.command.V2GarrisonRecruitContext
-import opensamguk.logic.command.V2GarrisonRecruitDecision
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CityTransportContext
+import opensamguk.logic.command.CityTransportDecision
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.GarrisonRecruitArgs
+import opensamguk.logic.command.GarrisonRecruitContext
+import opensamguk.logic.command.GarrisonRecruitDecision
 import opensamguk.logic.command.decideCityTransport
 import opensamguk.logic.command.decideGarrisonRecruit
 import opensamguk.logic.command.resolveImmediateCityTransportRoute
@@ -46,25 +46,25 @@ class V2CommandPrecheckService(
 
     fun precheck(
         generalId: Int,
-        available: V2CommandAvailability.Available,
-    ): V2CommandAvailability = when (val args = available.args) {
-        is V2GarrisonRecruitArgs -> precheckRecruit(generalId, available, args)
-        is V2CityTransportArgs -> precheckTransport(generalId, available, args)
+        available: CommandAvailability.Available,
+    ): CommandAvailability = when (val args = available.args) {
+        is GarrisonRecruitArgs -> precheckRecruit(generalId, available, args)
+        is CityTransportArgs -> precheckTransport(generalId, available, args)
     }
 
     private fun precheckRecruit(
         generalId: Int,
-        available: V2CommandAvailability.Available,
-        args: V2GarrisonRecruitArgs,
-    ): V2CommandAvailability {
+        available: CommandAvailability.Available,
+        args: GarrisonRecruitArgs,
+    ): CommandAvailability {
         val state = states.build(generalId, args = mapOf("destCityID" to args.cityId))
         if (state?.env?.get("battlefieldPresent") == true) {
-            return V2CommandAvailability.Blocked("BATTLEFIELD_LOCATION", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.")
+            return CommandAvailability.Blocked("BATTLEFIELD_LOCATION", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.")
         }
         val city = state?.view?.get(RequirementKey.City(args.cityId)) as? City
         val decision = decideGarrisonRecruit(
             args,
-            V2GarrisonRecruitContext(
+            GarrisonRecruitContext(
                 generalCityId = state?.actor?.cityId,
                 generalNationId = state?.actor?.nationId,
                 leadership = state?.actor?.leadership,
@@ -75,29 +75,29 @@ class V2CommandPrecheckService(
             ),
         )
         return when (decision) {
-            is V2GarrisonRecruitDecision.Applied -> available
-            is V2GarrisonRecruitDecision.Denied -> V2CommandAvailability.Blocked(decision.code, decision.reason)
+            is GarrisonRecruitDecision.Applied -> available
+            is GarrisonRecruitDecision.Denied -> CommandAvailability.Blocked(decision.code, decision.reason)
         }
     }
 
     private fun precheckTransport(
         generalId: Int,
-        available: V2CommandAvailability.Available,
-        args: V2CityTransportArgs,
-    ): V2CommandAvailability {
+        available: CommandAvailability.Available,
+        args: CityTransportArgs,
+    ): CommandAvailability {
         return when (val decision = evaluateTransport(generalId, args).first) {
-            is V2CityTransportDecision.Applied -> available
-            is V2CityTransportDecision.Denied -> V2CommandAvailability.Blocked(decision.code, decision.reason)
+            is CityTransportDecision.Applied -> available
+            is CityTransportDecision.Denied -> CommandAvailability.Blocked(decision.code, decision.reason)
         }
     }
 
-    fun previewTransport(generalId: Int, args: V2CityTransportArgs): V2CityTransportRoutePreview {
+    fun previewTransport(generalId: Int, args: CityTransportArgs): V2CityTransportRoutePreview {
         val (decision, path) = evaluateTransport(generalId, args, preview = true)
         return when (decision) {
-            is V2CityTransportDecision.Denied -> V2CityTransportRoutePreview(
+            is CityTransportDecision.Denied -> V2CityTransportRoutePreview(
                 status = "BLOCKED", code = decision.code, reason = decision.reason,
             )
-            is V2CityTransportDecision.Applied -> V2CityTransportRoutePreview(
+            is CityTransportDecision.Applied -> V2CityTransportRoutePreview(
                 status = "AVAILABLE", route = path?.let(V2CityTransportRoute::from),
             )
         }
@@ -105,16 +105,16 @@ class V2CommandPrecheckService(
 
     private fun evaluateTransport(
         generalId: Int,
-        args: V2CityTransportArgs,
+        args: CityTransportArgs,
         preview: Boolean = false,
-    ): Pair<V2CityTransportDecision, ResolvedStrategicPath?> {
+    ): Pair<CityTransportDecision, ResolvedStrategicPath?> {
         val state = states.build(
             generalId,
             args = mapOf("sourceCityID" to args.fromCityId, "destCityID" to args.toCityId),
             requireActiveMap = false,
         )
         if (state?.env?.get("battlefieldPresent") == true) {
-            return V2CityTransportDecision.Denied("BATTLEFIELD_LOCATION", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.") to null
+            return CityTransportDecision.Denied("BATTLEFIELD_LOCATION", "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.") to null
         }
         val from = state?.view?.get(RequirementKey.City(args.fromCityId)) as? City
         val to = state?.view?.get(RequirementKey.City(args.toCityId)) as? City
@@ -133,7 +133,7 @@ class V2CommandPrecheckService(
         val ledger = ledger(args.fromCityId)
         val decision = decideCityTransport(
             decisionArgs,
-            V2CityTransportContext(
+            CityTransportContext(
                 generalCityId = state?.actor?.cityId,
                 generalNationId = state?.actor?.nationId,
                 escortCrew = state?.actor?.crew,

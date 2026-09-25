@@ -4,34 +4,34 @@ import java.time.Duration
 import kotlin.reflect.KClass
 import opensamguk.common.wire.TurnDaemonCommandResult
 
-enum class V2CommandLayer { PERSONAL, CHIEF, STRATEGIC, TACTICAL }
+enum class CommandLayer { PERSONAL, CHIEF, STRATEGIC, TACTICAL }
 
-enum class V2CommandSourceRing { GENERAL_TURN, NATION_TURN, NONE }
+enum class CommandSourceRing { GENERAL_TURN, NATION_TURN, NONE }
 
-enum class V2CommandSubjectType { GENERAL, RETINUE, OPERATION, BATTLE, CITY, NATION }
+enum class CommandSubjectType { GENERAL, RETINUE, OPERATION, BATTLE, CITY, NATION }
 
-enum class V2CommandTarget { CITY, CITY_ROUTE }
+enum class CommandTarget { CITY, CITY_ROUTE }
 
-enum class V2CommandActor { GENERAL }
+enum class CommandActor { GENERAL }
 
-enum class V2CommandAuthority { OWNED_CITY }
+enum class CommandAuthority { OWNED_CITY }
 
-enum class V2AuthorityPolicyId { SUBJECT_OWNER }
+enum class AuthorityPolicyId { SUBJECT_OWNER }
 
-enum class V2CommandParityStatus { LOCKED, ADAPTED, NEW, DEPRECATED }
+enum class CommandParityStatus { LOCKED, ADAPTED, NEW, DEPRECATED }
 
-enum class V2IdempotencyPolicy { NOT_SUPPORTED }
+enum class IdempotencyPolicy { NOT_SUPPORTED }
 
-enum class V2RouteRevisionPolicy { NOT_APPLICABLE, PASSTHROUGH, REQUIRED }
+enum class RouteRevisionPolicy { NOT_APPLICABLE, PASSTHROUGH, REQUIRED }
 
-sealed interface V2CommandArgs
+sealed interface CommandArgs
 
-data class V2GarrisonRecruitArgs(
+data class GarrisonRecruitArgs(
     val cityId: Int,
     val amount: Int,
-) : V2CommandArgs
+) : CommandArgs
 
-data class V2CityTransportArgs(
+data class CityTransportArgs(
     val fromCityId: Int,
     val toCityId: Int,
     val gold: Long,
@@ -40,29 +40,29 @@ data class V2CityTransportArgs(
     val routeRevision: Long?,
     val topologyRevision: String? = null,
     val routePathHash: String? = null,
-) : V2CommandArgs
+) : CommandArgs
 
-data class V2CommandSchema(
+data class CommandSchema(
     val canonicalId: String,
     val legacyAliases: Set<String>,
-    val layer: V2CommandLayer,
-    val sourceRing: V2CommandSourceRing,
-    val subjectType: V2CommandSubjectType,
-    val target: V2CommandTarget,
-    val actor: V2CommandActor,
-    val authority: V2CommandAuthority,
-    val authorityPolicyId: V2AuthorityPolicyId,
+    val layer: CommandLayer,
+    val sourceRing: CommandSourceRing,
+    val subjectType: CommandSubjectType,
+    val target: CommandTarget,
+    val actor: CommandActor,
+    val authority: CommandAuthority,
+    val authorityPolicyId: AuthorityPolicyId,
     val authorityContextVersion: Int,
     val payloadVersion: Int,
     val adapter: String,
-    val parityStatus: V2CommandParityStatus,
-    val argsType: KClass<out V2CommandArgs>,
+    val parityStatus: CommandParityStatus,
+    val argsType: KClass<out CommandArgs>,
     val resultType: KClass<out TurnDaemonCommandResult>,
-    val idempotency: V2IdempotencyPolicy,
+    val idempotency: IdempotencyPolicy,
     val expiry: Duration,
     val replayEvent: String,
-    val routeRevision: V2RouteRevisionPolicy,
-    internal val parse: (Map<String, Any?>) -> V2CommandAvailability,
+    val routeRevision: RouteRevisionPolicy,
+    internal val parse: (Map<String, Any?>) -> CommandAvailability,
 ) {
     init {
         require(canonicalId.isNotBlank())
@@ -74,20 +74,20 @@ data class V2CommandSchema(
     }
 }
 
-sealed interface V2CommandAvailability {
+sealed interface CommandAvailability {
     data class Available(
-        val schema: V2CommandSchema,
-        val args: V2CommandArgs,
-    ) : V2CommandAvailability
+        val schema: CommandSchema,
+        val args: CommandArgs,
+    ) : CommandAvailability
 
-    data class NeedsInput(val missing: List<String>) : V2CommandAvailability
+    data class NeedsInput(val missing: List<String>) : CommandAvailability
 
     data class Blocked(
         val code: String,
         val reason: String,
-    ) : V2CommandAvailability
+    ) : CommandAvailability
 
     data class Unknown(
         val code: String = "UNKNOWN_COMMAND",
-    ) : V2CommandAvailability
+    ) : CommandAvailability
 }

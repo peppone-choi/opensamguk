@@ -20,8 +20,8 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.command.V2CommandArgs
-import opensamguk.logic.command.V2CommandSchema
+import opensamguk.logic.command.CommandArgs
+import opensamguk.logic.command.CommandSchema
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -142,8 +142,8 @@ class CommandReserveService(
 
     fun reserveV2(
         generalId: Int,
-        schema: V2CommandSchema,
-        args: V2CommandArgs,
+        schema: CommandSchema,
+        args: CommandArgs,
         ownerUserId: Int,
     ): ReserveResult {
         val requestId = requestIds()
@@ -200,7 +200,7 @@ class CommandReserveService(
         if (worldProfile == RuleProfile.HWIHA && actionCode !in COMMON_INTAKE_COMMANDS) {
             // The sandbox V2 endpoints call this service directly. Their registered aliases belong
             // to another ruleset, even though their spelling is outside the HWIHA input grammar.
-            if (opensamguk.logic.command.V2CommandRegistry.resolve(actionCode) != null)
+            if (opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode) != null)
                 throw AdmissionDenied(InputRejection.WRONG_RULE_PROFILE.name,
                     InputRejection.WRONG_RULE_PROFILE.message)
             val rejection = hwihaCatalog.rejectionFor(worldProfile, actionCode)
@@ -265,7 +265,7 @@ class CommandReserveService(
         } else argJson
         val requestId = requestIds()
         val acceptedAt = Instant.now(clock)
-        val v2Schema = opensamguk.logic.command.V2CommandRegistry.resolve(actionCode)
+        val v2Schema = opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode)
 
         // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
         val intake = CommandWireMapper.toCommand(
