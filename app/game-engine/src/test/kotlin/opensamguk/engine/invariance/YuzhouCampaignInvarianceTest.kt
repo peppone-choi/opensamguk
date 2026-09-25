@@ -119,7 +119,7 @@ class YuzhouCampaignInvarianceTest {
         WorldStateBaseline.assertMatches("yuzhou-36-seed-00", run.world)
     }
 
-    @Test fun `a second fixed seed has the same final world on repeat`() {
+    @Test fun `seed 01 replay is stable and currently shares seed 00 final state`() {
         fun run() = campaign(seed = "01").also { campaign -> repeat(36) { campaign.phase(it) } }.world
         val first = run()
         assertEquals(WorldStateBaseline.sha256(first), WorldStateBaseline.sha256(run()))

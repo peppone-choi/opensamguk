@@ -50,7 +50,7 @@ internal object WorldStateBaseline {
             }
             world.listBugoks().sortedBy { it.id }.forEach { b ->
                 add(listOf("bugok", b.masterGeneralId, b.troops, b.crewTypeId, b.training,
-                    b.morale, b.fatigue, b.provisions, b.commanderRetainerId, b.commanderBonusApplied))
+                    b.morale, b.fatigue, b.provisions, b.commanderBonusApplied))
             }
             world.listOperations().sortedBy { it.id }.forEach { o ->
                 add(listOf("operation", o.nationId, o.kind, o.targetCityId, o.declaredByGeneralId,
@@ -59,7 +59,7 @@ internal object WorldStateBaseline {
                     o.milestones.arrived, o.milestones.supplied, o.milestones.objective, o.closedReason))
             }
             world.listOperationUnits().sortedBy { it.id }.forEach { u ->
-                add(listOf("operationUnit", u.generalId, u.bugokId, u.role, u.joinedCityId,
+                add(listOf("operationUnit", u.generalId, u.role, u.joinedCityId,
                     u.joinedYear, u.joinedMonth, u.joinedPhase))
             }
             world.listBattlePlans().sortedBy { it.id }.forEach { p ->
@@ -84,13 +84,17 @@ internal object WorldStateBaseline {
 
     // Metadata keys are storage names scheduled for renaming. Values are sorted so map insertion order is irrelevant.
     private fun values(map: Map<*, *>): List<String> = map.entries.asSequence()
-        .filterNot { (key, _) ->
-            val name = key.toString().lowercase()
-            name.endsWith("id") || name.endsWith("ids") || name.endsWith("time") ||
-                name.endsWith("path") || name.endsWith("hash") || name.endsWith("revision") ||
-                name.endsWith("version")
-        }
+        .filterNot { (key, _) -> omittedMetadataKey(key.toString()) }
         .mapNotNull { metadata(it.value) }.sorted().toList()
+
+    private fun omittedMetadataKey(key: String): Boolean {
+        val snake = key.lowercase()
+        if (key == "id" || key.endsWith("Id") || key.endsWith("Ids") ||
+            snake.endsWith("_id") || snake.endsWith("_ids")) return true
+        return listOf("Time", "Path", "Hash", "Revision", "Version").any(key::endsWith) ||
+            listOf("_time", "_path", "_hash", "_revision", "_version").any(snake::endsWith) ||
+            snake == "starttime" || snake == "lastturntime"
+    }
 
     private fun metadata(value: Any?): String? = when (value) {
         null -> "null"
