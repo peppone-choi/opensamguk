@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.evidence
+package opensamguk.logic.evidence
 
 import kotlin.test.Test
 import kotlin.test.assertContains
