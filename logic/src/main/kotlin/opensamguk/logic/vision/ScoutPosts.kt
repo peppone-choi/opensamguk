@@ -1,4 +1,9 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
+
+import opensamguk.logic.domestic.PlacementState
+
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.PlacementTarget
 
 import opensamguk.logic.domestic.DomesticCard
 
@@ -9,7 +14,7 @@ import opensamguk.logic.domestic.DomesticCard
  *
  * status: `ACTIVE` = 부임지에 도착해 시야를 준다, `MOVING` = 부임 행군 중(시야 없음). 항목은 (retainerId, provinceId) 순이다.
  */
-data class HwihaScoutPostEntry(val retainerId: Int, val provinceId: String, val status: String) {
+data class ScoutPostEntry(val retainerId: Int, val provinceId: String, val status: String) {
     init {
         require(retainerId > 0 && provinceId.isNotBlank() && provinceId.length <= 128)
         require(status == ACTIVE || status == MOVING)
@@ -22,7 +27,7 @@ data class HwihaScoutPostEntry(val retainerId: Int, val provinceId: String, val 
     }
 }
 
-object HwihaScoutPosts {
+object ScoutPosts {
     const val META_KEY = "hwihaScoutPosts"
 
     /**
@@ -32,12 +37,12 @@ object HwihaScoutPosts {
     fun project(ownerId: Int, cards: List<DomesticCard>, placementOf: (generalId: Int) -> Map<String, Any?>?): Map<String, Any>? {
         val posts = cards.filter { it.masterId == ownerId && it.generalId != null }.sortedBy { it.id }.mapNotNull { card ->
             val meta = placementOf(card.generalId!!) ?: return@mapNotNull null
-            val active = try { HwihaPlacementState.read(meta)?.active } catch (_: IllegalArgumentException) { null } ?: return@mapNotNull null
+            val active = try { PlacementState.read(meta)?.active } catch (_: IllegalArgumentException) { null } ?: return@mapNotNull null
             val target = active.order.target as? PlacementTarget.Province ?: return@mapNotNull null
             if (active.order.post != PlacementPost.SCOUT || active.order.ownerGeneralId != ownerId || active.order.retainerId != card.id)
                 return@mapNotNull null
-            HwihaScoutPostEntry(card.id, target.provinceId,
-                if (active.arrivedAt != null) HwihaScoutPostEntry.ACTIVE else HwihaScoutPostEntry.MOVING)
+            ScoutPostEntry(card.id, target.provinceId,
+                if (active.arrivedAt != null) ScoutPostEntry.ACTIVE else ScoutPostEntry.MOVING)
         }.sortedWith(compareBy({ it.retainerId }, { it.provinceId }))
         if (posts.isEmpty()) return null
         return linkedMapOf("version" to 1, "posts" to posts.map { it.toMetaValue() })

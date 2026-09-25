@@ -1,5 +1,10 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
@@ -34,9 +39,9 @@ class HwihaCityMilitaryHandler(
             return reject(HwihaMilitaryFailure.ALREADY_PROCESSED)
         }
         val projection = context.projection(world)
-        val geographic = HwihaFieldRules.assess(HwihaFieldRequest(actorId, HwihaFieldInput.FARM), projection)
-        if (geographic is HwihaFieldAssessment.Rejected) return reject(HwihaMilitaryFailure.valueOf(geographic.reason.name))
-        val county = (geographic as HwihaFieldAssessment.Eligible).county
+        val geographic = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), projection)
+        if (geographic is FieldAssessment.Rejected) return reject(HwihaMilitaryFailure.valueOf(geographic.reason.name))
+        val county = (geographic as FieldAssessment.Eligible).county
         val city = world.getCityById(county.id) ?: return reject(HwihaMilitaryFailure.COUNTY_UNAVAILABLE)
         val condition = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
             catch (_: IllegalArgumentException) { return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE) }

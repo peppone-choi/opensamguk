@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.VisionRules
+import opensamguk.logic.vision.VisionSourceKind
+
 import opensamguk.logic.world.HanCommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 
@@ -54,7 +57,7 @@ data class VisionViewer(
 
 object HwihaVision {
     /** Deterministic source list: kind order, then commandery, then province, then reference id. */
-    fun sources(viewer: VisionViewer, index: HanCommanderyIndex, rules: HwihaVisionRules.Rules): List<VisionSource> {
+    fun sources(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules): List<VisionSource> {
         val out = mutableListOf<VisionSource>()
         fun add(kind: VisionSourceKind, node: StrategicNodeRef?, ref: Int?) {
             val province = (node as? StrategicNodeRef.LandProvince)?.id ?: return
@@ -79,7 +82,7 @@ object HwihaVision {
      * FULL = within a source's radius. INTEL = not FULL but scouted (snapshot stamp and age). FOG = neither.
      * Reports bound to other tiles are ignored — they cannot name a commandery of this map.
      */
-    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: HwihaVisionRules.Rules, now: HwihaPhase): HwihaVisionView {
+    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules, now: HwihaPhase): HwihaVisionView {
         val sources = sources(viewer, index, rules)
         val full = sortedSetOf<Int>()
         sources.forEach { full += index.within(it.commanderyNo, it.radius) }
@@ -142,7 +145,7 @@ data class CorpsSighting(
  */
 object HwihaCorpsVisibility {
     fun project(viewer: VisionViewer, view: HwihaVisionView, index: HanCommanderyIndex, projection: DeploymentProjection,
-        rules: HwihaVisionRules.Rules): List<CorpsSighting> {
+        rules: VisionRules.Rules): List<CorpsSighting> {
         val nodes = projection.people.associate { it.id to it.node }
         val live = projection.deployed.mapNotNull { corps ->
             val province = (nodes[corps.commanderGeneralId] as? StrategicNodeRef.LandProvince)?.id ?: return@mapNotNull null

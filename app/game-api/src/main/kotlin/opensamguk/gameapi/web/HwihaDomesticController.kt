@@ -5,7 +5,7 @@ import opensamguk.gameapi.read.HwihaDomesticForbidden
 import opensamguk.gameapi.read.HwihaDomesticReader
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.HwihaAdmissionDenied
-import opensamguk.logic.input.HwihaDomesticInput
+import opensamguk.logic.domestic.DomesticInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -34,7 +34,7 @@ class HwihaDomesticController(private val reserve: CommandReserveService, privat
 
     private fun submit(userId: Long?, generalId: Int, inputId: String, raw: String): ResponseEntity<Any> {
         if (!validUser(userId)) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
-        if (inputId !in HwihaDomesticInput.INPUT_IDS) return ResponseEntity.ok(mapOf("status" to "BLOCKED",
+        if (inputId !in DomesticInput.INPUT_IDS) return ResponseEntity.ok(mapOf("status" to "BLOCKED",
             "code" to "UNKNOWN_INPUT", "reason" to "등록되지 않은 내정 입력입니다."))
         return try {
             val accepted = reserve.publishImmediate(TurnDaemonCommand.ImmediateInput("", generalId, userId!!.toInt(), inputId, raw),

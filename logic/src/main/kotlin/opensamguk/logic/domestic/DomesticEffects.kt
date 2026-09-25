@@ -1,11 +1,14 @@
-package opensamguk.logic.input
+package opensamguk.logic.domestic
 
-import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.economy.HwihaCountyIncome
 import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.domestic.ActiveWork
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyIndicators
+import opensamguk.logic.input.HwihaPhase
 
 /** 縣治 城의 지표와 상한. 민심은 기존 저장 꼴(실수 0..100)을 그대로 쓴다. */
-data class HwihaCountyLevels(
+data class CountyLevels(
     val population: Int, val populationMax: Int,
     val agriculture: Int, val agricultureMax: Int,
     val commerce: Int, val commerceMax: Int,
@@ -14,12 +17,12 @@ data class HwihaCountyLevels(
     val defence: Int, val defenceMax: Int,
     val wall: Int, val wallMax: Int,
 ) {
-    fun indicators(): HwihaCountyIndicators = HwihaCountyIndicators(population, agriculture, commerce, security,
+    fun indicators(): CountyIndicators = CountyIndicators(population, agriculture, commerce, security,
         trust.toInt(), defence, wall)
 }
 
 /** 배율 계산에 쓰는 앉은 현령의 능력치. [hometown] 은 그 縣이 본관인가. */
-data class HwihaSeatStats(val leadership: Int, val strength: Int, val intelligence: Int, val politics: Int, val charm: Int,
+data class SeatStats(val leadership: Int, val strength: Int, val intelligence: Int, val politics: Int, val charm: Int,
     val hometown: Boolean) {
     fun of(stat: DomesticDesign.Stat): Int = when (stat) {
         DomesticDesign.Stat.LEADERSHIP -> leadership
@@ -30,21 +33,21 @@ data class HwihaSeatStats(val leadership: Int, val strength: Int, val intelligen
     }
 }
 
-data class HwihaPolicyOutcome(val levels: HwihaCountyLevels, val credit: HwihaResources, val debit: HwihaResources)
+data class PolicyOutcome(val levels: CountyLevels, val credit: HwihaResources, val debit: HwihaResources)
 
-sealed interface HwihaWorkStep {
+sealed interface WorkStep {
     /** 창고가 모자라 이번 순은 진척이 없다. */
-    data class Stopped(val work: HwihaActiveWork, val reason: String) : HwihaWorkStep
-    data class Advanced(val work: HwihaActiveWork, val debit: HwihaResources) : HwihaWorkStep
-    data class Completed(val completed: HwihaCompletedWork, val debit: HwihaResources, val levels: HwihaCountyLevels) : HwihaWorkStep
+    data class Stopped(val work: ActiveWork, val reason: String) : WorkStep
+    data class Advanced(val work: ActiveWork, val debit: HwihaResources) : WorkStep
+    data class Completed(val completed: CompletedWork, val debit: HwihaResources, val levels: CountyLevels) : WorkStep
 }
 
 /** 방침 효과·공사 진척의 순수 계산. 정수 연산이며 0 쪽으로 자른다(결정론). */
-object HwihaDomesticEffects {
+object DomesticEffects {
     const val INSUFFICIENT_STOCK = "INSUFFICIENT_STOCK"
 
     /** 천분율 배율. 고정량(stat null)은 1000, 빈자리는 emptySeatPermille. */
-    fun multiplier(design: DomesticDesign, stat: DomesticDesign.Stat?, seat: HwihaSeatStats?): Long {
+    fun multiplier(design: DomesticDesign, stat: DomesticDesign.Stat?, seat: SeatStats?): Long {
         if (stat == null) return 1000
         val scaling = design.scaling
         if (seat == null) return scaling.emptySeatPermille.toLong()
@@ -53,14 +56,14 @@ object HwihaDomesticEffects {
         return maxOf(scaling.minimumPermille.toLong(), raw)
     }
 
-    fun applyPolicy(design: DomesticDesign, policy: CountyPolicy, levels: HwihaCountyLevels, seat: HwihaSeatStats?): HwihaPolicyOutcome {
+    fun applyPolicy(design: DomesticDesign, policy: CountyPolicy, levels: CountyLevels, seat: SeatStats?): PolicyOutcome {
         val effect = design.countyPolicies.getValue(policy)
         return applyEffects(design, effect.indicators, effect.resources, levels, seat)
     }
 
     /** One direct action uses the acting general's stats and the same one-phase effect arithmetic as a policy. */
-    fun applyDirect(design: DomesticDesign, inputId: String, levels: HwihaCountyLevels,
-        actor: HwihaSeatStats): HwihaPolicyOutcome {
+    fun applyDirect(design: DomesticDesign, inputId: String, levels: CountyLevels,
+        actor: SeatStats): PolicyOutcome {
         val action = design.directActions.getValue(inputId)
         val base = applyEffects(design, action.indicators, action.resources, levels, actor)
         val rate = multiplier(design, action.costStat, actor)
@@ -71,8 +74,8 @@ object HwihaDomesticEffects {
     }
 
     private fun applyEffects(design: DomesticDesign, indicators: List<DomesticDesign.IndicatorEffect>,
-        resources: List<DomesticDesign.ResourceFlow>, levels: HwihaCountyLevels,
-        seat: HwihaSeatStats?): HwihaPolicyOutcome {
+        resources: List<DomesticDesign.ResourceFlow>, levels: CountyLevels,
+        seat: SeatStats?): PolicyOutcome {
         var next = levels
         for (entry in indicators) {
             val base = when (entry.unit) {
@@ -90,28 +93,28 @@ object HwihaDomesticEffects {
             val resources = resource(flow.resource, amount)
             if (flow.direction == DomesticDesign.Direction.CREDIT) credit = credit.credit(resources) else debit = debit.credit(resources)
         }
-        return HwihaPolicyOutcome(next, credit, debit)
+        return PolicyOutcome(next, credit, debit)
     }
 
-    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): HwihaActiveWork {
+    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): ActiveWork {
         val spec = design.works.getValue(work)
-        return HwihaActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null)
+        return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null)
     }
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
-    fun progressWork(design: DomesticDesign, work: HwihaActiveWork, now: HwihaPhase, stock: HwihaResources,
-        levels: HwihaCountyLevels, seat: HwihaSeatStats?): HwihaWorkStep {
+    fun progressWork(design: DomesticDesign, work: ActiveWork, now: HwihaPhase, stock: HwihaResources,
+        levels: CountyLevels, seat: SeatStats?): WorkStep {
         val speed = design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000
         val next = minOf(work.required.toLong(), work.progress + maxOf(1L, speed)).toInt()
         val due = charged(work.cost, next, work.required).debit(work.charged)
             ?: throw IllegalArgumentException("charged installments exceed the cumulative charge")
-        if (stock.debit(due) == null) return HwihaWorkStep.Stopped(work.copy(stopReason = INSUFFICIENT_STOCK), INSUFFICIENT_STOCK)
+        if (stock.debit(due) == null) return WorkStep.Stopped(work.copy(stopReason = INSUFFICIENT_STOCK), INSUFFICIENT_STOCK)
         if (next == work.required) {
             var after = levels
             for (effect in design.works.getValue(work.work).completion) after = add(after, effect.indicator, effect.amount.toLong())
-            return HwihaWorkStep.Completed(HwihaCompletedWork(work.work, now), due, after)
+            return WorkStep.Completed(CompletedWork(work.work, now), due, after)
         }
-        return HwihaWorkStep.Advanced(work.copy(progress = next, charged = work.charged.credit(due), lastProgressAt = now,
+        return WorkStep.Advanced(work.copy(progress = next, charged = work.charged.credit(due), lastProgressAt = now,
             stopReason = null), due)
     }
 
@@ -123,15 +126,15 @@ object HwihaDomesticEffects {
     }
 
     /** 남은 순 수(현재 속도 기준, 올림). */
-    fun remainingPhases(design: DomesticDesign, work: HwihaActiveWork, seat: HwihaSeatStats?): Int {
+    fun remainingPhases(design: DomesticDesign, work: ActiveWork, seat: SeatStats?): Int {
         val speed = maxOf(1L, design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000)
         return ((work.required - work.progress + speed - 1) / speed).toInt()
     }
 
-    fun levelsAfter(levels: HwihaCountyLevels, indicator: DomesticDesign.Indicator, delta: Long): HwihaCountyLevels =
+    fun levelsAfter(levels: CountyLevels, indicator: DomesticDesign.Indicator, delta: Long): CountyLevels =
         add(levels, indicator, delta)
 
-    private fun current(levels: HwihaCountyLevels, indicator: DomesticDesign.Indicator): Long = when (indicator) {
+    private fun current(levels: CountyLevels, indicator: DomesticDesign.Indicator): Long = when (indicator) {
         DomesticDesign.Indicator.POPULATION -> levels.population.toLong()
         DomesticDesign.Indicator.AGRICULTURE -> levels.agriculture.toLong()
         DomesticDesign.Indicator.COMMERCE -> levels.commerce.toLong()
@@ -142,7 +145,7 @@ object HwihaDomesticEffects {
     }
 
     /** 상한·하한에 맞춘다. 이미 상한을 넘은 값은 올리지 않을 뿐 깎지 않는다. */
-    private fun add(levels: HwihaCountyLevels, indicator: DomesticDesign.Indicator, delta: Long): HwihaCountyLevels {
+    private fun add(levels: CountyLevels, indicator: DomesticDesign.Indicator, delta: Long): CountyLevels {
         if (delta == 0L) return levels
         fun bounded(value: Int, max: Int): Int {
             val raw = value.toLong() + delta

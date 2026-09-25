@@ -1,5 +1,23 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.ScoutPosts
+
+import opensamguk.logic.domestic.FieldInput
+
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PlacementMarch
+import opensamguk.logic.domestic.PolicyApplication
+import opensamguk.logic.domestic.CountyPolicyState
+import opensamguk.logic.domestic.CommanderyPolicies
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyWorks
+import opensamguk.logic.domestic.CountyMonthly
+
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.SeatStats
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticFailure
 import opensamguk.logic.domestic.SeatedMagistrate
 import opensamguk.logic.domestic.DomesticRules
@@ -69,7 +87,7 @@ class HwihaDomesticEngineTest {
 
     @Test fun `direct county actions are routed only through personal reservations`() {
         val world = world(); val recorder = ChangeRecorder()
-        for (inputId in HwihaFieldInput.INPUT_IDS) {
+        for (inputId in FieldInput.INPUT_IDS) {
             val result = submit(world, recorder, inputId, "{}")
             assertEquals("INVALID_INPUT_CHANNEL", result.code, inputId)
         }
@@ -81,7 +99,7 @@ class HwihaDomesticEngineTest {
         assertEquals(CommandLifecycleResult(type = "reservationAccepted", ok = true, commandKind = "PLACEMENT",
             actionCode = "placement.assign", generalId = 1,
             inputResolved = InputResolved("placement.assign", "PLACEMENT", true)), result)
-        val stored = assertNotNull(HwihaPlacementState.read(world.getGeneralById(3)!!.meta))
+        val stored = assertNotNull(PlacementState.read(world.getGeneralById(3)!!.meta))
         assertNull(stored.active)
         assertEquals(PlacementTarget.County(10), stored.pending!!.target)
         assertEquals(world.positionOf(3), b, "intake never moves the card")
@@ -111,12 +129,12 @@ class HwihaDomesticEngineTest {
         val world = world(); val recorder = ChangeRecorder()
         submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":10}""")
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
-        val active = assertNotNull(HwihaPlacementState.read(world.getGeneralById(3)!!.meta)?.active)
+        val active = assertNotNull(PlacementState.read(world.getGeneralById(3)!!.meta)?.active)
         assertNull(active.arrivedAt)
         assertTrue(HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3))
         assertEquals(a, world.positionOf(3))
-        assertEquals(HwihaPhase(200, 1, 1), HwihaPlacementState.read(world.getGeneralById(3)!!.meta)!!.active!!.arrivedAt)
-        assertFalse(HwihaPlacementMarch.META_KEY in world.getGeneralById(3)!!.meta)
+        assertEquals(HwihaPhase(200, 1, 1), PlacementState.read(world.getGeneralById(3)!!.meta)!!.active!!.arrivedAt)
+        assertFalse(PlacementMarch.META_KEY in world.getGeneralById(3)!!.meta)
         val state = context.projection(world)
         assertEquals(SeatedMagistrate(3, 1, true, 5), DomesticRules.seatedMagistrate(state.county(10)!!, state))
         // A second turn on the post neither re-marches nor re-logs the arrival.
@@ -129,7 +147,7 @@ class HwihaDomesticEngineTest {
         val world = world(); val recorder = ChangeRecorder()
         assertTrue(submit(world, recorder, "placement.assign", """{"cardId":5,"post":"SCOUT","provinceId":"A"}""").ok)
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
-        fun posts() = world.getGeneralById(1)!!.meta[HwihaScoutPosts.META_KEY]
+        fun posts() = world.getGeneralById(1)!!.meta[ScoutPosts.META_KEY]
         assertEquals(mapOf("version" to 1, "posts" to listOf(mapOf("retainerId" to 5, "provinceId" to "A", "status" to "MOVING"))), posts())
         HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
         assertEquals(mapOf("version" to 1, "posts" to listOf(mapOf("retainerId" to 5, "provinceId" to "A", "status" to "ACTIVE"))), posts())
@@ -137,7 +155,7 @@ class HwihaDomesticEngineTest {
         world.setCurrentDate(200, 1, 2)
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
         assertNull(posts())
-        assertNull(HwihaPlacementState.read(world.getGeneralById(3)!!.meta))
+        assertNull(PlacementState.read(world.getGeneralById(3)!!.meta))
     }
 
     @Test fun `an invalidated pending placement is dropped with a reason and keeps no stale march`() {
@@ -145,7 +163,7 @@ class HwihaDomesticEngineTest {
         submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":11}""")
         world.applyCityDirtyFree(world.getCityById(11)!!.copy(nationId = 2)) // county captured before the card's turn
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
-        assertNull(HwihaPlacementState.read(world.getGeneralById(3)!!.meta))
+        assertNull(PlacementState.read(world.getGeneralById(3)!!.meta))
         assertTrue(world.peekLogs().any { it.text.contains(DomesticFailure.INVALID_COUNTY.message) })
     }
 
@@ -156,20 +174,20 @@ class HwihaDomesticEngineTest {
         HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
         submit(world, recorder, "policy.set", """{"scope":"COUNTY","countyId":10,"policy":"COMMERCE"}""")
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
-        assertEquals("COMMERCE", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.slot.active!!.policy)
+        assertEquals("COMMERCE", CountyPolicyState.read(world.getCityById(10)!!.meta)!!.slot.active!!.policy)
         val design = context.design
         boundary(world, recorder, 200, 1, 2)
-        val seated = HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, HwihaSeatStats(60, 60, 60, 80, 60, false))
+        val seated = DomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, SeatStats(60, 60, 60, 80, 60, false))
         assertEquals(1000 + (20 * seated / 1000).toInt(), world.getCityById(10)!!.commerce)
         assertEquals(1000, world.getCityById(10)!!.agriculture)
         assertEquals(1000 + 20 * design.scaling.emptySeatPermille / 1000, world.getCityById(11)!!.agriculture)
         val again = boundary(world, recorder, 200, 1, 2)
         assertTrue(again.alreadyStamped)
         assertEquals(1000 + (20 * seated / 1000).toInt(), world.getCityById(10)!!.commerce)
-        assertEquals(HwihaPolicyApplication(HwihaPhase(200, 1, 2), "COMMERCE", "SEATED", "APPLIED"),
-            HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied)
+        assertEquals(PolicyApplication(HwihaPhase(200, 1, 2), "COMMERCE", "SEATED", "APPLIED"),
+            CountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied)
         // The untouched county records no policy key: only its indicators moved.
-        assertFalse(HwihaCountyPolicyState.META_KEY in world.getCityById(11)!!.meta)
+        assertFalse(CountyPolicyState.META_KEY in world.getCityById(11)!!.meta)
     }
 
     @Test fun `policy resource flows settle through the county warehouse or record why they could not`() {
@@ -181,7 +199,7 @@ class HwihaDomesticEngineTest {
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
         boundary(world, recorder, 200, 1, 2)
         // Relief costs grain the empty warehouse does not have: no indicator moves, the reason is recorded.
-        assertEquals("INSUFFICIENT_STOCK", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
+        assertEquals("INSUFFICIENT_STOCK", CountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
         assertEquals(80.0, world.getCityById(10)!!.meta["trust"])
         val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder)
@@ -190,7 +208,7 @@ class HwihaDomesticEngineTest {
         val households = 50_000L / 5
         assertEquals(1_000_000 - households, HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock.grain)
         assertEquals(82.0, world.getCityById(10)!!.meta["trust"])
-        assertEquals("APPLIED", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
+        assertEquals("APPLIED", CountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
     }
 
     @Test fun `commandery policy activates at the next boundary and overrides every county in it`() {
@@ -198,7 +216,7 @@ class HwihaDomesticEngineTest {
         val accepted = submit(world, recorder, "policy.set", """{"scope":"COMMANDERY","commanderyId":"甲郡","policy":"MILITARY_FARM"}""")
         assertTrue(accepted.ok, accepted.toString())
         boundary(world, recorder, 200, 1, 2)
-        val policies = HwihaCommanderyPolicies.read(world.getNationById(1)!!.meta)!!
+        val policies = CommanderyPolicies.read(world.getNationById(1)!!.meta)!!
         assertEquals("MILITARY_FARM", policies["甲郡"]!!.slot.active!!.policy)
         // Both counties ran the commandery policy with the empty-seat multiplier (security rises, 둔전병).
         for (id in listOf(10, 11)) assertEquals(500 + 10 * context.design.scaling.emptySeatPermille / 1000, world.getCityById(id)!!.security)
@@ -208,7 +226,7 @@ class HwihaDomesticEngineTest {
         val world = world(HwihaResources(money = 1_000_000)); val recorder = ChangeRecorder()
         assertTrue(submit(world, recorder, "work.start", """{"countyId":10,"work":"FORTIFICATION"}""").ok)
         assertEquals(DomesticFailure.WORK_IN_PROGRESS.name, submit(world, recorder, "work.start", """{"countyId":10,"work":"ROAD"}""").code)
-        fun work() = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
+        fun work() = CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
         fun stock() = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         // Same phase as the order: the boundary does not touch the work at all (§4 「다음 순 경계부터」).
         world.setCurrentDate(200, 1, 1)
@@ -216,7 +234,7 @@ class HwihaDomesticEngineTest {
         assertEquals(0, work().progress); assertNull(work().stopReason); assertEquals(1_000_000, stock().money)
         // Next boundary: money is there but timber is not, so it stops without progress or payment.
         boundary(world, recorder, 200, 1, 2)
-        assertEquals(HwihaDomesticEffects.INSUFFICIENT_STOCK, work().stopReason)
+        assertEquals(DomesticEffects.INSUFFICIENT_STOCK, work().stopReason)
         assertEquals(0, work().progress); assertEquals(1_000_000, stock().money)
         val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder).settle(10, 1, warehouse.revision,
@@ -224,14 +242,14 @@ class HwihaDomesticEngineTest {
         val spec = context.design.works.getValue(DomesticWork.FORTIFICATION)
         var phase = HwihaPhase(200, 1, 2)
         var boundaries = 0
-        while (HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.active != null) {
+        while (CountyWorks.read(world.getCityById(10)!!.meta)!!.active != null) {
             phase = phase.plus(1); boundaries++
             boundary(world, recorder, phase.year, phase.month, phase.phase)
             if (boundaries == 1) assertNull(work().stopReason, "restocking clears the stop on the next boundary")
         }
         val emptySeatSpeed = context.design.progressPerPhase * context.design.scaling.emptySeatPermille / 1000
         assertEquals((spec.requiredProgress + emptySeatSpeed - 1) / emptySeatSpeed, boundaries)
-        val works = HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!
+        val works = CountyWorks.read(world.getCityById(10)!!.meta)!!
         assertEquals(listOf(DomesticWork.FORTIFICATION), works.completed.map { it.work })
         assertEquals(HwihaResources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0), stock())
         for (effect in spec.completion) {
@@ -247,12 +265,12 @@ class HwihaDomesticEngineTest {
     @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
         val world = world(HwihaResources(money = 1000)); val recorder = ChangeRecorder()
         val city = world.getCityById(10)!!
-        val completed = HwihaCountyWorks(null, listOf(HwihaCompletedWork(DomesticWork.FORTIFICATION, HwihaPhase(200, 1, 1))))
-        world.applyCityDirtyFree(city.copy(meta = city.meta + (HwihaCountyWorks.META_KEY to completed.toMetaValue())))
+        val completed = CountyWorks(null, listOf(CompletedWork(DomesticWork.FORTIFICATION, HwihaPhase(200, 1, 1))))
+        world.applyCityDirtyFree(city.copy(meta = city.meta + (CountyWorks.META_KEY to completed.toMetaValue())))
         val before = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         val reduced = submit(world, recorder, "work.reduce", """{"countyId":10,"work":"FORTIFICATION"}""")
         assertEquals(InputRejection.NOT_DELIVERED.name, reduced.code)
-        assertEquals(1, HwihaCountyWorks.read(world.getCityById(10)!!.meta)!!.completed.size)
+        assertEquals(1, CountyWorks.read(world.getCityById(10)!!.meta)!!.completed.size)
         assertEquals(before, HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
     }
 
@@ -281,7 +299,7 @@ class HwihaDomesticEngineTest {
         HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
         boundary(world, recorder, 200, 2, 1) // first month on the seat: snapshot only
         assertTrue(events.isEmpty())
-        assertEquals("0200-02", HwihaCountyMonthly.read(world.getCityById(10)!!.meta)!!.stamp)
+        assertEquals("0200-02", CountyMonthly.read(world.getCityById(10)!!.meta)!!.stamp)
         boundary(world, recorder, 200, 2, 2); boundary(world, recorder, 200, 2, 3)
         boundary(world, recorder, 200, 3, 1)
         val event = events.single()
@@ -289,6 +307,6 @@ class HwihaDomesticEngineTest {
         assertEquals(10, event.countyId); assertEquals("0200-03", event.monthStamp)
         assertTrue("agriculture" in event.risen)
         // The empty county never produces merit events or monthly snapshots.
-        assertFalse(HwihaCountyMonthly.META_KEY in world.getCityById(11)!!.meta)
+        assertFalse(CountyMonthly.META_KEY in world.getCityById(11)!!.meta)
     }
 }

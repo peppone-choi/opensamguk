@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticIds
+
 /** An installed hostile scheme watches one pinned land province. Its effect is a contact stop, not a fabricated battle. */
 data class HwihaInstalledScheme(
     val orderId: String,
@@ -38,7 +40,7 @@ data class HwihaReactionOrder(
     val nationId: Int,
     val since: HwihaPhase,
 ) {
-    init { require(HwihaDomesticIds.order(orderId) && ownerGeneralId > 0 && commanderGeneralId > 0 && nationId >= 0) }
+    init { require(DomesticIds.order(orderId) && ownerGeneralId > 0 && commanderGeneralId > 0 && nationId >= 0) }
 
     fun toMetaValue(): Map<String, Any> = linkedMapOf("orderId" to orderId, "ownerGeneralId" to ownerGeneralId,
         "commanderGeneralId" to commanderGeneralId, "nationId" to nationId, "since" to since.toMetaValue())

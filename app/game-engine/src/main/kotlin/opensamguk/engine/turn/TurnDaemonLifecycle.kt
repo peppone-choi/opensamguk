@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.domestic.FieldInput
+
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.engine.hwiha.HwihaPersonalTurn
 import opensamguk.logic.input.RuleProfile
@@ -191,7 +193,7 @@ class TurnDaemonLifecycle(
                     opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
                 // §5.1 현장 행동은 이동·조우 단계가 지난 뒤 현재 위치에서 실행한다.
                 val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
-                    (reserved.actionCode in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS ||
+                    (reserved.actionCode in opensamguk.logic.domestic.FieldInput.INPUT_IDS ||
                         reserved.actionCode in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS ||
                         reserved.actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS ||
                         reserved.actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS ||

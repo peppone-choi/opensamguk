@@ -1,5 +1,8 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PlacementMarch
+
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.josa.JosaUtil
@@ -78,7 +81,7 @@ class HwihaPeopleHandler(
                 if (joining.isEmpty() || joining.first().id != target.id)
                     return reject(HwihaPeopleFailure.STATE_UNAVAILABLE)
                 val targetMeta = liveTarget.meta - HwihaEncounterResolver.CAPTIVE_KEY -
-                    HwihaPlacementState.META_KEY - HwihaPlacementMarch.META_KEY -
+                    PlacementState.META_KEY - PlacementMarch.META_KEY -
                     HwihaCountyAssignment.META_KEY - HwihaCorpsOrder.META_KEY - HwihaCorpsMarchState.META_KEY
                 for (before in joining) {
                     val joined = before.copy(nationId = actor.nationId,

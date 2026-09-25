@@ -1,5 +1,8 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.CountyIndicators
+import opensamguk.logic.domestic.CountyMonthly
+
 import java.io.File
 import java.time.Instant
 import kotlin.test.*
@@ -85,7 +88,7 @@ class HwihaGovernanceMeritWiringTest {
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
         HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
         monthBoundary(world, recorder, context, 200, 2)
-        assertEquals("0200-02", HwihaCountyMonthly.read(world.getCityById(countyId)!!.meta)!!.stamp)
+        assertEquals("0200-02", CountyMonthly.read(world.getCityById(countyId)!!.meta)!!.stamp)
         for (id in listOf(10, 11)) {
             val city = world.getCityById(id)!!
             world.applyCityDirtyFree(city.copy(agriculture = city.agriculture + 500))
@@ -102,8 +105,8 @@ class HwihaGovernanceMeritWiringTest {
     @Test fun `the sink applies the records merit threshold to domestic events`() {
         val world = world(holder = false); val recorder = ChangeRecorder()
         val sink = HwihaGovernanceMeritRenownSink(world, recorder)
-        val base = HwihaCountyIndicators(50_000, 1000, 1000, 500, 80, 500, 500)
-        fun event(current: HwihaCountyIndicators) = HwihaGovernanceMeritEvent(1, 3, 5, 10, "0200-03", base, current,
+        val base = CountyIndicators(50_000, 1000, 1000, 500, 80, 500, 500)
+        fun event(current: CountyIndicators) = HwihaGovernanceMeritEvent(1, 3, 5, 10, "0200-03", base, current,
             current.risenSince(base))
         // 치안·민심·방비만 오르거나 전답이 상한(5000)의 2% 미만(99)이면 치적이 아니다.
         sink.onCountyIndicatorsRose(event(base.copy(security = 600, trust = 90, wall = 600)))

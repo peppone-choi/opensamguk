@@ -1,5 +1,12 @@
 package opensamguk.gameapi.precheck
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldFailure
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+import opensamguk.logic.domestic.FieldEconomyAssessment
+
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.gameapi.read.HwihaDomesticReader
 import opensamguk.logic.input.*
@@ -18,26 +25,26 @@ class HwihaFieldOptionsService(private val reader: HwihaDomesticReader,
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(inputId: String, actorId: Int, ownerUserId: Long): HwihaFieldOptions {
         reader.requireOwner(actorId, ownerUserId)
-        if (inputId !in HwihaFieldInput.INPUT_IDS) return blocked(inputId, HwihaFieldFailure.INVALID_INPUT)
+        if (inputId !in FieldInput.INPUT_IDS) return blocked(inputId, FieldFailure.INVALID_INPUT)
         val snapshot = reader.snapshot()
         val state = snapshot.state ?: return blocked(inputId, if (snapshot.failure == "WRONG_RULE_PROFILE")
-            HwihaFieldFailure.WRONG_RULE_PROFILE else HwihaFieldFailure.STATE_UNAVAILABLE)
-        return when (val check = HwihaFieldRules.assess(HwihaFieldRequest(actorId, inputId), state)) {
-            is HwihaFieldAssessment.Rejected -> blocked(inputId, check.reason)
-            is HwihaFieldAssessment.Eligible -> {
+            FieldFailure.WRONG_RULE_PROFILE else FieldFailure.STATE_UNAVAILABLE)
+        return when (val check = FieldRules.assess(FieldRequest(actorId, inputId), state)) {
+            is FieldAssessment.Rejected -> blocked(inputId, check.reason)
+            is FieldAssessment.Eligible -> {
                 if (design.directActionStatus != DomesticDesign.CONFIRMED ||
                     catalog[inputId]?.deliveryState?.hasHandler != true)
                     HwihaFieldOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-                else when (val economy = HwihaFieldRules.assessEconomy(inputId, check.person, check.county.id,
+                else when (val economy = FieldRules.assessEconomy(inputId, check.person, check.county.id,
                     snapshot.countyLevels[check.county.id], snapshot.warehouseStocks[check.county.id], design)) {
-                    is HwihaFieldEconomyAssessment.Rejected -> blocked(inputId, economy.reason)
-                    is HwihaFieldEconomyAssessment.Eligible -> HwihaFieldOptions(inputId, true, countyId = check.county.id,
+                    is FieldEconomyAssessment.Rejected -> blocked(inputId, economy.reason)
+                    is FieldEconomyAssessment.Eligible -> HwihaFieldOptions(inputId, true, countyId = check.county.id,
                         countyName = snapshot.countyNames[check.county.id] ?: check.county.name)
                 }
             }
         }
     }
 
-    private fun blocked(inputId: String, failure: HwihaFieldFailure) =
+    private fun blocked(inputId: String, failure: FieldFailure) =
         HwihaFieldOptions(inputId, false, failure.name, failure.message)
 }

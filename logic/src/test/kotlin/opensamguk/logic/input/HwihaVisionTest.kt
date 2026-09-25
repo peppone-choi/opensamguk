@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.VisionRules
+import opensamguk.logic.vision.VisionSourceKind
+
 import opensamguk.logic.world.HanCommandery
 import opensamguk.logic.world.HanCommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
@@ -13,7 +16,7 @@ class HwihaVisionTest {
         (0..4).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
         (0..4).associate { "p$it" to it } + ("p0b" to 0),
         setOf(0 to 1, 1 to 2, 2 to 3, 3 to 4))
-    private val rules = HwihaVisionRules.CANON
+    private val rules = VisionRules.CANON
     private val now = HwihaPhase(190, 3, 2)
 
     private fun land(id: String) = StrategicNodeRef.LandProvince(id)

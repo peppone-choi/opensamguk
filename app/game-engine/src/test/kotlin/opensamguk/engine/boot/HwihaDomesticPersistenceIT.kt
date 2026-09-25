@@ -1,5 +1,11 @@
 package opensamguk.engine.boot
 
+import opensamguk.logic.domestic.CountyPolicyState
+import opensamguk.logic.domestic.CorpsPolicyAssignments
+import opensamguk.logic.domestic.CountyWorks
+
+import opensamguk.logic.domestic.DomesticWork
+
 import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.flush.DatabaseHooks
@@ -86,9 +92,9 @@ class HwihaDomesticPersistenceIT {
 
         world = cold(id)
         val city = world.getCityById(county)!!
-        assertEquals("COMMERCE", HwihaCountyPolicyState.read(city.meta)!!.slot.pending!!.policy)
-        assertEquals(DomesticWork.IRRIGATION, HwihaCountyWorks.read(city.meta)!!.active!!.work)
-        assertEquals("INTERCEPT", HwihaCorpsPolicies.read(world.getGeneralById(10)!!.meta)!!.forOrder("o1")!!.slot.pending!!.policy)
+        assertEquals("COMMERCE", CountyPolicyState.read(city.meta)!!.slot.pending!!.policy)
+        assertEquals(DomesticWork.IRRIGATION, CountyWorks.read(city.meta)!!.active!!.work)
+        assertEquals("INTERCEPT", CorpsPolicyAssignments.read(world.getGeneralById(10)!!.meta)!!.forOrder("o1")!!.slot.pending!!.policy)
 
         // Commander's turn: the corps policy activates and the reaction inventory persists through game_env.
         recorder = ChangeRecorder()
@@ -105,7 +111,7 @@ class HwihaDomesticPersistenceIT {
         save(world, recorder)
         world = cold(id)
         world.setCurrentDate(200, 1, 2)
-        val progressed = HwihaCountyWorks.read(world.getCityById(county)!!.meta)!!.active!!
+        val progressed = CountyWorks.read(world.getCityById(county)!!.meta)!!.active!!
         assertTrue(progressed.progress > 0)
         assertEquals(progressed.charged, HwihaResources(1_000_000, 1_000_000, 0, 0, 0)
             .debit(HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock))
