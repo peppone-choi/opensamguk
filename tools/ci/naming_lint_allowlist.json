@@ -1,0 +1,50 @@
+{
+  "paths": [
+    {
+      "path": "infra/src/main/resources/db/migration/V1__baseline.sql",
+      "kinds": [
+        "retired_reference"
+      ],
+      "sha256": "4db6561f7151d44fe8290dbdcaa25072bf7d2349bfb9313f450400f80a20642d",
+      "reason": "ADR-LITE-066: old Flyway migration is immutable; historical SAMMO/che_ values remain here only."
+    },
+    {
+      "path": "infra/src/main/resources/db/migration/V2__p2_brief.sql",
+      "kinds": [
+        "retired_reference"
+      ],
+      "sha256": "57b076e5f6d734cc2f65eaa5291be104565fca2b2061ae48a0cffb781ea0de71",
+      "reason": "ADR-LITE-066: old Flyway migration is immutable; historical SAMMO/che_ values remain here only."
+    },
+    {
+      "path": "tools/ci/naming_lint.py",
+      "kinds": [
+        "product_identifier",
+        "product_path",
+        "package_name",
+        "retired_reference"
+      ],
+      "reason": "ADR-LITE-066: lint implementation, fixture and exact exception ledger mention forbidden tokens solely to detect them."
+    },
+    {
+      "path": "tools/ci/test_naming_lint.py",
+      "kinds": [
+        "product_identifier",
+        "product_path",
+        "package_name",
+        "retired_reference"
+      ],
+      "reason": "ADR-LITE-066: lint implementation, fixture and exact exception ledger mention forbidden tokens solely to detect them."
+    },
+    {
+      "path": "tools/ci/naming_lint_allowlist.json",
+      "kinds": [
+        "product_identifier",
+        "product_path",
+        "package_name",
+        "retired_reference"
+      ],
+      "reason": "ADR-LITE-066: lint implementation, fixture and exact exception ledger mention forbidden tokens solely to detect them."
+    }
+  ]
+}

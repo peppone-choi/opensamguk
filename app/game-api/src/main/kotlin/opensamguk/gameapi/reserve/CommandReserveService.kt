@@ -336,8 +336,9 @@ class CommandReserveService(
                     turnIdx = turnIdx,
                     actionCode = actionCode,
                     argJson = canonicalArgs,
-                    brief = when (actionCode) { "action.enlist" -> "출사"; "action.deploy" -> "출병"; "action.scout" -> "첩보";
-                        "action.assault" -> "강공"; "action.demandSurrender" -> "항복 권고"; else -> registry.resolve(actionCode).name },
+                    brief = if (worldProfile == RuleProfile.HWIHA)
+                        requireNotNull(hwihaCatalog[actionCode]?.displayName) { "missing action displayName: $actionCode" }
+                    else registry.resolve(actionCode).name,
                     requestId = requestId,
                 )
                 commandResults.insertTerminalResult(

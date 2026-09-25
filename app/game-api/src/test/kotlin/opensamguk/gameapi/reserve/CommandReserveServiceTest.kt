@@ -71,14 +71,14 @@ class CommandReserveServiceTest {
     }
 
     private fun catalogFor(inputId: String, kind: String, state: String) =
-        opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
-            "retiredLegacyCommands":[],"retiredLegacyReasons":{},"inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
+        opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
+            "inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
             "actor":"GENERAL","authorityRule":"SUBJECT_OWNER","targetSchema":{"status":"PLANNED","source":"test"},
             "costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
             "timing":${if (kind == "GENERAL_ACTION") """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}""" else
                 """{"phase":"NEXT_CARD_TURN","turnSlots":null,"perPhaseLimit":null}"""},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
             "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
-            "deliveryState":"$state","legacyCommands":[]}]}""")
+            "deliveryState":"$state"${if (kind == "GENERAL_ACTION") ",\"displayName\":\"테스트\"" else ""}}]}""")
     private fun worlds(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
         val repo = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
         `when`(repo.findProcessWorld()).thenReturn(config?.let { opensamguk.gameapi.read.WorldStateReadEntity(config = it) })
@@ -136,7 +136,7 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
-            hwihaAdmission = HwihaEnlistmentAdmission(generals, precheck, catalog))
+            hwihaAdmission = HwihaEnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
         assertEquals("FORBIDDEN", assertFailsWith<HwihaAdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)
@@ -153,7 +153,7 @@ class CommandReserveServiceTest {
         service.reserveForOwner(10, "action.enlist", 11, raw, 42)
         assertEquals(42, inbox.accepted.single().ownerUserId)
         assertEquals("hwiha-req", turns.reserves.single().requestId)
-        assertEquals("출사", turns.reserves.single().brief)
+        assertEquals("테스트", turns.reserves.single().brief)
         assertEquals("""{"mode":"NATION","targetId":3}""", turns.reserves.single().argJson)
         assertEquals(11, turns.reserves.single().turnIdx)
         assertEquals("reservationAccepted", results.rows.single().resultType)
