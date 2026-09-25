@@ -59,9 +59,10 @@ class MilitarySupplyUnavailableException(message: String) : IllegalStateExceptio
 
 /**
  * Evaluate the historical CityConst graph and projected spatial graph as independent evidence.
- * A destructive city-only spatial cut requires an exact reviewed UPHOLD decision. Unknown runtime
- * disagreements therefore fail safe. A reviewed PROTECT decision can also preserve a city whose
- * geometry disconnects both graphs, but only while the policy's reachability expectation matches.
+ * On maps without road construction state, a destructive city-only spatial cut requires an exact
+ * reviewed UPHOLD decision; unknown disagreements fail safe. On road-constrained maps, a city-only
+ * cut is upheld even without that decision unless a reviewed PROTECT decision applies. PROTECT can
+ * also preserve a city whose geometry disconnects both graphs, but only while its expectation matches.
  * The canonical audit is responsible for failing closed on unreviewed map defects.
  */
 fun evaluateSupplyReachability(
