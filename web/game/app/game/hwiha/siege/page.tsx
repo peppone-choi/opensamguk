@@ -6,7 +6,7 @@ import HwihaShell from '@/components/HwihaShell';
 import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
-import { type HwihaSiege, useHwihaRead } from '@/lib/hwiha-reads';
+import { type HwihaSiege, type RoadFort, useHwihaRead } from '@/lib/hwiha-reads';
 import { useHwihaSession } from '@/lib/hwiha-session';
 
 const number = new Intl.NumberFormat('ko-KR');
@@ -41,7 +41,9 @@ export default function SiegePage() {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ kind: 'error' | 'status'; text: string } | null>(null);
     const read = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
+    const roadRead = useHwihaRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
     const rows = read.data?.sieges ?? [];
+    const roadForts = roadRead.data?.forts ?? [];
     const problem = hwihaReadNotice(read, read.data?.status);
     const act = async (siege: HwihaSiege, action: 'action.assault' | 'action.demandSurrender') => {
         if (generalId == null || !siege.canAct || busy) return;
@@ -61,6 +63,26 @@ export default function SiegePage() {
             }
         } catch (error) {
             setNotice({ kind: 'error', text: error instanceof Error ? error.message : '공성 입력을 제출하지 못했습니다.' });
+        } finally { setBusy(false); }
+    };
+    const besiegeRoadFort = async (fort: RoadFort) => {
+        if (generalId == null || !fort.canBesiege || busy) return;
+        setBusy(true); setNotice(null);
+        try {
+            const reserved = await api.reservedCommands(generalId);
+            const used = new Set(reserved.slots.map((slot) => slot.turnIdx));
+            const turnIdx = Array.from({ length: 12 }, (_, i) => i).find((i) => !used.has(i));
+            if (turnIdx === undefined) { setNotice({ kind: 'error', text: '명령 목록 12순이 모두 찼습니다.' }); return; }
+            const result = await submitCommandAndAwaitResult(() =>
+                api.command('action.siegeRoadFort', { fortId: fort.id }, generalId, turnIdx));
+            if (result.status === 'rejected') setNotice({ kind: 'error', text: result.reason ?? '보루 포위 예약을 처리할 수 없습니다.' });
+            else {
+                setNotice({ kind: 'status', text: result.status === 'applied' ? '보루 포위를 시작했습니다.' :
+                    `${turnIdx + 1}순에 보루 포위를 예약했습니다.` });
+                setRefreshKey((key) => key + 1); refresh();
+            }
+        } catch (error) {
+            setNotice({ kind: 'error', text: error instanceof Error ? error.message : '보루 포위를 예약하지 못했습니다.' });
         } finally { setBusy(false); }
     };
 
@@ -105,6 +127,24 @@ export default function SiegePage() {
                     </li>)}
                 </ol>}
             </Panel>)}
+            <Panel style={{ padding: 12 }}>
+                <SectionHeader title="도로 보루" sub="현과 별개로 소유하고 포위하는 길목" actions={<Chip>{`${roadForts.length}곳`}</Chip>} />
+                {hwihaReadNotice(roadRead, roadRead.data?.status) &&
+                    <HwihaEmpty>{hwihaReadNotice(roadRead, roadRead.data?.status)}</HwihaEmpty>}
+                {!hwihaReadNotice(roadRead, roadRead.data?.status) && roadForts.length === 0 &&
+                    <HwihaEmpty>보이는 도로 보루가 없습니다.</HwihaEmpty>}
+                {roadForts.map((fort) => <div key={fort.id} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                    <strong>도로 보루 · {fort.provinceId}</strong>
+                    <KV items={[
+                        { k: '위치', v: `${fort.row}, ${fort.col}` },
+                        { k: '소유 세력', v: `${fort.ownerNationId}` },
+                        { k: '성벽', v: `${fort.wall}` },
+                        { k: '포위 진척', v: fort.besiegerGeneralId == null ? '포위 없음' : `${fort.siegeProgress}%` },
+                    ]} />
+                    {fort.canBesiege && <button className="os-button os-button--danger os-button--sm"
+                        disabled={busy} onClick={() => void besiegeRoadFort(fort)}>보루 포위 예약</button>}
+                </div>)}
+            </Panel>
         </div>
     </HwihaShell>;
 }

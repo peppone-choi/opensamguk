@@ -74,14 +74,16 @@ data class HwihaActiveWorkDto(
     val lastProgressAt: Phase?, val stopReason: String?, val stopReasonText: String?, val startsAtNextBoundary: Boolean,
 )
 
-data class HwihaCompletedWorkDto(val work: String, val label: String, val completedAt: Phase)
+data class HwihaCompletedWorkDto(val work: String, val label: String, val completedAt: Phase,
+    val edgeId: String? = null)
 
 data class HwihaStartableWorkDto(val work: String, val label: String, val available: Boolean, val blocked: HwihaReasonDto?,
     val cost: HwihaStockDto, val requiredProgress: Int, val estimatedPhases: Int)
 
 data class HwihaCountyWorksDto(
-    val countyId: Int, val name: String, val commanderyName: String?, val warehouse: HwihaStockDto?,
+    val countyId: Int, val provinceId: String?, val name: String, val commanderyName: String?, val warehouse: HwihaStockDto?,
     val active: HwihaActiveWorkDto?, val completed: List<HwihaCompletedWorkDto>, val startable: List<HwihaStartableWorkDto>,
+    val provinceIds: Set<String> = emptySet(),
 )
 
 data class HwihaWorksResponse(

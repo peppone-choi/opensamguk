@@ -1,0 +1,144 @@
+{
+  "schemaVersion": 1,
+  "decisionSetId": "province-growth-and-escape-boundaries-v1",
+  "authority": "user decisions 2026-09-24: all counties reserve maximum 7x7 growth at 4x grid; adjust adjacent commandery boundaries without changing county affiliation; eliminate enclosed provinces",
+  "resolutionScale": 4,
+  "growthSpan": 7,
+  "transfers": [
+    {
+      "row": 237,
+      "col": 456,
+      "fromProvinceId": "42818",
+      "toProvinceId": "42817",
+      "fromParentRegionId": "PARENT-0032",
+      "toParentRegionId": "PARENT-0032",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 237,
+      "col": 457,
+      "fromProvinceId": "42818",
+      "toProvinceId": "42817",
+      "fromParentRegionId": "PARENT-0032",
+      "toParentRegionId": "PARENT-0032",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 234,
+      "col": 376,
+      "fromProvinceId": "82879",
+      "toProvinceId": "82828",
+      "fromParentRegionId": "PARENT-0000",
+      "toParentRegionId": "PARENT-0000",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 187,
+      "col": 420,
+      "fromProvinceId": "87499",
+      "toProvinceId": "87159",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0131",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 186,
+      "col": 420,
+      "fromProvinceId": "87499",
+      "toProvinceId": "87159",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0131",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 184,
+      "col": 415,
+      "fromProvinceId": "87490",
+      "toProvinceId": "87489",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0014",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 182,
+      "col": 417,
+      "fromProvinceId": "87177",
+      "toProvinceId": "87510",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0014",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 181,
+      "col": 417,
+      "fromProvinceId": "87177",
+      "toProvinceId": "87510",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0014",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 223,
+      "col": 294,
+      "fromProvinceId": "70415",
+      "toProvinceId": "DIRECT-PARENT-0140-4962138710c0",
+      "fromParentRegionId": "PARENT-0006",
+      "toParentRegionId": "PARENT-0140",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 224,
+      "col": 294,
+      "fromProvinceId": "70415",
+      "toProvinceId": "DIRECT-PARENT-0140-4962138710c0",
+      "fromParentRegionId": "PARENT-0006",
+      "toParentRegionId": "PARENT-0140",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 292,
+      "col": 513,
+      "fromProvinceId": "40451",
+      "toProvinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
+      "fromParentRegionId": "PARENT-0052",
+      "toParentRegionId": "PARENT-0145",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 293,
+      "col": 513,
+      "fromProvinceId": "40451",
+      "toProvinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
+      "fromParentRegionId": "PARENT-0052",
+      "toParentRegionId": "PARENT-0145",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 301,
+      "col": 207,
+      "fromProvinceId": "96055",
+      "toProvinceId": "DIRECT-PARENT-0148-9cee1dedcd80",
+      "fromParentRegionId": "PARENT-0057",
+      "toParentRegionId": "PARENT-0148",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 302,
+      "col": 207,
+      "fromProvinceId": "96055",
+      "toProvinceId": "DIRECT-PARENT-0148-9cee1dedcd80",
+      "fromParentRegionId": "PARENT-0057",
+      "toParentRegionId": "PARENT-0148",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 295,
+      "col": 243,
+      "fromProvinceId": "96113",
+      "toProvinceId": "96107",
+      "fromParentRegionId": "PARENT-0056",
+      "toParentRegionId": "PARENT-0144",
+      "purpose": "OPEN_SECOND_LAND_EDGE_TO_HANSHUI"
+    }
+  ]
+}

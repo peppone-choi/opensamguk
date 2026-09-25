@@ -19,6 +19,7 @@ class InputRegistryTest {
     private var enlistCalls = 0
     private fun handlers(enlist: InputHandler) = (mapOf("action.enlist" to enlist, "action.deploy" to InputHandler {},
         "action.scout" to InputHandler {}, "action.assault" to InputHandler {}, "action.demandSurrender" to InputHandler {},
+        "action.siegeRoadFort" to InputHandler {},
         "placement.assign" to InputHandler {}, "policy.set" to InputHandler {}, "work.start" to InputHandler {},
         "work.reduce" to InputHandler {},
         "court.dispatch" to InputHandler {}, "court.dispatchReply" to InputHandler {}, "court.reward" to InputHandler {},
@@ -330,9 +331,9 @@ class InputRegistryTest {
 
     @Test
     fun `ledger keeps its row count and names every direct action`() {
-        assertEquals(73, catalog.entries.size)
+        assertEquals(74, catalog.entries.size)
         val direct = catalog.entries.filter { it.kind == InputKind.GENERAL_ACTION }
-        assertEquals(42, direct.size)
+        assertEquals(43, direct.size)
         assertTrue(direct.all { !it.displayName.isNullOrBlank() })
         assertEquals("농지개간", catalog["action.farm"]?.displayName)
         assertEquals("출사", catalog["action.enlist"]?.displayName)

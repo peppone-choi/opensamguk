@@ -100,6 +100,7 @@ def measure(document: dict) -> list[dict]:
             "seat": bool(city.get("seat")),
             "parent": record["parentRegionId"],
             "basis": record.get("geometryBasis"),
+            "coordinateBasis": city.get("locationBasis"),
             "area": area,
             "radius": round(radius, 2),
             "seedOffset": round(seed, 2),
@@ -130,7 +131,10 @@ def gate(rows: list[dict], exception_ids: frozenset[str] = frozenset()) -> dict[
     return {
         "Q1": landless + [r for r in measured
                           if not r["trueCellInJurisdiction"] and r["jurisdictionId"] not in exception_ids],
-        "Q1b": [r for r in measured if r["terrainAtTrue"] in ("PLAIN", "BASIN") and r["lowlandCells"] == 0],
+        # A synthetic commandery point has no historical terrain claim. Its
+        # projected cell is a placement witness, not evidence of a lowland.
+        "Q1b": [r for r in measured if r.get("coordinateBasis") != "SYNTHETIC_COMMANDERY_CELL"
+                and r["terrainAtTrue"] in ("PLAIN", "BASIN") and r["lowlandCells"] == 0],
     }
 
 

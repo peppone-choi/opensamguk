@@ -250,6 +250,53 @@
       "deliveryState": "HANDLER_READY"
     },
     {
+      "inputId": "action.siegeRoadFort",
+      "kind": "GENERAL_ACTION",
+      "layer": 1,
+      "actor": "GENERAL",
+      "authorityRule": "SUBJECT_OWNER",
+      "targetSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.siegeRoadFort fortId argument contract"
+      },
+      "costSchema": {
+        "status": "HANDLER_DEFINED",
+        "source": "server-side action.siegeRoadFort rules",
+        "money": null,
+        "grain": null,
+        "iron": null,
+        "timber": null,
+        "horses": null
+      },
+      "timing": {
+        "phase": "SIEGE",
+        "turnSlots": 12,
+        "perPhaseLimit": 1
+      },
+      "effectScope": "ACTOR_LOCATION",
+      "failureReasons": [
+        "WRONG_RULE_PROFILE",
+        "UNKNOWN_INPUT",
+        "INVALID_INPUT",
+        "STATE_UNAVAILABLE",
+        "FORT_NOT_FOUND",
+        "NOT_AT_GATE",
+        "NOT_HOSTILE",
+        "ALREADY_BESIEGED",
+        "ARMY_UNAVAILABLE"
+      ],
+      "resultType": "InputResolved",
+      "replayContract": {
+        "status": "HANDLER_DEFINED",
+        "key": "requestId"
+      },
+      "aiPolicyId": "ai.action.siegeRoadFort",
+      "helpTopicId": "commands.action.siegeRoadFort",
+      "tutorialObjectiveId": "N/A",
+      "displayName": "보루 포위",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
       "inputId": "court.dispatch",
       "kind": "COURT_DECISION",
       "layer": 1,

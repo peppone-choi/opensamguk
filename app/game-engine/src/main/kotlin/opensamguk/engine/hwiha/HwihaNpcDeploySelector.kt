@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
@@ -45,7 +47,9 @@ class HwihaNpcDeploySelector(
         if (units.isEmpty()) return null
         val troops = units.sumOf { it.troops.toLong() }
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
-        val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
+            catch (_: IllegalArgumentException) { null }
             ?: return null
         reliefTarget(world, actor.nationId, position, troops, projection, edges)?.let { return DeployInput(actorId, units.map { it.id }.sorted(), it) }
         // 급식이 안 되는 부곡으로는 공격 출병하지 않는다 — 도착해도 포위를 걸 수 없다. 자국 縣에 있으면 월 보충을 기다리고,
@@ -108,7 +112,9 @@ class HwihaNpcDeploySelector(
         if (troops <= 0) return null
         val position = world.positionOf(actorId) as? StrategicNodeRef.LandProvince ?: return null
         val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
-        val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
+            catch (_: IllegalArgumentException) { null }
             ?: return null
         return reliefTarget(world, actor.nationId, position, troops, projection, edges)
     }

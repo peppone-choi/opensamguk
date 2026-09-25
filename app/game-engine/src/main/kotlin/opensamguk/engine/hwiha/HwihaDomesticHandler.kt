@@ -71,6 +71,7 @@ class HwihaDomesticHandler(
             DomesticInput.WORK -> {
                 val request = DomesticInput.parseWork(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
+                infrastructureTargetError(request, state)?.let { return deny("INVALID_INFRASTRUCTURE_SITE", it) }
                 DomesticRules.assessWork(request, state).also {
                     if (it is DomesticAssessment.Eligible) storeWork(command.requestId, request, now)
                 }
@@ -134,15 +135,27 @@ class HwihaDomesticHandler(
     private fun storeWork(requestId: String, request: WorkRequest, now: Phase) {
         val city = checkNotNull(world.getCityById(request.countyId))
         val current = CountyWorks.read(city.meta)
-        val next = CountyWorks(DomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now),
+        val next = CountyWorks(DomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now,
+            request.edgeId, request.row, request.col),
             current?.completed.orEmpty())
         world.updateCityMeta(recorder, city.id, city.meta.withKey(CountyWorks.META_KEY, next.toMetaValue()))
+    }
+
+    private fun infrastructureTargetError(request: WorkRequest, state: DomesticProjection): String? {
+        val passage = try { context.topology?.let { LandPassageState.read(world.getState().meta, it) } }
+            catch (_: IllegalArgumentException) { null }
+        val forts = try { RoadFortState.read(world.getState().meta) }
+            catch (_: IllegalArgumentException) { return "보루 상태를 읽을 수 없습니다." }
+        return InfrastructureSiteRules.error(request, state,
+            InfrastructureSiteState(context.topology, context.roadGates, passage, forts))
     }
 
     private fun reduceFortification(countyId: Int) {
         val city = checkNotNull(world.getCityById(countyId))
         val works = checkNotNull(CountyWorks.read(city.meta))
-        val remaining = CountyWorks(null, works.completed.filterNot { it.work == DomesticWork.FORTIFICATION })
+        val remaining = CountyWorks(null, works.completed.filterNot {
+            it.work == DomesticWork.FORTIFICATION && it.edgeId == null
+        })
         val next = city.copy(defence = (city.defence - 500).coerceAtLeast(0),
             wall = (city.wall - 500).coerceAtLeast(0),
             meta = city.meta.withKey(CountyWorks.META_KEY, remaining.toMetaValue()))

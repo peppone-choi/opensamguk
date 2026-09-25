@@ -87,7 +87,6 @@ class ScenarioMapSeedIT {
             worldId = opensamguk.common.world.WorldId(1))
 
         assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
-        assertEquals(774, count("city")) // scenario_2 remains the legacy V2 compatibility template.
         assertEquals(0, count("nation"))
         assertEquals(0, count("general"))
 

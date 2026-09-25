@@ -171,6 +171,35 @@ export interface HwihaSieges {
     readonly sieges: readonly HwihaSiege[];
 }
 
+export interface RoadFort {
+    readonly id: string;
+    readonly edgeId: string;
+    readonly provinceId: string;
+    readonly row: number;
+    readonly col: number;
+    readonly ownerNationId: number;
+    readonly wall: number;
+    readonly garrison: number;
+    readonly besiegerGeneralId: number | null;
+    readonly siegeProgress: number;
+    readonly canBesiege: boolean;
+}
+
+export interface RoadForts {
+    readonly status: string;
+    readonly roadMode: boolean;
+    readonly forts: readonly RoadFort[];
+    readonly gates: readonly {
+        edgeId: string;
+        fromProvinceId: string;
+        toProvinceId: string;
+        active: boolean;
+        buildable: boolean;
+        historicalRouteIds: readonly string[];
+        fortCells: readonly { provinceId: string; row: number; col: number }[];
+    }[];
+}
+
 // ── 공용 훅 ──────────────────────────────────────────────────────────────────
 export interface HwihaRead<T> {
     readonly data: T | null;
@@ -381,6 +410,8 @@ export interface HwihaPolicies {
 }
 export interface HwihaCountyWorks {
     readonly countyId: number;
+    readonly provinceId: string | null;
+    readonly provinceIds: readonly string[];
     readonly name: string;
     readonly commanderyName: string | null;
     readonly warehouse: HwihaStock | null;
@@ -388,7 +419,7 @@ export interface HwihaCountyWorks {
         work: string; label: string; percent: number; remainingPhases: number;
         remainingCost: HwihaStock; stopReasonText: string | null; startsAtNextBoundary: boolean;
     } | null;
-    readonly completed: readonly { work: string; label: string }[];
+    readonly completed: readonly { work: string; label: string; edgeId: string | null }[];
     readonly startable: readonly { work: string; label: string; available: boolean; blocked: HwihaBlocked | null; cost: HwihaStock; estimatedPhases: number }[];
 }
 export interface HwihaWorks {

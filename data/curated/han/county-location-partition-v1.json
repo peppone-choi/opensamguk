@@ -5,19 +5,23 @@
   "inputs": {
     "decisions": {
       "path": "data/curated/han/county-location-partition-decisions-v1.json",
-      "sha256": "d6cd04852e8fefa336efb99dce8336edd28a43e7c985835a40fe9a0b6efdaad6"
+      "sha256": "2a4b5d02588e563f45f806c60a1828e63ef692e7890949cce8654a0eccde9f97"
     },
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
-      "sha256": "6cd029f7082746948934217b488de958d02fd48773b4f257a70a34fa23a225e7"
+      "sha256": "758f3d13fdcbe536f999eb34f560514fa5cfdb5f26a635ec0ac44c6e4e84f55f"
     },
     "passes": {
       "path": "data/curated/han/strategic-passes-v1.json",
       "sha256": "a43c49c20127ce4b4f222376a516b6311c219058f6db32c7888b0ced9d00d429"
+    },
+    "growthBoundaries": {
+      "path": "data/curated/han/province-growth-and-escape-boundaries-v1.json",
+      "sha256": "e6477eb4d63b110f196a66d13c0b7873a3ff6aba3d763809e6b640a0cf837a18"
     }
   },
   "rule": {
-    "minArea": 8,
+    "minArea": 9,
     "maxArea": 620,
     "straight": 10,
     "diagonal": 14,
@@ -1321,7 +1325,7 @@
       },
       "reason": "WATER_SEPARATED",
       "reasonBasis": "MECHANICAL_UNREVIEWED",
-      "disposition": "OWN_PROVINCE"
+      "disposition": "KEPT_IN_SEAT_PROVINCE"
     },
     {
       "jurisdictionId": "X052",
@@ -1541,20 +1545,30 @@
     }
   ],
   "multiComponentProvinceIds": [
+    "40165",
+    "40426",
     "40740",
     "41154",
+    "42301",
     "43057",
     "43138",
+    "43252",
     "43423",
     "43497",
     "70620",
     "83166",
     "85202",
     "85344",
+    "X035",
+    "X040",
+    "X041",
     "X046",
+    "X051",
     "X052",
     "X054",
     "X055",
+    "X056",
+    "X057",
     "fc-jiaozhi-006",
     "fc-lelang-010"
   ],
@@ -1562,21 +1576,31 @@
     {
       "jurisdictionId": "42817",
       "nameCh": "广戚县",
-      "borrowedCells": 3,
+      "borrowedCells": 4,
       "donors": {
-        "42818": 3
+        "42818": 4
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
       "satisfied": true
     },
     {
       "jurisdictionId": "44564",
       "nameCh": "西充国县",
-      "borrowedCells": 7,
+      "borrowedCells": 8,
       "donors": {
-        "44558": 7
+        "44558": 8
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "45038",
+      "nameCh": "梁邹县",
+      "borrowedCells": 1,
+      "donors": {
+        "45036": 1
+      },
+      "areaAfter": 9,
       "satisfied": true
     },
     {
@@ -1592,55 +1616,95 @@
     {
       "jurisdictionId": "45269",
       "nameCh": "瑕丘县",
-      "borrowedCells": 7,
+      "borrowedCells": 8,
       "donors": {
-        "45188": 7
+        "45188": 8
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
       "satisfied": true
     },
     {
       "jurisdictionId": "45651",
       "nameCh": "襄阳县",
-      "borrowedCells": 13,
+      "borrowedCells": 24,
       "donors": {
-        "45654": 7,
-        "45696": 6
+        "45654": 14,
+        "45696": 10
       },
-      "areaAfter": 16,
+      "areaAfter": 27,
       "satisfied": true,
-      "floor": 16
+      "floor": 27
     },
     {
       "jurisdictionId": "70634",
       "nameCh": "杜",
-      "borrowedCells": 2,
+      "borrowedCells": 3,
       "donors": {
-        "70623": 2
+        "70623": 2,
+        "70633": 1
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
       "satisfied": true
+    },
+    {
+      "jurisdictionId": "82519",
+      "nameCh": "平皋县",
+      "borrowedCells": 1,
+      "donors": {
+        "82489": 1
+      },
+      "areaAfter": 9,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "82520",
+      "nameCh": "温县",
+      "borrowedCells": 4,
+      "donors": {
+        "82846": 4
+      },
+      "areaAfter": 17,
+      "satisfied": false,
+      "floor": 18
     },
     {
       "jurisdictionId": "82879",
       "nameCh": "平阴县",
-      "borrowedCells": 2,
+      "borrowedCells": 8,
       "donors": {
-        "82828": 2
+        "82828": 8
       },
-      "areaAfter": 12,
+      "areaAfter": 18,
       "satisfied": true,
-      "floor": 12
+      "floor": 18
+    },
+    {
+      "jurisdictionId": "85691",
+      "nameCh": "章县",
+      "borrowedCells": 1,
+      "donors": {
+        "85681": 1
+      },
+      "areaAfter": 9,
+      "satisfied": true
     },
     {
       "jurisdictionId": "87051",
       "nameCh": "巨鹿县",
-      "borrowedCells": 1,
+      "borrowedCells": 2,
       "donors": {
-        "87499": 1
+        "87499": 2
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
       "satisfied": true
+    },
+    {
+      "jurisdictionId": "87159",
+      "nameCh": "广平县",
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 8,
+      "satisfied": false
     },
     {
       "jurisdictionId": "87489",
@@ -1655,22 +1719,18 @@
     {
       "jurisdictionId": "87490",
       "nameCh": "朝平县",
-      "borrowedCells": 1,
-      "donors": {
-        "87177": 1
-      },
-      "areaAfter": 7,
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 6,
       "satisfied": false
     },
     {
       "jurisdictionId": "87491",
       "nameCh": "南和县",
-      "borrowedCells": 1,
-      "donors": {
-        "87513": 1
-      },
-      "areaAfter": 8,
-      "satisfied": true
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 7,
+      "satisfied": false
     },
     {
       "jurisdictionId": "87506",
@@ -1689,24 +1749,59 @@
       "satisfied": false
     },
     {
+      "jurisdictionId": "87569",
+      "nameCh": "扶柳县",
+      "borrowedCells": 1,
+      "donors": {
+        "87591": 1
+      },
+      "areaAfter": 9,
+      "satisfied": true
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0140-SEAT",
+      "nameCh": "漆縣",
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 8,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0145-SEAT",
+      "nameCh": "毗陵縣",
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 8,
+      "satisfied": false
+    },
+    {
+      "jurisdictionId": "JURISDICTION-PARENT-0148-SEAT",
+      "nameCh": "汶山縣",
+      "borrowedCells": 0,
+      "donors": {},
+      "areaAfter": 8,
+      "satisfied": false
+    },
+    {
       "jurisdictionId": "fc-jiaozhi-009",
       "nameCh": "西于縣",
-      "borrowedCells": 3,
+      "borrowedCells": 4,
       "donors": {
         "fc-jiaozhi-002": 2,
-        "fc-jiaozhi-005": 1
+        "fc-jiaozhi-005": 1,
+        "fc-jiaozhi-011": 1
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
       "satisfied": true
     },
     {
       "jurisdictionId": "fc-xuantu-002",
       "nameCh": "西蓋馬縣",
-      "borrowedCells": 5,
+      "borrowedCells": 6,
       "donors": {
-        "fc-xuantu-003": 5
+        "fc-xuantu-003": 6
       },
-      "areaAfter": 8,
+      "areaAfter": 9,
       "satisfied": true
     }
   ],
@@ -1717,6 +1812,13 @@
       "siteIds": [
         "dengsai",
         "fancheng"
+      ]
+    },
+    {
+      "jurisdictionId": "82520",
+      "nameCh": "温县",
+      "siteIds": [
+        "xiaopingjin"
       ]
     },
     {
@@ -2155,31 +2257,344 @@
       "pieces": 3
     }
   ],
-  "areaViolations": [
+  "areaViolations": [],
+  "reviewedBoundaryTransfers": [
     {
-      "provinceId": "45203",
-      "cells": 7,
-      "class": "BELOW_MIN"
+      "row": 237,
+      "col": 456,
+      "fromProvinceId": "42818",
+      "toProvinceId": "42817",
+      "fromParentRegionId": "PARENT-0032",
+      "toParentRegionId": "PARENT-0032",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
     },
     {
-      "provinceId": "87489",
-      "cells": 4,
-      "class": "BELOW_MIN"
+      "row": 237,
+      "col": 457,
+      "fromProvinceId": "42818",
+      "toProvinceId": "42817",
+      "fromParentRegionId": "PARENT-0032",
+      "toParentRegionId": "PARENT-0032",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
     },
     {
-      "provinceId": "87490",
-      "cells": 7,
-      "class": "BELOW_MIN"
+      "row": 234,
+      "col": 376,
+      "fromProvinceId": "82879",
+      "toProvinceId": "82828",
+      "fromParentRegionId": "PARENT-0000",
+      "toParentRegionId": "PARENT-0000",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
     },
     {
-      "provinceId": "87506",
-      "cells": 5,
-      "class": "BELOW_MIN"
+      "row": 187,
+      "col": 420,
+      "fromProvinceId": "87499",
+      "toProvinceId": "87159",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0131",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
     },
     {
-      "provinceId": "87510",
-      "cells": 4,
-      "class": "BELOW_MIN"
+      "row": 186,
+      "col": 420,
+      "fromProvinceId": "87499",
+      "toProvinceId": "87159",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0131",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 184,
+      "col": 415,
+      "fromProvinceId": "87490",
+      "toProvinceId": "87489",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0014",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 182,
+      "col": 417,
+      "fromProvinceId": "87177",
+      "toProvinceId": "87510",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0014",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 181,
+      "col": 417,
+      "fromProvinceId": "87177",
+      "toProvinceId": "87510",
+      "fromParentRegionId": "PARENT-0014",
+      "toParentRegionId": "PARENT-0014",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 223,
+      "col": 294,
+      "fromProvinceId": "70415",
+      "toProvinceId": "DIRECT-PARENT-0140-4962138710c0",
+      "fromParentRegionId": "PARENT-0006",
+      "toParentRegionId": "PARENT-0140",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 224,
+      "col": 294,
+      "fromProvinceId": "70415",
+      "toProvinceId": "DIRECT-PARENT-0140-4962138710c0",
+      "fromParentRegionId": "PARENT-0006",
+      "toParentRegionId": "PARENT-0140",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 292,
+      "col": 513,
+      "fromProvinceId": "40451",
+      "toProvinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
+      "fromParentRegionId": "PARENT-0052",
+      "toParentRegionId": "PARENT-0145",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 293,
+      "col": 513,
+      "fromProvinceId": "40451",
+      "toProvinceId": "DIRECT-PARENT-0145-3a5b0d2b51a8",
+      "fromParentRegionId": "PARENT-0052",
+      "toParentRegionId": "PARENT-0145",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 301,
+      "col": 207,
+      "fromProvinceId": "96055",
+      "toProvinceId": "DIRECT-PARENT-0148-9cee1dedcd80",
+      "fromParentRegionId": "PARENT-0057",
+      "toParentRegionId": "PARENT-0148",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 302,
+      "col": 207,
+      "fromProvinceId": "96055",
+      "toProvinceId": "DIRECT-PARENT-0148-9cee1dedcd80",
+      "fromParentRegionId": "PARENT-0057",
+      "toParentRegionId": "PARENT-0148",
+      "purpose": "RESERVE_7X7_AT_4X_RESOLUTION"
+    },
+    {
+      "row": 295,
+      "col": 243,
+      "fromProvinceId": "96113",
+      "toProvinceId": "96107",
+      "fromParentRegionId": "PARENT-0056",
+      "toParentRegionId": "PARENT-0144",
+      "purpose": "OPEN_SECOND_LAND_EDGE_TO_HANSHUI"
+    }
+  ],
+  "absorbedCitylessDeadEnds": [
+    {
+      "provinceId": "SUB-40165-39a88c0543b5",
+      "intoProvinceId": "40165",
+      "jurisdictionId": "40165",
+      "landNeighbours": 0,
+      "cells": 9,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-40426-900f77eff5b7",
+      "intoProvinceId": "40426",
+      "jurisdictionId": "40426",
+      "landNeighbours": 0,
+      "cells": 39,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-40740-3a5b5675f605",
+      "intoProvinceId": "40740",
+      "jurisdictionId": "40740",
+      "landNeighbours": 0,
+      "cells": 30,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-42301-7104ff31657a",
+      "intoProvinceId": "42301",
+      "jurisdictionId": "42301",
+      "landNeighbours": 0,
+      "cells": 16,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-42444-b95f085a12a8",
+      "intoProvinceId": "42444",
+      "jurisdictionId": "42444",
+      "landNeighbours": 1,
+      "cells": 599,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-43252-2d3b29ad3f33",
+      "intoProvinceId": "43252",
+      "jurisdictionId": "43252",
+      "landNeighbours": 0,
+      "cells": 9,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X035-ba000ebf76e2",
+      "intoProvinceId": "X035",
+      "jurisdictionId": "X035",
+      "landNeighbours": 0,
+      "cells": 14,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X040-541a9c6ebb19",
+      "intoProvinceId": "X040",
+      "jurisdictionId": "X040",
+      "landNeighbours": 0,
+      "cells": 9,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X041-17b9700aed53",
+      "intoProvinceId": "X041",
+      "jurisdictionId": "X041",
+      "landNeighbours": 0,
+      "cells": 14,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X046-763d3a08775b",
+      "intoProvinceId": "X046",
+      "jurisdictionId": "X046",
+      "landNeighbours": 0,
+      "cells": 22,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X051-81bd3bc269dc",
+      "intoProvinceId": "X051",
+      "jurisdictionId": "X051",
+      "landNeighbours": 0,
+      "cells": 15,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X052-e2019b23588b",
+      "intoProvinceId": "X052",
+      "jurisdictionId": "X052",
+      "landNeighbours": 0,
+      "cells": 20,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X054-00d863f2c44d",
+      "intoProvinceId": "X054",
+      "jurisdictionId": "X054",
+      "landNeighbours": 0,
+      "cells": 611,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X054-05d9b93dfd00",
+      "intoProvinceId": "X054",
+      "jurisdictionId": "X054",
+      "landNeighbours": 0,
+      "cells": 480,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X055-0deaa9deddaa",
+      "intoProvinceId": "X055",
+      "jurisdictionId": "X055",
+      "landNeighbours": 0,
+      "cells": 41,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X055-d476e28be9f5",
+      "intoProvinceId": "X055",
+      "jurisdictionId": "X055",
+      "landNeighbours": 1,
+      "cells": 568,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X055-42319b3daf6c",
+      "intoProvinceId": "X055",
+      "jurisdictionId": "X055",
+      "landNeighbours": 0,
+      "cells": 28,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X055-f9c61192fa78",
+      "intoProvinceId": "X055",
+      "jurisdictionId": "X055",
+      "landNeighbours": 0,
+      "cells": 19,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X056-4430d4dd8ab9",
+      "intoProvinceId": "X056",
+      "jurisdictionId": "X056",
+      "landNeighbours": 1,
+      "cells": 436,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X056-c4d35e38f118",
+      "intoProvinceId": "X056",
+      "jurisdictionId": "X056",
+      "landNeighbours": 0,
+      "cells": 15,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X057-ef85eaeea522",
+      "intoProvinceId": "X057",
+      "jurisdictionId": "X057",
+      "landNeighbours": 0,
+      "cells": 42,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X057-583a342f4480",
+      "intoProvinceId": "X057",
+      "jurisdictionId": "X057",
+      "landNeighbours": 0,
+      "cells": 12,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X057-f6cdaf119bf2",
+      "intoProvinceId": "X057",
+      "jurisdictionId": "X057",
+      "landNeighbours": 0,
+      "cells": 11,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X057-6e514a3d0138",
+      "intoProvinceId": "X057",
+      "jurisdictionId": "X057",
+      "landNeighbours": 0,
+      "cells": 19,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
+    },
+    {
+      "provinceId": "SUB-X056-b6a5311503ef",
+      "intoProvinceId": "X056",
+      "jurisdictionId": "X056",
+      "landNeighbours": 1,
+      "cells": 437,
+      "reason": "CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION"
     }
   ],
   "retiredProvinceIds": [
@@ -4004,16 +4419,18 @@
     "stages": [
       {
         "inputDocumentSha256": "b1c284e7022b6ed798cf2bbafdbcca4ac48c755cfd6a0e8274c2d0f119fbb071",
-        "outputDocumentSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
+        "outputDocumentSha256": "989c37006f7069224320d936e29f6e9ceb89f16d9eb70a0bb298f308e659457a",
         "inputBlob": {
           "path": "data/curated/han/county-location-partition-v1.input.json.gz",
-          "sha256": "e549f918635cdf0148304ba2db4d63ce1d3b22118ebe3407cbe01bdaef5a9f09",
+          "sha256": "3e5d587b9674791aa53cc2e2bf61649de5a20ed95e5f242341e339fddee89af4",
           "fields": [
             "owner",
+            "parentOwner",
             "provinceRecords",
             "jurisdictionRecords",
             "cities",
             "adjacency.county",
+            "adjacency.commandery",
             "_meta.counts"
           ]
         },
@@ -5209,14 +5626,14 @@
           "fc-rinan-005",
           "82879"
         ],
-        "geometryDigest": "89acc1deaa0383ff2aea76be241511261dfc1f43e84e2b26416cf2046d06a5eb",
+        "geometryDigest": "8a6197bc1a9ef9ac5cb43f98ea035669a91006117927f5536b1df02c6d3f3e7c",
         "counts": {
           "jurisdictions": 1071,
-          "provinces": 1258,
+          "provinces": 1232,
           "seatProvinces": 1058,
-          "citylessProvinces": 200,
+          "citylessProvinces": 174,
           "provincesBefore": 1521,
-          "adjCounty": 3408,
+          "adjCounty": 3405,
           "diagonalFragmentCellsReassigned": 254,
           "seedlessComponents": 30,
           "seedlessCells": 1666

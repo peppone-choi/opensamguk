@@ -127,8 +127,13 @@ def build(tiles: dict, world: dict, params: dict, households: dict, historical_e
         weights = [
             prior.get(str(r["cityLevel"]), 1.0) * max(r["terrainScore"], floor) for r in members
         ]
-        for r, h in zip(members, largest_remainder(int(stat["households"]), weights)):
-            r["households"] = h
+        # A documented 郡 total should leave at least one household in every
+        # occupied 縣, including a tiny desert outpost after boundary edits.
+        total = int(stat["households"])
+        floor_per_county = 1 if total >= len(members) else 0
+        shares = largest_remainder(total - floor_per_county * len(members), weights)
+        for r, h in zip(members, shares):
+            r["households"] = h + floor_per_county
             r["householdsBasis"] = "JUNGUOZHI_COMMANDERY_SPLIT"
     for jid, city in city_by_jur.items():
         allocation = city.get("meta", {}).get("economyBasis")

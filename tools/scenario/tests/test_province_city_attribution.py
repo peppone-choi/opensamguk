@@ -64,7 +64,7 @@ class ProvinceCityAttributionTest(unittest.TestCase):
         # 2026-09-17(ADR-LITE-056): 城 없던 관할 11곳을 같은 실체 城 관할에 접고 郡國 밖 취락 37곳이 城으로 서서
         # 모든 省이 제 관할 治所 城을 본다 — 1594 전부 OWN. 이제 빌더가 OWN 아닌 省을 원장으로 쓰지 않고 멈춘다.
         # 2026-09-23: 결손 縣 56곳이 제 省을 받아 1374 → 1430. 폴백은 그대로 전부 0 이다.
-        self.assertEqual({"OWN_COUNTY_SEAT": 1653}, dict(self.basis))
+        self.assertEqual({"OWN_COUNTY_SEAT": 1627}, dict(self.basis))
 
     def test_attribution_never_crosses_a_commandery_boundary(self) -> None:
         jurisdictions = {

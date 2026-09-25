@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
 import { HwihaEmpty, hwihaReadNotice } from './HwihaStates';
 
-/** 사건 종류 → 뱃지 색. 종류 문자열은 서버 `HwihaRecordKind` 정본을 따른다. */
+/** 사건 종류 → 뱃지 색. 종류 문자열은 서버 `RecordKind` 정본을 따른다. */
 function kindTone(kind: string): 'moss' | 'rust' | 'info' | 'bronze' | 'neutral' {
     if (kind.startsWith('encounter') || kind === 'input.rejected' || kind === 'county.lost') return 'rust';
     if (kind.startsWith('court.')) return 'bronze';

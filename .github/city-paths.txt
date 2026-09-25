@@ -3,6 +3,7 @@
 [data]
 data/map/han-*artifacts-v1/**
 data/map/han-tiles.json
+data/map/han-land-roads-v1.json
 data/map/han-water-topology-v1.json
 data/map/han-strategic-topology-manifest-v1.json
 data/map/han-world-v3-manifest-v1.json
@@ -27,6 +28,9 @@ logic/src/main/kotlin/opensamguk/logic/world/CityConstRegistry.kt
 infra/src/main/kotlin/opensamguk/infra/seed/HanWorldArtifactsResolver.kt
 infra/src/main/kotlin/opensamguk/infra/seed/HanHistoricalArtifacts.kt
 infra/src/main/kotlin/opensamguk/infra/seed/Han1447Artifacts.kt
+infra/src/main/kotlin/opensamguk/infra/seed/Han1447Map4Artifacts.kt
+infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt
+logic/src/main/kotlin/opensamguk/logic/world/HanWorldVariant.kt
 infra/src/main/kotlin/opensamguk/infra/seed/HanHistoricalOwnership.kt
 tools/scenario/build_han_world.py
 tools/scenario/apply_han_world.py
@@ -38,6 +42,10 @@ tools/map/fold_cityless_jurisdictions.py
 tools/map/build_commandery_supply_links.py
 tools/map/materialize_frontier_counties.py
 tools/map/carve_strategic_site_provinces.py
+tools/map/build_han_1447_map4_bundle.py
+tools/map/audit_province_clearance.py
+tools/map/build_province_relocations.py
+data/curated/han/province-relocations-map4-v1.json
 tools/map/rebalance_han_tiles.py
 tools/scenario/build_province_city_attribution.py
 tools/scenario/build_scenario_province_ownership.py

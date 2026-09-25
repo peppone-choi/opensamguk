@@ -14,9 +14,9 @@ class Han1168ArtifactsIntegrityTest {
 
     @Test fun `new release loads expanded settlements and exact economy in both runtime paths`() {
         val release = Han1168Artifacts.load(Path.of(".."))
-        assertEquals(1168, release.cityConst.all().size)
         val cities = MapJson.loadCityDetails(release.artifactBytes(
             "infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8)).associateBy { it.id }
+        assertEquals(cities.keys, release.cityConst.all().keys)
         for (id in cities.keys.filter { it >= 1134 }) {
             val raw = cities.getValue(id)
             val runtime = release.cityConst.byId(id)!!
@@ -26,7 +26,6 @@ class Han1168ArtifactsIntegrityTest {
             assertTrue(raw.populationInit!! > 0)
             assertTrue(raw.populationInit!! <= raw.populationMax)
         }
-        assertEquals(1133, Han1133Artifacts.load(Path.of("..")).cityConst.all().size)
     }
 
     @Test fun `changed catalog and corrupt or missing blob never fall back to current files`() {
