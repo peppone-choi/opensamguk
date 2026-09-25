@@ -4,6 +4,7 @@
 > 상태: **정식(2026-09-24 사용자 승인) — 남은 차이 3건: #249·#892 (#779 상위).**
 > 상위: [장수·휘하 캠페인 재설계](./2026-09-17-general-and-retinue-campaign-redesign.md) §4·§5·§12, ADR-LITE-057, ADR-LITE-049 개정(2026-09-17 사용자 결정, `.ai/decisions.md`에 반영됨)
 > 범위: 휘하 입력 계약. 구현 근거와 남은 차이는 아래 대조표에 기록한다.
+> 2026-09-25 정리 결정: 삼모 대응은 제품 계약에서 제외한다. 아래 날짜가 붙은 과거 관측은 기록이고, 현행 원장 계약은 §2·§3의 개정 문장이 우선한다.
 
 ## 2026-09-24 구현 대조와 처리
 
@@ -12,9 +13,9 @@
 | 제품 기본 프로필이 SAMMO였음 — B1 해소 | 신규 시드의 누락 기본값을 HWIHA로 변경하고 저장한다. 기존 월드에서 키가 없으면 game-api는 거절하며, 복원 스위치가 켜진 경우에만 SAMMO로 읽는다. 엔진의 구형 누락 월드 SAMMO 해석은 동결 회귀 호환이다 | 기본값 테스트와 적색 프로브로 고정. [#249](https://github.com/peppone-choi/opensamguk/issues/249) |
 | 원장 스키마 필드 누락 — 첫 슬라이스 해소 | `HwihaInputEntry`가 계약 §3의 필드를 모두 읽고 필수 필드·중복 키를 검사한다. 미구현 행의 비용·효과·실패 사유 세부값은 `PLANNED`이며 실행 전 확정 대상 | 실제 수치·핸들러·사유 공유는 입력별 슬라이스에서 검증한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 | 통일 결과 봉투 `InputResolved`가 없음 | `InputResolved` 제품 타입은 없고 입력별 결과·기존 serializer가 남는다 | `InputResolved` wire·저장·실행 재검사 게이트를 구현한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
-| 70개 기존 명령 전환과 계책 입력이 미완 | 원장 71행에 기존 고유 명령 69개를 활성 역참조 64개·폐지/설정 5개로 등록했다. 신규 행은 모두 PLANNED다 | 직접 행동 38개와 70개 대응 게이트를 유지하며 실행은 후속 슬라이스. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
+| 계책 입력이 미완 | 현행 원장은 73행이다. 직접 행동 42행은 표시 이름을 원장에 둔다. 계책 행의 실행은 카드 소유권 완성 전까지 PLANNED다 | 핸들러·배달 상태·실패 사유 게이트를 유지하며 후속 슬라이스를 진행한다. [#892](https://github.com/peppone-choi/opensamguk/issues/892) |
 
-이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. B1 컷오버 이후 제품 기본 프로필은 HWIHA이며 SAMMO 분기는 ADR-LITE-065의 한 시즌 롤백과 동결 회귀 기준선으로만 해석한다. 현재 입력 원장의 전달 상태는 각 행을 기준으로 판정한다. 카드 소유권과 외교 전이, 보물 효과 및 국고 모델이 완성되지 않은 명령은 `PLANNED`로 차단한다.
+이 문서의 날짜가 붙은 「현행 실측」·「첫 구현 묶음」은 당시 기록이다. B1 컷오버 이후 제품 기본 프로필은 HWIHA다. SAMMO 분기와 한 시즌 롤백 설명은 2026-09-25 코드 정리 결정으로 폐기됐다. 현재 입력 원장의 전달 상태는 각 행을 기준으로 판정한다. 카드 소유권과 외교 전이, 보물 효과 및 국고 모델이 완성되지 않은 명령은 `PLANNED`로 차단한다.
 
 ## 2026-09-20 기반 결정
 
@@ -47,9 +48,8 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 - 같은 라우트·같은 인테이크를 쓰되 **월드의 ruleProfile** 로 갈린다(ADR-LITE-049 개정: 기존 라우트를 바로 교체하되 pep 전환 전까지 기존 명령 입력 경로 유지).
 - `SAMMO` 월드에서 `HWIHA` 입력을, `HWIHA` 월드에서 `che_*` 코드를 받으면 **명시적 거절**(`reason = WRONG_RULE_PROFILE`)이다. 휴식으로 떨어지지 않는다.
 - **ruleProfile 의 자리(2026-09-20 확정, B1 기본값 개정):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter`가 `world_state.config["ruleProfile"]`에 적는다. 런타임은 저장된 config의 같은 값을 사용한다. game-api의 새 입력 분기는 이 계약을 소비해야 하며 미구현 배선을 완료로 취급하지 않는다. 신규 시드의 누락 기본은 `HWIHA`지만 HWIHA 선언이 없는 옛 시나리오는 시드를 거절한다. 기존 월드에서 키가 없으면 game-api는 거절하고, 한 시즌 복원 스위치가 켜진 경우에만 `SAMMO`로 읽는다. 구형 엔진의 누락 월드 해석은 동결 기준선의 `SAMMO`로 유지한다. 월드가 살아 있는 동안 저장된 값을 바꾸지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
-- 기존 명령 70개의 대응은 재설계 §12 표가 정본이고, 원장 행마다 `legacyCommands[]` 로 역참조를 단다.
-- `legacyCommands[]` 는 **기존 명령 역참조**다. 「대체」가 아니다 — 직접 행동은 기존 이름을 그대로 잇고(ADR-LITE-062), 같은 기존 명령이 위임 형태(방침·배치·공사)로도 간다. 그래서 **기존 명령 하나를 여러 행이 가리켜도 된다(다대일).** 대응 검사는 「기존 명령마다 가리키는 행이 하나 이상」으로 세고 「정확히 하나」를 요구하지 않는다. 금지는 둘뿐이다: 한 행 안의 같은 이름 중복, 실제 삼모 명령이 아닌 이름(`CommandRegistry.resolve` 가 `RestAction` 으로 떨어지는 이름). (#837, 옛 필드 이름 `replacesLegacy` 는 원장 파서가 거절한다.)
-- 직접 행동 행은 기존 표시 이름을 쓰되 `inputId` 는 새 꼴(`action.<name>`)이다 — `che_…` 꼴은 registry 가 `WRONG_RULE_PROFILE` 로 거절한다.
+- 직접 행동(`GENERAL_ACTION`)은 원장 `displayName`이 한국어 표시 이름의 정본이다. `inputId`는 `action.<name>` 형식으로 유지한다.
+- 삼모 명령 역참조와 폐지 목록은 원장에 넣지 않는다. `legacyCommands`, `retiredLegacyCommands`, `retiredLegacyReasons`가 들어오면 파서가 거절한다.
 
 ## 3. 원장 행
 
@@ -57,13 +57,13 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 inputId, kind, layer(1|2|3), actor(GENERAL|LORD|RULER|OFFICE_HOLDER),
 authorityRule, targetSchema, costSchema(전·곡·철·목재·말), timing, effectScope,
 failureReasons[], resultType, replayContract, aiPolicyId, helpTopicId,
-tutorialObjectiveId|N/A, legacyCommands[], deliveryState; root.retiredLegacyCommands[]
+tutorialObjectiveId|N/A, deliveryState; GENERAL_ACTION 행은 displayName 필수
 ```
 
 - (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry와 예약 API는 같은 원장 판정으로 이런 입력을 `NOT_DELIVERED`로 거절한다. registry 거절 사유는 `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED` 네 가지다. 원장에 있고 핸들러도 있지만 잘못된 API 경로로 들어온 입력은 API가 `INVALID_INPUT_CHANNEL`로 거절한다. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
 - `PLANNED` 뒤는 기존 파이프라인을 그대로 쓴다: `DOMAIN_READY → HANDLER_READY → UI_READY → AI_READY → HELP_READY → TUTORIAL_READY → REPLAY_READY → VERIFIED`(재기준선 §3 보존).
-- 원장 파일: `data/commands/hwiha-input-catalog.json`(현행 파일). 알파 카탈로그 파일과 `PublicCommandCatalogIndex` 는 `SAMMO` 월드용으로 남는다.
-- schemaVersion 2부터 필수 필드 누락·미지 필드·중복 객체 키를 거절한다. `retiredLegacyCommands[]`는 명령이 폐지되거나 설정으로 이동한 경우만 기록한다. 대응 게이트는 각 기존 명령이 활성 역참조 또는 이 목록 중 정확히 한쪽에 있는지 검사한다.
+- 원장 파일: `data/commands/hwiha-input-catalog.json`(현행 파일). 알파 카탈로그와 삼모 제품 경로는 코드 정리 단계에서 삭제한다.
+- schemaVersion 3은 삼모 대응 필드를 제거하고 직접 행동의 `displayName`을 요구한다. 필수 필드 누락·미지 필드·중복 객체 키를 거절한다. 원장 행 수, 원장↔핸들러, 실패 사유 계약 게이트는 유지한다.
 
 ## 4. 시점(timing)
 
@@ -101,7 +101,7 @@ tutorialObjectiveId|N/A, legacyCommands[], deliveryState; root.retiredLegacyComm
 3. 원장 ↔ 코드 등록 일치(원장에 있고 핸들러가 없거나 그 반대면 실패).
 4. 사전검사·실행 거절 사유 집합 일치.
 5. wire 왕복.
-6. `SAMMO` 월드의 기존 골든·회귀는 바이트 불변.
+6. 삼모 골든·회귀는 코드 정리 결정에 따라 제거한다. 휘하 결정론과 동일 입력 재실행 검사를 유지한다.
 
 ## 9. 첫 구현 묶음(3단계 슬라이스)
 
