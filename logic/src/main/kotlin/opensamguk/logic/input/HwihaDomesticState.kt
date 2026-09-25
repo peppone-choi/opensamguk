@@ -1,5 +1,13 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticIds
+
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.CountyPolicy
+import opensamguk.logic.domestic.CorpsPolicy
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicTopologySnapshot
@@ -210,7 +218,7 @@ data class HwihaCountyPolicyState(val slot: HwihaPolicySlot, val lastApplied: Hw
 
 data class HwihaCommanderyPolicy(val commanderyId: String, val slot: HwihaPolicySlot) {
     init {
-        require(HwihaDomesticIds.commandery(commanderyId) && !slot.isEmpty)
+        require(DomesticIds.commandery(commanderyId) && !slot.isEmpty)
         listOfNotNull(slot.active?.policy, slot.pending?.policy).forEach { p -> require(CountyPolicy.entries.any { it.name == p }) }
     }
 }
@@ -243,7 +251,7 @@ data class HwihaCommanderyPolicies(val entries: List<HwihaCommanderyPolicy>) {
 
 data class HwihaCorpsPolicy(val orderId: String, val commanderGeneralId: Int, val slot: HwihaPolicySlot) {
     init {
-        require(HwihaDomesticIds.order(orderId) && commanderGeneralId > 0 && !slot.isEmpty)
+        require(DomesticIds.order(orderId) && commanderGeneralId > 0 && !slot.isEmpty)
         listOfNotNull(slot.active?.policy, slot.pending?.policy).forEach { p -> require(CorpsPolicy.entries.any { it.name == p }) }
     }
 }

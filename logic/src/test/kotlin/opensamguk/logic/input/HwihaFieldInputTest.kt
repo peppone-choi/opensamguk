@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.CountyLevels
+
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticProjection
@@ -49,7 +51,7 @@ class HwihaFieldInputTest {
     }
 
     @Test fun `shared economy assessment rejects a short warehouse before effect`() {
-        val levels = HwihaCountyLevels(50_000, 100_000, 100, 1000, 100, 1000, 100, 1000, 50.0,
+        val levels = CountyLevels(50_000, 100_000, 100, 1000, 100, 1000, 100, 1000, 50.0,
             100, 1000, 100, 1000)
         val design = DomesticDesign.CANON
         val short = HwihaFieldRules.assessEconomy(HwihaFieldInput.FORTIFY, person, county.id,

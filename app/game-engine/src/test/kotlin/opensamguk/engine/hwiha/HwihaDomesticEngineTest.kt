@@ -1,5 +1,10 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.SeatStats
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticFailure
 import opensamguk.logic.domestic.SeatedMagistrate
 import opensamguk.logic.domestic.DomesticRules
@@ -159,7 +164,7 @@ class HwihaDomesticEngineTest {
         assertEquals("COMMERCE", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.slot.active!!.policy)
         val design = context.design
         boundary(world, recorder, 200, 1, 2)
-        val seated = HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, HwihaSeatStats(60, 60, 60, 80, 60, false))
+        val seated = DomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, SeatStats(60, 60, 60, 80, 60, false))
         assertEquals(1000 + (20 * seated / 1000).toInt(), world.getCityById(10)!!.commerce)
         assertEquals(1000, world.getCityById(10)!!.agriculture)
         assertEquals(1000 + 20 * design.scaling.emptySeatPermille / 1000, world.getCityById(11)!!.agriculture)
@@ -216,7 +221,7 @@ class HwihaDomesticEngineTest {
         assertEquals(0, work().progress); assertNull(work().stopReason); assertEquals(1_000_000, stock().money)
         // Next boundary: money is there but timber is not, so it stops without progress or payment.
         boundary(world, recorder, 200, 1, 2)
-        assertEquals(HwihaDomesticEffects.INSUFFICIENT_STOCK, work().stopReason)
+        assertEquals(DomesticEffects.INSUFFICIENT_STOCK, work().stopReason)
         assertEquals(0, work().progress); assertEquals(1_000_000, stock().money)
         val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder).settle(10, 1, warehouse.revision,

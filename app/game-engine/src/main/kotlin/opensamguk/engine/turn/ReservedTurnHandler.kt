@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.domestic.DomesticInput
+
 import opensamguk.engine.hwiha.HwihaTurnOutcome
 import opensamguk.engine.hwiha.HwihaEnlistmentHandler
 import opensamguk.logic.input.InputHandler
@@ -320,7 +322,7 @@ class ReservedTurnHandler(
                     }
                 }
             }
-            for (inputId in opensamguk.logic.input.HwihaDomesticInput.INPUT_IDS) {
+            for (inputId in opensamguk.logic.domestic.DomesticInput.INPUT_IDS) {
                 if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
                     handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
                 }

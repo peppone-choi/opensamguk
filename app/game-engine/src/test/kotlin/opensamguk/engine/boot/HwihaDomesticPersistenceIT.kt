@@ -1,5 +1,7 @@
 package opensamguk.engine.boot
 
+import opensamguk.logic.domestic.DomesticWork
+
 import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.flush.DatabaseHooks

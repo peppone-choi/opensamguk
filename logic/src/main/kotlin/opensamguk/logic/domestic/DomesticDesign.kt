@@ -11,9 +11,9 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import opensamguk.logic.economy.HwihaResources
-import opensamguk.logic.input.CorpsPolicy
-import opensamguk.logic.input.CountyPolicy
-import opensamguk.logic.input.DomesticWork
+import opensamguk.logic.domestic.CorpsPolicy
+import opensamguk.logic.domestic.CountyPolicy
+import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.input.HwihaFieldInput
 
 /**

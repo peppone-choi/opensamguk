@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticCard
 
 import opensamguk.logic.domestic.DomesticDesign
@@ -48,10 +53,10 @@ class HwihaDomesticVisionContractTest {
         assertEquals(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY, HwihaCountyWorks.META_KEY)
         assertEquals(HwihaMetaVisionSourceReader.WATCHTOWER_BEACON, DomesticWork.WATCHTOWER_BEACON.name)
         val done = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
-            HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
+            DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
             listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now))).toMetaValue())
         val building = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
-            HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
+            DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
 
         assertEquals(SourceRead(true, 0), reader.hasCompletedWatchtower(done))
         assertEquals(SourceRead(false, 0), reader.hasCompletedWatchtower(building), "진행 중 망루봉화는 시야가 아니다(무효도 아니다)")

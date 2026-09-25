@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.PlacementTarget
+
 import opensamguk.logic.domestic.DomesticCard
 
 /**

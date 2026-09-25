@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.CountyLevels
+import opensamguk.logic.domestic.SeatStats
+import opensamguk.logic.domestic.PolicyOutcome
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticProjection
@@ -78,12 +83,12 @@ object HwihaFieldRules {
 
     /** A single affordability calculation is used by both the API snapshot and the execution world. */
     fun assessEconomy(inputId: String, person: DomesticPerson, countyId: Int,
-        levels: HwihaCountyLevels?, stock: HwihaResources?, design: DomesticDesign,
+        levels: CountyLevels?, stock: HwihaResources?, design: DomesticDesign,
         hometown: Boolean = false): HwihaFieldEconomyAssessment {
         if (levels == null) return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.STATE_UNAVAILABLE)
-        val stats = HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics,
+        val stats = SeatStats(person.leadership, person.strength, person.intelligence, person.politics,
             person.charm, hometown)
-        val outcome = try { HwihaDomesticEffects.applyDirect(design, inputId, levels, stats) }
+        val outcome = try { DomesticEffects.applyDirect(design, inputId, levels, stats) }
             catch (_: IllegalArgumentException) { return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.INVALID_INPUT) }
             catch (_: ArithmeticException) { return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.STATE_UNAVAILABLE) }
         if (outcome.levels == levels && outcome.credit == HwihaResources())
@@ -98,6 +103,6 @@ object HwihaFieldRules {
 }
 
 sealed interface HwihaFieldEconomyAssessment {
-    data class Eligible(val countyId: Int, val outcome: HwihaPolicyOutcome) : HwihaFieldEconomyAssessment
+    data class Eligible(val countyId: Int, val outcome: PolicyOutcome) : HwihaFieldEconomyAssessment
     data class Rejected(val reason: HwihaFieldFailure) : HwihaFieldEconomyAssessment
 }

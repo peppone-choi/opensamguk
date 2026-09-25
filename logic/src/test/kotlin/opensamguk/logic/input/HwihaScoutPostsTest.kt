@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticCard
 
 import opensamguk.logic.domestic.DomesticDesign
@@ -34,7 +39,7 @@ class HwihaScoutPostsTest {
     }
 
     @Test fun `county works publish kind and status for the watchtower reader`() {
-        val works = HwihaCountyWorks(HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
+        val works = HwihaCountyWorks(DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
             listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now)))
         val raw = works.toMetaValue()
         assertEquals(1, raw["version"])

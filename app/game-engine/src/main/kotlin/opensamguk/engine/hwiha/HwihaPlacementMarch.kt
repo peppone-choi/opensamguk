@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.PlacementTarget
+
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*

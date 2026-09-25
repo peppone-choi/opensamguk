@@ -154,7 +154,7 @@ class DomesticRulesTest {
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION), state()))
         assertEquals(DomesticFailure.WAREHOUSE_NOT_READY, rejected(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = emptyMap()))))))
-        val active = HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 1, now)
+        val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 1, now)
         val busy = warehouse(10) + (HwihaCountyWorks.META_KEY to HwihaCountyWorks(active, emptyList()).toMetaValue())
         assertEquals(DomesticFailure.WORK_IN_PROGRESS, rejected(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = busy))))))

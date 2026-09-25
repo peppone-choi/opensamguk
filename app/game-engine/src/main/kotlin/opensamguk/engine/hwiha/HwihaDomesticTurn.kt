@@ -1,5 +1,12 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.CorpsPolicy
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.CountyLevels
+import opensamguk.logic.domestic.SeatStats
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticAssessment
 import opensamguk.logic.domestic.DomesticRules
@@ -151,11 +158,11 @@ internal class HwihaDomesticCountyEffects(
         }
         val seat = effective.seat?.let { seat ->
             val person = checkNotNull(state.person(seat.personId))
-            HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
+            SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
                 state.homeCountyByGeneral[person.id] == countyId)
         }
         val levels = levelsOf(city)
-        val outcome = HwihaDomesticEffects.applyPolicy(context.design, effective.policy, levels, seat)
+        val outcome = DomesticEffects.applyPolicy(context.design, effective.policy, levels, seat)
         var resultCode = "APPLIED"
         if (outcome.credit != HwihaResources() || outcome.debit != HwihaResources()) {
             // Resource flows go through the warehouse settlement boundary (owner and revision rechecked).
@@ -173,7 +180,7 @@ internal class HwihaDomesticCountyEffects(
         write(current, if (resultCode == "APPLIED") outcome.levels else levels, current.meta, stored, application.takeIf { record })
     }
 
-    private fun write(before: City, levels: HwihaCountyLevels, baseMeta: Map<String, Any?>, stored: HwihaCountyPolicyState?,
+    private fun write(before: City, levels: CountyLevels, baseMeta: Map<String, Any?>, stored: HwihaCountyPolicyState?,
         application: HwihaPolicyApplication?) {
         var meta = baseMeta
         if (application != null) meta = meta.withKey(HwihaCountyPolicyState.META_KEY,
@@ -190,7 +197,7 @@ internal class HwihaDomesticCountyEffects(
 
     companion object {
         fun trustOf(city: City): Double = (city.meta["trust"] as? Number)?.toDouble() ?: 0.0
-        fun levelsOf(city: City) = HwihaCountyLevels(city.population, city.populationMax, city.agriculture, city.agricultureMax,
+        fun levelsOf(city: City) = CountyLevels(city.population, city.populationMax, city.agriculture, city.agricultureMax,
             city.commerce, city.commerceMax, city.security, city.securityMax, trustOf(city), city.defence, city.defenceMax,
             city.wall, city.wallMax)
     }

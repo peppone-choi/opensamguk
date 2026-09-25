@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+
 import kotlin.test.*
 import opensamguk.logic.economy.HwihaResources
 

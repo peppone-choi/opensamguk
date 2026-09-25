@@ -1,5 +1,18 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.CountyPolicy
+import opensamguk.logic.domestic.CorpsPolicy
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.PolicyTarget
+import opensamguk.logic.domestic.PlacementRequest
+import opensamguk.logic.domestic.PolicyRequest
+import opensamguk.logic.domestic.WorkRequest
+import opensamguk.logic.domestic.CountyLevels
+import opensamguk.logic.domestic.SeatStats
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCard
 import opensamguk.logic.domestic.DomesticCounty
@@ -31,7 +44,7 @@ data class HwihaDomesticSnapshot(
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, HwihaResources> = emptyMap(),
-    val countyLevels: Map<Int, HwihaCountyLevels> = emptyMap(),
+    val countyLevels: Map<Int, CountyLevels> = emptyMap(),
     val cityMilitaryStates: Map<Int, HwihaCityMilitaryState> = emptyMap(),
     val cityMilitaryTroops: Map<Int, Int> = emptyMap(),
 )
@@ -110,7 +123,7 @@ class HwihaDomesticReader(
                     warehouseStocks = counties.mapNotNull { c ->
                         try { HwihaCountyWarehouse.read(c.meta, c.id)?.let { c.id to it.stock } } catch (_: IllegalArgumentException) { null }
                     }.toMap(),
-                    countyLevels = counties.associate { c -> c.id to HwihaCountyLevels(c.population, c.populationMax,
+                    countyLevels = counties.associate { c -> c.id to CountyLevels(c.population, c.populationMax,
                         c.agriculture, c.agricultureMax, c.commerce, c.commerceMax, c.security, c.securityMax,
                         c.trust, c.defense, c.defenseMax, c.wall, c.wallMax) },
                     cityMilitaryStates = counties.mapNotNull { c ->
@@ -242,22 +255,22 @@ object HwihaDomesticViews {
                 val works = HwihaCountyWorks.read(county.meta)
                 val seat = DomesticRules.seatedMagistrate(county, state)?.let { seat ->
                     val person = state.person(seat.personId)!!
-                    HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm, false)
+                    SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm, false)
                 }
                 val active = works?.active?.let { work ->
                     val remaining = work.cost.debit(work.charged) ?: HwihaResources()
                     HwihaActiveWorkDto(work.work.name, work.work.label, work.requestedAt, work.progress, work.required,
-                        (work.progress.toLong() * 100 / work.required).toInt(), HwihaDomesticEffects.remainingPhases(design, work, seat),
+                        (work.progress.toLong() * 100 / work.required).toInt(), DomesticEffects.remainingPhases(design, work, seat),
                         stock(work.cost), stock(work.charged), stock(remaining), work.lastProgressAt, work.stopReason,
                         work.stopReason?.let(::stopText), work.requestedAt >= state.now)
                 }
                 val startable = DomesticWork.entries.map { kind ->
                     val spec = design.works.getValue(kind)
                     val check = DomesticRules.assessWork(WorkRequest(actorId, county.id, kind), state)
-                    val preview = HwihaDomesticEffects.newWork(design, kind, "preview", actorId, state.now)
+                    val preview = DomesticEffects.newWork(design, kind, "preview", actorId, state.now)
                     HwihaStartableWorkDto(kind.name, kind.label, check is DomesticAssessment.Eligible,
                         (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) },
-                        stock(spec.cost), spec.requiredProgress, HwihaDomesticEffects.remainingPhases(design, preview, seat))
+                        stock(spec.cost), spec.requiredProgress, DomesticEffects.remainingPhases(design, preview, seat))
                 }
                 HwihaCountyWorksDto(county.id, snapshot.countyNames[county.id] ?: county.name,
                     county.commanderyId?.let { snapshot.commanderyNames[it] ?: it }, snapshot.warehouseStocks[county.id]?.let(::stock),
@@ -277,7 +290,7 @@ object HwihaDomesticViews {
         ?: CorpsPolicy.entries.firstOrNull { it.name == code }?.label ?: code
     private fun stock(value: HwihaResources) = HwihaStockDto(value.money, value.grain, value.iron, value.timber, value.horses)
     private fun stopText(code: String) = when (code) {
-        HwihaDomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
+        DomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
         "WAREHOUSE_NOT_READY" -> "현의 창고를 확인할 수 없습니다."
         "STALE_WAREHOUSE" -> "창고 정산이 어긋났습니다."
         else -> code

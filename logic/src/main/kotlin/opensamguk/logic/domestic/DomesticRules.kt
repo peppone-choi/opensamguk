@@ -1,8 +1,8 @@
 package opensamguk.logic.domestic
 
 import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.input.CountyPolicy
-import opensamguk.logic.input.DomesticWork
+import opensamguk.logic.domestic.CountyPolicy
+import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.input.DispatchStatus
 import opensamguk.logic.input.HwihaCommanderyPolicies
 import opensamguk.logic.input.HwihaCorpsPolicies
@@ -17,13 +17,13 @@ import opensamguk.logic.input.HwihaPhase
 import opensamguk.logic.input.HwihaPlacementOrder
 import opensamguk.logic.input.HwihaPlacementState
 import opensamguk.logic.input.HwihaPolicySlot
-import opensamguk.logic.input.PlacementPost
-import opensamguk.logic.input.PlacementRequest
-import opensamguk.logic.input.PlacementTarget
-import opensamguk.logic.input.PolicyRequest
-import opensamguk.logic.input.PolicyTarget
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.PlacementRequest
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.PolicyRequest
+import opensamguk.logic.domestic.PolicyTarget
 import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.input.WorkRequest
+import opensamguk.logic.domestic.WorkRequest
 
 /** 장수 한 명의 투영. [node] 는 위치 권위의 현재 육상 省 id(없으면 null), [userOwned] 는 계정 소유(사람 장수) 여부다. */
 data class DomesticPerson(

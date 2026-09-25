@@ -1,5 +1,10 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCard
 import opensamguk.logic.domestic.DomesticCounty
@@ -70,8 +75,8 @@ class HwihaDomesticViewsTest {
     }
 
     @Test fun `works show startable costs and active progress with stop reasons`() {
-        val active = HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
-            .copy(progress = 150, charged = HwihaResources(money = 10_000, timber = 500), stopReason = HwihaDomesticEffects.INSUFFICIENT_STOCK)
+        val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
+            .copy(progress = 150, charged = HwihaResources(money = 10_000, timber = 500), stopReason = DomesticEffects.INSUFFICIENT_STOCK)
         val counties = listOf(DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse + (HwihaCountyWorks.META_KEY to
             HwihaCountyWorks(active, listOf(HwihaCompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())),
             DomesticCounty(8, "C8", 1, "p8", "甲郡", emptyMap()))

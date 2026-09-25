@@ -1,5 +1,9 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.SeatStats
+import opensamguk.logic.domestic.WorkStep
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticRules
 
@@ -88,20 +92,20 @@ class HwihaDomesticBoundary(
         val seat = try { DomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }?.let { seat ->
             val person = state.person(seat.personId)
                 ?: return stop(countyId, works, active, now, "SEAT_PERSON_MISSING")
-            HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
+            SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
                 state.homeCountyByGeneral[person.id] == countyId)
         }
         val levels = HwihaDomesticCountyEffects.levelsOf(city)
-        return when (val step = HwihaDomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels, seat)) {
-            is HwihaWorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
-            is HwihaWorkStep.Advanced -> {
+        return when (val step = DomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels, seat)) {
+            is WorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
+            is WorkStep.Advanced -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
                 world.updateCityMeta(recorder, countyId, after.meta.withKey(HwihaCountyWorks.META_KEY,
                     HwihaCountyWorks(step.work, works.completed).toMetaValue()))
                 WorkResult.ADVANCED
             }
-            is HwihaWorkStep.Completed -> {
+            is WorkStep.Completed -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
                 val done = HwihaCountyWorks(null, (works.completed + step.completed).sortedWith(
@@ -121,11 +125,11 @@ class HwihaDomesticBoundary(
     }
 
     /** 창고 차감은 정산 경계로만 한다(소유 세력·revision 재검사). */
-    private fun settle(countyId: Int, nationId: Int, revision: Long, step: HwihaWorkStep): Boolean {
+    private fun settle(countyId: Int, nationId: Int, revision: Long, step: WorkStep): Boolean {
         val debit = when (step) {
-            is HwihaWorkStep.Advanced -> step.debit
-            is HwihaWorkStep.Completed -> step.debit
-            is HwihaWorkStep.Stopped -> return false
+            is WorkStep.Advanced -> step.debit
+            is WorkStep.Completed -> step.debit
+            is WorkStep.Stopped -> return false
         }
         if (debit == opensamguk.logic.economy.HwihaResources()) return true
         return HwihaWarehouseSettlement(world, recorder).settle(countyId, nationId, revision, debit) ==
@@ -176,7 +180,7 @@ class HwihaDomesticBoundary(
     }
 
     private fun reasonText(reason: String) = when (reason) {
-        HwihaDomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
+        DomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
         "WAREHOUSE_NOT_READY" -> "현의 창고를 확인할 수 없습니다."
         "STALE_WAREHOUSE" -> "창고 정산이 어긋났습니다."
         "SEAT_PERSON_MISSING" -> "현령 인물 정보를 확인할 수 없습니다."
