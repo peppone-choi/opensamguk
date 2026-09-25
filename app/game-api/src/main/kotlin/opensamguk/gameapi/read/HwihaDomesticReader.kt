@@ -68,13 +68,6 @@ class HwihaDomesticReader(
                 val admin = bundle.projection.administrativeCountyIds
                 val counties = selected.cities.filter { it.id in admin }.sortedBy { it.id }
                 val countyGeography = HwihaCountyGeographyJson.load(bundle)
-                fun gameEnvMeta(key: String): Map<String, Any?> {
-                    val raw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", key)?.value
-                    if (raw == null) return selected.world.meta
-                    @Suppress("UNCHECKED_CAST")
-                    val value = mapper.readValue(raw, Map::class.java) as Map<String, Any?>
-                    return selected.world.meta + (key to value)
-                }
                 HwihaDomesticSnapshot(
                     state = HwihaDomesticProjection(
                         profile = profile,
@@ -105,8 +98,10 @@ class HwihaDomesticReader(
                     ),
                     infrastructure = HwihaInfrastructureSiteState(topology,
                         bundle.projection.presentation?.roadGates.orEmpty(),
-                        HwihaLandPassageState.read(gameEnvMeta(HwihaLandPassageState.META_KEY), topology),
-                        HwihaRoadFortState.read(gameEnvMeta(HwihaRoadFortState.META_KEY))),
+                        HwihaLandPassageState.read(HwihaGameEnvStateMeta.overlay(selected.world.meta,
+                            gameKv, mapper, HwihaLandPassageState.META_KEY), topology),
+                        HwihaRoadFortState.read(HwihaGameEnvStateMeta.overlay(selected.world.meta,
+                            gameKv, mapper, HwihaRoadFortState.META_KEY))),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->
                         val place = places[c.id] ?: return@mapNotNull null
@@ -267,7 +262,15 @@ object HwihaDomesticViews {
                 }
                 HwihaCountyWorksDto(county.id, county.provinceId, snapshot.countyNames[county.id] ?: county.name,
                     county.commanderyId?.let { snapshot.commanderyNames[it] ?: it }, snapshot.warehouseStocks[county.id]?.let(::stock),
-                    active, works?.completed.orEmpty().map { HwihaCompletedWorkDto(it.work.name, it.work.label, it.completedAt) }, startable)
+                    active, works?.completed.orEmpty().map { completed ->
+                        HwihaCompletedWorkDto(completed.work.name,
+                            if (completed.edgeId != null) when (completed.work) {
+                                DomesticWork.ROAD -> "도로 개척"
+                                DomesticWork.FORTIFICATION -> "보루"
+                                else -> completed.work.label
+                            } else completed.work.label,
+                            completed.completedAt, completed.edgeId)
+                    }, startable, state.provinceIdsByCounty[county.id].orEmpty() + listOfNotNull(county.provinceId))
             }
             HwihaWorksResponse("READY", now = state.now, provisional = design.status, counties = counties)
         } catch (_: IllegalArgumentException) { HwihaWorksResponse("UNAVAILABLE") }

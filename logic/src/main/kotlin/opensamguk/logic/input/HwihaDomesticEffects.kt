@@ -109,7 +109,9 @@ object HwihaDomesticEffects {
         if (stock.debit(due) == null) return HwihaWorkStep.Stopped(work.copy(stopReason = INSUFFICIENT_STOCK), INSUFFICIENT_STOCK)
         if (next == work.required) {
             var after = levels
-            if (!alreadyCompletedInCounty) for (effect in design.works.getValue(work.work).completion)
+            // Strategic roads and forts change the world map, not the county's commerce or walls.
+            if (work.edgeId == null && !alreadyCompletedInCounty)
+                for (effect in design.works.getValue(work.work).completion)
                 after = add(after, effect.indicator, effect.amount.toLong())
             return HwihaWorkStep.Completed(HwihaCompletedWork(work.work, now, work.edgeId, work.row, work.col), due, after)
         }

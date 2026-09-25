@@ -240,8 +240,8 @@ export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; re
                         <div style={{ display: 'flex', gap: 6, alignItems: 'baseline', flexWrap: 'wrap' }}>
                             <strong>{c.name}</strong>
                             {c.commanderyName ? <span style={{ fontSize: 12, color: 'var(--muted)' }}>{c.commanderyName}</span> : null}
-                            {c.completed.map((w) => <Chip key={w.work} tone="moss">{w.label}</Chip>)}
-                            {!c.active && c.completed.some(w => w.work === 'FORTIFICATION') && (
+                            {c.completed.map((w) => <Chip key={`${w.work}:${w.edgeId ?? ''}`} tone="moss">{w.label}</Chip>)}
+                            {!c.active && c.completed.some(w => w.work === 'FORTIFICATION' && !w.edgeId) && (
                                 <button type="button" className="os-button os-button--ghost os-button--sm" disabled={busy}
                                     onClick={() => void submit('reduce', { countyId: c.countyId, work: 'FORTIFICATION' },
                                         `${c.name} 성방을 감축했습니다.`)}>성방 감축</button>
@@ -264,7 +264,7 @@ export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; re
                             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                                 {c.startable.map((w) => w.work === 'ROAD' && roadMode ? (() => {
                                     const choices = gates.filter((gate) => gate.buildable && !gate.active &&
-                                        (gate.fromProvinceId === c.provinceId || gate.toProvinceId === c.provinceId));
+                                        (c.provinceIds.includes(gate.fromProvinceId) || c.provinceIds.includes(gate.toProvinceId)));
                                     const chosen = choices.find((choice) => choice.edgeId === roadChoice[c.countyId])?.edgeId ?? choices[0]?.edgeId;
                                     return <span key={w.work} style={{ display: 'inline-flex', gap: 4 }}>
                                         <select aria-label={`${c.name} 도로 접경`} value={chosen ?? ''}
@@ -281,7 +281,7 @@ export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; re
                                     </span>;
                                 })() : w.work === 'FORTIFICATION' && roadMode ? (() => {
                                     const choices = gates.filter((gate) => gate.active)
-                                        .flatMap((gate) => gate.fortCells.filter((cell) => cell.provinceId === c.provinceId)
+                                        .flatMap((gate) => gate.fortCells.filter((cell) => c.provinceIds.includes(cell.provinceId))
                                             .filter((cell) => !roads.data?.forts.some((fort) => fort.row === cell.row && fort.col === cell.col))
                                             .map((cell) => ({ value: `${gate.edgeId}|${cell.row}|${cell.col}`,
                                                 label: `${gate.historicalRouteIds.join(', ') || '길목'} · ${cell.row}, ${cell.col}` })));

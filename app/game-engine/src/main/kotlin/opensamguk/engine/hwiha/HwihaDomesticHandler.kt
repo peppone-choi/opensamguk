@@ -132,7 +132,9 @@ class HwihaDomesticHandler(
     private fun reduceFortification(countyId: Int) {
         val city = checkNotNull(world.getCityById(countyId))
         val works = checkNotNull(HwihaCountyWorks.read(city.meta))
-        val remaining = HwihaCountyWorks(null, works.completed.filterNot { it.work == DomesticWork.FORTIFICATION })
+        val remaining = HwihaCountyWorks(null, works.completed.filterNot {
+            it.work == DomesticWork.FORTIFICATION && it.edgeId == null
+        })
         val next = city.copy(defence = (city.defence - 500).coerceAtLeast(0),
             wall = (city.wall - 500).coerceAtLeast(0),
             meta = city.meta.withKey(HwihaCountyWorks.META_KEY, remaining.toMetaValue()))

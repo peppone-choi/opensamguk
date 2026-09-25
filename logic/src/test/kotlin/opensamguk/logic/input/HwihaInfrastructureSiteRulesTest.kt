@@ -29,6 +29,13 @@ class HwihaInfrastructureSiteRulesTest {
         assertNotNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(true)))
     }
 
+    @Test fun `legacy county road needs no strategic gate but targeted roads still do`() {
+        val legacy = infrastructure(false, emptyList())
+        assertNull(HwihaInfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD), state, legacy))
+        assertNotNull(HwihaInfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD, "road-piece"), state, legacy))
+        assertNotNull(HwihaInfrastructureSiteRules.error(WorkRequest(1, 10, DomesticWork.ROAD), state, infrastructure(false)))
+    }
+
     @Test fun `fort uses the county piece and rejects occupied cells`() {
         val request = WorkRequest(1, 10, DomesticWork.FORTIFICATION, "road-piece", 1, 1)
         assertNull(HwihaInfrastructureSiteRules.error(request, state, infrastructure(true)))

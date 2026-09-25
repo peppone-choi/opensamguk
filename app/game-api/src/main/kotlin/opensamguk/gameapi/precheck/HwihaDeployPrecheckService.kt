@@ -31,15 +31,13 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         val ready = requireNotNull(snapshot.ready)
         val topology = ready.bundle.projection.topology
         val passage = try {
-            val passageRaw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY)?.value
-            val passageMeta = if (passageRaw == null) ready.selected.world.meta else
-                ready.selected.world.meta + (HwihaLandPassageState.META_KEY to mapper.readValue(passageRaw, Map::class.java))
+            val passageMeta = HwihaGameEnvStateMeta.overlay(ready.selected.world.meta, gameKv, mapper,
+                HwihaLandPassageState.META_KEY)
             val base = HwihaLandPassageState.read(passageMeta, topology)
                 ?: return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
             if (ready.bundle.projection.presentation?.roadGates.isNullOrEmpty()) base else {
-                val raw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaRoadFortState.META_KEY)?.value
-                val forts = raw?.let { HwihaRoadFortState.read(mapOf(HwihaRoadFortState.META_KEY to
-                    mapper.readValue(it, Map::class.java))) }.orEmpty()
+                val forts = HwihaRoadFortState.read(HwihaGameEnvStateMeta.overlay(emptyMap(), gameKv, mapper,
+                    HwihaRoadFortState.META_KEY))
                 val hostile = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
                     when (ready.people.single { it.id == request.actorId }.nationId) {
                         relation.srcNationId -> relation.destNationId

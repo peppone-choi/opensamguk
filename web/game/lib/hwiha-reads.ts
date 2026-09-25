@@ -411,6 +411,7 @@ export interface HwihaPolicies {
 export interface HwihaCountyWorks {
     readonly countyId: number;
     readonly provinceId: string | null;
+    readonly provinceIds: readonly string[];
     readonly name: string;
     readonly commanderyName: string | null;
     readonly warehouse: HwihaStock | null;
@@ -418,7 +419,7 @@ export interface HwihaCountyWorks {
         work: string; label: string; percent: number; remainingPhases: number;
         remainingCost: HwihaStock; stopReasonText: string | null; startsAtNextBoundary: boolean;
     } | null;
-    readonly completed: readonly { work: string; label: string }[];
+    readonly completed: readonly { work: string; label: string; edgeId: string | null }[];
     readonly startable: readonly { work: string; label: string; available: boolean; blocked: HwihaBlocked | null; cost: HwihaStock; estimatedPhases: number }[];
 }
 export interface HwihaWorks {

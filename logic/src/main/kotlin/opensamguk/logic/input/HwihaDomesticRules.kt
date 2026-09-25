@@ -212,7 +212,7 @@ object HwihaDomesticRules {
         val works = HwihaCountyWorks.read(county.meta)
         if (works?.active != null) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
         if (request.work != DomesticWork.FORTIFICATION ||
-            works?.completed?.none { it.work == DomesticWork.FORTIFICATION } != false)
+            works?.completed?.none { it.work == DomesticWork.FORTIFICATION && it.edgeId == null } != false)
             return@guarded reject(DomesticFailure.WORK_NOT_COMPLETED)
         DomesticAssessment.Eligible(person = actor)
     }

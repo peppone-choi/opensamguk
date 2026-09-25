@@ -4,6 +4,7 @@ import opensamguk.gameapi.read.StrategicTopologyReadSource
 import opensamguk.gameapi.read.WaterControlReadRepository
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.GameKvReadRepository
+import opensamguk.gameapi.read.HwihaGameEnvStateMeta
 import opensamguk.gameapi.dto.StrategicTopologyBinding
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -54,11 +55,8 @@ class MapStrategicTopologyController(
         }
         val roadGates = projection.presentation?.roadGates.orEmpty()
         val roads = if (roadGates.isNotEmpty()) {
-            val raw = gameKv?.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY)?.value
-            val state = if (raw == null) null else {
-                val decoded = ObjectMapper().readValue(raw, Map::class.java)
-                HwihaLandPassageState.read(mapOf(HwihaLandPassageState.META_KEY to decoded), projection.topology)
-            }
+            val state = HwihaLandPassageState.read(HwihaGameEnvStateMeta.overlay(emptyMap(), gameKv,
+                ObjectMapper(), HwihaLandPassageState.META_KEY), projection.topology)
             (state?.edgeStates?.filter { it.value.active }?.keys ?: roadGates
                 .filter { it.initiallyBuilt }.map { it.edgeId }).sorted()
         } else null

@@ -34,9 +34,8 @@ class HwihaRoadFortReader(
         val topology = bundle.projection.topology
         val position = (spatial.readSnapshot(world.id, topology).generalPositionSnapshot.stateFor(generalId)?.node
             as? StrategicNodeRef.LandProvince) ?: return HwihaRoadFortsResponse("UNAVAILABLE")
-        val raw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaRoadFortState.META_KEY)?.value
-        val forts = try { if (raw == null) emptyList() else HwihaRoadFortState.read(mapOf(
-            HwihaRoadFortState.META_KEY to mapper.readValue(raw, Map::class.java))) }
+        val forts = try { HwihaRoadFortState.read(HwihaGameEnvStateMeta.overlay(emptyMap(), gameKv, mapper,
+            HwihaRoadFortState.META_KEY)) }
             catch (_: RuntimeException) { return HwihaRoadFortsResponse("UNAVAILABLE") }
         val edges = topology.traversalEdges.associateBy { it.id }
         val enemies = diplomacy.findAll().filter { it.stateCode == 0 }.mapNotNull { relation ->
@@ -51,12 +50,9 @@ class HwihaRoadFortReader(
             .flatMap { city -> geography.provincesOfCounty(city.id).ifEmpty {
                 setOfNotNull(bundle.projection.bindingsByCityId[city.id]?.landProvinceId)
             } }.toSet()
-        val passageRaw = gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY)?.value
         val passage = try {
-            passageRaw?.let { serialized ->
-                val decoded = mapper.readValue(serialized, Map::class.java)
-                HwihaLandPassageState.read(mapOf(HwihaLandPassageState.META_KEY to decoded), topology)
-            }
+            HwihaLandPassageState.read(HwihaGameEnvStateMeta.overlay(emptyMap(), gameKv, mapper,
+                HwihaLandPassageState.META_KEY), topology)
         } catch (_: RuntimeException) { return HwihaRoadFortsResponse("UNAVAILABLE") }
         val gates = bundle.projection.presentation?.roadGates.orEmpty().mapNotNull { gate ->
             val edge = edges[gate.edgeId] ?: return@mapNotNull null

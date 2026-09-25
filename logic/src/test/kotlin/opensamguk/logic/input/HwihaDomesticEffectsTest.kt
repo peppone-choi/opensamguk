@@ -150,4 +150,20 @@ class HwihaDomesticEffectsTest {
         assertEquals(levels, repeated.levels)
         assertEquals(first.debit, repeated.debit)
     }
+
+    @Test fun `strategic road and fort completion never grant county level bonuses`() {
+        val stock = HwihaResources(10_000_000, 10_000_000, 10_000_000, 10_000_000, 10_000_000)
+        for (kind in listOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) {
+            val spec = design.works.getValue(kind)
+            val work = HwihaDomesticEffects.newWork(design, kind, "targeted", 1, now,
+                "road-piece", if (kind == DomesticWork.FORTIFICATION) 1 else null,
+                if (kind == DomesticWork.FORTIFICATION) 1 else null)
+                .copy(progress = spec.requiredProgress - 1,
+                    charged = HwihaDomesticEffects.charged(spec.cost, spec.requiredProgress - 1, spec.requiredProgress))
+            val completed = assertIs<HwihaWorkStep.Completed>(HwihaDomesticEffects.progressWork(
+                design, work, now.plus(1), stock, levels, null))
+            assertEquals(levels, completed.levels, kind.name)
+            assertEquals("road-piece", completed.completed.edgeId)
+        }
+    }
 }

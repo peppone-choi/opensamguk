@@ -19,7 +19,12 @@ object HwihaInfrastructureSiteRules {
         if (request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
         if (request.work == DomesticWork.FORTIFICATION && request.edgeId == null &&
             request.row == null && request.col == null) return null // County wall.
-        if (infrastructure.roadGates.isEmpty()) return "이 지도에는 도로 공사 자리가 없습니다."
+        if (infrastructure.roadGates.isEmpty()) {
+            // Older maps use ROAD as county commerce work and have no strategic road gates.
+            if (request.work == DomesticWork.ROAD && request.edgeId == null &&
+                request.row == null && request.col == null) return null
+            return "이 지도에는 도로 공사 자리가 없습니다."
+        }
         val gate = infrastructure.roadGates.singleOrNull { it.edgeId == request.edgeId }
             ?: return "지도에 등록된 도로 접경을 골라 주세요."
         val countyProvinces = state.provinceIdsByCounty[request.countyId].orEmpty() +

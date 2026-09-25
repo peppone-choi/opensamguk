@@ -4,6 +4,9 @@ import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.*
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.input.HwihaLandPassageState
+import opensamguk.infra.entity.GameKvEntity
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -37,8 +40,8 @@ class MapStrategicTopologyControllerTest {
     @AfterEach
     fun clearIdentity() = SecurityContextHolder.clearContext()
 
-    private fun mvc(mapName: String = "han-world-v3") = MockMvcBuilders.standaloneSetup(
-        MapStrategicTopologyController(resolver, WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source),
+    private fun mvc(mapName: String = "han-world-v3", gameKv: GameKvReadRepository? = null) = MockMvcBuilders.standaloneSetup(
+        MapStrategicTopologyController(resolver, WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source, gameKv),
     ).setControllerAdvice(MapStrategicTopologyErrors()).build().also {
         `when`(cities.findAll()).thenReturn(artifacts.artifacts(opensamguk.logic.world.HanWorldVariant.V3_835).cityConst.all().keys.map {
             CityReadEntity(id = it, worldId = 7)
@@ -46,6 +49,26 @@ class MapStrategicTopologyControllerTest {
         `when`(pins.readPins(7)).thenReturn(emptyList())
         `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 7, scenarioCode = "scenario_1050",
             config = mapOf("mapName" to mapName)))
+    }
+
+    @Test
+    fun `a newly opened road appears in the strategic topology response`() {
+        val selected = artifacts.artifacts(HanWorldVariant.V3_1447_MAP4)
+        val topology = selected.projection.topology
+        val gate = selected.projection.presentation!!.roadGates.first { it.buildable && !it.initiallyBuilt }
+        val initial = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology))
+        val opened = HwihaLandPassageState.activate(initial, topology, gate.edgeId)
+        val gameKv = mock(GameKvReadRepository::class.java)
+        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", HwihaLandPassageState.META_KEY))
+            .thenReturn(GameKvEntity("game_env", "game_env", HwihaLandPassageState.META_KEY,
+                ObjectMapper().writeValueAsString(opened), 7))
+        val client = mvc(gameKv = gameKv)
+        `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map { CityReadEntity(id = it, worldId = 7) })
+        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control",
+            topology.topologyRevision, topology.contentHash)))
+        client.perform(get("/api/map/strategic-topology"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.roadOpenEdgeIds", org.hamcrest.Matchers.hasItem(gate.edgeId)))
     }
 
     @Test
