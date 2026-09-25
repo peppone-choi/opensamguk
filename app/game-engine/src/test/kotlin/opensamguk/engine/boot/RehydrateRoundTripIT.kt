@@ -112,8 +112,8 @@ class RehydrateRoundTripIT {
 
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
-            VALUES (1, 'scenario_0', 200, 1, 3600)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (1, 'scenario_0', 200, 1, 3600, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
         )
         jdbc.update(

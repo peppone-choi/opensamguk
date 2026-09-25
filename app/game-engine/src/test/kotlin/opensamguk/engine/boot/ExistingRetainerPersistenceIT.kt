@@ -38,7 +38,8 @@ class ExistingRetainerPersistenceIT {
             .locations("classpath:db/migration")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         executor = JdbcFlushExecutor(NamedParameterJdbcTemplate(ds), TransactionTemplate(DataSourceTransactionManager(ds)))
-        jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'retainer-test', 200, 1, 3600)")
+        jdbc.update("""INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (1, 'retainer-test', 200, 1, 3600, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)""")
         jdbc.update("INSERT INTO general (world_id, id, name, nation_id, city_id, npc_state, gold, rice, crew, turn_time) VALUES (1, 10, '주인', 0, 1, 0, 5000, 5000, 400, now()), (1, 20, '장수', 0, 1, 2, 1000, 1000, 300, now())")
     }
     @AfterAll fun teardown() { if (this::postgres.isInitialized) postgres.stop() }

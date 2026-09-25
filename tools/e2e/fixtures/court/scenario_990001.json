@@ -1,7 +1,7 @@
 {
   "title": "HWIHA court synthetic QA",
   "startYear": 200,
-  "ruleProfile": "HWIHA",
+  "worldFormat": "GENERAL_RETAINER_CAMPAIGN",
   "map": {
     "mapName": "han-world-v3"
   },

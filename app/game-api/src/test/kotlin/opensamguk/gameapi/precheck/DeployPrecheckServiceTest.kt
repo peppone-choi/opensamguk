@@ -41,7 +41,7 @@ class DeployPrecheckServiceTest {
             HanStrategicRouteBinding(1, "r1", "p1", "A"), HanStrategicRouteBinding(2, "r2", "p2", "B"),
             HanStrategicRouteBinding(3, "r3", "p3", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
-        val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"), meta = mapOf(
+        val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"), meta = mapOf(
             LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
             MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue()))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world, listOf(

@@ -31,7 +31,7 @@ internal fun ownedHwihaGeneral(generals: GeneralReadRepository, generalId: Int, 
 internal fun hwihaGate(worlds: WorldStateReadRepository, actor: GeneralReadEntity): String? {
     val world = worlds.findProcessWorld() ?: return "UNAVAILABLE"
     if (actor.worldId != world.id) return "UNAVAILABLE"
-    if (world.config["ruleProfile"] != "HWIHA") return "WRONG_RULE_PROFILE"
+    if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return "UNSUPPORTED_WORLD_FORMAT"
     return null
 }
 

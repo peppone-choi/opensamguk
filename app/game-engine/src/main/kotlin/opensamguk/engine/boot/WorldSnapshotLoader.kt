@@ -116,6 +116,7 @@ class WorldSnapshotLoader(
             }
             loaded.copy(meta = merged)
         }
+        opensamguk.logic.world.WorldFormat.require(loadedState.config, loadedState.meta)
         val activeGame = resolveActiveGame(loadedState.meta)
         val activeServerId = activeGame?.serverId
         val serverCount = loadServerCount()
@@ -383,6 +384,7 @@ class WorldSnapshotLoader(
             { rs, _ ->
                 val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
                 val config = LinkedHashMap(MetaJson.decode(rs.getString("config")))
+                opensamguk.logic.world.WorldFormat.require(config, meta)
                 val persistedStartTime = rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
                     ?: parseStartTime(config["startTime"] ?: meta["startTime"])
                 persistedStartTime?.toString()?.let { startTime ->

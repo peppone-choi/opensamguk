@@ -195,7 +195,7 @@ class CommandReserveServiceIT {
             """.trimIndent(),
         )
         jdbcTemplate.update(
-            "INSERT INTO world_state (id) VALUES (1)",
+            "INSERT INTO world_state (id, config) VALUES (1, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN'))",
         )
         jdbc = NamedParameterJdbcTemplate(dataSource)
 

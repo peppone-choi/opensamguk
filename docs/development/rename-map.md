@@ -163,7 +163,7 @@
 |---|---|---|---|
 | `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | `ImmediateInput` | 저장·통신 draft | #919에서는 기존 값 고정; reset 전 새 값으로 확정 |
 | 와이어 discriminator `hwihaCourtInput` | `immediateInput` | 저장·통신 draft | `@SerialName`과 `type` 갱신 |
-| `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
+| `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 세계 형식 가드 PR | 값 없는 세계·옛 키·삼모 세계 fail closed |
 | `hwiha_siege` | `siege` | DB 식별자 draft | V64에서 표·제약·인덱스 개명, V61 원본 유지 |
 | `hwiha_person_card` | `person_card` | DB 식별자 draft | V64에서 뷰 개명과 새 meta 키 투영, V63 원본 유지 |
 | `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
@@ -1480,3 +1480,9 @@ web/game/lib/hwiha-reads.ts
 | `hanSpatialSupplyProvider` | `spatialSupplyProvider` | 엔진 배선 인자 |
 
 지도 자료의 `han-world-v3`·`han-tiles.json` 등 저장된 판 ID와 입력 파일명은 그대로 둔다. 해당 값은 세계 핀과 심사 원장이 참조하는 역사 지도 계약이다.
+
+## 세계 형식 가드
+
+새 시드는 `world_state.config.worldFormat = GENERAL_RETAINER_CAMPAIGN`을 기록한다. 엔진 부팅과 API 처리 월드 조회는 이 값이 없거나 다르거나, `ruleProfile` 또는 `hwiha*` 옛 키가 config·meta에 남으면 명시적으로 거절한다. API는 `409 Conflict`와 원인을 돌려준다. 운영 세계 데이터를 자동 이전하지 않으므로 pep C단계 리셋 전 게임 서버를 승격하지 않는다.
+
+`WorldRuleProfile`과 API의 `ruleProfile` 응답은 남은 입력 핸들러·웹 소비자가 쓰는 임시 내부 어댑터다. 저장된 세계의 판정은 오직 `WorldFormat`이 한다. 옛 `/game/hwiha/*`와 `/game/<server>/hwiha/*`의 308 리다이렉트는 `web/game/middleware.ts` 및 기존 9화면 계약 테스트가 유지한다.

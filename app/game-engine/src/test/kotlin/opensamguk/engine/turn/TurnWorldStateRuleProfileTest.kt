@@ -7,31 +7,28 @@ import kotlin.test.assertFailsWith
 import opensamguk.logic.input.RuleProfile
 
 class TurnWorldStateRuleProfileTest {
-    private fun state(config: Map<String, Any?>) =
-        TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60, lastTurnTime = Instant.EPOCH, config = config)
+    private fun state(config: Map<String, Any?>, meta: Map<String, Any?> = emptyMap()) =
+        TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60,
+            lastTurnTime = Instant.EPOCH, config = config, meta = meta)
 
-    @Test
-    fun `worlds seeded before the field exist are SAMMO`() {
-        assertEquals(RuleProfile.SAMMO, state(emptyMap()).ruleProfile)
+    @Test fun `current world uses the temporary input profile`() {
+        assertEquals(RuleProfile.HWIHA,
+            state(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")).ruleProfile)
     }
 
-    @Test
-    fun `hwiha worlds read the seeded value`() {
-        assertEquals(RuleProfile.HWIHA, state(mapOf("ruleProfile" to "HWIHA")).ruleProfile)
-    }
-
-    @Test
-    fun `unknown text fails instead of quietly becoming SAMMO`() {
-        assertFailsWith<IllegalArgumentException> { state(mapOf("ruleProfile" to "hwiha")).ruleProfile }
-    }
-
-    @Test
-    fun `non string config values fail instead of quietly becoming SAMMO`() {
-        for (value in listOf(1, true, listOf("HWIHA"), mapOf("name" to "HWIHA"))) {
-            assertFailsWith<IllegalArgumentException>("invalid ruleProfile: $value") {
-                state(mapOf("ruleProfile" to value)).ruleProfile
-            }
+    @Test fun `unmarked and old worlds cannot reach runtime input rules`() {
+        for (config in listOf(emptyMap<String, Any?>(),
+            mapOf("ruleProfile" to "HWIHA"),
+            mapOf("worldFormat" to "SAMMO"),
+            mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "ruleProfile" to "HWIHA"))) {
+            assertFailsWith<IllegalArgumentException> { state(config).ruleProfile }
         }
     }
 
+    @Test fun `retired state keys are rejected during runtime projection`() {
+        assertFailsWith<IllegalArgumentException> {
+            state(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"),
+                mapOf(("hwi" + "haCountyWarehouse") to true)).ruleProfile
+        }
+    }
 }

@@ -63,7 +63,7 @@ class WorldSnapshotLoaderArchiveIT {
 
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, meta)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, meta, config)
             VALUES (
                 1,
                 'scenario_0',
@@ -76,7 +76,8 @@ class WorldSnapshotLoaderArchiveIT {
                     "nationHistory":{"7":["stale nation"]},
                     "generalHistory":{"7":["stale general"]},
                     "globalLogs":[{"category":"action","year":200,"month":1,"text":"stale global"}]
-                }'::jsonb
+                }'::jsonb,
+                '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb
             )
             """.trimIndent(),
         )
@@ -248,8 +249,8 @@ class WorldSnapshotLoaderArchiveIT {
     fun `configured world only loads its world-scoped state cohorts`() {
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
-            VALUES (2, 'other_world', 201, 2, 1800)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (2, 'other_world', 201, 2, 1800, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
         )
         jdbc.update(

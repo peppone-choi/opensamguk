@@ -174,7 +174,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    exclude("**/HanExpandedCityCommandRoundTripIT.class")
+    exclude("**/ExpandedCityPersistenceIT.class")
     inputs.file(rootProject.file(".github/city-paths.txt"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
     testLogging {
@@ -207,10 +207,10 @@ val cityPathInputs = rootProject.fileTree(rootProject.projectDir) {
 
 tasks.register<Test>("cityTest") {
     group = "verification"
-    description = "Runs one deterministic shard of the exhaustive added-city command round trip."
+    description = "Runs one deterministic shard of current-world added-city persistence."
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    include("**/HanExpandedCityCommandRoundTripIT.class")
+    include("**/ExpandedCityPersistenceIT.class")
     useJUnitPlatform()
     maxHeapSize = "2g"
     val shardCount = providers.gradleProperty("cityShardCount").orElse("1")
@@ -223,6 +223,7 @@ tasks.register<Test>("cityTest") {
     inputs.file(cityPathList).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cityPathInputs).withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
+    systemProperty("opensamguk.artifacts.root", rootProject.projectDir.absolutePath)
     environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")

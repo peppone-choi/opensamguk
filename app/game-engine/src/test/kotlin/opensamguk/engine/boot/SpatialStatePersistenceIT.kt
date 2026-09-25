@@ -55,7 +55,7 @@ class SpatialStatePersistenceIT {
 
     private fun seed(id: Int, map: String = "han-world-v3") {
         jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, world_version, writer_epoch) " +
-            "VALUES (?, 'spatial-test', 200, 1, 60, CAST(? AS jsonb), 0, 1)", id, "{\"mapName\":\"$map\"}")
+            "VALUES (?, 'spatial-test', 200, 1, 60, CAST(? AS jsonb), 0, 1)", id, "{\"mapName\":\"$map\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}")
         jdbc.update("INSERT INTO general (world_id, id, name, turn_time) VALUES (?, 7, 'G', now())", id)
         jdbc.update("INSERT INTO ng_games (world_id, server_id, date, season, scenario, scenario_name, env) " +
             "VALUES (?, ?, now(), 1, 0, 'Spatial test', '{}'::jsonb)", id, "spatial-test-$id")

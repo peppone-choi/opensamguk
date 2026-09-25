@@ -40,7 +40,7 @@ class HanHistoricalWorldRoundTripIT {
         HanWorldVariant.entries.forEachIndexed { index, variant ->
             val id = index + 1
             jdbc.update("INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config,meta) VALUES (?, 'scenario_1020',200,1,60,?::jsonb,'{}'::jsonb)",
-                id, "{\"mapName\":\"han-world-v3\"}")
+                id, "{\"mapName\":\"han-world-v3\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}")
             val bundle = artifacts.artifacts(variant)
             jdbc.batchUpdate("""INSERT INTO city(world_id,id,name,level,nation_id,pop,pop_max,agri,agri_max,comm,comm_max,
                 secu,secu_max,def,def_max,wall,wall_max,region) VALUES (?,?,?,1,0,100,1000,10,1000,10,1000,10,1000,10,1000,10,1000,1)""",

@@ -181,7 +181,8 @@ class ScenarioImporterIT {
         val storedMeta = jdbc.queryForObject("SELECT meta::text FROM general WHERE world_id = 1 AND meta->>'lord' = 'true'", String::class.java)!!
         assertTrue(opensamguk.logic.input.LordStatus.read(opensamguk.infra.persistence.MetaJson.decode(storedMeta)))
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"ruleProfile\": \"HWIHA\"") || config.contains("\"ruleProfile\":\"HWIHA\""))
+        assertTrue(config.contains("\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"") ||
+            config.contains("\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
         val freshVariant = opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4
         val topology = HanWorldArtifactsResolver(root).artifacts(freshVariant).projection.topology

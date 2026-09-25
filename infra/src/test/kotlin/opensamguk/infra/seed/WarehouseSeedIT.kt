@@ -66,7 +66,7 @@ class WarehouseSeedIT {
 
     @Test fun `fresh scenario without a profile seeds HWIHA positions and records HWIHA`() {
         importer(scenario(includeProfile = false)).importAll(jdbc, WorldId(1))
-        assertEquals("HWIHA", jdbc.queryForObject("SELECT config->>'ruleProfile' FROM world_state WHERE id=1", String::class.java))
+        assertEquals("GENERAL_RETAINER_CAMPAIGN", jdbc.queryForObject("SELECT config->>'worldFormat' FROM world_state WHERE id=1", String::class.java))
         assertTrue(jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id=1", Int::class.java)!! > 0)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1", Int::class.java))
     }

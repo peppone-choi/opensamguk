@@ -37,7 +37,7 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
-            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")))
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         for ((inputId, expected) in mapOf(
             "stratagem.play" to "NOT_DELIVERED",
             "action.unlisted" to "UNKNOWN_INPUT",
@@ -63,7 +63,7 @@ class CommandReserveServiceTest {
             .thenThrow(AdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
         val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
             CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
-            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaDeployAdmission = deploy)
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), hwihaDeployAdmission = deploy)
 
         assertEquals("ADMISSION_REACHED", assertFailsWith<AdmissionDenied> {
             service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
@@ -86,7 +86,7 @@ class CommandReserveServiceTest {
     }
     @Test fun `legacy direct reservation cannot enter hwiha slots and invalid world fails closed`() {
         for (config in listOf(null, mapOf("ruleProfile" to null), mapOf("ruleProfile" to "unknown"),
-            mapOf("ruleProfile" to 1), mapOf("ruleProfile" to "HWIHA"))) {
+            mapOf("ruleProfile" to 1), mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))) {
             val turns = RecordingReservedTurns()
             val inbox = RecordingInbox()
             val results = RecordingResults()
@@ -135,7 +135,7 @@ class CommandReserveServiceTest {
         val inbox = RecordingInbox()
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
-            GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
+            GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
             hwihaAdmission = EnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<AdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
@@ -173,7 +173,7 @@ class CommandReserveServiceTest {
             val service = CommandReserveService(RecordingReservedTurns(), inbox, RecordingResults(), redis(),
                 CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture",
                 requestIds = { "court-collision" }, transactions = TestTransactions,
-                worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaCourtAdmission = admission)
+                worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), hwihaCourtAdmission = admission)
             service.publishImmediate(base, 42)
             service.publishImmediate(base.copy(requestId = "another-client-id", ownerUserId = 777), 42)
             assertFailsWith<IllegalStateException> { service.publishImmediate(variant, owner) }
@@ -200,7 +200,7 @@ class CommandReserveServiceTest {
         val turns = RecordingReservedTurns()
         val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", requestIds = { "domestic-req" }, transactions = TestTransactions,
-            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaCourtAdmission = court)
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), hwihaCourtAdmission = court)
         service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("client", 10, 999,
             "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
         val stored = inbox.accepted.single()
@@ -363,7 +363,7 @@ class CommandReserveServiceTest {
             profile = "che:scenario_2",
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00Z"), ZoneOffset.UTC),
             requestIds = { "req-immediate" },
-            transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
+            transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
         )
 
         val result = service.reserve(generalId = 10, actionCode = "sendMessage", turnIdx = 0, argJson = """{"msg":"x"}""")

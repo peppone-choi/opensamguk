@@ -67,7 +67,7 @@ class WaterControlPersistenceIT {
 
     private fun seedWorld(id: Int, map: String = "han-world-v3") {
         jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, world_version, writer_epoch) " +
-            "VALUES (?, 'water-test', 200, 1, 60, CAST(? AS jsonb), 0, 1)", id, "{\"mapName\":\"$map\"}")
+            "VALUES (?, 'water-test', 200, 1, 60, CAST(? AS jsonb), 0, 1)", id, "{\"mapName\":\"$map\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}")
     }
 
     private fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)),

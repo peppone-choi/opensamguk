@@ -262,8 +262,10 @@ class ScenarioImporter(
             "fiction" to fiction,
             "refreshLimit" to PHP_REFRESH_LIMIT,
             "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
-            // Store the resolved profile so later reads never infer from a missing key.
-            "ruleProfile" to effectiveProfile.name,
+            // Only the current product emits a world format marker. Historical imports remain
+            // unmarked and are rejected by runtime boot and API reads.
+            (if (effectiveProfile == RuleProfile.HWIHA) "worldFormat" to "GENERAL_RETAINER_CAMPAIGN"
+                else "ruleProfile" to effectiveProfile.name),
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,

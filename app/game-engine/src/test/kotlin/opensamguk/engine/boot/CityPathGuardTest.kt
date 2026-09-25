@@ -45,7 +45,7 @@ class CityPathGuardTest {
         val opened = RepositoryInputTrace.capture(root) {
             MapJson.loadFromClasspath("han-world-v3")
             MapJson.loadCityDetailsFromClasspath("han-world-v3")
-            SeedBootstrap(scenarioCode = "scenario_1020", worldId = WorldId(1)).loadScenario()
+            SeedBootstrap(scenarioCode = "scenario_990002", worldId = WorldId(1)).loadScenario()
             val resolver = HanWorldArtifactsResolver(root)
             resolver.artifacts(HanWorldVariant.V3_835)
             resolver.artifacts(HanWorldVariant.V3_1447)
@@ -56,9 +56,8 @@ class CityPathGuardTest {
     }
 
     @Test fun `command keys and city path classes are covered by code paths`() {
-        val registry = CommandRegistry(GeneralActionPipeline())
-        val classes = ExpandedCityCommandCases.keys.map { registry.resolve(it).javaClass } + listOf(
-            CommandRegistry::class.java, ReservedTurnHandler::class.java, DatabaseHooks::class.java,
+        val classes = listOf(
+            DatabaseHooks::class.java,
             JdbcFlushExecutor::class.java, WorldSnapshotLoader::class.java,
             MapAdministrativeOwnership::class.java, SpatialSupplyProvider::class.java,
             HanStrategicRouteProjection::class.java, CalcCityDistance::class.java,

@@ -30,7 +30,7 @@ class DispatchPrecheckServiceTest {
         `when`(projection.administrativeCountyIds).thenReturn(setOf(7))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(
             WorldStateReadEntity(id = 1, currentYear = phase.year, currentMonth = phase.month, currentPhase = phase.phase,
-                config = mapOf("ruleProfile" to "HWIHA")),
+                config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
             listOf(CityReadEntity(id = 7, name = "C7", worldId = 1, nationId = 1), CityReadEntity(id = 8, worldId = 1, nationId = 1)), artifacts))
         return people
     }
@@ -85,7 +85,7 @@ class DispatchPrecheckServiceTest {
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(1,41).code)
         valid.world.config = emptyMap()
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(1,41).code)
-        valid.world.config = mapOf("ruleProfile" to "HWIHA")
+        valid.world.config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")
         people[2].worldId = 2
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(1,41).code)
     }

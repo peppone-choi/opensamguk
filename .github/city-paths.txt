@@ -1,4 +1,4 @@
-# Paths that require the exhaustive added-city command round trip on a PR.
+# Paths that require the exhaustive current-world added-city persistence check on a PR.
 # This file is read by both the CI change classifier and the Gradle cityTest task.
 [data]
 data/map/han-*artifacts-v1/**
@@ -17,7 +17,7 @@ data/curated/han/territory-disconnection-adjudications-v1.json
 data/curated/han/supply-disconnection-adjudications-v3.json
 infra/src/main/resources/map/han-world-v3.json
 infra/src/main/resources/map/han-780-v1.json
-infra/src/main/resources/scenario/scenario_1020.json
+infra/src/main/resources/scenario/scenario_990002.json
 common/src/main/kotlin/opensamguk/common/constants/HanCityConst.kt
 common/src/main/kotlin/opensamguk/common/constants/HanGateIndex.kt
 common/src/main/kotlin/opensamguk/common/constants/HanWorldV*CityConst.kt

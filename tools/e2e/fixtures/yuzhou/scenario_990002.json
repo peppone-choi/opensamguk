@@ -1,7 +1,7 @@
 {
   "title": "휘하 예주 조각 (합성 운영 후보)",
   "startYear": 190,
-  "ruleProfile": "HWIHA",
+  "worldFormat": "GENERAL_RETAINER_CAMPAIGN",
   "map": {"mapName": "han-world-v3"},
   "seedContract": {"activeGenerals": {"base": 6, "extended": 6}},
   "lords": ["양국 주공","여남 주공","패국 주공","영천 주공","진국 주공","노국 주공"],

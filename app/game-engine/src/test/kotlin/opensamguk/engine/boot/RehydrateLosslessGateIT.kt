@@ -70,22 +70,22 @@ class RehydrateLosslessGateIT {
 
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
-            VALUES (?, 'scenario_0', 200, 1, 3600)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (?, 'scenario_0', 200, 1, 3600, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
             worldId.value,
         )
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
-            VALUES (?, 'scenario_0', 200, 1, 3600)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (?, 'scenario_0', 200, 1, 3600, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
             secondWorldId.value,
         )
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
-            VALUES (?, 'scenario_0', 200, 1, 3600)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (?, 'scenario_0', 200, 1, 3600, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
             thirdWorldId.value,
         )
