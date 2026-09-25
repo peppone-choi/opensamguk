@@ -4,7 +4,7 @@
 
 추천은 작성 → 제출 → 심의 → 원안·낮은 관직·대행·보류·기각·경쟁 후보 결정을 거친다. 제안된 후보는 임명을 수락하거나 사양한다. 이 상태기계는 관직을 직접 발급하지 않는다. 수락 뒤 실제 관직을 만들 때에는 조서·인장·부임 조건을 각각 검증한다.
 
-관직 주장은 L1의 여덟 `OfficeClaimOrigin`을 그대로 사용하고 `world_state.meta.officeClaimHistory`에 별도 순서 기록으로 저장한다. `OfficeTenure.origin`은 재임 생성 시 고정된다. 자칭 주장을 추인하면 기존 `SELF_STYLED` 행을 변경하지 않고, 조서 ID와 앞선 주장 ID를 가진 `COURT_CONFIRMED` 행을 뒤에 추가한다. 추인 증거는 S6-3의 수락된 유효 조서에서만 어댑터가 생성한다. 이력 codec은 중복 ID, 끊어진 연결, 잘못된 출처를 거절한다.
+관직 주장은 L1의 여덟 `OfficeClaimOrigin`을 그대로 사용하고 `officeClaimHistory` 메타 키에 별도 순서 기록으로 저장한다. 실제 메타 소유 행은 b 통합에서 정한다. `OfficeTenure.origin`은 재임 생성 시 고정된다. 자칭 주장을 추인하면 기존 `SELF_STYLED` 행을 변경하지 않고, 조서 ID와 앞선 주장 ID를 가진 `COURT_CONFIRMED` 행을 뒤에 추가한다. 추인 증거는 S6-3의 수락된 유효 조서에서만 어댑터가 생성한다. 이력 codec은 중복 ID, 끊어진 연결, 잘못된 출처를 거절한다.
 
 실권은 관직 주장에 대한 해당 세력의 인정과 L1 `OfficeCapabilityResolver.actualJurisdiction`의 치소·점유·인원·보급 판정을 모두 만족할 때만 있다. 인정받은 자칭자라도 물리적 조건이 없으면 실권이 없고, 실권을 지녔어도 타 세력의 인정을 자동 획득하지 않는다.
 
