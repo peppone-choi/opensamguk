@@ -1320,6 +1320,12 @@
 | `HwihaYuedan` | `Yuedan` |
 | `HwihaYuedanRow` | `YuedanRow` |
 
+## 엔진 패키지 개명
+
+| 이전 패키지·경로 | 새 패키지·경로 | 비고 |
+|---|---|---|
+| `opensamguk.engine.hwiha` (`app/game-engine/src/{main,test}/kotlin/opensamguk/engine/hwiha/`) | `opensamguk.engine.campaign` (`app/game-engine/src/{main,test}/kotlin/opensamguk/engine/campaign/`) | 103개 파일·호출부의 패키지 경로 이동. 조정·내정·전쟁 등 세부 도메인 분리는 후속 정리. |
+
 ## #905 교차 경로
 
 PR #905 변경 파일 244개 가운데 개명 범위와 겹치는 경로가 64개다(app 31, logic 18, infra 6, web 4, tools 3, data 2). #905가 draft인 동안 해당 경로의 파일 이동과 참조 수정은 병합 상태를 확인하고 진행한다. 아래 목록은 개명 또는 리베이스가 필요한 정확한 옛 경로다.

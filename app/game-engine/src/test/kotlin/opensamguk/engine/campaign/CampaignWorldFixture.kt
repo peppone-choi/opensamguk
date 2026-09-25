@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import java.nio.file.Path
 import java.time.Instant

@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.common.constants.GameConst
 import opensamguk.engine.turn.InMemoryTurnWorld

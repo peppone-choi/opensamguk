@@ -2,7 +2,7 @@ package opensamguk.engine.boot
 
 import kotlin.test.*
 import opensamguk.engine.flush.DatabaseHooks
-import opensamguk.engine.hwiha.MonthlyCountyIncome
+import opensamguk.engine.campaign.MonthlyCountyIncome
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson

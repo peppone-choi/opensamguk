@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.TurnOutcome
+import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.gameapi.GameApiApplication
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -58,8 +58,8 @@ class CourtApiIT {
         fixture.seed(1)
         val seeded = InMemoryTurnWorld(fixture.load(1))
         val recorder = opensamguk.engine.turn.ChangeRecorder()
-        assertIs<opensamguk.engine.hwiha.EnlistmentExecution.Applied>(
-            opensamguk.engine.hwiha.EnlistmentExecutor(seeded, recorder).execute(
+        assertIs<opensamguk.engine.campaign.EnlistmentExecution.Applied>(
+            opensamguk.engine.campaign.EnlistmentExecutor(seeded, recorder).execute(
                 opensamguk.logic.input.EnlistmentRequest(1, opensamguk.logic.input.EnlistmentMode.NATION, 1)) { error("no draw") })
         flush.flush(opensamguk.engine.flush.DatabaseHooks.toFlushPayload(seeded, recorder, seeded.consumeDirtyState()))
         val county = seeded.administrativeCountyIds.min()

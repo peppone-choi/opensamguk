@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.engine.hwiha.EncounterResolver
+import opensamguk.engine.campaign.EncounterResolver
 import opensamguk.engine.invariance.WorldStateBaseline
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld

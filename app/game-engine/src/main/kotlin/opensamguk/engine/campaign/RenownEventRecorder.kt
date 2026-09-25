@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.common.josa.JosaUtil
 import opensamguk.engine.turn.ChangeRecorder

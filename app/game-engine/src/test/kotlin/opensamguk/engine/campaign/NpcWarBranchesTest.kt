@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import kotlin.test.*
 import opensamguk.engine.turn.*

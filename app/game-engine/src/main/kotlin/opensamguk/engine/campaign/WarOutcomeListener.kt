@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 /**
  * 전쟁 결과 → 명망 사건 기록의 경계. 조우 정산과 縣 함락이 이 두 메서드만 부른다.

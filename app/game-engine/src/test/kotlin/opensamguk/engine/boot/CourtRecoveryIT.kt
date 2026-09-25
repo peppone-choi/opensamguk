@@ -13,8 +13,8 @@ import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
-import opensamguk.engine.hwiha.EnlistmentExecution
-import opensamguk.engine.hwiha.EnlistmentExecutor
+import opensamguk.engine.campaign.EnlistmentExecution
+import opensamguk.engine.campaign.EnlistmentExecutor
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
@@ -162,8 +162,8 @@ class CourtRecoveryIT {
         val initial = InMemoryTurnWorld(fixture.load(id))
         val recorder = ChangeRecorder()
         val county = initial.administrativeCountyIds.min()
-        assertIs<opensamguk.engine.hwiha.DispatchExecution.Applied>(
-            opensamguk.engine.hwiha.DispatchExecutor(initial, recorder)
+        assertIs<opensamguk.engine.campaign.DispatchExecution.Applied>(
+            opensamguk.engine.campaign.DispatchExecutor(initial, recorder)
                 .issue("original-103", DispatchRequest(10, 1, county)))
         flush.flush(DatabaseHooks.toFlushPayload(initial, recorder, initial.consumeDirtyState()))
         jdbc.update("""UPDATE world_state SET start_year=200,config=jsonb_set(config,'{startYear}','200'::jsonb),start_time='0200-01-01T00:00:00Z',

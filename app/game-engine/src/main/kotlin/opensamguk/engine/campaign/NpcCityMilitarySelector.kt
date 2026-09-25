@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.logic.domestic.FieldRequest
 import opensamguk.logic.domestic.FieldInput

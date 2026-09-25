@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.logic.vision.ScoutInputCodec
 import opensamguk.logic.vision.ScoutFailure

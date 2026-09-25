@@ -2,8 +2,8 @@ package opensamguk.engine.boot
 
 import kotlin.test.*
 import opensamguk.engine.flush.DatabaseHooks
-import opensamguk.engine.hwiha.WarehouseSettlement
-import opensamguk.engine.hwiha.WarehouseSettlement.Result.*
+import opensamguk.engine.campaign.WarehouseSettlement
+import opensamguk.engine.campaign.WarehouseSettlement.Result.*
 import opensamguk.engine.turn.*
 import opensamguk.logic.economy.*
 import opensamguk.infra.persistence.JdbcFlushExecutor

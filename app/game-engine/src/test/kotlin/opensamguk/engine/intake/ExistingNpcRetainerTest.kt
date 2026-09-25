@@ -5,7 +5,7 @@ import opensamguk.common.wire.RetainerActionResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.retainer.RetainerMonthlyService
-import opensamguk.engine.hwiha.CampaignWorldFixture
+import opensamguk.engine.campaign.CampaignWorldFixture
 import opensamguk.engine.turn.*
 import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.input.PersonPolicyState

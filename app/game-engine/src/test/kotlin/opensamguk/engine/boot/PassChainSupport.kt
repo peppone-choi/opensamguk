@@ -9,11 +9,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.EncounterResolver
-import opensamguk.engine.hwiha.MonthlyAssessment
-import opensamguk.engine.hwiha.MonthlyCountyIncome
-import opensamguk.engine.hwiha.MonthlySalary
-import opensamguk.engine.hwiha.SiegeService
+import opensamguk.engine.campaign.EncounterResolver
+import opensamguk.engine.campaign.MonthlyAssessment
+import opensamguk.engine.campaign.MonthlyCountyIncome
+import opensamguk.engine.campaign.MonthlySalary
+import opensamguk.engine.campaign.SiegeService
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.MetaJson

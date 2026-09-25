@@ -163,7 +163,7 @@ class PersonalTurnDeterminismTest {
             val seeds = mutableListOf<String>()
             val result = handler(world(RuleProfile.HWIHA, listOf(gen(17))), seeds)
                 .handle(17, code, 200, 6, "14:00")
-            kotlin.test.assertIs<opensamguk.engine.hwiha.TurnOutcome.Rejected>(result.hwihaOutcome)
+            kotlin.test.assertIs<opensamguk.engine.campaign.TurnOutcome.Rejected>(result.hwihaOutcome)
             assertEquals(emptyList(), seeds)
         }
     }

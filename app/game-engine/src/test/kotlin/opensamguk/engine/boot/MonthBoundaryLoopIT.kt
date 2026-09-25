@@ -9,8 +9,8 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.engine.hwiha.MonthlyAssessment
-import opensamguk.engine.hwiha.MonthlyCountyIncome
+import opensamguk.engine.campaign.MonthlyAssessment
+import opensamguk.engine.campaign.MonthlyCountyIncome
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.JdbcFlushExecutor

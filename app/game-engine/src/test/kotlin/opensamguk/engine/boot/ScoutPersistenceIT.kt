@@ -6,7 +6,7 @@ import opensamguk.logic.vision.ScoutReports
 import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.engine.flush.DatabaseHooks
-import opensamguk.engine.hwiha.*
+import opensamguk.engine.campaign.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.seed.HanWorldArtifactsResolver

@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.logic.domestic.ActivePlacement
 import opensamguk.logic.domestic.PlacementState

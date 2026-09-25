@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil

@@ -9,7 +9,7 @@ import opensamguk.logic.domestic.DomesticWork
 import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.flush.DatabaseHooks
-import opensamguk.engine.hwiha.*
+import opensamguk.engine.campaign.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson

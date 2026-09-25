@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import java.io.File
 import java.time.Instant
@@ -168,7 +168,7 @@ class GovernanceMeritWiringTest {
             File("src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
             File("app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt"),
         ).firstOrNull { it.isFile }?.readText() ?: error("DaemonLoopConfig.kt source not found from ${File(".").absolutePath}")
-        assertTrue(source.contains("merit = opensamguk.engine.hwiha.GovernanceMeritRenownSink(world, recorder)"),
+        assertTrue(source.contains("merit = opensamguk.engine.campaign.GovernanceMeritRenownSink(world, recorder)"),
             "HWIHA 내정 문맥의 치적 사건이 버려지고 있다(GovernanceMeritSink.NONE)")
     }
 }

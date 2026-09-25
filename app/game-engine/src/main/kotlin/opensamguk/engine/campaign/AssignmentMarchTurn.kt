@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn

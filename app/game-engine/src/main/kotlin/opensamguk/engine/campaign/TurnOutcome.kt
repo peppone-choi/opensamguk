@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.campaign
 
 /** A staged personal-turn outcome; only the common world/slot/result flush commits it. */
 sealed interface TurnOutcome {
