@@ -1,5 +1,21 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.VisionRules
+import opensamguk.logic.vision.VisionSourceKind
+
+import opensamguk.logic.vision.ScoutPosts
+
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.ActivePlacement
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyWorks
+
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticCard
 
 import opensamguk.logic.domestic.DomesticDesign
@@ -20,8 +36,8 @@ class HwihaDomesticVisionContractTest {
     private val now = HwihaPhase(200, 1, 1)
     private val reader: HwihaVisionSourceReader = HwihaMetaVisionSourceReader
 
-    private fun scoutPlacement(retainer: Int, owner: Int, province: String, arrived: Boolean) = mapOf(HwihaPlacementState.META_KEY to
-        HwihaPlacementState(HwihaActivePlacement(HwihaPlacementOrder("r$retainer", owner, retainer, PlacementPost.SCOUT,
+    private fun scoutPlacement(retainer: Int, owner: Int, province: String, arrived: Boolean) = mapOf(PlacementState.META_KEY to
+        PlacementState(ActivePlacement(PlacementOrder("r$retainer", owner, retainer, PlacementPost.SCOUT,
             PlacementTarget.Province(province), now), now, if (arrived) now else null), null).toMetaValue())
 
     private fun viewer(posts: List<HwihaScoutPost>, towers: List<Pair<Int, String>>) =
@@ -32,31 +48,31 @@ class HwihaDomesticVisionContractTest {
     @Test fun `a domestic-written arrived scout post is FULL vision and a marching one is none`() {
         val cards = listOf(DomesticCard(5, 1, 50, "staff"), DomesticCard(6, 1, 60, "staff"))
         val placements = mapOf(50 to scoutPlacement(5, 1, "p2", arrived = true), 60 to scoutPlacement(6, 1, "p4", arrived = false))
-        val ownerMeta = mapOf<String, Any?>(HwihaScoutPosts.META_KEY to HwihaScoutPosts.project(1, cards) { placements[it] })
+        val ownerMeta = mapOf<String, Any?>(ScoutPosts.META_KEY to ScoutPosts.project(1, cards) { placements[it] })
 
-        assertEquals(HwihaMetaVisionSourceReader.SCOUT_POSTS_KEY, HwihaScoutPosts.META_KEY)
+        assertEquals(HwihaMetaVisionSourceReader.SCOUT_POSTS_KEY, ScoutPosts.META_KEY)
         val read = reader.scoutPosts(ownerMeta)
         assertEquals(SourceRead(listOf(HwihaScoutPost(5, "p2")), 0), read, "도착한 정찰만 시야, 행군 중(MOVING)은 무효가 아니라 무시")
 
-        val view = HwihaVision.project(viewer(read.value, emptyList()), index, HwihaVisionRules.CANON, now)
+        val view = HwihaVision.project(viewer(read.value, emptyList()), index, VisionRules.CANON, now)
         assertEquals(listOf(VisionTier.FOG, VisionTier.FULL, VisionTier.FULL, VisionTier.FULL, VisionTier.FOG), tiers(view))
-        assertEquals(listOf(VisionSource(VisionSourceKind.SCOUT_POST, 2, HwihaVisionRules.CANON.radius(VisionSourceKind.SCOUT_POST), "p2", 5)),
+        assertEquals(listOf(VisionSource(VisionSourceKind.SCOUT_POST, 2, VisionRules.CANON.radius(VisionSourceKind.SCOUT_POST), "p2", 5)),
             view.sources)
     }
 
     @Test fun `a domestic-written completed watchtower beacon is FULL vision and an unfinished one is none`() {
-        assertEquals(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY, HwihaCountyWorks.META_KEY)
+        assertEquals(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY, CountyWorks.META_KEY)
         assertEquals(HwihaMetaVisionSourceReader.WATCHTOWER_BEACON, DomesticWork.WATCHTOWER_BEACON.name)
-        val done = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
-            HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
-            listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now))).toMetaValue())
-        val building = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
-            HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
+        val done = mapOf<String, Any?>(CountyWorks.META_KEY to CountyWorks(
+            DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
+            listOf(CompletedWork(DomesticWork.WATCHTOWER_BEACON, now))).toMetaValue())
+        val building = mapOf<String, Any?>(CountyWorks.META_KEY to CountyWorks(
+            DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
 
         assertEquals(SourceRead(true, 0), reader.hasCompletedWatchtower(done))
         assertEquals(SourceRead(false, 0), reader.hasCompletedWatchtower(building), "진행 중 망루봉화는 시야가 아니다(무효도 아니다)")
 
-        val view = HwihaVision.project(viewer(emptyList(), listOf(40 to "p4")), index, HwihaVisionRules.CANON, now)
+        val view = HwihaVision.project(viewer(emptyList(), listOf(40 to "p4")), index, VisionRules.CANON, now)
         assertEquals(listOf(VisionTier.FOG, VisionTier.FOG, VisionTier.FOG, VisionTier.FULL, VisionTier.FULL), tiers(view))
     }
 }

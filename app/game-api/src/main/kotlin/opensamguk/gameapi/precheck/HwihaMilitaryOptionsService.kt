@@ -1,5 +1,10 @@
 package opensamguk.gameapi.precheck
 
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldRules
+
 import opensamguk.gameapi.read.HwihaDomesticReader
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
@@ -34,10 +39,10 @@ class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
         val snapshot = reader.snapshot()
         val state = snapshot.state ?: return blocked(inputId, if (snapshot.failure == "WRONG_RULE_PROFILE")
             HwihaMilitaryFailure.WRONG_RULE_PROFILE else HwihaMilitaryFailure.STATE_UNAVAILABLE)
-        val geography = HwihaFieldRules.assess(HwihaFieldRequest(actorId, HwihaFieldInput.FARM), state)
-        if (geography is HwihaFieldAssessment.Rejected)
+        val geography = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
+        if (geography is FieldAssessment.Rejected)
             return blocked(inputId, HwihaMilitaryFailure.valueOf(geography.reason.name))
-        val county = (geography as HwihaFieldAssessment.Eligible).county
+        val county = (geography as FieldAssessment.Eligible).county
         val levels = snapshot.countyLevels[county.id]
         val check = HwihaMilitaryRules.assessCity(HwihaMilitaryRequest(actorId, inputId), state,
             levels?.population, levels?.populationMax, snapshot.cityMilitaryTroops[county.id],

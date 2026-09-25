@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.ScoutPosts
+
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCard
 import opensamguk.logic.domestic.DomesticCounty
@@ -109,6 +111,6 @@ internal fun Map<String, Any?>.withKey(key: String, value: Any?): Map<String, An
 internal fun InMemoryTurnWorld.syncScoutPosts(recorder: ChangeRecorder, ownerId: Int) {
     val owner = getGeneralById(ownerId) ?: return
     val cards = listRetainers().map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) }
-    val projected = HwihaScoutPosts.project(ownerId, cards) { getGeneralById(it)?.meta }
-    updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaScoutPosts.META_KEY, projected))
+    val projected = ScoutPosts.project(ownerId, cards) { getGeneralById(it)?.meta }
+    updateGeneralMeta(recorder, owner, owner.meta.withKey(ScoutPosts.META_KEY, projected))
 }

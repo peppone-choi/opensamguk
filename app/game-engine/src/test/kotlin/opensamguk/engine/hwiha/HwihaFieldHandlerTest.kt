@@ -5,7 +5,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.domestic.DomesticDesign
-import opensamguk.logic.input.HwihaFieldInput
+import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.input.HwihaInputCatalog
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
@@ -30,12 +30,12 @@ class HwihaFieldHandlerTest {
         val recorder = ChangeRecorder()
         val handler = HwihaFieldHandler(world, recorder, HwihaDomesticContext(design = design))
         val before = world.getCityById(route.startCity)!!.agriculture
-        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaFieldInput.FARM, actor.id, "{}", "farm-501", 42))
+        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(FieldInput.FARM, actor.id, "{}", "farm-501", 42))
         val first = world.getCityById(route.startCity)!!.agriculture
         assertTrue(first > before)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
         assertEquals(1, world.getGeneralById(actor.id)!!.dedication)
-        assertEquals(applied, handler.handle(HwihaFieldInput.FARM, actor.id, "{}", "farm-501", 42))
+        assertEquals(applied, handler.handle(FieldInput.FARM, actor.id, "{}", "farm-501", 42))
         assertEquals(first, world.getCityById(route.startCity)!!.agriculture)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
     }
@@ -51,7 +51,7 @@ class HwihaFieldHandlerTest {
         val handler = HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext(design = design))
         val before = world.getCityById(route.startCity)!!.defence
         // Actor intelligence is 70: cost scales beyond the unscaled 5,000/250 stock.
-        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaFieldInput.FORTIFY,
+        val rejected = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(FieldInput.FORTIFY,
             actor.id, "{}", "fort-502", 42))
         assertEquals("INSUFFICIENT_STOCK", rejected.code)
         assertEquals(before, world.getCityById(route.startCity)!!.defence)
@@ -65,7 +65,7 @@ class HwihaFieldHandlerTest {
             if (city.id == route.startCity) city.copy(nationId = 2) else city
         })
         val rejected = assertIs<HwihaTurnOutcome.Rejected>(HwihaFieldHandler(world, ChangeRecorder(),
-            HwihaDomesticContext(design = design)).handle(HwihaFieldInput.FARM, actor.id, "{}", "farm-503", 42))
+            HwihaDomesticContext(design = design)).handle(FieldInput.FARM, actor.id, "{}", "farm-503", 42))
         assertEquals("FOREIGN_COUNTY", rejected.code)
         assertEquals(0, world.getGeneralById(actor.id)!!.experience)
     }
@@ -79,7 +79,7 @@ class HwihaFieldHandlerTest {
         val catalog = HwihaInputCatalog.load()
         val selected = HwihaNpcFieldSelector(HwihaDomesticContext(design = design), catalog)
             .select(world, actor.id, ReservedTurn("휴식", "{}", rowExists = false))
-        assertEquals(HwihaFieldInput.FARM, selected.actionCode)
+        assertEquals(FieldInput.FARM, selected.actionCode)
         assertIs<HwihaTurnOutcome.Applied>(HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext(design = design))
             .handle(selected.actionCode, actor.id, selected.argJson, null, null, npcSelected = true))
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)

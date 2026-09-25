@@ -1,5 +1,7 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.DomesticInput
+
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticFailure
 import opensamguk.logic.domestic.DomesticAssessment
@@ -24,21 +26,21 @@ class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
         if (ownerUserId <= 0) deny("UNAUTHORIZED", "제출자 인증이 필요합니다.")
         reader.requireOwner(actorId, ownerUserId.toLong())
         val (canonical, assess) = when (inputId) {
-            HwihaDomesticInput.PLACEMENT -> {
-                val request = HwihaDomesticInput.parsePlacement(actorId, raw) ?: deny("INVALID_REQUEST", "배치할 카드와 자리를 확인해 주세요.")
-                HwihaDomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessPlacement(request, state) }
+            DomesticInput.PLACEMENT -> {
+                val request = DomesticInput.parsePlacement(actorId, raw) ?: deny("INVALID_REQUEST", "배치할 카드와 자리를 확인해 주세요.")
+                DomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessPlacement(request, state) }
             }
-            HwihaDomesticInput.POLICY -> {
-                val request = HwihaDomesticInput.parsePolicy(actorId, raw) ?: deny("INVALID_REQUEST", "방침 대상과 방침을 확인해 주세요.")
-                HwihaDomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessPolicy(request, state) }
+            DomesticInput.POLICY -> {
+                val request = DomesticInput.parsePolicy(actorId, raw) ?: deny("INVALID_REQUEST", "방침 대상과 방침을 확인해 주세요.")
+                DomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessPolicy(request, state) }
             }
-            HwihaDomesticInput.WORK -> {
-                val request = HwihaDomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
-                HwihaDomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessWork(request, state) }
+            DomesticInput.WORK -> {
+                val request = DomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
+                DomesticInput.canonicalJson(request) to { state: DomesticProjection -> DomesticRules.assessWork(request, state) }
             }
-            HwihaDomesticInput.REDUCE -> {
-                val request = HwihaDomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
-                HwihaDomesticInput.canonicalJson(request) to
+            DomesticInput.REDUCE -> {
+                val request = DomesticInput.parseWork(actorId, raw) ?: deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
+                DomesticInput.canonicalJson(request) to
                     { state: DomesticProjection -> DomesticRules.assessReduce(request, state) }
             }
             else -> deny(InputRejection.UNKNOWN_INPUT.name, InputRejection.UNKNOWN_INPUT.message)
@@ -48,8 +50,8 @@ class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
             "WRONG_RULE_PROFILE" -> deny(InputRejection.WRONG_RULE_PROFILE.name, InputRejection.WRONG_RULE_PROFILE.message)
             else -> deny(DomesticFailure.STATE_UNAVAILABLE.name, DomesticFailure.STATE_UNAVAILABLE.message)
         }
-        if (inputId == HwihaDomesticInput.WORK) {
-            val request = HwihaDomesticInput.parseWork(actorId, raw)
+        if (inputId == DomesticInput.WORK) {
+            val request = DomesticInput.parseWork(actorId, raw)
                 ?: deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
             val infrastructure = snapshot.infrastructure ?: deny(DomesticFailure.STATE_UNAVAILABLE.name,
                 DomesticFailure.STATE_UNAVAILABLE.message)

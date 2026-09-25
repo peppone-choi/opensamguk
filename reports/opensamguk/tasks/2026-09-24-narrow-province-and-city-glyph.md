@@ -94,3 +94,5 @@
 - main의 내정 모델·즉시 입력 봉투 이름 변경과 #905의 도로·보루 기능을 함께 적용했다. 보루 포위의 표시 이름을 명령 원장에 넣고, 삭제된 `legacyCommands` 필드는 제거했다.
 - 선택 검사 통과: `HwihaInputRegistryTest`, `HwihaInfrastructureSiteRulesTest`, `HwihaDomesticEffectsTest`, `DomesticRulesTest`, `CommandReserveServiceTest`, `HwihaDomesticEngineTest`, `HanStrategicSupplyProviderTest`.
 - `audit_province_clearance.py --check`는 관할 포위·전략 거점 막다른 길·런타임 도로 막다른 길 모두 0으로 통과했다. 전체 CI와 S3 통합 검사는 PR 업데이트 후 확인한다.
+
+- 이어서 main의 #923·#925 내정 패키지 이동을 병합했다. 공사 상태의 접경 ID·칸 좌표 직렬화와 현 단위 완공 보너스 규칙을 새 `domestic` 타입에 유지했다. 재검증에서 로직의 입력·상태·효과·규칙·공사 자리 테스트, API 예약 테스트, 엔진 공사 및 15개 시나리오 보급 테스트가 통과했다. 지역 분리 감사도 124/124 판정 유지로 통과했다.

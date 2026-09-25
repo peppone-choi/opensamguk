@@ -1,9 +1,10 @@
-package opensamguk.logic.input
+package opensamguk.logic.domestic
 
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import opensamguk.logic.input.HwihaFlatArguments
 
 /**
  * 배치 자리(§4·§8.2, 2026-09-23 사용자 결정). 사람 장수는 배치하지 않는다 — 그것은 발령이다.
@@ -34,7 +35,7 @@ enum class DomesticWork(val label: String) {
 
 sealed interface PlacementTarget {
     data class County(val countyId: Int) : PlacementTarget { init { require(countyId > 0) } }
-    data class Province(val provinceId: String) : PlacementTarget { init { require(HwihaDomesticIds.province(provinceId)) } }
+    data class Province(val provinceId: String) : PlacementTarget { init { require(DomesticIds.province(provinceId)) } }
     data class Nation(val nationId: Int) : PlacementTarget { init { require(nationId > 0) } }
     /** 군단장은 주인 곁으로 모이고, 해제는 목적지가 없다. */
     data object None : PlacementTarget
@@ -70,8 +71,8 @@ sealed interface PlacementTarget {
 
 sealed interface PolicyTarget {
     data class County(val countyId: Int) : PolicyTarget { init { require(countyId > 0) } }
-    data class Commandery(val commanderyId: String) : PolicyTarget { init { require(HwihaDomesticIds.commandery(commanderyId)) } }
-    data class Corps(val orderId: String) : PolicyTarget { init { require(HwihaDomesticIds.order(orderId)) } }
+    data class Commandery(val commanderyId: String) : PolicyTarget { init { require(DomesticIds.commandery(commanderyId)) } }
+    data class Corps(val orderId: String) : PolicyTarget { init { require(DomesticIds.order(orderId)) } }
 }
 
 data class PlacementRequest(val actorId: Int, val cardId: Int, val post: PlacementPost, val target: PlacementTarget) {
@@ -96,13 +97,13 @@ data class WorkRequest(
     init {
         require(actorId > 0 && countyId > 0)
         require(edgeId == null || (work == DomesticWork.ROAD || work == DomesticWork.FORTIFICATION) &&
-            HwihaDomesticIds.order(edgeId))
+            DomesticIds.order(edgeId))
         require((row == null) == (col == null) && (row == null ||
             (work == DomesticWork.FORTIFICATION && edgeId != null && row >= 0 && col!! >= 0)))
     }
 }
 
-internal object HwihaDomesticIds {
+internal object DomesticIds {
     private val provincePattern = Regex("[A-Za-z0-9._:-]{1,64}")
     private val orderPattern = Regex("[A-Za-z0-9._:-]{1,128}")
     fun province(value: String) = provincePattern.matches(value)
@@ -115,7 +116,7 @@ internal object HwihaDomesticIds {
  * 배치·방침·공사 접수 인자. 행위자 ID 는 인증된 호출자가 주고 본문에 없다. 키는 정확히 맞아야 하며
  * (중복·미지 키·문자열 숫자·소수·넘침·뒤따르는 내용은 거절) 같은 입력은 같은 canonical JSON 으로 저장된다.
  */
-object HwihaDomesticInput {
+object DomesticInput {
     const val PLACEMENT = "placement.assign"
     const val POLICY = "policy.set"
     const val WORK = "work.start"
@@ -132,7 +133,7 @@ object HwihaDomesticInput {
             }
             PlacementPost.SCOUT -> {
                 if (fields.keys != setOf("cardId", "post", "provinceId")) return@parse null
-                PlacementTarget.Province(text(fields["provinceId"])?.takeIf(HwihaDomesticIds::province) ?: return@parse null)
+                PlacementTarget.Province(text(fields["provinceId"])?.takeIf(DomesticIds::province) ?: return@parse null)
             }
             PlacementPost.ENVOY -> {
                 if (fields.keys != setOf("cardId", "post", "nationId")) return@parse null
@@ -156,12 +157,12 @@ object HwihaDomesticInput {
             }
             "COMMANDERY" -> {
                 if (fields.keys != setOf("scope", "commanderyId", "policy")) return@parse null
-                PolicyTarget.Commandery(text(fields["commanderyId"])?.takeIf(HwihaDomesticIds::commandery) ?: return@parse null) to
+                PolicyTarget.Commandery(text(fields["commanderyId"])?.takeIf(DomesticIds::commandery) ?: return@parse null) to
                     CountyPolicy.entries.map { it.name }
             }
             "CORPS" -> {
                 if (fields.keys != setOf("scope", "orderId", "policy")) return@parse null
-                PolicyTarget.Corps(text(fields["orderId"])?.takeIf(HwihaDomesticIds::order) ?: return@parse null) to
+                PolicyTarget.Corps(text(fields["orderId"])?.takeIf(DomesticIds::order) ?: return@parse null) to
                     CorpsPolicy.entries.map { it.name }
             }
             else -> return@parse null

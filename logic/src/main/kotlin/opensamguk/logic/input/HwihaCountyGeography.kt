@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticIds
+
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonArray
@@ -14,7 +16,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * (예: 譙 → 汝南郡). 화면이 보여 주는 郡과 방침이 걸리는 郡을 맞추려고 여기서는 `meta.junCh` 를 쓴다.
  */
 data class HwihaCountyPlace(val countyId: Int, val commanderyId: String, val commanderyName: String?, val jurisdictionId: String?) {
-    init { require(countyId > 0 && HwihaDomesticIds.commandery(commanderyId)) }
+    init { require(countyId > 0 && DomesticIds.commandery(commanderyId)) }
 }
 
 class HwihaCountyGeography(places: Collection<HwihaCountyPlace>,

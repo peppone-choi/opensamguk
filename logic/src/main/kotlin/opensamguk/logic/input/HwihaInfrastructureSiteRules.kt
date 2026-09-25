@@ -1,6 +1,8 @@
 package opensamguk.logic.input
 
 import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.WorkRequest
 import opensamguk.logic.world.StrategicEdgeStateSnapshot
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicRoadGate

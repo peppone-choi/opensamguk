@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.VisionRules
+
 import opensamguk.engine.turn.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.input.*
@@ -10,7 +12,7 @@ data class HwihaVisionContext(
     val topology: StrategicTopologySnapshot,
     val metrics: LandMarchMetricSnapshot,
     val commanderies: HanCommanderyIndex,
-    val rules: HwihaVisionRules.Rules = HwihaVisionRules.CANON,
+    val rules: VisionRules.Rules = VisionRules.CANON,
 )
 
 /**

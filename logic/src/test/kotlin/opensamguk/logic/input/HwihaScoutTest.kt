@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.VisionRules
+import opensamguk.logic.vision.VisionSourceKind
+
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.world.HanCommandery
 import opensamguk.logic.world.HanCommanderyIndex
@@ -11,7 +14,7 @@ class HwihaScoutTest {
     private val index = HanCommanderyIndex(hash,
         (0..3).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
         mapOf("p0" to 0, "p1" to 1, "p2" to 2, "p3" to 3), setOf(0 to 1, 1 to 2))
-    private val rules = HwihaVisionRules.CANON
+    private val rules = VisionRules.CANON
     private fun land(id: String) = StrategicNodeRef.LandProvince(id)
 
     @Test fun `scout input is exactly one commandery id and canonicalizes`() {
@@ -80,10 +83,10 @@ class HwihaScoutTest {
         assertEquals(HwihaResources(), rules.scoutCost)
         assertEquals("B1", rules.band(0).code); assertEquals("B2", rules.band(1000).code); assertEquals("B5", rules.band(Int.MAX_VALUE).code)
         val text = checkNotNull(javaClass.classLoader.getResource("hwiha/hwiha-vision-rules-v1.json")).readText()
-        assertFailsWith<IllegalArgumentException> { HwihaVisionRules.parse(text.replace("\"money\": 0", "\"money\": 5")) }
-        assertFailsWith<IllegalArgumentException> { HwihaVisionRules.parse(text.replace("SHARED_BORDER_4_NEIGHBOUR", "TOPOLOGY_EDGES")) }
-        assertFailsWith<IllegalArgumentException> { HwihaVisionRules.parse(text.replace("\"SELF\": 0,", "")) }
-        assertFailsWith<IllegalArgumentException> { HwihaVisionRules.parse(text.replace("\"minInclusive\": 1000", "\"minInclusive\": 0")) }
+        assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"money\": 0", "\"money\": 5")) }
+        assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("SHARED_BORDER_4_NEIGHBOUR", "TOPOLOGY_EDGES")) }
+        assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"SELF\": 0,", "")) }
+        assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"minInclusive\": 1000", "\"minInclusive\": 0")) }
     }
 
     @Test fun `optional source records from the domestic stream never invent vision`() {

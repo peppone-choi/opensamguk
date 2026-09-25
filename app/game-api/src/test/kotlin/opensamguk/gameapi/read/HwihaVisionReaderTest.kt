@@ -1,5 +1,7 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.VisionRules
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.dto.HwihaCorpsResponse
 import opensamguk.gameapi.dto.HwihaScoutOptionsResponse
@@ -29,7 +31,7 @@ class HwihaVisionReaderTest {
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
     private val reader = HwihaVisionReader(generals, worlds, nations, retainers, resolver, spatial,
-        HwihaMetaVisionSourceReader, HwihaVisionRules.CANON)
+        HwihaMetaVisionSourceReader, VisionRules.CANON)
     private val controller = HwihaVisionController(reader)
     private val json = ObjectMapper().findAndRegisterModules()
 

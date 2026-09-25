@@ -1,5 +1,7 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.FieldInput
+
 import opensamguk.common.wire.RunReason
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
@@ -225,7 +227,7 @@ class CommandReserveService(
             (hwihaTravelAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
-        } else if (actionCode in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS) {
+        } else if (actionCode in opensamguk.logic.domestic.FieldInput.INPUT_IDS) {
             (hwihaFieldAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
@@ -489,7 +491,7 @@ class CommandReserveService(
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
         val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.deploy", "action.scout") +
             setOf("action.enlist") +
-            opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.input.HwihaFieldInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.domestic.FieldInput.INPUT_IDS +
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
             opensamguk.logic.input.HwihaRetireInput.INPUT_ID +

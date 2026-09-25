@@ -3,6 +3,8 @@ package opensamguk.logic.input
 import kotlin.test.*
 import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.WorkRequest
 import opensamguk.logic.world.*
 
 class HwihaInfrastructureSiteRulesTest {

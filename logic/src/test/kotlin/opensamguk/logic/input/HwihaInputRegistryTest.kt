@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldFailure
+
+import opensamguk.logic.domestic.DomesticInput
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -118,9 +123,9 @@ class HwihaInputRegistryTest {
 
     @Test
     fun `every direct field action is UI ready and has a handler`() {
-        for (id in HwihaFieldInput.INPUT_IDS) {
+        for (id in FieldInput.INPUT_IDS) {
             assertEquals(InputDeliveryState.UI_READY, catalog[id]!!.deliveryState, id)
-            assertEquals(HwihaFieldFailure.entries.map { it.name }.toSet(),
+            assertEquals(FieldFailure.entries.map { it.name }.toSet(),
                 catalog[id]!!.failureReasons.toSet() - setOf("UNKNOWN_INPUT", "NOT_DELIVERED", "UNAUTHORIZED",
                     "FORBIDDEN", "INVALID_TURN_SLOT"), id)
             assertIs<InputResolution.Resolved>(registry.resolve(RuleProfile.HWIHA, id))
@@ -228,11 +233,11 @@ class HwihaInputRegistryTest {
                 catalog[id]!!.failureReasons.toSet() - channelFailures, id)
             assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, id))
         }
-        assertEquals(InputDeliveryState.PLANNED, catalog[HwihaDomesticInput.REDUCE]!!.deliveryState)
-        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, HwihaDomesticInput.REDUCE))
+        assertEquals(InputDeliveryState.PLANNED, catalog[DomesticInput.REDUCE]!!.deliveryState)
+        assertEquals(InputRejection.NOT_DELIVERED, reject(RuleProfile.HWIHA, DomesticInput.REDUCE))
         val reduceFailures = setOf("WRONG_RULE_PROFILE", "INVALID_REQUEST", "ACTOR_NOT_FOUND", "INVALID_COUNTY",
             "NOT_COUNTY_AUTHORITY", "WORK_IN_PROGRESS", "WORK_NOT_COMPLETED", "STATE_UNAVAILABLE")
-        assertEquals(reduceFailures, catalog[HwihaDomesticInput.REDUCE]!!.failureReasons.toSet() - channelFailures)
+        assertEquals(reduceFailures, catalog[DomesticInput.REDUCE]!!.failureReasons.toSet() - channelFailures)
     }
 
     @Test

@@ -1,5 +1,9 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.FieldInput
+
+import opensamguk.logic.domestic.DomesticInput
+
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.InputResolved
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
@@ -41,12 +45,12 @@ class HwihaCourtHandler(
             HwihaRewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
             HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
             // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
-            HwihaDomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
-            HwihaDomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
-            HwihaDomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
+            DomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
+            DomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
+            DomesticInput.WORK to InputHandler { outcome = domestic.handle(command) },
         )
-        if (catalog[HwihaDomesticInput.REDUCE]?.deliveryState?.hasHandler == true)
-            channelHandlers[HwihaDomesticInput.REDUCE] = InputHandler { outcome = domestic.handle(command) }
+        if (catalog[DomesticInput.REDUCE]?.deliveryState?.hasHandler == true)
+            channelHandlers[DomesticInput.REDUCE] = InputHandler { outcome = domestic.handle(command) }
         for (travelId in HwihaTravelInput.INPUT_IDS) {
             channelHandlers[travelId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "직접 이동은 개인 행동 예약으로 입력해야 합니다.") }
@@ -61,7 +65,7 @@ class HwihaCourtHandler(
                 channelHandlers[stratagemId] = InputHandler { outcome = handleKnown(command) }
             }
         }
-        for (fieldId in HwihaFieldInput.INPUT_IDS) {
+        for (fieldId in FieldInput.INPUT_IDS) {
             channelHandlers[fieldId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
         }

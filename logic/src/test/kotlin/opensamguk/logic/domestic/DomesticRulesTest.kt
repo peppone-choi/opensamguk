@@ -29,15 +29,15 @@ class DomesticRulesTest {
     private fun rejected(result: DomesticAssessment) = assertIs<DomesticAssessment.Rejected>(result).reason
 
     @Test fun `a road fort alone cannot be reduced as a county wall`() {
-        val fort = HwihaCompletedWork(DomesticWork.FORTIFICATION, now, "road-piece", 1, 1)
+        val fort = CompletedWork(DomesticWork.FORTIFICATION, now, "road-piece", 1, 1)
         val withFort = county(10, meta = warehouse(10) +
-            (HwihaCountyWorks.META_KEY to HwihaCountyWorks(null, listOf(fort)).toMetaValue()))
+            (CountyWorks.META_KEY to CountyWorks(null, listOf(fort)).toMetaValue()))
         val request = WorkRequest(1, 10, DomesticWork.FORTIFICATION)
         assertEquals(DomesticFailure.WORK_NOT_COMPLETED, rejected(DomesticRules.assessReduce(
             request, state(counties = listOf(withFort)))))
-        val wall = HwihaCompletedWork(DomesticWork.FORTIFICATION, now.plus(1))
-        val withWall = withFort.copy(meta = warehouse(10) + (HwihaCountyWorks.META_KEY to
-            HwihaCountyWorks(null, listOf(fort, wall)).toMetaValue()))
+        val wall = CompletedWork(DomesticWork.FORTIFICATION, now.plus(1))
+        val withWall = withFort.copy(meta = warehouse(10) + (CountyWorks.META_KEY to
+            CountyWorks(null, listOf(fort, wall)).toMetaValue()))
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessReduce(
             request, state(counties = listOf(withWall))))
     }
@@ -77,8 +77,8 @@ class DomesticRulesTest {
     }
 
     @Test fun `a seat claimed by a dispatch or another placement is occupied`() {
-        val order = HwihaPlacementOrder("r1", 1, 5, PlacementPost.MAGISTRATE, PlacementTarget.County(10), now)
-        val claimed = mapOf(HwihaPlacementState.META_KEY to HwihaPlacementState(null, order).toMetaValue())
+        val order = PlacementOrder("r1", 1, 5, PlacementPost.MAGISTRATE, PlacementTarget.County(10), now)
+        val claimed = mapOf(PlacementState.META_KEY to PlacementState(null, order).toMetaValue())
         val s = state(people = listOf(person(1, human = true, lord = true, level = 12), person(2), person(3, meta = claimed),
             person(6, human = true)))
         assertEquals(DomesticFailure.COUNTY_OCCUPIED, rejected(DomesticRules.assessPlacement(
@@ -104,7 +104,7 @@ class DomesticRulesTest {
         assertEquals(DomesticFailure.CARD_DEPLOYED, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 4, PlacementPost.SCOUT, PlacementTarget.Province("p2")), s)))
         val corrupt = state(people = listOf(person(1, human = true, lord = true, level = 12), person(2),
-            person(3, meta = mapOf(HwihaPlacementState.META_KEY to "broken")), person(6, human = true)))
+            person(3, meta = mapOf(PlacementState.META_KEY to "broken")), person(6, human = true)))
         assertEquals(DomesticFailure.STATE_UNAVAILABLE, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 5, PlacementPost.SCOUT, PlacementTarget.Province("p2")), corrupt)))
     }
@@ -112,9 +112,9 @@ class DomesticRulesTest {
     @Test fun `release requires an existing placement and repeats are unchanged`() {
         assertEquals(DomesticFailure.NO_PLACEMENT, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 5, PlacementPost.NONE, PlacementTarget.None), state())))
-        val active = HwihaActivePlacement(HwihaPlacementOrder("r1", 1, 5, PlacementPost.SCOUT, PlacementTarget.Province("p2"), now), now, null)
+        val active = ActivePlacement(PlacementOrder("r1", 1, 5, PlacementPost.SCOUT, PlacementTarget.Province("p2"), now), now, null)
         val s = state(people = listOf(person(1, human = true, lord = true, level = 12), person(2),
-            person(3, meta = mapOf(HwihaPlacementState.META_KEY to HwihaPlacementState(active, null).toMetaValue())), person(6, human = true)))
+            person(3, meta = mapOf(PlacementState.META_KEY to PlacementState(active, null).toMetaValue())), person(6, human = true)))
         assertEquals(DomesticFailure.UNCHANGED, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 5, PlacementPost.SCOUT, PlacementTarget.Province("p2")), s)))
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPlacement(
@@ -131,9 +131,9 @@ class DomesticRulesTest {
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPolicy(PolicyRequest(6, PolicyTarget.County(10), "COMMERCE"), withSeat))
         assertEquals(DomesticFailure.NOT_COUNTY_AUTHORITY, rejected(DomesticRules.assessPolicy(
             PolicyRequest(6, PolicyTarget.County(11), "COMMERCE"), withSeat)))
-        val upper = HwihaCommanderyPolicies(emptyList()).with("A郡",
-            HwihaPolicySlot(HwihaPolicySetting("AGRICULTURE", "r1", 1, now), null))
-        val ruled = withSeat.copy(nations = listOf(DomesticNation(1, "N1", 10, mapOf(HwihaCommanderyPolicies.META_KEY to upper.toMetaValue())),
+        val upper = CommanderyPolicies(emptyList()).with("A郡",
+            PolicySlot(PolicySetting("AGRICULTURE", "r1", 1, now), null))
+        val ruled = withSeat.copy(nations = listOf(DomesticNation(1, "N1", 10, mapOf(CommanderyPolicies.META_KEY to upper.toMetaValue())),
             DomesticNation(2, "N2", 20, emptyMap())))
         assertEquals(DomesticFailure.UPPER_POLICY_IN_FORCE, rejected(DomesticRules.assessPolicy(
             PolicyRequest(6, PolicyTarget.County(10), "COMMERCE"), ruled)))
@@ -168,12 +168,12 @@ class DomesticRulesTest {
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION), state()))
         assertEquals(DomesticFailure.WAREHOUSE_NOT_READY, rejected(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = emptyMap()))))))
-        val active = HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 1, now)
-        val busy = warehouse(10) + (HwihaCountyWorks.META_KEY to HwihaCountyWorks(active, emptyList()).toMetaValue())
+        val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 1, now)
+        val busy = warehouse(10) + (CountyWorks.META_KEY to CountyWorks(active, emptyList()).toMetaValue())
         assertEquals(DomesticFailure.WORK_IN_PROGRESS, rejected(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = busy))))))
-        val done = warehouse(10) + (HwihaCountyWorks.META_KEY to HwihaCountyWorks(null,
-            listOf(HwihaCompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())
+        val done = warehouse(10) + (CountyWorks.META_KEY to CountyWorks(null,
+            listOf(CompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())
         assertEquals(DomesticFailure.WORK_COMPLETED, rejected(DomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = done))))))
         assertEquals(DomesticFailure.NOT_COUNTY_AUTHORITY, rejected(DomesticRules.assessWork(WorkRequest(6, 10, DomesticWork.ROAD), state())))
@@ -181,12 +181,12 @@ class DomesticRulesTest {
 
     @Test fun `seated magistrate needs arrival and presence and drives the effective policy`() {
         val design = DomesticDesign.CANON
-        val order = HwihaPlacementOrder("r1", 1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(10), now)
+        val order = PlacementOrder("r1", 1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(10), now)
         fun with(arrived: HwihaPhase?, node: String) = state(people = listOf(person(1, human = true, lord = true, level = 12),
-            person(2, node = node, meta = mapOf(HwihaPlacementState.META_KEY to
-                HwihaPlacementState(HwihaActivePlacement(order, now, arrived), null).toMetaValue())), person(3), person(6, human = true)),
-            counties = listOf(county(10, meta = warehouse(10) + (HwihaCountyPolicyState.META_KEY to HwihaCountyPolicyState(
-                HwihaPolicySlot(HwihaPolicySetting("COMMERCE", "r2", 1, now), null), null).toMetaValue()))))
+            person(2, node = node, meta = mapOf(PlacementState.META_KEY to
+                PlacementState(ActivePlacement(order, now, arrived), null).toMetaValue())), person(3), person(6, human = true)),
+            counties = listOf(county(10, meta = warehouse(10) + (CountyPolicyState.META_KEY to CountyPolicyState(
+                PolicySlot(PolicySetting("COMMERCE", "r2", 1, now), null), null).toMetaValue()))))
         val seated = with(now, "p10")
         assertEquals(SeatedMagistrate(2, 1, true, 4), DomesticRules.seatedMagistrate(seated.county(10)!!, seated))
         assertEquals(EffectivePolicy(CountyPolicy.COMMERCE, PolicySource.COUNTY, SeatedMagistrate(2, 1, true, 4)),
