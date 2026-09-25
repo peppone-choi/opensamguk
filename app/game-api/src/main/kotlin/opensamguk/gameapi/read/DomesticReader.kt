@@ -1,27 +1,7 @@
 package opensamguk.gameapi.read
 
-import opensamguk.logic.domestic.PlacementState
-import opensamguk.logic.domestic.PolicySetting
-import opensamguk.logic.domestic.PolicyOrder
-import opensamguk.logic.domestic.PolicySlot
-import opensamguk.logic.domestic.CountyPolicyState
-import opensamguk.logic.domestic.CommanderyPolicies
-import opensamguk.logic.domestic.CorpsPolicyAssignments
-import opensamguk.logic.domestic.CountyWorks
-
-import opensamguk.logic.domestic.PlacementPost
-import opensamguk.logic.domestic.CountyPolicy
-import opensamguk.logic.domestic.CorpsPolicy
-import opensamguk.logic.domestic.DomesticWork
-import opensamguk.logic.domestic.PlacementTarget
-import opensamguk.logic.domestic.PolicyTarget
-import opensamguk.logic.domestic.PlacementRequest
-import opensamguk.logic.domestic.PolicyRequest
-import opensamguk.logic.domestic.WorkRequest
-import opensamguk.logic.domestic.CountyLevels
-import opensamguk.logic.domestic.SeatStats
-import opensamguk.logic.domestic.DomesticEffects
-
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.logic.domestic.*
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCard
 import opensamguk.logic.domestic.DomesticCounty
@@ -35,6 +15,7 @@ import opensamguk.logic.domestic.DomesticRules
 
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.gameapi.dto.*
+import opensamguk.infra.seed.CountyGeographyJson
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
@@ -50,6 +31,7 @@ class DomesticForbidden : RuntimeException()
 data class DomesticSnapshot(
     val state: DomesticProjection? = null,
     val failure: String? = null,
+    val infrastructure: InfrastructureSiteState? = null,
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
     val warehouseStocks: Map<Int, Resources> = emptyMap(),
@@ -72,6 +54,8 @@ class DomesticReader(
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
     private val geography: CityGeography,
+    private val gameKv: GameKvReadRepository,
+    private val mapper: ObjectMapper,
     private val diplomacy: DiplomacyReadRepository,
     private val sieges: SiegeReadRepository,
 ) {
@@ -96,6 +80,7 @@ class DomesticReader(
                 val places = geography.places(bundle)
                 val admin = bundle.projection.administrativeCountyIds
                 val counties = selected.cities.filter { it.id in admin }.sortedBy { it.id }
+                val countyGeography = CountyGeographyJson.load(bundle)
                 DomesticSnapshot(
                     state = DomesticProjection(
                         profile = profile,
@@ -115,6 +100,7 @@ class DomesticReader(
                         nations = nationRows.sortedBy { it.id }.map { DomesticNation(it.id, it.name, it.capitalCityId, it.meta,
                             it.level, it.gold, it.rice, it.tech) },
                         landProvinceIds = topology.landProvinceIds,
+                        provinceIdsByCounty = admin.associateWith(countyGeography::provincesOfCounty),
                         bugoks = retainers.allBugoks().map { DomesticBugok(it.id, it.masterGeneralId, it.crewTypeId, it.training) },
                         countyAdjacency = admin.associateWith { countyId ->
                             bundle.cityConst.byId(countyId)?.path?.keys?.filter { it in admin }?.toSet() ?: emptySet()
@@ -123,6 +109,12 @@ class DomesticReader(
                         diplomacy = diplomacy.findAll().map { DomesticDiplomacy(it.srcNationId, it.destNationId, it.stateCode, it.term) },
                         activeSiegeCountyIds = sieges.activeCountyIds(),
                     ),
+                    infrastructure = InfrastructureSiteState(topology,
+                        bundle.projection.presentation?.roadGates.orEmpty(),
+                        LandPassageState.read(GameEnvStateMeta.overlay(selected.world.meta,
+                            gameKv, mapper, LandPassageState.META_KEY), topology),
+                        RoadFortState.read(GameEnvStateMeta.overlay(selected.world.meta,
+                            gameKv, mapper, RoadFortState.META_KEY))),
                     countyNames = counties.associate { it.id to (places[it.id]?.displayName ?: it.name) },
                     commanderyNames = counties.mapNotNull { c ->
                         val place = places[c.id] ?: return@mapNotNull null
@@ -281,9 +273,17 @@ object DomesticViews {
                         (check as? DomesticAssessment.Rejected)?.reason?.let { ReasonDto(it.name, it.message) },
                         stock(spec.cost), spec.requiredProgress, DomesticEffects.remainingPhases(design, preview, seat))
                 }
-                CountyWorksDto(county.id, snapshot.countyNames[county.id] ?: county.name,
+                CountyWorksDto(county.id, county.provinceId, snapshot.countyNames[county.id] ?: county.name,
                     county.commanderyId?.let { snapshot.commanderyNames[it] ?: it }, snapshot.warehouseStocks[county.id]?.let(::stock),
-                    active, works?.completed.orEmpty().map { CompletedWorkDto(it.work.name, it.work.label, it.completedAt) }, startable)
+                    active, works?.completed.orEmpty().map { completed ->
+                        CompletedWorkDto(completed.work.name,
+                            if (completed.edgeId != null) when (completed.work) {
+                                DomesticWork.ROAD -> "도로 개척"
+                                DomesticWork.FORTIFICATION -> "보루"
+                                else -> completed.work.label
+                            } else completed.work.label,
+                            completed.completedAt, completed.edgeId)
+                    }, startable, state.provinceIdsByCounty[county.id].orEmpty() + listOfNotNull(county.provinceId))
             }
             WorksResponse("READY", now = state.now, provisional = design.status, counties = counties)
         } catch (_: IllegalArgumentException) { WorksResponse("UNAVAILABLE") }

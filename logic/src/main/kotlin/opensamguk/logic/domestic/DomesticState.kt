@@ -293,29 +293,42 @@ data class ActiveWork(
     val charged: Resources,
     val lastProgressAt: Phase?,
     val stopReason: String?,
+    val edgeId: String? = null,
+    val row: Int? = null,
+    val col: Int? = null,
 ) {
     init {
         require(requestIdPattern.matches(requestId) && actorId > 0 && required > 0 && progress in 0 until required)
         require(cost.debit(charged) != null) { "charged installments cannot exceed the total cost" }
         require(stopReason == null || stopReason.isNotBlank())
+        require((row == null) == (col == null) && (row == null || (row >= 0 && col!! >= 0)) &&
+            (edgeId == null || DomesticIds.order(edgeId)))
     }
 
     fun toMetaValue(): Map<String, Any?> = linkedMapOf(
         "kind" to work.name, "status" to CountyWorks.IN_PROGRESS, "requestId" to requestId, "actorId" to actorId,
         "requestedAt" to requestedAt.toMetaValue(), "progress" to progress, "required" to required, "cost" to cost.toMetaValue(),
         "charged" to charged.toMetaValue(), "lastProgressAt" to lastProgressAt?.toMetaValue(), "stopReason" to stopReason,
-    )
+    ).also { value ->
+        if (edgeId != null) value["edgeId"] = edgeId
+        if (row != null) { value["row"] = row; value["col"] = col }
+    }
 
     companion object {
         private val fields = setOf("kind", "status", "requestId", "actorId", "requestedAt", "progress", "required", "cost", "charged",
             "lastProgressAt", "stopReason")
         fun read(raw: Any?): ActiveWork {
             val value = raw as? Map<*, *> ?: invalid("active work")
-            require(value.keys == fields && value["status"] == CountyWorks.IN_PROGRESS) { "invalid HWIHA active work fields" }
+            require(value.keys == fields || value.keys == fields + "edgeId" ||
+                value.keys == fields + setOf("edgeId", "row", "col")) { "invalid HWIHA active work fields" }
+            require(value["status"] == CountyWorks.IN_PROGRESS)
             return ActiveWork(DomesticWork.valueOf(value.string("kind", "work")), value.string("requestId", "work"),
                 value.int("actorId", "work"), Phase.read(value["requestedAt"]), value.int("progress", "work"),
                 value.int("required", "work"), resources(value["cost"]), resources(value["charged"]),
-                value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") })
+                value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") },
+                value["edgeId"]?.let { it as? String ?: invalid("work edge") },
+                value["row"]?.let { it as? Int ?: invalid("work row") },
+                value["col"]?.let { it as? Int ?: invalid("work col") })
         }
 
         internal fun resources(raw: Any?): Resources {
@@ -327,14 +340,27 @@ data class ActiveWork(
     }
 }
 
-data class CompletedWork(val work: DomesticWork, val completedAt: Phase) {
+data class CompletedWork(val work: DomesticWork, val completedAt: Phase,
+    val edgeId: String? = null, val row: Int? = null, val col: Int? = null) {
+    init {
+        require((row == null) == (col == null) && (row == null || (row >= 0 && col!! >= 0)) &&
+            (edgeId == null || DomesticIds.order(edgeId)))
+    }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("kind" to work.name, "status" to CountyWorks.COMPLETE,
-        "completedAt" to completedAt.toMetaValue())
+        "completedAt" to completedAt.toMetaValue()).also { value ->
+            if (edgeId != null) value["edgeId"] = edgeId
+            if (row != null) { value["row"] = row; value["col"] = col ?: invalid("completed work cell") }
+        }
     companion object {
         fun read(raw: Any?): CompletedWork {
             val row = raw as? Map<*, *> ?: invalid("completed work")
-            require(row.keys == setOf("kind", "status", "completedAt") && row["status"] == CountyWorks.COMPLETE)
-            return CompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), Phase.read(row["completedAt"]))
+            val fields = setOf("kind", "status", "completedAt")
+            require((row.keys == fields || row.keys == fields + "edgeId" ||
+                row.keys == fields + setOf("edgeId", "row", "col")) && row["status"] == CountyWorks.COMPLETE)
+            return CompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), Phase.read(row["completedAt"]),
+                row["edgeId"]?.let { it as? String ?: invalid("completed work edge") },
+                row["row"]?.let { it as? Int ?: invalid("completed work row") },
+                row["col"]?.let { it as? Int ?: invalid("completed work col") })
         }
     }
 }
@@ -347,9 +373,11 @@ data class CompletedWork(val work: DomesticWork, val completedAt: Phase) {
  */
 data class CountyWorks(val active: ActiveWork?, val completed: List<CompletedWork>) {
     init {
-        require(completed.map { it.work }.distinct().size == completed.size) { "a work completes once per county" }
-        require(active == null || completed.none { it.work == active.work })
-        require(completed == completed.sortedWith(compareBy({ it.completedAt }, { it.work.ordinal })))
+        require(completed.map { listOf(it.work, it.edgeId, it.row, it.col) }.distinct().size == completed.size)
+        require(active == null || completed.none { it.work == active.work && it.edgeId == active.edgeId &&
+            it.row == active.row && it.col == active.col })
+        require(completed == completed.sortedWith(compareBy({ it.completedAt }, { it.work.ordinal },
+            { it.edgeId ?: "" }, { it.row ?: -1 }, { it.col ?: -1 })))
     }
     fun toMetaValue(): Map<String, Any?> = linkedMapOf("version" to 1,
         "works" to completed.map { it.toMetaValue() } + listOfNotNull(active?.toMetaValue()))

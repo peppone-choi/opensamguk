@@ -8,6 +8,7 @@ import opensamguk.logic.domestic.CountyMonthly
 import opensamguk.logic.domestic.SeatStats
 import opensamguk.logic.domestic.WorkStep
 import opensamguk.logic.domestic.DomesticEffects
+import opensamguk.logic.domestic.DomesticWork
 
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticRules
@@ -91,6 +92,20 @@ class DomesticBoundary(
             log(active.actorId, "${city.name}의 ${active.work.label} 공사를 거두었습니다(현의 주인이 바뀌었습니다).")
             return WorkResult.STOPPED
         }
+        if (active.work == DomesticWork.ROAD && active.edgeId != null) {
+            val topology = context.topology ?: return stop(countyId, works, active, now, "ROAD_TOPOLOGY_MISSING")
+            val passage = try { LandPassageState.read(world.getState().meta, topology) }
+                catch (_: IllegalArgumentException) { null }
+                ?: return stop(countyId, works, active, now, "ROAD_STATE_MISSING")
+            if (passage.edgeStates[active.edgeId]?.active != false)
+                return stop(countyId, works, active, now, "ROAD_ALREADY_OPEN")
+        }
+        if (active.work == DomesticWork.FORTIFICATION && active.edgeId != null) {
+            val forts = try { RoadFortState.read(world.getState().meta) }
+                catch (_: IllegalArgumentException) { return stop(countyId, works, active, now, "FORT_STATE_INVALID") }
+            if (forts.any { it.row == active.row && it.col == active.col })
+                return stop(countyId, works, active, now, "FORT_SITE_OCCUPIED")
+        }
         val warehouse = try { CountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
         if (warehouse == null) return stop(city.id, works, active, now, "WAREHOUSE_NOT_READY")
         val county = state.county(countyId) ?: return WorkResult.NONE
@@ -101,7 +116,8 @@ class DomesticBoundary(
                 state.homeCountyByGeneral[person.id] == countyId)
         }
         val levels = DomesticCountyEffects.levelsOf(city)
-        return when (val step = DomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels, seat)) {
+        return when (val step = DomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels,
+            seat, works.completed.any { it.work == active.work && it.edgeId == null })) {
             is WorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
             is WorkStep.Advanced -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
@@ -111,10 +127,20 @@ class DomesticBoundary(
                 WorkResult.ADVANCED
             }
             is WorkStep.Completed -> {
+                val fortProvinceId = if (step.completed.work == DomesticWork.FORTIFICATION &&
+                    step.completed.edgeId != null) {
+                    val edgeId = step.completed.edgeId
+                    val row = step.completed.row
+                    val col = step.completed.col
+                    context.roadGates.singleOrNull { it.edgeId == edgeId }?.fortCells
+                        ?.singleOrNull { it.row == row && it.col == col }?.provinceId
+                        ?: return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                } else null
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
                 val done = CountyWorks(null, (works.completed + step.completed).sortedWith(
-                    compareBy({ it.completedAt }, { it.work.ordinal })))
+                    compareBy({ it.completedAt }, { it.work.ordinal }, { it.edgeId ?: "" },
+                        { it.row ?: -1 }, { it.col ?: -1 })))
                 val trust = opensamguk.engine.turn.ReservedTurnHandler.materializeMariaDbFloat(step.levels.trust)
                 var meta = after.meta.withKey(CountyWorks.META_KEY, done.toMetaValue())
                 if (trust != DomesticCountyEffects.trustOf(after)) meta = meta.withKey("trust", trust)
@@ -123,6 +149,26 @@ class DomesticBoundary(
                     wall = step.levels.wall, meta = meta)
                 if (world.applyCityDirtyFree(next) == null) return missingCounty(active.actorId, countyId)
                 recorder.diffCity(opensamguk.engine.turn.PerTurnOverlay.toLogicCity(after), opensamguk.engine.turn.PerTurnOverlay.toLogicCity(next))
+                if (step.completed.work == DomesticWork.ROAD && step.completed.edgeId != null) {
+                    val topology = checkNotNull(context.topology)
+                    val passage = LandPassageState.activate(world.getState().meta, topology,
+                        checkNotNull(step.completed.edgeId))
+                    world.setGameEnvValue(LandPassageState.META_KEY, passage)
+                    recorder.recordKv("game_env", "game_env", LandPassageState.META_KEY, passage)
+                }
+                if (step.completed.work == DomesticWork.FORTIFICATION && step.completed.edgeId != null) {
+                    val edgeId = checkNotNull(step.completed.edgeId)
+                    val row = checkNotNull(step.completed.row)
+                    val col = checkNotNull(step.completed.col)
+                    val fort = RoadFort(
+                        RoadFort.siteId(edgeId, row, col),
+                        edgeId, checkNotNull(fortProvinceId),
+                        row, col, city.nationId, wall = 100, garrison = 0,
+                    )
+                    val value = RoadFortState.toMetaValue(RoadFortState.read(world.getState().meta) + fort)
+                    world.setGameEnvValue(RoadFortState.META_KEY, value)
+                    recorder.recordKv("game_env", "game_env", RoadFortState.META_KEY, value)
+                }
                 log(active.actorId, "${city.name}의 ${active.work.label} 공사를 마쳤습니다.")
                 WorkResult.COMPLETED
             }

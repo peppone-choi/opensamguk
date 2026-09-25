@@ -1,5 +1,7 @@
 package opensamguk.infra.seed
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -13,8 +15,8 @@ class CountyProductionJsonTest {
     @Test
     fun `committed runtime table matches the generated ledger totals`() {
         val table = CountyProductionJson.table()
-        // 결손 縣 223곳을 추가한 현재 생성 원장과 맞춘다.
-        assertEquals(1_415, table.size, "생성된 원장의 縣 수와 같아야 한다")
+        val ledger = ObjectMapper().readTree(Path.of("../data/curated/han/hwiha-resource-production-v1.json").toFile())
+        assertEquals(ledger.path("counties").map { it.path("countyId").asInt() }.toSet(), table.keys)
         assertEquals(34_000, table.values.sumOf { it.iron })
         assertEquals(600, table.values.sumOf { it.horses })
         assertEquals(197_460, table.values.sumOf { it.timber })

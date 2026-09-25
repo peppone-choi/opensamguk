@@ -67,7 +67,7 @@ export {
   labelZoomFor,
   mapCityToTile,
   provinceLayerRuntimeCities,
-  overviewCityVisualBox,
+  cityPixelVisualBox,
   provinceAtScreenPoint,
   sceneGolden,
   screenBoxInsideProvince,

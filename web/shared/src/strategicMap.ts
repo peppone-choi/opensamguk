@@ -35,6 +35,24 @@ export interface StrategicTraversalEdge {
   capacity: number;
   seasonalAvailability: string;
   supplyAllowed: boolean;
+  initiallyOpen?: boolean;
+  routeWeightPermille?: number;
+}
+
+export interface StrategicRoadGate {
+  edgeId: string;
+  fromRow: number;
+  fromCol: number;
+  toRow: number;
+  toCol: number;
+  terrainCost: number;
+  initiallyBuilt: boolean;
+  buildable?: boolean;
+  overviewTrunk?: boolean;
+  historicalRouteIds: readonly string[];
+  fortCells?: readonly { provinceId: string; row: number; col: number }[];
+  fromTrail?: readonly (readonly [number, number])[];
+  toTrail?: readonly (readonly [number, number])[];
 }
 
 export interface StrategicMapTopology {
@@ -45,6 +63,7 @@ export interface StrategicMapTopology {
   riverBarriers: readonly { id: string; firstLandProvinceId: string; secondLandProvinceId: string }[];
   ports: readonly { edgeId: string; landProvinceId: string; waterZoneId: string }[];
   activationBlockerCodes: readonly string[];
+  roadGates?: readonly StrategicRoadGate[];
 }
 
 export interface StrategicWaterControl {
@@ -61,6 +80,7 @@ export interface StrategicMapResponse {
   topology: StrategicMapTopology | null;
   controlVisibility: 'REDACTED' | 'VISIBLE';
   controls: readonly StrategicWaterControl[];
+  roadOpenEdgeIds?: readonly string[] | null;
 }
 
 export interface StrategicMapSnapshot extends StrategicMapResponse {
@@ -114,10 +134,13 @@ export interface StrategicMapScene {
   zones: readonly StrategicZoneShape[];
   byCell: ReadonlyMap<number, StrategicWaterZone>;
   edgesById: ReadonlyMap<string, StrategicTraversalEdge>;
+  roadGates: readonly StrategicRoadGate[];
+  roadPaths?: { ordinary: Path2D; trunk: Path2D; historical: Path2D; junctions: Path2D };
 }
 
 /** Decode only reviewed cells. This is a renderer, never a route search or coastline flood-fill. */
-export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: WorldTiles): StrategicMapScene {
+export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: WorldTiles,
+  roadOpenEdgeIds?: readonly string[] | null): StrategicMapScene {
   const { cols, rows } = tiles._meta;
   const unique = <T>(values: readonly T[], key: (value: T) => string) => {
     const result = new Map(values.map(value => [key(value), value]));
@@ -133,6 +156,76 @@ export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: Wo
     : node.startsWith('water:') && zoneRecords.has(node.slice(6));
   for (const edge of edgesById.values()) {
     if (!nodeExists(edge.from) || !nodeExists(edge.to) || edge.from === edge.to || !MODES.has(edge.mode)) throw new Error('Invalid strategic edge');
+  }
+  const roadGates = topology.roadGates ?? [];
+  const seenGates = new Set<string>();
+  for (const gate of roadGates) {
+    const edge = edgesById.get(gate.edgeId);
+    if (!edge || edge.mode !== 'LAND' || seenGates.has(gate.edgeId) ||
+      ![gate.fromRow, gate.fromCol, gate.toRow, gate.toCol, gate.terrainCost].every(Number.isInteger) ||
+      gate.fromRow < 0 || gate.fromRow >= rows || gate.toRow < 0 || gate.toRow >= rows ||
+      gate.fromCol < 0 || gate.fromCol >= cols || gate.toCol < 0 || gate.toCol >= cols ||
+      Math.abs(gate.fromRow - gate.toRow) + Math.abs(gate.fromCol - gate.toCol) !== 1 ||
+      gate.terrainCost <= 0 || edge.initiallyOpen !== gate.initiallyBuilt ||
+      (gate.buildable != null && typeof gate.buildable !== 'boolean') ||
+      (gate.overviewTrunk != null && typeof gate.overviewTrunk !== 'boolean') ||
+      !Array.isArray(gate.historicalRouteIds) || !Array.isArray(gate.fortCells) || !gate.fortCells.length)
+      throw new Error('Invalid road gate');
+    seenGates.add(gate.edgeId);
+  }
+  const openRoads = roadOpenEdgeIds == null
+    ? new Set(roadGates.filter(gate => gate.initiallyBuilt).map(gate => gate.edgeId))
+    : new Set(roadOpenEdgeIds);
+  if ([...openRoads].some(id => !seenGates.has(id))) throw new Error('Unknown open road edge');
+  const roadPaths = { ordinary: new Path2D(), trunk: new Path2D(), historical: new Path2D(), junctions: new Path2D() };
+  const roadJunctions = new Set<string>();
+  function addCurvedTrail(path: Path2D, cells: readonly (readonly [number, number])[]) {
+    if (cells.length < 2) return;
+    const radius = 18;
+    const prefixRows = [0], prefixCols = [0];
+    for (const [row, col] of cells) {
+      prefixRows.push(prefixRows.at(-1)! + row);
+      prefixCols.push(prefixCols.at(-1)! + col);
+    }
+    const points = cells.map((cell, i): readonly [number, number] => {
+      if (i === 0 || i === cells.length - 1 || cells.length < 7) return cell;
+      const first = Math.max(0, i - radius), end = Math.min(cells.length, i + radius + 1);
+      return [(prefixRows[end] - prefixRows[first]) / (end - first),
+        (prefixCols[end] - prefixCols[first]) / (end - first)];
+    });
+    path.moveTo(points[0][1], points[0][0]);
+    for (let i = 1; i < points.length - 1; i += 1) {
+      const here = points[i], next = points[i + 1];
+      path.quadraticCurveTo(here[1], here[0], (here[1] + next[1]) / 2, (here[0] + next[0]) / 2);
+    }
+    path.lineTo(points.at(-1)![1], points.at(-1)![0]);
+  }
+  for (const gate of roadGates) {
+    if (!openRoads.has(gate.edgeId)) continue;
+    const historical = gate.historicalRouteIds.length > 0;
+    const path = historical ? roadPaths.historical : roadPaths.ordinary;
+    const from = gate.fromTrail ?? [[gate.fromRow, gate.fromCol] as const];
+    const to = gate.toTrail ?? [[gate.toRow, gate.toCol] as const];
+    for (const trail of [from, to]) {
+      if (!trail.length) throw new Error('Empty road trail');
+      for (let i = 0; i < trail.length; i += 1) {
+        const [row, col] = trail[i];
+        if (!Number.isInteger(row) || !Number.isInteger(col) || row < 0 || row >= rows || col < 0 || col >= cols ||
+          (i > 0 && (Math.max(Math.abs(row - trail[i - 1][0]), Math.abs(col - trail[i - 1][1])) !== 1)))
+          throw new Error('Invalid road trail');
+      }
+    }
+    if (from.at(-1)?.[0] !== gate.fromRow || from.at(-1)?.[1] !== gate.fromCol ||
+      to.at(-1)?.[0] !== gate.toRow || to.at(-1)?.[1] !== gate.toCol) throw new Error('Road trail misses gate');
+    for (const [row, col] of [from[0], to[0]]) {
+      const key = `${row}:${col}`;
+      if (roadJunctions.has(key)) continue;
+      roadJunctions.add(key);
+      roadPaths.junctions.rect(col - 0.75, row - 0.75, 1.5, 1.5);
+    }
+    addCurvedTrail(path, [...from, [gate.toRow, gate.toCol], ...to.slice().reverse()]);
+    if (gate.overviewTrunk && !historical)
+      addCurvedTrail(roadPaths.trunk, [...from, [gate.toRow, gate.toCol], ...to.slice().reverse()]);
   }
   const byCell = new Map<number, StrategicWaterZone>();
   const zones = topology.waterZones.map(zone => {
@@ -172,7 +265,7 @@ export function buildStrategicMapScene(topology: StrategicMapTopology, tiles: Wo
     const middle = [...cells][Math.floor(cells.size / 2)];
     return { zone, cells, fill, outline, hatch, anchor: { col: middle % cols, row: Math.floor(middle / cols) } };
   });
-  return { zones, byCell, edgesById };
+  return { zones, byCell, edgesById, roadGates, roadPaths };
 }
 
 export function validatedWaterControls(snapshot: StrategicMapSnapshot): ReadonlyMap<string, StrategicWaterControl> {

@@ -93,8 +93,10 @@ data/map/*
 # 2026-09-23: 결손 縣 56곳을 세운 1224 판. blob 은 예외가 없으면 조용히 빠진다(위 #851 참조).
 !data/map/han-world-v3-1224-artifacts-v1/
 !data/map/han-world-v3-1447-artifacts-v1/
+!data/map/han-world-v3-1447-map4-artifacts-v1/
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
+!data/map/han-land-roads-v1.json
 # Reviewed 15-scenario ownership materialization; generated deterministically from committed claims.
 !data/map/han-scenario-province-ownership-v1.json
 # Wikidata(CC0) 전용 산출물, CHGIS 입력 없음 — CHGIS 파생물이 아니므로 위 미커밋 규칙 대상이 아니다.

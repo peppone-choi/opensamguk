@@ -23,6 +23,9 @@ class ActiveWorldArtifactResolverTest {
         `when`(pins.readPins(8)).thenReturn(emptyList())
         for (variant in HanWorldVariant.entries) {
             `when`(cities.findAll()).thenReturn(roster(variant))
+            val topology = artifacts.artifacts(variant).projection.topology
+            `when`(pins.readPins(8)).thenReturn(if (variant == HanWorldVariant.V3_1447_MAP4)
+                listOf(HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             val selected = assertNotNull(resolver.resolve())
             assertEquals(variant, selected.artifacts!!.variant)
             val expectedNames = opensamguk.infra.seed.MapJson.loadMap(

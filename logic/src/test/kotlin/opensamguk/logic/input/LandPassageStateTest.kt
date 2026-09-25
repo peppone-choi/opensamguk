@@ -46,4 +46,14 @@ class LandPassageStateTest {
         val opened=season+("edges" to (rows+("ford" to ((rows["ford"] as Map<*,*>)+("seasonOpen" to true)))))
         assertEquals(StrategicEdgeState(true,true,false,7),read(opened)!!.edgeStates.getValue("ford"))
     }
+    @Test fun `road completion activates only the selected crossing and survives round trip`() {
+        val closed = changed("land", "active", false)
+        val value = LandPassageState.activate(mapOf(LandPassageState.META_KEY to closed), topology, "land")
+        val restored = read(value)!!
+        assertTrue(restored.edgeStates.getValue("land").active)
+        assertFalse(restored.edgeStates.getValue("ford").active)
+        assertFailsWith<IllegalArgumentException> {
+            LandPassageState.activate(mapOf(LandPassageState.META_KEY to closed), topology, "unknown")
+        }
+    }
 }

@@ -103,7 +103,8 @@ class LastTurnsReaderTest {
     @Test fun `세력 요약은 공개 종류만 묻는다 - 월세입은 요약 종류가 아니다`() {
         assertFalse(RecordKind.INCOME_MONTHLY in RecordKind.NATION_SUMMARY_KINDS)
         assertFalse(RecordKind.INCOME_MONTHLY in RecordKind.WORLD_SUMMARY_KINDS)
-        assertEquals(setOf(RecordKind.COUNTY_CAPTURED, RecordKind.COUNTY_LOST), RecordKind.NATION_SUMMARY_KINDS)
+        assertEquals(setOf(RecordKind.COUNTY_CAPTURED, RecordKind.COUNTY_LOST,
+            RecordKind.ROAD_FORT_CAPTURED), RecordKind.NATION_SUMMARY_KINDS)
         assertEquals(setOf(RecordKind.YUEDAN_ANNOUNCED), RecordKind.WORLD_SUMMARY_KINDS)
     }
 

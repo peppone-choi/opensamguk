@@ -348,6 +348,20 @@ class ReservedTurnHandler(
             for (siegeInput in listOf(opensamguk.engine.campaign.SiegeHandler.ASSAULT, opensamguk.engine.campaign.SiegeHandler.DEMAND_SURRENDER)) {
                 handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
             }
+            handlers[opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID] = InputHandler {
+                val inputId = opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID
+                val fortId = opensamguk.logic.input.RoadFortSiegeInput.parse(reserved.argJson)
+                val topology = hwihaDeploymentContext?.first
+                val metrics = hwihaDeploymentContext?.second
+                applied = if (fortId == null || topology == null || metrics == null)
+                    TurnOutcome.Rejected(inputId, "INVALID_INPUT", "점령할 보루를 골라 주세요.")
+                else {
+                    val failure = opensamguk.engine.siege.RoadFortSiegeService(world, recorder, topology, metrics)
+                        .start(generalId, fortId)
+                    if (failure == null) TurnOutcome.Applied(inputId)
+                    else TurnOutcome.Rejected(inputId, failure.name, failure.message)
+                }
+            }
             handlers[ScoutInputCodec.INPUT_ID] = InputHandler {
                 applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)
             }

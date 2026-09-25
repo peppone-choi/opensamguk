@@ -29,6 +29,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 import opensamguk.logic.world.*
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import java.nio.file.Path
@@ -99,13 +100,13 @@ class V2CommandPrecheckServiceTest {
     }
 
     @Test
-    fun `real Lu Licheng topology preview is available with reviewed dry land only`() {
+    fun `real Lu Licheng immediate transport respects the built road graph`() {
         val loader = { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
         val service = service("han-world-v3", 2000, loader, fromCityId = 273, toCityId = 781)
         val preview = service.previewTransport(10, transportArgs.copy(fromCityId = 273, toCityId = 781))
-        assertEquals("AVAILABLE", preview.status, preview.reason)
-        assertEquals(listOf("land:45098", "land:45022"), preview.route?.nodeKeys)
-        assertEquals(listOf("LAND"), preview.route?.modes)
+        assertEquals("BLOCKED", preview.status)
+        assertNull(preview.route)
+        assertTrue(preview.reason.orEmpty().contains("육로 한 구간"))
     }
 
     private fun projection(): HanStrategicRouteProjection = HanStrategicRouteProjection(

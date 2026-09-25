@@ -90,37 +90,43 @@ class MeasureTest(unittest.TestCase):
         """★ 지리 재분할(GH #806)이 han-tiles 에 들어왔다 — Q1·Q1b 는 이제 결합 목록의 차단 게이트다."""
         rc, text = self._run("--exceptions", *self.EXCEPTIONS)
         self.assertEqual(rc, 0, text)
-        self.assertIn("Q1: 0 / 1445", text)
-        self.assertIn("Q1b: 0 / 1445", text)
+        self.assertEqual(text.splitlines(), ["Q1: 0 / 1445", "Q1b: 0 / 1445"])
 
     def test_red_probe_without_the_exception_ledgers_the_gate_is_red(self):
         """적색 프로브: 예외 원장을 빼면 빨개진다 — 초록이 「아무것도 안 잰다」가 아님을 고정한다."""
         rc, text = self._run()
         self.assertEqual(rc, 1)
-        self.assertIn("Q1: 60 / 1445", text)
+        self.assertEqual(text.splitlines(), ["Q1: 168 / 1445", "Q1b: 0 / 1445"])
 
     def test_red_probe_seat_moved_ten_cells_is_red_even_with_the_ledgers(self):
-        """적색 프로브(계획 §6): 예외 행이 없는 城 하나의 실제 좌표를 10칸(≈0.54°) 옮긴 문서."""
+        """적색 프로브(계획 §6): 예외 행이 없는 城의 실제 좌표를 종전 격자 10칸만큼 옮긴 문서."""
         import json
         import tempfile
         document = json.loads(TILES.read_text())
         city = next(row for row in document["cities"] if row["nameCh"] == "邺县")
-        city["lon"] += 10 * document["_meta"]["projection"]["cell"] / document["_meta"]["projection"]["k"]
+        city["lon"] += 40 * document["_meta"]["projection"]["cell"] / document["_meta"]["projection"]["k"]
         with tempfile.NamedTemporaryFile("w", suffix=".json") as handle:
             json.dump(document, handle)
             handle.flush()
             rc, text = self._run("--tiles", handle.name, "--exceptions", *self.EXCEPTIONS)
         self.assertEqual(rc, 1)
-        self.assertIn("Q1: 1 / 1445", text)
+        self.assertEqual(text.splitlines(), ["Q1: 1 / 1445", "Q1b: 0 / 1445"])
 
-    def test_committed_tiles_baseline(self):
-        """현행 지도에서 면적이 있는 城의 공간 구획 귀속을 고정한다."""
+    def test_committed_tiles_baseline_and_seat_hierarchy(self):
+        """현행 실측 기준선과 省·관할·상위 구역의 포함 관계를 고정한다."""
         import json
         rows = [r for r in measure(json.loads(TILES.read_text())) if r.get("area")]
-        self.assertEqual(len(rows), 1445)  # 결손 縣 223곳 추가 후
-        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1376)
-        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1385)
+        # 작업 보고서 §5차 리뷰: 재분할과 잠현 치소 연결로 省 안 치소가 1281→1268곳.
+        self.assertEqual(len(rows), 1445)
+        self.assertEqual(sum(r["trueCellInProvince"] for r in rows), 1268)
+        self.assertEqual(sum(r["trueCellInJurisdiction"] for r in rows), 1277)
         self.assertEqual(sum(r["trueCellInParent"] for r in rows), 1415)
+        self.assertEqual(len(rows), len({r["id"] for r in rows}))
+        for row in rows:
+            if row["trueCellInProvince"]:
+                self.assertTrue(row["trueCellInJurisdiction"], row["id"])
+            if row["trueCellInJurisdiction"]:
+                self.assertTrue(row["trueCellInParent"], row["id"])
 
 
 if __name__ == "__main__":

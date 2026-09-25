@@ -171,7 +171,7 @@ class HanWorldV3Test(unittest.TestCase):
             },
         )
 
-        self.assertEqual([(273, 781, 6)], edges)
+        self.assertEqual([(273, 781, 24)], edges)  # 4× 세부 격자에서 물리 경계는 네 배 길다.
 
         province_index = {
             str(row["id"]): index for index, row in enumerate(tiles["provinceRecords"])
@@ -287,7 +287,7 @@ class HanWorldV3Test(unittest.TestCase):
             edge for edge in manifest["countyAdjacency"]
             if {edge["a"], edge["b"]} == {273, 781}
         )
-        self.assertEqual(6, edge["sharedBoundaryCells"])
+        self.assertEqual(24, edge["sharedBoundaryCells"])
         output_paths = {
             "worldJsonSha256": ROOT / "infra/src/main/resources/map/han-world-v3.json",
             "cityConstSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",

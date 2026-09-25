@@ -197,6 +197,9 @@ jobs:
       - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
         if: '!cancelled()'
         run: python3 tools/map/check_han_tiles_coupled.py --check
+      - name: Verify city growth clearance and province escape routes
+        if: '!cancelled()'
+        run: python3 tools/map/audit_province_clearance.py --check
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
         # (authored table fields -> derived numeric fields, same file) --
@@ -357,6 +360,15 @@ jobs:
           for m in common logic infra app/gateway-api app/game-api app/board-api; do
             printf '%-22s %s\n' "$m" "$(find "$m/build/test-results/test" -name 'TEST-*.xml' 2>/dev/null | wc -l)"
           done
+      - name: Upload failed JVM test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jvm-core-test-reports
+          path: |
+            infra/build/test-results/test/
+            app/game-api/build/test-results/test/
+          retention-days: 3
 
   game-engine:
     needs: changes
@@ -519,6 +531,9 @@ jobs:
         run: |
           corepack pnpm install --no-frozen-lockfile
           corepack pnpm build
+      - name: Install map audit dependency for web/game
+        if: matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        run: python3 -m pip install numpy==2.4.6
       # 2026-09-21: 이 잡은 여태 build 만 돌렸다. 두 앱 모두 "test": "vitest run" 을 갖고
       # 있었는데 아무도 안 돌려서, web/game 은 지도 판이 바뀌는 동안 낡은 핀 4 건을 안고
       # 빨간 채로 main 에 남아 있었다(web/shared 와 같은 원인 — 5b130608 · 2288e886).

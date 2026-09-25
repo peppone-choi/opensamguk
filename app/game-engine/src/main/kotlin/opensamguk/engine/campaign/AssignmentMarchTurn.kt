@@ -1,5 +1,7 @@
 package opensamguk.engine.campaign
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
@@ -40,7 +42,8 @@ class AssignmentMarchTurn(
         if (PlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (CountyAssignment.META_KEY !in actor.meta) return
-        val edges = try { LandPassageState.read(world.getState().meta, topology) }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)
+            ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
         val refs = assignmentRefs(actor.meta)
         if (edges == null) {

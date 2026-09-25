@@ -90,17 +90,20 @@ describe('committed Han board data', () => {
         || owner[marker.row * tiles._meta.cols + marker.col] !== city.provinceId;
     });
     expect(outside.map((city) => city.id)).toEqual([]);
-  });
+  }, 30_000);
 
   it('the reseat ledger matches a fresh calculation and catches the old 于山國 location', () => {
     expect(reseatCandidates()).toEqual(ledger.reseats.map(({ cityIndex, placeId, fromCell, toCell }) =>
       ({ cityIndex, placeId, fromCell, toCell })));
     const usan = tiles.cities.find((city) => city.id === 'X035')!;
     const [col, row] = projectedCell(usan);
-    expect(Math.hypot(col - usan.col, row - usan.row)).toBeLessThan(1);
-    expect([usan.col, usan.row]).not.toEqual([756, 201]);
+    const scale = tiles._meta.resolutionScale ?? 1;
+    expect(Math.hypot(col - usan.col, row - usan.row)).toBeLessThan(scale);
+    const formerCell = [756 * scale + Math.floor((scale - 1) / 2),
+      201 * scale + Math.floor((scale - 1) / 2)];
+    expect([usan.col, usan.row]).not.toEqual(formerCell);
     const previous = [usan.col, usan.row];
-    usan.col = 756; usan.row = 201;
+    [usan.col, usan.row] = formerCell;
     try { expect(reseatCandidates().map((candidate) => candidate.placeId)).toEqual(['X035']); }
     finally { [usan.col, usan.row] = previous; }
   });

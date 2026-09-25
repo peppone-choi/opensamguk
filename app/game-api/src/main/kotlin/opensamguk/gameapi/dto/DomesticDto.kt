@@ -74,14 +74,16 @@ data class ActiveWorkDto(
     val lastProgressAt: Phase?, val stopReason: String?, val stopReasonText: String?, val startsAtNextBoundary: Boolean,
 )
 
-data class CompletedWorkDto(val work: String, val label: String, val completedAt: Phase)
+data class CompletedWorkDto(val work: String, val label: String, val completedAt: Phase,
+    val edgeId: String? = null)
 
 data class StartableWorkDto(val work: String, val label: String, val available: Boolean, val blocked: ReasonDto?,
     val cost: StockDto, val requiredProgress: Int, val estimatedPhases: Int)
 
 data class CountyWorksDto(
-    val countyId: Int, val name: String, val commanderyName: String?, val warehouse: StockDto?,
+    val countyId: Int, val provinceId: String?, val name: String, val commanderyName: String?, val warehouse: StockDto?,
     val active: ActiveWorkDto?, val completed: List<CompletedWorkDto>, val startable: List<StartableWorkDto>,
+    val provinceIds: Set<String> = emptySet(),
 )
 
 data class WorksResponse(

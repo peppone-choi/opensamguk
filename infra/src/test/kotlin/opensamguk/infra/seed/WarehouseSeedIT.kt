@@ -26,9 +26,11 @@ class WarehouseSeedIT {
         ScenarioJson.loadMapCities(checkNotNull(javaClass.classLoader.getResourceAsStream("map/han-world-v3.json"))
             .bufferedReader().use { it.readText() })
     }
-    // 임포터는 런타임 지도의 城 집합으로 판을 고른다(ScenarioImporter 의 resolve). 픽스처도 같은 길로
-    // 고른다 — 판을 박아 두면 지도 릴리스마다 씨앗 topology 핀이 어긋나 이 IT 가 빨개진다(2026-09-21 실측).
-    private val bundle by lazy { HanWorldArtifactsResolver(root).resolve(cities.map { it.id }, emptyList()) }
+    // Fresh 1447 seeds select map4; an unpinned resolver intentionally selects the old live release.
+    private val bundle by lazy {
+        val variant = opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4
+        HanWorldArtifactsResolver(root).artifacts(variant)
+    }
     private val counties get() = bundle.projection.administrativeCountyIds.sorted()
 
     @BeforeAll fun setup() {

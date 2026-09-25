@@ -38,6 +38,9 @@ class StrategicSupplyNetwork(
     fun withMilitaryBlocks(blocks: Map<Int, Set<String>>) =
         StrategicSupplyNetwork(topology, provinceIds, waterControl, edgeStatesByNation, blocks)
 
+    fun withEdgeStates(states: Map<Int, StrategicEdgeStateSnapshot>) =
+        StrategicSupplyNetwork(topology, provinceIds, waterControl, states, militaryBlocksByNation)
+
     fun suppliedCities(
         cities: List<SupplyCity>,
         capitals: List<SupplyCapital>,

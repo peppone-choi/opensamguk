@@ -29,7 +29,8 @@ class YuzhouSliceScenarioTest {
     private data class Commandery(val jun: String, val counties: List<Int>)
 
     private fun generate(): String {
-        val projection = HanWorldArtifactsResolver(repo).resolve(cities.map { it.id }, emptyList()).projection
+        val projection = HanWorldArtifactsResolver(repo).artifacts(
+            opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).projection
         val admin = projection.administrativeCountyIds
         val byId = cities.associateBy { it.id }
         // Commandery order and each capital are fixed by id: the seat county when it is an administrative county.

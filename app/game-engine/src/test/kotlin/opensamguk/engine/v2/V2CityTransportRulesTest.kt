@@ -202,14 +202,16 @@ class V2CityTransportRulesTest {
     }
 
     @Test
-    fun `both historical V3 pinned routes apply both ledgers and do not move escort`() {
+    fun `historical pinned routes apply one hop and reject map4 multi hop without moving escort`() {
         val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
         for (variant in HanWorldVariant.entries) {
         val load = { artifacts.artifacts(variant).projection }
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
             V2CityTransportArgs(273, 781, 100, 0, 0, null), load,
         )).path
-        assertEquals(listOf("land:45098", "land:45022"), route.nodeKeys)
+        assertEquals(if (variant == HanWorldVariant.V3_1447_MAP4)
+            listOf("land:45098", "land:45127", "land:45022")
+        else listOf("land:45098", "land:45022"), route.nodeKeys)
         val h = handler(listOf(273, 781), mapName = "han-world-v3", hanWorldVariant = variant,
             loadTopology = { historicalTransportTopology(lastWorld.getState(), artifacts) })
         lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 273, goldDelta = 1000, riceDelta = 1000, garrisonDelta = 1000)
@@ -217,10 +219,17 @@ class V2CityTransportRulesTest {
             generalId = 10, fromCityId = 273, toCityId = 781, gold = 100, rice = 200, garrison = 300,
             topologyRevision = route.topologyRevision, routePathHash = route.pathHash,
         ))
-        assertTrue(result.ok, reasonOf(result))
-        assertEquals(V2CityLedgerEntry(900, 800, 700), lastLedger.entry(lastWorld.worldId, 273))
-        assertEquals(V2CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
-        assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
+        if (variant == HanWorldVariant.V3_1447_MAP4) {
+            assertFalse(result.ok)
+            assertEquals("ROUTE_REQUIRES_MULTI_TURN", (result as CommandLifecycleResult).code)
+            assertEquals(V2CityLedgerEntry(1000, 1000, 1000), lastLedger.entry(lastWorld.worldId, 273))
+            assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
+        } else {
+            assertTrue(result.ok, reasonOf(result))
+            assertEquals(V2CityLedgerEntry(900, 800, 700), lastLedger.entry(lastWorld.worldId, 273))
+            assertEquals(V2CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
+            assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
+        }
         assertEquals(273, lastWorld.getGeneralById(10)?.cityId)
         }
     }

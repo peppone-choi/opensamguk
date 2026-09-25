@@ -322,6 +322,7 @@ class DaemonLoopConfig {
                 nativeCounties = opensamguk.logic.input.NativeCountyLedger.load(),
                 topology = artifacts.projection.topology,
                 metrics = artifacts.landMarchMetrics,
+                roadGates = artifacts.projection.presentation?.roadGates.orEmpty(),
                 merit = opensamguk.engine.campaign.GovernanceMeritRenownSink(world, recorder),
                 cityConst = artifacts.cityConst,
             )
