@@ -4,8 +4,8 @@ import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.seed.HwihaUnitProfilesJson
 import opensamguk.logic.content.HwihaItemCatalogJson
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 
@@ -13,8 +13,8 @@ class HwihaLegacyDirectHandlerTest {
     private val fixture = HwihaCampaignWorldFixture()
     private fun context() = HwihaDomesticContext(cityConst = fixture.bundle.cityConst)
     private fun stock(id: Int, money: Long = 0, grain: Long = 0) = mapOf(
-        HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(id, 0,
-            HwihaResources(money = money, grain = grain)).toMetaValue())
+        CountyWarehouse.META_KEY to CountyWarehouse(id, 0,
+            Resources(money = money, grain = grain)).toMetaValue())
 
     @Test fun `conversion changes owned unit type and loses ten training`() {
         val route = fixture.route()
@@ -42,7 +42,7 @@ class HwihaLegacyDirectHandlerTest {
             HwihaLegacyDirectInput.GRAIN, actor.id, """{"side":"BUY","amount":1}""", "grain-4021", 42))
         assertEquals(0, world.getGeneralById(actor.id)!!.gold)
         assertEquals(300, world.getGeneralById(actor.id)!!.rice)
-        val after = HwihaCountyWarehouse.read(world.getCityById(route.startCity)!!.meta, route.startCity)!!.stock
+        val after = CountyWarehouse.read(world.getCityById(route.startCity)!!.meta, route.startCity)!!.stock
         assertEquals(100, after.money)
         assertEquals(0, after.grain)
     }
@@ -79,7 +79,7 @@ class HwihaLegacyDirectHandlerTest {
                 actor.id, """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1001}""", "too-much", 42)).code)
         assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaLegacyDirectInput.TRANSPORT, actor.id,
             """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1000}""", "transport-4041", 42))
-        assertEquals(500, HwihaCountyWarehouse.read(world.getCityById(sourceId)!!.meta, sourceId)!!.stock.grain)
-        assertEquals(1000, HwihaCountyWarehouse.read(world.getCityById(targetId)!!.meta, targetId)!!.stock.grain)
+        assertEquals(500, CountyWarehouse.read(world.getCityById(sourceId)!!.meta, sourceId)!!.stock.grain)
+        assertEquals(1000, CountyWarehouse.read(world.getCityById(targetId)!!.meta, targetId)!!.stock.grain)
     }
 }

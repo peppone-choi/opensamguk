@@ -5,7 +5,7 @@ import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticNation
 import opensamguk.logic.domestic.DomesticProjection
 
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 enum class HwihaTransferFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 자원 이전을 사용할 수 없습니다."),
@@ -25,7 +25,7 @@ enum class HwihaTransferFailure(val message: String) {
 sealed interface HwihaTransferAssessment {
     data class Eligible(val actor: DomesticPerson, val recipient: DomesticPerson? = null,
         val nation: DomesticNation? = null, val county: DomesticCounty? = null,
-        val donorStock: HwihaResources, val receivedStock: HwihaResources) : HwihaTransferAssessment
+        val donorStock: Resources, val receivedStock: Resources) : HwihaTransferAssessment
     data class Rejected(val reason: HwihaTransferFailure) : HwihaTransferAssessment
 }
 
@@ -74,11 +74,11 @@ object HwihaTransferRules {
         return HwihaTransferAssessment.Eligible(actor, recipient, nation, county, donorStock, received)
     }
 
-    fun HwihaTransferResource.amount(value: Long): HwihaResources = when (this) {
-        HwihaTransferResource.MONEY -> HwihaResources(money = value)
-        HwihaTransferResource.GRAIN -> HwihaResources(grain = value)
-        HwihaTransferResource.IRON -> HwihaResources(iron = value)
-        HwihaTransferResource.TIMBER -> HwihaResources(timber = value)
-        HwihaTransferResource.HORSES -> HwihaResources(horses = value)
+    fun HwihaTransferResource.amount(value: Long): Resources = when (this) {
+        HwihaTransferResource.MONEY -> Resources(money = value)
+        HwihaTransferResource.GRAIN -> Resources(grain = value)
+        HwihaTransferResource.IRON -> Resources(iron = value)
+        HwihaTransferResource.TIMBER -> Resources(timber = value)
+        HwihaTransferResource.HORSES -> Resources(horses = value)
     }
 }

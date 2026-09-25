@@ -3,8 +3,8 @@ package opensamguk.logic.domestic
 import opensamguk.logic.input.*
 
 import kotlin.test.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 
 /** 공유 판정(접수 = 재검사). 수치 없이 권한·자리·상태만 본다. */
 class DomesticRulesTest {
@@ -24,7 +24,7 @@ class DomesticRulesTest {
 
     private fun county(id: Int, nation: Int = 1, commandery: String = "A郡", meta: Map<String, Any?> = warehouse(id)) =
         DomesticCounty(id, "C$id", nation, "p$id", commandery, meta)
-    private fun warehouse(id: Int) = mapOf(HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(id, 0, HwihaResources()).toMetaValue())
+    private fun warehouse(id: Int) = mapOf(CountyWarehouse.META_KEY to CountyWarehouse(id, 0, Resources()).toMetaValue())
 
     private fun rejected(result: DomesticAssessment) = assertIs<DomesticAssessment.Rejected>(result).reason
 

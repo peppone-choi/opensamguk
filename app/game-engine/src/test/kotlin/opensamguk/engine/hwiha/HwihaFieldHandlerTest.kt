@@ -2,8 +2,8 @@ package opensamguk.engine.hwiha
 
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.input.HwihaInputCatalog
@@ -43,10 +43,10 @@ class HwihaFieldHandlerTest {
     @Test fun `fortification spends county stock and insufficient stock rejects without changes`() {
         val route = fixture.route()
         val actor = fixture.person(502, 1, route.startCity, userId = "42")
-        val warehouse = HwihaCountyWarehouse(route.startCity, 0, HwihaResources(money = 5_000, timber = 250))
+        val warehouse = CountyWarehouse(route.startCity, 0, Resources(money = 5_000, timber = 250))
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1,
-                meta = city.meta + (HwihaCountyWarehouse.META_KEY to warehouse.toMetaValue())) else city
+                meta = city.meta + (CountyWarehouse.META_KEY to warehouse.toMetaValue())) else city
         })
         val handler = HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext(design = design))
         val before = world.getCityById(route.startCity)!!.defence

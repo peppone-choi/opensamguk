@@ -11,7 +11,7 @@ import opensamguk.logic.domestic.DomesticNation
 import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.domestic.DomesticRules
 
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.diplomacy.DiplomacyState
 
 /** Ten legacy court orders use one strict input and one pure admission/execution gate. */
@@ -47,7 +47,7 @@ enum class HwihaLegacyCourtFailure(val message: String) {
 data class HwihaLegacyCourtReady(val actor: DomesticPerson, val nation: DomesticNation,
     val county: DomesticCounty? = null, val targetPerson: DomesticPerson? = null,
     val targetNation: DomesticNation? = null, val corps: HwihaDeployedCorps? = null,
-    val sourceStock: HwihaResources? = null, val destinationStock: HwihaResources? = null)
+    val sourceStock: Resources? = null, val destinationStock: Resources? = null)
 sealed interface HwihaLegacyCourtAssessment {
     data class Eligible(val ready: HwihaLegacyCourtReady) : HwihaLegacyCourtAssessment
     data class Rejected(val reason: HwihaLegacyCourtFailure) : HwihaLegacyCourtAssessment
@@ -63,7 +63,7 @@ object HwihaLegacyCourtRules {
         if (DomesticRules.rulerOf(nation.id, state)?.id != actorId) return fail(HwihaLegacyCourtFailure.NOT_RULER)
         fun eligible(county: DomesticCounty? = null, person: DomesticPerson? = null,
             targetNation: DomesticNation? = null, corps: HwihaDeployedCorps? = null,
-            source: HwihaResources? = null, destination: HwihaResources? = null) =
+            source: Resources? = null, destination: Resources? = null) =
             HwihaLegacyCourtAssessment.Eligible(HwihaLegacyCourtReady(actor, nation, county, person, targetNation, corps, source, destination))
         return try {
             when (inputId) {

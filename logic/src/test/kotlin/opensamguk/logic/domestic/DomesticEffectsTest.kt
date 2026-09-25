@@ -1,7 +1,7 @@
 package opensamguk.logic.domestic
 
 import kotlin.test.*
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.FieldInput
 import opensamguk.logic.input.HwihaPhase
 
@@ -39,7 +39,7 @@ class DomesticEffectsTest {
         }
         val fortify = DomesticEffects.applyDirect(design, FieldInput.FORTIFY, levels, actor)
         assertEquals(950, fortify.levels.defence)
-        assertEquals(HwihaResources(money = 5_000, timber = 250), fortify.debit)
+        assertEquals(Resources(money = 5_000, timber = 250), fortify.debit)
         val wall = DomesticEffects.applyDirect(design, FieldInput.REPAIR_WALL, levels, actor)
         assertEquals(950, wall.levels.wall)
         assertEquals(fortify.debit, wall.debit)
@@ -75,8 +75,8 @@ class DomesticEffectsTest {
             high.levels.agriculture)
         val capped = DomesticEffects.applyPolicy(design, CountyPolicy.COMMERCE, levels, seat(100))
         assertEquals(levels.commerceMax, capped.levels.commerce)
-        assertEquals(HwihaResources(), high.credit)
-        assertEquals(HwihaResources(), high.debit)
+        assertEquals(Resources(), high.credit)
+        assertEquals(Resources(), high.debit)
     }
 
     @Test fun `tax levy and relief move warehouse resources by households`() {
@@ -97,8 +97,8 @@ class DomesticEffectsTest {
     @Test fun `work charges proportionally and completes at exactly the total cost`() {
         var work = DomesticEffects.newWork(design, DomesticWork.IRRIGATION, "w1", 1, now)
         val spec = design.works.getValue(DomesticWork.IRRIGATION)
-        val rich = HwihaResources(10_000_000, 10_000_000, 0, 0, 0)
-        var paid = HwihaResources()
+        val rich = Resources(10_000_000, 10_000_000, 0, 0, 0)
+        var paid = Resources()
         var phase = now
         var steps = 0
         while (true) {
@@ -120,13 +120,13 @@ class DomesticEffectsTest {
 
     @Test fun `a short warehouse stops the work without progress and a later phase resumes`() {
         val work = DomesticEffects.newWork(design, DomesticWork.FORTIFICATION, "w1", 1, now)
-        val noTimber = HwihaResources(10_000_000, 0, 0, 0, 0)
+        val noTimber = Resources(10_000_000, 0, 0, 0, 0)
         val stopped = assertIs<WorkStep.Stopped>(DomesticEffects.progressWork(design, work, now.plus(1), noTimber, levels, null))
         assertEquals(DomesticEffects.INSUFFICIENT_STOCK, stopped.work.stopReason)
         assertEquals(0, stopped.work.progress)
-        assertEquals(HwihaResources(), stopped.work.charged)
+        assertEquals(Resources(), stopped.work.charged)
         val resumed = assertIs<WorkStep.Advanced>(DomesticEffects.progressWork(design, stopped.work, now.plus(2),
-            HwihaResources(10_000_000, 0, 0, 10_000, 0), levels, null))
+            Resources(10_000_000, 0, 0, 10_000, 0), levels, null))
         assertNull(resumed.work.stopReason)
         assertEquals(design.progressPerPhase * design.scaling.emptySeatPermille / 1000, resumed.work.progress)
     }

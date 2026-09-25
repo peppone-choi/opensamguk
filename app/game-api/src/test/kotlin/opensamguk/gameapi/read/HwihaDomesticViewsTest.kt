@@ -20,8 +20,8 @@ import opensamguk.logic.domestic.DomesticFailure
 
 import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** 조회 응답의 범위·가용 여부가 접수와 같은 규칙에서 나오는지 본다. DB 없음. */
@@ -30,15 +30,15 @@ class HwihaDomesticViewsTest {
     private fun person(id: Int, human: Boolean, lord: Boolean = false, level: Int = 0, node: String = "p$id",
         meta: Map<String, Any?> = emptyMap()) = DomesticPerson(id, "G$id", 1, human, if (human) 0 else 2, level,
         50, 50, 50, 50, 50, node, false, meta + ("hwihaLord" to lord))
-    private val warehouse = mapOf(HwihaCountyWarehouse.META_KEY to
-        HwihaCountyWarehouse(7, 3, HwihaResources(money = 100_000)).toMetaValue())
+    private val warehouse = mapOf(CountyWarehouse.META_KEY to
+        CountyWarehouse(7, 3, Resources(money = 100_000)).toMetaValue())
     private fun snapshot(people: List<DomesticPerson>, counties: List<DomesticCounty> = listOf(
         DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse), DomesticCounty(8, "C8", 1, "p8", "甲郡", emptyMap()),
         DomesticCounty(9, "C9", 2, "p9", "乙郡", emptyMap()))) = HwihaDomesticSnapshot(
         DomesticProjection(RuleProfile.HWIHA, now, people, listOf(DomesticCard(5, 10, 20, "staff"), DomesticCard(6, 10, 30, "guest")),
             counties, listOf(DomesticNation(1, "N1", 7, emptyMap()), DomesticNation(2, "N2", 9, emptyMap())), setOf("p7", "p8", "p9")),
         countyNames = mapOf(7 to "갑현", 8 to "을현", 9 to "병현"), commanderyNames = mapOf("甲郡" to "갑군"),
-        warehouseStocks = mapOf(7 to HwihaResources(money = 100_000)))
+        warehouseStocks = mapOf(7 to Resources(money = 100_000)))
 
     private val ruler = person(10, true, lord = true, level = 12)
 
@@ -82,7 +82,7 @@ class HwihaDomesticViewsTest {
 
     @Test fun `works show startable costs and active progress with stop reasons`() {
         val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
-            .copy(progress = 150, charged = HwihaResources(money = 10_000, timber = 500), stopReason = DomesticEffects.INSUFFICIENT_STOCK)
+            .copy(progress = 150, charged = Resources(money = 10_000, timber = 500), stopReason = DomesticEffects.INSUFFICIENT_STOCK)
         val counties = listOf(DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse + (CountyWorks.META_KEY to
             CountyWorks(active, listOf(CompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())),
             DomesticCounty(8, "C8", 1, "p8", "甲郡", emptyMap()))

@@ -9,7 +9,7 @@ import opensamguk.logic.domestic.FieldEconomyAssessment
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 
 /** Autonomous county work uses only the NPC's own current county and the human handler. */
@@ -30,7 +30,7 @@ internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
             as? FieldAssessment.Eligible ?: return reserved
         val city = world.getCityById(available.county.id) ?: return reserved
         val levels = HwihaDomesticCountyEffects.levelsOf(city)
-        val stock = try { HwihaCountyWarehouse.read(city.meta, city.id)?.stock }
+        val stock = try { CountyWarehouse.read(city.meta, city.id)?.stock }
             catch (_: IllegalArgumentException) { null }
         val candidates = FieldInput.INPUT_IDS.toList().mapIndexedNotNull { index, inputId ->
             if (catalog[inputId]?.deliveryState?.hasHandler != true) return@mapIndexedNotNull null

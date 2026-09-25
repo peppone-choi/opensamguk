@@ -7,7 +7,7 @@ import opensamguk.logic.domestic.FieldRules
 
 import opensamguk.logic.domestic.DomesticProjection
 
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 enum class HwihaMilitaryFailure(val message: String) {
     WRONG_RULE_PROFILE("이 세계에서는 휘하 군사 행동을 사용할 수 없습니다."),
@@ -34,7 +34,7 @@ enum class HwihaMilitaryFailure(val message: String) {
 }
 
 data class HwihaCityMilitaryPlan(val countyId: Int, val population: Int, val troops: Int,
-    val condition: HwihaCityMilitaryState, val debit: HwihaResources)
+    val condition: HwihaCityMilitaryState, val debit: Resources)
 
 sealed interface HwihaCityMilitaryAssessment {
     data class Eligible(val plan: HwihaCityMilitaryPlan) : HwihaCityMilitaryAssessment
@@ -44,7 +44,7 @@ sealed interface HwihaCityMilitaryAssessment {
 /** One precheck for API and engine; county identity comes from the general's spatial pin. */
 object HwihaMilitaryRules {
     fun assessCity(request: HwihaMilitaryRequest, projection: DomesticProjection,
-        population: Int?, populationMax: Int?, troops: Int?, condition: HwihaCityMilitaryState?, stock: HwihaResources?,
+        population: Int?, populationMax: Int?, troops: Int?, condition: HwihaCityMilitaryState?, stock: Resources?,
         design: HwihaMilitaryDesign): HwihaCityMilitaryAssessment {
         fun reject(reason: HwihaMilitaryFailure) = HwihaCityMilitaryAssessment.Rejected(reason)
         if (request.inputId == HwihaMilitaryInput.MUSTER || request.inputId !in HwihaMilitaryInput.INPUT_IDS)
@@ -69,19 +69,19 @@ object HwihaMilitaryRules {
                     val money = if (request.inputId == HwihaMilitaryInput.RAISE_VOLUNTEERS)
                         Math.multiplyExact(recruited.toLong(), design.moneyPerVolunteer) else 0L
                     HwihaCityMilitaryPlan(county.id, population - recruited, Math.addExact(troops, recruited),
-                        condition, HwihaResources(money = money, grain = grain))
+                        condition, Resources(money = money, grain = grain))
                 }
                 HwihaMilitaryInput.TRAIN -> {
                     if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
                     if (condition.training == 100) return reject(HwihaMilitaryFailure.ALREADY_MAX)
                     HwihaCityMilitaryPlan(county.id, population, troops,
-                        condition.copy(training = (condition.training + design.trainingGain).coerceAtMost(100)), HwihaResources())
+                        condition.copy(training = (condition.training + design.trainingGain).coerceAtMost(100)), Resources())
                 }
                 HwihaMilitaryInput.BOOST_MORALE -> {
                     if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
                     if (condition.morale == 100) return reject(HwihaMilitaryFailure.ALREADY_MAX)
                     HwihaCityMilitaryPlan(county.id, population, troops,
-                        condition.copy(morale = (condition.morale + design.moraleGain).coerceAtMost(100)), HwihaResources())
+                        condition.copy(morale = (condition.morale + design.moraleGain).coerceAtMost(100)), Resources())
                 }
                 HwihaMilitaryInput.DEMOBILIZE -> {
                     if (troops == 0) return reject(HwihaMilitaryFailure.NO_CITY_TROOPS)
@@ -90,11 +90,11 @@ object HwihaMilitaryRules {
                     val released = maxOf(1, (troops.toLong() * design.demobilizeTroopPermille / 1000).toInt())
                         .coerceAtMost(troops).coerceAtMost(headroom)
                     HwihaCityMilitaryPlan(county.id, Math.addExact(population, released), troops - released,
-                        condition, HwihaResources())
+                        condition, Resources())
                 }
                 else -> return reject(HwihaMilitaryFailure.INVALID_INPUT)
             }
-            if (next.debit != HwihaResources()) {
+            if (next.debit != Resources()) {
                 if (stock == null) return reject(HwihaMilitaryFailure.WAREHOUSE_NOT_READY)
                 if (stock.debit(next.debit) == null) return reject(HwihaMilitaryFailure.INSUFFICIENT_STOCK)
             }

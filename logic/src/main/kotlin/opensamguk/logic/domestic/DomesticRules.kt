@@ -1,6 +1,6 @@
 package opensamguk.logic.domestic
 
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.domestic.CountyPolicy
 import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.input.DispatchStatus
@@ -214,7 +214,7 @@ object DomesticRules {
             ?: return@guarded reject(DomesticFailure.INVALID_COUNTY)
         if (rulerOf(county.nationId, state)?.id != actor.id && actor.id !in countyControllers(county, state))
             return@guarded reject(DomesticFailure.NOT_COUNTY_AUTHORITY)
-        if (HwihaCountyWarehouse.read(county.meta, county.id) == null) return@guarded reject(DomesticFailure.WAREHOUSE_NOT_READY)
+        if (CountyWarehouse.read(county.meta, county.id) == null) return@guarded reject(DomesticFailure.WAREHOUSE_NOT_READY)
         val works = CountyWorks.read(county.meta)
         when {
             works?.active != null -> reject(DomesticFailure.WORK_IN_PROGRESS)

@@ -3,7 +3,7 @@ package opensamguk.logic.input
 import opensamguk.logic.vision.VisionRules
 import opensamguk.logic.vision.VisionSourceKind
 
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.world.HanCommandery
 import opensamguk.logic.world.HanCommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
@@ -80,7 +80,7 @@ class HwihaScoutTest {
     @Test fun `canonical vision rules load and the scout cost cannot become a fake non-zero cost`() {
         assertEquals(0, rules.radius(VisionSourceKind.SELF))
         assertEquals(1, rules.radius(VisionSourceKind.SCOUT_POST))
-        assertEquals(HwihaResources(), rules.scoutCost)
+        assertEquals(Resources(), rules.scoutCost)
         assertEquals("B1", rules.band(0).code); assertEquals("B2", rules.band(1000).code); assertEquals("B5", rules.band(Int.MAX_VALUE).code)
         val text = checkNotNull(javaClass.classLoader.getResource("hwiha/hwiha-vision-rules-v1.json")).readText()
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"money\": 0", "\"money\": 5")) }

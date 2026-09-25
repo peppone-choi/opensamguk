@@ -1,6 +1,6 @@
 package opensamguk.logic.domestic
 
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaMarchCheckpoint
 import opensamguk.logic.input.HwihaPhase
 import opensamguk.logic.world.LandMarchMetricSnapshot
@@ -289,8 +289,8 @@ data class ActiveWork(
     val requestedAt: HwihaPhase,
     val progress: Int,
     val required: Int,
-    val cost: HwihaResources,
-    val charged: HwihaResources,
+    val cost: Resources,
+    val charged: Resources,
     val lastProgressAt: HwihaPhase?,
     val stopReason: String?,
 ) {
@@ -318,10 +318,10 @@ data class ActiveWork(
                 value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") })
         }
 
-        internal fun resources(raw: Any?): HwihaResources {
+        internal fun resources(raw: Any?): Resources {
             val value = raw as? Map<*, *> ?: invalid("resources")
             require(value.keys == setOf("money", "grain", "iron", "timber", "horses"))
-            return HwihaResources(value.exactLong("money", "resources"), value.exactLong("grain", "resources"),
+            return Resources(value.exactLong("money", "resources"), value.exactLong("grain", "resources"),
                 value.exactLong("iron", "resources"), value.exactLong("timber", "resources"), value.exactLong("horses", "resources"))
         }
     }

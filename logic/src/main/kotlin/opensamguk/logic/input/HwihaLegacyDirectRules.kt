@@ -8,8 +8,8 @@ import opensamguk.logic.domestic.DomesticRules
 
 import opensamguk.logic.content.HwihaItemCatalogJson
 import opensamguk.logic.content.HwihaTreasureDefinition
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 
 enum class HwihaLegacyDirectFailure(val message: String) {
     WRONG_RULE_PROFILE("휘하 규칙에서만 사용할 수 있습니다."), INVALID_INPUT("직접 행동 인자가 올바르지 않습니다."),
@@ -28,8 +28,8 @@ sealed interface HwihaLegacyDirectAssessment {
     data class Eligible(val actor: DomesticPerson, val county: DomesticCounty? = null,
         val targetCounty: DomesticCounty? = null, val bugok: DomesticBugok? = null,
         val treasure: HwihaTreasureDefinition? = null, val inventory: Set<String> = emptySet(),
-        val actorStock: HwihaResources? = null, val warehouse: HwihaCountyWarehouse? = null,
-        val targetWarehouse: HwihaCountyWarehouse? = null) : HwihaLegacyDirectAssessment
+        val actorStock: Resources? = null, val warehouse: CountyWarehouse? = null,
+        val targetWarehouse: CountyWarehouse? = null) : HwihaLegacyDirectAssessment
     data class Rejected(val reason: HwihaLegacyDirectFailure) : HwihaLegacyDirectAssessment
 }
 
@@ -62,7 +62,7 @@ object HwihaLegacyDirectRules {
         val county = counties.single()
         if (county.nationId <= 0 || county.nationId != actor.nationId)
             return reject(HwihaLegacyDirectFailure.FOREIGN_COUNTY)
-        val warehouse = try { HwihaCountyWarehouse.read(county.meta, county.id) }
+        val warehouse = try { CountyWarehouse.read(county.meta, county.id) }
             catch (_: IllegalArgumentException) { return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE) }
             ?: return reject(HwihaLegacyDirectFailure.WAREHOUSE_NOT_READY)
         if (warehouse.revision == Long.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE)
@@ -83,7 +83,7 @@ object HwihaLegacyDirectRules {
                 if (request.side == HwihaTradeSide.BUY) {
                     if (treasure.header.id in cards) return reject(HwihaLegacyDirectFailure.TREASURE_ISSUED)
                     if (actorStock.money < price) return reject(HwihaLegacyDirectFailure.INSUFFICIENT_STOCK)
-                    try { warehouse.stock.credit(HwihaResources(money = price)) }
+                    try { warehouse.stock.credit(Resources(money = price)) }
                     catch (_: ArithmeticException) { return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW) }
                 } else {
                     if (treasure.header.id !in inventory) return reject(HwihaLegacyDirectFailure.TREASURE_NOT_OWNED)
@@ -99,13 +99,13 @@ object HwihaLegacyDirectRules {
                     if (actorStock.money < design.grainTradeMoney || warehouse.stock.grain < design.grainTradeGrain)
                         return reject(HwihaLegacyDirectFailure.INSUFFICIENT_STOCK)
                     if (actorStock.grain + design.grainTradeGrain > Int.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW)
-                    try { warehouse.stock.credit(HwihaResources(money = design.grainTradeMoney.toLong())) }
+                    try { warehouse.stock.credit(Resources(money = design.grainTradeMoney.toLong())) }
                     catch (_: ArithmeticException) { return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW) }
                 } else {
                     if (actorStock.grain < design.grainTradeGrain || warehouse.stock.money < design.grainTradeMoney)
                         return reject(HwihaLegacyDirectFailure.INSUFFICIENT_STOCK)
                     if (actorStock.money + design.grainTradeMoney > Int.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW)
-                    try { warehouse.stock.credit(HwihaResources(grain = design.grainTradeGrain.toLong())) }
+                    try { warehouse.stock.credit(Resources(grain = design.grainTradeGrain.toLong())) }
                     catch (_: ArithmeticException) { return reject(HwihaLegacyDirectFailure.STOCK_OVERFLOW) }
                 }
                 return HwihaLegacyDirectAssessment.Eligible(actor, county, actorStock = actorStock, warehouse = warehouse)
@@ -115,7 +115,7 @@ object HwihaLegacyDirectRules {
                 val target = state.county(request.targetCountyId)?.takeIf {
                     it.id in state.countyAdjacency[county.id].orEmpty() && it.nationId == county.nationId
                 } ?: return reject(HwihaLegacyDirectFailure.TARGET_COUNTY_UNAVAILABLE)
-                val targetWarehouse = try { HwihaCountyWarehouse.read(target.meta, target.id) }
+                val targetWarehouse = try { CountyWarehouse.read(target.meta, target.id) }
                     catch (_: IllegalArgumentException) { return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE) }
                     ?: return reject(HwihaLegacyDirectFailure.WAREHOUSE_NOT_READY)
                 if (targetWarehouse.revision == Long.MAX_VALUE) return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE)
@@ -129,11 +129,11 @@ object HwihaLegacyDirectRules {
         }
     }
 
-    fun HwihaCargo.amount(value: Long): HwihaResources = when (this) {
-        HwihaCargo.MONEY -> HwihaResources(money = value)
-        HwihaCargo.GRAIN -> HwihaResources(grain = value)
-        HwihaCargo.IRON -> HwihaResources(iron = value)
-        HwihaCargo.TIMBER -> HwihaResources(timber = value)
-        HwihaCargo.HORSES -> HwihaResources(horses = value)
+    fun HwihaCargo.amount(value: Long): Resources = when (this) {
+        HwihaCargo.MONEY -> Resources(money = value)
+        HwihaCargo.GRAIN -> Resources(grain = value)
+        HwihaCargo.IRON -> Resources(iron = value)
+        HwihaCargo.TIMBER -> Resources(timber = value)
+        HwihaCargo.HORSES -> Resources(horses = value)
     }
 }

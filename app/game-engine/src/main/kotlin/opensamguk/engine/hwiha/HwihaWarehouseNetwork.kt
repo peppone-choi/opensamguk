@@ -2,8 +2,8 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import org.slf4j.LoggerFactory
 
 /**
@@ -28,15 +28,15 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
 
     /** @return 전액을 뺐으면 true. 모자라면 아무것도 빼지 않고 false. */
     fun payMoney(payerNationId: Int, counties: List<Int>, amount: Long): Boolean =
-        pay(payerNationId, counties, amount, { it.money }, { HwihaResources(money = it) })
+        pay(payerNationId, counties, amount, { it.money }, { Resources(money = it) })
 
     fun payGrain(payerNationId: Int, counties: List<Int>, amount: Long): Boolean =
-        pay(payerNationId, counties, amount, { it.grain }, { HwihaResources(grain = it) })
+        pay(payerNationId, counties, amount, { it.grain }, { Resources(grain = it) })
 
     fun grainIn(counties: List<Int>): Long = counties.mapNotNull(::warehouse).sumOf { it.stock.grain }
 
-    private fun pay(payerNationId: Int, counties: List<Int>, amount: Long, balance: (HwihaResources) -> Long,
-        debit: (Long) -> HwihaResources): Boolean {
+    private fun pay(payerNationId: Int, counties: List<Int>, amount: Long, balance: (Resources) -> Long,
+        debit: (Long) -> Resources): Boolean {
         if (amount < 0 || counties.distinct().size != counties.size) {
             log.warn("hwiha_warehouse_payment_skipped nation={} reason=INVALID_REQUEST", payerNationId)
             return false
@@ -65,10 +65,10 @@ class HwihaWarehouseNetwork(private val world: InMemoryTurnWorld, private val re
 
     private fun hasWarehouse(countyId: Int) = warehouse(countyId) != null
 
-    private fun warehouse(countyId: Int): HwihaCountyWarehouse? {
+    private fun warehouse(countyId: Int): CountyWarehouse? {
         if (countyId !in world.administrativeCountyIds) return null
         val city = world.getCityById(countyId) ?: return null
-        return try { HwihaCountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
+        return try { CountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
     }
 
     private companion object {

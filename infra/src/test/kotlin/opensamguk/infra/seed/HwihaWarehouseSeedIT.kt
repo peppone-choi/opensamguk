@@ -4,8 +4,8 @@ import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.RuleProfile
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.BeforeAll
@@ -49,7 +49,7 @@ class HwihaWarehouseSeedIT {
         "topologyRevision" to bundle.projection.topology.topologyRevision,
         "topologyHash" to bundle.projection.topology.contentHash,
         "warehouses" to counties.mapIndexed { index, id -> mapOf("countyId" to id,
-            "stock" to HwihaResources(100L+index, 3_000_000_000L+index, 20, 30, 40).toMetaValue()) },
+            "stock" to Resources(100L+index, 3_000_000_000L+index, 20, 30, 40).toMetaValue()) },
     )
     private fun scenario(includeProfile: Boolean = true): Scenario {
         val raw = HwihaSyntheticScenario.root().toMutableMap()
@@ -59,7 +59,7 @@ class HwihaWarehouseSeedIT {
         return ScenarioJson.loadScenario(MetaJson.encode(raw))
     }
     private fun importer(scenario: Scenario) = ScenarioImporter(scenario, cities, artifactsRoot=root)
-    private fun stored(id: Int): HwihaCountyWarehouse? = HwihaCountyWarehouse.read(MetaJson.decode(
+    private fun stored(id: Int): CountyWarehouse? = CountyWarehouse.read(MetaJson.decode(
         jdbc.queryForObject("SELECT meta::text FROM city WHERE world_id=1 AND id=?", String::class.java, id)!!), id)
 
     @Test fun `fresh scenario without a profile seeds HWIHA positions and records HWIHA`() {
@@ -73,7 +73,7 @@ class HwihaWarehouseSeedIT {
         val scenario = scenario()
         importer(scenario).importAll(jdbc, WorldId(1))
         val seed = assertNotNull(scenario.hwihaWarehouses)
-        for ((id, stock) in seed.warehouses) assertEquals(HwihaCountyWarehouse(id, 0, stock), stored(id))
+        for ((id, stock) in seed.warehouses) assertEquals(CountyWarehouse(id, 0, stock), stored(id))
         for (city in cities.filter { it.id !in counties }) assertNull(stored(city.id))
         assertEquals(0L, jdbc.queryForObject("SELECT sum(gold+rice)::bigint FROM nation", Long::class.java))
         val meta = MetaJson.decode(jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
@@ -92,7 +92,7 @@ class HwihaWarehouseSeedIT {
         val invalid = listOf(
             scenario.copy(hwihaWarehouses=seed.copy(topologyHash="0".repeat(64))),
             scenario.copy(hwihaWarehouses=seed.copy(warehouses=seed.warehouses-counties.first())),
-            scenario.copy(hwihaWarehouses=seed.copy(warehouses=seed.warehouses+(Int.MAX_VALUE to HwihaResources()))),
+            scenario.copy(hwihaWarehouses=seed.copy(warehouses=seed.warehouses+(Int.MAX_VALUE to Resources()))),
             scenario.copy(nations=scenario.nations.map { it.copy(gold=1) }),
             scenario.copy(nations=scenario.nations.map { it.copy(rice=1) }),
             scenario.copy(ruleProfile=RuleProfile.SAMMO),

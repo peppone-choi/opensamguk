@@ -2,10 +2,10 @@ package opensamguk.infra.seed
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.util.Collections
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 /**
- * 縣별 월 산지 생산(철·목재·말). 전·곡은 담지 않는다 — 그쪽은 `HwihaCountyIncome` 의 식이 만든다.
+ * 縣별 월 산지 생산(철·목재·말). 전·곡은 담지 않는다 — 그쪽은 `CountyIncome` 의 식이 만든다.
  *
  * 산출물은 `tools/map/build_hwiha_resource_production.py` 가 낸다. 철·말의 위치는 사료 산지 원장
  * (`resource-sites-v1`), 목재는 han-tiles 의 삼림 가능 칸 수이고, 단가만 게임 설계다. 단가를 바꾸려면
@@ -16,21 +16,21 @@ import opensamguk.logic.economy.HwihaResources
 object HwihaCountyProductionJson {
     const val RESOURCE = "hwiha/county-production-v1.json"
 
-    private val cached: Map<Int, HwihaResources> by lazy { load(RESOURCE) }
+    private val cached: Map<Int, Resources> by lazy { load(RESOURCE) }
 
     /** 런타임 표. 없는 縣은 생산 0 이다. */
-    fun table(): Map<Int, HwihaResources> = cached
+    fun table(): Map<Int, Resources> = cached
 
-    internal fun load(resource: String): Map<Int, HwihaResources> {
+    internal fun load(resource: String): Map<Int, Resources> {
         val json = HwihaCountyProductionJson::class.java.classLoader.getResourceAsStream(resource)
             ?.bufferedReader(Charsets.UTF_8)?.use { it.readText() } ?: return emptyMap()
         return parse(json)
     }
 
-    internal fun parse(json: String): Map<Int, HwihaResources> {
+    internal fun parse(json: String): Map<Int, Resources> {
         val root = ObjectMapper().readTree(json)
         require(root.path("schemaVersion").asInt() == 1) { "Unsupported county production schema" }
-        val table = LinkedHashMap<Int, HwihaResources>()
+        val table = LinkedHashMap<Int, Resources>()
         for (row in root.path("counties")) {
             val countyId = row.path("countyId").let {
                 require(it.isInt) { "County production row needs an integer countyId" }
@@ -43,12 +43,12 @@ object HwihaCountyProductionJson {
             require(fields.isNotEmpty() && fields.all { it in ALLOWED }) {
                 "County production may only name iron, timber and horses"
             }
-            val produced = HwihaResources(
+            val produced = Resources(
                 iron = amount(monthly, "iron"),
                 timber = amount(monthly, "timber"),
                 horses = amount(monthly, "horses"),
             )
-            require(produced != HwihaResources()) { "County production row must produce something" }
+            require(produced != Resources()) { "County production row must produce something" }
             require(table.put(countyId, produced) == null) { "Duplicate county production row" }
         }
         return Collections.unmodifiableMap(table)

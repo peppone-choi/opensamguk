@@ -59,7 +59,7 @@ class HwihaRetireHandler(private val world: InMemoryTurnWorld, private val recor
         val stamp = mapOf("turn" to turnToken, "requestId" to requestId, "ownerUserId" to ownerUserId,
             "successorGeneralId" to request.successorGeneralId, "effects" to effects)
         val retired = actor.copy(userId = null, npcState = 5, officerLevel = 1, gold = 0, rice = 0,
-            meta = HwihaPortableStock.withStock(actor.meta, opensamguk.logic.economy.HwihaResources()) +
+            meta = HwihaPortableStock.withStock(actor.meta, opensamguk.logic.economy.Resources()) +
                 (HwihaLordStatus.META_KEY to false) + ("hwihaRetired" to true) + (LAST_TURN_KEY to stamp))
         val inherited = successor.copy(userId = actor.userId ?: successor.userId,
             npcState = if (actor.userId != null) 0 else successor.npcState,

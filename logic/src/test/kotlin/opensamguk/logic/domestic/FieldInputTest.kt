@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaDeployedCorps
 import opensamguk.logic.input.HwihaDeploymentState
 import opensamguk.logic.input.HwihaPhase
@@ -52,14 +52,14 @@ class FieldInputTest {
             100, 1000, 100, 1000)
         val design = DomesticDesign.CANON
         val short = FieldRules.assessEconomy(FieldInput.FORTIFY, person, county.id,
-            levels, HwihaResources(money = 4_999, timber = 250), design)
+            levels, Resources(money = 4_999, timber = 250), design)
         assertEquals(FieldFailure.INSUFFICIENT_STOCK,
             assertIs<FieldEconomyAssessment.Rejected>(short).reason)
         val ready = FieldRules.assessEconomy(FieldInput.FORTIFY, person, county.id,
-            levels, HwihaResources(money = 5_000, timber = 250), design)
+            levels, Resources(money = 5_000, timber = 250), design)
         assertEquals(150, assertIs<FieldEconomyAssessment.Eligible>(ready).outcome.levels.defence)
         val capped = FieldRules.assessEconomy(FieldInput.FORTIFY, person, county.id,
-            levels.copy(defence = 1000), HwihaResources(), design)
+            levels.copy(defence = 1000), Resources(), design)
         assertEquals(FieldFailure.AT_CAPACITY,
             assertIs<FieldEconomyAssessment.Rejected>(capped).reason)
     }

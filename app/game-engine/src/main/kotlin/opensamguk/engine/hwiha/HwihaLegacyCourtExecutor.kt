@@ -114,13 +114,13 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
         return null
     }
 
-    private fun updatePerson(before: TurnGeneral, stock: opensamguk.logic.economy.HwihaResources) {
+    private fun updatePerson(before: TurnGeneral, stock: opensamguk.logic.economy.Resources) {
         val next = before.copy(gold = HwihaPortableStock.checkedColumn(stock.money),
             rice = HwihaPortableStock.checkedColumn(stock.grain), meta = HwihaPortableStock.withStock(before.meta, stock))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(next))
         world.applyGeneralDirtyFree(next)
     }
-    private fun updateNation(before: Nation, stock: opensamguk.logic.economy.HwihaResources) {
+    private fun updateNation(before: Nation, stock: opensamguk.logic.economy.Resources) {
         val next = before.copy(gold = HwihaPortableStock.checkedColumn(stock.money),
             rice = HwihaPortableStock.checkedColumn(stock.grain), meta = HwihaPortableStock.withStock(before.meta, stock))
         recorder.diffNation(PerTurnOverlay.toLogicNation(before), PerTurnOverlay.toLogicNation(next))
