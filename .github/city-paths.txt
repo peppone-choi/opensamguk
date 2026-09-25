@@ -61,6 +61,6 @@ infra/src/main/kotlin/opensamguk/infra/seed/HanStrategicTopologyJson.kt
 app/game-engine/src/main/kotlin/opensamguk/engine/turn/ReservedTurnHandler.kt
 app/game-engine/src/main/kotlin/opensamguk/engine/flush/DatabaseHooks.kt
 app/game-engine/src/main/kotlin/opensamguk/engine/boot/WorldSnapshotLoader.kt
-app/game-engine/src/main/kotlin/opensamguk/engine/world/HanSpatialSupplyProvider.kt
+app/game-engine/src/main/kotlin/opensamguk/engine/world/SpatialSupplyProvider.kt
 app/game-api/src/main/kotlin/opensamguk/gameapi/read/MapAdministrativeOwnership.kt
 infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt

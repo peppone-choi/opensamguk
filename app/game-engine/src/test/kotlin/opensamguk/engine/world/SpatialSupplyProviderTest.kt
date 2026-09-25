@@ -20,7 +20,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-class HanSpatialSupplyProviderTest {
+class SpatialSupplyProviderTest {
     private val mapper = ObjectMapper()
     private val mapPath = "../../data/map/han-tiles.json"
     private val ownershipPath = "../../data/map/han-scenario-province-ownership-v1.json"
@@ -29,7 +29,7 @@ class HanSpatialSupplyProviderTest {
     private val sourceLedgerPath = "../../data/curated/han/territory-disconnection-adjudications-v1.json"
     private val runtimeMapPath = "../../infra/src/main/resources/map/han.json"
 
-    private fun provider() = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath)
+    private fun provider() = SpatialSupplyProvider(mapper, mapPath, ownershipPath)
 
     /**
      * 2026-09-17(ADR-LITE-056): legacy v2 han.json 의 두 城은 현행 han-tiles 에서 제 관할의 治所 省이 아니다 —
@@ -67,10 +67,10 @@ class HanSpatialSupplyProviderTest {
 
     @Test
     fun `reviewed active fallback policies are attached to the spatial network`() {
-        val loader = HanSupplyDisconnectionPolicyLoader(
+        val loader = SupplyDisconnectionPolicyLoader(
             mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
         )
-        val provider = HanSpatialSupplyProvider(mapper, mapPath, ownershipPath, loader)
+        val provider = SpatialSupplyProvider(mapper, mapPath, ownershipPath, loader)
         val liveCities = MapJson.loadFromClasspath("han").cities.filter { it.id !in foldedLegacyV2Seats }.mapNotNull { city ->
             city.provinceId?.let { SpatialSupplyCity(city.id, it, 0) }
         }
@@ -133,11 +133,11 @@ class HanSpatialSupplyProviderTest {
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han"), emptyMap())
         val scenarioCodes = mapper.readTree(Path(ownershipPath).toFile()).path("scenarios")
             .map { it.path("scenarioCode").asInt() }
-        val reviewedProvider = HanSpatialSupplyProvider(
+        val reviewedProvider = SpatialSupplyProvider(
             mapper,
             mapPath,
             ownershipPath,
-            HanSupplyDisconnectionPolicyLoader(
+            SupplyDisconnectionPolicyLoader(
                 mapper, ledgerPath, mapPath, runtimeMapPath, sourceLedgerPath,
             ),
         )
@@ -217,7 +217,7 @@ class HanSpatialSupplyProviderTest {
         val file = createTempFile("split-ownership", ".json")
         try {
             mapper.writeValue(file.toFile(), ownership)
-            val provider = HanSpatialSupplyProvider(mapper, mapPath, file.toString())
+            val provider = SpatialSupplyProvider(mapper, mapPath, file.toString())
             val baseline = provider.network(1020, emptyList()).provinceOwners.toList()
             assertEquals(88, baseline[splitIndex])
             // R1(ADR-LITE-052): live 점령은 심사 분할 칸도 함께 넘긴다.
@@ -319,7 +319,7 @@ class HanSpatialSupplyProviderTest {
         try {
             malformed.toFile().writeText(json)
             assertFailsWith<IllegalStateException> {
-                HanSpatialSupplyProvider(mapper, mapPath, malformed.toString()).network(1020, emptyList())
+                SpatialSupplyProvider(mapper, mapPath, malformed.toString()).network(1020, emptyList())
             }
         } finally {
             malformed.deleteIfExists()
@@ -331,7 +331,7 @@ class HanSpatialSupplyProviderTest {
         try {
             malformed.toFile().writeText(json)
             assertFailsWith<IllegalStateException> {
-                HanSpatialSupplyProvider(mapper, malformed.toString(), ownershipPath).network(1020, emptyList())
+                SpatialSupplyProvider(mapper, malformed.toString(), ownershipPath).network(1020, emptyList())
             }
         } finally {
             malformed.deleteIfExists()

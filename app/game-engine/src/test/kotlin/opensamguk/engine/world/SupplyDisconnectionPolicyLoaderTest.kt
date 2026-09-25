@@ -10,10 +10,10 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
-class HanSupplyDisconnectionPolicyLoaderTest {
+class SupplyDisconnectionPolicyLoaderTest {
     private val mapper = ObjectMapper()
 
-    private fun fixture(ledger: String): HanSupplyDisconnectionPolicyLoader {
+    private fun fixture(ledger: String): SupplyDisconnectionPolicyLoader {
         val dir = createTempDirectory("han-supply-policy")
         val map = dir.resolve("tiles.json")
         val runtime = dir.resolve("han.json")
@@ -40,7 +40,7 @@ class HanSupplyDisconnectionPolicyLoaderTest {
             ]}""",
         )
         ledgerPath.writeText(ledger)
-        return HanSupplyDisconnectionPolicyLoader(
+        return SupplyDisconnectionPolicyLoader(
             mapper,
             ledgerPath.toString(),
             map.toString(),
@@ -180,7 +180,7 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         map.writeText("""{"provinceRecords":[],"jurisdictionRecords":[]}""")
         ledgerPath.writeText(ledger())
         sourceLedgerPath.writeText("""{"schemaVersion":1,"adjudications":[]}""")
-        val loader = HanSupplyDisconnectionPolicyLoader(
+        val loader = SupplyDisconnectionPolicyLoader(
             mapper,
             ledgerPath.toString(),
             map.toString(),
@@ -207,7 +207,7 @@ class HanSupplyDisconnectionPolicyLoaderTest {
         return path.toString()
     }
 
-    private fun v3Loader(v3Ledger: String) = HanSupplyDisconnectionPolicyLoader(
+    private fun v3Loader(v3Ledger: String) = SupplyDisconnectionPolicyLoader(
         objectMapper = mapper,
         ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json",
         mapPath = "../../data/map/han-tiles.json",
