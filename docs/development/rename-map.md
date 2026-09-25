@@ -85,6 +85,28 @@
 | `opensamguk.logic.economy.HwihaCountyIncome` (`logic/economy/HwihaCountyIncome.kt`) | `opensamguk.logic.economy.CountyIncome` (`logic/economy/CountyIncome.kt`) | 이 PR | 縣 월 생산 타입·파일 개명 |
 | `logic/economy/HwihaCountyWarehouseTest.kt` | `logic/economy/CountyWarehouseTest.kt` | 이 PR | 창고 테스트 파일·타입 개명 |
 | `logic/economy/HwihaCountyIncomeTest.kt` | `logic/economy/CountyIncomeTest.kt` | 이 PR | 월 생산 테스트 파일·타입 개명 |
+| `opensamguk.logic.input.HwihaVision` (`logic/input/HwihaVision.kt`) | `opensamguk.logic.vision.Vision` (`logic/vision/Vision.kt`) | 이 PR | 시야 투영 본체의 도메인 패키지 이동 |
+| `opensamguk.logic.input.HwihaVisionView` | `opensamguk.logic.vision.VisionView` | 이 PR | 시야 투영 결과 타입 |
+| `opensamguk.logic.input.HwihaCorpsVisibility` | `opensamguk.logic.vision.CorpsVisibility` | 이 PR | 군단 시야 판정 |
+| `opensamguk.logic.input.VisionTier` | `opensamguk.logic.vision.VisionTier` | 이 PR | 시야 등급 enum 패키지 이동 |
+| `opensamguk.logic.input.VisionSource` | `opensamguk.logic.vision.VisionSource` | 이 PR | 시야 출처 타입 패키지 이동 |
+| `opensamguk.logic.input.VisionEntry` | `opensamguk.logic.vision.VisionEntry` | 이 PR | 시야 항목 타입 패키지 이동 |
+| `opensamguk.logic.input.VisionViewer` | `opensamguk.logic.vision.VisionViewer` | 이 PR | 시야 관찰자 타입 패키지 이동 |
+| `opensamguk.logic.input.CorpsSighting` | `opensamguk.logic.vision.CorpsSighting` | 이 PR | 군단 목격 정보 타입 패키지 이동 |
+| `logic/input/HwihaVisionTest.kt` | `logic/vision/VisionTest.kt` | 이 PR | 시야 투영 테스트 파일·타입·패키지 개명 |
+| `opensamguk.logic.input.HwihaScoutInput` (`logic/input/HwihaScout.kt`) | `opensamguk.logic.vision.ScoutInputCodec` (`logic/vision/Scout.kt`) | 이 PR | 정찰 입력 파서; 데이터 타입 `ScoutInput`과 이름 충돌 회피 |
+| `opensamguk.logic.input.HwihaScoutRules` | `opensamguk.logic.vision.ScoutRules` | 이 PR | 정찰 판정 규칙 |
+| `opensamguk.logic.input.HwihaScoutReport` | `opensamguk.logic.vision.ScoutReport` | 이 PR | 정찰 보고서 |
+| `opensamguk.logic.input.HwihaScoutReports` | `opensamguk.logic.vision.ScoutReports` | 이 PR | 정찰 보고서 묶음 |
+| `opensamguk.logic.input.HwihaScoutCapture` | `opensamguk.logic.vision.ScoutCapture` | 이 PR | 정찰 관측 캡처 |
+| `opensamguk.logic.input.HwihaCorpsTroops` | `opensamguk.logic.vision.CorpsTroops` | 이 PR | 시야 공개용 군단 병력 계산 |
+| `opensamguk.logic.input.ScoutInput` | `opensamguk.logic.vision.ScoutInput` | 이 PR | 정찰 입력 데이터 타입 패키지 이동 |
+| `opensamguk.logic.input.ScoutFailure` | `opensamguk.logic.vision.ScoutFailure` | 이 PR | 정찰 거절 사유 패키지 이동 |
+| `opensamguk.logic.input.ScoutAssessment` | `opensamguk.logic.vision.ScoutAssessment` | 이 PR | 정찰 사전 판정 패키지 이동 |
+| `opensamguk.logic.input.ScoutedCity` | `opensamguk.logic.vision.ScoutedCity` | 이 PR | 정찰 도시 관측값 패키지 이동 |
+| `opensamguk.logic.input.ScoutedCorps` | `opensamguk.logic.vision.ScoutedCorps` | 이 PR | 정찰 군단 관측값 패키지 이동 |
+| `opensamguk.logic.input.ScoutCityFact` | `opensamguk.logic.vision.ScoutCityFact` | 이 PR | 정찰 도시 사실값 패키지 이동 |
+| `logic/input/HwihaScoutTest.kt` | `logic/vision/ScoutTest.kt` | 이 PR | 정찰 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 

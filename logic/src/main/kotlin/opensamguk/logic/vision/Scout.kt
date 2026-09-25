@@ -1,6 +1,7 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
 
-import opensamguk.logic.vision.VisionRules
+import opensamguk.logic.input.*
+
 
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -15,7 +16,7 @@ data class ScoutInput(val actorId: Int, val commanderyId: String) {
     init { require(actorId > 0 && commanderyId.isNotBlank() && commanderyId.length <= 128) }
 }
 
-object HwihaScoutInput {
+object ScoutInputCodec {
     const val INPUT_ID = "action.scout"
 
     /** Exactly `{"commanderyId":"<parentRegions id>"}`; the id is stable across number reorders. */
@@ -43,7 +44,7 @@ sealed interface ScoutAssessment {
 }
 
 /** Shared by the API precheck, the reservation admission and the personal-turn re-check (§5 contract). */
-object HwihaScoutRules {
+object ScoutRules {
     fun assess(profile: RuleProfile, actorNode: StrategicNodeRef?, commanderyId: String, index: HanCommanderyIndex): ScoutAssessment {
         if (profile != RuleProfile.HWIHA) return ScoutAssessment.Rejected(ScoutFailure.WRONG_RULE_PROFILE)
         val origin = index.commanderyOf(actorNode) ?: return ScoutAssessment.Rejected(ScoutFailure.POSITION_UNAVAILABLE)
@@ -83,7 +84,7 @@ data class ScoutedCorps(
     }
 }
 
-data class HwihaScoutReport(
+data class ScoutReport(
     val commanderyId: String,
     val seenAt: HwihaPhase,
     val cities: List<ScoutedCity>,
@@ -112,7 +113,7 @@ data class HwihaScoutReport(
  * Bound to the tiles content hash: a map change orphans commandery identities, so a notebook written against
  * other tiles is unusable rather than silently reinterpreted.
  */
-data class HwihaScoutReports(val tilesContentHash: String, val reports: List<HwihaScoutReport>) {
+data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutReport>) {
     init {
         require(tilesContentHash.matches(Regex("[0-9a-f]{64}")))
         require(reports.map { it.commanderyId } == reports.map { it.commanderyId }.distinct().sorted()) {
@@ -120,7 +121,7 @@ data class HwihaScoutReports(val tilesContentHash: String, val reports: List<Hwi
         }
     }
 
-    fun with(report: HwihaScoutReport): HwihaScoutReports =
+    fun with(report: ScoutReport): ScoutReports =
         copy(reports = (reports.filterNot { it.commanderyId == report.commanderyId } + report).sortedBy { it.commanderyId })
 
     fun toMetaValue(): Map<String, Any> = linkedMapOf(
@@ -130,15 +131,15 @@ data class HwihaScoutReports(val tilesContentHash: String, val reports: List<Hwi
         const val META_KEY = "hwihaScoutReports"
 
         /** @throws IllegalArgumentException on a malformed notebook (the caller decides how to fail closed). */
-        fun read(meta: Map<String, Any?>): HwihaScoutReports? {
+        fun read(meta: Map<String, Any?>): ScoutReports? {
             if (META_KEY !in meta) return null
             val root = meta[META_KEY] as? Map<*, *> ?: invalid()
             require(root.keys == setOf("version", "tilesContentHash", "reports") && root["version"] == 1) { "Invalid scout reports schema" }
             val rows = root["reports"] as? List<*> ?: invalid()
-            return HwihaScoutReports(root["tilesContentHash"] as? String ?: invalid(), rows.map { raw ->
+            return ScoutReports(root["tilesContentHash"] as? String ?: invalid(), rows.map { raw ->
                 val row = raw as? Map<*, *> ?: invalid()
                 require(row.keys == setOf("commanderyId", "seenAt", "cities", "corps"))
-                HwihaScoutReport(
+                ScoutReport(
                     row["commanderyId"] as? String ?: invalid(),
                     HwihaPhase.read(row["seenAt"]),
                     (row["cities"] as? List<*> ?: invalid()).map { item ->
@@ -165,7 +166,7 @@ data class HwihaScoutReports(val tilesContentHash: String, val reports: List<Hwi
 /** Facts about one city that the capture needs; the caller resolves the city → province binding. */
 data class ScoutCityFact(val cityId: Int, val provinceId: String, val nationId: Int, val warehouse: Boolean)
 
-object HwihaScoutCapture {
+object ScoutCapture {
     /**
      * Opaque, deterministic corps identity for other viewers. A raw order id is the owner's request id and is
      * never shown to anyone else.
@@ -184,7 +185,7 @@ object HwihaScoutCapture {
         projection: DeploymentProjection,
         rules: VisionRules.Rules,
         now: HwihaPhase,
-    ): HwihaScoutReport {
+    ): ScoutReport {
         val seenCities = cities.filter { index.commanderyOf(it.provinceId) == target.no }
             .map { ScoutedCity(it.cityId, it.nationId, it.warehouse) }.sortedBy { it.cityId }
         val nodes = projection.people.associate { it.id to it.node }
@@ -193,13 +194,13 @@ object HwihaScoutCapture {
             if (index.commanderyOf(node.id) != target.no) return@mapNotNull null
             if (HwihaDeploymentRules.assessActive(corps, projection) !is DeploymentAssessment.Eligible) return@mapNotNull null
             ScoutedCorps(corpsKey(corps.orderId), corps.ownerGeneralId, corps.commanderGeneralId, corps.nationId, node.id,
-                rules.band(HwihaCorpsTroops.of(corps, projection)).code)
+                rules.band(CorpsTroops.of(corps, projection)).code)
         }.sortedBy { it.corpsKey }
-        return HwihaScoutReport(target.id, now, seenCities, seenCorps)
+        return ScoutReport(target.id, now, seenCities, seenCorps)
     }
 }
 
-object HwihaCorpsTroops {
+object CorpsTroops {
     /** Live troops of a corps: the sum of its unit cards' current troops (never copied into the deployment). */
     fun of(corps: HwihaDeployedCorps, projection: DeploymentProjection): Int =
         corps.bugokIds.sumOf { id -> projection.units.singleOrNull { it.id == id }?.troops?.coerceAtLeast(0) ?: 0 }

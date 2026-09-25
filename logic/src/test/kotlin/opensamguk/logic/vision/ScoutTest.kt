@@ -1,7 +1,7 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
 
-import opensamguk.logic.vision.VisionRules
-import opensamguk.logic.vision.VisionSourceKind
+import opensamguk.logic.input.*
+
 
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.world.HanCommandery
@@ -9,7 +9,7 @@ import opensamguk.logic.world.HanCommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import kotlin.test.*
 
-class HwihaScoutTest {
+class ScoutTest {
     private val hash = "c".repeat(64)
     private val index = HanCommanderyIndex(hash,
         (0..3).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
@@ -18,20 +18,20 @@ class HwihaScoutTest {
     private fun land(id: String) = StrategicNodeRef.LandProvince(id)
 
     @Test fun `scout input is exactly one commandery id and canonicalizes`() {
-        val input = assertNotNull(HwihaScoutInput.parse(5, """ {"commanderyId" : "PARENT-1"} """))
-        assertEquals("""{"commanderyId":"PARENT-1"}""", HwihaScoutInput.canonicalJson(input))
+        val input = assertNotNull(ScoutInputCodec.parse(5, """ {"commanderyId" : "PARENT-1"} """))
+        assertEquals("""{"commanderyId":"PARENT-1"}""", ScoutInputCodec.canonicalJson(input))
         listOf(null, "", "{}", """{"commanderyId":1}""", """{"commanderyId":""}""",
             """{"commanderyId":"PARENT-1","extra":1}""", """{"commanderyId":"PARENT-1","commanderyId":"PARENT-2"}""",
             """{"commanderyId":"PARENT-1","commanderyId":"PARENT-2"}""", """["PARENT-1"]""",
-        ).forEach { assertNull(HwihaScoutInput.parse(5, it), "accepted: $it") }
-        assertNull(HwihaScoutInput.parse(0, """{"commanderyId":"PARENT-1"}"""))
+        ).forEach { assertNull(ScoutInputCodec.parse(5, it), "accepted: $it") }
+        assertNull(ScoutInputCodec.parse(0, """{"commanderyId":"PARENT-1"}"""))
     }
 
     @Test fun `only a commandery sharing a border with where the actor stands can be scouted`() {
-        val eligible = assertIs<ScoutAssessment.Eligible>(HwihaScoutRules.assess(RuleProfile.HWIHA, land("p1"), "PARENT-2", index))
+        val eligible = assertIs<ScoutAssessment.Eligible>(ScoutRules.assess(RuleProfile.HWIHA, land("p1"), "PARENT-2", index))
         assertEquals(1, eligible.origin.no); assertEquals(2, eligible.target.no)
         fun reason(node: StrategicNodeRef?, id: String, profile: RuleProfile = RuleProfile.HWIHA) =
-            assertIs<ScoutAssessment.Rejected>(HwihaScoutRules.assess(profile, node, id, index)).reason
+            assertIs<ScoutAssessment.Rejected>(ScoutRules.assess(profile, node, id, index)).reason
         assertEquals(ScoutFailure.NOT_ADJACENT, reason(land("p0"), "PARENT-2"))
         assertEquals(ScoutFailure.NOT_ADJACENT, reason(land("p1"), "PARENT-1"))   // own commandery is already seen
         assertEquals(ScoutFailure.NOT_ADJACENT, reason(land("p3"), "PARENT-2"))   // island: no neighbours
@@ -39,7 +39,7 @@ class HwihaScoutTest {
         assertEquals(ScoutFailure.POSITION_UNAVAILABLE, reason(null, "PARENT-2"))
         assertEquals(ScoutFailure.POSITION_UNAVAILABLE, reason(StrategicNodeRef.WaterZone("w1"), "PARENT-2"))
         assertEquals(ScoutFailure.WRONG_RULE_PROFILE, reason(land("p1"), "PARENT-2", RuleProfile.SAMMO))
-        ScoutFailure.entries.forEach { assertTrue(HwihaScoutRules.reason(it).isNotBlank()) }
+        ScoutFailure.entries.forEach { assertTrue(ScoutRules.reason(it).isNotBlank()) }
     }
 
     private fun projection() = DeploymentProjection(RuleProfile.HWIHA,
@@ -53,10 +53,10 @@ class HwihaScoutTest {
 
     @Test fun `capture records owners, warehouse presence and banded corps of the target only`() {
         val cities = listOf(ScoutCityFact(7, "p2", 2, true), ScoutCityFact(5, "p2", 0, false), ScoutCityFact(9, "p1", 1, true))
-        val report = HwihaScoutCapture.capture(index.commanderies[2], index, cities, projection(), rules, HwihaPhase(190, 2, 1))
+        val report = ScoutCapture.capture(index.commanderies[2], index, cities, projection(), rules, HwihaPhase(190, 2, 1))
         assertEquals("PARENT-2", report.commanderyId)
         assertEquals(listOf(ScoutedCity(5, 0, false), ScoutedCity(7, 2, true)), report.cities)
-        assertEquals(setOf("o1", "o2").map(HwihaScoutCapture::corpsKey).sorted(), report.corps.map { it.corpsKey })
+        assertEquals(setOf("o1", "o2").map(ScoutCapture::corpsKey).sorted(), report.corps.map { it.corpsKey })
         assertEquals(setOf("B1", "B4"), report.corps.map { it.troopsBand }.toSet())
         // The notebook never stores exact troops or raw order ids.
         val bytes = report.toMetaValue().toString()
@@ -64,17 +64,17 @@ class HwihaScoutTest {
     }
 
     @Test fun `notebook round-trips, replaces per commandery and fails closed on any schema drift`() {
-        val first = HwihaScoutCapture.capture(index.commanderies[2], index, emptyList(), projection(), rules, HwihaPhase(190, 2, 1))
-        val notebook = HwihaScoutReports(hash, emptyList()).with(first)
-        assertEquals(notebook, HwihaScoutReports.read(mapOf(HwihaScoutReports.META_KEY to notebook.toMetaValue())))
+        val first = ScoutCapture.capture(index.commanderies[2], index, emptyList(), projection(), rules, HwihaPhase(190, 2, 1))
+        val notebook = ScoutReports(hash, emptyList()).with(first)
+        assertEquals(notebook, ScoutReports.read(mapOf(ScoutReports.META_KEY to notebook.toMetaValue())))
         val again = first.copy(seenAt = HwihaPhase(190, 3, 1), corps = emptyList())
         assertEquals(listOf(again), notebook.with(again).reports)
-        assertNull(HwihaScoutReports.read(emptyMap()))
+        assertNull(ScoutReports.read(emptyMap()))
         val raw = notebook.toMetaValue()
         listOf(raw + ("version" to 2), raw + ("extra" to 1), raw - "tilesContentHash", mapOf("version" to 1)).forEach {
-            assertFailsWith<IllegalArgumentException> { HwihaScoutReports.read(mapOf(HwihaScoutReports.META_KEY to it)) }
+            assertFailsWith<IllegalArgumentException> { ScoutReports.read(mapOf(ScoutReports.META_KEY to it)) }
         }
-        assertFailsWith<IllegalArgumentException> { HwihaScoutReports.read(mapOf(HwihaScoutReports.META_KEY to "x")) }
+        assertFailsWith<IllegalArgumentException> { ScoutReports.read(mapOf(ScoutReports.META_KEY to "x")) }
     }
 
     @Test fun `canonical vision rules load and the scout cost cannot become a fake non-zero cost`() {
