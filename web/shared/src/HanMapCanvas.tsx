@@ -93,6 +93,7 @@ export interface HanTiles {
   _meta: {
     cols: number;
     rows: number;
+    resolutionScale?: number;
     year: number;
     terrainLegend: Record<string, string>;
     roadMaskBits?: Record<string, number>;
@@ -486,13 +487,18 @@ export function tierZoom(table: Record<string, number>, kind: string, fit: numbe
   return factor === undefined ? undefined : factor * fit;
 }
 
-export function labelZoomFor(kind: string, fit: number, dpr = 1): number | undefined {
+/** At fourfold raster detail the maximum tile is 16 CSS px: a county can fill the viewport. */
+function maxMapScaleForDpr(dpr: number, resolutionScale = 1): number {
+  return maxScaleForDpr(dpr) / Math.sqrt(resolutionScale);
+}
+
+export function labelZoomFor(kind: string, fit: number, dpr = 1, resolutionScale = 1): number | undefined {
   const absolute = TIER2_LABEL_ZOOM[kind];
   if (absolute === undefined) return undefined;
   const backingRatio = effectiveDpr(dpr);
-  const absoluteBacking = absolute * backingRatio;
+  const absoluteBacking = absolute * backingRatio / resolutionScale;
   return Math.min(
-    maxScaleForDpr(dpr) - 0.5 * backingRatio,
+    maxMapScaleForDpr(dpr, resolutionScale) - 0.5 * backingRatio,
     Math.max(absoluteBacking, tierZoom(TIER2_MARKER_ZOOM, kind, fit) ?? absoluteBacking),
   );
 }
@@ -509,10 +515,10 @@ export function initialView(
   width: number,
   height: number,
   grid: GridSize,
-  _tiles: HanTiles,
+  tiles: HanTiles,
   dpr = 1,
 ): IsoView {
-  const scale = Math.min(fitScale(width, height, grid), maxScaleForDpr(dpr) * 0.9);
+  const scale = Math.min(fitScale(width, height, grid), maxMapScaleForDpr(dpr, tiles._meta.resolutionScale) * 0.9);
   return viewAt(width, height, (grid.cols - 1) / 2, (grid.rows - 1) / 2, scale);
 }
 
@@ -527,12 +533,13 @@ export function initialFocusedView(
 ): IsoView {
   const fitted = initialView(width, height, grid, tiles, dpr);
   if (!current) return fitted;
+  const resolutionScale = tiles._meta.resolutionScale ?? 1;
   const targetScale = profile === 'current-commandery'
-    ? COMMANDERY_FOCUS_SCALE * effectiveDpr(dpr)
+    ? COMMANDERY_FOCUS_SCALE * effectiveDpr(dpr) / resolutionScale
     : profile === 'current-city-close'
-      ? 10 * effectiveDpr(dpr)
-      : labelZoomFor('COUNTY', fitted.scale, dpr) ?? fitted.scale;
-  const scale = Math.min(maxScaleForDpr(dpr) * 0.9, Math.max(fitted.scale, targetScale));
+      ? 10 * effectiveDpr(dpr) / resolutionScale
+      : labelZoomFor('COUNTY', fitted.scale, dpr, resolutionScale) ?? fitted.scale;
+  const scale = Math.min(maxMapScaleForDpr(dpr, resolutionScale) * 0.9, Math.max(fitted.scale, targetScale));
   return viewAt(width, height, current.col, current.row, scale);
 }
 
@@ -875,6 +882,22 @@ function bakeTerrain(tiles: HanTiles): HTMLCanvasElement | null {
   return canvas;
 }
 
+/** Low-zoom picture only. Exact terrain cells remain in the primary canvas for close inspection. */
+function bakeTerrainOverview(terrain: HTMLCanvasElement): HTMLCanvasElement | null {
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.max(1, Math.floor(terrain.width / 2));
+  canvas.height = Math.max(1, Math.floor(terrain.height / 2));
+  const context = canvas.getContext('2d');
+  if (!context) return null;
+  context.fillStyle = terrainColorFor('0');
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.imageSmoothingEnabled = true;
+  context.filter = 'blur(1.2px)';
+  context.drawImage(terrain, 0, 0, canvas.width, canvas.height);
+  context.filter = 'none';
+  return canvas;
+}
+
 interface PoliticalPaths {
   province: Path2D;
   jurisdiction: Path2D;
@@ -1132,182 +1155,19 @@ function starPath(context: CanvasRenderingContext2D, x: number, y: number, radiu
   context.closePath();
 }
 
-const CITY_MARKER_ZOOM_STEPS: readonly CityMarkerZoom[] = [1.5, 1, 0.75, 0.5];
-
-function detailedCityVisualBox(
-  city: IsoSceneCity,
-  level: number,
-  x: number,
-  y: number,
-  dpr: number,
-  zoom: CityMarkerZoom,
-) {
-  const marker = cityMarkerDrawBox(level, x, y, dpr, zoom);
-  const radius = cityMarkerRadius(level, dpr) * zoom;
-  const bounds = {
-    left: marker.x,
-    top: marker.y,
-    right: marker.x + marker.width,
-    bottom: marker.y + marker.height,
-  };
-  const include = (left: number, top: number, right: number, bottom: number) => {
-    bounds.left = Math.min(bounds.left, left);
-    bounds.top = Math.min(bounds.top, top);
-    bounds.right = Math.max(bounds.right, right);
-    bounds.bottom = Math.max(bounds.bottom, bottom);
-  };
-  const strokePadding = 2 * dpr;
-  if (isOwnedNationVisual(city.nationId, city.nationColor)) {
-    const cloth = flagClothPoints(x, y, radius, city.supply !== false, 0);
-    include(
-      Math.min(...cloth.map(([px]) => px)) - strokePadding,
-      Math.min(y - radius * 1.65, ...cloth.map(([, py]) => py)) - strokePadding,
-      Math.max(x + radius * 0.55, ...cloth.map(([px]) => px)) + strokePadding,
-      Math.max(y - radius * 0.45, ...cloth.map(([, py]) => py)) + strokePadding,
-    );
-  }
-  if (city.isCapital) {
-    const starRadius = Math.max(4, radius * 0.42);
-    include(
-      x + radius * 1.2 - starRadius - dpr,
-      y - radius * 1.8 - starRadius - dpr,
-      x + radius * 1.2 + starRadius + dpr,
-      y - radius * 1.8 + starRadius + dpr,
-    );
-  }
-  if ((city.state ?? 0) > 0) {
-    const badgeRadius = Math.max(5, radius * 0.42);
-    include(
-      x - radius * 1.05 - badgeRadius,
-      y - radius * 0.9 - badgeRadius,
-      x - radius * 1.05 + badgeRadius,
-      y - radius * 0.9 + badgeRadius,
-    );
-  }
-  if (city.layers.includes('current')) {
-    include(
-      x - radius * 1.35 - strokePadding,
-      y - radius * 1.35 - strokePadding,
-      x + radius * 1.35 + strokePadding,
-      y + radius * 1.35 + strokePadding,
-    );
-  }
-  if (city.layers.includes('selected')) {
-    include(
-      x - radius - strokePadding,
-      y - radius - strokePadding,
-      x + radius + strokePadding,
-      y + radius + strokePadding,
-    );
-  }
-  return bounds;
+/** An individual city pixel at map overview zoom, with a usable click area. */
+export function cityPixelVisualBox(x: number, y: number, dpr: number) {
+  const radius = Math.max(6 * dpr, 6);
+  return { left: x - radius, top: y - radius, right: x + radius, bottom: y + radius };
 }
 
-function containedCityMarkerZoom(
-  city: IsoSceneCity,
-  level: number,
-  x: number,
-  y: number,
-  requested: CityMarkerZoom,
-  dpr: number,
-  view: IsoView,
-): CityMarkerZoom | undefined {
-  if (city.provinceId === undefined || city.visualClearance === undefined) return requested;
-  for (const zoom of CITY_MARKER_ZOOM_STEPS) {
-    if (zoom > requested) continue;
-    if (screenBoxInsideVisualClearance(
-      city.col,
-      city.row,
-      city.visualClearance,
-      view,
-      detailedCityVisualBox(city, level, x, y, dpr, zoom),
-    )) return zoom;
-  }
-  return undefined;
-}
-
-export function overviewCityVisualBox(
-  x: number,
-  y: number,
-  scale: number,
-  _dpr: number,
-  clearance: number,
-) {
-  const safeRadius = Math.max(0, clearance + 0.5 - 1e-3);
-  const horizontal = safeRadius * scale * 0.72;
-  const vertical = safeRadius * scale * 0.28;
-  return {
-    left: x - horizontal,
-    top: y - vertical,
-    right: x + horizontal,
-    bottom: y + vertical,
-  };
-}
-
-function drawOverviewCityGlyph(
-  context: CanvasRenderingContext2D,
-  city: IsoSceneCity,
-  x: number,
-  y: number,
-  scale: number,
-  dpr: number,
-) {
-  const box = overviewCityVisualBox(x, y, scale, dpr, city.visualClearance ?? 0);
-  const horizontal = (box.right - box.left) / 2;
-  const vertical = (box.bottom - box.top) / 2;
-  const detail = Math.min(horizontal, vertical);
-  const stroke = Math.max(detail * 0.08, Math.min(dpr, detail * 0.2));
-  const pathHorizontal = Math.max(0, horizontal - stroke / 2);
-  const pathVertical = Math.max(0, vertical - stroke / 2);
-  context.lineJoin = 'bevel';
-  context.beginPath();
-  context.moveTo(x, y - pathVertical);
-  context.lineTo(x + pathHorizontal, y);
-  context.lineTo(x, y + pathVertical);
-  context.lineTo(x - pathHorizontal, y);
-  context.closePath();
-  context.fillStyle = CASTLE_FILL;
-  context.fill();
-  context.strokeStyle = CASTLE_STROKE;
-  context.lineWidth = stroke;
-  context.stroke();
-
-  if (isOwnedNationVisual(city.nationId, city.nationColor)) {
-    context.beginPath();
-    const flagTop = y - pathVertical * 0.72;
-    context.moveTo(x, flagTop);
-    context.lineTo(x + pathHorizontal * 0.45, flagTop + (city.supply === false ? pathVertical * 0.45 : 0));
-    context.lineTo(x, y - pathVertical * 0.08);
-    context.closePath();
-    context.fillStyle = city.territoryColor;
-    context.fill();
-    context.strokeStyle = '#21180f';
-    context.lineWidth = stroke;
-    context.stroke();
-  }
-  if (city.isCapital) {
-    context.beginPath();
-    context.arc(x + pathHorizontal * 0.38, y, detail * 0.18, 0, Math.PI * 2);
-    context.fillStyle = '#ffd84f';
-    context.fill();
-  }
-  if ((city.state ?? 0) > 0) {
-    context.beginPath();
-    context.arc(x - pathHorizontal * 0.38, y, detail * 0.18, 0, Math.PI * 2);
-    context.fillStyle = '#b72f2f';
-    context.fill();
-  }
-  if (city.layers.includes('selected')) {
-    context.strokeStyle = '#ffd84f';
-    context.lineWidth = stroke;
-    context.strokeRect(
-      x - pathHorizontal * 0.82,
-      y - pathVertical * 0.82,
-      pathHorizontal * 1.64,
-      pathVertical * 1.64,
-    );
-  }
-  return box;
+function drawCityPixel(context: CanvasRenderingContext2D, city: IsoSceneCity,
+  x: number, y: number, dpr: number) {
+  const size = Math.max(1, Math.round(dpr));
+  context.fillStyle = city.isCapital ? '#ffd84f'
+    : isOwnedNationVisual(city.nationId, city.nationColor) ? city.territoryColor : city.iconColor;
+  context.fillRect(Math.round(x - size / 2), Math.round(y - size / 2), size, size);
+  return cityPixelVisualBox(x, y, dpr);
 }
 
 function drawCurrentLocationOverlay(
@@ -1400,6 +1260,7 @@ function footprintSpans(cities: readonly { id: number; level: number; col: numbe
 function drawScene(
   canvas: HTMLCanvasElement,
   terrain: HTMLCanvasElement,
+  terrainOverview: HTMLCanvasElement | null,
   political: HTMLCanvasElement | null,
   paths: PoliticalPaths | null,
   provinceMap: ProvinceIdentityMap | null,
@@ -1420,6 +1281,7 @@ function drawScene(
   juLayer: JuLayer | null,
   manualAdministrativeLayer: boolean,
   politicalAlpha = 1,
+  resolutionScale = 1,
 ): CityHitBox[] {
   const context = canvas.getContext('2d');
   if (!context) return [];
@@ -1428,7 +1290,7 @@ function drawScene(
   const scale = view.scale;
   const selectedLod = manualAdministrativeLayer
     ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
-    : mapLod(2 * scale / dpr);
+    : mapLod(2 * scale * resolutionScale / dpr);
   const lod = selectedLod === 'JU' && !juLayer ? 'COMMANDERY' : selectedLod;
   const fittedScale = provinceMap
     ? fitScale(width, height, { cols: provinceMap.width, rows: provinceMap.height })
@@ -1437,8 +1299,10 @@ function drawScene(
   context.clearRect(0, 0, width, height);
   context.save();
   context.transform(scale, scale / 2, -scale, scale / 2, view.ox, view.oy);
-  context.imageSmoothingEnabled = scale < 2;
-  context.drawImage(terrain, -0.5, -0.5);
+  const overview = terrainOverview && scale * resolutionScale / dpr < 2;
+  context.imageSmoothingEnabled = overview || scale < 2;
+  if (overview) context.drawImage(terrainOverview, -0.5, -0.5, terrain.width, terrain.height);
+  else context.drawImage(terrain, -0.5, -0.5);
   if (political) {
     context.imageSmoothingEnabled = false;
     context.globalAlpha = politicalAlpha;
@@ -1518,6 +1382,27 @@ function drawScene(
       }
     }
   }
+  if (strategic && scale * resolutionScale / dpr >= 0.8) {
+    const paths = strategic.scene.roadPaths;
+    context.lineCap = 'round';
+    context.strokeStyle = scale * resolutionScale / dpr >= 2
+      ? 'rgba(109, 75, 37, 0.78)' : 'rgba(109, 75, 37, 0.54)';
+    context.lineWidth = Math.max(0.22, (scale * resolutionScale / dpr >= 2 ? 1 : 0.7) * dpr / scale);
+    if (paths) context.stroke(paths.ordinary);
+    context.strokeStyle = 'rgba(132, 91, 53, 0.88)';
+    context.lineWidth = Math.max(0.25, 1.15 * dpr / scale);
+    if (paths) context.stroke(paths.trunk);
+    context.strokeStyle = 'rgba(229, 178, 86, 0.96)';
+    context.lineWidth = Math.max(0.3, 1.5 * dpr / scale);
+    if (paths) context.stroke(paths.historical);
+    if (paths && scale * resolutionScale / dpr < 2) {
+      context.fillStyle = 'rgba(82, 60, 42, 0.92)';
+      context.fill(paths.junctions);
+      context.strokeStyle = 'rgba(82, 60, 42, 0.92)';
+      context.lineWidth = Math.max(0.2, 1.2 * dpr / scale);
+      context.stroke(paths.junctions);
+    }
+  }
   if (lod === 'JU' && juLayer) {
     context.strokeStyle = 'rgba(249,232,173,0.92)';
     context.lineWidth = 3.5 * dpr / scale;
@@ -1580,14 +1465,12 @@ function drawScene(
   }
 
   const hits: CityHitBox[] = [];
+  let pixelCount = 0;
   for (const city of scene.cities) {
     const [x, y] = cellToScreen(city.col, city.row, view);
     const level = markerLevel(city);
-    const requestedMarkerZoom = cityMarkerZoomStep(scale, dpr);
-    const markerZoom = containedCityMarkerZoom(
-      city, level, x, y, requestedMarkerZoom, dpr, view,
-    );
-    const radius = cityMarkerRadius(level, dpr) * (markerZoom ?? 0.5);
+    const markerZoom = cityMarkerZoomStep(scale * resolutionScale, dpr);
+    const radius = cityMarkerRadius(level, dpr) * markerZoom;
     const assetScale = cityMarkerAssetScale(dpr);
     const style = architectureForJu(city.regionName);
     const marker = markerImages[regionalMarkerKey(style, assetScale * 32, level)]
@@ -1596,8 +1479,9 @@ function drawScene(
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
     context.save();
     // 당겨 보는 배율에서는 城 을 성내에 꽉 맞춘다 — 깃발·별·이름표·집기 상자도 이 자리를 따른다.
-    const fit = markerZoom === undefined ? null
-      : cityFootprintMarkerBox(city.level, city.col, city.row, footprintSpans(scene.cities).get(city.id) ?? 1, view);
+    const fit = cityFootprintMarkerBox(city.level, city.col, city.row,
+      footprintSpans(scene.cities).get(city.id) ?? 1, view);
+    const pixelLod = fit.width < 3 * dpr;
     // 깃발·별·이름표는 화면 크기로 둔다(아이소 지도와 같은 원칙) — 城 그림만 성내에 맞춰 커진다.
     // 깃발 기준점은 그림의 지붕 높이(그림 위쪽 절반), 이름표 기준점은 성내 앞 꼭짓점이다.
     const px = fit ? fit.cx : x;
@@ -1606,26 +1490,19 @@ function drawScene(
     const fy = fit ? fit.baseY - fit.footprintWidth * 0.3 : y;
     const r = radius;
 
-    if (markerZoom === undefined) {
-      const overviewBox = drawOverviewCityGlyph(context, city, x, y, scale, dpr);
-      hits.push({ city, provinceId: city.provinceId, ...overviewBox });
-      if (city.layers.includes('current')) {
-        const detail = Math.min(
-          (overviewBox.right - overviewBox.left) / 2,
-          (overviewBox.bottom - overviewBox.top) / 2,
-        );
-        drawCurrentLocationOverlay(context, x, y, detail, dpr, selfLocationPhase);
-      }
-    } else if (marker && fit) {
+    if (pixelLod) {
+      pixelCount += 1;
+      hits.push({ city, provinceId: city.provinceId, ...drawCityPixel(context, city, x, y, dpr) });
+    } else if (marker) {
       // 그릴 폭보다 작지 않은 가장 작은 원본(1x 32 · 2x 64 · 4x 128 · 8x 256)을 쓴다. 불러온 것이 없으면 가장 큰 것.
       const sprite = cityFitSprite(markerImages, level, fit.width, style) ?? marker;
       hits.push({
         city,
         provinceId: city.provinceId,
-        left: fit.x,
-        top: fit.y,
-        right: fit.x + fit.width,
-        bottom: fit.baseY,
+        left: Math.min(fit.x, x - 6 * dpr),
+        top: Math.min(fit.y, y - 6 * dpr),
+        right: Math.max(fit.x + fit.width, x + 6 * dpr),
+        bottom: Math.max(fit.baseY, y + 6 * dpr),
       });
       // 그림보다 크게 늘리면 흐려진다 — 늘릴 때만 부드럽게 보간한다.
       // 픽셀아트라 늘려도 최근접으로 — 흐리게 보간하지 않는다.
@@ -1646,7 +1523,7 @@ function drawScene(
       context.fillRect(px + r * 0.2, py - r * 1.35, r * 0.3, r * 0.5);
     }
 
-    if (markerZoom !== undefined && owned) {
+    if (!pixelLod && owned) {
       context.strokeStyle = '#e8dec5';
       context.beginPath();
       context.moveTo(px + r * 0.55, fy - r * 0.45);
@@ -1667,7 +1544,7 @@ function drawScene(
       context.stroke();
     }
 
-    if (markerZoom !== undefined && city.isCapital) {
+    if (!pixelLod && city.isCapital) {
       starPath(context, px + r * 1.2, fy - r * 1.8, Math.max(4, r * 0.42));
       context.fillStyle = '#ffd84f';
       context.fill();
@@ -1675,7 +1552,7 @@ function drawScene(
       context.stroke();
     }
 
-    if (markerZoom !== undefined) {
+    if (!pixelLod) {
       // 상태 배지 — 城 그림 왼쪽 위에서 오른쪽으로 줄지어. 픽셀아트라 최근접 확대로 키운다.
       const keys = cityStatusBadgeKeys(city);
       const fw = fit ? fit.footprintWidth : r * 2;
@@ -1720,19 +1597,20 @@ function drawScene(
       }
     }
 
-    if (markerZoom !== undefined && city.layers.includes('current')) {
+    if (city.layers.includes('current')) {
       drawCurrentLocationOverlay(context, px, fit ? fy : py, fit ? Math.max(r, fit.width * 0.3) : r, dpr, selfLocationPhase);
     }
-    if (markerZoom !== undefined && city.layers.includes('selected')) {
+    if (city.layers.includes('selected')) {
       context.strokeStyle = '#ffd84f';
       context.lineWidth = 3;
-      if (fit) context.strokeRect(fit.cx - fit.footprintWidth / 2, fit.baseY - fit.footprintWidth * 0.8, fit.footprintWidth, fit.footprintWidth * 0.8);
+      if (pixelLod) context.strokeRect(x - 3 * dpr, y - 3 * dpr, 6 * dpr, 6 * dpr);
+      else if (fit) context.strokeRect(fit.cx - fit.footprintWidth / 2, fit.baseY - fit.footprintWidth * 0.8, fit.footprintWidth, fit.footprintWidth * 0.8);
       else context.strokeRect(px - r, py - r, r * 2, r * 2);
     }
 
     if (!hideCityNames) {
       const labelKind = city.provinceKind === 'SETTLEMENT' ? 'COUNTY' : city.provinceKind;
-      const labelThreshold = labelKind ? labelZoomFor(labelKind, fittedScale, dpr) : undefined;
+      const labelThreshold = labelKind ? labelZoomFor(labelKind, fittedScale, dpr, resolutionScale) : undefined;
       const labelVisibleAtZoom = labelThreshold === undefined || scale >= labelThreshold;
       const metrics = cityLabelMetrics(scale, dpr);
       const labelX = px;
@@ -1763,6 +1641,9 @@ function drawScene(
     }
     context.restore();
   }
+  canvas.dataset.cityPixels = String(pixelCount);
+  canvas.dataset.citySprites = String(hits.length - pixelCount);
+  canvas.dataset.cityGlyphs = '0';
   return hits;
 }
 
@@ -1834,6 +1715,7 @@ export function HanMapCanvas({
   const boxRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const terrainRef = useRef<HTMLCanvasElement | null>(null);
+  const terrainOverviewRef = useRef<HTMLCanvasElement | null>(null);
   const politicalRef = useRef<HTMLCanvasElement | null>(null);
   const politicalPathsRef = useRef<PoliticalPaths | null>(null);
   const juLayerRef = useRef<JuLayer | null>(null);
@@ -1966,7 +1848,8 @@ export function HanMapCanvas({
     }
     return buildProvinceVisualAnchors(provinceMap, preferredByProvince);
   }, [canonicalMarkerPositions, cities, provinceMap]);
-  const strategicSceneCache = useRef<{ hash: string; tiles: HanTiles; scene: StrategicMapScene } | null>(null);
+  const strategicSceneCache = useRef<{ hash: string; tiles: HanTiles; roads: readonly string[] | null | undefined;
+    scene: StrategicMapScene } | null>(null);
   const strategicScene = useMemo(() => {
     if (!strategicTopology || !loadedTiles) return null;
     try {
@@ -1975,12 +1858,15 @@ export function HanMapCanvas({
         || binding.cols !== loadedTiles._meta.cols || binding.rows !== loadedTiles._meta.rows
         || terrainIdentity?.mapCode !== mapCode || terrainIdentity.hash !== binding.baseTilesSha256) return null;
       const cached = strategicSceneCache.current;
-      if (cached?.hash === binding.topologyHash && cached.tiles === loadedTiles) return cached.scene;
-      const scene = buildStrategicMapScene(strategicTopology.topology, loadedTiles);
-      strategicSceneCache.current = { hash: binding.topologyHash, tiles: loadedTiles, scene };
+      if (cached?.hash === binding.topologyHash && cached.tiles === loadedTiles &&
+        cached.roads === strategicTopology.roadOpenEdgeIds) return cached.scene;
+      const scene = buildStrategicMapScene(strategicTopology.topology, loadedTiles, strategicTopology.roadOpenEdgeIds);
+      strategicSceneCache.current = { hash: binding.topologyHash, tiles: loadedTiles,
+        roads: strategicTopology.roadOpenEdgeIds, scene };
       return scene;
     } catch { return null; }
-  }, [loadedTiles, mapCode, strategicTopology?.binding.topologyHash, strategicTopology?.topology, terrainIdentity]);
+  }, [loadedTiles, mapCode, strategicTopology?.binding.topologyHash, strategicTopology?.topology,
+    strategicTopology?.roadOpenEdgeIds, terrainIdentity]);
   const strategicControls = useMemo(() => {
     try { return strategicTopology ? validatedWaterControls(strategicTopology) : null; }
     catch { return null; }
@@ -1997,7 +1883,7 @@ export function HanMapCanvas({
   const selectedRoutePoints = useMemo(() => selectedServerRoute && strategicTopology && strategicScene
     ? serverRoutePoints(selectedServerRoute, strategicTopology.binding, strategicScene, routeAnchors, currentServerId) : null,
   [selectedServerRoute, strategicTopology?.binding, strategicScene, routeAnchors, currentServerId]);
-  const strategicRef = useRef<Parameters<typeof drawScene>[13]>(null);
+  const strategicRef = useRef<Parameters<typeof drawScene>[14]>(null);
   strategicRef.current = strategicScene && strategicControls ? {
     scene: strategicScene, controls: strategicControls, visible: showWater, route: selectedRoutePoints,
   } : null;
@@ -2120,6 +2006,8 @@ export function HanMapCanvas({
 
   useEffect(() => {
     terrainRef.current = loadedTiles ? bakeTerrain(loadedTiles) : null;
+    terrainOverviewRef.current = loadedTiles?._meta.resolutionScale === 4 && terrainRef.current
+      ? bakeTerrainOverview(terrainRef.current) : null;
     viewRef.current = null;
     userModifiedViewRef.current = false;
     initialFocusAppliedRef.current = false;
@@ -2150,11 +2038,12 @@ export function HanMapCanvas({
     if (!canvas || !terrain || !latestScene || !view) return;
     const selectedLod = manualAdministrativeLayerRef.current
       ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
-      : mapLod(2 * view.scale / sizeRef.current.dpr);
+      : mapLod(2 * view.scale * (loadedTiles?._meta.resolutionScale ?? 1) / sizeRef.current.dpr);
     canvas.dataset.mapLod = selectedLod === 'JU' && !juLayerRef.current ? 'COMMANDERY' : selectedLod;
     hitRef.current = drawScene(
       canvas,
       terrain,
+      terrainOverviewRef.current,
       politicalRef.current,
       politicalPathsRef.current,
       provinceMapRef.current,
@@ -2174,6 +2063,7 @@ export function HanMapCanvas({
       juLayerRef.current,
       manualAdministrativeLayerRef.current,
       politicalStyle === 'tint' ? POLITICAL_TINT_ALPHA : 1,
+      loadedTiles?._meta.resolutionScale ?? 1,
     );
     battlefieldHits.current = [];
     const ctx = canvas.getContext('2d');
@@ -2187,7 +2077,7 @@ export function HanMapCanvas({
       battlefieldHits.current.push({ target: item.target, x, y, radius: radius + 4 * sizeRef.current.dpr });
     }
     if (ctx && corpsRef.current?.length) drawCorpsOverlay(ctx, corpsRef.current, view, sizeRef.current.dpr);
-  }, [administrativeLayer, mapCode, politicalStyle]);
+  }, [administrativeLayer, loadedTiles?._meta.resolutionScale, mapCode, politicalStyle]);
 
   // 군단 겹이 바뀌면 다시 그린다 — 순 갱신마다 새 배열이 온다.
   useEffect(() => {
@@ -2306,7 +2196,7 @@ export function HanMapCanvas({
         );
         const dprRatio = dpr / previousSize.dpr;
         const scale = Math.min(
-          maxScaleForDpr(dpr),
+          maxMapScaleForDpr(dpr, loadedTiles._meta.resolutionScale),
           Math.max(fitScale(canvas.width, canvas.height, grid), previousView.scale * dprRatio),
         );
         viewRef.current = clampView(
@@ -2328,7 +2218,7 @@ export function HanMapCanvas({
         if (currentPosition !== undefined) initialFocusAppliedRef.current = true;
       }
       if (viewChanged) onViewChange?.(viewRef.current);
-      const nextLod = mapLod(2 * viewRef.current.scale / dpr);
+      const nextLod = mapLod(2 * viewRef.current.scale * (loadedTiles._meta.resolutionScale ?? 1) / dpr);
       if (!manualAdministrativeLayerRef.current) setAdministrativeLayer((previous) => {
         const next = nextLod === 'COUNTY' ? 'JURISDICTION' : 'COMMANDERY';
         return previous === next ? previous : next;
@@ -2361,14 +2251,14 @@ export function HanMapCanvas({
   const updateView = useCallback((next: IsoView) => {
     userModifiedViewRef.current = true;
     viewRef.current = next;
-    const nextLod = mapLod(2 * next.scale / sizeRef.current.dpr);
+    const nextLod = mapLod(2 * next.scale * (loadedTiles?._meta.resolutionScale ?? 1) / sizeRef.current.dpr);
     if (!manualAdministrativeLayerRef.current) setAdministrativeLayer((previous) => {
       const layer = nextLod === 'COUNTY' ? 'JURISDICTION' : 'COMMANDERY';
       return previous === layer ? previous : layer;
     });
     onViewChange?.(next);
     render();
-  }, [onViewChange, render]);
+  }, [loadedTiles?._meta.resolutionScale, onViewChange, render]);
 
   const zoomBy = useCallback((factor: number, sx?: number, sy?: number) => {
     const view = viewRef.current;
@@ -2381,7 +2271,7 @@ export function HanMapCanvas({
       sy ?? height / 2,
       factor,
       fitScale(width, height, grid),
-      maxScaleForDpr(dpr),
+      maxMapScaleForDpr(dpr, loadedTiles._meta.resolutionScale),
     );
     updateView(clampView(next, width, height, grid));
   }, [loadedTiles, updateView]);
@@ -2567,7 +2457,7 @@ export function HanMapCanvas({
           anchorY,
           gesture.factor,
           fitScale(width, height, grid),
-          maxScaleForDpr(sizeRef.current.dpr),
+          maxMapScaleForDpr(sizeRef.current.dpr, loadedTiles._meta.resolutionScale),
         );
         updateView(clampView(next, width, height, grid));
       }

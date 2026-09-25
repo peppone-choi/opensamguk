@@ -349,7 +349,8 @@
       "recruitmentSource": "涪陵郡 지역의 병력 모집 전통",
       "requires": {
         "generalName": null,
-        "regionName": "涪陵"
+        "regionName": "涪陵郡",
+        "mapParentRegionId": "PARENT-0150"
       },
       "bondRecruitmentKinds": [],
       "renownCost": {
@@ -390,7 +391,8 @@
       "recruitmentSource": "諸葛亮이 涪陵郡 지역에서 뽑아 漢中으로 옮긴 정예 병력",
       "requires": {
         "generalName": "諸葛亮",
-        "regionName": "涪陵"
+        "regionName": "涪陵郡",
+        "mapParentRegionId": "PARENT-0150"
       },
       "bondRecruitmentKinds": [],
       "renownCost": {

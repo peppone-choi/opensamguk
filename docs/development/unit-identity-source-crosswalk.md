@@ -19,6 +19,7 @@
 | `costColors` | `CardHeader.costColors` | `MONEY`·`GRAIN`·`IRON`·`TIMBER`·`HORSES` 중 고른 비용 색이다. |
 | `bondRecruitmentKinds` | `UnitBondKind` | `VOLUNTEER`·`CAPTIVE`는 게임 내 모집 경로다. 해당 인물이 실제로 자원했다는 사료 주장이 아니다. |
 | `requires.generalName` | 후속 카드 편성 조건 | 시나리오 인물 ID는 1층 C1·역사 시나리오의 확정 ID와 후속 PR에서 연결한다. |
+| `requires.regionName`, `mapParentRegionId` | 후속 카드 편성 조건 | 지역명은 사료 문맥이고 지도 ID는 게임 지도에 대한 연결 결정이다. 이름만으로 군·현을 판정하지 않는다. |
 | `attestedPeriod` | 후속 편성 가용 시기 | 원문 문맥이 허용하는 넓은 시기만 쓴다. `UNKNOWN`은 임의 연도로 보충하지 않는다. |
 
 아래 번호는 옛 `units.json`의 han 후보를 대조한 조사 키일 뿐 로더나
@@ -38,6 +39,14 @@
 | 적갑군 | 2120 | 華陽國志 卷一 巴志의 涪陵郡 절에 있는 赤甲軍 | `漢時` 이상으로 세부 연대 미확인 |
 | 연노사 | 2121 | 華陽國志 卷一 巴志의 涪陵郡 절에 있는 連弩士 | 다른 시기의 반복 모집 가능 여부 미확인 |
 
+적갑군·연노사의 `requires.regionName`은 원문 절의 `涪陵郡`이다. MAP4의
+`data/map/han-tiles.json`에는 같은 지명의 군 `parentRegions.id=PARENT-0150`과
+현 `涪陵縣`이 별도로 있다. 두 카드만 `mapParentRegionId=PARENT-0150`으로
+게임 지도 연결을 고정한다. 이 연결은 사료의 행정 연대 주장과 구분하며,
+후속 편성 단계에서 지도 ID로 판정해야 한다. MAP4 대조표의 군 좌석 진단은
+일부 현에 `REVIEW_REQUIRED_DIAGNOSTIC_ONLY` 상태를 남기므로, 좌석 문자열이나
+진단 행을 모집 판정으로 사용하지 않는다.
+
 `COMMON`과 비용 색, 명망 값, 결속 모집 목록은 `designDecision` 및
 `renownCost`의 `CONFIRMED`/`decidedBy`로 게임 결정을 분리했다. 사료가
 확인해 주는 것은 이름과 해당 문맥의 인물·지역·넓은 시기뿐이다. 정확한
@@ -52,6 +61,10 @@
 漢書 卷030 藝文志에 儒家·道家·陰陽家·法家·名家·墨家·縱橫家·兵家가
 문헌 갈래로 분류돼 있어도, 그것만으로 한말의 독립 국가 정체성이
 확인되지는 않는다. 중립과 없음은 게임 상태다.
+
+최신 `ScenarioImporter`는 국가의 `ideology`를 기존 `nation.type_code`로
+옮기지만 이 프리셋 원장의 ID를 받는 시드 필드는 없다. 따라서 이 원장을
+기존 이념 코드에 암묵적으로 결합하지 않는다.
 
 ## 제외·보류
 

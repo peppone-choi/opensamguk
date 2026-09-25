@@ -18,7 +18,8 @@ SOURCE_ROOTS = ("common", "logic", "infra", "app", "web", "tools")
 SOURCE_SUFFIXES = {".kt", ".kts", ".java", ".ts", ".tsx", ".js", ".mjs", ".py", ".php", ".sh", ".sql", ".json", ".yml", ".yaml"}
 SKIP_DIRS = {".git", ".gradle", ".next", "build", "dist", "node_modules", "__pycache__", "coverage"}
 PATTERNS = {
-    "product_identifier": re.compile(r"\b(?:Hwiha|hwiha|V2|v2)[A-Z][A-Za-z0-9_]*\b"),
+    # Product identifiers are ASCII; Unicode word boundaries differ between Python releases.
+    "product_identifier": re.compile(r"\b(?:Hwiha|hwiha|V2|v2)[A-Z][A-Za-z0-9_]*\b", re.ASCII),
     "retired_reference": re.compile(r"SAMMO|(?<![A-Za-z0-9_])che_|CommandRegistry|(?:Public)?AlphaCommandCatalog"),
 }
 PACKAGE = re.compile(r"^\s*package\s+(opensamguk(?:\.[A-Za-z_][A-Za-z0-9_]*)+)\s*$")

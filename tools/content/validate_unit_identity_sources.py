@@ -97,11 +97,16 @@ def validate_units(data: dict) -> int:
         text(row.get("recruitmentSource"), f"{row_id}.recruitmentSource")
         text(row.get("attestedPeriod"), f"{row_id}.attestedPeriod")
         required = row.get("requires")
-        if not isinstance(required, dict) or set(required) != {"generalName", "regionName"}:
-            fail(f"{row_id}.requires needs generalName and regionName")
-        for key in required:
-            if required[key] is not None:
-                text(required[key], f"{row_id}.requires.{key}")
+        if not isinstance(required, dict) or not {"generalName", "regionName"} <= set(required) or set(required) - {"generalName", "regionName", "mapParentRegionId"}:
+            fail(f"{row_id}.requires needs generalName and regionName, with an optional mapParentRegionId")
+        for key, value in required.items():
+            if value is not None:
+                text(value, f"{row_id}.requires.{key}")
+        if "mapParentRegionId" in required and required["regionName"] is None:
+            fail(f"{row_id}.requires.mapParentRegionId needs regionName")
+        if row_id in {"unit.chijia-regional", "unit.liannu-regional"}:
+            if required.get("regionName") != "涪陵郡" or required.get("mapParentRegionId") != "PARENT-0150":
+                fail(f"{row_id} requires the MAP4 涪陵郡 parent region PARENT-0150")
         bonds = row.get("bondRecruitmentKinds")
         if not isinstance(bonds, list) or len(bonds) != len(set(bonds)) or set(bonds) - {"VOLUNTEER", "CAPTIVE"}:
             fail(f"{row_id} has invalid bond recruitment kinds")

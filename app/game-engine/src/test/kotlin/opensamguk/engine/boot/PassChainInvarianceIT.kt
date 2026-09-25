@@ -57,6 +57,7 @@ class PassChainInvarianceIT {
         PassChainSupport.run(service, measuredWorld = world)
         PassChainSupport.assertChain(world, jdbc, WORLD)
         PassChainSupport.assertSiegesReload(world, loader)
+        assertEquals(0, world.getCityById(77)?.supplyState, "an unbuilt road must cut city 77 supply")
         WorldStateBaseline.assertMatches("s3-chain-48", world)
     }
 

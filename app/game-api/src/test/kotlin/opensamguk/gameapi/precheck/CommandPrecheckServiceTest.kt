@@ -96,6 +96,9 @@ class CommandPrecheckServiceTest {
         val resolver = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins, bundles)
         val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, worldArtifacts = resolver)
         for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            val topology = bundles.artifacts(variant).projection.topology
+            `when`(pins.readPins(1)).thenReturn(if (variant == opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
+                listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             `when`(cities.findAll()).thenReturn(bundles.artifacts(variant).cityConst.all().keys.map {
                 CityReadEntity(id = it, worldId = 1)
             })

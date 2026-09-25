@@ -3,8 +3,8 @@
   "auditId": "han-administrative-topology-audit-v1",
   "referenceYear": 220,
   "grid": {
-    "rows": 669,
-    "cols": 768,
+    "rows": 2676,
+    "cols": 3072,
     "connectivity": "FOUR_NEIGHBOR"
   },
   "policy": {
@@ -15,1112 +15,34 @@
     "noAutomaticRepair": true
   },
   "counts": {
-    "province": 1653,
+    "province": 1627,
     "jurisdiction": 1447,
     "commandery": 173
   },
   "provinceTopology": {
     "minimumCellCount": 8,
-    "belowMinimumCount": 13,
-    "belowMinimum": [
-      {
-        "id": "45203",
-        "displayName": "번현",
-        "cellCount": 7
-      },
-      {
-        "id": "87489",
-        "displayName": "장현",
-        "cellCount": 4
-      },
-      {
-        "id": "87490",
-        "displayName": "조평현",
-        "cellCount": 7
-      },
-      {
-        "id": "87506",
-        "displayName": "광향현",
-        "cellCount": 5
-      },
-      {
-        "id": "87510",
-        "displayName": "평향현",
-        "cellCount": 4
-      },
-      {
-        "id": "SUB-X029-d36cd99b5619",
-        "displayName": "졸본",
-        "cellCount": 6
-      },
-      {
-        "id": "ss-dengsai",
-        "displayName": "등새",
-        "cellCount": 4
-      },
-      {
-        "id": "ss-fancheng",
-        "displayName": "번성",
-        "cellCount": 2
-      },
-      {
-        "id": "ss-mengjin",
-        "displayName": "맹진",
-        "cellCount": 4
-      },
-      {
-        "id": "ss-xiaopingjin",
-        "displayName": "소평진",
-        "cellCount": 5
-      },
-      {
-        "id": "gc-g0008-035",
-        "displayName": "고시현",
-        "cellCount": 6
-      },
-      {
-        "id": "gc-g0083-010",
-        "displayName": "성악현",
-        "cellCount": 7
-      },
-      {
-        "id": "KOR-X068-SUB-X028-febacb66851d",
-        "displayName": "개마",
-        "cellCount": 6
-      }
-    ],
-    "disconnectedCount": 20,
-    "disconnected": [
-      {
-        "id": "40740",
-        "displayName": "무현",
-        "componentCellCounts": [
-          46,
-          7
-        ],
-        "components": [
-          {
-            "cellCount": 46,
-            "memberIds": [
-              "40740"
-            ]
-          },
-          {
-            "cellCount": 7,
-            "memberIds": [
-              "40740"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "41154",
-        "displayName": "팽택현",
-        "componentCellCounts": [
-          52,
-          3
-        ],
-        "components": [
-          {
-            "cellCount": 52,
-            "memberIds": [
-              "41154"
-            ]
-          },
-          {
-            "cellCount": 3,
-            "memberIds": [
-              "41154"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "43057",
-        "displayName": "합비현",
-        "componentCellCounts": [
-          332,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 332,
-            "memberIds": [
-              "43057"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "43057"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "43138",
-        "displayName": "육안현",
-        "componentCellCounts": [
-          130,
-          30
-        ],
-        "components": [
-          {
-            "cellCount": 130,
-            "memberIds": [
-              "43138"
-            ]
-          },
-          {
-            "cellCount": 30,
-            "memberIds": [
-              "43138"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "43423",
-        "displayName": "악현",
-        "componentCellCounts": [
-          35,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 35,
-            "memberIds": [
-              "43423"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "43423"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "43497",
-        "displayName": "주릉현",
-        "componentCellCounts": [
-          191,
-          5
-        ],
-        "components": [
-          {
-            "cellCount": 191,
-            "memberIds": [
-              "43497"
-            ]
-          },
-          {
-            "cellCount": 5,
-            "memberIds": [
-              "43497"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "70620",
-        "displayName": "서도현",
-        "componentCellCounts": [
-          88,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 88,
-            "memberIds": [
-              "70620"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "70620"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "83166",
-        "displayName": "양안현",
-        "componentCellCounts": [
-          15,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 15,
-            "memberIds": [
-              "83166"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "83166"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "85202",
-        "displayName": "영현",
-        "componentCellCounts": [
-          32,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 32,
-            "memberIds": [
-              "85202"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "85202"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "85344",
-        "displayName": "낭사현",
-        "componentCellCounts": [
-          67,
-          3
-        ],
-        "components": [
-          {
-            "cellCount": 67,
-            "memberIds": [
-              "85344"
-            ]
-          },
-          {
-            "cellCount": 3,
-            "memberIds": [
-              "85344"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "KOR-X070-X030",
-        "displayName": "행인",
-        "componentCellCounts": [
-          12,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 12,
-            "memberIds": [
-              "KOR-X070-X030"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "KOR-X070-X030"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "SUB-X028-7238a630ea3c",
-        "displayName": "주나",
-        "componentCellCounts": [
-          56,
-          39
-        ],
-        "components": [
-          {
-            "cellCount": 56,
-            "memberIds": [
-              "SUB-X028-7238a630ea3c"
-            ]
-          },
-          {
-            "cellCount": 39,
-            "memberIds": [
-              "SUB-X028-7238a630ea3c"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "SUB-X030-b78cb489a20c",
-        "displayName": "북옥저",
-        "componentCellCounts": [
-          21,
-          4
-        ],
-        "components": [
-          {
-            "cellCount": 21,
-            "memberIds": [
-              "SUB-X030-b78cb489a20c"
-            ]
-          },
-          {
-            "cellCount": 4,
-            "memberIds": [
-              "SUB-X030-b78cb489a20c"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "SUB-X042-1f00b3225ad9",
-        "displayName": "백제국",
-        "componentCellCounts": [
-          163,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 163,
-            "memberIds": [
-              "SUB-X042-1f00b3225ad9"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "SUB-X042-1f00b3225ad9"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X046",
-        "displayName": "고자미동국",
-        "componentCellCounts": [
-          222,
-          2,
-          1,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 222,
-            "memberIds": [
-              "X046"
-            ]
-          },
-          {
-            "cellCount": 2,
-            "memberIds": [
-              "X046"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "X046"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "X046"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X052",
-        "displayName": "말로국",
-        "componentCellCounts": [
-          116,
-          1,
-          1
-        ],
-        "components": [
-          {
-            "cellCount": 116,
-            "memberIds": [
-              "X052"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "X052"
-            ]
-          },
-          {
-            "cellCount": 1,
-            "memberIds": [
-              "X052"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X054",
-        "displayName": "노국",
-        "componentCellCounts": [
-          208,
-          6,
-          4
-        ],
-        "components": [
-          {
-            "cellCount": 208,
-            "memberIds": [
-              "X054"
-            ]
-          },
-          {
-            "cellCount": 6,
-            "memberIds": [
-              "X054"
-            ]
-          },
-          {
-            "cellCount": 4,
-            "memberIds": [
-              "X054"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X055",
-        "displayName": "야마일국",
-        "componentCellCounts": [
-          568,
-          7
-        ],
-        "components": [
-          {
-            "cellCount": 568,
-            "memberIds": [
-              "X055"
-            ]
-          },
-          {
-            "cellCount": 7,
-            "memberIds": [
-              "X055"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "fc-jiaozhi-006",
-        "displayName": "곡양현",
-        "componentCellCounts": [
-          285,
-          4,
-          2
-        ],
-        "components": [
-          {
-            "cellCount": 285,
-            "memberIds": [
-              "fc-jiaozhi-006"
-            ]
-          },
-          {
-            "cellCount": 4,
-            "memberIds": [
-              "fc-jiaozhi-006"
-            ]
-          },
-          {
-            "cellCount": 2,
-            "memberIds": [
-              "fc-jiaozhi-006"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "fc-lelang-010",
-        "displayName": "해명현",
-        "componentCellCounts": [
-          106,
-          7
-        ],
-        "components": [
-          {
-            "cellCount": 106,
-            "memberIds": [
-              "fc-lelang-010"
-            ]
-          },
-          {
-            "cellCount": 7,
-            "memberIds": [
-              "fc-lelang-010"
-            ]
-          }
-        ]
-      }
-    ],
-    "fullyEnclosedCount": 48,
-    "fullyEnclosed": [
-      {
-        "id": "96107",
-        "displayName": "재동현",
-        "componentCellCount": 46,
-        "surroundingIds": [
-          "96113"
-        ],
-        "surroundingDisplayNames": [
-          "부현"
-        ]
-      },
-      {
-        "id": "gc-g0005-012",
-        "displayName": "아현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70340"
-        ],
-        "surroundingDisplayNames": [
-          "속읍현"
-        ]
-      },
-      {
-        "id": "gc-g0008-009",
-        "displayName": "북의춘현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "83168"
-        ],
-        "surroundingDisplayNames": [
-          "신양현"
-        ]
-      },
-      {
-        "id": "gc-g0048-001",
-        "displayName": "음릉현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43130"
-        ],
-        "surroundingDisplayNames": [
-          "서곡양현"
-        ]
-      },
-      {
-        "id": "gc-g0048-003",
-        "displayName": "준주현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43057"
-        ],
-        "surroundingDisplayNames": [
-          "합비현"
-        ]
-      },
-      {
-        "id": "gc-g0048-009",
-        "displayName": "전초현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43057"
-        ],
-        "surroundingDisplayNames": [
-          "합비현"
-        ]
-      },
-      {
-        "id": "gc-g0050-006",
-        "displayName": "용서현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43134"
-        ],
-        "surroundingDisplayNames": [
-          "첨현"
-        ]
-      },
-      {
-        "id": "gc-g0053-005",
-        "displayName": "여릉현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "40885"
-        ],
-        "surroundingDisplayNames": [
-          "고창현"
-        ]
-      },
-      {
-        "id": "gc-g0060-008",
-        "displayName": "회무현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200284"
-        ],
-        "surroundingDisplayNames": [
-          "정착현"
-        ]
-      },
-      {
-        "id": "gc-g0060-011",
-        "displayName": "소시현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-200281-c658d67f2ab8"
-        ],
-        "surroundingDisplayNames": [
-          "착진현"
-        ]
-      },
-      {
-        "id": "gc-g0062-005",
-        "displayName": "사룡현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "45372"
-        ],
-        "surroundingDisplayNames": [
-          "운남현"
-        ]
-      },
-      {
-        "id": "gc-g0066-005",
-        "displayName": "대하현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-70126-5aba6cfc921e"
-        ],
-        "surroundingDisplayNames": [
-          "포한현"
-        ]
-      },
-      {
-        "id": "gc-g0070-001",
-        "displayName": "임경현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70186"
-        ],
-        "surroundingDisplayNames": [
-          "경양현"
-        ]
-      },
-      {
-        "id": "gc-g0070-008",
-        "displayName": "순고현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70178"
-        ],
-        "surroundingDisplayNames": [
-          "조나현"
-        ]
-      },
-      {
-        "id": "gc-g0072-001",
-        "displayName": "고장현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ]
-      },
-      {
-        "id": "gc-g0072-009",
-        "displayName": "선위현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ]
-      },
-      {
-        "id": "gc-g0072-011",
-        "displayName": "전음현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-70609-079630df9832"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ]
-      },
-      {
-        "id": "gc-g0072-014",
-        "displayName": "좌기현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-70609-b6d2a81666e0"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ]
-      },
-      {
-        "id": "gc-g0074-003",
-        "displayName": "낙관현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-70459-c86c8fbee593"
-        ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ]
-      },
-      {
-        "id": "gc-g0074-005",
-        "displayName": "회수현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-70459-c86c8fbee593"
-        ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ]
-      },
-      {
-        "id": "gc-g0074-007",
-        "displayName": "안미현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-70459-c86c8fbee593"
-        ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ]
-      },
-      {
-        "id": "gc-g0076-004",
-        "displayName": "사마관현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "DIRECT-PARENT-0076-731e4f54790a"
-        ],
-        "surroundingDisplayNames": [
-          "장액속국"
-        ]
-      },
-      {
-        "id": "gc-g0081-006",
-        "displayName": "고랑현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "DIRECT-PARENT-0081-7a0310a62424"
-        ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ]
-      },
-      {
-        "id": "gc-g0081-009",
-        "displayName": "익란현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "DIRECT-PARENT-0081-592c95b30d73"
-        ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ]
-      },
-      {
-        "id": "gc-g0081-011",
-        "displayName": "인현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "DIRECT-PARENT-0081-592c95b30d73"
-        ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ]
-      },
-      {
-        "id": "gc-g0089-001",
-        "displayName": "고류현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "95010"
-        ],
-        "surroundingDisplayNames": [
-          "북평읍현"
-        ]
-      },
-      {
-        "id": "gc-g0090-005",
-        "displayName": "거용현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87111"
-        ],
-        "surroundingDisplayNames": [
-          "저양현"
-        ]
-      },
-      {
-        "id": "gc-g0091-004",
-        "displayName": "옹노현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87436"
-        ],
-        "surroundingDisplayNames": [
-          "노현"
-        ]
-      },
-      {
-        "id": "gc-g0098-003",
-        "displayName": "중숙현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "42269"
-        ],
-        "surroundingDisplayNames": [
-          "사회현"
-        ]
-      },
-      {
-        "id": "ss-anpingkou",
-        "displayName": "안평구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "SUB-X029-f447e36b3ebd"
-        ],
-        "surroundingDisplayNames": [
-          "서안평현"
-        ]
-      },
-      {
-        "id": "ss-hukouguan",
-        "displayName": "호관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "95318"
-        ],
-        "surroundingDisplayNames": [
-          "호관현"
-        ]
-      },
-      {
-        "id": "ss-jiange",
-        "displayName": "검각",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "44587"
-        ],
-        "surroundingDisplayNames": [
-          "한수현"
-        ]
-      },
-      {
-        "id": "ss-jiaoqiucheng",
-        "displayName": "초구성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "41092"
-        ],
-        "surroundingDisplayNames": [
-          "남창현"
-        ]
-      },
-      {
-        "id": "ss-lankou",
-        "displayName": "남구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "82216"
-        ],
-        "surroundingDisplayNames": [
-          "임려현"
-        ]
-      },
-      {
-        "id": "ss-liaokou",
-        "displayName": "요구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-liaodong-006"
-        ],
-        "surroundingDisplayNames": [
-          "안시현"
-        ]
-      },
-      {
-        "id": "ss-lieliucheng",
-        "displayName": "열류성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70952"
-        ],
-        "surroundingDisplayNames": [
-          "유미현"
-        ]
-      },
-      {
-        "id": "ss-lukou",
-        "displayName": "육구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43497"
-        ],
-        "surroundingDisplayNames": [
-          "주릉현"
-        ]
-      },
-      {
-        "id": "ss-lulongsai",
-        "displayName": "노룡새",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87456"
-        ],
-        "surroundingDisplayNames": [
-          "서무현"
-        ]
-      },
-      {
-        "id": "ss-maocheng",
-        "displayName": "모성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87150"
-        ],
-        "surroundingDisplayNames": [
-          "섭현"
-        ]
-      },
-      {
-        "id": "ss-mulansai",
-        "displayName": "목란새",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200080"
-        ],
-        "surroundingDisplayNames": [
-          "석현"
-        ]
-      },
-      {
-        "id": "ss-nanan-xiakou",
-        "displayName": "남안협구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "40871"
-        ],
-        "surroundingDisplayNames": [
-          "남안현"
-        ]
-      },
-      {
-        "id": "ss-sikou",
-        "displayName": "사구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "42746"
-        ],
-        "surroundingDisplayNames": [
-          "회음현"
-        ]
-      },
-      {
-        "id": "ss-wansuiwu",
-        "displayName": "만세오",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70930"
-        ],
-        "surroundingDisplayNames": [
-          "미현"
-        ]
-      },
-      {
-        "id": "ss-wuguan",
-        "displayName": "무관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200092"
-        ],
-        "surroundingDisplayNames": [
-          "상현"
-        ]
-      },
-      {
-        "id": "ss-xiakou",
-        "displayName": "협구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "45796"
-        ],
-        "surroundingDisplayNames": [
-          "이릉현"
-        ]
-      },
-      {
-        "id": "ss-yanganguan",
-        "displayName": "양안관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "71101"
-        ],
-        "surroundingDisplayNames": [
-          "면양현"
-        ]
-      },
-      {
-        "id": "ss-yangpingguan",
-        "displayName": "양평관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "71101"
-        ],
-        "surroundingDisplayNames": [
-          "면양현"
-        ]
-      },
-      {
-        "id": "ss-zhanyinkou",
-        "displayName": "전음구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70156"
-        ],
-        "surroundingDisplayNames": [
-          "순음현"
-        ]
-      }
-    ]
-  },
-  "jurisdictionTopology": {
-    "disconnectedCount": 31,
+    "belowMinimumCount": 0,
+    "belowMinimum": [],
+    "disconnectedCount": 30,
     "disconnected": [
       {
         "id": "40165",
         "displayName": "동부후관현",
         "componentCellCounts": [
-          1030,
-          9
+          7952,
+          144
         ],
         "components": [
           {
-            "cellCount": 1030,
+            "cellCount": 7952,
             "memberIds": [
-              "40165",
-              "SUB-40165-cd0c5fe403f0"
+              "40165"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
-              "SUB-40165-39a88c0543b5"
+              "40165"
             ]
           }
         ]
@@ -1129,20 +51,20 @@
         "id": "40426",
         "displayName": "누현",
         "componentCellCounts": [
-          190,
-          39
+          3040,
+          624
         ],
         "components": [
           {
-            "cellCount": 190,
+            "cellCount": 3040,
             "memberIds": [
               "40426"
             ]
           },
           {
-            "cellCount": 39,
+            "cellCount": 624,
             "memberIds": [
-              "SUB-40426-900f77eff5b7"
+              "40426"
             ]
           }
         ]
@@ -1151,25 +73,25 @@
         "id": "40740",
         "displayName": "무현",
         "componentCellCounts": [
-          46,
-          30,
-          7
+          736,
+          480,
+          112
         ],
         "components": [
           {
-            "cellCount": 46,
+            "cellCount": 736,
             "memberIds": [
               "40740"
             ]
           },
           {
-            "cellCount": 30,
+            "cellCount": 480,
             "memberIds": [
-              "SUB-40740-3a5b5675f605"
+              "40740"
             ]
           },
           {
-            "cellCount": 7,
+            "cellCount": 112,
             "memberIds": [
               "40740"
             ]
@@ -1180,42 +102,20 @@
         "id": "41154",
         "displayName": "팽택현",
         "componentCellCounts": [
-          52,
-          3
+          832,
+          48
         ],
         "components": [
           {
-            "cellCount": 52,
+            "cellCount": 832,
             "memberIds": [
               "41154"
             ]
           },
           {
-            "cellCount": 3,
+            "cellCount": 48,
             "memberIds": [
               "41154"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "41194",
-        "displayName": "교양현",
-        "componentCellCounts": [
-          28,
-          20
-        ],
-        "components": [
-          {
-            "cellCount": 28,
-            "memberIds": [
-              "SUB-41194-9ed479cc6a6f"
-            ]
-          },
-          {
-            "cellCount": 20,
-            "memberIds": [
-              "41194"
             ]
           }
         ]
@@ -1224,43 +124,20 @@
         "id": "42301",
         "displayName": "안령현",
         "componentCellCounts": [
-          314,
-          16
+          5024,
+          256
         ],
         "components": [
           {
-            "cellCount": 314,
+            "cellCount": 5024,
             "memberIds": [
               "42301"
             ]
           },
           {
-            "cellCount": 16,
+            "cellCount": 256,
             "memberIds": [
-              "SUB-42301-7104ff31657a"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "42524",
-        "displayName": "합포현",
-        "componentCellCounts": [
-          862,
-          59
-        ],
-        "components": [
-          {
-            "cellCount": 862,
-            "memberIds": [
-              "42524",
-              "SUB-42524-46d8b1b4b707"
-            ]
-          },
-          {
-            "cellCount": 59,
-            "memberIds": [
-              "SUB-42524-622c0a56ef76"
+              "42301"
             ]
           }
         ]
@@ -1269,18 +146,18 @@
         "id": "43057",
         "displayName": "합비현",
         "componentCellCounts": [
-          332,
-          1
+          5344,
+          16
         ],
         "components": [
           {
-            "cellCount": 332,
+            "cellCount": 5344,
             "memberIds": [
               "43057"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "43057"
             ]
@@ -1291,18 +168,18 @@
         "id": "43138",
         "displayName": "육안현",
         "componentCellCounts": [
-          130,
-          30
+          2016,
+          608
         ],
         "components": [
           {
-            "cellCount": 130,
+            "cellCount": 2016,
             "memberIds": [
               "43138"
             ]
           },
           {
-            "cellCount": 30,
+            "cellCount": 608,
             "memberIds": [
               "43138"
             ]
@@ -1313,20 +190,20 @@
         "id": "43252",
         "displayName": "서현",
         "componentCellCounts": [
-          35,
-          9
+          576,
+          144
         ],
         "components": [
           {
-            "cellCount": 35,
+            "cellCount": 576,
             "memberIds": [
               "43252"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
-              "SUB-43252-2d3b29ad3f33"
+              "43252"
             ]
           }
         ]
@@ -1335,18 +212,18 @@
         "id": "43423",
         "displayName": "악현",
         "componentCellCounts": [
-          35,
-          1
+          624,
+          16
         ],
         "components": [
           {
-            "cellCount": 35,
+            "cellCount": 624,
             "memberIds": [
               "43423"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "43423"
             ]
@@ -1357,67 +234,20 @@
         "id": "43497",
         "displayName": "주릉현",
         "componentCellCounts": [
-          191,
-          5
+          3040,
+          80
         ],
         "components": [
           {
-            "cellCount": 191,
+            "cellCount": 3040,
             "memberIds": [
               "43497"
             ]
           },
           {
-            "cellCount": 5,
+            "cellCount": 80,
             "memberIds": [
               "43497"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "44621",
-        "displayName": "한창현",
-        "componentCellCounts": [
-          493,
-          81
-        ],
-        "components": [
-          {
-            "cellCount": 493,
-            "memberIds": [
-              "44580",
-              "44621"
-            ]
-          },
-          {
-            "cellCount": 81,
-            "memberIds": [
-              "SUB-44580-4cf3b7cc1de8"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "70524",
-        "displayName": "부평현",
-        "componentCellCounts": [
-          1451,
-          43
-        ],
-        "components": [
-          {
-            "cellCount": 1451,
-            "memberIds": [
-              "70524",
-              "SUB-70524-3f80f5c46aa8",
-              "SUB-70524-fd46f346c5e3"
-            ]
-          },
-          {
-            "cellCount": 43,
-            "memberIds": [
-              "70523"
             ]
           }
         ]
@@ -1426,18 +256,18 @@
         "id": "70620",
         "displayName": "서도현",
         "componentCellCounts": [
-          88,
-          1
+          1408,
+          16
         ],
         "components": [
           {
-            "cellCount": 88,
+            "cellCount": 1408,
             "memberIds": [
               "70620"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "70620"
             ]
@@ -1448,18 +278,18 @@
         "id": "83166",
         "displayName": "양안현",
         "componentCellCounts": [
-          15,
-          1
+          240,
+          16
         ],
         "components": [
           {
-            "cellCount": 15,
+            "cellCount": 240,
             "memberIds": [
               "83166"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "83166"
             ]
@@ -1470,42 +300,20 @@
         "id": "85202",
         "displayName": "영현",
         "componentCellCounts": [
-          32,
-          1
+          512,
+          16
         ],
         "components": [
           {
-            "cellCount": 32,
+            "cellCount": 512,
             "memberIds": [
               "85202"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "85202"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "85217",
-        "displayName": "동안평현",
-        "componentCellCounts": [
-          15,
-          13
-        ],
-        "components": [
-          {
-            "cellCount": 15,
-            "memberIds": [
-              "SUB-85217-f84e793192be"
-            ]
-          },
-          {
-            "cellCount": 13,
-            "memberIds": [
-              "85217"
             ]
           }
         ]
@@ -1514,20 +322,152 @@
         "id": "85344",
         "displayName": "낭사현",
         "componentCellCounts": [
-          67,
-          3
+          1136,
+          48
         ],
         "components": [
           {
-            "cellCount": 67,
+            "cellCount": 1136,
             "memberIds": [
               "85344"
             ]
           },
           {
-            "cellCount": 3,
+            "cellCount": 48,
             "memberIds": [
               "85344"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "KOR-X070-X030",
+        "displayName": "행인",
+        "componentCellCounts": [
+          192,
+          16
+        ],
+        "components": [
+          {
+            "cellCount": 192,
+            "memberIds": [
+              "KOR-X070-X030"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "KOR-X070-X030"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "KOR-X078-X040",
+        "displayName": "신소도",
+        "componentCellCounts": [
+          240,
+          144
+        ],
+        "components": [
+          {
+            "cellCount": 240,
+            "memberIds": [
+              "KOR-X078-X040"
+            ]
+          },
+          {
+            "cellCount": 144,
+            "memberIds": [
+              "KOR-X078-X040"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "KOR-X089-X041",
+        "displayName": "침미다례 권역",
+        "componentCellCounts": [
+          1840,
+          224
+        ],
+        "components": [
+          {
+            "cellCount": 1840,
+            "memberIds": [
+              "KOR-X089-X041"
+            ]
+          },
+          {
+            "cellCount": 224,
+            "memberIds": [
+              "KOR-X089-X041"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X028-7238a630ea3c",
+        "displayName": "주나",
+        "componentCellCounts": [
+          896,
+          624
+        ],
+        "components": [
+          {
+            "cellCount": 896,
+            "memberIds": [
+              "SUB-X028-7238a630ea3c"
+            ]
+          },
+          {
+            "cellCount": 624,
+            "memberIds": [
+              "SUB-X028-7238a630ea3c"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X030-b78cb489a20c",
+        "displayName": "북옥저",
+        "componentCellCounts": [
+          336,
+          64
+        ],
+        "components": [
+          {
+            "cellCount": 336,
+            "memberIds": [
+              "SUB-X030-b78cb489a20c"
+            ]
+          },
+          {
+            "cellCount": 64,
+            "memberIds": [
+              "SUB-X030-b78cb489a20c"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "SUB-X042-1f00b3225ad9",
+        "displayName": "백제국",
+        "componentCellCounts": [
+          2608,
+          16
+        ],
+        "components": [
+          {
+            "cellCount": 2608,
+            "memberIds": [
+              "SUB-X042-1f00b3225ad9"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "SUB-X042-1f00b3225ad9"
             ]
           }
         ]
@@ -1536,18 +476,18 @@
         "id": "X035",
         "displayName": "우산국",
         "componentCellCounts": [
-          14,
-          9
+          224,
+          144
         ],
         "components": [
           {
-            "cellCount": 14,
+            "cellCount": 224,
             "memberIds": [
-              "SUB-X035-ba000ebf76e2"
+              "X035"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "X035"
             ]
@@ -1558,39 +498,39 @@
         "id": "X046",
         "displayName": "고자미동국",
         "componentCellCounts": [
-          222,
-          22,
-          2,
-          1,
-          1
+          3552,
+          352,
+          32,
+          16,
+          16
         ],
         "components": [
           {
-            "cellCount": 222,
+            "cellCount": 3552,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 22,
-            "memberIds": [
-              "SUB-X046-763d3a08775b"
-            ]
-          },
-          {
-            "cellCount": 2,
+            "cellCount": 352,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 32,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
+            "memberIds": [
+              "X046"
+            ]
+          },
+          {
+            "cellCount": 16,
             "memberIds": [
               "X046"
             ]
@@ -1601,18 +541,18 @@
         "id": "X051",
         "displayName": "일대국",
         "componentCellCounts": [
-          15,
-          9
+          240,
+          144
         ],
         "components": [
           {
-            "cellCount": 15,
+            "cellCount": 240,
             "memberIds": [
-              "SUB-X051-81bd3bc269dc"
+              "X051"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "X051"
             ]
@@ -1623,39 +563,39 @@
         "id": "X052",
         "displayName": "말로국",
         "componentCellCounts": [
-          116,
-          20,
-          8,
-          1,
-          1
+          1856,
+          320,
+          128,
+          16,
+          16
         ],
         "components": [
           {
-            "cellCount": 116,
+            "cellCount": 1856,
             "memberIds": [
               "X052"
             ]
           },
           {
-            "cellCount": 20,
-            "memberIds": [
-              "SUB-X052-9097a8854a1f"
-            ]
-          },
-          {
-            "cellCount": 8,
-            "memberIds": [
-              "SUB-X052-e2019b23588b"
-            ]
-          },
-          {
-            "cellCount": 1,
+            "cellCount": 320,
             "memberIds": [
               "X052"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 128,
+            "memberIds": [
+              "X052"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "X052"
+            ]
+          },
+          {
+            "cellCount": 16,
             "memberIds": [
               "X052"
             ]
@@ -1666,39 +606,39 @@
         "id": "X054",
         "displayName": "노국",
         "componentCellCounts": [
-          611,
-          480,
-          208,
-          6,
-          4
+          9776,
+          7680,
+          3328,
+          96,
+          64
         ],
         "components": [
           {
-            "cellCount": 611,
-            "memberIds": [
-              "SUB-X054-00d863f2c44d"
-            ]
-          },
-          {
-            "cellCount": 480,
-            "memberIds": [
-              "SUB-X054-05d9b93dfd00"
-            ]
-          },
-          {
-            "cellCount": 208,
+            "cellCount": 9776,
             "memberIds": [
               "X054"
             ]
           },
           {
-            "cellCount": 6,
+            "cellCount": 7680,
             "memberIds": [
               "X054"
             ]
           },
           {
-            "cellCount": 4,
+            "cellCount": 3328,
+            "memberIds": [
+              "X054"
+            ]
+          },
+          {
+            "cellCount": 96,
+            "memberIds": [
+              "X054"
+            ]
+          },
+          {
+            "cellCount": 64,
             "memberIds": [
               "X054"
             ]
@@ -1709,40 +649,39 @@
         "id": "X055",
         "displayName": "야마일국",
         "componentCellCounts": [
-          1136,
-          41,
-          28,
-          19,
-          7
+          18176,
+          656,
+          448,
+          304,
+          112
         ],
         "components": [
           {
-            "cellCount": 1136,
+            "cellCount": 18176,
             "memberIds": [
-              "SUB-X055-d476e28be9f5",
               "X055"
             ]
           },
           {
-            "cellCount": 41,
+            "cellCount": 656,
             "memberIds": [
-              "SUB-X055-0deaa9deddaa"
+              "X055"
             ]
           },
           {
-            "cellCount": 28,
+            "cellCount": 448,
             "memberIds": [
-              "SUB-X055-42319b3daf6c"
+              "X055"
             ]
           },
           {
-            "cellCount": 19,
+            "cellCount": 304,
             "memberIds": [
-              "SUB-X055-f9c61192fa78"
+              "X055"
             ]
           },
           {
-            "cellCount": 7,
+            "cellCount": 112,
             "memberIds": [
               "X055"
             ]
@@ -1753,22 +692,20 @@
         "id": "X056",
         "displayName": "이주",
         "componentCellCounts": [
-          1311,
-          15
+          20976,
+          240
         ],
         "components": [
           {
-            "cellCount": 1311,
+            "cellCount": 20976,
             "memberIds": [
-              "SUB-X056-4430d4dd8ab9",
-              "SUB-X056-b6a5311503ef",
               "X056"
             ]
           },
           {
-            "cellCount": 15,
+            "cellCount": 240,
             "memberIds": [
-              "SUB-X056-c4d35e38f118"
+              "X056"
             ]
           }
         ]
@@ -1777,85 +714,41 @@
         "id": "X057",
         "displayName": "유구 (후대 명칭)",
         "componentCellCounts": [
-          71,
-          42,
-          19,
-          12,
-          11
+          1136,
+          672,
+          304,
+          192,
+          176
         ],
         "components": [
           {
-            "cellCount": 71,
+            "cellCount": 1136,
             "memberIds": [
               "X057"
             ]
           },
           {
-            "cellCount": 42,
+            "cellCount": 672,
             "memberIds": [
-              "SUB-X057-ef85eaeea522"
+              "X057"
             ]
           },
           {
-            "cellCount": 19,
+            "cellCount": 304,
             "memberIds": [
-              "SUB-X057-6e514a3d0138"
+              "X057"
             ]
           },
           {
-            "cellCount": 12,
+            "cellCount": 192,
             "memberIds": [
-              "SUB-X057-583a342f4480"
+              "X057"
             ]
           },
           {
-            "cellCount": 11,
+            "cellCount": 176,
             "memberIds": [
-              "SUB-X057-f6cdaf119bf2"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X078",
-        "displayName": "신소도",
-        "componentCellCounts": [
-          15,
-          9
-        ],
-        "components": [
-          {
-            "cellCount": 15,
-            "memberIds": [
-              "KOR-X078-X040"
-            ]
-          },
-          {
-            "cellCount": 9,
-            "memberIds": [
-              "SUB-X040-541a9c6ebb19"
-            ]
-          }
-        ]
-      },
-      {
-        "id": "X089",
-        "displayName": "침미다례 권역",
-        "componentCellCounts": [
-          115,
-          14
-        ],
-        "components": [
-          {
-            "cellCount": 115,
-            "memberIds": [
-              "KOR-X089-X041"
-            ]
-          },
-          {
-            "cellCount": 14,
-            "memberIds": [
-              "SUB-X041-17b9700aed53"
+              "X057"
             ]
           }
         ]
@@ -1864,25 +757,25 @@
         "id": "fc-jiaozhi-006",
         "displayName": "곡양현",
         "componentCellCounts": [
-          285,
-          4,
-          2
+          4560,
+          64,
+          32
         ],
         "components": [
           {
-            "cellCount": 285,
+            "cellCount": 4560,
             "memberIds": [
               "fc-jiaozhi-006"
             ]
           },
           {
-            "cellCount": 4,
+            "cellCount": 64,
             "memberIds": [
               "fc-jiaozhi-006"
             ]
           },
           {
-            "cellCount": 2,
+            "cellCount": 32,
             "memberIds": [
               "fc-jiaozhi-006"
             ]
@@ -1893,18 +786,18 @@
         "id": "fc-lelang-010",
         "displayName": "해명현",
         "componentCellCounts": [
-          106,
-          7
+          1696,
+          112
         ],
         "components": [
           {
-            "cellCount": 106,
+            "cellCount": 1696,
             "memberIds": [
               "fc-lelang-010"
             ]
           },
           {
-            "cellCount": 7,
+            "cellCount": 112,
             "memberIds": [
               "fc-lelang-010"
             ]
@@ -1912,793 +805,821 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 56,
-    "fullyEnclosed": [
+    "fullyEnclosedCount": 0,
+    "fullyEnclosed": []
+  },
+  "jurisdictionTopology": {
+    "disconnectedCount": 31,
+    "disconnected": [
       {
-        "id": "96107",
-        "displayName": "재동현",
-        "componentCellCount": 46,
-        "surroundingIds": [
-          "96113"
+        "id": "40165",
+        "displayName": "동부후관현",
+        "componentCellCounts": [
+          16480,
+          144
         ],
-        "surroundingDisplayNames": [
-          "부현"
-        ],
-        "commanderyId": "PARENT-0144",
-        "surroundingCommanderyId": "PARENT-0056",
-        "sameCommandery": false
+        "components": [
+          {
+            "cellCount": 16480,
+            "memberIds": [
+              "40165",
+              "SUB-40165-cd0c5fe403f0"
+            ]
+          },
+          {
+            "cellCount": 144,
+            "memberIds": [
+              "40165"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0005-012",
-        "displayName": "아현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70340"
+        "id": "40426",
+        "displayName": "누현",
+        "componentCellCounts": [
+          3040,
+          624
         ],
-        "surroundingDisplayNames": [
-          "속읍현"
-        ],
-        "commanderyId": "PARENT-0005",
-        "surroundingCommanderyId": "PARENT-0005",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 3040,
+            "memberIds": [
+              "40426"
+            ]
+          },
+          {
+            "cellCount": 624,
+            "memberIds": [
+              "40426"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0008-009",
-        "displayName": "북의춘현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "83168"
+        "id": "40740",
+        "displayName": "무현",
+        "componentCellCounts": [
+          736,
+          480,
+          112
         ],
-        "surroundingDisplayNames": [
-          "신양현"
-        ],
-        "commanderyId": "PARENT-0008",
-        "surroundingCommanderyId": "PARENT-0008",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 736,
+            "memberIds": [
+              "40740"
+            ]
+          },
+          {
+            "cellCount": 480,
+            "memberIds": [
+              "40740"
+            ]
+          },
+          {
+            "cellCount": 112,
+            "memberIds": [
+              "40740"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0048-001",
-        "displayName": "음릉현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43130"
+        "id": "41154",
+        "displayName": "팽택현",
+        "componentCellCounts": [
+          832,
+          48
         ],
-        "surroundingDisplayNames": [
-          "서곡양현"
-        ],
-        "commanderyId": "PARENT-0048",
-        "surroundingCommanderyId": "PARENT-0048",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 832,
+            "memberIds": [
+              "41154"
+            ]
+          },
+          {
+            "cellCount": 48,
+            "memberIds": [
+              "41154"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0048-003",
-        "displayName": "준주현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43057"
+        "id": "41194",
+        "displayName": "교양현",
+        "componentCellCounts": [
+          448,
+          320
         ],
-        "surroundingDisplayNames": [
-          "합비현"
-        ],
-        "commanderyId": "PARENT-0048",
-        "surroundingCommanderyId": "PARENT-0048",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 448,
+            "memberIds": [
+              "SUB-41194-9ed479cc6a6f"
+            ]
+          },
+          {
+            "cellCount": 320,
+            "memberIds": [
+              "41194"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0048-009",
-        "displayName": "전초현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43057"
+        "id": "42301",
+        "displayName": "안령현",
+        "componentCellCounts": [
+          5024,
+          256
         ],
-        "surroundingDisplayNames": [
-          "합비현"
-        ],
-        "commanderyId": "PARENT-0048",
-        "surroundingCommanderyId": "PARENT-0048",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 5024,
+            "memberIds": [
+              "42301"
+            ]
+          },
+          {
+            "cellCount": 256,
+            "memberIds": [
+              "42301"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0050-006",
-        "displayName": "용서현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43134"
+        "id": "42524",
+        "displayName": "합포현",
+        "componentCellCounts": [
+          13792,
+          1008
         ],
-        "surroundingDisplayNames": [
-          "첨현"
-        ],
-        "commanderyId": "PARENT-0050",
-        "surroundingCommanderyId": "PARENT-0050",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 13792,
+            "memberIds": [
+              "42524",
+              "SUB-42524-46d8b1b4b707"
+            ]
+          },
+          {
+            "cellCount": 1008,
+            "memberIds": [
+              "SUB-42524-622c0a56ef76"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0053-005",
-        "displayName": "여릉현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "40885"
+        "id": "43057",
+        "displayName": "합비현",
+        "componentCellCounts": [
+          5344,
+          16
         ],
-        "surroundingDisplayNames": [
-          "고창현"
-        ],
-        "commanderyId": "PARENT-0053",
-        "surroundingCommanderyId": "PARENT-0053",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 5344,
+            "memberIds": [
+              "43057"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "43057"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0060-008",
-        "displayName": "회무현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200284"
+        "id": "43138",
+        "displayName": "육안현",
+        "componentCellCounts": [
+          2016,
+          608
         ],
-        "surroundingDisplayNames": [
-          "정착현"
-        ],
-        "commanderyId": "PARENT-0060",
-        "surroundingCommanderyId": "PARENT-0060",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 2016,
+            "memberIds": [
+              "43138"
+            ]
+          },
+          {
+            "cellCount": 608,
+            "memberIds": [
+              "43138"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0060-011",
-        "displayName": "소시현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200281"
+        "id": "43252",
+        "displayName": "서현",
+        "componentCellCounts": [
+          576,
+          144
         ],
-        "surroundingDisplayNames": [
-          "착진현"
-        ],
-        "commanderyId": "PARENT-0060",
-        "surroundingCommanderyId": "PARENT-0060",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 576,
+            "memberIds": [
+              "43252"
+            ]
+          },
+          {
+            "cellCount": 144,
+            "memberIds": [
+              "43252"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0061-016",
-        "displayName": "농동현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "45603"
+        "id": "43423",
+        "displayName": "악현",
+        "componentCellCounts": [
+          624,
+          16
         ],
-        "surroundingDisplayNames": [
-          "분고현"
-        ],
-        "commanderyId": "PARENT-0061",
-        "surroundingCommanderyId": "PARENT-0061",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 624,
+            "memberIds": [
+              "43423"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "43423"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0062-005",
-        "displayName": "사룡현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "45372"
+        "id": "43497",
+        "displayName": "주릉현",
+        "componentCellCounts": [
+          3040,
+          80
         ],
-        "surroundingDisplayNames": [
-          "운남현"
-        ],
-        "commanderyId": "PARENT-0062",
-        "surroundingCommanderyId": "PARENT-0062",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 3040,
+            "memberIds": [
+              "43497"
+            ]
+          },
+          {
+            "cellCount": 80,
+            "memberIds": [
+              "43497"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0066-005",
-        "displayName": "대하현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70126"
+        "id": "44621",
+        "displayName": "한창현",
+        "componentCellCounts": [
+          7888,
+          1296
         ],
-        "surroundingDisplayNames": [
-          "포한현"
-        ],
-        "commanderyId": "PARENT-0066",
-        "surroundingCommanderyId": "PARENT-0066",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 7888,
+            "memberIds": [
+              "44580",
+              "44621"
+            ]
+          },
+          {
+            "cellCount": 1296,
+            "memberIds": [
+              "SUB-44580-4cf3b7cc1de8"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0070-001",
-        "displayName": "임경현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70186"
+        "id": "70524",
+        "displayName": "부평현",
+        "componentCellCounts": [
+          23216,
+          688
         ],
-        "surroundingDisplayNames": [
-          "경양현"
-        ],
-        "commanderyId": "PARENT-0070",
-        "surroundingCommanderyId": "PARENT-0070",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 23216,
+            "memberIds": [
+              "70524",
+              "SUB-70524-3f80f5c46aa8",
+              "SUB-70524-fd46f346c5e3"
+            ]
+          },
+          {
+            "cellCount": 688,
+            "memberIds": [
+              "70523"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0070-008",
-        "displayName": "순고현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70178"
+        "id": "70620",
+        "displayName": "서도현",
+        "componentCellCounts": [
+          1408,
+          16
         ],
-        "surroundingDisplayNames": [
-          "조나현"
-        ],
-        "commanderyId": "PARENT-0070",
-        "surroundingCommanderyId": "PARENT-0070",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 1408,
+            "memberIds": [
+              "70620"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "70620"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0072-001",
-        "displayName": "고장현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
+        "id": "83166",
+        "displayName": "양안현",
+        "componentCellCounts": [
+          240,
+          16
         ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 240,
+            "memberIds": [
+              "83166"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "83166"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0072-008",
-        "displayName": "오위현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
+        "id": "85202",
+        "displayName": "영현",
+        "componentCellCounts": [
+          512,
+          16
         ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 512,
+            "memberIds": [
+              "85202"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "85202"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0072-009",
-        "displayName": "선위현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
+        "id": "85217",
+        "displayName": "동안평현",
+        "componentCellCounts": [
+          304,
+          208
         ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 304,
+            "memberIds": [
+              "SUB-85217-f84e793192be"
+            ]
+          },
+          {
+            "cellCount": 208,
+            "memberIds": [
+              "85217"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0072-011",
-        "displayName": "전음현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
+        "id": "85344",
+        "displayName": "낭사현",
+        "componentCellCounts": [
+          1136,
+          48
         ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 1136,
+            "memberIds": [
+              "85344"
+            ]
+          },
+          {
+            "cellCount": 48,
+            "memberIds": [
+              "85344"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0072-012",
-        "displayName": "조려현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
+        "id": "X035",
+        "displayName": "우산국",
+        "componentCellCounts": [
+          224,
+          144
         ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 224,
+            "memberIds": [
+              "X035"
+            ]
+          },
+          {
+            "cellCount": 144,
+            "memberIds": [
+              "X035"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0072-014",
-        "displayName": "좌기현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70609"
+        "id": "X046",
+        "displayName": "고자미동국",
+        "componentCellCounts": [
+          3552,
+          352,
+          32,
+          16,
+          16
         ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 3552,
+            "memberIds": [
+              "X046"
+            ]
+          },
+          {
+            "cellCount": 352,
+            "memberIds": [
+              "X046"
+            ]
+          },
+          {
+            "cellCount": 32,
+            "memberIds": [
+              "X046"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "X046"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "X046"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0074-003",
-        "displayName": "낙관현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70459"
+        "id": "X051",
+        "displayName": "일대국",
+        "componentCellCounts": [
+          240,
+          144
         ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ],
-        "commanderyId": "PARENT-0074",
-        "surroundingCommanderyId": "PARENT-0074",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 240,
+            "memberIds": [
+              "X051"
+            ]
+          },
+          {
+            "cellCount": 144,
+            "memberIds": [
+              "X051"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0074-005",
-        "displayName": "회수현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70459"
+        "id": "X052",
+        "displayName": "말로국",
+        "componentCellCounts": [
+          1856,
+          320,
+          128,
+          16,
+          16
         ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ],
-        "commanderyId": "PARENT-0074",
-        "surroundingCommanderyId": "PARENT-0074",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 1856,
+            "memberIds": [
+              "X052"
+            ]
+          },
+          {
+            "cellCount": 320,
+            "memberIds": [
+              "X052"
+            ]
+          },
+          {
+            "cellCount": 128,
+            "memberIds": [
+              "X052"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "X052"
+            ]
+          },
+          {
+            "cellCount": 16,
+            "memberIds": [
+              "X052"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0074-007",
-        "displayName": "안미현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70459"
+        "id": "X054",
+        "displayName": "노국",
+        "componentCellCounts": [
+          9776,
+          7680,
+          3328,
+          96,
+          64
         ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ],
-        "commanderyId": "PARENT-0074",
-        "surroundingCommanderyId": "PARENT-0074",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 9776,
+            "memberIds": [
+              "X054"
+            ]
+          },
+          {
+            "cellCount": 7680,
+            "memberIds": [
+              "X054"
+            ]
+          },
+          {
+            "cellCount": 3328,
+            "memberIds": [
+              "X054"
+            ]
+          },
+          {
+            "cellCount": 96,
+            "memberIds": [
+              "X054"
+            ]
+          },
+          {
+            "cellCount": 64,
+            "memberIds": [
+              "X054"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0076-004",
-        "displayName": "사마관현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0076-SEAT"
+        "id": "X055",
+        "displayName": "야마일국",
+        "componentCellCounts": [
+          18176,
+          656,
+          448,
+          304,
+          112
         ],
-        "surroundingDisplayNames": [
-          "후관"
-        ],
-        "commanderyId": "PARENT-0076",
-        "surroundingCommanderyId": "PARENT-0076",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 18176,
+            "memberIds": [
+              "X055"
+            ]
+          },
+          {
+            "cellCount": 656,
+            "memberIds": [
+              "X055"
+            ]
+          },
+          {
+            "cellCount": 448,
+            "memberIds": [
+              "X055"
+            ]
+          },
+          {
+            "cellCount": 304,
+            "memberIds": [
+              "X055"
+            ]
+          },
+          {
+            "cellCount": 112,
+            "memberIds": [
+              "X055"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0080-004",
-        "displayName": "사연현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70418"
+        "id": "X056",
+        "displayName": "이주",
+        "componentCellCounts": [
+          20976,
+          240
         ],
-        "surroundingDisplayNames": [
-          "조음현"
-        ],
-        "commanderyId": "PARENT-0080",
-        "surroundingCommanderyId": "PARENT-0080",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 20976,
+            "memberIds": [
+              "X056"
+            ]
+          },
+          {
+            "cellCount": 240,
+            "memberIds": [
+              "X056"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0081-006",
-        "displayName": "고랑현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0081-SEAT"
+        "id": "X057",
+        "displayName": "유구 (후대 명칭)",
+        "componentCellCounts": [
+          1136,
+          672,
+          304,
+          192,
+          176
         ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ],
-        "commanderyId": "PARENT-0081",
-        "surroundingCommanderyId": "PARENT-0081",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 1136,
+            "memberIds": [
+              "X057"
+            ]
+          },
+          {
+            "cellCount": 672,
+            "memberIds": [
+              "X057"
+            ]
+          },
+          {
+            "cellCount": 304,
+            "memberIds": [
+              "X057"
+            ]
+          },
+          {
+            "cellCount": 192,
+            "memberIds": [
+              "X057"
+            ]
+          },
+          {
+            "cellCount": 176,
+            "memberIds": [
+              "X057"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0081-009",
-        "displayName": "익란현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0081-SEAT"
+        "id": "X078",
+        "displayName": "신소도",
+        "componentCellCounts": [
+          240,
+          144
         ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ],
-        "commanderyId": "PARENT-0081",
-        "surroundingCommanderyId": "PARENT-0081",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 240,
+            "memberIds": [
+              "KOR-X078-X040"
+            ]
+          },
+          {
+            "cellCount": 144,
+            "memberIds": [
+              "KOR-X078-X040"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0081-011",
-        "displayName": "인현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0081-SEAT"
+        "id": "X089",
+        "displayName": "침미다례 권역",
+        "componentCellCounts": [
+          1840,
+          224
         ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ],
-        "commanderyId": "PARENT-0081",
-        "surroundingCommanderyId": "PARENT-0081",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 1840,
+            "memberIds": [
+              "KOR-X089-X041"
+            ]
+          },
+          {
+            "cellCount": 224,
+            "memberIds": [
+              "KOR-X089-X041"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0086-006",
-        "displayName": "대성현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0086-SEAT"
+        "id": "fc-jiaozhi-006",
+        "displayName": "곡양현",
+        "componentCellCounts": [
+          4560,
+          64,
+          32
         ],
-        "surroundingDisplayNames": [
-          "임융현"
-        ],
-        "commanderyId": "PARENT-0086",
-        "surroundingCommanderyId": "PARENT-0086",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 4560,
+            "memberIds": [
+              "fc-jiaozhi-006"
+            ]
+          },
+          {
+            "cellCount": 64,
+            "memberIds": [
+              "fc-jiaozhi-006"
+            ]
+          },
+          {
+            "cellCount": 32,
+            "memberIds": [
+              "fc-jiaozhi-006"
+            ]
+          }
+        ]
       },
       {
-        "id": "gc-g0089-001",
-        "displayName": "고류현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "95010"
+        "id": "fc-lelang-010",
+        "displayName": "해명현",
+        "componentCellCounts": [
+          1696,
+          112
         ],
-        "surroundingDisplayNames": [
-          "북평읍현"
-        ],
-        "commanderyId": "PARENT-0089",
-        "surroundingCommanderyId": "PARENT-0089",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0090-005",
-        "displayName": "거용현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87111"
-        ],
-        "surroundingDisplayNames": [
-          "저양현"
-        ],
-        "commanderyId": "PARENT-0090",
-        "surroundingCommanderyId": "PARENT-0090",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0091-004",
-        "displayName": "옹노현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87436"
-        ],
-        "surroundingDisplayNames": [
-          "노현"
-        ],
-        "commanderyId": "PARENT-0091",
-        "surroundingCommanderyId": "PARENT-0091",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0091-009",
-        "displayName": "광평현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87436"
-        ],
-        "surroundingDisplayNames": [
-          "노현"
-        ],
-        "commanderyId": "PARENT-0091",
-        "surroundingCommanderyId": "PARENT-0091",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0098-003",
-        "displayName": "중숙현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "42269"
-        ],
-        "surroundingDisplayNames": [
-          "사회현"
-        ],
-        "commanderyId": "PARENT-0098",
-        "surroundingCommanderyId": "PARENT-0098",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0100-010",
-        "displayName": "증식현",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "44055"
-        ],
-        "surroundingDisplayNames": [
-          "영방현"
-        ],
-        "commanderyId": "PARENT-0100",
-        "surroundingCommanderyId": "PARENT-0100",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-anpingkou",
-        "displayName": "안평구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-liaodong-008"
-        ],
-        "surroundingDisplayNames": [
-          "서안평현"
-        ],
-        "commanderyId": "PARENT-0094",
-        "surroundingCommanderyId": "PARENT-0094",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-hukouguan",
-        "displayName": "호관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "95318"
-        ],
-        "surroundingDisplayNames": [
-          "호관현"
-        ],
-        "commanderyId": "PARENT-0078",
-        "surroundingCommanderyId": "PARENT-0078",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-jiange",
-        "displayName": "검각",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "44587"
-        ],
-        "surroundingDisplayNames": [
-          "한수현"
-        ],
-        "commanderyId": "PARENT-0055",
-        "surroundingCommanderyId": "PARENT-0055",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-jiaoqiucheng",
-        "displayName": "초구성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "41092"
-        ],
-        "surroundingDisplayNames": [
-          "남창현"
-        ],
-        "commanderyId": "PARENT-0053",
-        "surroundingCommanderyId": "PARENT-0053",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-lankou",
-        "displayName": "남구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "82216"
-        ],
-        "surroundingDisplayNames": [
-          "임려현"
-        ],
-        "commanderyId": "PARENT-0001",
-        "surroundingCommanderyId": "PARENT-0001",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-liaokou",
-        "displayName": "요구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "fc-liaodong-006"
-        ],
-        "surroundingDisplayNames": [
-          "안시현"
-        ],
-        "commanderyId": "PARENT-0094",
-        "surroundingCommanderyId": "PARENT-0094",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-lieliucheng",
-        "displayName": "열류성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70952"
-        ],
-        "surroundingDisplayNames": [
-          "유미현"
-        ],
-        "commanderyId": "PARENT-0006",
-        "surroundingCommanderyId": "PARENT-0006",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-lukou",
-        "displayName": "육구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "43497"
-        ],
-        "surroundingDisplayNames": [
-          "주릉현"
-        ],
-        "commanderyId": "PARENT-0042",
-        "surroundingCommanderyId": "PARENT-0042",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-lulongsai",
-        "displayName": "노룡새",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87456"
-        ],
-        "surroundingDisplayNames": [
-          "서무현"
-        ],
-        "commanderyId": "PARENT-0092",
-        "surroundingCommanderyId": "PARENT-0092",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-maocheng",
-        "displayName": "모성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "87150"
-        ],
-        "surroundingDisplayNames": [
-          "섭현"
-        ],
-        "commanderyId": "PARENT-0013",
-        "surroundingCommanderyId": "PARENT-0013",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-mulansai",
-        "displayName": "목란새",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200080"
-        ],
-        "surroundingDisplayNames": [
-          "석현"
-        ],
-        "commanderyId": "PARENT-0054",
-        "surroundingCommanderyId": "PARENT-0054",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-nanan-xiakou",
-        "displayName": "남안협구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "40871"
-        ],
-        "surroundingDisplayNames": [
-          "남안현"
-        ],
-        "commanderyId": "PARENT-0058",
-        "surroundingCommanderyId": "PARENT-0058",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-sikou",
-        "displayName": "사구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "42746"
-        ],
-        "surroundingDisplayNames": [
-          "회음현"
-        ],
-        "commanderyId": "PARENT-0034",
-        "surroundingCommanderyId": "PARENT-0034",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-wansuiwu",
-        "displayName": "만세오",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70930"
-        ],
-        "surroundingDisplayNames": [
-          "미현"
-        ],
-        "commanderyId": "PARENT-0006",
-        "surroundingCommanderyId": "PARENT-0006",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-wuguan",
-        "displayName": "무관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "200092"
-        ],
-        "surroundingDisplayNames": [
-          "상현"
-        ],
-        "commanderyId": "PARENT-0004",
-        "surroundingCommanderyId": "PARENT-0004",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-xiakou",
-        "displayName": "협구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "45796"
-        ],
-        "surroundingDisplayNames": [
-          "이릉현"
-        ],
-        "commanderyId": "PARENT-0126",
-        "surroundingCommanderyId": "PARENT-0126",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-yanganguan",
-        "displayName": "양안관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "71101"
-        ],
-        "surroundingDisplayNames": [
-          "면양현"
-        ],
-        "commanderyId": "PARENT-0054",
-        "surroundingCommanderyId": "PARENT-0054",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-yangpingguan",
-        "displayName": "양평관",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "71101"
-        ],
-        "surroundingDisplayNames": [
-          "면양현"
-        ],
-        "commanderyId": "PARENT-0054",
-        "surroundingCommanderyId": "PARENT-0054",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-zhanyinkou",
-        "displayName": "전음구",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70156"
-        ],
-        "surroundingDisplayNames": [
-          "순음현"
-        ],
-        "commanderyId": "PARENT-0069",
-        "surroundingCommanderyId": "PARENT-0069",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-zuocheng",
-        "displayName": "좌성",
-        "componentCellCount": 8,
-        "surroundingIds": [
-          "70459"
-        ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ],
-        "commanderyId": "PARENT-0074",
-        "surroundingCommanderyId": "PARENT-0074",
-        "sameCommandery": true
+        "components": [
+          {
+            "cellCount": 1696,
+            "memberIds": [
+              "fc-lelang-010"
+            ]
+          },
+          {
+            "cellCount": 112,
+            "memberIds": [
+              "fc-lelang-010"
+            ]
+          }
+        ]
       }
-    ]
+    ],
+    "fullyEnclosedCount": 0,
+    "fullyEnclosed": []
   },
   "commanderyTopology": {
     "disconnectedCount": 42,
@@ -2707,12 +1628,12 @@
         "id": "PARENT-0000",
         "displayName": "하남윤",
         "componentCellCounts": [
-          271,
-          177
+          4336,
+          2832
         ],
         "components": [
           {
-            "cellCount": 271,
+            "cellCount": 4336,
             "memberIds": [
               "44320",
               "44356",
@@ -2729,7 +1650,7 @@
             ]
           },
           {
-            "cellCount": 177,
+            "cellCount": 2832,
             "memberIds": [
               "82520",
               "82828",
@@ -2753,12 +1674,12 @@
         "id": "PARENT-0010",
         "displayName": "패국",
         "componentCellCounts": [
-          716,
-          17
+          11456,
+          272
         ],
         "components": [
           {
-            "cellCount": 716,
+            "cellCount": 11456,
             "memberIds": [
               "40236",
               "42782",
@@ -2783,7 +1704,7 @@
             ]
           },
           {
-            "cellCount": 17,
+            "cellCount": 272,
             "memberIds": [
               "45294"
             ]
@@ -2794,12 +1715,12 @@
         "id": "PARENT-0012",
         "displayName": "노국",
         "componentCellCounts": [
-          101,
-          19
+          1616,
+          304
         ],
         "components": [
           {
-            "cellCount": 101,
+            "cellCount": 1616,
             "memberIds": [
               "45180",
               "45199",
@@ -2810,7 +1731,7 @@
             ]
           },
           {
-            "cellCount": 19,
+            "cellCount": 304,
             "memberIds": [
               "45203",
               "45210"
@@ -2822,12 +1743,12 @@
         "id": "PARENT-0013",
         "displayName": "위군",
         "componentCellCounts": [
-          658,
-          14
+          10528,
+          224
         ],
         "components": [
           {
-            "cellCount": 658,
+            "cellCount": 10528,
             "memberIds": [
               "45350",
               "82196",
@@ -2849,7 +1770,7 @@
             ]
           },
           {
-            "cellCount": 14,
+            "cellCount": 224,
             "memberIds": [
               "87505"
             ]
@@ -2860,12 +1781,12 @@
         "id": "PARENT-0014",
         "displayName": "거록군",
         "componentCellCounts": [
-          165,
-          128
+          2608,
+          2048
         ],
         "components": [
           {
-            "cellCount": 165,
+            "cellCount": 2608,
             "memberIds": [
               "85186",
               "87051",
@@ -2885,7 +1806,7 @@
             ]
           },
           {
-            "cellCount": 128,
+            "cellCount": 2048,
             "memberIds": [
               "87061",
               "87173",
@@ -2900,12 +1821,12 @@
         "id": "PARENT-0019",
         "displayName": "청하국",
         "componentCellCounts": [
-          204,
-          1
+          3264,
+          16
         ],
         "components": [
           {
-            "cellCount": 204,
+            "cellCount": 3264,
             "memberIds": [
               "45153",
               "45157",
@@ -2915,7 +1836,7 @@
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "85202"
             ]
@@ -2926,12 +1847,12 @@
         "id": "PARENT-0022",
         "displayName": "진류군",
         "componentCellCounts": [
-          425,
-          19
+          6800,
+          304
         ],
         "components": [
           {
-            "cellCount": 425,
+            "cellCount": 6800,
             "memberIds": [
               "44324",
               "44326",
@@ -2953,7 +1874,7 @@
             ]
           },
           {
-            "cellCount": 19,
+            "cellCount": 304,
             "memberIds": [
               "82282"
             ]
@@ -2964,12 +1885,12 @@
         "id": "PARENT-0023",
         "displayName": "동군",
         "componentCellCounts": [
-          250,
-          170
+          4000,
+          2720
         ],
         "components": [
           {
-            "cellCount": 250,
+            "cellCount": 4000,
             "memberIds": [
               "45123",
               "45295",
@@ -2984,7 +1905,7 @@
             ]
           },
           {
-            "cellCount": 170,
+            "cellCount": 2720,
             "memberIds": [
               "82289",
               "82304",
@@ -3000,13 +1921,13 @@
         "id": "PARENT-0027",
         "displayName": "제북국",
         "componentCellCounts": [
-          100,
-          35,
-          26
+          1600,
+          560,
+          416
         ],
         "components": [
           {
-            "cellCount": 100,
+            "cellCount": 1600,
             "memberIds": [
               "45098",
               "45285",
@@ -3014,13 +1935,13 @@
             ]
           },
           {
-            "cellCount": 35,
+            "cellCount": 560,
             "memberIds": [
               "45291"
             ]
           },
           {
-            "cellCount": 26,
+            "cellCount": 416,
             "memberIds": [
               "45332"
             ]
@@ -3031,12 +1952,12 @@
         "id": "PARENT-0031",
         "displayName": "낭사국",
         "componentCellCounts": [
-          603,
-          3
+          9648,
+          48
         ],
         "components": [
           {
-            "cellCount": 603,
+            "cellCount": 9648,
             "memberIds": [
               "45234",
               "85337",
@@ -3054,7 +1975,7 @@
             ]
           },
           {
-            "cellCount": 3,
+            "cellCount": 48,
             "memberIds": [
               "85344"
             ]
@@ -3065,12 +1986,12 @@
         "id": "PARENT-0033",
         "displayName": "광릉군",
         "componentCellCounts": [
-          1492,
-          68
+          23872,
+          1088
         ],
         "components": [
           {
-            "cellCount": 1492,
+            "cellCount": 23872,
             "memberIds": [
               "40556",
               "42681",
@@ -3088,7 +2009,7 @@
             ]
           },
           {
-            "cellCount": 68,
+            "cellCount": 1088,
             "memberIds": [
               "42844"
             ]
@@ -3099,14 +2020,14 @@
         "id": "PARENT-0034",
         "displayName": "하비국",
         "componentCellCounts": [
-          390,
-          231,
-          81,
-          9
+          6240,
+          3696,
+          1296,
+          144
         ],
         "components": [
           {
-            "cellCount": 390,
+            "cellCount": 6240,
             "memberIds": [
               "42821",
               "42829",
@@ -3121,7 +2042,7 @@
             ]
           },
           {
-            "cellCount": 231,
+            "cellCount": 3696,
             "memberIds": [
               "42746",
               "42760",
@@ -3132,14 +2053,14 @@
             ]
           },
           {
-            "cellCount": 81,
+            "cellCount": 1296,
             "memberIds": [
               "43284",
               "gc-g0034-008"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "43252"
             ]
@@ -3150,12 +2071,12 @@
         "id": "PARENT-0036",
         "displayName": "평원군",
         "componentCellCounts": [
-          550,
-          39
+          8800,
+          624
         ],
         "components": [
           {
-            "cellCount": 550,
+            "cellCount": 8800,
             "memberIds": [
               "200038",
               "45087",
@@ -3171,7 +2092,7 @@
             ]
           },
           {
-            "cellCount": 39,
+            "cellCount": 624,
             "memberIds": [
               "45121"
             ]
@@ -3182,14 +2103,14 @@
         "id": "PARENT-0038",
         "displayName": "북해국",
         "componentCellCounts": [
-          549,
-          168,
-          23,
-          13
+          8784,
+          2688,
+          368,
+          208
         ],
         "components": [
           {
-            "cellCount": 549,
+            "cellCount": 8784,
             "memberIds": [
               "85272",
               "85292",
@@ -3207,7 +2128,7 @@
             ]
           },
           {
-            "cellCount": 168,
+            "cellCount": 2688,
             "memberIds": [
               "85385",
               "85393",
@@ -3215,14 +2136,14 @@
             ]
           },
           {
-            "cellCount": 23,
+            "cellCount": 368,
             "memberIds": [
               "85217",
               "gc-g0038-007"
             ]
           },
           {
-            "cellCount": 13,
+            "cellCount": 208,
             "memberIds": [
               "85217"
             ]
@@ -3233,13 +2154,13 @@
         "id": "PARENT-0039",
         "displayName": "동래군",
         "componentCellCounts": [
-          421,
-          270,
-          131
+          6736,
+          4320,
+          2096
         ],
         "components": [
           {
-            "cellCount": 421,
+            "cellCount": 6736,
             "memberIds": [
               "200036",
               "85371",
@@ -3253,7 +2174,7 @@
             ]
           },
           {
-            "cellCount": 270,
+            "cellCount": 4320,
             "memberIds": [
               "85381",
               "85410",
@@ -3261,7 +2182,7 @@
             ]
           },
           {
-            "cellCount": 131,
+            "cellCount": 2096,
             "memberIds": [
               "85481",
               "85505"
@@ -3273,13 +2194,13 @@
         "id": "PARENT-0042",
         "displayName": "남군",
         "componentCellCounts": [
-          1597,
-          336,
-          5
+          25552,
+          5376,
+          80
         ],
         "components": [
           {
-            "cellCount": 1597,
+            "cellCount": 25552,
             "memberIds": [
               "43676",
               "43711",
@@ -3304,7 +2225,7 @@
             ]
           },
           {
-            "cellCount": 336,
+            "cellCount": 5376,
             "memberIds": [
               "43421",
               "43497",
@@ -3313,7 +2234,7 @@
             ]
           },
           {
-            "cellCount": 5,
+            "cellCount": 80,
             "memberIds": [
               "43497"
             ]
@@ -3324,12 +2245,12 @@
         "id": "PARENT-0043",
         "displayName": "강하군",
         "componentCellCounts": [
-          2070,
-          1
+          33120,
+          16
         ],
         "components": [
           {
-            "cellCount": 2070,
+            "cellCount": 33120,
             "memberIds": [
               "41117",
               "43423",
@@ -3353,7 +2274,7 @@
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "43423"
             ]
@@ -3364,12 +2285,12 @@
         "id": "PARENT-0045",
         "displayName": "계양군",
         "componentCellCounts": [
-          1669,
-          48
+          26704,
+          768
         ],
         "components": [
           {
-            "cellCount": 1669,
+            "cellCount": 26704,
             "memberIds": [
               "41682",
               "41689",
@@ -3384,7 +2305,7 @@
             ]
           },
           {
-            "cellCount": 48,
+            "cellCount": 768,
             "memberIds": [
               "41838"
             ]
@@ -3395,12 +2316,12 @@
         "id": "PARENT-0048",
         "displayName": "구강군",
         "componentCellCounts": [
-          868,
-          1
+          13888,
+          16
         ],
         "components": [
           {
-            "cellCount": 868,
+            "cellCount": 13888,
             "memberIds": [
               "43057",
               "43121",
@@ -3424,7 +2345,7 @@
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "43057"
             ]
@@ -3435,12 +2356,12 @@
         "id": "PARENT-0050",
         "displayName": "여강군",
         "componentCellCounts": [
-          1526,
-          38
+          24416,
+          608
         ],
         "components": [
           {
-            "cellCount": 1526,
+            "cellCount": 24416,
             "memberIds": [
               "41256",
               "43000",
@@ -3453,6 +2374,7 @@
               "82581",
               "82606",
               "gc-g0050-001",
+              "gc-g0050-004",
               "gc-g0050-005",
               "gc-g0050-006",
               "gc-g0050-007",
@@ -3462,10 +2384,9 @@
             ]
           },
           {
-            "cellCount": 38,
+            "cellCount": 608,
             "memberIds": [
-              "43138",
-              "gc-g0050-004"
+              "43138"
             ]
           }
         ]
@@ -3474,14 +2395,14 @@
         "id": "PARENT-0051",
         "displayName": "회계군",
         "componentCellCounts": [
-          3134,
-          30,
-          27,
-          7
+          50144,
+          480,
+          432,
+          112
         ],
         "components": [
           {
-            "cellCount": 3134,
+            "cellCount": 50144,
             "memberIds": [
               "40078",
               "40242",
@@ -3509,19 +2430,19 @@
             ]
           },
           {
-            "cellCount": 30,
+            "cellCount": 480,
             "memberIds": [
               "40740"
             ]
           },
           {
-            "cellCount": 27,
+            "cellCount": 432,
             "memberIds": [
               "40377"
             ]
           },
           {
-            "cellCount": 7,
+            "cellCount": 112,
             "memberIds": [
               "40740"
             ]
@@ -3532,12 +2453,12 @@
         "id": "PARENT-0052",
         "displayName": "오군",
         "componentCellCounts": [
-          1354,
-          39
+          21664,
+          624
         ],
         "components": [
           {
-            "cellCount": 1354,
+            "cellCount": 21664,
             "memberIds": [
               "40052",
               "40070",
@@ -3557,7 +2478,7 @@
             ]
           },
           {
-            "cellCount": 39,
+            "cellCount": 624,
             "memberIds": [
               "40426"
             ]
@@ -3568,15 +2489,15 @@
         "id": "PARENT-0053",
         "displayName": "예장군",
         "componentCellCounts": [
-          7021,
-          72,
-          28,
-          9,
-          3
+          112336,
+          1152,
+          448,
+          144,
+          48
         ],
         "components": [
           {
-            "cellCount": 7021,
+            "cellCount": 112336,
             "memberIds": [
               "40165",
               "40228",
@@ -3612,26 +2533,26 @@
             ]
           },
           {
-            "cellCount": 72,
+            "cellCount": 1152,
             "memberIds": [
               "41154",
               "41194"
             ]
           },
           {
-            "cellCount": 28,
+            "cellCount": 448,
             "memberIds": [
               "41194"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "40165"
             ]
           },
           {
-            "cellCount": 3,
+            "cellCount": 48,
             "memberIds": [
               "41154"
             ]
@@ -3642,12 +2563,12 @@
         "id": "PARENT-0055",
         "displayName": "파군",
         "componentCellCounts": [
-          3605,
-          81
+          57680,
+          1296
         ],
         "components": [
           {
-            "cellCount": 3605,
+            "cellCount": 57680,
             "memberIds": [
               "44496",
               "44505",
@@ -3669,7 +2590,7 @@
             ]
           },
           {
-            "cellCount": 81,
+            "cellCount": 1296,
             "memberIds": [
               "44621"
             ]
@@ -3680,13 +2601,13 @@
         "id": "PARENT-0071",
         "displayName": "북지군",
         "componentCellCounts": [
-          2736,
-          633,
-          43
+          43776,
+          10128,
+          688
         ],
         "components": [
           {
-            "cellCount": 2736,
+            "cellCount": 43776,
             "memberIds": [
               "70524",
               "70610",
@@ -3694,14 +2615,14 @@
             ]
           },
           {
-            "cellCount": 633,
+            "cellCount": 10128,
             "memberIds": [
               "70613",
               "70614"
             ]
           },
           {
-            "cellCount": 43,
+            "cellCount": 688,
             "memberIds": [
               "70524"
             ]
@@ -3712,12 +2633,12 @@
         "id": "PARENT-0078",
         "displayName": "상당군",
         "componentCellCounts": [
-          750,
-          67
+          12000,
+          1072
         ],
         "components": [
           {
-            "cellCount": 750,
+            "cellCount": 12000,
             "memberIds": [
               "95318",
               "95323",
@@ -3734,7 +2655,7 @@
             ]
           },
           {
-            "cellCount": 67,
+            "cellCount": 1072,
             "memberIds": [
               "95369"
             ]
@@ -3745,12 +2666,12 @@
         "id": "PARENT-0079",
         "displayName": "태원군",
         "componentCellCounts": [
-          784,
-          104
+          12544,
+          1664
         ],
         "components": [
           {
-            "cellCount": 784,
+            "cellCount": 12544,
             "memberIds": [
               "95145",
               "95152",
@@ -3769,7 +2690,7 @@
             ]
           },
           {
-            "cellCount": 104,
+            "cellCount": 1664,
             "memberIds": [
               "95134",
               "gc-g0079-005"
@@ -3781,26 +2702,26 @@
         "id": "PARENT-0101",
         "displayName": "합포군",
         "componentCellCounts": [
-          1199,
-          1102,
-          67
+          19184,
+          17632,
+          1072
         ],
         "components": [
           {
-            "cellCount": 1199,
+            "cellCount": 19184,
             "memberIds": [
               "42444"
             ]
           },
           {
-            "cellCount": 1102,
+            "cellCount": 17632,
             "memberIds": [
               "42424",
               "42524"
             ]
           },
           {
-            "cellCount": 67,
+            "cellCount": 1072,
             "memberIds": [
               "42524",
               "gc-g0101-004"
@@ -3812,13 +2733,13 @@
         "id": "PARENT-0102",
         "displayName": "교지군",
         "componentCellCounts": [
-          1801,
-          4,
-          2
+          28816,
+          64,
+          32
         ],
         "components": [
           {
-            "cellCount": 1801,
+            "cellCount": 28816,
             "memberIds": [
               "JURISDICTION-PARENT-0102-SEAT",
               "fc-jiaozhi-002",
@@ -3835,13 +2756,13 @@
             ]
           },
           {
-            "cellCount": 4,
+            "cellCount": 64,
             "memberIds": [
               "fc-jiaozhi-006"
             ]
           },
           {
-            "cellCount": 2,
+            "cellCount": 32,
             "memberIds": [
               "fc-jiaozhi-006"
             ]
@@ -3852,18 +2773,18 @@
         "id": "PARENT-0108",
         "displayName": "우산국",
         "componentCellCounts": [
-          14,
-          9
+          224,
+          144
         ],
         "components": [
           {
-            "cellCount": 14,
+            "cellCount": 224,
             "memberIds": [
               "X035"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "X035"
             ]
@@ -3874,39 +2795,39 @@
         "id": "PARENT-0116",
         "displayName": "고자미동국",
         "componentCellCounts": [
-          222,
-          22,
-          2,
-          1,
-          1
+          3552,
+          352,
+          32,
+          16,
+          16
         ],
         "components": [
           {
-            "cellCount": 222,
+            "cellCount": 3552,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 22,
+            "cellCount": 352,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 2,
+            "cellCount": 32,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "X046"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "X046"
             ]
@@ -3917,18 +2838,18 @@
         "id": "PARENT-0123",
         "displayName": "이주",
         "componentCellCounts": [
-          1311,
-          15
+          20976,
+          240
         ],
         "components": [
           {
-            "cellCount": 1311,
+            "cellCount": 20976,
             "memberIds": [
               "X056"
             ]
           },
           {
-            "cellCount": 15,
+            "cellCount": 240,
             "memberIds": [
               "X056"
             ]
@@ -3939,12 +2860,12 @@
         "id": "PARENT-0130",
         "displayName": "대방군",
         "componentCellCounts": [
-          589,
-          7
+          9424,
+          112
         ],
         "components": [
           {
-            "cellCount": 589,
+            "cellCount": 9424,
             "memberIds": [
               "JURISDICTION-PARENT-0130-SEAT",
               "fc-lelang-004",
@@ -3957,7 +2878,7 @@
             ]
           },
           {
-            "cellCount": 7,
+            "cellCount": 112,
             "memberIds": [
               "fc-lelang-010"
             ]
@@ -3968,18 +2889,18 @@
         "id": "PARENT-0147",
         "displayName": "강양군",
         "componentCellCounts": [
-          304,
-          260
+          4864,
+          4160
         ],
         "components": [
           {
-            "cellCount": 304,
+            "cellCount": 4864,
             "memberIds": [
               "96030"
             ]
           },
           {
-            "cellCount": 260,
+            "cellCount": 4160,
             "memberIds": [
               "96023"
             ]
@@ -3990,39 +2911,39 @@
         "id": "PARENT-0149",
         "displayName": "유구",
         "componentCellCounts": [
-          71,
-          42,
-          19,
-          12,
-          11
+          1136,
+          672,
+          304,
+          192,
+          176
         ],
         "components": [
           {
-            "cellCount": 71,
+            "cellCount": 1136,
             "memberIds": [
               "X057"
             ]
           },
           {
-            "cellCount": 42,
+            "cellCount": 672,
             "memberIds": [
               "X057"
             ]
           },
           {
-            "cellCount": 19,
+            "cellCount": 304,
             "memberIds": [
               "X057"
             ]
           },
           {
-            "cellCount": 12,
+            "cellCount": 192,
             "memberIds": [
               "X057"
             ]
           },
           {
-            "cellCount": 11,
+            "cellCount": 176,
             "memberIds": [
               "X057"
             ]
@@ -4033,12 +2954,12 @@
         "id": "PARENT-0153",
         "displayName": "구야국",
         "componentCellCounts": [
-          110,
-          42
+          1760,
+          672
         ],
         "components": [
           {
-            "cellCount": 110,
+            "cellCount": 1760,
             "memberIds": [
               "X045",
               "X102",
@@ -4047,7 +2968,7 @@
             ]
           },
           {
-            "cellCount": 42,
+            "cellCount": 672,
             "memberIds": [
               "X050"
             ]
@@ -4058,12 +2979,12 @@
         "id": "PARENT-0156",
         "displayName": "목지국",
         "componentCellCounts": [
-          371,
-          9
+          5936,
+          144
         ],
         "components": [
           {
-            "cellCount": 371,
+            "cellCount": 5936,
             "memberIds": [
               "X040",
               "X073",
@@ -4076,7 +2997,7 @@
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "X078"
             ]
@@ -4087,18 +3008,18 @@
         "id": "PARENT-0162",
         "displayName": "서평군",
         "componentCellCounts": [
-          88,
-          1
+          1408,
+          16
         ],
         "components": [
           {
-            "cellCount": 88,
+            "cellCount": 1408,
             "memberIds": [
               "70620"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "70620"
             ]
@@ -4109,12 +3030,12 @@
         "id": "PARENT-0164",
         "displayName": "벽비리국",
         "componentCellCounts": [
-          550,
-          14
+          8800,
+          224
         ],
         "components": [
           {
-            "cellCount": 550,
+            "cellCount": 8800,
             "memberIds": [
               "X041",
               "X081",
@@ -4127,7 +3048,7 @@
             ]
           },
           {
-            "cellCount": 14,
+            "cellCount": 224,
             "memberIds": [
               "X089"
             ]
@@ -4138,25 +3059,25 @@
         "id": "PARENT-0165",
         "displayName": "야마일국",
         "componentCellCounts": [
-          1479,
-          611,
-          480,
-          41,
-          28,
-          20,
-          19,
-          15,
-          9,
-          8,
-          7,
-          6,
-          4,
-          1,
-          1
+          23664,
+          9776,
+          7680,
+          656,
+          448,
+          320,
+          304,
+          240,
+          144,
+          128,
+          112,
+          96,
+          64,
+          16,
+          16
         ],
         "components": [
           {
-            "cellCount": 1479,
+            "cellCount": 23664,
             "memberIds": [
               "X052",
               "X053",
@@ -4165,85 +3086,85 @@
             ]
           },
           {
-            "cellCount": 611,
+            "cellCount": 9776,
             "memberIds": [
               "X054"
             ]
           },
           {
-            "cellCount": 480,
+            "cellCount": 7680,
             "memberIds": [
               "X054"
             ]
           },
           {
-            "cellCount": 41,
+            "cellCount": 656,
             "memberIds": [
               "X055"
             ]
           },
           {
-            "cellCount": 28,
+            "cellCount": 448,
             "memberIds": [
               "X055"
             ]
           },
           {
-            "cellCount": 20,
+            "cellCount": 320,
             "memberIds": [
               "X052"
             ]
           },
           {
-            "cellCount": 19,
+            "cellCount": 304,
             "memberIds": [
               "X055"
             ]
           },
           {
-            "cellCount": 15,
+            "cellCount": 240,
             "memberIds": [
               "X051"
             ]
           },
           {
-            "cellCount": 9,
+            "cellCount": 144,
             "memberIds": [
               "X051"
             ]
           },
           {
-            "cellCount": 8,
+            "cellCount": 128,
             "memberIds": [
               "X052"
             ]
           },
           {
-            "cellCount": 7,
+            "cellCount": 112,
             "memberIds": [
               "X055"
             ]
           },
           {
-            "cellCount": 6,
+            "cellCount": 96,
             "memberIds": [
               "X054"
             ]
           },
           {
-            "cellCount": 4,
+            "cellCount": 64,
             "memberIds": [
               "X054"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "X052"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "X052"
             ]
@@ -4254,18 +3175,18 @@
         "id": "PARENT-0168",
         "displayName": "양안군",
         "componentCellCounts": [
-          15,
-          1
+          240,
+          16
         ],
         "components": [
           {
-            "cellCount": 15,
+            "cellCount": 240,
             "memberIds": [
               "83166"
             ]
           },
           {
-            "cellCount": 1,
+            "cellCount": 16,
             "memberIds": [
               "83166"
             ]
@@ -4276,12 +3197,12 @@
         "id": "PARENT-0169",
         "displayName": "고량군",
         "componentCellCounts": [
-          941,
-          16
+          15056,
+          256
         ],
         "components": [
           {
-            "cellCount": 941,
+            "cellCount": 15056,
             "memberIds": [
               "42277",
               "42300",
@@ -4289,7 +3210,7 @@
             ]
           },
           {
-            "cellCount": 16,
+            "cellCount": 256,
             "memberIds": [
               "42301"
             ]
@@ -4297,12 +3218,12 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 10,
+    "fullyEnclosedCount": 9,
     "fullyEnclosed": [
       {
         "id": "PARENT-0045",
         "displayName": "계양군",
-        "componentCellCount": 48,
+        "componentCellCount": 768,
         "surroundingIds": [
           "PARENT-0047"
         ],
@@ -4313,7 +3234,7 @@
       {
         "id": "PARENT-0050",
         "displayName": "여강군",
-        "componentCellCount": 38,
+        "componentCellCount": 608,
         "surroundingIds": [
           "PARENT-0048"
         ],
@@ -4324,7 +3245,7 @@
       {
         "id": "PARENT-0082",
         "displayName": "오원군",
-        "componentCellCount": 120,
+        "componentCellCount": 1920,
         "surroundingIds": [
           "PARENT-0114"
         ],
@@ -4335,7 +3256,7 @@
       {
         "id": "PARENT-0101",
         "displayName": "합포군",
-        "componentCellCount": 67,
+        "componentCellCount": 1072,
         "surroundingIds": [
           "PARENT-0169"
         ],
@@ -4346,7 +3267,7 @@
       {
         "id": "PARENT-0126",
         "displayName": "의도군",
-        "componentCellCount": 111,
+        "componentCellCount": 1776,
         "surroundingIds": [
           "PARENT-0042"
         ],
@@ -4357,7 +3278,7 @@
       {
         "id": "PARENT-0127",
         "displayName": "산월",
-        "componentCellCount": 76,
+        "componentCellCount": 1216,
         "surroundingIds": [
           "PARENT-0049"
         ],
@@ -4368,7 +3289,7 @@
       {
         "id": "PARENT-0133",
         "displayName": "여릉군",
-        "componentCellCount": 530,
+        "componentCellCount": 8480,
         "surroundingIds": [
           "PARENT-0053"
         ],
@@ -4377,20 +3298,9 @@
         ]
       },
       {
-        "id": "PARENT-0144",
-        "displayName": "재동군",
-        "componentCellCount": 46,
-        "surroundingIds": [
-          "PARENT-0056"
-        ],
-        "surroundingDisplayNames": [
-          "광한군"
-        ]
-      },
-      {
         "id": "PARENT-0158",
         "displayName": "장릉군",
-        "componentCellCount": 20,
+        "componentCellCount": 320,
         "surroundingIds": [
           "PARENT-0041"
         ],
@@ -4401,7 +3311,7 @@
       {
         "id": "PARENT-0168",
         "displayName": "양안군",
-        "componentCellCount": 1,
+        "componentCellCount": 16,
         "surroundingIds": [
           "PARENT-0008"
         ],
@@ -9166,7 +8076,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312"
+      "sha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

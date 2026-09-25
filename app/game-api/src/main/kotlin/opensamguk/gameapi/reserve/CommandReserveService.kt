@@ -218,6 +218,11 @@ class CommandReserveService(
             (hwihaScoutAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode == opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID) {
+            if (ownerUserId == null || ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            val fortId = opensamguk.logic.input.RoadFortSiegeInput.parse(argJson)
+                ?: throw HwihaAdmissionDenied("INVALID_REQUEST", "점령할 보루를 골라 주세요.")
+            "{\"fortId\":\"$fortId\"}"
         } else if (actionCode in opensamguk.logic.input.TravelInput.INPUT_IDS) {
             (hwihaTravelAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
@@ -493,7 +498,8 @@ class CommandReserveService(
             opensamguk.logic.input.PeopleInput.INPUT_IDS +
             opensamguk.logic.input.PoliticalInput.INPUT_IDS +
             opensamguk.logic.input.TransferInput.INPUT_IDS +
-            opensamguk.logic.input.DirectInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
+            opensamguk.logic.input.DirectInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS +
+            opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID
         /** Shared board and mailbox intake, dispatched immediately outside the game turn ring. */
         val COMMON_INTAKE_COMMANDS: Set<String> = setOf(
             "boardArticle", "boardComment", "boardRead", "sendMessage", "deleteMessage", "readLatestMessage",

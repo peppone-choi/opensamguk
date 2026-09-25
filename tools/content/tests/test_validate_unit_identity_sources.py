@@ -50,6 +50,13 @@ class UnitIdentitySourceTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "15 specified presets"):
             validate_identities(broken)
 
+    def test_fuling_commandery_cannot_be_replaced_with_ambiguous_county_name(self):
+        broken = copy.deepcopy(self.units)
+        row = next(row for row in broken["rows"] if row["id"] == "unit.chijia-regional")
+        row["requires"]["regionName"] = "涪陵"
+        with self.assertRaisesRegex(ValueError, "PARENT-0150"):
+            validate_units(broken)
+
 
 if __name__ == "__main__":
     unittest.main()

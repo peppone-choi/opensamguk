@@ -6,7 +6,7 @@ const PROVINCE_MASK = 0x0fff;
 const PNG_SIGNATURE = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 const CANONICAL_PNG_CHUNKS = ['IHDR', 'IDAT', 'IEND'] as const;
 const MAX_PROVINCE_PNG_AXIS = 4096;
-const MAX_PROVINCE_PNG_CELLS = 4_194_304;
+const MAX_PROVINCE_PNG_CELLS = 8_388_608; // 3072×2676 high-detail Han raster fits.
 const MAX_PROVINCE_PNG_BYTES = 16 * 1024 * 1024;
 const CRC32_TABLE = Uint32Array.from({ length: 256 }, (_, value) => {
   let crc = value;
@@ -688,10 +688,23 @@ export function buildProvinceVisualAnchors(
       ? (col - preferred.col) ** 2 + (row - preferred.row) ** 2
       : 0;
     const current = anchors[provinceId];
-    if (!current || clearance > current.clearance
-      || (clearance === current.clearance && preferredDistance < preferredDistances[provinceId])
-      || (clearance === current.clearance && preferredDistance === preferredDistances[provinceId]
-        && (row < current.row || (row === current.row && col < current.col)))) {
+    // A relocated seat can use any 7×7 interior, while older maps with less
+    // room still fall back to their deepest available cell.
+    const growthReady = Boolean(preferred) && clearance >= 3;
+    const currentGrowthReady = Boolean(preferred) && current !== undefined && current.clearance >= 3;
+    const isBetter = !current
+      || (growthReady && !currentGrowthReady)
+      || (growthReady && currentGrowthReady && preferredDistance < preferredDistances[provinceId])
+      || (!growthReady && !currentGrowthReady && clearance > current.clearance)
+      || (!growthReady && !currentGrowthReady && clearance === current.clearance
+        && preferredDistance < preferredDistances[provinceId])
+      || (growthReady && currentGrowthReady && preferredDistance === preferredDistances[provinceId]
+        && clearance > current.clearance)
+      || (growthReady === currentGrowthReady
+        && preferredDistance === preferredDistances[provinceId]
+        && clearance === current.clearance
+        && (row < current.row || (row === current.row && col < current.col)));
+    if (isBetter) {
       anchors[provinceId] = { provinceId, col, row, clearance };
       preferredDistances[provinceId] = preferredDistance;
     }

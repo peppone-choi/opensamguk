@@ -18,6 +18,50 @@ sys.path.insert(0, str(ROOT))
 TILES = ROOT / 'data/map/han-tiles.json'
 DECISIONS = ROOT / 'data/curated/han/korea-place-corrections-v1.json'
 LEDGER = ROOT / 'data/curated/han/korea-place-correction-stage-v1.json'
+DISPLAY_GRID_SCALE = 4
+
+
+def enlarge_tile_geometry(document: dict, factor: int = DISPLAY_GRID_SCALE) -> dict:
+    """Increase the playable tile resolution without changing world geography.
+
+    The legacy gameplay snapshot deliberately stays in its original frame. The
+    current province/terrain/seat surfaces and their coordinate records all use
+    the finer frame, so city growth can reserve a full 7×7 interior.
+    """
+    from tools.map.measure_province_seat_offset import expand_rle
+    from tools.map.world_province_geometry import _encode_runs
+
+    meta = document['_meta']
+    old_rows, old_cols = meta['rows'], meta['cols']
+    if factor < 1 or not isinstance(factor, int):
+        raise ValueError('tile resolution factor must be a positive integer')
+    if factor == 1:
+        return document
+    for key in ('owner', 'parentOwner', 'seatOwner'):
+        grid = expand_rle(document[key], old_rows, old_cols)
+        document[key] = _encode_runs(np.repeat(np.repeat(grid, factor, axis=0), factor, axis=1))
+    document['terrain'] = [scaled for row in document['terrain']
+                           for scaled in [''.join(code * factor for code in row)] * factor]
+    for city in document['cities']:
+        city['col'] = city['col'] * factor + (factor - 1) // 2
+        city['row'] = city['row'] * factor + (factor - 1) // 2
+    for jun in document['juns']:
+        seat = document['cities'][jun['seat']]
+        jun['col'], jun['row'] = seat['col'], seat['row']
+    for region in document['regions']:
+        region['col'] = region['col'] * factor + (factor - 1) // 2
+        region['row'] = region['row'] * factor + (factor - 1) // 2
+        region['cells'] *= factor * factor
+    for edge_kind in ('county', 'commandery'):
+        for edge in document['adjacency'][edge_kind]:
+            edge['cells'] *= factor
+    meta['cols'] = old_cols * factor
+    meta['rows'] = old_rows * factor
+    meta['projection']['cols'] = meta['cols']
+    meta['projection']['rows'] = meta['rows']
+    meta['projection']['cell'] /= factor
+    meta['resolutionScale'] = factor
+    return document
 
 def digest(value):
     return hashlib.sha256(json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
@@ -58,6 +102,15 @@ def apply(source, decisions):
     owner = add_settlements(doc, owner, decisions)
     from tools.map.korea_settlement_layout import cap_settlement_provinces
     owner = cap_settlement_provinces(doc, owner, decisions)
+    for move in decisions.get('growthBoundaryTransfers', []):
+        provinces = {p['id']: i for i, p in enumerate(doc['provinceRecords'])}
+        donor, recipient = provinces[move['fromProvinceId']], provinces[move['toProvinceId']]
+        row, col = move['row'], move['col']
+        if int(owner[row, col]) != donor:
+            raise ValueError(f'growth transfer source changed: {move}')
+        if doc['provinceRecords'][donor]['jurisdictionId'] != doc['provinceRecords'][recipient]['jurisdictionId']:
+            raise ValueError(f'growth transfer crosses jurisdiction: {move}')
+        owner[row, col] = recipient
     # Explicitly reviewed re-parenting; the old numeric parent namespace is append-only.
     for parent in decisions.get('newParents', []):
         ids=set(parent['jurisdictionIds'])
@@ -112,7 +165,7 @@ def apply(source, decisions):
     _rederive_parent_surfaces(doc)
     if not decisions.get('newParents') and not decisions.get('extension') and source['parentOwner'] != doc['parentOwner']:
         raise ValueError('seat correction changed political boundaries')
-    return doc
+    return enlarge_tile_geometry(doc)
 
 def diff(before, after):
     patches = []

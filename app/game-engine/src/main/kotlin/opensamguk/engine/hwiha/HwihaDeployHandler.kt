@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
+
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
@@ -27,7 +29,12 @@ class HwihaDeployHandler(private val world: InMemoryTurnWorld, private val recor
         val metrics = metrics ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
         val executor = HwihaDeploymentExecutor(world,recorder,topology,metrics)
         val projection = executor.projection() ?: return reject(DeploymentFailure.STATE_UNAVAILABLE)
-        val assessed = DeployRules.assess(input,projection,topology,world.getState().meta,metrics)
+        val meta = world.getState().meta
+        val passage = try { LandPassageState.read(meta, topology)?.let {
+            RoadFortPassage.forNation(world, it, checkNotNull(world.getGeneralById(actorId)).nationId)
+        } } catch (_: IllegalArgumentException) { null }
+        val assessed = if (passage == null) DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) else
+            DeployRules.assess(input,projection,topology,meta,metrics,passage)
         if (assessed is DeploymentAssessment.Rejected) return reject(assessed.reason)
         val order = CorpsOrder(requestId,actorId,actorId,input.destination,topology.topologyRevision,topology.contentHash)
         return when (val result = executor.deploy(requestId,input.deploymentRequest())) {
