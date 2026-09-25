@@ -6,11 +6,11 @@ import kotlin.test.assertTrue
 import kotlin.test.assertFailsWith
 import kotlinx.serialization.SerializationException
 
-class HwihaCourtInputWireTest {
+class ImmediateInputWireTest {
     @Test fun `court dispatch and reply round trip through sealed command`() {
         for ((input, args) in listOf("court.dispatch" to "{\"targetGeneralId\":2,\"countyId\":10}",
             "court.dispatchReply" to "{\"dispatchId\":\"req-1\",\"accept\":false}")) {
-            val command = TurnDaemonCommand.HwihaCourtInput("req-1", 1, 42, input, args)
+            val command = TurnDaemonCommand.ImmediateInput("req-1", 1, 42, input, args)
             val encoded = WireJson.encodeToString(TurnDaemonCommand.serializer(), command)
             assertTrue(encoded.contains("\"type\":\"hwihaCourtInput\""))
             assertEquals(command, WireJson.decodeFromString(TurnDaemonCommand.serializer(), encoded))

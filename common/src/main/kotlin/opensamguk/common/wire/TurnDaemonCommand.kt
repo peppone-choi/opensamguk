@@ -16,7 +16,7 @@ sealed class TurnDaemonCommand {
 
     @Serializable
     @SerialName("hwihaCourtInput")
-    data class HwihaCourtInput(
+    data class ImmediateInput(
         val requestId: String,
         val generalId: Int,
         val ownerUserId: Int,

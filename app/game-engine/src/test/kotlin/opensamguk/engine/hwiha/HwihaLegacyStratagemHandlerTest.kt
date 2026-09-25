@@ -41,7 +41,7 @@ class HwihaLegacyStratagemHandlerTest {
         for (inputId in HwihaLegacyStratagemInput.INPUT_IDS.sorted()) {
             val world = world()
             val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
-            val submitted = handler.handle(TurnDaemonCommand.HwihaCourtInput("play-$inputId", 501, 42, inputId, args(inputId)))
+            val submitted = handler.handle(TurnDaemonCommand.ImmediateInput("play-$inputId", 501, 42, inputId, args(inputId)))
             assertEquals(InputRejection.NOT_DELIVERED.name, submitted.code, inputId)
             handler.onIssuerTurn(501)
             assertTrue(handler.takeExecutions().isEmpty(), inputId)
@@ -53,7 +53,7 @@ class HwihaLegacyStratagemHandlerTest {
     @Test fun `rejected steal does not move money`() {
         val world = world()
         val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
-        val rejected = handler.handle(TurnDaemonCommand.HwihaCourtInput("steal", 501, 42,
+        val rejected = handler.handle(TurnDaemonCommand.ImmediateInput("steal", 501, 42,
             "stratagem.steal", args("stratagem.steal")))
         assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
         handler.onIssuerTurn(501)

@@ -2,7 +2,7 @@ package opensamguk.engine.hwiha
 
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.InputResolved
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
@@ -19,7 +19,7 @@ class HwihaDomesticHandler(
     private val recorder: ChangeRecorder,
     private val context: HwihaDomesticContext,
 ) {
-    fun handle(command: HwihaCourtInput): CommandLifecycleResult {
+    fun handle(command: ImmediateInput): CommandLifecycleResult {
         val kind = kindOf(command.inputId)
         fun deny(code: String, reason: String) = result(command.generalId, command.inputId, kind, false, code, reason)
         if (world.ruleProfile != RuleProfile.HWIHA) return deny("WRONG_RULE_PROFILE", "이 월드의 규칙에서 사용할 수 없는 입력입니다.")

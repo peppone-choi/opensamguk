@@ -385,7 +385,7 @@ class TurnDaemonCommandDispatcher(
         sentAt: Instant,
         executionAt: Instant,
     ): TurnDaemonCommandResult? = when (command) {
-        is TurnDaemonCommand.HwihaCourtInput -> hwihaCourt.handle(command)
+        is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
@@ -508,7 +508,7 @@ class TurnDaemonCommandDispatcher(
         envelopes: List<TurnDaemonCommandEnvelope>,
     ): List<Pair<String, TurnDaemonCommandResult>> =
         envelopes.mapNotNull { env ->
-            val court = env.command as? TurnDaemonCommand.HwihaCourtInput
+            val court = env.command as? TurnDaemonCommand.ImmediateInput
             if (court != null && court.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
                 type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
                 generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")

@@ -2,7 +2,7 @@ package opensamguk.engine.hwiha
 
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.InputResolved
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 
@@ -21,7 +21,7 @@ class HwihaCourtHandler(
     private val stratagem by lazy { HwihaLegacyStratagemExecutor(world, recorder, domesticContext) }
     private val executions = mutableListOf<HwihaCourtExecution>()
 
-    fun handle(command: HwihaCourtInput): CommandLifecycleResult {
+    fun handle(command: ImmediateInput): CommandLifecycleResult {
         var outcome: CommandLifecycleResult? = null
         val channelHandlers = mutableMapOf<String, InputHandler>(
             "action.enlist" to InputHandler { outcome = result(command.generalId, command.inputId, false,
@@ -97,7 +97,7 @@ class HwihaCourtHandler(
         }
     }
 
-    private fun handleKnown(command: HwihaCourtInput): CommandLifecycleResult {
+    private fun handleKnown(command: ImmediateInput): CommandLifecycleResult {
         fun deny(code: String, reason: String) = result(command.generalId, command.inputId, false, code, reason)
         if (world.ruleProfile != RuleProfile.HWIHA) return deny("WRONG_RULE_PROFILE", "이 월드의 규칙에서 사용할 수 없는 입력입니다.")
         if (!command.requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}"))) return deny("INVALID_REQUEST", "입력 식별자가 올바르지 않습니다.")

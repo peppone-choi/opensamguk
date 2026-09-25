@@ -4,7 +4,7 @@ import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.InputResolved
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
@@ -55,7 +55,7 @@ class HwihaDomesticEngineTest {
     }
 
     private fun submit(world: InMemoryTurnWorld, recorder: ChangeRecorder, inputId: String, body: String, owner: Int = 42) =
-        HwihaCourtHandler(world, recorder, context).handle(HwihaCourtInput("req-${body.hashCode().toUInt()}", 1, owner, inputId, body))
+        HwihaCourtHandler(world, recorder, context).handle(ImmediateInput("req-${body.hashCode().toUInt()}", 1, owner, inputId, body))
 
     private fun boundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, year: Int, month: Int, phase: Int): HwihaDomesticBoundary.Outcome {
         world.setCurrentDate(year, month, phase)
