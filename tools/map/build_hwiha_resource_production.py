@@ -40,7 +40,11 @@ ERA = "LATER_HAN"
 
 
 def timber_cells_by_jurisdiction(tiles: dict) -> dict[str, int]:
-    """縣별 삼림 가능 칸 수. 소유 격자를 그대로 읽는다 — 어림하지 않는다."""
+    """縣별 삼림 가능 면적을 원래 게임 격자의 칸 수로 환산한다.
+
+    지도 해상도를 높여도 생산량은 변하지 않는다. 마지막 정수 반올림은
+    국소 해안선 조정으로 4×4 블록이 완전하지 않을 때만 영향을 준다.
+    """
     from tools.map.measure_province_seat_offset import expand_rle
 
     meta = tiles["_meta"]
@@ -58,7 +62,12 @@ def timber_cells_by_jurisdiction(tiles: dict) -> dict[str, int]:
             jurisdiction = records[province].get("jurisdictionId")
             if jurisdiction:
                 cells[jurisdiction] = cells.get(jurisdiction, 0) + 1
-    return cells
+    scale = int(meta.get("resolutionScale", 1))
+    if scale < 1:
+        raise ValueError("resolutionScale must be positive")
+    area_divisor = scale * scale
+    return {jurisdiction: max(1, (raw + area_divisor // 2) // area_divisor)
+            for jurisdiction, raw in cells.items()}
 
 
 def runtime_county_by_jurisdiction(tiles: dict) -> dict[str, int]:
@@ -104,7 +113,7 @@ def build() -> dict:
                              "sourceName": entry.get("sourceName"), "matchStatus": entry["matchStatus"]})
         row["monthly"][resource] = row["monthly"].get(resource, 0) + RATES[resource]
 
-    # 목재: 면적 축. 산지 근거가 없는 대신 칸 수가 근거다.
+    # 목재: 면적 축. 세부 격자 수는 기준 격자 면적으로 환산한다.
     for jurisdiction, cells in timber_cells_by_jurisdiction(tiles).items():
         if jurisdiction not in known or cells <= 0:
             continue
@@ -131,7 +140,9 @@ def build() -> dict:
         "era": ERA,
         "rates": dict(sorted(RATES.items())),
         "timber": {"perWoodedCell": TIMBER_PER_CELL, "woodedTerrainCodes": sorted(WOODED_TERRAIN),
-                   "axis": "han-tiles 소유 격자의 삼림 가능 칸 수", "basis": "GAME_DESIGN_DISTRIBUTED"},
+                   "resolutionAreaDivisor": int(tiles["_meta"].get("resolutionScale", 1)) ** 2,
+                   "axis": "han-tiles 소유 격자의 삼림 가능 면적(기준 격자 칸 수로 환산)",
+                   "basis": "GAME_DESIGN_DISTRIBUTED"},
         "source": {"path": "data/curated/han/resource-sites-v1.json",
                    "catalogId": sites["catalogId"]},
         "counts": {"counties": len(ordered), "monthlyTotals": dict(sorted(totals.items())),

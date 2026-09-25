@@ -38,6 +38,10 @@ class ResolvedHanWorldArtifacts internal constructor(
 /** Cache immutable artifacts, never the world's selection: a reset can change its roster. */
 class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
     companion object {
+        // Immutable topology pins for the two releases with the same 1447-city roster.
+        // Select from these before loading either multi-megabyte bundle.
+        private const val V3_1447_HASH = "393e42c8b0ff59b03f3bf5a1c67f41eb12caa53ce71033097480918f977b7ecb"
+        private const val V3_1447_MAP4_HASH = "eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14"
         /**
          * 엔진·API 는 저장소 루트에서 뜨므로 기본값은 `.` 이다. 그 전제가 성립하지 않는 곳 —
          * Gradle 이 모듈 디렉터리(app/game-engine)에서 띄우는 통합 테스트처럼 — 에서는 이
@@ -59,6 +63,7 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
         else if (it == HanWorldVariant.V3_1168) Han1168Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1224) Han1224Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1447) Han1447Artifacts.load(root)
+        else if (it == HanWorldVariant.V3_1447_MAP4) Han1447Map4Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1194) Han1194Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1341) Han1341Artifacts.load(root)
         else if (it == HanWorldVariant.V3_1141) Han1141Artifacts.load(root)
@@ -71,8 +76,25 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
         val ids = completeCityIds.toSet()
         require(ids.size == completeCityIds.size) { "Duplicate world city identities" }
         val candidates = HanWorldVariant.entries.filter { CityConstRegistry.hanWorld(it).all().keys == ids }
-        require(candidates.size == 1) { "World city identities do not select a unique registered Han artifact set" }
-        val selected = artifacts(candidates.single())
+        require(candidates.isNotEmpty()) { "World city identities do not select a registered Han artifact set" }
+        val selected = if (candidates.size == 1) {
+            artifacts(candidates.single())
+        } else {
+            // Both 1447 releases have the same city identities. Stored topology
+            // pins identify their grid; unpinned old worlds keep the old release.
+            if (pins.isEmpty()) artifacts(HanWorldVariant.V3_1447)
+            else {
+                require(pins.all { it.revision == "han-water-topology-v1" && it.hash == pins.first().hash }) {
+                    "World spatial pins disagree"
+                }
+                val variant = when (pins.first().hash) {
+                    V3_1447_HASH -> HanWorldVariant.V3_1447
+                    V3_1447_MAP4_HASH -> HanWorldVariant.V3_1447_MAP4
+                    else -> throw IllegalArgumentException("World spatial pins do not select one 1447 release")
+                }
+                artifacts(variant)
+            }
+        }
         val topology = selected.projection.topology
         pins.forEach { pin ->
             require(pin.channel in setOf("water_zone_control", "province_control", "general_spatial_position")) {

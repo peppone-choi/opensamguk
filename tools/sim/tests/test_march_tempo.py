@@ -18,8 +18,9 @@ class MarchTempoTest(unittest.TestCase):
         # 2026-09-18 실측(GH #806 지리 재분할 뒤). 城 씨앗이 실제 위치로 돌아와 최소제곱이 투영식 그 자체
         # (cell/k = 0.04690971/0.866025 = 0.05417°/col, cell = 0.04691°/row)로 수렴한다. 2026-09-17 의 0.0534/0.0461 은
         # 밀린 씨앗(p90 12.8칸)이 끌어내린 값이었다. ADR-LITE-053 의 lon 80.5–116.6 범위를 쓰면 0.047 이 되어 빨개진다.
-        self.assertAlmostEqual(self.graph.dlon, 0.0542, places=3)
-        self.assertAlmostEqual(self.graph.dlat, -0.0469, places=3)
+        scale = self.tiles['_meta'].get('resolutionScale', 1)
+        self.assertAlmostEqual(self.graph.dlon * scale, 0.0542, places=3)
+        self.assertAlmostEqual(self.graph.dlat * scale, -0.0469, places=3)
 
     def test_every_route_is_reachable_and_deterministic(self):
         self.assertTrue(all(r["reachable"] for r in self.rows))

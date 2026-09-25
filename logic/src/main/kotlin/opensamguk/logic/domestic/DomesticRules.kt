@@ -78,6 +78,7 @@ data class DomesticProjection(
     val landProvinceIds: Set<String>?,
     /** 원장이 있을 때만 향당 보너스를 판정한다. 장수 id → 본관 縣治 城 id. */
     val homeCountyByGeneral: Map<Int, Int> = emptyMap(),
+    val provinceIdsByCounty: Map<Int, Set<String>> = emptyMap(),
     val bugoks: List<DomesticBugok> = emptyList(),
     val countyAdjacency: Map<Int, Set<Int>> = emptyMap(),
     val supportedCrewTypeIds: Set<Int> = emptySet(),
@@ -218,7 +219,8 @@ object DomesticRules {
         val works = CountyWorks.read(county.meta)
         when {
             works?.active != null -> reject(DomesticFailure.WORK_IN_PROGRESS)
-            works?.completed?.any { it.work == request.work } == true -> reject(DomesticFailure.WORK_COMPLETED)
+            works?.completed?.any { it.work == request.work && it.edgeId == request.edgeId &&
+                it.row == request.row && it.col == request.col } == true -> reject(DomesticFailure.WORK_COMPLETED)
             else -> DomesticAssessment.Eligible(person = actor)
         }
     }
@@ -233,7 +235,7 @@ object DomesticRules {
         val works = CountyWorks.read(county.meta)
         if (works?.active != null) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
         if (request.work != DomesticWork.FORTIFICATION ||
-            works?.completed?.none { it.work == DomesticWork.FORTIFICATION } != false)
+            works?.completed?.none { it.work == DomesticWork.FORTIFICATION && it.edgeId == null } != false)
             return@guarded reject(DomesticFailure.WORK_NOT_COMPLETED)
         DomesticAssessment.Eligible(person = actor)
     }

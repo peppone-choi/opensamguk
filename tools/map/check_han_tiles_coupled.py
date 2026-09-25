@@ -71,7 +71,8 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/rebind_misbound_counties.py", "--check"), None),
     Coupled("frontier-county-materialization", ("data/map/han-tiles.json",),
             _t("tools/map/materialize_frontier_counties.py", "--check"), None, slow=True),
-    Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",),
+    Coupled("territory-disconnection-ledger", ("data/curated/han/territory-disconnection-adjudications-v1.json",
+                                              "data/curated/han/territory-disconnection-adjudications-map4-v1.json"),
             _t("tools/map/audit_territory_disconnections.py", "--check"), None, slow=True),
     Coupled("territory-review-table", ("data/curated/han/territory-disconnection-review-table-v1.json",),
             _t("tools/map/refresh_territory_review_table.py", "--check"), None),
@@ -156,6 +157,12 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("scenario-province-ownership", ("data/map/han-scenario-province-ownership-v1.json",),
             _t("tools/scenario/build_scenario_province_ownership.py", "--check"),
             _t("tools/scenario/build_scenario_province_ownership.py")),
+    # Initial roads preserve supply connections for these reviewed ownerships.
+    Coupled("land-roads", ("data/map/han-land-roads-v1.json",),
+            _t("tools/map/build_han_land_roads.py", "--check"),
+            _t("tools/map/build_han_land_roads.py")),
+    Coupled("province-clearance", ("data/map/han-tiles.json", "data/curated/han/province-dead-end-dispositions-v1.json"),
+            _t("tools/map/audit_province_clearance.py", "--check"), None),
     # ★ 지리 재분할(GH #806)의 씨앗 충돌 원장 초안. 기계 필드만 다시 뽑고 사람 판정 필드는 보존한다.
     Coupled("county-seed-collisions", ("data/curated/han/county-seed-collisions-v1.json",),
             _t("tools/map/draft_county_seed_collisions.py", "--check"),
@@ -174,6 +181,11 @@ COUPLED: tuple[Coupled, ...] = (
     # Latest release must reproduce current inputs; historical 1133 integrity remains separately tested.
     Coupled("release-1447-bundle", ("data/map/han-world-v3-1447-artifacts-v1/catalog.json",),
             _t("tools/map/build_han_1447_bundle.py", "--check"), None),
+    Coupled("province-relocations-map4", ("data/curated/han/province-relocations-map4-v1.json",),
+            _t("tools/map/build_province_relocations.py", "--check"),
+            _t("tools/map/build_province_relocations.py", "--write")),
+    Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
+            _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
 )
 
 

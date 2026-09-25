@@ -26,10 +26,12 @@ class CountyGeographyJsonTest {
     @Test fun `non administrative cities and cities without a commandery are left out`() {
         val map = """{"cities":[{"id":1,"meta":{"junCh":"甲郡","jun":"갑군"},"provinceId":0},
             {"id":2,"meta":{"jun":"을군"},"provinceId":1},{"id":3,"meta":{"junCh":"丙郡"},"provinceId":1}]}""".toByteArray()
-        val tiles = """{"provinceRecords":[{"jurisdictionId":"j1"},{"jurisdictionId":"j2"}]}""".toByteArray()
+        val tiles = """{"provinceRecords":[{"id":"seat","jurisdictionId":"j1"},
+            {"id":"other","jurisdictionId":"j2"},{"id":"cityless","jurisdictionId":"j1"}]}""".toByteArray()
         val geography = CountyGeographyJson.parse(map, tiles, setOf(1, 2))
         assertEquals(setOf(1), geography.byCounty.keys)
         assertEquals("甲郡", geography.commanderyOf(1))
         assertEquals(1, geography.countyOfJurisdiction("j1"))
+        assertEquals(setOf("seat", "cityless"), geography.provincesOfCounty(1))
     }
 }

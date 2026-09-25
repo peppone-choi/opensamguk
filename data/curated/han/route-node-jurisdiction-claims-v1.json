@@ -4879,7 +4879,7 @@
       "evidence": {
         "kind": "USER_APPROVED_SYNTHETIC_GAME_CITY",
         "datasetPath": "data/curated/han/gap-counties-v1.json",
-        "datasetSha256": "493c16fe13cb6dc9b09abda687a3116e154d0fafb1ade904c65465415418d9c0",
+        "datasetSha256": "6c0c9d1b3674725e3fee2aa5daa8063da9fd7f349ce669abb1f6b1685b14a2e1",
         "countyId": "hhs:113:遼東屬國:005",
         "jurisdictionId": "gc-g0097-005"
       }

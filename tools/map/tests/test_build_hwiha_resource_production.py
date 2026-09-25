@@ -100,6 +100,10 @@ class HwihaResourceProductionTest(unittest.TestCase):
         self.assertEqual(dict(sorted(tool.RATES.items())), self.built["rates"])
         self.assertEqual(tool.TIMBER_PER_CELL, self.built["timber"]["perWoodedCell"])
         self.assertEqual(sorted(tool.WOODED_TERRAIN), self.built["timber"]["woodedTerrainCodes"])
+        scale = self.tiles["_meta"]["resolutionScale"]
+        self.assertEqual(scale * scale, self.built["timber"]["resolutionAreaDivisor"])
+        # 4배 정밀 격자는 화면·건설 위치만 늘린다. 월 생산량은 기존 게임 면적과 같다.
+        self.assertEqual(197_460, self.built["counts"]["monthlyTotals"]["TIMBER"])
 
     def test_unbound_entries_are_skipped_not_guessed(self):
         for row in self.built["skipped"]:

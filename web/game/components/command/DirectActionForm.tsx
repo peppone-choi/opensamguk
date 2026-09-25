@@ -2,16 +2,16 @@
 import {useEffect,useRef,useState} from 'react';
 import {api} from '../../lib/api';
 import {submitCommandAndAwaitResult} from '../../lib/commandSubmit';
-import type {DirectActionActionId,DirectActionOptions} from '../../lib/types';
+import type {DirectActionId,DirectActionOptions} from '../../lib/types';
 
-export const legacyDirectLabels:Record<DirectActionActionId,string>={
+export const legacyDirectLabels:Record<DirectActionId,string>={
     'action.convertProficiency':'숙련전환','action.tradeEquipment':'장비매매',
     'action.tradeGrain':'군량매매','action.transport':'물자조달',
 };
-export function isLegacyDirectActionId(value:string):value is DirectActionActionId{return value in legacyDirectLabels;}
+export function isLegacyDirectActionId(value:string):value is DirectActionId{return value in legacyDirectLabels;}
 
 export default function DirectActionForm({inputId,generalId,turnIdx,refreshKey,unavailable,onToast,onClose,onReserved}:{
-    inputId:DirectActionActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
+    inputId:DirectActionId;generalId:number;turnIdx:number;refreshKey?:number;unavailable:boolean;
     onToast:(message:string,type:'success'|'error'|'info')=>void;onClose:()=>void;onReserved?:()=>void;
 }){
     const [data,setData]=useState<DirectActionOptions|null>(null);

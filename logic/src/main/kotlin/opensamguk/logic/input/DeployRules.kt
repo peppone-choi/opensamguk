@@ -5,12 +5,13 @@ import opensamguk.logic.world.*
 /** Shared admission/execution checks. A new order must have a currently passable land route. */
 object DeployRules {
     fun assess(request: DeployInput, state: DeploymentProjection, topology: StrategicTopologySnapshot,
-        worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot): DeploymentAssessment {
+        worldMeta: Map<String, Any?>, metrics: LandMarchMetricSnapshot,
+        passageOverride: StrategicEdgeStateSnapshot? = null): DeploymentAssessment {
         val relationship = DeploymentRules.assess(request.deploymentRequest(), state)
         if (relationship !is DeploymentAssessment.Eligible) return relationship
         if (!topology.containsNode(request.destination)) return DeploymentAssessment.Rejected(DeploymentFailure.INVALID_DESTINATION)
         return try {
-            val edges = LandPassageState.read(worldMeta, topology)
+            val edges = passageOverride ?: LandPassageState.read(worldMeta, topology)
             // 기록이 쌓인(PENDING) 반응 목록은 출병 입력을 막지 않는다 — 진입 판정이 반응 정책으로 따로 본다.
             if (edges == null || MarchReactions.presence(worldMeta).let {
                     it == MarchReactions.Presence.MISSING || it == MarchReactions.Presence.MALFORMED })

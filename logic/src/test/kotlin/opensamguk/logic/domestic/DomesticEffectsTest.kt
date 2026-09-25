@@ -137,4 +137,35 @@ class DomesticEffectsTest {
         val fast = DomesticEffects.remainingPhases(design, work, seat(100))
         assertTrue(fast < slow, "$fast < $slow")
     }
+
+    @Test fun `another road site completes without granting county commerce twice`() {
+        val spec = design.works.getValue(DomesticWork.ROAD)
+        val nearCompletion = DomesticEffects.newWork(design, DomesticWork.ROAD, "second-road", 1, now)
+            .copy(progress = spec.requiredProgress - 1,
+                charged = DomesticEffects.charged(spec.cost, spec.requiredProgress - 1, spec.requiredProgress))
+        val stock = Resources(10_000_000, 10_000_000, 10_000_000, 10_000_000, 10_000_000)
+        val first = assertIs<WorkStep.Completed>(DomesticEffects.progressWork(
+            design, nearCompletion, now.plus(1), stock, levels, null))
+        val repeated = assertIs<WorkStep.Completed>(DomesticEffects.progressWork(
+            design, nearCompletion, now.plus(1), stock, levels, null, alreadyCompletedInCounty = true))
+        assertTrue(first.levels.commerce > levels.commerce)
+        assertEquals(levels, repeated.levels)
+        assertEquals(first.debit, repeated.debit)
+    }
+
+    @Test fun `strategic road and fort completion never grant county level bonuses`() {
+        val stock = Resources(10_000_000, 10_000_000, 10_000_000, 10_000_000, 10_000_000)
+        for (kind in listOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) {
+            val spec = design.works.getValue(kind)
+            val work = DomesticEffects.newWork(design, kind, "targeted", 1, now,
+                "road-piece", if (kind == DomesticWork.FORTIFICATION) 1 else null,
+                if (kind == DomesticWork.FORTIFICATION) 1 else null)
+                .copy(progress = spec.requiredProgress - 1,
+                    charged = DomesticEffects.charged(spec.cost, spec.requiredProgress - 1, spec.requiredProgress))
+            val completed = assertIs<WorkStep.Completed>(DomesticEffects.progressWork(
+                design, work, now.plus(1), stock, levels, null))
+            assertEquals(levels, completed.levels, kind.name)
+            assertEquals("road-piece", completed.completed.edgeId)
+        }
+    }
 }

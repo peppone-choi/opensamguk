@@ -19,6 +19,7 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicTopologySnapshot
+import opensamguk.logic.world.StrategicRoadGate
 import opensamguk.logic.world.CityConstVariant
 import opensamguk.infra.seed.UnitProfilesJson
 
@@ -32,6 +33,7 @@ class DomesticContext(
     val nativeCounties: NativeCountyLedger? = null,
     val topology: StrategicTopologySnapshot? = null,
     val metrics: LandMarchMetricSnapshot? = null,
+    val roadGates: List<StrategicRoadGate> = emptyList(),
     val merit: GovernanceMeritSink = GovernanceMeritSink.NONE,
     val cityConst: CityConstVariant? = null,
 ) {
@@ -70,6 +72,8 @@ class DomesticContext(
             homeCountyByGeneral = if (geography == null || ledger == null) emptyMap() else generals.mapNotNull { g ->
                 ledger.homeCounty(g.name, g.meta, geography)?.let { g.id to it }
             }.toMap(),
+            provinceIdsByCounty = if (geography == null) emptyMap() else world.administrativeCountyIds
+                .associateWith(geography::provincesOfCounty),
             activeSiegeCountyIds = world.listHwihaSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
         )
     }

@@ -95,10 +95,9 @@ class SearchDistanceTest {
         // A full BFS over the connected graph: a city reachable by multiple paths is finalized at the
         // FIRST (shortest, FIFO) dequeue. Assert each city appears exactly once and at its min dist.
         val cities = AiDistance.searchDistanceCities(from = 54, maxDist = 99)
-        // No duplicate keys (LinkedHashMap already enforces this) — but assert the count equals the
-        // distinct-city count and that a multi-path city (장사=14, reachable as a dist-1 neighbour and
-        // also via other hops) is pinned at its minimal dist 1, proving first-dequeue-wins.
-        assertEquals(94, cities.size, "all 94 connected cities finalized exactly once")
+        // The result covers the configured graph, and a multi-path city (장사=14)
+        // is pinned at its minimal distance, proving first-dequeue-wins.
+        assertEquals(CityConst.all().keys, cities.keys)
         assertEquals(1, cities.getValue(14), "장사(14) finalized at its minimal dist (first dequeue wins)")
         assertEquals(0, cities.getValue(54), "the from city is dist 0")
     }

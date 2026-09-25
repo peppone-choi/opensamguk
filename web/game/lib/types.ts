@@ -861,14 +861,14 @@ export interface PoliticalConsentOption {
     accepted?:boolean|null;code?:string|null;reason?:string|null;
 }
 export type TransferActionId = 'action.gift' | 'action.donate';
-export type DirectActionActionId = 'action.convertProficiency' | 'action.tradeEquipment'
+export type DirectActionId = 'action.convertProficiency' | 'action.tradeEquipment'
     | 'action.tradeGrain' | 'action.transport';
 export interface DirectActionChoice {
     label:string;arguments:Record<string,string|number>;available:boolean;
     code?:string|null;reason?:string|null;maxAmount?:number|null;
 }
 export interface DirectActionOptions {
-    inputId:DirectActionActionId;available:boolean;code?:string|null;reason?:string|null;
+    inputId:DirectActionId;available:boolean;code?:string|null;reason?:string|null;
     choices:DirectActionChoice[];
 }
 export type CourtActionId = 'court.releaseCorps' | 'court.diplomacy' | 'court.abandonCounty'

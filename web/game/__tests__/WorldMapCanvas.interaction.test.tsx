@@ -6,7 +6,6 @@ import {
   cityFallbackHitBox,
   cityMarkerRadius,
   initialView,
-  overviewCityVisualBox,
   provinceAtScreenPoint,
   screenToCell,
   type IsoView,
@@ -295,6 +294,7 @@ describe('shared WorldMapCanvas viewport interaction', () => {
         }
         moveTo(...values: number[]) { this.record.moves.push(values); }
         lineTo(...values: number[]) { this.record.lines.push(values); }
+        quadraticCurveTo(...values: number[]) { this.record.lines.push(values); }
         rect(...values: number[]) { this.record.rects.push(values); }
       },
       configurable: true,
@@ -881,7 +881,7 @@ describe('shared WorldMapCanvas viewport interaction', () => {
     expect(onCityActivate).not.toHaveBeenCalled();
   });
 
-  it('uses a contained overview glyph with all state channels when even the 16px marker cannot fit', () => {
+  it('draws a city instead of the old glyph even in a one-cell synthetic county', () => {
     const views: IsoView[] = [];
     const onCityActivate = vi.fn();
     const provinceMap: ProvinceIdentityMap = {
@@ -920,32 +920,16 @@ describe('shared WorldMapCanvas viewport interaction', () => {
 
     const canvas = screen.getByRole('img', { name: 'han 2D 지도' }) as HTMLCanvasElement;
     const main = recordFor(canvas);
-    expect(main.fillRects).not.toContain('#8b8172');
-    expect(main.fills).toContain('#8b8172');
-    expect(main.fills).toContain('#ffd84f');
-    expect(main.fills).toContain('#b72f2f');
-    expect(main.strokes).toContain('#ffffff');
-    expect(main.strokes).toContain('rgba(18,12,6,0.92)');
-    expect(main.strokes).toContain('#ffd84f');
+    expect(canvas.dataset.cityGlyphs).toBe('0');
+    expect(canvas.dataset.cityPixels).toBe('0');
+    expect(main.fillRects).toContain('#8b8172');
     expect(main.fillTexts).toContain('내 위치');
     expect(main.strokeRects.some(({ style }) => style === '#ffd84f')).toBe(true);
-    expect(main.strokeJoins).toContain('bevel');
     expect(main.clips).toBe(0);
 
     const view = views.at(-1)!;
     const [x, y] = cellToScreen(0, 0, view);
-    const box = overviewCityVisualBox(x, y, view.scale, 2, 0);
-    const hitX = box.right - (box.right - box.left) * 0.05;
-    fireEvent.pointerDown(canvas, {
-      clientX: hitX / 2, clientY: y / 2, pointerId: 1, pointerType: 'mouse',
-    });
-    fireEvent.pointerUp(canvas, {
-      clientX: hitX / 2, clientY: y / 2, pointerId: 1, pointerType: 'mouse',
-    });
-    expect(onCityActivate).toHaveBeenCalledWith(
-      expect.objectContaining({ id: 1 }),
-      { pointerType: 'mouse' },
-    );
+    expect(provinceAtScreenPoint(provinceMap, view, x, y)).toBe(0);
   });
 
   it('omits the self-location overlay when the current city is absent', () => {

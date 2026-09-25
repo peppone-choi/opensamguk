@@ -232,7 +232,7 @@ class CampReaderTest {
         `when`(cities.findById(6)).thenReturn(Optional.of(CityReadEntity(id = 6, worldId = 1, name = "장안", nationId = 1, supplyState = 1)))
         val iron = assertNotNull(reader.county(5, 1, 41))
         assertEquals("READY", iron.status); assertEquals("탕거", iron.name)
-        // 원장 행 200197(宕渠) = 철 1000 · 목재 132(면적 축).
+        // 원장 행 200197(宕渠) = 철 1000 · 목재 132(기준 격자 면적 축).
         assertEquals(listOf("IRON" to 1000L, "TIMBER" to 132L), iron.specialties.map { it.resource to it.ledgerMonthly })
         assertEquals("철", iron.specialties.first().label)
         assertEquals(listOf<Long?>(1000, 132), iron.specialties.map { it.monthly }, "보급된 우리 縣은 원장대로 들어온다")

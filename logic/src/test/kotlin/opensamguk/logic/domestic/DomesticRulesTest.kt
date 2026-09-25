@@ -28,6 +28,20 @@ class DomesticRulesTest {
 
     private fun rejected(result: DomesticAssessment) = assertIs<DomesticAssessment.Rejected>(result).reason
 
+    @Test fun `a road fort alone cannot be reduced as a county wall`() {
+        val fort = CompletedWork(DomesticWork.FORTIFICATION, now, "road-piece", 1, 1)
+        val withFort = county(10, meta = warehouse(10) +
+            (CountyWorks.META_KEY to CountyWorks(null, listOf(fort)).toMetaValue()))
+        val request = WorkRequest(1, 10, DomesticWork.FORTIFICATION)
+        assertEquals(DomesticFailure.WORK_NOT_COMPLETED, rejected(DomesticRules.assessReduce(
+            request, state(counties = listOf(withFort)))))
+        val wall = CompletedWork(DomesticWork.FORTIFICATION, now.plus(1))
+        val withWall = withFort.copy(meta = warehouse(10) + (CountyWorks.META_KEY to
+            CountyWorks(null, listOf(fort, wall)).toMetaValue()))
+        assertIs<DomesticAssessment.Eligible>(DomesticRules.assessReduce(
+            request, state(counties = listOf(withWall))))
+    }
+
     @Test fun `lord places an owned npc card as magistrate but never a human`() {
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPlacement(
             PlacementRequest(1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(10)), state()))

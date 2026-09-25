@@ -59,7 +59,8 @@ class WaterwayNetworkTest(unittest.TestCase):
         ledger = self.mutated()
         row = next(b for b in ledger["blocked"] if b["stableKey"] == "guangling")
         ledger["blocked"].remove(row)
-        city = next(c for c in self.tiles["cities"] if c["id"] == row["siteRef"]["id"])
+        from tools.map.korea_map_extension import base_frame
+        city = next(c for c in base_frame(self.tiles)["cities"] if c["id"] == row["siteRef"]["id"])
         ledger["nodes"].append({
             "stableKey": "guangling", "nameHan": row["nameHan"], "siteRef": row["siteRef"],
             "cell": {"row": city["row"], "col": city["col"]}, "reach": "jiang-ruxu-jianye",
@@ -72,10 +73,10 @@ class WaterwayNetworkTest(unittest.TestCase):
         self.node(ledger, "fankou")["reach"] = "he-mengjin"
         self.assertRed(ledger, "no inland port")
 
-    def test_site_cannot_be_moved_to_the_water(self):
+    def test_site_cell_must_match_the_committed_site(self):
         ledger = self.mutated()
         self.node(ledger, "jiangzhou")["cell"]["col"] += 1
-        self.assertRed(ledger, "sites are never moved")
+        self.assertRed(ledger, "ledger cell differs from the committed site cell")
 
     def test_crossing_banks_on_the_same_bank_are_rejected(self):
         ledger = self.mutated()
@@ -123,11 +124,11 @@ class WaterwayNetworkTest(unittest.TestCase):
         ledger = self.mutated()
         row = next(b for b in ledger["blocked"] if b["stableKey"] == "guandu")
         ledger["blocked"].remove(row)
-        anchor = next(s for s in self.strong["strongholds"] if s["id"] == "guandu")["tileAnchor"]
+        from tools.map.korea_map_extension import base_frame
+        anchor = next(c for c in base_frame(self.tiles)["cities"] if c["id"] == "ss-guandu")
         ledger["nodes"].append({
             "stableKey": "guandu", "nameHan": "官渡", "siteRef": row["siteRef"],
-            # 거점 원장의 tileAnchor 는 원래 프레임 좌표다. 확장 프레임에서는 +174 로 옮겨 맞췄는데,
-            # 2026-09-21 프레임을 걷어낸 뒤로는 그대로 쓴다.
+            # 시험 변이는 실제 배치된 거점 칸을 쓰되 물에서 먼 항구를 주장한다.
             "cell": {"row": anchor["row"], "col": anchor["col"]}, "reach": "he-mengjin",
             "roles": ["PORT"], "sourceRefs": row["sourceRefs"], "crossing": None,
             "port": {"landProvinceId": "82879", "sourceRefs": row["sourceRefs"]}})

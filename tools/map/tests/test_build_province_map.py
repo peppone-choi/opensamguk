@@ -161,7 +161,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "dimension"):
             build_from_runs([], [], 4097, 1)
         with self.assertRaisesRegex(ValueError, "cell count"):
-            build_from_runs([], [], 2048, 2049)
+            build_from_runs([], [], 3072, 3000)
         with self.assertRaisesRegex(ValueError, "exceeds"):
             build_from_runs([[0, 10**9]], [[0, 1]], 1, 1)
 
@@ -215,7 +215,7 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
 
         expected_provinces = [value for value, count in source["owner"] for _ in range(count)]
         expected_commanderies = [value for value, count in source["parentOwner"] for _ in range(count)]
-        self.assertEqual((width, height), (768, 669))
+        self.assertEqual((width, height), (source["_meta"]["cols"], source["_meta"]["rows"]))
         self.assertEqual(provinces, expected_provinces)
         self.assertEqual(commanderies, expected_commanderies)
 

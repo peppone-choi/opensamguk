@@ -22,20 +22,24 @@ internal object Han1447Artifacts {
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-    fun load(root: Path): ResolvedHanWorldArtifacts {
-        val variant = HanWorldVariant.V3_1447
-        val directory = root.resolve("data/map/han-world-v3-1447-artifacts-v1")
+    fun load(root: Path): ResolvedHanWorldArtifacts = loadPinned(
+        root, HanWorldVariant.V3_1447, "han-world-v3-1447-artifacts-v1", CATALOG_SHA256)
+
+    internal fun loadPinned(root: Path, variant: HanWorldVariant, directoryName: String,
+                            catalogSha256: String): ResolvedHanWorldArtifacts {
+        val directory = root.resolve("data/map/$directoryName")
         val catalogPath = directory.resolve("catalog.json")
         RepositoryInputTrace.file(catalogPath)
         val raw = Files.readAllBytes(catalogPath)
-        require(sha(raw) == CATALOG_SHA256) { "1447 release catalog hash mismatch" }
+        require(sha(raw) == catalogSha256) { "${variant.artifactId} release catalog hash mismatch" }
         val catalog = mapper.readTree(raw)
         require(catalog.path("schemaVersion").asInt() == 1 &&
             catalog.path("artifactId").asText() == variant.artifactId &&
             catalog.path("logicalMapName").asText() == "han-world-v3" &&
             catalog.path("cityCount").asInt() == variant.cityCount) { "1447 release identity mismatch" }
         val entries = catalog.path("files").toList()
-        val paths = HanStrategicTopologyJson.artifactPaths() + ownershipPaths
+        val paths = HanStrategicTopologyJson.artifactPaths() + ownershipPaths +
+            (if (variant == HanWorldVariant.V3_1447_MAP4) setOf("data/map/han-land-roads-v1.json") else emptySet())
         require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
             "1447 release artifact path set mismatch"
         }
