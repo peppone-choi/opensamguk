@@ -1,4 +1,4 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
@@ -8,6 +8,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.input.HwihaScoutInput
 
 /** Where FULL vision comes from (spec §7 plus the 2026-09-23 user decision). */
 enum class VisionSourceKind { SELF, OWN_CORPS, RETINUE, TERRITORY, SCOUT_POST, WATCHTOWER_BEACON }
@@ -18,7 +19,7 @@ data class TroopBand(val code: String, val label: String, val minInclusive: Int)
  * Confirmed vision numbers (2026-09-23 user decision). The only source is `data/curated/han/hwiha-vision-rules-v1.json`; this object
  * copies nothing into code and fails closed when the file is missing or malformed.
  */
-object HwihaVisionRules {
+object VisionRules {
     const val ADJACENCY_RULE = "SHARED_BORDER_4_NEIGHBOUR"
     private const val RESOURCE = "hwiha/hwiha-vision-rules-v1.json"
 
@@ -52,7 +53,7 @@ object HwihaVisionRules {
     }
 
     val CANON: Rules by lazy {
-        parse(checkNotNull(HwihaVisionRules::class.java.classLoader.getResource(RESOURCE)) {
+        parse(checkNotNull(VisionRules::class.java.classLoader.getResource(RESOURCE)) {
             "hwiha vision rules resource is missing: $RESOURCE"
         }.readText())
     }

@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementState
+
 data class DispatchPerson(val id: Int, val nationId: Int, val isLord: Boolean, val isHuman: Boolean,
     val meta: Map<String, Any?>)
 data class DispatchRetainer(val id: Int, val masterId: Int, val generalId: Int, val loyalty: Int)
@@ -99,7 +101,7 @@ object HwihaDispatchRules {
             val assignment = HwihaCountyAssignment.read(it.meta)
             val pending = HwihaDispatchState.read(it.meta)
             // A card placed (or queued) as this county's magistrate also holds the seat (배치 縣令, #193).
-            val placement = HwihaPlacementState.read(it.meta)
+            val placement = PlacementState.read(it.meta)
             (assignment?.countyId == countyId && assignment.nationId == it.nationId && assignment.nationId == owner) ||
                 (pending?.countyId == countyId && pending.status == DispatchStatus.PENDING && pending.nationId == it.nationId && pending.nationId == owner) ||
                 (placement?.claimsMagistracy(countyId) == true && it.nationId == owner)

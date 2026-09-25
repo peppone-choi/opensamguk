@@ -1,5 +1,16 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.ActivePlacement
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyWorks
+
+import opensamguk.logic.domestic.PlacementPost
+import opensamguk.logic.domestic.DomesticWork
+import opensamguk.logic.domestic.PlacementTarget
+import opensamguk.logic.domestic.DomesticEffects
+
 import opensamguk.logic.domestic.DomesticPerson
 import opensamguk.logic.domestic.DomesticCard
 import opensamguk.logic.domestic.DomesticCounty
@@ -32,8 +43,8 @@ class HwihaDomesticViewsTest {
     private val ruler = person(10, true, lord = true, level = 12)
 
     @Test fun `posts list my cards with lord gated seats and occupancy`() {
-        val claimed = mapOf(HwihaPlacementState.META_KEY to HwihaPlacementState(
-            HwihaActivePlacement(HwihaPlacementOrder("r1", 10, 5, PlacementPost.MAGISTRATE, PlacementTarget.County(7), now), now, null),
+        val claimed = mapOf(PlacementState.META_KEY to PlacementState(
+            ActivePlacement(PlacementOrder("r1", 10, 5, PlacementPost.MAGISTRATE, PlacementTarget.County(7), now), now, null),
             null).toMetaValue())
         val view = HwihaDomesticViews.posts(10, snapshot(listOf(ruler, person(20, false, meta = claimed), person(30, true))))
         assertEquals("READY", view.status)
@@ -70,10 +81,10 @@ class HwihaDomesticViewsTest {
     }
 
     @Test fun `works show startable costs and active progress with stop reasons`() {
-        val active = HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
-            .copy(progress = 150, charged = HwihaResources(money = 10_000, timber = 500), stopReason = HwihaDomesticEffects.INSUFFICIENT_STOCK)
-        val counties = listOf(DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse + (HwihaCountyWorks.META_KEY to
-            HwihaCountyWorks(active, listOf(HwihaCompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())),
+        val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
+            .copy(progress = 150, charged = HwihaResources(money = 10_000, timber = 500), stopReason = DomesticEffects.INSUFFICIENT_STOCK)
+        val counties = listOf(DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse + (CountyWorks.META_KEY to
+            CountyWorks(active, listOf(CompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())),
             DomesticCounty(8, "C8", 1, "p8", "甲郡", emptyMap()))
         val view = HwihaDomesticViews.works(10, snapshot(listOf(ruler, person(20, false), person(30, true)), counties))
         val c7 = view.counties.single { it.countyId == 7 }

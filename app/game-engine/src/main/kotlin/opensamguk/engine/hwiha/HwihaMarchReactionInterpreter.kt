@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.VisionRules
+
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
@@ -11,7 +13,7 @@ class HwihaMarchReactionInterpreter(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val commanderies: HanCommanderyIndex,
-    private val visionRules: HwihaVisionRules.Rules = HwihaVisionRules.CANON,
+    private val visionRules: VisionRules.Rules = VisionRules.CANON,
 ) : HwihaMarchReactionPolicy {
     private data class Decision(
         val scheme: Boolean,

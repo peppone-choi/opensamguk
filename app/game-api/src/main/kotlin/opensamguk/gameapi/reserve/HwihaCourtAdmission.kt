@@ -1,5 +1,7 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.DomesticInput
+
 import opensamguk.gameapi.precheck.HwihaDispatchPrecheckService
 import opensamguk.gameapi.read.HwihaDomesticReader
 import opensamguk.gameapi.read.HwihaDomesticForbidden
@@ -14,7 +16,7 @@ class HwihaCourtAdmission(private val precheck: HwihaDispatchPrecheckService,
     fun canonicalArguments(actorId: Int, ownerUserId: Int, inputId: String, raw: String): String {
         if (ownerUserId <= 0) throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
         // Standing domestic inputs share the immediate channel (no 12-phase slot), with their own admission.
-        if (inputId in HwihaDomesticInput.INPUT_IDS) return (domestic
+        if (inputId in DomesticInput.INPUT_IDS) return (domestic
             ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "내정 입력 정책을 확인할 수 없습니다."))
             .canonicalArguments(actorId, ownerUserId, inputId, raw)
         val (assessment, canonical) = when (inputId) {

@@ -1,5 +1,7 @@
 package opensamguk.engine.boot
 
+import opensamguk.logic.domestic.FieldInput
+
 import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.logic.war.hwiha.HwihaEncounterCombatProfiles
@@ -123,14 +125,14 @@ class HwihaMarchPersistenceIT {
         recorder = ChangeRecorder()
         val before = world.getCityById(countyId)!!.agriculture
         val handler = HwihaFieldHandler(world, recorder, HwihaDomesticContext())
-        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
+        val first = assertIs<HwihaTurnOutcome.Applied>(handler.handle(FieldInput.FARM, 1, "{}", "field-$id", 42))
         save(world, recorder)
         world = cold(id)
         assertTrue(world.getCityById(countyId)!!.agriculture > before)
         assertEquals(10, world.getGeneralById(1)!!.experience)
         assertEquals(1, world.getGeneralById(1)!!.dedication)
         assertEquals(first, HwihaFieldHandler(world, ChangeRecorder(), HwihaDomesticContext())
-            .handle(HwihaFieldInput.FARM, 1, "{}", "field-$id", 42))
+            .handle(FieldInput.FARM, 1, "{}", "field-$id", 42))
         assertEquals(10, cold(id).getGeneralById(1)!!.experience)
     }
 

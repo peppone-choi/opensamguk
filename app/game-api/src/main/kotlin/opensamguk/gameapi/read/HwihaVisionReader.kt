@@ -1,5 +1,7 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.VisionRules
+
 import opensamguk.gameapi.dto.*
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.input.*
@@ -33,12 +35,12 @@ class HwihaVisionReader(
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
     private val sources: HwihaVisionSourceReader,
-    private val rules: HwihaVisionRules.Rules,
+    private val rules: VisionRules.Rules,
 ) {
     @Autowired
     constructor(generals: GeneralReadRepository, worlds: WorldStateReadRepository, nations: NationReadRepository,
         retainers: RetainerReadRepository, artifacts: ActiveWorldArtifactResolver, spatial: SpatialStateReadRepository) :
-        this(generals, worlds, nations, retainers, artifacts, spatial, HwihaMetaVisionSourceReader, HwihaVisionRules.CANON)
+        this(generals, worlds, nations, retainers, artifacts, spatial, HwihaMetaVisionSourceReader, VisionRules.CANON)
 
     fun visibility(generalId: Int, userId: Long): HwihaVisibilityResponse {
         val frame = when (val built = frame(generalId, userId)) {
