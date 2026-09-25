@@ -198,6 +198,7 @@ class CommandReserveServiceTest {
             "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
         val stored = inbox.accepted.single()
         assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, stored.commandKind)
+        assertEquals("HwihaCourtInput", stored.actionCode)
         assertEquals(42, stored.ownerUserId)
         assertEquals(0, turns.reserves.size)
         val envelope = opensamguk.common.wire.WireJson.decodeFromString(opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(),

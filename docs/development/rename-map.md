@@ -19,7 +19,7 @@
 
 ## 정한 값의 근거
 
-- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.
+- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`과 `command_inbox.action_code` 값 `HwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.
 - `worldFormat = GENERAL_RETAINER_CAMPAIGN`은 유일한 제품 세계의 구조를 명시한다. 새 가드는 키·값이 없거나 옛 `ruleProfile`이 있으면 실패한다. 이전 데이터 자동 해석은 넣지 않는다.
 - DB의 `siege`와 `person_card`는 현행 스키마에 같은 이름이 없어 충돌하지 않는다. 이름 변경은 새 Flyway 파일로만 실행한다.
 - 상태 키 79종의 새 이름은 `hwiha` 접두사를 제거하되 현행 제품 의미가 남은 `Legacy`를 도메인 이름으로 풀어 썼다. 키 이름이 같은 다른 JSON 층(예: `corpsPolicies`)과 합쳐지지 않는지는 reader·writer별 픽스처에서 확인한다.
@@ -28,6 +28,7 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | 도메인별 즉시 입력 값 | 예정 | #919에서는 기존 값 고정; 새 값은 저장·통신 단계에서 확정 |
 | `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
 | `hwiha_siege` | `siege` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
 | `hwiha_person_card` | `person_card` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |

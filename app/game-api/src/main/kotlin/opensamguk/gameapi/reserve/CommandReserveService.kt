@@ -398,7 +398,10 @@ class CommandReserveService(
                     } else intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
                     generalId = null,
                     turnIdx = 0,
-                    actionCode = command::class.simpleName,
+                    actionCode = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
+                        // Keep the existing inbox value until the storage identifier migration.
+                        "HwihaCourtInput"
+                    } else command::class.simpleName,
                     payloadJson = payload,
                     ownerUserId = ownerUserId,
                 ),
