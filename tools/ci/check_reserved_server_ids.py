@@ -16,6 +16,7 @@ WORKFLOWS = (
     ".github/workflows/promote-game-server.yml",
     ".github/workflows/deploy.yml",
 )
+RECOVERY = "tools/ops/game_server_recovery.py"
 
 
 def read_ids(path: str) -> set[str]:
@@ -25,6 +26,11 @@ def read_ids(path: str) -> set[str]:
         if match is None:
             raise ValueError(f"reserved ID list missing: {path}")
         return set(re.findall(r"'([^']+)'", match.group(1)))
+    if path == RECOVERY:
+        match = re.search(r"RESERVED = set\((.*?)\.split\(\)\)", source, re.S)
+        if match is None:
+            raise ValueError(f"reserved ID list missing: {path}")
+        return set(" ".join(re.findall(r"'([^']*)'", match.group(1))).split())
     match = re.search(r"readonly RESERVED_PUBLIC_SERVER_IDS='([^']+)'", source)
     if match is None:
         raise ValueError(f"reserved ID list missing: {path}")
@@ -40,7 +46,7 @@ def built_screens() -> set[str]:
 
 
 def main() -> int:
-    paths = TYPESCRIPT + WORKFLOWS
+    paths = TYPESCRIPT + WORKFLOWS + (RECOVERY,)
     expected = read_ids(paths[0])
     errors = []
     for path in paths[1:]:
