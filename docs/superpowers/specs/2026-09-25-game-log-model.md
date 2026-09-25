@@ -121,7 +121,7 @@
 ### 읽기 소비자·공개 경계 요약
 
 | 읽기/화면 근거 | 실제 조건·제한 | 새 계약상 처리 |
-|---|---|
+|---|---|---|
 | `A/read/HwihaRecordReadRepository.kt:42-75`, `A/read/HwihaLastTurnsReader.kt:33-69`, `A/web/HwihaLastTurnsController.kt:18-23`, `web/game/components/hwiha/LastTurnPanel.tsx:47-79` | 본인 소유 장수의 최근 12순(최대 36) 개인 기록 및 자기 세력 allowlist+세계 발표만. 화면은 비어 있지 않은 앞 6순과 요약 앞 4건만 표시. | 각 분류/권한을 조회 레벨에서 분리하고 12순 창이 버린 오래된 기록은 커서로 접근. |
 | `A/controller/GeneralLogController.kt:53-103`, `A/read/AdminGeneralLogReadRepository.kt:13-47`, `web/game/components/game/MyInfoLogPanel.tsx:114-160`, `web/game/app/game/battle-center/page.tsx:56-62` | 같은 세력, 사관/수뇌 권한. 개인 action은 유저 장수 타인을 수뇌만; action/전투는 30건 id 페이지, history는 무제한. | 새 audience 권한과 전투 replay 권한을 명시. |
 | `A/read/LogFeedReadRepository.kt:17-148` | 세계 history/action은 `SYSTEM` category로, 개인 action은 general id로 검색. 연월 조회 일부 무제한. | 공개 kind + publication 필터, 개인 소유 검증이 있는 서비스만 노출. |
