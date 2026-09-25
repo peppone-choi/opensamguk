@@ -1320,7 +1320,7 @@
   1. **휘하가 유일한 제품 규칙**이다. 휘하 월드/비휘하 월드 선택 UI와 분기를 두지 않는다. 시나리오 시드·API 기본 해석·웹 제품 경로의 기본값은 HWIHA다.
   2. 삼모 명령·알파 카탈로그·엔진 코드·골든·회귀·도구는 의존 감사 후 제거한다. 휘하가 쓰는 공유 동작은 중립 이름으로 이전한다. registry 밖 입력은 명시적으로 실패한다(2026-09-25 ADR-LITE-066 정정).
   3. 현재 `/game/<서버>/hwiha/*` 화면을 해당 서버의 메인 제품 경로로 승격하고 옛 주소는 새 주소로 리다이렉트한다. 메인 작전실은 휘하 작전실이다. 전체 지도 역사 시나리오는 S4([#596](https://github.com/peppone-choi/opensamguk/issues/596)) 몫이므로, 컷오버 기본 시나리오는 런북의 `scenario_990002`다.
-  4. 삼모 복귀 env 스위치는 제거한다. 롤백은 컷오버 전 `IMAGE_TAG`·`WEB_GAME_TAG` 이미지와 백업 복원으로 수행한다. 해당 SHA 이미지는 레지스트리 정리 대상에서 영구 제외한다. [#891](https://github.com/peppone-choi/opensamguk/issues/891)은 이 코드 정리 작업으로 대체한다(2026-09-25 ADR-LITE-066 정정).
+  4. 삼모 복귀 env 스위치는 제거한다. 롤백은 컷오버 전 `IMAGE_TAG`·`WEB_GAME_TAG` 이미지와 백업 복원으로 수행한다. 해당 SHA 이미지는 레지스트리 정리 대상에서 영구 제외한다. [#891](https://github.com/peppone-choi/opensamguk/issues/891)은 [코드 정리 #917](https://github.com/peppone-choi/opensamguk/issues/917)로 대체·종결한다(2026-09-25 ADR-LITE-066 정정).
   5. [pep 전환 런북](../docs/admin/hwiha-pep-transition.md)의 C단계는 저장·통신 식별자 개명과 삼모 은퇴 뒤로 미룬다. 운영 월드 초기화·배포는 대상별 사용자 승인을 받은 후 백업 → 월드 초기화 → 휘하 시나리오 → 엔진 포함 승격 순서로 진행한다(2026-09-25 ADR-LITE-066 정정).
   6. **main 머지는 PR마다 사용자 허가**를 받는다. CI 필수 검사 전부 초록, 최신 main 반영, 리뷰 지적 처리 뒤 PR 번호·head SHA·CI·반영 리뷰·위험을 「머지 대기」로 보고하고 멈춘다. 포괄 허가는 그 말을 들을 때 열려 있던 PR에만 적용한다.
 - Supersedes: ADR-LITE-057 Consequences의 「라이브 서버와 기존 코드는 새 체계 활성화 전까지 그대로 운영」, ADR-LITE-049의 현행 메뉴·게이팅과 월드 프로필별 제품 분기 중 이 결정에 충돌하는 부분, [#249](https://github.com/peppone-choi/opensamguk/issues/249)의 RTK/devsam 기본 시나리오·제품 복귀 AC. 삼모 동결 기준선 의무는 2026-09-25 ADR-LITE-066으로 폐기했다.
