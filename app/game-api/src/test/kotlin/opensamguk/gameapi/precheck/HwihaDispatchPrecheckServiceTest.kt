@@ -155,7 +155,10 @@ class HwihaDispatchPrecheckServiceTest {
     @Test fun `options unavailable states stay explicit and corrupt queue never returns successful empty data`() {
         val people = setup()
         people[0].meta += HwihaQueuedDispatch.META_KEY to null
+        assertEquals(DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE),
+            service.assessDispatch(DispatchRequest(1,2,7),41))
         assertEquals(DispatchFailure.STATE_UNAVAILABLE,service.options(1,41).code)
+        assertEquals(DispatchFailure.STATE_UNAVAILABLE,service.pending(1,41).code)
         assertFalse(service.pending(1,41).result)
         `when`(resolver.resolve()).thenThrow(IllegalArgumentException("pin"))
         assertFalse(service.options(1,41).result)

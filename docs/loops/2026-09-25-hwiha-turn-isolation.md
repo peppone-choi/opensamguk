@@ -7,6 +7,7 @@
 - 발령 대기 메타 파싱 예외를 잡는다. 상사·기존 조정·계책 대기 메타도 기존의 조용한 무시 대신 실패로 확정한다.
 - 손상된 대기 키를 제거하고 개인 기록에 `STATE_UNAVAILABLE`을 남긴다. 유효한 요청 ID와 소유자 ID를 읽을 수 있으면 폴링 가능한 실패 결과도 같은 flush에 싣는다.
 - 조정 대기 입력은 실행 직전에도 같은 입력 원장의 배달 상태를 검사한다. 대기 중 `PLANNED`로 내려가거나 원장에서 빠진 입력은 효과를 실행하지 않고 사유가 있는 터미널 실패로 확정한다.
+- 리뷰 지적을 반영해 계책 폴백 식별자 `stratagem.unknown`도 결과 종류를 `STRATAGEM`으로 분류한다. API 발령 사전검사의 기존 예외 처리 범위는 손상 큐 테스트로 확인한다.
 - 다른 대기열과 개인 행동 처리는 계속한다.
 
 ## 검증
@@ -14,7 +15,9 @@
 - 적색: 수정 전 손상된 발령 메타를 넣은 `HwihaLegacyCourtHandlerTest`가 `IllegalArgumentException`으로 실패했다.
 - 초록: 같은 테스트 클래스 전체 통과. 네 대기열의 손상된 메타 제거·실패 결과를 확인했다.
 - 실제 `TurnDaemonLifecycle.runTick`에서 손상된 발령 장수와 뒤따르는 장수의 `turnTime`이 모두 전진함을 확인했다.
-- 발령을 예약한 뒤 원장 상태를 `PLANNED`로 내린 테스트에서 `NOT_DELIVERED` 결과와 대기 키 제거를 확인했다. `HwihaLegacyCourtHandlerTest` 8개 통과.
+- 발령을 예약한 뒤 원장 상태를 `PLANNED`로 내린 테스트에서 `NOT_DELIVERED` 결과와 대기 키 제거를 확인했다.
+- `court.releaseCorps` 대기 입력의 원장을 `PLANNED`로 내렸을 때에도 비용·효과 없이 `NOT_DELIVERED`가 나옴을 확인했다. 계책 폴백의 결과 종류와 API의 손상 큐 사전검사·옵션·대기 조회도 검증했다.
+- 리뷰 반영 후 `HwihaLegacyCourtHandlerTest` 10개와 `HwihaDispatchPrecheckServiceTest` 13개 통과(XML 실패·오류·건너뜀 0건).
 
 ## 남은 P0 범위
 

@@ -325,7 +325,7 @@ class HwihaCourtHandler(
     private fun result(generalId: Int, inputId: String, ok: Boolean, code: String? = null, reason: String? = null,
         type: String = if (ok) "executionApplied" else "executionRejected") =
         CommandLifecycleResult(type = type, ok = ok,
-            commandKind = if (inputId in HwihaLegacyStratagemInput.INPUT_IDS) "STRATAGEM" else "COURT_DECISION", actionCode = inputId,
+            commandKind = if (inputId.startsWith("stratagem.")) "STRATAGEM" else "COURT_DECISION", actionCode = inputId,
             generalId = generalId, code = code, reason = reason,
             inputResolved = catalog[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
 }
