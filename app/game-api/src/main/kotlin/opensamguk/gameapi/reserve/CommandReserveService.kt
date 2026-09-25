@@ -373,7 +373,7 @@ class CommandReserveService(
 
     fun publishImmediate(command: TurnDaemonCommand, ownerUserId: Int?): ReserveResult {
         val requestId = requestIds()
-        val boundCommand = if (command is TurnDaemonCommand.HwihaCourtInput) {
+        val boundCommand = if (command is TurnDaemonCommand.ImmediateInput) {
             val owner = ownerUserId?.takeIf { it > 0 }
                 ?: throw HwihaAdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
             val admission = hwihaCourtAdmission ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "발령 정책을 확인할 수 없습니다.")
@@ -392,13 +392,16 @@ class CommandReserveService(
                     worldId = worldId,
                     requestId = requestId,
                     commandKind = CommandKind.IMMEDIATE,
-                    intentFingerprint = if (boundCommand is TurnDaemonCommand.HwihaCourtInput) {
+                    intentFingerprint = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
                         intentFingerprint(CommandKind.IMMEDIATE, boundCommand.generalId, 0,
                             boundCommand.inputId, boundCommand.argJson, boundCommand.ownerUserId)
                     } else intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
                     generalId = null,
                     turnIdx = 0,
-                    actionCode = command::class.simpleName,
+                    actionCode = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
+                        // Keep the existing inbox value until the storage identifier migration.
+                        "HwihaCourtInput"
+                    } else command::class.simpleName,
                     payloadJson = payload,
                     ownerUserId = ownerUserId,
                 ),

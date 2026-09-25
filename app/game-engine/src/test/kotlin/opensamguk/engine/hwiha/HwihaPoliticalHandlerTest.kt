@@ -76,7 +76,7 @@ class HwihaPoliticalHandlerTest {
         assertEquals(HwihaPoliticalFailure.CONSENT_REQUIRED.name,
             assertIs<HwihaTurnOutcome.Rejected>(political.handle(HwihaPoliticalInput.ABDICATE,
                 ruler.id, args, "abdicate-denied", 42)).code)
-        val reply = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.HwihaCourtInput(
+        val reply = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.ImmediateInput(
             "accept-1052", successor.id, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":${ruler.id},"inputId":"action.abdicate","accepted":true}"""))
         assertTrue(reply.ok)
@@ -95,14 +95,14 @@ class HwihaPoliticalHandlerTest {
         val world = fixture.world(listOf(actor to route.start, target to route.start))
         val political = HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
         val args = """{"targetGeneralId":${target.id}}"""
-        val refused = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.HwihaCourtInput(
+        val refused = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.ImmediateInput(
             "refuse-1062", target.id, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":${actor.id},"inputId":"action.oath","accepted":false}"""))
         assertTrue(refused.ok)
         assertEquals(HwihaPoliticalFailure.CONSENT_DECLINED.name,
             assertIs<HwihaTurnOutcome.Rejected>(political.handle(HwihaPoliticalInput.OATH,
                 actor.id, args, "oath-refused", 42)).code)
-        val accepted = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.HwihaCourtInput(
+        val accepted = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.ImmediateInput(
             "accept-1062", target.id, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":${actor.id},"inputId":"action.oath","accepted":true}"""))
         assertTrue(accepted.ok)

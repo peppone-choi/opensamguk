@@ -87,7 +87,7 @@ class HwihaCourtApiIT {
         val requestId=json.readTree(mvc.perform(dispatch()).andExpect(status().isAccepted).andExpect(jsonPath("$.status").value("AVAILABLE")).andReturn().response.contentAsString)["requestId"].asText()
         val payload=jdbc.queryForObject("SELECT payload::text FROM command_inbox WHERE request_id=?",String::class.java,requestId)!!
         val envelope=opensamguk.common.wire.decodeCommandEnvelope(payload)
-        val typed=assertIs<opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput>(envelope.command)
+        val typed=assertIs<opensamguk.common.wire.TurnDaemonCommand.ImmediateInput>(envelope.command)
         assertEquals(requestId,typed.requestId); assertEquals(40,typed.ownerUserId)
         val published=mutableListOf<String>()
         assertEquals(1,fixture.service(WorldId(1),InMemoryTurnWorld(fixture.load(1)),published,intake=true).runIntakeCommands())

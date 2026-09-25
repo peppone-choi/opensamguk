@@ -15,7 +15,7 @@ import java.time.Instant
 class HwihaLegacyCourtHandlerTest {
     private val fixture = HwihaCampaignWorldFixture()
     private fun input(id: String, args: String, requestId: String = "court-test") =
-        TurnDaemonCommand.HwihaCourtInput(requestId, 501, 42, id, args)
+        TurnDaemonCommand.ImmediateInput(requestId, 501, 42, id, args)
 
     private fun catalogWithPlanned(inputId: String, originalState: String): HwihaInputCatalog {
         val resource = checkNotNull(javaClass.classLoader.getResource("command-catalog/hwiha-input-catalog.json"))

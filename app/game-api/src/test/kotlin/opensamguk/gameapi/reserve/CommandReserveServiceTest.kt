@@ -155,7 +155,7 @@ class CommandReserveServiceTest {
 
     @Test fun `court request collision binds actor owner input and canonical arguments`() {
         val admission = mock(HwihaCourtAdmission::class.java)
-        val base = opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput(
+        val base = opensamguk.common.wire.TurnDaemonCommand.ImmediateInput(
             "client-id", 10, 999, "court.dispatch", "{args}")
         val variants = listOf(base.copy(generalId = 11) to 42,
             base to 43, base.copy(inputId = "court.dispatchReply") to 42,
@@ -194,15 +194,16 @@ class CommandReserveServiceTest {
         val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", requestIds = { "domestic-req" }, transactions = TestTransactions,
             worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaCourtAdmission = court)
-        service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("client", 10, 999,
+        service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("client", 10, 999,
             "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
         val stored = inbox.accepted.single()
         assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, stored.commandKind)
+        assertEquals("HwihaCourtInput", stored.actionCode)
         assertEquals(42, stored.ownerUserId)
         assertEquals(0, turns.reserves.size)
         val envelope = opensamguk.common.wire.WireJson.decodeFromString(opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(),
             stored.payloadJson)
-        assertEquals(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("domestic-req", 10, 42, "placement.assign",
+        assertEquals(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("domestic-req", 10, 42, "placement.assign",
             """{"cardId":5,"post":"MAGISTRATE","countyId":7}"""), envelope.command)
         // Shared-rule rejections and malformed bodies never reach the inbox.
         for ((input, body, code) in listOf(
@@ -212,7 +213,7 @@ class CommandReserveServiceTest {
             Triple("work.start", """{"countyId":7,"work":"ROAD","x":1}""", "INVALID_REQUEST"),
         )) {
             assertEquals(code, assertFailsWith<HwihaAdmissionDenied> {
-                service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("c", 10, 42, input, body), 42)
+                service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("c", 10, 42, input, body), 42)
             }.code, body)
         }
         assertEquals(1, inbox.accepted.size)

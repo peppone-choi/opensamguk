@@ -185,7 +185,7 @@ class HwihaEconomyBoundaryTest {
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
         val recorder = ChangeRecorder()
         val court = HwihaCourtHandler(world, recorder)
-        val queued = court.handle(TurnDaemonCommand.HwihaCourtInput("reward-1", 1, 42, "court.reward", """{"retainerId":4,"money":500}"""))
+        val queued = court.handle(TurnDaemonCommand.ImmediateInput("reward-1", 1, 42, "court.reward", """{"retainerId":4,"money":500}"""))
         assertTrue(queued.ok, "${queued.code} ${queued.reason}")
         assertEquals(2000L, money(world, capital), "nothing is paid before the issuer's turn")
         court.onIssuerTurn(1)
