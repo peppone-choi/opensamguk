@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticCard
+
 import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 

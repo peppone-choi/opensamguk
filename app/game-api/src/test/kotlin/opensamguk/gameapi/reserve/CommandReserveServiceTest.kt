@@ -1,5 +1,11 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.persistence.CommandInboxRepository
@@ -179,12 +185,12 @@ class CommandReserveServiceTest {
     @Test fun `domestic standing inputs publish canonical immediate commands without a turn slot`() {
         val reader = mock(opensamguk.gameapi.read.HwihaDomesticReader::class.java)
         val now = opensamguk.logic.input.HwihaPhase(200, 1, 1)
-        fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.input.DomesticPerson(id, "G$id", 1, human,
+        fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.domestic.DomesticPerson(id, "G$id", 1, human,
             if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("hwihaLord" to lord))
-        val state = opensamguk.logic.input.HwihaDomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
-            listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.input.DomesticCard(5, 10, 20, "staff")),
-            listOf(opensamguk.logic.input.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
-            listOf(opensamguk.logic.input.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
+        val state = opensamguk.logic.domestic.DomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
+            listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.domestic.DomesticCard(5, 10, 20, "staff")),
+            listOf(opensamguk.logic.domestic.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
+            listOf(opensamguk.logic.domestic.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
         `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state))
         val catalog = opensamguk.logic.input.HwihaInputCatalog.load()
         val court = HwihaCourtAdmission(mock(opensamguk.gameapi.precheck.HwihaDispatchPrecheckService::class.java),

@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.logic.economy.HwihaResources
 
 enum class HwihaTransferFailure(val message: String) {
@@ -25,7 +30,7 @@ sealed interface HwihaTransferAssessment {
 }
 
 object HwihaTransferRules {
-    fun assess(request: HwihaTransferRequest, state: HwihaDomesticProjection): HwihaTransferAssessment {
+    fun assess(request: HwihaTransferRequest, state: DomesticProjection): HwihaTransferAssessment {
         fun reject(reason: HwihaTransferFailure) = HwihaTransferAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaTransferFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaTransferInput.INPUT_IDS || request.amount <= 0)

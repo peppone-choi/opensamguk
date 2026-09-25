@@ -1,5 +1,11 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticBugok
+import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticRules
+
 import opensamguk.logic.content.HwihaItemCatalogJson
 import opensamguk.logic.content.HwihaTreasureDefinition
 import opensamguk.logic.economy.HwihaCountyWarehouse
@@ -28,7 +34,7 @@ sealed interface HwihaLegacyDirectAssessment {
 }
 
 object HwihaLegacyDirectRules {
-    fun assess(request: HwihaLegacyDirectRequest, state: HwihaDomesticProjection): HwihaLegacyDirectAssessment {
+    fun assess(request: HwihaLegacyDirectRequest, state: DomesticProjection): HwihaLegacyDirectAssessment {
         fun reject(reason: HwihaLegacyDirectFailure) = HwihaLegacyDirectAssessment.Rejected(reason)
         val design = HwihaLegacyDirectDesign.CANON
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaLegacyDirectFailure.WRONG_RULE_PROFILE)
@@ -43,7 +49,7 @@ object HwihaLegacyDirectRules {
                 ?: return reject(HwihaLegacyDirectFailure.COUNTY_UNAVAILABLE)
             if (local.nationId != actor.nationId || local.nationId <= 0)
                 return reject(HwihaLegacyDirectFailure.FOREIGN_COUNTY)
-            val deployed = try { HwihaDomesticRules.deployedCorps(state) }
+            val deployed = try { DomesticRules.deployedCorps(state) }
                 catch (_: IllegalArgumentException) { return reject(HwihaLegacyDirectFailure.STATE_UNAVAILABLE) }
             if (deployed.any { unit.id in it.bugokIds }) return reject(HwihaLegacyDirectFailure.BUGOK_UNAVAILABLE)
             if (request.crewTypeId !in state.supportedCrewTypeIds)

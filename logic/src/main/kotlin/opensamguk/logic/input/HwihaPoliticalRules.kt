@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticProjection
+
 enum class HwihaPoliticalFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 정치 행동을 사용할 수 없습니다."),
     INVALID_INPUT("정치 행동 인자를 확인할 수 없습니다."),
@@ -34,7 +38,7 @@ sealed interface HwihaPoliticalAssessment {
 object HwihaPoliticalRules {
     val SUPPORTED_IDS = HwihaPoliticalInput.INPUT_IDS
 
-    fun assess(request: HwihaPoliticalRequest, state: HwihaDomesticProjection): HwihaPoliticalAssessment {
+    fun assess(request: HwihaPoliticalRequest, state: DomesticProjection): HwihaPoliticalAssessment {
         fun reject(reason: HwihaPoliticalFailure) = HwihaPoliticalAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaPoliticalFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in SUPPORTED_IDS ||
@@ -103,7 +107,7 @@ object HwihaPoliticalRules {
     }
 
     /** Used by the recipient's immediate reply, before storing their decision. */
-    fun assessConsent(targetId: Int, consent: HwihaPoliticalConsent, state: HwihaDomesticProjection): HwihaPoliticalFailure? {
+    fun assessConsent(targetId: Int, consent: HwihaPoliticalConsent, state: DomesticProjection): HwihaPoliticalFailure? {
         if (state.profile != RuleProfile.HWIHA) return HwihaPoliticalFailure.WRONG_RULE_PROFILE
         val target = state.person(targetId) ?: return HwihaPoliticalFailure.ACTOR_NOT_FOUND
         val issuer = state.person(consent.issuerGeneralId) ?: return HwihaPoliticalFailure.TARGET_NOT_FOUND
@@ -113,7 +117,7 @@ object HwihaPoliticalRules {
     }
 
     private fun relationFailure(inputId: String, issuer: DomesticPerson, target: DomesticPerson,
-        state: HwihaDomesticProjection): HwihaPoliticalFailure? {
+        state: DomesticProjection): HwihaPoliticalFailure? {
         if (issuer.id == target.id) return HwihaPoliticalFailure.INVALID_INPUT
         if (!target.userOwned) return HwihaPoliticalFailure.TARGET_NOT_HUMAN
         if (inputId == HwihaPoliticalInput.ABDICATE) {

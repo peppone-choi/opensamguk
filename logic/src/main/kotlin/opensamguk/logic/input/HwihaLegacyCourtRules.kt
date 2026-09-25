@@ -1,5 +1,11 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticRules
+
 import opensamguk.logic.economy.HwihaResources
 import opensamguk.logic.diplomacy.DiplomacyState
 
@@ -43,13 +49,13 @@ sealed interface HwihaLegacyCourtAssessment {
 }
 
 object HwihaLegacyCourtRules {
-    fun assess(actorId: Int, inputId: String, raw: String, state: HwihaDomesticProjection): HwihaLegacyCourtAssessment {
+    fun assess(actorId: Int, inputId: String, raw: String, state: DomesticProjection): HwihaLegacyCourtAssessment {
         fun fail(reason: HwihaLegacyCourtFailure) = HwihaLegacyCourtAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return fail(HwihaLegacyCourtFailure.WRONG_RULE_PROFILE)
         if (HwihaLegacyCourtInput.canonical(actorId, inputId, raw) == null) return fail(HwihaLegacyCourtFailure.INVALID_INPUT)
         val actor = state.person(actorId) ?: return fail(HwihaLegacyCourtFailure.ACTOR_NOT_FOUND)
         val nation = state.nation(actor.nationId) ?: return fail(HwihaLegacyCourtFailure.NOT_RULER)
-        if (HwihaDomesticRules.rulerOf(nation.id, state)?.id != actorId) return fail(HwihaLegacyCourtFailure.NOT_RULER)
+        if (DomesticRules.rulerOf(nation.id, state)?.id != actorId) return fail(HwihaLegacyCourtFailure.NOT_RULER)
         fun eligible(county: DomesticCounty? = null, person: DomesticPerson? = null,
             targetNation: DomesticNation? = null, corps: HwihaDeployedCorps? = null,
             source: HwihaResources? = null, destination: HwihaResources? = null) =
@@ -60,7 +66,7 @@ object HwihaLegacyCourtRules {
                     val request = HwihaCourtExpansionInput.parse(actorId, inputId, raw) as HwihaCourtExpansionRequest.ReleaseCorps
                     val person = state.person(request.targetGeneralId)?.takeIf { it.nationId == nation.id }
                         ?: return fail(HwihaLegacyCourtFailure.TARGET_UNAVAILABLE)
-                    val corps = HwihaDomesticRules.deployedCorps(state).singleOrNull {
+                    val corps = DomesticRules.deployedCorps(state).singleOrNull {
                         it.commanderGeneralId == person.id && it.ownerGeneralId == actorId
                     } ?: return fail(HwihaLegacyCourtFailure.CORPS_UNAVAILABLE)
                     eligible(person = person, corps = corps)
@@ -123,7 +129,7 @@ object HwihaLegacyCourtRules {
           catch (_: ArithmeticException) { fail(HwihaLegacyCourtFailure.STOCK_OVERFLOW) }
     }
 
-    private fun hasEnvoy(actorId: Int, targetNationId: Int, state: HwihaDomesticProjection): Boolean =
+    private fun hasEnvoy(actorId: Int, targetNationId: Int, state: DomesticProjection): Boolean =
         state.cards.any { card -> card.masterId == actorId && card.generalId?.let(state::person)?.let { person ->
             val placement = HwihaPlacementState.read(person.meta)?.active
             placement?.order?.post == PlacementPost.ENVOY &&

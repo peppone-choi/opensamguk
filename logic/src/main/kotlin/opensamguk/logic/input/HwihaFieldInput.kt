@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.economy.HwihaResources
 
@@ -53,7 +57,7 @@ sealed interface HwihaFieldAssessment {
 
 /** Both admission and execution resolve the exact same county from spatial position, never general.cityId. */
 object HwihaFieldRules {
-    fun assess(request: HwihaFieldRequest, state: HwihaDomesticProjection): HwihaFieldAssessment {
+    fun assess(request: HwihaFieldRequest, state: DomesticProjection): HwihaFieldAssessment {
         fun reject(reason: HwihaFieldFailure) = HwihaFieldAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaFieldFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaFieldInput.INPUT_IDS) return reject(HwihaFieldFailure.INVALID_INPUT)

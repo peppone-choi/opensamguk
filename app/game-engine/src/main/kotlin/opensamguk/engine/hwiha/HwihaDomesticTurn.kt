@@ -1,5 +1,9 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticAssessment
+import opensamguk.logic.domestic.DomesticRules
+
 import opensamguk.engine.turn.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
@@ -28,7 +32,7 @@ class HwihaDomesticTurn(
         val candidate = seatCandidate(generalId) ?: return
         val state = context.projection(world)
         val county = state.county(candidate) ?: return
-        val seated = try { HwihaDomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }
+        val seated = try { DomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }
         if (seated?.personId == generalId) activateCountyPolicy(county.id, state.now)
     }
 
@@ -49,7 +53,7 @@ class HwihaDomesticTurn(
         var active = stored.active
         val pending = stored.pending
         if (pending != null) {
-            when (val check = HwihaDomesticRules.assessPlacementOrder(generalId, pending, state)) {
+            when (val check = DomesticRules.assessPlacementOrder(generalId, pending, state)) {
                 is DomesticAssessment.Rejected -> {
                     log(generalId, "새 배치(${pending.post.label})가 무효가 되어 적용하지 않았습니다: ${check.reason.message}")
                     log(pending.ownerGeneralId, "${card.name}의 새 배치(${pending.post.label})가 무효가 되었습니다: ${check.reason.message}")
@@ -63,7 +67,7 @@ class HwihaDomesticTurn(
             }
         }
         if (active != null) {
-            val check = HwihaDomesticRules.assessPlacementOrder(generalId, active.order, state)
+            val check = DomesticRules.assessPlacementOrder(generalId, active.order, state)
             if (check is DomesticAssessment.Rejected) {
                 log(generalId, "${active.order.post.label} 배치가 풀렸습니다: ${check.reason.message}")
                 log(active.order.ownerGeneralId, "${card.name}의 ${active.order.post.label} 배치가 풀렸습니다: ${check.reason.message}")
@@ -86,7 +90,7 @@ class HwihaDomesticTurn(
 
     private fun activateCorpsPolicies(commanderId: Int) {
         val state = context.projection(world)
-        val deployed = try { HwihaDomesticRules.deployedCorps(state) } catch (_: IllegalArgumentException) { return }
+        val deployed = try { DomesticRules.deployedCorps(state) } catch (_: IllegalArgumentException) { return }
         var changed = false
         for (owner in world.listGenerals().sortedBy { it.id }) {
             val policies = try { HwihaCorpsPolicies.read(owner.meta) } catch (_: IllegalArgumentException) { null } ?: continue
@@ -132,7 +136,7 @@ internal class HwihaDomesticCountyEffects(
     private val recorder: ChangeRecorder,
     private val context: HwihaDomesticContext,
 ) {
-    fun apply(countyId: Int, state: HwihaDomesticProjection) {
+    fun apply(countyId: Int, state: DomesticProjection) {
         val county = state.county(countyId) ?: return
         if (county.nationId <= 0) return
         val city = world.getCityById(countyId) ?: return
@@ -140,7 +144,7 @@ internal class HwihaDomesticCountyEffects(
             // A corrupt policy record is not silently replaced by the default policy.
             return
         }
-        val effective = try { HwihaDomesticRules.effectivePolicy(county, state, context.design) } catch (_: IllegalArgumentException) {
+        val effective = try { DomesticRules.effectivePolicy(county, state, context.design) } catch (_: IllegalArgumentException) {
             write(city, levelsOf(city), city.meta, stored,
                 HwihaPolicyApplication(state.now, context.design.defaultCountyPolicy.name, "EMPTY", "STATE_UNAVAILABLE"))
             return

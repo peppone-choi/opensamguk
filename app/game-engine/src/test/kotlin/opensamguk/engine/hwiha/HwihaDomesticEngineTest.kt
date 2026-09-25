@@ -1,5 +1,9 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticFailure
+import opensamguk.logic.domestic.SeatedMagistrate
+import opensamguk.logic.domestic.DomesticRules
+
 import opensamguk.logic.domestic.DomesticDesign
 import java.time.Instant
 import kotlin.test.*
@@ -114,7 +118,7 @@ class HwihaDomesticEngineTest {
         assertEquals(HwihaPhase(200, 1, 1), HwihaPlacementState.read(world.getGeneralById(3)!!.meta)!!.active!!.arrivedAt)
         assertFalse(HwihaPlacementMarch.META_KEY in world.getGeneralById(3)!!.meta)
         val state = context.projection(world)
-        assertEquals(HwihaSeatedMagistrate(3, 1, true, 5), HwihaDomesticRules.seatedMagistrate(state.county(10)!!, state))
+        assertEquals(SeatedMagistrate(3, 1, true, 5), DomesticRules.seatedMagistrate(state.county(10)!!, state))
         // A second turn on the post neither re-marches nor re-logs the arrival.
         val logs = world.peekLogs().size
         assertTrue(HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3))
