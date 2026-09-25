@@ -74,10 +74,15 @@ object OfficeClaimHistoryCodec {
     private fun validateHistory(history: List<OfficeClaimRecord>) {
         require(history.map { it.id }.toSet().size == history.size)
         val seen = mutableMapOf<String, OfficeClaimRecord>()
+        val confirmedPredecessors = mutableSetOf<String>()
         history.forEach { claim ->
             claim.previousClaimId?.let { previousId ->
                 val previous = requireNotNull(seen[previousId]) { "claim predecessor must precede confirmation" }
                 require(previous.officeId == claim.officeId && previous.claimantId == claim.claimantId)
+                if (claim.origin == OfficeClaimOrigin.COURT_CONFIRMED) {
+                    require(previous.origin != OfficeClaimOrigin.COURT_CONFIRMED)
+                    require(confirmedPredecessors.add(previousId)) { "duplicate court confirmation" }
+                }
             }
             seen[claim.id] = claim
         }

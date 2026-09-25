@@ -50,18 +50,19 @@ class OfficeNominationTest {
     fun `confirmation appends a new claim without rewriting self styled origin or tenure origin`() {
         val self = OfficeClaims.selfStyle("claim-self", "office.taishou", 20)
         val tenure = OfficeTenure("tenure-1", self.officeId, "hhs-group:109:河南尹", 20, 20, 2, OfficeClaimOrigin.SELF_STYLED, 1)
-        val history = OfficeClaims.confirm(listOf(self), self.id, "claim-court", 1, CourtConfirmationProof("edict-1", self.officeId, 20))
+        val history = OfficeClaims.confirm(listOf(self), self.id, "claim-court", 1, CourtConfirmationProof("edict-1", self.officeId, 20, 1))
         assertEquals(2, history.size)
         assertEquals(OfficeClaimOrigin.SELF_STYLED, history[0].origin)
         assertEquals(OfficeClaimOrigin.COURT_CONFIRMED, history[1].origin)
         assertEquals(self.id, history[1].previousClaimId)
+        assertEquals(ClaimRecognition.RECOGNIZED, history[1].recognitionByPolity[1])
         assertEquals(OfficeClaimOrigin.SELF_STYLED, tenure.origin)
         assertEquals(history, OfficeClaimHistoryCodec.decode(OfficeClaimHistoryCodec.encode(history)))
         assertFailsWith<IllegalArgumentException> {
-            OfficeClaims.confirm(history, self.id, "claim-duplicate", 1, CourtConfirmationProof("edict-2", "office.other", 20))
+            OfficeClaims.confirm(history, self.id, "claim-duplicate", 1, CourtConfirmationProof("edict-2", "office.other", 20, 1))
         }
         assertFailsWith<IllegalArgumentException> {
-            OfficeClaims.confirm(history, self.id, "claim-second", 1, CourtConfirmationProof("edict-2", self.officeId, 20))
+            OfficeClaims.confirm(history, self.id, "claim-second", 1, CourtConfirmationProof("edict-2", self.officeId, 20, 1))
         }
         assertFailsWith<IllegalArgumentException> {
             OfficeClaimRecord("unproved", self.officeId, 20, OfficeClaimOrigin.COURT_CONFIRMED, 1, previousClaimId = self.id)

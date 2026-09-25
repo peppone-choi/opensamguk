@@ -107,8 +107,8 @@ data class OfficeClaimRecord(
     }
 }
 
-data class CourtConfirmationProof(val edictId: String, val officeId: String, val claimantId: Int) {
-    init { require(edictId.isNotBlank() && officeId.isNotBlank() && claimantId > 0) }
+data class CourtConfirmationProof(val edictId: String, val officeId: String, val claimantId: Int, val courtPolityId: Int) {
+    init { require(edictId.isNotBlank() && officeId.isNotBlank() && claimantId > 0 && courtPolityId > 0) }
 }
 
 object OfficeClaims {
@@ -137,7 +137,7 @@ object OfficeClaims {
             previousClaimId = prior.id,
             nominationId = prior.nominationId,
             edictId = proof.edictId,
-            recognitionByPolity = prior.recognitionByPolity,
+            recognitionByPolity = prior.recognitionByPolity + (proof.courtPolityId to ClaimRecognition.RECOGNIZED),
         )
         return history.toList() + confirmation
     }
