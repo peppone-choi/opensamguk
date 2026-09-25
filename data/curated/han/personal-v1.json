@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "ledgerId": "hwiha-personal-v1",
+  "ledgerId": "personal-v1",
   "status": "CONFIRMED",
   "note": "2026-09-24 사용자 확정: 견문 경험 10·치적 1, 단련 지정 능력 +1·피로 +5, 요양 부상 -10·피로 -10. 2026-09-25 위임 결정: 단련 상한 80, 은퇴 연령 60세. 은퇴자는 별도 정치 단계에서 후보를 지정한다.",
   "travelExperience": 10,

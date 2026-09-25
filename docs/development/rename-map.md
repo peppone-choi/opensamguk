@@ -155,7 +155,32 @@
 | `hwiha_person_card` | `person_card` | DB 식별자 draft | V64에서 뷰 개명과 새 meta 키 투영, V63 원본 유지 |
 | `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
 | `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 예정 | 옛 경로 308 리다이렉트 |
-| `data/**/hwiha-*.json` | 도메인별 파일명 | 예정 | 해시·핀·패키징 동시 갱신 |
+| `data/**/hwiha-*.json` | 도메인별 파일명 | 저장·통신 draft | 18개 파일·내부 ID·빌드 패키징·로더·생성기 경로 동시 갱신 |
+
+## 데이터 파일·리소스 대응
+
+| 이전 | 확정 이름 |
+|---|---|
+| `data/battle/hwiha-unit-profiles-v1.json` | `data/battle/unit-profiles-v1.json` |
+| `data/commands/hwiha-input-catalog.json` | `data/commands/input-catalog.json` |
+| `data/curated/han/hwiha-aptitude-weights-v1.json` | `data/curated/han/aptitude-weights-v1.json` |
+| `data/curated/han/hwiha-s3-provisional-v1.json` | `data/curated/han/campaign-balance-v1.json` |
+| `data/curated/han/hwiha-legacy-direct-v1.json` | `data/curated/han/direct-actions-v1.json` |
+| `data/curated/han/hwiha-domestic-v1.json` | `data/curated/han/domestic-v1.json` |
+| `data/curated/han/hwiha-equipment-v1.json` | `data/curated/han/equipment-v1.json` |
+| `data/curated/han/hwiha-items-excluded-v1.json` | `data/curated/han/items-excluded-v1.json` |
+| `data/curated/han/hwiha-military-v1.json` | `data/curated/han/military-v1.json` |
+| `data/curated/han/hwiha-people-v1.json` | `data/curated/han/people-v1.json` |
+| `data/curated/han/hwiha-personal-encounter-v1.json` | `data/curated/han/personal-encounter-v1.json` |
+| `data/curated/han/hwiha-personal-v1.json` | `data/curated/han/personal-v1.json` |
+| `data/curated/han/hwiha-political-v1.json` | `data/curated/han/political-v1.json` |
+| `data/curated/han/hwiha-renown-assessment-v1.json` | `data/curated/han/renown-assessment-v1.json` |
+| `data/curated/han/hwiha-renown-events-v1.json` | `data/curated/han/renown-events-v1.json` |
+| `data/curated/han/hwiha-resource-production-v1.json` | `data/curated/han/resource-production-v1.json` |
+| `data/curated/han/hwiha-treasure-cards-v1.json` | `data/curated/han/treasure-cards-v1.json` |
+| `data/curated/han/hwiha-vision-rules-v1.json` | `data/curated/han/vision-rules-v1.json` |
+
+classpath `hwiha/`는 `campaign/`으로 옮겼다. `tools/map/build_hwiha_resource_production.py`는 `build_county_resource_production.py`, `tools/content/build_hwiha_item_ledgers.py`는 `build_item_ledgers.py`가 되었으며, 생성 원장과 런타임 파일의 내부 ID·generator·sourceLedger도 새 이름을 쓴다. 지도 번들 판 ID(`han-world-v3-1447` 등)는 세계 핀 계약이므로 유지한다.
 
 ## 상태·시나리오 필드 대응
 

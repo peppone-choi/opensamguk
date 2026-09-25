@@ -10,7 +10,7 @@ import opensamguk.logic.world.*
 import org.slf4j.LoggerFactory
 
 /**
- * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, 확정 `hwiha-s3-provisional-v1.json` rations).
+ * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, 확정 `campaign-balance-v1.json` rations).
  *
  * - **출병 적재**: 출병하는 순간 출발지 창고망의 곡으로 부곡 휴대 군량을 (병력 × [CampaignBalance.DEPLOY_LOAD_MONTHS] 개월)까지 채운다.
  *   출발지가 자국 縣이 아니면(적지·무주지) 싣지 못한다. 창고가 모자라면 있는 만큼만 싣는다.

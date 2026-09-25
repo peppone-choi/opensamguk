@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "data/extracted/item/items.json",
-  "catalogId": "hwiha-treasure-cards-v1",
+  "catalogId": "treasure-cards-v1",
   "availabilityTwoCopyPolicy": "PENDING",
   "cards": [
     {

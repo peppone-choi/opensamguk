@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Split the extracted registry into HWIHA treasure, equipment, and excluded ledgers.
+"""Split the extracted registry into treasure, equipment, and excluded ledgers.
 
 Legacy availability 2 is classified as limited, but its card instance count stays
 unresolved until #788 receives a product decision. No runtime issuance occurs here.
@@ -56,17 +56,17 @@ def split(source: dict) -> tuple[dict, dict, dict]:
             raise ValueError(f"unsupported registered availability: {code}={availability}")
     common = {"schemaVersion": 1, "source": str(SOURCE)}
     return (
-        {**common, "catalogId": "hwiha-treasure-cards-v1",
+        {**common, "catalogId": "treasure-cards-v1",
          "availabilityTwoCopyPolicy": "PENDING", "cards": treasures},
-        {**common, "catalogId": "hwiha-equipment-v1", "equipment": equipment},
-        {**common, "catalogId": "hwiha-items-excluded-v1", "excluded": excluded},
+        {**common, "catalogId": "equipment-v1", "equipment": equipment},
+        {**common, "catalogId": "items-excluded-v1", "excluded": excluded},
     )
 
 
 def main() -> None:
     source = json.loads((ROOT / SOURCE).read_text(encoding="utf-8"))
-    for name, data in zip(("hwiha-treasure-cards-v1.json", "hwiha-equipment-v1.json",
-                           "hwiha-items-excluded-v1.json"), split(source)):
+    for name, data in zip(("treasure-cards-v1.json", "equipment-v1.json",
+                           "items-excluded-v1.json"), split(source)):
         (ROOT / OUTPUT / name).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

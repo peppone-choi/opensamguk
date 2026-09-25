@@ -73,7 +73,7 @@ data class WarehousesResponse(
 /**
  * 현 특산 한 줄.
  *
- * [ledgerMonthly] 는 `hwiha-resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 월 세입
+ * [ledgerMonthly] 는 `resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 월 세입
  * (`MonthlyCountyIncome`)이 이번 달 이 縣 창고에 실제로 넣을 양이다 — 주인 없음·보급 끊김·창고 없음이면 0,
  * 창고 meta 가 깨져 엔진도 건너뛰면 `null` 이다. 평소에는 두 값이 같다.
  */

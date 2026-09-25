@@ -1,9 +1,9 @@
 {
  "schemaVersion": 1,
- "artifactId": "hwiha-county-production-v1",
- "generator": "tools/map/build_hwiha_resource_production.py",
- "note": "철·말은 사료 산지, 목재는 면적 축이다. 전·곡은 HwihaCountyIncome 의 식이 만든다.",
- "sourceLedger": "data/curated/han/hwiha-resource-production-v1.json",
+ "artifactId": "county-production-v1",
+ "generator": "tools/map/build_county_resource_production.py",
+ "note": "철·말은 사료 산지, 목재는 면적 축이다. 전·곡은 CountyIncome 의 식이 만든다.",
+ "sourceLedger": "data/curated/han/resource-production-v1.json",
  "counts": {
   "counties": 1414,
   "monthlyTotals": {

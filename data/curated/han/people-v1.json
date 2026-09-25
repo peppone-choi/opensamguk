@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "ledgerId": "hwiha-people-v1",
+  "ledgerId": "people-v1",
   "status": "CONFIRMED",
   "note": "2026-09-24 사용자 확정: 탐색 1명·무비용, 등용 기본 50%, 포로 설득 기본 30%, 매력 차이 1점당 ±1%p(5~95%), 실패도 한 순 소비, 경험 10·치적 1. 타 세력 주공 포로는 국가 처리 전 설득 불가.",
   "searchDiscoverCount": 1,

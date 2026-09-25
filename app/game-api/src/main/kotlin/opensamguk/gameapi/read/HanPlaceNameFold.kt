@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 /**
  * 지명 대조용 정규화 — `tools/map/audit_county_coverage.py` 의 `load_fold_table()` · `make_normalizer()` 를
- * 그대로 옮긴 것이다. 글자표는 `data/curated/han/han-name-simplification-v1.json`(빌드가 classpath `hwiha/` 로 싣는다).
+ * 그대로 옮긴 것이다. 글자표는 `data/curated/han/han-name-simplification-v1.json`(빌드가 classpath `campaign/` 로 싣는다).
  *
  * 규칙(표 파일의 `normalizationRule`):
  * - 郡([group]): 접미사를 떼지 않고 글자만 繁→簡 으로 눕힌다.
@@ -33,7 +33,7 @@ class HanPlaceNameFold internal constructor(private val table: Map<Int, Int>) {
     }
 
     companion object {
-        const val RESOURCE = "hwiha/han-name-simplification-v1.json"
+        const val RESOURCE = "campaign/han-name-simplification-v1.json"
         private val GROUP_SUFFIXES = listOf("侯国", "侯國", "属国", "屬國", "公国", "公國")
         private val COUNTY_SUFFIXES = listOf("县", "縣")
 

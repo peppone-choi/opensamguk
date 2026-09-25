@@ -82,7 +82,7 @@ class ScoutTest {
         assertEquals(1, rules.radius(VisionSourceKind.SCOUT_POST))
         assertEquals(Resources(), rules.scoutCost)
         assertEquals("B1", rules.band(0).code); assertEquals("B2", rules.band(1000).code); assertEquals("B5", rules.band(Int.MAX_VALUE).code)
-        val text = checkNotNull(javaClass.classLoader.getResource("hwiha/hwiha-vision-rules-v1.json")).readText()
+        val text = checkNotNull(javaClass.classLoader.getResource("campaign/vision-rules-v1.json")).readText()
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"money\": 0", "\"money\": 5")) }
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("SHARED_BORDER_4_NEIGHBOUR", "TOPOLOGY_EDGES")) }
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"SELF\": 0,", "")) }

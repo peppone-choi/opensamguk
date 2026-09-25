@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "data/extracted/item/items.json",
-  "catalogId": "hwiha-equipment-v1",
+  "catalogId": "equipment-v1",
   "equipment": [
     {
       "id": "equipment:che_명마_01_노기",

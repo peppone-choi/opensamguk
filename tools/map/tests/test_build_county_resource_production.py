@@ -1,10 +1,10 @@
 import json
 import unittest
 
-from tools.map import build_hwiha_resource_production as tool
+from tools.map import build_county_resource_production as tool
 
 
-class HwihaResourceProductionTest(unittest.TestCase):
+class CountyResourceProductionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.built = tool.build()
