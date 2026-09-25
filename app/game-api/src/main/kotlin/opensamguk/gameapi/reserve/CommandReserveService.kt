@@ -15,6 +15,9 @@ import opensamguk.infra.persistence.CommandInboxRepository.CommandKind
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.input.HwihaInputCatalog
+import opensamguk.logic.input.InputRejection
+import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.v2.command.V2CommandArgs
 import opensamguk.logic.v2.command.V2CommandSchema
 import org.slf4j.LoggerFactory
@@ -94,6 +97,7 @@ class CommandReserveService(
     private val hwihaPoliticalAdmission: HwihaPoliticalAdmission? = null,
     private val hwihaTransferAdmission: HwihaTransferAdmission? = null,
     private val hwihaLegacyDirectAdmission: HwihaLegacyDirectAdmission? = null,
+    private val hwihaCatalog: HwihaInputCatalog = HwihaInputCatalog.load(),
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -191,10 +195,15 @@ class CommandReserveService(
     ): ReserveResult {
         val worldProfile = (verifiedProfile ?: worldStates.processRuleProfile())
             ?: throw HwihaAdmissionDenied("POLICY_UNAVAILABLE", "세계 규칙을 확인할 수 없습니다.")
-        if (worldProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
-            actionCode !in HWIHA_RESERVABLE_ACTIONS && actionCode !in COMMON_INTAKE_COMMANDS) {
-            throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
-                opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
+        if (worldProfile == RuleProfile.HWIHA && actionCode !in COMMON_INTAKE_COMMANDS) {
+            // The sandbox V2 endpoints call this service directly. Their registered aliases belong
+            // to another ruleset, even though their spelling is outside the HWIHA input grammar.
+            if (opensamguk.logic.v2.command.V2CommandRegistry.resolve(actionCode) != null)
+                throw HwihaAdmissionDenied(InputRejection.WRONG_RULE_PROFILE.name,
+                    InputRejection.WRONG_RULE_PROFILE.message)
+            val rejection = hwihaCatalog.rejectionFor(worldProfile, actionCode)
+                ?: if (actionCode !in HWIHA_RESERVABLE_ACTIONS) InputRejection.INVALID_INPUT_CHANNEL else null
+            if (rejection != null) throw HwihaAdmissionDenied(rejection.name, rejection.message)
         }
         val canonicalArgs = if (actionCode in opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS) {
             (hwihaAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
@@ -470,7 +479,7 @@ class CommandReserveService(
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
         val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.deploy", "action.scout") +
-            opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS +
+            setOf("action.enlist") +
             opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.input.HwihaFieldInput.INPUT_IDS +
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
