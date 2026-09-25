@@ -16,7 +16,7 @@
 | `type` | 필수 입력과 효과 | 금지·검사 |
 | --- | --- | --- |
 | `rename` | 대상 `cityId` 또는 `commanderyId` 중 정확히 하나, `expected`, `name`, `nameCh`, `displayName`, `aliases`; 시점 이름·검색 별칭 교체 | 城·郡 id와 안정 검색 키·`administrativeUnitId`·`physicalPlaceRef` 불변. 郡 개명은 郡 id를 유지하고 소속 城 표시를 재파생. |
-| `scale` | `cityId`, `expected`, `level`, `initial`, `max`, `expansionLimit`; 인구·농업·상업·치안·수비·성벽 여섯 지표 전부 정의 | 지표마다 `0 ≤ initial ≤ max ≤ expansionLimit`, level 범위 검사. 이벤트가 이미 변한 실제 인구를 시작값으로 재설정할 수 없다. |
+| `scale` | `cityId`, `expected`, `level`, `metrics`; `metrics`는 인구·농업·상업·치안·수비·성벽 여섯 키 각각에 `{initial,max,expansionLimit}`을 둔다 | 지표마다 `0 ≤ initial ≤ max ≤ expansionLimit`, level 범위 검사. 현재 지도에 별도 증축 한도가 없으면 `expected.expansionLimit=null`을 명시한다. 이벤트가 이미 변한 실제 인구를 시작값으로 재설정할 수 없다. |
 | `commanderySeat` | `commanderyId`, `fromCityId`, `toCityId`; 유일한 郡 치소 변경 | 둘 다 같은 郡의 행정 縣治 城, 현 치소가 `fromCityId`. `meta.seat/isSeat`와 표시를 결과에서 함께 파생. 천자 소재와 郡 치소는 별개. |
 | `reassignProvince` | 안정 `provinceRecordId`, `fromJurisdictionId`, `toJurisdictionId`; **기존 省 전체**의 관할 재배정 | 省 id·셀·간선·지형·점유·`parentRegionId` 불변. 실재 관할만 대상. 城 앵커의 자기 縣 관할 및 郡 경계 유지. 省 분할 불가. |
 
@@ -27,7 +27,7 @@
 ### 적용 순서와 충돌
 
 1. 기본 지도 판·위상 핀을 먼저 확정한다. 매니페스트의 **기재 순서**, 이어서 각 delta의 `changes[]` 순서대로 적용한다. 연도로 암묵 정렬하지 않는다.
-2. 변경마다 `expected` 이전값을 검사한다. 동일 필드 후속 변경은 이전 결과를 `expected`로 선언한 명시적 체인만 허용한다. 같은 묶음 안 같은 대상·속성 중복, last-write-wins, 누락 참조는 거절한다.
+2. 변경하는 **모든 필드**의 이전값을 `expected`에 선언하고 검사한다. 별칭 목록도 배열 전체를 비교하며 필드 부재는 `null`로 구분한다. 동일 필드 후속 변경은 이전 결과를 `expected`로 선언한 명시적 체인만 허용한다. 같은 묶음 안 같은 대상·속성 중복, last-write-wins, 누락 참조는 거절한다.
 3. 한 delta 전체를 스키마→참조→행정 관계→형상→위상 순서로 검사하고 원자 적용한다. 실패하면 이전 투영을 유지한다. 적용기는 벽시계·RNG를 읽지 않는 순수 함수 `applyAdministrativeDelta(baseProjection, delta)` 하나다. 시드와 이벤트 재생이 이를 공유한다.
 
 ## 월드 저장·시드·부팅·API
@@ -62,7 +62,7 @@ JSON은 UTF-8, 키 순서 고정, 정수 정규화, 공백 제거로 canonical b
 | 위상 불변 | 省 id 집합, 셀 소유·지형·물길, typed 이동·보급 간선/비용, `topologyRevision/hash` 적용 전후 동일. 간선 하나 변경·省 분할 주입 시 실패. 관할별 보급 집계는 재계산해도 실제 통과 그래프는 불변. |
 | 행정 완결성 | 플레이 가능 省마다 관할 하나, 郡 치소 하나·같은 郡, 城 앵커의 제 省은 자기 縣, 고아/빈 관할 금지. 앵커 省을 다른 縣에 배정하면 실패. |
 | 구역 모양 | 투영 후 관할별 셀 합집합의 연결성·구멍·구역 안 구역·좁은 목/돌출부 검사. `tools/map/province_quality.py`, `tools/map/administrative_spatial_hierarchy.py`의 정책을 재사용·대조. 분리/포위 省 주입 시 실패. |
-| 결정론 | 같은 기본 판+delta 순서를 시드와 이벤트 재생으로 구성할 때 투영·DB 城 값·해시 같음. 이벤트의 가변 인구는 같은 사전 상태로 비교. 순서 교환·중복 id·낡은 CAS 해시 실패. |
+| 결정론 | 같은 기본 판+delta 순서를 시드와 이벤트 재생으로 구성할 때 투영·DB 城 값·해시 같음. 이벤트의 가변 인구는 같은 사전 상태로 비교. 순서 교환·196을 건너뛴 221 단독 적용·중복 id·낡은 CAS 해시 실패. |
 | 소비자 | 190/196/220/221 표시·옛 이름 검색, 엔진/API 동일 월드 해시, 월드 간 캐시 오염 0. 기본 지도만 읽는 경로 주입 시 계약 실패. |
 
 구역 형상 임계값은 #905 뒤의 실제 판 검사와 일치시킨다. 적색 프로브가 통과하기 전 재배정 예시를 출시 데이터로 승격하지 않는다.
@@ -82,11 +82,11 @@ JSON은 UTF-8, 키 순서 고정, 정수 정규화, 공백 제거로 canonical b
 
 ```json
 {"id":"xu-196-capital-v1","baseArtifactId":"han-world-v3-1447","evidence":[{"book":"後漢書","volume":"卷9 獻帝紀","quote":"庚申，遷都許。"}],"designValues":["level/initial/max/expansionLimit: GAME_DESIGN, 미결정"],"changes":[
-  {"type":"rename","cityId":130,"expected":{"nameCh":"许县"},"name":"허","nameCh":"许县","displayName":"영천군 허현 (허도)","aliases":["許","許縣","許都","허","허현","허도"]},
-  {"type":"scale","cityId":130,"level":"<미결정>","initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"}
+  {"type":"rename","cityId":130,"expected":{"name":"허","nameCh":"许县","displayName":"영천군 허현","aliases":null},"name":"허","nameCh":"许县","displayName":"영천군 허현 (허도)","aliases":["許","許縣","許都","허","허현","허도"]},
+  {"type":"scale","cityId":130,"expected":{"level":10,"metrics":{"population":{"initial":50000,"max":146900,"expansionLimit":null},"agriculture":{"initial":1000,"max":2900,"expansionLimit":null},"commerce":{"initial":1000,"max":2975,"expansionLimit":null},"security":{"initial":1000,"max":2000,"expansionLimit":null},"defence":{"initial":1500,"max":3000,"expansionLimit":null},"wall":{"initial":1500,"max":2950,"expansionLimit":null}}},"level":"<미결정>","metrics":{"population":{"initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"},"agriculture":{"initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"},"commerce":{"initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"},"security":{"initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"},"defence":{"initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"},"wall":{"initial":"<미결정>","max":"<미결정>","expansionLimit":"<미결정>"}}}
 ]}
 {"id":"xu-221-rename-v1","baseArtifactId":"han-world-v3-1447","evidence":[{"book":"三國志","volume":"卷2 魏書·文帝紀","quote":"改許縣爲許昌縣。"}],"designValues":[],"changes":[
-  {"type":"rename","cityId":130,"expected":{"nameCh":"许县"},"name":"허창","nameCh":"许昌县","displayName":"영천군 허창현","aliases":["許","許縣","許都","許昌","許昌縣","허현","허창현"]}
+  {"type":"rename","cityId":130,"expected":{"name":"허","nameCh":"许县","displayName":"영천군 허현 (허도)","aliases":["許","許縣","許都","허","허현","허도"]},"name":"허창","nameCh":"许昌县","displayName":"영천군 허창현","aliases":["許","許縣","許都","許昌","許昌縣","허현","허창현"]}
 ]}
 ```
 
