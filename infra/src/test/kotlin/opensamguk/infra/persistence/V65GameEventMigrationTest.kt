@@ -48,15 +48,22 @@ class V65GameEventMigrationTest {
                 recipients = "{5,8}", refs = """{"REQUEST":"dispatch-7"}""")
             assertEquals(3, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 1", Int::class.java))
             assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE publication_state = 'PUBLISHED'", Int::class.java))
-            assertFailsWith<DataAccessException> { insert(keyA, 3, "PUBLIC", "WORLD", "yuedan.announced", state = "PUBLISHED") }
-            assertFailsWith<DataAccessException> { insert("d".repeat(64), 0, "PUBLIC", "WORLD", "yuedan.announced", state = "PUBLISHED") }
-            assertFailsWith<DataAccessException> { insert("e".repeat(64), 3, "PUBLIC", "WORLD", "income.monthly", state = "PUBLISHED") }
-            assertFailsWith<DataAccessException> { insert("3".repeat(64), 3, "PUBLIC", "WORLD", "county.ownerChanged", state = "PUBLISHED", refs = """{"CITY":7,"TO_NATION":3}""") }
-            assertFailsWith<DataAccessException> { insert("4".repeat(64), 3, "PUBLIC", "WORLD", "county.ownerChanged", state = "PUBLISHED", refs = """{"CITY":7,"FROM_NATION":0,"TO_NATION":3,"ACTOR":9}""") }
-            assertFailsWith<DataAccessException> { insert("f".repeat(64), 3, "NATION", "RETINUE_NATION", "income.monthly", nation = 3, state = "PUBLISHED") }
-            assertFailsWith<DataAccessException> { insert("0".repeat(64), 3, "SELF", "PERSONAL", "personal.applied") }
-            assertFailsWith<DataAccessException> { insert("1".repeat(64), 3, "COURT", "COURT", "court.dispatchReceived", nation = 3, recipients = "{}") }
-            assertFailsWith<DataAccessException> { insert("2".repeat(64), 3, "COURT", "COURT", "court.dispatchReceived", nation = 3, recipients = "{0}") }
+            insert("5".repeat(64), 3, "RETINUE", "RETINUE_NATION", "people.joined", general = 7,
+                recipients = "{7,9}", refs = """{"PERSON":9}""")
+            fun rejectedBy(constraint: String, block: () -> Unit) {
+                val error = assertFailsWith<DataAccessException>(block)
+                assertTrue(error.mostSpecificCause.message?.contains(constraint) == true,
+                    "expected $constraint, got ${error.mostSpecificCause.message}")
+            }
+            rejectedBy("game_event_key_uq") { insert(keyA, 4, "PUBLIC", "WORLD", "yuedan.announced", state = "PUBLISHED") }
+            rejectedBy("game_event_order_uq") { insert("d".repeat(64), 0, "PUBLIC", "WORLD", "yuedan.announced", state = "PUBLISHED") }
+            rejectedBy("game_event_public_ck") { insert("e".repeat(64), 4, "PUBLIC", "WORLD", "income.monthly", state = "PUBLISHED") }
+            rejectedBy("game_event_public_ck") { insert("3".repeat(64), 4, "PUBLIC", "WORLD", "county.ownerChanged", state = "PUBLISHED", refs = """{"CITY":7,"TO_NATION":3}""") }
+            rejectedBy("game_event_public_ck") { insert("4".repeat(64), 4, "PUBLIC", "WORLD", "county.ownerChanged", state = "PUBLISHED", refs = """{"CITY":7,"FROM_NATION":0,"TO_NATION":3,"ACTOR":9}""") }
+            rejectedBy("game_event_publication_ck") { insert("f".repeat(64), 4, "NATION", "RETINUE_NATION", "income.monthly", nation = 3, state = "PUBLISHED") }
+            rejectedBy("game_event_target_ck") { insert("0".repeat(64), 4, "SELF", "PERSONAL", "personal.applied") }
+            rejectedBy("game_event_target_ck") { insert("1".repeat(64), 4, "COURT", "COURT", "court.dispatchReceived", nation = 3, recipients = "{}") }
+            rejectedBy("game_event_target_ck") { insert("2".repeat(64), 4, "COURT", "COURT", "court.dispatchReceived", nation = 3, recipients = "{0}") }
             for (index in listOf("game_event_self_feed_idx", "game_event_nation_feed_idx", "game_event_recipient_idx", "game_event_public_feed_idx")) {
                 assertTrue(jdbc.queryForObject(
                     "SELECT i.indisvalid FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE c.relname = ?",

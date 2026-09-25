@@ -36,7 +36,10 @@ sealed interface EventFact {
 }
 
 enum class FactRole(val type: Class<out EventFact>) {
-    AMOUNT(EventFact.Amount::class.java), CHANGE(EventFact.Change::class.java),
+    COUNTIES(EventFact.Amount::class.java), MONEY(EventFact.Amount::class.java), GRAIN(EventFact.Amount::class.java),
+    IRON(EventFact.Amount::class.java), TIMBER(EventFact.Amount::class.java), HORSES(EventFact.Amount::class.java),
+    RENOWN_BEFORE(EventFact.Amount::class.java), RENOWN_AFTER(EventFact.Amount::class.java),
+    RENOWN_CHANGE(EventFact.Change::class.java),
     TROOPS_BAND(EventFact.TroopsBand::class.java), OUTCOME(EventFact.Outcome::class.java),
 }
 
@@ -58,6 +61,10 @@ sealed interface AudienceTarget {
         val authorizedGeneralIds: Set<Int> = authorizedGeneralIds.toSet()
         init { require(ownerGeneralId > 0 && this.authorizedGeneralIds.isNotEmpty() && this.authorizedGeneralIds.all { it > 0 }) }
         override val audience = EventAudience.RETINUE
+        override fun equals(other: Any?): Boolean = other is Retinue && ownerGeneralId == other.ownerGeneralId &&
+            authorizedGeneralIds == other.authorizedGeneralIds
+        override fun hashCode(): Int = 31 * ownerGeneralId + authorizedGeneralIds.hashCode()
+        override fun toString(): String = "Retinue(ownerGeneralId=$ownerGeneralId, authorizedGeneralIds=$authorizedGeneralIds)"
     }
     data class Nation(val nationId: Int) : AudienceTarget {
         init { require(nationId > 0) }
@@ -67,6 +74,10 @@ sealed interface AudienceTarget {
         val authorizedGeneralIds: Set<Int> = authorizedGeneralIds.toSet()
         init { require(nationId > 0 && this.authorizedGeneralIds.isNotEmpty() && this.authorizedGeneralIds.all { it > 0 }) }
         override val audience = EventAudience.COURT
+        override fun equals(other: Any?): Boolean = other is Court && nationId == other.nationId &&
+            authorizedGeneralIds == other.authorizedGeneralIds
+        override fun hashCode(): Int = 31 * nationId + authorizedGeneralIds.hashCode()
+        override fun toString(): String = "Court(nationId=$nationId, authorizedGeneralIds=$authorizedGeneralIds)"
     }
     data object Public : AudienceTarget { override val audience = EventAudience.PUBLIC }
 }

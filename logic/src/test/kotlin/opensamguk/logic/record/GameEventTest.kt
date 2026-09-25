@@ -37,7 +37,7 @@ class GameEventTest {
             event.copy(refs = refs - RefRole.FROM_NATION)
         }
         assertFailsWith<IllegalArgumentException> {
-            event.copy(facts = mapOf(FactRole.AMOUNT to EventFact.Amount(900)))
+            event.copy(facts = mapOf(FactRole.MONEY to EventFact.Amount(900)))
         }
         assertFailsWith<IllegalArgumentException> {
             event.copy(publication = Publication(PublicationState.PRIVATE))
@@ -48,7 +48,7 @@ class GameEventTest {
     fun `private income and court dispatch cannot be published`() {
         val income = GameEvent(1, EventKind.INCOME_MONTHLY, whenOccurred, AudienceTarget.Nation(2),
             Publication(PublicationState.PRIVATE), key,
-            facts = mapOf(FactRole.AMOUNT to EventFact.Amount(900)))
+            facts = mapOf(FactRole.MONEY to EventFact.Amount(900), FactRole.COUNTIES to EventFact.Amount(3)))
         assertEquals(EventSection.RETINUE_NATION, income.section)
         assertFailsWith<IllegalArgumentException> {
             income.copy(audience = AudienceTarget.Public, publication = Publication(PublicationState.PUBLISHED))
@@ -75,6 +75,12 @@ class GameEventTest {
         assertFailsWith<IllegalArgumentException> { OccurredAt(200, 1, 4, 0) }
         assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, emptySet()) }
         assertFailsWith<IllegalArgumentException> { Publication(PublicationState.PRIVATE, whenOccurred) }
+        val mutable = mutableSetOf(3, 5)
+        val sealed = AudienceTarget.Retinue(1, mutable)
+        mutable.add(8)
+        assertEquals(setOf(3, 5), sealed.authorizedGeneralIds)
+        assertEquals(sealed, AudienceTarget.Retinue(1, setOf(5, 3)))
+        assertEquals(AudienceTarget.Court(2, setOf(3)), AudienceTarget.Court(2, setOf(3)))
     }
 
     @Test
@@ -82,10 +88,28 @@ class GameEventTest {
         val refs = mapOf(RefRole.CITY to EventRef.City(7), RefRole.FROM_NATION to EventRef.Nation(0),
             RefRole.REQUEST to EventRef.Request("dispatch-7"))
         assertEquals(refs, EventPayloadCodec.decodeRefs(EventPayloadCodec.encodeRefs(refs)))
-        val facts = mapOf(FactRole.AMOUNT to EventFact.Amount(900), FactRole.OUTCOME to EventFact.Outcome("won"))
+        val facts = mapOf(FactRole.MONEY to EventFact.Amount(900), FactRole.RENOWN_CHANGE to EventFact.Change(-5),
+            FactRole.OUTCOME to EventFact.Outcome("won"))
         assertEquals(facts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(facts)))
         assertFailsWith<IllegalArgumentException> { EventPayloadCodec.decodeRefs("""{"NAME":"허도"}""") }
         assertFailsWith<IllegalArgumentException> { EventPayloadCodec.decodeRefs("""{"CITY":"허도"}""") }
-        assertFailsWith<IllegalArgumentException> { EventPayloadCodec.decodeFacts("""{"AMOUNT":"900"}""") }
+        assertFailsWith<IllegalArgumentException> { EventPayloadCodec.decodeFacts("""{"MONEY":"900"}""") }
+    }
+
+    @Test
+    fun `monthly income and assessment retain every distinct numerical fact`() {
+        val incomeFacts = mapOf(
+            FactRole.COUNTIES to EventFact.Amount(2), FactRole.MONEY to EventFact.Amount(100),
+            FactRole.GRAIN to EventFact.Amount(200), FactRole.IRON to EventFact.Amount(3),
+            FactRole.TIMBER to EventFact.Amount(4), FactRole.HORSES to EventFact.Amount(5),
+        )
+        val income = GameEvent(1, EventKind.INCOME_MONTHLY, whenOccurred, AudienceTarget.Nation(3),
+            Publication(PublicationState.PRIVATE), key, facts = incomeFacts)
+        assertEquals(incomeFacts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(income.facts)))
+        val assessmentFacts = mapOf(FactRole.RENOWN_BEFORE to EventFact.Amount(15),
+            FactRole.RENOWN_AFTER to EventFact.Amount(12), FactRole.RENOWN_CHANGE to EventFact.Change(-3))
+        val assessment = GameEvent(1, EventKind.YUEDAN_ASSESSED, whenOccurred, AudienceTarget.Self(7),
+            Publication(PublicationState.PRIVATE), key, facts = assessmentFacts)
+        assertEquals(assessmentFacts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(assessment.facts)))
     }
 }

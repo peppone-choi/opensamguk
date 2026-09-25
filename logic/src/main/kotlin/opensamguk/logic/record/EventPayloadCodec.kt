@@ -50,8 +50,9 @@ object EventPayloadCodec {
         val role = FactRole.valueOf(key)
         val primitive = value as? JsonPrimitive ?: throw IllegalArgumentException("$key must be scalar")
         val fact = when (role) {
-            FactRole.AMOUNT -> EventFact.Amount(primitive.longNumber())
-            FactRole.CHANGE -> EventFact.Change(primitive.longNumber())
+            FactRole.COUNTIES, FactRole.MONEY, FactRole.GRAIN, FactRole.IRON, FactRole.TIMBER,
+            FactRole.HORSES, FactRole.RENOWN_BEFORE, FactRole.RENOWN_AFTER -> EventFact.Amount(primitive.longNumber())
+            FactRole.RENOWN_CHANGE -> EventFact.Change(primitive.longNumber())
             FactRole.TROOPS_BAND -> EventFact.TroopsBand(primitive.intId())
             FactRole.OUTCOME -> EventFact.Outcome(primitive.stringId())
         }
