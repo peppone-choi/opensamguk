@@ -35,7 +35,11 @@ class CommandReserveServiceTest {
         for ((inputId, expected) in mapOf(
             "stratagem.play" to "NOT_DELIVERED",
             "action.unlisted" to "UNKNOWN_INPUT",
+            "action.resign" to "NOT_DELIVERED",
+            "action.randomEnlist" to "UNKNOWN_INPUT",
             "che_농지개간" to "WRONG_RULE_PROFILE",
+            "v2CityTransport" to "WRONG_RULE_PROFILE",
+            "v2GarrisonRecruit" to "WRONG_RULE_PROFILE",
             "court.dispatch" to "INVALID_INPUT_CHANNEL",
         )) {
             assertEquals(expected, assertFailsWith<HwihaAdmissionDenied> {
@@ -45,6 +49,19 @@ class CommandReserveServiceTest {
         assertEquals(0, turns.reserves.size)
         assertEquals(0, inbox.accepted.size)
         assertEquals(0, results.rows.size)
+    }
+
+    @Test fun `delivered deploy reaches its reservation admission`() {
+        val deploy = mock(HwihaDeployAdmission::class.java)
+        `when`(deploy.canonicalArguments(10, 42, 0, "{}"))
+            .thenThrow(HwihaAdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
+        val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
+            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaDeployAdmission = deploy)
+
+        assertEquals("ADMISSION_REACHED", assertFailsWith<HwihaAdmissionDenied> {
+            service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
+        }.code)
     }
 
     private fun catalogFor(inputId: String, kind: String, state: String) =
