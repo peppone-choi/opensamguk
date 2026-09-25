@@ -187,7 +187,10 @@ class HwihaCourtHandler(
         runQueuedLegacy(generalId)
         runQueuedStratagem(generalId)
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = HwihaQueuedDispatch.read(actor.meta)
+        val queued = try { HwihaQueuedDispatch.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, HwihaQueuedDispatch.META_KEY, "court.dispatch")
+            return
+        }
         if (queued == null) {
             HwihaNpcDispatchSelector.select(world, generalId, executor)?.let { request ->
                 // The NPC lord's reason is the target's dispatch record (spec §14: 발령 근거를 「지난 순」에).
@@ -212,7 +215,10 @@ class HwihaCourtHandler(
     /** 상사 대기는 발령 대기와 독립이다 — 결정권자의 턴에 한 건 실행하고 결과를 같은 flush 에 싣는다. */
     private fun runQueuedReward(generalId: Int) {
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { HwihaQueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) { null } ?: return
+        val queued = try { HwihaQueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, HwihaQueuedReward.META_KEY, HwihaRewardInput.INPUT_ID)
+            return
+        } ?: return
         val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, HwihaRewardInput.INPUT_ID, false, "FORBIDDEN", "상사 제출 후 장수 소유자가 변경되었습니다.")
         } else when (val failure = HwihaRewardExecutor(world, recorder).reward(RewardRequest(generalId, queued.retainerId, queued.money))) {
@@ -226,7 +232,10 @@ class HwihaCourtHandler(
 
     private fun runQueuedLegacy(generalId: Int) {
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { HwihaQueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) { null } ?: return
+        val queued = try { HwihaQueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, HwihaQueuedLegacyCourt.META_KEY, "court.unknown")
+            return
+        } ?: return
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
         } else when (val rejected = legacy.execute(generalId, queued.inputId, queued.argJson)) {
@@ -242,7 +251,10 @@ class HwihaCourtHandler(
 
     private fun runQueuedStratagem(generalId: Int) {
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { HwihaQueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) { null } ?: return
+        val queued = try { HwihaQueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, HwihaQueuedLegacyStratagem.META_KEY, "stratagem.unknown")
+            return
+        } ?: return
         val request = HwihaLegacyStratagemInput.parse(generalId, queued.inputId, queued.argJson)
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
@@ -261,6 +273,21 @@ class HwihaCourtHandler(
     }
 
     fun expireDue() { executor.expireDue() }
+
+    private fun discardMalformedQueue(actor: TurnGeneral, key: String, fallbackInputId: String) {
+        val raw = actor.meta[key] as? Map<*, *>
+        val inputId = (raw?.get("inputId") as? String)?.takeIf { it.isNotBlank() } ?: fallbackInputId
+        val requestId = (raw?.get("requestId") as? String)?.takeIf { it.matches(Regex("[A-Za-z0-9._:-]{1,128}")) }
+        val ownerUserId = (raw?.get("ownerUserId") as? Int)?.takeIf { it > 0 }
+        val reason = "저장된 대기 입력을 확인할 수 없습니다."
+        updateMeta(actor, actor.meta - key)
+        HwihaRecords.general(world, actor.id, HwihaRecordKind.INPUT_REJECTED, reason,
+            linkedMapOf("inputId" to inputId, "code" to "STATE_UNAVAILABLE"))
+        if (requestId != null && ownerUserId != null) {
+            executions += HwihaCourtExecution(requestId, ownerUserId,
+                result(actor.id, inputId, false, "STATE_UNAVAILABLE", reason))
+        }
+    }
 
     companion object {
         const val NPC_DISPATCH_REASON = "담당 장수가 없는 아군 현의 첫 부임 대상으로 발령되었습니다."

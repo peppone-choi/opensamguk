@@ -5,12 +5,83 @@ import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.Retainer
+import opensamguk.engine.turn.ReservedTurnHandler
+import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.logic.input.*
+import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.stats.GeneralActionPipeline
+import java.time.Instant
 
 class HwihaLegacyCourtHandlerTest {
     private val fixture = HwihaCampaignWorldFixture()
     private fun input(id: String, args: String, requestId: String = "court-test") =
         TurnDaemonCommand.HwihaCourtInput(requestId, 501, 42, id, args)
+
+    @Test fun `malformed queued dispatch is rejected and removed before the next issuer turn`() {
+        val route = fixture.route()
+        val queued = mapOf("requestId" to "bad-queue", "ownerUserId" to 42,
+            "targetGeneralId" to 502, "countyId" to "invalid")
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
+            it.copy(meta = it.meta + (HwihaQueuedDispatch.META_KEY to queued))
+        }
+        val world = fixture.world(listOf(ruler to route.start), nations = listOf(
+            Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
+        val handler = HwihaCourtHandler(world, ChangeRecorder())
+
+        handler.onIssuerTurn(501)
+
+        assertFalse(HwihaQueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
+        val execution = handler.takeExecutions().single()
+        assertEquals("bad-queue", execution.requestId)
+        assertEquals("STATE_UNAVAILABLE", execution.result.code)
+        assertFalse(execution.result.ok)
+    }
+
+    @Test fun `malformed reward legacy and stratagem queues are rejected independently`() {
+        val route = fixture.route()
+        for ((key, inputId) in listOf(
+            HwihaQueuedReward.META_KEY to HwihaRewardInput.INPUT_ID,
+            HwihaQueuedLegacyCourt.META_KEY to "court.releaseCorps",
+            HwihaQueuedLegacyStratagem.META_KEY to "stratagem.lastStand",
+        )) {
+            val queued = mapOf("requestId" to "bad-$key", "ownerUserId" to 42,
+                "inputId" to inputId, "invalid" to true)
+            val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
+                it.copy(meta = it.meta + (key to queued))
+            }
+            val world = fixture.world(listOf(ruler to route.start), nations = listOf(
+                Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
+            val handler = HwihaCourtHandler(world, ChangeRecorder())
+
+            handler.onIssuerTurn(501)
+
+            assertFalse(key in world.getGeneralById(501)!!.meta, key)
+            val execution = handler.takeExecutions().single()
+            assertEquals("bad-$key", execution.requestId)
+            assertEquals("STATE_UNAVAILABLE", execution.result.code)
+            assertEquals(inputId, execution.result.actionCode)
+        }
+    }
+
+    @Test fun `malformed queued decision does not stop the next general in the lifecycle`() {
+        val route = fixture.route()
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
+            it.copy(meta = it.meta + (HwihaQueuedDispatch.META_KEY to mapOf(
+                "requestId" to "bad-queue", "ownerUserId" to 42, "targetGeneralId" to 502, "countyId" to "invalid")))
+        }
+        val next = fixture.person(502, 1, route.startCity, userId = "43", lord = false)
+        val world = fixture.world(listOf(ruler to route.start, next to route.start), nations = listOf(
+            Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
+        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "fixture", 200)
+        val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { HwihaCampaignWorldFixture.NO_INPUT })
+
+        val handled = lifecycle.runTick(Instant.parse("0200-01-01T03:00:01Z"))
+
+        assertEquals(setOf(501, 502), handled.map { it.generalId }.toSet())
+        assertTrue(world.getGeneralById(501)!!.turnTime > ruler.turnTime)
+        assertTrue(world.getGeneralById(502)!!.turnTime > next.turnTime)
+        assertFalse(HwihaQueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
+    }
 
     @Test fun `institution is rejected without a defined treasury model`() {
         val route = fixture.route()
