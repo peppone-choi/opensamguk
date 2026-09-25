@@ -21,6 +21,7 @@ from wikiwiki_compact import compact
 
 class WikiwikiExtractTest(unittest.TestCase):
     def test_table_span_ruby_links_and_non_table_sections(self) -> None:
+        self.assertFalse(True, "temporary CI red probe")
         page = {"page_key": "190年1月 仮の例", "kind": "시나리오",
                 "url": "https://wikiwiki.jp/sangokushi14/example"}
         html = b"""<div id='content'>
