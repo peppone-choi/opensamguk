@@ -3,9 +3,9 @@ package opensamguk.engine.hwiha
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
-import opensamguk.logic.input.HwihaRenownEventSource
 import opensamguk.logic.input.RewardRequest
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
 
 /**
@@ -36,7 +36,7 @@ class HwihaRewardExecutor(private val world: InMemoryTurnWorld, private val reco
             return Failure.INSUFFICIENT_STOCK
         world.updateRetainer(card.copy(loyalty = (card.loyalty + gain).coerceAtMost(100)))
         // 결속 사건(상사) — 기록 스트림의 월단평 사건 집계. 같은 달 같은 종류는 한 건이다.
-        HwihaRenownEventRecorder(world, recorder).record(person.id, HwihaRenownEventSource.REWARD)
+        HwihaRenownEventRecorder(world, recorder).record(person.id, RenownEventSource.REWARD)
         world.pushLog(LogEntryDraft(scope = "general", category = "action",
             text = "${person.name}에게 금 ${request.money}을 상으로 내렸습니다.", generalId = actor.id, nationId = actor.nationId))
         return null

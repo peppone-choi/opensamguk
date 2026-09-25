@@ -1,5 +1,7 @@
 package opensamguk.engine.boot
 
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -11,17 +13,15 @@ import opensamguk.engine.hwiha.HwihaMonthlyAssessment
 import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
-import java.nio.file.Files
-import java.nio.file.Path
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.world.HanWorldVariant
-import opensamguk.logic.input.HwihaPersonPolicyState
-import opensamguk.logic.input.HwihaRenownAssessment
-import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
+import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownRules
+import opensamguk.logic.world.HanWorldVariant
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -106,7 +106,7 @@ class HwihaMonthBoundaryLoopIT {
         )
         val lord = assertNotNull(world.getGeneralById(1))
         assertEquals(
-            HwihaRenownRules.INITIAL_CAPACITY + 2 * HwihaRenownAssessment.CANON.warMerit,
+            RenownRules.INITIAL_CAPACITY + 2 * RenownAssessment.CANON.warMerit,
             assertNotNull(HwihaPersonPolicyState.read(lord.meta)).renownCapacity,
             "전공 2건이 명망을 올렸다",
         )
@@ -116,7 +116,7 @@ class HwihaMonthBoundaryLoopIT {
         )
         val peer = assertNotNull(world.getGeneralById(2))
         assertEquals(
-            HwihaRenownRules.INITIAL_CAPACITY,
+            RenownRules.INITIAL_CAPACITY,
             assertNotNull(HwihaPersonPolicyState.read(peer.meta)).renownCapacity,
             "사건이 없는 장수는 명망을 보존한다 — 월단평은 초기화하지 않는다",
         )
@@ -135,7 +135,7 @@ class HwihaMonthBoundaryLoopIT {
             "같은 달을 두 번 적립하지 않는다",
         )
         assertEquals(
-            HwihaRenownRules.INITIAL_CAPACITY + 2 * HwihaRenownAssessment.CANON.warMerit,
+            RenownRules.INITIAL_CAPACITY + 2 * RenownAssessment.CANON.warMerit,
             assertNotNull(HwihaPersonPolicyState.read(assertNotNull(world.getGeneralById(1)).meta)).renownCapacity,
             "월단평도 같은 달을 두 번 적용하지 않는다",
         )

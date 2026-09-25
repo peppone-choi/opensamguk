@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.renown.RenownRules
+
 /** Projection of current persisted stats; no default stats or inferred provenance. */
 data class PersonPolicyInput(
     val id: Int, val nationId: Int,
@@ -43,7 +45,7 @@ object HwihaEnlistmentBudget {
     private fun cost(general: PersonPolicyInput): Int {
         person(general)
         return try {
-            HwihaRenownRules.personCost(general.leadership, general.strength, general.intelligence, general.politics, general.charm)
+            RenownRules.personCost(general.leadership, general.strength, general.intelligence, general.politics, general.charm)
         } catch (_: IllegalArgumentException) {
             unavailable(RenownBudgetFailure.INVALID_STATS)
         }

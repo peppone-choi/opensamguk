@@ -221,6 +221,20 @@
 | `hwihaWarehouseSeed` | `warehouseSeed` | `infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt` |
 | `hwihaWarehouses` | `warehouses` | `infra/src/main/kotlin/opensamguk/infra/seed/HwihaScenarioWarehouseSeeds.kt` |
 
+## 명망 로직 개명
+
+| 이전 | 새 이름 | 비고 |
+|---|---|---|
+| `opensamguk.logic.input.HwihaRenownAssessment` | `opensamguk.logic.renown.RenownAssessment` | 저장 키·정본 데이터 파일 이름은 저장 식별자 단계에서 변경 |
+| `opensamguk.logic.input.HwihaRenownEvents` | `opensamguk.logic.renown.RenownEvents` | 사건 집계와 저장 키는 별도 변경 |
+| `opensamguk.logic.input.HwihaRenownRules` | `opensamguk.logic.renown.RenownRules` | 인물 코스트 규칙 |
+| `opensamguk.logic.input.HwihaRenownEventKind` | `opensamguk.logic.renown.RenownEventKind` | 사건 종류 |
+| `opensamguk.logic.input.HwihaRenownEventSource` | `opensamguk.logic.renown.RenownEventSource` | 사건 원인 |
+| `opensamguk.logic.input.HwihaRenownEntry` | `opensamguk.logic.renown.RenownEntry` | 집계 항목 |
+| `opensamguk.logic.input.HwihaRenownHooks` | `opensamguk.logic.renown.RenownHooks` | 사건 기록 훅 |
+| `opensamguk.logic.input.HwihaDomesticMerit` | `opensamguk.logic.renown.DomesticMerit` | 월단평용 내정 치적 판정 |
+| `logic/input/HwihaRenown*Test.kt` | `logic/renown/Renown*Test.kt` | 테스트 파일·타입·패키지 개명 |
+
 ## #905 교차 경로
 
 PR #905 변경 파일 244개 가운데 개명 범위와 겹치는 경로가 64개다(app 31, logic 18, infra 6, web 4, tools 3, data 2). #905가 draft인 동안 해당 경로의 파일 이동과 참조 수정은 병합 상태를 확인하고 진행한다. 아래 목록은 개명 또는 리베이스가 필요한 정확한 옛 경로다.

@@ -6,11 +6,12 @@ import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownRules
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.TestInstance
-import org.junit.jupiter.api.Assumptions
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -66,7 +67,7 @@ class HwihaCreatedPersonPersistenceIT {
         val budget = assertIs<HwihaEnlistmentPolicyResult.Ready>(HwihaEnlistmentPolicy(cold)
             .current(EnlistmentRequest(created.id, EnlistmentMode.RANDOM)))
         val st = created.stats
-        assertEquals(HwihaRenownRules.personCost(st.leadership, st.strength, st.intelligence, st.politics, st.charm), budget.policy.actorCardCost)
+        assertEquals(RenownRules.personCost(st.leadership, st.strength, st.intelligence, st.politics, st.charm), budget.policy.actorCardCost)
 
         // Fixture transition models a prior rejection and released NPC; possession must preserve it.
         val reduced = HwihaPersonPolicyState.read(reloaded.meta)!!.copy(renownCapacity = 29)

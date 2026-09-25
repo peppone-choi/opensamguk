@@ -1,7 +1,7 @@
-package opensamguk.logic.input
+package opensamguk.logic.renown
 
 /** Game-design policy; callers must provide five source-validated stats, never importer defaults. */
-object HwihaRenownRules {
+object RenownRules {
     /** New characters only; monthly assessment must preserve and update existing renown. */
     const val INITIAL_CAPACITY = 30
 

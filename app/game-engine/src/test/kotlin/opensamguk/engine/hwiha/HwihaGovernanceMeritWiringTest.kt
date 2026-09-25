@@ -1,16 +1,20 @@
 package opensamguk.engine.hwiha
 
-import opensamguk.logic.domestic.CountyIndicators
-import opensamguk.logic.domestic.CountyMonthly
-
 import java.io.File
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
+import opensamguk.logic.domestic.CountyIndicators
+import opensamguk.logic.domestic.CountyMonthly
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownEntry
+import opensamguk.logic.renown.RenownEventKind
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.world.*
 
 /**
@@ -27,7 +31,7 @@ class HwihaGovernanceMeritWiringTest {
             sourceRefs = listOf("qa:ab"), confidence = EvidenceConfidence.REVIEWED)), emptyList(),
         mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
     private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
-    private val curve = HwihaRenownAssessment.CANON
+    private val curve = RenownAssessment.CANON
 
     private fun context(world: InMemoryTurnWorld, recorder: ChangeRecorder) = HwihaDomesticContext(
         geography = HwihaCountyGeography(listOf(HwihaCountyPlace(10, "甲郡", "갑군", "j10"), HwihaCountyPlace(11, "甲郡", "갑군", "j11"))),
@@ -63,7 +67,7 @@ class HwihaGovernanceMeritWiringTest {
             generalPositionSnapshot = positions, cityLandProvinceById = mapOf(10 to "A", 11 to "B"), administrativeCountyIds = setOf(10, 11)))
     }
 
-    private fun entries(world: InMemoryTurnWorld, id: Int) = HwihaRenownEvents.entries(world.getGeneralById(id)!!.meta)
+    private fun entries(world: InMemoryTurnWorld, id: Int) = RenownEvents.entries(world.getGeneralById(id)!!.meta)
     private fun renown(world: InMemoryTurnWorld, id: Int) = HwihaPersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
 
     /** TurnRunService 월 경계 순서 그대로(월간 사건은 없다). */
@@ -113,7 +117,7 @@ class HwihaGovernanceMeritWiringTest {
         sink.onCountyIndicatorsRose(event(base.copy(agriculture = 1099)))
         assertTrue(entries(world, 1).isEmpty())
         sink.onCountyIndicatorsRose(event(base.copy(agriculture = 1100)))
-        assertEquals(listOf(HwihaRenownEntry(HwihaRenownEventKind.DOMESTIC_MERIT, "0200-02", HwihaRenownEventSource.COUNTY_INDICATOR_RISE)),
+        assertEquals(listOf(RenownEntry(RenownEventKind.DOMESTIC_MERIT, "0200-02", RenownEventSource.COUNTY_INDICATOR_RISE)),
             entries(world, 1))
         assertEquals(setOf(1), recorder.dirtyGeneralIds(), "쓰기는 ChangeRecorder 경로로 간다")
     }

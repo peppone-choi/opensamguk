@@ -3,8 +3,8 @@ package opensamguk.engine.hwiha
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
-import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
 
 /**
@@ -28,7 +28,7 @@ class HwihaMonthlySalary(private val world: InMemoryTurnWorld, private val recor
             val person = card.generalId?.let(world::getGeneralById) ?: continue
             val master = world.getGeneralById(card.masterGeneralId) ?: continue
             val cost = try {
-                HwihaRenownRules.personCost(person.stats.leadership, person.stats.strength, person.stats.intelligence,
+                RenownRules.personCost(person.stats.leadership, person.stats.strength, person.stats.intelligence,
                     person.stats.politics, person.stats.charm)
             } catch (_: IllegalArgumentException) { continue }
             val amount = cost.toLong() * HwihaS3Provisional.SALARY_MONEY_PER_RENOWN_COST

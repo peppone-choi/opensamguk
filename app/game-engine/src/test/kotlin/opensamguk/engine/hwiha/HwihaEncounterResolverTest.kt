@@ -4,9 +4,11 @@ import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.war.hwiha.HwihaBattleJournal
-import opensamguk.logic.world.LandMarchStop
 import opensamguk.logic.world.HanProvinceCellIndex
+import opensamguk.logic.world.LandMarchStop
 
 /** Real pinned map, in-memory world: an entered encounter is sealed, then resolved on the attacker's next turn. */
 class HwihaEncounterResolverTest {
@@ -82,9 +84,9 @@ class HwihaEncounterResolverTest {
         }
         assertEquals(records[0], records[1])
         assertEquals(2, outcomes.encounters.size, "one call per resolved battle")
-        val once = HwihaRenownEvents.recordRenownEvent(emptyMap(), HwihaRenownEventSource.REWARD, "0200-01")
+        val once = RenownEvents.recordRenownEvent(emptyMap(), RenownEventSource.REWARD, "0200-01")
         assertTrue(once.recorded)
-        assertFalse(HwihaRenownEvents.recordRenownEvent(once.meta, HwihaRenownEventSource.REWARD, "0200-01").recorded)
+        assertFalse(RenownEvents.recordRenownEvent(once.meta, RenownEventSource.REWARD, "0200-01").recorded)
     }
 
     @Test fun `an unprepared encounter retries two phases then disbands without battle`() {
