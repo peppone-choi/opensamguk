@@ -15,8 +15,8 @@ class HwihaEnlistmentPolicyTest {
         id = id, name = "G$id", nationId = if (id == 1) 0 else 1, cityId = 1, troopId = 0,
         stats = GeneralStats(50, 50, 50, 50, 50), experience = 0, dedication = 0,
         officerLevel = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to lord, HwihaPersonPolicyState.META_KEY to
-            HwihaPersonPolicyState(capacity, true, "fixture", "pin", id).toMetaValue()),
+        meta = mapOf("hwihaLord" to lord, PersonPolicyState.META_KEY to
+            PersonPolicyState(capacity, true, "fixture", "pin", id).toMetaValue()),
     )
     private fun card(id: Int, master: Int, general: Int?) = Retainer(
         id, master, if (general == null) "RECRUITED" else "EXISTING", general, "C$id", "guest")
@@ -49,7 +49,7 @@ class HwihaEnlistmentPolicyTest {
             assertIs<HwihaEnlistmentPolicyResult.Unavailable>(HwihaEnlistmentPolicy(world()).current(request.copy(actorId = 99))).reason)
         for ((actor, reason) in listOf(
             general(1).copy(meta = emptyMap()) to EnlistmentPolicyUnavailable.MISSING_PERSON_POLICY,
-            general(1).copy(meta = mapOf(HwihaPersonPolicyState.META_KEY to null)) to EnlistmentPolicyUnavailable.INVALID_PERSON_POLICY,
+            general(1).copy(meta = mapOf(PersonPolicyState.META_KEY to null)) to EnlistmentPolicyUnavailable.INVALID_PERSON_POLICY,
             general(1).copy(stats = GeneralStats(-1, 50, 50)) to EnlistmentPolicyUnavailable.INVALID_STATS,
         )) assertEquals(reason, assertIs<HwihaEnlistmentPolicyResult.Unavailable>(
             HwihaEnlistmentPolicy(world(listOf(actor, general(10, true)))).current(request)).reason)

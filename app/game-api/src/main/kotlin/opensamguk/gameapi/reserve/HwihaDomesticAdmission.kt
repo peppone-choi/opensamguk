@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class HwihaDomesticAdmission(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(actorId: Int, ownerUserId: Int, inputId: String, raw: String): String {
         if (ownerUserId <= 0) deny("UNAUTHORIZED", "제출자 인증이 필요합니다.")

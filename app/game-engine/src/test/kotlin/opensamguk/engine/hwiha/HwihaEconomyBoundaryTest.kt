@@ -11,7 +11,7 @@ import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.retainer.RetainerRules
-import opensamguk.logic.war.hwiha.HwihaS3Provisional
+import opensamguk.logic.war.CampaignBalance
 
 /** 순 경계 보급 재계산, 녹봉(창고망), 기존 가신 유지비 끔, 상사 — in-memory, real map. */
 class HwihaEconomyBoundaryTest {
@@ -145,8 +145,8 @@ class HwihaEconomyBoundaryTest {
         world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
         fixture.deploy(world, ChangeRecorder(), 1, listOf(7), route.destination)
-        assertEquals(100 * HwihaS3Provisional.DEPLOY_LOAD_MONTHS, world.getBugokById(7)!!.provisions, "troops × 3 months")
-        assertEquals(1_000_000L - 300L * HwihaS3Provisional.GRAIN_PER_PROVISION,
+        assertEquals(100 * CampaignBalance.DEPLOY_LOAD_MONTHS, world.getBugokById(7)!!.provisions, "troops × 3 months")
+        assertEquals(1_000_000L - 300L * CampaignBalance.GRAIN_PER_PROVISION,
             CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
 
         val poor = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
@@ -166,19 +166,19 @@ class HwihaEconomyBoundaryTest {
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         assertEquals(0, world.getBugokById(7)!!.provisions, "no loading outside the own network")
         val rations = HwihaCorpsRations(world, recorder, fixture.topology, fixture.metrics)
-        val dispatchedAt = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+        val dispatchedAt = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
         assertEquals(1, rations.dispatch(200, 2))
         val convoy = rations.convoys().single()
-        assertEquals(100L * HwihaS3Provisional.CONVOY_TARGET_MONTHS, convoy.provisions)
+        assertEquals(100L * CampaignBalance.CONVOY_TARGET_MONTHS, convoy.provisions)
         assertTrue(convoy.arrive > dispatchedAt, "a convoy is never instant")
-        assertEquals(1_000_000L - 300L * HwihaS3Provisional.GRAIN_PER_PROVISION,
+        assertEquals(1_000_000L - 300L * CampaignBalance.GRAIN_PER_PROVISION,
             CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain, "paid at departure")
         assertEquals(0, rations.dispatch(200, 2), "once a month")
         assertEquals(0, rations.deliver(), "not yet")
         var phases = 0
         while (world.getBugokById(7)!!.provisions == 0 && phases < 12) { fixture.nextPhase(world); rations.deliver(); phases++ }
         assertEquals(300, world.getBugokById(7)!!.provisions, "delivered in full: no loss")
-        assertEquals(convoy.arrive, world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) })
+        assertEquals(convoy.arrive, world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) })
         assertTrue(rations.convoys().isEmpty())
     }
 

@@ -29,12 +29,12 @@ import opensamguk.infra.seed.HwihaUnitProfilesJson
  */
 class HwihaDomesticContext(
     val design: DomesticDesign = DomesticDesign.CANON,
-    val geography: HwihaCountyGeography? = null,
-    val nativeCounties: HwihaNativeCountyLedger? = null,
+    val geography: CountyGeography? = null,
+    val nativeCounties: NativeCountyLedger? = null,
     val topology: StrategicTopologySnapshot? = null,
     val metrics: LandMarchMetricSnapshot? = null,
     val roadGates: List<StrategicRoadGate> = emptyList(),
-    val merit: HwihaGovernanceMeritSink = HwihaGovernanceMeritSink.NONE,
+    val merit: GovernanceMeritSink = GovernanceMeritSink.NONE,
     val cityConst: CityConstVariant? = null,
 ) {
     private val supportedCrewTypeIds by lazy { HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet() }
@@ -47,7 +47,7 @@ class HwihaDomesticContext(
         val ledger = nativeCounties
         return DomesticProjection(
             profile = world.ruleProfile,
-            now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase),
+            now = Phase(state.currentYear, state.currentMonth, state.currentPhase),
             people = generals.map { g ->
                 val position = positions?.stateFor(g.id)
                 DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState, g.officerLevel,
@@ -79,7 +79,7 @@ class HwihaDomesticContext(
     }
 }
 
-internal fun InMemoryTurnWorld.hwihaNow(): HwihaPhase = getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+internal fun InMemoryTurnWorld.hwihaNow(): Phase = getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
 
 internal fun InMemoryTurnWorld.updateGeneralMeta(recorder: ChangeRecorder, before: TurnGeneral, meta: Map<String, Any?>) {
     if (before.meta == meta) return

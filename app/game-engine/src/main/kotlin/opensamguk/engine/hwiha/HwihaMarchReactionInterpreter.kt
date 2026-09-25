@@ -13,7 +13,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
-import opensamguk.logic.war.hwiha.HwihaS3Provisional
+import opensamguk.logic.war.CampaignBalance
 
 /** Resolves saved scheme and corps-policy reactions against current deployments, sight and pinned geography. */
 class HwihaMarchReactionInterpreter(
@@ -75,16 +75,16 @@ class HwihaMarchReactionInterpreter(
     private fun decide(world: InMemoryTurnWorld, actorId: Int, node: StrategicNodeRef.LandProvince,
         directTravel: Boolean = false): Decision? {
         if (world.ruleProfile != RuleProfile.HWIHA || !topology.containsNode(node)) return null
-        val inventory = try { HwihaMarchReactions.read(world.getState().meta) } catch (_: IllegalArgumentException) { null }
+        val inventory = try { MarchReactions.read(world.getState().meta) } catch (_: IllegalArgumentException) { null }
             ?: return null
-        if (inventory == HwihaMarchReactions.Empty) return Decision(false, emptyList(), emptyMap(), emptySet())
+        if (inventory == MarchReactions.Empty) return Decision(false, emptyList(), emptyMap(), emptySet())
         val actor = world.getGeneralById(actorId) ?: return null
         val projection = HwihaDeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
         val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
-        val now = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+        val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
         fun hostile(nation: Int) = nation > 0 && nation != actor.nationId && actor.nationId > 0 &&
             ((actor.nationId to nation) in wars || (nation to actor.nationId) in wars)
-        fun corps(order: HwihaReactionOrder): HwihaDeployedCorps? = projection.deployed.singleOrNull {
+        fun corps(order: ReactionOrder): DeployedCorps? = projection.deployed.singleOrNull {
             it.orderId == order.orderId && it.ownerGeneralId == order.ownerGeneralId &&
                 it.commanderGeneralId == order.commanderGeneralId && it.nationId == order.nationId
         }
@@ -106,7 +106,7 @@ class HwihaMarchReactionInterpreter(
             val passage = passableFor(order.nationId) ?: return@mapNotNull null
             val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(from, node, 1), passage, metrics)
                 as? LandMarchPathResult.Resolved)?.path ?: return@mapNotNull null
-            if (path.edgeIds.size > HwihaS3Provisional.INTERCEPT_RANGE_PROVINCES) return@mapNotNull null
+            if (path.edgeIds.size > CampaignBalance.INTERCEPT_RANGE_PROVINCES) return@mapNotNull null
             order.commanderGeneralId
         }.distinct().sorted()
         val evaders = linkedMapOf<Int, StrategicNodeRef.LandProvince>()
@@ -123,7 +123,7 @@ class HwihaMarchReactionInterpreter(
 
     /** A live target in FULL sight only; stale INTEL and FOG never grant interception. */
     private fun visible(world: InMemoryTurnWorld, viewerId: Int, target: StrategicNodeRef.LandProvince,
-        projection: DeploymentProjection, now: HwihaPhase): Boolean {
+        projection: DeploymentProjection, now: Phase): Boolean {
         val viewer = world.getGeneralById(viewerId) ?: return false
         val territory = world.provinceControlSnapshot()?.statesByProvinceId.orEmpty().values
             .filter { it.nationId == viewer.nationId }.mapTo(sortedSetOf()) { it.provinceId }
@@ -144,10 +144,10 @@ class HwihaMarchReactionInterpreter(
         return Vision.project(sources, commanderies, visionRules, now).tierOf(commandery) == VisionTier.FULL
     }
 
-    private fun retreat(world: InMemoryTurnWorld, order: HwihaReactionOrder, from: StrategicNodeRef.LandProvince,
-        edges: StrategicEdgeStateSnapshot, now: HwihaPhase): StrategicNodeRef.LandProvince? {
+    private fun retreat(world: InMemoryTurnWorld, order: ReactionOrder, from: StrategicNodeRef.LandProvince,
+        edges: StrategicEdgeStateSnapshot, now: Phase): StrategicNodeRef.LandProvince? {
         val actor = world.getGeneralById(order.commanderGeneralId) ?: return null
-        val march = try { HwihaCorpsMarchState.read(actor.meta, topology, metrics) } catch (_: IllegalArgumentException) { null }
+        val march = try { CorpsMarchState.read(actor.meta, topology, metrics) } catch (_: IllegalArgumentException) { null }
         if (march?.checkpoint?.lastAdvancedAt == now) return null // this turn's movement was already spent
         fun own(province: String): Boolean = world.provinceControlSnapshot()?.statesByProvinceId?.get(province)?.nationId
             ?.let { it == order.nationId } ?: world.listCities().any { city ->

@@ -52,7 +52,7 @@ class YuzhouCampaignInvarianceTest {
             TurnGeneral(id = index + 1, name = g.name, nationId = g.nationId, cityId = g.locatedCity!!.toInt(), troopId = 0,
                 stats = GeneralStats(g.leadership, g.strength, g.intel, g.politics, g.charm), experience = 0, dedication = 0,
                 officerLevel = 12, npcState = 2, turnTime = Instant.parse("0190-01-01T00:00:00Z").plusSeconds(index.toLong()),
-                meta = mapOf(HwihaLordStatus.META_KEY to true, HwihaPersonPolicyState.META_KEY to g.hwihaPersonPolicy!!.toMetaValue()))
+                meta = mapOf(LordStatus.META_KEY to true, PersonPolicyState.META_KEY to g.hwihaPersonPolicy!!.toMetaValue()))
         }
         val units = scenario.hwihaUnits.mapIndexed { index, u ->
             Bugok(index + 1, lords.indexOfFirst { it.name == u.general } + 1, u.name, u.troops, u.crewTypeId, u.training, u.morale,
@@ -66,7 +66,7 @@ class YuzhouCampaignInvarianceTest {
         val state = TurnWorldState(1, 190, 1, 3600, Instant.parse("0190-01-01T00:00:00Z"), currentPhase = 1,
             config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = bundle.variant,
             meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
-                HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue(), "startYear" to 190))
+                MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue(), "startYear" to 190))
         val world = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals, cities = cities,
             nations = scenario.nations.map { Nation(it.id, it.name, it.color, capitalCityId = it.cities.first().toInt(), level = it.scale,
                 chiefGeneralId = lords.indexOfFirst { l -> l.nationId == it.id } + 1) },
@@ -90,7 +90,7 @@ class YuzhouCampaignInvarianceTest {
     /** One phase: every general's personal turn, then the world boundary into the next phase. */
     private fun Campaign.phase(index: Int) {
         lifecycle.runTick(Instant.parse("0190-01-01T00:00:00Z").plusSeconds(3600L * (index + 1)))
-        val next = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }.plus(1)
+        val next = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }.plus(1)
         world.setCurrentDate(next.year, next.month, next.phase)
         boundary.run(world, recorder)
     }
@@ -99,7 +99,7 @@ class YuzhouCampaignInvarianceTest {
         val run = campaign()
         val owners = run.world.listCities().associate { it.id to it.nationId }
         repeat(36) { run.phase(it) }
-        val deployed = run.world.listGenerals().count { HwihaDeploymentState.META_KEY in it.meta } +
+        val deployed = run.world.listGenerals().count { DeploymentState.META_KEY in it.meta } +
             run.world.listHwihaSieges().size
         assertTrue(deployed > 0, "NPC lords deployed")
         assertTrue(run.world.listHwihaSieges().isNotEmpty(), "an arrived corps besieged a county")

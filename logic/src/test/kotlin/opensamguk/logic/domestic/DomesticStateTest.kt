@@ -2,10 +2,10 @@ package opensamguk.logic.domestic
 
 import kotlin.test.*
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.Phase
 
 class DomesticStateTest {
-    private val now = HwihaPhase(200, 1, 1)
+    private val now = Phase(200, 1, 1)
     private fun <T> roundTrip(key: String, value: Map<String, Any?>, read: (Map<String, Any?>) -> T?): T? = read(mapOf(key to value))
 
     @Test fun `placement codec round trips and rejects corrupt shapes`() {

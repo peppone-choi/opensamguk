@@ -17,7 +17,7 @@ class VisionTest {
         (0..4).associate { "p$it" to it } + ("p0b" to 0),
         setOf(0 to 1, 1 to 2, 2 to 3, 3 to 4))
     private val rules = VisionRules.CANON
-    private val now = HwihaPhase(190, 3, 2)
+    private val now = Phase(190, 3, 2)
 
     private fun land(id: String) = StrategicNodeRef.LandProvince(id)
     private fun viewer(
@@ -31,7 +31,7 @@ class VisionTest {
         reports: ScoutReports? = null,
     ) = VisionViewer(1, nationId, actorNode, corps, retinue, territory, posts, towers, reports)
 
-    private fun report(commandery: Int, seenAt: HwihaPhase, vararg corps: ScoutedCorps) =
+    private fun report(commandery: Int, seenAt: Phase, vararg corps: ScoutedCorps) =
         ScoutReport("PARENT-$commandery", seenAt, listOf(ScoutedCity(100 + commandery, 2, true)),
             corps.sortedBy { it.corpsKey })
 
@@ -61,21 +61,21 @@ class VisionTest {
     }
 
     @Test fun `scouted commandery is intel with its age and a live source overrides it`() {
-        val reports = ScoutReports(hash, listOf(report(1, HwihaPhase(190, 2, 3)), report(3, now)))
+        val reports = ScoutReports(hash, listOf(report(1, Phase(190, 2, 3)), report(3, now)))
         val view = Vision.project(viewer(reports = reports), index, rules, now)
-        assertEquals(VisionEntry(1, VisionTier.INTEL, HwihaPhase(190, 2, 3), 2), view.entry(1))
+        assertEquals(VisionEntry(1, VisionTier.INTEL, Phase(190, 2, 3), 2), view.entry(1))
         assertEquals(VisionEntry(3, VisionTier.INTEL, now, 0), view.entry(3))
         val covered = Vision.project(viewer(reports = reports, posts = listOf(ScoutPost(3, "p0"))), index, rules, now)
         assertEquals(VisionTier.FULL, covered.tierOf(1))
         assertEquals(VisionTier.INTEL, covered.tierOf(3))
         // Across a year boundary the age still counts 旬 (36 per year).
-        assertEquals(37, Vision.ageTurns(HwihaPhase(189, 3, 1), HwihaPhase(190, 3, 2)))
+        assertEquals(37, Vision.ageTurns(Phase(189, 3, 1), Phase(190, 3, 2)))
     }
 
     @Test fun `notebooks from other tiles or from the future never become intel`() {
         val other = ScoutReports("b".repeat(64), listOf(report(2, now)))
         assertEquals(VisionTier.FOG, Vision.project(viewer(reports = other), index, rules, now).tierOf(2))
-        val future = ScoutReports(hash, listOf(report(2, HwihaPhase(190, 3, 3))))
+        val future = ScoutReports(hash, listOf(report(2, Phase(190, 3, 3))))
         assertEquals(VisionTier.FOG, Vision.project(viewer(reports = future), index, rules, now).tierOf(2))
     }
 
@@ -83,7 +83,7 @@ class VisionTest {
 
     private fun person(id: Int, nation: Int, node: StrategicNodeRef?) = DeploymentPerson(id, nation, false, node, false)
     private fun corps(order: String, owner: Int, nation: Int, vararg units: Int) =
-        HwihaDeployedCorps(order, owner, owner, null, nation, units.toList().sorted(), HwihaPhase(190, 1, 1))
+        DeployedCorps(order, owner, owner, null, nation, units.toList().sorted(), Phase(190, 1, 1))
 
     /** Viewer 1 (nation 1) owns order-own at p0; 2 (nation 2) at p1; 3 (nation 3) at p2; 4 (nation 3) at p4. */
     private fun projection(): DeploymentProjection = DeploymentProjection(RuleProfile.HWIHA,
@@ -107,21 +107,21 @@ class VisionTest {
 
     @Test fun `intel shows only the scouting snapshot, not the live corps standing there now`() {
         val seenThen = ScoutedCorps(ScoutCapture.corpsKey("order-old"), 9, 9, 3, "p2", "B1")
-        val reports = ScoutReports(hash, listOf(report(2, HwihaPhase(190, 1, 1), seenThen)))
+        val reports = ScoutReports(hash, listOf(report(2, Phase(190, 1, 1), seenThen)))
         val v = viewer(reports = reports)
         val view = Vision.project(v, index, rules, now)
         assertEquals(VisionTier.INTEL, view.tierOf(2))
         val seen = CorpsVisibility.project(v, view, index, projection(), rules)
         val intel = seen.single { it.visibility == VisionTier.INTEL }
         assertEquals(seenThen.corpsKey, intel.corpsKey)
-        assertEquals(HwihaPhase(190, 1, 1), intel.seenAt); assertEquals(7, intel.ageTurns); assertEquals("B1", intel.troopsBand)
+        assertEquals(Phase(190, 1, 1), intel.seenAt); assertEquals(7, intel.ageTurns); assertEquals("B1", intel.troopsBand)
         // The live 45000-strong corps in the same INTEL commandery stays hidden: a snapshot is not live sight.
         assertTrue(seen.none { it.corpsKey == ScoutCapture.corpsKey("order-secret-fog") })
     }
 
     @Test fun `an old snapshot of a commandery that is now in full sight yields only the live corps`() {
         val stale = ScoutedCorps(ScoutCapture.corpsKey("order-gone"), 8, 8, 2, "p1", "B5")
-        val reports = ScoutReports(hash, listOf(report(1, HwihaPhase(189, 1, 1), stale)))
+        val reports = ScoutReports(hash, listOf(report(1, Phase(189, 1, 1), stale)))
         val v = viewer(reports = reports, posts = listOf(ScoutPost(5, "p0")))   // FULL: 0, 1
         val view = Vision.project(v, index, rules, now)
         assertEquals(VisionTier.FULL, view.tierOf(1))

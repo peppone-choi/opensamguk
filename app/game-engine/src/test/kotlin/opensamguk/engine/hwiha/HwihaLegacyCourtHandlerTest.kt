@@ -17,20 +17,20 @@ class HwihaLegacyCourtHandlerTest {
     private fun input(id: String, args: String, requestId: String = "court-test") =
         TurnDaemonCommand.ImmediateInput(requestId, 501, 42, id, args)
 
-    private fun catalogWithPlanned(inputId: String, originalState: String): HwihaInputCatalog {
+    private fun catalogWithPlanned(inputId: String, originalState: String): InputCatalog {
         val resource = checkNotNull(javaClass.classLoader.getResource("command-catalog/hwiha-input-catalog.json"))
         val original = resource.readText()
         val row = Regex("(\\\"inputId\\\":\\s*\\\"${Regex.escape(inputId)}\\\"[\\s\\S]*?\\\"deliveryState\\\":\\s*\\\")$originalState(\\\")")
         val planned = row.replace(original, "${'$'}1PLANNED${'$'}2")
         assertNotEquals(original, planned)
-        return HwihaInputCatalog.parse(planned)
+        return InputCatalog.parse(planned)
     }
 
     @Test fun `queued dispatch is rejected when its catalog row is no longer delivered`() {
         val route = fixture.route()
-        val queued = HwihaQueuedDispatch("planned-dispatch", 42, 502, route.destinationCounty)
+        val queued = QueuedDispatch("planned-dispatch", 42, 502, route.destinationCounty)
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (HwihaQueuedDispatch.META_KEY to queued.toMetaValue()))
+            it.copy(meta = it.meta + (QueuedDispatch.META_KEY to queued.toMetaValue()))
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
@@ -39,7 +39,7 @@ class HwihaLegacyCourtHandlerTest {
 
         handler.onIssuerTurn(501)
 
-        assertFalse(HwihaQueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
+        assertFalse(QueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
         val execution = handler.takeExecutions().single()
         assertEquals("planned-dispatch", execution.requestId)
         assertEquals(InputRejection.NOT_DELIVERED.name, execution.result.code)
@@ -71,7 +71,7 @@ class HwihaLegacyCourtHandlerTest {
         val queued = mapOf("requestId" to "bad-queue", "ownerUserId" to 42,
             "targetGeneralId" to 502, "countyId" to "invalid")
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (HwihaQueuedDispatch.META_KEY to queued))
+            it.copy(meta = it.meta + (QueuedDispatch.META_KEY to queued))
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
@@ -79,7 +79,7 @@ class HwihaLegacyCourtHandlerTest {
 
         handler.onIssuerTurn(501)
 
-        assertFalse(HwihaQueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
+        assertFalse(QueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
         val execution = handler.takeExecutions().single()
         assertEquals("bad-queue", execution.requestId)
         assertEquals("STATE_UNAVAILABLE", execution.result.code)
@@ -89,7 +89,7 @@ class HwihaLegacyCourtHandlerTest {
     @Test fun `malformed reward legacy and stratagem queues are rejected independently`() {
         val route = fixture.route()
         for ((key, inputId) in listOf(
-            HwihaQueuedReward.META_KEY to HwihaRewardInput.INPUT_ID,
+            QueuedReward.META_KEY to RewardInput.INPUT_ID,
             HwihaQueuedLegacyCourt.META_KEY to "court.releaseCorps",
             HwihaQueuedLegacyStratagem.META_KEY to "stratagem.lastStand",
         )) {
@@ -134,7 +134,7 @@ class HwihaLegacyCourtHandlerTest {
     @Test fun `malformed queued decision does not stop the next general in the lifecycle`() {
         val route = fixture.route()
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (HwihaQueuedDispatch.META_KEY to mapOf(
+            it.copy(meta = it.meta + (QueuedDispatch.META_KEY to mapOf(
                 "requestId" to "bad-queue", "ownerUserId" to 42, "targetGeneralId" to 502, "countyId" to "invalid")))
         }
         val next = fixture.person(502, 1, route.startCity, userId = "43", lord = false)
@@ -148,7 +148,7 @@ class HwihaLegacyCourtHandlerTest {
         assertEquals(setOf(501, 502), handled.map { it.generalId }.toSet())
         assertTrue(world.getGeneralById(501)!!.turnTime > ruler.turnTime)
         assertTrue(world.getGeneralById(502)!!.turnTime > next.turnTime)
-        assertFalse(HwihaQueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
+        assertFalse(QueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
     }
 
     @Test fun `institution is rejected without a defined treasury model`() {
@@ -201,13 +201,13 @@ class HwihaLegacyCourtHandlerTest {
 
     @Test fun `corps release persists metadata removal for owner and commander`() {
         val route = fixture.route()
-        val corps = HwihaDeployedCorps("corps-release", 501, 502, 51, 1, listOf(7), HwihaPhase(200, 1, 1))
+        val corps = DeployedCorps("corps-release", 501, 502, 51, 1, listOf(7), Phase(200, 1, 1))
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue()))
+            it.copy(meta = it.meta + (DeploymentState.META_KEY to DeploymentState(listOf(corps)).toMetaValue()))
         }
         val commander = fixture.person(502, 1, route.startCity, lord = false).let {
-            it.copy(meta = it.meta + (HwihaCorpsOrder.META_KEY to mapOf("stale" to true)) +
-                (HwihaCorpsMarchState.META_KEY to mapOf("stale" to true)))
+            it.copy(meta = it.meta + (CorpsOrder.META_KEY to mapOf("stale" to true)) +
+                (CorpsMarchState.META_KEY to mapOf("stale" to true)))
         }
         val world = fixture.world(listOf(ruler to route.start, commander to route.start),
             bugoks = listOf(fixture.unit(7, ruler.id, 1000)),
@@ -217,9 +217,9 @@ class HwihaLegacyCourtHandlerTest {
         assertTrue(handler.handle(input("court.releaseCorps", """{"targetGeneralId":502}""", "release")).ok)
         handler.onIssuerTurn(501)
         assertTrue(handler.takeExecutions().single().result.ok)
-        assertNull(HwihaDeploymentState.read(world.getGeneralById(501)!!.meta))
-        assertFalse(HwihaCorpsOrder.META_KEY in world.getGeneralById(502)!!.meta)
-        assertFalse(HwihaCorpsMarchState.META_KEY in world.getGeneralById(502)!!.meta)
+        assertNull(DeploymentState.read(world.getGeneralById(501)!!.meta))
+        assertFalse(CorpsOrder.META_KEY in world.getGeneralById(502)!!.meta)
+        assertFalse(CorpsMarchState.META_KEY in world.getGeneralById(502)!!.meta)
         assertEquals(setOf(501, 502), recorder.generalPatches().map { it.id }.toSet())
     }
 }

@@ -10,17 +10,17 @@ internal object HwihaNpcDispatchSelector {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val issuer = world.getGeneralById(issuerId) ?: return null
         if (issuer.npcState != NpcType.NPC_LITE || issuer.nationId <= 0 ||
-            issuer.meta[HwihaLordStatus.META_KEY] != true ||
+            issuer.meta[LordStatus.META_KEY] != true ||
             (!issuer.userId.isNullOrBlank() && issuer.userId.toLongOrNull()?.let { it <= 0 } != true) ||
-            HwihaQueuedDispatch.META_KEY in issuer.meta) return null
+            QueuedDispatch.META_KEY in issuer.meta) return null
         if (world.listRetainers().any { it.generalId == issuerId }) return null
         val directTargetIds = world.listRetainers().filter { it.generalId != null }
             .groupBy { it.generalId!! }
             .filterValues { cards -> cards.size == 1 && cards.single().masterGeneralId == issuerId }.keys
         val targets = directTargetIds.mapNotNull(world::getGeneralById).filter {
             it.id != issuerId && it.nationId == issuer.nationId &&
-                (it.userId?.toLongOrNull() ?: 0) > 0 && it.meta[HwihaLordStatus.META_KEY] == false &&
-                HwihaDispatchState.META_KEY !in it.meta && HwihaCountyAssignment.META_KEY !in it.meta
+                (it.userId?.toLongOrNull() ?: 0) > 0 && it.meta[LordStatus.META_KEY] == false &&
+                DispatchState.META_KEY !in it.meta && CountyAssignment.META_KEY !in it.meta
         }.sortedBy { it.id }
         if (targets.isEmpty()) return null
         val counties = world.listCities().filter {

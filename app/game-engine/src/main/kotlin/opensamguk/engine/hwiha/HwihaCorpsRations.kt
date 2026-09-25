@@ -5,16 +5,16 @@ import opensamguk.engine.siege.RoadFortPassage
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
-import opensamguk.logic.war.hwiha.HwihaS3Provisional
+import opensamguk.logic.war.CampaignBalance
 import opensamguk.logic.world.*
 import org.slf4j.LoggerFactory
 
 /**
  * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, 확정 `hwiha-s3-provisional-v1.json` rations).
  *
- * - **출병 적재**: 출병하는 순간 출발지 창고망의 곡으로 부곡 휴대 군량을 (병력 × [HwihaS3Provisional.DEPLOY_LOAD_MONTHS] 개월)까지 채운다.
+ * - **출병 적재**: 출병하는 순간 출발지 창고망의 곡으로 부곡 휴대 군량을 (병력 × [CampaignBalance.DEPLOY_LOAD_MONTHS] 개월)까지 채운다.
  *   출발지가 자국 縣이 아니면(적지·무주지) 싣지 못한다. 창고가 모자라면 있는 만큼만 싣는다.
- * - **보급선**: 월 경계에 자국 縣 밖에 있는 군단으로 (병력 × [HwihaS3Provisional.CONVOY_TARGET_MONTHS] 개월)까지 모자란 곡을 보낸다.
+ * - **보급선**: 월 경계에 자국 縣 밖에 있는 군단으로 (병력 × [CampaignBalance.CONVOY_TARGET_MONTHS] 개월)까지 모자란 곡을 보낸다.
  *   가장 가까운(행군 경로 비용) 보급된 자국 縣에서 출발하고, 경로 비용 ÷ 한 순 행군 예산(올림, 최소 1)순 뒤 도착한다. **손실은 없다**
  *   (지연만 — spec §9.2 「멀수록 늦게 도착한다」). 경로가 적 군단이 있는 省을 지나면 그 달은 보내지 못한다(보급선 차단).
  *   값은 출발할 때 창고망에서 빠지고, 도착하는 순 경계에 부곡이 남아 있으면 휴대 군량에 더한다.
@@ -27,15 +27,15 @@ class HwihaCorpsRations(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
 ) {
-    data class Convoy(val bugokId: Int, val nationId: Int, val provisions: Long, val arrive: HwihaPhase) {
+    data class Convoy(val bugokId: Int, val nationId: Int, val provisions: Long, val arrive: Phase) {
         fun toMetaValue(): Map<String, Any> = linkedMapOf("bugokId" to bugokId, "nationId" to nationId,
             "provisions" to provisions, "arrive" to arrive.toMetaValue())
     }
 
-    private fun now() = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+    private fun now() = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
 
     /** 출병 적재. @return 실은 휴대 군량 합. */
-    fun load(corps: HwihaDeployedCorps): Long {
+    fun load(corps: DeployedCorps): Long {
         if (world.ruleProfile != RuleProfile.HWIHA) return 0
         val here = cityAt(world, corps.commanderGeneralId) ?: return 0
         val network = HwihaWarehouseNetwork(world, recorder)
@@ -44,12 +44,12 @@ class HwihaCorpsRations(
         var loaded = 0L
         for (id in corps.bugokIds.sorted()) {
             val unit = world.getBugokById(id) ?: continue
-            val want = (unit.troops.toLong() * HwihaS3Provisional.DEPLOY_LOAD_MONTHS)
+            val want = (unit.troops.toLong() * CampaignBalance.DEPLOY_LOAD_MONTHS)
                 .coerceAtMost(Int.MAX_VALUE.toLong()) - unit.provisions
             if (want <= 0) continue
-            val add = minOf(want, network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION)
+            val add = minOf(want, network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION)
             if (add <= 0) break
-            if (!network.payGrain(corps.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION)) {
+            if (!network.payGrain(corps.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
                 log.warn("hwiha_corps_load_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
                 break
             }
@@ -77,7 +77,7 @@ class HwihaCorpsRations(
                 val here = cityAt(world, corps.commanderGeneralId)
                 if (here != null && world.getCityById(here)?.nationId == corps.nationId) continue
                 val target = world.positionOf(corps.commanderGeneralId) as? StrategicNodeRef.LandProvince ?: continue
-                val blocked = (HwihaMilitaryPresence.assessNation(corps.nationId, projection, wars)
+                val blocked = (MilitaryPresence.assessNation(corps.nationId, projection, wars)
                     as? MilitaryPresenceAssessment.Ready)?.blockedProvinceIds ?: continue
                 val source = world.administrativeCountyIds.sorted().mapNotNull { countyId ->
                     val city = world.getCityById(countyId)?.takeIf { it.nationId == corps.nationId && it.supplyState != 0 }
@@ -99,12 +99,12 @@ class HwihaCorpsRations(
                 for (id in corps.bugokIds.sorted()) {
                     val unit = world.getBugokById(id) ?: continue
                     val coming = inFlight.filter { it.bugokId == id }.sumOf { it.provisions }
-                    val want = (unit.troops.toLong() * HwihaS3Provisional.CONVOY_TARGET_MONTHS)
+                    val want = (unit.troops.toLong() * CampaignBalance.CONVOY_TARGET_MONTHS)
                         .coerceAtMost(Int.MAX_VALUE.toLong()) - unit.provisions - coming
                     if (want <= 0) continue
-                    val add = minOf(want, network.grainIn(counties) / HwihaS3Provisional.GRAIN_PER_PROVISION)
+                    val add = minOf(want, network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION)
                     if (add <= 0) break
-                    if (!network.payGrain(corps.nationId, counties, add * HwihaS3Provisional.GRAIN_PER_PROVISION)) {
+                    if (!network.payGrain(corps.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
                         log.warn("hwiha_convoy_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
                         break
                     }
@@ -142,7 +142,7 @@ class HwihaCorpsRations(
         val m = raw as? Map<*, *> ?: return@mapNotNull null
         Convoy((m["bugokId"] as? Number)?.toInt() ?: return@mapNotNull null, (m["nationId"] as? Number)?.toInt() ?: 0,
             (m["provisions"] as? Number)?.toLong() ?: return@mapNotNull null,
-            try { HwihaPhase.read(m["arrive"]) } catch (_: IllegalArgumentException) { return@mapNotNull null })
+            try { Phase.read(m["arrive"]) } catch (_: IllegalArgumentException) { return@mapNotNull null })
     }
 
     private fun save(convoys: List<Convoy>) {

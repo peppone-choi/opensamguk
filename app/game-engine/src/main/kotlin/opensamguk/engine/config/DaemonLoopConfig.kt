@@ -319,7 +319,7 @@ class DaemonLoopConfig {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA domestic inputs require pinned Han artifacts" }
             opensamguk.engine.hwiha.HwihaDomesticContext(
                 geography = opensamguk.infra.seed.HwihaCountyGeographyJson.load(artifacts),
-                nativeCounties = opensamguk.logic.input.HwihaNativeCountyLedger.load(),
+                nativeCounties = opensamguk.logic.input.NativeCountyLedger.load(),
                 topology = artifacts.projection.topology,
                 metrics = artifacts.landMarchMetrics,
                 roadGates = artifacts.projection.presentation?.roadGates.orEmpty(),
@@ -350,8 +350,8 @@ class DaemonLoopConfig {
         val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = visionContext?.let {
             opensamguk.engine.hwiha.HwihaMarchReactionInterpreter(it.topology, it.metrics, it.commanderies, it.rules)
         } ?: opensamguk.engine.hwiha.HwihaMarchReactionPolicy { current, _, _ ->
-            if (opensamguk.logic.input.HwihaMarchReactions.presence(current.getState().meta) ==
-                opensamguk.logic.input.HwihaMarchReactions.Presence.EMPTY)
+            if (opensamguk.logic.input.MarchReactions.presence(current.getState().meta) ==
+                opensamguk.logic.input.MarchReactions.Presence.EMPTY)
                 opensamguk.logic.world.LandMarchEntry.CLEAR else opensamguk.logic.world.LandMarchEntry.UNAVAILABLE
         }
         val handler = ReservedTurnHandler(

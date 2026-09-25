@@ -58,7 +58,7 @@ class HwihaDeploymentPersistenceIT {
         assertEquals(listOf(7,8),first.corps.bugokIds)
         assertEquals(2,first.corps.commanderGeneralId)
         save(world,recorder);world=cold(id)
-        assertEquals(listOf(first.corps),HwihaDeploymentState.read(world.getGeneralById(1)!!.meta)!!.corps)
+        assertEquals(listOf(first.corps),DeploymentState.read(world.getGeneralById(1)!!.meta)!!.corps)
         assertEquals(beforeUnits,world.listBugoks());assertEquals(beforePosition,world.positionOf(2))
         val after=world.getGeneralById(1)!!
         assertEquals(beforeGeneral.copy(meta=after.meta),after)
@@ -66,12 +66,12 @@ class HwihaDeploymentPersistenceIT {
         assertEquals(DeploymentFailure.ALREADY_DEPLOYED,assertIs<DeploymentExecution.Rejected>(duplicate).reason)
         assertEquals(after,world.getGeneralById(1));assertEquals(beforeUnits,world.listBugoks())
         val live=executor(world,ChangeRecorder()).projection()!!
-        assertIs<DeploymentAssessment.Eligible>(HwihaDeploymentRules.assessActive(first.corps,live))
+        assertIs<DeploymentAssessment.Eligible>(DeploymentRules.assessActive(first.corps,live))
         jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=? AND id=7",id)
         world=cold(id)
         val changed=executor(world,ChangeRecorder()).projection()!!
         assertEquals(DeploymentFailure.COMMANDER_CHANGED,
-            assertIs<DeploymentAssessment.Rejected>(HwihaDeploymentRules.assessActive(first.corps,changed)).reason)
+            assertIs<DeploymentAssessment.Rejected>(DeploymentRules.assessActive(first.corps,changed)).reason)
     }
 
     @Test fun `owner led deployment uses explicit neutral corps and absence remains distinct`() {
@@ -84,7 +84,7 @@ class HwihaDeploymentPersistenceIT {
         assertEquals(0,result.corps.nationId);assertEquals(1,result.corps.commanderGeneralId)
         save(world,recorder);world=cold(id)
         val state=executor(world,ChangeRecorder()).projection()!!
-        assertIs<DeploymentAssessment.Eligible>(HwihaDeploymentRules.assessActive(result.corps,state))
+        assertIs<DeploymentAssessment.Eligible>(DeploymentRules.assessActive(result.corps,state))
         jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaDeployment}','null'::jsonb) WHERE world_id=? AND id=1",id)
         world=cold(id)
         assertNull(executor(world,ChangeRecorder()).projection())
@@ -150,9 +150,9 @@ class HwihaDeploymentPersistenceIT {
             // Position and encounter are explicit fixture preconditions, not a combat simulation.
             assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world,actorId,destination))
             val before=world.getGeneralById(actorId)!!
-            val march=HwihaMarchState(HwihaCountyAssignment("fixture",10,1,1),path,
-                LandMarchCursor(path.pathHash,path.edgeIds.size,0),HwihaPhase(200,1,1),LandMarchStop.ENCOUNTER)
-            val after=before.copy(meta=before.meta+(HwihaMarchState.META_KEY to march.toMetaValue()))
+            val march=MarchState(CountyAssignment("fixture",10,1,1),path,
+                LandMarchCursor(path.pathHash,path.edgeIds.size,0),Phase(200,1,1),LandMarchStop.ENCOUNTER)
+            val after=before.copy(meta=before.meta+(MarchState.META_KEY to march.toMetaValue()))
             recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before),PerTurnOverlay.toLogicGeneral(after));world.applyGeneralDirtyFree(after)
             save(world,recorder);world=cold(id)
             assertEquals(DeploymentFailure.BATTLE_PENDING,assertIs<DeploymentExecution.Rejected>(
@@ -178,15 +178,15 @@ class HwihaDeploymentPersistenceIT {
         val destination = StrategicNodeRef.LandProvince(path.nodeKeys.last().removePrefix("land:"))
         // Explicit persistence fixture: this does not stand in for runtime march or combat verification.
         assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 2, destination))
-        val checkpoint = HwihaMarchCheckpoint(path, LandMarchCursor(path.pathHash, path.edgeIds.size, 0),
+        val checkpoint = MarchCheckpoint(path, LandMarchCursor(path.pathHash, path.edgeIds.size, 0),
             corps.startedAt, LandMarchStop.ENCOUNTER)
-        val state = HwihaCorpsMarchState(corps.orderId, corps.ownerGeneralId, corps.commanderGeneralId, checkpoint)
+        val state = CorpsMarchState(corps.orderId, corps.ownerGeneralId, corps.commanderGeneralId, checkpoint)
         val before = world.getGeneralById(2)!!
-        val after = before.copy(meta = before.meta + (HwihaCorpsMarchState.META_KEY to state.toMetaValue()))
+        val after = before.copy(meta = before.meta + (CorpsMarchState.META_KEY to state.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
         save(world, recorder); world = cold(id)
-        val restored = HwihaCorpsMarchState.read(world.getGeneralById(2)!!.meta, topology, metrics)!!
+        val restored = CorpsMarchState.read(world.getGeneralById(2)!!.meta, topology, metrics)!!
         restored.requireBinding(corps, 2)
         assertEquals(checkpoint.cursor, restored.checkpoint.cursor)
         assertEquals(destination, world.positionOf(2))
@@ -199,14 +199,14 @@ class HwihaDeploymentPersistenceIT {
             state.copy(commanderGeneralId = 10),
             state.copy(checkpoint = checkpoint.copy(cursor = LandMarchCursor(path.pathHash), stop = LandMarchStop.BUDGET_EXHAUSTED)))
         for (bad in badStates) {
-            world.applyGeneralDirtyFree(good.copy(meta = good.meta + (HwihaCorpsMarchState.META_KEY to bad.toMetaValue())))
+            world.applyGeneralDirtyFree(good.copy(meta = good.meta + (CorpsMarchState.META_KEY to bad.toMetaValue())))
             assertNull(executor(world, ChangeRecorder()).projection())
         }
         world.applyGeneralDirtyFree(good)
         assertNotNull(executor(world, ChangeRecorder()).projection())
-        val assignment = HwihaMarchState(HwihaCountyAssignment("fixture", 10, 1, 1), path,
+        val assignment = MarchState(CountyAssignment("fixture", 10, 1, 1), path,
             checkpoint.cursor, checkpoint.lastAdvancedAt, checkpoint.stop)
-        world.applyGeneralDirtyFree(good.copy(meta = good.meta + (HwihaMarchState.META_KEY to assignment.toMetaValue())))
+        world.applyGeneralDirtyFree(good.copy(meta = good.meta + (MarchState.META_KEY to assignment.toMetaValue())))
         assertNull(executor(world, ChangeRecorder()).projection())
     }
 
@@ -218,24 +218,24 @@ class HwihaDeploymentPersistenceIT {
         assertEquals(LandMarchEntry.UNAVAILABLE, military(world).entryAt(10, node))
         fun store(raw: Any?) {
             jdbc.update("UPDATE world_state SET meta=jsonb_set(meta, ARRAY[?], ?::jsonb) WHERE id=?",
-                HwihaMarchReactions.META_KEY, opensamguk.infra.persistence.MetaJson.encode(raw), id)
+                MarchReactions.META_KEY, opensamguk.infra.persistence.MetaJson.encode(raw), id)
         }
-        store(HwihaMarchReactions.Empty.toMetaValue()); world = cold(id)
+        store(MarchReactions.Empty.toMetaValue()); world = cold(id)
         assertEquals(LandMarchEntry.CLEAR, military(world).entryAt(10, node))
         val recorder = ChangeRecorder()
         assertIs<DeploymentExecution.Applied>(executor(world, recorder).deploy("reaction-$id", DeploymentRequest(1, null, listOf(7))))
         world.setCurrentDate(200, 1, 2)
         save(world, recorder); world = cold(id)
-        assertEquals(HwihaMarchReactions.Empty, HwihaMarchReactions.read(world.getState().meta))
+        assertEquals(MarchReactions.Empty, MarchReactions.read(world.getState().meta))
         assertEquals(LandMarchEntry.ENCOUNTER, military(world).entryAt(10, node))
-        for (raw in listOf(null, HwihaMarchReactions.Empty.toMetaValue() - "avoidanceOrders",
-            HwihaMarchReactions.Empty.toMetaValue() + ("version" to 2),
-            HwihaMarchReactions.Empty.toMetaValue() + ("avoidanceOrders" to listOf(mapOf("id" to "pending"))))) {
+        for (raw in listOf(null, MarchReactions.Empty.toMetaValue() - "avoidanceOrders",
+            MarchReactions.Empty.toMetaValue() + ("version" to 2),
+            MarchReactions.Empty.toMetaValue() + ("avoidanceOrders" to listOf(mapOf("id" to "pending"))))) {
             store(raw); world = cold(id)
             // Even a hostile corps cannot substitute for unknown avoidance or installed reactions.
             assertEquals(LandMarchEntry.UNAVAILABLE, military(world).entryAt(10, node))
         }
-        jdbc.update("UPDATE world_state SET meta=meta - ? WHERE id=?", HwihaMarchReactions.META_KEY, id)
+        jdbc.update("UPDATE world_state SET meta=meta - ? WHERE id=?", MarchReactions.META_KEY, id)
         world = cold(id)
         assertEquals(LandMarchEntry.UNAVAILABLE, military(world).entryAt(10, node))
     }

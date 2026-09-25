@@ -19,7 +19,7 @@ internal data class HwihaQueuedLegacyCourt(val requestId: String, val ownerUserI
             val owner = row["ownerUserId"] as? Int ?: invalid()
             val inputId = row["inputId"] as? String ?: invalid()
             val json = row["argJson"] as? String ?: invalid()
-            require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")) && owner > 0 && inputId in HwihaLegacyCourtInput.INPUT_IDS)
+            require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")) && owner > 0 && inputId in CourtInput.INPUT_IDS)
             require(json.length <= 4096)
             return HwihaQueuedLegacyCourt(requestId, owner, inputId, json)
         }
@@ -31,70 +31,70 @@ internal data class HwihaQueuedLegacyCourt(val requestId: String, val ownerUserI
 internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val context: HwihaDomesticContext) {
     fun assess(actorId: Int, inputId: String, json: String) =
-        HwihaLegacyCourtRules.assess(actorId, inputId, json, context.projection(world))
+        CourtRules.assess(actorId, inputId, json, context.projection(world))
 
-    fun execute(actorId: Int, inputId: String, json: String): HwihaLegacyCourtAssessment.Rejected? {
+    fun execute(actorId: Int, inputId: String, json: String): CourtAssessment.Rejected? {
         val result = assess(actorId, inputId, json)
-        if (result is HwihaLegacyCourtAssessment.Rejected) return result
-        val ready = (result as HwihaLegacyCourtAssessment.Eligible).ready
-        val nation = world.getNationById(ready.nation.id) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
+        if (result is CourtAssessment.Rejected) return result
+        val ready = (result as CourtAssessment.Eligible).ready
+        val nation = world.getNationById(ready.nation.id) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
         when (inputId) {
-            HwihaCourtExpansionInput.RELEASE_CORPS -> {
+            CourtExpansionInput.RELEASE_CORPS -> {
                 val corps = ready.corps!!
-                val owner = world.getGeneralById(corps.ownerGeneralId) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
-                val deployment = HwihaDeploymentState.read(owner.meta) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
+                val owner = world.getGeneralById(corps.ownerGeneralId) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
+                val deployment = DeploymentState.read(owner.meta) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
                 val remaining = deployment.corps.filterNot { it.orderId == corps.orderId }
-                world.updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaDeploymentState.META_KEY,
-                    remaining.takeIf { it.isNotEmpty() }?.let { HwihaDeploymentState(it).toMetaValue() }) +
+                world.updateGeneralMeta(recorder, owner, owner.meta.withKey(DeploymentState.META_KEY,
+                    remaining.takeIf { it.isNotEmpty() }?.let { DeploymentState(it).toMetaValue() }) +
                     ("hwihaLegacyReleaseCorpsLast" to corps.orderId))
-                val commander = world.getGeneralById(corps.commanderGeneralId) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
+                val commander = world.getGeneralById(corps.commanderGeneralId) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
                 world.updateGeneralMeta(recorder, commander,
-                    (commander.meta - HwihaCorpsOrder.META_KEY - HwihaCorpsMarchState.META_KEY) +
+                    (commander.meta - CorpsOrder.META_KEY - CorpsMarchState.META_KEY) +
                         ("hwihaLegacyReleaseCorpsLast" to corps.orderId))
             }
-            HwihaCourtExpansionInput.ABANDON_COUNTY -> {
-                val county = world.getCityById(ready.county!!.id) ?: return reject(HwihaLegacyCourtFailure.COUNTY_UNAVAILABLE)
+            CourtExpansionInput.ABANDON_COUNTY -> {
+                val county = world.getCityById(ready.county!!.id) ?: return reject(CourtFailure.COUNTY_UNAVAILABLE)
                 val next = county.copy(nationId = 0)
                 recorder.diffCity(PerTurnOverlay.toLogicCity(county), PerTurnOverlay.toLogicCity(next))
                 world.applyCityDirtyFree(next)
             }
-            HwihaCourtExpansionInput.MOVE_CAPITAL -> {
+            CourtExpansionInput.MOVE_CAPITAL -> {
                 val next = nation.copy(capitalCityId = ready.county!!.id)
                 recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(next))
                 world.applyNationDirtyFree(next)
             }
-            HwihaLegacyCourtInput.INSTITUTION -> {
-                val stock = ready.sourceStock!!.debit(with(HwihaTransferRules) { HwihaTransferResource.MONEY.amount(100) })!!
-                val next = nation.copy(gold = HwihaPortableStock.checkedColumn(stock.money), tech = nation.tech + 10.0,
-                    meta = HwihaPortableStock.withStock(nation.meta, stock))
+            CourtInput.INSTITUTION -> {
+                val stock = ready.sourceStock!!.debit(with(TransferRules) { TransferResource.MONEY.amount(100) })!!
+                val next = nation.copy(gold = PortableStock.checkedColumn(stock.money), tech = nation.tech + 10.0,
+                    meta = PortableStock.withStock(nation.meta, stock))
                 recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(next))
                 world.applyNationDirtyFree(next)
             }
-            in HwihaCourtResourceInput.INPUT_IDS -> {
-                val request = HwihaCourtResourceInput.parse(actorId, inputId, json)!!
-                val delta = with(HwihaTransferRules) { request.resource.amount(request.amount.toLong()) }
+            in CourtResourceInput.INPUT_IDS -> {
+                val request = CourtResourceInput.parse(actorId, inputId, json)!!
+                val delta = with(TransferRules) { request.resource.amount(request.amount.toLong()) }
                 val source = ready.sourceStock!!.debit(delta)!!
                 val destination = ready.destinationStock!!.credit(delta)
-                if (inputId == HwihaCourtResourceInput.CONFISCATE) {
-                    val person = world.getGeneralById(ready.targetPerson!!.id) ?: return reject(HwihaLegacyCourtFailure.TARGET_UNAVAILABLE)
+                if (inputId == CourtResourceInput.CONFISCATE) {
+                    val person = world.getGeneralById(ready.targetPerson!!.id) ?: return reject(CourtFailure.TARGET_UNAVAILABLE)
                     updatePerson(person, source)
                     updateNation(nation, destination)
                 } else {
                     updateNation(nation, source)
-                    val target = world.getNationById(ready.targetNation!!.id) ?: return reject(HwihaLegacyCourtFailure.TARGET_UNAVAILABLE)
+                    val target = world.getNationById(ready.targetNation!!.id) ?: return reject(CourtFailure.TARGET_UNAVAILABLE)
                     updateNation(target, destination)
                 }
             }
-            in HwihaDiplomacyInput.INPUT_IDS -> {
+            in DiplomacyInput.INPUT_IDS -> {
                 val other = ready.targetNation!!.id
-                val forward = world.getDiplomacy(nation.id, other) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
-                val backward = world.getDiplomacy(other, nation.id) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
+                val forward = world.getDiplomacy(nation.id, other) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
+                val backward = world.getDiplomacy(other, nation.id) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
                 val nextState = when (inputId) {
-                    HwihaDiplomacyInput.NON_AGGRESSION -> DiplomacyState.NON_AGGRESSION
-                    HwihaDiplomacyInput.DECLARE_WAR -> DiplomacyState.DECLARATION
-                    HwihaDiplomacyInput.OFFER_PEACE -> DiplomacyState.TRADE
-                    HwihaDiplomacyInput.BREAK_NON_AGGRESSION -> DiplomacyState.WAR
-                    else -> return reject(HwihaLegacyCourtFailure.INVALID_INPUT)
+                    DiplomacyInput.NON_AGGRESSION -> DiplomacyState.NON_AGGRESSION
+                    DiplomacyInput.DECLARE_WAR -> DiplomacyState.DECLARATION
+                    DiplomacyInput.OFFER_PEACE -> DiplomacyState.TRADE
+                    DiplomacyInput.BREAK_NON_AGGRESSION -> DiplomacyState.WAR
+                    else -> return reject(CourtFailure.INVALID_INPUT)
                 }
                 for (pre in listOf(forward, backward)) {
                     val next = world.updateDiplomacy(pre.fromNationId, pre.toNationId, nextState,
@@ -103,11 +103,11 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
                             DiplomacyState.DECLARATION -> DiplomacyConst.DEFAULT_DECLARE_WAR_TERM
                             DiplomacyState.WAR -> DiplomacyConst.DEFAULT_WAR_TERM
                             else -> 0
-                        }) ?: return reject(HwihaLegacyCourtFailure.STATE_UNAVAILABLE)
+                        }) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
                     recorder.diffDiplomacy(pre, next)
                 }
             }
-            else -> return reject(HwihaLegacyCourtFailure.INVALID_INPUT)
+            else -> return reject(CourtFailure.INVALID_INPUT)
         }
         HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
             "${ready.actor.name}의 조정 결정을 실행했습니다.", mapOf("inputId" to inputId))
@@ -115,16 +115,16 @@ internal class HwihaLegacyCourtExecutor(private val world: InMemoryTurnWorld, pr
     }
 
     private fun updatePerson(before: TurnGeneral, stock: opensamguk.logic.economy.Resources) {
-        val next = before.copy(gold = HwihaPortableStock.checkedColumn(stock.money),
-            rice = HwihaPortableStock.checkedColumn(stock.grain), meta = HwihaPortableStock.withStock(before.meta, stock))
+        val next = before.copy(gold = PortableStock.checkedColumn(stock.money),
+            rice = PortableStock.checkedColumn(stock.grain), meta = PortableStock.withStock(before.meta, stock))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(next))
         world.applyGeneralDirtyFree(next)
     }
     private fun updateNation(before: Nation, stock: opensamguk.logic.economy.Resources) {
-        val next = before.copy(gold = HwihaPortableStock.checkedColumn(stock.money),
-            rice = HwihaPortableStock.checkedColumn(stock.grain), meta = HwihaPortableStock.withStock(before.meta, stock))
+        val next = before.copy(gold = PortableStock.checkedColumn(stock.money),
+            rice = PortableStock.checkedColumn(stock.grain), meta = PortableStock.withStock(before.meta, stock))
         recorder.diffNation(PerTurnOverlay.toLogicNation(before), PerTurnOverlay.toLogicNation(next))
         world.applyNationDirtyFree(next)
     }
-    private fun reject(reason: HwihaLegacyCourtFailure) = HwihaLegacyCourtAssessment.Rejected(reason)
+    private fun reject(reason: CourtFailure) = CourtAssessment.Rejected(reason)
 }

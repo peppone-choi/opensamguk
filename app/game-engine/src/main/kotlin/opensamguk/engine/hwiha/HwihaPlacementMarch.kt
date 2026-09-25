@@ -34,7 +34,7 @@ class HwihaPlacementMarchTurn(
         val card = world.getGeneralById(generalId) ?: return false
         val active = try { PlacementState.read(card.meta)?.active } catch (_: IllegalArgumentException) { null } ?: return false
         // A dispatched human assignment owns movement; placements only move NPC cards (validated at intake and activation).
-        if (HwihaCountyAssignment.META_KEY in card.meta) return false
+        if (CountyAssignment.META_KEY in card.meta) return false
         val destination = destinationOf(active.order) ?: run {
             log(generalId, "${active.order.post.label} 자리의 위치를 확인할 수 없어 부임 행군을 멈췄습니다."); return true
         }
@@ -85,7 +85,7 @@ class HwihaPlacementMarchTurn(
             }
             reactions.onEntered(world, recorder, generalId, node)
         }
-        val march = PlacementMarch(active.order.requestId, HwihaMarchCheckpoint(path, movement.cursor, now, movement.stop))
+        val march = PlacementMarch(active.order.requestId, MarchCheckpoint(path, movement.cursor, now, movement.stop))
         val before = checkNotNull(world.getGeneralById(generalId))
         world.updateGeneralMeta(recorder, before, before.meta.withKey(PlacementMarch.META_KEY, march.toMetaValue()))
         when (movement.stop) {
@@ -109,7 +109,7 @@ class HwihaPlacementMarchTurn(
         PlacementTarget.None -> world.positionOf(order.ownerGeneralId) as? StrategicNodeRef.LandProvince
     }
 
-    private fun arrive(generalId: Int, active: ActivePlacement, at: HwihaPhase?, clearMarch: Boolean) {
+    private fun arrive(generalId: Int, active: ActivePlacement, at: Phase?, clearMarch: Boolean) {
         val before = checkNotNull(world.getGeneralById(generalId))
         var meta = before.meta.withKey(PlacementState.META_KEY,
             PlacementState(active.copy(arrivedAt = at), PlacementState.read(before.meta)?.pending).toMetaValue())

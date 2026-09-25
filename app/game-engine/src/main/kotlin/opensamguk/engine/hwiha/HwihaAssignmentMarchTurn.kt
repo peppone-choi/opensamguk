@@ -27,8 +27,8 @@ class HwihaAssignmentMarchTurn(
             else -> Unit
         }
         // A future field action must not run alongside automatic personal movement.
-        val startsDeployment = reserved.actionCode == HwihaDeployInput.INPUT_ID && outcome is HwihaTurnOutcome.Applied
-        val startsMuster = reserved.actionCode == HwihaMilitaryInput.MUSTER && outcome is HwihaTurnOutcome.Applied
+        val startsDeployment = reserved.actionCode == DeployInputs.INPUT_ID && outcome is HwihaTurnOutcome.Applied
+        val startsMuster = reserved.actionCode == MilitaryInput.MUSTER && outcome is HwihaTurnOutcome.Applied
         if (!HwihaPersonalTurn.hasNoInput(reserved) && reserved.actionCode != HwihaEnlistmentHandler.INPUT_ID && !startsDeployment && !startsMuster) return
         if (HwihaCorpsMarchTurn(world,recorder,topology,metrics,cells,reactions).onTurn(generalId)) {
             // §5.1 step 6: an arrived corps besieges a hostile county seat; an NPC commander also chooses its siege action.
@@ -41,7 +41,7 @@ class HwihaAssignmentMarchTurn(
         // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
         if (HwihaPlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
-        if (HwihaCountyAssignment.META_KEY !in actor.meta) return
+        if (CountyAssignment.META_KEY !in actor.meta) return
         val edges = try { LandPassageState.read(world.getState().meta, topology)
             ?.let { RoadFortPassage.forNation(world, it, actor.nationId) } }
             catch (_: IllegalArgumentException) { null }
@@ -50,7 +50,7 @@ class HwihaAssignmentMarchTurn(
             log(generalId, "육상 통행 상태를 확인할 수 없어 부임 행군을 멈췄습니다.", refs + ("stop" to "PASSAGE_UNAVAILABLE"))
             return
         }
-        val previous = try { HwihaMarchState.read(actor.meta, topology, metrics) }
+        val previous = try { MarchState.read(actor.meta, topology, metrics) }
             catch (_: IllegalArgumentException) { null }
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
         // One is the minimum positive passage threshold, not one soldier or one unit card.
@@ -88,9 +88,9 @@ class HwihaAssignmentMarchTurn(
         HwihaRecords.general(world, generalId, RecordKind.MARCH_ASSIGNMENT, text, refs)
 
     private fun assignmentRefs(meta: Map<String, Any?>): Map<String, Any?> =
-        (try { HwihaCountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null })
+        (try { CountyAssignment.read(meta) } catch (_: IllegalArgumentException) { null })
             ?.let(::assignmentRefs) ?: emptyMap()
 
-    private fun assignmentRefs(assignment: HwihaCountyAssignment): Map<String, Any?> =
+    private fun assignmentRefs(assignment: CountyAssignment): Map<String, Any?> =
         linkedMapOf("dispatchId" to assignment.dispatchId, "countyId" to assignment.countyId)
 }

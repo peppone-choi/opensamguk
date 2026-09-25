@@ -13,11 +13,11 @@ class HwihaPoliticalHandlerTest {
     @Test fun `rise waits for a complete nation transition`() {
         val route = fixture.route()
         val base = fixture.person(1011, 0, route.startCity, userId = "42", lord = false)
-        val policy = HwihaPersonPolicyState(50, true, "test", "1", base.id)
-        val actor = base.copy(meta = base.meta + (HwihaPersonPolicyState.META_KEY to policy.toMetaValue()))
+        val policy = PersonPolicyState(50, true, "test", "1", base.id)
+        val actor = base.copy(meta = base.meta + (PersonPolicyState.META_KEY to policy.toMetaValue()))
         val world = fixture.world(listOf(actor to route.start))
         val handler = HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
-        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPoliticalInput.RISE,
+        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(PoliticalInput.RISE,
             actor.id, "{}", "rise-1011", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, result.code)
         assertEquals(actor, world.getGeneralById(actor.id))
@@ -32,7 +32,7 @@ class HwihaPoliticalHandlerTest {
             retainers = listOf(Retainer(31, actor.id, "EXISTING", follower.id, follower.name, "guest")))
         assertEquals(InputRejection.NOT_DELIVERED.name,
             assertIs<HwihaTurnOutcome.Rejected>(HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
-                .handle(HwihaPoliticalInput.RESIGN, actor.id, "{}", "resign-1021", 42)).code)
+                .handle(PoliticalInput.RESIGN, actor.id, "{}", "resign-1021", 42)).code)
         assertEquals(1, world.getGeneralById(actor.id)!!.nationId)
         assertEquals(1, world.getGeneralById(follower.id)!!.nationId)
         assertEquals(actor.id, world.listRetainers().single().masterGeneralId)
@@ -45,7 +45,7 @@ class HwihaPoliticalHandlerTest {
             cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
         assertEquals(InputRejection.NOT_DELIVERED.name,
             assertIs<HwihaTurnOutcome.Rejected>(HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
-                .handle(HwihaPoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-1031", 42)).code)
+                .handle(PoliticalInput.DISSOLVE, actor.id, "{}", "dissolve-1031", 42)).code)
         assertNotNull(world.getNationById(1))
         assertEquals(1, world.getCityById(route.startCity)!!.nationId)
         assertEquals(1, world.getGeneralById(actor.id)!!.nationId)
@@ -57,10 +57,10 @@ class HwihaPoliticalHandlerTest {
         val world = fixture.world(listOf(actor to route.start),
             nations = listOf(Nation(1, "N1", "#111111", capitalCityId = route.startCity), Nation(2, "N2", "#222222")))
         val handler = HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPoliticalInput.FOUND_STATE, actor.id, "{}", "found-1041", 42))
+        assertIs<HwihaTurnOutcome.Applied>(handler.handle(PoliticalInput.FOUND_STATE, actor.id, "{}", "found-1041", 42))
         assertEquals(1, world.getNationById(1)!!.level)
-        assertEquals(HwihaPoliticalFailure.ALREADY_PROCESSED.name,
-            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPoliticalInput.FOUND_STATE,
+        assertEquals(PoliticalFailure.ALREADY_PROCESSED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(PoliticalInput.FOUND_STATE,
                 actor.id, "{}", "found-again", 42)).code)
     }
 
@@ -73,19 +73,19 @@ class HwihaPoliticalHandlerTest {
                 Nation(2, "N2", "#222222")))
         val political = HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
         val args = """{"targetGeneralId":${successor.id}}"""
-        assertEquals(HwihaPoliticalFailure.CONSENT_REQUIRED.name,
-            assertIs<HwihaTurnOutcome.Rejected>(political.handle(HwihaPoliticalInput.ABDICATE,
+        assertEquals(PoliticalFailure.CONSENT_REQUIRED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(political.handle(PoliticalInput.ABDICATE,
                 ruler.id, args, "abdicate-denied", 42)).code)
         val reply = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.ImmediateInput(
-            "accept-1052", successor.id, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
+            "accept-1052", successor.id, 43, PoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":${ruler.id},"inputId":"action.abdicate","accepted":true}"""))
         assertTrue(reply.ok)
-        assertIs<HwihaTurnOutcome.Applied>(political.handle(HwihaPoliticalInput.ABDICATE,
+        assertIs<HwihaTurnOutcome.Applied>(political.handle(PoliticalInput.ABDICATE,
             ruler.id, args, "abdicate-1051", 42))
-        assertFalse(HwihaLordStatus.read(world.getGeneralById(ruler.id)!!.meta))
-        assertTrue(HwihaLordStatus.read(world.getGeneralById(successor.id)!!.meta))
+        assertFalse(LordStatus.read(world.getGeneralById(ruler.id)!!.meta))
+        assertTrue(LordStatus.read(world.getGeneralById(successor.id)!!.meta))
         assertEquals(successor.id, world.getNationById(1)!!.chiefGeneralId)
-        assertNull(HwihaPoliticalConsent.read(world.getGeneralById(successor.id)!!.meta))
+        assertNull(PoliticalConsent.read(world.getGeneralById(successor.id)!!.meta))
     }
 
     @Test fun `oath needs an explicit acceptance and stores a symmetric bond`() {
@@ -96,19 +96,19 @@ class HwihaPoliticalHandlerTest {
         val political = HwihaPoliticalHandler(world, ChangeRecorder(), HwihaDomesticContext())
         val args = """{"targetGeneralId":${target.id}}"""
         val refused = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.ImmediateInput(
-            "refuse-1062", target.id, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
+            "refuse-1062", target.id, 43, PoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":${actor.id},"inputId":"action.oath","accepted":false}"""))
         assertTrue(refused.ok)
-        assertEquals(HwihaPoliticalFailure.CONSENT_DECLINED.name,
-            assertIs<HwihaTurnOutcome.Rejected>(political.handle(HwihaPoliticalInput.OATH,
+        assertEquals(PoliticalFailure.CONSENT_DECLINED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(political.handle(PoliticalInput.OATH,
                 actor.id, args, "oath-refused", 42)).code)
         val accepted = HwihaCourtHandler(world, ChangeRecorder()).handle(TurnDaemonCommand.ImmediateInput(
-            "accept-1062", target.id, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
+            "accept-1062", target.id, 43, PoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":${actor.id},"inputId":"action.oath","accepted":true}"""))
         assertTrue(accepted.ok)
-        assertIs<HwihaTurnOutcome.Applied>(political.handle(HwihaPoliticalInput.OATH,
+        assertIs<HwihaTurnOutcome.Applied>(political.handle(PoliticalInput.OATH,
             actor.id, args, "oath-1061", 42))
-        assertEquals(setOf(target.id), HwihaOathBonds.read(world.getGeneralById(actor.id)!!.meta))
-        assertEquals(setOf(actor.id), HwihaOathBonds.read(world.getGeneralById(target.id)!!.meta))
+        assertEquals(setOf(target.id), OathBonds.read(world.getGeneralById(actor.id)!!.meta))
+        assertEquals(setOf(actor.id), OathBonds.read(world.getGeneralById(target.id)!!.meta))
     }
 }

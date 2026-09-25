@@ -16,7 +16,7 @@ class InfrastructureSiteRulesTest {
     private val gate = StrategicRoadGate("road-piece", 1, 1, 1, 2, 2, false,
         fortCells = listOf(StrategicFortCell("piece", 1, 1)))
     private val county = DomesticCounty(10, "County", 1, "seat", "郡", emptyMap())
-    private val state = DomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
+    private val state = DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1),
         emptyList(), emptyList(), listOf(county), emptyList(), topology.landProvinceIds,
         provinceIdsByCounty = mapOf(10 to setOf("seat", "piece")))
     private fun infrastructure(active: Boolean, gates: List<StrategicRoadGate> = listOf(gate),

@@ -13,7 +13,7 @@ import opensamguk.infra.entity.GameKvEntity
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.world.HanWorldVariant
@@ -38,21 +38,21 @@ class HwihaCampReaderTest {
     private val bundle = mock(ResolvedHanWorldArtifacts::class.java)
 
     private fun policy(renown: Int, source: String = "synthetic-qa:camp") =
-        HwihaPersonPolicyState(renown, false, source, "v1", 1).toMetaValue()
+        PersonPolicyState(renown, false, source, "v1", 1).toMetaValue()
 
     // 본인: 시나리오 장수 조조(沛國 譙). 휘하: 하후돈(沛國 譙) · 유비(涿郡 涿縣) · 정봉(동명이인) · 장수 없는 카드.
     private val lord = GeneralReadEntity(id = 1, worldId = 1, name = "조조", nationId = 1, cityId = 5, userId = "41",
         leadership = 100, strength = 80, intel = 95, politics = 90, charm = 95,
-        meta = mapOf("npc_org" to 1, HwihaPersonPolicyState.META_KEY to policy(30)))
+        meta = mapOf("npc_org" to 1, PersonPolicyState.META_KEY to policy(30)))
     private val xiahou = GeneralReadEntity(id = 2, worldId = 1, name = "하후돈", nationId = 1, cityId = 2, npcState = 2,
         leadership = 90, strength = 90, intel = 60, politics = 60, charm = 70,
-        meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(30)))
+        meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30)))
     private val liubei = GeneralReadEntity(id = 3, worldId = 1, name = "유비", nationId = 0, npcState = 2,
         leadership = 80, strength = 70, intel = 70, politics = 70, charm = 99,
-        meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(40)))
+        meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(40)))
     private val dingfeng = GeneralReadEntity(id = 4, worldId = 1, name = "정봉", nationId = 1, npcState = 2,
         leadership = 70, strength = 77, intel = 64, politics = 50, charm = 50,
-        meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(30)))
+        meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30)))
     private val other = GeneralReadEntity(id = 9, worldId = 1, name = "남", userId = "42")
 
     private fun setup(profile: String = "HWIHA") {
@@ -299,7 +299,7 @@ class HwihaCampReaderTest {
         setup()
         val namedCards = retainers.retainersOf(1).filter { it.generalId != null }
         `when`(retainers.retainersOf(1)).thenReturn(namedCards)
-        lord.meta = lord.meta + (HwihaPersonPolicyState.META_KEY to policy(15))
+        lord.meta = lord.meta + (PersonPolicyState.META_KEY to policy(15))
         val out = reader.retinue(1, 41)
         assertTrue(out.overCapacity)
         // 23 > 15: 충성 20 동점(12 유비, 13 정봉) → 13 먼저(-7 → 16), 그다음 12(-8 → 8 ≤ 15) 에서 멈춘다.
@@ -319,10 +319,10 @@ class HwihaCampReaderTest {
     @Test fun `사람이 만든 장수는 이름이 같아도 본관을 받지 않는다`() {
         setup()
         // 이름만 「유비」인 신규 장수 — npc_org 가 없고 정책 출처가 created-general 이다.
-        liubei.meta = mapOf(HwihaPersonPolicyState.META_KEY to policy(30, source = HwihaCampLedgers.CREATED_GENERAL_SOURCE))
+        liubei.meta = mapOf(PersonPolicyState.META_KEY to policy(30, source = HwihaCampLedgers.CREATED_GENERAL_SOURCE))
         val out = reader.retinue(1, 41)
         assertTrue(out.people[1].bonds.isEmpty())
-        liubei.meta = mapOf("npc_org" to 2, HwihaPersonPolicyState.META_KEY to policy(30, source = HwihaCampLedgers.CREATED_GENERAL_SOURCE))
+        liubei.meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30, source = HwihaCampLedgers.CREATED_GENERAL_SOURCE))
         assertTrue(reader.retinue(1, 41).people[1].bonds.isEmpty())
     }
 

@@ -6,7 +6,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.Retainer
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
-import opensamguk.logic.content.HwihaPersonContributionState
+import opensamguk.logic.content.PersonContributionState
 
 class HwihaNpcDeploySelectorTest {
     private val fixture = HwihaCampaignWorldFixture()
@@ -27,7 +27,7 @@ class HwihaNpcDeploySelectorTest {
         assertNotEquals(1, w.getCityById(county)!!.nationId, "the target is hostile")
         assertEquals(choice, selector.choose(world(), 1), "same world, same choice")
         val reserved = selector.select(w, 1, HwihaCampaignWorldFixture.NO_INPUT)
-        assertEquals(HwihaDeployInput.INPUT_ID, reserved.actionCode); assertFalse(reserved.rowExists); assertNull(reserved.requestId)
+        assertEquals(DeployInputs.INPUT_ID, reserved.actionCode); assertFalse(reserved.rowExists); assertNull(reserved.requestId)
     }
 
     @Test fun `humans, reservations, thin armies and deployed corps are left alone`() {
@@ -42,7 +42,7 @@ class HwihaNpcDeploySelectorTest {
     @Test fun `held npc does not select an autonomous deployment`() {
         val held = fixture.world(listOf(
             fixture.person(1, 1, route.startCity, lord = false).let { person -> person.copy(meta = person.meta +
-                (HwihaPersonContributionState.META_KEY to HwihaPersonContributionState(
+                (PersonContributionState.META_KEY to PersonContributionState(
                     setOf("hwiha-stratagem-insight")).toMetaValue())) } to route.first,
             fixture.person(10, 1, route.startCity) to route.first,
         ), bugoks = listOf(fixture.unit(7, 1, 1000)),
@@ -51,25 +51,25 @@ class HwihaNpcDeploySelectorTest {
         assertNull(selector.choose(held, 1))
         assertNull(selector.reliefFor(held, 1))
         HwihaStratagemDraw(held, ChangeRecorder()).onTurn(10)
-        val ownersHand = assertNotNull(HwihaStratagemHand.read(held.getGeneralById(10)!!.meta, 10))
-        assertEquals(HwihaStratagemCardType.INSIGHT, ownersHand.cardType(ownersHand.extras.single().instanceId))
+        val ownersHand = assertNotNull(StratagemHand.read(held.getGeneralById(10)!!.meta, 10))
+        assertEquals(StratagemCardType.INSIGHT, ownersHand.cardType(ownersHand.extras.single().instanceId))
         HwihaStratagemDraw(held, ChangeRecorder()).onTurn(1)
-        assertNull(HwihaStratagemHand.read(held.getGeneralById(1)!!.meta, 1))
+        assertNull(StratagemHand.read(held.getGeneralById(1)!!.meta, 1))
         held.removeRetainer(1)
         HwihaStratagemDraw(held, ChangeRecorder()).onTurn(10)
-        assertTrue(HwihaStratagemHand.read(held.getGeneralById(10)!!.meta, 10)!!.extras.isEmpty())
+        assertTrue(StratagemHand.read(held.getGeneralById(10)!!.meta, 10)!!.extras.isEmpty())
     }
 
     @Test fun `the deploy handler accepts a synthesized npc order and still forbids an unowned human reservation`() {
         val w = world()
         val choice = assertNotNull(selector.choose(w, 1))
         val handler = HwihaDeployHandler(w, ChangeRecorder(), fixture.topology, fixture.metrics)
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, HwihaDeployInput.canonicalJson(choice), null, null, npcSelected = true))
-        val corps = HwihaDeploymentState.read(w.getGeneralById(1)!!.meta)!!.corps.single()
+        assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, DeployInputs.canonicalJson(choice), null, null, npcSelected = true))
+        val corps = DeploymentState.read(w.getGeneralById(1)!!.meta)!!.corps.single()
         assertEquals(HwihaNpcDeploySelector.orderId(w, 1), corps.orderId)
-        assertEquals(choice.destination, HwihaCorpsOrder.read(w.getGeneralById(1)!!.meta, fixture.topology)!!.destination)
+        assertEquals(choice.destination, CorpsOrder.read(w.getGeneralById(1)!!.meta, fixture.topology)!!.destination)
         val human = world(userId = "42")
         assertEquals("FORBIDDEN", assertIs<HwihaTurnOutcome.Rejected>(HwihaDeployHandler(human, ChangeRecorder(),
-            fixture.topology, fixture.metrics).handle(1, HwihaDeployInput.canonicalJson(choice), null, null, npcSelected = true)).code)
+            fixture.topology, fixture.metrics).handle(1, DeployInputs.canonicalJson(choice), null, null, npcSelected = true)).code)
     }
 }

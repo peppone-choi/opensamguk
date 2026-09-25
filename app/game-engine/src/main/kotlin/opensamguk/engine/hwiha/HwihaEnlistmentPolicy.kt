@@ -16,7 +16,7 @@ sealed interface HwihaEnlistmentPolicyResult {
 /** Current-world projection only; API and engine share the logic budget authority. */
 class HwihaEnlistmentPolicy(private val world: InMemoryTurnWorld) {
     fun current(request: EnlistmentRequest): HwihaEnlistmentPolicyResult {
-        val result = HwihaEnlistmentBudget.assess(request.actorId, world.ruleProfile,
+        val result = EnlistmentBudget.assess(request.actorId, world.ruleProfile,
             world.listGenerals().map { general ->
                 val stats = general.stats
                 PersonPolicyInput(general.id, general.nationId, stats.leadership, stats.strength,

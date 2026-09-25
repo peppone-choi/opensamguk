@@ -13,15 +13,15 @@ class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
         it.fromNationId to it.toNationId
     }
     fun assess(actorId: Int): MilitaryPresenceAssessment = projection()?.let {
-        HwihaMilitaryPresence.assess(actorId, it, wars())
+        MilitaryPresence.assess(actorId, it, wars())
     } ?: MilitaryPresenceAssessment.Unavailable
 
     /** Production entry reader: missing or unsupported reaction inventories are not clear terrain. */
     fun entryAt(actorId: Int, node: StrategicNodeRef.LandProvince): LandMarchEntry {
         if (world.ruleProfile != RuleProfile.HWIHA) return LandMarchEntry.UNAVAILABLE
-        val reactions = try { HwihaMarchReactions.read(world.getState().meta) }
+        val reactions = try { MarchReactions.read(world.getState().meta) }
             catch (_: IllegalArgumentException) { return LandMarchEntry.UNAVAILABLE }
-        if (reactions != HwihaMarchReactions.Empty) return LandMarchEntry.UNAVAILABLE
+        if (reactions != MarchReactions.Empty) return LandMarchEntry.UNAVAILABLE
         return entryAt(actorId, node, LandMarchEntry.CLEAR)
     }
 
@@ -60,7 +60,7 @@ class HwihaMilitaryPresenceProvider(private val world: InMemoryTurnWorld,
         val state = projection() ?: throw MilitarySupplyUnavailableException("Deployment authority is unavailable")
         val wars = wars()
         val blocks = world.listNations().map { it.id }.filter { it > 0 }.sorted().associateWith { nation ->
-            when (val result = HwihaMilitaryPresence.assessNation(nation, state, wars)) {
+            when (val result = MilitaryPresence.assessNation(nation, state, wars)) {
                 MilitaryPresenceAssessment.Unavailable -> throw MilitarySupplyUnavailableException("Active corps authority is unavailable")
                 is MilitaryPresenceAssessment.Ready -> result.blockedProvinceIds
             }

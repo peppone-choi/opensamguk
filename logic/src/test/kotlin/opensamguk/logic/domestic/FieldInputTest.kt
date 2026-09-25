@@ -5,9 +5,9 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNull
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaDeployedCorps
-import opensamguk.logic.input.HwihaDeploymentState
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.DeployedCorps
+import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.input.Phase
 import opensamguk.logic.input.RuleProfile
 
 class FieldInputTest {
@@ -24,7 +24,7 @@ class FieldInputTest {
     private val person = DomesticPerson(7, "장수", 2, true, 2, 1, 50, 50, 50, 50, 50,
         "province-a", false, emptyMap())
     private val county = DomesticCounty(11, "현", 2, "province-a", "군", emptyMap())
-    private val state = DomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
+    private val state = DomesticProjection(RuleProfile.HWIHA, Phase(200, 1, 1),
         listOf(person), emptyList(), listOf(county), emptyList(), setOf("province-a"))
     private val request = FieldRequest(7, FieldInput.FARM)
 
@@ -39,11 +39,11 @@ class FieldInputTest {
         assertEquals(FieldFailure.BATTLE_PENDING,
             assertIs<FieldAssessment.Rejected>(FieldRules.assess(request,
                 state.copy(people = listOf(person.copy(inBattle = true))))).reason)
-        val deployed = HwihaDeploymentState(listOf(HwihaDeployedCorps("order-7", 7, 7, null, 2,
+        val deployed = DeploymentState(listOf(DeployedCorps("order-7", 7, 7, null, 2,
             listOf(1), state.now)))
         assertEquals(FieldFailure.CORPS_DEPLOYED,
             assertIs<FieldAssessment.Rejected>(FieldRules.assess(request,
-                state.copy(people = listOf(person.copy(meta = mapOf(HwihaDeploymentState.META_KEY to
+                state.copy(people = listOf(person.copy(meta = mapOf(DeploymentState.META_KEY to
                     deployed.toMetaValue())))))).reason)
     }
 

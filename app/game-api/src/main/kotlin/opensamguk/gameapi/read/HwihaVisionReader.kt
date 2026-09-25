@@ -176,14 +176,14 @@ class HwihaVisionReader(
         val bundle = selected.artifacts ?: return Built.Failed("UNAVAILABLE")
         return try {
             require(world.currentMonth in 1..12 && world.currentPhase in 1..3 && world.currentYear >= 0)
-            val now = HwihaPhase(world.currentYear, world.currentMonth, world.currentPhase)
+            val now = Phase(world.currentYear, world.currentMonth, world.currentPhase)
             val index = bundle.commanderyIndex
             val topology = bundle.projection.topology
             val people = generals.findAll(); val cards = retainers.findAll(); val units = retainers.allBugoks()
             require(people.all { it.worldId == world.id } && cards.all { it.worldId == world.id } && units.all { it.worldId == world.id })
             val snapshot = spatial.readSnapshot(world.id, topology)
             val positions = snapshot.generalPositionSnapshot
-            val projection = requireNotNull(HwihaDeploymentProjection.build(RuleProfile.HWIHA,
+            val projection = requireNotNull(DeploymentProjector.build(RuleProfile.HWIHA,
                 people.map { DeploymentPersonSource(it.id, it.nationId,
                     it.npcState == 2 && (it.userId.isNullOrBlank() || it.userId?.toLongOrNull()?.let { id -> id <= 0 } == true), it.meta) },
                 units.map { DeploymentUnit(it.id, it.masterGeneralId, it.troops, it.commanderRetainerId) },
@@ -231,8 +231,8 @@ class HwihaVisionReader(
         commander ?: return null
         val topology = bundle.projection.topology
         return try {
-            val order = HwihaCorpsOrder.read(commander.meta, topology)
-            val march = HwihaCorpsMarchState.read(commander.meta, topology, bundle.landMarchMetrics)
+            val order = CorpsOrder.read(commander.meta, topology)
+            val march = CorpsMarchState.read(commander.meta, topology, bundle.landMarchMetrics)
             val path = march?.checkpoint?.let { checkpoint ->
                 checkpoint.path.nodeKeys.drop(checkpoint.cursor.edgeIndex).map { it.removePrefix("land:") }
             }
@@ -243,5 +243,5 @@ class HwihaVisionReader(
     private fun blocked(status: String, failure: ScoutFailure) =
         HwihaScoutOptionsResponse(status = status, available = false, code = failure.name, reason = ScoutRules.reason(failure))
 
-    private fun stamp(phase: HwihaPhase) = HwihaStampDto(phase.year, phase.month, phase.phase)
+    private fun stamp(phase: Phase) = HwihaStampDto(phase.year, phase.month, phase.phase)
 }

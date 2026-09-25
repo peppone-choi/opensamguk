@@ -103,15 +103,15 @@ class HwihaCourtApiIT {
             .andExpect(status().isOk).andExpect(jsonPath("$.code").value("ALREADY_QUEUED"))
             .andExpect(jsonPath("$.counties[0].available").value(false))
         val queued=fixture.load(1)
-        assertNotNull(opensamguk.logic.input.HwihaQueuedDispatch.read(queued.generals.single { it.id==10 }.meta))
-        assertNull(opensamguk.logic.input.HwihaDispatchState.read(queued.generals.single { it.id==1 }.meta))
+        assertNotNull(opensamguk.logic.input.QueuedDispatch.read(queued.generals.single { it.id==10 }.meta))
+        assertNull(opensamguk.logic.input.DispatchState.read(queued.generals.single { it.id==1 }.meta))
         mvc.perform(dispatch()).andExpect(status().isOk).andExpect(jsonPath("$.code").value("ALREADY_QUEUED"))
         val late=Instant.parse("0200-01-01T03:00:01Z")
         fixture.service(WorldId(1),InMemoryTurnWorld(queued),published,intake=true).runDueGeneralTurns(late)
         val issued=fixture.load(1)
-        assertNull(opensamguk.logic.input.HwihaQueuedDispatch.read(issued.generals.single { it.id==10 }.meta))
+        assertNull(opensamguk.logic.input.QueuedDispatch.read(issued.generals.single { it.id==10 }.meta))
         assertEquals(opensamguk.logic.input.DispatchStatus.PENDING,
-            opensamguk.logic.input.HwihaDispatchState.read(issued.generals.single { it.id==1 }.meta)!!.status)
+            opensamguk.logic.input.DispatchState.read(issued.generals.single { it.id==1 }.meta)!!.status)
         assertEquals(listOf("reservationAccepted","executionApplied"),jdbc.queryForList(
             "SELECT result_type FROM command_result WHERE request_id=? ORDER BY result_seq",String::class.java,requestId))
         mvc.perform(get("/api/command/result/{requestId}",requestId)).andExpect(status().isOk)
@@ -132,7 +132,7 @@ class HwihaCourtApiIT {
         assertEquals(beforeActor,afterActor.copy(meta=beforeActor.meta))
         assertEquals(45,after.retainers.single { it.generalId==1 }.loyalty)
         // 거절 명망은 즉시 깎지 않고 다음 월단평에 −4 로 한 번 반영한다(2026-09-23 결정) — 지금은 사건만 쌓인다.
-        assertEquals(30,opensamguk.logic.input.HwihaPersonPolicyState.read(afterActor.meta)!!.renownCapacity)
+        assertEquals(30,opensamguk.logic.input.PersonPolicyState.read(afterActor.meta)!!.renownCapacity)
         assertEquals(listOf(RenownEventSource.DISPATCH_REFUSAL),
             RenownEvents.entries(afterActor.meta).map { it.source })
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1",Int::class.java))

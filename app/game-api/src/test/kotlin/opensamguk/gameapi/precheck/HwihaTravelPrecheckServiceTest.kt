@@ -37,7 +37,7 @@ class HwihaTravelPrecheckServiceTest {
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"), meta = mapOf(
             LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
-            HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue()))
+            MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue()))
         `when`(artifacts.resolve()).thenReturn(ActiveWorldArtifactSnapshot(world,
             listOf(CityReadEntity(id = 1, worldId = 1), CityReadEntity(id = 2, worldId = 1)), bundle))
         `when`(spatial.readSnapshot(1, topology)).thenReturn(SpatialStateReadSnapshot(
@@ -48,34 +48,34 @@ class HwihaTravelPrecheckServiceTest {
 
     @Test fun `owner check precedes map reads and options use the shared route assessment`() {
         setup()
-        assertFailsWith<TravelReadForbidden> { service.options(1, HwihaTravelInput.MOVE, 42) }
+        assertFailsWith<TravelReadForbidden> { service.options(1, TravelInput.MOVE, 42) }
         verifyNoInteractions(artifacts, spatial)
-        val options = service.options(1, HwihaTravelInput.MOVE, 41)
+        val options = service.options(1, TravelInput.MOVE, 41)
         assertTrue(options.available)
         assertEquals(listOf("A", "B"), options.destinations.map { it.provinceId })
         assertEquals("ALREADY_THERE", options.destinations.first().code)
         assertTrue(options.destinations.last().available)
-        assertIs<HwihaTravelAssessment.Eligible>(service.assess(HwihaTravelRequest(1, HwihaTravelInput.MOVE, b), 41))
+        assertIs<TravelAssessment.Eligible>(service.assess(TravelRequest(1, TravelInput.MOVE, b), 41))
     }
 
     @Test fun `return follows dispatch county and missing assignment is an explicit failure`() {
         val actor = setup()
-        assertEquals("NO_RETURN_ASSIGNMENT", service.options(1, HwihaTravelInput.RETURN, 41).code)
-        actor.meta = actor.meta + (HwihaCountyAssignment.META_KEY to
-            HwihaCountyAssignment("dispatch-1", 3, 1, 2).toMetaValue())
-        assertEquals(listOf("B"), service.options(1, HwihaTravelInput.RETURN, 41).destinations.map { it.provinceId })
-        assertIs<HwihaTravelAssessment.Eligible>(service.assess(HwihaTravelRequest(1, HwihaTravelInput.RETURN, null), 41))
+        assertEquals("NO_RETURN_ASSIGNMENT", service.options(1, TravelInput.RETURN, 41).code)
+        actor.meta = actor.meta + (CountyAssignment.META_KEY to
+            CountyAssignment("dispatch-1", 3, 1, 2).toMetaValue())
+        assertEquals(listOf("B"), service.options(1, TravelInput.RETURN, 41).destinations.map { it.provinceId })
+        assertIs<TravelAssessment.Eligible>(service.assess(TravelRequest(1, TravelInput.RETURN, null), 41))
     }
 
     @Test fun `admission rejects malformed arguments and controller protects options`() {
         setup()
         val admission = HwihaTravelAdmission(service)
         assertEquals("INVALID_TURN_SLOT", assertFailsWith<HwihaAdmissionDenied> {
-            admission.canonicalArguments(HwihaTravelInput.MOVE, 1, 41, 12, "{}") }.code)
+            admission.canonicalArguments(TravelInput.MOVE, 1, 41, 12, "{}") }.code)
         assertEquals("INVALID_INPUT", assertFailsWith<HwihaAdmissionDenied> {
-            admission.canonicalArguments(HwihaTravelInput.MOVE, 1, 41, 0,
+            admission.canonicalArguments(TravelInput.MOVE, 1, 41, 0,
                 """{"destinationProvinceId":"B","destinationProvinceId":"A"}""") }.code)
-        assertEquals("""{"destinationProvinceId":"B"}""", admission.canonicalArguments(HwihaTravelInput.MOVE,
+        assertEquals("""{"destinationProvinceId":"B"}""", admission.canonicalArguments(TravelInput.MOVE,
             1, 41, 0, """{"destinationProvinceId":"B"}"""))
         val controller = HwihaTravelOptionsController(service)
         assertEquals(401, controller.move(null, 1).statusCode.value())

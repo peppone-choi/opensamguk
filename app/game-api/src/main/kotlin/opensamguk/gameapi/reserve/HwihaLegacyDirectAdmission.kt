@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class HwihaLegacyDirectAdmission(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun canonicalArguments(inputId: String, actorId: Int, ownerUserId: Int?, turnIdx: Int, raw: String?): String {
         fun deny(code: String, reason: String): Nothing = throw HwihaAdmissionDenied(code, reason)
@@ -19,14 +19,14 @@ class HwihaLegacyDirectAdmission(private val reader: HwihaDomesticReader,
         if (turnIdx !in 0..11) deny("INVALID_TURN_SLOT", "예약 순은 0부터 11까지입니다.")
         if (catalog[inputId]?.deliveryState?.hasHandler != true)
             deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val request = HwihaLegacyDirectInput.parse(actorId, inputId, raw)
-            ?: deny(HwihaLegacyDirectFailure.INVALID_INPUT.name, HwihaLegacyDirectFailure.INVALID_INPUT.message)
+        val request = DirectInput.parse(actorId, inputId, raw)
+            ?: deny(DirectFailure.INVALID_INPUT.name, DirectFailure.INVALID_INPUT.message)
         val state = reader.snapshot().state
-            ?: deny(HwihaLegacyDirectFailure.STATE_UNAVAILABLE.name, HwihaLegacyDirectFailure.STATE_UNAVAILABLE.message)
-        when (val assessed = HwihaLegacyDirectRules.assess(request, state)) {
-            is HwihaLegacyDirectAssessment.Rejected -> deny(assessed.reason.name, assessed.reason.message)
-            is HwihaLegacyDirectAssessment.Eligible -> Unit
+            ?: deny(DirectFailure.STATE_UNAVAILABLE.name, DirectFailure.STATE_UNAVAILABLE.message)
+        when (val assessed = DirectRules.assess(request, state)) {
+            is DirectAssessment.Rejected -> deny(assessed.reason.name, assessed.reason.message)
+            is DirectAssessment.Eligible -> Unit
         }
-        return HwihaLegacyDirectInput.canonicalJson(request)
+        return DirectInput.canonicalJson(request)
     }
 }

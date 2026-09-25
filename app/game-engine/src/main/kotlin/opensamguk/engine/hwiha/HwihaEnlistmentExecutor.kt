@@ -39,11 +39,11 @@ class HwihaEnlistmentExecutor(
         val nations = world.listNations().associateBy { it.id }
         val projection = world.enlistmentProjection()
         val policy = currentPolicy?.invoke(request)
-        val assessment = if (policy == null) HwihaEnlistmentPrecheck.assess(request, projection)
-            else HwihaEnlistmentPrecheck.assess(request, projection,
+        val assessment = if (policy == null) EnlistmentPrecheck.assess(request, projection)
+            else EnlistmentPrecheck.assess(request, projection,
                 RenownBudgetResult.Ready(policy.acceptingLordIds, policy.freeRenownByLord, policy.actorCardCost, emptyMap()))
         if (assessment is EnlistmentAssessment.Rejected) return EnlistmentExecution.Rejected(assessment.reason)
-        val plan = HwihaEnlistmentRules.select(assessment as EnlistmentAssessment.Eligible, drawIndex)
+        val plan = EnlistmentRules.select(assessment as EnlistmentAssessment.Eligible, drawIndex)
         // GENERAL can select a lord whose corrupt nation reference has no state row.
         val nation = nations[plan.nationId]
             ?: return EnlistmentExecution.Rejected(EnlistmentFailure.TARGET_NOT_FOUND)
@@ -52,7 +52,7 @@ class HwihaEnlistmentExecutor(
         val changed = plan.joiningGeneralIds.map { id ->
             val before = byId.getValue(id)
             before to before.copy(nationId = plan.nationId, meta =
-                if (id == plan.actorId) HwihaLordStatus.afterEnlistment(before.meta) else before.meta)
+                if (id == plan.actorId) LordStatus.afterEnlistment(before.meta) else before.meta)
         }
         val joiningIds = plan.joiningGeneralIds.toSet()
         val count = generals.count { it.npcState != 5 && (it.nationId == nation.id || it.id in joiningIds) }
@@ -83,7 +83,7 @@ class HwihaEnlistmentExecutor(
 }
 
 /** Shared current-world projection for NPC selection and execution revalidation. */
-internal fun InMemoryTurnWorld.enlistmentProjection() = HwihaEnlistmentProjection(ruleProfile,
+internal fun InMemoryTurnWorld.enlistmentProjection() = EnlistmentProjection(ruleProfile,
     listGenerals().map { general ->
         val stats = general.stats
         EnlistmentPersonRow(PersonPolicyInput(general.id, general.nationId, stats.leadership,

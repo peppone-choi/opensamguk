@@ -6,7 +6,7 @@ import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.world.*
 
 sealed interface DeploymentExecution {
-    data class Applied(val corps: HwihaDeployedCorps) : DeploymentExecution
+    data class Applied(val corps: DeployedCorps) : DeploymentExecution
     data class Rejected(val reason: DeploymentFailure) : DeploymentExecution
 }
 
@@ -14,23 +14,23 @@ sealed interface DeploymentExecution {
 class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot) {
     fun assess(request: DeploymentRequest): DeploymentAssessment = projection()?.let {
-        HwihaDeploymentRules.assess(request, it)
+        DeploymentRules.assess(request, it)
     } ?: DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
 
     fun deploy(orderId: String, request: DeploymentRequest): DeploymentExecution {
         if (orderId.isBlank() || orderId.length > 128) return DeploymentExecution.Rejected(DeploymentFailure.INVALID_INPUT)
         val state = projection() ?: return DeploymentExecution.Rejected(DeploymentFailure.STATE_UNAVAILABLE)
         if (state.deployed.any { it.orderId == orderId }) return DeploymentExecution.Rejected(DeploymentFailure.ALREADY_DEPLOYED)
-        val assessment = HwihaDeploymentRules.assess(request, state)
+        val assessment = DeploymentRules.assess(request, state)
         if (assessment is DeploymentAssessment.Rejected) return DeploymentExecution.Rejected(assessment.reason)
         assessment as DeploymentAssessment.Eligible
-        val now = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
-        val corps = HwihaDeployedCorps(orderId, request.ownerId, assessment.commander.id, request.commanderRetainerId,
+        val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
+        val corps = DeployedCorps(orderId, request.ownerId, assessment.commander.id, request.commanderRetainerId,
             assessment.owner.nationId, request.bugokIds.sorted(), now)
         val owner = checkNotNull(world.getGeneralById(request.ownerId))
-        val old = HwihaDeploymentState.read(owner.meta)?.corps.orEmpty()
-        val next = HwihaDeploymentState((old + corps).sortedBy { it.commanderGeneralId })
-        val after = owner.copy(meta = owner.meta + (HwihaDeploymentState.META_KEY to next.toMetaValue()))
+        val old = DeploymentState.read(owner.meta)?.corps.orEmpty()
+        val next = DeploymentState((old + corps).sortedBy { it.commanderGeneralId })
+        val after = owner.copy(meta = owner.meta + (DeploymentState.META_KEY to next.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(owner), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
         // 출병 적재: 출발지 창고망의 곡으로 휴대 군량을 채운다(2026-09-23 확정 군량).
@@ -39,7 +39,7 @@ class HwihaDeploymentExecutor(private val world: InMemoryTurnWorld, private val 
     }
 
     /** Corrupt metadata remains unavailable in the shared API/engine projection. */
-    fun projection(): DeploymentProjection? = HwihaDeploymentProjection.build(
+    fun projection(): DeploymentProjection? = DeploymentProjector.build(
         world.ruleProfile,
         world.listGenerals().map { DeploymentPersonSource(it.id, it.nationId,
             it.npcState == 2 && (it.userId.isNullOrBlank() || it.userId.toLongOrNull()?.let { id -> id <= 0 } == true), it.meta) },

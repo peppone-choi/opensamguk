@@ -2,20 +2,20 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.logic.input.HwihaGovernanceMeritEvent
-import opensamguk.logic.input.HwihaGovernanceMeritSink
+import opensamguk.logic.input.GovernanceMeritEvent
+import opensamguk.logic.input.GovernanceMeritSink
 import opensamguk.logic.renown.DomesticMerit
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 
 /**
- * 내정 스트림의 치적 사건([HwihaGovernanceMeritEvent] — 縣令 카드가 앉은 縣 의 지표 상승)을 기록 스트림의
+ * 내정 스트림의 치적 사건([GovernanceMeritEvent] — 縣令 카드가 앉은 縣 의 지표 상승)을 기록 스트림의
  * 월단평 사건(치적, [RenownEventSource.COUNTY_INDICATOR_RISE])으로 잇는다. 쓰기는 [HwihaRenownEventRecorder]
  * 를 거쳐 ChangeRecorder 경로로만 간다.
  *
  * ### 도장은 비교를 마친 달이 아니라 지표가 오른 달이다
  *
- * 내정 경계는 M+1 월 경계(상순)에서 M 월 경계에 적어 둔 값과 지금 값을 비교하고 [HwihaGovernanceMeritEvent.monthStamp]
+ * 내정 경계는 M+1 월 경계(상순)에서 M 월 경계에 적어 둔 값과 지금 값을 비교하고 [GovernanceMeritEvent.monthStamp]
  * 에 M+1 을 싣는다. 지표가 오른 것은 M 이므로 치적은 M 도장으로 쌓는다. 그래야
  *
  * - 기록 스트림의 치적 창([HwihaCountyMeritWindow], 같은 경계에서 M 도장으로 닫는다)과 같은 달 같은 종류가 되어
@@ -34,8 +34,8 @@ import opensamguk.logic.renown.RenownEvents
 class HwihaGovernanceMeritRenownSink(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-) : HwihaGovernanceMeritSink {
-    override fun onCountyIndicatorsRose(event: HwihaGovernanceMeritEvent) {
+) : GovernanceMeritSink {
+    override fun onCountyIndicatorsRose(event: GovernanceMeritEvent) {
         val stamp = meritStamp(event.monthStamp) ?: return
         val city = world.getCityById(event.countyId) ?: return
         val risen = DomesticMerit.risen(

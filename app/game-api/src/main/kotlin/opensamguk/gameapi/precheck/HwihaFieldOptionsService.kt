@@ -20,7 +20,7 @@ data class HwihaFieldOptions(val inputId: String, val available: Boolean,
 
 @Service
 class HwihaFieldOptionsService(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load(),
+    private val catalog: InputCatalog = InputCatalog.load(),
     private val design: DomesticDesign = DomesticDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(inputId: String, actorId: Int, ownerUserId: Long): HwihaFieldOptions {

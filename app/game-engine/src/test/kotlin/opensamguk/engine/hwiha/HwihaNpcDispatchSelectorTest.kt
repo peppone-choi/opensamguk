@@ -15,8 +15,8 @@ class HwihaNpcDispatchSelectorTest {
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
         experience = 0, dedication = 0, officerLevel = if (nation > 0) 12 else 0,
         npcState = 2, userId = null, gold = 100, rice = 200, crew = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to (nation > 0), HwihaPersonPolicyState.META_KEY to
-            HwihaPersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()))
+        meta = mapOf("hwihaLord" to (nation > 0), PersonPolicyState.META_KEY to
+            PersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()))
 
     private fun world(issuer: TurnGeneral = person(10, 1), reverse: Boolean = false, countyIds: Set<Int> = setOf(1,2,3)): InMemoryTurnWorld {
         val persons = listOf(issuer) + listOf(1, 2).map { person(it, 1).copy(userId = "42", officerLevel = 1,
@@ -40,8 +40,8 @@ class HwihaNpcDispatchSelectorTest {
             assertEquals(DispatchRequest(10,1,1),select(world))
             val handler=HwihaCourtHandler(world,ChangeRecorder())
             handler.onIssuerTurn(10)
-            assertEquals("npc-dispatch:1:10:1:200:1:1",HwihaDispatchState.read(world.getGeneralById(1)!!.meta)!!.dispatchId)
-            assertNull(HwihaDispatchState.read(world.getGeneralById(2)!!.meta))
+            assertEquals("npc-dispatch:1:10:1:200:1:1",DispatchState.read(world.getGeneralById(1)!!.meta)!!.dispatchId)
+            assertNull(DispatchState.read(world.getGeneralById(2)!!.meta))
             assertTrue(handler.takeExecutions().isEmpty())
             assertEquals(1,world.peekLogs().single().generalId)
             assertEquals("담당 장수가 없는 아군 현의 첫 부임 대상으로 발령되었습니다.",world.peekLogs().single().text)
@@ -55,7 +55,7 @@ class HwihaNpcDispatchSelectorTest {
         for (issuer in variants) assertNull(select(world(issuer)))
     }
     @Test fun `any dispatch or assignment metadata prevents repeat including malformed and closed history`() {
-        for (key in listOf(HwihaDispatchState.META_KEY,HwihaCountyAssignment.META_KEY)) {
+        for (key in listOf(DispatchState.META_KEY,CountyAssignment.META_KEY)) {
             val world=world()
             for(id in listOf(1,2)) {
                 val person=world.getGeneralById(id)!!
@@ -67,13 +67,13 @@ class HwihaNpcDispatchSelectorTest {
     @Test fun `closed dispatch history and accepted assignment prevent automatic reissue`() {
         for (status in listOf(DispatchStatus.REFUSED, DispatchStatus.CANCELLED, DispatchStatus.ACCEPTED)) {
             val world = world()
-            val phase = HwihaPhase(200,1,1)
+            val phase = Phase(200,1,1)
             val first = world.getGeneralById(1)!!
-            world.applyGeneralDirtyFree(first.copy(meta = first.meta + (HwihaDispatchState.META_KEY to
-                HwihaDispatchState("old",10,1,1,1,phase,phase.plus(12),status).toMetaValue())))
+            world.applyGeneralDirtyFree(first.copy(meta = first.meta + (DispatchState.META_KEY to
+                DispatchState("old",10,1,1,1,phase,phase.plus(12),status).toMetaValue())))
             val second = world.getGeneralById(2)!!
-            world.applyGeneralDirtyFree(second.copy(meta = second.meta + (HwihaCountyAssignment.META_KEY to
-                HwihaCountyAssignment("assigned",10,1,2).toMetaValue())))
+            world.applyGeneralDirtyFree(second.copy(meta = second.meta + (CountyAssignment.META_KEY to
+                CountyAssignment("assigned",10,1,2).toMetaValue())))
             assertNull(select(world), "automatic repeat after $status")
         }
     }
@@ -99,22 +99,22 @@ class HwihaNpcDispatchSelectorTest {
         assertNull(select(world))
         HwihaCourtHandler(world,ChangeRecorder()).onIssuerTurn(10)
         assertTrue(world.peekLogs().isEmpty())
-        assertNull(HwihaDispatchState.read(world.getGeneralById(1)!!.meta))
+        assertNull(DispatchState.read(world.getGeneralById(1)!!.meta))
     }
     @Test fun `friendly strategic sites without administrative counties mean no assignment`() {
         val world=world(countyIds=emptySet())
         assertNull(select(world))
         HwihaCourtHandler(world,ChangeRecorder()).onIssuerTurn(10)
         assertTrue(world.peekLogs().isEmpty())
-        assertNull(HwihaDispatchState.read(world.getGeneralById(1)!!.meta))
+        assertNull(DispatchState.read(world.getGeneralById(1)!!.meta))
     }
     @Test fun `explicit queue suppresses automatic selection even when it will be rejected`() {
-        val issuer=person(10,1).copy(meta=person(10,1).meta+(HwihaQueuedDispatch.META_KEY to
-            HwihaQueuedDispatch("human-request",40,1,1).toMetaValue()))
+        val issuer=person(10,1).copy(meta=person(10,1).meta+(QueuedDispatch.META_KEY to
+            QueuedDispatch("human-request",40,1,1).toMetaValue()))
         val world=world(issuer)
         val handler=HwihaCourtHandler(world,ChangeRecorder())
         handler.onIssuerTurn(10)
-        assertNull(HwihaDispatchState.read(world.getGeneralById(1)!!.meta))
+        assertNull(DispatchState.read(world.getGeneralById(1)!!.meta))
         assertEquals("FORBIDDEN",handler.takeExecutions().single().result.code)
     }
 }

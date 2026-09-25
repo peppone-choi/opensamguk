@@ -66,7 +66,7 @@ class HwihaDomesticBoundary(
         return Outcome(stamp, false, advanced, completed, stopped, events)
     }
 
-    private fun activateCommanderyPolicies(now: HwihaPhase) {
+    private fun activateCommanderyPolicies(now: Phase) {
         for (nation in world.listNations().sortedBy { it.id }) {
             val policies = try { CommanderyPolicies.read(nation.meta) } catch (_: IllegalArgumentException) { continue } ?: continue
             var next = policies
@@ -78,7 +78,7 @@ class HwihaDomesticBoundary(
 
     private enum class WorkResult { NONE, ADVANCED, COMPLETED, STOPPED }
 
-    private fun progressWork(countyId: Int, now: HwihaPhase, state: DomesticProjection): WorkResult {
+    private fun progressWork(countyId: Int, now: Phase, state: DomesticProjection): WorkResult {
         val city = world.getCityById(countyId) ?: return WorkResult.NONE
         val works = try { CountyWorks.read(city.meta) } catch (_: IllegalArgumentException) { return WorkResult.NONE }
             ?: return WorkResult.NONE
@@ -187,7 +187,7 @@ class HwihaDomesticBoundary(
             HwihaWarehouseSettlement.Result.APPLIED
     }
 
-    private fun stop(countyId: Int, works: CountyWorks, work: ActiveWork, now: HwihaPhase, reason: String): WorkResult {
+    private fun stop(countyId: Int, works: CountyWorks, work: ActiveWork, now: Phase, reason: String): WorkResult {
         val city = world.getCityById(countyId) ?: return missingCounty(work.actorId, countyId)
         val stopped = work.copy(stopReason = reason)
         if (work.stopReason != reason) log(work.actorId, "${city.name}의 ${work.work.label} 공사가 멈췄습니다: ${reasonText(reason)}")
@@ -198,9 +198,9 @@ class HwihaDomesticBoundary(
 
     /** 縣令으로 배치된 카드가 앉은 縣만 비교한다. 지난달 기록이 없으면(처음 앉은 달) 사건 없이 기록만 남긴다. */
     /** Close the prior month before global growth events, so natural growth cannot become a magistrate's merit. */
-    fun closeMonthlyMerit(year: Int, month: Int): Int = monthlyMerit(HwihaPhase(year, month, 1), compare = true, open = false)
+    fun closeMonthlyMerit(year: Int, month: Int): Int = monthlyMerit(Phase(year, month, 1), compare = true, open = false)
 
-    private fun monthlyMerit(now: HwihaPhase, compare: Boolean, open: Boolean): Int {
+    private fun monthlyMerit(now: Phase, compare: Boolean, open: Boolean): Int {
         val month = "%04d-%02d".format(now.year, now.month)
         val state = context.projection(world)
         var events = 0
@@ -219,7 +219,7 @@ class HwihaDomesticBoundary(
                 val retainerId = seat.retainerId
                 if (retainerId == null) log(seat.controllerId, "${city.name}의 치적을 기록하지 못했습니다(현령 카드가 없습니다).")
                 else {
-                    context.merit.onCountyIndicatorsRose(HwihaGovernanceMeritEvent(seat.controllerId, seat.personId,
+                    context.merit.onCountyIndicatorsRose(GovernanceMeritEvent(seat.controllerId, seat.personId,
                         retainerId, county.id, month, previous.indicators, current, risen))
                     events++
                 }
@@ -252,6 +252,6 @@ class HwihaDomesticBoundary(
     companion object {
         private val logger = LoggerFactory.getLogger(HwihaDomesticBoundary::class.java)
         const val STAMP_KEY = "hwihaDomesticPhase"
-        fun stampOf(phase: HwihaPhase): String = "%04d-%02d-%d".format(phase.year, phase.month, phase.phase)
+        fun stampOf(phase: Phase): String = "%04d-%02d-%d".format(phase.year, phase.month, phase.phase)
     }
 }

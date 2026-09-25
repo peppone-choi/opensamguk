@@ -32,28 +32,28 @@ class HwihaTravelPrecheckService(
             throw TravelReadForbidden()
     }
 
-    fun assess(request: HwihaTravelRequest, ownerUserId: Long): HwihaTravelAssessment {
+    fun assess(request: TravelRequest, ownerUserId: Long): TravelAssessment {
         requireOwner(request.actorId, ownerUserId)
         return when (val result = snapshot(request.actorId)) {
-            is Snapshot.Rejected -> HwihaTravelAssessment.Rejected(result.reason)
+            is Snapshot.Rejected -> TravelAssessment.Rejected(result.reason)
             is Snapshot.Ready -> result.value.assess(request)
         }
     }
 
     fun options(actorId: Int, inputId: String, ownerUserId: Long): HwihaTravelOptions {
         requireOwner(actorId, ownerUserId)
-        if (inputId !in HwihaTravelInput.INPUT_IDS)
-            return HwihaTravelOptions(inputId, false, HwihaTravelFailure.INVALID_INPUT.name,
-                HwihaTravelFailure.INVALID_INPUT.message)
+        if (inputId !in TravelInput.INPUT_IDS)
+            return HwihaTravelOptions(inputId, false, TravelFailure.INVALID_INPUT.name,
+                TravelFailure.INVALID_INPUT.message)
         val result = snapshot(actorId)
         if (result is Snapshot.Rejected) return HwihaTravelOptions(inputId, false,
             result.reason.name, result.reason.message)
         val ready = (result as Snapshot.Ready).value
-        if (inputId == HwihaTravelInput.RETURN) {
-            val assessment = ready.assess(HwihaTravelRequest(actorId, inputId, null))
-            val denied = assessment as? HwihaTravelAssessment.Rejected
-            val destination = (ready.destinationFor(HwihaTravelRequest(actorId, inputId, null)) as?
-                HwihaReturnDestination.Ready)?.node?.id
+        if (inputId == TravelInput.RETURN) {
+            val assessment = ready.assess(TravelRequest(actorId, inputId, null))
+            val denied = assessment as? TravelAssessment.Rejected
+            val destination = (ready.destinationFor(TravelRequest(actorId, inputId, null)) as?
+                ReturnDestination.Ready)?.node?.id
             return HwihaTravelOptions(inputId, denied == null, denied?.reason?.name, denied?.reason?.message,
                 destination?.let { listOf(HwihaTravelDestinationOption(it, ready.nameOfProvince(it), denied == null, denied?.reason?.name,
                     denied?.reason?.message)) } ?: emptyList())
@@ -62,14 +62,14 @@ class HwihaTravelPrecheckService(
         val origin = (ready.positions.stateFor(actorId)?.node as? StrategicNodeRef.LandProvince)?.id
         val destinations = ready.bundle.projection.topology.landProvinceIds.sorted().map { id ->
             val reason = globalFailure ?: when {
-                id == origin -> HwihaTravelFailure.ALREADY_THERE
-                id !in reachable -> HwihaTravelFailure.NO_ROUTE
+                id == origin -> TravelFailure.ALREADY_THERE
+                id !in reachable -> TravelFailure.NO_ROUTE
                 else -> null
             }
             HwihaTravelDestinationOption(id, ready.nameOfProvince(id), reason == null, reason?.name, reason?.message)
         }
         val available = destinations.any { it.available }
-        val firstFailure = globalFailure ?: if (available) null else HwihaTravelFailure.NO_ROUTE
+        val firstFailure = globalFailure ?: if (available) null else TravelFailure.NO_ROUTE
         return HwihaTravelOptions(inputId, available, firstFailure?.name, firstFailure?.message, destinations)
     }
 
@@ -85,60 +85,60 @@ class HwihaTravelPrecheckService(
         }
         fun nameOfProvince(id: String): String = namesByProvince[id] ?: id
 
-        fun destinationFor(request: HwihaTravelRequest): HwihaReturnDestination =
-            if (request.inputId == HwihaTravelInput.RETURN) HwihaTravelReturn.resolve(actor.meta, actor.nationId) { cityId ->
+        fun destinationFor(request: TravelRequest): ReturnDestination =
+            if (request.inputId == TravelInput.RETURN) TravelReturn.resolve(actor.meta, actor.nationId) { cityId ->
                 bundle.projection.bindingsByCityId[cityId]?.landProvinceId?.let { StrategicNodeRef.LandProvince(it) }
-            } else request.destination?.let(HwihaReturnDestination::Ready)
-                ?: HwihaReturnDestination.Rejected(HwihaTravelFailure.INVALID_INPUT)
+            } else request.destination?.let(ReturnDestination::Ready)
+                ?: ReturnDestination.Rejected(TravelFailure.INVALID_INPUT)
 
-        fun assess(request: HwihaTravelRequest): HwihaTravelAssessment {
+        fun assess(request: TravelRequest): TravelAssessment {
             val destination = when (val result = destinationFor(request)) {
-                is HwihaReturnDestination.Ready -> result.node
-                is HwihaReturnDestination.Rejected -> return HwihaTravelAssessment.Rejected(result.reason)
+                is ReturnDestination.Ready -> result.node
+                is ReturnDestination.Rejected -> return TravelAssessment.Rejected(result.reason)
             }
-            return HwihaTravelRules.assess(request, destination, HwihaTravelSnapshot(
+            return TravelRules.assess(request, destination, TravelSnapshot(
                 RuleProfile.HWIHA, true, positions.stateFor(actor.id)?.node,
                 positions.stateFor(actor.id)?.battlefield != null, actor.id in deployedCommanders),
                 bundle.projection.topology, bundle.landMarchMetrics, selected.world.meta)
         }
 
         /** One graph traversal answers every destination on this snapshot. Reservation still checks one route exactly. */
-        fun reachableDestinations(): Pair<Set<String>, HwihaTravelFailure?> {
-            val position = positions.stateFor(actor.id) ?: return emptySet<String>() to HwihaTravelFailure.POSITION_UNAVAILABLE
+        fun reachableDestinations(): Pair<Set<String>, TravelFailure?> {
+            val position = positions.stateFor(actor.id) ?: return emptySet<String>() to TravelFailure.POSITION_UNAVAILABLE
             val origin = position.node as? StrategicNodeRef.LandProvince
-                ?: return emptySet<String>() to HwihaTravelFailure.POSITION_UNAVAILABLE
-            if (position.battlefield != null) return emptySet<String>() to HwihaTravelFailure.BATTLE_PENDING
-            if (actor.id in deployedCommanders) return emptySet<String>() to HwihaTravelFailure.CORPS_DEPLOYED
+                ?: return emptySet<String>() to TravelFailure.POSITION_UNAVAILABLE
+            if (position.battlefield != null) return emptySet<String>() to TravelFailure.BATTLE_PENDING
+            if (actor.id in deployedCommanders) return emptySet<String>() to TravelFailure.CORPS_DEPLOYED
             val topology = bundle.projection.topology
             val metrics = bundle.landMarchMetrics
             if (metrics.topologyRevision != topology.topologyRevision || metrics.topologyHash != topology.contentHash)
-                return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+                return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
             return try {
                 val passage = LandPassageState.read(selected.world.meta, topology)
-                    ?: return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
-                if (HwihaMarchReactions.presence(selected.world.meta) in setOf(
-                        HwihaMarchReactions.Presence.MISSING, HwihaMarchReactions.Presence.MALFORMED))
-                    return emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+                    ?: return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
+                if (MarchReactions.presence(selected.world.meta) in setOf(
+                        MarchReactions.Presence.MISSING, MarchReactions.Presence.MALFORMED))
+                    return emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
                 val nodes = StrategicPathResolver.reachableNodes(topology, setOf(origin), passage, 1,
                     { it is StrategicNodeRef.LandProvince }, LandMarchMetricSnapshot::supports)
                 nodes.mapNotNull { (it as? StrategicNodeRef.LandProvince)?.id }.toSet() to null
             } catch (_: IllegalArgumentException) {
-                emptySet<String>() to HwihaTravelFailure.STATE_UNAVAILABLE
+                emptySet<String>() to TravelFailure.STATE_UNAVAILABLE
             }
         }
     }
 
     private sealed interface Snapshot {
         data class Ready(val value: HwihaTravelPrecheckService.Ready) : Snapshot
-        data class Rejected(val reason: HwihaTravelFailure) : Snapshot
+        data class Rejected(val reason: TravelFailure) : Snapshot
     }
 
     private fun snapshot(actorId: Int): Snapshot {
       return try {
-        val selected = artifacts.resolve() ?: return Snapshot.Rejected(HwihaTravelFailure.STATE_UNAVAILABLE)
+        val selected = artifacts.resolve() ?: return Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE)
         if (WorldRuleProfile.require(selected.world.config) != RuleProfile.HWIHA)
-            return Snapshot.Rejected(HwihaTravelFailure.WRONG_RULE_PROFILE)
-        val bundle = selected.artifacts ?: return Snapshot.Rejected(HwihaTravelFailure.STATE_UNAVAILABLE)
+            return Snapshot.Rejected(TravelFailure.WRONG_RULE_PROFILE)
+        val bundle = selected.artifacts ?: return Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE)
         val people = generals.findAll()
         val cards = retainers.findAll()
         val units = retainers.allBugoks()
@@ -147,19 +147,19 @@ class HwihaTravelPrecheckService(
         require(people.map { it.id }.distinct().size == people.size &&
             cards.map { it.id }.distinct().size == cards.size && units.map { it.id }.distinct().size == units.size)
         val actor = people.singleOrNull { it.id == actorId }
-            ?: return Snapshot.Rejected(HwihaTravelFailure.ACTOR_NOT_FOUND)
+            ?: return Snapshot.Rejected(TravelFailure.ACTOR_NOT_FOUND)
         val positions = spatial.readSnapshot(selected.world.id, bundle.projection.topology).generalPositionSnapshot
-        val projection = HwihaDeploymentProjection.build(RuleProfile.HWIHA,
+        val projection = DeploymentProjector.build(RuleProfile.HWIHA,
             people.map { DeploymentPersonSource(it.id, it.nationId,
                 it.npcState == 2 && (it.userId.isNullOrBlank() || it.userId?.toLongOrNull()?.let { id -> id <= 0 } == true), it.meta) },
             units.map { DeploymentUnit(it.id, it.masterGeneralId, it.troops, it.commanderRetainerId) },
             cards.map { DeploymentRetainer(it.id, it.masterGeneralId, it.generalId, it.relation == RetainerRules.RELATION_LIEUTENANT) },
             positions, bundle.projection.topology, bundle.landMarchMetrics)
-            ?: return Snapshot.Rejected(HwihaTravelFailure.STATE_UNAVAILABLE)
+            ?: return Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE)
         Snapshot.Ready(Ready(actor, selected, bundle, positions,
             projection.deployed.mapTo(hashSetOf()) { it.commanderGeneralId }))
-      } catch (_: IllegalArgumentException) { Snapshot.Rejected(HwihaTravelFailure.STATE_UNAVAILABLE) }
-        catch (_: IllegalStateException) { Snapshot.Rejected(HwihaTravelFailure.STATE_UNAVAILABLE) }
-        catch (_: java.io.IOException) { Snapshot.Rejected(HwihaTravelFailure.STATE_UNAVAILABLE) }
+      } catch (_: IllegalArgumentException) { Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE) }
+        catch (_: IllegalStateException) { Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE) }
+        catch (_: java.io.IOException) { Snapshot.Rejected(TravelFailure.STATE_UNAVAILABLE) }
     }
 }

@@ -1,6 +1,6 @@
 package opensamguk.gameapi.dto
 
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.Phase
 
 /*
  * 휘하 내정 입력(배치·방침·공사) 조회 응답. status: READY | WRONG_RULE_PROFILE | UNAVAILABLE.
@@ -15,11 +15,11 @@ data class HwihaPlacementTargetDto(val countyId: Int? = null, val provinceId: St
     val label: String? = null)
 
 data class HwihaPlacementOrderDto(val requestId: String, val post: String, val postLabel: String, val target: HwihaPlacementTargetDto,
-    val requestedAt: HwihaPhase)
+    val requestedAt: Phase)
 
 /** state: MOVING(부임 행군 중) | ARRIVED(자리에 앉음). */
 data class HwihaActivePlacementDto(val post: String, val postLabel: String, val target: HwihaPlacementTargetDto,
-    val since: HwihaPhase, val arrivedAt: HwihaPhase?, val state: String)
+    val since: Phase, val arrivedAt: Phase?, val state: String)
 
 data class HwihaPlacementCardDto(
     val cardId: Int, val generalId: Int?, val name: String, val relation: String, val provinceId: String?,
@@ -35,14 +35,14 @@ data class HwihaPostOptionDto(val post: String, val label: String, val available
     val targets: List<HwihaPostTargetDto>?)
 
 data class HwihaPostsResponse(
-    val status: String, val inputId: String = "placement.assign", val now: HwihaPhase? = null,
+    val status: String, val inputId: String = "placement.assign", val now: Phase? = null,
     val cards: List<HwihaPlacementCardDto> = emptyList(), val posts: List<HwihaPostOptionDto> = emptyList(),
 )
 
-data class HwihaPolicySettingDto(val policy: String, val label: String, val since: HwihaPhase)
+data class HwihaPolicySettingDto(val policy: String, val label: String, val since: Phase)
 /** policy null 은 거두기 대기다. */
-data class HwihaPolicyOrderDto(val policy: String?, val label: String?, val requestedAt: HwihaPhase)
-data class HwihaPolicyApplicationDto(val at: HwihaPhase, val policy: String, val label: String, val seat: String, val result: String)
+data class HwihaPolicyOrderDto(val policy: String?, val label: String?, val requestedAt: Phase)
+data class HwihaPolicyApplicationDto(val at: Phase, val policy: String, val label: String, val seat: String, val result: String)
 data class HwihaSeatDto(val generalId: Int, val name: String, val placed: Boolean)
 data class HwihaEffectivePolicyDto(val policy: String, val label: String, val source: String)
 
@@ -61,7 +61,7 @@ data class HwihaCorpsPolicyDto(val orderId: String, val commanderGeneralId: Int,
     val active: HwihaPolicySettingDto?, val pending: HwihaPolicyOrderDto?, val settable: Boolean, val blocked: HwihaReasonDto?)
 
 data class HwihaPoliciesResponse(
-    val status: String, val inputId: String = "policy.set", val now: HwihaPhase? = null,
+    val status: String, val inputId: String = "policy.set", val now: Phase? = null,
     val countyOptions: List<HwihaCodeLabel> = emptyList(), val corpsOptions: List<HwihaCodeLabel> = emptyList(),
     val defaultPolicy: HwihaCodeLabel? = null, val provisional: String? = null,
     val counties: List<HwihaCountyPolicyDto> = emptyList(), val commanderies: List<HwihaCommanderyPolicyDto> = emptyList(),
@@ -69,12 +69,12 @@ data class HwihaPoliciesResponse(
 )
 
 data class HwihaActiveWorkDto(
-    val work: String, val label: String, val requestedAt: HwihaPhase, val progress: Int, val required: Int, val percent: Int,
+    val work: String, val label: String, val requestedAt: Phase, val progress: Int, val required: Int, val percent: Int,
     val remainingPhases: Int, val cost: HwihaStockDto, val charged: HwihaStockDto, val remainingCost: HwihaStockDto,
-    val lastProgressAt: HwihaPhase?, val stopReason: String?, val stopReasonText: String?, val startsAtNextBoundary: Boolean,
+    val lastProgressAt: Phase?, val stopReason: String?, val stopReasonText: String?, val startsAtNextBoundary: Boolean,
 )
 
-data class HwihaCompletedWorkDto(val work: String, val label: String, val completedAt: HwihaPhase,
+data class HwihaCompletedWorkDto(val work: String, val label: String, val completedAt: Phase,
     val edgeId: String? = null)
 
 data class HwihaStartableWorkDto(val work: String, val label: String, val available: Boolean, val blocked: HwihaReasonDto?,
@@ -87,6 +87,6 @@ data class HwihaCountyWorksDto(
 )
 
 data class HwihaWorksResponse(
-    val status: String, val inputId: String = "work.start", val now: HwihaPhase? = null, val provisional: String? = null,
+    val status: String, val inputId: String = "work.start", val now: Phase? = null, val provisional: String? = null,
     val counties: List<HwihaCountyWorksDto> = emptyList(),
 )

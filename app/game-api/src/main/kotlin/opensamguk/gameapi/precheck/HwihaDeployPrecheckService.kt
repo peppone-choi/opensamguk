@@ -48,19 +48,19 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
                 RoadFortState.forNation(base, forts, hostile)
             }
         } catch (_: RuntimeException) { return DeploymentAssessment.Rejected(DeploymentFailure.STATE_UNAVAILABLE) }
-        return HwihaDeployRules.assess(request, ready.state, topology,
+        return DeployRules.assess(request, ready.state, topology,
             ready.selected.world.meta, ready.bundle.landMarchMetrics, passage)
     }
 
-    fun assessMuster(actorId: Int, ownerUserId: Long): HwihaMusterAssessment {
+    fun assessMuster(actorId: Int, ownerUserId: Long): MusterAssessment {
         requireOwner(actorId, ownerUserId)
         val snapshot = snapshot()
         snapshot.failure?.let { failure ->
-            return HwihaMusterAssessment.Rejected(if (failure == DeploymentFailure.WRONG_RULE_PROFILE)
-                HwihaMilitaryFailure.WRONG_RULE_PROFILE else HwihaMilitaryFailure.STATE_UNAVAILABLE)
+            return MusterAssessment.Rejected(if (failure == DeploymentFailure.WRONG_RULE_PROFILE)
+                MilitaryFailure.WRONG_RULE_PROFILE else MilitaryFailure.STATE_UNAVAILABLE)
         }
         val ready = requireNotNull(snapshot.ready)
-        return HwihaMusterRules.assess(actorId, ready.state, ready.bundle.projection.topology,
+        return MusterRules.assess(actorId, ready.state, ready.bundle.projection.topology,
             ready.bundle.landMarchMetrics, ready.selected.world.meta)
     }
 
@@ -73,18 +73,18 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
         return try {
             // Missing authority is not an implicit clear map, even before a destination is selected.
             require(LandPassageState.read(ready.selected.world.meta, topology) != null)
-            require(HwihaMarchReactions.presence(ready.selected.world.meta).let {
-                it == HwihaMarchReactions.Presence.EMPTY || it == HwihaMarchReactions.Presence.PENDING })
+            require(MarchReactions.presence(ready.selected.world.meta).let {
+                it == MarchReactions.Presence.EMPTY || it == MarchReactions.Presence.PENDING })
             require(ready.state.deployed.filter { it.ownerGeneralId == actorId }.all {
-                HwihaDeploymentRules.assessActive(it, ready.state) is DeploymentAssessment.Eligible
+                DeploymentRules.assessActive(it, ready.state) is DeploymentAssessment.Eligible
             }) { "Owned deployment relationships are no longer valid" }
             val actor = ready.people.single { it.id == actorId }
-            val order = HwihaCorpsOrder.read(actor.meta, topology)
-            val march = HwihaCorpsMarchState.read(actor.meta, topology, ready.bundle.landMarchMetrics)
+            val order = CorpsOrder.read(actor.meta, topology)
+            val march = CorpsMarchState.read(actor.meta, topology, ready.bundle.landMarchMetrics)
             val rows = ready.units.filter { it.masterGeneralId == actorId }.sortedBy { it.id }.map { unit ->
-                val check = HwihaDeploymentRules.assess(DeploymentRequest(actorId, null, listOf(unit.id)), ready.state)
+                val check = DeploymentRules.assess(DeploymentRequest(actorId, null, listOf(unit.id)), ready.state)
                 val failure = (check as? DeploymentAssessment.Rejected)?.reason
-                HwihaDeployBugok(unit.id, unit.name, unit.troops, failure == null, failure?.let(HwihaDeployRules::reason))
+                HwihaDeployBugok(unit.id, unit.name, unit.troops, failure == null, failure?.let(DeployRules::reason))
             }
             val destinations = ready.selected.cities.sortedBy { it.id }.mapNotNull { city ->
                 ready.bundle.projection.bindingsByCityId[city.id]?.landProvinceId?.let {
@@ -97,15 +97,15 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
                 destinations.isEmpty() -> DeploymentFailure.INVALID_DESTINATION
                 else -> null
             }
-            HwihaDeployOptions(blocked == null, blocked?.name, blocked?.let(HwihaDeployRules::reason),
+            HwihaDeployOptions(blocked == null, blocked?.name, blocked?.let(DeployRules::reason),
                 bugoks = rows, destinations = destinations,
                 order = order?.let { HwihaDeployOrder(it.orderId, it.destination.id,
-                    if (HwihaCorpsEncounter.META_KEY in actor.meta) "ENCOUNTER" else march?.checkpoint?.stop?.name) })
+                    if (CorpsEncounter.META_KEY in actor.meta) "ENCOUNTER" else march?.checkpoint?.stop?.name) })
         } catch (_: IllegalArgumentException) { unavailable(DeploymentFailure.STATE_UNAVAILABLE) }
           catch (_: NoSuchElementException) { unavailable(DeploymentFailure.STATE_UNAVAILABLE) }
     }
 
-    private fun unavailable(reason: DeploymentFailure) = HwihaDeployOptions(false, reason.name, HwihaDeployRules.reason(reason))
+    private fun unavailable(reason: DeploymentFailure) = HwihaDeployOptions(false, reason.name, DeployRules.reason(reason))
     private data class Ready(val state: DeploymentProjection, val selected: ActiveWorldArtifactSnapshot,
         val bundle: ResolvedHanWorldArtifacts, val people: List<GeneralReadEntity>, val units: List<GeneralBugokReadEntity>)
     private data class Snapshot(val ready: Ready? = null, val failure: DeploymentFailure? = null)
@@ -121,7 +121,7 @@ class HwihaDeployPrecheckService(private val generals: GeneralReadRepository,
                 units.all { it.worldId == selected.world.id })
             require(people.map { it.id }.distinct().size == people.size && cards.map { it.id }.distinct().size == cards.size &&
                 units.map { it.id }.distinct().size == units.size)
-            val state = requireNotNull(HwihaDeploymentProjection.build(profile,
+            val state = requireNotNull(DeploymentProjector.build(profile,
                 people.map { DeploymentPersonSource(it.id, it.nationId,
                     it.npcState == 2 && (it.userId.isNullOrBlank() || it.userId?.toLongOrNull()?.let { id -> id <= 0 } == true), it.meta) },
                 units.map { DeploymentUnit(it.id, it.masterGeneralId, it.troops, it.commanderRetainerId) },

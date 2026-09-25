@@ -14,7 +14,7 @@ import opensamguk.logic.input.*
 
 /** Autonomous county work uses only the NPC's own current county and the human handler. */
 internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
             context.design.directActionStatus != DomesticDesign.CONFIRMED) return reserved
@@ -22,9 +22,9 @@ internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
         if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId }) return reserved
         // An ongoing corps march owns this turn's movement. A new county action would stop it before encounter.
-        val deployed = try { HwihaDeploymentState.read(actor.meta)?.corps.orEmpty() }
+        val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reserved }
-        if (deployed.isNotEmpty() || HwihaCorpsOrder.META_KEY in actor.meta) return reserved
+        if (deployed.isNotEmpty() || CorpsOrder.META_KEY in actor.meta) return reserved
         val state = context.projection(world)
         val available = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
             as? FieldAssessment.Eligible ?: return reserved

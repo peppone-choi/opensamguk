@@ -2,7 +2,7 @@ package opensamguk.gameapi.web
 
 import opensamguk.gameapi.precheck.HwihaPeopleOptionsService
 import opensamguk.gameapi.read.HwihaDomesticForbidden
-import opensamguk.logic.input.HwihaPeopleInput
+import opensamguk.logic.input.PeopleInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,15 +15,15 @@ import org.springframework.web.bind.annotation.RestController
 class HwihaPeopleOptionsController(private val service: HwihaPeopleOptionsService) {
     @GetMapping("/api/commands/search-options")
     fun search(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaPeopleInput.SEARCH, generalId, userId)
+        options(PeopleInput.SEARCH, generalId, userId)
 
     @GetMapping("/api/commands/employ-options")
     fun employ(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaPeopleInput.EMPLOY, generalId, userId)
+        options(PeopleInput.EMPLOY, generalId, userId)
 
     @GetMapping("/api/commands/persuade-captive-options")
     fun persuadeCaptive(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaPeopleInput.PERSUADE_CAPTIVE, generalId, userId)
+        options(PeopleInput.PERSUADE_CAPTIVE, generalId, userId)
 
     private fun options(inputId: String, generalId: Int, userId: Long?): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())

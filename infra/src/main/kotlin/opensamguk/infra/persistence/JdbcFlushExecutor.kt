@@ -1050,7 +1050,7 @@ open class JdbcFlushExecutor(
             require(row.initialTurns.size <= 12) { "HWIHA initial reservations exceed twelve phases" }
             val actorId = (row.columns["id"] as Number).toInt()
             require(row.initialTurns.all { it.actionCode == "action.enlist" &&
-                opensamguk.logic.input.HwihaEnlistmentInput.parse(actorId, it.argJson) != null }) {
+                opensamguk.logic.input.EnlistmentInput.parse(actorId, it.argJson) != null }) {
                 "unsupported HWIHA initial reservation"
             }
         }

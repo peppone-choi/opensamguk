@@ -8,7 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertSame
 import kotlin.test.assertTrue
-import opensamguk.logic.input.HwihaCountyAssignment
+import opensamguk.logic.input.CountyAssignment
 
 class RenownEventsTest {
     private val base: Map<String, Any?> = mapOf("keep" to "preserved")
@@ -93,9 +93,9 @@ class RenownEventsTest {
 
     @Test
     fun `縣 점령 훅과 관할 장수`() {
-        val assigned = base + (HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d-1", 9, 2, 10).toMetaValue())
-        val otherNation = base + (HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d-2", 8, 3, 10).toMetaValue())
-        val broken = base + (HwihaCountyAssignment.META_KEY to "broken")
+        val assigned = base + (CountyAssignment.META_KEY to CountyAssignment("d-1", 9, 2, 10).toMetaValue())
+        val otherNation = base + (CountyAssignment.META_KEY to CountyAssignment("d-2", 8, 3, 10).toMetaValue())
+        val broken = base + (CountyAssignment.META_KEY to "broken")
         val people = mapOf(5 to assigned, 4 to otherNation, 6 to broken, 7 to base)
         assertEquals(listOf(5), RenownHooks.countyHolderIds(10, 2, people))
         val updates = RenownHooks.onCountyCaptured(listOf(1), listOf(5), 200, 5) { if (it == 1) base else people[it] }

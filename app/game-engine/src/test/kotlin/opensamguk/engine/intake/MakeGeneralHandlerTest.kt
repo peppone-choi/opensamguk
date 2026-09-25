@@ -40,8 +40,8 @@ class MakeGeneralHandlerTest {
         assertEquals(legacy.role, created.role)
         assertEquals(legacy.meta, created.meta - setOf("hwihaLord", "hwihaPersonPolicy"))
         assertEquals(false, created.meta["hwihaLord"])
-        val policy = opensamguk.logic.input.HwihaPersonPolicyState.read(created.meta)!!
-        assertEquals(opensamguk.logic.input.HwihaPersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
+        val policy = opensamguk.logic.input.PersonPolicyState.read(created.meta)!!
+        assertEquals(opensamguk.logic.input.PersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
         val stats = created.stats
         val expectedCost = ((listOf(stats.leadership, stats.strength, stats.intelligence, stats.politics, stats.charm).sumOf { it.toLong() } + 49) / 50).toInt()
         val budget = assertIs<opensamguk.engine.hwiha.HwihaEnlistmentPolicyResult.Ready>(

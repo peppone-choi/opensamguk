@@ -19,12 +19,12 @@ class HwihaRenownRecordsTest {
     private val curve = RenownAssessment.CANON
     private val HASH = "b".repeat(64)
 
-    private fun policy(renown: Int) = HwihaPersonPolicyState(renown, false, "synthetic-test", "1", 1).toMetaValue()
+    private fun policy(renown: Int) = PersonPolicyState(renown, false, "synthetic-test", "1", 1).toMetaValue()
 
     private fun person(id: Int, nationId: Int = 1, renown: Int = 30, extra: Map<String, Any?> = emptyMap()) =
         TurnGeneral(id = id, name = "G$id", nationId = nationId, cityId = 10, userId = "4$id", npcState = 2, troopId = 0,
             stats = GeneralStats(70, 70, 70), experience = 0, dedication = 0, officerLevel = 0, gold = 0, rice = 0,
-            crew = 0, turnTime = Instant.EPOCH, meta = mapOf(HwihaPersonPolicyState.META_KEY to policy(renown)) + extra)
+            crew = 0, turnTime = Instant.EPOCH, meta = mapOf(PersonPolicyState.META_KEY to policy(renown)) + extra)
 
     private fun county(id: Int = 10, nationId: Int = 1, agriculture: Int = 5_000) = City(
         id = id, name = "縣$id", nationId = nationId, level = 1, population = 50_000, populationMax = 100_000,
@@ -43,10 +43,10 @@ class HwihaRenownRecordsTest {
             cityLandProvinceById = cities.associate { it.id to "p${it.id}" }, administrativeCountyIds = cities.map { it.id }.toSet()))
 
     private fun tally(vararg entries: RenownEntry) = RenownEvents.withEntries(emptyMap(), entries.toList())
-    private fun renown(world: InMemoryTurnWorld, id: Int) = HwihaPersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
+    private fun renown(world: InMemoryTurnWorld, id: Int) = PersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
     private fun entries(world: InMemoryTurnWorld, id: Int) = RenownEvents.entries(world.getGeneralById(id)!!.meta)
     private fun assign(countyId: Int, nationId: Int = 1) =
-        mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d-$countyId", 1, nationId, countyId).toMetaValue())
+        mapOf(CountyAssignment.META_KEY to CountyAssignment("d-$countyId", 1, nationId, countyId).toMetaValue())
 
     @Test fun `월단평은 지난 달 사건만 적용하고 사유를 종류로만 발표한다`() {
         val meta = tally(

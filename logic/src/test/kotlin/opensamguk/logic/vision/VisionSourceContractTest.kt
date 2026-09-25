@@ -33,7 +33,7 @@ class VisionSourceContractTest {
     // 0 — 1 — 2 — 3 — 4 (line); province pN belongs to commandery N.
     private val index = HanCommanderyIndex(hash, (0..4).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
         (0..4).associate { "p$it" to it }, setOf(0 to 1, 1 to 2, 2 to 3, 3 to 4))
-    private val now = HwihaPhase(200, 1, 1)
+    private val now = Phase(200, 1, 1)
     private val reader: VisionSourceReader = MetaVisionSourceReader
 
     private fun scoutPlacement(retainer: Int, owner: Int, province: String, arrived: Boolean) = mapOf(PlacementState.META_KEY to
