@@ -47,7 +47,8 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 
 - 같은 라우트·같은 인테이크를 쓰되 **월드의 ruleProfile** 로 갈린다(ADR-LITE-049 개정: 기존 라우트를 바로 교체하되 pep 전환 전까지 기존 명령 입력 경로 유지).
 - `SAMMO` 월드에서 `HWIHA` 입력을, `HWIHA` 월드에서 `che_*` 코드를 받으면 **명시적 거절**(`reason = WRONG_RULE_PROFILE`)이다. 휴식으로 떨어지지 않는다.
-- **ruleProfile 의 자리(2026-09-20 확정, B1 기본값 개정):** 시나리오 JSON 이 선언하고, 시드 때 `ScenarioImporter`가 `world_state.config["ruleProfile"]`에 적는다. 런타임은 저장된 config의 같은 값을 사용한다. game-api의 새 입력 분기는 이 계약을 소비해야 하며 미구현 배선을 완료로 취급하지 않는다. 신규 시드의 누락 기본은 `HWIHA`지만 HWIHA 선언이 없는 옛 시나리오는 시드를 거절한다. 기존 월드에서 키가 없으면 game-api는 거절하고, 한 시즌 복원 스위치가 켜진 경우에만 `SAMMO`로 읽는다. 구형 엔진의 누락 월드 해석은 동결 기준선의 `SAMMO`로 유지한다. 월드가 살아 있는 동안 저장된 값을 바꾸지 않고, 바꾸는 길은 초기화(재시드)뿐이다 — pep 전환(재설계 §15.2)이 곧 이 재시드다.
+- **현행 전환기 구현:** 시나리오의 `ruleProfile`을 시드 때 `world_state.config`에 기록한다. 휘하 입력은 `HWIHA` 프로필과 원장·핸들러 배달 상태로 판정한다. 아직 코드에 남은 `SAMMO` 프로필·복원 스위치·누락값의 옛 해석은 제품 계약이 아니며, 코드 정리와 pep C단계 이전 세계 형식 가드에서 제거한다(ADR-LITE-065·066). 가드는 옛 키·누락값·삼모 세계를 명시적으로 거절한다.
+
 - 직접 행동(`GENERAL_ACTION`)은 원장 `displayName`이 한국어 표시 이름의 정본이다. `inputId`는 `action.<name>` 형식으로 유지한다.
 - 삼모 명령 역참조와 폐지 목록은 원장에 넣지 않는다. `legacyCommands`, `retiredLegacyCommands`, `retiredLegacyReasons`가 들어오면 파서가 거절한다.
 

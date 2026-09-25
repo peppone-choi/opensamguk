@@ -7,12 +7,13 @@ import kotlinx.serialization.json.put
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 
-/** Card modes registered in the input ledger. */
+/** Explicit card modes; the ledger must list the same modes without silently changing their rules. */
 object HwihaLegacyStratagemInput {
-    val INPUT_IDS = HwihaInputCatalog.load().entries.filter {
-        it.kind == InputKind.STRATAGEM && it.inputId != "stratagem.play"
-    }
-        .map { it.inputId }.toSet()
+    val INPUT_IDS = setOf(
+        "stratagem.rumor", "stratagem.steal", "stratagem.sabotage", "stratagem.fire",
+        "stratagem.lastStand", "stratagem.mobilizePeople", "stratagem.flood", "stratagem.falseReport",
+        "stratagem.raiseMilitia", "stratagem.provokeRivalry", "stratagem.raid", "stratagem.reciprocity",
+    )
     const val LAST_STAND = "stratagem.lastStand"
     const val PROVOKE_RIVALRY = "stratagem.provokeRivalry"
     val OWN_COUNTY_IDS = setOf("stratagem.mobilizePeople", "stratagem.raiseMilitia")

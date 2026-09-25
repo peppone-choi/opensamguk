@@ -317,6 +317,12 @@ class HwihaInputRegistryTest {
         HwihaInputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
         "inputs":[${rows.joinToString(",")}]}""")
 
+    private fun assertStratagemRows(source: HwihaInputCatalog) {
+        assertEquals(HwihaLegacyStratagemInput.INPUT_IDS,
+            source.entries.filter { it.kind == InputKind.STRATAGEM && it.inputId != "stratagem.play" }
+                .map { it.inputId }.toSet())
+    }
+
     @Test
     fun `ledger keeps its row count and names every direct action`() {
         assertEquals(73, catalog.entries.size)
@@ -326,9 +332,10 @@ class HwihaInputRegistryTest {
         assertEquals("농지개간", catalog["action.farm"]?.displayName)
         assertEquals("출사", catalog["action.enlist"]?.displayName)
         assertEquals(12, HwihaLegacyStratagemInput.INPUT_IDS.size)
-        assertEquals(catalog.entries.filter { it.kind == InputKind.STRATAGEM && it.inputId != "stratagem.play" }
-            .map { it.inputId }.toSet(),
-            HwihaLegacyStratagemInput.INPUT_IDS)
+        assertStratagemRows(catalog)
+        val rogue = catalog["stratagem.rumor"]!!.copy(inputId = "stratagem.newCard")
+        val mutated = HwihaInputCatalog(catalog.entries + rogue)
+        assertFailsWith<AssertionError> { assertStratagemRows(mutated) }
     }
 
     @Test
