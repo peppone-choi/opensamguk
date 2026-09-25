@@ -1,4 +1,4 @@
-package opensamguk.common.wire.v2
+package opensamguk.common.wire.command
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -14,7 +14,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFails
 import kotlin.test.assertNotEquals
 
-class V2WireContractTest {
+class WireContractTest {
     @Test
     fun `command result envelope round-trips its explicit schema world correlation and payload`() {
         // Given
@@ -109,8 +109,8 @@ class V2WireContractTest {
         assertNotEquals(decodedCommand.worldId, decodedTurn.worldId)
     }
 
-    private fun commandResultEnvelope(worldId: WorldId): V2CommandResultEnvelope =
-        V2CommandResultEnvelope(
+    private fun commandResultEnvelope(worldId: WorldId): CommandResultEnvelope =
+        CommandResultEnvelope(
             worldId = worldId,
             requestId = "request-101",
             eventId = "command-result:${worldId.value}:request-101:1",
@@ -124,8 +124,8 @@ class V2WireContractTest {
             },
         )
 
-    private fun turnEventEnvelope(worldId: WorldId): V2TurnEventEnvelope =
-        V2TurnEventEnvelope(
+    private fun turnEventEnvelope(worldId: WorldId): TurnEventEnvelope =
+        TurnEventEnvelope(
             worldId = worldId,
             eventId = "turn-completed:${worldId.value}:31",
             turnId = "turn-${worldId.value}-31",

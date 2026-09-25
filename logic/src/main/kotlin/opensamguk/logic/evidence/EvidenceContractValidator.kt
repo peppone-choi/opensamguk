@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.evidence
+package opensamguk.logic.evidence
 
 /** 위반 한 건. [code]는 티켓 번호에 대응하는 안정 식별자이며 테스트가 이 값으로 단언한다. */
 data class ContractViolation(val code: String, val message: String)
