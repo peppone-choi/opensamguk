@@ -1,8 +1,8 @@
 package opensamguk.engine.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.engine.world.HanSpatialSupplyProvider
-import opensamguk.engine.world.HanSupplyDisconnectionPolicyLoader
+import opensamguk.engine.world.SpatialSupplyProvider
+import opensamguk.engine.world.SupplyDisconnectionPolicyLoader
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import opensamguk.infra.seed.MapJson
 import opensamguk.logic.world.SpatialSupplyNetwork
@@ -108,7 +108,7 @@ class SpatialSupplyNetworkWiringTest {
     @Test
     fun `daemon eager snapshot loads the V3 policy domain for all active scenarios`() {
         val mapper = ObjectMapper()
-        val loader = HanSupplyDisconnectionPolicyLoader(
+        val loader = SupplyDisconnectionPolicyLoader(
             objectMapper = mapper,
             ledgerPath = "../../data/curated/han/supply-disconnection-adjudications-v1.json",
             mapPath = "../../data/map/han-tiles.json",
@@ -117,7 +117,7 @@ class SpatialSupplyNetworkWiringTest {
             v3LedgerPath = "../../data/curated/han/supply-disconnection-adjudications-v3.json",
             v3RuntimeMapPath = "../../infra/src/main/resources/map/han-world-v3.json",
         )
-        val spatial = HanSpatialSupplyProvider(
+        val spatial = SpatialSupplyProvider(
             mapper,
             "../../data/map/han-tiles.json",
             "../../data/map/han-scenario-province-ownership-v1.json",

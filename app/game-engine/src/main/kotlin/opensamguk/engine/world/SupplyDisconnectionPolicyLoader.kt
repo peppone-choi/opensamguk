@@ -11,7 +11,7 @@ import java.nio.file.Path
 
 /** Strict loader for reviewed Han supply-disconnection decisions. */
 @Component
-class HanSupplyDisconnectionPolicyLoader(
+class SupplyDisconnectionPolicyLoader(
     private val objectMapper: ObjectMapper,
     @Value("\${HAN_SUPPLY_DISCONNECTION_LEDGER_FILE:data/curated/han/supply-disconnection-adjudications-v1.json}")
     private val ledgerPath: String,
