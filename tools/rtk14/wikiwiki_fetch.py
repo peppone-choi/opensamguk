@@ -209,6 +209,8 @@ def collect(root: Path, *, limit: int | None = None, minimum_delay: float = MIN_
                 append_log(log_path, {"started_at": started_at, "fetched_at": stamp, "url": url, "status": status,
                                       "sha256": digest, "kind": page["kind"], "attempt": request_number,
                                       "error": error})
+                if result["stopped"]:
+                    break
                 if status == 429:
                     consecutive_rate_limits += 1
                     result["rate_limited"] += 1

@@ -21,7 +21,6 @@ from wikiwiki_compact import compact
 
 class WikiwikiExtractTest(unittest.TestCase):
     def test_table_span_ruby_links_and_non_table_sections(self) -> None:
-        self.assertFalse(True, "temporary CI red probe")
         page = {"page_key": "190年1月 仮の例", "kind": "시나리오",
                 "url": "https://wikiwiki.jp/sangokushi14/example"}
         html = b"""<div id='content'>
@@ -172,6 +171,27 @@ class WikiwikiExtractTest(unittest.TestCase):
             save_page(other, original)
             self.assertFalse(other.exists())
             self.assertEqual(read_cached_page(other), original)
+
+    def test_forbidden_redirect_stops_without_retrying_original_url(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            (root / "robots.txt").write_text("User-Agent: *\nDisallow: /*?\n")
+            (root / "inventory.json").write_text(json.dumps({"total": 1, "pages": [
+                {"page_key": "sample", "kind": "기타", "url": "https://wikiwiki.jp/sangokushi14/sample"}]}))
+
+            class Opener:
+                calls = 0
+
+                def open(self, request, timeout):
+                    self.calls += 1
+                    raise ValueError("redirect target is disallowed: https://example.invalid/")
+
+            opener = Opener()
+            with patch("wikiwiki_fetch.urllib.request.build_opener", return_value=opener), patch("wikiwiki_fetch.time.sleep"):
+                result = collect(root)
+            self.assertEqual(opener.calls, 1)
+            self.assertIn("disallowed", result["stopped"])
+            self.assertEqual(result["fetched"], 0)
 
     def test_retry_after_seconds(self) -> None:
         self.assertEqual(retry_after_seconds("120"), 120)
