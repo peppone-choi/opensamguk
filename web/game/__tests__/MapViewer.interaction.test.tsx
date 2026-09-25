@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const shared = vi.hoisted(() => ({
@@ -26,7 +26,7 @@ vi.mock('@opensamguk/ui', async () => {
             commanderyControl: mapData.commanderyControl.map((row) => ({ ...row, ...colorOf(row.nationId) })) } : undefined,
       };
     },
-    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
       shared.props = props;
       const city = props.cities?.[0];
       const county = city ? {

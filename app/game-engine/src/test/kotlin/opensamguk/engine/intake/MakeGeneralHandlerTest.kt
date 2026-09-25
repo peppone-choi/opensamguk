@@ -44,8 +44,8 @@ class MakeGeneralHandlerTest {
         assertEquals(opensamguk.logic.input.PersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
         val stats = created.stats
         val expectedCost = ((listOf(stats.leadership, stats.strength, stats.intelligence, stats.politics, stats.charm).sumOf { it.toLong() } + 49) / 50).toInt()
-        val budget = assertIs<opensamguk.engine.hwiha.HwihaEnlistmentPolicyResult.Ready>(
-            opensamguk.engine.hwiha.HwihaEnlistmentPolicy(hwiha).current(opensamguk.logic.input.EnlistmentRequest(b.generalId, opensamguk.logic.input.EnlistmentMode.RANDOM)))
+        val budget = assertIs<opensamguk.engine.campaign.EnlistmentPolicyResult.Ready>(
+            opensamguk.engine.campaign.EnlistmentPolicyReader(hwiha).current(opensamguk.logic.input.EnlistmentRequest(b.generalId, opensamguk.logic.input.EnlistmentMode.RANDOM)))
         assertEquals(expectedCost, budget.policy.actorCardCost)
         assertTrue(DatabaseHooks.toFlushPayload(hwiha, recorder, hwiha.consumeDirtyState()).createdGenerals.isNotEmpty())
     }

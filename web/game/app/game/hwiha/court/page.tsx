@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Chip, KV, Panel, SectionHeader } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import { HwihaEmpty } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import { Empty } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { hwihaHref } from '@/lib/hwiha-screens';
 import { useHwihaSession } from '@/lib/hwiha-session';
@@ -44,14 +44,14 @@ export default function CourtPage() {
         return () => controller.abort();
     }, [capital]);
     return (
-        <HwihaShell title="조정 구상 — 관직 · 외교 · 천도 입력 준비 중" tab="조정 결정">
+        <GameShell title="조정 구상 — 관직 · 외교 · 천도 입력 준비 중" tab="조정 결정">
             <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12 }}>
                     {/* 관직은 둘로 나눈다(2026-09-23 사용자 결정). 지방 관직은 2층 임명·실효 지배,
                         중앙 관직은 황실 조서로만 주어지는 3층이다. */}
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="지방 관직" sub="자사 · 태수 · 현령 · 관할과 실효 지배" />
-                        <HwihaEmpty>지방 관직 모델이 아직 없습니다. 주 → 군 → 현 관할마다 앉은 사람·실효 지배가 여기 나옵니다.</HwihaEmpty>
+                        <Empty>지방 관직 모델이 아직 없습니다. 주 → 군 → 현 관할마다 앉은 사람·실효 지배가 여기 나옵니다.</Empty>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                             <Chip tone="moss">실권 있음</Chip>
                             <Chip tone="rust">명목</Chip>
@@ -59,7 +59,7 @@ export default function CourtPage() {
                     </Panel>
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="중앙 관직" sub="삼공 · 구경 · 상서 · 장군호 — 황실 조서로 받는다" />
-                        <HwihaEmpty>황실과 조서가 생기면 조정의 자리와 앉은 사람이 여기 나옵니다.</HwihaEmpty>
+                        <Empty>황실과 조서가 생기면 조정의 자리와 앉은 사람이 여기 나옵니다.</Empty>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                             <Chip tone="bronze">조서 임명</Chip>
                             <Chip tone="info">추천됨</Chip>
@@ -68,7 +68,7 @@ export default function CourtPage() {
                     </Panel>
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="관직 임명" sub="추천 → 심의 → 임명" />
-                        <HwihaEmpty>임명·추천·천거 결정이 아직 없습니다.</HwihaEmpty>
+                        <Empty>임명·추천·천거 결정이 아직 없습니다.</Empty>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                             <Pending label="추천" />
                             <Pending label="천거 요청" />
@@ -91,7 +91,7 @@ export default function CourtPage() {
                 <div style={{ display: 'grid', gap: 12 }}>
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="외교" sub="군주의 결정 · 사자 카드 필요" />
-                        <HwihaEmpty>휘하 규칙의 외교 결정이 아직 없습니다. 세력마다 관계와 유예가 여기 나옵니다.</HwihaEmpty>
+                        <Empty>휘하 규칙의 외교 결정이 아직 없습니다. 세력마다 관계와 유예가 여기 나옵니다.</Empty>
                         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', paddingTop: 10 }}>
                             <Pending label="원조" />
                             <Pending label="불가침 제의" />
@@ -119,6 +119,6 @@ export default function CourtPage() {
                     </Panel>
                 </div>
             </div>
-        </HwihaShell>
+        </GameShell>
     );
 }

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { api } from './api';
-import type { HwihaCorps, HwihaScoutOption, HwihaSieges, HwihaWorks } from './hwiha-reads';
+import type { Corps, ScoutOption, Sieges, Works } from './hwiha-reads';
 import { reserveHwihaScout } from './hwiha-scout';
 import { readServerCookie } from './serverGameUrl';
 
@@ -14,10 +14,10 @@ export function useMapLayers(scope: MapLayerScope, refreshKey: unknown, supplied
     const [generalId, setGeneralId] = useState<number | null>(null);
     const [visibility, setVisibility] = useState<ReadonlyMap<number, CommanderyVisibility> | null>(null);
     const [intelAge, setIntelAge] = useState<ReadonlyMap<number, number>>(new Map());
-    const [corps, setCorps] = useState<readonly HwihaCorps[]>([]);
-    const [works, setWorks] = useState<HwihaWorks | null>(null);
-    const [sieges, setSieges] = useState<HwihaSieges | null>(null);
-    const [scoutOptions, setScoutOptions] = useState<readonly HwihaScoutOption[]>([]);
+    const [corps, setCorps] = useState<readonly Corps[]>([]);
+    const [works, setWorks] = useState<Works | null>(null);
+    const [sieges, setSieges] = useState<Sieges | null>(null);
+    const [scoutOptions, setScoutOptions] = useState<readonly ScoutOption[]>([]);
     const [visibilityError, setVisibilityError] = useState(false);
     const [corpsError, setCorpsError] = useState(false);
     const [badgeError, setBadgeError] = useState(false);

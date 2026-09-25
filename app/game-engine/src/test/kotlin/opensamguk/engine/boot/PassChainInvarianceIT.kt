@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.engine.hwiha.HwihaEncounterResolver
+import opensamguk.engine.campaign.EncounterResolver
 import opensamguk.engine.invariance.WorldStateBaseline
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -31,7 +31,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 /**
  * S3 관문 — 운영 배선(Spring 컨텍스트의 TurnRunService: 개인 턴 lifecycle·NPC 선택기·순 경계·월간 파이프라인)으로
  * 豫州 조각을 48순 돌려 출사 → 발령 → 행군 → 조우 → 공성 → 점령 → 징세 → 월단평이 스스로 이어지는지 본다.
- * 사람이 하는 일은 가입·장수 생성·출사 예약뿐이고, 나머지는 NPC 와 루프가 한다. 적색 짝은 [HwihaS3PassChainProbeIT].
+ * 사람이 하는 일은 가입·장수 생성·출사 예약뿐이고, 나머지는 NPC 와 루프가 한다. 적색 짝은 [S3PassChainProbeIT].
  */
 @Testcontainers(disabledWithoutDocker = true)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

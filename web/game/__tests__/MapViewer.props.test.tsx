@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { STRATEGIC_BINDING, STRATEGIC_TOPOLOGY } from './fixtures/strategic-topology';
 
@@ -26,7 +26,7 @@ vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: moc
   hwihaScoutOptions: mocks.hwihaScoutOptions } }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
     mocks.props = props;
     return <div data-testid="shared-iso-map" />;
   } };

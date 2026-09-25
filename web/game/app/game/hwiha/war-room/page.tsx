@@ -3,16 +3,16 @@
 import { useMemo, useState } from 'react';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { Panel } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
+import GameShell from '@/components/GameShell';
 import Toast from '@/components/Toast';
 import MainRecordZone from '@/components/game/MainRecordZone';
 import MessagePanel from '@/components/game/MessagePanel';
-import CountyPanel from '@/components/hwiha/CountyPanel';
-import GeneralRoster from '@/components/hwiha/GeneralRoster';
-import LastTurnPanel from '@/components/hwiha/LastTurnPanel';
-import StandingBar from '@/components/hwiha/StandingBar';
-import TurnList from '@/components/hwiha/TurnList';
-import WarRoomMap from '@/components/hwiha/WarRoomMap';
+import CountyPanel from '@/components/campaign/CountyPanel';
+import GeneralRoster from '@/components/campaign/GeneralRoster';
+import LastTurnPanel from '@/components/campaign/LastTurnPanel';
+import StandingBar from '@/components/campaign/StandingBar';
+import TurnList from '@/components/campaign/TurnList';
+import WarRoomMap from '@/components/campaign/WarRoomMap';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
@@ -72,7 +72,7 @@ export default function WarRoomPage() {
     };
 
     return (
-        <HwihaShell title="작전실" tab={null} showBack={false} requiresHwiha={false}>
+        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false}>
             <div
                 style={{
                     padding: 12,
@@ -142,6 +142,6 @@ export default function WarRoomPage() {
                 )}
             </div>
             <Toast toasts={toasts} onRemove={remove} />
-        </HwihaShell>
+        </GameShell>
     );
 }

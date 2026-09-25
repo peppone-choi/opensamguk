@@ -270,7 +270,7 @@ class DaemonLoopConfig {
                 val network = hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
                 if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                     val artifacts = requireNotNull(supplyArtifacts) { "HWIHA military supply requires pinned Han artifacts" }
-                    opensamguk.engine.hwiha.HwihaMilitaryPresenceProvider(world, artifacts.projection.topology,
+                    opensamguk.engine.campaign.MilitaryPresenceProvider(world, artifacts.projection.topology,
                         artifacts.landMarchMetrics).withMilitarySupply(network)
                 } else network
             },
@@ -317,22 +317,22 @@ class DaemonLoopConfig {
         // 월단평 사건(치적)으로 같은 recorder 에 쌓는다 — 기록 스트림 치적 창과 같은 달 도장이라 한 달 한 번으로 접힌다.
         val domesticContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA domestic inputs require pinned Han artifacts" }
-            opensamguk.engine.hwiha.HwihaDomesticContext(
-                geography = opensamguk.infra.seed.HwihaCountyGeographyJson.load(artifacts),
+            opensamguk.engine.campaign.DomesticContext(
+                geography = opensamguk.infra.seed.CountyGeographyJson.load(artifacts),
                 nativeCounties = opensamguk.logic.input.NativeCountyLedger.load(),
                 topology = artifacts.projection.topology,
                 metrics = artifacts.landMarchMetrics,
                 roadGates = artifacts.projection.presentation?.roadGates.orEmpty(),
-                merit = opensamguk.engine.hwiha.HwihaGovernanceMeritRenownSink(world, recorder),
+                merit = opensamguk.engine.campaign.GovernanceMeritRenownSink(world, recorder),
                 cityConst = artifacts.cityConst,
             )
-        } else opensamguk.engine.hwiha.HwihaDomesticContext()
+        } else opensamguk.engine.campaign.DomesticContext()
 
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
-        // 전쟁 결과 → 명망 사건 경계: 기록 스트림(HwihaRenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
-        val hwihaWarOutcomes: opensamguk.engine.hwiha.HwihaWarOutcomeListener =
-            opensamguk.engine.hwiha.HwihaWarOutcomeRenownListener(world, recorder)
+        // 전쟁 결과 → 명망 사건 경계: 기록 스트림(RenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
+        val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener =
+            opensamguk.engine.campaign.WarOutcomeRenownListener(world, recorder)
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
             artifacts.projection.topology to artifacts.landMarchMetrics
@@ -341,15 +341,15 @@ class DaemonLoopConfig {
         val visionContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA vision requires pinned Han artifacts" }
             try {
-                opensamguk.engine.hwiha.HwihaVisionContext(artifacts.projection.topology, artifacts.landMarchMetrics,
+                opensamguk.engine.campaign.VisionContext(artifacts.projection.topology, artifacts.landMarchMetrics,
                     artifacts.commanderyIndex)
             } catch (_: IllegalArgumentException) { null }
         } else null
         // Saved reactions use the same pinned commandery sight and land topology as scouting. A missing index
         // cannot silently turn a pending interception into clear passage.
-        val hwihaMarchReactions: opensamguk.engine.hwiha.HwihaMarchReactionPolicy = visionContext?.let {
-            opensamguk.engine.hwiha.HwihaMarchReactionInterpreter(it.topology, it.metrics, it.commanderies, it.rules)
-        } ?: opensamguk.engine.hwiha.HwihaMarchReactionPolicy { current, _, _ ->
+        val hwihaMarchReactions: opensamguk.engine.campaign.MarchReactionPolicy = visionContext?.let {
+            opensamguk.engine.campaign.MarchReactionInterpreter(it.topology, it.metrics, it.commanderies, it.rules)
+        } ?: opensamguk.engine.campaign.MarchReactionPolicy { current, _, _ ->
             if (opensamguk.logic.input.MarchReactions.presence(current.getState().meta) ==
                 opensamguk.logic.input.MarchReactions.Presence.EMPTY)
                 opensamguk.logic.world.LandMarchEntry.CLEAR else opensamguk.logic.world.LandMarchEntry.UNAVAILABLE
@@ -519,20 +519,20 @@ class DaemonLoopConfig {
             },
             hwihaMovementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
-                val movement = opensamguk.engine.hwiha.HwihaAssignmentMarchTurn(world, recorder,
+                val movement = opensamguk.engine.campaign.AssignmentMarchTurn(world, recorder,
                     artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes,
                     hwihaMarchReactions)
                 movement::onTurn
             } else { _, _, _ -> },
             hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
-                val deploy = opensamguk.engine.hwiha.HwihaNpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)
-                val field = opensamguk.engine.hwiha.HwihaNpcFieldSelector(domesticContext)
-                val military = opensamguk.engine.hwiha.HwihaNpcCityMilitarySelector(domesticContext)
-                val personal = opensamguk.engine.hwiha.HwihaNpcPersonalSelector(domesticContext)
-                val retire = opensamguk.engine.hwiha.HwihaNpcRetireSelector(domesticContext)
-                val people = opensamguk.engine.hwiha.HwihaNpcPeopleSelector(domesticContext)
-                val muster = opensamguk.engine.hwiha.HwihaNpcMusterSelector(artifacts.projection.topology, artifacts.landMarchMetrics)
+                val deploy = opensamguk.engine.campaign.NpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)
+                val field = opensamguk.engine.campaign.NpcFieldSelector(domesticContext)
+                val military = opensamguk.engine.campaign.NpcCityMilitarySelector(domesticContext)
+                val personal = opensamguk.engine.campaign.NpcPersonalSelector(domesticContext)
+                val retire = opensamguk.engine.campaign.NpcRetireSelector(domesticContext)
+                val people = opensamguk.engine.campaign.NpcPeopleSelector(domesticContext)
+                val muster = opensamguk.engine.campaign.NpcMusterSelector(artifacts.projection.topology, artifacts.landMarchMetrics)
                 val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn = { generalId, reserved ->
                     personal.select(world, generalId, field.select(world, generalId,
                         people.select(world, generalId, military.select(world, generalId,
@@ -577,7 +577,7 @@ class DaemonLoopConfig {
             commandOutboxRelay = commandOutboxRelay,
             hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
-                opensamguk.engine.hwiha.HwihaPhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
+                opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
                     artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
             } else null,
             tournamentDaemon = TournamentDaemon(

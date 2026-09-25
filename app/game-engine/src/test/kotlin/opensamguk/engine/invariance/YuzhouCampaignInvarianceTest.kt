@@ -6,7 +6,7 @@ import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
-import opensamguk.engine.hwiha.*
+import opensamguk.engine.campaign.*
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.economy.CountyWarehouse
@@ -28,8 +28,8 @@ class YuzhouCampaignInvarianceTest {
     private val metrics = bundle.landMarchMetrics
     private val cells = bundle.provinceCells
 
-    private class Campaign(val world: InMemoryTurnWorld, val lifecycle: TurnDaemonLifecycle, val boundary: HwihaPhaseBoundary,
-        val recorder: ChangeRecorder, val outcomes: HwihaCampaignWorldFixture.RecordingOutcomes)
+    private class Campaign(val world: InMemoryTurnWorld, val lifecycle: TurnDaemonLifecycle, val boundary: PhaseBoundary,
+        val recorder: ChangeRecorder, val outcomes: CampaignWorldFixture.RecordingOutcomes)
 
     private fun campaign(npcDeploy: Boolean = true, seed: String = "00"): Campaign {
         val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
@@ -74,17 +74,17 @@ class YuzhouCampaignInvarianceTest {
             generalPositionSnapshot = positions, cityLandProvinceById = provinceOf,
             administrativeCountyIds = bundle.projection.administrativeCountyIds))
         val recorder = ChangeRecorder()
-        val outcomes = HwihaCampaignWorldFixture.RecordingOutcomes()
+        val outcomes = CampaignWorldFixture.RecordingOutcomes()
         val handler = ReservedTurnHandler(world, opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
             seed, 190, recorder = recorder, hwihaDeploymentContext = topology to metrics, hwihaProvinceCells = cells,
             hwihaWarOutcomes = outcomes)
-        val selector = HwihaNpcDeploySelector(topology, metrics)
+        val selector = NpcDeploySelector(topology, metrics)
         val lifecycle = TurnDaemonLifecycle(world, handler,
-            hwihaMovementOf = HwihaAssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes,
-                reactions = HwihaMarchReactionInterpreter(topology, metrics, bundle.commanderyIndex))::onTurn,
+            hwihaMovementOf = AssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes,
+                reactions = MarchReactionInterpreter(topology, metrics, bundle.commanderyIndex))::onTurn,
             hwihaNpcInputOf = if (npcDeploy) { id, reserved -> selector.select(world, id, reserved) } else { _, reserved -> reserved },
-            reservedActionOf = { HwihaCampaignWorldFixture.NO_INPUT })
-        return Campaign(world, lifecycle, HwihaPhaseBoundary(topology, metrics, cells, outcomes = outcomes), recorder, outcomes)
+            reservedActionOf = { CampaignWorldFixture.NO_INPUT })
+        return Campaign(world, lifecycle, PhaseBoundary(topology, metrics, cells, outcomes = outcomes), recorder, outcomes)
     }
 
     /** One phase: every general's personal turn, then the world boundary into the next phase. */
@@ -104,8 +104,8 @@ class YuzhouCampaignInvarianceTest {
         assertTrue(deployed > 0, "NPC lords deployed")
         assertTrue(run.world.listHwihaSieges().isNotEmpty(), "an arrived corps besieged a county")
         assertTrue(run.outcomes.encounters.isNotEmpty(), "a relief corps met a besieging corps and the battle resolved")
-        assertTrue(run.world.listGenerals().any { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }, "battle record kept")
-        val captured = run.world.listHwihaSieges().filter { it.status == HwihaSiegeService.FALLEN }
+        assertTrue(run.world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta }, "battle record kept")
+        val captured = run.world.listHwihaSieges().filter { it.status == SiegeService.FALLEN }
         assertTrue(captured.isNotEmpty(), "a county fell: ${run.world.listHwihaSieges().map { it.countyId to it.status }}")
         // A county can change hands more than once; the row keeps its latest siege, so its besieger holds it now.
         assertTrue(captured.all { run.world.getCityById(it.countyId)!!.nationId == it.besiegerNationId },
@@ -114,7 +114,7 @@ class YuzhouCampaignInvarianceTest {
         assertTrue(captured.any { owners[it.countyId] != it.besiegerNationId }, "the map changed hands")
         val durations = captured.map { it.turns }.sorted()
         println("yuzhou-simulation encounters=${run.outcomes.encounters.size} sieges=${run.world.listHwihaSieges().size} " +
-            "fallen=${captured.size} battles=${run.world.listGenerals().count { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }} " +
+            "fallen=${captured.size} battles=${run.world.listGenerals().count { EncounterResolver.BATTLE_RECORD_KEY in it.meta }} " +
             "fallTurns=$durations target12to24=${durations.count { it in 12..24 }}/${durations.size}")
         WorldStateBaseline.assertMatches("yuzhou-36-seed-00", run.world)
     }

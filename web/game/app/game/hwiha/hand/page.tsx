@@ -1,8 +1,8 @@
 'use client';
 
 import { Chip, Panel, SectionHeader } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
 
@@ -24,7 +24,7 @@ export default function HandPage() {
     const notice = hwihaReadNotice(read, hand?.status);
 
     return (
-        <HwihaShell title="계책 덱" tab="계책">
+        <GameShell title="계책 덱" tab="계책">
             <div style={{ padding: 12, display: 'grid', gap: 12 }}>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader
@@ -32,11 +32,11 @@ export default function HandPage() {
                         sub="자기 턴마다 한 장 뽑는다"
                         actions={hand?.status === 'READY' ? <Chip tone="bronze">{`${hand.cards.length} / ${hand.handLimit}`}</Chip> : null}
                     />
-                    {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
+                    {notice ? <Empty>{notice}</Empty> : null}
                     {!notice && hand?.status === 'NOT_READY' ? (
-                        <HwihaEmpty>아직 첫 손패를 받지 않았습니다. 다음 개인 턴에 처음 뽑습니다.</HwihaEmpty>
+                        <Empty>아직 첫 손패를 받지 않았습니다. 다음 개인 턴에 처음 뽑습니다.</Empty>
                     ) : null}
-                    {hand?.status === 'READY' && hand.cards.length === 0 ? <HwihaEmpty>손패가 비었습니다.</HwihaEmpty> : null}
+                    {hand?.status === 'READY' && hand.cards.length === 0 ? <Empty>손패가 비었습니다.</Empty> : null}
                     {hand?.status === 'READY' && hand.cards.length > 0 ? (
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12, paddingTop: 8 }}>
                             {hand.cards.map((card) => {
@@ -78,6 +78,6 @@ export default function HandPage() {
                     ) : null}
                 </Panel>
             </div>
-        </HwihaShell>
+        </GameShell>
     );
 }

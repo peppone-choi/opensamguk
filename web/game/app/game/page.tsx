@@ -1,13 +1,13 @@
 import { Suspense } from 'react';
-import GameEntry from '@/components/hwiha/GameEntry';
-import HwihaLayout from './hwiha/layout';
+import GameEntry from '@/components/campaign/GameEntry';
+import GameLayout from './hwiha/layout';
 
 export default function GameMainPage() {
   return (
-    <HwihaLayout>
+    <GameLayout>
       <Suspense fallback={null}>
         <GameEntry />
       </Suspense>
-    </HwihaLayout>
+    </GameLayout>
   );
 }
