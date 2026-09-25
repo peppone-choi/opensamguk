@@ -14,40 +14,40 @@ data class HwihaLegacyStratagemOptions(val inputId: String, val available: Boole
 
 @Service
 class HwihaLegacyStratagemOptionsService(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(actorId: Int, userId: Long, inputId: String): HwihaLegacyStratagemOptions {
         reader.requireOwner(actorId, userId)
-        if (inputId !in HwihaLegacyStratagemInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
+        if (inputId !in StratagemInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
             return HwihaLegacyStratagemOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = reader.snapshot().state ?: return HwihaLegacyStratagemOptions(inputId, false,
-            HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.name, HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.message)
+            StratagemFailure.STATE_UNAVAILABLE.name, StratagemFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return HwihaLegacyStratagemOptions(inputId, false,
-            HwihaLegacyStratagemFailure.ACTOR_NOT_FOUND.name, HwihaLegacyStratagemFailure.ACTOR_NOT_FOUND.message)
+            StratagemFailure.ACTOR_NOT_FOUND.name, StratagemFailure.ACTOR_NOT_FOUND.message)
         val local = state.counties.singleOrNull { it.provinceId == actor.node && it.nationId == actor.nationId }
-        val requests: List<Pair<String, HwihaLegacyStratagemInput.Request>> = when (inputId) {
-            HwihaLegacyStratagemInput.LAST_STAND -> listOf("본인" to HwihaLegacyStratagemInput.Request(actorId, inputId))
-            HwihaLegacyStratagemInput.PROVOKE_RIVALRY -> state.nations.filter { it.id != actor.nationId }
+        val requests: List<Pair<String, StratagemInput.Request>> = when (inputId) {
+            StratagemInput.LAST_STAND -> listOf("본인" to StratagemInput.Request(actorId, inputId))
+            StratagemInput.PROVOKE_RIVALRY -> state.nations.filter { it.id != actor.nationId }
                 .sortedBy { it.id }.flatMapIndexed { index, first ->
                     state.nations.filter { it.id != actor.nationId }.sortedBy { it.id }.drop(index + 1).map { second ->
-                        "${first.name} ↔ ${second.name}" to HwihaLegacyStratagemInput.Request(actorId, inputId,
+                        "${first.name} ↔ ${second.name}" to StratagemInput.Request(actorId, inputId,
                             firstNationId = first.id, secondNationId = second.id)
                     }
                 }
-            in HwihaLegacyStratagemInput.OWN_COUNTY_IDS -> local?.let { listOf(it.name to
-                HwihaLegacyStratagemInput.Request(actorId, inputId, targetCountyId = it.id)) }.orEmpty()
+            in StratagemInput.OWN_COUNTY_IDS -> local?.let { listOf(it.name to
+                StratagemInput.Request(actorId, inputId, targetCountyId = it.id)) }.orEmpty()
             else -> state.countyAdjacency[local?.id].orEmpty().sorted().mapNotNull { id ->
                 state.county(id)?.takeIf { it.nationId > 0 && it.nationId != actor.nationId }?.let { county ->
-                    county.name to HwihaLegacyStratagemInput.Request(actorId, inputId, targetCountyId = county.id)
+                    county.name to StratagemInput.Request(actorId, inputId, targetCountyId = county.id)
                 }
             }
         }
         val choices = requests.map { (label, request) ->
-            val result = HwihaLegacyStratagemRules.assess(request, state)
-            val failure = (result as? HwihaLegacyStratagemAssessment.Rejected)?.reason
+            val result = StratagemRules.assess(request, state)
+            val failure = (result as? StratagemAssessment.Rejected)?.reason
             val args = when (request.inputId) {
-                HwihaLegacyStratagemInput.LAST_STAND -> emptyMap()
-                HwihaLegacyStratagemInput.PROVOKE_RIVALRY -> mapOf("firstNationId" to request.firstNationId!!,
+                StratagemInput.LAST_STAND -> emptyMap()
+                StratagemInput.PROVOKE_RIVALRY -> mapOf("firstNationId" to request.firstNationId!!,
                     "secondNationId" to request.secondNationId!!)
                 else -> mapOf("targetCountyId" to request.targetCountyId!!)
             }
@@ -55,7 +55,7 @@ class HwihaLegacyStratagemOptionsService(private val reader: HwihaDomesticReader
         }
         val available = choices.any { it.available }
         val reason = if (available) null else choices.firstOrNull()?.let { it.code to it.reason }
-            ?: (HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE.name to HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE.message)
+            ?: (StratagemFailure.TARGET_UNAVAILABLE.name to StratagemFailure.TARGET_UNAVAILABLE.message)
         return HwihaLegacyStratagemOptions(inputId, available, reason?.first, reason?.second, choices)
     }
 }

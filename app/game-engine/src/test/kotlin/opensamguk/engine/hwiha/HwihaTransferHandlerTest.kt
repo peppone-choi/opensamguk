@@ -16,13 +16,13 @@ class HwihaTransferHandlerTest {
         val handler = HwihaTransferHandler(world, ChangeRecorder(), HwihaDomesticContext())
         val json = """{"targetGeneralId":1102,"resource":"MONEY","amount":40}"""
         val applied = assertIs<HwihaTurnOutcome.Applied>(
-            handler.handle(HwihaTransferInput.GIFT, donor.id, json, "gift-1101", 42))
+            handler.handle(TransferInput.GIFT, donor.id, json, "gift-1101", 42))
         assertEquals(80, world.getGeneralById(donor.id)!!.gold)
         assertEquals(50, world.getGeneralById(recipient.id)!!.gold)
         assertEquals(donor.experience, world.getGeneralById(donor.id)!!.experience)
-        assertEquals(applied, handler.handle(HwihaTransferInput.GIFT, donor.id, json, "gift-1101", 42))
-        assertEquals(HwihaTransferFailure.ALREADY_PROCESSED.name,
-            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaTransferInput.GIFT,
+        assertEquals(applied, handler.handle(TransferInput.GIFT, donor.id, json, "gift-1101", 42))
+        assertEquals(TransferFailure.ALREADY_PROCESSED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(TransferInput.GIFT,
                 donor.id, json.replace("40", "20"), "gift-other", 42)).code)
     }
 
@@ -35,7 +35,7 @@ class HwihaTransferHandlerTest {
         val json = """{"resource":"GRAIN","amount":30}"""
         assertEquals(InputRejection.NOT_DELIVERED.name,
             assertIs<HwihaTurnOutcome.Rejected>(HwihaTransferHandler(world, ChangeRecorder(), HwihaDomesticContext())
-                .handle(HwihaTransferInput.DONATE, donor.id, json, "donate-1111", 42)).code)
+                .handle(TransferInput.DONATE, donor.id, json, "donate-1111", 42)).code)
         assertEquals(80, world.getGeneralById(donor.id)!!.rice)
         assertEquals(7, world.getNationById(2)!!.rice)
         assertEquals(0, world.getNationById(1)!!.rice)

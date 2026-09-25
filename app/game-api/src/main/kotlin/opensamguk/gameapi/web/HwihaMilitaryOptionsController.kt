@@ -2,7 +2,7 @@ package opensamguk.gameapi.web
 
 import opensamguk.gameapi.precheck.HwihaMilitaryOptionsService
 import opensamguk.gameapi.read.HwihaDomesticForbidden
-import opensamguk.logic.input.HwihaMilitaryInput
+import opensamguk.logic.input.MilitaryInput
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -15,22 +15,22 @@ import org.springframework.web.bind.annotation.RestController
 class HwihaMilitaryOptionsController(private val service: HwihaMilitaryOptionsService) {
     @GetMapping("/api/commands/conscript-options")
     fun conscript(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaMilitaryInput.CONSCRIPT, generalId, userId)
+        options(MilitaryInput.CONSCRIPT, generalId, userId)
     @GetMapping("/api/commands/raise-volunteers-options")
     fun raiseVolunteers(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaMilitaryInput.RAISE_VOLUNTEERS, generalId, userId)
+        options(MilitaryInput.RAISE_VOLUNTEERS, generalId, userId)
     @GetMapping("/api/commands/train-options")
     fun train(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaMilitaryInput.TRAIN, generalId, userId)
+        options(MilitaryInput.TRAIN, generalId, userId)
     @GetMapping("/api/commands/boost-morale-options")
     fun boostMorale(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaMilitaryInput.BOOST_MORALE, generalId, userId)
+        options(MilitaryInput.BOOST_MORALE, generalId, userId)
     @GetMapping("/api/commands/muster-options")
     fun muster(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaMilitaryInput.MUSTER, generalId, userId)
+        options(MilitaryInput.MUSTER, generalId, userId)
     @GetMapping("/api/commands/demobilize-options")
     fun demobilize(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int) =
-        options(HwihaMilitaryInput.DEMOBILIZE, generalId, userId)
+        options(MilitaryInput.DEMOBILIZE, generalId, userId)
 
     private fun options(inputId: String, generalId: Int, userId: Long?): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())

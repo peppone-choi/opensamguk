@@ -49,7 +49,7 @@ class HwihaDomesticHandler(
         if (command.ownerUserId <= 0 || actor.userId?.toLongOrNull() != command.ownerUserId.toLong())
             return deny("FORBIDDEN", "자신의 장수만 조작할 수 있습니다.")
         if (command.inputId == DomesticInput.REDUCE &&
-            HwihaInputCatalog.load()[command.inputId]?.deliveryState?.hasHandler != true)
+            InputCatalog.load()[command.inputId]?.deliveryState?.hasHandler != true)
             return deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = context.projection(world)
         val now = state.now
@@ -95,7 +95,7 @@ class HwihaDomesticHandler(
     fun rejectPersonalReservation(inputId: String) =
         HwihaTurnOutcome.Rejected(inputId, "INVALID_INPUT_CHANNEL", "배치·방침·공사는 명령 목록에 넣지 않고 따로 입력합니다.")
 
-    private fun storePlacement(requestId: String, request: PlacementRequest, cardGeneralId: Int, now: HwihaPhase) {
+    private fun storePlacement(requestId: String, request: PlacementRequest, cardGeneralId: Int, now: Phase) {
         val card = checkNotNull(world.getGeneralById(cardGeneralId))
         val current = PlacementState.read(card.meta)
         val order = PlacementOrder(requestId, request.actorId, request.cardId, request.post, request.target, now)
@@ -103,7 +103,7 @@ class HwihaDomesticHandler(
         world.updateGeneralMeta(recorder, card, card.meta.withKey(PlacementState.META_KEY, next.toMetaValue()))
     }
 
-    private fun storePolicy(requestId: String, request: PolicyRequest, state: DomesticProjection, now: HwihaPhase) {
+    private fun storePolicy(requestId: String, request: PolicyRequest, state: DomesticProjection, now: Phase) {
         val order = PolicyOrder(request.policy, requestId, request.actorId, now)
         when (val target = request.target) {
             is PolicyTarget.County -> {
@@ -131,7 +131,7 @@ class HwihaDomesticHandler(
         }
     }
 
-    private fun storeWork(requestId: String, request: WorkRequest, now: HwihaPhase) {
+    private fun storeWork(requestId: String, request: WorkRequest, now: Phase) {
         val city = checkNotNull(world.getCityById(request.countyId))
         val current = CountyWorks.read(city.meta)
         val next = CountyWorks(DomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now),
@@ -162,5 +162,5 @@ class HwihaDomesticHandler(
         type: String = if (ok) "executionApplied" else "executionRejected") =
         CommandLifecycleResult(type = type, ok = ok, commandKind = kind, actionCode = inputId, generalId = generalId,
             code = code, reason = reason,
-            inputResolved = HwihaInputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
+            inputResolved = InputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
 }

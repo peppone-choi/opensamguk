@@ -7,8 +7,8 @@ import opensamguk.infra.seed.HwihaCountyProductionJson
 import opensamguk.logic.economy.CountyIncome
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaAptitude
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.Aptitude
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEvents
@@ -221,7 +221,7 @@ class HwihaCampReader(
     private fun gate(actor: GeneralReadEntity): String? = hwihaGate(worlds, actor)
 
     private fun renownOf(general: GeneralReadEntity): Int? =
-        try { HwihaPersonPolicyState.read(general.meta)?.renownCapacity } catch (_: IllegalArgumentException) { null }
+        try { PersonPolicyState.read(general.meta)?.renownCapacity } catch (_: IllegalArgumentException) { null }
 
     /** 결손 카드가 하나라도 있으면 총합은 미상이다. 검증되지 않은 능력치를 0 코스트로 취급하지 않는다. */
     private fun retinueCost(masterId: Int, lookup: (Int) -> GeneralReadEntity?): Int? {
@@ -230,12 +230,12 @@ class HwihaCampReader(
     }
 
     private fun personCost(person: GeneralReadEntity): Int? = try {
-        if (HwihaPersonPolicyState.read(person.meta) == null) null else
+        if (PersonPolicyState.read(person.meta) == null) null else
             RenownRules.personCost(person.leadership, person.strength, person.intel, person.politics, person.charm)
     } catch (_: IllegalArgumentException) { null }
 
     private fun aptitudes(person: GeneralReadEntity): HwihaAptitudesDto? = try {
-        HwihaAptitude.compute(HwihaAptitude.Stats(person.leadership, person.strength, person.intel, person.politics, person.charm))
+        Aptitude.compute(Aptitude.Stats(person.leadership, person.strength, person.intel, person.politics, person.charm))
             .let { HwihaAptitudesDto(it.command, it.administration, it.strategy, it.envoy) }
     } catch (_: IllegalArgumentException) { null }
 

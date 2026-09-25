@@ -26,7 +26,7 @@ import opensamguk.logic.input.*
 
 /** 조회 응답의 범위·가용 여부가 접수와 같은 규칙에서 나오는지 본다. DB 없음. */
 class HwihaDomesticViewsTest {
-    private val now = HwihaPhase(200, 1, 2)
+    private val now = Phase(200, 1, 2)
     private fun person(id: Int, human: Boolean, lord: Boolean = false, level: Int = 0, node: String = "p$id",
         meta: Map<String, Any?> = emptyMap()) = DomesticPerson(id, "G$id", 1, human, if (human) 0 else 2, level,
         50, 50, 50, 50, 50, node, false, meta + ("hwihaLord" to lord))
@@ -73,7 +73,7 @@ class HwihaDomesticViewsTest {
         assertEquals(DomesticDesign.CONFIRMED, view.provisional)
         assertEquals(6, view.countyOptions.size); assertEquals(5, view.corpsOptions.size)
         // A human seat holder sees only its own county; a stranger sees none.
-        val assigned = mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d1", 10, 1, 8).toMetaValue())
+        val assigned = mapOf(CountyAssignment.META_KEY to CountyAssignment("d1", 10, 1, 8).toMetaValue())
         val holder = HwihaDomesticViews.policies(30, snapshot(listOf(ruler, person(20, false), person(30, true, meta = assigned))))
         assertEquals(listOf(8), holder.counties.map { it.countyId })
         assertTrue(holder.commanderies.isEmpty())
@@ -81,7 +81,7 @@ class HwihaDomesticViewsTest {
     }
 
     @Test fun `works show startable costs and active progress with stop reasons`() {
-        val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, HwihaPhase(200, 1, 1))
+        val active = DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 10, Phase(200, 1, 1))
             .copy(progress = 150, charged = Resources(money = 10_000, timber = 500), stopReason = DomesticEffects.INSUFFICIENT_STOCK)
         val counties = listOf(DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse + (CountyWorks.META_KEY to
             CountyWorks(active, listOf(CompletedWork(DomesticWork.IRRIGATION, now))).toMetaValue())),

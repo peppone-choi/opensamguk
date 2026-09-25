@@ -1,8 +1,8 @@
 package opensamguk.logic.domestic
 
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaDeploymentState
-import opensamguk.logic.input.HwihaFlatArguments
+import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.input.FlatArguments
 import opensamguk.logic.input.RuleProfile
 
 /** A field action uses the acting general's saved position; the caller supplies no county, cost, or actor. */
@@ -22,7 +22,7 @@ object FieldInput {
     fun parse(actorId: Int, inputId: String, rawJson: String?): FieldRequest? {
         if (actorId <= 0 || inputId !in INPUT_IDS || rawJson == null) return null
         return try {
-            if (HwihaFlatArguments(rawJson).read().isNotEmpty()) null else FieldRequest(actorId, inputId)
+            if (FlatArguments(rawJson).read().isNotEmpty()) null else FieldRequest(actorId, inputId)
         } catch (_: IllegalArgumentException) { null }
     }
 
@@ -61,7 +61,7 @@ object FieldRules {
         if (request.actorId <= 0 || request.inputId !in FieldInput.INPUT_IDS) return reject(FieldFailure.INVALID_INPUT)
         val person = state.person(request.actorId) ?: return reject(FieldFailure.ACTOR_NOT_FOUND)
         if (person.inBattle) return reject(FieldFailure.BATTLE_PENDING)
-        val deployed = try { HwihaDeploymentState.read(person.meta)?.corps.orEmpty() }
+        val deployed = try { DeploymentState.read(person.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reject(FieldFailure.STATE_UNAVAILABLE) }
         if (deployed.any { it.ownerGeneralId == person.id }) return reject(FieldFailure.CORPS_DEPLOYED)
         val node = person.node ?: return reject(FieldFailure.POSITION_UNAVAILABLE)

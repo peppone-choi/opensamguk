@@ -8,7 +8,7 @@ import opensamguk.logic.economy.Resources
 
 /** 공유 판정(접수 = 재검사). 수치 없이 권한·자리·상태만 본다. */
 class DomesticRulesTest {
-    private val now = HwihaPhase(200, 1, 1)
+    private val now = Phase(200, 1, 1)
     private fun person(id: Int, nation: Int = 1, human: Boolean = false, lord: Boolean = false, level: Int = 0,
         node: String? = "p$id", npc: Int = 2, meta: Map<String, Any?> = emptyMap()) = DomesticPerson(id, "G$id", nation, human,
         if (human) 0 else npc, level, 60, 60, 60, 60, 60, node, false, meta + ("hwihaLord" to lord))
@@ -69,24 +69,24 @@ class DomesticRulesTest {
             person(6, human = true)))
         assertEquals(DomesticFailure.COUNTY_OCCUPIED, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(10)), s)))
-        val assigned = mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d1", 1, 1, 11).toMetaValue())
+        val assigned = mapOf(CountyAssignment.META_KEY to CountyAssignment("d1", 1, 1, 11).toMetaValue())
         val t = state(people = listOf(person(1, human = true, lord = true, level = 12), person(2), person(3),
             person(6, human = true, meta = assigned)))
         assertEquals(DomesticFailure.COUNTY_OCCUPIED, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(11)), t)))
         // Red probe for the dispatch side: the same placement claim must also block a dispatch to that county.
-        val dispatch = HwihaDispatchProjection(RuleProfile.HWIHA,
-            s.people.map { DispatchPerson(it.id, it.nationId, HwihaLordStatus.read(it.meta), it.userOwned, it.meta) },
+        val dispatch = DispatchProjection(RuleProfile.HWIHA,
+            s.people.map { DispatchPerson(it.id, it.nationId, LordStatus.read(it.meta), it.userOwned, it.meta) },
             listOf(DispatchRetainer(8, 1, 6, 50)), listOf(DispatchCounty(10, 1), DispatchCounty(11, 1)))
         assertEquals(DispatchFailure.COUNTY_OCCUPIED, assertIs<DispatchAssessment.Rejected>(
-            HwihaDispatchRules.assess(DispatchRequest(1, 6, 10), dispatch)).reason)
-        assertIs<DispatchAssessment.Eligible>(HwihaDispatchRules.assess(DispatchRequest(1, 6, 11), dispatch))
+            DispatchRules.assess(DispatchRequest(1, 6, 10), dispatch)).reason)
+        assertIs<DispatchAssessment.Eligible>(DispatchRules.assess(DispatchRequest(1, 6, 11), dispatch))
     }
 
     @Test fun `deployed or corrupt cards are not placed`() {
-        val corps = HwihaDeploymentState(listOf(HwihaDeployedCorps("o1", 1, 2, 4, 1, listOf(7), now)))
+        val corps = DeploymentState(listOf(DeployedCorps("o1", 1, 2, 4, 1, listOf(7), now)))
         val s = state(people = listOf(person(1, human = true, lord = true, level = 12,
-            meta = mapOf(HwihaDeploymentState.META_KEY to corps.toMetaValue())), person(2), person(3), person(6, human = true)))
+            meta = mapOf(DeploymentState.META_KEY to corps.toMetaValue())), person(2), person(3), person(6, human = true)))
         assertEquals(DomesticFailure.CARD_DEPLOYED, rejected(DomesticRules.assessPlacement(
             PlacementRequest(1, 4, PlacementPost.SCOUT, PlacementTarget.Province("p2")), s)))
         val corrupt = state(people = listOf(person(1, human = true, lord = true, level = 12), person(2),
@@ -111,7 +111,7 @@ class DomesticRulesTest {
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPolicy(PolicyRequest(1, PolicyTarget.County(10), "COMMERCE"), state()))
         assertEquals(DomesticFailure.NOT_COUNTY_AUTHORITY, rejected(DomesticRules.assessPolicy(
             PolicyRequest(6, PolicyTarget.County(10), "COMMERCE"), state())))
-        val assigned = mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d1", 1, 1, 10).toMetaValue())
+        val assigned = mapOf(CountyAssignment.META_KEY to CountyAssignment("d1", 1, 1, 10).toMetaValue())
         val withSeat = state(people = listOf(person(1, human = true, lord = true, level = 12), person(2), person(3),
             person(6, human = true, meta = assigned)))
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPolicy(PolicyRequest(6, PolicyTarget.County(10), "COMMERCE"), withSeat))
@@ -142,9 +142,9 @@ class DomesticRulesTest {
     }
 
     @Test fun `corps policy is set by the deployment owner`() {
-        val corps = HwihaDeploymentState(listOf(HwihaDeployedCorps("o1", 1, 2, 4, 1, listOf(7), now)))
+        val corps = DeploymentState(listOf(DeployedCorps("o1", 1, 2, 4, 1, listOf(7), now)))
         val s = state(people = listOf(person(1, human = true, lord = true, level = 12,
-            meta = mapOf(HwihaDeploymentState.META_KEY to corps.toMetaValue())), person(2), person(3), person(6, human = true)))
+            meta = mapOf(DeploymentState.META_KEY to corps.toMetaValue())), person(2), person(3), person(6, human = true)))
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPolicy(PolicyRequest(1, PolicyTarget.Corps("o1"), "EVADE"), s))
         assertEquals(DomesticFailure.CORPS_NOT_FOUND, rejected(DomesticRules.assessPolicy(
             PolicyRequest(6, PolicyTarget.Corps("o1"), "EVADE"), s)))
@@ -168,7 +168,7 @@ class DomesticRulesTest {
     @Test fun `seated magistrate needs arrival and presence and drives the effective policy`() {
         val design = DomesticDesign.CANON
         val order = PlacementOrder("r1", 1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(10), now)
-        fun with(arrived: HwihaPhase?, node: String) = state(people = listOf(person(1, human = true, lord = true, level = 12),
+        fun with(arrived: Phase?, node: String) = state(people = listOf(person(1, human = true, lord = true, level = 12),
             person(2, node = node, meta = mapOf(PlacementState.META_KEY to
                 PlacementState(ActivePlacement(order, now, arrived), null).toMetaValue())), person(3), person(6, human = true)),
             counties = listOf(county(10, meta = warehouse(10) + (CountyPolicyState.META_KEY to CountyPolicyState(

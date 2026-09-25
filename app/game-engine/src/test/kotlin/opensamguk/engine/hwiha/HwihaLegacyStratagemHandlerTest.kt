@@ -31,22 +31,22 @@ class HwihaLegacyStratagemHandlerTest {
             else -> city
         } })
     private fun args(inputId: String) = when (inputId) {
-        HwihaLegacyStratagemInput.LAST_STAND -> "{}"
-        HwihaLegacyStratagemInput.PROVOKE_RIVALRY -> """{"firstNationId":2,"secondNationId":3}"""
-        in HwihaLegacyStratagemInput.OWN_COUNTY_IDS -> """{"targetCountyId":$sourceId}"""
+        StratagemInput.LAST_STAND -> "{}"
+        StratagemInput.PROVOKE_RIVALRY -> """{"firstNationId":2,"secondNationId":3}"""
+        in StratagemInput.OWN_COUNTY_IDS -> """{"targetCountyId":$sourceId}"""
         else -> """{"targetCountyId":$targetId}"""
     }
 
     @Test fun `all twelve stratagems reject before card ownership is implemented`() {
-        for (inputId in HwihaLegacyStratagemInput.INPUT_IDS.sorted()) {
+        for (inputId in StratagemInput.INPUT_IDS.sorted()) {
             val world = world()
             val handler = HwihaCourtHandler(world, ChangeRecorder(), HwihaDomesticContext(cityConst = fixture.bundle.cityConst))
             val submitted = handler.handle(TurnDaemonCommand.ImmediateInput("play-$inputId", 501, 42, inputId, args(inputId)))
             assertEquals(InputRejection.NOT_DELIVERED.name, submitted.code, inputId)
             handler.onIssuerTurn(501)
             assertTrue(handler.takeExecutions().isEmpty(), inputId)
-            assertTrue(HwihaLegacyStratagemStock.forPhase(world.getGeneralById(501)!!.meta,
-                HwihaPhase(200, 1, 1)).available(inputId), inputId)
+            assertTrue(StratagemStock.forPhase(world.getGeneralById(501)!!.meta,
+                Phase(200, 1, 1)).available(inputId), inputId)
         }
     }
 

@@ -1,7 +1,7 @@
 package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.read.HwihaDomesticReader
-import opensamguk.logic.content.HwihaItemCatalogJson
+import opensamguk.logic.content.ItemCatalogJson
 import opensamguk.logic.input.*
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -16,68 +16,68 @@ data class HwihaLegacyDirectOptions(val inputId: String, val available: Boolean,
 
 @Service
 class HwihaLegacyDirectOptionsService(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(actorId: Int, userId: Long, inputId: String): HwihaLegacyDirectOptions {
         reader.requireOwner(actorId, userId)
-        if (inputId !in HwihaLegacyDirectInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
+        if (inputId !in DirectInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
             return HwihaLegacyDirectOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = reader.snapshot().state ?: return HwihaLegacyDirectOptions(inputId, false,
-            HwihaLegacyDirectFailure.STATE_UNAVAILABLE.name, HwihaLegacyDirectFailure.STATE_UNAVAILABLE.message)
+            DirectFailure.STATE_UNAVAILABLE.name, DirectFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return HwihaLegacyDirectOptions(inputId, false,
-            HwihaLegacyDirectFailure.ACTOR_NOT_FOUND.name, HwihaLegacyDirectFailure.ACTOR_NOT_FOUND.message)
-        val requests: List<Pair<String, HwihaLegacyDirectRequest>> = when (inputId) {
-            HwihaLegacyDirectInput.CONVERT -> state.bugoks.filter { it.masterGeneralId == actorId }.flatMap { unit ->
+            DirectFailure.ACTOR_NOT_FOUND.name, DirectFailure.ACTOR_NOT_FOUND.message)
+        val requests: List<Pair<String, DirectRequest>> = when (inputId) {
+            DirectInput.CONVERT -> state.bugoks.filter { it.masterGeneralId == actorId }.flatMap { unit ->
                 state.supportedCrewTypeIds.sorted().map { crew ->
-                    "${unit.id}번 부곡 → ${crew}번 병종" to HwihaLegacyDirectRequest.Convert(actorId, unit.id, crew)
+                    "${unit.id}번 부곡 → ${crew}번 병종" to DirectRequest.Convert(actorId, unit.id, crew)
                 }
             }
-            HwihaLegacyDirectInput.EQUIPMENT -> HwihaItemCatalogJson.CANON.treasures
+            DirectInput.EQUIPMENT -> ItemCatalogJson.CANON.treasures
                 .filter { it.issuedCopies != null }.sortedBy { it.sourceRowIndex }.flatMap { card ->
-                    HwihaTradeSide.entries.map { side ->
-                        "${card.header.name} ${if (side == HwihaTradeSide.BUY) "매입" else "매각"} · 전 ${card.purchaseCost}" to
-                            HwihaLegacyDirectRequest.Equipment(actorId, card.sourceRowIndex, side)
+                    TradeSide.entries.map { side ->
+                        "${card.header.name} ${if (side == TradeSide.BUY) "매입" else "매각"} · 전 ${card.purchaseCost}" to
+                            DirectRequest.Equipment(actorId, card.sourceRowIndex, side)
                     }
                 }
-            HwihaLegacyDirectInput.GRAIN -> HwihaTradeSide.entries.map { side ->
-                (if (side == HwihaTradeSide.BUY) "전 100 → 곡물 300" else "곡물 300 → 전 100") to
-                    HwihaLegacyDirectRequest.Grain(actorId, side, 1)
+            DirectInput.GRAIN -> TradeSide.entries.map { side ->
+                (if (side == TradeSide.BUY) "전 100 → 곡물 300" else "곡물 300 → 전 100") to
+                    DirectRequest.Grain(actorId, side, 1)
             }
             else -> state.countyAdjacency.keys.sorted().flatMap { sourceId ->
                 val source = state.county(sourceId) ?: return@flatMap emptyList()
                 if (source.provinceId != actor.node) return@flatMap emptyList()
                 state.countyAdjacency[sourceId].orEmpty().sorted().flatMap { targetId ->
                     val target = state.county(targetId) ?: return@flatMap emptyList()
-                    HwihaCargo.entries.map { cargo ->
+                    Cargo.entries.map { cargo ->
                         "${target.name} · ${cargo.name}" to
-                            HwihaLegacyDirectRequest.Transport(actorId, targetId, cargo, 1)
+                            DirectRequest.Transport(actorId, targetId, cargo, 1)
                     }
                 }
             }
         }
         val choices = requests.map { (label, request) ->
-            val assessment = HwihaLegacyDirectRules.assess(request, state)
-            val failure = (assessment as? HwihaLegacyDirectAssessment.Rejected)?.reason
+            val assessment = DirectRules.assess(request, state)
+            val failure = (assessment as? DirectAssessment.Rejected)?.reason
             val args = when (request) {
-                is HwihaLegacyDirectRequest.Convert -> mapOf("bugokId" to request.bugokId, "crewTypeId" to request.crewTypeId)
-                is HwihaLegacyDirectRequest.Equipment -> mapOf("treasureId" to request.treasureId, "side" to request.side.name)
-                is HwihaLegacyDirectRequest.Grain -> mapOf("side" to request.side.name, "amount" to 1)
-                is HwihaLegacyDirectRequest.Transport -> mapOf("targetCountyId" to request.targetCountyId,
+                is DirectRequest.Convert -> mapOf("bugokId" to request.bugokId, "crewTypeId" to request.crewTypeId)
+                is DirectRequest.Equipment -> mapOf("treasureId" to request.treasureId, "side" to request.side.name)
+                is DirectRequest.Grain -> mapOf("side" to request.side.name, "amount" to 1)
+                is DirectRequest.Transport -> mapOf("targetCountyId" to request.targetCountyId,
                     "cargo" to request.cargo.name, "amount" to 1)
             }
-            val maxAmount = if (request is HwihaLegacyDirectRequest.Transport && failure == null) {
-                val ready = assessment as HwihaLegacyDirectAssessment.Eligible
+            val maxAmount = if (request is DirectRequest.Transport && failure == null) {
+                val ready = assessment as DirectAssessment.Eligible
                 val stock = checkNotNull(ready.warehouse).stock
                 minOf(1000L, when (request.cargo) {
-                    HwihaCargo.MONEY -> stock.money; HwihaCargo.GRAIN -> stock.grain
-                    HwihaCargo.IRON -> stock.iron; HwihaCargo.TIMBER -> stock.timber; HwihaCargo.HORSES -> stock.horses
+                    Cargo.MONEY -> stock.money; Cargo.GRAIN -> stock.grain
+                    Cargo.IRON -> stock.iron; Cargo.TIMBER -> stock.timber; Cargo.HORSES -> stock.horses
                 }).toInt()
             } else null
             HwihaLegacyDirectChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
         }
         val first = choices.firstOrNull { it.available }
         val failure = if (first == null) choices.firstOrNull()?.let { it.code to it.reason }
-            ?: (HwihaLegacyDirectFailure.STATE_UNAVAILABLE.name to HwihaLegacyDirectFailure.STATE_UNAVAILABLE.message)
+            ?: (DirectFailure.STATE_UNAVAILABLE.name to DirectFailure.STATE_UNAVAILABLE.message)
             else null
         return HwihaLegacyDirectOptions(inputId, first != null, failure?.first, failure?.second, choices)
     }

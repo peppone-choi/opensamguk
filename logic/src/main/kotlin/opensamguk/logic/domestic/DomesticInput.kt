@@ -4,7 +4,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import opensamguk.logic.input.HwihaFlatArguments
+import opensamguk.logic.input.FlatArguments
 
 /**
  * 배치 자리(§4·§8.2, 2026-09-23 사용자 결정). 사람 장수는 배치하지 않는다 — 그것은 발령이다.
@@ -197,7 +197,7 @@ object DomesticInput {
 
     private fun <T> parse(actorId: Int, raw: String?, read: (Map<String, JsonElement>) -> T?): T? {
         if (actorId <= 0 || raw == null) return null
-        return try { read(HwihaFlatArguments(raw).read()) } catch (_: IllegalArgumentException) { null }
+        return try { read(FlatArguments(raw).read()) } catch (_: IllegalArgumentException) { null }
     }
 
     private fun positiveId(value: JsonElement?): Int? {

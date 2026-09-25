@@ -5,19 +5,19 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.security.MessageDigest
-import opensamguk.logic.war.hwiha.HwihaUnitProfile
-import opensamguk.logic.war.hwiha.HwihaUnitProfiles
+import opensamguk.logic.war.UnitProfile
+import opensamguk.logic.war.UnitProfiles
 
 object HwihaUnitProfilesJson {
     private const val RESOURCE = "battle/hwiha-unit-profiles-v1.json"
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
-    fun loadDefault(): HwihaUnitProfiles = load(requireNotNull(
+    fun loadDefault(): UnitProfiles = load(requireNotNull(
         HwihaUnitProfilesJson::class.java.classLoader.getResourceAsStream(RESOURCE)) {
         "Missing HWIHA unit profiles resource"
     }.use { it.readBytes() })
 
-    fun load(bytes: ByteArray): HwihaUnitProfiles {
+    fun load(bytes: ByteArray): UnitProfiles {
         val root = try { mapper.readTree(bytes) } catch (e: java.io.IOException) {
             throw IllegalArgumentException("Malformed HWIHA unit profiles JSON", e)
         }
@@ -26,13 +26,13 @@ object HwihaUnitProfilesJson {
         require(root["profiles"].isArray && root["unsupportedCrewTypeIds"].isArray)
         val profiles = root["profiles"].map { row ->
             keys(row, setOf("crewTypeId", "movementSteps", "attackRange", "attackPower", "defencePower", "initiative"))
-            HwihaUnitProfile(integer(row["crewTypeId"]),integer(row["movementSteps"]),integer(row["attackRange"]),
+            UnitProfile(integer(row["crewTypeId"]),integer(row["movementSteps"]),integer(row["attackRange"]),
                 integer(row["attackPower"]),integer(row["defencePower"]),integer(row["initiative"]))
         }
         val unsupported = root["unsupportedCrewTypeIds"].map(::integer)
         require(unsupported.distinct().size == unsupported.size)
         val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        return HwihaUnitProfiles(integer(root["version"]),hash,profiles,unsupported.toSet())
+        return UnitProfiles(integer(root["version"]),hash,profiles,unsupported.toSet())
     }
     private fun integer(node: JsonNode): Int {
         require(node.isIntegralNumber && node.canConvertToInt()) { "Expected actual Int" }

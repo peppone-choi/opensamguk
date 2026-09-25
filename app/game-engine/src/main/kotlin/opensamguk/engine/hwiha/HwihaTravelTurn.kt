@@ -16,20 +16,20 @@ class HwihaTravelTurn(
 ) {
     fun onTurn(actorId: Int): Boolean {
         val actor = world.getGeneralById(actorId) ?: return false
-        val state = try { HwihaTravelState.read(actor.meta, topology, metrics) }
+        val state = try { TravelState.read(actor.meta, topology, metrics) }
             catch (_: IllegalArgumentException) {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED,
-                    HwihaTravelFailure.STATE_UNAVAILABLE.message,
-                    mapOf("inputId" to "action.move", "code" to HwihaTravelFailure.STATE_UNAVAILABLE.name))
+                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
+                    TravelFailure.STATE_UNAVAILABLE.message,
+                    mapOf("inputId" to "action.move", "code" to TravelFailure.STATE_UNAVAILABLE.name))
                 return false
             } ?: run { recover(actorId); return false }
-        val assignment = try { HwihaCountyAssignment.read(actor.meta) }
+        val assignment = try { CountyAssignment.read(actor.meta) }
             catch (_: IllegalArgumentException) {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED,
-                    HwihaTravelFailure.STATE_UNAVAILABLE.message,
-                    mapOf("inputId" to state.inputId, "code" to HwihaTravelFailure.STATE_UNAVAILABLE.name))
+                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED,
+                    TravelFailure.STATE_UNAVAILABLE.message,
+                    mapOf("inputId" to state.inputId, "code" to TravelFailure.STATE_UNAVAILABLE.name))
                 return false
             }
         if (state.assignmentIdAtStart != assignment?.dispatchId) {
@@ -42,7 +42,7 @@ class HwihaTravelTurn(
             return false
         }
         val military = HwihaMilitaryPresenceProvider(world, topology, metrics)
-        val budget = if (state.inputId == HwihaTravelInput.FORCED_MARCH) HwihaForcedMarchTempo.budgetMm else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
+        val budget = if (state.inputId == TravelInput.FORCED_MARCH) ForcedMarchTempo.budgetMm else LandMarchMetricSnapshot.NORMAL_BUDGET_MM
         when (val result = HwihaTravelExecutor(world, recorder, topology, metrics).resume(actorId, budget) { node ->
             HwihaPersonalEncounter.entryAt(world, military, reactions, actorId, node)
         }) {
@@ -50,7 +50,7 @@ class HwihaTravelTurn(
             HwihaTravelExecution.AlreadyProcessed -> Unit
             is HwihaTravelExecution.Rejected -> {
                 clearOrder(actorId)
-                HwihaRecords.general(world, actorId, HwihaRecordKind.INPUT_REJECTED, result.reason.message,
+                HwihaRecords.general(world, actorId, RecordKind.INPUT_REJECTED, result.reason.message,
                     mapOf("inputId" to state.inputId, "code" to result.reason.name))
                 return false
             }
@@ -65,8 +65,8 @@ class HwihaTravelTurn(
 
     private fun clearOrder(actorId: Int) {
         val before = world.getGeneralById(actorId) ?: return
-        if (HwihaTravelState.META_KEY !in before.meta) return
-        val after = before.copy(meta = before.meta - HwihaTravelState.META_KEY)
+        if (TravelState.META_KEY !in before.meta) return
+        val after = before.copy(meta = before.meta - TravelState.META_KEY)
         recorder.diffGeneral(opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(before),
             opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
@@ -74,16 +74,16 @@ class HwihaTravelTurn(
 
     private fun recover(actorId: Int) {
         val before = world.getGeneralById(actorId) ?: return
-        val now = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
-        val condition = try { HwihaPersonalTravelCondition.read(before.meta) }
+        val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
+        val condition = try { PersonalTravelCondition.read(before.meta) }
             catch (_: IllegalArgumentException) { return } ?: return
-        val last = try { before.meta[RECOVERY_AT]?.let(HwihaPhase::read) }
+        val last = try { before.meta[RECOVERY_AT]?.let(Phase::read) }
             catch (_: IllegalArgumentException) { return }
         if (last != null && last >= now) return
         val rested = condition.afterRest()
         if (rested == condition) return
         val after = before.copy(meta = before.meta +
-            (HwihaPersonalTravelCondition.META_KEY to rested.toMetaValue()) + (RECOVERY_AT to now.toMetaValue()))
+            (PersonalTravelCondition.META_KEY to rested.toMetaValue()) + (RECOVERY_AT to now.toMetaValue()))
         recorder.diffGeneral(opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(before),
             opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)

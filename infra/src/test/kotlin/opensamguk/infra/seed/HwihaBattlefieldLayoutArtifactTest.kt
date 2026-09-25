@@ -5,7 +5,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.logic.world.*
-import opensamguk.logic.world.HwihaBattlefieldGeometry.Position
+import opensamguk.logic.world.BattlefieldGeometry.Position
 
 /** Measures the selected source bundle; unavailable layouts are evidence, not test failures. */
 class HwihaBattlefieldLayoutArtifactTest {
@@ -20,25 +20,25 @@ class HwihaBattlefieldLayoutArtifactTest {
             val a = (edge.from as StrategicNodeRef.LandProvince).id
             val b = (edge.to as StrategicNodeRef.LandProvince).id
             for ((approach, province) in listOf(a to b, b to a)) {
-                val geometry = HwihaBattlefieldGeometry.extract(index, province)
+                val geometry = BattlefieldGeometry.extract(index, province)
                 assertEquals(index.cellsOf(province), geometry.cells.map { it.source })
                 assertEquals(index.topologyHash, geometry.topologyHash)
                 assertEquals(index.tilesContentHash, geometry.tilesContentHash)
                 val row = linkedMapOf<String, Any>("edgeId" to edge.id, "mode" to edge.mode.name,
                     "approach" to approach, "province" to province, "sourceCells" to geometry.cells.size)
-                when (val result = HwihaBattlefieldLayout.prepare(index, province, approach)) {
-                    is HwihaBattlefieldLayout.Result.Unavailable -> row["status"] = result.reason.name
-                    is HwihaBattlefieldLayout.Result.Ready -> {
+                when (val result = BattlefieldLayout.prepare(index, province, approach)) {
+                    is BattlefieldLayout.Result.Unavailable -> row["status"] = result.reason.name
+                    is BattlefieldLayout.Result.Ready -> {
                         val layout = result.layout
                         assertEquals(geometry.cells, layout.geometry.cells)
                         val selected = layout.distancesFromEntry.keys
                         assertTrue(layout.attackerZone.isNotEmpty() && layout.defenderZone.isNotEmpty())
                         assertTrue(layout.attackerZone.toSet().intersect(layout.defenderZone.toSet()).isEmpty())
                         assertTrue(selected.containsAll(layout.attackerZone + layout.defenderZone))
-                        selected.forEach { assertTrue(HwihaBattlefieldLayout.isLandPassable(geometry.cellAt(it)!!.terrain)) }
+                        selected.forEach { assertTrue(BattlefieldLayout.isLandPassable(geometry.cellAt(it)!!.terrain)) }
                         val reached = hashSetOf<Position>()
                         val queue = ArrayDeque<Position>()
-                        val approachCells = index.cellsOf(approach).filter { HwihaBattlefieldLayout.isLandPassable(index.terrainLegend.getValue(it.terrainCode)) }
+                        val approachCells = index.cellsOf(approach).filter { BattlefieldLayout.isLandPassable(index.terrainLegend.getValue(it.terrainCode)) }
                             .mapTo(hashSetOf()) { Position(it.col, it.row) }
                         // Independent physical entry calculation and BFS, not the returned distances as authority.
                         for (position in selected) {
@@ -60,7 +60,7 @@ class HwihaBattlefieldLayoutArtifactTest {
                         assertEquals(selected, reached)
                         assertEquals(layout.distancesFromEntry, distances)
                         // No passable neighboring cell may have been dropped from the selected component.
-                        selected.forEach { position -> geometry.neighbors(position).filter { HwihaBattlefieldLayout.isLandPassable(it.terrain) }
+                        selected.forEach { position -> geometry.neighbors(position).filter { BattlefieldLayout.isLandPassable(it.terrain) }
                             .forEach { assertTrue(it.position in selected) } }
                         row["status"] = "READY"
                         row["connectedCells"] = selected.size
@@ -73,7 +73,7 @@ class HwihaBattlefieldLayoutArtifactTest {
             }
         }
         assertEquals(edges.size*2, rows.size)
-        val evidence = linkedMapOf<String, Any>("ruleVersion" to HwihaBattlefieldLayout.RULE_VERSION,
+        val evidence = linkedMapOf<String, Any>("ruleVersion" to BattlefieldLayout.RULE_VERSION,
             "scope" to "Selected V3_1133 LAND/FORD/BRIDGE edges, both geometric directions; not combat readiness or route permission",
             "topologyRevision" to topology.topologyRevision, "topologyHash" to topology.contentHash,
             "tilesHash" to index.tilesContentHash, "provinceCount" to index.provinceIds.size,

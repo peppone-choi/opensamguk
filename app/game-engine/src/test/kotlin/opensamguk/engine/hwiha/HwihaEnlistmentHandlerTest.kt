@@ -17,8 +17,8 @@ class HwihaEnlistmentHandlerTest {
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
         experience = 0, dedication = 0, officerLevel = if (nation > 0) 12 else 0,
         npcState = 2, userId = null, gold = 100, rice = 200, crew = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to (nation > 0), HwihaPersonPolicyState.META_KEY to
-            HwihaPersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()),
+        meta = mapOf("hwihaLord" to (nation > 0), PersonPolicyState.META_KEY to
+            PersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()),
     )
     private fun world(profile: String = "HWIHA", reverse: Boolean = false): InMemoryTurnWorld {
         val people = listOf(person(1), person(10, 1), person(20, 2))
@@ -84,8 +84,8 @@ class HwihaEnlistmentHandlerTest {
             val world = world()
             for (id in if (candidateCount == 0) listOf(10, 20) else listOf(20)) {
                 val lord = world.getGeneralById(id)!!
-                world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (HwihaPersonPolicyState.META_KEY to
-                    HwihaPersonPolicyState(0, true, "synthetic-test", "v1", id).toMetaValue())))
+                world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (PersonPolicyState.META_KEY to
+                    PersonPolicyState(0, true, "synthetic-test", "v1", id).toMetaValue())))
             }
             val result = HwihaEnlistmentHandler(world, ChangeRecorder(), "fixture") { error("unexpected RNG") }
                 .handle(1, """{"mode":"RANDOM"}""", 200, 1)
@@ -101,8 +101,8 @@ class HwihaEnlistmentHandlerTest {
         val recorder = ChangeRecorder()
         val handler = HwihaEnlistmentHandler(world, recorder, "fixture") { error("unexpected RNG") }
         val lord = world.getGeneralById(10)!!
-        world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (HwihaPersonPolicyState.META_KEY to
-            HwihaPersonPolicyState(6, true, "synthetic-test", "v1", 10).toMetaValue())))
+        world.applyGeneralDirtyFree(lord.copy(meta = lord.meta + (PersonPolicyState.META_KEY to
+            PersonPolicyState(6, true, "synthetic-test", "v1", 10).toMetaValue())))
         val result = handler.handle(1, """{"mode":"NATION","targetId":1}""", 200, 1)
         assertEquals(EnlistmentFailure.INSUFFICIENT_RENOWN.name, assertIs<HwihaTurnOutcome.Rejected>(result).code)
         assertEquals(0, world.getGeneralById(1)!!.nationId)

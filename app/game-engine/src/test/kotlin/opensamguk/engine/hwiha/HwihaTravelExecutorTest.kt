@@ -4,15 +4,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.logic.input.HwihaTravelInput
-import opensamguk.logic.input.HwihaTravelRequest
-import opensamguk.logic.input.HwihaTravelState
-import opensamguk.logic.input.HwihaPersonalTravelCondition
-import opensamguk.logic.input.HwihaCountyAssignment
-import opensamguk.logic.input.HwihaMarchState
+import opensamguk.logic.input.TravelInput
+import opensamguk.logic.input.TravelRequest
+import opensamguk.logic.input.TravelState
+import opensamguk.logic.input.PersonalTravelCondition
+import opensamguk.logic.input.CountyAssignment
+import opensamguk.logic.input.MarchState
 import opensamguk.logic.world.LandMarchEntry
 import opensamguk.logic.world.LandMarchStop
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.Phase
 import kotlin.test.assertNull
 import kotlin.test.assertNotNull
 import opensamguk.engine.turn.PerTurnOverlay
@@ -26,7 +26,7 @@ class HwihaTravelExecutorTest {
         val world = fixture.world(listOf(actor to route.start))
         val recorder = ChangeRecorder()
         val executor = HwihaTravelExecutor(world, recorder, fixture.topology, fixture.metrics)
-        val request = HwihaTravelRequest(actor.id, HwihaTravelInput.MOVE, route.destination)
+        val request = TravelRequest(actor.id, TravelInput.MOVE, route.destination)
         val partial = assertIs<HwihaTravelExecution.Applied>(
             executor.start("travel-101", request, route.destination, 1) { LandMarchEntry.CLEAR })
         val firstCost = fixture.metrics.edgesById.getValue(partial.state.checkpoint.path.edgeIds.first()).costMm
@@ -45,7 +45,7 @@ class HwihaTravelExecutorTest {
         assertEquals(listOf(route.first), reached.movement.reachedNodes)
         assertIs<HwihaTravelExecution.AlreadyProcessed>(
             executor.resume(actor.id, firstCost) { LandMarchEntry.CLEAR })
-        assertEquals("travel-101", HwihaTravelState.read(world.getGeneralById(actor.id)!!.meta,
+        assertEquals("travel-101", TravelState.read(world.getGeneralById(actor.id)!!.meta,
             fixture.topology, fixture.metrics)?.orderId)
     }
 
@@ -56,14 +56,14 @@ class HwihaTravelExecutorTest {
         val actor = fixture.person(102, 1, route.startCity)
         val world = fixture.world(listOf(actor to route.start))
         val executor = HwihaTravelExecutor(world, ChangeRecorder(), fixture.topology, fixture.metrics)
-        val request = HwihaTravelRequest(actor.id, HwihaTravelInput.FORCED_MARCH, route.destination)
+        val request = TravelRequest(actor.id, TravelInput.FORCED_MARCH, route.destination)
         val first = assertIs<HwihaTravelExecution.Applied>(
             executor.start("forced-102", request, route.destination, 45_000_000) { LandMarchEntry.CLEAR })
-        val condition = HwihaPersonalTravelCondition.read(world.getGeneralById(actor.id)!!.meta)
+        val condition = PersonalTravelCondition.read(world.getGeneralById(actor.id)!!.meta)
         assertEquals(first.condition, condition)
         assertIs<HwihaTravelExecution.AlreadyProcessed>(
             executor.start("forced-102", request, route.destination, 45_000_000) { LandMarchEntry.CLEAR })
-        assertEquals(condition, HwihaPersonalTravelCondition.read(world.getGeneralById(actor.id)!!.meta))
+        assertEquals(condition, PersonalTravelCondition.read(world.getGeneralById(actor.id)!!.meta))
     }
 
     @Test
@@ -74,21 +74,21 @@ class HwihaTravelExecutorTest {
         val world = fixture.world(listOf(actor to route.start))
         val recorder = ChangeRecorder()
         val executor = HwihaTravelExecutor(world, recorder, fixture.topology, fixture.metrics)
-        val request = HwihaTravelRequest(actor.id, HwihaTravelInput.MOVE, route.destination)
+        val request = TravelRequest(actor.id, TravelInput.MOVE, route.destination)
         val initial = assertIs<HwihaTravelExecution.Applied>(
             executor.start("travel-103", request, route.destination, 1) { LandMarchEntry.CLEAR })
         val before = world.getGeneralById(actor.id)!!
-        val march = HwihaMarchState(HwihaCountyAssignment("dispatch-103", route.destinationCounty, 1, 1),
-            initial.state.checkpoint.path, initial.state.checkpoint.cursor, HwihaPhase(200, 1, 1),
+        val march = MarchState(CountyAssignment("dispatch-103", route.destinationCounty, 1, 1),
+            initial.state.checkpoint.path, initial.state.checkpoint.cursor, Phase(200, 1, 1),
             LandMarchStop.BUDGET_EXHAUSTED)
-        val withMarch = before.copy(meta = before.meta + (HwihaMarchState.META_KEY to march.toMetaValue()))
+        val withMarch = before.copy(meta = before.meta + (MarchState.META_KEY to march.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(withMarch))
         world.applyGeneralDirtyFree(withMarch)
         fixture.nextPhase(world)
 
         assertIs<HwihaTravelExecution.Applied>(executor.resume(actor.id,
             fixture.metrics.edgesById.getValue(initial.state.checkpoint.path.edgeIds.first()).costMm) { LandMarchEntry.CLEAR })
-        assertNull(HwihaMarchState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
+        assertNull(MarchState.read(world.getGeneralById(actor.id)!!.meta, fixture.topology, fixture.metrics))
         assertNotNull(HwihaDeploymentExecutor(world, recorder, fixture.topology, fixture.metrics).projection())
     }
 }

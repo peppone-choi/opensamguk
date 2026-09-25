@@ -2,8 +2,8 @@ package opensamguk.infra.seed
 
 import java.util.concurrent.ConcurrentHashMap
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.logic.input.HwihaCountyGeography
-import opensamguk.logic.input.HwihaCountyPlace
+import opensamguk.logic.input.CountyGeography
+import opensamguk.logic.input.CountyPlace
 import opensamguk.logic.world.HanWorldVariant
 
 /**
@@ -13,13 +13,13 @@ import opensamguk.logic.world.HanWorldVariant
 object HwihaCountyGeographyJson {
     const val RUNTIME_MAP = "infra/src/main/resources/map/han-world-v3.json"
     const val TILES = "data/map/han-tiles.json"
-    private val cache = ConcurrentHashMap<HanWorldVariant, HwihaCountyGeography>()
+    private val cache = ConcurrentHashMap<HanWorldVariant, CountyGeography>()
 
-    fun load(artifacts: ResolvedHanWorldArtifacts): HwihaCountyGeography = cache.computeIfAbsent(artifacts.variant) {
+    fun load(artifacts: ResolvedHanWorldArtifacts): CountyGeography = cache.computeIfAbsent(artifacts.variant) {
         parse(artifacts.artifactBytes(RUNTIME_MAP), artifacts.artifactBytes(TILES), artifacts.projection.administrativeCountyIds)
     }
 
-    fun parse(runtimeMap: ByteArray, tiles: ByteArray, administrativeCountyIds: Set<Int>): HwihaCountyGeography {
+    fun parse(runtimeMap: ByteArray, tiles: ByteArray, administrativeCountyIds: Set<Int>): CountyGeography {
         val cities = MetaJson.decode(runtimeMap.toString(Charsets.UTF_8))["cities"] as? List<*>
             ?: error("runtime map cities missing")
         val provinces = MetaJson.decode(tiles.toString(Charsets.UTF_8))["provinceRecords"] as? List<*>
@@ -33,8 +33,8 @@ object HwihaCountyGeographyJson {
             val provinceIndex = (city["provinceId"] as? Number)?.toInt()
             val jurisdiction = provinceIndex?.takeIf { it in provinces.indices }
                 ?.let { (provinces[it] as? Map<*, *>)?.get("jurisdictionId") as? String }?.takeIf { it.isNotBlank() }
-            HwihaCountyPlace(id, commandery, (meta["jun"] as? String)?.takeIf { it.isNotBlank() }, jurisdiction)
+            CountyPlace(id, commandery, (meta["jun"] as? String)?.takeIf { it.isNotBlank() }, jurisdiction)
         }
-        return HwihaCountyGeography(places)
+        return CountyGeography(places)
     }
 }

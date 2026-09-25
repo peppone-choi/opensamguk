@@ -9,7 +9,7 @@ import opensamguk.logic.input.*
 
 class HwihaPeopleHandlerTest {
     private val fixture = HwihaCampaignWorldFixture()
-    private val ready = HwihaPeopleDesign.CANON.copy(status = HwihaPeopleDesign.CONFIRMED)
+    private val ready = PeopleDesign.CANON.copy(status = PeopleDesign.CONFIRMED)
 
     @Test fun `search discovers an existing free person once and replays the same result`() {
         val route = fixture.route()
@@ -19,11 +19,11 @@ class HwihaPeopleHandlerTest {
         val handler = HwihaPeopleHandler(world, ChangeRecorder(), HwihaDomesticContext(), "test", ready) {
             error("one search candidate must not consume RNG")
         }
-        val result = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPeopleInput.SEARCH, actor.id,
+        val result = assertIs<HwihaTurnOutcome.Applied>(handler.handle(PeopleInput.SEARCH, actor.id,
             "{}", "search-801", 42))
         assertTrue(result.effects.contains("discoveredGeneralId:802"))
-        assertEquals(setOf(free.id), HwihaTalentDiscovery.read(world.getGeneralById(actor.id)!!.meta))
-        assertEquals(result, handler.handle(HwihaPeopleInput.SEARCH, actor.id, "{}", "search-801", 42))
+        assertEquals(setOf(free.id), TalentDiscovery.read(world.getGeneralById(actor.id)!!.meta))
+        assertEquals(result, handler.handle(PeopleInput.SEARCH, actor.id, "{}", "search-801", 42))
         assertTrue(world.listRetainers().isEmpty())
         assertEquals(ready.experience, world.getGeneralById(actor.id)!!.experience)
     }
@@ -39,23 +39,23 @@ class HwihaPeopleHandlerTest {
             }
         }
         val args = """{"targetGeneralId":812}"""
-        assertEquals(HwihaPeopleFailure.TARGET_NOT_DISCOVERED.name,
-            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPeopleInput.EMPLOY, actor.id,
+        assertEquals(PeopleFailure.TARGET_NOT_DISCOVERED.name,
+            assertIs<HwihaTurnOutcome.Rejected>(handler.handle(PeopleInput.EMPLOY, actor.id,
                 args, "employ-811", 42)).code)
-        world.applyGeneralDirtyFree(actor.copy(meta = HwihaTalentDiscovery.add(actor.meta, free.id)))
-        val result = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPeopleInput.EMPLOY,
+        world.applyGeneralDirtyFree(actor.copy(meta = TalentDiscovery.add(actor.meta, free.id)))
+        val result = assertIs<HwihaTurnOutcome.Applied>(handler.handle(PeopleInput.EMPLOY,
             actor.id, args, "employ-811", 42))
         assertTrue(result.effects.contains("joinedGeneralId:812"))
         assertEquals(actor.nationId, world.getGeneralById(free.id)!!.nationId)
         assertEquals(actor.id, world.listRetainers().single().masterGeneralId)
-        assertEquals(result, handler.handle(HwihaPeopleInput.EMPLOY, actor.id, args, "employ-811", 42))
+        assertEquals(result, handler.handle(PeopleInput.EMPLOY, actor.id, args, "employ-811", 42))
         assertEquals(1, world.listRetainers().size)
     }
 
     @Test fun `employ transfers the candidate and their direct retinue together`() {
         val route = fixture.route()
         val actor = fixture.person(841, 1, route.startCity, userId = "42")
-            .let { it.copy(meta = HwihaTalentDiscovery.add(it.meta, 842)) }
+            .let { it.copy(meta = TalentDiscovery.add(it.meta, 842)) }
         val target = fixture.person(842, 0, route.startCity, lord = false)
         val child = fixture.person(843, 0, route.startCity, lord = false)
         val card = Retainer(844, target.id, "EXISTING", child.id, child.name, "guest")
@@ -66,7 +66,7 @@ class HwihaPeopleHandlerTest {
                 override fun nextInt(minInclusive: Int, maxExclusive: Int) = minInclusive
             }
         }
-        assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaPeopleInput.EMPLOY, actor.id,
+        assertIs<HwihaTurnOutcome.Applied>(handler.handle(PeopleInput.EMPLOY, actor.id,
             """{"targetGeneralId":842}""", "employ-841", 42))
         assertEquals(1, world.getGeneralById(target.id)!!.nationId)
         assertEquals(1, world.getGeneralById(child.id)!!.nationId)
@@ -87,7 +87,7 @@ class HwihaPeopleHandlerTest {
             }
         }
         val args = """{"targetGeneralId":822}"""
-        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPeopleInput.PERSUADE_CAPTIVE,
+        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(PeopleInput.PERSUADE_CAPTIVE,
             actor.id, args, "persuade-821", 42))
         assertEquals("NOT_DELIVERED", result.code)
         assertEquals(2, world.getGeneralById(captive.id)!!.nationId)
@@ -105,7 +105,7 @@ class HwihaPeopleHandlerTest {
         val handler = HwihaPeopleHandler(world, ChangeRecorder(), HwihaDomesticContext(), "test", ready) {
             error("foreign lord gate must run before RNG")
         }
-        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(HwihaPeopleInput.PERSUADE_CAPTIVE,
+        val result = assertIs<HwihaTurnOutcome.Rejected>(handler.handle(PeopleInput.PERSUADE_CAPTIVE,
             actor.id, """{"targetGeneralId":832}""", "persuade-831", 42))
         assertEquals("NOT_DELIVERED", result.code)
         assertEquals(lord, world.getGeneralById(lord.id))

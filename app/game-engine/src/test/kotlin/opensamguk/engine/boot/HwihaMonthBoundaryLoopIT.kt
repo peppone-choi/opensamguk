@@ -18,7 +18,7 @@ import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.world.HanWorldVariant
@@ -107,7 +107,7 @@ class HwihaMonthBoundaryLoopIT {
         val lord = assertNotNull(world.getGeneralById(1))
         assertEquals(
             RenownRules.INITIAL_CAPACITY + 2 * RenownAssessment.CANON.warMerit,
-            assertNotNull(HwihaPersonPolicyState.read(lord.meta)).renownCapacity,
+            assertNotNull(PersonPolicyState.read(lord.meta)).renownCapacity,
             "전공 2건이 명망을 올렸다",
         )
         assertNull(
@@ -117,7 +117,7 @@ class HwihaMonthBoundaryLoopIT {
         val peer = assertNotNull(world.getGeneralById(2))
         assertEquals(
             RenownRules.INITIAL_CAPACITY,
-            assertNotNull(HwihaPersonPolicyState.read(peer.meta)).renownCapacity,
+            assertNotNull(PersonPolicyState.read(peer.meta)).renownCapacity,
             "사건이 없는 장수는 명망을 보존한다 — 월단평은 초기화하지 않는다",
         )
         @Suppress("UNCHECKED_CAST")
@@ -136,7 +136,7 @@ class HwihaMonthBoundaryLoopIT {
         )
         assertEquals(
             RenownRules.INITIAL_CAPACITY + 2 * RenownAssessment.CANON.warMerit,
-            assertNotNull(HwihaPersonPolicyState.read(assertNotNull(world.getGeneralById(1)).meta)).renownCapacity,
+            assertNotNull(PersonPolicyState.read(assertNotNull(world.getGeneralById(1)).meta)).renownCapacity,
             "월단평도 같은 달을 두 번 적용하지 않는다",
         )
     }

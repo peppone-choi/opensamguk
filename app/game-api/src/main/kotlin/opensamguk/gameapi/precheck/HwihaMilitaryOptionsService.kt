@@ -22,34 +22,34 @@ data class HwihaMilitaryOptions(val inputId: String, val available: Boolean,
 @Service
 class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
     private val deploy: HwihaDeployPrecheckService,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load(),
-    private val design: HwihaMilitaryDesign = HwihaMilitaryDesign.CANON) {
+    private val catalog: InputCatalog = InputCatalog.load(),
+    private val design: MilitaryDesign = MilitaryDesign.CANON) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(inputId: String, actorId: Int, userId: Long): HwihaMilitaryOptions {
         reader.requireOwner(actorId, userId)
-        if (inputId !in HwihaMilitaryInput.INPUT_IDS) return blocked(inputId, HwihaMilitaryFailure.INVALID_INPUT)
-        if (inputId == HwihaMilitaryInput.MUSTER) {
+        if (inputId !in MilitaryInput.INPUT_IDS) return blocked(inputId, MilitaryFailure.INVALID_INPUT)
+        if (inputId == MilitaryInput.MUSTER) {
             val check = deploy.assessMuster(actorId, userId)
-            if (check is HwihaMusterAssessment.Rejected) return blocked(inputId, check.reason)
-            val ready = check as HwihaMusterAssessment.Eligible
-            return if (design.status == HwihaMilitaryDesign.CONFIRMED && catalog[inputId]?.deliveryState?.hasHandler == true)
+            if (check is MusterAssessment.Rejected) return blocked(inputId, check.reason)
+            val ready = check as MusterAssessment.Eligible
+            return if (design.status == MilitaryDesign.CONFIRMED && catalog[inputId]?.deliveryState?.hasHandler == true)
                 HwihaMilitaryOptions(inputId, true, gatheringCorps = ready.corps.size)
             else HwihaMilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         }
         val snapshot = reader.snapshot()
         val state = snapshot.state ?: return blocked(inputId, if (snapshot.failure == "WRONG_RULE_PROFILE")
-            HwihaMilitaryFailure.WRONG_RULE_PROFILE else HwihaMilitaryFailure.STATE_UNAVAILABLE)
+            MilitaryFailure.WRONG_RULE_PROFILE else MilitaryFailure.STATE_UNAVAILABLE)
         val geography = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
         if (geography is FieldAssessment.Rejected)
-            return blocked(inputId, HwihaMilitaryFailure.valueOf(geography.reason.name))
+            return blocked(inputId, MilitaryFailure.valueOf(geography.reason.name))
         val county = (geography as FieldAssessment.Eligible).county
         val levels = snapshot.countyLevels[county.id]
-        val check = HwihaMilitaryRules.assessCity(HwihaMilitaryRequest(actorId, inputId), state,
+        val check = MilitaryRules.assessCity(MilitaryRequest(actorId, inputId), state,
             levels?.population, levels?.populationMax, snapshot.cityMilitaryTroops[county.id],
             snapshot.cityMilitaryStates[county.id], snapshot.warehouseStocks[county.id], design)
-        if (check is HwihaCityMilitaryAssessment.Rejected) return blocked(inputId, check.reason)
-        val plan = (check as HwihaCityMilitaryAssessment.Eligible).plan
-        if (design.status != HwihaMilitaryDesign.CONFIRMED || catalog[inputId]?.deliveryState?.hasHandler != true)
+        if (check is CityMilitaryAssessment.Rejected) return blocked(inputId, check.reason)
+        val plan = (check as CityMilitaryAssessment.Eligible).plan
+        if (design.status != MilitaryDesign.CONFIRMED || catalog[inputId]?.deliveryState?.hasHandler != true)
             return HwihaMilitaryOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         return HwihaMilitaryOptions(inputId, true, countyId = county.id,
             countyName = snapshot.countyNames[county.id] ?: county.name, troops = snapshot.cityMilitaryTroops[county.id],
@@ -60,6 +60,6 @@ class HwihaMilitaryOptionsService(private val reader: HwihaDomesticReader,
             grainCost = plan.debit.grain, moneyCost = plan.debit.money)
     }
 
-    private fun blocked(inputId: String, reason: HwihaMilitaryFailure) =
+    private fun blocked(inputId: String, reason: MilitaryFailure) =
         HwihaMilitaryOptions(inputId, false, reason.name, reason.message)
 }

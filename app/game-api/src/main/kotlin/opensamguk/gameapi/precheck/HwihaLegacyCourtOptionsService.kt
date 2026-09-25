@@ -19,48 +19,48 @@ data class HwihaLegacyCourtOptions(val inputId: String, val available: Boolean,
 
 @Service
 class HwihaLegacyCourtOptionsService(private val reader: HwihaDomesticReader,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
     fun options(actorId: Int, userId: Long, inputId: String): HwihaLegacyCourtOptions {
         reader.requireOwner(actorId, userId)
-        if (inputId !in HwihaLegacyCourtInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
+        if (inputId !in CourtInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
             return HwihaLegacyCourtOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = reader.snapshot().state ?: return HwihaLegacyCourtOptions(inputId, false,
-            HwihaLegacyCourtFailure.STATE_UNAVAILABLE.name, HwihaLegacyCourtFailure.STATE_UNAVAILABLE.message)
+            CourtFailure.STATE_UNAVAILABLE.name, CourtFailure.STATE_UNAVAILABLE.message)
         val actor = state.person(actorId) ?: return HwihaLegacyCourtOptions(inputId, false,
-            HwihaLegacyCourtFailure.ACTOR_NOT_FOUND.name, HwihaLegacyCourtFailure.ACTOR_NOT_FOUND.message)
+            CourtFailure.ACTOR_NOT_FOUND.name, CourtFailure.ACTOR_NOT_FOUND.message)
         val ownedCounties = state.counties.filter { it.nationId == actor.nationId }.sortedBy { it.id }
         val others = state.nations.filter { it.id != actor.nationId }.sortedBy { it.id }
         val requests: List<Pair<String, Map<String, Any>>> = when (inputId) {
-            HwihaCourtExpansionInput.RELEASE_CORPS -> DomesticRules.deployedCorps(state)
+            CourtExpansionInput.RELEASE_CORPS -> DomesticRules.deployedCorps(state)
                 .filter { it.ownerGeneralId == actorId }.map { corps ->
                     "${state.person(corps.commanderGeneralId)?.name ?: corps.commanderGeneralId}의 군단" to
                         mapOf("targetGeneralId" to corps.commanderGeneralId)
                 }
-            HwihaCourtExpansionInput.ABANDON_COUNTY, HwihaCourtExpansionInput.MOVE_CAPITAL ->
+            CourtExpansionInput.ABANDON_COUNTY, CourtExpansionInput.MOVE_CAPITAL ->
                 ownedCounties.map { "${it.name} (${it.id})" to mapOf("countyId" to it.id) }
-            HwihaLegacyCourtInput.INSTITUTION -> listOf("기술 연구 · 전 100" to emptyMap())
-            HwihaCourtResourceInput.CONFISCATE -> state.cards.filter { it.masterId == actorId }
+            CourtInput.INSTITUTION -> listOf("기술 연구 · 전 100" to emptyMap())
+            CourtResourceInput.CONFISCATE -> state.cards.filter { it.masterId == actorId }
                 .mapNotNull { it.generalId?.let(state::person) }.distinctBy { it.id }.sortedBy { it.id }.flatMap { person ->
-                    HwihaTransferResource.entries.map { resource ->
+                    TransferResource.entries.map { resource ->
                         "${person.name} · ${resource.name}" to mapOf("targetGeneralId" to person.id,
                             "resource" to resource.name, "amount" to 1)
                     }
                 }
-            HwihaCourtResourceInput.AID -> others.flatMap { nation -> HwihaTransferResource.entries.map { resource ->
+            CourtResourceInput.AID -> others.flatMap { nation -> TransferResource.entries.map { resource ->
                 "${nation.name} · ${resource.name}" to mapOf("targetNationId" to nation.id,
                     "resource" to resource.name, "amount" to 1)
             } }
-            in HwihaDiplomacyInput.INPUT_IDS -> others.map { "${it.name} (${it.id})" to mapOf("targetNationId" to it.id) }
+            in DiplomacyInput.INPUT_IDS -> others.map { "${it.name} (${it.id})" to mapOf("targetNationId" to it.id) }
             else -> emptyList()
         }
         val choices = requests.map { (label, args) ->
             val json = buildJsonObject { args.forEach { (key, value) ->
                 when (value) { is Int -> put(key, value); is String -> put(key, value); else -> error("unsupported argument") }
             } }.toString()
-            val result = HwihaLegacyCourtRules.assess(actorId, inputId, json, state)
-            val failure = (result as? HwihaLegacyCourtAssessment.Rejected)?.reason
-            val maxAmount = (result as? HwihaLegacyCourtAssessment.Eligible)?.ready?.sourceStock?.let { stock ->
+            val result = CourtRules.assess(actorId, inputId, json, state)
+            val failure = (result as? CourtAssessment.Rejected)?.reason
+            val maxAmount = (result as? CourtAssessment.Eligible)?.ready?.sourceStock?.let { stock ->
                 when (args["resource"]) {
                     "MONEY" -> stock.money; "GRAIN" -> stock.grain; "IRON" -> stock.iron
                     "TIMBER" -> stock.timber; "HORSES" -> stock.horses; else -> null
@@ -70,7 +70,7 @@ class HwihaLegacyCourtOptionsService(private val reader: HwihaDomesticReader,
         }
         val available = choices.any { it.available }
         val reason = if (available) null else choices.firstOrNull()?.let { it.code to it.reason }
-            ?: (HwihaLegacyCourtFailure.TARGET_UNAVAILABLE.name to HwihaLegacyCourtFailure.TARGET_UNAVAILABLE.message)
+            ?: (CourtFailure.TARGET_UNAVAILABLE.name to CourtFailure.TARGET_UNAVAILABLE.message)
         return HwihaLegacyCourtOptions(inputId, available, reason?.first, reason?.second, choices)
     }
 }

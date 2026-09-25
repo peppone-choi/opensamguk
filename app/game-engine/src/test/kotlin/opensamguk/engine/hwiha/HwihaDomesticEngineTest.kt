@@ -46,9 +46,9 @@ class HwihaDomesticEngineTest {
             sourceRefs = listOf("qa:ab"), confidence = EvidenceConfidence.REVIEWED)), emptyList(),
         mapOf(LandMarchMetricSnapshot.TILES_PATH to pin))
     private val metrics = LandMarchMetricSnapshot(topology, pin, listOf(LandMarchEdgeMetric("ab", 40, 40)))
-    private val events = mutableListOf<HwihaGovernanceMeritEvent>()
+    private val events = mutableListOf<GovernanceMeritEvent>()
     private val context = HwihaDomesticContext(
-        geography = HwihaCountyGeography(listOf(HwihaCountyPlace(10, "甲郡", "갑군", "j10"), HwihaCountyPlace(11, "甲郡", "갑군", "j11"))),
+        geography = CountyGeography(listOf(CountyPlace(10, "甲郡", "갑군", "j10"), CountyPlace(11, "甲郡", "갑군", "j11"))),
         topology = topology, metrics = metrics, merit = { events += it })
 
     private fun general(id: Int, node: String, human: Boolean = false, lord: Boolean = false, level: Int = 0,
@@ -68,8 +68,8 @@ class HwihaDomesticEngineTest {
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
             state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH, currentPhase = 1,
                 config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"),
-                meta = mapOf(HwihaLandPassageState.META_KEY to HwihaLandPassageState.initialMetaValue(topology),
-                    HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())),
+                meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
+                    MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())),
             generals = listOf(general(1, "A", human = true, lord = true, level = 12), general(2, "A"), general(3, "B")),
             nations = listOf(Nation(1, "N1", "#000", capitalCityId = 10), Nation(2, "N2", "#fff", capitalCityId = 11)),
             cities = listOf(county(10, stock), county(11, stock)),
@@ -115,8 +115,8 @@ class HwihaDomesticEngineTest {
 
     @Test fun `a placed card still marches while corps reaction orders are pending`() {
         val world = world(); val recorder = ChangeRecorder()
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY, HwihaMarchReactions.of(
-            listOf(HwihaReactionOrder("o-intercept", 1, 2, 1, HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
+        world.setGameEnvValue(MarchReactions.META_KEY, MarchReactions.of(
+            listOf(ReactionOrder("o-intercept", 1, 2, 1, Phase(200, 1, 1))), emptyList()).toMetaValue())
         submit(world, recorder, "placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":10}""")
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
         // The fail-closed overload still refuses to judge entry; the production march uses the non-blocking policy.
@@ -133,7 +133,7 @@ class HwihaDomesticEngineTest {
         assertNull(active.arrivedAt)
         assertTrue(HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3))
         assertEquals(a, world.positionOf(3))
-        assertEquals(HwihaPhase(200, 1, 1), PlacementState.read(world.getGeneralById(3)!!.meta)!!.active!!.arrivedAt)
+        assertEquals(Phase(200, 1, 1), PlacementState.read(world.getGeneralById(3)!!.meta)!!.active!!.arrivedAt)
         assertFalse(PlacementMarch.META_KEY in world.getGeneralById(3)!!.meta)
         val state = context.projection(world)
         assertEquals(SeatedMagistrate(3, 1, true, 5), DomesticRules.seatedMagistrate(state.county(10)!!, state))
@@ -184,7 +184,7 @@ class HwihaDomesticEngineTest {
         val again = boundary(world, recorder, 200, 1, 2)
         assertTrue(again.alreadyStamped)
         assertEquals(1000 + (20 * seated / 1000).toInt(), world.getCityById(10)!!.commerce)
-        assertEquals(PolicyApplication(HwihaPhase(200, 1, 2), "COMMERCE", "SEATED", "APPLIED"),
+        assertEquals(PolicyApplication(Phase(200, 1, 2), "COMMERCE", "SEATED", "APPLIED"),
             CountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied)
         // The untouched county records no policy key: only its indicators moved.
         assertFalse(CountyPolicyState.META_KEY in world.getCityById(11)!!.meta)
@@ -240,7 +240,7 @@ class HwihaDomesticEngineTest {
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder).settle(10, 1, warehouse.revision,
             Resources(), Resources(timber = 100_000)))
         val spec = context.design.works.getValue(DomesticWork.FORTIFICATION)
-        var phase = HwihaPhase(200, 1, 2)
+        var phase = Phase(200, 1, 2)
         var boundaries = 0
         while (CountyWorks.read(world.getCityById(10)!!.meta)!!.active != null) {
             phase = phase.plus(1); boundaries++
@@ -265,7 +265,7 @@ class HwihaDomesticEngineTest {
     @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
         val world = world(Resources(money = 1000)); val recorder = ChangeRecorder()
         val city = world.getCityById(10)!!
-        val completed = CountyWorks(null, listOf(CompletedWork(DomesticWork.FORTIFICATION, HwihaPhase(200, 1, 1))))
+        val completed = CountyWorks(null, listOf(CompletedWork(DomesticWork.FORTIFICATION, Phase(200, 1, 1))))
         world.applyCityDirtyFree(city.copy(meta = city.meta + (CountyWorks.META_KEY to completed.toMetaValue())))
         val before = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         val reduced = submit(world, recorder, "work.reduce", """{"countyId":10,"work":"FORTIFICATION"}""")
@@ -277,14 +277,14 @@ class HwihaDomesticEngineTest {
     @Test fun `corps reaction policies populate the march reaction inventory on the commander's turn`() {
         val world = world(); val recorder = ChangeRecorder()
         val owner = world.getGeneralById(1)!!
-        val corps = HwihaDeploymentState(listOf(HwihaDeployedCorps("o1", 1, 2, 4, 1, listOf(7), HwihaPhase(200, 1, 1))))
-        world.applyGeneralDirtyFree(owner.copy(meta = owner.meta + (HwihaDeploymentState.META_KEY to corps.toMetaValue())))
+        val corps = DeploymentState(listOf(DeployedCorps("o1", 1, 2, 4, 1, listOf(7), Phase(200, 1, 1))))
+        world.applyGeneralDirtyFree(owner.copy(meta = owner.meta + (DeploymentState.META_KEY to corps.toMetaValue())))
         assertTrue(submit(world, recorder, "policy.set", """{"scope":"CORPS","orderId":"o1","policy":"INTERCEPT"}""").ok)
-        assertEquals(HwihaMarchReactions.Empty, HwihaMarchReactions.read(world.getState().meta), "not before the commander's turn")
+        assertEquals(MarchReactions.Empty, MarchReactions.read(world.getState().meta), "not before the commander's turn")
         HwihaDomesticTurn(world, recorder, context).beforeMovement(2)
-        val reactions = assertIs<HwihaMarchReactions.Inventory>(HwihaMarchReactions.read(world.getState().meta))
-        assertEquals(listOf(HwihaReactionOrder("o1", 1, 2, 1, HwihaPhase(200, 1, 1))), reactions.interceptions)
-        assertTrue(recorder.kvDirty().keys.any { it.key == HwihaMarchReactions.META_KEY })
+        val reactions = assertIs<MarchReactions.Inventory>(MarchReactions.read(world.getState().meta))
+        assertEquals(listOf(ReactionOrder("o1", 1, 2, 1, Phase(200, 1, 1))), reactions.interceptions)
+        assertTrue(recorder.kvDirty().keys.any { it.key == MarchReactions.META_KEY })
         // Until an encounter consumer resolves reaction orders, march entry stays undecidable (fail closed).
         assertEquals(LandMarchEntry.UNAVAILABLE, HwihaMilitaryPresenceProvider(world, topology, metrics).entryAt(3, a))
         // The corps commander card cannot be re-placed while deployed.

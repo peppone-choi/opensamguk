@@ -125,8 +125,8 @@ class HwihaEnlistmentApiIT {
             .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
         val topology = bundle.projection.topology
         val authority = mapOf(
-            opensamguk.logic.input.HwihaLandPassageState.META_KEY to opensamguk.logic.input.HwihaLandPassageState.initialMetaValue(topology),
-            opensamguk.logic.input.HwihaMarchReactions.META_KEY to opensamguk.logic.input.HwihaMarchReactions.Empty.toMetaValue(),
+            opensamguk.logic.input.LandPassageState.META_KEY to opensamguk.logic.input.LandPassageState.initialMetaValue(topology),
+            opensamguk.logic.input.MarchReactions.META_KEY to opensamguk.logic.input.MarchReactions.Empty.toMetaValue(),
         )
         jdbc.update("UPDATE world_state SET current_phase=2, meta=meta || ?::jsonb WHERE id=1", json.writeValueAsString(authority))
         jdbc.update("UPDATE general_bugok SET commander_retainer_id=NULL WHERE world_id=1 AND id=7")
@@ -136,7 +136,7 @@ class HwihaEnlistmentApiIT {
             val node = departure.landNodeOfCity(city) as? opensamguk.logic.world.StrategicNodeRef.LandProvince ?: return@firstNotNullOf null
             val path = opensamguk.logic.world.StrategicPathResolver.resolveLandMarch(topology,
                 opensamguk.logic.world.StrategicPathRequest(sourceNode,node,1),
-                opensamguk.logic.input.HwihaLandPassageState.read(departure.getState().meta,topology)!!,
+                opensamguk.logic.input.LandPassageState.read(departure.getState().meta,topology)!!,
                 bundle.landMarchMetrics) as? opensamguk.logic.world.LandMarchPathResult.Resolved
             node.takeIf { path != null && path.path.totalCostMm in 30_000_001L..120_000_000L }
         }
@@ -154,9 +154,9 @@ class HwihaEnlistmentApiIT {
         val deployed = fixture.service(WorldId(1),deployWorld,deploymentPublished,movement=true).runDueGeneralTurns(deployDue)
         assertIs<HwihaTurnOutcome.Applied>(deployed.handled.single().hwihaOutcome)
         val deployedCold = InMemoryTurnWorld(fixture.load(1))
-        val order = opensamguk.logic.input.HwihaCorpsOrder.read(deployedCold.getGeneralById(1)!!.meta,topology)
+        val order = opensamguk.logic.input.CorpsOrder.read(deployedCold.getGeneralById(1)!!.meta,topology)
         assertEquals(deployId,order?.orderId); assertEquals(target,order?.destination)
-        val march = assertNotNull(opensamguk.logic.input.HwihaCorpsMarchState.read(deployedCold.getGeneralById(1)!!.meta,topology,bundle.landMarchMetrics))
+        val march = assertNotNull(opensamguk.logic.input.CorpsMarchState.read(deployedCold.getGeneralById(1)!!.meta,topology,bundle.landMarchMetrics))
         assertTrue(march.checkpoint.cursor.edgeIndex > 0 || march.checkpoint.cursor.paidMm > 0,
             "the admitted deployment must make actual march progress")
         assertEquals(listOf("reservationAccepted","executionApplied"),jdbc.queryForList(

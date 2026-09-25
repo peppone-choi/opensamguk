@@ -6,7 +6,7 @@ import opensamguk.gameapi.dto.HwihaLastTurnDto
 import opensamguk.gameapi.dto.HwihaLastTurnsResponse
 import opensamguk.gameapi.dto.HwihaNationSummaryEntryDto
 import opensamguk.gameapi.dto.HwihaRecordEntryDto
-import opensamguk.logic.input.HwihaRecordKind
+import opensamguk.logic.input.RecordKind
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -16,9 +16,9 @@ import org.springframework.transaction.annotation.Transactional
  *
  * - 창은 지금 세계 시각(연·월·순)을 끝으로 거꾸로 [limit]순이다. 기록이 없던 순도 빈 칸으로 싣는다.
  * - **개인 기록**은 본인 앞 줄만(`scope=GENERAL`, `general_id` = 본인) — 쓰는 쪽이 그 장수가 알아도 되는 것만
- *   그 장수 앞으로 쓴다(#343, `HwihaRecordKind`).
- * - **세력 요약**은 본인 세력의 공개 사건([HwihaRecordKind.NATION_SUMMARY_KINDS])과 세계 공개 사건
- *   ([HwihaRecordKind.WORLD_SUMMARY_KINDS])만. 세력 내부 기록(월세입)은 싣지 않는다.
+ *   그 장수 앞으로 쓴다(#343, `RecordKind`).
+ * - **세력 요약**은 본인 세력의 공개 사건([RecordKind.NATION_SUMMARY_KINDS])과 세계 공개 사건
+ *   ([RecordKind.WORLD_SUMMARY_KINDS])만. 세력 내부 기록(월세입)은 싣지 않는다.
  *
  * 인증은 다른 휘하 조회와 같다([ownedHwihaGeneral]·[hwihaGate]).
  */
@@ -42,15 +42,15 @@ class HwihaLastTurnsReader(
         val personal = records.personal(actor.id, from, now).groupBy { HwihaTurnStamp(it.year, it.month, it.phase) }
         val turns = (now.ordinal downTo from.ordinal).map { ordinal ->
             val turn = HwihaTurnStamp.ofOrdinal(ordinal)
-            HwihaLastTurnDto(turn.year, turn.month, turn.phase, HwihaRecordKind.phaseLabel(turn.phase),
+            HwihaLastTurnDto(turn.year, turn.month, turn.phase, RecordKind.phaseLabel(turn.phase),
                 personal[turn].orEmpty().map { HwihaRecordEntryDto(it.kind, it.text, refs(it.refsJson)) })
         }
-        val summary = records.summary(actor.nationId, HwihaRecordKind.NATION_SUMMARY_KINDS,
-            HwihaRecordKind.WORLD_SUMMARY_KINDS, from, now)
+        val summary = records.summary(actor.nationId, RecordKind.NATION_SUMMARY_KINDS,
+            RecordKind.WORLD_SUMMARY_KINDS, from, now)
             .sortedWith(compareByDescending<HwihaRecordRow> { HwihaTurnStamp(it.year, it.month, it.phase).ordinal }
                 .thenBy { it.id })
             .map {
-                HwihaNationSummaryEntryDto(it.year, it.month, it.phase, HwihaRecordKind.phaseLabel(it.phase),
+                HwihaNationSummaryEntryDto(it.year, it.month, it.phase, RecordKind.phaseLabel(it.phase),
                     it.kind, it.text, refs(it.refsJson))
             }
         return HwihaLastTurnsResponse("READY", turns, summary)

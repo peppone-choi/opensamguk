@@ -2,8 +2,8 @@ package opensamguk.gameapi.read
 
 import opensamguk.gameapi.dto.*
 import opensamguk.logic.economy.CountyWarehouse
-import opensamguk.logic.input.HwihaDeploymentState
-import opensamguk.logic.war.hwiha.HwihaSiegeRules
+import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.war.SiegeRules
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional
  * 공성 조회(읽기 전용). 인증은 휘하 화면 조회([HwihaCampReader])와 같다: `?generalId=` 장수의 `userId` 가
  * principal 과 같아야 하고 아니면 [HwihaCampForbidden](403). 보이는 포위는 **관여한 것**이다 — 조회 장수가
  * 포위 지휘관이거나, 그 장수의 세력이 포위·수비 세력인 행. 시야 규칙이 생기기 전에는 남의 포위를 보여 주지 않는다.
- * 판정 값(항복 권고 문턱·급식)은 엔진과 같은 [HwihaSiegeRules] 를 부른다.
+ * 판정 값(항복 권고 문턱·급식)은 엔진과 같은 [SiegeRules] 를 부른다.
  */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -46,7 +46,7 @@ class HwihaSiegeReader(
                 grain = grain, morale = row.morale, garrison = row.garrison, trust = trust,
                 countySupplied = (city?.supplyState ?: 0) != 0, besiegerTroops = troops, besiegerFed = fed,
                 canAct = active && row.besiegerGeneralId == actor.id,
-                surrenderDemandAccepted = active && HwihaSiegeRules.surrenderDemandAccepted(row.morale, trust),
+                surrenderDemandAccepted = active && SiegeRules.surrenderDemandAccepted(row.morale, trust),
                 timeline = row.timeline,
             )
         }
@@ -56,10 +56,10 @@ class HwihaSiegeReader(
     /** 포위 군단(주인의 출전 기록 → 부곡)의 병력과 급식 판정. 읽을 수 없으면 (null, null). */
     private fun corpsOf(row: HwihaSiegeReadRow): Pair<Int?, Boolean?> {
         val owner = generals.findById(row.besiegerOwnerGeneralId).orElse(null) ?: return null to null
-        val corps = runCatching { HwihaDeploymentState.read(owner.meta) }.getOrNull()?.corps
+        val corps = runCatching { DeploymentState.read(owner.meta) }.getOrNull()?.corps
             ?.singleOrNull { it.orderId == row.besiegerOrderId } ?: return null to null
         val units = retainers.bugoksOf(owner.id).filter { it.id in corps.bugokIds }
         if (units.size != corps.bugokIds.size) return null to null
-        return units.sumOf { it.troops } to units.all { HwihaSiegeRules.besiegerFed(it.troops, it.provisions) }
+        return units.sumOf { it.troops } to units.all { SiegeRules.besiegerFed(it.troops, it.provisions) }
     }
 }

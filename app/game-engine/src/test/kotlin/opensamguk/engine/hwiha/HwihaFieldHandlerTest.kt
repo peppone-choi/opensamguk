@@ -6,7 +6,7 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.domestic.FieldInput
-import opensamguk.logic.input.HwihaInputCatalog
+import opensamguk.logic.input.InputCatalog
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
 class HwihaFieldHandlerTest {
@@ -76,7 +76,7 @@ class HwihaFieldHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1) else city
         })
-        val catalog = HwihaInputCatalog.load()
+        val catalog = InputCatalog.load()
         val selected = HwihaNpcFieldSelector(HwihaDomesticContext(design = design), catalog)
             .select(world, actor.id, ReservedTurn("휴식", "{}", rowExists = false))
         assertEquals(FieldInput.FARM, selected.actionCode)
