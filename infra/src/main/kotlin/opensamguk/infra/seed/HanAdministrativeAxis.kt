@@ -22,12 +22,18 @@ data class AdministrativeCounty(
 class HanAdministrativeAxis private constructor(
     val counties: Map<Int, AdministrativeCounty>,
     val commanderyToZhou: Map<String, String>,
+    val baseCommanderySeatById: Map<String, Int>,
 ) {
     fun county(cityId: Int): AdministrativeCounty? = counties[cityId]
 
     fun commanderyFor(cityId: Int): String? = counties[cityId]?.commanderyId
 
     fun zhouFor(cityId: Int): String? = counties[cityId]?.zhouId
+
+    /** Base-map seat only. A world-specific administrative overlay may replace it. */
+    fun baseSeatFor(commanderyId: String): Int? = baseCommanderySeatById[commanderyId]
+
+    val unresolvedBaseSeatIds: Set<String> get() = commanderyToZhou.keys - baseCommanderySeatById.keys
 
     companion object {
         private val mapper = ObjectMapper()
@@ -50,6 +56,8 @@ class HanAdministrativeAxis private constructor(
             require(counts[AdministrativeCoverage.CANONICAL] == pin["knownCountyRows"].asInt()) { "canonical county count changed" }
             require(counts[AdministrativeCoverage.OUTSIDE_CANON] == pin["outsideCanonRows"].asInt()) { "outside-canon count changed" }
             require(counts[AdministrativeCoverage.UNRESOLVED_PARENT] == pin["unresolvedParentRows"].asInt()) { "unresolved-parent count changed" }
+            require(projection.baseCommanderySeatById.size == pin["knownCommanderySeats"].asInt()) { "known commandery seat count changed" }
+            require(projection.unresolvedBaseSeatIds.size == pin["unresolvedCommanderySeats"].asInt()) { "unresolved commandery seat count changed" }
             return projection
         }
 
@@ -65,6 +73,7 @@ class HanAdministrativeAxis private constructor(
             }
             val counties = linkedMapOf<Int, AdministrativeCounty>()
             val units = mutableSetOf<String>()
+            val seatCandidates = linkedMapOf<String, MutableList<Int>>()
             world["cities"].forEach { city ->
                 val cityId = city["id"].asInt()
                 require(cityId > 0 && cityId !in counties) { "duplicate city $cityId" }
@@ -74,6 +83,9 @@ class HanAdministrativeAxis private constructor(
                     require(units.add(unit)) { "duplicate administrative unit $unit" }
                     val group = "hhs-group:${match.groupValues[1]}:${match.groupValues[2]}"
                     val zhou = requireNotNull(groups[group]) { "missing 州 for 郡國 $group" }
+                    val seatNode = city["meta"]?.get("isSeat")
+                    require(seatNode == null || seatNode.isBoolean) { "invalid 郡國 seat flag at $cityId" }
+                    if (seatNode?.asBoolean() == true) seatCandidates.getOrPut(group) { mutableListOf() }.add(cityId)
                     AdministrativeCounty(cityId, unit, group, zhou, AdministrativeCoverage.CANONICAL)
                 } else {
                     val coverage = if (city["meta"]?.get("ju")?.asText() == "동이") {
@@ -88,7 +100,8 @@ class HanAdministrativeAxis private constructor(
             require(groups.keys.all { group -> counties.values.any { it.commanderyId == group } }) {
                 "administrative axis contains an unrepresented 郡國"
             }
-            return HanAdministrativeAxis(counties, groups)
+            require(seatCandidates.values.all { it.size == 1 }) { "multiple base seats in a 郡國" }
+            return HanAdministrativeAxis(counties, groups, seatCandidates.mapValues { it.value.single() })
         }
 
         private fun resource(path: String): ByteArray = requireNotNull(HanAdministrativeAxis::class.java.getResourceAsStream(path)) {

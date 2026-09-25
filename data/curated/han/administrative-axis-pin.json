@@ -8,5 +8,7 @@
   "knownCountyRows": 1127,
   "outsideCanonRows": 61,
   "unresolvedParentRows": 259,
+  "knownCommanderySeats": 101,
+  "unresolvedCommanderySeats": 4,
   "note": "Map4 world bundle after #905; city ID, administrativeUnitId, and meta ju/jun/junCh assignments match the previous pinned world. Missing parent IDs grant no jurisdiction."
 }

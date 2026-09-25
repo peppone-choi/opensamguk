@@ -15,4 +15,4 @@ JVM 소비자는 `ContentLedgerValidator.requireValid`을 거친 뒤 행을 읽�
 
 ## 행정 축
 
-`HanAdministrativeAxis.loadPinned()`은 기본 세계 지도와 州 축의 SHA-256을 검사하고, 정본 郡國에 소속된 縣만 관직 관할 대상으로 돌린다. 기본 판에서 105 郡國의 1,127 縣이 연결된다. `OUTSIDE_CANON` 61개와 `UNRESOLVED_PARENT` 259개는 관할권을 부여하지 않는다. #905 세계 지도 변경 시 `administrative-axis-pin.json`을 새 지도와 함께 재검증한다. 월드별 행정 변경은 별도 오버레이 투영이며 이 기본 핀이 그 투영을 대체하지 않는다.
+`HanAdministrativeAxis.loadPinned()`은 기본 세계 지도와 州 축의 SHA-256을 검사하고, 정본 郡國에 소속된 縣만 관직 관할 대상으로 돌린다. #905 지도 병합 뒤에도 105 郡國의 1,127 縣이 연결된다. `OUTSIDE_CANON` 61개와 `UNRESOLVED_PARENT` 259개는 관할권을 부여하지 않는다. 기본 城 번들의 `isSeat`로 101 郡國의 치소 城 ID를 읽는다. 清河國·泰山郡·齊國·張掖屬國 4곳은 `isSeat` 城이 없어 `baseSeatFor`가 null을 돌려준다. 이름으로 치소를 추측하지 않는다. 월드별 행정 변경은 별도 오버레이 투영이며 이 기본 핀이 그 투영을 대체하지 않는다.
