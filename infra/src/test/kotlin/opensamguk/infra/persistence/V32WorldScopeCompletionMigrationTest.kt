@@ -660,6 +660,7 @@ class V32WorldScopeCompletionMigrationTest {
             "battle_plan", // V57 — 출병 계획(Phase 4X-C)
             "battle_replay", // V57 — 리플레이(Phase 4X-C, INSERT 전용)
             "siege", // V61 — HWIHA 縣城 포위
+            "game_event", // V65 — 구조화된 사건 기록
             "command_inbox",
             "command_result",
             "command_outbox",

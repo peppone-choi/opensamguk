@@ -69,7 +69,10 @@ CREATE INDEX game_event_self_feed_idx ON game_event
 CREATE INDEX game_event_nation_feed_idx ON game_event
     (world_id, audience_nation_id, occurred_year DESC, occurred_month DESC, occurred_phase DESC, occurred_ordinal DESC, id DESC)
     WHERE audience = 'NATION';
-CREATE INDEX game_event_recipient_idx ON game_event USING GIN (recipient_general_ids)
+-- Recipient filtering is rechecked after a world-scoped recent-page scan. Measure EXPLAIN before
+-- adding a specialized recipient index; the world-scope invariant requires world_id first.
+CREATE INDEX game_event_shared_feed_idx ON game_event
+    (world_id, audience, occurred_year DESC, occurred_month DESC, occurred_phase DESC, occurred_ordinal DESC, id DESC)
     WHERE audience IN ('RETINUE', 'COURT');
 CREATE INDEX game_event_public_feed_idx ON game_event
     (world_id, occurred_year DESC, occurred_month DESC, occurred_phase DESC, occurred_ordinal DESC, id DESC)

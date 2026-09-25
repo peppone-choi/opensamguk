@@ -64,7 +64,7 @@ class V65GameEventMigrationTest {
             rejectedBy("game_event_target_ck") { insert("0".repeat(64), 4, "SELF", "PERSONAL", "personal.applied") }
             rejectedBy("game_event_target_ck") { insert("1".repeat(64), 4, "COURT", "COURT", "court.dispatchReceived", nation = 3, recipients = "{}") }
             rejectedBy("game_event_target_ck") { insert("2".repeat(64), 4, "COURT", "COURT", "court.dispatchReceived", nation = 3, recipients = "{0}") }
-            for (index in listOf("game_event_self_feed_idx", "game_event_nation_feed_idx", "game_event_recipient_idx", "game_event_public_feed_idx")) {
+            for (index in listOf("game_event_self_feed_idx", "game_event_nation_feed_idx", "game_event_shared_feed_idx", "game_event_public_feed_idx")) {
                 assertTrue(jdbc.queryForObject(
                     "SELECT i.indisvalid FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid WHERE c.relname = ?",
                     Boolean::class.java, index) == true)
