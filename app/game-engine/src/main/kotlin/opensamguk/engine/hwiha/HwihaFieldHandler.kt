@@ -1,19 +1,19 @@
 package opensamguk.engine.hwiha
 
-import opensamguk.logic.domestic.FieldInput
-import opensamguk.logic.domestic.FieldFailure
-import opensamguk.logic.domestic.FieldAssessment
-import opensamguk.logic.domestic.FieldRules
-import opensamguk.logic.domestic.FieldEconomyAssessment
-
-import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.ReservedTurnHandler
+import opensamguk.logic.domestic.DomesticDesign
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldEconomyAssessment
+import opensamguk.logic.domestic.FieldFailure
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldRules
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
 
 /** Applies one direct county action after the personal movement stage. */
 class HwihaFieldHandler(
@@ -104,8 +104,8 @@ class HwihaFieldHandler(
             meta = latest.meta.withKey(LAST_TURN_KEY, record))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_COUNTY_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED, "${city.name}에서 현장 행동을 마쳤습니다.",
+        HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_COUNTY_ACTION)
+        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED, "${city.name}에서 현장 행동을 마쳤습니다.",
             linkedMapOf("inputId" to inputId, "countyId" to city.id, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

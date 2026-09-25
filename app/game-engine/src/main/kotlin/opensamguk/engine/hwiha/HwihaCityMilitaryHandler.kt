@@ -1,16 +1,16 @@
 package opensamguk.engine.hwiha
 
-import opensamguk.logic.domestic.FieldRequest
-import opensamguk.logic.domestic.FieldInput
-import opensamguk.logic.domestic.FieldAssessment
-import opensamguk.logic.domestic.FieldRules
-
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.logic.domestic.FieldAssessment
+import opensamguk.logic.domestic.FieldInput
+import opensamguk.logic.domestic.FieldRequest
+import opensamguk.logic.domestic.FieldRules
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
 
 /** Executes one city-owned military action against the same county snapshot used by precheck. */
 class HwihaCityMilitaryHandler(
@@ -89,8 +89,8 @@ class HwihaCityMilitaryHandler(
             meta = latest.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_MILITARY_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.FIELD_APPLIED,
+        HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_MILITARY_ACTION)
+        HwihaRecords.general(world, actorId, HwihaRecordKind.FIELD_APPLIED,
             "${city.name}에서 군사 행동을 마쳤습니다.", mapOf("inputId" to inputId, "countyId" to city.id, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

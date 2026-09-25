@@ -2,6 +2,8 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
 
 sealed interface DispatchExecution {
     data class Applied(val dispatch: HwihaDispatchState) : DispatchExecution
@@ -90,8 +92,8 @@ class HwihaDispatchExecutor(
             // A refusal still requires a readable renown state so that the charge has somewhere to land.
             try { HwihaPersonPolicyState.read(target.meta) }
                 catch (_: IllegalArgumentException) { null } ?: return reject(DispatchFailure.POLICY_UNAVAILABLE)
-            val tallied = HwihaRenownEvents.recordRenownEvent(meta, HwihaRenownEventSource.DISPATCH_REFUSAL,
-                HwihaRenownEvents.stampOf(now().year, now().month))
+            val tallied = RenownEvents.recordRenownEvent(meta, RenownEventSource.DISPATCH_REFUSAL,
+                RenownEvents.stampOf(now().year, now().month))
             meta = tallied.meta
             renownRecorded = tallied.recorded
             val card = world.getRetainerById(assessment.card.id)!!
@@ -107,7 +109,7 @@ class HwihaDispatchExecutor(
             how ?: if (accept) "발령을 수락했습니다. 다음 턴부터 부임지로 행군합니다."
                 else "발령을 거절했습니다. 충성이 ${policy.refusalLoyaltyLoss} 줄고 다음 월단평에 발령 거절이 반영됩니다.",
             refs(resolved) + ("lapsed" to lapsed))
-        if (renownRecorded) HwihaRenownEventRecorder.announce(world, target.id, HwihaRenownEventSource.DISPATCH_REFUSAL)
+        if (renownRecorded) HwihaRenownEventRecorder.announce(world, target.id, RenownEventSource.DISPATCH_REFUSAL)
         // An NPC lord keeps no personal record; its reasoning is already in the target's record.
         if (humanOwned(old.issuerId)) HwihaRecords.general(world, old.issuerId, kind,
             if (accept) "발령한 장수가 부임을 수락했습니다." else "발령한 장수가 부임을 거절했습니다.",

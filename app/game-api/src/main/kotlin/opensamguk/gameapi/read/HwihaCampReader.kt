@@ -9,10 +9,10 @@ import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaAptitude
 import opensamguk.logic.input.HwihaPersonPolicyState
-import opensamguk.logic.input.HwihaRenownAssessment
-import opensamguk.logic.input.HwihaRenownEventKind
-import opensamguk.logic.input.HwihaRenownEvents
-import opensamguk.logic.input.HwihaRenownRules
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownEventKind
+import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.retainer.RetainerRules
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
@@ -41,8 +41,8 @@ internal fun hwihaGate(worlds: WorldStateReadRepository, actor: GeneralReadEntit
  * 인증은 계책 손패([HwihaStratagemHandReader])와 같다: `?generalId=` 장수의 `userId` 가 principal 과
  * 같아야 하고 아니면 [HwihaCampForbidden](403). 휘하 규칙이 아닌 월드는 200 + `WRONG_RULE_PROFILE` 이다.
  *
- * 규칙 수치는 엔진과 같은 함수를 부른다 — 코스트 [HwihaRenownRules.personCost], 이탈 순서
- * [HwihaRenownAssessment.departures], 월단평 키 [HwihaRenownAssessment.STAMP_KEY]·[HwihaRenownAssessment.RANKING_KEY].
+ * 규칙 수치는 엔진과 같은 함수를 부른다 — 코스트 [RenownRules.personCost], 이탈 순서
+ * [RenownAssessment.departures], 월단평 키 [RenownAssessment.STAMP_KEY]·[RenownAssessment.RANKING_KEY].
  */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -70,8 +70,8 @@ class HwihaCampReader(
         val renown = renownOf(actor)
         val self = HwihaYuedanSelf(actor.id, renown, cost, renown != null && cost != null && cost > renown)
         val pending = pendingEvents(actor)
-        val stamp = kv(HwihaRenownAssessment.STAMP_KEY)?.let { node -> if (node.isTextual) node.asText() else node.toString() }
-        val published = kv(HwihaRenownAssessment.RANKING_KEY)
+        val stamp = kv(RenownAssessment.STAMP_KEY)?.let { node -> if (node.isTextual) node.asText() else node.toString() }
+        val published = kv(RenownAssessment.RANKING_KEY)
             ?: return HwihaYuedanResponse("NOT_ASSESSED", stamp, self, selfPendingEvents = pending)
         if (!published.isArray || !published.all { it.isIntegralNumber && it.canConvertToInt() })
             return HwihaYuedanResponse("UNAVAILABLE", stamp, self, selfPendingEvents = pending)
@@ -89,17 +89,17 @@ class HwihaCampReader(
     }
 
     /**
-     * 마지막 월단평의 사유(엔진 [HwihaRenownAssessment.REASONS_KEY]). 발표 도장과 같은 달의 것만 쓴다 — 도장이
+     * 마지막 월단평의 사유(엔진 [RenownAssessment.REASONS_KEY]). 발표 도장과 같은 달의 것만 쓴다 — 도장이
      * 다르면 다른 달의 사유라 싣지 않는다. 읽을 수 없는 줄은 빠진다(사유는 곁들임이다).
      */
     private fun reasonsFor(stamp: String?): Map<Int, List<HwihaRenownReasonDto>> {
-        val node = kv(HwihaRenownAssessment.REASONS_KEY) ?: return emptyMap()
+        val node = kv(RenownAssessment.REASONS_KEY) ?: return emptyMap()
         if (stamp == null || node.path("stamp").asText(null) != stamp) return emptyMap()
         val byGeneral = node.path("byGeneral").takeIf { it.isObject } ?: return emptyMap()
         return byGeneral.fields().asSequence().mapNotNull { (key, rows) ->
             val id = key.toIntOrNull() ?: return@mapNotNull null
             id to rows.mapNotNull { row ->
-                val kind = HwihaRenownEventKind.ofKey(row.path("kind").asText("")) ?: return@mapNotNull null
+                val kind = RenownEventKind.ofKey(row.path("kind").asText("")) ?: return@mapNotNull null
                 val count = row.path("count").takeIf { it.canConvertToInt() }?.intValue() ?: return@mapNotNull null
                 val amount = row.path("amount").takeIf { it.canConvertToInt() }?.intValue() ?: return@mapNotNull null
                 HwihaRenownReasonDto(kind.key, kind.label, count, amount)
@@ -109,9 +109,9 @@ class HwihaCampReader(
 
     /** 본인 집계 — 본인만 받는다(이 응답은 소유 확인을 지난 장수 것이다). */
     private fun pendingEvents(actor: GeneralReadEntity): List<HwihaRenownPendingEventDto> =
-        HwihaRenownEvents.entries(actor.meta).map {
+        RenownEvents.entries(actor.meta).map {
             HwihaRenownPendingEventDto(it.kind.key, it.kind.label, it.stamp, it.source?.name, it.source?.label,
-                it.kind.amountIn(HwihaRenownAssessment.CANON))
+                it.kind.amountIn(RenownAssessment.CANON))
         }
 
     // ── 縣 창고 ────────────────────────────────────────────────────────────
@@ -185,8 +185,8 @@ class HwihaCampReader(
         val costs = cards.associate { card -> card.id to people[card.id]?.let(::personCost) }
         val costSum = if (costs.values.any { it == null }) null else costs.values.sumOf { requireNotNull(it) }
         val over = renown != null && costSum != null && costSum > renown
-        val order = if (!over) emptyMap() else HwihaRenownAssessment.departures(requireNotNull(renown),
-            cards.mapNotNull { card -> costs[card.id]?.let { HwihaRenownAssessment.RetainerCard(card.id, it, card.loyalty) } })
+        val order = if (!over) emptyMap() else RenownAssessment.departures(requireNotNull(renown),
+            cards.mapNotNull { card -> costs[card.id]?.let { RenownAssessment.RetainerCard(card.id, it, card.loyalty) } })
             .withIndex().associate { (index, id) -> id to index + 1 }
         val lordHome = ledgers.nativeCountyOf(actor)
         val homes = cards.associate { card -> card.id to people[card.id]?.let(ledgers::nativeCountyOf) }
@@ -231,7 +231,7 @@ class HwihaCampReader(
 
     private fun personCost(person: GeneralReadEntity): Int? = try {
         if (HwihaPersonPolicyState.read(person.meta) == null) null else
-            HwihaRenownRules.personCost(person.leadership, person.strength, person.intel, person.politics, person.charm)
+            RenownRules.personCost(person.leadership, person.strength, person.intel, person.politics, person.charm)
     } catch (_: IllegalArgumentException) { null }
 
     private fun aptitudes(person: GeneralReadEntity): HwihaAptitudesDto? = try {

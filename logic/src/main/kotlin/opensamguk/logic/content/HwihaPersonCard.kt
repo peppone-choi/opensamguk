@@ -1,7 +1,7 @@
 package opensamguk.logic.content
 
 import opensamguk.logic.input.HwihaAptitude
-import opensamguk.logic.input.HwihaRenownRules
+import opensamguk.logic.renown.RenownRules
 
 /** §2.7 bonds. Historical scenarios supply links and evidence in #596. */
 enum class PersonBondKind { BLOOD_KIN, NATIVE_COUNTY, PATRONAGE, OATH, RENOWN }
@@ -105,7 +105,7 @@ data class HwihaPersonCard(
         require((identity.generalId == null) == (header.availability == CardAvailability.COMMON))
         require(bonds.map { it.kind to it.targetId }.distinct().size == bonds.size)
         require(stratagemCardIds.none { it.isBlank() })
-        require(header.renownCost == HwihaRenownRules.personCost(
+        require(header.renownCost == RenownRules.personCost(
             stats.leadership, stats.strength, stats.intelligence, stats.politics, stats.charm))
     }
 

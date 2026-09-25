@@ -7,6 +7,9 @@ import opensamguk.engine.turn.*
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventKind
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
 
@@ -191,8 +194,8 @@ class HwihaEconomyBoundaryTest {
         court.onIssuerTurn(1)
         assertEquals(1500L, money(world, capital)); assertEquals(55, world.getRetainerById(4)!!.loyalty)
         assertTrue(court.takeExecutions().single().result.ok)
-        fun bondEvents() = HwihaRenownEvents.entries(world.getGeneralById(2)!!.meta).filter { it.kind == HwihaRenownEventKind.BOND_EVENT }
-        assertEquals(listOf(HwihaRenownEventSource.REWARD), bondEvents().map { it.source })
+        fun bondEvents() = RenownEvents.entries(world.getGeneralById(2)!!.meta).filter { it.kind == RenownEventKind.BOND_EVENT }
+        assertEquals(listOf(RenownEventSource.REWARD), bondEvents().map { it.source })
         assertEquals(HwihaRewardExecutor.Failure.INSUFFICIENT_STOCK, HwihaRewardExecutor(world, recorder).reward(RewardRequest(1, 4, 5000)))
         assertNull(HwihaRewardExecutor(world, recorder).reward(RewardRequest(1, 4, 100)))
         assertEquals(1, bondEvents().size, "one bond event a month")

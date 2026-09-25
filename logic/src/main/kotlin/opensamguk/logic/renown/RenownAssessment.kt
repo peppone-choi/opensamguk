@@ -1,17 +1,17 @@
-package opensamguk.logic.input
+package opensamguk.logic.renown
 
 /**
  * 월단평 — 매월 상순 명망을 갱신하고 순위를 매기며, 코스트 상한을 넘은 휘하의 이탈을 판정한다.
  *
  * 정본 설계 §2.8(명망·월단평), §5.2(순 경계 4번: … 재해 → 월단평 → 코스트 상한을 넘은 장수의 휘하
  * 이탈 판정), §6.6(휘하 규칙). 갱신 방식은 **사건 누적식**이다(2026-09-22 사용자 결정): 지난 달에
- * 일어난 사건을 세어 두고 월단평에서 한 번 적용한다. 사건 집계는 [HwihaRenownEvents](한 달에 종류당 한 번). 가감값·상하한은
+ * 일어난 사건을 세어 두고 월단평에서 한 번 적용한다. 사건 집계는 [RenownEvents](한 달에 종류당 한 번). 가감값·상하한은
  * `data/curated/han/hwiha-renown-assessment-v1.json` 에 있고 이 객체는 그 값을 받아 쓴다 — 수치를
  * 코드에 박지 않는다.
  *
  * 명망은 **초기화하지 않는다**(§2.8) — 월단평은 기존 값을 보존하며 갱신한다.
  */
-object HwihaRenownAssessment {
+object RenownAssessment {
     /** 마지막 월단평 도장(`YYYY-MM`) — `game_env` 키. 엔진이 쓰고 game-api 조회가 읽는다. */
     const val STAMP_KEY = "hwihaRenownAssessmentStamp"
 
@@ -80,7 +80,7 @@ object HwihaRenownAssessment {
      * 정본 곡선 — `data/curated/han/hwiha-renown-assessment-v1.json` 을 그대로 옮긴 값이다.
      *
      * Kotlin 런타임이 `data/curated` 를 읽지 않는 것이 이 저장소의 방식이므로(포위 사기도 같다)
-     * 값을 여기 둔다. 두 곳이 갈라지지 않는지는 `HwihaRenownAssessmentTest` 가 파일을 읽어 대조한다.
+     * 값을 여기 둔다. 두 곳이 갈라지지 않는지는 `RenownAssessmentTest` 가 파일을 읽어 대조한다.
      */
     val CANON: Curve = Curve(
         warMerit = 3, domesticMerit = 2, office = 4, bondEvent = 2,

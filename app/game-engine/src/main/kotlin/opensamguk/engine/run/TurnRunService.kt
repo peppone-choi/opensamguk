@@ -1,46 +1,46 @@
 package opensamguk.engine.run
 
+import java.time.Instant
+import opensamguk.common.rng.RandUtil
+import opensamguk.common.wire.CommandLifecycleResult
+import opensamguk.common.wire.TurnDaemonCommandEnvelope
+import opensamguk.common.wire.TurnDaemonCommandResult
+import opensamguk.common.wire.TurnDaemonEvent
+import opensamguk.common.wire.TurnDaemonEventEnvelope
+import opensamguk.common.wire.WireJson
+import opensamguk.engine.auction.AuctionExpiryDaemon
+import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.flush.DeltaGenerationSession
 import opensamguk.engine.flush.FlushRecoveryGate
 import opensamguk.engine.flush.FlushRecoveryGateProvider
-import opensamguk.infra.persistence.StaleWorldWriterException
-
-import opensamguk.common.rng.RandUtil
-import opensamguk.engine.auction.AuctionExpiryDaemon
-import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
+import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.engine.turn.TurnWorldState
-import opensamguk.engine.tournament.TournamentDaemon
-import opensamguk.common.wire.TurnDaemonCommandResult
-import opensamguk.common.wire.TurnDaemonEvent
-import opensamguk.common.wire.TurnDaemonEventEnvelope
-import opensamguk.common.wire.TurnDaemonCommandEnvelope
-import opensamguk.common.wire.WireJson
-import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRow
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.StaleWorldWriterException
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
-import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.SelectPoolRepository
+import opensamguk.infra.read.VotePollRepository
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventDispatcher
-import opensamguk.logic.tick.MonthlyPipeline
+import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.tick.GameDate
+import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.RaiseInvaderContext
-import java.time.Instant
 
 data class TurnClockSnapshot(
     val currentYear: Int,
@@ -402,7 +402,7 @@ open class TurnRunService(
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
                             opensamguk.engine.hwiha.HwihaMonthlyAssessment(
                                 world, handler.recorder,
-                                opensamguk.logic.input.HwihaRenownAssessment.CANON,
+                                RenownAssessment.CANON,
                             ).assess(date.year, date.month)
                             // 치적 창 열기 — 월간 사건이 끝난 뒤 값으로 이번 달을 연다.
                             opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder)

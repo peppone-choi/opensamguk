@@ -4,6 +4,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
 
 /** Resolves one field-phase personal action at the general's current land position. */
 class HwihaPersonalHandler(
@@ -78,8 +79,8 @@ class HwihaPersonalHandler(
             meta = next.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        if (exploring) HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_PERSONAL_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.PERSONAL_APPLIED,
+        if (exploring) HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_PERSONAL_ACTION)
+        HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
             "${actor.name}의 개인 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)
     }

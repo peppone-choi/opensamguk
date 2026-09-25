@@ -5,13 +5,18 @@ import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownEntry
+import opensamguk.logic.renown.RenownEventKind
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
 
 /** 월단평 사건 원천(이탈·치적·점령/조우 훅)과 월단평 적용·발표·기록. */
 class HwihaRenownRecordsTest {
-    private val curve = HwihaRenownAssessment.CANON
+    private val curve = RenownAssessment.CANON
     private val HASH = "b".repeat(64)
 
     private fun policy(renown: Int) = HwihaPersonPolicyState(renown, false, "synthetic-test", "1", 1).toMetaValue()
@@ -37,23 +42,23 @@ class HwihaRenownRecordsTest {
             },
             cityLandProvinceById = cities.associate { it.id to "p${it.id}" }, administrativeCountyIds = cities.map { it.id }.toSet()))
 
-    private fun tally(vararg entries: HwihaRenownEntry) = HwihaRenownEvents.withEntries(emptyMap(), entries.toList())
+    private fun tally(vararg entries: RenownEntry) = RenownEvents.withEntries(emptyMap(), entries.toList())
     private fun renown(world: InMemoryTurnWorld, id: Int) = HwihaPersonPolicyState.read(world.getGeneralById(id)!!.meta)!!.renownCapacity
-    private fun entries(world: InMemoryTurnWorld, id: Int) = HwihaRenownEvents.entries(world.getGeneralById(id)!!.meta)
+    private fun entries(world: InMemoryTurnWorld, id: Int) = RenownEvents.entries(world.getGeneralById(id)!!.meta)
     private fun assign(countyId: Int, nationId: Int = 1) =
         mapOf(HwihaCountyAssignment.META_KEY to HwihaCountyAssignment("d-$countyId", 1, nationId, countyId).toMetaValue())
 
     @Test fun `월단평은 지난 달 사건만 적용하고 사유를 종류로만 발표한다`() {
         val meta = tally(
-            HwihaRenownEntry(HwihaRenownEventKind.WAR_MERIT, "0200-01", HwihaRenownEventSource.COUNTY_CAPTURE),
-            HwihaRenownEntry(HwihaRenownEventKind.DISPATCH_REFUSAL, "0200-01", HwihaRenownEventSource.DISPATCH_REFUSAL),
-            HwihaRenownEntry(HwihaRenownEventKind.DEFEAT, "0200-02", HwihaRenownEventSource.COUNTY_LOSS),
+            RenownEntry(RenownEventKind.WAR_MERIT, "0200-01", RenownEventSource.COUNTY_CAPTURE),
+            RenownEntry(RenownEventKind.DISPATCH_REFUSAL, "0200-01", RenownEventSource.DISPATCH_REFUSAL),
+            RenownEntry(RenownEventKind.DEFEAT, "0200-02", RenownEventSource.COUNTY_LOSS),
         )
         val world = world(listOf(person(1, extra = meta), person(2)))
         val recorder = ChangeRecorder()
         val outcome = assertNotNull(HwihaMonthlyAssessment(world, recorder, curve).assess(200, 2))
         assertEquals(30 + 3 - 4, renown(world, 1))
-        assertEquals(listOf(HwihaRenownEventKind.DEFEAT), entries(world, 1).map { it.kind }, "이번 달 사건은 다음 달로 넘긴다")
+        assertEquals(listOf(RenownEventKind.DEFEAT), entries(world, 1).map { it.kind }, "이번 달 사건은 다음 달로 넘긴다")
         assertEquals(30, renown(world, 2))
         assertEquals(listOf(2, 1), outcome.ranking)
 
@@ -112,7 +117,7 @@ class HwihaRenownRecordsTest {
         world.applyCityDirtyFree(world.getCityById(10)!!.copy(agriculture = 5_200))   // 상한의 2%
         world.applyCityDirtyFree(world.getCityById(11)!!.copy(agriculture = 5_199))   // 문턱 아래
         assertEquals(listOf(2), window.close(200, 2))
-        assertEquals(listOf(HwihaRenownEntry(HwihaRenownEventKind.DOMESTIC_MERIT, "0200-01", HwihaRenownEventSource.COUNTY_INDICATOR_RISE)),
+        assertEquals(listOf(RenownEntry(RenownEventKind.DOMESTIC_MERIT, "0200-01", RenownEventSource.COUNTY_INDICATOR_RISE)),
             entries(world, 2), "창을 연 달의 도장이라 같은 경계의 월단평이 적용한다")
         assertTrue(entries(world, 3).isEmpty())
         assertTrue(window.close(200, 2).isEmpty(), "닫은 창은 다시 닫지 않는다")
@@ -134,8 +139,8 @@ class HwihaRenownRecordsTest {
         val recorder = ChangeRecorder()
         val events = HwihaRenownEventRecorder(world, recorder)
         assertEquals(listOf(2, 5), events.onCountyCaptured(10, previousNationId = 1, captorNationId = 2, capturerIds = listOf(5)))
-        assertEquals(HwihaRenownEventSource.COUNTY_LOSS, entries(world, 2).single().source)
-        assertEquals(HwihaRenownEventSource.COUNTY_CAPTURE, entries(world, 5).single().source)
+        assertEquals(RenownEventSource.COUNTY_LOSS, entries(world, 2).single().source)
+        assertEquals(RenownEventSource.COUNTY_CAPTURE, entries(world, 5).single().source)
         val nationRecords = world.peekLogs().filter { it.scope == "nation" }
         assertEquals(listOf(2 to RecordKind.COUNTY_CAPTURED, 1 to RecordKind.COUNTY_LOST),
             nationRecords.map { it.nationId to it.eventKind })

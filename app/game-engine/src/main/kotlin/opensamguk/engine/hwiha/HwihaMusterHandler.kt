@@ -2,6 +2,7 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.world.*
 
 /** Reissues each commanded corps' durable destination as the owner's current province. */
@@ -61,8 +62,8 @@ class HwihaMusterHandler(private val world: InMemoryTurnWorld, private val recor
             meta = latest.meta + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(stamped))
         world.applyGeneralDirtyFree(stamped)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_MILITARY_ACTION)
-        HwihaRecords.general(world, actorId, RecordKind.MUSTER_ORDERED,
+        HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_MILITARY_ACTION)
+        HwihaRecords.general(world, actorId, HwihaRecordKind.MUSTER_ORDERED,
             "지휘 중인 군단에 현재 省으로 집결하도록 명했습니다.",
             mapOf("destination" to ready.destination.canonicalKey,
                 "commanderIds" to ready.corps.map { it.commanderGeneralId }, "requestId" to requestId))
