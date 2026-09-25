@@ -90,16 +90,16 @@ class ScoutTest {
     }
 
     @Test fun `optional source records from the domestic stream never invent vision`() {
-        val reader = HwihaMetaVisionSourceReader
-        assertEquals(SourceRead(emptyList<HwihaScoutPost>(), 0), reader.scoutPosts(emptyMap()))
-        val posts = mapOf(HwihaMetaVisionSourceReader.SCOUT_POSTS_KEY to mapOf("version" to 1, "posts" to listOf(
+        val reader = MetaVisionSourceReader
+        assertEquals(SourceRead(emptyList<ScoutPost>(), 0), reader.scoutPosts(emptyMap()))
+        val posts = mapOf(MetaVisionSourceReader.SCOUT_POSTS_KEY to mapOf("version" to 1, "posts" to listOf(
             mapOf("retainerId" to 4, "provinceId" to "p1", "status" to "ACTIVE"),
             mapOf("retainerId" to 5, "provinceId" to "p2", "status" to "EN_ROUTE"),
             mapOf("retainerId" to 6, "provinceId" to "p3"))))
-        assertEquals(SourceRead(listOf(HwihaScoutPost(4, "p1")), 1), reader.scoutPosts(posts))
-        assertEquals(SourceRead(emptyList<HwihaScoutPost>(), 1),
-            reader.scoutPosts(mapOf(HwihaMetaVisionSourceReader.SCOUT_POSTS_KEY to mapOf("version" to 2, "posts" to emptyList<Any>()))))
-        fun works(vararg rows: Map<String, Any>) = mapOf(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY to mapOf("version" to 1, "works" to rows.toList()))
+        assertEquals(SourceRead(listOf(ScoutPost(4, "p1")), 1), reader.scoutPosts(posts))
+        assertEquals(SourceRead(emptyList<ScoutPost>(), 1),
+            reader.scoutPosts(mapOf(MetaVisionSourceReader.SCOUT_POSTS_KEY to mapOf("version" to 2, "posts" to emptyList<Any>()))))
+        fun works(vararg rows: Map<String, Any>) = mapOf(MetaVisionSourceReader.COUNTY_WORKS_KEY to mapOf("version" to 1, "works" to rows.toList()))
         assertEquals(SourceRead(true, 0), reader.hasCompletedWatchtower(works(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))
         assertEquals(SourceRead(false, 0), reader.hasCompletedWatchtower(works(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "IN_PROGRESS"),
             mapOf("kind" to "GRANARY", "status" to "COMPLETE"))))

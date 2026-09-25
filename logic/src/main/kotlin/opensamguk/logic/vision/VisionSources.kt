@@ -1,4 +1,4 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
 
 /**
  * Optional vision inputs owned by the domestic-inputs stream (배치 정찰 · 공사 망루봉화). This file fixes the
@@ -13,13 +13,13 @@ data class SourceRead<T>(val value: T, val invalid: Int) {
 }
 
 /** A scout placement that has arrived. [provinceId] is a pinned land province id. */
-data class HwihaScoutPost(val retainerId: Int, val provinceId: String) {
+data class ScoutPost(val retainerId: Int, val provinceId: String) {
     init { require(retainerId > 0 && provinceId.isNotBlank() && provinceId.length <= 128) }
 }
 
-interface HwihaVisionSourceReader {
+interface VisionSourceReader {
     /** Arrived scout posts stored on the owning general's meta. */
-    fun scoutPosts(ownerMeta: Map<String, Any?>): SourceRead<List<HwihaScoutPost>>
+    fun scoutPosts(ownerMeta: Map<String, Any?>): SourceRead<List<ScoutPost>>
 
     /** Whether a county seat carries a completed watchtower/beacon work. */
     fun hasCompletedWatchtower(cityMeta: Map<String, Any?>): SourceRead<Boolean>
@@ -33,14 +33,14 @@ interface HwihaVisionSourceReader {
  * - City meta `hwihaCountyWorks`: `{"version":1,"works":[{"kind":str,"status":str}]}`. Vision reads only
  *   `kind == WATCHTOWER_BEACON && status == COMPLETE`; other kinds/statuses belong to the works stream.
  */
-object HwihaMetaVisionSourceReader : HwihaVisionSourceReader {
+object MetaVisionSourceReader : VisionSourceReader {
     const val SCOUT_POSTS_KEY = "hwihaScoutPosts"
     const val COUNTY_WORKS_KEY = "hwihaCountyWorks"
     const val ACTIVE = "ACTIVE"
     const val WATCHTOWER_BEACON = "WATCHTOWER_BEACON"
     const val COMPLETE = "COMPLETE"
 
-    override fun scoutPosts(ownerMeta: Map<String, Any?>): SourceRead<List<HwihaScoutPost>> {
+    override fun scoutPosts(ownerMeta: Map<String, Any?>): SourceRead<List<ScoutPost>> {
         if (SCOUT_POSTS_KEY !in ownerMeta) return SourceRead(emptyList(), 0)
         val root = ownerMeta[SCOUT_POSTS_KEY] as? Map<*, *> ?: return SourceRead(emptyList(), 1)
         if (root.keys != setOf("version", "posts") || root["version"] != 1) return SourceRead(emptyList(), 1)
@@ -55,7 +55,7 @@ object HwihaMetaVisionSourceReader : HwihaVisionSourceReader {
                 province.isNullOrBlank() || province.length > 128 || status.isNullOrBlank()) {
                 invalid++; return@mapNotNull null
             }
-            if (status == ACTIVE) HwihaScoutPost(retainer, province) else null
+            if (status == ACTIVE) ScoutPost(retainer, province) else null
         }
         return SourceRead(posts.distinct().sortedWith(compareBy({ it.retainerId }, { it.provinceId })), invalid)
     }
