@@ -6,18 +6,19 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRecordKind
-import opensamguk.logic.input.HwihaRenownAssessment
-import opensamguk.logic.input.HwihaRenownEntry
-import opensamguk.logic.input.HwihaRenownEvents
-import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownEntry
+import opensamguk.logic.renown.RenownEventKind
+import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.renown.RenownRules
 import org.slf4j.LoggerFactory
 
 /**
  * 월 경계의 「월단평」 — 명망을 갱신하고 순위를 발표한다(정본 설계 §2.8, §5.2 순 경계 4번).
  *
  * 갱신은 **사건 누적식**이다(2026-09-22 사용자 결정). 사건은 장수 meta 의 [TALLY_META_KEY] 에 쌓이고
- * ([HwihaRenownEvents] — 한 달에 종류당 한 번, 2026-09-23 사용자 결정), 월단평이 **이번 달 이전** 사건을
+ * ([RenownEvents] — 한 달에 종류당 한 번, 2026-09-23 사용자 결정), 월단평이 **이번 달 이전** 사건을
  * 한 번 적용한 뒤 그 줄만 지운다. 이번 달 도장의 사건(같은 경계에서 막 기록된 것 포함)은 다음 달로 넘긴다.
  * 가감값·상하한은 `data/curated/han/hwiha-renown-assessment-v1.json` 에서 온다 — 코드에 박지 않는다.
  *
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory
 class HwihaMonthlyAssessment(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val curve: HwihaRenownAssessment.Curve,
+    private val curve: RenownAssessment.Curve,
 ) {
     /**
      * @property moved 명망이 실제로 움직인 장수 수.
@@ -76,21 +77,21 @@ class HwihaMonthlyAssessment(
             assessed++
             val retinue = (retainersByMaster[general.id] ?: emptyList()).mapNotNull { card ->
                 val person = card.generalId?.let { world.getGeneralById(it) } ?: return@mapNotNull null
-                HwihaRenownAssessment.RetainerCard(
+                RenownAssessment.RetainerCard(
                     retainerId = card.id,
-                    cost = HwihaRenownRules.personCost(
+                    cost = RenownRules.personCost(
                         person.stats.leadership, person.stats.strength, person.stats.intelligence,
                         person.stats.politics, person.stats.charm,
                     ),
                     loyalty = card.loyalty,
                 )
             }
-            val split = HwihaRenownEvents.split(general.meta, stamp)
+            val split = RenownEvents.split(general.meta, stamp)
             val before = policy.renownCapacity.coerceIn(curve.floor, curve.ceiling)
-            val outcome = HwihaRenownAssessment.assess(
+            val outcome = RenownAssessment.assess(
                 generalId = general.id,
                 renown = before,
-                tally = HwihaRenownEvents.tallyOf(split.applied),
+                tally = RenownEvents.tallyOf(split.applied),
                 curve = curve,
                 retinue = retinue,
             )
@@ -98,7 +99,7 @@ class HwihaMonthlyAssessment(
             if (outcome.released.isNotEmpty()) overCap++
 
             // 적용한 줄만 지운다 — 남기면 다음 달에 또 적용되고, 이번 달 줄을 지우면 사라진다.
-            val nextMeta = LinkedHashMap(HwihaRenownEvents.withEntries(general.meta, split.remaining))
+            val nextMeta = LinkedHashMap(RenownEvents.withEntries(general.meta, split.remaining))
             nextMeta[HwihaPersonPolicyState.META_KEY] = policy.copy(renownCapacity = outcome.renown).toMetaValue()
             if (nextMeta != general.meta) {
                 if (!apply(general, nextMeta)) {
@@ -135,7 +136,7 @@ class HwihaMonthlyAssessment(
             }
         }
 
-        val ranking = HwihaRenownAssessment.ranking(renownByGeneral)
+        val ranking = RenownAssessment.ranking(renownByGeneral)
         world.setGameEnvValue(STAMP_KEY, stamp)
         recorder.recordKv("game_env", "game_env", STAMP_KEY, stamp)
         world.setGameEnvValue(RANKING_KEY, ranking)
@@ -155,14 +156,14 @@ class HwihaMonthlyAssessment(
             linkedMapOf("stamp" to stamp, "top" to ranking.take(ANNOUNCED_TOP)))
     }
 
-    /** 종류별 건수와 증감(이번 곡선 기준). 종류 순서는 [opensamguk.logic.input.HwihaRenownEventKind] 선언 순. */
-    private fun summarize(applied: List<HwihaRenownEntry>): List<Map<String, Any?>> =
+    /** 종류별 건수와 증감(이번 곡선 기준). 종류 순서는 [RenownEventKind] 선언 순. */
+    private fun summarize(applied: List<RenownEntry>): List<Map<String, Any?>> =
         applied.groupBy { it.kind }.entries.sortedBy { it.key.ordinal }.map { (kind, rows) ->
             linkedMapOf("kind" to kind.key, "count" to rows.size, "amount" to kind.amountIn(curve) * rows.size)
         }
 
     private fun labelOf(row: Map<String, Any?>): String {
-        val kind = opensamguk.logic.input.HwihaRenownEventKind.ofKey(row["kind"] as? String ?: "")
+        val kind = RenownEventKind.ofKey(row["kind"] as? String ?: "")
             ?: run {
                 log.warn("hwiha_monthly_assessment_label_unavailable kind={}", row["kind"])
                 return "알 수 없는 사건"
@@ -183,14 +184,14 @@ class HwihaMonthlyAssessment(
 
     companion object {
         private val log = LoggerFactory.getLogger(HwihaMonthlyAssessment::class.java)
-        const val STAMP_KEY = HwihaRenownAssessment.STAMP_KEY
-        const val RANKING_KEY = HwihaRenownAssessment.RANKING_KEY
-        const val REASONS_KEY = HwihaRenownAssessment.REASONS_KEY
-        const val TALLY_META_KEY = HwihaRenownEvents.META_KEY
+        const val STAMP_KEY = RenownAssessment.STAMP_KEY
+        const val RANKING_KEY = RenownAssessment.RANKING_KEY
+        const val REASONS_KEY = RenownAssessment.REASONS_KEY
+        const val TALLY_META_KEY = RenownEvents.META_KEY
 
         /** 발표 기록에 싣는 상위 순위 수. 전체 순위는 [RANKING_KEY] 에 있다. */
         const val ANNOUNCED_TOP = 10
 
-        fun stampOf(year: Int, month: Int): String = HwihaRenownEvents.stampOf(year, month)
+        fun stampOf(year: Int, month: Int): String = RenownEvents.stampOf(year, month)
     }
 }

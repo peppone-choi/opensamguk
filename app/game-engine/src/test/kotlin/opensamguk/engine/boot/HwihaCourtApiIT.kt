@@ -9,6 +9,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.gameapi.GameApiApplication
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
 import org.junit.jupiter.api.AfterEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -131,8 +133,8 @@ class HwihaCourtApiIT {
         assertEquals(45,after.retainers.single { it.generalId==1 }.loyalty)
         // 거절 명망은 즉시 깎지 않고 다음 월단평에 −4 로 한 번 반영한다(2026-09-23 결정) — 지금은 사건만 쌓인다.
         assertEquals(30,opensamguk.logic.input.HwihaPersonPolicyState.read(afterActor.meta)!!.renownCapacity)
-        assertEquals(listOf(opensamguk.logic.input.HwihaRenownEventSource.DISPATCH_REFUSAL),
-            opensamguk.logic.input.HwihaRenownEvents.entries(afterActor.meta).map { it.source })
+        assertEquals(listOf(RenownEventSource.DISPATCH_REFUSAL),
+            RenownEvents.entries(afterActor.meta).map { it.source })
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=1",Int::class.java))
         assertEquals(listOf(requestId,requestId,reply),published)
         assertEquals(0,fixture.service(WorldId(1),InMemoryTurnWorld(after),published,intake=true).runIntakeCommands())

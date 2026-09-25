@@ -5,13 +5,13 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.HwihaRecordKind
-import opensamguk.logic.input.HwihaRenownEventSource
-import opensamguk.logic.input.HwihaRenownEvents
-import opensamguk.logic.input.HwihaRenownHooks
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.renown.RenownHooks
 import org.slf4j.LoggerFactory
 
 /**
- * 월단평 사건을 월드에 쌓는 엔진 어댑터 — 순수 훅([HwihaRenownHooks]·[HwihaRenownEvents])이 돌려준 meta 를
+ * 월단평 사건을 월드에 쌓는 엔진 어댑터 — 순수 훅([RenownHooks]·[RenownEvents])이 돌려준 meta 를
  * ChangeRecorder 경로로 저장하고, 새로 쌓인 사건만 그 장수의 개인 기록에 남긴다.
  *
  * ### 다른 흐름(hwiha-s3-core)이 부르는 자리
@@ -28,9 +28,9 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
      *
      * @param stamp 사건이 일어난 달. 기본은 지금 세계의 달이다. 월 경계에서 지난 달을 닫는 쪽(치적)만 넘긴다.
      */
-    fun record(generalId: Int, source: HwihaRenownEventSource, stamp: String = currentStamp(world)): Boolean {
+    fun record(generalId: Int, source: RenownEventSource, stamp: String = currentStamp(world)): Boolean {
         val before = world.getGeneralById(generalId) ?: return false
-        val result = HwihaRenownEvents.recordRenownEvent(before.meta, source, stamp)
+        val result = RenownEvents.recordRenownEvent(before.meta, source, stamp)
         if (!result.recorded) return false
         if (!apply(generalId, result.meta)) return false
         announce(world, generalId, source, stamp)
@@ -43,13 +43,13 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
      */
     fun onEncounterResolved(winnerIds: Collection<Int>, loserIds: Collection<Int>): List<Int> {
         val state = world.getState()
-        return applyAll(HwihaRenownHooks.onEncounterResolved(winnerIds, loserIds, state.currentYear, state.currentMonth) {
+        return applyAll(RenownHooks.onEncounterResolved(winnerIds, loserIds, state.currentYear, state.currentMonth) {
             world.getGeneralById(it)?.meta
         })
     }
 
     /**
-     * 縣 함락 정산 뒤 한 번. 점령한 장수 → 전공(縣 점령), 그 縣 을 관할하던 장수([HwihaRenownHooks.countyHolderIds],
+     * 縣 함락 정산 뒤 한 번. 점령한 장수 → 전공(縣 점령), 그 縣 을 관할하던 장수([RenownHooks.countyHolderIds],
      * [previousNationId] 기준) → 패전(縣 상실). 두 세력 앞으로 공개 기록(점령·상실)을 남긴다 — 縣 소유는 지도에
      * 드러나는 공개 정보다.
      *
@@ -61,10 +61,10 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
             log.warn("hwiha_renown_capture_skipped county={} reason=SAME_OWNER nation={}", countyId, captorNationId)
             return emptyList()
         }
-        val holders = if (previousNationId == 0) emptyList() else HwihaRenownHooks.countyHolderIds(countyId,
+        val holders = if (previousNationId == 0) emptyList() else RenownHooks.countyHolderIds(countyId,
             previousNationId, world.listGenerals().associate { it.id to it.meta })
         val state = world.getState()
-        val updated = applyAll(HwihaRenownHooks.onCountyCaptured(capturerIds, holders - capturerIds.toSet(),
+        val updated = applyAll(RenownHooks.onCountyCaptured(capturerIds, holders - capturerIds.toSet(),
             state.currentYear, state.currentMonth) { world.getGeneralById(it)?.meta })
         val name = world.getCityById(countyId)?.name ?: "縣 $countyId"
         val refs = linkedMapOf<String, Any?>("countyId" to countyId, "fromNationId" to previousNationId,
@@ -76,7 +76,7 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
         return updated
     }
 
-    private fun applyAll(updates: List<HwihaRenownHooks.MetaUpdate>): List<Int> = updates.mapNotNull { update ->
+    private fun applyAll(updates: List<RenownHooks.MetaUpdate>): List<Int> = updates.mapNotNull { update ->
         val source = update.entry.source
         if (source == null) {
             log.warn("hwiha_renown_event_skipped general={} reason=MISSING_SOURCE", update.generalId)
@@ -108,13 +108,13 @@ class HwihaRenownEventRecorder(private val world: InMemoryTurnWorld, private val
         internal fun announce(
             world: InMemoryTurnWorld,
             generalId: Int,
-            source: HwihaRenownEventSource,
+            source: RenownEventSource,
             stamp: String = currentStamp(world),
         ) = HwihaRecords.general(world, generalId, HwihaRecordKind.RENOWN_EVENT,
             "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
             linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
 
         internal fun currentStamp(world: InMemoryTurnWorld): String =
-            world.getState().let { HwihaRenownEvents.stampOf(it.currentYear, it.currentMonth) }
+            world.getState().let { RenownEvents.stampOf(it.currentYear, it.currentMonth) }
     }
 }

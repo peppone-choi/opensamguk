@@ -1,6 +1,7 @@
 package opensamguk.logic.input
 
 import opensamguk.logic.domestic.CountyIndicators
+import opensamguk.logic.renown.RenownEvents
 
 /**
  * 치적 사건: 縣令으로 배치된 카드가 앉은 縣의 지표가 지난달보다 올랐다(§8.2 「치적은 명망으로 이어진다」).
@@ -22,7 +23,7 @@ data class HwihaGovernanceMeritEvent(
 }
 
 /**
- * 치적 사건을 받는 자리(기본은 버림). 기록 스트림의 `HwihaRenownEvents.recordRenownEvent(meta, kind, stamp, source?)` 에는
+ * 치적 사건을 받는 자리(기본은 버림). 기록 스트림의 `RenownEvents.recordRenownEvent(meta, kind, stamp, source?)` 에는
  * 병합 때 이 인터페이스의 구현으로 잇는다 — 이 스트림은 그 함수를 직접 부르지 않는다.
  * 엔진은 월 경계(상순의 순 경계 3단계 뒤)에서 縣 id 순으로 한 번씩 부른다. 구현은 ChangeRecorder 경로로만 써야 한다.
  */

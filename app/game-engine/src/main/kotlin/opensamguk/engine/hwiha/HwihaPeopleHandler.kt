@@ -1,13 +1,13 @@
 package opensamguk.engine.hwiha
 
-import opensamguk.logic.domestic.PlacementState
-import opensamguk.logic.domestic.PlacementMarch
-
+import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
-import opensamguk.common.josa.JosaUtil
 import opensamguk.engine.turn.*
+import opensamguk.logic.domestic.PlacementMarch
+import opensamguk.logic.domestic.PlacementState
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.retainer.RetainerRules
 
 /** Local talent search and consent or resistance adjudication use one personal-turn RNG. */
@@ -133,7 +133,7 @@ class HwihaPeopleHandler(
             meta = discovered + (LAST_TURN_KEY to stamp))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(grown))
         world.applyGeneralDirtyFree(grown)
-        HwihaRenownEventRecorder(world, recorder).record(actorId, HwihaRenownEventSource.DIRECT_PEOPLE_ACTION)
+        HwihaRenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_PEOPLE_ACTION)
         HwihaRecords.general(world, actorId, recordKind, recordText,
             mapOf("inputId" to inputId, "targetGeneralId" to request.targetGeneralId, "requestId" to requestId))
         return HwihaTurnOutcome.Applied(inputId, effects)

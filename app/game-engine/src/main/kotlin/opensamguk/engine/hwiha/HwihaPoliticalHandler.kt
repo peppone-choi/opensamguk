@@ -2,6 +2,7 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventSource
 
 /** Nation-changing personal orders are resolved at the political stage before movement. */
 class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
@@ -147,8 +148,8 @@ class HwihaPoliticalHandler(private val world: InMemoryTurnWorld, private val re
         world.applyGeneralDirtyFree(recorded)
         if (inputId == HwihaPoliticalInput.OATH) {
             val renown = HwihaRenownEventRecorder(world, recorder)
-            renown.record(actorId, HwihaRenownEventSource.SWORN_OATH)
-            renown.record(checkNotNull(request.targetGeneralId), HwihaRenownEventSource.SWORN_OATH)
+            renown.record(actorId, RenownEventSource.SWORN_OATH)
+            renown.record(checkNotNull(request.targetGeneralId), RenownEventSource.SWORN_OATH)
         }
         HwihaRecords.general(world, actorId, HwihaRecordKind.PERSONAL_APPLIED,
             "${actor.name}의 정치 행동을 마쳤습니다.", mapOf("inputId" to inputId, "requestId" to requestId))

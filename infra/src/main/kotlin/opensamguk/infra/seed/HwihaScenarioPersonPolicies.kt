@@ -1,8 +1,8 @@
 package opensamguk.infra.seed
 
 import opensamguk.logic.input.HwihaPersonPolicyState
-import opensamguk.logic.input.HwihaRenownRules
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.renown.RenownRules
 
 /** Explicit synthetic QA inputs. This is not an authority for unverified historical datasets. */
 internal object HwihaScenarioPersonPolicies {
@@ -31,7 +31,7 @@ internal object HwihaScenarioPersonPolicies {
             fun text(key: String): String = (row[key] as? String)?.takeIf { it.isNotBlank() }
                 ?: throw IllegalArgumentException("Missing person policy $key")
             val name = text("name")
-            val state = HwihaPersonPolicyState(HwihaRenownRules.INITIAL_CAPACITY,
+            val state = HwihaPersonPolicyState(RenownRules.INITIAL_CAPACITY,
                 row["acceptsEnlistment"] as? Boolean ?: throw IllegalArgumentException("Explicit acceptance required"),
                 text("statSourceId"), text("statSourceRevision"), nonnegative(row["officerId"]))
             requireSynthetic(state)
@@ -47,7 +47,7 @@ internal object HwihaScenarioPersonPolicies {
     fun validate(general: ScenarioGeneral) {
         val state = general.hwihaPersonPolicy ?: return
         requireSynthetic(state)
-        require(state.renownCapacity == HwihaRenownRules.INITIAL_CAPACITY) { "Seed capacity must use the new-person policy" }
+        require(state.renownCapacity == RenownRules.INITIAL_CAPACITY) { "Seed capacity must use the new-person policy" }
         explicitStats(general)
         require(general.officerNumber == null || general.officerNumber == state.officerId) { "Scenario officer identity mismatch" }
     }

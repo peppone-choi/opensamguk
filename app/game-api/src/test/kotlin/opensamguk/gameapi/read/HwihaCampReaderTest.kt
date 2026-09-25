@@ -1,6 +1,8 @@
 package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import java.util.Optional
+import kotlin.test.*
 import opensamguk.gameapi.dto.HwihaRenownPendingEventDto
 import opensamguk.gameapi.dto.HwihaRenownReasonDto
 import opensamguk.gameapi.dto.HwihaRetinueResponse
@@ -12,12 +14,10 @@ import opensamguk.infra.seed.ResolvedHanWorldArtifacts
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaPersonPolicyState
-import opensamguk.logic.input.HwihaRenownAssessment
-import opensamguk.logic.input.HwihaRenownEvents
+import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.world.HanWorldVariant
 import org.mockito.Mockito.*
-import java.util.Optional
-import kotlin.test.*
 
 class HwihaCampReaderTest {
     private val generals = mock(GeneralReadRepository::class.java)
@@ -141,8 +141,8 @@ class HwihaCampReaderTest {
 
     @Test fun `월단평 순위는 발표된 자리대로 싣고 사라진 장수는 뺀다`() {
         setup()
-        kv(HwihaRenownAssessment.STAMP_KEY, "\"0190-03\"")
-        kv(HwihaRenownAssessment.RANKING_KEY, "[3, 99, 1, 2]")
+        kv(RenownAssessment.STAMP_KEY, "\"0190-03\"")
+        kv(RenownAssessment.RANKING_KEY, "[3, 99, 1, 2]")
         val out = reader.yuedan(1, 41)
         assertEquals("READY", out.status); assertEquals("0190-03", out.stamp)
         // 99 는 없는 장수; 발표된 자리 번호는 그대로다.
@@ -156,14 +156,14 @@ class HwihaCampReaderTest {
     @Test fun `순위 행에 지난 월단평 사유를 종류로만 싣고 본인 대기 사건은 본인에게만 준다`() {
         setup()
         // 본인(조조) 집계: 이번 달 발령 거절 1건 — 원인까지 본인은 본다.
-        lord.meta = lord.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
+        lord.meta = lord.meta + (RenownEvents.META_KEY to mapOf("entries" to listOf(
             mapOf("kind" to "dispatchRefusal", "stamp" to "0190-03", "source" to "DISPATCH_REFUSAL"))))
         // 남(유비)의 집계는 응답 어디에도 나오지 않는다.
-        liubei.meta = liubei.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
+        liubei.meta = liubei.meta + (RenownEvents.META_KEY to mapOf("entries" to listOf(
             mapOf("kind" to "warMerit", "stamp" to "0190-03", "source" to "ENCOUNTER_VICTORY"))))
-        kv(HwihaRenownAssessment.STAMP_KEY, "\"0190-03\"")
-        kv(HwihaRenownAssessment.RANKING_KEY, "[3, 1]")
-        kv(HwihaRenownAssessment.REASONS_KEY, """{"stamp":"0190-03","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3},
+        kv(RenownAssessment.STAMP_KEY, "\"0190-03\"")
+        kv(RenownAssessment.RANKING_KEY, "[3, 1]")
+        kv(RenownAssessment.REASONS_KEY, """{"stamp":"0190-03","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3},
             {"kind":"bogus","count":1,"amount":9}],"1":[{"kind":"defeat","count":2,"amount":-6}]}}""")
         val out = reader.yuedan(1, 41)
         assertEquals(listOf(HwihaRenownReasonDto("warMerit", "전공", 1, 3)), out.ranking.first { it.generalId == 3 }.reasons)
@@ -173,13 +173,13 @@ class HwihaCampReaderTest {
         assertFalse("ENCOUNTER_VICTORY" in mapper.writeValueAsString(out), "남의 사건 원인은 새지 않는다")
 
         // 사유의 도장이 발표 도장과 다르면(다른 달) 싣지 않는다.
-        kv(HwihaRenownAssessment.REASONS_KEY, """{"stamp":"0190-02","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3}]}}""")
+        kv(RenownAssessment.REASONS_KEY, """{"stamp":"0190-02","byGeneral":{"3":[{"kind":"warMerit","count":1,"amount":3}]}}""")
         assertTrue(reader.yuedan(1, 41).ranking.all { it.reasons.isEmpty() })
     }
 
     @Test fun `월단평 전에도 본인 대기 사건은 보인다`() {
         setup()
-        lord.meta = lord.meta + (HwihaRenownEvents.META_KEY to mapOf("entries" to listOf(
+        lord.meta = lord.meta + (RenownEvents.META_KEY to mapOf("entries" to listOf(
             mapOf("kind" to "betrayal", "stamp" to "0190-03", "source" to "DEFECTION"))))
         val out = reader.yuedan(1, 41)
         assertEquals("NOT_ASSESSED", out.status)
@@ -188,7 +188,7 @@ class HwihaCampReaderTest {
 
     @Test fun `순위 값이 목록이 아니면 UNAVAILABLE`() {
         setup()
-        kv(HwihaRenownAssessment.RANKING_KEY, "{\"x\":1}")
+        kv(RenownAssessment.RANKING_KEY, "{\"x\":1}")
         assertEquals("UNAVAILABLE", reader.yuedan(1, 41).status)
     }
 
