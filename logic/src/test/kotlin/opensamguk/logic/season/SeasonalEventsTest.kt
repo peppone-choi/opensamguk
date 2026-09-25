@@ -29,8 +29,12 @@ class SeasonalEventsTest {
     @Test
     fun `catalog requires confirmed numeric decisions and all event definitions`() {
         assertEquals(SeasonalEventKind.entries.size, SeasonalCatalog.parseRules(definitions, values).size)
+        val target = values.indexOf("\"id\": \"season-event:drought\"")
+        assertTrue(target >= 0)
+        val damagedValues = values.substring(0, target) +
+            values.substring(target).replaceFirst("\"CONFIRMED\"", "\"DRAFT\"")
         assertFailsWith<IllegalArgumentException> {
-            SeasonalCatalog.parseRules(definitions, values.replaceFirst("\"CONFIRMED\"", "\"DRAFT\""))
+            SeasonalCatalog.parseRules(definitions, damagedValues)
         }
         assertFailsWith<IllegalArgumentException> {
             SeasonalCatalog.parseRules(definitions.replaceFirst("\"GAME_TERM\"", "\"PRIMARY\""), values)
