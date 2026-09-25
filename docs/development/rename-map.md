@@ -47,6 +47,26 @@
 | `opensamguk.logic.input.HwihaWorkStep` | `opensamguk.logic.domestic.WorkStep` | 이 PR | 공사 단계 |
 | `logic/input/HwihaDomesticInputTest.kt` | `logic/domestic/DomesticInputTest.kt` | 이 PR | 입력 테스트 파일·타입·패키지 개명 |
 | `logic/input/HwihaDomesticEffectsTest.kt` | `logic/domestic/DomesticEffectsTest.kt` | 이 PR | 효과 테스트 파일·타입·패키지 개명 |
+| `logic/input/HwihaDomesticState.kt` | `logic/domestic/DomesticState.kt` | 이 PR | 상태 codec 파일·패키지 이동, meta 키는 저장 단계에서 별도 개명 |
+| `opensamguk.logic.input.HwihaPlacementOrder` | `opensamguk.logic.domestic.PlacementOrder` | 이 PR | 배치 접수 |
+| `opensamguk.logic.input.HwihaActivePlacement` | `opensamguk.logic.domestic.ActivePlacement` | 이 PR | 현행 배치 |
+| `opensamguk.logic.input.HwihaPlacementState` | `opensamguk.logic.domestic.PlacementState` | 이 PR | 배치 상태 |
+| `opensamguk.logic.input.HwihaPlacementMarch` | `opensamguk.logic.domestic.PlacementMarch` | 이 PR | 부임 행군 |
+| `opensamguk.logic.input.HwihaPolicySetting` | `opensamguk.logic.domestic.PolicySetting` | 이 PR | 현행 방침 |
+| `opensamguk.logic.input.HwihaPolicyOrder` | `opensamguk.logic.domestic.PolicyOrder` | 이 PR | 방침 접수 |
+| `opensamguk.logic.input.HwihaPolicySlot` | `opensamguk.logic.domestic.PolicySlot` | 이 PR | 현행·대기 방침 |
+| `opensamguk.logic.input.HwihaPolicyApplication` | `opensamguk.logic.domestic.PolicyApplication` | 이 PR | 적용 기록 |
+| `opensamguk.logic.input.HwihaCountyPolicyState` | `opensamguk.logic.domestic.CountyPolicyState` | 이 PR | 縣 방침 상태 |
+| `opensamguk.logic.input.HwihaCommanderyPolicy` | `opensamguk.logic.domestic.CommanderyPolicy` | 이 PR | 郡 방침 항목 |
+| `opensamguk.logic.input.HwihaCommanderyPolicies` | `opensamguk.logic.domestic.CommanderyPolicies` | 이 PR | 郡 방침 모음 |
+| `opensamguk.logic.input.HwihaCorpsPolicy` | `opensamguk.logic.domestic.CorpsPolicyAssignment` | 이 PR | 정책 enum `CorpsPolicy`와 구분되는 군단 방침 항목 |
+| `opensamguk.logic.input.HwihaCorpsPolicies` | `opensamguk.logic.domestic.CorpsPolicyAssignments` | 이 PR | 군단 방침 항목 모음 |
+| `opensamguk.logic.input.HwihaActiveWork` | `opensamguk.logic.domestic.ActiveWork` | 이 PR | 진행 중 공사 |
+| `opensamguk.logic.input.HwihaCompletedWork` | `opensamguk.logic.domestic.CompletedWork` | 이 PR | 완료 공사 |
+| `opensamguk.logic.input.HwihaCountyWorks` | `opensamguk.logic.domestic.CountyWorks` | 이 PR | 縣 공사 상태 |
+| `opensamguk.logic.input.HwihaCountyIndicators` | `opensamguk.logic.domestic.CountyIndicators` | 이 PR | 縣 지표 기록 |
+| `opensamguk.logic.input.HwihaCountyMonthly` | `opensamguk.logic.domestic.CountyMonthly` | 이 PR | 지난달 지표 |
+| `logic/input/HwihaDomesticStateTest.kt` | `logic/domestic/DomesticStateTest.kt` | 이 PR | 상태 codec 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
