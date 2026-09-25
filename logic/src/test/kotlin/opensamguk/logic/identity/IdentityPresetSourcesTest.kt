@@ -31,4 +31,10 @@ class IdentityPresetSourcesTest {
             "\"defaultWhenSourcesConflict\": \"PRIMARY\"")
         assertFailsWith<IllegalArgumentException> { IdentityPresetSources.parse(broken) }
     }
+
+    @Test
+    fun `missing preset is rejected before gameplay reads the catalogue`() {
+        val broken = payload.replaceFirst("\"id\": \"identity.none\"", "\"id\": \"identity.unknown\"")
+        assertFailsWith<IllegalArgumentException> { IdentityPresetSources.parse(broken) }
+    }
 }

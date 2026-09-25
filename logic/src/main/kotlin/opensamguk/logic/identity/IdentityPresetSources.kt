@@ -49,6 +49,13 @@ data class IdentityPresetSource(
 
 /** Source badges only; gameplay identity state and transitions are S6-8/S6-9 integration work. */
 object IdentityPresetSources {
+    private val expectedIds = setOf(
+        "identity.virtue", "identity.dao", "identity.bandit", "identity.names", "identity.mohist",
+        "identity.legalist", "identity.military", "identity.buddhist", "identity.wudoumi",
+        "identity.confucian", "identity.yinyang", "identity.diplomatist", "identity.taiping",
+        "identity.neutral", "identity.none",
+    )
+
     fun parse(payload: String): List<IdentityPresetSource> {
         val root = Json.parseToJsonElement(payload).jsonObject
         require(root.getValue("schemaVersion").jsonPrimitive.int == 1)
@@ -80,6 +87,7 @@ object IdentityPresetSources {
             )
         }
         require(rows.map { it.id }.distinct().size == rows.size)
+        require(rows.map { it.id }.toSet() == expectedIds)
         return rows.sortedBy { it.id }
     }
 
