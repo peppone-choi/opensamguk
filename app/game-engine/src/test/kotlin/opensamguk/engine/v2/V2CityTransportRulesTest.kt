@@ -12,8 +12,8 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.world.CalcCityDistance
 import opensamguk.logic.world.*
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.resolveImmediateCityTransportRoute
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.resolveImmediateCityTransportRoute
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import java.nio.file.Path
 import org.mockito.Mockito
@@ -207,7 +207,7 @@ class V2CityTransportRulesTest {
         for (variant in HanWorldVariant.entries) {
         val load = { artifacts.artifacts(variant).projection }
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
-            V2CityTransportArgs(273, 781, 100, 0, 0, null), load,
+            CityTransportArgs(273, 781, 100, 0, 0, null), load,
         )).path
         assertEquals(if (variant == HanWorldVariant.V3_1447_MAP4)
             listOf("land:45098", "land:45127", "land:45022")
@@ -256,7 +256,7 @@ class V2CityTransportRulesTest {
     fun `V3 stale topology or changed path rejects without any ledger delta`() {
         val projection = testProjection()
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
-            V2CityTransportArgs(1, 2, 100, 0, 0, null), { projection },
+            CityTransportArgs(1, 2, 100, 0, 0, null), { projection },
         )).path
         listOf(
             "old" to route.pathHash to "TOPOLOGY_REVISION_STALE",
@@ -283,7 +283,7 @@ class V2CityTransportRulesTest {
             testProjection(mode = TraversalMode.FERRY) to "TRANSPORT_MODE_UNSUPPORTED",
         ).forEach { (projection, code) ->
             val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
-                V2CityTransportArgs(1, 2, 100, 0, 0, null), { projection },
+                CityTransportArgs(1, 2, 100, 0, 0, null), { projection },
             )).path
             val h = handler(listOf(1, 2), mapName = "han-world-v3", loadTopology = { projection })
             lastLedger.adjust(lastWorld.worldId, ChangeRecorder(), 1, goldDelta = 1000)

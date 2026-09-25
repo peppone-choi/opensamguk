@@ -21,8 +21,8 @@ import opensamguk.gameapi.reserve.CommandWireMapper
 import opensamguk.gameapi.sanitize.HtmlSanitizer
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.RuleProfile
@@ -126,11 +126,11 @@ class CommandController(
             if (userId > Int.MAX_VALUE.toLong()) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             return try {
                 reserveAccepted(generalId, code, turnIdx, argJson, userId.toInt(), worldProfile)
-            } catch (denied: opensamguk.gameapi.reserve.HwihaAdmissionDenied) {
+            } catch (denied: opensamguk.gameapi.reserve.AdmissionDenied) {
                 ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
             }
         }
-        val v2Schema = V2CommandRegistry.resolve(code)
+        val v2Schema = CommandSchemaCatalog.resolve(code)
         if (v2Schema != null) {
             if (code == v2Schema.canonicalId) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UnknownCommandResponse())
@@ -139,13 +139,13 @@ class CommandController(
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             }
             val availability = validateLegacyV2Arguments(code, argJson)
-            if (availability !is V2CommandAvailability.Available) return availability.legacyError(code)
+            if (availability !is CommandAvailability.Available) return availability.legacyError(code)
             val reserved = reserve.reserveForOwner(generalId, code, turnIdx, argJson, userId.toInt())
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(
                 ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),
             )
         }
-        if (looksLikeV2Command(code) && V2CommandRegistry.resolve(code) == null) {
+        if (looksLikeV2Command(code) && CommandSchemaCatalog.resolve(code) == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(UnknownCommandResponse())
         }
         if (!isForecastReservable(code)) {
@@ -245,8 +245,8 @@ class CommandController(
     //     필드 보존). deny(ok=false)도 RESOLVED로 돌아온다 — 성공 토스트 위조 금지의 근거 데이터.
     //   - 손상 페이로드 → PENDING (RESOLVED를 위조하지 않는다).
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(opensamguk.gameapi.reserve.HwihaAdmissionDenied::class)
-    fun admissionDenied(denied: opensamguk.gameapi.reserve.HwihaAdmissionDenied): ResponseEntity<Any> =
+    @org.springframework.web.bind.annotation.ExceptionHandler(opensamguk.gameapi.reserve.AdmissionDenied::class)
+    fun admissionDenied(denied: opensamguk.gameapi.reserve.AdmissionDenied): ResponseEntity<Any> =
         ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to denied.code, "reason" to denied.message))
 
     /** 키 부재/손상 시의 PENDING 폴링 응답. */

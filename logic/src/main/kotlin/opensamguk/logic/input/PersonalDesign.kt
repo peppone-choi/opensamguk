@@ -27,7 +27,7 @@ data class PersonalDesign(
 
     companion object {
         const val CONFIRMED = "CONFIRMED"
-        private const val RESOURCE = "hwiha/hwiha-personal-v1.json"
+        private const val RESOURCE = "campaign/personal-v1.json"
         val CANON by lazy { parse(checkNotNull(PersonalDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
 
         fun parse(payload: String): PersonalDesign {
@@ -36,7 +36,7 @@ data class PersonalDesign(
                 "travelDedication", "trainingStatGain", "trainingStatCap", "trainingFatigueGain",
                 "recuperationInjuryRecovery", "recuperationFatigueRecovery", "retirementMinimumAge"))
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1 &&
-                root.getValue("ledgerId").jsonPrimitive.content == "hwiha-personal-v1" &&
+                root.getValue("ledgerId").jsonPrimitive.content == "personal-v1" &&
                 root.getValue("note").jsonPrimitive.content.isNotBlank())
             fun number(name: String) = root.getValue(name).jsonPrimitive.int
             return PersonalDesign(root.getValue("status").jsonPrimitive.content,

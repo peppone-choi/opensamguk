@@ -67,7 +67,7 @@ internal object WorldStateBaseline {
                     p.retreatMoraleBelow, p.sealedYear, p.sealedMonth, p.sealedPhase,
                     p.resolvedYear, p.resolvedMonth, p.resolvedPhase))
             }
-            world.listHwihaSieges().sortedBy { it.countyId }.forEach { s ->
+            world.listSieges().sortedBy { it.countyId }.forEach { s ->
                 add(listOf("siege", s.countyId, s.status, s.besiegerGeneralId,
                     s.besiegerOwnerGeneralId, s.besiegerNationId, s.defenderNationId,
                     s.startedYear, s.startedMonth, s.startedPhase, s.settledYear,

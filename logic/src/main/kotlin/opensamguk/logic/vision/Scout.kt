@@ -128,7 +128,7 @@ data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutRep
         "version" to 1, "tilesContentHash" to tilesContentHash, "reports" to reports.map { it.toMetaValue() })
 
     companion object {
-        const val META_KEY = "hwihaScoutReports"
+        const val META_KEY = "scoutReports"
 
         /** @throws IllegalArgumentException on a malformed notebook (the caller decides how to fail closed). */
         fun read(meta: Map<String, Any?>): ScoutReports? {
@@ -159,7 +159,7 @@ data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutRep
             })
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA scout reports")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid scout reports")
     }
 }
 
@@ -172,7 +172,7 @@ object ScoutCapture {
      * never shown to anyone else.
      */
     fun corpsKey(orderId: String): String = MessageDigest.getInstance("SHA-256")
-        .digest("hwiha-corps:$orderId".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }.take(16)
+        .digest("corps:$orderId".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }.take(16)
 
     /**
      * Snapshot of [target] now. Corps positions come from the commander's authoritative position; corps whose

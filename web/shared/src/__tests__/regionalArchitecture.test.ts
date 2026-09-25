@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ARCHITECTURE_BY_JU, architectureForJu } from '../iso/regionalArchitecture';
-import { cityFitSprite } from '../HanMapCanvas';
+import { cityFitSprite } from '../WorldMapCanvas';
 
 const world = JSON.parse(readFileSync(resolve(__dirname, '../../../../infra/src/main/resources/map/han-world-v3.json'), 'utf8')) as {
   cities: { meta?: { ju?: string } }[];

@@ -1154,7 +1154,7 @@ input:focus, select:focus, textarea:focus {
   .war-room > .game-info,
   .war-room > .main-page-content { max-width: 1440px; margin-inline: auto; }
 
-  /* 지도: 폭 종속 aspect-ratio 를 버리고 스테이지 높이를 채운다(HanMapCanvas 가 ResizeObserver 로 따라온다). */
+  /* 지도: 폭 종속 aspect-ratio 를 버리고 스테이지 높이를 채운다(WorldMapCanvas 가 ResizeObserver 로 따라온다). */
   .ib-map .map-viewer { display: flex; flex-direction: column; height: 100%; }
   /* 전장 행동은 양쪽 레일 사이의 지도 조작 공간 안에서 읽고 실행한다. */
   .war-room .ib-map .map-viewer {

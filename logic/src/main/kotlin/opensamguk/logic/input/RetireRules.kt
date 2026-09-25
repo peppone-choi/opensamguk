@@ -31,7 +31,7 @@ object RetireRules {
         if (request.actorId <= 0 || request.successorGeneralId <= 0 || request.actorId == request.successorGeneralId)
             return reject(RetireFailure.INVALID_INPUT)
         val actor = state.person(request.actorId) ?: return reject(RetireFailure.ACTOR_NOT_FOUND)
-        if (actor.meta["hwihaRetired"] == true || actor.npcState == 5) return reject(RetireFailure.ALREADY_RETIRED)
+        if (actor.meta["retired"] == true || actor.npcState == 5) return reject(RetireFailure.ALREADY_RETIRED)
         if (actor.inBattle) return reject(RetireFailure.BATTLE_PENDING)
         val successor = state.person(request.successorGeneralId) ?: return reject(RetireFailure.SUCCESSOR_UNAVAILABLE)
         val card = state.cards.singleOrNull { it.masterId == actor.id && it.generalId == successor.id }

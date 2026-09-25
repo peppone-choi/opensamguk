@@ -351,7 +351,7 @@ object DatabaseHooks {
         commanderRetainerId = b.commanderRetainerId, commanderBonusApplied = b.commanderBonusApplied,
     )
 
-    private fun toHwihaSiegeRow(v: opensamguk.engine.turn.HwihaSiege) = opensamguk.infra.persistence.HwihaSiegeRow(
+    private fun toSiegeRow(v: opensamguk.engine.turn.Siege) = opensamguk.infra.persistence.SiegeRow(
         countyId = v.countyId, status = v.status, besiegerGeneralId = v.besiegerGeneralId,
         besiegerOwnerGeneralId = v.besiegerOwnerGeneralId, besiegerOrderId = v.besiegerOrderId,
         besiegerNationId = v.besiegerNationId, defenderNationId = v.defenderNationId,
@@ -640,7 +640,7 @@ object DatabaseHooks {
         val createdOperationIds = dirty.createdOperations.map { it.id }.toSet()
         val createdOperationUnitIds = dirty.createdOperationUnits.map { it.id }.toSet()
         val createdBattlePlanIds = dirty.createdBattlePlans.map { it.id }.toSet()
-        val createdHwihaSiegeIds = dirty.createdHwihaSieges.map { it.countyId }.toSet()
+        val createdSiegeIds = dirty.createdSieges.map { it.countyId }.toSet()
 
         // Dirty rows from the recorder (the lone dirty source), resolved to the world's post-state.
         val updatedGenerals = recorder.dirtyGeneralIds()
@@ -755,8 +755,8 @@ object DatabaseHooks {
             deletedBattlePlanIds = dirty.deletedBattlePlans,
             battleReplayInserts = recorder.battleReplayInserts().map { BattleReplayInsertRow(it.columns) },
             // HWIHA 포위(8j) — 이번 틱 생성 행은 UPDATE 에서 제외.
-            createdHwihaSieges = dirty.createdHwihaSieges.map { toHwihaSiegeRow(it) },
-            updatedHwihaSieges = dirty.hwihaSieges.filter { it.countyId !in createdHwihaSiegeIds }.map { toHwihaSiegeRow(it) },
+            createdSieges = dirty.createdSieges.map { toSiegeRow(it) },
+            updatedSieges = dirty.sieges.filter { it.countyId !in createdSiegeIds }.map { toSiegeRow(it) },
             logEntries = logEntries,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),

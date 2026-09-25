@@ -13,6 +13,13 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
+| `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
+| `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
+| `web/game/lib/hwiha-scout.ts` | `web/game/lib/campaign-scout.ts` | 저장·통신 draft | 정찰 예약 함수 개명 |
+| `web/game/lib/hwiha-session.tsx` | `web/game/lib/campaign-session.tsx` | 저장·통신 draft | 세션 훅·판정 필드 개명 |
+| `web/game/lib/hwiha-map.ts` | `web/game/lib/campaign-map.ts` | 저장·통신 draft | 지도 훅·상수 개명; `han` 지도 번들 ID는 유지 |
+| `HanMapCanvasType` 테스트 별칭 | `WorldMapCanvasType` | 저장·통신 draft | 범용 캔버스 이름과 일치 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
@@ -114,30 +121,87 @@
 | `opensamguk.logic.input.SourceRead` | `opensamguk.logic.vision.SourceRead` | 이 PR | 시야 출처 읽기 결과 타입 패키지 이동 |
 | `logic/input/HwihaDomesticVisionContractTest.kt` | `logic/vision/VisionSourceContractTest.kt` | 이 PR | 내정·시야 계약 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
-| `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
+| `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName`과 inbox 저장값은 저장·통신 식별자 PR에서 변경 |
+
+| `LegacyCourt*` (API·engine 코드 타입/파일) | `CourtAction*` | #937 draft | 저장 키 `hwihaLegacyCourt*`는 저장 계약 단계에서 처리 |
+| `LegacyDirect*` (API·engine 코드 타입/파일) | `DirectAction*` | #937 draft | 저장 키 `hwihaLegacyDirect*`는 저장 계약 단계에서 처리 |
+| `LegacyStratagem*` (API·engine 코드 타입/파일) | `StratagemAction*` | #937 draft | 저장 키 `hwihaLegacyStratagem*`는 저장 계약 단계에서 처리 |
+| `QueuedLegacyCourt`, `QueuedLegacyStratagem` | `QueuedCourtAction`, `QueuedStratagemAction` | #937 draft | 직렬화 meta 키 값은 별도 처리 |
+| `logic/world/HanMapConnectivityTest.kt` | `logic/world/WorldMapConnectivityTest.kt` | #937 draft | 특정 `han` 지도 픽스처는 유지 |
+
+| `opensamguk.common.wire.v2` | `opensamguk.common.wire.command` | 후속 draft | 코드 패키지, 와이어 값 유지 |
+| `opensamguk.logic.v2.command` | `opensamguk.logic.command` | 후속 draft | 입력 명령 계약 패키지 |
+| `opensamguk.logic.v2.evidence` | `opensamguk.logic.evidence` | 후속 draft | 사료 근거 계약 패키지 |
+| `opensamguk.logic.v2.geo` | `opensamguk.logic.geo` | 후속 draft | 지리 계약 패키지 |
+
+| `V2CommandRegistry` | `CommandSchemaCatalog` | 후속 draft | 삼모 `CommandRegistry`와 이름 충돌 방지 |
+| `V2Command*`, `V2GarrisonRecruit*`, `V2CityTransport*` (common/logic 계약) | 접두사 없는 도메인 타입 | 후속 draft | 명령 코드 문자열 `v2…`은 저장·통신 단계 |
+| `V2CommandResultEnvelope`, `V2TurnEventEnvelope` | `CommandResultEnvelope`, `TurnEventEnvelope` | 후속 draft | `schemaVersion` 값 유지 |
+| `V2_*` (공용 와이어·명령 수치 상수) | 접두사 없는 상수 | 후속 draft | 값 유지 |
 
 ## 정한 값의 근거
 
-- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`과 `command_inbox.action_code` 값 `HwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.
+- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 첫 코드 개명 PR은 Kotlin 타입만 바꾸고 저장 값을 유지했다. 저장·통신 식별자 PR에서 discriminator `hwihaCourtInput`은 `immediateInput`, `command_inbox.action_code` 값 `HwihaCourtInput`은 `ImmediateInput`으로 바꾸고 producer·consumer·직렬화 테스트를 함께 갱신한다.
 - `worldFormat = GENERAL_RETAINER_CAMPAIGN`은 유일한 제품 세계의 구조를 명시한다. 새 가드는 키·값이 없거나 옛 `ruleProfile`이 있으면 실패한다. 이전 데이터 자동 해석은 넣지 않는다.
 - DB의 `siege`와 `person_card`는 현행 스키마에 같은 이름이 없어 충돌하지 않는다. 이름 변경은 새 Flyway 파일로만 실행한다.
 - 상태 키 79종의 새 이름은 `hwiha` 접두사를 제거하되 현행 제품 의미가 남은 `Legacy`를 도메인 이름으로 풀어 썼다. 키 이름이 같은 다른 JSON 층(예: `corpsPolicies`)과 합쳐지지 않는지는 reader·writer별 픽스처에서 확인한다.
+
+## 결정론 해시 도메인 구분자
+
+| 이전 | 확정 이름 | 이유 |
+|---|---|---|
+| `hwihaBattlePlayback:v1` | `battlePlayback:v1` | 제품 접두사 제거; 재생 해시가 달라짐 |
+| `hwihaEncounterResolution:v${RULE_VERSION}` | `encounterResolution:v${RULE_VERSION}` | 제품 접두사 제거; 조우 스냅샷 해시가 달라짐 |
+| `hwihaSiegeAssault:v${RULE_VERSION}` | `siegeAssault:v${RULE_VERSION}` | 제품 접두사 제거; 공성 결과 해시가 달라짐 |
+| `hwihaBattleJournal:v1` | `battleJournal:v1` | 전투 기록 해시 입력의 제품 접두사 제거 |
+| `hwihaBattlePlans:v1` | `battlePlans:v1` | 전투 계획 해시 입력의 제품 접두사 제거 |
+| `hwiha-corps:<orderId>` | `corps:<orderId>` | #950에서 정찰 관측 ID의 해시 도메인 변경; 기존 관측 ID는 재사용하지 않음 |
 
 ## 저장·통신 식별자
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
-| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | 도메인별 즉시 입력 값 | 예정 | #919에서는 기존 값 고정; 새 값은 저장·통신 단계에서 확정 |
+| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | `ImmediateInput` | 저장·통신 draft | #919에서는 기존 값 고정; reset 전 새 값으로 확정 |
+| 와이어 discriminator `hwihaCourtInput` | `immediateInput` | 저장·통신 draft | `@SerialName`과 `type` 갱신 |
 | `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
-| `hwiha_siege` | `siege` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
-| `hwiha_person_card` | `person_card` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
-| `/api/hwiha/*` | 도메인별 `/api/*` | 예정 | 엔드포인트별 경로 확정 필요 |
-| `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 예정 | 옛 경로 308 리다이렉트 |
-| `data/**/hwiha-*.json` | 도메인별 파일명 | 예정 | 해시·핀·패키징 동시 갱신 |
+| `hwiha_siege` | `siege` | DB 식별자 draft | V64에서 표·제약·인덱스 개명, V61 원본 유지 |
+| `hwiha_person_card` | `person_card` | DB 식별자 draft | V64에서 뷰 개명과 새 meta 키 투영, V63 원본 유지 |
+| `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
+| `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 저장·통신 draft | Next 경로 그룹 `(campaign)`으로 화면 이동; 옛 서버 경로와 서버 없는 경로 308 리다이렉트 |
+| `data/**/hwiha-*.json` | 도메인별 파일명 | 저장·통신 draft | 18개 파일·내부 ID·빌드 패키징·로더·생성기 경로 동시 갱신 |
+| `hwiha-stratagem-fortify`, `hwiha-stratagem-insight` | `stratagem-fortify`, `stratagem-insight` | 카드 ID 후속 | 카드 원장·기여 상태의 저장 ID 변경; pep 리셋 전 적용 |
+| `hwiha_*` 엔진 경고 이벤트 이름 | `campaign_*` | 카드 ID 후속 | 캠페인 경고 로그의 제품 접두사 제거 |
+
+## 데이터 파일·리소스 대응
+
+| 이전 | 확정 이름 |
+|---|---|
+| `data/battle/hwiha-unit-profiles-v1.json` | `data/battle/unit-profiles-v1.json` |
+| `data/commands/hwiha-input-catalog.json` | `data/commands/input-catalog.json` |
+| `data/curated/han/hwiha-aptitude-weights-v1.json` | `data/curated/han/aptitude-weights-v1.json` |
+| `data/curated/han/hwiha-s3-provisional-v1.json` | `data/curated/han/campaign-balance-v1.json` |
+| `data/curated/han/hwiha-legacy-direct-v1.json` | `data/curated/han/direct-actions-v1.json` |
+| `data/curated/han/hwiha-domestic-v1.json` | `data/curated/han/domestic-v1.json` |
+| `data/curated/han/hwiha-equipment-v1.json` | `data/curated/han/equipment-v1.json` |
+| `data/curated/han/hwiha-items-excluded-v1.json` | `data/curated/han/items-excluded-v1.json` |
+| `data/curated/han/hwiha-military-v1.json` | `data/curated/han/military-v1.json` |
+| `data/curated/han/hwiha-people-v1.json` | `data/curated/han/people-v1.json` |
+| `data/curated/han/hwiha-personal-encounter-v1.json` | `data/curated/han/personal-encounter-v1.json` |
+| `data/curated/han/hwiha-personal-v1.json` | `data/curated/han/personal-v1.json` |
+| `data/curated/han/hwiha-political-v1.json` | `data/curated/han/political-v1.json` |
+| `data/curated/han/hwiha-renown-assessment-v1.json` | `data/curated/han/renown-assessment-v1.json` |
+| `data/curated/han/hwiha-renown-events-v1.json` | `data/curated/han/renown-events-v1.json` |
+| `data/curated/han/hwiha-resource-production-v1.json` | `data/curated/han/resource-production-v1.json` |
+| `data/curated/han/hwiha-treasure-cards-v1.json` | `data/curated/han/treasure-cards-v1.json` |
+| `data/curated/han/hwiha-vision-rules-v1.json` | `data/curated/han/vision-rules-v1.json` |
+
+classpath `hwiha/`는 `campaign/`으로 옮겼다. `tools/map/build_hwiha_resource_production.py`는 `build_county_resource_production.py`, `tools/content/build_hwiha_item_ledgers.py`는 `build_item_ledgers.py`가 되었으며, 생성 원장과 런타임 파일의 내부 ID·generator·sourceLedger도 새 이름을 쓴다. 지도 번들 판 ID(`han-world-v3-1447` 등)는 세계 핀 계약이므로 유지한다.
+
+E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 각각 `court`, `yuzhou`로 옮겼다. 라이브 스펙은 `court-live.spec.ts`, `yuzhou-live.spec.ts`이며 실행 환경 변수는 `E2E_COURT_LIVE`, `E2E_YUZHOU_LIVE`다. 예약 서버 ID 목록 8곳은 드리프트 검사 `tools/ci/check_reserved_server_ids.py`로 묶었다.
 
 ## 상태·시나리오 필드 대응
 
-소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 변경 PR에서는 reader·writer·fixture의 동일 키 교체와 옛 키 거절을 함께 검증한다.
+소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 저장 식별자 PR에서 reader·writer·fixture 130파일의 347참조를 같은 이름으로 교체했다. 옛 키 거절은 후속 세계 형식 가드에서 검증할 예정이다. 그 가드와 pep C단계 리셋 전에는 이 코드로 게임 서버를 승격하지 않는다.
 
 | 이전 키 | 확정 키 | 현행 사용 위치 예시 |
 |---|---|---|
@@ -630,6 +694,702 @@
 | `HwihaTreasureDefinition` | `TreasureDefinition` |
 | `HwihaTreasureState` | `TreasureState` |
 
+## 인프라·엔진·API 코드 개명
+
+제품 접두사를 제거한 순수 코드 이름 변경이다. 저장·통신 키와 값은 별도 단계에서 바꾼다. 아래 타입 이름은 해당 파일의 원래 패키지에서 사용한다.
+
+| 이전 파일 | 새 파일 |
+|---|---|
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/HwihaCampDto.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/CampDto.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/HwihaDeployDtos.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/DeployDtos.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/HwihaDispatchDto.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/DispatchDto.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/HwihaDomesticDto.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/DomesticDto.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/HwihaSiegeDto.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/SiegeDto.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/HwihaVisionDtos.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/dto/VisionDtos.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaDeployPrecheckService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/DeployPrecheckService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaDispatchPrecheckService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/DispatchPrecheckService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaEnlistmentPrecheckService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/EnlistmentPrecheckService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaFieldOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/FieldOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaLegacyCourtOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/LegacyCourtOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaLegacyDirectOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/LegacyDirectOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaLegacyStratagemOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/LegacyStratagemOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaMilitaryOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/MilitaryOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaPeopleOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/PeopleOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaPersonalOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/PersonalOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaPoliticalOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/PoliticalOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaRetireOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/RetireOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaTransferOptionsService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/TransferOptionsService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/HwihaTravelPrecheckService.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/precheck/TravelPrecheckService.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaCampLedgers.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/CampLedgers.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaCampReader.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/CampReader.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaDomesticReader.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/DomesticReader.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaLastTurnsReader.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/LastTurnsReader.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaRecordReadRepository.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/RecordReadRepository.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaSiegeReadRepository.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/SiegeReadRepository.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaSiegeReader.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/SiegeReader.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaStratagemHandReader.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/StratagemHandReader.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/read/HwihaVisionReader.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/read/VisionReader.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaCourtAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/CourtAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaDeployAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/DeployAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaDomesticAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/DomesticAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaEnlistmentAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/EnlistmentAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaFieldAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/FieldAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaLegacyDirectAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/LegacyDirectAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaMilitaryAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/MilitaryAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaPeopleAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/PeopleAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaPersonalAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/PersonalAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaPoliticalAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/PoliticalAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaRetireAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/RetireAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaScoutAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/ScoutAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaTransferAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/TransferAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/HwihaTravelAdmission.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/reserve/TravelAdmission.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaCampController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/CampController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaCourtController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/CourtController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaDeployController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/DeployController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaDispatchReadController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/DispatchReadController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaDomesticController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/DomesticController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaEnlistmentOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/EnlistmentOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaFieldOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/FieldOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaLastTurnsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/LastTurnsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaLegacyCourtOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/LegacyCourtOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaLegacyDirectOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/LegacyDirectOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaLegacyStratagemController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/LegacyStratagemController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaMilitaryOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/MilitaryOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaPeopleOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/PeopleOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaPersonalOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/PersonalOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaPoliticalOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/PoliticalOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaRetireOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/RetireOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaSiegeController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/SiegeController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaStratagemHandController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/StratagemHandController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaTransferOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/TransferOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaTravelOptionsController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/TravelOptionsController.kt` |
+| `app/game-api/src/main/kotlin/opensamguk/gameapi/web/HwihaVisionController.kt` | `app/game-api/src/main/kotlin/opensamguk/gameapi/web/VisionController.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/HwihaDeployPrecheckServiceTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/DeployPrecheckServiceTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/HwihaDispatchPrecheckServiceTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/DispatchPrecheckServiceTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/HwihaEnlistmentPrecheckServiceTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/EnlistmentPrecheckServiceTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/HwihaTravelPrecheckServiceTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/precheck/TravelPrecheckServiceTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/read/HwihaCampReaderTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/read/CampReaderTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/read/HwihaDomesticViewsTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/read/DomesticViewsTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/read/HwihaLastTurnsReaderTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/read/LastTurnsReaderTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/read/HwihaSiegeReaderTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/read/SiegeReaderTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/read/HwihaVisionReaderTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/read/VisionReaderTest.kt` |
+| `app/game-api/src/test/kotlin/opensamguk/gameapi/reserve/HwihaReservableActionsTest.kt` | `app/game-api/src/test/kotlin/opensamguk/gameapi/reserve/ReservableActionsTest.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaAssignmentMarchExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/AssignmentMarchExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaAssignmentMarchTurn.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/AssignmentMarchTurn.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCapitalAfterCapture.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CapitalAfterCapture.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCityMilitaryHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CityMilitaryHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCorpsEncounterRecorder.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CorpsEncounterRecorder.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCorpsMarchExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CorpsMarchExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCorpsMarchTurn.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CorpsMarchTurn.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCorpsRations.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CorpsRations.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCountyMeritWindow.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CountyMeritWindow.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCourtHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/CourtHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDeployHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DeployHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDeploymentExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DeploymentExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDispatchExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DispatchExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDomesticBoundary.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DomesticBoundary.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDomesticContext.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DomesticContext.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDomesticHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DomesticHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaDomesticTurn.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/DomesticTurn.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaEncounterResolver.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/EncounterResolver.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaEnlistmentExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/EnlistmentExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaEnlistmentHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/EnlistmentHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaEnlistmentPolicy.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/EnlistmentPolicyReader.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaFieldHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/FieldHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaGovernanceMeritRenownSink.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/GovernanceMeritRenownSink.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaLegacyCourtExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/LegacyCourtExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaLegacyDirectHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/LegacyDirectHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaLegacyStratagemExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/LegacyStratagemExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMarchReactionInterpreter.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MarchReactionInterpreter.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMarchReactionPolicy.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MarchReactionPolicy.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMilitaryPresenceProvider.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MilitaryPresenceProvider.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMonthlyAssessment.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MonthlyAssessment.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMonthlyCountyIncome.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MonthlyCountyIncome.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMonthlySalary.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MonthlySalary.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMusterHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/MusterHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcCityMilitarySelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcCityMilitarySelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcDeploySelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcDeploySelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcDispatchSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcDispatchSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcEnlistmentSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcEnlistmentSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcFieldSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcFieldSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcMusterSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcMusterSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcPeopleSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcPeopleSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcPersonalSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcPersonalSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaNpcRetireSelector.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/NpcRetireSelector.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPeopleHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PeopleHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPersonDeckProjection.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PersonDeckProjection.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPersonalEncounter.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PersonalEncounter.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPersonalHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PersonalHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPersonalTurn.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PersonalTurn.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPhaseBoundary.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PhaseBoundary.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPlacementMarch.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PlacementMarch.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaPoliticalHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/PoliticalHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaReactionInventory.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/ReactionInventory.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaRecords.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/Records.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaRenownEventRecorder.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/RenownEventRecorder.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaRetireHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/RetireHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaRewardExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/RewardExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaScoutHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/ScoutHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaSiegeHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/SiegeHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaSiegeService.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/SiegeService.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaStratagemDraw.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/StratagemDraw.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaTransferHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/TransferHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaTravelExecutor.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/TravelExecutor.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaTravelHandler.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/TravelHandler.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaTravelTurn.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/TravelTurn.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaTurnOutcome.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/TurnOutcome.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaUnitResupply.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/UnitResupply.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaWarOutcomeListener.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/WarOutcomeListener.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaWarOutcomeRenownListener.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/WarOutcomeRenownListener.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaWarehouseNetwork.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/WarehouseNetwork.kt` |
+| `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaWarehouseSettlement.kt` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/WarehouseSettlement.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaCourtApiIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/CourtApiIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaCourtRecoveryIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/CourtRecoveryIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaCreatedPersonPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/CreatedPersonPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaDeploymentPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/DeploymentPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaDispatchPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/DispatchPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaDomesticPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/DomesticPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaEnlistmentApiIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/EnlistmentApiIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaEnlistmentFixture.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/EnlistmentFixture.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaEnlistmentPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/EnlistmentPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaMarchPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/MarchPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaMonthBoundaryLoopIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/MonthBoundaryLoopIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaMonthlyIncomePersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/MonthlyIncomePersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaNpcCourtFlowApiIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/NpcCourtFlowApiIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaNpcDispatchPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/NpcDispatchPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaS3PassChainProbeIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/S3PassChainProbeIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaScoutPersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/ScoutPersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaStratagemHandApiIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/StratagemHandApiIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/boot/HwihaWarehousePersistenceIT.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/boot/WarehousePersistenceIT.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaCampaignWorldFixture.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/CampaignWorldFixture.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaCapitalAfterCaptureTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/CapitalAfterCaptureTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaCityMilitaryHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/CityMilitaryHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaDispatchExecutorTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/DispatchExecutorTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaDomesticEngineTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/DomesticEngineTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaEconomyBoundaryTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/EconomyBoundaryTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaEncounterResolverTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/EncounterResolverTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaEnlistmentExecutorTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/EnlistmentExecutorTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaEnlistmentHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/EnlistmentHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaEnlistmentPolicyTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/EnlistmentPolicyReaderTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaFieldHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/FieldHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaGovernanceMeritWiringTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/GovernanceMeritWiringTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaLegacyCourtHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/LegacyCourtHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaLegacyDirectHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/LegacyDirectHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaLegacyStratagemHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/LegacyStratagemHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaMarchReactionInterpreterTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/MarchReactionInterpreterTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaMarchReactionPolicyTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/MarchReactionPolicyTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaMonthlyCountyIncomeTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/MonthlyCountyIncomeTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaMusterHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/MusterHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaNpcDeploySelectorTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/NpcDeploySelectorTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaNpcDispatchSelectorTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/NpcDispatchSelectorTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaNpcEnlistmentSelectorTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/NpcEnlistmentSelectorTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaNpcWarBranchesTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/NpcWarBranchesTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaPeopleHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/PeopleHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaPersonalHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/PersonalHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaPoliticalHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/PoliticalHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaRenownRecordsTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/RenownRecordsTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaReservedTurnRejectionTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/ReservedTurnRejectionTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaRetireHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/RetireHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaScoutHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/ScoutHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaSiegeServiceTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/SiegeServiceTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaTransferHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/TransferHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaTravelExecutorTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/TravelExecutorTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaTravelHandlerTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/TravelHandlerTest.kt` |
+| `app/game-engine/src/test/kotlin/opensamguk/engine/intake/HwihaDeploymentEditGuardTest.kt` | `app/game-engine/src/test/kotlin/opensamguk/engine/intake/DeploymentEditGuardTest.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/persistence/HwihaSiegeRow.kt` | `infra/src/main/kotlin/opensamguk/infra/persistence/SiegeRow.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/seed/HwihaCountyGeographyJson.kt` | `infra/src/main/kotlin/opensamguk/infra/seed/CountyGeographyJson.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/seed/HwihaCountyProductionJson.kt` | `infra/src/main/kotlin/opensamguk/infra/seed/CountyProductionJson.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/seed/HwihaScenarioPersonPolicies.kt` | `infra/src/main/kotlin/opensamguk/infra/seed/ScenarioPersonPolicies.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/seed/HwihaScenarioUnits.kt` | `infra/src/main/kotlin/opensamguk/infra/seed/ScenarioUnits.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/seed/HwihaScenarioWarehouseSeeds.kt` | `infra/src/main/kotlin/opensamguk/infra/seed/ScenarioWarehouseSeeds.kt` |
+| `infra/src/main/kotlin/opensamguk/infra/seed/HwihaUnitProfilesJson.kt` | `infra/src/main/kotlin/opensamguk/infra/seed/UnitProfilesJson.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaBattlefieldLayoutArtifactTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/BattlefieldLayoutArtifactTest.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaCountyGeographyJsonTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/CountyGeographyJsonTest.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaCountyProductionJsonTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/CountyProductionJsonTest.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaScenarioPersonPoliciesTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/ScenarioPersonPoliciesTest.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaScenarioWarehouseSeedsTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/ScenarioWarehouseSeedsTest.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaUnitProfilesJsonTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/UnitProfilesJsonTest.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaWarehouseSeedIT.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/WarehouseSeedIT.kt` |
+| `infra/src/test/kotlin/opensamguk/infra/seed/HwihaYuzhouSliceScenarioTest.kt` | `infra/src/test/kotlin/opensamguk/infra/seed/YuzhouSliceScenarioTest.kt` |
+
+| 이전 타입 | 새 타입 |
+|---|---|
+| `HwihaActivePlacementDto` | `ActivePlacementDto` |
+| `HwihaActiveWorkDto` | `ActiveWorkDto` |
+| `HwihaAdmissionDenied` | `AdmissionDenied` |
+| `HwihaAptitudesDto` | `AptitudesDto` |
+| `HwihaAssignmentMarchExecutor` | `AssignmentMarchExecutor` |
+| `HwihaAssignmentMarchTurn` | `AssignmentMarchTurn` |
+| `HwihaBattlefieldLayoutArtifactTest` | `BattlefieldLayoutArtifactTest` |
+| `HwihaBondDto` | `BondDto` |
+| `HwihaCampController` | `CampController` |
+| `HwihaCampForbidden` | `CampForbidden` |
+| `HwihaCampLedgers` | `CampLedgers` |
+| `HwihaCampReader` | `CampReader` |
+| `HwihaCampReaderTest` | `CampReaderTest` |
+| `HwihaCampaignWorldFixture` | `CampaignWorldFixture` |
+| `HwihaCapitalAfterCapture` | `CapitalAfterCapture` |
+| `HwihaCapitalAfterCaptureTest` | `CapitalAfterCaptureTest` |
+| `HwihaCityGeography` | `CityGeography` |
+| `HwihaCityMilitaryHandler` | `CityMilitaryHandler` |
+| `HwihaCityMilitaryHandlerTest` | `CityMilitaryHandlerTest` |
+| `HwihaCodeLabel` | `CodeLabel` |
+| `HwihaCommanderyPolicyDto` | `CommanderyPolicyDto` |
+| `HwihaCompletedWorkDto` | `CompletedWorkDto` |
+| `HwihaCorpsDto` | `CorpsDto` |
+| `HwihaCorpsEncounterRecorder` | `CorpsEncounterRecorder` |
+| `HwihaCorpsMarchExecutor` | `CorpsMarchExecutor` |
+| `HwihaCorpsMarchTurn` | `CorpsMarchTurn` |
+| `HwihaCorpsPolicyDto` | `CorpsPolicyDto` |
+| `HwihaCorpsRations` | `CorpsRations` |
+| `HwihaCorpsResponse` | `CorpsResponse` |
+| `HwihaCountyGeographyJson` | `CountyGeographyJson` |
+| `HwihaCountyGeographyJsonTest` | `CountyGeographyJsonTest` |
+| `HwihaCountyMeritWindow` | `CountyMeritWindow` |
+| `HwihaCountyPolicyDto` | `CountyPolicyDto` |
+| `HwihaCountyProductionJson` | `CountyProductionJson` |
+| `HwihaCountyProductionJsonTest` | `CountyProductionJsonTest` |
+| `HwihaCountyResponse` | `CountyResponse` |
+| `HwihaCountyWorksDto` | `CountyWorksDto` |
+| `HwihaCourtAdmission` | `CourtAdmission` |
+| `HwihaCourtApiIT` | `CourtApiIT` |
+| `HwihaCourtController` | `CourtController` |
+| `HwihaCourtExecution` | `CourtExecution` |
+| `HwihaCourtHandler` | `CourtHandler` |
+| `HwihaCourtRecoveryIT` | `CourtRecoveryIT` |
+| `HwihaCreatedPersonPersistenceIT` | `CreatedPersonPersistenceIT` |
+| `HwihaDeployAdmission` | `DeployAdmission` |
+| `HwihaDeployBugok` | `DeployBugok` |
+| `HwihaDeployController` | `DeployController` |
+| `HwihaDeployDestination` | `DeployDestination` |
+| `HwihaDeployHandler` | `DeployHandler` |
+| `HwihaDeployOptions` | `DeployOptions` |
+| `HwihaDeployOrder` | `DeployOrder` |
+| `HwihaDeployPrecheckService` | `DeployPrecheckService` |
+| `HwihaDeployPrecheckServiceTest` | `DeployPrecheckServiceTest` |
+| `HwihaDeploymentEditGuardTest` | `DeploymentEditGuardTest` |
+| `HwihaDeploymentExecutor` | `DeploymentExecutor` |
+| `HwihaDeploymentPersistenceIT` | `DeploymentPersistenceIT` |
+| `HwihaDispatchExecutor` | `DispatchExecutor` |
+| `HwihaDispatchExecutorTest` | `DispatchExecutorTest` |
+| `HwihaDispatchPersistenceIT` | `DispatchPersistenceIT` |
+| `HwihaDispatchPrecheckService` | `DispatchPrecheckService` |
+| `HwihaDispatchPrecheckServiceTest` | `DispatchPrecheckServiceTest` |
+| `HwihaDispatchReadController` | `DispatchReadController` |
+| `HwihaDomesticAdmission` | `DomesticAdmission` |
+| `HwihaDomesticBoundary` | `DomesticBoundary` |
+| `HwihaDomesticContext` | `DomesticContext` |
+| `HwihaDomesticController` | `DomesticController` |
+| `HwihaDomesticCountyEffects` | `DomesticCountyEffects` |
+| `HwihaDomesticEngineTest` | `DomesticEngineTest` |
+| `HwihaDomesticForbidden` | `DomesticForbidden` |
+| `HwihaDomesticHandler` | `DomesticHandler` |
+| `HwihaDomesticPersistenceIT` | `DomesticPersistenceIT` |
+| `HwihaDomesticReader` | `DomesticReader` |
+| `HwihaDomesticSnapshot` | `DomesticSnapshot` |
+| `HwihaDomesticTurn` | `DomesticTurn` |
+| `HwihaDomesticViews` | `DomesticViews` |
+| `HwihaDomesticViewsTest` | `DomesticViewsTest` |
+| `HwihaEconomyBoundaryTest` | `EconomyBoundaryTest` |
+| `HwihaEffectivePolicyDto` | `EffectivePolicyDto` |
+| `HwihaEncounterResolver` | `EncounterResolver` |
+| `HwihaEncounterResolverTest` | `EncounterResolverTest` |
+| `HwihaEnlistmentAdmission` | `EnlistmentAdmission` |
+| `HwihaEnlistmentApiIT` | `EnlistmentApiIT` |
+| `HwihaEnlistmentExecutor` | `EnlistmentExecutor` |
+| `HwihaEnlistmentExecutorTest` | `EnlistmentExecutorTest` |
+| `HwihaEnlistmentFixture` | `EnlistmentFixture` |
+| `HwihaEnlistmentHandler` | `EnlistmentHandler` |
+| `HwihaEnlistmentHandlerTest` | `EnlistmentHandlerTest` |
+| `HwihaEnlistmentOptionsController` | `EnlistmentOptionsController` |
+| `HwihaEnlistmentPersistenceIT` | `EnlistmentPersistenceIT` |
+| `HwihaEnlistmentPolicy` | `EnlistmentPolicyReader` |
+| `HwihaEnlistmentPolicyResult` | `EnlistmentPolicyResult` |
+| `HwihaEnlistmentPolicyTest` | `EnlistmentPolicyReaderTest` |
+| `HwihaEnlistmentPrecheckService` | `EnlistmentPrecheckService` |
+| `HwihaEnlistmentPrecheckServiceTest` | `EnlistmentPrecheckServiceTest` |
+| `HwihaFieldAdmission` | `FieldAdmission` |
+| `HwihaFieldHandler` | `FieldHandler` |
+| `HwihaFieldHandlerTest` | `FieldHandlerTest` |
+| `HwihaFieldOptions` | `FieldOptions` |
+| `HwihaFieldOptionsController` | `FieldOptionsController` |
+| `HwihaFieldOptionsService` | `FieldOptionsService` |
+| `HwihaFiveStatsDto` | `FiveStatsDto` |
+| `HwihaGovernanceMeritRenownSink` | `GovernanceMeritRenownSink` |
+| `HwihaGovernanceMeritWiringTest` | `GovernanceMeritWiringTest` |
+| `HwihaLastTurnDto` | `LastTurnDto` |
+| `HwihaLastTurnsController` | `LastTurnsController` |
+| `HwihaLastTurnsReader` | `LastTurnsReader` |
+| `HwihaLastTurnsReaderTest` | `LastTurnsReaderTest` |
+| `HwihaLastTurnsResponse` | `LastTurnsResponse` |
+| `HwihaLegacyCourtChoice` | `LegacyCourtChoice` |
+| `HwihaLegacyCourtExecutor` | `LegacyCourtExecutor` |
+| `HwihaLegacyCourtHandlerTest` | `LegacyCourtHandlerTest` |
+| `HwihaLegacyCourtOptions` | `LegacyCourtOptions` |
+| `HwihaLegacyCourtOptionsController` | `LegacyCourtOptionsController` |
+| `HwihaLegacyCourtOptionsService` | `LegacyCourtOptionsService` |
+| `HwihaLegacyDirectAdmission` | `LegacyDirectAdmission` |
+| `HwihaLegacyDirectChoice` | `LegacyDirectChoice` |
+| `HwihaLegacyDirectHandler` | `LegacyDirectHandler` |
+| `HwihaLegacyDirectHandlerTest` | `LegacyDirectHandlerTest` |
+| `HwihaLegacyDirectOptions` | `LegacyDirectOptions` |
+| `HwihaLegacyDirectOptionsController` | `LegacyDirectOptionsController` |
+| `HwihaLegacyDirectOptionsService` | `LegacyDirectOptionsService` |
+| `HwihaLegacyStratagemChoice` | `LegacyStratagemChoice` |
+| `HwihaLegacyStratagemController` | `LegacyStratagemController` |
+| `HwihaLegacyStratagemExecutor` | `LegacyStratagemExecutor` |
+| `HwihaLegacyStratagemHandlerTest` | `LegacyStratagemHandlerTest` |
+| `HwihaLegacyStratagemOptions` | `LegacyStratagemOptions` |
+| `HwihaLegacyStratagemOptionsService` | `LegacyStratagemOptionsService` |
+| `HwihaMarchPersistenceIT` | `MarchPersistenceIT` |
+| `HwihaMarchReactionInterpreter` | `MarchReactionInterpreter` |
+| `HwihaMarchReactionInterpreterTest` | `MarchReactionInterpreterTest` |
+| `HwihaMarchReactionPolicy` | `MarchReactionPolicy` |
+| `HwihaMarchReactionPolicyTest` | `MarchReactionPolicyTest` |
+| `HwihaMilitaryAdmission` | `MilitaryAdmission` |
+| `HwihaMilitaryOptions` | `MilitaryOptions` |
+| `HwihaMilitaryOptionsController` | `MilitaryOptionsController` |
+| `HwihaMilitaryOptionsService` | `MilitaryOptionsService` |
+| `HwihaMilitaryPresenceProvider` | `MilitaryPresenceProvider` |
+| `HwihaMonthBoundaryLoopIT` | `MonthBoundaryLoopIT` |
+| `HwihaMonthlyAssessment` | `MonthlyAssessment` |
+| `HwihaMonthlyCountyIncome` | `MonthlyCountyIncome` |
+| `HwihaMonthlyCountyIncomeTest` | `MonthlyCountyIncomeTest` |
+| `HwihaMonthlyIncomePersistenceIT` | `MonthlyIncomePersistenceIT` |
+| `HwihaMonthlySalary` | `MonthlySalary` |
+| `HwihaMusterHandler` | `MusterHandler` |
+| `HwihaMusterHandlerTest` | `MusterHandlerTest` |
+| `HwihaNationSummaryEntryDto` | `NationSummaryEntryDto` |
+| `HwihaNpcCityMilitarySelector` | `NpcCityMilitarySelector` |
+| `HwihaNpcCourtFlowApiIT` | `NpcCourtFlowApiIT` |
+| `HwihaNpcDeploySelector` | `NpcDeploySelector` |
+| `HwihaNpcDeploySelectorTest` | `NpcDeploySelectorTest` |
+| `HwihaNpcDispatchPersistenceIT` | `NpcDispatchPersistenceIT` |
+| `HwihaNpcDispatchSelector` | `NpcDispatchSelector` |
+| `HwihaNpcDispatchSelectorTest` | `NpcDispatchSelectorTest` |
+| `HwihaNpcEnlistmentSelector` | `NpcEnlistmentSelector` |
+| `HwihaNpcEnlistmentSelectorTest` | `NpcEnlistmentSelectorTest` |
+| `HwihaNpcFieldSelector` | `NpcFieldSelector` |
+| `HwihaNpcMusterSelector` | `NpcMusterSelector` |
+| `HwihaNpcPeopleSelector` | `NpcPeopleSelector` |
+| `HwihaNpcPersonalSelector` | `NpcPersonalSelector` |
+| `HwihaNpcRetireSelector` | `NpcRetireSelector` |
+| `HwihaNpcWarBranchesTest` | `NpcWarBranchesTest` |
+| `HwihaPeopleAdmission` | `PeopleAdmission` |
+| `HwihaPeopleHandler` | `PeopleHandler` |
+| `HwihaPeopleHandlerTest` | `PeopleHandlerTest` |
+| `HwihaPeopleOptions` | `PeopleOptions` |
+| `HwihaPeopleOptionsController` | `PeopleOptionsController` |
+| `HwihaPeopleOptionsService` | `PeopleOptionsService` |
+| `HwihaPeopleTargetOption` | `PeopleTargetOption` |
+| `HwihaPersonCardDto` | `PersonCardDto` |
+| `HwihaPersonDeckProjection` | `PersonDeckProjection` |
+| `HwihaPersonalAdmission` | `PersonalAdmission` |
+| `HwihaPersonalEncounter` | `PersonalEncounter` |
+| `HwihaPersonalHandler` | `PersonalHandler` |
+| `HwihaPersonalHandlerTest` | `PersonalHandlerTest` |
+| `HwihaPersonalOptions` | `PersonalOptions` |
+| `HwihaPersonalOptionsController` | `PersonalOptionsController` |
+| `HwihaPersonalOptionsService` | `PersonalOptionsService` |
+| `HwihaPersonalStatOption` | `PersonalStatOption` |
+| `HwihaPersonalTurn` | `PersonalTurn` |
+| `HwihaPhaseBoundary` | `PhaseBoundary` |
+| `HwihaPlacementCardDto` | `PlacementCardDto` |
+| `HwihaPlacementMarchTurn` | `PlacementMarchTurn` |
+| `HwihaPlacementOrderDto` | `PlacementOrderDto` |
+| `HwihaPlacementTargetDto` | `PlacementTargetDto` |
+| `HwihaPoliciesResponse` | `PoliciesResponse` |
+| `HwihaPolicyApplicationDto` | `PolicyApplicationDto` |
+| `HwihaPolicyOrderDto` | `PolicyOrderDto` |
+| `HwihaPolicySettingDto` | `PolicySettingDto` |
+| `HwihaPoliticalAdmission` | `PoliticalAdmission` |
+| `HwihaPoliticalConsentOption` | `PoliticalConsentOption` |
+| `HwihaPoliticalHandler` | `PoliticalHandler` |
+| `HwihaPoliticalHandlerTest` | `PoliticalHandlerTest` |
+| `HwihaPoliticalOption` | `PoliticalOption` |
+| `HwihaPoliticalOptionsController` | `PoliticalOptionsController` |
+| `HwihaPoliticalOptionsService` | `PoliticalOptionsService` |
+| `HwihaPoliticalTargetOption` | `PoliticalTargetOption` |
+| `HwihaPostOptionDto` | `PostOptionDto` |
+| `HwihaPostTargetDto` | `PostTargetDto` |
+| `HwihaPostsResponse` | `PostsResponse` |
+| `HwihaQueuedLegacyCourt` | `QueuedLegacyCourt` |
+| `HwihaQueuedLegacyStratagem` | `QueuedLegacyStratagem` |
+| `HwihaReactionInventory` | `ReactionInventory` |
+| `HwihaReasonDto` | `ReasonDto` |
+| `HwihaRecordEntryDto` | `RecordEntryDto` |
+| `HwihaRecordReadRepository` | `RecordReadRepository` |
+| `HwihaRecordRow` | `RecordRow` |
+| `HwihaRecords` | `Records` |
+| `HwihaRenownEventRecorder` | `RenownEventRecorder` |
+| `HwihaRenownPendingEventDto` | `RenownPendingEventDto` |
+| `HwihaRenownReasonDto` | `RenownReasonDto` |
+| `HwihaRenownRecordsTest` | `RenownRecordsTest` |
+| `HwihaReservableActionsTest` | `ReservableActionsTest` |
+| `HwihaReservedTurnRejectionTest` | `ReservedTurnRejectionTest` |
+| `HwihaResourceCostDto` | `ResourceCostDto` |
+| `HwihaRetinueResponse` | `CampRetinueResponse` |
+| `HwihaRetireAdmission` | `RetireAdmission` |
+| `HwihaRetireHandler` | `RetireHandler` |
+| `HwihaRetireHandlerTest` | `RetireHandlerTest` |
+| `HwihaRetireOptions` | `RetireOptions` |
+| `HwihaRetireOptionsController` | `RetireOptionsController` |
+| `HwihaRetireOptionsService` | `RetireOptionsService` |
+| `HwihaRetireSuccessorOption` | `RetireSuccessorOption` |
+| `HwihaRewardExecutor` | `RewardExecutor` |
+| `HwihaS3PassChainProbeIT` | `S3PassChainProbeIT` |
+| `HwihaScenarioPersonPolicies` | `ScenarioPersonPolicies` |
+| `HwihaScenarioPersonPoliciesTest` | `ScenarioPersonPoliciesTest` |
+| `HwihaScenarioUnit` | `ScenarioUnit` |
+| `HwihaScenarioUnits` | `ScenarioUnits` |
+| `HwihaScenarioWarehouseSeeds` | `ScenarioWarehouseSeeds` |
+| `HwihaScenarioWarehouseSeedsTest` | `ScenarioWarehouseSeedsTest` |
+| `HwihaScoutAdmission` | `ScoutAdmission` |
+| `HwihaScoutHandler` | `ScoutHandler` |
+| `HwihaScoutHandlerTest` | `ScoutHandlerTest` |
+| `HwihaScoutOptionDto` | `ScoutOptionDto` |
+| `HwihaScoutOptionsResponse` | `ScoutOptionsResponse` |
+| `HwihaScoutOriginDto` | `ScoutOriginDto` |
+| `HwihaScoutPersistenceIT` | `ScoutPersistenceIT` |
+| `HwihaSeatDto` | `SeatDto` |
+| `HwihaSiegeController` | `SiegeController` |
+| `HwihaSiegeDto` | `SiegeDto` |
+| `HwihaSiegeHandler` | `SiegeHandler` |
+| `HwihaSiegePartyDto` | `SiegePartyDto` |
+| `HwihaSiegePhaseDto` | `SiegePhaseDto` |
+| `HwihaSiegeReadRepository` | `SiegeReadRepository` |
+| `HwihaSiegeReadRow` | `SiegeReadRow` |
+| `HwihaSiegeReader` | `SiegeReader` |
+| `HwihaSiegeReaderTest` | `SiegeReaderTest` |
+| `HwihaSiegeRow` | `SiegeRow` |
+| `HwihaSiegeService` | `SiegeService` |
+| `HwihaSiegeServiceTest` | `SiegeServiceTest` |
+| `HwihaSiegesResponse` | `SiegesResponse` |
+| `HwihaSpecialtyDto` | `SpecialtyDto` |
+| `HwihaStampDto` | `StampDto` |
+| `HwihaStartableWorkDto` | `StartableWorkDto` |
+| `HwihaStockDto` | `StockDto` |
+| `HwihaStratagemDraw` | `StratagemDraw` |
+| `HwihaStratagemHandApiIT` | `StratagemHandApiIT` |
+| `HwihaStratagemHandController` | `StratagemHandController` |
+| `HwihaStratagemHandReader` | `StratagemHandReader` |
+| `HwihaSyntheticScenario` | `SyntheticScenario` |
+| `HwihaTransferAdmission` | `TransferAdmission` |
+| `HwihaTransferHandler` | `TransferHandler` |
+| `HwihaTransferHandlerTest` | `TransferHandlerTest` |
+| `HwihaTransferOptions` | `TransferOptions` |
+| `HwihaTransferOptionsController` | `TransferOptionsController` |
+| `HwihaTransferOptionsService` | `TransferOptionsService` |
+| `HwihaTransferResourceOption` | `TransferResourceOption` |
+| `HwihaTransferTargetOption` | `TransferTargetOption` |
+| `HwihaTravelAdmission` | `TravelAdmission` |
+| `HwihaTravelDestinationOption` | `TravelDestinationOption` |
+| `HwihaTravelExecution` | `TravelExecution` |
+| `HwihaTravelExecutor` | `TravelExecutor` |
+| `HwihaTravelExecutorTest` | `TravelExecutorTest` |
+| `HwihaTravelHandler` | `TravelHandler` |
+| `HwihaTravelHandlerTest` | `TravelHandlerTest` |
+| `HwihaTravelOptions` | `TravelOptions` |
+| `HwihaTravelOptionsController` | `TravelOptionsController` |
+| `HwihaTravelPrecheckService` | `TravelPrecheckService` |
+| `HwihaTravelPrecheckServiceTest` | `TravelPrecheckServiceTest` |
+| `HwihaTravelTurn` | `TravelTurn` |
+| `HwihaTroopBandDto` | `TroopBandDto` |
+| `HwihaTurnOutcome` | `TurnOutcome` |
+| `HwihaTurnStamp` | `TurnStamp` |
+| `HwihaUnitProfilesJson` | `UnitProfilesJson` |
+| `HwihaUnitProfilesJsonTest` | `UnitProfilesJsonTest` |
+| `HwihaUnitResupply` | `UnitResupply` |
+| `HwihaVisibilityCommanderyDto` | `VisibilityCommanderyDto` |
+| `HwihaVisibilityResponse` | `VisibilityResponse` |
+| `HwihaVisionContext` | `VisionContext` |
+| `HwihaVisionController` | `VisionController` |
+| `HwihaVisionForbidden` | `VisionForbidden` |
+| `HwihaVisionReader` | `VisionReader` |
+| `HwihaVisionReaderTest` | `VisionReaderTest` |
+| `HwihaVisionSourceDto` | `VisionSourceDto` |
+| `HwihaWarOutcomeListener` | `WarOutcomeListener` |
+| `HwihaWarOutcomeRenownListener` | `WarOutcomeRenownListener` |
+| `HwihaWarehouseDto` | `WarehouseDto` |
+| `HwihaWarehouseNetwork` | `WarehouseNetwork` |
+| `HwihaWarehousePersistenceIT` | `WarehousePersistenceIT` |
+| `HwihaWarehouseSeed` | `WarehouseSeed` |
+| `HwihaWarehouseSeedIT` | `WarehouseSeedIT` |
+| `HwihaWarehouseSettlement` | `WarehouseSettlement` |
+| `HwihaWarehousesResponse` | `WarehousesResponse` |
+| `HwihaWorksResponse` | `WorksResponse` |
+| `HwihaYuedanResponse` | `YuedanResponse` |
+| `HwihaYuedanRow` | `YuedanRow` |
+| `HwihaYuedanSelf` | `YuedanSelf` |
+| `HwihaYuzhouSliceScenarioTest` | `YuzhouSliceScenarioTest` |
+
+## 웹 코드 이름 개명
+
+공용 지도 UI의 `HanMapCanvas`·`HanTiles`도 실제 사용 범위에 맞춰 `WorldMapCanvas`·`WorldTiles`로 바꾼다. 저장 세계가 핀으로 가리키는 `han-world-v3`는 데이터 계약 예외로 유지한다. 웹 경로와 API 경로는 저장·통신 단계에서 바꾼다.
+
+| 이전 파일 | 새 파일 |
+|---|---|
+| `web/game/__tests__/HwihaCourtForm.test.tsx` | `web/game/__tests__/CourtForm.test.tsx` |
+| `web/game/__tests__/HwihaDeployForm.test.tsx` | `web/game/__tests__/DeployForm.test.tsx` |
+| `web/game/__tests__/HwihaLegacyDirectForm.test.tsx` | `web/game/__tests__/DirectActionForm.test.tsx` |
+| `web/game/__tests__/HwihaEnlistmentForm.test.tsx` | `web/game/__tests__/EnlistmentForm.test.tsx` |
+| `web/game/__tests__/HwihaFieldForm.test.tsx` | `web/game/__tests__/FieldForm.test.tsx` |
+| `web/game/__tests__/HwihaMilitaryForm.test.tsx` | `web/game/__tests__/MilitaryForm.test.tsx` |
+| `web/game/__tests__/HwihaPeopleForm.test.tsx` | `web/game/__tests__/PeopleForm.test.tsx` |
+| `web/game/__tests__/HwihaPersonalForm.test.tsx` | `web/game/__tests__/PersonalForm.test.tsx` |
+| `web/game/__tests__/HwihaPoliticalForm.test.tsx` | `web/game/__tests__/PoliticalForm.test.tsx` |
+| `web/game/__tests__/HwihaTransferForm.test.tsx` | `web/game/__tests__/TransferForm.test.tsx` |
+| `web/game/__tests__/HwihaTravelForm.test.tsx` | `web/game/__tests__/TravelForm.test.tsx` |
+| `web/game/__tests__/HanMapCanvas.interaction.test.tsx` | `web/game/__tests__/WorldMapCanvas.interaction.test.tsx` |
+| `web/game/__tests__/HanMapCanvas.test.ts` | `web/game/__tests__/WorldMapCanvas.test.ts` |
+| `web/game/components/HwihaShell.module.css` | `web/game/components/GameShell.module.css` |
+| `web/game/components/HwihaShell.tsx` | `web/game/components/GameShell.tsx` |
+| `web/game/components/hwiha/CommanderyNavigator.tsx` | `web/game/components/campaign/CommanderyNavigator.tsx` |
+| `web/game/components/hwiha/CountyPanel.tsx` | `web/game/components/campaign/CountyPanel.tsx` |
+| `web/game/components/hwiha/DomesticPanels.tsx` | `web/game/components/campaign/DomesticPanels.tsx` |
+| `web/game/components/hwiha/HwihaEmbed.module.css` | `web/game/components/campaign/GameEmbed.module.css` |
+| `web/game/components/hwiha/GameEntry.tsx` | `web/game/components/campaign/GameEntry.tsx` |
+| `web/game/components/hwiha/HwihaStates.tsx` | `web/game/components/campaign/GameStates.tsx` |
+| `web/game/components/hwiha/GeneralRoster.module.css` | `web/game/components/campaign/GeneralRoster.module.css` |
+| `web/game/components/hwiha/GeneralRoster.tsx` | `web/game/components/campaign/GeneralRoster.tsx` |
+| `web/game/components/hwiha/LastTurnPanel.tsx` | `web/game/components/campaign/LastTurnPanel.tsx` |
+| `web/game/components/hwiha/StandingBar.tsx` | `web/game/components/campaign/StandingBar.tsx` |
+| `web/game/components/hwiha/TurnList.tsx` | `web/game/components/campaign/TurnList.tsx` |
+| `web/game/components/hwiha/WarRoomMap.tsx` | `web/game/components/campaign/WarRoomMap.tsx` |
+| `web/game/components/command/HwihaLegacyCourtForm.tsx` | `web/game/components/command/CourtActionForm.tsx` |
+| `web/game/components/command/HwihaCourtForm.module.css` | `web/game/components/command/CourtForm.module.css` |
+| `web/game/components/command/HwihaCourtForm.preview.css` | `web/game/components/command/CourtForm.preview.css` |
+| `web/game/components/command/HwihaCourtForm.preview.tsx` | `web/game/components/command/CourtForm.preview.tsx` |
+| `web/game/components/command/HwihaCourtForm.tsx` | `web/game/components/command/CourtForm.tsx` |
+| `web/game/components/command/HwihaDeployForm.tsx` | `web/game/components/command/DeployForm.tsx` |
+| `web/game/components/command/HwihaLegacyDirectForm.tsx` | `web/game/components/command/DirectActionForm.tsx` |
+| `web/game/components/command/HwihaEnlistmentForm.tsx` | `web/game/components/command/EnlistmentForm.tsx` |
+| `web/game/components/command/HwihaFieldForm.tsx` | `web/game/components/command/FieldForm.tsx` |
+| `web/game/components/command/HwihaMilitaryForm.tsx` | `web/game/components/command/MilitaryForm.tsx` |
+| `web/game/components/command/HwihaPeopleForm.tsx` | `web/game/components/command/PeopleForm.tsx` |
+| `web/game/components/command/HwihaPersonalForm.tsx` | `web/game/components/command/PersonalForm.tsx` |
+| `web/game/components/command/HwihaPoliticalForm.tsx` | `web/game/components/command/PoliticalForm.tsx` |
+| `web/game/components/command/HwihaLegacyStratagemForm.tsx` | `web/game/components/command/StratagemActionForm.tsx` |
+| `web/game/components/command/HwihaTransferForm.tsx` | `web/game/components/command/TransferForm.tsx` |
+| `web/game/components/command/HwihaTravelForm.tsx` | `web/game/components/command/TravelForm.tsx` |
+| `web/shared/src/HanMapCanvas.tsx` | `web/shared/src/WorldMapCanvas.tsx` |
+
+| 이전 식별자 | 새 식별자 |
+|---|---|
+| `HanMapCanvas` | `WorldMapCanvas` |
+| `HanTiles` | `WorldTiles` |
+| `HwihaAction` | `Action` |
+| `HwihaAptitudes` | `Aptitudes` |
+| `HwihaBlocked` | `Blocked` |
+| `HwihaBond` | `Bond` |
+| `HwihaBuilt` | `Built` |
+| `HwihaCities` | `Cities` |
+| `HwihaCodeLabel` | `CodeLabel` |
+| `HwihaCommanderyCell` | `CommanderyCell` |
+| `HwihaCorps` | `Corps` |
+| `HwihaCorpsList` | `CorpsList` |
+| `HwihaCounty` | `County` |
+| `HwihaCountyPolicy` | `CountyPolicy` |
+| `HwihaCountyWorks` | `CountyWorks` |
+| `HwihaCourtForm` | `CourtForm` |
+| `HwihaDate` | `Date` |
+| `HwihaDeployForm` | `DeployForm` |
+| `HwihaDeployOptions` | `DeployOptions` |
+| `HwihaDirection` | `Direction` |
+| `HwihaEmbed` | `GameEmbed` |
+| `HwihaEmpty` | `Empty` |
+| `HwihaEnlistmentForm` | `EnlistmentForm` |
+| `HwihaFieldActionId` | `FieldActionId` |
+| `HwihaFieldForm` | `FieldForm` |
+| `HwihaFieldOptions` | `FieldOptions` |
+| `HwihaFiveStats` | `FiveStats` |
+| `HwihaInputTab` | `InputTab` |
+| `HwihaLastTurn` | `LastTurn` |
+| `HwihaLastTurnEntry` | `LastTurnEntry` |
+| `HwihaLastTurns` | `LastTurns` |
+| `HwihaLayout` | `GameLayout` |
+| `HwihaLegacyCourtChoice` | `CourtActionChoice` |
+| `HwihaLegacyCourtForm` | `CourtActionForm` |
+| `HwihaLegacyCourtId` | `CourtActionId` |
+| `HwihaLegacyCourtOptions` | `CourtActionOptions` |
+| `HwihaLegacyDirectActionId` | `DirectActionId` |
+| `HwihaLegacyDirectChoice` | `DirectActionChoice` |
+| `HwihaLegacyDirectForm` | `DirectActionForm` |
+| `HwihaLegacyDirectOptions` | `DirectActionOptions` |
+| `HwihaLegacyStratagemChoice` | `StratagemActionChoice` |
+| `HwihaLegacyStratagemForm` | `StratagemActionForm` |
+| `HwihaLegacyStratagemId` | `StratagemActionId` |
+| `HwihaLegacyStratagemOptions` | `StratagemActionOptions` |
+| `HwihaLegendEntry` | `LegendEntry` |
+| `HwihaMapState` | `MapState` |
+| `HwihaMilitaryActionId` | `MilitaryActionId` |
+| `HwihaMilitaryForm` | `MilitaryForm` |
+| `HwihaMilitaryOptions` | `MilitaryOptions` |
+| `HwihaMonthlyAssessment` | `MonthlyAssessment` |
+| `HwihaNationSummaryEntry` | `NationSummaryEntry` |
+| `HwihaPeopleActionId` | `PeopleActionId` |
+| `HwihaPeopleForm` | `PeopleForm` |
+| `HwihaPeopleOptions` | `PeopleOptions` |
+| `HwihaPersonCard` | `PersonCard` |
+| `HwihaPersonalActionId` | `PersonalActionId` |
+| `HwihaPersonalForm` | `PersonalForm` |
+| `HwihaPersonalOptions` | `PersonalOptions` |
+| `HwihaPhase` | `Phase` |
+| `HwihaPlacementCard` | `PlacementCard` |
+| `HwihaPolicies` | `Policies` |
+| `HwihaPoliticalActionId` | `PoliticalActionId` |
+| `HwihaPoliticalConsentOption` | `PoliticalConsentOption` |
+| `HwihaPoliticalForm` | `PoliticalForm` |
+| `HwihaPoliticalOption` | `PoliticalOption` |
+| `HwihaPostOption` | `PostOption` |
+| `HwihaPosts` | `Posts` |
+| `HwihaRead` | `Read` |
+| `HwihaReadStatus` | `ReadStatus` |
+| `HwihaRecordKind` | `RecordKind` |
+| `HwihaRenown` | `Renown` |
+| `HwihaRenownPendingEvent` | `RenownPendingEvent` |
+| `HwihaRenownReason` | `RenownReason` |
+| `HwihaRetinue` | `Retinue` |
+| `HwihaScout` | `Scout` |
+| `HwihaScoutOption` | `ScoutOption` |
+| `HwihaScoutOptions` | `ScoutOptions` |
+| `HwihaScreen` | `GameScreen` |
+| `HwihaSession` | `GameSession` |
+| `HwihaSessionContext` | `GameSessionContext` |
+| `HwihaSessionProvider` | `GameSessionProvider` |
+| `HwihaShell` | `GameShell` |
+| `HwihaShellProps` | `GameShellProps` |
+| `HwihaSiege` | `Siege` |
+| `HwihaSieges` | `Sieges` |
+| `HwihaStamp` | `Stamp` |
+| `HwihaStates` | `GameStates` |
+| `HwihaStock` | `Stock` |
+| `HwihaStratagemCard` | `StratagemCard` |
+| `HwihaStratagemHand` | `StratagemHand` |
+| `HwihaTransferActionId` | `TransferActionId` |
+| `HwihaTransferForm` | `TransferForm` |
+| `HwihaTransferOptions` | `TransferOptions` |
+| `HwihaTravelActionId` | `TravelActionId` |
+| `HwihaTravelForm` | `TravelForm` |
+| `HwihaTravelOptions` | `TravelOptions` |
+| `HwihaUnitCard` | `UnitCard` |
+| `HwihaVisibility` | `Visibility` |
+| `HwihaVisibilityCommandery` | `VisibilityCommandery` |
+| `HwihaVisionTier` | `VisionTier` |
+| `HwihaWarehouse` | `Warehouse` |
+| `HwihaWarehouses` | `Warehouses` |
+| `HwihaWorks` | `Works` |
+| `HwihaWorld` | `World` |
+| `HwihaWorldMap` | `WorldMap` |
+| `HwihaYuedan` | `Yuedan` |
+| `HwihaYuedanRow` | `YuedanRow` |
+
+## 엔진 패키지 개명
+
+| 이전 패키지·경로 | 새 패키지·경로 | 비고 |
+|---|---|---|
+| `opensamguk.engine.hwiha` (`app/game-engine/src/{main,test}/kotlin/opensamguk/engine/hwiha/`) | `opensamguk.engine.campaign` (`app/game-engine/src/{main,test}/kotlin/opensamguk/engine/campaign/`) | 103개 파일·호출부의 패키지 경로 이동. 조정·내정·전쟁 등 세부 도메인 분리는 후속 정리. |
+
 ## #905 교차 경로
 
 PR #905 변경 파일 244개 가운데 개명 범위와 겹치는 경로가 64개다(app 31, logic 18, infra 6, web 4, tools 3, data 2). #905가 draft인 동안 해당 경로의 파일 이동과 참조 수정은 병합 상태를 확인하고 진행한다. 아래 목록은 개명 또는 리베이스가 필요한 정확한 옛 경로다.
@@ -700,3 +1460,23 @@ web/game/app/game/hwiha/siege/page.tsx
 web/game/components/hwiha/DomesticPanels.tsx
 web/game/lib/hwiha-reads.ts
 ```
+
+## 엔진 공성 상태 후속 개명
+
+| 이전 코드 이름 | 새 코드 이름 | 범위 |
+|---|---|---|
+| `HwihaSiege` | `Siege` | 엔진 월드 상태 타입; DB `siege`와 의미 일치 |
+| `listHwihaSieges`·`getHwihaSiege`·`putHwihaSiege` | `listSieges`·`getSiege`·`putSiege` | 인메모리 월드 접근자 |
+| `hwihaSieges`·`createdHwihaSieges`·`updatedHwihaSieges` | `sieges`·`createdSieges`·`updatedSieges` | 스냅샷·flush 계약의 Kotlin 필드 |
+| `loadHwihaSieges`·`toHwihaSiegeRow`·`hwihaSiegeCreateMany`·`hwihaSiegeUpdate` | `loadSieges`·`toSiegeRow`·`siegeCreateMany`·`siegeUpdate` | 부팅 로더·flush 함수 |
+| `hwihaNow()` | `phaseNow()` | 현재 세계 순의 `Phase` 값 |
+
+## 지도 보급 런타임 이름
+
+| 이전 코드 이름 | 새 코드 이름 | 범위 |
+|---|---|---|
+| `HanSpatialSupplyProvider` | `SpatialSupplyProvider` | 월별 보급망을 구성하는 Spring 컴포넌트·테스트 타입 |
+| `HanSupplyDisconnectionPolicyLoader` | `SupplyDisconnectionPolicyLoader` | 보급 단절 심사 원장 로더·테스트 타입 |
+| `hanSpatialSupplyProvider` | `spatialSupplyProvider` | 엔진 배선 인자 |
+
+지도 자료의 `han-world-v3`·`han-tiles.json` 등 저장된 판 ID와 입력 파일명은 그대로 둔다. 해당 값은 세계 핀과 심사 원장이 참조하는 역사 지도 계약이다.

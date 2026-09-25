@@ -445,92 +445,92 @@ export const api = {
         post<IntakeOutcome>(`/api/commands/court/dispatch?generalId=${generalId}`, args),
     courtDispatchReply: (generalId: number, args: {dispatchId: string; accept: boolean}) =>
         post<IntakeOutcome>(`/api/commands/court/dispatchReply?generalId=${generalId}`, args),
-    deployOptions: (generalId: number) => get<import('./types').HwihaDeployOptions>(`/api/hwiha/deploy/options?generalId=${generalId}`),
-    travelOptions: (inputId: import('./types').HwihaTravelActionId, generalId: number) => {
+    deployOptions: (generalId: number) => get<import('./types').DeployOptions>(`/api/deploy/options?generalId=${generalId}`),
+    travelOptions: (inputId: import('./types').TravelActionId, generalId: number) => {
         const name = inputId === 'action.move' ? 'move' : inputId === 'action.forcedMarch' ? 'forced-march' : 'return';
-        return get<import('./types').HwihaTravelOptions>(`/api/commands/${name}-options?generalId=${generalId}`);
+        return get<import('./types').TravelOptions>(`/api/commands/${name}-options?generalId=${generalId}`);
     },
-    fieldOptions: (inputId: import('./types').HwihaFieldActionId, generalId: number) => {
-        const names: Record<import('./types').HwihaFieldActionId, string> = {
+    fieldOptions: (inputId: import('./types').FieldActionId, generalId: number) => {
+        const names: Record<import('./types').FieldActionId, string> = {
             'action.farm': 'farm', 'action.commerce': 'commerce', 'action.fortify': 'fortify',
             'action.repairWall': 'repair-wall', 'action.security': 'security', 'action.settle': 'settle',
             'action.selectResidents': 'select-residents', 'action.tour': 'tour',
         };
-        return get<import('./types').HwihaFieldOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+        return get<import('./types').FieldOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
-    militaryOptions: (inputId: import('./types').HwihaMilitaryActionId, generalId: number) => {
-        const names: Record<import('./types').HwihaMilitaryActionId, string> = {
+    militaryOptions: (inputId: import('./types').MilitaryActionId, generalId: number) => {
+        const names: Record<import('./types').MilitaryActionId, string> = {
             'action.conscript': 'conscript', 'action.raiseVolunteers': 'raise-volunteers',
             'action.train': 'train', 'action.boostMorale': 'boost-morale',
             'action.muster': 'muster', 'action.demobilize': 'demobilize',
         };
-        return get<import('./types').HwihaMilitaryOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+        return get<import('./types').MilitaryOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
-    personalOptions: (inputId: import('./types').HwihaPersonalActionId, generalId: number) => {
-        const names: Record<import('./types').HwihaPersonalActionId, string> = {
+    personalOptions: (inputId: import('./types').PersonalActionId, generalId: number) => {
+        const names: Record<import('./types').PersonalActionId, string> = {
             'action.travel': 'travel', 'action.selfTrain': 'self-train', 'action.recuperate': 'recuperate',
             'action.retire': 'retire',
         };
-        return get<import('./types').HwihaPersonalOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+        return get<import('./types').PersonalOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
-    peopleOptions: (inputId: import('./types').HwihaPeopleActionId, generalId: number) => {
-        const names: Record<import('./types').HwihaPeopleActionId, string> = {
+    peopleOptions: (inputId: import('./types').PeopleActionId, generalId: number) => {
+        const names: Record<import('./types').PeopleActionId, string> = {
             'action.search': 'search', 'action.employ': 'employ',
             'action.persuadeCaptive': 'persuade-captive',
         };
-        return get<import('./types').HwihaPeopleOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
+        return get<import('./types').PeopleOptions>(`/api/commands/${names[inputId]}-options?generalId=${generalId}`);
     },
     politicalOptions: (generalId: number) =>
-        get<import('./types').HwihaPoliticalOption[]>(`/api/commands/political-options?generalId=${generalId}`),
+        get<import('./types').PoliticalOption[]>(`/api/commands/political-options?generalId=${generalId}`),
     politicalConsentOptions: (generalId: number) =>
-        get<import('./types').HwihaPoliticalConsentOption[]>(`/api/commands/political-consent-options?generalId=${generalId}`),
+        get<import('./types').PoliticalConsentOption[]>(`/api/commands/political-consent-options?generalId=${generalId}`),
     courtPoliticalConsent: (generalId: number, args: {issuerGeneralId:number;inputId:'action.abdicate'|'action.oath';accepted:boolean}) =>
         post<IntakeOutcome>(`/api/commands/court/politicalConsent?generalId=${generalId}`, args),
-    transferOptions: (inputId: import('./types').HwihaTransferActionId, generalId: number) =>
-        get<import('./types').HwihaTransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
-    legacyDirectOptions: (inputId: import('./types').HwihaLegacyDirectActionId, generalId: number) =>
-        get<import('./types').HwihaLegacyDirectOptions>(`/api/commands/legacy-direct-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
-    legacyCourtOptions: (inputId: import('./types').HwihaLegacyCourtId, generalId: number) =>
-        get<import('./types').HwihaLegacyCourtOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
-    courtLegacy: (inputId: import('./types').HwihaLegacyCourtId, generalId: number, args: Record<string,string|number>) =>
+    transferOptions: (inputId: import('./types').TransferActionId, generalId: number) =>
+        get<import('./types').TransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
+    legacyDirectOptions: (inputId: import('./types').DirectActionId, generalId: number) =>
+        get<import('./types').DirectActionOptions>(`/api/commands/legacy-direct-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
+    legacyCourtOptions: (inputId: import('./types').CourtActionId, generalId: number) =>
+        get<import('./types').CourtActionOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
+    courtLegacy: (inputId: import('./types').CourtActionId, generalId: number, args: Record<string,string|number>) =>
         post<IntakeOutcome>(`/api/commands/court/${inputId.slice(6)}?generalId=${generalId}`, args),
-    legacyStratagemOptions: (inputId: import('./types').HwihaLegacyStratagemId, generalId: number) =>
-        get<import('./types').HwihaLegacyStratagemOptions>(`/api/commands/legacy-stratagem-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
-    playLegacyStratagem: (inputId: import('./types').HwihaLegacyStratagemId, generalId: number, args: Record<string,number>) =>
+    legacyStratagemOptions: (inputId: import('./types').StratagemActionId, generalId: number) =>
+        get<import('./types').StratagemActionOptions>(`/api/commands/legacy-stratagem-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
+    playLegacyStratagem: (inputId: import('./types').StratagemActionId, generalId: number, args: Record<string,number>) =>
         post<IntakeOutcome>(`/api/commands/stratagem/${inputId.slice(10)}?generalId=${generalId}`, args),
     // 휘하 조회 — 모두 `?generalId=` 로 본인 장수를 받는다. 휘하 규칙이 아닌 월드는 status 로 알린다.
     stratagemHand: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaStratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
-    hwihaYuedan: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaYuedan>(`/api/hwiha/yuedan?generalId=${generalId}`, signal),
-    hwihaWarehouses: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaWarehouses>(`/api/hwiha/warehouses?generalId=${generalId}`, signal),
-    hwihaCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaCounty>(`/api/hwiha/county/${cityId}?generalId=${generalId}`, signal),
-    hwihaRetinue: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaRetinue>(`/api/hwiha/retinue?generalId=${generalId}`, signal),
-    hwihaSieges: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaSieges>(`/api/hwiha/sieges?generalId=${generalId}`, signal),
+        get<import('./campaign-reads').StratagemHand>(`/api/commands/stratagem-hand?generalId=${generalId}`, signal),
+    campaignYuedan: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Yuedan>(`/api/yuedan?generalId=${generalId}`, signal),
+    warehouses: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Warehouses>(`/api/warehouses?generalId=${generalId}`, signal),
+    campaignCounty: (generalId: number, cityId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').County>(`/api/county/${cityId}?generalId=${generalId}`, signal),
+    campaignRetinue: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Retinue>(`/api/retinue?generalId=${generalId}`, signal),
+    campaignSieges: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Sieges>(`/api/sieges?generalId=${generalId}`, signal),
     roadForts: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').RoadForts>(`/api/hwiha/road-forts?generalId=${generalId}`, signal),
+        get<import('./campaign-reads').RoadForts>(`/api/road-forts?generalId=${generalId}`, signal),
     courtReward: (generalId: number, args: {retainerId: number; money: number}) =>
         post<IntakeOutcome>(`/api/commands/court/reward?generalId=${generalId}`, args),
-    hwihaLastTurns: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaLastTurns>(`/api/hwiha/last-turns?generalId=${generalId}&limit=12`, signal),
-    hwihaVisibility: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaVisibility>(`/api/hwiha/visibility?generalId=${generalId}`, signal),
-    hwihaCorps: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaCorpsList>(`/api/hwiha/corps?generalId=${generalId}`, signal),
-    hwihaScoutOptions: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaScoutOptions>(`/api/hwiha/scout-options?generalId=${generalId}`, signal),
-    hwihaPosts: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaPosts>(`/api/hwiha/posts?generalId=${generalId}`, signal),
-    hwihaPolicies: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaPolicies>(`/api/hwiha/policies?generalId=${generalId}`, signal),
-    hwihaWorks: (generalId: number, signal?: AbortSignal) =>
-        get<import('./hwiha-reads').HwihaWorks>(`/api/hwiha/works?generalId=${generalId}`, signal),
+    campaignLastTurns: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').LastTurns>(`/api/last-turns?generalId=${generalId}&limit=12`, signal),
+    campaignVisibility: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Visibility>(`/api/visibility?generalId=${generalId}`, signal),
+    campaignCorps: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').CorpsList>(`/api/corps?generalId=${generalId}`, signal),
+    campaignScoutOptions: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').ScoutOptions>(`/api/scout-options?generalId=${generalId}`, signal),
+    campaignPosts: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Posts>(`/api/posts?generalId=${generalId}`, signal),
+    campaignPolicies: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Policies>(`/api/policies?generalId=${generalId}`, signal),
+    campaignWorks: (generalId: number, signal?: AbortSignal) =>
+        get<import('./campaign-reads').Works>(`/api/works?generalId=${generalId}`, signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
-    hwihaDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
+    campaignDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
         post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),

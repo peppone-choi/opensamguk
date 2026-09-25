@@ -75,8 +75,8 @@ export default function MyPage() {
     ['훈련/사기', `${myPage.train} / ${myPage.atmos}`],
   ];
   const retinueHref = frontInfo.global.serverId
-    ? resolveServerGamePath(undefined, frontInfo.global.serverId, '/game', 'hwiha/retinue')
-    : '/game/hwiha/retinue';
+    ? resolveServerGamePath(undefined, frontInfo.global.serverId, '/game', 'retinue')
+    : '/game/retinue';
 
   return (
     <Shell>

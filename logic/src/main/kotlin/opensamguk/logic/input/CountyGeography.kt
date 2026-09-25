@@ -40,7 +40,7 @@ class CountyGeography(places: Collection<CountyPlace>,
 
 /**
  * 인물 본관 원장(`officer-native-county-v1.json`)에서 향당 보너스에 쓰는 부분만 읽는다. game-api 의
- * `HwihaCampLedgers.nativeCountyOf` 와 같은 규칙이다: `scenarioLink == EXACT`, `method == DIRECT`, 그 이름을 실은 원장 행이
+ * `CampLedgers.nativeCountyOf` 와 같은 규칙이다: `scenarioLink == EXACT`, `method == DIRECT`, 그 이름을 실은 원장 행이
  * 하나뿐(동명이인 제외). 여기서는 **`jurisdictionId` 가 있는 행만** 쓴다 — 관할에 못 붙은 행(沛國 譙 등)은 이름 정규화가
  * 필요해 이번 범위에서 향당 보너스를 주지 않는다(추정하지 않는다).
  */
@@ -58,7 +58,7 @@ class NativeCountyLedger internal constructor(private val jurisdictionByName: Ma
     }
 
     companion object {
-        const val RESOURCE = "hwiha/officer-native-county-v1.json"
+        const val RESOURCE = "campaign/officer-native-county-v1.json"
         const val CREATED_GENERAL_SOURCE = "opensamguk:created-general"
 
         fun load(): NativeCountyLedger? =

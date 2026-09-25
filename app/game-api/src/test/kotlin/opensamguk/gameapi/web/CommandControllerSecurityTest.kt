@@ -94,7 +94,7 @@ class CommandControllerSecurityTest {
             .andExpect(status().isForbidden)
         verifyNoInteractions(reserve)
         `when`(reserve.reserveForOwner(10, "action.enlist", 0, body, 7))
-            .thenThrow(opensamguk.gameapi.reserve.HwihaAdmissionDenied("POLICY_UNAVAILABLE", "정책 미확인"))
+            .thenThrow(opensamguk.gameapi.reserve.AdmissionDenied("POLICY_UNAVAILABLE", "정책 미확인"))
         mockMvc().perform(post("/api/command/action.enlist").param("generalId", "10")
             .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content(body))
             .andExpect(status().isOk).andExpect(jsonPath("$.code").value("POLICY_UNAVAILABLE"))
@@ -135,7 +135,7 @@ class CommandControllerSecurityTest {
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(reserve.reserveForOwnerWithRuleProfile(10, "action.resign", 0, "{}", 7, RuleProfile.HWIHA))
-            .thenThrow(opensamguk.gameapi.reserve.HwihaAdmissionDenied("NOT_DELIVERED", "아직 제공되지 않는 입력입니다."))
+            .thenThrow(opensamguk.gameapi.reserve.AdmissionDenied("NOT_DELIVERED", "아직 제공되지 않는 입력입니다."))
 
         mockMvc().perform(post("/api/command/action.resign").param("generalId", "10")
             .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content("{}"))
