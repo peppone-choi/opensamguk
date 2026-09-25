@@ -218,7 +218,7 @@ const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'tournament-admin',
     'troop',
     'v2-lab',
-  'vote',
+    'vote',
     'court',
     'hand',
     'orders',

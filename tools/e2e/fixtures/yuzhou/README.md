@@ -10,7 +10,7 @@ The scenario is registered in the operating catalog as an S3 test and pep transi
 |---|---|---|
 | Lords | `<郡> 주공`, stats 70/65/65/60/70, `synthetic-qa:yuzhou-slice` | synthetic; no historical person is claimed |
 | Nations | level 1, gold/rice 0 | treasury lives only in county warehouses |
-| Units (`hwihaUnits`) | 2 per lord, infantry 1100, 4,000 troops, training 50, morale 60, provisions 6 months (24,000) | the generator test checks that every lord can besiege an enemy county on the active map |
+| Units (`units`) | 2 per lord, infantry 1100, 4,000 troops, training 50, morale 60, provisions 6 months (24,000) | the generator test checks that every lord can besiege an enemy county on the active map |
 | Warehouses | grain = seed garrison × 100 × 18 phases in every slice county; money 100,000 in each capital; zero elsewhere | 18 phases is the approved siege reference (`march-tempo-targets-v1.json` `siegeResolution.referenceInitialRationTurns`); 100/soldier/phase is the 2026-09-23 confirmed ration in `campaign-balance-v1.json`. The seed stock amount remains a QA fixture choice. |
 | Start | year 190 | |
 

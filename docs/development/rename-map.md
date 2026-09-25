@@ -143,6 +143,9 @@
 | `hwihaBattlePlayback:v1` | `battlePlayback:v1` | 제품 접두사 제거; 재생 해시가 달라짐 |
 | `hwihaEncounterResolution:v${RULE_VERSION}` | `encounterResolution:v${RULE_VERSION}` | 제품 접두사 제거; 조우 스냅샷 해시가 달라짐 |
 | `hwihaSiegeAssault:v${RULE_VERSION}` | `siegeAssault:v${RULE_VERSION}` | 제품 접두사 제거; 공성 결과 해시가 달라짐 |
+| `hwihaBattleJournal:v1` | `battleJournal:v1` | 전투 기록 해시 입력의 제품 접두사 제거 |
+| `hwihaBattlePlans:v1` | `battlePlans:v1` | 전투 계획 해시 입력의 제품 접두사 제거 |
+| `hwiha-corps:<orderId>` | `corps:<orderId>` | 후속 #950에서 정찰 관측 ID의 해시 도메인을 변경 |
 
 ## 저장·통신 식별자
 
@@ -182,11 +185,11 @@
 
 classpath `hwiha/`는 `campaign/`으로 옮겼다. `tools/map/build_hwiha_resource_production.py`는 `build_county_resource_production.py`, `tools/content/build_hwiha_item_ledgers.py`는 `build_item_ledgers.py`가 되었으며, 생성 원장과 런타임 파일의 내부 ID·generator·sourceLedger도 새 이름을 쓴다. 지도 번들 판 ID(`han-world-v3-1447` 등)는 세계 핀 계약이므로 유지한다.
 
-E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 각각 `court`, `yuzhou`로 옮겼다. 라이브 스펙은 `court-live.spec.ts`, `yuzhou-live.spec.ts`이며 실행 환경 변수는 `E2E_COURT_LIVE`, `E2E_YUZHOU_LIVE`다. 예약 서버 ID 목록 7곳은 드리프트 검사 `tools/ci/check_reserved_server_ids.py`로 묶었다.
+E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 각각 `court`, `yuzhou`로 옮겼다. 라이브 스펙은 `court-live.spec.ts`, `yuzhou-live.spec.ts`이며 실행 환경 변수는 `E2E_COURT_LIVE`, `E2E_YUZHOU_LIVE`다. 예약 서버 ID 목록 8곳은 드리프트 검사 `tools/ci/check_reserved_server_ids.py`로 묶었다.
 
 ## 상태·시나리오 필드 대응
 
-소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 저장 식별자 draft에서 reader·writer·fixture 130파일의 347참조를 같은 이름으로 교체했다. 옛 키 거절은 세계 형식 가드에서 검증한다.
+소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 저장 식별자 PR에서 reader·writer·fixture 130파일의 347참조를 같은 이름으로 교체했다. 옛 키 거절은 후속 세계 형식 가드에서 검증할 예정이다. 그 가드와 pep C단계 리셋 전에는 이 코드로 게임 서버를 승격하지 않는다.
 
 | 이전 키 | 확정 키 | 현행 사용 위치 예시 |
 |---|---|---|
