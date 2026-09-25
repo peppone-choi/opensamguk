@@ -36,5 +36,7 @@
 ## 확인 방법과 한계
 
 - `git grep -n`으로 main 소스·테스트의 import, 호출, 코드/이벤트 이름, `getResource`·Gradle 리소스 복사·KV 문자열을 찾았다. Kotlin의 정적 import가 없어도 이벤트 이름, 명령 문자열, Spring 라우트, JSON 리소스는 삭제 계약이다.
+- 테스트 참조 교차 확인: AI는 `GeneralAiFactoryTest.kt`, `AiProductionWiringGuardTest.kt`; 경매는 `NeutralAuctionRegistrarTest.kt`, `AuctionBidHandlerTest.kt`; 베팅은 `BettingActionsTest.kt`, `WorldActionContextNationBettingTest.kt`; 토너먼트는 `ProcessTournamentTest.kt`, `TournamentDaemonFightAdapterTest.kt`; 유산은 `InheritancePointStoreTest.kt`, `InheritanceOverlayHandlerTest.kt`; 카탈로그는 `PublicCommandCatalogIndexTest.kt`, `CommandCatalogRowFactoryTest.kt`에 있다. 이 테스트들이 존재한다는 사실만으로 휘하 제품 동작이라고 판정하지 않았고, 제거 시 함께 재분류해야 한다.
+- 감사 대상 Kotlin 소스에서 `Class.forName`/`forName(` 기반 클래스 로딩 참조는 `git grep` 결과 0건이었다. 확인된 동적 참조는 이벤트 액션 이름(`WorldActions.kt:34`, `WorldActionContext.kt:899-909`), `getResource` 경로(`PublicCommandCatalogIndex.kt:30-35`), 명령 코드 문자열(`CommandRegistry.kt:132-217`)이다.
 - JDK 21 Gradle 컴파일러로 `:logic:compileKotlin :app:game-engine:compileKotlin :app:game-api:compileKotlin --rerun-tasks`를 실행했다. 이는 **기준 트리의 컴파일 확인**이다. 후보를 실제 삭제한 뒤의 컴파일 통과나 런타임 경로 제거 증명은 아니다.
 - 휘하 프로필에서 즉시 명령 API 전부가 도달 가능한지, 웹/외부 시나리오/운영 저장 소비자의 전수 목록은 미확인이다. 따라서 프로필 가드가 없는 경로는 안전하다고 추정하지 않았다.
