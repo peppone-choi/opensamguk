@@ -4,7 +4,7 @@ import type { DispatchPendingResponse, EnlistmentOptionsResponse } from '../lib/
 
 const gameUrl = process.env.E2E_GAME_URL ?? 'http://localhost:3001';
 const gatewayUrl = process.env.E2E_GATEWAY_URL ?? 'http://localhost:3000';
-const enabled = process.env.E2E_HWIHA_COURT === 'true';
+const enabled = process.env.E2E_COURT_LIVE === 'true';
 
 type Terminal = { status: string; ok?: boolean; reason?: string };
 

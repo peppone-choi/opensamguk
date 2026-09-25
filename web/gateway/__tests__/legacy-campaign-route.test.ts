@@ -7,7 +7,7 @@ describe('old HWIHA addresses', () => {
   it('redirects the hub to the game route', () => {
     const response = root(new NextRequest('https://gateway.example.test/hwiha?from=bookmark'));
     expect(response.status).toBe(308);
-    expect(response.headers.get('location')).toBe('/game/hwiha/war-room?from=bookmark');
+    expect(response.headers.get('location')).toBe('/game/war-room?from=bookmark');
   });
 
   it('preserves a screen path and query for the game server redirect', async () => {
@@ -16,6 +16,6 @@ describe('old HWIHA addresses', () => {
       { params: Promise.resolve({ slug: ['retinue'] }) },
     );
     expect(response.status).toBe(308);
-    expect(response.headers.get('location')).toBe('/game/hwiha/retinue?person=17');
+    expect(response.headers.get('location')).toBe('/game/retinue?person=17');
   });
 });

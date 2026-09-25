@@ -147,7 +147,7 @@ class ScenarioImporterIT {
     fun `explicit synthetic person policy survives actual seed and does not reset on repeated import`() {
         assumeTrue(dockerAvailable, "Docker unavailable")
         val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(
-            java.nio.file.Path.of("../tools/e2e/fixtures/hwiha-court/scenario_990001.json")))
+            java.nio.file.Path.of("../tools/e2e/fixtures/court/scenario_990001.json")))
         val importer = regressionImporter(scenario = scenario, cities = mapCitiesOf(scenario),
             scenarioCode = "scenario_990001", artifactsRoot = java.nio.file.Path.of(".."))
         importer.importAll(jdbc, canonicalWorldId)

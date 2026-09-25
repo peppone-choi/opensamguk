@@ -8,11 +8,11 @@ Use `tools/e2e/local_v1_gate.sh` with fresh isolated resources and caller-suppli
 SCENARIO_CODE=scenario_990001
 TURN_PROFILE_NAME=che:scenario_990001
 OPENSAMGUK_WORLD_ID=990001
-SCENARIO_HOST_DIR="$(pwd)/tools/e2e/fixtures/hwiha-court"
+SCENARIO_HOST_DIR="$(pwd)/tools/e2e/fixtures/court"
 SCENARIO_QA_TURNTERM=1
 E2E_ENABLE_AUTH=true
-E2E_HWIHA_COURT=true
-E2E_TEST_SPEC=e2e/hwiha-court-live.spec.ts
+E2E_COURT_LIVE=true
+E2E_TEST_SPEC=e2e/court-live.spec.ts
 E2E_TEST_TIMEOUT_MS=600000
 E2E_BUILD_MODE=sequential
 ```

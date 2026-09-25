@@ -75,7 +75,7 @@ class ScenarioPersonPoliciesTest {
 
     @Test fun `isolated browser fixture supplies explicit policy and valid seed counts`() {
         val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(
-            java.nio.file.Path.of("../tools/e2e/fixtures/hwiha-court/scenario_990001.json")))
+            java.nio.file.Path.of("../tools/e2e/fixtures/court/scenario_990001.json")))
         ScenarioImporter(scenario, emptyList(), scenarioCode = "scenario_990001").validateSeedContract()
         assertEquals(1, scenario.generals.size)
         assertEquals(1, scenario.generals.count { it.lord == true })

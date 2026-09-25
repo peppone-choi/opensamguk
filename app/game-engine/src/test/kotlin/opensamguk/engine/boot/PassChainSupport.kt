@@ -44,7 +44,7 @@ internal object PassChainSupport {
     /** Seeds the scenario through the production importer, then the human's own signup and reservation. */
     fun seed(jdbc: JdbcTemplate, world: Int, withUnits: Boolean = true) {
         val root = repoRoot()
-        val scenario = ScenarioJson.loadScenario(Files.readString(root.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
+        val scenario = ScenarioJson.loadScenario(Files.readString(root.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")))
         val cities = ScenarioJson.loadMapCities(Files.readString(root.resolve("infra/src/main/resources/map/han-world-v3.json")))
         ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_990002",
             installTime = OffsetDateTime.ofInstant(START, ZoneOffset.UTC), artifactsRoot = root).importAll(jdbc, WorldId(world))

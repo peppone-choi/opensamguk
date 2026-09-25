@@ -8,7 +8,7 @@ import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.util.phpRound
 
 /**
- * 豫州 조각 운영 후보 시나리오(`tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json`)의 생성기이자 드리프트 게이트.
+ * 豫州 조각 운영 후보 시나리오(`tools/e2e/fixtures/yuzhou/scenario_990002.json`)의 생성기이자 드리프트 게이트.
  *
  * 파일은 손으로 쓰지 않는다 — 활성 `han-world-v3` 지도(城 표·郡/州 메타)와 부팅이 고를 판의 핀·행정 縣 목록에서
  * 결정론으로 만든다. 파일이 없을 때만 새로 쓴다(다시 만들려면 파일을 지우고 이 테스트를 돌린다). 파일이 있으면
@@ -17,7 +17,7 @@ import opensamguk.logic.util.phpRound
 class YuzhouSliceScenarioTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }
         .first { Files.isDirectory(it.resolve("data/map")) }
-    private val file: Path = repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")
+    private val file: Path = repo.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")
     private val mapJson: String = Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json"))
     private val cities = ScenarioJson.loadMapCities(mapJson)
 

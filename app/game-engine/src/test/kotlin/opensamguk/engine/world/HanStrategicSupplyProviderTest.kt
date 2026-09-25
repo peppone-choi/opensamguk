@@ -83,7 +83,7 @@ class HanStrategicSupplyProviderTest {
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han-world-v3"), emptyMap())
         val newCuts = mutableMapOf<Int, Set<Int>>()
         for (code in scenarios + 990002) {
-            val path = if (code == 990002) "../../tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json"
+            val path = if (code == 990002) "../../tools/e2e/fixtures/yuzhou/scenario_990002.json"
                 else "../../infra/src/main/resources/scenario/scenario_$code.json"
             val scenario = ScenarioJson.loadScenario(Path.of(path).toFile().readText())
             val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
