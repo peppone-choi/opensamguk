@@ -15,9 +15,9 @@ import TurnList from '@/components/campaign/TurnList';
 import WarRoomMap from '@/components/campaign/WarRoomMap';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
-import { useHwihaRead } from '@/lib/hwiha-reads';
-import { reserveHwihaScout } from '@/lib/hwiha-scout';
-import { useHwihaSession } from '@/lib/hwiha-session';
+import { useCampaignRead } from '@/lib/campaign-reads';
+import { reserveScout } from '@/lib/campaign-scout';
+import { useGameSession } from '@/lib/campaign-session';
 
 /**
  * 작전실 — 시안 WarRoom(메인).
@@ -29,8 +29,8 @@ import { useHwihaSession } from '@/lib/hwiha-session';
  * 지도는 휘하 규칙이 아닌 서버에서도 보인다(공개 지도 API). 나머지 패널은 장수가 있어야 뜻이 있다.
  */
 export default function WarRoomPage() {
-    const session = useHwihaSession();
-    const { frontInfo, generalId, isHwihaWorld, refresh } = session;
+    const session = useGameSession();
+    const { frontInfo, generalId, isCampaignWorld, refresh } = session;
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
     const bump = () => {
@@ -39,11 +39,11 @@ export default function WarRoomPage() {
     };
 
     // 시야·군단·첩보 — 서버 투영이 정한다. 조회 실패 시 레이어를 비운다.
-    const vision = useHwihaRead((id, signal) => api.hwihaVisibility(id, signal), [refreshKey]);
-    const corps = useHwihaRead((id, signal) => api.hwihaCorps(id, signal), [refreshKey]);
-    const sieges = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
-    const works = useHwihaRead((id, signal) => api.hwihaWorks(id, signal), [refreshKey]);
-    const scout = useHwihaRead((id, signal) => api.hwihaScoutOptions(id, signal), [refreshKey]);
+    const vision = useCampaignRead((id, signal) => api.campaignVisibility(id, signal), [refreshKey]);
+    const corps = useCampaignRead((id, signal) => api.campaignCorps(id, signal), [refreshKey]);
+    const sieges = useCampaignRead((id, signal) => api.campaignSieges(id, signal), [refreshKey]);
+    const works = useCampaignRead((id, signal) => api.campaignWorks(id, signal), [refreshKey]);
+    const scout = useCampaignRead((id, signal) => api.campaignScoutOptions(id, signal), [refreshKey]);
     const visibility = useMemo(() => {
         const list = vision.data?.status === 'READY' ? vision.data.commanderies : undefined;
         return list ? new Map<number, CommanderyVisibility>(list.map((c) => [c.no, c.tier])) : null;
@@ -63,7 +63,7 @@ export default function WarRoomPage() {
         if (generalId == null || !option) return;
         setScoutPending(true);
         try {
-            const result = await reserveHwihaScout(generalId, option);
+            const result = await reserveScout(generalId, option);
             show(result.message, result.ok ? 'success' : 'error');
             if (result.ok) bump();
         } finally {
@@ -98,14 +98,14 @@ export default function WarRoomPage() {
                     />
                     {vision.error || vision.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p> : null}
                     {corps.error || corps.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p> : null}
-                    {isHwihaWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
+                    {isCampaignWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
                         요격·회피 반응은 현재 기록만 남으며 이동이나 전투에 효과가 없습니다.
                     </p>}
                     {frontInfo && generalId != null ? (
                         <>
-                            <CountyPanel city={frontInfo.city} isHwihaWorld={isHwihaWorld} />
+                            <CountyPanel city={frontInfo.city} isCampaignWorld={isCampaignWorld} />
                             <StandingBar />
-                            {isHwihaWorld ? <LastTurnPanel /> : null}
+                            {isCampaignWorld ? <LastTurnPanel /> : null}
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12 }}>
                                 <Panel style={{ padding: 0, minWidth: 0 }}>
                                     <MainRecordZone recentRecord={frontInfo.recentRecord} />
@@ -128,7 +128,7 @@ export default function WarRoomPage() {
                         generalId={generalId}
                         nationId={frontInfo.general.nationId}
                         refreshKey={refreshKey}
-                        isHwihaWorld={isHwihaWorld}
+                        isCampaignWorld={isCampaignWorld}
                         onToast={show}
                         onReserved={bump}
                     />

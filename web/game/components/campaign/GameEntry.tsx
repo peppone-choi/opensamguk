@@ -4,12 +4,12 @@ import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import WarRoomPage from '@/app/game/hwiha/war-room/page';
 import CharacterClaim from '@/components/game/CharacterClaim';
-import { hwihaHref } from '@/lib/hwiha-screens';
-import { useHwihaSession } from '@/lib/hwiha-session';
+import { campaignHref } from '@/lib/campaign-screens';
+import { useGameSession } from '@/lib/campaign-session';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 
 export default function GameEntry() {
-  const session = useHwihaSession();
+  const session = useGameSession();
   const router = useRouter();
   const possessionEntry = useSearchParams().get('entry') === 'possession';
   const joinHref = session.serverId
@@ -42,7 +42,7 @@ export default function GameEntry() {
     if (possessionEntry) {
       return <CharacterClaim global={session.frontInfo.global} onClaimed={() => {
         session.refresh();
-        router.replace(hwihaHref('war-room', session.serverId));
+        router.replace(campaignHref('war-room', session.serverId));
       }} />;
     }
     return <p role="status">장수 등록 화면으로 이동합니다.</p>;

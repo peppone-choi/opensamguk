@@ -13,6 +13,13 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
+| `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
+| `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
+| `web/game/lib/hwiha-scout.ts` | `web/game/lib/campaign-scout.ts` | 저장·통신 draft | 정찰 예약 함수 개명 |
+| `web/game/lib/hwiha-session.tsx` | `web/game/lib/campaign-session.tsx` | 저장·통신 draft | 세션 훅·판정 필드 개명 |
+| `web/game/lib/hwiha-map.ts` | `web/game/lib/campaign-map.ts` | 저장·통신 draft | 지도 훅·상수 개명; `han` 지도 번들 ID는 유지 |
+| `HanMapCanvasType` 테스트 별칭 | `WorldMapCanvasType` | 저장·통신 draft | 범용 캔버스 이름과 일치 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
@@ -146,7 +153,7 @@
 | `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
 | `hwiha_siege` | `siege` | DB 식별자 draft | V64에서 표·제약·인덱스 개명, V61 원본 유지 |
 | `hwiha_person_card` | `person_card` | DB 식별자 draft | V64에서 뷰 개명과 새 meta 키 투영, V63 원본 유지 |
-| `/api/hwiha/*` | 도메인별 `/api/*` | 예정 | 엔드포인트별 경로 확정 필요 |
+| `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
 | `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 예정 | 옛 경로 308 리다이렉트 |
 | `data/**/hwiha-*.json` | 도메인별 파일명 | 예정 | 해시·핀·패키징 동시 갱신 |
 
@@ -1263,7 +1270,7 @@
 | `HwihaLegacyCourtForm` | `CourtActionForm` |
 | `HwihaLegacyCourtId` | `CourtActionId` |
 | `HwihaLegacyCourtOptions` | `CourtActionOptions` |
-| `HwihaLegacyDirectActionId` | `DirectActionActionId` |
+| `HwihaLegacyDirectActionId` | `DirectActionId` |
 | `HwihaLegacyDirectChoice` | `DirectActionChoice` |
 | `HwihaLegacyDirectForm` | `DirectActionForm` |
 | `HwihaLegacyDirectOptions` | `DirectActionOptions` |

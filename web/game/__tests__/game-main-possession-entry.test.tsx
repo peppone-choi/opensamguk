@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import GameMainPage from '@/app/game/page';
-import { useHwihaSession, type GameSession } from '@/lib/hwiha-session';
+import { useGameSession, type GameSession } from '@/lib/campaign-session';
 
 const mocks = vi.hoisted(() => ({
   useSearchParams: vi.fn(),
@@ -15,9 +15,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mocks.replace }),
 }));
 
-vi.mock('@/lib/hwiha-session', () => ({
+vi.mock('@/lib/campaign-session', () => ({
   GameSessionProvider: ({ children }: { children: ReactNode }) => <>{children}</>,
-  useHwihaSession: vi.fn(),
+  useGameSession: vi.fn(),
 }));
 
 vi.mock('@/app/game/hwiha/war-room/page', () => ({
@@ -29,13 +29,13 @@ vi.mock('@/components/game/CharacterClaim', () => ({
 }));
 
 function setSession(generalId: number | null, global: { npcMode?: number; blockGeneralCreate?: number } = {}) {
-  vi.mocked(useHwihaSession).mockReturnValue({
+  vi.mocked(useGameSession).mockReturnValue({
     loading: false,
     error: null,
     frontInfo: { global: { serverId: 'pep', ...global } },
     generalId,
     serverId: 'pep',
-    isHwihaWorld: true,
+    isCampaignWorld: true,
     gameDate: '',
     refresh: mocks.refresh,
   } as unknown as GameSession);

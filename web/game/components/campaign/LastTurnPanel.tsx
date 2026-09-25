@@ -2,8 +2,8 @@
 
 import { Chip, Panel, SectionHeader } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import { useHwihaRead } from '@/lib/hwiha-reads';
-import { Empty, hwihaReadNotice } from './GameStates';
+import { useCampaignRead } from '@/lib/campaign-reads';
+import { Empty, campaignReadNotice } from './GameStates';
 
 /** 사건 종류 → 뱃지 색. 종류 문자열은 서버 `RecordKind` 정본을 따른다. */
 function kindTone(kind: string): 'moss' | 'rust' | 'info' | 'bronze' | 'neutral' {
@@ -45,8 +45,8 @@ function kindLabel(kind: string): string {
  * 기록이 없는 순은 서버가 빈 칸으로 보내므로 가장 최근 몇 순만 펼친다.
  */
 export default function LastTurnPanel() {
-    const read = useHwihaRead((id, signal) => api.hwihaLastTurns(id, signal));
-    const notice = hwihaReadNotice(read, read.data?.status);
+    const read = useCampaignRead((id, signal) => api.campaignLastTurns(id, signal));
+    const notice = campaignReadNotice(read, read.data?.status);
     const turns = (read.data?.turns ?? []).filter((t) => t.entries.length > 0).slice(0, 6);
     const nation = read.data?.nationSummary ?? [];
     return (

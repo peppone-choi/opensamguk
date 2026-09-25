@@ -416,7 +416,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 7
           path: |
-            app/game-engine/build/test-results/test/TEST-*HwihaS3PassChain*.xml
+            app/game-engine/build/test-results/test/TEST-*S3PassChainProbeIT.xml
             app/game-engine/build/test-results/test/TEST-*PassChainInvarianceIT.xml
             app/game-engine/build/test-results/test/TEST-*YuzhouCampaignInvarianceTest.xml
 

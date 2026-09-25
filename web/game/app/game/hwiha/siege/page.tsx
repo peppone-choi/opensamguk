@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { Chip, KV, Panel, SectionHeader } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
-import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
+import { Empty, campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
-import { type Siege, type RoadFort, useHwihaRead } from '@/lib/hwiha-reads';
-import { useHwihaSession } from '@/lib/hwiha-session';
+import { type Siege, type RoadFort, useCampaignRead } from '@/lib/campaign-reads';
+import { useGameSession } from '@/lib/campaign-session';
 
 const number = new Intl.NumberFormat('ko-KR');
 const failureText: Record<string, string> = {
@@ -36,15 +36,15 @@ function rejectedReason(reason: string | undefined, code: unknown): string {
 }
 
 export default function SiegePage() {
-    const { generalId, refresh } = useHwihaSession();
+    const { generalId, refresh } = useGameSession();
     const [refreshKey, setRefreshKey] = useState(0);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ kind: 'error' | 'status'; text: string } | null>(null);
-    const read = useHwihaRead((id, signal) => api.hwihaSieges(id, signal), [refreshKey]);
-    const roadRead = useHwihaRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
+    const read = useCampaignRead((id, signal) => api.campaignSieges(id, signal), [refreshKey]);
+    const roadRead = useCampaignRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
     const rows = read.data?.sieges ?? [];
     const roadForts = roadRead.data?.forts ?? [];
-    const problem = hwihaReadNotice(read, read.data?.status);
+    const problem = campaignReadNotice(read, read.data?.status);
     const act = async (siege: Siege, action: 'action.assault' | 'action.demandSurrender') => {
         if (generalId == null || !siege.canAct || busy) return;
         setBusy(true); setNotice(null);
@@ -129,9 +129,9 @@ export default function SiegePage() {
             </Panel>)}
             <Panel style={{ padding: 12 }}>
                 <SectionHeader title="도로 보루" sub="현과 별개로 소유하고 포위하는 길목" actions={<Chip>{`${roadForts.length}곳`}</Chip>} />
-                {hwihaReadNotice(roadRead, roadRead.data?.status) &&
-                    <Empty>{hwihaReadNotice(roadRead, roadRead.data?.status)}</Empty>}
-                {!hwihaReadNotice(roadRead, roadRead.data?.status) && roadForts.length === 0 &&
+                {campaignReadNotice(roadRead, roadRead.data?.status) &&
+                    <Empty>{campaignReadNotice(roadRead, roadRead.data?.status)}</Empty>}
+                {!campaignReadNotice(roadRead, roadRead.data?.status) && roadForts.length === 0 &&
                     <Empty>보이는 도로 보루가 없습니다.</Empty>}
                 {roadForts.map((fort) => <div key={fort.id} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
                     <strong>도로 보루 · {fort.provinceId}</strong>

@@ -4,10 +4,10 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Chip, Panel, Portrait } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import { useHwihaRead, useHwihaRenown, type FiveStats, type PersonCard } from '@/lib/hwiha-reads';
-import { hwihaHref } from '@/lib/hwiha-screens';
-import { useHwihaSession } from '@/lib/hwiha-session';
-import { Empty, hwihaReadNotice } from './GameStates';
+import { useCampaignRead, useRenown, type FiveStats, type PersonCard } from '@/lib/campaign-reads';
+import { campaignHref } from '@/lib/campaign-screens';
+import { useGameSession } from '@/lib/campaign-session';
+import { Empty, campaignReadNotice } from './GameStates';
 import styles from './GeneralRoster.module.css';
 
 const fmt = new Intl.NumberFormat('ko-KR');
@@ -50,12 +50,12 @@ function StatBars({ stats }: { stats: Partial<FiveStats> | null | undefined }) {
 
 /**
  * 장수 — 나와 내 휘하. 작전실 오른쪽 열의 맨 위, samnet 의 장수 카드 열과 같은 자리·같은 모양이다.
- * 나는 `front-info`, 휘하 인물은 `GET /api/hwiha/retinue`. 휘하 카드를 누르면 휘하 편성 상세로 간다.
+ * 나는 `front-info`, 휘하 인물은 `GET /api/retinue`. 휘하 카드를 누르면 휘하 편성 상세로 간다.
  */
 export default function GeneralRoster() {
-    const { frontInfo, serverId, isHwihaWorld, generalId } = useHwihaSession();
-    const renown = useHwihaRenown();
-    const retinue = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal));
+    const { frontInfo, serverId, isCampaignWorld, generalId } = useGameSession();
+    const renown = useRenown();
+    const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal));
     const [sort, setSort] = useState<SortKey>('order');
     const [turnTime, setTurnTime] = useState<string | null>(null);
 
@@ -80,7 +80,7 @@ export default function GeneralRoster() {
     const me = frontInfo?.general;
     if (!frontInfo || !me?.hasGeneral) return null;
     const units = retinue.data?.units ?? [];
-    const notice = isHwihaWorld ? hwihaReadNotice(retinue, retinue.data?.status) : null;
+    const notice = isCampaignWorld ? campaignReadNotice(retinue, retinue.data?.status) : null;
     const troopsOf = (p: PersonCard) => {
         const led = units.filter((u) => u.commanderRetainerId === p.retainerId);
         if (led.length === 0) return null;
@@ -124,17 +124,17 @@ export default function GeneralRoster() {
                     <StatBars stats={me} />
                     <div className={styles.foot}>
                         <span className="os-num">{`병력 ${fmt.format(me.crew)}`}</span>
-                        {isHwihaWorld ? <span className={styles.renown}>{`명망 ${renown ?? '—'}`}</span> : null}
+                        {isCampaignWorld ? <span className={styles.renown}>{`명망 ${renown ?? '—'}`}</span> : null}
                     </div>
                 </div>
             </div>
 
             {notice ? <Empty>{notice}</Empty> : null}
-            {!notice && isHwihaWorld && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
+            {!notice && isCampaignWorld && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
             {people.map((p) => {
                 const troops = troopsOf(p);
                 return (
-                    <Link key={p.retainerId} href={`${hwihaHref('retinue', serverId)}?person=${p.retainerId}`} className={styles.card}>
+                    <Link key={p.retainerId} href={`${campaignHref('retinue', serverId)}?person=${p.retainerId}`} className={styles.card}>
                         <Portrait picture={p.picture} imageServer={p.imageServer} size="card-44" alt={`${p.name} 초상`} />
                         <div className={styles.body}>
                             <div className={styles.top}>

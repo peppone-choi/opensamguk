@@ -19,7 +19,7 @@ export interface GameSession {
     readonly generalId: number | null;
     readonly serverId: string | undefined;
     /** 휘하 규칙 월드인지. 아니면 휘하 API 는 모두 `WRONG_RULE_PROFILE` 을 돌려준다. */
-    readonly isHwihaWorld: boolean;
+    readonly isCampaignWorld: boolean;
     /** 「200년 3월 중순」 같은 게임 날짜 문구. */
     readonly gameDate: string;
     readonly refresh: () => void;
@@ -27,7 +27,7 @@ export interface GameSession {
 
 const GameSessionContext = createContext<GameSession | null>(null);
 
-export function formatHwihaDate(info: FrontInfoResponse | null): string {
+export function formatCampaignDate(info: FrontInfoResponse | null): string {
     if (!info) return '';
     const { year, month, turnPhaseText } = info.global;
     return `${year}년 ${month}월${turnPhaseText ? ` ${turnPhaseText}` : ''}`;
@@ -62,16 +62,16 @@ export function GameSessionProvider({ children }: { children: React.ReactNode })
         frontInfo,
         generalId: frontInfo?.general.hasGeneral ? frontInfo.general.generalId : null,
         serverId,
-        isHwihaWorld: frontInfo?.global.ruleProfile === 'HWIHA',
-        gameDate: formatHwihaDate(frontInfo),
+        isCampaignWorld: frontInfo?.global.ruleProfile === 'HWIHA',
+        gameDate: formatCampaignDate(frontInfo),
         refresh,
     }), [error, frontInfo, loading, refresh, serverId]);
 
     return <GameSessionContext.Provider value={value}>{children}</GameSessionContext.Provider>;
 }
 
-export function useHwihaSession(): GameSession {
+export function useGameSession(): GameSession {
     const session = useContext(GameSessionContext);
-    if (!session) throw new Error('useHwihaSession 은 GameSessionProvider 안에서만 쓴다');
+    if (!session) throw new Error('useGameSession 은 GameSessionProvider 안에서만 쓴다');
     return session;
 }
