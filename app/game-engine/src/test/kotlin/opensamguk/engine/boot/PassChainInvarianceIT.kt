@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
 import opensamguk.engine.hwiha.HwihaEncounterResolver
+import opensamguk.engine.invariance.WorldStateBaseline
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.seed.HanWorldArtifactsResolver
@@ -45,7 +46,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
             "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration",
     ],
 )
-class HwihaS3PassChainIT {
+class PassChainInvarianceIT {
     @Autowired lateinit var world: InMemoryTurnWorld
     @Autowired lateinit var service: TurnRunService
     @Autowired lateinit var jdbc: JdbcTemplate
@@ -53,9 +54,10 @@ class HwihaS3PassChainIT {
 
     @Test
     fun `S3 고리 — 출사 발령 행군 조우 공성 점령 징세 월단평이 관리자 개입 없이 이어진다`() {
-        HwihaS3ChainSupport.run(service, measuredWorld = world)
-        HwihaS3ChainSupport.assertChain(world, jdbc, WORLD)
-        HwihaS3ChainSupport.assertSiegesReload(world, loader)
+        PassChainSupport.run(service, measuredWorld = world)
+        PassChainSupport.assertChain(world, jdbc, WORLD)
+        PassChainSupport.assertSiegesReload(world, loader)
+        WorldStateBaseline.assertMatches("s3-chain-48", world)
     }
 
     /**
@@ -89,7 +91,7 @@ class HwihaS3PassChainIT {
     companion object {
         private const val WORLD = 23
 
-        private fun repoRoot(): Path = HwihaS3ChainSupport.repoRoot()
+        private fun repoRoot(): Path = PassChainSupport.repoRoot()
 
         @JvmStatic
         @AfterAll
@@ -111,7 +113,7 @@ class HwihaS3PassChainIT {
             val source = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             Flyway.configure().dataSource(source).locations("classpath:db/migration")
                 .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
-            HwihaS3ChainSupport.seed(JdbcTemplate(source), WORLD, withUnits = true)
+            PassChainSupport.seed(JdbcTemplate(source), WORLD, withUnits = true)
 
             registry.add("spring.datasource.url", postgres::getJdbcUrl)
             registry.add("spring.datasource.username", postgres::getUsername)
