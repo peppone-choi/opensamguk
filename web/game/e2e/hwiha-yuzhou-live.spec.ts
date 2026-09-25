@@ -123,7 +123,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   expect(activeWarAfterFirstBoundary, 'war relations survive the first monthly settlement').toBe(30);
 
   const siegeSummary = () => JSON.parse(sql(`SELECT json_build_object('active', count(*) FILTER (WHERE status='ACTIVE'),
-    'fallen', count(*) FILTER (WHERE status='FALLEN'), 'rows', count(*)) FROM hwiha_siege WHERE world_id=${worldId};`)) as
+    'fallen', count(*) FILTER (WHERE status='FALLEN'), 'rows', count(*)) FROM siege WHERE world_id=${worldId};`)) as
     { active: number; fallen: number; rows: number };
   await expect.poll(() => siegeSummary().fallen, { timeout: 2_400_000, intervals: [10_000] }).toBeGreaterThan(0);
   const npcBattles = () => Number(sql(`SELECT count(*) FROM general WHERE world_id=${worldId} AND id BETWEEN 1001 AND 1006
@@ -168,7 +168,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     }
   }
   await cdp.detach();
-  const db = sql(`SELECT json_build_object('sieges', (SELECT json_agg(json_build_object('countyId',county_id,'status',status,'turns',turns,'endReason',end_reason)) FROM hwiha_siege WHERE world_id=${worldId}),
+  const db = sql(`SELECT json_build_object('sieges', (SELECT json_agg(json_build_object('countyId',county_id,'status',status,'turns',turns,'endReason',end_reason)) FROM siege WHERE world_id=${worldId}),
     'player', (SELECT json_build_object('nationId',g.nation_id,'assignment',g.meta->'countyAssignment',
       'position',(SELECT row_to_json(p) FROM general_spatial_position p WHERE p.world_id=g.world_id AND p.general_id=g.id))
       FROM general g WHERE g.world_id=${worldId} AND g.id=${generalId}),

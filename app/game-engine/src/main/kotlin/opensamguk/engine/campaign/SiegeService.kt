@@ -9,7 +9,7 @@ import opensamguk.logic.war.*
 import opensamguk.logic.world.*
 
 /**
- * 縣城 공성(§5.1 6단계·§5.2 2단계). 상태는 V61 `hwiha_siege` 행이고 쓰기는 world dirty 집합 → flush 뿐이다.
+ * 縣城 공성(§5.1 6단계·§5.2 2단계). 상태는 V61 `siege` 행이고 쓰기는 world dirty 집합 → flush 뿐이다.
  *
  * - **포위 시작**: 출전 군단이 목적지 省에 도착했고 그 省에 적대(교전 중이거나 무주) 縣治가 있으며 적 군단이 없으면
  *   개인 턴 이동 단계 뒤에 포위를 건다. 수비병이 0 이면 지킬 사람이 없어 바로 넘어간다(2026-09-23 확정 규칙).

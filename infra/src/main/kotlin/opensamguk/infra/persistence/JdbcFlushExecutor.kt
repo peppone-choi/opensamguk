@@ -1861,7 +1861,7 @@ open class JdbcFlushExecutor(
     private fun hwihaSiegeCreateMany(worldId: WorldId, rows: List<SiegeRow>) {
         jdbc.batchUpdate(
             """
-            INSERT INTO hwiha_siege
+            INSERT INTO siege
                 (world_id, county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id,
                  besieger_nation_id, defender_nation_id, approach_province_id, started_year, started_month, started_phase,
                  settled_year, settled_month, settled_phase, turns, morale, garrison, end_reason, timeline)
@@ -1872,13 +1872,13 @@ open class JdbcFlushExecutor(
             """.trimIndent(),
             rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
         )
-        lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.CREATE_MANY, rows.size))
+        lastOps.add(FlushExecOp("siege", FlushVerb.CREATE_MANY, rows.size))
     }
 
     private fun hwihaSiegeUpdate(worldId: WorldId, rows: List<SiegeRow>) {
         val affected = jdbc.batchUpdate(
             """
-            UPDATE hwiha_siege
+            UPDATE siege
                SET status = :status, besieger_general_id = :besieger_general_id,
                    besieger_owner_general_id = :besieger_owner_general_id, besieger_order_id = :besieger_order_id,
                    besieger_nation_id = :besieger_nation_id, defender_nation_id = :defender_nation_id,
@@ -1890,8 +1890,8 @@ open class JdbcFlushExecutor(
             """.trimIndent(),
             rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
         )
-        requireExactlyOneAffected("hwiha_siege UPDATE", affected)
-        lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.UPDATE, rows.size))
+        requireExactlyOneAffected("siege UPDATE", affected)
+        lastOps.add(FlushExecOp("siege", FlushVerb.UPDATE, rows.size))
     }
 
     // --- step 8h: 작전 채널 (Phase 4X-B) ---------------------------------------------------------

@@ -135,8 +135,8 @@ internal object PassChainSupport {
         // 조우
         assertTrue(world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta }, "조우: a sealed encounter was resolved")
         // 공성 · 점령 (persisted)
-        assertTrue(jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
-        val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM hwiha_siege WHERE world_id=? AND status='FALLEN'", id)
+        assertTrue(jdbc.queryForObject("SELECT count(*) FROM siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
+        val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM siege WHERE world_id=? AND status='FALLEN'", id)
         assertTrue(fallen.isNotEmpty(), "점령: a county fell")
         // A captured county can change hands again later — retaken, or neutralized by the monthly isolation decay
         // (UpdateCitySupply). So each fallen county's owner in the database must equal the live world's (the capture

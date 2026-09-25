@@ -144,8 +144,8 @@
 | `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | `ImmediateInput` | 저장·통신 draft | #919에서는 기존 값 고정; reset 전 새 값으로 확정 |
 | 와이어 discriminator `hwihaCourtInput` | `immediateInput` | 저장·통신 draft | `@SerialName`과 `type` 갱신 |
 | `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
-| `hwiha_siege` | `siege` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
-| `hwiha_person_card` | `person_card` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
+| `hwiha_siege` | `siege` | DB 식별자 draft | V64에서 표·제약·인덱스 개명, V61 원본 유지 |
+| `hwiha_person_card` | `person_card` | DB 식별자 draft | V64에서 뷰 개명과 새 meta 키 투영, V63 원본 유지 |
 | `/api/hwiha/*` | 도메인별 `/api/*` | 예정 | 엔드포인트별 경로 확정 필요 |
 | `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 예정 | 옛 경로 308 리다이렉트 |
 | `data/**/hwiha-*.json` | 도메인별 파일명 | 예정 | 해시·핀·패키징 동시 갱신 |

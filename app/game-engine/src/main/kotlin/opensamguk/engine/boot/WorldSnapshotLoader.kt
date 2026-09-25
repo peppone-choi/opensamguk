@@ -303,12 +303,12 @@ class WorldSnapshotLoader(
         "SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id, " +
             "defender_nation_id, approach_province_id, started_year, started_month, started_phase, settled_year, settled_month, " +
             "settled_phase, turns, morale, garrison, end_reason, timeline::text AS timeline " +
-            "FROM hwiha_siege WHERE world_id = ? ORDER BY county_id",
+            "FROM siege WHERE world_id = ? ORDER BY county_id",
         { rs, _ ->
             fun nullableInt(column: String): Int? = rs.getObject(column)?.let { (it as Number).toInt() }
             @Suppress("UNCHECKED_CAST")
             val timeline = (opensamguk.infra.persistence.MetaJson.decode("{\"timeline\":${rs.getString("timeline")}}")["timeline"]
-                as? List<Map<String, Any?>>) ?: error("hwiha_siege.timeline is not an array")
+                as? List<Map<String, Any?>>) ?: error("siege.timeline is not an array")
             opensamguk.engine.turn.HwihaSiege(
                 countyId = rs.getInt("county_id"), status = rs.getString("status"),
                 besiegerGeneralId = rs.getInt("besieger_general_id"),

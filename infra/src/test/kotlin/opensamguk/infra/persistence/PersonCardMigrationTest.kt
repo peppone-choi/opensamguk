@@ -12,7 +12,7 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import kotlin.test.*
 
-class V63HwihaPersonCardMigrationTest {
+class PersonCardMigrationTest {
     @Test fun `a database recording V61 before V60 needs explicit out of order recovery`() {
         assumeTrue(runCatching { DockerClientFactory.instance().isDockerAvailable }.getOrDefault(false))
         PostgreSQLContainer("postgres:16-alpine").use { pg ->
@@ -57,14 +57,20 @@ class V63HwihaPersonCardMigrationTest {
                 "VALUES (1,1,10,'EXISTING',20,'부장','lieutenant','MUTUAL')," +
                 "(1,2,10,'RECRUITED',NULL,'무명','guest','MASTER_ONLY')")
 
-            flyway("63").migrate()
-            val cards = jdbc.queryForList("SELECT card_id,holder_general_id,availability,renown_cost FROM hwiha_person_card WHERE world_id=1 ORDER BY card_id")
+            flyway("64").migrate()
+            assertEquals(false, jdbc.queryForObject("SELECT to_regclass('hwiha_siege') IS NOT NULL", Boolean::class.java))
+            assertEquals(true, jdbc.queryForObject("SELECT to_regclass('siege') IS NOT NULL", Boolean::class.java))
+            assertEquals(false, jdbc.queryForObject("SELECT to_regclass('hwiha_person_card') IS NOT NULL", Boolean::class.java))
+            assertEquals(true, jdbc.queryForObject("SELECT to_regclass('person_card') IS NOT NULL", Boolean::class.java))
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM pg_constraint WHERE conrelid = 'siege'::regclass AND conname LIKE 'hwiha_siege_%'", Int::class.java))
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM pg_indexes WHERE tablename = 'siege' AND indexname LIKE 'hwiha_siege_%'", Int::class.java))
+            val cards = jdbc.queryForList("SELECT card_id,holder_general_id,availability,renown_cost FROM person_card WHERE world_id=1 ORDER BY card_id")
             assertEquals(listOf("general:10", "general:20", "general:30", "recruited:2"), cards.map { it["card_id"] })
             assertEquals(10, cards[1]["holder_general_id"])
             assertEquals("UNIQUE", cards[1]["availability"])
             assertEquals(5, cards[1]["renown_cost"])
-            assertTrue(jdbc.queryForObject("SELECT bond_state::text FROM hwiha_person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("\"bonds\""))
-            assertTrue(jdbc.queryForObject("SELECT contribution_state::text FROM hwiha_person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("hwiha-stratagem-insight"))
+            assertTrue(jdbc.queryForObject("SELECT bond_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("\"bonds\""))
+            assertTrue(jdbc.queryForObject("SELECT contribution_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("hwiha-stratagem-insight"))
             assertNull(cards[0]["renown_cost"])
             assertEquals("COMMON", cards[3]["availability"])
             assertNull(cards[3]["renown_cost"])
@@ -73,7 +79,7 @@ class V63HwihaPersonCardMigrationTest {
                     "VALUES (1,3,30,'EXISTING',20,'부장','guest','MUTUAL')")
             }
             jdbc.execute("DELETE FROM general_retainers WHERE world_id=1 AND id=1")
-            assertNull(jdbc.queryForObject("SELECT holder_general_id FROM hwiha_person_card WHERE world_id=1 AND card_id='general:20'", Int::class.java))
+            assertNull(jdbc.queryForObject("SELECT holder_general_id FROM person_card WHERE world_id=1 AND card_id='general:20'", Int::class.java))
         }
     }
 }

@@ -1,6 +1,6 @@
 package opensamguk.infra.persistence
 
-/** V61 `hwiha_siege` 한 행 — 엔진 `HwihaSiege` 의 flush 표현. [timelineJson] 은 JSON 배열 문자열이다. */
+/** V61 `siege` 한 행 — 엔진 `HwihaSiege` 의 flush 표현. [timelineJson] 은 JSON 배열 문자열이다. */
 data class SiegeRow(
     val countyId: Int,
     val status: String,
