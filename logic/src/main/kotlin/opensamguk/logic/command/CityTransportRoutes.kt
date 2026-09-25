@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.command
+package opensamguk.logic.command
 
 import opensamguk.logic.world.HanStrategicRouteProjection
 import opensamguk.logic.world.PathDenialCode
@@ -11,7 +11,7 @@ import opensamguk.logic.world.StrategicPathResult
  * API preview, precheck and daemon execution must all use this same projection and state policy.
  */
 fun resolveImmediateCityTransportRoute(
-    args: V2CityTransportArgs,
+    args: CityTransportArgs,
     loadTopology: () -> HanStrategicRouteProjection,
 ): StrategicPathResult = try {
     val projection = loadTopology()

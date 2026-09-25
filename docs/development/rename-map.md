@@ -122,6 +122,16 @@
 | `QueuedLegacyCourt`, `QueuedLegacyStratagem` | `QueuedCourtAction`, `QueuedStratagemAction` | #937 draft | 직렬화 meta 키 값은 별도 처리 |
 | `logic/world/HanMapConnectivityTest.kt` | `logic/world/WorldMapConnectivityTest.kt` | #937 draft | 특정 `han` 지도 픽스처는 유지 |
 
+| `opensamguk.common.wire.v2` | `opensamguk.common.wire.command` | 후속 draft | 코드 패키지, 와이어 값 유지 |
+| `opensamguk.logic.v2.command` | `opensamguk.logic.command` | 후속 draft | 입력 명령 계약 패키지 |
+| `opensamguk.logic.v2.evidence` | `opensamguk.logic.evidence` | 후속 draft | 사료 근거 계약 패키지 |
+| `opensamguk.logic.v2.geo` | `opensamguk.logic.geo` | 후속 draft | 지리 계약 패키지 |
+
+| `V2CommandRegistry` | `CommandSchemaCatalog` | 후속 draft | 삼모 `CommandRegistry`와 이름 충돌 방지 |
+| `V2Command*`, `V2GarrisonRecruit*`, `V2CityTransport*` (common/logic 계약) | 접두사 없는 도메인 타입 | 후속 draft | 명령 코드 문자열 `v2…`은 저장·통신 단계 |
+| `V2CommandResultEnvelope`, `V2TurnEventEnvelope` | `CommandResultEnvelope`, `TurnEventEnvelope` | 후속 draft | `schemaVersion` 값 유지 |
+| `V2_*` (공용 와이어·명령 수치 상수) | 접두사 없는 상수 | 후속 draft | 값 유지 |
+
 ## 정한 값의 근거
 
 - `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`과 `command_inbox.action_code` 값 `HwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.

@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.geo
+package opensamguk.logic.geo
 
 /**
  * V2 G0-A 물리 장소 계약 (OPENSAM-36 / T1-B05, B07, B08, B10, B15, E08).

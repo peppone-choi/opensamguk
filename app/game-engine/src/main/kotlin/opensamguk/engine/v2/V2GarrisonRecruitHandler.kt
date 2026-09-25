@@ -7,11 +7,11 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.persistence.CommandInboxRepository
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
-import opensamguk.logic.v2.command.V2GarrisonRecruitContext
-import opensamguk.logic.v2.command.V2GarrisonRecruitDecision
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.decideGarrisonRecruit
+import opensamguk.logic.command.GarrisonRecruitArgs
+import opensamguk.logic.command.GarrisonRecruitContext
+import opensamguk.logic.command.GarrisonRecruitDecision
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.decideGarrisonRecruit
 
 /**
  * OPENSAM-153 (v2 R4) — 도시병사 보충(`v2GarrisonRecruit`) 핸들러. 도메인 규칙은 [recruitDecision]
@@ -46,8 +46,8 @@ class V2GarrisonRecruitHandler(
 
         return when (
             val decision = decideGarrisonRecruit(
-                V2GarrisonRecruitArgs(command.cityId, command.amount),
-                V2GarrisonRecruitContext(
+                GarrisonRecruitArgs(command.cityId, command.amount),
+                GarrisonRecruitContext(
                     generalCityId = general?.cityId,
                     generalNationId = general?.nationId,
                     leadership = general?.stats?.leadership,
@@ -58,8 +58,8 @@ class V2GarrisonRecruitHandler(
                 ),
             )
         ) {
-            is V2GarrisonRecruitDecision.Denied -> rejected(command, decision.reason, decision.code)
-            is V2GarrisonRecruitDecision.Applied -> {
+            is GarrisonRecruitDecision.Denied -> rejected(command, decision.reason, decision.code)
+            is GarrisonRecruitDecision.Applied -> {
                 val resolvedCity = checkNotNull(city)
                 val preLogic = PerTurnOverlay.toLogicCity(resolvedCity)
                 ledger.adjust(
@@ -100,8 +100,8 @@ class V2GarrisonRecruitHandler(
                 actionCode = ACTION_CODE,
                 generalId = command.generalId,
                 turnIdx = 0,
-                canonicalCommandId = V2CommandRegistry.garrisonRecruitSchema.canonicalId,
-                replayEvent = V2CommandRegistry.garrisonRecruitSchema.replayEvent,
+                canonicalCommandId = CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
+                replayEvent = CommandSchemaCatalog.garrisonRecruitSchema.replayEvent,
             )
 
         internal fun rejected(command: CityGarrisonRecruit, reason: String, code: String? = null): TurnDaemonCommandResult =
@@ -114,8 +114,8 @@ class V2GarrisonRecruitHandler(
                 turnIdx = 0,
                 reason = reason,
                 code = code,
-                canonicalCommandId = V2CommandRegistry.garrisonRecruitSchema.canonicalId,
-                replayEvent = V2CommandRegistry.garrisonRecruitSchema.replayEvent,
+                canonicalCommandId = CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
+                replayEvent = CommandSchemaCatalog.garrisonRecruitSchema.replayEvent,
             )
 
         /**

@@ -7,15 +7,15 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CityTransportContext
-import opensamguk.logic.v2.command.V2CityTransportDecision
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CityTransportContext
+import opensamguk.logic.command.CityTransportDecision
 import opensamguk.logic.world.CalcCityDistance
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.CityConstRegistry
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.decideCityTransport
-import opensamguk.logic.v2.command.resolveImmediateCityTransportRoute
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.decideCityTransport
+import opensamguk.logic.command.resolveImmediateCityTransportRoute
 import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
 import opensamguk.logic.world.HanStrategicRouteProjection
 
@@ -55,13 +55,13 @@ class V2CityTransportHandler(
         val state = world.getState()
         val mapName = runCatching { ActiveWorldMap.requireName(state.config, state.meta) }.getOrNull()
         val strategic = mapName == HAN_WORLD_V3_MAP_NAME
-        val args = V2CityTransportArgs(
+        val args = CityTransportArgs(
             command.fromCityId, command.toCityId, command.gold, command.rice, command.garrison,
             command.routeRevision, command.topologyRevision, command.routePathHash,
         )
         val decision = decideCityTransport(
             args,
-            V2CityTransportContext(
+            CityTransportContext(
                 generalCityId = general?.cityId,
                 generalNationId = general?.nationId,
                 escortCrew = general?.crew,
@@ -83,8 +83,8 @@ class V2CityTransportHandler(
         )
 
         return when (decision) {
-            is V2CityTransportDecision.Denied -> rejected(command, decision.reason, decision.code)
-            is V2CityTransportDecision.Applied -> {
+            is CityTransportDecision.Denied -> rejected(command, decision.reason, decision.code)
+            is CityTransportDecision.Applied -> {
                 val resolvedFrom = checkNotNull(from)
                 val resolvedTo = checkNotNull(to)
                 ledger.adjust(
@@ -113,8 +113,8 @@ class V2CityTransportHandler(
                 actionCode = ACTION_CODE,
                 generalId = command.generalId,
                 turnIdx = 0,
-                canonicalCommandId = V2CommandRegistry.cityTransportSchema.canonicalId,
-                replayEvent = V2CommandRegistry.cityTransportSchema.replayEvent,
+                canonicalCommandId = CommandSchemaCatalog.cityTransportSchema.canonicalId,
+                replayEvent = CommandSchemaCatalog.cityTransportSchema.replayEvent,
                 routeRevision = command.routeRevision,
             )
 
@@ -128,8 +128,8 @@ class V2CityTransportHandler(
                 turnIdx = 0,
                 reason = reason,
                 code = code,
-                canonicalCommandId = V2CommandRegistry.cityTransportSchema.canonicalId,
-                replayEvent = V2CommandRegistry.cityTransportSchema.replayEvent,
+                canonicalCommandId = CommandSchemaCatalog.cityTransportSchema.canonicalId,
+                replayEvent = CommandSchemaCatalog.cityTransportSchema.replayEvent,
                 routeRevision = command.routeRevision,
             )
 

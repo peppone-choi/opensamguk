@@ -1,4 +1,4 @@
-package opensamguk.common.wire.v2
+package opensamguk.common.wire.command
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -8,14 +8,14 @@ import kotlinx.serialization.json.jsonObject
 import opensamguk.common.wire.WireJson
 import opensamguk.common.world.WorldId
 
-const val V2_COMMAND_RESULT_SCHEMA_VERSION: Int = 1
-const val V2_TURN_EVENT_SCHEMA_VERSION: Int = 1
+const val COMMAND_RESULT_SCHEMA_VERSION: Int = 1
+const val TURN_EVENT_SCHEMA_VERSION: Int = 1
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-data class V2CommandResultEnvelope(
+data class CommandResultEnvelope(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val schemaVersion: Int = V2_COMMAND_RESULT_SCHEMA_VERSION,
+    val schemaVersion: Int = COMMAND_RESULT_SCHEMA_VERSION,
     val worldId: WorldId,
     val requestId: String,
     val eventId: String,
@@ -32,9 +32,9 @@ data class V2CommandResultEnvelope(
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
-data class V2TurnEventEnvelope(
+data class TurnEventEnvelope(
     @EncodeDefault(EncodeDefault.Mode.ALWAYS)
-    val schemaVersion: Int = V2_TURN_EVENT_SCHEMA_VERSION,
+    val schemaVersion: Int = TURN_EVENT_SCHEMA_VERSION,
     val worldId: WorldId,
     val eventId: String,
     val turnId: String,
@@ -48,21 +48,21 @@ data class V2TurnEventEnvelope(
     }
 }
 
-fun encodeV2CommandResultEnvelope(envelope: V2CommandResultEnvelope): String =
-    WireJson.encodeToString(V2CommandResultEnvelope.serializer(), envelope)
+fun encodeV2CommandResultEnvelope(envelope: CommandResultEnvelope): String =
+    WireJson.encodeToString(CommandResultEnvelope.serializer(), envelope)
 
-fun decodeV2CommandResultEnvelope(payload: String): V2CommandResultEnvelope =
+fun decodeV2CommandResultEnvelope(payload: String): CommandResultEnvelope =
     WireJson.decodeFromJsonElement(
-        V2CommandResultEnvelope.serializer(),
+        CommandResultEnvelope.serializer(),
         parseVersionedEnvelope(payload, "v2 command-result"),
     )
 
-fun encodeV2TurnEventEnvelope(envelope: V2TurnEventEnvelope): String =
-    WireJson.encodeToString(V2TurnEventEnvelope.serializer(), envelope)
+fun encodeV2TurnEventEnvelope(envelope: TurnEventEnvelope): String =
+    WireJson.encodeToString(TurnEventEnvelope.serializer(), envelope)
 
-fun decodeV2TurnEventEnvelope(payload: String): V2TurnEventEnvelope =
+fun decodeV2TurnEventEnvelope(payload: String): TurnEventEnvelope =
     WireJson.decodeFromJsonElement(
-        V2TurnEventEnvelope.serializer(),
+        TurnEventEnvelope.serializer(),
         parseVersionedEnvelope(payload, "v2 turn-event"),
     )
 
@@ -75,13 +75,13 @@ private fun parseVersionedEnvelope(payload: String, envelopeType: String): JsonO
 }
 
 private fun requireCurrentCommandResultSchemaVersion(schemaVersion: Int) {
-    require(schemaVersion == V2_COMMAND_RESULT_SCHEMA_VERSION) {
+    require(schemaVersion == COMMAND_RESULT_SCHEMA_VERSION) {
         "Unsupported v2 command-result schema version: $schemaVersion"
     }
 }
 
 private fun requireCurrentTurnEventSchemaVersion(schemaVersion: Int) {
-    require(schemaVersion == V2_TURN_EVENT_SCHEMA_VERSION) {
+    require(schemaVersion == TURN_EVENT_SCHEMA_VERSION) {
         "Unsupported v2 turn-event schema version: $schemaVersion"
     }
 }
