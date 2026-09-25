@@ -31,6 +31,10 @@
           "quote": "戊午，皇子辯即皇帝位，年十七。",
           "grade": "PRIMARY"
         }
+      ],
+      "father": "person.liu_hong",
+      "refs": [
+        "person.liu_hong"
       ]
     },
     {
@@ -47,6 +51,10 @@
           "quote": "孝獻皇帝諱協，靈帝中子也。",
           "grade": "PRIMARY"
         }
+      ],
+      "father": "person.liu_hong",
+      "refs": [
+        "person.liu_hong"
       ]
     },
     {
