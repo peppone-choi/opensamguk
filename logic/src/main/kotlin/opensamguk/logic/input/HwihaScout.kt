@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.VisionRules
+
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -180,7 +182,7 @@ object HwihaScoutCapture {
         index: HanCommanderyIndex,
         cities: List<ScoutCityFact>,
         projection: DeploymentProjection,
-        rules: HwihaVisionRules.Rules,
+        rules: VisionRules.Rules,
         now: HwihaPhase,
     ): HwihaScoutReport {
         val seenCities = cities.filter { index.commanderyOf(it.provinceId) == target.no }

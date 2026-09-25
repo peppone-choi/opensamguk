@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.VisionRules
+import opensamguk.logic.vision.VisionSourceKind
+
 import opensamguk.logic.vision.ScoutPosts
 
 import opensamguk.logic.domestic.PlacementOrder
@@ -51,9 +54,9 @@ class HwihaDomesticVisionContractTest {
         val read = reader.scoutPosts(ownerMeta)
         assertEquals(SourceRead(listOf(HwihaScoutPost(5, "p2")), 0), read, "도착한 정찰만 시야, 행군 중(MOVING)은 무효가 아니라 무시")
 
-        val view = HwihaVision.project(viewer(read.value, emptyList()), index, HwihaVisionRules.CANON, now)
+        val view = HwihaVision.project(viewer(read.value, emptyList()), index, VisionRules.CANON, now)
         assertEquals(listOf(VisionTier.FOG, VisionTier.FULL, VisionTier.FULL, VisionTier.FULL, VisionTier.FOG), tiers(view))
-        assertEquals(listOf(VisionSource(VisionSourceKind.SCOUT_POST, 2, HwihaVisionRules.CANON.radius(VisionSourceKind.SCOUT_POST), "p2", 5)),
+        assertEquals(listOf(VisionSource(VisionSourceKind.SCOUT_POST, 2, VisionRules.CANON.radius(VisionSourceKind.SCOUT_POST), "p2", 5)),
             view.sources)
     }
 
@@ -69,7 +72,7 @@ class HwihaDomesticVisionContractTest {
         assertEquals(SourceRead(true, 0), reader.hasCompletedWatchtower(done))
         assertEquals(SourceRead(false, 0), reader.hasCompletedWatchtower(building), "진행 중 망루봉화는 시야가 아니다(무효도 아니다)")
 
-        val view = HwihaVision.project(viewer(emptyList(), listOf(40 to "p4")), index, HwihaVisionRules.CANON, now)
+        val view = HwihaVision.project(viewer(emptyList(), listOf(40 to "p4")), index, VisionRules.CANON, now)
         assertEquals(listOf(VisionTier.FOG, VisionTier.FOG, VisionTier.FOG, VisionTier.FULL, VisionTier.FULL), tiers(view))
     }
 }
