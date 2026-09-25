@@ -44,3 +44,5 @@ identify relationships and capture ownership; changing them may require a
 documented projection update. This gate cannot detect changes confined to an
 excluded field or tell which field changed from a SHA mismatch alone. The
 existing chain assertions and the seed replay assertion remain complementary.
+Bugok commander assignment is also outside this projection: its retainer row ID
+is generated, and this baseline does not resolve it to a stable person key.
