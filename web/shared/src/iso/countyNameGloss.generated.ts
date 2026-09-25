@@ -1,6 +1,6 @@
 // 생성물 — tools/map/build_county_display_name_collisions.py 가 쓴다. 손으로 고치지 마라(--check 가 적색이 된다).
 // 원본 목록: data/curated/han/county-display-name-collisions-v1.json (이슈 #838).
-// han-tiles sha256 386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011
+// han-tiles sha256 bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488
 
 /** 같은 郡 안에서 한글 표시명이 겹치는 관할(jurisdictionId) → 漢字 병기(繁體, 县/縣 꼬리 없음). */
 export const COUNTY_GLOSS_BY_JURISDICTION_ID: Readonly<Record<string, string>> = {

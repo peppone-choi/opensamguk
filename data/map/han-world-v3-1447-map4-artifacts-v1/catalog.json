@@ -3,60 +3,60 @@
   "cityCount": 1447,
   "files": [
     {
-      "blob": "blobs/386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011.json.gz",
-      "bytes": 11456707,
-      "compressedSha256": "2b9fb68663677f1040c9d3dc33a3faf0e0a7a033b508658644a537ff0124de14",
+      "blob": "blobs/bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488.json.gz",
+      "bytes": 11456719,
+      "compressedSha256": "9687359d80f5ab92cdb3923b7dd3d824952ca973d5e5d6e09363801957b89611",
       "path": "data/map/han-tiles.json",
-      "sha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011"
+      "sha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488"
     },
     {
-      "blob": "blobs/f12649f6f2128a7763e401c9ba9dd807c686bb1e0faeece960d76a8c77f5cdb6.json.gz",
+      "blob": "blobs/4dd651c73da5568acbfb618a8b936dfaed130ac33792b1f149f05543842d2634.json.gz",
       "bytes": 45054,
-      "compressedSha256": "0af3b7c94d16761f71f1b93ef84821c6edf77334335634fefea245d60b57cf2d",
+      "compressedSha256": "c3e1d826fa32c157817c7272a121a890c0f3912e0dc6d51eb33b9e1aadf3d16e",
       "path": "data/map/han-water-topology-v1.json",
-      "sha256": "f12649f6f2128a7763e401c9ba9dd807c686bb1e0faeece960d76a8c77f5cdb6"
+      "sha256": "4dd651c73da5568acbfb618a8b936dfaed130ac33792b1f149f05543842d2634"
     },
     {
-      "blob": "blobs/4c8e4d0e83d099c53b2203c5d1aceb67a5769cc5da2bdc492ad057ed7c1f39f3.json.gz",
+      "blob": "blobs/d665d3a14f1b7f2bbb8af9ce09c0bb12f93b037a79eb175885b7b9b0f023d585.json.gz",
       "bytes": 35392,
-      "compressedSha256": "f57bbbb1a74880e792e72db7386d1d03551f579972a967439cf4f5813956cd94",
+      "compressedSha256": "691629d62d28f8aa6ac330522d303851d8a217e303015f627955efab01714177",
       "path": "data/curated/han/water-topology-adjudications-v1.json",
-      "sha256": "4c8e4d0e83d099c53b2203c5d1aceb67a5769cc5da2bdc492ad057ed7c1f39f3"
+      "sha256": "d665d3a14f1b7f2bbb8af9ce09c0bb12f93b037a79eb175885b7b9b0f023d585"
     },
     {
-      "blob": "blobs/646ace854667eb3f50300aa81b796d3726fd0c1bce0d890439cb91d4b947d2c5.json.gz",
+      "blob": "blobs/8ca65799cddbb40259b3803307a9930f1958c7ac337d68c8ded1154dacb0145f.json.gz",
       "bytes": 822,
-      "compressedSha256": "48c0b139876fef1681b58febf3582a618208382f7cd925930033dcef51f2ee3d",
+      "compressedSha256": "c17c8a96ebe40dc6110abbf1c519b91b55fea89f8131f46e66649902ef0418ae",
       "path": "data/map/han-strategic-topology-manifest-v1.json",
-      "sha256": "646ace854667eb3f50300aa81b796d3726fd0c1bce0d890439cb91d4b947d2c5"
+      "sha256": "8ca65799cddbb40259b3803307a9930f1958c7ac337d68c8ded1154dacb0145f"
     },
     {
-      "blob": "blobs/40ed5053f5641b18ed3421f97a54bbbe3bd2264c3f92b63a0a6905eeb80c8b7e.json.gz",
-      "bytes": 1642532,
-      "compressedSha256": "4f642f4d0844259c6c105fa6f23ff9aa3b1ec98e64419720452420f760b1591d",
+      "blob": "blobs/57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30.json.gz",
+      "bytes": 1642533,
+      "compressedSha256": "b087795d8abfc8c4341168d74c67607158d55a44129ae7cfed2a847a80fba537",
       "path": "infra/src/main/resources/map/han-world-v3.json",
-      "sha256": "40ed5053f5641b18ed3421f97a54bbbe3bd2264c3f92b63a0a6905eeb80c8b7e"
+      "sha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30"
     },
     {
-      "blob": "blobs/2d68846f7447ab0246eb7792e0c16da24d639164f17294067d23e738d9cfab30.json.gz",
-      "bytes": 522981,
-      "compressedSha256": "e7c5096f655e5da83f9b3efaaef707a11de21115e3cdf59fa5b78f10b21b1bed",
+      "blob": "blobs/6aba642e7df755adaff102fea72d18a0579f8942adc9148afad2b828b6ea81bb.json.gz",
+      "bytes": 522982,
+      "compressedSha256": "431b1be430da19beab024a581817c213b1c2e0a03740d1820f75474b62f15e22",
       "path": "data/map/han-world-v3-manifest-v1.json",
-      "sha256": "2d68846f7447ab0246eb7792e0c16da24d639164f17294067d23e738d9cfab30"
+      "sha256": "6aba642e7df755adaff102fea72d18a0579f8942adc9148afad2b828b6ea81bb"
     },
     {
-      "blob": "blobs/5f0440cf2054ab3fecbfb6b9445cf4a17de60ef1a7b25ac9d79f1d5f56a6ac90.json.gz",
+      "blob": "blobs/4030deb96c167e55d8dc26b88f2abbad09ac7d1f7ca626e540f35c627143a9e5.json.gz",
       "bytes": 1789968,
-      "compressedSha256": "4f734b4eea1e0bfe63c827e749b39259e096d9306a1d26b8490af297cce41d01",
+      "compressedSha256": "db8dca7a8ab6367d248e41b7ae564fdbb6ef3553d271b296d9a89baea68e3148",
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "5f0440cf2054ab3fecbfb6b9445cf4a17de60ef1a7b25ac9d79f1d5f56a6ac90"
+      "sha256": "4030deb96c167e55d8dc26b88f2abbad09ac7d1f7ca626e540f35c627143a9e5"
     },
     {
-      "blob": "blobs/e9ccd64a856c217e818faff06a175806bfb0ef46c8bb5dc49ef86ed746076bcf.json.gz",
+      "blob": "blobs/1424d129d903c6ba384771d483942b878d4d0e65b1bcbb7a769f17bcb12f2c69.json.gz",
       "bytes": 391777,
-      "compressedSha256": "843f0175f380c20bb17129076a32dc8aab670b1c8c6f1116ce2cb900f7940b0f",
+      "compressedSha256": "9a2157f9e0335213b30f2cb5d2e7b21f5853d2ea494fe5edad933cb21fb306ea",
       "path": "data/curated/han/route-node-migration-v1.json",
-      "sha256": "e9ccd64a856c217e818faff06a175806bfb0ef46c8bb5dc49ef86ed746076bcf"
+      "sha256": "1424d129d903c6ba384771d483942b878d4d0e65b1bcbb7a769f17bcb12f2c69"
     },
     {
       "blob": "blobs/a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670.json.gz",
@@ -66,11 +66,11 @@
       "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
     },
     {
-      "blob": "blobs/1c0b7e91af3a78a71bd8a0060fdcb57e1be4750ba32a21bdd646418ed827f616.json.gz",
+      "blob": "blobs/8f006f14aca91776b838c8a22d7e66a54a1f5c76f723a58133d4f2d79d21775b.json.gz",
       "bytes": 19561944,
-      "compressedSha256": "ebbdb4f5a9a2f72c653997625ce0ee4d79cefc0cd9d011004899a32195d00771",
+      "compressedSha256": "0857fa5ce609ae2b7ebde4faaedb01ce89265c080e0f7f700a103cf8e5e5089b",
       "path": "data/map/han-scenario-province-ownership-v1.json",
-      "sha256": "1c0b7e91af3a78a71bd8a0060fdcb57e1be4750ba32a21bdd646418ed827f616"
+      "sha256": "8f006f14aca91776b838c8a22d7e66a54a1f5c76f723a58133d4f2d79d21775b"
     },
     {
       "blob": "blobs/cd8bb52ff3c2929c2274e4a4a0871bd1f777f037c379f2d77b3d5e7329b55350.json.gz",
@@ -102,10 +102,10 @@
     },
     {
       "path": "data/map/han-land-roads-v1.json",
-      "sha256": "741082ec34f418e967f55fb0515dd44cb2d35c1ecd3d9c5683867aa69f79ad8b",
-      "bytes": 6365995,
-      "blob": "blobs/741082ec34f418e967f55fb0515dd44cb2d35c1ecd3d9c5683867aa69f79ad8b.json.gz",
-      "compressedSha256": "7c2f1d85cb976fa1edf5e913aa3a3a749b48bc6890738041d517b3c03c8d0731"
+      "sha256": "cf379f77c1d147988fd8cb7471ce2bd5cff025ce5a0c3fbf1ab379886a79a5b7",
+      "bytes": 6365726,
+      "blob": "blobs/cf379f77c1d147988fd8cb7471ce2bd5cff025ce5a0c3fbf1ab379886a79a5b7.json.gz",
+      "compressedSha256": "2fc0c1c420cb0fc1b445310a840e712f93220765bf6c2b2f9992938d6bf64c90"
     }
   ],
   "logicalMapName": "han-world-v3",

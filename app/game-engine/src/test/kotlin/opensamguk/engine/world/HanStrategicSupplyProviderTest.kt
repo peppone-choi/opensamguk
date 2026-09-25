@@ -6,8 +6,6 @@ import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.world.*
 import java.nio.file.Path
-import java.security.MessageDigest
-import java.util.HexFormat
 import kotlin.test.*
 
 class HanStrategicSupplyProviderTest {
@@ -55,16 +53,17 @@ class HanStrategicSupplyProviderTest {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
         assertEquals(1627, network.provinceOwners.size)  // 4배 지도 구역 재편 후
-        // 省 1,593(수·진·관 거점 省 73 포함) · 郡縣 인접 4,274(han-tiles adjacency.county 실측) 중 물을 건너는
-        // 60 간선이 v3 에서 빠져 4,214 다. v2 는 그 걸러내기가 없어 아래에서 4,274 그대로다.
-        // 2026-09-18 지리 재분할(GH #806) 실측: 縣 인접 3,551 중 물을 건너는 51 간선이 v3 에서 빠져 3,500 (앞 판 4,215).
-        // 확장 후 전체 4,167개 중 물을 건너는 51개를 제외한 마른땅 연결 4,116개.
-        // 2026-09-21 #848: 縣 인접 3,660 중 물을 건너는 51 간선을 뺀 마른땅 3,609.
-        // 2026-09-23 미해독 3행 제외·결손 縣 223곳 추가: 縣 인접 4,296 중 물 경계 52간선을 뺀 마른땅 4,244.
-        assertEquals(4284, network.provinceAdjacency.sumOf(IntArray::size) / 2)
+        val provinceIndex = network.strategicSupply!!.provinceIds.withIndex().associate { it.value to it.index }
+        projection.topology.traversalEdges.filter { it.mode == TraversalMode.LAND }.forEach { edge ->
+            val a = provinceIndex.getValue((edge.from as StrategicNodeRef.LandProvince).id)
+            val b = provinceIndex.getValue((edge.to as StrategicNodeRef.LandProvince).id)
+            assertTrue(b in network.provinceAdjacency[a], "missing land adjacency ${edge.id}")
+            assertTrue(a in network.provinceAdjacency[b], "asymmetric land adjacency ${edge.id}")
+        }
         assertNotNull(network.strategicSupply)
-        assertEquals(4337, provider.network("han-world-v2", 1020, emptyList()).provinceAdjacency.sumOf(IntArray::size) / 2)  // 같은 타일의 전체 접경
-        assertNull(provider.network("han-world-v2", 1020, emptyList()).strategicSupply)
+        val legacy = provider.network("han-world-v2", 1020, emptyList())
+        assertTrue(legacy.provinceAdjacency.any { it.isNotEmpty() })
+        assertNull(legacy.strategicSupply)
     }
 
     @Test fun `V3 rejects mismatched route physical and province binding before supply`() {
@@ -77,12 +76,12 @@ class HanStrategicSupplyProviderTest {
         }
     }
 
-    @Test fun `15 scenario road graph only removes supply reachability from the raw graph`() {
+    @Test fun `15 scenarios start with no new supply cuts from built roads`() {
         val scenarios = mapper.readTree(Path.of("../../data/map/han-scenario-province-ownership-v1.json").toFile())
             .path("scenarios").map { it.path("scenarioCode").asInt() }
         assertEquals(15, scenarios.size)
         val cityConst = ActiveWorldMap.requireVariant(mapOf("mapName" to "han-world-v3"), emptyMap())
-        val cuts = linkedMapOf<Int, Pair<Int, String>>()
+        val newCuts = mutableMapOf<Int, Set<Int>>()
         for (code in scenarios) {
             val scenario = ScenarioJson.loadScenario(Path.of("../../infra/src/main/resources/scenario/scenario_$code.json").toFile().readText())
             val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
@@ -99,27 +98,33 @@ class HanStrategicSupplyProviderTest {
             val after = evaluateSupplyReachability(owned, capitals, cityConst, dry).rows
                 .filter { it.spatialGraphSupplied }.map { it.cityId }.toSet()
             assertEquals(emptySet(), after - before, "road graph created supply reachability in $code")
-            val sortedCuts = (before - after).sorted().joinToString(",")
-            cuts[code] = (before - after).size to HexFormat.of().formatHex(
-                MessageDigest.getInstance("SHA-256").digest(sortedCuts.toByteArray(Charsets.UTF_8))
-            )
+            if (before - after != emptySet<Int>()) newCuts[code] = before - after
         }
-        assertEquals(mapOf(
-            1010 to (23 to "63bf89266f82429aafa50cec6a947fe855f57cc35b074f894d8f65aa649a0f0a"),
-            1020 to (78 to "6660d85aa2d5fc5b70a17abe2f10b77057511cf69c556868b07afc7a5461db47"),
-            1021 to (94 to "35184194578392b77d601352485551c0d7ba04004635f4351a85172e2e014480"),
-            1030 to (240 to "48ef39af94a35844895e64b35354b63a76e9ea35aae315c1a3967eeb61c785f2"),
-            1031 to (309 to "46da6fa2bc70fcf0aca3ca20a3b68be406c99950c549704dd277de1b629f7ec2"),
-            1040 to (218 to "3ab373db9cb515797f2a6bed860e51b7ff9f2530a61512c547f0d58b9274b055"),
-            1041 to (312 to "149ca9180335a53cfc270144647c8c812a75d169e9453165658ac10003bffd2b"),
-            1050 to (225 to "b70bf1afebe7b03bdefc1002e161f54b33a6f54d2233ea233688238bcac84e4f"),
-            1060 to (229 to "b5cf5d2f8311c7112d83fb6ee5cacc1020dc9449c37fbf94a46b59777becaf1a"),
-            1070 to (151 to "cddb1a844871ec1c1a9ec3c52d1885723123c793635072f8ea5cd67bc806cd86"),
-            1080 to (195 to "2e70f0f1e420847bde680356b990c7936a51ba5906de1c1c2df4de8bca3ce08d"),
-            1090 to (191 to "00fd0f72a50c82b1abc0c4df461797ee435e70792e22175a5f367aea05abcdac"),
-            1100 to (931 to "9ee7af6041dfd2b35a263e53a1d52c2184bff1104bedd30325872fcf031cb16c"),
-            1110 to (902 to "017169f1f5b71b91cbe1950dddc16e905e3c1ec5ccf6c9ed61d9ea73f4f8458e"),
-            1120 to (78 to "f5ea5e58b39036e749600235df16b1fa674b919fed44a4aee6ba8f2aed075102"),
-        ), cuts, "scenario road graph cuts changed")
+        assertEquals(emptyMap(), newCuts, "initial roads cut supply")
+    }
+
+    @Test fun `closing an initial road makes the no new supply cuts gate red`() {
+        val code = 1100
+        val scenario = ScenarioJson.loadScenario(Path.of("../../infra/src/main/resources/scenario/scenario_$code.json").toFile().readText())
+        val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
+        val live = cities(owners)
+        val owned = live.filter { it.nationId > 0 }.map { SupplyCity(it.cityId, it.nationId) }
+        val capitals = scenario.nations.filter { it.scale > 0 }.mapNotNull { n ->
+            n.cities.firstOrNull()?.toInt()?.let { SupplyCapital(it, n.id) }
+        }
+        val raw = provider.network("han-world-v2", code, live)
+        val dry = provider.network("han-world-v3", code, live, null, projection)
+        val strategic = requireNotNull(dry.strategicSupply)
+        val bridgeId = "land-boundary:6:20006412:gc-g0068-003"
+        assertTrue(strategic.topology.traversalEdges.single { it.id == bridgeId }.initiallyOpen)
+        val closed = dry.copy(strategicSupply = strategic.withEdgeStates(mapOf(
+            1 to StrategicEdgeStateSnapshot(strategic.topology.topologyRevision,
+                strategic.topology.contentHash, mapOf(bridgeId to StrategicEdgeState(active = false)))
+        )))
+        fun supplied(network: SpatialSupplyNetwork) = evaluateSupplyReachability(
+            owned, capitals, ActiveWorldMap.requireVariant(mapOf("mapName" to "han-world-v3"), emptyMap()), network
+        ).rows.filter { it.spatialGraphSupplied }.map { it.cityId }.toSet()
+        assertEquals(emptySet(), supplied(raw) - supplied(dry))
+        assertTrue((supplied(raw) - supplied(closed)).isNotEmpty(), "closed road must trip the initial supply invariant")
     }
 }

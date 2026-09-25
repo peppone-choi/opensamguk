@@ -5,8 +5,8 @@
   "sourcePins": {
     "frozenTilesSha256": "ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312",
     "frozenWorldSha256": "4d5eec1eabbef132d4c799d6b211d724310d8ef614ae737608d392ce95c7dbf2",
-    "map4TilesSha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011",
-    "map4WorldSha256": "40ed5053f5641b18ed3421f97a54bbbe3bd2264c3f92b63a0a6905eeb80c8b7e"
+    "map4TilesSha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488",
+    "map4WorldSha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30"
   },
   "counts": {
     "moved": 262,
@@ -16,7 +16,7 @@
       "수": 28,
       "진": 16
     },
-    "throughPairGained": 12
+    "throughPairGained": 13
   },
   "relocations": [
     {
@@ -2178,10 +2178,10 @@
         "col": 468
       },
       "newCell": {
-        "row": 288,
-        "col": 465
+        "row": 299,
+        "col": 459
       },
-      "baseCellDistance": 3.16,
+      "baseCellDistance": 15.0,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -2192,10 +2192,11 @@
         ],
         "newNeighbourCityIds": [
           513,
-          526
+          526,
+          1077
         ],
         "oldThroughNeighbourPair": false,
-        "newThroughNeighbourPair": false
+        "newThroughNeighbourPair": true
       }
     },
     {
@@ -7669,7 +7670,7 @@
         ],
         "newNeighbourCityIds": [
           513,
-          526
+          1466
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false

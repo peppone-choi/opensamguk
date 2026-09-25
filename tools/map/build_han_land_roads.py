@@ -2,14 +2,16 @@
 """Build a deterministic, terrain-aware county road graph for the map4 release.
 
 The candidate graph is every physically dry four-neighbour county boundary.
-Its crossing cells are geometry, while the BUILT set is a connected minimum
-network with short, low-friction loops. These are inferred game routes, not
+Its crossing cells are geometry, while the BUILT set starts with a connected
+minimum network, short loops, and the links needed to preserve initial scenario
+supply. These are inferred game routes, not
 claims that a historical road followed any particular cell.
 """
 from __future__ import annotations
 
 import argparse
 import heapq
+import hashlib
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -21,6 +23,9 @@ from audit_province_clearance import owner_grid
 ROOT = Path(__file__).resolve().parents[2]
 TILES = ROOT / "data/map/han-tiles.json"
 OUTPUT = ROOT / "data/map/han-land-roads-v1.json"
+OWNERSHIP = ROOT / "data/map/han-scenario-province-ownership-v1.json"
+WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
+SCENARIOS = ROOT / "infra/src/main/resources/scenario"
 DRY_COST = {"PLAIN": 1, "BASIN": 2, "HILL": 3, "PLATEAU": 4, "MOUNTAIN": 6, "DESERT": 7}
 HISTORICAL_CORRIDORS = (
     {"id": "jingxing", "name": "井陘道", "waypointCityIds": ("gc-g0079-001", "87093", "88410"),
@@ -60,7 +65,7 @@ HISTORICAL_CORRIDORS = (
 )
 
 
-def build(tiles: dict) -> dict:
+def build(tiles: dict, ownership: dict) -> dict:
     meta = tiles["_meta"]
     if meta.get("resolutionScale") != 4:
         raise ValueError("Road release requires the map4 terrain")
@@ -328,6 +333,65 @@ def build(tiles: dict) -> dict:
             built.add(pair)
             degree[pair[0]] += 1
             degree[pair[1]] += 1
+    # An initially owned territory must retain every supply connection that
+    # its dry boundary graph already has. The global MST can otherwise route
+    # through a different nation's land and strand many counties at start.
+    # Add only the cheapest accessible links needed by the reviewed scenario
+    # ownerships; roads remain meaningful for later construction and blockade.
+    id_index = {province_id: index for index, province_id in enumerate(ids)}
+    world_cities = {int(city["id"]): city for city in json.loads(WORLD.read_text())["cities"]}
+    supply_links = 0
+    for scenario in sorted(ownership["scenarios"], key=lambda row: row["scenarioCode"]):
+        assignments = scenario["assignments"]
+        if len(assignments) != len(ids) or {row["provinceId"] for row in assignments} != set(ids):
+            raise ValueError(f"incomplete scenario ownership: {scenario['scenarioCode']}")
+        owner_by_index = {id_index[row["provinceId"]]: row["ownerNationId"] for row in assignments}
+        scenario_doc = json.loads((SCENARIOS / f"scenario_{scenario['scenarioCode']}.json").read_text())
+        occupied_cities = {}
+        for nation, nation_row in enumerate(scenario_doc["nation"], start=1):
+            for city_id in nation_row[8]:
+                occupied_cities[int(city_id)] = nation
+        live_jurisdictions = {}
+        for city_id, city in world_cities.items():
+            seat_id = city["spatialProvinceId"]
+            jurisdiction = provinces[id_index[seat_id]]["jurisdictionId"]
+            nation = occupied_cities.get(city_id, 0)
+            previous = live_jurisdictions.setdefault(jurisdiction, nation)
+            if previous != nation:
+                raise ValueError(f"conflicting live jurisdiction owner: {jurisdiction}")
+        # Runtime city occupancy, including neutral cities, overrides the static
+        # assignment for every province in that city's jurisdiction, not just its seat.
+        for index, province in enumerate(provinces):
+            override = live_jurisdictions.get(province["jurisdictionId"])
+            if override is not None:
+                owner_by_index[index] = override
+        by_nation: dict[int, set[int]] = defaultdict(set)
+        for index, nation in owner_by_index.items():
+            if nation is not None and nation > 0:
+                by_nation[nation].add(index)
+        for nation in sorted(by_nation):
+            owned = by_nation[nation]
+            supply_parent = {node: node for node in owned}
+            def supply_root(node: int) -> int:
+                while supply_parent[node] != node:
+                    supply_parent[node] = supply_parent[supply_parent[node]]
+                    node = supply_parent[node]
+                return node
+            for a, b in built:
+                if a in owned and b in owned:
+                    supply_parent[supply_root(a)] = supply_root(b)
+            for (a, b), _ in ordered:
+                if (a, b) not in accessible or a not in owned or b not in owned:
+                    continue
+                ra, rb = supply_root(a), supply_root(b)
+                if ra == rb:
+                    continue
+                supply_parent[ra] = rb
+                if (a, b) not in built:
+                    built.add((a, b))
+                    degree[a] += 1
+                    degree[b] += 1
+                    supply_links += 1
     # The long-distance overview shows the part of the initial tree that
     # actually joins substantial groups of counties. Local terminal streets
     # remain available at closer zoom, without cluttering the world picture.
@@ -389,14 +453,15 @@ def build(tiles: dict) -> dict:
                       "fortCells": fort_cells})
     return {"schemaVersion": 1, "artifactId": "han-land-roads-v1", "resolutionScale": 4,
             "rows": rows, "cols": cols, "provinceCount": len(ids),
-            "policy": "dry-four-neighbour-terrain-mst-with-commandery-and-site-links-v2",
+            "policy": "dry-four-neighbour-terrain-mst-with-scenario-supply-links-v3",
             "historicalStatus": "INFERRED_ROUTE_NOT_ATTESTED_ROAD",
             "historicalCorridors": corridors,
             "counts": {"candidateEdges": len(edges), "builtEdges": len(built),
                        "unbuiltEdges": len(accessible) - len(built),
                        "inaccessibleEdges": len(edges) - len(accessible),
                        "overviewTrunkEdges": sum(edge["overviewTrunk"] for edge in edges),
-                       "dryComponents": len({root(i) for i in range(len(ids))})},
+                       "dryComponents": len({root(i) for i in range(len(ids))}),
+                       "scenarioSupplyLinks": supply_links},
             "edges": edges}
 
 
@@ -404,7 +469,11 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    result = build(json.loads(TILES.read_text(encoding="utf-8")))
+    tile_bytes = TILES.read_bytes()
+    ownership = json.loads(OWNERSHIP.read_text(encoding="utf-8"))
+    if ownership["sources"]["mapSha256"] != hashlib.sha256(tile_bytes).hexdigest():
+        raise ValueError("scenario ownership must be regenerated before land roads")
+    result = build(json.loads(tile_bytes), ownership)
     payload = json.dumps(result, ensure_ascii=False, separators=(",", ":")) + "\n"
     if args.check:
         if OUTPUT.read_text(encoding="utf-8") != payload:

@@ -3,16 +3,16 @@
   "manifestId": "han-world-v3-manifest-v1",
   "worldVersion": "han-world-v3",
   "inputs": {
-    "selectionSha256": "5f0440cf2054ab3fecbfb6b9445cf4a17de60ef1a7b25ac9d79f1d5f56a6ac90",
-    "migrationSha256": "e9ccd64a856c217e818faff06a175806bfb0ef46c8bb5dc49ef86ed746076bcf",
-    "hanTilesSha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011",
-    "provinceCityAttributionSha256": "2eea5350775297b4ec4ae3b781444936706880d9688cf90596e56560b699f3f0",
+    "selectionSha256": "4030deb96c167e55d8dc26b88f2abbad09ac7d1f7ca626e540f35c627143a9e5",
+    "migrationSha256": "1424d129d903c6ba384771d483942b878d4d0e65b1bcbb7a769f17bcb12f2c69",
+    "hanTilesSha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488",
+    "provinceCityAttributionSha256": "960e58c0512709358ff3dc8341aaf523bf33d1438d79114d805adc2dfe545f6d",
     "legacy780Sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
-    "waterwayNetworkSha256": "8396feaf33781f55a942cc3754f3b34f660ab16ac7eafcd226e0c171b282d76b"
+    "waterwayNetworkSha256": "2a87e76a1b467d5f0fa27434433f8015d7203e275ddd7ee4194a834087856ed7"
   },
   "outputs": {
-    "worldJsonSha256": "40ed5053f5641b18ed3421f97a54bbbe3bd2264c3f92b63a0a6905eeb80c8b7e",
-    "cityConstSha256": "7169f243ff1ef5f788407631d88791d4e988b63db86aac1e67dfd8a97b4203be",
+    "worldJsonSha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30",
+    "cityConstSha256": "4243feb660c155c2822f2fa6d32f63e47345cf789a7616ae18191b998d5fa4bb",
     "gateIndexSha256": "ddcf53040c54e4a77923f62f0885743ffc2ea7bf31f744edcf4e4a9df4551eb7"
   },
   "routeNodes": [
@@ -17546,7 +17546,7 @@
     {
       "a": 513,
       "b": 526,
-      "sharedBoundaryCells": 120
+      "sharedBoundaryCells": 124
     },
     {
       "a": 513,
@@ -17626,7 +17626,7 @@
     {
       "a": 513,
       "b": 1466,
-      "sharedBoundaryCells": 8
+      "sharedBoundaryCells": 4
     },
     {
       "a": 514,
@@ -17865,11 +17865,6 @@
     },
     {
       "a": 526,
-      "b": 1077,
-      "sharedBoundaryCells": 8
-    },
-    {
-      "a": 526,
       "b": 1084,
       "sharedBoundaryCells": 4
     },
@@ -17886,7 +17881,7 @@
     {
       "a": 526,
       "b": 1466,
-      "sharedBoundaryCells": 24
+      "sharedBoundaryCells": 20
     },
     {
       "a": 527,
@@ -25732,6 +25727,11 @@
       "a": 1062,
       "b": 1098,
       "sharedBoundaryCells": 12
+    },
+    {
+      "a": 1077,
+      "b": 1466,
+      "sharedBoundaryCells": 8
     },
     {
       "a": 1097,

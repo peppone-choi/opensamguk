@@ -168,18 +168,18 @@
         "id": "43138",
         "displayName": "육안현",
         "componentCellCounts": [
-          2080,
-          544
+          2016,
+          608
         ],
         "components": [
           {
-            "cellCount": 2080,
+            "cellCount": 2016,
             "memberIds": [
               "43138"
             ]
           },
           {
-            "cellCount": 544,
+            "cellCount": 608,
             "memberIds": [
               "43138"
             ]
@@ -1000,18 +1000,18 @@
         "id": "43138",
         "displayName": "육안현",
         "componentCellCounts": [
-          2080,
-          544
+          2016,
+          608
         ],
         "components": [
           {
-            "cellCount": 2080,
+            "cellCount": 2016,
             "memberIds": [
               "43138"
             ]
           },
           {
-            "cellCount": 544,
+            "cellCount": 608,
             "memberIds": [
               "43138"
             ]
@@ -2374,6 +2374,7 @@
               "82581",
               "82606",
               "gc-g0050-001",
+              "gc-g0050-004",
               "gc-g0050-005",
               "gc-g0050-006",
               "gc-g0050-007",
@@ -2385,8 +2386,7 @@
           {
             "cellCount": 608,
             "memberIds": [
-              "43138",
-              "gc-g0050-004"
+              "43138"
             ]
           }
         ]
@@ -8076,7 +8076,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011"
+      "sha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

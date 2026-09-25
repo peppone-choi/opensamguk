@@ -6,8 +6,8 @@
  "counts": {
   "rows": 67,
   "humanDecisionRequired": 15,
-  "currentExact": 52,
-  "currentChanged": 11,
+  "currentExact": 54,
+  "currentChanged": 9,
   "currentAbsent": 4
  },
  "rows": [
@@ -243,11 +243,11 @@
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "UNVERIFIED",
    "sourceConfidence": "LOW",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "43138"
    ],
-   "currentCellCount": 34,
+   "currentCellCount": 38,
    "status": "HUMAN_DECISION_REQUIRED",
    "decision": null,
    "evidenceRefs": [
@@ -930,10 +930,9 @@
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "UPHELD",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
-    "43138",
-    "gc-g0050-004"
+    "43138"
    ],
    "currentCellCount": 38,
    "status": "DRAFT_RECHECK_GEOMETRY",

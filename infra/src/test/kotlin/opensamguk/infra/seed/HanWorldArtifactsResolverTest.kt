@@ -17,9 +17,11 @@ class HanWorldArtifactsResolverTest {
         assertEquals(ids.toSet(), selected.projection.bindingsByCityId.keys)
         val roadGates = requireNotNull(selected.projection.presentation).roadGates
         val topologyRoads = selected.projection.topology.traversalEdges.associateBy { it.id }
-        assertEquals(4284, roadGates.size)
-        assertEquals(656, roadGates.count { it.overviewTrunk })
-        assertEquals(12, roadGates.count { !it.buildable })
+        val committedRoads = com.fasterxml.jackson.databind.ObjectMapper().readTree(
+            selected.artifactBytes("data/map/han-land-roads-v1.json")).path("edges")
+        assertEquals(committedRoads.map { it.path("id").asText() }.toSet(), roadGates.map { it.edgeId }.toSet())
+        assertEquals(committedRoads.count { it.path("overviewTrunk").asBoolean() }, roadGates.count { it.overviewTrunk })
+        assertEquals(committedRoads.count { it.path("status").asText() == "INACCESSIBLE" }, roadGates.count { !it.buildable })
         assertTrue(roadGates.all { gate -> topologyRoads.getValue(gate.edgeId).initiallyOpen == gate.initiallyBuilt })
         assertTrue(roadGates.filterNot { it.buildable }.none { it.initiallyBuilt })
         assertContentEquals(java.nio.file.Files.readAllBytes(mapPath),

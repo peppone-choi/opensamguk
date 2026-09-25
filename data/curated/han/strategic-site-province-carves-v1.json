@@ -13,7 +13,7 @@
     },
     "gapCounties": {
       "path": "data/curated/han/gap-counties-v1.json",
-      "sha256": "493c16fe13cb6dc9b09abda687a3116e154d0fafb1ade904c65465415418d9c0"
+      "sha256": "6c0c9d1b3674725e3fee2aa5daa8063da9fd7f349ce669abb1f6b1685b14a2e1"
     }
   },
   "rule": {
@@ -44,7 +44,7 @@
     "stages": [
       {
         "inputDocumentSha256": "989c37006f7069224320d936e29f6e9ceb89f16d9eb70a0bb298f308e659457a",
-        "outputDocumentSha256": "83cef0418c5c4bcdc8a1fe123acbc6af34a9a51d5b37aa51fc2d144f180f785a",
+        "outputDocumentSha256": "b336504dd494d7d2555b98958fdc393852288a2f0c9a1e851027e409843a823e",
         "inputCounts": {
           "cities": 1190,
           "seats": 172,
@@ -13482,18 +13482,6 @@
             "after": "gc-g0008-030"
           },
           {
-            "col": 465,
-            "row": 288,
-            "before": "43138",
-            "after": "gc-g0050-004"
-          },
-          {
-            "col": 466,
-            "row": 288,
-            "before": "43138",
-            "after": "gc-g0050-004"
-          },
-          {
             "col": 369,
             "row": 289,
             "before": "45651",
@@ -13504,18 +13492,6 @@
             "row": 289,
             "before": "45651",
             "after": "ss-dengsai"
-          },
-          {
-            "col": 465,
-            "row": 289,
-            "before": "43138",
-            "after": "gc-g0050-004"
-          },
-          {
-            "col": 466,
-            "row": 289,
-            "before": "43138",
-            "after": "gc-g0050-004"
           },
           {
             "col": 485,
@@ -13908,6 +13884,18 @@
             "after": "ss-shukou"
           },
           {
+            "col": 459,
+            "row": 299,
+            "before": "43138",
+            "after": "gc-g0050-004"
+          },
+          {
+            "col": 460,
+            "row": 299,
+            "before": "43138",
+            "after": "gc-g0050-004"
+          },
+          {
             "col": 481,
             "row": 299,
             "before": "43057",
@@ -13960,6 +13948,18 @@
             "row": 300,
             "before": "82578",
             "after": "gc-g0008-002"
+          },
+          {
+            "col": 459,
+            "row": 300,
+            "before": "43138",
+            "after": "gc-g0050-004"
+          },
+          {
+            "col": 460,
+            "row": 300,
+            "before": "43138",
+            "after": "gc-g0050-004"
           },
           {
             "col": 481,
@@ -19000,15 +19000,15 @@
             "commanderyId": "PARENT-0050",
             "worldCommanderyHan": "廬江郡",
             "anchorCell": {
-              "col": 465,
-              "row": 288
+              "col": 459,
+              "row": 299
             },
             "carvedCellCount": 4,
             "displacedFrom": {
-              "col": 468,
-              "row": 287,
+              "col": 460,
+              "row": 299,
               "reason": "PROJECTED_CELL_WOULD_SPLIT_DONOR",
-              "cellDistance": 3.16
+              "cellDistance": 1.0
             }
           },
           {

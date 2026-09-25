@@ -8411,8 +8411,8 @@
    "fieldCapacityCells": 2464,
    "terrainScore": 2480.0,
    "wetAdjacentCells": 0,
-   "connections": 13,
-   "marketCapacityCells": 13,
+   "connections": 12,
+   "marketCapacityCells": 12,
    "households": 16316,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -30452,8 +30452,8 @@
    "fieldCapacityCells": 64,
    "terrainScore": 64.0,
    "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
+   "connections": 3,
+   "marketCapacityCells": 3,
    "households": 422,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },

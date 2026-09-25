@@ -57,11 +57,6 @@ COUPLED: tuple[Coupled, ...] = (
             ("data/map/han-tiles.json", "data/curated/han/county-location-partition-v1.json",
              "data/curated/han/county-location-partition-v1.input.json.gz"),
             _t("tools/map/partition_counties_by_location.py", "--check"), None),
-    Coupled("province-clearance", ("data/map/han-tiles.json", "data/curated/han/province-dead-end-dispositions-v1.json"),
-            _t("tools/map/audit_province_clearance.py", "--check"), None),
-    Coupled("land-roads", ("data/map/han-land-roads-v1.json",),
-            _t("tools/map/build_han_land_roads.py", "--check"),
-            _t("tools/map/build_han_land_roads.py")),
     # Q1(城의 실제 칸 ∈ 제 관할)·Q1b(실제 칸이 저지면 제 省에 저지 ≥ 1칸). 예외는 원장 행뿐이다.
     Coupled("tiles-seat-in-place-q1", ("data/map/han-tiles.json",),
             _t("tools/map/measure_province_seat_offset.py", "--check", "--exceptions",
@@ -162,6 +157,12 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("scenario-province-ownership", ("data/map/han-scenario-province-ownership-v1.json",),
             _t("tools/scenario/build_scenario_province_ownership.py", "--check"),
             _t("tools/scenario/build_scenario_province_ownership.py")),
+    # Initial roads preserve supply connections for these reviewed ownerships.
+    Coupled("land-roads", ("data/map/han-land-roads-v1.json",),
+            _t("tools/map/build_han_land_roads.py", "--check"),
+            _t("tools/map/build_han_land_roads.py")),
+    Coupled("province-clearance", ("data/map/han-tiles.json", "data/curated/han/province-dead-end-dispositions-v1.json"),
+            _t("tools/map/audit_province_clearance.py", "--check"), None),
     # ★ 지리 재분할(GH #806)의 씨앗 충돌 원장 초안. 기계 필드만 다시 뽑고 사람 판정 필드는 보존한다.
     Coupled("county-seed-collisions", ("data/curated/han/county-seed-collisions-v1.json",),
             _t("tools/map/draft_county_seed_collisions.py", "--check"),

@@ -41,7 +41,7 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
         // Immutable topology pins for the two releases with the same 1447-city roster.
         // Select from these before loading either multi-megabyte bundle.
         private const val V3_1447_HASH = "393e42c8b0ff59b03f3bf5a1c67f41eb12caa53ce71033097480918f977b7ecb"
-        private const val V3_1447_MAP4_HASH = "2cb3e2efe0ee0d40c6137ceac0a9bfcac9e61120f1539510687603380d4927f5"
+        private const val V3_1447_MAP4_HASH = "cbff0602a95363c6b6ca254b869c739203f620e2a5592aadad2c11b0b33c0c81"
         /**
          * 엔진·API 는 저장소 루트에서 뜨므로 기본값은 `.` 이다. 그 전제가 성립하지 않는 곳 —
          * Gradle 이 모듈 디렉터리(app/game-engine)에서 띄우는 통합 테스트처럼 — 에서는 이

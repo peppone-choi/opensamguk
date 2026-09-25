@@ -22,6 +22,10 @@ class HanAdministrativeCountyTest {
             // the test worker heap without strengthening the assertion.
             val artifact = HanWorldArtifactsResolver(Path.of("..")).artifacts(variant)
             val projection = artifact.projection
+            val bundledCityIds = MapJson.loadCityDetails(artifact.artifactBytes(
+                "infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
+                .mapTo(linkedSetOf()) { it.id }
+            assertEquals(bundledCityIds, projection.bindingsByCityId.keys)
             assertTrue(projection.administrativeCountyIds.all { it in projection.bindingsByCityId })
             val hasJurisdictions = mapper.factory.createParser(
                 artifact.artifactBytes("data/map/han-tiles.json")
