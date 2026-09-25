@@ -17,6 +17,30 @@ class HwihaLegacyCourtHandlerTest {
     private fun input(id: String, args: String, requestId: String = "court-test") =
         TurnDaemonCommand.HwihaCourtInput(requestId, 501, 42, id, args)
 
+    @Test fun `queued dispatch is rejected when its catalog row is no longer delivered`() {
+        val route = fixture.route()
+        val queued = HwihaQueuedDispatch("planned-dispatch", 42, 502, route.destinationCounty)
+        val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
+            it.copy(meta = it.meta + (HwihaQueuedDispatch.META_KEY to queued.toMetaValue()))
+        }
+        val world = fixture.world(listOf(ruler to route.start), nations = listOf(
+            Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
+        val resource = checkNotNull(javaClass.classLoader.getResource("command-catalog/hwiha-input-catalog.json"))
+        val original = resource.readText()
+        val row = Regex("(\\\"inputId\\\":\\s*\\\"court\\.dispatch\\\"[\\s\\S]*?\\\"deliveryState\\\":\\s*\\\")HANDLER_READY(\\\")")
+        val planned = row.replace(original, "${'$'}1PLANNED${'$'}2")
+        assertNotEquals(original, planned)
+        val handler = HwihaCourtHandler(world, ChangeRecorder(), catalog = HwihaInputCatalog.parse(planned))
+
+        handler.onIssuerTurn(501)
+
+        assertFalse(HwihaQueuedDispatch.META_KEY in world.getGeneralById(501)!!.meta)
+        val execution = handler.takeExecutions().single()
+        assertEquals("planned-dispatch", execution.requestId)
+        assertEquals(InputRejection.NOT_DELIVERED.name, execution.result.code)
+        assertFalse(execution.result.ok)
+    }
+
     @Test fun `malformed queued dispatch is rejected and removed before the next issuer turn`() {
         val route = fixture.route()
         val queued = mapOf("requestId" to "bad-queue", "ownerUserId" to 42,
