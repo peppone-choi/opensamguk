@@ -6,7 +6,11 @@
 
 현재 `InMemoryTurnWorld.pushLog`가 `LogEntryDraft`를 메모리 목록에 놓고 `consumeDirtyState()`에서 비운다. `DatabaseHooks`의 두 `toFlushPayload` 경로가 각각 `dirty.logs`를 `LogRow`로 바꾸고, `JdbcFlushExecutor.logEntryCreateMany`가 같은 flush 트랜잭션에서 `log_entry`에 넣는다. 새 사건도 **동일한** `ChangeRecorder → DirtyState → DatabaseHooks → FlushPayload → JdbcFlushExecutor` 경로를 써야 한다. 엔진 생산자가 JDBC를 직접 호출하지 않는다.
 
-`game_event`의 `(world_id,occurred_year,occurred_month,occurred_phase,occurred_ordinal)`은 그 순에 발생한 **모든** 작성자의 순서를 공유한다. `pushEvent` 목록의 인덱스만 쓰면 같은 순에서 flush가 여러 번 일어날 때 다시 0부터 시작한다. 다음 단계는 부팅 시 기존 최대 ordinal을 로드하고 메모리 카운터를 이어 쓰거나, flush 경계가 순마다 단 한 번임을 테스트로 증명해야 한다. `eventKey`는 월드·순·생산자·안정 원인 ID·해당 원인의 결과 순번으로 만들고, 문장이나 현재 표시 이름을 해시에 넣지 않는다. 재실행 시 동일 키와 동일 ordinal을 얻는 테스트가 필요하다.
+`game_event`의 `(world_id,occurred_year,occurred_month,occurred_phase,occurred_ordinal)`은 그 순에 발생한 **모든** 작성자의 순서를 공유한다. `TurnRunService`는 `runIntakeCommands`, `runDueGeneralTurns`, `runTick` 각각에서 flush할 수 있으므로 같은 순에 여러 flush가 실제로 가능하다. `pushEvent` 목록의 인덱스만 쓰면 다시 0부터 시작해 충돌한다. 부팅 시 해당 순의 기존 최대 ordinal을 로드하고 메모리 카운터를 이어 써야 한다. `eventKey`는 월드·순·생산자·안정 원인 ID·해당 원인의 결과 순번으로 만들고, 문장이나 현재 표시 이름을 해시에 넣지 않는다. 재실행·중복 intake와 중단/재개에서 같은 키가 한 건만 저장되고 새 사건의 ordinal이 이어지는 테스트가 필요하다.
+
+순수 `EventOrdinalAllocator`는 부팅에서 넘긴 마지막 확정 ordinal을 이어 쓰고 턴이 전진할 때 0부터 배정한다. `GameEventOrdinalRepository`는 V65에서 월드·연·월·순별 확정 최대값만 읽는다. 두 구성 요소를 부팅에 연결하고 flush 실패 뒤 재구성하는 일은 공유 런타임 연결 PR의 책임이다.
+
+`Records.general`의 현재 인자는 kind/text/refs뿐이어서 안정 원인 ID가 없는 범용 `field.applied`·`personal.applied`를 장수·종류·순만으로 해시하면 같은 순의 두 행동이 충돌한다. 각 성공/실패 호출부까지 예약 턴 request ID 또는 intake 명령 ID를 전달해야 한다. 월말은 `stamp+general/nation`, 발령은 dispatch ID, 보루는 `fortId+phase+결과`, 점령은 `countyId+이전/새 세력+전이 시각`을 원인 좌표로 쓸 수 있다. 불분명한 호출부에 임시 난수나 렌더 문장을 키로 쓰지 않는다.
 
 ## 현재 kind가 있는 휘하 생산자
 
