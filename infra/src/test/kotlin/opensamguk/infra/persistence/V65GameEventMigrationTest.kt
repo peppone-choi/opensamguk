@@ -11,6 +11,15 @@ import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import opensamguk.logic.record.EventTurn
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.GameEvent
+import opensamguk.logic.record.OccurredAt
+import opensamguk.logic.record.Publication
+import opensamguk.logic.record.PublicationState
+import opensamguk.logic.record.RefRole
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
@@ -63,6 +72,38 @@ class V65GameEventMigrationTest {
                 "6".repeat(64))
             assertEquals(3, ordinalReader.maxCommitted(1, EventTurn(200, 2, 3)))
             assertEquals(10, ordinalReader.maxCommitted(2, EventTurn(200, 2, 3)))
+            val eventWriter = GameEventWriteRepository(NamedParameterJdbcTemplate(jdbc))
+            val event = GameEvent(
+                worldId = 1,
+                kind = EventKind.PERSONAL_APPLIED,
+                occurredAt = OccurredAt(200, 2, 3, 11),
+                audience = AudienceTarget.Self(5),
+                publication = Publication(PublicationState.PRIVATE),
+                eventKey = EventKey.derive("fixture", "personal", "11"),
+                refs = mapOf(RefRole.ACTOR to EventRef.General(5)),
+            )
+            assertTrue(eventWriter.insert(event))
+            assertTrue(!eventWriter.insert(event))
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 1 AND event_key = ?",
+                Int::class.java, event.eventKey.value))
+            assertFailsWith<IllegalStateException> {
+                eventWriter.insert(event.copy(refs = mapOf(RefRole.ACTOR to EventRef.General(6))))
+            }
+            assertTrue(eventWriter.insert(event.copy(worldId = 2)))
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 2 AND event_key = ?",
+                Int::class.java, event.eventKey.value))
+            val retinueEvent = event.copy(
+                kind = EventKind.PEOPLE_JOINED,
+                occurredAt = OccurredAt(200, 2, 3, 12),
+                audience = AudienceTarget.Retinue(7, setOf(9, 7)),
+                eventKey = EventKey.derive("fixture", "retinue", "12"),
+                refs = mapOf(RefRole.PERSON to EventRef.General(9)),
+            )
+            assertTrue(eventWriter.insert(retinueEvent))
+            assertEquals("{7,9}", jdbc.queryForObject(
+                "SELECT recipient_general_ids::text FROM game_event WHERE world_id = 1 AND event_key = ?",
+                String::class.java, retinueEvent.eventKey.value))
+            assertTrue(!eventWriter.insert(retinueEvent))
             fun rejectedBy(constraint: String, block: () -> Unit) {
                 val error = assertFailsWith<DataAccessException> { block() }
                 assertTrue(error.mostSpecificCause.message?.contains(constraint) == true,
