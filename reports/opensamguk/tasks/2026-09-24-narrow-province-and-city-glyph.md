@@ -133,3 +133,4 @@
 - 예외 원장 적용 시 `Q1: 0 / 1445`, `Q1b: 0 / 1445`, 원장을 빼면 `Q1: 168 / 1445`, 치소 좌표 변형 시 `Q1: 1 / 1445`로 게이트 출력을 고정했다. `test_measure_province_seat_offset` 10건이 통과했다.
 - 도로 제약 지도에서 검토된 `UPHOLD` 행 없이도 공간 절단을 인정하는 보급 판정 예외를 KDoc에 명시했다. #928 병합 후 로컬 이름 래칫 실측값은 제품 식별자 10,277건이므로 기준선을 10,280에서 10,277로 내렸고 로컬 `naming_lint.py` 네 항목과 단위 테스트 8건이 통과했다.
 - 직전 head의 CI `contracts`에서 전략 거점 승인 원장이 추적하는 `build_han_places.py` 해시가 낡아 테스트 2건이 실패했다. 5차 수정에서 바뀐 것은 중복 지명 심사의 입력 해시 상수 한 줄이며, 이 원장이 증언하는 투영 코드는 바뀌지 않았다. 원장의 파일 해시만 실제 SHA-256 `68800d02…`로 갱신했다. 다른 추적 입력 3개의 해시는 일치했다.
+- 수정 후 전략 거점 승인 테스트 5건과 `validate_han_strategic_site_anchors.py --check`가 통과했다. 지도 계약 전체 테스트는 `test_relocate_han_province`의 긴 실행 중 중단해 전체 합격 여부를 확인하지 못했다. `check_han_tiles_coupled.py --check --include-slow`도 선행 10개 OK, 로컬 전용 CHGIS 검사 1개 SKIPPED까지 확인하고 중단했다. 뒤의 결합 항목은 미검증이다. 새 head의 GitHub CI 결과도 아직 없다.
