@@ -1,10 +1,11 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticDesign
 import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.InputResolved
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
@@ -55,7 +56,7 @@ class HwihaDomesticEngineTest {
     }
 
     private fun submit(world: InMemoryTurnWorld, recorder: ChangeRecorder, inputId: String, body: String, owner: Int = 42) =
-        HwihaCourtHandler(world, recorder, context).handle(HwihaCourtInput("req-${body.hashCode().toUInt()}", 1, owner, inputId, body))
+        HwihaCourtHandler(world, recorder, context).handle(ImmediateInput("req-${body.hashCode().toUInt()}", 1, owner, inputId, body))
 
     private fun boundary(world: InMemoryTurnWorld, recorder: ChangeRecorder, year: Int, month: Int, phase: Int): HwihaDomesticBoundary.Outcome {
         world.setCurrentDate(year, month, phase)
@@ -154,7 +155,7 @@ class HwihaDomesticEngineTest {
         assertEquals("COMMERCE", HwihaCountyPolicyState.read(world.getCityById(10)!!.meta)!!.slot.active!!.policy)
         val design = context.design
         boundary(world, recorder, 200, 1, 2)
-        val seated = HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, HwihaSeatStats(60, 60, 60, 80, 60, false))
+        val seated = HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, HwihaSeatStats(60, 60, 60, 80, 60, false))
         assertEquals(1000 + (20 * seated / 1000).toInt(), world.getCityById(10)!!.commerce)
         assertEquals(1000, world.getCityById(10)!!.agriculture)
         assertEquals(1000 + 20 * design.scaling.emptySeatPermille / 1000, world.getCityById(11)!!.agriculture)
@@ -231,8 +232,8 @@ class HwihaDomesticEngineTest {
         assertEquals(HwihaResources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0), stock())
         for (effect in spec.completion) {
             val value = when (effect.indicator) {
-                HwihaDomesticDesign.Indicator.DEFENCE -> world.getCityById(10)!!.defence
-                HwihaDomesticDesign.Indicator.WALL -> world.getCityById(10)!!.wall
+                DomesticDesign.Indicator.DEFENCE -> world.getCityById(10)!!.defence
+                DomesticDesign.Indicator.WALL -> world.getCityById(10)!!.wall
                 else -> fail("unexpected 성방 effect ${effect.indicator}")
             }
             assertEquals(minOf(1000, 500 + effect.amount), value)

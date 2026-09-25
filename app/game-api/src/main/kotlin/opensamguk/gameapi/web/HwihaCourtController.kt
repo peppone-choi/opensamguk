@@ -18,7 +18,7 @@ class HwihaCourtController(private val reserve: CommandReserveService) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             val inputId = "court.$name"
-            val accepted = reserve.publishImmediate(TurnDaemonCommand.HwihaCourtInput("", generalId,
+            val accepted = reserve.publishImmediate(TurnDaemonCommand.ImmediateInput("", generalId,
                 userId.toInt(), inputId, raw), userId.toInt())
             ResponseEntity.status(HttpStatus.ACCEPTED).body(mapOf("status" to "AVAILABLE",
                 "requestId" to accepted.requestId, "inputId" to inputId))

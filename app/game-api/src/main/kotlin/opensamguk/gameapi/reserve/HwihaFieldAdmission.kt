@@ -1,5 +1,6 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.gameapi.read.HwihaDomesticReader
 import opensamguk.gameapi.read.HwihaDomesticForbidden
 import opensamguk.logic.input.*
@@ -26,11 +27,11 @@ class HwihaFieldAdmission(private val reader: HwihaDomesticReader,
         val assessment = HwihaFieldRules.assess(request, state)
         if (assessment is HwihaFieldAssessment.Rejected) deny(assessment.reason.name, assessment.reason.message)
         val eligible = assessment as HwihaFieldAssessment.Eligible
-        if (HwihaDomesticDesign.CANON.directActionStatus != HwihaDomesticDesign.CONFIRMED ||
+        if (DomesticDesign.CANON.directActionStatus != DomesticDesign.CONFIRMED ||
             catalog[inputId]?.deliveryState?.hasHandler != true)
             deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val economy = HwihaFieldRules.assessEconomy(inputId, eligible.person, eligible.county.id,
-            snapshot.countyLevels[eligible.county.id], snapshot.warehouseStocks[eligible.county.id], HwihaDomesticDesign.CANON)
+            snapshot.countyLevels[eligible.county.id], snapshot.warehouseStocks[eligible.county.id], DomesticDesign.CANON)
         if (economy is HwihaFieldEconomyAssessment.Rejected) deny(economy.reason.name, economy.reason.message)
         return HwihaFieldInput.canonicalJson(request)
     }

@@ -1,5 +1,6 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.economy.HwihaCountyWarehouse
 
 /** 장수 한 명의 투영. [node] 는 위치 권위의 현재 육상 省 id(없으면 null), [userOwned] 는 계정 소유(사람 장수) 여부다. */
@@ -22,12 +23,12 @@ data class DomesticPerson(
     val gold: Int = 0,
     val rice: Int = 0,
 ) {
-    fun stat(stat: HwihaDomesticDesign.Stat): Int = when (stat) {
-        HwihaDomesticDesign.Stat.LEADERSHIP -> leadership
-        HwihaDomesticDesign.Stat.STRENGTH -> strength
-        HwihaDomesticDesign.Stat.INTELLIGENCE -> intelligence
-        HwihaDomesticDesign.Stat.POLITICS -> politics
-        HwihaDomesticDesign.Stat.CHARM -> charm
+    fun stat(stat: DomesticDesign.Stat): Int = when (stat) {
+        DomesticDesign.Stat.LEADERSHIP -> leadership
+        DomesticDesign.Stat.STRENGTH -> strength
+        DomesticDesign.Stat.INTELLIGENCE -> intelligence
+        DomesticDesign.Stat.POLITICS -> politics
+        DomesticDesign.Stat.CHARM -> charm
     }
 }
 
@@ -264,7 +265,7 @@ object HwihaDomesticRules {
     }
 
     /** 郡 방침(현행) > 縣 방침(현행, 앉은 현령이 있을 때) > 기본 방침(§8.2 「빈자리는 기본 방침으로 자동 운영」). */
-    fun effectivePolicy(county: DomesticCounty, state: HwihaDomesticProjection, design: HwihaDomesticDesign): HwihaEffectivePolicy {
+    fun effectivePolicy(county: DomesticCounty, state: HwihaDomesticProjection, design: DomesticDesign): HwihaEffectivePolicy {
         val seat = seatedMagistrate(county, state)
         commanderySlot(county, state)?.active?.let { return HwihaEffectivePolicy(CountyPolicy.valueOf(it.policy), PolicySource.COMMANDERY, seat) }
         val own = HwihaCountyPolicyState.read(county.meta)?.slot?.active

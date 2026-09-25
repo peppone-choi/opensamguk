@@ -1,7 +1,7 @@
 package opensamguk.engine.boot
 
 import kotlin.test.*
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
@@ -78,7 +78,7 @@ class HwihaDomesticPersistenceIT {
         val context = HwihaDomesticContext()
         var recorder = ChangeRecorder()
         fun submit(inputId: String, body: String) =
-            HwihaCourtHandler(world, recorder, context).handle(HwihaCourtInput("req-$inputId", 10, 42, inputId, body))
+            HwihaCourtHandler(world, recorder, context).handle(ImmediateInput("req-$inputId", 10, 42, inputId, body))
         assertTrue(submit("policy.set", """{"scope":"COUNTY","countyId":$county,"policy":"COMMERCE"}""").ok)
         assertTrue(submit("work.start", """{"countyId":$county,"work":"IRRIGATION"}""").ok)
         assertTrue(submit("policy.set", """{"scope":"CORPS","orderId":"o1","policy":"INTERCEPT"}""").ok)

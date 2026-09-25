@@ -93,12 +93,12 @@ class HwihaMarchPersistenceIT {
         val before = world.getNationById(1)!!
         val court = HwihaCourtHandler(world, ChangeRecorder())
         assertEquals(InputRejection.NOT_DELIVERED.name,
-            court.handle(TurnDaemonCommand.HwihaCourtInput("institution-$id", 10, 42,
+            court.handle(TurnDaemonCommand.ImmediateInput("institution-$id", 10, 42,
                 HwihaLegacyCourtInput.INSTITUTION, "{}")).code)
         assertNull(HwihaQueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
         val stratagem = HwihaCourtHandler(world, ChangeRecorder())
         assertEquals(InputRejection.NOT_DELIVERED.name,
-            stratagem.handle(TurnDaemonCommand.HwihaCourtInput("last-stand-$id", 10, 42,
+            stratagem.handle(TurnDaemonCommand.ImmediateInput("last-stand-$id", 10, 42,
                 HwihaLegacyStratagemInput.LAST_STAND, "{}")).code)
         assertNull(HwihaQueuedLegacyStratagem.read(world.getGeneralById(10)!!.meta))
         world = cold(id)
@@ -210,7 +210,7 @@ class HwihaMarchPersistenceIT {
         save(world, recorder)
         world = cold(id)
         recorder = ChangeRecorder()
-        val consent = HwihaCourtHandler(world, recorder).handle(TurnDaemonCommand.HwihaCourtInput(
+        val consent = HwihaCourtHandler(world, recorder).handle(TurnDaemonCommand.ImmediateInput(
             "consent-$id", 10, 43, HwihaPoliticalConsent.COURT_INPUT_ID,
             """{"issuerGeneralId":1,"inputId":"action.oath","accepted":true}"""))
         assertTrue(consent.ok)
