@@ -63,6 +63,13 @@ class ClearanceRedProbeTest(unittest.TestCase):
         result = audit(tiles, world)
         self.assertIn('P11', {row['provinceId'] for row in result['strategicDeadEnds']})
 
+    def test_activated_water_route_is_a_runtime_exit(self):
+        tiles, world = fixture([(row, 11) for row in range(18, 27)], 2)
+        roads = {'edges': [dict(fromProvinceId='P0', toProvinceId='P11', status='BUILT')]}
+        self.assertIn('P11', {row['provinceId'] for row in audit(tiles, world, roads)['runtimeRoadStrategicDeadEnds']})
+        world['seaRoutes'].append({'from': 12, 'to': 2, 'kind': 'RIVER'})
+        self.assertNotIn('P11', {row['provinceId'] for row in audit(tiles, world, roads)['runtimeRoadStrategicDeadEnds']})
+
 
 if __name__ == '__main__':
     unittest.main()

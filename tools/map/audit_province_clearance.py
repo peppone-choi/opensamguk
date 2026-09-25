@@ -125,25 +125,32 @@ def movement_graph(tiles: dict, world: dict) -> tuple[list[set[int]], list[dict]
 
 
 def runtime_road_dead_ends(tiles: dict, world: dict, roads: dict) -> list[dict]:
-    """Use only initially open roads, as the map4 movement graph does."""
+    """Count all initially open movement exits: built roads and activated water routes."""
     provinces = tiles['provinceRecords']
     index = {province['id']: n for n, province in enumerate(provinces)}
-    degree = [0] * len(provinces)
+    road_neighbours = [set() for _ in provinces]
     for edge in roads['edges']:
         if edge['status'] != 'BUILT':
             continue
         a, b = index[edge['fromProvinceId']], index[edge['toProvinceId']]
-        degree[a] += 1
-        degree[b] += 1
+        road_neighbours[a].add(b)
+        road_neighbours[b].add(a)
+    all_neighbours = [set(neighbours) for neighbours in road_neighbours]
+    city_province = {city['id']: index[city['spatialProvinceId']] for city in world['cities']}
+    for route in world['seaRoutes']:
+        a, b = city_province[route['from']], city_province[route['to']]
+        all_neighbours[a].add(b)
+        all_neighbours[b].add(a)
     result = []
     for city in world['cities']:
         if city['level'] > 4:
             continue
         province_id = city['spatialProvinceId']
         n = index[province_id]
-        if degree[n] <= 1:
+        if len(all_neighbours[n]) <= 1:
             result.append({'provinceId': province_id, 'cityId': city['id'],
-                           'level': city['level'], 'builtRoadDegree': degree[n]})
+                           'level': city['level'], 'builtRoadDegree': len(road_neighbours[n]),
+                           'operationalExitDegree': len(all_neighbours[n])})
     return result
 
 

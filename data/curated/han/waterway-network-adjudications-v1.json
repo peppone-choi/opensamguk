@@ -7,7 +7,7 @@
   "base": {
     "hanTiles": {
       "path": "data/map/han-tiles.json",
-      "sha256": "99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f"
+      "sha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011"
     },
     "strongholds": {
       "path": "data/curated/han/strategic-strongholds-v1.json",
@@ -1035,8 +1035,8 @@
         "id": "pubanjin"
       },
       "cell": {
-        "row": 232,
-        "col": 333
+        "row": 230,
+        "col": 332
       },
       "reach": "he-puban",
       "roles": [
@@ -1143,8 +1143,8 @@
         "id": "hanjin"
       },
       "cell": {
-        "row": 319,
-        "col": 376
+        "row": 315,
+        "col": 378
       },
       "reach": "mian-hanjin",
       "roles": [
@@ -1164,8 +1164,8 @@
         },
         "bankB": {
           "landProvinceId": "ss-hanjin",
-          "row": 319,
-          "col": 377
+          "row": 315,
+          "col": 378
         },
         "sourceRefs": [
           "shiliao:sgz32-hanjin"
@@ -1503,7 +1503,7 @@
         "id": "zhanyinkou"
       },
       "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
-      "measuredCellDistanceToWater": 2,
+      "measuredCellDistanceToWater": 3,
       "note": "張既傳 원문에서 渡河는 鸇陰口 앞 문장(金城)이고 張既는 鸇陰을 피해 且次로 갔다. 거점 원장의 supports 도 2026-09-18 에 INTERCEPTION_AT_SITE 로 정정됐다.",
       "sourceRefs": [
         "stronghold:zhanyinkou#0",
@@ -1518,7 +1518,7 @@
         "id": "nanan-xiakou"
       },
       "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
-      "measuredCellDistanceToWater": 1,
+      "measuredCellDistanceToWater": 0,
       "note": "讀史方輿紀要는 이 물을 青衣水라 한다(江 본류 아님). 인용은 차단(遮)이지 승선이 아니다. 青衣水 구간 판정 뒤로 미룬다.",
       "sourceRefs": [
         "stronghold:nanan-xiakou#0",
@@ -1607,7 +1607,7 @@
         "id": "wankou"
       },
       "reasonCode": "ROLE_NOT_ESTABLISHED_BY_EVIDENCE",
-      "measuredCellDistanceToWater": 0,
+      "measuredCellDistanceToWater": 1,
       "note": "「權至皖口」뿐 — 三國志에 배 문구 없음(讀史方輿紀要의 舟車衝要는 후대 일반론).",
       "sourceRefs": [
         "stronghold:wankou#0"
@@ -1875,7 +1875,7 @@
         "id": "xiaoyaojin"
       },
       "reasonCode": "OUT_OF_SLICE_WATER_SYSTEM",
-      "measuredCellDistanceToWater": 1,
+      "measuredCellDistanceToWater": 4,
       "note": "#826 사료 근거로 施水의 나루 anchor에 RIVER 한 칸을 새겼다. 이 계통은 현 수로망 slice 1(長江·黃河) 밖이며, 연속 물길이 판정되기 전에는 뱃길에 연결하지 않는다.",
       "sourceRefs": [
         "stronghold:xiaoyaojin#0"

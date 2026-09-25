@@ -5,18 +5,18 @@
   "sourcePins": {
     "frozenTilesSha256": "ec9970ee181c7089b87a62bece57d277b4ae760111d755b5eb14ba2debf91312",
     "frozenWorldSha256": "4d5eec1eabbef132d4c799d6b211d724310d8ef614ae737608d392ce95c7dbf2",
-    "map4TilesSha256": "99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f",
-    "map4WorldSha256": "06d69df5cdeddbcf77afba77bee3732954d52092eee1cf1aae8c33de72be32d5"
+    "map4TilesSha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011",
+    "map4WorldSha256": "40ed5053f5641b18ed3421f97a54bbbe3bd2264c3f92b63a0a6905eeb80c8b7e"
   },
   "counts": {
-    "moved": 253,
+    "moved": 262,
     "byLevel": {
       "관": 7,
-      "성": 204,
-      "수": 26,
+      "성": 211,
+      "수": 28,
       "진": 16
     },
-    "throughPairGained": 11
+    "throughPairGained": 12
   },
   "relocations": [
     {
@@ -2636,10 +2636,10 @@
         "col": 117
       },
       "newCell": {
-        "row": 375,
-        "col": 119
+        "row": 360,
+        "col": 131
       },
-      "baseCellDistance": 9.22,
+      "baseCellDistance": 15.23,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -2647,7 +2647,8 @@
           624
         ],
         "newNeighbourCityIds": [
-          624
+          624,
+          981
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -2693,10 +2694,10 @@
         "col": 148
       },
       "newCell": {
-        "row": 351,
-        "col": 149
+        "row": 364,
+        "col": 143
       },
-      "baseCellDistance": 1.41,
+      "baseCellDistance": 13.0,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -2704,6 +2705,7 @@
           981
         ],
         "newNeighbourCityIds": [
+          624,
           981
         ],
         "oldThroughNeighbourPair": false,
@@ -2779,10 +2781,10 @@
         "col": 194
       },
       "newCell": {
-        "row": 513,
-        "col": 188
+        "row": 521,
+        "col": 217
       },
-      "baseCellDistance": 19.92,
+      "baseCellDistance": 25.5,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -2790,7 +2792,8 @@
           714
         ],
         "newNeighbourCityIds": [
-          714
+          714,
+          816
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -2821,6 +2824,35 @@
         "newNeighbourCityIds": [
           714,
           816
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
+      "placeId": "gc-g0061-016",
+      "gameCityId": 1490,
+      "name": "농동(益州郡)",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 499,
+        "col": 181
+      },
+      "newCell": {
+        "row": 486,
+        "col": 168
+      },
+      "baseCellDistance": 18.38,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          714
+        ],
+        "newNeighbourCityIds": [
+          612,
+          714
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -3052,10 +3084,10 @@
         "col": 168
       },
       "newCell": {
-        "row": 225,
-        "col": 170
+        "row": 218,
+        "col": 168
       },
-      "baseCellDistance": 2.24,
+      "baseCellDistance": 6.0,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -3063,7 +3095,8 @@
           662
         ],
         "newNeighbourCityIds": [
-          662
+          662,
+          663
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -3455,10 +3488,10 @@
         "col": 113
       },
       "newCell": {
-        "row": 203,
-        "col": 129
+        "row": 206,
+        "col": 140
       },
-      "baseCellDistance": 16.12,
+      "baseCellDistance": 27.46,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -3466,10 +3499,12 @@
           656
         ],
         "newNeighbourCityIds": [
-          656
+          656,
+          1497,
+          1517
         ],
         "oldThroughNeighbourPair": false,
-        "newThroughNeighbourPair": false
+        "newThroughNeighbourPair": true
       }
     },
     {
@@ -3529,7 +3564,8 @@
         "newNeighbourCityIds": [
           656,
           663,
-          1497
+          1497,
+          1515
         ],
         "oldThroughNeighbourPair": true,
         "newThroughNeighbourPair": true
@@ -3733,10 +3769,10 @@
         "col": 192
       },
       "newCell": {
-        "row": 166,
-        "col": 192
+        "row": 157,
+        "col": 185
       },
-      "baseCellDistance": 2.0,
+      "baseCellDistance": 9.9,
       "coordinateBasis": "READY_NAMU",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -3744,6 +3780,7 @@
           647
         ],
         "newNeighbourCityIds": [
+          641,
           647
         ],
         "oldThroughNeighbourPair": false,
@@ -3876,6 +3913,35 @@
       }
     },
     {
+      "placeId": "gc-g0072-008",
+      "gameCityId": 1530,
+      "name": "오위",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 169,
+        "col": 214
+      },
+      "newCell": {
+        "row": 176,
+        "col": 219
+      },
+      "baseCellDistance": 8.6,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          647
+        ],
+        "newNeighbourCityIds": [
+          647,
+          987
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
       "placeId": "gc-g0072-009",
       "gameCityId": 1369,
       "name": "선위",
@@ -3886,10 +3952,10 @@
         "col": 199
       },
       "newCell": {
-        "row": 148,
-        "col": 203
+        "row": 151,
+        "col": 190
       },
-      "baseCellDistance": 6.4,
+      "baseCellDistance": 9.22,
       "coordinateBasis": "READY_NAMU",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -3897,6 +3963,7 @@
           647
         ],
         "newNeighbourCityIds": [
+          641,
           647
         ],
         "oldThroughNeighbourPair": false,
@@ -3933,6 +4000,35 @@
       }
     },
     {
+      "placeId": "gc-g0072-012",
+      "gameCityId": 1533,
+      "name": "조려",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 150,
+        "col": 211
+      },
+      "newCell": {
+        "row": 146,
+        "col": 192
+      },
+      "baseCellDistance": 19.42,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          647
+        ],
+        "newNeighbourCityIds": [
+          641,
+          647
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
       "placeId": "gc-g0072-014",
       "gameCityId": 1534,
       "name": "좌기(武威郡)",
@@ -3943,10 +4039,10 @@
         "col": 221
       },
       "newCell": {
-        "row": 132,
-        "col": 220
+        "row": 125,
+        "col": 222
       },
-      "baseCellDistance": 1.0,
+      "baseCellDistance": 7.07,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -3954,7 +4050,8 @@
           647
         ],
         "newNeighbourCityIds": [
-          647
+          647,
+          833
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -4091,10 +4188,10 @@
         "col": 122
       },
       "newCell": {
-        "row": 124,
-        "col": 116
+        "row": 126,
+        "col": 114
       },
-      "baseCellDistance": 6.71,
+      "baseCellDistance": 8.06,
       "coordinateBasis": "READY_NAMU",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -4102,7 +4199,8 @@
           771
         ],
         "newNeighbourCityIds": [
-          771
+          771,
+          1097
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -4179,9 +4277,9 @@
       },
       "newCell": {
         "row": 161,
-        "col": 51
+        "col": 63
       },
-      "baseCellDistance": 19.7,
+      "baseCellDistance": 26.91,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -4189,6 +4287,7 @@
           645
         ],
         "newNeighbourCityIds": [
+          643,
           645
         ],
         "oldThroughNeighbourPair": false,
@@ -4419,6 +4518,35 @@
       }
     },
     {
+      "placeId": "gc-g0080-004",
+      "gameCityId": 1549,
+      "name": "사연",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 179,
+        "col": 318
+      },
+      "newCell": {
+        "row": 189,
+        "col": 324
+      },
+      "baseCellDistance": 11.66,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          772
+        ],
+        "newNeighbourCityIds": [
+          772,
+          1401
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
       "placeId": "gc-g0080-006",
       "gameCityId": 1550,
       "name": "정림",
@@ -4617,10 +4745,10 @@
         "col": 351
       },
       "newCell": {
-        "row": 161,
-        "col": 347
+        "row": 168,
+        "col": 358
       },
-      "baseCellDistance": 5.66,
+      "baseCellDistance": 7.62,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -4628,6 +4756,7 @@
           834
         ],
         "newNeighbourCityIds": [
+          685,
           834
         ],
         "oldThroughNeighbourPair": false,
@@ -4766,10 +4895,10 @@
         "col": 345
       },
       "newCell": {
-        "row": 155,
-        "col": 348
+        "row": 145,
+        "col": 349
       },
-      "baseCellDistance": 3.61,
+      "baseCellDistance": 8.94,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -4777,7 +4906,8 @@
           834
         ],
         "newNeighbourCityIds": [
-          834
+          834,
+          1133
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -4824,10 +4954,10 @@
         "col": 351
       },
       "newCell": {
-        "row": 144,
-        "col": 350
+        "row": 146,
+        "col": 352
       },
-      "baseCellDistance": 1.0,
+      "baseCellDistance": 2.24,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -5509,10 +5639,10 @@
         "col": 291
       },
       "newCell": {
-        "row": 63,
-        "col": 288
+        "row": 88,
+        "col": 302
       },
-      "baseCellDistance": 3.0,
+      "baseCellDistance": 27.31,
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
       "movementGraph": {
@@ -5520,7 +5650,8 @@
           833
         ],
         "newNeighbourCityIds": [
-          833
+          833,
+          1133
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -5546,6 +5677,35 @@
       "movementGraph": {
         "oldNeighbourCityIds": [
           628,
+          833
+        ],
+        "newNeighbourCityIds": [
+          628,
+          833
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
+      "placeId": "gc-g0086-006",
+      "gameCityId": 1592,
+      "name": "대성",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 93,
+        "col": 262
+      },
+      "newCell": {
+        "row": 127,
+        "col": 260
+      },
+      "baseCellDistance": 34.06,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
           833
         ],
         "newNeighbourCityIds": [
@@ -6073,6 +6233,35 @@
       }
     },
     {
+      "placeId": "gc-g0091-009",
+      "gameCityId": 1608,
+      "name": "광평(漁陽郡)",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 91,
+        "col": 459
+      },
+      "newCell": {
+        "row": 83,
+        "col": 468
+      },
+      "baseCellDistance": 12.04,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          726
+        ],
+        "newNeighbourCityIds": [
+          726,
+          1131
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
       "placeId": "gc-g0092-004",
       "gameCityId": 1609,
       "name": "무종",
@@ -6311,6 +6500,35 @@
         "newNeighbourCityIds": [
           742,
           756
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
+      "placeId": "gc-g0100-010",
+      "gameCityId": 1618,
+      "name": "증식",
+      "level": 11,
+      "levelName": "성",
+      "oldCell": {
+        "row": 473,
+        "col": 275
+      },
+      "newCell": {
+        "row": 458,
+        "col": 286
+      },
+      "baseCellDistance": 18.6,
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "strategicReason": "SAME_COMMANDERY_BOUNDARY_CORE_FOR_GROWTH_AND_EXIT",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          758
+        ],
+        "newNeighbourCityIds": [
+          757,
+          758
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -6697,6 +6915,37 @@
           550
         ],
         "oldThroughNeighbourPair": true,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
+      "placeId": "ss-hanjin",
+      "gameCityId": 1042,
+      "name": "한진",
+      "level": 1,
+      "levelName": "수",
+      "oldCell": {
+        "row": 319,
+        "col": 376
+      },
+      "newCell": {
+        "row": 315,
+        "col": 378
+      },
+      "baseCellDistance": 4.47,
+      "coordinateBasis": null,
+      "strategicReason": "BOUNDARY_FERRY_PASS_OR_FORT_WITH_TWO_DRY_EXITS",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          405,
+          464,
+          1050
+        ],
+        "newNeighbourCityIds": [
+          464,
+          1050
+        ],
+        "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
       }
     },
@@ -7253,10 +7502,10 @@
         "col": 213
       },
       "newCell": {
-        "row": 345,
-        "col": 212
+        "row": 344,
+        "col": 211
       },
-      "baseCellDistance": 1.41,
+      "baseCellDistance": 2.0,
       "coordinateBasis": null,
       "strategicReason": "BOUNDARY_FERRY_PASS_OR_FORT_WITH_TWO_DRY_EXITS",
       "movementGraph": {
@@ -7282,10 +7531,10 @@
         "col": 333
       },
       "newCell": {
-        "row": 232,
-        "col": 333
+        "row": 230,
+        "col": 332
       },
-      "baseCellDistance": 1.0,
+      "baseCellDistance": 1.41,
       "coordinateBasis": null,
       "strategicReason": "BOUNDARY_FERRY_PASS_OR_FORT_WITH_TWO_DRY_EXITS",
       "movementGraph": {
@@ -7295,6 +7544,7 @@
           855
         ],
         "newNeighbourCityIds": [
+          16,
           23,
           855
         ],
@@ -7485,6 +7735,37 @@
       }
     },
     {
+      "placeId": "ss-wankou",
+      "gameCityId": 1081,
+      "name": "환구",
+      "level": 1,
+      "levelName": "수",
+      "oldCell": {
+        "row": 324,
+        "col": 458
+      },
+      "newCell": {
+        "row": 321,
+        "col": 462
+      },
+      "baseCellDistance": 5.0,
+      "coordinateBasis": null,
+      "strategicReason": "BOUNDARY_FERRY_PASS_OR_FORT_WITH_TWO_DRY_EXITS",
+      "movementGraph": {
+        "oldNeighbourCityIds": [
+          509,
+          530,
+          571
+        ],
+        "newNeighbourCityIds": [
+          509,
+          530
+        ],
+        "oldThroughNeighbourPair": false,
+        "newThroughNeighbourPair": false
+      }
+    },
+    {
       "placeId": "ss-wansuiwu",
       "gameCityId": 1082,
       "name": "만세오",
@@ -7643,10 +7924,10 @@
         "col": 463
       },
       "newCell": {
-        "row": 294,
-        "col": 464
+        "row": 292,
+        "col": 459
       },
-      "baseCellDistance": 1.0,
+      "baseCellDistance": 4.47,
       "coordinateBasis": null,
       "strategicReason": "BOUNDARY_FERRY_PASS_OR_FORT_WITH_TWO_DRY_EXITS",
       "movementGraph": {
@@ -7656,7 +7937,8 @@
         ],
         "newNeighbourCityIds": [
           513,
-          526
+          526,
+          549
         ],
         "oldThroughNeighbourPair": false,
         "newThroughNeighbourPair": false
@@ -7735,7 +8017,7 @@
         "col": 423
       },
       "newCell": {
-        "row": 329,
+        "row": 331,
         "col": 423
       },
       "baseCellDistance": 1.0,
@@ -7747,7 +8029,7 @@
           471
         ],
         "newNeighbourCityIds": [
-          467,
+          459,
           471
         ],
         "oldThroughNeighbourPair": false,
@@ -7823,10 +8105,10 @@
         "col": 230
       },
       "newCell": {
-        "row": 195,
-        "col": 233
+        "row": 200,
+        "col": 227
       },
-      "baseCellDistance": 3.0,
+      "baseCellDistance": 5.83,
       "coordinateBasis": null,
       "strategicReason": "BOUNDARY_FERRY_PASS_OR_FORT_WITH_TWO_DRY_EXITS",
       "movementGraph": {
@@ -7834,6 +8116,7 @@
           987
         ],
         "newNeighbourCityIds": [
+          658,
           987
         ],
         "oldThroughNeighbourPair": false,

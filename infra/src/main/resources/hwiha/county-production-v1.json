@@ -5,7 +5,7 @@
  "note": "철·말은 사료 산지, 목재는 면적 축이다. 전·곡은 HwihaCountyIncome 의 식이 만든다.",
  "sourceLedger": "data/curated/han/hwiha-resource-production-v1.json",
  "counts": {
-  "counties": 1415,
+  "counties": 1414,
   "monthlyTotals": {
    "HORSE": 600,
    "IRON": 34000,
@@ -2811,7 +2811,7 @@
   {
    "countyId": 464,
    "monthly": {
-    "timber": 100
+    "timber": 98
    }
   },
   {
@@ -2853,7 +2853,7 @@
   {
    "countyId": 471,
    "monthly": {
-    "timber": 172
+    "timber": 174
    }
   },
   {
@@ -3081,7 +3081,7 @@
   {
    "countyId": 509,
    "monthly": {
-    "timber": 147
+    "timber": 143
    }
   },
   {
@@ -3321,7 +3321,7 @@
   {
    "countyId": 549,
    "monthly": {
-    "timber": 93
+    "timber": 92
    }
   },
   {
@@ -3776,7 +3776,7 @@
   {
    "countyId": 624,
    "monthly": {
-    "timber": 1460
+    "timber": 1455
    }
   },
   {
@@ -3881,7 +3881,7 @@
   {
    "countyId": 643,
    "monthly": {
-    "timber": 819
+    "timber": 817
    }
   },
   {
@@ -3893,7 +3893,7 @@
   {
    "countyId": 645,
    "monthly": {
-    "timber": 3394
+    "timber": 3401
    }
   },
   {
@@ -3905,7 +3905,7 @@
   {
    "countyId": 647,
    "monthly": {
-    "timber": 1150
+    "timber": 1154
    }
   },
   {
@@ -3930,7 +3930,7 @@
   {
    "countyId": 651,
    "monthly": {
-    "timber": 276
+    "timber": 275
    }
   },
   {
@@ -3960,7 +3960,7 @@
   {
    "countyId": 656,
    "monthly": {
-    "timber": 1817
+    "timber": 1822
    }
   },
   {
@@ -4648,7 +4648,7 @@
   {
    "countyId": 771,
    "monthly": {
-    "timber": 1495
+    "timber": 1489
    }
   },
   {
@@ -6273,7 +6273,7 @@
   {
    "countyId": 1042,
    "monthly": {
-    "timber": 2
+    "timber": 4
    }
   },
   {
@@ -6411,7 +6411,7 @@
   {
    "countyId": 1065,
    "monthly": {
-    "timber": 4
+    "timber": 5
    }
   },
   {
@@ -6507,7 +6507,7 @@
   {
    "countyId": 1081,
    "monthly": {
-    "timber": 2
+    "timber": 6
    }
   },
   {
@@ -6543,7 +6543,7 @@
   {
    "countyId": 1087,
    "monthly": {
-    "timber": 8
+    "timber": 9
    }
   },
   {
@@ -6561,7 +6561,7 @@
   {
    "countyId": 1090,
    "monthly": {
-    "timber": 5
+    "timber": 3
    }
   },
   {
@@ -7189,12 +7189,6 @@
    }
   },
   {
-   "countyId": 1368,
-   "monthly": {
-    "timber": 4
-   }
-  },
-  {
    "countyId": 1370,
    "monthly": {
     "timber": 9
@@ -7318,7 +7312,7 @@
   {
    "countyId": 1392,
    "monthly": {
-    "timber": 3
+    "timber": 9
    }
   },
   {
@@ -7866,7 +7860,7 @@
   {
    "countyId": 1483,
    "monthly": {
-    "timber": 4
+    "timber": 9
    }
   },
   {
@@ -8070,7 +8064,7 @@
   {
    "countyId": 1517,
    "monthly": {
-    "timber": 9
+    "timber": 4
    }
   },
   {
@@ -8148,7 +8142,7 @@
   {
    "countyId": 1538,
    "monthly": {
-    "timber": 9
+    "timber": 4
    }
   },
   {

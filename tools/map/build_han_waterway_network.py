@@ -251,7 +251,7 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
         seen_sites.add(site)
         cell = site_cell(row["siteRef"], where)
         need([cell[0], cell[1]] == [row["cell"]["row"], row["cell"]["col"]],
-             f"{where}: ledger cell differs from the site's recorded cell — sites are never moved")
+             f"{where}: ledger cell differs from the committed site cell")
         need(row["reach"] in reach_cells, f"{where}: unknown reach")
         reach = reach_cells[row["reach"]]
         roles = row["roles"]

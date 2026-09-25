@@ -12,8 +12,8 @@
  ],
  "excludedByReviewedProtection": [],
  "stats": {
-  "linkCount": 124,
-  "medianKm": 122.8,
+  "linkCount": 123,
+  "medianKm": 115.9,
   "p90Km": 257.0,
   "maxKm": 1049.3
  },
@@ -782,6 +782,14 @@
    "distanceKm": 63.1
   },
   {
+   "canonicalGroup": "西河郡",
+   "fromProvinceIndex": 1523,
+   "toProvinceIndex": 1525,
+   "fromCityName": "인",
+   "toCityName": "엄연",
+   "distanceKm": 54.7
+  },
+  {
    "canonicalGroup": "豫章郡",
    "fromProvinceIndex": 109,
    "toProvinceIndex": 110,
@@ -910,14 +918,6 @@
    "distanceKm": 183.4
   },
   {
-   "canonicalGroup": "金城郡",
-   "fromProvinceIndex": 1478,
-   "toProvinceIndex": 1480,
-   "fromCityName": "윤오",
-   "toCityName": "영거",
-   "distanceKm": 144.3
-  },
-  {
    "canonicalGroup": "鉅鹿郡",
    "fromProvinceIndex": 775,
    "toProvinceIndex": 794,
@@ -940,14 +940,6 @@
    "fromCityName": "임도",
    "toCityName": "하소",
    "distanceKm": 129.0
-  },
-  {
-   "canonicalGroup": "隴西郡",
-   "fromProvinceIndex": 461,
-   "toProvinceIndex": 1462,
-   "fromCityName": "포한",
-   "toCityName": "대하",
-   "distanceKm": 154.3
   },
   {
    "canonicalGroup": "隴西郡",

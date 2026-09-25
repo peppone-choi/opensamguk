@@ -146,12 +146,12 @@
         "id": "43057",
         "displayName": "합비현",
         "componentCellCounts": [
-          5328,
+          5344,
           16
         ],
         "components": [
           {
-            "cellCount": 5328,
+            "cellCount": 5344,
             "memberIds": [
               "43057"
             ]
@@ -978,12 +978,12 @@
         "id": "43057",
         "displayName": "합비현",
         "componentCellCounts": [
-          5328,
+          5344,
           16
         ],
         "components": [
           {
-            "cellCount": 5328,
+            "cellCount": 5344,
             "memberIds": [
               "43057"
             ]
@@ -1618,289 +1618,8 @@
         ]
       }
     ],
-    "fullyEnclosedCount": 20,
-    "fullyEnclosed": [
-      {
-        "id": "gc-g0060-011",
-        "displayName": "소시현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "200281"
-        ],
-        "surroundingDisplayNames": [
-          "착진현"
-        ],
-        "commanderyId": "PARENT-0060",
-        "surroundingCommanderyId": "PARENT-0060",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0061-004",
-        "displayName": "율고현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "45603"
-        ],
-        "surroundingDisplayNames": [
-          "분고현"
-        ],
-        "commanderyId": "PARENT-0061",
-        "surroundingCommanderyId": "PARENT-0061",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0061-016",
-        "displayName": "농동현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "45603"
-        ],
-        "surroundingDisplayNames": [
-          "분고현"
-        ],
-        "commanderyId": "PARENT-0061",
-        "surroundingCommanderyId": "PARENT-0061",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0066-005",
-        "displayName": "대하현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70126"
-        ],
-        "surroundingDisplayNames": [
-          "포한현"
-        ],
-        "commanderyId": "PARENT-0066",
-        "surroundingCommanderyId": "PARENT-0066",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0069-001",
-        "displayName": "윤오현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70617"
-        ],
-        "surroundingDisplayNames": [
-          "임강현"
-        ],
-        "commanderyId": "PARENT-0069",
-        "surroundingCommanderyId": "PARENT-0069",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0072-001",
-        "displayName": "고장현",
-        "componentCellCount": 64,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0072-008",
-        "displayName": "오위현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0072-009",
-        "displayName": "선위현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0072-012",
-        "displayName": "조려현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0072-014",
-        "displayName": "좌기현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70609"
-        ],
-        "surroundingDisplayNames": [
-          "현미현"
-        ],
-        "commanderyId": "PARENT-0072",
-        "surroundingCommanderyId": "PARENT-0072",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0074-007",
-        "displayName": "안미현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70459"
-        ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ],
-        "commanderyId": "PARENT-0074",
-        "surroundingCommanderyId": "PARENT-0074",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0075-005",
-        "displayName": "엄지현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70596"
-        ],
-        "surroundingDisplayNames": [
-          "용륵현"
-        ],
-        "commanderyId": "PARENT-0075",
-        "surroundingCommanderyId": "PARENT-0075",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0080-004",
-        "displayName": "사연현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70418"
-        ],
-        "surroundingDisplayNames": [
-          "조음현"
-        ],
-        "commanderyId": "PARENT-0080",
-        "surroundingCommanderyId": "PARENT-0080",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0081-006",
-        "displayName": "고랑현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0081-SEAT"
-        ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ],
-        "commanderyId": "PARENT-0081",
-        "surroundingCommanderyId": "PARENT-0081",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0081-011",
-        "displayName": "인현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0081-SEAT"
-        ],
-        "surroundingDisplayNames": [
-          "이석현"
-        ],
-        "commanderyId": "PARENT-0081",
-        "surroundingCommanderyId": "PARENT-0081",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0086-006",
-        "displayName": "대성현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "JURISDICTION-PARENT-0086-SEAT"
-        ],
-        "surroundingDisplayNames": [
-          "임융현"
-        ],
-        "commanderyId": "PARENT-0086",
-        "surroundingCommanderyId": "PARENT-0086",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0091-009",
-        "displayName": "광평현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "87436"
-        ],
-        "surroundingDisplayNames": [
-          "노현"
-        ],
-        "commanderyId": "PARENT-0091",
-        "surroundingCommanderyId": "PARENT-0091",
-        "sameCommandery": true
-      },
-      {
-        "id": "gc-g0100-010",
-        "displayName": "증식현",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "44055"
-        ],
-        "surroundingDisplayNames": [
-          "영방현"
-        ],
-        "commanderyId": "PARENT-0100",
-        "surroundingCommanderyId": "PARENT-0100",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-zhanyinkou",
-        "displayName": "전음구",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70156"
-        ],
-        "surroundingDisplayNames": [
-          "순음현"
-        ],
-        "commanderyId": "PARENT-0069",
-        "surroundingCommanderyId": "PARENT-0069",
-        "sameCommandery": true
-      },
-      {
-        "id": "ss-zuocheng",
-        "displayName": "좌성",
-        "componentCellCount": 144,
-        "surroundingIds": [
-          "70459"
-        ],
-        "surroundingDisplayNames": [
-          "연수현"
-        ],
-        "commanderyId": "PARENT-0074",
-        "surroundingCommanderyId": "PARENT-0074",
-        "sameCommandery": true
-      }
-    ]
+    "fullyEnclosedCount": 0,
+    "fullyEnclosed": []
   },
   "commanderyTopology": {
     "disconnectedCount": 42,
@@ -8357,7 +8076,7 @@
   ],
   "inputs": {
     "hanTiles": {
-      "sha256": "99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f"
+      "sha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011"
     },
     "administrativeUnits": {
       "sha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"

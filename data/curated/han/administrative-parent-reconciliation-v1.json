@@ -15,8 +15,8 @@
       "44580",
       "70523"
     ],
-    "inputTilesSha256": "ef2ddf11f6988bdbf8d0f746b91b2c9d7477c929d1d0b5ca0aecc6fd90c26165",
-    "outputDocumentSha256": "d4ca42e67765c51bcc0fef1e5b48aa6b4d99f0d239ae4e4498f52ed59d38a0ef"
+    "inputTilesSha256": "66cc4a2df7386ffbb780afbefa5b79b64740b335e7822c1906d184e310327152",
+    "outputDocumentSha256": "8baa0b8301c40cce6136e8570d99b848e9a83abf55178aef43a83e54ccdb1961"
   },
   "countyRebindingProjection": {
     "affectedParentRegionIds": [
@@ -250,7 +250,7 @@
     },
     "data/map/han-tiles.json": {
       "path": "data/map/han-tiles.json",
-      "sha256": "99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f"
+      "sha256": "386dd2e570602c8c1409d0633bcd4c3a0229d223016750905aa3fac9d1fb9011"
     },
     "infra/src/main/resources/map/han-780-v1.json": {
       "path": "infra/src/main/resources/map/han-780-v1.json",
@@ -295,7 +295,7 @@
       "X107",
       "X108"
     ],
-    "inputTilesSha256": "9691d6e3ae3a96981d388d0a6493d1ab630425615f12445c8ef828e81b5218ce"
+    "inputTilesSha256": "dcc9c1d73da27674731b79189e58379b38f41b4087166c71a8f4598386c0959a"
   },
   "ledgerId": "han-administrative-parent-reconciliation-v1",
   "policy": {
@@ -54739,7 +54739,7 @@
   "strategicSiteCarveProjection": {
     "changedCellCount": 2233,
     "inputTilesSha256": "8b037695ac0b096ab1f10dbfcd635884306a15ffaec32bebe4f9c5e9df812148",
-    "outputDocumentSha256": "ed1d923259603f4d1905d5b9dab5964ea6be68211d7d0a20c626c8be9f29c52d",
+    "outputDocumentSha256": "83cef0418c5c4bcdc8a1fe123acbc6af34a9a51d5b37aa51fc2d144f180f785a",
     "placedGapCountyCount": 279,
     "placedSiteCount": 73
   },

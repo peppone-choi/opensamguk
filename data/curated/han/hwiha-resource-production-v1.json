@@ -26,7 +26,7 @@
   "catalogId": "resource-sites-v1"
  },
  "counts": {
-  "counties": 1415,
+  "counties": 1414,
   "monthlyTotals": {
    "HORSE": 600,
    "IRON": 34000,
@@ -838,9 +838,9 @@
    "countyId": 651,
    "sites": [],
    "monthly": {
-    "TIMBER": 276
+    "TIMBER": 275
    },
-   "woodedCells": 276
+   "woodedCells": 275
   },
   {
    "jurisdictionId": "40878",
@@ -1279,9 +1279,9 @@
    "countyId": 509,
    "sites": [],
    "monthly": {
-    "TIMBER": 147
+    "TIMBER": 143
    },
-   "woodedCells": 147
+   "woodedCells": 143
   },
   {
    "jurisdictionId": "41347",
@@ -2278,9 +2278,9 @@
    "countyId": 549,
    "sites": [],
    "monthly": {
-    "TIMBER": 93
+    "TIMBER": 92
    },
-   "woodedCells": 93
+   "woodedCells": 92
   },
   {
    "jurisdictionId": "43130",
@@ -2638,9 +2638,9 @@
    "countyId": 471,
    "sites": [],
    "monthly": {
-    "TIMBER": 172
+    "TIMBER": 174
    },
-   "woodedCells": 172
+   "woodedCells": 174
   },
   {
    "jurisdictionId": "43584",
@@ -2656,9 +2656,9 @@
    "countyId": 464,
    "sites": [],
    "monthly": {
-    "TIMBER": 100
+    "TIMBER": 98
    },
-   "woodedCells": 100
+   "woodedCells": 98
   },
   {
    "jurisdictionId": "43602",
@@ -3835,9 +3835,9 @@
    "countyId": 624,
    "sites": [],
    "monthly": {
-    "TIMBER": 1460
+    "TIMBER": 1455
    },
-   "woodedCells": 1460
+   "woodedCells": 1455
   },
   {
    "jurisdictionId": "45437",
@@ -4501,9 +4501,9 @@
    "countyId": 771,
    "sites": [],
    "monthly": {
-    "TIMBER": 1495
+    "TIMBER": 1489
    },
-   "woodedCells": 1495
+   "woodedCells": 1489
   },
   {
    "jurisdictionId": "70524",
@@ -4546,18 +4546,18 @@
    "countyId": 645,
    "sites": [],
    "monthly": {
-    "TIMBER": 3394
+    "TIMBER": 3401
    },
-   "woodedCells": 3394
+   "woodedCells": 3401
   },
   {
    "jurisdictionId": "70597",
    "countyId": 643,
    "sites": [],
    "monthly": {
-    "TIMBER": 819
+    "TIMBER": 817
    },
-   "woodedCells": 819
+   "woodedCells": 817
   },
   {
    "jurisdictionId": "70599",
@@ -4636,9 +4636,9 @@
    "countyId": 647,
    "sites": [],
    "monthly": {
-    "TIMBER": 1150
+    "TIMBER": 1154
    },
-   "woodedCells": 1150
+   "woodedCells": 1154
   },
   {
    "jurisdictionId": "70610",
@@ -4681,9 +4681,9 @@
    "countyId": 656,
    "sites": [],
    "monthly": {
-    "TIMBER": 1817
+    "TIMBER": 1822
    },
-   "woodedCells": 1817
+   "woodedCells": 1822
   },
   {
    "jurisdictionId": "70618",
@@ -11242,9 +11242,9 @@
    "countyId": 1483,
    "sites": [],
    "monthly": {
-    "TIMBER": 4
+    "TIMBER": 9
    },
-   "woodedCells": 4
+   "woodedCells": 9
   },
   {
    "jurisdictionId": "gc-g0060-008",
@@ -11602,9 +11602,9 @@
    "countyId": 1517,
    "sites": [],
    "monthly": {
-    "TIMBER": 9
+    "TIMBER": 4
    },
-   "woodedCells": 9
+   "woodedCells": 4
   },
   {
    "jurisdictionId": "gc-g0069-004",
@@ -11668,15 +11668,6 @@
     "TIMBER": 9
    },
    "woodedCells": 9
-  },
-  {
-   "jurisdictionId": "gc-g0072-001",
-   "countyId": 1368,
-   "sites": [],
-   "monthly": {
-    "TIMBER": 4
-   },
-   "woodedCells": 4
   },
   {
    "jurisdictionId": "gc-g0072-003",
@@ -11746,9 +11737,9 @@
    "countyId": 1392,
    "sites": [],
    "monthly": {
-    "TIMBER": 3
+    "TIMBER": 9
    },
-   "woodedCells": 3
+   "woodedCells": 9
   },
   {
    "jurisdictionId": "gc-g0075-004",
@@ -11764,9 +11755,9 @@
    "countyId": 1538,
    "sites": [],
    "monthly": {
-    "TIMBER": 9
+    "TIMBER": 4
    },
-   "woodedCells": 9
+   "woodedCells": 4
   },
   {
    "jurisdictionId": "gc-g0076-002",
@@ -12646,9 +12637,9 @@
    "countyId": 1042,
    "sites": [],
    "monthly": {
-    "TIMBER": 2
+    "TIMBER": 4
    },
-   "woodedCells": 2
+   "woodedCells": 4
   },
   {
    "jurisdictionId": "ss-hengjiangjin",
@@ -12853,9 +12844,9 @@
    "countyId": 1065,
    "sites": [],
    "monthly": {
-    "TIMBER": 4
+    "TIMBER": 5
    },
-   "woodedCells": 4
+   "woodedCells": 5
   },
   {
    "jurisdictionId": "ss-niuzhuying",
@@ -12997,9 +12988,9 @@
    "countyId": 1081,
    "sites": [],
    "monthly": {
-    "TIMBER": 2
+    "TIMBER": 6
    },
-   "woodedCells": 2
+   "woodedCells": 6
   },
   {
    "jurisdictionId": "ss-wansuiwu",
@@ -13051,9 +13042,9 @@
    "countyId": 1087,
    "sites": [],
    "monthly": {
-    "TIMBER": 8
+    "TIMBER": 9
    },
-   "woodedCells": 8
+   "woodedCells": 9
   },
   {
    "jurisdictionId": "ss-xieguguan",
@@ -13078,9 +13069,9 @@
    "countyId": 1090,
    "sites": [],
    "monthly": {
-    "TIMBER": 5
+    "TIMBER": 3
    },
-   "woodedCells": 5
+   "woodedCells": 3
   },
   {
    "jurisdictionId": "ss-xunkou",

@@ -79,6 +79,7 @@ MINIMUM_FOOTPRINT = 4
 # second movement exit is that route, so a single dry-land neighbour suffices.
 # The other 72 sites still require two independent land neighbours.
 SEA_SUPPORTED_LANDING = "tajin"
+LAND_EXIT_REPAIR_SITES = frozenset({"hanjin", "nanan-xiakou", "pubanjin", "wankou", "xiaoyaojin", "xisai"})
 DONOR_JURISDICTION_KINDS = frozenset({"COUNTY", "EXTERNAL_SETTLEMENT"})
 MINIMUM_AREA = 9
 # 런타임 보급망이 잇는 지형 이름(HanStrategicTopologyJson dryNames 와 같은 집합). 코드는 terrainLegend 로 푼다.
@@ -191,15 +192,17 @@ def _anchor_candidates(owner: np.ndarray, donor: int, cell: tuple[int, int], tak
 
 
 def _boundary_core_candidates(before: np.ndarray, provinces: list[dict],
-                              protected: set[tuple[int, int]], size: int = 3,
-                              min_land_neighbours: int = 2) -> dict[str, list[tuple[int, int]]]:
+                              protected: set[tuple[int, int]], size: int = 3
+                              ) -> tuple[dict[str, list[tuple[int, int]]], dict[str, list[tuple[int, int]]]]:
     """Square interiors beside another land province, indexed by their 郡.
 
     A 2×2 square becomes 8×8 cells at the approved 4× display resolution and
     therefore still contains a complete 7×7 future capital footprint.
     """
     rows, cols = before.shape
-    result: dict[str, list[tuple[int, int]]] = {}
+    landing: dict[str, list[tuple[int, int]]] = {}
+    through: dict[str, list[tuple[int, int]]] = {}
+    parent_by_province = [row["parentRegionId"] for row in provinces]
     for r, c in np.argwhere(before >= 0):
         r, c = int(r), int(c)
         margin = 2 if size == 3 else 1
@@ -210,18 +213,21 @@ def _boundary_core_candidates(before: np.ndarray, provinces: list[dict],
         core = before[start_r:start_r + size, start_c:start_c + size]
         if (core < 0).any():
             continue
-        parent_id = provinces[donor]["parentRegionId"]
-        if any(provinces[int(other)]["parentRegionId"] != parent_id for other in np.unique(core)):
+        parent_id = parent_by_province[donor]
+        if any(parent_by_province[int(other)] != parent_id for other in core.flat):
             continue
         if any((rr, cc) in protected for rr in range(start_r, start_r + size)
                for cc in range(start_c, start_c + size)):
             continue
         ring = before[start_r - 1:start_r + size + 1, start_c - 1:start_c + size + 1]
         exterior = np.concatenate((ring[0], ring[-1], ring[1:-1, 0], ring[1:-1, -1]))
-        if len({int(other) for other in exterior if other >= 0}) < min_land_neighbours:
+        land_neighbours = {int(other) for other in exterior if other >= 0}
+        if not land_neighbours:
             continue
-        result.setdefault(parent_id, []).append((r, c))
-    return result
+        landing.setdefault(parent_id, []).append((r, c))
+        if len(land_neighbours) >= 2:
+            through.setdefault(parent_id, []).append((r, c))
+    return landing, through
 
 
 def _sorted_boundary_candidates(candidates: list[tuple[int, int]], cell: tuple[int, int]):
@@ -262,7 +268,8 @@ def _shares_dry_border(carved: set[tuple[int, int]], remainder: set[tuple[int, i
 def _carve(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: set[tuple[int, int]],
            footprint: int = FOOTPRINT, terrain: list[str] | None = None, dry: frozenset[str] = frozenset(),
            reserve: int = 0, provinces: list[dict] | None = None,
-           min_land_neighbours: int = 2):
+           min_land_neighbours: int = 2, min_jurisdiction_neighbours: int = 1,
+           min_dry_province_neighbours: int = 1):
     """Reserve a complete 3×3 interior at a donor boundary for a city marker.
 
     기증 省이 원래 여러 조각이면(섬·월경지 — territory-disconnection 원장이 판정한 것) 그 조각 수
@@ -300,6 +307,16 @@ def _carve(owner: np.ndarray, donor: int, anchor: tuple[int, int], protected: se
                 if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in carved and owner[nr, nc] >= 0}
     if len(exterior) < min_land_neighbours:
         return None
+    if provinces is not None and len({provinces[other]["jurisdictionId"] for other in exterior}) < min_jurisdiction_neighbours:
+        return None
+    if terrain is not None:
+        dry_exterior = {int(owner[nr, nc]) for r, c in carved if terrain[r][c] in dry
+                        for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))
+                        for nr, nc in ((r + dr, c + dc),)
+                        if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in carved
+                        and owner[nr, nc] >= 0 and terrain[nr][nc] in dry}
+        if len(dry_exterior) < min_dry_province_neighbours:
+            return None
     remainders = set()
     for other in contributors:
         donor_cells = {(int(r), int(c)) for r, c in np.argwhere(owner == other)}
@@ -378,12 +395,9 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
     jurisdictions = {row["id"]: row for row in document["jurisdictionRecords"]}
     commanderies = {row["id"]: row for row in document["commanderyRecords"]}
     point_cells = {(row["row"], row["col"]) for row in document["cities"]}
-    boundary_candidates = _boundary_core_candidates(before, provinces, point_cells)
-    minimum_boundary_candidates = _boundary_core_candidates(before, provinces, point_cells, size=2)
-    landing_candidates = _boundary_core_candidates(before, provinces, point_cells,
-                                                    min_land_neighbours=1)
-    minimum_landing_candidates = _boundary_core_candidates(before, provinces, point_cells, size=2,
-                                                            min_land_neighbours=1)
+    landing_candidates, boundary_candidates = _boundary_core_candidates(before, provinces, point_cells)
+    minimum_landing_candidates, minimum_boundary_candidates = _boundary_core_candidates(
+        before, provinces, point_cells, size=2)
     terrain, dry = document["terrain"], _dry_codes(document)
     placements, excluded = [], []
     pending = _pending_by_donor(before, sites, projection, rows, cols)
@@ -427,6 +441,10 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
         for candidate, footprint in choices:
             if (candidate[0] - cell[0]) ** 2 + (candidate[1] - cell[1]) ** 2 > 6.1 ** 2:
                 continue
+            # 漢津's reviewed ferry crossing needs its marker on the eastern
+            # bank of 沔水. The nearest two-road core lies on the western bank.
+            if site["id"] == "hanjin" and (candidate, footprint) != ((315, 378), MINIMUM_FOOTPRINT):
+                continue
             candidate_donor = int(owner[candidate])
             if candidate_donor < 0 or candidate_donor >= original_province_count:
                 continue
@@ -438,7 +456,21 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
                 continue
             carved = _carve(owner, candidate_donor, candidate, point_cells, footprint, terrain, dry,
                             reserve if candidate_donor == donor else 0, provinces,
-                            1 if site["id"] == SEA_SUPPORTED_LANDING else 2)
+                            1 if site["id"] == SEA_SUPPORTED_LANDING else 2,
+                            1 if site["id"] in {SEA_SUPPORTED_LANDING, "zuocheng"} else 2,
+                            2 if site["id"] in LAND_EXIT_REPAIR_SITES else 1)
+            if carved is not None and site["id"] == "xiaoyaojin":
+                # The closest eastern contact is a detached piece of 43138:
+                # it has a dry edge but no road from that county's seat.
+                # A nearby western core also touches seat-connected 43121.
+                connected_exit = any(
+                    terrain[r][c] in dry and terrain[nr][nc] in dry
+                    and provinces[int(owner[nr, nc])]["id"] == "43121"
+                    for r, c in carved for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1))
+                    for nr, nc in ((r + dr, c + dc),)
+                    if 0 <= nr < rows and 0 <= nc < cols and (nr, nc) not in carved and owner[nr, nc] >= 0)
+                if not connected_exit:
+                    carved = None
             if carved is not None:
                 anchor = candidate
                 donor, donor_record, jurisdiction = candidate_donor, candidate_record, candidate_jurisdiction
@@ -552,7 +584,8 @@ def apply_carves(source: dict, sites: list[dict], counties: list[dict] | None = 
             candidate_jurisdiction = jurisdictions[candidate_record["jurisdictionId"]]
             if candidate_jurisdiction["kind"] not in DONOR_JURISDICTION_KINDS:
                 continue
-            carved = _carve(owner, candidate_donor, candidate, point_cells, footprint, terrain, dry, 0, provinces)
+            carved = _carve(owner, candidate_donor, candidate, point_cells, footprint, terrain, dry, 0,
+                            provinces, min_jurisdiction_neighbours=2)
             if carved is not None:
                 anchor = candidate
                 donor, donor_record, jurisdiction = candidate_donor, candidate_record, candidate_jurisdiction
@@ -805,7 +838,24 @@ def main() -> int:
     if args.prepare:
         LEDGER.write_text(json.dumps(ledger, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if folded is not None:
-        document = folding.reapply(document, folded)
+        # The carve changes the input fingerprint of every later stage. Build
+        # their reviewed ledgers from the new geometry in dependency order.
+        if args.prepare:
+            document, fold_ledger = folding.build_stage(
+                document, json.loads(folding.DECISIONS.read_text(encoding="utf-8")))
+            folding.LEDGER.write_text(json.dumps(fold_ledger, ensure_ascii=False, indent=2) + "\n",
+                                           encoding="utf-8")
+            from tools.map import reclassify_han_lowland_terrain as lowland
+            lowland_ledger = folded.get(folding.LOWLAND_KEY)
+            if lowland_ledger is not None:
+                document, relaid = lowland.build_stage(
+                    document, json.loads(lowland.DECISIONS.read_text(encoding="utf-8")))
+                lowland.LEDGER.write_text(json.dumps(relaid, ensure_ascii=False, indent=2) + "\n",
+                                          encoding="utf-8")
+                from tools.map import refine_korea_places as korea
+                document = korea.restack(document, lowland_ledger, prepare=True)
+        else:
+            document = folding.reapply(document, folded)
     if args.output:
         args.output.write_text(json.dumps(document, ensure_ascii=False, separators=(",", ":")) + "\n",
                                encoding="utf-8")

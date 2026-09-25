@@ -288,6 +288,46 @@ def build(tiles: dict) -> dict:
         built.add(pair)
         degree[pair[0]] += 1
         degree[pair[1]] += 1
+    # The 郡 is also a supply unit. Keep its inexpensive dry county contacts
+    # connected in the initial road graph, even when the global spanning tree
+    # joined those counties by a longer route outside the 郡.
+    local_parent = list(range(len(ids)))
+    def local_root(index: int) -> int:
+        while local_parent[index] != index:
+            local_parent[index] = local_parent[local_parent[index]]
+            index = local_parent[index]
+        return index
+    def same_commandery(pair: tuple[int, int]) -> bool:
+        return provinces[pair[0]]["parentRegionId"] == provinces[pair[1]]["parentRegionId"]
+    for a, b in built:
+        if same_commandery((a, b)):
+            local_parent[local_root(a)] = local_root(b)
+    for pair, (score, _, _) in sorted(best.items(), key=lambda item:
+                                      (item[1][0], ids[item[0][0]], ids[item[0][1]])):
+        if pair not in accessible or pair in built or score[0] > 8 or not same_commandery(pair):
+            continue
+        a, b = pair
+        ra, rb = local_root(a), local_root(b)
+        if ra == rb:
+            continue
+        local_parent[ra] = rb
+        built.add(pair)
+        degree[a] += 1
+        degree[b] += 1
+    # A strategic site at an accessible junction needs both branches open at
+    # the start. High-cost passes are intentional here: their terrain, rather
+    # than an arbitrary loop budget, determines the route cost.
+    for node in sorted(site_nodes):
+        if degree[node] >= 2:
+            continue
+        options = sorted((pair for pair in best if node in pair and pair in accessible and pair not in built),
+                         key=lambda pair: (best[pair][0], ids[pair[0]], ids[pair[1]]))
+        for pair in options:
+            if degree[node] >= 2:
+                break
+            built.add(pair)
+            degree[pair[0]] += 1
+            degree[pair[1]] += 1
     # The long-distance overview shows the part of the initial tree that
     # actually joins substantial groups of counties. Local terminal streets
     # remain available at closer zoom, without cluttering the world picture.
@@ -349,7 +389,7 @@ def build(tiles: dict) -> dict:
                       "fortCells": fort_cells})
     return {"schemaVersion": 1, "artifactId": "han-land-roads-v1", "resolutionScale": 4,
             "rows": rows, "cols": cols, "provinceCount": len(ids),
-            "policy": "dry-four-neighbour-terrain-mst-with-local-bypasses-v1",
+            "policy": "dry-four-neighbour-terrain-mst-with-commandery-and-site-links-v2",
             "historicalStatus": "INFERRED_ROUTE_NOT_ATTESTED_ROAD",
             "historicalCorridors": corridors,
             "counts": {"candidateEdges": len(edges), "builtEdges": len(built),
