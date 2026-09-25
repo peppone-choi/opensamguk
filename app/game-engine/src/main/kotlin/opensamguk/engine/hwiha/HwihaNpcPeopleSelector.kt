@@ -6,16 +6,16 @@ import opensamguk.logic.input.*
 
 /** Unowned lords use their own discovery and captive records; the execution path is shared. */
 internal class HwihaNpcPeopleSelector(private val context: HwihaDomesticContext,
-    private val design: HwihaPeopleDesign = HwihaPeopleDesign.CANON,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val design: PeopleDesign = PeopleDesign.CANON,
+    private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
-            design.status != HwihaPeopleDesign.CONFIRMED) return reserved
+            design.status != PeopleDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
         if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 || actor.nationId <= 0 ||
-            !runCatching { HwihaLordStatus.read(actor.meta) }.getOrDefault(false) ||
-            world.listRetainers().any { it.generalId == actorId } || HwihaCorpsOrder.META_KEY in actor.meta) return reserved
-        val deployed = try { HwihaDeploymentState.read(actor.meta)?.corps.orEmpty() }
+            !runCatching { LordStatus.read(actor.meta) }.getOrDefault(false) ||
+            world.listRetainers().any { it.generalId == actorId } || CorpsOrder.META_KEY in actor.meta) return reserved
+        val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reserved }
         if (deployed.isNotEmpty()) return reserved
         val state = context.projection(world)
@@ -23,20 +23,20 @@ internal class HwihaNpcPeopleSelector(private val context: HwihaDomesticContext,
         val people = state.peopleAt(here)
         fun eligible(inputId: String, targetId: Int?) =
             catalog[inputId]?.deliveryState?.hasHandler == true &&
-                HwihaPeopleRules.assess(HwihaPeopleRequest(actorId, inputId, targetId), state) is HwihaPeopleAssessment.Eligible
+                PeopleRules.assess(PeopleRequest(actorId, inputId, targetId), state) is PeopleAssessment.Eligible
         val captive = people.firstOrNull { target ->
             (target.meta["hwihaCaptive"] as? Map<*, *>)?.get("captorGeneralId") == actorId &&
-                eligible(HwihaPeopleInput.PERSUADE_CAPTIVE, target.id)
+                eligible(PeopleInput.PERSUADE_CAPTIVE, target.id)
         }
-        if (captive != null) return order(HwihaPeopleInput.PERSUADE_CAPTIVE, actorId, captive.id)
-        val known = try { HwihaTalentDiscovery.read(actor.meta) } catch (_: IllegalArgumentException) { return reserved }
-        val recruit = people.firstOrNull { it.id in known && eligible(HwihaPeopleInput.EMPLOY, it.id) }
-        if (recruit != null) return order(HwihaPeopleInput.EMPLOY, actorId, recruit.id)
-        if (eligible(HwihaPeopleInput.SEARCH, null)) return order(HwihaPeopleInput.SEARCH, actorId, null)
+        if (captive != null) return order(PeopleInput.PERSUADE_CAPTIVE, actorId, captive.id)
+        val known = try { TalentDiscovery.read(actor.meta) } catch (_: IllegalArgumentException) { return reserved }
+        val recruit = people.firstOrNull { it.id in known && eligible(PeopleInput.EMPLOY, it.id) }
+        if (recruit != null) return order(PeopleInput.EMPLOY, actorId, recruit.id)
+        if (eligible(PeopleInput.SEARCH, null)) return order(PeopleInput.SEARCH, actorId, null)
         return reserved
     }
 
     private fun order(inputId: String, actorId: Int, targetId: Int?) = ReservedTurn(inputId,
-        HwihaPeopleInput.canonicalJson(HwihaPeopleRequest(actorId, inputId, targetId)),
+        PeopleInput.canonicalJson(PeopleRequest(actorId, inputId, targetId)),
         brief = inputId, rowExists = false)
 }

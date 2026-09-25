@@ -3,7 +3,7 @@ package opensamguk.gameapi.read
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.world.HanWorldVariant
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
@@ -53,7 +53,7 @@ class HwihaCampLedgers(private val objectMapper: ObjectMapper) {
      */
     fun nativeCountyOf(general: GeneralReadEntity): NativeCounty? {
         if ("npc_org" !in general.meta) return null
-        val policy = try { HwihaPersonPolicyState.read(general.meta) } catch (_: IllegalArgumentException) { null }
+        val policy = try { PersonPolicyState.read(general.meta) } catch (_: IllegalArgumentException) { null }
         if (policy?.statSourceId == CREATED_GENERAL_SOURCE) return null
         return nativeCountyByScenarioName[general.name]
     }

@@ -6,36 +6,36 @@ import opensamguk.logic.input.*
 
 /** NPCs use the same current-condition rules as player reservations. */
 internal class HwihaNpcPersonalSelector(private val context: HwihaDomesticContext,
-    private val design: HwihaPersonalDesign = HwihaPersonalDesign.CANON,
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
+    private val design: PersonalDesign = PersonalDesign.CANON,
+    private val catalog: InputCatalog = InputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
-            design.status != HwihaPersonalDesign.CONFIRMED) return reserved
+            design.status != PersonalDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
         if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
-            world.listRetainers().any { it.generalId == actorId } || HwihaCorpsOrder.META_KEY in actor.meta)
+            world.listRetainers().any { it.generalId == actorId } || CorpsOrder.META_KEY in actor.meta)
             return reserved
         val state = context.projection(world)
-        fun eligible(request: HwihaPersonalRequest) =
+        fun eligible(request: PersonalRequest) =
             catalog[request.inputId]?.deliveryState?.hasHandler == true &&
-                HwihaPersonalRules.assess(request, state) is HwihaPersonalAssessment.Eligible
-        val heal = HwihaPersonalRequest(actorId, HwihaPersonalInput.RECUPERATE)
+                PersonalRules.assess(request, state) is PersonalAssessment.Eligible
+        val heal = PersonalRequest(actorId, PersonalInput.RECUPERATE)
         if (eligible(heal)) return order(heal)
-        val train = HwihaTrainingStat.entries.filter { eligible(HwihaPersonalRequest(actorId,
-            HwihaPersonalInput.SELF_TRAIN, it)) }.minWithOrNull(compareBy({ stat ->
+        val train = TrainingStat.entries.filter { eligible(PersonalRequest(actorId,
+            PersonalInput.SELF_TRAIN, it)) }.minWithOrNull(compareBy({ stat ->
                 when (stat) {
-                    HwihaTrainingStat.LEADERSHIP -> actor.stats.leadership
-                    HwihaTrainingStat.STRENGTH -> actor.stats.strength
-                    HwihaTrainingStat.INTELLIGENCE -> actor.stats.intelligence
-                    HwihaTrainingStat.POLITICS -> actor.stats.politics
-                    HwihaTrainingStat.CHARM -> actor.stats.charm
+                    TrainingStat.LEADERSHIP -> actor.stats.leadership
+                    TrainingStat.STRENGTH -> actor.stats.strength
+                    TrainingStat.INTELLIGENCE -> actor.stats.intelligence
+                    TrainingStat.POLITICS -> actor.stats.politics
+                    TrainingStat.CHARM -> actor.stats.charm
                 }
             }, { it.ordinal }))
-        if (train != null) return order(HwihaPersonalRequest(actorId, HwihaPersonalInput.SELF_TRAIN, train))
-        val travel = HwihaPersonalRequest(actorId, HwihaPersonalInput.TRAVEL)
+        if (train != null) return order(PersonalRequest(actorId, PersonalInput.SELF_TRAIN, train))
+        val travel = PersonalRequest(actorId, PersonalInput.TRAVEL)
         return if (eligible(travel)) order(travel) else reserved
     }
 
-    private fun order(request: HwihaPersonalRequest) = ReservedTurn(request.inputId,
-        HwihaPersonalInput.canonicalJson(request), brief = request.inputId, rowExists = false)
+    private fun order(request: PersonalRequest) = ReservedTurn(request.inputId,
+        PersonalInput.canonicalJson(request), brief = request.inputId, rowExists = false)
 }

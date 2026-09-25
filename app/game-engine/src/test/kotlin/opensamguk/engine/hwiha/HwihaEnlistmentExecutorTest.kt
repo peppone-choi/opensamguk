@@ -49,7 +49,7 @@ class HwihaEnlistmentExecutorTest {
         val positions = before.keys.associateWith(world::positionOf)
         val result = assertIs<EnlistmentExecution.Applied>(HwihaEnlistmentExecutor(world, recorder) { policy() }.execute(request, noDraw))
         assertEquals(listOf(1, 2), result.plan.joiningGeneralIds)
-        assertEquals(before.getValue(1).copy(nationId = 1, meta = HwihaLordStatus.afterEnlistment(before.getValue(1).meta)), world.getGeneralById(1))
+        assertEquals(before.getValue(1).copy(nationId = 1, meta = LordStatus.afterEnlistment(before.getValue(1).meta)), world.getGeneralById(1))
         assertEquals(before.getValue(2).copy(nationId = 1), world.getGeneralById(2))
         for (id in listOf(3, 10, 11, 20)) assertEquals(before[id], world.getGeneralById(id))
         assertEquals(positions, before.keys.associateWith(world::positionOf))
@@ -108,7 +108,7 @@ class HwihaEnlistmentExecutorTest {
         val recorder = ChangeRecorder()
         val executor = HwihaEnlistmentExecutor(world, recorder) { policy() }
         val lord = world.getGeneralById(10)!!
-        world.applyGeneralDirtyFree(lord.copy(meta = HwihaLordStatus.afterEnlistment(lord.meta)))
+        world.applyGeneralDirtyFree(lord.copy(meta = LordStatus.afterEnlistment(lord.meta)))
         assertEquals(EnlistmentFailure.TARGET_NOT_LORD,
             assertIs<EnlistmentExecution.Rejected>(executor.execute(request, noDraw)).reason)
         assertTrue(world.listRetainers().isEmpty())

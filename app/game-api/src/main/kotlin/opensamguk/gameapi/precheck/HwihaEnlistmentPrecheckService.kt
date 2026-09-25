@@ -18,7 +18,7 @@ class HwihaEnlistmentPrecheckService(
     fun assess(request: EnlistmentRequest): EnlistmentAssessment {
         return when (val snapshot = snapshot()) {
             is Snapshot.Unavailable -> EnlistmentAssessment.Rejected(snapshot.reason)
-            is Snapshot.Ready -> HwihaEnlistmentPrecheck.assess(request, snapshot.state)
+            is Snapshot.Ready -> EnlistmentPrecheck.assess(request, snapshot.state)
         }
     }
 
@@ -34,14 +34,14 @@ class HwihaEnlistmentPrecheckService(
         }
         snapshot as Snapshot.Ready
         val state = snapshot.state
-        val budget = HwihaEnlistmentBudget.assess(actorId, state.profile, state.persons.map { it.policy },
+        val budget = EnlistmentBudget.assess(actorId, state.profile, state.persons.map { it.policy },
             state.cards.map { DirectPersonCard(it.id, it.masterId, it.generalId) })
         if (budget is RenownBudgetResult.Unavailable) {
             return EnlistmentOptions(options = listOf(EnlistmentOption(EnlistmentMode.RANDOM, null, "무작위 출사",
                 EnlistmentOptionAvailability.blocked(EnlistmentFailure.POLICY_UNAVAILABLE))))
         }
         fun option(mode: EnlistmentMode, id: Int?, label: String): EnlistmentOption {
-            val assessment = HwihaEnlistmentPrecheck.assess(EnlistmentRequest(actorId, mode, id), state, budget)
+            val assessment = EnlistmentPrecheck.assess(EnlistmentRequest(actorId, mode, id), state, budget)
             val availability = when (assessment) {
                 is EnlistmentAssessment.Eligible -> EnlistmentOptionAvailability("AVAILABLE")
                 is EnlistmentAssessment.Rejected -> EnlistmentOptionAvailability.blocked(assessment.reason)
@@ -61,7 +61,7 @@ class HwihaEnlistmentPrecheckService(
 
     private sealed interface Snapshot {
         data class Unavailable(val reason: EnlistmentFailure) : Snapshot
-        data class Ready(val state: HwihaEnlistmentProjection, val nations: List<NationReadEntity>) : Snapshot
+        data class Ready(val state: EnlistmentProjection, val nations: List<NationReadEntity>) : Snapshot
     }
 
     private fun snapshot(): Snapshot {
@@ -70,7 +70,7 @@ class HwihaEnlistmentPrecheckService(
             ?: return Snapshot.Unavailable(EnlistmentFailure.POLICY_UNAVAILABLE)
         if (profile != RuleProfile.HWIHA) return Snapshot.Unavailable(EnlistmentFailure.WRONG_RULE_PROFILE)
         val nationRows = nations.findAll()
-        val state = HwihaEnlistmentProjection(profile,
+        val state = EnlistmentProjection(profile,
             generals.findAll().map { general ->
                 // Do not use the legacy toLogic conversion: it does not project politics/charm.
                 EnlistmentPersonRow(PersonPolicyInput(general.id, general.nationId, general.leadership,

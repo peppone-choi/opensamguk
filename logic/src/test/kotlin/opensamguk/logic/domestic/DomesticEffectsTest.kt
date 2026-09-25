@@ -3,11 +3,11 @@ package opensamguk.logic.domestic
 import kotlin.test.*
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.FieldInput
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.Phase
 
 class DomesticEffectsTest {
     private val design = DomesticDesign.CANON
-    private val now = HwihaPhase(200, 1, 1)
+    private val now = Phase(200, 1, 1)
     private val levels = CountyLevels(50_000, 100_000, 1000, 1200, 1000, 1010, 500, 600, 80.0, 900, 1000, 900, 1000)
     private fun seat(stat: Int, hometown: Boolean = false) = SeatStats(stat, stat, stat, stat, stat, hometown)
 

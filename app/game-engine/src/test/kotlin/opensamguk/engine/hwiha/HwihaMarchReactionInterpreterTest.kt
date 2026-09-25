@@ -16,11 +16,11 @@ class HwihaMarchReactionInterpreterTest {
     @Test fun `policy inventory rebuild preserves installed schemes`() {
         val world = fixture.world(listOf(fixture.person(1, 1, route.startCity) to route.start,
             fixture.person(2, 2, route.destinationCounty) to route.destination))
-        val scheme = HwihaInstalledScheme("scheme-1", 2, 2, route.first.id, HwihaPhase(200, 1, 1))
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
-            HwihaMarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
+        val scheme = InstalledScheme("scheme-1", 2, 2, route.first.id, Phase(200, 1, 1))
+        world.setGameEnvValue(MarchReactions.META_KEY,
+            MarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
         assertEquals(HwihaReactionInventory.Result.UNCHANGED, HwihaReactionInventory(world, ChangeRecorder()).rebuild())
-        assertEquals(listOf(scheme), HwihaMarchReactions.read(world.getState().meta)?.installedSchemes)
+        assertEquals(listOf(scheme), MarchReactions.read(world.getState().meta)?.installedSchemes)
     }
 
     @Test fun `entering an enemy installed scheme province causes a contact stop`() {
@@ -30,9 +30,9 @@ class HwihaMarchReactionInterpreterTest {
             cityChanges = { city -> city.copy(nationId = if (city.id == route.destinationCounty) 2 else 1) })
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
-        val scheme = HwihaInstalledScheme("scheme-1", 2, 2, route.first.id, HwihaPhase(200, 1, 1))
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
-            HwihaMarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
+        val scheme = InstalledScheme("scheme-1", 2, 2, route.first.id, Phase(200, 1, 1))
+        world.setGameEnvValue(MarchReactions.META_KEY,
+            MarchReactions.of(emptyList(), emptyList(), listOf(scheme)).toMetaValue())
         fixture.nextPhase(world)
         assertEquals(LandMarchEntry.ENCOUNTER,
             HwihaMilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, route.first, policy))
@@ -40,8 +40,8 @@ class HwihaMarchReactionInterpreterTest {
             .onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
         assertEquals(route.first, world.positionOf(1))
         assertEquals(LandMarchStop.ENCOUNTER,
-            HwihaCorpsMarchState.read(world.getGeneralById(1)!!.meta, fixture.topology, fixture.metrics)?.checkpoint?.stop)
-        assertNull(HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology),
+            CorpsMarchState.read(world.getGeneralById(1)!!.meta, fixture.topology, fixture.metrics)?.checkpoint?.stop)
+        assertNull(CorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology),
             "a scheme has no fabricated defending corps")
     }
 
@@ -67,8 +67,8 @@ class HwihaMarchReactionInterpreterTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), target)
         fixture.deploy(world, recorder, 2, listOf(8), target)
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
-            HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-2", 2, 2, 2, HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
+        world.setGameEnvValue(MarchReactions.META_KEY,
+            MarchReactions.of(listOf(ReactionOrder("order-2", 2, 2, 2, Phase(200, 1, 1))), emptyList()).toMetaValue())
         assertEquals(LandMarchEntry.CLEAR, policy.entryHazard(world, 1, target), "FOG cannot intercept")
         val city = world.getCityById(towerCity)!!
         world.updateCity(city.copy(meta = city.meta + (MetaVisionSourceReader.COUNTY_WORKS_KEY to
@@ -107,9 +107,9 @@ class HwihaMarchReactionInterpreterTest {
             cityChanges = { city -> city.copy(nationId = if (city.id == towerCity) 2 else 1) })
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 12, listOf(812), target, "order-12")
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
-            HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-12", 12, 12, 2,
-                HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
+        world.setGameEnvValue(MarchReactions.META_KEY,
+            MarchReactions.of(listOf(ReactionOrder("order-12", 12, 12, 2,
+                Phase(200, 1, 1))), emptyList()).toMetaValue())
         val tower = world.getCityById(towerCity)!!
         world.updateCity(tower.copy(meta = tower.meta + (MetaVisionSourceReader.COUNTY_WORKS_KEY to
             mapOf("version" to 1, "works" to listOf(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))))
@@ -127,9 +127,9 @@ class HwihaMarchReactionInterpreterTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.deploy(world, recorder, 2, listOf(8), route.start)
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
-            HwihaMarchReactions.of(emptyList(), listOf(HwihaReactionOrder("order-2", 2, 2, 2,
-                HwihaPhase(200, 1, 1)))).toMetaValue())
+        world.setGameEnvValue(MarchReactions.META_KEY,
+            MarchReactions.of(emptyList(), listOf(ReactionOrder("order-2", 2, 2, 2,
+                Phase(200, 1, 1)))).toMetaValue())
         assertEquals(LandMarchEntry.CLEAR,
             HwihaMilitaryPresenceProvider(world, fixture.topology, fixture.metrics).entryAt(1, route.first, policy))
         recorder.moveGeneral(world, 1, route.first)
@@ -153,8 +153,8 @@ class HwihaMarchReactionInterpreterTest {
         val city = world.getCityById(towerCity)!!
         world.updateCity(city.copy(nationId = 2, meta = city.meta + (MetaVisionSourceReader.COUNTY_WORKS_KEY to
             mapOf("version" to 1, "works" to listOf(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))))
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY,
-            HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-2", 2, 2, 2, HwihaPhase(200, 1, 1))),
+        world.setGameEnvValue(MarchReactions.META_KEY,
+            MarchReactions.of(listOf(ReactionOrder("order-2", 2, 2, 2, Phase(200, 1, 1))),
                 emptyList()).toMetaValue())
         fixture.nextPhase(world)
         assertEquals(LandMarchEntry.ENCOUNTER, policy.entryHazard(world, 1, route.first))
@@ -162,6 +162,6 @@ class HwihaMarchReactionInterpreterTest {
             .onTurn(1, HwihaCampaignWorldFixture.NO_INPUT)
         assertEquals(route.first, world.positionOf(1))
         assertEquals(route.first, world.positionOf(2))
-        assertNotNull(HwihaCorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology))
+        assertNotNull(CorpsEncounter.read(world.getGeneralById(1)!!.meta, fixture.topology))
     }
 }

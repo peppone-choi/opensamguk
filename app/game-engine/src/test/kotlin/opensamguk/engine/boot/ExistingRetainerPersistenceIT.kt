@@ -58,8 +58,8 @@ class ExistingRetainerPersistenceIT {
         val rebooted = InMemoryTurnWorld(load())
         val loaded = rebooted.getGeneralById(10)!!
         assertEquals(marked, loaded)
-        assertTrue(opensamguk.logic.input.HwihaLordStatus.read(loaded.meta))
-        val released = loaded.copy(meta = opensamguk.logic.input.HwihaLordStatus.afterEnlistment(loaded.meta))
+        assertTrue(opensamguk.logic.input.LordStatus.read(loaded.meta))
+        val released = loaded.copy(meta = opensamguk.logic.input.LordStatus.afterEnlistment(loaded.meta))
         val releaseRecorder = ChangeRecorder()
         rebooted.applyGeneralDirtyFree(released)
         releaseRecorder.diffGeneral(opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(loaded),
@@ -67,7 +67,7 @@ class ExistingRetainerPersistenceIT {
         flush(rebooted, releaseRecorder)
         val after = InMemoryTurnWorld(load()).getGeneralById(10)!!
         assertEquals(released, after)
-        assertEquals(false, opensamguk.logic.input.HwihaLordStatus.read(after.meta))
+        assertEquals(false, opensamguk.logic.input.LordStatus.read(after.meta))
     }
 
     @Test fun `intake flush and cold boot preserve linked identity and released id high water`() {

@@ -21,7 +21,7 @@ internal data class HwihaQueuedLegacyStratagem(val requestId: String, val ownerU
             val inputId = row["inputId"] as? String ?: invalid()
             val json = row["argJson"] as? String ?: invalid()
             require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")) && owner > 0 &&
-                inputId in HwihaLegacyStratagemInput.INPUT_IDS && json.length <= 4096)
+                inputId in StratagemInput.INPUT_IDS && json.length <= 4096)
             return HwihaQueuedLegacyStratagem(requestId, owner, inputId, json)
         }
         private fun invalid(): Nothing = throw IllegalArgumentException("invalid queued stratagem")
@@ -30,17 +30,17 @@ internal data class HwihaQueuedLegacyStratagem(val requestId: String, val ownerU
 
 internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val context: HwihaDomesticContext) {
-    fun assess(request: HwihaLegacyStratagemInput.Request) =
-        HwihaLegacyStratagemRules.assess(request, context.projection(world))
+    fun assess(request: StratagemInput.Request) =
+        StratagemRules.assess(request, context.projection(world))
 
-    fun execute(request: HwihaLegacyStratagemInput.Request): HwihaLegacyStratagemAssessment.Rejected? {
+    fun execute(request: StratagemInput.Request): StratagemAssessment.Rejected? {
         val assessed = assess(request)
-        if (assessed is HwihaLegacyStratagemAssessment.Rejected) return assessed
-        val ready = (assessed as HwihaLegacyStratagemAssessment.Eligible).ready
-        val beforeSource = world.getCityById(ready.source.id) ?: return reject(HwihaLegacyStratagemFailure.SOURCE_UNAVAILABLE)
+        if (assessed is StratagemAssessment.Rejected) return assessed
+        val ready = (assessed as StratagemAssessment.Eligible).ready
+        val beforeSource = world.getCityById(ready.source.id) ?: return reject(StratagemFailure.SOURCE_UNAVAILABLE)
         val beforeTarget = ready.target?.let { world.getCityById(it.id) }
-        if (ready.target != null && beforeTarget == null) return reject(HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE)
-        val actor = world.getGeneralById(request.actorId) ?: return reject(HwihaLegacyStratagemFailure.ACTOR_NOT_FOUND)
+        if (ready.target != null && beforeTarget == null) return reject(StratagemFailure.TARGET_UNAVAILABLE)
+        val actor = world.getGeneralById(request.actorId) ?: return reject(StratagemFailure.ACTOR_NOT_FOUND)
         var source = beforeSource
         var target = beforeTarget
         var sourceStock = ready.warehouse.stock.debit(ready.cost)!!
@@ -51,9 +51,9 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
             else -> null
         }
         if (transfer != null) {
-            targetStock = targetStock!!.debit(transfer) ?: return reject(HwihaLegacyStratagemFailure.INSUFFICIENT_STOCK)
+            targetStock = targetStock!!.debit(transfer) ?: return reject(StratagemFailure.INSUFFICIENT_STOCK)
             sourceStock = try { sourceStock.credit(transfer) }
-                catch (_: ArithmeticException) { return reject(HwihaLegacyStratagemFailure.STOCK_OVERFLOW) }
+                catch (_: ArithmeticException) { return reject(StratagemFailure.STOCK_OVERFLOW) }
         }
         when (request.inputId) {
             "stratagem.rumor" -> target = target!!.copy(meta = target.meta +
@@ -63,16 +63,16 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
             "stratagem.flood" -> target = target!!.copy(agriculture = (target.agriculture - 50).coerceAtLeast(0),
                 population = (target.population - 50).coerceAtLeast(0))
             "stratagem.falseReport" -> {
-                val military = HwihaCityMilitaryState.read(target!!.meta)
-                target = target.copy(meta = target.meta + (HwihaCityMilitaryState.META_KEY to
+                val military = CityMilitaryState.read(target!!.meta)
+                target = target.copy(meta = target.meta + (CityMilitaryState.META_KEY to
                     military.copy(morale = (military.morale - 10).coerceAtLeast(0)).toMetaValue()))
             }
             "stratagem.mobilizePeople" -> source = source.copy(population = (source.population - 100).coerceAtLeast(0),
                 defence = (source.defence + 50).coerceAtMost(source.defenceMax))
             "stratagem.raiseMilitia" -> {
-                val military = HwihaCityMilitaryState.read(source.meta)
+                val military = CityMilitaryState.read(source.meta)
                 source = source.copy(population = (source.population - 50).coerceAtLeast(0),
-                    meta = source.meta + (HwihaCityMilitaryState.META_KEY to military.copy(
+                    meta = source.meta + (CityMilitaryState.META_KEY to military.copy(
                         troops = Math.addExact(military.troops, 50),
                         morale = (military.morale + 10).coerceAtMost(100)).toMetaValue()))
             }
@@ -81,24 +81,24 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
                 target = target!!.copy(defence = (target.defence - 50).coerceAtLeast(0))
             }
             "stratagem.lastStand" -> {
-                val condition = HwihaPersonalTravelCondition.read(actor.meta) ?: HwihaPersonalTravelCondition.INITIAL
-                val next = actor.copy(meta = actor.meta + (HwihaPersonalTravelCondition.META_KEY to condition.copy(
+                val condition = PersonalTravelCondition.read(actor.meta) ?: PersonalTravelCondition.INITIAL
+                val next = actor.copy(meta = actor.meta + (PersonalTravelCondition.META_KEY to condition.copy(
                     fatigue = (condition.fatigue + 10).coerceAtMost(100),
                     morale = (condition.morale + 20).coerceAtMost(100)).toMetaValue()))
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(next))
                 world.applyGeneralDirtyFree(next)
             }
-            HwihaLegacyStratagemInput.PROVOKE_RIVALRY -> {
+            StratagemInput.PROVOKE_RIVALRY -> {
                 val a = ready.firstNation!!.id; val b = ready.secondNation!!.id
                 for ((from, to) in listOf(a to b, b to a)) {
-                    val pre = world.getDiplomacy(from, to) ?: return reject(HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE)
+                    val pre = world.getDiplomacy(from, to) ?: return reject(StratagemFailure.TARGET_UNAVAILABLE)
                     val next = world.updateDiplomacy(from, to, DiplomacyState.WAR, 3)
-                        ?: return reject(HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE)
+                        ?: return reject(StratagemFailure.TARGET_UNAVAILABLE)
                     recorder.diffDiplomacy(pre, next)
                 }
             }
             "stratagem.steal", "stratagem.raid" -> Unit
-            else -> return reject(HwihaLegacyStratagemFailure.INVALID_INPUT)
+            else -> return reject(StratagemFailure.INVALID_INPUT)
         }
         source = source.copy(meta = source.meta + (CountyWarehouse.META_KEY to
             ready.warehouse.replace(sourceStock).toMetaValue()))
@@ -106,10 +106,10 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
             (CountyWarehouse.META_KEY to ready.targetWarehouse!!.replace(targetStock).toMetaValue()))
         updateCity(beforeSource, source)
         if (beforeTarget != null && target != null) updateCity(beforeTarget, target)
-        val current = world.getGeneralById(request.actorId) ?: return reject(HwihaLegacyStratagemFailure.ACTOR_NOT_FOUND)
-        world.updateGeneralMeta(recorder, current, current.meta + (HwihaLegacyStratagemStock.META_KEY to
+        val current = world.getGeneralById(request.actorId) ?: return reject(StratagemFailure.ACTOR_NOT_FOUND)
+        world.updateGeneralMeta(recorder, current, current.meta + (StratagemStock.META_KEY to
             ready.cardStock.consume(request.inputId).toMetaValue()))
-        HwihaRecords.general(world, request.actorId, HwihaRecordKind.PERSONAL_APPLIED,
+        HwihaRecords.general(world, request.actorId, RecordKind.PERSONAL_APPLIED,
             "${ready.actor.name}의 계책을 펼쳤습니다.", mapOf("inputId" to request.inputId))
         return null
     }
@@ -119,5 +119,5 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
         recorder.diffCity(PerTurnOverlay.toLogicCity(before), PerTurnOverlay.toLogicCity(after))
         world.applyCityDirtyFree(after)
     }
-    private fun reject(reason: HwihaLegacyStratagemFailure) = HwihaLegacyStratagemAssessment.Rejected(reason)
+    private fun reject(reason: StratagemFailure) = StratagemAssessment.Rejected(reason)
 }

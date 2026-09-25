@@ -11,7 +11,7 @@ enum class CorpsMarchFailure {
 sealed interface CorpsMarchExecution {
     data class Rejected(val reason: CorpsMarchFailure) : CorpsMarchExecution
     data object AlreadyProcessed : CorpsMarchExecution
-    data class Applied(val state: HwihaCorpsMarchState, val movement: LandMarchAdvance.Advanced) : CorpsMarchExecution
+    data class Applied(val state: CorpsMarchState, val movement: LandMarchAdvance.Advanced) : CorpsMarchExecution
 }
 
 /** One commander's durable movement. Scheduling, entry authorities and command authorization belong to the caller. */
@@ -33,16 +33,16 @@ class HwihaCorpsMarchExecutor(
             ?: return reject(CorpsMarchFailure.INVALID_STATE)
         val corps = projection.deployed.singleOrNull { it.orderId == orderId && it.commanderGeneralId == commanderId }
             ?: return reject(CorpsMarchFailure.NO_DEPLOYMENT)
-        val assessment = HwihaDeploymentRules.assessActive(corps, projection)
+        val assessment = DeploymentRules.assessActive(corps, projection)
         if (assessment !is DeploymentAssessment.Eligible) return reject(CorpsMarchFailure.INVALID_DEPLOYMENT)
         if (!topology.containsNode(destination)) return reject(CorpsMarchFailure.INVALID_DESTINATION)
         val actor = world.getGeneralById(commanderId) ?: return reject(CorpsMarchFailure.INVALID_STATE)
         val position = world.generalPositionSnapshot()?.stateFor(commanderId)
             ?: return reject(CorpsMarchFailure.POSITION_UNAVAILABLE)
         // projection validated schema, binding and position; read again without discarding corrupt state.
-        val old = HwihaCorpsMarchState.read(actor.meta, topology, metrics)
-        val assignment = HwihaMarchState.read(actor.meta, topology, metrics)
-        val now = world.getState().let { HwihaPhase(it.currentYear, it.currentMonth, it.currentPhase) }
+        val old = CorpsMarchState.read(actor.meta, topology, metrics)
+        val assignment = MarchState.read(actor.meta, topology, metrics)
+        val now = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
         if (corps.startedAt > now || old?.checkpoint?.lastAdvancedAt?.let { it > now } == true ||
             assignment?.lastAdvancedAt?.let { it > now } == true) return reject(CorpsMarchFailure.INVALID_STATE)
         if (old?.checkpoint?.lastAdvancedAt == now || assignment?.lastAdvancedAt == now)
@@ -63,8 +63,8 @@ class HwihaCorpsMarchExecutor(
             is LandMarchAdvance.Rejected -> return reject(CorpsMarchFailure.PROGRESS_REJECTED)
         }
         if (position.revision > Long.MAX_VALUE - movement.reachedNodes.size) return reject(CorpsMarchFailure.INVALID_STATE)
-        val next = HwihaCorpsMarchState(corps.orderId, corps.ownerGeneralId, commanderId,
-            HwihaMarchCheckpoint(path, movement.cursor, now, movement.stop))
+        val next = CorpsMarchState(corps.orderId, corps.ownerGeneralId, commanderId,
+            MarchCheckpoint(path, movement.cursor, now, movement.stop))
         next.requireBinding(corps, commanderId)
         for (node in movement.reachedNodes) {
             check(recorder.moveGeneral(world, commanderId, node) is GeneralPositionChangeResult.Changed) {
@@ -73,8 +73,8 @@ class HwihaCorpsMarchExecutor(
         }
         val before = checkNotNull(world.getGeneralById(commanderId))
         // The deployment takes over movement. The accepted county assignment itself remains intact.
-        val after = before.copy(meta = (before.meta - HwihaMarchState.META_KEY) +
-            (HwihaCorpsMarchState.META_KEY to next.toMetaValue()))
+        val after = before.copy(meta = (before.meta - MarchState.META_KEY) +
+            (CorpsMarchState.META_KEY to next.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
         return CorpsMarchExecution.Applied(next, movement)

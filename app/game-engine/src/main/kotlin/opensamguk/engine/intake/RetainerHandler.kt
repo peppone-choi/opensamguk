@@ -13,8 +13,8 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.logic.input.DirectPersonCard
-import opensamguk.logic.input.HwihaEnlistmentBudget
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.EnlistmentBudget
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.PersonPolicyInput
 import opensamguk.logic.input.RenownBudgetResult
 import opensamguk.logic.input.RuleProfile
@@ -92,7 +92,7 @@ class RetainerHandler(
             enforceLegacySlotLimit = world.ruleProfile != RuleProfile.HWIHA)?.let { return fail(type, c.generalId, it) }
         val joining = if (world.ruleProfile == RuleProfile.HWIHA) {
             val people = world.listGenerals()
-            val budget = HwihaEnlistmentBudget.assess(target.id, RuleProfile.HWIHA,
+            val budget = EnlistmentBudget.assess(target.id, RuleProfile.HWIHA,
                 people.map { general ->
                     val stats = general.stats
                     PersonPolicyInput(general.id, general.nationId, stats.leadership, stats.strength,
@@ -101,7 +101,7 @@ class RetainerHandler(
             val ready = budget as? RenownBudgetResult.Ready
                 ?: return fail(type, c.generalId, "인물 카드의 능력치 출처를 확인할 수 없습니다.")
             if (me.id in ready.unavailableOwnerReasons) return fail(type, c.generalId, "휘하 명망 사용량을 확인할 수 없습니다.")
-            val capacity = try { HwihaPersonPolicyState.read(me.meta)?.renownCapacity }
+            val capacity = try { PersonPolicyState.read(me.meta)?.renownCapacity }
                 catch (_: IllegalArgumentException) { null }
                 ?: return fail(type, c.generalId, "주인의 명망 상한을 확인할 수 없습니다.")
             if ((ready.freeRenownByOwner[me.id] ?: capacity) < ready.actorCardCost)
@@ -148,11 +148,11 @@ class RetainerHandler(
     }
 
     /** Deployment metadata is authority, not a hint; corrupt rows must not look undeployed. */
-    private fun deploymentEditDeny(blocks: (opensamguk.logic.input.HwihaDeployedCorps) -> Boolean): String? {
+    private fun deploymentEditDeny(blocks: (opensamguk.logic.input.DeployedCorps) -> Boolean): String? {
         if (world.ruleProfile != opensamguk.logic.input.RuleProfile.HWIHA) return null
         val corps = try {
             world.listGenerals().flatMap { owner ->
-                opensamguk.logic.input.HwihaDeploymentState.read(owner.meta)?.corps.orEmpty().also { rows ->
+                opensamguk.logic.input.DeploymentState.read(owner.meta)?.corps.orEmpty().also { rows ->
                     require(rows.all { it.ownerGeneralId == owner.id })
                 }
             }.also { rows ->

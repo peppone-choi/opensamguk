@@ -56,7 +56,7 @@ class HwihaDomesticTurn(
         val meta = world.getGeneralById(generalId)?.meta ?: return null
         val placed = try { PlacementState.read(meta)?.active?.order } catch (_: IllegalArgumentException) { null }
         if (placed?.post == PlacementPost.MAGISTRATE) return (placed.target as PlacementTarget.County).countyId
-        return try { HwihaCountyAssignment.read(meta)?.countyId } catch (_: IllegalArgumentException) { null }
+        return try { CountyAssignment.read(meta)?.countyId } catch (_: IllegalArgumentException) { null }
     }
 
     private fun activatePlacement(generalId: Int) {
@@ -126,7 +126,7 @@ class HwihaDomesticTurn(
         if (changed) HwihaReactionInventory(world, recorder).rebuild()
     }
 
-    private fun activateCountyPolicy(countyId: Int, now: HwihaPhase) {
+    private fun activateCountyPolicy(countyId: Int, now: Phase) {
         val city = world.getCityById(countyId) ?: return
         val current = try { CountyPolicyState.read(city.meta) } catch (_: IllegalArgumentException) { return } ?: return
         if (current.slot.pending == null) return

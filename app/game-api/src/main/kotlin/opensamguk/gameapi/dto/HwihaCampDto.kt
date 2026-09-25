@@ -132,7 +132,7 @@ data class HwihaRetinueResponse(
     val units: List<RetinueBugokDto> = emptyList(),
 )
 
-/** 「지난 순」 기록 한 줄. [kind] 는 `HwihaRecordKind`, [refs] 는 종류마다 다른 식별자 묶음이다. */
+/** 「지난 순」 기록 한 줄. [kind] 는 `RecordKind`, [refs] 는 종류마다 다른 식별자 묶음이다. */
 data class HwihaRecordEntryDto(val kind: String, val text: String, val refs: Map<String, Any?>)
 
 /** 지난 순 하나(연·월·순). 기록이 없던 순도 빈 [entries] 로 싣는다 — 명령 목록 12순과 같은 칸 수다. */

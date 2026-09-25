@@ -1050,7 +1050,7 @@ open class JdbcFlushExecutor(
             require(row.initialTurns.size <= 12) { "HWIHA initial reservations exceed twelve phases" }
             val actorId = (row.columns["id"] as Number).toInt()
             require(row.initialTurns.all { it.actionCode == "action.enlist" &&
-                opensamguk.logic.input.HwihaEnlistmentInput.parse(actorId, it.argJson) != null }) {
+                opensamguk.logic.input.EnlistmentInput.parse(actorId, it.argJson) != null }) {
                 "unsupported HWIHA initial reservation"
             }
         }
@@ -3339,7 +3339,7 @@ data class KvWrite(val table: String, val namespace: String, val key: String, va
  * (`log_scope`/`log_category`); they bind through a `CAST(... AS log_scope)` in the INSERT.
  * `year`/`month`/`phase` come from world state (the engine `LogEntryDraft` does not carry them; they are
  * stamped at finalize). `meta` is encoded jsonb via [MetaJson] (insertion-order, PHP-faithful).
- * `eventKind` is the HWIHA record kind (`log_entry.event_kind`, V60; vocabulary in `HwihaRecordKind`) — null for
+ * `eventKind` is the HWIHA record kind (`log_entry.event_kind`, V60; vocabulary in `RecordKind`) — null for
  * every legacy writer.
  */
 data class LogRow(

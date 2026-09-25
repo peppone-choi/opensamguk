@@ -23,7 +23,7 @@ object ScoutInputCodec {
     fun parse(actorId: Int, rawJson: String?): ScoutInput? {
         if (actorId <= 0 || rawJson == null) return null
         return try {
-            val fields = HwihaFlatArguments(rawJson).read()
+            val fields = FlatArguments(rawJson).read()
             if (fields.keys != setOf("commanderyId")) return null
             val id = fields["commanderyId"] as? JsonPrimitive ?: return null
             if (!id.isString || id.content.isBlank() || id.content.length > 128) return null
@@ -86,7 +86,7 @@ data class ScoutedCorps(
 
 data class ScoutReport(
     val commanderyId: String,
-    val seenAt: HwihaPhase,
+    val seenAt: Phase,
     val cities: List<ScoutedCity>,
     val corps: List<ScoutedCorps>,
 ) {
@@ -141,7 +141,7 @@ data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutRep
                 require(row.keys == setOf("commanderyId", "seenAt", "cities", "corps"))
                 ScoutReport(
                     row["commanderyId"] as? String ?: invalid(),
-                    HwihaPhase.read(row["seenAt"]),
+                    Phase.read(row["seenAt"]),
                     (row["cities"] as? List<*> ?: invalid()).map { item ->
                         val city = item as? Map<*, *> ?: invalid()
                         require(city.keys == setOf("cityId", "nationId", "warehouse"))
@@ -176,7 +176,7 @@ object ScoutCapture {
 
     /**
      * Snapshot of [target] now. Corps positions come from the commander's authoritative position; corps whose
-     * relationships no longer hold (see [HwihaDeploymentRules.assessActive]) are not reported as seen.
+     * relationships no longer hold (see [DeploymentRules.assessActive]) are not reported as seen.
      */
     fun capture(
         target: HanCommandery,
@@ -184,7 +184,7 @@ object ScoutCapture {
         cities: List<ScoutCityFact>,
         projection: DeploymentProjection,
         rules: VisionRules.Rules,
-        now: HwihaPhase,
+        now: Phase,
     ): ScoutReport {
         val seenCities = cities.filter { index.commanderyOf(it.provinceId) == target.no }
             .map { ScoutedCity(it.cityId, it.nationId, it.warehouse) }.sortedBy { it.cityId }
@@ -192,7 +192,7 @@ object ScoutCapture {
         val seenCorps = projection.deployed.mapNotNull { corps ->
             val node = nodes[corps.commanderGeneralId] as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (index.commanderyOf(node.id) != target.no) return@mapNotNull null
-            if (HwihaDeploymentRules.assessActive(corps, projection) !is DeploymentAssessment.Eligible) return@mapNotNull null
+            if (DeploymentRules.assessActive(corps, projection) !is DeploymentAssessment.Eligible) return@mapNotNull null
             ScoutedCorps(corpsKey(corps.orderId), corps.ownerGeneralId, corps.commanderGeneralId, corps.nationId, node.id,
                 rules.band(CorpsTroops.of(corps, projection)).code)
         }.sortedBy { it.corpsKey }
@@ -202,6 +202,6 @@ object ScoutCapture {
 
 object CorpsTroops {
     /** Live troops of a corps: the sum of its unit cards' current troops (never copied into the deployment). */
-    fun of(corps: HwihaDeployedCorps, projection: DeploymentProjection): Int =
+    fun of(corps: DeployedCorps, projection: DeploymentProjection): Int =
         corps.bugokIds.sumOf { id -> projection.units.singleOrNull { it.id == id }?.troops?.coerceAtLeast(0) ?: 0 }
 }

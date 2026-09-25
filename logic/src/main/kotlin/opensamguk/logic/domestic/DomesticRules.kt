@@ -6,14 +6,14 @@ import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.input.DispatchStatus
 import opensamguk.logic.domestic.CommanderyPolicies
 import opensamguk.logic.domestic.CorpsPolicyAssignments
-import opensamguk.logic.input.HwihaCountyAssignment
+import opensamguk.logic.input.CountyAssignment
 import opensamguk.logic.domestic.CountyPolicyState
 import opensamguk.logic.domestic.CountyWorks
-import opensamguk.logic.input.HwihaDeployedCorps
-import opensamguk.logic.input.HwihaDeploymentState
-import opensamguk.logic.input.HwihaDispatchState
-import opensamguk.logic.input.HwihaLordStatus
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.DeployedCorps
+import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.input.DispatchState
+import opensamguk.logic.input.LordStatus
+import opensamguk.logic.input.Phase
 import opensamguk.logic.domestic.PlacementOrder
 import opensamguk.logic.domestic.PlacementState
 import opensamguk.logic.domestic.PolicySlot
@@ -70,7 +70,7 @@ data class DomesticDiplomacy(val fromNationId: Int, val toNationId: Int, val sta
 /** API 와 엔진이 같은 규칙을 쓰도록 공유하는 투영. [landProvinceIds] 가 null 이면 지도 핀을 확인하지 못한 것이다. */
 data class DomesticProjection(
     val profile: RuleProfile,
-    val now: HwihaPhase,
+    val now: Phase,
     val people: List<DomesticPerson>,
     val cards: List<DomesticCard>,
     val counties: List<DomesticCounty>,
@@ -242,13 +242,13 @@ object DomesticRules {
     fun rulerOf(nationId: Int, state: DomesticProjection): DomesticPerson? {
         if (nationId <= 0) return null
         return state.people.filter { it.nationId == nationId && it.officerLevel == 12 }.singleOrNull()
-            ?.takeIf { HwihaLordStatus.read(it.meta) }
+            ?.takeIf { LordStatus.read(it.meta) }
     }
 
     /** 縣 방침·공사를 정할 수 있는 현령 자리 주인들(군주 제외): 발령된 사람 장수 본인, 현행 배치 카드의 주인. */
     fun countyControllers(county: DomesticCounty, state: DomesticProjection): Set<Int> = buildSet {
         for (person in state.people.sortedBy { it.id }) {
-            val assignment = HwihaCountyAssignment.read(person.meta)
+            val assignment = CountyAssignment.read(person.meta)
             if (assignment != null && assignment.countyId == county.id && assignment.nationId == county.nationId &&
                 person.nationId == county.nationId) add(person.id)
             val active = PlacementState.read(person.meta)?.active
@@ -272,7 +272,7 @@ object DomesticRules {
                 active.order.target == PlacementTarget.County(county.id) &&
                 assessPlacementOrder(person.id, active.order, state) is DomesticAssessment.Eligible)
                 return@mapNotNull SeatedMagistrate(person.id, active.order.ownerGeneralId, true, active.order.retainerId)
-            val assignment = HwihaCountyAssignment.read(person.meta)
+            val assignment = CountyAssignment.read(person.meta)
             if (assignment != null && person.userOwned && assignment.countyId == county.id && assignment.nationId == county.nationId)
                 return@mapNotNull SeatedMagistrate(person.id, person.id, false, null)
             null
@@ -300,8 +300,8 @@ object DomesticRules {
         val county = state.county(countyId) ?: return true
         return state.people.filter { it.id != exceptPersonId }.any { person ->
             val placement = PlacementState.read(person.meta)
-            val assignment = HwihaCountyAssignment.read(person.meta)
-            val dispatch = HwihaDispatchState.read(person.meta)
+            val assignment = CountyAssignment.read(person.meta)
+            val dispatch = DispatchState.read(person.meta)
             (placement?.claimsMagistracy(countyId) == true && person.nationId == county.nationId) ||
                 (assignment?.countyId == countyId && assignment.nationId == person.nationId && assignment.nationId == county.nationId) ||
                 (dispatch?.countyId == countyId && dispatch.status == DispatchStatus.PENDING && dispatch.nationId == person.nationId &&
@@ -310,8 +310,8 @@ object DomesticRules {
     }
 
     /** 사람 장수 meta 의 출전 기록. 오염되면 예외(호출자가 STATE_UNAVAILABLE 로 바꾼다). */
-    fun deployedCorps(state: DomesticProjection): List<HwihaDeployedCorps> = state.people.sortedBy { it.id }.flatMap { person ->
-        HwihaDeploymentState.read(person.meta)?.corps.orEmpty().also { rows -> require(rows.all { it.ownerGeneralId == person.id }) }
+    fun deployedCorps(state: DomesticProjection): List<DeployedCorps> = state.people.sortedBy { it.id }.flatMap { person ->
+        DeploymentState.read(person.meta)?.corps.orEmpty().also { rows -> require(rows.all { it.ownerGeneralId == person.id }) }
     }
 
     private fun cardRelation(actorId: Int, cardId: Int, state: DomesticProjection): DomesticAssessment {
@@ -331,7 +331,7 @@ object DomesticRules {
 
     private fun targetCheck(owner: DomesticPerson, post: PlacementPost, target: PlacementTarget, person: DomesticPerson,
         card: DomesticCard, state: DomesticProjection, requireLord: Boolean = true): DomesticAssessment? {
-        val lord = !requireLord || (owner.nationId > 0 && HwihaLordStatus.read(owner.meta))
+        val lord = !requireLord || (owner.nationId > 0 && LordStatus.read(owner.meta))
         return when (post) {
             PlacementPost.MAGISTRATE -> {
                 if (!lord) return reject(DomesticFailure.NOT_LORD)

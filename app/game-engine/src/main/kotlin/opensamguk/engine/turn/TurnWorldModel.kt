@@ -162,7 +162,7 @@ data class Bugok(
 )
 
 /**
- * HWIHA 縣城 포위(V61 `hwiha_siege`). 縣治 城 id 가 키다. 규칙·판정은 `opensamguk.logic.war.hwiha.HwihaSiegeRules`,
+ * HWIHA 縣城 포위(V61 `hwiha_siege`). 縣治 城 id 가 키다. 규칙·판정은 `opensamguk.logic.war.SiegeRules`,
  * 저장은 world dirty 집합 → JdbcFlushExecutor. [timeline] 은 순마다 한 줄씩 쌓는 조회용 기록이다.
  */
 data class HwihaSiege(
@@ -277,7 +277,7 @@ data class LogEntryDraft(
     val year: Int? = null,
     val month: Int? = null,
     val phase: Int? = null,
-    /** HWIHA record kind (`log_entry.event_kind`; vocabulary in `HwihaRecordKind`). Null for legacy logs. */
+    /** HWIHA record kind (`log_entry.event_kind`; vocabulary in `RecordKind`). Null for legacy logs. */
     val eventKind: String? = null,
 )
 

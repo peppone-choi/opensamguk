@@ -14,7 +14,7 @@ data class VisionSource(val kind: VisionSourceKind, val commanderyNo: Int, val r
     init { require(commanderyNo >= 0 && radius >= 0) }
 }
 
-data class VisionEntry(val no: Int, val tier: VisionTier, val seenAt: HwihaPhase?, val ageTurns: Int?) {
+data class VisionEntry(val no: Int, val tier: VisionTier, val seenAt: Phase?, val ageTurns: Int?) {
     init {
         require((tier == VisionTier.INTEL) == (seenAt != null) && (seenAt == null) == (ageTurns == null)) {
             "Only INTEL carries a sighting stamp"
@@ -23,7 +23,7 @@ data class VisionEntry(val no: Int, val tier: VisionTier, val seenAt: HwihaPhase
     }
 }
 
-class VisionView(val now: HwihaPhase, val entries: List<VisionEntry>, val sources: List<VisionSource>,
+class VisionView(val now: Phase, val entries: List<VisionEntry>, val sources: List<VisionSource>,
     val reports: ScoutReports?) {
     init { require(entries.withIndex().all { (index, it) -> it.no == index }) }
     fun tierOf(no: Int): VisionTier = entries.getOrNull(no)?.tier ?: VisionTier.FOG
@@ -82,7 +82,7 @@ object Vision {
      * FULL = within a source's radius. INTEL = not FULL but scouted (snapshot stamp and age). FOG = neither.
      * Reports bound to other tiles are ignored — they cannot name a commandery of this map.
      */
-    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules, now: HwihaPhase): VisionView {
+    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules, now: Phase): VisionView {
         val sources = sources(viewer, index, rules)
         val full = sortedSetOf<Int>()
         sources.forEach { full += index.within(it.commanderyNo, it.radius) }
@@ -101,13 +101,13 @@ object Vision {
     }
 
     /** Whole 旬 between two stamps (36 per year). */
-    fun ageTurns(seenAt: HwihaPhase, now: HwihaPhase): Int {
+    fun ageTurns(seenAt: Phase, now: Phase): Int {
         val diff = ordinal(now) - ordinal(seenAt)
         require(diff >= 0) { "A sighting cannot be in the future" }
         return Math.toIntExact(diff)
     }
 
-    private fun ordinal(phase: HwihaPhase): Long = phase.year.toLong() * 36 + (phase.month - 1) * 3 + phase.phase - 1
+    private fun ordinal(phase: Phase): Long = phase.year.toLong() * 36 + (phase.month - 1) * 3 + phase.phase - 1
 }
 
 /** A corps as a given viewer may see it. Fields that the viewer is not entitled to are null, never zeroed. */
@@ -127,7 +127,7 @@ data class CorpsSighting(
     /** Band code — other corps only. */
     val troopsBand: String?,
     /** INTEL only: when the scouting snapshot was taken. */
-    val seenAt: HwihaPhase?,
+    val seenAt: Phase?,
     val ageTurns: Int?,
 ) {
     init {
@@ -154,7 +154,7 @@ object CorpsVisibility {
             if (!own) {
                 if (view.tierOf(no) != VisionTier.FULL) return@mapNotNull null
                 // A stale or broken relationship is not a standing army on the map.
-                if (HwihaDeploymentRules.assessActive(corps, projection) !is DeploymentAssessment.Eligible) return@mapNotNull null
+                if (DeploymentRules.assessActive(corps, projection) !is DeploymentAssessment.Eligible) return@mapNotNull null
             }
             val troops = CorpsTroops.of(corps, projection)
             CorpsSighting(ScoutCapture.corpsKey(corps.orderId), corps.orderId.takeIf { own }, corps.ownerGeneralId,

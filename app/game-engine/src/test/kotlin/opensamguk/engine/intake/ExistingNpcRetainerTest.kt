@@ -8,7 +8,7 @@ import opensamguk.engine.retainer.RetainerMonthlyService
 import opensamguk.engine.hwiha.HwihaCampaignWorldFixture
 import opensamguk.engine.turn.*
 import opensamguk.logic.retainer.RetainerRules
-import opensamguk.logic.input.HwihaPersonPolicyState
+import opensamguk.logic.input.PersonPolicyState
 import java.time.Instant
 import kotlin.test.*
 
@@ -35,8 +35,8 @@ class ExistingNpcRetainerTest {
         val fixture = HwihaCampaignWorldFixture()
         val route = fixture.route()
         val owner = fixture.person(10, 1, route.startCity, lord = false).copy(npcState = 0, gold = 5000,
-            meta = mapOf("hwihaLord" to false, HwihaPersonPolicyState.META_KEY to
-                HwihaPersonPolicyState(capacity, true, "verified-fixture", "1", 10).toMetaValue()))
+            meta = mapOf("hwihaLord" to false, PersonPolicyState.META_KEY to
+                PersonPolicyState(capacity, true, "verified-fixture", "1", 10).toMetaValue()))
         val target = fixture.person(20, 0, route.startCity, lord = false).copy(gold = 5000,
             stats = GeneralStats(80, 70, 60, 50, 50))
         return fixture.world(listOf(owner to route.first, target to route.first))

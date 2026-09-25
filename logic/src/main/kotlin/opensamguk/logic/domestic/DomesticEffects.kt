@@ -5,7 +5,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.ActiveWork
 import opensamguk.logic.domestic.CompletedWork
 import opensamguk.logic.domestic.CountyIndicators
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.Phase
 
 /** 縣治 城의 지표와 상한. 민심은 기존 저장 꼴(실수 0..100)을 그대로 쓴다. */
 data class CountyLevels(
@@ -96,13 +96,13 @@ object DomesticEffects {
         return PolicyOutcome(next, credit, debit)
     }
 
-    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): ActiveWork {
+    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: Phase): ActiveWork {
         val spec = design.works.getValue(work)
         return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, Resources(), null, null)
     }
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
-    fun progressWork(design: DomesticDesign, work: ActiveWork, now: HwihaPhase, stock: Resources,
+    fun progressWork(design: DomesticDesign, work: ActiveWork, now: Phase, stock: Resources,
         levels: CountyLevels, seat: SeatStats?): WorkStep {
         val speed = design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000
         val next = minOf(work.required.toLong(), work.progress + maxOf(1L, speed)).toInt()

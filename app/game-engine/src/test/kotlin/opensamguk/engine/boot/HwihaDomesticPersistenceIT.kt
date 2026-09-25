@@ -74,11 +74,11 @@ class HwihaDomesticPersistenceIT {
             VALUES (?,11,?,?,'LAND_PROVINCE',?,1)""", id, topology.topologyRevision, topology.topologyHash, node)
         jdbc.update("""INSERT INTO general_retainers(world_id,id,master_general_id,origin,general_id,name,relation,has_own_bugok,release_policy)
             VALUES (?,5,10,'EXISTING',11,'G11','staff',false,'MUTUAL')""", id)
-        val corps = HwihaDeploymentState(listOf(HwihaDeployedCorps("o1", 10, 11, 5, 1, listOf(7), HwihaPhase(200, 1, 1))))
+        val corps = DeploymentState(listOf(DeployedCorps("o1", 10, 11, 5, 1, listOf(7), Phase(200, 1, 1))))
         jdbc.update("UPDATE general SET meta = meta || ?::jsonb WHERE world_id=? AND id=10",
-            MetaJson.encode(mapOf(HwihaDeploymentState.META_KEY to corps.toMetaValue())), id)
+            MetaJson.encode(mapOf(DeploymentState.META_KEY to corps.toMetaValue())), id)
         jdbc.update("UPDATE world_state SET meta = meta || ?::jsonb WHERE id=?",
-            MetaJson.encode(mapOf(HwihaMarchReactions.META_KEY to HwihaMarchReactions.Empty.toMetaValue())), id)
+            MetaJson.encode(mapOf(MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())), id)
         world = cold(id)
 
         val context = HwihaDomesticContext()
@@ -101,7 +101,7 @@ class HwihaDomesticPersistenceIT {
         HwihaDomesticTurn(world, recorder, context).beforeMovement(11)
         save(world, recorder)
         world = cold(id)
-        assertEquals(listOf("o1"), assertIs<HwihaMarchReactions.Inventory>(HwihaMarchReactions.read(world.getState().meta))
+        assertEquals(listOf("o1"), assertIs<MarchReactions.Inventory>(MarchReactions.read(world.getState().meta))
             .interceptions.map { it.orderId })
 
         // Next phase boundary: the work advances once, pays its installment, and the stamp blocks a replay after reload.

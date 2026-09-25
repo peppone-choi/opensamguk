@@ -63,12 +63,12 @@ internal object PassChainSupport {
         val capital = scenario.nations.first().cities.first().toInt()
         val projection = HanWorldArtifactsResolver(root).resolve(cities.map { it.id }, emptyList()).projection
         val province = requireNotNull(projection.bindingsByCityId[capital]?.landProvinceId)
-        val policy = HwihaPersonPolicyState(30, false, "synthetic-qa:yuzhou-player", "v1", 900).toMetaValue()
+        val policy = PersonPolicyState(30, false, "synthetic-qa:yuzhou-player", "v1", 900).toMetaValue()
         jdbc.update("""INSERT INTO general(world_id,id,name,user_id,nation_id,city_id,npc_state,officer_level,gold,rice,crew,
             leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
             VALUES (?,?,'플레이어',?,0,?,0,0,0,0,0,60,60,60,60,60,?,'{"command":"휴식"}'::jsonb,?::jsonb)""",
             world, HUMAN, HUMAN_USER.toString(), capital, java.sql.Timestamp.from(START.plusSeconds(30)),
-            MetaJson.encode(mapOf(HwihaLordStatus.META_KEY to false, HwihaPersonPolicyState.META_KEY to policy)))
+            MetaJson.encode(mapOf(LordStatus.META_KEY to false, PersonPolicyState.META_KEY to policy)))
         // Every general carries its rank_data rows (the importer and the flush insert them with the general);
         // a hand-inserted player without them breaks the first rank write of a battle.
         jdbc.update("""INSERT INTO rank_data (world_id, nation_id, general_id, type, value)
@@ -91,7 +91,7 @@ internal object PassChainSupport {
         jdbc.update("UPDATE general SET turn_time = turn_time - make_interval(secs => ?) WHERE world_id=?",
             drift.seconds.toDouble(), world)
         opensamguk.infra.persistence.ReservedTurnRepository(named).reserve(WorldId(world), HUMAN, 0, "action.enlist",
-            HwihaEnlistmentInput.canonicalJson(EnlistmentRequest(HUMAN, EnlistmentMode.NATION, 1)), requestId = requestId)
+            EnlistmentInput.canonicalJson(EnlistmentRequest(HUMAN, EnlistmentMode.NATION, 1)), requestId = requestId)
     }
 
     /** One tick per phase, so each personal turn and each world boundary runs exactly once. */
@@ -105,8 +105,8 @@ internal object PassChainSupport {
             val meta = world.getState().meta
             val links = linkedMapOf(
                 "enlist" to ((human?.nationId ?: 0) > 0),
-                "dispatch" to (human?.meta?.containsKey(HwihaCountyAssignment.META_KEY) == true),
-                "march" to (world.listGenerals().any { HwihaCorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } || sieges.isNotEmpty()),
+                "dispatch" to (human?.meta?.containsKey(CountyAssignment.META_KEY) == true),
+                "march" to (world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } || sieges.isNotEmpty()),
                 "encounter" to world.listGenerals().any { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta },
                 "siege" to sieges.isNotEmpty(),
                 "capture" to sieges.any { it.status == HwihaSiegeService.FALLEN },
@@ -127,9 +127,9 @@ internal object PassChainSupport {
         assertTrue(human.nationId > 0, "출사: the player joined a lord's nation")
         assertTrue(world.listRetainers().any { it.generalId == HUMAN }, "출사: the player is a lord's person card")
         // 발령 (the NPC lord issues it; an unanswered dispatch is accepted at its deadline)
-        assertTrue(HwihaCountyAssignment.META_KEY in human.meta, "발령: the player holds an accepted county assignment")
+        assertTrue(CountyAssignment.META_KEY in human.meta, "발령: the player holds an accepted county assignment")
         // 행군
-        assertTrue(world.listGenerals().any { HwihaCorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } ||
+        assertTrue(world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } ||
             world.listHwihaSieges().isNotEmpty(), "행군: an NPC corps marched")
         // 조우
         assertTrue(world.listGenerals().any { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }, "조우: a sealed encounter was resolved")

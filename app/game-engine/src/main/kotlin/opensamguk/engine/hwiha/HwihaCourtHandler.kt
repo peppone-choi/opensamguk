@@ -19,7 +19,7 @@ class HwihaCourtHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val domesticContext: HwihaDomesticContext = HwihaDomesticContext(),
-    private val catalog: HwihaInputCatalog = HwihaInputCatalog.load(),
+    private val catalog: InputCatalog = InputCatalog.load(),
 ) {
     private val executor = HwihaDispatchExecutor(world, recorder)
     private val domestic by lazy { HwihaDomesticHandler(world, recorder, domesticContext) }
@@ -32,7 +32,7 @@ class HwihaCourtHandler(
         val channelHandlers = mutableMapOf<String, InputHandler>(
             "action.enlist" to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "출사는 개인 행동 예약으로 입력해야 합니다.") },
-            HwihaDeployInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
+            DeployInputs.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "본인 출병은 개인 행동 예약으로 입력해야 합니다.") },
             ScoutInputCodec.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "첩보는 개인 행동 예약으로 입력해야 합니다.") },
@@ -42,8 +42,8 @@ class HwihaCourtHandler(
                 "INVALID_INPUT_CHANNEL", "항복 권고는 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
-            HwihaRewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
-            HwihaPoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
+            RewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },
+            PoliticalConsent.COURT_INPUT_ID to InputHandler { outcome = handleKnown(command) },
             // Standing inputs share this immediate channel: they never occupy a 12-phase slot (§5.1).
             DomesticInput.PLACEMENT to InputHandler { outcome = domestic.handle(command) },
             DomesticInput.POLICY to InputHandler { outcome = domestic.handle(command) },
@@ -51,16 +51,16 @@ class HwihaCourtHandler(
         )
         if (catalog[DomesticInput.REDUCE]?.deliveryState?.hasHandler == true)
             channelHandlers[DomesticInput.REDUCE] = InputHandler { outcome = domestic.handle(command) }
-        for (travelId in HwihaTravelInput.INPUT_IDS) {
+        for (travelId in TravelInput.INPUT_IDS) {
             channelHandlers[travelId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "직접 이동은 개인 행동 예약으로 입력해야 합니다.") }
         }
-        for (legacyId in HwihaLegacyCourtInput.INPUT_IDS) {
+        for (legacyId in CourtInput.INPUT_IDS) {
             if (catalog[legacyId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[legacyId] = InputHandler { outcome = handleKnown(command) }
             }
         }
-        for (stratagemId in HwihaLegacyStratagemInput.INPUT_IDS) {
+        for (stratagemId in StratagemInput.INPUT_IDS) {
             if (catalog[stratagemId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[stratagemId] = InputHandler { outcome = handleKnown(command) }
             }
@@ -69,19 +69,19 @@ class HwihaCourtHandler(
             channelHandlers[fieldId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
         }
-        for (militaryId in HwihaMilitaryInput.INPUT_IDS) {
+        for (militaryId in MilitaryInput.INPUT_IDS) {
             if (catalog[militaryId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[militaryId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                     "INVALID_INPUT_CHANNEL", "직접 군사 행동은 개인 행동 예약으로 입력해야 합니다.") }
             }
         }
-        for (personalId in HwihaPersonalInput.FIELD_IDS) {
+        for (personalId in PersonalInput.FIELD_IDS) {
             if (catalog[personalId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[personalId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                     "INVALID_INPUT_CHANNEL", "개인 현장 행동은 개인 행동 예약으로 입력해야 합니다.") }
             }
         }
-        for (peopleId in HwihaPeopleInput.INPUT_IDS) {
+        for (peopleId in PeopleInput.INPUT_IDS) {
             if (catalog[peopleId]?.deliveryState?.hasHandler == true) {
                 channelHandlers[peopleId] = InputHandler { outcome = result(command.generalId, command.inputId, false,
                     "INVALID_INPUT_CHANNEL", "인물 직접 행동은 개인 행동 예약으로 입력해야 합니다.") }
@@ -95,7 +95,7 @@ class HwihaCourtHandler(
                     "INVALID_INPUT_CHANNEL", "직접 행동은 개인 행동 예약으로 입력해야 합니다.")
             })
         }
-        val registry = HwihaInputRegistry(catalog, channelHandlers)
+        val registry = InputRegistry(catalog, channelHandlers)
         return when (val resolution = registry.resolve(world.ruleProfile, command.inputId)) {
             is InputResolution.Rejected -> result(command.generalId, command.inputId, false,
                 resolution.reason.name, resolution.reason.message)
@@ -112,73 +112,73 @@ class HwihaCourtHandler(
             return deny("FORBIDDEN", "자신의 장수만 조작할 수 있습니다.")
         return when (command.inputId) {
             "court.dispatch" -> {
-                val request = HwihaDispatchInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "발령 대상과 목적지를 확인해 주세요.")
-                val existing = try { HwihaQueuedDispatch.read(actor.meta) } catch (_: IllegalArgumentException) {
+                val request = DispatchInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "발령 대상과 목적지를 확인해 주세요.")
+                val existing = try { QueuedDispatch.read(actor.meta) } catch (_: IllegalArgumentException) {
                     return deny("STATE_UNAVAILABLE", "저장된 발령 대기 상태를 확인할 수 없습니다.")
                 }
                 if (existing != null) return deny("ALREADY_QUEUED", "다음 턴에 실행할 발령이 이미 있습니다.")
                 val assessment = executor.assess(request)
                 if (assessment is DispatchAssessment.Rejected) return deny(assessment.reason.name, assessment.reason.message)
-                val queued = HwihaQueuedDispatch(command.requestId, command.ownerUserId, request.targetGeneralId, request.countyId)
-                updateMeta(actor, actor.meta + (HwihaQueuedDispatch.META_KEY to queued.toMetaValue()))
+                val queued = QueuedDispatch(command.requestId, command.ownerUserId, request.targetGeneralId, request.countyId)
+                updateMeta(actor, actor.meta + (QueuedDispatch.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
             "court.dispatchReply" -> {
-                val request = HwihaDispatchReplyInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "발령 응답을 확인해 주세요.")
+                val request = DispatchReplyInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "발령 응답을 확인해 주세요.")
                 when (val applied = executor.reply(request)) {
                     is DispatchExecution.Applied -> result(actor.id, command.inputId, true)
                     is DispatchExecution.Rejected -> deny(applied.reason.name, applied.reason.message)
                 }
             }
-            HwihaRewardInput.INPUT_ID -> {
-                val request = HwihaRewardInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "상사할 카드와 금을 확인해 주세요.")
-                val existing = try { HwihaQueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) {
+            RewardInput.INPUT_ID -> {
+                val request = RewardInput.parse(actor.id, command.argJson) ?: return deny("INVALID_REQUEST", "상사할 카드와 금을 확인해 주세요.")
+                val existing = try { QueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) {
                     return deny("STATE_UNAVAILABLE", "저장된 상사 대기 상태를 확인할 수 없습니다.")
                 }
                 if (existing != null) return deny("ALREADY_QUEUED", "다음 턴에 실행할 상사가 이미 있습니다.")
                 if (world.getRetainerById(request.retainerId)?.takeIf { it.masterGeneralId == actor.id && it.generalId != null } == null)
                     return deny(HwihaRewardExecutor.Failure.CARD_UNAVAILABLE.name, HwihaRewardExecutor.Failure.CARD_UNAVAILABLE.message)
-                val queued = HwihaQueuedReward(command.requestId, command.ownerUserId, request.retainerId, request.money)
-                updateMeta(actor, actor.meta + (HwihaQueuedReward.META_KEY to queued.toMetaValue()))
+                val queued = QueuedReward(command.requestId, command.ownerUserId, request.retainerId, request.money)
+                updateMeta(actor, actor.meta + (QueuedReward.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
-            HwihaPoliticalConsent.COURT_INPUT_ID -> {
-                val consent = HwihaPoliticalConsent.parse(actor.id, command.argJson)
-                    ?: return deny(HwihaPoliticalFailure.INVALID_INPUT.name, HwihaPoliticalFailure.INVALID_INPUT.message)
+            PoliticalConsent.COURT_INPUT_ID -> {
+                val consent = PoliticalConsent.parse(actor.id, command.argJson)
+                    ?: return deny(PoliticalFailure.INVALID_INPUT.name, PoliticalFailure.INVALID_INPUT.message)
                 val state = domesticContext.projection(world)
-                HwihaPoliticalRules.assessConsent(actor.id, consent, state)?.let {
+                PoliticalRules.assessConsent(actor.id, consent, state)?.let {
                     return deny(it.name, it.message)
                 }
-                updateMeta(actor, actor.meta + (HwihaPoliticalConsent.META_KEY to consent.toMetaValue()))
+                updateMeta(actor, actor.meta + (PoliticalConsent.META_KEY to consent.toMetaValue()))
                 result(actor.id, command.inputId, true)
             }
-            in HwihaLegacyCourtInput.INPUT_IDS -> {
-                val json = HwihaLegacyCourtInput.canonical(actor.id, command.inputId, command.argJson)
-                    ?: return deny(HwihaLegacyCourtFailure.INVALID_INPUT.name, HwihaLegacyCourtFailure.INVALID_INPUT.message)
+            in CourtInput.INPUT_IDS -> {
+                val json = CourtInput.canonical(actor.id, command.inputId, command.argJson)
+                    ?: return deny(CourtFailure.INVALID_INPUT.name, CourtFailure.INVALID_INPUT.message)
                 val existing = try { HwihaQueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) {
-                    return deny(HwihaLegacyCourtFailure.STATE_UNAVAILABLE.name, HwihaLegacyCourtFailure.STATE_UNAVAILABLE.message)
+                    return deny(CourtFailure.STATE_UNAVAILABLE.name, CourtFailure.STATE_UNAVAILABLE.message)
                 }
-                if (existing != null) return deny(HwihaLegacyCourtFailure.ALREADY_QUEUED.name,
-                    HwihaLegacyCourtFailure.ALREADY_QUEUED.message)
+                if (existing != null) return deny(CourtFailure.ALREADY_QUEUED.name,
+                    CourtFailure.ALREADY_QUEUED.message)
                 val assessment = legacy.assess(actor.id, command.inputId, json)
-                if (assessment is HwihaLegacyCourtAssessment.Rejected) return deny(assessment.reason.name, assessment.reason.message)
+                if (assessment is CourtAssessment.Rejected) return deny(assessment.reason.name, assessment.reason.message)
                 val queued = HwihaQueuedLegacyCourt(command.requestId, command.ownerUserId, command.inputId, json)
                 updateMeta(actor, actor.meta + (HwihaQueuedLegacyCourt.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
-            in HwihaLegacyStratagemInput.INPUT_IDS -> {
-                val request = HwihaLegacyStratagemInput.parse(actor.id, command.inputId, command.argJson)
-                    ?: return deny(HwihaLegacyStratagemFailure.INVALID_INPUT.name, HwihaLegacyStratagemFailure.INVALID_INPUT.message)
+            in StratagemInput.INPUT_IDS -> {
+                val request = StratagemInput.parse(actor.id, command.inputId, command.argJson)
+                    ?: return deny(StratagemFailure.INVALID_INPUT.name, StratagemFailure.INVALID_INPUT.message)
                 val existing = try { HwihaQueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) {
-                    return deny(HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.name, HwihaLegacyStratagemFailure.STATE_UNAVAILABLE.message)
+                    return deny(StratagemFailure.STATE_UNAVAILABLE.name, StratagemFailure.STATE_UNAVAILABLE.message)
                 }
-                if (existing != null) return deny(HwihaLegacyStratagemFailure.ALREADY_QUEUED.name,
-                    HwihaLegacyStratagemFailure.ALREADY_QUEUED.message)
+                if (existing != null) return deny(StratagemFailure.ALREADY_QUEUED.name,
+                    StratagemFailure.ALREADY_QUEUED.message)
                 val assessment = stratagem.assess(request)
-                if (assessment is HwihaLegacyStratagemAssessment.Rejected)
+                if (assessment is StratagemAssessment.Rejected)
                     return deny(assessment.reason.name, assessment.reason.message)
                 val queued = HwihaQueuedLegacyStratagem(command.requestId, command.ownerUserId, command.inputId,
-                    HwihaLegacyStratagemInput.canonicalJson(request))
+                    StratagemInput.canonicalJson(request))
                 updateMeta(actor, actor.meta + (HwihaQueuedLegacyStratagem.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
@@ -193,11 +193,11 @@ class HwihaCourtHandler(
         runQueuedLegacy(generalId)
         runQueuedStratagem(generalId)
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { HwihaQueuedDispatch.read(actor.meta) } catch (_: IllegalArgumentException) {
-            discardMalformedQueue(actor, HwihaQueuedDispatch.META_KEY, "court.dispatch")
+        val queued = try { QueuedDispatch.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, QueuedDispatch.META_KEY, "court.dispatch")
             return
         }
-        if (queued != null && rejectUndeliveredQueue(actor, HwihaQueuedDispatch.META_KEY,
+        if (queued != null && rejectUndeliveredQueue(actor, QueuedDispatch.META_KEY,
                 "court.dispatch", queued.requestId, queued.ownerUserId)) return
         if (queued == null) {
             HwihaNpcDispatchSelector.select(world, generalId, executor)?.let { request ->
@@ -216,27 +216,27 @@ class HwihaCourtHandler(
         }
         // The issue can update another general; remove only this issuer's queue from its current metadata.
         val current = world.getGeneralById(generalId)!!
-        updateMeta(current, current.meta - HwihaQueuedDispatch.META_KEY)
+        updateMeta(current, current.meta - QueuedDispatch.META_KEY)
         executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, result)
     }
 
     /** 상사 대기는 발령 대기와 독립이다 — 결정권자의 턴에 한 건 실행하고 결과를 같은 flush 에 싣는다. */
     private fun runQueuedReward(generalId: Int) {
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { HwihaQueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) {
-            discardMalformedQueue(actor, HwihaQueuedReward.META_KEY, HwihaRewardInput.INPUT_ID)
+        val queued = try { QueuedReward.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, QueuedReward.META_KEY, RewardInput.INPUT_ID)
             return
         } ?: return
-        if (rejectUndeliveredQueue(actor, HwihaQueuedReward.META_KEY, HwihaRewardInput.INPUT_ID,
+        if (rejectUndeliveredQueue(actor, QueuedReward.META_KEY, RewardInput.INPUT_ID,
                 queued.requestId, queued.ownerUserId)) return
         val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
-            result(generalId, HwihaRewardInput.INPUT_ID, false, "FORBIDDEN", "상사 제출 후 장수 소유자가 변경되었습니다.")
+            result(generalId, RewardInput.INPUT_ID, false, "FORBIDDEN", "상사 제출 후 장수 소유자가 변경되었습니다.")
         } else when (val failure = HwihaRewardExecutor(world, recorder).reward(RewardRequest(generalId, queued.retainerId, queued.money))) {
-            null -> result(generalId, HwihaRewardInput.INPUT_ID, true)
-            else -> result(generalId, HwihaRewardInput.INPUT_ID, false, failure.name, failure.message)
+            null -> result(generalId, RewardInput.INPUT_ID, true)
+            else -> result(generalId, RewardInput.INPUT_ID, false, failure.name, failure.message)
         }
         val current = world.getGeneralById(generalId)!!
-        updateMeta(current, current.meta - HwihaQueuedReward.META_KEY)
+        updateMeta(current, current.meta - QueuedReward.META_KEY)
         executions += HwihaCourtExecution(queued.requestId, queued.ownerUserId, result)
     }
 
@@ -269,12 +269,12 @@ class HwihaCourtHandler(
         } ?: return
         if (rejectUndeliveredQueue(actor, HwihaQueuedLegacyStratagem.META_KEY, queued.inputId,
                 queued.requestId, queued.ownerUserId)) return
-        val request = HwihaLegacyStratagemInput.parse(generalId, queued.inputId, queued.argJson)
+        val request = StratagemInput.parse(generalId, queued.inputId, queued.argJson)
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
         } else if (request == null) {
-            result(generalId, queued.inputId, false, HwihaLegacyStratagemFailure.INVALID_INPUT.name,
-                HwihaLegacyStratagemFailure.INVALID_INPUT.message)
+            result(generalId, queued.inputId, false, StratagemFailure.INVALID_INPUT.name,
+                StratagemFailure.INVALID_INPUT.message)
         } else when (val rejected = stratagem.execute(request)) {
             null -> result(generalId, queued.inputId, true)
             else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
@@ -293,7 +293,7 @@ class HwihaCourtHandler(
         val rejection = catalog.rejectionFor(world.ruleProfile, inputId) ?: return false
         val current = world.getGeneralById(actor.id) ?: return true
         updateMeta(current, current.meta - key)
-        HwihaRecords.general(world, actor.id, HwihaRecordKind.INPUT_REJECTED, rejection.message,
+        HwihaRecords.general(world, actor.id, RecordKind.INPUT_REJECTED, rejection.message,
             linkedMapOf("inputId" to inputId, "code" to rejection.name))
         executions += HwihaCourtExecution(requestId, ownerUserId,
             result(actor.id, inputId, false, rejection.name, rejection.message))
@@ -307,7 +307,7 @@ class HwihaCourtHandler(
         val ownerUserId = (raw?.get("ownerUserId") as? Int)?.takeIf { it > 0 }
         val reason = "저장된 대기 입력을 확인할 수 없습니다."
         updateMeta(actor, actor.meta - key)
-        HwihaRecords.general(world, actor.id, HwihaRecordKind.INPUT_REJECTED, reason,
+        HwihaRecords.general(world, actor.id, RecordKind.INPUT_REJECTED, reason,
             linkedMapOf("inputId" to inputId, "code" to "STATE_UNAVAILABLE"))
         if (requestId != null && ownerUserId != null) {
             executions += HwihaCourtExecution(requestId, ownerUserId,

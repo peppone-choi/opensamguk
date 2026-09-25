@@ -3,9 +3,9 @@ package opensamguk.gameapi.read
 import opensamguk.gameapi.web.HwihaSiegeController
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaDeployedCorps
-import opensamguk.logic.input.HwihaDeploymentState
-import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.DeployedCorps
+import opensamguk.logic.input.DeploymentState
+import opensamguk.logic.input.Phase
 import org.mockito.Mockito.*
 import org.springframework.http.HttpStatus
 import java.util.Optional
@@ -22,9 +22,9 @@ class HwihaSiegeReaderTest {
     private val controller = HwihaSiegeController(reader)
     private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"))
 
-    private val corps = HwihaDeployedCorps("order-1", 1, 1, null, 1, listOf(21), HwihaPhase(190, 1, 1))
+    private val corps = DeployedCorps("order-1", 1, 1, null, 1, listOf(21), Phase(190, 1, 1))
     private val besieger = GeneralReadEntity(id = 1, worldId = 1, name = "공격", nationId = 1, userId = "41",
-        meta = mapOf(HwihaDeploymentState.META_KEY to HwihaDeploymentState(listOf(corps)).toMetaValue()))
+        meta = mapOf(DeploymentState.META_KEY to DeploymentState(listOf(corps)).toMetaValue()))
     private val defender = GeneralReadEntity(id = 2, worldId = 1, name = "수비", nationId = 2, userId = "42")
     private val stranger = GeneralReadEntity(id = 3, worldId = 1, name = "제삼", nationId = 3, userId = "43")
     private val row = HwihaSiegeReadRow(77, "ACTIVE", 1, 1, "order-1", 1, 2, 190, 1, 1, turns = 3, morale = 2500,

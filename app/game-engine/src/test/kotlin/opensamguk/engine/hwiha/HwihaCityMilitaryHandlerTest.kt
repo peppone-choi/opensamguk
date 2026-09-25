@@ -4,8 +4,8 @@ import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.input.HwihaCityMilitaryState
-import opensamguk.logic.input.HwihaMilitaryInput
+import opensamguk.logic.input.CityMilitaryState
+import opensamguk.logic.input.MilitaryInput
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
 class HwihaCityMilitaryHandlerTest {
@@ -21,16 +21,16 @@ class HwihaCityMilitaryHandlerTest {
         })
         val handler = HwihaCityMilitaryHandler(world, ChangeRecorder())
         val before = world.getCityById(route.startCity)!!
-        assertEquals(100, HwihaCityMilitaryState.read(before.meta).troops)
-        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(HwihaMilitaryInput.CONSCRIPT,
+        assertEquals(100, CityMilitaryState.read(before.meta).troops)
+        val applied = assertIs<HwihaTurnOutcome.Applied>(handler.handle(MilitaryInput.CONSCRIPT,
             actor.id, "{}", "conscript-711", 42))
         val after = world.getCityById(route.startCity)!!
         assertEquals(950, after.population)
-        assertEquals(150, HwihaCityMilitaryState.read(after.meta).troops)
+        assertEquals(150, CityMilitaryState.read(after.meta).troops)
         assertEquals(before.defence, after.defence)
         assertEquals(985_000L, CountyWarehouse.read(after.meta, after.id)!!.stock.grain)
-        assertEquals(applied, handler.handle(HwihaMilitaryInput.CONSCRIPT, actor.id, "{}", "conscript-711", 42))
-        assertEquals(150, HwihaCityMilitaryState.read(world.getCityById(after.id)!!.meta).troops)
+        assertEquals(applied, handler.handle(MilitaryInput.CONSCRIPT, actor.id, "{}", "conscript-711", 42))
+        assertEquals(150, CityMilitaryState.read(world.getCityById(after.id)!!.meta).troops)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
     }
 
@@ -43,11 +43,11 @@ class HwihaCityMilitaryHandlerTest {
         val handler = HwihaCityMilitaryHandler(world, ChangeRecorder())
         val before = world.getCityById(route.startCity)!!
         assertEquals("WAREHOUSE_NOT_READY", assertIs<HwihaTurnOutcome.Rejected>(handler.handle(
-            HwihaMilitaryInput.CONSCRIPT, actor.id, "{}", "conscript-712", 42)).code)
+            MilitaryInput.CONSCRIPT, actor.id, "{}", "conscript-712", 42)).code)
         assertEquals(before, world.getCityById(route.startCity))
         world.applyCityDirtyFree(before.copy(nationId = 2))
         assertEquals("FOREIGN_COUNTY", assertIs<HwihaTurnOutcome.Rejected>(handler.handle(
-            HwihaMilitaryInput.TRAIN, actor.id, "{}", "train-712", 42)).code)
+            MilitaryInput.TRAIN, actor.id, "{}", "train-712", 42)).code)
         assertEquals(0, world.getGeneralById(actor.id)!!.experience)
     }
 
@@ -56,14 +56,14 @@ class HwihaCityMilitaryHandlerTest {
         val actor = fixture.person(713, 1, route.startCity)
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta +
-                (HwihaCityMilitaryState.META_KEY to HwihaCityMilitaryState(30, 50, 100).toMetaValue())) else city
+                (CityMilitaryState.META_KEY to CityMilitaryState(30, 50, 100).toMetaValue())) else city
         })
         val selected = HwihaNpcCityMilitarySelector(HwihaDomesticContext()).select(world, actor.id,
             ReservedTurn("휴식", "{}", rowExists = false))
-        assertEquals(HwihaMilitaryInput.TRAIN, selected.actionCode)
+        assertEquals(MilitaryInput.TRAIN, selected.actionCode)
         assertIs<HwihaTurnOutcome.Applied>(HwihaCityMilitaryHandler(world, ChangeRecorder()).handle(
             selected.actionCode, actor.id, selected.argJson, null, null, npcSelected = true))
-        assertEquals(40, HwihaCityMilitaryState.read(world.getCityById(route.startCity)!!.meta).training)
+        assertEquals(40, CityMilitaryState.read(world.getCityById(route.startCity)!!.meta).training)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)
     }
 }

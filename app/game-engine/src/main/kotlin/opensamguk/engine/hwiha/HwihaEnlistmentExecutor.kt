@@ -39,11 +39,11 @@ class HwihaEnlistmentExecutor(
         val nations = world.listNations().associateBy { it.id }
         val projection = world.enlistmentProjection()
         val policy = currentPolicy?.invoke(request)
-        val assessment = if (policy == null) HwihaEnlistmentPrecheck.assess(request, projection)
-            else HwihaEnlistmentPrecheck.assess(request, projection,
+        val assessment = if (policy == null) EnlistmentPrecheck.assess(request, projection)
+            else EnlistmentPrecheck.assess(request, projection,
                 RenownBudgetResult.Ready(policy.acceptingLordIds, policy.freeRenownByLord, policy.actorCardCost, emptyMap()))
         if (assessment is EnlistmentAssessment.Rejected) return EnlistmentExecution.Rejected(assessment.reason)
-        val plan = HwihaEnlistmentRules.select(assessment as EnlistmentAssessment.Eligible, drawIndex)
+        val plan = EnlistmentRules.select(assessment as EnlistmentAssessment.Eligible, drawIndex)
         // GENERAL can select a lord whose corrupt nation reference has no state row.
         val nation = nations[plan.nationId]
             ?: return EnlistmentExecution.Rejected(EnlistmentFailure.TARGET_NOT_FOUND)
@@ -52,7 +52,7 @@ class HwihaEnlistmentExecutor(
         val changed = plan.joiningGeneralIds.map { id ->
             val before = byId.getValue(id)
             before to before.copy(nationId = plan.nationId, meta =
-                if (id == plan.actorId) HwihaLordStatus.afterEnlistment(before.meta) else before.meta)
+                if (id == plan.actorId) LordStatus.afterEnlistment(before.meta) else before.meta)
         }
         val joiningIds = plan.joiningGeneralIds.toSet()
         val count = generals.count { it.npcState != 5 && (it.nationId == nation.id || it.id in joiningIds) }
@@ -74,16 +74,16 @@ class HwihaEnlistmentExecutor(
         val master = byId[plan.masterId]
         val refs = linkedMapOf<String, Any?>("nationId" to plan.nationId, "masterId" to plan.masterId,
             "generalId" to actor.id, "retainerId" to card.id)
-        HwihaRecords.general(world, actor.id, HwihaRecordKind.ENLISTED,
+        HwihaRecords.general(world, actor.id, RecordKind.ENLISTED,
             "${nation.name}에 출사해 ${master?.name ?: "주공"}의 휘하에 들어갔습니다.", refs, nationId = plan.nationId)
-        if (plan.masterId != actor.id) HwihaRecords.general(world, plan.masterId, HwihaRecordKind.RETAINER_JOINED,
+        if (plan.masterId != actor.id) HwihaRecords.general(world, plan.masterId, RecordKind.RETAINER_JOINED,
             "${JosaUtil.put(actor.name, "이")} 출사해 휘하에 들어왔습니다.", refs, nationId = plan.nationId)
         return EnlistmentExecution.Applied(plan, card.id)
     }
 }
 
 /** Shared current-world projection for NPC selection and execution revalidation. */
-internal fun InMemoryTurnWorld.enlistmentProjection() = HwihaEnlistmentProjection(ruleProfile,
+internal fun InMemoryTurnWorld.enlistmentProjection() = EnlistmentProjection(ruleProfile,
     listGenerals().map { general ->
         val stats = general.stats
         EnlistmentPersonRow(PersonPolicyInput(general.id, general.nationId, stats.leadership,

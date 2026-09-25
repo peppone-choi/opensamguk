@@ -20,22 +20,22 @@ class HwihaReactionInventory(private val world: InMemoryTurnWorld, private val r
 
     fun rebuild(): Result {
         if (world.ruleProfile != RuleProfile.HWIHA) return Result.MISSING
-        val current = try { HwihaMarchReactions.read(world.getState().meta) } catch (_: IllegalArgumentException) {
+        val current = try { MarchReactions.read(world.getState().meta) } catch (_: IllegalArgumentException) {
             return Result.INVALID
         } ?: return Result.MISSING
         val people = world.listGenerals().sortedBy { it.id }
         val deployed = try {
-            people.flatMap { person -> HwihaDeploymentState.read(person.meta)?.corps.orEmpty() }
+            people.flatMap { person -> DeploymentState.read(person.meta)?.corps.orEmpty() }
         } catch (_: IllegalArgumentException) { return Result.INVALID }
-        val intercept = mutableListOf<HwihaReactionOrder>()
-        val evade = mutableListOf<HwihaReactionOrder>()
+        val intercept = mutableListOf<ReactionOrder>()
+        val evade = mutableListOf<ReactionOrder>()
         for (owner in people) {
             val policies = try { CorpsPolicyAssignments.read(owner.meta) } catch (_: IllegalArgumentException) { return Result.INVALID } ?: continue
             for (entry in policies.entries) {
                 val active = entry.slot.active ?: continue
                 val corps = deployed.singleOrNull { it.orderId == entry.orderId && it.ownerGeneralId == owner.id &&
                     it.commanderGeneralId == entry.commanderGeneralId } ?: continue
-                val order = HwihaReactionOrder(corps.orderId, corps.ownerGeneralId, corps.commanderGeneralId, corps.nationId, active.since)
+                val order = ReactionOrder(corps.orderId, corps.ownerGeneralId, corps.commanderGeneralId, corps.nationId, active.since)
                 when (CorpsPolicy.valueOf(active.policy)) {
                     CorpsPolicy.INTERCEPT -> intercept += order
                     CorpsPolicy.EVADE -> evade += order
@@ -43,11 +43,11 @@ class HwihaReactionInventory(private val world: InMemoryTurnWorld, private val r
                 }
             }
         }
-        val next = HwihaMarchReactions.of(intercept, evade, current.installedSchemes)
+        val next = MarchReactions.of(intercept, evade, current.installedSchemes)
         if (next == current) return Result.UNCHANGED
         val value = next.toMetaValue()
-        world.setGameEnvValue(HwihaMarchReactions.META_KEY, value)
-        recorder.recordKv("game_env", "game_env", HwihaMarchReactions.META_KEY, value)
+        world.setGameEnvValue(MarchReactions.META_KEY, value)
+        recorder.recordKv("game_env", "game_env", MarchReactions.META_KEY, value)
         return Result.WRITTEN
     }
 }
