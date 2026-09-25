@@ -1,5 +1,10 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.ScoutFailure
+import opensamguk.logic.vision.ScoutAssessment
+import opensamguk.logic.vision.ScoutRules
+import opensamguk.logic.vision.ScoutReports
+
 import opensamguk.logic.vision.VisionView
 import opensamguk.logic.vision.VisionViewer
 import opensamguk.logic.vision.Vision
@@ -26,7 +31,7 @@ class HwihaVisionForbidden : RuntimeException()
  * Every response is computed for exactly one viewer (`?generalId=` owned by the principal, else 403). Data the
  * viewer may not see is filtered here, before serialization: a corps in a FOG commandery is never loaded into a
  * DTO, so it cannot appear in the bytes. The same logic functions ([Vision], [CorpsVisibility],
- * [HwihaScoutRules]) are what the engine and reservation admission use.
+ * [ScoutRules]) are what the engine and reservation admission use.
  *
  * Corruption anywhere in the authoritative state yields `UNAVAILABLE` (nothing), never a partial map.
  */
@@ -114,10 +119,10 @@ class HwihaVisionReader(
         val options = index.neighbours(origin).map { no ->
             val commandery = index.commanderies[no]
             val entry = requireNotNull(frame.view.entry(no))
-            val check = HwihaScoutRules.assess(RuleProfile.HWIHA, node, commandery.id, index)
+            val check = ScoutRules.assess(RuleProfile.HWIHA, node, commandery.id, index)
             val failure = (check as? ScoutAssessment.Rejected)?.reason
             HwihaScoutOptionDto(no, commandery.id, commandery.name, entry.tier.name, failure == null,
-                failure?.name, failure?.let(HwihaScoutRules::reason), entry.seenAt?.let(::stamp), entry.ageTurns)
+                failure?.name, failure?.let(ScoutRules::reason), entry.seenAt?.let(::stamp), entry.ageTurns)
         }
         val any = options.any { it.available }
         return HwihaScoutOptionsResponse(
@@ -129,14 +134,14 @@ class HwihaVisionReader(
         )
     }
 
-    /** Reservation precheck: the same rule the personal turn re-runs ([HwihaScoutRules.assess]). */
+    /** Reservation precheck: the same rule the personal turn re-runs ([ScoutRules.assess]). */
     fun assessScout(generalId: Int, userId: Long, commanderyId: String): ScoutAssessment {
         val frame = when (val built = frame(generalId, userId)) {
             is Built.Failed -> return ScoutAssessment.Rejected(
                 if (built.status == "WRONG_RULE_PROFILE") ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
             is Built.Ready -> built.frame
         }
-        return HwihaScoutRules.assess(RuleProfile.HWIHA, frame.viewer.actorNode, commanderyId, frame.index)
+        return ScoutRules.assess(RuleProfile.HWIHA, frame.viewer.actorNode, commanderyId, frame.index)
     }
 
     // ── 공용 ───────────────────────────────────────────────────────────────
@@ -197,7 +202,7 @@ class HwihaVisionReader(
                     val province = bundle.projection.bindingsByCityId[city.id]?.landProvinceId
                     if (province == null) { invalid++; null } else city.id to province
                 }
-            val reports = try { HwihaScoutReports.read(actor.meta) } catch (_: IllegalArgumentException) { invalid++; null }
+            val reports = try { ScoutReports.read(actor.meta) } catch (_: IllegalArgumentException) { invalid++; null }
             val viewer = VisionViewer(
                 actorId = actor.id,
                 nationId = actor.nationId.coerceAtLeast(0),
@@ -233,7 +238,7 @@ class HwihaVisionReader(
     }
 
     private fun blocked(status: String, failure: ScoutFailure) =
-        HwihaScoutOptionsResponse(status = status, available = false, code = failure.name, reason = HwihaScoutRules.reason(failure))
+        HwihaScoutOptionsResponse(status = status, available = false, code = failure.name, reason = ScoutRules.reason(failure))
 
     private fun stamp(phase: HwihaPhase) = HwihaStampDto(phase.year, phase.month, phase.phase)
 }

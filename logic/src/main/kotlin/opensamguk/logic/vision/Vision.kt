@@ -24,7 +24,7 @@ data class VisionEntry(val no: Int, val tier: VisionTier, val seenAt: HwihaPhase
 }
 
 class VisionView(val now: HwihaPhase, val entries: List<VisionEntry>, val sources: List<VisionSource>,
-    val reports: HwihaScoutReports?) {
+    val reports: ScoutReports?) {
     init { require(entries.withIndex().all { (index, it) -> it.no == index }) }
     fun tierOf(no: Int): VisionTier = entries.getOrNull(no)?.tier ?: VisionTier.FOG
     fun entry(no: Int): VisionEntry? = entries.getOrNull(no)
@@ -47,7 +47,7 @@ data class VisionViewer(
     val scoutPosts: List<HwihaScoutPost>,
     /** (cityId, provinceId) of own-nation county seats with a completed watchtower/beacon. */
     val watchtowers: List<Pair<Int, String>>,
-    val reports: HwihaScoutReports?,
+    val reports: ScoutReports?,
 ) {
     init {
         require(actorId > 0 && nationId >= 0)
@@ -156,8 +156,8 @@ object CorpsVisibility {
                 // A stale or broken relationship is not a standing army on the map.
                 if (HwihaDeploymentRules.assessActive(corps, projection) !is DeploymentAssessment.Eligible) return@mapNotNull null
             }
-            val troops = HwihaCorpsTroops.of(corps, projection)
-            CorpsSighting(HwihaScoutCapture.corpsKey(corps.orderId), corps.orderId.takeIf { own }, corps.ownerGeneralId,
+            val troops = CorpsTroops.of(corps, projection)
+            CorpsSighting(ScoutCapture.corpsKey(corps.orderId), corps.orderId.takeIf { own }, corps.ownerGeneralId,
                 corps.commanderGeneralId, corps.nationId, province, no, VisionTier.FULL, own,
                 troops.takeIf { own }, if (own) null else rules.band(troops).code, null, null)
         }

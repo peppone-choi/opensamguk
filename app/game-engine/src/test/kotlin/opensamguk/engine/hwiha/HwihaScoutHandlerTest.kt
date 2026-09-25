@@ -1,5 +1,12 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.ScoutInputCodec
+import opensamguk.logic.vision.ScoutFailure
+import opensamguk.logic.vision.ScoutedCity
+import opensamguk.logic.vision.ScoutReport
+import opensamguk.logic.vision.ScoutReports
+import opensamguk.logic.vision.ScoutCapture
+
 import java.nio.file.Path
 import java.time.Instant
 import kotlin.test.*
@@ -62,14 +69,14 @@ class HwihaScoutHandlerTest {
     @Test fun `scouting a neighbour stores a private banded snapshot through the recorder`() {
         val world = world(); val recorder = ChangeRecorder()
         val outcome = HwihaScoutHandler(world, recorder, context).handle(1, args(geo.nextId), 42)
-        assertEquals(HwihaTurnOutcome.Applied(HwihaScoutInput.INPUT_ID), outcome)
-        val notebook = assertNotNull(HwihaScoutReports.read(world.getGeneralById(1)!!.meta))
+        assertEquals(HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID), outcome)
+        val notebook = assertNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
         assertEquals(index.tilesContentHash, notebook.tilesContentHash)
         val report = notebook.reports.single()
         assertEquals(geo.nextId, report.commanderyId); assertEquals(HwihaPhase(190, 3, 2), report.seenAt)
         assertEquals(listOf(ScoutedCity(20, 2, true)), report.cities)
         val corps = report.corps.single()
-        assertEquals(HwihaScoutCapture.corpsKey("req-secret-next"), corps.corpsKey)
+        assertEquals(ScoutCapture.corpsKey("req-secret-next"), corps.corpsKey)
         assertEquals("B3", corps.troopsBand); assertEquals(geo.next, corps.provinceId)
         // Only the actor row changes, and it flushes through the recorder like any personal-turn write.
         val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
@@ -93,13 +100,13 @@ class HwihaScoutHandlerTest {
     }
 
     @Test fun `a corrupt notebook is never overwritten and a notebook from other tiles is replaced`() {
-        val corrupt = world(extraActorMeta = mapOf(HwihaScoutReports.META_KEY to mapOf("version" to 9)))
+        val corrupt = world(extraActorMeta = mapOf(ScoutReports.META_KEY to mapOf("version" to 9)))
         assertEquals(ScoutFailure.STATE_UNAVAILABLE.name, assertIs<HwihaTurnOutcome.Rejected>(
             HwihaScoutHandler(corrupt, ChangeRecorder(), context).handle(1, args(geo.nextId), 42)).code)
-        val stale = HwihaScoutReports("0".repeat(64), listOf(HwihaScoutReport("PARENT-OLD", HwihaPhase(189, 1, 1), emptyList(), emptyList())))
-        val world = world(extraActorMeta = mapOf(HwihaScoutReports.META_KEY to stale.toMetaValue()))
+        val stale = ScoutReports("0".repeat(64), listOf(ScoutReport("PARENT-OLD", HwihaPhase(189, 1, 1), emptyList(), emptyList())))
+        val world = world(extraActorMeta = mapOf(ScoutReports.META_KEY to stale.toMetaValue()))
         assertIs<HwihaTurnOutcome.Applied>(HwihaScoutHandler(world, ChangeRecorder(), context).handle(1, args(geo.nextId), 42))
-        assertEquals(listOf(geo.nextId), HwihaScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.map { it.commanderyId })
+        assertEquals(listOf(geo.nextId), ScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.map { it.commanderyId })
     }
 
     @Test fun `scouting again replaces the old snapshot of that commandery only`() {
@@ -107,7 +114,7 @@ class HwihaScoutHandlerTest {
         assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, args(geo.nextId), 42))
         world.setCurrentDate(190, 4, 1)
         assertIs<HwihaTurnOutcome.Applied>(handler.handle(1, args(geo.nextId), 42))
-        val report = HwihaScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.single()
+        val report = ScoutReports.read(world.getGeneralById(1)!!.meta)!!.reports.single()
         assertEquals(190, report.seenAt.year); assertEquals(4, report.seenAt.month)
     }
 
@@ -117,9 +124,9 @@ class HwihaScoutHandlerTest {
             opensamguk.logic.stats.GeneralActionPipeline()), hiddenSeed = "seed", startYear = 184,
             hwihaVisionContext = context)
         val turn = handler.handle(1, opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
-            actionCode = HwihaScoutInput.INPUT_ID, argJson = args(geo.nextId), requestId = "r-1", reservationOwnerUserId = 42),
+            actionCode = ScoutInputCodec.INPUT_ID, argJson = args(geo.nextId), requestId = "r-1", reservationOwnerUserId = 42),
             190, 3, "00:00")
-        assertEquals(HwihaTurnOutcome.Applied(HwihaScoutInput.INPUT_ID), turn.hwihaOutcome)
-        assertNotNull(HwihaScoutReports.read(world.getGeneralById(1)!!.meta))
+        assertEquals(HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID), turn.hwihaOutcome)
+        assertNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
     }
 }
