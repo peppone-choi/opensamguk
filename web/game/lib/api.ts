@@ -488,7 +488,7 @@ export const api = {
         post<IntakeOutcome>(`/api/commands/court/politicalConsent?generalId=${generalId}`, args),
     transferOptions: (inputId: import('./types').TransferActionId, generalId: number) =>
         get<import('./types').TransferOptions>(`/api/commands/${inputId === 'action.gift' ? 'gift' : 'donate'}-options?generalId=${generalId}`),
-    legacyDirectOptions: (inputId: import('./types').DirectActionActionId, generalId: number) =>
+    legacyDirectOptions: (inputId: import('./types').DirectActionId, generalId: number) =>
         get<import('./types').DirectActionOptions>(`/api/commands/legacy-direct-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),
     legacyCourtOptions: (inputId: import('./types').CourtActionId, generalId: number) =>
         get<import('./types').CourtActionOptions>(`/api/commands/legacy-court-options?generalId=${generalId}&inputId=${encodeURIComponent(inputId)}`),

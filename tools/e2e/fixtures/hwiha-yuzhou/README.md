@@ -16,7 +16,7 @@ The scenario is registered in the operating catalog as an S3 test and pep transi
 
 Counties outside 豫州 are unowned (neutral). NPC lords may also march on nearby neutral counties when they can field twice the garrison.
 
-The file is generated, not hand-edited: `infra/src/test/kotlin/opensamguk/infra/seed/HwihaYuzhouSliceScenarioTest.kt` rebuilds it from the map and the boot artifact pin and fails when the committed file drifts. To regenerate after a map change, delete the file and run that test, then review the diff. Do not touch the han-tiles chain for this fixture.
+The file is generated, not hand-edited: `infra/src/test/kotlin/opensamguk/infra/seed/YuzhouSliceScenarioTest.kt` rebuilds it from the map and the boot artifact pin and fails when the committed file drifts. To regenerate after a map change, delete the file and run that test, then review the diff. Do not touch the han-tiles chain for this fixture.
 
 Local run follows `tools/e2e/fixtures/hwiha-court/README.md` with:
 

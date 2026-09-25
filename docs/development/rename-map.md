@@ -1263,7 +1263,7 @@
 | `HwihaLegacyCourtForm` | `CourtActionForm` |
 | `HwihaLegacyCourtId` | `CourtActionId` |
 | `HwihaLegacyCourtOptions` | `CourtActionOptions` |
-| `HwihaLegacyDirectActionId` | `DirectActionActionId` |
+| `HwihaLegacyDirectActionId` | `DirectActionId` |
 | `HwihaLegacyDirectChoice` | `DirectActionChoice` |
 | `HwihaLegacyDirectForm` | `DirectActionForm` |
 | `HwihaLegacyDirectOptions` | `DirectActionOptions` |
