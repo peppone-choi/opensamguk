@@ -80,6 +80,15 @@
 | `opensamguk.logic.input.HwihaVisionRules` (`logic/input/HwihaVisionRules.kt`) | `opensamguk.logic.vision.VisionRules` (`logic/vision/VisionRules.kt`) | 이 PR | 시야 규칙 로더; 리소스 식별자는 저장·데이터 단계에서 개명 |
 | `opensamguk.logic.input.VisionSourceKind` | `opensamguk.logic.vision.VisionSourceKind` | 이 PR | 시야 출처 enum 패키지 이동 |
 | `opensamguk.logic.input.TroopBand` | `opensamguk.logic.vision.TroopBand` | 이 PR | 병력 구간 타입 패키지 이동 |
+| `opensamguk.logic.input.HwihaVision` (`logic/input/HwihaVision.kt`) | `opensamguk.logic.vision.Vision` (`logic/vision/Vision.kt`) | 이 PR | 시야 투영 본체의 도메인 패키지 이동 |
+| `opensamguk.logic.input.HwihaVisionView` | `opensamguk.logic.vision.VisionView` | 이 PR | 시야 투영 결과 타입 |
+| `opensamguk.logic.input.HwihaCorpsVisibility` | `opensamguk.logic.vision.CorpsVisibility` | 이 PR | 군단 시야 판정 |
+| `opensamguk.logic.input.VisionTier` | `opensamguk.logic.vision.VisionTier` | 이 PR | 시야 등급 enum 패키지 이동 |
+| `opensamguk.logic.input.VisionSource` | `opensamguk.logic.vision.VisionSource` | 이 PR | 시야 출처 타입 패키지 이동 |
+| `opensamguk.logic.input.VisionEntry` | `opensamguk.logic.vision.VisionEntry` | 이 PR | 시야 항목 타입 패키지 이동 |
+| `opensamguk.logic.input.VisionViewer` | `opensamguk.logic.vision.VisionViewer` | 이 PR | 시야 관찰자 타입 패키지 이동 |
+| `opensamguk.logic.input.CorpsSighting` | `opensamguk.logic.vision.CorpsSighting` | 이 PR | 군단 목격 정보 타입 패키지 이동 |
+| `logic/input/HwihaVisionTest.kt` | `logic/vision/VisionTest.kt` | 이 PR | 시야 투영 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
