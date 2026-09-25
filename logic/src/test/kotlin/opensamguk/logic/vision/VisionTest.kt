@@ -1,7 +1,7 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
 
-import opensamguk.logic.vision.VisionRules
-import opensamguk.logic.vision.VisionSourceKind
+import opensamguk.logic.input.*
+
 
 import opensamguk.logic.world.HanCommandery
 import opensamguk.logic.world.HanCommanderyIndex
@@ -9,7 +9,7 @@ import opensamguk.logic.world.StrategicNodeRef
 import kotlin.test.*
 
 /** Vision projection (#785) and the corps leak boundary (#343/#465) on a synthetic five-commandery line. */
-class HwihaVisionTest {
+class VisionTest {
     private val hash = "a".repeat(64)
     // 0 — 1 — 2 — 3 — 4 (line); province pN belongs to commandery N, p0b also to 0.
     private val index = HanCommanderyIndex(hash,
@@ -35,25 +35,25 @@ class HwihaVisionTest {
         HwihaScoutReport("PARENT-$commandery", seenAt, listOf(ScoutedCity(100 + commandery, 2, true)),
             corps.sortedBy { it.corpsKey })
 
-    private fun tiers(view: HwihaVisionView) = view.entries.map { it.tier }
+    private fun tiers(view: VisionView) = view.entries.map { it.tier }
 
     @Test fun `self sees only its own commandery by default and everything else is fog`() {
-        val view = HwihaVision.project(viewer(), index, rules, now)
+        val view = Vision.project(viewer(), index, rules, now)
         assertEquals(listOf(VisionTier.FULL, VisionTier.FOG, VisionTier.FOG, VisionTier.FOG, VisionTier.FOG), tiers(view))
         assertEquals(listOf(VisionSource(VisionSourceKind.SELF, 0, 0, "p0", 1)), view.sources)
     }
 
     @Test fun `scout posts and watchtowers reach one neighbour step and corps and retinue see where they stand`() {
-        val view = HwihaVision.project(viewer(actorNode = null, corps = mapOf(7 to land("p4")),
+        val view = Vision.project(viewer(actorNode = null, corps = mapOf(7 to land("p4")),
             posts = listOf(HwihaScoutPost(3, "p2")), towers = emptyList()), index, rules, now)
         assertEquals(listOf(VisionTier.FOG, VisionTier.FULL, VisionTier.FULL, VisionTier.FULL, VisionTier.FULL), tiers(view))
-        val tower = HwihaVision.project(viewer(actorNode = null, towers = listOf(55 to "p0b"),
+        val tower = Vision.project(viewer(actorNode = null, towers = listOf(55 to "p0b"),
             retinue = mapOf(9 to land("p3"))), index, rules, now)
         assertEquals(listOf(VisionTier.FULL, VisionTier.FULL, VisionTier.FOG, VisionTier.FULL, VisionTier.FOG), tiers(tower))
     }
 
     @Test fun `territory is one row per commandery and an unaffiliated viewer cannot claim territory`() {
-        val view = HwihaVision.project(viewer(actorNode = null, territory = setOf("p0", "p0b", "p3")), index, rules, now)
+        val view = Vision.project(viewer(actorNode = null, territory = setOf("p0", "p0b", "p3")), index, rules, now)
         assertEquals(listOf(VisionSourceKind.TERRITORY, VisionSourceKind.TERRITORY), view.sources.map { it.kind })
         assertEquals(listOf(0, 3), view.sources.map { it.commanderyNo })
         assertTrue(view.sources.all { it.provinceId == null })
@@ -62,21 +62,21 @@ class HwihaVisionTest {
 
     @Test fun `scouted commandery is intel with its age and a live source overrides it`() {
         val reports = HwihaScoutReports(hash, listOf(report(1, HwihaPhase(190, 2, 3)), report(3, now)))
-        val view = HwihaVision.project(viewer(reports = reports), index, rules, now)
+        val view = Vision.project(viewer(reports = reports), index, rules, now)
         assertEquals(VisionEntry(1, VisionTier.INTEL, HwihaPhase(190, 2, 3), 2), view.entry(1))
         assertEquals(VisionEntry(3, VisionTier.INTEL, now, 0), view.entry(3))
-        val covered = HwihaVision.project(viewer(reports = reports, posts = listOf(HwihaScoutPost(3, "p0"))), index, rules, now)
+        val covered = Vision.project(viewer(reports = reports, posts = listOf(HwihaScoutPost(3, "p0"))), index, rules, now)
         assertEquals(VisionTier.FULL, covered.tierOf(1))
         assertEquals(VisionTier.INTEL, covered.tierOf(3))
         // Across a year boundary the age still counts 旬 (36 per year).
-        assertEquals(37, HwihaVision.ageTurns(HwihaPhase(189, 3, 1), HwihaPhase(190, 3, 2)))
+        assertEquals(37, Vision.ageTurns(HwihaPhase(189, 3, 1), HwihaPhase(190, 3, 2)))
     }
 
     @Test fun `notebooks from other tiles or from the future never become intel`() {
         val other = HwihaScoutReports("b".repeat(64), listOf(report(2, now)))
-        assertEquals(VisionTier.FOG, HwihaVision.project(viewer(reports = other), index, rules, now).tierOf(2))
+        assertEquals(VisionTier.FOG, Vision.project(viewer(reports = other), index, rules, now).tierOf(2))
         val future = HwihaScoutReports(hash, listOf(report(2, HwihaPhase(190, 3, 3))))
-        assertEquals(VisionTier.FOG, HwihaVision.project(viewer(reports = future), index, rules, now).tierOf(2))
+        assertEquals(VisionTier.FOG, Vision.project(viewer(reports = future), index, rules, now).tierOf(2))
     }
 
     // ── corps projection ───────────────────────────────────────────────────
@@ -96,8 +96,8 @@ class HwihaVisionTest {
 
     @Test fun `fog corps never appear, own corps are exact and others are banded`() {
         val v = viewer(posts = listOf(HwihaScoutPost(5, "p0")))   // FULL: 0, 1
-        val view = HwihaVision.project(v, index, rules, now)
-        val seen = HwihaCorpsVisibility.project(v, view, index, projection(), rules)
+        val view = Vision.project(v, index, rules, now)
+        val seen = CorpsVisibility.project(v, view, index, projection(), rules)
         assertEquals(listOf("order-own", HwihaScoutCapture.corpsKey("order-neighbour")), seen.map { it.orderId ?: it.corpsKey })
         val own = seen.first(); val other = seen.last()
         assertEquals(1234, own.troops); assertNull(own.troopsBand); assertEquals("order-own", own.orderId)
@@ -109,9 +109,9 @@ class HwihaVisionTest {
         val seenThen = ScoutedCorps(HwihaScoutCapture.corpsKey("order-old"), 9, 9, 3, "p2", "B1")
         val reports = HwihaScoutReports(hash, listOf(report(2, HwihaPhase(190, 1, 1), seenThen)))
         val v = viewer(reports = reports)
-        val view = HwihaVision.project(v, index, rules, now)
+        val view = Vision.project(v, index, rules, now)
         assertEquals(VisionTier.INTEL, view.tierOf(2))
-        val seen = HwihaCorpsVisibility.project(v, view, index, projection(), rules)
+        val seen = CorpsVisibility.project(v, view, index, projection(), rules)
         val intel = seen.single { it.visibility == VisionTier.INTEL }
         assertEquals(seenThen.corpsKey, intel.corpsKey)
         assertEquals(HwihaPhase(190, 1, 1), intel.seenAt); assertEquals(7, intel.ageTurns); assertEquals("B1", intel.troopsBand)
@@ -123,9 +123,9 @@ class HwihaVisionTest {
         val stale = ScoutedCorps(HwihaScoutCapture.corpsKey("order-gone"), 8, 8, 2, "p1", "B5")
         val reports = HwihaScoutReports(hash, listOf(report(1, HwihaPhase(189, 1, 1), stale)))
         val v = viewer(reports = reports, posts = listOf(HwihaScoutPost(5, "p0")))   // FULL: 0, 1
-        val view = HwihaVision.project(v, index, rules, now)
+        val view = Vision.project(v, index, rules, now)
         assertEquals(VisionTier.FULL, view.tierOf(1))
-        val seen = HwihaCorpsVisibility.project(v, view, index, projection(), rules)
+        val seen = CorpsVisibility.project(v, view, index, projection(), rules)
         assertTrue(seen.none { it.visibility == VisionTier.INTEL || it.corpsKey == stale.corpsKey }, "$seen")
         assertEquals(listOf(true, false), seen.map { it.own })
     }
@@ -133,7 +133,7 @@ class HwihaVisionTest {
     @Test fun `a broken relationship is not reported as a standing army even in full sight`() {
         val broken = projection().let { it.copy(units = it.units.filterNot { unit -> unit.id == 21 }) }
         val v = viewer(posts = listOf(HwihaScoutPost(5, "p0")))
-        val seen = HwihaCorpsVisibility.project(v, HwihaVision.project(v, index, rules, now), index, broken, rules)
+        val seen = CorpsVisibility.project(v, Vision.project(v, index, rules, now), index, broken, rules)
         assertEquals(listOf(true), seen.map { it.own })
     }
 }

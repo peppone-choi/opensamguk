@@ -1,7 +1,7 @@
-package opensamguk.logic.input
+package opensamguk.logic.vision
 
-import opensamguk.logic.vision.VisionRules
-import opensamguk.logic.vision.VisionSourceKind
+import opensamguk.logic.input.*
+
 
 import opensamguk.logic.world.HanCommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
@@ -23,7 +23,7 @@ data class VisionEntry(val no: Int, val tier: VisionTier, val seenAt: HwihaPhase
     }
 }
 
-class HwihaVisionView(val now: HwihaPhase, val entries: List<VisionEntry>, val sources: List<VisionSource>,
+class VisionView(val now: HwihaPhase, val entries: List<VisionEntry>, val sources: List<VisionSource>,
     val reports: HwihaScoutReports?) {
     init { require(entries.withIndex().all { (index, it) -> it.no == index }) }
     fun tierOf(no: Int): VisionTier = entries.getOrNull(no)?.tier ?: VisionTier.FOG
@@ -55,7 +55,7 @@ data class VisionViewer(
     }
 }
 
-object HwihaVision {
+object Vision {
     /** Deterministic source list: kind order, then commandery, then province, then reference id. */
     fun sources(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules): List<VisionSource> {
         val out = mutableListOf<VisionSource>()
@@ -82,7 +82,7 @@ object HwihaVision {
      * FULL = within a source's radius. INTEL = not FULL but scouted (snapshot stamp and age). FOG = neither.
      * Reports bound to other tiles are ignored — they cannot name a commandery of this map.
      */
-    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules, now: HwihaPhase): HwihaVisionView {
+    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules, now: HwihaPhase): VisionView {
         val sources = sources(viewer, index, rules)
         val full = sortedSetOf<Int>()
         sources.forEach { full += index.within(it.commanderyNo, it.radius) }
@@ -97,7 +97,7 @@ object HwihaVision {
                 else -> VisionEntry(commandery.no, VisionTier.FOG, null, null)
             }
         }
-        return HwihaVisionView(now, entries, sources, reports)
+        return VisionView(now, entries, sources, reports)
     }
 
     /** Whole 旬 between two stamps (36 per year). */
@@ -143,8 +143,8 @@ data class CorpsSighting(
  * corps standing in a FULL commandery. In an INTEL commandery the viewer sees only its scouting snapshot —
  * the rule-allowed last sighting — and nothing live. FOG commanderies emit nothing at all.
  */
-object HwihaCorpsVisibility {
-    fun project(viewer: VisionViewer, view: HwihaVisionView, index: HanCommanderyIndex, projection: DeploymentProjection,
+object CorpsVisibility {
+    fun project(viewer: VisionViewer, view: VisionView, index: HanCommanderyIndex, projection: DeploymentProjection,
         rules: VisionRules.Rules): List<CorpsSighting> {
         val nodes = projection.people.associate { it.id to it.node }
         val live = projection.deployed.mapNotNull { corps ->

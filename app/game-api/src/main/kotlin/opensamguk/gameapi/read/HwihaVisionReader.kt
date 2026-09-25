@@ -1,5 +1,10 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.VisionView
+import opensamguk.logic.vision.VisionViewer
+import opensamguk.logic.vision.Vision
+import opensamguk.logic.vision.CorpsVisibility
+
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.gameapi.dto.*
@@ -20,7 +25,7 @@ class HwihaVisionForbidden : RuntimeException()
  *
  * Every response is computed for exactly one viewer (`?generalId=` owned by the principal, else 403). Data the
  * viewer may not see is filtered here, before serialization: a corps in a FOG commandery is never loaded into a
- * DTO, so it cannot appear in the bytes. The same logic functions ([HwihaVision], [HwihaCorpsVisibility],
+ * DTO, so it cannot appear in the bytes. The same logic functions ([Vision], [CorpsVisibility],
  * [HwihaScoutRules]) are what the engine and reservation admission use.
  *
  * Corruption anywhere in the authoritative state yields `UNAVAILABLE` (nothing), never a partial map.
@@ -66,7 +71,7 @@ class HwihaVisionReader(
             is Built.Failed -> return HwihaCorpsResponse(built.status)
             is Built.Ready -> built.frame
         }
-        val sightings = HwihaCorpsVisibility.project(frame.viewer, frame.view, frame.index, frame.projection, rules)
+        val sightings = CorpsVisibility.project(frame.viewer, frame.view, frame.index, frame.projection, rules)
         val people = frame.people.associateBy { it.id }
         val nationColors = nations.findAll().associate { it.id to it.color.takeIf(String::isNotBlank) }
         val bundle = frame.bundle
@@ -142,7 +147,7 @@ class HwihaVisionReader(
         val people: List<GeneralReadEntity>,
         val projection: DeploymentProjection,
         val viewer: VisionViewer,
-        val view: HwihaVisionView,
+        val view: VisionView,
         val invalidSources: Int,
     )
 
@@ -207,7 +212,7 @@ class HwihaVisionReader(
                 watchtowers = watchtowers,
                 reports = reports,
             )
-            Built.Ready(Frame(bundle, index, people, projection, viewer, HwihaVision.project(viewer, index, rules, now), invalid))
+            Built.Ready(Frame(bundle, index, people, projection, viewer, Vision.project(viewer, index, rules, now), invalid))
         } catch (_: IllegalArgumentException) { Built.Failed("UNAVAILABLE") }
           catch (_: IllegalStateException) { Built.Failed("UNAVAILABLE") }
           catch (_: java.io.IOException) { Built.Failed("UNAVAILABLE") }

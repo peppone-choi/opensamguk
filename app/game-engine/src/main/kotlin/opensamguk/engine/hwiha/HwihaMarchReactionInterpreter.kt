@@ -1,5 +1,9 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.VisionTier
+import opensamguk.logic.vision.VisionViewer
+import opensamguk.logic.vision.Vision
+
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.engine.turn.ChangeRecorder
@@ -128,7 +132,7 @@ class HwihaMarchReactionInterpreter(
             cards.mapNotNull { it.generalId }.distinct().associateWith(world::positionOf),
             territory, posts, watchtowers, reports)
         val commandery = commanderies.commanderyOf(target.id) ?: return false
-        return HwihaVision.project(sources, commanderies, visionRules, now).tierOf(commandery) == VisionTier.FULL
+        return Vision.project(sources, commanderies, visionRules, now).tierOf(commandery) == VisionTier.FULL
     }
 
     private fun retreat(world: InMemoryTurnWorld, order: HwihaReactionOrder, from: StrategicNodeRef.LandProvince,
