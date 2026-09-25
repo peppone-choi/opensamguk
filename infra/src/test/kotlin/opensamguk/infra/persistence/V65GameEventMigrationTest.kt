@@ -51,7 +51,7 @@ class V65GameEventMigrationTest {
             insert("5".repeat(64), 3, "RETINUE", "RETINUE_NATION", "people.joined", general = 7,
                 recipients = "{7,9}", refs = """{"PERSON":9}""")
             fun rejectedBy(constraint: String, block: () -> Unit) {
-                val error = assertFailsWith<DataAccessException>(block)
+                val error = assertFailsWith<DataAccessException> { block() }
                 assertTrue(error.mostSpecificCause.message?.contains(constraint) == true,
                     "expected $constraint, got ${error.mostSpecificCause.message}")
             }

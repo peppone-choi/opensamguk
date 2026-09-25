@@ -15,5 +15,5 @@
 
 ## 로컬 검증
 
-- JDK 21 `:logic:compileKotlin` 성공, `GameEventTest` 4건 성공(새 JSONB wire 테스트 추가 전 실행).
-- `V65GameEventMigrationTest`는 Testcontainers의 PostgreSQL 컨테이너 생성 단계에서 Docker HTTP 500으로 중단됐다. SQL 실행·스키마 검증은 원격 CI 결과가 필요하다. 테스트는 건너뛰거나 약화하지 않는다.
+- JDK 21 `:logic:compileKotlin` 성공, 최신 `GameEventTest` 6건 성공.
+- `V65GameEventMigrationTest` 1건 성공: 실제 PostgreSQL 16에서 V64→V65 이행, 기존 `log_entry` 유지, 정상 수신 대상·공개 사건, 중복 키·순서·공개/수신 제약 이름, 인덱스 유효성을 확인했다. 첫 시도는 Docker 컨테이너 생성 HTTP 500으로 SQL 전 실패했으나 재시도에서 실행됐다.
