@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "edict.credibility.EMPEROR_ASSENT",
+      "factor": "EMPEROR_ASSENT",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": 20,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "황제의 실제 재가를 문서 권위의 가장 큰 양의 근거로 둔다."
+      }
+    },
+    {
+      "id": "edict.credibility.SECRETARIAT_RECORD",
+      "factor": "SECRETARIAT_RECORD",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": 12,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "상서 기초·등록이 문서 대조를 가능하게 하므로 중간 크기의 양의 근거로 둔다."
+      }
+    },
+    {
+      "id": "edict.credibility.AUTHENTIC_SEAL",
+      "factor": "AUTHENTIC_SEAL",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": 15,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "관할이 유효한 인장은 문서 진위를 강하게 뒷받침하지만 단독으로 권한을 주지는 않는다."
+      }
+    },
+    {
+      "id": "edict.credibility.COURT_WITNESS",
+      "factor": "COURT_WITNESS",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": 8,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "조정 관료의 증언은 독립 확인의 보조 근거다."
+      }
+    },
+    {
+      "id": "edict.credibility.RITUAL_CONTINUITY",
+      "factor": "RITUAL_CONTINUITY",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": 6,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "연호·의례의 연속성은 문서 내용보다 약한 주변 근거다."
+      }
+    },
+    {
+      "id": "edict.credibility.TRUSTED_COURIER",
+      "factor": "TRUSTED_COURIER",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": 7,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "사자의 신뢰는 전달 경로의 보조 근거다."
+      }
+    },
+    {
+      "id": "edict.credibility.PUBLIC_COERCION",
+      "factor": "PUBLIC_COERCION",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": -15,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "공개 강압은 진정한 재가를 의심하게 하므로 큰 감점이다."
+      }
+    },
+    {
+      "id": "edict.credibility.FORGERY_OR_DUPLICATE",
+      "factor": "FORGERY_OR_DUPLICATE",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": -30,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "위조·중복 조서는 문서의 신뢰를 가장 크게 훼손한다."
+      }
+    },
+    {
+      "id": "edict.credibility.PROTECTOR_DEFIANCE",
+      "factor": "PROTECTOR_DEFIANCE",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": -10,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "보호자가 과거 조서를 반복 거역한 기록은 신뢰를 깎는다."
+      }
+    },
+    {
+      "id": "edict.credibility.COURT_COLLAPSE",
+      "factor": "COURT_COLLAPSE",
+      "grade": "GAME_TERM",
+      "gameTermReason": "조서 신뢰도 가중치는 사료 수치가 아니라 게임 판정 수치다.",
+      "displayBadge": "게임 용어",
+      "sources": [],
+      "weight": {
+        "value": -12,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "조정의 물리적 붕괴는 문서 검증과 집행망을 약화시킨다."
+      }
+    }
+  ]
+}
