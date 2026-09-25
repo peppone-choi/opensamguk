@@ -1,5 +1,7 @@
 package opensamguk.logic.imperial
 
+import java.security.MessageDigest
+import java.util.HexFormat
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -44,8 +46,9 @@ object ImperialEdictResponseImpact {
         require(edict.stage == EdictStage.RESPONDED)
         val receipt = requireNotNull(edict.receipt)
         require(receipt.recipientFactionId == edict.proposal.recipientFactionId)
+        val idDigest = MessageDigest.getInstance("SHA-256").digest(edict.proposal.id.toByteArray(Charsets.UTF_8))
         return EdictResponseImpact(
-            requestId = "edict-response:${edict.proposal.id}",
+            requestId = "edict-response:${HexFormat.of().formatHex(idDigest)}",
             imperialLineCode = edict.proposal.imperialLineCode,
             recipientFactionId = receipt.recipientFactionId,
             courtFavorDelta = rules.courtFavorDelta.getValue(receipt.decision),
