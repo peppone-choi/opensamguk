@@ -105,7 +105,7 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
             PoliticalInput.FOUND_STATE -> {
                 val old = checkNotNull(oldNation)
                 if (old.level > 0) return reject(PoliticalFailure.ALREADY_FOUNDED)
-                val next = old.copy(level = 1, meta = old.meta + ("hwihaFoundedBy" to actorId))
+                val next = old.copy(level = 1, meta = old.meta + ("foundedBy" to actorId))
                 recorder.diffNation(PerTurnOverlay.toLogicNation(old), PerTurnOverlay.toLogicNation(next))
                 world.applyNationDirtyFree(next)
                 effects += "nationLevel:1"
@@ -184,5 +184,5 @@ class PoliticalHandler(private val world: InMemoryTurnWorld, private val recorde
         }
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaPoliticalLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "politicalLastTurn" }
 }

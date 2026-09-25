@@ -58,7 +58,7 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
      */
     fun onCountyCaptured(countyId: Int, previousNationId: Int, captorNationId: Int, capturerIds: Collection<Int>): List<Int> {
         if (previousNationId == captorNationId) {
-            log.warn("hwiha_renown_capture_skipped county={} reason=SAME_OWNER nation={}", countyId, captorNationId)
+            log.warn("campaign_renown_capture_skipped county={} reason=SAME_OWNER nation={}", countyId, captorNationId)
             return emptyList()
         }
         val holders = if (previousNationId == 0) emptyList() else RenownHooks.countyHolderIds(countyId,
@@ -79,7 +79,7 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
     private fun applyAll(updates: List<RenownHooks.MetaUpdate>): List<Int> = updates.mapNotNull { update ->
         val source = update.entry.source
         if (source == null) {
-            log.warn("hwiha_renown_event_skipped general={} reason=MISSING_SOURCE", update.generalId)
+            log.warn("campaign_renown_event_skipped general={} reason=MISSING_SOURCE", update.generalId)
             return@mapNotNull null
         }
         if (!apply(update.generalId, update.meta)) return@mapNotNull null
@@ -90,12 +90,12 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
     private fun apply(generalId: Int, meta: Map<String, Any?>): Boolean {
         val before = world.getGeneralById(generalId)
         if (before == null) {
-            log.warn("hwiha_renown_event_skipped general={} reason=MISSING_GENERAL", generalId)
+            log.warn("campaign_renown_event_skipped general={} reason=MISSING_GENERAL", generalId)
             return false
         }
         val after = before.copy(meta = meta)
         if (world.applyGeneralDirtyFree(after) == null) {
-            log.warn("hwiha_renown_event_skipped general={} reason=APPLY_REJECTED", generalId)
+            log.warn("campaign_renown_event_skipped general={} reason=APPLY_REJECTED", generalId)
             return false
         }
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))

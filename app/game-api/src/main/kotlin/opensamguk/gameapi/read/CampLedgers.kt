@@ -10,9 +10,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 휘하 조회가 읽는 두 원장. 정본은 저장소 루트의 `data/curated/han/` 파일이고 빌드가 classpath
- * `hwiha/` 로 그대로 싣는다(`app/game-api/build.gradle.kts`). 사본을 코드에 두지 않는다.
+ * `campaign/` 로 그대로 싣는다(`app/game-api/build.gradle.kts`). 사본을 코드에 두지 않는다.
  *
- * - `hwiha-resource-production-v1.json` — 縣(`jurisdictionId`, han-tiles 관할 id)별 철·목재·말 설계 산출량(목재는 모든 縣, 면적 축).
+ * - `resource-production-v1.json` — 縣(`jurisdictionId`, han-tiles 관할 id)별 철·목재·말 설계 산출량(목재는 모든 縣, 면적 축).
  * - `officer-native-county-v1.json` — 인물 본관 縣. `method == DIRECT` 행만 쓴다.
  */
 @Component
@@ -65,7 +65,7 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
 
     fun parseProduction(bytes: ByteArray): Map<String, List<Specialty>> {
         val root = objectMapper.readTree(bytes)
-        check(root.path("schemaVersion").asInt() == 2 && root.path("ledgerId").asText() == "hwiha-resource-production-v1") {
+        check(root.path("schemaVersion").asInt() == 2 && root.path("ledgerId").asText() == "resource-production-v1") {
             "Unexpected HWIHA resource production ledger header"
         }
         val result = linkedMapOf<String, List<Specialty>>()
@@ -108,8 +108,8 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
     }
 
     companion object {
-        const val PRODUCTION = "hwiha/hwiha-resource-production-v1.json"
-        const val NATIVE_COUNTY = "hwiha/officer-native-county-v1.json"
+        const val PRODUCTION = "campaign/resource-production-v1.json"
+        const val NATIVE_COUNTY = "campaign/officer-native-county-v1.json"
         const val CREATED_GENERAL_SOURCE = "opensamguk:created-general"
     }
 }

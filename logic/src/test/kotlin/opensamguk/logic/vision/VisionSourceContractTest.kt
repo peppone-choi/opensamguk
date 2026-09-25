@@ -24,7 +24,7 @@ import opensamguk.logic.world.HanCommanderyIndex
 import kotlin.test.*
 
 /**
- * 통합 계약: 내정 스트림이 **쓰는** 꼴(`hwihaScoutPosts` 장수 meta, `hwihaCountyWorks` 縣治 meta)을 시야 스트림의
+ * 통합 계약: 내정 스트림이 **쓰는** 꼴(`scoutPosts` 장수 meta, `countyWorks` 縣治 meta)을 시야 스트림의
  * reader([MetaVisionSourceReader])가 그대로 읽어 시야 투영에서 FULL 이 된다. 어느 한쪽이 키·꼴을 바꾸면
  * 여기서 빨개진다(두 스트림 각각의 단위 테스트는 자기 쪽 꼴만 본다).
  */

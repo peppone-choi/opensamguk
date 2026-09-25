@@ -22,7 +22,7 @@ class EncounterDeployment private constructor(
 
     companion object {
         const val RULE_VERSION = 1
-        const val META_KEY = "hwihaEncounterDeployment"
+        const val META_KEY = "encounterDeployment"
 
         fun defaultMetaValue(encounter: CorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> =
             serialize(prepareDefault(encounter, index), encounter, index)

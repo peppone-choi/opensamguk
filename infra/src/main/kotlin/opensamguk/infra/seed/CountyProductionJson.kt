@@ -7,14 +7,14 @@ import opensamguk.logic.economy.Resources
 /**
  * 縣별 월 산지 생산(철·목재·말). 전·곡은 담지 않는다 — 그쪽은 `CountyIncome` 의 식이 만든다.
  *
- * 산출물은 `tools/map/build_hwiha_resource_production.py` 가 낸다. 철·말의 위치는 사료 산지 원장
+ * 산출물은 `tools/map/build_county_resource_production.py` 가 낸다. 철·말의 위치는 사료 산지 원장
  * (`resource-sites-v1`), 목재는 han-tiles 의 삼림 가능 칸 수이고, 단가만 게임 설계다. 단가를 바꾸려면
  * 그 도구의 상수를 고치고 다시 생성한다 — 런타임이 수치를 추정하지 않는다.
  *
  * 파일이 없으면 **빈 표**다. 생산이 0 이 되는 것이 조용히 다른 수치를 만들어 내는 것보다 안전하다.
  */
 object CountyProductionJson {
-    const val RESOURCE = "hwiha/county-production-v1.json"
+    const val RESOURCE = "campaign/county-production-v1.json"
 
     private val cached: Map<Int, Resources> by lazy { load(RESOURCE) }
 

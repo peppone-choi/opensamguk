@@ -184,7 +184,7 @@ object SiegeAssault {
     private fun hash(outcome: Outcome, rounds: Int, results: List<UnitResult>, garrison: Int): String {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
-            out.writeUTF("hwihaSiegeAssault:v$RULE_VERSION"); out.writeUTF(outcome.name); out.writeInt(rounds); out.writeInt(garrison)
+            out.writeUTF("siegeAssault:v$RULE_VERSION"); out.writeUTF(outcome.name); out.writeInt(rounds); out.writeInt(garrison)
             results.sortedBy { it.bugokId }.forEach { listOf(it.bugokId, it.troops, it.morale, it.fatigue).forEach(out::writeInt) }
         }
         return MessageDigest.getInstance("SHA-256").digest(bytes.toByteArray()).joinToString("") { "%02x".format(it) }

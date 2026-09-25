@@ -206,7 +206,7 @@ class ReservedTurnHandler(
     private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
     /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
     private val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener = opensamguk.engine.campaign.WarOutcomeListener.NONE,
-    private val hwihaMarchReactions: opensamguk.engine.campaign.MarchReactionPolicy = opensamguk.engine.campaign.MarchReactionPolicy.NON_BLOCKING,
+    private val marchReactions: opensamguk.engine.campaign.MarchReactionPolicy = opensamguk.engine.campaign.MarchReactionPolicy.NON_BLOCKING,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
@@ -224,7 +224,7 @@ class ReservedTurnHandler(
     private val siegeHandler by lazy { opensamguk.engine.campaign.SiegeHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
     private val travelHandler by lazy { opensamguk.engine.campaign.TravelHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, marchReactions, hwihaWarOutcomes) }
     private val fieldHandler by lazy { opensamguk.engine.campaign.FieldHandler(world, recorder, hwihaDomesticContext) }
     private val cityMilitaryHandler by lazy { opensamguk.engine.campaign.CityMilitaryHandler(world, recorder, hwihaDomesticContext) }
     private val personalHandler by lazy { opensamguk.engine.campaign.PersonalHandler(world, recorder, hwihaDomesticContext) }

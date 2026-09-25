@@ -32,9 +32,9 @@ class YuzhouCampaignInvarianceTest {
         val recorder: ChangeRecorder, val outcomes: CampaignWorldFixture.RecordingOutcomes)
 
     private fun campaign(npcDeploy: Boolean = true, seed: String = "00"): Campaign {
-        val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
+        val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
-        val warehouses = requireNotNull(scenario.hwihaWarehouses).warehouses
+        val warehouses = requireNotNull(scenario.warehouses).warehouses
         val provinceOf = bundle.projection.bindingsByCityId.mapNotNull { (id, b) -> b.landProvinceId?.let { id to it } }.toMap()
         // Same initial stats the importer writes: occupied → 70% of max, neutral → the map's initial values.
         val cities = mapCities.map { c ->
@@ -47,14 +47,14 @@ class YuzhouCampaignInvarianceTest {
                 supplyState = 1, meta = mapOf("trust" to if (occupied) 80.0 else 50.0) + (warehouses[c.id]?.let {
                     mapOf(CountyWarehouse.META_KEY to CountyWarehouse(c.id, 0, it).toMetaValue()) } ?: emptyMap()))
         }
-        val lords = scenario.generals.filter { it.hwihaLord == true }
+        val lords = scenario.generals.filter { it.lord == true }
         val generals = lords.mapIndexed { index, g ->
             TurnGeneral(id = index + 1, name = g.name, nationId = g.nationId, cityId = g.locatedCity!!.toInt(), troopId = 0,
                 stats = GeneralStats(g.leadership, g.strength, g.intel, g.politics, g.charm), experience = 0, dedication = 0,
                 officerLevel = 12, npcState = 2, turnTime = Instant.parse("0190-01-01T00:00:00Z").plusSeconds(index.toLong()),
-                meta = mapOf(LordStatus.META_KEY to true, PersonPolicyState.META_KEY to g.hwihaPersonPolicy!!.toMetaValue()))
+                meta = mapOf(LordStatus.META_KEY to true, PersonPolicyState.META_KEY to g.personPolicy!!.toMetaValue()))
         }
-        val units = scenario.hwihaUnits.mapIndexed { index, u ->
+        val units = scenario.units.mapIndexed { index, u ->
             Bugok(index + 1, lords.indexOfFirst { it.name == u.general } + 1, u.name, u.troops, u.crewTypeId, u.training, u.morale,
                 provisions = u.provisions)
         }
@@ -100,20 +100,20 @@ class YuzhouCampaignInvarianceTest {
         val owners = run.world.listCities().associate { it.id to it.nationId }
         repeat(36) { run.phase(it) }
         val deployed = run.world.listGenerals().count { DeploymentState.META_KEY in it.meta } +
-            run.world.listHwihaSieges().size
+            run.world.listSieges().size
         assertTrue(deployed > 0, "NPC lords deployed")
-        assertTrue(run.world.listHwihaSieges().isNotEmpty(), "an arrived corps besieged a county")
+        assertTrue(run.world.listSieges().isNotEmpty(), "an arrived corps besieged a county")
         assertTrue(run.outcomes.encounters.isNotEmpty(), "a relief corps met a besieging corps and the battle resolved")
         assertTrue(run.world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta }, "battle record kept")
-        val captured = run.world.listHwihaSieges().filter { it.status == SiegeService.FALLEN }
-        assertTrue(captured.isNotEmpty(), "a county fell: ${run.world.listHwihaSieges().map { it.countyId to it.status }}")
+        val captured = run.world.listSieges().filter { it.status == SiegeService.FALLEN }
+        assertTrue(captured.isNotEmpty(), "a county fell: ${run.world.listSieges().map { it.countyId to it.status }}")
         // A county can change hands more than once; the row keeps its latest siege, so its besieger holds it now.
         assertTrue(captured.all { run.world.getCityById(it.countyId)!!.nationId == it.besiegerNationId },
             captured.joinToString { "${it.countyId}: was ${owners[it.countyId]} now ${run.world.getCityById(it.countyId)!!.nationId} by ${it.besiegerNationId} ${it.endReason}" })
         assertTrue(run.outcomes.captures.size >= captured.size, "every capture is reported, recaptures included")
         assertTrue(captured.any { owners[it.countyId] != it.besiegerNationId }, "the map changed hands")
         val durations = captured.map { it.turns }.sorted()
-        println("yuzhou-simulation encounters=${run.outcomes.encounters.size} sieges=${run.world.listHwihaSieges().size} " +
+        println("yuzhou-simulation encounters=${run.outcomes.encounters.size} sieges=${run.world.listSieges().size} " +
             "fallen=${captured.size} battles=${run.world.listGenerals().count { EncounterResolver.BATTLE_RECORD_KEY in it.meta }} " +
             "fallTurns=$durations target12to24=${durations.count { it in 12..24 }}/${durations.size}")
         WorldStateBaseline.assertMatches("yuzhou-36-seed-00", run.world)
@@ -134,7 +134,7 @@ class YuzhouCampaignInvarianceTest {
                 listOf(
                     run.world.listCities().sortedBy { it.id }.map { it.id to it.nationId },
                     run.world.listBugoks().sortedBy { it.id }.map { listOf(it.id, it.troops, it.provisions) },
-                    run.world.listHwihaSieges().sortedBy { it.countyId }.map { listOf(it.countyId, it.status, it.turns, it.timeline) },
+                    run.world.listSieges().sortedBy { it.countyId }.map { listOf(it.countyId, it.status, it.turns, it.timeline) },
                     run.outcomes.encounters.toList(), run.outcomes.captures.toList(),
                 )
             }
@@ -145,7 +145,7 @@ class YuzhouCampaignInvarianceTest {
     @Test fun `cutting npc deployment leaves the slice without sieges or captures`() {
         val run = campaign(npcDeploy = false)
         repeat(12) { run.phase(it) }
-        assertTrue(run.world.listHwihaSieges().isEmpty())
+        assertTrue(run.world.listSieges().isEmpty())
         assertTrue(run.outcomes.captures.isEmpty() && run.outcomes.encounters.isEmpty())
     }
 }

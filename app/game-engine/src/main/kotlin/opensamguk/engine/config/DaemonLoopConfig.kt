@@ -347,7 +347,7 @@ class DaemonLoopConfig {
         } else null
         // Saved reactions use the same pinned commandery sight and land topology as scouting. A missing index
         // cannot silently turn a pending interception into clear passage.
-        val hwihaMarchReactions: opensamguk.engine.campaign.MarchReactionPolicy = visionContext?.let {
+        val marchReactions: opensamguk.engine.campaign.MarchReactionPolicy = visionContext?.let {
             opensamguk.engine.campaign.MarchReactionInterpreter(it.topology, it.metrics, it.commanderies, it.rules)
         } ?: opensamguk.engine.campaign.MarchReactionPolicy { current, _, _ ->
             if (opensamguk.logic.input.MarchReactions.presence(current.getState().meta) ==
@@ -373,7 +373,7 @@ class DaemonLoopConfig {
             hwihaVisionContext = visionContext,
             hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
             hwihaWarOutcomes = hwihaWarOutcomes,
-            hwihaMarchReactions = hwihaMarchReactions,
+            marchReactions = marchReactions,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
@@ -521,7 +521,7 @@ class DaemonLoopConfig {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.campaign.AssignmentMarchTurn(world, recorder,
                     artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes,
-                    hwihaMarchReactions)
+                    marchReactions)
                 movement::onTurn
             } else { _, _, _ -> },
             hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {

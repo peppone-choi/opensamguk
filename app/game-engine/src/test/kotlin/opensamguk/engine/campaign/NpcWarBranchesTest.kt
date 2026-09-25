@@ -49,16 +49,16 @@ class NpcWarBranchesTest {
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.nextPhase(world)
         fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
-        assertEquals(SiegeService.ACTIVE, world.getHwihaSiege(route.destinationCounty)?.status)
+        assertEquals(SiegeService.ACTIVE, world.getSiege(route.destinationCounty)?.status)
         fixture.deploy(world, recorder, 2, listOf(8), route.start)
         val now = world.getState()
-        world.putHwihaSiege(HwihaSiege(route.startCity, SiegeService.ACTIVE, 2, 2, "order-2", 2, 1,
+        world.putSiege(Siege(route.startCity, SiegeService.ACTIVE, 2, 2, "order-2", 2, 1,
             route.first.id, now.currentYear, now.currentMonth, now.currentPhase,
             morale = 10_000, garrison = 100))
         assertEquals(route.start, selector.reliefFor(world, 1))
         fixture.nextPhase(world)
         siegeService(world, recorder).npcAct(1)
-        assertEquals("RELIEF", world.getHwihaSiege(route.destinationCounty)?.endReason)
+        assertEquals("RELIEF", world.getSiege(route.destinationCounty)?.endReason)
         assertNull(DeploymentState.read(world.getGeneralById(1)!!.meta))
         fixture.nextPhase(world)
         assertEquals(route.start, selector.choose(world, 1)?.destination)
@@ -106,7 +106,7 @@ class NpcWarBranchesTest {
         val city = world.getCityById(route.destinationCounty)!!
         val expected = minOf(city.defenceMax * CampaignBalance.CAPTURE_GARRISON_DEFENCE_MAX_PERCENT / 100,
             800 * CampaignBalance.CAPTURE_GARRISON_MAX_CORPS_PERCENT / 100)
-        assertEquals(SiegeService.FALLEN, world.getHwihaSiege(city.id)?.status)
+        assertEquals(SiegeService.FALLEN, world.getSiege(city.id)?.status)
         assertEquals(expected, CityMilitaryState.read(city.meta, city.defence).troops)
         assertEquals(100, city.defence, "captured troops must not increase the fortification score")
         assertEquals(500 - expected * 500 / 800, world.getBugokById(7)!!.troops)

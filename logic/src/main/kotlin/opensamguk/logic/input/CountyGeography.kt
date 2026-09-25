@@ -58,7 +58,7 @@ class NativeCountyLedger internal constructor(private val jurisdictionByName: Ma
     }
 
     companion object {
-        const val RESOURCE = "hwiha/officer-native-county-v1.json"
+        const val RESOURCE = "campaign/officer-native-county-v1.json"
         const val CREATED_GENERAL_SOURCE = "opensamguk:created-general"
 
         fun load(): NativeCountyLedger? =

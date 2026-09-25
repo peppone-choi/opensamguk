@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 class RoadFortController(private val reader: RoadFortReader) {
-    @GetMapping("/api/hwiha/road-forts")
+    @GetMapping("/api/road-forts")
     fun forts(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()

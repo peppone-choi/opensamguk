@@ -17,15 +17,15 @@ class ScenarioJsonTest {
         val old = ScenarioJson.loadScenario("{" + raw)
         val name = old.baseGenerals.first().name
         fun parse(declaration: String, profile: String = "HWIHA") =
-            ScenarioJson.loadScenario("{\"ruleProfile\":\"$profile\",\"hwihaLords\":$declaration," + raw)
+            ScenarioJson.loadScenario("{\"ruleProfile\":\"$profile\",\"lords\":$declaration," + raw)
         val encoded = opensamguk.infra.persistence.MetaJson.encode(listOf(name))
         val declared = parse(encoded)
-        assertTrue(declared.generals.single { it.name == name }.hwihaLord == true)
-        assertTrue(declared.generals.filter { it.name != name }.all { it.hwihaLord == false })
-        assertTrue(old.generals.all { it.hwihaLord == false })
-        val omittedProfile = ScenarioJson.loadScenario("{\"hwihaLords\":$encoded," + raw)
+        assertTrue(declared.generals.single { it.name == name }.lord == true)
+        assertTrue(declared.generals.filter { it.name != name }.all { it.lord == false })
+        assertTrue(old.generals.all { it.lord == false })
+        val omittedProfile = ScenarioJson.loadScenario("{\"lords\":$encoded," + raw)
         assertNull(omittedProfile.ruleProfile)
-        assertTrue(omittedProfile.generals.single { it.name == name }.hwihaLord == true)
+        assertTrue(omittedProfile.generals.single { it.name == name }.lord == true)
         for (bad in listOf("null", "42", "[42]", "[\"\"]", "[\"no-such-general\"]",
             opensamguk.infra.persistence.MetaJson.encode(listOf(name, name)))) {
             assertFailsWith<IllegalArgumentException> { parse(bad) }
@@ -34,7 +34,7 @@ class ScenarioJsonTest {
         assertFailsWith<IllegalArgumentException> { parse("null", "SAMMO") }
         val duplicate = opensamguk.infra.persistence.MetaJson.decode("{" + raw).toMutableMap()
         duplicate["ruleProfile"] = "HWIHA"
-        duplicate["hwihaLords"] = listOf(name)
+        duplicate["lords"] = listOf(name)
         duplicate["general_ex"] = listOf((duplicate["general"] as List<*>).first())
         assertFailsWith<IllegalArgumentException> {
             ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(duplicate))

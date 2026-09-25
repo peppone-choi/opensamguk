@@ -19,10 +19,10 @@ internal object ScenarioPersonPolicies {
     }
 
     fun decode(root: Map<String, Any?>, profile: RuleProfile?): Map<String, Declaration> {
-        if ("hwihaPersonPolicies" !in root) return emptyMap()
-        require(profile == RuleProfile.HWIHA) { "hwihaPersonPolicies requires HWIHA" }
-        val entries = root["hwihaPersonPolicies"] as? List<*>
-            ?: throw IllegalArgumentException("hwihaPersonPolicies must be an array")
+        if ("personPolicies" !in root) return emptyMap()
+        require(profile == RuleProfile.HWIHA) { "personPolicies requires HWIHA" }
+        val entries = root["personPolicies"] as? List<*>
+            ?: throw IllegalArgumentException("personPolicies must be an array")
         val result = linkedMapOf<String, Declaration>()
         val identities = mutableSetOf<Triple<String, String, Int>>()
         for (raw in entries) {
@@ -45,7 +45,7 @@ internal object ScenarioPersonPolicies {
 
     /** Also checks manually constructed Scenario objects before the importer writes anything. */
     fun validate(general: ScenarioGeneral) {
-        val state = general.hwihaPersonPolicy ?: return
+        val state = general.personPolicy ?: return
         requireSynthetic(state)
         require(state.renownCapacity == RenownRules.INITIAL_CAPACITY) { "Seed capacity must use the new-person policy" }
         explicitStats(general)

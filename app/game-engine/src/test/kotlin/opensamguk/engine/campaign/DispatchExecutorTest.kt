@@ -16,7 +16,7 @@ class DispatchExecutorTest {
     private fun person(id: Int, lord: Boolean = false) = TurnGeneral(id=id, name="G$id", nationId=1, cityId=10,
         userId=if(lord) null else "42", npcState=2, troopId=0, stats=GeneralStats(70,70,70), experience=500,
         dedication=600, officerLevel=0, gold=1000, rice=2000, crew=300, turnTime=Instant.EPOCH,
-        meta=mapOf("hwihaLord" to lord, "keep" to "preserved", PersonPolicyState.META_KEY to
+        meta=mapOf("lord" to lord, "keep" to "preserved", PersonPolicyState.META_KEY to
             PersonPolicyState(30,true,"synthetic-test","1",id).toMetaValue()))
     private fun world(): InMemoryTurnWorld {
         val hash="b".repeat(64)

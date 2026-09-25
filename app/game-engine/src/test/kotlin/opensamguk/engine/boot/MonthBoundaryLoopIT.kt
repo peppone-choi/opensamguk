@@ -257,7 +257,7 @@ class MonthBoundaryLoopIT {
             // 지나게 하려면 집계를 직접 심어야 한다. 한 달에 종류당 한 건이라 전공 2건은 서로 다른 두 달이다
             // (199-12, 200-01 — 둘 다 200-02 월단평 이전) → CANON 에서 +3*2.
             jdbc.update(
-                """UPDATE general SET meta = meta || '{"hwihaRenownTally":{"entries":[
+                """UPDATE general SET meta = meta || '{"renownTally":{"entries":[
                      {"kind":"warMerit","stamp":"0199-12","source":"ENCOUNTER_VICTORY"},
                      {"kind":"warMerit","stamp":"0200-01","source":"COUNTY_CAPTURE"}]}}'::jsonb
                    WHERE world_id=? AND id=1""",

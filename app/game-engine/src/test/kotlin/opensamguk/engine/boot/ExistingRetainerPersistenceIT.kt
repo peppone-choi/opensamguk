@@ -49,7 +49,7 @@ class ExistingRetainerPersistenceIT {
         // Storage contract only: this fixture does not activate a HWIHA gameplay handler.
         val world = InMemoryTurnWorld(load())
         val before = world.getGeneralById(10)!!
-        val marked = before.copy(meta = LinkedHashMap(before.meta).apply { put("hwihaLord", true) })
+        val marked = before.copy(meta = LinkedHashMap(before.meta).apply { put("lord", true) })
         val recorder = ChangeRecorder()
         world.applyGeneralDirtyFree(marked)
         recorder.diffGeneral(opensamguk.engine.turn.PerTurnOverlay.toLogicGeneral(before),

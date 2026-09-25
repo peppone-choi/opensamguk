@@ -57,7 +57,7 @@ class WarehouseSeedIT {
         val raw = SyntheticScenario.root().toMutableMap()
         if (!includeProfile) raw.remove("ruleProfile")
         raw["nation"] = listOf(listOf("QA 세력", "#123456", 0, 0, "synthetic QA", 0, null, 1, listOf("허창")))
-        raw["hwihaWarehouses"] = declaration()
+        raw["warehouses"] = declaration()
         return ScenarioJson.loadScenario(MetaJson.encode(raw))
     }
     private fun importer(scenario: Scenario) = ScenarioImporter(scenario, cities, artifactsRoot=root)
@@ -74,27 +74,27 @@ class WarehouseSeedIT {
     @Test fun `fresh import preserves explicit county stock only and reboot cannot refill consumed inventory`() {
         val scenario = scenario()
         importer(scenario).importAll(jdbc, WorldId(1))
-        val seed = assertNotNull(scenario.hwihaWarehouses)
+        val seed = assertNotNull(scenario.warehouses)
         for ((id, stock) in seed.warehouses) assertEquals(CountyWarehouse(id, 0, stock), stored(id))
         for (city in cities.filter { it.id !in counties }) assertNull(stored(city.id))
         assertEquals(0L, jdbc.queryForObject("SELECT sum(gold+rice)::bigint FROM nation", Long::class.java))
         val meta = MetaJson.decode(jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id=1", String::class.java)!!)
-        val provenance = meta["hwihaWarehouseSeed"] as Map<*, *>
+        val provenance = meta["warehouseSeed"] as Map<*, *>
         assertEquals(seed.topologyHash, provenance["topologyHash"])
         assertEquals("GAME_DESIGN", provenance["source"])
         val id = counties.first()
-        jdbc.update("UPDATE city SET meta=jsonb_set(meta,'{hwihaCountyWarehouse,stock,grain}','0') WHERE world_id=1 AND id=?", id)
+        jdbc.update("UPDATE city SET meta=jsonb_set(meta,'{countyWarehouse,stock,grain}','0') WHERE world_id=1 AND id=?", id)
         assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(WorldId(1)) { error("existing world must not reconstruct inventory") }.seeded)
         assertEquals(0L, stored(id)!!.stock.grain)
     }
 
     @Test fun `wrong pins incomplete or noncounty inventory and legacy treasury fail before any writes`() {
         val scenario = scenario()
-        val seed = scenario.hwihaWarehouses!!
+        val seed = scenario.warehouses!!
         val invalid = listOf(
-            scenario.copy(hwihaWarehouses=seed.copy(topologyHash="0".repeat(64))),
-            scenario.copy(hwihaWarehouses=seed.copy(warehouses=seed.warehouses-counties.first())),
-            scenario.copy(hwihaWarehouses=seed.copy(warehouses=seed.warehouses+(Int.MAX_VALUE to Resources()))),
+            scenario.copy(warehouses=seed.copy(topologyHash="0".repeat(64))),
+            scenario.copy(warehouses=seed.copy(warehouses=seed.warehouses-counties.first())),
+            scenario.copy(warehouses=seed.copy(warehouses=seed.warehouses+(Int.MAX_VALUE to Resources()))),
             scenario.copy(nations=scenario.nations.map { it.copy(gold=1) }),
             scenario.copy(nations=scenario.nations.map { it.copy(rice=1) }),
             scenario.copy(ruleProfile=RuleProfile.SAMMO),

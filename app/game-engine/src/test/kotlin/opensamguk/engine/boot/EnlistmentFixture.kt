@@ -27,7 +27,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
             jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
                 VALUES (?,?,?,?,?,?,?,1000,2000,300,70,70,70,70,70,'0200-01-01T00:00:00Z','{"command":"휴식"}'::jsonb,?::jsonb)""",
                 id, generalId, "G$generalId", nation, binding.key, npc, if (generalId == 10) 12 else 0,
-                """{"hwihaLord":${generalId != 2},"keep":"unchanged","hwihaPersonPolicy":{
+                """{"lord":${generalId != 2},"keep":"unchanged","personPolicy":{
                     "renownCapacity":30,"acceptsEnlistment":true,"statSourceId":"synthetic-storage-fixture",
                     "statSourceRevision":"fixture-v1","officerId":$generalId}}""")
             val topology = bundle.projection.topology

@@ -85,7 +85,7 @@ class DeploymentPersistenceIT {
         save(world,recorder);world=cold(id)
         val state=executor(world,ChangeRecorder()).projection()!!
         assertIs<DeploymentAssessment.Eligible>(DeploymentRules.assessActive(result.corps,state))
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaDeployment}','null'::jsonb) WHERE world_id=? AND id=1",id)
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{deployment}','null'::jsonb) WHERE world_id=? AND id=1",id)
         world=cold(id)
         assertNull(executor(world,ChangeRecorder()).projection())
         assertEquals(DeploymentFailure.STATE_UNAVAILABLE,assertIs<DeploymentExecution.Rejected>(

@@ -58,7 +58,7 @@ data class ReactionOrder(
 }
 
 /**
- * 월드 meta `hwihaMarchReactions`. 버전 1 의 세 목록 가운데 `interceptions`(요격)·`avoidanceOrders`(회피)는 군단 방침이
+ * 월드 meta `marchReactions`. 버전 1 의 세 목록 가운데 `interceptions`(요격)·`avoidanceOrders`(회피)는 군단 방침이
  * 채운다(지휘 장수 id, 명령 id 순). `installedSchemes`는 설치 입력 스트림이 쓴 권위 있는 지역 기록이다.
  * 키가 없거나 꼴·항목이 어긋나면 빈 목록으로 바꿔 읽지 않는다.
  */
@@ -99,7 +99,7 @@ sealed interface MarchReactions {
     enum class Presence { MISSING, MALFORMED, EMPTY, PENDING }
 
     companion object {
-        const val META_KEY = "hwihaMarchReactions"
+        const val META_KEY = "marchReactions"
         private val fields = setOf("version", "installedSchemes", "interceptions", "avoidanceOrders")
 
         fun of(interceptions: List<ReactionOrder>, avoidanceOrders: List<ReactionOrder>,

@@ -94,6 +94,10 @@ class VisionTest {
         listOf(corps("order-own", 1, 1, 11), corps("order-neighbour", 2, 2, 21, 22),
             corps("order-secret-fog", 3, 3, 31), corps("order-far", 4, 3, 41)))
 
+    @Test fun `opaque corps key uses the neutral stored domain`() {
+        assertEquals("b9e894c4ea86e3f7", ScoutCapture.corpsKey("order-42"))
+    }
+
     @Test fun `fog corps never appear, own corps are exact and others are banded`() {
         val v = viewer(posts = listOf(ScoutPost(5, "p0")))   // FULL: 0, 1
         val view = Vision.project(v, index, rules, now)

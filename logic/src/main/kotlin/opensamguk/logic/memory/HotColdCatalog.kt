@@ -138,8 +138,8 @@ object HotColdCatalog {
             bound = AccessBound.HOT_ENTITY_SET,
         ),
         SnapshotAccess(
-            methodName = "loadHwihaSieges",
-            relation = "hwiha_siege",
+            methodName = "loadSieges",
+            relation = "siege",
             temperature = DataTemperature.ALWAYS_HOT,
             boundary = AccessBoundary.BOOT_SNAPSHOT,
             ordering = "county_id ASC",

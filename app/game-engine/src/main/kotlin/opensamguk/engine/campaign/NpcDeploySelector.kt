@@ -14,7 +14,7 @@ import opensamguk.logic.world.*
  * NPC 출병 선택기(#792 일부) — 사람 소유가 아닌 장수가 예약 없이 턴을 맞으면 `action.deploy` 를 골라 준다.
  * 입력만 고르고 실행·기록은 기존 출병 핸들러가 한다(출사 선택기와 같은 방식).
  *
- * 고르는 규칙(2026-09-23 확정, `hwiha-s3-provisional-v1.json` npcDeploy): 세력에 속했고, 출전·조우·포위 중이 아니며,
+ * 고르는 규칙(2026-09-23 확정, `campaign-balance-v1.json` npcDeploy): 세력에 속했고, 출전·조우·포위 중이 아니며,
  * 직속(부장 지휘 아님) 부곡이 있는 NPC 가 현재 省에서 간선 [CampaignBalance.NPC_DEPLOY_MAX_EDGES] 개 이내의
  * 적대(교전 중 또는 무주) 縣治 가운데 병력이 수비병 × [CampaignBalance.NPC_DEPLOY_MIN_RATIO] 이상인 곳을
  * 교전 세력 縣을 무주 縣보다 먼저 보고, 각 묶음에서는 가까운 간선 고리(省 hop)부터,
@@ -40,7 +40,7 @@ class NpcDeploySelector(
         // A held NPC card moves through its holder's deployment and standing policy.
         if (world.listRetainers().any { it.generalId == actorId }) return null
         if (CorpsEncounter.META_KEY in actor.meta || CountyAssignment.META_KEY in actor.meta) return null
-        if (world.listHwihaSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
+        if (world.listSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
         val projection = DeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
         if (projection.deployed.any { it.commanderGeneralId == actorId || it.ownerGeneralId == actorId }) return null
         val units = world.bugoksOf(actorId).filter { it.commanderRetainerId == null && it.troops > 0 }
@@ -65,7 +65,7 @@ class NpcDeploySelector(
             return DeployInput(actorId, units.map { it.id }.sorted(), home.third)
         }
         val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
-        val claimed = world.listHwihaSieges().filter { it.status == SiegeService.ACTIVE }.map { it.countyId }.toSet() +
+        val claimed = world.listSieges().filter { it.status == SiegeService.ACTIVE }.map { it.countyId }.toSet() +
             projection.people.mapNotNull { person ->
                 world.getGeneralById(person.id)?.takeIf { it.nationId == actor.nationId }
                     ?.let { try { CorpsOrder.read(it.meta, topology) } catch (_: IllegalArgumentException) { null } }
@@ -123,7 +123,7 @@ class NpcDeploySelector(
     private fun reliefTarget(world: InMemoryTurnWorld, nationId: Int, position: StrategicNodeRef.LandProvince, troops: Long,
         projection: DeploymentProjection, edges: StrategicEdgeStateSnapshot): StrategicNodeRef.LandProvince? {
         val near = provinceHops(position, CampaignBalance.NPC_DEPLOY_MAX_EDGES).keys
-        return world.listHwihaSieges().filter { it.status == SiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
+        return world.listSieges().filter { it.status == SiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
             val city = world.getCityById(siege.countyId)?.takeIf { it.nationId == nationId } ?: return@mapNotNull null
             val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (node == position || node.id !in near) return@mapNotNull null

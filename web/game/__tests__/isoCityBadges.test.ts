@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import ledger from '../../../data/curated/han/hwiha-domestic-v1.json';
+import ledger from '../../../data/curated/han/domestic-v1.json';
 import { WORK_BADGE_LABELS, cityBadgesById } from '../lib/iso-city-badges';
 
 describe('아이소 城 상태 배지', () => {

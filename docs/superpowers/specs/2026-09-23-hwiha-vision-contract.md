@@ -29,7 +29,7 @@
 | 출처 | 읽는 곳 | 비고 |
 |---|---|---|
 | SELF | `general_spatial_position`(본인) | 육지 省일 때만 |
-| OWN_CORPS | 본인이 소유한 출전 군단(`hwihaDeployment`)의 지휘 장수 위치 | 수역에 있으면 郡國 없음 |
+| OWN_CORPS | 본인이 소유한 출전 군단(`deployment`)의 지휘 장수 위치 | 수역에 있으면 郡國 없음 |
 | RETINUE | 본인 휘하 카드(`general_retainer.master_general_id = 본인`, `general_id` 있음)의 위치 | 발령 부임지(`hwihaCountyAssignment`)는 자기 세력 縣이라 TERRITORY 가 덮는다 |
 | TERRITORY | `province_control.nation_id = 본인 세력`(세력 0 은 없음) | 省 하나라도 있으면 그 郡國 전체 |
 | SCOUT_POST | 본인 장수 meta **`hwihaScoutPosts`** | 아래 스키마. 내정 입력 흐름이 기록한다 |
@@ -82,9 +82,9 @@ city.meta.hwihaCountyWorks = {"version":1,"works":[{"kind":"WATCHTOWER_BEACON","
 // 위치가 육지 省이 아니면 status READY, available false, code POSITION_UNAVAILABLE, options 없음.
 ```
 
-- `corpsId`: 자기 군단은 출병 requestId(= `hwihaDeployment.orderId`, 출병 옵션의 `order.orderId` 와 같다), 남의 군단은 `sha256("hwiha-corps:"+orderId)` 앞 16자. 남의 requestId 는 내보내지 않는다.
+- `corpsId`: 자기 군단은 출병 requestId(= `deployment.orderId`, 출병 옵션의 `order.orderId` 와 같다), 남의 군단은 `sha256("corps:"+orderId)` 앞 16자. 남의 requestId 는 내보내지 않는다.
 - `troops` 는 자기 군단만, `troopsBand` 는 남의 군단만. `marchPath`·`destinationProvinceId` 는 자기 군단만.
-- `interceptRange` 는 **내보내지 않는다** — 요격 방침이 아직 없다(`HwihaMarchReactions` 는 빈 목록만 지원).
+- `interceptRange` 는 **내보내지 않는다** — 요격 방침이 아직 없다(`MarchReactions` 는 빈 목록만 지원).
 
 ## 5. 군단 투영 규칙(#343 · #465)
 

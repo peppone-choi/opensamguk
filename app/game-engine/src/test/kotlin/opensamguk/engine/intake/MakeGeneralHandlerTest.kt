@@ -38,8 +38,8 @@ class MakeGeneralHandlerTest {
         assertEquals(legacy.stats, created.stats)
         assertEquals(legacy.turnTime, created.turnTime)
         assertEquals(legacy.role, created.role)
-        assertEquals(legacy.meta, created.meta - setOf("hwihaLord", "hwihaPersonPolicy"))
-        assertEquals(false, created.meta["hwihaLord"])
+        assertEquals(legacy.meta, created.meta - setOf("lord", "personPolicy"))
+        assertEquals(false, created.meta["lord"])
         val policy = opensamguk.logic.input.PersonPolicyState.read(created.meta)!!
         assertEquals(opensamguk.logic.input.PersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
         val stats = created.stats

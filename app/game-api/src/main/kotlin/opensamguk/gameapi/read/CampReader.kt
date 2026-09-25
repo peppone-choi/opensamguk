@@ -58,7 +58,7 @@ class CampReader(
     private val geography: CityGeography,
     private val objectMapper: ObjectMapper,
 ) {
-    /** 엔진과 같은 런타임 산지 표(`infra` 의 hwiha/county-production-v1.json). 테스트가 바꿔 끼운다. */
+    /** 엔진과 같은 런타임 산지 표(`infra` 의 campaign/county-production-v1.json). 테스트가 바꿔 끼운다. */
     internal var production: Map<Int, Resources> = CountyProductionJson.table()
 
     // ── 월단평 ─────────────────────────────────────────────────────────────
