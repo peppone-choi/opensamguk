@@ -25,6 +25,45 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    @Test fun `hwiha reserve classifies ledger delivery before route availability`() {
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")))
+        for ((inputId, expected) in mapOf(
+            "stratagem.play" to "NOT_DELIVERED",
+            "action.unlisted" to "UNKNOWN_INPUT",
+            "action.resign" to "NOT_DELIVERED",
+            "action.randomEnlist" to "UNKNOWN_INPUT",
+            "che_농지개간" to "WRONG_RULE_PROFILE",
+            "v2CityTransport" to "WRONG_RULE_PROFILE",
+            "v2GarrisonRecruit" to "WRONG_RULE_PROFILE",
+            "court.dispatch" to "INVALID_INPUT_CHANNEL",
+        )) {
+            assertEquals(expected, assertFailsWith<HwihaAdmissionDenied> {
+                service.reserveForOwner(10, inputId, 0, "{}", 42)
+            }.code, inputId)
+        }
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+        assertEquals(0, results.rows.size)
+    }
+
+    @Test fun `delivered deploy reaches its reservation admission`() {
+        val deploy = mock(HwihaDeployAdmission::class.java)
+        `when`(deploy.canonicalArguments(10, 42, 0, "{}"))
+            .thenThrow(HwihaAdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
+        val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
+            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaDeployAdmission = deploy)
+
+        assertEquals("ADMISSION_REACHED", assertFailsWith<HwihaAdmissionDenied> {
+            service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
+        }.code)
+    }
+
     private fun catalogFor(inputId: String, kind: String, state: String) =
         opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
             "retiredLegacyCommands":[],"retiredLegacyReasons":{},"inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
