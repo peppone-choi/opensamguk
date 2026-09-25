@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 1,
+  "scope": "S6-7a source-backed card candidates; no runtime activation",
+  "rows": [
+    {
+      "id": "unit.youzhou-cavalry",
+      "name": "유주돌기",
+      "historicalName": "幽州突騎",
+      "kind": "REGIONAL",
+      "availability": "COMMON",
+      "recruitmentSource": "幽州에서 징발한 돌기",
+      "requires": {
+        "generalName": null,
+        "regionName": "幽州"
+      },
+      "bondRecruitmentKinds": [],
+      "renownCost": {
+        "value": 3,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "지역 모집 전통은 고유 수행 부대보다 낮은 명망 점유로 둔다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "HORSES"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷08",
+          "section": "魏書·二公孫陶四張傳",
+          "quote": "光和中，涼州賊起，發幽州突騎三千人，假瓚都督行事傳，使將之",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "光和中"
+    },
+    {
+      "id": "unit.danyang-soldiers",
+      "name": "단양병",
+      "historicalName": "丹楊兵",
+      "kind": "REGIONAL",
+      "availability": "COMMON",
+      "recruitmentSource": "丹楊 지역에서 모은 병력",
+      "requires": {
+        "generalName": null,
+        "regionName": "丹楊"
+      },
+      "bondRecruitmentKinds": [],
+      "renownCost": {
+        "value": 3,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "지역 모집 전통은 고유 수행 부대보다 낮은 명망 점유로 둔다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷32",
+          "section": "蜀書·先主傳",
+          "quote": "謙以丹楊兵四千益先主",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "陶謙援劉備時"
+    },
+    {
+      "id": "unit.baima-yicong",
+      "name": "백마의종",
+      "historicalName": "白馬義從",
+      "kind": "NAMED",
+      "availability": "UNIQUE",
+      "recruitmentSource": "公孫瓚이 거느린 백마 기병 수행 집단",
+      "requires": {
+        "generalName": "公孫瓚",
+        "regionName": "幽州"
+      },
+      "bondRecruitmentKinds": [
+        "VOLUNTEER"
+      ],
+      "renownCost": {
+        "value": 7,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "실명 고유 수행 부대이므로 지역 전통보다 높은 명망을 점유한다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "HORSES"
+      ],
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷073",
+          "section": "劉虞公孫瓚陶謙列傳 第六十三",
+          "quote": "瓚常與善射之士數十人，皆乘白馬，以為左右翼，自號「白馬義從」",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "公孫瓚對烏桓時"
+    },
+    {
+      "id": "unit.hubao-cavalry",
+      "name": "호표기",
+      "historicalName": "虎豹騎",
+      "kind": "NAMED",
+      "availability": "UNIQUE",
+      "recruitmentSource": "曹純이 독한 기병",
+      "requires": {
+        "generalName": "曹純",
+        "regionName": null
+      },
+      "bondRecruitmentKinds": [
+        "VOLUNTEER"
+      ],
+      "renownCost": {
+        "value": 8,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "정예 기병의 희소한 고유 편제를 명망 상한에 반영한다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON",
+        "HORSES"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷09",
+          "section": "魏書·諸夏侯曹傳 曹純",
+          "quote": "督虎豹騎從圍南皮",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "曹純參與南皮圍攻時"
+    },
+    {
+      "id": "unit.xianzhen-camp",
+      "name": "함진영",
+      "historicalName": "陷陣營",
+      "kind": "NAMED",
+      "availability": "UNIQUE",
+      "recruitmentSource": "高順이 지휘한 정예 병력",
+      "requires": {
+        "generalName": "高順",
+        "regionName": null
+      },
+      "bondRecruitmentKinds": [
+        "VOLUNTEER"
+      ],
+      "renownCost": {
+        "value": 7,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "장수 고유 편제의 명망 점유를 백마의종과 같은 단계로 둔다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷07",
+          "section": "魏書·呂布臧洪傳 裴注引英雄記",
+          "quote": "鎧甲鬬具皆精練齊整，每所攻擊無不破者，名爲陷陣營",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "高順在呂布麾下時"
+    },
+    {
+      "id": "unit.qingzhou-soldiers",
+      "name": "청주병",
+      "historicalName": "青州兵",
+      "kind": "NAMED",
+      "availability": "UNIQUE",
+      "recruitmentSource": "曹操가 항복한 청주 황건 집단에서 뽑은 병력",
+      "requires": {
+        "generalName": "曹操",
+        "regionName": "青州"
+      },
+      "bondRecruitmentKinds": [],
+      "renownCost": {
+        "value": 6,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "항복 집단 재편을 고유 부대 카드로 한 장만 표현한다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷01",
+          "section": "魏書·武帝紀",
+          "quote": "受降卒三十餘萬，男女百餘萬口，收其精銳者，號爲青州兵",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "曹操受青州降卒時"
+    },
+    {
+      "id": "unit.daji-guards",
+      "name": "대극사",
+      "historicalName": "大戟士",
+      "kind": "NAMED",
+      "availability": "UNIQUE",
+      "recruitmentSource": "袁紹의 장막 수행 병력",
+      "requires": {
+        "generalName": "袁紹",
+        "regionName": null
+      },
+      "bondRecruitmentKinds": [
+        "VOLUNTEER"
+      ],
+      "renownCost": {
+        "value": 6,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "장막 호위 고유 편제로 명망 점유를 중간 단계에 둔다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷06",
+          "section": "魏書·董二袁劉傳",
+          "quote": "惟帳下彊弩數十張，大戟士百餘人自隨",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "袁紹與公孫瓚交戰時"
+    },
+    {
+      "id": "unit.jiefan-soldiers",
+      "name": "해번병",
+      "historicalName": "解煩兵",
+      "kind": "NAMED",
+      "availability": "UNIQUE",
+      "recruitmentSource": "韓當이 거느린 부대",
+      "requires": {
+        "generalName": "韓當",
+        "regionName": null
+      },
+      "bondRecruitmentKinds": [
+        "VOLUNTEER"
+      ],
+      "renownCost": {
+        "value": 7,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "고유 대부대 편제의 명망 점유를 백마의종과 같은 단계로 둔다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON"
+      ],
+      "sources": [
+        {
+          "book": "三國志",
+          "volume": "卷55",
+          "section": "吳書·十二虎臣傳 韓當",
+          "quote": "將敢死及解煩兵萬人，討丹楊賊，破之",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "韓當黃武二年受封後"
+    },
+    {
+      "id": "unit.chijia-regional",
+      "name": "적갑군",
+      "historicalName": "赤甲軍",
+      "kind": "REGIONAL",
+      "availability": "COMMON",
+      "recruitmentSource": "巴 지역의 병력 모집 전통",
+      "requires": {
+        "generalName": null,
+        "regionName": "巴"
+      },
+      "bondRecruitmentKinds": [],
+      "renownCost": {
+        "value": 4,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "지역 전통이지만 사료에 실명 부대가 있어 일반 지역 카드보다 한 단계 높인다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON"
+      ],
+      "sources": [
+        {
+          "book": "華陽國志",
+          "volume": "卷一",
+          "section": "巴志",
+          "quote": "漢時，赤甲軍常取其民",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "漢時, 세부 연대 UNKNOWN"
+    },
+    {
+      "id": "unit.liannu-regional",
+      "name": "연노사",
+      "historicalName": "連弩士",
+      "kind": "REGIONAL",
+      "availability": "COMMON",
+      "recruitmentSource": "諸葛亮이 巴 지역에서 뽑아 漢中으로 옮긴 정예 병력",
+      "requires": {
+        "generalName": "諸葛亮",
+        "regionName": "巴"
+      },
+      "bondRecruitmentKinds": [],
+      "renownCost": {
+        "value": 5,
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "장수와 지역의 동시 조건을 지역 전통의 명망 점유에 반영한다(재설계 §6.3·§6.6)."
+      },
+      "costColors": [
+        "GRAIN",
+        "IRON",
+        "TIMBER"
+      ],
+      "sources": [
+        {
+          "book": "華陽國志",
+          "volume": "卷一",
+          "section": "巴志",
+          "quote": "蜀丞相亮亦發其勁卒三千人為連弩士，遂移家漢中",
+          "grade": "PRIMARY"
+        }
+      ],
+      "grade": "PRIMARY",
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-25",
+        "basis": "재설계 §6.3의 유일성·모집원과 현행 CardAvailability·UnitBondKind·CostColor 계약에 맞춰 게임 목록을 정했다."
+      },
+      "attestedPeriod": "諸葛亮任蜀丞相時"
+    }
+  ]
+}
