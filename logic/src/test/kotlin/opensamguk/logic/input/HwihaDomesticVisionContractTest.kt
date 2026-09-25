@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.vision.ScoutPosts
+
 import opensamguk.logic.domestic.PlacementOrder
 import opensamguk.logic.domestic.ActivePlacement
 import opensamguk.logic.domestic.PlacementState
@@ -43,9 +45,9 @@ class HwihaDomesticVisionContractTest {
     @Test fun `a domestic-written arrived scout post is FULL vision and a marching one is none`() {
         val cards = listOf(DomesticCard(5, 1, 50, "staff"), DomesticCard(6, 1, 60, "staff"))
         val placements = mapOf(50 to scoutPlacement(5, 1, "p2", arrived = true), 60 to scoutPlacement(6, 1, "p4", arrived = false))
-        val ownerMeta = mapOf<String, Any?>(HwihaScoutPosts.META_KEY to HwihaScoutPosts.project(1, cards) { placements[it] })
+        val ownerMeta = mapOf<String, Any?>(ScoutPosts.META_KEY to ScoutPosts.project(1, cards) { placements[it] })
 
-        assertEquals(HwihaMetaVisionSourceReader.SCOUT_POSTS_KEY, HwihaScoutPosts.META_KEY)
+        assertEquals(HwihaMetaVisionSourceReader.SCOUT_POSTS_KEY, ScoutPosts.META_KEY)
         val read = reader.scoutPosts(ownerMeta)
         assertEquals(SourceRead(listOf(HwihaScoutPost(5, "p2")), 0), read, "도착한 정찰만 시야, 행군 중(MOVING)은 무효가 아니라 무시")
 

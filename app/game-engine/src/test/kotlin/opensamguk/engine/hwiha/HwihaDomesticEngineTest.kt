@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.ScoutPosts
+
 import opensamguk.logic.domestic.FieldInput
 
 import opensamguk.logic.domestic.PlacementState
@@ -145,7 +147,7 @@ class HwihaDomesticEngineTest {
         val world = world(); val recorder = ChangeRecorder()
         assertTrue(submit(world, recorder, "placement.assign", """{"cardId":5,"post":"SCOUT","provinceId":"A"}""").ok)
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)
-        fun posts() = world.getGeneralById(1)!!.meta[HwihaScoutPosts.META_KEY]
+        fun posts() = world.getGeneralById(1)!!.meta[ScoutPosts.META_KEY]
         assertEquals(mapOf("version" to 1, "posts" to listOf(mapOf("retainerId" to 5, "provinceId" to "A", "status" to "MOVING"))), posts())
         HwihaPlacementMarchTurn(world, recorder, topology, metrics).onTurn(3)
         assertEquals(mapOf("version" to 1, "posts" to listOf(mapOf("retainerId" to 5, "provinceId" to "A", "status" to "ACTIVE"))), posts())
