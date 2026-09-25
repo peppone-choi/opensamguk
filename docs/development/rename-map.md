@@ -74,6 +74,9 @@
 | `opensamguk.logic.input.HwihaFieldRules` | `opensamguk.logic.domestic.FieldRules` | 이 PR | 현장 행동 규칙 |
 | `opensamguk.logic.input.HwihaFieldEconomyAssessment` | `opensamguk.logic.domestic.FieldEconomyAssessment` | 이 PR | 현장 행동 자원 판정 |
 | `logic/input/HwihaFieldInputTest.kt` | `logic/domestic/FieldInputTest.kt` | 이 PR | 현장 행동 테스트 파일·타입·패키지 개명 |
+| `opensamguk.logic.input.HwihaScoutPosts` (`logic/input/HwihaScoutPosts.kt`) | `opensamguk.logic.vision.ScoutPosts` (`logic/vision/ScoutPosts.kt`) | 이 PR | 정찰 배치의 시야 공개 투영, 저장 키는 별도 단계 |
+| `opensamguk.logic.input.HwihaScoutPostEntry` | `opensamguk.logic.vision.ScoutPostEntry` | 이 PR | 정찰 배치 항목 |
+| `logic/input/HwihaScoutPostsTest.kt` | `logic/vision/ScoutPostsTest.kt` | 이 PR | 시야 계약 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
