@@ -22,14 +22,14 @@
 
 ## 월말 tail RNG 경계
 
-`PostUpdateMonthly.kt:397-419`의 공유 `monthlyRng` 소비 순서는 Q4(앞 단계) → 연도 조건부 Q11 방랑 처리 → Q15 토너먼트 → Q16 경매다. Q14 통일 판정, Q12 장수 수, Q17 전선은 여기서 RNG를 받지 않는다. `MonthlyPostUpdateHook.kt:376-414`의 Q15는 활성 상태·`tnmt_trig` 조건을 통과하면 `nextBool(0.4)` 한 번을, Q16의 `NeutralAuctionRegistrar.kt:30-57`은 매수·매도 게이트 두 번과 성공 시 추가 범위 추첨을 소비한다. Q11은 방랑 군주 수와 `CheHaesan.resolve` 경로에 따라 소비량이 달라진다. Q15·Q16을 제거하면 뒤 소비자만 아니라 이후 재현 해시도 달라질 수 있다. `PostUpdateMonthlyTailTest.kt:61-97`과 `MonthlyPostUpdateHookTailWiringTest.kt:304-412`의 과거 삼모 순서 기대값을 휘하 기준 결정론 테스트로 교체해야 한다. 실제 변경 전후 해시 비교는 제품 코드를 바꾸지 않아 실행하지 않았다.
+`MonthlyPipeline.kt:106`과 `DaemonLoopConfig.kt:421`에 따라 `monthlyRng`은 달마다 `MonthScopedRng.forMonth(hiddenSeed, year, month)`로 새로 시드된다. 같은 달 소비 순서는 Q4(앞 단계) → 연도 조건부 Q11 방랑 처리 → Q15 토너먼트 → Q16 경매다(`PostUpdateMonthly.kt:397-419`). Q14 통일 판정, Q12 장수 수, Q17 전선은 여기서 RNG를 받지 않는다. `MonthlyPostUpdateHook.kt:376-414`의 Q15는 활성 상태·`tnmt_trig` 조건을 통과하면 `nextBool(0.4)` 한 번을, Q16의 `NeutralAuctionRegistrar.kt:30-57`은 매수·매도 게이트 두 번과 성공 시 추가 범위 추첨을 소비한다. Q11은 방랑 군주 수와 `CheHaesan.resolve` 경로에 따라 소비량이 달라진다. Q11 또는 Q15만 제거하면 같은 달 뒤 소비자의 추첨이 바뀔 수 있다. Q15·Q16을 함께 제거하면 남은 tail 소비자의 RNG 커서는 바뀌지 않는다. 다음 달의 RNG 커서도 이어지지 않는다. 결과 해시는 제거된 동작의 상태 효과에 따라 달라질 수 있다. `PostUpdateMonthlyTailTest.kt:61-97`과 `MonthlyPostUpdateHookTailWiringTest.kt:304-412`의 과거 삼모 순서 기대값을 휘하 기준 결정론 테스트로 교체해야 한다. 실제 변경 전후 해시 비교는 제품 코드를 바꾸지 않아 실행하지 않았다.
 
 | 후보 | 현재 tail RNG 영향 / 제거 시 예상 변화 |
 | --- | --- |
-| `actions/`·`CheHaesan` | Q11에서 같은 `monthlyRng`을 전달한다(`MonthlyPostUpdateHook.kt:268-281`). 방랑 군주가 있을 때 제거 방식에 따라 소비량이 바뀔 수 있어 이관 전 수치 확정 불가. |
+| `actions/`·`CheHaesan` | Q11에서 같은 달 `monthlyRng`을 전달한다(`MonthlyPostUpdateHook.kt:268-281`). 방랑 군주가 있을 때 제거 방식에 따라 같은 달 Q15·Q16의 추첨이 바뀔 수 있어 이관 전 수치 확정 불가. |
 | AI·즉시 명령·베팅·상속·알파 카탈로그 | tail의 Q11/Q15/Q16 인자로 직접 전달되지 않는다(`MonthlyPostUpdateHook.kt:222-231`). 다만 베팅은 Q15 토너먼트의 후속 처리에 연결돼 결과 해시 영향을 별도 검증해야 한다. |
-| 토너먼트 | Q15의 월 RNG 0~1회 게이트가 사라진다. Q16의 시작 커서와 후속 월 RNG 재현이 달라진다. 별도 패턴 shuffle RNG는 월 RNG 소비가 아니다. |
-| 경매 | Q16의 두 게이트 및 성공 시 추가 추첨이 사라진다. tail 이후 월 RNG 재현이 달라진다. |
+| 토너먼트 | Q15의 월 RNG 0~1회 게이트가 사라진다. Q16을 유지하면 **같은 달** Q16의 시작 커서와 추첨이 달라질 수 있다. 별도 패턴 shuffle RNG는 월 RNG 소비가 아니다. |
+| 경매 | Q16의 두 게이트 및 성공 시 추가 추첨이 사라진다. Q16 뒤에는 같은 달 tail의 RNG 소비자가 없어 남은 tail의 RNG 커서 변화는 없다. |
 | `CheckEmperior` | Q14 자체는 0회 소비하므로 직접 커서 변화는 없다. `isunited` 변경의 후속 상태 효과는 별도 비교한다. |
 | 공유 월 경계·웹/시나리오/DB | 전체 파이프라인을 지우면 Q4·Q11·Q15·Q16 호출 자체가 없어지므로 영향 범위를 이 감사만으로 특정할 수 없다. 공유 경로는 유지한다. |
 
