@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
@@ -96,7 +101,7 @@ object HwihaLegacyStratagemRules {
         else -> HwihaResources(money = 100)
     }
 
-    fun assess(request: HwihaLegacyStratagemInput.Request, state: HwihaDomesticProjection): HwihaLegacyStratagemAssessment {
+    fun assess(request: HwihaLegacyStratagemInput.Request, state: DomesticProjection): HwihaLegacyStratagemAssessment {
         fun fail(reason: HwihaLegacyStratagemFailure) = HwihaLegacyStratagemAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return fail(HwihaLegacyStratagemFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaLegacyStratagemInput.INPUT_IDS)

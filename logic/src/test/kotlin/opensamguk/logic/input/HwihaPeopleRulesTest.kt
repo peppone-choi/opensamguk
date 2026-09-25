@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticProjection
+
 import kotlin.test.*
 
 class HwihaPeopleRulesTest {
@@ -16,7 +21,7 @@ class HwihaPeopleRulesTest {
             HwihaPersonPolicyState(30, true, "test", "1", 7).toMetaValue()))
     private val free = actor.copy(id = 8, name = "재야", nationId = 0, userOwned = false, npcState = 2)
     private val county = DomesticCounty(11, "縣", 1, "province-a", "郡", emptyMap())
-    private val base = HwihaDomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
+    private val base = DomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
         listOf(actor, free), emptyList(), listOf(county), emptyList(), setOf("province-a"))
 
     @Test fun `search reveals only undiscovered existing free people in the current county`() {

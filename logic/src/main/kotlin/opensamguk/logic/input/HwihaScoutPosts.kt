@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticCard
+
 /**
  * 정찰 배치의 공개 투영. 배치 주인 장수 meta `hwihaScoutPosts` = `{"version":1,"posts":[{"retainerId":int,"provinceId":str,"status":str}]}`
  * — 시야 스트림(`HwihaMetaVisionSourceReader.scoutPosts`, 비전 계약 `2026-09-23-hwiha-vision-contract.md` §3)이 읽는 꼴 그대로다.

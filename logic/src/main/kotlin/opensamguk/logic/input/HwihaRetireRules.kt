@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticProjection
+
 enum class HwihaRetireFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 은퇴할 수 없습니다."),
     INVALID_INPUT("승계할 인물을 한 명 지정해 주세요."),
@@ -21,7 +25,7 @@ sealed interface HwihaRetireAssessment {
 
 /** The same successor gate runs at reservation and immediately before the political action. */
 object HwihaRetireRules {
-    fun assess(request: HwihaRetireRequest, state: HwihaDomesticProjection): HwihaRetireAssessment {
+    fun assess(request: HwihaRetireRequest, state: DomesticProjection): HwihaRetireAssessment {
         fun reject(reason: HwihaRetireFailure) = HwihaRetireAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaRetireFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.successorGeneralId <= 0 || request.actorId == request.successorGeneralId)
