@@ -3,48 +3,7 @@
   "decisionSetId": "county-location-partition-decisions-v1",
   "authority": "user-decision-2026-09-17 「지리 우선」 + user-decision-2026-09-18 (GH #806 댓글: 변경 省 성김 수용 · 거점 발자국 축소 · 8칸 미만 縣은 Q4 예외 행) + spec 2026-09-17-province-geography-first §3 + 위임 결정 2026-09-18(사용자 「너가 판단해」 → main 세션): 씨앗 성분 < 8칸이면 같은 郡의 씨앗 없는 최대 성분으로 옮긴다",
   "reviewedAt": "2026-09-18",
-  "areaExceptions": [
-    {
-      "provinceId": "45203",
-      "nameCh": "蕃县",
-      "cells": 7,
-      "class": "BELOW_MIN",
-      "reason": "NEIGHBOURS_AT_FLOOR",
-      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
-    },
-    {
-      "provinceId": "87489",
-      "nameCh": "张县",
-      "cells": 4,
-      "class": "BELOW_MIN",
-      "reason": "NEIGHBOURS_AT_FLOOR",
-      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
-    },
-    {
-      "provinceId": "87490",
-      "nameCh": "朝平县",
-      "cells": 7,
-      "class": "BELOW_MIN",
-      "reason": "NEIGHBOURS_AT_FLOOR",
-      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
-    },
-    {
-      "provinceId": "87506",
-      "nameCh": "广乡县",
-      "cells": 5,
-      "class": "BELOW_MIN",
-      "reason": "NEIGHBOURS_AT_FLOOR",
-      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
-    },
-    {
-      "provinceId": "87510",
-      "nameCh": "平乡县",
-      "cells": 4,
-      "class": "BELOW_MIN",
-      "reason": "NEIGHBOURS_AT_FLOOR",
-      "basis": "user-decision-2026-09-18 ③: 8칸 미만 縣은 Q4 예외 행으로 둔다 — 이웃 縣의 최소 넓이를 깎지 않는다."
-    }
-  ],
+  "areaExceptions": [],
   "mechanicalRules": [
     {
       "id": "DIAGONAL_FRAGMENT_TO_4_NEIGHBOUR",

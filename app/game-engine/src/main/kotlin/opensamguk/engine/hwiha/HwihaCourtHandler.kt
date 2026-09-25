@@ -40,6 +40,8 @@ class HwihaCourtHandler(
                 "INVALID_INPUT_CHANNEL", "강공은 개인 행동 예약으로 입력해야 합니다.") },
             HwihaSiegeHandler.DEMAND_SURRENDER to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "항복 권고는 개인 행동 예약으로 입력해야 합니다.") },
+            RoadFortSiegeInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
+                "INVALID_INPUT_CHANNEL", "보루 포위는 개인 행동 예약으로 입력해야 합니다.") },
             "court.dispatch" to InputHandler { outcome = handleKnown(command) },
             "court.dispatchReply" to InputHandler { outcome = handleKnown(command) },
             RewardInput.INPUT_ID to InputHandler { outcome = handleKnown(command) },

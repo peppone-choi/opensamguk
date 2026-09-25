@@ -23,7 +23,8 @@ class FerryWaterGateTest(unittest.TestCase):
     def test_red_probe_restoring_one_missing_river_cell_fails(self):
         site = next(row for row in self.ledger["rows"] if row["siteId"] == "liaokou")
         tiles = copy.deepcopy(self.tiles)
-        r, c = site["anchor"]["row"], site["anchor"]["col"]
+        scale = tiles["_meta"].get("resolutionScale", 1)
+        r, c = site["anchor"]["row"] * scale, site["anchor"]["col"] * scale
         line = tiles["terrain"][r]
         tiles["terrain"][r] = line[:c] + site["terrainBefore"] + line[c + 1:]
         errors = audit.check(tiles, self.strongholds, self.ledger)

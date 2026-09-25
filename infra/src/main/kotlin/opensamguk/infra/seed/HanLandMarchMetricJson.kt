@@ -83,7 +83,8 @@ object HanLandMarchMetricJson {
             val km = StrictMath.hypot((x2 - x1) * dlon * 111.32 * StrictMath.cos(StrictMath.toRadians(lat)),
                 (y2 - y1) * dlat * 110.57)
             val share = (r[a].toDouble() / n[a] + r[b].toDouble() / n[b]) / 2
-            LandMarchEdgeMetric(edge.id, millimetres(km), millimetres(km * (1 + 0.5 * share)))
+            LandMarchEdgeMetric(edge.id, millimetres(km),
+                millimetres(km * (1 + 0.5 * share * edge.routeWeightPermille / 1000.0)))
         }
         return LandMarchMetricSnapshot(topology, hash, metrics)
     }

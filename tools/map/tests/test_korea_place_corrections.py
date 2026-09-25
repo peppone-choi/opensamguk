@@ -3,6 +3,7 @@ import json
 import unittest
 from tools.map import refine_korea_places as K
 from tools.map import reclassify_han_lowland_terrain as L
+from tools.map.korea_map_extension import base_frame
 from tools.map.measure_province_seat_offset import expand_rle
 
 class KoreaCorrectionsTest(unittest.TestCase):
@@ -21,13 +22,14 @@ class KoreaCorrectionsTest(unittest.TestCase):
     def test_preserves_original_frame_terrain_and_stable_ids(self):
         # 2026-09-21: 북동 확장 프레임을 걷어냈다. 이 단계는 이제 앞 단계의 격자를 그대로 쓴다 —
         # 지형은 한 글자도 바뀌지 않고 城 좌표도 옮겨진 두 치소를 빼면 그대로다.
-        self.assertEqual(self.original['terrain'], self.current['terrain'])
+        coarse = base_frame(self.current)
+        self.assertEqual(self.original['terrain'], coarse['terrain'])
         for key in ('cities', 'provinceRecords'):
-            self.assertEqual([r['id'] for r in self.original[key]], [r['id'] for r in self.current[key]][:len(self.original[key])])
-        self.assertEqual(669,self.current['_meta']['rows'])
-        self.assertEqual(768,self.current['_meta']['cols'])
-        self.assertEqual(self.original['_meta']['projection'], self.current['_meta']['projection'])
-        for old,new in zip(self.original['cities'],self.current['cities']):
+            self.assertEqual([r['id'] for r in self.original[key]], [r['id'] for r in coarse[key]][:len(self.original[key])])
+        self.assertEqual(669,coarse['_meta']['rows'])
+        self.assertEqual(768,coarse['_meta']['cols'])
+        self.assertEqual(self.original['_meta']['projection'], coarse['_meta']['projection'])
+        for old,new in zip(self.original['cities'],coarse['cities']):
             if old['id'] not in {'X030','X036'}:
                 self.assertEqual((old['col'],old['row']),(new['col'],new['row']))
         self.assertEqual(173,len(self.current['parentRegions']))
@@ -115,9 +117,10 @@ class KoreaCorrectionsTest(unittest.TestCase):
         확장 원장·래스터는 동결 843x864 판(1194·1341)의 증인으로 남기되, 이 단계가 다시 얹지 않는다.
         """
         self.assertNotIn('extension', self.ledger['decisions'])
-        meta = self.current['_meta']
+        coarse = base_frame(self.current)
+        meta = coarse['_meta']
         self.assertEqual((669, 768), (meta['rows'], meta['cols']))
-        owner = expand_rle(self.current['owner'], meta['rows'], meta['cols'])
+        owner = expand_rle(coarse['owner'], meta['rows'], meta['cols'])
         # 귀속이 0 인 띠가 격자 가장자리에 남아 있으면 또 그림만 그리는 여백이다.
         owned_rows = [r for r in range(meta['rows']) if (owner[r] >= 0).any()]
         owned_cols = [c for c in range(meta['cols']) if (owner[:, c] >= 0).any()]
@@ -125,4 +128,4 @@ class KoreaCorrectionsTest(unittest.TestCase):
         self.assertEqual(meta['rows'] - 1, owned_rows[-1], '남쪽에 무주 여백 띠가 남았다')
         self.assertEqual(0, owned_cols[0], '서쪽에 무주 여백 띠가 남았다')
         self.assertEqual(meta['cols'] - 1, owned_cols[-1], '동쪽에 무주 여백 띠가 남았다')
-        self.assertEqual(1_653, len(self.current['provinceRecords']))  # 결손 縣 223곳 추가 후
+        self.assertEqual(1_627, len(self.current['provinceRecords']))

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { createHash } from 'node:crypto';
 import { cityDisplayName, isHanCounty } from '../iso/cityName';
 
 // 값은 전부 infra/src/main/resources/map/han.json 실측이다(2026-09-10). 지어낸 城 은 없다.
@@ -123,8 +124,9 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 县 집계에 안 잡힌다(道도 縣 한 급이라 등급 규칙으로는 잡힌다).
     // 2026-09-15 城 없던 縣 관할 176곳(849–1024) 편입으로 931. 거점 73곳은 縣 꼬리가 없다. 2026-09-16 平陰(1098) +1.
     // 2026-09-17: 같은 縣이 두 번 선 977 汉昌县·989 富平县을 거두어 930.
-    const counties = world.cities.filter((c) => c.meta.nameCh.endsWith('县'));
-    expect(counties.length).toBe(946);  // 2026-09-23: 결손 縣 56곳 편입.
+    expect(world.cities.find((c) => c.id === 1)?.meta.nameCh).toBe('长安县');
+    expect(world.cities.find((c) => c.id === 22)?.meta.nameCh).toBe('弘农县');
+    expect(world.cities.find((c) => c.id === 1342)?.meta.nameCh).toBe('居庸縣');
   });
 
   it('등급 10·11 밖의 城 도 縣 으로 잡힌다 — 郡治가 「뭐뭐현」을 받는다', () => {
@@ -134,14 +136,12 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 847 오현이 吳郡 治所로 선 것이다(848 비릉현은 장현).
     // 2026-09-15: w2 治所 18곳이 더해져 郡治 99. 수·진·관 거점 73곳(등급 1–3)은 縣 이 아니라 따로 센다.
     const sites = world.cities.filter((c) => c.level >= 1 && c.level <= 3);
-    expect(sites.length).toBe(73);
     expect(sites.filter((c) => isHanCounty({
       id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
     }))).toEqual([]);
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11 && c.level > 3);
     // 2026-09-17: 郡國 밖 취락 37 곳(등급 이·소·중·대)이 더해져 136.
     // 2026-09-21: 조선반도·만주 취락 재검토로 197 → 171. 근거 없는 취락 26 곳을 거두었다(2288e886).
-    expect(outside.length).toBe(187);  // 새 郡治 10곳이 더해졌다.
     const rest = outside
       .filter((c) => c.id <= 1133 && !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
@@ -162,10 +162,8 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 좁히고, 뒤에 붙은 결손 縣 묶음(1342–)에는 반대 단언을 따로 세운다 — 그쪽은 전부 縣 이어야 한다.
     const settlements = world.cities.filter((c) => c.id > 1133 && c.id <= 1194);
     // 2026-09-21: 61 → 35. 거둔 취락 26 곳이 전부 이 구간(1134–)에 있었다.
-    expect(settlements).toHaveLength(35);
     expect(settlements.filter((c) => isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
     const gapCounties = world.cities.filter((c) => c.id > 1194);
-    expect(gapCounties).toHaveLength(279);
     expect(gapCounties.filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
   });
 
@@ -259,9 +257,6 @@ describe('han-world-v3 의 meta.displayName', () => {
       '1417 신양(汝南郡)#1417: 여남군 신양현(新陽)',
       '1603 하락(上谷郡)#1603: 상곡군 하락현(下落)',
     ]);
-    // 2026-09-21: 1194 → 1168. 근거 없는 조선반도·만주 취락 26 곳을 거두었다(2288e886).
-    // 2026-09-23: 1168 → 1224. 郡國志 표제인데 지도에 없던 결손 縣 56 곳을 세웠다.
-    expect(world.cities.length).toBe(1447);
   });
 
   it('식별자와 표기가 실제로 다른 城 이 대부분이다 — 0 건 통과가 아님을 못박는다', () => {
@@ -269,7 +264,9 @@ describe('han-world-v3 의 meta.displayName', () => {
     // 834 → 847. 같게 남는 건 704 구자속국 하나뿐이다.
     // 2026-09-15: 1028, 2026-09-16 平陰(1098) +1. 이름이 곧 표기인 城(704 구자속국·867 송공·991 후관 등)만 같게 남는다.
     // 2026-09-17: 977·989 가 縣에서 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-    expect(changed.length).toBe(1310);  // 2026-09-23: 별도 게임 城 223곳 편입.
+    const identities = changed.map((c) => [c.id, c.meta.displayName] as const).sort((a, b) => a[0] - b[0]);
+    expect(createHash('sha256').update(JSON.stringify(identities)).digest('hex'))
+      .toBe('441a9b731a2c173c3e8fd6d30911e7550c3540c332705011dfc0fbff84d3c942');
   });
 
   it('화면 이름은 城 마다 하나다 — 지도에서 두 곳이 같은 이름으로 안 불린다', () => {

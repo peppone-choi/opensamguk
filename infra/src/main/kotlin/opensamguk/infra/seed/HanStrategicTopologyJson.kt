@@ -13,6 +13,7 @@ import java.security.MessageDigest
 object HanStrategicTopologyJson {
     private const val MAP = "han-world-v3"
     private const val TILES = "data/map/han-tiles.json"
+    private const val ROADS = "data/map/han-land-roads-v1.json"
     private const val WATER = "data/map/han-water-topology-v1.json"
     private const val LEDGER = "data/curated/han/water-topology-adjudications-v1.json"
     private const val MANIFEST = "data/map/han-strategic-topology-manifest-v1.json"
@@ -59,7 +60,7 @@ object HanStrategicTopologyJson {
     private const val FIRST_STAND_IN_SEAT_ROSTER = 849
 
     internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection {
-        val expectedLandCount = requireNotNull(landCountByRoster[cityCount]) { "Unregistered historical Han route roster" }
+        val rosterLandCount = requireNotNull(landCountByRoster[cityCount]) { "Unregistered historical Han route roster" }
         require(mapName == MAP) { "Strategic topology is only supported for $MAP; got $mapName" }
         try {
             val bytes = paths.associateWith { readArtifact(it).copyOf() }
@@ -84,7 +85,9 @@ object HanStrategicTopologyJson {
             val meta = tiles.objectField("_meta")
             val rows = meta.integer("rows")
             val cols = meta.integer("cols")
-            require(rows in 1..4096 && cols in 1..4096 && rows.toLong() * cols <= 4_000_000) { "Invalid terrain dimensions" }
+            val expectedLandCount = if (cityCount == 1447 && meta.path("resolutionScale").asInt(1) == 4)
+                1627 else rosterLandCount
+            require(rows in 1..4096 && cols in 1..4096 && rows.toLong() * cols <= 8_388_608) { "Invalid terrain dimensions" }
             val provinces = tiles.array("provinceRecords")
             val landIds = provinces.map { it.text("id") }
             // 省 1,520 — 변경경계 51 縣을 세우며 直領을 다시 나눠 1,524 에서 줄었다(han-tiles 실측).
@@ -145,7 +148,8 @@ object HanStrategicTopologyJson {
                 if (zone.kind == WaterZoneKind.COASTAL_SEA) require(selector.text("kind") == "CELL_RANGES") {
                     "Coastal geometry requires reviewed cell ranges, never a sea flood fill"
                 }
-                validateGeometrySelector(selector, geometries.getValue(zone.geometryRef), terrain)
+                validateGeometrySelector(selector, geometries.getValue(zone.geometryRef), terrain,
+                    meta.path("resolutionScale").asInt(1))
             }
             validateZoneSourceBoundaries(zones, geometries, sources, provinces, owner, cols)
             val barriers = water.array("riverBarriers").map { row ->
@@ -176,6 +180,113 @@ object HanStrategicTopologyJson {
             }
             validateCounts(manifest, water)
             val dryEdges = projectHanDryLandEdges(landIds, owner, terrain, dryCodes, barriers, hashes.getValue(TILES))
+            val map4 = cityCount == 1447 && meta.path("resolutionScale").asInt(1) == 4
+            val roadBytes = if (map4) readArtifact(ROADS) else null
+            val roadRows = if (roadBytes != null) {
+                val road = mapper.readTree(roadBytes)
+                road.fieldsExactly("schemaVersion", "artifactId", "resolutionScale", "rows", "cols", "provinceCount",
+                    "policy", "historicalStatus", "historicalCorridors", "counts", "edges")
+                require(road.integer("schemaVersion") == 1 && road.text("artifactId") == "han-land-roads-v1" &&
+                    road.integer("resolutionScale") == 4 && road.integer("rows") == rows && road.integer("cols") == cols &&
+                    road.integer("provinceCount") == landIds.size) { "Road grid or province identity drift" }
+                val byId = road.array("edges").associateBy { it.text("id") }
+                val routeIds = road.array("historicalCorridors").map { corridor ->
+                    corridor.fieldsExactly("id", "name", "waypointCityIds", "sourceRefs", "alignment", "selectedEdges", "edgeIds")
+                    require(corridor.array("sourceRefs").all { it.stringValue().startsWith("https://") } &&
+                        corridor.text("alignment") == "TERRAIN_INFERRED_BETWEEN_DOCUMENTED_WAYPOINTS")
+                    require(corridor.array("edgeIds").all { it.stringValue() in byId.keys })
+                    corridor.text("id")
+                }.toSet()
+                require(byId.size == dryEdges.size && byId.keys == dryEdges.map { it.id }.toSet()) {
+                    "Road candidates must cover every and only dry county boundary"
+                }
+                val idToIndex = landIds.withIndex().associate { it.value to it.index }
+                val pathCodes = dryCodes + legend.fields().asSequence()
+                    .filter { it.value.asText() == "RIVER" }.map { it.key.single() }.toSet()
+                for (edge in dryEdges) {
+                    val row = byId.getValue(edge.id)
+                    row.fieldsExactly("id", "fromProvinceId", "toProvinceId", "fromCell", "toCell",
+                        "terrainCost", "status", "overviewTrunk", "evidence", "historicalRouteIds", "routeWeightPermille",
+                        "fromTrail", "toTrail", "fortCells")
+                    val historicalIds = row.array("historicalRouteIds").map { it.stringValue() }
+                    require(historicalIds == historicalIds.distinct().sorted() && historicalIds.all { it in routeIds })
+                    require(row.text("status") in setOf("BUILT", "UNBUILT", "INACCESSIBLE") &&
+                        row["overviewTrunk"].isBoolean &&
+                        (!row["overviewTrunk"].booleanValue() || row.text("status") == "BUILT") &&
+                        row.text("evidence") == (if (historicalIds.isEmpty()) "TERRAIN_INFERRED"
+                            else "DOCUMENTED_CORRIDOR_INFERRED_ALIGNMENT") &&
+                        row.integer("routeWeightPermille") == (if (historicalIds.isEmpty()) 1000 else 700) &&
+                        row.integer("terrainCost") > 0)
+                    require(row.text("fromProvinceId") == (edge.from as StrategicNodeRef.LandProvince).id &&
+                        row.text("toProvinceId") == (edge.to as StrategicNodeRef.LandProvince).id)
+                    fun cell(key: String, expected: String): Pair<Int, Int> {
+                        val value = row.objectField(key)
+                        value.fieldsExactly("row", "col")
+                        val r = value.integer("row")
+                        val c = value.integer("col")
+                        require(r in 0 until rows && c in 0 until cols &&
+                            owner[r * cols + c] == idToIndex.getValue(expected) && terrain[r][c] in dryCodes) {
+                            "Road gate leaves its dry province: ${edge.id}"
+                        }
+                        return r to c
+                    }
+                    val first = cell("fromCell", row.text("fromProvinceId"))
+                    val second = cell("toCell", row.text("toProvinceId"))
+                    require(kotlin.math.abs(first.first - second.first) + kotlin.math.abs(first.second - second.second) == 1) {
+                        "Road gate must cross one shared dry cell boundary: ${edge.id}"
+                    }
+                    fun trail(key: String, expected: String, gate: Pair<Int, Int>) {
+                        val points = row.array(key)
+                        require(points.isNotEmpty()) { "Road trail is empty: ${edge.id}" }
+                        var last: Pair<Int, Int>? = null
+                        for (point in points) {
+                            require(point.isArray && point.size() == 2 && point[0].isInt && point[1].isInt)
+                            val here = point[0].intValue() to point[1].intValue()
+                            val dr = last?.let { kotlin.math.abs(here.first - it.first) } ?: 0
+                            val dc = last?.let { kotlin.math.abs(here.second - it.second) } ?: 0
+                            val cornerClear = last == null || dr == 0 || dc == 0 ||
+                                (here.first in 0 until rows && here.second in 0 until cols &&
+                                    (owner[here.first * cols + last.second] == idToIndex.getValue(expected) &&
+                                    terrain[here.first][last.second] in pathCodes) &&
+                                    (owner[last.first * cols + here.second] == idToIndex.getValue(expected) &&
+                                    terrain[last.first][here.second] in pathCodes))
+                            require(here.first in 0 until rows && here.second in 0 until cols &&
+                                owner[here.first * cols + here.second] == idToIndex.getValue(expected) &&
+                                terrain[here.first][here.second] in pathCodes &&
+                                (last == null || (dr <= 1 && dc <= 1 && dr + dc > 0 && cornerClear))) {
+                                "Road trail leaves dry connected province: ${edge.id}"
+                            }
+                            last = here
+                        }
+                        require(last == gate) { "Road trail misses gate: ${edge.id}" }
+                    }
+                    trail("fromTrail", row.text("fromProvinceId"), first)
+                    trail("toTrail", row.text("toProvinceId"), second)
+                    val fortCells = row.array("fortCells")
+                    require(fortCells.isNotEmpty())
+                    val seenCells = hashSetOf<Pair<Int, Int>>()
+                    for (fort in fortCells) {
+                        fort.fieldsExactly("provinceId", "row", "col")
+                        val provinceId = fort.text("provinceId")
+                        val r = fort.integer("row")
+                        val c = fort.integer("col")
+                        val gate = if (provinceId == row.text("fromProvinceId")) first else {
+                            require(provinceId == row.text("toProvinceId"))
+                            second
+                        }
+                        require(r in 0 until rows && c in 0 until cols &&
+                            owner[r * cols + c] == idToIndex.getValue(provinceId) && terrain[r][c] in dryCodes &&
+                            maxOf(kotlin.math.abs(r - gate.first), kotlin.math.abs(c - gate.second)) <= 1 &&
+                            seenCells.add(r to c)) { "Invalid fort placement cell on ${edge.id}" }
+                    }
+                }
+                require(road.objectField("counts").integer("candidateEdges") == byId.size &&
+                    road.objectField("counts").integer("builtEdges") == byId.values.count { it.text("status") == "BUILT" } &&
+                    road.objectField("counts").integer("unbuiltEdges") == byId.values.count { it.text("status") == "UNBUILT" } &&
+                    road.objectField("counts").integer("inaccessibleEdges") == byId.values.count { it.text("status") == "INACCESSIBLE" } &&
+                    road.objectField("counts").integer("overviewTrunkEdges") == byId.values.count { it["overviewTrunk"].booleanValue() })
+                byId
+            } else emptyMap()
             val explicitLand = typedEdges.filter { it.mode == TraversalMode.LAND }
             val dryKeys = dryEdges.map { setOf(it.from, it.to) }.toSet()
             require(explicitLand.all { setOf(it.from, it.to) in dryKeys }) {
@@ -183,8 +294,12 @@ object HanStrategicTopologyJson {
             }
             val explicitKeys = explicitLand.map { setOf(it.from, it.to) }.toSet()
             val topology = StrategicTopologySnapshot(revision, landIds.toSet(), zones,
-                dryEdges.filter { setOf(it.from, it.to) !in explicitKeys } + typedEdges, barriers,
-                hashes + ("dryLandProjectionPolicy" to sha("dry-v1:4-neighbour:both-dry:PLAIN,MOUNTAIN,DESERT,PLATEAU,BASIN,HILL:cost=1:capacity=2147483647:supply=true".toByteArray())))
+                dryEdges.filter { setOf(it.from, it.to) !in explicitKeys }.map { edge ->
+                    edge.copy(initiallyOpen = roadRows[edge.id]?.text("status") == "BUILT" || roadRows.isEmpty(),
+                        routeWeightPermille = roadRows[edge.id]?.integer("routeWeightPermille") ?: 1000)
+                } + typedEdges, barriers,
+                hashes + ("dryLandProjectionPolicy" to sha("dry-v1:4-neighbour:both-dry:PLAIN,MOUNTAIN,DESERT,PLATEAU,BASIN,HILL:cost=1:capacity=2147483647:supply=true".toByteArray())) +
+                    (if (roadBytes != null) mapOf(ROADS to sha(roadBytes)) else emptyMap()))
             val presentation = StrategicMapPresentation(cols, rows, hashes.getValue(TILES),
                 geometries.toSortedMap().map { (id, geometry) ->
                     StrategicWaterGeometry(id, geometry.row.integer("terrainCode"), geometry.cells.size,
@@ -193,6 +308,19 @@ object HanStrategicTopologyJson {
                         })
                 },
                 water.array("waterZones").sortedBy { it.text("id") }.associate { it.text("id") to it.text("connectionStatus") },
+                roadRows.values.sortedBy { it.text("id") }.map { road ->
+                    val from = road.objectField("fromCell")
+                    val to = road.objectField("toCell")
+                    StrategicRoadGate(road.text("id"), from.integer("row"), from.integer("col"),
+                        to.integer("row"), to.integer("col"), road.integer("terrainCost"),
+                        road.text("status") == "BUILT", road.text("status") != "INACCESSIBLE",
+                        road["overviewTrunk"].booleanValue(),
+                        road.array("historicalRouteIds").map { it.stringValue() },
+                        road.array("fortCells").map { fort -> StrategicFortCell(fort.text("provinceId"),
+                            fort.integer("row"), fort.integer("col")) },
+                        road.array("fromTrail").map { point -> listOf(point[0].intValue(), point[1].intValue()) },
+                        road.array("toTrail").map { point -> listOf(point[0].intValue(), point[1].intValue()) })
+                },
             )
             val standIn = if (cityCount >= FIRST_STAND_IN_SEAT_ROSTER) standInSeatProvinces(tiles, provinces, owner, cols) else emptyMap()
             return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds, cityCount, standIn), blockers, presentation)
@@ -272,7 +400,7 @@ object HanStrategicTopologyJson {
             // 1168·1224 판은 명부 id 가 연속이 아니다 — 은퇴 id 26 개를 되쓰지 않으므로
             // 최댓값이 명부 수보다 크다. 그 판은 등록부에서 실제 id 집합을 읽는다.
             val expectedIds = if (cityCount in setOf(1168, 1224, 1447)) opensamguk.logic.world.CityConstRegistry.hanWorld(
-                opensamguk.logic.world.HanWorldVariant.entries.single { it.cityCount == cityCount }).all().keys
+                opensamguk.logic.world.HanWorldVariant.entries.first { it.cityCount == cityCount }).all().keys
                 else (1..cityCount).toSet()
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }
             require(result.map { it.id }.toSet() == expectedIds && result.map { it.key }.toSet().size == cityCount &&
@@ -361,9 +489,10 @@ object HanStrategicTopologyJson {
         }
     }
 
-    private fun validateGeometrySelector(selector: JsonNode, geometry: Geometry, terrain: List<String>) {
+    private fun validateGeometrySelector(selector: JsonNode, geometry: Geometry, terrain: List<String>, scale: Int) {
+        require(scale in 1..4 && geometry.cols % scale == 0 && terrain.size % scale == 0)
         require(selector.integer("terrainCode") == geometry.row.integer("terrainCode") &&
-            selector.integer("expectedCellCount") == geometry.cells.size) { "Geometry selection binding drift" }
+            selector.integer("expectedCellCount") * scale * scale == geometry.cells.size) { "Geometry selection binding drift" }
         when (selector.text("kind")) {
             "CELL_RANGES" -> {
                 selector.fieldsExactly("kind", "terrainCode", "cellRuns", "expectedCellCount")
@@ -372,14 +501,17 @@ object HanStrategicTopologyJson {
                 for (run in selector.array("cellRuns")) {
                     run.fieldsExactly("row", "startCol", "endCol")
                     val row = run.integer("row"); val start = run.integer("startCol"); val end = run.integer("endCol")
-                    require(row in terrain.indices && start in 0 until geometry.cols && end in start until geometry.cols)
-                    for (col in start..end) selectedCells.add(row * geometry.cols + col)
+                    require(row in 0 until terrain.size / scale && start in 0 until geometry.cols / scale &&
+                        end in start until geometry.cols / scale)
+                    for (fineRow in row * scale until (row + 1) * scale)
+                        for (fineCol in start * scale until (end + 1) * scale)
+                            selectedCells.add(fineRow * geometry.cols + fineCol)
                 }
                 require(selectedCells == geometry.cells) { "Geometry cell range review drift" }
             }
             "TERRAIN_COMPONENT" -> {
                 selector.fieldsExactly("kind", "terrainCode", "seedRow", "seedCol", "expectedCellCount")
-                val row = selector.integer("seedRow"); val col = selector.integer("seedCol")
+                val row = selector.integer("seedRow") * scale; val col = selector.integer("seedCol") * scale
                 require(row in terrain.indices && col in 0 until geometry.cols && row * geometry.cols + col in geometry.cells)
                 val code = selector.integer("terrainCode").toString().single()
                 require(geometry.cells.all { cell -> neighbors(cell, geometry.cols, terrain.size * geometry.cols).all { next ->

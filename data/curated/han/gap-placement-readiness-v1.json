@@ -248,7 +248,7 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 117.6963,
       "lat": 31.14534,
-      "commanderyCentroidKm": 113,
+      "commanderyCentroidKm": 114,
       "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },
@@ -259,7 +259,7 @@
       "ledger": "abolished-verdict-corrections-v1",
       "lon": 116.62608,
       "lat": 31.34139,
-      "commanderyCentroidKm": 29,
+      "commanderyCentroidKm": 26,
       "commanderyCentroidSample": 18,
       "readiness": "READY_TGAZ"
     },

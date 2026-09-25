@@ -11,11 +11,13 @@ class MilitarySupplyReachabilityTest {
         RawCity(1,"A","특",100,1,1,1,1,1,"하북",0,0,listOf("B")),
         RawCity(2,"B","특",100,1,1,1,1,1,"하북",0,0,listOf("A","C")),
         RawCity(3,"C","특",100,1,1,1,1,1,"하북",0,0,listOf("B"))))
-    private fun network(blocks: Map<Int, Set<String>> = emptyMap(), disconnected: Boolean = false): SpatialSupplyNetwork {
-        fun edge(id: String, a: String, b: String) = TraversalEdge(id,land(a),land(b),TraversalMode.LAND,false,1,8,
-            RiskBand.LOW,SeasonalAvailability.ALWAYS,true,listOf("test:military"),EvidenceConfidence.REVIEWED)
+    private fun network(blocks: Map<Int, Set<String>> = emptyMap(), disconnected: Boolean = false,
+                        unbuiltRoad: Boolean = false): SpatialSupplyNetwork {
+        fun edge(id: String, a: String, b: String, open: Boolean = true) = TraversalEdge(id,land(a),land(b),TraversalMode.LAND,false,1,8,
+            RiskBand.LOW,SeasonalAvailability.ALWAYS,true,listOf("test:military"),EvidenceConfidence.REVIEWED,
+            initiallyOpen = open)
         val topology=StrategicTopologySnapshot("test-military",setOf("a","b","c"),emptyList(),
-            listOf(edge("ab","a","b")) + if(disconnected) emptyList() else listOf(edge("bc","b","c")),
+            listOf(edge("ab","a","b")) + if(disconnected) emptyList() else listOf(edge("bc","b","c", !unbuiltRoad)),
             emptyList(),mapOf("fixture" to "memory"))
         return SpatialSupplyNetwork(intArrayOf(1,1,1),
             if(disconnected) listOf(intArrayOf(1),intArrayOf(0),intArrayOf()) else listOf(intArrayOf(1),intArrayOf(0,2),intArrayOf(1)),
@@ -42,6 +44,12 @@ class MilitarySupplyReachabilityTest {
     @Test fun `missing geometry plus remote blockade is unavailable rather than guessed supply or loss`() {
         assertEquals(SupplyReachabilityVerdict.CITY_ONLY_PROTECTED,evaluate(network(disconnected=true)).rows.last().verdict)
         assertFailsWith<MilitarySupplyUnavailableException> { evaluate(network(mapOf(1 to setOf("b")),disconnected=true)) }
+    }
+    @Test fun `unbuilt road remains a supply cut when another province is blockaded`() {
+        val road = network(unbuiltRoad=true).copy(fallbackPolicies=emptyMap())
+        assertEquals(SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD, evaluate(road).rows.last().verdict)
+        val block = network(mapOf(1 to setOf("b")), unbuiltRoad=true).copy(fallbackPolicies=emptyMap())
+        assertEquals(SupplyReachabilityVerdict.SPATIAL_CUT_UPHELD, evaluate(block).rows.last().verdict)
     }
     @Test fun `reviewed upheld disconnection remains unsupplied instead of stopping settlement`() {
         for(decision in listOf(SupplyDisconnectionDecision.UPHOLD_WATER_ROUTE_ONLY,SupplyDisconnectionDecision.UPHOLD_HISTORICAL_EXCLAVE)) {

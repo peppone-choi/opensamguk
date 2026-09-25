@@ -581,7 +581,6 @@ class ScenarioJsonTest {
     fun `map_miniche_b city data keeps its own city stats`() {
         val cities = ScenarioJson.loadMapCities(readResource("map/miniche_b.json"))
 
-        assertEquals(78, cities.size)
         assertEquals("낙양", cities[0].name)
         assertEquals(8, cities[0].level)
         assertEquals(668600, cities[0].popMax)

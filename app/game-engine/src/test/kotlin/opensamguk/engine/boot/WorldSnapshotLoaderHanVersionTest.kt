@@ -58,7 +58,11 @@ class WorldSnapshotLoaderHanVersionTest {
     @Test fun `boot selects each historical roster and preserves renamed city labels`() {
         for (variant in HanWorldVariant.entries) {
             val ids = artifacts.artifacts(variant).cityConst.all().keys.toList()
-            val (snapshot, queries) = load(ids)
+            val pins = if (variant == HanWorldVariant.V3_1447_MAP4) {
+                val topology = artifacts.artifacts(variant).projection.topology
+                listOf(HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash))
+            } else emptyList()
+            val (snapshot, queries) = load(ids, pins)
             assertEquals(variant, snapshot.state.hanWorldVariant)
             assertEquals("renamed-1", snapshot.cities.first().name)
             assertEquals(artifacts.artifacts(variant).projection.topology.contentHash, snapshot.waterControlSnapshot!!.topologyHash)

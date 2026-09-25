@@ -15,6 +15,7 @@ It is read-only with respect to ``han-tiles.json``.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -133,9 +134,10 @@ OPTIONAL_ROW_KEYS = frozenset({
     "proposedParent", "defectNote", "searched",
     "fragmentLedgerRef", "followUp", "overruledArgument",
     # ★ 지리 재분할(GH #806) 뒤로 옮겨 온 행의 표시: 어느 옛 행에서 왔고 무엇이 바뀌었으며 재검토를 기다리는가.
-    "partitionCarry",
+    "partitionCarry", "map4Carry",
 })
 PARTITION_LEDGER = ROOT / "data/curated/han/territory-disconnection-adjudications-partition-v1.json"
+MAP4_LEDGER = ROOT / "data/curated/han/territory-disconnection-adjudications-map4-v1.json"
 
 # An overturned row holds two arguments: the one the refuters broke and the one that
 # replaced it. `rationale` is the row's current position, so the withdrawn one lives
@@ -506,6 +508,68 @@ def validate_ledger(document: object) -> list[dict]:
 # -------------------------------------------------------------------------- check
 
 
+def _project_map4_rows(document: Mapping, prior_rows: list[dict], stage: Mapping,
+                       base_ledger: Mapping) -> list[dict]:
+    """Rebind old reviewed fragments to the fourfold grid, with explicit exceptions.
+
+    The ordinary rebind is an exact 4× anchor. The separate ledger pins the
+    complete resulting inventory and names every retired or newly split piece.
+    This preserves the historical verdict without silently adjudicating a new
+    geometry or accepting an unexpected map change.
+    """
+    record = json.loads(MAP4_LEDGER.read_text(encoding="utf-8"))
+    if record.get("schemaVersion") != 1 or record.get("ledgerId") != "territory-disconnection-adjudications-map4-v1":
+        raise ValueError("map4 territory review ledger identity drift")
+    if (record["inputSha256"] != stage["inputSha256"] or
+            record["outputSha256"] != stage["outputSha256"]):
+        raise ValueError("map4 territory review stage pin drift")
+    components = inventory(document)
+    digest = hashlib.sha256(json.dumps(components, ensure_ascii=False, sort_keys=True,
+                                      separators=(",", ":")).encode()).hexdigest()
+    if digest != record["componentInventorySha256"]:
+        raise ValueError("map4 territory component inventory drift")
+    current = {row["componentKey"]: row for row in components}
+    retired = {row["sourceComponentKey"] for row in record["retiredComponentKeys"]}
+    projected = []
+    seen = set()
+    missing = set()
+    for source in prior_rows:
+        old_key = source["componentKey"]
+        col, row = map(int, old_key.split("@")[1].split(":"))
+        key = f"{source['unitId']}@{col * 4}:{row * 4}"
+        now = current.get(key)
+        if now is None:
+            missing.add(old_key)
+            continue
+        if old_key in retired or now["unitKind"] != source["unitKind"]:
+            raise ValueError(f"map4 territory fragment rebind changed identity: {old_key}")
+        item = dict(source)
+        for field in ("unitKind", "unitId", "unitNameCh", "componentKey", "cellCount",
+                      "memberIds", "memberNamesCh", "holdsSeat"):
+            item[field] = now[field]
+        item["evidenceRefs"] = [*source["evidenceRefs"], f"map:data/map/han-tiles.json#{key}"]
+        item["map4Carry"] = {"sourceComponentKey": old_key,
+                             "sourceVerdict": source["verdict"]}
+        projected.append(item)
+        seen.add(key)
+    if retired != missing:
+        raise ValueError("map4 retired component list drift")
+    if {row["sourceComponentKey"] for row in record["adjudications"]} != retired:
+        raise ValueError("map4 new fragments lack their retired source review")
+    additions = validate_ledger({**base_ledger, "adjudications": [
+        {key: value for key, value in row.items() if key != "sourceComponentKey"}
+        for row in record["adjudications"]]})
+    for row in additions:
+        if row["componentKey"] in seen:
+            raise ValueError(f"map4 territory fragment has duplicate review: {row['componentKey']}")
+        seen.add(row["componentKey"])
+    if seen != set(current) or record["counts"] != {
+            "carried": len(projected), "newOrChanged": len(additions),
+            "retired": len(retired), "rows": len(current)}:
+        raise ValueError("map4 territory coverage or count drift")
+    return projected + additions
+
+
 def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tuple[list[dict], object]:
     """Peel later document stages so rows reviewed against an earlier stage still apply.
 
@@ -532,6 +596,9 @@ def _reviewed_rows(document: Mapping, ledger: Mapping, rows: list[dict]) -> tupl
             row['componentKey']=re.sub(r':(\d+)$',lambda m:':'+str(int(m[1])+reviewed['rowOffset']),row['componentKey'])
             if row['componentKey'] not in reviewed['replacedComponentKeys']:translated.append(row)
         additions=validate_ledger({**ledger,'adjudications':reviewed['adjudications']})
+        if document.get("_meta", {}).get("resolutionScale", 1) == 4:
+            return _project_map4_rows(document, translated + additions, korean_stage, ledger), {
+                "map4Stage": korean_stage["outputSha256"], "priorProjection": projection}
         return translated+additions, {'koreaExtensionStage':korean_stage['outputSha256'],'priorProjection':projection}
     from tools.map import carve_strategic_site_provinces as carving
     from tools.map import materialize_frontier_counties as frontier

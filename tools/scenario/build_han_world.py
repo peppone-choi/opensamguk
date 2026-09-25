@@ -280,9 +280,9 @@ SEA_LINKS: list[tuple[str, str, str]] = [
 # v2 섬 郡 뱃길(SEA_LINKS) 가운데 夷洲·流求·州胡·于山國은 郡治끼리 그대로 잇고, 邪馬壹國↔狗邪國은
 # 倭人傳 도해 사슬(帶方→狗邪韓國→對馬→一大→末盧)로 바꾼다.
 V3_SEA_ROUTES: list[tuple[str, str, str]] = [
-    ("curated:frontier-county-v1:fc-liaodong-011", "chgis:v6:cnty:85371",
+    ("curated:strategic-site-v1:ss-tajin", "chgis:v6:cnty:85371",
      "三國志 卷8 公孫度傳 「越海收東萊諸縣」 · 三國志 卷4 「以遼東東沓縣吏民渡海居齊郡界」 — 遼東 沓氏 ↔ 東萊 黃"),
-    ("curated:frontier-county-v1:fc-liaodong-011", "chgis:v6:cnty:40404",
+    ("curated:strategic-site-v1:ss-tajin", "chgis:v6:cnty:40404",
      "資治通鑑 卷72 「吳主遣將軍周賀、校尉裴潛乘海之遼東」 — 吳 ↔ 遼東 沓氏"),
     ("chgis:v6:cnty:40404", "curated:strategic-site-v1:ss-anpingkou",
      "三國志 卷47 吳主傳 裴注 「恂等到安平口，先遣校尉陳奉前見宮」 — 吳 ↔ 安平口"),

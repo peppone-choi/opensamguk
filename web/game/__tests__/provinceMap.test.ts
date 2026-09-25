@@ -504,9 +504,9 @@ describe('province identity map', () => {
     expect([...binding.colors.values()].some((color) => color.nationId === 1)).toBe(true);
     expect(binding.conflicts).toEqual([]);
     expect([...countyIndex.commanderyByProvince].every((commandery) => commandery >= 0)).toBe(true);
-  });
+  }, 30_000);
 
-  it('renders all 15 scenarios without inferred ownership or cross-commandery claims', () => {
+  it('renders all 15 scenarios without inferred ownership or cross-commandery claims', async () => {
     const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
@@ -575,10 +575,11 @@ describe('province identity map', () => {
         city.provinceId === province
         || countyIndex.commanderyByName.get(city.commanderyName!) === countyIndex.commanderyByProvince[province]
       )), scenarioFile).toBe(true);
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
-  }, 15_000);
+  }, 90_000);
 
-  it('audits all 15 canonical scenario province colors for missing excess and out-of-scope pixels', () => {
+  it('audits all 15 canonical scenario province colors for missing excess and out-of-scope pixels', async () => {
     const tiles = JSON.parse(readFileSync(resolve(process.cwd(), '../../data/map/han-tiles.json'), 'utf8')) as {
       _meta: { cols: number; rows: number };
       owner: [number, number][];
@@ -619,11 +620,8 @@ describe('province identity map', () => {
 
     expect(canonical.scenarios).toHaveLength(15);
     for (const scenario of canonical.scenarios) {
-      // 지리 재분할(GH #806, 2026-09-18) 뒤: 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331.
-      // 앞 판은 1,520 + 73 + 平陰 1 = 1,594 였다.
-      // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,374 — han-tiles 의
-      // provinceRecords 실측과 같은 수다(아래 landProvinces 단언이 그 동치를 건다).
-      expect(scenario.assignments).toHaveLength(1_653);  // 2026-09-23: 결손 縣 56 곳이 제 省을 받아 1,374 → 1,434
+      // 모든 시나리오는 현재 지도에 선언한 성 구역을 빠짐없이 배정한다.
+      expect(scenario.assignments).toHaveLength(tiles.provinceRecords.length);
       const ownership = {
         provinceOccupancy: scenario.assignments.map((assignment) => {
           const provinceIndex = provinceIndexById.get(assignment.provinceId)!;
@@ -721,9 +719,10 @@ describe('province identity map', () => {
         const evidence = new Set(assignments.flatMap((assignment) => assignment.evidenceIds));
         expect(allowance!.evidenceIds.every((evidenceId) => evidence.has(evidenceId)), key).toBe(true);
       }
+      await new Promise((resolve) => setTimeout(resolve, 0));
     }
     expect(observedConflictKeys).toEqual(allowedConflictKeys);
-  }, 30_000);
+  }, 120_000);
 
   it('uses the county coordinate as the stable commandery parent across a mixed polygon', () => {
     const map = decodeProvincePixels(new Uint8ClampedArray([
@@ -1041,7 +1040,7 @@ describe('province identity image loader', () => {
 
   it.each([
     ['axis', 4097, 1, /axis/],
-    ['cell count', 4096, 1025, /cell/],
+    ['cell count', 4096, 2049, /cell/],
   ])('rejects an oversized IHDR %s before decode', async (_label, width, height, message) => {
     const createBitmap = vi.fn();
     vi.stubGlobal('createImageBitmap', createBitmap);

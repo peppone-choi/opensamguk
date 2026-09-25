@@ -39,6 +39,9 @@ class GetConstControllerTest {
         val api = GetConstController(opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cities, pins, artifacts))
         for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
             val selected = artifacts.artifacts(variant)
+            val topology = selected.projection.topology
+            `when`(pins.readPins(7)).thenReturn(if (variant == opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
+                listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map { opensamguk.gameapi.read.CityReadEntity(id = it, worldId = 7) })
             val json = selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8)
             val details = MapJson.loadCityDetails(json)

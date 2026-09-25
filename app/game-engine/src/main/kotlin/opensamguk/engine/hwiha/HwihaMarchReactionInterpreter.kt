@@ -1,9 +1,8 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.engine.siege.RoadFortPassage
 import opensamguk.logic.vision.MetaVisionSourceReader
-
 import opensamguk.logic.vision.ScoutReports
-
 import opensamguk.logic.vision.VisionTier
 import opensamguk.logic.vision.VisionViewer
 import opensamguk.logic.vision.Vision
@@ -97,10 +96,15 @@ class HwihaMarchReactionInterpreter(
         val actorIsCorps = projection.deployed.any { it.commanderGeneralId == actorId }
         val edges = try { LandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
             ?: return null
+        val nationEdges = hashMapOf<Int, StrategicEdgeStateSnapshot?>()
+        fun passableFor(nationId: Int): StrategicEdgeStateSnapshot? = nationEdges.getOrPut(nationId) {
+            RoadFortPassage.forNation(world, edges, nationId)
+        }
         val interceptors = if (!directTravel && !actorIsCorps) emptyList() else inventory.interceptions.filter { hostile(it.nationId) }.mapNotNull { order ->
             val from = world.positionOf(order.commanderGeneralId) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (from == node || !visible(world, order.ownerGeneralId, node, projection, now)) return@mapNotNull null
-            val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(from, node, 1), edges, metrics)
+            val passage = passableFor(order.nationId) ?: return@mapNotNull null
+            val path = (StrategicPathResolver.resolveLandMarch(topology, StrategicPathRequest(from, node, 1), passage, metrics)
                 as? LandMarchPathResult.Resolved)?.path ?: return@mapNotNull null
             if (path.edgeIds.size > CampaignBalance.INTERCEPT_RANGE_PROVINCES) return@mapNotNull null
             order.commanderGeneralId
@@ -109,7 +113,8 @@ class HwihaMarchReactionInterpreter(
         val yielding = sortedSetOf<String>()
         for (order in inventory.avoidanceOrders.filter { hostile(it.nationId) }) {
             if (world.positionOf(order.commanderGeneralId) != node) continue
-            val retreat = retreat(world, order, node, edges, now) ?: continue
+            val passage = passableFor(order.nationId) ?: continue
+            val retreat = retreat(world, order, node, passage, now) ?: continue
             evaders[order.commanderGeneralId] = retreat
             yielding += order.orderId
         }
