@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.MetaVisionSourceReader
+
 import opensamguk.logic.vision.ScoutReports
 
 import opensamguk.logic.vision.VisionTier
@@ -121,10 +123,10 @@ class HwihaMarchReactionInterpreter(
         val territory = world.provinceControlSnapshot()?.statesByProvinceId.orEmpty().values
             .filter { it.nationId == viewer.nationId }.mapTo(sortedSetOf()) { it.provinceId }
         val cards = world.listRetainers().filter { it.masterGeneralId == viewerId }
-        val posts = HwihaMetaVisionSourceReader.scoutPosts(viewer.meta).value
+        val posts = MetaVisionSourceReader.scoutPosts(viewer.meta).value
             .filter { post -> cards.any { it.id == post.retainerId } }
         val watchtowers = world.listCities().filter { it.nationId == viewer.nationId }.mapNotNull { city ->
-            if (!HwihaMetaVisionSourceReader.hasCompletedWatchtower(city.meta).value) return@mapNotNull null
+            if (!MetaVisionSourceReader.hasCompletedWatchtower(city.meta).value) return@mapNotNull null
             (world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince)?.let { city.id to it.id }
         }
         val reports = try { ScoutReports.read(viewer.meta) } catch (_: IllegalArgumentException) { null }

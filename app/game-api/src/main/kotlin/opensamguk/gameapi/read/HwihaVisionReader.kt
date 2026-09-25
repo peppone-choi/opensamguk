@@ -1,5 +1,8 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.VisionSourceReader
+import opensamguk.logic.vision.MetaVisionSourceReader
+
 import opensamguk.logic.vision.ScoutFailure
 import opensamguk.logic.vision.ScoutAssessment
 import opensamguk.logic.vision.ScoutRules
@@ -44,13 +47,13 @@ class HwihaVisionReader(
     private val retainers: RetainerReadRepository,
     private val artifacts: ActiveWorldArtifactResolver,
     private val spatial: SpatialStateReadRepository,
-    private val sources: HwihaVisionSourceReader,
+    private val sources: VisionSourceReader,
     private val rules: VisionRules.Rules,
 ) {
     @Autowired
     constructor(generals: GeneralReadRepository, worlds: WorldStateReadRepository, nations: NationReadRepository,
         retainers: RetainerReadRepository, artifacts: ActiveWorldArtifactResolver, spatial: SpatialStateReadRepository) :
-        this(generals, worlds, nations, retainers, artifacts, spatial, HwihaMetaVisionSourceReader, VisionRules.CANON)
+        this(generals, worlds, nations, retainers, artifacts, spatial, MetaVisionSourceReader, VisionRules.CANON)
 
     fun visibility(generalId: Int, userId: Long): HwihaVisibilityResponse {
         val frame = when (val built = frame(generalId, userId)) {
