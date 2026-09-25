@@ -31,13 +31,16 @@ class ImperialEdictAuthorityTest {
         val sealed = ImperialEdictAuthority.sealWithRegalia(registered(), world, regalia, "seal-1", 4, setOf(4))
         val delivered = ImperialEdictPipeline.deliver(ImperialEdictPipeline.dispatch(sealed, 5), 8)
         val accepted = ImperialEdictPipeline.respond(delivered, EdictReceipt(8, EdictRecipientDecision.ACCEPT, setOf(office.officeId)))
-        val proof = ImperialEdictAuthority.centralConfirmationProof(accepted, catalog, courtPolityId = 10)
+        val proof = ImperialEdictAuthority.centralConfirmationProof(accepted, catalog, world, courtPolityId = 10)
         assertEquals(CourtConfirmationProof("edict-1", office.officeId, 77, 10), proof)
         val prior = OfficeClaims.selfStyle("self", office.officeId, 77)
         val history = OfficeClaims.confirm(listOf(prior), prior.id, "confirmed", 1, requireNotNull(proof))
         assertEquals(OfficeClaimOrigin.SELF_STYLED, history.first().origin)
         assertEquals(OfficeClaimOrigin.COURT_CONFIRMED, history.last().origin)
         assertEquals(ClaimRecognition.RECOGNIZED, history.last().recognitionByPolity[10])
+        assertFailsWith<IllegalArgumentException> {
+            ImperialEdictAuthority.centralConfirmationProof(accepted, catalog, world, courtPolityId = 11)
+        }
     }
 
     @Test
@@ -73,6 +76,6 @@ class ImperialEdictAuthorityTest {
         val sealed = ImperialEdictAuthority.sealWithRegalia(registered(), world, regalia, "seal-1", 4, setOf(4))
         val delivered = ImperialEdictPipeline.deliver(ImperialEdictPipeline.dispatch(sealed, 5), 8)
         val refused = ImperialEdictPipeline.respond(delivered, EdictReceipt(8, EdictRecipientDecision.REFUSE))
-        assertNull(ImperialEdictAuthority.centralConfirmationProof(refused, catalog, 10))
+        assertNull(ImperialEdictAuthority.centralConfirmationProof(refused, catalog, world, 10))
     }
 }

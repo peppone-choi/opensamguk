@@ -32,10 +32,13 @@ object ImperialEdictAuthority {
     fun centralConfirmationProof(
         edict: ImperialEdict,
         catalog: CentralOfficeCatalog,
+        world: ImperialWorldState,
         courtPolityId: Int,
     ): CourtConfirmationProof? {
         require(courtPolityId > 0)
         val grant = ImperialEdictPipeline.acceptedCentralGrant(edict, catalog) ?: return null
+        val house = world.houses.single { it.code == edict.proposal.imperialLineCode }
+        require(house.courtNationId == courtPolityId) { "confirmation polity is not the issuing court" }
         return CourtConfirmationProof(edict.proposal.id, grant.officeId, grant.holderId, courtPolityId)
     }
 }
