@@ -235,7 +235,7 @@ class ReservedTurnHandler(
         hwihaDomesticContext) }
     private val transferHandler by lazy { opensamguk.engine.campaign.TransferHandler(world, recorder,
         hwihaDomesticContext) }
-    private val legacyDirectHandler by lazy { opensamguk.engine.campaign.LegacyDirectHandler(world, recorder,
+    private val directActionHandler by lazy { opensamguk.engine.campaign.DirectActionHandler(world, recorder,
         hwihaDomesticContext) }
     private val musterHandler by lazy { opensamguk.engine.campaign.MusterHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
@@ -414,7 +414,7 @@ class ReservedTurnHandler(
             for (directId in opensamguk.logic.input.DirectInput.INPUT_IDS) {
                 if (hwihaCatalog[directId]?.deliveryState?.hasHandler == true) {
                     handlers[directId] = InputHandler {
-                        applied = legacyDirectHandler.handle(directId, generalId, reserved.argJson, reserved.requestId,
+                        applied = directActionHandler.handle(directId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }

@@ -6,7 +6,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** Direct conversion, treasure/grain trade and one-hop warehouse transport. */
-class LegacyDirectHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+class DirectActionHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
     fun handle(inputId: String, actorId: Int, rawJson: String?, requestId: String?, ownerUserId: Int?,

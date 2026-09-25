@@ -1,6 +1,6 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.precheck.LegacyDirectOptionsService
+import opensamguk.gameapi.precheck.DirectActionOptionsService
 import opensamguk.gameapi.read.DomesticForbidden
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class LegacyDirectOptionsController(private val service: LegacyDirectOptionsService) {
+class DirectActionOptionsController(private val service: DirectActionOptionsService) {
     @GetMapping("/api/commands/legacy-direct-options")
     fun options(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int,
         @RequestParam inputId: String): ResponseEntity<Any> {

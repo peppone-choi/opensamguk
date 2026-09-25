@@ -10,24 +10,24 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class LegacyCourtChoice(val label: String, val arguments: Map<String, Any>,
+data class CourtActionChoice(val label: String, val arguments: Map<String, Any>,
     val available: Boolean, val code: String? = null, val reason: String? = null,
     val maxAmount: Long? = null)
-data class LegacyCourtOptions(val inputId: String, val available: Boolean,
+data class CourtActionOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<LegacyCourtChoice> = emptyList())
+    val choices: List<CourtActionChoice> = emptyList())
 
 @Service
-class LegacyCourtOptionsService(private val reader: DomesticReader,
+class CourtActionOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(actorId: Int, userId: Long, inputId: String): LegacyCourtOptions {
+    fun options(actorId: Int, userId: Long, inputId: String): CourtActionOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in CourtInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return LegacyCourtOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return LegacyCourtOptions(inputId, false,
+            return CourtActionOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val state = reader.snapshot().state ?: return CourtActionOptions(inputId, false,
             CourtFailure.STATE_UNAVAILABLE.name, CourtFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return LegacyCourtOptions(inputId, false,
+        val actor = state.person(actorId) ?: return CourtActionOptions(inputId, false,
             CourtFailure.ACTOR_NOT_FOUND.name, CourtFailure.ACTOR_NOT_FOUND.message)
         val ownedCounties = state.counties.filter { it.nationId == actor.nationId }.sortedBy { it.id }
         val others = state.nations.filter { it.id != actor.nationId }.sortedBy { it.id }
@@ -66,11 +66,11 @@ class LegacyCourtOptionsService(private val reader: DomesticReader,
                     "TIMBER" -> stock.timber; "HORSES" -> stock.horses; else -> null
                 }
             }
-            LegacyCourtChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
+            CourtActionChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
         }
         val available = choices.any { it.available }
         val reason = if (available) null else choices.firstOrNull()?.let { it.code to it.reason }
             ?: (CourtFailure.TARGET_UNAVAILABLE.name to CourtFailure.TARGET_UNAVAILABLE.message)
-        return LegacyCourtOptions(inputId, available, reason?.first, reason?.second, choices)
+        return CourtActionOptions(inputId, available, reason?.first, reason?.second, choices)
     }
 }

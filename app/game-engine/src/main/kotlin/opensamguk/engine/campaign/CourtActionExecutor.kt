@@ -6,12 +6,12 @@ import opensamguk.logic.diplomacy.DiplomacyState
 import opensamguk.logic.input.*
 
 /** Queued on submission; replayed exactly once at the issuer's next turn. */
-internal data class QueuedLegacyCourt(val requestId: String, val ownerUserId: Int, val inputId: String, val argJson: String) {
+internal data class QueuedCourtAction(val requestId: String, val ownerUserId: Int, val inputId: String, val argJson: String) {
     fun toMetaValue(): Map<String, Any?> = mapOf("version" to 1, "requestId" to requestId,
         "ownerUserId" to ownerUserId, "inputId" to inputId, "argJson" to argJson)
     companion object {
         const val META_KEY = "hwihaQueuedLegacyCourt"
-        fun read(meta: Map<String, Any?>): QueuedLegacyCourt? {
+        fun read(meta: Map<String, Any?>): QueuedCourtAction? {
             val value = meta[META_KEY] ?: return null
             val row = value as? Map<*, *> ?: invalid()
             require(row.keys == setOf("version", "requestId", "ownerUserId", "inputId", "argJson") && row["version"] == 1)
@@ -21,14 +21,14 @@ internal data class QueuedLegacyCourt(val requestId: String, val ownerUserId: In
             val json = row["argJson"] as? String ?: invalid()
             require(requestId.matches(Regex("[A-Za-z0-9._:-]{1,128}")) && owner > 0 && inputId in CourtInput.INPUT_IDS)
             require(json.length <= 4096)
-            return QueuedLegacyCourt(requestId, owner, inputId, json)
+            return QueuedCourtAction(requestId, owner, inputId, json)
         }
         private fun invalid(): Nothing = throw IllegalArgumentException("invalid queued legacy court input")
     }
 }
 
 /** One executor and one assessment for every court legacy mode. */
-internal class LegacyCourtExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
+internal class CourtActionExecutor(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val context: DomesticContext) {
     fun assess(actorId: Int, inputId: String, json: String) =
         CourtRules.assess(actorId, inputId, json, context.projection(world))

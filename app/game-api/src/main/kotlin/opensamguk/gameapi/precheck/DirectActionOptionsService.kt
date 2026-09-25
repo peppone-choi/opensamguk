@@ -7,24 +7,24 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class LegacyDirectChoice(val label: String, val arguments: Map<String, Any>,
+data class DirectActionChoice(val label: String, val arguments: Map<String, Any>,
     val available: Boolean, val code: String? = null, val reason: String? = null,
     val maxAmount: Int? = null)
-data class LegacyDirectOptions(val inputId: String, val available: Boolean,
+data class DirectActionOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<LegacyDirectChoice> = emptyList())
+    val choices: List<DirectActionChoice> = emptyList())
 
 @Service
-class LegacyDirectOptionsService(private val reader: DomesticReader,
+class DirectActionOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(actorId: Int, userId: Long, inputId: String): LegacyDirectOptions {
+    fun options(actorId: Int, userId: Long, inputId: String): DirectActionOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in DirectInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return LegacyDirectOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return LegacyDirectOptions(inputId, false,
+            return DirectActionOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val state = reader.snapshot().state ?: return DirectActionOptions(inputId, false,
             DirectFailure.STATE_UNAVAILABLE.name, DirectFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return LegacyDirectOptions(inputId, false,
+        val actor = state.person(actorId) ?: return DirectActionOptions(inputId, false,
             DirectFailure.ACTOR_NOT_FOUND.name, DirectFailure.ACTOR_NOT_FOUND.message)
         val requests: List<Pair<String, DirectRequest>> = when (inputId) {
             DirectInput.CONVERT -> state.bugoks.filter { it.masterGeneralId == actorId }.flatMap { unit ->
@@ -73,12 +73,12 @@ class LegacyDirectOptionsService(private val reader: DomesticReader,
                     Cargo.IRON -> stock.iron; Cargo.TIMBER -> stock.timber; Cargo.HORSES -> stock.horses
                 }).toInt()
             } else null
-            LegacyDirectChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
+            DirectActionChoice(label, args, failure == null, failure?.name, failure?.message, maxAmount)
         }
         val first = choices.firstOrNull { it.available }
         val failure = if (first == null) choices.firstOrNull()?.let { it.code to it.reason }
             ?: (DirectFailure.STATE_UNAVAILABLE.name to DirectFailure.STATE_UNAVAILABLE.message)
             else null
-        return LegacyDirectOptions(inputId, first != null, failure?.first, failure?.second, choices)
+        return DirectActionOptions(inputId, first != null, failure?.first, failure?.second, choices)
     }
 }

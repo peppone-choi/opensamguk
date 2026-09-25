@@ -97,12 +97,12 @@ class MarchPersistenceIT {
         assertEquals(InputRejection.NOT_DELIVERED.name,
             court.handle(TurnDaemonCommand.ImmediateInput("institution-$id", 10, 42,
                 CourtInput.INSTITUTION, "{}")).code)
-        assertNull(QueuedLegacyCourt.read(world.getGeneralById(10)!!.meta))
+        assertNull(QueuedCourtAction.read(world.getGeneralById(10)!!.meta))
         val stratagem = CourtHandler(world, ChangeRecorder())
         assertEquals(InputRejection.NOT_DELIVERED.name,
             stratagem.handle(TurnDaemonCommand.ImmediateInput("last-stand-$id", 10, 42,
                 StratagemInput.LAST_STAND, "{}")).code)
-        assertNull(QueuedLegacyStratagem.read(world.getGeneralById(10)!!.meta))
+        assertNull(QueuedStratagemAction.read(world.getGeneralById(10)!!.meta))
         world = cold(id)
         assertEquals(before.tech, world.getNationById(1)!!.tech)
         assertEquals(before.gold, world.getNationById(1)!!.gold)

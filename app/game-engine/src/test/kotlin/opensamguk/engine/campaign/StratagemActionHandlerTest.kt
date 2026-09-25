@@ -9,7 +9,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 
-class LegacyStratagemHandlerTest {
+class StratagemActionHandlerTest {
     private val fixture = CampaignWorldFixture()
     private val administrative = fixture.bundle.projection.administrativeCountyIds
     private val sourceId = administrative.sorted().first { source ->

@@ -12,7 +12,7 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 
-class LegacyCourtHandlerTest {
+class CourtActionHandlerTest {
     private val fixture = CampaignWorldFixture()
     private fun input(id: String, args: String, requestId: String = "court-test") =
         TurnDaemonCommand.ImmediateInput(requestId, 501, 42, id, args)
@@ -48,9 +48,9 @@ class LegacyCourtHandlerTest {
 
     @Test fun `queued legacy court input is rejected when its catalog row becomes planned`() {
         val route = fixture.route()
-        val queued = QueuedLegacyCourt("planned-release", 42, "court.releaseCorps", """{"targetGeneralId":502}""")
+        val queued = QueuedCourtAction("planned-release", 42, "court.releaseCorps", """{"targetGeneralId":502}""")
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (QueuedLegacyCourt.META_KEY to queued.toMetaValue()))
+            it.copy(meta = it.meta + (QueuedCourtAction.META_KEY to queued.toMetaValue()))
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(
             Nation(1, "N1", "#111111", capitalCityId = route.startCity)))
@@ -59,7 +59,7 @@ class LegacyCourtHandlerTest {
 
         handler.onIssuerTurn(501)
 
-        assertFalse(QueuedLegacyCourt.META_KEY in world.getGeneralById(501)!!.meta)
+        assertFalse(QueuedCourtAction.META_KEY in world.getGeneralById(501)!!.meta)
         val execution = handler.takeExecutions().single()
         assertEquals("planned-release", execution.requestId)
         assertEquals(InputRejection.NOT_DELIVERED.name, execution.result.code)
@@ -90,8 +90,8 @@ class LegacyCourtHandlerTest {
         val route = fixture.route()
         for ((key, inputId) in listOf(
             QueuedReward.META_KEY to RewardInput.INPUT_ID,
-            QueuedLegacyCourt.META_KEY to "court.releaseCorps",
-            QueuedLegacyStratagem.META_KEY to "stratagem.lastStand",
+            QueuedCourtAction.META_KEY to "court.releaseCorps",
+            QueuedStratagemAction.META_KEY to "stratagem.lastStand",
         )) {
             val queued = mapOf("requestId" to "bad-$key", "ownerUserId" to 42,
                 "inputId" to inputId, "invalid" to true)
@@ -109,7 +109,7 @@ class LegacyCourtHandlerTest {
             assertEquals("bad-$key", execution.requestId)
             assertEquals("STATE_UNAVAILABLE", execution.result.code)
             assertEquals(inputId, execution.result.actionCode)
-            if (key == QueuedLegacyStratagem.META_KEY)
+            if (key == QueuedStratagemAction.META_KEY)
                 assertEquals("STRATAGEM", execution.result.commandKind)
         }
     }
@@ -117,7 +117,7 @@ class LegacyCourtHandlerTest {
     @Test fun `malformed stratagem without input id keeps stratagem result kind`() {
         val route = fixture.route()
         val ruler = fixture.person(501, 1, route.startCity, userId = "42").let {
-            it.copy(meta = it.meta + (QueuedLegacyStratagem.META_KEY to mapOf(
+            it.copy(meta = it.meta + (QueuedStratagemAction.META_KEY to mapOf(
                 "requestId" to "bad-stratagem", "ownerUserId" to 42, "invalid" to true)))
         }
         val world = fixture.world(listOf(ruler to route.start), nations = listOf(

@@ -9,7 +9,7 @@ import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 
-class LegacyDirectHandlerTest {
+class DirectActionHandlerTest {
     private val fixture = CampaignWorldFixture()
     private fun context() = DomesticContext(cityConst = fixture.bundle.cityConst)
     private fun stock(id: Int, money: Long = 0, grain: Long = 0) = mapOf(
@@ -23,7 +23,7 @@ class LegacyDirectHandlerTest {
         val nextType = UnitProfilesJson.loadDefault().profiles.first { it.crewTypeId != unit.crewTypeId }.crewTypeId
         val world = fixture.world(listOf(actor to route.start), bugoks = listOf(unit),
             cityChanges = { city -> if (city.id == route.startCity) city.copy(nationId = 1) else city })
-        val handler = LegacyDirectHandler(world, ChangeRecorder(), context())
+        val handler = DirectActionHandler(world, ChangeRecorder(), context())
         val json = """{"bugokId":${unit.id},"crewTypeId":$nextType}"""
         val first = assertIs<TurnOutcome.Applied>(handler.handle(DirectInput.CONVERT,
             actor.id, json, "convert-4011", 42))
@@ -38,7 +38,7 @@ class LegacyDirectHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id, grain = 300)) else city
         })
-        assertIs<TurnOutcome.Applied>(LegacyDirectHandler(world, ChangeRecorder(), context()).handle(
+        assertIs<TurnOutcome.Applied>(DirectActionHandler(world, ChangeRecorder(), context()).handle(
             DirectInput.GRAIN, actor.id, """{"side":"BUY","amount":1}""", "grain-4021", 42))
         assertEquals(0, world.getGeneralById(actor.id)!!.gold)
         assertEquals(300, world.getGeneralById(actor.id)!!.rice)
@@ -54,7 +54,7 @@ class LegacyDirectHandlerTest {
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1, meta = city.meta + stock(city.id)) else city
         })
-        val handler = LegacyDirectHandler(world, ChangeRecorder(), context())
+        val handler = DirectActionHandler(world, ChangeRecorder(), context())
         val rejected = assertIs<TurnOutcome.Rejected>(handler.handle(DirectInput.EQUIPMENT, actor.id,
             """{"treasureId":${card.sourceRowIndex},"side":"BUY"}""", "buy-4031", 42))
         assertEquals(InputRejection.NOT_DELIVERED.name, rejected.code)
@@ -73,7 +73,7 @@ class LegacyDirectHandlerTest {
             targetId -> city.copy(nationId = 1, meta = city.meta + stock(city.id))
             else -> city
         } })
-        val handler = LegacyDirectHandler(world, ChangeRecorder(), context())
+        val handler = DirectActionHandler(world, ChangeRecorder(), context())
         assertEquals(DirectFailure.INVALID_INPUT.name,
             assertIs<TurnOutcome.Rejected>(handler.handle(DirectInput.TRANSPORT,
                 actor.id, """{"targetCountyId":$targetId,"cargo":"GRAIN","amount":1001}""", "too-much", 42)).code)

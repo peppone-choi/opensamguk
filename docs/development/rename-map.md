@@ -116,6 +116,12 @@
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
+| `LegacyCourt*` (API·engine 코드 타입/파일) | `CourtAction*` | #937 draft | 저장 키 `hwihaLegacyCourt*`는 저장 계약 단계에서 처리 |
+| `LegacyDirect*` (API·engine 코드 타입/파일) | `DirectAction*` | #937 draft | 저장 키 `hwihaLegacyDirect*`는 저장 계약 단계에서 처리 |
+| `LegacyStratagem*` (API·engine 코드 타입/파일) | `StratagemAction*` | #937 draft | 저장 키 `hwihaLegacyStratagem*`는 저장 계약 단계에서 처리 |
+| `QueuedLegacyCourt`, `QueuedLegacyStratagem` | `QueuedCourtAction`, `QueuedStratagemAction` | #937 draft | 직렬화 meta 키 값은 별도 처리 |
+| `logic/world/HanMapConnectivityTest.kt` | `logic/world/WorldMapConnectivityTest.kt` | #937 draft | 특정 `han` 지도 픽스처는 유지 |
+
 ## 정한 값의 근거
 
 - `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`과 `command_inbox.action_code` 값 `HwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.

@@ -6,23 +6,23 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 
-data class LegacyStratagemChoice(val label: String, val arguments: Map<String, Int>,
+data class StratagemActionChoice(val label: String, val arguments: Map<String, Int>,
     val available: Boolean, val code: String? = null, val reason: String? = null)
-data class LegacyStratagemOptions(val inputId: String, val available: Boolean,
+data class StratagemActionOptions(val inputId: String, val available: Boolean,
     val code: String? = null, val reason: String? = null,
-    val choices: List<LegacyStratagemChoice> = emptyList())
+    val choices: List<StratagemActionChoice> = emptyList())
 
 @Service
-class LegacyStratagemOptionsService(private val reader: DomesticReader,
+class StratagemActionOptionsService(private val reader: DomesticReader,
     private val catalog: InputCatalog = InputCatalog.load()) {
     @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
-    fun options(actorId: Int, userId: Long, inputId: String): LegacyStratagemOptions {
+    fun options(actorId: Int, userId: Long, inputId: String): StratagemActionOptions {
         reader.requireOwner(actorId, userId)
         if (inputId !in StratagemInput.INPUT_IDS || catalog[inputId]?.deliveryState?.hasHandler != true)
-            return LegacyStratagemOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
-        val state = reader.snapshot().state ?: return LegacyStratagemOptions(inputId, false,
+            return StratagemActionOptions(inputId, false, InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
+        val state = reader.snapshot().state ?: return StratagemActionOptions(inputId, false,
             StratagemFailure.STATE_UNAVAILABLE.name, StratagemFailure.STATE_UNAVAILABLE.message)
-        val actor = state.person(actorId) ?: return LegacyStratagemOptions(inputId, false,
+        val actor = state.person(actorId) ?: return StratagemActionOptions(inputId, false,
             StratagemFailure.ACTOR_NOT_FOUND.name, StratagemFailure.ACTOR_NOT_FOUND.message)
         val local = state.counties.singleOrNull { it.provinceId == actor.node && it.nationId == actor.nationId }
         val requests: List<Pair<String, StratagemInput.Request>> = when (inputId) {
@@ -51,11 +51,11 @@ class LegacyStratagemOptionsService(private val reader: DomesticReader,
                     "secondNationId" to request.secondNationId!!)
                 else -> mapOf("targetCountyId" to request.targetCountyId!!)
             }
-            LegacyStratagemChoice(label, args, failure == null, failure?.name, failure?.message)
+            StratagemActionChoice(label, args, failure == null, failure?.name, failure?.message)
         }
         val available = choices.any { it.available }
         val reason = if (available) null else choices.firstOrNull()?.let { it.code to it.reason }
             ?: (StratagemFailure.TARGET_UNAVAILABLE.name to StratagemFailure.TARGET_UNAVAILABLE.message)
-        return LegacyStratagemOptions(inputId, available, reason?.first, reason?.second, choices)
+        return StratagemActionOptions(inputId, available, reason?.first, reason?.second, choices)
     }
 }

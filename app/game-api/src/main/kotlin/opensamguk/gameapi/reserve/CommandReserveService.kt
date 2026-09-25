@@ -98,7 +98,7 @@ class CommandReserveService(
     private val hwihaPeopleAdmission: PeopleAdmission? = null,
     private val hwihaPoliticalAdmission: PoliticalAdmission? = null,
     private val hwihaTransferAdmission: TransferAdmission? = null,
-    private val hwihaLegacyDirectAdmission: LegacyDirectAdmission? = null,
+    private val directActionAdmission: DirectActionAdmission? = null,
     private val hwihaCatalog: InputCatalog = InputCatalog.load(),
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
@@ -251,7 +251,7 @@ class CommandReserveService(
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.DirectInput.INPUT_IDS) {
-            (hwihaLegacyDirectAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (directActionAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {

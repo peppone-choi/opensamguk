@@ -23,8 +23,8 @@ class CourtHandler(
 ) {
     private val executor = DispatchExecutor(world, recorder)
     private val domestic by lazy { DomesticHandler(world, recorder, domesticContext) }
-    private val legacy by lazy { LegacyCourtExecutor(world, recorder, domesticContext) }
-    private val stratagem by lazy { LegacyStratagemExecutor(world, recorder, domesticContext) }
+    private val courtAction by lazy { CourtActionExecutor(world, recorder, domesticContext) }
+    private val stratagem by lazy { StratagemActionExecutor(world, recorder, domesticContext) }
     private val executions = mutableListOf<CourtExecution>()
 
     fun handle(command: ImmediateInput): CommandLifecycleResult {
@@ -155,21 +155,21 @@ class CourtHandler(
             in CourtInput.INPUT_IDS -> {
                 val json = CourtInput.canonical(actor.id, command.inputId, command.argJson)
                     ?: return deny(CourtFailure.INVALID_INPUT.name, CourtFailure.INVALID_INPUT.message)
-                val existing = try { QueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) {
+                val existing = try { QueuedCourtAction.read(actor.meta) } catch (_: IllegalArgumentException) {
                     return deny(CourtFailure.STATE_UNAVAILABLE.name, CourtFailure.STATE_UNAVAILABLE.message)
                 }
                 if (existing != null) return deny(CourtFailure.ALREADY_QUEUED.name,
                     CourtFailure.ALREADY_QUEUED.message)
-                val assessment = legacy.assess(actor.id, command.inputId, json)
+                val assessment = courtAction.assess(actor.id, command.inputId, json)
                 if (assessment is CourtAssessment.Rejected) return deny(assessment.reason.name, assessment.reason.message)
-                val queued = QueuedLegacyCourt(command.requestId, command.ownerUserId, command.inputId, json)
-                updateMeta(actor, actor.meta + (QueuedLegacyCourt.META_KEY to queued.toMetaValue()))
+                val queued = QueuedCourtAction(command.requestId, command.ownerUserId, command.inputId, json)
+                updateMeta(actor, actor.meta + (QueuedCourtAction.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
             in StratagemInput.INPUT_IDS -> {
                 val request = StratagemInput.parse(actor.id, command.inputId, command.argJson)
                     ?: return deny(StratagemFailure.INVALID_INPUT.name, StratagemFailure.INVALID_INPUT.message)
-                val existing = try { QueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) {
+                val existing = try { QueuedStratagemAction.read(actor.meta) } catch (_: IllegalArgumentException) {
                     return deny(StratagemFailure.STATE_UNAVAILABLE.name, StratagemFailure.STATE_UNAVAILABLE.message)
                 }
                 if (existing != null) return deny(StratagemFailure.ALREADY_QUEUED.name,
@@ -177,9 +177,9 @@ class CourtHandler(
                 val assessment = stratagem.assess(request)
                 if (assessment is StratagemAssessment.Rejected)
                     return deny(assessment.reason.name, assessment.reason.message)
-                val queued = QueuedLegacyStratagem(command.requestId, command.ownerUserId, command.inputId,
+                val queued = QueuedStratagemAction(command.requestId, command.ownerUserId, command.inputId,
                     StratagemInput.canonicalJson(request))
-                updateMeta(actor, actor.meta + (QueuedLegacyStratagem.META_KEY to queued.toMetaValue()))
+                updateMeta(actor, actor.meta + (QueuedStratagemAction.META_KEY to queued.toMetaValue()))
                 result(actor.id, command.inputId, true, type = "reservationAccepted")
             }
             else -> deny("UNKNOWN_INPUT", "등록되지 않은 조정 입력입니다.")
@@ -190,7 +190,7 @@ class CourtHandler(
     fun onIssuerTurn(generalId: Int) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         runQueuedReward(generalId)
-        runQueuedLegacy(generalId)
+        runQueuedCourtAction(generalId)
         runQueuedStratagem(generalId)
         val actor = world.getGeneralById(generalId) ?: return
         val queued = try { QueuedDispatch.read(actor.meta) } catch (_: IllegalArgumentException) {
@@ -240,22 +240,22 @@ class CourtHandler(
         executions += CourtExecution(queued.requestId, queued.ownerUserId, result)
     }
 
-    private fun runQueuedLegacy(generalId: Int) {
+    private fun runQueuedCourtAction(generalId: Int) {
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { QueuedLegacyCourt.read(actor.meta) } catch (_: IllegalArgumentException) {
-            discardMalformedQueue(actor, QueuedLegacyCourt.META_KEY, "court.unknown")
+        val queued = try { QueuedCourtAction.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, QueuedCourtAction.META_KEY, "court.unknown")
             return
         } ?: return
-        if (rejectUndeliveredQueue(actor, QueuedLegacyCourt.META_KEY, queued.inputId,
+        if (rejectUndeliveredQueue(actor, QueuedCourtAction.META_KEY, queued.inputId,
                 queued.requestId, queued.ownerUserId)) return
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, queued.inputId, false, "FORBIDDEN", "제출 후 소유권이 변경되었습니다.")
-        } else when (val rejected = legacy.execute(generalId, queued.inputId, queued.argJson)) {
+        } else when (val rejected = courtAction.execute(generalId, queued.inputId, queued.argJson)) {
             null -> result(generalId, queued.inputId, true)
             else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
         }
         val current = world.getGeneralById(generalId) ?: return
-        updateMeta(current, (current.meta - QueuedLegacyCourt.META_KEY) +
+        updateMeta(current, (current.meta - QueuedCourtAction.META_KEY) +
             ("hwihaLegacyCourtLastExecution" to mapOf("requestId" to queued.requestId,
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)
@@ -263,11 +263,11 @@ class CourtHandler(
 
     private fun runQueuedStratagem(generalId: Int) {
         val actor = world.getGeneralById(generalId) ?: return
-        val queued = try { QueuedLegacyStratagem.read(actor.meta) } catch (_: IllegalArgumentException) {
-            discardMalformedQueue(actor, QueuedLegacyStratagem.META_KEY, "stratagem.unknown")
+        val queued = try { QueuedStratagemAction.read(actor.meta) } catch (_: IllegalArgumentException) {
+            discardMalformedQueue(actor, QueuedStratagemAction.META_KEY, "stratagem.unknown")
             return
         } ?: return
-        if (rejectUndeliveredQueue(actor, QueuedLegacyStratagem.META_KEY, queued.inputId,
+        if (rejectUndeliveredQueue(actor, QueuedStratagemAction.META_KEY, queued.inputId,
                 queued.requestId, queued.ownerUserId)) return
         val request = StratagemInput.parse(generalId, queued.inputId, queued.argJson)
         val resolved = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
@@ -280,7 +280,7 @@ class CourtHandler(
             else -> result(generalId, queued.inputId, false, rejected.reason.name, rejected.reason.message)
         }
         val current = world.getGeneralById(generalId) ?: return
-        updateMeta(current, (current.meta - QueuedLegacyStratagem.META_KEY) +
+        updateMeta(current, (current.meta - QueuedStratagemAction.META_KEY) +
             ("hwihaLegacyStratagemLastExecution" to mapOf("requestId" to queued.requestId,
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)

@@ -1,6 +1,6 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.precheck.LegacyCourtOptionsService
+import opensamguk.gameapi.precheck.CourtActionOptionsService
 import opensamguk.gameapi.read.DomesticForbidden
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-class LegacyCourtOptionsController(private val service: LegacyCourtOptionsService) {
+class CourtActionOptionsController(private val service: CourtActionOptionsService) {
     @GetMapping("/api/commands/legacy-court-options")
     fun options(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int,
         @RequestParam inputId: String): ResponseEntity<Any> {

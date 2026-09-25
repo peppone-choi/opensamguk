@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
  *
  * 이 테스트는 `SEA_LINKS` 별칭이 실제로 물려서 도달 불가 城이 0임을 고정한다.
  */
-class HanMapConnectivityTest {
+class WorldMapConnectivityTest {
 
     @Test
     fun `han 城 전체가 하나의 연결 성분이다(고립 城 0)`() {

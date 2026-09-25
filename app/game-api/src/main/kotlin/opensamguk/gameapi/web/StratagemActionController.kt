@@ -1,7 +1,7 @@
 package opensamguk.gameapi.web
 
 import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.gameapi.precheck.LegacyStratagemOptionsService
+import opensamguk.gameapi.precheck.StratagemActionOptionsService
 import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.reserve.AdmissionDenied
@@ -12,8 +12,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
-class LegacyStratagemController(private val reserve: CommandReserveService,
-    private val options: LegacyStratagemOptionsService) {
+class StratagemActionController(private val reserve: CommandReserveService,
+    private val options: StratagemActionOptionsService) {
     @PostMapping("/api/commands/stratagem/{name}")
     fun submit(@AuthenticationPrincipal userId: Long?, @PathVariable name: String,
         @RequestParam generalId: Int, @RequestBody raw: String): ResponseEntity<Any> {
