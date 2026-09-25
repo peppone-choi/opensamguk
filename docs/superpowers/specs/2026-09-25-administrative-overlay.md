@@ -16,7 +16,7 @@
 | `type` | 필수 입력과 효과 | 금지·검사 |
 | --- | --- | --- |
 | `rename` | 대상 `cityId` 또는 `commanderyId` 중 정확히 하나, `expected`, `name`, `nameCh`, `displayName`, `aliases`; 시점 이름·검색 별칭 교체 | 城·郡 id와 안정 검색 키·`administrativeUnitId`·`physicalPlaceRef` 불변. 郡 개명은 郡 id를 유지하고 소속 城 표시를 재파생. |
-| `scale` | `cityId`, `expected`, `level`, `metrics`; `metrics`는 인구·농업·상업·치안·수비·성벽 여섯 키 각각에 `{initial,max,expansionLimit}`을 둔다 | 지표마다 `0 ≤ initial ≤ max ≤ expansionLimit`, level 범위 검사. 현재 지도에 별도 증축 한도가 없으면 `expected.expansionLimit=null`을 명시한다. 이벤트가 이미 변한 실제 인구를 시작값으로 재설정할 수 없다. |
+| `scale` | `cityId`, `expected`, `level`, `metrics`; `metrics`는 인구·농업·상업·치안·수비·성벽 여섯 키 각각에 `{initial,max,expansionLimit}`을 둔다 | 지표마다 `0 ≤ initial ≤ max ≤ expansionLimit`, level 범위 검사. 현재 지도에 별도 증축 한도가 없으면 각 지표의 `expected.metrics.<지표>.expansionLimit=null`을 명시한다. 이벤트가 이미 변한 실제 인구를 시작값으로 재설정할 수 없다. |
 | `commanderySeat` | `commanderyId`, `fromCityId`, `toCityId`; 유일한 郡 치소 변경 | 둘 다 같은 郡의 행정 縣治 城, 현 치소가 `fromCityId`. `meta.seat/isSeat`와 표시를 결과에서 함께 파생. 천자 소재와 郡 치소는 별개. |
 | `reassignProvince` | 안정 `provinceRecordId`, `fromJurisdictionId`, `toJurisdictionId`; **기존 省 전체**의 관할 재배정 | 省 id·셀·간선·지형·점유·`parentRegionId` 불변. 실재 관할만 대상. 城 앵커의 자기 縣 관할 및 郡 경계 유지. 省 분할 불가. |
 
