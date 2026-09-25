@@ -1,6 +1,6 @@
 # 게임 사건 작성 경로 대조표
 
-기준: ADR-LITE-069, 사건 모델 PR #955의 `EventKind`, 2026-09-26 `origin/main`의 생산자. 새 쓰기 변경은 이 브랜치에서 준비하되 세계 형식 가드 PR #917이 소유한 공유 런타임 파일은 main 병합 뒤 다룬다.
+기준: ADR-LITE-069, 사건 모델 PR #955의 `EventKind`, 2026-09-26 `origin/main`의 생산자. `rg -l 'Records\.(general|nation|world)\(|pushLog\(' app/game-engine/src/main/kotlin/opensamguk/engine`으로 직접 기록 경계 55개 파일(허브 `Records`/`InMemoryTurnWorld` 포함)을 확인했다. 새 쓰기 변경은 이 브랜치에서 준비하되 세계 형식 가드 #917이 소유한 공유 런타임 파일은 main 병합 뒤 다룬다.
 
 ## 단일 저장 경로
 
@@ -22,7 +22,7 @@
 | `MonthlyCountyIncome` | `income.monthly` | 세력 내부 `COUNTIES/MONEY/GRAIN/IRON/TIMBER/HORSES` facts. NATION만, 세계·연감에는 없음. |
 | `MonthlyAssessment` | `yuedan.assessed`, `retinue.departureJudged`, `retinue.departed`, `yuedan.announced` | 개인 점수 전/후/변화와 이탈자 ID는 SELF. 공개 발표는 안전한 별도 WORLD 사건. |
 | `RenownEventRecorder` | `renown.event`, 공개 `county.ownerChanged` | 전공 변화는 SELF, 縣 소유권은 이전/새 세력과 城 ID로 한 건만 PUBLIC. 현 `county.captured` + `county.lost` 두 국가 행을 복사하지 않는다. |
-| `SiegeService` | `roadFort.siege` 및 결산 결과 추가 필요 | 참가/관할자의 전장 사건, 공개 영토 변화는 별도 승인된 투영만. |
+| `RoadFortSiegeService` (`engine/siege`) | `roadFort.siege` / `roadFort.captured` | 참가/관할자의 전장 사건과 점령 공개 사건을 분리한다. 보루 ID와 소유 세력 변화만 PUBLIC. |
 
 ## kind 없는 휘하 평문 생산자
 
@@ -33,6 +33,7 @@
 | `ScoutHandler` | 정찰 결과 | #343 시야 계약, 적 병력·첩보 정보를 PUBLIC·타 세력에 0건. |
 | `RewardExecutor` | 포상 수여 결과 | COURT 공문 수신자와 SELF 당사자 투영 분리. |
 | `EncounterResolver.log`, `SiegeService.log` | 전투/공성/조우 결산 | 결산 kind·replay 권한·양측 안전 투영, `roadFort.siege` 시작과 중복 여부. |
+| `RetainerMonthlyService` (`engine/retainer`) | 휘하 월말 결과 | `MonthlyAssessment`의 이탈 판정과 중복 여부, 당사자/주인 가시성. |
 | `CapitalAfterCapture` | 수도 이전/점령 후 조정 | 지도에 나타나는 공개 사실과 내부 후속 조치 분리. `county.ownerChanged`와 이중 발표 금지. |
 
 ## 공유·레거시 생산자와 파일 소유
