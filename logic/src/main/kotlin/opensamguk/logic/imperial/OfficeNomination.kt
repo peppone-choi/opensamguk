@@ -150,6 +150,7 @@ object OfficeClaims {
         rules: OfficeRules,
     ): ActualJurisdiction? {
         require(claim.officeId == tenure.officeId && claim.claimantId == tenure.holderId)
+        if (claim.origin == OfficeClaimOrigin.POSTHUMOUS) return null
         if (claim.recognitionByPolity[polityId] != ClaimRecognition.RECOGNIZED) return null
         return OfficeCapabilityResolver.actualJurisdiction(tenure, snapshot, rules).takeIf { it.effective }
     }

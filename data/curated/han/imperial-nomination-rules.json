@@ -115,11 +115,11 @@
           "basis": "목적이 한정된 임시 군직이다."
         },
         "origin.POSTHUMOUS": {
-          "value": 0,
+          "value": 60,
           "status": "CONFIRMED",
           "decidedBy": "구현 에이전트",
           "decidedAt": "2026-09-25",
-          "basis": "사후 추증은 생전 지휘권을 주지 않는다."
+          "basis": "사후 추증은 명예·가문 정통성으로 인정될 수 있다. 생전 지휘권 금지는 별도 실권 판정이 맡는다."
         }
       }
     }

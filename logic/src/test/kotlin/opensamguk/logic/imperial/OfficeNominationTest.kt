@@ -21,7 +21,7 @@ class OfficeNominationTest {
         assertEquals(3, rules.reviewTurnLimit)
         assertEquals(33, rules.score(setOf(NominationFactor.VACANCY_AND_CAPACITY, NominationFactor.PROPOSER_AUTHORITY)))
         assertEquals(20, rules.originStartRecognition.getValue(OfficeClaimOrigin.SELF_STYLED))
-        assertEquals(0, rules.originStartRecognition.getValue(OfficeClaimOrigin.POSTHUMOUS))
+        assertEquals(60, rules.originStartRecognition.getValue(OfficeClaimOrigin.POSTHUMOUS))
         assertEquals(NominationStatus.DRAFT, draft.status)
     }
 
@@ -103,5 +103,6 @@ class OfficeNominationTest {
         assertEquals(listOf(46), OfficeClaims.recognizedEffectiveJurisdiction(claim, tenure, 2, snapshot, rules)?.countyIds)
         assertNull(OfficeClaims.recognizedEffectiveJurisdiction(claim, tenure, 3, snapshot, rules))
         assertNull(OfficeClaims.recognizedEffectiveJurisdiction(claim, tenure.copy(assumedTurn = null, seatCountyId = null), 2, snapshot, rules))
+        assertNull(OfficeClaims.recognizedEffectiveJurisdiction(claim.copy(origin = OfficeClaimOrigin.POSTHUMOUS), tenure, 2, snapshot, rules))
     }
 }
