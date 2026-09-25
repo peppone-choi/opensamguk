@@ -77,7 +77,7 @@
   ],
   "hwihaWarehouses": {
     "version": 1, "units": "game-resource-v1", "source": "GAME_DESIGN",
-    "topologyRevision": "han-water-topology-v1", "topologyHash": "cbff0602a95363c6b6ca254b869c739203f620e2a5592aadad2c11b0b33c0c81",
+    "topologyRevision": "han-water-topology-v1", "topologyHash": "eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14",
     "warehouses": [
       {"countyId":1,"stock":{"money":0,"grain":0,"iron":0,"timber":0,"horses":0}},
       {"countyId":2,"stock":{"money":0,"grain":0,"iron":0,"timber":0,"horses":0}},
