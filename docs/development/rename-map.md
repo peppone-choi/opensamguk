@@ -29,6 +29,24 @@
 | `opensamguk.logic.input.DomesticAssessment` | `opensamguk.logic.domestic.DomesticAssessment` | 이 PR | 이름 유지, 패키지만 이동 |
 | `opensamguk.logic.input.PolicySource` | `opensamguk.logic.domestic.PolicySource` | 이 PR | 이름 유지, 패키지만 이동 |
 | `logic/input/HwihaDomesticRulesTest.kt` | `logic/domestic/DomesticRulesTest.kt` | 이 PR | 테스트 타입·파일·패키지 개명 |
+| `opensamguk.logic.input.HwihaDomesticInput` (`logic/input/HwihaDomesticInput.kt`) | `opensamguk.logic.domestic.DomesticInput` (`logic/domestic/DomesticInput.kt`) | 이 PR | 입력 파서 타입·파일·패키지 개명 |
+| `opensamguk.logic.input.HwihaDomesticIds` | `opensamguk.logic.domestic.DomesticIds` | 이 PR | 내정 입력의 내부 식별자 검사 |
+| `opensamguk.logic.input.PlacementPost` | `opensamguk.logic.domestic.PlacementPost` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.CountyPolicy` | `opensamguk.logic.domestic.CountyPolicy` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.CorpsPolicy` | `opensamguk.logic.domestic.CorpsPolicy` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticWork` | `opensamguk.logic.domestic.DomesticWork` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.PlacementTarget` | `opensamguk.logic.domestic.PlacementTarget` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.PolicyTarget` | `opensamguk.logic.domestic.PolicyTarget` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.PlacementRequest` | `opensamguk.logic.domestic.PlacementRequest` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.PolicyRequest` | `opensamguk.logic.domestic.PolicyRequest` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.WorkRequest` | `opensamguk.logic.domestic.WorkRequest` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.HwihaDomesticEffects` (`logic/input/HwihaDomesticEffects.kt`) | `opensamguk.logic.domestic.DomesticEffects` (`logic/domestic/DomesticEffects.kt`) | 이 PR | 효과 타입·파일·패키지 개명 |
+| `opensamguk.logic.input.HwihaCountyLevels` | `opensamguk.logic.domestic.CountyLevels` | 이 PR | 縣 지표 단계 |
+| `opensamguk.logic.input.HwihaSeatStats` | `opensamguk.logic.domestic.SeatStats` | 이 PR | 자리 능력치 |
+| `opensamguk.logic.input.HwihaPolicyOutcome` | `opensamguk.logic.domestic.PolicyOutcome` | 이 PR | 방침 결과 |
+| `opensamguk.logic.input.HwihaWorkStep` | `opensamguk.logic.domestic.WorkStep` | 이 PR | 공사 단계 |
+| `logic/input/HwihaDomesticInputTest.kt` | `logic/domestic/DomesticInputTest.kt` | 이 PR | 입력 테스트 파일·타입·패키지 개명 |
+| `logic/input/HwihaDomesticEffectsTest.kt` | `logic/domestic/DomesticEffectsTest.kt` | 이 PR | 효과 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
