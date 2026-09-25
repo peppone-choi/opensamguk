@@ -165,7 +165,7 @@ class MonthlyAssessment(
     private fun labelOf(row: Map<String, Any?>): String {
         val kind = RenownEventKind.ofKey(row["kind"] as? String ?: "")
             ?: run {
-                log.warn("hwiha_monthly_assessment_label_unavailable kind={}", row["kind"])
+                log.warn("campaign_monthly_assessment_label_unavailable kind={}", row["kind"])
                 return "알 수 없는 사건"
             }
         val count = row["count"] as? Int ?: 1
@@ -175,7 +175,7 @@ class MonthlyAssessment(
     private fun apply(before: TurnGeneral, meta: Map<String, Any?>): Boolean {
         val after = before.copy(meta = meta)
         if (world.applyGeneralDirtyFree(after) == null) {
-            log.warn("hwiha_monthly_assessment_skipped general={} reason=APPLY_REJECTED", before.id)
+            log.warn("campaign_monthly_assessment_skipped general={} reason=APPLY_REJECTED", before.id)
             return false
         }
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))

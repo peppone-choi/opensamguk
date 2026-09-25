@@ -30,19 +30,19 @@ class PersonCardTest {
 
     @Test fun `only direct NPC cards contribute to their holder deck`() {
         val holdings = listOf(
-            DirectPersonHolding(10, card(1, setOf("hwiha-stratagem-insight")), true),
-            DirectPersonHolding(1, card(2, setOf("hwiha-stratagem-fortify")), true),
-            DirectPersonHolding(10, card(3, setOf("hwiha-stratagem-fortify")), false),
+            DirectPersonHolding(10, card(1, setOf("stratagem-insight")), true),
+            DirectPersonHolding(1, card(2, setOf("stratagem-fortify")), true),
+            DirectPersonHolding(10, card(3, setOf("stratagem-fortify")), false),
         )
         val catalogue = CommonStratagemCards.headers.values
-        assertEquals(listOf("hwiha-stratagem-insight"), PersonStratagemDeck.contributedIds(10, holdings, catalogue))
-        assertEquals(listOf("hwiha-stratagem-fortify"), PersonStratagemDeck.contributedIds(1, holdings, catalogue))
-        assertEquals(listOf("hwiha-stratagem-insight", "hwiha-stratagem-insight"), PersonStratagemDeck.contributedIds(10,
-            holdings + DirectPersonHolding(10, card(4, setOf("hwiha-stratagem-insight")), true), catalogue))
+        assertEquals(listOf("stratagem-insight"), PersonStratagemDeck.contributedIds(10, holdings, catalogue))
+        assertEquals(listOf("stratagem-fortify"), PersonStratagemDeck.contributedIds(1, holdings, catalogue))
+        assertEquals(listOf("stratagem-insight", "stratagem-insight"), PersonStratagemDeck.contributedIds(10,
+            holdings + DirectPersonHolding(10, card(4, setOf("stratagem-insight")), true), catalogue))
         assertFailsWith<IllegalArgumentException> {
             PersonStratagemDeck.contributedIds(10, listOf(DirectPersonHolding(10, card(4, setOf("missing")), true)), catalogue)
         }
-        val state = PersonContributionState(setOf("hwiha-stratagem-insight"))
+        val state = PersonContributionState(setOf("stratagem-insight"))
         assertEquals(state, PersonContributionState.read(mapOf(PersonContributionState.META_KEY to state.toMetaValue())))
     }
 }

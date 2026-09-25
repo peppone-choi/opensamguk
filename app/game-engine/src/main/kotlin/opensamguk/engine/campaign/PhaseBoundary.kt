@@ -12,7 +12,7 @@ import opensamguk.logic.world.*
 import org.slf4j.LoggerFactory
 
 /**
- * HWIHA 순 경계(세계 처리, 재설계 spec §5.2). [opensamguk.engine.run.TurnRunService] 가 순마다(월 경계 포함)
+ * 캠페인 순 경계(세계 처리, 재설계 spec §5.2). [opensamguk.engine.run.TurnRunService] 가 순마다(월 경계 포함)
  * 세계 날짜를 새 순으로 옮긴 직후 한 번 부른다. 월 경계 전용 단계(징세·녹봉·월단평)는 호출부가 이 뒤에 잇는다.
  *
  * 1. **포위**(§5.2 2단계) — 성 안 군량·사기·항복. 함락이 여기서 일어난다.
@@ -75,7 +75,7 @@ class PhaseBoundary(
             } else if (network != null) computeSuppliedCitiesWithSpatialNetwork(cities, capitals, cityConst, network)
             else computeSuppliedCities(cities, capitals, cityConst)
         } catch (error: RuntimeException) {
-            log.warn("hwiha_phase_supply_unavailable world={} reason={}", world.worldId.value, error.message)
+            log.warn("campaign_phase_supply_unavailable world={} reason={}", world.worldId.value, error.message)
             return -1
         }
         var changed = 0

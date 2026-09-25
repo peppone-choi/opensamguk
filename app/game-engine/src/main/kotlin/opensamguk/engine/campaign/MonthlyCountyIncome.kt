@@ -12,7 +12,7 @@ import opensamguk.logic.input.RuleProfile
 import org.slf4j.LoggerFactory
 
 /**
- * 월 경계에서 縣 창고에 월세입을 넣는다. HWIHA 전용이고, 기존 국가·개인 재정은 같은 프로파일에서
+ * 월 경계에서 縣 창고에 월세입을 넣는다. 캠페인 전용이고, 기존 국가·개인 재정은 같은 프로파일에서
  * 꺼진다(`WorldActionContext.skipsLegacyFinance`) — 두 재정을 함께 켜지 않는다.
  *
  * **한 달에 한 번**을 보장하는 것은 [STAMP_KEY] 다. 도장과 창고는 같은 flush 에 실린다 —
@@ -72,7 +72,7 @@ class MonthlyCountyIncome(
                 catch (_: ArithmeticException) { overflow++; continue }
             val after = before.copy(meta = before.meta + (CountyWarehouse.META_KEY to next.toMetaValue()))
             if (world.applyCityDirtyFree(after) == null) {
-                log.warn("hwiha_county_income_skipped county={} reason=APPLY_REJECTED", countyId)
+                log.warn("campaign_county_income_skipped county={} reason=APPLY_REJECTED", countyId)
                 invalid++
                 continue
             }

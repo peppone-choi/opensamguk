@@ -51,7 +51,7 @@ class PersonCardMigrationTest {
                 "\"personPolicy\":{\"renownCapacity\":30,\"acceptsEnlistment\":true,\"statSourceId\":\"verified\",\"statSourceRevision\":\"v1\",\"officerId\":20}}'::jsonb " +
                 "WHERE world_id=1 AND id=20")
             jdbc.execute("""UPDATE general SET meta = meta || '{"personBonds":{"version":1,"bonds":[]},
-                "personContribution":{"version":1,"stratagemCardIds":["hwiha-stratagem-insight"]}}'::jsonb
+                "personContribution":{"version":1,"stratagemCardIds":["stratagem-insight"]}}'::jsonb
                 WHERE world_id=1 AND id=20""".trimIndent())
             jdbc.execute("INSERT INTO general_retainers (world_id,id,master_general_id,origin,general_id,name,relation,release_policy) " +
                 "VALUES (1,1,10,'EXISTING',20,'부장','lieutenant','MUTUAL')," +
@@ -70,7 +70,7 @@ class PersonCardMigrationTest {
             assertEquals("UNIQUE", cards[1]["availability"])
             assertEquals(5, cards[1]["renown_cost"])
             assertTrue(jdbc.queryForObject("SELECT bond_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("\"bonds\""))
-            assertTrue(jdbc.queryForObject("SELECT contribution_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("hwiha-stratagem-insight"))
+            assertTrue(jdbc.queryForObject("SELECT contribution_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("stratagem-insight"))
             assertNull(cards[0]["renown_cost"])
             assertEquals("COMMON", cards[3]["availability"])
             assertNull(cards[3]["renown_cost"])

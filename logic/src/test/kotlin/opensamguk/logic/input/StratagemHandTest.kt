@@ -48,13 +48,13 @@ class StratagemHandTest {
         for(v in listOf<Any>(1L,1.0,"1",true)) assertFailsWith<IllegalArgumentException> { read(raw+("hand" to listOf(v,2))) }
     }
     @Test fun `NPC contributed instances join and leave the same owned deck across cold reads`() {
-        val joined = initial().withContributions(mapOf("20:hwiha-stratagem-insight" to StratagemCardType.INSIGHT))
+        val joined = initial().withContributions(mapOf("20:stratagem-insight" to StratagemCardType.INSIGHT))
         assertEquals(listOf(3, 4, -1), joined.drawPile)
         assertEquals(StratagemCardType.INSIGHT, joined.cardType(-1))
         val cold = assertNotNull(read(joined.toMetaValue()))
         assertEquals(2, cold.toMetaValue()["version"])
         assertEquals(joined.toMetaValue(), cold.toMetaValue())
-        assertSame(cold, cold.withContributions(mapOf("20:hwiha-stratagem-insight" to StratagemCardType.INSIGHT)))
+        assertSame(cold, cold.withContributions(mapOf("20:stratagem-insight" to StratagemCardType.INSIGHT)))
         val released = cold.withContributions(emptyMap())
         assertEquals(listOf(3, 4), released.drawPile)
         assertEquals(1, released.toMetaValue()["version"])
