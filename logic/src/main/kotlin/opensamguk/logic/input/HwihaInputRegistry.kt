@@ -67,16 +67,11 @@ data class HwihaInputEntry(
     val helpTopicId: String,
     val tutorialObjectiveId: String,
     val deliveryState: InputDeliveryState,
-    /**
-     * 기존(삼모) 명령 역참조(#837). 「대체」가 아니다 — 직접 행동은 기존 이름을 그대로 잇고 위임 행(방침·배치·공사)도
-     * 같은 기존 명령을 가리킨다. 그래서 기존 명령 하나를 여러 행이 가리켜도 된다(다대일). 한 행 안의 중복만 금지한다.
-     */
-    val legacyCommands: List<String>,
+    val displayName: String?,
 )
 
 class HwihaInputCatalog internal constructor(
     val entries: List<HwihaInputEntry>,
-    val retiredLegacyCommands: List<String>,
 ) {
     private val byId = entries.associateBy { it.inputId }
     operator fun get(inputId: String): HwihaInputEntry? = byId[inputId]
@@ -93,25 +88,6 @@ class HwihaInputCatalog internal constructor(
         return if (entry.deliveryState.hasHandler) null else InputRejection.NOT_DELIVERED
     }
 
-    /** 기존 명령 → 그것을 가리키는 원장 행들(원장 순서). 다대일이므로 값은 목록이다. */
-    val legacyIndex: Map<String, List<HwihaInputEntry>> by lazy {
-        val index = linkedMapOf<String, MutableList<HwihaInputEntry>>()
-        entries.forEach { entry -> entry.legacyCommands.forEach { index.getOrPut(it) { mutableListOf() }.add(entry) } }
-        index
-    }
-
-    /** [legacy] 가운데 어느 행도 가리키지 않는 기존 명령(입력 순서 유지). 몇 행이 가리키든 하나 이상이면 대응된 것이다. */
-    fun uncoveredLegacyCommands(legacy: Iterable<String>): List<String> = legacy.filter { it !in legacyIndex }
-
-    /** An old command belongs to a live row or the explicit retired/settings list, but never both. */
-    fun invalidLegacyCoverage(legacy: Iterable<String>): List<String> {
-        val retired = retiredLegacyCommands.toSet()
-        return legacy.filter { (it in legacyIndex) == (it in retired) }
-    }
-
-    /** 역참조 가운데 [isRealCommand] 가 아니라고 답한 이름(지어낸 명령). */
-    fun unknownLegacyCommands(isRealCommand: (String) -> Boolean): List<String> = legacyIndex.keys.filterNot(isRealCommand)
-
     companion object {
         private const val RESOURCE = "command-catalog/hwiha-input-catalog.json"
         private val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
@@ -125,23 +101,19 @@ class HwihaInputCatalog internal constructor(
         fun parse(payload: String): HwihaInputCatalog {
             HwihaCatalogDuplicateKeys(payload).check()
             val root = Json.parseToJsonElement(payload).jsonObject
-            require(root.requiredInt("schemaVersion") == 2) { "unsupported hwiha input catalog schemaVersion" }
-            require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs", "retiredLegacyCommands", "retiredLegacyReasons")) {
+            require(root.requiredInt("schemaVersion") == 3) { "unsupported hwiha input catalog schemaVersion" }
+            require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs")) {
                 "unexpected or missing hwiha catalog field"
             }
             root.requiredText("catalogId")
             root.requiredText("status")
             root.requiredText("note")
-            val retired = root.getValue("retiredLegacyCommands").stringArray("retiredLegacyCommands")
-            require(retired.size == retired.toSet().size) { "duplicate retiredLegacyCommands" }
-            val reasons = root.getValue("retiredLegacyReasons").jsonObject
-            require(reasons.keys == retired.toSet()) { "retiredLegacyReasons must match retiredLegacyCommands" }
-            reasons.keys.forEach { reasons.requiredText(it) }
             val entries = root.getValue("inputs").jsonArray.map { element ->
                 val row = element.jsonObject
                 val inputId = row.getValue("inputId").jsonPrimitive.content
-                require(row.keys == ENTRY_FIELDS) { "unexpected or missing field for $inputId: ${ENTRY_FIELDS - row.keys} / ${row.keys - ENTRY_FIELDS}" }
                 val kind = enumValueOfOrFail<InputKind>(row.getValue("kind").jsonPrimitive.content, inputId)
+                val requiredFields = if (kind == InputKind.GENERAL_ACTION) ENTRY_FIELDS + "displayName" else ENTRY_FIELDS
+                require(row.keys == requiredFields) { "unexpected or missing field for $inputId: ${requiredFields - row.keys} / ${row.keys - requiredFields}" }
                 val parsed = parseInputId(inputId)
                 require(parsed != null && parsed.first == kind) { "inputId prefix does not match kind: $inputId / $kind" }
                 val cost = row.getValue("costSchema").jsonObject
@@ -192,23 +164,16 @@ class HwihaInputCatalog internal constructor(
                     helpTopicId = row.requiredText("helpTopicId"),
                     tutorialObjectiveId = row.requiredText("tutorialObjectiveId"),
                     deliveryState = enumValueOfOrFail(row.getValue("deliveryState").jsonPrimitive.content, inputId),
-                    legacyCommands = requireNotNull(row["legacyCommands"]) {
-                        "missing legacyCommands for $inputId (replacesLegacy was renamed, #837)"
-                    }.stringArray("legacyCommands").also {
-                        require(it.toSet().size == it.size) { "duplicate legacyCommands within one row: $inputId" }
-                    },
+                    displayName = if (kind == InputKind.GENERAL_ACTION) row.requiredText("displayName") else null,
                 )
             }
             require(entries.map { it.inputId }.toSet().size == entries.size) { "duplicate inputId in hwiha input catalog" }
-            require(entries.flatMap { it.legacyCommands }.toSet().intersect(retired.toSet()).isEmpty()) {
-                "retired legacy command is also referenced by a live input"
-            }
-            return HwihaInputCatalog(entries, retired)
+            return HwihaInputCatalog(entries)
         }
 
         private val ENTRY_FIELDS = setOf("inputId", "kind", "layer", "actor", "authorityRule", "targetSchema",
             "costSchema", "timing", "effectScope", "failureReasons", "resultType", "replayContract",
-            "aiPolicyId", "helpTopicId", "tutorialObjectiveId", "legacyCommands", "deliveryState")
+            "aiPolicyId", "helpTopicId", "tutorialObjectiveId", "deliveryState")
         private val COST_FIELDS = setOf("status", "source", "money", "grain", "iron", "timber", "horses")
         private val TARGET_FIELDS = setOf("status", "source")
         private val REPLAY_FIELDS = setOf("status", "key")
