@@ -1359,7 +1359,7 @@
 - Invariants: no id addition/deletion, no topology/edge/cell change, every playable 省 has one valid jurisdiction, every 城 anchor stays in its own 縣, exactly one valid seat per 郡, valid connected non-narrow/no-enclave county geometry, deterministic seed = event replay for equal prior state, and immutable applied delta bytes. Any violation rejects the entire delta. Scale limits and event threshold rules remain explicit user decisions, not silent defaults.
 - Gates: schema/reference/expected-value validation; before/after graph and pin equality; county geometry policy and city-anchor audit; seed/event equivalence and two-world cache isolation; hash mismatch/deleted file/duplicate id/old CAS failures as red probes; exact 190/196/220/221 name and alias checks. Implementation PRs start only after freeze release and #905 merge. No product code or map data changes in this design PR.
 
-## ADR-LITE-068 — 게임 기록은 사건·식별자·시각으로 저장하고 화면에서 서술한다 (2026-09-25)
+## ADR-LITE-069 — 게임 기록은 사건·식별자·시각으로 저장하고 화면에서 서술한다 (2026-09-25)
 
 - Date: 2026-09-25
 - Status: approved for design by the user's six decisions; implementation deferred until the code-cleanup freeze ends. This ADR is not evidence of a migrated world or running API.
