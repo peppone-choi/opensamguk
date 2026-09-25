@@ -1,7 +1,29 @@
-package opensamguk.logic.input
+package opensamguk.logic.domestic
 
-import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.input.CountyPolicy
+import opensamguk.logic.input.DomesticWork
+import opensamguk.logic.input.DispatchStatus
+import opensamguk.logic.input.HwihaCommanderyPolicies
+import opensamguk.logic.input.HwihaCorpsPolicies
+import opensamguk.logic.input.HwihaCountyAssignment
+import opensamguk.logic.input.HwihaCountyPolicyState
+import opensamguk.logic.input.HwihaCountyWorks
+import opensamguk.logic.input.HwihaDeployedCorps
+import opensamguk.logic.input.HwihaDeploymentState
+import opensamguk.logic.input.HwihaDispatchState
+import opensamguk.logic.input.HwihaLordStatus
+import opensamguk.logic.input.HwihaPhase
+import opensamguk.logic.input.HwihaPlacementOrder
+import opensamguk.logic.input.HwihaPlacementState
+import opensamguk.logic.input.HwihaPolicySlot
+import opensamguk.logic.input.PlacementPost
+import opensamguk.logic.input.PlacementRequest
+import opensamguk.logic.input.PlacementTarget
+import opensamguk.logic.input.PolicyRequest
+import opensamguk.logic.input.PolicyTarget
+import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.input.WorkRequest
 
 /** 장수 한 명의 투영. [node] 는 위치 권위의 현재 육상 省 id(없으면 null), [userOwned] 는 계정 소유(사람 장수) 여부다. */
 data class DomesticPerson(
@@ -46,7 +68,7 @@ data class DomesticBugok(val id: Int, val masterGeneralId: Int, val crewTypeId: 
 data class DomesticDiplomacy(val fromNationId: Int, val toNationId: Int, val state: Int, val term: Int)
 
 /** API 와 엔진이 같은 규칙을 쓰도록 공유하는 투영. [landProvinceIds] 가 null 이면 지도 핀을 확인하지 못한 것이다. */
-data class HwihaDomesticProjection(
+data class DomesticProjection(
     val profile: RuleProfile,
     val now: HwihaPhase,
     val people: List<DomesticPerson>,
@@ -108,10 +130,10 @@ sealed interface DomesticAssessment {
 }
 
 /** 縣令 자리에 실제로 앉은 인물. [controllerId] 는 그 자리의 방침을 정할 수 있는 장수(배치 카드면 주인, 발령이면 본인). */
-data class HwihaSeatedMagistrate(val personId: Int, val controllerId: Int, val placed: Boolean, val retainerId: Int?)
+data class SeatedMagistrate(val personId: Int, val controllerId: Int, val placed: Boolean, val retainerId: Int?)
 
 enum class PolicySource { COMMANDERY, COUNTY, DEFAULT }
-data class HwihaEffectivePolicy(val policy: CountyPolicy, val source: PolicySource, val seat: HwihaSeatedMagistrate?)
+data class EffectivePolicy(val policy: CountyPolicy, val source: PolicySource, val seat: SeatedMagistrate?)
 
 /**
  * 배치·방침·공사의 공유 판정(접수 사전검사 = 실행 재검사). 난수·시계·쓰기 없음. 권한 근거:
@@ -122,10 +144,10 @@ data class HwihaEffectivePolicy(val policy: CountyPolicy, val source: PolicySour
  * - 군단 방침은 출전 군단의 주인이 건다.
  * 군주 = 그 세력에서 유일한 `officer_level == 12` 이면서 `hwihaLord == true` 인 장수(출사 투영과 같은 근거).
  */
-object HwihaDomesticRules {
+object DomesticRules {
     const val RELATION_LIEUTENANT = "lieutenant"
 
-    fun assessPlacement(request: PlacementRequest, state: HwihaDomesticProjection): DomesticAssessment = guarded {
+    fun assessPlacement(request: PlacementRequest, state: DomesticProjection): DomesticAssessment = guarded {
         val base = cardRelation(request.actorId, request.cardId, state)
         if (base !is DomesticAssessment.Eligible) return@guarded base
         val actor = state.person(request.actorId)!!
@@ -141,7 +163,7 @@ object HwihaDomesticRules {
     }
 
     /** 카드 턴의 재검사: 현행(또는 막 현행이 될) 배치가 아직 유효한가. 자리 권한(주공)은 접수 때만 본다. */
-    fun assessPlacementOrder(personId: Int, order: HwihaPlacementOrder, state: HwihaDomesticProjection): DomesticAssessment = guarded {
+    fun assessPlacementOrder(personId: Int, order: HwihaPlacementOrder, state: DomesticProjection): DomesticAssessment = guarded {
         val base = cardRelation(order.ownerGeneralId, order.retainerId, state)
         if (base !is DomesticAssessment.Eligible) return@guarded base
         if (base.person!!.id != personId) return@guarded reject(DomesticFailure.CARD_NOT_FOUND)
@@ -150,7 +172,7 @@ object HwihaDomesticRules {
         targetCheck(owner, order.post, order.target, base.person, base.card!!, state, requireLord = false) ?: base
     }
 
-    fun assessPolicy(request: PolicyRequest, state: HwihaDomesticProjection): DomesticAssessment = guarded {
+    fun assessPolicy(request: PolicyRequest, state: DomesticProjection): DomesticAssessment = guarded {
         if (state.profile != RuleProfile.HWIHA) return@guarded reject(DomesticFailure.WRONG_RULE_PROFILE)
         val actor = state.person(request.actorId) ?: return@guarded reject(DomesticFailure.ACTOR_NOT_FOUND)
         val slot = when (val target = request.target) {
@@ -185,7 +207,7 @@ object HwihaDomesticRules {
         }
     }
 
-    fun assessWork(request: WorkRequest, state: HwihaDomesticProjection): DomesticAssessment = guarded {
+    fun assessWork(request: WorkRequest, state: DomesticProjection): DomesticAssessment = guarded {
         if (state.profile != RuleProfile.HWIHA) return@guarded reject(DomesticFailure.WRONG_RULE_PROFILE)
         val actor = state.person(request.actorId) ?: return@guarded reject(DomesticFailure.ACTOR_NOT_FOUND)
         val county = state.county(request.countyId)?.takeIf { it.nationId > 0 && it.nationId == actor.nationId }
@@ -201,7 +223,7 @@ object HwihaDomesticRules {
         }
     }
 
-    fun assessReduce(request: WorkRequest, state: HwihaDomesticProjection): DomesticAssessment = guarded {
+    fun assessReduce(request: WorkRequest, state: DomesticProjection): DomesticAssessment = guarded {
         if (state.profile != RuleProfile.HWIHA) return@guarded reject(DomesticFailure.WRONG_RULE_PROFILE)
         val actor = state.person(request.actorId) ?: return@guarded reject(DomesticFailure.ACTOR_NOT_FOUND)
         val county = state.county(request.countyId)?.takeIf { it.nationId > 0 && it.nationId == actor.nationId }
@@ -217,14 +239,14 @@ object HwihaDomesticRules {
     }
 
     /** 세력의 군주. 둘 이상이거나 주공 표지가 없으면 없음이다. */
-    fun rulerOf(nationId: Int, state: HwihaDomesticProjection): DomesticPerson? {
+    fun rulerOf(nationId: Int, state: DomesticProjection): DomesticPerson? {
         if (nationId <= 0) return null
         return state.people.filter { it.nationId == nationId && it.officerLevel == 12 }.singleOrNull()
             ?.takeIf { HwihaLordStatus.read(it.meta) }
     }
 
     /** 縣 방침·공사를 정할 수 있는 현령 자리 주인들(군주 제외): 발령된 사람 장수 본인, 현행 배치 카드의 주인. */
-    fun countyControllers(county: DomesticCounty, state: HwihaDomesticProjection): Set<Int> = buildSet {
+    fun countyControllers(county: DomesticCounty, state: DomesticProjection): Set<Int> = buildSet {
         for (person in state.people.sortedBy { it.id }) {
             val assignment = HwihaCountyAssignment.read(person.meta)
             if (assignment != null && assignment.countyId == county.id && assignment.nationId == county.nationId &&
@@ -240,7 +262,7 @@ object HwihaDomesticRules {
      * 발령된 사람 장수는 수락한 부임 목표가 그 縣이고 지금 그 縣의 省에 서 있어야 한다. 둘 이상이면 장수 id 가 작은 쪽.
      * 그 省에 선 장수의 저장값이 오염됐으면 예외다 — 빈자리로 바꿔 읽지 않는다.
      */
-    fun seatedMagistrate(county: DomesticCounty, state: HwihaDomesticProjection): HwihaSeatedMagistrate? {
+    fun seatedMagistrate(county: DomesticCounty, state: DomesticProjection): SeatedMagistrate? {
         val province = county.provinceId ?: return null
         val seats = state.peopleAt(province).mapNotNull { person ->
             if (person.inBattle || person.nationId != county.nationId) return@mapNotNull null
@@ -249,32 +271,32 @@ object HwihaDomesticRules {
             if (active != null && active.arrivedAt != null && active.order.post == PlacementPost.MAGISTRATE &&
                 active.order.target == PlacementTarget.County(county.id) &&
                 assessPlacementOrder(person.id, active.order, state) is DomesticAssessment.Eligible)
-                return@mapNotNull HwihaSeatedMagistrate(person.id, active.order.ownerGeneralId, true, active.order.retainerId)
+                return@mapNotNull SeatedMagistrate(person.id, active.order.ownerGeneralId, true, active.order.retainerId)
             val assignment = HwihaCountyAssignment.read(person.meta)
             if (assignment != null && person.userOwned && assignment.countyId == county.id && assignment.nationId == county.nationId)
-                return@mapNotNull HwihaSeatedMagistrate(person.id, person.id, false, null)
+                return@mapNotNull SeatedMagistrate(person.id, person.id, false, null)
             null
         }
         return seats.firstOrNull()
     }
 
-    fun commanderySlot(county: DomesticCounty, state: HwihaDomesticProjection): HwihaPolicySlot? {
+    fun commanderySlot(county: DomesticCounty, state: DomesticProjection): HwihaPolicySlot? {
         val commandery = county.commanderyId ?: return null
         val nation = state.nation(county.nationId) ?: return null
         return HwihaCommanderyPolicies.read(nation.meta)?.get(commandery)?.slot
     }
 
     /** 郡 방침(현행) > 縣 방침(현행, 앉은 현령이 있을 때) > 기본 방침(§8.2 「빈자리는 기본 방침으로 자동 운영」). */
-    fun effectivePolicy(county: DomesticCounty, state: HwihaDomesticProjection, design: DomesticDesign): HwihaEffectivePolicy {
+    fun effectivePolicy(county: DomesticCounty, state: DomesticProjection, design: DomesticDesign): EffectivePolicy {
         val seat = seatedMagistrate(county, state)
-        commanderySlot(county, state)?.active?.let { return HwihaEffectivePolicy(CountyPolicy.valueOf(it.policy), PolicySource.COMMANDERY, seat) }
+        commanderySlot(county, state)?.active?.let { return EffectivePolicy(CountyPolicy.valueOf(it.policy), PolicySource.COMMANDERY, seat) }
         val own = HwihaCountyPolicyState.read(county.meta)?.slot?.active
-        if (seat != null && own != null) return HwihaEffectivePolicy(CountyPolicy.valueOf(own.policy), PolicySource.COUNTY, seat)
-        return HwihaEffectivePolicy(design.defaultCountyPolicy, PolicySource.DEFAULT, seat)
+        if (seat != null && own != null) return EffectivePolicy(CountyPolicy.valueOf(own.policy), PolicySource.COUNTY, seat)
+        return EffectivePolicy(design.defaultCountyPolicy, PolicySource.DEFAULT, seat)
     }
 
     /** 사람 장수의 발령 부임(대기 포함)과 다른 카드의 배치가 잡은 縣令 자리. */
-    fun magistracyClaimed(countyId: Int, exceptPersonId: Int, state: HwihaDomesticProjection): Boolean {
+    fun magistracyClaimed(countyId: Int, exceptPersonId: Int, state: DomesticProjection): Boolean {
         val county = state.county(countyId) ?: return true
         return state.people.filter { it.id != exceptPersonId }.any { person ->
             val placement = HwihaPlacementState.read(person.meta)
@@ -288,11 +310,11 @@ object HwihaDomesticRules {
     }
 
     /** 사람 장수 meta 의 출전 기록. 오염되면 예외(호출자가 STATE_UNAVAILABLE 로 바꾼다). */
-    fun deployedCorps(state: HwihaDomesticProjection): List<HwihaDeployedCorps> = state.people.sortedBy { it.id }.flatMap { person ->
+    fun deployedCorps(state: DomesticProjection): List<HwihaDeployedCorps> = state.people.sortedBy { it.id }.flatMap { person ->
         HwihaDeploymentState.read(person.meta)?.corps.orEmpty().also { rows -> require(rows.all { it.ownerGeneralId == person.id }) }
     }
 
-    private fun cardRelation(actorId: Int, cardId: Int, state: HwihaDomesticProjection): DomesticAssessment {
+    private fun cardRelation(actorId: Int, cardId: Int, state: DomesticProjection): DomesticAssessment {
         if (state.profile != RuleProfile.HWIHA) return reject(DomesticFailure.WRONG_RULE_PROFILE)
         val actor = state.person(actorId) ?: return reject(DomesticFailure.ACTOR_NOT_FOUND)
         val card = state.cards.singleOrNull { it.id == cardId }?.takeIf { it.masterId == actor.id }
@@ -308,7 +330,7 @@ object HwihaDomesticRules {
     }
 
     private fun targetCheck(owner: DomesticPerson, post: PlacementPost, target: PlacementTarget, person: DomesticPerson,
-        card: DomesticCard, state: HwihaDomesticProjection, requireLord: Boolean = true): DomesticAssessment? {
+        card: DomesticCard, state: DomesticProjection, requireLord: Boolean = true): DomesticAssessment? {
         val lord = !requireLord || (owner.nationId > 0 && HwihaLordStatus.read(owner.meta))
         return when (post) {
             PlacementPost.MAGISTRATE -> {

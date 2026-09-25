@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticProjection
+
 enum class HwihaPersonalFailure(val message: String) {
     WRONG_RULE_PROFILE("이 월드에서는 개인 행동을 사용할 수 없습니다."),
     INVALID_INPUT("개인 행동 인자를 확인할 수 없습니다."),
@@ -20,7 +23,7 @@ sealed interface HwihaPersonalAssessment {
 
 /** Shared precheck for player reservation, options and immediate execution. */
 object HwihaPersonalRules {
-    fun assess(request: HwihaPersonalRequest, state: HwihaDomesticProjection): HwihaPersonalAssessment {
+    fun assess(request: HwihaPersonalRequest, state: DomesticProjection): HwihaPersonalAssessment {
         fun reject(reason: HwihaPersonalFailure) = HwihaPersonalAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaPersonalFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaPersonalInput.FIELD_IDS ||

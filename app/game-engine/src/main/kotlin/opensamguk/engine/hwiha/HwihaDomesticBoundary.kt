@@ -1,5 +1,8 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticRules
+
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
@@ -65,7 +68,7 @@ class HwihaDomesticBoundary(
 
     private enum class WorkResult { NONE, ADVANCED, COMPLETED, STOPPED }
 
-    private fun progressWork(countyId: Int, now: HwihaPhase, state: HwihaDomesticProjection): WorkResult {
+    private fun progressWork(countyId: Int, now: HwihaPhase, state: DomesticProjection): WorkResult {
         val city = world.getCityById(countyId) ?: return WorkResult.NONE
         val works = try { HwihaCountyWorks.read(city.meta) } catch (_: IllegalArgumentException) { return WorkResult.NONE }
             ?: return WorkResult.NONE
@@ -82,7 +85,7 @@ class HwihaDomesticBoundary(
         val warehouse = try { HwihaCountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
         if (warehouse == null) return stop(city.id, works, active, now, "WAREHOUSE_NOT_READY")
         val county = state.county(countyId) ?: return WorkResult.NONE
-        val seat = try { HwihaDomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }?.let { seat ->
+        val seat = try { DomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }?.let { seat ->
             val person = state.person(seat.personId)
                 ?: return stop(countyId, works, active, now, "SEAT_PERSON_MISSING")
             HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm,
@@ -147,7 +150,7 @@ class HwihaDomesticBoundary(
         val state = context.projection(world)
         var events = 0
         for (county in state.counties) {
-            val seat = try { HwihaDomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }
+            val seat = try { DomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }
             val city = world.getCityById(county.id) ?: continue
             val previous = try { HwihaCountyMonthly.read(city.meta) } catch (_: IllegalArgumentException) { null }
             if (seat == null || !seat.placed) {

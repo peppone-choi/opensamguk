@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -21,7 +25,7 @@ class HwihaFieldInputTest {
     private val person = DomesticPerson(7, "장수", 2, true, 2, 1, 50, 50, 50, 50, 50,
         "province-a", false, emptyMap())
     private val county = DomesticCounty(11, "현", 2, "province-a", "군", emptyMap())
-    private val state = HwihaDomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
+    private val state = DomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
         listOf(person), emptyList(), listOf(county), emptyList(), setOf("province-a"))
     private val request = HwihaFieldRequest(7, HwihaFieldInput.FARM)
 

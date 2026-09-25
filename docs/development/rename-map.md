@@ -15,6 +15,20 @@
 |---|---|---|---|
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
+| `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
+| `opensamguk.logic.input.HwihaDomesticProjection` | `opensamguk.logic.domestic.DomesticProjection` | 이 PR | 규칙 파일의 투영 타입 |
+| `opensamguk.logic.input.HwihaSeatedMagistrate` | `opensamguk.logic.domestic.SeatedMagistrate` | 이 PR | 규칙 파일의 현령 자리 타입 |
+| `opensamguk.logic.input.HwihaEffectivePolicy` | `opensamguk.logic.domestic.EffectivePolicy` | 이 PR | 규칙 파일의 유효 방침 타입 |
+| `opensamguk.logic.input.DomesticPerson` | `opensamguk.logic.domestic.DomesticPerson` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticCard` | `opensamguk.logic.domestic.DomesticCard` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticCounty` | `opensamguk.logic.domestic.DomesticCounty` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticNation` | `opensamguk.logic.domestic.DomesticNation` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticBugok` | `opensamguk.logic.domestic.DomesticBugok` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticDiplomacy` | `opensamguk.logic.domestic.DomesticDiplomacy` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticFailure` | `opensamguk.logic.domestic.DomesticFailure` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.DomesticAssessment` | `opensamguk.logic.domestic.DomesticAssessment` | 이 PR | 이름 유지, 패키지만 이동 |
+| `opensamguk.logic.input.PolicySource` | `opensamguk.logic.domestic.PolicySource` | 이 PR | 이름 유지, 패키지만 이동 |
+| `logic/input/HwihaDomesticRulesTest.kt` | `logic/domestic/DomesticRulesTest.kt` | 이 PR | 테스트 타입·파일·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 

@@ -1,5 +1,9 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.logic.retainer.RetainerRules
 
 enum class HwihaPeopleFailure(val message: String) {
@@ -30,7 +34,7 @@ sealed interface HwihaPeopleAssessment {
 
 /** One location and target gate shared by reservation, options and immediate turn recheck. */
 object HwihaPeopleRules {
-    fun assess(request: HwihaPeopleRequest, state: HwihaDomesticProjection): HwihaPeopleAssessment {
+    fun assess(request: HwihaPeopleRequest, state: DomesticProjection): HwihaPeopleAssessment {
         fun reject(reason: HwihaPeopleFailure) = HwihaPeopleAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaPeopleFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaPeopleInput.INPUT_IDS) return reject(HwihaPeopleFailure.INVALID_INPUT)

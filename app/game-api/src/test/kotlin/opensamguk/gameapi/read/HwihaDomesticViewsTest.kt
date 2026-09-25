@@ -1,5 +1,12 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticFailure
+
 import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
@@ -17,7 +24,7 @@ class HwihaDomesticViewsTest {
     private fun snapshot(people: List<DomesticPerson>, counties: List<DomesticCounty> = listOf(
         DomesticCounty(7, "C7", 1, "p7", "甲郡", warehouse), DomesticCounty(8, "C8", 1, "p8", "甲郡", emptyMap()),
         DomesticCounty(9, "C9", 2, "p9", "乙郡", emptyMap()))) = HwihaDomesticSnapshot(
-        HwihaDomesticProjection(RuleProfile.HWIHA, now, people, listOf(DomesticCard(5, 10, 20, "staff"), DomesticCard(6, 10, 30, "guest")),
+        DomesticProjection(RuleProfile.HWIHA, now, people, listOf(DomesticCard(5, 10, 20, "staff"), DomesticCard(6, 10, 30, "guest")),
             counties, listOf(DomesticNation(1, "N1", 7, emptyMap()), DomesticNation(2, "N2", 9, emptyMap())), setOf("p7", "p8", "p9")),
         countyNames = mapOf(7 to "갑현", 8 to "을현", 9 to "병현"), commanderyNames = mapOf("甲郡" to "갑군"),
         warehouseStocks = mapOf(7 to HwihaResources(money = 100_000)))

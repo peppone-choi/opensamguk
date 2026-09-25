@@ -1,5 +1,13 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticBugok
+import opensamguk.logic.domestic.DomesticDiplomacy
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -27,13 +35,13 @@ class HwihaDomesticContext(
 ) {
     private val supportedCrewTypeIds by lazy { HwihaUnitProfilesJson.loadDefault().profiles.map { it.crewTypeId }.toSet() }
     /** 현재 월드 상태의 공유 판정 투영(API 와 같은 규칙). */
-    fun projection(world: InMemoryTurnWorld): HwihaDomesticProjection {
+    fun projection(world: InMemoryTurnWorld): DomesticProjection {
         val positions = world.generalPositionSnapshot()
         val state = world.getState()
         val generals = world.listGenerals().sortedBy { it.id }
         val geography = geography
         val ledger = nativeCounties
-        return HwihaDomesticProjection(
+        return DomesticProjection(
             profile = world.ruleProfile,
             now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase),
             people = generals.map { g ->
