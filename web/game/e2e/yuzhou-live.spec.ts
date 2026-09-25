@@ -4,7 +4,7 @@ import type { DispatchPendingResponse, EnlistmentOptionsResponse } from '../lib/
 
 const gameUrl = process.env.E2E_GAME_URL ?? 'http://localhost:3001';
 const gatewayUrl = process.env.E2E_GATEWAY_URL ?? 'http://localhost:3000';
-const enabled = process.env.E2E_HWIHA_YUZHOU === 'true';
+const enabled = process.env.E2E_YUZHOU_LIVE === 'true';
 
 // Live map animation can stall Playwright's automatic failure screenshot.
 // The test attaches its own screenshots through CDP below.
@@ -151,7 +151,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   };
   const cdp = await context.newCDPSession(page);
   for (const screen of screens) {
-    await page.goto(`${gameUrl}/game/hwiha/${screen}`);
+    await page.goto(`${gameUrl}/game/${screen}`);
     await expect(page.locator('nav[aria-label="입력 여섯 가지"]')).toBeVisible();
     await expect(page.locator('body')).toContainText(generalName, { timeout: 120_000 });
     await expect(page.locator('body')).not.toContainText('불러오는 중입니다', { timeout: 120_000 });

@@ -18,17 +18,17 @@ Counties outside 豫州 are unowned (neutral). NPC lords may also march on nearb
 
 The file is generated, not hand-edited: `infra/src/test/kotlin/opensamguk/infra/seed/YuzhouSliceScenarioTest.kt` rebuilds it from the map and the boot artifact pin and fails when the committed file drifts. To regenerate after a map change, delete the file and run that test, then review the diff. Do not touch the han-tiles chain for this fixture.
 
-Local run follows `tools/e2e/fixtures/hwiha-court/README.md` with:
+Local run follows `tools/e2e/fixtures/court/README.md` with:
 
 ```bash
 SCENARIO_CODE=scenario_990002
 TURN_PROFILE_NAME=che:scenario_990002
 OPENSAMGUK_WORLD_ID=990002
-SCENARIO_HOST_DIR="$(pwd)/tools/e2e/fixtures/hwiha-yuzhou"
+SCENARIO_HOST_DIR="$(pwd)/tools/e2e/fixtures/yuzhou"
 SCENARIO_QA_TURNTERM=1
 E2E_ENABLE_AUTH=true
-E2E_HWIHA_YUZHOU=true
-E2E_TEST_SPEC=e2e/hwiha-yuzhou-live.spec.ts
+E2E_YUZHOU_LIVE=true
+E2E_TEST_SPEC=e2e/yuzhou-live.spec.ts
 E2E_TEST_TIMEOUT_MS=3000000
 E2E_BUILD_MODE=sequential
 ```

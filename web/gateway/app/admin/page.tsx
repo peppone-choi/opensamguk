@@ -217,7 +217,17 @@ const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'tournament',
     'tournament-admin',
     'troop',
-    'vote',
+    'v2-lab',
+  'vote',
+    'court',
+    'hand',
+    'orders',
+    'posts',
+    'retinue',
+    'siege',
+    'supply',
+    'war-room',
+    'yuedan',
     'world-log',
 ]);
 const AUTORUN_OPTIONS = [

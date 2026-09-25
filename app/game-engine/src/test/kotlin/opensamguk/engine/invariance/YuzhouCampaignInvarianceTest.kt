@@ -32,7 +32,7 @@ class YuzhouCampaignInvarianceTest {
         val recorder: ChangeRecorder, val outcomes: CampaignWorldFixture.RecordingOutcomes)
 
     private fun campaign(npcDeploy: Boolean = true, seed: String = "00"): Campaign {
-        val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
+        val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
         val warehouses = requireNotNull(scenario.warehouses).warehouses
         val provinceOf = bundle.projection.bindingsByCityId.mapNotNull { (id, b) -> b.landProvinceId?.let { id to it } }.toMap()

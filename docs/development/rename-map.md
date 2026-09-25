@@ -154,7 +154,7 @@
 | `hwiha_siege` | `siege` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
 | `hwiha_person_card` | `person_card` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
 | `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
-| `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 예정 | 옛 경로 308 리다이렉트 |
+| `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 저장·통신 draft | Next 경로 그룹 `(campaign)`으로 화면 이동; 옛 서버 경로와 서버 없는 경로 308 리다이렉트 |
 | `data/**/hwiha-*.json` | 도메인별 파일명 | 저장·통신 draft | 18개 파일·내부 ID·빌드 패키징·로더·생성기 경로 동시 갱신 |
 
 ## 데이터 파일·리소스 대응
@@ -181,6 +181,8 @@
 | `data/curated/han/hwiha-vision-rules-v1.json` | `data/curated/han/vision-rules-v1.json` |
 
 classpath `hwiha/`는 `campaign/`으로 옮겼다. `tools/map/build_hwiha_resource_production.py`는 `build_county_resource_production.py`, `tools/content/build_hwiha_item_ledgers.py`는 `build_item_ledgers.py`가 되었으며, 생성 원장과 런타임 파일의 내부 ID·generator·sourceLedger도 새 이름을 쓴다. 지도 번들 판 ID(`han-world-v3-1447` 등)는 세계 핀 계약이므로 유지한다.
+
+E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 각각 `court`, `yuzhou`로 옮겼다. 라이브 스펙은 `court-live.spec.ts`, `yuzhou-live.spec.ts`이며 실행 환경 변수는 `E2E_COURT_LIVE`, `E2E_YUZHOU_LIVE`다. 예약 서버 ID 목록 7곳은 드리프트 검사 `tools/ci/check_reserved_server_ids.py`로 묶었다.
 
 ## 상태·시나리오 필드 대응
 

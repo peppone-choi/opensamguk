@@ -20,7 +20,7 @@ export interface ControlGating {
 const NATION_REASON = '장수 직위 이상 필요';
 
 const route = (label: string, href: string): DeptRouteEntry => ({ kind: 'route', label, href });
-export const OPS_ROUTE = route('작전실', '/game/hwiha/war-room');
+export const OPS_ROUTE = route('작전실', '/game/war-room');
 export const MAP_ROUTE = route('천하 지도', '/game/map');
 
 /** The product menu is local and fixed. The old server GlobalMenu describes SAMMO actions. */
@@ -29,10 +29,10 @@ export function buildDeptGroups(): readonly DeptGroup[] {
     { key: 'ops', label: '작전실', entries: [OPS_ROUTE] },
     {
       key: 'nation', label: '국가 운영', entries: [
-        route('배치 · 방침 · 공사', '/game/hwiha/posts'),
-        route('조정 결정', '/game/hwiha/orders'),
-        route('조정 구상 (입력 준비 중)', '/game/hwiha/court'),
-        route('보급망 · 창고', '/game/hwiha/supply'),
+        route('배치 · 방침 · 공사', '/game/posts'),
+        route('조정 결정', '/game/orders'),
+        route('조정 구상 (입력 준비 중)', '/game/court'),
+        route('보급망 · 창고', '/game/supply'),
         route('세력 정보', '/game/my-nation'),
         route('세력 도시', '/game/my-cities'),
         route('세력 장수', '/game/my-generals'),
@@ -40,9 +40,9 @@ export function buildDeptGroups(): readonly DeptGroup[] {
     },
     {
       key: 'military', label: '군사', entries: [
-        route('휘하 편성', '/game/hwiha/retinue'),
-        route('공성', '/game/hwiha/siege'),
-        route('계책 덱', '/game/hwiha/hand'),
+        route('휘하 편성', '/game/retinue'),
+        route('공성', '/game/siege'),
+        route('계책 덱', '/game/hand'),
       ],
     },
     {
@@ -63,7 +63,7 @@ export function buildDeptGroups(): readonly DeptGroup[] {
     },
     {
       key: 'records', label: '기록', entries: [
-        route('월단평', '/game/hwiha/yuedan'),
+        route('월단평', '/game/yuedan'),
         route('연감', '/game/history'),
         route('월드 기록', '/game/world-log'),
         route('랭킹', '/game/rankings'),
@@ -75,9 +75,9 @@ export function buildDeptGroups(): readonly DeptGroup[] {
 export const DEPT_GROUPS = buildDeptGroups();
 
 export const MOBILE_TABS = [
-  { key: 'ops', label: '작전실', href: '/game/hwiha/war-room', controlId: null },
+  { key: 'ops', label: '작전실', href: '/game/war-room', controlId: null },
   { key: 'map', label: '지도', href: '/game/map', controlId: null },
-  { key: 'commands', label: '명령', href: '/game/hwiha/war-room#reservedCommandPanel', controlId: null },
+  { key: 'commands', label: '명령', href: '/game/war-room#reservedCommandPanel', controlId: null },
   { key: 'nation', label: '국가', href: '/game/my-nation', controlId: 11 },
   { key: 'more', label: '더보기', href: '#dept-more', controlId: null },
 ] as const;

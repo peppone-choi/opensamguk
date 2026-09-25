@@ -1,4 +1,4 @@
-// 휘하(HWIHA) 화면 등록부 — 새 시대 화면의 단일 출처.
+// 캠페인 화면 등록부 — 새 시대 화면의 단일 출처.
 //
 // 정본은 시안 아트보드 `docs/opensamguk/ui-new-screens-2026-09-18/project/<Name>.dc.html` 이고,
 // 제목과 탭(`on`)은 그 시안에서 그대로 옮겼다. 라벨을 새로 만들지 않는다.
@@ -25,7 +25,7 @@ export type InputTab = (typeof CAMPAIGN_INPUT_TABS)[number];
 export interface GameScreen {
     /** 시안 아트보드 파일 이름. 시안과 코드를 잇는 열쇠다. */
     readonly board: string;
-    /** URL 조각. `/game/<서버>/hwiha/<slug>` — 기존 게임과 같은 인증 게이트·서버 선택을 쓴다. */
+    /** URL 조각. `/game/<서버>/<slug>` — 기존 게임과 같은 인증 게이트·서버 선택을 쓴다. */
     readonly slug: string;
     /** 시안 제목 그대로. */
     readonly title: string;
@@ -78,11 +78,11 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
 ];
 
 /**
- * 휘하 화면 주소. 서버 식별자가 있으면 `/game/<서버>/hwiha/<slug>` 로 만든다 — 미들웨어가 그 경로를
- * `/game/hwiha/<slug>` 로 되쓰고 `sam_server` 쿠키를 심는다(기존 게임 링크와 같은 규칙).
+ * 캠페인 화면 주소. 서버 식별자가 있으면 `/game/<서버>/<slug>` 로 만든다 — 미들웨어가 그 경로를
+ * `/game/<slug>` 로 되쓰고 `sam_server` 쿠키를 심는다(기존 게임 링크와 같은 규칙).
  */
 export function campaignHref(slug: string, serverId?: string): string {
-    const child = `hwiha/${slug}`;
+    const child = slug;
     return serverId ? resolveServerGamePath(undefined, serverId, '/game', child) : `/game/${child}`;
 }
 

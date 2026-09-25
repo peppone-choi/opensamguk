@@ -81,7 +81,7 @@ test('one HWIHA board across public preview and both operation rooms', async ({ 
   await testInfo.attach('main-map-canvas', { body: await page.locator('.map-viewer canvas').first().screenshot(), contentType: 'image/png' });
   const mainHit = await canvasHit(page, '.map-viewer canvas');
 
-  await page.goto(`${gameUrl}/game/hwiha/war-room`);
+  await page.goto(`${gameUrl}/game/war-room`);
   await expect(page.locator('canvas[aria-label^="천하 형세"]')).toBeVisible({ timeout: 60_000 });
   const warFocus = (await page.getByTestId('commandery-focus').first().textContent())?.trim();
   expect(warFocus).toBe(mainFocus);

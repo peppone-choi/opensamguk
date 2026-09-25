@@ -100,8 +100,8 @@ describe('campaign-fog neighborInDirection', () => {
 
 describe('campaign-screens links', () => {
     it('puts screens under the game server path', () => {
-        expect(campaignHref('war-room')).toBe('/game/hwiha/war-room');
-        expect(campaignHref('war-room', 'pep')).toBe('/game/pep/hwiha/war-room');
+        expect(campaignHref('war-room')).toBe('/game/war-room');
+        expect(campaignHref('war-room', 'pep')).toBe('/game/pep/war-room');
     });
 
     it('lands a tab only on a screen that exists', () => {

@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import WarRoomPage from '@/app/game/hwiha/war-room/page';
+import WarRoomPage from '@/app/game/(campaign)/war-room/page';
 import CharacterClaim from '@/components/game/CharacterClaim';
 import { campaignHref } from '@/lib/campaign-screens';
 import { useGameSession } from '@/lib/campaign-session';

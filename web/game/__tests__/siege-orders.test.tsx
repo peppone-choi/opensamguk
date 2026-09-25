@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import SiegePage from '@/app/game/hwiha/siege/page';
-import OrdersPage from '@/app/game/hwiha/orders/page';
+import SiegePage from '@/app/game/(campaign)/siege/page';
+import OrdersPage from '@/app/game/(campaign)/orders/page';
 
 const mock = vi.hoisted(() => ({
     campaignSieges: vi.fn(), roadForts: vi.fn(), campaignRetinue: vi.fn(), warehouses: vi.fn(),

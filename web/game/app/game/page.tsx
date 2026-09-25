@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import GameEntry from '@/components/campaign/GameEntry';
-import GameLayout from './hwiha/layout';
+import GameLayout from './(campaign)/layout';
 
 export default function GameMainPage() {
   return (
