@@ -110,6 +110,8 @@ class CommandControllerSecurityTest {
             "che_요양" to "WRONG_RULE_PROFILE",
             "휴식" to "WRONG_RULE_PROFILE",
             "action.unlisted" to "UNKNOWN_INPUT",
+            "action.randomEnlist" to "UNKNOWN_INPUT",
+            "action.targetEnlist" to "UNKNOWN_INPUT",
             "stratagem.play" to "NOT_DELIVERED",
             "court.dispatch" to "INVALID_INPUT_CHANNEL",
             "court.dispatchReply" to "INVALID_INPUT_CHANNEL",
@@ -127,6 +129,19 @@ class CommandControllerSecurityTest {
                 .andExpect(jsonPath("$.code").value(expected))
         }
         verifyNoInteractions(precheck, reserve)
+    }
+
+    @Test fun `hwiha allowed planned input reaches reserve ledger rejection`() {
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
+        `when`(reserve.reserveForOwnerWithRuleProfile(10, "action.resign", 0, "{}", 7, RuleProfile.HWIHA))
+            .thenThrow(opensamguk.gameapi.reserve.HwihaAdmissionDenied("NOT_DELIVERED", "아직 제공되지 않는 입력입니다."))
+
+        mockMvc().perform(post("/api/command/action.resign").param("generalId", "10")
+            .with(principal(7L)).contentType(MediaType.APPLICATION_JSON).content("{}"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.code").value("NOT_DELIVERED"))
+        verify(reserve).reserveForOwnerWithRuleProfile(10, "action.resign", 0, "{}", 7, RuleProfile.HWIHA)
     }
 
     @Test

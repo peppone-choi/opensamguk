@@ -1,5 +1,7 @@
 package opensamguk.gameapi.precheck
 
+import opensamguk.logic.domestic.DomesticRules
+
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import opensamguk.gameapi.read.HwihaDomesticReader
@@ -30,7 +32,7 @@ class HwihaLegacyCourtOptionsService(private val reader: HwihaDomesticReader,
         val ownedCounties = state.counties.filter { it.nationId == actor.nationId }.sortedBy { it.id }
         val others = state.nations.filter { it.id != actor.nationId }.sortedBy { it.id }
         val requests: List<Pair<String, Map<String, Any>>> = when (inputId) {
-            HwihaCourtExpansionInput.RELEASE_CORPS -> HwihaDomesticRules.deployedCorps(state)
+            HwihaCourtExpansionInput.RELEASE_CORPS -> DomesticRules.deployedCorps(state)
                 .filter { it.ownerGeneralId == actorId }.map { corps ->
                     "${state.person(corps.commanderGeneralId)?.name ?: corps.commanderGeneralId}의 군단" to
                         mapOf("targetGeneralId" to corps.commanderGeneralId)

@@ -88,3 +88,9 @@
 - 지역 분리 목록 124행 가운데 이 이동으로 바뀐 것은 육안현 떨어진 조각과 여강군 조각 두 행뿐이다. 두 조각의 기준점과 외부 접경, 기존 판정은 유지된다. 새 칸 수·구성원에 맞춰 map4 심사 원장의 전체 목록 해시를 갱신했다.
 - 감사의 적색 반례로 관할 완전 포위 행 하나를 임시 입력에 넣었을 때 `audit_province_clearance.py --check`가 종료 코드 1과 `jurisdictionFullyEnclosed=1`을 냈다.
 - `HanStrategicSupplyProviderTest`의 15개 시나리오 검사와 도로 폐쇄 반례, 지도 여유·막다른 길 감사, 지도 단위 검사 7개, 관련 infra 테스트가 통과했다. 지역 분리 원장은 124개 조각 모두 판정이 유지되며 검사에 통과했다. PR 전체 CI와 S3 통합 테스트는 새 커밋 푸시 뒤 확인한다.
+
+## 2026-09-25 main 병합 충돌 처리
+
+- main의 내정 모델·즉시 입력 봉투 이름 변경과 #905의 도로·보루 기능을 함께 적용했다. 보루 포위의 표시 이름을 명령 원장에 넣고, 삭제된 `legacyCommands` 필드는 제거했다.
+- 선택 검사 통과: `HwihaInputRegistryTest`, `HwihaInfrastructureSiteRulesTest`, `HwihaDomesticEffectsTest`, `DomesticRulesTest`, `CommandReserveServiceTest`, `HwihaDomesticEngineTest`, `HanStrategicSupplyProviderTest`.
+- `audit_province_clearance.py --check`는 관할 포위·전략 거점 막다른 길·런타임 도로 막다른 길 모두 0으로 통과했다. 전체 CI와 S3 통합 검사는 PR 업데이트 후 확인한다.

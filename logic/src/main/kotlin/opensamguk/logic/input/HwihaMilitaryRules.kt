@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.logic.economy.HwihaResources
 
 enum class HwihaMilitaryFailure(val message: String) {
@@ -36,7 +38,7 @@ sealed interface HwihaCityMilitaryAssessment {
 
 /** One precheck for API and engine; county identity comes from the general's spatial pin. */
 object HwihaMilitaryRules {
-    fun assessCity(request: HwihaMilitaryRequest, projection: HwihaDomesticProjection,
+    fun assessCity(request: HwihaMilitaryRequest, projection: DomesticProjection,
         population: Int?, populationMax: Int?, troops: Int?, condition: HwihaCityMilitaryState?, stock: HwihaResources?,
         design: HwihaMilitaryDesign): HwihaCityMilitaryAssessment {
         fun reject(reason: HwihaMilitaryFailure) = HwihaCityMilitaryAssessment.Rejected(reason)

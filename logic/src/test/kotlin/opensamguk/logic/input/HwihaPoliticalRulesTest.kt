@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+
 import kotlin.test.*
 
 class HwihaPoliticalRulesTest {
@@ -9,10 +14,10 @@ class HwihaPoliticalRulesTest {
                 HwihaPersonPolicyState.META_KEY to HwihaPersonPolicyState(renown, true,
                     "test", "1", 1).toMetaValue()))
     private fun state(actor: DomesticPerson, countyOwner: Int = 0) =
-        HwihaDomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1), listOf(actor), emptyList(),
+        DomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1), listOf(actor), emptyList(),
             listOf(DomesticCounty(10, "현", countyOwner, "province", "군", emptyMap())),
             listOf(DomesticNation(1, "국", 10, emptyMap())), setOf("province"))
-    private fun check(inputId: String, state: HwihaDomesticProjection) =
+    private fun check(inputId: String, state: DomesticProjection) =
         HwihaPoliticalRules.assess(HwihaPoliticalRequest(1, inputId), state)
 
     @Test fun `rise and independence require renown fifty and the current county`() {

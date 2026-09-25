@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticProjection
+
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.economy.HwihaResources
 
 /** A field action uses the acting general's saved position; the caller supplies no county, cost, or actor. */
@@ -52,7 +57,7 @@ sealed interface HwihaFieldAssessment {
 
 /** Both admission and execution resolve the exact same county from spatial position, never general.cityId. */
 object HwihaFieldRules {
-    fun assess(request: HwihaFieldRequest, state: HwihaDomesticProjection): HwihaFieldAssessment {
+    fun assess(request: HwihaFieldRequest, state: DomesticProjection): HwihaFieldAssessment {
         fun reject(reason: HwihaFieldFailure) = HwihaFieldAssessment.Rejected(reason)
         if (state.profile != RuleProfile.HWIHA) return reject(HwihaFieldFailure.WRONG_RULE_PROFILE)
         if (request.actorId <= 0 || request.inputId !in HwihaFieldInput.INPUT_IDS) return reject(HwihaFieldFailure.INVALID_INPUT)
@@ -73,7 +78,7 @@ object HwihaFieldRules {
 
     /** A single affordability calculation is used by both the API snapshot and the execution world. */
     fun assessEconomy(inputId: String, person: DomesticPerson, countyId: Int,
-        levels: HwihaCountyLevels?, stock: HwihaResources?, design: HwihaDomesticDesign,
+        levels: HwihaCountyLevels?, stock: HwihaResources?, design: DomesticDesign,
         hometown: Boolean = false): HwihaFieldEconomyAssessment {
         if (levels == null) return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.STATE_UNAVAILABLE)
         val stats = HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics,

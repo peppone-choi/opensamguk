@@ -68,7 +68,7 @@ class HwihaCourtRecoveryIT {
         jdbc.update("UPDATE general SET user_id='40' WHERE world_id=? AND id=10", id)
         jdbc.update("UPDATE general SET user_id='42' WHERE world_id=? AND id=1", id)
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=? AND id<>10", id)
-        val command = TurnDaemonCommand.HwihaCourtInput(requestId, 10, 40, "court.dispatch",
+        val command = TurnDaemonCommand.ImmediateInput(requestId, 10, 40, "court.dispatch",
             """{"targetGeneralId":1,"countyId":$county}""")
         val payload = encodeCommandPayload(TurnDaemonCommandEnvelope(requestId, Instant.now().toString(), command))
         assertIs<CommandInboxRepository.InsertResult.Inserted>(CommandInboxRepository(NamedParameterJdbcTemplate(jdbc))
@@ -170,7 +170,7 @@ class HwihaCourtRecoveryIT {
             current_month=4,current_phase=3,
             meta=jsonb_set(meta,'{lastTurnTime}','"0200-01-01T11:00:00Z"'::jsonb) WHERE id=?""", id)
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=?", id)
-        val command = TurnDaemonCommand.HwihaCourtInput(request, 1, 42, "court.dispatchReply",
+        val command = TurnDaemonCommand.ImmediateInput(request, 1, 42, "court.dispatchReply",
             """{"dispatchId":"original-103","accept":false}""")
         val payload = encodeCommandPayload(TurnDaemonCommandEnvelope(request, Instant.now().toString(), command))
         CommandInboxRepository(NamedParameterJdbcTemplate(jdbc)).insertAccepted(

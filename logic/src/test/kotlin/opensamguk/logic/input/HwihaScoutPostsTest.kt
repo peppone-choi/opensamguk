@@ -1,5 +1,8 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticCard
+
+import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 
 /**
@@ -31,7 +34,7 @@ class HwihaScoutPostsTest {
     }
 
     @Test fun `county works publish kind and status for the watchtower reader`() {
-        val works = HwihaCountyWorks(HwihaDomesticEffects.newWork(HwihaDomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
+        val works = HwihaCountyWorks(HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
             listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now)))
         val raw = works.toMetaValue()
         assertEquals(1, raw["version"])

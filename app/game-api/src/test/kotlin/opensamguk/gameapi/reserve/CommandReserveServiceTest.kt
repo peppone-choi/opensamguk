@@ -1,5 +1,11 @@
 package opensamguk.gameapi.reserve
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticCounty
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.persistence.CommandInboxRepository
@@ -25,15 +31,54 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
 class CommandReserveServiceTest {
+    @Test fun `hwiha reserve classifies ledger delivery before route availability`() {
+        val turns = RecordingReservedTurns()
+        val inbox = RecordingInbox()
+        val results = RecordingResults()
+        val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
+            GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")))
+        for ((inputId, expected) in mapOf(
+            "stratagem.play" to "NOT_DELIVERED",
+            "action.unlisted" to "UNKNOWN_INPUT",
+            "action.resign" to "NOT_DELIVERED",
+            "action.randomEnlist" to "UNKNOWN_INPUT",
+            "che_농지개간" to "WRONG_RULE_PROFILE",
+            "v2CityTransport" to "WRONG_RULE_PROFILE",
+            "v2GarrisonRecruit" to "WRONG_RULE_PROFILE",
+            "court.dispatch" to "INVALID_INPUT_CHANNEL",
+        )) {
+            assertEquals(expected, assertFailsWith<HwihaAdmissionDenied> {
+                service.reserveForOwner(10, inputId, 0, "{}", 42)
+            }.code, inputId)
+        }
+        assertEquals(0, turns.reserves.size)
+        assertEquals(0, inbox.accepted.size)
+        assertEquals(0, results.rows.size)
+    }
+
+    @Test fun `delivered deploy reaches its reservation admission`() {
+        val deploy = mock(HwihaDeployAdmission::class.java)
+        `when`(deploy.canonicalArguments(10, 42, 0, "{}"))
+            .thenThrow(HwihaAdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
+        val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
+            CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
+            worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaDeployAdmission = deploy)
+
+        assertEquals("ADMISSION_REACHED", assertFailsWith<HwihaAdmissionDenied> {
+            service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
+        }.code)
+    }
+
     private fun catalogFor(inputId: String, kind: String, state: String) =
-        opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":2,"catalogId":"test","status":"DRAFT","note":"test",
-            "retiredLegacyCommands":[],"retiredLegacyReasons":{},"inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
+        opensamguk.logic.input.HwihaInputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
+            "inputs":[{"inputId":"$inputId","kind":"$kind","layer":1,
             "actor":"GENERAL","authorityRule":"SUBJECT_OWNER","targetSchema":{"status":"PLANNED","source":"test"},
             "costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
             "timing":${if (kind == "GENERAL_ACTION") """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}""" else
                 """{"phase":"NEXT_CARD_TURN","turnSlots":null,"perPhaseLimit":null}"""},"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
             "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
-            "deliveryState":"$state","legacyCommands":[]}]}""")
+            "deliveryState":"$state"${if (kind == "GENERAL_ACTION") ",\"displayName\":\"테스트\"" else ""}}]}""")
     private fun worlds(config: Map<String, Any?>? = mapOf("ruleProfile" to "SAMMO")): opensamguk.gameapi.read.WorldStateReadRepository {
         val repo = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
         `when`(repo.findProcessWorld()).thenReturn(config?.let { opensamguk.gameapi.read.WorldStateReadEntity(config = it) })
@@ -91,7 +136,7 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("ruleProfile" to "HWIHA")),
-            hwihaAdmission = HwihaEnlistmentAdmission(generals, precheck, catalog))
+            hwihaAdmission = HwihaEnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<HwihaAdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
         assertEquals("FORBIDDEN", assertFailsWith<HwihaAdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)
@@ -108,7 +153,7 @@ class CommandReserveServiceTest {
         service.reserveForOwner(10, "action.enlist", 11, raw, 42)
         assertEquals(42, inbox.accepted.single().ownerUserId)
         assertEquals("hwiha-req", turns.reserves.single().requestId)
-        assertEquals("출사", turns.reserves.single().brief)
+        assertEquals("테스트", turns.reserves.single().brief)
         assertEquals("""{"mode":"NATION","targetId":3}""", turns.reserves.single().argJson)
         assertEquals(11, turns.reserves.single().turnIdx)
         assertEquals("reservationAccepted", results.rows.single().resultType)
@@ -116,7 +161,7 @@ class CommandReserveServiceTest {
 
     @Test fun `court request collision binds actor owner input and canonical arguments`() {
         val admission = mock(HwihaCourtAdmission::class.java)
-        val base = opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput(
+        val base = opensamguk.common.wire.TurnDaemonCommand.ImmediateInput(
             "client-id", 10, 999, "court.dispatch", "{args}")
         val variants = listOf(base.copy(generalId = 11) to 42,
             base to 43, base.copy(inputId = "court.dispatchReply") to 42,
@@ -140,12 +185,12 @@ class CommandReserveServiceTest {
     @Test fun `domestic standing inputs publish canonical immediate commands without a turn slot`() {
         val reader = mock(opensamguk.gameapi.read.HwihaDomesticReader::class.java)
         val now = opensamguk.logic.input.HwihaPhase(200, 1, 1)
-        fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.input.DomesticPerson(id, "G$id", 1, human,
+        fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.domestic.DomesticPerson(id, "G$id", 1, human,
             if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("hwihaLord" to lord))
-        val state = opensamguk.logic.input.HwihaDomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
-            listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.input.DomesticCard(5, 10, 20, "staff")),
-            listOf(opensamguk.logic.input.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
-            listOf(opensamguk.logic.input.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
+        val state = opensamguk.logic.domestic.DomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
+            listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.domestic.DomesticCard(5, 10, 20, "staff")),
+            listOf(opensamguk.logic.domestic.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
+            listOf(opensamguk.logic.domestic.DomesticNation(1, "N1", 7, emptyMap())), setOf("p7", "p10", "p20"))
         `when`(reader.snapshot()).thenReturn(opensamguk.gameapi.read.HwihaDomesticSnapshot(state,
             infrastructure = opensamguk.logic.input.HwihaInfrastructureSiteState(null, emptyList(), null, emptyList())))
         val catalog = opensamguk.logic.input.HwihaInputCatalog.load()
@@ -156,27 +201,28 @@ class CommandReserveServiceTest {
         val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", requestIds = { "domestic-req" }, transactions = TestTransactions,
             worldStates = worlds(mapOf("ruleProfile" to "HWIHA")), hwihaCourtAdmission = court)
-        service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("client", 10, 999,
+        service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("client", 10, 999,
             "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
         val stored = inbox.accepted.single()
         assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, stored.commandKind)
+        assertEquals("HwihaCourtInput", stored.actionCode)
         assertEquals(42, stored.ownerUserId)
         assertEquals(0, turns.reserves.size)
         val envelope = opensamguk.common.wire.WireJson.decodeFromString(opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(),
             stored.payloadJson)
-        assertEquals(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("domestic-req", 10, 42, "placement.assign",
+        assertEquals(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("domestic-req", 10, 42, "placement.assign",
             """{"cardId":5,"post":"MAGISTRATE","countyId":7}"""), envelope.command)
         // Shared-rule rejections and malformed bodies never reach the inbox.
         for ((input, body, code) in listOf(
             Triple("placement.assign", """{"cardId":5,"post":"MAGISTRATE","countyId":8}""", "INVALID_COUNTY"),
             Triple("policy.set", """{"scope":"COUNTY","countyId":7,"policy":"NONE"}""", "NOTHING_TO_CLEAR"),
-            Triple("work.start", """{"countyId":7,"work":"ROAD"}""", "INVALID_INFRASTRUCTURE_SITE"),
+            Triple("work.start", """{"countyId":7,"work":"ROAD","edgeId":"remote"}""", "INVALID_INFRASTRUCTURE_SITE"),
             Triple("work.start", """{"countyId":7,"work":"FORTIFICATION","edgeId":"remote","row":0,"col":0}""",
                 "INVALID_INFRASTRUCTURE_SITE"),
             Triple("work.start", """{"countyId":7,"work":"ROAD","x":1}""", "INVALID_REQUEST"),
         )) {
             assertEquals(code, assertFailsWith<HwihaAdmissionDenied> {
-                service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput("c", 10, 42, input, body), 42)
+                service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("c", 10, 42, input, body), 42)
             }.code, body)
         }
         assertEquals(1, inbox.accepted.size)

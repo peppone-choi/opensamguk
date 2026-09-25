@@ -1,5 +1,10 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticCard
+import opensamguk.logic.domestic.DomesticNation
+import opensamguk.logic.domestic.DomesticProjection
+
 import kotlin.test.*
 
 class HwihaRetireRulesTest {
@@ -7,7 +12,7 @@ class HwihaRetireRulesTest {
         "province", false, mapOf(HwihaLordStatus.META_KEY to true))
     private val heir = actor.copy(id = 2, name = "후계", userOwned = false, npcState = 2,
         officerLevel = 1, meta = mapOf(HwihaLordStatus.META_KEY to false))
-    private val state = HwihaDomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
+    private val state = DomesticProjection(RuleProfile.HWIHA, HwihaPhase(200, 1, 1),
         listOf(actor, heir), listOf(DomesticCard(10, 1, 2, "guest")), emptyList(),
         listOf(DomesticNation(1, "국", null, emptyMap())), setOf("province"))
 

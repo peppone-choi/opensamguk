@@ -1,31 +1,32 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 import opensamguk.logic.economy.HwihaResources
 
 class HwihaDomesticEffectsTest {
-    private val design = HwihaDomesticDesign.CANON
+    private val design = DomesticDesign.CANON
     private val now = HwihaPhase(200, 1, 1)
     private val levels = HwihaCountyLevels(50_000, 100_000, 1000, 1200, 1000, 1010, 500, 600, 80.0, 900, 1000, 900, 1000)
     private fun seat(stat: Int, hometown: Boolean = false) = HwihaSeatStats(stat, stat, stat, stat, stat, hometown)
 
     @Test fun `design file confirms policy work and direct action rates`() {
-        assertEquals(HwihaDomesticDesign.CONFIRMED, design.status)
-        assertEquals(HwihaDomesticDesign.CONFIRMED, design.directActionStatus)
+        assertEquals(DomesticDesign.CONFIRMED, design.status)
+        assertEquals(DomesticDesign.CONFIRMED, design.directActionStatus)
         assertEquals(HwihaFieldInput.INPUT_IDS, design.directActions.keys)
         assertEquals(CountyPolicy.entries.toSet(), design.countyPolicies.keys)
         assertEquals(DomesticWork.entries.toSet(), design.works.keys)
         assertEquals(CountyPolicy.AGRICULTURE, design.defaultCountyPolicy)
         // Merged works (user decision 2026-09-23): 성방 carries both the defence and the wall effect.
-        assertEquals(setOf(HwihaDomesticDesign.Indicator.DEFENCE, HwihaDomesticDesign.Indicator.WALL),
+        assertEquals(setOf(DomesticDesign.Indicator.DEFENCE, DomesticDesign.Indicator.WALL),
             design.works.getValue(DomesticWork.FORTIFICATION).completion.map { it.indicator }.toSet())
         assertTrue(design.works.getValue(DomesticWork.WAREHOUSE).completion.isEmpty())
         // Every row declares its status: no silent design numbers.
-        val raw = javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
+        val raw = javaClass.classLoader.getResource(DomesticDesign.RESOURCE)!!.readText()
         val statuses = Regex("\"status\": \"([^\"]+)\"").findAll(raw).map { it.groupValues[1] }.toList()
         assertTrue(statuses.size >= 1 + 1 + 1 + CountyPolicy.entries.size + CorpsPolicy.entries.size + 1)
         assertEquals(0, statuses.count { it == "PROPOSED" }, statuses.toString())
-        assertTrue(statuses.all { it in setOf(HwihaDomesticDesign.CONFIRMED, "PROPOSED") }, statuses.toString())
+        assertTrue(statuses.all { it in setOf(DomesticDesign.CONFIRMED, "PROPOSED") }, statuses.toString())
     }
 
     @Test fun `direct actions use one phase policy magnitude and cost`() {
@@ -44,32 +45,32 @@ class HwihaDomesticEffectsTest {
     }
 
     @Test fun `malformed design fails instead of defaulting`() {
-        val raw = javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
-        assertFailsWith<IllegalArgumentException> { HwihaDomesticDesign.parse(raw.replace("\"name\": \"권농\"", "\"name\": \"농\"")) }
-        assertFailsWith<IllegalArgumentException> { HwihaDomesticDesign.parse(raw.replace("\"code\": \"BARRACKS\"", "\"code\": \"CAMP\"")) }
-        assertFailsWith<IllegalArgumentException> { HwihaDomesticDesign.parse(raw.replace("\"maxActiveWorksPerCounty\": 1", "\"maxActiveWorksPerCounty\": 2")) }
+        val raw = javaClass.classLoader.getResource(DomesticDesign.RESOURCE)!!.readText()
+        assertFailsWith<IllegalArgumentException> { DomesticDesign.parse(raw.replace("\"name\": \"권농\"", "\"name\": \"농\"")) }
+        assertFailsWith<IllegalArgumentException> { DomesticDesign.parse(raw.replace("\"code\": \"BARRACKS\"", "\"code\": \"CAMP\"")) }
+        assertFailsWith<IllegalArgumentException> { DomesticDesign.parse(raw.replace("\"maxActiveWorksPerCounty\": 1", "\"maxActiveWorksPerCounty\": 2")) }
     }
 
     @Test fun `multiplier follows the section 8_2 stat and empty seat rule`() {
         val s = design.scaling
         assertEquals(1000, HwihaDomesticEffects.multiplier(design, null, null))
-        assertEquals(s.emptySeatPermille.toLong(), HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, null))
-        assertEquals(1000, HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, seat(s.neutralStat)))
-        assertEquals(1000L + 30 * s.permillePerStatPoint, HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, seat(s.neutralStat + 30)))
+        assertEquals(s.emptySeatPermille.toLong(), HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, null))
+        assertEquals(1000, HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, seat(s.neutralStat)))
+        assertEquals(1000L + 30 * s.permillePerStatPoint, HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, seat(s.neutralStat + 30)))
         assertEquals(1000L + 30 * s.permillePerStatPoint + s.hometownBonusPermille,
-            HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, seat(s.neutralStat + 30, hometown = true)))
+            HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, seat(s.neutralStat + 30, hometown = true)))
         assertEquals(maxOf(s.minimumPermille.toLong(), 1000L - s.neutralStat * s.permillePerStatPoint),
-            HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, seat(0)))
+            HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, seat(0)))
         // The floor binds once the per-point slope is steep enough.
-        val steep = HwihaDomesticDesign.parse(javaClass.classLoader.getResource(HwihaDomesticDesign.RESOURCE)!!.readText()
+        val steep = DomesticDesign.parse(javaClass.classLoader.getResource(DomesticDesign.RESOURCE)!!.readText()
             .replace("\"permillePerStatPoint\": ${s.permillePerStatPoint}", "\"permillePerStatPoint\": 100"))
-        assertEquals(s.minimumPermille.toLong(), HwihaDomesticEffects.multiplier(steep, HwihaDomesticDesign.Stat.POLITICS, seat(0)))
+        assertEquals(s.minimumPermille.toLong(), HwihaDomesticEffects.multiplier(steep, DomesticDesign.Stat.POLITICS, seat(0)))
     }
 
     @Test fun `agriculture policy scales with politics and stops at the cap`() {
         val base = design.countyPolicies.getValue(CountyPolicy.AGRICULTURE).indicators.single().amount
         val high = HwihaDomesticEffects.applyPolicy(design, CountyPolicy.AGRICULTURE, levels, seat(80))
-        assertEquals(levels.agriculture + base * HwihaDomesticEffects.multiplier(design, HwihaDomesticDesign.Stat.POLITICS, seat(80)).toInt() / 1000,
+        assertEquals(levels.agriculture + base * HwihaDomesticEffects.multiplier(design, DomesticDesign.Stat.POLITICS, seat(80)).toInt() / 1000,
             high.levels.agriculture)
         val capped = HwihaDomesticEffects.applyPolicy(design, CountyPolicy.COMMERCE, levels, seat(100))
         assertEquals(levels.commerceMax, capped.levels.commerce)

@@ -1,5 +1,6 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticProjection
 import opensamguk.logic.world.StrategicEdgeStateSnapshot
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicRoadGate
@@ -14,7 +15,7 @@ data class HwihaInfrastructureSiteState(
 )
 
 object HwihaInfrastructureSiteRules {
-    fun error(request: WorkRequest, state: HwihaDomesticProjection,
+    fun error(request: WorkRequest, state: DomesticProjection,
         infrastructure: HwihaInfrastructureSiteState): String? {
         if (request.work !in setOf(DomesticWork.ROAD, DomesticWork.FORTIFICATION)) return null
         if (request.work == DomesticWork.FORTIFICATION && request.edgeId == null &&

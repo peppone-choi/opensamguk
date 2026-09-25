@@ -571,3 +571,16 @@ jobs:
         if: '!cancelled()'
         working-directory: web/shared
         run: corepack pnpm test
+
+  naming-lint:
+    name: naming-lint
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test naming lint
+        run: python3 -m unittest discover -s tools/ci -p 'test_naming_lint.py'
+      - name: Check naming and retired references
+        run: python3 tools/ci/naming_lint.py

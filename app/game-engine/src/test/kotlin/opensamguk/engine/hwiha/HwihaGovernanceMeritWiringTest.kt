@@ -3,7 +3,7 @@ package opensamguk.engine.hwiha
 import java.io.File
 import java.time.Instant
 import kotlin.test.*
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
@@ -79,7 +79,7 @@ class HwihaGovernanceMeritWiringTest {
      * 그 달 동안 두 縣 의 전답이 상한의 10% 오른다 — 두 경로 모두의 문턱을 넘는다.
      */
     private fun seatMagistrate(world: InMemoryTurnWorld, recorder: ChangeRecorder, context: HwihaDomesticContext, countyId: Int) {
-        val placed = HwihaCourtHandler(world, recorder, context).handle(HwihaCourtInput("req-seat", 1, 42, "placement.assign",
+        val placed = HwihaCourtHandler(world, recorder, context).handle(ImmediateInput("req-seat", 1, 42, "placement.assign",
             """{"cardId":5,"post":"MAGISTRATE","countyId":$countyId}"""))
         assertTrue(placed.ok, "배치 접수: $placed")
         HwihaDomesticTurn(world, recorder, context).beforeMovement(3)

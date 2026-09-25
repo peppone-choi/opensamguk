@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "catalogId": "hwiha-input-catalog",
   "status": "DRAFT",
-  "note": "휘하 입력 원장. PLANNED 행은 구현 아님. null 비용과 PLANNED 계약은 후속 슬라이스에서 확정하며 NOT_DELIVERED 로 거절한다. 기존 명령 역참조는 직접 행동과 위임의 중복을 허용한다.",
+  "note": "휘하 입력 원장. PLANNED 행은 구현 아님. null 비용과 PLANNED 계약은 후속 슬라이스에서 확정하며 NOT_DELIVERED 로 거절한다. 직접 행동의 표시 이름은 displayName 이 정본이다.",
   "inputs": [
     {
       "inputId": "action.enlist",
@@ -54,11 +54,7 @@
       "aiPolicyId": "ai.action.enlist",
       "helpTopicId": "commands.action.enlist",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_임관",
-        "che_랜덤임관",
-        "che_장수대상임관"
-      ],
+      "displayName": "출사",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -111,9 +107,7 @@
       "aiPolicyId": "ai.action.deploy",
       "helpTopicId": "commands.action.deploy",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_출병"
-      ],
+      "displayName": "출병",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -158,9 +152,7 @@
       "aiPolicyId": "ai.action.scout",
       "helpTopicId": "commands.action.scout",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_첩보"
-      ],
+      "displayName": "첩보",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -207,7 +199,7 @@
       "aiPolicyId": "ai.action.assault",
       "helpTopicId": "commands.action.assault",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "강공",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -254,7 +246,7 @@
       "aiPolicyId": "ai.action.demandSurrender",
       "helpTopicId": "commands.action.demandSurrender",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "항복 권고",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -301,7 +293,7 @@
       "aiPolicyId": "ai.action.siegeRoadFort",
       "helpTopicId": "commands.action.siegeRoadFort",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "보루 포위",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -359,9 +351,6 @@
       "aiPolicyId": "ai.court.dispatch",
       "helpTopicId": "commands.court.dispatch",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_발령"
-      ],
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -419,7 +408,6 @@
       "aiPolicyId": "ai.court.dispatchReply",
       "helpTopicId": "commands.court.dispatchReply",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -462,9 +450,6 @@
       "aiPolicyId": "ai.court.reward",
       "helpTopicId": "commands.court.reward",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_포상"
-      ],
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -528,7 +513,6 @@
       "aiPolicyId": "ai.court.politicalConsent",
       "helpTopicId": "commands.court.politicalConsent",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
       "deliveryState": "UI_READY"
     },
     {
@@ -595,7 +579,6 @@
       "aiPolicyId": "ai.placement.assign",
       "helpTopicId": "commands.placement.assign",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -662,7 +645,6 @@
       "aiPolicyId": "ai.policy.set",
       "helpTopicId": "commands.policy.set",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -729,9 +711,6 @@
       "aiPolicyId": "ai.work.start",
       "helpTopicId": "commands.work.start",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_증축"
-      ],
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -784,9 +763,6 @@
       "aiPolicyId": "ai.stratagem.rumor",
       "helpTopicId": "commands.stratagem.rumor",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_선동"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -839,7 +815,6 @@
       "aiPolicyId": "ai.stratagem.play",
       "helpTopicId": "commands.stratagem.play",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
       "deliveryState": "PLANNED"
     },
     {
@@ -895,9 +870,7 @@
       "aiPolicyId": "ai.action.farm",
       "helpTopicId": "commands.action.farm",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_농지개간"
-      ],
+      "displayName": "농지개간",
       "deliveryState": "UI_READY"
     },
     {
@@ -953,9 +926,7 @@
       "aiPolicyId": "ai.action.commerce",
       "helpTopicId": "commands.action.commerce",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_상업투자"
-      ],
+      "displayName": "상업투자",
       "deliveryState": "UI_READY"
     },
     {
@@ -1011,9 +982,7 @@
       "aiPolicyId": "ai.action.fortify",
       "helpTopicId": "commands.action.fortify",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_수비강화"
-      ],
+      "displayName": "수비강화",
       "deliveryState": "UI_READY"
     },
     {
@@ -1069,9 +1038,7 @@
       "aiPolicyId": "ai.action.repairWall",
       "helpTopicId": "commands.action.repairWall",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_성벽보수"
-      ],
+      "displayName": "성벽보수",
       "deliveryState": "UI_READY"
     },
     {
@@ -1127,9 +1094,7 @@
       "aiPolicyId": "ai.action.security",
       "helpTopicId": "commands.action.security",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_치안강화"
-      ],
+      "displayName": "치안강화",
       "deliveryState": "UI_READY"
     },
     {
@@ -1185,9 +1150,7 @@
       "aiPolicyId": "ai.action.settle",
       "helpTopicId": "commands.action.settle",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_정착장려"
-      ],
+      "displayName": "정착장려",
       "deliveryState": "UI_READY"
     },
     {
@@ -1243,9 +1206,7 @@
       "aiPolicyId": "ai.action.selectResidents",
       "helpTopicId": "commands.action.selectResidents",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_주민선정"
-      ],
+      "displayName": "주민선정",
       "deliveryState": "UI_READY"
     },
     {
@@ -1304,9 +1265,7 @@
       "aiPolicyId": "ai.action.conscript",
       "helpTopicId": "commands.action.conscript",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_징병"
-      ],
+      "displayName": "징병",
       "deliveryState": "UI_READY"
     },
     {
@@ -1365,9 +1324,7 @@
       "aiPolicyId": "ai.action.raiseVolunteers",
       "helpTopicId": "commands.action.raiseVolunteers",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_모병"
-      ],
+      "displayName": "모병",
       "deliveryState": "UI_READY"
     },
     {
@@ -1426,9 +1383,7 @@
       "aiPolicyId": "ai.action.train",
       "helpTopicId": "commands.action.train",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_훈련"
-      ],
+      "displayName": "훈련",
       "deliveryState": "UI_READY"
     },
     {
@@ -1487,9 +1442,7 @@
       "aiPolicyId": "ai.action.boostMorale",
       "helpTopicId": "commands.action.boostMorale",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_사기진작"
-      ],
+      "displayName": "사기진작",
       "deliveryState": "UI_READY"
     },
     {
@@ -1549,9 +1502,7 @@
       "aiPolicyId": "ai.action.demobilize",
       "helpTopicId": "commands.action.demobilize",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_소집해제"
-      ],
+      "displayName": "소집해제",
       "deliveryState": "UI_READY"
     },
     {
@@ -1610,9 +1561,7 @@
       "aiPolicyId": "ai.action.search",
       "helpTopicId": "commands.action.search",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_인재탐색"
-      ],
+      "displayName": "인재탐색",
       "deliveryState": "UI_READY"
     },
     {
@@ -1671,9 +1620,7 @@
       "aiPolicyId": "ai.action.employ",
       "helpTopicId": "commands.action.employ",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_등용"
-      ],
+      "displayName": "등용",
       "deliveryState": "UI_READY"
     },
     {
@@ -1725,9 +1672,7 @@
       "aiPolicyId": "ai.action.travel",
       "helpTopicId": "commands.action.travel",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_견문"
-      ],
+      "displayName": "견문",
       "deliveryState": "UI_READY"
     },
     {
@@ -1779,9 +1724,7 @@
       "aiPolicyId": "ai.action.selfTrain",
       "helpTopicId": "commands.action.selfTrain",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_단련"
-      ],
+      "displayName": "단련",
       "deliveryState": "UI_READY"
     },
     {
@@ -1833,9 +1776,7 @@
       "aiPolicyId": "ai.action.recuperate",
       "helpTopicId": "commands.action.recuperate",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_요양"
-      ],
+      "displayName": "요양",
       "deliveryState": "UI_READY"
     },
     {
@@ -1890,9 +1831,7 @@
       "aiPolicyId": "ai.action.gift",
       "helpTopicId": "commands.action.gift",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_증여"
-      ],
+      "displayName": "증여",
       "deliveryState": "UI_READY"
     },
     {
@@ -1947,9 +1886,7 @@
       "aiPolicyId": "ai.action.donate",
       "helpTopicId": "commands.action.donate",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_헌납"
-      ],
+      "displayName": "헌납",
       "deliveryState": "PLANNED"
     },
     {
@@ -2005,9 +1942,7 @@
       "aiPolicyId": "ai.action.muster",
       "helpTopicId": "commands.action.muster",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_집합"
-      ],
+      "displayName": "집합",
       "deliveryState": "HANDLER_READY"
     },
     {
@@ -2060,9 +1995,7 @@
       "aiPolicyId": "ai.action.move",
       "helpTopicId": "commands.action.move",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_이동"
-      ],
+      "displayName": "이동",
       "deliveryState": "UI_READY"
     },
     {
@@ -2115,9 +2048,7 @@
       "aiPolicyId": "ai.action.forcedMarch",
       "helpTopicId": "commands.action.forcedMarch",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_강행"
-      ],
+      "displayName": "강행",
       "deliveryState": "UI_READY"
     },
     {
@@ -2170,9 +2101,7 @@
       "aiPolicyId": "ai.action.return",
       "helpTopicId": "commands.action.return",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_귀환"
-      ],
+      "displayName": "귀환",
       "deliveryState": "UI_READY"
     },
     {
@@ -2225,9 +2154,7 @@
       "aiPolicyId": "ai.action.retire",
       "helpTopicId": "commands.action.retire",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_은퇴"
-      ],
+      "displayName": "은퇴",
       "deliveryState": "PLANNED"
     },
     {
@@ -2292,9 +2219,7 @@
       "aiPolicyId": "ai.action.resign",
       "helpTopicId": "commands.action.resign",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_하야"
-      ],
+      "displayName": "하야",
       "deliveryState": "PLANNED"
     },
     {
@@ -2359,9 +2284,7 @@
       "aiPolicyId": "ai.action.rise",
       "helpTopicId": "commands.action.rise",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_거병"
-      ],
+      "displayName": "거병",
       "deliveryState": "PLANNED"
     },
     {
@@ -2426,9 +2349,7 @@
       "aiPolicyId": "ai.action.foundState",
       "helpTopicId": "commands.action.foundState",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_건국"
-      ],
+      "displayName": "건국",
       "deliveryState": "UI_READY"
     },
     {
@@ -2493,9 +2414,7 @@
       "aiPolicyId": "ai.action.abdicate",
       "helpTopicId": "commands.action.abdicate",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_선양"
-      ],
+      "displayName": "선양",
       "deliveryState": "UI_READY"
     },
     {
@@ -2560,9 +2479,7 @@
       "aiPolicyId": "ai.action.dissolve",
       "helpTopicId": "commands.action.dissolve",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_해산"
-      ],
+      "displayName": "세력 해산",
       "deliveryState": "PLANNED"
     },
     {
@@ -2618,7 +2535,7 @@
       "aiPolicyId": "ai.action.tour",
       "helpTopicId": "commands.action.tour",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "순행",
       "deliveryState": "UI_READY"
     },
     {
@@ -2677,7 +2594,7 @@
       "aiPolicyId": "ai.action.persuadeCaptive",
       "helpTopicId": "commands.action.persuadeCaptive",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "포로 설득",
       "deliveryState": "PLANNED"
     },
     {
@@ -2742,7 +2659,7 @@
       "aiPolicyId": "ai.action.oath",
       "helpTopicId": "commands.action.oath",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "결의",
       "deliveryState": "UI_READY"
     },
     {
@@ -2807,7 +2724,7 @@
       "aiPolicyId": "ai.action.independence",
       "helpTopicId": "commands.action.independence",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [],
+      "displayName": "독립",
       "deliveryState": "PLANNED"
     },
     {
@@ -2869,9 +2786,7 @@
       "aiPolicyId": "ai.action.convertProficiency",
       "helpTopicId": "commands.action.convertProficiency",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_숙련전환"
-      ],
+      "displayName": "숙련전환",
       "deliveryState": "UI_READY"
     },
     {
@@ -2933,9 +2848,7 @@
       "aiPolicyId": "ai.action.tradeEquipment",
       "helpTopicId": "commands.action.tradeEquipment",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_장비매매"
-      ],
+      "displayName": "장비매매",
       "deliveryState": "PLANNED"
     },
     {
@@ -2997,9 +2910,7 @@
       "aiPolicyId": "ai.action.tradeGrain",
       "helpTopicId": "commands.action.tradeGrain",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_군량매매"
-      ],
+      "displayName": "군량매매",
       "deliveryState": "UI_READY"
     },
     {
@@ -3061,9 +2972,7 @@
       "aiPolicyId": "ai.action.transport",
       "helpTopicId": "commands.action.transport",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_물자조달"
-      ],
+      "displayName": "물자조달",
       "deliveryState": "UI_READY"
     },
     {
@@ -3121,9 +3030,6 @@
       "aiPolicyId": "ai.court.releaseCorps",
       "helpTopicId": "commands.court.releaseCorps",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_부대탈퇴지시"
-      ],
       "deliveryState": "UI_READY"
     },
     {
@@ -3181,9 +3087,6 @@
       "aiPolicyId": "ai.court.diplomacy",
       "helpTopicId": "commands.court.diplomacy",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_물자원조"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3241,9 +3144,6 @@
       "aiPolicyId": "ai.court.abandonCounty",
       "helpTopicId": "commands.court.abandonCounty",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_초토화"
-      ],
       "deliveryState": "UI_READY"
     },
     {
@@ -3301,9 +3201,6 @@
       "aiPolicyId": "ai.court.institution",
       "helpTopicId": "commands.court.institution",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_기술연구"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3361,9 +3258,6 @@
       "aiPolicyId": "ai.court.moveCapital",
       "helpTopicId": "commands.court.moveCapital",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_천도"
-      ],
       "deliveryState": "UI_READY"
     },
     {
@@ -3421,9 +3315,6 @@
       "aiPolicyId": "ai.court.confiscate",
       "helpTopicId": "commands.court.confiscate",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_몰수"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3481,9 +3372,6 @@
       "aiPolicyId": "ai.court.nonAggression",
       "helpTopicId": "commands.court.nonAggression",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_불가침제의"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3541,9 +3429,6 @@
       "aiPolicyId": "ai.court.declareWar",
       "helpTopicId": "commands.court.declareWar",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_선전포고"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3601,9 +3486,6 @@
       "aiPolicyId": "ai.court.offerPeace",
       "helpTopicId": "commands.court.offerPeace",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_종전제의"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3661,9 +3543,6 @@
       "aiPolicyId": "ai.court.breakNonAggression",
       "helpTopicId": "commands.court.breakNonAggression",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_불가침파기제의"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3712,9 +3591,6 @@
       "aiPolicyId": "ai.work.reduce",
       "helpTopicId": "commands.work.reduce",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_감축"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3767,9 +3643,6 @@
       "aiPolicyId": "ai.stratagem.steal",
       "helpTopicId": "commands.stratagem.steal",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_탈취"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3822,9 +3695,6 @@
       "aiPolicyId": "ai.stratagem.sabotage",
       "helpTopicId": "commands.stratagem.sabotage",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_파괴"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3877,9 +3747,6 @@
       "aiPolicyId": "ai.stratagem.fire",
       "helpTopicId": "commands.stratagem.fire",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_화계"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3932,9 +3799,6 @@
       "aiPolicyId": "ai.stratagem.lastStand",
       "helpTopicId": "commands.stratagem.lastStand",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_필사즉생"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -3987,9 +3851,6 @@
       "aiPolicyId": "ai.stratagem.mobilizePeople",
       "helpTopicId": "commands.stratagem.mobilizePeople",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_백성동원"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -4042,9 +3903,6 @@
       "aiPolicyId": "ai.stratagem.flood",
       "helpTopicId": "commands.stratagem.flood",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_수몰"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -4097,9 +3955,6 @@
       "aiPolicyId": "ai.stratagem.falseReport",
       "helpTopicId": "commands.stratagem.falseReport",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_허보"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -4152,9 +4007,6 @@
       "aiPolicyId": "ai.stratagem.raiseMilitia",
       "helpTopicId": "commands.stratagem.raiseMilitia",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_의병모집"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -4207,9 +4059,6 @@
       "aiPolicyId": "ai.stratagem.provokeRivalry",
       "helpTopicId": "commands.stratagem.provokeRivalry",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_이호경식"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -4262,9 +4111,6 @@
       "aiPolicyId": "ai.stratagem.raid",
       "helpTopicId": "commands.stratagem.raid",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_급습"
-      ],
       "deliveryState": "PLANNED"
     },
     {
@@ -4317,24 +4163,7 @@
       "aiPolicyId": "ai.stratagem.reciprocity",
       "helpTopicId": "commands.stratagem.reciprocity",
       "tutorialObjectiveId": "N/A",
-      "legacyCommands": [
-        "che_피장파장"
-      ],
       "deliveryState": "PLANNED"
     }
-  ],
-  "retiredLegacyCommands": [
-    "휴식",
-    "che_내정특기초기화",
-    "che_전투특기초기화",
-    "che_국기변경",
-    "che_국호변경"
-  ],
-  "retiredLegacyReasons": {
-    "휴식": "빈 순이 휴식",
-    "che_내정특기초기화": "카드 특기 고정",
-    "che_전투특기초기화": "카드 특기 고정",
-    "che_국기변경": "명령이 아닌 설정",
-    "che_국호변경": "명령이 아닌 설정"
-  }
+  ]
 }

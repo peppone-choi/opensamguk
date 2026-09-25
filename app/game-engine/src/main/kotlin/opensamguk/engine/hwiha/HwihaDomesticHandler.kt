@@ -1,8 +1,12 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticProjection
+import opensamguk.logic.domestic.DomesticAssessment
+import opensamguk.logic.domestic.DomesticRules
+
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.InputResolved
-import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
@@ -19,7 +23,7 @@ class HwihaDomesticHandler(
     private val recorder: ChangeRecorder,
     private val context: HwihaDomesticContext,
 ) {
-    fun handle(command: HwihaCourtInput): CommandLifecycleResult {
+    fun handle(command: ImmediateInput): CommandLifecycleResult {
         val kind = kindOf(command.inputId)
         fun deny(code: String, reason: String) = result(command.generalId, command.inputId, kind, false, code, reason)
         if (world.ruleProfile != RuleProfile.HWIHA) return deny("WRONG_RULE_PROFILE", "이 월드의 규칙에서 사용할 수 없는 입력입니다.")
@@ -36,14 +40,14 @@ class HwihaDomesticHandler(
             HwihaDomesticInput.PLACEMENT -> {
                 val request = HwihaDomesticInput.parsePlacement(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "배치할 카드와 자리를 확인해 주세요.")
-                HwihaDomesticRules.assessPlacement(request, state).also {
+                DomesticRules.assessPlacement(request, state).also {
                     if (it is DomesticAssessment.Eligible) storePlacement(command.requestId, request, it.person!!.id, now)
                 }
             }
             HwihaDomesticInput.POLICY -> {
                 val request = HwihaDomesticInput.parsePolicy(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "방침 대상과 방침을 확인해 주세요.")
-                HwihaDomesticRules.assessPolicy(request, state).also {
+                DomesticRules.assessPolicy(request, state).also {
                     if (it is DomesticAssessment.Eligible) storePolicy(command.requestId, request, state, now)
                 }
             }
@@ -51,14 +55,14 @@ class HwihaDomesticHandler(
                 val request = HwihaDomesticInput.parseWork(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "공사할 현과 공사를 확인해 주세요.")
                 infrastructureTargetError(request, state)?.let { return deny("INVALID_INFRASTRUCTURE_SITE", it) }
-                HwihaDomesticRules.assessWork(request, state).also {
+                DomesticRules.assessWork(request, state).also {
                     if (it is DomesticAssessment.Eligible) storeWork(command.requestId, request, now)
                 }
             }
             HwihaDomesticInput.REDUCE -> {
                 val request = HwihaDomesticInput.parseWork(actor.id, command.argJson)
                     ?: return deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
-                HwihaDomesticRules.assessReduce(request, state).also {
+                DomesticRules.assessReduce(request, state).also {
                     if (it is DomesticAssessment.Eligible) reduceFortification(request.countyId)
                 }
             }
@@ -83,7 +87,7 @@ class HwihaDomesticHandler(
         world.updateGeneralMeta(recorder, card, card.meta.withKey(HwihaPlacementState.META_KEY, next.toMetaValue()))
     }
 
-    private fun storePolicy(requestId: String, request: PolicyRequest, state: HwihaDomesticProjection, now: HwihaPhase) {
+    private fun storePolicy(requestId: String, request: PolicyRequest, state: DomesticProjection, now: HwihaPhase) {
         val order = HwihaPolicyOrder(request.policy, requestId, request.actorId, now)
         when (val target = request.target) {
             is PolicyTarget.County -> {
@@ -102,7 +106,7 @@ class HwihaDomesticHandler(
             }
             is PolicyTarget.Corps -> {
                 val owner = checkNotNull(world.getGeneralById(request.actorId))
-                val corps = HwihaDomesticRules.deployedCorps(state).single { it.orderId == target.orderId }
+                val corps = DomesticRules.deployedCorps(state).single { it.orderId == target.orderId }
                 val current = HwihaCorpsPolicies.read(owner.meta) ?: HwihaCorpsPolicies(emptyList())
                 val slot = HwihaPolicySlot(current.forOrder(corps.orderId)?.slot?.active, order)
                 world.updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaCorpsPolicies.META_KEY,
@@ -120,7 +124,7 @@ class HwihaDomesticHandler(
         world.updateCityMeta(recorder, city.id, city.meta.withKey(HwihaCountyWorks.META_KEY, next.toMetaValue()))
     }
 
-    private fun infrastructureTargetError(request: WorkRequest, state: HwihaDomesticProjection): String? {
+    private fun infrastructureTargetError(request: WorkRequest, state: DomesticProjection): String? {
         val passage = try { context.topology?.let { HwihaLandPassageState.read(world.getState().meta, it) } }
             catch (_: IllegalArgumentException) { null }
         val forts = try { HwihaRoadFortState.read(world.getState().meta) }

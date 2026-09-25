@@ -1,4 +1,4 @@
-package opensamguk.logic.input
+package opensamguk.logic.domestic
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
@@ -11,13 +11,17 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.input.CorpsPolicy
+import opensamguk.logic.input.CountyPolicy
+import opensamguk.logic.input.DomesticWork
+import opensamguk.logic.input.HwihaFieldInput
 
 /**
  * 휘하 내정 입력의 확정 수치(`data/curated/han/hwiha-domestic-v1.json`, classpath `hwiha/`).
  * 설계 문서가 정하지 않은 효과량·비용·기간은 모두 이 파일 한 곳에만 있고 `status` 가
  * 「CONFIRMED」다 — 코드에 박지 않는다. 파일이 없거나 꼴이 어긋나면 기본값으로 가지 않고 실패한다.
  */
-class HwihaDomesticDesign internal constructor(
+class DomesticDesign internal constructor(
     val status: String,
     val scaling: Scaling,
     val defaultCountyPolicy: CountyPolicy,
@@ -59,13 +63,13 @@ class HwihaDomesticDesign internal constructor(
         const val RESOURCE = "hwiha/hwiha-domestic-v1.json"
         const val CONFIRMED = "CONFIRMED"
 
-        val CANON: HwihaDomesticDesign by lazy {
-            parse(checkNotNull(HwihaDomesticDesign::class.java.classLoader.getResource(RESOURCE)) {
+        val CANON: DomesticDesign by lazy {
+            parse(checkNotNull(DomesticDesign::class.java.classLoader.getResource(RESOURCE)) {
                 "hwiha domestic design resource is missing: $RESOURCE"
             }.readText())
         }
 
-        fun parse(payload: String): HwihaDomesticDesign {
+        fun parse(payload: String): DomesticDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.int("schemaVersion") == 1) { "unsupported hwiha domestic schemaVersion" }
             require(root.text("ledgerId") == "hwiha-domestic-v1") { "unexpected hwiha domestic ledgerId" }
@@ -151,7 +155,7 @@ class HwihaDomesticDesign internal constructor(
                     "$inputId must match half of one fortification phase"
                 }
             }
-            return HwihaDomesticDesign(status, scaling, defaultPolicy, policies.associateBy { it.policy },
+            return DomesticDesign(status, scaling, defaultPolicy, policies.associateBy { it.policy },
                 directStatus, directActions.associateBy { it.inputId },
                 worksNode.int("maxActiveWorksPerCounty").also { require(it == 1) { "only one active work per county is supported" } },
                 worksNode.int("progressPerPhase").also { require(it > 0) }, works.associateBy { it.work })

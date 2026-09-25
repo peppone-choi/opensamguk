@@ -1,10 +1,13 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticProjection
+
 import kotlin.test.*
 
 class HwihaPersonalRulesTest {
     private fun state(person: DomesticPerson, profile: RuleProfile = RuleProfile.HWIHA) =
-        HwihaDomesticProjection(profile, HwihaPhase(200, 1, 1), listOf(person), emptyList(),
+        DomesticProjection(profile, HwihaPhase(200, 1, 1), listOf(person), emptyList(),
             emptyList(), emptyList(), setOf("province"))
 
     private fun person(injury: Int = 0, fatigue: Int = 0, strength: Int = 70) =
