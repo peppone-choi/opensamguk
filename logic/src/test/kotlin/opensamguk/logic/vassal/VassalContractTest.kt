@@ -66,6 +66,8 @@ class VassalContractTest {
         val minimumReduced = (request.requestedTroops.toLong() * rules.minimumReducedPercent + 99) / 100
         assertEquals(ReinforcementOutcome.PENDING, VassalReinforcement.assess(contract, request, null, 13, rules).outcome)
         assertEquals(ReinforcementOutcome.DELAYED, VassalReinforcement.assess(contract, request, ReinforcementResponse(ReinforcementReply.DELAY, request.requestedTroops, 13), 13, rules).outcome)
+        assertEquals(ReinforcementOutcome.BREACH, VassalReinforcement.assess(contract, request, ReinforcementResponse(ReinforcementReply.ACCEPT, request.requestedTroops - 1, 13), 13, rules).outcome)
+        assertEquals(ReinforcementOutcome.BREACH, VassalReinforcement.assess(contract, request, ReinforcementResponse(ReinforcementReply.DELAY, request.requestedTroops - 1, 13), 13, rules).outcome)
         assertEquals(ReinforcementOutcome.REDUCED, VassalReinforcement.assess(contract, request, ReinforcementResponse(ReinforcementReply.REDUCE, minimumReduced.toInt(), 13), 13, rules).outcome)
         assertEquals(ReinforcementOutcome.BREACH, VassalReinforcement.assess(contract, request, ReinforcementResponse(ReinforcementReply.REFUSE, 0, 13), 13, rules).outcome)
         assertEquals(ReinforcementOutcome.BREACH, VassalReinforcement.assess(contract, request, null, request.issuedTurn + rules.reinforcementReplyTurns + 1, rules).outcome)

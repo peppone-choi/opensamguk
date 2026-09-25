@@ -97,12 +97,12 @@ object VassalReinforcement {
         val obligated = minOf(request.requestedTroops, contract.reinforcementTroops)
         return when (response.kind) {
             ReinforcementReply.ACCEPT -> {
-                require(response.offeredTroops >= obligated)
-                ReinforcementDecision(ReinforcementOutcome.ACCEPTED, response.offeredTroops, response.answeredTurn)
+                if (response.offeredTroops < obligated) ReinforcementDecision(ReinforcementOutcome.BREACH, 0, deadline)
+                else ReinforcementDecision(ReinforcementOutcome.ACCEPTED, response.offeredTroops, response.answeredTurn)
             }
             ReinforcementReply.DELAY -> {
-                require(response.offeredTroops >= obligated)
-                ReinforcementDecision(ReinforcementOutcome.DELAYED, response.offeredTroops, deadline)
+                if (response.offeredTroops < obligated) ReinforcementDecision(ReinforcementOutcome.BREACH, 0, deadline)
+                else ReinforcementDecision(ReinforcementOutcome.DELAYED, response.offeredTroops, deadline)
             }
             ReinforcementReply.REDUCE -> {
                 val minimum = obligated.toLong() * rules.minimumReducedPercent
