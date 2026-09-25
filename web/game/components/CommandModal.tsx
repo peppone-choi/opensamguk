@@ -46,6 +46,7 @@ import HwihaPersonalForm, { personalLabels, isPersonalActionId } from './command
 import HwihaPeopleForm, { peopleLabels, isPeopleActionId } from './command/HwihaPeopleForm';
 import HwihaPoliticalForm, { politicalLabels, isPoliticalActionId } from './command/HwihaPoliticalForm';
 import HwihaTransferForm, { transferLabels, isTransferActionId } from './command/HwihaTransferForm';
+import HwihaLegacyDirectForm, { legacyDirectLabels, isLegacyDirectActionId } from './command/HwihaLegacyDirectForm';
 import HwihaEnlistmentForm, { useRuleProfile } from './command/HwihaEnlistmentForm';
 import SelectFoundingField from './command/SelectFoundingField';
 import SelectRecruitField from './command/SelectRecruitField';
@@ -583,7 +584,7 @@ export default function CommandModal({
 
     return (
         <Modal
-            ariaLabel={courtMode ? '발령·응답' : pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
+            ariaLabel={courtMode ? '발령·조정·계책' : pinnedLabel ? `명령: ${pinnedLabel}` : '명령'}
             className="modal-content"
             overlayClassName="modal-overlay"
             onClose={onClose}
@@ -595,7 +596,7 @@ export default function CommandModal({
                         </div>
                     )}
                     <div className="cmd-header__text">
-                        <h2 className="os-serif">{courtMode ? '발령·응답' : '명령'}</h2>
+                        <h2 className="os-serif">{courtMode ? '발령·조정·계책' : '명령'}</h2>
                         {hero?.name && <span className="cmd-header__who">{hero.name}{!courtMode && turnIdx != null ? ` · ${turnIdx + 1}순` : ''}</span>}
                     </div>
                     <button type="button" className="os-button os-button--ghost os-button--sm cmd-close" onClick={onClose} aria-label="닫기">×</button>
@@ -605,7 +606,7 @@ export default function CommandModal({
 
                 {courtMode ? (profile === 'HWIHA' ? <HwihaCourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} /> : <p role="status">서버 규칙을 확인하지 못해 발령을 입력할 수 없습니다.</p>) : profile === 'HWIHA' ? (
                     <>
-                        {!isNationCommand && !pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={hwihaAction} onChange={e => setHwihaAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option><option value="action.move">이동</option><option value="action.forcedMarch">강행</option><option value="action.return">귀환</option>{Object.entries(fieldLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(militaryLabels).filter(([id])=>id!=='action.muster').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(personalLabels).filter(([id])=>id!=='action.retire').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(peopleLabels).filter(([id])=>id!=='action.persuadeCaptive').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(politicalLabels).filter(([id])=>!['action.resign','action.rise','action.independence','action.dissolve'].includes(id)).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(transferLabels).filter(([id])=>id!=='action.donate').map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
+                        {!isNationCommand && !pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={hwihaAction} onChange={e => setHwihaAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option><option value="action.move">이동</option><option value="action.forcedMarch">강행</option><option value="action.return">귀환</option>{Object.entries(fieldLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(militaryLabels).filter(([id])=>id!=='action.muster').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(personalLabels).filter(([id])=>id!=='action.retire').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(peopleLabels).filter(([id])=>id!=='action.persuadeCaptive').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(politicalLabels).filter(([id])=>!['action.resign','action.rise','action.independence','action.dissolve'].includes(id)).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(transferLabels).filter(([id])=>id!=='action.donate').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(legacyDirectLabels).filter(([id])=>id!=='action.tradeEquipment').map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
                         {(pinnedCommand || hwihaAction) === 'action.deploy' ?
                             <HwihaDeployForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
                             isTravelActionId(pinnedCommand || hwihaAction) ?
@@ -622,8 +623,10 @@ export default function CommandModal({
                             <HwihaPoliticalForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaPoliticalActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
                             isTransferActionId(pinnedCommand || hwihaAction) ?
                             <HwihaTransferForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaTransferActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            <HwihaEnlistmentForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx}
-                                unavailable={!!isNationCommand || (!!pinnedCommand && pinnedCommand !== 'action.enlist')}
+                            isLegacyDirectActionId(pinnedCommand || hwihaAction) ?
+                            <HwihaLegacyDirectForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaLegacyDirectActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            <HwihaEnlistmentForm key={`${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as 'action.enlist' | 'action.randomEnlist' | 'action.targetEnlist'} generalId={generalId} turnIdx={turnIdx}
+                                unavailable={!!isNationCommand || (!!pinnedCommand && !['action.enlist', 'action.randomEnlist', 'action.targetEnlist'].includes(pinnedCommand))}
                                 onToast={onToast} onClose={onClose} onReserved={onReserved} />}
                     </>
                 ) : profile !== 'SAMMO' ? <p role="status">서버 규칙을 확인하지 못해 명령을 예약할 수 없습니다.</p> : !selected ? (

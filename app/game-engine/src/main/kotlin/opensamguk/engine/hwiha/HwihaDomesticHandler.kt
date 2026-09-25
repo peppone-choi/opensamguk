@@ -1,9 +1,11 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.common.wire.CommandLifecycleResult
+import opensamguk.common.wire.InputResolved
 import opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.logic.input.*
 
 /**
@@ -25,6 +27,9 @@ class HwihaDomesticHandler(
         val actor = world.getGeneralById(command.generalId) ?: return deny("ACTOR_NOT_FOUND", "장수를 찾을 수 없습니다.")
         if (command.ownerUserId <= 0 || actor.userId?.toLongOrNull() != command.ownerUserId.toLong())
             return deny("FORBIDDEN", "자신의 장수만 조작할 수 있습니다.")
+        if (command.inputId == HwihaDomesticInput.REDUCE &&
+            HwihaInputCatalog.load()[command.inputId]?.deliveryState?.hasHandler != true)
+            return deny(InputRejection.NOT_DELIVERED.name, InputRejection.NOT_DELIVERED.message)
         val state = context.projection(world)
         val now = state.now
         val outcome: DomesticAssessment = when (command.inputId) {
@@ -49,11 +54,19 @@ class HwihaDomesticHandler(
                     if (it is DomesticAssessment.Eligible) storeWork(command.requestId, request, now)
                 }
             }
+            HwihaDomesticInput.REDUCE -> {
+                val request = HwihaDomesticInput.parseWork(actor.id, command.argJson)
+                    ?: return deny("INVALID_REQUEST", "감축할 현을 확인해 주세요.")
+                HwihaDomesticRules.assessReduce(request, state).also {
+                    if (it is DomesticAssessment.Eligible) reduceFortification(request.countyId)
+                }
+            }
             else -> return deny("UNKNOWN_INPUT", "등록되지 않은 내정 입력입니다.")
         }
         return when (outcome) {
             is DomesticAssessment.Rejected -> deny(outcome.reason.name, outcome.reason.message)
-            is DomesticAssessment.Eligible -> result(actor.id, command.inputId, kind, true, type = "reservationAccepted")
+            is DomesticAssessment.Eligible -> result(actor.id, command.inputId, kind, true,
+                type = if (command.inputId == HwihaDomesticInput.REDUCE) "executionApplied" else "reservationAccepted")
         }
     }
 
@@ -105,15 +118,28 @@ class HwihaDomesticHandler(
         world.updateCityMeta(recorder, city.id, city.meta.withKey(HwihaCountyWorks.META_KEY, next.toMetaValue()))
     }
 
+    private fun reduceFortification(countyId: Int) {
+        val city = checkNotNull(world.getCityById(countyId))
+        val works = checkNotNull(HwihaCountyWorks.read(city.meta))
+        val remaining = HwihaCountyWorks(null, works.completed.filterNot { it.work == DomesticWork.FORTIFICATION })
+        val next = city.copy(defence = (city.defence - 500).coerceAtLeast(0),
+            wall = (city.wall - 500).coerceAtLeast(0),
+            meta = city.meta.withKey(HwihaCountyWorks.META_KEY, remaining.toMetaValue()))
+        recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(next))
+        world.applyCityDirtyFree(next)
+    }
+
     private fun kindOf(inputId: String) = when (inputId) {
         HwihaDomesticInput.PLACEMENT -> "PLACEMENT"
         HwihaDomesticInput.POLICY -> "POLICY"
         HwihaDomesticInput.WORK -> "WORK"
+        HwihaDomesticInput.REDUCE -> "WORK"
         else -> "COURT_DECISION"
     }
 
     private fun result(generalId: Int, inputId: String, kind: String, ok: Boolean, code: String? = null, reason: String? = null,
         type: String = if (ok) "executionApplied" else "executionRejected") =
         CommandLifecycleResult(type = type, ok = ok, commandKind = kind, actionCode = inputId, generalId = generalId,
-            code = code, reason = reason)
+            code = code, reason = reason,
+            inputResolved = HwihaInputCatalog.load()[inputId]?.let { InputResolved(inputId, it.kind.name, ok, reason) })
 }

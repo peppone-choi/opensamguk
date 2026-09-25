@@ -9,11 +9,15 @@ data class HwihaTreasureDefinition(
     val slot: TreasureSlot,
     /** Null means issuance is unresolved, including legacy availability 2 before #788's decision. */
     val issuedCopies: Int?,
+    /** Extracted legacy card price and stable source row used by the trade input. */
+    val purchaseCost: Int = 0,
+    val sourceRowIndex: Int = 0,
 ) {
     init {
         require(header.kind == CardKind.TREASURE && header.availability == CardAvailability.UNIQUE)
         require(header.renownCost == 0 && sourceCode.isNotBlank())
         require(issuedCopies == null || issuedCopies > 0)
+        require(purchaseCost >= 0 && sourceRowIndex >= 0)
     }
 }
 

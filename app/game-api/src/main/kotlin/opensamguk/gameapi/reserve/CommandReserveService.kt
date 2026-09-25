@@ -93,6 +93,7 @@ class CommandReserveService(
     private val hwihaPeopleAdmission: HwihaPeopleAdmission? = null,
     private val hwihaPoliticalAdmission: HwihaPoliticalAdmission? = null,
     private val hwihaTransferAdmission: HwihaTransferAdmission? = null,
+    private val hwihaLegacyDirectAdmission: HwihaLegacyDirectAdmission? = null,
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -195,9 +196,9 @@ class CommandReserveService(
             throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.name,
                 opensamguk.logic.input.InputRejection.WRONG_RULE_PROFILE.message)
         }
-        val canonicalArgs = if (actionCode == "action.enlist") {
+        val canonicalArgs = if (actionCode in opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS) {
             (hwihaAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
-                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
+                .canonicalArguments(generalId, ownerUserId, turnIdx, argJson, actionCode)
         } else if (actionCode == "action.deploy") {
             (hwihaDeployAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
@@ -236,6 +237,10 @@ class CommandReserveService(
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS) {
             (hwihaTransferAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+                opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+                .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
+        } else if (actionCode in opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS) {
+            (hwihaLegacyDirectAdmission ?: throw HwihaAdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in HWIHA_SIEGE_ACTIONS) {
@@ -464,14 +469,16 @@ class CommandReserveService(
         val HWIHA_SIEGE_ACTIONS: Set<String> = setOf("action.assault", "action.demandSurrender")
 
         /** HWIHA 월드가 12순 목록에 받는 개인 행동. */
-        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.enlist", "action.deploy", "action.scout") +
+        val HWIHA_RESERVABLE_ACTIONS: Set<String> = setOf("action.deploy", "action.scout") +
+            opensamguk.logic.input.HwihaEnlistmentInput.INPUT_IDS +
             opensamguk.logic.input.HwihaTravelInput.INPUT_IDS + opensamguk.logic.input.HwihaFieldInput.INPUT_IDS +
             opensamguk.logic.input.HwihaMilitaryInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS +
             opensamguk.logic.input.HwihaRetireInput.INPUT_ID +
             opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS +
             opensamguk.logic.input.HwihaPoliticalInput.INPUT_IDS +
-            opensamguk.logic.input.HwihaTransferInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
+            opensamguk.logic.input.HwihaTransferInput.INPUT_IDS +
+            opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS + HWIHA_SIEGE_ACTIONS
         /** Shared board and mailbox intake, dispatched immediately outside the game turn ring. */
         val COMMON_INTAKE_COMMANDS: Set<String> = setOf(
             "boardArticle", "boardComment", "boardRead", "sendMessage", "deleteMessage", "readLatestMessage",

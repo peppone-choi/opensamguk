@@ -39,7 +39,10 @@ data class DomesticCounty(val id: Int, val name: String, val nationId: Int, val 
     val meta: Map<String, Any?>)
 
 data class DomesticNation(val id: Int, val name: String, val capitalCityId: Int?, val meta: Map<String, Any?>,
-    val level: Int = 0, val gold: Int = 0, val rice: Int = 0, val chiefGeneralId: Int? = null)
+    val level: Int = 0, val gold: Int = 0, val rice: Int = 0, val tech: Double = 0.0,
+    val chiefGeneralId: Int? = null)
+data class DomesticBugok(val id: Int, val masterGeneralId: Int, val crewTypeId: Int, val training: Int)
+data class DomesticDiplomacy(val fromNationId: Int, val toNationId: Int, val state: Int, val term: Int)
 
 /** API 와 엔진이 같은 규칙을 쓰도록 공유하는 투영. [landProvinceIds] 가 null 이면 지도 핀을 확인하지 못한 것이다. */
 data class HwihaDomesticProjection(
@@ -52,6 +55,10 @@ data class HwihaDomesticProjection(
     val landProvinceIds: Set<String>?,
     /** 원장이 있을 때만 향당 보너스를 판정한다. 장수 id → 본관 縣治 城 id. */
     val homeCountyByGeneral: Map<Int, Int> = emptyMap(),
+    val bugoks: List<DomesticBugok> = emptyList(),
+    val countyAdjacency: Map<Int, Set<Int>> = emptyMap(),
+    val supportedCrewTypeIds: Set<Int> = emptySet(),
+    val diplomacy: List<DomesticDiplomacy> = emptyList(),
     val activeSiegeCountyIds: Set<Int> = emptySet(),
 ) {
     private val peopleById = people.associateBy { it.id }
@@ -90,6 +97,7 @@ enum class DomesticFailure(val message: String) {
     WAREHOUSE_NOT_READY("이 현의 창고가 아직 준비되지 않았습니다."),
     WORK_IN_PROGRESS("이미 진행 중인 공사가 있습니다."),
     WORK_COMPLETED("이미 완공한 공사입니다."),
+    WORK_NOT_COMPLETED("감축할 성방 공사가 완공되지 않았습니다."),
     STATE_UNAVAILABLE("저장된 내정 상태를 확인할 수 없습니다."),
 }
 
@@ -190,6 +198,21 @@ object HwihaDomesticRules {
             works?.completed?.any { it.work == request.work } == true -> reject(DomesticFailure.WORK_COMPLETED)
             else -> DomesticAssessment.Eligible(person = actor)
         }
+    }
+
+    fun assessReduce(request: WorkRequest, state: HwihaDomesticProjection): DomesticAssessment = guarded {
+        if (state.profile != RuleProfile.HWIHA) return@guarded reject(DomesticFailure.WRONG_RULE_PROFILE)
+        val actor = state.person(request.actorId) ?: return@guarded reject(DomesticFailure.ACTOR_NOT_FOUND)
+        val county = state.county(request.countyId)?.takeIf { it.nationId > 0 && it.nationId == actor.nationId }
+            ?: return@guarded reject(DomesticFailure.INVALID_COUNTY)
+        if (rulerOf(county.nationId, state)?.id != actor.id && actor.id !in countyControllers(county, state))
+            return@guarded reject(DomesticFailure.NOT_COUNTY_AUTHORITY)
+        val works = HwihaCountyWorks.read(county.meta)
+        if (works?.active != null) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
+        if (request.work != DomesticWork.FORTIFICATION ||
+            works?.completed?.none { it.work == DomesticWork.FORTIFICATION } != false)
+            return@guarded reject(DomesticFailure.WORK_NOT_COMPLETED)
+        DomesticAssessment.Eligible(person = actor)
     }
 
     /** 세력의 군주. 둘 이상이거나 주공 표지가 없으면 없음이다. */
