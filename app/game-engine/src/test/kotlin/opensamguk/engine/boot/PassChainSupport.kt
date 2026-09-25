@@ -102,7 +102,7 @@ internal object PassChainSupport {
             service.runTick(START.plusSeconds(3600L * k))
             val world = measuredWorld ?: continue
             val human = world.getGeneralById(HUMAN)
-            val sieges = world.listHwihaSieges()
+            val sieges = world.listSieges()
             val meta = world.getState().meta
             val links = linkedMapOf(
                 "enlist" to ((human?.nationId ?: 0) > 0),
@@ -131,7 +131,7 @@ internal object PassChainSupport {
         assertTrue(CountyAssignment.META_KEY in human.meta, "발령: the player holds an accepted county assignment")
         // 행군
         assertTrue(world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || EncounterResolver.BATTLE_RECORD_KEY in it.meta } ||
-            world.listHwihaSieges().isNotEmpty(), "행군: an NPC corps marched")
+            world.listSieges().isNotEmpty(), "행군: an NPC corps marched")
         // 조우
         assertTrue(world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta }, "조우: a sealed encounter was resolved")
         // 공성 · 점령 (persisted)
@@ -159,8 +159,8 @@ internal object PassChainSupport {
 
     /** Cold reload: the flushed siege rows come back as they are in memory (V61 round trip). */
     fun assertSiegesReload(world: InMemoryTurnWorld, loader: WorldSnapshotLoader) {
-        val cold = loader.buildSnapshot().hwihaSieges.associateBy { it.countyId }
-        val live = world.listHwihaSieges().associateBy { it.countyId }
+        val cold = loader.buildSnapshot().sieges.associateBy { it.countyId }
+        val live = world.listSieges().associateBy { it.countyId }
         assertEquals(live.keys, cold.keys)
         for ((county, siege) in live) {
             val stored = cold.getValue(county)

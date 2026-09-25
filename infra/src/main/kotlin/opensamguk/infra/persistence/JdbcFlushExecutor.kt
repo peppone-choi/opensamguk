@@ -294,8 +294,8 @@ open class JdbcFlushExecutor(
 
             // 8j. HWIHA 포위 채널(V61): 행을 지우지 않는다 — CREATE → UPDATE. 5단계 general DELETE 의 CASCADE 로
             //     사라진 행은 엔진 메모리에서도 함께 내렸으므로 pending 작업이 남지 않는다.
-            if (payload.createdHwihaSieges.isNotEmpty()) hwihaSiegeCreateMany(payload.worldId, payload.createdHwihaSieges)
-            if (payload.updatedHwihaSieges.isNotEmpty()) hwihaSiegeUpdate(payload.worldId, payload.updatedHwihaSieges)
+            if (payload.createdSieges.isNotEmpty()) siegeCreateMany(payload.worldId, payload.createdSieges)
+            if (payload.updatedSieges.isNotEmpty()) siegeUpdate(payload.worldId, payload.updatedSieges)
 
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
@@ -1846,7 +1846,7 @@ open class JdbcFlushExecutor(
     }
 
     // --- step 8j: HWIHA 포위 채널 (V61) --------------------------------------------------------------
-    private fun hwihaSiegeParams(worldId: WorldId, r: SiegeRow): MapSqlParameterSource = MapSqlParameterSource()
+    private fun siegeParams(worldId: WorldId, r: SiegeRow): MapSqlParameterSource = MapSqlParameterSource()
         .addValue("world_id", worldId.value).addValue("county_id", r.countyId).addValue("status", r.status)
         .addValue("besieger_general_id", r.besiegerGeneralId).addValue("besieger_owner_general_id", r.besiegerOwnerGeneralId)
         .addValue("besieger_order_id", r.besiegerOrderId).addValue("besieger_nation_id", r.besiegerNationId)
@@ -1858,7 +1858,7 @@ open class JdbcFlushExecutor(
         .addValue("turns", r.turns).addValue("morale", r.morale).addValue("garrison", r.garrison)
         .addValue("end_reason", r.endReason, java.sql.Types.VARCHAR).addValue("timeline", r.timelineJson)
 
-    private fun hwihaSiegeCreateMany(worldId: WorldId, rows: List<SiegeRow>) {
+    private fun siegeCreateMany(worldId: WorldId, rows: List<SiegeRow>) {
         jdbc.batchUpdate(
             """
             INSERT INTO siege
@@ -1870,12 +1870,12 @@ open class JdbcFlushExecutor(
                  :besieger_nation_id, :defender_nation_id, :approach_province_id, :started_year, :started_month, :started_phase,
                  :settled_year, :settled_month, :settled_phase, :turns, :morale, :garrison, :end_reason, CAST(:timeline AS jsonb))
             """.trimIndent(),
-            rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
+            rows.map { siegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
         )
         lastOps.add(FlushExecOp("siege", FlushVerb.CREATE_MANY, rows.size))
     }
 
-    private fun hwihaSiegeUpdate(worldId: WorldId, rows: List<SiegeRow>) {
+    private fun siegeUpdate(worldId: WorldId, rows: List<SiegeRow>) {
         val affected = jdbc.batchUpdate(
             """
             UPDATE siege
@@ -1888,7 +1888,7 @@ open class JdbcFlushExecutor(
                    garrison = :garrison, end_reason = :end_reason, timeline = CAST(:timeline AS jsonb), updated_at = now()
              WHERE world_id = :world_id AND county_id = :county_id
             """.trimIndent(),
-            rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
+            rows.map { siegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
         )
         requireExactlyOneAffected("siege UPDATE", affected)
         lastOps.add(FlushExecOp("siege", FlushVerb.UPDATE, rows.size))
@@ -3080,8 +3080,8 @@ data class FlushPayload(
     val deletedBattlePlanIds: List<Int> = emptyList(),
     val battleReplayInserts: List<BattleReplayInsertRow> = emptyList(),
     // --- HWIHA 포위(V61, step-8j, 8i 뒤; CREATE → UPDATE, 삭제 없음) ---
-    val createdHwihaSieges: List<SiegeRow> = emptyList(),
-    val updatedHwihaSieges: List<SiegeRow> = emptyList(),
+    val createdSieges: List<SiegeRow> = emptyList(),
+    val updatedSieges: List<SiegeRow> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),

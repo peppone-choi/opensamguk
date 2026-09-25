@@ -40,7 +40,7 @@ class DomesticBoundary(
 
     fun run(meritClosedBeforeMonthlyEvents: Boolean = false): Outcome? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
-        val now = world.hwihaNow()
+        val now = world.phaseNow()
         val stamp = stampOf(now)
         if (world.getState().meta[STAMP_KEY] == stamp) return Outcome(stamp, alreadyStamped = true)
         activateCommanderyPolicies(now)

@@ -63,8 +63,8 @@ class SiegeService(
     private fun inBattle(commanderId: Int): Boolean =
         projection()?.people?.singleOrNull { it.id == commanderId }?.inBattle ?: true
 
-    private fun activeSiegeOf(commanderId: Int): HwihaSiege? =
-        world.listHwihaSieges().singleOrNull { it.status == ACTIVE && it.besiegerGeneralId == commanderId }
+    private fun activeSiegeOf(commanderId: Int): Siege? =
+        world.listSieges().singleOrNull { it.status == ACTIVE && it.besiegerGeneralId == commanderId }
 
     private fun corpsTroops(corps: DeployedCorps) = corps.bugokIds.sumOf { world.getBugokById(it)?.troops ?: 0 }
 
@@ -87,7 +87,7 @@ class SiegeService(
             log(commanderId, "縣城 앞에 적 군단이 있어 포위를 걸 수 없습니다.")
             return false
         }
-        val existing = world.getHwihaSiege(county)
+        val existing = world.getSiege(county)
         if (existing?.status == ACTIVE) {
             log(commanderId, "이미 다른 군단이 이 縣城을 포위하고 있습니다.")
             return false
@@ -108,10 +108,10 @@ class SiegeService(
         val approach = if (path.nodeKeys.size >= 2) path.nodeKeys[path.nodeKeys.size - 2].removePrefix("land:")
             else fallbackApproach(node)
         val now = now()
-        val siege = HwihaSiege(county, ACTIVE, commanderId, corps.ownerGeneralId, corps.orderId, corps.nationId,
+        val siege = Siege(county, ACTIVE, commanderId, corps.ownerGeneralId, corps.orderId, corps.nationId,
             city.nationId, approach, now.year, now.month, now.phase, morale = SiegeMorale.INITIAL_MORALE,
             garrison = garrison, timeline = listOf(entry(now, "START", SiegeMorale.INITIAL_MORALE, garrison)))
-        world.putHwihaSiege(siege)
+        world.putSiege(siege)
         log(commanderId, "${city.name} 縣城을 포위했습니다.")
         if (garrison == 0) capture(siege, "UNDEFENDED")
         return true
@@ -176,7 +176,7 @@ class SiegeService(
         val accepted = SiegeRules.surrenderDemandAccepted(siege.morale, trustOf(city))
         val next = siege.copy(timeline = appendEntry(siege.timeline, entry(now(), if (accepted) "DEMAND_ACCEPTED" else "DEMAND_REFUSED",
             siege.morale, siege.garrison, "trust" to trustOf(city))))
-        world.putHwihaSiege(next)
+        world.putSiege(next)
         if (!accepted) { log(actorId, "${city.name} 縣城이 항복 권고를 거절했습니다."); return Failure.REFUSED }
         log(actorId, "${city.name} 縣城이 항복 권고를 받아들였습니다.")
         capture(next, "SURRENDER_DEMAND")
@@ -225,7 +225,7 @@ class SiegeService(
         val next = siege.copy(garrison = result.garrisonRemaining, timeline = appendEntry(siege.timeline,
             entry(now(), "ASSAULT_" + result.outcome.name, siege.morale, result.garrisonRemaining,
                 "rounds" to result.rounds, "replayHash" to result.replayHash)))
-        world.putHwihaSiege(next)
+        world.putSiege(next)
         val remaining = corps.bugokIds.filter { it !in destroyed }
         if (remaining.isEmpty()) {
             endDeployment(corps)
@@ -248,7 +248,7 @@ class SiegeService(
     fun settleBoundary() {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         val now = now()
-        for (siege in world.listHwihaSieges().filter { it.status == ACTIVE }.sortedBy { it.countyId }) {
+        for (siege in world.listSieges().filter { it.status == ACTIVE }.sortedBy { it.countyId }) {
             val settledYear = siege.settledYear
             val settledMonth = siege.settledMonth
             val settledPhase = siege.settledPhase
@@ -260,7 +260,7 @@ class SiegeService(
         }
     }
 
-    private fun settleOne(siege: HwihaSiege, now: Phase) {
+    private fun settleOne(siege: Siege, now: Phase) {
         val city = world.getCityById(siege.countyId)
         val corps = corpsOf(siege.besiegerGeneralId)?.takeIf { it.orderId == siege.besiegerOrderId }
         val stamped = siege.copy(settledYear = now.year, settledMonth = now.month, settledPhase = now.phase)
@@ -306,7 +306,7 @@ class SiegeService(
             timeline = appendEntry(siege.timeline, entry(now, "TURN", settled.morale, garrison,
                 "rationDemand" to settled.rationDemand, "rationServed" to settled.rationServed,
                 "grainAfter" to grain - settled.rationServed, "besiegerTroops" to troops)))
-        world.putHwihaSiege(next)
+        world.putSiege(next)
         if (settled.surrendered) {
             log(siege.besiegerGeneralId, "${city.name} 縣城이 굶주림 끝에 항복했습니다.")
             capture(next, "STARVED")
@@ -314,10 +314,10 @@ class SiegeService(
     }
 
     /** 포위 중인 縣 id — 순 경계 보급 재계산 뒤 외부 보급을 끊는다(armyEncirclement.maintenance). */
-    fun besiegedCountyIds(): Set<Int> = world.listHwihaSieges().filter { it.status == ACTIVE }.mapTo(sortedSetOf()) { it.countyId }
+    fun besiegedCountyIds(): Set<Int> = world.listSieges().filter { it.status == ACTIVE }.mapTo(sortedSetOf()) { it.countyId }
 
     // ── 함락·해제 ────────────────────────────────────────────────────────────
-    private fun capture(siege: HwihaSiege, reason: String) {
+    private fun capture(siege: Siege, reason: String) {
         val before = world.getCityById(siege.countyId) ?: run {
             lift(siege, "COUNTY_UNAVAILABLE")
             log(siege.besiegerGeneralId, "함락 대상 縣 자료가 없어 포위를 풀었습니다.")
@@ -338,7 +338,7 @@ class SiegeService(
         world.applyCityDirtyFree(after)
         CapitalAfterCapture(world, recorder).settle(previousOwner, before.id)
         val now = now()
-        world.putHwihaSiege(siege.copy(status = FALLEN, endReason = reason, garrison = 0,
+        world.putSiege(siege.copy(status = FALLEN, endReason = reason, garrison = 0,
             timeline = appendEntry(siege.timeline, entry(now, "FALLEN", siege.morale, 0, "reason" to reason,
                 "disarmedToCivilians" to settlement.disarmedToCivilians))))
         // The expedition achieved its objective: the corps disbands in the captured county.
@@ -370,8 +370,8 @@ class SiegeService(
         return Math.toIntExact(left)
     }
 
-    private fun lift(siege: HwihaSiege, reason: String) {
-        world.putHwihaSiege(siege.copy(status = LIFTED, endReason = reason,
+    private fun lift(siege: Siege, reason: String) {
+        world.putSiege(siege.copy(status = LIFTED, endReason = reason,
             timeline = appendEntry(siege.timeline, entry(now(), "LIFTED", siege.morale, siege.garrison, "reason" to reason))))
     }
 

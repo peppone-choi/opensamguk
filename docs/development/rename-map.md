@@ -1460,3 +1460,13 @@ web/game/app/game/hwiha/siege/page.tsx
 web/game/components/hwiha/DomesticPanels.tsx
 web/game/lib/hwiha-reads.ts
 ```
+
+## 엔진 공성 상태 후속 개명
+
+| 이전 코드 이름 | 새 코드 이름 | 범위 |
+|---|---|---|
+| `HwihaSiege` | `Siege` | 엔진 월드 상태 타입; DB `siege`와 의미 일치 |
+| `listHwihaSieges`·`getHwihaSiege`·`putHwihaSiege` | `listSieges`·`getSiege`·`putSiege` | 인메모리 월드 접근자 |
+| `hwihaSieges`·`createdHwihaSieges`·`updatedHwihaSieges` | `sieges`·`createdSieges`·`updatedSieges` | 스냅샷·flush 계약의 Kotlin 필드 |
+| `loadHwihaSieges`·`toHwihaSiegeRow`·`hwihaSiegeCreateMany`·`hwihaSiegeUpdate` | `loadSieges`·`toSiegeRow`·`siegeCreateMany`·`siegeUpdate` | 부팅 로더·flush 함수 |
+| `hwihaNow()` | `phaseNow()` | 현재 세계 순의 `Phase` 값 |
