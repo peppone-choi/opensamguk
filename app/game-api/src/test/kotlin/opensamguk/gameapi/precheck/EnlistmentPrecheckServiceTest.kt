@@ -15,7 +15,7 @@ class EnlistmentPrecheckServiceTest {
     private fun general(id: Int, lord: Boolean = false, cap: Int = 30) = GeneralReadEntity(
         id = id, worldId = 1, name = "G$id", nationId = if (lord) 1 else 0, officerLevel = if (lord) 12 else 0,
         npcState = 2, leadership = 20, strength = 20, intel = 20, politics = 100, charm = 100,
-        meta = mapOf("hwihaLord" to lord, PersonPolicyState.META_KEY to
+        meta = mapOf("lord" to lord, PersonPolicyState.META_KEY to
             PersonPolicyState(cap, true, "fixture", "v1", id).toMetaValue()))
     private fun setup(cap: Int = 30) {
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA")))

@@ -139,5 +139,5 @@ class PeopleHandler(
         return TurnOutcome.Applied(inputId, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaPeopleLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "peopleLastTurn" }
 }

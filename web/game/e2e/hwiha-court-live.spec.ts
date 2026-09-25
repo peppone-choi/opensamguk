@@ -34,8 +34,8 @@ function storedGeneral(generalId: number): Record<string, unknown> {
   expect(project).toMatch(/^v1-e2e-[a-z0-9-]+$/);
   expect(world).toMatch(/^[1-9][0-9]*$/);
   expect(Number.isSafeInteger(generalId) && generalId > 0).toBe(true);
-  const sql = `SELECT json_build_object('nationId', g.nation_id, 'policy', g.meta->'hwihaPersonPolicy',
-    'dispatch', g.meta->'hwihaDispatch', 'assignment', g.meta->'hwihaCountyAssignment',
+  const sql = `SELECT json_build_object('nationId', g.nation_id, 'policy', g.meta->'personPolicy',
+    'dispatch', g.meta->'dispatch', 'assignment', g.meta->'countyAssignment',
     'position', (SELECT row_to_json(p) FROM general_spatial_position p WHERE p.world_id=g.world_id AND p.general_id=g.id),
     'reservations', (SELECT count(*) FROM general_turn t WHERE t.world_id=g.world_id AND t.general_id=g.id))
     FROM general g WHERE g.world_id=${world} AND g.id=${generalId};`;

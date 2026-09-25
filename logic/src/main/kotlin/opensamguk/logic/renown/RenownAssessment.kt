@@ -13,16 +13,16 @@ package opensamguk.logic.renown
  */
 object RenownAssessment {
     /** 마지막 월단평 도장(`YYYY-MM`) — `game_env` 키. 엔진이 쓰고 game-api 조회가 읽는다. */
-    const val STAMP_KEY = "hwihaRenownAssessmentStamp"
+    const val STAMP_KEY = "renownAssessmentStamp"
 
     /** 마지막 월단평 순위(장수 id 목록, 명망 내림차순) — `game_env` 키. */
-    const val RANKING_KEY = "hwihaRenownRanking"
+    const val RANKING_KEY = "renownRanking"
 
     /**
      * 마지막 월단평이 적용한 사유 — `game_env` 키. `{"stamp":"YYYY-MM","byGeneral":{"<id>":[{"kind","count","amount"}]}}`.
      * 종류·건수·증감만 싣는다(§2.8 발표에 실리는 공개 정보). 사건 원인은 싣지 않는다.
      */
-    const val REASONS_KEY = "hwihaRenownReasons"
+    const val REASONS_KEY = "renownReasons"
 
     /** 한 장수의 지난 달 사건 집계. 어떤 사건이 어디에 해당하는지는 호출부가 정한다. */
     data class Tally(

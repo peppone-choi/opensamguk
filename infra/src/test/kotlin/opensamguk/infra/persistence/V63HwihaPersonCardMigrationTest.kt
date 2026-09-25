@@ -48,10 +48,10 @@ class V63HwihaPersonCardMigrationTest {
             jdbc.execute("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'sc', 200, 1, 3600)")
             jdbc.execute("INSERT INTO general (world_id,id,name,nation_id,city_id,turn_time) VALUES (1,10,'주공',1,1,now()),(1,20,'부장',1,1,now()),(1,30,'재야',0,1,now())")
             jdbc.execute("UPDATE general SET meta='{" +
-                "\"hwihaPersonPolicy\":{\"renownCapacity\":30,\"acceptsEnlistment\":true,\"statSourceId\":\"verified\",\"statSourceRevision\":\"v1\",\"officerId\":20}}'::jsonb " +
+                "\"personPolicy\":{\"renownCapacity\":30,\"acceptsEnlistment\":true,\"statSourceId\":\"verified\",\"statSourceRevision\":\"v1\",\"officerId\":20}}'::jsonb " +
                 "WHERE world_id=1 AND id=20")
-            jdbc.execute("""UPDATE general SET meta = meta || '{"hwihaPersonBonds":{"version":1,"bonds":[]},
-                "hwihaPersonContribution":{"version":1,"stratagemCardIds":["hwiha-stratagem-insight"]}}'::jsonb
+            jdbc.execute("""UPDATE general SET meta = meta || '{"personBonds":{"version":1,"bonds":[]},
+                "personContribution":{"version":1,"stratagemCardIds":["hwiha-stratagem-insight"]}}'::jsonb
                 WHERE world_id=1 AND id=20""".trimIndent())
             jdbc.execute("INSERT INTO general_retainers (world_id,id,master_general_id,origin,general_id,name,relation,release_policy) " +
                 "VALUES (1,1,10,'EXISTING',20,'부장','lieutenant','MUTUAL')," +

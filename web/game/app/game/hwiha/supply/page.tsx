@@ -15,7 +15,7 @@ const fmt = new Intl.NumberFormat('ko-KR');
  * 빼앗긴다. 재고는 `GET /api/hwiha/warehouses`, 끊김은 월 보급이 매기는 城 보급 상태다.
  */
 export default function SupplyPage() {
-    const read = useHwihaRead((id, signal) => api.hwihaWarehouses(id, signal));
+    const read = useHwihaRead((id, signal) => api.warehouses(id, signal));
     const warehouses = read.data?.warehouses ?? [];
     const notice = hwihaReadNotice(read, read.data?.status);
     const cut = warehouses.filter((w) => !w.supplied);

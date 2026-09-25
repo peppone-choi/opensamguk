@@ -114,7 +114,7 @@
 | `opensamguk.logic.input.SourceRead` | `opensamguk.logic.vision.SourceRead` | 이 PR | 시야 출처 읽기 결과 타입 패키지 이동 |
 | `logic/input/HwihaDomesticVisionContractTest.kt` | `logic/vision/VisionSourceContractTest.kt` | 이 PR | 내정·시야 계약 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
-| `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
+| `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName`과 inbox 저장값은 저장·통신 식별자 PR에서 변경 |
 
 | `LegacyCourt*` (API·engine 코드 타입/파일) | `CourtAction*` | #937 draft | 저장 키 `hwihaLegacyCourt*`는 저장 계약 단계에서 처리 |
 | `LegacyDirect*` (API·engine 코드 타입/파일) | `DirectAction*` | #937 draft | 저장 키 `hwihaLegacyDirect*`는 저장 계약 단계에서 처리 |
@@ -124,16 +124,25 @@
 
 ## 정한 값의 근거
 
-- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`과 `command_inbox.action_code` 값 `HwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.
+- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 첫 코드 개명 PR은 Kotlin 타입만 바꾸고 저장 값을 유지했다. 저장·통신 식별자 PR에서 discriminator `hwihaCourtInput`은 `immediateInput`, `command_inbox.action_code` 값 `HwihaCourtInput`은 `ImmediateInput`으로 바꾸고 producer·consumer·직렬화 테스트를 함께 갱신한다.
 - `worldFormat = GENERAL_RETAINER_CAMPAIGN`은 유일한 제품 세계의 구조를 명시한다. 새 가드는 키·값이 없거나 옛 `ruleProfile`이 있으면 실패한다. 이전 데이터 자동 해석은 넣지 않는다.
 - DB의 `siege`와 `person_card`는 현행 스키마에 같은 이름이 없어 충돌하지 않는다. 이름 변경은 새 Flyway 파일로만 실행한다.
 - 상태 키 79종의 새 이름은 `hwiha` 접두사를 제거하되 현행 제품 의미가 남은 `Legacy`를 도메인 이름으로 풀어 썼다. 키 이름이 같은 다른 JSON 층(예: `corpsPolicies`)과 합쳐지지 않는지는 reader·writer별 픽스처에서 확인한다.
+
+## 결정론 해시 도메인 구분자
+
+| 이전 | 확정 이름 | 이유 |
+|---|---|---|
+| `hwihaBattlePlayback:v1` | `battlePlayback:v1` | 제품 접두사 제거; 재생 해시가 달라짐 |
+| `hwihaEncounterResolution:v${RULE_VERSION}` | `encounterResolution:v${RULE_VERSION}` | 제품 접두사 제거; 조우 스냅샷 해시가 달라짐 |
+| `hwihaSiegeAssault:v${RULE_VERSION}` | `siegeAssault:v${RULE_VERSION}` | 제품 접두사 제거; 공성 결과 해시가 달라짐 |
 
 ## 저장·통신 식별자
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
-| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | 도메인별 즉시 입력 값 | 예정 | #919에서는 기존 값 고정; 새 값은 저장·통신 단계에서 확정 |
+| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | `ImmediateInput` | 저장·통신 draft | #919에서는 기존 값 고정; reset 전 새 값으로 확정 |
+| 와이어 discriminator `hwihaCourtInput` | `immediateInput` | 저장·통신 draft | `@SerialName`과 `type` 갱신 |
 | `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
 | `hwiha_siege` | `siege` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
 | `hwiha_person_card` | `person_card` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
@@ -143,7 +152,7 @@
 
 ## 상태·시나리오 필드 대응
 
-소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 변경 PR에서는 reader·writer·fixture의 동일 키 교체와 옛 키 거절을 함께 검증한다.
+소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 저장 식별자 draft에서 reader·writer·fixture 130파일의 347참조를 같은 이름으로 교체했다. 옛 키 거절은 세계 형식 가드에서 검증한다.
 
 | 이전 키 | 확정 키 | 현행 사용 위치 예시 |
 |---|---|---|

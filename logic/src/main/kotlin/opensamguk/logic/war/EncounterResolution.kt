@@ -104,7 +104,7 @@ object EncounterResolution {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             fun text(value: String) { val b = value.toByteArray(Charsets.UTF_8); out.writeInt(b.size); out.write(b) }
-            text("hwihaEncounterResolution:v$RULE_VERSION"); text(journal.snapshotId); text(barrier.name); text(outcome.name)
+            text("encounterResolution:v$RULE_VERSION"); text(journal.snapshotId); text(barrier.name); text(outcome.name)
             out.writeInt(units.size)
             units.sortedBy { it.bugokId }.forEach { unit ->
                 listOf(unit.bugokId, unit.troops, unit.morale, unit.fatigue).forEach(out::writeInt)

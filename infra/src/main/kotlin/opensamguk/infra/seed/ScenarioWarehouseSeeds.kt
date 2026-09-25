@@ -13,9 +13,9 @@ data class WarehouseSeed(
 /** Explicit game-design inventory only. Map identity and fresh-world checks belong to the importer. */
 object ScenarioWarehouseSeeds {
     fun decode(root: Map<String, Any?>, profile: RuleProfile?): WarehouseSeed? {
-        if ("hwihaWarehouses" !in root) return null
-        require(profile == RuleProfile.HWIHA) { "hwihaWarehouses requires HWIHA" }
-        val declaration = root["hwihaWarehouses"] as? Map<*, *> ?: invalid()
+        if ("warehouses" !in root) return null
+        require(profile == RuleProfile.HWIHA) { "warehouses requires HWIHA" }
+        val declaration = root["warehouses"] as? Map<*, *> ?: invalid()
         require(declaration.keys == setOf("version", "units", "source", "topologyRevision", "topologyHash", "warehouses"))
         require(declaration["version"] is Int && declaration["version"] == 1)
         require(declaration["units"] == "game-resource-v1" && declaration["source"] == "GAME_DESIGN")

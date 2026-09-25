@@ -29,7 +29,7 @@ data class TravelState(
     )
 
     companion object {
-        const val META_KEY = "hwihaDirectTravel"
+        const val META_KEY = "directTravel"
         private val fields = setOf("version", "orderId", "inputId", "destinationProvinceId", "checkpoint", "assignmentIdAtStart")
 
         fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot,

@@ -15,7 +15,7 @@ class EnlistmentExecutorTest {
         stats = GeneralStats(80, 70, 60), experience = 300, dedication = 400, officerLevel = if (nation > 0 && lord) 12 else 0,
         npcState = if (human) 0 else 2, userId = if (human) "100" else null,
         gold = 1000, rice = 2000, crew = 300, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to lord, "unrelated" to "preserve"),
+        meta = mapOf("lord" to lord, "unrelated" to "preserve"),
     )
     private fun world(profile: String = "HWIHA", cards: List<Retainer> = emptyList()): InMemoryTurnWorld {
         val generals = listOf(general(1, lord = true, human = true), general(2), general(3),

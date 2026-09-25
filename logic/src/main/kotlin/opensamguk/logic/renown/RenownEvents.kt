@@ -101,7 +101,7 @@ data class RenownEntry(
  * 읽을 수 없는 줄은 건너뛴다 — 월 경계에서 던지면 턴 루프가 영구히 멈춘다.
  */
 object RenownEvents {
-    const val META_KEY = "hwihaRenownTally"
+    const val META_KEY = "renownTally"
     private const val ENTRIES = "entries"
     private val STAMP = Regex("""(\d{4})-(\d{2})""")
 

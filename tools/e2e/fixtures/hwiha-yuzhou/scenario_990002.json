@@ -4,7 +4,7 @@
   "ruleProfile": "HWIHA",
   "map": {"mapName": "han-world-v3"},
   "seedContract": {"activeGenerals": {"base": 6, "extended": 6}},
-  "hwihaLords": ["양국 주공","여남 주공","패국 주공","영천 주공","진국 주공","노국 주공"],
+  "lords": ["양국 주공","여남 주공","패국 주공","영천 주공","진국 주공","노국 주공"],
   "nation": [
     ["양국 세력","#8B1E1E",0,0,"합성 운영 후보 — 양국 縣 11곳",0,null,1,["78","79","81","83","84","871","872","1366","1367","1423","1424"]],
     ["여남 세력","#1E4F8B",0,0,"합성 운영 후보 — 여남군 縣 37곳",0,null,1,["85","77","82","86","87","88","89","90","91","92","93","94","95","98","99","101","102","104","105","106","145","866","867","868","869","870","1371","1372","1373","1374","1375","1417","1418","1419","1420","1421","1422"]],
@@ -53,7 +53,7 @@
     [0,"진국 주공",null,5,"137",70,65,65,12,150,250,null,null,null,60,70],
     [0,"노국 주공",null,6,"1429",70,65,65,12,150,250,null,null,null,60,70]
   ],
-  "hwihaPersonPolicies": [
+  "personPolicies": [
     {"name":"양국 주공","statSourceId":"synthetic-qa:yuzhou-slice","statSourceRevision":"v1","officerId":1,"acceptsEnlistment":true,"stats":{"leadership":70,"strength":65,"intelligence":65,"politics":60,"charm":70}},
     {"name":"여남 주공","statSourceId":"synthetic-qa:yuzhou-slice","statSourceRevision":"v1","officerId":2,"acceptsEnlistment":true,"stats":{"leadership":70,"strength":65,"intelligence":65,"politics":60,"charm":70}},
     {"name":"패국 주공","statSourceId":"synthetic-qa:yuzhou-slice","statSourceRevision":"v1","officerId":3,"acceptsEnlistment":true,"stats":{"leadership":70,"strength":65,"intelligence":65,"politics":60,"charm":70}},
@@ -61,7 +61,7 @@
     {"name":"진국 주공","statSourceId":"synthetic-qa:yuzhou-slice","statSourceRevision":"v1","officerId":5,"acceptsEnlistment":true,"stats":{"leadership":70,"strength":65,"intelligence":65,"politics":60,"charm":70}},
     {"name":"노국 주공","statSourceId":"synthetic-qa:yuzhou-slice","statSourceRevision":"v1","officerId":6,"acceptsEnlistment":true,"stats":{"leadership":70,"strength":65,"intelligence":65,"politics":60,"charm":70}}
   ],
-  "hwihaUnits": [
+  "units": [
     {"general":"양국 주공","name":"양국 부곡 1","troops":4000,"crewTypeId":1100,"training":50,"morale":60,"provisions":24000},
     {"general":"양국 주공","name":"양국 부곡 2","troops":4000,"crewTypeId":1100,"training":50,"morale":60,"provisions":24000},
     {"general":"여남 주공","name":"여남 부곡 1","troops":4000,"crewTypeId":1100,"training":50,"morale":60,"provisions":24000},
@@ -75,7 +75,7 @@
     {"general":"노국 주공","name":"노국 부곡 1","troops":4000,"crewTypeId":1100,"training":50,"morale":60,"provisions":24000},
     {"general":"노국 주공","name":"노국 부곡 2","troops":4000,"crewTypeId":1100,"training":50,"morale":60,"provisions":24000}
   ],
-  "hwihaWarehouses": {
+  "warehouses": {
     "version": 1, "units": "game-resource-v1", "source": "GAME_DESIGN",
     "topologyRevision": "han-water-topology-v1", "topologyHash": "eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14",
     "warehouses": [

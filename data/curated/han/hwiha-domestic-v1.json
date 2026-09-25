@@ -76,8 +76,8 @@
     {"code": "DRILL", "name": "조련", "status": "CONFIRMED", "effect": "저장·조회만 한다. 훈련 증가 소비자는 아직 없다."},
     {"code": "ASSAULT", "name": "공략", "status": "CONFIRMED", "effect": "저장·조회만 한다. 공성 보정 소비자는 아직 없다."},
     {"code": "DEFEND", "name": "수비", "status": "CONFIRMED", "effect": "방어 측 진형 방침(§6.3). 저장·조회만 한다. 진형 어휘와 전투 소비자는 아직 없다."},
-    {"code": "INTERCEPT", "name": "요격", "status": "CONFIRMED", "effect": "월드 hwihaMarchReactions.interceptions 에 싣는다. 요격 범위·판정은 조우 소비자가 정한다."},
-    {"code": "EVADE", "name": "회피", "status": "CONFIRMED", "effect": "월드 hwihaMarchReactions.avoidanceOrders 에 싣는다. 물러나기 판정은 조우 소비자가 정한다."}
+    {"code": "INTERCEPT", "name": "요격", "status": "CONFIRMED", "effect": "월드 marchReactions.interceptions 에 싣는다. 요격 범위·판정은 조우 소비자가 정한다."},
+    {"code": "EVADE", "name": "회피", "status": "CONFIRMED", "effect": "월드 marchReactions.avoidanceOrders 에 싣는다. 물러나기 판정은 조우 소비자가 정한다."}
   ],
   "works": {
     "status": "CONFIRMED",

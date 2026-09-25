@@ -407,8 +407,8 @@ class CommandReserveService(
                     generalId = null,
                     turnIdx = 0,
                     actionCode = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
-                        // Keep the existing inbox value until the storage identifier migration.
-                        "HwihaCourtInput"
+                        // Store the neutral immediate-input action code for the reset world.
+                        "ImmediateInput"
                     } else command::class.simpleName,
                     payloadJson = payload,
                     ownerUserId = ownerUserId,

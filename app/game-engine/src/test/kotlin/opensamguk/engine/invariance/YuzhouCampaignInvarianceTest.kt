@@ -34,7 +34,7 @@ class YuzhouCampaignInvarianceTest {
     private fun campaign(npcDeploy: Boolean = true, seed: String = "00"): Campaign {
         val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
-        val warehouses = requireNotNull(scenario.hwihaWarehouses).warehouses
+        val warehouses = requireNotNull(scenario.warehouses).warehouses
         val provinceOf = bundle.projection.bindingsByCityId.mapNotNull { (id, b) -> b.landProvinceId?.let { id to it } }.toMap()
         // Same initial stats the importer writes: occupied → 70% of max, neutral → the map's initial values.
         val cities = mapCities.map { c ->
@@ -47,14 +47,14 @@ class YuzhouCampaignInvarianceTest {
                 supplyState = 1, meta = mapOf("trust" to if (occupied) 80.0 else 50.0) + (warehouses[c.id]?.let {
                     mapOf(CountyWarehouse.META_KEY to CountyWarehouse(c.id, 0, it).toMetaValue()) } ?: emptyMap()))
         }
-        val lords = scenario.generals.filter { it.hwihaLord == true }
+        val lords = scenario.generals.filter { it.lord == true }
         val generals = lords.mapIndexed { index, g ->
             TurnGeneral(id = index + 1, name = g.name, nationId = g.nationId, cityId = g.locatedCity!!.toInt(), troopId = 0,
                 stats = GeneralStats(g.leadership, g.strength, g.intel, g.politics, g.charm), experience = 0, dedication = 0,
                 officerLevel = 12, npcState = 2, turnTime = Instant.parse("0190-01-01T00:00:00Z").plusSeconds(index.toLong()),
-                meta = mapOf(LordStatus.META_KEY to true, PersonPolicyState.META_KEY to g.hwihaPersonPolicy!!.toMetaValue()))
+                meta = mapOf(LordStatus.META_KEY to true, PersonPolicyState.META_KEY to g.personPolicy!!.toMetaValue()))
         }
-        val units = scenario.hwihaUnits.mapIndexed { index, u ->
+        val units = scenario.units.mapIndexed { index, u ->
             Bugok(index + 1, lords.indexOfFirst { it.name == u.general } + 1, u.name, u.troops, u.crewTypeId, u.training, u.morale,
                 provisions = u.provisions)
         }

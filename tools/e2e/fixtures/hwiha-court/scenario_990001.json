@@ -11,7 +11,7 @@
       "extended": 1
     }
   },
-  "hwihaLords": [
+  "lords": [
     "QA 주공"
   ],
   "nation": [
@@ -49,7 +49,7 @@
       64
     ]
   ],
-  "hwihaPersonPolicies": [
+  "personPolicies": [
     {
       "name": "QA 주공",
       "statSourceId": "synthetic-qa:court",

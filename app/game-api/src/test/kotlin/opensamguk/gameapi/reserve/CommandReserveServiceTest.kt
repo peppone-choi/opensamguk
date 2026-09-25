@@ -186,7 +186,7 @@ class CommandReserveServiceTest {
         val reader = mock(opensamguk.gameapi.read.DomesticReader::class.java)
         val now = opensamguk.logic.input.Phase(200, 1, 1)
         fun person(id: Int, human: Boolean, lord: Boolean = false) = opensamguk.logic.domestic.DomesticPerson(id, "G$id", 1, human,
-            if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("hwihaLord" to lord))
+            if (human) 0 else 2, if (lord) 12 else 0, 50, 50, 50, 50, 50, "p$id", false, mapOf("lord" to lord))
         val state = opensamguk.logic.domestic.DomesticProjection(opensamguk.logic.input.RuleProfile.HWIHA, now,
             listOf(person(10, true, lord = true), person(20, false)), listOf(opensamguk.logic.domestic.DomesticCard(5, 10, 20, "staff")),
             listOf(opensamguk.logic.domestic.DomesticCounty(7, "C7", 1, "p7", "甲郡", emptyMap())),
@@ -205,7 +205,7 @@ class CommandReserveServiceTest {
             "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
         val stored = inbox.accepted.single()
         assertEquals(CommandInboxRepository.CommandKind.IMMEDIATE, stored.commandKind)
-        assertEquals("HwihaCourtInput", stored.actionCode)
+        assertEquals("ImmediateInput", stored.actionCode)
         assertEquals(42, stored.ownerUserId)
         assertEquals(0, turns.reserves.size)
         val envelope = opensamguk.common.wire.WireJson.decodeFromString(opensamguk.common.wire.TurnDaemonCommandEnvelope.serializer(),

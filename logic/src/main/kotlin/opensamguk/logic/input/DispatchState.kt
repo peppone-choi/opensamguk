@@ -60,7 +60,7 @@ data class DispatchState(
         "dueAt" to dueAt.toMetaValue(), "status" to status.name,
     )
     companion object {
-        const val META_KEY = "hwihaDispatch"
+        const val META_KEY = "dispatch"
         private val fields = setOf("dispatchId", "issuerId", "targetId", "nationId", "countyId", "issuedAt", "dueAt", "status")
         fun read(meta: Map<String, Any?>): DispatchState? {
             if (META_KEY !in meta) return null
@@ -83,7 +83,7 @@ data class CountyAssignment(val dispatchId: String, val issuerId: Int, val natio
     fun toMetaValue(): Map<String, Any> = linkedMapOf("dispatchId" to dispatchId, "issuerId" to issuerId,
         "nationId" to nationId, "countyId" to countyId)
     companion object {
-        const val META_KEY = "hwihaCountyAssignment"
+        const val META_KEY = "countyAssignment"
         fun read(meta: Map<String, Any?>): CountyAssignment? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalidDispatchState()

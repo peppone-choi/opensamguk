@@ -18,7 +18,7 @@ class DispatchPrecheckServiceTest {
     private val dispatch = DispatchState("d1", 1, 2, 1, 7, now, now.plus(12))
     private fun person(id: Int, meta: Map<String, Any?> = emptyMap()) = GeneralReadEntity(
         id = id, name = "G$id", worldId = 1, nationId = 1, userId = (40 + id).toString(), npcState = 2,
-        meta = mapOf("hwihaLord" to (id == 1)) + meta)
+        meta = mapOf("lord" to (id == 1)) + meta)
     private fun setup(pending: Boolean = false, phase: Phase = now): List<GeneralReadEntity> {
         val people = listOf(person(1), person(2, if (pending) mapOf(DispatchState.META_KEY to dispatch.toMetaValue()) else emptyMap()), person(3))
         people.forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
@@ -69,7 +69,7 @@ class DispatchPrecheckServiceTest {
     }
     @Test fun `malformed pending and invalid pins are unavailable not empty success`() {
         val people = setup(true)
-        people[1].meta = mapOf("hwihaDispatch" to null)
+        people[1].meta = mapOf("dispatch" to null)
         assertEquals(DispatchFailure.STATE_UNAVAILABLE, service.pending(2,42).code)
         assertFalse(service.pending(2,42).result)
         `when`(resolver.resolve()).thenThrow(IllegalArgumentException("pin mismatch"))
@@ -116,8 +116,8 @@ class DispatchPrecheckServiceTest {
         assertFalse(blocked.available)
         assertEquals(DispatchFailure.ALREADY_PENDING,blocked.code)
         assertEquals(blocked.code!!.message,blocked.reason)
-        people[1].meta = mapOf("hwihaLord" to false)
-        people[2].meta = mapOf("hwihaLord" to false, CountyAssignment.META_KEY to
+        people[1].meta = mapOf("lord" to false)
+        people[2].meta = mapOf("lord" to false, CountyAssignment.META_KEY to
             CountyAssignment("other",1,1,7).toMetaValue())
         assertEquals(DispatchFailure.COUNTY_OCCUPIED,service.options(1,41,2).counties.single().code)
         val world = resolver.resolve()!!
@@ -132,9 +132,9 @@ class DispatchPrecheckServiceTest {
         people[1].nationId = 2
         assertTrue(service.options(1,41).targets.isEmpty())
         people[1].nationId = 1
-        people[1].meta = mapOf("hwihaLord" to true)
+        people[1].meta = mapOf("lord" to true)
         assertTrue(service.options(1,41).targets.isEmpty())
-        people[1].meta = mapOf("hwihaLord" to false)
+        people[1].meta = mapOf("lord" to false)
         val card = retainers.findAll().single()
         `when`(retainers.findAll()).thenReturn(listOf(card,GeneralRetainerReadEntity(worldId=1,id=6,masterGeneralId=1,generalId=2)))
         assertTrue(service.options(1,41).targets.isEmpty())

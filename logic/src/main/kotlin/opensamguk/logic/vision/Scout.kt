@@ -128,7 +128,7 @@ data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutRep
         "version" to 1, "tilesContentHash" to tilesContentHash, "reports" to reports.map { it.toMetaValue() })
 
     companion object {
-        const val META_KEY = "hwihaScoutReports"
+        const val META_KEY = "scoutReports"
 
         /** @throws IllegalArgumentException on a malformed notebook (the caller decides how to fail closed). */
         fun read(meta: Map<String, Any?>): ScoutReports? {

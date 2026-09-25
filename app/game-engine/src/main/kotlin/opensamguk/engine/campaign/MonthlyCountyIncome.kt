@@ -100,7 +100,7 @@ class MonthlyCountyIncome(
 
     companion object {
         private val log = LoggerFactory.getLogger(MonthlyCountyIncome::class.java)
-        const val STAMP_KEY = "hwihaCountyIncomeMonth"
+        const val STAMP_KEY = "countyIncomeMonth"
         fun stampOf(year: Int, month: Int): String = "%04d-%02d".format(year, month)
     }
 }

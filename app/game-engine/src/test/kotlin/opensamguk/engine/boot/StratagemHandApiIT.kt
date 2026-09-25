@@ -80,7 +80,7 @@ class StratagemHandApiIT {
         login(99)
         mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("READY"))
             .andExpect(jsonPath("$.cards.length()").value(2))
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaStratagemHand,ownerGeneralId}','7') WHERE world_id=1 AND id=1")
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{stratagemHand,ownerGeneralId}','7') WHERE world_id=1 AND id=1")
         mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("UNAVAILABLE"))
             .andExpect(jsonPath("$.cards.length()").value(0))
         jdbc.update("UPDATE world_state SET config=jsonb_set(config,'{ruleProfile}','\"SAMMO\"') WHERE id=1")

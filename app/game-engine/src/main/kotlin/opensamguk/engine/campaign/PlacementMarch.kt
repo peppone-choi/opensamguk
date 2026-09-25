@@ -15,7 +15,7 @@ import opensamguk.logic.world.*
 
 /**
  * 배치 카드의 부임 행군(§4 「카드는 자기 턴마다 지도 위를 실제로 이동해 부임」). 발령 부임 행군과 같은 경로·진행·조우 경계를
- * 쓰고, 진행은 카드 장수 meta `hwihaPlacementMarch` 에, 도착은 `hwihaPlacement.active.arrivedAt` 에 적는다.
+ * 쓰고, 진행은 카드 장수 meta `placementMarch` 에, 도착은 `placement.active.arrivedAt` 에 적는다.
  *
  * 목적지: 縣令 = 그 縣治 城의 省, 사자 = 상대 세력 수도의 省, 정찰 = 지정 省, 군단장 = 주인 장수의 현재 省(주인이 움직이면
  * 다시 경로를 잡는다). 이미 목적지에 서 있으면 행군 없이 도착이다.

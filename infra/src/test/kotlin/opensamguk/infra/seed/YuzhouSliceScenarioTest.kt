@@ -54,7 +54,7 @@ class YuzhouSliceScenarioTest {
         line("  \"ruleProfile\": \"HWIHA\",")
         line("  \"map\": {\"mapName\": \"han-world-v3\"},")
         line("  \"seedContract\": {\"activeGenerals\": {\"base\": ${commanderies.size}, \"extended\": ${commanderies.size}}},")
-        line("  \"hwihaLords\": ${j(commanderies.map(::lordName))},")
+        line("  \"lords\": ${j(commanderies.map(::lordName))},")
         line("  \"nation\": [")
         commanderies.forEachIndexed { index, c ->
             val row = listOf("${c.jun.removeSuffix("군")} 세력", COLORS[index], 0, 0, "합성 운영 후보 — ${c.jun} 縣 ${c.counties.size}곳",
@@ -74,7 +74,7 @@ class YuzhouSliceScenarioTest {
             line("    ${j(row)}${if (index < commanderies.lastIndex) "," else ""}")
         }
         line("  ],")
-        line("  \"hwihaPersonPolicies\": [")
+        line("  \"personPolicies\": [")
         commanderies.forEachIndexed { index, c ->
             val row = linkedMapOf("name" to lordName(c), "statSourceId" to "synthetic-qa:yuzhou-slice",
                 "statSourceRevision" to "v1", "officerId" to index + 1, "acceptsEnlistment" to true,
@@ -83,7 +83,7 @@ class YuzhouSliceScenarioTest {
             line("    ${j(row)}${if (index < commanderies.lastIndex) "," else ""}")
         }
         line("  ],")
-        line("  \"hwihaUnits\": [")
+        line("  \"units\": [")
         val units = commanderies.flatMap { c -> (1..UNITS_PER_LORD).map { n -> linkedMapOf("general" to lordName(c),
             "name" to "${c.jun.removeSuffix("군")} 부곡 $n", "troops" to UNIT_TROOPS, "crewTypeId" to UNIT_CREW_TYPE,
             "training" to UNIT_TRAINING, "morale" to UNIT_MORALE, "provisions" to UNIT_TROOPS * UNIT_PROVISION_MONTHS) } }
@@ -91,7 +91,7 @@ class YuzhouSliceScenarioTest {
         line("  ],")
         val slice = commanderies.flatMap { it.counties }.toSet()
         val capitals = commanderies.map { it.counties.first() }.toSet()
-        line("  \"hwihaWarehouses\": {")
+        line("  \"warehouses\": {")
         line("    \"version\": 1, \"units\": \"game-resource-v1\", \"source\": \"GAME_DESIGN\",")
         line("    \"topologyRevision\": ${j(projection.topology.topologyRevision)}, \"topologyHash\": ${j(projection.topology.contentHash)},")
         line("    \"warehouses\": [")
@@ -133,8 +133,8 @@ class YuzhouSliceScenarioTest {
         val nations = scenario.nations.map { it.id }
         assertEquals(nations.size * (nations.size - 1), scenario.diplomacy.count { it.state == 0 }, "every lord pair is at war")
         assertTrue(scenario.diplomacy.all { it.remainMonths == WAR_MONTHS }, "war must survive monthly settlement during live QA")
-        assertEquals(scenario.nations.size, scenario.generals.count { it.hwihaLord == true })
-        assertTrue(scenario.generals.all { it.hwihaPersonPolicy?.acceptsEnlistment == true }, "a human can enlist with any lord")
+        assertEquals(scenario.nations.size, scenario.generals.count { it.lord == true })
+        assertTrue(scenario.generals.all { it.personPolicy?.acceptsEnlistment == true }, "a human can enlist with any lord")
     }
 
     @Test fun `each lord can besiege at least one enemy county of the slice`() {
@@ -142,8 +142,8 @@ class YuzhouSliceScenarioTest {
         val scenario = ScenarioJson.loadScenario(Files.readString(file))
         val byId = cities.associateBy { it.id }
         for (nation in scenario.nations) {
-            val lord = scenario.generals.single { it.nationId == nation.id && it.hwihaLord == true }
-            val troops = scenario.hwihaUnits.filter { it.general == lord.name }.sumOf { it.troops }
+            val lord = scenario.generals.single { it.nationId == nation.id && it.lord == true }
+            val troops = scenario.units.filter { it.general == lord.name }.sumOf { it.troops }
             val weakestEnemy = scenario.nations.filter { it.id != nation.id }.flatMap { it.cities }
                 .minOf { phpRound(byId.getValue(it.toInt()).defMax * 0.7) }
             assertTrue(troops >= 2 * weakestEnemy, "${lord.name}: $troops troops vs weakest enemy garrison $weakestEnemy")

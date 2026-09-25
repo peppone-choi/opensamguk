@@ -251,7 +251,7 @@ class DomesticBoundary(
 
     companion object {
         private val logger = LoggerFactory.getLogger(DomesticBoundary::class.java)
-        const val STAMP_KEY = "hwihaDomesticPhase"
+        const val STAMP_KEY = "domesticPhase"
         fun stampOf(phase: Phase): String = "%04d-%02d-%d".format(phase.year, phase.month, phase.phase)
     }
 }

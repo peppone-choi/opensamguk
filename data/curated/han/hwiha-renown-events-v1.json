@@ -41,7 +41,7 @@
   },
   "domesticMerit": {
     "status": "CONFIRMED",
-    "holders": "발령을 수락해 그 縣 을 부임지로 받은 장수(hwihaCountyAssignment)이고, 발령 세력이 지금 그 縣 을 소유한다.",
+    "holders": "발령을 수락해 그 縣 을 부임지로 받은 장수(countyAssignment)이고, 발령 세력이 지금 그 縣 을 소유한다.",
     "indicators": ["population", "agriculture", "commerce"],
     "window": "월 경계 월간 사건 뒤에 열고 다음 월 경계 월간 사건 전에 닫는다 — 반기 도시 성장 같은 자연 증가를 빼기 위해서다.",
     "minRiseBasisPoints": 200,

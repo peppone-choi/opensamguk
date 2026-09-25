@@ -107,10 +107,10 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   await expect.poll(async () => (await read<DispatchPendingResponse>(page, dispatchPath)).dispatches
     .find(d => d.dispatchId === dispatch.dispatchId)?.status).toBe('ACCEPTED');
   const marchState = () => JSON.parse(sql(`SELECT json_build_object(
-    'stop',meta->'hwihaMarch'->>'stop',
-    'edgeIndex',coalesce((meta->'hwihaMarch'->>'edgeIndex')::integer,0),
-    'paidMm',coalesce((meta->'hwihaMarch'->>'paidMm')::bigint,0),
-    'routeCostMm',(meta->'hwihaMarch'->'path'->>'totalCostMm')::bigint)
+    'stop',meta->'march'->>'stop',
+    'edgeIndex',coalesce((meta->'march'->>'edgeIndex')::integer,0),
+    'paidMm',coalesce((meta->'march'->>'paidMm')::bigint,0),
+    'routeCostMm',(meta->'march'->'path'->>'totalCostMm')::bigint)
     FROM general WHERE world_id=${worldId} AND id=${generalId};`)) as
     { stop: string | null; edgeIndex: number; paidMm: number; routeCostMm: number | null };
   // New characters are born in a random neutral city anywhere in the world.
@@ -127,7 +127,7 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     { active: number; fallen: number; rows: number };
   await expect.poll(() => siegeSummary().fallen, { timeout: 2_400_000, intervals: [10_000] }).toBeGreaterThan(0);
   const npcBattles = () => Number(sql(`SELECT count(*) FROM general WHERE world_id=${worldId} AND id BETWEEN 1001 AND 1006
-    AND meta ? 'hwihaLastBattle';`));
+    AND meta ? 'lastBattle';`));
   await expect.poll(npcBattles, { timeout: 4_800_000, intervals: [10_000] }).toBeGreaterThan(0);
   // Observe the same 36-phase horizon as the in-memory simulation. The old
   // isolation bug only recaptured the same neutralized counties months later.
@@ -169,18 +169,18 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
   }
   await cdp.detach();
   const db = sql(`SELECT json_build_object('sieges', (SELECT json_agg(json_build_object('countyId',county_id,'status',status,'turns',turns,'endReason',end_reason)) FROM hwiha_siege WHERE world_id=${worldId}),
-    'player', (SELECT json_build_object('nationId',g.nation_id,'assignment',g.meta->'hwihaCountyAssignment',
+    'player', (SELECT json_build_object('nationId',g.nation_id,'assignment',g.meta->'countyAssignment',
       'position',(SELECT row_to_json(p) FROM general_spatial_position p WHERE p.world_id=g.world_id AND p.general_id=g.id))
       FROM general g WHERE g.world_id=${worldId} AND g.id=${generalId}),
-    'warehouses', (SELECT json_agg(json_build_object('id',id,'stock',meta->'hwihaCountyWarehouse')) FROM city WHERE world_id=${worldId} AND nation_id=${nationId}),
+    'warehouses', (SELECT json_agg(json_build_object('id',id,'stock',meta->'countyWarehouse')) FROM city WHERE world_id=${worldId} AND nation_id=${nationId}),
     'monthly', (SELECT json_object_agg(key,value) FROM game_kv WHERE world_id=${worldId} AND "table"='game_env' AND namespace='game_env'
-      AND key IN ('hwihaCountyIncomeMonth','hwihaSalaryMonth','hwihaRenownAssessmentStamp','hwihaRenownRanking')));`);
+      AND key IN ('countyIncomeMonth','salaryMonth','renownAssessmentStamp','renownRanking')));`);
   await testInfo.attach('db-hwiha-slice', { body: db, contentType: 'application/json' });
   const monthly = (JSON.parse(db) as { monthly: Record<string, unknown> }).monthly;
-  expect(monthly.hwihaCountyIncomeMonth).toBeTruthy();
-  expect(monthly.hwihaSalaryMonth).toBeTruthy();
-  expect(monthly.hwihaRenownAssessmentStamp).toBeTruthy();
-  expect(Array.isArray(monthly.hwihaRenownRanking) && monthly.hwihaRenownRanking.length > 0).toBe(true);
+  expect(monthly.countyIncomeMonth).toBeTruthy();
+  expect(monthly.salaryMonth).toBeTruthy();
+  expect(monthly.renownAssessmentStamp).toBeTruthy();
+  expect(Array.isArray(monthly.renownRanking) && monthly.renownRanking.length > 0).toBe(true);
   const phaseEvents = sql(`SELECT coalesce(json_agg(json_build_object('year',year,'month',month,'phase',phase,
     'kind',event_kind,'generalId',general_id,'nationId',nation_id,'text',text,'refs',meta->'refs') ORDER BY year,month,phase,id),'[]'::json)
     FROM log_entry WHERE world_id=${worldId} AND event_kind IS NOT NULL;`);

@@ -11,7 +11,7 @@ internal data class QueuedStratagemAction(val requestId: String, val ownerUserId
     fun toMetaValue(): Map<String, Any?> = mapOf("version" to 1, "requestId" to requestId,
         "ownerUserId" to ownerUserId, "inputId" to inputId, "argJson" to argJson)
     companion object {
-        const val META_KEY = "hwihaQueuedLegacyStratagem"
+        const val META_KEY = "queuedStratagem"
         fun read(meta: Map<String, Any?>): QueuedStratagemAction? {
             val raw = meta[META_KEY] ?: return null
             val row = raw as? Map<*, *> ?: invalid()

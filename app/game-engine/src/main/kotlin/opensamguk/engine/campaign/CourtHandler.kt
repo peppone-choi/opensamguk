@@ -258,7 +258,7 @@ class CourtHandler(
         }
         val current = world.getGeneralById(generalId) ?: return
         updateMeta(current, (current.meta - QueuedCourtAction.META_KEY) +
-            ("hwihaLegacyCourtLastExecution" to mapOf("requestId" to queued.requestId,
+            ("courtLastExecution" to mapOf("requestId" to queued.requestId,
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }
@@ -283,7 +283,7 @@ class CourtHandler(
         }
         val current = world.getGeneralById(generalId) ?: return
         updateMeta(current, (current.meta - QueuedStratagemAction.META_KEY) +
-            ("hwihaLegacyStratagemLastExecution" to mapOf("requestId" to queued.requestId,
+            ("stratagemLastExecution" to mapOf("requestId" to queued.requestId,
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }

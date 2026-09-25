@@ -154,8 +154,8 @@ class CorpsRations(
 
     companion object {
         private val log = LoggerFactory.getLogger(CorpsRations::class.java)
-        const val STAMP_KEY = "hwihaSupplyConvoyMonth"
-        const val CONVOYS_KEY = "hwihaSupplyConvoys"
+        const val STAMP_KEY = "supplyConvoyMonth"
+        const val CONVOYS_KEY = "supplyConvoys"
 
         /** 장수가 실제로 선 省의 城(위치 정본). 기준 城이 그 省이면 그것을, 아니면 그 省의 城을, 城 없는 省이면 null. */
         fun cityAt(world: InMemoryTurnWorld, generalId: Int): Int? {

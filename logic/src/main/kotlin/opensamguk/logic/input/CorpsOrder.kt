@@ -33,7 +33,7 @@ data class CorpsOrder(
     )
 
     companion object {
-        const val META_KEY = "hwihaCorpsOrder"
+        const val META_KEY = "corpsOrder"
         private val fields = setOf("version", "orderId", "ownerGeneralId", "commanderGeneralId",
             "destination", "topologyRevision", "topologyHash")
 

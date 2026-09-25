@@ -25,7 +25,7 @@ export default function OrdersPage() {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ kind: 'error' | 'status'; text: string } | null>(null);
     const retinue = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal), [refreshKey]);
-    const warehouses = useHwihaRead((id, signal) => api.hwihaWarehouses(id, signal), [refreshKey]);
+    const warehouses = useHwihaRead((id, signal) => api.warehouses(id, signal), [refreshKey]);
     const people = (retinue.data?.people ?? []).filter((person) => person.generalId != null);
     const selected = people.find((person) => person.retainerId === retainerId);
     const location = warehouses.data?.warehouses.find((row) => row.cityId === selected?.locationCityId);

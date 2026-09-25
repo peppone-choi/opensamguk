@@ -6,7 +6,7 @@ import SiegePage from '@/app/game/hwiha/siege/page';
 import OrdersPage from '@/app/game/hwiha/orders/page';
 
 const mock = vi.hoisted(() => ({
-    hwihaSieges: vi.fn(), roadForts: vi.fn(), hwihaRetinue: vi.fn(), hwihaWarehouses: vi.fn(),
+    hwihaSieges: vi.fn(), roadForts: vi.fn(), hwihaRetinue: vi.fn(), warehouses: vi.fn(),
     reservedCommands: vi.fn(), command: vi.fn(), courtReward: vi.fn(),
     submit: vi.fn(), refresh: vi.fn(),
 }));
@@ -17,7 +17,7 @@ vi.mock('@/lib/hwiha-session', () => ({ useHwihaSession: () => ({
 }) }));
 vi.mock('@/lib/api', () => ({ api: {
     hwihaSieges: mock.hwihaSieges, roadForts: mock.roadForts,
-    hwihaRetinue: mock.hwihaRetinue, hwihaWarehouses: mock.hwihaWarehouses,
+    hwihaRetinue: mock.hwihaRetinue, warehouses: mock.warehouses,
     reservedCommands: mock.reservedCommands, command: mock.command, courtReward: mock.courtReward,
 } }));
 vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: mock.submit }));
@@ -41,7 +41,7 @@ describe('휘하 공성·상사 화면', () => {
         mock.courtReward.mockResolvedValue({ status: 'AVAILABLE', requestId: 'r2' });
         mock.submit.mockImplementation(async (send: () => Promise<unknown>) => { await send(); return { status: 'reserved' }; });
         mock.hwihaRetinue.mockResolvedValue({ status: 'READY', people: [{ retainerId: 31, generalId: 55, name: '문관', loyalty: 60, locationCityId: 12 }] });
-        mock.hwihaWarehouses.mockResolvedValue({ status: 'READY', warehouses: [
+        mock.warehouses.mockResolvedValue({ status: 'READY', warehouses: [
             { cityId: 12, supplied: true, stock: { money: 100 } },
             { cityId: 13, supplied: true, stock: { money: 50 } },
         ] });

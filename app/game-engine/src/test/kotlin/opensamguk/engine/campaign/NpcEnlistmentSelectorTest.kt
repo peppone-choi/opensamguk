@@ -19,7 +19,7 @@ class NpcEnlistmentSelectorTest {
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
         experience = 0, dedication = 0, officerLevel = if (nation > 0) 12 else 0,
         npcState = 2, userId = null, gold = 100, rice = 200, crew = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to (nation > 0), PersonPolicyState.META_KEY to
+        meta = mapOf("lord" to (nation > 0), PersonPolicyState.META_KEY to
             PersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()))
     private fun world(actor: TurnGeneral = person(1), lords: Int = 1, reverse: Boolean = false): InMemoryTurnWorld {
         val persons = listOf(actor) + (1..lords).map { person(it * 10, it).copy(turnTime = Instant.EPOCH.plusSeconds(99999)) }
@@ -43,8 +43,8 @@ class NpcEnlistmentSelectorTest {
     @Test fun `humans special NPCs lords and absent lord declaration are untouched`() {
         val actors = listOf(0, 1, 3, 4, 5, 6, 9).map { person(1).copy(npcState = it) } +
             listOf("42", "opaque-owner").map { person(1).copy(userId = it) } +
-            listOf(person(1).copy(meta = person(1).meta + ("hwihaLord" to true)),
-                person(1).copy(meta = person(1).meta - "hwihaLord"), person(1, 1))
+            listOf(person(1).copy(meta = person(1).meta + ("lord" to true)),
+                person(1).copy(meta = person(1).meta - "lord"), person(1, 1))
         for (actor in actors) assertSame(missing, NpcEnlistmentSelector.select(world(actor), 1, missing))
         for (owner in listOf(null, "", "0", "-1"))
             assertEquals("action.enlist", NpcEnlistmentSelector.select(world(person(1).copy(userId = owner)), 1, missing).actionCode)
