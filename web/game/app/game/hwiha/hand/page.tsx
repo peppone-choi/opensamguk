@@ -2,9 +2,9 @@
 
 import { Chip, Panel, SectionHeader } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
-import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
+import { Empty, campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
-import { useHwihaRead } from '@/lib/hwiha-reads';
+import { useCampaignRead } from '@/lib/campaign-reads';
 
 /** 카드 종류별 한 줄 설명 — 계책 카드 카탈로그 초안의 사용 방식만 옮긴다(수치 없음). */
 const CARD_HINT: Record<string, { kind: string; text: string; cost: string }> = {
@@ -19,9 +19,9 @@ const CARD_HINT: Record<string, { kind: string; text: string; cost: string }> = 
  * 일어나고, 조회는 카드를 만들지 않는다. 카드 쓰기(예약·공개·비용)는 아직 서버에 없어 비활성이다.
  */
 export default function HandPage() {
-    const read = useHwihaRead((id, signal) => api.stratagemHand(id, signal));
+    const read = useCampaignRead((id, signal) => api.stratagemHand(id, signal));
     const hand = read.data;
-    const notice = hwihaReadNotice(read, hand?.status);
+    const notice = campaignReadNotice(read, hand?.status);
 
     return (
         <GameShell title="계책 덱" tab="계책">

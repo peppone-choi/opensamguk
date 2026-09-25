@@ -2,9 +2,9 @@
 
 import { Chip, Panel, SectionHeader, Table } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
-import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
+import { Empty, campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
-import { HWIHA_RESOURCE_LABELS, useHwihaRead } from '@/lib/hwiha-reads';
+import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead } from '@/lib/campaign-reads';
 
 const fmt = new Intl.NumberFormat('ko-KR');
 
@@ -15,9 +15,9 @@ const fmt = new Intl.NumberFormat('ko-KR');
  * 빼앗긴다. 재고는 `GET /api/warehouses`, 끊김은 월 보급이 매기는 城 보급 상태다.
  */
 export default function SupplyPage() {
-    const read = useHwihaRead((id, signal) => api.warehouses(id, signal));
+    const read = useCampaignRead((id, signal) => api.warehouses(id, signal));
     const warehouses = read.data?.warehouses ?? [];
-    const notice = hwihaReadNotice(read, read.data?.status);
+    const notice = campaignReadNotice(read, read.data?.status);
     const cut = warehouses.filter((w) => !w.supplied);
 
     return (
@@ -31,14 +31,14 @@ export default function SupplyPage() {
                     ) : null}
                     {warehouses.length > 0 ? (
                         <Table
-                            headers={['창고', ...HWIHA_RESOURCE_LABELS.map((r) => r.label)]}
+                            headers={['창고', ...CAMPAIGN_RESOURCE_LABELS.map((r) => r.label)]}
                             rows={warehouses.map((w) => [
                                 <span key="n" style={{ whiteSpace: 'nowrap' }}>
                                     {w.name}{' '}
                                     {w.isCapital ? <Chip tone="bronze">수도</Chip> : null}{' '}
                                     {!w.supplied ? <Chip tone="rust">고립</Chip> : null}
                                 </span>,
-                                ...HWIHA_RESOURCE_LABELS.map((r) => (
+                                ...CAMPAIGN_RESOURCE_LABELS.map((r) => (
                                     <span key={r.key} className="os-num">
                                         {fmt.format(w.stock[r.key])}
                                     </span>

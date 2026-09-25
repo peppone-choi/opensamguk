@@ -10,9 +10,9 @@ import { Empty } from '@/components/campaign/GameStates';
 import embed from '@/components/campaign/GameEmbed.module.css';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
-import { useHwihaSession } from '@/lib/hwiha-session';
+import { useGameSession } from '@/lib/campaign-session';
 
-const HWIHA_SLOTS = 12;
+const ORDER_SLOTS = 12;
 
 /**
  * 배치 · 방침 · 공사 — 시안 Posts.
@@ -21,7 +21,7 @@ const HWIHA_SLOTS = 12;
  * 출병은 직접 행동이라 명령 목록의 빈 순에 한 건 예약한다.
  */
 export default function PostsPage() {
-    const { generalId } = useHwihaSession();
+    const { generalId } = useGameSession();
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
     const [turnIdx, setTurnIdx] = useState<number | null>(null);
@@ -35,7 +35,7 @@ export default function PostsPage() {
             .then((res) => {
                 if (!alive) return;
                 const used = new Set(res.slots.map((s) => s.turnIdx));
-                const free = Array.from({ length: HWIHA_SLOTS }, (_, i) => i).filter((i) => !used.has(i));
+                const free = Array.from({ length: ORDER_SLOTS }, (_, i) => i).filter((i) => !used.has(i));
                 setFreeSlots(free);
                 setTurnIdx((prev) => (prev != null && free.includes(prev) ? prev : free[0] ?? null));
             })

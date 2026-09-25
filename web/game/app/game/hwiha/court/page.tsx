@@ -6,8 +6,8 @@ import { Chip, KV, Panel, SectionHeader } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
 import { Empty } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
-import { hwihaHref } from '@/lib/hwiha-screens';
-import { useHwihaSession } from '@/lib/hwiha-session';
+import { campaignHref } from '@/lib/campaign-screens';
+import { useGameSession } from '@/lib/campaign-session';
 
 /** 아직 입력이 없는 결정 — 숨기지 않고 사유와 함께 비활성으로 둔다(표시 원칙). */
 function Pending({ label, danger = false }: { label: string; danger?: boolean }) {
@@ -31,7 +31,7 @@ function Pending({ label, danger = false }: { label: string; danger?: boolean })
  * 여기에 싣지 않는다.
  */
 export default function CourtPage() {
-    const { serverId, frontInfo } = useHwihaSession();
+    const { serverId, frontInfo } = useGameSession();
     const capital = frontInfo?.nation?.capitalCityId ?? null;
     // 수도 이름은 공개 지도 미리보기의 城 표에서 찾는다 — 번호를 그대로 보이지 않는다.
     const [capitalName, setCapitalName] = useState<string | null>(null);
@@ -81,7 +81,7 @@ export default function CourtPage() {
                             받은 발령의 수락·거절과 직속 장수 발령은 발령 화면에서 합니다.
                         </p>
                         <div style={{ paddingTop: 10 }}>
-                            <Link className="os-button os-button--primary os-button--sm" href={hwihaHref('orders', serverId)}>
+                            <Link className="os-button os-button--primary os-button--sm" href={campaignHref('orders', serverId)}>
                                 발령 · 포상으로
                             </Link>
                         </div>

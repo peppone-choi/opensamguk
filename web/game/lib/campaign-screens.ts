@@ -11,7 +11,7 @@
 import { resolveServerGamePath } from './serverGameUrl';
 
 /** 정본 설계 §4 입력 여섯 가지. 시안 헤더 탭 바와 같은 순서·같은 라벨이다. */
-export const HWIHA_INPUT_TABS = [
+export const CAMPAIGN_INPUT_TABS = [
     '장수 행동',
     '배치',
     '방침',
@@ -20,7 +20,7 @@ export const HWIHA_INPUT_TABS = [
     '조정 결정',
 ] as const;
 
-export type InputTab = (typeof HWIHA_INPUT_TABS)[number];
+export type InputTab = (typeof CAMPAIGN_INPUT_TABS)[number];
 
 export interface GameScreen {
     /** 시안 아트보드 파일 이름. 시안과 코드를 잇는 열쇠다. */
@@ -36,9 +36,9 @@ export interface GameScreen {
 }
 
 /** 작전실 — 허브. 다른 화면의 「← 작전실」이 여기로 돌아온다. */
-export const HWIHA_HUB_SLUG = 'war-room';
+export const CAMPAIGN_HUB_SLUG = 'war-room';
 
-export const HWIHA_SCREENS: readonly GameScreen[] = [
+export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
     { board: 'WarRoom', slug: 'war-room', title: '작전실', tab: null, onHub: false },
     { board: 'Command', slug: 'command', title: '이번 순에 할 일', tab: null, onHub: true },
 
@@ -81,20 +81,20 @@ export const HWIHA_SCREENS: readonly GameScreen[] = [
  * 휘하 화면 주소. 서버 식별자가 있으면 `/game/<서버>/hwiha/<slug>` 로 만든다 — 미들웨어가 그 경로를
  * `/game/hwiha/<slug>` 로 되쓰고 `sam_server` 쿠키를 심는다(기존 게임 링크와 같은 규칙).
  */
-export function hwihaHref(slug: string, serverId?: string): string {
+export function campaignHref(slug: string, serverId?: string): string {
     const child = `hwiha/${slug}`;
     return serverId ? resolveServerGamePath(undefined, serverId, '/game', child) : `/game/${child}`;
 }
 
-export function hwihaScreenOf(slug: string): GameScreen | undefined {
-    return HWIHA_SCREENS.find((s) => s.slug === slug);
+export function campaignScreenOf(slug: string): GameScreen | undefined {
+    return CAMPAIGN_SCREENS.find((s) => s.slug === slug);
 }
 
 /**
  * 실제로 페이지가 있는 화면. 등록부는 시안 전체를 담지만 링크는 여기 있는 것만 건다 — 없는 화면으로
  * 가는 링크는 404 다. 페이지를 새로 만들면 여기에 더한다.
  */
-export const HWIHA_BUILT_SLUGS: ReadonlySet<string> = new Set([
+export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'war-room',
     'yuedan',
     'posts',
@@ -106,16 +106,16 @@ export const HWIHA_BUILT_SLUGS: ReadonlySet<string> = new Set([
     'siege',
 ]);
 
-export function isHwihaBuilt(slug: string): boolean {
-    return HWIHA_BUILT_SLUGS.has(slug);
+export function isCampaignBuilt(slug: string): boolean {
+    return CAMPAIGN_BUILT_SLUGS.has(slug);
 }
 
 /** 한 입력 탭에 속한 화면들 — 시안 순서를 지킨다. 아직 없는 화면도 포함한다. */
-export function hwihaScreensOfTab(tab: InputTab): readonly GameScreen[] {
-    return HWIHA_SCREENS.filter((s) => s.tab === tab);
+export function campaignScreensOfTab(tab: InputTab): readonly GameScreen[] {
+    return CAMPAIGN_SCREENS.filter((s) => s.tab === tab);
 }
 
 /** 탭을 눌렀을 때 갈 첫 화면 — 페이지가 있는 것 가운데 첫째. 없으면 undefined. */
-export function hwihaTabLanding(tab: InputTab): GameScreen | undefined {
-    return hwihaScreensOfTab(tab).find((s) => isHwihaBuilt(s.slug));
+export function campaignTabLanding(tab: InputTab): GameScreen | undefined {
+    return campaignScreensOfTab(tab).find((s) => isCampaignBuilt(s.slug));
 }

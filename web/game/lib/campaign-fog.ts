@@ -1,12 +1,12 @@
 // 8방향 군국 이동.
 //
 // 지도는 군국 하나가 화면을 채우는 배율로 열리고, 화살표로 이웃 군국으로 옮긴다. 군국 표는 서버가
-// 서빙하는 지형의 juns 에서 온다(`hwiha-map.ts` buildCommanderies) — 번호가 식별 PNG 와 같다.
+// 서빙하는 지형의 juns 에서 온다(`campaign-map.ts` buildCommanderies) — 번호가 식별 PNG 와 같다.
 
-import type { CommanderyCell } from './hwiha-map';
+import type { CommanderyCell } from './campaign-map';
 
 /** 화면의 8방향. 이름은 지도 위 방향 그대로다. */
-export const HWIHA_DIRECTIONS = [
+export const COMMANDERY_DIRECTIONS = [
     { key: 'N', label: '북', dc: 0, dr: -1 },
     { key: 'NE', label: '북동', dc: 1, dr: -1 },
     { key: 'E', label: '동', dc: 1, dr: 0 },
@@ -17,7 +17,7 @@ export const HWIHA_DIRECTIONS = [
     { key: 'NW', label: '북서', dc: -1, dr: -1 },
 ] as const;
 
-export type Direction = (typeof HWIHA_DIRECTIONS)[number];
+export type Direction = (typeof COMMANDERY_DIRECTIONS)[number];
 
 /**
  * [from] 에서 [dir] 쪽에 있는 가장 가까운 군국. 초점 城 이 없는 군국(城 없는 군국)은 옮겨 갈 수

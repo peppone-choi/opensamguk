@@ -1,19 +1,19 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as WorldMapCanvasType } from '@opensamguk/ui';
 
-const mocks = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null, refreshKey: null as unknown }));
+const mocks = vi.hoisted(() => ({ props: null as ComponentProps<typeof WorldMapCanvasType> | null, refreshKey: null as unknown }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof WorldMapCanvasType>) => {
     mocks.props = props; return <div data-testid="war-map">
       <button type="button" onClick={() => props.onCityHover?.(props.cities![0], { x: 1, y: 2 })}>城 얹기</button>
     </div>;
   } };
 });
-vi.mock('@/lib/hwiha-map', () => ({ HWIHA_MAP_CODE: 'han-world-v3', HWIHA_PROVINCES_URL: '/provinces',
-  useHwihaWorldMap: (refreshKey: unknown) => { mocks.refreshKey = refreshKey; return { kind: 'ready', preview: { cities: [{ id: 7, commanderyName: '甲郡' }] },
+vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3', CAMPAIGN_PROVINCES_URL: '/provinces',
+  useCampaignWorldMap: (refreshKey: unknown) => { mocks.refreshKey = refreshKey; return { kind: 'ready', preview: { cities: [{ id: 7, commanderyName: '甲郡' }] },
     tiles: { _meta: { cols: 768, rows: 669 } }, tilesSha256: 'a'.repeat(64), provinceMap: null,
     provinceCenter: (id: string) => id === 'P1' ? { col: 10, row: 20 } : undefined,
     markerPositions: new Map([[7, { col: 384, row: 334 }]]),

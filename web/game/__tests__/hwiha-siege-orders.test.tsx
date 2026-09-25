@@ -6,18 +6,18 @@ import SiegePage from '@/app/game/hwiha/siege/page';
 import OrdersPage from '@/app/game/hwiha/orders/page';
 
 const mock = vi.hoisted(() => ({
-    hwihaSieges: vi.fn(), roadForts: vi.fn(), hwihaRetinue: vi.fn(), warehouses: vi.fn(),
+    campaignSieges: vi.fn(), roadForts: vi.fn(), campaignRetinue: vi.fn(), warehouses: vi.fn(),
     reservedCommands: vi.fn(), command: vi.fn(), courtReward: vi.fn(),
     submit: vi.fn(), refresh: vi.fn(),
 }));
 vi.mock('@/components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
 vi.mock('@/components/command/CourtForm', () => ({ default: () => <div>발령 폼</div> }));
-vi.mock('@/lib/hwiha-session', () => ({ useHwihaSession: () => ({
-    generalId: 9, isHwihaWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
+vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({
+    generalId: 9, isCampaignWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
 }) }));
 vi.mock('@/lib/api', () => ({ api: {
-    hwihaSieges: mock.hwihaSieges, roadForts: mock.roadForts,
-    hwihaRetinue: mock.hwihaRetinue, warehouses: mock.warehouses,
+    campaignSieges: mock.campaignSieges, roadForts: mock.roadForts,
+    campaignRetinue: mock.campaignRetinue, warehouses: mock.warehouses,
     reservedCommands: mock.reservedCommands, command: mock.command, courtReward: mock.courtReward,
 } }));
 vi.mock('@/lib/commandSubmit', () => ({ submitCommandAndAwaitResult: mock.submit }));
@@ -34,13 +34,13 @@ const siege = {
 describe('휘하 공성·상사 화면', () => {
     beforeEach(() => {
         vi.clearAllMocks();
-        mock.hwihaSieges.mockResolvedValue({ status: 'READY', sieges: [siege] });
+        mock.campaignSieges.mockResolvedValue({ status: 'READY', sieges: [siege] });
         mock.roadForts.mockResolvedValue({ status: 'READY', roadMode: true, forts: [], gates: [] });
         mock.reservedCommands.mockResolvedValue({ slots: [{ turnIdx: 0 }] });
         mock.command.mockResolvedValue({ status: 'AVAILABLE', requestId: 'r1' });
         mock.courtReward.mockResolvedValue({ status: 'AVAILABLE', requestId: 'r2' });
         mock.submit.mockImplementation(async (send: () => Promise<unknown>) => { await send(); return { status: 'reserved' }; });
-        mock.hwihaRetinue.mockResolvedValue({ status: 'READY', people: [{ retainerId: 31, generalId: 55, name: '문관', loyalty: 60, locationCityId: 12 }] });
+        mock.campaignRetinue.mockResolvedValue({ status: 'READY', people: [{ retainerId: 31, generalId: 55, name: '문관', loyalty: 60, locationCityId: 12 }] });
         mock.warehouses.mockResolvedValue({ status: 'READY', warehouses: [
             { cityId: 12, supplied: true, stock: { money: 100 } },
             { cityId: 13, supplied: true, stock: { money: 50 } },
@@ -70,7 +70,7 @@ describe('휘하 공성·상사 화면', () => {
     });
 
     it('disables orders for a noncommander and shows a server execution rejection', async () => {
-        mock.hwihaSieges.mockResolvedValueOnce({ status: 'READY', sieges: [{ ...siege, canAct: false }] });
+        mock.campaignSieges.mockResolvedValueOnce({ status: 'READY', sieges: [{ ...siege, canAct: false }] });
         const view = render(<SiegePage />);
         expect(await screen.findByText('초현')).toBeInTheDocument();
         expect(screen.getByRole('button', { name: '강공 예약' })).toBeDisabled();
@@ -83,14 +83,14 @@ describe('휘하 공성·상사 화면', () => {
     });
 
     it('shows an empty state when the server has no siege', async () => {
-        mock.hwihaSieges.mockResolvedValueOnce({ status: 'READY', sieges: [] });
+        mock.campaignSieges.mockResolvedValueOnce({ status: 'READY', sieges: [] });
         render(<SiegePage />);
         expect(await screen.findByText('관여한 포위가 없습니다.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: '강공 예약' })).not.toBeInTheDocument();
     });
 
     it('shows the remaining assault turns and a lifted siege explicitly', async () => {
-        mock.hwihaSieges.mockResolvedValueOnce({ status: 'READY', sieges: [
+        mock.campaignSieges.mockResolvedValueOnce({ status: 'READY', sieges: [
             { ...siege, turns: 1 },
             { ...siege, countyId: 13, countyName: '패현', status: 'LIFTED', canAct: false },
         ] });

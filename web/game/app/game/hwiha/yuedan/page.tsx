@@ -2,9 +2,9 @@
 
 import { Chip, KV, Panel, SectionHeader, Table } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
-import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
+import { Empty, campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
-import { useHwihaRead } from '@/lib/hwiha-reads';
+import { useCampaignRead } from '@/lib/campaign-reads';
 
 /** 명망이 오르고 떨어지는 길 — 정본 설계 §2.8 그대로. */
 const RISING = ['전공', '치적', '관직', '결속 사건'];
@@ -24,9 +24,9 @@ function stampLabel(stamp: string | null): string | null {
  * `MonthlyAssessment` 가 남긴 것을 `GET /api/yuedan` 으로 읽는다.
  */
 export default function YuedanPage() {
-    const yuedan = useHwihaRead((id, signal) => api.hwihaYuedan(id, signal));
-    const retinue = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal));
-    const notice = hwihaReadNotice(yuedan, yuedan.data?.status);
+    const yuedan = useCampaignRead((id, signal) => api.campaignYuedan(id, signal));
+    const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal));
+    const notice = campaignReadNotice(yuedan, yuedan.data?.status);
     const self = yuedan.data?.self ?? null;
     const ranking = yuedan.data?.ranking ?? [];
     const when = stampLabel(yuedan.data?.stamp ?? null);
@@ -131,7 +131,7 @@ export default function YuedanPage() {
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="이탈 판정 순서" sub="코스트가 상한을 넘으면 충성이 낮은 사람부터" />
                         {departures.length === 0 ? (
-                            <Empty>{hwihaReadNotice(retinue, retinue.data?.status) ?? '코스트가 상한 안이라 이탈 판정을 받을 사람이 없습니다.'}</Empty>
+                            <Empty>{campaignReadNotice(retinue, retinue.data?.status) ?? '코스트가 상한 안이라 이탈 판정을 받을 사람이 없습니다.'}</Empty>
                         ) : (
                             <Table
                                 headers={['순서', '인물', '충성', '코스트']}

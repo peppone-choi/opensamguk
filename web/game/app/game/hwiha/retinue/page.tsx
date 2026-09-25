@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Chip, KV, Panel, Portrait, SectionHeader, Table } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
-import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
+import { Empty, campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
-import { useHwihaRead, type PersonCard } from '@/lib/hwiha-reads';
+import { useCampaignRead, type PersonCard } from '@/lib/campaign-reads';
 
 const loyaltyTone = (loyalty: number) => (loyalty >= 80 ? 'moss' : loyalty < 50 ? 'rust' : 'info');
 
@@ -106,11 +106,11 @@ function PersonDetail({ person }: { person: PersonCard }) {
  * 같은 자리이므로 `⚖ 합 / 상한` 표기를 쓴다. 값은 `GET /api/retinue` 에서 온다.
  */
 export default function RetinuePage() {
-    const read = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal));
+    const read = useCampaignRead((id, signal) => api.campaignRetinue(id, signal));
     // 작전실 장수 목록에서 ?person=<retainerId> 로 들어오면 그 인물을 연다.
     const linked = Number(useSearchParams().get('person'));
     const [selectedId, setSelectedId] = useState<number | null>(Number.isInteger(linked) && linked > 0 ? linked : null);
-    const notice = hwihaReadNotice(read, read.data?.status);
+    const notice = campaignReadNotice(read, read.data?.status);
     const people = read.data?.people ?? [];
     const units = read.data?.units ?? [];
     const selected = people.find((p) => p.retainerId === selectedId) ?? people[0] ?? null;

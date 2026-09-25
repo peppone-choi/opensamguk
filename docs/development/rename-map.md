@@ -13,6 +13,13 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
+| `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
+| `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
+| `web/game/lib/hwiha-scout.ts` | `web/game/lib/campaign-scout.ts` | 저장·통신 draft | 정찰 예약 함수 개명 |
+| `web/game/lib/hwiha-session.tsx` | `web/game/lib/campaign-session.tsx` | 저장·통신 draft | 세션 훅·판정 필드 개명 |
+| `web/game/lib/hwiha-map.ts` | `web/game/lib/campaign-map.ts` | 저장·통신 draft | 지도 훅·상수 개명; `han` 지도 번들 ID는 유지 |
+| `HanMapCanvasType` 테스트 별칭 | `WorldMapCanvasType` | 저장·통신 draft | 범용 캔버스 이름과 일치 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |

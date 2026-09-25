@@ -7,7 +7,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from './api';
-import { useHwihaSession } from './hwiha-session';
+import { useGameSession } from './campaign-session';
 
 export type ReadStatus = 'READY' | 'NOT_ASSESSED' | 'NOT_READY' | 'UNAVAILABLE' | 'WRONG_RULE_PROFILE';
 
@@ -211,16 +211,16 @@ export interface Read<T> {
  * 본인 장수로 휘하 조회 하나를 부른다. 장수가 없거나 휘하 월드가 아니면 부르지 않는다 — 그때
  * 화면은 셸의 차단 사유를 보인다. [deps] 가 바뀌면 다시 부른다.
  */
-export function useHwihaRead<T>(
+export function useCampaignRead<T>(
     load: (generalId: number, signal: AbortSignal) => Promise<T>,
     deps: readonly unknown[] = [],
 ): Read<T> {
-    const { generalId, isHwihaWorld, frontInfo } = useHwihaSession();
+    const { generalId, isCampaignWorld, frontInfo } = useGameSession();
     const [state, setState] = useState<Read<T>>({ data: null, error: null, loading: true });
     const turnKey = frontInfo ? `${frontInfo.global.year}-${frontInfo.global.month}-${frontInfo.global.turnPhase ?? ''}` : '';
 
     useEffect(() => {
-        if (generalId == null || !isHwihaWorld) {
+        if (generalId == null || !isCampaignWorld) {
             setState({ data: null, error: null, loading: false });
             return;
         }
@@ -234,19 +234,19 @@ export function useHwihaRead<T>(
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- load 는 호출부의 인라인 화살표다
-    }, [generalId, isHwihaWorld, turnKey, ...deps]);
+    }, [generalId, isCampaignWorld, turnKey, ...deps]);
 
     return state;
 }
 
 /** 머리의 명망 칩. 월단평 조회의 본인 값을 쓴다. */
-export function useHwihaRenown(): number | null {
-    const { data } = useHwihaRead((id, signal) => api.hwihaYuedan(id, signal));
+export function useRenown(): number | null {
+    const { data } = useCampaignRead((id, signal) => api.campaignYuedan(id, signal));
     return data?.self?.renown ?? null;
 }
 
 /** 자원 다섯의 화면 이름 — 사용자 확정 표기(전→금, 곡→쌀). */
-export const HWIHA_RESOURCE_LABELS: ReadonlyArray<{ key: keyof Stock; label: string }> = [
+export const CAMPAIGN_RESOURCE_LABELS: ReadonlyArray<{ key: keyof Stock; label: string }> = [
     { key: 'money', label: '금' },
     { key: 'grain', label: '쌀' },
     { key: 'iron', label: '철' },

@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { Panel, SectionHeader } from '@opensamguk/ui';
 import GameShell from '@/components/GameShell';
 import CourtForm from '@/components/command/CourtForm';
-import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
+import { Empty, campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
-import { useHwihaRead } from '@/lib/hwiha-reads';
-import { useHwihaSession } from '@/lib/hwiha-session';
+import { useCampaignRead } from '@/lib/campaign-reads';
+import { useGameSession } from '@/lib/campaign-session';
 
 /**
  * 조정 결정 — 발령 · 포상. 시안 Orders.
@@ -18,14 +18,14 @@ import { useHwihaSession } from '@/lib/hwiha-session';
  * 로 보낸다. 상사는 카드 위치의 창고망 금 잔액을 확인해 `court.reward`로 접수한다.
  */
 export default function OrdersPage() {
-    const { generalId, refresh } = useHwihaSession();
+    const { generalId, refresh } = useGameSession();
     const [refreshKey, setRefreshKey] = useState(0);
     const [retainerId, setRetainerId] = useState(0);
     const [amount, setAmount] = useState('');
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ kind: 'error' | 'status'; text: string } | null>(null);
-    const retinue = useHwihaRead((id, signal) => api.hwihaRetinue(id, signal), [refreshKey]);
-    const warehouses = useHwihaRead((id, signal) => api.warehouses(id, signal), [refreshKey]);
+    const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal), [refreshKey]);
+    const warehouses = useCampaignRead((id, signal) => api.warehouses(id, signal), [refreshKey]);
     const people = (retinue.data?.people ?? []).filter((person) => person.generalId != null);
     const selected = people.find((person) => person.retainerId === retainerId);
     const location = warehouses.data?.warehouses.find((row) => row.cityId === selected?.locationCityId);
@@ -34,7 +34,7 @@ export default function OrdersPage() {
         : location.stock.money;
     const money = Number(amount);
     const valid = selected != null && Number.isSafeInteger(money) && money > 0 && money <= Math.min(balance, 1_000_000_000);
-    const problem = hwihaReadNotice(retinue, retinue.data?.status) ?? hwihaReadNotice(warehouses, warehouses.data?.status);
+    const problem = campaignReadNotice(retinue, retinue.data?.status) ?? campaignReadNotice(warehouses, warehouses.data?.status);
     async function reward() {
         if (generalId == null || !valid || busy) return;
         setBusy(true); setNotice(null);

@@ -86,7 +86,7 @@ test('one HWIHA board across public preview and both operation rooms', async ({ 
   const warFocus = (await page.getByTestId('commandery-focus').first().textContent())?.trim();
   expect(warFocus).toBe(mainFocus);
   await testInfo.attach('hwiha-operation-room', { body: await page.screenshot(), contentType: 'image/png' });
-  await testInfo.attach('hwiha-map-canvas', { body: await page.locator('canvas[aria-label^="천하 형세"]').screenshot(), contentType: 'image/png' });
+  await testInfo.attach('campaign-map-canvas', { body: await page.locator('canvas[aria-label^="천하 형세"]').screenshot(), contentType: 'image/png' });
   const warHit = await canvasHit(page, 'canvas[aria-label^="천하 형세"]');
 
   expect(isoRequests).toEqual([]);
