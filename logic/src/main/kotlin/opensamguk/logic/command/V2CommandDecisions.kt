@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.command
+package opensamguk.logic.command
 
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.util.phpRound

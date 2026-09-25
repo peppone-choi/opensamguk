@@ -11,9 +11,9 @@ import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
 import org.junit.jupiter.api.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyString
@@ -40,7 +40,7 @@ class V2CommandPrecheckServiceTest {
     fun `deployed actor blocks both immediate city actions and transport preview`() {
         val service = service("han-world-v3", 2000, deployed = true)
         val recruit = V2CommandAvailability.Available(V2CommandRegistry.garrisonRecruitSchema,
-            opensamguk.logic.v2.command.V2GarrisonRecruitArgs(1,100))
+            opensamguk.logic.command.V2GarrisonRecruitArgs(1,100))
         val transport = V2CommandAvailability.Available(V2CommandRegistry.cityTransportSchema, transportArgs)
         for (available in listOf(recruit, transport)) {
             assertEquals("BATTLEFIELD_LOCATION", assertIs<V2CommandAvailability.Blocked>(service.precheck(10, available)).code)

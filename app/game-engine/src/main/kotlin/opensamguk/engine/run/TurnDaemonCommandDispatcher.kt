@@ -57,8 +57,8 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
 import opensamguk.logic.world.RaiseInvaderSpec
 import java.time.Clock
 import java.time.Instant

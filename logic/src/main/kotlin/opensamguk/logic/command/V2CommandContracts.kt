@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.command
+package opensamguk.logic.command
 
 import java.time.Duration
 import kotlin.reflect.KClass

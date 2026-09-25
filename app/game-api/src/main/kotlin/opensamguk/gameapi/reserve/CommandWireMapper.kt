@@ -13,11 +13,11 @@ import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CommandArgs
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2CommandSchema
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandArgs
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.V2CommandSchema
+import opensamguk.logic.command.V2GarrisonRecruitArgs
 
 /**
  * F-INTAKE seam — maps a `POST /api/command/{code}` `{code, argJson, generalId}` onto the EXISTING

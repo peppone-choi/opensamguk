@@ -1,4 +1,4 @@
-package opensamguk.common.wire.v2
+package opensamguk.common.wire.command
 
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi

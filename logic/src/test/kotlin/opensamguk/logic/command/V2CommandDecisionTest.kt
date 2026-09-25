@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.command
+package opensamguk.logic.command
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

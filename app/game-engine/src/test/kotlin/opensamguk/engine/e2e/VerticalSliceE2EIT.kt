@@ -54,10 +54,10 @@ import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.V2GarrisonRecruitArgs
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll

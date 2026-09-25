@@ -21,8 +21,8 @@ import opensamguk.gameapi.reserve.CommandWireMapper
 import opensamguk.gameapi.sanitize.HtmlSanitizer
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.V2CommandAvailability
 import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.RuleProfile

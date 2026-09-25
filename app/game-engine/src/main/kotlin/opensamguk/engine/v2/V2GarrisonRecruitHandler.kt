@@ -7,11 +7,11 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.infra.persistence.CommandInboxRepository
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
-import opensamguk.logic.v2.command.V2GarrisonRecruitContext
-import opensamguk.logic.v2.command.V2GarrisonRecruitDecision
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.decideGarrisonRecruit
+import opensamguk.logic.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.V2GarrisonRecruitContext
+import opensamguk.logic.command.V2GarrisonRecruitDecision
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.decideGarrisonRecruit
 
 /**
  * OPENSAM-153 (v2 R4) — 도시병사 보충(`v2GarrisonRecruit`) 핸들러. 도메인 규칙은 [recruitDecision]

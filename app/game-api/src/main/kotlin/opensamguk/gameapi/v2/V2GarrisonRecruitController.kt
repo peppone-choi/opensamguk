@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandAvailability
 
 /**
  * OPENSAM-153 (v2 R4) — v2 도시병사 보충 인테이크 엔드포인트. **v2 샌드박스 전용, 새 파일**

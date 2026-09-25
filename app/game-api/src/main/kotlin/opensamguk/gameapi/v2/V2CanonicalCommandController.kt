@@ -10,8 +10,8 @@ import kotlinx.serialization.json.longOrNull
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus

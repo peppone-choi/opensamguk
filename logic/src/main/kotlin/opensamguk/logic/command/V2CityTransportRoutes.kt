@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.command
+package opensamguk.logic.command
 
 import opensamguk.logic.world.HanStrategicRouteProjection
 import opensamguk.logic.world.PathDenialCode

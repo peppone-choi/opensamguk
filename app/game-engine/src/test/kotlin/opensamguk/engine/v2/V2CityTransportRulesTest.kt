@@ -12,8 +12,8 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.world.CalcCityDistance
 import opensamguk.logic.world.*
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.resolveImmediateCityTransportRoute
+import opensamguk.logic.command.V2CityTransportArgs
+import opensamguk.logic.command.resolveImmediateCityTransportRoute
 import opensamguk.infra.seed.HanStrategicTopologyJson
 import java.nio.file.Path
 import org.mockito.Mockito

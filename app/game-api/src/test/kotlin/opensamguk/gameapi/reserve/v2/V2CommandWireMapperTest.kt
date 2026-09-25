@@ -8,8 +8,8 @@ import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.gameapi.reserve.CommandWireMapper
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.V2CityTransportArgs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

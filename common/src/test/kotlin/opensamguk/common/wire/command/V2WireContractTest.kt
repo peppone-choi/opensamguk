@@ -1,4 +1,4 @@
-package opensamguk.common.wire.v2
+package opensamguk.common.wire.command
 
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive

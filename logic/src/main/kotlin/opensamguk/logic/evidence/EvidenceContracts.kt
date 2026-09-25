@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.evidence
+package opensamguk.logic.evidence
 
 /**
  * OPENSAM-37 [G0-A②] 출처·확실성 계약 — in-memory 모델만. DB write·마이그레이션 없음.

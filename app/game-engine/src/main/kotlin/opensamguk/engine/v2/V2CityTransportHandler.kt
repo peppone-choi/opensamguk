@@ -7,15 +7,15 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CityTransportContext
-import opensamguk.logic.v2.command.V2CityTransportDecision
+import opensamguk.logic.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CityTransportContext
+import opensamguk.logic.command.V2CityTransportDecision
 import opensamguk.logic.world.CalcCityDistance
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.CityConstRegistry
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.decideCityTransport
-import opensamguk.logic.v2.command.resolveImmediateCityTransportRoute
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.decideCityTransport
+import opensamguk.logic.command.resolveImmediateCityTransportRoute
 import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
 import opensamguk.logic.world.HanStrategicRouteProjection
 

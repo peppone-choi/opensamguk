@@ -3,10 +3,10 @@ package opensamguk.gameapi.v2
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
-import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
+import opensamguk.logic.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.V2CityTransportArgs
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`

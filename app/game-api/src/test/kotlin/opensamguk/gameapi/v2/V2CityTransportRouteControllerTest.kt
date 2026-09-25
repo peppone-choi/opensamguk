@@ -5,9 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CommandRegistry
 import org.mockito.Mockito.*
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType

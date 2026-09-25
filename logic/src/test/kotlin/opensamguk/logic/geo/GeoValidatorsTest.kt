@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.geo
+package opensamguk.logic.geo
 
 import java.time.LocalDate
 import kotlin.test.Test

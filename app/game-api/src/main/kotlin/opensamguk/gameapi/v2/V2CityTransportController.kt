@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.command.V2CommandAvailability
+import opensamguk.logic.command.V2CityTransportArgs
 import opensamguk.logic.world.ResolvedStrategicPath
 import com.fasterxml.jackson.annotation.JsonInclude
 

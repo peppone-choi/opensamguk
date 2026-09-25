@@ -1,4 +1,4 @@
-package opensamguk.logic.v2.geo
+package opensamguk.logic.geo
 
 /**
  * V2 G0-A validator (OPENSAM-36 / G0A-p, G0A-q, T1-B06, B07, B12).
