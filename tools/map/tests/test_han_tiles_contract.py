@@ -730,7 +730,8 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
             # 2026-09-21: 북동 확장 프레임을 걷어내 격자가 843x864 → 669x768 로 돌아왔다(城·省 id 는 그대로).
             # 2026-09-21: 취락 표시명 교체가 옛 郡 이름 별칭(aliases)을 같이 내리게 고치면서 재핀했다.
             # parentRegions 3 곳(반로·본피·고동람)이 aliases 를 얻은 것뿐이라 아래 격자·투영 단언은 그대로 산다.
-            "99b7ba370e7c60b1f7087972cb1e050bc60524fd988333b72508c7bbbd8bac2f",  # 4배 정밀 격자·전 구역 7×7 공간
+            # 2026-09-25: 잠현의 치소를 연결된 여강군 땅으로 옮긴 map4 타일 판.
+            "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488",  # 4배 정밀 격자·전 구역 7×7 공간
             binding["sha256"],
         )
         self.assertEqual((3072, 2676), (binding["cols"], binding["rows"]))

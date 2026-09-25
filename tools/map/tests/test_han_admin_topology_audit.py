@@ -412,7 +412,8 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         self.assertEqual(0, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(31, snapshot["jurisdictionTopology"]["disconnectedCount"])
         # 2026-09-17: 安平口 관할이 遼東郡 西安平 땅에 합쳐 38 → 37(ADR-LITE-056).
-        self.assertEqual(20, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        # map4 경계 보정 뒤 관할이 다른 관할에 완전히 포위된 경우는 없다.
+        self.assertEqual(0, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.

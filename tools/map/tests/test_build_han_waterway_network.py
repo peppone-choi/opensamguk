@@ -73,10 +73,10 @@ class WaterwayNetworkTest(unittest.TestCase):
         self.node(ledger, "fankou")["reach"] = "he-mengjin"
         self.assertRed(ledger, "no inland port")
 
-    def test_site_cannot_be_moved_to_the_water(self):
+    def test_site_cell_must_match_the_committed_site(self):
         ledger = self.mutated()
         self.node(ledger, "jiangzhou")["cell"]["col"] += 1
-        self.assertRed(ledger, "sites are never moved")
+        self.assertRed(ledger, "ledger cell differs from the committed site cell")
 
     def test_crossing_banks_on_the_same_bank_are_rejected(self):
         ledger = self.mutated()
