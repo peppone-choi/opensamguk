@@ -5,7 +5,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import opensamguk.common.constants.GameConst
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.RestAction
@@ -313,6 +318,32 @@ class HwihaInputRegistryTest {
     private val legacy70Slots = (GameConst.availableGeneralCommand.values + GameConst.availableChiefCommand.values).flatten()
     private val legacy70 = legacy70Slots.distinct()
 
+    private fun missingDirectActions(source: HwihaInputCatalog, names: List<String>): List<String> =
+        names.filter { name -> source.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } }
+
+    private fun missingChiefKinds(source: HwihaInputCatalog, names: List<String>, kind: InputKind): List<String> =
+        names.map { "che_$it" }.filter { name -> source.legacyIndex[name].orEmpty().none { it.kind == kind } }
+
+    private fun withoutLegacyReference(name: String): HwihaInputCatalog {
+        val source = repoRoot().resolve("data/commands/hwiha-input-catalog.json").toFile().readText()
+        val root = Json.parseToJsonElement(source).jsonObject
+        val changed = if (name in catalog.retiredLegacyCommands) {
+            JsonObject(root + mapOf(
+                "retiredLegacyCommands" to JsonArray(root.getValue("retiredLegacyCommands").jsonArray.filterNot { it.jsonPrimitive.content == name }),
+                "retiredLegacyReasons" to JsonObject(root.getValue("retiredLegacyReasons").jsonObject.filterKeys { it != name }),
+            ))
+        } else {
+            val rows = root.getValue("inputs").jsonArray.map { element ->
+                val row = element.jsonObject
+                JsonObject(row + ("legacyCommands" to JsonArray(row.getValue("legacyCommands").jsonArray.filterNot {
+                    it.jsonPrimitive.content == name
+                })))
+            }
+            JsonObject(root + ("inputs" to JsonArray(rows)))
+        }
+        return HwihaInputCatalog.parse(changed.toString())
+    }
+
     private fun row(inputId: String, kind: String, legacy: String): String {
         val timing = if (kind == "GENERAL_ACTION")
             """{"phase":"FIELD","turnSlots":12,"perPhaseLimit":1}"""
@@ -374,9 +405,9 @@ class HwihaInputRegistryTest {
             "숙련전환", "장비매매", "군량매매", "물자조달",
         ).map { "che_$it" }
         assertEquals(38, direct.size)
-        assertEquals(emptyList(), direct.filter { name -> catalog.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
-        val mutated = ledger(row("policy.farm", "POLICY", "\"che_농지개간\""))
-        assertEquals(listOf("che_농지개간"), direct.filter { name -> name == "che_농지개간" && mutated.legacyIndex[name].orEmpty().none { it.kind == InputKind.GENERAL_ACTION } })
+        assertEquals(emptyList(), missingDirectActions(catalog, direct))
+        val mutated = withoutLegacyReference("che_농지개간")
+        assertEquals(listOf("che_농지개간"), missingDirectActions(mutated, direct))
     }
 
     @Test
@@ -387,21 +418,28 @@ class HwihaInputRegistryTest {
             catalog.retiredLegacyCommands.toSet())
         assertTrue(catalog.entries.all { it.inputId == "action.enlist" || it.legacyCommands.size <= 1 }, "출사 외 기존 명령은 명령별 한 행으로 둔다")
         assertEquals(73, catalog.entries.size)
-        val mutation = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""))
-        assertTrue(mutation.invalidLegacyCoverage(legacy70).isNotEmpty())
+        for (name in legacy70Slots) {
+            val mutation = withoutLegacyReference(name)
+            assertEquals(listOf(name), mutation.invalidLegacyCoverage(legacy70), name)
+        }
         val overlap = ledger(row("action.farm", "GENERAL_ACTION", "\"che_농지개간\""),
             retired = "\"che_징병\"", reasons = "\"che_징병\":\"test\"")
         assertEquals(emptyList(), overlap.invalidLegacyCoverage(listOf("che_농지개간", "che_징병")))
-        val court = listOf("부대탈퇴지시", "물자원조", "초토화", "기술연구", "천도", "몰수", "불가침제의", "선전포고", "종전제의", "불가침파기제의")
+        val court = listOf("발령", "포상", "부대탈퇴지시", "물자원조", "초토화", "천도", "몰수", "불가침제의", "선전포고", "종전제의", "불가침파기제의")
         val work = listOf("증축", "감축")
         val stratagem = listOf("필사즉생", "백성동원", "수몰", "허보", "의병모집", "이호경식", "급습", "피장파장")
-        assertEquals(20, court.size + work.size + stratagem.size)
+        val chief = GameConst.availableChiefCommand.values.flatten().filter { it != "휴식" && it !in catalog.retiredLegacyCommands }
+        assertEquals(21, chief.size)
+        assertEquals(chief.toSet(), (court + work + stratagem).map { "che_$it" }.toSet())
         for ((names, kind) in listOf(court to InputKind.COURT_DECISION, work to InputKind.WORK,
             stratagem to InputKind.STRATAGEM)) {
-            names.forEach { name ->
-                assertTrue(catalog.legacyIndex["che_$name"].orEmpty().any { it.kind == kind }, "che_$name -> $kind")
-            }
+            assertEquals(emptyList(), missingChiefKinds(catalog, names, kind), kind.name)
         }
+        assertEquals(listOf("che_발령"), missingChiefKinds(withoutLegacyReference("che_발령"), court, InputKind.COURT_DECISION))
+        assertTrue("che_기술연구" in GameConst.availableGeneralCommand.values.flatten())
+        assertTrue("che_기술연구" !in chief)
+        // Old general-command provenance and the new 3rd-layer court.institution mapping are separate contracts.
+        assertTrue(catalog.legacyIndex["che_기술연구"].orEmpty().any { it.kind == InputKind.COURT_DECISION })
     }
 
     @Test
