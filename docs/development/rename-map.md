@@ -77,6 +77,9 @@
 | `opensamguk.logic.input.HwihaScoutPosts` (`logic/input/HwihaScoutPosts.kt`) | `opensamguk.logic.vision.ScoutPosts` (`logic/vision/ScoutPosts.kt`) | 이 PR | 정찰 배치의 시야 공개 투영, 저장 키는 별도 단계 |
 | `opensamguk.logic.input.HwihaScoutPostEntry` | `opensamguk.logic.vision.ScoutPostEntry` | 이 PR | 정찰 배치 항목 |
 | `logic/input/HwihaScoutPostsTest.kt` | `logic/vision/ScoutPostsTest.kt` | 이 PR | 시야 계약 테스트 파일·타입·패키지 개명 |
+| `opensamguk.logic.input.HwihaVisionRules` (`logic/input/HwihaVisionRules.kt`) | `opensamguk.logic.vision.VisionRules` (`logic/vision/VisionRules.kt`) | 이 PR | 시야 규칙 로더; 리소스 식별자는 저장·데이터 단계에서 개명 |
+| `opensamguk.logic.input.VisionSourceKind` | `opensamguk.logic.vision.VisionSourceKind` | 이 PR | 시야 출처 enum 패키지 이동 |
+| `opensamguk.logic.input.TroopBand` | `opensamguk.logic.vision.TroopBand` | 이 PR | 병력 구간 타입 패키지 이동 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 
@@ -172,7 +175,7 @@
 | `hwihaRetireLastTurn` | `retireLastTurn` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaRetireHandler.kt` |
 | `hwihaRetired` | `retired` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaRetireRules.kt` |
 | `hwihaSalaryMonth` | `salaryMonth` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaMonthlySalary.kt` |
-| `hwihaScoutPosts` | `scoutPosts` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaScoutPosts.kt` |
+| `hwihaScoutPosts` | `scoutPosts` | `logic/src/main/kotlin/opensamguk/logic/vision/ScoutPosts.kt` |
 | `hwihaScoutReports` | `scoutReports` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaScout.kt` |
 | `hwihaStratagemHand` | `stratagemHand` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaStratagemHand.kt` |
 | `hwihaSupplyConvoyMonth` | `supplyConvoyMonth` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCorpsRations.kt` |
