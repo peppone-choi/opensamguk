@@ -43,7 +43,7 @@ class V65GameEventMigrationTest {
             insert(keyA, 0, "PUBLIC", "WORLD", "county.ownerChanged", state = "PUBLISHED",
                 refs = """{"CITY":7,"FROM_NATION":0,"TO_NATION":3}""")
             insert("b".repeat(64), 1, "NATION", "RETINUE_NATION", "income.monthly", nation = 3,
-                facts = """{"AMOUNT":900}""")
+                facts = """{"MONEY":900}""")
             insert("c".repeat(64), 2, "COURT", "COURT", "court.dispatchReceived", nation = 3,
                 recipients = "{5,8}", refs = """{"REQUEST":"dispatch-7"}""")
             assertEquals(3, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 1", Int::class.java))
