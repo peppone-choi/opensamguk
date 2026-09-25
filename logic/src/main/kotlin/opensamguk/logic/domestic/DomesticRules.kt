@@ -4,19 +4,19 @@ import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.domestic.CountyPolicy
 import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.input.DispatchStatus
-import opensamguk.logic.input.HwihaCommanderyPolicies
-import opensamguk.logic.input.HwihaCorpsPolicies
+import opensamguk.logic.domestic.CommanderyPolicies
+import opensamguk.logic.domestic.CorpsPolicyAssignments
 import opensamguk.logic.input.HwihaCountyAssignment
-import opensamguk.logic.input.HwihaCountyPolicyState
-import opensamguk.logic.input.HwihaCountyWorks
+import opensamguk.logic.domestic.CountyPolicyState
+import opensamguk.logic.domestic.CountyWorks
 import opensamguk.logic.input.HwihaDeployedCorps
 import opensamguk.logic.input.HwihaDeploymentState
 import opensamguk.logic.input.HwihaDispatchState
 import opensamguk.logic.input.HwihaLordStatus
 import opensamguk.logic.input.HwihaPhase
-import opensamguk.logic.input.HwihaPlacementOrder
-import opensamguk.logic.input.HwihaPlacementState
-import opensamguk.logic.input.HwihaPolicySlot
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PolicySlot
 import opensamguk.logic.domestic.PlacementPost
 import opensamguk.logic.domestic.PlacementRequest
 import opensamguk.logic.domestic.PlacementTarget
@@ -152,7 +152,7 @@ object DomesticRules {
         if (base !is DomesticAssessment.Eligible) return@guarded base
         val actor = state.person(request.actorId)!!
         val person = base.person!!
-        val current = HwihaPlacementState.read(person.meta)
+        val current = PlacementState.read(person.meta)
         if (request.post == PlacementPost.NONE) {
             return@guarded if (current == null || (current.active == null && current.pending?.post == PlacementPost.NONE))
                 reject(DomesticFailure.NO_PLACEMENT) else base
@@ -163,7 +163,7 @@ object DomesticRules {
     }
 
     /** 카드 턴의 재검사: 현행(또는 막 현행이 될) 배치가 아직 유효한가. 자리 권한(주공)은 접수 때만 본다. */
-    fun assessPlacementOrder(personId: Int, order: HwihaPlacementOrder, state: DomesticProjection): DomesticAssessment = guarded {
+    fun assessPlacementOrder(personId: Int, order: PlacementOrder, state: DomesticProjection): DomesticAssessment = guarded {
         val base = cardRelation(order.ownerGeneralId, order.retainerId, state)
         if (base !is DomesticAssessment.Eligible) return@guarded base
         if (base.person!!.id != personId) return@guarded reject(DomesticFailure.CARD_NOT_FOUND)
@@ -184,19 +184,19 @@ object DomesticRules {
                     return@guarded reject(DomesticFailure.NOT_COUNTY_AUTHORITY)
                 if (ruler?.id != actor.id && commanderySlot(county, state)?.isEmpty == false)
                     return@guarded reject(DomesticFailure.UPPER_POLICY_IN_FORCE)
-                HwihaCountyPolicyState.read(county.meta)?.slot
+                CountyPolicyState.read(county.meta)?.slot
             }
             is PolicyTarget.Commandery -> {
                 if (actor.nationId <= 0 || rulerOf(actor.nationId, state)?.id != actor.id) return@guarded reject(DomesticFailure.NOT_RULER)
                 if (state.counties.all { it.commanderyId == null }) return@guarded reject(DomesticFailure.STATE_UNAVAILABLE)
                 if (state.counties.none { it.nationId == actor.nationId && it.commanderyId == target.commanderyId })
                     return@guarded reject(DomesticFailure.INVALID_COMMANDERY)
-                state.nation(actor.nationId)?.let { HwihaCommanderyPolicies.read(it.meta)?.get(target.commanderyId)?.slot }
+                state.nation(actor.nationId)?.let { CommanderyPolicies.read(it.meta)?.get(target.commanderyId)?.slot }
             }
             is PolicyTarget.Corps -> {
                 val corps = deployedCorps(state).singleOrNull { it.orderId == target.orderId && it.ownerGeneralId == actor.id }
                     ?: return@guarded reject(DomesticFailure.CORPS_NOT_FOUND)
-                HwihaCorpsPolicies.read(actor.meta)?.forOrder(corps.orderId)?.slot
+                CorpsPolicyAssignments.read(actor.meta)?.forOrder(corps.orderId)?.slot
             }
         }
         when {
@@ -215,7 +215,7 @@ object DomesticRules {
         if (rulerOf(county.nationId, state)?.id != actor.id && actor.id !in countyControllers(county, state))
             return@guarded reject(DomesticFailure.NOT_COUNTY_AUTHORITY)
         if (HwihaCountyWarehouse.read(county.meta, county.id) == null) return@guarded reject(DomesticFailure.WAREHOUSE_NOT_READY)
-        val works = HwihaCountyWorks.read(county.meta)
+        val works = CountyWorks.read(county.meta)
         when {
             works?.active != null -> reject(DomesticFailure.WORK_IN_PROGRESS)
             works?.completed?.any { it.work == request.work } == true -> reject(DomesticFailure.WORK_COMPLETED)
@@ -230,7 +230,7 @@ object DomesticRules {
             ?: return@guarded reject(DomesticFailure.INVALID_COUNTY)
         if (rulerOf(county.nationId, state)?.id != actor.id && actor.id !in countyControllers(county, state))
             return@guarded reject(DomesticFailure.NOT_COUNTY_AUTHORITY)
-        val works = HwihaCountyWorks.read(county.meta)
+        val works = CountyWorks.read(county.meta)
         if (works?.active != null) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
         if (request.work != DomesticWork.FORTIFICATION ||
             works?.completed?.none { it.work == DomesticWork.FORTIFICATION } != false)
@@ -251,7 +251,7 @@ object DomesticRules {
             val assignment = HwihaCountyAssignment.read(person.meta)
             if (assignment != null && assignment.countyId == county.id && assignment.nationId == county.nationId &&
                 person.nationId == county.nationId) add(person.id)
-            val active = HwihaPlacementState.read(person.meta)?.active
+            val active = PlacementState.read(person.meta)?.active
             if (active != null && active.order.post == PlacementPost.MAGISTRATE && active.order.target == PlacementTarget.County(county.id) &&
                 assessPlacementOrder(person.id, active.order, state) is DomesticAssessment.Eligible) add(active.order.ownerGeneralId)
         }
@@ -267,7 +267,7 @@ object DomesticRules {
         val seats = state.peopleAt(province).mapNotNull { person ->
             if (person.inBattle || person.nationId != county.nationId) return@mapNotNull null
             // Only people standing in this county are read: a corrupt record elsewhere cannot unseat this county.
-            val active = HwihaPlacementState.read(person.meta)?.active
+            val active = PlacementState.read(person.meta)?.active
             if (active != null && active.arrivedAt != null && active.order.post == PlacementPost.MAGISTRATE &&
                 active.order.target == PlacementTarget.County(county.id) &&
                 assessPlacementOrder(person.id, active.order, state) is DomesticAssessment.Eligible)
@@ -280,17 +280,17 @@ object DomesticRules {
         return seats.firstOrNull()
     }
 
-    fun commanderySlot(county: DomesticCounty, state: DomesticProjection): HwihaPolicySlot? {
+    fun commanderySlot(county: DomesticCounty, state: DomesticProjection): PolicySlot? {
         val commandery = county.commanderyId ?: return null
         val nation = state.nation(county.nationId) ?: return null
-        return HwihaCommanderyPolicies.read(nation.meta)?.get(commandery)?.slot
+        return CommanderyPolicies.read(nation.meta)?.get(commandery)?.slot
     }
 
     /** 郡 방침(현행) > 縣 방침(현행, 앉은 현령이 있을 때) > 기본 방침(§8.2 「빈자리는 기본 방침으로 자동 운영」). */
     fun effectivePolicy(county: DomesticCounty, state: DomesticProjection, design: DomesticDesign): EffectivePolicy {
         val seat = seatedMagistrate(county, state)
         commanderySlot(county, state)?.active?.let { return EffectivePolicy(CountyPolicy.valueOf(it.policy), PolicySource.COMMANDERY, seat) }
-        val own = HwihaCountyPolicyState.read(county.meta)?.slot?.active
+        val own = CountyPolicyState.read(county.meta)?.slot?.active
         if (seat != null && own != null) return EffectivePolicy(CountyPolicy.valueOf(own.policy), PolicySource.COUNTY, seat)
         return EffectivePolicy(design.defaultCountyPolicy, PolicySource.DEFAULT, seat)
     }
@@ -299,7 +299,7 @@ object DomesticRules {
     fun magistracyClaimed(countyId: Int, exceptPersonId: Int, state: DomesticProjection): Boolean {
         val county = state.county(countyId) ?: return true
         return state.people.filter { it.id != exceptPersonId }.any { person ->
-            val placement = HwihaPlacementState.read(person.meta)
+            val placement = PlacementState.read(person.meta)
             val assignment = HwihaCountyAssignment.read(person.meta)
             val dispatch = HwihaDispatchState.read(person.meta)
             (placement?.claimsMagistracy(countyId) == true && person.nationId == county.nationId) ||

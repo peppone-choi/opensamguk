@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.CountyIndicators
+
 /**
  * 치적 사건: 縣令으로 배치된 카드가 앉은 縣의 지표가 지난달보다 올랐다(§8.2 「치적은 명망으로 이어진다」).
  * [ownerGeneralId] 는 그 카드를 거느린 장수(치적을 받을 쪽), [risen] 은 오른 지표 이름(고정 순서:
@@ -12,8 +14,8 @@ data class HwihaGovernanceMeritEvent(
     val retainerId: Int,
     val countyId: Int,
     val monthStamp: String,
-    val previous: HwihaCountyIndicators,
-    val current: HwihaCountyIndicators,
+    val previous: CountyIndicators,
+    val current: CountyIndicators,
     val risen: List<String>,
 ) {
     init { require(ownerGeneralId > 0 && cardGeneralId > 0 && retainerId > 0 && countyId > 0 && risen.isNotEmpty()) }

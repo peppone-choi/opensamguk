@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementState
+
 import opensamguk.logic.domestic.PlacementPost
 import opensamguk.logic.domestic.PlacementTarget
 
@@ -134,7 +136,7 @@ object HwihaLegacyCourtRules {
 
     private fun hasEnvoy(actorId: Int, targetNationId: Int, state: DomesticProjection): Boolean =
         state.cards.any { card -> card.masterId == actorId && card.generalId?.let(state::person)?.let { person ->
-            val placement = HwihaPlacementState.read(person.meta)?.active
+            val placement = PlacementState.read(person.meta)?.active
             placement?.order?.post == PlacementPost.ENVOY &&
                 placement.order.target == PlacementTarget.Nation(targetNationId) && placement.arrivedAt != null
         } == true }

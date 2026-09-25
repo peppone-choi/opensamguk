@@ -1,5 +1,11 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.ActivePlacement
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyWorks
+
 import opensamguk.logic.domestic.PlacementPost
 import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.domestic.PlacementTarget
@@ -16,8 +22,8 @@ import kotlin.test.*
  */
 class HwihaScoutPostsTest {
     private val now = HwihaPhase(200, 1, 1)
-    private fun placed(retainer: Int, owner: Int, post: PlacementPost, arrived: Boolean) = mapOf(HwihaPlacementState.META_KEY to
-        HwihaPlacementState(HwihaActivePlacement(HwihaPlacementOrder("r$retainer", owner, retainer, post,
+    private fun placed(retainer: Int, owner: Int, post: PlacementPost, arrived: Boolean) = mapOf(PlacementState.META_KEY to
+        PlacementState(ActivePlacement(PlacementOrder("r$retainer", owner, retainer, post,
             if (post == PlacementPost.SCOUT) PlacementTarget.Province("p$retainer") else PlacementTarget.County(10), now), now,
             if (arrived) now else null), null).toMetaValue())
 
@@ -39,17 +45,17 @@ class HwihaScoutPostsTest {
     }
 
     @Test fun `county works publish kind and status for the watchtower reader`() {
-        val works = HwihaCountyWorks(DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
-            listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now)))
+        val works = CountyWorks(DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
+            listOf(CompletedWork(DomesticWork.WATCHTOWER_BEACON, now)))
         val raw = works.toMetaValue()
         assertEquals(1, raw["version"])
         val rows = raw["works"] as List<*>
         assertEquals(listOf("WATCHTOWER_BEACON" to "COMPLETE", "ROAD" to "IN_PROGRESS"),
             rows.map { (it as Map<*, *>)["kind"] to it["status"] })
-        assertEquals(works, HwihaCountyWorks.read(mapOf(HwihaCountyWorks.META_KEY to raw)))
+        assertEquals(works, CountyWorks.read(mapOf(CountyWorks.META_KEY to raw)))
         // Reordering the in-progress entry ahead of a completed one is corruption, not a new county state.
         assertFailsWith<IllegalArgumentException> {
-            HwihaCountyWorks.read(mapOf(HwihaCountyWorks.META_KEY to linkedMapOf("version" to 1, "works" to rows.reversed())))
+            CountyWorks.read(mapOf(CountyWorks.META_KEY to linkedMapOf("version" to 1, "works" to rows.reversed())))
         }
     }
 }

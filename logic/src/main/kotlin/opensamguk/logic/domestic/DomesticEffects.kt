@@ -2,9 +2,9 @@ package opensamguk.logic.domestic
 
 import opensamguk.logic.economy.HwihaCountyIncome
 import opensamguk.logic.economy.HwihaResources
-import opensamguk.logic.input.HwihaActiveWork
-import opensamguk.logic.input.HwihaCompletedWork
-import opensamguk.logic.input.HwihaCountyIndicators
+import opensamguk.logic.domestic.ActiveWork
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyIndicators
 import opensamguk.logic.input.HwihaPhase
 
 /** 縣治 城의 지표와 상한. 민심은 기존 저장 꼴(실수 0..100)을 그대로 쓴다. */
@@ -17,7 +17,7 @@ data class CountyLevels(
     val defence: Int, val defenceMax: Int,
     val wall: Int, val wallMax: Int,
 ) {
-    fun indicators(): HwihaCountyIndicators = HwihaCountyIndicators(population, agriculture, commerce, security,
+    fun indicators(): CountyIndicators = CountyIndicators(population, agriculture, commerce, security,
         trust.toInt(), defence, wall)
 }
 
@@ -37,9 +37,9 @@ data class PolicyOutcome(val levels: CountyLevels, val credit: HwihaResources, v
 
 sealed interface WorkStep {
     /** 창고가 모자라 이번 순은 진척이 없다. */
-    data class Stopped(val work: HwihaActiveWork, val reason: String) : WorkStep
-    data class Advanced(val work: HwihaActiveWork, val debit: HwihaResources) : WorkStep
-    data class Completed(val completed: HwihaCompletedWork, val debit: HwihaResources, val levels: CountyLevels) : WorkStep
+    data class Stopped(val work: ActiveWork, val reason: String) : WorkStep
+    data class Advanced(val work: ActiveWork, val debit: HwihaResources) : WorkStep
+    data class Completed(val completed: CompletedWork, val debit: HwihaResources, val levels: CountyLevels) : WorkStep
 }
 
 /** 방침 효과·공사 진척의 순수 계산. 정수 연산이며 0 쪽으로 자른다(결정론). */
@@ -96,13 +96,13 @@ object DomesticEffects {
         return PolicyOutcome(next, credit, debit)
     }
 
-    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): HwihaActiveWork {
+    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): ActiveWork {
         val spec = design.works.getValue(work)
-        return HwihaActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null)
+        return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null)
     }
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
-    fun progressWork(design: DomesticDesign, work: HwihaActiveWork, now: HwihaPhase, stock: HwihaResources,
+    fun progressWork(design: DomesticDesign, work: ActiveWork, now: HwihaPhase, stock: HwihaResources,
         levels: CountyLevels, seat: SeatStats?): WorkStep {
         val speed = design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000
         val next = minOf(work.required.toLong(), work.progress + maxOf(1L, speed)).toInt()
@@ -112,7 +112,7 @@ object DomesticEffects {
         if (next == work.required) {
             var after = levels
             for (effect in design.works.getValue(work.work).completion) after = add(after, effect.indicator, effect.amount.toLong())
-            return WorkStep.Completed(HwihaCompletedWork(work.work, now), due, after)
+            return WorkStep.Completed(CompletedWork(work.work, now), due, after)
         }
         return WorkStep.Advanced(work.copy(progress = next, charged = work.charged.credit(due), lastProgressAt = now,
             stopReason = null), due)
@@ -126,7 +126,7 @@ object DomesticEffects {
     }
 
     /** 남은 순 수(현재 속도 기준, 올림). */
-    fun remainingPhases(design: DomesticDesign, work: HwihaActiveWork, seat: SeatStats?): Int {
+    fun remainingPhases(design: DomesticDesign, work: ActiveWork, seat: SeatStats?): Int {
         val speed = maxOf(1L, design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000)
         return ((work.required - work.progress + speed - 1) / speed).toInt()
     }

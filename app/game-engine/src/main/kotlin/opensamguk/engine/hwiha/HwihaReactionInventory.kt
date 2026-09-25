@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.CorpsPolicyAssignments
+
 import opensamguk.logic.domestic.CorpsPolicy
 
 import opensamguk.engine.turn.ChangeRecorder
@@ -28,7 +30,7 @@ class HwihaReactionInventory(private val world: InMemoryTurnWorld, private val r
         val intercept = mutableListOf<HwihaReactionOrder>()
         val evade = mutableListOf<HwihaReactionOrder>()
         for (owner in people) {
-            val policies = try { HwihaCorpsPolicies.read(owner.meta) } catch (_: IllegalArgumentException) { return Result.INVALID } ?: continue
+            val policies = try { CorpsPolicyAssignments.read(owner.meta) } catch (_: IllegalArgumentException) { return Result.INVALID } ?: continue
             for (entry in policies.entries) {
                 val active = entry.slot.active ?: continue
                 val corps = deployed.singleOrNull { it.orderId == entry.orderId && it.ownerGeneralId == owner.id &&

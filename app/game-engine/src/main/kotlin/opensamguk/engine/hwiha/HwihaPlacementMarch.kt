@@ -1,5 +1,10 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.ActivePlacement
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PlacementMarch
+
 import opensamguk.logic.domestic.PlacementTarget
 
 import opensamguk.engine.turn.*
@@ -25,7 +30,7 @@ class HwihaPlacementMarchTurn(
     fun onTurn(generalId: Int): Boolean {
         if (world.ruleProfile != RuleProfile.HWIHA) return false
         val card = world.getGeneralById(generalId) ?: return false
-        val active = try { HwihaPlacementState.read(card.meta)?.active } catch (_: IllegalArgumentException) { null } ?: return false
+        val active = try { PlacementState.read(card.meta)?.active } catch (_: IllegalArgumentException) { null } ?: return false
         // A dispatched human assignment owns movement; placements only move NPC cards (validated at intake and activation).
         if (HwihaCountyAssignment.META_KEY in card.meta) return false
         val destination = destinationOf(active.order) ?: run {
@@ -47,7 +52,7 @@ class HwihaPlacementMarchTurn(
         if (active.arrivedAt != null) arrive(generalId, active, null, clearMarch = false)
         val edges = try { HwihaLandPassageState.read(world.getState().meta, topology) } catch (_: IllegalArgumentException) { null }
         if (edges == null) { log(generalId, "육상 통행 상태를 확인할 수 없어 부임 행군을 멈췄습니다."); return true }
-        val old = try { HwihaPlacementMarch.read(card.meta, topology, metrics) } catch (_: IllegalArgumentException) {
+        val old = try { PlacementMarch.read(card.meta, topology, metrics) } catch (_: IllegalArgumentException) {
             log(generalId, "부임 행군 상태를 확인할 수 없어 이동하지 않았습니다."); return true
         }?.takeIf { it.requestId == active.order.requestId }
         if (old != null && old.checkpoint.lastAdvancedAt >= now) return true
@@ -76,9 +81,9 @@ class HwihaPlacementMarchTurn(
             }
             reactions.onEntered(world, recorder, generalId, node)
         }
-        val march = HwihaPlacementMarch(active.order.requestId, HwihaMarchCheckpoint(path, movement.cursor, now, movement.stop))
+        val march = PlacementMarch(active.order.requestId, HwihaMarchCheckpoint(path, movement.cursor, now, movement.stop))
         val before = checkNotNull(world.getGeneralById(generalId))
-        world.updateGeneralMeta(recorder, before, before.meta.withKey(HwihaPlacementMarch.META_KEY, march.toMetaValue()))
+        world.updateGeneralMeta(recorder, before, before.meta.withKey(PlacementMarch.META_KEY, march.toMetaValue()))
         when (movement.stop) {
             LandMarchStop.ARRIVED -> {
                 arrive(generalId, active, now, clearMarch = true)
@@ -92,7 +97,7 @@ class HwihaPlacementMarchTurn(
         return true
     }
 
-    private fun destinationOf(order: HwihaPlacementOrder): StrategicNodeRef.LandProvince? = when (val target = order.target) {
+    private fun destinationOf(order: PlacementOrder): StrategicNodeRef.LandProvince? = when (val target = order.target) {
         is PlacementTarget.County -> world.landNodeOfCity(target.countyId) as? StrategicNodeRef.LandProvince
         is PlacementTarget.Nation -> world.getNationById(target.nationId)?.capitalCityId
             ?.let { world.landNodeOfCity(it) as? StrategicNodeRef.LandProvince }
@@ -100,11 +105,11 @@ class HwihaPlacementMarchTurn(
         PlacementTarget.None -> world.positionOf(order.ownerGeneralId) as? StrategicNodeRef.LandProvince
     }
 
-    private fun arrive(generalId: Int, active: HwihaActivePlacement, at: HwihaPhase?, clearMarch: Boolean) {
+    private fun arrive(generalId: Int, active: ActivePlacement, at: HwihaPhase?, clearMarch: Boolean) {
         val before = checkNotNull(world.getGeneralById(generalId))
-        var meta = before.meta.withKey(HwihaPlacementState.META_KEY,
-            HwihaPlacementState(active.copy(arrivedAt = at), HwihaPlacementState.read(before.meta)?.pending).toMetaValue())
-        if (clearMarch) meta = meta - HwihaPlacementMarch.META_KEY
+        var meta = before.meta.withKey(PlacementState.META_KEY,
+            PlacementState(active.copy(arrivedAt = at), PlacementState.read(before.meta)?.pending).toMetaValue())
+        if (clearMarch) meta = meta - PlacementMarch.META_KEY
         world.updateGeneralMeta(recorder, before, meta)
         world.syncScoutPosts(recorder, active.order.ownerGeneralId)
     }

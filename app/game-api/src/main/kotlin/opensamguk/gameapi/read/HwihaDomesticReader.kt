@@ -1,5 +1,14 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PolicySetting
+import opensamguk.logic.domestic.PolicyOrder
+import opensamguk.logic.domestic.PolicySlot
+import opensamguk.logic.domestic.CountyPolicyState
+import opensamguk.logic.domestic.CommanderyPolicies
+import opensamguk.logic.domestic.CorpsPolicyAssignments
+import opensamguk.logic.domestic.CountyWorks
+
 import opensamguk.logic.domestic.PlacementPost
 import opensamguk.logic.domestic.CountyPolicy
 import opensamguk.logic.domestic.CorpsPolicy
@@ -167,7 +176,7 @@ object HwihaDomesticViews {
         return try {
             val cards = state.cards.filter { it.masterId == actorId }.sortedBy { it.id }.map { card ->
                 val person = card.generalId?.let(state::person)
-                val placement = person?.let { HwihaPlacementState.read(it.meta) }
+                val placement = person?.let { PlacementState.read(it.meta) }
                 // Probe placeability with a release-agnostic scout request: it checks only the card relation.
                 val probe = DomesticRules.assessPlacement(PlacementRequest(actorId, card.id, PlacementPost.SCOUT,
                     PlacementTarget.Province(state.landProvinceIds?.minOrNull() ?: "none")), state)
@@ -209,7 +218,7 @@ object HwihaDomesticViews {
             val ruler = DomesticRules.rulerOf(actor.nationId, state)?.id == actorId
             val counties = state.counties.filter { it.nationId > 0 && it.nationId == actor.nationId &&
                 (ruler || actorId in DomesticRules.countyControllers(it, state)) }.map { county ->
-                val stored = HwihaCountyPolicyState.read(county.meta)
+                val stored = CountyPolicyState.read(county.meta)
                 val effective = DomesticRules.effectivePolicy(county, state, design)
                 val check = DomesticRules.assessPolicy(PolicyRequest(actorId, PolicyTarget.County(county.id),
                     probePolicy(stored?.slot)), state)
@@ -222,7 +231,7 @@ object HwihaDomesticViews {
                     check is DomesticAssessment.Eligible, (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) })
             }
             val nation = state.nation(actor.nationId)
-            val commanderyPolicies = nation?.let { HwihaCommanderyPolicies.read(it.meta) }
+            val commanderyPolicies = nation?.let { CommanderyPolicies.read(it.meta) }
             val commanderies = if (!ruler) emptyList() else state.counties.filter { it.nationId == actor.nationId && it.commanderyId != null }
                 .groupBy { it.commanderyId!! }.toSortedMap().map { (id, members) ->
                     val slot = commanderyPolicies?.get(id)?.slot
@@ -231,7 +240,7 @@ object HwihaDomesticViews {
                         slot?.active?.let(::setting), slot?.pending?.let(::order), check is DomesticAssessment.Eligible,
                         (check as? DomesticAssessment.Rejected)?.reason?.let { HwihaReasonDto(it.name, it.message) })
                 }
-            val corpsPolicies = HwihaCorpsPolicies.read(actor.meta)
+            val corpsPolicies = CorpsPolicyAssignments.read(actor.meta)
             val corps = DomesticRules.deployedCorps(state).filter { it.ownerGeneralId == actorId }.map { deployed ->
                 val slot = corpsPolicies?.forOrder(deployed.orderId)?.slot
                 HwihaCorpsPolicyDto(deployed.orderId, deployed.commanderGeneralId, state.person(deployed.commanderGeneralId)?.name,
@@ -252,7 +261,7 @@ object HwihaDomesticViews {
             val ruler = DomesticRules.rulerOf(actor.nationId, state)?.id == actorId
             val counties = state.counties.filter { it.nationId > 0 && it.nationId == actor.nationId &&
                 (ruler || actorId in DomesticRules.countyControllers(it, state)) }.map { county ->
-                val works = HwihaCountyWorks.read(county.meta)
+                val works = CountyWorks.read(county.meta)
                 val seat = DomesticRules.seatedMagistrate(county, state)?.let { seat ->
                     val person = state.person(seat.personId)!!
                     SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm, false)
@@ -281,11 +290,11 @@ object HwihaDomesticViews {
     }
 
     /** 권한만 보려고 지금과 다른 방침으로 판정한다(UNCHANGED·NOTHING_TO_CLEAR 를 피한다). */
-    private fun probePolicy(slot: HwihaPolicySlot?): String =
+    private fun probePolicy(slot: PolicySlot?): String =
         CountyPolicy.entries.first { it.name != slot?.active?.policy && it.name != slot?.pending?.policy }.name
 
-    private fun setting(value: HwihaPolicySetting) = HwihaPolicySettingDto(value.policy, label(value.policy), value.since)
-    private fun order(value: HwihaPolicyOrder) = HwihaPolicyOrderDto(value.policy, value.policy?.let(::label), value.requestedAt)
+    private fun setting(value: PolicySetting) = HwihaPolicySettingDto(value.policy, label(value.policy), value.since)
+    private fun order(value: PolicyOrder) = HwihaPolicyOrderDto(value.policy, value.policy?.let(::label), value.requestedAt)
     private fun label(code: String): String = CountyPolicy.entries.firstOrNull { it.name == code }?.label
         ?: CorpsPolicy.entries.firstOrNull { it.name == code }?.label ?: code
     private fun stock(value: HwihaResources) = HwihaStockDto(value.money, value.grain, value.iron, value.timber, value.horses)

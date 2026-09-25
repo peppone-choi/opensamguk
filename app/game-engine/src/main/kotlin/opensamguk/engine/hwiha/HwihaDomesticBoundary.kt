@@ -1,5 +1,10 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.CommanderyPolicies
+import opensamguk.logic.domestic.ActiveWork
+import opensamguk.logic.domestic.CountyWorks
+import opensamguk.logic.domestic.CountyMonthly
+
 import opensamguk.logic.domestic.SeatStats
 import opensamguk.logic.domestic.WorkStep
 import opensamguk.logic.domestic.DomesticEffects
@@ -62,11 +67,11 @@ class HwihaDomesticBoundary(
 
     private fun activateCommanderyPolicies(now: HwihaPhase) {
         for (nation in world.listNations().sortedBy { it.id }) {
-            val policies = try { HwihaCommanderyPolicies.read(nation.meta) } catch (_: IllegalArgumentException) { continue } ?: continue
+            val policies = try { CommanderyPolicies.read(nation.meta) } catch (_: IllegalArgumentException) { continue } ?: continue
             var next = policies
             for (entry in policies.entries) if (entry.slot.pending != null) next = next.with(entry.commanderyId, entry.slot.activate(now))
             if (next != policies) world.updateNationMeta(recorder, nation.id,
-                nation.meta.withKey(HwihaCommanderyPolicies.META_KEY, next.takeIf { it.entries.isNotEmpty() }?.toMetaValue()))
+                nation.meta.withKey(CommanderyPolicies.META_KEY, next.takeIf { it.entries.isNotEmpty() }?.toMetaValue()))
         }
     }
 
@@ -74,15 +79,15 @@ class HwihaDomesticBoundary(
 
     private fun progressWork(countyId: Int, now: HwihaPhase, state: DomesticProjection): WorkResult {
         val city = world.getCityById(countyId) ?: return WorkResult.NONE
-        val works = try { HwihaCountyWorks.read(city.meta) } catch (_: IllegalArgumentException) { return WorkResult.NONE }
+        val works = try { CountyWorks.read(city.meta) } catch (_: IllegalArgumentException) { return WorkResult.NONE }
             ?: return WorkResult.NONE
         val active = works.active ?: return WorkResult.NONE
         // Starts at the next phase boundary after intake, never in the phase it was ordered (§4).
         if (active.requestedAt >= now || active.lastProgressAt == now) return WorkResult.NONE
         val actorNation = world.getGeneralById(active.actorId)?.nationId
         if (city.nationId <= 0 || actorNation != city.nationId) {
-            world.updateCityMeta(recorder, countyId, city.meta.withKey(HwihaCountyWorks.META_KEY,
-                HwihaCountyWorks(null, works.completed).takeIf { it.completed.isNotEmpty() }?.toMetaValue()))
+            world.updateCityMeta(recorder, countyId, city.meta.withKey(CountyWorks.META_KEY,
+                CountyWorks(null, works.completed).takeIf { it.completed.isNotEmpty() }?.toMetaValue()))
             log(active.actorId, "${city.name}의 ${active.work.label} 공사를 거두었습니다(현의 주인이 바뀌었습니다).")
             return WorkResult.STOPPED
         }
@@ -101,17 +106,17 @@ class HwihaDomesticBoundary(
             is WorkStep.Advanced -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
-                world.updateCityMeta(recorder, countyId, after.meta.withKey(HwihaCountyWorks.META_KEY,
-                    HwihaCountyWorks(step.work, works.completed).toMetaValue()))
+                world.updateCityMeta(recorder, countyId, after.meta.withKey(CountyWorks.META_KEY,
+                    CountyWorks(step.work, works.completed).toMetaValue()))
                 WorkResult.ADVANCED
             }
             is WorkStep.Completed -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
-                val done = HwihaCountyWorks(null, (works.completed + step.completed).sortedWith(
+                val done = CountyWorks(null, (works.completed + step.completed).sortedWith(
                     compareBy({ it.completedAt }, { it.work.ordinal })))
                 val trust = opensamguk.engine.turn.ReservedTurnHandler.materializeMariaDbFloat(step.levels.trust)
-                var meta = after.meta.withKey(HwihaCountyWorks.META_KEY, done.toMetaValue())
+                var meta = after.meta.withKey(CountyWorks.META_KEY, done.toMetaValue())
                 if (trust != HwihaDomesticCountyEffects.trustOf(after)) meta = meta.withKey("trust", trust)
                 val next = after.copy(population = step.levels.population, agriculture = step.levels.agriculture,
                     commerce = step.levels.commerce, security = step.levels.security, defence = step.levels.defence,
@@ -136,12 +141,12 @@ class HwihaDomesticBoundary(
             HwihaWarehouseSettlement.Result.APPLIED
     }
 
-    private fun stop(countyId: Int, works: HwihaCountyWorks, work: HwihaActiveWork, now: HwihaPhase, reason: String): WorkResult {
+    private fun stop(countyId: Int, works: CountyWorks, work: ActiveWork, now: HwihaPhase, reason: String): WorkResult {
         val city = world.getCityById(countyId) ?: return missingCounty(work.actorId, countyId)
         val stopped = work.copy(stopReason = reason)
         if (work.stopReason != reason) log(work.actorId, "${city.name}의 ${work.work.label} 공사가 멈췄습니다: ${reasonText(reason)}")
-        world.updateCityMeta(recorder, countyId, city.meta.withKey(HwihaCountyWorks.META_KEY,
-            HwihaCountyWorks(stopped, works.completed).toMetaValue()))
+        world.updateCityMeta(recorder, countyId, city.meta.withKey(CountyWorks.META_KEY,
+            CountyWorks(stopped, works.completed).toMetaValue()))
         return WorkResult.STOPPED
     }
 
@@ -156,9 +161,9 @@ class HwihaDomesticBoundary(
         for (county in state.counties) {
             val seat = try { DomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }
             val city = world.getCityById(county.id) ?: continue
-            val previous = try { HwihaCountyMonthly.read(city.meta) } catch (_: IllegalArgumentException) { null }
+            val previous = try { CountyMonthly.read(city.meta) } catch (_: IllegalArgumentException) { null }
             if (seat == null || !seat.placed) {
-                if (HwihaCountyMonthly.META_KEY in city.meta) world.updateCityMeta(recorder, county.id, city.meta - HwihaCountyMonthly.META_KEY)
+                if (CountyMonthly.META_KEY in city.meta) world.updateCityMeta(recorder, county.id, city.meta - CountyMonthly.META_KEY)
                 continue
             }
             if (previous?.stamp == month) continue
@@ -173,8 +178,8 @@ class HwihaDomesticBoundary(
                     events++
                 }
             }
-            if (open) world.updateCityMeta(recorder, county.id, city.meta.withKey(HwihaCountyMonthly.META_KEY,
-                HwihaCountyMonthly(month, current).toMetaValue()))
+            if (open) world.updateCityMeta(recorder, county.id, city.meta.withKey(CountyMonthly.META_KEY,
+                CountyMonthly(month, current).toMetaValue()))
         }
         return events
     }

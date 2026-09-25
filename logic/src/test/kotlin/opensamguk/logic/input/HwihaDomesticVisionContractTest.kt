@@ -1,5 +1,11 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.ActivePlacement
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.CompletedWork
+import opensamguk.logic.domestic.CountyWorks
+
 import opensamguk.logic.domestic.PlacementPost
 import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.domestic.PlacementTarget
@@ -25,8 +31,8 @@ class HwihaDomesticVisionContractTest {
     private val now = HwihaPhase(200, 1, 1)
     private val reader: HwihaVisionSourceReader = HwihaMetaVisionSourceReader
 
-    private fun scoutPlacement(retainer: Int, owner: Int, province: String, arrived: Boolean) = mapOf(HwihaPlacementState.META_KEY to
-        HwihaPlacementState(HwihaActivePlacement(HwihaPlacementOrder("r$retainer", owner, retainer, PlacementPost.SCOUT,
+    private fun scoutPlacement(retainer: Int, owner: Int, province: String, arrived: Boolean) = mapOf(PlacementState.META_KEY to
+        PlacementState(ActivePlacement(PlacementOrder("r$retainer", owner, retainer, PlacementPost.SCOUT,
             PlacementTarget.Province(province), now), now, if (arrived) now else null), null).toMetaValue())
 
     private fun viewer(posts: List<HwihaScoutPost>, towers: List<Pair<Int, String>>) =
@@ -50,12 +56,12 @@ class HwihaDomesticVisionContractTest {
     }
 
     @Test fun `a domestic-written completed watchtower beacon is FULL vision and an unfinished one is none`() {
-        assertEquals(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY, HwihaCountyWorks.META_KEY)
+        assertEquals(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY, CountyWorks.META_KEY)
         assertEquals(HwihaMetaVisionSourceReader.WATCHTOWER_BEACON, DomesticWork.WATCHTOWER_BEACON.name)
-        val done = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
+        val done = mapOf<String, Any?>(CountyWorks.META_KEY to CountyWorks(
             DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
-            listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now))).toMetaValue())
-        val building = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
+            listOf(CompletedWork(DomesticWork.WATCHTOWER_BEACON, now))).toMetaValue())
+        val building = mapOf<String, Any?>(CountyWorks.META_KEY to CountyWorks(
             DomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
 
         assertEquals(SourceRead(true, 0), reader.hasCompletedWatchtower(done))

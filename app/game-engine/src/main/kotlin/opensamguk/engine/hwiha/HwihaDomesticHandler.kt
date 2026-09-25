@@ -1,5 +1,14 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.PlacementOrder
+import opensamguk.logic.domestic.PlacementState
+import opensamguk.logic.domestic.PolicyOrder
+import opensamguk.logic.domestic.PolicySlot
+import opensamguk.logic.domestic.CountyPolicyState
+import opensamguk.logic.domestic.CommanderyPolicies
+import opensamguk.logic.domestic.CorpsPolicyAssignments
+import opensamguk.logic.domestic.CountyWorks
+
 import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.domestic.PolicyTarget
 import opensamguk.logic.domestic.PlacementRequest
@@ -88,35 +97,35 @@ class HwihaDomesticHandler(
 
     private fun storePlacement(requestId: String, request: PlacementRequest, cardGeneralId: Int, now: HwihaPhase) {
         val card = checkNotNull(world.getGeneralById(cardGeneralId))
-        val current = HwihaPlacementState.read(card.meta)
-        val order = HwihaPlacementOrder(requestId, request.actorId, request.cardId, request.post, request.target, now)
-        val next = HwihaPlacementState(current?.active, order)
-        world.updateGeneralMeta(recorder, card, card.meta.withKey(HwihaPlacementState.META_KEY, next.toMetaValue()))
+        val current = PlacementState.read(card.meta)
+        val order = PlacementOrder(requestId, request.actorId, request.cardId, request.post, request.target, now)
+        val next = PlacementState(current?.active, order)
+        world.updateGeneralMeta(recorder, card, card.meta.withKey(PlacementState.META_KEY, next.toMetaValue()))
     }
 
     private fun storePolicy(requestId: String, request: PolicyRequest, state: DomesticProjection, now: HwihaPhase) {
-        val order = HwihaPolicyOrder(request.policy, requestId, request.actorId, now)
+        val order = PolicyOrder(request.policy, requestId, request.actorId, now)
         when (val target = request.target) {
             is PolicyTarget.County -> {
                 val city = checkNotNull(world.getCityById(target.countyId))
-                val current = HwihaCountyPolicyState.read(city.meta)
-                val next = HwihaCountyPolicyState(HwihaPolicySlot(current?.slot?.active, order), current?.lastApplied)
-                world.updateCityMeta(recorder, city.id, city.meta.withKey(HwihaCountyPolicyState.META_KEY, next.toMetaValue()))
+                val current = CountyPolicyState.read(city.meta)
+                val next = CountyPolicyState(PolicySlot(current?.slot?.active, order), current?.lastApplied)
+                world.updateCityMeta(recorder, city.id, city.meta.withKey(CountyPolicyState.META_KEY, next.toMetaValue()))
             }
             is PolicyTarget.Commandery -> {
                 val nationId = checkNotNull(state.person(request.actorId)).nationId
                 val nation = checkNotNull(world.getNationById(nationId))
-                val current = HwihaCommanderyPolicies.read(nation.meta) ?: HwihaCommanderyPolicies(emptyList())
-                val slot = HwihaPolicySlot(current[target.commanderyId]?.slot?.active, order)
-                world.updateNationMeta(recorder, nationId, nation.meta.withKey(HwihaCommanderyPolicies.META_KEY,
+                val current = CommanderyPolicies.read(nation.meta) ?: CommanderyPolicies(emptyList())
+                val slot = PolicySlot(current[target.commanderyId]?.slot?.active, order)
+                world.updateNationMeta(recorder, nationId, nation.meta.withKey(CommanderyPolicies.META_KEY,
                     current.with(target.commanderyId, slot).toMetaValue()))
             }
             is PolicyTarget.Corps -> {
                 val owner = checkNotNull(world.getGeneralById(request.actorId))
                 val corps = DomesticRules.deployedCorps(state).single { it.orderId == target.orderId }
-                val current = HwihaCorpsPolicies.read(owner.meta) ?: HwihaCorpsPolicies(emptyList())
-                val slot = HwihaPolicySlot(current.forOrder(corps.orderId)?.slot?.active, order)
-                world.updateGeneralMeta(recorder, owner, owner.meta.withKey(HwihaCorpsPolicies.META_KEY,
+                val current = CorpsPolicyAssignments.read(owner.meta) ?: CorpsPolicyAssignments(emptyList())
+                val slot = PolicySlot(current.forOrder(corps.orderId)?.slot?.active, order)
+                world.updateGeneralMeta(recorder, owner, owner.meta.withKey(CorpsPolicyAssignments.META_KEY,
                     current.with(corps.orderId, corps.commanderGeneralId, slot).toMetaValue()))
             }
         }
@@ -124,19 +133,19 @@ class HwihaDomesticHandler(
 
     private fun storeWork(requestId: String, request: WorkRequest, now: HwihaPhase) {
         val city = checkNotNull(world.getCityById(request.countyId))
-        val current = HwihaCountyWorks.read(city.meta)
-        val next = HwihaCountyWorks(DomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now),
+        val current = CountyWorks.read(city.meta)
+        val next = CountyWorks(DomesticEffects.newWork(context.design, request.work, requestId, request.actorId, now),
             current?.completed.orEmpty())
-        world.updateCityMeta(recorder, city.id, city.meta.withKey(HwihaCountyWorks.META_KEY, next.toMetaValue()))
+        world.updateCityMeta(recorder, city.id, city.meta.withKey(CountyWorks.META_KEY, next.toMetaValue()))
     }
 
     private fun reduceFortification(countyId: Int) {
         val city = checkNotNull(world.getCityById(countyId))
-        val works = checkNotNull(HwihaCountyWorks.read(city.meta))
-        val remaining = HwihaCountyWorks(null, works.completed.filterNot { it.work == DomesticWork.FORTIFICATION })
+        val works = checkNotNull(CountyWorks.read(city.meta))
+        val remaining = CountyWorks(null, works.completed.filterNot { it.work == DomesticWork.FORTIFICATION })
         val next = city.copy(defence = (city.defence - 500).coerceAtLeast(0),
             wall = (city.wall - 500).coerceAtLeast(0),
-            meta = city.meta.withKey(HwihaCountyWorks.META_KEY, remaining.toMetaValue()))
+            meta = city.meta.withKey(CountyWorks.META_KEY, remaining.toMetaValue()))
         recorder.diffCity(PerTurnOverlay.toLogicCity(city), PerTurnOverlay.toLogicCity(next))
         world.applyCityDirtyFree(next)
     }

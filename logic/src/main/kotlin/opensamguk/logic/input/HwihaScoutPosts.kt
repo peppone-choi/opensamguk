@@ -1,5 +1,7 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.PlacementState
+
 import opensamguk.logic.domestic.PlacementPost
 import opensamguk.logic.domestic.PlacementTarget
 
@@ -35,7 +37,7 @@ object HwihaScoutPosts {
     fun project(ownerId: Int, cards: List<DomesticCard>, placementOf: (generalId: Int) -> Map<String, Any?>?): Map<String, Any>? {
         val posts = cards.filter { it.masterId == ownerId && it.generalId != null }.sortedBy { it.id }.mapNotNull { card ->
             val meta = placementOf(card.generalId!!) ?: return@mapNotNull null
-            val active = try { HwihaPlacementState.read(meta)?.active } catch (_: IllegalArgumentException) { null } ?: return@mapNotNull null
+            val active = try { PlacementState.read(meta)?.active } catch (_: IllegalArgumentException) { null } ?: return@mapNotNull null
             val target = active.order.target as? PlacementTarget.Province ?: return@mapNotNull null
             if (active.order.post != PlacementPost.SCOUT || active.order.ownerGeneralId != ownerId || active.order.retainerId != card.id)
                 return@mapNotNull null
