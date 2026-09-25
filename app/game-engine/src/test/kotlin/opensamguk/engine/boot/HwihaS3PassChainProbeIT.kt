@@ -28,8 +28,8 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 /**
- * [HwihaS3PassChainIT] 의 적색 짝. 같은 시드에서 초기 부곡만 지워 NPC 출병 고리를 끊으면 같은 게이트
- * ([HwihaS3ChainSupport.assertChain])가 행군·조우·공성에서 빨개져야 한다. 게이트가 가짜면 이 테스트가 빨개진다.
+ * [PassChainInvarianceIT] 의 적색 짝. 같은 시드에서 초기 부곡만 지워 NPC 출병 고리를 끊으면 같은 게이트
+ * ([PassChainSupport.assertChain])가 행군·조우·공성에서 빨개져야 한다. 게이트가 가짜면 이 테스트가 빨개진다.
  */
 @Testcontainers(disabledWithoutDocker = true)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -52,13 +52,13 @@ class HwihaS3PassChainProbeIT {
 
     @Test
     fun `적색 짝 — 부곡이 없으면 출병 고리가 끊겨 게이트가 조우·공성에서 빨개진다`() {
-        HwihaS3ChainSupport.run(service)
-        val failure = assertFailsWith<AssertionError> { HwihaS3ChainSupport.assertChain(world, jdbc, WORLD) }
+        PassChainSupport.run(service)
+        val failure = assertFailsWith<AssertionError> { PassChainSupport.assertChain(world, jdbc, WORLD) }
         assertTrue(listOf("행군", "조우", "공성").any { failure.message.orEmpty().contains(it) }, "끊긴 고리를 짚는다: ${failure.message}")
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, WORLD))
         assertTrue(world.listGenerals().none { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta })
         // 끊긴 고리 밖은 그대로 돈다 — 게이트가 모든 것을 한꺼번에 빨갛게 만드는 가짜가 아님을 같이 본다.
-        assertTrue(world.getGeneralById(HwihaS3ChainSupport.HUMAN)!!.nationId > 0, "출사는 여전히 된다")
+        assertTrue(world.getGeneralById(PassChainSupport.HUMAN)!!.nationId > 0, "출사는 여전히 된다")
     }
 
     /**
@@ -92,7 +92,7 @@ class HwihaS3PassChainProbeIT {
     companion object {
         private const val WORLD = 24
 
-        private fun repoRoot(): Path = HwihaS3ChainSupport.repoRoot()
+        private fun repoRoot(): Path = PassChainSupport.repoRoot()
 
         @JvmStatic
         @AfterAll
@@ -114,7 +114,7 @@ class HwihaS3PassChainProbeIT {
             val source = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             Flyway.configure().dataSource(source).locations("classpath:db/migration")
                 .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
-            HwihaS3ChainSupport.seed(JdbcTemplate(source), WORLD, withUnits = false)
+            PassChainSupport.seed(JdbcTemplate(source), WORLD, withUnits = false)
 
             registry.add("spring.datasource.url", postgres::getJdbcUrl)
             registry.add("spring.datasource.username", postgres::getUsername)

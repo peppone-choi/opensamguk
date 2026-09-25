@@ -1,4 +1,4 @@
-package opensamguk.engine.hwiha
+package opensamguk.engine.invariance
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -6,6 +6,7 @@ import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
+import opensamguk.engine.hwiha.*
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.economy.HwihaCountyWarehouse
@@ -17,9 +18,9 @@ import opensamguk.logic.world.*
  * NPC-only smoke run of the 豫州 slice scenario through the production personal-turn lifecycle and the phase
  * boundary, in memory (no database, no flush). It proves the NPC links close on the real map: 출병 → 행군 →
  * (조우) → 공성 → 점령, deterministically. The database-backed chain with 출사·발령·징세·월단평 is
- * `HwihaS3PassChainIT`.
+ * `PassChainInvarianceIT`.
  */
-class HwihaYuzhouCampaignSimulationTest {
+class YuzhouCampaignInvarianceTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }.first { Files.isDirectory(it.resolve("data/map")) }
     private val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
     private val bundle = HanWorldArtifactsResolver(repo).resolve(mapCities.map { it.id }, emptyList())
@@ -30,7 +31,7 @@ class HwihaYuzhouCampaignSimulationTest {
     private class Campaign(val world: InMemoryTurnWorld, val lifecycle: TurnDaemonLifecycle, val boundary: HwihaPhaseBoundary,
         val recorder: ChangeRecorder, val outcomes: HwihaCampaignWorldFixture.RecordingOutcomes)
 
-    private fun campaign(npcDeploy: Boolean = true): Campaign {
+    private fun campaign(npcDeploy: Boolean = true, seed: String = "00"): Campaign {
         val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
         val warehouses = requireNotNull(scenario.hwihaWarehouses).warehouses
@@ -75,7 +76,7 @@ class HwihaYuzhouCampaignSimulationTest {
         val recorder = ChangeRecorder()
         val outcomes = HwihaCampaignWorldFixture.RecordingOutcomes()
         val handler = ReservedTurnHandler(world, opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
-            "00", 190, recorder = recorder, hwihaDeploymentContext = topology to metrics, hwihaProvinceCells = cells,
+            seed, 190, recorder = recorder, hwihaDeploymentContext = topology to metrics, hwihaProvinceCells = cells,
             hwihaWarOutcomes = outcomes)
         val selector = HwihaNpcDeploySelector(topology, metrics)
         val lifecycle = TurnDaemonLifecycle(world, handler,
@@ -115,6 +116,14 @@ class HwihaYuzhouCampaignSimulationTest {
         println("yuzhou-simulation encounters=${run.outcomes.encounters.size} sieges=${run.world.listHwihaSieges().size} " +
             "fallen=${captured.size} battles=${run.world.listGenerals().count { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }} " +
             "fallTurns=$durations target12to24=${durations.count { it in 12..24 }}/${durations.size}")
+        WorldStateBaseline.assertMatches("yuzhou-36-seed-00", run.world)
+    }
+
+    @Test fun `seed 01 replay is stable and currently shares seed 00 final state`() {
+        fun run() = campaign(seed = "01").also { campaign -> repeat(36) { campaign.phase(it) } }.world
+        val first = run()
+        assertEquals(WorldStateBaseline.sha256(first), WorldStateBaseline.sha256(run()))
+        WorldStateBaseline.assertMatches("yuzhou-36-seed-01", first)
     }
 
     @Test fun `the same seed has an identical outcome at each of 36 phases`() {
