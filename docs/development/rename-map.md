@@ -1470,3 +1470,13 @@ web/game/lib/hwiha-reads.ts
 | `hwihaSieges`·`createdHwihaSieges`·`updatedHwihaSieges` | `sieges`·`createdSieges`·`updatedSieges` | 스냅샷·flush 계약의 Kotlin 필드 |
 | `loadHwihaSieges`·`toHwihaSiegeRow`·`hwihaSiegeCreateMany`·`hwihaSiegeUpdate` | `loadSieges`·`toSiegeRow`·`siegeCreateMany`·`siegeUpdate` | 부팅 로더·flush 함수 |
 | `hwihaNow()` | `phaseNow()` | 현재 세계 순의 `Phase` 값 |
+
+## 지도 보급 런타임 이름
+
+| 이전 코드 이름 | 새 코드 이름 | 범위 |
+|---|---|---|
+| `HanSpatialSupplyProvider` | `SpatialSupplyProvider` | 월별 보급망을 구성하는 Spring 컴포넌트·테스트 타입 |
+| `HanSupplyDisconnectionPolicyLoader` | `SupplyDisconnectionPolicyLoader` | 보급 단절 심사 원장 로더·테스트 타입 |
+| `hanSpatialSupplyProvider` | `spatialSupplyProvider` | 엔진 배선 인자 |
+
+지도 자료의 `han-world-v3`·`han-tiles.json` 등 저장된 판 ID와 입력 파일명은 그대로 둔다. 해당 값은 세계 핀과 심사 원장이 참조하는 역사 지도 계약이다.

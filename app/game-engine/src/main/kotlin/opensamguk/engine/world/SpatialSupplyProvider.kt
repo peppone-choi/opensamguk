@@ -33,12 +33,12 @@ data class SpatialSupplyCity(
  * them too.
  */
 @Component
-class HanSpatialSupplyProvider(
+class SpatialSupplyProvider(
     private val objectMapper: ObjectMapper,
     @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapPath: String,
     @Value("\${HAN_SCENARIO_PROVINCE_OWNERSHIP_FILE:data/map/han-scenario-province-ownership-v1.json}")
     private val ownershipPath: String,
-    private val policyLoader: HanSupplyDisconnectionPolicyLoader? = null,
+    private val policyLoader: SupplyDisconnectionPolicyLoader? = null,
     /** ADR-LITE-051 郡 내부 보급선. 없으면 보급이 오늘과 같다. */
     private val commanderySupplyLinks: CommanderySupplyLinkLoader =
         CommanderySupplyLinkLoader(objectMapper, "data/map/han-commandery-supply-links-v1.json"),
