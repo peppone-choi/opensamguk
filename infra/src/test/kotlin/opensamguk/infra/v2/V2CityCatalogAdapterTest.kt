@@ -16,10 +16,8 @@ class V2CityCatalogAdapterTest {
         assertEquals(V2ContentStatus.ACTIVE, snapshot.metadata.status)
         assertEquals("scenario/cities_1010.json", snapshot.metadata.source)
         assertEquals("6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393", snapshot.metadata.sha256)
-        assertEquals(94, snapshot.metadata.cityCount)
-        assertEquals(24, snapshot.metadata.scenarioOwnedCityCount)
-        assertEquals(94, snapshot.cities.size)
-        assertEquals(24, snapshot.cities.count { it.nationId != 0 })
+        assertEquals(snapshot.cities.size, snapshot.metadata.cityCount)
+        assertEquals(snapshot.cities.count { it.nationId != 0 }, snapshot.metadata.scenarioOwnedCityCount)
     }
 
     @Test

@@ -56,7 +56,8 @@ class HanStrategicTopologyJsonTest {
         assertEquals(2, topology.waterZones.size)
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
-        assertEquals(1447, loaded.bindingsByCityId.size)
+        assertEquals(opensamguk.logic.world.CityConstRegistry.hanWorld(
+            opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).all().keys, loaded.bindingsByCityId.keys)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
         // 대리 治所 관할의 省 id 는 재분할로 다시 발급됐다(관할 id + ':geo:' + 순번의 해시, DIRECT- 접두어 유지).
         assertEquals("DIRECT-PARENT-0086-a120c2e594e6", loaded.bindingsByCityId.getValue(833).landProvinceId)

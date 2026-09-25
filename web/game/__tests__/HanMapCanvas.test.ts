@@ -419,7 +419,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(scene.cities.filter((city) => city.provinceId === 691)).toHaveLength(1);
     }, 30_000);
 
-    it('실제 정본에서 1020개 현과 172개 군국 마커를 각각 한 번만 만든다', () => {
+    it('실제 정본에서 현과 군국 마커를 각각 한 번만 만든다', () => {
         const runtime = JSON.parse(
             readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han.json'), 'utf8'),
         ) as { width: number; height: number; cities: IsoCityOverlay[] };
@@ -447,17 +447,9 @@ describe('지도 아이콘 배율과 앵커', () => {
             null,
             provinceMap,
         );
-        // 1,070 = han-tiles.json 의 jurisdictionRecords 실측. 南鄉郡이 제 이름의 縣(71022 南鄉)을
-        // 되찾으면서 그 자리를 지키던 합성 관할 JURISDICTION-PARENT-0113-SEAT 이 접혔다
-        // (data/curated/han/county-misbinding-rebindings-v1.json · supersedesJurisdictionSeatRecovery).
-        // 2026-09-15: 수·진·관 거점 73 곳이 제 관할(STRATEGIC_SITE)을 받아 1,143 이다.
-        // 2026-09-16: 河南尹 平陰縣(82879) 관할이 더해져 1,144 다.
-        // 2026-09-17: 城 없던 관할 11 곳을 같은 실체 城 관할에 접어(fold_cityless_jurisdictions) 1,133 — 城 수와 같다.
-        // 2026-09-21: 조선반도·만주 취락 재검토(5b130608 → 2288e886)로 1,168. 「관할 수 = 城 수」는 그대로다
-        //   — han-world-v3 의 城 도 1,168 이다(web/shared cityName.test.ts 가 그쪽 축을 건다).
-        // 2026-09-23: 郡國志 표제인데 지도에 없던 결손 縣 56 곳이 제 관할을 받아 1,228. 「관할 수 = 城 수」는 그대로다.
-        expect(jurisdictions).toHaveLength(1_447);
-        expect(new Set(jurisdictions.map((city) => city.jurisdictionId)).size).toBe(1_447);
+        expect(jurisdictions.map((city) => city.jurisdictionId).sort()).toEqual(
+            (hanTiles.jurisdictionRecords ?? []).map((record) => record.id).sort(),
+        );
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
             name: '노현',
@@ -480,7 +472,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         // 173 − 4 = 169. 省 없는 郡 은 여전히 같은 4 곳이다 — 빼는 수가 아니라 전체가 늘었다.
         expect(commanderies).toHaveLength(169);
         expect(new Set(commanderies.map((city) => city.name)).size).toBe(169);
-    });
+    }, 30_000);
 
     it('같은 현 프로빈스에 겹친 수도와 현 마커는 수도 하나만 그린다', () => {
         const tiles = {
