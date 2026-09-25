@@ -60,7 +60,7 @@ failureReasons[], resultType, replayContract, aiPolicyId, helpTopicId,
 tutorialObjectiveId|N/A, legacyCommands[], deliveryState; root.retiredLegacyCommands[]
 ```
 
-- (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry 는 이런 입력을 `NOT_DELIVERED` 로 거절한다. 현행 예약 API는 허용 목록에 없는 PLANNED 입력을 먼저 `WRONG_RULE_PROFILE`로 거절하므로, 예약 경로를 원장 판정으로 바꾸기 전까지 두 표면의 거절 사유가 다르다. registry 거절 사유는 `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED` 네 가지다. 원장에 있고 핸들러도 있지만 잘못된 API 경로로 들어온 입력은 API가 `INVALID_INPUT_CHANNEL`로 거절한다. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
+- (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry와 예약 API는 같은 원장 판정으로 이런 입력을 `NOT_DELIVERED`로 거절한다. registry 거절 사유는 `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED` 네 가지다. 원장에 있고 핸들러도 있지만 잘못된 API 경로로 들어온 입력은 API가 `INVALID_INPUT_CHANNEL`로 거절한다. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
 - `PLANNED` 뒤는 기존 파이프라인을 그대로 쓴다: `DOMAIN_READY → HANDLER_READY → UI_READY → AI_READY → HELP_READY → TUTORIAL_READY → REPLAY_READY → VERIFIED`(재기준선 §3 보존).
 - 원장 파일: `data/commands/hwiha-input-catalog.json`(현행 파일). 알파 카탈로그 파일과 `PublicCommandCatalogIndex` 는 `SAMMO` 월드용으로 남는다.
 - schemaVersion 2부터 필수 필드 누락·미지 필드·중복 객체 키를 거절한다. `retiredLegacyCommands[]`는 명령이 폐지되거나 설정으로 이동한 경우만 기록한다. 대응 게이트는 각 기존 명령이 활성 역참조 또는 이 목록 중 정확히 한쪽에 있는지 검사한다.
