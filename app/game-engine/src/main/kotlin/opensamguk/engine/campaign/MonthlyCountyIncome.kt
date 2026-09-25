@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
  * 창고가 없는 縣 은 건너뛴다. 명시 재고 입력이 없는 시나리오·기존 월드를 조용히 충전하지 않는다.
  *
  * 철·목재·말은 이 클래스가 만들지 않는다 — [production] 표가 준다. 기본값은 생성된 런타임 산출물이고,
- * 철·말의 위치는 사료 산지 원장, 목재는 지도 면적 축이다(tools/map/build_hwiha_resource_production.py).
+ * 철·말의 위치는 사료 산지 원장, 목재는 지도 면적 축이다(tools/map/build_county_resource_production.py).
  */
 class MonthlyCountyIncome(
     private val world: InMemoryTurnWorld,

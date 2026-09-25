@@ -1082,7 +1082,7 @@
 
 ## ADR-LITE-057 — 삼모 명령 체계를 「장수·휘하」 캠페인 설계로 교체한다 (2026-09-17)
 
-- Status: accepted (2026-09-24 사용자 승인). S3 게임 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)에서 확정했다. 정본은 `data/curated/han/hwiha-s3-provisional-v1.json`·`hwiha-domestic-v1.json`·`hwiha-vision-rules-v1.json`이며, 그 밖의 미정 수치는 각 원장 상태를 따른다.
+- Status: accepted (2026-09-24 사용자 승인). S3 게임 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)에서 확정했다. 정본은 `data/curated/han/campaign-balance-v1.json`·`domestic-v1.json`·`vision-rules-v1.json`이며, 그 밖의 미정 수치는 각 원장 상태를 따른다.
 - Context: 지도는 城 1,133 · 省 1,594 의 면(面) 세계가 됐지만(ADR-LITE-055·056) 규칙은 삼모전의 점(點) 구조다.
   시나리오 1020 개시 활성 장수는 231명(확장 299, `seedContract.activeGenerals`)이라 1,133城에서 城당 약 0.20명이다.
   이동은 인접 城 1칸이 1턴이고 이동 비용에 지형 계수가 없다. 지형은 전투·명령 코드에서 참조되지 않고 보급·경로 위상에 물/마른땅

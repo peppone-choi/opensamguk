@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "artifactId": "hwiha-s3-provisional-v1",
+  "artifactId": "campaign-balance-v1",
   "status": "CONFIRMED",
-  "note": "S3 핵심 고리(조우 정산·공성·보급·녹봉·상사·NPC 출병)의 게임 규칙과 수치다. 설계 정본(2026-09-17 재설계 spec)과 march-tempo-targets-v1.json 에 없는 값만 여기 둔다. 사료 수치가 아니며 2026-09-23 사용자 결정으로 현행 게임 수치를 확정했다. Kotlin 은 data/curated 를 읽지 않으므로 같은 값을 logic 의 HwihaS3Provisional 에 두고 HwihaS3ProvisionalTest 가 이 파일과 대조한다.",
+  "note": "S3 핵심 고리(조우 정산·공성·보급·녹봉·상사·NPC 출병)의 게임 규칙과 수치다. 설계 정본(2026-09-17 재설계 spec)과 march-tempo-targets-v1.json 에 없는 값만 여기 둔다. 사료 수치가 아니며 2026-09-23 사용자 결정으로 현행 게임 수치를 확정했다. Kotlin 은 data/curated 를 읽지 않으므로 같은 값을 logic 의 CampaignBalance 에 두고 CampaignBalanceTest 가 이 파일과 대조한다.",
   "encounter": {
     "status": "CONFIRMED",
     "resolutionTiming": "조우는 진입한 턴에 봉인하고, 공격 지휘관의 다음 개인 턴 시작에 해결한다. 전투가 그 턴 이동을 끝낸다.",
@@ -12,7 +12,7 @@
     "winnerAttacker": "원래 명령을 유지하고 다음 턴 그 省에서 행군을 이어 간다.",
     "captives": "궤멸한 쪽 지휘관이 반대편 승자의 포로 표식(captive)을 받는다. 공격 승리면 공격 지휘관, 방어 승리면 버틴 방어 지휘관 중 가장 작은 id. 표식 외 효과(행동 제한·설득·석방)는 없다.",
     "unpreparedBattle": "병종 미지원·전장 없음으로 기록이 없는 조우는 결과를 지어내지 않고 보류로 남는다.",
-    "renown": "승자가 있는 조우만 HwihaWarOutcomeListener.onEncounterResolved(승자, 패자) 를 한 번 부른다(양쪽 모두 퇴각·궤멸한 결말은 부르지 않는다)."
+    "renown": "승자가 있는 조우만 WarOutcomeListener.onEncounterResolved(승자, 패자) 를 한 번 부른다(양쪽 모두 퇴각·궤멸한 결말은 부르지 않는다)."
   },
   "siege": {
     "status": "CONFIRMED",
@@ -42,7 +42,7 @@
     "npcAssaultMinRatio": 3,
     "npcNote": "NPC 포위 지휘관은 항복 권고가 통하면 권고, 병력이 수비병의 3배 이상이면 강공, 아니면 포위만 유지한다.",
     "captureEffects": "함락 뒤 포위 군단은 점령군 수비대를 남기고 출병을 끝낸다(목표 달성), 縣 supplyState 는 다음 순 경계 재계산까지 0 이다. 수도 함락 시 수도 이전·국고 이동은 하지 않는다(미구현).",
-    "renownOnCapture": "縣 소유가 넘어간 직후 HwihaWarOutcomeListener.onCountyCaptured(縣, 이전 세력, 점령 세력, [포위 지휘관]) 를 한 번 부른다. 명망 집계 기록은 기록 스트림 구현이 맡는다(이 브랜치 기본값은 무동작). 강공 실패는 명망 사건을 내지 않는다.",
+    "renownOnCapture": "縣 소유가 넘어간 직후 WarOutcomeListener.onCountyCaptured(縣, 이전 세력, 점령 세력, [포위 지휘관]) 를 한 번 부른다. 명망 집계 기록은 기록 스트림 구현이 맡는다(이 브랜치 기본값은 무동작). 강공 실패는 명망 사건을 내지 않는다.",
     "siegeTimelineMax": 36
   },
   "salary": {
@@ -74,7 +74,7 @@
     "status": "CONFIRMED",
     "interceptRangeProvinces": 1,
     "rule": "설치 계책이 있는 적 省에 진입하면 조우한다. 가시성이 FULL인 적 군단은 省 간선 1개 안에서 요격하며, 회피 방침 군단은 인접 자국 省으로 물러나 통행을 내준다. 권위가 없거나 틀이 깨졌으면 판정 불가다.",
-    "interceptNote": "요격 범위는 省 간선 1개로 2026-09-23 확정했다. HwihaMarchReactionInterpreter가 읽는다. 보이지 않는 군단은 요격하지 않는다(재설계 spec §7 시야)."
+    "interceptNote": "요격 범위는 省 간선 1개로 2026-09-23 확정했다. MarchReactionInterpreter가 읽는다. 보이지 않는 군단은 요격하지 않는다(재설계 spec §7 시야)."
   },
   "rations": {
     "status": "CONFIRMED",

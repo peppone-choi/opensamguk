@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "ledgerId": "hwiha-political-v1",
+  "ledgerId": "political-v1",
   "status": "PROPOSED",
   "note": "거병·독립 효과는 출병·발령 정리와 외교 초기 상태 연결 전까지 차단한다. 신규 외교 초기값은 통상(2)으로 제안한다. 증여는 개인 전·곡만 열고 헌납은 縣 창고 적립 경로 전까지 차단한다.",
   "riseMinimumRenown": 50,

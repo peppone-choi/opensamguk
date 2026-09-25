@@ -16,12 +16,12 @@ data class DirectDesign(val conversionTrainingLoss: Int, val grainTradeMoney: In
     companion object {
         val CANON by lazy {
             val resource = checkNotNull(DirectDesign::class.java.classLoader
-                .getResource("hwiha/hwiha-legacy-direct-v1.json"))
+                .getResource("campaign/direct-actions-v1.json"))
             val root = Json.parseToJsonElement(resource.readText()).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note",
                 "conversionTrainingLoss", "grainTradeMoney", "grainTradeGrain", "transportMaxAmount"))
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1)
-            require(root.getValue("ledgerId").jsonPrimitive.content == "hwiha-legacy-direct-v1")
+            require(root.getValue("ledgerId").jsonPrimitive.content == "direct-actions-v1")
             require(root.getValue("status").jsonPrimitive.content == "CONFIRMED")
             DirectDesign(root.getValue("conversionTrainingLoss").jsonPrimitive.int,
                 root.getValue("grainTradeMoney").jsonPrimitive.int,

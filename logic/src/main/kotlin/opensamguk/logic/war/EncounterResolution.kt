@@ -24,7 +24,7 @@ import opensamguk.logic.input.EncounterRelations
  * - A DESTROYED loser of the opposing side becomes a captive: destroyed defenders of the attacker when it
  *   won, or a destroyed attacker of the lowest HOLDING defender. With no winner there is no captor. This
  *   is the provisional minimal captive rule
- *   (`data/curated/han/hwiha-s3-provisional-v1.json` `encounter.captives`).
+ *   (`data/curated/han/campaign-balance-v1.json` `encounter.captives`).
  */
 object EncounterResolution {
     const val RULE_VERSION = 1

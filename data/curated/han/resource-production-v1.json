@@ -1,7 +1,7 @@
 {
  "schemaVersion": 2,
- "ledgerId": "hwiha-resource-production-v1",
- "generator": "tools/map/build_hwiha_resource_production.py",
+ "ledgerId": "resource-production-v1",
+ "generator": "tools/map/build_county_resource_production.py",
  "note": "철·말의 위치는 resource-sites-v1 의 사료 근거, 목재는 han-tiles 면적 축이다. 산출량 단가는 모두 게임 설계 수치다. 소금은 5자원에 없다.",
  "era": "LATER_HAN",
  "rates": {

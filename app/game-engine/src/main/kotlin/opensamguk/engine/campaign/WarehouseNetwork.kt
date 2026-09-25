@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 
 /**
  * 「카드가 있는 곳의 보급망」(재설계 spec §9.2) — 녹봉·상사가 금을 내는 창고 목록. 2026-09-23 확정 규칙
- * (`hwiha-s3-provisional-v1.json` salary.note):
+ * (`campaign-balance-v1.json` salary.note):
  *
  * - 카드 인물의 기준 城이 지불자 세력의 **보급된** 縣이면: 그 세력의 보급된 縣 창고 전체(수도 먼저, 그다음 id 순).
  * - 지불자 세력의 縣이지만 보급이 끊겼으면(고립): 그 縣 창고만.

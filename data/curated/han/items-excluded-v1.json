@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "data/extracted/item/items.json",
-  "catalogId": "hwiha-items-excluded-v1",
+  "catalogId": "items-excluded-v1",
   "excluded": [
     {
       "sourceRowIndex": 124,

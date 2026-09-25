@@ -52,5 +52,5 @@ tasks.test {
 
 // One checked-in HWIHA rules source, packaged without runtime working-directory fallback.
 tasks.processResources {
-    from(rootProject.file("data/battle/hwiha-unit-profiles-v1.json")) { into("battle") }
+    from(rootProject.file("data/battle/unit-profiles-v1.json")) { into("battle") }
 }

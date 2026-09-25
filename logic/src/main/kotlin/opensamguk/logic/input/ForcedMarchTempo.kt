@@ -10,7 +10,7 @@ import opensamguk.logic.world.LandMarchMetricSnapshot
 /** The approved march tempo ledger supplies every direct forced-march magnitude. */
 object ForcedMarchTempo {
     private val root by lazy {
-        Json.parseToJsonElement(checkNotNull(javaClass.classLoader.getResource("hwiha/march-tempo-targets-v1.json"))
+        Json.parseToJsonElement(checkNotNull(javaClass.classLoader.getResource("campaign/march-tempo-targets-v1.json"))
             .readText()).jsonObject
     }
     private val forced get() = root.getValue("forcedMarch").jsonObject

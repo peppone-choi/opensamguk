@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""HWIHA 縣 월간 철·말 생산 원장.
+"""縣 월간 철·말 생산 원장.
 
 **어느 縣이 생산하는가는 사료가 정하고, 얼마나 생산하는가는 게임 설계가 정한다.**
 `resource-sites-v1.json` 은 스스로 「게임 수치가 아니다」라고 적어 둔 근거 원장이라 산출량이 없다.
@@ -24,10 +24,10 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 SITES = ROOT / "data/curated/han/resource-sites-v1.json"
 TILES = ROOT / "data/map/han-tiles.json"
-OUT = ROOT / "data/curated/han/hwiha-resource-production-v1.json"
+OUT = ROOT / "data/curated/han/resource-production-v1.json"
 RUNTIME_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 # 런타임이 읽는 판. 원장은 縣 키로 적고 이쪽은 런타임 城 id 로만 적는다 — 엔진이 지도 파일을 다시 읽지 않는다.
-RUNTIME_OUT = ROOT / "infra/src/main/resources/hwiha/county-production-v1.json"
+RUNTIME_OUT = ROOT / "infra/src/main/resources/campaign/county-production-v1.json"
 
 # 게임 설계 수치다. 사료 근거가 없다 — 사료는 「어디에」만 말한다.
 # 규모 감각: 전 지도 월 전 5,005만 · 곡 5억 1,302만(초안 규모)에 견주면 철·말은 3 자리 수 더 희소하다.
@@ -134,8 +134,8 @@ def build() -> dict:
             totals[resource] = totals.get(resource, 0) + amount
     return {
         "schemaVersion": 2,
-        "ledgerId": "hwiha-resource-production-v1",
-        "generator": "tools/map/build_hwiha_resource_production.py",
+        "ledgerId": "resource-production-v1",
+        "generator": "tools/map/build_county_resource_production.py",
         "note": "철·말의 위치는 resource-sites-v1 의 사료 근거, 목재는 han-tiles 면적 축이다. 산출량 단가는 모두 게임 설계 수치다. 소금은 5자원에 없다.",
         "era": ERA,
         "rates": dict(sorted(RATES.items())),
@@ -166,10 +166,10 @@ def runtime_document(built: dict) -> dict:
     rows.sort(key=lambda row: row["countyId"])
     return {
         "schemaVersion": 1,
-        "artifactId": "hwiha-county-production-v1",
-        "generator": "tools/map/build_hwiha_resource_production.py",
-        "note": "철·말은 사료 산지, 목재는 면적 축이다. 전·곡은 HwihaCountyIncome 의 식이 만든다.",
-        "sourceLedger": "data/curated/han/hwiha-resource-production-v1.json",
+        "artifactId": "county-production-v1",
+        "generator": "tools/map/build_county_resource_production.py",
+        "note": "철·말은 사료 산지, 목재는 면적 축이다. 전·곡은 CountyIncome 의 식이 만든다.",
+        "sourceLedger": "data/curated/han/resource-production-v1.json",
         "counts": {"counties": len(rows), "monthlyTotals": built["counts"]["monthlyTotals"]},
         "counties": rows,
     }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "ledgerId": "hwiha-legacy-direct-v1",
+  "ledgerId": "direct-actions-v1",
   "status": "CONFIRMED",
   "note": "2026-09-24 사용자 확정: 숙련전환은 본인 부곡 1개 병종 변경·훈련 -10, 장비매매는 현재 縣에서 보물 카드 값으로 1개 거래, 군량매매는 전 100과 곡물 300 교환, 물자조달은 현재 縣 창고에서 인접 아군 縣 창고로 자원 1종을 한 순 최대 1000 운반한다.",
   "conversionTrainingLoss": 10,
