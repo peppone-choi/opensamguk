@@ -55,6 +55,10 @@ class NamedUnitTraditionsTest {
         fuling.forEach {
             assertEquals("涪陵郡", it.requiredRegionName)
             assertEquals("PARENT-0150", it.requiredMapParentRegionId)
+            val countyOnly = UnitFormationContext(true, true, emptySet(), 10)
+            assertEquals(UnitFormationFailure.REQUIRED_REGION_MISSING, NamedUnitFormation.assess(it, countyOnly))
+            assertNull(NamedUnitFormation.assess(it,
+                countyOnly.copy(eligibleMapParentRegionIds = setOf("PARENT-0150"))))
         }
     }
 

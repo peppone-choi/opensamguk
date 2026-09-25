@@ -51,6 +51,8 @@ data class UnitFormationContext(
     /** Card ids already issued anywhere in this server. */
     val issuedCardIds: Set<String>,
     val freeRenown: Int,
+    /** Parent region ids currently eligible for recruitment in this server. */
+    val eligibleMapParentRegionIds: Set<String> = emptySet(),
 )
 
 enum class UnitFormationFailure {
@@ -66,7 +68,11 @@ object NamedUnitFormation {
         if (unit.requiredGeneralName != null && !context.requiredGeneralPresent) {
             return UnitFormationFailure.REQUIRED_GENERAL_MISSING
         }
-        if (unit.requiredRegionName != null && !context.requiredRegionPresent) {
+        if (unit.requiredMapParentRegionId != null &&
+            unit.requiredMapParentRegionId !in context.eligibleMapParentRegionIds) {
+            return UnitFormationFailure.REQUIRED_REGION_MISSING
+        }
+        if (unit.requiredMapParentRegionId == null && unit.requiredRegionName != null && !context.requiredRegionPresent) {
             return UnitFormationFailure.REQUIRED_REGION_MISSING
         }
         if (unit.header.availability == CardAvailability.UNIQUE && unit.header.id in context.issuedCardIds) {
