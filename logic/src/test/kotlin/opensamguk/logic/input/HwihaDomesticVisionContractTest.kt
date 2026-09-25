@@ -1,5 +1,6 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.world.HanCommandery
 import opensamguk.logic.world.HanCommanderyIndex
 import kotlin.test.*
@@ -45,10 +46,10 @@ class HwihaDomesticVisionContractTest {
         assertEquals(HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY, HwihaCountyWorks.META_KEY)
         assertEquals(HwihaMetaVisionSourceReader.WATCHTOWER_BEACON, DomesticWork.WATCHTOWER_BEACON.name)
         val done = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
-            HwihaDomesticEffects.newWork(HwihaDomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
+            HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w", 1, now),
             listOf(HwihaCompletedWork(DomesticWork.WATCHTOWER_BEACON, now))).toMetaValue())
         val building = mapOf<String, Any?>(HwihaCountyWorks.META_KEY to HwihaCountyWorks(
-            HwihaDomesticEffects.newWork(HwihaDomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
+            HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.WATCHTOWER_BEACON, "w", 1, now), emptyList()).toMetaValue())
 
         assertEquals(SourceRead(true, 0), reader.hasCompletedWatchtower(done))
         assertEquals(SourceRead(false, 0), reader.hasCompletedWatchtower(building), "진행 중 망루봉화는 시야가 아니다(무효도 아니다)")

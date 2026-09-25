@@ -1,5 +1,6 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.gameapi.dto.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
@@ -134,7 +135,7 @@ class HwihaDomesticReader(
 
 /** 조회 응답 조립(순수). 접수·엔진과 같은 [HwihaDomesticRules] 판정만 쓴다. */
 object HwihaDomesticViews {
-    private val design get() = HwihaDomesticDesign.CANON
+    private val design get() = DomesticDesign.CANON
 
     fun posts(actorId: Int, snapshot: HwihaDomesticSnapshot): HwihaPostsResponse {
         val state = snapshot.state ?: return HwihaPostsResponse(snapshot.failure ?: "UNAVAILABLE")

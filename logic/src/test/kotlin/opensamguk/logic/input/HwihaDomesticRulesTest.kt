@@ -1,5 +1,6 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
@@ -152,7 +153,7 @@ class HwihaDomesticRulesTest {
         assertIs<DomesticAssessment.Eligible>(HwihaDomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION), state()))
         assertEquals(DomesticFailure.WAREHOUSE_NOT_READY, rejected(HwihaDomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = emptyMap()))))))
-        val active = HwihaDomesticEffects.newWork(HwihaDomesticDesign.CANON, DomesticWork.ROAD, "w1", 1, now)
+        val active = HwihaDomesticEffects.newWork(DomesticDesign.CANON, DomesticWork.ROAD, "w1", 1, now)
         val busy = warehouse(10) + (HwihaCountyWorks.META_KEY to HwihaCountyWorks(active, emptyList()).toMetaValue())
         assertEquals(DomesticFailure.WORK_IN_PROGRESS, rejected(HwihaDomesticRules.assessWork(WorkRequest(1, 10, DomesticWork.IRRIGATION),
             state(counties = listOf(county(10, meta = busy))))))
@@ -164,7 +165,7 @@ class HwihaDomesticRulesTest {
     }
 
     @Test fun `seated magistrate needs arrival and presence and drives the effective policy`() {
-        val design = HwihaDomesticDesign.CANON
+        val design = DomesticDesign.CANON
         val order = HwihaPlacementOrder("r1", 1, 4, PlacementPost.MAGISTRATE, PlacementTarget.County(10), now)
         fun with(arrived: HwihaPhase?, node: String) = state(people = listOf(person(1, human = true, lord = true, level = 12),
             person(2, node = node, meta = mapOf(HwihaPlacementState.META_KEY to

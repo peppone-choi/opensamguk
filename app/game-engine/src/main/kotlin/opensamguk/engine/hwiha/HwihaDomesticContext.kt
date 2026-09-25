@@ -1,5 +1,6 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
@@ -16,7 +17,7 @@ import opensamguk.infra.seed.HwihaUnitProfilesJson
  * [topology]·[metrics] 가 없으면 배치 부임 행군을 하지 않는다. [merit] 은 치적 사건을 받는 자리(기본은 버림).
  */
 class HwihaDomesticContext(
-    val design: HwihaDomesticDesign = HwihaDomesticDesign.CANON,
+    val design: DomesticDesign = DomesticDesign.CANON,
     val geography: HwihaCountyGeography? = null,
     val nativeCounties: HwihaNativeCountyLedger? = null,
     val topology: StrategicTopologySnapshot? = null,

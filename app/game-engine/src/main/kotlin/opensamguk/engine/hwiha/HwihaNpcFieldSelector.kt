@@ -1,5 +1,6 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.economy.HwihaCountyWarehouse
@@ -10,7 +11,7 @@ internal class HwihaNpcFieldSelector(private val context: HwihaDomesticContext,
     private val catalog: HwihaInputCatalog = HwihaInputCatalog.load()) {
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !HwihaPersonalTurn.hasNoInput(reserved) ||
-            context.design.directActionStatus != HwihaDomesticDesign.CONFIRMED) return reserved
+            context.design.directActionStatus != DomesticDesign.CONFIRMED) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
         if (!HwihaNpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
             world.listRetainers().any { it.generalId == actorId }) return reserved

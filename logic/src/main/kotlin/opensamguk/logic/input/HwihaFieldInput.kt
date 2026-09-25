@@ -1,5 +1,6 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.economy.HwihaResources
 
 /** A field action uses the acting general's saved position; the caller supplies no county, cost, or actor. */
@@ -73,7 +74,7 @@ object HwihaFieldRules {
 
     /** A single affordability calculation is used by both the API snapshot and the execution world. */
     fun assessEconomy(inputId: String, person: DomesticPerson, countyId: Int,
-        levels: HwihaCountyLevels?, stock: HwihaResources?, design: HwihaDomesticDesign,
+        levels: HwihaCountyLevels?, stock: HwihaResources?, design: DomesticDesign,
         hometown: Boolean = false): HwihaFieldEconomyAssessment {
         if (levels == null) return HwihaFieldEconomyAssessment.Rejected(HwihaFieldFailure.STATE_UNAVAILABLE)
         val stats = HwihaSeatStats(person.leadership, person.strength, person.intelligence, person.politics,
