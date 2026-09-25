@@ -115,14 +115,14 @@ object ImperialEdictPipeline {
     }
 
     /** An adapter may create an OfficeTenure only from this proof and a catalogued central office. */
-    fun acceptedCentralGrant(edict: ImperialEdict, catalogOfficeIds: Set<String>): CentralOfficeGrant? {
+    fun acceptedCentralGrant(edict: ImperialEdict, catalog: CentralOfficeCatalog): CentralOfficeGrant? {
         if (edict.stage != EdictStage.RESPONDED || !edict.sealAuthorityAccepted) return null
         val review = edict.review ?: return null
         if (review.emperorActorId != edict.proposal.emperorId || review.emperorDecision == EmperorEdictDecision.REFUSE) return null
         if (edict.registrarId == null || edict.registerId == null || edict.sealArtifactId == null || edict.courierId == null) return null
         if (edict.deliveredToFactionId != edict.proposal.recipientFactionId) return null
         val grant = edict.proposal.requestedOffice ?: return null
-        if (grant.officeId !in catalogOfficeIds) return null
+        if (grant.officeId !in catalog.ids) return null
         val receipt = edict.receipt ?: return null
         if (receipt.decision !in setOf(EdictRecipientDecision.ACCEPT, EdictRecipientDecision.PARTIAL_ACCEPT)) return null
         return grant.takeIf { it.officeId in receipt.acceptedOfficeIds }

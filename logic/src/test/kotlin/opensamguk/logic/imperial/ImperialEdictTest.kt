@@ -10,7 +10,18 @@ import kotlin.test.assertTrue
 class ImperialEdictTest {
     private val office = CentralOfficeGrant("office.taiwei", 77)
     private val proposal = ImperialEdictProposal("edict-1", "later_han", 50, 1, 8, "詔", office)
-    private val catalog = setOf(office.officeId)
+    private val catalog = CentralOfficeCatalog.decode(File("../data/curated/han/imperial-central-offices.json").readText())
+
+    @Test
+    fun `central catalog preserves source rank labels and rejects duplicate identifiers`() {
+        val source = File("../data/curated/han/imperial-central-offices.json").readText()
+        val loaded = CentralOfficeCatalog.decode(source)
+        assertEquals(22, loaded.definitions.size)
+        assertEquals("公", loaded.definition("office.taiwei")?.rankLabel)
+        assertEquals("UNKNOWN", loaded.definition("office.qianjiangjun")?.rankLabel)
+        val duplicate = source.replace("\"office.situ\"", "\"office.taiwei\"")
+        assertFailsWith<IllegalArgumentException> { CentralOfficeCatalog.decode(duplicate) }
+    }
 
     private fun reviewed(decision: EmperorEdictDecision = EmperorEdictDecision.APPROVE) =
         ImperialEdictPipeline.review(ImperialEdict(proposal), decision, CourtFactionDecision.OPPOSE, 1, "詔")
@@ -29,7 +40,8 @@ class ImperialEdictTest {
             delivered(), EdictReceipt(8, EdictRecipientDecision.ACCEPT, setOf(office.officeId)),
         )
         assertEquals(office, ImperialEdictPipeline.acceptedCentralGrant(accepted, catalog))
-        assertNull(ImperialEdictPipeline.acceptedCentralGrant(accepted, emptySet()))
+        val unknown = accepted.copy(proposal = proposal.copy(requestedOffice = CentralOfficeGrant("office.unknown", 77)))
+        assertNull(ImperialEdictPipeline.acceptedCentralGrant(unknown, catalog))
     }
 
     @Test
