@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
 
 /**
  * V60 — `log_entry.event_kind` 와 휘하 기록 부분 인덱스 2개. 인덱스가 유효하고(CONCURRENTLY 빌드), 기존 행은
- * NULL 로 남고, game-api `HwihaRecordReadRepository` 와 같은 모양의 질의(연·월·순 행 비교, 종류 IN 목록)가
+ * NULL 로 남고, game-api `RecordReadRepository` 와 같은 모양의 질의(연·월·순 행 비교, 종류 IN 목록)가
  * 해를 넘는 창에서 맞는 줄만 고르는지 본다.
  */
 class V60LogEntryEventKindMigrationTest {

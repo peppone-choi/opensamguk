@@ -3,17 +3,17 @@
 import { useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Chip, KV, Panel, Portrait, SectionHeader, Table } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
-import { useHwihaRead, type HwihaPersonCard } from '@/lib/hwiha-reads';
+import { useHwihaRead, type PersonCard } from '@/lib/hwiha-reads';
 
 const loyaltyTone = (loyalty: number) => (loyalty >= 80 ? 'moss' : loyalty < 50 ? 'rust' : 'info');
 
 /** 아직 입력이 없는 행동 — 숨기지 않고 사유와 함께 비활성으로 둔다(표시 원칙). */
 const NOT_YET = '아직 이 입력이 없습니다';
 
-function PersonDetail({ person }: { person: HwihaPersonCard }) {
+function PersonDetail({ person }: { person: PersonCard }) {
     const s = person.stats;
     const a = person.aptitudes;
     return (
@@ -43,7 +43,7 @@ function PersonDetail({ person }: { person: HwihaPersonCard }) {
                         ]}
                     />
                 ) : (
-                    <HwihaEmpty>능력치가 없는 카드입니다.</HwihaEmpty>
+                    <Empty>능력치가 없는 카드입니다.</Empty>
                 )}
             </div>
 
@@ -59,14 +59,14 @@ function PersonDetail({ person }: { person: HwihaPersonCard }) {
                         ]}
                     />
                 ) : (
-                    <HwihaEmpty>능력치가 없어 적성을 매길 수 없습니다.</HwihaEmpty>
+                    <Empty>능력치가 없어 적성을 매길 수 없습니다.</Empty>
                 )}
             </div>
 
             <div style={{ paddingTop: 12 }}>
                 <SectionHeader title="결속" as="h4" />
                 {person.bonds.length === 0 ? (
-                    <HwihaEmpty>확인된 결속이 없습니다.</HwihaEmpty>
+                    <Empty>확인된 결속이 없습니다.</Empty>
                 ) : (
                     <div style={{ display: 'grid', gap: 6, paddingTop: 6 }}>
                         {person.bonds.map((b) => (
@@ -118,7 +118,7 @@ export default function RetinuePage() {
         retainerId == null ? '—' : people.find((p) => p.retainerId === retainerId)?.name ?? '—';
 
     return (
-        <HwihaShell title="휘하 편성" tab="배치">
+        <GameShell title="휘하 편성" tab="배치">
             <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     <Panel style={{ padding: 12 }}>
@@ -133,8 +133,8 @@ export default function RetinuePage() {
                                 ) : null
                             }
                         />
-                        {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
-                        {!notice && people.length === 0 ? <HwihaEmpty>거느린 인물이 없습니다.</HwihaEmpty> : null}
+                        {notice ? <Empty>{notice}</Empty> : null}
+                        {!notice && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
                         {people.length > 0 ? (
                             <Table
                                 headers={['인물', '결속', '충성', '자리', '코스트']}
@@ -166,7 +166,7 @@ export default function RetinuePage() {
 
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="부대 카드" sub={`부곡 ${units.length}`} />
-                        {!notice && units.length === 0 ? <HwihaEmpty>편성한 부대가 없습니다.</HwihaEmpty> : null}
+                        {!notice && units.length === 0 ? <Empty>편성한 부대가 없습니다.</Empty> : null}
                         {units.length > 0 ? (
                             <Table
                                 headers={['부대', '병종', '병력', '훈련', '사기', '군량', '지휘']}
@@ -186,10 +186,10 @@ export default function RetinuePage() {
 
                 {selected ? <PersonDetail person={selected} /> : (
                     <Panel style={{ padding: 12 }}>
-                        <HwihaEmpty>인물을 고르면 여기에 카드가 열립니다.</HwihaEmpty>
+                        <Empty>인물을 고르면 여기에 카드가 열립니다.</Empty>
                     </Panel>
                 )}
             </div>
-        </HwihaShell>
+        </GameShell>
     );
 }

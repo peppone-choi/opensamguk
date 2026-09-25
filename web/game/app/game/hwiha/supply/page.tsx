@@ -1,8 +1,8 @@
 'use client';
 
 import { Chip, Panel, SectionHeader, Table } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { HWIHA_RESOURCE_LABELS, useHwihaRead } from '@/lib/hwiha-reads';
 
@@ -21,13 +21,13 @@ export default function SupplyPage() {
     const cut = warehouses.filter((w) => !w.supplied);
 
     return (
-        <HwihaShell title="보급망 · 창고" tab="배치">
+        <GameShell title="보급망 · 창고" tab="배치">
             <div style={{ padding: 12, display: 'grid', gap: 12 }}>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title="창고별 재고" sub="다섯 자원 모두 실물" actions={<Chip>{`${warehouses.length}곳`}</Chip>} />
-                    {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
+                    {notice ? <Empty>{notice}</Empty> : null}
                     {!notice && warehouses.length === 0 ? (
-                        <HwihaEmpty>우리 세력의 창고가 없습니다.</HwihaEmpty>
+                        <Empty>우리 세력의 창고가 없습니다.</Empty>
                     ) : null}
                     {warehouses.length > 0 ? (
                         <Table
@@ -64,7 +64,7 @@ export default function SupplyPage() {
                             actions={<Chip tone={cut.length ? 'rust' : 'moss'}>{cut.length}</Chip>}
                         />
                         {cut.length === 0 ? (
-                            <HwihaEmpty>{notice ?? '끊긴 창고가 없습니다. 모든 창고가 수도와 이어져 있습니다.'}</HwihaEmpty>
+                            <Empty>{notice ?? '끊긴 창고가 없습니다. 모든 창고가 수도와 이어져 있습니다.'}</Empty>
                         ) : (
                             <div style={{ display: 'grid', gap: 6, paddingTop: 8 }}>
                                 {cut.map((w) => (
@@ -82,10 +82,10 @@ export default function SupplyPage() {
 
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="녹봉 미지급 위험" sub="월 경계(상순) 지급" />
-                        <HwihaEmpty>녹봉 규칙이 아직 없습니다. 규칙이 생기면 지급 못 할 사람이 여기 나옵니다.</HwihaEmpty>
+                        <Empty>녹봉 규칙이 아직 없습니다. 규칙이 생기면 지급 못 할 사람이 여기 나옵니다.</Empty>
                     </Panel>
                 </div>
             </div>
-        </HwihaShell>
+        </GameShell>
     );
 }

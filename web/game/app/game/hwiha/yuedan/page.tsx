@@ -1,8 +1,8 @@
 'use client';
 
 import { Chip, KV, Panel, SectionHeader, Table } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { useHwihaRead } from '@/lib/hwiha-reads';
 
@@ -21,7 +21,7 @@ function stampLabel(stamp: string | null): string | null {
  * 월단평 — 시안 Yuedan.
  *
  * 매월 상순 명망을 갱신하고 순위를 발표한다(정본 설계 §2.8·§5.2). 순위는 월 경계의
- * `HwihaMonthlyAssessment` 가 남긴 것을 `GET /api/hwiha/yuedan` 으로 읽는다.
+ * `MonthlyAssessment` 가 남긴 것을 `GET /api/hwiha/yuedan` 으로 읽는다.
  */
 export default function YuedanPage() {
     const yuedan = useHwihaRead((id, signal) => api.hwihaYuedan(id, signal));
@@ -35,7 +35,7 @@ export default function YuedanPage() {
         .sort((a, b) => (a.departureOrder ?? 0) - (b.departureOrder ?? 0));
 
     return (
-        <HwihaShell title="월단평" tab="장수 행동">
+        <GameShell title="월단평" tab="장수 행동">
             <div
                 style={{
                     padding: 12,
@@ -47,9 +47,9 @@ export default function YuedanPage() {
             >
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title={when ? `${when} 월단평` : '월단평'} sub="달마다 새로 매긴다" />
-                    {notice ? <HwihaEmpty>{notice}</HwihaEmpty> : null}
+                    {notice ? <Empty>{notice}</Empty> : null}
                     {!notice && yuedan.data?.status === 'NOT_ASSESSED' ? (
-                        <HwihaEmpty>아직 첫 월단평이 없습니다. 다음 달 상순에 처음 발표합니다.</HwihaEmpty>
+                        <Empty>아직 첫 월단평이 없습니다. 다음 달 상순에 처음 발표합니다.</Empty>
                     ) : null}
                     {ranking.length > 0 ? (
                         <Table
@@ -131,7 +131,7 @@ export default function YuedanPage() {
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader title="이탈 판정 순서" sub="코스트가 상한을 넘으면 충성이 낮은 사람부터" />
                         {departures.length === 0 ? (
-                            <HwihaEmpty>{hwihaReadNotice(retinue, retinue.data?.status) ?? '코스트가 상한 안이라 이탈 판정을 받을 사람이 없습니다.'}</HwihaEmpty>
+                            <Empty>{hwihaReadNotice(retinue, retinue.data?.status) ?? '코스트가 상한 안이라 이탈 판정을 받을 사람이 없습니다.'}</Empty>
                         ) : (
                             <Table
                                 headers={['순서', '인물', '충성', '코스트']}
@@ -146,6 +146,6 @@ export default function YuedanPage() {
                     </Panel>
                 </div>
             </div>
-        </HwihaShell>
+        </GameShell>
     );
 }

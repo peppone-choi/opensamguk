@@ -1,12 +1,12 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
 
 const mocks = vi.hoisted(() => ({ props: null as ComponentProps<typeof HanMapCanvasType> | null, refreshKey: null as unknown }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
     mocks.props = props; return <div data-testid="war-map">
       <button type="button" onClick={() => props.onCityHover?.(props.cities![0], { x: 1, y: 2 })}>城 얹기</button>
     </div>;
@@ -20,7 +20,7 @@ vi.mock('@/lib/hwiha-map', () => ({ HWIHA_MAP_CODE: 'han-world-v3', HWIHA_PROVIN
     cities: [{ id: 7, name: '甲縣', commanderyName: '甲郡', mapLabel: '甲縣', level: 5, nationId: 1, x: 350, y: 305 }],
     commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 }],
     sourceSize: { width: 700, height: 610 }, legend: [], administrativeOwnership: undefined }; } }));
-import WarRoomMap from '@/components/hwiha/WarRoomMap';
+import WarRoomMap from '@/components/campaign/WarRoomMap';
 
 describe('WarRoomMap unified map props', () => {
   it('passes the served cells, centered 城, visibility, and projected corps', () => {

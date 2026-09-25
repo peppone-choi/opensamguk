@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { Panel, SectionHeader } from '@opensamguk/ui';
-import HwihaShell from '@/components/HwihaShell';
-import HwihaCourtForm from '@/components/command/HwihaCourtForm';
-import { HwihaEmpty, hwihaReadNotice } from '@/components/hwiha/HwihaStates';
+import GameShell from '@/components/GameShell';
+import CourtForm from '@/components/command/CourtForm';
+import { Empty, hwihaReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { submitCommandAndAwaitResult } from '@/lib/commandSubmit';
 import { useHwihaRead } from '@/lib/hwiha-reads';
@@ -14,7 +14,7 @@ import { useHwihaSession } from '@/lib/hwiha-session';
  * 조정 결정 — 발령 · 포상. 시안 Orders.
  *
  * 발령은 사람 장수에게 내리는 조정 결정이고 결정권자의 턴에 실행된다. 받은 발령의 수락·거절, 직속
- * 장수에게 새 발령은 기존 발령 폼(`HwihaCourtForm`)이 서버 입력 `court.dispatch`·`court.dispatchReply`
+ * 장수에게 새 발령은 기존 발령 폼(`CourtForm`)이 서버 입력 `court.dispatch`·`court.dispatchReply`
  * 로 보낸다. 상사는 카드 위치의 창고망 금 잔액을 확인해 `court.reward`로 접수한다.
  */
 export default function OrdersPage() {
@@ -50,18 +50,18 @@ export default function OrdersPage() {
         } finally { setBusy(false); }
     }
     return (
-        <HwihaShell title="조정 결정 — 발령 · 포상" tab="조정 결정">
+        <GameShell title="조정 결정 — 발령 · 포상" tab="조정 결정">
             <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title="발령" sub="받은 발령 · 내린 발령 · 새 발령" />
-                    {generalId != null ? <HwihaCourtForm generalId={generalId} onReserved={refresh} /> : null}
+                    {generalId != null ? <CourtForm generalId={generalId} onReserved={refresh} /> : null}
                 </Panel>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title="상사" sub="직속 인물에게 창고 금을 내립니다" />
                     <p style={{ margin: '8px 0', fontSize: 13, color: 'var(--text-2)' }}>금 100당 충성 +1, 한 번에 최대 +10</p>
-                    {problem && <HwihaEmpty>{problem}</HwihaEmpty>}
+                    {problem && <Empty>{problem}</Empty>}
                     {notice && <p role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p>}
-                    {!problem && people.length === 0 && <HwihaEmpty>상사할 직속 인물 카드가 없습니다.</HwihaEmpty>}
+                    {!problem && people.length === 0 && <Empty>상사할 직속 인물 카드가 없습니다.</Empty>}
                     {!problem && people.length > 0 && <div style={{ display: 'grid', gap: 10, paddingTop: 10 }}>
                         <label>상사 대상
                             <select className="os-inset" aria-label="상사 대상" value={retainerId || ''} onChange={(event) => setRetainerId(Number(event.target.value))} disabled={busy}>
@@ -78,6 +78,6 @@ export default function OrdersPage() {
                     </div>}
                 </Panel>
             </div>
-        </HwihaShell>
+        </GameShell>
     );
 }

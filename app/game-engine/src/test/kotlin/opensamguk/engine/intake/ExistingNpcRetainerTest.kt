@@ -5,7 +5,7 @@ import opensamguk.common.wire.RetainerActionResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.world.WorldId
 import opensamguk.engine.retainer.RetainerMonthlyService
-import opensamguk.engine.hwiha.HwihaCampaignWorldFixture
+import opensamguk.engine.campaign.CampaignWorldFixture
 import opensamguk.engine.turn.*
 import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.input.PersonPolicyState
@@ -32,7 +32,7 @@ class ExistingNpcRetainerTest {
         ) as RetainerActionResult
 
     private fun hwihaWorld(capacity: Int): InMemoryTurnWorld {
-        val fixture = HwihaCampaignWorldFixture()
+        val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val owner = fixture.person(10, 1, route.startCity, lord = false).copy(npcState = 0, gold = 5000,
             meta = mapOf("hwihaLord" to false, PersonPolicyState.META_KEY to

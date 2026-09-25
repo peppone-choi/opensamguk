@@ -351,7 +351,7 @@ object DatabaseHooks {
         commanderRetainerId = b.commanderRetainerId, commanderBonusApplied = b.commanderBonusApplied,
     )
 
-    private fun toHwihaSiegeRow(v: opensamguk.engine.turn.HwihaSiege) = opensamguk.infra.persistence.HwihaSiegeRow(
+    private fun toHwihaSiegeRow(v: opensamguk.engine.turn.HwihaSiege) = opensamguk.infra.persistence.SiegeRow(
         countyId = v.countyId, status = v.status, besiegerGeneralId = v.besiegerGeneralId,
         besiegerOwnerGeneralId = v.besiegerOwnerGeneralId, besiegerOrderId = v.besiegerOrderId,
         besiegerNationId = v.besiegerNationId, defenderNationId = v.defenderNationId,

@@ -86,7 +86,7 @@ object ScenarioJson {
             RuleProfile.fromWorldConfig(value)
         } else null
         val effectiveProfile = ruleProfile ?: WorldRuleProfile.defaultProfile()
-        val personPolicies = HwihaScenarioPersonPolicies.decode(root, effectiveProfile)
+        val personPolicies = ScenarioPersonPolicies.decode(root, effectiveProfile)
         val rawLords = root["hwihaLords"]
         require("hwihaLords" !in root || effectiveProfile == RuleProfile.HWIHA) {
             "hwihaLords requires HWIHA ruleProfile"
@@ -177,8 +177,8 @@ object ScenarioJson {
             ignoreDefaultEvents = ignoreDefaultEvents,
             ruleProfile = ruleProfile,
             seedContract = seedContract,
-            hwihaWarehouses = HwihaScenarioWarehouseSeeds.decode(root, effectiveProfile),
-            hwihaUnits = HwihaScenarioUnits.decode(root, effectiveProfile).also { units ->
+            hwihaWarehouses = ScenarioWarehouseSeeds.decode(root, effectiveProfile),
+            hwihaUnits = ScenarioUnits.decode(root, effectiveProfile).also { units ->
                 for (unit in units) require(roster.count { it.name == unit.general } == 1) {
                     "hwihaUnits general must identify exactly one general: ${unit.general}"
                 }
@@ -391,9 +391,9 @@ data class Scenario(
     /** 월드 규칙 프로필. null = 시나리오가 선언하지 않음(시드 때 SAMMO 로 기록). */
     val ruleProfile: opensamguk.logic.input.RuleProfile? = null,
     val seedContract: ScenarioSeedContract? = null,
-    val hwihaWarehouses: HwihaWarehouseSeed? = null,
+    val hwihaWarehouses: WarehouseSeed? = null,
     /** HWIHA 초기 부곡 선언(`hwihaUnits`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
-    val hwihaUnits: List<HwihaScenarioUnit> = emptyList(),
+    val hwihaUnits: List<ScenarioUnit> = emptyList(),
 ) {
     fun seedGenerals(extendedGeneral: Boolean): List<ScenarioGeneral> {
         validateRtk14AddedPlacement()

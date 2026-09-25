@@ -1,6 +1,6 @@
 package opensamguk.gameapi.web
 
-import opensamguk.gameapi.read.HwihaCampForbidden
+import opensamguk.gameapi.read.CampForbidden
 import opensamguk.gameapi.read.RoadFortReader
 import org.springframework.http.CacheControl
 import org.springframework.http.HttpStatus
@@ -18,7 +18,7 @@ class RoadFortController(private val reader: RoadFortReader) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(reader.forts(generalId, userId))
-        } catch (_: HwihaCampForbidden) {
+        } catch (_: CampForbidden) {
             ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
     }

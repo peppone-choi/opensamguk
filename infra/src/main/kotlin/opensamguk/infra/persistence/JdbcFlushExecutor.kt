@@ -1846,7 +1846,7 @@ open class JdbcFlushExecutor(
     }
 
     // --- step 8j: HWIHA 포위 채널 (V61) --------------------------------------------------------------
-    private fun hwihaSiegeParams(worldId: WorldId, r: HwihaSiegeRow): MapSqlParameterSource = MapSqlParameterSource()
+    private fun hwihaSiegeParams(worldId: WorldId, r: SiegeRow): MapSqlParameterSource = MapSqlParameterSource()
         .addValue("world_id", worldId.value).addValue("county_id", r.countyId).addValue("status", r.status)
         .addValue("besieger_general_id", r.besiegerGeneralId).addValue("besieger_owner_general_id", r.besiegerOwnerGeneralId)
         .addValue("besieger_order_id", r.besiegerOrderId).addValue("besieger_nation_id", r.besiegerNationId)
@@ -1858,7 +1858,7 @@ open class JdbcFlushExecutor(
         .addValue("turns", r.turns).addValue("morale", r.morale).addValue("garrison", r.garrison)
         .addValue("end_reason", r.endReason, java.sql.Types.VARCHAR).addValue("timeline", r.timelineJson)
 
-    private fun hwihaSiegeCreateMany(worldId: WorldId, rows: List<HwihaSiegeRow>) {
+    private fun hwihaSiegeCreateMany(worldId: WorldId, rows: List<SiegeRow>) {
         jdbc.batchUpdate(
             """
             INSERT INTO hwiha_siege
@@ -1875,7 +1875,7 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.CREATE_MANY, rows.size))
     }
 
-    private fun hwihaSiegeUpdate(worldId: WorldId, rows: List<HwihaSiegeRow>) {
+    private fun hwihaSiegeUpdate(worldId: WorldId, rows: List<SiegeRow>) {
         val affected = jdbc.batchUpdate(
             """
             UPDATE hwiha_siege
@@ -3080,8 +3080,8 @@ data class FlushPayload(
     val deletedBattlePlanIds: List<Int> = emptyList(),
     val battleReplayInserts: List<BattleReplayInsertRow> = emptyList(),
     // --- HWIHA 포위(V61, step-8j, 8i 뒤; CREATE → UPDATE, 삭제 없음) ---
-    val createdHwihaSieges: List<HwihaSiegeRow> = emptyList(),
-    val updatedHwihaSieges: List<HwihaSiegeRow> = emptyList(),
+    val createdHwihaSieges: List<SiegeRow> = emptyList(),
+    val updatedHwihaSieges: List<SiegeRow> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
