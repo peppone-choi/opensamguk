@@ -1,6 +1,10 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.engine.siege.RoadFortPassage
+import opensamguk.logic.vision.ScoutReports
+import opensamguk.logic.vision.VisionTier
+import opensamguk.logic.vision.VisionViewer
+import opensamguk.logic.vision.Vision
 
 import opensamguk.logic.vision.VisionRules
 
@@ -129,14 +133,14 @@ class HwihaMarchReactionInterpreter(
             if (!HwihaMetaVisionSourceReader.hasCompletedWatchtower(city.meta).value) return@mapNotNull null
             (world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince)?.let { city.id to it.id }
         }
-        val reports = try { HwihaScoutReports.read(viewer.meta) } catch (_: IllegalArgumentException) { null }
+        val reports = try { ScoutReports.read(viewer.meta) } catch (_: IllegalArgumentException) { null }
         val sources = VisionViewer(viewerId, viewer.nationId.coerceAtLeast(0), world.positionOf(viewerId),
             projection.deployed.filter { it.ownerGeneralId == viewerId }
                 .associate { it.commanderGeneralId to world.positionOf(it.commanderGeneralId) },
             cards.mapNotNull { it.generalId }.distinct().associateWith(world::positionOf),
             territory, posts, watchtowers, reports)
         val commandery = commanderies.commanderyOf(target.id) ?: return false
-        return HwihaVision.project(sources, commanderies, visionRules, now).tierOf(commandery) == VisionTier.FULL
+        return Vision.project(sources, commanderies, visionRules, now).tierOf(commandery) == VisionTier.FULL
     }
 
     private fun retreat(world: InMemoryTurnWorld, order: HwihaReactionOrder, from: StrategicNodeRef.LandProvince,

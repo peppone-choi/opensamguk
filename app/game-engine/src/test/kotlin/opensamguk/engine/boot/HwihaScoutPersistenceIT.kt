@@ -1,5 +1,8 @@
 package opensamguk.engine.boot
 
+import opensamguk.logic.vision.ScoutInputCodec
+import opensamguk.logic.vision.ScoutReports
+
 import java.nio.file.Path
 import kotlin.test.*
 import opensamguk.engine.flush.DatabaseHooks
@@ -54,12 +57,12 @@ class HwihaScoutPersistenceIT {
         val target = index.commanderies[index.neighbours(origin).first()]
         val others = world.listGenerals().filter { it.id != 1 }
         val recorder = ChangeRecorder()
-        assertEquals(HwihaTurnOutcome.Applied(HwihaScoutInput.INPUT_ID),
+        assertEquals(HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID),
             HwihaScoutHandler(world, recorder, context).handle(1, """{"commanderyId":"${target.id}"}""", 77))
-        val written = requireNotNull(HwihaScoutReports.read(world.getGeneralById(1)!!.meta))
+        val written = requireNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
         flush.flush(DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState()))
         world = cold(id)
-        assertEquals(written, HwihaScoutReports.read(world.getGeneralById(1)!!.meta))
+        assertEquals(written, ScoutReports.read(world.getGeneralById(1)!!.meta))
         assertEquals(target.id, written.reports.single().commanderyId)
         assertEquals(others, world.listGenerals().filter { it.id != 1 })
     }
