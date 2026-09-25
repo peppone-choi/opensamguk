@@ -172,7 +172,7 @@ class WorldSnapshotLoader(
         val operations = loadOperations()
         val operationUnits = loadOperationUnits()
         val battlePlans = loadBattlePlans()
-        val hwihaSieges = loadHwihaSieges()
+        val sieges = loadSieges()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -199,7 +199,7 @@ class WorldSnapshotLoader(
             operations = operations,
             operationUnits = operationUnits,
             battlePlans = battlePlans,
-            hwihaSieges = hwihaSieges,
+            sieges = sieges,
             archivedNationIds = archivedNationIds,
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
@@ -299,7 +299,7 @@ class WorldSnapshotLoader(
     )
 
     /** HWIHA 포위(V61) 적재 — 끝난 포위도 조회·기록용으로 싣는다. 행 0 이면 빈 목록. */
-    private fun loadHwihaSieges(): List<opensamguk.engine.turn.HwihaSiege> = jdbc.query(
+    private fun loadSieges(): List<opensamguk.engine.turn.Siege> = jdbc.query(
         "SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id, " +
             "defender_nation_id, approach_province_id, started_year, started_month, started_phase, settled_year, settled_month, " +
             "settled_phase, turns, morale, garrison, end_reason, timeline::text AS timeline " +
@@ -309,7 +309,7 @@ class WorldSnapshotLoader(
             @Suppress("UNCHECKED_CAST")
             val timeline = (opensamguk.infra.persistence.MetaJson.decode("{\"timeline\":${rs.getString("timeline")}}")["timeline"]
                 as? List<Map<String, Any?>>) ?: error("siege.timeline is not an array")
-            opensamguk.engine.turn.HwihaSiege(
+            opensamguk.engine.turn.Siege(
                 countyId = rs.getInt("county_id"), status = rs.getString("status"),
                 besiegerGeneralId = rs.getInt("besieger_general_id"),
                 besiegerOwnerGeneralId = rs.getInt("besieger_owner_general_id"),

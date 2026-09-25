@@ -165,7 +165,7 @@ data class Bugok(
  * HWIHA 縣城 포위(V61 `siege`). 縣治 城 id 가 키다. 규칙·판정은 `opensamguk.logic.war.SiegeRules`,
  * 저장은 world dirty 집합 → JdbcFlushExecutor. [timeline] 은 순마다 한 줄씩 쌓는 조회용 기록이다.
  */
-data class HwihaSiege(
+data class Siege(
     val countyId: Int,
     val status: String,
     val besiegerGeneralId: Int,

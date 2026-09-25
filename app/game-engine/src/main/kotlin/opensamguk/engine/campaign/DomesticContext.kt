@@ -74,12 +74,12 @@ class DomesticContext(
             }.toMap(),
             provinceIdsByCounty = if (geography == null) emptyMap() else world.administrativeCountyIds
                 .associateWith(geography::provincesOfCounty),
-            activeSiegeCountyIds = world.listHwihaSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
+            activeSiegeCountyIds = world.listSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
         )
     }
 }
 
-internal fun InMemoryTurnWorld.hwihaNow(): Phase = getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
+internal fun InMemoryTurnWorld.phaseNow(): Phase = getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
 
 internal fun InMemoryTurnWorld.updateGeneralMeta(recorder: ChangeRecorder, before: TurnGeneral, meta: Map<String, Any?>) {
     if (before.meta == meta) return

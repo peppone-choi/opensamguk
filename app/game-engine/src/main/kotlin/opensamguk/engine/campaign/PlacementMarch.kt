@@ -42,7 +42,7 @@ class PlacementMarchTurn(
         val position = positions.stateFor(generalId) ?: return true
         if (position.battlefield != null) return true
         if (positions.topologyRevision != topology.topologyRevision || positions.topologyHash != topology.contentHash) return true
-        val now = world.hwihaNow()
+        val now = world.phaseNow()
         if (position.node == destination) {
             if (active.arrivedAt == null) {
                 arrive(generalId, active, now, clearMarch = true)

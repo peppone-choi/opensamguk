@@ -40,7 +40,7 @@ class NpcDeploySelector(
         // A held NPC card moves through its holder's deployment and standing policy.
         if (world.listRetainers().any { it.generalId == actorId }) return null
         if (CorpsEncounter.META_KEY in actor.meta || CountyAssignment.META_KEY in actor.meta) return null
-        if (world.listHwihaSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
+        if (world.listSieges().any { it.status == SiegeService.ACTIVE && it.besiegerGeneralId == actorId }) return null
         val projection = DeploymentExecutor(world, ChangeRecorder(), topology, metrics).projection() ?: return null
         if (projection.deployed.any { it.commanderGeneralId == actorId || it.ownerGeneralId == actorId }) return null
         val units = world.bugoksOf(actorId).filter { it.commanderRetainerId == null && it.troops > 0 }
@@ -65,7 +65,7 @@ class NpcDeploySelector(
             return DeployInput(actorId, units.map { it.id }.sorted(), home.third)
         }
         val wars = world.listDiplomacy().filter { it.state == 0 }.mapTo(hashSetOf()) { it.fromNationId to it.toNationId }
-        val claimed = world.listHwihaSieges().filter { it.status == SiegeService.ACTIVE }.map { it.countyId }.toSet() +
+        val claimed = world.listSieges().filter { it.status == SiegeService.ACTIVE }.map { it.countyId }.toSet() +
             projection.people.mapNotNull { person ->
                 world.getGeneralById(person.id)?.takeIf { it.nationId == actor.nationId }
                     ?.let { try { CorpsOrder.read(it.meta, topology) } catch (_: IllegalArgumentException) { null } }
@@ -123,7 +123,7 @@ class NpcDeploySelector(
     private fun reliefTarget(world: InMemoryTurnWorld, nationId: Int, position: StrategicNodeRef.LandProvince, troops: Long,
         projection: DeploymentProjection, edges: StrategicEdgeStateSnapshot): StrategicNodeRef.LandProvince? {
         val near = provinceHops(position, CampaignBalance.NPC_DEPLOY_MAX_EDGES).keys
-        return world.listHwihaSieges().filter { it.status == SiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
+        return world.listSieges().filter { it.status == SiegeService.ACTIVE }.sortedBy { it.countyId }.mapNotNull { siege ->
             val city = world.getCityById(siege.countyId)?.takeIf { it.nationId == nationId } ?: return@mapNotNull null
             val node = world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince ?: return@mapNotNull null
             if (node == position || node.id !in near) return@mapNotNull null

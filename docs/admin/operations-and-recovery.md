@@ -180,7 +180,7 @@ pending 조우는 공격 지휘관의 다음 개인 턴 시작(`HwihaAssignmentM
 
 ### HWIHA 포위 상태(V61 `siege`)
 
-縣治 城 하나에 행 하나(PK world_id·county_id)이고 `ACTIVE`·`LIFTED`·`FALLEN` 을 가진다. 끝난 포위도 조회·기록용으로 남고 같은 縣의 새 포위가 덮어쓴다. 쓰기는 엔진 world dirty 집합 → `JdbcFlushExecutor` 8j 채널(CREATE → UPDATE)뿐이며 부팅 스냅샷(`loadHwihaSieges`)이 싣는다. 포위 장수 행이 지워지면 FK CASCADE 로 함께 사라진다. 순 경계(`HwihaPhaseBoundary`)는 `settled_*` 도장으로 같은 순을 두 번 정산하지 않는다. 성 안 급식은 `HwihaWarehouseSettlement` 로 縣 창고 곡을 뺀다. 함락은 `city.nation_id`·`pop`·`def` 를 바꾸고 창고는 縣에 남긴다. 수도 함락 때 수도 이전·국고 이동은 아직 없다. 조회는 `GET /api/sieges?generalId=`(관여한 포위만).
+縣治 城 하나에 행 하나(PK world_id·county_id)이고 `ACTIVE`·`LIFTED`·`FALLEN` 을 가진다. 끝난 포위도 조회·기록용으로 남고 같은 縣의 새 포위가 덮어쓴다. 쓰기는 엔진 world dirty 집합 → `JdbcFlushExecutor` 8j 채널(CREATE → UPDATE)뿐이며 부팅 스냅샷(`loadSieges`)이 싣는다. 포위 장수 행이 지워지면 FK CASCADE 로 함께 사라진다. 순 경계(`HwihaPhaseBoundary`)는 `settled_*` 도장으로 같은 순을 두 번 정산하지 않는다. 성 안 급식은 `HwihaWarehouseSettlement` 로 縣 창고 곡을 뺀다. 함락은 `city.nation_id`·`pop`·`def` 를 바꾸고 창고는 縣에 남긴다. 수도 함락 때 수도 이전·국고 이동은 아직 없다. 조회는 `GET /api/sieges?generalId=`(관여한 포위만).
 
 ### HWIHA 순 경계 보급·녹봉·기존 유지비
 
