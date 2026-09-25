@@ -78,7 +78,8 @@ object Misinformation {
     /** Phantom corps enter only the view model. FOG sees nothing, and no deployment is created. */
     fun victimPhantoms(victimGeneralId: Int, view: VisionView, commanderyNoById: Map<String, Int>,
         provinceCommanderyNoById: Map<String, Int>, authoritativeCorpsKeys: Set<String>,
-        active: Collection<FalseSighting>): List<CorpsSighting> = active.asSequence()
+        active: Collection<FalseSighting>): List<CorpsSighting> {
+        val sightings = active.asSequence()
         .filter { it.victimGeneralId == victimGeneralId && it.createdAt <= view.now && view.now < it.expiresAt }
         .mapNotNull { record ->
             val no = commanderyNoById[record.commanderyId] ?: return@mapNotNull null
@@ -92,4 +93,7 @@ object Misinformation {
                 if (tier == VisionTier.INTEL) record.createdAt else null,
                 if (tier == VisionTier.INTEL) opensamguk.logic.vision.Vision.ageTurns(record.createdAt, view.now) else null)
         }.sortedWith(compareBy({ it.commanderyNo }, { it.corpsKey })).toList()
+        require(sightings.map { it.corpsKey }.distinct().size == sightings.size) { "duplicate phantom corps key" }
+        return sightings
+    }
 }

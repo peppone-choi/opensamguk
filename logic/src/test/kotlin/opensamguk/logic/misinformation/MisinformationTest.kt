@@ -65,6 +65,9 @@ class MisinformationTest {
         assertFailsWith<IllegalArgumentException> {
             Misinformation.victimPhantoms(9, view(VisionTier.FULL), map, provinceMap, setOf(fake.corpsKey), listOf(planted))
         }
+        assertFailsWith<IllegalArgumentException> {
+            project(9, VisionTier.FULL, listOf(planted, planted.copy(id = "false-2")))
+        }
         // Only CorpsSighting is produced. A phantom has no deployment or order identity for encounter/supply.
         assertTrue(full.single().toString().contains("feedfacefeedface"))
         assertFalse(full.single().toString().contains("false-1"))
