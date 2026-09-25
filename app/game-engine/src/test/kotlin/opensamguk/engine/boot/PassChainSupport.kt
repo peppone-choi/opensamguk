@@ -25,11 +25,11 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /**
- * S3 pass chain shared by [HwihaS3PassChainIT] and its red probe [HwihaS3PassChainProbeIT]: the 豫州 slice seeded by
+ * S3 pass chain shared by [PassChainInvarianceIT] and its red probe [HwihaS3PassChainProbeIT]: the 豫州 slice seeded by
  * the real importer, one human player who signs up and reserves 출사 through the normal reservation tables, and
  * nothing else. Every later link (발령 → 행군 → 조우 → 공성 → 점령 → 징세 → 월단평) must come from the loop itself.
  */
-internal object HwihaS3ChainSupport {
+internal object PassChainSupport {
     const val HUMAN = 9001
     const val HUMAN_USER = 42
     const val PHASES = 48
