@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.MetaVisionSourceReader
+
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.logic.input.*
@@ -69,7 +71,7 @@ class HwihaMarchReactionInterpreterTest {
             HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-2", 2, 2, 2, HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
         assertEquals(LandMarchEntry.CLEAR, policy.entryHazard(world, 1, target), "FOG cannot intercept")
         val city = world.getCityById(towerCity)!!
-        world.updateCity(city.copy(meta = city.meta + (HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY to
+        world.updateCity(city.copy(meta = city.meta + (MetaVisionSourceReader.COUNTY_WORKS_KEY to
             mapOf("version" to 1, "works" to listOf(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))))
         val distant = fixture.topology.landProvinceIds.asSequence().sorted().map { StrategicNodeRef.LandProvince(it) }
             .filter { it != from && it != target }.first { candidate ->
@@ -109,7 +111,7 @@ class HwihaMarchReactionInterpreterTest {
             HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-12", 12, 12, 2,
                 HwihaPhase(200, 1, 1))), emptyList()).toMetaValue())
         val tower = world.getCityById(towerCity)!!
-        world.updateCity(tower.copy(meta = tower.meta + (HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY to
+        world.updateCity(tower.copy(meta = tower.meta + (MetaVisionSourceReader.COUNTY_WORKS_KEY to
             mapOf("version" to 1, "works" to listOf(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))))
         assertEquals(LandMarchEntry.CLEAR, policy.entryHazard(world, 11, target))
         assertEquals(LandMarchEntry.ENCOUNTER, policy.directEntryHazard(world, 11, target))
@@ -149,7 +151,7 @@ class HwihaMarchReactionInterpreterTest {
             binding.landProvinceId?.let(fixture.bundle.commanderyIndex::commanderyOf) == targetCommandery
         }.key
         val city = world.getCityById(towerCity)!!
-        world.updateCity(city.copy(nationId = 2, meta = city.meta + (HwihaMetaVisionSourceReader.COUNTY_WORKS_KEY to
+        world.updateCity(city.copy(nationId = 2, meta = city.meta + (MetaVisionSourceReader.COUNTY_WORKS_KEY to
             mapOf("version" to 1, "works" to listOf(mapOf("kind" to "WATCHTOWER_BEACON", "status" to "COMPLETE"))))))
         world.setGameEnvValue(HwihaMarchReactions.META_KEY,
             HwihaMarchReactions.of(listOf(HwihaReactionOrder("order-2", 2, 2, 2, HwihaPhase(200, 1, 1))),

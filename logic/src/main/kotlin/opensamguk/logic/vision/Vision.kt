@@ -44,7 +44,7 @@ data class VisionViewer(
     val retinueNodes: Map<Int, StrategicNodeRef?>,
     /** Land provinces controlled by the actor's nation (empty when unaffiliated). */
     val territoryProvinceIds: Set<String>,
-    val scoutPosts: List<HwihaScoutPost>,
+    val scoutPosts: List<ScoutPost>,
     /** (cityId, provinceId) of own-nation county seats with a completed watchtower/beacon. */
     val watchtowers: List<Pair<Int, String>>,
     val reports: ScoutReports?,

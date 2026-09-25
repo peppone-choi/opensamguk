@@ -19,7 +19,7 @@ import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.*
 
 /**
- * 공개 꼴 계약: 시야 스트림의 reader(`HwihaMetaVisionSourceReader`)는 최상위 키가 정확히 {version, posts}, version == 1,
+ * 공개 꼴 계약: 시야 스트림의 reader(`MetaVisionSourceReader`)는 최상위 키가 정확히 {version, posts}, version == 1,
  * 항목 키가 정확히 {retainerId(Int), provinceId(String ≤128), status(String)} 이어야 읽고 `ACTIVE` 만 시야로 센다.
  */
 class ScoutPostsTest {
