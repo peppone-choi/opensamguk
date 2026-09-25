@@ -50,7 +50,7 @@ class CorpsRations(
             val add = minOf(want, network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION)
             if (add <= 0) break
             if (!network.payGrain(corps.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
-                log.warn("hwiha_corps_load_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
+                log.warn("campaign_corps_load_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
                 break
             }
             world.updateBugok(unit.copy(provisions = (unit.provisions + add).toInt()))
@@ -59,7 +59,7 @@ class CorpsRations(
         return loaded
     }
 
-    /** 월 경계 보급선 출발. @return 보낸 수송 건수(부곡 단위), HWIHA 가 아니면 null. */
+    /** 월 경계 보급선 출발. @return 보낸 수송 건수(부곡 단위), 캠페인 세계가 아니면 null. */
     fun dispatch(year: Int, month: Int): Int? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val stamp = "%04d-%02d".format(year, month)
@@ -92,7 +92,7 @@ class CorpsRations(
                 val counties = network.countiesFor(corps.nationId, source.second)
                 val delay = maxOf(1L, (source.first + LandMarchMetricSnapshot.NORMAL_BUDGET_MM - 1) / LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
                 if (delay > Int.MAX_VALUE) {
-                    log.warn("hwiha_convoy_skipped commander={} reason=ROUTE_TOO_LONG", corps.commanderGeneralId)
+                    log.warn("campaign_convoy_skipped commander={} reason=ROUTE_TOO_LONG", corps.commanderGeneralId)
                     continue
                 }
                 val arrive = now().plus(delay.toInt())
@@ -105,7 +105,7 @@ class CorpsRations(
                     val add = minOf(want, network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION)
                     if (add <= 0) break
                     if (!network.payGrain(corps.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
-                        log.warn("hwiha_convoy_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
+                        log.warn("campaign_convoy_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
                         break
                     }
                     inFlight += Convoy(id, corps.nationId, add, arrive)
@@ -131,7 +131,7 @@ class CorpsRations(
             val unit = world.getBugokById(convoy.bugokId) ?: continue
             val replenished = unit.provisions.toLong() + convoy.provisions
             if (replenished > Int.MAX_VALUE)
-                log.warn("hwiha_convoy_delivery_capped unit={} excess={}", convoy.bugokId, replenished - Int.MAX_VALUE)
+                log.warn("campaign_convoy_delivery_capped unit={} excess={}", convoy.bugokId, replenished - Int.MAX_VALUE)
             world.updateBugok(unit.copy(provisions = replenished.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()))
         }
         if (arrived.isNotEmpty()) save(pending)

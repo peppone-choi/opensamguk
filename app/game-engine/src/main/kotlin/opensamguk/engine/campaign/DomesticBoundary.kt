@@ -239,7 +239,7 @@ class DomesticBoundary(
     }
 
     private fun missingCounty(actorId: Int, countyId: Int): WorkResult {
-        logger.warn("hwiha_domestic_work_skipped county={} reason=MISSING_COUNTY", countyId)
+        logger.warn("campaign_domestic_work_skipped county={} reason=MISSING_COUNTY", countyId)
         log(actorId, "현 $countyId 정보를 확인할 수 없어 공사 진행을 건너뛰었습니다.")
         return WorkResult.STOPPED
     }

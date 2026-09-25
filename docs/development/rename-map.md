@@ -143,6 +143,7 @@
 | `hwihaBattlePlayback:v1` | `battlePlayback:v1` | 제품 접두사 제거; 재생 해시가 달라짐 |
 | `hwihaEncounterResolution:v${RULE_VERSION}` | `encounterResolution:v${RULE_VERSION}` | 제품 접두사 제거; 조우 스냅샷 해시가 달라짐 |
 | `hwihaSiegeAssault:v${RULE_VERSION}` | `siegeAssault:v${RULE_VERSION}` | 제품 접두사 제거; 공성 결과 해시가 달라짐 |
+| `hwiha-corps:<orderId>` | `corps:<orderId>` | 정찰 관측에 쓰는 불투명 군단 ID의 해시 도메인 변경; 기존 관측 ID는 재사용하지 않음 |
 
 ## 저장·통신 식별자
 
@@ -156,6 +157,8 @@
 | `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
 | `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 저장·통신 draft | Next 경로 그룹 `(campaign)`으로 화면 이동; 옛 서버 경로와 서버 없는 경로 308 리다이렉트 |
 | `data/**/hwiha-*.json` | 도메인별 파일명 | 저장·통신 draft | 18개 파일·내부 ID·빌드 패키징·로더·생성기 경로 동시 갱신 |
+| `hwiha-stratagem-fortify`, `hwiha-stratagem-insight` | `stratagem-fortify`, `stratagem-insight` | 카드 ID 후속 | 카드 원장·기여 상태의 저장 ID 변경; pep 리셋 전 적용 |
+| `hwiha_*` 엔진 경고 이벤트 이름 | `campaign_*` | 카드 ID 후속 | 캠페인 경고 로그의 제품 접두사 제거 |
 
 ## 데이터 파일·리소스 대응
 

@@ -51,26 +51,26 @@ class PersonCardMigrationTest {
                 "\"personPolicy\":{\"renownCapacity\":30,\"acceptsEnlistment\":true,\"statSourceId\":\"verified\",\"statSourceRevision\":\"v1\",\"officerId\":20}}'::jsonb " +
                 "WHERE world_id=1 AND id=20")
             jdbc.execute("""UPDATE general SET meta = meta || '{"personBonds":{"version":1,"bonds":[]},
-                "personContribution":{"version":1,"stratagemCardIds":["hwiha-stratagem-insight"]}}'::jsonb
+                "personContribution":{"version":1,"stratagemCardIds":["stratagem-insight"]}}'::jsonb
                 WHERE world_id=1 AND id=20""".trimIndent())
             jdbc.execute("INSERT INTO general_retainers (world_id,id,master_general_id,origin,general_id,name,relation,release_policy) " +
                 "VALUES (1,1,10,'EXISTING',20,'부장','lieutenant','MUTUAL')," +
                 "(1,2,10,'RECRUITED',NULL,'무명','guest','MASTER_ONLY')")
 
             flyway("64").migrate()
-            assertEquals(false, jdbc.queryForObject("SELECT to_regclass('hwiha_siege') IS NOT NULL", Boolean::class.java))
+            assertEquals(false, jdbc.queryForObject("SELECT to_regclass('campaign_siege') IS NOT NULL", Boolean::class.java))
             assertEquals(true, jdbc.queryForObject("SELECT to_regclass('siege') IS NOT NULL", Boolean::class.java))
-            assertEquals(false, jdbc.queryForObject("SELECT to_regclass('hwiha_person_card') IS NOT NULL", Boolean::class.java))
+            assertEquals(false, jdbc.queryForObject("SELECT to_regclass('campaign_person_card') IS NOT NULL", Boolean::class.java))
             assertEquals(true, jdbc.queryForObject("SELECT to_regclass('person_card') IS NOT NULL", Boolean::class.java))
-            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM pg_constraint WHERE conrelid = 'siege'::regclass AND conname LIKE 'hwiha_siege_%'", Int::class.java))
-            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM pg_indexes WHERE tablename = 'siege' AND indexname LIKE 'hwiha_siege_%'", Int::class.java))
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM pg_constraint WHERE conrelid = 'siege'::regclass AND conname LIKE 'campaign_siege_%'", Int::class.java))
+            assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM pg_indexes WHERE tablename = 'siege' AND indexname LIKE 'campaign_siege_%'", Int::class.java))
             val cards = jdbc.queryForList("SELECT card_id,holder_general_id,availability,renown_cost FROM person_card WHERE world_id=1 ORDER BY card_id")
             assertEquals(listOf("general:10", "general:20", "general:30", "recruited:2"), cards.map { it["card_id"] })
             assertEquals(10, cards[1]["holder_general_id"])
             assertEquals("UNIQUE", cards[1]["availability"])
             assertEquals(5, cards[1]["renown_cost"])
             assertTrue(jdbc.queryForObject("SELECT bond_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("\"bonds\""))
-            assertTrue(jdbc.queryForObject("SELECT contribution_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("hwiha-stratagem-insight"))
+            assertTrue(jdbc.queryForObject("SELECT contribution_state::text FROM person_card WHERE world_id=1 AND card_id='general:20'", String::class.java)!!.contains("stratagem-insight"))
             assertNull(cards[0]["renown_cost"])
             assertEquals("COMMON", cards[3]["availability"])
             assertNull(cards[3]["renown_cost"])
