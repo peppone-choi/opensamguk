@@ -4,14 +4,14 @@ import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
-import opensamguk.logic.input.HwihaDomesticDesign
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.logic.input.HwihaFieldInput
 import opensamguk.logic.input.HwihaInputCatalog
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 
 class HwihaFieldHandlerTest {
     private val fixture = HwihaCampaignWorldFixture()
-    private val design = HwihaDomesticDesign.CANON
+    private val design = DomesticDesign.CANON
 
     @Test fun `pinned administrative counties have a unique land province per county`() {
         val grouped = fixture.bundle.projection.administrativeCountyIds.groupBy {

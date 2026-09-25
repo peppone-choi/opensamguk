@@ -1,5 +1,6 @@
 package opensamguk.logic.input
 
+import opensamguk.logic.domestic.DomesticDesign
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -46,7 +47,7 @@ class HwihaFieldInputTest {
     @Test fun `shared economy assessment rejects a short warehouse before effect`() {
         val levels = HwihaCountyLevels(50_000, 100_000, 100, 1000, 100, 1000, 100, 1000, 50.0,
             100, 1000, 100, 1000)
-        val design = HwihaDomesticDesign.CANON
+        val design = DomesticDesign.CANON
         val short = HwihaFieldRules.assessEconomy(HwihaFieldInput.FORTIFY, person, county.id,
             levels, HwihaResources(money = 4_999, timber = 250), design)
         assertEquals(HwihaFieldFailure.INSUFFICIENT_STOCK,

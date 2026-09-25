@@ -308,7 +308,7 @@ open class TurnRunService(
         // Enqueue after personal turns: an already processed issuer turn is not retroactively reused.
         val (courtInputs, immediateInputs) = claimed.map { it.envelope }.partition {
             world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
-                it.command is opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput
+                it.command is opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
         }
         val intakeResults = commandDispatcher?.dispatchEnvelopes(immediateInputs).orEmpty().toMutableList()
 

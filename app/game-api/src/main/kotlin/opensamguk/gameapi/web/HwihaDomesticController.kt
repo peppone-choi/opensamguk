@@ -37,7 +37,7 @@ class HwihaDomesticController(private val reserve: CommandReserveService, privat
         if (inputId !in HwihaDomesticInput.INPUT_IDS) return ResponseEntity.ok(mapOf("status" to "BLOCKED",
             "code" to "UNKNOWN_INPUT", "reason" to "등록되지 않은 내정 입력입니다."))
         return try {
-            val accepted = reserve.publishImmediate(TurnDaemonCommand.HwihaCourtInput("", generalId, userId!!.toInt(), inputId, raw),
+            val accepted = reserve.publishImmediate(TurnDaemonCommand.ImmediateInput("", generalId, userId!!.toInt(), inputId, raw),
                 userId.toInt())
             ResponseEntity.status(HttpStatus.ACCEPTED).body(mapOf("status" to "AVAILABLE",
                 "requestId" to accepted.requestId, "inputId" to inputId))

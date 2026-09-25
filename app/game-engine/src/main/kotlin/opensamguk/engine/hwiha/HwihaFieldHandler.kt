@@ -1,5 +1,6 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
@@ -36,7 +37,7 @@ class HwihaFieldHandler(
         if (assessment is HwihaFieldAssessment.Rejected) return reject(assessment.reason)
         val eligible = assessment as HwihaFieldAssessment.Eligible
         val design = context.design
-        if (design.directActionStatus != HwihaDomesticDesign.CONFIRMED)
+        if (design.directActionStatus != DomesticDesign.CONFIRMED)
             return reject("NOT_DELIVERED", "현장 행동의 효과 수치가 확정되지 않았습니다.")
         val city = world.getCityById(eligible.county.id) ?: return reject(HwihaFieldFailure.COUNTY_UNAVAILABLE)
         val levels = HwihaDomesticCountyEffects.levelsOf(city)

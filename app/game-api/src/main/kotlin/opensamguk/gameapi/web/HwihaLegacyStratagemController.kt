@@ -20,7 +20,7 @@ class HwihaLegacyStratagemController(private val reserve: CommandReserveService,
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         return try {
             val inputId = "stratagem.$name"
-            val accepted = reserve.publishImmediate(TurnDaemonCommand.HwihaCourtInput("", generalId,
+            val accepted = reserve.publishImmediate(TurnDaemonCommand.ImmediateInput("", generalId,
                 userId.toInt(), inputId, raw), userId.toInt())
             ResponseEntity.status(HttpStatus.ACCEPTED).body(mapOf("status" to "AVAILABLE",
                 "requestId" to accepted.requestId, "inputId" to inputId))
