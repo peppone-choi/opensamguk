@@ -7,8 +7,13 @@ data class VassalFoundingCandidate(
     val retinueOwnerId: Int?,
     val isLord: Boolean,
     val isHuman: Boolean,
+    val isLiving: Boolean = true,
+    val isRetired: Boolean = false,
 ) {
-    init { require(generalId > 0 && nationId >= 0 && (retinueOwnerId == null || retinueOwnerId > 0)) }
+    init {
+        require(generalId > 0 && nationId >= 0 && (retinueOwnerId == null || retinueOwnerId > 0))
+        require(!isRetired || isLiving)
+    }
 }
 
 enum class VassalFoundingFailure {
@@ -16,6 +21,7 @@ enum class VassalFoundingFailure {
     ISSUER_MISMATCH,
     CANDIDATE_MISMATCH,
     CANDIDATE_OUTSIDE_NATION,
+    CANDIDATE_UNAVAILABLE,
     CANDIDATE_NOT_DIRECT_RETINUE,
     CANDIDATE_ALREADY_LORD,
     CANDIDATE_ALREADY_VASSAL,
@@ -56,6 +62,8 @@ object VassalFounding {
             return VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_MISMATCH)
         if (candidate.nationId != issuer.nationId)
             return VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_OUTSIDE_NATION)
+        if (!candidate.isLiving || candidate.isRetired)
+            return VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_UNAVAILABLE)
         if (candidate.isLord)
             return VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_ALREADY_LORD)
         if (candidate.retinueOwnerId != issuer.id)

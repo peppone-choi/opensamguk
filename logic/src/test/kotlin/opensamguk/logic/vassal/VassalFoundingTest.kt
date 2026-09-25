@@ -31,6 +31,8 @@ class VassalFoundingTest {
     fun `foreign candidate, nonretinue and overlapping fief are denied`() {
         assertEquals(VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_OUTSIDE_NATION),
             VassalFounding.assess(proposed, issuer, candidate.copy(nationId = 8), mapOf(10 to 7), emptyList(), rules, 12))
+        assertEquals(VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_UNAVAILABLE),
+            VassalFounding.assess(proposed, issuer, candidate.copy(isLiving = false), mapOf(10 to 7), emptyList(), rules, 12))
         assertEquals(VassalFoundingAssessment.Denied(VassalFoundingFailure.CANDIDATE_NOT_DIRECT_RETINUE),
             VassalFounding.assess(proposed, issuer, candidate.copy(retinueOwnerId = 3), mapOf(10 to 7), emptyList(), rules, 12))
         val earlier = proposed.copy(id = "earlier", vassalLordId = 3, signedTurn = 5)
