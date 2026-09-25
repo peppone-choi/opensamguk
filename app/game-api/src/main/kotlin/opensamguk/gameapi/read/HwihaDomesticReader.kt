@@ -35,8 +35,8 @@ import opensamguk.logic.domestic.DomesticRules
 
 import opensamguk.logic.domestic.DomesticDesign
 import opensamguk.gameapi.dto.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.infra.seed.HwihaUnitProfilesJson
@@ -52,7 +52,7 @@ data class HwihaDomesticSnapshot(
     val failure: String? = null,
     val countyNames: Map<Int, String> = emptyMap(),
     val commanderyNames: Map<String, String> = emptyMap(),
-    val warehouseStocks: Map<Int, HwihaResources> = emptyMap(),
+    val warehouseStocks: Map<Int, Resources> = emptyMap(),
     val countyLevels: Map<Int, CountyLevels> = emptyMap(),
     val cityMilitaryStates: Map<Int, HwihaCityMilitaryState> = emptyMap(),
     val cityMilitaryTroops: Map<Int, Int> = emptyMap(),
@@ -130,7 +130,7 @@ class HwihaDomesticReader(
                         id to (place.commanderyName ?: id)
                     }.toMap(),
                     warehouseStocks = counties.mapNotNull { c ->
-                        try { HwihaCountyWarehouse.read(c.meta, c.id)?.let { c.id to it.stock } } catch (_: IllegalArgumentException) { null }
+                        try { CountyWarehouse.read(c.meta, c.id)?.let { c.id to it.stock } } catch (_: IllegalArgumentException) { null }
                     }.toMap(),
                     countyLevels = counties.associate { c -> c.id to CountyLevels(c.population, c.populationMax,
                         c.agriculture, c.agricultureMax, c.commerce, c.commerceMax, c.security, c.securityMax,
@@ -267,7 +267,7 @@ object HwihaDomesticViews {
                     SeatStats(person.leadership, person.strength, person.intelligence, person.politics, person.charm, false)
                 }
                 val active = works?.active?.let { work ->
-                    val remaining = work.cost.debit(work.charged) ?: HwihaResources()
+                    val remaining = work.cost.debit(work.charged) ?: Resources()
                     HwihaActiveWorkDto(work.work.name, work.work.label, work.requestedAt, work.progress, work.required,
                         (work.progress.toLong() * 100 / work.required).toInt(), DomesticEffects.remainingPhases(design, work, seat),
                         stock(work.cost), stock(work.charged), stock(remaining), work.lastProgressAt, work.stopReason,
@@ -297,7 +297,7 @@ object HwihaDomesticViews {
     private fun order(value: PolicyOrder) = HwihaPolicyOrderDto(value.policy, value.policy?.let(::label), value.requestedAt)
     private fun label(code: String): String = CountyPolicy.entries.firstOrNull { it.name == code }?.label
         ?: CorpsPolicy.entries.firstOrNull { it.name == code }?.label ?: code
-    private fun stock(value: HwihaResources) = HwihaStockDto(value.money, value.grain, value.iron, value.timber, value.horses)
+    private fun stock(value: Resources) = HwihaStockDto(value.money, value.grain, value.iron, value.timber, value.horses)
     private fun stopText(code: String) = when (code) {
         DomesticEffects.INSUFFICIENT_STOCK -> "창고의 자재가 모자랍니다."
         "WAREHOUSE_NOT_READY" -> "현의 창고를 확인할 수 없습니다."

@@ -9,8 +9,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.put
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 
 /** Explicit card modes; the ledger must list the same modes without silently changing their rules. */
 object HwihaLegacyStratagemInput {
@@ -89,20 +89,20 @@ enum class HwihaLegacyStratagemFailure(val message: String) {
 
 data class HwihaLegacyStratagemReady(val actor: DomesticPerson, val source: DomesticCounty,
     val target: DomesticCounty?, val firstNation: DomesticNation?, val secondNation: DomesticNation?,
-    val warehouse: HwihaCountyWarehouse, val targetWarehouse: HwihaCountyWarehouse?,
-    val cardStock: HwihaLegacyStratagemStock, val cost: HwihaResources)
+    val warehouse: CountyWarehouse, val targetWarehouse: CountyWarehouse?,
+    val cardStock: HwihaLegacyStratagemStock, val cost: Resources)
 sealed interface HwihaLegacyStratagemAssessment {
     data class Eligible(val ready: HwihaLegacyStratagemReady) : HwihaLegacyStratagemAssessment
     data class Rejected(val reason: HwihaLegacyStratagemFailure) : HwihaLegacyStratagemAssessment
 }
 
 object HwihaLegacyStratagemRules {
-    fun cost(inputId: String): HwihaResources = when (inputId) {
-        "stratagem.fire", "stratagem.flood" -> HwihaResources(timber = 100)
-        "stratagem.mobilizePeople", "stratagem.raiseMilitia" -> HwihaResources(grain = 300)
-        "stratagem.raid" -> HwihaResources(horses = 100)
-        HwihaLegacyStratagemInput.PROVOKE_RIVALRY -> HwihaResources(money = 300)
-        else -> HwihaResources(money = 100)
+    fun cost(inputId: String): Resources = when (inputId) {
+        "stratagem.fire", "stratagem.flood" -> Resources(timber = 100)
+        "stratagem.mobilizePeople", "stratagem.raiseMilitia" -> Resources(grain = 300)
+        "stratagem.raid" -> Resources(horses = 100)
+        HwihaLegacyStratagemInput.PROVOKE_RIVALRY -> Resources(money = 300)
+        else -> Resources(money = 100)
     }
 
     fun assess(request: HwihaLegacyStratagemInput.Request, state: DomesticProjection): HwihaLegacyStratagemAssessment {
@@ -119,7 +119,7 @@ object HwihaLegacyStratagemRules {
         return try {
             val cards = HwihaLegacyStratagemStock.forPhase(actor.meta, state.now)
             if (!cards.available(request.inputId)) return fail(HwihaLegacyStratagemFailure.CARD_UNAVAILABLE)
-            val warehouse = HwihaCountyWarehouse.read(source.meta, source.id)
+            val warehouse = CountyWarehouse.read(source.meta, source.id)
                 ?: return fail(HwihaLegacyStratagemFailure.SOURCE_UNAVAILABLE)
             val cost = cost(request.inputId)
             if (warehouse.stock.debit(cost) == null) return fail(HwihaLegacyStratagemFailure.INSUFFICIENT_STOCK)
@@ -143,7 +143,7 @@ object HwihaLegacyStratagemRules {
                     return fail(HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE)
             }
             val targetWarehouse = if (request.inputId in setOf("stratagem.steal", "stratagem.raid")) {
-                HwihaCountyWarehouse.read(target!!.meta, target.id)
+                CountyWarehouse.read(target!!.meta, target.id)
                     ?: return fail(HwihaLegacyStratagemFailure.TARGET_UNAVAILABLE)
             } else null
             if (request.inputId == "stratagem.steal" && targetWarehouse!!.stock.money < 100 ||

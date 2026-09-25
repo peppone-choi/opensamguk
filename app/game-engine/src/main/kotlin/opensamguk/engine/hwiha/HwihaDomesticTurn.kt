@@ -20,8 +20,8 @@ import opensamguk.logic.domestic.DomesticAssessment
 import opensamguk.logic.domestic.DomesticRules
 
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /**
@@ -172,9 +172,9 @@ internal class HwihaDomesticCountyEffects(
         val levels = levelsOf(city)
         val outcome = DomesticEffects.applyPolicy(context.design, effective.policy, levels, seat)
         var resultCode = "APPLIED"
-        if (outcome.credit != HwihaResources() || outcome.debit != HwihaResources()) {
+        if (outcome.credit != Resources() || outcome.debit != Resources()) {
             // Resource flows go through the warehouse settlement boundary (owner and revision rechecked).
-            val warehouse = try { HwihaCountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
+            val warehouse = try { CountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
             resultCode = if (warehouse == null) "WAREHOUSE_NOT_READY" else when (val settled = HwihaWarehouseSettlement(world, recorder)
                 .settle(countyId, city.nationId, warehouse.revision, outcome.debit, outcome.credit)) {
                 HwihaWarehouseSettlement.Result.APPLIED -> "APPLIED"

@@ -6,8 +6,8 @@ import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions
@@ -61,14 +61,14 @@ class HwihaMonthlyIncomePersistenceIT {
         jdbc.update(
             "UPDATE city SET nation_id=1, supply_state=1, meta=?::jsonb WHERE world_id=? AND id=?",
             MetaJson.encode(
-                mapOf("keep" to 17, HwihaCountyWarehouse.META_KEY to
-                    HwihaCountyWarehouse(county, 0, HwihaResources(money = 5, grain = 7)).toMetaValue())
+                mapOf("keep" to 17, CountyWarehouse.META_KEY to
+                    CountyWarehouse(county, 0, Resources(money = 5, grain = 7)).toMetaValue())
             ), id, county,
         )
 
         world = cold(id)
-        val seeded = assertNotNull(HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county))
-        assertEquals(HwihaResources(money = 5, grain = 7), seeded.stock)
+        val seeded = assertNotNull(CountyWarehouse.read(world.getCityById(county)!!.meta, county))
+        assertEquals(Resources(money = 5, grain = 7), seeded.stock)
 
         var recorder = ChangeRecorder()
         val first = assertNotNull(HwihaMonthlyCountyIncome(world, recorder).credit(200, 3))
@@ -78,7 +78,7 @@ class HwihaMonthlyIncomePersistenceIT {
 
         // 재기동: 새 스냅샷에 재고와 도장이 모두 남아야 한다.
         world = cold(id)
-        val reloaded = assertNotNull(HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county))
+        val reloaded = assertNotNull(CountyWarehouse.read(world.getCityById(county)!!.meta, county))
         assertEquals(seeded.stock.credit(first.total), reloaded.stock)
         assertEquals(1, reloaded.revision)
         assertEquals(17, (world.getCityById(county)!!.meta["keep"] as Number).toInt())
@@ -94,7 +94,7 @@ class HwihaMonthlyIncomePersistenceIT {
         assertTrue(retry.alreadyStamped)
         save(world, recorder)
         world = cold(id)
-        assertEquals(reloaded, HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county))
+        assertEquals(reloaded, CountyWarehouse.read(world.getCityById(county)!!.meta, county))
 
         // 다음 달은 다시 들어간다.
         recorder = ChangeRecorder()
@@ -103,7 +103,7 @@ class HwihaMonthlyIncomePersistenceIT {
         assertEquals(first.total, next.total)
         save(world, recorder)
         world = cold(id)
-        val after = assertNotNull(HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county))
+        val after = assertNotNull(CountyWarehouse.read(world.getCityById(county)!!.meta, county))
         assertEquals(seeded.stock.credit(first.total).credit(next.total), after.stock)
         assertEquals(2, after.revision)
         assertEquals(

@@ -7,7 +7,7 @@ import opensamguk.logic.domestic.FieldRules
 
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 
 /** Autonomous lords choose only from their own current county, using the human military precheck. */
@@ -31,7 +31,7 @@ internal class HwihaNpcCityMilitarySelector(
         val city = world.getCityById(geographic.county.id) ?: return reserved
         val state = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
             catch (_: IllegalArgumentException) { return reserved }
-        val stock = try { HwihaCountyWarehouse.read(city.meta, city.id)?.stock }
+        val stock = try { CountyWarehouse.read(city.meta, city.id)?.stock }
             catch (_: IllegalArgumentException) { null }
         val preferred = when {
             state.troops < design.npcPolicy.minimumTroops -> listOf(HwihaMilitaryInput.CONSCRIPT, HwihaMilitaryInput.RAISE_VOLUNTEERS)

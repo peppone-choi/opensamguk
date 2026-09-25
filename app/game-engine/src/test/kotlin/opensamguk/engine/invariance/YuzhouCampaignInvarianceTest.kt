@@ -9,7 +9,7 @@ import opensamguk.engine.turn.*
 import opensamguk.engine.hwiha.*
 import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.infra.seed.ScenarioJson
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.*
@@ -45,7 +45,7 @@ class YuzhouCampaignInvarianceTest {
                 commerceMax = c.commMax, security = stat(c.secuMax, c.secuInit), securityMax = c.secuMax,
                 defence = stat(c.defMax, c.defInit), defenceMax = c.defMax, wall = stat(c.wallMax, c.wallInit), wallMax = c.wallMax,
                 supplyState = 1, meta = mapOf("trust" to if (occupied) 80.0 else 50.0) + (warehouses[c.id]?.let {
-                    mapOf(HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(c.id, 0, it).toMetaValue()) } ?: emptyMap()))
+                    mapOf(CountyWarehouse.META_KEY to CountyWarehouse(c.id, 0, it).toMetaValue()) } ?: emptyMap()))
         }
         val lords = scenario.generals.filter { it.hwihaLord == true }
         val generals = lords.mapIndexed { index, g ->

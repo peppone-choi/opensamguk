@@ -8,12 +8,12 @@ package opensamguk.logic.economy
  * 곡 약 7,991 배다(1,168 縣 실측: 초안 월 전 50,053,689 · 곡 513,021,597 대 기존 월환산 전 36,513 ·
  * 곡 64,197). 두 배수가 다르므로 이 경제에서 곡은 기존보다 전에 비해 싸다. 그래서 이 규모는 **기존
  * 비용표를 물려받지 않는다** — HWIHA 비용은 처음부터 이 규모에 맞춰 적는다. 실제로 이 모듈이 들어올
- * 때 창고를 소모하는 호출자는 하나도 없었다(`HwihaResources` 사용처는 모델·정산 경계·씨앗 디코더뿐).
+ * 때 창고를 소모하는 호출자는 하나도 없었다(`Resources` 사용처는 모델·정산 경계·씨앗 디코더뿐).
  *
  * 기존 국가/개인 재정과 함께 켜면 이중 재정이 된다. HWIHA 에서 `ProcessIncome`·`ProcessWarIncome` 은
  * 적용되지 않고 `ProcessSemiAnnual` 은 도시 성장만 남는다(`WorldActionContext`).
  */
-object HwihaCountyIncome {
+object CountyIncome {
     /** 게임상 1 호 = 인구 5. 절삭한다. */
     const val POPULATION_PER_HOUSEHOLD = 5L
 
@@ -53,11 +53,11 @@ object HwihaCountyIncome {
      *
      * 정확한 정수 연산이다. 곱한 뒤 나누므로 개발비를 먼저 실수로 만들어 정밀도를 잃지 않는다.
      */
-    fun monthly(state: CountyState, sites: HwihaResources = HwihaResources()): HwihaResources {
-        if (state.ownerNationId <= 0 || !state.supplied) return HwihaResources()
+    fun monthly(state: CountyState, sites: Resources = Resources()): Resources {
+        if (state.ownerNationId <= 0 || !state.supplied) return Resources()
         val households = households(state.population)
         if (households == 0L) return sites
-        return HwihaResources(
+        return Resources(
             money = scaled(households, MONEY_PER_HOUSEHOLD, state.commerce, state.commerceMax),
             grain = scaled(households, GRAIN_PER_HOUSEHOLD, state.agriculture, state.agricultureMax),
         ).credit(sites)

@@ -20,8 +20,8 @@ import opensamguk.logic.world.HanWorldVariant
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRenownAssessment
 import opensamguk.logic.input.HwihaRenownRules
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -75,10 +75,10 @@ class HwihaMonthBoundaryLoopIT {
         // 시드가 이 縣 을 세력 수도로 두고 창고를 얹었다(companion). 여기서는 루프만 돈다.
         val county = requireNotNull(seededCounty) { "시드가 縣 을 고르지 않았다" }
         val before = assertNotNull(
-            HwihaCountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
+            CountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
             "시드한 창고가 스냅샷에 실렸다",
         )
-        assertEquals(HwihaResources(), before.stock, "시작 재고는 비어 있다")
+        assertEquals(Resources(), before.stock, "시작 재고는 비어 있다")
         assertNull(
             world.getState().meta[HwihaMonthlyCountyIncome.STAMP_KEY],
             "아직 어떤 달도 징세되지 않았다",
@@ -94,7 +94,7 @@ class HwihaMonthBoundaryLoopIT {
         )
         val city = assertNotNull(world.getCityById(county))
         assertTrue(city.supplyState != 0, "월간 보급 BFS 가 이 縣 을 보급 안에 두었다")
-        val credited = assertNotNull(HwihaCountyWarehouse.read(city.meta, county), "창고가 그대로 있다")
+        val credited = assertNotNull(CountyWarehouse.read(city.meta, county), "창고가 그대로 있다")
         assertTrue(credited.stock.grain > 0, "곡이 들어왔다: ${credited.stock}")
         assertEquals(1, credited.revision, "정확히 한 번 적립됐다")
 
@@ -131,7 +131,7 @@ class HwihaMonthBoundaryLoopIT {
         service.runTick(Instant.parse("0200-01-01T04:00:00Z"))
         assertEquals(
             credited,
-            HwihaCountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
+            CountyWarehouse.read(assertNotNull(world.getCityById(county)).meta, county),
             "같은 달을 두 번 적립하지 않는다",
         )
         assertEquals(
@@ -240,8 +240,8 @@ class HwihaMonthBoundaryLoopIT {
                 MetaJson.encode(
                     mapOf(
                         "keep" to "unchanged",
-                        HwihaCountyWarehouse.META_KEY to
-                            HwihaCountyWarehouse(county, 0, HwihaResources()).toMetaValue(),
+                        CountyWarehouse.META_KEY to
+                            CountyWarehouse(county, 0, Resources()).toMetaValue(),
                     ),
                 ),
                 WORLD, county,

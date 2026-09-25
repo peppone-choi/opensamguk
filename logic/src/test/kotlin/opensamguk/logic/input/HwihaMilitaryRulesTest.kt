@@ -5,7 +5,7 @@ import opensamguk.logic.domestic.DomesticCounty
 import opensamguk.logic.domestic.DomesticProjection
 
 import kotlin.test.*
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 class HwihaMilitaryRulesTest {
     private val person = DomesticPerson(7, "장수", 2, true, 2, 1, 50, 50, 50, 50, 50,
@@ -28,14 +28,14 @@ class HwihaMilitaryRulesTest {
         assertEquals(HwihaMilitaryDesign.CONFIRMED, design.status)
         val request = HwihaMilitaryRequest(7, HwihaMilitaryInput.CONSCRIPT)
         val result = HwihaMilitaryRules.assessCity(request, state, 1000, 2000, 100,
-            HwihaCityMilitaryState.INITIAL, HwihaResources(grain = 15_000), design)
+            HwihaCityMilitaryState.INITIAL, Resources(grain = 15_000), design)
         val plan = assertIs<HwihaCityMilitaryAssessment.Eligible>(result).plan
         assertEquals(950, plan.population)
         assertEquals(150, plan.troops)
-        assertEquals(HwihaResources(grain = 15_000), plan.debit)
+        assertEquals(Resources(grain = 15_000), plan.debit)
         assertEquals(HwihaMilitaryFailure.INSUFFICIENT_STOCK,
             assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(request, state,
-                1000, 2000, 100, HwihaCityMilitaryState.INITIAL, HwihaResources(grain = 14_999), design)).reason)
+                1000, 2000, 100, HwihaCityMilitaryState.INITIAL, Resources(grain = 14_999), design)).reason)
     }
 
     @Test fun `city troops migrate once from legacy garrison and remain separate from fortification`() {
@@ -85,7 +85,7 @@ class HwihaMilitaryRulesTest {
         assertEquals(HwihaMilitaryFailure.BESIEGED,
             assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(request,
                 state.copy(activeSiegeCountyIds = setOf(county.id)), 1000, 2000, 100,
-                HwihaCityMilitaryState.INITIAL, HwihaResources(grain = 99_999), design)).reason)
+                HwihaCityMilitaryState.INITIAL, Resources(grain = 99_999), design)).reason)
         assertEquals(HwihaMilitaryFailure.POPULATION_FULL,
             assertIs<HwihaCityMilitaryAssessment.Rejected>(HwihaMilitaryRules.assessCity(
                 HwihaMilitaryRequest(7, HwihaMilitaryInput.DEMOBILIZE), state, 1000, 1000, 100,

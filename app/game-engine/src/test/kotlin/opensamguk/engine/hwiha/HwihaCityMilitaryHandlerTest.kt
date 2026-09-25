@@ -2,8 +2,8 @@ package opensamguk.engine.hwiha
 
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaCityMilitaryState
 import opensamguk.logic.input.HwihaMilitaryInput
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
@@ -14,10 +14,10 @@ class HwihaCityMilitaryHandlerTest {
     @Test fun `conscript spends county grain and changes troops without raising fortification`() {
         val route = fixture.route()
         val actor = fixture.person(711, 1, route.startCity, userId = "42")
-        val stock = HwihaCountyWarehouse(route.startCity, 0, HwihaResources(grain = 1_000_000))
+        val stock = CountyWarehouse(route.startCity, 0, Resources(grain = 1_000_000))
         val world = fixture.world(listOf(actor to route.start), cityChanges = { city ->
             if (city.id == route.startCity) city.copy(nationId = 1,
-                meta = city.meta + (HwihaCountyWarehouse.META_KEY to stock.toMetaValue())) else city
+                meta = city.meta + (CountyWarehouse.META_KEY to stock.toMetaValue())) else city
         })
         val handler = HwihaCityMilitaryHandler(world, ChangeRecorder())
         val before = world.getCityById(route.startCity)!!
@@ -28,7 +28,7 @@ class HwihaCityMilitaryHandlerTest {
         assertEquals(950, after.population)
         assertEquals(150, HwihaCityMilitaryState.read(after.meta).troops)
         assertEquals(before.defence, after.defence)
-        assertEquals(985_000L, HwihaCountyWarehouse.read(after.meta, after.id)!!.stock.grain)
+        assertEquals(985_000L, CountyWarehouse.read(after.meta, after.id)!!.stock.grain)
         assertEquals(applied, handler.handle(HwihaMilitaryInput.CONSCRIPT, actor.id, "{}", "conscript-711", 42))
         assertEquals(150, HwihaCityMilitaryState.read(world.getCityById(after.id)!!.meta).troops)
         assertEquals(10, world.getGeneralById(actor.id)!!.experience)

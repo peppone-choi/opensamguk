@@ -1,6 +1,6 @@
 package opensamguk.logic.domestic
 
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaDeploymentState
 import opensamguk.logic.input.HwihaFlatArguments
 import opensamguk.logic.input.RuleProfile
@@ -76,7 +76,7 @@ object FieldRules {
 
     /** A single affordability calculation is used by both the API snapshot and the execution world. */
     fun assessEconomy(inputId: String, person: DomesticPerson, countyId: Int,
-        levels: CountyLevels?, stock: HwihaResources?, design: DomesticDesign,
+        levels: CountyLevels?, stock: Resources?, design: DomesticDesign,
         hometown: Boolean = false): FieldEconomyAssessment {
         if (levels == null) return FieldEconomyAssessment.Rejected(FieldFailure.STATE_UNAVAILABLE)
         val stats = SeatStats(person.leadership, person.strength, person.intelligence, person.politics,
@@ -84,9 +84,9 @@ object FieldRules {
         val outcome = try { DomesticEffects.applyDirect(design, inputId, levels, stats) }
             catch (_: IllegalArgumentException) { return FieldEconomyAssessment.Rejected(FieldFailure.INVALID_INPUT) }
             catch (_: ArithmeticException) { return FieldEconomyAssessment.Rejected(FieldFailure.STATE_UNAVAILABLE) }
-        if (outcome.levels == levels && outcome.credit == HwihaResources())
+        if (outcome.levels == levels && outcome.credit == Resources())
             return FieldEconomyAssessment.Rejected(FieldFailure.AT_CAPACITY)
-        if (outcome.debit != HwihaResources() || outcome.credit != HwihaResources()) {
+        if (outcome.debit != Resources() || outcome.credit != Resources()) {
             if (stock == null) return FieldEconomyAssessment.Rejected(FieldFailure.WAREHOUSE_NOT_READY)
             if (stock.debit(outcome.debit) == null)
                 return FieldEconomyAssessment.Rejected(FieldFailure.INSUFFICIENT_STOCK)

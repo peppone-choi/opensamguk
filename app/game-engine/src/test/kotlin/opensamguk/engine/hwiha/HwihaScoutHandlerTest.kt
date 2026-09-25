@@ -14,8 +14,8 @@ import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
 import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
@@ -57,7 +57,7 @@ class HwihaScoutHandlerTest {
                 general(3, 2, 30, "44").copy(meta = deployed(3, "req-secret-far", 8))),
             nations = listOf(Nation(1, "N1", "#111111"), Nation(2, "N2", "#222222")),
             cities = listOf(City(10, "집", 1, 1), City(20, "옆", 2, 1,
-                meta = mapOf(HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(20, 0, HwihaResources(5, 5, 5, 5, 5)).toMetaValue())),
+                meta = mapOf(CountyWarehouse.META_KEY to CountyWarehouse(20, 0, Resources(5, 5, 5, 5, 5)).toMetaValue())),
                 City(30, "먼곳", 2, 1)),
             bugoks = listOf(Bugok(7, 2, "옆 부곡", 6400, 1, 50, 50), Bugok(8, 3, "먼 부곡", 900, 1, 50, 50)),
             generalPositionSnapshot = positions,

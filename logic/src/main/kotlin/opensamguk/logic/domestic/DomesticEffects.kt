@@ -1,7 +1,7 @@
 package opensamguk.logic.domestic
 
-import opensamguk.logic.economy.HwihaCountyIncome
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyIncome
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.ActiveWork
 import opensamguk.logic.domestic.CompletedWork
 import opensamguk.logic.domestic.CountyIndicators
@@ -33,13 +33,13 @@ data class SeatStats(val leadership: Int, val strength: Int, val intelligence: I
     }
 }
 
-data class PolicyOutcome(val levels: CountyLevels, val credit: HwihaResources, val debit: HwihaResources)
+data class PolicyOutcome(val levels: CountyLevels, val credit: Resources, val debit: Resources)
 
 sealed interface WorkStep {
     /** 창고가 모자라 이번 순은 진척이 없다. */
     data class Stopped(val work: ActiveWork, val reason: String) : WorkStep
-    data class Advanced(val work: ActiveWork, val debit: HwihaResources) : WorkStep
-    data class Completed(val completed: CompletedWork, val debit: HwihaResources, val levels: CountyLevels) : WorkStep
+    data class Advanced(val work: ActiveWork, val debit: Resources) : WorkStep
+    data class Completed(val completed: CompletedWork, val debit: Resources, val levels: CountyLevels) : WorkStep
 }
 
 /** 방침 효과·공사 진척의 순수 계산. 정수 연산이며 0 쪽으로 자른다(결정론). */
@@ -68,7 +68,7 @@ object DomesticEffects {
         val base = applyEffects(design, action.indicators, action.resources, levels, actor)
         val rate = multiplier(design, action.costStat, actor)
         fun scaled(value: Long) = Math.multiplyExact(value, rate) / 1000L
-        val fixed = action.fixedCost.let { HwihaResources(scaled(it.money), scaled(it.grain), scaled(it.iron),
+        val fixed = action.fixedCost.let { Resources(scaled(it.money), scaled(it.grain), scaled(it.iron),
             scaled(it.timber), scaled(it.horses)) }
         return base.copy(debit = base.debit.credit(fixed))
     }
@@ -84,9 +84,9 @@ object DomesticEffects {
             }
             next = add(next, entry.indicator, base * multiplier(design, entry.stat, seat) / 1000)
         }
-        val households = HwihaCountyIncome.households(levels.population)
-        var credit = HwihaResources()
-        var debit = HwihaResources()
+        val households = CountyIncome.households(levels.population)
+        var credit = Resources()
+        var debit = Resources()
         for (flow in resources) {
             val amount = Math.multiplyExact(households, flow.perHouseholdPermille.toLong()) / 1000 *
                 multiplier(design, flow.stat, seat) / 1000
@@ -98,11 +98,11 @@ object DomesticEffects {
 
     fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: HwihaPhase): ActiveWork {
         val spec = design.works.getValue(work)
-        return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, HwihaResources(), null, null)
+        return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, Resources(), null, null)
     }
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
-    fun progressWork(design: DomesticDesign, work: ActiveWork, now: HwihaPhase, stock: HwihaResources,
+    fun progressWork(design: DomesticDesign, work: ActiveWork, now: HwihaPhase, stock: Resources,
         levels: CountyLevels, seat: SeatStats?): WorkStep {
         val speed = design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000
         val next = minOf(work.required.toLong(), work.progress + maxOf(1L, speed)).toInt()
@@ -119,10 +119,10 @@ object DomesticEffects {
     }
 
     /** 진척 [progress] 까지의 누적 청구 = 총비용 × 진척 / 필요량(내림). 완공 시 정확히 총비용이다. */
-    fun charged(cost: HwihaResources, progress: Int, required: Int): HwihaResources {
+    fun charged(cost: Resources, progress: Int, required: Int): Resources {
         require(required > 0 && progress in 0..required)
         fun part(total: Long) = Math.multiplyExact(total, progress.toLong()) / required
-        return HwihaResources(part(cost.money), part(cost.grain), part(cost.iron), part(cost.timber), part(cost.horses))
+        return Resources(part(cost.money), part(cost.grain), part(cost.iron), part(cost.timber), part(cost.horses))
     }
 
     /** 남은 순 수(현재 속도 기준, 올림). */
@@ -167,11 +167,11 @@ object DomesticEffects {
         }
     }
 
-    private fun resource(kind: DomesticDesign.Resource, amount: Long): HwihaResources = when (kind) {
-        DomesticDesign.Resource.MONEY -> HwihaResources(money = amount)
-        DomesticDesign.Resource.GRAIN -> HwihaResources(grain = amount)
-        DomesticDesign.Resource.IRON -> HwihaResources(iron = amount)
-        DomesticDesign.Resource.TIMBER -> HwihaResources(timber = amount)
-        DomesticDesign.Resource.HORSES -> HwihaResources(horses = amount)
+    private fun resource(kind: DomesticDesign.Resource, amount: Long): Resources = when (kind) {
+        DomesticDesign.Resource.MONEY -> Resources(money = amount)
+        DomesticDesign.Resource.GRAIN -> Resources(grain = amount)
+        DomesticDesign.Resource.IRON -> Resources(iron = amount)
+        DomesticDesign.Resource.TIMBER -> Resources(timber = amount)
+        DomesticDesign.Resource.HORSES -> Resources(horses = amount)
     }
 }

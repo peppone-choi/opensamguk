@@ -2,8 +2,8 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
 import opensamguk.infra.seed.HwihaUnitProfilesJson
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.war.hwiha.*
 import opensamguk.logic.world.*
@@ -290,12 +290,12 @@ class HwihaSiegeService(
             }
             HwihaSiegeRules.Maintenance.MAINTAINED -> Unit
         }
-        val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) } catch (_: IllegalArgumentException) { null }
+        val warehouse = try { CountyWarehouse.read(city.meta, city.id) } catch (_: IllegalArgumentException) { null }
         val grain = warehouse?.stock?.grain ?: 0L
         val settled = HwihaSiegeRules.settleTurn(siege.morale, garrison, grain)
         if (warehouse != null && settled.rationServed > 0) {
             val result = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, warehouse.revision,
-                HwihaResources(grain = settled.rationServed))
+                Resources(grain = settled.rationServed))
             if (result != HwihaWarehouseSettlement.Result.APPLIED) {
                 lift(stamped, "GARRISON_RATION_UNAVAILABLE")
                 log(siege.besiegerGeneralId, "${city.name} 縣城의 군량 정산에 실패해 포위를 풀었습니다($result).")

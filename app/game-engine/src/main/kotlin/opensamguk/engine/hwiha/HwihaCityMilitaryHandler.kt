@@ -8,8 +8,8 @@ import opensamguk.logic.domestic.FieldRules
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** Executes one city-owned military action against the same county snapshot used by precheck. */
@@ -45,7 +45,7 @@ class HwihaCityMilitaryHandler(
         val city = world.getCityById(county.id) ?: return reject(HwihaMilitaryFailure.COUNTY_UNAVAILABLE)
         val condition = try { HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0)) }
             catch (_: IllegalArgumentException) { return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE) }
-        val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) }
+        val warehouse = try { CountyWarehouse.read(city.meta, city.id) }
             catch (_: IllegalArgumentException) { null }
         val assessment = HwihaMilitaryRules.assessCity(request, projection, city.population, city.populationMax,
             condition.troops, condition, warehouse?.stock, design)
@@ -57,7 +57,7 @@ class HwihaCityMilitaryHandler(
             experience = Math.addExact(actor.experience, design.experience)
             dedication = Math.addExact(actor.dedication, design.dedication)
         } catch (_: ArithmeticException) { return reject(HwihaMilitaryFailure.STATE_UNAVAILABLE) }
-        if (plan.debit != HwihaResources()) {
+        if (plan.debit != Resources()) {
             val settled = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId,
                 checkNotNull(warehouse).revision, plan.debit)
             if (settled != HwihaWarehouseSettlement.Result.APPLIED) return reject(when (settled) {

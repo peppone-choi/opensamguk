@@ -469,8 +469,8 @@ class ScenarioImporter(
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
                 trust, def, c.defMax, wall, c.wallMax, c.region,
                 jsonb(scenario.hwihaWarehouses?.warehouses?.get(c.id)?.let { stock ->
-                    mapOf(opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to
-                        opensamguk.logic.economy.HwihaCountyWarehouse(c.id, 0, stock).toMetaValue())
+                    mapOf(opensamguk.logic.economy.CountyWarehouse.META_KEY to
+                        opensamguk.logic.economy.CountyWarehouse(c.id, 0, stock).toMetaValue())
                 } ?: emptyMap<String, Any?>()),
             )
             n++

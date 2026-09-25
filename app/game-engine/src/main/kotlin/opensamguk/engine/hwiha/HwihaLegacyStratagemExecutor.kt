@@ -2,8 +2,8 @@ package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.diplomacy.DiplomacyState
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 internal data class HwihaQueuedLegacyStratagem(val requestId: String, val ownerUserId: Int,
@@ -46,8 +46,8 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
         var sourceStock = ready.warehouse.stock.debit(ready.cost)!!
         var targetStock = ready.targetWarehouse?.stock
         val transfer = when (request.inputId) {
-            "stratagem.steal" -> HwihaResources(money = 100)
-            "stratagem.raid" -> HwihaResources(grain = 300)
+            "stratagem.steal" -> Resources(money = 100)
+            "stratagem.raid" -> Resources(grain = 300)
             else -> null
         }
         if (transfer != null) {
@@ -100,10 +100,10 @@ internal class HwihaLegacyStratagemExecutor(private val world: InMemoryTurnWorld
             "stratagem.steal", "stratagem.raid" -> Unit
             else -> return reject(HwihaLegacyStratagemFailure.INVALID_INPUT)
         }
-        source = source.copy(meta = source.meta + (HwihaCountyWarehouse.META_KEY to
+        source = source.copy(meta = source.meta + (CountyWarehouse.META_KEY to
             ready.warehouse.replace(sourceStock).toMetaValue()))
         if (targetStock != null) target = target!!.copy(meta = target.meta +
-            (HwihaCountyWarehouse.META_KEY to ready.targetWarehouse!!.replace(targetStock).toMetaValue()))
+            (CountyWarehouse.META_KEY to ready.targetWarehouse!!.replace(targetStock).toMetaValue()))
         updateCity(beforeSource, source)
         if (beforeTarget != null && target != null) updateCity(beforeTarget, target)
         val current = world.getGeneralById(request.actorId) ?: return reject(HwihaLegacyStratagemFailure.ACTOR_NOT_FOUND)

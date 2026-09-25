@@ -1,7 +1,7 @@
 package opensamguk.logic.domestic
 
 import kotlin.test.*
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaPhase
 
 class DomesticStateTest {
@@ -44,13 +44,13 @@ class DomesticStateTest {
     }
 
     @Test fun `works codec keeps long resources and refuses duplicate completion`() {
-        val active = ActiveWork(DomesticWork.ROAD, "w1", 1, now, 100, 600, HwihaResources(3_000_000_000L, 0, 0, 2000, 0),
-            HwihaResources(500_000_000L, 0, 0, 333, 0), now, null)
+        val active = ActiveWork(DomesticWork.ROAD, "w1", 1, now, 100, 600, Resources(3_000_000_000L, 0, 0, 2000, 0),
+            Resources(500_000_000L, 0, 0, 333, 0), now, null)
         val works = CountyWorks(active, listOf(CompletedWork(DomesticWork.IRRIGATION, now)))
         assertEquals(works, roundTrip(CountyWorks.META_KEY, works.toMetaValue(), CountyWorks::read))
         assertFailsWith<IllegalArgumentException> { CountyWorks(active.copy(work = DomesticWork.IRRIGATION),
             listOf(CompletedWork(DomesticWork.IRRIGATION, now))) }
-        assertFailsWith<IllegalArgumentException> { active.copy(charged = HwihaResources(3_000_000_001L, 0, 0, 0, 0)) }
+        assertFailsWith<IllegalArgumentException> { active.copy(charged = Resources(3_000_000_001L, 0, 0, 0, 0)) }
         val monthly = CountyMonthly("0200-01", CountyIndicators(1, 2, 3, 4, 5, 6, 7))
         assertEquals(monthly, roundTrip(CountyMonthly.META_KEY, monthly.toMetaValue(), CountyMonthly::read))
         assertEquals(listOf("agriculture", "trust"), CountyIndicators(1, 3, 3, 4, 9, 6, 7).risenSince(monthly.indicators))
