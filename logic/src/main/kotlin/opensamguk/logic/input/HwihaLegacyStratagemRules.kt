@@ -12,9 +12,13 @@ import kotlinx.serialization.json.put
 import opensamguk.logic.economy.HwihaCountyWarehouse
 import opensamguk.logic.economy.HwihaResources
 
-/** Each legacy stratagem command becomes one named card mode in the shared phase-three executor. */
+/** Explicit card modes; the ledger must list the same modes without silently changing their rules. */
 object HwihaLegacyStratagemInput {
-    val INPUT_IDS = HwihaLegacyStratagemCorrespondences.rows.map { it.inputId }.toSet()
+    val INPUT_IDS = setOf(
+        "stratagem.rumor", "stratagem.steal", "stratagem.sabotage", "stratagem.fire",
+        "stratagem.lastStand", "stratagem.mobilizePeople", "stratagem.flood", "stratagem.falseReport",
+        "stratagem.raiseMilitia", "stratagem.provokeRivalry", "stratagem.raid", "stratagem.reciprocity",
+    )
     const val LAST_STAND = "stratagem.lastStand"
     const val PROVOKE_RIVALRY = "stratagem.provokeRivalry"
     val OWN_COUNTY_IDS = setOf("stratagem.mobilizePeople", "stratagem.raiseMilitia")
