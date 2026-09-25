@@ -4,9 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.controller.RetinueController
 import opensamguk.gameapi.dto.*
 import opensamguk.infra.seed.HwihaCountyProductionJson
-import opensamguk.logic.economy.HwihaCountyIncome
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyIncome
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaAptitude
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRenownAssessment
@@ -59,7 +59,7 @@ class HwihaCampReader(
     private val objectMapper: ObjectMapper,
 ) {
     /** 엔진과 같은 런타임 산지 표(`infra` 의 hwiha/county-production-v1.json). 테스트가 바꿔 끼운다. */
-    internal var production: Map<Int, HwihaResources> = HwihaCountyProductionJson.table()
+    internal var production: Map<Int, Resources> = HwihaCountyProductionJson.table()
 
     // ── 월단평 ─────────────────────────────────────────────────────────────
     fun yuedan(generalId: Int, userId: Long): HwihaYuedanResponse {
@@ -124,7 +124,7 @@ class HwihaCampReader(
         val places = placesOrEmpty()
         var invalid = 0
         val rows = scope.mapNotNull { city ->
-            val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) }
+            val warehouse = try { CountyWarehouse.read(city.meta, city.id) }
                 catch (_: IllegalArgumentException) { invalid++; null } ?: return@mapNotNull null
             val stock = warehouse.stock
             HwihaWarehouseDto(city.id, city.name, places[city.id]?.commanderyName, city.id == capital,
@@ -154,21 +154,21 @@ class HwihaCampReader(
 
     /**
      * 엔진 월 세입(`HwihaMonthlyCountyIncome`)이 이 縣 창고에 이번 달 넣을 산지 몫(철·목재·말).
-     * 엔진과 같은 식(`HwihaCountyIncome.monthly`)에 같은 런타임 표를 넣는다 — 주인 없음·보급 끊김·창고 없음이면 0 이다.
+     * 엔진과 같은 식(`CountyIncome.monthly`)에 같은 런타임 표를 넣는다 — 주인 없음·보급 끊김·창고 없음이면 0 이다.
      * 창고 meta 가 깨졌으면 엔진도 그 縣을 건너뛰므로 null(모름)로 둔다.
      */
-    private fun creditedSites(city: CityReadEntity): HwihaResources? {
-        val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) } catch (_: IllegalArgumentException) { return null }
-        if (warehouse == null) return HwihaResources()
+    private fun creditedSites(city: CityReadEntity): Resources? {
+        val warehouse = try { CountyWarehouse.read(city.meta, city.id) } catch (_: IllegalArgumentException) { return null }
+        if (warehouse == null) return Resources()
         val state = try {
-            HwihaCountyIncome.CountyState(city.nationId, city.population, city.commerce, city.commerceMax,
+            CountyIncome.CountyState(city.nationId, city.population, city.commerce, city.commerceMax,
                 city.agriculture, city.agricultureMax, supplied = city.supplyState != 0)
         } catch (_: IllegalArgumentException) { return null }
-        val produced = HwihaCountyIncome.monthly(state, sites = production[city.id] ?: HwihaResources())
-        return HwihaResources(iron = produced.iron, timber = produced.timber, horses = produced.horses)
+        val produced = CountyIncome.monthly(state, sites = production[city.id] ?: Resources())
+        return Resources(iron = produced.iron, timber = produced.timber, horses = produced.horses)
     }
 
-    private fun siteAmount(sites: HwihaResources, resource: String): Long? = when (resource) {
+    private fun siteAmount(sites: Resources, resource: String): Long? = when (resource) {
         "IRON" -> sites.iron
         "TIMBER" -> sites.timber
         "HORSE" -> sites.horses

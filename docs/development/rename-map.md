@@ -80,6 +80,11 @@
 | `opensamguk.logic.input.HwihaVisionRules` (`logic/input/HwihaVisionRules.kt`) | `opensamguk.logic.vision.VisionRules` (`logic/vision/VisionRules.kt`) | 이 PR | 시야 규칙 로더; 리소스 식별자는 저장·데이터 단계에서 개명 |
 | `opensamguk.logic.input.VisionSourceKind` | `opensamguk.logic.vision.VisionSourceKind` | 이 PR | 시야 출처 enum 패키지 이동 |
 | `opensamguk.logic.input.TroopBand` | `opensamguk.logic.vision.TroopBand` | 이 PR | 병력 구간 타입 패키지 이동 |
+| `opensamguk.logic.economy.HwihaResources` (`logic/economy/HwihaCountyWarehouse.kt`) | `opensamguk.logic.economy.Resources` (`logic/economy/CountyWarehouse.kt`) | 이 PR | 전·곡·철·목재·말의 정수 자원 값; meta 필드 유지 |
+| `opensamguk.logic.economy.HwihaCountyWarehouse` | `opensamguk.logic.economy.CountyWarehouse` | 이 PR | 縣 창고 타입·파일 개명, 저장 키는 별도 단계 |
+| `opensamguk.logic.economy.HwihaCountyIncome` (`logic/economy/HwihaCountyIncome.kt`) | `opensamguk.logic.economy.CountyIncome` (`logic/economy/CountyIncome.kt`) | 이 PR | 縣 월 생산 타입·파일 개명 |
+| `logic/economy/HwihaCountyWarehouseTest.kt` | `logic/economy/CountyWarehouseTest.kt` | 이 PR | 창고 테스트 파일·타입 개명 |
+| `logic/economy/HwihaCountyIncomeTest.kt` | `logic/economy/CountyIncomeTest.kt` | 이 PR | 월 생산 테스트 파일·타입 개명 |
 | `opensamguk.logic.input.HwihaVision` (`logic/input/HwihaVision.kt`) | `opensamguk.logic.vision.Vision` (`logic/vision/Vision.kt`) | 이 PR | 시야 투영 본체의 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaVisionView` | `opensamguk.logic.vision.VisionView` | 이 PR | 시야 투영 결과 타입 |
 | `opensamguk.logic.input.HwihaCorpsVisibility` | `opensamguk.logic.vision.CorpsVisibility` | 이 PR | 군단 시야 판정 |
@@ -151,7 +156,7 @@
 | `hwihaCountyMeritWindow` | `countyMeritWindow` | `app/game-engine/src/main/kotlin/opensamguk/engine/hwiha/HwihaCountyMeritWindow.kt` |
 | `hwihaCountyMonthly` | `countyMonthly` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaDomesticState.kt` |
 | `hwihaCountyPolicy` | `countyPolicy` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaDomesticState.kt` |
-| `hwihaCountyWarehouse` | `countyWarehouse` | `logic/src/main/kotlin/opensamguk/logic/economy/HwihaCountyWarehouse.kt` |
+| `hwihaCountyWarehouse` | `countyWarehouse` | `logic/src/main/kotlin/opensamguk/logic/economy/CountyWarehouse.kt` |
 | `hwihaCountyWorks` | `countyWorks` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaDomesticState.kt` |
 | `hwihaDeparture` | `departure` | `app/game-engine/src/test/kotlin/opensamguk/engine/hwiha/HwihaRenownRecordsTest.kt` |
 | `hwihaDeployment` | `deployment` | `logic/src/main/kotlin/opensamguk/logic/input/HwihaDeploymentState.kt` |

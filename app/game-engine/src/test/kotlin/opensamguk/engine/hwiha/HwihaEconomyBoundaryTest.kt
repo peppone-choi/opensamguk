@@ -4,8 +4,8 @@ import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.retainer.RetainerMonthlyService
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
@@ -16,11 +16,11 @@ class HwihaEconomyBoundaryTest {
     private val route = fixture.route()
     private val capital = route.startCity
 
-    private fun warehouse(city: City, stock: HwihaResources) =
-        city.copy(meta = city.meta + (HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(city.id, 0, stock).toMetaValue()))
+    private fun warehouse(city: City, stock: Resources) =
+        city.copy(meta = city.meta + (CountyWarehouse.META_KEY to CountyWarehouse(city.id, 0, stock).toMetaValue()))
 
     private fun money(world: InMemoryTurnWorld, county: Int) =
-        HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.money
+        CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.money
 
     /** Nation 1 owns every city except [enemyCounty]; its capital is the route's start county. */
     private fun realm(enemyCounty: Int? = null, capitalMoney: Long = 0, card: Retainer? = null,
@@ -35,8 +35,8 @@ class HwihaEconomyBoundaryTest {
             val owner = if (city.id == enemyCounty) 2 else 1
             val owned = city.copy(nationId = owner, supplyState = 0)
             when (city.id) {
-                capital -> warehouse(owned, HwihaResources(money = capitalMoney))
-                enemyCounty -> warehouse(owned.copy(population = 50_000, agriculture = 1000), HwihaResources())
+                capital -> warehouse(owned, Resources(money = capitalMoney))
+                enemyCounty -> warehouse(owned.copy(population = 50_000, agriculture = 1000), Resources())
                 else -> owned
             }
         })
@@ -67,7 +67,7 @@ class HwihaEconomyBoundaryTest {
         assertEquals(1, world.getCityById(county)!!.supplyState, "the captured county joined the captor's network")
         val state = world.getState()
         HwihaMonthlyCountyIncome(world, recorder).credit(state.currentYear, state.currentMonth)
-        val stock = HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock
+        val stock = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock
         assertTrue(stock.grain > 0, "the new owner's county warehouse receives the month's income")
     }
 
@@ -89,7 +89,7 @@ class HwihaEconomyBoundaryTest {
     @Test fun `invalid warehouse network is rejected before any county is charged`() {
         val enemy = route.destinationCounty
         val world = realm(enemyCounty = enemy, capitalMoney = 500)
-        world.applyCityDirtyFree(warehouse(world.getCityById(enemy)!!, HwihaResources(money = 1000)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(enemy)!!, Resources(money = 1000)))
         val network = HwihaWarehouseNetwork(world, ChangeRecorder())
         assertFalse(network.payMoney(1, listOf(capital, enemy), 600))
         assertEquals(500L, money(world, capital), "the earlier own warehouse cannot be partially charged")
@@ -110,12 +110,12 @@ class HwihaEconomyBoundaryTest {
     @Test fun `units at home refill carried rations from the network once a month and besiegers abroad do not`() {
         val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)))
         val capitalCity = world.getCityById(capital)!!
-        world.applyCityDirtyFree(warehouse(capitalCity, HwihaResources(grain = 1_000_000)))
+        world.applyCityDirtyFree(warehouse(capitalCity, Resources(grain = 1_000_000)))
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
         val recorder = ChangeRecorder()
         assertEquals(1, HwihaUnitResupply(world, recorder).resupply(200, 2))
         assertEquals(200, world.getBugokById(7)!!.provisions, "filled to troops × 2 months")
-        assertEquals(1_000_000L - 150 * 300, HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+        assertEquals(1_000_000L - 150 * 300, CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
         assertEquals(0, HwihaUnitResupply(world, recorder).resupply(200, 2), "once a month")
         // Abroad (standing in an enemy county) there is no network to draw from.
         val abroad = realm(enemyCounty = route.destinationCounty, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)),
@@ -129,25 +129,25 @@ class HwihaEconomyBoundaryTest {
         val cityless = (fixture.topology.landProvinceIds - fixture.bundle.projection.bindingsByCityId.values.mapNotNull { it.landProvinceId }.toSet()).min()
         val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)),
             people = listOf(fixture.person(1, 1, capital, userId = "42") to opensamguk.logic.world.StrategicNodeRef.LandProvince(cityless)))
-        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, HwihaResources(grain = 1_000_000)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
         assertEquals(capital, world.getGeneralById(1)!!.cityId, "the reference city still points home")
         assertEquals(0, HwihaUnitResupply(world, ChangeRecorder()).resupply(200, 2))
         assertEquals(50, world.getBugokById(7)!!.provisions)
-        assertEquals(1_000_000L, HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+        assertEquals(1_000_000L, CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
     }
 
     @Test fun `deploying loads three months of rations from the departure network and only what the warehouses hold`() {
         val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
-        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, HwihaResources(grain = 1_000_000)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
         fixture.deploy(world, ChangeRecorder(), 1, listOf(7), route.destination)
         assertEquals(100 * HwihaS3Provisional.DEPLOY_LOAD_MONTHS, world.getBugokById(7)!!.provisions, "troops × 3 months")
         assertEquals(1_000_000L - 300L * HwihaS3Provisional.GRAIN_PER_PROVISION,
-            HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+            CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
 
         val poor = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
-        poor.applyCityDirtyFree(warehouse(poor.getCityById(capital)!!, HwihaResources(grain = 30_000)))
+        poor.applyCityDirtyFree(warehouse(poor.getCityById(capital)!!, Resources(grain = 30_000)))
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(poor, ChangeRecorder(), emptySet())
         fixture.deploy(poor, ChangeRecorder(), 1, listOf(7), route.destination)
         assertEquals(100, poor.getBugokById(7)!!.provisions, "only what the network holds (30000 / 300)")
@@ -157,7 +157,7 @@ class HwihaEconomyBoundaryTest {
         // Deployed from an enemy county: nothing is loaded at departure, so only the convoy can feed it.
         val world = realm(enemyCounty = route.destinationCounty, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)),
             people = listOf(fixture.person(1, 1, capital, userId = "42") to route.destination))
-        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, HwihaResources(grain = 1_000_000)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
@@ -169,7 +169,7 @@ class HwihaEconomyBoundaryTest {
         assertEquals(100L * HwihaS3Provisional.CONVOY_TARGET_MONTHS, convoy.provisions)
         assertTrue(convoy.arrive > dispatchedAt, "a convoy is never instant")
         assertEquals(1_000_000L - 300L * HwihaS3Provisional.GRAIN_PER_PROVISION,
-            HwihaCountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain, "paid at departure")
+            CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain, "paid at departure")
         assertEquals(0, rations.dispatch(200, 2), "once a month")
         assertEquals(0, rations.deliver(), "not yet")
         var phases = 0

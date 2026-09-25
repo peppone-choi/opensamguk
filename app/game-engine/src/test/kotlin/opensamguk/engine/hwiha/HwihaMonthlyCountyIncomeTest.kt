@@ -4,21 +4,21 @@ import java.time.Instant
 import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.world.GeneralPositionSnapshot
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 class HwihaMonthlyCountyIncomeTest {
     private fun county(
         id: Int, nationId: Int = 1, population: Int = 1_000, supplyState: Int = 1,
-        warehouse: HwihaCountyWarehouse? = HwihaCountyWarehouse(id, 0, HwihaResources()),
+        warehouse: CountyWarehouse? = CountyWarehouse(id, 0, Resources()),
     ) = City(
         id = id, name = "縣$id", nationId = nationId, level = 1, population = population,
         populationMax = population, agriculture = 100, agricultureMax = 100,
         commerce = 100, commerceMax = 100, supplyState = supplyState,
         meta = buildMap {
             put("keep", "preserved")
-            if (warehouse != null) put(HwihaCountyWarehouse.META_KEY, warehouse.toMetaValue())
+            if (warehouse != null) put(CountyWarehouse.META_KEY, warehouse.toMetaValue())
         },
     )
 
@@ -43,7 +43,7 @@ class HwihaMonthlyCountyIncomeTest {
     }
 
     private fun stored(world: InMemoryTurnWorld, id: Int) =
-        HwihaCountyWarehouse.read(world.getCityById(id)!!.meta, id)
+        CountyWarehouse.read(world.getCityById(id)!!.meta, id)
 
     @Test
     fun `첫 월 경계가 소유되고 보급된 縣 창고에 세입을 넣는다`() {
@@ -55,9 +55,9 @@ class HwihaMonthlyCountyIncomeTest {
         assertEquals("0200-03", outcome.stamp)
         assertEquals(1, outcome.creditedCounties)
         // 인구 1,000 → 200 호. 완전개발이라 전 200*20 · 곡 200*200.
-        assertEquals(HwihaResources(money = 4_000, grain = 40_000), outcome.total)
+        assertEquals(Resources(money = 4_000, grain = 40_000), outcome.total)
         val after = assertNotNull(stored(world, 10))
-        assertEquals(HwihaResources(money = 4_000, grain = 40_000), after.stock)
+        assertEquals(Resources(money = 4_000, grain = 40_000), after.stock)
         assertEquals(1, after.revision, "적립은 revision 을 올린다")
         assertEquals("preserved", world.getCityById(10)!!.meta["keep"], "다른 meta 는 보존한다")
     }
@@ -86,7 +86,7 @@ class HwihaMonthlyCountyIncomeTest {
         assertFalse(next.alreadyStamped)
         assertEquals(1, next.creditedCounties)
         val after = assertNotNull(stored(world, 10))
-        assertEquals(HwihaResources(money = 8_000, grain = 80_000), after.stock)
+        assertEquals(Resources(money = 8_000, grain = 80_000), after.stock)
         assertEquals(2, after.revision)
     }
 
@@ -109,7 +109,7 @@ class HwihaMonthlyCountyIncomeTest {
         val outcome = assertNotNull(HwihaMonthlyCountyIncome(world, ChangeRecorder(), emptyMap()).credit(200, 3))
 
         assertEquals(0, outcome.creditedCounties)
-        assertEquals(HwihaResources(), outcome.total)
+        assertEquals(Resources(), outcome.total)
         assertEquals(before10, world.getCityById(10)!!)
         assertEquals(before11, world.getCityById(11)!!)
     }
@@ -129,13 +129,13 @@ class HwihaMonthlyCountyIncomeTest {
     @Test
     fun `산지 표가 철 목재 말을 전 곡 위에 더한다`() {
         val world = world(county(10))
-        val production = mapOf(10 to HwihaResources(iron = 1_000, timber = 118, horses = 100))
+        val production = mapOf(10 to Resources(iron = 1_000, timber = 118, horses = 100))
         val outcome = assertNotNull(
             HwihaMonthlyCountyIncome(world, ChangeRecorder(), production).credit(200, 3)
         )
 
         assertEquals(
-            HwihaResources(money = 4_000, grain = 40_000, iron = 1_000, timber = 118, horses = 100),
+            Resources(money = 4_000, grain = 40_000, iron = 1_000, timber = 118, horses = 100),
             outcome.total,
         )
         assertEquals(outcome.total, assertNotNull(stored(world, 10)).stock)
@@ -144,11 +144,11 @@ class HwihaMonthlyCountyIncomeTest {
     @Test
     fun `표에 없는 縣 은 전 곡만 받는다`() {
         val world = world(county(10), county(11))
-        val production = mapOf(10 to HwihaResources(iron = 7))
+        val production = mapOf(10 to Resources(iron = 7))
         HwihaMonthlyCountyIncome(world, ChangeRecorder(), production).credit(200, 3)
 
-        assertEquals(HwihaResources(money = 4_000, grain = 40_000, iron = 7), assertNotNull(stored(world, 10)).stock)
-        assertEquals(HwihaResources(money = 4_000, grain = 40_000), assertNotNull(stored(world, 11)).stock)
+        assertEquals(Resources(money = 4_000, grain = 40_000, iron = 7), assertNotNull(stored(world, 10)).stock)
+        assertEquals(Resources(money = 4_000, grain = 40_000), assertNotNull(stored(world, 11)).stock)
     }
 
     @Test
@@ -156,7 +156,7 @@ class HwihaMonthlyCountyIncomeTest {
         val world = world(county(10, supplyState = 0))
         val before = world.getCityById(10)!!
         val outcome = assertNotNull(
-            HwihaMonthlyCountyIncome(world, ChangeRecorder(), mapOf(10 to HwihaResources(iron = 7)))
+            HwihaMonthlyCountyIncome(world, ChangeRecorder(), mapOf(10 to Resources(iron = 7)))
                 .credit(200, 3)
         )
 
@@ -172,7 +172,7 @@ class HwihaMonthlyCountyIncomeTest {
         val produced = assertNotNull(stored(world, 35)).stock
         assertEquals(1_000, produced.iron, "35 縣은 사료 철 산지다")
         assertTrue(produced.timber > 0, "목재는 분산이라 거의 모든 縣에서 난다")
-        assertEquals(HwihaResources(money = 4_000, grain = 40_000, iron = 1_000, timber = produced.timber),
+        assertEquals(Resources(money = 4_000, grain = 40_000, iron = 1_000, timber = produced.timber),
             outcome.total)
     }
 

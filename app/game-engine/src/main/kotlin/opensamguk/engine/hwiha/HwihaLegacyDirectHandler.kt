@@ -1,8 +1,8 @@
 package opensamguk.engine.hwiha
 
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** Direct conversion, treasure/grain trade and one-hop warehouse transport. */
@@ -47,7 +47,7 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
             is HwihaLegacyDirectRequest.Equipment -> {
                 val card = checkNotNull(ready.treasure)
                 val warehouse = checkNotNull(ready.warehouse)
-                val price = HwihaResources(money = card.purchaseCost.toLong())
+                val price = Resources(money = card.purchaseCost.toLong())
                 if (request.side == HwihaTradeSide.BUY) {
                     stock = checkNotNull(checkNotNull(stock).debit(price))
                     changeWarehouse(checkNotNull(ready.county).id, warehouse, warehouse.stock.credit(price))
@@ -62,8 +62,8 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
             }
             is HwihaLegacyDirectRequest.Grain -> {
                 val warehouse = checkNotNull(ready.warehouse)
-                val money = HwihaResources(money = design.grainTradeMoney.toLong())
-                val grain = HwihaResources(grain = design.grainTradeGrain.toLong())
+                val money = Resources(money = design.grainTradeMoney.toLong())
+                val grain = Resources(grain = design.grainTradeGrain.toLong())
                 if (request.side == HwihaTradeSide.BUY) {
                     stock = checkNotNull(checkNotNull(stock).debit(money)).credit(grain)
                     changeWarehouse(checkNotNull(ready.county).id, warehouse,
@@ -105,10 +105,10 @@ class HwihaLegacyDirectHandler(private val world: InMemoryTurnWorld, private val
         return HwihaTurnOutcome.Applied(inputId, effects)
     }
 
-    private fun changeWarehouse(countyId: Int, current: HwihaCountyWarehouse, next: HwihaResources) {
+    private fun changeWarehouse(countyId: Int, current: CountyWarehouse, next: Resources) {
         val county = checkNotNull(world.getCityById(countyId))
         world.updateCityMeta(recorder, countyId,
-            county.meta + (HwihaCountyWarehouse.META_KEY to current.replace(next).toMetaValue()))
+            county.meta + (CountyWarehouse.META_KEY to current.replace(next).toMetaValue()))
     }
     companion object { private const val LAST_TURN_KEY = "hwihaLegacyDirectLastTurn" }
 }

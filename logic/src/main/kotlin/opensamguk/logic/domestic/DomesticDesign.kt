@@ -10,7 +10,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.domestic.CorpsPolicy
 import opensamguk.logic.domestic.CountyPolicy
 import opensamguk.logic.domestic.DomesticWork
@@ -49,12 +49,12 @@ class DomesticDesign internal constructor(
     }
     data class PolicyEffect(val policy: CountyPolicy, val indicators: List<IndicatorEffect>, val resources: List<ResourceFlow>)
     data class DirectAction(val inputId: String, val equivalent: String,
-        val indicators: List<IndicatorEffect>, val resources: List<ResourceFlow>, val fixedCost: HwihaResources,
+        val indicators: List<IndicatorEffect>, val resources: List<ResourceFlow>, val fixedCost: Resources,
         val costStat: Stat?, val experience: Int, val dedication: Int) {
         init { require(experience >= 0 && dedication >= 0) }
     }
     data class CompletionEffect(val indicator: Indicator, val amount: Int)
-    data class WorkDesign(val work: DomesticWork, val requiredProgress: Int, val cost: HwihaResources,
+    data class WorkDesign(val work: DomesticWork, val requiredProgress: Int, val cost: Resources,
         val completion: List<CompletionEffect>) {
         init { require(requiredProgress > 0) }
     }
@@ -114,7 +114,7 @@ class DomesticDesign internal constructor(
                         ResourceFlow(Resource.valueOf(flow.text("resource").uppercase()), Direction.valueOf(flow.text("direction")),
                             flow.int("perHouseholdPermille"), flow.stat())
                     },
-                    HwihaResources(fixed.long("money"), fixed.long("grain"), fixed.long("iron"), fixed.long("timber"), fixed.long("horses")),
+                    Resources(fixed.long("money"), fixed.long("grain"), fixed.long("iron"), fixed.long("timber"), fixed.long("horses")),
                     row.stat("costStat"), row.int("experience"), row.int("dedication"))
             }
             require(directActions.map { it.inputId } == FieldInput.INPUT_IDS.toList()) {
@@ -130,7 +130,7 @@ class DomesticDesign internal constructor(
                 val cost = row.obj("cost")
                 require(cost.keys == setOf("money", "grain", "iron", "timber", "horses")) { "work cost fields for $code" }
                 WorkDesign(code, row.int("requiredProgress"),
-                    HwihaResources(cost.long("money"), cost.long("grain"), cost.long("iron"), cost.long("timber"), cost.long("horses")),
+                    Resources(cost.long("money"), cost.long("grain"), cost.long("iron"), cost.long("timber"), cost.long("horses")),
                     row.getValue("completion").jsonArray.map { item ->
                         val entry = item.jsonObject
                         CompletionEffect(Indicator.valueOf(entry.text("indicator").uppercase()), entry.int("amount"))
@@ -146,7 +146,7 @@ class DomesticDesign internal constructor(
                 val completion = fortification.completion.single { it.indicator == indicator }
                 require(direct.equivalent == "FORTIFICATION_1_PHASE" &&
                     direct.indicators.single().indicator == indicator && direct.indicators.single().amount.toLong() ==
-                    completion.amount * phaseProgress / requiredProgress && direct.fixedCost == HwihaResources(
+                    completion.amount * phaseProgress / requiredProgress && direct.fixedCost == Resources(
                     fortification.cost.money * phaseProgress / requiredProgress / 2,
                     fortification.cost.grain * phaseProgress / requiredProgress / 2,
                     fortification.cost.iron * phaseProgress / requiredProgress / 2,

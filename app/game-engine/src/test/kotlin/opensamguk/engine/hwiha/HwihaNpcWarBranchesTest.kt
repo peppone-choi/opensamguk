@@ -2,8 +2,8 @@ package opensamguk.engine.hwiha
 
 import kotlin.test.*
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import opensamguk.logic.war.hwiha.HwihaS3Provisional
@@ -26,8 +26,8 @@ class HwihaNpcWarBranchesTest {
             bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0), fixture.unit(8, 2, 100)),
             cityChanges = { city -> when (city.id) {
                 source -> city.copy(nationId = 1, supplyState = 1, meta = city.meta +
-                    (HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(source, 0,
-                        HwihaResources(grain = 1_000_000)).toMetaValue()))
+                    (CountyWarehouse.META_KEY to CountyWarehouse(source, 0,
+                        Resources(grain = 1_000_000)).toMetaValue()))
                 else -> city.copy(nationId = 2, supplyState = 1)
             } })
         val recorder = ChangeRecorder()
@@ -36,7 +36,7 @@ class HwihaNpcWarBranchesTest {
         val rations = HwihaCorpsRations(world, recorder, fixture.topology, fixture.metrics)
         assertEquals(0, rations.dispatch(200, 2))
         assertTrue(rations.convoys().isEmpty())
-        assertEquals(1_000_000L, HwihaCountyWarehouse.read(world.getCityById(source)!!.meta, source)!!.stock.grain)
+        assertEquals(1_000_000L, CountyWarehouse.read(world.getCityById(source)!!.meta, source)!!.stock.grain)
     }
 
     @Test fun `a besieging NPC lifts for relief and chooses the threatened county on its next turn`() {
@@ -96,8 +96,8 @@ class HwihaNpcWarBranchesTest {
         val world = fixture.world(listOf(fixture.person(1, 1, route.startCity) to route.first),
             bugoks = listOf(fixture.unit(7, 1, 500), fixture.unit(8, 1, 300), fixture.unit(9, 1, 1)),
             cityChanges = { city -> if (city.id == route.destinationCounty) city.copy(nationId = 2, defence = 100,
-                meta = city.meta + (HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(city.id, 0,
-                    HwihaResources()).toMetaValue())) else city })
+                meta = city.meta + (CountyWarehouse.META_KEY to CountyWarehouse(city.id, 0,
+                    Resources()).toMetaValue())) else city })
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7, 8, 9), route.destination)
         fixture.nextPhase(world)

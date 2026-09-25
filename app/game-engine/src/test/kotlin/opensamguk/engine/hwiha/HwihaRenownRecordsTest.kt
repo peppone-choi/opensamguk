@@ -151,8 +151,8 @@ class HwihaRenownRecordsTest {
 
     @Test fun `월세입 기록은 세력 내부 요약으로만 남는다`() {
         val world = world(emptyList(), cities = listOf(county(10).copy(supplyState = 1, meta = mapOf(
-            opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to
-                opensamguk.logic.economy.HwihaCountyWarehouse(10, 0, opensamguk.logic.economy.HwihaResources()).toMetaValue()))))
+            opensamguk.logic.economy.CountyWarehouse.META_KEY to
+                opensamguk.logic.economy.CountyWarehouse(10, 0, opensamguk.logic.economy.Resources()).toMetaValue()))))
         HwihaMonthlyCountyIncome(world, ChangeRecorder()).credit(200, 2)
         val record = world.peekLogs().single()
         assertEquals(RecordKind.INCOME_MONTHLY, record.eventKind)

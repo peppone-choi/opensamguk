@@ -1,7 +1,7 @@
 package opensamguk.gameapi.read
 
 import opensamguk.gameapi.dto.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.HwihaDeploymentState
 import opensamguk.logic.war.hwiha.HwihaSiegeRules
 import org.springframework.stereotype.Service
@@ -34,7 +34,7 @@ class HwihaSiegeReader(
         val rows = sieges.involving(actor.id, actor.nationId).map { row ->
             val city = cities.findById(row.countyId).orElse(null)
             val besieger = generals.findById(row.besiegerGeneralId).orElse(null)
-            val grain = city?.let { runCatching { HwihaCountyWarehouse.read(it.meta, it.id)?.stock?.grain }.getOrNull() }
+            val grain = city?.let { runCatching { CountyWarehouse.read(it.meta, it.id)?.stock?.grain }.getOrNull() }
             val (troops, fed) = corpsOf(row)
             val active = row.status == "ACTIVE"
             val trust = city?.trust ?: 0.0

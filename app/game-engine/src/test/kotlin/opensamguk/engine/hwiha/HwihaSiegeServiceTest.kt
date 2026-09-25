@@ -4,8 +4,8 @@ import opensamguk.logic.war.hwiha.HwihaS3Provisional
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** Real pinned map, in-memory: an arrived corps besieges an enemy county seat and the phase boundary settles it. */
@@ -29,7 +29,7 @@ class HwihaSiegeServiceTest {
             cityChanges = { city -> if (reverse && city.id == reserveCounty) city.copy(nationId = 2)
                 else if (city.id != county) city else city.copy(nationId = 2, defence = defence,
                 meta = city.meta + mapOf("trust" to trust,
-                    HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(county, 0, HwihaResources(grain = grain)).toMetaValue()) +
+                    CountyWarehouse.META_KEY to CountyWarehouse(county, 0, Resources(grain = grain)).toMetaValue()) +
                     (defenderCondition?.let { mapOf(HwihaCityMilitaryState.META_KEY to it.toMetaValue()) } ?: emptyMap())) })
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
@@ -81,7 +81,7 @@ class HwihaSiegeServiceTest {
             "the replacement garrison starts with fresh training and morale")
         assertEquals(100, city.defence, "capture leaves the fortification score intact")
         assertEquals(1000 - garrison, world.getBugokById(7)!!.troops, "taken from the besieging unit")
-        assertEquals(HwihaResources(), HwihaCountyWarehouse.read(city.meta, county)!!.stock, "warehouse stays in the county")
+        assertEquals(Resources(), CountyWarehouse.read(city.meta, county)!!.stock, "warehouse stays in the county")
         assertNull(HwihaDeploymentState.read(world.getGeneralById(1)!!.meta), "the expedition ends at its objective")
         assertEquals(listOf(listOf<Any>(county, 2, 1, listOf(1))), outcomes.captures, "capture reported exactly once")
         boundary(world, recorder)
@@ -101,12 +101,12 @@ class HwihaSiegeServiceTest {
     @Test fun `a fed garrison eats from its warehouse through the settlement boundary`() {
         val (world, recorder) = besieged(grain = 1_000_000)
         boundary(world, recorder)
-        val warehouse = HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county)!!
+        val warehouse = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!
         assertEquals(990_000L, warehouse.stock.grain); assertEquals(1, warehouse.revision)
         assertEquals(10_000, world.getHwihaSiege(county)!!.morale)
         // Settling the same phase twice must not eat twice.
         HwihaPhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder)
-        assertEquals(990_000L, HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.grain)
+        assertEquals(990_000L, CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.grain)
     }
 
     @Test fun `too few besiegers lift the siege and no rations end the expedition`() {

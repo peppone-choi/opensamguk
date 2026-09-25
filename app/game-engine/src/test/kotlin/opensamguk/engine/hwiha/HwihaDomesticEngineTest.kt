@@ -31,8 +31,8 @@ import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
@@ -57,12 +57,12 @@ class HwihaDomesticEngineTest {
         userId = if (human) "42" else null, npcState = if (human) 0 else 2, turnTime = Instant.EPOCH,
         meta = mapOf("hwihaLord" to lord))
 
-    private fun county(id: Int, stock: HwihaResources = HwihaResources()) = City(id, "縣$id", 1, 1, population = 50_000,
+    private fun county(id: Int, stock: Resources = Resources()) = City(id, "縣$id", 1, 1, population = 50_000,
         populationMax = 100_000, agriculture = 1000, agricultureMax = 5000, commerce = 1000, commerceMax = 5000, security = 500,
         securityMax = 1000, defence = 500, defenceMax = 1000, wall = 500, wallMax = 1000,
-        meta = mapOf("trust" to 80.0, HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(id, 0, stock).toMetaValue()))
+        meta = mapOf("trust" to 80.0, CountyWarehouse.META_KEY to CountyWarehouse(id, 0, stock).toMetaValue()))
 
-    private fun world(stock: HwihaResources = HwihaResources()): InMemoryTurnWorld {
+    private fun world(stock: Resources = Resources()): InMemoryTurnWorld {
         val positions = listOf(1 to a, 2 to a, 3 to b).fold(GeneralPositionSnapshot("qa", topology.contentHash, setOf("A", "B"), emptySet())) { s, (id, node) ->
             s.withState(GeneralPositionState("qa", topology.contentHash, id, node, 1)) }
         return InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1),
@@ -201,12 +201,12 @@ class HwihaDomesticEngineTest {
         // Relief costs grain the empty warehouse does not have: no indicator moves, the reason is recorded.
         assertEquals("INSUFFICIENT_STOCK", CountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
         assertEquals(80.0, world.getCityById(10)!!.meta["trust"])
-        val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
+        val warehouse = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder)
-            .settle(10, 1, warehouse.revision, HwihaResources(), HwihaResources(grain = 1_000_000)))
+            .settle(10, 1, warehouse.revision, Resources(), Resources(grain = 1_000_000)))
         boundary(world, recorder, 200, 1, 3)
         val households = 50_000L / 5
-        assertEquals(1_000_000 - households, HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock.grain)
+        assertEquals(1_000_000 - households, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock.grain)
         assertEquals(82.0, world.getCityById(10)!!.meta["trust"])
         assertEquals("APPLIED", CountyPolicyState.read(world.getCityById(10)!!.meta)!!.lastApplied!!.result)
     }
@@ -223,11 +223,11 @@ class HwihaDomesticEngineTest {
     }
 
     @Test fun `works start at the next boundary stop on shortage and complete at the total cost`() {
-        val world = world(HwihaResources(money = 1_000_000)); val recorder = ChangeRecorder()
+        val world = world(Resources(money = 1_000_000)); val recorder = ChangeRecorder()
         assertTrue(submit(world, recorder, "work.start", """{"countyId":10,"work":"FORTIFICATION"}""").ok)
         assertEquals(DomesticFailure.WORK_IN_PROGRESS.name, submit(world, recorder, "work.start", """{"countyId":10,"work":"POST_STATION"}""").code)
         fun work() = CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!
-        fun stock() = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+        fun stock() = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         // Same phase as the order: the boundary does not touch the work at all (§4 「다음 순 경계부터」).
         world.setCurrentDate(200, 1, 1)
         HwihaDomesticBoundary(world, recorder, context).run()
@@ -236,9 +236,9 @@ class HwihaDomesticEngineTest {
         boundary(world, recorder, 200, 1, 2)
         assertEquals(DomesticEffects.INSUFFICIENT_STOCK, work().stopReason)
         assertEquals(0, work().progress); assertEquals(1_000_000, stock().money)
-        val warehouse = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
+        val warehouse = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!
         assertEquals(HwihaWarehouseSettlement.Result.APPLIED, HwihaWarehouseSettlement(world, recorder).settle(10, 1, warehouse.revision,
-            HwihaResources(), HwihaResources(timber = 100_000)))
+            Resources(), Resources(timber = 100_000)))
         val spec = context.design.works.getValue(DomesticWork.FORTIFICATION)
         var phase = HwihaPhase(200, 1, 2)
         var boundaries = 0
@@ -251,7 +251,7 @@ class HwihaDomesticEngineTest {
         assertEquals((spec.requiredProgress + emptySeatSpeed - 1) / emptySeatSpeed, boundaries)
         val works = CountyWorks.read(world.getCityById(10)!!.meta)!!
         assertEquals(listOf(DomesticWork.FORTIFICATION), works.completed.map { it.work })
-        assertEquals(HwihaResources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0), stock())
+        assertEquals(Resources(1_000_000 - spec.cost.money, 0, 0, 100_000 - spec.cost.timber, 0), stock())
         for (effect in spec.completion) {
             val value = when (effect.indicator) {
                 DomesticDesign.Indicator.DEFENCE -> world.getCityById(10)!!.defence
@@ -268,7 +268,7 @@ class HwihaDomesticEngineTest {
                 HwihaCountyPlace(10, "甲郡", "갑군", "j10"), HwihaCountyPlace(11, "甲郡", "갑군", "j11"))),
             topology = topology, metrics = metrics,
             roadGates = listOf(StrategicRoadGate("ab", 0, 0, 0, 1, 1, false)))
-        val world = world(HwihaResources(money = 1_000_000, timber = 100_000))
+        val world = world(Resources(money = 1_000_000, timber = 100_000))
         val recorder = ChangeRecorder()
         world.setGameEnvValue(LandPassageState.META_KEY, mapOf(
             "version" to 1, "topologyRevision" to topology.topologyRevision,
@@ -292,15 +292,15 @@ class HwihaDomesticEngineTest {
     }
 
     @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
-        val world = world(HwihaResources(money = 1000)); val recorder = ChangeRecorder()
+        val world = world(Resources(money = 1000)); val recorder = ChangeRecorder()
         val city = world.getCityById(10)!!
         val completed = CountyWorks(null, listOf(CompletedWork(DomesticWork.FORTIFICATION, HwihaPhase(200, 1, 1))))
         world.applyCityDirtyFree(city.copy(meta = city.meta + (CountyWorks.META_KEY to completed.toMetaValue())))
-        val before = HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+        val before = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
         val reduced = submit(world, recorder, "work.reduce", """{"countyId":10,"work":"FORTIFICATION"}""")
         assertEquals(InputRejection.NOT_DELIVERED.name, reduced.code)
         assertEquals(1, CountyWorks.read(world.getCityById(10)!!.meta)!!.completed.size)
-        assertEquals(before, HwihaCountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
+        assertEquals(before, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
     }
 
     @Test fun `corps reaction policies populate the march reaction inventory on the commander's turn`() {

@@ -1,8 +1,8 @@
 package opensamguk.gameapi.read
 
 import opensamguk.gameapi.web.HwihaSiegeController
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaDeployedCorps
 import opensamguk.logic.input.HwihaDeploymentState
 import opensamguk.logic.input.HwihaPhase
@@ -37,8 +37,8 @@ class HwihaSiegeReaderTest {
         `when`(nations.findAll()).thenReturn(listOf(NationReadEntity(id = 1, worldId = 1, name = "양"),
             NationReadEntity(id = 2, worldId = 1, name = "여남")))
         `when`(cities.findById(77)).thenReturn(Optional.of(CityReadEntity(id = 77, worldId = 1, name = "익양현",
-            trust = 40.0, supplyState = 0, meta = mapOf(HwihaCountyWarehouse.META_KEY to
-                HwihaCountyWarehouse(77, 3, HwihaResources(grain = 12_345)).toMetaValue()))))
+            trust = 40.0, supplyState = 0, meta = mapOf(CountyWarehouse.META_KEY to
+                CountyWarehouse(77, 3, Resources(grain = 12_345)).toMetaValue()))))
         `when`(retainers.bugoksOf(1)).thenReturn(listOf(GeneralBugokReadEntity(worldId = 1, id = 21, masterGeneralId = 1,
             name = "부곡", troops = 4000, provisions = 24_000)))
         `when`(sieges.involving(1, 1)).thenReturn(listOf(row))

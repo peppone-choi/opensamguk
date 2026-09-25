@@ -11,7 +11,7 @@ import opensamguk.logic.vision.ScoutCapture
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
@@ -56,7 +56,7 @@ class HwihaScoutHandler(private val world: InMemoryTurnWorld, private val record
         val now = HwihaPhase(state.currentYear, state.currentMonth, state.currentPhase)
         val cities = world.listCities().sortedBy { it.id }.mapNotNull { city ->
             val province = (world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince)?.id ?: return@mapNotNull null
-            ScoutCityFact(city.id, province, city.nationId, HwihaCountyWarehouse.META_KEY in city.meta)
+            ScoutCityFact(city.id, province, city.nationId, CountyWarehouse.META_KEY in city.meta)
         }
         val report = ScoutCapture.capture(assessed.target, context.commanderies, cities, projection, context.rules, now)
         val notebook = (previous?.takeIf { it.tilesContentHash == context.commanderies.tilesContentHash }

@@ -13,8 +13,8 @@ import opensamguk.engine.hwiha.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
@@ -66,7 +66,7 @@ class HwihaDomesticPersistenceIT {
         // Ruler 10 owns the county and an NPC staff card 11 standing in it; the county has explicit stock.
         jdbc.update("UPDATE general SET user_id='42' WHERE world_id=? AND id=10", id)
         jdbc.update("UPDATE city SET nation_id=1, meta=?::jsonb WHERE world_id=? AND id=?", MetaJson.encode(mapOf(
-            HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(county, 0, HwihaResources(1_000_000, 1_000_000, 0, 0, 0)).toMetaValue())),
+            CountyWarehouse.META_KEY to CountyWarehouse(county, 0, Resources(1_000_000, 1_000_000, 0, 0, 0)).toMetaValue())),
             id, county)
         jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
             VALUES (?,11,'G11',1,?,2,0,0,0,0,60,60,90,80,60,'0200-01-01T00:00:00Z','{"command":"휴식"}'::jsonb,'{}'::jsonb)""", id, county)
@@ -113,8 +113,8 @@ class HwihaDomesticPersistenceIT {
         world.setCurrentDate(200, 1, 2)
         val progressed = CountyWorks.read(world.getCityById(county)!!.meta)!!.active!!
         assertTrue(progressed.progress > 0)
-        assertEquals(progressed.charged, HwihaResources(1_000_000, 1_000_000, 0, 0, 0)
-            .debit(HwihaCountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock))
+        assertEquals(progressed.charged, Resources(1_000_000, 1_000_000, 0, 0, 0)
+            .debit(CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock))
         assertTrue(HwihaDomesticBoundary(world, ChangeRecorder(), context).run()!!.alreadyStamped)
     }
 }

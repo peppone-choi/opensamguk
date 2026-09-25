@@ -374,8 +374,8 @@ class WorldActionContext(
         }
 
     /**
-     * HWIHA 는 국가·개인 재정을 쓰지 않는다 — 縣 창고(`HwihaCountyWarehouse`)가 유일한 재정이고
-     * 월세입은 `HwihaCountyIncome` 이 월 경계에서 그 창고에 넣는다. 기존 세입을 함께 켜면 이중
+     * HWIHA 는 국가·개인 재정을 쓰지 않는다 — 縣 창고(`CountyWarehouse`)가 유일한 재정이고
+     * 월세입은 `CountyIncome` 이 월 경계에서 그 창고에 넣는다. 기존 세입을 함께 켜면 이중
      * 재정이 된다(HWIHA 시나리오는 모든 nation.gold/rice 가 0 이어야 한다는 계약과도 어긋난다).
      *
      * 끄는 것은 **재정 효과뿐**이다. 비재정 이벤트와 같은 이벤트 안의 비재정 부분(도시 성장,

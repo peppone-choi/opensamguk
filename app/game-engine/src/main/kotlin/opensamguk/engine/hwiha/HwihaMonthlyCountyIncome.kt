@@ -3,9 +3,9 @@ package opensamguk.engine.hwiha
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
-import opensamguk.logic.economy.HwihaCountyIncome
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyIncome
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.infra.seed.HwihaCountyProductionJson
 import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.RuleProfile
@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory
 class HwihaMonthlyCountyIncome(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val production: Map<Int, HwihaResources> = HwihaCountyProductionJson.table(),
+    private val production: Map<Int, Resources> = HwihaCountyProductionJson.table(),
 ) {
     data class Outcome(
         val stamp: String,
@@ -35,7 +35,7 @@ class HwihaMonthlyCountyIncome(
         val skippedNoWarehouse: Int = 0,
         val skippedInvalidState: Int = 0,
         val skippedOverflow: Int = 0,
-        val total: HwihaResources = HwihaResources(),
+        val total: Resources = Resources(),
     )
 
     fun credit(year: Int, month: Int): Outcome? {
@@ -47,15 +47,15 @@ class HwihaMonthlyCountyIncome(
         var noWarehouse = 0
         var invalid = 0
         var overflow = 0
-        var total = HwihaResources()
-        val byNation = sortedMapOf<Int, Pair<Int, HwihaResources>>()
+        var total = Resources()
+        val byNation = sortedMapOf<Int, Pair<Int, Resources>>()
         for (countyId in world.administrativeCountyIds.sorted()) {
             val before = world.getCityById(countyId) ?: continue
-            val warehouse = try { HwihaCountyWarehouse.read(before.meta, countyId) }
+            val warehouse = try { CountyWarehouse.read(before.meta, countyId) }
                 catch (_: IllegalArgumentException) { invalid++; continue }
             if (warehouse == null) { noWarehouse++; continue }
-            val produced = HwihaCountyIncome.monthly(
-                HwihaCountyIncome.CountyState(
+            val produced = CountyIncome.monthly(
+                CountyIncome.CountyState(
                     ownerNationId = before.nationId,
                     population = before.population,
                     commerce = before.commerce,
@@ -64,13 +64,13 @@ class HwihaMonthlyCountyIncome(
                     agricultureMax = before.agricultureMax,
                     supplied = before.supplyState != 0,
                 ),
-                sites = production[countyId] ?: HwihaResources(),
+                sites = production[countyId] ?: Resources(),
             )
-            if (produced == HwihaResources()) continue
+            if (produced == Resources()) continue
             // 넘침은 그 縣 만 건너뛴다. 월 경계에서 던지면 턴 루프가 영구히 멈춘다.
             val next = try { warehouse.replace(warehouse.stock.credit(produced)) }
                 catch (_: ArithmeticException) { overflow++; continue }
-            val after = before.copy(meta = before.meta + (HwihaCountyWarehouse.META_KEY to next.toMetaValue()))
+            val after = before.copy(meta = before.meta + (CountyWarehouse.META_KEY to next.toMetaValue()))
             if (world.applyCityDirtyFree(after) == null) {
                 log.warn("hwiha_county_income_skipped county={} reason=APPLY_REJECTED", countyId)
                 invalid++
@@ -80,7 +80,7 @@ class HwihaMonthlyCountyIncome(
             credited++
             total = try { total.credit(produced) } catch (_: ArithmeticException) { total }
             if (before.nationId != 0) {
-                val (count, sum) = byNation[before.nationId] ?: (0 to HwihaResources())
+                val (count, sum) = byNation[before.nationId] ?: (0 to Resources())
                 byNation[before.nationId] = (count + 1) to (try { sum.credit(produced) } catch (_: ArithmeticException) { sum })
             }
         }

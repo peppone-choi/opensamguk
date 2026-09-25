@@ -6,7 +6,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 class HwihaCountyProductionJsonTest {
     private fun document(rows: String, version: Int = 1) =
@@ -43,13 +43,13 @@ class HwihaCountyProductionJsonTest {
         val parsed = HwihaCountyProductionJson.parse(
             document("""{"countyId":7,"monthly":{"iron":1,"timber":2,"horses":3}}""")
         )
-        assertEquals(mapOf(7 to HwihaResources(iron = 1, timber = 2, horses = 3)), parsed)
+        assertEquals(mapOf(7 to Resources(iron = 1, timber = 2, horses = 3)), parsed)
     }
 
     @Test
     fun `빠진 자원은 0 이다`() {
         val parsed = HwihaCountyProductionJson.parse(document("""{"countyId":7,"monthly":{"timber":2}}"""))
-        assertEquals(mapOf(7 to HwihaResources(timber = 2)), parsed)
+        assertEquals(mapOf(7 to Resources(timber = 2)), parsed)
     }
 
     @Test

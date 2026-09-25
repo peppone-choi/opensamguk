@@ -16,7 +16,7 @@ import opensamguk.logic.domestic.DomesticRules
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 import org.slf4j.LoggerFactory
 
@@ -106,7 +106,7 @@ class HwihaDomesticBoundary(
             if (forts.any { it.row == active.row && it.col == active.col })
                 return stop(countyId, works, active, now, "FORT_SITE_OCCUPIED")
         }
-        val warehouse = try { HwihaCountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
+        val warehouse = try { CountyWarehouse.read(city.meta, countyId) } catch (_: IllegalArgumentException) { null }
         if (warehouse == null) return stop(city.id, works, active, now, "WAREHOUSE_NOT_READY")
         val county = state.county(countyId) ?: return WorkResult.NONE
         val seat = try { DomesticRules.seatedMagistrate(county, state) } catch (_: IllegalArgumentException) { null }?.let { seat ->
@@ -182,7 +182,7 @@ class HwihaDomesticBoundary(
             is WorkStep.Completed -> step.debit
             is WorkStep.Stopped -> return false
         }
-        if (debit == opensamguk.logic.economy.HwihaResources()) return true
+        if (debit == opensamguk.logic.economy.Resources()) return true
         return HwihaWarehouseSettlement(world, recorder).settle(countyId, nationId, revision, debit) ==
             HwihaWarehouseSettlement.Result.APPLIED
     }

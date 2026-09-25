@@ -1,13 +1,13 @@
 package opensamguk.infra.seed
 
 import java.util.Collections
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.RuleProfile
 
 data class HwihaWarehouseSeed(
     val topologyRevision: String,
     val topologyHash: String,
-    val warehouses: Map<Int, HwihaResources>,
+    val warehouses: Map<Int, Resources>,
 )
 
 /** Explicit game-design inventory only. Map identity and fresh-world checks belong to the importer. */
@@ -22,14 +22,14 @@ object HwihaScenarioWarehouseSeeds {
         val revision = (declaration["topologyRevision"] as? String)?.takeIf { it.isNotBlank() } ?: invalid()
         val hash = (declaration["topologyHash"] as? String)?.takeIf { it.matches(Regex("[0-9a-f]{64}")) } ?: invalid()
         val rows = declaration["warehouses"] as? List<*> ?: invalid()
-        val inventories = linkedMapOf<Int, HwihaResources>()
+        val inventories = linkedMapOf<Int, Resources>()
         for (raw in rows) {
             val row = raw as? Map<*, *> ?: invalid()
             require(row.keys == setOf("countyId", "stock"))
             val county = (row["countyId"] as? Int)?.takeIf { it > 0 } ?: invalid()
             val stock = row["stock"] as? Map<*, *> ?: invalid()
             require(stock.keys == setOf("money", "grain", "iron", "timber", "horses"))
-            val resources = HwihaResources(quantity(stock["money"]), quantity(stock["grain"]),
+            val resources = Resources(quantity(stock["money"]), quantity(stock["grain"]),
                 quantity(stock["iron"]), quantity(stock["timber"]), quantity(stock["horses"]))
             require(inventories.put(county, resources) == null) { "Duplicate warehouse county" }
         }

@@ -11,8 +11,8 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.ReservedTurnHandler
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
 
 /** Applies one direct county action after the personal movement stage. */
@@ -47,7 +47,7 @@ class HwihaFieldHandler(
             return reject("NOT_DELIVERED", "현장 행동의 효과 수치가 확정되지 않았습니다.")
         val city = world.getCityById(eligible.county.id) ?: return reject(FieldFailure.COUNTY_UNAVAILABLE)
         val levels = HwihaDomesticCountyEffects.levelsOf(city)
-        val warehouse = try { HwihaCountyWarehouse.read(city.meta, city.id) }
+        val warehouse = try { CountyWarehouse.read(city.meta, city.id) }
             catch (_: IllegalArgumentException) { null }
         val economy = FieldRules.assessEconomy(inputId, eligible.person, city.id, levels, warehouse?.stock, design)
         if (economy is FieldEconomyAssessment.Rejected) return reject(economy.reason)
@@ -59,7 +59,7 @@ class HwihaFieldHandler(
             newExperience = Math.addExact(actor.experience, growth.experience)
             newDedication = Math.addExact(actor.dedication, growth.dedication)
         } catch (_: ArithmeticException) { return reject(FieldFailure.STATE_UNAVAILABLE) }
-        if (effect.debit != HwihaResources() || effect.credit != HwihaResources()) {
+        if (effect.debit != Resources() || effect.credit != Resources()) {
             val settled = HwihaWarehouseSettlement(world, recorder).settle(city.id, city.nationId, checkNotNull(warehouse).revision,
                 effect.debit, effect.credit)
             if (settled != HwihaWarehouseSettlement.Result.APPLIED) return reject(when (settled) {

@@ -9,8 +9,8 @@ import opensamguk.gameapi.dto.HwihaYuedanResponse
 import opensamguk.gameapi.web.HwihaCampController
 import opensamguk.infra.entity.GameKvEntity
 import opensamguk.infra.seed.ResolvedHanWorldArtifacts
-import opensamguk.logic.economy.HwihaCountyWarehouse
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.HwihaPersonPolicyState
 import opensamguk.logic.input.HwihaRenownAssessment
 import opensamguk.logic.input.HwihaRenownEvents
@@ -90,7 +90,7 @@ class HwihaCampReaderTest {
         `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", key)).thenReturn(GameKvEntity("game_env", "game_env", key, json, 1))
 
     private fun warehouseMeta(cityId: Int, money: Long) =
-        mapOf(HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(cityId, 3, HwihaResources(money, 200, 3, 4, 5)).toMetaValue())
+        mapOf(CountyWarehouse.META_KEY to CountyWarehouse(cityId, 3, Resources(money, 200, 3, 4, 5)).toMetaValue())
 
     // ── 인증 ─────────────────────────────────────────────────────────────
     @Test fun `principal 없음·범위 밖은 401, 남의 장수는 403, 본인은 200 no-store`() {
@@ -198,7 +198,7 @@ class HwihaCampReaderTest {
         `when`(cities.findByNationIdOrderByIdAsc(1)).thenReturn(listOf(
             CityReadEntity(id = 2, worldId = 1, name = "회", nationId = 1, supplyState = 1, meta = warehouseMeta(2, 10)),
             CityReadEntity(id = 5, worldId = 1, name = "탕거", nationId = 1, supplyState = 0, meta = warehouseMeta(5, 70)),
-            CityReadEntity(id = 3, worldId = 1, name = "깨짐", nationId = 1, meta = mapOf(HwihaCountyWarehouse.META_KEY to mapOf("version" to 2))),
+            CityReadEntity(id = 3, worldId = 1, name = "깨짐", nationId = 1, meta = mapOf(CountyWarehouse.META_KEY to mapOf("version" to 2))),
             CityReadEntity(id = 4, worldId = 1, name = "창고없음", nationId = 1),
             CityReadEntity(id = 1, worldId = 1, name = "앞번호", nationId = 1, supplyState = 1, meta = warehouseMeta(1, 5)),
         ))
@@ -225,7 +225,7 @@ class HwihaCampReaderTest {
     // ── 현 특산 ──────────────────────────────────────────────────────────
     @Test fun `현 특산은 산출 원장의 縣 행을 싣고 월 생산은 엔진과 같은 식으로 이번 달 실제 적립량이다`() {
         setup()
-        reader.production = mapOf(5 to HwihaResources(iron = 1000, timber = 132))
+        reader.production = mapOf(5 to Resources(iron = 1000, timber = 132))
         fun tangqu(supply: Int) = CityReadEntity(id = 5, worldId = 1, name = "탕거", nationId = 1, supplyState = supply,
             population = 5000, meta = warehouseMeta(5, 0))
         `when`(cities.findById(5)).thenReturn(Optional.of(tangqu(1)))
@@ -248,7 +248,7 @@ class HwihaCampReaderTest {
     @Test fun `창고 meta 가 깨진 縣은 월 생산을 모른다(null)`() {
         setup()
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1, name = "탕거", nationId = 1,
-            supplyState = 1, meta = mapOf(HwihaCountyWarehouse.META_KEY to "broken"))))
+            supplyState = 1, meta = mapOf(CountyWarehouse.META_KEY to "broken"))))
         assertTrue(assertNotNull(reader.county(5, 1, 41)).specialties.all { it.monthly == null })
     }
 

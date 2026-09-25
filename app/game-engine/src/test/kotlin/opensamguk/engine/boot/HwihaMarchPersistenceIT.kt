@@ -237,10 +237,10 @@ class HwihaMarchPersistenceIT {
             seeded.landNodeOfCity(it) is StrategicNodeRef.LandProvince &&
                 seeded.landNodeOfCity(it) != seeded.positionOf(1)
         }
-        val stock = opensamguk.logic.economy.HwihaCountyWarehouse(countyId, 0,
-            opensamguk.logic.economy.HwihaResources(grain = 100_000_000))
+        val stock = opensamguk.logic.economy.CountyWarehouse(countyId, 0,
+            opensamguk.logic.economy.Resources(grain = 100_000_000))
         jdbc.update("UPDATE city SET nation_id=1, meta=meta || ?::jsonb WHERE world_id=? AND id=?",
-            MetaJson.encode(mapOf(opensamguk.logic.economy.HwihaCountyWarehouse.META_KEY to stock.toMetaValue())), id, countyId)
+            MetaJson.encode(mapOf(opensamguk.logic.economy.CountyWarehouse.META_KEY to stock.toMetaValue())), id, countyId)
         var world = cold(id)
         var recorder = ChangeRecorder()
         assertIs<GeneralPositionChangeResult.Changed>(recorder.moveGeneral(world, 1,

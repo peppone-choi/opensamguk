@@ -7,7 +7,7 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import opensamguk.logic.economy.HwihaResources
+import opensamguk.logic.economy.Resources
 
 /** Where FULL vision comes from (spec §7 plus the 2026-09-23 user decision). */
 enum class VisionSourceKind { SELF, OWN_CORPS, RETINUE, TERRITORY, SCOUT_POST, WATCHTOWER_BEACON }
@@ -26,7 +26,7 @@ object VisionRules {
         val sourceRadius: Map<VisionSourceKind, Int>,
         val troopBands: List<TroopBand>,
         val scoutInputId: String,
-        val scoutCost: HwihaResources,
+        val scoutCost: Resources,
     ) {
         init {
             require(sourceRadius.keys == VisionSourceKind.entries.toSet()) { "Every vision source needs a radius" }
@@ -37,7 +37,7 @@ object VisionRules {
             require(troopBands.all { it.code.isNotBlank() && it.label.isNotBlank() })
             require(scoutInputId == ScoutInputCodec.INPUT_ID) { "Scout rules bind a different input" }
             // No debit path exists yet (warehouse access + revision binding); a non-zero cost would be a fake cost.
-            require(scoutCost == HwihaResources()) { "Scout cost must stay zero until a debit path exists" }
+            require(scoutCost == Resources()) { "Scout cost must stay zero until a debit path exists" }
         }
 
         fun radius(kind: VisionSourceKind): Int = sourceRadius.getValue(kind)
@@ -81,7 +81,7 @@ object VisionRules {
             sourceRadius = VisionSourceKind.entries.associateWith { radius.getValue(it.name).jsonPrimitive.int },
             troopBands = bands,
             scoutInputId = scout.getValue("inputId").jsonPrimitive.content,
-            scoutCost = HwihaResources(cost.getValue("money").jsonPrimitive.long, cost.getValue("grain").jsonPrimitive.long,
+            scoutCost = Resources(cost.getValue("money").jsonPrimitive.long, cost.getValue("grain").jsonPrimitive.long,
                 cost.getValue("iron").jsonPrimitive.long, cost.getValue("timber").jsonPrimitive.long,
                 cost.getValue("horses").jsonPrimitive.long),
         )

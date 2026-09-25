@@ -9,7 +9,7 @@ import kotlin.test.*
 import opensamguk.common.wire.TurnDaemonCommand.ImmediateInput
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
-import opensamguk.logic.economy.HwihaCountyWarehouse
+import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
@@ -41,7 +41,7 @@ class HwihaGovernanceMeritWiringTest {
     private fun county(id: Int) = City(id, "縣$id", 1, 1, population = 50_000,
         populationMax = 100_000, agriculture = 1000, agricultureMax = 5000, commerce = 1000, commerceMax = 5000, security = 500,
         securityMax = 1000, defence = 500, defenceMax = 1000, wall = 500, wallMax = 1000,
-        meta = mapOf("trust" to 80.0, HwihaCountyWarehouse.META_KEY to HwihaCountyWarehouse(id, 0, opensamguk.logic.economy.HwihaResources()).toMetaValue()))
+        meta = mapOf("trust" to 80.0, CountyWarehouse.META_KEY to CountyWarehouse(id, 0, opensamguk.logic.economy.Resources()).toMetaValue()))
 
     /** G1: 사람 주공(카드 5 = G3 의 주인). [holder] 면 縣 10 발령 관할 장수이기도 하다. */
     private fun world(holder: Boolean): InMemoryTurnWorld {
