@@ -102,6 +102,12 @@
 | `opensamguk.logic.input.ScoutedCorps` | `opensamguk.logic.vision.ScoutedCorps` | 이 PR | 정찰 군단 관측값 패키지 이동 |
 | `opensamguk.logic.input.ScoutCityFact` | `opensamguk.logic.vision.ScoutCityFact` | 이 PR | 정찰 도시 사실값 패키지 이동 |
 | `logic/input/HwihaScoutTest.kt` | `logic/vision/ScoutTest.kt` | 이 PR | 정찰 테스트 파일·타입·패키지 개명 |
+| `logic/input/HwihaVisionSources.kt` | `logic/vision/VisionSources.kt` | 이 PR | 시야 출처 meta reader의 도메인 패키지 이동; 저장 키는 유지 |
+| `opensamguk.logic.input.HwihaScoutPost` | `opensamguk.logic.vision.ScoutPost` | 이 PR | 도착한 정찰 배치 타입 |
+| `opensamguk.logic.input.HwihaVisionSourceReader` | `opensamguk.logic.vision.VisionSourceReader` | 이 PR | 시야 출처 reader 인터페이스 |
+| `opensamguk.logic.input.HwihaMetaVisionSourceReader` | `opensamguk.logic.vision.MetaVisionSourceReader` | 이 PR | 장수·도시 meta reader |
+| `opensamguk.logic.input.SourceRead` | `opensamguk.logic.vision.SourceRead` | 이 PR | 시야 출처 읽기 결과 타입 패키지 이동 |
+| `logic/input/HwihaDomesticVisionContractTest.kt` | `logic/vision/VisionSourceContractTest.kt` | 이 PR | 내정·시야 계약 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
 

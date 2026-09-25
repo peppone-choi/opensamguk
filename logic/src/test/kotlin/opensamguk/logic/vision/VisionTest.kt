@@ -26,7 +26,7 @@ class VisionTest {
         territory: Set<String> = emptySet(),
         corps: Map<Int, StrategicNodeRef?> = emptyMap(),
         retinue: Map<Int, StrategicNodeRef?> = emptyMap(),
-        posts: List<HwihaScoutPost> = emptyList(),
+        posts: List<ScoutPost> = emptyList(),
         towers: List<Pair<Int, String>> = emptyList(),
         reports: ScoutReports? = null,
     ) = VisionViewer(1, nationId, actorNode, corps, retinue, territory, posts, towers, reports)
@@ -45,7 +45,7 @@ class VisionTest {
 
     @Test fun `scout posts and watchtowers reach one neighbour step and corps and retinue see where they stand`() {
         val view = Vision.project(viewer(actorNode = null, corps = mapOf(7 to land("p4")),
-            posts = listOf(HwihaScoutPost(3, "p2")), towers = emptyList()), index, rules, now)
+            posts = listOf(ScoutPost(3, "p2")), towers = emptyList()), index, rules, now)
         assertEquals(listOf(VisionTier.FOG, VisionTier.FULL, VisionTier.FULL, VisionTier.FULL, VisionTier.FULL), tiers(view))
         val tower = Vision.project(viewer(actorNode = null, towers = listOf(55 to "p0b"),
             retinue = mapOf(9 to land("p3"))), index, rules, now)
@@ -65,7 +65,7 @@ class VisionTest {
         val view = Vision.project(viewer(reports = reports), index, rules, now)
         assertEquals(VisionEntry(1, VisionTier.INTEL, HwihaPhase(190, 2, 3), 2), view.entry(1))
         assertEquals(VisionEntry(3, VisionTier.INTEL, now, 0), view.entry(3))
-        val covered = Vision.project(viewer(reports = reports, posts = listOf(HwihaScoutPost(3, "p0"))), index, rules, now)
+        val covered = Vision.project(viewer(reports = reports, posts = listOf(ScoutPost(3, "p0"))), index, rules, now)
         assertEquals(VisionTier.FULL, covered.tierOf(1))
         assertEquals(VisionTier.INTEL, covered.tierOf(3))
         // Across a year boundary the age still counts 旬 (36 per year).
@@ -95,7 +95,7 @@ class VisionTest {
             corps("order-secret-fog", 3, 3, 31), corps("order-far", 4, 3, 41)))
 
     @Test fun `fog corps never appear, own corps are exact and others are banded`() {
-        val v = viewer(posts = listOf(HwihaScoutPost(5, "p0")))   // FULL: 0, 1
+        val v = viewer(posts = listOf(ScoutPost(5, "p0")))   // FULL: 0, 1
         val view = Vision.project(v, index, rules, now)
         val seen = CorpsVisibility.project(v, view, index, projection(), rules)
         assertEquals(listOf("order-own", ScoutCapture.corpsKey("order-neighbour")), seen.map { it.orderId ?: it.corpsKey })
@@ -122,7 +122,7 @@ class VisionTest {
     @Test fun `an old snapshot of a commandery that is now in full sight yields only the live corps`() {
         val stale = ScoutedCorps(ScoutCapture.corpsKey("order-gone"), 8, 8, 2, "p1", "B5")
         val reports = ScoutReports(hash, listOf(report(1, HwihaPhase(189, 1, 1), stale)))
-        val v = viewer(reports = reports, posts = listOf(HwihaScoutPost(5, "p0")))   // FULL: 0, 1
+        val v = viewer(reports = reports, posts = listOf(ScoutPost(5, "p0")))   // FULL: 0, 1
         val view = Vision.project(v, index, rules, now)
         assertEquals(VisionTier.FULL, view.tierOf(1))
         val seen = CorpsVisibility.project(v, view, index, projection(), rules)
@@ -132,7 +132,7 @@ class VisionTest {
 
     @Test fun `a broken relationship is not reported as a standing army even in full sight`() {
         val broken = projection().let { it.copy(units = it.units.filterNot { unit -> unit.id == 21 }) }
-        val v = viewer(posts = listOf(HwihaScoutPost(5, "p0")))
+        val v = viewer(posts = listOf(ScoutPost(5, "p0")))
         val seen = CorpsVisibility.project(v, Vision.project(v, index, rules, now), index, broken, rules)
         assertEquals(listOf(true), seen.map { it.own })
     }

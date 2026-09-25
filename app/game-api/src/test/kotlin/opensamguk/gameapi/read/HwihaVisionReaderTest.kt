@@ -1,5 +1,7 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.MetaVisionSourceReader
+
 import opensamguk.logic.vision.ScoutFailure
 import opensamguk.logic.vision.ScoutAssessment
 import opensamguk.logic.vision.ScoutedCity
@@ -39,7 +41,7 @@ class HwihaVisionReaderTest {
     private val resolver = mock(ActiveWorldArtifactResolver::class.java)
     private val spatial = mock(SpatialStateReadRepository::class.java)
     private val reader = HwihaVisionReader(generals, worlds, nations, retainers, resolver, spatial,
-        HwihaMetaVisionSourceReader, VisionRules.CANON)
+        MetaVisionSourceReader, VisionRules.CANON)
     private val controller = HwihaVisionController(reader)
     private val json = ObjectMapper().findAndRegisterModules()
 
