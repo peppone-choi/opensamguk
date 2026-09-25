@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.vision.ScoutInputCodec
+
 import opensamguk.logic.domestic.FieldInput
 
 import opensamguk.logic.domestic.DomesticInput
@@ -346,7 +348,7 @@ class ReservedTurnHandler(
             for (siegeInput in listOf(opensamguk.engine.hwiha.HwihaSiegeHandler.ASSAULT, opensamguk.engine.hwiha.HwihaSiegeHandler.DEMAND_SURRENDER)) {
                 handlers[siegeInput] = InputHandler { applied = siegeHandler.handle(siegeInput, generalId, reserved.argJson) }
             }
-            handlers[opensamguk.logic.input.HwihaScoutInput.INPUT_ID] = InputHandler {
+            handlers[ScoutInputCodec.INPUT_ID] = InputHandler {
                 applied = scoutHandler.handle(generalId, reserved.argJson, reserved.reservationOwnerUserId)
             }
             for (travelId in opensamguk.logic.input.HwihaTravelInput.INPUT_IDS) {

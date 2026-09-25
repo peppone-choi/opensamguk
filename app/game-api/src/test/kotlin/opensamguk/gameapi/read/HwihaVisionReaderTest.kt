@@ -1,5 +1,13 @@
 package opensamguk.gameapi.read
 
+import opensamguk.logic.vision.ScoutFailure
+import opensamguk.logic.vision.ScoutAssessment
+import opensamguk.logic.vision.ScoutedCity
+import opensamguk.logic.vision.ScoutedCorps
+import opensamguk.logic.vision.ScoutReport
+import opensamguk.logic.vision.ScoutReports
+import opensamguk.logic.vision.ScoutCapture
+
 import opensamguk.logic.vision.VisionRules
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -105,10 +113,10 @@ class HwihaVisionReaderTest {
         val body = controller.corps(41, 1).body as HwihaCorpsResponse
         val text = bytes(body)
         // Positive control: the FULL enemy in the actor's own commandery is in these very bytes.
-        assertTrue("보이는장수" in text && HwihaScoutCapture.corpsKey("req-visible-order") in text, text)
+        assertTrue("보이는장수" in text && ScoutCapture.corpsKey("req-visible-order") in text, text)
         assertFalse("req-visible-order" in text || "6400" in text, "other corps leak raw id or exact troops: $text")
         // The FOG corps: no name, no id, no key, no troops, no province.
-        listOf("비밀장수", "req-FOG-SECRET", HwihaScoutCapture.corpsKey("req-FOG-SECRET"), "7777", "\"${province(far)}\"")
+        listOf("비밀장수", "req-FOG-SECRET", ScoutCapture.corpsKey("req-FOG-SECRET"), "7777", "\"${province(far)}\"")
             .forEach { assertFalse(it in text, "FOG corps leaked '$it': $text") }
         // Neighbour is FOG too (no scouting yet): its 45000-strong corps is not in the bytes.
         assertFalse("옆장수" in text || "45000" in text, text)
@@ -120,16 +128,16 @@ class HwihaVisionReaderTest {
     }
 
     @Test fun `scouted neighbour shows only the snapshot and its age, never the live army there`() {
-        val seen = ScoutedCorps(HwihaScoutCapture.corpsKey("req-next-old"), 4, 4, 3, province(next), "B1")
-        val notebook = HwihaScoutReports(index.tilesContentHash, listOf(
-            HwihaScoutReport(index.commanderies[next].id, HwihaPhase(190, 2, 1), listOf(ScoutedCity(500, 3, true)), listOf(seen))))
-        setup(actorMeta = mapOf(HwihaScoutReports.META_KEY to notebook.toMetaValue()))
+        val seen = ScoutedCorps(ScoutCapture.corpsKey("req-next-old"), 4, 4, 3, province(next), "B1")
+        val notebook = ScoutReports(index.tilesContentHash, listOf(
+            ScoutReport(index.commanderies[next].id, HwihaPhase(190, 2, 1), listOf(ScoutedCity(500, 3, true)), listOf(seen))))
+        setup(actorMeta = mapOf(ScoutReports.META_KEY to notebook.toMetaValue()))
         val corps = controller.corps(41, 1).body as HwihaCorpsResponse
         val intel = corps.corps!!.single { it.visibility == "INTEL" }
         assertEquals(seen.corpsKey, intel.corpsId); assertEquals("B1", intel.troopsBand!!.code)
         assertEquals(4, intel.ageTurns); assertEquals(2, intel.lastSeenStamp!!.month)
         val text = bytes(corps)
-        assertFalse("45000" in text || HwihaScoutCapture.corpsKey("req-next-live") in text, "live INTEL corps leaked: $text")
+        assertFalse("45000" in text || ScoutCapture.corpsKey("req-next-live") in text, "live INTEL corps leaked: $text")
         val visibility = controller.visibility(41, 1).body as HwihaVisibilityResponse
         val row = visibility.commanderies!!.single { it.no == next }
         assertEquals("INTEL", row.tier); assertEquals(4, row.ageTurns)

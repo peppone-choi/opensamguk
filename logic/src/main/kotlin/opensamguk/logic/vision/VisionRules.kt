@@ -8,7 +8,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import opensamguk.logic.economy.HwihaResources
-import opensamguk.logic.input.HwihaScoutInput
 
 /** Where FULL vision comes from (spec §7 plus the 2026-09-23 user decision). */
 enum class VisionSourceKind { SELF, OWN_CORPS, RETINUE, TERRITORY, SCOUT_POST, WATCHTOWER_BEACON }
@@ -36,7 +35,7 @@ object VisionRules {
             require(troopBands.zipWithNext().all { (a, b) -> a.minInclusive < b.minInclusive }) { "Troop bands must ascend" }
             require(troopBands.map { it.code }.distinct().size == troopBands.size) { "Duplicate troop band code" }
             require(troopBands.all { it.code.isNotBlank() && it.label.isNotBlank() })
-            require(scoutInputId == HwihaScoutInput.INPUT_ID) { "Scout rules bind a different input" }
+            require(scoutInputId == ScoutInputCodec.INPUT_ID) { "Scout rules bind a different input" }
             // No debit path exists yet (warehouse access + revision binding); a non-zero cost would be a fake cost.
             require(scoutCost == HwihaResources()) { "Scout cost must stay zero until a debit path exists" }
         }

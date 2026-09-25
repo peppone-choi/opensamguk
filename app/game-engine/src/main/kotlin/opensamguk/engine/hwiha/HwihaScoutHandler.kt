@@ -1,5 +1,13 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.ScoutInputCodec
+import opensamguk.logic.vision.ScoutFailure
+import opensamguk.logic.vision.ScoutAssessment
+import opensamguk.logic.vision.ScoutRules
+import opensamguk.logic.vision.ScoutReports
+import opensamguk.logic.vision.ScoutCityFact
+import opensamguk.logic.vision.ScoutCapture
+
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.engine.turn.*
@@ -27,21 +35,21 @@ class HwihaScoutHandler(private val world: InMemoryTurnWorld, private val record
     private val context: HwihaVisionContext?) {
     fun handle(actorId: Int, argJson: String?, reservationOwnerUserId: Int?): HwihaTurnOutcome {
         fun reject(reason: ScoutFailure) =
-            HwihaTurnOutcome.Rejected(HwihaScoutInput.INPUT_ID, reason.name, HwihaScoutRules.reason(reason))
+            HwihaTurnOutcome.Rejected(ScoutInputCodec.INPUT_ID, reason.name, ScoutRules.reason(reason))
         if (world.ruleProfile != RuleProfile.HWIHA) return reject(ScoutFailure.WRONG_RULE_PROFILE)
         val actor = world.getGeneralById(actorId) ?: return reject(ScoutFailure.STATE_UNAVAILABLE)
         if (reservationOwnerUserId == null || reservationOwnerUserId <= 0 ||
             actor.userId?.toLongOrNull() != reservationOwnerUserId.toLong())
-            return HwihaTurnOutcome.Rejected(HwihaScoutInput.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되어 첩보할 수 없습니다.")
-        val input = HwihaScoutInput.parse(actorId, argJson) ?: return reject(ScoutFailure.INVALID_INPUT)
+            return HwihaTurnOutcome.Rejected(ScoutInputCodec.INPUT_ID, "FORBIDDEN", "예약한 장수의 소유권이 변경되어 첩보할 수 없습니다.")
+        val input = ScoutInputCodec.parse(actorId, argJson) ?: return reject(ScoutFailure.INVALID_INPUT)
         val context = context ?: return reject(ScoutFailure.STATE_UNAVAILABLE)
         val projection = HwihaDeploymentExecutor(world, recorder, context.topology, context.metrics).projection()
             ?: return reject(ScoutFailure.STATE_UNAVAILABLE)
-        val assessed = HwihaScoutRules.assess(world.ruleProfile, world.positionOf(actorId), input.commanderyId, context.commanderies)
+        val assessed = ScoutRules.assess(world.ruleProfile, world.positionOf(actorId), input.commanderyId, context.commanderies)
         if (assessed is ScoutAssessment.Rejected) return reject(assessed.reason)
         assessed as ScoutAssessment.Eligible
         // A corrupt notebook is not overwritten with a fresh one (that would silently discard sightings).
-        val previous = try { HwihaScoutReports.read(actor.meta) } catch (_: IllegalArgumentException) {
+        val previous = try { ScoutReports.read(actor.meta) } catch (_: IllegalArgumentException) {
             return reject(ScoutFailure.STATE_UNAVAILABLE)
         }
         val state = world.getState()
@@ -50,14 +58,14 @@ class HwihaScoutHandler(private val world: InMemoryTurnWorld, private val record
             val province = (world.landNodeOfCity(city.id) as? StrategicNodeRef.LandProvince)?.id ?: return@mapNotNull null
             ScoutCityFact(city.id, province, city.nationId, HwihaCountyWarehouse.META_KEY in city.meta)
         }
-        val report = HwihaScoutCapture.capture(assessed.target, context.commanderies, cities, projection, context.rules, now)
+        val report = ScoutCapture.capture(assessed.target, context.commanderies, cities, projection, context.rules, now)
         val notebook = (previous?.takeIf { it.tilesContentHash == context.commanderies.tilesContentHash }
-            ?: HwihaScoutReports(context.commanderies.tilesContentHash, emptyList())).with(report)
-        val after = actor.copy(meta = actor.meta + (HwihaScoutReports.META_KEY to notebook.toMetaValue()))
+            ?: ScoutReports(context.commanderies.tilesContentHash, emptyList())).with(report)
+        val after = actor.copy(meta = actor.meta + (ScoutReports.META_KEY to notebook.toMetaValue()))
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(actor), PerTurnOverlay.toLogicGeneral(after))
         world.applyGeneralDirtyFree(after)
         world.pushLog(LogEntryDraft(scope = "general", category = "action",
             text = "${assessed.target.name}의 형세를 몸소 살폈습니다.", generalId = actorId, nationId = after.nationId))
-        return HwihaTurnOutcome.Applied(HwihaScoutInput.INPUT_ID)
+        return HwihaTurnOutcome.Applied(ScoutInputCodec.INPUT_ID)
     }
 }

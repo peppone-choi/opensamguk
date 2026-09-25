@@ -1,5 +1,7 @@
 package opensamguk.engine.hwiha
 
+import opensamguk.logic.vision.ScoutInputCodec
+
 import opensamguk.logic.domestic.FieldInput
 
 import opensamguk.logic.domestic.DomesticInput
@@ -32,7 +34,7 @@ class HwihaCourtHandler(
                 "INVALID_INPUT_CHANNEL", "출사는 개인 행동 예약으로 입력해야 합니다.") },
             HwihaDeployInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "본인 출병은 개인 행동 예약으로 입력해야 합니다.") },
-            HwihaScoutInput.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
+            ScoutInputCodec.INPUT_ID to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "첩보는 개인 행동 예약으로 입력해야 합니다.") },
             HwihaSiegeHandler.ASSAULT to InputHandler { outcome = result(command.generalId, command.inputId, false,
                 "INVALID_INPUT_CHANNEL", "강공은 개인 행동 예약으로 입력해야 합니다.") },
