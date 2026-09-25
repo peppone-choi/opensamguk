@@ -25,6 +25,7 @@ data class OfficeDefinition(
     val rankStones: String,
     val gameGrade: Int,
     val countyPlacementOnly: Boolean,
+    val excludedJurisdictions: Set<String>,
     val sources: List<OfficeSource>,
 )
 
@@ -51,6 +52,7 @@ class OfficeCatalog private constructor(val definitions: List<OfficeDefinition>)
                     rankStones = row.string("rankStones"),
                     gameGrade = row["values"]!!.jsonObject["gameGrade"]!!.jsonObject["value"]!!.jsonPrimitive.int,
                     countyPlacementOnly = jurisdiction == OfficeJurisdiction.COUNTY,
+                    excludedJurisdictions = (row["excludedJurisdictions"] as? JsonArray)?.map { it.jsonPrimitive.content }?.toSet() ?: emptySet(),
                     sources = (row["sources"] as JsonArray).map { source ->
                         val citation = source.jsonObject
                         OfficeSource(citation.string("book"), citation.string("volume"), citation.string("section"), citation.string("quote"))
