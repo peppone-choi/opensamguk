@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "imperial-nomination-rules",
+  "rows": [
+    {
+      "id": "nomination.review-rules",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "추천 심의와 주장 시작 인정도는 사료 수치가 아닌 게임 규칙이다.",
+      "displayBadge": "게임 용어",
+      "values": {
+        "factor.VACANCY_AND_CAPACITY": {
+          "value": 18,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "공석과 정원은 임명 가능성의 선행 조건이다."
+        },
+        "factor.PROPOSER_AUTHORITY": {
+          "value": 15,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "표문 제출 권한과 조정 접근을 강하게 반영한다."
+        },
+        "factor.CANDIDATE_MERIT": {
+          "value": 12,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "후보 명성과 경력은 중간 크기의 근거다."
+        },
+        "factor.COURT_SUPPORT": {
+          "value": 12,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "황제·상서·조정 파벌의 지지를 별도 근거로 둔다."
+        },
+        "factor.TERRITORIAL_RELATION": {
+          "value": 10,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "실제 영토 지배자와의 관계를 반영한다."
+        },
+        "factor.CLEAR_OF_COMPETITOR": {
+          "value": 8,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "경쟁 추천이나 기존 주장이 없으면 심의가 쉬워진다."
+        },
+        "factor.ENFORCEMENT_CAPACITY": {
+          "value": 8,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "조정의 군사·역참·재정 집행력을 반영한다."
+        },
+        "reviewTurnLimit": {
+          "value": 3,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "심의 보류가 무기한 묶이지 않도록 기본 턴 상한을 둔다. 연장은 새 심의 사건으로 기록한다."
+        },
+        "origin.IMPERIAL_GRANT": {
+          "value": 90,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "정식 조정 임명은 높은 시작 인정도. 실효 지배와는 별개다."
+        },
+        "origin.COURT_CONFIRMED": {
+          "value": 80,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "사후 추인은 과거 자칭 이력을 지우지 않으므로 원발령보다 낮다."
+        },
+        "origin.POLITY_APPOINTMENT": {
+          "value": 70,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "정권 내부 인정은 높지만 타 세력 인정은 별개다."
+        },
+        "origin.SELF_STYLED": {
+          "value": 20,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "자칭은 조정 권한이 없으나 추종자 인정을 완전히 배제하지 않는다."
+        },
+        "origin.ACTING_XING": {
+          "value": 45,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "대행은 임시 직무임을 반영한다."
+        },
+        "origin.CONCURRENT_LING": {
+          "value": 50,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "겸직은 물리적 수행 조건과 함께 평가한다."
+        },
+        "origin.CAMPAIGN_COMMISSION": {
+          "value": 60,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "목적이 한정된 임시 군직이다."
+        },
+        "origin.POSTHUMOUS": {
+          "value": 60,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "사후 추증은 명예·가문 정통성으로 인정될 수 있다. 생전 지휘권 금지는 별도 실권 판정이 맡는다."
+        }
+      }
+    }
+  ]
+}
