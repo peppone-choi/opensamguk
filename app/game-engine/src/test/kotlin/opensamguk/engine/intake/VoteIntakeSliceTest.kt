@@ -36,11 +36,11 @@ class VoteIntakeSliceTest {
     private val hiddenSeed = "4bcea5ec9686d42f64f02329932f35b1"
     private val develCost = 20
 
-    private fun lotteryInputs() = VoteLotteryInputs(
+    private fun lotteryInputs(probability: Double = 0.0) = VoteLotteryInputs(
         genCount = 1,
         itemTypeCnt = 1,
         maxCnt = 1,
-        prob0 = 0.0,
+        prob0 = probability,
         moreProb = 0.0,
         itemPool = listOf(UniqueItemEntry("horse", "test_horse", 1)),
     )
@@ -162,6 +162,28 @@ class VoteIntakeSliceTest {
     // ── VoteCast validation ───────────────────────────────────────────────────────────
 
     @Test
+    fun `voteCast win applies item slot and flushes gold and item together`() {
+        val world = world(general(id = 1, gold = 100))
+        val recorder = ChangeRecorder()
+        val result = handler(
+            world, recorder,
+            poll = VotePollState(id = 2, multipleOptions = 1, optionsCount = 2),
+            pinned = lotteryInputs(probability = 1.0),
+        ).handleVoteCast(TurnDaemonCommand.VoteCast(generalId = 1, voteId = 2, selection = listOf(0)))
+
+        assertTrue((result as BoardActionResult).ok)
+        assertEquals(1, recorder.voteInserts().size)
+        val general = world.getGeneralById(1)!!
+        assertEquals(100 + develCost * 5, general.gold)
+        assertEquals("test_horse", general.role.items.horse)
+        val payload = flush(world, recorder)
+        val patch = payload.updatedGenerals.single { it.id == 1 }
+        assertEquals(100 + develCost * 5, patch.gold)
+        assertEquals("test_horse", patch.horse)
+        assertEquals(1, payload.voteInserts.size)
+    }
+
+    @Test
     fun `voteCast with an empty selection is denied`() {
         val world = world()
         val recorder = ChangeRecorder()
@@ -253,6 +275,7 @@ class VoteIntakeSliceTest {
         assertEquals(1, recorder.voteInserts().size)
         assertEquals(1, lotteryInputReads)
         assertEquals(100 + develCost * 5, world.getGeneralById(1)!!.gold)
+        assertNull(world.getGeneralById(1)!!.role.items.horse)
     }
 
     // ── VoteComment ─────────────────────────────────────────────────────────────────────────────
