@@ -7,9 +7,7 @@ import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
-import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
-import opensamguk.engine.auction.AuctionOpenHandler
 import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.AccountCommandHandler
 import opensamguk.engine.intake.AdminGeneralModerationHandler
@@ -127,7 +125,7 @@ class TurnDaemonCommandDispatcher(
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
-     * [AuctionBidHandler]와 유산 초기화가 이 seam 을 쓴다(바퀴 20 정본).
+     * 유산 초기화가 이 seam 을 쓴다(바퀴 20 정본).
      */
     private val persistedPreviousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
         { ownerId: Int ->
@@ -180,10 +178,6 @@ class TurnDaemonCommandDispatcher(
             ?: persistedLastStatResetReader(ownerId)
     }
 
-    private val auctionBid = AuctionBidHandler(
-        world, recorder, auctionRepository, auctionBidRepository,
-        previousPointReader = previousPointReader,
-    )
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
@@ -278,9 +272,6 @@ class TurnDaemonCommandDispatcher(
         raiseInvader = raiseInvader,
     )
 
-    // ── W6c 경매 개설 핸들러 (AuctionBidHandler와 동일 read repo 주입) ──
-    private val auctionOpen = AuctionOpenHandler(world, recorder, auctionRepository, auctionBidRepository)
-
     // ── W5d 외교 서신 핸들러 (ng_diplomacy read seam은 nullable) ──
     private val diplomacyLetter = DiplomacyLetterHandler(world, recorder, diplomacyLetterRepository)
     private val personnel = PersonnelHandler(world, recorder)
@@ -330,7 +321,6 @@ class TurnDaemonCommandDispatcher(
     ): TurnDaemonCommandResult? = when (command) {
         is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
-        is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
@@ -388,10 +378,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.AcceptDiplomaticMessage -> diplomaticMessage.handleAccept(command)
         is TurnDaemonCommand.DeclineDiplomaticMessage -> diplomaticMessage.handleDecline(command)
         is TurnDaemonCommand.AcceptRaiseInvaderMessage -> raiseInvaderMessage.handle(command)
-        // ── W6c 경매 개설 바인딩 ──
-        is TurnDaemonCommand.AuctionOpenBuyRice -> auctionOpen.handleBuyRice(command)
-        is TurnDaemonCommand.AuctionOpenSellRice -> auctionOpen.handleSellRice(command)
-        is TurnDaemonCommand.AuctionOpenUnique -> auctionOpen.handleUnique(command)
         // ── W5d 외교 서신 바인딩 ──
         is TurnDaemonCommand.DiploSendLetter -> diplomacyLetter.handleSend(command)
         is TurnDaemonCommand.DiploRollbackLetter -> diplomacyLetter.handleRollback(command)

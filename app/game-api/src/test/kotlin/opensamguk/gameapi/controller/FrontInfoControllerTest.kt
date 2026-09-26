@@ -51,7 +51,6 @@ class FrontInfoControllerTest {
     private val cities = mock(CityReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
     private val ranks = mock(opensamguk.gameapi.read.RankDataReadRepository::class.java)
-    private val auctions = mock(opensamguk.gameapi.read.AuctionCountReadRepository::class.java)
     private val votePolls = mock(opensamguk.gameapi.read.VotePollReadRepository::class.java)
     private val votes = mock(opensamguk.gameapi.read.VoteReadRepository::class.java)
     private val troops = mock(opensamguk.gameapi.read.TroopReadRepository::class.java)
@@ -76,7 +75,6 @@ class FrontInfoControllerTest {
                 nations,
                 cities,
                 ranks,
-                auctions,
                 votePolls,
                 votes,
                 troops,
