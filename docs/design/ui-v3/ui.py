@@ -34,7 +34,7 @@ def head(title,on):
     tabs=''.join(f'<span class="{"on" if t==on else ""}">{t}</span>' for t in ['장수 행동','배치','방침','공사','계책','조정 결정'])
     return f'''<div style="height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d);flex-shrink:0">
 <div style="display:flex;align-items:center;gap:14px"><a class="btn sm" href="#">← 작전실</a><span class="serif" style="font-size:18px;font-weight:900">{title}</span><div class="tabs">{tabs}</div></div>
-<div style="display:flex;align-items:center;gap:8px"><span class="chip">하후돈 · 조조 휘하</span><span class="chip bronze">명망 [미정]</span><span class="chip">200년 3월 중순</span></div></div>'''
+<div style="display:flex;align-items:center;gap:8px"><span class="chip">하후돈 · 조조 소속</span><span class="chip bronze">명망 [미정]</span><span class="chip">200년 3월 중순</span></div></div>'''
 def sec(t,sub=''): return f'<div class="sec-h"><span class="bar"></span><span class="t">{t}</span><span class="sub">{sub}</span></div>'
 def page(name,title,body,w=1440,h=1000):
     doc=f'''<!doctype html>

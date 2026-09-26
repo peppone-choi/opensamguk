@@ -1,5 +1,5 @@
 # 캔버스 v3 · 1묶음 — 셸 · 메뉴 · 작전실(데스크톱 · 태블릿 · 모바일) · 시스템 보강.  python3 boards_v3_shell.py
-# 예시 상황은 기존 시안과 같다: 플레이어 = 하후돈(조조 휘하), 200년 3월 중순, 관도 · 영천 방면.
+# 예시 상황은 기존 시안과 같다: 플레이어 = 하후돈(조조 소속), 200년 3월 중순, 관도 · 영천 방면.
 # 인물 능력치는 RTK14 추출본 값(로컬 캐시·V3_KOEI=1 일 때만, 저장소 사본은 「—」), 적성은 확정 가중 평균식(장 = 통×0.6+무×0.4 · 리 = 정×0.7+지×0.3 · 사 = 지×0.8+정×0.2 · 사자 = 매×0.6+정×0.4).
 from v3common import *
 from v3map import mapsvg, F
@@ -195,7 +195,7 @@ reason = f'''<div style="position:absolute;inset:0;background:rgba(8,10,9,.62)">
 <div style="height:48px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px"><span class="serif" style="font-size:17px;font-weight:900">발령 — 지금은 할 수 없습니다</span><button type="button" class="ibtn" aria-label="닫기">{icon("close")}</button></div>
 <div style="padding:4px 16px 12px;display:flex;flex-direction:column;gap:10px">
 <div style="border:1px solid #c96b5d;background:rgba(201,107,93,.12);padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="rs" style="font-size:14px;font-weight:700">발령은 주공만 할 수 있습니다.</span><span class="t2" style="font-size:12px">하후돈은 지금 조조를 섬기는 장수입니다.</span></div>
-<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="bz" style="font-size:12px;font-weight:700">이렇게 하면 됩니다</span><span class="t2" style="font-size:12px;line-height:1.5">주공이 되려면 거병하거나 독립해야 합니다. 주공이 되면 휘하의 사람 장수에게 발령을 낼 수 있습니다.</span></div></div>
+<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="bz" style="font-size:12px;font-weight:700">이렇게 하면 됩니다</span><span class="t2" style="font-size:12px;line-height:1.5">주공이 되려면 거병하거나 독립해야 합니다. 주공이 되면 내 부의 사람 장수에게 발령을 낼 수 있습니다.</span></div></div>
 <div style="margin-top:auto;padding:8px 16px 12px;display:flex;gap:8px;border-top:1px solid #2c342f"><a class="btn" href="#" style="flex:1">{icon("help", 18)}도움말 — 발령</a><button type="button" class="btn primary" style="flex:1">확인</button></div></section>'''
 
 mstage3 = f'<main style="height:{MSTAGE_H}px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column">{clist}{reason}</main>'
@@ -220,7 +220,7 @@ def mgroup(k, n, ic):
 me = (f'<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid #3d4740;background:#141816">'
       f'<img class="pt" src="{PT["hahoudon"]}" alt="하후돈 초상" style="width:40px;height:56px">'
       f'<div style="display:flex;flex-direction:column;min-width:0;flex:1"><span class="serif" style="font-size:16px;font-weight:900">하후돈</span>'
-      f'<span class="muted" style="font-size:11px">조조 휘하 · 관도</span></div><span class="chip bronze">명망 [미정]</span></div>')
+      f'<span class="muted" style="font-size:11px">조조 소속 · 관도</span></div><span class="chip bronze">명망 [미정]</span></div>')
 groups = ''.join(mgroup(k, n, ic) for k, n, ic, _ in NAV if k != 'war')
 helprow = (f'<div style="display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid #2c342f">'
            f'<a href="#" class="btn sm" style="height:44px;flex:1">{icon("help", 18)}도움말</a><a href="#" class="btn sm" style="height:44px;flex:1"><span class="chip info">첫걸음 3 / 8</span></a></div>')
@@ -245,11 +245,11 @@ GONE = ['장수 선택 풀 · 빙의', '감찰부', '황제 · 황제 상세', '
 gone = ''.join(f'<li style="height:32px;display:flex;align-items:center;border-bottom:1px solid #2c342f" class="t2">{g}</li>' for g in GONE)
 mtabs_demo = f'<div style="width:390px;border:1px solid #3d4740">{tabbar("war")}</div>'
 navright = f'''<div style="width:420px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">
-<section class="panel">{sec('모바일 하단 탭', '나머지는 「전체」에서')}<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{mtabs_demo}<span class="t2" style="font-size:12px">작전실 · 휘하 · 계책 · 기록 · 전체</span></div></section>
+<section class="panel">{sec('모바일 하단 탭', '나머지는 「전체」에서')}<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{mtabs_demo}<span class="t2" style="font-size:12px">작전실 · 막부 · 계책 · 기록 · 전체</span></div></section>
 <section class="panel">{sec('태블릿 · 데스크톱', '왼쪽 레일')}<div style="padding:12px;display:flex;gap:12px;align-items:flex-start"><div style="height:300px;overflow:hidden;border:1px solid #3d4740">{rail("war", slim=True)}</div><span class="t2" style="font-size:12px;line-height:1.6">레일 = 작전실 + 6묶음 + 광장<br>아래쪽 = 도움말 · 관리(권한자만)<br>태블릿은 좁은 레일</span></div></section>
 <section class="panel">{sec('지우는 화면', '대체 없음 · 옛 경로는 가까운 화면으로 308 또는 404')}<ul style="margin:0;padding:4px 12px 8px;list-style:none;font-size:12.5px">{gone}</ul></section></div>'''
 navbody = (f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">'
-           f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("메뉴 한 벌 — 작전실 · 휘하 · 계책 · 영지 · 군단 · 조정 · 기록 · 광장", "옛 경로는 308 전용")}<div style="padding:8px;overflow:hidden">{navtable}</div></section>{navright}</div>')
+           f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("메뉴 한 벌 — 작전실 · 부 · 계책 · 영지 · 군단 · 조정 · 기록 · 광장", "옛 경로는 308 전용")}<div style="padding:8px;overflow:hidden">{navtable}</div></section>{navright}</div>')
 page3('V3Nav.dc.html', '정보 구조 — 메뉴 한 벌', topbar('정보 구조') + navbody)
 
 
@@ -334,7 +334,7 @@ card = (f'<div style="width:300px;border:1px solid #3d4740;background:#141816;pa
 tc = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px"><span class="muted" style="font-size:11px">데스크톱 — 표</span>{tbl}'
       f'<span class="muted" style="font-size:11px">모바일 — 같은 내용을 카드로(정렬 · 거르기는 그대로)</span>{card}</div>')
 
-WORDS = [('縣 · 郡 · 城 · 省', '현 · 군 · 성 · 구역'), ('자금 · 전(錢) · 국고', '금 · 수도 창고'), ('군량 · 곡(穀) · 병량', '쌀'),
+WORDS = [('휘하', '부(막부 · 군부 · 주부 · 장군부 · 공부 · 승상부)'), ('縣 · 郡 · 城 · 省', '현 · 군 · 성 · 구역'), ('자금 · 전(錢) · 국고', '금 · 수도 창고'), ('군량 · 곡(穀) · 병량', '쌀'),
          ('예턴 · 사령턴', '명령 목록 · 예약'), ('휴식', '빈 순'), ('계책 손패(화면 이름)', '계책 덱 · 손패는 칸 이름'),
          ('숙련 · 명성 · 계급 · 삭턴 · 벌점', '쓰지 않는다'), ('년 월(표기)', '200년 3월 중순')]
 wrows = ''.join(f'<tr><td class="rs" style="text-decoration:line-through">{a}</td><td class="ms">{b}</td></tr>' for a, b in WORDS)

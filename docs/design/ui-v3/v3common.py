@@ -1,5 +1,5 @@
 # 캔버스 v3 공용 부품 — ADR-LITE-049 2026-09-26 개정.
-# 셸 하나, 메뉴 = 작전실 + 6묶음(휘하·계책·영지·군단·조정·기록) + 광장, 모바일도 같은 게임.
+# 셸 하나, 메뉴 = 작전실 + 6묶음(부·계책·영지·군단·조정·기록) + 광장, 모바일도 같은 게임.
 # ui.py 의 색·서체·부품(CSS, sec, kv, mod, PT, ART)을 그대로 잇고 v3 에서 더한 것만 여기에 둔다.
 import os
 from ui import CSS, PT, ART, FIELD, sec, kv, mod
@@ -63,7 +63,7 @@ def icon(name, size=20, color='currentColor'):
 # 메뉴 — 한 벌. (키, 이름, 아이콘, [(화면, 새 경로, 지금 화면)])
 NAV = [
     ('war', '작전실', 'war', [('지도 · 명령 목록 12순 · 지난 순', '/game/<서버>', '/game · /game/war-room · /game/map')]),
-    ('retinue', '휘하', 'retinue', [('편성 · 결속 · 명망', '/retinue', '/retinue'),
+    ('retinue', '막부', 'retinue', [('편성 · 결속 · 명망', '/retinue', '/retinue'),
                                    ('인물 일람', '/retinue/people', '/generals · /rankings/generals · /rankings/best-generals'),
                                    ('월단평', '/retinue/yuedan', '/yuedan')]),
     ('stratagem', '계책', 'stratagem', [('계책 덱', '/stratagem', '/hand')]),
@@ -108,7 +108,7 @@ def topbar(title, h=56, compact=False):
 <div style="display:flex;align-items:center;gap:8px"><span class="chip">200년 3월 중순</span>{nxt}{tut}
 <button type="button" class="ibtn" aria-label="서신 2통">{icon('mail')}<span class="badge">2</span></button>
 <button type="button" class="ibtn" aria-label="이 화면 도움말">{icon('help')}</button>
-<span class="chip">하후돈 · 조조 휘하</span><span class="chip bronze">명망 [미정]</span></div></header>'''
+<span class="chip">하후돈 · 조조 소속</span><span class="chip bronze">명망 [미정]</span></div></header>'''
 
 
 def mtop(title=None, back=None):
@@ -119,7 +119,7 @@ def mtop(title=None, back=None):
 <div style="display:flex;gap:6px"><button type="button" class="ibtn" aria-label="서신 2통">{icon('mail')}<span class="badge">2</span></button><button type="button" class="ibtn" aria-label="이 화면 도움말">{icon('help')}</button></div></header>'''
 
 
-MTABS = [('war', '작전실'), ('retinue', '휘하'), ('stratagem', '계책'), ('records', '기록'), ('menu', '전체')]
+MTABS = [('war', '작전실'), ('retinue', '막부'), ('stratagem', '계책'), ('records', '기록'), ('menu', '전체')]
 
 
 def tabbar(on='war'):
@@ -128,7 +128,7 @@ def tabbar(on='war'):
 
 
 # 기록 5분류(ADR-LITE-069) — 분류 표식 색.
-CATS = {'개인 행적': '#d3b064', '휘하 · 세력': '#8fa77a', '조정 공문': '#7aa7c7', '전장 보고': '#c96b5d', '천하 정세': '#b9b2a3'}
+CATS = {'개인 행적': '#d3b064', '부 · 세력': '#8fa77a', '조정 공문': '#7aa7c7', '전장 보고': '#c96b5d', '천하 정세': '#b9b2a3'}
 
 
 def cat(c):
