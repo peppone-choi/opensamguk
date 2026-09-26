@@ -516,30 +516,37 @@ def compute_mountains(inp, tier, width, placements):
     edits: dict[tuple, str] = {}; log = []
 
     def ok(y, x):
-        return 0 <= y < H and 0 <= x < W and not prot[y, x] and T[y, x] != TERRAIN_MOUNTAIN
+        # 편집 = 반드시 산이어야 할 칸. 지형 분류가 이미 산인 칸도 넣는다 — 산 높이(relief)가 평평하다고 지우지 못하게.
+        return 0 <= y < H and 0 <= x < W and not prot[y, x]
 
     road = inp["road"]
     for c in cities:
         if c["level"] != 3:
             continue
         r, cc = c["row"], c["col"]
-        if int((T[r - 6:r + 7, cc - 6:cc + 7] == TERRAIN_MOUNTAIN).sum()) >= 100:
-            continue
         ys, xs = np.where(road[r - 4:r + 5, cc - 4:cc + 5])
         near = np.c_[ys - 4, xs - 4].astype(float)
         A = near if len(near) > 2 else np.array([[0, -1], [0, 1.0]])
         wv, vv = np.linalg.eigh(np.cov(A.T)); d = vv[:, np.argmax(wv)]; n = np.array([-d[1], d[0]])
         added = 0
         for sgn in (1, -1):
-            ctr = np.array([r, cc], float) + n * 7 * sgn
-            for dy in range(-12, 13):
-                for dx in range(-12, 13):
-                    q = ctr + np.array([dy, dx], float); y, x = int(round(q[0])), int(round(q[1]))
-                    rel = np.array([y - r, x - cc], float); a = rel @ d; bb = rel @ n - 7 * sgn
-                    if (a / 9) ** 2 + (bb / 5) ** 2 > 1 + 0.35 * (noise(y, x) - 0.5) or abs(rel @ n) < 2.5 or not ok(y, x) or (y, x) in edits:
-                        continue
-                    edits[(y, x)] = "PASS_GORGE"; added += 1
-        log.append(dict(name=c["name"], cityId=c["id"], reason="PASS_GORGE", cells=added, why="관 양옆 능선 과장(길과 직각), 길 선 ±2칸은 골짜기"))
+            # 능선 자리가 강 기슭·길로 절반 넘게 막히면(관 바로 옆을 강이 지남) 능선을 바깥으로 민다
+            for off in (7, 9, 11, 13):
+                ctr = np.array([r, cc], float) + n * off * sgn; shape, free = [], []
+                for dy in range(-14, 15):
+                    for dx in range(-14, 15):
+                        q = ctr + np.array([dy, dx], float); y, x = int(round(q[0])), int(round(q[1]))
+                        rel = np.array([y - r, x - cc], float); a = rel @ d; bb = rel @ n - off * sgn
+                        if (a / 9) ** 2 + (bb / 5) ** 2 > 1 + 0.35 * (noise(y, x) - 0.5) or abs(rel @ n) < 2.5 or (y, x) in shape:
+                            continue
+                        shape.append((y, x))
+                        if ok(y, x) and (y, x) not in edits:
+                            free.append((y, x))
+                if len(free) * 2 >= len(shape) or off == 13:
+                    break
+            for y, x in free:
+                edits[(y, x)] = "PASS_GORGE"; added += 1
+        log.append(dict(name=c["name"], cityId=c["id"], reason="PASS_GORGE", cells=added, why="모든 관의 양옆 능선을 과장한다(길과 직각), 길 선 ±2칸은 골짜기"))
     for m in NAMED_RANGES:
         added = 0
         if m["kind"] == "blob":
