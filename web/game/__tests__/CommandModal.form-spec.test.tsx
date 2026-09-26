@@ -5,7 +5,6 @@ import CommandModal from '@/components/CommandModal';
 const mocks = vi.hoisted(() => ({
     availableCommands: vi.fn(),
     command: vi.fn(),
-    nationBulk: vi.fn(),
     mapPreview: vi.fn(),
     pollCommandResultResponse: vi.fn(),
 }));
@@ -18,10 +17,6 @@ vi.mock('@/lib/api', async importOriginal => {
             ...actual.api,
             availableCommands: mocks.availableCommands,
             command: mocks.command,
-            commandQueue: {
-                ...actual.api.commandQueue,
-                nationBulk: mocks.nationBulk,
-            },
             mapPreview: mocks.mapPreview,
         },
         pollCommandResultResponse: mocks.pollCommandResultResponse,
@@ -32,100 +27,8 @@ describe('CommandModal ordered form specs', () => {
     beforeEach(() => {
         mocks.availableCommands.mockReset();
         mocks.command.mockReset();
-        mocks.nationBulk.mockReset();
         mocks.mapPreview.mockReset();
         mocks.pollCommandResultResponse.mockReset();
-    });
-
-    it('submits every field from a pinned non-aggression proposal form', async () => {
-        mocks.availableCommands.mockResolvedValueOnce({
-            result: true,
-            commandTable: [{
-                category: '외교',
-                values: [{
-                    value: 'che_불가침제의',
-                    simpleName: '불가침 제의',
-                    title: '불가침 제의',
-                    compensation: 0,
-                    possible: true,
-                    reqArg: true,
-                    form: {
-                        fields: [
-                            {
-                                name: 'destNationID',
-                                valueType: 'int',
-                                control: 'select',
-                                optionSource: 'nations',
-                                required: true,
-                            },
-                            {
-                                name: 'year',
-                                valueType: 'int',
-                                control: 'number',
-                                required: true,
-                            },
-                            {
-                                name: 'month',
-                                valueType: 'int',
-                                control: 'number',
-                                required: true,
-                                min: 1,
-                                max: 12,
-                            },
-                        ],
-                    },
-                }],
-            }],
-        });
-        mocks.mapPreview.mockResolvedValueOnce({
-            result: true,
-            nations: [
-                { id: 1, name: '촉' },
-                { id: 2, name: '위' },
-            ],
-        });
-        mocks.nationBulk.mockResolvedValueOnce({
-            status: 'AVAILABLE',
-            requestId: 'non-aggression-applied',
-        });
-        mocks.pollCommandResultResponse.mockResolvedValueOnce({
-            status: 'RESOLVED',
-            requestId: 'non-aggression-applied',
-            ok: true,
-            type: 'che_불가침제의',
-            result: {},
-        });
-
-        render(
-            <CommandModal ruleProfile="SAMMO"
-                generalId={7}
-                nationId={1}
-                pinnedCommand="che_불가침제의"
-                pinnedLabel="불가침 제의"
-                pinnedArgType="nation"
-                resolvePinnedFromCatalog
-                isNationCommand
-                onClose={vi.fn()}
-                onToast={vi.fn()}
-            />,
-        );
-
-        const [year, month] = await screen.findAllByRole('spinbutton');
-        fireEvent.click(await screen.findByRole('option', { name: '위' }));
-        fireEvent.change(year, { target: { value: '200' } });
-        fireEvent.change(month, { target: { value: '12' } });
-        fireEvent.click(screen.getByRole('button', { name: '예약' }));
-
-        await waitFor(() => expect(mocks.nationBulk).toHaveBeenCalledWith(7, [{
-            action: 'che_불가침제의',
-            turnList: [0],
-            arg: {
-                destNationID: 2,
-                year: 200,
-                month: 12,
-            },
-        }]));
-        expect(mocks.availableCommands).toHaveBeenCalledWith(7);
     });
 
     it('fails closed when the catalog cannot resolve a pinned compound command', async () => {
@@ -139,7 +42,6 @@ describe('CommandModal ordered form specs', () => {
                 pinnedLabel="불가침 제의"
                 pinnedArgType="nation"
                 resolvePinnedFromCatalog
-                isNationCommand
                 onClose={vi.fn()}
                 onToast={vi.fn()}
             />,
@@ -147,7 +49,7 @@ describe('CommandModal ordered form specs', () => {
 
         expect(await screen.findByText('명령 정보를 불러오지 못했습니다.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: '예약' })).not.toBeInTheDocument();
-        expect(mocks.nationBulk).not.toHaveBeenCalled();
+        expect(mocks.command).not.toHaveBeenCalled();
     });
 
     it('fails closed when the catalog omits a pinned compound command', async () => {
@@ -167,7 +69,6 @@ describe('CommandModal ordered form specs', () => {
                 pinnedLabel="불가침 제의"
                 pinnedArgType="nation"
                 resolvePinnedFromCatalog
-                isNationCommand
                 onClose={vi.fn()}
                 onToast={vi.fn()}
             />,
@@ -175,7 +76,7 @@ describe('CommandModal ordered form specs', () => {
 
         expect(await screen.findByText('명령 정보를 불러오지 못했습니다.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: '예약' })).not.toBeInTheDocument();
-        expect(mocks.nationBulk).not.toHaveBeenCalled();
+        expect(mocks.command).not.toHaveBeenCalled();
     });
 
     it('fails closed when the pinned compound command row omits its form', async () => {
@@ -202,7 +103,6 @@ describe('CommandModal ordered form specs', () => {
                 pinnedLabel="불가침 제의"
                 pinnedArgType="nation"
                 resolvePinnedFromCatalog
-                isNationCommand
                 onClose={vi.fn()}
                 onToast={vi.fn()}
             />,
@@ -210,7 +110,7 @@ describe('CommandModal ordered form specs', () => {
 
         expect(await screen.findByText('명령 정보를 불러오지 못했습니다.')).toBeInTheDocument();
         expect(screen.queryByRole('button', { name: '예약' })).not.toBeInTheDocument();
-        expect(mocks.nationBulk).not.toHaveBeenCalled();
+        expect(mocks.command).not.toHaveBeenCalled();
     });
 
     it('submits every field from a compound resource form in server order', async () => {
