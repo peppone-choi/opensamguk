@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "person.liu_hong",
+      "kind": "IMPERIAL_PERSON",
+      "name": "劉宏",
+      "role": "靈帝",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷008",
+          "section": "帝紀第八 孝靈皇帝",
+          "quote": "孝靈皇帝諱宏",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "person.liu_bian",
+      "kind": "IMPERIAL_PERSON",
+      "name": "劉辯",
+      "role": "少帝",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷008",
+          "section": "帝紀第八 孝靈皇帝",
+          "quote": "戊午，皇子辯即皇帝位，年十七。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "father": "person.liu_hong",
+      "refs": [
+        "person.liu_hong"
+      ]
+    },
+    {
+      "id": "person.liu_xie",
+      "kind": "IMPERIAL_PERSON",
+      "name": "劉協",
+      "role": "獻帝",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷009",
+          "section": "帝紀第九 孝獻帝",
+          "quote": "孝獻皇帝諱協，靈帝中子也。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "father": "person.liu_hong",
+      "refs": [
+        "person.liu_hong"
+      ]
+    },
+    {
+      "id": "line.later_han",
+      "kind": "IMPERIAL_LINE",
+      "name": "後漢",
+      "members": [
+        "person.liu_hong",
+        "person.liu_bian",
+        "person.liu_xie"
+      ],
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷069",
+          "section": "竇何列傳 第五十九",
+          "quote": "初，何皇后生皇子辯，王貴人生皇子協。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "refs": [
+        "person.liu_hong",
+        "person.liu_bian",
+        "person.liu_xie"
+      ]
+    },
+    {
+      "id": "transition.liu_hong_to_liu_bian",
+      "kind": "IMPERIAL_TRANSITION",
+      "from": "person.liu_hong",
+      "to": "person.liu_bian",
+      "transitionType": "DEATH_SUCCESSION",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷008",
+          "section": "帝紀第八 孝靈皇帝",
+          "quote": "丙辰，帝崩于南宮嘉德殿，年三十四。戊午，皇子辯即皇帝位，年十七。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "refs": [
+        "person.liu_hong",
+        "person.liu_bian"
+      ]
+    },
+    {
+      "id": "transition.liu_bian_deposed",
+      "kind": "IMPERIAL_TRANSITION",
+      "from": "person.liu_bian",
+      "to": null,
+      "transitionType": "DEPOSITION",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷008",
+          "section": "帝紀第八 孝靈皇帝",
+          "quote": "九月甲戌，董卓廢帝爲弘農王。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "refs": [
+        "person.liu_bian"
+      ]
+    },
+    {
+      "id": "transition.liu_xie_enthroned",
+      "kind": "IMPERIAL_TRANSITION",
+      "from": null,
+      "to": "person.liu_xie",
+      "transitionType": "ENTHRONEMENT",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷009",
+          "section": "帝紀第九 孝獻帝",
+          "quote": "九月甲戌，即皇帝位，年九歲。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "refs": [
+        "person.liu_xie"
+      ]
+    }
+  ]
+}

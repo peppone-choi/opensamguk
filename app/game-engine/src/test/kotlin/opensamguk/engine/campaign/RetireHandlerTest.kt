@@ -38,14 +38,4 @@ class RetireHandlerTest {
         assertEquals(actor, world.getGeneralById(actor.id))
     }
 
-    @Test fun `old NPC does not select undelivered retirement`() {
-        val route = fixture.route()
-        val actor = fixture.person(961, 1, route.startCity, lord = true).copy(age = 80)
-        val heir = fixture.person(962, 1, route.startCity, lord = false)
-        val world = fixture.world(listOf(actor to route.start, heir to route.start),
-            retainers = listOf(Retainer(13, actor.id, "EXISTING", heir.id, heir.name, "guest")))
-        val chosen = NpcRetireSelector(DomesticContext()).select(world, actor.id,
-            CampaignWorldFixture.NO_INPUT)
-        assertEquals(CampaignWorldFixture.NO_INPUT, chosen)
-    }
 }

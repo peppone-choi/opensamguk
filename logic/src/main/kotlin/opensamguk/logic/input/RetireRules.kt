@@ -13,6 +13,7 @@ enum class RetireFailure(val message: String) {
     SUCCESSOR_UNAVAILABLE("지정한 승계 후보를 찾을 수 없습니다."),
     SUCCESSOR_NOT_RETAINER("직접 거느린 인물만 승계 후보로 지정할 수 있습니다."),
     SUCCESSOR_UNAVAILABLE_FOR_CONTROL("다른 플레이어의 장수나 활동할 수 없는 인물에게 넘길 수 없습니다."),
+    RETAINER_NAME_CONFLICT("승계 뒤 같은 주인에게 같은 이름의 인물 카드가 생깁니다."),
     STATE_UNAVAILABLE("승계에 필요한 상태를 확인할 수 없습니다."),
     ALREADY_PROCESSED("이 순에는 이미 은퇴를 처리했습니다."),
 }
@@ -38,6 +39,24 @@ object RetireRules {
             ?: return reject(RetireFailure.SUCCESSOR_NOT_RETAINER)
         if (successor.nationId != actor.nationId || successor.userOwned || successor.npcState == 5 || successor.inBattle)
             return reject(RetireFailure.SUCCESSOR_UNAVAILABLE_FOR_CONTROL)
+        val outerCards = state.cards.filter { it.generalId == actor.id }
+        if (outerCards.size > 1 || outerCards.any { it.masterId == successor.id })
+            return reject(RetireFailure.STATE_UNAVAILABLE)
+        // The DB enforces (world_id, master_general_id, name). A collision discovered only at
+        // flush would roll back the entire tick, including unrelated generals' turns.
+        val inheritedNames = state.cards.asSequence()
+            .filter { it.masterId == actor.id && it.id != card.id }
+            .map { it.name ?: it.generalId?.let { id -> state.person(id)?.name } }
+            .toList()
+        val successorNames = state.cards.asSequence().filter { it.masterId == successor.id }
+            .map { it.name ?: it.generalId?.let { id -> state.person(id)?.name } }.toList()
+        if (inheritedNames.any { it.isNullOrBlank() } || successorNames.any { it.isNullOrBlank() })
+            return reject(RetireFailure.STATE_UNAVAILABLE)
+        if ((inheritedNames + successorNames).distinct().size != inheritedNames.size + successorNames.size)
+            return reject(RetireFailure.RETAINER_NAME_CONFLICT)
+        if (outerCards.any { outer -> state.cards.any {
+                it.masterId == outer.masterId && it.id != outer.id && it.name == successor.name
+            } }) return reject(RetireFailure.RETAINER_NAME_CONFLICT)
         val wasLord = try { LordStatus.read(actor.meta) }
             catch (_: IllegalArgumentException) { return reject(RetireFailure.STATE_UNAVAILABLE) }
         if (wasLord && (actor.nationId <= 0 || state.nation(actor.nationId) == null))
