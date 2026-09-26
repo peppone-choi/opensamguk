@@ -10,6 +10,7 @@ import opensamguk.logic.vision.ScoutReport
 import opensamguk.logic.vision.ScoutedCorps
 import opensamguk.logic.vision.VisionTier
 import opensamguk.logic.vision.VisionView
+import opensamguk.logic.vision.VisionRules
 
 /** Only the server stores these records. They never become deployments or order rows. */
 data class FalseSighting(
@@ -56,7 +57,11 @@ object Misinformation {
         val detected = mutableListOf<String>()
         records.sortedBy { it.id }.forEach { record ->
             require(record.expiresAt == record.createdAt.plus(rules.durationTurns)) { "duration differs from confirmed rule" }
-            if (now < record.createdAt || now >= record.expiresAt) return@forEach
+            if (now < record.createdAt) {
+                active += record
+                return@forEach
+            }
+            if (now >= record.expiresAt) return@forEach
             val seed = serializeSeed(hiddenSeed, "misinformationDetection", worldId.value,
                 now.year, now.month, now.phase, record.id, record.casterGeneralId, record.victimGeneralId)
             if (RandUtil(LiteHashDrbg(seed)).nextRangeInt(0, 999) < rules.detectionPermille) detected += record.id
@@ -78,7 +83,7 @@ object Misinformation {
     /** Phantom corps enter only the view model. FOG sees nothing, and no deployment is created. */
     fun victimPhantoms(victimGeneralId: Int, view: VisionView, commanderyNoById: Map<String, Int>,
         provinceCommanderyNoById: Map<String, Int>, authoritativeCorpsKeys: Set<String>,
-        active: Collection<FalseSighting>): List<CorpsSighting> {
+        active: Collection<FalseSighting>, rules: VisionRules.Rules): List<CorpsSighting> {
         val sightings = active.asSequence()
         .filter { it.victimGeneralId == victimGeneralId && it.createdAt <= view.now && view.now < it.expiresAt }
         .mapNotNull { record ->
@@ -88,10 +93,11 @@ object Misinformation {
             val seen = record.falseCorps
             require(provinceCommanderyNoById[seen.provinceId] == no) { "false sighting outside its commandery" }
             require(seen.corpsKey !in authoritativeCorpsKeys) { "false sighting key collides with real corps" }
+            if (rules.bandByCode(seen.troopsBand) == null) return@mapNotNull null
+            val entry = view.entry(no) ?: return@mapNotNull null
             CorpsSighting(seen.corpsKey, null, seen.ownerGeneralId, seen.commanderGeneralId, seen.nationId,
                 seen.provinceId, no, tier, false, null, seen.troopsBand,
-                if (tier == VisionTier.INTEL) record.createdAt else null,
-                if (tier == VisionTier.INTEL) opensamguk.logic.vision.Vision.ageTurns(record.createdAt, view.now) else null)
+                entry.seenAt, entry.ageTurns)
         }.sortedWith(compareBy({ it.commanderyNo }, { it.corpsKey })).toList()
         require(sightings.map { it.corpsKey }.distinct().size == sightings.size) { "duplicate phantom corps key" }
         return sightings
