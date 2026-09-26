@@ -1,5 +1,6 @@
 package opensamguk.logic.record
 
+import opensamguk.logic.renown.RenownEventSource
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
@@ -34,6 +35,7 @@ sealed interface EventFact {
     data class TroopsBand(val value: Int) : EventFact { init { require(value in 0..5) } }
     data class Outcome(val code: String) : EventFact { init { require(isStableKey(code)) } }
     data class RewardReason(val code: RewardReasonCode) : EventFact
+    data class RenownSource(val code: RenownEventSource) : EventFact
 }
 
 enum class RewardReasonCode { WAR_MERIT, DOMESTIC_MERIT, LOYALTY_SUPPORT, ROUTINE_SERVICE }
@@ -45,6 +47,7 @@ enum class FactRole(val type: Class<out EventFact>) {
     RENOWN_CHANGE(EventFact.Change::class.java),
     TROOPS_BAND(EventFact.TroopsBand::class.java), OUTCOME(EventFact.Outcome::class.java),
     REASON(EventFact.RewardReason::class.java),
+    SOURCE(EventFact.RenownSource::class.java),
 }
 
 data class OccurredAt(val year: Int, val month: Int, val phase: Int, val ordinal: Int) {
@@ -128,6 +131,10 @@ data class GameEvent(
         if (kind == EventKind.REWARD_RECEIVED) {
             require((refs.getValue(RefRole.TARGET) as EventRef.General).id ==
                 (audience as AudienceTarget.Self).generalId) { "reward target must be the private recipient" }
+        }
+        if (kind == EventKind.RENOWN_EVENT) {
+            require((refs.getValue(RefRole.ACTOR) as EventRef.General).id ==
+                (audience as AudienceTarget.Self).generalId) { "renown actor must be the private recipient" }
         }
     }
 }

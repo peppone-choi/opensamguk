@@ -1,6 +1,7 @@
 package opensamguk.logic.record
 
 import opensamguk.logic.input.RecordKind
+import opensamguk.logic.renown.RenownEventSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -132,6 +133,20 @@ class GameEventTest {
         }
         assertFailsWith<IllegalArgumentException> {
             EventPayloadCodec.decodeFacts("""{"REASON":"unreviewed"}""")
+        }
+    }
+
+    @Test
+    fun `renown source is enumerated and visible only to its actor`() {
+        val refs = mapOf(RefRole.ACTOR to EventRef.General(7))
+        val facts = mapOf(FactRole.SOURCE to EventFact.RenownSource(RenownEventSource.COUNTY_CAPTURE))
+        val event = GameEvent(1, EventKind.RENOWN_EVENT, whenOccurred,
+            AudienceTarget.Self(7), Publication(PublicationState.PRIVATE), key, refs, facts)
+        assertEquals(facts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(event.facts)))
+        assertFailsWith<IllegalArgumentException> { event.copy(facts = emptyMap()) }
+        assertFailsWith<IllegalArgumentException> { event.copy(audience = AudienceTarget.Self(8)) }
+        assertFailsWith<IllegalArgumentException> {
+            EventPayloadCodec.decodeFacts("""{"SOURCE":"invented"}""")
         }
     }
 }

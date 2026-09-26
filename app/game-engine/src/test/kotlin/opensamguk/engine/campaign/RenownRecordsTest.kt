@@ -168,7 +168,16 @@ class RenownRecordsTest {
             "패전(조우)은 패전(縣 상실)과 같은 종류라 같은 달엔 한 건이다")
         assertEquals(1, entries(world, 2).size)
         assertEquals(2, world.peekLogs().count { it.eventKind == RecordKind.RENOWN_EVENT }, "새로 쌓인 사건만 본인에게 알린다")
-        val public = world.consumeDirtyState().gameEvents.single()
+        val typed = world.consumeDirtyState().gameEvents
+        assertEquals(listOf(EventKind.RENOWN_EVENT, EventKind.RENOWN_EVENT, EventKind.OWNER_CHANGED),
+            typed.map { it.kind })
+        assertEquals(listOf(AudienceTarget.Self(2), AudienceTarget.Self(5)),
+            typed.take(2).map { it.audience })
+        assertEquals(listOf(
+            EventFact.RenownSource(RenownEventSource.COUNTY_LOSS),
+            EventFact.RenownSource(RenownEventSource.COUNTY_CAPTURE),
+        ), typed.take(2).map { it.facts[FactRole.SOURCE] })
+        val public = typed.single { it.kind == EventKind.OWNER_CHANGED }
         assertEquals(EventKind.OWNER_CHANGED, public.kind)
         assertEquals(AudienceTarget.Public, public.audience)
         assertEquals(mapOf(

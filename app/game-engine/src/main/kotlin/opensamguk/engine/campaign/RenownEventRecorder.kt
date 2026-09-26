@@ -10,8 +10,10 @@ import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.renown.RenownHooks
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventFact
 import opensamguk.logic.record.EventKind
 import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
 import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
@@ -128,9 +130,19 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
             generalId: Int,
             source: RenownEventSource,
             stamp: String = currentStamp(world),
-        ) = Records.general(world, generalId, RecordKind.RENOWN_EVENT,
-            "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
-            linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
+        ) {
+            world.recordEvent(
+                kind = EventKind.RENOWN_EVENT,
+                audience = AudienceTarget.Self(generalId),
+                eventKey = EventKey.derive(EventKind.RENOWN_EVENT.code,
+                    world.worldId.value.toString(), stamp, generalId.toString(), source.kind.name),
+                refs = mapOf(RefRole.ACTOR to EventRef.General(generalId)),
+                facts = mapOf(FactRole.SOURCE to EventFact.RenownSource(source)),
+            )
+            Records.general(world, generalId, RecordKind.RENOWN_EVENT,
+                "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
+                linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
+        }
 
         internal fun currentStamp(world: InMemoryTurnWorld): String =
             world.getState().let { RenownEvents.stampOf(it.currentYear, it.currentMonth) }
