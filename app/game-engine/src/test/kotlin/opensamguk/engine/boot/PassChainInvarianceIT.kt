@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
 import opensamguk.engine.campaign.EncounterResolver
+import opensamguk.engine.campaign.RewardHistory
 import opensamguk.engine.invariance.WorldStateBaseline
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -56,12 +57,25 @@ class PassChainInvarianceIT {
     fun `S3 고리 — 출사 발령 행군 조우 공성 점령 징세 월단평이 관리자 개입 없이 이어진다`() {
         PassChainSupport.run(service, measuredWorld = world)
         PassChainSupport.assertChain(world, jdbc, WORLD)
-        assertTrue(world.getGeneralById(PassChainSupport.HUMAN)?.meta?.containsKey("courtRewardHistory") == true,
-            "포상: NPC 주공이 가입한 사람 카드의 포상 이력을 남겼다")
-        assertTrue(jdbc.queryForObject(
-            "SELECT count(*) FROM game_event WHERE world_id=? AND kind='court.rewardReceived' AND audience_general_id=?",
-            Int::class.java, WORLD, PassChainSupport.HUMAN,
-        )!! > 0, "포상: 수혜자 SELF typed 사건이 flush되었다")
+        val rewardHistory = RewardHistory.read(world.getGeneralById(PassChainSupport.HUMAN)!!.meta)
+        assertEquals(16, rewardHistory?.count, "포상: 같은 카드에 16회 지급한 이력을 남겼다")
+        assertEquals(191 to 4, rewardHistory?.let { it.year to it.month })
+        assertEquals("npc-reward:23:1001:9001:191:4", rewardHistory?.lastId)
+        assertEquals(99, world.listRetainers().single { it.generalId == PassChainSupport.HUMAN }.loyalty,
+            "포상: 수혜 카드 충성도가 지급액에 비례해 올랐다")
+        val rewardRows = jdbc.queryForList("""SELECT audience, audience_general_id, occurred_year, occurred_month,
+            refs->>'ISSUER' AS issuer_id, refs->>'TARGET' AS target_id,
+            (facts->>'MONEY')::bigint AS money
+            FROM game_event WHERE world_id=? AND kind='court.rewardReceived'
+            ORDER BY occurred_year, occurred_month, occurred_phase, occurred_ordinal""", WORLD)
+        assertEquals(16, rewardRows.size, "포상: 각 지급은 수혜자 SELF typed 사건으로 flush된다")
+        assertTrue(rewardRows.all { row ->
+            row["audience"] == "SELF" && (row["audience_general_id"] as Number).toInt() == PassChainSupport.HUMAN &&
+                row["issuer_id"] == "1001" && row["target_id"] == "9001" &&
+                (row["money"] as Number).toLong() in 100L..500L
+        }, "포상: 모든 사건의 발행자·수혜자·금액이 실제 카드 지급과 일치한다")
+        assertEquals(6_500L, rewardRows.sumOf { (it["money"] as Number).toLong() },
+            "포상: 창고에서 지급한 금과 typed 사건 금액 합계가 일치한다")
         PassChainSupport.assertSiegesReload(world, loader)
         assertEquals(0, world.getCityById(77)?.supplyState, "an unbuilt road must cut city 77 supply")
         WorldStateBaseline.assertMatches("s3-chain-48", world)
