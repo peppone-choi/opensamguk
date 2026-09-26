@@ -44,7 +44,7 @@ class BattlePlans(val encounterId: String, plans: List<CommanderBattlePlan>) {
         val bytes=ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             fun text(s:String) { val b=s.toByteArray(Charsets.UTF_8);out.writeInt(b.size);out.write(b) }
-            text("hwihaBattlePlans:v1");text(encounterId);out.writeInt(plans.size)
+            text("battlePlans:v1");text(encounterId);out.writeInt(plans.size)
             plans.forEach { plan ->
                 out.writeInt(plan.commanderGeneralId);text(plan.initialAction.name);out.writeInt(plan.commands.size)
                 plan.commands.forEach { out.writeInt(it.slot);text(it.condition.name);out.writeInt(it.threshold);text(it.action.name) }
@@ -55,7 +55,7 @@ class BattlePlans(val encounterId: String, plans: List<CommanderBattlePlan>) {
     fun toMetaValue(): Map<String,Any> = linkedMapOf("version" to 1,"encounterId" to encounterId,
         "snapshotId" to snapshotId,"plans" to plans.map { it.toMetaValue() })
     companion object {
-        const val META_KEY="hwihaBattlePlans"
+        const val META_KEY="battlePlans"
         const val MAX_ROUNDS=24
         fun defaultFor(encounter: CorpsEncounter): BattlePlans {
             val commands=listOf(BattlePlanCommand(0,BattlePlanCondition.LOSS_AT_LEAST,50,BattlePlanAction.RETREAT),

@@ -3901,7 +3901,7 @@
           "code": "1",
           "name": "PLAIN"
         },
-        "provinceIndex": 1200,
+        "provinceIndex": 1194,
         "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "SUB-X029-f447e36b3ebd",
@@ -8320,7 +8320,7 @@
           "code": "2",
           "name": "MOUNTAIN"
         },
-        "provinceIndex": 1133,
+        "provinceIndex": 1127,
         "sameCellPlaces": [],
         "status": "LAND",
         "provinceId": "SUB-70459-c86c8fbee593",

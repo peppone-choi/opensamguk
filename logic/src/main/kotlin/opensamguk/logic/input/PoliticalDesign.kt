@@ -16,12 +16,12 @@ data class PoliticalDesign(val riseMinimumRenown: Int, val independenceMinimumRe
     companion object {
         val CANON by lazy {
             val resource = checkNotNull(PoliticalDesign::class.java.classLoader
-                .getResource("hwiha/hwiha-political-v1.json"))
+                .getResource("campaign/political-v1.json"))
             val root = Json.parseToJsonElement(resource.readText()).jsonObject
             require(root.keys == setOf("schemaVersion", "ledgerId", "status", "note",
                 "riseMinimumRenown", "independenceMinimumRenown", "initialDiplomacyState"))
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1)
-            require(root.getValue("ledgerId").jsonPrimitive.content == "hwiha-political-v1")
+            require(root.getValue("ledgerId").jsonPrimitive.content == "political-v1")
             require(root.getValue("status").jsonPrimitive.content == "PROPOSED")
             PoliticalDesign(root.getValue("riseMinimumRenown").jsonPrimitive.int,
                 root.getValue("independenceMinimumRenown").jsonPrimitive.int,

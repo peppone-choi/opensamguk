@@ -5928,16 +5928,16 @@
       "role": "COUNTY",
       "positionStatus": "SYNTHETIC",
       "coordinates": {
-        "latitude": 32.2062784,
-        "longitude": 117.5771394
+        "latitude": 31.66095299625,
+        "longitude": 117.15057667936837
       },
       "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
       "syntheticPlacement": {
-        "row": 287,
-        "col": 468,
+        "row": 299,
+        "col": 460,
         "donorProvinceId": "43138",
         "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
+        "reason": "USER_APPROVED_DISTINCT_GAME_CITY; moved to seat-connected 六安 land to preserve initial road supply"
       },
       "survivalVerdict": {
         "ledger": null,

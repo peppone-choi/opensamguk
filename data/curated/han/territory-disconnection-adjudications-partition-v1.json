@@ -4,7 +4,7 @@
  "authority": "spec 2026-09-17-province-geography-first §4 「영토 단절 원장 — 재심사, 자동 승계 금지(검토 표시)」",
  "generator": "tools/map/reissue_territory_rows_after_partition.py (1회용 이관 — 사람이 고친 뒤에는 다시 돌리지 않는다)",
  "scope": "★ 지리 재분할 출력(거점 분할 앞 문서)의 단절 조각 전수. ★ 앞 문서의 행은 territory-disconnection-adjudications-v1 에 그대로 있다.",
- "partitionStageOutputSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
+ "partitionStageOutputSha256": "989c37006f7069224320d936e29f6e9ceb89f16d9eb70a0bb298f308e659457a",
  "counts": {
   "CARRIED_EXACT": 56,
   "CARRIED_MEMBERS": 45,
@@ -71,7 +71,7 @@
    "componentKey": "40165@483:451",
    "cellCount": 9,
    "memberIds": [
-    "SUB-40165-39a88c0543b5"
+    "40165"
    ],
    "memberNamesCh": [
     "东部侯官县"
@@ -113,7 +113,7 @@
    "componentKey": "40426@535:296",
    "cellCount": 39,
    "memberIds": [
-    "SUB-40426-900f77eff5b7"
+    "40426"
    ],
    "memberNamesCh": [
     "娄县"
@@ -201,7 +201,7 @@
    "componentKey": "40740@549:331",
    "cellCount": 30,
    "memberIds": [
-    "SUB-40740-3a5b5675f605"
+    "40740"
    ],
    "memberNamesCh": [
     "鄮县"
@@ -481,7 +481,7 @@
    "componentKey": "42301@379:509",
    "cellCount": 16,
    "memberIds": [
-    "SUB-42301-7104ff31657a"
+    "42301"
    ],
    "memberNamesCh": [
     "安宁县"
@@ -815,7 +815,7 @@
    "componentKey": "43252@480:266",
    "cellCount": 9,
    "memberIds": [
-    "SUB-43252-2d3b29ad3f33"
+    "43252"
    ],
    "memberNamesCh": [
     "徐县"
@@ -1847,7 +1847,7 @@
    "unitId": "PARENT-0014",
    "unitNameCh": "鉅鹿郡",
    "componentKey": "PARENT-0014@414:180",
-   "cellCount": 165,
+   "cellCount": 163,
    "memberIds": [
     "85186",
     "87051",
@@ -1913,9 +1913,10 @@
     "chgis:hvd_85186 source note「刘玄更始元年（23年）改延平侯国置，属魏郡。东汉同。」",
     "chgis:hvd_87489 source note「西汉初置。⑴治所在今河北任县任城镇西南。⑵属广平国。⑶」",
     "chgis:hvd_87506 source note「西汉初置。⑴治所在今河北任县任城镇西。⑵属广平国。⑶」",
-    "repo:data/curated/han/administrative-parent-reconciliation-v1.json cityId 87055 decision=PROPOSED_GEOMETRIC, nearestCandidates anchorCityId 87188 hhs-group:110:安平國 squaredGridDistance 32, approvedAdministrativeGroupIds=[安平國, 清河國]"
+    "repo:data/curated/han/administrative-parent-reconciliation-v1.json cityId 87055 decision=PROPOSED_GEOMETRIC, nearestCandidates anchorCityId 87188 hhs-group:110:安平國 squaredGridDistance 32, approvedAdministrativeGroupIds=[安平國, 清河國]",
+    "map:2026-09-24 최대 증축 경계 조정 뒤 PARENT-0014@414:180 은 163칸이며, 郡治 쪽 128칸과 여전히 따로 떨어진다. 기존 165칸 판정에서 2칸만 이웃 郡 경계로 이동했다."
    ],
-   "rationale": "경쟁 판정(run2-land, PARENT_MISASSIGNMENT→魏郡)의 핵심 인과가 자기 인용으로 무너진다. 三國志 卷01 武帝紀「鉅鹿之廮陶、曲周、南和，廣平之任城」과 같은 조서의 後漢書 卷110 註본「鉅鹿之廮陶、曲〔周〕、南和、廣平、任」이 모두 郡治 廮陶와 任(둘 다 조각1)을 함께 열거하고, 讀史方輿紀要 卷016 大名府가「割河內、東郡、鉅鹿、廣平、趙國十四縣」이라 총수를 못박아 그 명단이 망라적임을 보이므로, 建安17년 이속선은 조각 경계가 아니라 본체를 관통한다. 실측으로도 그 처방은 사건을 해소하지 못한다 — han-tiles.json 의 parentOwner 를 직접 펼쳐 조각0의 9縣을 빼면 鉅鹿郡은 [128, 21]로 그대로 두 조각이고, 사료에 가장 충실하게 平鄉만 남기고 나머지를 다 빼도 [128, 11]로 平鄉이 고립된다. 반면 절단면의 주인은 하나다: 後漢書 卷110 鉅鹿郡 十五城의 마지막이「南〈糸言糸〉」(南䜌)이고 卷001A 光武帝紀 李賢注가「屬鉅鹿郡，故城在今邢州柏人縣東北」이라 못박으며 安平國 十三城에는 없는데(鉅鹿에서 온 縣은「堂陽，故屬鉅鹿」이라 일부러 표시), 지도는 南䜌(87055) 25칸(row176–181, col418–423)을 安平國에 넣었다. 내가 틈새 12개 縣을 하나씩 되돌려 본 결과 오직 南䜌만이 165+128 을 318칸 한 덩어리로 합쳤고(高邑→[174,165], 柏人→[205,128], 經縣→[191,128], 廣平→[173,128] 등은 합쳐지지 않는다), 그 배정은 사료 조인이 아니라 최근접 앵커였다(reconciliation-v1 의 87055: decision=PROPOSED_GEOMETRIC, anchorCityId 87188 堂陽, 후보군이 安平國·清河國뿐이라 鉅鹿이 아예 후보에 없다 — 郡國志가 䜌을「〈糸言糸〉」로 분해 표기하고 지도 데이터도 縣名을「南?县」로 흘린 글리프 손실 탓으로 보인다). 여기에 격자 배치 이탈이 겹쳤다 — 巨鹿縣(87051)과 平鄉縣(87510)은 CHGIS 좌표가 114.91842/36.98014 로 완전히 동일한데 (col418,row173) 대 (col425,row185)로 12행 7열 떨어져 서로 다른 성분에 놓였고, 任·巨鹿·朝平의 행 잔차가 조각0 縣들보다 약 10행 북쪽이다. 조각 안에 縣 단위 오배정이 실재하는 것은 사실이나(平恩은 郡國志 魏郡 목록의「清淵，　平恩」으로 애초에 鉅鹿이 아니고, 曲周·南和는 212년 魏郡, 廣宗은 晉書 安平國「扶柳　廣宗」, 張·廣鄉은 十五城에도 晉書에도 없는 허수 縣) 처지가 제각각이어서 조각 전체를 받을 상위 郡이 하나도 없으므로, 조각 판정은 GEOMETRY_DEFECT 이고 縣별 사실은 followUpFindings 로 남긴다.",
+   "rationale": "경쟁 판정(run2-land, PARENT_MISASSIGNMENT→魏郡)의 핵심 인과가 자기 인용으로 무너진다. 三國志 卷01 武帝紀「鉅鹿之廮陶、曲周、南和，廣平之任城」과 같은 조서의 後漢書 卷110 註본「鉅鹿之廮陶、曲〔周〕、南和、廣平、任」이 모두 郡治 廮陶와 任(둘 다 조각1)을 함께 열거하고, 讀史方輿紀要 卷016 大名府가「割河內、東郡、鉅鹿、廣平、趙國十四縣」이라 총수를 못박아 그 명단이 망라적임을 보이므로, 建安17년 이속선은 조각 경계가 아니라 본체를 관통한다. 실측으로도 그 처방은 사건을 해소하지 못한다 — han-tiles.json 의 parentOwner 를 직접 펼쳐 조각0의 9縣을 빼면 鉅鹿郡은 [128, 21]로 그대로 두 조각이고, 사료에 가장 충실하게 平鄉만 남기고 나머지를 다 빼도 [128, 11]로 平鄉이 고립된다. 반면 절단면의 주인은 하나다: 後漢書 卷110 鉅鹿郡 十五城의 마지막이「南〈糸言糸〉」(南䜌)이고 卷001A 光武帝紀 李賢注가「屬鉅鹿郡，故城在今邢州柏人縣東北」이라 못박으며 安平國 十三城에는 없는데(鉅鹿에서 온 縣은「堂陽，故屬鉅鹿」이라 일부러 표시), 지도는 南䜌(87055) 25칸(row176–181, col418–423)을 安平國에 넣었다. 내가 틈새 12개 縣을 하나씩 되돌려 본 결과 오직 南䜌만이 165+128 을 318칸 한 덩어리로 합쳤고(高邑→[174,165], 柏人→[205,128], 經縣→[191,128], 廣平→[173,128] 등은 합쳐지지 않는다), 그 배정은 사료 조인이 아니라 최근접 앵커였다(reconciliation-v1 의 87055: decision=PROPOSED_GEOMETRIC, anchorCityId 87188 堂陽, 후보군이 安平國·清河國뿐이라 鉅鹿이 아예 후보에 없다 — 郡國志가 䜌을「〈糸言糸〉」로 분해 표기하고 지도 데이터도 縣名을「南?县」로 흘린 글리프 손실 탓으로 보인다). 여기에 격자 배치 이탈이 겹쳤다 — 巨鹿縣(87051)과 平鄉縣(87510)은 CHGIS 좌표가 114.91842/36.98014 로 완전히 동일한데 (col418,row173) 대 (col425,row185)로 12행 7열 떨어져 서로 다른 성분에 놓였고, 任·巨鹿·朝平의 행 잔차가 조각0 縣들보다 약 10행 북쪽이다. 조각 안에 縣 단위 오배정이 실재하는 것은 사실이나(平恩은 郡國志 魏郡 목록의「清淵，　平恩」으로 애초에 鉅鹿이 아니고, 曲周·南和는 212년 魏郡, 廣宗은 晉書 安平國「扶柳　廣宗」, 張·廣鄉은 十五城에도 晉書에도 없는 허수 縣) 처지가 제각각이어서 조각 전체를 받을 상위 郡이 하나도 없으므로, 조각 판정은 GEOMETRY_DEFECT 이고 縣별 사실은 followUpFindings 로 남긴다. 2026-09-24 지도 증축 경계 조정에서는 이 조각 2칸만 줄어 163칸이 되었고, 같은 郡의 다른 조각과 떨어진 상태와 GEOMETRY_DEFECT 판정은 유지된다.",
    "review": {
     "state": "TIEBREAK_RESOLVED",
     "judgedBy": "run2-land -> tiebreak",
@@ -7608,7 +7609,7 @@
    "componentKey": "X040@629:193",
    "cellCount": 9,
    "memberIds": [
-    "SUB-X040-541a9c6ebb19"
+    "X040"
    ],
    "memberNamesCh": [
     "目支國"
@@ -7688,7 +7689,7 @@
    "componentKey": "X041@625:229",
    "cellCount": 14,
    "memberIds": [
-    "SUB-X041-17b9700aed53"
+    "X041"
    ],
    "memberNamesCh": [
     "辟卑離國"
@@ -7991,7 +7992,7 @@
    "componentKey": "X046@659:229",
    "cellCount": 22,
    "memberIds": [
-    "SUB-X046-763d3a08775b"
+    "X046"
    ],
    "memberNamesCh": [
     "古資彌凍國"
@@ -8149,7 +8150,7 @@
    "componentKey": "X052@673:275",
    "cellCount": 20,
    "memberIds": [
-    "SUB-X052-9097a8854a1f"
+    "X052"
    ],
    "memberNamesCh": [
     "末盧國"
@@ -8191,7 +8192,7 @@
    "componentKey": "X052@687:263",
    "cellCount": 8,
    "memberIds": [
-    "SUB-X052-e2019b23588b"
+    "X052"
    ],
    "memberNamesCh": [
     "末盧國"
@@ -8568,7 +8569,7 @@
    "componentKey": "X054@767:243",
    "cellCount": 480,
    "memberIds": [
-    "SUB-X054-05d9b93dfd00"
+    "X054"
    ],
    "memberNamesCh": [
     "奴國"
@@ -8679,7 +8680,7 @@
    "componentKey": "X055@698:280",
    "cellCount": 41,
    "memberIds": [
-    "SUB-X055-0deaa9deddaa"
+    "X055"
    ],
    "memberNamesCh": [
     "邪馬壹國"
@@ -8754,7 +8755,7 @@
    "componentKey": "X055@707:324",
    "cellCount": 19,
    "memberIds": [
-    "SUB-X055-f9c61192fa78"
+    "X055"
    ],
    "memberNamesCh": [
     "邪馬壹國"
@@ -8823,7 +8824,7 @@
    "componentKey": "X055@717:316",
    "cellCount": 28,
    "memberIds": [
-    "SUB-X055-42319b3daf6c"
+    "X055"
    ],
    "memberNamesCh": [
     "邪馬壹國"
@@ -8894,7 +8895,7 @@
    "componentKey": "X056@582:453",
    "cellCount": 15,
    "memberIds": [
-    "SUB-X056-c4d35e38f118"
+    "X056"
    ],
    "memberNamesCh": [
     "夷洲"
@@ -8975,7 +8976,7 @@
    "componentKey": "X057@592:449",
    "cellCount": 19,
    "memberIds": [
-    "SUB-X057-6e514a3d0138"
+    "X057"
    ],
    "memberNamesCh": [
     "流求"
@@ -9049,7 +9050,7 @@
    "componentKey": "X057@610:443",
    "cellCount": 11,
    "memberIds": [
-    "SUB-X057-f6cdaf119bf2"
+    "X057"
    ],
    "memberNamesCh": [
     "流求"
@@ -9123,7 +9124,7 @@
    "componentKey": "X057@677:379",
    "cellCount": 12,
    "memberIds": [
-    "SUB-X057-583a342f4480"
+    "X057"
    ],
    "memberNamesCh": [
     "流求"
@@ -9197,7 +9198,7 @@
    "componentKey": "X057@692:366",
    "cellCount": 42,
    "memberIds": [
-    "SUB-X057-ef85eaeea522"
+    "X057"
    ],
    "memberNamesCh": [
     "流求"
@@ -9500,5 +9501,189 @@
     "pendingReview": true
    }
   }
- ]
+ ],
+ "map4Rebind": {
+  "authority": "2026-09-24 지도 최대 증축과 빈 막다른 구역 흡수 후 동일 조각 재대조. 역사 판정은 수정하지 않음.",
+  "priorPartitionStageOutputSha256": "2ce120782db466fb66dc934538e11c4377f76424fbe662132da4537637350124",
+  "memberIdentityChanges": [
+   {
+    "componentKey": "40165@483:451",
+    "fromMemberIds": [
+     "SUB-40165-39a88c0543b5"
+    ],
+    "toMemberIds": [
+     "40165"
+    ]
+   },
+   {
+    "componentKey": "40426@535:296",
+    "fromMemberIds": [
+     "SUB-40426-900f77eff5b7"
+    ],
+    "toMemberIds": [
+     "40426"
+    ]
+   },
+   {
+    "componentKey": "40740@549:331",
+    "fromMemberIds": [
+     "SUB-40740-3a5b5675f605"
+    ],
+    "toMemberIds": [
+     "40740"
+    ]
+   },
+   {
+    "componentKey": "42301@379:509",
+    "fromMemberIds": [
+     "SUB-42301-7104ff31657a"
+    ],
+    "toMemberIds": [
+     "42301"
+    ]
+   },
+   {
+    "componentKey": "43252@480:266",
+    "fromMemberIds": [
+     "SUB-43252-2d3b29ad3f33"
+    ],
+    "toMemberIds": [
+     "43252"
+    ]
+   },
+   {
+    "componentKey": "X040@629:193",
+    "fromMemberIds": [
+     "SUB-X040-541a9c6ebb19"
+    ],
+    "toMemberIds": [
+     "X040"
+    ]
+   },
+   {
+    "componentKey": "X041@625:229",
+    "fromMemberIds": [
+     "SUB-X041-17b9700aed53"
+    ],
+    "toMemberIds": [
+     "X041"
+    ]
+   },
+   {
+    "componentKey": "X046@659:229",
+    "fromMemberIds": [
+     "SUB-X046-763d3a08775b"
+    ],
+    "toMemberIds": [
+     "X046"
+    ]
+   },
+   {
+    "componentKey": "X052@673:275",
+    "fromMemberIds": [
+     "SUB-X052-9097a8854a1f"
+    ],
+    "toMemberIds": [
+     "X052"
+    ]
+   },
+   {
+    "componentKey": "X052@687:263",
+    "fromMemberIds": [
+     "SUB-X052-e2019b23588b"
+    ],
+    "toMemberIds": [
+     "X052"
+    ]
+   },
+   {
+    "componentKey": "X054@767:243",
+    "fromMemberIds": [
+     "SUB-X054-05d9b93dfd00"
+    ],
+    "toMemberIds": [
+     "X054"
+    ]
+   },
+   {
+    "componentKey": "X055@698:280",
+    "fromMemberIds": [
+     "SUB-X055-0deaa9deddaa"
+    ],
+    "toMemberIds": [
+     "X055"
+    ]
+   },
+   {
+    "componentKey": "X055@707:324",
+    "fromMemberIds": [
+     "SUB-X055-f9c61192fa78"
+    ],
+    "toMemberIds": [
+     "X055"
+    ]
+   },
+   {
+    "componentKey": "X055@717:316",
+    "fromMemberIds": [
+     "SUB-X055-42319b3daf6c"
+    ],
+    "toMemberIds": [
+     "X055"
+    ]
+   },
+   {
+    "componentKey": "X056@582:453",
+    "fromMemberIds": [
+     "SUB-X056-c4d35e38f118"
+    ],
+    "toMemberIds": [
+     "X056"
+    ]
+   },
+   {
+    "componentKey": "X057@592:449",
+    "fromMemberIds": [
+     "SUB-X057-6e514a3d0138"
+    ],
+    "toMemberIds": [
+     "X057"
+    ]
+   },
+   {
+    "componentKey": "X057@610:443",
+    "fromMemberIds": [
+     "SUB-X057-f6cdaf119bf2"
+    ],
+    "toMemberIds": [
+     "X057"
+    ]
+   },
+   {
+    "componentKey": "X057@677:379",
+    "fromMemberIds": [
+     "SUB-X057-583a342f4480"
+    ],
+    "toMemberIds": [
+     "X057"
+    ]
+   },
+   {
+    "componentKey": "X057@692:366",
+    "fromMemberIds": [
+     "SUB-X057-ef85eaeea522"
+    ],
+    "toMemberIds": [
+     "X057"
+    ]
+   }
+  ],
+  "boundaryChanges": [
+   {
+    "componentKey": "PARENT-0014@414:180",
+    "fromCellCount": 165,
+    "toCellCount": 163
+   }
+  ]
+ }
 }

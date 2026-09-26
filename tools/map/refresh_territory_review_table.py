@@ -5,16 +5,21 @@ This is a proposal inventory, never an automatic historical adjudication.
 """
 import argparse
 import json
+import sys
 from pathlib import Path
 import audit_territory_disconnections as audit
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 SOURCE = ROOT / 'data/curated/han/territory-disconnection-adjudications-partition-v1.json'
 OUTPUT = ROOT / 'data/curated/han/territory-disconnection-review-table-v1.json'
 TILES = ROOT / 'data/map/han-tiles.json'
 
 
 def build(source, tiles):
+    if tiles['_meta'].get('resolutionScale', 1) > 1:
+        from tools.map.korea_map_extension import base_frame
+        tiles = base_frame(tiles)
     pending = [r for r in source['adjudications'] if (r.get('partitionCarry') or {}).get('pendingReview')]
     if len(pending) != source['counts']['pendingReview']:
         raise ValueError('pendingReview count differs from source')

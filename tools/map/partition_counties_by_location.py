@@ -39,6 +39,7 @@ import heapq
 import json
 import math
 import sys
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -47,7 +48,8 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 TILES = ROOT / "data/map/han-tiles.json"
-MIN_AREA = 8      # spec §3 규칙 4 「현행 8」
+MIN_AREA = 9      # 성 표시 칸의 8방향 이웃까지 확보하는 최소 면적(3×3).
+GROWTH_BASE_AREA = 4  # 4× 격자의 7×7 성내를 담는 최소 2×2 원격자 면적.
 MAX_AREA = 620    # spec §3 규칙 5 「현행 620」
 STRAIGHT, DIAGONAL = 10, 14  # spec §3 규칙 3
 SUBDIVISION_BASIS = "WITHIN_COUNTY_SUBDIVISION"
@@ -55,7 +57,8 @@ SUBDIVISION_GEOMETRY = "COUNTY_LOCATION_PARTITION"
 LEDGER = ROOT / "data/curated/han/county-location-partition-v1.json"
 INPUT_BLOB = ROOT / "data/curated/han/county-location-partition-v1.input.json.gz"
 DECISIONS = ROOT / "data/curated/han/county-location-partition-decisions-v1.json"
-REPLACED_KEYS = ("owner", "provinceRecords", "jurisdictionRecords", "cities")  # + adjacency.county, _meta.counts
+GROWTH_BOUNDARIES = ROOT / "data/curated/han/province-growth-and-escape-boundaries-v1.json"
+REPLACED_KEYS = ("owner", "parentOwner", "provinceRecords", "jurisdictionRecords", "cities")
 FORBIDDEN_OUTPUT_ROOTS = ("data", "infra", "web", "app", "logic", "common")
 STEPS8 = ((-1, 0, STRAIGHT), (1, 0, STRAIGHT), (0, -1, STRAIGHT), (0, 1, STRAIGHT),
           (-1, -1, DIAGONAL), (-1, 1, DIAGONAL), (1, -1, DIAGONAL), (1, 1, DIAGONAL))
@@ -439,7 +442,8 @@ def _jurisdiction_order(document: dict) -> list[dict]:
 
 
 def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_AREA,
-              sites: list[dict] | None = None, keep_in_seat: frozenset = frozenset()) -> tuple[dict, dict]:
+              sites: list[dict] | None = None, keep_in_seat: frozenset = frozenset(),
+              fold_cityless_dead_ends: bool = False) -> tuple[dict, dict]:
     """순수 함수. (새 문서, 보고서). 입력의 배열 순서(cities·jurisdictionRecords)에 의존하지 않는다."""
     document = copy.deepcopy(source)
     meta = document["_meta"]
@@ -460,10 +464,10 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
     repaired = _repair_diagonal_fragments(label, land, parent, seeds_by_rank)
     reservations: dict[int, list[str]] = {}
     if sites:
-        from tools.map.carve_strategic_site_provinces import MINIMUM_FOOTPRINT
+        from tools.map.carve_strategic_site_provinces import FOOTPRINT
         reservations = site_reservations(document, label, land, sites)
     borrowed = _fill_minimum(label, land, parent, order, seeds, min_area,
-                             {rank: len(ids) * MINIMUM_FOOTPRINT for rank, ids in reservations.items()} if sites else None)
+                             {rank: len(ids) * FOOTPRINT for rank, ids in reservations.items()} if sites else None)
     if (label[land] < 0).any():
         raise ValueError("unassigned land after partition")
 
@@ -550,6 +554,44 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
             piece["standIn"] = stand_in
             pieces.append(piece)
 
+    # A cityless one-neighbour spatial node contributes neither a route nor a
+    # defended site. Keep its land in the same jurisdiction, but fold the node
+    # into that jurisdiction's seat province before assigning stable indices.
+    # Offshore pieces remain separate land components, never invented bridges.
+    absorbed_dead_ends = []
+    while True:
+        piece_owner = np.full((rows, cols), -1, dtype=np.int32)
+        for index, piece in enumerate(pieces):
+            piece_owner[piece["mask"]] = index
+        piece_neighbours = [set() for _ in pieces]
+        for edge in county_adjacency(piece_owner):
+            piece_neighbours[edge['a']].add(edge['b'])
+            piece_neighbours[edge['b']].add(edge['a'])
+        seat_index_by_rank = {piece['rank']: index for index, piece in enumerate(pieces) if piece['seat']}
+        retained = []
+        merged_any = False
+        for index, piece in enumerate(pieces):
+            if not fold_cityless_dead_ends or piece['seat'] or len(piece_neighbours[index]) > 1:
+                retained.append(piece)
+                continue
+            seat_index = seat_index_by_rank[piece['rank']]
+            seat_piece = pieces[seat_index]
+            if seat_piece is piece:
+                retained.append(piece)
+                continue
+            merged_any = True
+            absorbed_dead_ends.append({'provinceId': piece['id'], 'intoProvinceId': seat_piece['id'],
+                                       'jurisdictionId': piece['juris']['id'],
+                                       'landNeighbours': len(piece_neighbours[index]),
+                                       'cells': int(piece['mask'].sum()),
+                                       'reason': 'CITYLESS_DEAD_END_MERGED_WITHIN_JURISDICTION'})
+            seat_piece['mask'] = seat_piece['mask'] | piece['mask']
+            if len(piece_neighbours[index]) == 0 or piece_neighbours[index] != {seat_index}:
+                seat_piece['multiComponent'] = True
+        pieces = retained
+        if not merged_any:
+            break
+
     # 省 행: 城 있는 省은 입력 순서 그대로, 城 없는 省은 id 순으로 뒤에 붙인다.
     cityless = sorted((p for p in pieces if p["standIn"] or not p["seat"]), key=lambda p: p["id"])
     records, index_of = [], {}
@@ -588,15 +630,51 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
         if seat_province is not None and seat_province.get("cityIndex") is not None:
             city = document["cities"][seat_province["cityIndex"]]
             city["row"], city["col"] = int(seeds[juris["id"]][0]), int(seeds[juris["id"]][1])
+    # Reviewed local boundary transfers secure a 2×2 growth core for the
+    # exceptional counties and open 梓潼's otherwise enclosed second land edge.
+    parent_grid = expand(document["parentOwner"], rows, cols)
+    reviewed = json.loads(GROWTH_BOUNDARIES.read_text(encoding="utf-8"))
+    parent_index = {row["id"]: i for i, row in enumerate(document["parentRegions"])}
+    applied_transfers = []
+    for transfer in reviewed["transfers"]:
+        # Small synthetic inputs exercise the partitioner without the Han
+        # counties named by the release-specific boundary review.
+        if transfer["fromProvinceId"] not in index_of and transfer["toProvinceId"] not in index_of:
+            continue
+        if transfer["fromProvinceId"] not in index_of or transfer["toProvinceId"] not in index_of:
+            raise ValueError("reviewed boundary has only one endpoint in this partition")
+        r, c = transfer["row"], transfer["col"]
+        source_index = index_of[transfer["fromProvinceId"]]
+        target_index = index_of[transfer["toProvinceId"]]
+        if int(owner[r, c]) != source_index:
+            raise ValueError(f"reviewed boundary source changed at ({r}, {c})")
+        source_parent = records[source_index]["parentRegionId"]
+        target_parent = records[target_index]["parentRegionId"]
+        if source_parent != transfer["fromParentRegionId"] or target_parent != transfer["toParentRegionId"]:
+            raise ValueError(f"reviewed boundary parent changed at ({r}, {c})")
+        owner[r, c] = target_index
+        parent_grid[r, c] = parent_index[target_parent]
+        applied_transfers.append(transfer)
+    document["parentOwner"] = encode(parent_grid)
     document["provinceRecords"] = records
     document["owner"] = encode(owner)
-    document["adjacency"] = {**document["adjacency"], "county": county_adjacency(owner)}
+    document["adjacency"] = {**document["adjacency"], "county": county_adjacency(owner),
+                             "commandery": county_adjacency(parent_grid)}
     counts = meta.get("counts", {})
     counts["provinces"] = len(records)
     counts["adjCounty"] = len(document["adjacency"]["county"])
+    counts["adjCommandery"] = len(document["adjacency"]["commandery"])
 
     new_ids = {row["id"] for row in records}
     areas = np.bincount(owner[owner >= 0], minlength=len(records)).tolist()
+    merged_counts: dict[str, int] = {}
+    for merger in absorbed_dead_ends:
+        target = merger['intoProvinceId']
+        merged_counts[target] = merged_counts.get(target, 0) + 1
+    def maximum_area_for(province_id: str) -> int:
+        # Each removed province had its own 620-cell budget. Preserve that
+        # aggregate budget when it becomes a single administrative map node.
+        return max_area * (1 + merged_counts.get(province_id, 0))
     report = {
         "rules": {"minArea": min_area, "maxArea": max_area, "straight": STRAIGHT, "diagonal": DIAGONAL,
                   "source": "spec 2026-09-17-province-geography-first §3 (현행 값을 옮김, 이 도구가 지은 임계 없음)"},
@@ -617,8 +695,11 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
                                    and any(row["jurisdictionId"] == order[rank]["id"] for row in borrowed)],
         "subdivisions": subdivisions,
         "areaViolations": [{"provinceId": row["id"], "cells": areas[i],
-                            "class": "BELOW_MIN" if areas[i] < min_area else "ABOVE_MAX"}
-                           for i, row in enumerate(records) if not min_area <= areas[i] <= max_area],
+                            "class": "BELOW_MIN" if areas[i] < GROWTH_BASE_AREA else "ABOVE_MAX"}
+                           for i, row in enumerate(records)
+                           if not GROWTH_BASE_AREA <= areas[i] <= maximum_area_for(row['id'])],
+        "reviewedBoundaryTransfers": applied_transfers,
+        "absorbedCitylessDeadEnds": absorbed_dead_ends,
         "retiredProvinceIds": [{"id": pid, "jurisdictionId": provinces_in[pid]["jurisdictionId"]}
                                for pid in sorted(provinces_in) if pid not in new_ids],
         "multiComponentProvinceIds": sorted(p["id"] for p in pieces if p.get("multiComponent")),
@@ -629,8 +710,16 @@ def partition(source: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_ARE
 # ── 게이트 (불변식). 문제 목록을 돌려준다 — 빈 목록이 통과다. ────────────────────────────────────────────
 
 def check_parent_unchanged(source: dict, output: dict) -> list[str]:
-    """Q2."""
-    return [] if source["parentOwner"] == output["parentOwner"] else ["Q2 parentOwner changed"]
+    """Q2: only the exact reviewed neighbouring-郡 transfers may change."""
+    rows, cols = source["_meta"]["rows"], source["_meta"]["cols"]
+    expected = expand(source["parentOwner"], rows, cols)
+    parent_index = {row["id"]: i for i, row in enumerate(output["parentRegions"])}
+    for transfer in json.loads(GROWTH_BOUNDARIES.read_text(encoding="utf-8"))["transfers"]:
+        if (transfer["toParentRegionId"] not in parent_index or
+                transfer["row"] >= rows or transfer["col"] >= cols):
+            continue  # Synthetic partitions have no Han commandery IDs.
+        expected[transfer["row"], transfer["col"]] = parent_index[transfer["toParentRegionId"]]
+    return [] if encode(expected) == output["parentOwner"] else ["Q2 parentOwner differs from reviewed boundary transfers"]
 
 
 def check_cover(source: dict, output: dict, report: dict) -> list[str]:
@@ -658,13 +747,16 @@ def check_cover(source: dict, output: dict, report: dict) -> list[str]:
     return problems
 
 
-def check_area(output: dict, *, min_area: int = MIN_AREA, max_area: int = MAX_AREA) -> list[str]:
+def check_area(output: dict, *, min_area: int = GROWTH_BASE_AREA, max_area: int = MAX_AREA,
+               absorbed: list[dict] | None = None) -> list[str]:
     """Q4."""
     meta = output["_meta"]
     owner = expand(output["owner"], meta["rows"], meta["cols"])
     areas = np.bincount(owner[owner >= 0], minlength=len(output["provinceRecords"]))
+    merged = Counter(row['intoProvinceId'] for row in (absorbed or []))
     return [f"Q4 {row['id']} {row['nameCh']} area {int(areas[i])}"
-            for i, row in enumerate(output["provinceRecords"]) if not min_area <= int(areas[i]) <= max_area]
+            for i, row in enumerate(output["provinceRecords"])
+            if not min_area <= int(areas[i]) <= max_area * (1 + merged[row['id']])]
 
 
 def geometry_digest(document: dict) -> str:
@@ -705,6 +797,7 @@ def _sites() -> list[dict]:
 def _blob_bytes(source: dict) -> bytes:
     body = {key: source[key] for key in REPLACED_KEYS}
     body["adjacencyCounty"] = source["adjacency"]["county"]
+    body["adjacencyCommandery"] = source["adjacency"]["commandery"]
     body["counts"] = source["_meta"]["counts"]
     # sort_keys 를 쓰지 않는다: 앞 단계(조각 판정)는 cities·juns 를 **키 순서까지** 지문으로 본다. 복원한 문서가
     # 값은 같고 키 순서만 달라도 그 단계의 --check 가 「입력도 출력도 아니다」로 죽는다.
@@ -742,8 +835,11 @@ def restore_document(document: dict, ledger: dict) -> dict:
     body = json.loads(gzip.decompress(path.read_bytes()).decode("utf-8"))
     restored = copy.deepcopy(document)
     for key in REPLACED_KEYS:
-        restored[key] = body[key]
-    restored["adjacency"] = {**restored["adjacency"], "county": body["adjacencyCounty"]}
+        # The preceding committed stage did not replace parentOwner. Its old
+        # input blob therefore has no copy; the field is already intact.
+        restored[key] = body.get(key, restored[key])
+    restored["adjacency"] = {**restored["adjacency"], "county": body["adjacencyCounty"],
+                             "commandery": body.get("adjacencyCommandery", restored["adjacency"]["commandery"])}
     restored["_meta"]["counts"] = body["counts"]
     if digest(restored) != stage["inputDocumentSha256"]:
         raise ValueError("restored document differs from the pinned county-location partition input")
@@ -762,13 +858,13 @@ def peel(document: dict) -> tuple[dict, dict | None]:
 
 def reapply(document: dict, ledger: dict) -> dict:
     """앞 단계 검사가 다시 세운 문서 위에 ★ 를 똑같이 얹는다."""
-    rebuilt, _ = partition(document, sites=_sites(), keep_in_seat=_keep_in_seat())
+    rebuilt, _ = partition(document, sites=_sites(), keep_in_seat=_keep_in_seat(), fold_cityless_dead_ends=True)
     return rebuilt
 
 
 def build_stage(source: dict) -> tuple[dict, dict, bytes]:
     from tools.map import carve_strategic_site_provinces as carving
-    document, report = partition(source, sites=_sites(), keep_in_seat=_keep_in_seat())
+    document, report = partition(source, sites=_sites(), keep_in_seat=_keep_in_seat(), fold_cityless_dead_ends=True)
     problems = check_parent_unchanged(source, document) + check_cover(source, document, report)
     if problems:
         raise ValueError("partition gates failed: " + "; ".join(problems))
@@ -776,7 +872,7 @@ def build_stage(source: dict) -> tuple[dict, dict, bytes]:
     decisions = json.loads(DECISIONS.read_text(encoding="utf-8"))
     stage = {"inputDocumentSha256": digest(source), "outputDocumentSha256": digest(document),
              "inputBlob": {"path": INPUT_BLOB.relative_to(ROOT).as_posix(), "sha256": hashlib.sha256(blob).hexdigest(),
-                           "fields": [*REPLACED_KEYS, "adjacency.county", "_meta.counts"]},
+                           "fields": [*REPLACED_KEYS, "adjacency.county", "adjacency.commandery", "_meta.counts"]},
              "outputCityOrder": [row["id"] for row in document["cities"]],
              "geometryDigest": geometry_digest(document),
              "counts": report["counts"]}
@@ -786,7 +882,9 @@ def build_stage(source: dict) -> tuple[dict, dict, bytes]:
         "authority": decisions["authority"],
         "inputs": {"decisions": {"path": DECISIONS.relative_to(ROOT).as_posix(), "sha256": _sha256(DECISIONS)},
                    "strongholds": {"path": carving.STRONGHOLDS.relative_to(ROOT).as_posix(), "sha256": _sha256(carving.STRONGHOLDS)},
-                   "passes": {"path": carving.PASSES.relative_to(ROOT).as_posix(), "sha256": _sha256(carving.PASSES)}},
+                   "passes": {"path": carving.PASSES.relative_to(ROOT).as_posix(), "sha256": _sha256(carving.PASSES)},
+                   "growthBoundaries": {"path": GROWTH_BOUNDARIES.relative_to(ROOT).as_posix(),
+                                        "sha256": _sha256(GROWTH_BOUNDARIES)}},
         "rule": report["rules"],
         "mechanicalChoices": report["mechanicalChoices"],
         "seedExceptions": report["seedExceptions"],
@@ -797,6 +895,8 @@ def build_stage(source: dict) -> tuple[dict, dict, bytes]:
         "strongholdReservations": report["strongholdReservations"],
         "subdivisions": report["subdivisions"],
         "areaViolations": report["areaViolations"],
+        "reviewedBoundaryTransfers": report["reviewedBoundaryTransfers"],
+        "absorbedCitylessDeadEnds": report["absorbedCitylessDeadEnds"],
         "retiredProvinceIds": report["retiredProvinceIds"],
         "geometry": {"stages": [stage]},
     }
@@ -832,7 +932,8 @@ def check(document: dict, ledger: dict) -> list[str]:
     if gzip.decompress(blob) != committed_raw:
         problems.append("partition input blob is not reproducible from the restored input")
     for key in ("seedExceptions", "seedlessComponents", "components", "minAreaBorrowed", "subdivisions",
-                "areaViolations", "retiredProvinceIds", "multiComponentProvinceIds", "strongholdReservations"):
+                "areaViolations", "retiredProvinceIds", "multiComponentProvinceIds", "strongholdReservations",
+                "reviewedBoundaryTransfers", "absorbedCitylessDeadEnds"):
         if rebuilt_ledger[key] != ledger[key]:
             problems.append(f"county-location partition {key} differs from the reviewed stage")
     if digest(rebuilt) != stage["outputDocumentSha256"]:
@@ -844,6 +945,16 @@ def check(document: dict, ledger: dict) -> list[str]:
 def committed_area_problems(committed: dict) -> list[str]:
     """Q4 를 **커밋된 최종 문서**에 건다. 허용되는 위반은 둘뿐이다: 결정 원장의 areaExceptions 행, 그리고 거점 분할
     원장이 carvedCellCount 로 적어 둔 축소 발자국 거점 省(carve 규칙 5). 그 밖의 8 미만·620 초과는 적색이다."""
+    factor = committed['_meta'].get('resolutionScale', 1)
+    if factor > 1:
+        owner = expand(committed['owner'], committed['_meta']['rows'], committed['_meta']['cols'])
+        areas = np.bincount(owner[owner >= 0], minlength=len(committed['provinceRecords']))
+        stage = json.loads(LEDGER.read_text(encoding='utf-8'))
+        merged = Counter(row['intoProvinceId'] for row in stage.get('absorbedCitylessDeadEnds', []))
+        return [f"Q4 committed tiles: {row['id']} area {int(areas[i])} outside scaled growth budget"
+                for i, row in enumerate(committed['provinceRecords'])
+                if not GROWTH_BASE_AREA * factor * factor <= int(areas[i])
+                <= MAX_AREA * (1 + merged[row['id']]) * factor * factor]
     from tools.map import carve_strategic_site_provinces as carving
     decisions = json.loads(DECISIONS.read_text(encoding="utf-8"))
     allowed = {row["provinceId"]: row["cells"] for row in decisions["areaExceptions"]}
@@ -933,11 +1044,11 @@ def main() -> int:
                               ledger["areaViolations"], json.loads(DECISIONS.read_text(encoding="utf-8")))},
                          ensure_ascii=False, indent=1))
         return 0
-    document, report = partition(source, sites=_sites(), keep_in_seat=_keep_in_seat())
+    document, report = partition(source, sites=_sites(), keep_in_seat=_keep_in_seat(), fold_cityless_dead_ends=True)
     problems = check_parent_unchanged(source, document) + check_cover(source, document, report)
     report["gates"] = {"Q2": not any(p.startswith("Q2") for p in problems),
                        "Q3": not any(p.startswith("Q3") for p in problems),
-                       "Q4violations": len(check_area(document)),
+                       "Q4violations": len(check_area(document, absorbed=report['absorbedCitylessDeadEnds'])),
                        "geometryDigest": geometry_digest(document)}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(dumps(document), encoding="utf-8")

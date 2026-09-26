@@ -46,7 +46,7 @@
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
-      "sha256": "522f26c6bf94c125513216896e9e3e50caf962c7d859d4a37aea38f674d24d56"
+      "sha256": "2c2513a1681f240d5131c3a3a8a65a5c167ab9788f8507075d020daf7b6d24b5"
     },
     "strategicSiteRouteClaims": {
       "path": "data/curated/han/route-node-strategic-site-claims-v1.json",

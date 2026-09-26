@@ -228,6 +228,7 @@ describe('admin server ID validation', () => {
 
         const publicKey = await screen.findByRole('textbox', { name: /JWT 공개키/ });
         fireEvent.change(publicKey, { target: { value: 'public-key-material' } });
+        await waitFor(() => expect(screen.getByRole('button', { name: '서버 생성' })).toBeEnabled());
         fireEvent.click(screen.getByRole('button', { name: '서버 생성' }));
 
         await waitFor(() => expect(createRequestBody).toContain('"jwtPublicKey":"public-key-material"'));

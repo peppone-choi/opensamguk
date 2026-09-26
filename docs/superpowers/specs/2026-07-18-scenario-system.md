@@ -353,6 +353,11 @@ tuple 인덱스는 `infra/.../seed/ScenarioJson.kt` 상수와 1:1.
   산출물 금지 규칙은 그대로 적용된다(자체 모순 없음).
 - **생성물 취급**: `scenario_3<year>.json` 완성본(RTK14 원수치 포함)도 **gitignored 배포 디렉터리**(`SCENARIO_DIR`).
   5스탯 prod 사이드로드와 동일(source secret + checkout 조합 배포).
+- **190년 S4 예외(2026-09-26 사용자 지시)**: 첫 무인 시즌의 실 시드를 main에 올리라는
+  별도 결정에 따라 `infra/src/main/resources/scenario/scenario_3190.json`만 추적한다.
+  원천 HTML·정제층·원문 라벨은 여전히 미커밋이다. 생성 입력의 지문, 역사·연의 근거
+  경계, 잠정 게임 설계값은 `docs/data/scenario-3190-source-boundary.md`에 적는다.
+  다른 연도의 생성물은 위 gitignore 규칙을 유지한다.
 - **제목·용어**: 역사 용어·고사·지명·격문은 공용. **코에이 고유 조어 회피**(추풍오장원·정시정변·지재천리 →
   유사 사건명). 제목 22종·가상명 전부 **자작 확인**.
 - **격리 불변**: leadership/strength/intel의 getStatValue·RNG draw·로그·골든은 이 작업으로 **불변**.
@@ -386,6 +391,7 @@ tuple 인덱스는 `infra/.../seed/ScenarioJson.kt` 상수와 1:1.
 - `scenario_*.json` positional tuple 스키마 (G_*/N_* 인덱스).
 - `ScenarioImporter.kt` / `ScenarioJson.kt` / `ScenarioSeedRunner.kt` (임포터 무변경 = 게이트).
 - `officer-id-registry.tsv` (라이브 컷오버 후 id freeze, 재배정 금지).
-- 코에이 IP 미커밋 규칙 (raw·정제층·생성물 gitignore, tracked 층 원문 라벨 금지).
+- 코에이 IP 미커밋 규칙 (raw·정제층 gitignore, tracked 층 원문 라벨 금지;
+  §9의 190년 S4 실 시드만 생성물 예외).
 - five-stat divergence 격리 규율 (통무지 불변, 패러티 코어 사정권 밖).
 - 사실 22종 제목·슬러그·code(§8.1) / 가상 우선순위(§8.2, 백마장군의 위세 1호).

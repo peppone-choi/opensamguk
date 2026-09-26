@@ -1,0 +1,4088 @@
+{
+  "schemaVersion": 1,
+  "source": "data/extracted/item/items.json",
+  "catalogId": "treasure-cards-v1",
+  "availabilityTwoCopyPolicy": "PENDING",
+  "cards": [
+    {
+      "header": {
+        "id": "treasure:che_명마_07_기주마",
+        "name": "기주마(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 6,
+      "sourceCode": "che_명마_07_기주마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_07_기주마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "기주마(+7)",
+        "rawName": "기주마",
+        "info": "통솔 +7<br>[전투] 공격 시 페이즈 +1",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_07_백마",
+        "name": "백마(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 7,
+      "sourceCode": "che_명마_07_백마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_07_백마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "백마(+7)",
+        "rawName": "백마",
+        "info": "통솔 +7<br>[전투] 전투 종료로 인한 부상 없음",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_07_백상",
+        "name": "백상(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 8,
+      "sourceCode": "che_명마_07_백상",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_07_백상",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "백상(+7)",
+        "rawName": "백상",
+        "info": "통솔 +7<br>[전투] 공격력 +20%, 소모 군량 +10%, 공격 시 페이즈 -1",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_07_오환마",
+        "name": "오환마(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 9,
+      "sourceCode": "che_명마_07_오환마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_07_오환마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "오환마(+7)",
+        "rawName": "오환마",
+        "info": "통솔 +7",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_08_양주마",
+        "name": "양주마(+8)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 10,
+      "sourceCode": "che_명마_08_양주마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_08_양주마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "양주마(+8)",
+        "rawName": "양주마",
+        "info": "통솔 +8",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 8
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_08_흉노마",
+        "name": "흉노마(+8)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 11,
+      "sourceCode": "che_명마_08_흉노마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_08_흉노마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "흉노마(+8)",
+        "rawName": "흉노마",
+        "info": "통솔 +8",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 8
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_09_과하마",
+        "name": "과하마(+9)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 12,
+      "sourceCode": "che_명마_09_과하마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_09_과하마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "과하마(+9)",
+        "rawName": "과하마",
+        "info": "통솔 +9",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 9
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_09_의남백마",
+        "name": "의남백마(+9)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 13,
+      "sourceCode": "che_명마_09_의남백마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_09_의남백마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "의남백마(+9)",
+        "rawName": "의남백마",
+        "info": "통솔 +9",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 9
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_10_대완마",
+        "name": "대완마(+10)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 14,
+      "sourceCode": "che_명마_10_대완마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_10_대완마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "대완마(+10)",
+        "rawName": "대완마",
+        "info": "통솔 +10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 10
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_10_옥추마",
+        "name": "옥추마(+10)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 15,
+      "sourceCode": "che_명마_10_옥추마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_10_옥추마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "옥추마(+10)",
+        "rawName": "옥추마",
+        "info": "통솔 +10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 10
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_11_서량마",
+        "name": "서량마(+11)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 16,
+      "sourceCode": "che_명마_11_서량마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_11_서량마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "서량마(+11)",
+        "rawName": "서량마",
+        "info": "통솔 +11",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 11
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_11_화종마",
+        "name": "화종마(+11)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 17,
+      "sourceCode": "che_명마_11_화종마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_11_화종마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "화종마(+11)",
+        "rawName": "화종마",
+        "info": "통솔 +11",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 11
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_12_사륜거",
+        "name": "사륜거(+12)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 18,
+      "sourceCode": "che_명마_12_사륜거",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_12_사륜거",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "사륜거(+12)",
+        "rawName": "사륜거",
+        "info": "통솔 +12<br>[전투] 전투 종료로 인한 부상 없음",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 12
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_12_옥란백용구",
+        "name": "옥란백용구(+12)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 19,
+      "sourceCode": "che_명마_12_옥란백용구",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_12_옥란백용구",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "옥란백용구(+12)",
+        "rawName": "옥란백용구",
+        "info": "통솔 +12<br>[전투] 남은 병력이 적을수록 회피 확률 증가. 최대 +50%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 12
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_13_적로",
+        "name": "적로(+13)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 20,
+      "sourceCode": "che_명마_13_적로",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_13_적로",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "적로(+13)",
+        "rawName": "적로",
+        "info": "통솔 +13",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 13
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_13_절영",
+        "name": "절영(+13)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 21,
+      "sourceCode": "che_명마_13_절영",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_13_절영",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "절영(+13)",
+        "rawName": "절영",
+        "info": "통솔 +13",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 13
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_14_적란마",
+        "name": "적란마(+14)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 22,
+      "sourceCode": "che_명마_14_적란마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_14_적란마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "적란마(+14)",
+        "rawName": "적란마",
+        "info": "통솔 +14",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 14
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_14_조황비전",
+        "name": "조황비전(+14)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 23,
+      "sourceCode": "che_명마_14_조황비전",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_14_조황비전",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "조황비전(+14)",
+        "rawName": "조황비전",
+        "info": "통솔 +14",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 14
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_15_적토마",
+        "name": "적토마(+15)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 24,
+      "sourceCode": "che_명마_15_적토마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_15_적토마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "적토마(+15)",
+        "rawName": "적토마",
+        "info": "통솔 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 15
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명마_15_한혈마",
+        "name": "한혈마(+15)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:명마",
+          "slot:horse"
+        ]
+      },
+      "sourceRowIndex": 25,
+      "sourceCode": "che_명마_15_한혈마",
+      "slot": "HORSE",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_명마_15_한혈마",
+        "kind": "명마",
+        "baseClass": "BaseStatItem",
+        "name": "한혈마(+15)",
+        "rawName": "한혈마",
+        "info": "통솔 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "horse",
+        "availability": 2,
+        "statNick": "통솔",
+        "statType": "leadership",
+        "statValue": 15
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_07_동추",
+        "name": "동추(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 32,
+      "sourceCode": "che_무기_07_동추",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_07_동추",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "동추(+7)",
+        "rawName": "동추",
+        "info": "무력 +7",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_07_맥궁",
+        "name": "맥궁(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 33,
+      "sourceCode": "che_무기_07_맥궁",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_07_맥궁",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "맥궁(+7)",
+        "rawName": "맥궁",
+        "info": "무력 +7<br>[전투] 새로운 상대와 전투 시 20% 확률로 저격 발동, 성공 시 사기+20",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_07_철쇄",
+        "name": "철쇄(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 34,
+      "sourceCode": "che_무기_07_철쇄",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_07_철쇄",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "철쇄(+7)",
+        "rawName": "철쇄",
+        "info": "무력 +7",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_07_철편",
+        "name": "철편(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 35,
+      "sourceCode": "che_무기_07_철편",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_07_철편",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "철편(+7)",
+        "rawName": "철편",
+        "info": "무력 +7",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_08_유성추",
+        "name": "유성추(+8)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 36,
+      "sourceCode": "che_무기_08_유성추",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_08_유성추",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "유성추(+8)",
+        "rawName": "유성추",
+        "info": "무력 +8",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 8
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_08_철질여골",
+        "name": "철질여골(+8)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 37,
+      "sourceCode": "che_무기_08_철질여골",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_08_철질여골",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "철질여골(+8)",
+        "rawName": "철질여골",
+        "info": "무력 +8",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 8
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_09_동호비궁",
+        "name": "동호비궁(+9)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 38,
+      "sourceCode": "che_무기_09_동호비궁",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_09_동호비궁",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "동호비궁(+9)",
+        "rawName": "동호비궁",
+        "info": "무력 +9<br>[전투] 새로운 상대와 전투 시 20% 확률로 저격 발동, 성공 시 사기+20",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 9
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_09_쌍철극",
+        "name": "쌍철극(+9)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 39,
+      "sourceCode": "che_무기_09_쌍철극",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_09_쌍철극",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "쌍철극(+9)",
+        "rawName": "쌍철극",
+        "info": "무력 +9",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 9
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_10_대부",
+        "name": "대부(+10)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 40,
+      "sourceCode": "che_무기_10_대부",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_10_대부",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "대부(+10)",
+        "rawName": "대부",
+        "info": "무력 +10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 10
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_10_삼첨도",
+        "name": "삼첨도(+10)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 41,
+      "sourceCode": "che_무기_10_삼첨도",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_10_삼첨도",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "삼첨도(+10)",
+        "rawName": "삼첨도",
+        "info": "무력 +10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 10
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_11_고정도",
+        "name": "고정도(+11)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 42,
+      "sourceCode": "che_무기_11_고정도",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_11_고정도",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "고정도(+11)",
+        "rawName": "고정도",
+        "info": "무력 +11",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 11
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_11_이광궁",
+        "name": "이광궁(+11)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 43,
+      "sourceCode": "che_무기_11_이광궁",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_11_이광궁",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "이광궁(+11)",
+        "rawName": "이광궁",
+        "info": "무력 +11<br>[전투] 새로운 상대와 전투 시 10% 확률로 저격 발동, 성공 시 사기+10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 11
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_12_철척사모",
+        "name": "철척사모(+12)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 44,
+      "sourceCode": "che_무기_12_철척사모",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_12_철척사모",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "철척사모(+12)",
+        "rawName": "철척사모",
+        "info": "무력 +12",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 12
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_12_칠성검",
+        "name": "칠성검(+12)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 45,
+      "sourceCode": "che_무기_12_칠성검",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_12_칠성검",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "칠성검(+12)",
+        "rawName": "칠성검",
+        "info": "무력 +12",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 12
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_13_사모",
+        "name": "사모(+13)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 46,
+      "sourceCode": "che_무기_13_사모",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_13_사모",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "사모(+13)",
+        "rawName": "사모",
+        "info": "무력 +13",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 13
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_13_양유기궁",
+        "name": "양유기궁(+13)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 47,
+      "sourceCode": "che_무기_13_양유기궁",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_13_양유기궁",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "양유기궁(+13)",
+        "rawName": "양유기궁",
+        "info": "무력 +13<br>[전투] 새로운 상대와 전투 시 10% 확률로 저격 발동, 성공 시 사기+10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 13
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_14_방천화극",
+        "name": "방천화극(+14)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 48,
+      "sourceCode": "che_무기_14_방천화극",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_14_방천화극",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "방천화극(+14)",
+        "rawName": "방천화극",
+        "info": "무력 +14",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 14
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_14_언월도",
+        "name": "언월도(+14)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 49,
+      "sourceCode": "che_무기_14_언월도",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_14_언월도",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "언월도(+14)",
+        "rawName": "언월도",
+        "info": "무력 +14",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 14
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_15_의천검",
+        "name": "의천검(+15)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 50,
+      "sourceCode": "che_무기_15_의천검",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_15_의천검",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "의천검(+15)",
+        "rawName": "의천검",
+        "info": "무력 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 15
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_무기_15_청홍검",
+        "name": "청홍검(+15)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:무기",
+          "slot:weapon"
+        ]
+      },
+      "sourceRowIndex": 51,
+      "sourceCode": "che_무기_15_청홍검",
+      "slot": "WEAPON",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_무기_15_청홍검",
+        "kind": "무기",
+        "baseClass": "BaseStatItem",
+        "name": "청홍검(+15)",
+        "rawName": "청홍검",
+        "info": "무력 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "weapon",
+        "availability": 2,
+        "statNick": "무력",
+        "statType": "strength",
+        "statValue": 15
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_07_논어",
+        "name": "논어(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 58,
+      "sourceCode": "che_서적_07_논어",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_07_논어",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "논어(+7)",
+        "rawName": "논어",
+        "info": "지력 +7<br>[전투] 상대의 계략 성공 확률 -10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_07_사마법",
+        "name": "사마법(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 59,
+      "sourceCode": "che_서적_07_사마법",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_07_사마법",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "사마법(+7)",
+        "rawName": "사마법",
+        "info": "지력 +7<br>[전투] 상대의 계략을 10% 확률로 되돌림",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_07_위료자",
+        "name": "위료자(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 60,
+      "sourceCode": "che_서적_07_위료자",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_07_위료자",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "위료자(+7)",
+        "rawName": "위료자",
+        "info": "지력 +7<br>[전투] 계략 시도 확률 +20%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_07_한서",
+        "name": "한서(+7)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 61,
+      "sourceCode": "che_서적_07_한서",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_07_한서",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "한서(+7)",
+        "rawName": "한서",
+        "info": "지력 +7",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 7
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_08_사기",
+        "name": "사기(+8)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 62,
+      "sourceCode": "che_서적_08_사기",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_08_사기",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "사기(+8)",
+        "rawName": "사기",
+        "info": "지력 +8",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 8
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_08_전론",
+        "name": "전론(+8)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 63,
+      "sourceCode": "che_서적_08_전론",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_08_전론",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "전론(+8)",
+        "rawName": "전론",
+        "info": "지력 +8<br>[전투] 계략 성공 시 대미지 +20%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 8
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_09_역경",
+        "name": "역경(+9)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 64,
+      "sourceCode": "che_서적_09_역경",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_09_역경",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "역경(+9)",
+        "rawName": "역경",
+        "info": "지력 +9",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 9
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_09_장자",
+        "name": "장자(+9)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 65,
+      "sourceCode": "che_서적_09_장자",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_09_장자",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "장자(+9)",
+        "rawName": "장자",
+        "info": "지력 +9",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 9
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_10_구국론",
+        "name": "구국론(+10)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 66,
+      "sourceCode": "che_서적_10_구국론",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_10_구국론",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "구국론(+10)",
+        "rawName": "구국론",
+        "info": "지력 +10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 10
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_10_시경",
+        "name": "시경(+10)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 67,
+      "sourceCode": "che_서적_10_시경",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_10_시경",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "시경(+10)",
+        "rawName": "시경",
+        "info": "지력 +10",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 10
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_11_상군서",
+        "name": "상군서(+11)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 68,
+      "sourceCode": "che_서적_11_상군서",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_11_상군서",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "상군서(+11)",
+        "rawName": "상군서",
+        "info": "지력 +11",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 11
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_11_춘추전",
+        "name": "춘추전(+11)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 69,
+      "sourceCode": "che_서적_11_춘추전",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_11_춘추전",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "춘추전(+11)",
+        "rawName": "춘추전",
+        "info": "지력 +11<br>[전투] 상대의 계략 성공 확률 -10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 11
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_12_맹덕신서",
+        "name": "맹덕신서(+12)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 70,
+      "sourceCode": "che_서적_12_맹덕신서",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_12_맹덕신서",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "맹덕신서(+12)",
+        "rawName": "맹덕신서",
+        "info": "지력 +12",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 12
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_12_산해경",
+        "name": "산해경(+12)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 71,
+      "sourceCode": "che_서적_12_산해경",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_12_산해경",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "산해경(+12)",
+        "rawName": "산해경",
+        "info": "지력 +12<br>[전투] 상대의 계략을 10% 확률로 되돌림",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 12
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_13_관자",
+        "name": "관자(+13)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 72,
+      "sourceCode": "che_서적_13_관자",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_13_관자",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "관자(+13)",
+        "rawName": "관자",
+        "info": "지력 +13",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 13
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_13_병법24편",
+        "name": "병법24편(+13)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 73,
+      "sourceCode": "che_서적_13_병법24편",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_13_병법24편",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "병법24편(+13)",
+        "rawName": "병법24편",
+        "info": "지력 +13",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 13
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_14_오자병법",
+        "name": "오자병법(+14)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 74,
+      "sourceCode": "che_서적_14_오자병법",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_14_오자병법",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "오자병법(+14)",
+        "rawName": "오자병법",
+        "info": "지력 +14",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 14
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_14_한비자",
+        "name": "한비자(+14)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 75,
+      "sourceCode": "che_서적_14_한비자",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_14_한비자",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "한비자(+14)",
+        "rawName": "한비자",
+        "info": "지력 +14",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 14
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_15_노자",
+        "name": "노자(+15)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 76,
+      "sourceCode": "che_서적_15_노자",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_15_노자",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "노자(+15)",
+        "rawName": "노자",
+        "info": "지력 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 15
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_서적_15_손자병법",
+        "name": "손자병법(+15)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:서적",
+          "slot:book"
+        ]
+      },
+      "sourceRowIndex": 77,
+      "sourceCode": "che_서적_15_손자병법",
+      "slot": "BOOK",
+      "legacyAvailability": 2,
+      "issuedCopies": null,
+      "legacy": {
+        "code": "che_서적_15_손자병법",
+        "kind": "서적",
+        "baseClass": "BaseStatItem",
+        "name": "손자병법(+15)",
+        "rawName": "손자병법",
+        "info": "지력 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "book",
+        "availability": 2,
+        "statNick": "지력",
+        "statType": "intel",
+        "statValue": 15
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_간파_노군입산부",
+        "name": "노군입산부(간파)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 78,
+      "sourceCode": "che_간파_노군입산부",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_간파_노군입산부",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "노군입산부(간파)",
+        "rawName": "노군입산부",
+        "info": "[전투] 상대 회피 확률 -25%p, 상대 필살 확률 -10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_격노_구정신단경",
+        "name": "구정신단경(격노)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 79,
+      "sourceCode": "che_격노_구정신단경",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_격노_구정신단경",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "구정신단경(격노)",
+        "rawName": "구정신단경",
+        "info": "[전투] 상대방 필살 시 격노(필살) 발동, 회피 시도시 25% 확률로 격노 발동, 공격 시 일정 확률로 진노(1페이즈 추가), 격노마다 대미지 5% 추가 중첩",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_계략_삼략",
+        "name": "삼략(계략)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 80,
+      "sourceCode": "che_계략_삼략",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_계략_삼략",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "삼략(계략)",
+        "rawName": "삼략",
+        "info": "[계략] 화계·탈취·파괴·선동 : 성공률 +20%p<br>[전투] 계략 시도 확률 +10%p, 계략 성공 확률 +10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_계략_육도",
+        "name": "육도(계략)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 81,
+      "sourceCode": "che_계략_육도",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_계략_육도",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "육도(계략)",
+        "rawName": "육도",
+        "info": "[계략] 화계·탈취·파괴·선동 : 성공률 +20%p<br>[전투] 계략 시도 확률 +10%p, 계략 성공 확률 +10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_공성_묵자",
+        "name": "묵자(공성)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 84,
+      "sourceCode": "che_공성_묵자",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_공성_묵자",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "묵자(공성)",
+        "rawName": "묵자",
+        "info": "[전투] 성벽 공격 시 대미지 +50%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_내정_납금박산로",
+        "name": "납금박산로(내정)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 85,
+      "sourceCode": "che_내정_납금박산로",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_내정_납금박산로",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "납금박산로(내정)",
+        "rawName": "납금박산로",
+        "info": "[내정] 내정 성공률 +15%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_농성_위공자병법",
+        "name": "위공자병법(농성)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 86,
+      "sourceCode": "che_농성_위공자병법",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_농성_위공자병법",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "위공자병법(농성)",
+        "rawName": "위공자병법",
+        "info": "[계략] 장수 주둔 도시 화계·탈취·파괴·선동 : 성공률 -30%p<br>[전투] 상대 계략 시도 확률 -10%p, 상대 계략 성공 확률 -10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_농성_주서음부",
+        "name": "주서음부(농성)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 87,
+      "sourceCode": "che_농성_주서음부",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_농성_주서음부",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "주서음부(농성)",
+        "rawName": "주서음부",
+        "info": "[계략] 장수 주둔 도시 화계·탈취·파괴·선동 : 성공률 -30%p<br>[전투] 상대 계략 시도 확률 -10%p, 상대 계략 성공 확률 -10%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_능력치_무력_두강주",
+        "name": "두강주(무력)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 88,
+      "sourceCode": "che_능력치_무력_두강주",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_능력치_무력_두강주",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "두강주(무력)",
+        "rawName": "두강주",
+        "info": "[능력치] 무력 +5 +(4년마다 +1)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_능력치_지력_이강주",
+        "name": "이강주(지력)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 89,
+      "sourceCode": "che_능력치_지력_이강주",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_능력치_지력_이강주",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "이강주(지력)",
+        "rawName": "이강주",
+        "info": "[능력치] 지력 +5 +(4년마다 +1)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_능력치_통솔_보령압주",
+        "name": "보령압주(통솔)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 90,
+      "sourceCode": "che_능력치_통솔_보령압주",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_능력치_통솔_보령압주",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "보령압주(통솔)",
+        "rawName": "보령압주",
+        "info": "[능력치] 통솔 +5 +(4년마다 +1)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_명성_구석",
+        "name": "구석(명성)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 91,
+      "sourceCode": "che_명성_구석",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_명성_구석",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "구석(명성)",
+        "rawName": "구석",
+        "info": "명성 +20%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_보물_도기",
+        "name": "도기(보물)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 92,
+      "sourceCode": "che_보물_도기",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_보물_도기",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "도기(보물)",
+        "rawName": "도기",
+        "info": "[개인] 판매 시 장수 소지금과 국고에 금, 쌀 중 하나를 추가 (총 +10,000, 2년마다 +5,000)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_부적_태현청생부",
+        "name": "태현청생부(부적)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 93,
+      "sourceCode": "che_부적_태현청생부",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_부적_태현청생부",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "태현청생부(부적)",
+        "rawName": "태현청생부",
+        "info": "[전투] 저격 불가, 부상 없음",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_불굴_상편",
+        "name": "상편(불굴)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 94,
+      "sourceCode": "che_불굴_상편",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_불굴_상편",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "상편(불굴)",
+        "rawName": "상편",
+        "info": "[전투] 남은 병력이 적을수록 공격력 증가. 최대 +60%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_사기_초선화",
+        "name": "초선화(사기)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 95,
+      "sourceCode": "che_사기_초선화",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_사기_초선화",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "초선화(사기)",
+        "rawName": "초선화",
+        "info": "[전투] 사기 보정 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_사기_춘화첩",
+        "name": "춘화첩(사기)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 96,
+      "sourceCode": "che_사기_춘화첩",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_사기_춘화첩",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "춘화첩(사기)",
+        "rawName": "춘화첩",
+        "info": "[전투] 사기 보정 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_상성보정_과실주",
+        "name": "과실주(상성)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 98,
+      "sourceCode": "che_상성보정_과실주",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_상성보정_과실주",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "과실주(상성)",
+        "rawName": "과실주",
+        "info": "[전투] 대등/유리한 병종 전투시 공격력 +10%, 피해 -10%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_숙련_동작",
+        "name": "동작(숙련)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 99,
+      "sourceCode": "che_숙련_동작",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_숙련_동작",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "동작(숙련)",
+        "rawName": "동작",
+        "info": "숙련 +20%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_약탈_옥벽",
+        "name": "옥벽(약탈)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 100,
+      "sourceCode": "che_약탈_옥벽",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_약탈_옥벽",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "옥벽(약탈)",
+        "rawName": "옥벽",
+        "info": "[전투] 새로운 상대와 전투 시 20% 확률로 상대 금, 쌀 10% 약탈",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_위압_조목삭",
+        "name": "조목삭(위압)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 101,
+      "sourceCode": "che_위압_조목삭",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_위압_조목삭",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "조목삭(위압)",
+        "rawName": "조목삭",
+        "info": "[전투] 첫 페이즈 위압 발동(적 공격, 회피 불가, 사기 5 감소)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_의술_상한잡병론",
+        "name": "상한잡병론(의술)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 102,
+      "sourceCode": "che_의술_상한잡병론",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_의술_상한잡병론",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "상한잡병론(의술)",
+        "rawName": "상한잡병론",
+        "info": "[군사] 매 턴마다 자신(100%)과 소속 도시 장수(적 포함 50%) 부상 회복<br>[전투] 페이즈마다 40% 확률로 치료 발동(아군 피해 30% 감소, 부상 회복)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_의술_정력견혈산",
+        "name": "정력견혈산(의술)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 103,
+      "sourceCode": "che_의술_정력견혈산",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_의술_정력견혈산",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "정력견혈산(의술)",
+        "rawName": "정력견혈산",
+        "info": "[군사] 매 턴마다 자신(100%)과 소속 도시 장수(적 포함 50%) 부상 회복<br>[전투] 페이즈마다 40% 확률로 치료 발동(아군 피해 30% 감소, 부상 회복)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_의술_청낭서",
+        "name": "청낭서(의술)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 104,
+      "sourceCode": "che_의술_청낭서",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_의술_청낭서",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "청낭서(의술)",
+        "rawName": "청낭서",
+        "info": "[군사] 매 턴마다 자신(100%)과 소속 도시 장수(적 포함 50%) 부상 회복<br>[전투] 페이즈마다 40% 확률로 치료 발동(아군 피해 30% 감소, 부상 회복)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_의술_태평청령",
+        "name": "태평청령(의술)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 105,
+      "sourceCode": "che_의술_태평청령",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_의술_태평청령",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "태평청령(의술)",
+        "rawName": "태평청령",
+        "info": "[군사] 매 턴마다 자신(100%)과 소속 도시 장수(적 포함 50%) 부상 회복<br>[전투] 페이즈마다 40% 확률로 치료 발동(아군 피해 30% 감소, 부상 회복)",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_저격_매화수전",
+        "name": "매화수전(저격)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 106,
+      "sourceCode": "che_저격_매화수전",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_저격_매화수전",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "매화수전(저격)",
+        "rawName": "매화수전",
+        "info": "[전투] 새로운 상대와 전투 시 50% 확률로 저격 발동, 성공 시 사기+20",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_저격_비도",
+        "name": "비도(저격)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 107,
+      "sourceCode": "che_저격_비도",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_저격_비도",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "비도(저격)",
+        "rawName": "비도",
+        "info": "[전투] 새로운 상대와 전투 시 50% 확률로 저격 발동, 성공 시 사기+20",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_저지_삼황내문",
+        "name": "삼황내문(저지)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 109,
+      "sourceCode": "che_저지_삼황내문",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_저지_삼황내문",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "삼황내문(저지)",
+        "rawName": "삼황내문",
+        "info": "[전투] 수비 시 첫 페이즈 저지, 50% 확률로 2 페이즈 저지",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_전략_평만지장도",
+        "name": "평만지장도(전략)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 110,
+      "sourceCode": "che_전략_평만지장도",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_전략_평만지장도",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "평만지장도(전략)",
+        "rawName": "평만지장도",
+        "info": "[전략] 국가전략 사용시 재사용 대기 기간 -20%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_조달_주판",
+        "name": "주판(조달)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 111,
+      "sourceCode": "che_조달_주판",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_조달_주판",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "주판(조달)",
+        "rawName": "주판",
+        "info": "[내정] 물자조달 성공 확률 +20%p, 물자조달 획득량 +100%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_진압_박혁론",
+        "name": "박혁론(진압)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 112,
+      "sourceCode": "che_진압_박혁론",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_진압_박혁론",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "박혁론(진압)",
+        "rawName": "박혁론",
+        "info": "[전투] 상대의 계략 되돌림, 격노 불가",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_집중_전국책",
+        "name": "전국책(집중)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 113,
+      "sourceCode": "che_집중_전국책",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_집중_전국책",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "전국책(집중)",
+        "rawName": "전국책",
+        "info": "[전투] 계략 성공 시 대미지 +30%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_징병_낙주",
+        "name": "낙주(징병)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 114,
+      "sourceCode": "che_징병_낙주",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_징병_낙주",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "낙주(징병)",
+        "rawName": "낙주",
+        "info": "[군사] 징·모병비 -30%<br>[기타] 통솔 순수 능력치 보정 +15%, 징병/모병/소집해제 시 인구 변동 없음",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_척사_오악진형도",
+        "name": "오악진형도(척사)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 115,
+      "sourceCode": "che_척사_오악진형도",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_척사_오악진형도",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "오악진형도(척사)",
+        "rawName": "오악진형도",
+        "info": "[전투] 지역·도시 병종 상대로 대미지 +15%, 아군 피해 -15%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_필살_둔갑천서",
+        "name": "둔갑천서(필살)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 117,
+      "sourceCode": "che_필살_둔갑천서",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_필살_둔갑천서",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "둔갑천서(필살)",
+        "rawName": "둔갑천서",
+        "info": "[전투] 필살 확률 +20%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_행동_서촉지형도",
+        "name": "서촉지형도(행동)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 118,
+      "sourceCode": "che_행동_서촉지형도",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_행동_서촉지형도",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "서촉지형도(행동)",
+        "rawName": "서촉지형도",
+        "info": "[전투] 공격 시 페이즈 + 2",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_환술_논어집해",
+        "name": "논어집해(환술)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 119,
+      "sourceCode": "che_환술_논어집해",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_환술_논어집해",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "논어집해(환술)",
+        "rawName": "논어집해",
+        "info": "[전투] 계략 성공 확률 +10%p, 계략 성공 시 대미지 +20%",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_회피_태평요술",
+        "name": "태평요술(회피)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 120,
+      "sourceCode": "che_회피_태평요술",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_회피_태평요술",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "태평요술(회피)",
+        "rawName": "태평요술",
+        "info": "[전투] 회피 확률 +20%p",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_훈련_단결도",
+        "name": "단결도(훈련)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 121,
+      "sourceCode": "che_훈련_단결도",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_훈련_단결도",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "단결도(훈련)",
+        "rawName": "단결도",
+        "info": "[전투] 훈련 보정 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    },
+    {
+      "header": {
+        "id": "treasure:che_훈련_철벽서",
+        "name": "철벽서(훈련)",
+        "kind": "TREASURE",
+        "availability": "UNIQUE",
+        "provenance": [
+          {
+            "kind": "GAME_TERM"
+          }
+        ],
+        "renownCost": 0,
+        "costColors": [],
+        "tags": [
+          "legacy-kind:아이템",
+          "slot:item"
+        ]
+      },
+      "sourceRowIndex": 122,
+      "sourceCode": "che_훈련_철벽서",
+      "slot": "ITEM",
+      "legacyAvailability": 1,
+      "issuedCopies": 1,
+      "legacy": {
+        "code": "che_훈련_철벽서",
+        "kind": "아이템",
+        "baseClass": "BaseItem",
+        "name": "철벽서(훈련)",
+        "rawName": "철벽서",
+        "info": "[전투] 훈련 보정 +15",
+        "cost": 200,
+        "consumable": false,
+        "buyable": false,
+        "reqSecu": 0,
+        "inRegistry": true,
+        "registrySlot": "item",
+        "availability": 1
+      }
+    }
+  ]
+}

@@ -48,6 +48,11 @@ class DomesticInputTest {
     @Test fun `work bodies name one of the nine works`() {
         assertEquals(WorkRequest(7, 10, DomesticWork.WATCHTOWER_BEACON),
             DomesticInput.parseWork(7, """{"countyId":10,"work":"WATCHTOWER_BEACON"}"""))
+        assertEquals(WorkRequest(7, 10, DomesticWork.ROAD, "land-boundary:1:A1:B"),
+            DomesticInput.parseWork(7, """{"countyId":10,"work":"ROAD","edgeId":"land-boundary:1:A1:B"}"""))
+        assertEquals(WorkRequest(7, 10, DomesticWork.FORTIFICATION, "land-boundary:1:A1:B", 2, 3),
+            DomesticInput.parseWork(7,
+                """{"countyId":10,"work":"FORTIFICATION","edgeId":"land-boundary:1:A1:B","row":2,"col":3}"""))
         assertNull(DomesticInput.parseWork(7, """{"countyId":10,"work":"망루봉화"}"""))
         assertNull(DomesticInput.parseWork(7, """{"countyId":10,"work":"IRRIGATION","extra":1}"""))
         assertEquals(9, DomesticWork.entries.size)

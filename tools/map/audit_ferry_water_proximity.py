@@ -5,10 +5,12 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 TILES = ROOT / "data/map/han-tiles.json"
 STRONGHOLDS = ROOT / "data/curated/han/strategic-strongholds-v1.json"
 LEDGER = ROOT / "data/curated/han/ferry-water-adjudications-v1.json"
@@ -37,6 +39,9 @@ def nearest_water(terrain: list[str], row: int, col: int) -> tuple[int, tuple[in
 
 def check(tiles: dict, strongholds: dict, ledger: dict) -> list[str]:
     errors = []
+    if tiles["_meta"].get("resolutionScale", 1) > 1:
+        from tools.map.korea_map_extension import base_frame
+        tiles = base_frame(tiles)
     terrain = tiles["terrain"]
     ferries = {site["id"]: site for site in strongholds["strongholds"] if site.get("role") == "FERRY"}
     rows = ledger["rows"]

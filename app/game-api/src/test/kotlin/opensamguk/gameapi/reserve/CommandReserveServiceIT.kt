@@ -7,10 +7,19 @@ import opensamguk.common.wire.WIRE_PAYLOAD_FIELD
 import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
+import opensamguk.gameapi.precheck.EnlistmentPrecheckService
+import opensamguk.gameapi.read.GeneralReadEntity
+import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.ReservedTurnRepository
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.input.EnlistmentAssessment
+import opensamguk.logic.input.EnlistmentMode
+import opensamguk.logic.input.EnlistmentPlan
+import opensamguk.logic.input.EnlistmentRequest
 import opensamguk.logic.stats.GeneralActionPipeline
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -32,6 +41,7 @@ import java.sql.Timestamp
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
+import java.util.Optional
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -40,7 +50,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * Task E3 — reserve IT (Testcontainers postgres + redis). Reserves `che_농지개간` through
+ * Reserve IT (Testcontainers postgres + redis). Reserves the delivered `action.enlist` input through
  * [CommandReserveService] and proves BOTH effects of step 2:
  *
  *  - the durable `general_turn` row exists with the reserved action-code + arg (DB = source of truth);
@@ -53,7 +63,7 @@ import kotlin.test.assertTrue
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class CommandReserveServiceIT {
 
-    private val profile = "che:scenario_2"
+    private val profile = "campaign"
     private val commandStream = TurnDaemonStreamKeys.of(profile, WorldId(1)).commandStream
 
     private lateinit var jdbc: NamedParameterJdbcTemplate
@@ -66,23 +76,23 @@ class CommandReserveServiceIT {
         assertTrue(postgres.isRunning, "postgres:16-alpine container must be running")
         assertTrue(redis.isRunning, "redis:7-alpine container must be running")
 
-        val result = service.reserve(
+        val result = service.reserveForOwner(
             generalId = 10,
-            actionCode = "che_농지개간",
+            actionCode = "action.enlist",
             turnIdx = 0,
-            argJson = """{"amount":100}""",
+            argJson = """{ "targetId":3, "mode":"NATION" }""",
+            ownerUserId = 42,
         )
 
         // --- DB: the durable reservation exists with the reserved action + arg ---
         val reserved = ReservedTurnRepository(jdbc).readReserved(worldId = WorldId(1), generalId = 10, turnIdx = 0)
-        assertEquals("che_농지개간", reserved.actionCode)
-        assertEquals("""{"amount": 100}""", reserved.argJson)
+        assertEquals("action.enlist", reserved.actionCode)
+        assertEquals("""{"mode": "NATION", "targetId": 3}""", reserved.argJson)
         assertEquals(result.requestId, reserved.requestId)
         assertEquals(1, inboxCount(result.requestId))
-        // OPENSAM-197 — 결과 조회 소유권의 근거 행이 실제로 읽힌다. 일반 명령은 제출 계정을 따로
-        // 남기지 않으므로(=NULL) 소유권은 general_id로 판정된다.
+        // 결과 조회 소유권의 근거 행이 실제로 읽히고 제출 계정까지 보존된다.
         assertEquals(
-            CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = null),
+            CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = 42),
             CommandInboxRepository(jdbc).findRequestOwner(WorldId(1), result.requestId),
         )
         val redisWakePublishedAt = assertNotNull(readRedisWakePublishedAt(result.requestId))
@@ -117,7 +127,8 @@ class CommandReserveServiceIT {
         jdbcTemplate.execute(
             """
             CREATE TABLE world_state (
-                id integer PRIMARY KEY
+                id integer PRIMARY KEY,
+                config jsonb NOT NULL DEFAULT '{}'::jsonb
             )
             """.trimIndent(),
         )
@@ -195,7 +206,7 @@ class CommandReserveServiceIT {
             """.trimIndent(),
         )
         jdbcTemplate.update(
-            "INSERT INTO world_state (id) VALUES (1)",
+            "INSERT INTO world_state (id, config) VALUES (1, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN'))",
         )
         jdbc = NamedParameterJdbcTemplate(dataSource)
 
@@ -205,9 +216,14 @@ class CommandReserveServiceIT {
         redisTemplate = StringRedisTemplate(connectionFactory)
         redisTemplate.afterPropertiesSet()
 
-        val worldReads = org.mockito.Mockito.mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
-        org.mockito.Mockito.`when`(worldReads.findProcessWorld()).thenReturn(
-            opensamguk.gameapi.read.WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
+        val worldReads = mock(opensamguk.gameapi.read.WorldStateReadRepository::class.java)
+        `when`(worldReads.findProcessWorld()).thenReturn(
+            opensamguk.gameapi.read.WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
+        val generals = mock(GeneralReadRepository::class.java)
+        `when`(generals.findById(10)).thenReturn(Optional.of(GeneralReadEntity(id = 10, userId = "42")))
+        val precheck = mock(EnlistmentPrecheckService::class.java)
+        `when`(precheck.assess(EnlistmentRequest(10, EnlistmentMode.NATION, 3))).thenReturn(
+            EnlistmentAssessment.Eligible(listOf(EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
         // deterministic clock + requestId so the assertions are byte-stable.
         service = CommandReserveService(
             reservedTurns = ReservedTurnRepository(jdbc),
@@ -218,6 +234,7 @@ class CommandReserveServiceIT {
             processWorld = GameApiProcessWorld(1),
             profile = profile,
             worldStates = worldReads,
+            enlistmentAdmission = EnlistmentAdmission(generals, precheck),
             clock = Clock.fixed(Instant.parse("0200-01-01T00:00:00.000Z"), ZoneOffset.UTC),
             requestIds = { "req-e3-fixed" },
             transactions = TransactionTemplate(DataSourceTransactionManager(dataSource)),

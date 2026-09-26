@@ -96,14 +96,16 @@ object DomesticEffects {
         return PolicyOutcome(next, credit, debit)
     }
 
-    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: Phase): ActiveWork {
+    fun newWork(design: DomesticDesign, work: DomesticWork, requestId: String, actorId: Int, requestedAt: Phase,
+        edgeId: String? = null, row: Int? = null, col: Int? = null): ActiveWork {
         val spec = design.works.getValue(work)
-        return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, Resources(), null, null)
+        return ActiveWork(work, requestId, actorId, requestedAt, 0, spec.requiredProgress, spec.cost, Resources(), null, null,
+            edgeId, row, col)
     }
 
     /** 이번 순에 한 번 진척한다. [stock] 은 그 縣 창고의 현재 재고다. */
     fun progressWork(design: DomesticDesign, work: ActiveWork, now: Phase, stock: Resources,
-        levels: CountyLevels, seat: SeatStats?): WorkStep {
+        levels: CountyLevels, seat: SeatStats?, alreadyCompletedInCounty: Boolean = false): WorkStep {
         val speed = design.progressPerPhase.toLong() * multiplier(design, DomesticDesign.Stat.INTELLIGENCE, seat) / 1000
         val next = minOf(work.required.toLong(), work.progress + maxOf(1L, speed)).toInt()
         val due = charged(work.cost, next, work.required).debit(work.charged)
@@ -111,8 +113,11 @@ object DomesticEffects {
         if (stock.debit(due) == null) return WorkStep.Stopped(work.copy(stopReason = INSUFFICIENT_STOCK), INSUFFICIENT_STOCK)
         if (next == work.required) {
             var after = levels
-            for (effect in design.works.getValue(work.work).completion) after = add(after, effect.indicator, effect.amount.toLong())
-            return WorkStep.Completed(CompletedWork(work.work, now), due, after)
+            // Strategic roads and forts change the world map, not the county's commerce or walls.
+            if (work.edgeId == null && !alreadyCompletedInCounty)
+                for (effect in design.works.getValue(work.work).completion)
+                after = add(after, effect.indicator, effect.amount.toLong())
+            return WorkStep.Completed(CompletedWork(work.work, now, work.edgeId, work.row, work.col), due, after)
         }
         return WorkStep.Advanced(work.copy(progress = next, charged = work.charged.credit(due), lastProgressAt = now,
             stopReason = null), due)

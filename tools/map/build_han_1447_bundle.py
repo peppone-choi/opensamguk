@@ -50,16 +50,30 @@ def outputs():
 def main():
     p=argparse.ArgumentParser(description=__doc__);mode=p.add_mutually_exclusive_group(required=True)
     mode.add_argument('--write',action='store_true');mode.add_argument('--check',action='store_true');a=p.parse_args()
-    expected=outputs()
     if a.write:
-        for path,data in expected.items():
-            path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(data)
-        for path in (BUNDLE/'blobs').glob('*.json.gz'):
-            if path not in expected:path.unlink()
-    problems=[str(p.relative_to(ROOT)) for p,b in expected.items() if not p.exists() or p.read_bytes()!=b]
-    pins={'catalog':sha(expected[BUNDLE/'catalog.json']), 'constants':sha(expected[BUNDLE/'runtime-constants.json'])}
-    if not a.write:
-        if pins['catalog'] not in (ROOT/'infra/src/main/kotlin/opensamguk/infra/seed/Han1447Artifacts.kt').read_text():problems.append('1447 Kotlin catalog pin')
-        if pins['constants'] not in (ROOT/'infra/src/test/kotlin/opensamguk/infra/seed/HanRuntimeConstantsIntegrityTest.kt').read_text():problems.append('1447 constants test pin')
+        p.error('1447 is frozen; write a new variant instead')
+    catalog_bytes=(BUNDLE/'catalog.json').read_bytes()
+    constants_bytes=(BUNDLE/'runtime-constants.json').read_bytes()
+    catalog=json.loads(catalog_bytes);constants=json.loads(constants_bytes)
+    problems=[]
+    pins={'catalog':sha(catalog_bytes), 'constants':sha(constants_bytes)}
+    if catalog['artifactId']!='han-world-v3-1447' or catalog['cityCount']!=1447:
+        problems.append('1447 frozen catalog identity')
+    for entry in catalog['files']:
+        blob=BUNDLE/entry['blob']
+        if not blob.is_file():
+            problems.append(str(blob.relative_to(ROOT)));continue
+        compressed=blob.read_bytes()
+        if sha(compressed)!=entry['compressedSha256']:
+            problems.append(str(blob.relative_to(ROOT)));continue
+        data=gzip.decompress(compressed)
+        if len(data)!=entry['bytes'] or sha(data)!=entry['sha256']:
+            problems.append(str(blob.relative_to(ROOT)))
+    for entry in constants['files']:
+        snapshot=ROOT/entry['snapshot']
+        if not snapshot.is_file() or sha(snapshot.read_bytes())!=entry['snapshotSha256']:
+            problems.append(str(snapshot.relative_to(ROOT)))
+    if pins['catalog'] not in (ROOT/'infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Artifacts.kt').read_text():problems.append('1447 Kotlin catalog pin')
+    if pins['constants'] not in (ROOT/'infra/src/test/kotlin/opensamguk/infra/seed/ArchiveRuntimeConstantsIntegrityTest.kt').read_text():problems.append('1447 constants test pin')
     print(json.dumps({'pins':pins,'drift':problems}));return bool(problems)
 if __name__=='__main__':raise SystemExit(main())

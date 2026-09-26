@@ -45,7 +45,7 @@ WATER = {RIVER, LAKE}
 NEIGH8 = [(a, b) for a in (-1, 0, 1) for b in (-1, 0, 1) if (a, b) != (0, 0)]
 NEIGH4 = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 BANK_WINDOW = 6          # half-size of the window in which banks are separated
-BANK_MAX_FROM_NODE = 3   # a bank cell must sit this close to the node cell
+BANK_MAX_FROM_NODE = 4   # moved ferry markers may be one cell from their projected water node
 ROLES = {"CROSSING", "PORT"}
 BLOCK_CODES = {
     "RIVER_COURSE_NOT_IN_GRID",        # nearest water >= 2 cells away: needs river-course adjudication
@@ -161,6 +161,13 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
     need(base["hanTiles"]["sha256"] == sha256(tiles_bytes), "han-tiles base pin drift")
     need(base["strongholds"]["sha256"] == sha256(strongholds_bytes), "stronghold ledger base pin drift")
 
+    # This evidence ledger is a non-activating historical witness in the
+    # original 768×669 geographic frame. Display-grid refinement preserves
+    # those physical cells, so inspect that frame while pinning the full map.
+    if tiles['_meta'].get('resolutionScale', 1) > 1:
+        from tools.map.korea_map_extension import base_frame
+        tiles = base_frame(tiles)
+
     terrain = tiles["terrain"]
     owner = decode_owner(tiles)
     provinces = tiles["provinceRecords"]
@@ -225,9 +232,11 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
     def site_cell(ref: dict, where: str) -> tuple[int, int]:
         if ref["kind"] == "STRONGHOLD":
             site = ferries.get(ref["id"]) or fail(f"{where}: unknown FERRY stronghold {ref['id']}")
-            from tools.map.korea_map_extension import NORTH_ROWS
-            offset = NORTH_ROWS if tiles["_meta"]["rows"] == 843 else 0
-            return site["tileAnchor"]["row"] + offset, site["tileAnchor"]["col"]
+            # A reviewed strategic carve may move the actual ferry marker a
+            # few cells while preserving the source's projected tileAnchor.
+            # Water nodes must follow the committed playable marker.
+            placed = cities.get(f"ss-{ref['id']}") or fail(f"{where}: stronghold has no placed city")
+            return placed["row"], placed["col"]
         need(ref["kind"] == "CITY", f"{where}: unsupported site kind")
         city = cities.get(ref["id"]) or fail(f"{where}: unknown city {ref['id']}")
         return city["row"], city["col"]
@@ -242,7 +251,7 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
         seen_sites.add(site)
         cell = site_cell(row["siteRef"], where)
         need([cell[0], cell[1]] == [row["cell"]["row"], row["cell"]["col"]],
-             f"{where}: ledger cell differs from the site's recorded cell — sites are never moved")
+             f"{where}: ledger cell differs from the committed site cell")
         need(row["reach"] in reach_cells, f"{where}: unknown reach")
         reach = reach_cells[row["reach"]]
         roles = row["roles"]
@@ -426,6 +435,11 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
             to_reach = chebyshev_to(cell, reach_cells[row["reach"]])
             need(to_reach == row.get("measuredCellDistanceToReach") and to_reach >= 2,
                  f"{where}: reach distance {to_reach} does not justify the block")
+        elif row["reasonCode"] == "SITE_PROVINCE_DOES_NOT_TOUCH_REACH":
+            need(measured is not None and measured >= 2,
+                 f"{where}: moved site is now adjacent to water; review its province against the reach")
+        elif row["reasonCode"] in {"ROLE_NOT_ESTABLISHED_BY_EVIDENCE", "OUT_OF_SLICE_WATER_SYSTEM"}:
+            need(measured is not None, f"{where}: measured water distance unavailable")
         else:
             need(measured is not None and measured <= 1, f"{where}: site is not on water")
         blocked_rows.append({"id": f"blocked-node:{key}", "nameHan": row["nameHan"],

@@ -25,7 +25,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
         result = self.audit.audit_materialized()
 
         # 결손 223 城의 省을 포함하며, 미해독 세 城의 省은 제외한다.
-        self.assertEqual(1_653, result["counts"]["landProvinceIds"])
+        self.assertEqual(1_627, result["counts"]["landProvinceIds"])
         self.assertEqual(2, result["counts"]["waterZones"])
         self.assertEqual({"COASTAL_SEA": 1, "LAKE_BASIN": 1}, result["zoneKinds"])
         self.assertEqual({}, result["edgeModes"])
@@ -78,8 +78,8 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
 
         disconnected = copy.deepcopy(artifact)
         disconnected["geometryComponents"][0]["cellRuns"] = [
-            {"row": 51, "startCol": 731, "endCol": 731},
-            {"row": 668, "startCol": 0, "endCol": 0},
+            {"row": 2172, "startCol": 1220, "endCol": 1220},
+            {"row": 2175, "startCol": 1407, "endCol": 1407},
         ]
         disconnected["geometryComponents"][0]["cellCount"] = 2
         with self.assertRaisesRegex(ValueError, "connected waterbody"):
@@ -87,7 +87,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
 
         open_sea = copy.deepcopy(artifact)
         open_sea["geometryComponents"][0]["cellRuns"] = [
-            {"row": 55, "startCol": 729, "endCol": 730}
+            {"row": 2172, "startCol": 1300, "endCol": 1301}
         ]
         open_sea["geometryComponents"][0]["cellCount"] = 2
         with self.assertRaisesRegex(ValueError, "coastal.*owner boundary|shoreline"):
@@ -119,7 +119,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
         geometry = next(
             row for row in artifact["geometryComponents"] if row["id"] == coast["geometryRef"]
         )
-        geometry["cellRuns"] = [{"row": 51, "startCol": 731, "endCol": 732}]
+        geometry["cellRuns"] = [{"row": 639, "startCol": 1900, "endCol": 1901}]
         geometry["cellCount"] = 2
 
         with self.assertRaisesRegex(ValueError, "source.*member.*boundary|cited.*boundary"):

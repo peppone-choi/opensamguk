@@ -127,7 +127,7 @@ class RenownEventsTest {
 
     @Test
     fun `정본 데이터 파일과 코드의 임계값·원인 표가 같다`() {
-        val text = Files.readString(repoRoot().resolve("data/curated/han/hwiha-renown-events-v1.json"))
+        val text = Files.readString(repoRoot().resolve("data/curated/han/renown-events-v1.json"))
         val bp = Regex("\"minRiseBasisPoints\"\\s*:\\s*(\\d+)").find(text)!!.groupValues[1].toInt()
         assertEquals(DomesticMerit.MIN_RISE_BASIS_POINTS, bp)
         assertTrue("\"status\": \"CONFIRMED\"" in text, "2026-09-23 확정 상태를 유지해야 한다")

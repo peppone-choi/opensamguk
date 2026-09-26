@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "authority": "2026-09-24-user-decision-C-dead-ends",
+  "purpose": "일반 성이 있는 실제 해안·섬 막다른 구역의 기존 전략 가치 기록. 성 없는 막다른 구역과 수·진·관·이 막다른 끝은 허용하지 않는다.",
+  "dispositions": [
+    {
+      "provinceId": "42444",
+      "cityId": 744,
+      "cityName": "주애",
+      "level": 11,
+      "disposition": "EXISTING_CITY_VALUE",
+      "coastal": true,
+      "existingWaterRouteTo": [
+        "42424"
+      ],
+      "reason": "기존 성과 해상 간선의 통제 가치를 유지한다."
+    },
+    {
+      "provinceId": "X035",
+      "cityId": 1104,
+      "cityName": "우산국",
+      "level": 5,
+      "disposition": "EXISTING_CITY_VALUE",
+      "coastal": true,
+      "existingWaterRouteTo": [
+        "X032"
+      ],
+      "reason": "기존 성과 해상 간선의 통제 가치를 유지한다."
+    },
+    {
+      "provinceId": "X043",
+      "cityId": 1112,
+      "cityName": "주호",
+      "level": 5,
+      "disposition": "EXISTING_CITY_VALUE",
+      "coastal": true,
+      "existingWaterRouteTo": [
+        "X041"
+      ],
+      "reason": "기존 성과 해상 간선의 통제 가치를 유지한다."
+    },
+    {
+      "provinceId": "X056",
+      "cityId": 1125,
+      "cityName": "이주",
+      "level": 5,
+      "disposition": "EXISTING_CITY_VALUE",
+      "coastal": true,
+      "existingWaterRouteTo": [
+        "40758"
+      ],
+      "reason": "기존 성과 해상 간선의 통제 가치를 유지한다."
+    },
+    {
+      "provinceId": "X057",
+      "cityId": 1126,
+      "cityName": "유구",
+      "level": 5,
+      "disposition": "EXISTING_CITY_VALUE",
+      "coastal": true,
+      "existingWaterRouteTo": [
+        "40758"
+      ],
+      "reason": "기존 성과 해상 간선의 통제 가치를 유지한다."
+    },
+    {
+      "provinceId": "KOR-X078-X040",
+      "cityId": 1147,
+      "cityName": "신소도",
+      "level": 5,
+      "disposition": "EXISTING_CITY_VALUE",
+      "coastal": true,
+      "existingWaterRouteTo": [],
+      "reason": "기존 성과 해안 지형의 방어 가치를 유지한다. 근거 없는 바닷길을 추가하지 않는다."
+    }
+  ]
+}

@@ -11,7 +11,7 @@ class DomesticRulesTest {
     private val now = Phase(200, 1, 1)
     private fun person(id: Int, nation: Int = 1, human: Boolean = false, lord: Boolean = false, level: Int = 0,
         node: String? = "p$id", npc: Int = 2, meta: Map<String, Any?> = emptyMap()) = DomesticPerson(id, "G$id", nation, human,
-        if (human) 0 else npc, level, 60, 60, 60, 60, 60, node, false, meta + ("hwihaLord" to lord))
+        if (human) 0 else npc, level, 60, 60, 60, 60, 60, node, false, meta + ("lord" to lord))
 
     /** 1 = 군주(사람), 2 = 1의 NPC 부장 카드(4), 3 = 1의 NPC 참모 카드(5), 6 = 다른 사람 장수(1이 거느림, 카드 8). */
     private fun state(
@@ -27,6 +27,20 @@ class DomesticRulesTest {
     private fun warehouse(id: Int) = mapOf(CountyWarehouse.META_KEY to CountyWarehouse(id, 0, Resources()).toMetaValue())
 
     private fun rejected(result: DomesticAssessment) = assertIs<DomesticAssessment.Rejected>(result).reason
+
+    @Test fun `a road fort alone cannot be reduced as a county wall`() {
+        val fort = CompletedWork(DomesticWork.FORTIFICATION, now, "road-piece", 1, 1)
+        val withFort = county(10, meta = warehouse(10) +
+            (CountyWorks.META_KEY to CountyWorks(null, listOf(fort)).toMetaValue()))
+        val request = WorkRequest(1, 10, DomesticWork.FORTIFICATION)
+        assertEquals(DomesticFailure.WORK_NOT_COMPLETED, rejected(DomesticRules.assessReduce(
+            request, state(counties = listOf(withFort)))))
+        val wall = CompletedWork(DomesticWork.FORTIFICATION, now.plus(1))
+        val withWall = withFort.copy(meta = warehouse(10) + (CountyWorks.META_KEY to
+            CountyWorks(null, listOf(fort, wall)).toMetaValue()))
+        assertIs<DomesticAssessment.Eligible>(DomesticRules.assessReduce(
+            request, state(counties = listOf(withWall))))
+    }
 
     @Test fun `lord places an owned npc card as magistrate but never a human`() {
         assertIs<DomesticAssessment.Eligible>(DomesticRules.assessPlacement(

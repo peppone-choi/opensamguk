@@ -1,8 +1,9 @@
 package opensamguk.gameapi.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.StrategicWaterGeometry
+import opensamguk.logic.world.StrategicRoadGate
 
 data class StrategicTopologyBinding(
     val worldId: Int,
@@ -14,7 +15,7 @@ data class StrategicTopologyBinding(
     val rows: Int,
 ) {
     companion object {
-        fun from(worldId: Int, projection: HanStrategicRouteProjection): StrategicTopologyBinding {
+        fun from(worldId: Int, projection: StrategicRouteProjection): StrategicTopologyBinding {
             val display = requireNotNull(projection.presentation) { "Validated strategic presentation is missing" }
             return StrategicTopologyBinding(worldId, "han-world-v3", projection.topology.topologyRevision,
                 projection.topology.contentHash, display.baseTilesSha256, display.cols, display.rows)
@@ -30,6 +31,7 @@ data class StrategicWaterZoneDto(
 data class StrategicTraversalEdgeDto(
     val id: String, val from: String, val to: String, val mode: String,
     val movementCost: Int, val capacity: Int, val seasonalAvailability: String, val supplyAllowed: Boolean,
+    val initiallyOpen: Boolean = true, val routeWeightPermille: Int = 1000,
 )
 
 data class StrategicRiverBarrierDto(val id: String, val firstLandProvinceId: String, val secondLandProvinceId: String)
@@ -43,6 +45,7 @@ data class StrategicMapTopologyDto(
     val riverBarriers: List<StrategicRiverBarrierDto>,
     val ports: List<StrategicPortDto>,
     val activationBlockerCodes: List<String>,
+    val roadGates: List<StrategicRoadGate> = emptyList(),
 )
 
 @JsonInclude(JsonInclude.Include.ALWAYS)
@@ -61,4 +64,5 @@ data class StrategicTopologyResponse(
     val topology: StrategicMapTopologyDto?,
     val controlVisibility: String,
     val controls: List<StrategicWaterControlDto>,
+    val roadOpenEdgeIds: List<String>? = null,
 )

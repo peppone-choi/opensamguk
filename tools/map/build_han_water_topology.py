@@ -21,6 +21,7 @@ from han_tiles_contract import (
 
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 TILES = ROOT / "data" / "map" / "han-tiles.json"
 ADJUDICATIONS = ROOT / "data" / "curated" / "han" / "water-topology-adjudications-v1.json"
 OUTPUT = ROOT / "data" / "map" / "han-water-topology-v1.json"
@@ -576,11 +577,19 @@ def build_water_topology(
             "river activation blocker forbids executable river barriers and crossings"
         )
 
-    terrain = tiles["terrain"]
-    owner = _decode_owner(tiles)
-    owner_identities = _owner_identity_sets(tiles["provinceRecords"])
+    # Adjudicated selectors were reviewed on the 768×669 geographic frame.
+    # Resolve them there, then expand each selected water cell to the refined
+    # runtime grid. The artifact and its base binding use the full map.
+    scale = tiles["_meta"].get("resolutionScale", 1)
+    geometry_tiles = tiles
+    if scale > 1:
+        from tools.map.korea_map_extension import base_frame
+        geometry_tiles = base_frame(tiles)
+    terrain = geometry_tiles["terrain"]
+    owner = _decode_owner(geometry_tiles)
+    owner_identities = _owner_identity_sets(geometry_tiles["provinceRecords"])
     province_index_by_id = {
-        province["id"]: index for index, province in enumerate(tiles["provinceRecords"])
+        province["id"]: index for index, province in enumerate(geometry_tiles["provinceRecords"])
     }
     zone_rows: list[dict] = []
     geometry_rows: list[dict] = []
@@ -794,6 +803,15 @@ def build_water_topology(
             "sourceRefs": refs,
         })
 
+    if scale > 1:
+        for geometry in geometry_rows:
+            geometry["cellRuns"] = [
+                {"row": run["row"] * scale + offset,
+                 "startCol": run["startCol"] * scale,
+                 "endCol": (run["endCol"] + 1) * scale - 1}
+                for run in geometry["cellRuns"] for offset in range(scale)
+            ]
+            geometry["cellCount"] *= scale * scale
     artifact = {
         "schemaVersion": SCHEMA_VERSION,
         "artifactId": ARTIFACT_ID,

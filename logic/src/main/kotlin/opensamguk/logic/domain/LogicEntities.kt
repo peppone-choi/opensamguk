@@ -121,11 +121,11 @@ data class WorldEnv(
     // 인사/외교 5-stat 발산(등용 매력 평판완화 등)까지 포괄. 기본값 덕분에 기존 생성자/골든은 전부 무영향.
     val fiveStatLogic: Boolean = false,
     val mapName: String = "che",
-    val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
+    val worldMapVariant: opensamguk.logic.world.WorldMapVariant? = null,
 ) {
     val cityConst: opensamguk.logic.world.CityConstVariant get() {
-        require(mapName != "han-world-v3" || hanWorldVariant != null) { "Historical action map must be selected" }
-        return opensamguk.logic.world.ActiveWorldMap.requireVariant(mapOf("mapName" to mapName), emptyMap(), hanWorldVariant)
+        require(mapName != "han-world-v3" || worldMapVariant != null) { "Historical action map must be selected" }
+        return opensamguk.logic.world.ActiveWorldMap.requireVariant(mapOf("mapName" to mapName), emptyMap(), worldMapVariant)
     }
 
     val relYear: Int get() = year - startYear

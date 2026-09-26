@@ -1,8 +1,8 @@
 package opensamguk.gameapi.read
 
 import opensamguk.gameapi.dto.*
-import opensamguk.infra.seed.HanStrategicTopologyJson
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.infra.seed.StrategicTopologyJson
+import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.TraversalMode
 import org.springframework.beans.factory.annotation.Autowired
@@ -10,11 +10,11 @@ import org.springframework.stereotype.Component
 
 /** Both map endpoints consume this one immutable, fully verified artifact snapshot. */
 @Component
-class StrategicTopologyReadSource(private val loader: () -> HanStrategicRouteProjection) {
+class StrategicTopologyReadSource(private val loader: () -> StrategicRouteProjection) {
     @Autowired
-    constructor() : this(HanStrategicTopologyJson::loadDefault)
+    constructor() : this(StrategicTopologyJson::loadDefault)
 
-    val projection: HanStrategicRouteProjection by lazy(loader)
+    val projection: StrategicRouteProjection by lazy(loader)
 
     fun binding(worldId: Int): StrategicTopologyBinding = StrategicTopologyBinding.from(worldId, projection)
 
@@ -22,7 +22,7 @@ class StrategicTopologyReadSource(private val loader: () -> HanStrategicRoutePro
         presentationFor(projection)
     }
 
-    fun presentationFor(projection: HanStrategicRouteProjection): StrategicMapTopologyDto {
+    fun presentationFor(projection: StrategicRouteProjection): StrategicMapTopologyDto {
         val topology = projection.topology
         val display = requireNotNull(projection.presentation)
         return StrategicMapTopologyDto(
@@ -34,6 +34,7 @@ class StrategicTopologyReadSource(private val loader: () -> HanStrategicRoutePro
             topology.traversalEdges.sortedBy { it.id }.map { edge -> StrategicTraversalEdgeDto(
                 edge.id, edge.from.canonicalKey, edge.to.canonicalKey, edge.mode.name,
                 edge.movementCost, edge.capacity, edge.seasonalAvailability.name, edge.supplyAllowed,
+                edge.initiallyOpen, edge.routeWeightPermille,
             ) },
             topology.riverBarriers.sortedBy { it.id }.map { StrategicRiverBarrierDto(it.id, it.firstLandProvinceId, it.secondLandProvinceId) },
             topology.traversalEdges.filter { it.mode in setOf(TraversalMode.EMBARK, TraversalMode.DISEMBARK) }
@@ -43,6 +44,7 @@ class StrategicTopologyReadSource(private val loader: () -> HanStrategicRoutePro
                     StrategicPortDto(edge.id, land.id, water.id)
                 },
             projection.activationBlockerCodes.sorted(),
+            display.roadGates,
         )
     }
 }
