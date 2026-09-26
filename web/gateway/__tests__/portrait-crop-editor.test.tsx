@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useState } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import PortraitCropEditor from '@/components/account/PortraitCropEditor';
-import { initialCrops } from '@/lib/portraitCrop';
+import { initialCrops, type PortraitCrops } from '@/lib/portraitCrop';
 
 function source(w = 1200, h = 800, fails = false) {
     vi.stubGlobal('Image', class {
@@ -53,6 +54,31 @@ describe('manual portrait editor', () => {
         render(<PortraitCropEditor file={file} onChange={changed} />);
         const frame = await screen.findByLabelText('히어로 자르기 영역');
         fireEvent.wheel(frame, { deltaY: -200 });
+        const next = changed.mock.calls.at(-1)![0];
+        expect(next.hero.width).toBeLessThan(initialCrops(1200, 800).hero.width);
+        expect(next.card).toEqual(initialCrops(1200, 800).card);
+    });
+    it('wheel zooms from the commit that first shows the frame', async () => {
+        // The account page re-renders with every crop. A slow render there made the scheduler
+        // yield before passive effects, so the frame was on screen with no wheel listener.
+        const changed = vi.fn();
+        function Page() {
+            const [crops, setCrops] = useState<PortraitCrops | null>(null);
+            if (crops) for (const until = performance.now() + 10; performance.now() < until;);
+            return <PortraitCropEditor file={file} onChange={(next) => { changed(next); setCrops(next); }} />;
+        }
+        let fired = false;
+        const firstSight = new MutationObserver(() => {
+            const frame = screen.queryByLabelText('히어로 자르기 영역');
+            if (!frame || fired) return;
+            fired = true;
+            fireEvent.wheel(frame, { deltaY: -200 });
+        });
+        firstSight.observe(document.body, { childList: true, subtree: true });
+        render(<Page />);
+        await screen.findByLabelText('히어로 자르기 영역');
+        firstSight.disconnect();
+        expect(fired).toBe(true);
         const next = changed.mock.calls.at(-1)![0];
         expect(next.hero.width).toBeLessThan(initialCrops(1200, 800).hero.width);
         expect(next.card).toEqual(initialCrops(1200, 800).card);
