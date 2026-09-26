@@ -181,13 +181,11 @@ class MapDesignInvariantsTest(unittest.TestCase):
 
     def test_source_fix_candidates_are_sourced_and_not_silently_applied(self):
         doc = json.loads((B.OUT / "source-fix-candidates-v1.json").read_text())
-        moved = {p["cityId"] for p in self.pl}
         for r in doc["syntheticCounties"]:
             self.assertTrue(r["source"].startswith("http"), r["nameHan"])
             if r["verdict"] != "DESIGN_LAYER_MOVABLE":
                 self.assertNotIn(r["cityId"], {p["cityId"] for p in self.pl if p.get("reason") == "SOURCE_FIX"})
         self.assertEqual(doc["designLayerMoves"], [r["placeId"] for r in doc["syntheticCounties"] if r["verdict"] == "DESIGN_LAYER_MOVABLE"])
-        self.assertIsInstance(moved, set)
 
     def test_every_river_has_a_source_and_every_dodge_city_exists(self):
         self.assertTrue(all(r[2] for r in self.docs[B.RIVERS]["rivers"]))
