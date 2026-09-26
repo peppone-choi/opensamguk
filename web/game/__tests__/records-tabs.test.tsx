@@ -28,10 +28,11 @@ describe('RecordsTabs', () => {
     });
 
     it('keeps rankings active and links ranking siblings from a detail page', () => {
-        nav.pathname = '/game/rankings/emperor/7';
+        nav.pathname = '/game/rankings/best-generals';
         render(<RecordsTabs />);
         expect(screen.getByRole('link', { name: '랭킹' })).toHaveAttribute('aria-current', 'page');
-        expect(screen.getByRole('link', { name: '황제 정보' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.getByRole('link', { name: '명장 순위' })).toHaveAttribute('aria-current', 'page');
+        expect(screen.queryByRole('link', { name: '황제 정보' })).toBeNull();
         expect(screen.getByRole('link', { name: '세력 순위' })).toHaveAttribute('href', '/game/rankings/kingdoms');
     });
 });

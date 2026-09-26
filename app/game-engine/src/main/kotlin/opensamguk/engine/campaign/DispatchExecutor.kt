@@ -4,6 +4,11 @@ import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 
 sealed interface DispatchExecution {
     data class Applied(val dispatch: DispatchState) : DispatchExecution
@@ -39,8 +44,12 @@ class DispatchExecutor(
         // Only the issuer and the target learn about a dispatch; it is private to both (DispatchState).
         Records.general(world, dispatch.targetId, RecordKind.DISPATCH_RECEIVED,
             targetText ?: "발령이 도착했습니다. 기한 안에 수락하거나 거절할 수 있습니다.", refs(dispatch))
-        if (humanOwned(dispatch.issuerId)) Records.general(world, dispatch.issuerId, RecordKind.DISPATCH_ISSUED,
-            "휘하 장수에게 발령을 내렸습니다.", refs(dispatch))
+        recordDispatch(EventKind.DISPATCH_RECEIVED, dispatch, setOf(dispatch.targetId))
+        if (humanOwned(dispatch.issuerId)) {
+            Records.general(world, dispatch.issuerId, RecordKind.DISPATCH_ISSUED,
+                "휘하 장수에게 발령을 내렸습니다.", refs(dispatch))
+            recordDispatch(EventKind.DISPATCH_ISSUED, dispatch, setOf(dispatch.issuerId))
+        }
         return DispatchExecution.Applied(dispatch)
     }
 
@@ -74,6 +83,7 @@ class DispatchExecutor(
                 Records.general(world, target.id, RecordKind.DISPATCH_CANCELLED,
                     "기한이 되었지만 발령이 더 이상 유효하지 않아 벌점 없이 취소되었습니다.",
                     refs(cancelled) + ("reason" to assessment.reason.name))
+                recordDispatch(EventKind.DISPATCH_CANCELLED, cancelled, setOf(target.id))
             }
             return reject(assessment.reason)
         }
@@ -109,6 +119,9 @@ class DispatchExecutor(
             how ?: if (accept) "발령을 수락했습니다. 다음 턴부터 부임지로 행군합니다."
                 else "발령을 거절했습니다. 충성이 ${policy.refusalLoyaltyLoss} 줄고 다음 월단평에 발령 거절이 반영됩니다.",
             refs(resolved) + ("lapsed" to lapsed))
+        recordDispatch(if (accept) EventKind.DISPATCH_ACCEPTED else EventKind.DISPATCH_REFUSED,
+            resolved, setOf(target.id) +
+                (if (humanOwned(old.issuerId)) setOf(old.issuerId) else emptySet()))
         if (renownRecorded) RenownEventRecorder.announce(world, target.id, RenownEventSource.DISPATCH_REFUSAL)
         // An NPC lord keeps no personal record; its reasoning is already in the target's record.
         if (humanOwned(old.issuerId)) Records.general(world, old.issuerId, kind,
@@ -119,6 +132,23 @@ class DispatchExecutor(
 
     private fun humanOwned(generalId: Int): Boolean =
         (world.getGeneralById(generalId)?.userId?.toLongOrNull() ?: 0) > 0
+
+    private fun recordDispatch(kind: EventKind, dispatch: DispatchState, recipients: Set<Int>) {
+        world.recordEvent(
+            kind = kind,
+            audience = AudienceTarget.Court(dispatch.nationId, recipients),
+            // DispatchState permits punctuation at the start of an ID and up to 128
+            // characters. Prefix fixed-size chunks so each key coordinate satisfies
+            // EventKey's stricter grammar without truncating the source ID.
+            eventKey = EventKey.derive(kind.code, world.worldId.value.toString(),
+                *dispatch.dispatchId.chunked(64).map { "id$it" }.toTypedArray()),
+            refs = mapOf(
+                RefRole.REQUEST to EventRef.Request(dispatch.dispatchId),
+                RefRole.ISSUER to EventRef.General(dispatch.issuerId),
+                RefRole.TARGET to EventRef.General(dispatch.targetId),
+            ),
+        )
+    }
 
     private fun refs(dispatch: DispatchState): Map<String, Any?> = linkedMapOf(
         "dispatchId" to dispatch.dispatchId, "issuerId" to dispatch.issuerId, "targetId" to dispatch.targetId,
