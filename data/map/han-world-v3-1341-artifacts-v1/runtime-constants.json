@@ -2,14 +2,14 @@
   "variantId": "han-world-v3-1341",
   "files": [
     {
-      "source": "common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt",
-      "sourceSha256": "4a0ef283a7d110fbabe07f56c333573aae1f4c701f04b1d3972fd2f9721648b1",
+      "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",
+      "sourceSha256": "20a2447a571342a169b516d316b771e9d0a5accc7f324595640fee6aa764b220",
       "snapshot": "common/src/main/kotlin/opensamguk/common/constants/Archive1341CityConst.kt",
-      "snapshotSha256": "02d54841d8ce64872c65a6aed23218b61fd7c067310a7b712c7a4139cfe8f337"
+      "snapshotSha256": "ae9eaab5f79ebe4f5ac038623f8462446606a69298ac7b3268d7a15848fdc1a0"
     },
     {
-      "source": "common/src/main/kotlin/opensamguk/common/constants/ArchiveGateIndex.kt",
-      "sourceSha256": "4ef7f412aabcb6615eacd65e994d6d331d93c74207990c09268ae030b336c30d",
+      "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt",
+      "sourceSha256": "2bd4249e77d97814abe9fb6bf12efec6b89ff1ea38ae1b215711553d1dc00b47",
       "snapshot": "common/src/main/kotlin/opensamguk/common/constants/Archive1341GateIndex.kt",
       "snapshotSha256": "1c835de4900c6ac2388a7d3d490e3a5fdd1ac5f0af702b402347b247c5102623"
     }

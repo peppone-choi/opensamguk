@@ -1,4 +1,4 @@
-// Frozen runtime input from 91fad09734e472b72a3b8720b0bce9f5a7ac3ae5:common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt
+// Frozen runtime input from 91fad09734e472b72a3b8720b0bce9f5a7ac3ae5:common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt
 // Original SHA-256: e8342a1baed7c8764d71f638a041021fa2c9f6b9f5b509eb161a350fce86d4cd
 // Preserve this historical variant; regenerate only from its pinned source.
 package opensamguk.common.constants
@@ -13,7 +13,7 @@ import opensamguk.common.constants.CityConst.RawCity
  * che 와 달리 region 라벨이 州 이름이고 level 에 '경'·'영현'·'장현'이 더 있으므로,
  * 이 표를 CityConstRegistry 에 물릴 때 regionMap/levelMap 을 그 라벨까지 넓혀야 한다
  * (generateCities 가 regionMap/levelMap 의 getValue 로 라벨을 푼다). 배선은 이 파일의
- * 소관이 아니다 — HistoricalCityConstVariant 가 한다.
+ * 소관이 아니다 — HanCityConstVariant 가 한다.
  */
 object Archive835CityConst {
     // 城 표를 한 listOf 로 내면 <clinit> 이 JVM 메서드 64KB 한도를 넘는다

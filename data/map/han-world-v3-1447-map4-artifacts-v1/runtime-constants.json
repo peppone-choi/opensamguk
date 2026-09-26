@@ -2,14 +2,14 @@
   "variantId": "han-world-v3-1447-map4",
   "files": [
     {
-      "source": "common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt",
-      "sourceSha256": "d8bc6d21108a220eb6da93aa0230478d7df1b679288604879902aee03fb5580f",
+      "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",
+      "sourceSha256": "4243feb660c155c2822f2fa6d32f63e47345cf789a7616ae18191b998d5fa4bb",
       "snapshot": "common/src/main/kotlin/opensamguk/common/constants/Archive1447Map4CityConst.kt",
-      "snapshotSha256": "484f51b2fedd4a4f31808e210ec6dc7efa072e8f9e7e097f22262b1a1b7f68ae"
+      "snapshotSha256": "20b4ea990ec1ea930fde4fd0c77f8557ed4b93ec1d8dbe2108d74544aeff78fe"
     },
     {
-      "source": "common/src/main/kotlin/opensamguk/common/constants/ArchiveGateIndex.kt",
-      "sourceSha256": "b11513d90a5d5f25c9128f39aecc65c5e6412b6570ce8b886d05c06b9effb287",
+      "source": "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt",
+      "sourceSha256": "ddcf53040c54e4a77923f62f0885743ffc2ea7bf31f744edcf4e4a9df4551eb7",
       "snapshot": "common/src/main/kotlin/opensamguk/common/constants/Archive1447Map4GateIndex.kt",
       "snapshotSha256": "cfc868d13b825b203b4c23eff990832716c2db122f048ec4251e149f287bee95"
     }

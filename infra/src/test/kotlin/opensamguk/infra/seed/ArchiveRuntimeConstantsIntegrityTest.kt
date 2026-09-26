@@ -10,7 +10,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `frozen Kotlin constants match approved manifest and original source byte pins`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-artifacts-v1/runtime-constants.json"))
-        assertEquals("cd6579c680db934f4e1d1f53cd484335893de8e078f8501cf471b4d05202d553", sha(raw))
+        assertEquals("50c59f1ae09dd297ec95f4a3209532f2abe3afaed022f17ee9d9f5f5537ae14a", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(4, files.size)
         for (entry in files) {
@@ -28,7 +28,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `846 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-846-artifacts-v1/runtime-constants.json"))
-        assertEquals("f368fe0276b1205d07aa45b4c67b9c46e9749b8945d0e634108ffb307de0d380", sha(raw))
+        assertEquals("434c9e04569aefa5dde9f805faea822e4beaf7e61438c8894cf27d9d23efdfac", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -45,7 +45,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `848 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-848-artifacts-v1/runtime-constants.json"))
-        assertEquals("3cb286722fedee827ac08bac1e7def58e6a1eb531f70461064dfd006d3abd341", sha(raw))
+        assertEquals("0c9a09832b15bf9b3455af30f31fff3426422e0a5d3e0ea556b622082e78d3ba", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -62,7 +62,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1098 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1098-artifacts-v1/runtime-constants.json"))
-        assertEquals("f407ed1cead207f942237607a2c1ea175e7de21127f954380d15b3b54954f809", sha(raw))
+        assertEquals("aaf495fe64f495a1f7be98ddc1091523c8b6eebc6822064b4b74aec8dd84a1fa", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -79,7 +79,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1133 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1133-artifacts-v1/runtime-constants.json"))
-        assertEquals("76ced0869db263ef9063167a1a2016e9a8eeb4a6c75a798edb021257eecfc40c", sha(raw))
+        assertEquals("1ad9994f94e0c44734315a7e60f036d88e060b6b35088e22672333bc0d45da12", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -96,7 +96,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1141 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1141-artifacts-v1/runtime-constants.json"))
-        assertEquals("67ab21fed8d034d17d49f0068329ddef18a6c590e3ba64acad5900d91778724e", sha(raw))
+        assertEquals("e91219ff1e604f1d3a50f8690fcea022b9e37d8d61116a09f247da1301d7547e", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -113,7 +113,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1341 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1341-artifacts-v1/runtime-constants.json"))
-        assertEquals("5c5dee6ae948eca9f35de55a2fc90889cb0f46804a8f5d7e75156c7042e342ec", sha(raw))
+        assertEquals("b46344ef7ea88ed84753f32353c7c00deaf44325a32d69ea9c8cbdf9602493e9", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -130,7 +130,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1194 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1194-artifacts-v1/runtime-constants.json"))
-        assertEquals("df18936b76b388278275c73283faf0f18c3cffc4fbdea24c83516ea2d9a22f87", sha(raw))
+        assertEquals("7d9ebeede16888351adf280202f99bedd2cec3bb3dd115fc0c06d56899f536f2", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -147,7 +147,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1168 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1168-artifacts-v1/runtime-constants.json"))
-        assertEquals("d46b692a89dfce381dce58eda4ae3fd8fd842ea769e6252d6b66f0527495ccf1", sha(raw))
+        assertEquals("b8e2e4eb20203b32c54c090d852977dbc00996619f841eb8f13fecf05c1700df", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -164,7 +164,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1224 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1224-artifacts-v1/runtime-constants.json"))
-        assertEquals("660965d2569028a2b3fcef7d2e3bae68b1d79d9a7fd12e955966bcb67b88fb48", sha(raw))
+        assertEquals("970af6cace93d4e6f3474574a1fc74644c87cbdb6847da7ddccbb42cc667fe4a", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -181,7 +181,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1447 frozen constants preserve approved snapshot and original source identity`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1447-artifacts-v1/runtime-constants.json"))
-        assertEquals("47fbfea012b6c609dddfefd5ea9e80cac950991a916309bc450e3dffb04a46dc", sha(raw))
+        assertEquals("3724cedc4453e023192fbbb1d5da8db0a31daa2731b427ec3708813abc6ff4c5", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {
@@ -198,7 +198,7 @@ class ArchiveRuntimeConstantsIntegrityTest {
     @Test fun `1447 map4 frozen constants match the reviewed source and snapshots`() {
         val root = Path.of("..").toAbsolutePath().normalize()
         val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1447-map4-artifacts-v1/runtime-constants.json"))
-        assertEquals("a6267b0d342dd9915d39ec993855a1730b5c26f56bd951dd6ae23fd31524cfa5", sha(raw))
+        assertEquals("99d5db37a9d506081d03300686af25c98a12d8863a5cd0fb25633b17997ae54f", sha(raw))
         val files = ObjectMapper().readTree(raw).path("files").toList()
         assertEquals(2, files.size)
         for (entry in files) {

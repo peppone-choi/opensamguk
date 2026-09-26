@@ -1,4 +1,4 @@
-// Frozen runtime input from 91fad09734e472b72a3b8720b0bce9f5a7ac3ae5:common/src/main/kotlin/opensamguk/common/constants/ArchiveGateIndex.kt
+// Frozen runtime input from 91fad09734e472b72a3b8720b0bce9f5a7ac3ae5:common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt
 // Original SHA-256: f8a206241631540a56aefeb4bc903905b12b30d08f23467488b9ec6719daee43
 // Preserve this historical variant; regenerate only from its pinned source.
 package opensamguk.common.constants
