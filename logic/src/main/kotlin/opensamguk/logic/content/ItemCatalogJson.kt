@@ -38,8 +38,8 @@ data class ItemCatalog(
 
 /** Strict reader for the two active ledgers; the excluded-row audit never enters gameplay. */
 object ItemCatalogJson {
-    private const val TREASURE_RESOURCE = "hwiha/hwiha-treasure-cards-v1.json"
-    private const val EQUIPMENT_RESOURCE = "hwiha/hwiha-equipment-v1.json"
+    private const val TREASURE_RESOURCE = "campaign/treasure-cards-v1.json"
+    private const val EQUIPMENT_RESOURCE = "campaign/equipment-v1.json"
 
     val CANON: ItemCatalog by lazy {
         fun read(path: String) = checkNotNull(javaClass.classLoader.getResource(path)) {
@@ -53,8 +53,8 @@ object ItemCatalogJson {
         val equipmentRoot = Json.parseToJsonElement(equipmentPayload).jsonObject
         require(treasureRoot.getValue("schemaVersion").jsonPrimitive.int == 1)
         require(equipmentRoot.getValue("schemaVersion").jsonPrimitive.int == 1)
-        require(treasureRoot.getValue("catalogId").jsonPrimitive.content == "hwiha-treasure-cards-v1")
-        require(equipmentRoot.getValue("catalogId").jsonPrimitive.content == "hwiha-equipment-v1")
+        require(treasureRoot.getValue("catalogId").jsonPrimitive.content == "treasure-cards-v1")
+        require(equipmentRoot.getValue("catalogId").jsonPrimitive.content == "equipment-v1")
         require(treasureRoot.getValue("availabilityTwoCopyPolicy").jsonPrimitive.content == "PENDING")
         val treasures = treasureRoot.getValue("cards").jsonArray.map { node ->
             val row = node.jsonObject

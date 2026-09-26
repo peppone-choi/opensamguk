@@ -26,9 +26,10 @@ const retired = [
   'admin1', 'admin2', 'admin5', 'admin7', 'admin8',
   'auction', 'battle-plan', 'betting', 'chief-center', 'coming-soon',
   'diplomacy', 'inherit', 'my-boss', 'nation', 'nation-betting',
-  'nation-finance', 'npc-control', 'simulator', 'tournament',
+  'nation-finance', 'npc-control', 'select-pool', 'simulator', 'tournament',
   'tournament-admin', 'troop', 'v2-lab', 'vote',
 ];
+const retiredRankings = ['emperor', 'hall-of-fame', 'npcs', 'traffic'];
 
 function request(path: string): NextRequest {
   const url = new URL(path, 'https://game.example.test');
@@ -51,6 +52,17 @@ describe('retired SAMMO product routes', () => {
     } finally {
       if (previous === undefined) delete process.env.SERVER_ID;
       else process.env.SERVER_ID = previous;
+    }
+  });
+
+  it.each(retiredRankings)('/game/rankings/%s has no page and returns HTTP 404', (slug) => {
+    expect(existsSync(join(__dirname, '..', 'app', 'game', 'rankings', slug, 'page.tsx'))).toBe(false);
+    expect((middleware(request(`/game/rankings/${slug}`)) as { status: number }).status).toBe(404);
+  });
+
+  it('keeps the remaining rankings available to normal routing', () => {
+    for (const slug of ['best-generals', 'generals', 'kingdoms']) {
+      expect((middleware(request(`/game/rankings/${slug}`)) as { status?: number }).status).toBeUndefined();
     }
   });
 

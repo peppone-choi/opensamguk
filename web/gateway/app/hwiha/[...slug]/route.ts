@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server';
-import { redirectLegacyHwiha } from '@/lib/hwihaLegacyRoute';
+import { redirectLegacyCampaign } from '@/lib/legacyCampaignRoute';
 
 export async function GET(req: NextRequest, context: { params: Promise<{ slug: string[] }> }) {
   const { slug } = await context.params;
-  return redirectLegacyHwiha(req, slug);
+  return redirectLegacyCampaign(req, slug);
 }

@@ -704,44 +704,14 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 2026-09-18: ★ 지리 재분할(GH #806)로 郡 안 縣 경계를 실제 위치로 다시 잘랐다 — 균형 분할의 城 없는 省 463 이
         # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
         # 2026-09-23: 기존 56곳과 새 합성 223곳이 국소 carve 로 제 省·관할을 받았다.
-        # 미해독 3행은 제외하여 최종 1,653 省·1,447 관할이며 郡 수는 그대로다.
-        self.assertEqual((1653, 1447, 173), (
+        # 빈 막다른 26구역을 같은 郡 이웃에 접어 1,627 省·1,447 관할이다.
+        self.assertEqual((1627, 1447, 173), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),
         ))
-        # 省 최소 면적 8칸. 예외는 **물로 끊긴 直領 자투리 두 곳**뿐이다 — 변경 縣 51곳이
-        # 郡 몸통을 가져가면서 帶方郡(7칸)·交趾郡(6칸) 直領에는 섬 조각만 남았다. 섬은
-        # 물 때문에 키울 수 없고, 영역 단절 판정 원장이 이 두 省 id 를 직접 참조하므로
-        # 郡治 省으로 접어 없앨 수도 없다(administrative-topology-audit-v1 의
-        # provinceTopology.belowMinimum 이 같은 두 행을 기록한다).
-        # 거점 省 두 곳도 예외다 — 발자국은 남는 기증 縣 省과 마른땅 경계를 나눠야 한다(런타임 보급이 마른땅
-        # 경계만 잇는다). 孟津은 河陰縣 省이 20 칸짜리 가는 띠라 5 칸, 樊城은 8 칸이면 漢水 가의 맞닿는 마른땅
-        # 칸까지 먹어 7 칸으로 섰다(strategic-site-province-carves-v1).
-        # 2026-09-18 ★ 지리 재분할 뒤: 물로 끊긴 直領 자투리 두 곳은 가장 가까운 縣(海冥·曲陽)의 다성분 예외로 들어가
-        # 제 省이 아니게 됐다. 8칸 미만은 사용자 결정(2026-09-18 ③)의 Q4 예외 縣 6곳(county-location-partition-decisions-v1
-        # areaExceptions — 이웃 縣의 최소 넓이를 깎지 않는다)과 축소 발자국 거점 4곳(carve 원장 carvedCellCount)뿐이다.
-        island_remnants = {
-            "45203": 7, "87489": 4, "87490": 7, "87506": 5, "87510": 4,
-            "ss-dengsai": 4, "ss-fancheng": 2, "ss-mengjin": 4, "ss-xiaopingjin": 5,
-        }
-        korea_exceptions = json.loads((ROOT / "data/curated/han/korea-spatial-area-exceptions-v1.json").read_text())
-        island_remnants.update({row["provinceId"]: row["cells"] for row in korea_exceptions["areaExceptions"]})
-        # 2026-09-23: 결손 縣도 같은 carve 규칙을 탄다 — 발자국을 8칸으로 떼면 기증 省이 갈라지는 縣은
-        # 줄여서 세운다(汝南郡 固始縣 6칸). 위 거점 넷처럼 손으로 적지 않고 원장에서 읽는다.
-        carves = json.loads((ROOT / "data/curated/han/strategic-site-province-carves-v1.json").read_text())
-        for stage in carves["geometry"]["stages"]:
-            island_remnants.update({
-                row["placeId"]: row["carvedCellCount"]
-                for row in stage.get("gapCountyPlacements", ())
-                if row["carvedCellCount"] < 8
-            })
-        below = {
-            tiles["provinceRecords"][index]["id"]: count
-            for index, count in areas.items()
-            if count < 8
-        }
-        self.assertEqual(island_remnants, below)
+        # 4배 정밀 격자에서는 모든 구역에 7×7 증축 공간이 있다.
+        self.assertGreaterEqual(min(areas.values()), 49)
         # 조각 판정의 칸 재배정은 ★ 지리 재분할(GH #806) **앞** 문서의 사실이다 — ★ 는 郡 안 owner 를 통째로 다시 자르므로
         # 커밋본에서는 그 칸들이 새 경계를 따른다(spec §4 「뜻만 옮긴다」). 단계 사슬에서 ★ 입력을 복원해 거기서 확인한다.
         from tools.map import partition_counties_by_location as partition

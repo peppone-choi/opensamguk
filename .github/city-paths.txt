@@ -1,8 +1,9 @@
-# Paths that require the exhaustive added-city command round trip on a PR.
+# Paths that require the exhaustive current-world added-city persistence check on a PR.
 # This file is read by both the CI change classifier and the Gradle cityTest task.
 [data]
 data/map/han-*artifacts-v1/**
 data/map/han-tiles.json
+data/map/han-land-roads-v1.json
 data/map/han-water-topology-v1.json
 data/map/han-strategic-topology-manifest-v1.json
 data/map/han-world-v3-manifest-v1.json
@@ -16,18 +17,21 @@ data/curated/han/territory-disconnection-adjudications-v1.json
 data/curated/han/supply-disconnection-adjudications-v3.json
 infra/src/main/resources/map/han-world-v3.json
 infra/src/main/resources/map/han-780-v1.json
-infra/src/main/resources/scenario/scenario_1020.json
-common/src/main/kotlin/opensamguk/common/constants/HanCityConst.kt
-common/src/main/kotlin/opensamguk/common/constants/HanGateIndex.kt
-common/src/main/kotlin/opensamguk/common/constants/HanWorldV*CityConst.kt
-common/src/main/kotlin/opensamguk/common/constants/HanWorldV*GateIndex.kt
-common/src/main/kotlin/opensamguk/common/constants/Han780V1CityConst.kt
-common/src/main/kotlin/opensamguk/common/constants/Han780V1GateIndex.kt
+infra/src/main/resources/scenario/scenario_990002.json
+common/src/main/kotlin/opensamguk/common/constants/BaselineCityConst.kt
+common/src/main/kotlin/opensamguk/common/constants/BaselineGateIndex.kt
+common/src/main/kotlin/opensamguk/common/constants/Archive*CityConst.kt
+common/src/main/kotlin/opensamguk/common/constants/Archive*GateIndex.kt
+common/src/main/kotlin/opensamguk/common/constants/Archive780CityConst.kt
+common/src/main/kotlin/opensamguk/common/constants/Archive780GateIndex.kt
 logic/src/main/kotlin/opensamguk/logic/world/CityConstRegistry.kt
-infra/src/main/kotlin/opensamguk/infra/seed/HanWorldArtifactsResolver.kt
-infra/src/main/kotlin/opensamguk/infra/seed/HanHistoricalArtifacts.kt
-infra/src/main/kotlin/opensamguk/infra/seed/Han1447Artifacts.kt
-infra/src/main/kotlin/opensamguk/infra/seed/HanHistoricalOwnership.kt
+infra/src/main/kotlin/opensamguk/infra/seed/WorldArtifactsResolver.kt
+infra/src/main/kotlin/opensamguk/infra/seed/HistoricalArtifacts.kt
+infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Artifacts.kt
+infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Map4Artifacts.kt
+infra/src/main/kotlin/opensamguk/infra/seed/ScenarioImporter.kt
+logic/src/main/kotlin/opensamguk/logic/world/WorldMapVariant.kt
+infra/src/main/kotlin/opensamguk/infra/seed/HistoricalOwnership.kt
 tools/scenario/build_han_world.py
 tools/scenario/apply_han_world.py
 tools/scenario/han_active_city_ids.py
@@ -38,6 +42,10 @@ tools/map/fold_cityless_jurisdictions.py
 tools/map/build_commandery_supply_links.py
 tools/map/materialize_frontier_counties.py
 tools/map/carve_strategic_site_provinces.py
+tools/map/build_han_1447_map4_bundle.py
+tools/map/audit_province_clearance.py
+tools/map/build_province_relocations.py
+data/curated/han/province-relocations-map4-v1.json
 tools/map/rebalance_han_tiles.py
 tools/scenario/build_province_city_attribution.py
 tools/scenario/build_scenario_province_ownership.py
@@ -45,14 +53,14 @@ tools/scenario/build_scenario_province_ownership.py
 logic/src/main/kotlin/opensamguk/logic/actions/military/CheIdong.kt
 logic/src/main/kotlin/opensamguk/logic/actions/war/CheChulbyeong.kt
 logic/src/main/kotlin/opensamguk/logic/actions/CommandRegistry.kt
-logic/src/main/kotlin/opensamguk/logic/world/HanStrategicRouteProjection.kt
+logic/src/main/kotlin/opensamguk/logic/world/StrategicRouteProjection.kt
 logic/src/main/kotlin/opensamguk/logic/world/StrategicTopology.kt
 logic/src/main/kotlin/opensamguk/logic/world/CalcCityDistance.kt
 logic/src/main/kotlin/opensamguk/logic/war/SearchDistanceListToDest.kt
-infra/src/main/kotlin/opensamguk/infra/seed/HanStrategicTopologyJson.kt
+infra/src/main/kotlin/opensamguk/infra/seed/StrategicTopologyJson.kt
 app/game-engine/src/main/kotlin/opensamguk/engine/turn/ReservedTurnHandler.kt
 app/game-engine/src/main/kotlin/opensamguk/engine/flush/DatabaseHooks.kt
 app/game-engine/src/main/kotlin/opensamguk/engine/boot/WorldSnapshotLoader.kt
-app/game-engine/src/main/kotlin/opensamguk/engine/world/HanSpatialSupplyProvider.kt
+app/game-engine/src/main/kotlin/opensamguk/engine/world/SpatialSupplyProvider.kt
 app/game-api/src/main/kotlin/opensamguk/gameapi/read/MapAdministrativeOwnership.kt
 infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt

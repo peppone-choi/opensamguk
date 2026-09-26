@@ -100,22 +100,33 @@ def legacy_tuple(name, leadership=1, strength=2, intel=3, birth=150, death=220):
 
 
 class Rtk14StatsBuilderTest(unittest.TestCase):
-    def test_synthetic_hwiha_scenario_is_copied_without_officer_matching(self):
+    def test_synthetic_campaign_scenario_is_copied_without_officer_matching(self):
         with TemporaryDirectory() as tmp:
             root = Path(tmp)
             scenario_dir = root / "scenario"
             output_dir = root / "output"
             scenario_dir.mkdir()
             source = scenario_dir / "scenario_990002.json"
-            raw = '{"ruleProfile":"HWIHA","general":[[0,"합성 주공"]]}'
+            raw = '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN","general":[[0,"합성 주공"]]}'
             source.write_text(raw, encoding="utf-8")
 
             path, entries, assigned, _, detail = b.build_one(source, output_dir, {}, scenario_root=scenario_dir)
 
             self.assertEqual(str(output_dir / source.name), path)
             self.assertEqual((0, 0), (entries, assigned))
-            self.assertEqual("untouched_synthetic_hwiha", detail["status"])
+            self.assertEqual("untouched_synthetic_campaign", detail["status"])
             self.assertEqual(raw, (output_dir / source.name).read_text(encoding="utf-8"))
+
+    def test_committed_campaign_scenario_is_preserved_without_workbook(self):
+        source = Path(__file__).resolve().parents[2] / "infra" / "src" / "main" / "resources" / "scenario" / "scenario_990002.json"
+        self.assertEqual("GENERAL_RETAINER_CAMPAIGN", b.read_scenario(source)["worldFormat"])
+        with TemporaryDirectory() as tmp:
+            output_dir = Path(tmp)
+            path, entries, assigned, _, detail = b.build_one(
+                source, output_dir, {}, scenario_root=source.parent)
+            self.assertEqual("untouched_synthetic_campaign", detail["status"])
+            self.assertEqual((0, 0), (entries, assigned))
+            self.assertEqual(source.read_bytes(), Path(path).read_bytes())
 
     def test_reviewed_legacy_portraits_change_only_picture_and_are_deterministic(self):
         rows = source_rows()

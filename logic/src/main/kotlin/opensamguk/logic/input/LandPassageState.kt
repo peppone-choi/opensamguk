@@ -4,7 +4,7 @@ import opensamguk.logic.world.*
 
 /** Versioned land passability, not a troop or corps count allowance. Callers request capacity one. */
 object LandPassageState {
-    const val META_KEY = "hwihaLandPassage"
+    const val META_KEY = "landPassage"
     private val fields = setOf("version", "topologyRevision", "topologyHash", "edges")
     private val edgeFields = setOf("active", "seasonOpen", "blockaded", "availableCapacity")
 
@@ -13,7 +13,7 @@ object LandPassageState {
         "edges" to topology.traversalEdges.filter(LandMarchMetricSnapshot::supports).sortedBy { it.id }
             .associateTo(linkedMapOf()) { edge ->
                 edge.id to linkedMapOf<String, Any>(
-                    "active" to (edge.seasonalAvailability == SeasonalAvailability.ALWAYS),
+                    "active" to (edge.initiallyOpen && edge.seasonalAvailability == SeasonalAvailability.ALWAYS),
                     "seasonOpen" to false, "blockaded" to false, "availableCapacity" to edge.capacity)
             },
     )
@@ -40,6 +40,22 @@ object LandPassageState {
             edge.id to StrategicEdgeState(active, seasonOpen, blockaded, capacity)
         }
         return StrategicEdgeStateSnapshot(topology.topologyRevision, topology.contentHash, states)
+    }
+
+    fun activate(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, edgeId: String): Map<String, Any> {
+        val state = requireNotNull(read(meta, topology)) { "Land passage state is missing" }
+        require(state.edgeStates.containsKey(edgeId)) { "Unknown land passage edge" }
+        return linkedMapOf(
+            "version" to 1, "topologyRevision" to topology.topologyRevision,
+            "topologyHash" to topology.contentHash,
+            "edges" to state.edgeStates.entries.sortedBy { it.key }.associateTo(linkedMapOf()) { (id, edge) ->
+                id to linkedMapOf<String, Any>(
+                    "active" to (edge.active || id == edgeId), "seasonOpen" to edge.seasonOpen,
+                    "blockaded" to edge.blockaded,
+                    "availableCapacity" to (edge.availableCapacity ?: topology.traversalEdges.single { it.id == id }.capacity),
+                )
+            },
+        )
     }
     private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA land passage state")
 }

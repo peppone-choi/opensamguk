@@ -2,7 +2,7 @@
 
 // 로비·로그인 화면의 지도. 작전실과 같은 2D 지도판을 쓴다.
 import {
-    HanMapCanvas,
+    WorldMapCanvas,
     cityDisplayName,
     cityBadgeLabel,
     isUprisingNation,
@@ -127,7 +127,7 @@ export default function MapPreview({
     return (
         <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
             <div className="map-preview-canvas">
-                <HanMapCanvas
+                <WorldMapCanvas
                     className="map-preview-han"
                     mapCode={data.mapCode}
                     tiles={ready!.tiles}

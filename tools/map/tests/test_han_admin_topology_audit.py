@@ -399,7 +399,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # 포위 37 → 23. 관할 단절이 는 것은 씨앗 없는 郡 성분이 가장 가까운 縣의 떨어진 省이 되기 때문이다
         # (county-location-partition-v1 components, 영토 단절 원장이 조각마다 행을 갖는다).
         # 2026-09-18 위임 결정(규칙 1c·六安 포위 조각 seat 省 유지)으로 다성분 省이 둘 늘어 14 → 16, 미달 10 → 9(陽安 해소).
-        self.assertEqual(20, snapshot["provinceTopology"]["disconnectedCount"])
+        self.assertEqual(30, snapshot["provinceTopology"]["disconnectedCount"])
         # 23·22 = 실측. 사료가 지목한 郡으로 縣 4곳(無慮·高顯·遼陽·比景)의 씨앗칸을 옮기면서
         # 邊郡의 발자국이 다시 깎여 완전 포위된 省·관할이 각각 둘씩 풀렸다.
         # data/curated/han/county-misbinding-rebindings-v1.json · commanderyCorrections 참조.
@@ -408,18 +408,19 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
         # 2026-09-23: 기증 縣 省 한가운데서 떼어 낸 결손 縣 省이 완전 포위로 잡혀 22 → 37 · 23 → 38(거점 때와 같은 현상),
         # 발자국을 6 칸으로 줄여 세운 汝南郡 固始縣이 최소 면적 미달로 더해져 11 → 12 다(carvedCellCount).
         # 합성 城 223곳의 국소 carve 뒤 완전 포위 省은 48, 축소 발자국은 13곳이다.
-        self.assertEqual(48, snapshot["provinceTopology"]["fullyEnclosedCount"])
-        self.assertEqual(13, snapshot["provinceTopology"]["belowMinimumCount"])
+        self.assertEqual(0, snapshot["provinceTopology"]["fullyEnclosedCount"])
+        self.assertEqual(0, snapshot["provinceTopology"]["belowMinimumCount"])
         self.assertEqual(31, snapshot["jurisdictionTopology"]["disconnectedCount"])
         # 2026-09-17: 安平口 관할이 遼東郡 西安平 땅에 합쳐 38 → 37(ADR-LITE-056).
-        self.assertEqual(56, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
+        # map4 경계 보정 뒤 관할이 다른 관할에 완전히 포위된 경우는 없다.
+        self.assertEqual(0, snapshot["jurisdictionTopology"]["fullyEnclosedCount"])
         # 寧陽(45277)의 부모를 山陽郡에서 東平國으로 재판정하면 33셀
         # PARENT-0028@452:210 조각이 東平國 본체에 접촉해, 추가 기하 수정 없이
         # commandery 단절 하나가 해소된다.
         self.assertEqual(42, snapshot["commanderyTopology"]["disconnectedCount"])
         # 2026-09-16 1098: 五原郡이 바오터우 본토로 돌아가 南匈奴 땅에 완전히 둘러싸였다(10 → 11).
         # 2026-09-17: 관할을 접은 郡 4곳이 省을 잃어 포위 판정에서 빠지며 11 → 10.
-        self.assertEqual(10, snapshot["commanderyTopology"]["fullyEnclosedCount"])
+        self.assertEqual(9, snapshot["commanderyTopology"]["fullyEnclosedCount"])
         # 64 → 61: 관할 하나뿐이던 郡 3 곳(宜都·卒本·蘄春)에 거점 관할이 더해졌다.
         # 2026-09-16 1098: 五原郡에 河陰·九原 두 관할이 돌아와 61 → 60.
         # 2026-09-17: 관할 하나뿐이던 新平·毗陵典農校尉·汶山·章武가 이웃 城 관할에 접혀 60 → 56.

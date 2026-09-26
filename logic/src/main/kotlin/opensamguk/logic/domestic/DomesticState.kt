@@ -13,14 +13,14 @@ import opensamguk.logic.world.StrategicTopologySnapshot
  *
  * | 키 | 어디 | 내용 |
  * |---|---|---|
- * | `hwihaPlacement` | 배치된 카드의 장수 meta | 대기·현행 배치, 부임(도착) 순 |
- * | `hwihaPlacementMarch` | 같은 장수 meta | 부임 행군 진행(경로·커서) |
- * | `hwihaCountyPolicy` | 縣治 城 meta | 縣 방침 대기·현행, 마지막 적용 |
- * | `hwihaCountyWorks` | 縣治 城 meta | 진행 중 공사·완공 목록(시야 스트림 공개 꼴 `{"version":1,"works":[{kind,status,…}]}`) |
- * | `hwihaScoutPosts` | 배치 주인 장수 meta | 정찰 배치 공개 투영(시야 스트림이 읽는다, 정본은 `hwihaPlacement`) |
- * | `hwihaCountyMonthly` | 縣治 城 meta | 치적 비교용 지난달 지표 |
- * | `hwihaCommanderyPolicies` | 세력 nation meta | 郡 방침 대기·현행 |
- * | `hwihaCorpsPolicies` | 군단 주인 장수 meta | 군단 방침 대기·현행 |
+ * | `placement` | 배치된 카드의 장수 meta | 대기·현행 배치, 부임(도착) 순 |
+ * | `placementMarch` | 같은 장수 meta | 부임 행군 진행(경로·커서) |
+ * | `countyPolicy` | 縣治 城 meta | 縣 방침 대기·현행, 마지막 적용 |
+ * | `countyWorks` | 縣治 城 meta | 진행 중 공사·완공 목록(시야 스트림 공개 꼴 `{"version":1,"works":[{kind,status,…}]}`) |
+ * | `scoutPosts` | 배치 주인 장수 meta | 정찰 배치 공개 투영(시야 스트림이 읽는다, 정본은 `placement`) |
+ * | `countyMonthly` | 縣治 城 meta | 치적 비교용 지난달 지표 |
+ * | `commanderyPolicies` | 세력 nation meta | 郡 방침 대기·현행 |
+ * | `corpsPolicies` | 군단 주인 장수 meta | 군단 방침 대기·현행 |
  */
 
 private fun invalid(what: String): Nothing = throw IllegalArgumentException("invalid HWIHA $what")
@@ -102,7 +102,7 @@ data class PlacementState(val active: ActivePlacement?, val pending: PlacementOr
         listOfNotNull(active?.order, pending).any { it.post == PlacementPost.MAGISTRATE && it.target == PlacementTarget.County(countyId) }
 
     companion object {
-        const val META_KEY = "hwihaPlacement"
+        const val META_KEY = "placement"
         fun read(meta: Map<String, Any?>): PlacementState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("placement")
@@ -118,7 +118,7 @@ data class PlacementMarch(val requestId: String, val checkpoint: MarchCheckpoint
     fun toMetaValue(): Map<String, Any> = linkedMapOf("version" to 1, "requestId" to requestId, "checkpoint" to checkpoint.toMetaValue())
 
     companion object {
-        const val META_KEY = "hwihaPlacementMarch"
+        const val META_KEY = "placementMarch"
         fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): PlacementMarch? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("placement march")
@@ -198,7 +198,7 @@ data class CountyPolicyState(val slot: PolicySlot, val lastApplied: PolicyApplic
     fun toMetaValue(): Map<String, Any?> = linkedMapOf("version" to 1, "slot" to slot.toMetaValue(),
         "lastApplied" to lastApplied?.toMetaValue())
     companion object {
-        const val META_KEY = "hwihaCountyPolicy"
+        const val META_KEY = "countyPolicy"
         fun read(meta: Map<String, Any?>): CountyPolicyState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("county policy")
@@ -228,7 +228,7 @@ data class CommanderyPolicies(val entries: List<CommanderyPolicy>) {
         linkedMapOf("commanderyId" to it.commanderyId, "slot" to it.slot.toMetaValue())
     })
     companion object {
-        const val META_KEY = "hwihaCommanderyPolicies"
+        const val META_KEY = "commanderyPolicies"
         fun read(meta: Map<String, Any?>): CommanderyPolicies? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("commandery policies")
@@ -265,7 +265,7 @@ data class CorpsPolicyAssignments(val entries: List<CorpsPolicyAssignment>) {
         linkedMapOf("orderId" to it.orderId, "commanderGeneralId" to it.commanderGeneralId, "slot" to it.slot.toMetaValue())
     })
     companion object {
-        const val META_KEY = "hwihaCorpsPolicies"
+        const val META_KEY = "corpsPolicies"
         fun read(meta: Map<String, Any?>): CorpsPolicyAssignments? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("corps policies")
@@ -293,29 +293,42 @@ data class ActiveWork(
     val charged: Resources,
     val lastProgressAt: Phase?,
     val stopReason: String?,
+    val edgeId: String? = null,
+    val row: Int? = null,
+    val col: Int? = null,
 ) {
     init {
         require(requestIdPattern.matches(requestId) && actorId > 0 && required > 0 && progress in 0 until required)
         require(cost.debit(charged) != null) { "charged installments cannot exceed the total cost" }
         require(stopReason == null || stopReason.isNotBlank())
+        require((row == null) == (col == null) && (row == null || (row >= 0 && col!! >= 0)) &&
+            (edgeId == null || DomesticIds.order(edgeId)))
     }
 
     fun toMetaValue(): Map<String, Any?> = linkedMapOf(
         "kind" to work.name, "status" to CountyWorks.IN_PROGRESS, "requestId" to requestId, "actorId" to actorId,
         "requestedAt" to requestedAt.toMetaValue(), "progress" to progress, "required" to required, "cost" to cost.toMetaValue(),
         "charged" to charged.toMetaValue(), "lastProgressAt" to lastProgressAt?.toMetaValue(), "stopReason" to stopReason,
-    )
+    ).also { value ->
+        if (edgeId != null) value["edgeId"] = edgeId
+        if (row != null) { value["row"] = row; value["col"] = col }
+    }
 
     companion object {
         private val fields = setOf("kind", "status", "requestId", "actorId", "requestedAt", "progress", "required", "cost", "charged",
             "lastProgressAt", "stopReason")
         fun read(raw: Any?): ActiveWork {
             val value = raw as? Map<*, *> ?: invalid("active work")
-            require(value.keys == fields && value["status"] == CountyWorks.IN_PROGRESS) { "invalid HWIHA active work fields" }
+            require(value.keys == fields || value.keys == fields + "edgeId" ||
+                value.keys == fields + setOf("edgeId", "row", "col")) { "invalid HWIHA active work fields" }
+            require(value["status"] == CountyWorks.IN_PROGRESS)
             return ActiveWork(DomesticWork.valueOf(value.string("kind", "work")), value.string("requestId", "work"),
                 value.int("actorId", "work"), Phase.read(value["requestedAt"]), value.int("progress", "work"),
                 value.int("required", "work"), resources(value["cost"]), resources(value["charged"]),
-                value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") })
+                value.phaseOrNull("lastProgressAt"), value["stopReason"]?.let { it as? String ?: invalid("work stop") },
+                value["edgeId"]?.let { it as? String ?: invalid("work edge") },
+                value["row"]?.let { it as? Int ?: invalid("work row") },
+                value["col"]?.let { it as? Int ?: invalid("work col") })
         }
 
         internal fun resources(raw: Any?): Resources {
@@ -327,34 +340,49 @@ data class ActiveWork(
     }
 }
 
-data class CompletedWork(val work: DomesticWork, val completedAt: Phase) {
+data class CompletedWork(val work: DomesticWork, val completedAt: Phase,
+    val edgeId: String? = null, val row: Int? = null, val col: Int? = null) {
+    init {
+        require((row == null) == (col == null) && (row == null || (row >= 0 && col!! >= 0)) &&
+            (edgeId == null || DomesticIds.order(edgeId)))
+    }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("kind" to work.name, "status" to CountyWorks.COMPLETE,
-        "completedAt" to completedAt.toMetaValue())
+        "completedAt" to completedAt.toMetaValue()).also { value ->
+            if (edgeId != null) value["edgeId"] = edgeId
+            if (row != null) { value["row"] = row; value["col"] = col ?: invalid("completed work cell") }
+        }
     companion object {
         fun read(raw: Any?): CompletedWork {
             val row = raw as? Map<*, *> ?: invalid("completed work")
-            require(row.keys == setOf("kind", "status", "completedAt") && row["status"] == CountyWorks.COMPLETE)
-            return CompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), Phase.read(row["completedAt"]))
+            val fields = setOf("kind", "status", "completedAt")
+            require((row.keys == fields || row.keys == fields + "edgeId" ||
+                row.keys == fields + setOf("edgeId", "row", "col")) && row["status"] == CountyWorks.COMPLETE)
+            return CompletedWork(DomesticWork.valueOf(row.string("kind", "completed work")), Phase.read(row["completedAt"]),
+                row["edgeId"]?.let { it as? String ?: invalid("completed work edge") },
+                row["row"]?.let { it as? Int ?: invalid("completed work row") },
+                row["col"]?.let { it as? Int ?: invalid("completed work col") })
         }
     }
 }
 
 /**
- * 縣治 城 meta `hwihaCountyWorks` = `{"version":1,"works":[…]}`. 시야 스트림과 맞춘 공개 꼴이다(비전 계약
+ * 縣治 城 meta `countyWorks` = `{"version":1,"works":[…]}`. 시야 스트림과 맞춘 공개 꼴이다(비전 계약
  * `2026-09-23-hwiha-vision-contract.md` §3): 항목마다 `kind`(공사 코드)·`status` 가 있고, 완공은 `COMPLETE`, 진행 중은
  * `IN_PROGRESS`(멈춤 사유는 `stopReason`)다. 망루봉화 시야는 `kind == WATCHTOWER_BEACON && status == COMPLETE` 만 본다.
  * 완공 항목(완공 순·코드 순)이 앞, 진행 중 항목이 맨 뒤에 한 개 이하다.
  */
 data class CountyWorks(val active: ActiveWork?, val completed: List<CompletedWork>) {
     init {
-        require(completed.map { it.work }.distinct().size == completed.size) { "a work completes once per county" }
-        require(active == null || completed.none { it.work == active.work })
-        require(completed == completed.sortedWith(compareBy({ it.completedAt }, { it.work.ordinal })))
+        require(completed.map { listOf(it.work, it.edgeId, it.row, it.col) }.distinct().size == completed.size)
+        require(active == null || completed.none { it.work == active.work && it.edgeId == active.edgeId &&
+            it.row == active.row && it.col == active.col })
+        require(completed == completed.sortedWith(compareBy({ it.completedAt }, { it.work.ordinal },
+            { it.edgeId ?: "" }, { it.row ?: -1 }, { it.col ?: -1 })))
     }
     fun toMetaValue(): Map<String, Any?> = linkedMapOf("version" to 1,
         "works" to completed.map { it.toMetaValue() } + listOfNotNull(active?.toMetaValue()))
     companion object {
-        const val META_KEY = "hwihaCountyWorks"
+        const val META_KEY = "countyWorks"
         const val IN_PROGRESS = "IN_PROGRESS"
         const val COMPLETE = "COMPLETE"
         fun read(meta: Map<String, Any?>): CountyWorks? {
@@ -407,7 +435,7 @@ data class CountyMonthly(val stamp: String, val indicators: CountyIndicators) {
     init { require(stamp.matches(Regex("[0-9]{4,}-[0-9]{2}"))) }
     fun toMetaValue(): Map<String, Any> = linkedMapOf("version" to 1, "stamp" to stamp, "indicators" to indicators.toMetaValue())
     companion object {
-        const val META_KEY = "hwihaCountyMonthly"
+        const val META_KEY = "countyMonthly"
         fun read(meta: Map<String, Any?>): CountyMonthly? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("county monthly")

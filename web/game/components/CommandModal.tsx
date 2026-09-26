@@ -26,7 +26,7 @@ import {
     type CommandFormSpec,
 } from '../lib/command-arg-types';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
-import type { GameConstResponse, HwihaTravelActionId } from '../lib/types';
+import type { GameConstResponse, TravelActionId } from '../lib/types';
 import type {
     AvailableCommand,
     AvailableCommandCategory,
@@ -37,21 +37,21 @@ import SelectCityField from './command/SelectCityField';
 import SelectGeneralField from './command/SelectGeneralField';
 import SelectNationField from './command/SelectNationField';
 import SelectAmountField from './command/SelectAmountField';
-import HwihaCourtForm from './command/HwihaCourtForm';
-import HwihaDeployForm from './command/HwihaDeployForm';
-import HwihaTravelForm from './command/HwihaTravelForm';
-import HwihaFieldForm, { fieldLabels, isFieldActionId } from './command/HwihaFieldForm';
-import HwihaMilitaryForm, { militaryLabels, isMilitaryActionId } from './command/HwihaMilitaryForm';
-import HwihaPersonalForm, { personalLabels, isPersonalActionId } from './command/HwihaPersonalForm';
-import HwihaPeopleForm, { peopleLabels, isPeopleActionId } from './command/HwihaPeopleForm';
-import HwihaPoliticalForm, { politicalLabels, isPoliticalActionId } from './command/HwihaPoliticalForm';
-import HwihaTransferForm, { transferLabels, isTransferActionId } from './command/HwihaTransferForm';
-import HwihaLegacyDirectForm, { legacyDirectLabels, isLegacyDirectActionId } from './command/HwihaLegacyDirectForm';
-import HwihaEnlistmentForm, { useRuleProfile } from './command/HwihaEnlistmentForm';
+import CourtForm from './command/CourtForm';
+import DeployForm from './command/DeployForm';
+import TravelForm from './command/TravelForm';
+import FieldForm, { fieldLabels, isFieldActionId } from './command/FieldForm';
+import MilitaryForm, { militaryLabels, isMilitaryActionId } from './command/MilitaryForm';
+import PersonalForm, { personalLabels, isPersonalActionId } from './command/PersonalForm';
+import PeopleForm, { peopleLabels, isPeopleActionId } from './command/PeopleForm';
+import PoliticalForm, { politicalLabels, isPoliticalActionId } from './command/PoliticalForm';
+import TransferForm, { transferLabels, isTransferActionId } from './command/TransferForm';
+import DirectActionForm, { legacyDirectLabels, isLegacyDirectActionId } from './command/DirectActionForm';
+import EnlistmentForm, { useRuleProfile } from './command/EnlistmentForm';
 import SelectFoundingField from './command/SelectFoundingField';
 import SelectRecruitField from './command/SelectRecruitField';
 
-function isTravelActionId(value: string): value is HwihaTravelActionId {
+function isTravelActionId(value: string): value is TravelActionId {
     return value === 'action.move' || value === 'action.forcedMarch' || value === 'action.return';
 }
 
@@ -89,8 +89,6 @@ interface CommandModalProps {
     amountGuide?: number[];
     /** Page-fixed args merged into every submit body (e.g. {auctionId}, {bettingId}, {isUnique}). */
     extraArgs?: Record<string, unknown>;
-    /** When true, submits via `POST /api/command/nation/bulk` (nation_turn) instead of the personal `/api/command/{code}` (general_turn). */
-    isNationCommand?: boolean;
     /** 모달 헤더의 히어로 초상(04 아트보드) — 조작 대상 장수. 없으면 헤더는 제목만. */
     hero?: { picture?: string | null; imageServer?: number | null; name?: string | null; nationColor?: string | null } | null;
 }
@@ -402,7 +400,6 @@ export default function CommandModal({
     amountMax,
     amountGuide,
     extraArgs,
-    isNationCommand,
     hero = null,
 }: CommandModalProps) {
     const profile = useRuleProfile(ruleProfile);
@@ -420,7 +417,7 @@ export default function CommandModal({
           }
         : null;
 
-    const [hwihaAction, setHwihaAction] = useState('action.enlist');
+    const [selectedAction, setSelectedAction] = useState('action.enlist');
     const [catalog, setCatalog] = useState<AvailableCommandCategory[]>([]);
     const [loadError, setLoadError] = useState<string | null>(null);
     const [cat, setCat] = useState<string>('');
@@ -523,14 +520,7 @@ export default function CommandModal({
             // Page-fixed args (auctionId/bettingId/nationId/isUnique …) merge BENEATH the picked arg
             // so an explicit user pick wins on a key collision.
             const fullBody = { ...(extraArgs ?? {}), ...body };
-            const terminalResult = await submitCommandAndAwaitResult(() => {
-                if (isNationCommand) {
-                    return api.commandQueue.nationBulk(generalId, [
-                        { action: cmd.value, turnList: [turnIdx], arg: fullBody },
-                    ]);
-                }
-                return api.command(cmd.value, fullBody, generalId, turnIdx);
-            });
+            const terminalResult = await submitCommandAndAwaitResult(() => api.command(cmd.value, fullBody, generalId, turnIdx));
             if (terminalResult.status === 'applied') {
                 onToast(`${cmd.simpleName} 명령이 실행되었습니다.`, 'success');
                 onReserved?.();
@@ -604,29 +594,29 @@ export default function CommandModal({
 
                 {loadError && <p className="cmd-flag">{loadError}</p>}
 
-                {courtMode ? (profile === 'HWIHA' ? <HwihaCourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} /> : <p role="status">서버 규칙을 확인하지 못해 발령을 입력할 수 없습니다.</p>) : profile === 'HWIHA' ? (
+                {courtMode ? (profile === 'HWIHA' ? <CourtForm key={generalId} generalId={generalId} refreshKey={refreshKey} onReserved={onReserved} /> : <p role="status">서버 규칙을 확인하지 못해 발령을 입력할 수 없습니다.</p>) : profile === 'HWIHA' ? (
                     <>
-                        {!isNationCommand && !pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={hwihaAction} onChange={e => setHwihaAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option><option value="action.move">이동</option><option value="action.forcedMarch">강행</option><option value="action.return">귀환</option>{Object.entries(fieldLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(militaryLabels).filter(([id])=>id!=='action.muster').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(personalLabels).filter(([id])=>id!=='action.retire').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(peopleLabels).filter(([id])=>id!=='action.persuadeCaptive').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(politicalLabels).filter(([id])=>!['action.resign','action.rise','action.independence','action.dissolve'].includes(id)).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(transferLabels).filter(([id])=>id!=='action.donate').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(legacyDirectLabels).filter(([id])=>id!=='action.tradeEquipment').map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
-                        {(pinnedCommand || hwihaAction) === 'action.deploy' ?
-                            <HwihaDeployForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isTravelActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaTravelForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as HwihaTravelActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isFieldActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaFieldForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaFieldActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isMilitaryActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaMilitaryForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaMilitaryActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isPersonalActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaPersonalForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaPersonalActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isPeopleActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaPeopleForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaPeopleActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isPoliticalActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaPoliticalForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaPoliticalActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isTransferActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaTransferForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaTransferActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            isLegacyDirectActionId(pinnedCommand || hwihaAction) ?
-                            <HwihaLegacyDirectForm key={`${pinnedCommand || hwihaAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as import('../lib/types').HwihaLegacyDirectActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={!!isNationCommand} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
-                            <HwihaEnlistmentForm key={`${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || hwihaAction) as 'action.enlist' | 'action.randomEnlist' | 'action.targetEnlist'} generalId={generalId} turnIdx={turnIdx}
-                                unavailable={!!isNationCommand || (!!pinnedCommand && !['action.enlist', 'action.randomEnlist', 'action.targetEnlist'].includes(pinnedCommand))}
+                        {!pinnedCommand && <label>개인 행동<select className="os-inset" aria-label="개인 행동" value={selectedAction} onChange={e => setSelectedAction(e.target.value)}><option value="action.enlist">출사</option><option value="action.deploy">출병</option><option value="action.move">이동</option><option value="action.forcedMarch">강행</option><option value="action.return">귀환</option>{Object.entries(fieldLabels).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(militaryLabels).filter(([id])=>id!=='action.muster').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(personalLabels).filter(([id])=>id!=='action.retire').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(peopleLabels).filter(([id])=>id!=='action.persuadeCaptive').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(politicalLabels).filter(([id])=>!['action.resign','action.rise','action.independence','action.dissolve'].includes(id)).map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(transferLabels).filter(([id])=>id!=='action.donate').map(([id,label])=><option key={id} value={id}>{label}</option>)}{Object.entries(legacyDirectLabels).filter(([id])=>id!=='action.tradeEquipment').map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></label>}
+                        {(pinnedCommand || selectedAction) === 'action.deploy' ?
+                            <DeployForm key={`${generalId}:${refreshKey ?? ''}`} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isTravelActionId(pinnedCommand || selectedAction) ?
+                            <TravelForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as TravelActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isFieldActionId(pinnedCommand || selectedAction) ?
+                            <FieldForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').FieldActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isMilitaryActionId(pinnedCommand || selectedAction) ?
+                            <MilitaryForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').MilitaryActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isPersonalActionId(pinnedCommand || selectedAction) ?
+                            <PersonalForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').PersonalActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isPeopleActionId(pinnedCommand || selectedAction) ?
+                            <PeopleForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').PeopleActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isPoliticalActionId(pinnedCommand || selectedAction) ?
+                            <PoliticalForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').PoliticalActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isTransferActionId(pinnedCommand || selectedAction) ?
+                            <TransferForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').TransferActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            isLegacyDirectActionId(pinnedCommand || selectedAction) ?
+                            <DirectActionForm key={`${pinnedCommand || selectedAction}:${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as import('../lib/types').DirectActionId} generalId={generalId} turnIdx={turnIdx} refreshKey={refreshKey} unavailable={false} onToast={onToast} onClose={onClose} onReserved={onReserved} /> :
+                            <EnlistmentForm key={`${generalId}:${refreshKey ?? ''}`} inputId={(pinnedCommand || selectedAction) as 'action.enlist' | 'action.randomEnlist' | 'action.targetEnlist'} generalId={generalId} turnIdx={turnIdx}
+                                unavailable={(!!pinnedCommand && !['action.enlist', 'action.randomEnlist', 'action.targetEnlist'].includes(pinnedCommand))}
                                 onToast={onToast} onClose={onClose} onReserved={onReserved} />}
                     </>
                 ) : profile !== 'SAMMO' ? <p role="status">서버 규칙을 확인하지 못해 명령을 예약할 수 없습니다.</p> : !selected ? (
