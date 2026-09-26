@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "worldId": "world-example",
+  "accountId": "123",
+  "generalId": null,
+  "objectives": [
+    {
+      "id": "tutorial.register",
+      "title": "가입",
+      "order": 1,
+      "scope": "ACCOUNT",
+      "prerequisites": [],
+      "status": "COMPLETED",
+      "completedAt": "2026-09-26T00:00:00Z",
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.createGeneral",
+      "title": "장수 생성",
+      "order": 2,
+      "scope": "ACCOUNT",
+      "prerequisites": [
+        "tutorial.register"
+      ],
+      "status": "CURRENT",
+      "completedAt": null,
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.enlist",
+      "title": "첫 출사",
+      "order": 3,
+      "scope": "GENERAL",
+      "prerequisites": [
+        "tutorial.createGeneral"
+      ],
+      "status": "LOCKED",
+      "completedAt": null,
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.dispatch",
+      "title": "첫 발령",
+      "order": 4,
+      "scope": "GENERAL",
+      "prerequisites": [
+        "tutorial.enlist"
+      ],
+      "status": "LOCKED",
+      "completedAt": null,
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.work",
+      "title": "첫 공사",
+      "order": 5,
+      "scope": "GENERAL",
+      "prerequisites": [
+        "tutorial.dispatch"
+      ],
+      "status": "LOCKED",
+      "completedAt": null,
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.employ",
+      "title": "첫 등용",
+      "order": 6,
+      "scope": "GENERAL",
+      "prerequisites": [
+        "tutorial.work"
+      ],
+      "status": "LOCKED",
+      "completedAt": null,
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.march",
+      "title": "첫 행군",
+      "order": 7,
+      "scope": "GENERAL",
+      "prerequisites": [
+        "tutorial.employ"
+      ],
+      "status": "LOCKED",
+      "completedAt": null,
+      "helpTopicId": null
+    },
+    {
+      "id": "tutorial.battle",
+      "title": "첫 전투",
+      "order": 8,
+      "scope": "GENERAL",
+      "prerequisites": [
+        "tutorial.march"
+      ],
+      "status": "LOCKED",
+      "completedAt": null,
+      "helpTopicId": null
+    }
+  ]
+}

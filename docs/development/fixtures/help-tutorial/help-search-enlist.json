@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "query": "출사",
+  "hits": [
+    {
+      "id": "commands.action.enlist",
+      "title": "출사",
+      "excerpt": "주공의 휘하에 들어가는 직접 행동입니다.",
+      "matchedSection": "title"
+    }
+  ]
+}

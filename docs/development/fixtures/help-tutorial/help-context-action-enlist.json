@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "topic": {
+    "id": "commands.action.enlist",
+    "title": "출사",
+    "sections": {
+      "explanation": "주공의 휘하에 들어가는 직접 행동입니다.",
+      "example": "섬길 주공을 고르고 출사를 제출합니다.",
+      "successExample": "출사 성공 사건이 확정되면 휘하 관계가 생깁니다.",
+      "failureExample": "이미 다른 주공을 섬기는 장수라면 거절됩니다.",
+      "recoveryAdvice": "현재 섬기는 주공과 관계를 확인한 뒤 가능한 선택지를 다시 고르세요.",
+      "historicalContext": null
+    },
+    "sources": [],
+    "relatedTopicIds": []
+  },
+  "input": {
+    "inputId": "action.enlist",
+    "kind": "GENERAL_ACTION",
+    "displayName": "출사",
+    "deliveryState": "HANDLER_READY",
+    "actor": "GENERAL",
+    "authorityRule": "SUBJECT_OWNER",
+    "targetSchema": {
+      "status": "HANDLER_DEFINED",
+      "source": "server-side action.enlist argument contract"
+    },
+    "costSchema": {
+      "status": "HANDLER_DEFINED",
+      "source": "server-side action.enlist rules",
+      "money": null,
+      "grain": null,
+      "iron": null,
+      "timber": null,
+      "horses": null
+    },
+    "timing": {
+      "phase": "POLITICS",
+      "turnSlots": 12,
+      "perPhaseLimit": 1
+    },
+    "effectScope": "ACTOR_LOCATION",
+    "failureReasons": [
+      "WRONG_RULE_PROFILE",
+      "UNKNOWN_INPUT",
+      "INVALID_REQUEST",
+      "ACTOR_NOT_FOUND",
+      "ALREADY_SERVING",
+      "ALREADY_BOUND",
+      "INVALID_RETINUE",
+      "HUMAN_RETAINER_REQUIRES_LORD",
+      "TARGET_NOT_FOUND",
+      "TARGET_NOT_LORD",
+      "TARGET_NOT_ACCEPTING",
+      "INSUFFICIENT_RENOWN",
+      "NO_ELIGIBLE_NATION",
+      "DUPLICATE_RETAINER_NAME",
+      "POLICY_UNAVAILABLE"
+    ],
+    "helpTopicId": "commands.action.enlist",
+    "tutorialObjectiveId": null
+  }
+}
