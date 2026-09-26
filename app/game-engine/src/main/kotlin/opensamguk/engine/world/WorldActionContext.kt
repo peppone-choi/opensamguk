@@ -26,6 +26,7 @@ import opensamguk.engine.v2.V2CityLedgerEntry
 import opensamguk.engine.v2.V2CityLedgerStore
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
+import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.Troop
@@ -53,6 +54,8 @@ import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.input.LordStatus
+import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventTarget
@@ -298,6 +301,27 @@ class WorldActionContext(
         val id = world.allocateGeneralId()
         recorder.recordGeneralCreate(world, general.toTurnGeneral(id, world.getState()))
         return id
+    }
+
+    override fun stageDeclaredRetainer(generalId: Int, masterName: String) {
+        val subject = world.getGeneralById(generalId)
+        val master = world.listGenerals().singleOrNull { it.name == masterName }
+        // A historical declaration cannot force a card after the lord dies or allegiance changes.
+        // Keep the general's appearance alive; the unmanned-season gate detects missing coverage.
+        if (subject == null || master == null || master.id == generalId || subject.nationId <= 0 ||
+            master.nationId != subject.nationId ||
+            runCatching { LordStatus.read(master.meta) }.getOrDefault(false) != true ||
+            world.listRetainers().any { it.generalId == generalId }) {
+            LOGGER.warn("scenario_retainer_link_skipped world={} general={} master={}",
+                world.worldId.value, generalId, masterName)
+            return
+        }
+        world.createRetainer(Retainer(
+            id = world.allocateRetainerId(), masterGeneralId = master.id, origin = RetainerRules.ORIGIN_EXISTING,
+            generalId = generalId, name = subject.name, relation = RetainerRules.RELATION_STAFF,
+            role = RetainerRules.ROLE_NONE, releasePolicy = RetainerRules.RELEASE_MUTUAL,
+            loyalty = 50, task = RetainerRules.TASK_NONE,
+        ))
     }
 
     override fun stageNation(nation: LogicNation) {
