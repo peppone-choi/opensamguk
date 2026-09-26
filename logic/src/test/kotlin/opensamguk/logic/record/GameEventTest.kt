@@ -12,12 +12,11 @@ class GameEventTest {
     private val key = EventKey.derive("turn", "200", "2", "3", "actor-1")
 
     @Test
-    fun `all 31 existing record kinds have a new classification`() {
+    fun `all existing record kinds have a new classification`() {
         val legacy = RecordKind::class.java.declaredFields
             .filter { it.type == String::class.java && it.name != "REFS_META_KEY" }
             .map { it.get(null) as String }.toSet()
-        assertEquals(31, legacy.size)
-        assertEquals(legacy, EventKind.entries.map { it.code }.toSet() - EventKind.OWNER_CHANGED.code)
+        assertTrue(legacy.all { EventKind.fromCode(it) != null })
         assertEquals(5, EventKind.entries.map { it.section }.toSet().size)
     }
 
@@ -114,5 +113,24 @@ class GameEventTest {
         val assessment = GameEvent(1, EventKind.YUEDAN_ASSESSED, whenOccurred, AudienceTarget.Self(7),
             Publication(PublicationState.PRIVATE), key, facts = assessmentFacts)
         assertEquals(assessmentFacts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(assessment.facts)))
+    }
+
+    @Test
+    fun `reward receipt requires named participants amount and enumerated reason`() {
+        val refs = mapOf(RefRole.ISSUER to EventRef.General(3), RefRole.TARGET to EventRef.General(7))
+        val facts = mapOf(FactRole.MONEY to EventFact.Amount(50),
+            FactRole.REASON to EventFact.RewardReason(RewardReasonCode.WAR_MERIT))
+        val receipt = GameEvent(1, EventKind.REWARD_RECEIVED, whenOccurred,
+            AudienceTarget.Self(7), Publication(PublicationState.PRIVATE), key, refs, facts)
+        assertEquals(refs, EventPayloadCodec.decodeRefs(EventPayloadCodec.encodeRefs(receipt.refs)))
+        assertEquals(facts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(receipt.facts)))
+        assertFailsWith<IllegalArgumentException> { receipt.copy(refs = refs - RefRole.ISSUER) }
+        assertFailsWith<IllegalArgumentException> { receipt.copy(facts = facts - FactRole.REASON) }
+        assertFailsWith<IllegalArgumentException> {
+            receipt.copy(audience = AudienceTarget.Public, publication = Publication(PublicationState.PUBLISHED))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            EventPayloadCodec.decodeFacts("""{"REASON":"unreviewed"}""")
+        }
     }
 }

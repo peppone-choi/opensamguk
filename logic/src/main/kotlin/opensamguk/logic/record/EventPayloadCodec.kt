@@ -43,6 +43,7 @@ object EventPayloadCodec {
                 is EventFact.Change -> JsonPrimitive(fact.value)
                 is EventFact.TroopsBand -> JsonPrimitive(fact.value)
                 is EventFact.Outcome -> JsonPrimitive(fact.code)
+                is EventFact.RewardReason -> JsonPrimitive(fact.code.name)
             }
         }).toString()
 
@@ -55,6 +56,7 @@ object EventPayloadCodec {
             FactRole.RENOWN_CHANGE -> EventFact.Change(primitive.longNumber())
             FactRole.TROOPS_BAND -> EventFact.TroopsBand(primitive.intId())
             FactRole.OUTCOME -> EventFact.Outcome(primitive.stringId())
+            FactRole.REASON -> EventFact.RewardReason(RewardReasonCode.valueOf(primitive.stringId()))
         }
         role to fact
     }.toMap()

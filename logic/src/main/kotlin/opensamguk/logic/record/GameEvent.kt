@@ -33,7 +33,10 @@ sealed interface EventFact {
     data class Change(val value: Long) : EventFact
     data class TroopsBand(val value: Int) : EventFact { init { require(value in 0..5) } }
     data class Outcome(val code: String) : EventFact { init { require(isStableKey(code)) } }
+    data class RewardReason(val code: RewardReasonCode) : EventFact
 }
+
+enum class RewardReasonCode { WAR_MERIT, DOMESTIC_MERIT, LOYALTY_SUPPORT, ROUTINE_SERVICE }
 
 enum class FactRole(val type: Class<out EventFact>) {
     COUNTIES(EventFact.Amount::class.java), MONEY(EventFact.Amount::class.java), GRAIN(EventFact.Amount::class.java),
@@ -41,6 +44,7 @@ enum class FactRole(val type: Class<out EventFact>) {
     RENOWN_BEFORE(EventFact.Amount::class.java), RENOWN_AFTER(EventFact.Amount::class.java),
     RENOWN_CHANGE(EventFact.Change::class.java),
     TROOPS_BAND(EventFact.TroopsBand::class.java), OUTCOME(EventFact.Outcome::class.java),
+    REASON(EventFact.RewardReason::class.java),
 }
 
 data class OccurredAt(val year: Int, val month: Int, val phase: Int, val ordinal: Int) {
@@ -118,6 +122,7 @@ data class GameEvent(
         require(audience.audience in kind.audiences) { "${kind.code} does not allow ${audience.audience}" }
         require((audience == AudienceTarget.Public) == (publication.state == PublicationState.PUBLISHED))
         require(refs.keys.containsAll(kind.requiredRefs)) { "${kind.code} requires ${kind.requiredRefs - refs.keys}" }
+        require(facts.keys.containsAll(kind.requiredFacts)) { "${kind.code} requires ${kind.requiredFacts - facts.keys}" }
         require(refs.keys.all { it in kind.allowedRefs && it.type.isInstance(refs.getValue(it)) })
         require(facts.keys.all { it in kind.allowedFacts && it.type.isInstance(facts.getValue(it)) })
     }

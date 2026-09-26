@@ -15,6 +15,7 @@ enum class EventKind(
     val requiredRefs: Set<RefRole> = emptySet(),
     val allowedRefs: Set<RefRole> = requiredRefs,
     val allowedFacts: Set<FactRole> = emptySet(),
+    val requiredFacts: Set<FactRole> = emptySet(),
 ) {
     MARCH_ASSIGNMENT("march.assignment", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR, CITY)),
     MARCH_CORPS("march.corps", BATTLE, setOf(SELF, RETINUE, EventAudience.NATION), allowedRefs = setOf(ACTOR, CORPS, CITY)),
@@ -29,6 +30,8 @@ enum class EventKind(
     DISPATCH_ACCEPTED("court.dispatchAccepted", COURT, setOf(EventAudience.COURT), requiredRefs = setOf(REQUEST), allowedRefs = setOf(REQUEST, ISSUER, TARGET)),
     DISPATCH_REFUSED("court.dispatchRefused", COURT, setOf(EventAudience.COURT), requiredRefs = setOf(REQUEST), allowedRefs = setOf(REQUEST, ISSUER, TARGET)),
     DISPATCH_CANCELLED("court.dispatchCancelled", COURT, setOf(EventAudience.COURT), requiredRefs = setOf(REQUEST), allowedRefs = setOf(REQUEST, ISSUER, TARGET)),
+    REWARD_RECEIVED("court.rewardReceived", PERSONAL, setOf(SELF), requiredRefs = setOf(ISSUER, TARGET),
+        allowedFacts = setOf(MONEY, REASON), requiredFacts = setOf(MONEY, REASON)),
     ENLISTED("enlist.joined", PERSONAL, setOf(SELF), requiredRefs = setOf(NATION), allowedRefs = setOf(NATION, ACTOR)),
     RETAINER_JOINED("enlist.retainerJoined", RETINUE_NATION, setOf(SELF, RETINUE), requiredRefs = setOf(PERSON), allowedRefs = setOf(PERSON, ACTOR)),
     INPUT_REJECTED("input.rejected", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR)),
@@ -56,6 +59,7 @@ enum class EventKind(
 
     init {
         require(requiredRefs.all { it in allowedRefs })
+        require(requiredFacts.all { it in allowedFacts })
         require((section == WORLD) == (PUBLIC in audiences || audiences.isEmpty()))
         require(PUBLIC !in audiences || audiences == setOf(PUBLIC))
     }
