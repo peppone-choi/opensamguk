@@ -124,9 +124,6 @@ data class FrontGlobalInfo(
     val createdUserCnt: Int? = null, // npc_state == 0 (사용자 점유 가능 장수)
     val createdNPCCnt: Int? = null, // npc_state > 0 (NPC 장수)
 
-    // ng_auction.finished = 0 진행중 경매 수(아래 AuctionCountReadRepository).
-    val auctionCount: Int? = null,
-
     val serverLocked: Boolean? = null,
 )
 

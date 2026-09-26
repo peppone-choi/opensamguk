@@ -35,7 +35,7 @@ import opensamguk.logic.auction.AuctionType
  * @param auctionRepository JPA read repository — 경매 조회
  * @param bidRepository JPA read repository — 입찰 조회
  *
- * [AuctionBidHandler]와 동일하게 per-run plain 클래스다([InMemoryTurnWorld]는 싱글톤 빈이 아닌
+ * 다른 즉시 입력 핸들러와 동일하게 per-run plain 클래스다([InMemoryTurnWorld]는 싱글톤 빈이 아닌
  * 스냅샷 기반 per-run 상태). Spring `@Component` 미등록, 턴 파이프라인이 직접 인스턴스화한다.
  */
 class AuctionFinalizeHandler(

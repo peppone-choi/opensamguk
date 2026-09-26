@@ -52,18 +52,11 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `auctionBid maps auctionId amount and optional tryExtendCloseDate`() {
-        val cmd = CommandWireMapper.toCommand(
-            code = "auctionBid",
-            generalId = 11,
-            requestId = "req-bid",
-            argJson = """{"auctionId":9,"amount":1200,"isUnique":true}""",
-        )
-        val bid = roundTrip(cmd!!) as TurnDaemonCommand.AuctionBid
-        assertEquals(9, bid.auctionId)
-        assertEquals(11, bid.generalId)
-        assertEquals(1200, bid.amount)
-        assertNull(bid.tryExtendCloseDate) // not supplied → null (handler defaults to true)
+    fun `retired auction commands cannot enter the immediate intake wire`() {
+        for (code in listOf("auctionBid", "auctionOpenBuyRice", "auctionOpenSellRice", "auctionOpenUnique")) {
+            assertTrue(!CommandWireMapper.isIntakeCommand(code))
+            assertEquals(null, CommandWireMapper.toCommand(code, 11, "retired", """{"auctionId":9,"amount":1200}"""))
+        }
     }
 
     @Test

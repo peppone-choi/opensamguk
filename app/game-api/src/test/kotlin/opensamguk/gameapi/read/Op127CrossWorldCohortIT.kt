@@ -17,7 +17,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * OPENSAM-127 GWT: process world=1 never returns world=2 rows for rank / auction / log / diplomacy.
+ * OPENSAM-127 GWT: process world=1 never returns world=2 rows for rank / log / diplomacy.
  */
 @Testcontainers(disabledWithoutDocker = true)
 @DataJpaTest
@@ -26,7 +26,6 @@ import kotlin.test.assertTrue
 @Import(
     GameApiProcessWorldIdConfiguration::class,
     RankDataReadRepository::class,
-    AuctionCountReadRepository::class,
     DiplomacyReadRepository::class,
     LogFeedReadRepository::class,
     WorldStateReadRepository::class,
@@ -34,13 +33,12 @@ import kotlin.test.assertTrue
 class Op127CrossWorldCohortIT {
     @Autowired lateinit var jdbc: JdbcTemplate
     @Autowired lateinit var ranks: RankDataReadRepository
-    @Autowired lateinit var auctions: AuctionCountReadRepository
     @Autowired lateinit var diplomacy: DiplomacyReadRepository
     @Autowired lateinit var logFeeds: LogFeedReadRepository
     @Autowired lateinit var worldStates: WorldStateReadRepository
 
     @Test
-    fun `process world isolates rank auction log diplomacy and world_state`() {
+    fun `process world isolates rank log diplomacy and world_state`() {
         seedWorld(1)
         seedWorld(2)
         jdbc.update(
@@ -48,13 +46,6 @@ class Op127CrossWorldCohortIT {
         )
         jdbc.update(
             "INSERT INTO rank_data (id, world_id, nation_id, general_id, type, value) VALUES (2, 2, 1, 10, 'warnum', 99)",
-        )
-        jdbc.update(
-            """
-            INSERT INTO ng_auction (id, world_id, type, finished, host_general_id, req_resource, open_date, close_date)
-            VALUES (1, 1, 'buyRice', false, 1, 'gold', now(), now() + interval '1 hour'),
-                   (2, 2, 'buyRice', false, 1, 'gold', now(), now() + interval '1 hour')
-            """.trimIndent(),
         )
         jdbc.update(
             "INSERT INTO diplomacy (id, world_id, src_nation_id, dest_nation_id, state_code, term) VALUES (1, 1, 5, 6, 1, 0), (2, 2, 5, 6, 2, 0)",
@@ -69,7 +60,6 @@ class Op127CrossWorldCohortIT {
 
         assertEquals(listOf(7), ranks.findByGeneralId(10).map { it.value })
         assertEquals(7, ranks.findByGeneralIdAndType(10, "warnum")!!.value)
-        assertEquals(1, auctions.countByFinished(false))
         assertEquals(listOf(1), diplomacy.findBySrcNationId(5).map { it.stateCode })
         assertEquals(listOf("w1"), logFeeds.findRecentGlobalHistory(10).map { it.text })
         assertEquals(listOf(1), worldStates.findAll().map { it.id })

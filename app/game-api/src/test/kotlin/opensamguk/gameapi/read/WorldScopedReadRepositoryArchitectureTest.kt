@@ -16,7 +16,6 @@ class WorldScopedReadRepositoryArchitectureTest {
             "GeneralTurnReadRepository.kt" to "GeneralTurnReadRawRepository",
             "NationTurnReadRepository.kt" to "NationTurnReadRawRepository",
             "RankDataReadRepository.kt" to "RankDataReadRawRepository",
-            "AuctionCountReadRepository.kt" to "AuctionCountReadRawRepository",
             "DiplomacyReadRepository.kt" to "DiplomacyReadRawRepository",
             "LogFeedReadRepository.kt" to "LogFeedReadRawRepository",
             "GameKvReadRepository.kt" to "GameKvReadRawRepository",
