@@ -5,16 +5,16 @@ import com.fasterxml.jackson.databind.node.ArrayNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import java.nio.file.Path
 import kotlin.test.*
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import opensamguk.logic.world.LandMarchMetricSnapshot
 
 /** The vision commandery number must be the provinces PNG commandery channel for every released map. */
-class HanCommanderyIndexJsonTest {
-    private val resolver = HanWorldArtifactsResolver(Path.of(".."))
+class CommanderyIndexJsonTest {
+    private val resolver = WorldArtifactsResolver(Path.of(".."))
     private val mapper = ObjectMapper()
 
     @Test fun `every released han variant yields an index aligned with juns and the declared adjacency`() {
-        val variants = HanWorldVariant.entries.filter { it.cityCount >= 846 }
+        val variants = WorldMapVariant.entries.filter { it.cityCount >= 846 }
         assertTrue(variants.size >= 8)
         for (variant in variants) {
             val bundle = resolver.artifacts(variant)
@@ -36,7 +36,7 @@ class HanCommanderyIndexJsonTest {
     }
 
     @Test fun `the 1168 map places 하남윤 next to its five neighbours`() {
-        val index = resolver.artifacts(HanWorldVariant.V3_1168).commanderyIndex
+        val index = resolver.artifacts(WorldMapVariant.V3_1168).commanderyIndex
         val henan = index.commanderies.single { it.nameCh == "河南尹" }
         assertEquals(0, henan.no)
         assertEquals(setOf("영천군", "진류군", "하내군", "하동군", "홍농군"), index.neighbours(henan.no).map { index.commanderies[it].name }.toSet())
@@ -45,10 +45,10 @@ class HanCommanderyIndexJsonTest {
     // ── red probes: each cross-check must fire on a tampered copy ──────────
 
     private fun tampered(edit: (ObjectNode) -> Unit): Result<*> {
-        val bundle = resolver.artifacts(HanWorldVariant.V3_1168)
+        val bundle = resolver.artifacts(WorldMapVariant.V3_1168)
         val root = mapper.readTree(bundle.artifactBytes(LandMarchMetricSnapshot.TILES_PATH)) as ObjectNode
         edit(root)
-        return runCatching { HanCommanderyIndexJson.parse(mapper.writeValueAsBytes(root),
+        return runCatching { CommanderyIndexJson.parse(mapper.writeValueAsBytes(root),
             bundle.projection.topology.landProvinceIds, "f".repeat(64)) }
     }
 
@@ -69,8 +69,8 @@ class HanCommanderyIndexJsonTest {
     }
 
     @Test fun `bytes that differ from the topology pin are rejected before parsing`() {
-        val bundle = resolver.artifacts(HanWorldVariant.V3_1168)
+        val bundle = resolver.artifacts(WorldMapVariant.V3_1168)
         val bytes = bundle.artifactBytes(LandMarchMetricSnapshot.TILES_PATH) + " ".toByteArray()
-        assertFailsWith<IllegalArgumentException> { HanCommanderyIndexJson.load(bundle.projection.topology, bytes) }
+        assertFailsWith<IllegalArgumentException> { CommanderyIndexJson.load(bundle.projection.topology, bytes) }
     }
 }

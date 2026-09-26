@@ -3,7 +3,7 @@ package opensamguk.infra.seed
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -22,8 +22,8 @@ internal object Han1141Artifacts {
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-    fun load(root: Path): ResolvedHanWorldArtifacts {
-        val variant = HanWorldVariant.V3_1141
+    fun load(root: Path): ResolvedWorldArtifacts {
+        val variant = WorldMapVariant.V3_1141
         val directory = root.resolve("data/map/han-world-v3-1141-artifacts-v1")
         val raw = Files.readAllBytes(directory.resolve("catalog.json"))
         require(sha(raw) == CATALOG_SHA256) { "1141 release catalog hash mismatch" }
@@ -33,7 +33,7 @@ internal object Han1141Artifacts {
             catalog.path("logicalMapName").asText() == "han-world-v3" &&
             catalog.path("cityCount").asInt() == variant.cityCount) { "1141 release identity mismatch" }
         val entries = catalog.path("files").toList()
-        val paths = HanStrategicTopologyJson.artifactPaths() + ownershipPaths
+        val paths = StrategicTopologyJson.artifactPaths() + ownershipPaths
         require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
             "1141 release artifact path set mismatch"
         }
@@ -50,8 +50,8 @@ internal object Han1141Artifacts {
             require(data.size == length && sha(data) == hash) { "1141 artifact hash/length mismatch" }
             entry.path("path").asText() to data
         }
-        val projection = HanStrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
-        return ResolvedHanWorldArtifacts(variant, projection, bytes)
+        val projection = StrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
+        return ResolvedWorldArtifacts(variant, projection, bytes)
     }
 
     private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)

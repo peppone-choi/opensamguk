@@ -6,8 +6,8 @@ import java.security.MessageDigest
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.ActiveWorldArtifactSnapshot
 import opensamguk.gameapi.read.WorldStateReadEntity
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.logic.world.WorldMapVariant
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 import kotlin.test.assertEquals
@@ -17,10 +17,10 @@ class JuMapControllerTest {
     @Test
     fun `all historical terrain variants expose hash bound canonical Ju`() {
         val worlds = Mockito.mock(ActiveWorldArtifactResolver::class.java)
-        val bundles = HanWorldArtifactsResolver(Path.of("../.."))
+        val bundles = WorldArtifactsResolver(Path.of("../.."))
         val controller = JuMapController(worlds, "../../data/map/han-ju-index-v1.json")
         val mapper = ObjectMapper()
-        for (variant in HanWorldVariant.entries) {
+        for (variant in WorldMapVariant.entries) {
             val selected = bundles.artifacts(variant)
             Mockito.`when`(worlds.resolve()).thenReturn(
                 ActiveWorldArtifactSnapshot(WorldStateReadEntity(id = 7), emptyList(), selected),

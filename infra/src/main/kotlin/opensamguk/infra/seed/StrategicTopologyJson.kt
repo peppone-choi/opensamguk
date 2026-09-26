@@ -10,7 +10,7 @@ import java.nio.file.Path
 import java.security.MessageDigest
 
 /** Shared API/engine loader. Artifact mistakes are fatal; legacy Han never enters this domain. */
-object HanStrategicTopologyJson {
+object StrategicTopologyJson {
     private const val MAP = "han-world-v3"
     private const val TILES = "data/map/han-tiles.json"
     private const val ROADS = "data/map/han-land-roads-v1.json"
@@ -39,13 +39,13 @@ object HanStrategicTopologyJson {
         }
     }
 
-    fun loadDefault(): HanStrategicRouteProjection = defaultProjection
+    fun loadDefault(): StrategicRouteProjection = defaultProjection
 
-    fun loadFromDirectory(root: Path, mapName: String): HanStrategicRouteProjection =
+    fun loadFromDirectory(root: Path, mapName: String): StrategicRouteProjection =
         load(mapName) { Files.readAllBytes(root.resolve(it)) }
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
-    fun load(mapName: String, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection =
+    fun load(mapName: String, readArtifact: (String) -> ByteArray): StrategicRouteProjection =
         loadVersion(mapName, 1447, readArtifact)
 
     internal fun artifactPaths(): Set<String> = paths.toSet()
@@ -59,7 +59,7 @@ object HanStrategicTopologyJson {
     /** 대리 治所 省 규칙(standInSeatProvince)은 이 판부터 쓴다 — 앞 판 번들은 省 없는 城을 그대로 싣는다. */
     private const val FIRST_STAND_IN_SEAT_ROSTER = 849
 
-    internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): HanStrategicRouteProjection {
+    internal fun loadVersion(mapName: String, cityCount: Int, readArtifact: (String) -> ByteArray): StrategicRouteProjection {
         val rosterLandCount = requireNotNull(landCountByRoster[cityCount]) { "Unregistered historical Han route roster" }
         require(mapName == MAP) { "Strategic topology is only supported for $MAP; got $mapName" }
         try {
@@ -179,7 +179,7 @@ object HanStrategicTopologyJson {
                 }
             }
             validateCounts(manifest, water)
-            val dryEdges = projectHanDryLandEdges(landIds, owner, terrain, dryCodes, barriers, hashes.getValue(TILES))
+            val dryEdges = projectDryLandEdges(landIds, owner, terrain, dryCodes, barriers, hashes.getValue(TILES))
             val map4 = cityCount == 1447 && meta.path("resolutionScale").asInt(1) == 4
             val roadBytes = if (map4) readArtifact(ROADS) else null
             val roadRows = if (roadBytes != null) {
@@ -323,7 +323,7 @@ object HanStrategicTopologyJson {
                 },
             )
             val standIn = if (cityCount >= FIRST_STAND_IN_SEAT_ROSTER) standInSeatProvinces(tiles, provinces, owner, cols) else emptyMap()
-            return HanStrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds, cityCount, standIn), blockers, presentation)
+            return StrategicRouteProjection(topology, routeBindings(docs, hashes, provinces, landIds, cityCount, standIn), blockers, presentation)
         } catch (e: IllegalArgumentException) {
             throw e
         } catch (e: Exception) {
@@ -382,7 +382,7 @@ object HanStrategicTopologyJson {
     }
 
     private fun routeBindings(docs: Map<String, JsonNode>, hashes: Map<String, String>, provinces: List<JsonNode>, landIds: List<String>,
-        cityCount: Int, standInSeatProvinces: Map<Int, Int> = emptyMap()): List<HanStrategicRouteBinding> {
+        cityCount: Int, standInSeatProvinces: Map<Int, Int> = emptyMap()): List<StrategicRouteBinding> {
         val world = docs.getValue(WORLD)
         val selection = docs.getValue(SELECTION)
         val migration = docs.getValue(MIGRATION)
@@ -400,7 +400,7 @@ object HanStrategicTopologyJson {
             // 1168·1224 판은 명부 id 가 연속이 아니다 — 은퇴 id 26 개를 되쓰지 않으므로
             // 최댓값이 명부 수보다 크다. 그 판은 등록부에서 실제 id 집합을 읽는다.
             val expectedIds = if (cityCount in setOf(1168, 1224, 1447)) opensamguk.logic.world.CityConstRegistry.hanWorld(
-                opensamguk.logic.world.HanWorldVariant.entries.first { it.cityCount == cityCount }).all().keys
+                opensamguk.logic.world.WorldMapVariant.entries.first { it.cityCount == cityCount }).all().keys
                 else (1..cityCount).toSet()
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }
             require(result.map { it.id }.toSet() == expectedIds && result.map { it.key }.toSet().size == cityCount &&
@@ -451,7 +451,7 @@ object HanStrategicTopologyJson {
                     city.text("spatialProvinceId") == landIds[provinceIndex]) { "Runtime physical-to-province identity drift" }
             }
             require(countySeats == null || placeId in countySeats) { "Missing jurisdiction for runtime place $placeId" }
-            HanStrategicRouteBinding(city.integer("id"), city.text("routeNodeKey"), physical,
+            StrategicRouteBinding(city.integer("id"), city.text("routeNodeKey"), physical,
                 provinceIndex?.let(landIds::get), countySeats?.get(placeId) == true)
         }
     }

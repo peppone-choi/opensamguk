@@ -297,7 +297,7 @@ data class TurnWorldState(
     /** OPENSAM-131: active writer fence epoch observed at load. */
     val writerEpoch: Long = 0L,
     /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
-    val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
+    val worldMapVariant: opensamguk.logic.world.WorldMapVariant? = null,
 ) {
     /** Temporary adapter for input handlers until the retired profile type is removed. */
     val ruleProfile: opensamguk.logic.input.RuleProfile

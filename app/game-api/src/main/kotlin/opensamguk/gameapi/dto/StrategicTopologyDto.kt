@@ -1,7 +1,7 @@
 package opensamguk.gameapi.dto
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.StrategicWaterGeometry
 import opensamguk.logic.world.StrategicRoadGate
 
@@ -15,7 +15,7 @@ data class StrategicTopologyBinding(
     val rows: Int,
 ) {
     companion object {
-        fun from(worldId: Int, projection: HanStrategicRouteProjection): StrategicTopologyBinding {
+        fun from(worldId: Int, projection: StrategicRouteProjection): StrategicTopologyBinding {
             val display = requireNotNull(projection.presentation) { "Validated strategic presentation is missing" }
             return StrategicTopologyBinding(worldId, "han-world-v3", projection.topology.topologyRevision,
                 projection.topology.contentHash, display.baseTilesSha256, display.cols, display.rows)

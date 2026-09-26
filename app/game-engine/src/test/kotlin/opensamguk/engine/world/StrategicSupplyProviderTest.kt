@@ -1,16 +1,16 @@
 package opensamguk.engine.world
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.StrategicTopologyJson
 import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.world.*
 import java.nio.file.Path
 import kotlin.test.*
 
-class HanStrategicSupplyProviderTest {
+class StrategicSupplyProviderTest {
     private val mapper = ObjectMapper()
-    private val projection by lazy { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
+    private val projection by lazy { StrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
     private val provider by lazy {
         SpatialSupplyProvider(mapper, "../../data/map/han-tiles.json",
             "../../data/map/han-scenario-province-ownership-v1.json")
@@ -22,12 +22,12 @@ class HanStrategicSupplyProviderTest {
         }
 
     @Test fun `historical supply uses frozen ownership links and policies without runtime files`() {
-        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
         val policy = SupplyDisconnectionPolicyLoader(mapper, "/missing/legacy", "/missing/tiles", "/missing/map", "/missing/source",
             "/missing/v3policy", "/missing/v3map")
         val historicalProvider = SpatialSupplyProvider(mapper, "/missing/tiles", "/missing/owners", policy,
             CommanderySupplyLinkLoader(mapper, "/missing/links"))
-        for (variant in HanWorldVariant.entries) {
+        for (variant in WorldMapVariant.entries) {
             val bundle = artifacts.artifacts(variant)
             val map = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
             val live = map.cities.mapNotNull { city -> city.provinceId?.let {
@@ -42,7 +42,7 @@ class HanStrategicSupplyProviderTest {
                     if (i == 0) city.copy(physicalPlaceRef = "wrong") else city
                 }, artifacts = bundle)
             }
-            val other = HanWorldVariant.entries.first { it != variant }
+            val other = WorldMapVariant.entries.first { it != variant }
             assertFailsWith<IllegalArgumentException> {
                 historicalProvider.network("han-world-v3", 1020, live, strategicProjection = artifacts.artifacts(other).projection, artifacts = bundle)
             }

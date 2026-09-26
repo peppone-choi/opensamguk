@@ -6,7 +6,7 @@ import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
 import opensamguk.gameapi.reserve.*
 import opensamguk.gameapi.web.TravelOptionsController
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
@@ -31,9 +31,9 @@ class TravelPrecheckServiceTest {
         `when`(generals.findAll()).thenReturn(listOf(actor))
         `when`(retainers.findAll()).thenReturn(emptyList())
         `when`(retainers.allBugoks()).thenReturn(emptyList())
-        val bundle = mock(ResolvedHanWorldArtifacts::class.java)
-        `when`(bundle.projection).thenReturn(HanStrategicRouteProjection(topology, listOf(
-            HanStrategicRouteBinding(1, "r1", "p1", "A"), HanStrategicRouteBinding(2, "r2", "p2", "B"))))
+        val bundle = mock(ResolvedWorldArtifacts::class.java)
+        `when`(bundle.projection).thenReturn(StrategicRouteProjection(topology, listOf(
+            StrategicRouteBinding(1, "r1", "p1", "A"), StrategicRouteBinding(2, "r2", "p2", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"), meta = mapOf(
             LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),

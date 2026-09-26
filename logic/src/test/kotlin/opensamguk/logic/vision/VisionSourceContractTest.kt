@@ -19,8 +19,8 @@ import opensamguk.logic.domestic.DomesticEffects
 import opensamguk.logic.domestic.DomesticCard
 
 import opensamguk.logic.domestic.DomesticDesign
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import kotlin.test.*
 
 /**
@@ -31,7 +31,7 @@ import kotlin.test.*
 class VisionSourceContractTest {
     private val hash = "a".repeat(64)
     // 0 — 1 — 2 — 3 — 4 (line); province pN belongs to commandery N.
-    private val index = HanCommanderyIndex(hash, (0..4).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
+    private val index = CommanderyIndex(hash, (0..4).map { Commandery(it, "PARENT-$it", "군$it", "郡$it") },
         (0..4).associate { "p$it" to it }, setOf(0 to 1, 1 to 2, 2 to 3, 3 to 4))
     private val now = Phase(200, 1, 1)
     private val reader: VisionSourceReader = MetaVisionSourceReader

@@ -8,10 +8,10 @@ class GridReachTest {
     private fun layout(mountain: Set<Position> = emptySet(), holes: Set<Position> = emptySet()): BattlefieldLayout {
         val cells = (0..4).flatMap { row -> (0..4).mapNotNull { col ->
             val p = Position(col,row)
-            if (p in holes) null else HanProvinceCell(col+1,row,if(p in mountain) '2' else '1')
+            if (p in holes) null else ProvinceCell(col+1,row,if(p in mountain) '2' else '1')
         } }
-        val index = HanProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),6,5,
-            mapOf('1' to "PLAIN",'2' to "MOUNTAIN"),mapOf("a" to listOf(HanProvinceCell(0,0,'1')),"b" to cells))
+        val index = ProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),6,5,
+            mapOf('1' to "PLAIN",'2' to "MOUNTAIN"),mapOf("a" to listOf(ProvinceCell(0,0,'1')),"b" to cells))
         return (BattlefieldLayout.prepare(index,"b","a") as BattlefieldLayout.Result.Ready).layout
     }
     @Test fun `adjacency range and diagonal distance use Manhattan metric`() {

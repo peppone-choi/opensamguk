@@ -10,7 +10,7 @@ import java.math.RoundingMode
 import java.security.MessageDigest
 
 /** Pinned geometry only. The topology supplies every edge; county adjacency is never consulted. */
-object HanLandMarchMetricJson {
+object LandMarchMetricJson {
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
     private val water = setOf("SEA", "LAKE", "OUT_OF_SCOPE")

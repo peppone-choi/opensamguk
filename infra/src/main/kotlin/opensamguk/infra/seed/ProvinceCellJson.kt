@@ -7,13 +7,13 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import java.security.MessageDigest
 import opensamguk.logic.world.*
 
-/** The caller supplies bytes from its selected ResolvedHanWorldArtifacts; no filesystem fallback. */
-object HanProvinceCellJson {
+/** The caller supplies bytes from its selected ResolvedWorldArtifacts; no filesystem fallback. */
+object ProvinceCellJson {
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
     private val terrainKinds = setOf("SEA", "PLAIN", "MOUNTAIN", "RIVER", "LAKE", "DESERT", "PLATEAU", "BASIN", "HILL", "OUT_OF_SCOPE")
 
-    fun load(topology: StrategicTopologySnapshot, tilesBytes: ByteArray): HanProvinceCellIndex {
+    fun load(topology: StrategicTopologySnapshot, tilesBytes: ByteArray): ProvinceCellIndex {
         val hash = MessageDigest.getInstance("SHA-256").digest(tilesBytes).joinToString("") { "%02x".format(it) }
         require(topology.artifactHashes[LandMarchMetricSnapshot.TILES_PATH] == hash) { "Province cells differ from topology tiles pin" }
         val root = try { mapper.readTree(tilesBytes) } catch (e: java.io.IOException) {
@@ -35,7 +35,7 @@ object HanProvinceCellJson {
         }
         val terrain = array(root.path("terrain")).map(::text)
         require(terrain.size == rows && terrain.all { it.length == cols && it.all(legend::containsKey) }) { "Invalid terrain raster" }
-        val cells = ids.associateWithTo(linkedMapOf()) { mutableListOf<HanProvinceCell>() }
+        val cells = ids.associateWithTo(linkedMapOf()) { mutableListOf<ProvinceCell>() }
         var offset = 0
         for (run in array(root.path("owner"))) {
             require(run.isArray && run.size() == 2) { "Invalid owner RLE pair" }
@@ -44,12 +44,12 @@ object HanProvinceCellJson {
             require(length > 0 && offset.toLong() + length <= count) { "Invalid owner RLE length" }
             if (owner >= 0) repeat(length) { step ->
                 val index = offset + step; val col = index % cols; val row = index / cols
-                cells.getValue(ids[owner]).add(HanProvinceCell(col, row, terrain[row][col]))
+                cells.getValue(ids[owner]).add(ProvinceCell(col, row, terrain[row][col]))
             }
             offset += length
         }
         require(offset == count) { "Owner RLE does not cover raster" }
-        return HanProvinceCellIndex(topology.topologyRevision, topology.contentHash, hash, cols, rows, legend, cells)
+        return ProvinceCellIndex(topology.topologyRevision, topology.contentHash, hash, cols, rows, legend, cells)
     }
 
     private fun array(node: JsonNode): List<JsonNode> {

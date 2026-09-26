@@ -203,7 +203,7 @@ class ReservedTurnHandler(
     /** Pinned commandery geography for `action.scout`; null outside a Han HWIHA world (the input then rejects). */
     private val hwihaVisionContext: opensamguk.engine.campaign.VisionContext? = null,
     /** HWIHA 강공 격자에 쓰는 핀된 省 칸 색인. 없으면 공성 입력은 상태 없음으로 거절된다. */
-    private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
+    private val hwihaProvinceCells: opensamguk.logic.world.ProvinceCellIndex? = null,
     /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
     private val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener = opensamguk.engine.campaign.WarOutcomeListener.NONE,
     private val marchReactions: opensamguk.engine.campaign.MarchReactionPolicy = opensamguk.engine.campaign.MarchReactionPolicy.NON_BLOCKING,
@@ -492,7 +492,7 @@ class ReservedTurnHandler(
         env["mapName"] = ActiveWorldMap.requireName(state.config, state.meta)
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear).copy(
             mapName = ActiveWorldMap.requireName(state.config, state.meta),
-            hanWorldVariant = state.hanWorldVariant,
+            worldMapVariant = state.worldMapVariant,
         )
 
         if (actionCode == "che_전장이동") {
@@ -547,7 +547,7 @@ class ReservedTurnHandler(
             args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
-            hanWorldVariant = world.getState().hanWorldVariant,
+            worldMapVariant = world.getState().worldMapVariant,
         )
         val view = WorldStateViewAdapter(overlay, env = env, args = actionArgs)
         val result = evaluateConstraints(definition.buildConstraints(ctx), ctx, view)
@@ -1011,7 +1011,7 @@ class ReservedTurnHandler(
                 defenderNationGenerals = defenderNationGenerals,
                 allCitiesForBfs = logicCities,
                 diplomacyForFront = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) },
-                cityConstVariant = world.getState().let { ActiveWorldMap.requireVariant(it.config, it.meta, it.hanWorldVariant) },
+                cityConstVariant = world.getState().let { ActiveWorldMap.requireVariant(it.config, it.meta, it.worldMapVariant) },
                 attackerNationName = world.getNationById(attacker.nationId)?.name ?: "",
                 attackerGeneralName = attacker.name,
                 attackerNationChiefIds = world.listGenerals()
@@ -1612,7 +1612,7 @@ class ReservedTurnHandler(
             args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
-            hanWorldVariant = world.getState().hanWorldVariant,
+            worldMapVariant = world.getState().worldMapVariant,
         )
         when (val result = evaluateConstraints(
             definition.buildConstraints(constraintContext),

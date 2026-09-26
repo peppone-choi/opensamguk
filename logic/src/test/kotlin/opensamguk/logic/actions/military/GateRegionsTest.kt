@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
  * 별칭 하나를 지워도 RED 가 안 뜰 수 있다 — 프로덕션 로직이 그렇게 동작하는 게 맞고 테스트 결함이
  * 아니다. "같은 城 하나가 전부 가진다"를 검증하려면 [cityWithKeys] 로 찾은 단일 城만 `own` 에 넣어라.
  */
-class HanGateRegionsTest {
+class GateRegionsTest {
 
     private val han = CityConstRegistry.of("han")
     private val che = CityConstRegistry.of("che")

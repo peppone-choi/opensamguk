@@ -3,7 +3,7 @@ package opensamguk.infra.seed
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -13,7 +13,7 @@ import java.security.MessageDigest
  * name or falling back to current files. Selection by a complete world roster
  * and runtime wiring are deliberately separate from this archive reader.
  */
-object HanHistoricalArtifacts {
+object HistoricalArtifacts {
     internal const val CATALOG_SHA256 = "bbf8efcb3691a4670ea15801bc379486926fbdc34528d07c0d0a9c0e7b17dd53"
     private val versions = mapOf(
         "han-world-v3-832" to ("cf5a77806212c1d8d08d617b292a6fb5fd7cc496" to 832),
@@ -23,10 +23,10 @@ object HanHistoricalArtifacts {
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-    fun loadFromDirectory(root: Path, variantId: String): HanStrategicRouteProjection =
+    fun loadFromDirectory(root: Path, variantId: String): StrategicRouteProjection =
         loadBundleFromDirectory(root, variantId).projection
 
-    internal fun loadBundleFromDirectory(root: Path, variantId: String): ResolvedHanWorldArtifacts {
+    internal fun loadBundleFromDirectory(root: Path, variantId: String): ResolvedWorldArtifacts {
         val (commit, count) = requireNotNull(versions[variantId]) { "Unknown Han artifact set: $variantId" }
         try {
             val directory = root.resolve("data/map/han-world-artifacts-v1")
@@ -45,8 +45,8 @@ object HanHistoricalArtifacts {
                 variant.path("logicalMapName").asText() == "han-world-v3") { "Historical source domain mismatch" }
             val files = variant.path("files").toList()
             val paths = files.map { it.path("path").asText() }
-            require(paths.size == HanStrategicTopologyJson.artifactPaths().size &&
-                paths.toSet() == HanStrategicTopologyJson.artifactPaths()) { "Historical artifact path set mismatch" }
+            require(paths.size == StrategicTopologyJson.artifactPaths().size &&
+                paths.toSet() == StrategicTopologyJson.artifactPaths()) { "Historical artifact path set mismatch" }
             val bytes = files.associate { entry ->
                 val hash = entry.path("sha256").asText()
                 require(hash.matches(Regex("[a-f0-9]{64}"))) { "Invalid historical blob digest" }
@@ -59,10 +59,10 @@ object HanHistoricalArtifacts {
                 entry.path("path").asText() to data
             }
             // Retain all existing manifest, identity, terrain and connectivity checks.
-            val runtimeVariant = opensamguk.logic.world.HanWorldVariant.entries.single { it.artifactId == variantId }
-            val projection = HanStrategicTopologyJson.loadVersion("han-world-v3", count, bytes::getValue)
-            val ownership = HanHistoricalOwnership.load(directory, variantId, commit)
-            return ResolvedHanWorldArtifacts(runtimeVariant, projection, bytes + ownership)
+            val runtimeVariant = opensamguk.logic.world.WorldMapVariant.entries.single { it.artifactId == variantId }
+            val projection = StrategicTopologyJson.loadVersion("han-world-v3", count, bytes::getValue)
+            val ownership = HistoricalOwnership.load(directory, variantId, commit)
+            return ResolvedWorldArtifacts(runtimeVariant, projection, bytes + ownership)
         } catch (error: IllegalArgumentException) {
             throw error
         } catch (error: Exception) {

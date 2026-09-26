@@ -6,7 +6,7 @@ import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.campaign.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.flywaydb.core.Flyway
@@ -29,7 +29,7 @@ class DeploymentPersistenceIT {
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
     private lateinit var fixture: EnlistmentFixture
-    private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
+    private val bundle by lazy { WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133) }
     private fun executor(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
         DeploymentExecutor(world,recorder,bundle.projection.topology,bundle.landMarchMetrics)
 

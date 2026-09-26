@@ -6,15 +6,15 @@ import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.world.SpatialSupplyProvider
 import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.seed.StrategicTopologyJson
 import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.RepositoryInputTrace
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.CalcCityDistance
-import opensamguk.logic.world.HanStrategicRouteProjection
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.StrategicRouteProjection
+import opensamguk.logic.world.WorldMapVariant
 import org.junit.jupiter.api.Test
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -41,14 +41,21 @@ class CityPathGuardTest {
         FileSystems.getDefault().getPathMatcher("glob:$pattern").matches(Path.of(path))
     }
 
+    @Test fun `literal city paths exist`() {
+        val missing = sections.values.flatten()
+            .filterNot { path -> path.any { it in "*?[]" } }
+            .filterNot { path -> root.resolve(path).toFile().isFile }
+        assertTrue(missing.isEmpty(), "literal city paths absent from repository: $missing")
+    }
+
     @Test fun `opened city input files are covered by data paths`() {
         val opened = RepositoryInputTrace.capture(root) {
             MapJson.loadFromClasspath("han-world-v3")
             MapJson.loadCityDetailsFromClasspath("han-world-v3")
             SeedBootstrap(scenarioCode = "scenario_990002", worldId = WorldId(1)).loadScenario()
-            val resolver = HanWorldArtifactsResolver(root)
-            resolver.artifacts(HanWorldVariant.V3_835)
-            resolver.artifacts(HanWorldVariant.V3_1447)
+            val resolver = WorldArtifactsResolver(root)
+            resolver.artifacts(WorldMapVariant.V3_835)
+            resolver.artifacts(WorldMapVariant.V3_1447)
         }
         assertTrue(opened.isNotEmpty(), "city loader trace must capture files")
         assertTrue(opened.all { listed("data", it) },
@@ -60,8 +67,8 @@ class CityPathGuardTest {
             DatabaseHooks::class.java,
             JdbcFlushExecutor::class.java, WorldSnapshotLoader::class.java,
             MapAdministrativeOwnership::class.java, SpatialSupplyProvider::class.java,
-            HanStrategicRouteProjection::class.java, CalcCityDistance::class.java,
-            HanStrategicTopologyJson::class.java,
+            StrategicRouteProjection::class.java, CalcCityDistance::class.java,
+            StrategicTopologyJson::class.java,
         )
         val missing = classes.map { type ->
             val sourcePath = type.name.substringBefore('$').replace('.', '/') + ".kt"

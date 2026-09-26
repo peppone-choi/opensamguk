@@ -254,7 +254,7 @@ class DaemonLoopConfig {
             ?: 0
         val activeMapName = ActiveWorldMap.requireName(state.config, state.meta)
         val supplyArtifacts = if (activeMapName == "han-world-v3") {
-            opensamguk.infra.seed.HanWorldArtifactsResolver().artifacts(requireNotNull(state.hanWorldVariant))
+            opensamguk.infra.seed.WorldArtifactsResolver().artifacts(requireNotNull(state.worldMapVariant))
         } else null
         val spatialSupplyNetworkProvider = createSpatialSupplyNetworkProvider(
             activeMapName = activeMapName,

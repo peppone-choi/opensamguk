@@ -9,7 +9,7 @@
 2. role ↔ cityLevel ↔ 이름 끝 글자 규칙이 맞는다(津·口·渡·浦 = FERRY/1, 鎭·壘·塢 = FORT/2).
 3. id·nameHan·좌표가 겹치지 않는다.
 4. tileAnchor 는 han-tiles.json 에서 **이 파일 안의 독립 구현으로** 다시 계산한 값과 같다.
-   투영식은 web/shared/src/HanMapCanvas.tsx projectBattlefieldTarget 그대로다.
+   투영식은 web/shared/src/WorldMapCanvas.tsx projectBattlefieldTarget 그대로다.
 5. 좌표는 나무위키 수확본(namu-source-records-v1) 행의 명시 좌표와 같다.
 6. 후보 풀(OTHER_NAMED_SITE 중 범위 글자로 끝나는 이름을 가진 행)은 채택 아니면 제외로
    정확히 한 번씩 처리돼 있다.

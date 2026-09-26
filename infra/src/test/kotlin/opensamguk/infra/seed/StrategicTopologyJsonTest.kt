@@ -16,13 +16,13 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-class HanStrategicTopologyJsonTest {
+class StrategicTopologyJsonTest {
     private val mapper = ObjectMapper()
     private val root = Path.of("..").toAbsolutePath().normalize()
 
     @Test
     fun `validated presentation exposes exact isolated water cells without inferred connections`() {
-        val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
+        val loaded = StrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val json = mapper.valueToTree<JsonNode>(loaded)
         val presentation = json.path("presentation")
         // 2026-09-21: 북동 확장 프레임을 걷어내 격자가 669x768 로 돌아왔다.
@@ -42,7 +42,7 @@ class HanStrategicTopologyJsonTest {
 
     @Test
     fun `committed topology keeps stable land identities and resolves Lu to Licheng over dry ground`() {
-        val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
+        val loaded = StrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         val topology = loaded.topology
 
         // 지리 재분할(GH #806): 縣·城 없는 省 1,258 + 수·진·관 거점 省 73(배열 끝) = 1,331. 앞 판은 1,520 + 73 = 1,594 였다.
@@ -52,7 +52,7 @@ class HanStrategicTopologyJsonTest {
         assertEquals(0, topology.riverBarriers.size)
         assertTrue(topology.traversalEdges.all { it.mode == TraversalMode.LAND })
         assertEquals(opensamguk.logic.world.CityConstRegistry.hanWorld(
-            opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).all().keys, loaded.bindingsByCityId.keys)
+            opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys, loaded.bindingsByCityId.keys)
         // 대리 治所 城(833 朔方 臨戎)은 직할 省에, 거점 城(1047 劍閣)은 떼어 받은 제 省에 앉는다.
         // 대리 治所 관할의 省 id 는 재분할로 다시 발급됐다(관할 id + ':geo:' + 순번의 해시, DIRECT- 접두어 유지).
         assertEquals("DIRECT-PARENT-0086-a120c2e594e6", loaded.bindingsByCityId.getValue(833).landProvinceId)
@@ -86,10 +86,10 @@ class HanStrategicTopologyJsonTest {
     fun `legacy domain and stale route snapshots fail closed`() {
         for (mapName in listOf("han", "han-world-v2", "han-780-v1")) {
             assertFailsWith<IllegalArgumentException> {
-                HanStrategicTopologyJson.loadFromDirectory(root, mapName)
+                StrategicTopologyJson.loadFromDirectory(root, mapName)
             }
         }
-        val loaded = HanStrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
+        val loaded = StrategicTopologyJson.loadFromDirectory(root, "han-world-v3")
         assertEquals(
             PathDenialCode.TOPOLOGY_REVISION_STALE,
             assertIs<StrategicPathResult.Denied>(loaded.resolve(273, 781, 1,
@@ -358,7 +358,7 @@ class HanStrategicTopologyJsonTest {
         TILES, WATER, ADJUDICATIONS, WATER_MANIFEST, WORLD, WORLD_MANIFEST, SELECTION, MIGRATION, LEGACY, ROADS,
     ).associateWith { Files.readAllBytes(root.resolve(it)) }.toMutableMap()
 
-    private fun load(files: Map<String, ByteArray>) = HanStrategicTopologyJson.load("han-world-v3") { files.getValue(it) }
+    private fun load(files: Map<String, ByteArray>) = StrategicTopologyJson.load("han-world-v3") { files.getValue(it) }
 
     private fun update(files: MutableMap<String, ByteArray>, path: String, mutate: (ObjectNode) -> Unit) {
         val doc = mapper.readTree(files.getValue(path)) as ObjectNode
