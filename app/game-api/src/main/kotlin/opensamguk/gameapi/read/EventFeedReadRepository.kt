@@ -43,6 +43,7 @@ class EventFeedReadRepository(
         section: EventSection,
         generalId: Int,
         nationId: Int,
+        permission: Int,
         before: EventFeedPosition?,
         limit: Int,
     ): List<EventFeedRow> {
@@ -51,15 +52,20 @@ class EventFeedReadRepository(
             """SELECT $COLUMNS FROM game_event
                WHERE world_id = :world AND section = :section
                  AND ((audience = 'SELF' AND audience_general_id = :general)
-                   OR (audience = 'RETINUE' AND :nation > 0 AND audience_nation_id = :nation
+                   OR (audience = 'RETINUE' AND :nation > 0
+                     AND :permission >= CASE WHEN :section = 'BATTLE' THEN 2 ELSE 1 END
+                     AND audience_nation_id = :nation
                      AND :general = ANY(recipient_general_ids))
-                   OR (audience = 'NATION' AND :nation > 0 AND audience_nation_id = :nation)
-                   OR (audience = 'COURT' AND :nation > 0 AND audience_nation_id = :nation
+                   OR (audience = 'NATION' AND :nation > 0 AND :permission >= 2
+                     AND audience_nation_id = :nation)
+                   OR (audience = 'COURT' AND :nation > 0 AND :permission >= 0
+                     AND audience_nation_id = :nation
                      AND :general = ANY(recipient_general_ids)))
                  ${if (before == null) "" else CURSOR}
                ORDER BY occurred_year DESC, occurred_month DESC, occurred_phase DESC,
                  occurred_ordinal DESC, id DESC LIMIT :limit""",
-            params(worldId, section, before, limit) + mapOf("general" to generalId, "nation" to nationId),
+            params(worldId, section, before, limit) + mapOf("general" to generalId, "nation" to nationId,
+                "permission" to permission),
             ROW,
         )
     }

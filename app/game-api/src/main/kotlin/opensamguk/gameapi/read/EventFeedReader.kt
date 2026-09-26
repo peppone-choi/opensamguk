@@ -155,7 +155,8 @@ class EventFeedReader(
         while (visible.size <= limit && examined < MAX_SCAN) {
             val batchSize = minOf(BATCH, MAX_SCAN - examined)
             val rows = if (section == EventSection.WORLD) events.publicCandidates(worldId, cursor, batchSize)
-                else events.privateCandidates(worldId, section, requireNotNull(generalId), nationId, cursor, batchSize)
+                else events.privateCandidates(worldId, section, requireNotNull(generalId), nationId,
+                    permission, cursor, batchSize)
             if (rows.isEmpty()) { exhausted = true; break }
             for (row in rows) {
                 examined++
