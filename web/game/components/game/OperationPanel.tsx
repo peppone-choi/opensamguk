@@ -148,7 +148,7 @@ export default function OperationPanel() {
                     <form className="ops__form" onSubmit={submitDeclare}>
                         <label>종류
                             <select value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
-                                {rules.kinds.map((k) => <option key={k.kind} value={k.kind} disabled={!k.declarable} title={k.reason ?? undefined}>{k.label}{k.declarable ? '' : ` (${k.reason})`}</option>)}
+                                {rules.kinds.map((k) => <option key={k.kind} value={k.kind} disabled={!k.declarable}>{k.label}{k.declarable ? '' : ` (${k.reason})`}</option>)}
                             </select>
                         </label>
                         <label>목표 도시
