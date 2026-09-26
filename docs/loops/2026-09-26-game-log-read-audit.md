@@ -15,36 +15,36 @@
 
 ## 새 응답 권한
 
-읽기 진입점은 JWT의 `userId`에서 `GeneralResolver.resolve`로 **현재 소유 장수**를 확정한다. 파라미터로 전달된 장수 ID나 옛 로그의 `general_id`만 믿지 않는다. 처리 월드 범위는 `GameApiProcessWorld`/가드의 최신 세계 형식 판정 뒤 `world_id`로 모든 SQL에 적용한다. 비로그인 요청은 공개 `/api/world-events`만 허용한다.
+읽기 진입점은 JWT의 `userId`에서 `GeneralResolver.resolve`로 **현재 소유 장수**를 확정한다. 파라미터로 전달된 장수 ID나 옛 로그의 `general_id`만 믿지 않는다. 처리 월드 범위는 #956에서 병합된 `GameApiProcessWorld`/가드의 최신 세계 형식 판정 뒤 `world_id`로 모든 SQL에 적용한다. 비로그인 요청은 공개 `/api/world-events`만 허용한다.
 
 | audience | DB 후보 조건 | 반환 직전 재검사 |
 | --- | --- | --- |
-| SELF | `audience_general_id=actor.id` | resolver가 현재 그 장수의 소유 계정을 확인. 같은 세력 수뇌라는 이유로 개인 행을 보여 주지 않음. |
-| RETINUE | `actor.id = ANY(recipient_general_ids)`와 사건 당시 `audience_general_id=ownerId` | 사건 당시 허용 수신자 snapshot은 봉인한다. 관계가 바뀌어도 당시 수신자를 새로 추가하지 않으며, 반환 시 **현재 비밀 권한**을 다시 검사한다. 관계 종료만으로 과거 수신자를 자동 삭제하지 않는 것이 확정 정책이다. 주인 본인과 휘하 당사자의 최소 권한 문턱은 writer/읽기 구현에서 kind별로 고정해야 한다. |
+| SELF | `audience_general_id=actor.id` | resolver가 현재 그 장수의 소유 계정을 확인. **세력 이적 후에도 본인의 개인 사건은 유지**한다. 같은 세력 수뇌라는 이유로 남의 개인 행을 보여 주지 않음. |
+| RETINUE | `actor.id = ANY(recipient_general_ids)`와 사건 당시 `audience_general_id=ownerId`, `audience_nation_id=actor.nationId` | 당시 허용 수신자 snapshot과 **당시 세력**을 봉인한다. 관계 종료만으로 과거 수신자를 삭제하지 않으나 이적하면 이전 세력의 공유 사건은 차단한다. 현재 비밀 권한도 kind별로 재검사한다. 새 관계로 과거 수신자를 늘리지 않음. |
 | NATION | `audience_nation_id=actor.nationId`, `nationId>0` | 현재 세력·`SecretPermissionReader`의 허용 등급을 kind별로 재검사. 다른 세력에 옮긴 장수에게 이전 세력 수입/전술 정보를 남기지 않음. |
-| COURT | `actor.id = ANY(recipient_general_ids)`, 세력 ID 일치 | 사건 당시 발신/수신자 봉인과 현재 세력·관직/비밀 권한을 재검사. 일반 수신자가 자기 발령을 읽을 최소 권한과 사관/수뇌 열람 범위는 별도 규칙으로 명시해야 한다. |
+| COURT | `actor.id = ANY(recipient_general_ids)`, `audience_nation_id=actor.nationId` | 발신/수신 직접 당사자도 이전 세력의 공문은 이적 후 차단한다. 당시 수신자 봉인과 현재 관직/비밀 권한을 재검사한다. 본인에게 별도 SELF로 쓴 개인 사건은 유지된다. |
 | PUBLIC | `audience=PUBLIC AND publication_state=PUBLISHED AND section=WORLD` | 중앙 `EventKind.publicKinds`와 refs/facts allowlist를 다시 검사. `publish_after_*`는 v1에서 모두 NULL이며 자동 승격 없음. |
 
 `SecretPermissionReader`는 관직·사관년도·penalty를 반영한 현재 권한 값을 반환한다. 이 값을 과거 사건 당시의 관직으로 대신하지 않는다. `RetainerReadRepository`는 현재 관계를 읽을 수 있지만 RETINUE 과거 수신자 판정의 원천은 사건에 봉인한 snapshot이다. 현재 관계를 새 수신자 허용 근거로 쓰지 않는다. 접근 거절·손상 refs는 raw JSON이나 비밀 ID를 DTO로 내보내지 않으며, 승인된 안전 투영이 없으면 사건 전체를 숨긴다.
 
-### kind별 최소 권한 초안
+### kind별 확정 권한
 
-ADR-LITE-069는 대상과 kind 분리를, #343은 군단·첩보·봉인 배치의 최소 노출을 확정했다. 숫자 문턱까지 확정한 문서는 없다. 아래 숫자는 읽기와 쓰기에 **같은 판정표로 넣을 보수적 구현 제안**이며, 직접 당사자 권한 예외의 제품 정책 선택을 남긴다. `p`는 현재 `SecretPermissionReader` 값이다. `audience`는 `EventKind.audiences`와 DB target 제약을 먼저 통과해야 한다. 모든 행은 현재 월드·소유 장수 검사를 전제로 한다.
+사용자가 2026-09-26에 숫자 문턱과 이적 후 범위를 확정했다. 아래 표를 쓰기와 읽기에 **같은 판정표**로 적용한다. `p`는 현재 `SecretPermissionReader` 값이다. `audience`는 `EventKind.audiences`와 DB target 제약을 먼저 통과해야 한다. 모든 행은 현재 월드·소유 장수 검사를 전제로 한다. SELF는 분류가 BATTLE이라도 자기 사건이면 이적 후 유지하며, 공개 범위는 늘리지 않는다.
 
-| kind | 허용 audience와 읽기 문턱 초안 | refs/facts 경계 |
+| kind | 허용 audience와 읽기 문턱 | refs/facts 경계 |
 | --- | --- | --- |
 | `march.assignment`, `enlist.joined`, `input.rejected`, `personal.applied`, `renown.event`, `yuedan.assessed`, `march.direct`, `encounter.personal` | SELF: 현재 소유자. 국가 소속이나 p값을 추가 요구하지 않음. | 개인 사유·명망 수치와 replay는 다른 audience로 복제하지 않음. `REPLAY`는 별도 endpoint 재인가. |
 | `field.applied`, `people.resisted`, `retinue.departureJudged`, `retinue.departed` | SELF: 현재 소유자. | 거절·이탈 당사자 식별자를 세력 공통 피드에 재사용하지 않음. |
-| `enlist.retainerJoined`, `people.searched`, `people.joined` | SELF: 현재 소유자. RETINUE: 당시 봉인 수신자이며 현재 `p>=1` 제안. | RETINUE 기록에는 당사자/장수만. 현재 관계로 수신자를 늘리지 않음. 거절·검색 대상이 숨은 인물이면 `PERSON` ref를 봉인 수신자에게도 보내지 않음. |
-| `income.monthly` | NATION: 현재 같은 세력이고 `p>=2` 제안. | 금·쌀·철·목재·말·영토 수치는 승인된 세력 내부에만. 세력 이동 시 옛 세력 결산 접근 취소. |
-| `march.corps`, `deploy.started`, `encounter.pending`, `encounter.disbanded`, `roadFort.siege` | SELF: 현재 소유자. RETINUE: 당시 봉인 수신자이며 `p>=2` 제안. NATION: 현재 같은 세력이고 `p>=2` 제안. | 아군 군단 key·방향만. 적 군단 ID/key·정확한 병력·행군 목적·봉인 배치/계책·다른 요청 ID는 저장/응답 금지. `CITY`도 #343 시야를 넘는 위치이면 생략/사건 숨김. |
-| `military.musterOrdered` | SELF: 현재 소유자. NATION: 현재 같은 세력이고 `p>=2` 제안. | 아군 동원 정보만. 적 전력과 계획은 없음. |
-| `court.dispatchIssued`, `court.dispatchReceived`, `court.dispatchAccepted`, `court.dispatchRefused`, `court.dispatchCancelled` | COURT: 당시 봉인 수신자, 현재 같은 세력. 발신/수신 **직접 당사자**는 `p>=0`, 그 밖에 명시 수신된 관직자는 `p>=2` 제안. | `REQUEST`는 해당 공문 ID만. 발신/수신별 별도 안전 투영. 같은 나라의 수뇌라는 이유만으로 모든 공문에 자동 접근 불가. |
+| `enlist.retainerJoined`, `people.searched`, `people.joined` | SELF: 현재 소유자, 이적 후 유지. RETINUE: 당시 봉인 수신자, 현재도 **사건 당시 세력** 소속이며 `p>=1`. | RETINUE 기록에는 당사자/장수만. 현재 관계로 수신자를 늘리지 않음. 거절·검색 대상이 숨은 인물이면 `PERSON` ref를 봉인 수신자에게도 보내지 않음. |
+| `income.monthly` | NATION: 현재도 사건 당시 세력 소속이고 `p>=2`. | 금·쌀·철·목재·말·영토 수치는 승인된 세력 내부에만. 세력 이동 시 옛 세력 결산 접근 취소. |
+| `march.corps`, `deploy.started`, `encounter.pending`, `encounter.disbanded`, `roadFort.siege` | SELF: 현재 소유자, 이적 후 유지. RETINUE: 당시 봉인 수신자, 현재도 사건 당시 세력 소속이며 `p>=2`. NATION: 현재도 사건 당시 세력 소속이며 `p>=2`. | 아군 군단 key·방향만. 적 군단 ID/key·정확한 병력·행군 목적·봉인 배치/계책·다른 요청 ID는 저장/응답 금지. `CITY`도 #343 시야를 넘는 위치이면 생략/사건 숨김. |
+| `military.musterOrdered` | SELF: 현재 소유자, 이적 후 유지. NATION: 현재도 사건 당시 세력 소속이며 `p>=2`. | 아군 동원 정보만. 적 전력과 계획은 없음. |
+| `court.dispatchIssued`, `court.dispatchReceived`, `court.dispatchAccepted`, `court.dispatchRefused`, `court.dispatchCancelled` | COURT: 당시 봉인 수신자이며 현재도 사건 당시 세력 소속. 발신/수신 **직접 당사자**는 `p>=0`, 그 밖에 명시 수신된 관직자는 `p>=2`. 이 다섯 kind의 `REQUEST`가 국가 내부 발령이므로 직접 당사자도 이적 후에는 COURT 행을 못 본다. | `REQUEST`는 해당 공문 ID만. 발신/수신별 별도 안전 투영. 같은 나라의 수뇌라는 이유만으로 모든 공문에 자동 접근 불가. |
 | `county.ownerChanged`, `roadFort.captured`, `yuedan.announced` | PUBLIC: 즉시 PUBLISHED이며 비로그인 포함. | V65 `game_event_public_ck`와 `EventKind.publicKinds`가 허용한 공개 refs만, facts는 빈 객체. `county.captured/lost`는 쓰기 금지. |
 
 직접 당사자를 정하려면 COURT 행의 `ISSUER`/`TARGET`와 현재 소유 장수 ID를 타입 검증 후 비교한다. ref가 없거나 손상되면 당사자 예외는 적용하지 않는다. RETINUE `ownerGeneralId`만으로 행을 볼 수 있다는 예외도 만들지 않는다. writer가 주인을 읽히려면 주인 ID를 당시 수신자 배열에 명시해야 한다. 군단 사건의 `CORPS` ref는 EventKind의 타입 검사만으로 아군 여부를 증명할 수 없으므로 writer의 소유 판정과 reader의 안전 투영이 모두 필요하다.
 
-제품 정책 선택 두 가지가 남는다. (1) **문턱**: `p>=1` 일반 휘하, `p>=2` 군사·결산, COURT 직접 당사자 `p>=0`/그 외 `p>=2`를 추천한다. 더 낮게 통일하면 낮은 관직에도 옛 행군·자원이 노출되고, 더 높게 통일하면 직접 당사자의 공문까지 사라진다. ADR/#343에는 이 숫자가 없어 구현 확정 전에 사용자 판정이 필요하다. (2) **세력 이동한 RETINUE 수신자**: 사건 시 수신자 봉인과 현재 p만 보면, 적국으로 옮겨 p를 회복한 옛 수신자가 전술 기록을 다시 읽을 수 있다. 추천은 RETINUE의 군사 kind에 한해 **현재 주인과 같은 세력** 조건을 더하고, 일반 휘하 kind는 당시 수신자+p로 유지하는 것이다. 모두에 같은 세력 조건을 걸면 관계가 끝났어도 같은 세력에 남은 수신자는 유지되지만 재야·이적 수신자의 일반 기록도 사라진다. 군사 사건의 당시 세력 핀이 V65 행에 없어 현재 주인의 세력을 재조회해야 하며, 주인도 이적하면 과거 세력 기준이 바뀌는 한계가 있다. 정확한 당시 세력 판정이 필요하다면 writer가 별도 snapshot 필드를 전진 마이그레이션으로 남겨야 한다.
+`RETINUE`에서 기존 V65의 `audience_nation_id`는 NULL 강제라 사건 당시 세력을 저장하지 못한다. 최소 변경은 새 컬럼을 더하는 대신 V66 전진 마이그레이션으로 `game_event_target_ck`의 RETINUE 분기에서 `audience_nation_id > 0`을 요구하고, `AudienceTarget.Retinue`에 사건 당시 `nationId`를 필수로 넣는 것이다. `GameEventRow`가 기존 컬럼에 이 값을 싣고 reader는 현재 장수 세력이 이 값과 같을 때만 RETINUE 행을 준다. NATION/COURT는 이미 이 컬럼에 당시 세력이 고정돼 있다. 기존 NULL RETINUE 행은 새 API가 fail-closed하고, V66 배포 전에 새 월드 생산자가 쓰지 않았음을 확인한다. 당시 무소속 휘하 관계를 기록하려면 SELF 사건으로 남기며 RETINUE 공유 사건은 발행하지 않는다.
 
 ### 새 API 파일 설계
 
@@ -68,5 +68,5 @@ V65의 공개/SELF/NATION/RETINUE·COURT 부분 인덱스는 모두 `world_id` �
 ## 구현 파일 후보와 시험 관문
 
 - 새 파일 후보: `read/EventFeedReadRepository.kt`(JDBC world+audience+cursor), `read/EventFeedReader.kt`(현 소유·관계·비밀 권한과 DTO 투영), `controller/EventFeedController.kt`, `dto/GameEventDto.kt`, 읽기 전용 권한/커서 테스트.
-- 기존 파일 후보: `BattlePlanController.kt` replay 링크 재검증 테스트. `WorldStateReadRepository.kt`는 세계 형식 가드 소유이므로 #956 main 병합 전 편집하지 않는다. `WorldLogController`, `LastTurnsController`, `GeneralLogController`, `HistoryController`, `NationLogReadRepository`, `LogFeedReadRepository`의 구 text 경로 정리는 새 피드/화면 검증 뒤 별도 제거 PR에서 한다.
-- 적색 fixture: 타 세력 월 수입·정찰·군단 병력/목적지·발령·조우 봉인 정보를 PUBLIC/타국/비로그인/연감/replay에서 0건, 소유자·정해진 수신자에는 예상 건수. 관계 종료 전/후 RETINUE에서 당시 수신자 snapshot은 유지하되 현재 비밀 권한 변화만 반영, 세력 이동 전/후 NATION, 수신자 탈퇴 COURT, 공개 점령 1건, 손상 JSON·알 수 없는 kind, 세계 간 같은 ID 충돌을 포함한다.
+- 기존 파일 후보: `BattlePlanController.kt` replay 링크 재검증 테스트. `WorldStateReadRepository.kt`는 #956에서 병합된 세계 형식 가드 소유이므로 새 조회 API가 그 검사를 우회하지 않게 한다. `WorldLogController`, `LastTurnsController`, `GeneralLogController`, `HistoryController`, `NationLogReadRepository`, `LogFeedReadRepository`의 구 text 경로 정리는 새 피드/화면 검증 뒤 별도 제거 PR에서 한다.
+- 적색 fixture: 타 세력 월 수입·정찰·군단 병력/목적지·발령·조우 봉인 정보를 PUBLIC/타국/비로그인/연감/replay에서 0건, 소유자·정해진 수신자에는 예상 건수. 관계 종료 전/후 RETINUE에서 당시 수신자 snapshot은 유지하되 현재 비밀 권한과 **당시 세력 유지**를 재검사한다. 같은 장수가 이적해도 SELF 행적은 유지하고, 이전 세력 RETINUE/NATION/COURT 행은 거절한다. 공개 사건은 계속 보인다. 수신자 탈퇴 COURT, 공개 점령 1건, 손상 JSON·알 수 없는 kind, 세계 간 같은 ID 충돌을 포함한다.
