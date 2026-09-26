@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "reason": "ALREADY_SERVING",
+  "explanation": "이미 다른 주공을 섬기고 있습니다.",
+  "recoveryAdvice": "현재 소속 관계를 확인한 뒤 출사 가능한 상태에서 다시 시도하세요.",
+  "relatedTopicIds": [
+    "commands.action.enlist"
+  ]
+}
