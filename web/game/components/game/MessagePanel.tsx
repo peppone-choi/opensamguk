@@ -182,7 +182,7 @@ export default function MessagePanel({ generalId, nationId, refreshKey, onToast 
                 {/* 비활성 버튼은 사유를 달고 점선으로 둔다(리디자인 규칙) — 왜 못 누르는지 화면에서 알 수 있어야 한다. */}
                 {sendBlockedReason ? (
                     <ReasonTooltip reason={sendBlockedReason}>
-                        <button type="submit" className="msg-send-btn os-button os-button--sm msg-send-btn--blocked" disabled aria-disabled="true">
+                        <button type="submit" className="msg-send-btn os-button os-button--sm msg-send-btn--blocked" aria-disabled="true" onClick={(e) => e.preventDefault()}>
                             서신전달&amp;갱신
                         </button>
                     </ReasonTooltip>

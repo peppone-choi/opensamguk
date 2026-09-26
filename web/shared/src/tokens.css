@@ -500,7 +500,12 @@
 .os-empty__title { color: var(--text-2); font-weight: 700; font-size: 13px; }
 .os-empty__art { width: 96px; height: 96px; opacity: 0.9; margin-bottom: 2px; }
 
+/* 비활성 사유(ReasonTooltip) — 누르면 열린다. 데스크톱은 말풍선, 모바일(< 768px)은 하단 시트(ADR-LITE-049 (7)). */
 .os-reason { position: relative; display: inline-flex; }
+.os-reason--block { display: flex; width: 100%; }
+.os-reason--block > :first-child { flex: 1 1 auto; }
+.os-reason__backdrop,
+.os-reason__close { display: none; }
 .os-reason__tip {
   position: absolute;
   left: 0;
@@ -515,6 +520,47 @@
   border: 1px solid var(--line-2);
   box-shadow: var(--shadow-md);
   white-space: normal;
+}
+@media (max-width: 767px) {
+  .os-reason__tip {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: auto;
+    bottom: 0;
+    z-index: 70;
+    min-width: 0;
+    max-width: none;
+    min-height: 88px;
+    padding: 18px 76px calc(18px + env(safe-area-inset-bottom, 0px)) 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    border-width: 1px 0 0;
+  }
+  .os-reason__backdrop:not([hidden]) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 69;
+    background: rgba(0, 0, 0, 0.4);
+  }
+  .os-reason__close:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: 12px;
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+    z-index: 71;
+    min-width: 52px;
+    min-height: 44px;
+    padding: 0 10px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--raised);
+    border: 1px solid var(--line-2);
+  }
 }
 
 /* ============================================================================

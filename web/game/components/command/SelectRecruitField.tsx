@@ -195,7 +195,6 @@ export default function SelectRecruitField({ onChange }: SelectRecruitFieldProps
                                         type="button"
                                         className={`${unit.id === crewType ? 'selected' : ''}${availability.available ? '' : ' unavailable'}`}
                                         disabled={!availability.available}
-                                        title={availability.reason ?? undefined}
                                         onClick={() => chooseUnit(unit.id)}
                                     >
                                         <img src={`${ICON_CDN}/crewtype${unit.id}.png`} alt="" width={28} height={28} />

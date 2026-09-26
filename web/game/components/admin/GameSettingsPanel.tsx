@@ -5,6 +5,7 @@ import PageHead from '../PageHead';
 import GameCard from '@/components/GameCard';
 import { api } from '@/lib/api';
 import type { AdminGameSettingsResponse } from '@/lib/api';
+import { ReasonTooltip } from '@opensamguk/ui';
 
 function errorText(e: unknown): string {
     const msg = e instanceof Error ? e.message : '';
@@ -160,9 +161,9 @@ export default function GameSettingsPanel() {
                         <div className="u-row-sm">
                             <button onClick={load}>새로고침</button>
                             {data.blockedWrites.map((w) => (
-                                <button key={w.label} disabled title={w.reason}>
-                                    {w.label}
-                                </button>
+                                <ReasonTooltip key={w.label} reason={w.reason}>
+                                    <button type="button" aria-disabled="true">{w.label}</button>
+                                </ReasonTooltip>
                             ))}
                         </div>
                     </GameCard>

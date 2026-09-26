@@ -62,7 +62,9 @@ describe('OperationPanel (08 작전 진행)', () => {
         await waitFor(() => expect(mocks.command).toHaveBeenCalledWith('operationJoin', { operationId: 1, role: 'main' }, 10));
         const reserved = screen.getByRole('option', { name: /도로 확보/ }) as HTMLOptionElement;
         expect(reserved.disabled).toBe(true);
-        expect(reserved.title).toBe('아직 선언할 수 없는 작전 종류입니다.');
+        // 선택지의 사유는 title(호버 전용)이 아니라 글자로 보인다.
+        expect(reserved.textContent).toContain('아직 선언할 수 없는 작전 종류입니다.');
+        expect(reserved).not.toHaveAttribute('title');
         fireEvent.change(screen.getByLabelText('목표 도시'), { target: { value: '9' } });
         fireEvent.change(screen.getByLabelText('제목'), { target: { value: '낙양 재공략' } });
         fireEvent.change(screen.getByLabelText('기한(개월)'), { target: { value: '2' } });
@@ -75,8 +77,12 @@ describe('OperationPanel (08 작전 진행)', () => {
         render(<OperationPanel />);
         await screen.findByText('작전이 없습니다.');
         const declare = screen.getByRole('button', { name: '선언' });
-        expect(declare).toBeDisabled();
-        expect(declare).toHaveAttribute('title', '권한이 부족합니다. 수뇌부가 아닙니다');
+        // 막힌 조작도 누를 수 있고, 누르면 사유가 열린다(ADR-LITE-049 (7)). 명령은 나가지 않는다.
+        expect(declare).toHaveAttribute('aria-disabled', 'true');
+        expect(declare).toHaveAccessibleDescription('권한이 부족합니다. 수뇌부가 아닙니다');
+        fireEvent.click(declare);
+        expect(screen.getByRole('tooltip')).toHaveTextContent('권한이 부족합니다. 수뇌부가 아닙니다');
+        expect(mocks.command).not.toHaveBeenCalled();
     });
 });
 
