@@ -5,22 +5,23 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 /**
- * 시나리오 코드 → 표시 제목 해석 검증. 라이브 버그 3(로비가 코드 `scenario_1010` 표시) 수정.
+ * 시나리오 코드 → 표시 제목 해석 검증. 라이브 버그 3(로비가 제목 대신 시나리오 코드 표시) 수정.
  * 제목은 커밋된 scenario 리소스의 `title` 에서 read-time 해석(legacy getTitle 과 동일 출처).
+ * 제품 기본 시나리오(`scenario_990002`)로 잰다 — 은퇴한 삼모 시나리오는 클래스패스를 떠난다(#917).
  */
 class ScenarioTitleResolverTest {
 
     private val resolver = ScenarioTitleResolver()
 
     @Test
-    fun `scenario_1010 코드를 리소스 title 로 해석한다`() {
-        assertEquals("【역사모드1】 황건적의 난", resolver.titleOf("scenario_1010"))
+    fun `scenario_990002 코드를 리소스 title 로 해석한다`() {
+        assertEquals("휘하 예주 조각 (합성 운영 후보)", resolver.titleOf("scenario_990002"))
     }
 
     @Test
     fun `두 번째 호출도 동일(캐시)`() {
-        val first = resolver.titleOf("scenario_1010")
-        assertEquals(first, resolver.titleOf("scenario_1010"))
+        val first = resolver.titleOf("scenario_990002")
+        assertEquals(first, resolver.titleOf("scenario_990002"))
     }
 
     @Test
