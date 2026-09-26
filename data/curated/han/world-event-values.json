@@ -1,0 +1,737 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "external-event:border-raid",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "external",
+      "kind": "BORDER_RAID",
+      "relations": [
+        "HOSTILE"
+      ],
+      "values": {
+        "chancePermille": {
+          "value": 100,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "적대 접촉 한 건당 월 1회 판정하면 연 기대 1.2회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "money": {
+          "value": -20,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "grain": {
+          "value": -20,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "trust": {
+          "value": -2,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": -10,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "defence": {
+          "value": -1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        }
+      },
+      "resultingRelation": "HOSTILE",
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "external-event:tribute",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "external",
+      "kind": "TRIBUTE",
+      "relations": [
+        "TRIBUTARY"
+      ],
+      "values": {
+        "chancePermille": {
+          "value": 200,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "조공 관계 한 건당 월 1회 판정하면 연 기대 2.4회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "money": {
+          "value": 15,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "grain": {
+          "value": 10,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "trust": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "defence": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        }
+      },
+      "resultingRelation": "TRIBUTARY",
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "external-event:submission",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "external",
+      "kind": "SUBMISSION",
+      "relations": [
+        "NEUTRAL"
+      ],
+      "values": {
+        "chancePermille": {
+          "value": 100,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "중립 접촉 한 건당 월 1회 판정하면 첫 내속 전 연 기대 1.2회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "money": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "grain": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "trust": {
+          "value": 2,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": 5,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "defence": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        }
+      },
+      "resultingRelation": "SUBMITTED",
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "external-event:trade",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "external",
+      "kind": "TRADE",
+      "relations": [
+        "TRADE"
+      ],
+      "values": {
+        "chancePermille": {
+          "value": 300,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "교역 관계 한 건당 월 1회 판정하면 연 기대 3.6회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "money": {
+          "value": 10,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "grain": {
+          "value": 5,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "trust": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "defence": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        }
+      },
+      "resultingRelation": "TRADE",
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-event:drought",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "season",
+      "kind": "DROUGHT",
+      "values": {
+        "chancePermille": {
+          "value": 100,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "여름·가을 6개월 판정이면 縣당 연 기대 0.6회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "minimumPopulation": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "인구가 없는 縣에는 인구 피해형 사건을 내지 않는 최소 조건."
+        },
+        "trust": {
+          "value": -2,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": -10,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "agriculture": {
+          "value": -15,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "displaced": {
+          "value": 5,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "passageClosed": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "minimumAgriculture": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전답 피해형 사건은 전답 지표가 있을 때만 후보가 된다. 다른 사건은 전답과 무관하다."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-event:flood",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "season",
+      "kind": "FLOOD",
+      "values": {
+        "chancePermille": {
+          "value": 120,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "여름 3개월 판정이면 縣당 연 기대 0.36회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "minimumPopulation": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "인구가 없는 縣에는 인구 피해형 사건을 내지 않는 최소 조건."
+        },
+        "trust": {
+          "value": -2,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": -12,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "agriculture": {
+          "value": -12,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "displaced": {
+          "value": 6,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "passageClosed": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "minimumAgriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전답 피해형 사건은 전답 지표가 있을 때만 후보가 된다. 다른 사건은 전답과 무관하다."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-event:plague",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "season",
+      "kind": "PLAGUE",
+      "values": {
+        "chancePermille": {
+          "value": 50,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "12개월 판정이면 縣당 연 기대 0.6회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "minimumPopulation": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "인구가 없는 縣에는 인구 피해형 사건을 내지 않는 최소 조건."
+        },
+        "trust": {
+          "value": -3,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": -20,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "agriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "displaced": {
+          "value": 10,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "passageClosed": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "minimumAgriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전답 피해형 사건은 전답 지표가 있을 때만 후보가 된다. 다른 사건은 전답과 무관하다."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-event:locust",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "season",
+      "kind": "LOCUST",
+      "values": {
+        "chancePermille": {
+          "value": 80,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "여름·가을 6개월 판정이면 縣당 연 기대 0.48회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "minimumPopulation": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "인구가 없는 縣에는 인구 피해형 사건을 내지 않는 최소 조건."
+        },
+        "trust": {
+          "value": -1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "agriculture": {
+          "value": -20,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "displaced": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "passageClosed": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "minimumAgriculture": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전답 피해형 사건은 전답 지표가 있을 때만 후보가 된다. 다른 사건은 전답과 무관하다."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-event:freeze",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "season",
+      "kind": "FREEZE",
+      "values": {
+        "chancePermille": {
+          "value": 120,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "겨울 3개월 판정이면 縣당 연 기대 0.36회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "minimumPopulation": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "인구가 없는 縣에는 인구 피해형 사건을 내지 않는 최소 조건."
+        },
+        "trust": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "agriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "displaced": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "passageClosed": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "minimumAgriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전답 피해형 사건은 전답 지표가 있을 때만 후보가 된다. 다른 사건은 전답과 무관하다."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-event:rainy-passage",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "확률과 효과량은 사료 수치가 아니라 게임 설계값.",
+      "displayBadge": "게임 용어",
+      "domain": "season",
+      "kind": "RAINY_PASSAGE",
+      "values": {
+        "chancePermille": {
+          "value": 200,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "여름 3개월 판정이면 縣당 연 기대 0.6회가 되는 초기 게임 확률 선택. 단일 시드·조건 충족·사건 간 독립 판정을 전제한다."
+        },
+        "minimumPopulation": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "인구가 없는 縣에는 인구 피해형 사건을 내지 않는 최소 조건."
+        },
+        "trust": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "population": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "agriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "displaced": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "passageClosed": {
+          "value": 1,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "S5-4a·S5-5a 초기 게임 효과량. 한 사건의 縣 절대 증감량으로 반환하고 실제 clamp·창고 정산은 b 통합에서 검증한다."
+        },
+        "minimumAgriculture": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전답 피해형 사건은 전답 지표가 있을 때만 후보가 된다. 다른 사건은 전답과 무관하다."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season-calendar",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "사계절의 월 경계는 게임 달력 규칙이며 역사 계절기록 주장이 아니다.",
+      "displayBadge": "게임 용어",
+      "domain": "calendar",
+      "kind": "CALENDAR",
+      "values": {
+        "springStartMonth": {
+          "value": 3,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "한 해 36순·월 3순에 봄 3–5월, 여름 6–8월, 가을 9–11월, 겨울 12–2월을 대응시키는 게임 달력 선택."
+        },
+        "summerStartMonth": {
+          "value": 6,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "한 해 36순·월 3순에 봄 3–5월, 여름 6–8월, 가을 9–11월, 겨울 12–2월을 대응시키는 게임 달력 선택."
+        },
+        "autumnStartMonth": {
+          "value": 9,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "한 해 36순·월 3순에 봄 3–5월, 여름 6–8월, 가을 9–11월, 겨울 12–2월을 대응시키는 게임 달력 선택."
+        },
+        "winterStartMonth": {
+          "value": 12,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "한 해 36순·월 3순에 봄 3–5월, 여름 6–8월, 가을 9–11월, 겨울 12–2월을 대응시키는 게임 달력 선택."
+        }
+      },
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "external-relations",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "세력과 지도 밖 집단의 게임 관계 어휘. 특정 시기의 실제 관계를 뜻하지 않는다.",
+      "displayBadge": "게임 용어",
+      "domain": "relation-vocabulary",
+      "relations": [
+        "HOSTILE",
+        "TRIBUTARY",
+        "SUBMITTED",
+        "TRADE",
+        "NEUTRAL"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    }
+  ]
+}

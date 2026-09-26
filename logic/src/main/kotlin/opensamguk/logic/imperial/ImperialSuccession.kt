@@ -23,6 +23,8 @@ enum class ImperialTransitionType {
     FOUNDATION,
     VACANCY,
     EXTINCTION,
+    ASSASSINATION,
+    USURPATION,
 }
 
 /** A nation's political position toward one imperial line, separate from ordinary diplomacy. */
