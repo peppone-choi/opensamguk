@@ -16,16 +16,16 @@ class ScenarioJsonTest {
         val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
         val old = ScenarioJson.loadScenario("{" + raw)
         val name = old.baseGenerals.first().name
-        fun parse(declaration: String, profile: String = "HWIHA") =
-            ScenarioJson.loadScenario("{\"ruleProfile\":\"$profile\",\"hwihaLords\":$declaration," + raw)
+        fun parse(declaration: String, format: String = "GENERAL_RETAINER_CAMPAIGN") =
+            ScenarioJson.loadScenario("{\"worldFormat\":\"$format\",\"lords\":$declaration," + raw)
         val encoded = opensamguk.infra.persistence.MetaJson.encode(listOf(name))
         val declared = parse(encoded)
-        assertTrue(declared.generals.single { it.name == name }.hwihaLord == true)
-        assertTrue(declared.generals.filter { it.name != name }.all { it.hwihaLord == false })
-        assertTrue(old.generals.all { it.hwihaLord == false })
-        val omittedProfile = ScenarioJson.loadScenario("{\"hwihaLords\":$encoded," + raw)
+        assertTrue(declared.generals.single { it.name == name }.lord == true)
+        assertTrue(declared.generals.filter { it.name != name }.all { it.lord == false })
+        assertTrue(old.generals.all { it.lord == false })
+        val omittedProfile = ScenarioJson.loadScenario("{\"lords\":$encoded," + raw)
         assertNull(omittedProfile.ruleProfile)
-        assertTrue(omittedProfile.generals.single { it.name == name }.hwihaLord == true)
+        assertTrue(omittedProfile.generals.single { it.name == name }.lord == true)
         for (bad in listOf("null", "42", "[42]", "[\"\"]", "[\"no-such-general\"]",
             opensamguk.infra.persistence.MetaJson.encode(listOf(name, name)))) {
             assertFailsWith<IllegalArgumentException> { parse(bad) }
@@ -33,8 +33,8 @@ class ScenarioJsonTest {
         assertFailsWith<IllegalArgumentException> { parse(encoded, "SAMMO") }
         assertFailsWith<IllegalArgumentException> { parse("null", "SAMMO") }
         val duplicate = opensamguk.infra.persistence.MetaJson.decode("{" + raw).toMutableMap()
-        duplicate["ruleProfile"] = "HWIHA"
-        duplicate["hwihaLords"] = listOf(name)
+        duplicate["worldFormat"] = "GENERAL_RETAINER_CAMPAIGN"
+        duplicate["lords"] = listOf(name)
         duplicate["general_ex"] = listOf((duplicate["general"] as List<*>).first())
         assertFailsWith<IllegalArgumentException> {
             ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(duplicate))
@@ -74,9 +74,9 @@ class ScenarioJsonTest {
         val base = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
         assertEquals(
             opensamguk.logic.input.RuleProfile.HWIHA,
-            ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\"," + base).ruleProfile,
+            ScenarioJson.loadScenario("{\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"," + base).ruleProfile,
         )
-        assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": \"hwiha\"," + base) }
+        assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"worldFormat\": \"hwiha\"," + base) }
         assertFailsWith<IllegalArgumentException> { ScenarioJson.loadScenario("{\"ruleProfile\": null," + base) }
     }
 

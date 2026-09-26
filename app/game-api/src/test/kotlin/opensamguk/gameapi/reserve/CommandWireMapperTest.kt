@@ -37,22 +37,6 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `placeBet maps the merged extraArgs body and threads the resolved generalId`() {
-        val cmd = CommandWireMapper.toCommand(
-            code = "placeBet",
-            generalId = 42,
-            requestId = "req-bet",
-            argJson = """{"bettingId":7,"bettingType":[1,3],"amount":500}""",
-        )
-        val bet = roundTrip(cmd!!) as TurnDaemonCommand.PlaceBet
-        assertEquals("req-bet", bet.requestId)
-        assertEquals(7, bet.bettingId)
-        assertEquals(42, bet.generalId) // resolved id, NOT from the body
-        assertEquals(listOf(1, 3), bet.bettingType)
-        assertEquals(500, bet.amount)
-    }
-
-    @Test
     fun `json null arguments map to Kotlin null, not the string "null" (4X-B fallbackText)`() {
         val cmd = CommandWireMapper.toCommand(
             code = "operationDeclare", generalId = 10, requestId = "req-op",
@@ -111,10 +95,15 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `tournament enroll maps value and inherit resets are no-arg`() {
-        val enroll = roundTrip(CommandWireMapper.toCommand("tournamentEnroll", 10, "r", """{"value":1}""")!!) as TurnDaemonCommand.TournamentEnroll
-        assertEquals(1, enroll.value)
+    fun `retired tournament commands cannot enter the immediate intake wire`() {
+        for (code in listOf("tournamentEnroll", "tournamentStart", "tournamentReset")) {
+            assertTrue(!CommandWireMapper.isIntakeCommand(code))
+            assertEquals(null, CommandWireMapper.toCommand(code, 10, "retired", null))
+        }
+    }
 
+    @Test
+    fun `inherit resets are no-arg`() {
         val resetTt = roundTrip(CommandWireMapper.toCommand("inheritResetTurnTime", 10, "r", null)!!) as TurnDaemonCommand.InheritResetTurnTime
         assertEquals(10, resetTt.generalId)
 
@@ -139,25 +128,6 @@ class CommandWireMapperTest {
         assertEquals(55, resetStat.strength)
         assertEquals(55, resetStat.intel)
         assertEquals(listOf(1, 1, 1), resetStat.inheritBonusStat)
-    }
-
-    @Test
-    fun `tournament admin start and reset map to immediate daemon commands`() {
-        assertTrue(CommandWireMapper.isIntakeCommand("tournamentStart"))
-        assertTrue(CommandWireMapper.isIntakeCommand("tournamentReset"))
-
-        val start = roundTrip(
-            CommandWireMapper.toCommand("tournamentStart", 10, "req-start", """{"type":2}""")!!,
-        ) as TurnDaemonCommand.TournamentStart
-        assertEquals("req-start", start.requestId)
-        assertEquals(10, start.generalId)
-        assertEquals(2, start.tournamentType)
-
-        val reset = roundTrip(
-            CommandWireMapper.toCommand("tournamentReset", 10, "req-reset", null)!!,
-        ) as TurnDaemonCommand.TournamentReset
-        assertEquals("req-reset", reset.requestId)
-        assertEquals(10, reset.generalId)
     }
 
     @Test
@@ -330,10 +300,8 @@ class CommandWireMapperTest {
         assertEquals(15, rate.amount)
 
         // malformed body → empty args → fields fall to their command defaults (handler then denies/validates).
-        val bet = CommandWireMapper.toCommand("placeBet", 10, "r", "not json") as TurnDaemonCommand.PlaceBet
-        assertEquals(0, bet.bettingId)
-        assertEquals(0, bet.amount)
-        assertTrue(bet.bettingType.isEmpty())
+        val malformed = CommandWireMapper.toCommand("setRate", 10, "r", "not json") as TurnDaemonCommand.SetRate
+        assertEquals(0, malformed.amount)
     }
 
     @Test

@@ -9,9 +9,9 @@
     "han-tiles.json": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
   },
   "committedHashes": {
-    "Han780V1CityConst.kt": "3df1952c65406ddde4f22e4462867b897b8707ad41db645c4e78fb3212a19199",
-    "Han780V1GateIndex.kt": "7c381e5d7a18948f703c79a92f7edf1b11f0782942783428e3b087da930dc732",
     "han-780-v1.json": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
-    "han-780-v1-tiles.json": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
+    "han-780-v1-tiles.json": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d",
+    "Archive780CityConst.kt": "29b1a175acdbe153a365d81df23c0cc5c20b33d7137ca22b83841cbcd3681aad",
+    "Archive780GateIndex.kt": "822186487dab79e0097f61bbdfae4dbade1592cdf4c1e786c48131dfd90176b0"
   }
 }

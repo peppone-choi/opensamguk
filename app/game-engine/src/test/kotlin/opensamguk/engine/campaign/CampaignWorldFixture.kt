@@ -5,7 +5,7 @@ import java.time.Instant
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 
@@ -13,8 +13,8 @@ import opensamguk.logic.world.*
  * In-memory HWIHA world on the real archived map (no database). Synthetic people and units only; the map,
  * topology, march metrics and province cells are the pinned artifacts the engine uses in production.
  */
-internal class CampaignWorldFixture(val variant: HanWorldVariant = HanWorldVariant.V3_1168) {
-    val bundle = cache.getOrPut(variant) { HanWorldArtifactsResolver(Path.of("../..")).artifacts(variant) }
+internal class CampaignWorldFixture(val variant: WorldMapVariant = WorldMapVariant.V3_1168) {
+    val bundle = cache.getOrPut(variant) { WorldArtifactsResolver(Path.of("../..")).artifacts(variant) }
     val topology get() = bundle.projection.topology
     val metrics get() = bundle.landMarchMetrics
     val cells get() = bundle.provinceCells
@@ -93,7 +93,7 @@ internal class CampaignWorldFixture(val variant: HanWorldVariant = HanWorldVaria
                 wall = 100, wallMax = 1000, meta = mapOf("trust" to 50.0)))
         }
         val state = TurnWorldState(1, 200, 1, 3600, Instant.parse("0200-01-01T00:00:00Z"), currentPhase = 1,
-            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = variant,
+            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), worldMapVariant = variant,
             meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                 MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue(),
                 "startYear" to 200, "startTime" to "0200-01-01T00:00:00Z") + extraStateMeta)
@@ -140,7 +140,7 @@ internal class CampaignWorldFixture(val variant: HanWorldVariant = HanWorldVaria
 
     companion object {
         val NO_INPUT = ReservedTurn("휴식", "{}", rowExists = false)
-        private val cache = HashMap<HanWorldVariant, opensamguk.infra.seed.ResolvedHanWorldArtifacts>()
+        private val cache = HashMap<WorldMapVariant, opensamguk.infra.seed.ResolvedWorldArtifacts>()
         private val routeCache = HashMap<String, Route>()
     }
 }

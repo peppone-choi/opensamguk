@@ -35,6 +35,19 @@ jobs:
             --base '${{ github.event.pull_request.base.sha }}' \
             --head '${{ github.event.pull_request.head.sha }}'
 
+  rtk14-wikiwiki:
+    needs: changes
+    if: needs.changes.outputs.contracts == 'true'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install RTK14 wikiwiki extraction test dependencies
+        run: python3 -m pip install -r tools/rtk14/requirements.txt
+      - name: Verify RTK14 wikiwiki extraction contracts
+        run: python3 -m unittest tools/rtk14/test_wikiwiki_extract.py
+
   contracts:
     needs: changes
     if: needs.changes.outputs.contracts == 'true'
@@ -136,6 +149,11 @@ jobs:
       - name: Verify scenario data contract tests
         if: '!cancelled()'
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
+      - name: Verify unit identity source ledgers
+        if: '!cancelled()'
+        run: |
+          python3 -m unittest tools.content.tests.test_validate_unit_identity_sources
+          python3 tools/content/validate_unit_identity_sources.py
       - name: Verify RTK14 scenario materializer contracts
         if: '!cancelled()'
         run: python3 -m unittest tools/rtk14/test_build_rtk14_stats.py
@@ -585,3 +603,7 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_naming_lint.py'
       - name: Check naming and retired references
         run: python3 tools/ci/naming_lint.py
+      - name: Check active turn profile defaults
+        run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
+      - name: Check reserved game server IDs
+        run: python3 tools/ci/check_reserved_server_ids.py

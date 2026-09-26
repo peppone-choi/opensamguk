@@ -60,7 +60,7 @@ class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: 
             "successorGeneralId" to request.successorGeneralId, "effects" to effects)
         val retired = actor.copy(userId = null, npcState = 5, officerLevel = 1, gold = 0, rice = 0,
             meta = PortableStock.withStock(actor.meta, opensamguk.logic.economy.Resources()) +
-                (LordStatus.META_KEY to false) + ("hwihaRetired" to true) + (LAST_TURN_KEY to stamp))
+                (LordStatus.META_KEY to false) + ("retired" to true) + (LAST_TURN_KEY to stamp))
         val inherited = successor.copy(userId = actor.userId ?: successor.userId,
             npcState = if (actor.userId != null) 0 else successor.npcState,
             officerLevel = if (ready.wasLord) 12 else successor.officerLevel,
@@ -92,5 +92,5 @@ class RetireHandler(private val world: InMemoryTurnWorld, private val recorder: 
         return TurnOutcome.Applied(RetireInput.INPUT_ID, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaRetireLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "retireLastTurn" }
 }

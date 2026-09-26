@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import opensamguk.logic.v2.command.V2CommandAvailability
+import opensamguk.logic.command.CommandAvailability
 
 /**
  * OPENSAM-153 (v2 R4) — v2 도시병사 보충 인테이크 엔드포인트. **v2 샌드박스 전용, 새 파일**
@@ -52,7 +52,7 @@ class V2GarrisonRecruitController(
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
         val availability = validateLegacyV2Arguments("v2GarrisonRecruit", argJson)
-        if (availability !is V2CommandAvailability.Available) return availability.legacyError("v2GarrisonRecruit")
+        if (availability !is CommandAvailability.Available) return availability.legacyError("v2GarrisonRecruit")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
             actionCode = "v2GarrisonRecruit",

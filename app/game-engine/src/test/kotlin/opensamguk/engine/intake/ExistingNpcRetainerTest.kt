@@ -35,7 +35,7 @@ class ExistingNpcRetainerTest {
         val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val owner = fixture.person(10, 1, route.startCity, lord = false).copy(npcState = 0, gold = 5000,
-            meta = mapOf("hwihaLord" to false, PersonPolicyState.META_KEY to
+            meta = mapOf("lord" to false, PersonPolicyState.META_KEY to
                 PersonPolicyState(capacity, true, "verified-fixture", "1", 10).toMetaValue()))
         val target = fixture.person(20, 0, route.startCity, lord = false).copy(gold = 5000,
             stats = GeneralStats(80, 70, 60, 50, 50))

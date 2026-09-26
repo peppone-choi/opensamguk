@@ -19,7 +19,7 @@ class StratagemHandReader(private val generals:GeneralReadRepository,private val
         if(userId<=0 || userId>Int.MAX_VALUE || actor.userId?.toLongOrNull()!=userId)throw StratagemHandForbidden()
         val world=worlds.findProcessWorld() ?: return OwnedStratagemHand("UNAVAILABLE")
         if(actor.worldId!=world.id)return OwnedStratagemHand("UNAVAILABLE")
-        if(world.config["ruleProfile"]!="HWIHA")return OwnedStratagemHand("WRONG_RULE_PROFILE")
+        if(runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure)return OwnedStratagemHand("UNSUPPORTED_WORLD_FORMAT")
         val hand=try { StratagemHand.read(actor.meta,generalId) }
             catch (_:IllegalArgumentException) { return OwnedStratagemHand("UNAVAILABLE") }
             ?: return OwnedStratagemHand("NOT_READY")

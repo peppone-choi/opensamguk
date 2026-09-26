@@ -1,7 +1,7 @@
 package opensamguk.logic.input
 
 import java.util.Collections
-import opensamguk.logic.world.HanProvinceCellIndex
+import opensamguk.logic.world.ProvinceCellIndex
 import opensamguk.logic.world.BattlefieldGeometry.Position
 import opensamguk.logic.world.BattlefieldLayout
 
@@ -22,20 +22,20 @@ class EncounterDeployment private constructor(
 
     companion object {
         const val RULE_VERSION = 1
-        const val META_KEY = "hwihaEncounterDeployment"
+        const val META_KEY = "encounterDeployment"
 
-        fun defaultMetaValue(encounter: CorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> =
+        fun defaultMetaValue(encounter: CorpsEncounter, index: ProvinceCellIndex): Map<String, Any?> =
             serialize(prepareDefault(encounter, index), encounter, index)
 
         /** Exact reconstruction also rejects changed pins, extra fields, and tampered occupied cells. */
-        fun read(meta: Map<String, Any?>, encounter: CorpsEncounter, index: HanProvinceCellIndex): Result? {
+        fun read(meta: Map<String, Any?>, encounter: CorpsEncounter, index: ProvinceCellIndex): Result? {
             if (META_KEY !in meta) return null
             val result = prepareDefault(encounter, index)
             require(meta[META_KEY] == serialize(result, encounter, index)) { "Invalid sealed encounter deployment" }
             return result
         }
 
-        private fun serialize(result: Result, encounter: CorpsEncounter, index: HanProvinceCellIndex): Map<String, Any?> {
+        private fun serialize(result: Result, encounter: CorpsEncounter, index: ProvinceCellIndex): Map<String, Any?> {
             val value = linkedMapOf<String, Any?>("version" to RULE_VERSION,
                 "geometryVersion" to opensamguk.logic.world.BattlefieldGeometry.RULE_VERSION,
                 "layoutVersion" to BattlefieldLayout.RULE_VERSION, "encounterId" to encounter.encounterId,
@@ -55,7 +55,7 @@ class EncounterDeployment private constructor(
         }
 
         /** Called at approach, never to accept a new plan after an encounter has been sealed. */
-        fun prepareDefault(encounter: CorpsEncounter, index: HanProvinceCellIndex): Result {
+        fun prepareDefault(encounter: CorpsEncounter, index: ProvinceCellIndex): Result {
             require(encounter.topologyRevision == index.topologyRevision && encounter.topologyHash == index.topologyHash) {
                 "Encounter and battlefield pins differ"
             }

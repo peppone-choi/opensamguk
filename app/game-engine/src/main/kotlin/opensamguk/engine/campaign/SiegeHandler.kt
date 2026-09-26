@@ -3,7 +3,7 @@ package opensamguk.engine.campaign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.world.HanProvinceCellIndex
+import opensamguk.logic.world.ProvinceCellIndex
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicTopologySnapshot
 
@@ -13,7 +13,7 @@ class SiegeHandler(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot?,
     private val metrics: LandMarchMetricSnapshot?,
-    private val cells: HanProvinceCellIndex?,
+    private val cells: ProvinceCellIndex?,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
     fun handle(inputId: String, actorId: Int, argJson: String?): TurnOutcome {

@@ -8,13 +8,13 @@ import type { ReservedCommandsResponse } from '@/lib/types';
 import { Empty } from './GameStates';
 
 /** 휘하는 개인 턴 12순이다(정본 설계 §3). */
-const HWIHA_SLOTS = 12;
+const ORDER_SLOTS = 12;
 
 export interface TurnListProps {
     readonly generalId: number;
     readonly nationId: number;
     readonly refreshKey: number;
-    readonly isHwihaWorld: boolean;
+    readonly isCampaignWorld: boolean;
     readonly onToast: (msg: string, type: 'success' | 'error' | 'info') => void;
     readonly onReserved: () => void;
 }
@@ -23,7 +23,7 @@ export interface TurnListProps {
  * 명령 목록 12순 — 직접 행동, 한 순에 하나. 예약 링은 기존 `/api/reserved-commands` 를 읽고,
  * 빈 순의 「+ 예약」은 기존 명령 창(휘하 월드에서는 출사·출병만 받는다)을 연다.
  */
-export default function TurnList({ generalId, nationId, refreshKey, isHwihaWorld, onToast, onReserved }: TurnListProps) {
+export default function TurnList({ generalId, nationId, refreshKey, isCampaignWorld, onToast, onReserved }: TurnListProps) {
     const [data, setData] = useState<ReservedCommandsResponse | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [localKey, setLocalKey] = useState(0);
@@ -46,12 +46,12 @@ export default function TurnList({ generalId, nationId, refreshKey, isHwihaWorld
         };
     }, [generalId, refreshKey, localKey]);
 
-    const slots = Array.from({ length: HWIHA_SLOTS }, (_, turnIdx) => data?.slots.find((s) => s.turnIdx === turnIdx) ?? null);
+    const slots = Array.from({ length: ORDER_SLOTS }, (_, turnIdx) => data?.slots.find((s) => s.turnIdx === turnIdx) ?? null);
 
     return (
         <Panel id="reservedCommandPanel" style={{ padding: 12 }}>
             <SectionHeader
-                title={`명령 목록 ${HWIHA_SLOTS}순`}
+                title={`명령 목록 ${ORDER_SLOTS}순`}
                 sub={data?.turnTime ? `직접 행동 · 한 순에 하나 · 다음 실행 ${data.turnTime}` : '직접 행동 · 한 순에 하나'}
             />
             {error ? <Empty>{`불러오지 못했습니다 — ${error}`}</Empty> : null}
@@ -97,8 +97,8 @@ export default function TurnList({ generalId, nationId, refreshKey, isHwihaWorld
                                         type="button"
                                         className="os-button os-button--ghost os-button--sm"
                                         onClick={() => setEditTurnIdx(turnIdx)}
-                                        disabled={!isHwihaWorld}
-                                        title={isHwihaWorld ? undefined : '휘하 규칙 서버에서만 예약합니다'}
+                                        disabled={!isCampaignWorld}
+                                        title={isCampaignWorld ? undefined : '휘하 규칙 서버에서만 예약합니다'}
                                     >
                                         + 예약
                                     </button>

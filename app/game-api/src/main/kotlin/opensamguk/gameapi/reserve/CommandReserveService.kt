@@ -20,8 +20,8 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.v2.command.V2CommandArgs
-import opensamguk.logic.v2.command.V2CommandSchema
+import opensamguk.logic.command.CommandArgs
+import opensamguk.logic.command.CommandSchema
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
@@ -81,12 +81,12 @@ class CommandReserveService(
     private val redis: StringRedisTemplate,
     private val registry: CommandRegistry,
     processWorld: GameApiProcessWorld,
-    @Value("\${opensamguk.profile:che:scenario_2}") profile: String,
+    @Value("\${opensamguk.profile:pep:scenario_990002}") profile: String,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
     private val worldStates: opensamguk.gameapi.read.WorldStateReadRepository,
-    private val hwihaAdmission: EnlistmentAdmission? = null,
+    private val enlistmentAdmission: EnlistmentAdmission? = null,
     private val hwihaCourtAdmission: CourtAdmission? = null,
     private val hwihaDeployAdmission: DeployAdmission? = null,
     private val hwihaScoutAdmission: ScoutAdmission? = null,
@@ -142,8 +142,8 @@ class CommandReserveService(
 
     fun reserveV2(
         generalId: Int,
-        schema: V2CommandSchema,
-        args: V2CommandArgs,
+        schema: CommandSchema,
+        args: CommandArgs,
         ownerUserId: Int,
     ): ReserveResult {
         val requestId = requestIds()
@@ -200,7 +200,7 @@ class CommandReserveService(
         if (worldProfile == RuleProfile.HWIHA && actionCode !in COMMON_INTAKE_COMMANDS) {
             // The sandbox V2 endpoints call this service directly. Their registered aliases belong
             // to another ruleset, even though their spelling is outside the HWIHA input grammar.
-            if (opensamguk.logic.v2.command.V2CommandRegistry.resolve(actionCode) != null)
+            if (opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode) != null)
                 throw AdmissionDenied(InputRejection.WRONG_RULE_PROFILE.name,
                     InputRejection.WRONG_RULE_PROFILE.message)
             val rejection = hwihaCatalog.rejectionFor(worldProfile, actionCode)
@@ -208,7 +208,7 @@ class CommandReserveService(
             if (rejection != null) throw AdmissionDenied(rejection.name, rejection.message)
         }
         val canonicalArgs = if (actionCode in opensamguk.logic.input.EnlistmentInput.INPUT_IDS) {
-            (hwihaAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+            (enlistmentAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson, actionCode)
         } else if (actionCode == "action.deploy") {
             (hwihaDeployAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
@@ -270,7 +270,7 @@ class CommandReserveService(
         } else argJson
         val requestId = requestIds()
         val acceptedAt = Instant.now(clock)
-        val v2Schema = opensamguk.logic.v2.command.V2CommandRegistry.resolve(actionCode)
+        val v2Schema = opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode)
 
         // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
         val intake = CommandWireMapper.toCommand(
@@ -407,8 +407,8 @@ class CommandReserveService(
                     generalId = null,
                     turnIdx = 0,
                     actionCode = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
-                        // Keep the existing inbox value until the storage identifier migration.
-                        "HwihaCourtInput"
+                        // Store the neutral immediate-input action code for the reset world.
+                        "ImmediateInput"
                     } else command::class.simpleName,
                     payloadJson = payload,
                     ownerUserId = ownerUserId,

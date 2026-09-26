@@ -191,7 +191,13 @@ class CourtHandler(
     /** Runs beside, not instead of, the issuer's personal action. Lifecycle controls phase eligibility. */
     fun onIssuerTurn(generalId: Int) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
+        val hadQueuedReward = world.getGeneralById(generalId)?.meta?.containsKey(QueuedReward.META_KEY) == true
         runQueuedReward(generalId)
+        if (!hadQueuedReward) {
+            NpcRewardSelector.select(world, generalId, recorder)?.let { choice ->
+                RewardExecutor(world, recorder).reward(choice.request, choice.id, choice.reason, automatic = true)
+            }
+        }
         runQueuedCourtAction(generalId)
         runQueuedStratagem(generalId)
         val actor = world.getGeneralById(generalId) ?: return
@@ -205,7 +211,7 @@ class CourtHandler(
             NpcDispatchSelector.select(world, generalId, executor)?.let { request ->
                 // The NPC lord's reason is the target's dispatch record (spec §14: 발령 근거를 「지난 순」에).
                 executor.issue(NpcDispatchSelector.dispatchId(world, request), request,
-                    targetText = NPC_DISPATCH_REASON)
+                    targetText = NPC_DISPATCH_REASON, targetPolicy = DispatchTargetPolicy.NPC_AUTOMATED)
             }
             return
         }
@@ -233,7 +239,8 @@ class CourtHandler(
                 queued.requestId, queued.ownerUserId)) return
         val result = if (actor.userId?.toLongOrNull() != queued.ownerUserId.toLong()) {
             result(generalId, RewardInput.INPUT_ID, false, "FORBIDDEN", "상사 제출 후 장수 소유자가 변경되었습니다.")
-        } else when (val failure = RewardExecutor(world, recorder).reward(RewardRequest(generalId, queued.retainerId, queued.money))) {
+        } else when (val failure = RewardExecutor(world, recorder).reward(
+                RewardRequest(generalId, queued.retainerId, queued.money), queued.requestId)) {
             null -> result(generalId, RewardInput.INPUT_ID, true)
             else -> result(generalId, RewardInput.INPUT_ID, false, failure.name, failure.message)
         }
@@ -258,7 +265,7 @@ class CourtHandler(
         }
         val current = world.getGeneralById(generalId) ?: return
         updateMeta(current, (current.meta - QueuedCourtAction.META_KEY) +
-            ("hwihaLegacyCourtLastExecution" to mapOf("requestId" to queued.requestId,
+            ("courtLastExecution" to mapOf("requestId" to queued.requestId,
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }
@@ -283,7 +290,7 @@ class CourtHandler(
         }
         val current = world.getGeneralById(generalId) ?: return
         updateMeta(current, (current.meta - QueuedStratagemAction.META_KEY) +
-            ("hwihaLegacyStratagemLastExecution" to mapOf("requestId" to queued.requestId,
+            ("stratagemLastExecution" to mapOf("requestId" to queued.requestId,
                 "inputId" to queued.inputId, "ok" to resolved.ok, "code" to resolved.code)))
         executions += CourtExecution(queued.requestId, queued.ownerUserId, resolved)
     }

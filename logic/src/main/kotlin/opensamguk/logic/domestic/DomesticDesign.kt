@@ -17,7 +17,7 @@ import opensamguk.logic.domestic.DomesticWork
 import opensamguk.logic.domestic.FieldInput
 
 /**
- * 휘하 내정 입력의 확정 수치(`data/curated/han/hwiha-domestic-v1.json`, classpath `hwiha/`).
+ * 휘하 내정 입력의 확정 수치(`data/curated/han/domestic-v1.json`, classpath `campaign/`).
  * 설계 문서가 정하지 않은 효과량·비용·기간은 모두 이 파일 한 곳에만 있고 `status` 가
  * 「CONFIRMED」다 — 코드에 박지 않는다. 파일이 없거나 꼴이 어긋나면 기본값으로 가지 않고 실패한다.
  */
@@ -60,7 +60,7 @@ class DomesticDesign internal constructor(
     }
 
     companion object {
-        const val RESOURCE = "hwiha/hwiha-domestic-v1.json"
+        const val RESOURCE = "campaign/domestic-v1.json"
         const val CONFIRMED = "CONFIRMED"
 
         val CANON: DomesticDesign by lazy {
@@ -72,7 +72,7 @@ class DomesticDesign internal constructor(
         fun parse(payload: String): DomesticDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
             require(root.int("schemaVersion") == 1) { "unsupported hwiha domestic schemaVersion" }
-            require(root.text("ledgerId") == "hwiha-domestic-v1") { "unexpected hwiha domestic ledgerId" }
+            require(root.text("ledgerId") == "domestic-v1") { "unexpected hwiha domestic ledgerId" }
             val status = root.text("status")
             val scalingNode = root.obj("scaling")
             val scaling = Scaling(scalingNode.int("neutralStat"), scalingNode.int("permillePerStatPoint"),

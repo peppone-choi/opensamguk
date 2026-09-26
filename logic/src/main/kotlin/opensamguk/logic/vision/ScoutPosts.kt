@@ -8,9 +8,9 @@ import opensamguk.logic.domestic.PlacementTarget
 import opensamguk.logic.domestic.DomesticCard
 
 /**
- * 정찰 배치의 공개 투영. 배치 주인 장수 meta `hwihaScoutPosts` = `{"version":1,"posts":[{"retainerId":int,"provinceId":str,"status":str}]}`
+ * 정찰 배치의 공개 투영. 배치 주인 장수 meta `scoutPosts` = `{"version":1,"posts":[{"retainerId":int,"provinceId":str,"status":str}]}`
  * — 시야 스트림(`MetaVisionSourceReader.scoutPosts`, 비전 계약 `2026-09-23-hwiha-vision-contract.md` §3)이 읽는 꼴 그대로다.
- * 정본은 카드 장수 meta 의 `hwihaPlacement` 이고, 이 투영은 그 정본에서 다시 만든다(엔진이 배치가 바뀔 때마다 동기화).
+ * 정본은 카드 장수 meta 의 `placement` 이고, 이 투영은 그 정본에서 다시 만든다(엔진이 배치가 바뀔 때마다 동기화).
  *
  * status: `ACTIVE` = 부임지에 도착해 시야를 준다, `MOVING` = 부임 행군 중(시야 없음). 항목은 (retainerId, provinceId) 순이다.
  */
@@ -28,7 +28,7 @@ data class ScoutPostEntry(val retainerId: Int, val provinceId: String, val statu
 }
 
 object ScoutPosts {
-    const val META_KEY = "hwihaScoutPosts"
+    const val META_KEY = "scoutPosts"
 
     /**
      * 주인 [ownerId] 가 직접 거느린 카드(`masterId == ownerId`)의 현행 정찰 배치에서 투영을 만든다. 배치 주인이 바뀐 카드·

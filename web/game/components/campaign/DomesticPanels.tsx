@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import { Chip, Panel, SectionHeader, Table } from '@opensamguk/ui';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
-import { HWIHA_RESOURCE_LABELS, useHwihaRead, type Stock } from '@/lib/hwiha-reads';
-import { useHwihaSession } from '@/lib/hwiha-session';
-import { Empty, hwihaReadNotice } from './GameStates';
+import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead, type Stock } from '@/lib/campaign-reads';
+import { useGameSession } from '@/lib/campaign-session';
+import { Empty, campaignReadNotice } from './GameStates';
 
 type Toast = (msg: string, type: 'success' | 'error' | 'info') => void;
 
@@ -13,19 +13,19 @@ const fmt = new Intl.NumberFormat('ko-KR');
 
 /** 비용 한 줄 — 0 인 자원은 뺀다. */
 function costLine(stock: Stock): string {
-    const parts = HWIHA_RESOURCE_LABELS.filter(({ key }) => stock[key] > 0).map(({ key, label }) => `${label} ${fmt.format(stock[key])}`);
+    const parts = CAMPAIGN_RESOURCE_LABELS.filter(({ key }) => stock[key] > 0).map(({ key, label }) => `${label} ${fmt.format(stock[key])}`);
     return parts.length ? parts.join(' · ') : '없음';
 }
 
 /** 지속 입력 하나를 보내고 결과를 알린다. 접수(202)는 성공이 아니라 「다음 턴·순 경계에 효력」이다. */
 function useDomesticSubmit(onToast: Toast, onDone: () => void) {
-    const { generalId } = useHwihaSession();
+    const { generalId } = useGameSession();
     const [busy, setBusy] = useState(false);
     const submit = async (kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown, okText: string) => {
         if (generalId == null || busy) return;
         setBusy(true);
         try {
-            const out = await api.hwihaDomestic(generalId, kind, body);
+            const out = await api.campaignDomestic(generalId, kind, body);
             if (isIntakeQueued(out)) {
                 onToast(okText, 'success');
                 onDone();
@@ -43,10 +43,10 @@ const selectStyle: React.CSSProperties = { minHeight: 44, maxWidth: 220 };
 
 /** 배치 — 직접 거느린 NPC 인물 카드를 현령·군단장·사자·정찰 자리에 앉힌다. 카드는 걸어서 부임한다. */
 export function PlacementPanel({ onToast, refreshKey, onDone }: { onToast: Toast; refreshKey: number; onDone: () => void }) {
-    const read = useHwihaRead((id, signal) => api.hwihaPosts(id, signal), [refreshKey]);
+    const read = useCampaignRead((id, signal) => api.campaignPosts(id, signal), [refreshKey]);
     const { busy, submit } = useDomesticSubmit(onToast, onDone);
     const [choice, setChoice] = useState<Record<number, string>>({});
-    const notice = hwihaReadNotice(read, read.data?.status);
+    const notice = campaignReadNotice(read, read.data?.status);
     const cards = read.data?.cards ?? [];
     const posts = read.data?.posts ?? [];
     // 선택지 값은 「자리|대상」 — 대상이 없는 자리(군단장·해제)는 자리만.
@@ -127,9 +127,9 @@ export function PlacementPanel({ onToast, refreshKey, onDone }: { onToast: Toast
 
 /** 방침 — 현 방침 6종·군단 방침 5종. 현령 카드의 다음 턴에 현행이 되고, 효과는 순 경계마다 한 번. */
 export function PolicyPanel({ onToast, refreshKey, onDone }: { onToast: Toast; refreshKey: number; onDone: () => void }) {
-    const read = useHwihaRead((id, signal) => api.hwihaPolicies(id, signal), [refreshKey]);
+    const read = useCampaignRead((id, signal) => api.campaignPolicies(id, signal), [refreshKey]);
     const { busy, submit } = useDomesticSubmit(onToast, onDone);
-    const notice = hwihaReadNotice(read, read.data?.status);
+    const notice = campaignReadNotice(read, read.data?.status);
     const counties = read.data?.counties ?? [];
     const corps = read.data?.corps ?? [];
     const countyOptions = read.data?.countyOptions ?? [];
@@ -220,12 +220,12 @@ export function PolicyPanel({ onToast, refreshKey, onDone }: { onToast: Toast; r
 
 /** 공사 — 현마다 하나씩, 순 경계마다 진척하며 그 현 창고의 자원을 나눠 쓴다. */
 export function WorksPanel({ onToast, refreshKey, onDone }: { onToast: Toast; refreshKey: number; onDone: () => void }) {
-    const read = useHwihaRead((id, signal) => api.hwihaWorks(id, signal), [refreshKey]);
-    const roads = useHwihaRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
+    const read = useCampaignRead((id, signal) => api.campaignWorks(id, signal), [refreshKey]);
+    const roads = useCampaignRead((id, signal) => api.roadForts(id, signal), [refreshKey]);
     const { busy, submit } = useDomesticSubmit(onToast, onDone);
     const [roadChoice, setRoadChoice] = useState<Record<number, string>>({});
     const [fortChoice, setFortChoice] = useState<Record<number, string>>({});
-    const notice = hwihaReadNotice(read, read.data?.status);
+    const notice = campaignReadNotice(read, read.data?.status);
     const counties = read.data?.counties ?? [];
     const gates = roads.data?.gates ?? [];
     const roadMode = roads.data?.roadMode === true;
