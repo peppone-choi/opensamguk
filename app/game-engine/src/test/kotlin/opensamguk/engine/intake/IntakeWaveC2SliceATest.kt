@@ -223,33 +223,6 @@ class IntakeWaveC2SliceATest {
     // ── tournament enroll ───────────────────────────────────────────────────────
 
     @Test
-    fun `tournament enroll writes general tnmt and flushes the dirty general`() {
-        val world = world()
-        val recorder = ChangeRecorder()
-        val handler = TournamentEnrollHandler(world, recorder)
-
-        val res = handler.handle(TurnDaemonCommand.TournamentEnroll(generalId = 10, value = 0)) as NationSettingResult
-
-        assertTrue(res.ok)
-        assertEquals(0, world.getGeneralById(10)!!.meta["tnmt"])
-        assertEquals(setOf(10), recorder.dirtyGeneralIds())
-        assertEquals(0, flush(world, recorder).updatedGenerals.single().meta["tnmt"])
-    }
-
-    @Test
-    fun `tournament enroll clamps out-of-range to 1 (PHP faithful)`() {
-        val world = world()
-        val recorder = ChangeRecorder()
-        val handler = TournamentEnrollHandler(world, recorder)
-
-        handler.handle(TurnDaemonCommand.TournamentEnroll(generalId = 10, value = 7))
-
-        assertEquals(1, world.getGeneralById(10)!!.meta["tnmt"])
-    }
-
-    // ── inheritance reset: resetTurnTime ──────────────────────────────────────────
-
-    @Test
     fun `resetTurnTime deducts previous spends rank logs and flushes the full delta`() {
         // owner 100 has 5000 previous; currentLevel -1 → nextLevel 0 → reqPoint = base[0] = 1000.
         val world = world(
@@ -571,9 +544,6 @@ class IntakeWaveC2SliceATest {
         assertTrue((r as NationSettingResult).ok)
         assertEquals("setRate", r.type)
         assertEquals(15, world.getNationById(1)!!.meta["rate"])
-
-        val enroll = dispatcher.dispatch(TurnDaemonCommand.TournamentEnroll(generalId = 10, value = 1))
-        assertEquals("tournamentEnroll", (enroll as NationSettingResult).type)
 
         // 유산 구매 두 타입도 라우팅(handler가 result 반환 = silent no-op 아님).
         val buff = dispatcher.dispatch(TurnDaemonCommand.BuyHiddenBuff(generalId = 10, buffKey = "warAvoidRatio", level = 1))

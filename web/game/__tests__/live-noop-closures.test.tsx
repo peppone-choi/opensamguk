@@ -7,8 +7,6 @@ const apiMocks = vi.hoisted(() => ({
     frontInfo: vi.fn(),
     tournament: vi.fn(),
     generalLog: vi.fn(),
-    tournamentStart: vi.fn(),
-    tournamentReset: vi.fn(),
     selectPoolPick: vi.fn(),
     selectPoolUpdate: vi.fn(),
     selectPool: vi.fn(),
@@ -61,8 +59,6 @@ vi.mock('@/lib/api', () => ({
         tournament: apiMocks.tournament,
         generalLog: apiMocks.generalLog,
         selectPool: apiMocks.selectPool,
-        tournamentStart: apiMocks.tournamentStart,
-        tournamentReset: apiMocks.tournamentReset,
         commands: {
             selectPoolPick: apiMocks.selectPoolPick,
             selectPoolUpdate: apiMocks.selectPoolUpdate,
@@ -88,8 +84,6 @@ describe('production-reachable frontend no-op closures', () => {
         apiMocks.frontInfo.mockReset();
         apiMocks.tournament.mockReset();
         apiMocks.generalLog.mockReset();
-        apiMocks.tournamentStart.mockReset();
-        apiMocks.tournamentReset.mockReset();
         apiMocks.selectPoolPick.mockReset();
         apiMocks.selectPoolUpdate.mockReset();
         apiMocks.selectPool.mockReset();
