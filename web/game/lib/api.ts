@@ -6,23 +6,14 @@ const BASE = '/api/game';
 
 import type {
     FrontInfoResponse,
-    GlobalMenuResponse,
     GameConstResponse,
-    ClaimableResponse,
-    ClaimResponse,
     MapPreviewResponse,
     WorldMapResponse,
     PublicGeneral,
-    TournamentResponse,
     DiplomacyLettersResponse,
     DiplomacyConflictResponse,
     NationFinanceResponse,
-    ChiefReservedResponse,
-    NpcPolicyResponse,
-    InheritPointResponse,
     BoardResponse,
-    VoteListResponse,
-    VoteDetailResponse,
     TroopListResponse,
     HistoryResponse,
     IntakeOutcome,
@@ -51,35 +42,6 @@ export interface WorldLogResponse {
 }
 
 export type GeneralLogType = 'generalAction' | 'battleDetail' | 'battleResult' | 'generalHistory';
-
-export interface SelectPoolCard {
-    uniqueName: string;
-    generalName: string;
-    picture: string | null;
-    imageServer: number;
-    leadership: number | null;
-    strength: number | null;
-    intel: number | null;
-    politics: number | null;
-    charm: number | null;
-    dex: number[];
-    personality: string | null;
-    specialDomestic: string | null;
-    specialWar: string | null;
-    statEditable: boolean;
-}
-
-export interface SelectPoolResponse {
-    result: boolean;
-    generalId: number | null;
-    validUntil: string | null;
-    pick: SelectPoolCard[];
-}
-
-export interface SelectPoolRefreshAccepted {
-    status: 'AVAILABLE';
-    requestId: string;
-}
 
 export interface GeneralLogResponse {
     result: boolean;
@@ -138,13 +100,6 @@ export interface JoinFormResponse {
         readonly picture: string | null;
         readonly imageServer: number;
         readonly canUsePicture: boolean;
-    };
-    readonly inheritTotalPoint: number;
-    readonly inheritCosts: {
-        readonly special: number;
-        readonly turntime: number;
-        readonly city: number;
-        readonly stat: number;
     };
     readonly turnTermMinutes: number;
     readonly cities: readonly {
@@ -534,7 +489,6 @@ export const api = {
         post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),
     enlistmentOptions: (generalId: number) => get<import('./types').EnlistmentOptionsResponse>(`/api/commands/enlistment-options?generalId=${generalId}`),
     frontInfo: (signal?: AbortSignal) => get<FrontInfoResponse>('/api/front-info', signal),
-    globalMenu: () => get<GlobalMenuResponse>('/api/global-menu'),
     gameConst: () => get<GameConstResponse>('/api/const'),
 
     // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
@@ -545,10 +499,6 @@ export const api = {
     // MapPreview와 id로 머지해 렌더한다. neutralView/showMe 인자(기본 showMe=1로 내 도시 노출).
     worldMap: (neutralView = 0, showMe = 1) =>
         get<WorldMapResponse>(`/api/map?neutralView=${neutralView}&showMe=${showMe}`),
-
-    // Possession (장수 점유 / 빙의) — AUTH (identity resolved from Bearer)
-    claimable: () => get<ClaimableResponse>('/api/generals/claimable'),
-    claim: (generalId: number) => post<ClaimResponse>('/api/general/claim', { generalId }),
 
     // My pages
     myPage: <T>() => get<T>('/api/my-page'),
@@ -571,7 +521,6 @@ export const api = {
     city: <T>(id: number) => get<T>(`/api/city/${id}`),
     generals: <T>() => get<T>('/api/generals'),
     nationGeneralList: () => get<NationGeneralListResponse>('/api/nation/general-list'),
-    tournament: <T>() => get<T>('/api/tournament'),
     generalLog: (generalId: number, reqType: GeneralLogType, reqTo?: number) =>
         get<GeneralLogResponse>(
             reqTo == null
@@ -582,34 +531,12 @@ export const api = {
     // Rankings
     rankings: {
         bestGenerals: <T>() => get<T>('/api/rankings/best-generals'),
-        emperor: <T>() => get<T>('/api/rankings/emperor'),
-        emperorDetail: <T>(id: number) => get<T>(`/api/rankings/emperor/${id}`),
         allGenerals: <T>() => get<T>('/api/rankings/generals'),
         kingdoms: <T>() => get<T>('/api/rankings/kingdoms'),
         kingdomRoster: <T>() => get<T>('/api/rankings/kingdom-roster'),
-        npcs: <T>() => get<T>('/api/rankings/npcs'),
-        hallOfFame: <T>() => get<T>('/api/rankings/hall-of-fame'),
-        traffic: <T>() => get<T>('/api/rankings/traffic'),
     },
 
     // P6 pages
-    // 거래장(자원 경매) D1 — game-api `GET /api/auctions` → AuctionResourceListResponse
-    //   {result, buyRice[], sellRice[], recentLogs[], generalID}. 호출부는 envelope 통째로 받는다
-    //   (legacy SammoAPI.Auction.GetActiveResourceAuctionList와 동형).
-    auctions: <T>() => get<T>('/api/auctions'),
-    // 유니크 경매 D2 — `GET /api/auctions/unique` → UniqueItemAuctionListResponse {result, list[], obfuscatedName}.
-    auctionsUnique: <T>() => get<T>('/api/auctions/unique'),
-    // 유니크 경매 상세 D3 — `GET /api/auctions/{id}/unique-detail`
-    //   → {result, auction, bidList[], obfuscatedName, remainPoint}. 부재 시 404 + 한글 메시지.
-    auctionUniqueDetail: <T>(id: number) => get<T>(`/api/auctions/${id}/unique-detail`),
-    // 베팅 목록 D4 — `GET /api/bettings?type=` → BettingListResponse {result, bettingList(Map<id,item>), year, month}.
-    // type = legacy GetBettingList `req` 필터('bettingNation'|'tournament' — PHP Validator 화이트리스트
-    // verbatim). 생략 시 전체(P1-013: 국가베팅 페이지는 'bettingNation', 베팅장은 'tournament'를 넘길 것).
-    betting: <T>(type?: 'bettingNation' | 'tournament') =>
-        get<T>(type == null ? '/api/bettings' : `/api/bettings?type=${type}`),
-    // 베팅 상세 D5 — `GET /api/bettings/{id}/detail`(per-OWNER, 인증 필요)
-    //   → {result, bettingInfo(raw), bettingDetail[], myBetting[], remainPoint, year, month}.
-    bettingDetail: <T>(id: number) => get<T>(`/api/bettings/${id}/detail`),
     // Mailbox — parameterized by mailbox id (spec §7). game-api: GET /api/mailbox/{mailbox}.
     // No-arg overload (legacy default) kept for callers that still hit the bare route.
     mailbox: <T>(mailbox?: number) =>
@@ -637,10 +564,6 @@ export const api = {
         charm: number;
         character: string;
         pic?: boolean;
-        inheritSpecial?: string;
-        inheritTurntimeZone?: number;
-        inheritCity?: number;
-        inheritBonusStat?: readonly number[];
     }) =>
         post<{ status: string; requestId?: string; reason?: string }>('/api/join', body),
     commandResult: (requestId: string) => get<CommandResultResponse>(`/api/command/result/${requestId}`),
@@ -657,30 +580,14 @@ export const api = {
     // 전체 장수 (page 14 / 세력 장수 P0) — public, permission=0 fields.
     // 백엔드 GeneralsController는 PublicGeneral의 **bare 배열**을 반환한다(래퍼 아님).
     generalsList: () => get<PublicGeneral[]>('/api/generals'),
-    // 토너먼트 (page 12/13/11-bracket) — state/bracket/standings/rankings/msg.
-    tournamentView: () => get<TournamentResponse>('/api/tournament'),
     // 외교부 (page 1) — letter list (nations + letters map + myNationID).
     diplomacyLetters: () => get<DiplomacyLettersResponse>('/api/diplomacy/letters'),
     // 중원정보 (page 2) — global matrix + per-city 분쟁% conflict feed.
     diplomacyConflict: () => get<DiplomacyConflictResponse>('/api/diplomacy/conflict'),
     // 내무부 (page 3) — gold/rice/income/outcome/policy/warSettingCnt/msgs/editable.
     nationFinance: (id: number) => get<NationFinanceResponse>(`/api/nation/${id}/finance`),
-    // 사령부 (page 7) — 8 chief posts (lv 12/11/10/9/8/7/6/5) + reserved turns.
-    chiefReserved: () => get<ChiefReservedResponse>('/api/nation/chief-reserved'),
-    // NPC 정책 (page 8) — default+current policy/priorities/lastSetters/env.
-    npcPolicy: () => get<NpcPolicyResponse>('/api/nation/npc-policy'),
-    updateNpcPolicy: (body: { type: 'nationPolicy' | 'nationPriority' | 'generalPriority'; data: unknown }) =>
-        post<IntakeOutcome>('/api/nation/npc-policy', body),
-    selectPool: () => get<SelectPoolResponse>('/api/select-pool'),
-    refreshSelectPool: () => post<SelectPoolRefreshAccepted>('/api/select-pool/refresh', {}),
-    // 유산 (page 15) — inherit items/buffs/costs/availability/logs/currentStat.
-    inheritPoint: <T>() => get<T>('/api/inherit-point'),
     // 회의실 / 기밀실 (page 4) — articles+comments, permission-gated by ?secret=.
     board: (secret = false) => get<BoardResponse>(`/api/board?secret=${secret}`),
-    // 설문 조사 (page 5) — vote list.
-    votes: () => get<VoteListResponse>('/api/votes'),
-    // 설문 조사 (page 5) — vote detail + results + myVote + userCnt.
-    vote: (id: number) => get<VoteDetailResponse>(`/api/votes/${id}`),
     // 부대 편성 (page 6) — troop list (leader/members/reservedCommandBrief/turnTime).
     troops: () => get<TroopListResponse>('/api/troops'),
     // 연감 (page 16) — ng_history range + per-month records; ?yearMonth selects month.
@@ -709,22 +616,6 @@ export const api = {
             generalId == null ? '/api/reserved-commands' : `/api/reserved-commands?generalId=${generalId}`,
         ),
 
-    // 즉시 액션 인테이크 — `POST /api/instant-action/{code}?generalId=` (P0-24/25 소비처).
-    // instant(DieOnPrestart/DropItem/InstantRetreat) + inherit(ResetStat/CheckOwner …) 코드.
-    // legacy SammoAPI.InheritAction.*(예: ResetStat{leadership,strength,intel,inheritBonusStat},
-    // CheckOwner{destGeneralID})와 같은 args 키를 JSON 본문으로 싣는다. 무인자 액션은 args 생략.
-    // 미배선 코드는 BE가 409 {error}로 거른다 — post()가 그 사유 문자열로 reject.
-    // 무인자 액션은 args 생략 → JSON.stringify(undefined)=undefined → 본문 없음 →
-    // BE @RequestBody(required=false) argJson=null로 깔끔히 바인딩(문자열 "null" 전송 금지).
-    instantAction: (code: string, generalId: number, args?: unknown) =>
-        post<IntakeOutcome>(`/api/instant-action/${code}?generalId=${generalId}`, args),
-
-    // 유산 능력치 초기화 — POST /api/instant-action/ResetStat (P0-24)
-    resetStat: (
-        args: { leadership: number; strength: number; intel: number; inheritBonusStat?: number[] },
-        generalId: number,
-    ) => post<IntakeOutcome>(`/api/instant-action/ResetStat?generalId=${generalId}`, args),
-
     // ── 예약 큐 조작 (W6e bulk/push/repeat × {general, nation}) ───────────────────────────────
     // PHP SammoAPI.Command.* / NationCommand.*(PushCommand·RepeatCommand·ReserveBulkCommand) 대응.
     // 응답 규약: 202 = 큐 갱신(bulk는 briefList 동봉) / 200 BLOCKED = PHP 동결 회귀 deny 문자열.
@@ -739,15 +630,6 @@ export const api = {
         /** Repeat(장수) — 앞 amount턴 반복 채움. amount 1..12 (P0-02). */
         repeat: (generalId: number, amount: number) =>
             post<IntakeOutcome>(`/api/command/repeat?generalId=${generalId}`, { amount }),
-        /** ReserveBulk(국가) — 사령부 슬롯 제출 정본 경로(nation_turn 링 — P0-09/P0-11). */
-        nationBulk: (generalId: number, commandArray: { action: string; turnList: number[]; arg?: Record<string, unknown> }[]) =>
-            post<IntakeOutcome>(`/api/command/nation/bulk?generalId=${generalId}`, commandArray),
-        /** Push(국가) — 사령부 당기기/미루기 (P0-10). */
-        nationPush: (generalId: number, amount: number) =>
-            post<IntakeOutcome>(`/api/command/nation/push?generalId=${generalId}`, { amount }),
-        /** Repeat(국가) — 사령부 반복 (P0-10). */
-        nationRepeat: (generalId: number, amount: number) =>
-            post<IntakeOutcome>(`/api/command/nation/repeat?generalId=${generalId}`, { amount }),
     },
 
     // ── C1-α write submit 래퍼 (wire 코드 기존; 백엔드 신규 로직/핸들러/wire 없음) ──────────────────────
@@ -803,70 +685,6 @@ export const api = {
             turnIdx = 0,
         ) => post<IntakeOutcome & T>(`/api/command/changePermission?generalId=${generalId}&turnIdx=${turnIdx}`, args),
 
-        // ── 거래장/경매 (C1 AuctionResource/AuctionUniqueItem) ───────────────────────────────────
-        // CommandWireMapper.intakeCodes에 모두 기존 등록(auctionBid:135 / auctionOpenBuyRice:259 /
-        // auctionOpenSellRice:266 / auctionOpenUnique:273). args 키는 mapper가 파싱하는 키(=legacy ajax
-        // 폼 필드)와 byte-동일하게 맞춘다.
-        // 입찰 — legacy SammoAPI.Auction.Bid{BuyRice,SellRice,Unique}Auction({auctionID, amount}).
-        //   mapper는 `auctionId`/`amount`/(선택)`tryExtendCloseDate`를 읽는다(자원/유니크 동일 typed 명령).
-        auctionBid: <T = unknown>(
-            args: { auctionId: number; amount: number; tryExtendCloseDate?: boolean },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/auctionBid?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 쌀 매수 경매 등록 — legacy SammoAPI.Auction.OpenBuyRiceAuction.
-        //   {amount, startBidAmount, finishBidAmount, closeTurnCnt}.
-        auctionOpenBuyRice: <T = unknown>(
-            args: { amount: number; startBidAmount: number; finishBidAmount: number; closeTurnCnt: number },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/auctionOpenBuyRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 금(쌀 매도) 경매 등록 — legacy SammoAPI.Auction.OpenSellRiceAuction(동일 폼 필드).
-        auctionOpenSellRice: <T = unknown>(
-            args: { amount: number; startBidAmount: number; finishBidAmount: number; closeTurnCnt: number },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/auctionOpenSellRice?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        // 유니크 아이템 경매 등록 — legacy SammoAPI.Auction.OpenUniqueAuction. mapper는 `itemId`/`amount`.
-        auctionOpenUnique: <T = unknown>(
-            args: { itemId: string; amount: number },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/auctionOpenUnique?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-
-        // ── 베팅 (C1 BettingDetail) ────────────────────────────────────────────────────────────
-        // CommandWireMapper.intakeCodes `placeBet`:128. legacy SammoAPI.Betting.Bet({bettingID,
-        //   bettingType, amount}). mapper는 `bettingId`(camel)/`bettingType`(number[])/`amount`를 읽는다.
-        placeBet: <T = unknown>(
-            args: { bettingId: number; bettingType: number[]; amount: number },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/placeBet?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        selectPoolPick: <T = unknown>(
-            args: {
-                uniqueName: string;
-                leadership?: number;
-                strength?: number;
-                intel?: number;
-                personalityName?: string;
-                useOwnPicture?: boolean;
-            },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/selectPoolPick?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-        selectPoolUpdate: <T = unknown>(
-            args: {
-                uniqueName: string;
-                leadership?: number;
-                strength?: number;
-                intel?: number;
-                personalityName?: string;
-                useOwnPicture?: boolean;
-            },
-            generalId: number,
-            turnIdx = 0,
-        ) => post<IntakeOutcome & T>(`/api/command/selectPoolUpdate?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-
         // 서신 발송 — legacy SendMessage.php(mailbox, text).
         // CommandWireMapper.intakeCodes `sendMessage`:75.
         // mailbox: 9999=전체, 9000+nationId=국가, generalId=개인. 엔진 핸들러가 라우팅 결정.
@@ -893,21 +711,9 @@ export const api = {
             args: { type: 'private' | 'diplomacy'; msgID: number },
             generalId: number,
         ) => post<IntakeOutcome & T>(`/api/command/readLatestMessage?generalId=${generalId}`, args),
-        setMySetting: <T = unknown>(
-            args: {
-                tnmt: number;
-                defence_train: number;
-                use_treatment: number;
-                use_auto_nation_turn: number;
-            },
-            generalId: number,
-        ) => post<IntakeOutcome & T>(`/api/command/setMySetting?generalId=${generalId}`, args),
         vacation: <T = unknown>(generalId: number) =>
             post<IntakeOutcome & T>(`/api/command/vacation?generalId=${generalId}`, {}),
     },
-
-    // Simulator
-    simulateBattle: <T>(body: unknown) => post<T>('/api/simulate-battle', body),
 
     // ── 어드민 read (B3c/B4c — 게임서버 내, web/game) ────────────────────────────────
     // game-api AdminReadController — 전부 READ-only. 프록시가 httpOnly sam_access 쿠키를
