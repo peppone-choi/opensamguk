@@ -12,19 +12,12 @@ import opensamguk.gameapi.dto.TournamentGroupStage
 import opensamguk.gameapi.dto.TournamentRankingBoard
 import opensamguk.gameapi.dto.TournamentResponse
 import opensamguk.gameapi.dto.TournamentStandingRow
-import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.F4StateText
 import opensamguk.gameapi.read.GameKvReadRepository
-import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.logic.tournament.TournamentEntry
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
@@ -32,10 +25,7 @@ import org.springframework.web.bind.annotation.RestController
 class TournamentController(
     private val gameKv: GameKvReadRepository,
     private val objectMapper: ObjectMapper,
-    private val reserve: CommandReserveService? = null,
-    private val resolver: GeneralResolver? = null,
 ) {
-    private val permissionDeniedReason = "권한이 부족합니다. 수뇌부가 아닙니다."
     private val knockoutStages = listOf(
         KnockoutStage(round = 16, sourceBase = 20, matchCount = 8, targetBase = 30),
         KnockoutStage(round = 8, sourceBase = 30, matchCount = 4, targetBase = 40),
@@ -94,77 +84,6 @@ class TournamentController(
                 matches = adminMatches,
             ),
         )
-    }
-
-    @PostMapping("/start")
-    fun start(
-        @AuthenticationPrincipal userId: Long?,
-        @RequestParam generalId: Int,
-        @RequestBody(required = false) request: TournamentStartRequest?,
-    ): ResponseEntity<TournamentCommandAcceptedResponse> {
-        authorizeTournamentAdmin(userId, generalId)?.let { return it }
-        val service = reserve ?: return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
-            TournamentCommandAcceptedResponse(status = "UNAVAILABLE", requestId = "", turnIdx = 0),
-        )
-        val tournamentType = request?.type ?: request?.tournamentType ?: 0
-        val result = service.reserve(
-            generalId = generalId,
-            actionCode = "tournamentStart",
-            turnIdx = 0,
-            argJson = objectMapper.writeValueAsString(mapOf("type" to tournamentType)),
-        )
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-            TournamentCommandAcceptedResponse(status = "AVAILABLE", requestId = result.requestId, turnIdx = result.turnIdx),
-        )
-    }
-
-    @PostMapping("/reset")
-    fun reset(
-        @AuthenticationPrincipal userId: Long?,
-        @RequestParam generalId: Int,
-    ): ResponseEntity<TournamentCommandAcceptedResponse> {
-        authorizeTournamentAdmin(userId, generalId)?.let { return it }
-        val service = reserve ?: return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
-            TournamentCommandAcceptedResponse(status = "UNAVAILABLE", requestId = "", turnIdx = 0),
-        )
-        val result = service.reserve(
-            generalId = generalId,
-            actionCode = "tournamentReset",
-            turnIdx = 0,
-            argJson = null,
-        )
-        return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-            TournamentCommandAcceptedResponse(status = "AVAILABLE", requestId = result.requestId, turnIdx = result.turnIdx),
-        )
-    }
-
-    private fun authorizeTournamentAdmin(
-        userId: Long?,
-        requestedGeneralId: Int,
-    ): ResponseEntity<TournamentCommandAcceptedResponse>? {
-        val guard = resolver ?: return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE).body(
-            TournamentCommandAcceptedResponse(status = "UNAVAILABLE", requestId = "", turnIdx = 0),
-        )
-        val resolved = userId?.let { guard.resolve(it) }
-            ?: return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                TournamentCommandAcceptedResponse(status = "FORBIDDEN", requestId = "", turnIdx = 0),
-            )
-        if (resolved.general.id != requestedGeneralId) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                TournamentCommandAcceptedResponse(status = "FORBIDDEN", requestId = "", turnIdx = 0),
-            )
-        }
-        if (resolved.permission < 2) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(
-                TournamentCommandAcceptedResponse(
-                    status = "BLOCKED",
-                    requestId = "",
-                    turnIdx = 0,
-                    reason = permissionDeniedReason,
-                ),
-            )
-        }
-        return null
     }
 
     private fun tournamentEntries(): List<TournamentEntry> {
@@ -359,16 +278,4 @@ private data class KnockoutStage(
     val sourceBase: Int,
     val matchCount: Int,
     val targetBase: Int,
-)
-
-data class TournamentStartRequest(
-    val type: Int? = null,
-    val tournamentType: Int? = null,
-)
-
-data class TournamentCommandAcceptedResponse(
-    val status: String,
-    val requestId: String,
-    val turnIdx: Int,
-    val reason: String? = null,
 )

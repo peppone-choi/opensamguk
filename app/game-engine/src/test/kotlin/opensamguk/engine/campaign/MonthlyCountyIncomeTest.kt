@@ -7,6 +7,10 @@ import opensamguk.engine.turn.*
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.economy.Resources
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.FactRole
 
 class MonthlyCountyIncomeTest {
     private fun county(
@@ -60,6 +64,11 @@ class MonthlyCountyIncomeTest {
         assertEquals(Resources(money = 4_000, grain = 40_000), after.stock)
         assertEquals(1, after.revision, "적립은 revision 을 올린다")
         assertEquals("preserved", world.getCityById(10)!!.meta["keep"], "다른 meta 는 보존한다")
+        val event = world.consumeDirtyState().gameEvents.single()
+        assertEquals(EventKind.INCOME_MONTHLY, event.kind)
+        assertEquals(AudienceTarget.Nation(1), event.audience)
+        assertEquals(EventFact.Amount(4_000), event.facts[FactRole.MONEY])
+        assertEquals(EventFact.Amount(1), event.facts[FactRole.COUNTIES])
     }
 
     @Test
