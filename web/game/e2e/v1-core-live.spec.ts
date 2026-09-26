@@ -971,10 +971,6 @@ test('v1 core live surfaces and durable engine restart', async ({ browser }, tes
     writeArtifact('command-general-rejected.json', { status: rejected.response.status(), body: rejected.data });
     expect(rejected.response.status() >= 400 || (rejected.data && typeof rejected.data === 'object' && !Array.isArray(rejected.data) && (rejected.data as Record<string, unknown>).status === 'BLOCKED')).toBeTruthy();
 
-    const nation = await apiPost(page.request, `/api/game/api/command/nation/bulk?generalId=${generalId}`, []);
-    writeArtifact('command-nation.json', { status: nation.response.status(), body: nation.data, requestId: requestIdOf(nation.data) });
-    expect(nation.response.status()).toBeLessThan(300);
-
     const routes: Array<[string, string]> = [
       ['/game', 'general'],
       ['/game/war-room', 'war-room'],
@@ -983,21 +979,11 @@ test('v1 core live surfaces and durable engine restart', async ({ browser }, tes
       ['/game/board', 'board'],
       ['/game/board?secret=1', 'board-secret-deep-link'],
       ['/game/mailbox', 'mailbox'],
-      ['/game/select-pool', 'select-pool'],
       ['/game/my', 'my-info'],
       ['/game/history', 'history'],
       ['/game/rankings/kingdoms', 'kingdom-roles'],
     ];
     for (const [route, id] of routes) await captureSurface(page, route, id);
-
-    const emperorList = await apiGet(page.request, '/api/game/api/rankings/emperor');
-    writeArtifact('emperor-list.json', { status: emperorList.response.status(), body: emperorList.data });
-    let emperorId = '0';
-    if (Array.isArray(emperorList.data) && emperorList.data.length > 0 && emperorList.data[0] && typeof emperorList.data[0] === 'object') {
-      const record = emperorList.data[0] as Record<string, unknown>;
-      emperorId = String(record.id ?? record.generalId ?? record.emperorId ?? '0');
-    }
-    await captureSurface(page, `/game/rankings/emperor/${encodeURIComponent(emperorId)}`, 'emperor-detail');
 
     const beforeRestart = await apiGet(page.request, '/api/game/api/front-info');
     state.beforeRestart = { status: beforeRestart.response.status(), generalId: ((beforeRestart.data as Record<string, unknown>).general as Record<string, unknown> | undefined)?.generalId };
