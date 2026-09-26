@@ -1,0 +1,51 @@
+{
+  "status": "READY",
+  "now": { "year": 196, "month": 1, "phase": 1 },
+  "localOffices": [
+    {
+      "tenureId": "tenure-1",
+      "officeId": "office.commandery-prefect",
+      "officeName": "太守",
+      "jurisdictionId": "hhs-group:109:京兆尹",
+      "seatCountyId": 100,
+      "holderId": 2,
+      "holderName": "장수 예시",
+      "state": "EFFECTIVE",
+      "actualCountyIds": [100, 101],
+      "missing": []
+    },
+    {
+      "tenureId": "tenure-2",
+      "officeId": "office.provincial-inspector",
+      "officeName": "刺史",
+      "jurisdictionId": "zhou:豫州",
+      "seatCountyId": 200,
+      "holderId": 3,
+      "holderName": "장수 예시 2",
+      "state": "NOMINAL",
+      "actualCountyIds": [],
+      "missing": ["SEAT_OWNED"]
+    }
+  ],
+  "appointmentOptions": [
+    {
+      "officeId": "office.commandery-prefect",
+      "jurisdictionId": "hhs-group:109:京兆尹",
+      "seatCountyId": 100,
+      "candidateId": 4,
+      "candidateName": "장수 예시 3",
+      "available": false,
+      "blocked": { "code": "OFFICE_OCCUPIED", "reason": "이미 해당 관할에 재임자가 있습니다." }
+    }
+  ],
+  "pendingOffers": [
+    {
+      "offerId": "offer-1",
+      "candidateId": 5,
+      "officeId": "office.commandery-prefect",
+      "jurisdictionId": "hhs-group:109:左馮翊",
+      "status": "PENDING",
+      "dueAt": { "year": 196, "month": 1, "phase": 3 }
+    }
+  ]
+}
