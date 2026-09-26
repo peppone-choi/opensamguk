@@ -26,15 +26,38 @@ class MapDesignInvariantsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.inp = B.load_inputs()
-        cls.docs = {k: json.loads((B.OUT / k).read_text()) for k in (B.RIVERS, B.PLACEMENTS, B.MOUNTAINS, B.LANDCOVER, B.DODGE)}
+        cls.docs = {k: json.loads((B.OUT / k).read_text()) for k in (B.RIVERS, B.PLACEMENTS, B.MOUNTAINS, B.RELIEF, B.LANDCOVER, B.DODGE)}
         cls.tier, cls.width, cls.name = B.load_rivers_grid(cls.inp, cls.docs[B.RIVERS])
         cls.pl = cls.docs[B.PLACEMENTS]["placements"]
+        cls.lv = B.compute_relief(cls.inp, cls.tier, cls.width, cls.pl, cls.docs[B.MOUNTAINS])
 
     # ── 초록 ──
     def test_committed_layer_is_clean(self):
         self.assertEqual(B.check_river_lines(self.docs[B.RIVERS]), [])
         self.assertEqual(B.check_placements(self.inp, self.tier, self.width, self.pl), [])
         self.assertEqual(B.check_mountains(self.inp, self.tier, self.width, self.pl, self.docs[B.MOUNTAINS]), [])
+        self.assertEqual(B.check_relief(self.inp, self.tier, self.width, self.pl, self.lv), [])
+        self.assertEqual(B.relief_summary(self.lv, self.inp["terrain"]), self.docs[B.RELIEF]["result"])
+
+    def test_relief_fixes_known_misclassified_places(self):
+        # 米倉山 32.631°N 106.823°E(https://peakvisor.com/peak/micang-mountains.html): 지형 분류는 평지, 표고로 산
+        # 寶雞(陳倉) 34.363°N 107.238°E(https://en.wikipedia.org/wiki/Baoji): 渭水 골짜기 바닥인데 지형 분류는 산
+        T, P = self.inp["terrain"], self.inp["proj"]
+
+        def window(lat, lon, dr, dc):
+            r, c = (int(round(v)) for v in B.proj_rc(lon, lat, P))
+            return slice(r - dr, r + dr + 1), slice(c - dc, c + dc + 1)
+        micang, baoji = window(32.631, 106.823, 6, 8), window(34.363, 107.238, 2, 6)
+        self.assertEqual((T[micang] == B.TERRAIN_MOUNTAIN).mean(), 0)
+        self.assertGreater((self.lv[micang] > 0).mean(), 0.9)
+        self.assertEqual((T[baoji] == B.TERRAIN_MOUNTAIN).mean(), 1)
+        self.assertLess((self.lv[baoji] > 0).mean(), 0.1)
+
+    def test_component_sizes_counts_4_connected_cells(self):
+        import numpy as np
+        m = np.array([[1, 1, 0, 1], [0, 1, 0, 1], [1, 0, 0, 1], [1, 1, 0, 0]], bool)
+        self.assertEqual(B.component_sizes(m).tolist(), [[3, 3, 0, 3], [0, 3, 0, 3], [3, 0, 0, 3], [3, 3, 0, 0]])
+        self.assertEqual(B._drop_small(m, 4).sum(), 0)
 
     def test_every_river_has_a_source_and_every_dodge_city_exists(self):
         self.assertTrue(all(r[2] for r in self.docs[B.RIVERS]["rivers"]))
@@ -101,6 +124,14 @@ class MapDesignInvariantsTest(unittest.TestCase):
         self.assertTrue(any("출처 없음" in e for e in B.check_mountains(self.inp, self.tier, self.width, self.pl, mnt)))
 
 
+    def test_red_relief_on_road_and_loose_upper_tier(self):
+        lv = self.lv.copy(); ys, xs = self.inp["road"].nonzero(); lv[ys[0], xs[0]] = 1
+        self.assertTrue(any("보호 칸" in e for e in B.check_relief(self.inp, self.tier, self.width, self.pl, lv)))
+        lv = self.lv.copy(); edge = (self.lv == 1) & ~B._erode4(self.lv >= 1); y, x = map(int, next(zip(*edge.nonzero())))
+        lv[y, x] = 2
+        self.assertTrue(any("2단 칸" in e for e in B.check_relief(self.inp, self.tier, self.width, self.pl, lv)))
+
+
 class MapDesignCliProbeTest(unittest.TestCase):
     """사본 디렉터리에서 CLI --check 가 초록·적색을 실제로 가르는지."""
 
@@ -117,9 +148,12 @@ class MapDesignCliProbeTest(unittest.TestCase):
             mnt = json.loads((d / B.MOUNTAINS).read_text()); mnt["cells"].pop(); (d / B.MOUNTAINS).write_text(json.dumps(mnt))
             lc = json.loads((d / B.LANDCOVER).read_text()); lc["params"]["villageMax"] = 7; (d / B.LANDCOVER).write_text(json.dumps(lc))
             pl = json.loads((d / B.PLACEMENTS).read_text()); pl["placements"][0]["to"][1] += 1; (d / B.PLACEMENTS).write_text(json.dumps(pl))
+            rf = json.loads((d / B.RELIEF).read_text()); rf["params"]["tier3"] = 900; rf["input"]["demSha256"] = "0" * 64
+            (d / B.RELIEF).write_text(json.dumps(rf))
             bad = self._run(d)
             self.assertEqual(bad.returncode, 1, bad.stdout)
-            for needle in ("dodgeSha256", f"{B.MOUNTAINS} 가 재계산과 다르다", f"{B.LANDCOVER} 지문", f"{B.PLACEMENTS} 가 재계산과 다르다"):
+            for needle in ("dodgeSha256", f"{B.MOUNTAINS} 가 재계산과 다르다", f"{B.LANDCOVER} 지문", f"{B.PLACEMENTS} 가 재계산과 다르다",
+                           f"{B.RELIEF} 지문", "표고 원판"):
                 self.assertIn(needle, bad.stdout)
 
 

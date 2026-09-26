@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""지도 설계 층(map design layer) v1 — 강·城 위치 수정·산 편집·땅 피복.
+"""지도 설계 층(map design layer) v1 — 강·城 위치 수정·산 편집·산 높이·땅 피복.
 
 실제 지형(`data/map/han-tiles.json`)은 **입력**이고, 이 도구가 만드는 설계 층이 화면과
 규칙이 함께 읽는 **정본**이다(ADR-LITE-044 개정 2). 설계 방법은 지도 일반화 다섯 가지 —
@@ -9,6 +9,7 @@
     rivers-v1.json       사료로 확인한 강 36개의 중심선 칸(4-연결 한 줄)·위계·폭 규칙·출처
     placements-v1.json   과장한 강 폭에 잠긴 城을 기슭으로 옮기는 안(사유·출처)
     mountains-v1.json    관 양옆 능선·이름난 산 과장 칸(사유·출처)
+    relief-v1.json       산 높이 0–3단(표고로 산 범위를 고치고 단을 나눈다) 매개변수와 결과 지문
     landcover-v1.json    논·밭·숲·마을 피복 생성 매개변수와 결과 지문(sha256)
 
 입력
@@ -16,12 +17,13 @@
     infra/src/main/resources/map/han-world-v3.json  城 1447
     data/map/han-land-roads-v1.json               건설된 길
     data/curated/han/county-economy-inputs-v1.json 縣 호구·경작 칸
+    web/game/public/map/elevation/han-world-v3-metres.png  표고(NOAA ETOPO1, 퍼블릭 도메인, 768×669 = 우리 칸 ×¼)
     data/curated/han/map-design/river-waypoints-v1.json  NE에 없는 강의 경유지(水經注·웹 출처) — 판정 입력
     data/curated/han/map-design/river-dodge-v1.json      城 대신 강을 비킬 27곳 — 판정 입력
     data/natural-earth/ne_10m_rivers_lake_centerlines.geojson  **gitignored**. 강 선 재생성에만 쓴다.
 
     MAP_DESIGN_NE10M=<경로> python3 tools/map/build_map_design.py --build  # 강 선부터 전부(NE 10m 있는 로컬)
-    python3 tools/map/build_map_design.py --write-derived  # 커밋된 강 선에서 위치·산·피복만(han-tiles 바뀐 뒤)
+    python3 tools/map/build_map_design.py --write-derived  # 커밋된 강 선에서 위치·산 편집·산 높이·피복만(han-tiles 바뀐 뒤)
     python3 tools/map/build_map_design.py --check          # 불변식 + 결정적 재계산 대조(CI, 결합 목록)
 """
 from __future__ import annotations
@@ -44,6 +46,7 @@ ECONOMY = ROOT / "data/curated/han/county-economy-inputs-v1.json"
 WAYPOINTS = "river-waypoints-v1.json"      # 설계 판정 입력(사람이 고친다)
 DODGE = "river-dodge-v1.json"
 RIVERS, PLACEMENTS, MOUNTAINS, LANDCOVER = "rivers-v1.json", "placements-v1.json", "mountains-v1.json", "landcover-v1.json"
+RELIEF = "relief-v1.json"
 NE10M = Path(os.environ.get("MAP_DESIGN_NE10M", ROOT / "data/natural-earth/ne_10m_rivers_lake_centerlines.geojson"))
 
 # 城 성내 한 변(칸). 장현 1 · 영현 3 · 소 5 · 중 7 · 대 9 · 특 11 · 경 13, 수·진·관·이 1 (2026-09-26 사용자 안 B)
@@ -564,6 +567,134 @@ def compute_mountains(inp, tier, width, placements):
     return dict(cells=cells, log=log)
 
 
+# ── 산 높이(relief) ──────────────────────────────────────────────────────────────────
+# 커밋된 표고(NOAA ETOPO1, 퍼블릭 도메인)로 산 범위를 고치고 1–3단을 나눈다. 지형 분류의 산은 Natural Earth
+# 지리구역 폴리곤이라 곧은 변의 큰 덩어리다(秦嶺 남쪽 米倉·大巴가 평지, 太行 안 上黨·太原 분지가 산).
+#   줄이기: 산인데 주변보다 dropBelow m 도 안 솟은 곳은 뺀다.
+#   드러내기: 평지·분지·구릉인데 addAbove m 넘게 솟은 곳은 산으로 한다. 고원 분류는 건드리지 않는다.
+#   기복 = 표고 − (반경 baseRadius 표고칸 최저값을 흐린 것). 표고칸 하나는 우리 4×4칸이다.
+# 물·길·강 기슭·城(성내 + 1칸)은 산이 되지 않는다(골짜기). 윗단은 아랫단 안쪽 1칸 이상에 둔다.
+DEM = ROOT / "web/game/public/map/elevation/han-world-v3-metres.png"
+RELIEF_PARAMS = dict(baseRadius=6, dropBelow=150, addAbove=500, tier2=450, tier3=850, smoothRadius=3, minMass=200, minTier=80)
+RELIEF_CODES = {"0": "산 아님", "1": "낮은 산", "2": "산", "3": "높은 산"}
+
+
+def _box(a, r):
+    p = np.pad(a, r, mode="edge"); c = np.cumsum(np.cumsum(p, 0), 1); c = np.pad(c, ((1, 0), (1, 0))); k = 2 * r + 1
+    return (c[k:, k:] - c[:-k, k:] - c[k:, :-k] + c[:-k, :-k]) / (k * k)
+
+
+def _up4(d):
+    """표고칸(768×669) → 우리 칸 ×4, 이중선형. 표고칸 중심 = 우리 칸 4k+1.5."""
+    h, w = d.shape; y = (np.arange(h * 4) - 1.5) / 4; x = (np.arange(w * 4) - 1.5) / 4
+    y0 = np.clip(np.floor(y).astype(int), 0, h - 1); x0 = np.clip(np.floor(x).astype(int), 0, w - 1)
+    y1 = np.clip(y0 + 1, 0, h - 1); x1 = np.clip(x0 + 1, 0, w - 1)
+    fy = np.clip(y - np.floor(y), 0, 1)[:, None]; fx = np.clip(x - np.floor(x), 0, 1)[None, :]
+    return d[y0][:, x0] * (1 - fy) * (1 - fx) + d[y1][:, x0] * fy * (1 - fx) + d[y0][:, x1] * (1 - fy) * fx + d[y1][:, x1] * fy * fx
+
+
+def _majority(m, r, times, off=None):
+    M = m.astype(np.float64)
+    for _ in range(times):
+        M = (_box(M, r) > 0.5).astype(np.float64)
+        if off is not None:
+            M[off] = 0
+    return M.astype(bool)
+
+
+def _erode4(m):
+    e = m.copy(); e[1:] &= m[:-1]; e[:-1] &= m[1:]; e[:, 1:] &= m[:, :-1]; e[:, :-1] &= m[:, 1:]
+    return e
+
+
+def component_sizes(m):
+    """칸마다 제 4-연결 성분의 칸 수(성분 밖 0). 가로 구간 단위 합집합-찾기라 칸 수가 아니라 구간 수에 비례한다."""
+    h, w = m.shape
+    d = np.diff(np.pad(m.astype(np.int8), ((0, 0), (1, 1))), axis=1)
+    sy, sx = np.nonzero(d == 1); _, ex = np.nonzero(d == -1)
+    n = len(sy); out = np.zeros(h * w, np.int64)
+    if n == 0:
+        return out.reshape(h, w)
+    parent = list(range(n))
+
+    def find(a):
+        while parent[a] != a:
+            parent[a] = parent[parent[a]]; a = parent[a]
+        return a
+    row = np.searchsorted(sy, np.arange(h + 1)).tolist(); sxl = sx.tolist(); exl = ex.tolist()
+    for y in range(1, h):
+        i, i1, j, j1 = row[y - 1], row[y], row[y], row[y + 1]
+        while i < i1 and j < j1:
+            if sxl[i] < exl[j] and sxl[j] < exl[i]:
+                a, b = find(i), find(j)
+                if a != b:
+                    parent[max(a, b)] = min(a, b)
+            if exl[i] < exl[j]:
+                i += 1
+            else:
+                j += 1
+    roots = np.fromiter((find(i) for i in range(n)), np.int64, n); L = ex - sx
+    size = np.bincount(roots, weights=L, minlength=n).astype(np.int64)
+    offs = np.arange(L.sum()) - np.repeat(np.cumsum(L) - L, L)
+    out[np.repeat(sy * w + sx, L) + offs] = np.repeat(size[roots], L)
+    return out.reshape(h, w)
+
+
+def _drop_small(m, n):
+    return m & (component_sizes(m) >= n)
+
+
+def load_dem():
+    from PIL import Image
+    return np.maximum(np.array(Image.open(DEM)).astype(np.float64) - 32768, 0)
+
+
+def relief_rel(dem, r):
+    """주변 낮은 땅보다 얼마나 솟았나(m), 우리 칸 격자."""
+    from numpy.lib.stride_tricks import sliding_window_view
+    low = sliding_window_view(np.pad(dem, r, mode="edge"), (2 * r + 1, 2 * r + 1)).min(axis=(-1, -2))
+    return _up4(_box(dem, 1) - _box(low, r))
+
+
+def compute_relief(inp, tier, width, placements, mnt, dem=None):
+    prm = RELIEF_PARAMS; T = inp["terrain"]
+    rel = relief_rel(load_dem() if dem is None else dem, prm["baseRadius"])
+    valley = protected_mask(inp, tier, width, placements)
+    rs = _box(rel, 2)
+    m = ((T == TERRAIN_MOUNTAIN) & (rs >= prm["dropBelow"])) | (np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN, TERRAIN_HILL)) & (rs >= prm["addAbove"]))
+    m = _majority(m, prm["smoothRadius"], 2, off=valley)
+    m = _drop_small(m, prm["minMass"]); m = ~_drop_small(~m, prm["minMass"]) & ~valley
+    for y, x, _reason in mnt["cells"]:
+        if not valley[y, x]:
+            m[y, x] = True
+    hs = _box(rel, 5); lv = np.zeros(T.shape, np.uint8); lv[m] = 1; prev = m
+    for k, th in ((2, prm["tier2"]), (3, prm["tier3"])):
+        mk = _majority(prev & (hs >= th), prm["smoothRadius"], 2) & _erode4(prev)
+        mk = _drop_small(mk, prm["minTier"])
+        lv[mk] = k; prev = mk
+    return lv
+
+
+def relief_summary(lv, T):
+    old = T == TERRAIN_MOUNTAIN
+    return dict(sha256=sha256_bytes(lv.tobytes()), shape=list(lv.shape),
+                counts={RELIEF_CODES[str(k)]: int((lv == k).sum()) for k in range(4)},
+                terrainMountain=int(old.sum()), removedFromMountain=int((old & (lv == 0)).sum()),
+                addedToMountain=int((~old & (lv > 0)).sum()))
+
+
+def check_relief(inp, tier, width, placements, lv) -> list[str]:
+    errs = []; prot = protected_mask(inp, tier, width, placements)
+    bad = int((prot & (lv > 0)).sum())
+    if bad:
+        errs.append(f"산 높이: 물·길·강 기슭·城 보호 칸 {bad}개가 산이다")
+    for k in (2, 3):
+        loose = int(((lv >= k) & ~_erode4(lv >= k - 1)).sum())
+        if loose:
+            errs.append(f"산 높이: {k}단 칸 {loose}개가 {k - 1}단 안쪽 1칸 밖에 있다")
+    return errs
+
+
 # ── 땅 피복 ──────────────────────────────────────────────────────────────────────────
 LANDCOVER_PARAMS = dict(targetMedianFieldFraction=0.20, fieldFractionRange=[0.02, 0.55], seatClearCells=3,
                         paddyWetCells=3, paddySouthOfLat=33.3, villageHouseholds=9000, villageMax=6, villageSpacing=5,
@@ -593,7 +724,7 @@ def cell_city_grid(inp):
     return np.where(own >= 0, p2c[np.clip(own, 0, None)], -1)
 
 
-def compute_landcover(inp, tier, width, placements):
+def compute_landcover(inp, tier, width, placements, relief):
     T = inp["terrain"]; H, W = T.shape; P = inp["proj"]; prm = LANDCOVER_PARAMS
     cei = json.loads(ECONOMY.read_text()); J = {j["cityId"]: j for j in cei["jurisdictions"] if j.get("cityId") is not None}
     seat = {c["id"]: (c["row"], c["col"]) for c in moved_cities(inp, placements)}
@@ -602,7 +733,8 @@ def compute_landcover(inp, tier, width, placements):
     for y, x in zip(ys, xs):
         r = (max(1, int(width[y, x])) - 1) // 2 + prm["paddyWetCells"]
         wet[max(0, y - r):y + r + 1, max(0, x - r):x + r + 1] = True
-    road = inp["road"]; LC = np.zeros((H, W), np.uint8); arable = np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN))
+    road = inp["road"]; LC = np.zeros((H, W), np.uint8)
+    arable = np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN)) & (relief == 0)      # 설계 층에서 산이 된 칸은 경작지가 아니다
     ratio = [(J[k].get("households") or 0) / max(1, J[k]["arableCells"]) for k in J if J[k].get("arableCells") and J[k].get("households")]
     H0 = float(np.median(ratio)) / prm["targetMedianFieldFraction"]
     CC = cell_city_grid(inp); flat = CC.ravel(); order = np.argsort(flat, kind="stable"); srt = flat[order]
@@ -664,12 +796,17 @@ def write_derived(inp, out: Path, rivers_doc) -> dict:
                                 ferryLimit=FERRY_LIMIT, placements=placements))
     mnt = compute_mountains(inp, tier, width, placements)
     dump(out / MOUNTAINS, dict(schemaVersion=1, artifactId="map-design-mountains-v1", **mnt))
-    LC = compute_landcover(inp, tier, width, placements)
+    lv = compute_relief(inp, tier, width, placements, mnt)
+    dump(out / RELIEF, dict(schemaVersion=1, artifactId="map-design-relief-v1", params=RELIEF_PARAMS, codes=RELIEF_CODES,
+                            input=dict(dem=DEM.relative_to(ROOT).as_posix(), demSha256=sha256_bytes(DEM.read_bytes()),
+                                       source="NOAA NCEI ETOPO1 Ice Surface (public domain), web/game/public/map/elevation/manifest-legacy.json"),
+                            result=relief_summary(lv, inp["terrain"])))
+    LC = compute_landcover(inp, tier, width, placements, lv)
     dump(out / LANDCOVER, dict(schemaVersion=1, artifactId="map-design-landcover-v1", params=LANDCOVER_PARAMS,
                                codes=LANDCOVER_CODES, result=landcover_summary(LC)))
     review = [p["name"] for p in placements if p["status"] == "NEEDS_REVIEW"]
     return dict(moved=sum(1 for p in placements if p["to"]), review=review, mountainCells=len(mnt["cells"]),
-                landcover=landcover_summary(LC)["counts"])
+                relief=relief_summary(lv, inp["terrain"])["counts"], landcover=landcover_summary(LC)["counts"])
 
 
 def river_input_hashes(out: Path) -> dict:
@@ -694,14 +831,15 @@ def cmd_build(out: Path) -> int:
     dump(out / RIVERS, rivers_doc)
     r = write_derived(inp, out, rivers_doc)
     print(f"강 선 {len(lines)} · 비키기 미달 {n_bad} · 이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · "
-          f"산 편집 {r['mountainCells']} · 피복 {r['landcover']}")
+          f"산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 피복 {r['landcover']}")
     return 1 if r["review"] else 0
 
 
 def cmd_write_derived(out: Path) -> int:
     inp = load_inputs()
     r = write_derived(inp, out, json.loads((out / RIVERS).read_text()))
-    print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 산 편집 {r['mountainCells']} · 피복 {r['landcover']}")
+    print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 산 편집 {r['mountainCells']} · "
+          f"산 높이 {r['relief']} · 피복 {r['landcover']}")
     return 1 if r["review"] else 0
 
 
@@ -761,7 +899,7 @@ def check_mountains(inp, tier, width, placements, mnt) -> list[str]:
 
 
 def run_checks(inp, out: Path) -> list[str]:
-    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, MOUNTAINS, LANDCOVER)}
+    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, MOUNTAINS, RELIEF, LANDCOVER)}
     rivers_doc, pl = docs[RIVERS], docs[PLACEMENTS]["placements"]
     tier, width, name = load_rivers_grid(inp, rivers_doc)
     errs = check_river_lines(rivers_doc) + check_placements(inp, tier, width, pl) + check_mountains(inp, tier, width, pl, docs[MOUNTAINS])
@@ -776,7 +914,13 @@ def run_checks(inp, out: Path) -> list[str]:
         errs.append(f"{PLACEMENTS} 가 재계산과 다르다 — --write-derived")
     if compute_mountains(inp, tier, width, pl)["cells"] != docs[MOUNTAINS]["cells"]:
         errs.append(f"{MOUNTAINS} 가 재계산과 다르다 — --write-derived")
-    if docs[LANDCOVER]["params"] != LANDCOVER_PARAMS or landcover_summary(compute_landcover(inp, tier, width, pl)) != docs[LANDCOVER]["result"]:
+    lv = compute_relief(inp, tier, width, pl, docs[MOUNTAINS])
+    errs += check_relief(inp, tier, width, pl, lv)
+    if docs[RELIEF]["input"]["demSha256"] != sha256_bytes(DEM.read_bytes()):
+        errs.append(f"{RELIEF}: 표고 원판({DEM.name})이 바뀌었다 — --write-derived")
+    if docs[RELIEF]["params"] != RELIEF_PARAMS or relief_summary(lv, inp["terrain"]) != docs[RELIEF]["result"]:
+        errs.append(f"{RELIEF} 지문이 재계산과 다르다 — --write-derived")
+    if docs[LANDCOVER]["params"] != LANDCOVER_PARAMS or landcover_summary(compute_landcover(inp, tier, width, pl, lv)) != docs[LANDCOVER]["result"]:
         errs.append(f"{LANDCOVER} 지문이 재계산과 다르다 — --write-derived")
     return errs
 
@@ -793,7 +937,7 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     g = ap.add_mutually_exclusive_group(required=True)
     g.add_argument("--build", action="store_true", help="강 선부터 전부 다시 만든다(NE 10m 필요)")
-    g.add_argument("--write-derived", action="store_true", help="커밋된 강 선에서 위치·산·피복만 다시 만든다")
+    g.add_argument("--write-derived", action="store_true", help="커밋된 강 선에서 위치·산 편집·산 높이·피복만 다시 만든다")
     g.add_argument("--check", action="store_true", help="불변식 + 결정적 재계산 대조")
     ap.add_argument("--dir", type=Path, default=OUT, help="설계 층 디렉터리(적색 프로브용)")
     a = ap.parse_args(argv)

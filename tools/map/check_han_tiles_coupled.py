@@ -190,7 +190,8 @@ COUPLED: tuple[Coupled, ...] = (
     # 위치 수정·산 편집·피복은 커밋된 강 선과 han-tiles·월드·길·경제 입력에서 결정적으로 다시 만든다.
     Coupled("map-design-layer",
             ("data/curated/han/map-design/rivers-v1.json", "data/curated/han/map-design/placements-v1.json",
-             "data/curated/han/map-design/mountains-v1.json", "data/curated/han/map-design/landcover-v1.json"),
+             "data/curated/han/map-design/mountains-v1.json", "data/curated/han/map-design/relief-v1.json",
+             "data/curated/han/map-design/landcover-v1.json"),
             _t("tools/map/build_map_design.py", "--check"),
             _t("tools/map/build_map_design.py", "--write-derived")),
 )
