@@ -20,6 +20,5 @@
   { "type": "setNationMeta", "requestId": "req-snm-1", "nationId": 3, "updates": { "msg": "공지", "level": 4 }, "expectedUpdatedAt": "0200-01-01T00:00:00.000Z" },
   { "type": "adjustGeneralResources", "requestId": "req-agr-1", "reason": "event", "adjustments": [ { "generalId": 50, "goldDelta": 1000, "riceDelta": -200 } ] },
   { "type": "adjustGeneralMeta", "requestId": "req-agm-1", "reason": "patch", "adjustments": [ { "generalId": 50, "metaDelta": { "experience": 100, "dedication": 50 } } ] },
-  { "type": "patchGeneral", "requestId": "req-pg-1", "generalId": 60, "patch": { "meta": { "killturn": 120 }, "turnTime": "0200-01-01T00:00:00.000Z", "stats": { "leadership": 80, "strength": 75, "intelligence": 90 }, "specialWar": "che_special" } },
-  { "type": "auctionBid", "requestId": "req-ab-1", "auctionId": 101, "generalId": 70, "amount": 1500, "tryExtendCloseDate": true }
+  { "type": "patchGeneral", "requestId": "req-pg-1", "generalId": 60, "patch": { "meta": { "killturn": 120 }, "turnTime": "0200-01-01T00:00:00.000Z", "stats": { "leadership": 80, "strength": 75, "intelligence": 90 }, "specialWar": "che_special" } }
 ]

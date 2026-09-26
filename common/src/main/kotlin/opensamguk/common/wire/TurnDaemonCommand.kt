@@ -607,18 +607,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("auctionBid")
-    data class AuctionBid(
-        val requestId: String? = null,
-        val auctionId: Int,
-        val generalId: Int,
-        val amount: Int,
-        val tryExtendCloseDate: Boolean? = null,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "auctionBid"
-    }
-
-    @Serializable
     @SerialName("acceptDiplomaticMessage")
     data class AcceptDiplomaticMessage(
         val requestId: String? = null,
@@ -652,7 +640,7 @@ sealed class TurnDaemonCommand {
     // Faithful ports of the PHP BaseAPI launch() actions (NOT turn-reserved che_* commands): the
     // 내무부 finance setters (sammo/API/Nation/Set*.php), tournament enroll (j_set_my_setting.php tnmt),
     // and the inheritance resets (sammo/API/InheritAction/Reset*.php). They flow exactly like
-    // [AuctionBid]: game-api intake → command stream → TurnDaemonCommandDispatcher →
+    // the other intake commands: game-api intake → command stream → TurnDaemonCommandDispatcher →
     // handler → InMemoryTurnWorld mutate → ChangeRecorder delta → JdbcFlushExecutor flush.
 
     /**
@@ -870,41 +858,6 @@ sealed class TurnDaemonCommand {
         val messageType: String,
         val msgID: Int,
     ) : TurnDaemonCommand() { override val type: String get() = "readLatestMessage" }
-
-    // ── W6c 경매 개설 (BuyRice / SellRice / Unique) — OpenBuyRiceAuction.php 등 ──
-    /** 쌀 매수 경매 개설 (OpenBuyRiceAuction.php → AuctionBasicResource::openResourceAuction). */
-    @Serializable
-    @SerialName("auctionOpenBuyRice")
-    data class AuctionOpenBuyRice(
-        val requestId: String? = null,
-        val generalId: Int,
-        val amount: Int,
-        val closeTurnCnt: Int,
-        val startBidAmount: Int,
-        val finishBidAmount: Int,
-    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenBuyRice" }
-
-    /** 쌀 매도 경매 개설 (OpenSellRiceAuction.php → AuctionBasicResource::openResourceAuction). */
-    @Serializable
-    @SerialName("auctionOpenSellRice")
-    data class AuctionOpenSellRice(
-        val requestId: String? = null,
-        val generalId: Int,
-        val amount: Int,
-        val closeTurnCnt: Int,
-        val startBidAmount: Int,
-        val finishBidAmount: Int,
-    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenSellRice" }
-
-    /** 유니크 아이템 경매 개설 (AuctionUniqueItem). [itemId]는 유니크 아이템 키. */
-    @Serializable
-    @SerialName("auctionOpenUnique")
-    data class AuctionOpenUnique(
-        val requestId: String? = null,
-        val generalId: Int,
-        val itemId: String,
-        val amount: Int,
-    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenUnique" }
 
     // ── W5d 외교 서신 (Send / Rollback / Destroy) — j_diplomacy_*_letter.php ──
     /**

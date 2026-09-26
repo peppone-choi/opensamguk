@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.RestController
  * login and lobby immediately.
  *
  * **Public access.** game-api has NO Spring Security on the classpath (no `SecurityFilterChain`), so this
- * is open by default — matching the other plain `@RestController`s ([AuctionController], [DiplomacyController]).
+ * is open by default — matching the other plain `@RestController`s ([DiplomacyController]).
  *
  * **Empty-world safety.** If `world_state` is unseeded, returns 200 with empty cities/nations + year/month 0
  * (never 500) so the gateway can show a placeholder.
