@@ -5,6 +5,7 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class Scenario3190SeedTest {
@@ -23,6 +24,20 @@ class Scenario3190SeedTest {
         assertEquals(280, scenario.generals.size)
         assertEquals(249, scenario.generals.count { it.nationId > 0 })
         assertEquals(21, scenario.generals.count { it.lord == true })
+        assertEquals(228, scenario.retainers.size)
+        assertEquals(212, importer.initialRetainers().size)
+        assertEquals(16, scenario.retainers.size - importer.initialRetainers().size)
+        val futureNames = scenario.retainers.map { it.general }.toSet() - importer.initialRetainers().map { it.general }.toSet()
+        assertEquals(16, futureNames.size)
+        for (declaration in scenario.retainers.filter { it.general in futureNames }) {
+            val general = scenario.generals.single { it.name == declaration.general }
+            val action = importer.deferredGeneralAction(general)
+            assertEquals("RegNPC", action.first())
+            assertEquals(27, action.size)
+            assertEquals("ⓝ${declaration.master}", action[26])
+        }
+        assertEquals(scenario.generals.filter { it.nationId > 0 && it.lord != true }.map { it.name }.toSet(),
+            scenario.retainers.map { it.general }.toSet())
         assertEquals(280, scenario.generals.count { it.personPolicy != null })
         assertEquals(42, scenario.units.size)
         assertEquals(6, scenario.personBonds.values.sumOf { it.size })
@@ -37,5 +52,31 @@ class Scenario3190SeedTest {
         assertTrue(scenario.nations.all { it.gold == 0 && it.rice == 0 })
         importer.validateSeedContract()
         importer.validateWarehouseSeed()
+    }
+
+    @Test fun `190 ownership rejects duplicate self neutral and foreign nation declarations`() {
+        val raw = opensamguk.infra.persistence.MetaJson.decode(Files.readString(
+            repo.resolve("infra/src/main/resources/scenario/scenario_3190.json")))
+        val declared = (raw["retainers"] as List<*>).map { it as Map<*, *> }
+        fun rejected(extra: Map<String, String>) {
+            val altered = raw.toMutableMap()
+            altered["retainers"] = declared + extra
+            assertFailsWith<IllegalArgumentException> {
+                ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(altered))
+            }
+        }
+        val first = declared.first()
+        rejected(mapOf("general" to first["general"].toString(), "master" to first["master"].toString()))
+        rejected(mapOf("general" to "유비", "master" to "유비"))
+        val neutral = (raw["general"] as List<*>).map { it as List<*> }.first { it[3] == 0 }[1].toString()
+        rejected(mapOf("general" to neutral, "master" to "유비"))
+        val differentLord = (raw["lords"] as List<*>).map { it.toString() }.first { it != first["master"] }
+        val altered = raw.toMutableMap()
+        altered["retainers"] = declared.mapIndexed { index, item ->
+            if (index == 0) mapOf("general" to item["general"], "master" to differentLord) else item
+        }
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(altered))
+        }
     }
 }

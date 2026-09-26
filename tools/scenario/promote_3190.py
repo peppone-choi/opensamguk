@@ -42,6 +42,7 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         for resource in ("money", "grain", "iron", "timber", "horses"):
             stock[resource] = 0
     lords = []
+    lord_by_nation = {}
     units = []
     for nation_id, nation in enumerate(seed["nation"], 1):
         rulers = [row for row in seed["general"] if row[3] == nation_id and row[8] == 12]
@@ -55,6 +56,7 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         stocks[capital]["grain"] += nation[3]
         nation[2] = nation[3] = 0
         lords.append(lord)
+        lord_by_nation[nation_id] = lord
         # PROPOSED initial game units: the existing S3 slice uses these values.
         for number in (1, 2):
             units.append({"general": lord, "name": f"{lord} 부곡 {number}", "troops": 4000,
@@ -78,6 +80,14 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         raise ValueError(f"190 pilot references unknown map4 cities: {sorted(references - map_cities)}")
     seed["worldFormat"] = WORLD_FORMAT
     seed["lords"] = lords
+    # PROVISIONAL gameplay ownership: affiliation is source-backed, personal hierarchy is not.
+    # Future officers are declared here but receive a DB card only when their general exists.
+    seed["retainers"] = [
+        {"general": row[1], "master": lord_by_nation[row[3]]}
+        for row in seed["general"] if row[3] > 0 and row[1] != lord_by_nation[row[3]]
+    ]
+    if len(seed["retainers"]) != 228 or len({row["general"] for row in seed["retainers"]}) != 228:
+        raise ValueError("190 pilot must declare exactly 228 distinct affiliated retainers")
     seed["personPolicies"] = policies
     seed["warehouses"] = warehouse
     seed["units"] = units
