@@ -14,6 +14,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+
+import numpy as np
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -29,7 +31,9 @@ class MapDesignInvariantsTest(unittest.TestCase):
         cls.docs = {k: json.loads((B.OUT / k).read_text()) for k in (B.RIVERS, B.PLACEMENTS, B.MOUNTAINS, B.RELIEF, B.LANDCOVER, B.DODGE)}
         cls.tier, cls.width, cls.name = B.load_rivers_grid(cls.inp, cls.docs[B.RIVERS])
         cls.pl = cls.docs[B.PLACEMENTS]["placements"]
-        cls.lv = B.compute_relief(cls.inp, cls.tier, cls.width, cls.pl, cls.docs[B.MOUNTAINS])
+        dem = B.load_dem()
+        cls.lv = B.compute_relief(cls.inp, cls.tier, cls.width, cls.pl, cls.docs[B.MOUNTAINS], dem)
+        cls.plat = B.compute_plateau(cls.inp, cls.lv, dem)
 
     # ── 초록 ──
     def test_committed_layer_is_clean(self):
@@ -38,6 +42,25 @@ class MapDesignInvariantsTest(unittest.TestCase):
         self.assertEqual(B.check_mountains(self.inp, self.tier, self.width, self.pl, self.docs[B.MOUNTAINS]), [])
         self.assertEqual(B.check_relief(self.inp, self.tier, self.width, self.pl, self.lv), [])
         self.assertEqual(B.relief_summary(self.lv, self.inp["terrain"]), self.docs[B.RELIEF]["result"])
+        self.assertEqual(B.check_plateau(self.inp, self.plat), [])
+        self.assertEqual(B.plateau_summary(self.plat, self.inp["terrain"]), self.docs[B.RELIEF]["plateau"]["result"])
+
+    def test_plateau_escarpment_is_high_mountain(self):
+        # 四姑娘山 31.10667°N 102.90167°E(https://en.wikipedia.org/wiki/Mount_Siguniang): 지형 분류는 고원, 蜀 서쪽 산벽이라 높은 산
+        T, P = self.inp["terrain"], self.inp["proj"]
+        r, c = (int(round(v)) for v in B.proj_rc(102.90167, 31.10667, P))
+        w = (slice(r - 4, r + 5), slice(c - 4, c + 5))
+        self.assertTrue((T[w] == B.TERRAIN_PLATEAU).all())
+        self.assertTrue((self.lv[w] == 3).all())
+
+    def test_plateau_boundary_is_less_straight_than_the_polygon(self):
+        def straight(m):
+            tot = long = 0
+            for a in ((m[1:, :] != m[:-1, :]), (m[:, 1:] != m[:, :-1]).T):
+                d = np.diff(np.pad(a.astype(np.int8), ((0, 0), (1, 1))), axis=1)
+                L = np.nonzero(d == -1)[1] - np.nonzero(d == 1)[1]; tot += L.sum(); long += L[L >= 20].sum()
+            return long / max(1, tot)
+        self.assertLess(straight(self.plat), straight(self.inp["terrain"] == B.TERRAIN_PLATEAU))
 
     def test_relief_fixes_known_misclassified_places(self):
         # 米倉山 32.631°N 106.823°E(https://peakvisor.com/peak/micang-mountains.html): 지형 분류는 평지, 표고로 산
@@ -124,6 +147,10 @@ class MapDesignInvariantsTest(unittest.TestCase):
         self.assertTrue(any("출처 없음" in e for e in B.check_mountains(self.inp, self.tier, self.width, self.pl, mnt)))
 
 
+    def test_red_plateau_on_sea(self):
+        plat = self.plat.copy(); ys, xs = (self.inp["terrain"] == B.TERRAIN_SEA).nonzero(); plat[ys[0], xs[0]] = True
+        self.assertTrue(any("고원" in e for e in B.check_plateau(self.inp, plat)))
+
     def test_red_relief_on_road_and_loose_upper_tier(self):
         lv = self.lv.copy(); ys, xs = self.inp["road"].nonzero(); lv[ys[0], xs[0]] = 1
         self.assertTrue(any("보호 칸" in e for e in B.check_relief(self.inp, self.tier, self.width, self.pl, lv)))
@@ -149,11 +176,12 @@ class MapDesignCliProbeTest(unittest.TestCase):
             lc = json.loads((d / B.LANDCOVER).read_text()); lc["params"]["villageMax"] = 7; (d / B.LANDCOVER).write_text(json.dumps(lc))
             pl = json.loads((d / B.PLACEMENTS).read_text()); pl["placements"][0]["to"][1] += 1; (d / B.PLACEMENTS).write_text(json.dumps(pl))
             rf = json.loads((d / B.RELIEF).read_text()); rf["params"]["tier3"] = 900; rf["input"]["demSha256"] = "0" * 64
+            rf["plateau"]["params"]["step"] = 200
             (d / B.RELIEF).write_text(json.dumps(rf))
             bad = self._run(d)
             self.assertEqual(bad.returncode, 1, bad.stdout)
             for needle in ("dodgeSha256", f"{B.MOUNTAINS} 가 재계산과 다르다", f"{B.LANDCOVER} 지문", f"{B.PLACEMENTS} 가 재계산과 다르다",
-                           f"{B.RELIEF} 지문", "표고 원판"):
+                           f"{B.RELIEF} 지문", "표고 원판", f"{B.RELIEF} 고원 지문"):
                 self.assertIn(needle, bad.stdout)
 
 
