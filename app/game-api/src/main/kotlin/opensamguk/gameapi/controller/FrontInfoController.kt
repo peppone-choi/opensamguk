@@ -20,7 +20,6 @@ import opensamguk.gameapi.dto.NationPopulationGroup
 import opensamguk.gameapi.dto.NationTopChief
 import opensamguk.gameapi.dto.NationTypeInfo
 import opensamguk.gameapi.owner.GeneralResolver
-import opensamguk.gameapi.read.AuctionCountReadRepository
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
@@ -100,7 +99,6 @@ class FrontInfoController(
     private val nations: NationReadRepository,
     private val cities: CityReadRepository,
     private val ranks: RankDataReadRepository,
-    private val auctions: AuctionCountReadRepository,
     private val votePolls: VotePollReadRepository,
     // W0-2(P1-002) aux.myLastVote — vote 테이블 read.
     private val votes: VoteReadRepository,
@@ -634,7 +632,6 @@ class FrontInfoController(
 
         // [§2 BLOCKED — world_state.config 미기재] 아래 game_env 키는 데몬이 채우지 않으므로(현재 config는
         // startyear/starttime/turnterm만), config에서 방어적으로 읽되 부재 시 null/기본값. 날조 없음.
-        val auctionCount = auctions.countByFinished(false).toInt()
         val now = Instant.now()
         val openPolls = votePolls.countOpenPolls(now)
         val npcCount = generals.countByNpcStateGreaterThan(0).toInt()
@@ -716,7 +713,6 @@ class FrontInfoController(
             // COUNT 집계.
             createdUserCnt = generals.countByNpcState(0).toInt(),
             createdNPCCnt = generals.countByNpcStateGreaterThan(0).toInt(),
-            auctionCount = auctionCount,
 
             // 선택 서버 식별자 — 프록시/middleware가 `sam_server` 쿠키로 고정한 값.
             serverId = resolvedServerId,

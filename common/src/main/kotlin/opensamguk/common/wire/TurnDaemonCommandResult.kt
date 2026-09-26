@@ -291,22 +291,6 @@ data class PatchGeneralFail(
 ) : TurnDaemonCommandResult()
 
 @Serializable
-data class AuctionBidOk(
-    override val type: String = "auctionBid",
-    override val ok: Boolean = true,
-    val auctionId: Int,
-    val closeAt: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class AuctionBidFail(
-    override val type: String = "auctionBid",
-    override val ok: Boolean = false,
-    val auctionId: Int,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
 data class AcceptDiplomaticMessageOk(
     override val type: String = "acceptDiplomaticMessage",
     override val ok: Boolean = true,
@@ -507,16 +491,6 @@ data class DeleteMessageResult(
     val reason: String? = null,
 ) : TurnDaemonCommandResult()
 
-// W6c — 경매 개설 (3 코드 collapse, mirrors NationSettingResult). auctionId echo on success.
-@Serializable
-data class AuctionOpenResult(
-    override val type: String,     // auctionOpenBuyRice|auctionOpenSellRice|auctionOpenUnique
-    override val ok: Boolean,
-    val generalId: Int,
-    val auctionId: Int? = null,
-    val reason: String? = null,
-) : TurnDaemonCommandResult()
-
 // W5d — 외교 서신 (4 코드 collapse — W0-7에서 diploRespondLetter 합류). letterNo echo on success.
 @Serializable
 data class DiploLetterResult(
@@ -574,9 +548,6 @@ val BATTLE_PLAN_ACTION_TYPES = setOf("battlePlanSave", "battlePlanSeal", "battle
 // ── W6 REST mutation batch — collapsed intake type sets ──
 // sendMessage/deleteMessage 는 단일-타입 → 아래 `when`에서 직접 처리.
 // buildNationCandidate 는 Q-D1 RESOLVED: BOOLEAN_OK_TYPES 에 유지 → 여기서 다루지 않는다.
-/** 경매 개설 3코드(W6c) — collapsed [AuctionOpenResult] shape. */
-private val AUCTION_OPEN_TYPES = setOf("auctionOpenBuyRice", "auctionOpenSellRice", "auctionOpenUnique")
-
 /** 외교 서신 4코드(W5d + W0-7 respond) — collapsed [DiploLetterResult] shape. */
 private val DIPLO_LETTER_TYPES =
     setOf("diploSendLetter", "diploRollbackLetter", "diploDestroyLetter", "diploRespondLetter")
@@ -623,9 +594,6 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             return BattlePlanActionResult.serializer()
         }
         // ── W6 REST mutation batch — collapsed intake selectors (keyed on `type` only) ──
-        if (type in AUCTION_OPEN_TYPES) {
-            return AuctionOpenResult.serializer()
-        }
         if (type in DIPLO_LETTER_TYPES) {
             return DiploLetterResult.serializer()
         }
@@ -653,7 +621,6 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "adjustGeneralResources" -> if (ok) AdjustGeneralResourcesOk.serializer() else AdjustGeneralResourcesFail.serializer()
             "adjustGeneralMeta" -> if (ok) AdjustGeneralMetaOk.serializer() else AdjustGeneralMetaFail.serializer()
             "patchGeneral" -> if (ok) PatchGeneralOk.serializer() else PatchGeneralFail.serializer()
-            "auctionBid" -> if (ok) AuctionBidOk.serializer() else AuctionBidFail.serializer()
             "acceptDiplomaticMessage" -> if (ok) AcceptDiplomaticMessageOk.serializer() else AcceptDiplomaticMessageFail.serializer()
             "acceptRaiseInvaderMessage" -> if (ok) AcceptRaiseInvaderMessageOk.serializer() else AcceptRaiseInvaderMessageFail.serializer()
             "declineDiplomaticMessage" -> if (ok) DeclineDiplomaticMessageOk.serializer() else DeclineDiplomaticMessageFail.serializer()

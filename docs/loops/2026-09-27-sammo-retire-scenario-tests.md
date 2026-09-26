@@ -38,6 +38,8 @@
 
 `deploy.yml`의 RTK14 보강은 `scenario_990002`만 건드리지 않고 `scenario_3190`에는 RTK14 장수를 덧붙인다(`tools/rtk14/build_rtk14_stats.py` `build_one`·`_new_general`, 그림 값이 `<id>.png`). 3190은 `personBonds`가 있어 importer가 시작 활동 장수 전원의 숫자 그림 id를 요구하므로, 보강본을 이 테스트에 넣으면 배포가 빨개질 가능성이 높다(비밀 원본 없이 확인 불가, UNKNOWN). 3190을 운영 카탈로그에 올릴 때(#969 뒤) 보강 제외 또는 importer 쪽을 먼저 정해야 한다.
 
+- [ ] 3190 카탈로그 편입 때 `deploy.yml`의 materialized 시나리오 계약 검사 대상에 3190을 넣고, RTK14 보강본을 입력해 실패 조건이 실제로 감지되는지 확인한다.
+
 ## 검증 (JDK 21, Docker 켜짐, Gradle 한 번에 하나)
 
 - `:infra:test` 대상 실행: `ScenarioImporterIT` 24/0/0/0, `ScenarioJsonTest` 20/0/0/0, `EffectiveScenarioResolverTest` 4/0/0/0, `V26NpcLifecycleMigrationTest` 1/0/0/0(tests/skipped/failures/errors, XML mtime이 이번 실행 뒤).
