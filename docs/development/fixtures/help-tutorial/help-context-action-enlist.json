@@ -4,9 +4,9 @@
     "id": "commands.action.enlist",
     "title": "출사",
     "sections": {
-      "explanation": "주공의 휘하에 들어가는 직접 행동입니다.",
+      "explanation": "주공 밑으로 들어가 소속이 되는 직접 행동입니다.",
       "example": "섬길 주공을 고르고 출사를 제출합니다.",
-      "successExample": "출사 성공 사건이 확정되면 휘하 관계가 생깁니다.",
+      "successExample": "출사 성공 사건이 확정되면 소속 관계가 생깁니다.",
       "failureExample": "이미 다른 주공을 섬기는 장수라면 거절됩니다.",
       "recoveryAdvice": "현재 섬기는 주공과 관계를 확인한 뒤 가능한 선택지를 다시 고르세요.",
       "historicalContext": null
