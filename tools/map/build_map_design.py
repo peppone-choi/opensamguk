@@ -476,6 +476,177 @@ def build_rivers(inp, out: Path = OUT):
     return best
 
 
+# ── 길 ───────────────────────────────────────────────────────────────────────────────
+# 규칙의 길(han-land-roads-v1)은 城과 省 경계를 곧은 궤적으로 잇는다. 설계 층은 간선·끝점·지나는 省은 그대로 두고
+# 궤적만 땅을 따라 다시 긋는다. 원래 궤적을 부드럽게 한 중심선을 따라가며 칸마다 옆으로 ±D칸 안에서 비용이
+# 가장 작은 경로를 동적계획법으로 고른다. 비용은 비탈·기복·강 건너기에 매기고, 평지는 약한 잡음으로 굽힌다.
+# 제 省 밖·물은 지나지 않는다. 옮긴 城(placements)은 새 자리에서 출발한다. 길이 없으면 원래 궤적을 쓴다.
+ROADS_OUT = "roads-v1.json"
+ROAD_PARAMS = dict(corridor=4, corridorPerCell=0.15, corridorMax=10, bendWeight=1.0, baselineSmooth=9,
+                   slopeScale=30.0, reliefFrom=150, reliefScale=250.0, riverCost=6.0, noiseAmp=0.4, noiseScale=14,
+                   shareDiscount=0.35, meanderAmp=4.0, meanderWave=56.0, meanderWeight=0.25)
+
+
+def road_cost(inp, tier, width, dem):
+    prm = ROAD_PARAMS; T = inp["terrain"]
+    E = _up4(_box(dem, 1)); gy, gx = np.gradient(E)
+    rs = _box(relief_rel(dem, RELIEF_PARAMS["baseRadius"]), 2)
+    cost = 1.0 + np.hypot(gy, gx) / prm["slopeScale"] + np.maximum(rs - prm["reliefFrom"], 0) / prm["reliefScale"]
+    cost += prm["noiseAmp"] * value_noise(T.shape, prm["noiseScale"], "road")
+    cost += prm["riverCost"] * river_band(tier, width, 0)
+    cost[np.isin(T, (TERRAIN_SEA, TERRAIN_LAKE, TERRAIN_OUT))] = np.inf
+    return cost
+
+
+def _trail_baseline(pts, k):
+    """궤적을 칸 간격으로 다시 뽑고 이동 평균(창 k)으로 부드럽게 한다. 양 끝은 고정."""
+    P = np.array(pts, float); d = np.r_[0, np.cumsum(np.hypot(*np.diff(P, axis=0).T))]
+    n = max(2, int(round(d[-1])) + 1); t = np.linspace(0, d[-1], n)
+    Q = np.c_[np.interp(t, d, P[:, 0]), np.interp(t, d, P[:, 1])]
+    if n > 3 and k > 1:
+        pad = np.pad(Q, ((k // 2, k // 2), (0, 0)), mode="edge"); c = np.cumsum(np.pad(pad, ((1, 0), (0, 0))), axis=0)
+        S = (c[k:] - c[:-k]) / k
+        w = np.minimum(np.arange(n), np.arange(n)[::-1]) / max(1, k // 2); w = np.clip(w, 0, 1)[:, None]
+        Q = Q * (1 - w) + S[:n] * w
+    return Q
+
+
+def _step8(cells):
+    """반올림한 칸 목록을 8-연결로 잇고(빈틈은 두 좌표를 함께 한 칸씩), 되돌이를 없앤다."""
+    out = [cells[0]]
+    for q in cells[1:]:
+        y, x = out[-1]
+        while (y, x) != q:
+            y += (q[0] > y) - (q[0] < y); x += (q[1] > x) - (q[1] < x); out.append((y, x))
+    seen, res = {}, []
+    for c in out:
+        if c in seen:
+            del res[seen[c] + 1:]
+            seen = {cc: i for i, cc in enumerate(res)}
+            continue
+        seen[c] = len(res); res.append(c)
+    return res
+
+
+def route_trail(trail, start, cost, own, prov, used=None, seed="road", smooth=True):
+    """trail: 원래 궤적(칸 목록), start: 첫 칸(옮긴 城이면 새 자리). used: 먼저 그은 길 칸(싸게 쳐서 나란한 길을 합친다).
+    돌려주는 값: 새 궤적 또는 None(길 없음)."""
+    prm = ROAD_PARAMS; H, W = cost.shape
+    pts = [start] + [tuple(c) for c in trail[1:]]
+    # smooth=False: 원래 궤적 칸 자체가 중심선이다(옆 이동 0 = 원래 궤적이라 길이 반드시 있다). 省의 좁은 목에서 쓴다.
+    Q = _trail_baseline(pts, prm["baselineSmooth"]) if smooth else np.array(pts, float); n = len(Q)
+    if n < 4:
+        return None
+    tg = np.gradient(Q, axis=0); tg /= np.maximum(np.hypot(tg[:, 0], tg[:, 1]), 1e-9)[:, None]
+    N = np.c_[-tg[:, 1], tg[:, 0]]
+    D = int(min(prm["corridorMax"], prm["corridor"] + prm["corridorPerCell"] * n)); offs = np.arange(-D, D + 1)
+    Y = np.rint(Q[:, 0:1] + N[:, 0:1] * offs[None, :]).astype(int); X = np.rint(Q[:, 1:2] + N[:, 1:2] * offs[None, :]).astype(int)
+    ok = (Y >= 0) & (Y < H) & (X >= 0) & (X < W)
+    Yc, Xc = np.clip(Y, 0, H - 1), np.clip(X, 0, W - 1)
+    base = cost[Yc, Xc] * (np.where(used[Yc, Xc], prm["shareDiscount"], 1.0) if used is not None else 1.0)
+    # 평지에서도 곧은 자가 되지 않게: 긴 파장의 완만한 굽이를 선호한다(양 끝으로 갈수록 0)
+    ph = int(hashlib.md5(seed.encode()).hexdigest()[:6], 16) % 628 / 100
+    taper = np.clip(np.minimum(np.arange(n), np.arange(n)[::-1]) / 12, 0, 1)
+    pref = min(prm["meanderAmp"], D * 0.5) * np.sin(2 * np.pi * np.arange(n) / prm["meanderWave"] + ph) * taper
+    base = base + prm["meanderWeight"] * (offs[None, :] - pref[:, None]) ** 2
+    C = np.where(ok & (own[Yc, Xc] == prov), base, np.inf)
+    C[0, :] = np.inf; C[0, D] = 0.0; C[-1, :] = np.inf; C[-1, D] = cost[int(round(Q[-1, 0])), int(round(Q[-1, 1]))]
+    # 한 걸음에 옆으로 0 또는 ±1칸(굽힘 벌점 bendWeight). 같은 값이면 제자리 → 왼쪽 → 오른쪽 순으로 고른다.
+    S = len(offs); V = C[0].copy(); back = np.zeros((n, S), np.int16); ar = np.arange(S); bw = prm["bendWeight"]
+    st = np.empty((3, S))
+    for i in range(1, n):
+        st[0] = V; st[1, 0] = np.inf; st[1, 1:] = V[:-1] + bw; st[2, -1] = np.inf; st[2, :-1] = V[1:] + bw
+        a = st.argmin(0); V = st[a, ar] + C[i]; back[i] = ar - (a == 1) + (a == 2)
+    if not np.isfinite(V[D]):
+        return None
+    o = np.zeros(n, int); o[-1] = D
+    for i in range(n - 1, 0, -1):
+        o[i - 1] = back[i, o[i]]
+    cells = [(int(Y[i, o[i]]), int(X[i, o[i]])) for i in range(n)]
+    cells[0] = tuple(start); cells[-1] = tuple(trail[-1])
+    path = _step8(cells)
+    if any(own[y, x] != prov or not np.isfinite(cost[y, x]) for y, x in path):
+        return None
+    return path
+
+
+def compute_roads(inp, tier, width, placements, dem):
+    """간선마다 설계 궤적. 돌려주는 값: {id: (fromTrail, toTrail)}, 요약."""
+    cost = road_cost(inp, tier, width, dem); own = inp["owner"]
+    moved = {tuple(p["frm"]): tuple(p["to"]) for p in placements if p.get("to")}
+    idx = {p["id"]: k for k, p in enumerate(inp["ht"]["provinceRecords"])}
+    out = {}; stat = dict(trails=0, rerouted=0, fallback=0, movedStart=0)
+    edges = [e for e in json.loads(ROADS.read_text())["edges"] if e["status"] != "INACCESSIBLE"]
+    jobs = [(e, key, pid) for e in edges for key, pid in (("fromTrail", e["fromProvinceId"]), ("toTrail", e["toProvinceId"]))]
+    # 건설된 긴 길부터 긋는다. 뒤에 긋는 길은 먼저 그은 길 칸에 붙어 나란한 두 줄이 한 줄로 합쳐진다.
+    jobs.sort(key=lambda j: (j[0]["status"] != "BUILT", -len(j[0].get(j[1]) or []), j[0]["id"], j[1]))
+    used = np.zeros(cost.shape, bool); done = {}
+    for e, key, pid in jobs:
+        tr = [tuple(c) for c in (e.get(key) or [])]
+        if not tr:
+            done[(e["id"], key)] = []; continue
+        stat["trails"] += 1; start = moved.get(tr[0], tr[0])
+        if start != tr[0]:
+            stat["movedStart"] += 1
+        path = route_trail(tr, start, cost, own, idx[pid], used, e["id"] + key)
+        if path is None:
+            path = route_trail(tr, start, cost, own, idx[pid], used, e["id"] + key, smooth=False)
+        if path is None and start != tr[0]:
+            path = _step8([start] + tr[1:])                   # 옮긴 城에서 옛 궤적으로 곧게 이어 붙인다
+            path = path if all(own[y, x] == idx[pid] and np.isfinite(cost[y, x]) for y, x in path) else None
+        if path is None:
+            stat["fallback"] += 1; path = tr
+        else:
+            stat["rerouted"] += 1
+        for y, x in path:
+            used[y, x] = True
+        done[(e["id"], key)] = [list(c) for c in path]
+    for e in edges:
+        out[e["id"]] = dict(status=e["status"], fromTrail=done[(e["id"], "fromTrail")], toTrail=done[(e["id"], "toTrail")])
+    return out, stat
+
+
+def roads_mask(roads, shape, statuses=("BUILT",)):
+    m = np.zeros(shape, bool)
+    for r in roads.values():
+        if r["status"] in statuses:
+            for y, x in r["fromTrail"] + r["toTrail"]:
+                m[y, x] = True
+    return m
+
+
+def roads_summary(roads, stat):
+    blob = json.dumps(sorted((k, v["fromTrail"], v["toTrail"]) for k, v in roads.items()), separators=(",", ":")).encode()
+    built = sum(len(v["fromTrail"]) + len(v["toTrail"]) for v in roads.values() if v["status"] == "BUILT")
+    return dict(sha256=sha256_bytes(blob), edges=len(roads), builtCells=built, **stat)
+
+
+def check_roads(inp, roads) -> list[str]:
+    errs = []; own = inp["owner"]; T = inp["terrain"]
+    idx = {p["id"]: k for k, p in enumerate(inp["ht"]["provinceRecords"])}
+    orig = {e["id"]: e for e in json.loads(ROADS.read_text())["edges"]}
+    for rid, r in roads.items():
+        e = orig[rid]
+        for key, pid in (("fromTrail", e["fromProvinceId"]), ("toTrail", e["toProvinceId"])):
+            tr = r[key]
+            if not tr:
+                continue
+            if tr[-1] != (e.get(key) or [None])[-1]:
+                errs.append(f"길 {rid} {key}: 끝 칸이 원래 궤적과 다르다"); continue
+            a = np.array(tr)
+            if (np.abs(np.diff(a, axis=0)).max(initial=0)) > 1:
+                errs.append(f"길 {rid} {key}: 8-연결 끊김"); continue
+            if len({tuple(c) for c in tr}) != len(tr):
+                errs.append(f"길 {rid} {key}: 같은 칸을 두 번 지난다")
+            if (own[a[:, 0], a[:, 1]] != idx[pid]).any():
+                errs.append(f"길 {rid} {key}: 제 省 밖을 지난다")
+            if np.isin(T[a[:, 0], a[:, 1]], (TERRAIN_SEA, TERRAIN_LAKE, TERRAIN_OUT)).any():
+                errs.append(f"길 {rid} {key}: 물·지도 밖을 지난다")
+        if len(errs) > 50:
+            break
+    return errs
+
+
 # ── 산 편집 ──────────────────────────────────────────────────────────────────────────
 NAMED_RANGES = [
     dict(name="泰山", kind="blob", at=(36.2558, 117.1075), a=14, b=11, src="https://en.wikipedia.org/wiki/Mount_Tai",
@@ -957,9 +1128,14 @@ def write_derived(inp, out: Path, rivers_doc) -> dict:
     placements = compute_placements(inp, tier, width, name)
     dump(out / PLACEMENTS, dict(schemaVersion=1, artifactId="map-design-placements-v1", moveLimit=MOVE_LIMIT,
                                 ferryLimit=FERRY_LIMIT, placements=placements))
+    dem = load_dem(); roads, rstat = compute_roads(inp, tier, width, placements, dem)
+    dump(out / ROADS_OUT, dict(schemaVersion=1, artifactId="map-design-roads-v1", params=ROAD_PARAMS,
+                               input=dict(roads=ROADS.relative_to(ROOT).as_posix(), roadsSha256=sha256_bytes(ROADS.read_bytes())),
+                               result=roads_summary(roads, rstat)))
+    inp = dict(inp, road=roads_mask(roads, inp["terrain"].shape))      # 아래 단계는 설계 길을 따른다(골짜기·피복)
     mnt = compute_mountains(inp, tier, width, placements)
     dump(out / MOUNTAINS, dict(schemaVersion=1, artifactId="map-design-mountains-v1", **mnt))
-    dem = load_dem(); lv = compute_relief(inp, tier, width, placements, mnt, dem)
+    lv = compute_relief(inp, tier, width, placements, mnt, dem)
     des, plat = compute_desert(inp, lv, compute_plateau(inp, lv, dem), dem, tier, width)
     dump(out / RELIEF, dict(schemaVersion=1, artifactId="map-design-relief-v1", params=RELIEF_PARAMS, codes=RELIEF_CODES,
                             input=dict(dem=DEM.relative_to(ROOT).as_posix(), demSha256=sha256_bytes(DEM.read_bytes()),
@@ -971,7 +1147,7 @@ def write_derived(inp, out: Path, rivers_doc) -> dict:
     dump(out / LANDCOVER, dict(schemaVersion=1, artifactId="map-design-landcover-v1", params=LANDCOVER_PARAMS,
                                codes=LANDCOVER_CODES, result=landcover_summary(LC)))
     review = [p["name"] for p in placements if p["status"] == "NEEDS_REVIEW"]
-    return dict(moved=sum(1 for p in placements if p["to"]), review=review, mountainCells=len(mnt["cells"]),
+    return dict(moved=sum(1 for p in placements if p["to"]), review=review, roads=rstat, mountainCells=len(mnt["cells"]),
                 relief=relief_summary(lv, inp["terrain"])["counts"], plateau=plateau_summary(plat, inp["terrain"]),
                 desert=plateau_summary(des, inp["terrain"], TERRAIN_DESERT),
                 landcover=landcover_summary(LC)["counts"])
@@ -999,14 +1175,14 @@ def cmd_build(out: Path) -> int:
     dump(out / RIVERS, rivers_doc)
     r = write_derived(inp, out, rivers_doc)
     print(f"강 선 {len(lines)} · 비키기 미달 {n_bad} · 이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · "
-          f"산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
+          f"길 {r['roads']} · 산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
     return 1 if r["review"] else 0
 
 
 def cmd_write_derived(out: Path) -> int:
     inp = load_inputs()
     r = write_derived(inp, out, json.loads((out / RIVERS).read_text()))
-    print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 산 편집 {r['mountainCells']} · "
+    print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 길 {r['roads']} · 산 편집 {r['mountainCells']} · "
           f"산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
     return 1 if r["review"] else 0
 
@@ -1067,10 +1243,17 @@ def check_mountains(inp, tier, width, placements, mnt) -> list[str]:
 
 
 def run_checks(inp, out: Path) -> list[str]:
-    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, MOUNTAINS, RELIEF, LANDCOVER)}
+    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, ROADS_OUT, MOUNTAINS, RELIEF, LANDCOVER)}
     rivers_doc, pl = docs[RIVERS], docs[PLACEMENTS]["placements"]
     tier, width, name = load_rivers_grid(inp, rivers_doc)
-    errs = check_river_lines(rivers_doc) + check_placements(inp, tier, width, pl) + check_mountains(inp, tier, width, pl, docs[MOUNTAINS])
+    dem = load_dem(); roads, rstat = compute_roads(inp, tier, width, pl, dem)
+    errs = check_river_lines(rivers_doc) + check_placements(inp, tier, width, pl) + check_roads(inp, roads)
+    if docs[ROADS_OUT]["params"] != ROAD_PARAMS or roads_summary(roads, rstat) != docs[ROADS_OUT]["result"]:
+        errs.append(f"{ROADS_OUT} 지문이 재계산과 다르다 — --write-derived")
+    if docs[ROADS_OUT]["input"]["roadsSha256"] != sha256_bytes(ROADS.read_bytes()):
+        errs.append(f"{ROADS_OUT}: 규칙 길(han-land-roads-v1)이 바뀌었다 — --write-derived")
+    inp = dict(inp, road=roads_mask(roads, inp["terrain"].shape))
+    errs += check_mountains(inp, tier, width, pl, docs[MOUNTAINS])
     # 판정 입력을 고치고 강을 다시 새기지 않은 것
     for k, v in river_input_hashes(out).items():
         if rivers_doc["inputs"].get(k) != v:
@@ -1082,7 +1265,7 @@ def run_checks(inp, out: Path) -> list[str]:
         errs.append(f"{PLACEMENTS} 가 재계산과 다르다 — --write-derived")
     if compute_mountains(inp, tier, width, pl)["cells"] != docs[MOUNTAINS]["cells"]:
         errs.append(f"{MOUNTAINS} 가 재계산과 다르다 — --write-derived")
-    dem = load_dem(); lv = compute_relief(inp, tier, width, pl, docs[MOUNTAINS], dem)
+    lv = compute_relief(inp, tier, width, pl, docs[MOUNTAINS], dem)
     des, plat = compute_desert(inp, lv, compute_plateau(inp, lv, dem), dem, tier, width)
     errs += check_relief(inp, tier, width, pl, lv) + check_plateau(inp, plat) + check_plateau(inp, des, "사막") + check_plateau_desert(plat, des)
     if docs[RELIEF]["input"]["demSha256"] != sha256_bytes(DEM.read_bytes()):

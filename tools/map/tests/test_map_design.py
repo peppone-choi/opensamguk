@@ -27,11 +27,14 @@ TOOL = B.ROOT / "tools/map/build_map_design.py"
 class MapDesignInvariantsTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.inp = B.load_inputs()
-        cls.docs = {k: json.loads((B.OUT / k).read_text()) for k in (B.RIVERS, B.PLACEMENTS, B.MOUNTAINS, B.RELIEF, B.LANDCOVER, B.DODGE)}
-        cls.tier, cls.width, cls.name = B.load_rivers_grid(cls.inp, cls.docs[B.RIVERS])
+        cls.inp0 = B.load_inputs()
+        cls.docs = {k: json.loads((B.OUT / k).read_text())
+                    for k in (B.RIVERS, B.PLACEMENTS, B.ROADS_OUT, B.MOUNTAINS, B.RELIEF, B.LANDCOVER, B.DODGE)}
+        cls.tier, cls.width, cls.name = B.load_rivers_grid(cls.inp0, cls.docs[B.RIVERS])
         cls.pl = cls.docs[B.PLACEMENTS]["placements"]
         dem = B.load_dem()
+        cls.roads, cls.rstat = B.compute_roads(cls.inp0, cls.tier, cls.width, cls.pl, dem)
+        cls.inp = dict(cls.inp0, road=B.roads_mask(cls.roads, cls.inp0["terrain"].shape))    # 아래 단계는 설계 길을 따른다
         cls.lv = B.compute_relief(cls.inp, cls.tier, cls.width, cls.pl, cls.docs[B.MOUNTAINS], dem)
         cls.des, cls.plat = B.compute_desert(cls.inp, cls.lv, B.compute_plateau(cls.inp, cls.lv, dem), dem, cls.tier, cls.width)
 
@@ -95,6 +98,51 @@ class MapDesignInvariantsTest(unittest.TestCase):
         m = np.array([[1, 1, 0, 1], [0, 1, 0, 1], [1, 0, 0, 1], [1, 1, 0, 0]], bool)
         self.assertEqual(B.component_sizes(m).tolist(), [[3, 3, 0, 3], [0, 3, 0, 3], [3, 0, 0, 3], [3, 3, 0, 0]])
         self.assertEqual(B._drop_small(m, 4).sum(), 0)
+
+    def test_roads_follow_rules_and_are_less_straight(self):
+        self.assertEqual(B.check_roads(self.inp0, self.roads), [])
+        self.assertEqual(B.roads_summary(self.roads, self.rstat), self.docs[B.ROADS_OUT]["result"])
+
+        def straight_share(trails, run):
+            tot = long = 0
+            for tr in trails:
+                if len(tr) < 3:
+                    continue
+                d = np.diff(np.array(tr), axis=0); key = d[:, 0] * 3 + d[:, 1]
+                L = np.diff(np.r_[0, np.nonzero(key[1:] != key[:-1])[0] + 1, len(key)]); tot += L.sum(); long += L[L >= run].sum()
+            return long / max(1, tot)
+        built = [e for e in json.loads(B.ROADS.read_text())["edges"] if e["status"] == "BUILT"]
+        old = [e.get(k) or [] for e in built for k in ("fromTrail", "toTrail")]
+        new = [self.roads[e["id"]][k] for e in built for k in ("fromTrail", "toTrail")]
+        self.assertGreater(straight_share(old, 20), 0.4)            # 적색 기준: 원래 길은 걸린다(0.471)
+        self.assertLess(straight_share(new, 20), 0.05)              # 설계 길(0.012)
+
+    def test_red_road_off_province_gap_and_water(self):
+        rid, r = next((k, v) for k, v in self.roads.items() if v["status"] == "BUILT" and len(v["fromTrail"]) > 10)
+        own, T = self.inp0["owner"], self.inp0["terrain"]
+        bad = copy.deepcopy(self.roads); tr = bad[rid]["fromTrail"]; y, x = tr[5]
+        other = next((yy, xx) for yy in range(y - 30, y + 31) for xx in range(x - 30, x + 31) if own[yy, xx] not in (own[y, x], -1))
+        tr[5] = [other[0], other[1]]
+        errs = " | ".join(B.check_roads(self.inp0, bad))
+        self.assertIn("8-연결 끊김", errs)
+        bad = copy.deepcopy(self.roads); tr = bad[rid]["fromTrail"]; tr.insert(6, list(tr[5]))
+        self.assertIn("두 번", " | ".join(B.check_roads(self.inp0, bad)))
+        bad = copy.deepcopy(self.roads); bad[rid]["fromTrail"] = bad[rid]["fromTrail"][:-1]
+        self.assertIn("끝 칸", " | ".join(B.check_roads(self.inp0, bad)))
+        # 이웃 省으로 한 칸 비켜 가는 궤적(연결은 유지)
+        sy, sx = np.nonzero(own[:-1, :] != own[1:, :]); k = next(i for i in range(len(sy)) if own[sy[i], sx[i]] >= 0 and own[sy[i] + 1, sx[i]] >= 0)
+        y0, x0 = int(sy[k]), int(sx[k]); prov = own[y0, x0]
+        fake = {"x": dict(status="BUILT", fromTrail=[[y0, x0], [y0 + 1, x0]], toTrail=[])}
+        orig = [dict(id="x", fromProvinceId=self.inp0["ht"]["provinceRecords"][prov]["id"], toProvinceId="", fromTrail=[[y0, x0], [y0 + 1, x0]], toTrail=[])]
+        saved = B.ROADS
+        try:
+            tmp = Path(tempfile.mkdtemp()) / "roads.json"; tmp.write_text(json.dumps(dict(edges=orig))); B.ROADS = tmp
+            self.assertIn("제 省 밖", " | ".join(B.check_roads(self.inp0, fake)))
+            wy, wx = map(int, np.argwhere(T == B.TERRAIN_SEA)[0])
+            fake["x"]["fromTrail"] = [[wy, wx]]; orig[0]["fromTrail"] = [[wy, wx]]; tmp.write_text(json.dumps(dict(edges=orig)))
+            self.assertIn("물", " | ".join(B.check_roads(self.inp0, fake)))
+        finally:
+            B.ROADS = saved
 
     def test_every_river_has_a_source_and_every_dodge_city_exists(self):
         self.assertTrue(all(r[2] for r in self.docs[B.RIVERS]["rivers"]))
@@ -209,11 +257,12 @@ class MapDesignCliProbeTest(unittest.TestCase):
             pl = json.loads((d / B.PLACEMENTS).read_text()); pl["placements"][0]["to"][1] += 1; (d / B.PLACEMENTS).write_text(json.dumps(pl))
             rf = json.loads((d / B.RELIEF).read_text()); rf["params"]["tier3"] = 900; rf["input"]["demSha256"] = "0" * 64
             rf["plateau"]["params"]["step"] = 200; rf["desert"]["result"]["cells"] += 1
+            rd = json.loads((d / B.ROADS_OUT).read_text()); rd["params"]["bendWeight"] = 2.0; (d / B.ROADS_OUT).write_text(json.dumps(rd))
             (d / B.RELIEF).write_text(json.dumps(rf))
             bad = self._run(d)
             self.assertEqual(bad.returncode, 1, bad.stdout)
             for needle in ("dodgeSha256", f"{B.MOUNTAINS} 가 재계산과 다르다", f"{B.LANDCOVER} 지문", f"{B.PLACEMENTS} 가 재계산과 다르다",
-                           f"{B.RELIEF} 지문", "표고 원판", f"{B.RELIEF} 고원 지문", f"{B.RELIEF} 사막 지문"):
+                           f"{B.RELIEF} 지문", "표고 원판", f"{B.RELIEF} 고원 지문", f"{B.RELIEF} 사막 지문", f"{B.ROADS_OUT} 지문"):
                 self.assertIn(needle, bad.stdout)
 
 
