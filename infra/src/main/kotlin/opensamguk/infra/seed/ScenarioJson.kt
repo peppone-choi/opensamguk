@@ -150,6 +150,7 @@ object ScenarioJson {
         personPolicies.keys.forEach { name ->
             require(roster.count { it.name == name } == 1) { "personPolicies name must identify exactly one general: $name" }
         }
+        val personBonds = ScenarioPersonBonds.decode(root, effectiveProfile, roster)
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
@@ -182,6 +183,7 @@ object ScenarioJson {
             ruleProfile = ruleProfile,
             seedContract = seedContract,
             warehouses = ScenarioWarehouseSeeds.decode(root, effectiveProfile),
+            personBonds = personBonds,
             units = ScenarioUnits.decode(root, effectiveProfile).also { units ->
                 for (unit in units) require(roster.count { it.name == unit.general } == 1) {
                     "units general must identify exactly one general: ${unit.general}"
@@ -396,6 +398,8 @@ data class Scenario(
     val ruleProfile: opensamguk.logic.input.RuleProfile? = null,
     val seedContract: ScenarioSeedContract? = null,
     val warehouses: WarehouseSeed? = null,
+    /** Source-backed directed historical/novel links, resolved to active world IDs by the importer. */
+    val personBonds: Map<String, List<ScenarioPersonBond>> = emptyMap(),
     /** HWIHA 초기 부곡 선언(`units`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
     val units: List<ScenarioUnit> = emptyList(),
 ) {

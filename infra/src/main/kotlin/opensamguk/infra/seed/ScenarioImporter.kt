@@ -7,6 +7,8 @@ import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.common.world.WorldId
+import opensamguk.logic.content.PersonBond
+import opensamguk.logic.content.PersonBondState
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
@@ -555,6 +557,15 @@ class ScenarioImporter(
         require(declaredLords.all { lord -> active.count { it.name == lord.name && it.lord == true } == 1 }) {
             "declared HWIHA lord must be uniquely included and active at start; deferred lord events are not implemented"
         }
+        if (scenario.personBonds.isNotEmpty()) {
+            require(effectiveProfile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
+            val activeOfficers = active.mapNotNull { it.picture?.toIntOrNull() }.toSet()
+            require(activeOfficers.size == active.size) { "personBonds requires unique stable active officer IDs" }
+            require(scenario.personBonds.keys.all { name -> active.count { it.name == name } == 1 } &&
+                scenario.personBonds.values.flatten().all { it.targetOfficerId in activeOfficers }) {
+                "personBonds owner and target must be active at start"
+            }
+        }
         val contract = scenario.seedContract?.activeGenerals
         if (contract == null) {
             require(scenarioMapConfig()["mapName"] !in setOf("han-world-v2", "han-world-v3")) {
@@ -610,6 +621,16 @@ class ScenarioImporter(
         worldId: WorldId,
     ): Int {
         val rngRows = replayInitScenarioGeneralRng(startYear)
+        val bondStates = if (scenario.personBonds.isEmpty()) emptyMap() else {
+            val worldIdByOfficer = generals.associate { built ->
+                requireNotNull(built.src.picture?.toIntOrNull()) { "Bonded roster lacks a stable officer ID" } to built.id
+            }
+            require(worldIdByOfficer.size == generals.size) { "Bonded roster has duplicate officer IDs" }
+            scenario.personBonds.mapValues { (_, bonds) ->
+                PersonBondState(bonds.map { bond -> PersonBond(bond.kind,
+                    "general:${worldIdByOfficer.getValue(bond.targetOfficerId)}", bond.evidenceIds) }.toSet())
+            }
+        }
 
         val sql = """
             INSERT INTO general
@@ -666,7 +687,7 @@ class ScenarioImporter(
                 GameUnitConst.DEFAULT_CREWTYPE,
                 turnTime, age, personal, special.domestic, special.war,
                 // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
-                jsonb(initialGeneralMeta(g, born, dead, startYear, rngRow.killturnJitter, special)),
+                jsonb(initialGeneralMeta(g, born, dead, startYear, rngRow.killturnJitter, special, bondStates[g.name])),
                 g.politics, g.charm,
             )
             n++
@@ -737,6 +758,7 @@ class ScenarioImporter(
         startYear: Int,
         legacyMonthJitter: Int,
         special: ScenarioSpecial,
+        personBonds: PersonBondState? = null,
     ): Map<String, Any?> {
         val meta = linkedMapOf<String, Any?>(
             "killturn" to ScenarioLifecycleMeta.killturnFor(
@@ -771,6 +793,7 @@ class ScenarioImporter(
         if (effectiveProfile == RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.LordStatus.META_KEY] = general.lord ?: false
             general.personPolicy?.let { meta[opensamguk.logic.input.PersonPolicyState.META_KEY] = it.toMetaValue() }
+            personBonds?.let { meta[PersonBondState.META_KEY] = it.toMetaValue() }
         }
         if (general.npcType == IMPERIAL_NPC_TYPE) meta["imperial"] = true
         if (general.text != null) meta["npcmsg"] = general.text
