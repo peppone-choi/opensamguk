@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
  * 미확정 — 삭제의 안전성 자체엔 영향 없다, 삭제 대상엔 참조가 없다). 여기 값은
  * [HistoricalCityConstVariant.seatCountByProvince] 를 실제로 돌려 나온 실측값이다.
  */
-class HanProvinceSeatsTest {
+class ProvinceSeatsTest {
 
     @Test
     fun `han seatCountByProvince sums to the actual gunchi count`() {

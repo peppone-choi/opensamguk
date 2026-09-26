@@ -16,7 +16,7 @@ import opensamguk.logic.command.GarrisonRecruitDecision
 import opensamguk.logic.command.decideCityTransport
 import opensamguk.logic.command.decideGarrisonRecruit
 import opensamguk.logic.command.resolveImmediateCityTransportRoute
-import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
+import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
 import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.ResolvedStrategicPath
 import opensamguk.logic.world.StrategicPathResult
@@ -119,7 +119,7 @@ class V2CommandPrecheckService(
         val from = state?.view?.get(RequirementKey.City(args.fromCityId)) as? City
         val to = state?.view?.get(RequirementKey.City(args.toCityId)) as? City
         val mapName = state?.env?.get("mapName") as? String
-        val strategic = mapName == HAN_WORLD_V3_MAP_NAME
+        val strategic = mapName == WORLD_ARCHIVE_MAP_NAME
         val route = if (strategic) resolveImmediateCityTransportRoute(args) {
             loadTopology?.invoke() ?: historicalArtifacts.artifacts(requireNotNull(state?.worldMapVariant)).projection
         } else null

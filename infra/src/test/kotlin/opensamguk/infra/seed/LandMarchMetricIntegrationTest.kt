@@ -6,7 +6,7 @@ import opensamguk.logic.world.*
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-class HanLandMarchMetricIntegrationTest {
+class LandMarchMetricIntegrationTest {
     private val resolver = WorldArtifactsResolver(Path.of(".."))
 
     @Test fun `current pinned bundle agrees with independent Python distances including rough terrain`() {

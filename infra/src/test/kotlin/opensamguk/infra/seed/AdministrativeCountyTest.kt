@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonToken
 import java.nio.file.Path
 import kotlin.test.*
 
-class HanAdministrativeCountyTest {
+class AdministrativeCountyTest {
     private val mapper = ObjectMapper()
     @Test fun `pinned 1133 archive exposes only administrative counties`() {
         val projection = WorldArtifactsResolver(Path.of("..")).artifacts(opensamguk.logic.world.WorldMapVariant.V3_1133).projection

@@ -16,7 +16,7 @@ import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.command.decideCityTransport
 import opensamguk.logic.command.resolveImmediateCityTransportRoute
-import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
+import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
 import opensamguk.logic.world.StrategicRouteProjection
 
 /**
@@ -54,7 +54,7 @@ class V2CityTransportHandler(
         val resources = from?.let { ledger.entry(world.worldId, it.id) } ?: V2CityLedgerEntry.EMPTY
         val state = world.getState()
         val mapName = runCatching { ActiveWorldMap.requireName(state.config, state.meta) }.getOrNull()
-        val strategic = mapName == HAN_WORLD_V3_MAP_NAME
+        val strategic = mapName == WORLD_ARCHIVE_MAP_NAME
         val args = CityTransportArgs(
             command.fromCityId, command.toCityId, command.gold, command.rice, command.garrison,
             command.routeRevision, command.topologyRevision, command.routePathHash,
@@ -143,7 +143,7 @@ internal fun historicalTransportTopology(
     state: opensamguk.engine.turn.TurnWorldState,
     artifacts: WorldArtifactsResolver,
 ): StrategicRouteProjection {
-    require(ActiveWorldMap.requireName(state.config, state.meta) == HAN_WORLD_V3_MAP_NAME)
+    require(ActiveWorldMap.requireName(state.config, state.meta) == WORLD_ARCHIVE_MAP_NAME)
     return artifacts.artifacts(requireNotNull(state.worldMapVariant) {
         "V3 transport requires the boot-validated historical map identity"
     }).projection

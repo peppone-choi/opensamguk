@@ -1507,3 +1507,26 @@ web/game/lib/hwiha-reads.ts
 | `generateHanCities` | `generateHistoricalCities` |
 | `isHanMapName` | `isHistoricalMapName` |
 | `projectHanDryLandEdges` | `projectDryLandEdges` |
+
+### 지도 판 이름 상수
+
+| 옛 코드 이름 | 새 코드 이름 | 저장 값 |
+| --- | --- | --- |
+| `HAN_MAP_NAME` | `HISTORICAL_MAP_NAME` | `han` 유지 |
+| `HAN_780_V1_MAP_NAME` | `LEGACY_MAP_ARCHIVE_NAME` | `han-780-v1` 유지 |
+| `HAN_WORLD_V2_MAP_NAME` | `EARLY_WORLD_ARCHIVE_NAME` | `han-world-v2` 유지 |
+| `HAN_WORLD_V3_MAP_NAME` | `WORLD_ARCHIVE_MAP_NAME` | `han-world-v3` 유지 |
+| `currentHan`·`legacyHan`·`hanWorldV3`·`historicalHanWorlds` | `currentHistoricalMap`·`legacyHistoricalMap`·`worldArchiveMap`·`historicalWorlds` | 코드 지역 이름만 변경 |
+
+### 지도 테스트 이름
+
+| 옛 테스트 | 새 테스트 |
+| --- | --- |
+| `HanHistoricalWorldRoundTripIT` | `HistoricalWorldRoundTripIT` |
+| `HanStrategicSupplyProviderTest` | `StrategicSupplyProviderTest` |
+| `HanCityLevelLabelsTest` | `CityLevelLabelsTest` |
+| `HanAdministrativeCountyTest` | `AdministrativeCountyTest` |
+| `HanLandMarchMetricIntegrationTest` | `LandMarchMetricIntegrationTest` |
+| `HanFoundAssaultTest` | `FoundAssaultTest` |
+| `HanGateRegionsTest` | `GateRegionsTest` |
+| `HanProvinceSeatsTest` | `ProvinceSeatsTest` |

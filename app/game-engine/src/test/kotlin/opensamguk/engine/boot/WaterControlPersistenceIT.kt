@@ -72,7 +72,7 @@ class WaterControlPersistenceIT {
 
     private fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)),
         WorldId(id), snapshotValidator = {}, waterTopologyLoader = { topology },
-        // Synthetic p1/lake topology isolates persistence; real archive identity is covered by HanHistoricalWorldRoundTripIT.
+        // Synthetic p1/lake topology isolates persistence; real archive identity is covered by HistoricalWorldRoundTripIT.
         mapVariantSelector = { _, _ -> opensamguk.logic.world.WorldMapVariant.V3_835 },
         administrativeCountyIdsLoader = { emptySet() }).buildSnapshot()
 

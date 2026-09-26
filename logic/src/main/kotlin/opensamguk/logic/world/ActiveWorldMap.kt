@@ -25,7 +25,7 @@ object ActiveWorldMap {
     ): CityConstVariant {
         val name = requireName(config, meta)
         if (worldMapVariant == null) return CityConstRegistry.of(name)
-        require(name == HAN_WORLD_V3_MAP_NAME) { "Historical Han runtime identity requires han-world-v3" }
+        require(name == WORLD_ARCHIVE_MAP_NAME) { "Historical Han runtime identity requires han-world-v3" }
         return CityConstRegistry.hanWorld(worldMapVariant)
     }
 }

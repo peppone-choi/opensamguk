@@ -3,7 +3,7 @@ package opensamguk.common.constants
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class HanCityLevelLabelsTest {
+class CityLevelLabelsTest {
     @Test
     fun `han capital and county ranks are visible through shared API labels`() {
         val expected = mapOf(9 to "경", 10 to "영현", 11 to "장현")

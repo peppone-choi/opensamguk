@@ -8,7 +8,7 @@ import opensamguk.logic.world.*
 import java.nio.file.Path
 import kotlin.test.*
 
-class HanStrategicSupplyProviderTest {
+class StrategicSupplyProviderTest {
     private val mapper = ObjectMapper()
     private val projection by lazy { StrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
     private val provider by lazy {

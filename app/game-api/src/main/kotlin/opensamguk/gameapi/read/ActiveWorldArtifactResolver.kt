@@ -2,7 +2,7 @@ package opensamguk.gameapi.read
 
 import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.ResolvedWorldArtifacts
-import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
+import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Isolation
@@ -32,7 +32,7 @@ class ActiveWorldArtifactResolver(
         val mapName = ActiveWorldMap.requireName(world)
         val roster = cities.findAll()
         require(roster.all { it.worldId == world.id }) { "City roster does not match process world" }
-        val artifacts = if (mapName == HAN_WORLD_V3_MAP_NAME) {
+        val artifacts = if (mapName == WORLD_ARCHIVE_MAP_NAME) {
             artifactResolver.resolve(roster.map { it.id }, pins.readPins(world.id))
         } else null
         return ActiveWorldArtifactSnapshot(world, roster, artifacts)

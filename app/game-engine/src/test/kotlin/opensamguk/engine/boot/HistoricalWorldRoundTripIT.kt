@@ -21,7 +21,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertFailsWith
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class HanHistoricalWorldRoundTripIT {
+class HistoricalWorldRoundTripIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
