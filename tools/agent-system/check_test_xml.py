@@ -16,14 +16,9 @@ opt-out: OPENSAM_ALLOW_SKIPPED_IT=1 — Docker 없이 로컬에서 빠르게 반
 이름을 항상 stderr에 눈에 띄게 찍는다. CI는 이 env를 절대 설정하지 않는다 —
 CI 러너는 Docker가 항상 있어야 하므로 CI에서의 skip은 무조건 실패다.
 
-quarantine (skipped_it_quarantine.json, 2026-08-24): #517 첫 CI 실행에서
-`LongSimReplayGateTest#12 month structural replay matches PHP golden()`이
-Docker가 살아 있는 러너에서도 스킵됐다 — 원인은 Docker가 아니라
-`LONGSIM_SCHEMA4_CANDIDATE_DIR`(외부 PHP golden candidate, CI 미배선, CLAUDE.md
-P5 backlog "long-sim multi-turn"). opt-out은 전역 예외라 이런 건을 가려버리므로
-쓰지 않는다. 대신 이름별 quarantine 등록만 통과시키되, 티켓 없는 등록은 로더가
-거부한다(빈 "가드가 있다는 착각"을 막기 위함) — 등록된 스킵도 항상 stderr에
-QUARANTINED로 눈에 띄게 찍힌다.
+quarantine (skipped_it_quarantine.json): 특정 테스트의 임시 예외가 필요하면
+이름별로 등록한다. 티켓 없는 등록은 로더가 거부하고, 등록된 스킵도 stderr에
+QUARANTINED로 표시한다.
 """
 import argparse
 import json
