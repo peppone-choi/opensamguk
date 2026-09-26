@@ -16,7 +16,6 @@ import opensamguk.engine.flush.FlushRecoveryGateProvider
 import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
-import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
@@ -129,7 +128,6 @@ open class TurnRunService(
     /** inheritance KV read seam (P0-07 — `inheritance_{owner}` previous[0], PHP Betting.php:133,142). */
     private val inheritanceRepository: opensamguk.infra.read.InheritanceRepository? = null,
     private val selectPoolRepository: SelectPoolRepository? = null,
-    private val tournamentDaemon: TournamentDaemon? = null,
     private val processNationCommand: ProcessNationCommand? = null,
     /** OPENSAM-130 generation session shared with [handler.recorder]. */
     private val generationSession: DeltaGenerationSession = DeltaGenerationSession(),
@@ -434,7 +432,6 @@ open class TurnRunService(
             crossed = 0
         }
 
-        tournamentDaemon?.processTournament(world, handler.recorder, runTime)
         auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).

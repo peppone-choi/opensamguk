@@ -5,7 +5,7 @@ import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
 import opensamguk.gameapi.web.DeployController
 import opensamguk.gameapi.reserve.*
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import java.util.Optional
@@ -36,10 +36,10 @@ class DeployPrecheckServiceTest {
         `when`(retainers.allBugoks()).thenReturn(listOf(
             GeneralBugokReadEntity(worldId = 1, id = 4, masterGeneralId = 1, name = "내부대", troops = 100),
             GeneralBugokReadEntity(worldId = 1, id = 5, masterGeneralId = 2, name = "비공개 상대부대", troops = 999)))
-        val bundle = mock(ResolvedHanWorldArtifacts::class.java)
-        `when`(bundle.projection).thenReturn(HanStrategicRouteProjection(topology, listOf(
-            HanStrategicRouteBinding(1, "r1", "p1", "A"), HanStrategicRouteBinding(2, "r2", "p2", "B"),
-            HanStrategicRouteBinding(3, "r3", "p3", "B"))))
+        val bundle = mock(ResolvedWorldArtifacts::class.java)
+        `when`(bundle.projection).thenReturn(StrategicRouteProjection(topology, listOf(
+            StrategicRouteBinding(1, "r1", "p1", "A"), StrategicRouteBinding(2, "r2", "p2", "B"),
+            StrategicRouteBinding(3, "r3", "p3", "B"))))
         `when`(bundle.landMarchMetrics).thenReturn(metrics)
         val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"), meta = mapOf(
             LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),

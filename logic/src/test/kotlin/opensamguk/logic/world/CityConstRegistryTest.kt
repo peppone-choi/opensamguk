@@ -45,12 +45,12 @@ class CityConstRegistryTest {
 
     @Test
     fun `Han family recognition includes active version and compatibility keys`() {
-        assertTrue(isHanMapName("han"))
-        assertTrue(isHanMapName("han-world-v2"))
-        assertTrue(isHanMapName("han-world-v3"))
-        assertTrue(isHanMapName("han-780-v1"))
-        assertFalse(isHanMapName("che"))
-        assertFalse(isHanMapName(null))
+        assertTrue(isHistoricalMapName("han"))
+        assertTrue(isHistoricalMapName("han-world-v2"))
+        assertTrue(isHistoricalMapName("han-world-v3"))
+        assertTrue(isHistoricalMapName("han-780-v1"))
+        assertFalse(isHistoricalMapName("che"))
+        assertFalse(isHistoricalMapName(null))
     }
 
     @Test
@@ -58,7 +58,7 @@ class CityConstRegistryTest {
         val v2 = CityConstRegistry.of("han-world-v2")
         assertEquals(CityConstRegistry.of("han").all(), v2.all())
         assertEquals((1..774).toList(), v2.all().keys.toList())
-        val generated = opensamguk.common.constants.HanWorldV3CityConst.initCity
+        val generated = opensamguk.common.constants.ArchiveCityConst.initCity
         val v3 = CityConstRegistry.of("han-world-v3")
         assertEquals(generated.map { it.id }.toSet(), v3.all().keys)
         val byName = generated.associateBy { it.name }

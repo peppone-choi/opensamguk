@@ -31,7 +31,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import opensamguk.logic.world.*
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.StrategicTopologyJson
 import java.nio.file.Path
 
 class V2CommandPrecheckServiceTest {
@@ -81,7 +81,7 @@ class V2CommandPrecheckServiceTest {
             service("han-world-v3", 1999, ::projection) to transportArgs to "ESCORT_INSUFFICIENT",
             service("han-world-v3", 2000, ::projection) to transportArgs.copy(gold = 101) to "CITY_GOLD_INSUFFICIENT",
             service("han-world-v3", 2000, loadTopology = { error("missing artifacts") }) to transportArgs to "TOPOLOGY_STATE_INVALID",
-            service("han-world-v3", 2000, loadTopology = { projection().let { HanStrategicRouteProjection(it.topology, it.bindingsByCityId.values.filter { binding -> binding.runtimeCityId == 1 }) } }) to transportArgs to "UNKNOWN_NODE",
+            service("han-world-v3", 2000, loadTopology = { projection().let { StrategicRouteProjection(it.topology, it.bindingsByCityId.values.filter { binding -> binding.runtimeCityId == 1 }) } }) to transportArgs to "UNKNOWN_NODE",
         ).forEach { (case, code) ->
             val preview = case.first.previewTransport(10, case.second)
             assertEquals("BLOCKED", preview.status)
@@ -101,7 +101,7 @@ class V2CommandPrecheckServiceTest {
 
     @Test
     fun `real Lu Licheng immediate transport respects the built road graph`() {
-        val loader = { HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
+        val loader = { StrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") }
         val service = service("han-world-v3", 2000, loader, fromCityId = 273, toCityId = 781)
         val preview = service.previewTransport(10, transportArgs.copy(fromCityId = 273, toCityId = 781))
         assertEquals("BLOCKED", preview.status)
@@ -109,14 +109,14 @@ class V2CommandPrecheckServiceTest {
         assertTrue(preview.reason.orEmpty().contains("육로 한 구간"))
     }
 
-    private fun projection(): HanStrategicRouteProjection = HanStrategicRouteProjection(
+    private fun projection(): StrategicRouteProjection = StrategicRouteProjection(
         StrategicTopologySnapshot("test-v3", setOf("45098", "45022"), emptyList(), listOf(
             TraversalEdge("lu-li", StrategicNodeRef.LandProvince("45098"), StrategicNodeRef.LandProvince("45022"),
                 TraversalMode.LAND, false, 1, 1000, RiskBand.LOW, SeasonalAvailability.ALWAYS, true,
                 listOf("reviewed:test"), EvidenceConfidence.EXACT),
         ), emptyList(), mapOf("fixture" to "abc")),
-        listOf(HanStrategicRouteBinding(1, "route:lu", "physical:lu", "45098"),
-            HanStrategicRouteBinding(2, "route:li", "physical:li", "45022")),
+        listOf(StrategicRouteBinding(1, "route:lu", "physical:lu", "45098"),
+            StrategicRouteBinding(2, "route:li", "physical:li", "45022")),
     )
 
     @Test
@@ -143,7 +143,7 @@ class V2CommandPrecheckServiceTest {
 
     private fun service(
         mapName: String, crew: Int,
-        loadTopology: () -> HanStrategicRouteProjection = { error("legacy must not load V3 topology") },
+        loadTopology: () -> StrategicRouteProjection = { error("legacy must not load V3 topology") },
         fromCityId: Int = 1, toCityId: Int = 2, deployed: Boolean = false,
     ): V2CommandPrecheckService {
         val generals = mock(GeneralReadRepository::class.java)
@@ -204,8 +204,8 @@ class V2CommandPrecheckServiceTest {
                     BattlefieldPresence("changban", "b".repeat(64), fromCityId)), emptyMap()))
         } else null
         val worldArtifacts = mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
-        val bundle = mock(opensamguk.infra.seed.ResolvedHanWorldArtifacts::class.java)
-        `when`(bundle.variant).thenReturn(HanWorldVariant.V3_835)
+        val bundle = mock(opensamguk.infra.seed.ResolvedWorldArtifacts::class.java)
+        `when`(bundle.variant).thenReturn(WorldMapVariant.V3_835)
         `when`(worldArtifacts.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
             WorldStateReadEntity(id = 1), emptyList(), bundle))
         val states = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, fields, worldArtifacts)

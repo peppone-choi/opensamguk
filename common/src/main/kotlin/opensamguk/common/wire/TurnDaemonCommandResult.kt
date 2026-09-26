@@ -637,13 +637,13 @@ data class SelectPoolActionResult(
  */
 private val NATION_SETTING_TYPES = setOf(
     "setNotice", "setScoutMsg", "setRate", "setBill", "setSecretLimit",
-    "setBlockWar", "setBlockScout", "npcPolicyUpdate", "tournamentEnroll",
+    "setBlockWar", "setBlockScout", "npcPolicyUpdate",
 )
 
 private val BOOLEAN_OK_TYPES = setOf(
     "dieOnPrestart", "buildNationCandidate", "instantRetreat",
     "dropItem", "checkOwner", "changePermission", "kick", "appoint",
-    "claimNpc", "tournamentStart", "tournamentReset",
+    "claimNpc",
     "adminGeneralModeration", "adminWorldSettings",
 )
 

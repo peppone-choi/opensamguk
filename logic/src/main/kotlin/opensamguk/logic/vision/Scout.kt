@@ -6,8 +6,8 @@ import opensamguk.logic.input.*
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import java.security.MessageDigest
 
@@ -39,13 +39,13 @@ enum class ScoutFailure {
 }
 
 sealed interface ScoutAssessment {
-    data class Eligible(val origin: HanCommandery, val target: HanCommandery) : ScoutAssessment
+    data class Eligible(val origin: Commandery, val target: Commandery) : ScoutAssessment
     data class Rejected(val reason: ScoutFailure) : ScoutAssessment
 }
 
 /** Shared by the API precheck, the reservation admission and the personal-turn re-check (§5 contract). */
 object ScoutRules {
-    fun assess(profile: RuleProfile, actorNode: StrategicNodeRef?, commanderyId: String, index: HanCommanderyIndex): ScoutAssessment {
+    fun assess(profile: RuleProfile, actorNode: StrategicNodeRef?, commanderyId: String, index: CommanderyIndex): ScoutAssessment {
         if (profile != RuleProfile.HWIHA) return ScoutAssessment.Rejected(ScoutFailure.WRONG_RULE_PROFILE)
         val origin = index.commanderyOf(actorNode) ?: return ScoutAssessment.Rejected(ScoutFailure.POSITION_UNAVAILABLE)
         val target = index.byId(commanderyId) ?: return ScoutAssessment.Rejected(ScoutFailure.UNKNOWN_COMMANDERY)
@@ -179,8 +179,8 @@ object ScoutCapture {
      * relationships no longer hold (see [DeploymentRules.assessActive]) are not reported as seen.
      */
     fun capture(
-        target: HanCommandery,
-        index: HanCommanderyIndex,
+        target: Commandery,
+        index: CommanderyIndex,
         cities: List<ScoutCityFact>,
         projection: DeploymentProjection,
         rules: VisionRules.Rules,

@@ -2,9 +2,9 @@ package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.PersonPolicyState
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
@@ -26,7 +26,7 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
     }
 
     /** 지명 대조 정규화 — audit 도구와 같은 표·규칙. */
-    val fold: HanPlaceNameFold by lazy { HanPlaceNameFold.loadDefault(objectMapper) }
+    val fold: PlaceNameFold by lazy { PlaceNameFold.loadDefault(objectMapper) }
 
     /**
      * 같은 고향인가. 두 쪽 다 `jurisdictionId` 가 있으면 그것으로, 아니면 정규화한 (郡, 縣) 쌍으로 본다
@@ -138,7 +138,7 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
     class CountyNames internal constructor(
         private val byJurisdiction: Map<String, List<String>>,
         private val byPair: Map<Pair<String, String>, List<String>>,
-        private val fold: HanPlaceNameFold,
+        private val fold: PlaceNameFold,
     ) {
         fun korean(native: CampLedgers.NativeCounty): String? {
             val hits = if (native.jurisdictionId != null) byJurisdiction[native.jurisdictionId]
@@ -147,10 +147,10 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
         }
     }
 
-    private val cache = ConcurrentHashMap<HanWorldVariant, Map<Int, Place>>()
-    private val names = ConcurrentHashMap<HanWorldVariant, CountyNames>()
+    private val cache = ConcurrentHashMap<WorldMapVariant, Map<Int, Place>>()
+    private val names = ConcurrentHashMap<WorldMapVariant, CountyNames>()
 
-    fun places(artifacts: ResolvedHanWorldArtifacts): Map<Int, Place> = cache.computeIfAbsent(artifacts.variant) {
+    fun places(artifacts: ResolvedWorldArtifacts): Map<Int, Place> = cache.computeIfAbsent(artifacts.variant) {
         val cities = objectMapper.readTree(artifacts.artifactBytes(RUNTIME_MAP)).get("cities")
         check(cities != null && cities.isArray) { "runtime map cities missing" }
         val provinces = objectMapper.readTree(artifacts.artifactBytes(TILES)).get("provinceRecords")
@@ -166,7 +166,7 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
         }.toMap()
     }
 
-    fun countyNames(artifacts: ResolvedHanWorldArtifacts): CountyNames = names.computeIfAbsent(artifacts.variant) {
+    fun countyNames(artifacts: ResolvedWorldArtifacts): CountyNames = names.computeIfAbsent(artifacts.variant) {
         val places = places(artifacts).values.filter { it.displayName != null }
         val fold = ledgers.fold
         CountyNames(

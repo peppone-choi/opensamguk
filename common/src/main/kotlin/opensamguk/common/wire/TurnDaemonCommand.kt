@@ -813,39 +813,6 @@ sealed class TurnDaemonCommand {
     }
 
     /**
-     * 토너먼트 참가 (enroll) — `j_set_my_setting.php` 의 `tnmt` 토글. Writes the acting general's
-     * `tnmt` (0/1) into the general row. `value` clamps to 0..1 (PHP: `< 0 || > 1 → 1`).
-     */
-    @Serializable
-    @SerialName("tournamentEnroll")
-    data class TournamentEnroll(
-        val requestId: String? = null,
-        val generalId: Int,
-        val value: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentEnroll"
-    }
-
-    @Serializable
-    @SerialName("tournamentStart")
-    data class TournamentStart(
-        val requestId: String? = null,
-        val generalId: Int,
-        val tournamentType: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentStart"
-    }
-
-    @Serializable
-    @SerialName("tournamentReset")
-    data class TournamentReset(
-        val requestId: String? = null,
-        val generalId: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReset"
-    }
-
-    /**
      * 유산: 턴 시간 초기화 (ResetTurnTime.php). Spends `inheritResetAttrPointBase[nextLevel]` from the
      * acting owner's inheritance `previous` balance, draws ONE `RandUtil(hiddenSeed,'ResetTurnTime',…)`
      * float for the new turn-time offset, and bumps `inherit_point_spent_dynamic`.

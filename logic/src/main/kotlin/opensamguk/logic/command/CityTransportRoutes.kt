@@ -1,6 +1,6 @@
 package opensamguk.logic.command
 
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.PathDenialCode
 import opensamguk.logic.world.StrategicEdgeStateSnapshot
 import opensamguk.logic.world.StrategicPathResult
@@ -12,7 +12,7 @@ import opensamguk.logic.world.StrategicPathResult
  */
 fun resolveImmediateCityTransportRoute(
     args: CityTransportArgs,
-    loadTopology: () -> HanStrategicRouteProjection,
+    loadTopology: () -> StrategicRouteProjection,
 ): StrategicPathResult = try {
     val projection = loadTopology()
     projection.resolve(

@@ -14,7 +14,7 @@ import opensamguk.logic.world.*
 /** Returns whether a deployed corps owns this commander's movement stage. */
 class CorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot, private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex,
+    private val cells: ProvinceCellIndex,
     private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING) {
     fun onTurn(commanderId: Int): Boolean {
         val actor = world.getGeneralById(commanderId) ?: return false
