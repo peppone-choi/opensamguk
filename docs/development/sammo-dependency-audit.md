@@ -48,3 +48,18 @@
 - `infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt:79-94,195-201`: 옛 경매·상속 flush 분기와 하위 SQL 함수. Flyway의 공유/삼모 전용 표 판정 뒤 제거한다.
 - `app/game-engine/src/main/kotlin/opensamguk/engine/turn/InMemoryTurnWorld.kt:269-277`: SAMMO 위치 규칙 분기. 현행 세계 형식 가드가 도달을 거절하므로 제품 위치 규칙만 남기는 후보이나 writer의 기록 경계 변경과 겹치므로 뒤로 미룬다.
 - `logic/src/main/kotlin/opensamguk/logic/input/RecordKind.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/campaign/Records.kt`는 현재 경매·베팅·상속·troop 키워드 실행 코드가 없었다. `BootstrapConfig.kt:15`는 관련 주석만 있다. writer가 독립적으로 다룬다.
+
+### 남은 제품 코드 삭제 후보 인벤토리(이 브랜치에서 미삭제)
+
+`*.kt` 파일 수는 #958 부모 작업트리에서 2026-09-26 재측정했다. 숫자는 삭제 허가가 아니라 후속 슬라이스의 상한이다.
+
+| 후보 | 파일 수 | 의존·삭제 선행 조건 |
+| --- | ---: | --- |
+| `logic/actions` | 116 | `actions/intake.SecretPermission`을 엔진 intake·API rank가 import한다. `actions/military.RecruitAlgorithm`도 공유 전투/모집 계산에서 쓰므로 소비자별 이전 후 삭제한다. `CommandRegistry`는 엔진 `DaemonLoopConfig.kt:46`, API `CommandReserveService.kt:19`에 남아 있다. |
+| `logic/ai` | 18 | `AiTurnAdapter.kt:15-40`의 기존 AI와 `NpcPolicyHandler.kt:22-23`의 자동행동 정책을 분리한다. 현행 NPC 정책 소비 여부를 확인한 뒤 삭제한다. |
+| `logic/auction`·`betting`·`inheritance`·`tournament` | 8·2·22·3 | `WorldActionContext.kt:41-68`의 타입·함수 import와 `MonthlyPostUpdateHook.kt:20-24`의 월말 경매 호출, `JoinController.kt:18`의 상속 API를 먼저 끊는다. 월 경계 도시 성장·사상자와 삼모 재정은 분리한다. |
+| 엔진 `auction`·`betting`·`tournament`·`nationbulk`·`operation` | 5·1·3·1·1 | `TurnDaemonCommandDispatcher.kt:57` 베팅, `WorldActionContext` 및 월말 hook과 연결된다. 현재 제품 입력/운영 경로와 수입 그래프를 분리한다. |
+| API `/v2/`·엔진 `/v2/`·인프라 `/v2/` | 6·9·4 | 샌드박스 구성과 콘텐츠가 제품에서 실제 호출되는지 API 라우트·Spring 빈·웹 import를 확인한다. `web/game/lib/v2/terrain` 투영은 지도 UI 소비를 따로 확인한다. |
+| 삼모 골든·캡처 테스트 | 로직 52·엔진 8, 로직 fixture 270 | 위 외부 소비 테스트 3곳과 `app/game-engine/build.gradle.kts:78-87` classpath 배선을 분리한 뒤 제거한다. `tools/php-golden/` 57파일은 첫 독립 슬라이스에서 제거했다. |
+
+구체적인 후속 PR 순서: (1) #958 지도 이름 PR main 병합, (2) 이 도구 삭제 PR base를 main으로 변경·리뷰·병합, (3) 저장·통신 키 전환을 pep C단계 리셋 전에 완료, (4) 기존 골든의 외부 소비 테스트를 현재 제품 의미로 이전하고 골든/fixture/skip 허용 목록 삭제, (5) 월 사건의 현재 효과 이전, (6) 명령/AI·API/웹·DB 표 삭제, (7) 이름/삼모 흔적 적색 프로브를 완료한다. writer 우선 소유 파일은 해당 writer PR 병합 뒤 수정한다.
