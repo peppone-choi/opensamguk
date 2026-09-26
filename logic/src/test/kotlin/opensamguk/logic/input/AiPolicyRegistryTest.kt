@@ -37,6 +37,7 @@ class AiPolicyRegistryTest {
     @Test
     fun `undelivered and wrong selector policies cannot choose an NPC input`() {
         assertTrue(AiPolicyRegistry.selectable(catalog, "action.deploy", AiSelectorKey.DEPLOY))
+        assertTrue(AiPolicyRegistry.selectable(catalog, "action.muster", AiSelectorKey.MUSTER))
         assertFalse(AiPolicyRegistry.selectable(catalog, "action.deploy", AiSelectorKey.PERSONAL))
         assertFalse(AiPolicyRegistry.selectable(catalog, "action.retire", AiSelectorKey.PERSONAL))
         assertFalse(AiPolicyRegistry.selectable(catalog, "action.unknown", AiSelectorKey.DEPLOY))

@@ -37,6 +37,7 @@
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
 | `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
+| `Han<연도>Artifacts`·`Han1447Map4Artifacts` | `Archive<연도>Artifacts`·`Archive1447Map4Artifacts` | 보관본 로더 개명 | 11개 릴리스 번들 로더와 10개 무결성 테스트를 순수 개명; `han-world-v3-*` 번들 ID·catalog SHA 불변 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
@@ -1533,3 +1534,11 @@ web/game/lib/hwiha-reads.ts
 | `HanFoundAssaultTest` | `FoundAssaultTest` |
 | `HanGateRegionsTest` | `GateRegionsTest` |
 | `HanProvinceSeatsTest` | `ProvinceSeatsTest` |
+
+## 활성 턴 프로필 기본 식별자
+
+| 설정 | 이전 기본값 | 새 기본값 |
+| --- | --- | --- |
+| `TURN_PROFILE_NAME`·`OPENSAMGUK_PROFILE` | `che:scenario_2` | `pep:scenario_990002` |
+
+새 기본값은 `SERVER_ID=pep`, `SCENARIO_CODE=scenario_990002`와 일치한다. 운영자가 환경 변수로 지정한 프로필은 그대로 적용한다. 기존 Redis 키 접두사 `sammo:`는 저장 데이터 호환성 검토 후 별도로 변경한다.

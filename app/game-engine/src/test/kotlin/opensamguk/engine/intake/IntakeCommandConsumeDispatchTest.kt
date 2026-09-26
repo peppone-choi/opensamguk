@@ -156,19 +156,6 @@ class IntakeCommandConsumeDispatchTest {
     }
 
     @Test
-    fun `tournamentEnroll payload decodes and dispatches writing the general tnmt`() {
-        val world = world()
-        val recorder = ChangeRecorder()
-
-        val decoded = decodeAsConsumer(TurnDaemonCommand.TournamentEnroll(requestId = "r", generalId = 10, value = 1))
-        val result = dispatcher(world, recorder).dispatch(decoded) as NationSettingResult
-
-        assertTrue(result.ok)
-        assertEquals(1, world.getGeneralById(10)!!.meta["tnmt"])
-        assertEquals(setOf(10), recorder.dirtyGeneralIds())
-    }
-
-    @Test
     fun `newVote payload decodes and dispatches to VoteHandler producing the vote_poll delta`() {
         // 새 설문조사를 개설할 수 있는 vote-admin(userGrade>=5) 장수.
         val world = InMemoryTurnWorld(

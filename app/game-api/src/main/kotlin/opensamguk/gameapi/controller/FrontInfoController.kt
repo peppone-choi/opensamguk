@@ -634,7 +634,6 @@ class FrontInfoController(
 
         // [§2 BLOCKED — world_state.config 미기재] 아래 game_env 키는 데몬이 채우지 않으므로(현재 config는
         // startyear/starttime/turnterm만), config에서 방어적으로 읽되 부재 시 null/기본값. 날조 없음.
-        val tournament = intOrNull(config["tournament"])
         val auctionCount = auctions.countByFinished(false).toInt()
         val now = Instant.now()
         val openPolls = votePolls.countOpenPolls(now)
@@ -702,15 +701,6 @@ class FrontInfoController(
             apiLimit = intOrNull(config["refreshLimit"]),
             serverCnt = generation,
             isunited = boolOrNull(config["isunited"]),
-            tournamentTermMinutes = turnTerm.coerceIn(5, 120),
-
-            // 토너먼트/베팅 — tournament 정수에서 파생(부재 시 모두 null/false).
-            tournamentState = tournament,
-            tournamentType = intOrNull(config["tnmt_type"])?.let { F4StateText.tournamentTypeText(it) },
-            isTournamentActive = tournament?.let { it > 0 },
-            isTournamentApplicationOpen = tournament?.let { it == 1 },
-            isBettingActive = tournament?.let { it == 6 },
-            nationBetting = tournament?.let { it == 6 },
 
             // 설문 진행 여부(미만료 폴 존재).
             vote = openPolls > 0,

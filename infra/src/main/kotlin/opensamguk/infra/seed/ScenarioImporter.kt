@@ -92,8 +92,7 @@ class ScenarioImporter(
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
-    // Fresh imports always use HWIHA. The rollback switch is for an existing restored world.
-    private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile(rollback = false)
+    private val effectiveProfile = scenario.ruleProfile ?: WorldRuleProfile.defaultProfile()
 
     /** Result counts for the boot log + idempotency assertions. */
     data class ImportCounts(
