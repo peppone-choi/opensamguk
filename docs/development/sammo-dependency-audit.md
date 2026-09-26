@@ -26,3 +26,25 @@
 1. `MonthlyPreUpdateHook`·`MonthlyPostUpdateHook` 내부의 각 액션과 `EventStore` 기본 행을 실제 휘하 효과별로 분해한다. `checkWander`, 외교 기간 정산, 통계, 도시 성장·사상자·재정, 가신·작전 월 정산을 구분한다.
 2. `AiTurnAdapter`·`ProcessNationCommand`는 휘하 장수 턴의 `continue` 아래에 있어 건너뛰지만, 즉시 명령 디스패처 등 다른 진입점이 있는지 따로 확인한다. #913~#915의 기존 변경은 이 감사의 기준에 포함했다.
 3. 삭제 후보(`logic/actions`, 삼모 AI·경매·베팅·토너먼트·상속, 엔진 동일 기능, 알파 카탈로그, 웹·시나리오·DB)에 대해 import 그래프와 호출·테스트를 교차 확인한다. 현재 표는 삭제 허가 목록이 아니다.
+
+## 2026-09-26 재감사: #956·#958 이후 삭제 순서
+
+기준은 #958 지도 이름 변경 브랜치 `a324cc360`이다. 위 표의 2026-09-25 파일명·줄 번호는 당시 기록이며, 삭제 판단에는 아래 현재 경계를 쓴다. 이 감사 브랜치는 #958을 부모로 쌓고, #958 병합 뒤 main에 재기반한다.
+
+| 묶음 | 현재 사용 근거 | 판정·순서 |
+| --- | --- | --- |
+| PHP 캡처 도구 `tools/php-golden/`(57파일) | `.github/workflows`와 제품 소스·실행 스크립트에서 이 디렉터리를 실행하는 참조가 없다. 테스트의 `logic/src/test/kotlin/opensamguk/logic/golden/MonthTickReplayGateTest.kt:21-32`, `app/game-engine/src/test/kotlin/opensamguk/engine/golden/LongSimReplayGateTest.kt:318-327` 등은 캡처 출처를 설명한다. | 삼모 비교 도구 전용이다. 독립 1차 삭제 슬라이스로 제거한다. 캡처 자료를 사용하던 테스트·리소스는 아래 의존을 끊은 뒤 별도 삭제한다. |
+| Kotlin 삼모 골든 테스트·리소스 | `logic/src/test/kotlin/opensamguk/logic/golden/` 52파일, `app/game-engine/src/test/kotlin/opensamguk/engine/golden/` 8파일, `logic/src/test/resources/golden/` 270파일이다. 바깥의 `MakeGeneralInheritanceTest.kt:4`는 `JoinDrawRecorder`, `OneRngPerGeneralTurnTest.kt:5`는 `AiDrawRecorder`를 import한다. `ConquerCityCollapseTest.kt:330-334`는 `golden/p4`를 읽는다. `app/game-engine/build.gradle.kts:78-87`은 로직 테스트 리소스를 엔진에 공유한다. | 테스트 디렉터리 전체를 바로 지우면 컴파일/fixture가 깨진다. 세 외부 소비 테스트를 현재 제품 의미에 맞게 이전하거나 삼모 전용 구간을 제거하고, 공유 classpath 배선을 정리한 다음 골든 자료를 삭제한다. |
+| 삼모 명령/AI·경매·베팅·상속 | `TurnDaemonLifecycle.kt:182-260`의 현행 입력 뒤 `continue`는 장수·사령턴의 레거시 경로를 건너뛴다. 그러나 `WorldActionContext.kt:41-68`, `MonthlyPostUpdateHook.kt:20-24`, `CommandReserveService.kt:19` 등은 기존 타입을 여전히 import한다. | 레거시 턴 실행부는 삭제 후보지만 import만 보고 패키지를 일괄 삭제할 수 없다. 월 사건의 도시 성장·인구·사상자 같은 현재 효과는 위 표대로 분리한 후 제거한다. |
+| `logic.actions.intake.SecretPermission` 등 | `PersonnelHandler.kt:12`, `OperationHandler.kt:14`, `RankReadService.kt:38`이 import한다. 해당 핸들러/API의 현행 도달성을 확인해야 한다. | 공유 보안 판정 가능성이 있어 이번 도구 삭제 슬라이스에서 유지한다. 삼모 전용 endpoint를 걷을 때 소비자별로 분류한다. |
+| 기록·flush 경계 | writer 담당이 `JdbcFlushExecutor.kt`, `InMemoryTurnWorld.kt` 기록 구간, `DatabaseHooks`, `RecordKind`/`HwihaRecords`, `DirtyState.kt`, `BootstrapConfig.kt`를 편집한다. | 이 감사/삭제 브랜치에서는 직접 편집하지 않는다. 삼모 호출 제거 지점만 줄 단위로 전달하고 writer PR 또는 그 병합 후 후속 PR에서 처리한다. |
+
+독립 도구 삭제 뒤 검사: 저장소 전체에서 `tools/php-golden/`의 **실행** 참조 0건, `python3 tools/ci/naming_lint.py --counts` 실측 기준 반영, `git diff --check`. 남은 설명·과거 보고서의 경로 언급은 기록으로 남기고, 제품 안내·CI의 실행 경로는 0건이어야 한다.
+
+### writer 담당에게 넘긴 삭제 후보(직접 편집 금지)
+
+- `app/game-engine/src/main/kotlin/opensamguk/engine/turn/DirtyState.kt:68-85,251-262`: 경매·입찰·베팅·상속 dirty 채널 타입과 필드. 현행 제품의 가신·부곡 dirty 채널(`:204`)과 섞지 않는다.
+- `app/game-engine/src/main/kotlin/opensamguk/engine/flush/DatabaseHooks.kt:661-662,778-780,811-815,837-864`: 옛 auction/betting/inheritance payload와 active auction 투영. 현재 기록 writer 변경과 병합해 처리한다.
+- `infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt:79-94,195-201`: 옛 경매·상속 flush 분기와 하위 SQL 함수. Flyway의 공유/삼모 전용 표 판정 뒤 제거한다.
+- `app/game-engine/src/main/kotlin/opensamguk/engine/turn/InMemoryTurnWorld.kt:269-277`: SAMMO 위치 규칙 분기. 현행 세계 형식 가드가 도달을 거절하므로 제품 위치 규칙만 남기는 후보이나 writer의 기록 경계 변경과 겹치므로 뒤로 미룬다.
+- `logic/src/main/kotlin/opensamguk/logic/input/RecordKind.kt`, `app/game-engine/src/main/kotlin/opensamguk/engine/campaign/Records.kt`는 현재 경매·베팅·상속·troop 키워드 실행 코드가 없었다. `BootstrapConfig.kt:15`는 관련 주석만 있다. writer가 독립적으로 다룬다.
