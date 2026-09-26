@@ -195,7 +195,7 @@ export default function CityTransportForm() {
                 </button>
             </div>
             {selectedRoute && <p>{transportRouteSummary(selectedRoute)}</p>}
-            <MapViewer disallowClick hwihaLayers="fog" refreshKey={ledgerRefresh} selectedServerRoute={selectedRoute}
+            <MapViewer disallowClick mapLayers="fog" refreshKey={ledgerRefresh} selectedServerRoute={selectedRoute}
                 onStrategicBindingChange={handleBindingChange} selectedCityId={Number(fromCityId) || null} />
             {outcome && (
                 <p

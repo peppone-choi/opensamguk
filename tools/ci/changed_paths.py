@@ -15,7 +15,7 @@ CITY_INFRASTRUCTURE = {
     ".github/city-paths.txt",
     ".github/workflows/ci.yml",
     "app/game-engine/build.gradle.kts",
-    "app/game-engine/src/test/kotlin/opensamguk/engine/boot/HanExpandedCityCommandRoundTripIT.kt",
+    "app/game-engine/src/test/kotlin/opensamguk/engine/boot/ExpandedCityPersistenceIT.kt",
     "app/game-engine/src/test/kotlin/opensamguk/engine/boot/CityPathGuardTest.kt",
     "tools/ci/changed_paths.py",
     "tools/ci/check_city_shards.py",

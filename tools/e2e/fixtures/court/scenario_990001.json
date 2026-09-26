@@ -1,0 +1,68 @@
+{
+  "title": "HWIHA court synthetic QA",
+  "startYear": 200,
+  "worldFormat": "GENERAL_RETAINER_CAMPAIGN",
+  "map": {
+    "mapName": "han-world-v3"
+  },
+  "seedContract": {
+    "activeGenerals": {
+      "base": 1,
+      "extended": 1
+    }
+  },
+  "lords": [
+    "QA 주공"
+  ],
+  "nation": [
+    [
+      "QA 세력",
+      "#123456",
+      1000,
+      1000,
+      "합성 QA 전용",
+      0,
+      null,
+      1,
+      [
+        "허창"
+      ]
+    ]
+  ],
+  "general": [
+    [
+      0,
+      "QA 주공",
+      null,
+      1,
+      "허창",
+      60,
+      61,
+      62,
+      12,
+      170,
+      280,
+      null,
+      null,
+      null,
+      63,
+      64
+    ]
+  ],
+  "personPolicies": [
+    {
+      "name": "QA 주공",
+      "statSourceId": "synthetic-qa:court",
+      "statSourceRevision": "v1",
+      "officerId": 1,
+      "acceptsEnlistment": true,
+      "stats": {
+        "leadership": 60,
+        "strength": 61,
+        "intelligence": 62,
+        "politics": 63,
+        "charm": 64
+      }
+    }
+  ]
+}

@@ -41,7 +41,7 @@ class MapPreviewControllerTest {
     private val objectMapper = ObjectMapper()
 
     private val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
-    private val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+    private val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
     private fun resolver(): opensamguk.gameapi.read.ActiveWorldArtifactResolver {
         `when`(worldRepo.findProcessWorld()).thenAnswer { worldRepo.findAll().firstOrNull() }
         return opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cityRepo, pins, artifacts)
@@ -211,11 +211,11 @@ class MapPreviewControllerTest {
         `when`(pins.readPins(1)).thenReturn(emptyList())
         `when`(nationRepo.findAll()).thenReturn(emptyList())
         val mvc = mockMvc()
-        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+        for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
             val selected = artifacts.artifacts(variant)
             val topology = selected.projection.topology
-            `when`(pins.readPins(1)).thenReturn(if (variant == opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
-                listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
+            `when`(pins.readPins(1)).thenReturn(if (variant == opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
+                listOf(opensamguk.infra.seed.WorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             val map = opensamguk.infra.seed.MapJson.loadMap(selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
             `when`(cityRepo.findAll()).thenReturn(map.cities.map { city(it.id, 5, 0) })
             val response = mvc.perform(get("/api/map/preview")).andExpect(status().isOk)
@@ -227,7 +227,7 @@ class MapPreviewControllerTest {
                 kotlin.test.assertEquals(expected.y, returned.getValue(expected.id)["y"].asDouble())
             }
         }
-        `when`(pins.readPins(1)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", "wrong", "wrong")))
+        `when`(pins.readPins(1)).thenReturn(listOf(opensamguk.infra.seed.WorldTopologyPin("province_control", "wrong", "wrong")))
         mvc.perform(get("/api/map/preview")).andExpect(status().isConflict)
             .andExpect(jsonPath("$.code").value("STRATEGIC_STATE_INVALID"))
     }

@@ -1,13 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { HanTiles, IsoCityOverlay } from '../HanMapCanvas';
+import type { WorldTiles, IsoCityOverlay } from '../WorldMapCanvas';
 import type { ProvinceIdentityMap } from '../provinceMap';
 import { buildMarkerPositions } from '../useWorldMap';
 
 // Retained board data contracts. These do not depend on the retired sprite renderer.
 const root = resolve(__dirname, '../../../..');
-const tiles = JSON.parse(readFileSync(resolve(root, 'data/map/han-tiles.json'), 'utf8')) as HanTiles;
+const tiles = JSON.parse(readFileSync(resolve(root, 'data/map/han-tiles.json'), 'utf8')) as WorldTiles;
 const world = JSON.parse(readFileSync(resolve(root, 'infra/src/main/resources/map/han-world-v3.json'), 'utf8')) as {
   cities: { id: number; name: string; x: number; y: number; provinceId?: number }[];
   seaRoutes: { from: number; to: number; kind: string }[];
@@ -41,7 +41,7 @@ tiles.provinceRecords?.forEach((record, province) => {
   provincesByCity.set(record.cityIndex, indices);
 });
 
-function projectedCell(city: HanTiles['cities'][number]): [number, number] {
+function projectedCell(city: WorldTiles['cities'][number]): [number, number] {
   const p = tiles._meta.projection!;
   return [(city.lon * p.k - p.x0 + p.pad) / p.cell, (p.y1 + p.pad - city.lat) / p.cell];
 }

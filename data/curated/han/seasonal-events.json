@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "season:drought",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "계절과 지형의 게임 사건 유형. 특정 역사 사건이나 시기 주장 없음.",
+      "displayBadge": "게임 용어",
+      "label": "가뭄",
+      "kind": "DROUGHT",
+      "seasons": [
+        "SUMMER",
+        "AUTUMN"
+      ],
+      "terrains": [
+        "PLAIN"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season:flood",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "계절과 지형의 게임 사건 유형. 특정 역사 사건이나 시기 주장 없음.",
+      "displayBadge": "게임 용어",
+      "label": "홍수",
+      "kind": "FLOOD",
+      "seasons": [
+        "SUMMER"
+      ],
+      "terrains": [
+        "RIVER",
+        "WETLAND"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season:plague",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "계절과 지형의 게임 사건 유형. 특정 역사 사건이나 시기 주장 없음.",
+      "displayBadge": "게임 용어",
+      "label": "역병",
+      "kind": "PLAGUE",
+      "seasons": [
+        "SPRING",
+        "SUMMER",
+        "AUTUMN",
+        "WINTER"
+      ],
+      "terrains": [
+        "PLAIN",
+        "RIVER",
+        "MOUNTAIN",
+        "WETLAND"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season:locust",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "계절과 지형의 게임 사건 유형. 특정 역사 사건이나 시기 주장 없음.",
+      "displayBadge": "게임 용어",
+      "label": "황충",
+      "kind": "LOCUST",
+      "seasons": [
+        "SUMMER",
+        "AUTUMN"
+      ],
+      "terrains": [
+        "PLAIN"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season:freeze",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "계절과 지형의 게임 사건 유형. 특정 역사 사건이나 시기 주장 없음.",
+      "displayBadge": "게임 용어",
+      "label": "결빙",
+      "kind": "FREEZE",
+      "seasons": [
+        "WINTER"
+      ],
+      "terrains": [
+        "RIVER",
+        "MOUNTAIN"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    },
+    {
+      "id": "season:rainy-passage",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "계절과 지형의 게임 사건 유형. 특정 역사 사건이나 시기 주장 없음.",
+      "displayBadge": "게임 용어",
+      "label": "우기 통행",
+      "kind": "RAINY_PASSAGE",
+      "seasons": [
+        "SUMMER"
+      ],
+      "terrains": [
+        "MOUNTAIN",
+        "WETLAND"
+      ],
+      "status": "CONFIRMED",
+      "decidedBy": "구현 에이전트",
+      "decidedAt": "2026-09-25",
+      "basis": "S5-4a·S5-5a의 순수 사건/관계 어휘를 위한 초기 게임 설계 선택."
+    }
+  ]
+}

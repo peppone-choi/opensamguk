@@ -19,19 +19,19 @@ import opensamguk.logic.domestic.DomesticEffects
 import opensamguk.logic.domestic.DomesticCard
 
 import opensamguk.logic.domestic.DomesticDesign
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import kotlin.test.*
 
 /**
- * 통합 계약: 내정 스트림이 **쓰는** 꼴(`hwihaScoutPosts` 장수 meta, `hwihaCountyWorks` 縣治 meta)을 시야 스트림의
+ * 통합 계약: 내정 스트림이 **쓰는** 꼴(`scoutPosts` 장수 meta, `countyWorks` 縣治 meta)을 시야 스트림의
  * reader([MetaVisionSourceReader])가 그대로 읽어 시야 투영에서 FULL 이 된다. 어느 한쪽이 키·꼴을 바꾸면
  * 여기서 빨개진다(두 스트림 각각의 단위 테스트는 자기 쪽 꼴만 본다).
  */
 class VisionSourceContractTest {
     private val hash = "a".repeat(64)
     // 0 — 1 — 2 — 3 — 4 (line); province pN belongs to commandery N.
-    private val index = HanCommanderyIndex(hash, (0..4).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
+    private val index = CommanderyIndex(hash, (0..4).map { Commandery(it, "PARENT-$it", "군$it", "郡$it") },
         (0..4).associate { "p$it" to it }, setOf(0 to 1, 1 to 2, 2 to 3, 3 to 4))
     private val now = Phase(200, 1, 1)
     private val reader: VisionSourceReader = MetaVisionSourceReader

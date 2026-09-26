@@ -80,4 +80,27 @@ class DispatchRulesTest {
             assignment.copy(nationId=2),pending)))
     }
 
+    @Test fun `NPC automation admits a direct NPC card only when the issuer is an NPC lord`() {
+        val npc = state().copy(people = state().people.map {
+            when (it.id) {
+                1 -> it.copy(isNpc = true)
+                2 -> it.copy(isHuman = false, isNpc = true)
+                else -> it
+            }
+        })
+        assertEquals(DispatchFailure.TARGET_NOT_HUMAN, failure(DispatchRules.assess(request, npc)))
+        assertIs<DispatchAssessment.Eligible>(DispatchRules.assess(request, npc, DispatchTargetPolicy.NPC_AUTOMATED))
+        assertEquals(DispatchFailure.NPC_ISSUER_REQUIRED, failure(DispatchRules.assess(request,
+            npc.copy(people = npc.people.map { if (it.id == 1) it.copy(isNpc = false) else it }),
+            DispatchTargetPolicy.NPC_AUTOMATED)))
+        val pending = npc.copy(people = npc.people.map { if (it.id == 2)
+            it.copy(meta = mapOf(DispatchState.META_KEY to order.toMetaValue())) else it })
+        assertIs<DispatchAssessment.Eligible>(DispatchRules.assessReply(2, order.dispatchId, pending,
+            DispatchTargetPolicy.NPC_AUTOMATED))
+        assertEquals(DispatchFailure.TARGET_NOT_HUMAN,
+            failure(DispatchRules.assessReply(2, order.dispatchId, pending)))
+        assertIs<DispatchAssessment.Eligible>(DispatchRules.assessAssignment(2,
+            CountyAssignment(order.dispatchId, 1, 1, 10), pending, DispatchTargetPolicy.NPC_AUTOMATED))
+    }
+
 }

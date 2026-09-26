@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ComponentProps } from 'react';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as WorldMapCanvasType } from '@opensamguk/ui';
 
 const shared = vi.hoisted(() => ({
-  props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  props: null as ComponentProps<typeof WorldMapCanvasType> | null,
 }));
 
 vi.mock('@opensamguk/ui', async () => {
@@ -24,7 +24,7 @@ vi.mock('@opensamguk/ui', async () => {
             commanderyControl: mapData.commanderyControl.map((row) => ({ ...row, ...colorOf(row.nationId) })) } : undefined,
       };
     },
-    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    WorldMapCanvas: (props: ComponentProps<typeof WorldMapCanvasType>) => {
       shared.props = props;
       return <div data-testid="han-map" aria-label={props.ariaLabel}>
         <button type="button" onClick={() => props.onCityActivate?.(props.cities![0])}>첫 城 누르기</button>

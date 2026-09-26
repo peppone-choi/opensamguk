@@ -1,0 +1,393 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "office.taiwei",
+      "kind": "CENTRAL_OFFICE",
+      "name": "太尉",
+      "officeClass": "THREE_DUKE",
+      "rankLabel": "公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "太尉，公一人。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.situ",
+      "kind": "CENTRAL_OFFICE",
+      "name": "司徒",
+      "officeClass": "THREE_DUKE",
+      "rankLabel": "公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "司徒，公一人。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.sikong",
+      "kind": "CENTRAL_OFFICE",
+      "name": "司空",
+      "officeClass": "THREE_DUKE",
+      "rankLabel": "公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "司空，公一人。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.taichang",
+      "kind": "CENTRAL_OFFICE",
+      "name": "太常",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷115",
+          "section": "百官志 百官二 太常 光祿勳 衛尉 太僕 廷尉 大鴻臚",
+          "quote": "太常，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.guangluxun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "光祿勳",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷115",
+          "section": "百官志 百官二 太常 光祿勳 衛尉 太僕 廷尉 大鴻臚",
+          "quote": "光祿勛，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.weiwei",
+      "kind": "CENTRAL_OFFICE",
+      "name": "衛尉",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷115",
+          "section": "百官志 百官二 太常 光祿勳 衛尉 太僕 廷尉 大鴻臚",
+          "quote": "衞尉，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.taipu",
+      "kind": "CENTRAL_OFFICE",
+      "name": "太僕",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷115",
+          "section": "百官志 百官二 太常 光祿勳 衛尉 太僕 廷尉 大鴻臚",
+          "quote": "太僕，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.tingwei",
+      "kind": "CENTRAL_OFFICE",
+      "name": "廷尉",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷115",
+          "section": "百官志 百官二 太常 光祿勳 衛尉 太僕 廷尉 大鴻臚",
+          "quote": "廷尉，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.dahonglu",
+      "kind": "CENTRAL_OFFICE",
+      "name": "大鴻臚",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷115",
+          "section": "百官志 百官二 太常 光祿勳 衛尉 太僕 廷尉 大鴻臚",
+          "quote": "大鴻臚，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.zongzheng",
+      "kind": "CENTRAL_OFFICE",
+      "name": "宗正",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷116",
+          "section": "百官志 百官三 宗正 大司農 少府",
+          "quote": "宗正，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.dasinong",
+      "kind": "CENTRAL_OFFICE",
+      "name": "大司農",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷116",
+          "section": "百官志 百官三 宗正 大司農 少府",
+          "quote": "大司农，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.shaofu",
+      "kind": "CENTRAL_OFFICE",
+      "name": "少府",
+      "officeClass": "NINE_MINISTER",
+      "rankLabel": "中二千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷116",
+          "section": "百官志 百官三 宗正 大司農 少府",
+          "quote": "少府，卿一人，中二千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.shangshuling",
+      "kind": "CENTRAL_OFFICE",
+      "name": "尚書令",
+      "officeClass": "SECRETARIAT",
+      "rankLabel": "千石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷116",
+          "section": "百官志 百官三 宗正 大司農 少府",
+          "quote": "尚书令一人，千石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "一人"
+    },
+    {
+      "id": "office.shangshu",
+      "kind": "CENTRAL_OFFICE",
+      "name": "尚書",
+      "officeClass": "SECRETARIAT",
+      "rankLabel": "六百石",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷116",
+          "section": "百官志 百官三 宗正 大司農 少府",
+          "quote": "尚书六人，六百石。",
+          "grade": "PRIMARY"
+        }
+      ],
+      "attestedCapacity": "六人"
+    },
+    {
+      "id": "office.dajiangjun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "大將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "比公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.piaoqi",
+      "kind": "CENTRAL_OFFICE",
+      "name": "驃騎將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "比公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.cheqi",
+      "kind": "CENTRAL_OFFICE",
+      "name": "車騎將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "比公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.weijiangjun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "衞將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "比公",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.qianjiangjun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "前將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "UNKNOWN",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.houjiangjun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "後將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "UNKNOWN",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.zuojiangjun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "左將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "UNKNOWN",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "office.youjiangjun",
+      "kind": "CENTRAL_OFFICE",
+      "name": "右將軍",
+      "officeClass": "GENERAL_COMMISSION",
+      "rankLabel": "UNKNOWN",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷114",
+          "section": "百官志 百官一 太傅 太尉 司徒 司空 將軍",
+          "quote": "比公者四：第一大將軍，次驃騎將軍，次車騎將軍，次衞將軍。又有前、後、左、右將軍。",
+          "grade": "PRIMARY"
+        }
+      ]
+    }
+  ]
+}

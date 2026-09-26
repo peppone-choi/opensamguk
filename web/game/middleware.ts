@@ -53,6 +53,15 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   // the v2 experimental namespace as a server ID.
   'v2-lab',
   'vote',
+  'court',
+  'hand',
+  'orders',
+  'posts',
+  'retinue',
+  'siege',
+  'supply',
+  'war-room',
+  'yuedan',
   'world-log',
 ]);
 
@@ -79,15 +88,17 @@ const RETIRED_GAME_PATHS = new Set([
   'admin1', 'admin2', 'admin5', 'admin7', 'admin8',
   'auction', 'battle-plan', 'betting', 'chief-center', 'coming-soon',
   'diplomacy', 'inherit', 'my-boss', 'nation', 'nation-betting',
-  'nation-finance', 'npc-control', 'simulator', 'tournament',
+  'nation-finance', 'npc-control', 'select-pool', 'simulator', 'tournament',
   'tournament-admin', 'troop', 'v2-lab', 'vote',
 ]);
+// 삼모 전용 랭킹 4종(ADR-LITE-049 2026-09-26: 대체 없이 삭제). 첫 조각만으로는 못 막아 rankings 아래를 따로 본다.
+const RETIRED_RANKING_PATHS = new Set(['emperor', 'hall-of-fame', 'npcs', 'traffic']);
 
 function isRetiredGamePath(pathname: string): boolean {
   const segments = pathname.split('/');
   if (segments[1] !== 'game') return false;
   const rest = segments[2] === configuredServerId() ? segments.slice(3) : segments.slice(2);
-  return RETIRED_GAME_PATHS.has(rest[0]);
+  return RETIRED_GAME_PATHS.has(rest[0]) || (rest[0] === 'rankings' && RETIRED_RANKING_PATHS.has(rest[1]));
 }
 
 export function middleware(req: NextRequest) {
@@ -97,18 +108,20 @@ export function middleware(req: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
-  // The serverless HWIHA URL is a legacy address. Keep the selected game
-  // instance in the visible URL, while the existing rewrite serves its page.
-  if (pathname === '/game/hwiha' || pathname.startsWith('/game/hwiha/')) {
-    const serverId = configuredServerId();
-    if (serverId) {
-      const targetUrl = req.nextUrl.clone();
-      targetUrl.pathname = `/game/${serverId}${pathname.slice('/game'.length)}${pathname === '/game/hwiha' ? '/war-room' : ''}`;
-      targetUrl.searchParams.delete('server');
-      const res = NextResponse.redirect(targetUrl, 308);
-      setServerCookie(res, serverId);
-      return res;
-    }
+  // Old campaign URLs redirect to the same screen at its domain route.
+  const segments = pathname.split('/');
+  const oldServerless = segments[1] === 'game' && segments[2] === 'hwiha';
+  const oldServerPath = segments[1] === 'game' && isPublicServerId(segments[2] ?? '') && segments[3] === 'hwiha';
+  if (oldServerless || oldServerPath) {
+    const pathServerId = oldServerPath ? segments[2] : undefined;
+    const serverId = pathServerId ?? configuredServerId();
+    const slug = segments.slice(oldServerPath ? 4 : 3).filter(Boolean).join('/') || 'war-room';
+    const targetUrl = req.nextUrl.clone();
+    targetUrl.pathname = `/game/${serverId ? `${serverId}/` : ''}${slug}`;
+    if (serverId) targetUrl.searchParams.delete('server');
+    const res = NextResponse.redirect(targetUrl, 308);
+    if (serverId && serverId === configuredServerId()) setServerCookie(res, serverId);
+    return res;
   }
 
   // 1) Query-based server selection: preserve existing behavior.
@@ -120,7 +133,6 @@ export function middleware(req: NextRequest) {
   }
 
   // Only rewrite this instance's SERVER_ID path, so `/game/join` remains an ordinary route.
-  const segments = pathname.split('/');
   if (segments.length >= 3 && segments[1] === 'game') {
     const serverId = segments[2];
     if (serverId === configuredServerId()) {

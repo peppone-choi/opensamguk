@@ -7,11 +7,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.engine.hwiha.HwihaEncounterResolver
+import opensamguk.engine.campaign.EncounterResolver
+import opensamguk.engine.campaign.RewardHistory
 import opensamguk.engine.invariance.WorldStateBaseline
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,7 +32,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
 /**
  * S3 관문 — 운영 배선(Spring 컨텍스트의 TurnRunService: 개인 턴 lifecycle·NPC 선택기·순 경계·월간 파이프라인)으로
  * 豫州 조각을 48순 돌려 출사 → 발령 → 행군 → 조우 → 공성 → 점령 → 징세 → 월단평이 스스로 이어지는지 본다.
- * 사람이 하는 일은 가입·장수 생성·출사 예약뿐이고, 나머지는 NPC 와 루프가 한다. 적색 짝은 [HwihaS3PassChainProbeIT].
+ * 사람이 하는 일은 가입·장수 생성·출사 예약뿐이고, 나머지는 NPC 와 루프가 한다. 적색 짝은 [S3PassChainProbeIT].
  */
 @Testcontainers(disabledWithoutDocker = true)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
@@ -56,6 +57,25 @@ class PassChainInvarianceIT {
     fun `S3 고리 — 출사 발령 행군 조우 공성 점령 징세 월단평이 관리자 개입 없이 이어진다`() {
         PassChainSupport.run(service, measuredWorld = world)
         PassChainSupport.assertChain(world, jdbc, WORLD)
+        val rewardHistory = RewardHistory.read(world.getGeneralById(PassChainSupport.HUMAN)!!.meta)
+        assertEquals(16, rewardHistory?.count, "포상: 같은 카드에 16회 지급한 이력을 남겼다")
+        assertEquals(191 to 4, rewardHistory?.let { it.year to it.month })
+        assertEquals("npc-reward:23:1001:9001:191:4", rewardHistory?.lastId)
+        assertEquals(99, world.listRetainers().single { it.generalId == PassChainSupport.HUMAN }.loyalty,
+            "포상: 수혜 카드 충성도가 지급액에 비례해 올랐다")
+        val rewardRows = jdbc.queryForList("""SELECT audience, audience_general_id, occurred_year, occurred_month,
+            refs->>'ISSUER' AS issuer_id, refs->>'TARGET' AS target_id,
+            (facts->>'MONEY')::bigint AS money
+            FROM game_event WHERE world_id=? AND kind='court.rewardReceived'
+            ORDER BY occurred_year, occurred_month, occurred_phase, occurred_ordinal""", WORLD)
+        assertEquals(16, rewardRows.size, "포상: 각 지급은 수혜자 SELF typed 사건으로 flush된다")
+        assertTrue(rewardRows.all { row ->
+            row["audience"] == "SELF" && (row["audience_general_id"] as Number).toInt() == PassChainSupport.HUMAN &&
+                row["issuer_id"] == "1001" && row["target_id"] == "9001" &&
+                (row["money"] as Number).toLong() in 100L..500L
+        }, "포상: 모든 사건의 발행자·수혜자·금액이 실제 카드 지급과 일치한다")
+        assertEquals(6_500L, rewardRows.sumOf { (it["money"] as Number).toLong() },
+            "포상: 창고에서 지급한 금과 typed 사건 금액 합계가 일치한다")
         PassChainSupport.assertSiegesReload(world, loader)
         assertEquals(0, world.getCityById(77)?.supplyState, "an unbuilt road must cut city 77 supply")
         WorldStateBaseline.assertMatches("s3-chain-48", world)
@@ -75,11 +95,11 @@ class PassChainInvarianceIT {
             seedBootstrap: SeedBootstrap,
             processWorld: EngineProcessWorld,
         ): WorldSnapshotLoader {
-            val artifacts = HanWorldArtifactsResolver(repoRoot())
+            val artifacts = WorldArtifactsResolver(repoRoot())
             return WorldSnapshotLoader(
                 jdbc, seedBootstrap, processWorld.worldId,
                 waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-                hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+                mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
                 administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
                 cityLandProvinceLoader = { variant ->
                     artifacts.artifacts(variant).projection.bindingsByCityId

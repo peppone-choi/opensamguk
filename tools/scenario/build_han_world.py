@@ -10,8 +10,8 @@
 
 출력:
   infra/src/main/resources/map/han.json                              (che.json 과 동일 스키마)
-  common/src/main/kotlin/opensamguk/common/constants/HanCityConst.kt (생성물, 손편집 금지)
-  common/src/main/kotlin/opensamguk/common/constants/HanGateIndex.kt (생성물, 손편집 금지)
+  common/src/main/kotlin/opensamguk/common/constants/BaselineCityConst.kt (생성물, 손편집 금지)
+  common/src/main/kotlin/opensamguk/common/constants/BaselineGateIndex.kt (생성물, 손편집 금지)
     — 城 id → 그 城이 가진 게이트 키(漢字) 집합. han 병종의 ReqRegions/ForbidRegions 해석에 쓴다.
 
     python3 tools/scenario/build_han_world.py
@@ -62,11 +62,11 @@ CHE = ROOT / "infra" / "src" / "main" / "resources" / "map" / "che.json"
 UNITS = ROOT / "data" / "unitset" / "units.json"
 
 OUT_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han.json"
-OUT_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanCityConst.kt"
-OUT_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanGateIndex.kt"
+OUT_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "BaselineCityConst.kt"
+OUT_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "BaselineGateIndex.kt"
 OUT_V3_JSON = ROOT / "infra" / "src" / "main" / "resources" / "map" / "han-world-v3.json"
-OUT_V3_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV3CityConst.kt"
-OUT_V3_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "HanWorldV3GateIndex.kt"
+OUT_V3_KT = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "ArchiveCityConst.kt"
+OUT_V3_GATE = ROOT / "common" / "src" / "main" / "kotlin" / "opensamguk" / "common" / "constants" / "ArchiveGateIndex.kt"
 OUT_V3_MANIFEST = ROOT / "data" / "map" / "han-world-v3-manifest-v1.json"
 SELECTION = ROOT / "data" / "curated" / "han" / "route-node-selection-v1.json"
 MIGRATION = ROOT / "data" / "curated" / "han" / "route-node-migration-v1.json"
@@ -234,13 +234,13 @@ BUILD_INIT = {
     "대": (150000, 1000, 1000, 1000, 4000, 4000),
     "특": (150000, 1000, 1000, 1000, 5000, 5000),
     # '경'은 che 에 없다. che 계단(def/wall +1000, pop 100k→150k)을 한 칸 더 이은 밸런스값이고,
-    # CityConstRegistry.HanCityConstVariant.hanBuildInit 과 같은 값이어야 한다.
+    # CityConstRegistry.HistoricalCityConstVariant.hanBuildInit 과 같은 값이어야 한다.
     "경": (200000, 1000, 1000, 1000, 6000, 6000),
     # 縣 두 등급. 續漢書 百官志 「萬戶以上為令，不滿為長」의 1만 戶 경계를 그대로 쓴다.
     # pop 은 戶를 사람 수로 옮긴 것 — 郡國志의 戶·口 비율 중앙값이 4.98 이라 1호 ≈ 5인이다.
     # 令縣 1만 戶 × 5 = 5만, 長縣은 그 절반 아래로 잡은 2만(이쪽은 밸런스값이다).
     # def/wall 은 che 계단에 없는 자리라 밸런스값이고,
-    # CityConstRegistry.HanCityConstVariant.hanBuildInit 과 같은 값이어야 한다.
+    # CityConstRegistry.HistoricalCityConstVariant.hanBuildInit 과 같은 값이어야 한다.
     "영현": (50000, 1000, 1000, 1000, 1500, 1500),
     "장현": (20000, 500, 500, 500, 1000, 1000),
 }
@@ -635,7 +635,7 @@ def gate_index(tiles: dict, region_of: list[str]) -> tuple[dict[int, list[str]],
     return {jn: sorted(v) for jn, v in sorted(keys.items())}, missing
 
 
-def kotlin_gate(index: dict[int, list[str]], object_name: str = "HanGateIndex") -> str:
+def kotlin_gate(index: dict[int, list[str]], object_name: str = "BaselineGateIndex") -> str:
     rows = "\n".join(
         f'        {cid} to setOf({", ".join(chr(34) + k + chr(34) for k in ks)}),'
         for cid, ks in index.items()
@@ -665,8 +665,8 @@ def build_gate_skeleton() -> dict:
     """게이트 계산에 필요한 최소 뼈대 — TILES + CANON_105(tools/map/build_junguozhi.py 안의
     파이썬 리터럴, JUNGUOZHI 산출물이 아니다) 만 있으면 된다. JUNGUOZHI(郡國志 戶 사료)와
     CHE(che.json) 는 level/max 계산에만 쓰이고 州 배정·城 목록·id 배정에는 안 닿는다
-    (`build_gate()`/`--check-gate` 가 이 뼈대만으로 HanGateIndex.kt 드리프트를 잡는 이유 —
-    실측: JUNGUOZHI 를 훼손해 재생성해도 HanGateIndex.kt 는 바이트 단위로 그대로였다).
+    (`build_gate()`/`--check-gate` 가 이 뼈대만으로 BaselineGateIndex.kt 드리프트를 잡는 이유 —
+    실측: JUNGUOZHI 를 훼손해 재생성해도 BaselineGateIndex.kt 는 바이트 단위로 그대로였다).
     """
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
     juns, cities = tiles["juns"], tiles["cities"]
@@ -729,7 +729,7 @@ def build_committed_world_gate() -> tuple[str, dict[int, list[str]], list[str]]:
 
     전체 월드 3종을 다시 구울 때는 ``build_gate(sk)``가 새 정렬을 함께 적용한다.
     반면 게이트만 검사할 때 새 CANON_105 정렬을 먼저 적용하면 아직 재생성하지 않은
-    HanCityConst/han.json과 숫자 id가 어긋난다. 따라서 독립 검사는 실제 런타임 월드의
+    BaselineCityConst/han.json과 숫자 id가 어긋난다. 따라서 독립 검사는 실제 런타임 월드의
     id와 소속을 정본으로 삼는다.
     """
     tiles = json.loads(TILES.read_text(encoding="utf-8"))
@@ -760,7 +760,7 @@ def build_committed_world_gate() -> tuple[str, dict[int, list[str]], list[str]]:
 
 
 def build_gate(sk: dict | None = None) -> tuple[str, dict[int, list[str]], list[str]]:
-    """HanGateIndex.kt 문자열 + city-id 게이트 인덱스 + 매칭 안 된 게이트 키.
+    """BaselineGateIndex.kt 문자열 + city-id 게이트 인덱스 + 매칭 안 된 게이트 키.
 
     ``sk``가 있으면 전체 월드 생성 중 새 city id 정렬을 사용한다. 없으면 커밋된
     han.json의 런타임 city id를 사용한다. 두 경로의 id 축을 섞지 않는다.
@@ -1015,7 +1015,7 @@ def build() -> tuple[dict, str, str, dict]:
 KOTLIN_CHUNK = 150
 
 
-def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
+def kotlin(rows, object_name: str = "BaselineCityConst", target: str = "han") -> str:
     body = []
     for cid, name, lv, stats, region, x, y, path, *rest in rows:
         p = ", ".join(f'"{n}"' for n in path)
@@ -1042,7 +1042,7 @@ def kotlin(rows, object_name: str = "HanCityConst", target: str = "han") -> str:
         " * che 와 달리 region 라벨이 州 이름이고 level 에 '경'·'영현'·'장현'이 더 있으므로,\n"
         " * 이 표를 CityConstRegistry 에 물릴 때 regionMap/levelMap 을 그 라벨까지 넓혀야 한다\n"
         " * (generateCities 가 regionMap/levelMap 의 getValue 로 라벨을 푼다). 배선은 이 파일의\n"
-        " * 소관이 아니다 — HanCityConstVariant 가 한다.\n"
+        " * 소관이 아니다 — HistoricalCityConstVariant 가 한다.\n"
         " */\n"
         f"object {object_name} {{\n"
         + _kotlin_city_table(body, chunked=target == "han-world-v3")
@@ -1739,7 +1739,7 @@ def build_v3() -> tuple[str, str, str, str]:
         "seaRoutes": sorted(sea_routes, key=lambda row: (row["from"], row["to"])),
     }
     blob = json.dumps(doc, ensure_ascii=False, indent=2) + "\n"
-    kt = kotlin(raw_rows, "HanWorldV3CityConst", "han-world-v3")
+    kt = kotlin(raw_rows, "ArchiveCityConst", "han-world-v3")
 
     gate_by_jun, _ = gate_index(skeleton["tiles"], skeleton["region_of"])
     jun_index = {row["nameCh"]: i for i, row in enumerate(skeleton["juns"])}
@@ -1748,7 +1748,7 @@ def build_v3() -> tuple[str, str, str, str]:
         for node in nodes
         if world_parent_ch(node) in jun_index and gate_by_jun.get(jun_index[world_parent_ch(node)])
     }
-    gate = kotlin_gate(gate_index_v3, "HanWorldV3GateIndex")
+    gate = kotlin_gate(gate_index_v3, "ArchiveGateIndex")
 
     manifest = {
         "schemaVersion": 1,
@@ -1818,11 +1818,11 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--target", choices=("han-world-v3",))
     ap.add_argument("--check-gate", action="store_true",
-                     help="현재 han.json city id 기준으로 HanGateIndex.kt 드리프트만 검사한다. "
+                     help="현재 han.json city id 기준으로 BaselineGateIndex.kt 드리프트만 검사한다. "
                           "TILES·han.json·UNITS(전부 tracked)만 필요하고 JUNGUOZHI·CHE(둘 다 "
                           "gitignored, ADR-LITE-039)는 필요 없다 — CI가 부르는 경로.")
     ap.add_argument("--write-gate", action="store_true",
-                    help="현재 han.json city id 기준 HanGateIndex.kt만 재생성한다.")
+                    help="현재 han.json city id 기준 BaselineGateIndex.kt만 재생성한다.")
     args = ap.parse_args()
     if args.target == "han-world-v3":
         if args.check_gate or args.write_gate:
