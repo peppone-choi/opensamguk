@@ -64,3 +64,10 @@ A1(#991)이 사람의 경매 입력(입찰·개설 명령, 조회 API)을 지운
   - phase-hot 후보가 경매 둘뿐이었으므로 `phase hot candidates …` 테스트의 「비어 있지 않음」 단언을 「현재 후보 집합 = 빈 집합」 핀으로 바꿨다(새 후보를 들이면 핀과 규약을 함께 고쳐야 한다).
 - naming lint: retired_reference 5828→5815, `tools/ci/naming_lint_baseline.json` 갱신 후 전 항목 OK.
 - `python3 -m unittest test_production_shape_manifest`: 23건 통과(패키지 jar·Docker가 필요한 3건은 환경 변수 게이트로 건너뜀). `test_run_runtime_baseline`: 24건 통과.
+
+## s3-chain-48 해시 갱신 (조율자 검증)
+
+- `world-state-sha256.txt`의 `s3-chain-48`: `c2f2c1c4…fdbb5c` → `3647b52a…d08a51`. CI(game-engine 1,300건 중 이 1건만 실패)와 로컬 IT가 같은 값을 냈다.
+- 근거: 테스트 전용 임시 덤프(커밋 안 함)로 A1(`c47223f09`)과 A2의 정규화 행을 뽑아 비교했다. 1,540행 중 calendar 외 1,539행(장수·도시·국가·부곡·작전·공성·위치 등)이 바이트 단위로 같고, calendar 행은 meta 값 `[]` 하나(`,S2:[]`)만 빠졌다. `WorldStateBaseline`은 meta 키를 버리고 값만 넣으며 `…ById` 키는 제외하므로, 빠진 값은 이 PR이 지운 `activeUniqueAuctionItems = []`다. 게임 상태 변화는 없다.
+- 주의: 이 저장소는 `org.gradle.configuration-cache=true`라 테스트 JVM 환경 변수가 설정 캐시에 잡힌다. 두 판을 연달아 덤프할 때는 `--no-configuration-cache`를 써야 경로가 섞이지 않는다.
+- `yuzhou-36-seed-00/01`은 이 PR의 CI에서 바뀌지 않았다(해당 테스트 통과).
