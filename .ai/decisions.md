@@ -1410,6 +1410,15 @@
 - Gates: schema/reference/expected-value validation; before/after graph and pin equality; county geometry policy and city-anchor audit; seed/event equivalence and two-world cache isolation; hash mismatch/deleted file/duplicate id/old CAS failures as red probes; exact 190/196/220/221 name and alias checks. Implementation PRs start only after freeze release and #905 merge. No product code or map data changes in this design PR.
 - Sources: local `references/sources/shiliao/corpus/hhs-009.txt` (建安元年 「庚申，遷都許」), `sgz-02.txt` (黃初二年 「改許縣爲許昌縣」), `hhs-110.txt` (郡國志 and correction), `js-014.txt` (later county listings), and `dsfy-047.txt` (later 郡治 account). Micro-boundary reassignment evidence is UNKNOWN; a proposed province reassignment remains a technical probe, not approved historical data.
 
+## ADR-LITE-068 — 지방 관직과 중앙 관직의 임명 출처를 분리한다 (2026-09-25)
+
+- Status: approved (2026-09-26 사용자 승인). 행정 오버레이의 ADR-LITE-067과 별도 결정이다.
+- Approved by: 사용자 (2026-09-26)
+- Context: 조정 화면의 관직 패널은 지방과 중앙을 구분하지만 관직 정의·임명 계약은 아직 없다. 재설계 §2.4·§4·§8.2는 郡·州 관할과 縣令 자리를 구분한다.
+- Decision: 지방 관직 刺史·牧·太守·國相은 2층에서 임명하고 실효 관할을 판정한다. 縣令·縣長·侯國相은 기존 縣 배치·발령의 읽기 투영이며 독립 재임 상태로 이중 기록하지 않는다. 중앙 관직(삼공·구경·상서·장군호 등)은 3층에서 황실 조서로만 부여하며 2층 군주의 임명 입력으로 생성하지 않는다.
+- Consequences: 지방·중앙 관직 원장은 분리하고, 권한 판정은 관직명 문자열이 아닌 검증된 재임과 실효 관할을 쓴다. 司隸는 十二州刺史 정원에 더하지 않는다. 지방 관직의 사료는 『後漢書』 卷118 百官志 百官五의 별도 인용으로 확인한다.
+- Reversal: 사용자가 중앙 관직의 수여권을 변경하거나 정본 설계에서 縣 자리의 쓰기 권위를 옮길 때 별도 ADR과 저장 이전 계획으로 개정한다.
+
 ## ADR-LITE-069 — 게임 기록은 사건·식별자·시각으로 저장하고 화면에서 서술한다 (2026-09-25)
 
 - Date: 2026-09-25

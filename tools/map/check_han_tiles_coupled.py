@@ -91,6 +91,9 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("han-world-v3", ("infra/src/main/resources/map/han-world-v3.json", "data/map/han-world-v3-manifest-v1.json"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3", "--check"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3")),
+    # 관직 관할 핀은 지도와 州 축을 함께 고정한다. 새 지도에서는 수치·치소도 사람이 재검토한다.
+    Coupled("administrative-axis-pin", ("data/curated/han/administrative-axis-pin.json",),
+            _t("tools/map/check_administrative_axis_pin.py", "--check"), None),
     Coupled("han-ju-index", ("data/map/han-ju-index-v1.json",),
             _t("tools/map/build_han_ju_index.py", "--check"),
             _t("tools/map/build_han_ju_index.py")),

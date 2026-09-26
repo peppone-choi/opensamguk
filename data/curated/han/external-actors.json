@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "external:southern-xiongnu",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷089",
+          "section": "南匈奴列傳第七十九",
+          "quote": "南單于新附",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "남흉노",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:wuhuan",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷090",
+          "section": "烏桓鮮卑列傳第八十·烏桓",
+          "quote": "烏桓大人郝旦等九百二十二人率眾向化",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "오환",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:xianbei",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷090",
+          "section": "烏桓鮮卑列傳第八十·鮮卑",
+          "quote": "鮮卑大人於仇賁、滿頭等率種人詣闕朝賀",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "선비",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:western-qiang",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷087",
+          "section": "西羌傳第七十七",
+          "quote": "不立君臣，無相長一",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "서강",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:white-horse-di",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷086",
+          "section": "南蠻西南夷列傳第七十·白馬氐",
+          "quote": "白馬氐者，武帝",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "백마저",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:buyeo",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷085",
+          "section": "東夷列傳第七十五·夫餘國",
+          "quote": "夫餘國，在玄菟北千里",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "부여",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:goguryeo",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷085",
+          "section": "東夷列傳第七十五·高句麗",
+          "quote": "高句驪，在遼東之東千里",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "고구려",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    },
+    {
+      "id": "external:wa",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷085",
+          "section": "東夷列傳第七十五·倭",
+          "quote": "倭在韓東南大海中，依山島為居",
+          "grade": "PRIMARY"
+        }
+      ],
+      "label": "왜",
+      "organizationType": "HISTORICAL_NETWORK",
+      "activation": "CANDIDATE",
+      "attestationDate": null,
+      "subjectPeriod": {
+        "fromYear": null,
+        "toYear": null
+      },
+      "interpretationNote": "원문은 이름 또는 집단을 입증한다. 189년 단일 외교 대표와 활동 기간은 별도 검증 전 UNKNOWN이다."
+    }
+  ]
+}

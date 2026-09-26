@@ -28,7 +28,7 @@ import opensamguk.logic.command.GarrisonRecruitArgs
  * AVAILABLE command and reserved the action-code into the `general_turn` ring. That is correct for
  * the **turn-reserved** `che_*` commands (resolved on the general's turn from the ring). But the
  * betting/auction + C2 commands are NOT turn-reserved — their engine handlers
- * ([opensamguk.engine.betting.PlaceBetHandler], …, the C2 intake handlers) are driven by the
+ * (the auction handlers, …, the C2 intake handlers) are driven by the
  * [opensamguk.engine.run.TurnDaemonCommandDispatcher] off a TYPED command on the command stream, NOT
  * by the `general_turn` ring. So they need their typed [TurnDaemonCommand] published verbatim — a
  * `Run(POKE)` would reach the dispatcher and return `null` (no handler), silently dropping the action.
@@ -49,7 +49,6 @@ object CommandWireMapper {
 
     /** The immediate-intake command codes this mapper translates (everything else = turn-reserved). */
     val intakeCodes: Set<String> = setOf(
-        "placeBet",
         "auctionBid",
         "setNotice",
         "setScoutMsg",
@@ -215,13 +214,6 @@ object CommandWireMapper {
         if (code !in intakeCodes) return null
         val args = parseArgs(argJson)
         return when (code) {
-            "placeBet" -> TurnDaemonCommand.PlaceBet(
-                requestId = requestId,
-                bettingId = args.int("bettingId") ?: 0,
-                generalId = generalId,
-                bettingType = args.intList("bettingType"),
-                amount = args.int("amount") ?: 0,
-            )
             "auctionBid" -> TurnDaemonCommand.AuctionBid(
                 requestId = requestId,
                 auctionId = args.int("auctionId") ?: 0,

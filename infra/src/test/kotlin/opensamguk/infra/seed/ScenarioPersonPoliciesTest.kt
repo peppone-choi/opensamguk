@@ -28,6 +28,25 @@ class ScenarioPersonPoliciesTest {
         ScenarioPersonPolicies.validate(general)
         assertNull(SyntheticScenario.parse(SyntheticScenario.root() - "personPolicies").generals.single().personPolicy)
     }
+    @Test fun `reviewed 190 source binds stable officer identity and rejects a changed revision`() {
+        val root = SyntheticScenario.root()
+        val person = SyntheticScenario.person().toMutableList().also { it[2] = 10071 }
+        val historical = SyntheticScenario.policy(officerId = 10071) + mapOf(
+            "statSourceId" to "rtk14-wikiwiki:190.1",
+            "statSourceRevision" to "sha256:5f511438e36bd5b673370928365c8cef78d464a7683ec78105280d310e4a68fd",
+        )
+        val scenario = SyntheticScenario.parse(root + mapOf(
+            "general" to listOf(person), "personPolicies" to listOf(historical)))
+        ScenarioPersonPolicies.validate(scenario.generals.single())
+        assertFailsWith<IllegalArgumentException> { SyntheticScenario.parse(root + mapOf(
+            "general" to listOf(person),
+            "personPolicies" to listOf(historical + ("statSourceRevision" to "sha256:changed")))) }
+        val changedPicture = person.toMutableList().also { it[2] = 10072 }
+        assertFailsWith<IllegalArgumentException> {
+            ScenarioPersonPolicies.validate(SyntheticScenario.parse(root + mapOf(
+                "general" to listOf(changedPicture), "personPolicies" to listOf(historical))).generals.single())
+        }
+    }
     @Test fun `profile identity duplicates and unsupported historical claims are rejected`() {
         val root = SyntheticScenario.root(); val policy = SyntheticScenario.policy()
         val invalid = listOf(

@@ -10,7 +10,6 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.auction.AuctionOpenHandler
-import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.AccountCommandHandler
 import opensamguk.engine.intake.AdminGeneralModerationHandler
@@ -41,7 +40,6 @@ import opensamguk.engine.v2.V2CityTransportHandler
 import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
-import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.ContactReader
 import opensamguk.infra.read.DiplomacyLetterRepository
@@ -51,8 +49,6 @@ import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.engine.turn.KvKey
-import opensamguk.logic.betting.BettingInfo
-import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
 import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.command.CommandSchemaCatalog
@@ -110,18 +106,11 @@ class TurnDaemonCommandDispatcher(
      * W6a 메시지 연락처/장수 read seam. null이면 [MessageHandler]가 stub-empty(연락처 없음)로 동작한다.
      */
     contactReader: ContactReader? = null,
-    /**
-     * P0-07 베팅 마스터 read seam — game_kv(table='betting'). null이면 [PlaceBetHandler]가
-     * stub('해당 베팅이 없습니다')로 동작한다(다른 read-repo 주입 패턴과 동일).
-     */
+    /** game_kv read seam(game_env·user 등). null이면 해당 핸들러가 stub 으로 동작한다. */
     gameKvRepository: GameKvRepository? = null,
     /**
-     * P0-07 ng_betting 누적 합 read seam — PHP Betting.php:135의 user별 sum. null이면 누적 0 가정.
-     */
-    bettingRepository: BettingRepository? = null,
-    /**
-     * P0-07 유산포인트 read seam — `inheritance_{userID}` `previous[0]`(PHP Betting.php:133,142).
-     * null이면 PlaceBetHandler 기본(world meta `inheritancePrevious` 스냅샷)으로 폴백.
+     * 유산포인트 read seam — `inheritance_{userID}` `previous[0]`.
+     * null이면 world meta `inheritancePrevious` 스냅샷으로 폴백.
      */
     inheritanceRepository: InheritanceRepository? = null,
     processNationCommand: ProcessNationCommand? = null,
@@ -138,7 +127,7 @@ class TurnDaemonCommandDispatcher(
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
-     * [PlaceBetHandler]와 [AuctionBidHandler]가 동일 seam 을 공유한다(바퀴 20 정본).
+     * [AuctionBidHandler]와 유산 초기화가 이 seam 을 쓴다(바퀴 20 정본).
      */
     private val persistedPreviousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
         { ownerId: Int ->
@@ -196,25 +185,6 @@ class TurnDaemonCommandDispatcher(
         previousPointReader = previousPointReader,
     )
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
-
-    private val placeBet = PlaceBetHandler(
-        world, recorder,
-        // PHP `bettingStor->getValue("id_{n}")`(Betting.php:42-44) — BettingController.loadRawBettingInfo와
-        // 동일하게 table='betting' 전 행을 맵 디코드해 id 일치 행을 찾는다(key 레이아웃 비의존).
-        bettingInfoReader = gameKvRepository?.let { repo ->
-            { bettingId: Int ->
-                repo.findByTable("betting").firstNotNullOfOrNull { row ->
-                    runCatching { jsonDecode(row.value) }.getOrNull()
-                        ?.let { BettingInfo.fromKvMap(it) }
-                        ?.takeIf { it.id == bettingId }
-                }
-            }
-        } ?: { null },
-        prevBetAmountDbReader = bettingRepository?.let { repo ->
-            { bettingId: Int, userId: Int -> repo.sumAmountByBettingIdAndUserId(bettingId, userId).toInt() }
-        } ?: { _, _ -> 0 },
-        previousPointReader = previousPointReader,
-    )
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
@@ -362,7 +332,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
-        is TurnDaemonCommand.PlaceBet -> placeBet.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
         is TurnDaemonCommand.SetScoutMsg -> nationFinance.handleSetScoutMsg(command)

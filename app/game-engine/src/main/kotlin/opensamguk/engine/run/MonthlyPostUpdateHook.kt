@@ -30,7 +30,6 @@ import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.DiplomacyRow
 import opensamguk.logic.world.FrontCity
 import opensamguk.logic.world.PowerKv
-import opensamguk.logic.world.checkEmperior
 import opensamguk.logic.world.PostNationPowerInput
 import opensamguk.logic.world.PostFrontResult
 import opensamguk.logic.world.PowerCity
@@ -198,24 +197,6 @@ class MonthlyPostUpdateHook(
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
         val isUnited = (state.meta["isunited"] as? Int ?: 0) != 0
 
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
-        val checkEmperiorContext = WorldActionContext(
-            env = mutableMapOf(
-                "year" to year,
-                "month" to state.currentMonth,
-                "phase" to state.currentPhase,
-                "cityConst" to cityConst,
-                WorldActionContext.ENV_EVENT_DISPATCHER to eventDispatcher,
-            ),
-            world = world,
-            recorder = recorder,
-            pipeline = pipeline,
-            auctionRepository = auctionRepository,
-            auctionBidRepository = auctionBidRepository,
-            archiveHistoryReader = archiveHistoryReader,
-            statisticSnapshotReader = statisticSnapshotReader,
-        )
-
         postUpdateMonthlyTail(
             year = year,
             startYear = startYear,
@@ -224,7 +205,6 @@ class MonthlyPostUpdateHook(
             updateGeneralNumber = { updateGeneralNumber() },
             registerAuction = { rng -> registerAuction(rng) },
             setNationFront = { setNationFronts() },
-            checkEmperior = { checkEmperior(checkEmperiorContext) },
             isUnited = isUnited,
         )
 

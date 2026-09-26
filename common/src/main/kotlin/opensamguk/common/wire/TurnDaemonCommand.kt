@@ -554,42 +554,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("tournamentRefund")
-    data class TournamentRefund(
-        val requestId: String? = null,
-        val bettingId: Int? = null,
-        val reason: String? = null,
-        val refunds: List<AmountEntry>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentRefund"
-    }
-
-    @Serializable
-    @SerialName("tournamentBettingPayout")
-    data class TournamentBettingPayout(
-        val requestId: String? = null,
-        val bettingId: Int? = null,
-        val reason: String? = null,
-        val payouts: List<AmountEntry>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentBettingPayout"
-    }
-
-    @Serializable
-    @SerialName("tournamentReward")
-    data class TournamentReward(
-        val requestId: String? = null,
-        val tournamentType: Int,
-        val winnerId: Int,
-        val runnerUpId: Int,
-        val top16: List<Int>,
-        val top8: List<Int>,
-        val top4: List<Int>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReward"
-    }
-
-    @Serializable
     @SerialName("voteReward")
     data class VoteReward(
         val requestId: String? = null,
@@ -633,18 +597,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("tournamentMatchResult")
-    data class TournamentMatchResult(
-        val requestId: String? = null,
-        val tournamentType: Int,
-        val attackerId: Int,
-        val defenderId: Int,
-        val result: MatchResult,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentMatchResult"
-    }
-
-    @Serializable
     @SerialName("patchGeneral")
     data class PatchGeneral(
         val requestId: String? = null,
@@ -664,18 +616,6 @@ sealed class TurnDaemonCommand {
         val tryExtendCloseDate: Boolean? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "auctionBid"
-    }
-
-    @Serializable
-    @SerialName("placeBet")
-    data class PlaceBet(
-        val requestId: String? = null,
-        val bettingId: Int,
-        val generalId: Int,
-        val bettingType: List<Int>,
-        val amount: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "placeBet"
     }
 
     @Serializable
@@ -712,7 +652,7 @@ sealed class TurnDaemonCommand {
     // Faithful ports of the PHP BaseAPI launch() actions (NOT turn-reserved che_* commands): the
     // 내무부 finance setters (sammo/API/Nation/Set*.php), tournament enroll (j_set_my_setting.php tnmt),
     // and the inheritance resets (sammo/API/InheritAction/Reset*.php). They flow exactly like
-    // [PlaceBet]/[AuctionBid]: game-api intake → command stream → TurnDaemonCommandDispatcher →
+    // [AuctionBid]: game-api intake → command stream → TurnDaemonCommandDispatcher →
     // handler → InMemoryTurnWorld mutate → ChangeRecorder delta → JdbcFlushExecutor flush.
 
     /**
@@ -1163,10 +1103,3 @@ data class PatchStats(
     val strength: Int? = null,
     val intelligence: Int? = null,
 )
-
-@Serializable
-enum class MatchResult {
-    @SerialName("attacker") ATTACKER,
-    @SerialName("defender") DEFENDER,
-    @SerialName("draw") DRAW,
-}

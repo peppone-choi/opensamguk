@@ -52,5 +52,12 @@ tasks.test {
 
 // One checked-in HWIHA rules source, packaged without runtime working-directory fallback.
 tasks.processResources {
+    from(rootProject.file("data/curated/han/administrative-zhou-axis-v1.json")) {
+        into("administration")
+        rename { "administrative-zhou-axis.json" }
+    }
+    from(rootProject.file("data/curated/han/administrative-axis-pin.json")) {
+        into("administration")
+    }
     from(rootProject.file("data/battle/unit-profiles-v1.json")) { into("battle") }
 }
