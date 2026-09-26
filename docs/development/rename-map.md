@@ -37,6 +37,8 @@
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
 | `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
+
+1447 Map4 번들 검사는 현재 `ArchiveCityConst`·`ArchiveGateIndex`에서 옛 객체 이름과 역사 주석을 복원해 동결 스냅샷을 검산한다. 번들 안의 지도 매니페스트는 저장된 세계의 공간 핀에 포함되므로 기존 바이트와 카탈로그 해시를 유지한다. 과거 원본 출처 필드와 스냅샷 본문도 유지한다.
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
