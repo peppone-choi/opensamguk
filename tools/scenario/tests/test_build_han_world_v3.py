@@ -18,7 +18,7 @@ build_han_world = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(build_han_world)
 
 
-class HanWorldV3Test(unittest.TestCase):
+class ArchiveMapGenerationTest(unittest.TestCase):
     def test_replaced_nodes_derive_visible_names_from_selected_physical_identity(self) -> None:
         selection = json.loads(
             (ROOT / "data/curated/han/route-node-selection-v1.json").read_text()
@@ -171,7 +171,7 @@ class HanWorldV3Test(unittest.TestCase):
             },
         )
 
-        self.assertEqual([(273, 781, 6)], edges)
+        self.assertEqual([(273, 781, 24)], edges)  # 4× 세부 격자에서 물리 경계는 네 배 길다.
 
         province_index = {
             str(row["id"]): index for index, row in enumerate(tiles["provinceRecords"])
@@ -287,11 +287,11 @@ class HanWorldV3Test(unittest.TestCase):
             edge for edge in manifest["countyAdjacency"]
             if {edge["a"], edge["b"]} == {273, 781}
         )
-        self.assertEqual(6, edge["sharedBoundaryCells"])
+        self.assertEqual(24, edge["sharedBoundaryCells"])
         output_paths = {
             "worldJsonSha256": ROOT / "infra/src/main/resources/map/han-world-v3.json",
-            "cityConstSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3CityConst.kt",
-            "gateIndexSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/HanWorldV3GateIndex.kt",
+            "cityConstSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt",
+            "gateIndexSha256": ROOT / "common/src/main/kotlin/opensamguk/common/constants/ArchiveGateIndex.kt",
         }
         for field, path in output_paths.items():
             self.assertEqual(
@@ -589,7 +589,7 @@ class DisplayNameTest(unittest.TestCase):
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""
         kt = (ROOT / "common/src/main/kotlin/opensamguk/common/constants"
-              / "HanWorldV3CityConst.kt").read_text()
+              / "ArchiveCityConst.kt").read_text()
         self.assertIn('RawCity(1, "장안(京兆尹)"', kt)
         self.assertIn('), "경조윤 장안현"),', kt)
 

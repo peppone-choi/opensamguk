@@ -61,7 +61,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
-      TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-che:scenario_2}
+      TURN_PROFILE_NAME: ${TURN_PROFILE_NAME:-pep:scenario_990002}
       # Production starts empty by default; admins create servers before any scenario seed.
       SCENARIO_SEED_ENABLED: ${SCENARIO_SEED_ENABLED:-false}
       SCENARIO_CODE: ${SCENARIO_CODE:-scenario_990002}
@@ -114,8 +114,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       OPENSAMGUK_WORLD_ID: ${OPENSAMGUK_WORLD_ID:?OPENSAMGUK_WORLD_ID required}
-      OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-che:scenario_2}
-      SAMMO_ROLLBACK_ENABLED: ${SAMMO_ROLLBACK_ENABLED:-false}
+      OPENSAMGUK_PROFILE: ${TURN_PROFILE_NAME:-pep:scenario_990002}
       SERVER_ID: ${SERVER_ID:-pep}
       SERVER_NAME: ${SERVER_NAME:-통일 서버}
       SERVER_GENERATION: ${SERVER_GENERATION:-1}

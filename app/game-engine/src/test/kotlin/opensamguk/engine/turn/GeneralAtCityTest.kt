@@ -7,6 +7,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
+import opensamguk.engine.boot.ActiveWorldMapValidator
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
@@ -48,14 +49,14 @@ class GeneralAtCityTest {
     @Test
     fun `hwiha boot fails when a living general has no position row`() {
         assertFailsWith<IllegalArgumentException> {
-            InMemoryTurnWorld(snapshot("HWIHA", listOf(general(7, 10), general(8, 20)), positions(7 to p1)))
+            ActiveWorldMapValidator.validate(snapshot("HWIHA", listOf(general(7, 10), general(8, 20)), positions(7 to p1)))
         }
     }
 
     @Test
     fun `hwiha boot fails when a reference city has no province binding`() {
         assertFailsWith<IllegalArgumentException> {
-            InMemoryTurnWorld(snapshot("HWIHA", listOf(general(7, 99)), positions(7 to p1)))
+            ActiveWorldMapValidator.validate(snapshot("HWIHA", listOf(general(7, 99)), positions(7 to p1)))
         }
     }
 }

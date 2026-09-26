@@ -5,7 +5,7 @@ import kotlin.test.*
 class EnlistmentBudgetTest {
     private fun person(id: Int, lord: Boolean = false) = PersonPolicyInput(
         id, if (id == 1) 0 else 1, 50, 50, 50, 50, 50,
-        mapOf("hwihaLord" to lord, PersonPolicyState.META_KEY to
+        mapOf("lord" to lord, PersonPolicyState.META_KEY to
             PersonPolicyState(30, true, "fixture", "pin", id).toMetaValue()),
     )
     @Test fun `shared budget preserves direct costs and deterministic ordering without mutation`() {
@@ -22,7 +22,7 @@ class EnlistmentBudgetTest {
     }
     @Test fun `over capacity personal retinue blocks its owner without charging the upper lord`() {
         val people = listOf(person(1), person(10, true), person(2).copy(meta = mapOf(
-            "hwihaLord" to false, PersonPolicyState.META_KEY to
+            "lord" to false, PersonPolicyState.META_KEY to
                 PersonPolicyState(4, true, "fixture", "pin", 2).toMetaValue())), person(3))
         val result = assertIs<RenownBudgetResult.Ready>(EnlistmentBudget.assess(1, RuleProfile.HWIHA, people,
             listOf(DirectPersonCard(1, 10, 2), DirectPersonCard(2, 2, 3))))
@@ -35,7 +35,7 @@ class EnlistmentBudgetTest {
             listOf(DirectPersonCard(1, 10, null))))
         assertEquals(mapOf(10 to RenownBudgetFailure.UNSUPPORTED_UNLINKED_CARD), result.unavailableLordReasons)
         assertTrue(result.freeRenownByLord.isEmpty())
-        val bad = people + person(3).copy(nationId = 0, meta = mapOf("hwihaLord" to null))
+        val bad = people + person(3).copy(nationId = 0, meta = mapOf("lord" to null))
         assertEquals(RenownBudgetResult.Unavailable(RenownBudgetFailure.INVALID_LORD_STATUS),
             EnlistmentBudget.assess(1, RuleProfile.HWIHA, bad, emptyList()))
     }

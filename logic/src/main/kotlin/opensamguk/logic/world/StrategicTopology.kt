@@ -86,11 +86,16 @@ data class TraversalEdge(
     val supplyAllowed: Boolean = false,
     val sourceRefs: List<String>,
     val confidence: EvidenceConfidence,
+    /** False for a physical dry boundary whose road still has to be built. */
+    val initiallyOpen: Boolean = true,
+    /** Lower mountain friction within a documented corridor; 1000 is neutral. */
+    val routeWeightPermille: Int = 1000,
 ) {
     init {
         require(id.isNotBlank()) { "Traversal edge id must not be blank" }
         require(movementCost > 0) { "Traversal edge $id movementCost must be positive" }
         require(capacity > 0) { "Traversal edge $id capacity must be positive" }
+        require(routeWeightPermille in 500..1000) { "Traversal edge $id road weight outside policy" }
         require(sourceRefs.isNotEmpty() && sourceRefs.none(String::isBlank)) {
             "Traversal edge $id requires source references"
         }
@@ -243,6 +248,9 @@ class StrategicTopologySnapshot(
             token(edge.supplyAllowed.toString())
             strings(edge.sourceRefs.sorted())
             token(edge.confidence.name)
+            // Keep frozen pre-road release topology hashes byte-identical.
+            if (!edge.initiallyOpen) token("road-unbuilt")
+            if (edge.routeWeightPermille != 1000) token("road-weight:${edge.routeWeightPermille}")
         }
     }.toString()
 

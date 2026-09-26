@@ -55,16 +55,21 @@ class SpatialStatePersistenceIT {
 
     private fun seed(id: Int, map: String = "han-world-v3") {
         jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, world_version, writer_epoch) " +
-            "VALUES (?, 'spatial-test', 200, 1, 60, CAST(? AS jsonb), 0, 1)", id, "{\"mapName\":\"$map\"}")
-        jdbc.update("INSERT INTO general (world_id, id, name, turn_time) VALUES (?, 7, 'G', now())", id)
+            "VALUES (?, 'spatial-test', 200, 1, 60, CAST(? AS jsonb), 0, 1)", id, "{\"mapName\":\"$map\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}")
+        jdbc.update("""INSERT INTO city(world_id,id,name,level,pop,pop_max,agri,agri_max,comm,comm_max,
+            secu,secu_max,def,def_max,wall,wall_max,region)
+            VALUES (?,1,'Fixture county',1,100,1000,10,1000,10,1000,10,1000,10,1000,10,1000,1)""", id)
+        jdbc.update("INSERT INTO general (world_id, id, name, city_id, turn_time) VALUES (?, 7, 'G', 1, now())", id)
         jdbc.update("INSERT INTO ng_games (world_id, server_id, date, season, scenario, scenario_name, env) " +
             "VALUES (?, ?, now(), 1, 0, 'Spatial test', '{}'::jsonb)", id, "spatial-test-$id")
     }
 
     private fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)),
         WorldId(id), snapshotValidator = {}, waterTopologyLoader = { topology },
-        // Synthetic p1/lake topology isolates persistence; real archive identity is covered by HanHistoricalWorldRoundTripIT.
-        hanVariantSelector = { _, _ -> opensamguk.logic.world.HanWorldVariant.V3_835 }).buildSnapshot()
+        // Synthetic p1/lake topology isolates persistence; real archive identity is covered by HistoricalWorldRoundTripIT.
+        mapVariantSelector = { _, _ -> opensamguk.logic.world.WorldMapVariant.V3_835 },
+        administrativeCountyIdsLoader = { emptySet() },
+        cityLandProvinceLoader = { mapOf(1 to "p1") }).buildSnapshot()
     private fun read(id: Int) = SpatialStateReadRepository(named, GameApiProcessWorld(id)).readSnapshot(id, topology)
     private fun province(owner: Int, id: String = "p1") = ProvinceControlAssessment("r1", topology.contentHash, id, owner)
     private fun position(water: Boolean, generalId: Int = 7) = GeneralPositionAssessment("r1", topology.contentHash, generalId,
@@ -137,7 +142,6 @@ class SpatialStatePersistenceIT {
             val world = InMemoryTurnWorld(load(id))
             val recorder = ChangeRecorder()
             recorder.recordGeneralCreate(world, world.getGeneralById(7)!!.copy(id = 8))
-            recorder.applyGeneralPositionAssessment(world, null, position(true, 8))
             flush(world, recorder)
             assertNotNull(load(id).generalPositionSnapshot!!.stateFor(8))
         }
@@ -146,7 +150,6 @@ class SpatialStatePersistenceIT {
         recorder.applyGeneralPositionAssessment(world, 1, position(false, 8))
         recorder.markGeneralDeleted(world, 8)
         recorder.recordGeneralCreate(world, world.getGeneralById(7)!!.copy(id = 9))
-        recorder.applyGeneralPositionAssessment(world, null, position(false, 9))
         recorder.recordAccessLogUpsert(world, GeneralAccessLog(9, refresh = 3))
         recorder.markGeneralDeleted(world, 9)
         val payload = flush(world, recorder)

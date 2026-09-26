@@ -78,6 +78,7 @@ data class DomesticProjection(
     val landProvinceIds: Set<String>?,
     /** 원장이 있을 때만 향당 보너스를 판정한다. 장수 id → 본관 縣治 城 id. */
     val homeCountyByGeneral: Map<Int, Int> = emptyMap(),
+    val provinceIdsByCounty: Map<Int, Set<String>> = emptyMap(),
     val bugoks: List<DomesticBugok> = emptyList(),
     val countyAdjacency: Map<Int, Set<Int>> = emptyMap(),
     val supportedCrewTypeIds: Set<Int> = emptySet(),
@@ -142,7 +143,7 @@ data class EffectivePolicy(val policy: CountyPolicy, val source: PolicySource, v
  *   군주가 건 郡 방침이 있으면 군주가 아닌 장수는 縣 방침을 바꿀 수 없다(§2.4 「상위 방침의 범위 안에서만」).
  * - 郡 방침은 군주만 건다(太守·刺史는 2층 관직이라 이번 범위 밖).
  * - 군단 방침은 출전 군단의 주인이 건다.
- * 군주 = 그 세력에서 유일한 `officer_level == 12` 이면서 `hwihaLord == true` 인 장수(출사 투영과 같은 근거).
+ * 군주 = 그 세력에서 유일한 `officer_level == 12` 이면서 `lord == true` 인 장수(출사 투영과 같은 근거).
  */
 object DomesticRules {
     const val RELATION_LIEUTENANT = "lieutenant"
@@ -218,7 +219,8 @@ object DomesticRules {
         val works = CountyWorks.read(county.meta)
         when {
             works?.active != null -> reject(DomesticFailure.WORK_IN_PROGRESS)
-            works?.completed?.any { it.work == request.work } == true -> reject(DomesticFailure.WORK_COMPLETED)
+            works?.completed?.any { it.work == request.work && it.edgeId == request.edgeId &&
+                it.row == request.row && it.col == request.col } == true -> reject(DomesticFailure.WORK_COMPLETED)
             else -> DomesticAssessment.Eligible(person = actor)
         }
     }
@@ -233,7 +235,7 @@ object DomesticRules {
         val works = CountyWorks.read(county.meta)
         if (works?.active != null) return@guarded reject(DomesticFailure.WORK_IN_PROGRESS)
         if (request.work != DomesticWork.FORTIFICATION ||
-            works?.completed?.none { it.work == DomesticWork.FORTIFICATION } != false)
+            works?.completed?.none { it.work == DomesticWork.FORTIFICATION && it.edgeId == null } != false)
             return@guarded reject(DomesticFailure.WORK_NOT_COMPLETED)
         DomesticAssessment.Eligible(person = actor)
     }

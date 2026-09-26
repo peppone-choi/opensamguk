@@ -2,7 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.EffectiveScenarioResolver
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.MapJson
 import opensamguk.infra.seed.Scenario
 import opensamguk.infra.seed.ScenarioImporter
@@ -79,7 +79,7 @@ class SeedBootstrap(
     private val resetBlockGeneralCreate: String? = null,
     private val resetNpcMode: String? = null,
     private val resetShowImgLevel: String? = null,
-    private val artifactsRoot: Path = HanWorldArtifactsResolver.defaultRoot(),
+    private val artifactsRoot: Path = WorldArtifactsResolver.defaultRoot(),
     private val worldId: WorldId,
 ) {
     private val log = LoggerFactory.getLogger(SeedBootstrap::class.java)

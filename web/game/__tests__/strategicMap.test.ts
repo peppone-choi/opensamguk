@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { serverRoutePoints, strategicCapacityLabel, type StrategicMapScene } from '@opensamguk/ui';
 import { STRATEGIC_BINDING, STRATEGIC_ROUTE, STRATEGIC_TOPOLOGY } from './fixtures/strategic-topology';
 
-const scene: StrategicMapScene = { zones: [], byCell: new Map(),
+const scene: StrategicMapScene = { zones: [], byCell: new Map(), roadGates: [],
   edgesById: new Map(STRATEGIC_TOPOLOGY.topology.traversalEdges.map(edge => [edge.id, edge])) };
 const anchors = new Map([['land:45098', { col: 2, row: 3 }], ['land:45022', { col: 4, row: 3 }]]);
 

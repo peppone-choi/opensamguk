@@ -2,8 +2,11 @@ package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.read.*
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.logic.world.WorldMapVariant
+import opensamguk.logic.input.LandPassageState
+import opensamguk.infra.entity.GameKvEntity
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -31,16 +34,16 @@ class MapStrategicTopologyControllerTest {
     private val jdbc = ReadJdbc()
     private val cities = mock(CityReadRepository::class.java)
     private val pins = mock(WorldArtifactIdentityReadRepository::class.java)
-    private val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+    private val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
     private val resolver = ActiveWorldArtifactResolver(world, cities, pins, artifacts)
 
     @AfterEach
     fun clearIdentity() = SecurityContextHolder.clearContext()
 
-    private fun mvc(mapName: String = "han-world-v3") = MockMvcBuilders.standaloneSetup(
-        MapStrategicTopologyController(resolver, WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source),
+    private fun mvc(mapName: String = "han-world-v3", gameKv: GameKvReadRepository? = null) = MockMvcBuilders.standaloneSetup(
+        MapStrategicTopologyController(resolver, WaterControlReadRepository(jdbc, GameApiProcessWorld(7)), source, gameKv),
     ).setControllerAdvice(MapStrategicTopologyErrors()).build().also {
-        `when`(cities.findAll()).thenReturn(artifacts.artifacts(opensamguk.logic.world.HanWorldVariant.V3_835).cityConst.all().keys.map {
+        `when`(cities.findAll()).thenReturn(artifacts.artifacts(opensamguk.logic.world.WorldMapVariant.V3_835).cityConst.all().keys.map {
             CityReadEntity(id = it, worldId = 7)
         })
         `when`(pins.readPins(7)).thenReturn(emptyList())
@@ -49,15 +52,35 @@ class MapStrategicTopologyControllerTest {
     }
 
     @Test
+    fun `a newly opened road appears in the strategic topology response`() {
+        val selected = artifacts.artifacts(WorldMapVariant.V3_1447_MAP4)
+        val topology = selected.projection.topology
+        val gate = selected.projection.presentation!!.roadGates.first { it.buildable && !it.initiallyBuilt }
+        val initial = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology))
+        val opened = LandPassageState.activate(initial, topology, gate.edgeId)
+        val gameKv = mock(GameKvReadRepository::class.java)
+        `when`(gameKv.findByTableAndNamespaceAndKey("game_env", "game_env", LandPassageState.META_KEY))
+            .thenReturn(GameKvEntity("game_env", "game_env", LandPassageState.META_KEY,
+                ObjectMapper().writeValueAsString(opened), 7))
+        val client = mvc(gameKv = gameKv)
+        `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map { CityReadEntity(id = it, worldId = 7) })
+        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.WorldTopologyPin("province_control",
+            topology.topologyRevision, topology.contentHash)))
+        client.perform(get("/api/map/strategic-topology"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.roadOpenEdgeIds", org.hamcrest.Matchers.hasItem(gate.edgeId)))
+    }
+
+    @Test
     fun `historical roster returns its own topology and rejects stale identity`() {
         val client = mvc()
-        val older = artifacts.artifacts(opensamguk.logic.world.HanWorldVariant.V3_832)
+        val older = artifacts.artifacts(opensamguk.logic.world.WorldMapVariant.V3_832)
         `when`(cities.findAll()).thenReturn(older.cityConst.all().keys.map { CityReadEntity(id = it, worldId = 7) })
         client.perform(get("/api/map/strategic-topology").queryParam("knownTopologyHash", loaded.topology.contentHash))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.binding.topologyHash").value(older.projection.topology.contentHash))
             .andExpect(jsonPath("$.topology").exists())
-        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin(
+        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.WorldTopologyPin(
             "province_control", loaded.topology.topologyRevision, loaded.topology.contentHash)))
         client.perform(get("/api/map/strategic-topology"))
             .andExpect(status().isConflict)
@@ -67,7 +90,7 @@ class MapStrategicTopologyControllerTest {
     @Test
     fun `validation failure remains conflict through real Spring transaction proxies`() {
         mvc() // configure the complete world roster
-        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.HanWorldTopologyPin("province_control", "bad", "bad")))
+        `when`(pins.readPins(7)).thenReturn(listOf(opensamguk.infra.seed.WorldTopologyPin("province_control", "bad", "bad")))
         val connection = mock(java.sql.Connection::class.java)
         `when`(connection.autoCommit).thenReturn(true)
         val dataSource = mock(javax.sql.DataSource::class.java)
@@ -158,12 +181,15 @@ class MapStrategicTopologyControllerTest {
     @Test
     fun `each registered world uses its own control identity and cache hash`() {
         admin()
-        for (variant in HanWorldVariant.entries) {
+        for (variant in WorldMapVariant.entries) {
             val client = mvc()
             val selected = artifacts.artifacts(variant)
             `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map {
                 CityReadEntity(id = it, worldId = 7)
             })
+            `when`(pins.readPins(7)).thenReturn(if (variant == WorldMapVariant.V3_1447_MAP4) listOf(
+                opensamguk.infra.seed.WorldTopologyPin("province_control",
+                    selected.projection.topology.topologyRevision, selected.projection.topology.contentHash)) else emptyList())
             jdbc.rows = listOf(row(hash = selected.projection.topology.contentHash,
                 topologyRevision = selected.projection.topology.topologyRevision))
             client.perform(get("/api/map/strategic-topology")
@@ -172,7 +198,7 @@ class MapStrategicTopologyControllerTest {
                 .andExpect(jsonPath("$.binding.topologyHash").value(selected.projection.topology.contentHash))
                 .andExpect(jsonPath("$.topology").value(org.hamcrest.Matchers.nullValue()))
                 .andExpect(jsonPath("$.controls[0].status").value("BLOCKED"))
-            val other = HanWorldVariant.entries.first { it != variant }
+            val other = WorldMapVariant.entries.first { it != variant }
             client.perform(get("/api/map/strategic-topology")
                 .queryParam("knownTopologyHash", artifacts.artifacts(other).projection.topology.contentHash))
                 .andExpect(status().isOk)
@@ -241,6 +267,6 @@ class MapStrategicTopologyControllerTest {
     }
 
     companion object {
-        private val loaded by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_835).projection }
+        private val loaded by lazy { WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_835).projection }
     }
 }

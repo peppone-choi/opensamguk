@@ -140,7 +140,7 @@ class CommandPrecheckService(
             args = args,
             env = state.env,
             mode = ConstraintMode.PRECHECK,
-            hanWorldVariant = state.hanWorldVariant,
+            worldMapVariant = state.worldMapVariant,
         )
     }
 

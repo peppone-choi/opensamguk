@@ -152,21 +152,6 @@ object F4StateText {
         GameConst.availableChiefCommand.map { (category, commands) -> category to commands }
 
     /**
-     * 토너먼트 type → display text. Verbatim from `b_tournament.php` switch
-     * (`전력전`/`통솔전`/`일기토`/`설전`); tnmt_type is the legacy `convertTournamentType` int.
-     */
-    fun tournamentTypeText(tnmtType: Int): String = when (tnmtType) {
-        0 -> "전력전"
-        1 -> "통솔전"
-        2 -> "일기토"
-        3 -> "설전"
-        else -> "전력전"
-    }
-
-    /** The 4 ranking-type labels rendered on the tournament/betting bracket page (verbatim, fixed order). */
-    val RANKING_TYPES: List<String> = listOf("전력전", "통솔전", "일기토", "설전")
-
-    /**
      * 역사 PHP `getHonor($experience)` 비교를 보존한 동결 회귀(ADR-LITE-042; 현재 제품 정본 아님) — 경험치 구간별 명성 한글명.
      * 경계값/라벨 모두 byte-for-byte 그대로(locked rule 3 — 한글 패러티). FrontGeneralInfo.honorText에 쓴다.
      * `experience`는 실 컬럼이므로 파생값 계산은 날조가 아니다.

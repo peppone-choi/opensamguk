@@ -271,7 +271,7 @@ export default function HistoryPage() {
                         {mapSnapshot == null ? (
                             <p className="record-empty">지도 스냅샷을 렌더할 수 없습니다.</p>
                         ) : (
-                            <MapViewer mapData={mapSnapshot} hwihaLayers="none" disallowClick />
+                            <MapViewer mapData={mapSnapshot} mapLayers="none" disallowClick />
                         )}
                     </Panel>
                     <div className="record-grid">

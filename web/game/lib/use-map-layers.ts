@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CommanderyVisibility } from '@opensamguk/ui';
 import { api } from './api';
-import type { HwihaCorps, HwihaScoutOption, HwihaSieges, HwihaWorks } from './hwiha-reads';
-import { reserveHwihaScout } from './hwiha-scout';
+import type { Corps, ScoutOption, Sieges, Works } from './campaign-reads';
+import { reserveScout } from './campaign-scout';
 import { readServerCookie } from './serverGameUrl';
 
 export type MapLayerScope = 'full' | 'fog' | 'none';
@@ -14,10 +14,10 @@ export function useMapLayers(scope: MapLayerScope, refreshKey: unknown, supplied
     const [generalId, setGeneralId] = useState<number | null>(null);
     const [visibility, setVisibility] = useState<ReadonlyMap<number, CommanderyVisibility> | null>(null);
     const [intelAge, setIntelAge] = useState<ReadonlyMap<number, number>>(new Map());
-    const [corps, setCorps] = useState<readonly HwihaCorps[]>([]);
-    const [works, setWorks] = useState<HwihaWorks | null>(null);
-    const [sieges, setSieges] = useState<HwihaSieges | null>(null);
-    const [scoutOptions, setScoutOptions] = useState<readonly HwihaScoutOption[]>([]);
+    const [corps, setCorps] = useState<readonly Corps[]>([]);
+    const [works, setWorks] = useState<Works | null>(null);
+    const [sieges, setSieges] = useState<Sieges | null>(null);
+    const [scoutOptions, setScoutOptions] = useState<readonly ScoutOption[]>([]);
     const [visibilityError, setVisibilityError] = useState(false);
     const [corpsError, setCorpsError] = useState(false);
     const [badgeError, setBadgeError] = useState(false);
@@ -53,7 +53,7 @@ export function useMapLayers(scope: MapLayerScope, refreshKey: unknown, supplied
             identity.current = { server, scope, generalId: id };
             setGeneralId(id);
             if (id == null) return;
-            void api.hwihaVisibility(id, controller.signal).then((result) => {
+            void api.campaignVisibility(id, controller.signal).then((result) => {
                 if (controller.signal.aborted) return;
                 if (result.status !== 'READY' || !result.commanderies) {
                     setVisibility(null); setIntelAge(new Map()); setCorps([]); setVisibilityError(true); return;
@@ -64,19 +64,19 @@ export function useMapLayers(scope: MapLayerScope, refreshKey: unknown, supplied
             }).catch(() => { if (!controller.signal.aborted) {
                 setVisibility(null); setIntelAge(new Map()); setCorps([]); setVisibilityError(true);
             } });
-            void api.hwihaWorks(id, controller.signal).then((result) => {
+            void api.campaignWorks(id, controller.signal).then((result) => {
                 if (!controller.signal.aborted) { setWorks(result.status === 'READY' ? result : null); if (result.status !== 'READY') setBadgeError(true); }
             }).catch(() => { if (!controller.signal.aborted) { setWorks(null); setBadgeError(true); } });
-            void api.hwihaSieges(id, controller.signal).then((result) => {
+            void api.campaignSieges(id, controller.signal).then((result) => {
                 if (!controller.signal.aborted) { setSieges(result.status === 'READY' ? result : null); if (result.status !== 'READY') setBadgeError(true); }
             }).catch(() => { if (!controller.signal.aborted) { setSieges(null); setBadgeError(true); } });
             if (scope !== 'full') return;
-            void api.hwihaCorps(id, controller.signal).then((result) => {
+            void api.campaignCorps(id, controller.signal).then((result) => {
                 if (controller.signal.aborted) return;
                 if (result.status !== 'READY') { setCorps([]); setCorpsError(true); return; }
                 setCorps(result.corps ?? []);
             }).catch(() => { if (!controller.signal.aborted) { setCorps([]); setCorpsError(true); } });
-            void api.hwihaScoutOptions(id, controller.signal).then((result) => {
+            void api.campaignScoutOptions(id, controller.signal).then((result) => {
                 if (controller.signal.aborted) return;
                 if (result.status === 'READY') setScoutOptions(result.options ?? []);
                 else { setScoutOptions([]); setScoutError(true); }
@@ -94,7 +94,7 @@ export function useMapLayers(scope: MapLayerScope, refreshKey: unknown, supplied
         if (generalId == null || !option || scoutPending) return;
         setScoutPending(true);
         try {
-            const result = await reserveHwihaScout(generalId, option);
+            const result = await reserveScout(generalId, option);
             setScoutMessage(result.message);
             if (result.ok) setRevision((value) => value + 1);
         } finally { setScoutPending(false); }

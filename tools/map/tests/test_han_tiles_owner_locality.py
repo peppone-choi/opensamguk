@@ -88,6 +88,7 @@ class TestOwnerGridStaysNearItsLabel(unittest.TestCase):
     def setUpClass(cls) -> None:
         tiles = json.loads(TILES.read_text())
         cols = tiles["_meta"]["cols"]
+        cls.resolution_scale = tiles["_meta"].get("resolutionScale", 1)
         owner: list[int] = []
         for city_index, run in tiles["owner"]:
             owner.extend([city_index] * run)
@@ -108,7 +109,7 @@ class TestOwnerGridStaysNearItsLabel(unittest.TestCase):
             cls.reach[(record["id"], c["col"], c["row"])] = far
 
     def test_city_labels_own_no_new_distant_territory(self):
-        self.assertLessEqual(max(self.reach.values()), 80.0)
+        self.assertLessEqual(max(self.reach.values()), 80.0 * self.resolution_scale)
 
     def test_every_city_owns_the_cell_under_its_own_label(self):
         tiles = json.loads(TILES.read_text())
@@ -157,8 +158,9 @@ class OrphanLandIntakeTest(unittest.TestCase):
             flat.extend([value] * count)
         water = land = 0
         orphans = []
-        for row in range(464, 525):
-            for col in range(380, 461):
+        scale = tiles["_meta"].get("resolutionScale", 1)
+        for row in range(464 * scale, 525 * scale):
+            for col in range(380 * scale, 461 * scale):
                 pos = row * cols + col
                 kind = terrain[row][col]
                 if flat[pos] == -1:

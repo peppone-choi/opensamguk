@@ -8,13 +8,13 @@ import opensamguk.logic.war.GridMovement.Intent
 import opensamguk.logic.war.GridMovement.Outcome
 
 class GridMovementTest {
-    private val layout = (BattlefieldLayout.prepare(HanProvinceCellIndex(
+    private val layout = (BattlefieldLayout.prepare(ProvinceCellIndex(
         "qa", "a".repeat(64), "b".repeat(64), 10, 5,
         mapOf('1' to "PLAIN", '2' to "MOUNTAIN", '3' to "RIVER"),
-        mapOf("a" to listOf(HanProvinceCell(0, 1, '1')),
-            "b" to listOf(HanProvinceCell(1, 1, '1'), HanProvinceCell(2, 1, '3'),
-                HanProvinceCell(3, 1, '1'), HanProvinceCell(4, 1, '2'), HanProvinceCell(6, 1, '1'),
-                HanProvinceCell(1, 2, '1'), HanProvinceCell(2, 2, '1'), HanProvinceCell(3, 2, '1')))),
+        mapOf("a" to listOf(ProvinceCell(0, 1, '1')),
+            "b" to listOf(ProvinceCell(1, 1, '1'), ProvinceCell(2, 1, '3'),
+                ProvinceCell(3, 1, '1'), ProvinceCell(4, 1, '2'), ProvinceCell(6, 1, '1'),
+                ProvinceCell(1, 2, '1'), ProvinceCell(2, 2, '1'), ProvinceCell(3, 2, '1')))),
         "b", "a") as BattlefieldLayout.Result.Ready).layout
     private fun unit(id: Int, col: Int, row: Int = 0, initiative: Int = 1) = UnitPosition(id, Position(col, row), initiative)
     private fun move(id: Int, col: Int, row: Int = 0) = Intent(id, Position(col, row))

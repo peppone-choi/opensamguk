@@ -8,8 +8,8 @@ class AiDistanceListCacheTest {
     @Test
     fun `historical variants with the same logical name and city subset do not share distances`() {
         val cache = AiDistanceListCache()
-        val old = opensamguk.logic.world.CityConstRegistry.hanWorld(opensamguk.logic.world.HanWorldVariant.V3_832)
-        val newer = opensamguk.logic.world.CityConstRegistry.hanWorld(opensamguk.logic.world.HanWorldVariant.V3_835)
+        val old = opensamguk.logic.world.CityConstRegistry.hanWorld(opensamguk.logic.world.WorldMapVariant.V3_832)
+        val newer = opensamguk.logic.world.CityConstRegistry.hanWorld(opensamguk.logic.world.WorldMapVariant.V3_835)
         assertEquals(old.mapName, newer.mapName)
         val ids = old.all().keys.intersect(newer.all().keys).take(2)
         var calls = 0

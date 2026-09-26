@@ -42,7 +42,7 @@ class BattleJournal(val encounterId: String, val contextHash: String, rounds: Li
         val bytes=ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             fun text(s:String) { val b=s.toByteArray(Charsets.UTF_8);out.writeInt(b.size);out.write(b) }
-            text("hwihaBattleJournal:v1");text(encounterId);text(contextHash);out.writeInt(rounds.size)
+            text("battleJournal:v1");text(encounterId);text(contextHash);out.writeInt(rounds.size)
             rounds.forEach { input ->
                 out.writeInt(input.round);out.writeInt(input.movements.size)
                 input.movements.forEach { move -> out.writeInt(move.bugokId);out.writeInt(move.path.size)
@@ -56,7 +56,7 @@ class BattleJournal(val encounterId: String, val contextHash: String, rounds: Li
     fun toMetaValue(): Map<String,Any> = linkedMapOf("version" to 1,"encounterId" to encounterId,
         "contextHash" to contextHash,"snapshotId" to snapshotId,"rounds" to rounds.map { it.toMetaValue() })
     companion object {
-        const val META_KEY="hwihaBattleJournal"
+        const val META_KEY="battleJournal"
         fun read(meta: Map<String,Any?>): BattleJournal? {
             if(META_KEY !in meta)return null
             val root=row(meta[META_KEY],setOf("version","encounterId","contextHash","snapshotId","rounds"))

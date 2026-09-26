@@ -19,7 +19,8 @@ data class CountyPlace(val countyId: Int, val commanderyId: String, val commande
     init { require(countyId > 0 && DomesticIds.commandery(commanderyId)) }
 }
 
-class CountyGeography(places: Collection<CountyPlace>) {
+class CountyGeography(places: Collection<CountyPlace>,
+    private val provinceIdsByJurisdiction: Map<String, Set<String>> = emptyMap()) {
     val byCounty: Map<Int, CountyPlace> = places.sortedBy { it.countyId }.associateBy { it.countyId }.also {
         require(it.size == places.size) { "duplicate county geography" }
     }
@@ -29,6 +30,9 @@ class CountyGeography(places: Collection<CountyPlace>) {
     fun commanderyOf(countyId: Int): String? = byCounty[countyId]?.commanderyId
     fun countiesOf(commanderyId: String): List<Int> = byCounty.values.filter { it.commanderyId == commanderyId }.map { it.countyId }
     fun commanderyName(commanderyId: String): String? = byCounty.values.firstOrNull { it.commanderyId == commanderyId }?.commanderyName
+    /** Every 省 in this 縣's jurisdiction, including pieces without a 城 seat. */
+    fun provincesOfCounty(countyId: Int): Set<String> =
+        byCounty[countyId]?.jurisdictionId?.let(provinceIdsByJurisdiction::get).orEmpty()
 
     /** 관할 id 가 정확히 한 縣治 城에 닿을 때만 그 城. */
     fun countyOfJurisdiction(jurisdictionId: String): Int? = countyByJurisdiction[jurisdictionId]
@@ -36,7 +40,7 @@ class CountyGeography(places: Collection<CountyPlace>) {
 
 /**
  * 인물 본관 원장(`officer-native-county-v1.json`)에서 향당 보너스에 쓰는 부분만 읽는다. game-api 의
- * `HwihaCampLedgers.nativeCountyOf` 와 같은 규칙이다: `scenarioLink == EXACT`, `method == DIRECT`, 그 이름을 실은 원장 행이
+ * `CampLedgers.nativeCountyOf` 와 같은 규칙이다: `scenarioLink == EXACT`, `method == DIRECT`, 그 이름을 실은 원장 행이
  * 하나뿐(동명이인 제외). 여기서는 **`jurisdictionId` 가 있는 행만** 쓴다 — 관할에 못 붙은 행(沛國 譙 등)은 이름 정규화가
  * 필요해 이번 범위에서 향당 보너스를 주지 않는다(추정하지 않는다).
  */
@@ -54,7 +58,7 @@ class NativeCountyLedger internal constructor(private val jurisdictionByName: Ma
     }
 
     companion object {
-        const val RESOURCE = "hwiha/officer-native-county-v1.json"
+        const val RESOURCE = "campaign/officer-native-county-v1.json"
         const val CREATED_GENERAL_SOURCE = "opensamguk:created-general"
 
         fun load(): NativeCountyLedger? =

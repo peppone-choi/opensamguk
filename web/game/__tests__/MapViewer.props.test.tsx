@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as WorldMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse, WorldMapResponse } from '@/lib/types';
 import { STRATEGIC_BINDING, STRATEGIC_TOPOLOGY } from './fixtures/strategic-topology';
 
@@ -10,23 +10,23 @@ const mocks = vi.hoisted(() => ({
   worldMap: vi.fn(),
   strategicTopology: vi.fn(),
   frontInfo: vi.fn(),
-  hwihaWorks: vi.fn(),
-  hwihaSieges: vi.fn(),
-  hwihaVisibility: vi.fn(),
-  hwihaCorps: vi.fn(),
-  hwihaScoutOptions: vi.fn(),
-  props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  campaignWorks: vi.fn(),
+  campaignSieges: vi.fn(),
+  campaignVisibility: vi.fn(),
+  campaignCorps: vi.fn(),
+  campaignScoutOptions: vi.fn(),
+  props: null as ComponentProps<typeof WorldMapCanvasType> | null,
   fetch: vi.fn(),
 }));
 
 vi.mock('@/lib/api', () => ({ api: { mapPreview: mocks.mapPreview, worldMap: mocks.worldMap,
   strategicTopology: mocks.strategicTopology, frontInfo: mocks.frontInfo,
-  hwihaWorks: mocks.hwihaWorks, hwihaSieges: mocks.hwihaSieges,
-  hwihaVisibility: mocks.hwihaVisibility, hwihaCorps: mocks.hwihaCorps,
-  hwihaScoutOptions: mocks.hwihaScoutOptions } }));
+  campaignWorks: mocks.campaignWorks, campaignSieges: mocks.campaignSieges,
+  campaignVisibility: mocks.campaignVisibility, campaignCorps: mocks.campaignCorps,
+  campaignScoutOptions: mocks.campaignScoutOptions } }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual, HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof WorldMapCanvasType>) => {
     mocks.props = props;
     return <div data-testid="shared-iso-map" />;
   } };
@@ -57,11 +57,11 @@ beforeEach(() => {
   mocks.worldMap.mockReset().mockResolvedValue(WORLD);
   mocks.strategicTopology.mockReset().mockResolvedValue(STRATEGIC_TOPOLOGY);
   mocks.frontInfo.mockReset().mockResolvedValue({ general: { generalId: null } });
-  mocks.hwihaWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
-  mocks.hwihaSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
-  mocks.hwihaVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [] });
-  mocks.hwihaCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [] });
-  mocks.hwihaScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
+  mocks.campaignWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
+  mocks.campaignSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
+  mocks.campaignVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [] });
+  mocks.campaignCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [] });
+  mocks.campaignScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
   vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
   vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
   Object.defineProperty(navigator, 'maxTouchPoints', { configurable: true, value: 0 });
@@ -224,9 +224,9 @@ describe('MapViewer data props', () => {
 
   it('shows nine-kind work and siege details on the default 2D city layer', async () => {
     mocks.frontInfo.mockResolvedValueOnce({ general: { generalId: 7 } });
-    mocks.hwihaWorks.mockResolvedValueOnce({ status: 'READY', counties: [{ countyId: 11,
+    mocks.campaignWorks.mockResolvedValueOnce({ status: 'READY', counties: [{ countyId: 11,
       active: { work: 'ROAD', label: '도로', percent: 35 }, completed: [] }] });
-    mocks.hwihaSieges.mockResolvedValueOnce({ status: 'READY', sieges: [{ countyId: 11, status: 'ACTIVE' }] });
+    mocks.campaignSieges.mockResolvedValueOnce({ status: 'READY', sieges: [{ countyId: 11, status: 'ACTIVE' }] });
     render(<MapViewer live />);
     await waitFor(() => expect(mocks.props?.cities?.[0].cityBadges).toEqual([
       { kind: 'supply', supplied: false },
