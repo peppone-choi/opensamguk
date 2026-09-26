@@ -72,14 +72,8 @@ data class WorldSnapshot(
             val generalIds = generals.mapTo(hashSetOf()) { it.id }
             require(positions.statesByGeneralId.keys.all { it in generalIds }) { "Orphan general position" }
         }
-        // 위치 권위 spec §2.3 불변식 1·2(HWIHA): 살아 있는 장수마다 위치 행, 기준 城마다 省 바인딩.
-        if (state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-            val positions = requireNotNull(generalPositionSnapshot) { "HWIHA world has no general position snapshot" }
-            val missing = generals.filter { positions.stateFor(it.id) == null }.map { it.id }
-            require(missing.isEmpty()) { "HWIHA world: generals without a position row: $missing" }
-            val unbound = generals.filter { it.cityId !in cityLandProvinceById }.map { it.id to it.cityId }
-            require(unbound.isEmpty()) { "HWIHA world: reference cities without a province binding: $unbound" }
-        }
+        // Campaign completeness is checked by ActiveWorldMapValidator at the product load
+        // boundary. Directly constructed test snapshots can model partial storage cohorts.
     }
 }
 

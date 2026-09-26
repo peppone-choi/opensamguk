@@ -302,13 +302,19 @@ data class TurnWorldState(
     /** Temporary adapter for input handlers until the retired profile type is removed. */
     val ruleProfile: opensamguk.logic.input.RuleProfile
         get() {
-            // The loader validates the full config/meta tree once. This getter runs for every
-            // general and must only check the already validated format marker.
-            require(config[opensamguk.logic.world.WorldFormat.CONFIG_KEY] ==
-                opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name) {
-                "unsupported worldFormat in runtime world config"
+            // Product worlds are constructed only by WorldSnapshotLoader, which validates the
+            // full config/meta tree. Directly constructed in-memory test worlds still use the
+            // retired profile field; keep this per-general projection constant-time.
+            val marker = config[opensamguk.logic.world.WorldFormat.CONFIG_KEY]
+            if (marker != null) {
+                require(marker == opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name) {
+                    "unsupported worldFormat in runtime world config"
+                }
+                return opensamguk.logic.input.RuleProfile.HWIHA
             }
-            return opensamguk.logic.input.RuleProfile.HWIHA
+            val legacy = config["ruleProfile"]
+            require(legacy == null || legacy is String) { "invalid legacy ruleProfile" }
+            return opensamguk.logic.input.RuleProfile.fromWorldConfig(legacy as String?)
         }
 }
 

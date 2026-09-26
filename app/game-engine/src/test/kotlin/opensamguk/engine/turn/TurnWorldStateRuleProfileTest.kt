@@ -16,11 +16,11 @@ class TurnWorldStateRuleProfileTest {
             state(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")).ruleProfile)
     }
 
-    @Test fun `unmarked and old worlds cannot reach runtime input rules`() {
-        for (config in listOf(emptyMap<String, Any?>(),
-            mapOf("ruleProfile" to "HWIHA"),
-            mapOf("worldFormat" to "SAMMO"))) {
-            assertFailsWith<IllegalArgumentException> { state(config).ruleProfile }
+    @Test fun `direct in-memory fixtures retain their profile projection`() {
+        assertEquals(RuleProfile.SAMMO, state(emptyMap()).ruleProfile)
+        assertEquals(RuleProfile.HWIHA, state(mapOf("ruleProfile" to "HWIHA")).ruleProfile)
+        assertFailsWith<IllegalArgumentException> {
+            state(mapOf("worldFormat" to "SAMMO")).ruleProfile
         }
     }
 }

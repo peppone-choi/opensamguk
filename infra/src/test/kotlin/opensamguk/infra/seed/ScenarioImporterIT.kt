@@ -165,9 +165,9 @@ class ScenarioImporterIT {
     @Test
     fun `hwiha scenario seeds one position row per general pinned to the boot topology`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-        // 위치 권위 spec §2.2·§3-3: HWIHA 시드 = 전 장수 위치 행. 기존 1010 에 ruleProfile 만 얹는다.
+        // 위치 권위 spec §2.2·§3-3: current-world 시드 = 전 장수 위치 행.
         val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
-        val scenario = ScenarioJson.loadScenario("{\"ruleProfile\": \"HWIHA\", \"lords\": [\"우길\"]," + raw)
+        val scenario = ScenarioJson.loadScenario("{\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\", \"lords\": [\"우길\"]," + raw)
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
         regressionImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
 

@@ -2,7 +2,9 @@ package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.MapJson
+import opensamguk.infra.seed.HanWorldArtifactsResolver
 import opensamguk.logic.world.WorldFormat
+import java.nio.file.Path
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -27,7 +29,10 @@ class ScenarioBootIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var loader: WorldSnapshotLoader
-    private val bootstrap = SeedBootstrap(scenarioCode = "scenario_990002", worldId = WorldId(1))
+    private val artifactsRoot = Path.of("../..").toAbsolutePath().normalize()
+    private val artifacts = HanWorldArtifactsResolver(artifactsRoot)
+    private val bootstrap = SeedBootstrap(scenarioCode = "scenario_990002", worldId = WorldId(1),
+        artifactsRoot = artifactsRoot)
     private var dockerAvailable = false
 
     @BeforeAll fun setup() {
@@ -46,7 +51,12 @@ class ScenarioBootIT {
         Flyway.configure().dataSource(source).locations("classpath:db/migration")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
-        loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1))
+        loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
+            waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
+            hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+            administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
+            cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
+                .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() })
     }
 
     @AfterAll fun cleanup() {
@@ -94,5 +104,14 @@ class ScenarioBootIT {
         }
         assertEquals(WorldFormat.GENERAL_RETAINER_CAMPAIGN.name,
             loader.buildSnapshot().state.config[WorldFormat.CONFIG_KEY])
+    }
+
+    @Test @Order(4)
+    fun `current world without a general position is refused at boot`() {
+        assumeTrue(dockerAvailable)
+        jdbc.update("""DELETE FROM general_spatial_position WHERE world_id=1
+            AND general_id=(SELECT min(id) FROM general WHERE world_id=1)""")
+        val error = assertFailsWith<IllegalArgumentException> { loader.buildSnapshot() }
+        assertTrue(error.message.orEmpty().contains("generals without a position row"), error.message)
     }
 }

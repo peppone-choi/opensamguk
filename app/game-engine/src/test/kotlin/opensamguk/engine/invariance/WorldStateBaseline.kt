@@ -101,7 +101,10 @@ internal object WorldStateBaseline {
         is Map<*, *> -> canonical(values(value))
         is Iterable<*> -> canonical(value.mapNotNull(::metadata))
         is Array<*> -> canonical(value.mapNotNull(::metadata))
-        is String -> if (value.contains("HWIHA", true) || value.contains("hwiha", true) ||
+        // The format label is a storage contract, not gameplay state. The old profile label
+        // was already excluded; exclude its replacement so this hash still compares behavior.
+        is String -> if (value == opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name ||
+            value.contains("HWIHA", true) || value.contains("hwiha", true) ||
             value.startsWith('/') || Regex("\\d{4}-\\d{2}-\\d{2}T").containsMatchIn(value)) null else canonical(value)
         is Number, is Boolean -> canonical(value)
         else -> null
