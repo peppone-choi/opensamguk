@@ -41,6 +41,13 @@ class CityPathGuardTest {
         FileSystems.getDefault().getPathMatcher("glob:$pattern").matches(Path.of(path))
     }
 
+    @Test fun `literal city paths exist`() {
+        val missing = sections.values.flatten()
+            .filterNot { path -> path.any { it in "*?[]" } }
+            .filterNot { path -> root.resolve(path).toFile().isFile }
+        assertTrue(missing.isEmpty(), "literal city paths absent from repository: $missing")
+    }
+
     @Test fun `opened city input files are covered by data paths`() {
         val opened = RepositoryInputTrace.capture(root) {
             MapJson.loadFromClasspath("han-world-v3")
