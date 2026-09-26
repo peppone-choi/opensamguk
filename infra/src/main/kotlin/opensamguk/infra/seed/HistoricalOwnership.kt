@@ -9,7 +9,7 @@ import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 
 /** Exact historical ownership inputs; compressed storage does not change the original-byte identity. */
-internal object HanHistoricalOwnership {
+internal object HistoricalOwnership {
     private const val CATALOG_SHA256 = "97a1420f872e4fcfe08e1a5e635051cbfe2632bcaf68c1aeeee00aa5764c071e"
     private val paths = setOf("data/map/han-scenario-province-ownership-v1.json",
         "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",

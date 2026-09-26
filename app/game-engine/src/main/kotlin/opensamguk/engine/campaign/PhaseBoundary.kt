@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory
 class PhaseBoundary(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex,
+    private val cells: ProvinceCellIndex,
     private val spatialSupplyNetwork: () -> SpatialSupplyNetwork? = { null },
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
@@ -56,9 +56,9 @@ class PhaseBoundary(
             .map { SupplyCapital(it.capitalCityId ?: 0, it.id) }
         // A boundary exception would wedge the turn loop forever; an unavailable network keeps last phase's flags.
         val supplied = try {
-            val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+            val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
             val network = spatialSupplyNetwork()
-            if (state.hanWorldVariant == HanWorldVariant.V3_1447_MAP4) {
+            if (state.worldMapVariant == WorldMapVariant.V3_1447_MAP4) {
                 val spatial = requireNotNull(network) { "Map4 supply network is missing" }
                 val strategic = requireNotNull(spatial.strategicSupply) { "Map4 strategic supply network is missing" }
                 val passage = requireNotNull(LandPassageState.read(state.meta, topology)) {

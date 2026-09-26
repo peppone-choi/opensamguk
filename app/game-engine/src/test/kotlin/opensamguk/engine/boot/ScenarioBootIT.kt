@@ -2,7 +2,7 @@ package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.seed.MapJson
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.world.WorldFormat
 import java.nio.file.Path
 import org.flywaydb.core.Flyway
@@ -30,7 +30,7 @@ class ScenarioBootIT {
     private lateinit var jdbc: JdbcTemplate
     private lateinit var loader: WorldSnapshotLoader
     private val artifactsRoot = Path.of("../..").toAbsolutePath().normalize()
-    private val artifacts = HanWorldArtifactsResolver(artifactsRoot)
+    private val artifacts = WorldArtifactsResolver(artifactsRoot)
     private val bootstrap = SeedBootstrap(scenarioCode = "scenario_990002", worldId = WorldId(1),
         artifactsRoot = artifactsRoot)
     private var dockerAvailable = false
@@ -53,7 +53,7 @@ class ScenarioBootIT {
         jdbc = JdbcTemplate(source)
         loader = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
             waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-            hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+            mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
             administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
             cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
                 .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() })

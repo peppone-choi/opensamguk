@@ -6,7 +6,7 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.CommandInboxRepository
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.command.CityTransportArgs
 import opensamguk.logic.command.CityTransportContext
 import opensamguk.logic.command.CityTransportDecision
@@ -17,7 +17,7 @@ import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.command.decideCityTransport
 import opensamguk.logic.command.resolveImmediateCityTransportRoute
 import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 
 /**
  * OPENSAM-154 (v2 R5) — 도시 자원 수송(`v2CityTransport`) 핸들러.
@@ -40,7 +40,7 @@ class V2CityTransportHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val ledger: V2CityLedgerStore,
-    private val loadTopology: () -> HanStrategicRouteProjection = {
+    private val loadTopology: () -> StrategicRouteProjection = {
         historicalTransportTopology(world.getState(), historicalArtifacts)
     },
 ) {
@@ -70,7 +70,7 @@ class V2CityTransportHandler(
                 hopDistance = if (strategic || from == null || to == null) {
                     null
                 } else {
-                    mapName?.let { ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant) }?.let { map ->
+                    mapName?.let { ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant) }?.let { map ->
                         CalcCityDistance.calcCityDistance(from.id, to.id, cityConst = map)
                     }
                 },
@@ -102,7 +102,7 @@ class V2CityTransportHandler(
     }
 
     companion object {
-        private val historicalArtifacts = HanWorldArtifactsResolver()
+        private val historicalArtifacts = WorldArtifactsResolver()
         const val ACTION_CODE = "v2CityTransport"
 
         internal fun applied(command: CityTransport): TurnDaemonCommandResult =
@@ -141,10 +141,10 @@ class V2CityTransportHandler(
 
 internal fun historicalTransportTopology(
     state: opensamguk.engine.turn.TurnWorldState,
-    artifacts: HanWorldArtifactsResolver,
-): HanStrategicRouteProjection {
+    artifacts: WorldArtifactsResolver,
+): StrategicRouteProjection {
     require(ActiveWorldMap.requireName(state.config, state.meta) == HAN_WORLD_V3_MAP_NAME)
-    return artifacts.artifacts(requireNotNull(state.hanWorldVariant) {
+    return artifacts.artifacts(requireNotNull(state.worldMapVariant) {
         "V3 transport requires the boot-validated historical map identity"
     }).projection
 }

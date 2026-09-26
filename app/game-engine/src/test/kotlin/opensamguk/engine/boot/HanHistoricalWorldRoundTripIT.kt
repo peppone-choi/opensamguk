@@ -3,8 +3,8 @@ package opensamguk.engine.boot
 import opensamguk.common.world.WorldId
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.logic.world.WorldMapVariant
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.*
 import org.springframework.jdbc.core.JdbcTemplate
@@ -25,7 +25,7 @@ class HanHistoricalWorldRoundTripIT {
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: JdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
-    private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
+    private val artifacts = WorldArtifactsResolver(Path.of("../.."))
 
     @BeforeAll fun setup() {
         Assumptions.assumeTrue(org.testcontainers.DockerClientFactory.instance().isDockerAvailable,
@@ -37,7 +37,7 @@ class HanHistoricalWorldRoundTripIT {
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = JdbcTemplate(source)
         executor = JdbcFlushExecutor(NamedParameterJdbcTemplate(source), TransactionTemplate(DataSourceTransactionManager(source)))
-        HanWorldVariant.entries.forEachIndexed { index, variant ->
+        WorldMapVariant.entries.forEachIndexed { index, variant ->
             val id = index + 1
             jdbc.update("INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config,meta) VALUES (?, 'scenario_1020',200,1,60,?::jsonb,'{}'::jsonb)",
                 id, "{\"mapName\":\"han-world-v3\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}")
@@ -56,13 +56,13 @@ class HanHistoricalWorldRoundTripIT {
     private fun loader(id: Int) = WorldSnapshotLoader(jdbc,
         SeedBootstrap(scenarioCode = "scenario_0", seedEnabled = false, worldId = WorldId(id)), WorldId(id),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-        hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant })
+        mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant })
 
     @Test fun `real flush and fresh loader preserve all registered world identities and changed names`() {
-        HanWorldVariant.entries.forEachIndexed { index, variant ->
+        WorldMapVariant.entries.forEachIndexed { index, variant ->
             val id = index + 1
             val before = loader(id).buildSnapshot()
-            assertEquals(variant, before.state.hanWorldVariant)
+            assertEquals(variant, before.state.worldMapVariant)
             assertEquals(artifacts.artifacts(variant).cityConst.all().keys, before.cities.map { it.id }.toSet())
             val cityId = before.cities.first().id
             val newName = "world-$id-renamed-$cityId"
@@ -73,7 +73,7 @@ class HanHistoricalWorldRoundTripIT {
                 updatedCities = listOf(opensamguk.logic.domain.City(id = cityId, nationId = 0, level = 1, commerce = 1234, commerceMax = 2000,
                     agriculture = 10, agricultureMax = 1000, supplyState = 0, frontState = 0, trust = 0.0))))
             val after = loader(id).buildSnapshot()
-            assertEquals(variant, after.state.hanWorldVariant)
+            assertEquals(variant, after.state.worldMapVariant)
             assertEquals(before.cities.map { it.id }, after.cities.map { it.id })
             assertEquals(newName, after.cities.single { it.id == cityId }.name)
             assertEquals(1234, after.cities.single { it.id == cityId }.commerce)
@@ -83,17 +83,17 @@ class HanHistoricalWorldRoundTripIT {
             assertEquals(artifacts.artifacts(variant).projection.topology.contentHash,
                 assertNotNull(after.waterControlSnapshot).topologyHash)
             assertEquals("han-world-v3", after.state.config["mapName"])
-            assertFalse(after.state.config.containsKey("hanWorldVariant"))
-            assertFalse(after.state.meta.containsKey("hanWorldVariant"))
+            assertFalse(after.state.config.containsKey("worldMapVariant"))
+            assertFalse(after.state.meta.containsKey("worldMapVariant"))
         }
     }
 
     @Test fun `another worlds inconsistent pin cannot change this worlds selected map`() {
-        val older = artifacts.artifacts(HanWorldVariant.V3_832).projection.topology
-        val newer = artifacts.artifacts(HanWorldVariant.V3_835).projection.topology
+        val older = artifacts.artifacts(WorldMapVariant.V3_832).projection.topology
+        val newer = artifacts.artifacts(WorldMapVariant.V3_835).projection.topology
         jdbc.update("UPDATE province_control SET topology_hash=? WHERE world_id=2", older.contentHash)
         try {
-            assertEquals(HanWorldVariant.V3_832, loader(1).buildSnapshot().state.hanWorldVariant)
+            assertEquals(WorldMapVariant.V3_832, loader(1).buildSnapshot().state.worldMapVariant)
             assertFailsWith<IllegalArgumentException> { loader(2).buildSnapshot() }
         } finally {
             jdbc.update("UPDATE province_control SET topology_hash=? WHERE world_id=2", newer.contentHash)

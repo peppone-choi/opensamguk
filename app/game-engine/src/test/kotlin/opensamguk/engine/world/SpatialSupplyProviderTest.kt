@@ -50,9 +50,9 @@ class SpatialSupplyProviderTest {
         assertTrue(custom.provinceOwners.all { it==0 || it==77 })
         // 판을 박아 두면 지도 릴리스마다 살아 있는 城 집합과 어긋난다(2026-09-21 실측: 1,168 판에서
         // 城 1134 identity 불일치). 런타임이 하는 그대로 살아 있는 城 id 로 판을 고른다.
-        val resolver=opensamguk.infra.seed.HanWorldArtifactsResolver(Path("../.."))
-        val topology=resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).projection.topology
-        val artifacts=resolver.resolve(cities.map { it.cityId }, listOf(opensamguk.infra.seed.HanWorldTopologyPin(
+        val resolver=opensamguk.infra.seed.WorldArtifactsResolver(Path("../.."))
+        val topology=resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection.topology
+        val artifacts=resolver.resolve(cities.map { it.cityId }, listOf(opensamguk.infra.seed.WorldTopologyPin(
             "province_control", topology.topologyRevision, topology.contentHash)))
         val selected=provider().network("han-world-v3",990001,cities,artifacts=artifacts)
         assertEquals(custom.provinceOwners.toList(),selected.provinceOwners.toList())

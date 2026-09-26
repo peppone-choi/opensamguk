@@ -121,8 +121,8 @@ class EnlistmentApiIT {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.options[0].availability.code").value("ALREADY_SERVING"))
         // Explicit synthetic passage/reaction authority, using the actual pinned map.
-        val bundle = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
-            .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
+        val bundle = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
+            .artifacts(opensamguk.logic.world.WorldMapVariant.V3_1133)
         val topology = bundle.projection.topology
         val authority = mapOf(
             opensamguk.logic.input.LandPassageState.META_KEY to opensamguk.logic.input.LandPassageState.initialMetaValue(topology),
@@ -187,7 +187,7 @@ class EnlistmentApiIT {
             cities: opensamguk.gameapi.read.CityReadRepository,
             pins: opensamguk.gameapi.read.WorldArtifactIdentityReadRepository,
         ) = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins,
-            opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../..")))
+            opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../..")))
     }
 
     companion object {

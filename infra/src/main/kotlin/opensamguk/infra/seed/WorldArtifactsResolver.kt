@@ -3,29 +3,29 @@ package opensamguk.infra.seed
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 import opensamguk.logic.world.CityConstRegistry
-import opensamguk.logic.world.HanWorldVariant
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.WorldMapVariant
+import opensamguk.logic.world.StrategicRouteProjection
 
 /** A stored pin from one of the three world-scoped spatial tables. */
-data class HanWorldTopologyPin(val channel: String, val revision: String?, val hash: String?)
+data class WorldTopologyPin(val channel: String, val revision: String?, val hash: String?)
 
-class ResolvedHanWorldArtifacts internal constructor(
-    val variant: HanWorldVariant,
-    val projection: HanStrategicRouteProjection,
+class ResolvedWorldArtifacts internal constructor(
+    val variant: WorldMapVariant,
+    val projection: StrategicRouteProjection,
     bytes: Map<String, ByteArray>,
 ) {
     private val artifacts = bytes.mapValues { it.value.copyOf() }
     val landMarchMetrics: opensamguk.logic.world.LandMarchMetricSnapshot by lazy {
-        HanLandMarchMetricJson.load(projection.topology,
+        LandMarchMetricJson.load(projection.topology,
             artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
     }
-    val provinceCells: opensamguk.logic.world.HanProvinceCellIndex by lazy {
-        HanProvinceCellJson.load(projection.topology,
+    val provinceCells: opensamguk.logic.world.ProvinceCellIndex by lazy {
+        ProvinceCellJson.load(projection.topology,
             artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
     }
     /** 郡國 numbering and shared-border graph for HWIHA vision (same numbers as the provinces PNG). */
-    val commanderyIndex: opensamguk.logic.world.HanCommanderyIndex by lazy {
-        HanCommanderyIndexJson.load(projection.topology,
+    val commanderyIndex: opensamguk.logic.world.CommanderyIndex by lazy {
+        CommanderyIndexJson.load(projection.topology,
             artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
     }
     val cityConst get() = CityConstRegistry.hanWorld(variant)
@@ -36,7 +36,7 @@ class ResolvedHanWorldArtifacts internal constructor(
 }
 
 /** Cache immutable artifacts, never the world's selection: a reset can change its roster. */
-class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
+class WorldArtifactsResolver(private val root: Path = defaultRoot()) {
     companion object {
         // Immutable topology pins for the two releases with the same 1447-city roster.
         // Select from these before loading either multi-megabyte bundle.
@@ -54,42 +54,42 @@ class HanWorldArtifactsResolver(private val root: Path = defaultRoot()) {
                 ?: Path.of(".")
     }
 
-    private val cache = ConcurrentHashMap<HanWorldVariant, ResolvedHanWorldArtifacts>()
+    private val cache = ConcurrentHashMap<WorldMapVariant, ResolvedWorldArtifacts>()
 
-    fun artifacts(variant: HanWorldVariant): ResolvedHanWorldArtifacts = cache.computeIfAbsent(variant) {
-        if (it == HanWorldVariant.V3_846) Han846Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_848) Han848Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1098) Han1098Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1168) Han1168Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1224) Han1224Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1447) Han1447Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1447_MAP4) Han1447Map4Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1194) Han1194Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1341) Han1341Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1141) Han1141Artifacts.load(root)
-        else if (it == HanWorldVariant.V3_1133) Han1133Artifacts.load(root)
-        else HanHistoricalArtifacts.loadBundleFromDirectory(root, it.artifactId)
+    fun artifacts(variant: WorldMapVariant): ResolvedWorldArtifacts = cache.computeIfAbsent(variant) {
+        if (it == WorldMapVariant.V3_846) Han846Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_848) Han848Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1098) Han1098Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1168) Han1168Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1224) Han1224Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1447) Han1447Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1447_MAP4) Han1447Map4Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1194) Han1194Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1341) Han1341Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1141) Han1141Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1133) Han1133Artifacts.load(root)
+        else HistoricalArtifacts.loadBundleFromDirectory(root, it.artifactId)
     }
 
     /** The caller must provide the complete world roster and all world-scoped persisted pins. */
-    fun resolve(completeCityIds: Collection<Int>, pins: Collection<HanWorldTopologyPin>): ResolvedHanWorldArtifacts {
+    fun resolve(completeCityIds: Collection<Int>, pins: Collection<WorldTopologyPin>): ResolvedWorldArtifacts {
         val ids = completeCityIds.toSet()
         require(ids.size == completeCityIds.size) { "Duplicate world city identities" }
-        val candidates = HanWorldVariant.entries.filter { CityConstRegistry.hanWorld(it).all().keys == ids }
+        val candidates = WorldMapVariant.entries.filter { CityConstRegistry.hanWorld(it).all().keys == ids }
         require(candidates.isNotEmpty()) { "World city identities do not select a registered Han artifact set" }
         val selected = if (candidates.size == 1) {
             artifacts(candidates.single())
         } else {
             // Both 1447 releases have the same city identities. Stored topology
             // pins identify their grid; unpinned old worlds keep the old release.
-            if (pins.isEmpty()) artifacts(HanWorldVariant.V3_1447)
+            if (pins.isEmpty()) artifacts(WorldMapVariant.V3_1447)
             else {
                 require(pins.all { it.revision == "han-water-topology-v1" && it.hash == pins.first().hash }) {
                     "World spatial pins disagree"
                 }
                 val variant = when (pins.first().hash) {
-                    V3_1447_HASH -> HanWorldVariant.V3_1447
-                    V3_1447_MAP4_HASH -> HanWorldVariant.V3_1447_MAP4
+                    V3_1447_HASH -> WorldMapVariant.V3_1447
+                    V3_1447_MAP4_HASH -> WorldMapVariant.V3_1447_MAP4
                     else -> throw IllegalArgumentException("World spatial pins do not select one 1447 release")
                 }
                 artifacts(variant)

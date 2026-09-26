@@ -15,13 +15,13 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownRules
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -155,11 +155,11 @@ class MonthBoundaryLoopIT {
             seedBootstrap: SeedBootstrap,
             processWorld: EngineProcessWorld,
         ): WorldSnapshotLoader {
-            val artifacts = HanWorldArtifactsResolver(repoRoot())
+            val artifacts = WorldArtifactsResolver(repoRoot())
             return WorldSnapshotLoader(
                 jdbc, seedBootstrap, processWorld.worldId,
                 waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-                hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+                mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
                 administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
                 cityLandProvinceLoader = { variant ->
                     artifacts.artifacts(variant).projection.bindingsByCityId
@@ -232,8 +232,8 @@ class MonthBoundaryLoopIT {
             // 세입은 소유·보급된 縣 에만 들어간다. 그런데 보급 상태는 월간 파이프라인의
             // UpdateCitySupply 가 수도에서 BFS 로 다시 계산하므로, 시드에서 supply_state 를
             // 1 로 박아도 경계에서 덮인다. 그래서 이 縣 을 세력 수도로 만든다.
-            val county = HanWorldArtifactsResolver(Path.of("../.."))
-                .artifacts(HanWorldVariant.V3_1133).projection.administrativeCountyIds.min()
+            val county = WorldArtifactsResolver(Path.of("../.."))
+                .artifacts(WorldMapVariant.V3_1133).projection.administrativeCountyIds.min()
             seededCounty = county
             jdbc.update(
                 "UPDATE city SET nation_id=1, supply_state=1, meta=?::jsonb WHERE world_id=? AND id=?",

@@ -184,8 +184,8 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"") ||
             config.contains("\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
-        val freshVariant = opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4
-        val topology = HanWorldArtifactsResolver(root).artifacts(freshVariant).projection.topology
+        val freshVariant = opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4
+        val topology = WorldArtifactsResolver(root).artifacts(freshVariant).projection.topology
         val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
         val passageMeta = opensamguk.infra.persistence.MetaJson.decode(

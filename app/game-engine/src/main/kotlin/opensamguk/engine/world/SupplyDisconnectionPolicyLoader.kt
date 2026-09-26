@@ -41,7 +41,7 @@ class SupplyDisconnectionPolicyLoader(
         activeMapName: String,
         scenarioCode: Int,
         liveCities: List<SpatialSupplyCity>,
-        artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null,
+        artifacts: opensamguk.infra.seed.ResolvedWorldArtifacts? = null,
     ): Map<Int, SupplyFallbackPolicy> {
         val canonical = canonical(activeMapName, artifacts)
         val liveById = liveCities.associateBy { it.cityId }
@@ -86,12 +86,12 @@ class SupplyDisconnectionPolicyLoader(
         return result
     }
 
-    private fun canonical(activeMapName: String, artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null): CanonicalPolicies = synchronized(cached) {
+    private fun canonical(activeMapName: String, artifacts: opensamguk.infra.seed.ResolvedWorldArtifacts? = null): CanonicalPolicies = synchronized(cached) {
         require(artifacts == null || activeMapName == "han-world-v3")
         cached.getOrPut(artifacts?.variant?.artifactId ?: activeMapName) { loadCanonical(activeMapName, artifacts) }
     }
 
-    private fun loadCanonical(activeMapName: String, artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts?): CanonicalPolicies {
+    private fun loadCanonical(activeMapName: String, artifacts: opensamguk.infra.seed.ResolvedWorldArtifacts?): CanonicalPolicies {
         try {
             val (activeLedgerPath, activeRuntimeMapPath, schemaVersion) = when (activeMapName) {
                 "han", "han-world-v2" -> Triple(ledgerPath, runtimeMapPath, 1)

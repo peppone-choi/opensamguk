@@ -7,7 +7,7 @@ import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.engine.campaign.*
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
@@ -23,7 +23,7 @@ import opensamguk.logic.world.*
 class YuzhouCampaignInvarianceTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }.first { Files.isDirectory(it.resolve("data/map")) }
     private val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
-    private val bundle = HanWorldArtifactsResolver(repo).resolve(mapCities.map { it.id }, emptyList())
+    private val bundle = WorldArtifactsResolver(repo).resolve(mapCities.map { it.id }, emptyList())
     private val topology = bundle.projection.topology
     private val metrics = bundle.landMarchMetrics
     private val cells = bundle.provinceCells
@@ -64,7 +64,7 @@ class YuzhouCampaignInvarianceTest {
                 StrategicNodeRef.LandProvince(provinceOf.getValue(g.cityId)), 1))
         }
         val state = TurnWorldState(1, 190, 1, 3600, Instant.parse("0190-01-01T00:00:00Z"), currentPhase = 1,
-            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), hanWorldVariant = bundle.variant,
+            config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"), worldMapVariant = bundle.variant,
             meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                 MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue(), "startYear" to 190))
         val world = InMemoryTurnWorld(WorldSnapshot(worldId = WorldId(1), state = state, generals = generals, cities = cities,

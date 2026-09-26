@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import java.security.MessageDigest
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.LandMarchMetricSnapshot
 import opensamguk.logic.world.StrategicTopologySnapshot
 
 /**
- * Builds the vision [HanCommanderyIndex] from the selected world's pinned tiles bytes.
+ * Builds the vision [CommanderyIndex] from the selected world's pinned tiles bytes.
  *
  * - Numbers are `parentRegions` indices; `juns[i]` must name the same 郡國 so the number equals the provinces
  *   PNG commandery channel (`tools/map/build_province_map.py` writes `parentOwner` → `parentRegions`).
@@ -19,18 +19,18 @@ import opensamguk.logic.world.StrategicTopologySnapshot
  * - Adjacency is derived from the owner raster (4-neighbour shared border, sea excluded) and, when the tiles carry
  *   `adjacency.commandery`, must equal it — two independent derivations of the same graph.
  */
-object HanCommanderyIndexJson {
+object CommanderyIndexJson {
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-    fun load(topology: StrategicTopologySnapshot, tilesBytes: ByteArray): HanCommanderyIndex {
+    fun load(topology: StrategicTopologySnapshot, tilesBytes: ByteArray): CommanderyIndex {
         val hash = MessageDigest.getInstance("SHA-256").digest(tilesBytes).joinToString("") { "%02x".format(it) }
         require(topology.artifactHashes[LandMarchMetricSnapshot.TILES_PATH] == hash) { "Commandery tiles differ from topology pin" }
         return parse(tilesBytes, topology.landProvinceIds, hash)
     }
 
     /** Pure parse, split out so tests can probe the cross-checks without a matching topology pin. */
-    internal fun parse(tilesBytes: ByteArray, landProvinceIds: Set<String>, hash: String): HanCommanderyIndex {
+    internal fun parse(tilesBytes: ByteArray, landProvinceIds: Set<String>, hash: String): CommanderyIndex {
         val root = try { mapper.readTree(tilesBytes) } catch (e: java.io.IOException) {
             throw IllegalArgumentException("Malformed commandery tiles JSON", e)
         }
@@ -40,7 +40,7 @@ object HanCommanderyIndexJson {
         require(parents.isNotEmpty() && parents.size == juns.size) { "parentRegions and juns must align" }
         val commanderies = parents.mapIndexed { index, parent ->
             require(text(parent.path("nameCh")) == text(juns[index].path("nameCh"))) { "juns[$index] names a different commandery" }
-            HanCommandery(index, text(parent.path("id")), text(parent.path("displayName")), text(parent.path("nameCh")))
+            Commandery(index, text(parent.path("id")), text(parent.path("displayName")), text(parent.path("nameCh")))
         }
         val numberById = commanderies.associate { it.id to it.no }
         require(numberById.size == commanderies.size) { "Duplicate parent region id" }
@@ -83,7 +83,7 @@ object HanCommanderyIndexJson {
             }.toSortedSet(compareBy({ it.first }, { it.second }))
             require(listed == pairs) { "Declared commandery adjacency differs from the owner raster" }
         }
-        return HanCommanderyIndex(hash, commanderies, provinceIds.zip(provinceCommandery).toMap(), pairs.toSet())
+        return CommanderyIndex(hash, commanderies, provinceIds.zip(provinceCommandery).toMap(), pairs.toSet())
     }
 
     private fun array(node: JsonNode): List<JsonNode> {

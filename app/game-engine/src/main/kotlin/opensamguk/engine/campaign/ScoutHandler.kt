@@ -19,7 +19,7 @@ import opensamguk.logic.world.*
 data class VisionContext(
     val topology: StrategicTopologySnapshot,
     val metrics: LandMarchMetricSnapshot,
-    val commanderies: HanCommanderyIndex,
+    val commanderies: CommanderyIndex,
     val rules: VisionRules.Rules = VisionRules.CANON,
 )
 

@@ -86,7 +86,7 @@ class ScenarioImporter(
     /** The install instant; also `general.turn_time` / `world_state.start_time` / `ng_games.date`. */
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
-    private val artifactsRoot: java.nio.file.Path = HanWorldArtifactsResolver.defaultRoot(),
+    private val artifactsRoot: java.nio.file.Path = WorldArtifactsResolver.defaultRoot(),
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
@@ -406,12 +406,12 @@ class ScenarioImporter(
 
     /** A fresh 1447 seed uses the reviewed fourfold grid; old worlds are
      * selected independently from their stored topology pins on boot. */
-    private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedHanWorldArtifacts {
-        val resolver = HanWorldArtifactsResolver(artifactsRoot)
+    private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
+        val resolver = WorldArtifactsResolver(artifactsRoot)
         return if (ids.toSet() ==
             opensamguk.logic.world.CityConstRegistry.hanWorld(
-                opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).all().keys)
-            resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
+                opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
+            resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
         else resolver.resolve(ids, emptyList())
     }
 

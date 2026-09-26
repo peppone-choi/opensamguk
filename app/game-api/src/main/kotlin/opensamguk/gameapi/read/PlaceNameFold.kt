@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  * 표는 「실제로 쓰인 글자만」 싣는다. 표에 없는 글자(예: 溫)는 접히지 않으므로 그런 縣은 대조에서
  * 빠진다 — 그때 호출부는 모른다고 답해야 한다.
  */
-class HanPlaceNameFold internal constructor(private val table: Map<Int, Int>) {
+class PlaceNameFold internal constructor(private val table: Map<Int, Int>) {
     fun group(name: String?): String = fold((name ?: "").trim())
 
     fun county(name: String?): String {
@@ -37,13 +37,13 @@ class HanPlaceNameFold internal constructor(private val table: Map<Int, Int>) {
         private val GROUP_SUFFIXES = listOf("侯国", "侯國", "属国", "屬國", "公国", "公國")
         private val COUNTY_SUFFIXES = listOf("县", "縣")
 
-        fun loadDefault(objectMapper: ObjectMapper): HanPlaceNameFold = load(objectMapper,
-            checkNotNull(HanPlaceNameFold::class.java.classLoader.getResourceAsStream(RESOURCE)) {
+        fun loadDefault(objectMapper: ObjectMapper): PlaceNameFold = load(objectMapper,
+            checkNotNull(PlaceNameFold::class.java.classLoader.getResourceAsStream(RESOURCE)) {
                 "Han place-name fold table resource is missing: $RESOURCE"
             }.use { it.readBytes() })
 
         /** 표 + 검토된 異體字 쌍. 한 글자 → 다른 한 글자, 표와 어긋남·사슬·witness 누락은 거부한다(파이썬과 같은 검증). */
-        fun load(objectMapper: ObjectMapper, bytes: ByteArray): HanPlaceNameFold {
+        fun load(objectMapper: ObjectMapper, bytes: ByteArray): PlaceNameFold {
             val root = objectMapper.readTree(bytes)
             check(root.path("tableId").asText() == "han-name-simplification-v1") { "Unexpected fold table" }
             val table = linkedMapOf<Int, Int>()
@@ -60,7 +60,7 @@ class HanPlaceNameFold internal constructor(private val table: Map<Int, Int>) {
             additions.forEach { row ->
                 require(single(row.path("to").asText()) !in table) { "reviewedVariantAdditions chains at ${row.path("to").asText()}" }
             }
-            return HanPlaceNameFold(table)
+            return PlaceNameFold(table)
         }
 
         private fun single(text: String): Int {

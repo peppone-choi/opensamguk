@@ -20,6 +20,18 @@
 | `web/game/lib/hwiha-session.tsx` | `web/game/lib/campaign-session.tsx` | 저장·통신 draft | 세션 훅·판정 필드 개명 |
 | `web/game/lib/hwiha-map.ts` | `web/game/lib/campaign-map.ts` | 저장·통신 draft | 지도 훅·상수 개명; `han` 지도 번들 ID는 유지 |
 | `HanMapCanvasType` 테스트 별칭 | `WorldMapCanvasType` | 저장·통신 draft | 범용 캔버스 이름과 일치 |
+| `HanWorldVariant`·`hanWorldVariant` | `WorldMapVariant`·`worldMapVariant` | 중립 지도 개명 | 코드 타입·필드만 변경; 저장 번들 ID `han-world-v3*`와 핀 값은 그대로 둔다 |
+| `HanWorldArtifactsResolver` | `WorldArtifactsResolver` | 중립 지도 개명 | 지도 아카이브 선택기 타입·파일명 변경 |
+| `HanWorldTopologyPin` | `WorldTopologyPin` | 중립 지도 개명 | 저장 핀을 읽는 코드 타입만 변경 |
+| `ResolvedHanWorldArtifacts` | `ResolvedWorldArtifacts` | 중립 지도 개명 | 아카이브 해석 결과 타입만 변경 |
+| `hanVariantSelector` | `mapVariantSelector` | 중립 지도 개명 | 로더 주입 매개변수 이름만 변경 |
+| `HanStrategicTopologyJson` | `StrategicTopologyJson` | 중립 지도 개명 | 저장된 topology revision/hash 값은 유지 |
+| `HanStrategicRouteProjection`·`HanStrategicRouteBinding` | `StrategicRouteProjection`·`StrategicRouteBinding` | 중립 지도 개명 | 행군 경로 코드 타입만 변경 |
+| `HanProvinceCell`·`HanProvinceCellIndex`·`HanProvinceCellJson` | `ProvinceCell`·`ProvinceCellIndex`·`ProvinceCellJson` | 중립 지도 개명 | 지형 그리드 코드 타입·파일명 변경 |
+| `HanCommandery`·`HanCommanderyIndex`·`HanCommanderyIndexJson` | `Commandery`·`CommanderyIndex`·`CommanderyIndexJson` | 중립 지도 개명 | 郡 인덱스 코드 타입·파일명 변경 |
+| `HanLandMarchMetricJson` | `LandMarchMetricJson` | 중립 지도 개명 | 행군 거리 로더 코드 타입·파일명 변경 |
+| `HanPlaceNameFold` | `PlaceNameFold` | 중립 지도 개명 | 지명 표기 코드 타입·파일명 변경 |
+| `HanHistoricalOwnership`·`HanHistoricalArtifacts` | `HistoricalOwnership`·`HistoricalArtifacts` | 중립 지도 개명 | 사료 기반 자료 로더 코드 타입·파일명 변경 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
@@ -1486,3 +1498,12 @@ web/game/lib/hwiha-reads.ts
 새 시드는 `world_state.config.worldFormat = GENERAL_RETAINER_CAMPAIGN`을 기록한다. 엔진 부팅과 API 처리 월드 조회는 이 값이 없거나 다르거나, `ruleProfile` 또는 `hwiha*` 옛 키가 config·meta에 남으면 명시적으로 거절한다. API는 `409 Conflict`와 원인을 돌려준다. 운영 세계 데이터를 자동 이전하지 않으므로 pep C단계 리셋 전 게임 서버를 승격하지 않는다.
 
 `WorldRuleProfile`과 API의 `ruleProfile` 응답은 남은 입력 핸들러·웹 소비자가 쓰는 임시 내부 어댑터다. 저장된 세계의 판정은 오직 `WorldFormat`이 한다. 옛 `/game/hwiha/*`와 `/game/<server>/hwiha/*`의 308 리다이렉트는 `web/game/middleware.ts` 및 기존 9화면 계약 테스트가 유지한다.
+
+### 역사 지도 런타임 이름 추가
+
+| 옛 이름 | 새 이름 |
+| --- | --- |
+| `HanCityConstVariant` | `HistoricalCityConstVariant` |
+| `generateHanCities` | `generateHistoricalCities` |
+| `isHanMapName` | `isHistoricalMapName` |
+| `projectHanDryLandEdges` | `projectDryLandEdges` |

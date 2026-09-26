@@ -5,9 +5,9 @@ import opensamguk.logic.world.*
 
 class SiegeAssaultTest {
     private val layout = assertIs<BattlefieldLayout.Result.Ready>(BattlefieldLayout.prepare(
-        HanProvinceCellIndex("qa", "a".repeat(64), "b".repeat(64), 12, 2, mapOf('1' to "PLAIN"),
-            mapOf("A" to listOf(HanProvinceCell(0, 0, '1'), HanProvinceCell(0, 1, '1')),
-                "B" to (0..1).flatMap { row -> (1..10).map { HanProvinceCell(it, row, '1') } })), "B", "A")).layout
+        ProvinceCellIndex("qa", "a".repeat(64), "b".repeat(64), 12, 2, mapOf('1' to "PLAIN"),
+            mapOf("A" to listOf(ProvinceCell(0, 0, '1'), ProvinceCell(0, 1, '1')),
+                "B" to (0..1).flatMap { row -> (1..10).map { ProvinceCell(it, row, '1') } })), "B", "A")).layout
     private val infantry = UnitProfile(1100, 1, 1, 100, 120, 20)
     private fun army(troops: Int) = listOf(SiegeAssault.Attacker(7, troops, 50, 50, 0, infantry),
         SiegeAssault.Attacker(8, troops, 50, 50, 0, infantry))

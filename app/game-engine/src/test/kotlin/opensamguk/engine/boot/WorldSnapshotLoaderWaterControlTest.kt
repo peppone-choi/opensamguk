@@ -48,7 +48,7 @@ class WorldSnapshotLoaderWaterControlTest {
         }
         val snapshot = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(8)),
             WorldId(8), snapshotValidator = {}, waterTopologyLoader = { topology },
-            hanVariantSelector = { _, _ -> HanWorldVariant.V3_835 },
+            mapVariantSelector = { _, _ -> WorldMapVariant.V3_835 },
             administrativeCountyIdsLoader = { emptySet() }).buildSnapshot()
         return snapshot to queries
     }

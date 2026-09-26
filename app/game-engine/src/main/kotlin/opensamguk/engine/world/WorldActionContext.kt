@@ -203,7 +203,7 @@ class WorldActionContext(
     private fun resolveTurnterm(): Int = (world.getState().meta["turnterm"] as? Number)?.toInt() ?: 1
     private fun activeCityConst(): CityConstVariant {
         val state = world.getState()
-        return ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        return ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
     }
 
     private fun logDraft(

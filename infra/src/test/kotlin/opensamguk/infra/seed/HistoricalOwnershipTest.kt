@@ -7,19 +7,19 @@ import java.security.MessageDigest
 import org.junit.jupiter.api.io.TempDir
 import kotlin.test.*
 
-class HanHistoricalOwnershipTest {
+class HistoricalOwnershipTest {
     @TempDir lateinit var temporary: Path
     private val directory = Path.of("../data/map/han-world-artifacts-v1")
 
     @Test fun `ownership originals match catalog hashes and source domain`() {
         val catalog = ObjectMapper().readTree(Files.readAllBytes(directory.resolve("ownership-catalog.json")))
         for (variant in catalog["variants"]) {
-            val bytes = HanHistoricalOwnership.load(directory, variant["variantId"].asText(), variant["sourceCommit"].asText())
+            val bytes = HistoricalOwnership.load(directory, variant["variantId"].asText(), variant["sourceCommit"].asText())
             for (file in variant["files"]) {
                 val raw = bytes.getValue(file["path"].asText())
                 assertEquals(file["sha256"].asText(), MessageDigest.getInstance("SHA-256").digest(raw).joinToString("") { "%02x".format(it) })
             }
-            assertFailsWith<IllegalArgumentException> { HanHistoricalOwnership.load(directory, variant["variantId"].asText(), "other-commit") }
+            assertFailsWith<IllegalArgumentException> { HistoricalOwnership.load(directory, variant["variantId"].asText(), "other-commit") }
         }
     }
 
@@ -31,7 +31,7 @@ class HanHistoricalOwnershipTest {
         Files.createDirectories(blob.parent)
         Files.write(blob, byteArrayOf(1, 2, 3))
         assertFailsWith<IllegalArgumentException> {
-            HanHistoricalOwnership.load(temporary, variant["variantId"].asText(), variant["sourceCommit"].asText())
+            HistoricalOwnership.load(temporary, variant["variantId"].asText(), variant["sourceCommit"].asText())
         }
     }
 }
