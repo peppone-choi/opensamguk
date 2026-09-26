@@ -8,12 +8,40 @@ import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.CountyAssignment
+import opensamguk.logic.input.DispatchAssessment
+import opensamguk.logic.input.DispatchFailure
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventKind
 import opensamguk.logic.record.EventRef
 import opensamguk.logic.record.RefRole
 
 class AssignmentMarchEventTest {
+    @Test
+    fun `NPC assignment march stops when the issuing lord becomes human owned`() {
+        val fixture = CampaignWorldFixture()
+        val route = fixture.route()
+        val issuer = fixture.person(1, 1, route.startCity, userId = "42")
+        val assignment = CountyAssignment("npc-dispatch", issuer.id, 1, route.destinationCounty)
+        val target = fixture.person(301, 1, route.startCity, lord = false).copy(
+            meta = fixture.person(301, 1, route.startCity, lord = false).meta +
+                (CountyAssignment.META_KEY to assignment.toMetaValue()))
+        val world = fixture.world(listOf(issuer to route.start, target to route.start),
+            retainers = listOf(Retainer(1, issuer.id, "EXISTING", target.id, target.name, "guest")),
+            cityChanges = { city -> city.copy(nationId = 1) })
+        val recorder = ChangeRecorder()
+        assertEquals(DispatchFailure.NPC_ISSUER_REQUIRED,
+            assertIs<DispatchAssessment.Rejected>(
+                DispatchExecutor(world, recorder).assessAssignment(target.id, assignment)).reason)
+        val position = world.generalPositionSnapshot()!!.stateFor(target.id)
+
+        fixture.movement(world, recorder).onTurn(target.id, CampaignWorldFixture.NO_INPUT)
+
+        assertEquals(position, world.generalPositionSnapshot()!!.stateFor(target.id))
+        assertEquals(assignment, CountyAssignment.read(world.getGeneralById(target.id)!!.meta))
+        assertTrue(world.peekLogs().any { it.generalId == target.id &&
+            it.text == "발령이 더 이상 유효하지 않아 부임 행군을 멈췄습니다." })
+    }
+
     @Test
     fun `human and NPC assignment movement emit one typed self event in the world flush`() {
         for (userId in listOf("42", null)) {

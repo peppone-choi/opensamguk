@@ -5,9 +5,11 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.domain.NpcType
 import opensamguk.logic.input.*
 import opensamguk.logic.record.RewardReasonCode
+import opensamguk.logic.war.CampaignBalance
 
 /** One affordable direct-card reward on an NPC lord's turn, oldest unrewarded card first. */
 internal object NpcRewardSelector {
+    private const val NPC_REWARD_MAX_LOYALTY_GAIN = 5
     private val catalog by lazy { InputCatalog.load() }
     data class Choice(val request: RewardRequest, val id: String, val reason: RewardReasonCode)
 
@@ -38,8 +40,10 @@ internal object NpcRewardSelector {
                 return@mapNotNull null
             val counties = network.countiesFor(issuer.nationId, target.cityId)
             val available = network.moneyIn(counties)
-            val amount = (minOf(5, 100 - card.loyalty, (available / 100).coerceAtMost(5).toInt()) * 100).toLong()
-            if (amount < 100) return@mapNotNull null
+            val per = CampaignBalance.REWARD_MONEY_PER_LOYALTY
+            val gain = minOf(NPC_REWARD_MAX_LOYALTY_GAIN.toLong(), (100 - card.loyalty).toLong(), available / per)
+            if (gain <= 0) return@mapNotNull null
+            val amount = gain * per
             Triple(card, history, amount)
         }.sortedWith(compareBy<Triple<opensamguk.engine.turn.Retainer, RewardHistory?, Long>>
             { it.second?.year ?: 0 }.thenBy { it.second?.month ?: 0 }.thenBy { it.first.id })

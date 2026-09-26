@@ -78,7 +78,8 @@ class DispatchExecutor(
         if (assessment is DispatchAssessment.Rejected) {
             // A lapsed order cannot resurrect a lost bond, a captured county or a changed owner.
             if (automatic && assessment.reason in setOf(DispatchFailure.NOT_LORD, DispatchFailure.ACTOR_NOT_FOUND,
-                    DispatchFailure.TARGET_NOT_HUMAN, DispatchFailure.NOT_DIRECT_RETAINER, DispatchFailure.DIFFERENT_NATION,
+                    DispatchFailure.TARGET_NOT_HUMAN, DispatchFailure.NPC_ISSUER_REQUIRED,
+                    DispatchFailure.NOT_DIRECT_RETAINER, DispatchFailure.DIFFERENT_NATION,
                     DispatchFailure.INVALID_COUNTY, DispatchFailure.COUNTY_OCCUPIED, DispatchFailure.RELATION_CHANGED)) {
                 val target = world.getGeneralById(request.actorId) ?: return reject(assessment.reason)
                 val old = DispatchState.read(target.meta) ?: return reject(assessment.reason)

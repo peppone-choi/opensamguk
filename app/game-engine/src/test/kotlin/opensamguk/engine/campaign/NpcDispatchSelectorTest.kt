@@ -123,6 +123,30 @@ class NpcDispatchSelectorTest {
             targetPolicy = DispatchTargetPolicy.NPC_AUTOMATED))
         assertNull(select(world), "a second pending order cannot be repeated")
     }
+    @Test fun `NPC order is cancelled without penalty when issuer is possessed before deadline`() {
+        val world = world()
+        val target = world.getGeneralById(1)!!
+        world.applyGeneralDirtyFree(target.copy(userId = null))
+        val recorder = ChangeRecorder()
+        val executor = DispatchExecutor(world, recorder)
+        val request = DispatchRequest(10, 1, 1)
+        assertIs<DispatchExecution.Applied>(executor.issue("npc-possessed", request,
+            targetPolicy = DispatchTargetPolicy.NPC_AUTOMATED))
+        val loyalty = world.getRetainerById(1)!!.loyalty
+        val issuer = world.getGeneralById(10)!!
+        world.applyGeneralDirtyFree(issuer.copy(userId = "42"))
+
+        world.setCurrentDate(201, 1, 1)
+        assertEquals(DispatchFailure.NPC_ISSUER_REQUIRED,
+            assertIs<DispatchExecution.Rejected>(executor.expireDue().single()).reason)
+        assertEquals(DispatchStatus.CANCELLED, DispatchState.read(world.getGeneralById(1)!!.meta)?.status)
+        assertEquals(loyalty, world.getRetainerById(1)!!.loyalty)
+        assertEquals(DispatchFailure.NPC_ISSUER_REQUIRED.name,
+            (world.peekLogs().last().meta?.get(RecordKind.REFS_META_KEY) as? Map<*, *>)?.get("reason"))
+        assertTrue(executor.expireDue().isEmpty())
+        assertIs<DispatchAssessment.Eligible>(executor.assess(DispatchRequest(10, 2, 1)),
+            "cancelled order must release the county")
+    }
     @Test fun `duplicate bindings exclude candidate even if one belongs to issuer`() {
         val world=world()
         world.createRetainer(Retainer(99,20,"EXISTING",1,"G1","guest"))
