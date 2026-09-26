@@ -91,7 +91,7 @@ def main() -> int:
                 if not path.is_file() or path.read_bytes() != data]
     if args.check:
         pin = sha(expected[BUNDLE / 'catalog.json'])
-        loader = ROOT / 'infra/src/main/kotlin/opensamguk/infra/seed/Han1447Map4Artifacts.kt'
+        loader = ROOT / 'infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Map4Artifacts.kt'
         if not loader.is_file() or pin not in loader.read_text():
             problems.append('1447-map4 Kotlin catalog pin')
     print(json.dumps({'catalogSha256': sha(expected[BUNDLE / 'catalog.json']),

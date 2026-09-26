@@ -10,8 +10,8 @@ import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 
 /** Immutable release inputs; never falls back to mutable current-world files. */
-internal object Han1098Artifacts {
-    private const val CATALOG_SHA256 = "c3fdd04d9163fc502457c7726c559723cbce412d0851eded4a989269cb365e61"
+internal object Archive1224Artifacts {
+    private const val CATALOG_SHA256 = "047668fa9bfcc5de9efe6d82d40b67c1942d8534f426616837058e2f02729d15"
     private val ownershipPaths = setOf(
         "data/map/han-scenario-province-ownership-v1.json",
         "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
@@ -23,19 +23,19 @@ internal object Han1098Artifacts {
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
     fun load(root: Path): ResolvedWorldArtifacts {
-        val variant = WorldMapVariant.V3_1098
-        val directory = root.resolve("data/map/han-world-v3-1098-artifacts-v1")
+        val variant = WorldMapVariant.V3_1224
+        val directory = root.resolve("data/map/han-world-v3-1224-artifacts-v1")
         val raw = Files.readAllBytes(directory.resolve("catalog.json"))
-        require(sha(raw) == CATALOG_SHA256) { "1098 release catalog hash mismatch" }
+        require(sha(raw) == CATALOG_SHA256) { "1224 release catalog hash mismatch" }
         val catalog = mapper.readTree(raw)
         require(catalog.path("schemaVersion").asInt() == 1 &&
             catalog.path("artifactId").asText() == variant.artifactId &&
             catalog.path("logicalMapName").asText() == "han-world-v3" &&
-            catalog.path("cityCount").asInt() == variant.cityCount) { "1098 release identity mismatch" }
+            catalog.path("cityCount").asInt() == variant.cityCount) { "1224 release identity mismatch" }
         val entries = catalog.path("files").toList()
         val paths = StrategicTopologyJson.artifactPaths() + ownershipPaths
         require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
-            "1098 release artifact path set mismatch"
+            "1224 release artifact path set mismatch"
         }
         val bytes = entries.associate { entry ->
             val hash = entry.path("sha256").asText()
@@ -43,11 +43,11 @@ internal object Han1098Artifacts {
             val blob = "blobs/$hash.json.gz"
             require(entry.path("blob").asText() == blob)
             val compressed = Files.readAllBytes(directory.resolve(blob))
-            require(sha(compressed) == entry.path("compressedSha256").asText()) { "1098 compressed artifact hash mismatch" }
+            require(sha(compressed) == entry.path("compressedSha256").asText()) { "1224 compressed artifact hash mismatch" }
             val length = entry.path("bytes").asInt()
             require(length in 1..30_000_000)
             val data = GZIPInputStream(compressed.inputStream()).use { it.readNBytes(length + 1) }
-            require(data.size == length && sha(data) == hash) { "1098 artifact hash/length mismatch" }
+            require(data.size == length && sha(data) == hash) { "1224 artifact hash/length mismatch" }
             entry.path("path").asText() to data
         }
         val projection = StrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
