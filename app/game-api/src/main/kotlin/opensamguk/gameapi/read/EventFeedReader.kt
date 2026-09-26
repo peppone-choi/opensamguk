@@ -97,6 +97,8 @@ object EventFeedPolicy {
         }
         if (kind == EventKind.REWARD_RECEIVED &&
             (refs[RefRole.TARGET] as? EventRef.General)?.id != row.audienceGeneralId) return null
+        if (kind == EventKind.RENOWN_EVENT &&
+            (refs[RefRole.ACTOR] as? EventRef.General)?.id != row.audienceGeneralId) return null
 
         // Battle actor, location, corps and replay identifiers need separate vision/replay
         // authorization. Until that projection is available, only classification is returned.
@@ -119,6 +121,7 @@ object EventFeedPolicy {
             is EventFact.TroopsBand -> fact.value
             is EventFact.Outcome -> fact.code
             is EventFact.RewardReason -> fact.code.name
+            is EventFact.RenownSource -> fact.code.name
         } }.mapKeys { it.key.name }
         return GameEventDto(row.id, kind.code, kind.section.name,
             GameEventTimeDto(row.year, row.month, row.phase, row.ordinal), safeRefs, safeFacts)

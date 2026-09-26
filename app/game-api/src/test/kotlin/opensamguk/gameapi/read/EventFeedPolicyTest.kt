@@ -13,6 +13,7 @@ import opensamguk.logic.record.EventSection
 import opensamguk.logic.record.FactRole
 import opensamguk.logic.record.RefRole
 import opensamguk.logic.record.RewardReasonCode
+import opensamguk.logic.renown.RenownEventSource
 import org.springframework.web.server.ResponseStatusException
 
 class EventFeedPolicyTest {
@@ -100,6 +101,16 @@ class EventFeedPolicyTest {
         assertNull(EventFeedPolicy.project(row.copy(refsJson = EventPayloadCodec.encodeRefs(
             refs + (RefRole.TARGET to EventRef.General(8)))), 7, 1, 0))
         assertNull(EventFeedPolicy.project(row.copy(factsJson = EventPayloadCodec.encodeFacts(facts - FactRole.REASON)), 7, 1, 0))
+    }
+
+    @Test
+    fun `renown source is visible only to the same personal actor`() {
+        val row = row(EventKind.RENOWN_EVENT, "SELF", general = 7,
+            refs = mapOf(RefRole.ACTOR to EventRef.General(7)),
+            facts = mapOf(FactRole.SOURCE to EventFact.RenownSource(RenownEventSource.COUNTY_CAPTURE)))
+        assertEquals("COUNTY_CAPTURE", EventFeedPolicy.project(row, 7, 1, 0)?.facts?.get("SOURCE"))
+        assertNull(EventFeedPolicy.project(row.copy(refsJson = EventPayloadCodec.encodeRefs(
+            mapOf(RefRole.ACTOR to EventRef.General(8)))), 7, 1, 0))
     }
 
     private fun row(kind: EventKind, audience: String, general: Int? = null, nation: Int? = null,
