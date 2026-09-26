@@ -9,6 +9,7 @@
 - 두 응답의 `status`는 `READY | UNAVAILABLE`; `UNAVAILABLE`일 때 목록은 비어 있다. 소유권이 다르면 HTTP 403, 인증되지 않았으면 HTTP 401이다. `available=false`는 선택지가 보이지만 현재 접수할 수 없다는 뜻이며 `blocked.code`에 서버의 정확한 실패 enum을 싣는다. 표시는 권한의 최종 보증이 아니다.
 - 임명 `state`는 `PENDING_ACCEPTANCE | AWAITING_ARRIVAL | EFFECTIVE | NOMINAL`이다. `missing`은 `OfficeEvidence` 코드 목록이고, `EFFECTIVE`가 아닌 재임에 능력을 부여하지 않는다. `actualCountyIds`는 실효일 때만 채운다.
 - `jurisdictionId`는 행정 축의 `zhou:<...>` 또는 `hhs-group:<...>` 정규 ID이며 기존 내정 `commanderyId` 문자열을 그대로 보내지 않는다. 기본 지도에 治所 근거가 없는 관할은 임명 선택지를 내지 않는다.
+- 220년 `han-tiles`에만 확인된 축 밖 parent 36개는 시나리오 연도별 郡 유효성·州 귀속 원장이 검증되기 전까지 임명 선택지나 실효 관할에 내지 않는다. registry ACTIVE만으로 승격하지 않는다.
 
 ## 쓰기
 
