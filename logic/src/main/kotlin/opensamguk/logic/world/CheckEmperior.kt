@@ -4,7 +4,7 @@ import opensamguk.common.josa.JosaUtil
 
 /**
  * Q14 `checkEmperior` — 천하통일(전토통일) 탐지. PHP `func_gamerule.php:696-939`(:430 호출, POST3
- * refreshNationStaticInfo 뒤 / triggerTournament 앞) 충실 포팅.
+ * 월말 정산 중 호출) 포팅.
  *
  * 매월 `postUpdateMonthly` 꼬리 Q14 슬롯에서 호출되며 **RNG draw가 전혀 없다**(no-rng — 월 draw
  * 스트림 불변, `PostUpdateMonthlyTailTest` 의 SC-3 단언과 일치). `level>0` 국가가 정확히 1국이고 그

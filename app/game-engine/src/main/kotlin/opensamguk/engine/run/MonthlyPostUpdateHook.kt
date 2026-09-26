@@ -12,7 +12,6 @@ import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.world.WorldActionContext
-import opensamguk.engine.tournament.TournamentAdminService
 import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
@@ -26,7 +25,6 @@ import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
-import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.PostUpdateMonthly
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.DiplomacyRow
@@ -59,7 +57,6 @@ class MonthlyPostUpdateHook(
     private val pipeline: GeneralActionPipeline,
     private val auctionRepository: AuctionRepository? = null,
     private val auctionBidRepository: AuctionBidRepository? = null,
-    private val tournamentAdmin: TournamentAdminService = TournamentAdminService(),
     private val eventDispatcher: EventDispatcher? = null,
     private val archiveHistoryReader: ArchiveHistoryReader? = null,
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
@@ -225,7 +222,6 @@ class MonthlyPostUpdateHook(
             rng = monthlyRng,
             checkWander = { rng -> checkWander(rng, year, state.currentMonth) },
             updateGeneralNumber = { updateGeneralNumber() },
-            triggerTournament = { rng -> triggerTournament(rng) },
             registerAuction = { rng -> registerAuction(rng) },
             setNationFront = { setNationFronts() },
             checkEmperior = { checkEmperior(checkEmperiorContext) },
@@ -373,26 +369,6 @@ class MonthlyPostUpdateHook(
         }
     }
 
-    private fun triggerTournament(rng: RandUtil) {
-        val state = world.getState()
-        if (((state.meta["tournament"] as? Number)?.toInt() ?: 0) != 0) return
-        if (!boolMeta("tnmt_trig")) return
-        if (!rng.nextBool(0.4)) return
-
-        val rawPattern = state.meta["tnmt_pattern"] as? List<*> ?: emptyList<Any?>()
-        val pattern = rawPattern.mapNotNull { (it as? Number)?.toInt() }.toMutableList()
-        if (pattern.isEmpty()) {
-            // PHP shuffle() is ambient and does not advance the monthly RandUtil passed to Q15.
-            // Sanctioned deterministic divergence: preserve the monthly stream boundary and replayability.
-            val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
-            val shuffleRng = MonthScopedRng.forMonth(hiddenSeed, state.currentYear, state.currentMonth)
-            pattern.addAll(shuffleRng.shuffle(listOf(0, 0, 1, 2, 3)))
-        }
-        val tournamentType = pattern.removeAt(pattern.lastIndex)
-        recorder.recordKv("game_env", "game_env", "tnmt_pattern", pattern)
-        tournamentAdmin.startTournament(world, recorder, tournamentType, Instant.now())
-    }
-
     private fun registerAuction(rng: RandUtil) {
         val active = auctionRepository?.findByFinishedFalse().orEmpty()
         val neutralBuyRiceCount = active.count { it.hostGeneralId == 0 && it.type == AuctionType.BUY_RICE }
@@ -434,12 +410,6 @@ class MonthlyPostUpdateHook(
             result += PostFrontResult(nation.id)
         }
         return result
-    }
-
-    private fun boolMeta(key: String): Boolean = when (val raw = world.getState().meta[key]) {
-        is Boolean -> raw
-        is Number -> raw.toInt() != 0
-        else -> false
     }
 
     private fun startYear(): Int =
