@@ -186,6 +186,13 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_province_relocations.py", "--write")),
     Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
             _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
+    # 지도 설계 층(ADR-LITE-044 개정 2): 강 선은 NE 10m(gitignored)이 있는 로컬에서만 --build 로 다시 새긴다.
+    # 위치 수정·산 편집·피복은 커밋된 강 선과 han-tiles·월드·길·경제 입력에서 결정적으로 다시 만든다.
+    Coupled("map-design-layer",
+            ("data/curated/han/map-design/rivers-v1.json", "data/curated/han/map-design/placements-v1.json",
+             "data/curated/han/map-design/mountains-v1.json", "data/curated/han/map-design/landcover-v1.json"),
+            _t("tools/map/build_map_design.py", "--check"),
+            _t("tools/map/build_map_design.py", "--write-derived")),
 )
 
 
