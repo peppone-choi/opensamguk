@@ -43,7 +43,7 @@ data class QueuedReward(val requestId: String, val ownerUserId: Int, val retaine
         "retainerId" to retainerId, "money" to money)
 
     companion object {
-        const val META_KEY = "hwihaQueuedReward"
+        const val META_KEY = "queuedReward"
 
         fun read(meta: Map<String, Any?>): QueuedReward? {
             if (META_KEY !in meta) return null

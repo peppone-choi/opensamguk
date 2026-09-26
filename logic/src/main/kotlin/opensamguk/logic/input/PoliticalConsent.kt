@@ -12,7 +12,7 @@ data class PoliticalConsent(val issuerGeneralId: Int, val inputId: String, val a
         "inputId" to inputId, "accepted" to accepted)
 
     companion object {
-        const val META_KEY = "hwihaPoliticalConsent"
+        const val META_KEY = "politicalConsent"
         const val COURT_INPUT_ID = "court.politicalConsent"
         fun parse(actorId: Int, raw: String?): PoliticalConsent? = try {
             if (actorId <= 0 || raw == null) null else {

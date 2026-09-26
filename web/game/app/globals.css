@@ -112,7 +112,6 @@ input:focus, select:focus, textarea:focus {
 
 .shell-body { display: flex; flex: 1; }
 
-
 .game-sidebar-item.active {
   background: var(--bg-hover);
   color: var(--text-primary);
@@ -466,51 +465,6 @@ input:focus, select:focus, textarea:focus {
 }
 .error-state button:hover { background: var(--gold-dim); }
 
-/* Tournament */
-.tournament-header .tournament-meta {
-  display: flex;
-  gap: var(--space-lg);
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-}
-.bracket {
-  display: flex;
-  gap: var(--space-lg);
-  overflow-x: auto;
-  padding: var(--space-md) 0;
-}
-.bracket-round {
-  min-width: 180px;
-}
-.bracket-round h3 {
-  font-size: var(--text-sm);
-  margin-bottom: var(--space-sm);
-  color: var(--text-secondary);
-}
-.bracket-match {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-sm);
-  padding: var(--space-sm);
-  margin-bottom: var(--space-sm);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-}
-.bracket-vs {
-  color: var(--text-muted);
-  font-size: var(--text-xs);
-}
-.bracket-winner {
-  color: var(--gold);
-  font-weight: 600;
-}
-
-/* Boss card */
-.boss-card { max-width: 480px; }
-
 /* City detail */
 
 /* Nation overview */
@@ -525,7 +479,6 @@ input:focus, select:focus, textarea:focus {
   .toast { min-width: auto; }
   .cmd-grid { grid-template-columns: repeat(2, 1fr); }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
-  .bracket { flex-direction: column; }
 }
 
 @media (max-width: 767px) {
@@ -539,7 +492,6 @@ input:focus, select:focus, textarea:focus {
   .cmd-grid { grid-template-columns: 1fr; }
   .stat-grid { grid-template-columns: repeat(2, 1fr); }
 
-  .tournament-header .tournament-meta { flex-direction: column; gap: var(--space-sm); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -772,106 +724,6 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--shadow-md);
   padding: var(--space-xs) 0;
 }
-
-/* CharacterClaim (장수선택 / 빙의) */
-.claim-screen { max-width: 960px; margin: 0 auto; }
-.claim-mode-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-.claim-mode-card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-.claim-mode-card h2 {
-  font-size: var(--text-lg);
-  color: var(--gold);
-  margin: 0;
-}
-.claim-mode-card p {
-  font-size: var(--text-sm);
-  color: var(--text-secondary);
-  margin: 0;
-}
-.claim-mode-card.is-disabled { opacity: 0.68; }
-.claim-mode-action,
-.claim-mode-active,
-.claim-mode-blocked {
-  margin-top: auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2rem;
-  padding: 0 var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  font-weight: 700;
-  text-decoration: none;
-}
-.claim-mode-action {
-  color: var(--bg-base);
-  background: var(--gold);
-}
-.claim-mode-active {
-  color: var(--gold);
-  border: 1px solid var(--gold-dim);
-}
-.claim-mode-blocked {
-  color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
-}
-.claim-mode-note {
-  padding: var(--space-md);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  background: var(--bg-card);
-}
-.claim-section-title {
-  margin: 0 0 var(--space-md);
-  font-size: var(--text-lg);
-  color: var(--text-primary);
-}
-.claim-error {
-  margin-bottom: var(--space-md);
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(198, 40, 40, 0.15);
-  border: 1px solid var(--crimson-dim);
-  color: var(--crimson);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-}
-.claim-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: var(--space-md);
-}
-.claim-card { display: flex; flex-direction: column; gap: var(--space-sm); }
-.claim-card-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
-.claim-name { font-size: var(--text-lg); font-weight: 700; color: var(--gold); }
-.claim-nation { font-size: var(--text-sm); color: var(--text-secondary); }
-.claim-stats {
-  display: flex;
-  gap: var(--space-md);
-  font-size: var(--text-sm);
-  color: var(--text-primary);
-}
-.claim-meta { font-size: var(--text-xs); color: var(--text-muted); }
-.claim-btn {
-  margin-top: auto;
-  background: var(--gold);
-  color: var(--bg-base);
-  font-weight: 600;
-}
-.claim-btn:hover { background: var(--gold-dim); }
-.claim-hint { font-size: var(--text-xs); margin-top: var(--space-sm); }
 
 /* ── F2 Wave 4 — MapViewer (interactive world map) ───────────────────────────── */
 
@@ -1154,7 +1006,7 @@ input:focus, select:focus, textarea:focus {
   .war-room > .game-info,
   .war-room > .main-page-content { max-width: 1440px; margin-inline: auto; }
 
-  /* 지도: 폭 종속 aspect-ratio 를 버리고 스테이지 높이를 채운다(HanMapCanvas 가 ResizeObserver 로 따라온다). */
+  /* 지도: 폭 종속 aspect-ratio 를 버리고 스테이지 높이를 채운다(WorldMapCanvas 가 ResizeObserver 로 따라온다). */
   .ib-map .map-viewer { display: flex; flex-direction: column; height: 100%; }
   /* 전장 행동은 양쪽 레일 사이의 지도 조작 공간 안에서 읽고 실행한다. */
   .war-room .ib-map .map-viewer {
@@ -2256,13 +2108,6 @@ input:focus, select:focus, textarea:focus {
 .nation-kv dt { text-align: left; }
 @media (max-width: 720px) { .nation-kv { grid-template-columns: auto minmax(0, 1fr); } }
 .nation-cities { display: flex; flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
-.chief-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
-.chief-grid > .record-panel + .record-panel { margin-top: 0; }
-.chief-post__time { font-size: 11px; color: var(--muted); }
-.chief-post__slots { display: flex; flex-direction: column; }
-.chief-post__slots .os-slot { min-height: 36px; }
-.chief-post .cmd-cats { margin: 8px 12px 0; }
-.chief-post .cmd-grid { padding: 8px 12px; }
 .me-hero { position: relative; display: grid; grid-template-columns: 200px minmax(0, 1fr); gap: 20px; align-items: end; margin-bottom: 14px; border: 1px solid var(--line-2); background: linear-gradient(90deg, var(--inset), var(--panel) 70%); overflow: hidden; }
 .me-hero__portrait { width: 200px; height: 284px; border: 0; border-right: 1px solid var(--line); }
 .me-hero__text { padding: 16px 20px 18px 0; display: flex; flex-direction: column; gap: 8px; }
@@ -2502,12 +2347,6 @@ input:focus, select:focus, textarea:focus {
 .join-section { border-top: 1px solid var(--line); padding-top: 8px; }
 .join-warn { text-align: center; margin: 0; color: var(--focus); } /* 원래 리터럴 orange — 팔레트의 경고/주목 색으로 사상 */
 .join-note { text-align: center; margin: 8px 0 0; color: var(--muted); }
-.join-inherit__head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.join-inherit__title { flex: 1; }
-.join-inherit { display: grid; gap: 8px; color: var(--muted); font-size: 12px; }
-.join-inherit__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.join-inherit__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
-.join-inherit__label { display: block; margin-bottom: 4px; }
 .join-bonus { border: 1px solid var(--line); padding: 8px; }
 .join-bonus__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; }
 .join-submit { display: flex; gap: 8px; margin-top: 4px; }
@@ -2560,37 +2399,6 @@ input:focus, select:focus, textarea:focus {
 .link-button--current { color: var(--bronze); }
 /* 이전에는 정의되지 않은 --surface-raised 를 써서 배경이 아예 그려지지 않았다. */
 .toast-floating { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--raised); border: 1px solid var(--line); padding: 8px 16px; z-index: 200; }
-.vote-section { margin-bottom: 16px; }
-.vote-section-foot { margin-top: 16px; }
-.vote-count { width: 5ch; text-align: right; font-variant-numeric: tabular-nums; }
-.vote-text { white-space: pre-wrap; word-break: break-word; }
-.vote-small { font-size: 11px; }
-.vote-empty { margin: 0; }
-.vote-form { margin-top: 8px; }
-.vote-textarea { resize: vertical; }
-.vote-width-120 { width: 120px; }
-
-/* 유산(계승) — 구분선 · 격자 · 항목 줄 */
-.inh-hr { border-top: 1px solid var(--line); opacity: 0.5; margin: 12px 0; }
-.inh-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.inh-row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-.inh-note { margin-top: 4px; font-size: 12px; }
-.inh-hint { margin-top: 4px; font-size: 11px; color: var(--muted); }
-.inh-num { width: 5ch; text-align: right; font-variant-numeric: tabular-nums; }
-.inh-subhead { color: var(--text-2); margin-bottom: 4px; }
-.inh-subhead--spaced { margin-top: 8px; }
-.inh-grid { display: grid; gap: 12px; }
-.inh-grid--gap-lg { gap: 16px; }
-.inh-grid--240 { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
-.inh-grid--260 { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
-.inh-grid--280 { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
-.inh-line { display: flex; gap: 8px; align-items: baseline; }
-.inh-line__k { flex-basis: 14ch; flex-shrink: 0; text-align: right; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
-.inh-line__v { flex: 1; }
-.inh-k { font-size: 12px; color: var(--text-2); font-weight: 500; }
-.inh-v { font-variant-numeric: tabular-nums; text-align: right; font-weight: 600; }
-.inh-info { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
-.inh-cost { font-size: 11px; color: var(--bronze); }
 
 /* 중원 정보(세계 외교) — 띠 제목 강조 · 외교 행렬 · 분쟁 막대 */
 .band-title--info { border-left: 3px solid var(--info); color: var(--info); }
@@ -2699,13 +2507,7 @@ input:focus, select:focus, textarea:focus {
 .opt--unavailable { color: var(--rust); }     /* 선택 불가 옵션 (구 'red') */
 .outcome--ok { color: var(--moss-2); }        /* 처리됨 (구 'green') */
 .outcome--bad { color: var(--rust); }         /* 거절됨 (구 'crimson') */
-.bet--hit { color: var(--moss-2); }
-.bet--partial { color: var(--focus); }
-.bet--miss { color: var(--rust); }
 .fw-bold { font-weight: 700; }
-.auction-band { padding: 4px 8px; font-weight: 600; }
-.auction-band--buy { background: var(--log-o); color: var(--bg); }   /* 구 orange */
-.auction-band--sell { background: var(--log-s); color: var(--bg); }  /* 구 skyblue */
 .map-title--y1 { color: var(--log-m); }   /* 개시 1년 (구 magenta) */
 .map-title--y2 { color: var(--log-o); }   /* 개시 2년 (구 orange) */
 .map-title--y3 { color: var(--focus); }   /* 개시 3년 (구 yellow) */

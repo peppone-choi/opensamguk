@@ -15,7 +15,7 @@ sealed class TurnDaemonCommand {
     abstract val type: String
 
     @Serializable
-    @SerialName("hwihaCourtInput")
+    @SerialName("immediateInput")
     data class ImmediateInput(
         val requestId: String,
         val generalId: Int,
@@ -23,7 +23,7 @@ sealed class TurnDaemonCommand {
         val inputId: String,
         val argJson: String,
     ) : TurnDaemonCommand() {
-        override val type: String get() = "hwihaCourtInput"
+        override val type: String get() = "immediateInput"
     }
 
     @Serializable
@@ -554,42 +554,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("tournamentRefund")
-    data class TournamentRefund(
-        val requestId: String? = null,
-        val bettingId: Int? = null,
-        val reason: String? = null,
-        val refunds: List<AmountEntry>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentRefund"
-    }
-
-    @Serializable
-    @SerialName("tournamentBettingPayout")
-    data class TournamentBettingPayout(
-        val requestId: String? = null,
-        val bettingId: Int? = null,
-        val reason: String? = null,
-        val payouts: List<AmountEntry>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentBettingPayout"
-    }
-
-    @Serializable
-    @SerialName("tournamentReward")
-    data class TournamentReward(
-        val requestId: String? = null,
-        val tournamentType: Int,
-        val winnerId: Int,
-        val runnerUpId: Int,
-        val top16: List<Int>,
-        val top8: List<Int>,
-        val top4: List<Int>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReward"
-    }
-
-    @Serializable
     @SerialName("voteReward")
     data class VoteReward(
         val requestId: String? = null,
@@ -630,18 +594,6 @@ sealed class TurnDaemonCommand {
         val adjustments: List<MetaAdj>,
     ) : TurnDaemonCommand() {
         override val type: String get() = "adjustGeneralMeta"
-    }
-
-    @Serializable
-    @SerialName("tournamentMatchResult")
-    data class TournamentMatchResult(
-        val requestId: String? = null,
-        val tournamentType: Int,
-        val attackerId: Int,
-        val defenderId: Int,
-        val result: MatchResult,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentMatchResult"
     }
 
     @Serializable
@@ -810,39 +762,6 @@ sealed class TurnDaemonCommand {
         val data: kotlinx.serialization.json.JsonElement,
     ) : TurnDaemonCommand() {
         override val type: String get() = "npcPolicyUpdate"
-    }
-
-    /**
-     * 토너먼트 참가 (enroll) — `j_set_my_setting.php` 의 `tnmt` 토글. Writes the acting general's
-     * `tnmt` (0/1) into the general row. `value` clamps to 0..1 (PHP: `< 0 || > 1 → 1`).
-     */
-    @Serializable
-    @SerialName("tournamentEnroll")
-    data class TournamentEnroll(
-        val requestId: String? = null,
-        val generalId: Int,
-        val value: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentEnroll"
-    }
-
-    @Serializable
-    @SerialName("tournamentStart")
-    data class TournamentStart(
-        val requestId: String? = null,
-        val generalId: Int,
-        val tournamentType: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentStart"
-    }
-
-    @Serializable
-    @SerialName("tournamentReset")
-    data class TournamentReset(
-        val requestId: String? = null,
-        val generalId: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReset"
     }
 
     /**
@@ -1196,10 +1115,3 @@ data class PatchStats(
     val strength: Int? = null,
     val intelligence: Int? = null,
 )
-
-@Serializable
-enum class MatchResult {
-    @SerialName("attacker") ATTACKER,
-    @SerialName("defender") DEFENDER,
-    @SerialName("draw") DRAW,
-}

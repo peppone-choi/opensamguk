@@ -18,7 +18,7 @@ data class QueuedDispatch(
     )
 
     companion object {
-        const val META_KEY = "hwihaQueuedDispatch"
+        const val META_KEY = "queuedDispatch"
         private val fields = setOf("requestId", "ownerUserId", "targetGeneralId", "countyId")
 
         fun read(meta: Map<String, Any?>): QueuedDispatch? {

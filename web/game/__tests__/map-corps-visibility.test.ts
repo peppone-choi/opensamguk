@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { HwihaCorps } from '@/lib/hwiha-reads';
+import type { Corps } from '@/lib/campaign-reads';
 import { buildVisibleCorps } from '@/lib/map-corps';
 
-const corps = (over: Partial<HwihaCorps>): HwihaCorps => ({
+const corps = (over: Partial<Corps>): Corps => ({
     corpsId: 'c1', ownerGeneralId: 1, commanderGeneralId: 1, nationId: 1,
     provinceId: 'P1', commanderyNo: 1, visibility: 'FULL', own: false, ...over,
 });

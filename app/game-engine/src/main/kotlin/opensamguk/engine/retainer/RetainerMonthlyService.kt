@@ -21,7 +21,7 @@ class RetainerMonthlyService {
         val bugoks = world.listBugoks()
         val retainers = world.listRetainers()
         if (bugoks.isEmpty() && retainers.isEmpty()) return
-        // HWIHA 는 기존 개인 재정(부곡 급여·가신 유지비 30/30)을 쓰지 않는다 — 녹봉은 HwihaMonthlySalary 가 창고망에서
+        // HWIHA 는 기존 개인 재정(부곡 급여·가신 유지비 30/30)을 쓰지 않는다 — 녹봉은 MonthlySalary 가 창고망에서
         // 낸다(skipsLegacyFinance 원칙). 끄는 것은 재정 효과뿐이다: 군량 소모·훈련·피로·충성 변동은 그대로 둔다.
         val skipsLegacyFinance = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA
 

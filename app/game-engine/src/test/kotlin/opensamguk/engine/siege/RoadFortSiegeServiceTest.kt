@@ -1,6 +1,6 @@
 package opensamguk.engine.siege
 
-import opensamguk.engine.hwiha.*
+import opensamguk.engine.campaign.*
 
 import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
@@ -8,7 +8,7 @@ import opensamguk.logic.input.RoadFort
 import opensamguk.logic.input.RoadFortState
 
 class RoadFortSiegeServiceTest {
-    private val fixture = HwihaCampaignWorldFixture()
+    private val fixture = CampaignWorldFixture()
 
     private fun prepared() : Triple<opensamguk.engine.turn.InMemoryTurnWorld, ChangeRecorder, RoadFort> {
         val route = fixture.route()

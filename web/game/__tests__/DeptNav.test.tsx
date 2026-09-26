@@ -18,7 +18,7 @@ const NONE: ControlGating = { myLevel: 0 };
 
 describe('DeptNav (부서 나브)', () => {
     it('renders the six product groups with HWIHA links', () => {
-        mocks.pathname.mockReturnValue('/game/s1/hwiha/war-room');
+        mocks.pathname.mockReturnValue('/game/s1/war-room');
         mocks.serverId.mockReturnValue('s1');
         render(<DeptNav gating={NONE} />);
 
@@ -30,8 +30,8 @@ describe('DeptNav (부서 나브)', () => {
         }
         fireEvent.click(screen.getByRole('button', { name: /국가 운영/ }));
         const menu = screen.getByRole('menu', { name: '국가 운영' });
-        expect(within(menu).getByRole('menuitem', { name: '배치 · 방침 · 공사' })).toHaveAttribute('href', '/game/s1/hwiha/posts');
-        expect(within(menu).getByRole('menuitem', { name: '조정 결정' })).toHaveAttribute('href', '/game/s1/hwiha/orders');
+        expect(within(menu).getByRole('menuitem', { name: '배치 · 방침 · 공사' })).toHaveAttribute('href', '/game/s1/posts');
+        expect(within(menu).getByRole('menuitem', { name: '조정 결정' })).toHaveAttribute('href', '/game/s1/orders');
     });
 
     it('resolves hrefs onto the server-scoped path and omits the old server menu', () => {
@@ -46,7 +46,7 @@ describe('DeptNav (부서 나브)', () => {
         fireEvent.click(screen.getByRole('button', { name: /^기록/ }));
         const records = screen.getByRole('menu', { name: '기록' });
         expect(within(records).queryByText('빙의일람')).not.toBeInTheDocument();
-        expect(within(records).getByRole('menuitem', { name: '월단평' })).toHaveAttribute('href', '/game/s1/hwiha/yuedan');
+        expect(within(records).getByRole('menuitem', { name: '월단평' })).toHaveAttribute('href', '/game/s1/yuedan');
     });
 
     it('opens a group with ArrowDown, moves focus with arrows and closes with Escape back to the button', () => {

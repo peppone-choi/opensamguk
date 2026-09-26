@@ -75,18 +75,6 @@ plugins {
 
 kotlin { jvmToolchain(21) }
 
-// P1 Task G4 (the P1 GATE): the VerticalSliceE2EIT byte-compares the flushed rows against the
-// SAME committed PHP-captured golden fixtures the :logic G2/G3 tests use. There is ONE golden
-// file (logic/src/test/resources/golden/p1/), never a copy — so it can never drift. Expose it on
-// the game-engine test classpath as an additional test-resources source dir (read-only consume).
-sourceSets {
-    test {
-        resources {
-            srcDir(rootProject.file("logic/src/test/resources"))
-        }
-    }
-}
-
 val v2NamingConventionSources = rootProject.files(
     listOf(
         "app/game-engine/src/main/kotlin",
@@ -120,7 +108,7 @@ tasks.named("jar") { enabled = false }
 
 // 휘하 내정 입력의 향당(본관 縣) 보너스가 읽는 인물 본관 원장 — 저장소 루트 파일이 정본이다(game-api 와 같은 파일).
 tasks.processResources {
-    from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("hwiha") }
+    from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("campaign") }
 }
 
 // 빌드 버전/시각을 /actuator/info로 노출(buildInfo) → gateway-api가 서버별 fan-out 수집해 어드민에 표시.
@@ -174,7 +162,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
-    exclude("**/HanExpandedCityCommandRoundTripIT.class")
+    exclude("**/ExpandedCityPersistenceIT.class")
     inputs.file(rootProject.file(".github/city-paths.txt"))
         .withPathSensitivity(PathSensitivity.RELATIVE)
     testLogging {
@@ -207,10 +195,10 @@ val cityPathInputs = rootProject.fileTree(rootProject.projectDir) {
 
 tasks.register<Test>("cityTest") {
     group = "verification"
-    description = "Runs one deterministic shard of the exhaustive added-city command round trip."
+    description = "Runs one deterministic shard of current-world added-city persistence."
     testClassesDirs = sourceSets.test.get().output.classesDirs
     classpath = sourceSets.test.get().runtimeClasspath
-    include("**/HanExpandedCityCommandRoundTripIT.class")
+    include("**/ExpandedCityPersistenceIT.class")
     useJUnitPlatform()
     maxHeapSize = "2g"
     val shardCount = providers.gradleProperty("cityShardCount").orElse("1")
@@ -223,6 +211,7 @@ tasks.register<Test>("cityTest") {
     inputs.file(cityPathList).withPathSensitivity(PathSensitivity.RELATIVE)
     inputs.files(cityPathInputs).withPathSensitivity(PathSensitivity.RELATIVE)
     systemProperty("api.version", System.getProperty("api.version") ?: "1.44")
+    systemProperty("opensamguk.artifacts.root", rootProject.projectDir.absolutePath)
     environment("DOCKER_HOST", System.getenv("DOCKER_HOST") ?: "unix:///var/run/docker.sock")
     environment("DOCKER_CONTEXT", "default")
     environment("TESTCONTAINERS_RYUK_DISABLED", System.getenv("TESTCONTAINERS_RYUK_DISABLED") ?: "true")
