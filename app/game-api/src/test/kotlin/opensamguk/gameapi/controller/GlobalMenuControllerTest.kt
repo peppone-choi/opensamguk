@@ -22,20 +22,18 @@ class GlobalMenuControllerTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.version").value(2))
-            .andExpect(jsonPath("$.menu.length()").value(8))
-            // #1 천통국 베팅 — item with highlight var
-            .andExpect(jsonPath("$.menu[0].type").value("item"))
-            .andExpect(jsonPath("$.menu[0].name").value("천통국 베팅"))
-            .andExpect(jsonPath("$.menu[0].condHighlightVar").value("nationBetting"))
-            // #2 게임정보 — multi with a MenuLine inside
-            .andExpect(jsonPath("$.menu[1].type").value("multi"))
-            .andExpect(jsonPath("$.menu[1].subMenu.length()").value(6))
-            .andExpect(jsonPath("$.menu[1].subMenu[3].type").value("line"))
-            .andExpect(jsonPath("$.menu[3].type").value("item"))
-            .andExpect(jsonPath("$.menu[3].name").value("게시판"))
-            .andExpect(jsonPath("$.menu[3].url").value("/game/board"))
-            // #7 기타 정보 — 빙의일람 gated by condShowVar npcMode
-            .andExpect(jsonPath("$.menu[6].subMenu[1].condShowVar").value("npcMode"))
+            // 삼모 「천통국 베팅」 항목은 베팅 은퇴로 뺐다(#917) — 나머지는 한 칸씩 앞으로.
+            .andExpect(jsonPath("$.menu.length()").value(7))
+            .andExpect(jsonPath("$.menu[*].name").value(org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("천통국 베팅"))))
+            // #1 게임정보 — multi with a MenuLine inside
+            .andExpect(jsonPath("$.menu[0].type").value("multi"))
+            .andExpect(jsonPath("$.menu[0].subMenu.length()").value(6))
+            .andExpect(jsonPath("$.menu[0].subMenu[3].type").value("line"))
+            .andExpect(jsonPath("$.menu[2].type").value("item"))
+            .andExpect(jsonPath("$.menu[2].name").value("게시판"))
+            .andExpect(jsonPath("$.menu[2].url").value("/game/board"))
+            // #6 기타 정보 — 빙의일람 gated by condShowVar npcMode
+            .andExpect(jsonPath("$.menu[5].subMenu[1].condShowVar").value("npcMode"))
     }
 
     // 구 `/api/const` 테스트는 삭제: 엔드포인트가 W3 GetConstController(superset)로 이관됨
