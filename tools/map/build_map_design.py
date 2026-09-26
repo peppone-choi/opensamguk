@@ -587,7 +587,7 @@ def compute_mountains(inp, tier, width, placements):
 # 물·길·강 기슭·城(성내 + 1칸)은 산이 되지 않는다(골짜기). 윗단은 아랫단 안쪽 1칸 이상에 둔다.
 DEM = ROOT / "web/game/public/map/elevation/han-world-v3-metres.png"
 RELIEF_PARAMS = dict(baseRadius=6, dropBelow=150, addAbove=500, addPlateauAbove=1000, tier2=450, tier3=850, smoothRadius=3,
-                     minMass=200, minTier=80)
+                     minMass=200, minTier=80, roadValleyMax=3, roadValleyScale=8, passNarrow=10)
 # 고원 경계: 지형 분류의 고원(NE 폴리곤, 곧은 변)을 경계 띠 안에서만 다시 긋는다. 턱(고원 안 평균 − 저지 평균)이 step m
 # 이상이면 그 중간 높이가 경계, 턱이 없으면 경계가 임의이므로 곧은 선을 결정적 잡음으로 흔든다. 산·물은 건드리지 않는다.
 PLATEAU_PARAMS = dict(meanRadius=40, band=24, step=150, wobbleScale=12, wobbleAmp=0.35, smoothRadius=3, minMass=300)
@@ -671,10 +671,27 @@ def relief_rel(dem, r):
     return _up4(_box(dem, 1) - _box(low, r))
 
 
+def road_valley(road, kmax, scale, narrow=None):
+    """산을 지나는 길 둘레 골짜기. 폭(0..kmax칸)을 결정적 잡음으로 오르내리게 해 곧은 길이 곧은 칼자국이 되지 않게 한다.
+    narrow(관 둘레)에서는 넓히지 않는다 — 관은 좁은 골짜기다."""
+    K = np.floor(value_noise(road.shape, scale, "road-valley") * (kmax + 1)).astype(np.int32)
+    if narrow is not None:
+        K[narrow] = 0
+    out = road.copy(); dil = road.copy()
+    for k in range(1, kmax + 1):
+        dil = _box(dil.astype(np.float64), 1) > 0
+        out |= dil & (K >= k)
+    return out
+
+
 def compute_relief(inp, tier, width, placements, mnt, dem=None):
     prm = RELIEF_PARAMS; T = inp["terrain"]
     rel = relief_rel(load_dem() if dem is None else dem, prm["baseRadius"])
-    valley = protected_mask(inp, tier, width, placements)
+    passes = np.zeros(T.shape, bool)
+    for c in moved_cities(inp, placements):
+        if c["level"] == 3:
+            passes[max(0, c["row"] - prm["passNarrow"]):c["row"] + prm["passNarrow"] + 1, max(0, c["col"] - prm["passNarrow"]):c["col"] + prm["passNarrow"] + 1] = True
+    valley = protected_mask(inp, tier, width, placements) | road_valley(inp["road"], prm["roadValleyMax"], prm["roadValleyScale"], passes)
     rs = _box(rel, 2)
     m = ((T == TERRAIN_MOUNTAIN) & (rs >= prm["dropBelow"])) | (np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN, TERRAIN_HILL)) & (rs >= prm["addAbove"]))
     m |= (T == TERRAIN_PLATEAU) & (rs >= prm["addPlateauAbove"])     # 고원 가장자리 산벽(蜀 서쪽 龍門·邛崍)과 고원 안 산맥
