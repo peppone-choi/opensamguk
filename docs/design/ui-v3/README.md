@@ -25,7 +25,7 @@ python3 boards_v3_shell.py   # project/V3*.dc.html 을 만든다
 
 | 묶음 | 보드 | 상태 |
 |---|---|---|
-| 1 셸·메뉴·작전실·시스템 | V3WarRoom, V3WarRoomTablet, V3MWarRoom, V3MSheet, V3MReason, V3MMenu, V3Nav, V3System | 승인 대기 |
+| 1 셸·메뉴·작전실·시스템 | V3WarRoom, V3WarRoomTablet, V3MWarRoom, V3MSheet, V3MReason, V3MMenu, V3Nav, V3System | 승인(2026-09-26) |
 
 ## 규칙
 
