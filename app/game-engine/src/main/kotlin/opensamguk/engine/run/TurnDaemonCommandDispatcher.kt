@@ -30,12 +30,9 @@ import opensamguk.engine.intake.PersonnelHandler
 import opensamguk.engine.intake.ProfileIconSyncHandler
 import opensamguk.engine.intake.RaiseInvaderMessageHandler
 import opensamguk.engine.intake.SelectPoolHandler
-import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
 import opensamguk.engine.intake.VotePollState
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
@@ -222,30 +219,6 @@ class TurnDaemonCommandDispatcher(
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
     private val npcPolicy = NpcPolicyHandler(world, recorder)
-    private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
-    private val tournamentBettingPort =
-        if (gameKvRepository != null && bettingRepository != null && inheritanceRepository != null) {
-            ProductionTournamentBettingPort(world, recorder, gameKvRepository, bettingRepository, inheritanceRepository)
-        } else {
-            null
-        }
-    private val lastTournamentBettingIdReader: () -> Int = gameKvRepository?.let { repo ->
-        {
-            repo.findByTable("game_env").firstNotNullOfOrNull { row ->
-                if (row.namespace == "game_env" && row.key == "last_tournament_betting_id") {
-                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
-                } else {
-                    null
-                }
-            } ?: 0
-        }
-    } ?: { 0 }
-    private val tournamentAdmin = TournamentAdminHandler(
-        world,
-        recorder,
-        lastBettingIdReader = lastTournamentBettingIdReader,
-        bettingPort = tournamentBettingPort,
-    )
     private val inheritReset = InheritResetHandler(
         world,
         recorder,
@@ -399,9 +372,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.SetBlockWar -> nationFinance.handleSetBlockWar(command)
         is TurnDaemonCommand.SetBlockScout -> nationFinance.handleSetBlockScout(command)
         is TurnDaemonCommand.NpcPolicyUpdate -> npcPolicy.handle(command)
-        is TurnDaemonCommand.TournamentEnroll -> tournamentEnroll.handle(command)
-        is TurnDaemonCommand.TournamentStart -> tournamentAdmin.handleStart(command)
-        is TurnDaemonCommand.TournamentReset -> tournamentAdmin.handleReset(command)
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)

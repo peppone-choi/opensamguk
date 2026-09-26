@@ -8,6 +8,7 @@ import org.mockito.ArgumentMatchers.anyString
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
@@ -15,6 +16,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 class TournamentReadContractTest {
     private val objectMapper = ObjectMapper()
     private val gameKv = mock(GameKvReadRepository::class.java)
+
+    @Test
+    fun `retired tournament admin routes are absent`() {
+        val mvc = MockMvcBuilders.standaloneSetup(TournamentController(gameKv, objectMapper)).build()
+        mvc.perform(post("/api/tournament/start")).andExpect(status().isNotFound)
+        mvc.perform(post("/api/tournament/reset")).andExpect(status().isNotFound)
+    }
 
     @Test
     fun `tournament exposes production entries as PHP standing rows and semantic bracket matches`() {

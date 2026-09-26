@@ -578,10 +578,6 @@ export const api = {
                 ? `/api/general-log?generalID=${generalId}&reqType=${reqType}`
                 : `/api/general-log?generalID=${generalId}&reqType=${reqType}&reqTo=${reqTo}`,
         ),
-    tournamentStart: <T = { result: boolean; reason?: string }>(generalId: number) =>
-        post<T>(`/api/tournament/start?generalId=${generalId}`, {}),
-    tournamentReset: <T = { result: boolean; reason?: string }>(generalId: number) =>
-        post<T>(`/api/tournament/reset?generalId=${generalId}`, {}),
 
     // Rankings
     rankings: {

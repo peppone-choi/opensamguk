@@ -3,38 +3,38 @@ package opensamguk.logic.world
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.CityConst.RawCity
 import opensamguk.common.constants.CityInitialDetail
-import opensamguk.common.constants.HanCityConst
-import opensamguk.common.constants.HanGateIndex
-import opensamguk.common.constants.Han780V1CityConst
-import opensamguk.common.constants.Han780V1GateIndex
-import opensamguk.common.constants.HanWorldV3832CityConst
-import opensamguk.common.constants.HanWorldV3832GateIndex
-import opensamguk.common.constants.HanWorldV3846CityConst
-import opensamguk.common.constants.HanWorldV3846GateIndex
-import opensamguk.common.constants.HanWorldV31098CityConst
-import opensamguk.common.constants.HanWorldV31098GateIndex
-import opensamguk.common.constants.HanWorldV31168CityConst
-import opensamguk.common.constants.HanWorldV31168GateIndex
-import opensamguk.common.constants.HanWorldV31224CityConst
-import opensamguk.common.constants.HanWorldV31224GateIndex
-import opensamguk.common.constants.HanWorldV31447CityConst
-import opensamguk.common.constants.HanWorldV31447GateIndex
-import opensamguk.common.constants.HanWorldV31447Map4CityConst
-import opensamguk.common.constants.HanWorldV31447Map4GateIndex
-import opensamguk.common.constants.HanWorldV31194CityConst
-import opensamguk.common.constants.HanWorldV31194GateIndex
-import opensamguk.common.constants.HanWorldV31341CityConst
-import opensamguk.common.constants.HanWorldV31341GateIndex
-import opensamguk.common.constants.HanWorldV31141CityConst
-import opensamguk.common.constants.HanWorldV31141GateIndex
-import opensamguk.common.constants.HanWorldV31133CityConst
-import opensamguk.common.constants.HanWorldV31133GateIndex
-import opensamguk.common.constants.HanWorldV3848CityConst
-import opensamguk.common.constants.HanWorldV3848GateIndex
-import opensamguk.common.constants.HanWorldV3835CityConst
-import opensamguk.common.constants.HanWorldV3835GateIndex
-import opensamguk.common.constants.HanWorldV3CityConst
-import opensamguk.common.constants.HanWorldV3GateIndex
+import opensamguk.common.constants.BaselineCityConst
+import opensamguk.common.constants.BaselineGateIndex
+import opensamguk.common.constants.Archive780CityConst
+import opensamguk.common.constants.Archive780GateIndex
+import opensamguk.common.constants.Archive832CityConst
+import opensamguk.common.constants.Archive832GateIndex
+import opensamguk.common.constants.Archive846CityConst
+import opensamguk.common.constants.Archive846GateIndex
+import opensamguk.common.constants.Archive1098CityConst
+import opensamguk.common.constants.Archive1098GateIndex
+import opensamguk.common.constants.Archive1168CityConst
+import opensamguk.common.constants.Archive1168GateIndex
+import opensamguk.common.constants.Archive1224CityConst
+import opensamguk.common.constants.Archive1224GateIndex
+import opensamguk.common.constants.Archive1447CityConst
+import opensamguk.common.constants.Archive1447GateIndex
+import opensamguk.common.constants.Archive1447Map4CityConst
+import opensamguk.common.constants.Archive1447Map4GateIndex
+import opensamguk.common.constants.Archive1194CityConst
+import opensamguk.common.constants.Archive1194GateIndex
+import opensamguk.common.constants.Archive1341CityConst
+import opensamguk.common.constants.Archive1341GateIndex
+import opensamguk.common.constants.Archive1141CityConst
+import opensamguk.common.constants.Archive1141GateIndex
+import opensamguk.common.constants.Archive1133CityConst
+import opensamguk.common.constants.Archive1133GateIndex
+import opensamguk.common.constants.Archive848CityConst
+import opensamguk.common.constants.Archive848GateIndex
+import opensamguk.common.constants.Archive835CityConst
+import opensamguk.common.constants.Archive835GateIndex
+import opensamguk.common.constants.ArchiveCityConst
+import opensamguk.common.constants.ArchiveGateIndex
 
 /**
  * F6 Task FM1 — per-map CityConst variant registry, keyed by `mapName`.
@@ -200,9 +200,9 @@ internal class InitCityOverrideVariant(
 }
 
 /**
- * 'han' — 續漢書 郡國志 + CHGIS 격자에서 구운 178 郡 지도([HanCityConst], 생성물).
+ * 'han' — 續漢書 郡國志 + CHGIS 격자에서 구운 178 郡 지도([BaselineCityConst], 생성물).
  * region 라벨이 州 이름이라 base 의 8개 라벨 대신 자기 [regionMap] 을 쓰고,
- * 게이트 키는 같은 생성기가 낸 [HanGateIndex] 에서 온다.
+ * 게이트 키는 같은 생성기가 낸 [BaselineGateIndex] 에서 온다.
  */
 internal class HistoricalCityConstVariant(
     override val mapName: String,
@@ -340,75 +340,75 @@ internal class HistoricalCityConstVariant(
 
 private val currentHistoricalMap = HistoricalCityConstVariant(
     mapName = HISTORICAL_MAP_NAME,
-    rawRows = HanCityConst.initCity,
-    gateKeysFor = HanGateIndex::keys,
+    rawRows = BaselineCityConst.initCity,
+    gateKeysFor = BaselineGateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
 )
 private val legacyHistoricalMap = HistoricalCityConstVariant(
     mapName = LEGACY_MAP_ARCHIVE_NAME,
-    rawRows = Han780V1CityConst.initCity,
-    gateKeysFor = Han780V1GateIndex::keys,
+    rawRows = Archive780CityConst.initCity,
+    gateKeysFor = Archive780GateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91),
 )
 private val worldArchiveMap = HistoricalCityConstVariant(
     mapName = WORLD_ARCHIVE_MAP_NAME,
-    rawRows = HanWorldV3CityConst.initCity,
-    gateKeysFor = HanWorldV3GateIndex::keys,
+    rawRows = ArchiveCityConst.initCity,
+    gateKeysFor = ArchiveGateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
 )
 
 private val historicalWorlds: Map<WorldMapVariant, CityConstVariant> by lazy {
     mapOf(
         WorldMapVariant.V3_832 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV3832CityConst.initCity, HanWorldV3832GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive832CityConst.initCity, Archive832GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_846 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV3846CityConst.initCity, HanWorldV3846GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive846CityConst.initCity, Archive846GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_848 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV3848CityConst.initCity, HanWorldV3848GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive848CityConst.initCity, Archive848GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1098 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31098CityConst.initCity, HanWorldV31098GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1098CityConst.initCity, Archive1098GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1168 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31168CityConst.initCity, HanWorldV31168GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1168CityConst.initCity, Archive1168GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1224 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31224CityConst.initCity, HanWorldV31224GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1224CityConst.initCity, Archive1224GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1447 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31447CityConst.initCity, HanWorldV31447GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1447CityConst.initCity, Archive1447GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1447_MAP4 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31447Map4CityConst.initCity, HanWorldV31447Map4GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1447Map4CityConst.initCity, Archive1447Map4GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1194 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31194CityConst.initCity, HanWorldV31194GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1194CityConst.initCity, Archive1194GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1341 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31341CityConst.initCity, HanWorldV31341GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1341CityConst.initCity, Archive1341GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1141 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31141CityConst.initCity, HanWorldV31141GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1141CityConst.initCity, Archive1141GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1133 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV31133CityConst.initCity, HanWorldV31133GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive1133CityConst.initCity, Archive1133GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_835 to HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, HanWorldV3835CityConst.initCity, HanWorldV3835GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, Archive835CityConst.initCity, Archive835GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
     )

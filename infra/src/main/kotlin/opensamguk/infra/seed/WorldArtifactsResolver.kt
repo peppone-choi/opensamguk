@@ -57,17 +57,17 @@ class WorldArtifactsResolver(private val root: Path = defaultRoot()) {
     private val cache = ConcurrentHashMap<WorldMapVariant, ResolvedWorldArtifacts>()
 
     fun artifacts(variant: WorldMapVariant): ResolvedWorldArtifacts = cache.computeIfAbsent(variant) {
-        if (it == WorldMapVariant.V3_846) Han846Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_848) Han848Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1098) Han1098Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1168) Han1168Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1224) Han1224Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1447) Han1447Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1447_MAP4) Han1447Map4Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1194) Han1194Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1341) Han1341Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1141) Han1141Artifacts.load(root)
-        else if (it == WorldMapVariant.V3_1133) Han1133Artifacts.load(root)
+        if (it == WorldMapVariant.V3_846) Archive846Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_848) Archive848Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1098) Archive1098Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1168) Archive1168Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1224) Archive1224Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1447) Archive1447Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1447_MAP4) Archive1447Map4Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1194) Archive1194Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1341) Archive1341Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1141) Archive1141Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1133) Archive1133Artifacts.load(root)
         else HistoricalArtifacts.loadBundleFromDirectory(root, it.artifactId)
     }
 
