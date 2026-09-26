@@ -144,6 +144,53 @@ class ScenarioImporterIT {
     }
 
     @Test
+    fun `190 HWIHA pilot imports the full map4 world and remains idempotent`() {
+        assumeTrue(dockerAvailable, "Docker unavailable — 190 seed IT skipped")
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_3190.json"))
+        val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
+        val importer = ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_3190",
+            scenarioNumber = 3190, artifactsRoot = root)
+        val counts = importer.importAll(jdbc, canonicalWorldId)
+        assertEquals(1, counts.worldState)
+        assertEquals(21, counts.nation)
+        assertEquals(1447, counts.city)
+        assertEquals(264, counts.general)
+        assertEquals(264, counts.generalPosition)
+        assertEquals(42, counts.bugok)
+        assertEquals(212, counts.retainer)
+        assertEquals(212, jdbc.queryForObject("SELECT count(*) FROM general_retainers WHERE world_id=1", Int::class.java))
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM general_retainers r JOIN general g ON g.world_id=r.world_id AND g.id=r.general_id " +
+                "JOIN general m ON m.world_id=r.world_id AND m.id=r.master_general_id " +
+                "WHERE r.world_id=1 AND (g.nation_id<>m.nation_id OR m.meta->>'lord'<>'true' OR g.id=m.id)",
+            Int::class.java))
+        assertEquals(212, jdbc.queryForObject("SELECT (meta->>'maxRetainerId')::int FROM world_state WHERE id=1", Int::class.java))
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM general g LEFT JOIN city c ON c.world_id=g.world_id AND c.id=g.city_id " +
+                "WHERE g.world_id=1 AND c.id IS NULL", Int::class.java))
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM nation n LEFT JOIN city c ON c.world_id=n.world_id AND c.id=n.capital_city_id " +
+                "WHERE n.world_id=1 AND c.id IS NULL", Int::class.java))
+        val topology = WorldArtifactsResolver(root).artifacts(
+            opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection.topology
+        val pins = jdbc.queryForList(
+            "SELECT DISTINCT topology_hash FROM general_spatial_position WHERE world_id=1", String::class.java)
+        assertEquals(listOf(topology.contentHash), pins)
+        val guanId = jdbc.queryForObject(
+            "SELECT id FROM general WHERE world_id=1 AND name LIKE '%관우'", Int::class.java)!!
+        val zhangId = jdbc.queryForObject(
+            "SELECT id FROM general WHERE world_id=1 AND name LIKE '%장비'", Int::class.java)!!
+        val liuMeta = opensamguk.infra.persistence.MetaJson.decode(jdbc.queryForObject(
+            "SELECT meta::text FROM general WHERE world_id=1 AND name LIKE '%유비'", String::class.java)!!)
+        val oath = opensamguk.logic.content.PersonBondState.read(liuMeta)!!.bonds
+        assertEquals(setOf("general:$guanId", "general:$zhangId"), oath.map { it.targetId }.toSet())
+        assertTrue(oath.all { it.evidenceIds == setOf("novel:三國演義:第一回") })
+        assertFalse(ScenarioSeedCoordinator(jdbc).ensureSeeded(canonicalWorldId) {
+            error("existing 190 world must not be imported twice")
+        }.seeded)
+    }
+
+    @Test
     fun `explicit synthetic person policy survives actual seed and does not reset on repeated import`() {
         assumeTrue(dockerAvailable, "Docker unavailable")
         val scenario = ScenarioJson.loadScenario(java.nio.file.Files.readString(

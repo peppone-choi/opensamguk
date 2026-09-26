@@ -14,6 +14,10 @@ import opensamguk.logic.world.LandMarchEntry
 import opensamguk.logic.world.GeneralPositionChangeResult
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.engine.turn.GeneralStats
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 
 class TravelHandlerTest {
     @Test
@@ -38,6 +42,25 @@ class TravelHandlerTest {
         assertEquals("move-201", second.orderId)
         assertEquals(route.destination, second.destination)
         assertEquals(false, second.checkpoint.lastAdvancedAt == first.checkpoint.lastAdvancedAt)
+        val events = world.consumeDirtyState().gameEvents.filter { it.kind == EventKind.MARCH_DIRECT }
+        assertEquals(2, events.size)
+        assertEquals(2, events.map { it.eventKey }.toSet().size)
+        assertTrue(events.all { it.audience == AudienceTarget.Self(actor.id) &&
+            it.refs[RefRole.ACTOR] == EventRef.General(actor.id) })
+    }
+
+    @Test
+    fun `opaque order id yields one typed direct march on retry`() {
+        val fixture = CampaignWorldFixture()
+        val route = fixture.route()
+        val actor = fixture.person(212, 1, route.startCity, userId = "42")
+        val world = fixture.world(listOf(actor to route.start))
+        val handler = TravelHandler(world, ChangeRecorder(), fixture.topology, fixture.metrics)
+        val raw = TravelInput.canonicalJson(TravelRequest(actor.id, TravelInput.MOVE, route.destination))
+        val orderId = "." + "한".repeat(127)
+        assertIs<TurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, orderId, 42))
+        assertIs<TurnOutcome.Applied>(handler.handle(TravelInput.MOVE, actor.id, raw, orderId, 42))
+        assertEquals(1, world.consumeDirtyState().gameEvents.count { it.kind == EventKind.MARCH_DIRECT })
     }
 
     @Test

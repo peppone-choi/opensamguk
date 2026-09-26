@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import opensamguk.infra.persistence.KvWrite
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.record.GameEvent
 import java.time.Instant
 
 /**
@@ -262,4 +263,6 @@ data class DirtyState(
     val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(),
     /** [statisticInserts]: the `statistic` INSERT intents (W1 checkStatistic). INSERT-only. */
     val statisticInserts: List<StatisticInsert> = emptyList(),
+    /** Canonical, typed events drained with the same turn flush as world state. */
+    val gameEvents: List<GameEvent> = emptyList(),
 )
