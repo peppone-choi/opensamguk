@@ -111,10 +111,15 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `tournament enroll maps value and inherit resets are no-arg`() {
-        val enroll = roundTrip(CommandWireMapper.toCommand("tournamentEnroll", 10, "r", """{"value":1}""")!!) as TurnDaemonCommand.TournamentEnroll
-        assertEquals(1, enroll.value)
+    fun `retired tournament commands cannot enter the immediate intake wire`() {
+        for (code in listOf("tournamentEnroll", "tournamentStart", "tournamentReset")) {
+            assertTrue(!CommandWireMapper.isIntakeCommand(code))
+            assertEquals(null, CommandWireMapper.toCommand(code, 10, "retired", null))
+        }
+    }
 
+    @Test
+    fun `inherit resets are no-arg`() {
         val resetTt = roundTrip(CommandWireMapper.toCommand("inheritResetTurnTime", 10, "r", null)!!) as TurnDaemonCommand.InheritResetTurnTime
         assertEquals(10, resetTt.generalId)
 
@@ -139,25 +144,6 @@ class CommandWireMapperTest {
         assertEquals(55, resetStat.strength)
         assertEquals(55, resetStat.intel)
         assertEquals(listOf(1, 1, 1), resetStat.inheritBonusStat)
-    }
-
-    @Test
-    fun `tournament admin start and reset map to immediate daemon commands`() {
-        assertTrue(CommandWireMapper.isIntakeCommand("tournamentStart"))
-        assertTrue(CommandWireMapper.isIntakeCommand("tournamentReset"))
-
-        val start = roundTrip(
-            CommandWireMapper.toCommand("tournamentStart", 10, "req-start", """{"type":2}""")!!,
-        ) as TurnDaemonCommand.TournamentStart
-        assertEquals("req-start", start.requestId)
-        assertEquals(10, start.generalId)
-        assertEquals(2, start.tournamentType)
-
-        val reset = roundTrip(
-            CommandWireMapper.toCommand("tournamentReset", 10, "req-reset", null)!!,
-        ) as TurnDaemonCommand.TournamentReset
-        assertEquals("req-reset", reset.requestId)
-        assertEquals(10, reset.generalId)
     }
 
     @Test

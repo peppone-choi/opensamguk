@@ -145,7 +145,7 @@ class CommandResultLookupTest {
             "req-db",
             storedPayload(
                 "req-db",
-                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                NationSettingResult(type = "setBlockWar", ok = true, generalId = 10, nationId = 1),
                 committedWorldVersion = 12,
             ),
         )
@@ -155,7 +155,7 @@ class CommandResultLookupTest {
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.requestId").value("req-db"))
             .andExpect(jsonPath("$.ok").value(true))
-            .andExpect(jsonPath("$.type").value("tournamentEnroll"))
+            .andExpect(jsonPath("$.type").value("setBlockWar"))
             .andExpect(jsonPath("$.committedWorldVersion").value(12))
             .andExpect(jsonPath("$.result.generalId").value(10))
     }
@@ -164,7 +164,7 @@ class CommandResultLookupTest {
     fun `Redis result includes committedWorldVersion from event envelope`() {
         val payload = storedPayload(
             "req-ryw",
-            NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+            NationSettingResult(type = "setBlockWar", ok = true, generalId = 10, nationId = 1),
             committedWorldVersion = 34,
         )
         stubKey("req-ryw", payload)
@@ -329,7 +329,7 @@ class CommandResultLookupTest {
             "req-a",
             storedPayload(
                 "req-a",
-                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                NationSettingResult(type = "setBlockWar", ok = true, generalId = 10, nationId = 1),
             ),
         )
 
@@ -338,7 +338,7 @@ class CommandResultLookupTest {
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.requestId").value("req-a"))
             .andExpect(jsonPath("$.ok").value(true))
-            .andExpect(jsonPath("$.type").value("tournamentEnroll"))
+            .andExpect(jsonPath("$.type").value("setBlockWar"))
             .andExpect(jsonPath("$.result.generalId").value(10))
             .andExpect(jsonPath("$.result.nationId").value(1))
     }
@@ -379,7 +379,7 @@ class CommandResultLookupTest {
             "req-durable-broken-redis",
             storedPayload(
                 "req-durable-broken-redis",
-                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                NationSettingResult(type = "setBlockWar", ok = true, generalId = 10, nationId = 1),
             ),
         )
 
@@ -387,7 +387,7 @@ class CommandResultLookupTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.ok").value(true))
-            .andExpect(jsonPath("$.type").value("tournamentEnroll"))
+            .andExpect(jsonPath("$.type").value("setBlockWar"))
     }
 
     // ── OPENSAM-197 소유권 ──────────────────────────────────────────────────────
@@ -402,7 +402,7 @@ class CommandResultLookupTest {
             requestId,
             storedPayload(
                 requestId,
-                NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                NationSettingResult(type = "setBlockWar", ok = true, generalId = 10, nationId = 1),
             ),
         )
     }
