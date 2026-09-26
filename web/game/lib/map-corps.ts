@@ -1,9 +1,9 @@
 import type { CommanderyVisibility, MapCorpsOverlay } from '@opensamguk/ui';
-import type { HwihaCorps } from './hwiha-reads';
+import type { Corps } from './campaign-reads';
 
 /** Defense in depth: the projected corps response is the only source, then current visibility gates it. */
 export function buildVisibleCorps(
-    corps: readonly HwihaCorps[] | undefined,
+    corps: readonly Corps[] | undefined,
     visibility: ReadonlyMap<number, CommanderyVisibility> | null,
     provinceCenter: (provinceId: string) => { col: number; row: number } | undefined,
 ): MapCorpsOverlay[] {

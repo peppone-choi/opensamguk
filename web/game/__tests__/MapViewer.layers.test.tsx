@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { HanMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as WorldMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const mocks = vi.hoisted(() => ({
-  props: null as ComponentProps<typeof HanMapCanvasType> | null,
-  frontInfo: vi.fn(), hwihaVisibility: vi.fn(), hwihaCorps: vi.fn(), hwihaWorks: vi.fn(),
-  hwihaSieges: vi.fn(), hwihaScoutOptions: vi.fn(), strategicTopology: vi.fn(),
+  props: null as ComponentProps<typeof WorldMapCanvasType> | null,
+  frontInfo: vi.fn(), campaignVisibility: vi.fn(), campaignCorps: vi.fn(), campaignWorks: vi.fn(),
+  campaignSieges: vi.fn(), campaignScoutOptions: vi.fn(), strategicTopology: vi.fn(),
 }));
 const PREVIEW: MapPreviewResponse = {
   serverName: '테스트', year: 200, month: 5, mapCode: 'han-world-v3', width: 700, height: 610,
@@ -18,9 +18,9 @@ const PREVIEW: MapPreviewResponse = {
   nations: [{ id: 1, name: '魏', color: '#ff0000' }],
 };
 vi.mock('@/lib/api', () => ({ api: {
-  frontInfo: mocks.frontInfo, hwihaVisibility: mocks.hwihaVisibility, hwihaCorps: mocks.hwihaCorps,
-  hwihaWorks: mocks.hwihaWorks, hwihaSieges: mocks.hwihaSieges,
-  hwihaScoutOptions: mocks.hwihaScoutOptions, strategicTopology: mocks.strategicTopology,
+  frontInfo: mocks.frontInfo, campaignVisibility: mocks.campaignVisibility, campaignCorps: mocks.campaignCorps,
+  campaignWorks: mocks.campaignWorks, campaignSieges: mocks.campaignSieges,
+  campaignScoutOptions: mocks.campaignScoutOptions, strategicTopology: mocks.strategicTopology,
 } }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
@@ -32,7 +32,7 @@ vi.mock('@opensamguk/ui', async () => {
       commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 },
         { no: 2, name: '乙郡', col: 394, row: 334, focusCityId: 8 }],
       sourceSize: { width: 700, height: 610 }, administrativeOwnership: undefined }),
-    HanMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+    WorldMapCanvas: (props: ComponentProps<typeof WorldMapCanvasType>) => {
       mocks.props = props; return <div data-testid="main-map" />;
     },
   };
@@ -42,14 +42,14 @@ import MapViewer from '@/components/game/MapViewer';
 beforeEach(() => {
   mocks.props = null;
   mocks.frontInfo.mockReset().mockResolvedValue({ general: { generalId: 7 } });
-  mocks.hwihaVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [{ no: 1, tier: 'INTEL', ageTurns: 2 }] });
-  mocks.hwihaCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [
+  mocks.campaignVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [{ no: 1, tier: 'INTEL', ageTurns: 2 }] });
+  mocks.campaignCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [
     { corpsId: 'seen', ownerGeneralId: 7, commanderGeneralId: 7, nationId: 1, provinceId: 'P1', commanderyNo: 1, visibility: 'INTEL', own: true },
     { corpsId: 'hidden', ownerGeneralId: 8, commanderGeneralId: 8, nationId: 2, provinceId: 'P1', commanderyNo: 2, visibility: 'FOG', own: false },
   ] });
-  mocks.hwihaWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
-  mocks.hwihaSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
-  mocks.hwihaScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
+  mocks.campaignWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
+  mocks.campaignSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
+  mocks.campaignScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
   mocks.strategicTopology.mockReset().mockRejectedValue(new Error('no topology in fixture'));
   vi.stubGlobal('localStorage', { getItem: () => null, setItem() {}, removeItem() {}, clear() {}, key: () => null, length: 0 });
   vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
@@ -57,19 +57,19 @@ beforeEach(() => {
 
 describe('MapViewer Hwiha layers', () => {
   it('passes projected corps and dim visibility into the main war room without hidden corps', async () => {
-    render(<MapViewer mapData={PREVIEW} hwihaLayers="full" currentCityId={7} />);
+    render(<MapViewer mapData={PREVIEW} mapLayers="full" currentCityId={7} />);
     await waitFor(() => expect(mocks.props?.commanderyVisibility?.get(1)).toBe('INTEL'));
     expect(mocks.props?.fogMode).toBe('dim');
     expect(mocks.props?.corps).toMatchObject([{ id: 'seen', stale: true }]);
     expect(mocks.props?.markerPositions?.get(7)).toEqual({ col: 384, row: 334 });
     expect(screen.getByText('2순 전 정보')).toBeInTheDocument();
-    expect(mocks.hwihaCorps).toHaveBeenCalledWith(7, expect.any(AbortSignal));
+    expect(mocks.campaignCorps).toHaveBeenCalledWith(7, expect.any(AbortSignal));
   });
 
   it('keeps the map and clears only the rejected Hwiha layers', async () => {
-    mocks.hwihaVisibility.mockResolvedValue({ status: 'WRONG_RULE_PROFILE' });
-    mocks.hwihaCorps.mockRejectedValue(new Error('unavailable'));
-    render(<MapViewer mapData={PREVIEW} hwihaLayers="full" />);
+    mocks.campaignVisibility.mockResolvedValue({ status: 'WRONG_RULE_PROFILE' });
+    mocks.campaignCorps.mockRejectedValue(new Error('unavailable'));
+    render(<MapViewer mapData={PREVIEW} mapLayers="full" />);
     expect(screen.getByTestId('main-map')).toBeInTheDocument();
     expect(await screen.findByText('시야를 불러오지 못해 안개 레이어를 비웠습니다.')).toBeInTheDocument();
     expect(screen.getByText('군단을 불러오지 못해 군단 레이어를 비웠습니다.')).toBeInTheDocument();
@@ -78,7 +78,7 @@ describe('MapViewer Hwiha layers', () => {
   });
 
   it('moves the camera to a neighboring 郡 without moving the current 城 marker', async () => {
-    render(<MapViewer mapData={PREVIEW} hwihaLayers="full" currentCityId={7} />);
+    render(<MapViewer mapData={PREVIEW} mapLayers="full" currentCityId={7} />);
     await waitFor(() => expect(screen.getByRole('button', { name: '동 — 乙郡' })).toBeEnabled());
     fireEvent.click(screen.getByRole('button', { name: '동 — 乙郡' }));
     expect(mocks.props?.currentCityId).toBe(7);

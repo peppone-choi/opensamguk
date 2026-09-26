@@ -1,0 +1,204 @@
+package opensamguk.engine.campaign
+
+import kotlin.test.*
+import opensamguk.common.wire.TurnDaemonCommand
+import opensamguk.engine.retainer.RetainerMonthlyService
+import opensamguk.engine.turn.*
+import opensamguk.logic.economy.CountyWarehouse
+import opensamguk.logic.economy.Resources
+import opensamguk.logic.input.*
+import opensamguk.logic.renown.RenownEventKind
+import opensamguk.logic.renown.RenownEventSource
+import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.retainer.RetainerRules
+import opensamguk.logic.war.CampaignBalance
+
+/** 순 경계 보급 재계산, 녹봉(창고망), 기존 가신 유지비 끔, 상사 — in-memory, real map. */
+class EconomyBoundaryTest {
+    private val fixture = CampaignWorldFixture()
+    private val route = fixture.route()
+    private val capital = route.startCity
+
+    private fun warehouse(city: City, stock: Resources) =
+        city.copy(meta = city.meta + (CountyWarehouse.META_KEY to CountyWarehouse(city.id, 0, stock).toMetaValue()))
+
+    private fun money(world: InMemoryTurnWorld, county: Int) =
+        CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.money
+
+    /** Nation 1 owns every city except [enemyCounty]; its capital is the route's start county. */
+    private fun realm(enemyCounty: Int? = null, capitalMoney: Long = 0, card: Retainer? = null,
+        people: List<Pair<TurnGeneral, opensamguk.logic.world.StrategicNodeRef.LandProvince>> =
+            listOf(fixture.person(1, 1, capital, userId = "42") to route.start,
+                fixture.person(2, 1, capital, lord = false) to route.start),
+        bugoks: List<Bugok> = emptyList()) = fixture.world(people, bugoks = bugoks,
+        nations = listOf(Nation(1, "N1", "#111111", capitalCityId = capital, level = 1, chiefGeneralId = 1),
+            Nation(2, "N2", "#222222", level = 1, capitalCityId = enemyCounty ?: 0)),
+        retainers = listOfNotNull(card),
+        cityChanges = { city ->
+            val owner = if (city.id == enemyCounty) 2 else 1
+            val owned = city.copy(nationId = owner, supplyState = 0)
+            when (city.id) {
+                capital -> warehouse(owned, Resources(money = capitalMoney))
+                enemyCounty -> warehouse(owned.copy(population = 50_000, agriculture = 1000), Resources())
+                else -> owned
+            }
+        })
+
+    @Test fun `each phase recomputes supply flags from the capital and cuts a besieged county`() {
+        val world = realm()
+        val boundary = PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells)
+        assertTrue(boundary.recomputeSupply(world, ChangeRecorder(), emptySet()) > 0)
+        assertEquals(1, world.getCityById(capital)!!.supplyState, "the capital is supplied")
+        val neighbour = fixture.bundle.cityConst.byId(capital)!!.path.keys.first()
+        assertEquals(1, world.getCityById(neighbour)!!.supplyState, "a connected own city is supplied")
+        boundary.recomputeSupply(world, ChangeRecorder(), setOf(neighbour))
+        assertEquals(0, world.getCityById(neighbour)!!.supplyState, "encirclement cuts outside supply")
+    }
+
+    @Test fun `a county captured at the boundary is supplied in time for the new owner's income`() {
+        val county = route.destinationCounty
+        val world = realm(enemyCounty = county,
+            people = listOf(fixture.person(1, 1, capital, userId = "42") to route.first),
+            bugoks = listOf(fixture.unit(7, 1, 1000)))
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, 1, listOf(7), route.destination)
+        fixture.nextPhase(world)
+        fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
+        val boundary = PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells)
+        repeat(4) { fixture.nextPhase(world); boundary.run(world, recorder) }
+        assertEquals(1, world.getCityById(county)!!.nationId)
+        assertEquals(1, world.getCityById(county)!!.supplyState, "the captured county joined the captor's network")
+        val state = world.getState()
+        MonthlyCountyIncome(world, recorder).credit(state.currentYear, state.currentMonth)
+        val stock = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock
+        assertTrue(stock.grain > 0, "the new owner's county warehouse receives the month's income")
+    }
+
+    @Test fun `salary is paid from the card's network once a month and unpaid cards lose loyalty`() {
+        val card = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 50)
+        val world = realm(capitalMoney = 1000, card = card)
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val recorder = ChangeRecorder()
+        val first = MonthlySalary(world, recorder).pay(200, 2)!!
+        assertEquals(1, first.paid); assertEquals(700L, first.money, "cost 7 × 100")
+        assertEquals(300L, money(world, capital)); assertEquals(50, world.getRetainerById(4)!!.loyalty)
+        assertTrue(MonthlySalary(world, recorder).pay(200, 2)!!.alreadyStamped)
+        assertEquals(300L, money(world, capital), "the same month is not paid twice")
+        val unpaid = MonthlySalary(world, recorder).pay(200, 3)!!
+        assertEquals(1, unpaid.unpaid); assertEquals(300L, money(world, capital), "no partial payment")
+        assertEquals(45, world.getRetainerById(4)!!.loyalty)
+    }
+
+    @Test fun `invalid warehouse network is rejected before any county is charged`() {
+        val enemy = route.destinationCounty
+        val world = realm(enemyCounty = enemy, capitalMoney = 500)
+        world.applyCityDirtyFree(warehouse(world.getCityById(enemy)!!, Resources(money = 1000)))
+        val network = WarehouseNetwork(world, ChangeRecorder())
+        assertFalse(network.payMoney(1, listOf(capital, enemy), 600))
+        assertEquals(500L, money(world, capital), "the earlier own warehouse cannot be partially charged")
+        assertEquals(1000L, money(world, enemy))
+        assertFalse(network.payMoney(1, listOf(capital), -1))
+    }
+
+    @Test fun `legacy retainer upkeep and unit pay are off in HWIHA but provisions and drift remain`() {
+        val card = Retainer(4, 1, RetainerRules.ORIGIN_RECRUITED, null, "무명", RetainerRules.RELATION_STAFF, loyalty = 50)
+        val world = realm(card = card, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 500)))
+        RetainerMonthlyService().settle(world, ChangeRecorder())
+        assertEquals(50 + RetainerRules.LOYALTY_IDLE, world.getRetainerById(4)!!.loyalty, "no unpaid-upkeep loss")
+        assertEquals(0, world.getGeneralById(1)!!.gold, "no legacy gold paid")
+        val unit = world.getBugokById(7)!!
+        assertEquals(50, unit.morale, "no unpaid-pay morale loss"); assertEquals(400, unit.provisions, "provisions still consumed")
+    }
+
+    @Test fun `units at home refill carried rations from the network once a month and besiegers abroad do not`() {
+        val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)))
+        val capitalCity = world.getCityById(capital)!!
+        world.applyCityDirtyFree(warehouse(capitalCity, Resources(grain = 1_000_000)))
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val recorder = ChangeRecorder()
+        assertEquals(1, UnitResupply(world, recorder).resupply(200, 2))
+        assertEquals(200, world.getBugokById(7)!!.provisions, "filled to troops × 2 months")
+        assertEquals(1_000_000L - 150 * 300, CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+        assertEquals(0, UnitResupply(world, recorder).resupply(200, 2), "once a month")
+        // Abroad (standing in an enemy county) there is no network to draw from.
+        val abroad = realm(enemyCounty = route.destinationCounty, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)),
+            people = listOf(fixture.person(1, 1, route.destinationCounty, userId = "42") to route.destination))
+        assertEquals(0, UnitResupply(abroad, ChangeRecorder()).resupply(200, 2))
+        assertEquals(50, abroad.getBugokById(7)!!.provisions)
+    }
+
+    @Test fun `a unit whose holder stands in a cityless province draws nothing though the reference city is home`() {
+        // 城 없는 省에 들어가도 기준 城 id 는 이전 값(수도)으로 남는다 — 실제 위치로 판정해야 한다.
+        val cityless = (fixture.topology.landProvinceIds - fixture.bundle.projection.bindingsByCityId.values.mapNotNull { it.landProvinceId }.toSet()).min()
+        val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 50)),
+            people = listOf(fixture.person(1, 1, capital, userId = "42") to opensamguk.logic.world.StrategicNodeRef.LandProvince(cityless)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        assertEquals(capital, world.getGeneralById(1)!!.cityId, "the reference city still points home")
+        assertEquals(0, UnitResupply(world, ChangeRecorder()).resupply(200, 2))
+        assertEquals(50, world.getBugokById(7)!!.provisions)
+        assertEquals(1_000_000L, CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+    }
+
+    @Test fun `deploying loads three months of rations from the departure network and only what the warehouses hold`() {
+        val world = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        fixture.deploy(world, ChangeRecorder(), 1, listOf(7), route.destination)
+        assertEquals(100 * CampaignBalance.DEPLOY_LOAD_MONTHS, world.getBugokById(7)!!.provisions, "troops × 3 months")
+        assertEquals(1_000_000L - 300L * CampaignBalance.GRAIN_PER_PROVISION,
+            CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain)
+
+        val poor = realm(bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)))
+        poor.applyCityDirtyFree(warehouse(poor.getCityById(capital)!!, Resources(grain = 30_000)))
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(poor, ChangeRecorder(), emptySet())
+        fixture.deploy(poor, ChangeRecorder(), 1, listOf(7), route.destination)
+        assertEquals(100, poor.getBugokById(7)!!.provisions, "only what the network holds (30000 / 300)")
+    }
+
+    @Test fun `a corps abroad gets a monthly convoy that arrives after the march delay without loss`() {
+        // Deployed from an enemy county: nothing is loaded at departure, so only the convoy can feed it.
+        val world = realm(enemyCounty = route.destinationCounty, bugoks = listOf(fixture.unit(7, 1, 100, provisions = 0)),
+            people = listOf(fixture.person(1, 1, capital, userId = "42") to route.destination))
+        world.applyCityDirtyFree(warehouse(world.getCityById(capital)!!, Resources(grain = 1_000_000)))
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val recorder = ChangeRecorder()
+        fixture.deploy(world, recorder, 1, listOf(7), route.destination)
+        assertEquals(0, world.getBugokById(7)!!.provisions, "no loading outside the own network")
+        val rations = CorpsRations(world, recorder, fixture.topology, fixture.metrics)
+        val dispatchedAt = world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
+        assertEquals(1, rations.dispatch(200, 2))
+        val convoy = rations.convoys().single()
+        assertEquals(100L * CampaignBalance.CONVOY_TARGET_MONTHS, convoy.provisions)
+        assertTrue(convoy.arrive > dispatchedAt, "a convoy is never instant")
+        assertEquals(1_000_000L - 300L * CampaignBalance.GRAIN_PER_PROVISION,
+            CountyWarehouse.read(world.getCityById(capital)!!.meta, capital)!!.stock.grain, "paid at departure")
+        assertEquals(0, rations.dispatch(200, 2), "once a month")
+        assertEquals(0, rations.deliver(), "not yet")
+        var phases = 0
+        while (world.getBugokById(7)!!.provisions == 0 && phases < 12) { fixture.nextPhase(world); rations.deliver(); phases++ }
+        assertEquals(300, world.getBugokById(7)!!.provisions, "delivered in full: no loss")
+        assertEquals(convoy.arrive, world.getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) })
+        assertTrue(rations.convoys().isEmpty())
+    }
+
+    @Test fun `reward is a queued court decision paid from the warehouse raising loyalty and one bond event a month`() {
+        val card = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 50)
+        val world = realm(capitalMoney = 2000, card = card)
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val recorder = ChangeRecorder()
+        val court = CourtHandler(world, recorder)
+        val queued = court.handle(TurnDaemonCommand.ImmediateInput("reward-1", 1, 42, "court.reward", """{"retainerId":4,"money":500}"""))
+        assertTrue(queued.ok, "${queued.code} ${queued.reason}")
+        assertEquals(2000L, money(world, capital), "nothing is paid before the issuer's turn")
+        court.onIssuerTurn(1)
+        assertEquals(1500L, money(world, capital)); assertEquals(55, world.getRetainerById(4)!!.loyalty)
+        assertTrue(court.takeExecutions().single().result.ok)
+        fun bondEvents() = RenownEvents.entries(world.getGeneralById(2)!!.meta).filter { it.kind == RenownEventKind.BOND_EVENT }
+        assertEquals(listOf(RenownEventSource.REWARD), bondEvents().map { it.source })
+        assertEquals(RewardExecutor.Failure.INSUFFICIENT_STOCK, RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 5000)))
+        assertNull(RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 100)))
+        assertEquals(1, bondEvents().size, "one bond event a month")
+        assertEquals(RewardExecutor.Failure.CARD_UNAVAILABLE, RewardExecutor(world, recorder).reward(RewardRequest(2, 4, 100)))
+    }
+}

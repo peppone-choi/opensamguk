@@ -38,7 +38,7 @@ class TruncateContractTest {
 
     @Test
     fun `per-season tables are truncated not survived`() {
-        for (table in listOf("general", "city", "nation", "diplomacy", "log_entry")) {
+        for (table in listOf("general", "city", "nation", "diplomacy", "log_entry", "game_event")) {
             assertTrue(table in TruncateContract.TRUNCATED, "$table must be truncated")
             assertFalse(TruncateContract.isExcludedFromTruncate(table), "$table must not survive")
         }

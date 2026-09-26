@@ -45,14 +45,14 @@ class TurnDaemonCommandWireTest {
         val expected = setOf(
             "run", "pause", "resume", "shutdown", "getStatus", "troopJoin", "troopExit",
             "dieOnPrestart", "buildNationCandidate", "instantRetreat", "vacation", "setMySetting",
-            "dropItem", "auctionFinalize", "changePermission", "kick", "appoint", "tournamentRefund",
-            "tournamentBettingPayout", "tournamentReward", "voteReward", "setNationMeta",
-            "adjustGeneralResources", "adjustGeneralMeta", "tournamentMatchResult", "patchGeneral",
+            "dropItem", "auctionFinalize", "changePermission", "kick", "appoint",
+            "voteReward", "setNationMeta",
+            "adjustGeneralResources", "adjustGeneralMeta", "patchGeneral",
             "auctionBid",
         )
         val seen = validCorpus.map { (it as JsonObject)["type"]!!.jsonPrimitive.content }.toSet()
         assertEquals(expected, seen, "valid corpus must cover exactly the command union")
-        assertEquals(27, validCorpus.size, "corpus size is locked")
+        assertEquals(23, validCorpus.size, "corpus size is locked")
         assertTrue(seen.size == validCorpus.size, "no duplicate type keys in corpus")
     }
 }

@@ -142,7 +142,7 @@ class FrontInfoControllerTest {
             .andExpect(jsonPath("$.global.year").value(200))
             .andExpect(jsonPath("$.global.month").value(3))
             .andExpect(jsonPath("$.global.turnterm").value(60)) // 3600s / 60
-            .andExpect(jsonPath("$.global.tournamentTermMinutes").value(60))
+            .andExpect(jsonPath("$.global.tournamentTermMinutes").doesNotExist())
             .andExpect(jsonPath("$.global.generalCount").value(174))
             .andExpect(jsonPath("$.global.npcCount").value(160))
             .andExpect(jsonPath("$.global.npcModeText").value("불가능"))

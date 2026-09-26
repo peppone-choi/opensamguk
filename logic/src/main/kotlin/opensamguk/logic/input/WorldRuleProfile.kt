@@ -1,32 +1,21 @@
 package opensamguk.logic.input
 
-/** One-season SAMMO rollback fence for restored worlds with no stored profile. */
+/** Adapter for input handlers while their profile parameter is retired. */
 object WorldRuleProfile {
-    const val ROLLBACK_ENV = "SAMMO_ROLLBACK_ENABLED"
-    private val runtimeRollback: Boolean by lazy { rollbackEnabled(System.getenv(ROLLBACK_ENV)) }
+    fun defaultProfile(): RuleProfile = RuleProfile.HWIHA
 
-    fun rollbackEnabled(raw: String? = System.getenv(ROLLBACK_ENV)): Boolean = when (raw) {
-        null, "", "false" -> false
-        "true" -> true
-        else -> throw IllegalArgumentException("$ROLLBACK_ENV must be true or false")
+    /** API production reads pass WorldStateReadRepository's full format validation first.
+     * Direct test doubles retain the retired profile projection until those fixtures migrate. */
+    fun resolve(config: Map<String, Any?>): RuleProfile? {
+        val marker = config[opensamguk.logic.world.WorldFormat.CONFIG_KEY]
+        if (marker != null) {
+            opensamguk.logic.world.WorldFormat.require(config)
+            return RuleProfile.HWIHA
+        }
+        val legacy = config["ruleProfile"] as? String ?: return null
+        return RuleProfile.entries.firstOrNull { it.name == legacy }
     }
 
-    /** Fresh scenario imports use HWIHA unless their JSON declares a profile. */
-    fun defaultProfile(rollback: Boolean = false): RuleProfile =
-        if (rollback) RuleProfile.SAMMO else RuleProfile.HWIHA
-
-    /** An existing world without a profile is unreadable unless rollback is active. */
-    fun resolve(config: Map<String, Any?>, rollback: Boolean = runtimeRollback): RuleProfile? {
-        if ("ruleProfile" !in config) return if (rollback) RuleProfile.SAMMO else null
-        val raw = config["ruleProfile"] as? String ?: return null
-        return RuleProfile.entries.firstOrNull { it.name == raw }
-    }
-
-    fun require(config: Map<String, Any?>, rollback: Boolean = runtimeRollback): RuleProfile =
-        requireNotNull(resolve(config, rollback)) { "invalid ruleProfile in world config" }
-
-    /** Called by game-api during startup so an invalid env value fails before requests arrive. */
-    fun validateRuntimeConfiguration() {
-        runtimeRollback
-    }
+    fun require(config: Map<String, Any?>): RuleProfile =
+        requireNotNull(resolve(config)) { "world profile is missing" }
 }

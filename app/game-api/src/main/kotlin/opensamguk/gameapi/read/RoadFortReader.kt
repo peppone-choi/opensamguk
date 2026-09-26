@@ -24,11 +24,11 @@ class RoadFortReader(
     private val mapper: ObjectMapper,
 ) {
     fun forts(generalId: Int, userId: Long): RoadFortsResponse {
-        val actor = generals.findById(generalId).orElse(null) ?: throw HwihaCampForbidden()
-        if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw HwihaCampForbidden()
+        val actor = generals.findById(generalId).orElse(null) ?: throw CampForbidden()
+        if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw CampForbidden()
         val world = worlds.findProcessWorld() ?: return RoadFortsResponse("UNAVAILABLE")
         if (actor.worldId != world.id) return RoadFortsResponse("UNAVAILABLE")
-        if (world.config["ruleProfile"] != "HWIHA") return RoadFortsResponse("WRONG_RULE_PROFILE")
+        if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return RoadFortsResponse("UNSUPPORTED_WORLD_FORMAT")
         val selected = artifacts.resolve() ?: return RoadFortsResponse("UNAVAILABLE")
         val bundle = selected.artifacts ?: return RoadFortsResponse("UNAVAILABLE")
         val topology = bundle.projection.topology
@@ -45,7 +45,7 @@ class RoadFortReader(
                 else -> null
             }
         }.toSet()
-        val geography = opensamguk.infra.seed.HwihaCountyGeographyJson.load(bundle)
+        val geography = opensamguk.infra.seed.CountyGeographyJson.load(bundle)
         val ownedProvinces = selected.cities.filter { it.nationId == actor.nationId }
             .flatMap { city -> geography.provincesOfCounty(city.id).ifEmpty {
                 setOfNotNull(bundle.projection.bindingsByCityId[city.id]?.landProvinceId)

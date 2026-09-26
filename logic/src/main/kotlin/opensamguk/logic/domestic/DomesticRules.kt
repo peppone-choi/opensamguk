@@ -143,7 +143,7 @@ data class EffectivePolicy(val policy: CountyPolicy, val source: PolicySource, v
  *   군주가 건 郡 방침이 있으면 군주가 아닌 장수는 縣 방침을 바꿀 수 없다(§2.4 「상위 방침의 범위 안에서만」).
  * - 郡 방침은 군주만 건다(太守·刺史는 2층 관직이라 이번 범위 밖).
  * - 군단 방침은 출전 군단의 주인이 건다.
- * 군주 = 그 세력에서 유일한 `officer_level == 12` 이면서 `hwihaLord == true` 인 장수(출사 투영과 같은 근거).
+ * 군주 = 그 세력에서 유일한 `officer_level == 12` 이면서 `lord == true` 인 장수(출사 투영과 같은 근거).
  */
 object DomesticRules {
     const val RELATION_LIEUTENANT = "lieutenant"
