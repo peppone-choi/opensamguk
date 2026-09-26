@@ -586,12 +586,13 @@ def compute_mountains(inp, tier, width, placements):
 #   기복 = 표고 − (반경 baseRadius 표고칸 최저값을 흐린 것). 표고칸 하나는 우리 4×4칸이다.
 # 물·길·강 기슭·城(성내 + 1칸)은 산이 되지 않는다(골짜기). 윗단은 아랫단 안쪽 1칸 이상에 둔다.
 DEM = ROOT / "web/game/public/map/elevation/han-world-v3-metres.png"
-RELIEF_PARAMS = dict(baseRadius=6, dropBelow=150, addAbove=500, addPlateauAbove=1000, tier2=450, tier3=850, smoothRadius=3,
+RELIEF_PARAMS = dict(baseRadius=6, dropBelow=150, addAbove=500, addPlateauAbove=1000, tier2=450, tier3=850,
+                     edgeRadius=2, edgeNoise=0.2,
                      minMass=200, minTier=80, roadValleyMax=3, roadValleyScale=8, passNarrow=10)
 # 고원 경계: 지형 분류의 고원(NE 폴리곤, 곧은 변)을 경계 띠 안에서만 다시 긋는다. 턱(고원 안 평균 − 저지 평균)이 step m
 # 이상이면 그 중간 높이가 경계, 턱이 없으면 경계가 임의이므로 곧은 선을 결정적 잡음으로 흔든다. 산·물은 건드리지 않는다.
 PLATEAU_PARAMS = dict(meanRadius=40, bandMin=12, bandMax=36, bandScale=30, step=150, wobbleBox=20, wobbleScale=40, wobbleAmp=0.6,
-                      wobbleScale2=12, wobbleAmp2=0.3, smoothRadius=3, minMass=300)
+                      wobbleScale2=12, wobbleAmp2=0.3, edgeRadius=2, edgeNoise=0.2, minMass=300)
 DESERT_PARAMS = dict(PLATEAU_PARAMS, gapWidth=8, gapMinMass=80, riverMargin=2, riverSliver=3000)        # 사막 경계도 같은 방식(사용자 2026-09-27). 사막·고원 사이 8칸 미만 틈과 80칸 미만 조각은 메운다
 LOWLAND = (1, 7, 8)          # 저지로 치는 지형 분류(평지·분지·구릉)
 
@@ -620,6 +621,16 @@ def _up4(d):
     y1 = np.clip(y0 + 1, 0, h - 1); x1 = np.clip(x0 + 1, 0, w - 1)
     fy = np.clip(y - np.floor(y), 0, 1)[:, None]; fx = np.clip(x - np.floor(x), 0, 1)[None, :]
     return d[y0][:, x0] * (1 - fy) * (1 - fx) + d[y1][:, x0] * fy * (1 - fx) + d[y0][:, x1] * (1 - fy) * fx + d[y1][:, x1] * fy * fx
+
+
+def smooth_edges(m, r, passes, noise=0.0, salt="edge", scale=10):
+    """경계를 부드럽게: 상자 흐림을 passes 번(≈ 가우스) 한 뒤 0.5 에서 자른다. 옛 분류의 4×4칸 덩이 계단이 사라진다.
+    noise 가 있으면 자르는 높이를 결정적 잡음으로 흔들어 너무 매끈한 덩이가 되지 않게 한다."""
+    f = m.astype(np.float64)
+    for _ in range(passes):
+        f = _box(f, r)
+    th = 0.5 if noise <= 0 else 0.5 + noise * (value_noise(m.shape, scale, salt) - 0.5)
+    return f > th
 
 
 def _majority(m, r, times, off=None):
@@ -713,14 +724,14 @@ def compute_relief(inp, tier, width, placements, mnt, dem=None):
     rs = _box(rel, 2)
     m = ((T == TERRAIN_MOUNTAIN) & (rs >= prm["dropBelow"])) | (np.isin(T, LOWLAND) & (rs >= prm["addAbove"]))
     m |= (T == TERRAIN_PLATEAU) & (rs >= prm["addPlateauAbove"])     # 고원 가장자리 산벽(蜀 서쪽 龍門·邛崍)과 고원 안 산맥
-    m = _majority(m, prm["smoothRadius"], 2, off=valley)
+    m = smooth_edges(m, prm["edgeRadius"], 3, prm["edgeNoise"], "mountain-edge") & ~valley
     m = _drop_small(m, prm["minMass"]); m = ~_drop_small(~m, prm["minMass"]) & ~valley
     for y, x, _reason in mnt["cells"]:
         if not valley[y, x]:
             m[y, x] = True
     hs = _box(rel, 5); lv = np.zeros(T.shape, np.uint8); lv[m] = 1; prev = m
     for k, th in ((2, prm["tier2"]), (3, prm["tier3"])):
-        mk = _majority(prev & (hs >= th), prm["smoothRadius"], 2) & _erode4(prev)
+        mk = smooth_edges(prev & (hs >= th), prm["edgeRadius"], 3, prm["edgeNoise"], f"tier{k}-edge") & _erode4(prev)
         mk = _drop_small(mk, prm["minTier"])
         lv[mk] = k; prev = mk
     return lv
@@ -752,9 +763,9 @@ def reshape_class(own, low, lv, E, prm, salt):
     out = own.copy(); real = band & (step >= prm["step"]); flat = band & (step < prm["step"])
     out[real] = es[real] >= ((ehi + elo) / 2)[real]; out[flat] = wob[flat]
     keep = cand | own; out &= keep
-    out = _majority(out, prm["smoothRadius"], 2) & keep
+    out = smooth_edges(out, prm["edgeRadius"], 3, prm["edgeNoise"], salt + "-edge") & keep
     out = _drop_small(out, prm["minMass"]); out = ~_drop_small(~out, prm["minMass"]) & keep
-    return out | (own & (lv > 0))          # 산 칸의 분류(색)는 지형 분류 그대로
+    return out | (smooth_edges(own, prm["edgeRadius"], 3, prm["edgeNoise"], salt + "-mountain") & (lv > 0))   # 산 칸의 분류(색)
 
 
 def compute_plateau(inp, lv, dem=None):
@@ -764,12 +775,12 @@ def compute_plateau(inp, lv, dem=None):
 
 
 def river_band(tier, width, extra):
-    """설계 강 칸 + 반폭 + extra 칸."""
+    """설계 강 칸 + 반폭 + extra 칸. 네모를 이어 붙이면 가장자리가 계단이 되니 흐려서 둥글게 자른다."""
     band = np.zeros(tier.shape, bool); ys, xs = np.nonzero(tier > 0)
     for y, x in zip(ys, xs):
         r = (max(1, int(width[y, x])) - 1) // 2 + extra
         band[max(0, y - r):y + r + 1, max(0, x - r):x + r + 1] = True
-    return band
+    return smooth_edges(band, 1, 3) | (tier > 0)
 
 
 def compute_desert(inp, lv, plat, dem, tier, width):
@@ -800,6 +811,12 @@ def compute_desert(inp, lv, plat, dem, tier, width):
     small = rest & (component_sizes(rest) < prm["gapMinMass"]) & (fd + fp > 0.5)
     fill |= small
     des = des | (fill & (fd >= fp) & ~rb); plat2 = plat2 | (fill & (fp > fd))      # 강 기슭은 메워도 사막이 아니다
+    # 마지막 다듬기: 띠 밖에 남은 옛 4×4칸 계단(사막–고원, 지도 밖과 맞닿은 곳)까지 경계 전체를 부드럽게
+    land = ~np.isin(inp["terrain"], (TERRAIN_SEA, TERRAIN_LAKE, TERRAIN_OUT)) & (lv == 0)
+    des = smooth_edges(des, prm["edgeRadius"], 3, prm["edgeNoise"], "desert-final") & land & ~rb
+    plat2 = smooth_edges(plat2, prm["edgeRadius"], 3, prm["edgeNoise"], "plateau-final") & land & ~des
+    # 산 칸의 고원 여부(색)도 원래 분류 그대로 두면 산 색 경계가 4칸 계단이 된다
+    plat2 |= smooth_edges(T == TERRAIN_PLATEAU, prm["edgeRadius"], 3, prm["edgeNoise"], "plateau-mountain") & (lv > 0)
     return des, plat2
 
 

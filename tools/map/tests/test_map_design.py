@@ -161,6 +161,20 @@ class MapDesignInvariantsTest(unittest.TestCase):
         self.assertTrue(any("출처 없음" in e for e in B.check_mountains(self.inp, self.tier, self.width, self.pl, mnt)))
 
 
+    def test_boundaries_do_not_inherit_4x4_block_stairs(self):
+        # 옛 지형 분류는 768 격자 ×4 덩이라 경계가 4칸 격자선 위에만 놓인다(지수 1.0). 자연스러운 경계는 약 0.25.
+        land = ~np.isin(self.inp["terrain"], (B.TERRAIN_SEA, B.TERRAIN_LAKE, B.TERRAIN_OUT))
+
+        def stair(m):
+            v = (m[1:, :] != m[:-1, :]) & land[1:, :] & land[:-1, :]; h = (m[:, 1:] != m[:, :-1]) & land[:, 1:] & land[:, :-1]
+            rv = (np.arange(1, m.shape[0]) % 4 == 0)[:, None]; rh = (np.arange(1, m.shape[1]) % 4 == 0)[None, :]
+            return ((v & rv).sum() + (h & rh).sum()) / max(1, v.sum() + h.sum())
+        self.assertGreater(stair(self.inp["terrain"] == B.TERRAIN_DESERT), 0.95)         # 적색 기준: 옛 분류는 걸린다
+        # 기준은 다듬기를 끈 값(사막 0.334 · 고원 0.476 · 산 0.296)과 다듬은 값(0.233 · 0.289 · 0.263) 사이
+        for name, m, lim in (("산", self.lv > 0, 0.28), ("2단", self.lv >= 2, 0.28), ("3단", self.lv >= 3, 0.28),
+                             ("사막", self.des, 0.30), ("고원", self.plat, 0.32)):
+            self.assertLess(stair(m), lim, name)
+
     def test_red_plateau_and_desert_overlap(self):
         des = self.des.copy(); ys, xs = self.plat.nonzero(); des[ys[0], xs[0]] = True
         self.assertTrue(any("둘 다" in e for e in B.check_plateau_desert(self.plat, des)))
