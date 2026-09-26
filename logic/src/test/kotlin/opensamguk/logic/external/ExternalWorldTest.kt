@@ -31,11 +31,28 @@ class ExternalWorldTest {
         assertFailsWith<IllegalArgumentException> {
             ExternalWorld.decide("seed", WorldId(1), 189, 3, 1, emptyList(),
                 listOf(ExternalContact(1, id, ExternalRelation.HOSTILE, 5)), ExternalCatalog.parseEventRules(valuesPayload))
-        assertFailsWith<IllegalArgumentException> {
-            ExternalWorld.decide("seed", WorldId(1), 189, 3, 1, ExternalCatalog.parseActors(actorsPayload),
-                listOf(ExternalContact(1, id, ExternalRelation.HOSTILE, 5)), ExternalCatalog.parseEventRules(valuesPayload))
         }
+    }
+
+    @Test
+    fun `candidate and out of period actors cannot produce external events`() {
+        val id = ExternalActorId("external:wuhuan")
+        val actors = ExternalCatalog.parseActors(actorsPayload)
+        val contacts = listOf(ExternalContact(1, id, ExternalRelation.HOSTILE, 5))
+        val rules = ExternalCatalog.parseEventRules(valuesPayload)
+
+        val candidateError = assertFailsWith<IllegalArgumentException> {
+            ExternalWorld.decide("seed", WorldId(1), 189, 3, 1, actors, contacts, rules)
         }
+        assertEquals("inactive or out-of-period external actor", candidateError.message)
+
+        val outOfPeriodActors = actors.map {
+            if (it.id == id) it.copy(activation = "ACTIVE", subjectPeriod = 190..190) else it
+        }
+        val outOfPeriodError = assertFailsWith<IllegalArgumentException> {
+            ExternalWorld.decide("seed", WorldId(1), 189, 3, 1, outOfPeriodActors, contacts, rules)
+        }
+        assertEquals("inactive or out-of-period external actor", outOfPeriodError.message)
     }
 
     @Test
