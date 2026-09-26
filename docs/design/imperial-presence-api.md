@@ -2,7 +2,7 @@
 
 ## 용도와 범위
 
-S6-2b의 지도 배지와 황실 화면에 같은 황제 소재지 정보를 제공한다. `ImperialPresenceProjection.badges`의 결과를 서버 읽기 API가 전달한다. 이 문서는 프론트 인계용 계약이며 엔드포인트는 아직 구현되지 않았다. 실제 황제의 城은 장수 위치 행에서 읽고, `ImperialHouse.courtCityId`는 조정 소재지로 따로 보존한다. 두 城이 달라도 황제를 조정 城에 놓지 않는다.
+S6-2b의 지도 배지와 황실 화면에 같은 황제 소재지 정보를 제공한다. `ImperialPresenceProjection.badges`의 결과를 서버 읽기 API가 전달한다. 실제 황제의 城은 장수 위치 행에서 읽고, `ImperialHouse.courtCityId`는 조정 소재지로 따로 보존한다. 두 城이 달라도 황제를 조정 城에 놓지 않는다.
 
 ## 요청과 응답
 
@@ -19,4 +19,4 @@ S6-2b의 지도 배지와 황실 화면에 같은 황제 소재지 정보를 제
 - `app/game-api/src/test/resources/imperial/presence-not-seeded.json`: 황실 시드가 없는 월드의 명시적 빈 응답.
 - `app/game-api/src/test/resources/imperial/presence-unavailable.json`: 손상된 상태의 오류 응답 본문(HTTP 409).
 
-두 fixture는 역사 사건을 주장하지 않는 API 형식 자료다. 서버 구현 시 DTO 직렬화 결과를 이 파일과 대조하고, 위치 행을 삭제한 적색 프로브가 `READY`를 만들지 못함을 확인한다. 프론트 담당은 이 fixture로 화면을 먼저 구성할 수 있다.
+세 fixture는 역사 사건을 주장하지 않는 API 형식 자료다. `ImperialPresenceReaderTest`가 DTO 직렬화 결과를 이 파일과 대조하고, 위치 행이 없을 때 `READY`를 만들지 못함을 확인한다. 프론트 담당은 이 fixture로 화면을 구성할 수 있다.
