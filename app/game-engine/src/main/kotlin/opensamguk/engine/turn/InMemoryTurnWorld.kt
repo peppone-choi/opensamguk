@@ -7,6 +7,18 @@ import opensamguk.logic.world.WaterControlSnapshot
 import opensamguk.logic.world.ProvinceControlSnapshot
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventOrdinalAllocator
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.EventTurn
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.GameEvent
+import opensamguk.logic.record.Publication
+import opensamguk.logic.record.PublicationState
+import opensamguk.logic.record.RefRole
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -35,7 +47,7 @@ data class WorldSnapshot(
     /** Phase 4X-C — 미소비 출병 계획(부팅·rehydrate 적재, `resolved_year IS NULL` 만). */
     val battlePlans: List<BattlePlan> = emptyList(),
     /** HWIHA 縣城 포위(V61) — 끝난 포위도 조회용으로 남는다. */
-    val hwihaSieges: List<HwihaSiege> = emptyList(),
+    val sieges: List<Siege> = emptyList(),
     val archivedNationIds: List<Int> = emptyList(),
     val serverId: String? = state.serverId,
     val worldId: WorldId,
@@ -72,14 +84,8 @@ data class WorldSnapshot(
             val generalIds = generals.mapTo(hashSetOf()) { it.id }
             require(positions.statesByGeneralId.keys.all { it in generalIds }) { "Orphan general position" }
         }
-        // 위치 권위 spec §2.3 불변식 1·2(HWIHA): 살아 있는 장수마다 위치 행, 기준 城마다 省 바인딩.
-        if (state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-            val positions = requireNotNull(generalPositionSnapshot) { "HWIHA world has no general position snapshot" }
-            val missing = generals.filter { positions.stateFor(it.id) == null }.map { it.id }
-            require(missing.isEmpty()) { "HWIHA world: generals without a position row: $missing" }
-            val unbound = generals.filter { it.cityId !in cityLandProvinceById }.map { it.id to it.cityId }
-            require(unbound.isEmpty()) { "HWIHA world: reference cities without a province binding: $unbound" }
-        }
+        // Campaign completeness is checked by ActiveWorldMapValidator at the product load
+        // boundary. Directly constructed test snapshots can model partial storage cohorts.
     }
 }
 
@@ -105,6 +111,7 @@ interface LegacyDiplomacyIdentityOracle {
 class InMemoryTurnWorld(
     snapshot: WorldSnapshot,
     private val legacyDiplomacyIdentityOracle: LegacyDiplomacyIdentityOracle? = null,
+    private val lastCommittedEventOrdinal: (EventTurn) -> Int? = { null },
 ) {
     val worldId: WorldId = snapshot.worldId
     private val generals = LinkedHashMap<Int, TurnGeneral>()
@@ -144,9 +151,9 @@ class InMemoryTurnWorld(
     private val deletedBattlePlanIds = LinkedHashSet<Int>()
     private var maxBattlePlanId: Int = 0
     // HWIHA 포위(V61) — 縣治 城 id 키. 행은 지우지 않고 상태만 바꾼다(같은 縣의 새 포위는 덮어쓴다).
-    private val hwihaSieges = java.util.TreeMap<Int, HwihaSiege>()
-    private val dirtyHwihaSiegeIds = LinkedHashSet<Int>()
-    private val createdHwihaSiegeIds = LinkedHashSet<Int>()
+    private val sieges = java.util.TreeMap<Int, Siege>()
+    private val dirtySiegeIds = LinkedHashSet<Int>()
+    private val createdSiegeIds = LinkedHashSet<Int>()
 
     private val dirtyGeneralIds = LinkedHashSet<Int>()
     private val dirtyCityIds = LinkedHashSet<Int>()
@@ -169,6 +176,10 @@ class InMemoryTurnWorld(
     private val deletedNationIds = LinkedHashSet<Int>()
     private val deletedNationSnapshots = mutableListOf<DeletedNationSnapshot>()
     private val logs = mutableListOf<LogEntryDraft>()
+    private val gameEvents = mutableListOf<GameEvent>()
+    private val gameEventByKey = LinkedHashMap<EventKey, GameEvent>()
+    private var gameEventKeyTurn: EventTurn? = null
+    private var eventOrdinalAllocator: EventOrdinalAllocator? = null
 
     // 액추에이터/어드민 HTTP 스레드가 데몬 스레드의 `state = state.copy(...)`와 동시에 읽는다.
     // [TurnWorldState]는 불변 data class라 torn object는 없지만, @Volatile 없이는 가시성 보장이 없다.
@@ -200,10 +211,10 @@ class InMemoryTurnWorld(
         for (city in snapshot.cities) {
             if (snapshot.state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
                 city.id in administrativeCountyIds &&
-                opensamguk.logic.input.HwihaCityMilitaryState.META_KEY !in city.meta) {
-                val military = opensamguk.logic.input.HwihaCityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0))
+                opensamguk.logic.input.CityMilitaryState.META_KEY !in city.meta) {
+                val military = opensamguk.logic.input.CityMilitaryState.read(city.meta, city.defence.coerceAtLeast(0))
                 cities[city.id] = city.copy(meta = city.meta +
-                    (opensamguk.logic.input.HwihaCityMilitaryState.META_KEY to military.toMetaValue()))
+                    (opensamguk.logic.input.CityMilitaryState.META_KEY to military.toMetaValue()))
                 dirtyCityIds += city.id
             } else cities[city.id] = city
         }
@@ -222,7 +233,7 @@ class InMemoryTurnWorld(
         maxOperationId = maxOf(snapshot.operations.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxOperationId"] as? Number)?.toInt() ?: 0)
         maxOperationUnitId = maxOf(snapshot.operationUnits.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxOperationUnitId"] as? Number)?.toInt() ?: 0)
         for (p in snapshot.battlePlans) battlePlans[p.id] = p
-        for (siege in snapshot.hwihaSieges) hwihaSieges[siege.countyId] = siege
+        for (siege in snapshot.sieges) sieges[siege.countyId] = siege
         maxBattlePlanId = maxOf(snapshot.battlePlans.maxOfOrNull { it.id } ?: 0, (snapshot.state.meta["maxBattlePlanId"] as? Number)?.toInt() ?: 0)
         maxNationId = maxOf(
             snapshot.nations.maxOfOrNull { it.id } ?: 0,
@@ -430,22 +441,22 @@ class InMemoryTurnWorld(
         // 남의 부곡이 사라진 가신을 지휘하고 있었다면(다른 주인 — 이 절편엔 없지만 방어) commander 를 비운다.
         for (b in bugoks.values.filter { it.commanderRetainerId != null && it.commanderRetainerId in gone }) updateBugok(b.copy(commanderRetainerId = null))
         // V61 포위 행은 포위 장수 FK CASCADE 로 DB 에서 지워진다 — 메모리에서도 같이 내린다(pending 작업 0).
-        for (county in hwihaSieges.values.filter { it.besiegerGeneralId == generalId }.map { it.countyId }) {
-            hwihaSieges.remove(county); dirtyHwihaSiegeIds.remove(county); createdHwihaSiegeIds.remove(county)
+        for (county in sieges.values.filter { it.besiegerGeneralId == generalId }.map { it.countyId }) {
+            sieges.remove(county); dirtySiegeIds.remove(county); createdSiegeIds.remove(county)
         }
     }
 
     /** HWIHA 포위 — 縣 id 오름차순. */
-    fun listHwihaSieges(): List<HwihaSiege> = hwihaSieges.values.toList()
+    fun listSieges(): List<Siege> = sieges.values.toList()
 
-    fun getHwihaSiege(countyId: Int): HwihaSiege? = hwihaSieges[countyId]
+    fun getSiege(countyId: Int): Siege? = sieges[countyId]
 
     /** 없으면 만들고 있으면 덮어쓴다. 같은 틱에 만든 행은 CREATE 로 한 번만 나간다. */
-    fun putHwihaSiege(siege: HwihaSiege): HwihaSiege {
+    fun putSiege(siege: Siege): Siege {
         require(siege.countyId in cities) { "unknown siege county ${siege.countyId}" }
-        if (!hwihaSieges.containsKey(siege.countyId)) createdHwihaSiegeIds.add(siege.countyId)
-        hwihaSieges[siege.countyId] = siege
-        dirtyHwihaSiegeIds.add(siege.countyId)
+        if (!sieges.containsKey(siege.countyId)) createdSiegeIds.add(siege.countyId)
+        sieges[siege.countyId] = siege
+        dirtySiegeIds.add(siege.countyId)
         return siege
     }
 
@@ -610,6 +621,49 @@ class InMemoryTurnWorld(
             ),
         )
     }
+
+    /** Record a typed fact at the world's current turn; no rendered sentence enters this channel. */
+    fun recordEvent(
+        kind: EventKind,
+        audience: AudienceTarget,
+        eventKey: EventKey,
+        refs: Map<RefRole, EventRef> = emptyMap(),
+        facts: Map<FactRole, EventFact> = emptyMap(),
+    ): GameEvent {
+        val turn = EventTurn(state.currentYear, state.currentMonth, state.currentPhase)
+        if (gameEventKeyTurn != turn) {
+            gameEventByKey.clear()
+            gameEventKeyTurn = turn
+        }
+        val existing = gameEventByKey[eventKey]
+        if (existing != null) {
+            check(existing.kind == kind && existing.audience == audience && existing.refs == refs && existing.facts == facts) {
+                "game event key reused with changed payload"
+            }
+            // A flush may have drained the buffer before its transaction failed. Requeueing
+            // the same semantic event is safe after a successful flush too: the DB key is
+            // idempotent, and no new ordinal is consumed here.
+            if (existing !in gameEvents) gameEvents.add(existing)
+            return existing
+        }
+        val allocator = eventOrdinalAllocator ?: EventOrdinalAllocator(turn, lastCommittedEventOrdinal(turn)).also {
+            eventOrdinalAllocator = it
+        }
+        val event = GameEvent(
+            worldId = worldId.value,
+            kind = kind,
+            occurredAt = allocator.allocate(turn),
+            audience = audience,
+            publication = Publication(if (audience == AudienceTarget.Public) PublicationState.PUBLISHED else PublicationState.PRIVATE),
+            eventKey = eventKey,
+            refs = refs,
+            facts = facts,
+        )
+        gameEvents.add(event)
+        gameEventByKey[eventKey] = event
+        return event
+    }
+
 
     fun updateGeneral(next: TurnGeneral): TurnGeneral? {
         if (!generals.containsKey(next.id)) return null
@@ -977,6 +1031,7 @@ class InMemoryTurnWorld(
         val deletedNations = deletedNationIds.toList()
         val deletedSnapshots = deletedNationSnapshots.toList()
         val logsOut = logs.toList()
+        val gameEventsOut = gameEvents.toList()
         val retainersOut = dirtyRetainerIds.mapNotNull { retainers[it] }
         val createdRetainers = createdRetainerIds.mapNotNull { retainers[it] }
         val deletedRetainers = deletedRetainerIds.toList()
@@ -992,8 +1047,8 @@ class InMemoryTurnWorld(
         val battlePlansOut = dirtyBattlePlanIds.mapNotNull { battlePlans[it] }
         val createdBattlePlans = createdBattlePlanIds.mapNotNull { battlePlans[it] }
         val deletedBattlePlans = deletedBattlePlanIds.toList()
-        val hwihaSiegesOut = dirtyHwihaSiegeIds.mapNotNull { hwihaSieges[it] }
-        val createdHwihaSieges = createdHwihaSiegeIds.mapNotNull { hwihaSieges[it] }
+        val siegesOut = dirtySiegeIds.mapNotNull { sieges[it] }
+        val createdSieges = createdSiegeIds.mapNotNull { sieges[it] }
         // PR 비평 S17: 소비된 계획은 이번 flush 로 `resolved_*` 가 영속되고 부팅 시 다시 읽지 않으므로 메모리에서도 내린다(잔류 방지).
         for (id in battlePlans.values.filter { it.resolved }.map { it.id }) battlePlans.remove(id)
 
@@ -1012,6 +1067,7 @@ class InMemoryTurnWorld(
         deletedNationIds.clear()
         deletedNationSnapshots.clear()
         logs.clear()
+        gameEvents.clear()
         dirtyRetainerIds.clear()
         createdRetainerIds.clear()
         deletedRetainerIds.clear()
@@ -1027,8 +1083,8 @@ class InMemoryTurnWorld(
         dirtyBattlePlanIds.clear()
         createdBattlePlanIds.clear()
         deletedBattlePlanIds.clear()
-        dirtyHwihaSiegeIds.clear()
-        createdHwihaSiegeIds.clear()
+        dirtySiegeIds.clear()
+        createdSiegeIds.clear()
 
         return DirtyState(
             generals = generalsOut,
@@ -1041,6 +1097,7 @@ class InMemoryTurnWorld(
             deletedNationSnapshots = deletedSnapshots,
             diplomacy = diplomacyOut,
             logs = logsOut,
+            gameEvents = gameEventsOut,
             createdGenerals = createdGenerals,
             createdNations = createdNations,
             createdTroops = createdTroops,
@@ -1061,8 +1118,8 @@ class InMemoryTurnWorld(
             battlePlans = battlePlansOut,
             createdBattlePlans = createdBattlePlans,
             deletedBattlePlans = deletedBattlePlans,
-            hwihaSieges = hwihaSiegesOut,
-            createdHwihaSieges = createdHwihaSieges,
+            sieges = siegesOut,
+            createdSieges = createdSieges,
         )
     }
 }

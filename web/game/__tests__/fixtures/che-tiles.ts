@@ -1,6 +1,6 @@
-import type { HanTiles, IsoCityOverlay } from '@opensamguk/ui';
+import type { WorldTiles, IsoCityOverlay } from '@opensamguk/ui';
 
-export const CHE_TILES_FIXTURE: HanTiles = {
+export const CHE_TILES_FIXTURE: WorldTiles = {
   _meta: {
     cols: 4,
     rows: 3,

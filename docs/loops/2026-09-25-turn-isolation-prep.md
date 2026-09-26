@@ -1,5 +1,12 @@
 # 턴 루프 격리 후속 조사
 
+## 2026-09-26 PR #980 리뷰 반영
+
+- 최신 `origin/main`을 PR 브랜치에 병합해 은퇴 사전검사를 `RetireRules`/`RetireRulesTest`의 중립 이름으로 옮겼다. 아래의 `HwihaRetireRules` 경로와 재기반 대기 기록은 당시 상태를 설명한다.
+- 새 사전 거절 사유 `RETAINER_NAME_CONFLICT`를 입력 원장에 등록해 규칙과 실패 사유 계약을 맞췄다.
+- `ChangeRecorder` 체크포인트는 가변 컬렉션 채널 각각의 실제 대상 참조와 `spatialWorldId`를 캡처한다. 리플렉션 가드는 현재 필드 집합과 캡처 집합이 일치하는지 검사한다. 컬렉션 캡처 한 줄을 제거하는 적색 프로브로 가드의 실패를 확인한다.
+- 러너 배선, 월드 상태 복원, 외부 ID 할당자와 `kvWriteObserver`의 원자성 경계는 여전히 후속 작업이다.
+
 ## 2026-09-26 Claude 인계 상태
 
 - 사용자 최종 지시에 따라 이 worktree의 진행 중 변경만 커밋·푸시해 **draft PR로 보존**한다. 아래의 기능 PR 동결은 구현·ready 전환·main 병합 보류를 뜻하며, 이번 보존용 draft PR은 예외다. 새 기능·테스트·worktree·검증은 시작하지 않는다.

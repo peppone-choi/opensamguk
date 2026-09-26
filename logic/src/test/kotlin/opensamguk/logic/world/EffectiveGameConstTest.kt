@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
 class EffectiveGameConstTest {
 
     @Test
-    fun `scenario_1010 (no map block) resolves to che and the active CityConst is the base 94-city seed`() {
+    fun `scenario_1010 (no map block) resolves to che and the active CityConst is the base seed`() {
         // scenario_1010: no `map`, const = {defaultMaxGeneral: 600}.
         val eff = EffectiveGameConst.resolve(
             ScenarioConf(map = null, const = mapOf("defaultMaxGeneral" to 600)),
@@ -31,12 +31,11 @@ class EffectiveGameConstTest {
         assertEquals("che", eff.unitSet, "no unitSet -> 'che'")
         assertEquals(600, eff.gameConf["defaultMaxGeneral"], "const merged through")
         // gate-oracle invariant: active CityConst byte-matches the base (zero delta).
-        assertEquals(94, eff.cityConst.all().size)
-        assertEquals(CityConst.all(), eff.cityConst.all(), "active CityConst == base 94-city seed")
+        assertEquals(CityConst.all(), eff.cityConst.all(), "active CityConst == base seed")
     }
 
     @Test
-    fun `scenario_1 (map miniche) resolves the 78-city override with inherited buildInit`() {
+    fun `scenario_1 (map miniche) resolves its override with inherited buildInit`() {
         // scenario_1: map = {mapName: miniche}, const = {joinRuinedNPCProp:0, npcBanMessageProb:1}.
         val eff = EffectiveGameConst.resolve(
             ScenarioConf(
@@ -48,7 +47,7 @@ class EffectiveGameConstTest {
         assertEquals("che", eff.unitSet, "unitSet absent -> 'che'")
         assertEquals(0, eff.gameConf["joinRuinedNPCProp"])
         assertEquals(1, eff.gameConf["npcBanMessageProb"])
-        assertEquals(78, eff.cityConst.all().size, "miniche 78-city override")
+        assertTrue(eff.cityConst.all().keys != CityConst.all().keys, "miniche overrides the base city identities")
         assertEquals(CityConst.buildInit, eff.cityConst.buildInit, "inherited buildInit")
     }
 

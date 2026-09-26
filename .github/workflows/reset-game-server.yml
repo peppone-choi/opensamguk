@@ -85,7 +85,7 @@ jobs:
           TURN_TERM_INPUT="$INPUT_TURN_TERM"
           EXPECTED_CITY_COUNT="$INPUT_EXPECTED_CITY_COUNT"
           EXPECTED_FIRST_CITY="$INPUT_EXPECTED_FIRST_CITY"
-          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop vote world-log'
+          readonly RESERVED_PUBLIC_SERVER_IDS='all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board chief-center city coming-soon diplomacy generals global-diplomacy history inherit join mailbox main map my my-boss my-cities my-generals my-nation nation nation-betting nation-finance npc-control rankings register select-pool simulator tournament tournament-admin troop v2-lab vote court hand orders posts retinue siege supply war-room yuedan world-log'
 
           is_reserved_public_server_id() {
             local server_id="$1"

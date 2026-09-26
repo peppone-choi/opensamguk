@@ -92,15 +92,18 @@ class CommandPrecheckServiceTest {
         `when`(generals.findById(10)).thenReturn(Optional.of(general()))
         `when`(cities.findById(5)).thenReturn(Optional.of(city().apply { worldId = 1 }))
         `when`(pins.readPins(1)).thenReturn(emptyList())
-        val bundles = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val bundles = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
         val resolver = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins, bundles)
         val factory = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, worldArtifacts = resolver)
-        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+        for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
+            val topology = bundles.artifacts(variant).projection.topology
+            `when`(pins.readPins(1)).thenReturn(if (variant == opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
+                listOf(opensamguk.infra.seed.WorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             `when`(cities.findAll()).thenReturn(bundles.artifacts(variant).cityConst.all().keys.map {
                 CityReadEntity(id = it, worldId = 1)
             })
             val result = kotlin.test.assertNotNull(factory.build(10, loadAllCities = false))
-            assertEquals(variant, result.hanWorldVariant)
+            assertEquals(variant, result.worldMapVariant)
         }
         `when`(cities.findAll()).thenReturn(listOf(CityReadEntity(id = 5, worldId = 1)))
         kotlin.test.assertFailsWith<IllegalArgumentException> { factory.build(10, loadAllCities = false) }

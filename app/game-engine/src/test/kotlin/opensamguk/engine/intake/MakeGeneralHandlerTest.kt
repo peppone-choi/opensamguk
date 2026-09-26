@@ -38,14 +38,14 @@ class MakeGeneralHandlerTest {
         assertEquals(legacy.stats, created.stats)
         assertEquals(legacy.turnTime, created.turnTime)
         assertEquals(legacy.role, created.role)
-        assertEquals(legacy.meta, created.meta - setOf("hwihaLord", "hwihaPersonPolicy"))
-        assertEquals(false, created.meta["hwihaLord"])
-        val policy = opensamguk.logic.input.HwihaPersonPolicyState.read(created.meta)!!
-        assertEquals(opensamguk.logic.input.HwihaPersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
+        assertEquals(legacy.meta, created.meta - setOf("lord", "personPolicy"))
+        assertEquals(false, created.meta["lord"])
+        val policy = opensamguk.logic.input.PersonPolicyState.read(created.meta)!!
+        assertEquals(opensamguk.logic.input.PersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
         val stats = created.stats
         val expectedCost = ((listOf(stats.leadership, stats.strength, stats.intelligence, stats.politics, stats.charm).sumOf { it.toLong() } + 49) / 50).toInt()
-        val budget = assertIs<opensamguk.engine.hwiha.HwihaEnlistmentPolicyResult.Ready>(
-            opensamguk.engine.hwiha.HwihaEnlistmentPolicy(hwiha).current(opensamguk.logic.input.EnlistmentRequest(b.generalId, opensamguk.logic.input.EnlistmentMode.RANDOM)))
+        val budget = assertIs<opensamguk.engine.campaign.EnlistmentPolicyResult.Ready>(
+            opensamguk.engine.campaign.EnlistmentPolicyReader(hwiha).current(opensamguk.logic.input.EnlistmentRequest(b.generalId, opensamguk.logic.input.EnlistmentMode.RANDOM)))
         assertEquals(expectedCost, budget.policy.actorCardCost)
         assertTrue(DatabaseHooks.toFlushPayload(hwiha, recorder, hwiha.consumeDirtyState()).createdGenerals.isNotEmpty())
     }

@@ -16,7 +16,7 @@ import opensamguk.logic.actions.intake.TroopActions
 
 /**
  * 부대 (troop) intake handler — faithful port of the `sammo/API/Troop/` `launch()` bodies (F4 Wave
- * C2 slice B). Per-run (world + recorder), mirroring [NationFinanceSetterHandler] / [TournamentEnrollHandler].
+ * C2 slice B). Per-run (world + recorder), mirroring [NationFinanceSetterHandler].
  *
  * The pure guard chains live in [TroopActions]; this handler owns the world-state effects PHP performs
  * via `DB::db()` — the troopExists SELECT, the UPDATE affectedRows guard, and the troop-table lifecycle.

@@ -30,12 +30,9 @@ import opensamguk.engine.intake.PersonnelHandler
 import opensamguk.engine.intake.ProfileIconSyncHandler
 import opensamguk.engine.intake.RaiseInvaderMessageHandler
 import opensamguk.engine.intake.SelectPoolHandler
-import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
 import opensamguk.engine.intake.VotePollState
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
@@ -57,8 +54,8 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.world.RaiseInvaderSpec
 import java.time.Clock
 import java.time.Instant
@@ -136,7 +133,7 @@ class TurnDaemonCommandDispatcher(
     v2CityLedger: V2CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
-    hwihaCourtHandler: opensamguk.engine.hwiha.HwihaCourtHandler? = null,
+    hwihaCourtHandler: opensamguk.engine.campaign.CourtHandler? = null,
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
@@ -222,30 +219,6 @@ class TurnDaemonCommandDispatcher(
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
     private val npcPolicy = NpcPolicyHandler(world, recorder)
-    private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
-    private val tournamentBettingPort =
-        if (gameKvRepository != null && bettingRepository != null && inheritanceRepository != null) {
-            ProductionTournamentBettingPort(world, recorder, gameKvRepository, bettingRepository, inheritanceRepository)
-        } else {
-            null
-        }
-    private val lastTournamentBettingIdReader: () -> Int = gameKvRepository?.let { repo ->
-        {
-            repo.findByTable("game_env").firstNotNullOfOrNull { row ->
-                if (row.namespace == "game_env" && row.key == "last_tournament_betting_id") {
-                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
-                } else {
-                    null
-                }
-            } ?: 0
-        }
-    } ?: { 0 }
-    private val tournamentAdmin = TournamentAdminHandler(
-        world,
-        recorder,
-        lastBettingIdReader = lastTournamentBettingIdReader,
-        bettingPort = tournamentBettingPort,
-    )
     private val inheritReset = InheritResetHandler(
         world,
         recorder,
@@ -358,7 +331,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
-    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder)
+    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.campaign.CourtHandler(world, recorder)
 
     // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
     private val profileIconSync = ProfileIconSyncHandler(world, recorder)
@@ -385,7 +358,7 @@ class TurnDaemonCommandDispatcher(
         sentAt: Instant,
         executionAt: Instant,
     ): TurnDaemonCommandResult? = when (command) {
-        is TurnDaemonCommand.HwihaCourtInput -> hwihaCourt.handle(command)
+        is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
@@ -399,9 +372,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.SetBlockWar -> nationFinance.handleSetBlockWar(command)
         is TurnDaemonCommand.SetBlockScout -> nationFinance.handleSetBlockScout(command)
         is TurnDaemonCommand.NpcPolicyUpdate -> npcPolicy.handle(command)
-        is TurnDaemonCommand.TournamentEnroll -> tournamentEnroll.handle(command)
-        is TurnDaemonCommand.TournamentStart -> tournamentAdmin.handleStart(command)
-        is TurnDaemonCommand.TournamentReset -> tournamentAdmin.handleReset(command)
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
@@ -508,7 +478,7 @@ class TurnDaemonCommandDispatcher(
         envelopes: List<TurnDaemonCommandEnvelope>,
     ): List<Pair<String, TurnDaemonCommandResult>> =
         envelopes.mapNotNull { env ->
-            val court = env.command as? TurnDaemonCommand.HwihaCourtInput
+            val court = env.command as? TurnDaemonCommand.ImmediateInput
             if (court != null && court.requestId != env.requestId) return@mapNotNull env.requestId to CommandLifecycleResult(
                 type = "executionRejected", ok = false, commandKind = "COURT_DECISION", actionCode = court.inputId,
                 generalId = court.generalId, code = "REQUEST_ID_MISMATCH", reason = "입력 식별자가 일치하지 않습니다.")
@@ -534,15 +504,15 @@ private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =
 
 private data class ExpirationFailure(val code: String, val reason: String)
 
-private fun v2PrecheckFailure(command: CityGarrisonRecruit): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityGarrisonRecruit): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
         mapOf("cityId" to command.cityId, "amount" to command.amount),
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
-private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.cityTransportSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityTransport): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.cityTransportSchema.canonicalId,
         buildMap {
             put("fromCityId", command.fromCityId)
             put("toCityId", command.toCityId)
@@ -551,7 +521,7 @@ private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blo
             put("garrison", command.garrison)
             command.routeRevision?.let { put("routeRevision", it) }
         },
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
 private fun expirationFailure(expiresAt: String?, executionAt: Instant): ExpirationFailure? {
     if (expiresAt == null) return null

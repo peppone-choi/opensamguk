@@ -166,7 +166,7 @@ class NonPlayableRegionsTest(unittest.TestCase):
         self.assertEqual("OUT_OF_SCOPE", document["_meta"]["terrainLegend"]["9"])
         # 2026-09-21 북동 확장 프레임을 걷어낸 뒤 실측. 확장 전(5b130608^) 문서와 정확히 같은 수다
         # — 크롭이 원래 프레임을 한 칸도 바꾸지 않았다는 독립 대조다(SEA 174,997 도 동일).
-        self.assertEqual(110367, int(excluded.sum()))
+        self.assertEqual(110367 * 16, int(excluded.sum()))
         self.assertTrue(np.all(owner[excluded] == -1))
         self.assertTrue(np.all(parent_owner[excluded] == -1))
         self.assertFalse(any(
@@ -179,7 +179,7 @@ class NonPlayableRegionsTest(unittest.TestCase):
             index for index, row in enumerate(document["parentRegions"])
             if row["id"] == "PARENT-0149"
         )
-        self.assertEqual(155, int((parent_owner == ryukyu_parent).sum()))
+        self.assertEqual(155 * 16, int((parent_owner == ryukyu_parent).sum()))
         vietnam_parents = {
             index for index, row in enumerate(document["parentRegions"])
             if row["id"] in {"PARENT-0102", "PARENT-0103", "PARENT-0104"}
@@ -198,7 +198,7 @@ class NonPlayableRegionsTest(unittest.TestCase):
                         and vietnam[next_row, next_col] and neighbor not in seen):
                     seen.add(neighbor)
                     pending.append(neighbor)
-        self.assertLessEqual(int(vietnam.sum()) - len(seen), 10)
+        self.assertLessEqual(int(vietnam.sum()) - len(seen), 10 * 16)
 
 
 if __name__ == "__main__":

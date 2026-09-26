@@ -25,7 +25,7 @@ class GetConstControllerTest {
         val cities = mock(opensamguk.gameapi.read.CityReadRepository::class.java)
         val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
         return GetConstController(opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cities, pins,
-            opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))))
+            opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))))
     }
 
     @Test
@@ -35,10 +35,13 @@ class GetConstControllerTest {
         val cities = mock(opensamguk.gameapi.read.CityReadRepository::class.java)
         val pins = mock(opensamguk.gameapi.read.WorldArtifactIdentityReadRepository::class.java)
         `when`(pins.readPins(7)).thenReturn(emptyList())
-        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
         val api = GetConstController(opensamguk.gameapi.read.ActiveWorldArtifactResolver(worldRepo, cities, pins, artifacts))
-        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+        for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
             val selected = artifacts.artifacts(variant)
+            val topology = selected.projection.topology
+            `when`(pins.readPins(7)).thenReturn(if (variant == opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
+                listOf(opensamguk.infra.seed.WorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             `when`(cities.findAll()).thenReturn(selected.cityConst.all().keys.map { opensamguk.gameapi.read.CityReadEntity(id = it, worldId = 7) })
             val json = selected.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8)
             val details = MapJson.loadCityDetails(json)

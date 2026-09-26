@@ -35,6 +35,10 @@ tasks.named<Jar>("jar") {
 
 tasks.test {
     useJUnitPlatform()
+    // The fourfold terrain release is loaded beside earlier pinned archives
+    // in the full seed test suite; the Gradle default 512 MiB worker heap is
+    // insufficient even though each archive passes in isolation.
+    maxHeapSize = "1g"
     // Local dev (macOS Docker Desktop 29.x): the bundled docker-java client defaults to API
     // v1.32 while the daemon requires >= v1.40. docker-java reads the client version from the
     // `api.version` SYSTEM PROPERTY (not the DOCKER_API_VERSION env var). Pin it, point at the
@@ -48,5 +52,5 @@ tasks.test {
 
 // One checked-in HWIHA rules source, packaged without runtime working-directory fallback.
 tasks.processResources {
-    from(rootProject.file("data/battle/hwiha-unit-profiles-v1.json")) { into("battle") }
+    from(rootProject.file("data/battle/unit-profiles-v1.json")) { into("battle") }
 }

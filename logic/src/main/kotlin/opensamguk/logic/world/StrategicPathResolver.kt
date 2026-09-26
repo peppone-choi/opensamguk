@@ -323,7 +323,7 @@ object StrategicPathResolver {
             if (!options.ignoreBarriers && edge.mode == TraversalMode.LAND && edge.crossesBarrier(barrierKeys)) {
                 return false
             }
-            val live = state.edgeStates[edge.id] ?: StrategicEdgeState()
+            val live = state.edgeStates[edge.id] ?: StrategicEdgeState(active = edge.initiallyOpen)
             if (!live.active) return false
             val seasonClosed = edge.seasonalAvailability == SeasonalAvailability.CLOSED ||
                 (edge.seasonalAvailability == SeasonalAvailability.SEASONAL && !live.seasonOpen)

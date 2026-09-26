@@ -1,7 +1,9 @@
 package opensamguk.engine.turn
 
+import opensamguk.logic.domestic.FieldInput
+
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
-import opensamguk.engine.hwiha.HwihaPersonalTurn
+import opensamguk.engine.campaign.PersonalTurn
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
@@ -76,7 +78,7 @@ class TurnDaemonLifecycle(
     private val observeGeneralTurnStart: (generalId: Int) -> Unit = { },
     private val observeHandledTurn: (ReservedTurnHandler.HandledTurn) -> Unit = { },
     /** HWIHA movement stage, after political input and before the one-phase stamp/atomic flush. */
-    private val hwihaMovementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.hwiha.HwihaTurnOutcome?) -> Unit = { _, _, _ -> },
+    private val hwihaMovementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.campaign.TurnOutcome?) -> Unit = { _, _, _ -> },
     /** HWIHA NPC input chooser (출병) for a general with no reservation; identity by default. */
     private val hwihaNpcInputOf: (generalId: Int, reserved: ReservedTurn) -> ReservedTurn = { _, reserved -> reserved },
     /**
@@ -115,7 +117,7 @@ class TurnDaemonLifecycle(
 
     private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =
         world.ruleProfile != RuleProfile.HWIHA ||
-            (general.meta["hwihaRetired"] != true && HwihaPersonalTurn.eligible(general.meta, world.getState()))
+            (general.meta["retired"] != true && PersonalTurn.eligible(general.meta, world.getState()))
 
     class GeneralDrainCohort internal constructor(
         internal val identityTokens: Map<Int, Long>,
@@ -183,20 +185,20 @@ class TurnDaemonLifecycle(
                 // New inputs never enter legacy healing, blocking, AI, nation actions or rebirth.
                 // Even an undelivered reservation receives a terminal result and consumes one slot.
                 require(state.tickSeconds > 0) { "positive personal-turn interval required" }
-                opensamguk.engine.hwiha.HwihaStratagemDraw(world, handler.recorder).onTurn(g.id)
+                opensamguk.engine.campaign.StratagemDraw(world, handler.recorder).onTurn(g.id)
                 // §5.1 1단계 재검사: 배치·방침은 해당 카드의 다음 턴부터 효력(대기 → 현행).
                 handler.domesticTurn.beforeMovement(g.id)
                 handler.courtHandler.onIssuerTurn(g.id)
                 val reserved = hwihaNpcInputOf(g.id,
-                    opensamguk.engine.hwiha.HwihaNpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
+                    opensamguk.engine.campaign.NpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
                 // §5.1 현장 행동은 이동·조우 단계가 지난 뒤 현재 위치에서 실행한다.
                 val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
-                    (reserved.actionCode in opensamguk.logic.input.HwihaFieldInput.INPUT_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaMilitaryInput.CITY_INPUT_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaPersonalInput.FIELD_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaPeopleInput.INPUT_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaTransferInput.INPUT_IDS ||
-                        reserved.actionCode in opensamguk.logic.input.HwihaLegacyDirectInput.INPUT_IDS)
+                    (reserved.actionCode in opensamguk.logic.domestic.FieldInput.INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.MilitaryInput.CITY_INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.PersonalInput.FIELD_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.PeopleInput.INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.TransferInput.INPUT_IDS ||
+                        reserved.actionCode in opensamguk.logic.input.DirectInput.INPUT_IDS)
                 if (fieldAction) hwihaMovementOf(g.id, reserved, null)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
@@ -206,7 +208,7 @@ class TurnDaemonLifecycle(
                 pullGeneralTurnOf(g.id)
                 val beforeAdvance = checkNotNull(world.getGeneralById(g.id))
                 val advanced = beforeAdvance.copy(turnTime = g.turnTime.plusSeconds(state.tickSeconds.toLong()),
-                    meta = if (world.ruleProfile == RuleProfile.HWIHA) HwihaPersonalTurn.after(beforeAdvance.meta, state)
+                    meta = if (world.ruleProfile == RuleProfile.HWIHA) PersonalTurn.after(beforeAdvance.meta, state)
                         else beforeAdvance.meta)
                 handler.recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(beforeAdvance), PerTurnOverlay.toLogicGeneral(advanced))
                 world.applyGeneralDirtyFree(advanced)

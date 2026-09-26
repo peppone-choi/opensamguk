@@ -1,0 +1,16 @@
+{
+  "hit": "CANVAS",
+  "observed": {
+    "glyphs": "0",
+    "pixels": "1445",
+    "sprites": "2"
+  },
+  "wheelChanges": true,
+  "maxZoomChanges": true,
+  "maximumScale": 16,
+  "maximumCityPixels": 0,
+  "maximumCitySprites": 1447,
+  "dragChanges": true,
+  "errors": [],
+  "qaError": null
+}

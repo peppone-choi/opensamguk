@@ -45,7 +45,7 @@ export { Tile, type TileProps, type TileState } from './Tile';
 
 export {
   CITY_MARKER_SPECS,
-  HanMapCanvas,
+  WorldMapCanvas,
   projectBattlefieldTarget,
   type BattlefieldMapTarget,
   type BattlefieldMapProjection,
@@ -67,7 +67,7 @@ export {
   labelZoomFor,
   mapCityToTile,
   provinceLayerRuntimeCities,
-  overviewCityVisualBox,
+  cityPixelVisualBox,
   provinceAtScreenPoint,
   sceneGolden,
   screenBoxInsideProvince,
@@ -78,10 +78,10 @@ export {
   TIER2_LABEL_ZOOM,
   TIER2_MARKER_ZOOM,
   type AdjEdge,
-  type HanMapCanvasProps,
+  type WorldMapCanvasProps,
   type CommanderyVisibility,
   type InitialFocusProfile,
-  type HanTiles,
+  type WorldTiles,
   type IsoCityOverlay,
   type CityMarkerZoom,
   type IsoCountyHover,
@@ -92,7 +92,7 @@ export {
   type IsoSceneOptions,
   type IsoSourceSize,
   type Jun,
-} from './HanMapCanvas';
+} from './WorldMapCanvas';
 export {
   MAX_CSS_SCALE,
   MAX_SCALE,
@@ -200,7 +200,7 @@ export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
   buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,
   type WorldMapPreview, type WorldMapOptions, type WorldMapState,
-  type HwihaCommanderyCell, type HwihaLegendEntry,
+  type CommanderyCell, type LegendEntry,
 } from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';

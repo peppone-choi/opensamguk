@@ -270,14 +270,18 @@ class ChangeRecorder(
      * rewound here: allocated ids may have gaps after a failed unit, and observer side effects need
      * their own commit boundary before the runner can use this for exception isolation.
      */
+    internal class Capture(val target: Any, val restore: () -> Unit)
+
     class Checkpoint internal constructor(
         private val owner: ChangeRecorder,
-        private val restores: List<() -> Unit>,
+        private val restores: List<Capture>,
     ) {
+        internal fun capturedTargets(): List<Any> = restores.map { it.target }
+
         internal fun restoreInto(recorder: ChangeRecorder) {
             require(recorder === owner) { "recorder checkpoint belongs to a different recorder" }
             recorder.gateMutation("restore checkpoint")
-            restores.forEach { it() }
+            restores.forEach { it.restore() }
         }
     }
 
@@ -309,7 +313,7 @@ class ChangeRecorder(
             captureMap(waterControlWrites),
             captureMap(provinceControlWrites),
             captureMap(generalPositionWrites),
-            { spatialWorldId = savedSpatialWorldId },
+            Capture("spatialWorldId") { spatialWorldId = savedSpatialWorldId },
             captureList(profileIconUpdates) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(boardPostInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(boardCommentInserts) { it.copy(columns = copyStringMap(it.columns)) },
@@ -345,26 +349,26 @@ class ChangeRecorder(
 
     fun restore(checkpoint: Checkpoint) = checkpoint.restoreInto(this)
 
-    private fun <K, V> captureMap(target: MutableMap<K, V>, copy: (V) -> V = { it }): () -> Unit {
+    private fun <K, V> captureMap(target: MutableMap<K, V>, copy: (V) -> V = { it }): Capture {
         val saved = LinkedHashMap<K, V>()
         target.forEach { (key, value) -> saved[key] = copy(value) }
-        return {
+        return Capture(target) {
             target.clear()
             saved.forEach { (key, value) -> target[key] = copy(value) }
         }
     }
 
-    private fun <T> captureList(target: MutableList<T>, copy: (T) -> T = { it }): () -> Unit {
+    private fun <T> captureList(target: MutableList<T>, copy: (T) -> T = { it }): Capture {
         val saved = target.map(copy)
-        return {
+        return Capture(target) {
             target.clear()
             saved.forEach { target.add(copy(it)) }
         }
     }
 
-    private fun <T> captureSet(target: MutableSet<T>): () -> Unit {
+    private fun <T> captureSet(target: MutableSet<T>): Capture {
         val saved = LinkedHashSet(target)
-        return {
+        return Capture(target) {
             target.clear()
             target.addAll(saved)
         }
@@ -1313,7 +1317,7 @@ class ChangeRecorder(
         requireSpatialWorld(world.worldId)
         if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             require(initialTurns.size <= 12 && initialTurns.all {
-                it.actionCode == "action.enlist" && opensamguk.logic.input.HwihaEnlistmentInput.parse(general.id, it.argJson) != null
+                it.actionCode == "action.enlist" && opensamguk.logic.input.EnlistmentInput.parse(general.id, it.argJson) != null
             }) { "HWIHA initial reservations must contain at most twelve supported inputs" }
         } else require(initialTurns.isEmpty() || initialTurns.size == 30) {
             "created general initial turn ring must be empty (canonical rest) or exactly 30 slots"

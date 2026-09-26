@@ -15,15 +15,15 @@ sealed class TurnDaemonCommand {
     abstract val type: String
 
     @Serializable
-    @SerialName("hwihaCourtInput")
-    data class HwihaCourtInput(
+    @SerialName("immediateInput")
+    data class ImmediateInput(
         val requestId: String,
         val generalId: Int,
         val ownerUserId: Int,
         val inputId: String,
         val argJson: String,
     ) : TurnDaemonCommand() {
-        override val type: String get() = "hwihaCourtInput"
+        override val type: String get() = "immediateInput"
     }
 
     @Serializable
@@ -810,39 +810,6 @@ sealed class TurnDaemonCommand {
         val data: kotlinx.serialization.json.JsonElement,
     ) : TurnDaemonCommand() {
         override val type: String get() = "npcPolicyUpdate"
-    }
-
-    /**
-     * 토너먼트 참가 (enroll) — `j_set_my_setting.php` 의 `tnmt` 토글. Writes the acting general's
-     * `tnmt` (0/1) into the general row. `value` clamps to 0..1 (PHP: `< 0 || > 1 → 1`).
-     */
-    @Serializable
-    @SerialName("tournamentEnroll")
-    data class TournamentEnroll(
-        val requestId: String? = null,
-        val generalId: Int,
-        val value: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentEnroll"
-    }
-
-    @Serializable
-    @SerialName("tournamentStart")
-    data class TournamentStart(
-        val requestId: String? = null,
-        val generalId: Int,
-        val tournamentType: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentStart"
-    }
-
-    @Serializable
-    @SerialName("tournamentReset")
-    data class TournamentReset(
-        val requestId: String? = null,
-        val generalId: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReset"
     }
 
     /**

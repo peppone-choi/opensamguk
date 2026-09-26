@@ -1,5 +1,8 @@
 package opensamguk.engine.intake
 
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import opensamguk.common.constants.GameConst
 import opensamguk.common.josa.JosaUtil
 import opensamguk.common.rng.LiteHashDrbg
@@ -10,23 +13,20 @@ import opensamguk.common.wire.MakeGeneralOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.turn.ChangeRecorder
+import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.GeneralRole
 import opensamguk.engine.turn.GeneralStats
-import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
-import opensamguk.logic.input.HwihaLordStatus
-import opensamguk.logic.input.HwihaPersonPolicyState
-import opensamguk.logic.input.HwihaRenownRules
+import opensamguk.logic.input.LordStatus
+import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.renown.RenownRules
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.MakeGeneral
 import opensamguk.logic.world.SpecialityHelper
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 
 /**
  * B1 장수생성(재야→일반/Join) 데몬 핸들러.
@@ -184,11 +184,11 @@ class MakeGeneralHandler(
         )
         if (state.ruleProfile == RuleProfile.HWIHA) {
             // The actual creation draw is the source, not a historical officer or default stats.
-            HwihaRenownRules.personCost(drawResult.leadership, drawResult.strength, drawResult.intel,
+            RenownRules.personCost(drawResult.leadership, drawResult.strength, drawResult.intel,
                 drawResult.politics, drawResult.charm)
-            generalMeta[HwihaLordStatus.META_KEY] = false
-            generalMeta[HwihaPersonPolicyState.META_KEY] = HwihaPersonPolicyState(
-                HwihaRenownRules.INITIAL_CAPACITY, false, "opensamguk:created-general", "v1", generalId,
+            generalMeta[LordStatus.META_KEY] = false
+            generalMeta[PersonPolicyState.META_KEY] = PersonPolicyState(
+                RenownRules.INITIAL_CAPACITY, false, "opensamguk:created-general", "v1", generalId,
             ).toMetaValue()
         }
         command.ownerName?.takeIf { it.isNotBlank() }?.let { generalMeta["owner_name"] = it }

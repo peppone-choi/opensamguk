@@ -4,8 +4,31 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import java.lang.reflect.Modifier
 
 class ChangeRecorderCheckpointTest {
+    @Test
+    fun `checkpoint covers every recorder mutable channel exactly once`() {
+        val recorder = ChangeRecorder()
+        val targets = recorder.checkpoint().capturedTargets()
+        val fields = ChangeRecorder::class.java.declaredFields.filterNot { Modifier.isStatic(it.modifiers) }
+        val channels = fields.mapNotNull { field ->
+            field.isAccessible = true
+            val value = field.get(recorder)
+            if (value is Map<*, *> || value is Collection<*>) field.name to value else null
+        }
+        val scalarFields = fields.filter {
+            !Modifier.isFinal(it.modifiers) && it.name != "generationSession"
+        }.map { it.name }.toSet()
+
+        assertEquals(channels.size, targets.count { it is Map<*, *> || it is Collection<*> })
+        channels.forEach { (name, value) ->
+            assertEquals(1, targets.count { it === value }, "checkpoint channel: $name")
+        }
+        assertEquals(scalarFields, targets.filterIsInstance<String>().toSet())
+        assertEquals(channels.size + scalarFields.size, targets.size)
+    }
+
     @Test
     fun `restore removes failed unit deltas but keeps earlier ordered channels`() {
         val recorder = ChangeRecorder()
