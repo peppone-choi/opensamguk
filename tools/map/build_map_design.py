@@ -52,7 +52,7 @@ NE10M = Path(os.environ.get("MAP_DESIGN_NE10M", ROOT / "data/natural-earth/ne_10
 # 城 성내 한 변(칸). 장현 1 · 영현 3 · 소 5 · 중 7 · 대 9 · 특 11 · 경 13, 수·진·관·이 1 (2026-09-26 사용자 안 B)
 SPAN = {9: 13, 8: 11, 7: 9, 6: 7, 5: 5, 10: 3}
 TERRAIN_SEA, TERRAIN_PLAIN, TERRAIN_MOUNTAIN, TERRAIN_RIVER, TERRAIN_LAKE = 0, 1, 2, 3, 4
-TERRAIN_PLATEAU, TERRAIN_BASIN, TERRAIN_HILL, TERRAIN_OUT = 6, 7, 8, 9
+TERRAIN_DESERT, TERRAIN_PLATEAU, TERRAIN_BASIN, TERRAIN_HILL, TERRAIN_OUT = 5, 6, 7, 8, 9
 MOVE_LIMIT = 12
 FERRY_LIMIT = 6
 
@@ -590,7 +590,21 @@ RELIEF_PARAMS = dict(baseRadius=6, dropBelow=150, addAbove=500, addPlateauAbove=
                      minMass=200, minTier=80, roadValleyMax=3, roadValleyScale=8, passNarrow=10)
 # 고원 경계: 지형 분류의 고원(NE 폴리곤, 곧은 변)을 경계 띠 안에서만 다시 긋는다. 턱(고원 안 평균 − 저지 평균)이 step m
 # 이상이면 그 중간 높이가 경계, 턱이 없으면 경계가 임의이므로 곧은 선을 결정적 잡음으로 흔든다. 산·물은 건드리지 않는다.
-PLATEAU_PARAMS = dict(meanRadius=40, band=24, step=150, wobbleScale=12, wobbleAmp=0.35, smoothRadius=3, minMass=300)
+PLATEAU_PARAMS = dict(meanRadius=40, bandMin=12, bandMax=36, bandScale=30, step=150, wobbleBox=20, wobbleScale=40, wobbleAmp=0.6,
+                      wobbleScale2=12, wobbleAmp2=0.3, smoothRadius=3, minMass=300)
+DESERT_PARAMS = dict(PLATEAU_PARAMS, gapWidth=8, gapMinMass=80, riverMargin=2, riverSliver=3000)        # 사막 경계도 같은 방식(사용자 2026-09-27). 사막·고원 사이 8칸 미만 틈과 80칸 미만 조각은 메운다
+LOWLAND = (1, 7, 8)          # 저지로 치는 지형 분류(평지·분지·구릉)
+
+
+def effective_terrain(inp):
+    """옛 강 분류(RIVER, NE 50m 강을 4×4로 새긴 줄)는 설계 강(rivers-v1)으로 대체됐으니 땅이다.
+    칸마다 둘레(반경 6)에서 가장 많은 땅 분류로 흡수한다 — 저지로 치면 고원·사막이 옛 강 줄기를 따라 깎인다."""
+    if "terrain_eff" not in inp:
+        T = inp["terrain"]; land = (1, 2, 5, 6, 7, 8)
+        cnt = np.stack([_box((T == c).astype(np.float64), 6) for c in land])
+        pick = np.array(land, np.uint8)[np.argmax(cnt, axis=0)]
+        inp["terrain_eff"] = np.where(T == TERRAIN_RIVER, pick, T).astype(np.uint8)
+    return inp["terrain_eff"]
 RELIEF_CODES = {"0": "산 아님", "1": "낮은 산", "2": "산", "3": "높은 산"}
 
 
@@ -622,14 +636,14 @@ def _erode4(m):
     return e
 
 
-def component_sizes(m):
+def component_sizes(m, labels=False):
     """칸마다 제 4-연결 성분의 칸 수(성분 밖 0). 가로 구간 단위 합집합-찾기라 칸 수가 아니라 구간 수에 비례한다."""
     h, w = m.shape
     d = np.diff(np.pad(m.astype(np.int8), ((0, 0), (1, 1))), axis=1)
     sy, sx = np.nonzero(d == 1); _, ex = np.nonzero(d == -1)
     n = len(sy); out = np.zeros(h * w, np.int64)
     if n == 0:
-        return out.reshape(h, w)
+        return (out.reshape(h, w), np.full((h, w), -1, np.int64)) if labels else out.reshape(h, w)
     parent = list(range(n))
 
     def find(a):
@@ -651,7 +665,11 @@ def component_sizes(m):
     roots = np.fromiter((find(i) for i in range(n)), np.int64, n); L = ex - sx
     size = np.bincount(roots, weights=L, minlength=n).astype(np.int64)
     offs = np.arange(L.sum()) - np.repeat(np.cumsum(L) - L, L)
-    out[np.repeat(sy * w + sx, L) + offs] = np.repeat(size[roots], L)
+    idx = np.repeat(sy * w + sx, L) + offs
+    out[idx] = np.repeat(size[roots], L)
+    if labels:
+        lab = np.full(h * w, -1, np.int64); lab[idx] = np.repeat(roots, L)
+        return out.reshape(h, w), lab.reshape(h, w)
     return out.reshape(h, w)
 
 
@@ -685,7 +703,7 @@ def road_valley(road, kmax, scale, narrow=None):
 
 
 def compute_relief(inp, tier, width, placements, mnt, dem=None):
-    prm = RELIEF_PARAMS; T = inp["terrain"]
+    prm = RELIEF_PARAMS; T = effective_terrain(inp)
     rel = relief_rel(load_dem() if dem is None else dem, prm["baseRadius"])
     passes = np.zeros(T.shape, bool)
     for c in moved_cities(inp, placements):
@@ -693,7 +711,7 @@ def compute_relief(inp, tier, width, placements, mnt, dem=None):
             passes[max(0, c["row"] - prm["passNarrow"]):c["row"] + prm["passNarrow"] + 1, max(0, c["col"] - prm["passNarrow"]):c["col"] + prm["passNarrow"] + 1] = True
     valley = protected_mask(inp, tier, width, placements) | road_valley(inp["road"], prm["roadValleyMax"], prm["roadValleyScale"], passes)
     rs = _box(rel, 2)
-    m = ((T == TERRAIN_MOUNTAIN) & (rs >= prm["dropBelow"])) | (np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN, TERRAIN_HILL)) & (rs >= prm["addAbove"]))
+    m = ((T == TERRAIN_MOUNTAIN) & (rs >= prm["dropBelow"])) | (np.isin(T, LOWLAND) & (rs >= prm["addAbove"]))
     m |= (T == TERRAIN_PLATEAU) & (rs >= prm["addPlateauAbove"])     # 고원 가장자리 산벽(蜀 서쪽 龍門·邛崍)과 고원 안 산맥
     m = _majority(m, prm["smoothRadius"], 2, off=valley)
     m = _drop_small(m, prm["minMass"]); m = ~_drop_small(~m, prm["minMass"]) & ~valley
@@ -717,26 +735,77 @@ def value_noise(shape, scale, salt):
     return g[y0][:, x0] * (1 - fy) * (1 - fx) + g[y0][:, x0 + 1] * (1 - fy) * fx + g[y0 + 1][:, x0] * fy * (1 - fx) + g[y0 + 1][:, x0 + 1] * fy * fx
 
 
-def compute_plateau(inp, lv, dem=None):
-    prm = PLATEAU_PARAMS; T = inp["terrain"]
-    E = _up4(_box(load_dem() if dem is None else dem, 1))
-    P = T == TERRAIN_PLATEAU; low = np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN, TERRAIN_HILL)) & (lv == 0)
-    cand = (P | low) & (lv == 0); Pf = P.astype(float); Lf = low.astype(float); R = prm["meanRadius"]
-    ehi = _box(E * Pf, R) / np.maximum(_box(Pf, R), 1e-6); elo = _box(E * Lf, R) / np.maximum(_box(Lf, R), 1e-6)
-    near = _box(Pf, prm["band"]); band = (near > 0) & (near < 1) & cand & (_box(Lf, prm["band"]) > 0)
+def reshape_class(own, low, lv, E, prm, salt):
+    """지형 분류 한 종류(own, 폴리곤이라 곧은 변)의 경계를 경계 띠 안에서만 다시 긋는다. low 는 맞닿은 저지.
+    턱(own 안 평균 − 저지 평균)이 step m 이상이면 그 중간 높이가 경계, 없으면 곧은 선을 결정적 잡음으로 흔든다."""
+    cand = (own | low) & (lv == 0); Of = own.astype(float); Lf = low.astype(float); R = prm["meanRadius"]
+    ehi = _box(E * Of, R) / np.maximum(_box(Of, R), 1e-6); elo = _box(E * Lf, R) / np.maximum(_box(Lf, R), 1e-6)
+    # 경계 띠 폭을 잡음으로 bandMin–bandMax 칸 사이에서 흔든다. 폭이 고정이면 턱이 띠 밖에 있을 때 새 경계가 띠 끝에 붙어 곧아진다.
+    R = prm["bandMin"] + value_noise(own.shape, prm["bandScale"], salt + "-band") * (prm["bandMax"] - prm["bandMin"])
+    band = np.zeros(own.shape, bool)
+    for r in range(prm["bandMin"], prm["bandMax"] + 1, 4):
+        near = _box(Of, r); band |= (near > 0) & (near < 1) & (R >= r)
+    band &= cand & (_box(Lf, prm["bandMax"]) > 0)
     step = ehi - elo; es = _box(E, 2)
-    wob = _box(Pf, 6) + prm["wobbleAmp"] * (value_noise(T.shape, prm["wobbleScale"], "plateau") - 0.5) > 0.5
-    out = P.copy(); real = band & (step >= prm["step"]); flat = band & (step < prm["step"])
+    wob = (_box(Of, prm["wobbleBox"]) + prm["wobbleAmp"] * (value_noise(own.shape, prm["wobbleScale"], salt) - 0.5)
+           + prm["wobbleAmp2"] * (value_noise(own.shape, prm["wobbleScale2"], salt + "-2") - 0.5)) > 0.5
+    out = own.copy(); real = band & (step >= prm["step"]); flat = band & (step < prm["step"])
     out[real] = es[real] >= ((ehi + elo) / 2)[real]; out[flat] = wob[flat]
-    keep = cand | P; out &= keep
+    keep = cand | own; out &= keep
     out = _majority(out, prm["smoothRadius"], 2) & keep
     out = _drop_small(out, prm["minMass"]); out = ~_drop_small(~out, prm["minMass"]) & keep
-    return out | (P & (lv > 0))          # 산 칸의 고원 여부(색)는 지형 분류 그대로
+    return out | (own & (lv > 0))          # 산 칸의 분류(색)는 지형 분류 그대로
 
 
-def plateau_summary(pl, T):
-    old = T == TERRAIN_PLATEAU
-    return dict(sha256=sha256_bytes(pl.tobytes()), cells=int(pl.sum()), terrainPlateau=int(old.sum()),
+def compute_plateau(inp, lv, dem=None):
+    T = effective_terrain(inp); E = _up4(_box(load_dem() if dem is None else dem, 1))
+    low = np.isin(T, LOWLAND) & (lv == 0)
+    return reshape_class(T == TERRAIN_PLATEAU, low, lv, E, PLATEAU_PARAMS, "plateau")
+
+
+def river_band(tier, width, extra):
+    """설계 강 칸 + 반폭 + extra 칸."""
+    band = np.zeros(tier.shape, bool); ys, xs = np.nonzero(tier > 0)
+    for y, x in zip(ys, xs):
+        r = (max(1, int(width[y, x])) - 1) // 2 + extra
+        band[max(0, y - r):y + r + 1, max(0, x - r):x + r + 1] = True
+    return band
+
+
+def compute_desert(inp, lv, plat, dem, tier, width):
+    """사막 경계를 고원과 같은 방식으로 다시 긋는다. 사막에서 빠진 칸은 둘레가 고원이면 고원, 아니면 저지다.
+    사막과 고원 사이에 낀 가는 저지 틈(두 폴리곤이 맞닿지 않은 자리)은 더 가까운 쪽으로 메운다(생략하기).
+    돌려주는 값: (설계 사막, 고칠 설계 고원)."""
+    prm = DESERT_PARAMS; T = effective_terrain(inp); E = _up4(_box(load_dem() if dem is None else dem, 1)); own = T == TERRAIN_DESERT
+    low = (np.isin(T, LOWLAND) | plat) & (lv == 0) & ~own
+    des = reshape_class(own, low, lv, E, prm, "desert")
+    # 강은 사막의 경계다. 옛 사막 경계는 옛 강 칸(NE 50m)을 따르지만 설계 강(NE 10m)은 다른 자리로 굽이친다.
+    # 설계 강 기슭은 사막이 아니고, 강에 끊겨 본체에서 떨어진 작은 사막 조각은 맞은편 기슭 띠로 보고 없앤다.
+    rb = river_band(tier, width, prm["riverMargin"]); des &= ~rb
+    size, lab = component_sizes(des, labels=True)
+    touch = np.unique(lab[(_box(rb.astype(np.float64), 1) > 0) & des])
+    des &= ~(np.isin(lab, touch) & (size < prm["riverSliver"]))
+    freed = own & ~des
+    plat2 = (plat & ~des) | (freed & (_box(plat.astype(np.float64), 6) > 0.5))
+    gapw = prm["gapWidth"]; r = gapw // 2 + 1
+    gap = np.isin(T, LOWLAND + (TERRAIN_DESERT, TERRAIN_PLATEAU)) & (lv == 0) & ~des & ~plat2     # 설계상 저지(사막·고원에서 빠진 칸 포함)
+    wide = gap.copy()
+    for _ in range(gapw // 2):
+        wide = _erode4(wide)
+    thin = gap & ~(_box(wide.astype(np.float64), gapw // 2) > 0)          # 폭 gapWidth 칸 미만
+    fd = _box(des.astype(np.float64), r); fp = _box(plat2.astype(np.float64), r)
+    fill = thin & (fd > 0) & (fp > 0)
+    # 사막·고원에 거의 둘러싸인 작은 저지 조각(gapMinMass 칸 미만)도 메운다
+    rest = gap & ~fill
+    small = rest & (component_sizes(rest) < prm["gapMinMass"]) & (fd + fp > 0.5)
+    fill |= small
+    des = des | (fill & (fd >= fp) & ~rb); plat2 = plat2 | (fill & (fp > fd))      # 강 기슭은 메워도 사막이 아니다
+    return des, plat2
+
+
+def plateau_summary(pl, T, code=TERRAIN_PLATEAU):
+    old = T == code
+    return dict(sha256=sha256_bytes(pl.tobytes()), cells=int(pl.sum()), terrainCells=int(old.sum()),
                 removed=int((old & ~pl).sum()), added=int((~old & pl).sum()))
 
 
@@ -748,9 +817,14 @@ def relief_summary(lv, T):
                 addedToMountain=int((~old & (lv > 0)).sum()))
 
 
-def check_plateau(inp, plat) -> list[str]:
+def check_plateau(inp, plat, label="고원") -> list[str]:
     bad = int((plat & np.isin(inp["terrain"], (TERRAIN_SEA, TERRAIN_LAKE, TERRAIN_OUT))).sum())
-    return [f"고원: 물·지도 밖 칸 {bad}개가 고원이다"] if bad else []
+    return [f"{label}: 물·지도 밖 칸 {bad}개가 {label}이다"] if bad else []
+
+
+def check_plateau_desert(plat, des) -> list[str]:
+    both = int((plat & des).sum())
+    return [f"고원·사막: {both}칸이 둘 다다"] if both else []
 
 
 def check_relief(inp, tier, width, placements, lv) -> list[str]:
@@ -796,8 +870,8 @@ def cell_city_grid(inp):
     return np.where(own >= 0, p2c[np.clip(own, 0, None)], -1)
 
 
-def compute_landcover(inp, tier, width, placements, relief, plateau):
-    T = inp["terrain"]; H, W = T.shape; P = inp["proj"]; prm = LANDCOVER_PARAMS
+def compute_landcover(inp, tier, width, placements, relief, plateau, desert):
+    T = effective_terrain(inp); H, W = T.shape; P = inp["proj"]; prm = LANDCOVER_PARAMS
     cei = json.loads(ECONOMY.read_text()); J = {j["cityId"]: j for j in cei["jurisdictions"] if j.get("cityId") is not None}
     seat = {c["id"]: (c["row"], c["col"]) for c in moved_cities(inp, placements)}
     row_huai = int((P["y1"] - prm["paddySouthOfLat"] + P["pad"]) / P["cell"])
@@ -806,7 +880,7 @@ def compute_landcover(inp, tier, width, placements, relief, plateau):
         r = (max(1, int(width[y, x])) - 1) // 2 + prm["paddyWetCells"]
         wet[max(0, y - r):y + r + 1, max(0, x - r):x + r + 1] = True
     road = inp["road"]; LC = np.zeros((H, W), np.uint8)
-    arable = (np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN)) | (T == TERRAIN_PLATEAU)) & ~plateau & (relief == 0)   # 설계 층의 산·고원은 경작지가 아니다
+    arable = np.isin(T, (TERRAIN_PLAIN, TERRAIN_BASIN, TERRAIN_PLATEAU, TERRAIN_DESERT)) & ~plateau & ~desert & (relief == 0)   # 설계 층의 산·고원·사막은 경작지가 아니다
     ratio = [(J[k].get("households") or 0) / max(1, J[k]["arableCells"]) for k in J if J[k].get("arableCells") and J[k].get("households")]
     H0 = float(np.median(ratio)) / prm["targetMedianFieldFraction"]
     CC = cell_city_grid(inp); flat = CC.ravel(); order = np.argsort(flat, kind="stable"); srt = flat[order]
@@ -868,18 +942,21 @@ def write_derived(inp, out: Path, rivers_doc) -> dict:
                                 ferryLimit=FERRY_LIMIT, placements=placements))
     mnt = compute_mountains(inp, tier, width, placements)
     dump(out / MOUNTAINS, dict(schemaVersion=1, artifactId="map-design-mountains-v1", **mnt))
-    dem = load_dem(); lv = compute_relief(inp, tier, width, placements, mnt, dem); plat = compute_plateau(inp, lv, dem)
+    dem = load_dem(); lv = compute_relief(inp, tier, width, placements, mnt, dem)
+    des, plat = compute_desert(inp, lv, compute_plateau(inp, lv, dem), dem, tier, width)
     dump(out / RELIEF, dict(schemaVersion=1, artifactId="map-design-relief-v1", params=RELIEF_PARAMS, codes=RELIEF_CODES,
                             input=dict(dem=DEM.relative_to(ROOT).as_posix(), demSha256=sha256_bytes(DEM.read_bytes()),
                                        source="NOAA NCEI ETOPO1 Ice Surface (public domain), web/game/public/map/elevation/manifest-legacy.json"),
                             result=relief_summary(lv, inp["terrain"]),
-                            plateau=dict(params=PLATEAU_PARAMS, result=plateau_summary(plat, inp["terrain"]))))
-    LC = compute_landcover(inp, tier, width, placements, lv, plat)
+                            plateau=dict(params=PLATEAU_PARAMS, result=plateau_summary(plat, inp["terrain"])),
+                            desert=dict(params=DESERT_PARAMS, result=plateau_summary(des, inp["terrain"], TERRAIN_DESERT))))
+    LC = compute_landcover(inp, tier, width, placements, lv, plat, des)
     dump(out / LANDCOVER, dict(schemaVersion=1, artifactId="map-design-landcover-v1", params=LANDCOVER_PARAMS,
                                codes=LANDCOVER_CODES, result=landcover_summary(LC)))
     review = [p["name"] for p in placements if p["status"] == "NEEDS_REVIEW"]
     return dict(moved=sum(1 for p in placements if p["to"]), review=review, mountainCells=len(mnt["cells"]),
                 relief=relief_summary(lv, inp["terrain"])["counts"], plateau=plateau_summary(plat, inp["terrain"]),
+                desert=plateau_summary(des, inp["terrain"], TERRAIN_DESERT),
                 landcover=landcover_summary(LC)["counts"])
 
 
@@ -905,7 +982,7 @@ def cmd_build(out: Path) -> int:
     dump(out / RIVERS, rivers_doc)
     r = write_derived(inp, out, rivers_doc)
     print(f"강 선 {len(lines)} · 비키기 미달 {n_bad} · 이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · "
-          f"산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 고원 {r['plateau']} · 피복 {r['landcover']}")
+          f"산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
     return 1 if r["review"] else 0
 
 
@@ -913,7 +990,7 @@ def cmd_write_derived(out: Path) -> int:
     inp = load_inputs()
     r = write_derived(inp, out, json.loads((out / RIVERS).read_text()))
     print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 산 편집 {r['mountainCells']} · "
-          f"산 높이 {r['relief']} · 고원 {r['plateau']} · 피복 {r['landcover']}")
+          f"산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
     return 1 if r["review"] else 0
 
 
@@ -988,15 +1065,18 @@ def run_checks(inp, out: Path) -> list[str]:
         errs.append(f"{PLACEMENTS} 가 재계산과 다르다 — --write-derived")
     if compute_mountains(inp, tier, width, pl)["cells"] != docs[MOUNTAINS]["cells"]:
         errs.append(f"{MOUNTAINS} 가 재계산과 다르다 — --write-derived")
-    dem = load_dem(); lv = compute_relief(inp, tier, width, pl, docs[MOUNTAINS], dem); plat = compute_plateau(inp, lv, dem)
-    errs += check_relief(inp, tier, width, pl, lv) + check_plateau(inp, plat)
+    dem = load_dem(); lv = compute_relief(inp, tier, width, pl, docs[MOUNTAINS], dem)
+    des, plat = compute_desert(inp, lv, compute_plateau(inp, lv, dem), dem, tier, width)
+    errs += check_relief(inp, tier, width, pl, lv) + check_plateau(inp, plat) + check_plateau(inp, des, "사막") + check_plateau_desert(plat, des)
     if docs[RELIEF]["input"]["demSha256"] != sha256_bytes(DEM.read_bytes()):
         errs.append(f"{RELIEF}: 표고 원판({DEM.name})이 바뀌었다 — --write-derived")
     if docs[RELIEF]["params"] != RELIEF_PARAMS or relief_summary(lv, inp["terrain"]) != docs[RELIEF]["result"]:
         errs.append(f"{RELIEF} 지문이 재계산과 다르다 — --write-derived")
     if docs[RELIEF].get("plateau", {}).get("params") != PLATEAU_PARAMS or plateau_summary(plat, inp["terrain"]) != docs[RELIEF]["plateau"]["result"]:
         errs.append(f"{RELIEF} 고원 지문이 재계산과 다르다 — --write-derived")
-    if docs[LANDCOVER]["params"] != LANDCOVER_PARAMS or landcover_summary(compute_landcover(inp, tier, width, pl, lv, plat)) != docs[LANDCOVER]["result"]:
+    if docs[RELIEF].get("desert", {}).get("params") != DESERT_PARAMS or plateau_summary(des, inp["terrain"], TERRAIN_DESERT) != docs[RELIEF]["desert"]["result"]:
+        errs.append(f"{RELIEF} 사막 지문이 재계산과 다르다 — --write-derived")
+    if docs[LANDCOVER]["params"] != LANDCOVER_PARAMS or landcover_summary(compute_landcover(inp, tier, width, pl, lv, plat, des)) != docs[LANDCOVER]["result"]:
         errs.append(f"{LANDCOVER} 지문이 재계산과 다르다 — --write-derived")
     return errs
 
