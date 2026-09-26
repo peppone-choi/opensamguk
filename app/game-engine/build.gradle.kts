@@ -75,18 +75,6 @@ plugins {
 
 kotlin { jvmToolchain(21) }
 
-// P1 Task G4 (the P1 GATE): the VerticalSliceE2EIT byte-compares the flushed rows against the
-// SAME committed PHP-captured golden fixtures the :logic G2/G3 tests use. There is ONE golden
-// file (logic/src/test/resources/golden/p1/), never a copy — so it can never drift. Expose it on
-// the game-engine test classpath as an additional test-resources source dir (read-only consume).
-sourceSets {
-    test {
-        resources {
-            srcDir(rootProject.file("logic/src/test/resources"))
-        }
-    }
-}
-
 val v2NamingConventionSources = rootProject.files(
     listOf(
         "app/game-engine/src/main/kotlin",
