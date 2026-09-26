@@ -489,6 +489,10 @@ NAMED_RANGES = [
     dict(name="隴山", kind="ridge", pts=[(35.50, 106.45), (35.20, 106.55), (34.95, 106.50), (34.55, 106.75)], w=6,
          src="https://www.baoji.gov.cn/bmpd/bjslyj/ztzl/djjjhjswm/202305/t20230508_741089.html",
          why="後漢書 3권, 지형은 고원 — 남북 능선(平涼~寶雞, 華亭·張家川·隴縣)"),
+    dict(name="沂山", kind="blob", at=(36.165, 118.633), a=10, b=7, src="https://baike.baidu.com/en/item/Yishan%20Scenic%20Area/1531139",
+         why="後漢書 卷002 顯宗紀 「青州，其山曰沂山」 — 靑州의 鎭山. 표고 자료(약 5km)로는 山東 구릉이 잡히지 않아 과장"),
+    dict(name="勞山", kind="blob", at=(36.19167, 120.59167), a=11, b=9, src="https://en.wikipedia.org/wiki/Mount_Lao",
+         why="後漢書 卷083 逸民列傳 逢萌 「乃之琅邪勞山」·郡國志 琅邪 注 — 膠東 바닷가 산(주봉 1,133m), 표고 자료로는 기복 300m 미만"),
 ]
 
 
