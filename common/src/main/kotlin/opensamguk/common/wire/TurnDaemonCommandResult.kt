@@ -385,23 +385,6 @@ data class AuctionBidFail(
 ) : TurnDaemonCommandResult()
 
 @Serializable
-data class PlaceBetOk(
-    override val type: String = "placeBet",
-    override val ok: Boolean = true,
-    val bettingId: Int,
-    val generalId: Int,
-    val amount: Int,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class PlaceBetFail(
-    override val type: String = "placeBet",
-    override val ok: Boolean = false,
-    val bettingId: Int,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
 data class AcceptDiplomaticMessageOk(
     override val type: String = "acceptDiplomaticMessage",
     override val ok: Boolean = true,
@@ -753,7 +736,6 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "tournamentMatchResult" -> if (ok) TournamentMatchResultOk.serializer() else TournamentMatchResultFail.serializer()
             "patchGeneral" -> if (ok) PatchGeneralOk.serializer() else PatchGeneralFail.serializer()
             "auctionBid" -> if (ok) AuctionBidOk.serializer() else AuctionBidFail.serializer()
-            "placeBet" -> if (ok) PlaceBetOk.serializer() else PlaceBetFail.serializer()
             "acceptDiplomaticMessage" -> if (ok) AcceptDiplomaticMessageOk.serializer() else AcceptDiplomaticMessageFail.serializer()
             "acceptRaiseInvaderMessage" -> if (ok) AcceptRaiseInvaderMessageOk.serializer() else AcceptRaiseInvaderMessageFail.serializer()
             "declineDiplomaticMessage" -> if (ok) DeclineDiplomaticMessageOk.serializer() else DeclineDiplomaticMessageFail.serializer()
