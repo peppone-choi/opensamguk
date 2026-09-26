@@ -304,16 +304,17 @@ class WorldActionContext(
     }
 
     override fun stageDeclaredRetainer(generalId: Int, masterName: String) {
-        val subject = requireNotNull(world.getGeneralById(generalId)) {
-            "deferred retainer subject $generalId was not staged"
-        }
+        val subject = world.getGeneralById(generalId)
         val master = world.listGenerals().singleOrNull { it.name == masterName }
-        require(master != null && master.id != generalId && subject.nationId > 0 &&
-            master.nationId == subject.nationId && LordStatus.read(master.meta)) {
-            "deferred retainer ${subject.name} has no valid same-nation lord $masterName"
-        }
-        require(world.listRetainers().none { it.generalId == generalId }) {
-            "deferred retainer ${subject.name} already has a card"
+        // A historical declaration cannot force a card after the lord dies or allegiance changes.
+        // Keep the general's appearance alive; the unmanned-season gate detects missing coverage.
+        if (subject == null || master == null || master.id == generalId || subject.nationId <= 0 ||
+            master.nationId != subject.nationId ||
+            runCatching { LordStatus.read(master.meta) }.getOrDefault(false) != true ||
+            world.listRetainers().any { it.generalId == generalId }) {
+            LOGGER.warn("scenario_retainer_link_skipped world={} general={} master={}",
+                world.worldId.value, generalId, masterName)
+            return
         }
         world.createRetainer(Retainer(
             id = world.allocateRetainerId(), masterGeneralId = master.id, origin = RetainerRules.ORIGIN_EXISTING,

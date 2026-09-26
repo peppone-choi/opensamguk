@@ -6,8 +6,8 @@ import opensamguk.logic.domain.Diplomacy
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
 import opensamguk.logic.world.CalcCityDistance
-import opensamguk.common.constants.HanWorldV3CityConst
-import opensamguk.common.constants.HanWorldV3GateIndex
+import opensamguk.common.constants.ArchiveCityConst
+import opensamguk.common.constants.ArchiveGateIndex
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.CityConstVariant
 import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
@@ -97,13 +97,13 @@ class ConquerCityResetTest {
     /** 그 城들만 그래프에서 떼어 낸 han-world-v3 표 — 「링으로 못 닿는다」를 지도 결함 없이 만든다. */
     private fun v3WithCitiesCutOff(vararg ids: Int): CityConstVariant {
         val cut = ids.toSet()
-        val names = HanWorldV3CityConst.initCity.filter { it.id in cut }.map { it.name }.toSet()
-        val rows = HanWorldV3CityConst.initCity.map { row ->
+        val names = ArchiveCityConst.initCity.filter { it.id in cut }.map { it.name }.toSet()
+        val rows = ArchiveCityConst.initCity.map { row ->
             if (row.id in cut) row.copy(path = emptyList())
             else row.copy(path = row.path.filterNot { it in names })
         }
         return HistoricalCityConstVariant(
-            WORLD_ARCHIVE_MAP_NAME, rows, HanWorldV3GateIndex::keys,
+            WORLD_ARCHIVE_MAP_NAME, rows, ArchiveGateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         )
     }
