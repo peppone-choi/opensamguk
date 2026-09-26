@@ -1,0 +1,12 @@
+{
+  "status": "READY",
+  "badges": [
+    {
+      "lineCode": "test_line",
+      "lineName": "시험 계통",
+      "emperorGeneralId": 101,
+      "emperorCityId": 12,
+      "courtCityId": 11
+    }
+  ]
+}
