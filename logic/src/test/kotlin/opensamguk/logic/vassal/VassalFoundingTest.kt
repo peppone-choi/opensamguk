@@ -3,6 +3,7 @@ package opensamguk.logic.vassal
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertIs
 
 class VassalFoundingTest {
     private val rules = VassalRules.loadClasspath()
@@ -40,5 +41,28 @@ class VassalFoundingTest {
             VassalFounding.assess(proposed, issuer, candidate, mapOf(10 to 7), listOf(earlier), rules, 12))
         assertEquals(VassalFoundingAssessment.Denied(VassalFoundingFailure.CONTRACT_ID_USED),
             VassalFounding.assess(proposed, issuer, candidate, mapOf(10 to 7), listOf(proposed.copy(endedTurn = 12)), rules, 12))
+    }
+
+    @Test
+    fun `completion rechecks current fief ownership with the same denial as precheck`() {
+        val ownership = mapOf(10 to 8)
+        val precheck = assertIs<VassalFoundingAssessment.Denied>(
+            VassalFounding.assess(proposed, issuer, candidate, ownership, emptyList(), rules, 12))
+        val completion = assertIs<VassalFoundingCompletion.Denied>(
+            VassalFounding.complete(proposed, issuer, candidate, ownership, emptyList(), rules, 12, true))
+        assertEquals(precheck.reason, completion.reason)
+    }
+
+    @Test
+    fun `human consent is explicit before founding and npc needs no consent`() {
+        assertEquals(VassalFoundingCompletion.Denied(VassalFoundingFailure.CANDIDATE_CONSENT_PENDING),
+            VassalFounding.complete(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, null))
+        assertEquals(VassalFoundingCompletion.Denied(VassalFoundingFailure.CANDIDATE_REFUSED),
+            VassalFounding.complete(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, false))
+        assertEquals(VassalFoundingCompletion.Founded(VassalFoundingPlan(1, 2, proposed)),
+            VassalFounding.complete(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, true))
+        assertEquals(VassalFoundingCompletion.Founded(VassalFoundingPlan(1, 2, proposed)),
+            VassalFounding.complete(proposed, issuer, candidate.copy(isHuman = false), mapOf(10 to 7),
+                emptyList(), rules, 12, null))
     }
 }

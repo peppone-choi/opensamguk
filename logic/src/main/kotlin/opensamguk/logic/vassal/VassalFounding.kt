@@ -30,6 +30,8 @@ enum class VassalFoundingFailure {
     FIEF_NOT_OWNED,
     FIEF_ALREADY_GRANTED,
     TRIBUTE_OUT_OF_RANGE,
+    CANDIDATE_CONSENT_PENDING,
+    CANDIDATE_REFUSED,
 }
 
 sealed interface VassalFoundingAssessment {
@@ -43,6 +45,11 @@ data class VassalFoundingPlan(
     val promoteGeneralIdToLord: Int,
     val contract: VassalContract,
 )
+
+sealed interface VassalFoundingCompletion {
+    data class Founded(val plan: VassalFoundingPlan) : VassalFoundingCompletion
+    data class Denied(val reason: VassalFoundingFailure) : VassalFoundingCompletion
+}
 
 object VassalFounding {
     fun assess(
@@ -94,9 +101,29 @@ object VassalFounding {
         atTurn: Long,
         candidateConsented: Boolean,
     ): VassalFoundingPlan {
+        val completion = complete(proposed, issuer, candidate, countyNationById, contracts, rules, atTurn,
+            candidateConsented)
+        require(completion is VassalFoundingCompletion.Founded) { "vassal founding denied: $completion" }
+        return completion.plan
+    }
+
+    /** Rechecks the same rule on current state before the handler applies the three writes atomically. */
+    fun complete(
+        proposed: VassalContract,
+        issuer: VassalLord,
+        candidate: VassalFoundingCandidate,
+        countyNationById: Map<Int, Int>,
+        contracts: Collection<VassalContract>,
+        rules: VassalRules,
+        atTurn: Long,
+        candidateConsent: Boolean?,
+    ): VassalFoundingCompletion {
         val assessment = assess(proposed, issuer, candidate, countyNationById, contracts, rules, atTurn)
-        require(assessment is VassalFoundingAssessment.Allowed) { "vassal founding denied: $assessment" }
-        require(!assessment.needsCandidateConsent || candidateConsented) { "human candidate consent missing" }
-        return VassalFoundingPlan(issuer.id, candidate.generalId, proposed)
+        if (assessment is VassalFoundingAssessment.Denied) return VassalFoundingCompletion.Denied(assessment.reason)
+        if (assessment is VassalFoundingAssessment.Allowed && assessment.needsCandidateConsent) {
+            if (candidateConsent == null) return VassalFoundingCompletion.Denied(VassalFoundingFailure.CANDIDATE_CONSENT_PENDING)
+            if (!candidateConsent) return VassalFoundingCompletion.Denied(VassalFoundingFailure.CANDIDATE_REFUSED)
+        }
+        return VassalFoundingCompletion.Founded(VassalFoundingPlan(issuer.id, candidate.generalId, proposed))
     }
 }
