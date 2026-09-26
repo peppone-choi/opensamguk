@@ -45,6 +45,8 @@ enum class OfficeAppointmentFailure {
     OFFICE_OCCUPIED,
     CONCURRENT_LIMIT,
     TENURE_NOT_FOUND,
+    OFFER_NOT_ACCEPTED,
+    DUPLICATE_TENURE_ID,
 }
 
 sealed interface OfficeAppointmentAssessment {
