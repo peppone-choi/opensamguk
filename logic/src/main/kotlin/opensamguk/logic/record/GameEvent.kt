@@ -1,5 +1,6 @@
 package opensamguk.logic.record
 
+import opensamguk.logic.renown.RenownEventSource
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 
@@ -13,7 +14,9 @@ sealed interface EventRef {
     data class City(val id: Int) : EventRef { init { require(id > 0) } }
     data class Nation(val id: Int) : EventRef { init { require(id >= 0) } }
     data class Corps(val id: String) : EventRef { init { require(isStableKey(id)) } }
-    data class Request(val id: String) : EventRef { init { require(isStableKey(id)) } }
+    data class Request(val id: String) : EventRef {
+        init { require(id.matches(Regex("[A-Za-z0-9._:-]{1,128}"))) }
+    }
     data class RoadFort(val id: String) : EventRef { init { require(isStableKey(id)) } }
     data class Replay(val id: String) : EventRef { init { require(isStableKey(id)) } }
 }
@@ -33,7 +36,11 @@ sealed interface EventFact {
     data class Change(val value: Long) : EventFact
     data class TroopsBand(val value: Int) : EventFact { init { require(value in 0..5) } }
     data class Outcome(val code: String) : EventFact { init { require(isStableKey(code)) } }
+    data class RewardReason(val code: RewardReasonCode) : EventFact
+    data class RenownSource(val code: RenownEventSource) : EventFact
 }
+
+enum class RewardReasonCode { WAR_MERIT, DOMESTIC_MERIT, LOYALTY_SUPPORT, ROUTINE_SERVICE }
 
 enum class FactRole(val type: Class<out EventFact>) {
     COUNTIES(EventFact.Amount::class.java), MONEY(EventFact.Amount::class.java), GRAIN(EventFact.Amount::class.java),
@@ -41,6 +48,8 @@ enum class FactRole(val type: Class<out EventFact>) {
     RENOWN_BEFORE(EventFact.Amount::class.java), RENOWN_AFTER(EventFact.Amount::class.java),
     RENOWN_CHANGE(EventFact.Change::class.java),
     TROOPS_BAND(EventFact.TroopsBand::class.java), OUTCOME(EventFact.Outcome::class.java),
+    REASON(EventFact.RewardReason::class.java),
+    SOURCE(EventFact.RenownSource::class.java),
 }
 
 data class OccurredAt(val year: Int, val month: Int, val phase: Int, val ordinal: Int) {
@@ -57,14 +66,14 @@ sealed interface AudienceTarget {
         init { require(generalId > 0) }
         override val audience = EventAudience.SELF
     }
-    class Retinue(val ownerGeneralId: Int, authorizedGeneralIds: Set<Int>) : AudienceTarget {
+    class Retinue(val ownerGeneralId: Int, val nationId: Int, authorizedGeneralIds: Set<Int>) : AudienceTarget {
         val authorizedGeneralIds: Set<Int> = authorizedGeneralIds.toSet()
-        init { require(ownerGeneralId > 0 && this.authorizedGeneralIds.isNotEmpty() && this.authorizedGeneralIds.all { it > 0 }) }
+        init { require(ownerGeneralId > 0 && nationId > 0 && this.authorizedGeneralIds.isNotEmpty() && this.authorizedGeneralIds.all { it > 0 }) }
         override val audience = EventAudience.RETINUE
-        override fun equals(other: Any?): Boolean = other is Retinue && ownerGeneralId == other.ownerGeneralId &&
+        override fun equals(other: Any?): Boolean = other is Retinue && ownerGeneralId == other.ownerGeneralId && nationId == other.nationId &&
             authorizedGeneralIds == other.authorizedGeneralIds
-        override fun hashCode(): Int = 31 * ownerGeneralId + authorizedGeneralIds.hashCode()
-        override fun toString(): String = "Retinue(ownerGeneralId=$ownerGeneralId, authorizedGeneralIds=$authorizedGeneralIds)"
+        override fun hashCode(): Int = 31 * (31 * ownerGeneralId + nationId) + authorizedGeneralIds.hashCode()
+        override fun toString(): String = "Retinue(ownerGeneralId=$ownerGeneralId, nationId=$nationId, authorizedGeneralIds=$authorizedGeneralIds)"
     }
     data class Nation(val nationId: Int) : AudienceTarget {
         init { require(nationId > 0) }
@@ -118,7 +127,16 @@ data class GameEvent(
         require(audience.audience in kind.audiences) { "${kind.code} does not allow ${audience.audience}" }
         require((audience == AudienceTarget.Public) == (publication.state == PublicationState.PUBLISHED))
         require(refs.keys.containsAll(kind.requiredRefs)) { "${kind.code} requires ${kind.requiredRefs - refs.keys}" }
+        require(facts.keys.containsAll(kind.requiredFacts)) { "${kind.code} requires ${kind.requiredFacts - facts.keys}" }
         require(refs.keys.all { it in kind.allowedRefs && it.type.isInstance(refs.getValue(it)) })
         require(facts.keys.all { it in kind.allowedFacts && it.type.isInstance(facts.getValue(it)) })
+        if (kind == EventKind.REWARD_RECEIVED) {
+            require((refs.getValue(RefRole.TARGET) as EventRef.General).id ==
+                (audience as AudienceTarget.Self).generalId) { "reward target must be the private recipient" }
+        }
+        if (kind == EventKind.RENOWN_EVENT) {
+            require((refs.getValue(RefRole.ACTOR) as EventRef.General).id ==
+                (audience as AudienceTarget.Self).generalId) { "renown actor must be the private recipient" }
+        }
     }
 }

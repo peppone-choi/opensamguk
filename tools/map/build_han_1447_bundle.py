@@ -73,7 +73,7 @@ def main():
         snapshot=ROOT/entry['snapshot']
         if not snapshot.is_file() or sha(snapshot.read_bytes())!=entry['snapshotSha256']:
             problems.append(str(snapshot.relative_to(ROOT)))
-    if pins['catalog'] not in (ROOT/'infra/src/main/kotlin/opensamguk/infra/seed/Han1447Artifacts.kt').read_text():problems.append('1447 Kotlin catalog pin')
-    if pins['constants'] not in (ROOT/'infra/src/test/kotlin/opensamguk/infra/seed/HanRuntimeConstantsIntegrityTest.kt').read_text():problems.append('1447 constants test pin')
+    if pins['catalog'] not in (ROOT/'infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Artifacts.kt').read_text():problems.append('1447 Kotlin catalog pin')
+    if pins['constants'] not in (ROOT/'infra/src/test/kotlin/opensamguk/infra/seed/ArchiveRuntimeConstantsIntegrityTest.kt').read_text():problems.append('1447 constants test pin')
     print(json.dumps({'pins':pins,'drift':problems}));return bool(problems)
 if __name__=='__main__':raise SystemExit(main())

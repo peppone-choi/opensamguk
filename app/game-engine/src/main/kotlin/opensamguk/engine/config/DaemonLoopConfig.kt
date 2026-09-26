@@ -16,8 +16,6 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.run.LiveRemainNationEnv
 import opensamguk.engine.status.DaemonPauseGate
 import opensamguk.engine.status.DurableGameLock
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.EngineGeneralActionPipelineBuilder
@@ -526,19 +524,10 @@ class DaemonLoopConfig {
             } else { _, _, _ -> },
             hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
-                val deploy = opensamguk.engine.campaign.NpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)
-                val field = opensamguk.engine.campaign.NpcFieldSelector(domesticContext)
-                val military = opensamguk.engine.campaign.NpcCityMilitarySelector(domesticContext)
-                val personal = opensamguk.engine.campaign.NpcPersonalSelector(domesticContext)
-                val retire = opensamguk.engine.campaign.NpcRetireSelector(domesticContext)
-                val people = opensamguk.engine.campaign.NpcPeopleSelector(domesticContext)
-                val muster = opensamguk.engine.campaign.NpcMusterSelector(artifacts.projection.topology, artifacts.landMarchMetrics)
-                val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn = { generalId, reserved ->
-                    personal.select(world, generalId, field.select(world, generalId,
-                        people.select(world, generalId, military.select(world, generalId,
-                            muster.select(world, generalId, deploy.select(world, generalId,
-                                retire.select(world, generalId, reserved)))))))
-                }
+                val selector = opensamguk.engine.campaign.NpcAiTurnSelector(
+                    artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext)
+                val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn =
+                    { generalId, reserved -> selector.select(world, generalId, reserved) }
                 select
             } else { _, reserved -> reserved },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
@@ -580,18 +569,6 @@ class DaemonLoopConfig {
                 opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
                     artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
             } else null,
-            tournamentDaemon = TournamentDaemon(
-                gameKvRepository = gameKvRepository,
-                bettingFactory = { liveWorld, liveRecorder ->
-                    ProductionTournamentBettingPort(
-                        world = liveWorld,
-                        recorder = liveRecorder,
-                        gameKvRepository = gameKvRepository,
-                        bettingRepository = bettingRepository,
-                        inheritanceRepository = inheritanceRepository,
-                    )
-                },
-            ),
         )
     }
 
