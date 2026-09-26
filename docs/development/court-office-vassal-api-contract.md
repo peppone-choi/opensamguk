@@ -26,4 +26,4 @@
 
 ## 저장·재현
 
-관직 재임, credential, 봉신 계약은 각각 `localOfficeTenures`, `officeCredentials`, `vassalContracts` 키를 `game_kv(game_env, game_env)`에 쓴다. 월드 메모리 변경과 `ChangeRecorder.recordKv`를 한 handler에서 함께 수행해야 한다. 현재 턴의 JSON 문자열과 cold reload의 객체형 값을 codec 앞에서 `PersistedMetaJson.raw`로 통일한다. cold reload 뒤 다른 `game_env` 키가 보존되는지와 같은 입력 재생 결과가 같은지 IT로 확인한다. 상납은 월수입 직후 한 번 실행하고 계약·영수증을 같은 flush에 기록한다.
+관직 재임, credential, 봉신 계약은 각각 `localOfficeTenures`, `officeCredentials`, `vassalContracts` 키를 `game_kv(game_env, game_env)`에 쓴다. `CourtStateStore`가 월드 메모리 변경과 `ChangeRecorder.recordKv`를 같은 호출에서 수행한다. 현재 턴의 JSON 문자열과 cold reload의 객체형 값을 codec 앞에서 `PersistedMetaJson.raw`로 통일한다. 저장 어댑터 단위 테스트는 세 키의 KV 델타와 다른 키 보존·직렬화 왕복을 검증한다. DB를 거치는 cold reload IT와 같은 입력 재생 해시는 실제 handler 배선 뒤 확인한다. 상납은 월수입 직후 한 번 실행하고 계약·영수증을 같은 flush에 기록한다.
