@@ -26,9 +26,10 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1447, `general`=230,
- * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
- * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
+ * 은퇴한 삼모 런타임 시나리오 31개(클래스패스 `scenario/` 의 0·1·2·900번대·1010–1120·9200)는 읽지 않는다(#917).
+ * 월드 id 전파·재진입·동시 시드·빈 월드 게이트 같은 일반 불변식은 제품 기본 시나리오
+ * `scenario_990002`(휘하 豫州 조각)로, 삼모 경로 회귀는 테스트 리소스 `scenario_mapless_legacy.json`
+ * 과 인라인 합성 JSON 으로 잰다. The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
  * is unavailable the test is SKIPPED (assumeTrue), not failed.
  */
@@ -39,6 +40,8 @@ class ScenarioImporterIT {
     private lateinit var jdbc: JdbcTemplate
     private var dockerAvailable = false
     private val canonicalWorldId = WorldId(1)
+    /** 휘하 시드가 위치 핀·창고 핀을 읽는 저장소 루트(infra 테스트 작업 디렉터리의 부모). */
+    private val artifactsRoot = java.nio.file.Path.of("..").toAbsolutePath().normalize()
 
     @BeforeAll
     fun setUpClass() {
@@ -90,7 +93,7 @@ class ScenarioImporterIT {
     private fun regressionImporter(
         scenario: Scenario,
         cities: List<ScenarioCity>,
-        scenarioCode: String = "scenario_1010",
+        scenarioCode: String = "scenario_mapless_legacy",
         scenarioNumber: Int = 1010,
         showImageLevel: Int = 3,
         extendedGeneral: Boolean = true,
@@ -107,17 +110,18 @@ class ScenarioImporterIT {
         artifactsRoot = artifactsRoot,
     )
 
-    private fun newImporter(
-        showImageLevel: Int = 3,
-        extendedGeneral: Boolean = true,
-    ): ScenarioImporter {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
-        val cities = mapCitiesOf(scenario)
-        return regressionImporter(
+    /**
+     * 제품 기본 시나리오(휘하 豫州 조각). 시나리오를 가리지 않는 일반 불변식의 픽스처다 —
+     * 이 시드가 쓰는 관계(위치·부곡 포함)가 전부 행을 갖는다. 휘하는 장수 턴 큐를 비워 둔다.
+     */
+    private fun newProductImporter(): ScenarioImporter {
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_990002.json"))
+        return ScenarioImporter(
             scenario = scenario,
-            cities = cities,
-            showImageLevel = showImageLevel,
-            extendedGeneral = extendedGeneral,
+            cities = mapCitiesOf(scenario),
+            scenarioCode = "scenario_990002",
+            scenarioNumber = 990002,
+            artifactsRoot = artifactsRoot,
         )
     }
 
@@ -134,13 +138,6 @@ class ScenarioImporterIT {
             showImageLevel = showImageLevel,
             extendedGeneral = extendedGeneral,
         )
-    }
-
-    // Scenario 1030 shares the versioned Han catalog declared by its mapName.
-    private fun newImporter1030(): ScenarioImporter {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1030.json"))
-        val cities = mapCitiesOf(scenario)
-        return regressionImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_1030")
     }
 
     @Test
@@ -213,20 +210,22 @@ class ScenarioImporterIT {
     fun `hwiha scenario seeds one position row per general pinned to the boot topology`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
         // 위치 권위 spec §2.2·§3-3: current-world 시드 = 전 장수 위치 행.
-        val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
-        val scenario = ScenarioJson.loadScenario("{\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\", \"lords\": [\"우길\"]," + raw)
-        val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
-        regressionImporter(scenario = scenario, cities = mapCitiesOf(scenario), artifactsRoot = root).importAll(jdbc, canonicalWorldId)
+        // 휘하 시나리오(190)가 제 선언(군주 21명·비군주 다수) 그대로 시드한다.
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_3190.json"))
+        val root = artifactsRoot
+        ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_3190",
+            scenarioNumber = 3190, artifactsRoot = root).importAll(jdbc, canonicalWorldId)
 
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id = 1", Int::class.java))
         val generals = jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1", Int::class.java)!!
         val rows = jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java)!!
         assertEquals(generals, rows)
         assertTrue(generals > 100)
-        assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta->>'lord' = 'true'", Int::class.java))
+        assertEquals(21, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta->>'lord' = 'true'", Int::class.java))
         assertEquals(generals, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'lord'", Int::class.java))
-        val storedMeta = jdbc.queryForObject("SELECT meta::text FROM general WHERE world_id = 1 AND meta->>'lord' = 'true'", String::class.java)!!
-        assertTrue(opensamguk.logic.input.LordStatus.read(opensamguk.infra.persistence.MetaJson.decode(storedMeta)))
+        val storedLordMetas = jdbc.queryForList("SELECT meta::text FROM general WHERE world_id = 1 AND meta->>'lord' = 'true'", String::class.java)
+        assertEquals(21, storedLordMetas.size)
+        assertTrue(storedLordMetas.all { opensamguk.logic.input.LordStatus.read(opensamguk.infra.persistence.MetaJson.decode(it)) })
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
         assertTrue(config.contains("\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"") ||
             config.contains("\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\""))
@@ -261,7 +260,7 @@ class ScenarioImporterIT {
     @Test
     fun `sammo scenario seeds no position rows`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-        newImporter().importAll(jdbc, canonicalWorldId)
+        newImporterBlankMap().importAll(jdbc, canonicalWorldId)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general_spatial_position WHERE world_id = 1", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id = 1 AND meta ? 'lord'", Int::class.java))
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state WHERE id=1 AND meta ? 'marchReactions'", Int::class.java))
@@ -271,359 +270,15 @@ class ScenarioImporterIT {
     @Test
     fun `historical scenario without profile cannot seed a partial HWIHA world`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1020.json"))
-        val importer = ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_1020")
+        // 프로필·휘하 선언(창고·군주·인물 정책)이 없는 구 시나리오. regressionImporter 처럼 SAMMO 를
+        // 채워 주지 않으면 새 월드 기본값(휘하)으로 반쪽 월드를 만들려다 거부돼야 한다.
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_mapless_legacy.json"))
+        assertEquals(null, scenario.ruleProfile)
+        val importer = ScenarioImporter(scenario, mapCitiesOf(scenario), scenarioCode = "scenario_mapless_legacy")
 
-        assertFailsWith<IllegalArgumentException> { importer.importAll(jdbc, canonicalWorldId) }
+        val error = assertFailsWith<IllegalArgumentException> { importer.importAll(jdbc, canonicalWorldId) }
+        assertTrue(error.message.orEmpty().contains("omits ruleProfile without HWIHA"), error.message)
         assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java))
-    }
-
-    @Test
-    fun `scenario 9200 seeds stable V3 ownership capitals and general locations`() {
-        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
-
-        regressionImporter(
-            scenario = scenario,
-            cities = mapCitiesOf(scenario),
-            scenarioCode = "scenario_9200",
-        ).importAll(jdbc, canonicalWorldId)
-
-        assertEquals(1, jdbc.queryForObject("SELECT nation_id FROM city WHERE id = 46", Int::class.java))
-        assertEquals(2, jdbc.queryForObject("SELECT nation_id FROM city WHERE id = 1", Int::class.java))
-        assertEquals(46, jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE name = '동탁'", Int::class.java))
-        assertEquals(1, jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE name = '원소'", Int::class.java))
-        assertEquals(46, jdbc.queryForObject("SELECT city_id FROM general WHERE name = 'ⓝ동탁'", Int::class.java))
-        assertEquals(1, jdbc.queryForObject("SELECT city_id FROM general WHERE name = 'ⓝ원소'", Int::class.java))
-    }
-
-    private fun newImporter2(): ScenarioImporter {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
-        val cities = mapCitiesOf(scenario)
-        return regressionImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_2", scenarioNumber = 2)
-    }
-
-    @Test
-    fun `importAll seeds the A-minimal world with the expected row counts`() {
-        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-
-        val counts = newImporter().importAll(jdbc, canonicalWorldId)
-
-        assertEquals(1, counts.worldState)
-        assertTrue(counts.gameEnv > 0)
-        assertEquals(2, counts.nation)
-        // V3 projects scenario ownership through stable place identities: Han 123, Yellow 117, neutral 608
-        // (781 → 832: 交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國 屬縣 51 곳이 게임 城 으로 섰다, 전부 공백지.
-        // 833–835: 城 없던 郡 3곳의 治所가 neutral 로 +3. 836–846: w1 11곳이 郡 귀속 세력에 +4,
-        // 나머지는 공백지로 +7. 847 吳縣·848 毘陵: 1010 지배표에 없어 공백지로 +2.
-        // 849–1024 城 없던 縣 관할 176곳 · 1025–1097 수·진·관 거점 73곳 · 1098 河南尹 平陰: 郡 귀속대로 후한 161 · 황건적 139 · 공백지 798.)
-        assertEquals(230, counts.general)
-        assertEquals(230 * 30, counts.generalTurn)
-        assertEquals(230 * 37, counts.rankData)
-        assertEquals(1, counts.ngGames)
-        assertEquals(counts.event, count("event"))
-        assertTrue(counts.event > 1, "1010 stores defaults plus the scenario event")
-        assertEquals("pre_month", jdbc.queryForObject("SELECT target_code FROM event ORDER BY id ASC LIMIT 1", String::class.java))
-        assertEquals(
-            "Month",
-            jdbc.queryForObject("SELECT target_code FROM event ORDER BY id DESC LIMIT 1", String::class.java),
-        )
-        assertEquals(
-            77,
-            jdbc.queryForObject("SELECT count(*) FROM event WHERE action::text LIKE '%RegNPC%'", Int::class.java),
-        )
-        assertEquals(
-            0,
-            jdbc.queryForObject(
-                "SELECT count(*) FROM general WHERE born_year + 14 > 181 OR dead_year <= 181",
-                Int::class.java,
-            ),
-        )
-        val emperor = jdbc.queryForMap(
-            "SELECT npc_state, meta ->> 'imperial' AS imperial FROM general WHERE name = '유굉'",
-        )
-        assertEquals(7, soi(emperor["npc_state"]))
-        assertEquals("true", sso(emperor["imperial"]))
-
-        assertEquals(1, count("world_state"))
-        assertEquals(counts.gameEnv, jdbc.queryForObject("SELECT count(*) FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env'", Int::class.java))
-        assertEquals(
-            "30000",
-            jdbc.queryForObject(
-                "SELECT value::text FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env' AND key = 'refreshLimit'",
-                String::class.java,
-            ),
-        )
-        // game_env.fiction 은 설치 폼 값이 그대로 들어간다(`ResetHelper.php:297` `'fiction'=>$fiction`).
-        // PHP 폼 기본값은 1이다(`install.php:98` `fiction_1` checked). 시나리오 JSON 최상위
-        // "fiction" 키는 별개이며 PHP `Scenario.php` 도 우리 파서도 읽지 않는다.
-        assertEquals(
-            "1",
-            jdbc.queryForObject(
-                "SELECT value::text FROM game_kv WHERE \"table\" = 'game_env' AND namespace = 'game_env' AND key = 'fiction'",
-                String::class.java,
-            ),
-        )
-        assertEquals(2, count("nation"))
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
-        assertEquals(mapCitiesOf(scenario).map { it.id }.sorted(),
-            jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
-        // name 컬럼은 **표기**다("제남국 역성현"). 식별자 "역성"(ScenarioCity.name)은 시나리오
-        // 소유 목록을 푸는 데만 쓰고 DB 에는 남지 않는다 — 로그·목록·지도가 한 이름을 쓰게 한
-        // 지점이 ScenarioImporter.insertCities 다(2026-09-11). 郡을 앞에 세우는 것은
-        // 「군현제 안에선 뭐뭐군 뭐뭐현으로 표기해」(2026-09-12)다.
-        assertEquals("제남국 역성현", jdbc.queryForObject("SELECT name FROM city WHERE id = 781 AND nation_id = 0", String::class.java))
-        // 실효 지배지만 시나리오 소유로 칠하고, 나머지는 공백지로 둔다.
-        // 596 → 599 는 城 없던 郡 3곳의 治所(833–835)가 들어오면서다 — 1010 지배표에 없어
-        // 셋 다 공백지다. 599 → 606 은 w1 11곳 중 지배표에 없는 7곳이 공백지로 들어오면서다
-        // (836은 後漢, 838·839·842는 黃巾 지배표에 있어 소유로 간다).
-        // 606 → 608 은 847 吳縣·848 毘陵이 공백지로 들어오면서다(1010 지배표에 없다).
-        // 608 → 798 · 123 → 160 · 117 → 139 는 w2 176곳과 거점 73곳이 郡 귀속대로 들어오면서다(2026-09-15).
-        // 798 → 833: 2026-09-17 同縣 중복 977·989(공백지)를 거두고 郡國 밖 취락 37곳이 공백지로 들어왔다(ADR-LITE-056).
-        // The 26 retired locality proxies were all neutral in scenario_1010.
-        // 2026-09-23: 결손 縣 56곳 = 공백 44 · 후한 5 · 황건 7, 그리고 993 易城이 河閒國으로 귀속을 바로잡으며
-        // 공백 → 후한. 1,224 판 911 · 167 · 146에서 합성 城 223곳을 더하고 미해독 3행은 제외했다.
-        assertEquals(1093, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        assertEquals(193, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
-        assertEquals(161, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
-        // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
-        // 서성(id 75, 西城县) 은 1010 지배표에 없어 공백지다: pop 20000·wall 1000·trust 50.
-        // 漢中郡의 縣이지 郡이 아니다 — 등급을 legacy 780 번호에서 물려받던 동안 소도시(5)로
-        // 서 있었고, 郡國志 戶口로 다시 세운 뒤 장현(11)이 됐다(build_han_world.py v3_level).
-        val sd = jdbc.queryForMap("SELECT pop, wall, trust FROM city WHERE id = 75")
-        assertEquals(20000, (sd["pop"] as Number).toInt())
-        assertEquals(1000, (sd["wall"] as Number).toInt())
-        assertEquals(50.0, (sd["trust"] as Number).toDouble())
-        // 점령지는 70%max 불변(parity). 낙양(id 46): pop=ratio70(754800)=528360, trust 80.
-        val ly = jdbc.queryForMap("SELECT pop, trust FROM city WHERE id = 46")
-        assertEquals(528360, (ly["pop"] as Number).toInt())
-        assertEquals(80.0, (ly["trust"] as Number).toDouble())
-        assertEquals(230, count("general"))
-        assertEquals(230 * 30, count("general_turn"))
-        assertEquals(230 * 37, count("rank_data"))
-        assertEquals(1, count("ng_games"))
-
-        // diplomacy: 2 nations → 2 ordered neutral pairs (no JSON overrides in 1010).
-        assertEquals(2, count("diplomacy"))
-
-        // nation_turn: 후한 lv7→chief 5 ⇒ seats 5..12 (8) ×12; 황건적 lv2→chief 9 ⇒ seats 9..12 (4) ×12.
-        assertEquals((8 + 4) * 12, count("nation_turn"))
-
-        // Per-general invariants — sample the boy-emperor 소제1 (id 1001) to lock the stat mapping.
-        val every37 = jdbc.queryForObject(
-            "SELECT min(c) = 37 AND max(c) = 37 FROM (SELECT count(*) c FROM rank_data GROUP BY general_id) s",
-            Boolean::class.java,
-        )
-        assertTrue(every37 == true, "every general has exactly 37 rank_data rows")
-        val every30 = jdbc.queryForObject(
-            "SELECT min(c) = 30 AND max(c) = 30 FROM (SELECT count(*) c FROM general_turn GROUP BY general_id) s",
-            Boolean::class.java,
-        )
-        assertTrue(every30 == true, "every general has exactly 30 general_turn rows")
-        assertEquals(
-            0,
-            jdbc.queryForObject("SELECT count(*) FROM general WHERE picture ~ '^[0-9]+$'", Int::class.java),
-            "numeric scenario picture ids require stored icon resolution and otherwise fall back to default.jpg",
-        )
-        assertEquals(
-            0,
-            jdbc.queryForObject(
-                """
-                SELECT count(*) FROM general
-                 WHERE age = 14
-                   AND ((nation_id = 0 AND officer_level <> 0) OR (nation_id <> 0 AND officer_level <> 1))
-                """.trimIndent(),
-                Int::class.java,
-            ),
-            "age-14 generals use PHP new-general officer normalization",
-        )
-        assertTrue(
-            jdbc.queryForObject(
-                """
-                SELECT count(*) > 0 FROM general
-                 WHERE (meta ->> 'killturn')::integer <>
-                       ((dead_year - 181) * 12 * 3)
-                """.trimIndent(),
-                Boolean::class.java,
-            ) == true,
-            "seeded generals carry PHP killturn jitter, not the zero-jitter baseline",
-        )
-        assertTrue(
-            jdbc.queryForObject("SELECT count(DISTINCT turn_time) > 1 FROM general", Boolean::class.java) == true,
-            "seeded turn_time uses PHP getRandTurn jitter per general",
-        )
-        assertTrue(
-            jdbc.queryForObject("SELECT count(DISTINCT city_id) > 3 FROM general", Boolean::class.java) == true,
-            "active generals persist PHP city choice results instead of collapsing to capitals/default city",
-        )
-        assertEquals(
-            0,
-            jdbc.queryForObject(
-                "SELECT count(*) FROM general WHERE affinity IS NULL OR (affinity NOT BETWEEN 1 AND 150 AND affinity <> 999)",
-                Int::class.java,
-            ),
-            "InitScenario affinity RNG results are persisted, including PHP's 900+ to 999 normalization",
-        )
-        assertEquals(
-            999,
-            jdbc.queryForObject("SELECT affinity FROM general WHERE name = 'ⓝ우길'", Int::class.java),
-            "scenario affinity 900+ normalizes to PHP sentinel 999",
-        )
-        val halfAwaySpec = jdbc.queryForMap(
-            """
-            SELECT (meta ->> 'specage')::int AS specage,
-                   (meta ->> 'specage2')::int AS specage2
-              FROM general
-             WHERE name = 'ⓝ우길'
-            """.trimIndent(),
-        )
-        assertEquals(53, soi(halfAwaySpec["specage"]), "seed specage uses PHP half-away rounding")
-        assertEquals(55, soi(halfAwaySpec["specage2"]), "seed specage2 uses PHP half-away rounding")
-        val seedMeta = jdbc.queryForMap(
-            """
-            SELECT (meta ->> 'npc_org')::int AS npc_org,
-                   (meta ->> 'dedlevel')::int AS dedlevel,
-                   (meta ->> 'specage')::int AS specage,
-                   (meta ->> 'specage2')::int AS specage2
-              FROM general
-             WHERE name = 'ⓝ간옹'
-            """.trimIndent(),
-        )
-        assertEquals(2, soi(seedMeta["npc_org"]), "active scenario general meta carries PHP npc_org")
-        assertEquals(1, soi(seedMeta["dedlevel"]), "active scenario general meta carries PHP dedlevel seed")
-        assertEquals(22, soi(seedMeta["specage"]), "active scenario general meta carries PHP specage")
-        assertEquals(28, soi(seedMeta["specage2"]), "active scenario general meta carries PHP specage2")
-        assertEquals(
-            0,
-            jdbc.queryForObject(
-                "SELECT count(*) FROM general WHERE nation_id <> 0 AND npc_state <> 7 AND officer_level NOT IN (1, 11, 12)",
-                Int::class.java,
-            ),
-            "PHP normalizes regular seeded officers while preserving rulers, commanders, and the imperial NPC",
-        )
-        assertEquals(12, jdbc.queryForObject("SELECT officer_level FROM general WHERE name = 'ⓝ장각'", Int::class.java))
-        assertEquals(11, jdbc.queryForObject("SELECT officer_level FROM general WHERE name = 'ⓝ하진'", Int::class.java))
-        assertEquals(
-            0,
-            jdbc.queryForObject("SELECT count(*) FROM general WHERE personal_code = 'None'", Int::class.java),
-            "InitScenario ego RNG results are consumed and persisted",
-        )
-        assertTrue(
-            jdbc.queryForObject("SELECT count(*) > 0 FROM general WHERE meta ? 'npcmsg'", Boolean::class.java) == true,
-            "fresh seed preserves scenario npcmsg in general meta",
-        )
-
-        assertEquals(
-            0,
-            jdbc.queryForObject(
-                """
-                SELECT count(*) FROM general
-                 WHERE (npc_state = 2 AND name NOT LIKE 'ⓝ%')
-                    OR (npc_state = 6 AND name NOT LIKE 'ⓤ%')
-                """.trimIndent(),
-                Int::class.java,
-            ),
-            "active scenario NPC names mirror GeneralBuilder prefixList",
-        )
-        assertEquals(
-            20,
-            jdbc.queryForObject("SELECT min(start_age) FROM general", Int::class.java),
-            "PHP GeneralBuilder omits startage so schema default 20 is used",
-        )
-        assertEquals(20, jdbc.queryForObject("SELECT max(start_age) FROM general", Int::class.java))
-
-        val domestic = jdbc.queryForMap(
-            """
-            SELECT special_code, special2_code, meta ->> 'special' AS meta_special,
-                   meta ->> 'special2' AS meta_special2, meta ->> 'start_age' AS meta_start_age
-              FROM general
-             WHERE name = 'ⓝ간옹'
-            """.trimIndent(),
-        )
-        assertEquals("che_경작", sso(domestic["special_code"]))
-        assertEquals("None", sso(domestic["special2_code"]))
-        assertEquals("che_경작", sso(domestic["meta_special"]))
-        assertEquals("None", sso(domestic["meta_special2"]))
-        assertEquals("20", sso(domestic["meta_start_age"]))
-
-        val war = jdbc.queryForMap(
-            """
-            SELECT special_code, special2_code, meta ->> 'special' AS meta_special,
-                   meta ->> 'special2' AS meta_special2
-              FROM general
-             WHERE name = 'ⓝ노식'
-            """.trimIndent(),
-        )
-        assertEquals("None", sso(war["special_code"]))
-        assertEquals("che_징병", sso(war["special2_code"]))
-        assertEquals("None", sso(war["meta_special"]))
-        assertEquals("che_징병", sso(war["meta_special2"]))
-
-        val so = jdbc.queryForMap("SELECT name, leadership, strength, intel, nation_id FROM general WHERE id = 1001")
-        assertEquals("ⓝ우길", sso(so["name"]))
-        assertEquals(17, soi(so["leadership"]))
-        assertEquals(13, soi(so["strength"]))
-        assertEquals(83, soi(so["intel"]))
-        assertEquals(0, soi(so["nation_id"]))
-
-        // City x100 scaling + level/region int map: 낙양 (id 46) pop_max 754800, level 9 (경), region 1 (사예).
-        val nak = jdbc.queryForMap("SELECT name, level, region, pop_max, nation_id FROM city WHERE id = 46")
-        // 京師라도 雒陽縣이다 — name 컬럼은 표기라 「하남윤 낙양현」이 들어간다
-        // (2026-09-11; 郡을 앞에 세우는 것은 2026-09-12 지시다).
-        assertEquals("하남윤 낙양현", sso(nak["name"]))
-        assertEquals(9, soi(nak["level"]))
-        assertEquals(1, soi(nak["region"]))
-        assertEquals(754800, soi(nak["pop_max"]))
-        assertEquals(1, soi(nak["nation_id"]))
-
-        // capital_city_id wired: 후한 (id 1) capital = first owned city 낙양현 (id 46).
-        val cap = jdbc.queryForObject("SELECT capital_city_id FROM nation WHERE id = 1", Int::class.java)
-        assertEquals(46, cap)
-
-        // nation.meta 패러티(PHP Scenario/Nation.php) — 종전 시드는 infoText 만 넣어 내무부 예산/정책
-        // 표가 전부 '-'(FE 가드 미충족)였다. rate=15/bill=100/scout=0/war=0/strategic_cmd_limit=24/
-        // surlimit=72 + gennum(소속 장수 수) 가 모두 실려야 한다.
-        val nMeta = jdbc.queryForObject("SELECT meta::text FROM nation WHERE id = 1", String::class.java)!!
-        assertTrue(nMeta.contains("\"rate\": 15") || nMeta.contains("\"rate\":15"), "nation meta has rate=15: $nMeta")
-        assertTrue(nMeta.contains("\"bill\": 100") || nMeta.contains("\"bill\":100"), "nation meta has bill=100: $nMeta")
-        assertTrue(nMeta.contains("\"scout\""), "nation meta has scout: $nMeta")
-        assertTrue(nMeta.contains("\"war\""), "nation meta has war: $nMeta")
-        assertTrue(nMeta.contains("\"gennum\""), "nation meta has gennum: $nMeta")
-        // gennum = 후한 소속 장수 수와 일치(meta jsonb 값 == general 테이블 count).
-        val hanGennum = jdbc.queryForObject("SELECT (meta->>'gennum')::int FROM nation WHERE id = 1", Int::class.java)
-        val hanGenerals = jdbc.queryForObject("SELECT count(*) FROM general WHERE nation_id = 1", Int::class.java)
-        assertEquals(hanGenerals, hanGennum, "nation gennum matches general count")
-
-        // world_state.meta carries the hiddenSeed/startYear/startTime EngineEventConfig reads.
-        val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(meta.contains("hiddenSeed"), "meta has hiddenSeed: $meta")
-        assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
-        assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
-        assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
-        assertTrue(
-            meta.contains("\"map\": \"han-world-v3\"") || meta.contains("\"map\":\"han-world-v3\""),
-            "meta has map=han-world-v3: $meta",
-        )
-        assertTrue(meta.contains("\"unitSet\": \"han\"") || meta.contains("\"unitSet\":\"han\""), "meta has unitSet=han: $meta")
-
-        // world_state.config carries entrance-gating values used by ServerBasicInfoController/FrontInfoController.
-        val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"npcmode\""), "config has npcmode: $config")
-        assertTrue(config.contains("\"block_general_create\""), "config has block_general_create: $config")
-        assertTrue(config.contains("\"show_img_level\""), "config has show_img_level: $config")
-        assertTrue(config.contains("\"extended_general\""), "config has extended_general: $config")
-        assertTrue(config.contains("\"refreshLimit\""), "config has refreshLimit: $config")
-        assertTrue(config.contains("\"fiction\""), "config has fiction: $config")
-        assertTrue(config.contains("\"map\""), "config has map block: $config")
-        assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
-        // Frozen SAMMO regression fixture declares its profile explicitly in newImporter().
-        assertTrue(config.contains("\"ruleProfile\": \"SAMMO\"") || config.contains("\"ruleProfile\":\"SAMMO\""), "config has ruleProfile: $config")
-        assertEquals(
-            "30000",
-            jdbc.queryForObject("SELECT env ->> 'refreshLimit' FROM ng_games", String::class.java),
-        )
-        // ng_games.env 는 game_env 미러 — 위 162행과 같은 근거(install.php:98 / ResetHelper.php:297).
-        assertEquals("1", jdbc.queryForObject("SELECT env ->> 'fiction' FROM ng_games", String::class.java))
     }
 
     @Test
@@ -904,6 +559,8 @@ class ScenarioImporterIT {
         assertTrue(meta.contains("\"serverId\""), "meta has active serverId: $meta")
         assertTrue(meta.contains("\"ngGameId\""), "meta has active ngGameId: $meta")
         assertTrue(meta.contains("\"map\": \"han\"") || meta.contains("\"map\":\"han\""), "meta has map=han: $meta")
+        // unitSet 을 생략한 시나리오도 han 병종표로 시드한다.
+        assertTrue(meta.contains("\"unitSet\": \"han\"") || meta.contains("\"unitSet\":\"han\""), "meta has unitSet=han: $meta")
 
         // world_state.config carries entrance-gating values used by ServerBasicInfoController/FrontInfoController.
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
@@ -915,6 +572,8 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"fiction\""), "config has fiction: $config")
         assertTrue(config.contains("\"map\""), "config has map block: $config")
         assertTrue(config.contains("\"ignoreDefaultEvents\": false") || config.contains("\"ignoreDefaultEvents\":false"))
+        // Frozen SAMMO regression fixture declares its profile explicitly in newImporterBlankMap().
+        assertTrue(config.contains("\"ruleProfile\": \"SAMMO\"") || config.contains("\"ruleProfile\":\"SAMMO\""), "config has ruleProfile: $config")
         assertEquals(
             "30000",
             jdbc.queryForObject("SELECT env ->> 'refreshLimit' FROM ng_games", String::class.java),
@@ -927,7 +586,7 @@ class ScenarioImporterIT {
     fun `importAll writes the inserted canonical world id to every imported world-owned relation`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
-        newImporter().importAll(jdbc, canonicalWorldId)
+        newProductImporter().importAll(jdbc, canonicalWorldId)
 
         val worldId = jdbc.queryForObject("SELECT id FROM world_state", Int::class.java)
         assertEquals(1, worldId, "a fresh schema starts with canonical world_state.id=1")
@@ -938,7 +597,7 @@ class ScenarioImporterIT {
     fun `importAll carries a non-one configured world id through every imported world-owned relation`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
-        newImporter().importAll(jdbc, WorldId(701))
+        newProductImporter().importAll(jdbc, WorldId(701))
 
         assertEquals(701, jdbc.queryForObject("SELECT id FROM world_state", Int::class.java))
         assertEquals(701L, jdbc.queryForObject("SELECT last_value FROM world_state_id_seq", Long::class.java))
@@ -949,12 +608,12 @@ class ScenarioImporterIT {
     @Test
     fun `direct importer reentry leaves no partial second world`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-        newImporter().importAll(jdbc, canonicalWorldId)
+        newProductImporter().importAll(jdbc, canonicalWorldId)
 
-        assertFailsWith<Exception> { newImporter().importAll(jdbc, canonicalWorldId) }
+        assertFailsWith<Exception> { newProductImporter().importAll(jdbc, canonicalWorldId) }
 
         assertEquals(listOf(1), jdbc.queryForList("SELECT id FROM world_state ORDER BY id", Int::class.java))
-        for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
+        for (table in WORLD_SCOPED_SEED_TABLES) {
             assertEquals(
                 0,
                 jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id <> 1", Int::class.java),
@@ -974,7 +633,7 @@ class ScenarioImporterIT {
                 executor.submit<Boolean> {
                     ready.countDown()
                     check(start.await(10, TimeUnit.SECONDS)) { "concurrent importer start barrier timed out" }
-                    runCatching { newImporter().importAll(jdbc, canonicalWorldId) }.isSuccess
+                    runCatching { newProductImporter().importAll(jdbc, canonicalWorldId) }.isSuccess
                 }
             }
             assertTrue(ready.await(10, TimeUnit.SECONDS), "both importer attempts must reach the start barrier")
@@ -983,7 +642,7 @@ class ScenarioImporterIT {
             val successfulAttempts = attempts.count { it.get(60, TimeUnit.SECONDS) }
             assertEquals(1, successfulAttempts, "exactly one direct import may be admitted")
             assertEquals(1, count("world_state"))
-            for (table in listOf("nation", "city", "general", "general_turn", "nation_turn")) {
+            for (table in WORLD_SCOPED_SEED_TABLES) {
                 assertEquals(
                     0,
                     jdbc.queryForObject("SELECT count(*) FROM $table WHERE world_id <> 1", Int::class.java),
@@ -999,7 +658,8 @@ class ScenarioImporterIT {
     fun `importAll excludes general_ex when extended_general is disabled`() {
         assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
 
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
+        // mapless 픽스처는 extended_general=true 일 때 229명을 시드한다(`importAll defaults a mapless ...`).
+        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_mapless_legacy.json"))
         val extendedName = scenario.generalEx.first().name
         val cities = mapCitiesOf(scenario)
         val counts = regressionImporter(
@@ -1758,85 +1418,9 @@ class ScenarioImporterIT {
             assertEquals(0, count(table), "$table must roll back after a mid-import failure")
         }
 
-        val retry = newImporter().importAll(jdbc, canonicalWorldId)
+        val retry = newProductImporter().importAll(jdbc, canonicalWorldId)
         assertEquals(1, retry.worldState)
         assertEquals(1, jdbc.queryForObject("SELECT id FROM world_state", Int::class.java))
-    }
-
-    @Test
-    fun `importAll seeds scenario_1030 (군웅할거, 21 nations) without error`() {
-        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-
-        // 빼섭 시나리오 일반성 게이트 — importer가 1010(2세력) 외 다세력 시나리오도 무에러 시드하는지.
-        val counts = newImporter1030().importAll(jdbc, canonicalWorldId)
-
-        assertEquals(1, counts.worldState)
-        assertEquals(21, counts.nation)            // 군웅할거 21세력
-        assertEquals(327, counts.general)
-        assertEquals(counts.general * 30, counts.generalTurn)
-        assertEquals(counts.general * 37, counts.rankData)
-        assertEquals(1, counts.ngGames)
-
-        assertEquals(21, count("nation"))
-        assertTrue(count("diplomacy") > 0, "diplomacy seeded for 21 nations")
-
-        // ── 도시 소유 정합 (보급-동결 버그 회귀 게이트) ──
-        // 소유를 시나리오 nation.cities로 배정한다(cities_1010.json baked nation_id가 아님). baked로는
-        // 국가 1·2만 소유 → 19국 무소유 → capital 보유인데 supplyCities 빔 → UpdateCitySupply 미시드 →
-        // doNPC구출발령의 RandUtil.choice(빈 보급도시) throw → 빼섭 턴데몬 크래시-루프 동결.
-        // (1) 실재 세력(level > 0)은 도시를 ≥1개 소유. level 0 = 방랑군은 정의상 무소유라 뺀다 —
-        // 1030 의 공주는 사료상 領有한 郡이 없어 방랑군으로 시드된다(`apply_han_world.py`).
-        val landlessNations = jdbc.queryForObject(
-            "SELECT count(*) FROM nation n WHERE n.level > 0 AND NOT EXISTS (SELECT 1 FROM city c WHERE c.nation_id = n.id)",
-            Int::class.java,
-        )
-        assertEquals(0, landlessNations, "방랑군이 아닌 1030 국가는 모두 도시를 소유해야 한다")
-        assertEquals(
-            1,
-            jdbc.queryForObject("SELECT count(*) FROM nation WHERE level = 0", Int::class.java),
-            "1030 방랑군은 공주 하나뿐이다",
-        )
-        // (2) 각 국가의 capital_city_id는 자국 소유 도시(UpdateCitySupply BFS가 capital을 seed할 수 있는 조건).
-        val miscapital = jdbc.queryForObject(
-            "SELECT count(*) FROM nation n JOIN city c ON c.id = n.capital_city_id WHERE c.nation_id <> n.id",
-            Int::class.java,
-        )
-        assertEquals(0, miscapital, "각 국가의 수도는 자국 소유 도시여야 한다")
-        // 모든 장수 불변식 유지(37 rank_data / 30 general_turn) — 다세력에서도.
-        val every37 = jdbc.queryForObject(
-            "SELECT min(c) = 37 AND max(c) = 37 FROM (SELECT count(*) c FROM rank_data GROUP BY general_id) s",
-            Boolean::class.java,
-        )
-        assertTrue(every37 == true, "every general has exactly 37 rank_data rows")
-        // world_state.meta startYear 191(군웅할거).
-        val meta = jdbc.queryForObject("SELECT meta::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(meta.contains("\"startYear\""), "meta has startYear: $meta")
-    }
-
-    @Test
-    fun `importAll seeds scenario_2 with the frozen Han V2 city catalog`() {
-        assumeTrue(dockerAvailable, "Docker unavailable — scenario-seed IT skipped (not failed)")
-
-        val counts = newImporter2().importAll(jdbc, canonicalWorldId)
-
-        assertEquals(1, counts.worldState)
-        assertEquals(0, counts.nation)
-        assertEquals(0, counts.general)
-        assertEquals(0, counts.generalTurn)
-        assertEquals(0, counts.rankData)
-        assertEquals(1, counts.ngGames)
-        assertEquals(774, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        assertEquals((1..774).toList(), jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
-
-        val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
-        assertEquals("장안", sso(city["name"]))
-        assertEquals(9, soi(city["level"]))
-        assertEquals(754800, soi(city["pop_max"]))
-        assertEquals(14000, soi(city["agri_max"]))
-        assertEquals(14800, soi(city["comm_max"]))
-
-        val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"han-world-v2\"") || config.contains("\"mapName\": \"han-world-v2\""), config)
     }
 
     @Test
@@ -1867,12 +1451,16 @@ class ScenarioImporterIT {
         jdbc.queryForObject("SELECT count(*) FROM $table", Int::class.java) ?: 0
 
     private fun assertImportedWorldOwnedRows(worldId: Int) {
+        // 휘하 시드는 장수 턴 큐를 비워 둔다(희소 큐) — general_turn 에는 어느 월드의 행도 없어야 한다.
+        // 대신 휘하만 쓰는 관계(위치·부곡)가 같은 월드 id 를 실어야 한다.
+        assertEquals(0, count("general_turn"), "HWIHA seed leaves the sparse general_turn queue empty")
         val importedRelations = listOf(
             "game_kv" to "\"table\" <> 'inheritance'",
             "nation" to "TRUE",
             "city" to "TRUE",
             "general" to "TRUE",
-            "general_turn" to "TRUE",
+            "general_spatial_position" to "TRUE",
+            "general_bugok" to "TRUE",
             "nation_turn" to "TRUE",
             "diplomacy" to "TRUE",
             "rank_data" to "TRUE",
@@ -1923,8 +1511,15 @@ class ScenarioImporterIT {
         fun ensureSeeded(jdbc: JdbcTemplate): Boolean {
             val worldCount = jdbc.queryForObject("SELECT count(*) FROM world_state", Int::class.java) ?: 0
             if (worldCount > 0) return false
-            newImporter().importAll(jdbc, canonicalWorldId)
+            newProductImporter().importAll(jdbc, canonicalWorldId)
             return true
         }
+    }
+
+    private companion object {
+        /** 거부된 재진입·동시 시드가 다른 월드 id 로 행을 남기면 안 되는 시드 관계. */
+        val WORLD_SCOPED_SEED_TABLES = listOf(
+            "nation", "city", "general", "general_turn", "nation_turn", "general_spatial_position", "general_bugok",
+        )
     }
 }

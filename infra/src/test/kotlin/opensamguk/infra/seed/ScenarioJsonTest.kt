@@ -6,6 +6,7 @@ import java.nio.file.Path
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
@@ -13,13 +14,18 @@ class ScenarioJsonTest {
 
     @Test
     fun `hwiha lord declarations are explicit unique and profile scoped`() {
-        val raw = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
+        val raw = readResource(LEGACY_FIXTURE).trimStart().removePrefix("{")
         val old = ScenarioJson.loadScenario("{" + raw)
-        val name = old.baseGenerals.first().name
+        // 시작 시점(181)에 활동 중인 base 장수여야 아래 지연·제외 거부가 그 조작 때문에 난다
+        // (첫 행 소제1은 168년생이라 원래부터 비활동이다).
+        val name = "우길"
+        assertEquals(1, old.baseGenerals.count { it.name == name })
         fun parse(declaration: String, format: String = "GENERAL_RETAINER_CAMPAIGN") =
             ScenarioJson.loadScenario("{\"worldFormat\":\"$format\",\"lords\":$declaration," + raw)
         val encoded = opensamguk.infra.persistence.MetaJson.encode(listOf(name))
         val declared = parse(encoded)
+        // 양성 대조: 선언 그대로면 계약을 통과한다.
+        ScenarioImporter(scenario = declared, cities = emptyList()).validateSeedContract()
         assertTrue(declared.generals.single { it.name == name }.lord == true)
         assertTrue(declared.generals.filter { it.name != name }.all { it.lord == false })
         assertTrue(old.generals.all { it.lord == false })
@@ -35,7 +41,7 @@ class ScenarioJsonTest {
         val duplicate = opensamguk.infra.persistence.MetaJson.decode("{" + raw).toMutableMap()
         duplicate["worldFormat"] = "GENERAL_RETAINER_CAMPAIGN"
         duplicate["lords"] = listOf(name)
-        duplicate["general_ex"] = listOf((duplicate["general"] as List<*>).first())
+        duplicate["general_ex"] = listOf((duplicate["general"] as List<*>).single { (it as List<*>)[1] == name })
         assertFailsWith<IllegalArgumentException> {
             ScenarioJson.loadScenario(opensamguk.infra.persistence.MetaJson.encode(duplicate))
         }
@@ -47,9 +53,9 @@ class ScenarioJsonTest {
             ScenarioImporter(scenario = deferred, cities = emptyList()).validateSeedContract()
         }
         assertTrue(deferredError.message!!.contains("declared HWIHA lord"))
-        val lord = declared.baseGenerals.first()
+        val lord = declared.baseGenerals.single { it.name == name }
         val excluded = declared.copy(
-            baseGenerals = declared.baseGenerals.drop(1),
+            baseGenerals = declared.baseGenerals - lord,
             generalEx = declared.generalEx + lord,
         )
         val excludedError = assertFailsWith<IllegalArgumentException> {
@@ -59,19 +65,10 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `scenario_1 uses the canonical Han world contract`() {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1.json"))
-
-        assertEquals("han-world-v2", scenario.map["mapName"])
-        assertEquals("han", scenario.map["unitSet"])
-        assertEquals(0, scenario.const["joinRuinedNPCProp"])
-    }
-
-    @Test
-    fun `ruleProfile is absent on committed scenarios and parses fail closed`() {
+    fun `ruleProfile omission is preserved and parses fail closed`() {
         // 누락은 fresh 시드에서 HWIHA로 해석하되, 파싱 모델에서는 누락 여부를 보존한다.
-        assertNull(ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json")).ruleProfile)
-        val base = readResource("scenario/scenario_1010.json").trimStart().removePrefix("{")
+        assertNull(ScenarioJson.loadScenario(readResource(LEGACY_FIXTURE)).ruleProfile)
+        val base = readResource(LEGACY_FIXTURE).trimStart().removePrefix("{")
         assertEquals(
             opensamguk.logic.input.RuleProfile.HWIHA,
             ScenarioJson.loadScenario("{\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"," + base).ruleProfile,
@@ -88,7 +85,8 @@ class ScenarioJsonTest {
                 .filter { it.matches(Regex("scenario_\\d+\\.json")) }
                 .toList()
         }
-        assertTrue(codes.size >= 32)
+        // 목록이 살아 있는지는 개수 하한 대신 남을 런타임 시나리오로 확인한다 — 은퇴 파일이 빠져도 성립한다.
+        assertTrue(codes.containsAll(RUNTIME_SCENARIO_CODES.map { "scenario_$it.json" }), "$codes")
         for (file in codes) {
             val scenario = ScenarioJson.loadScenario(readResource("scenario/$file"))
             val importer = ScenarioImporter(scenario, emptyList(), scenarioCode = file.removeSuffix(".json"))
@@ -98,33 +96,32 @@ class ScenarioJsonTest {
                 importer.validateFreshProfile()
             }
         }
+        // 거부 쪽 갈래는 런타임 목록과 무관하게 구 시나리오 픽스처로 늘 잰다.
+        val legacy = ScenarioJson.loadScenario(readResource(LEGACY_FIXTURE))
+        assertNull(legacy.ruleProfile)
+        assertFailsWith<IllegalArgumentException>(LEGACY_FIXTURE) {
+            ScenarioImporter(legacy, emptyList(), scenarioCode = "scenario_mapless_legacy").validateFreshProfile()
+        }
     }
 
+    /**
+     * 배포(`.github/workflows/deploy.yml` 「Validate materialized scenario seed contracts」)가 RTK14 보강 직후
+     * 이 테스트를 **이름으로** 돌린다. 이름을 바꾸면 deploy.yml 도 같이 바꾼다.
+     *
+     * 대상은 운영 카탈로그가 고를 수 있는 제품 시나리오다(`ScenarioCatalogService` 의 활성 목록).
+     * 휘하 190(`scenario_3190`)은 RTK14 보강이 행을 덧붙이는 파일이라 여기 넣지 않는다 — 커밋본의
+     * 계약은 `Scenario3190SeedTest` 가 잰다.
+     */
     @Test
-    fun `scenario_2 uses the canonical Han world contract`() {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_2.json"))
-
-        assertEquals("han-world-v2", scenario.map["mapName"])
-        assertEquals("han", scenario.map["unitSet"])
-    }
-
-    @Test
-    fun `committed runtime scenarios preserve frozen V2 and opt into new-world-only V3 explicitly`() {
-        val frozenV2Codes = setOf(
-            "0", "1", "2", "900", "901", "902", "903", "905", "906", "908",
-            "910", "911", "912", "913", "914",
-        )
-        val newWorldV3Codes = setOf(
-            "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
-            "1060", "1070", "1080", "1090", "1100", "1110", "1120",
-            "9200",
-        )
-
-        for (code in frozenV2Codes + newWorldV3Codes) {
+    fun `product runtime scenario declares the HWIHA new world and satisfies its seed contract`() {
+        for (code in listOf("990002")) {
             val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_$code.json"))
-            val expectedMap = if (code in newWorldV3Codes) "han-world-v3" else "han-world-v2"
-            assertEquals(expectedMap, scenario.map["mapName"], "scenario_$code mapName")
-            assertEquals("han", scenario.map["unitSet"], "scenario_$code unitSet")
+            assertEquals(opensamguk.logic.input.RuleProfile.HWIHA, scenario.ruleProfile, "scenario_$code worldFormat")
+            assertEquals("han-world-v3", scenario.map["mapName"], "scenario_$code mapName")
+            // unitSet 생략은 importer 가 han 으로 채운다(ScenarioImporter.scenarioMapConfig).
+            assertTrue(scenario.map["unitSet"] in setOf(null, "han"), "scenario_$code unitSet")
+            assertNotNull(scenario.seedContract, "scenario_$code seedContract")
+            ScenarioImporter(scenario, emptyList(), scenarioCode = "scenario_$code").validateFreshProfile()
             ScenarioImporter(
                 scenario = scenario,
                 cities = emptyList(),
@@ -138,26 +135,6 @@ class ScenarioJsonTest {
                 extendedGeneral = true,
             ).validateSeedContract()
         }
-    }
-
-    @Test
-    fun `scenario 9200 pins Chang-an and Luoyang to stable V3 city ids`() {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_9200.json"))
-
-        assertEquals("han-world-v3", scenario.map["mapName"])
-        assertEquals(listOf("46"), scenario.nations.single { it.name == "동탁" }.cities)
-        assertEquals(listOf("1"), scenario.nations.single { it.name == "원소" }.cities)
-        assertEquals("46", scenario.generals.single { it.name == "동탁" }.locatedCity)
-        assertEquals("1", scenario.generals.single { it.name == "원소" }.locatedCity)
-    }
-
-    @Test
-    fun `scenario_1010 keeps the full source roster plus the explicit emperor`() {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
-
-        assertEquals(679, scenario.generals.size)
-        assertEquals(setOf("유굉"), scenario.imperialGeneralNames)
-        assertEquals(7, scenario.generals.single { it.name == "유굉" }.npcType)
     }
 
     @Test
@@ -261,30 +238,6 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `all Han scenarios satisfy both committed active roster contracts`() {
-        val codes = listOf(
-            "1010", "1020", "1021", "1030", "1031", "1040", "1041", "1050",
-            "1060", "1070", "1080", "1090", "1100", "1110", "1120",
-        )
-
-        for (code in codes) {
-            val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_$code.json"))
-            ScenarioImporter(
-                scenario = scenario,
-                cities = emptyList(),
-                scenarioCode = "scenario_$code",
-                extendedGeneral = false,
-            ).validateSeedContract()
-            ScenarioImporter(
-                scenario = scenario,
-                cities = emptyList(),
-                scenarioCode = "scenario_$code",
-                extendedGeneral = true,
-            ).validateSeedContract()
-        }
-    }
-
-    @Test
     fun `enriched roster retains every RTK14 source officer when legacy extensions are disabled`() {
         fun sourceTuple(officerNumber: Int) =
             "[0,\"RTK$officerNumber\",null,0,null,1,1,1,0,180,240,null,null,null,50,50,200,$officerNumber,\"남\",60,41,5,\"유가\",false,false]"
@@ -312,7 +265,7 @@ class ScenarioJsonTest {
 
     @Test
     fun `scenario event tuples and initial events retain wire order`() {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_1010.json"))
+        val scenario = ScenarioJson.loadScenario(readResource(LEGACY_FIXTURE))
 
         assertEquals(false, scenario.ignoreDefaultEvents)
         assertEquals(1, scenario.events.size)
@@ -324,22 +277,30 @@ class ScenarioJsonTest {
     }
 
     @Test
-    fun `scenario 911 and 912 load their event rows`() {
-        val scenario911 = ScenarioJson.loadScenario(readResource("scenario/scenario_911.json"))
-        val scenario912 = ScenarioJson.loadScenario(readResource("scenario/scenario_912.json"))
-
-        assertEquals(5, scenario911.events.size)
-        assertEquals(9, scenario912.events.size)
-        assertEquals(false, scenario911.ignoreDefaultEvents)
-        assertEquals(false, scenario912.ignoreDefaultEvents)
-    }
-
-    @Test
-    fun `scenario 910 honors ignoreDefaultEvents`() {
-        val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_910.json"))
+    fun `scenario honors ignoreDefaultEvents`() {
+        val scenario = ScenarioJson.loadScenario(
+            """
+            {
+              "title": "own events",
+              "startYear": 181,
+              "map": {"mapName": "che"},
+              "const": {},
+              "ignoreDefaultEvents": true,
+              "nation": [],
+              "general": [],
+              "general_ex": [],
+              "diplomacy": [],
+              "events": [
+                ["Month", 1000, true, ["DeleteEvent"]],
+                ["Month", 999, ["Date", ">=", 182, 1], ["BlockScoutAction"], ["DeleteEvent"]]
+              ]
+            }
+            """.trimIndent(),
+        )
 
         assertEquals(true, scenario.ignoreDefaultEvents)
-        assertEquals(19, scenario.events.size)
+        assertEquals(2, scenario.events.size)
+        assertEquals(listOf(1000, 999), scenario.events.map { it.priority })
         assertEquals(0, scenario.initialEvents.size)
     }
 
@@ -591,5 +552,13 @@ class ScenarioJsonTest {
         val stream = javaClass.classLoader.getResourceAsStream(path)
             ?: error("resource not found: $path")
         return stream.use { it.readBytes().toString(StandardCharsets.UTF_8) }
+    }
+
+    private companion object {
+        /** 은퇴 파일이 클래스패스를 떠난 뒤에도 `src/main/resources/scenario` 에 남는 런타임 시나리오. */
+        val RUNTIME_SCENARIO_CODES = listOf("990002", "3190")
+
+        /** 프로필·mapName 을 선언하지 않은 구(삼모) 시나리오 — `src/test/resources` 의 1010 사본. */
+        const val LEGACY_FIXTURE = "scenario/scenario_mapless_legacy.json"
     }
 }
