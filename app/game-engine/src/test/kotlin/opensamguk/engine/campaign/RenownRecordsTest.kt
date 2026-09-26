@@ -10,6 +10,12 @@ import opensamguk.logic.renown.RenownEntry
 import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
@@ -77,8 +83,18 @@ class RenownRecordsTest {
         val announced = world.peekLogs().single { it.eventKind == RecordKind.YUEDAN_ANNOUNCED }
         assertEquals("global", announced.scope); assertNull(announced.generalId)
         assertEquals(listOf(2, 1), (announced.meta!![RecordKind.REFS_META_KEY] as Map<*, *>)["top"])
+        val events = world.consumeDirtyState().gameEvents
+        assertEquals(listOf(EventKind.YUEDAN_ASSESSED, EventKind.YUEDAN_ANNOUNCED), events.map { it.kind })
+        assertEquals(AudienceTarget.Self(1), events[0].audience)
+        assertEquals(EventFact.Amount(30), events[0].facts[FactRole.RENOWN_BEFORE])
+        assertEquals(EventFact.Amount(29), events[0].facts[FactRole.RENOWN_AFTER])
+        assertEquals(EventFact.Change(-1), events[0].facts[FactRole.RENOWN_CHANGE])
+        assertEquals(AudienceTarget.Public, events[1].audience)
+        assertTrue(events[1].refs.isEmpty(), "공개 발표에는 개인 순위와 원인을 싣지 않는다")
+        assertTrue(events[1].facts.isEmpty())
         // 같은 달 두 번은 막힌다.
         assertTrue(MonthlyAssessment(world, recorder, curve).assess(200, 2)!!.alreadyStamped)
+        assertTrue(world.consumeDirtyState().gameEvents.isEmpty())
     }
 
     @Test fun `이탈 판정은 배신이 아니다 - 명망 사건도 배신 사유도 없고 이탈 기록만 남는다`() {
@@ -152,6 +168,15 @@ class RenownRecordsTest {
             "패전(조우)은 패전(縣 상실)과 같은 종류라 같은 달엔 한 건이다")
         assertEquals(1, entries(world, 2).size)
         assertEquals(2, world.peekLogs().count { it.eventKind == RecordKind.RENOWN_EVENT }, "새로 쌓인 사건만 본인에게 알린다")
+        val public = world.consumeDirtyState().gameEvents.single()
+        assertEquals(EventKind.OWNER_CHANGED, public.kind)
+        assertEquals(AudienceTarget.Public, public.audience)
+        assertEquals(mapOf(
+            RefRole.CITY to EventRef.City(10),
+            RefRole.FROM_NATION to EventRef.Nation(1),
+            RefRole.TO_NATION to EventRef.Nation(2),
+        ), public.refs)
+        assertTrue(public.facts.isEmpty(), "점령자의 전공은 공개 사건에 싣지 않는다")
     }
 
     @Test fun `월세입 기록은 세력 내부 요약으로만 남는다`() {
