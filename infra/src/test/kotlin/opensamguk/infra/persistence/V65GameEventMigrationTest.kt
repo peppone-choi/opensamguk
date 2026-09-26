@@ -84,6 +84,8 @@ class V65GameEventMigrationTest {
             )
             assertTrue(eventWriter.insert(event))
             assertTrue(!eventWriter.insert(event))
+            // A restart may bootstrap the next ordinal from committed rows before replaying the same event key.
+            assertTrue(!eventWriter.insert(event.copy(occurredAt = OccurredAt(200, 2, 3, 13))))
             assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 1 AND event_key = ?",
                 Int::class.java, event.eventKey.value))
             assertFailsWith<IllegalStateException> {

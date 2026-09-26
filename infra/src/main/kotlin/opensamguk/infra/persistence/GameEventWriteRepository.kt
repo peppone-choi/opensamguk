@@ -5,7 +5,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /** Inserts only validated events. The caller owns the turn flush transaction. */
 class GameEventWriteRepository(private val jdbc: NamedParameterJdbcTemplate) {
-    /** True for a new row, false for an identical retry. A reused key with changed data fails closed. */
+    /** True for a new row, false for a semantic retry. A reused key with changed data fails closed. */
     fun insert(event: GameEvent): Boolean {
         val row = GameEventRow.from(event)
         val params = mapOf(
@@ -49,7 +49,7 @@ class GameEventWriteRepository(private val jdbc: NamedParameterJdbcTemplate) {
                      AND audience_nation_id IS NOT DISTINCT FROM :audience_nation_id
                      AND recipient_general_ids IS NOT DISTINCT FROM CAST(:recipient_general_ids AS integer[])
                      AND occurred_year = :occurred_year AND occurred_month = :occurred_month
-                     AND occurred_phase = :occurred_phase AND occurred_ordinal = :occurred_ordinal
+                     AND occurred_phase = :occurred_phase
                      AND refs = CAST(:refs AS jsonb) AND facts = CAST(:facts AS jsonb)
                      AND publication_state = :publication_state
                      AND publish_after_year IS NULL AND publish_after_month IS NULL AND publish_after_phase IS NULL

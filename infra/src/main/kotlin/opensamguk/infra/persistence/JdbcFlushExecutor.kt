@@ -48,6 +48,7 @@ open class JdbcFlushExecutor(
     private val jdbc: NamedParameterJdbcTemplate,
     private val transactionTemplate: TransactionTemplate,
 ) {
+    private val gameEventWriter = GameEventWriteRepository(jdbc)
     /** Records the op sequence of the most recent [flush] (instrumentation for the IT). */
     private val lastOps = mutableListOf<FlushExecOp>()
 
@@ -60,6 +61,9 @@ open class JdbcFlushExecutor(
             lastOps.clear()
             check(payload.worldStateUpdate["id"] == payload.worldId.value) {
                 "FlushPayload worldStateUpdate.id must equal worldId=${payload.worldId.value}"
+            }
+            check(payload.gameEvents.all { it.worldId == payload.worldId.value }) {
+                "FlushPayload gameEvents must belong to worldId=${payload.worldId.value}"
             }
 
             val (preArchiveLogs, regularLogs) = payload.logEntries.partition { it.flushBeforeArchive }
@@ -307,6 +311,10 @@ open class JdbcFlushExecutor(
             // 9. log_entry createMany.
             if (!isUnificationFlush && regularLogs.isNotEmpty()) {
                 logEntryCreateMany(payload.worldId, regularLogs)
+            }
+            if (payload.gameEvents.isNotEmpty()) {
+                val inserted = payload.gameEvents.count { gameEventWriter.insert(it) }
+                if (inserted > 0) lastOps.add(FlushExecOp("game_event", FlushVerb.CREATE_MANY, inserted))
             }
 
             // 10. KV writes (nation_env int-ns + game_kv string-ns, delete-on-null) + reserved_turns
@@ -3085,6 +3093,8 @@ data class FlushPayload(
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
+    /** Canonical structured events share the world-state flush transaction. */
+    val gameEvents: List<opensamguk.logic.record.GameEvent> = emptyList(),
 )
 
 data class GeneralTurnPullRow(

@@ -4,11 +4,21 @@ import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.GameEvent
+import opensamguk.logic.record.OccurredAt
+import opensamguk.logic.record.Publication
+import opensamguk.logic.record.PublicationState
+import opensamguk.logic.record.RefRole
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -39,6 +49,35 @@ class JdbcFlushExecutorIT {
     private lateinit var dataSource: DataSource
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
+
+    @Test
+    fun `typed event shares the world flush transaction and retry is idempotent`() {
+        val event = GameEvent(
+            worldId = 1,
+            kind = EventKind.PERSONAL_APPLIED,
+            occurredAt = OccurredAt(190, 1, 1, 777),
+            audience = AudienceTarget.Self(10),
+            publication = Publication(PublicationState.PRIVATE),
+            eventKey = EventKey.derive("flush", "personal", "777"),
+            refs = mapOf(RefRole.ACTOR to EventRef.General(10)),
+        )
+        val payload = testFlushPayload(WorldId(1), mapOf("id" to 1, "current_year" to 190,
+            "current_month" to 1, "current_phase" to 1)).copy(gameEvents = listOf(event))
+        executor.flush(payload)
+        executor.flush(payload)
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT count(*) FROM game_event WHERE world_id = 1 AND event_key = :key",
+            mapOf("key" to event.eventKey.value), Int::class.java))
+        assertFailsWith<DataAccessException> {
+            executor.flush(payload.copy(
+                worldStateUpdate = mapOf("id" to 1, "current_year" to 190, "current_month" to 1,
+                    "current_phase" to 2),
+                gameEvents = listOf(event.copy(eventKey = EventKey.derive("flush", "collision", "777"))),
+            ))
+        }
+        assertEquals(1, jdbc.queryForObject("SELECT current_phase FROM world_state WHERE id = 1",
+            MapSqlParameterSource(), Int::class.java), "the failed event insert rolls back the world clock")
+    }
 
     @BeforeAll
     fun setUp() {
