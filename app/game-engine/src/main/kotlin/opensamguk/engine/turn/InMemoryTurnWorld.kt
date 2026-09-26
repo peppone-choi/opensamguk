@@ -640,6 +640,10 @@ class InMemoryTurnWorld(
             check(existing.kind == kind && existing.audience == audience && existing.refs == refs && existing.facts == facts) {
                 "game event key reused with changed payload"
             }
+            // A flush may have drained the buffer before its transaction failed. Requeueing
+            // the same semantic event is safe after a successful flush too: the DB key is
+            // idempotent, and no new ordinal is consumed here.
+            if (existing !in gameEvents) gameEvents.add(existing)
             return existing
         }
         val allocator = eventOrdinalAllocator ?: EventOrdinalAllocator(turn, lastCommittedEventOrdinal(turn)).also {
