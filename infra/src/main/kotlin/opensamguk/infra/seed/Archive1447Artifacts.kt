@@ -1,0 +1,67 @@
+package opensamguk.infra.seed
+
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import opensamguk.logic.world.WorldMapVariant
+import java.nio.file.Files
+import java.nio.file.Path
+import java.security.MessageDigest
+import java.util.zip.GZIPInputStream
+
+/** Immutable release inputs; never falls back to mutable current-world files. */
+internal object Archive1447Artifacts {
+    private const val CATALOG_SHA256 = "e682d047310250d305c96b48a1a27c18ca634ba1e2d924d886a1a4202c87ba12"
+    private val ownershipPaths = setOf(
+        "data/map/han-scenario-province-ownership-v1.json",
+        "data/map/han-scenario-jurisdiction-conflict-allowlist-v1.json",
+        "data/map/han-commandery-supply-links-v1.json",
+        "data/curated/han/territory-disconnection-adjudications-v1.json",
+        "data/curated/han/supply-disconnection-adjudications-v3.json",
+    )
+    private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
+        .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
+
+    fun load(root: Path): ResolvedWorldArtifacts = loadPinned(
+        root, WorldMapVariant.V3_1447, "han-world-v3-1447-artifacts-v1", CATALOG_SHA256)
+
+    internal fun loadPinned(root: Path, variant: WorldMapVariant, directoryName: String,
+                            catalogSha256: String): ResolvedWorldArtifacts {
+        val directory = root.resolve("data/map/$directoryName")
+        val catalogPath = directory.resolve("catalog.json")
+        RepositoryInputTrace.file(catalogPath)
+        val raw = Files.readAllBytes(catalogPath)
+        require(sha(raw) == catalogSha256) { "${variant.artifactId} release catalog hash mismatch" }
+        val catalog = mapper.readTree(raw)
+        require(catalog.path("schemaVersion").asInt() == 1 &&
+            catalog.path("artifactId").asText() == variant.artifactId &&
+            catalog.path("logicalMapName").asText() == "han-world-v3" &&
+            catalog.path("cityCount").asInt() == variant.cityCount) { "1447 release identity mismatch" }
+        val entries = catalog.path("files").toList()
+        val paths = StrategicTopologyJson.artifactPaths() + ownershipPaths +
+            (if (variant == WorldMapVariant.V3_1447_MAP4) setOf("data/map/han-land-roads-v1.json") else emptySet())
+        require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
+            "1447 release artifact path set mismatch"
+        }
+        val bytes = entries.associate { entry ->
+            val hash = entry.path("sha256").asText()
+            require(hash.matches(Regex("[a-f0-9]{64}")))
+            val blob = "blobs/$hash.json.gz"
+            require(entry.path("blob").asText() == blob)
+            val blobPath = directory.resolve(blob)
+            RepositoryInputTrace.file(blobPath)
+            val compressed = Files.readAllBytes(blobPath)
+            require(sha(compressed) == entry.path("compressedSha256").asText()) { "1447 compressed artifact hash mismatch" }
+            val length = entry.path("bytes").asInt()
+            require(length in 1..30_000_000)
+            val data = GZIPInputStream(compressed.inputStream()).use { it.readNBytes(length + 1) }
+            require(data.size == length && sha(data) == hash) { "1447 artifact hash/length mismatch" }
+            entry.path("path").asText() to data
+        }
+        val projection = StrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
+        return ResolvedWorldArtifacts(variant, projection, bytes)
+    }
+
+    private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)
+        .joinToString("") { "%02x".format(it) }
+}

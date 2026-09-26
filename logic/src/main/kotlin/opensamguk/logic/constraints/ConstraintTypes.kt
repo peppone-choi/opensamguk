@@ -34,15 +34,15 @@ data class ConstraintContext(
     val args: Map<String, Any?> = emptyMap(),
     val env: Map<String, Any?> = emptyMap(),
     val mode: ConstraintMode,
-    val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
+    val worldMapVariant: opensamguk.logic.world.WorldMapVariant? = null,
 ) {
     fun selectedCityConst(): opensamguk.logic.world.CityConstVariant? {
         val mapName = if ("mapName" !in env) opensamguk.logic.world.CityConstRegistry.DEFAULT_MAP_NAME
             else env["mapName"] as? String ?: return null
         return if (mapName == "han-world-v3") {
-            hanWorldVariant?.let(opensamguk.logic.world.CityConstRegistry::hanWorld)
+            worldMapVariant?.let(opensamguk.logic.world.CityConstRegistry::hanWorld)
         } else {
-            if (hanWorldVariant != null) null else opensamguk.logic.world.CityConstRegistry.find(mapName)
+            if (worldMapVariant != null) null else opensamguk.logic.world.CityConstRegistry.find(mapName)
         }
     }
 }

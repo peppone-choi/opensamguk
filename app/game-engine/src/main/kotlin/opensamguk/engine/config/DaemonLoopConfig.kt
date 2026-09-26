@@ -16,8 +16,6 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.run.LiveRemainNationEnv
 import opensamguk.engine.status.DaemonPauseGate
 import opensamguk.engine.status.DurableGameLock
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.EngineGeneralActionPipelineBuilder
@@ -254,7 +252,7 @@ class DaemonLoopConfig {
             ?: 0
         val activeMapName = ActiveWorldMap.requireName(state.config, state.meta)
         val supplyArtifacts = if (activeMapName == "han-world-v3") {
-            opensamguk.infra.seed.HanWorldArtifactsResolver().artifacts(requireNotNull(state.hanWorldVariant))
+            opensamguk.infra.seed.WorldArtifactsResolver().artifacts(requireNotNull(state.worldMapVariant))
         } else null
         val spatialSupplyNetworkProvider = createSpatialSupplyNetworkProvider(
             activeMapName = activeMapName,
@@ -580,18 +578,6 @@ class DaemonLoopConfig {
                 opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
                     artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
             } else null,
-            tournamentDaemon = TournamentDaemon(
-                gameKvRepository = gameKvRepository,
-                bettingFactory = { liveWorld, liveRecorder ->
-                    ProductionTournamentBettingPort(
-                        world = liveWorld,
-                        recorder = liveRecorder,
-                        gameKvRepository = gameKvRepository,
-                        bettingRepository = bettingRepository,
-                        inheritanceRepository = inheritanceRepository,
-                    )
-                },
-            ),
         )
     }
 

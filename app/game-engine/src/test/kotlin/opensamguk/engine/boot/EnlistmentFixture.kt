@@ -4,15 +4,15 @@ import java.nio.file.Path
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.logic.world.WorldMapVariant
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /** Synthetic people on the actual archived map; shared only by database boundary tests. */
 internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flush: JdbcFlushExecutor) {
-    private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
-    private val bundle by lazy { artifacts.artifacts(HanWorldVariant.V3_1133) }
+    private val artifacts = WorldArtifactsResolver(Path.of("../.."))
+    private val bundle by lazy { artifacts.artifacts(WorldMapVariant.V3_1133) }
     fun seed(id: Int) {
         jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config,meta)
             VALUES (?, 'enlistment-storage-test',200,1,3600,
@@ -41,7 +41,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
     }
     fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)), WorldId(id),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-        hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+        mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
         administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()

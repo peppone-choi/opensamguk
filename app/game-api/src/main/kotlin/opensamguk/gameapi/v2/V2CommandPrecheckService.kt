@@ -3,7 +3,7 @@ package opensamguk.gameapi.v2
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
 import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.StrategicTopologyJson
 import opensamguk.logic.constraints.RequirementKey
 import opensamguk.logic.domain.City
 import opensamguk.logic.command.CityTransportArgs
@@ -16,8 +16,8 @@ import opensamguk.logic.command.GarrisonRecruitDecision
 import opensamguk.logic.command.decideCityTransport
 import opensamguk.logic.command.decideGarrisonRecruit
 import opensamguk.logic.command.resolveImmediateCityTransportRoute
-import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
+import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.ResolvedStrategicPath
 import opensamguk.logic.world.StrategicPathResult
 import opensamguk.logic.world.CalcCityDistance
@@ -36,7 +36,7 @@ class V2CommandPrecheckService(
     private val states: PrecheckStateViewFactory,
     private val jdbc: NamedParameterJdbcTemplate,
     processWorld: GameApiProcessWorld,
-    private val loadTopology: (() -> HanStrategicRouteProjection)?,
+    private val loadTopology: (() -> StrategicRouteProjection)?,
 ) {
     @Autowired
     constructor(states: PrecheckStateViewFactory, jdbc: NamedParameterJdbcTemplate, processWorld: GameApiProcessWorld) :
@@ -119,9 +119,9 @@ class V2CommandPrecheckService(
         val from = state?.view?.get(RequirementKey.City(args.fromCityId)) as? City
         val to = state?.view?.get(RequirementKey.City(args.toCityId)) as? City
         val mapName = state?.env?.get("mapName") as? String
-        val strategic = mapName == HAN_WORLD_V3_MAP_NAME
+        val strategic = mapName == WORLD_ARCHIVE_MAP_NAME
         val route = if (strategic) resolveImmediateCityTransportRoute(args) {
-            loadTopology?.invoke() ?: historicalArtifacts.artifacts(requireNotNull(state?.hanWorldVariant)).projection
+            loadTopology?.invoke() ?: historicalArtifacts.artifacts(requireNotNull(state?.worldMapVariant)).projection
         } else null
         val path = (route as? StrategicPathResult.Resolved)?.path
         val decisionArgs = if (preview && path != null) args.copy(
@@ -157,6 +157,6 @@ class V2CommandPrecheckService(
         .firstOrNull() ?: Ledger(0, 0, 0)
 
     private data class Ledger(val gold: Long, val rice: Long, val garrison: Int)
-    private companion object { val historicalArtifacts = opensamguk.infra.seed.HanWorldArtifactsResolver() }
+    private companion object { val historicalArtifacts = opensamguk.infra.seed.WorldArtifactsResolver() }
 
 }

@@ -97,21 +97,21 @@ class IntakeResultChannelTest {
         val results = dispatcher(world, recorder).dispatchEnvelopes(
             listOf(
                 // 성공 인테이크 — 장수 10 존재 → ok=true.
-                envelope("req-a", TurnDaemonCommand.TournamentEnroll(requestId = "req-a", generalId = 10, value = 1)),
+                envelope("req-a", TurnDaemonCommand.SetBlockScout(requestId = "req-a", generalId = 10, value = true)),
                 // 컨트롤 커맨드 — dispatch가 null을 돌려주므로 결과 쌍이 만들어지지 않는다.
                 envelope("req-ctl", TurnDaemonCommand.Run(reason = RunReason.POKE)),
                 // deny 인테이크 — 장수 99 부재 → ok=false + 사유. deny도 회신 대상이다.
-                envelope("req-b", TurnDaemonCommand.TournamentEnroll(requestId = "req-b", generalId = 99, value = 1)),
+                envelope("req-b", TurnDaemonCommand.SetBlockScout(requestId = "req-b", generalId = 99, value = true)),
             ),
         )
 
         assertEquals(listOf("req-a", "req-b"), results.map { it.first }, "컨트롤 커맨드는 건너뛰고 순서 보존")
         val okResult = results[0].second as NationSettingResult
         assertTrue(okResult.ok)
-        assertEquals("tournamentEnroll", okResult.type)
+        assertEquals("setBlockScout", okResult.type)
         val denyResult = results[1].second as NationSettingResult
         assertFalse(denyResult.ok)
-        assertEquals("장수가 존재하지 않습니다.", denyResult.reason)
+        assertEquals("권한이 부족합니다.", denyResult.reason)
     }
 
     @Test
@@ -119,11 +119,11 @@ class IntakeResultChannelTest {
         val malformed = TurnDaemonCommandEnvelope(
             requestId = "req-malformed",
             sentAt = "not-an-instant",
-            command = TurnDaemonCommand.TournamentEnroll(requestId = "req-malformed", generalId = 10, value = 1),
+            command = TurnDaemonCommand.SetBlockScout(requestId = "req-malformed", generalId = 10, value = true),
         )
         val valid = envelope(
             "req-valid",
-            TurnDaemonCommand.TournamentEnroll(requestId = "req-valid", generalId = 99, value = 1),
+            TurnDaemonCommand.SetBlockScout(requestId = "req-valid", generalId = 99, value = true),
         )
 
         val results = dispatcher(world(), ChangeRecorder()).dispatchEnvelopes(listOf(malformed, valid))
@@ -132,7 +132,7 @@ class IntakeResultChannelTest {
         val malformedResult = assertIs<CommandLifecycleResult>(results[0].second)
         assertFalse(malformedResult.ok)
         assertEquals("COMMAND_SENT_AT_INVALID", malformedResult.code)
-        assertEquals("tournamentEnroll", malformedResult.actionCode)
+        assertEquals("setBlockScout", malformedResult.actionCode)
         assertFalse(results[1].second.ok)
     }
 
@@ -151,7 +151,7 @@ class IntakeResultChannelTest {
                 requestId = "req-a",
                 sentAt = "0200-01-01T01:00:00Z",
                 event = TurnDaemonEvent.CommandResult(
-                    NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1),
+                    NationSettingResult(type = "setBlockScout", ok = true, generalId = 10, nationId = 1),
                 ),
                 committedWorldVersion = 12,
             ),
@@ -174,7 +174,7 @@ class IntakeResultChannelTest {
         assertEquals(12L, decoded.committedWorldVersion)
         val inner = (decoded.event as TurnDaemonEvent.CommandResult).result as NationSettingResult
         assertTrue(inner.ok)
-        assertEquals("tournamentEnroll", inner.type)
+        assertEquals("setBlockScout", inner.type)
         assertEquals(10, inner.generalId)
     }
 

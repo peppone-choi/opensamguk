@@ -4,15 +4,15 @@ import opensamguk.logic.input.*
 
 
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import kotlin.test.*
 
 class ScoutTest {
     private val hash = "c".repeat(64)
-    private val index = HanCommanderyIndex(hash,
-        (0..3).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
+    private val index = CommanderyIndex(hash,
+        (0..3).map { Commandery(it, "PARENT-$it", "군$it", "郡$it") },
         mapOf("p0" to 0, "p1" to 1, "p2" to 2, "p3" to 3), setOf(0 to 1, 1 to 2))
     private val rules = VisionRules.CANON
     private fun land(id: String) = StrategicNodeRef.LandProvince(id)

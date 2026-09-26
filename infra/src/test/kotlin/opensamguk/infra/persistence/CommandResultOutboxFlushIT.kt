@@ -97,7 +97,7 @@ class CommandResultOutboxFlushIT {
             MapSqlParameterSource(),
         )
         assertEquals("APPLIED", result["terminal_status"])
-        assertEquals("tournamentEnroll", result["result_type"])
+        assertEquals("setBlockWar", result["result_type"])
         assertEquals(true, result["ok"])
         assertEquals(2L, result["committed_world_version"])
         assertTrue(result["payload"].toString().contains("\"requestId\": \"req-ok\""))
@@ -518,7 +518,7 @@ class CommandResultOutboxFlushIT {
         committedWorldVersion: Long,
         payloadSchemaVersion: Int = 1,
         resultSeq: Int = 1,
-        resultType: String = "tournamentEnroll",
+        resultType: String = "setBlockWar",
         ok: Boolean = true,
         terminalizeInbox: Boolean = true,
     ): CommandResultRow =

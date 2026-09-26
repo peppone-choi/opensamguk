@@ -58,9 +58,6 @@ object CommandWireMapper {
         "setSecretLimit",
         "setBlockWar",
         "setBlockScout",
-        "tournamentEnroll",
-        "tournamentStart",
-        "tournamentReset",
         "inheritResetTurnTime",
         "inheritResetSpecialWar",
         "inheritSetNextSpecialWar",
@@ -254,18 +251,6 @@ object CommandWireMapper {
             )
             "setBlockScout" -> TurnDaemonCommand.SetBlockScout(
                 requestId = requestId, generalId = generalId, value = args.bool("value") ?: false,
-            )
-            "tournamentEnroll" -> TurnDaemonCommand.TournamentEnroll(
-                requestId = requestId, generalId = generalId, value = args.int("value") ?: 1,
-            )
-            "tournamentStart" -> TurnDaemonCommand.TournamentStart(
-                requestId = requestId,
-                generalId = generalId,
-                tournamentType = args.int("type") ?: args.int("tournamentType") ?: args.int("tnmtType") ?: 0,
-            )
-            "tournamentReset" -> TurnDaemonCommand.TournamentReset(
-                requestId = requestId,
-                generalId = generalId,
             )
             "inheritResetTurnTime" -> TurnDaemonCommand.InheritResetTurnTime(
                 requestId = requestId, generalId = generalId,

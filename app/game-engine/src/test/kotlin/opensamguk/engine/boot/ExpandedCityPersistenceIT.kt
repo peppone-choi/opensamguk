@@ -9,9 +9,9 @@ import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.gameapi.read.LiveCityOwnership
 import opensamguk.gameapi.read.MapAdministrativeOwnership
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.MapJson
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -38,7 +38,7 @@ class ExpandedCityPersistenceIT {
     private lateinit var jdbc: JdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
     private val root = Path.of("../..")
-    private val artifacts = HanWorldArtifactsResolver(root)
+    private val artifacts = WorldArtifactsResolver(root)
     private val bootstrap = SeedBootstrap(scenarioCode = "scenario_990002", artifactsRoot = root, worldId = WorldId(1))
 
     private companion object {
@@ -82,11 +82,11 @@ class ExpandedCityPersistenceIT {
 
     private fun load() = WorldSnapshotLoader(jdbc, bootstrap, WorldId(1),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-        hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant }).buildSnapshot()
+        mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant }).buildSnapshot()
 
     @Test fun `each added county persists ownership and remains in the map projection`() {
         val currentIds = MapJson.loadFromClasspath("han-world-v3").cities.map { it.id }.toSet()
-        val olderIds = artifacts.artifacts(HanWorldVariant.V3_835).cityConst.all().keys
+        val olderIds = artifacts.artifacts(WorldMapVariant.V3_835).cityConst.all().keys
         val additions = (currentIds - olderIds).sorted()
         assertTrue(additions.isNotEmpty(), "city expansion must remain covered")
         val shardCount = System.getProperty("cityShardCount", "1").toInt()
@@ -111,7 +111,7 @@ class ExpandedCityPersistenceIT {
         restoreSeededWorld()
         val baseline = load()
         assertEquals(currentIds, baseline.cities.map { it.id }.toSet())
-        val bundle = artifacts.artifacts(assertNotNull(baseline.state.hanWorldVariant))
+        val bundle = artifacts.artifacts(assertNotNull(baseline.state.worldMapVariant))
         val mapper = ObjectMapper()
         val ownership = MapAdministrativeOwnership(mapper, "unused", "unused", "unused")
         val coordinates = MapJson.loadMap(bundle.artifactBytes("infra/src/main/resources/map/han-world-v3.json")
@@ -140,7 +140,7 @@ class ExpandedCityPersistenceIT {
             }
             assertEquals(projectedOwners(world.listCities()), projectedOwners(restored.cities),
                 "map projection survives cold reload county=$destination")
-            assertEquals(baseline.state.hanWorldVariant, restored.state.hanWorldVariant)
+            assertEquals(baseline.state.worldMapVariant, restored.state.worldMapVariant)
             println("EXPANDED_CITY_PERSISTENCE county=$destination persisted=true")
         }
     }

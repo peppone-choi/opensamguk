@@ -3,7 +3,7 @@ package opensamguk.engine.config
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.engine.world.SpatialSupplyProvider
 import opensamguk.engine.world.SupplyDisconnectionPolicyLoader
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.StrategicTopologyJson
 import opensamguk.infra.seed.MapJson
 import opensamguk.logic.world.SpatialSupplyNetwork
 import java.nio.file.Path
@@ -124,7 +124,7 @@ class SpatialSupplyNetworkWiringTest {
             loader,
         )
         val mapData = MapJson.loadFromClasspath("han-world-v3")
-        val projection = HanStrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3")
+        val projection = StrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3")
         val scenarioCodes = mapper.readTree(
             Path.of("../../data/map/han-scenario-province-ownership-v1.json").toFile(),
         ).path("scenarios").map { it.path("scenarioCode").asInt() }

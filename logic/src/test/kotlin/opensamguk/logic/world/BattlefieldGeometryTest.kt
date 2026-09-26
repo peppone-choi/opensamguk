@@ -3,14 +3,14 @@ package opensamguk.logic.world
 import kotlin.test.*
 
 class BattlefieldGeometryTest {
-    private fun index(hash: String = "a".repeat(64)) = HanProvinceCellIndex(
+    private fun index(hash: String = "a".repeat(64)) = ProvinceCellIndex(
         "qa", "b".repeat(64), hash, 10, 10,
         mapOf('1' to "PLAIN", '2' to "MOUNTAIN", '3' to "RIVER"),
         linkedMapOf(
-            "battle" to listOf(HanProvinceCell(3, 2, '1'), HanProvinceCell(4, 2, '2'),
-                HanProvinceCell(3, 3, '3'), HanProvinceCell(7, 6, '1')),
-            "approach" to listOf(HanProvinceCell(2, 2, '1'), HanProvinceCell(2, 3, '1')),
-            "diagonal" to listOf(HanProvinceCell(2, 1, '1')),
+            "battle" to listOf(ProvinceCell(3, 2, '1'), ProvinceCell(4, 2, '2'),
+                ProvinceCell(3, 3, '3'), ProvinceCell(7, 6, '1')),
+            "approach" to listOf(ProvinceCell(2, 2, '1'), ProvinceCell(2, 3, '1')),
+            "diagonal" to listOf(ProvinceCell(2, 1, '1')),
             "empty" to emptyList(),
         ),
     )

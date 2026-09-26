@@ -7,7 +7,7 @@ import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.war.BattleJournal
-import opensamguk.logic.world.HanProvinceCellIndex
+import opensamguk.logic.world.ProvinceCellIndex
 import opensamguk.logic.world.LandMarchStop
 
 /** Real pinned map, in-memory world: an entered encounter is sealed, then resolved on the attacker's next turn. */
@@ -134,7 +134,7 @@ class EncounterResolverTest {
         val recorder = ChangeRecorder()
         fixture.deploy(world, recorder, 1, listOf(7), route.destination)
         fixture.deploy(world, recorder, 100, listOf(1100), route.first)
-        val emptyTerrain = HanProvinceCellIndex(fixture.topology.topologyRevision, fixture.topology.contentHash,
+        val emptyTerrain = ProvinceCellIndex(fixture.topology.topologyRevision, fixture.topology.contentHash,
             fixture.cells.tilesContentHash, 1, 1, mapOf('0' to "plain"),
             mapOf(route.start.id to emptyList(), route.first.id to emptyList()))
         fixture.nextPhase(world)

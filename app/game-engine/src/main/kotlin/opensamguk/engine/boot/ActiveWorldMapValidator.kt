@@ -15,7 +15,7 @@ object ActiveWorldMapValidator {
             val unbound = snapshot.generals.filter { it.cityId !in snapshot.cityLandProvinceById }.map { it.id to it.cityId }
             require(unbound.isEmpty()) { "HWIHA world: reference cities without a province binding: $unbound" }
         }
-        val variant = ActiveWorldMap.requireVariant(snapshot.state.config, snapshot.state.meta, snapshot.state.hanWorldVariant)
+        val variant = ActiveWorldMap.requireVariant(snapshot.state.config, snapshot.state.meta, snapshot.state.worldMapVariant)
         val persistedIds = snapshot.cities.mapTo(linkedSetOf()) { it.id }
         check(persistedIds == variant.all().keys) {
             "worldId=${snapshot.worldId.value} mapName=${variant.mapName} persisted city ids do not match variant"

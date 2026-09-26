@@ -3,8 +3,8 @@ package opensamguk.logic.vision
 import opensamguk.logic.input.*
 
 
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import kotlin.test.*
 
@@ -12,8 +12,8 @@ import kotlin.test.*
 class VisionTest {
     private val hash = "a".repeat(64)
     // 0 — 1 — 2 — 3 — 4 (line); province pN belongs to commandery N, p0b also to 0.
-    private val index = HanCommanderyIndex(hash,
-        (0..4).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
+    private val index = CommanderyIndex(hash,
+        (0..4).map { Commandery(it, "PARENT-$it", "군$it", "郡$it") },
         (0..4).associate { "p$it" to it } + ("p0b" to 0),
         setOf(0 to 1, 1 to 2, 2 to 3, 3 to 4))
     private val rules = VisionRules.CANON
