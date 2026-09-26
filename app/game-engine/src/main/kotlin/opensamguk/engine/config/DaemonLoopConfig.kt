@@ -22,6 +22,7 @@ import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.EngineGeneralActionPipelineBuilder
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.engine.turn.ImperialDeathHook
 import opensamguk.engine.turn.LifecycleEnv
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.ProcessNationCommand
@@ -364,6 +365,7 @@ class DaemonLoopConfig {
             turnTerm = turnTerm,
             // 군주(officer_level==12) 사망 시 후계 선정/승계 또는 국가 멸망 (func.php:1807 nextRuler).
             nextRuler = { generalId, env -> rulerSuccession.succeed(generalId, env) },
+            onGeneralDeath = { generalId, env -> ImperialDeathHook.apply(world, generalId, env) },
             recorder = recorder,
             // 휘하 내정 입력(배치·방침·공사)의 지리·원장·행군 핀.
             hwihaDomesticContext = domesticContext,
