@@ -8,6 +8,11 @@ import opensamguk.logic.input.RecordKind
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.renown.RenownHooks
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
 /**
@@ -73,6 +78,19 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
             "${JosaUtil.put(name, "을")} 점령했습니다.", refs)
         if (previousNationId != 0) Records.nation(world, previousNationId, RecordKind.COUNTY_LOST,
             "${JosaUtil.put(name, "을")} 잃었습니다.", refs)
+        world.recordEvent(
+            kind = EventKind.OWNER_CHANGED,
+            audience = AudienceTarget.Public,
+            eventKey = EventKey.derive(EventKind.OWNER_CHANGED.code,
+                world.worldId.value.toString(), state.currentYear.toString(),
+                state.currentMonth.toString(), state.currentPhase.toString(),
+                countyId.toString(), previousNationId.toString(), captorNationId.toString()),
+            refs = mapOf(
+                RefRole.CITY to EventRef.City(countyId),
+                RefRole.FROM_NATION to EventRef.Nation(previousNationId),
+                RefRole.TO_NATION to EventRef.Nation(captorNationId),
+            ),
+        )
         return updated
     }
 
