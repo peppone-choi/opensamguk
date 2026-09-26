@@ -21,6 +21,9 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/office-rules.json")) {
         into("office")
     }
+    from(rootProject.file("data/curated/han/vassal-rules.json")) {
+        into("vassal")
+    }
     from(rootProject.file("data/commands/hwiha-input-catalog.json")) {
         into("command-catalog")
     }
