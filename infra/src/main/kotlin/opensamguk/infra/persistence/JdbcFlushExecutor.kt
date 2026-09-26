@@ -7,6 +7,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.imperial.ImperialWorldCodec
 import opensamguk.logic.record.EventTurn
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.common.world.WorldId
@@ -593,6 +594,12 @@ open class JdbcFlushExecutor(
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
         // Phase 4X-A 고수위 — 키가 있을 때만 meta 에 병합한다(행 0 세계의 meta 바이트 동일, spec v3 P1).
         val extraMeta = buildString {
+            if ("imperial_world" in worldState) {
+                val imperial = requireNotNull(ImperialWorldCodec.read(
+                    mapOf(ImperialWorldCodec.META_KEY to worldState["imperial_world"])))
+                params.addValue("imperial_world", MetaJson.encode(ImperialWorldCodec.write(imperial)))
+                append(" || jsonb_build_object('${ImperialWorldCodec.META_KEY}', CAST(:imperial_world AS jsonb))")
+            }
             (worldState["max_retainer_id"] as? Number)?.let {
                 params.addValue("max_retainer_id", it.toInt())
                 append(" || jsonb_build_object('maxRetainerId', CAST(:max_retainer_id AS INTEGER))")

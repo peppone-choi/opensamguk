@@ -12,6 +12,7 @@ import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.logic.imperial.ImperialWorldCodec
 import opensamguk.infra.persistence.AuctionBidInsertRow
 import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.BettingInsertRow
@@ -256,7 +257,9 @@ object DatabaseHooks {
                 // NOT serial). Prevents cross-tick id reuse after restart.
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
-            ),
+            ).apply {
+                ImperialWorldCodec.read(state.meta)?.let { put("imperial_world", ImperialWorldCodec.write(it)) }
+            },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
@@ -693,6 +696,7 @@ object DatabaseHooks {
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ).apply {
+                ImperialWorldCodec.read(state.meta)?.let { put("imperial_world", ImperialWorldCodec.write(it)) }
                 // Phase 4X-A 고수위(spec v3 P1): 값이 있을 때만 싣는다 — 행 0 세계의 world_state.meta 바이트 동일.
                 (state.meta["maxRetainerId"] as? Number)?.let { put("max_retainer_id", it.toInt()) }
                 (state.meta["maxBugokId"] as? Number)?.let { put("max_bugok_id", it.toInt()) }

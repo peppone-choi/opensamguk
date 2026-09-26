@@ -4,6 +4,13 @@ import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.City
 import opensamguk.logic.domain.General
 import opensamguk.logic.domain.Nation
+import opensamguk.logic.imperial.ImperialCandidate
+import opensamguk.logic.imperial.ImperialDeathTransition
+import opensamguk.logic.imperial.ImperialHouse
+import opensamguk.logic.imperial.ImperialLineStatus
+import opensamguk.logic.imperial.ImperialPresenceProjection
+import opensamguk.logic.imperial.ImperialWorldCodec
+import opensamguk.logic.imperial.ImperialWorldState
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventKey
 import opensamguk.logic.record.EventKind
@@ -48,6 +55,68 @@ class JdbcFlushExecutorIT {
     private lateinit var dataSource: DataSource
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
+
+    @Test
+    fun `imperial death state survives selective world meta flush and cold decode`() {
+        val before = jdbc.queryForMap(
+            "SELECT meta::text AS meta, world_version, writer_epoch, current_year, current_month, current_phase, isunited " +
+                "FROM world_state WHERE id = 1", MapSqlParameterSource())
+        try {
+            jdbc.update("UPDATE world_state SET meta = CAST(:meta AS jsonb) WHERE id = 1",
+                mapOf("meta" to "{\"unrelated\":{\"keep\":7}}"))
+            val seeded = ImperialWorldState(listOf(ImperialHouse("test_line", "시험 계통",
+                ImperialLineStatus.ACTIVE, 10, 11, listOf(11), null, 1, 7, 50)),
+                emptyList(), emptyList())
+            val changedMeta = ImperialDeathTransition.apply(
+                mapOf(ImperialWorldCodec.META_KEY to ImperialWorldCodec.write(seeded)),
+                deceasedGeneralId = 10, requestId = "test.death:10", scriptedSuccessorGeneralId = null,
+                candidates = listOf(ImperialCandidate(11, living = true)),
+                year = 190, month = 3, reasonCode = "TEST_DEATH")
+            val changed = ImperialWorldCodec.read(changedMeta)!!
+            fun coldMeta(): Map<String, Any?> = MetaJson.decode(jdbc.queryForObject(
+                "SELECT meta::text FROM world_state WHERE id = 1", MapSqlParameterSource(), String::class.java))
+
+            executor.flush(testFlushPayload(WorldId(1), linkedMapOf(
+                "id" to 1, "current_year" to 190, "current_month" to 3,
+                "imperial_world" to changedMeta[ImperialWorldCodec.META_KEY])))
+            val first = coldMeta()
+            assertEquals(changed, ImperialWorldCodec.read(first))
+            assertEquals(mapOf("keep" to 7), first["unrelated"])
+            assertEquals(false, "imperial_world" in first, "the persisted codec key is camelCase")
+            val badge = ImperialPresenceProjection.badges(changed, mapOf(11 to 5)).single()
+            assertEquals(5, badge.emperorCityId)
+            assertEquals(7, badge.courtCityId)
+
+            executor.flush(testFlushPayload(WorldId(1), mapOf("id" to 1, "current_year" to 190,
+                "current_month" to 4)))
+            assertEquals(changed, ImperialWorldCodec.read(coldMeta()), "absent flush field preserves imperialWorld")
+
+            val version = jdbc.queryForMap("SELECT world_version, writer_epoch FROM world_state WHERE id = 1",
+                MapSqlParameterSource())
+            executor.flush(testFlushPayload(WorldId(1), linkedMapOf(
+                "id" to 1, "current_year" to 190, "current_month" to 5,
+                "expected_world_version" to version["world_version"], "writer_epoch" to version["writer_epoch"],
+                "imperial_world" to changedMeta[ImperialWorldCodec.META_KEY])))
+            assertEquals(changed, ImperialWorldCodec.read(coldMeta()), "CAS uses the same selective meta suffix")
+            assertEquals(mapOf("keep" to 7), coldMeta()["unrelated"])
+            assertFailsWith<IllegalArgumentException> {
+                executor.flush(testFlushPayload(WorldId(1), mapOf("id" to 1, "current_year" to 190,
+                    "current_month" to 6, "imperial_world" to mapOf("broken" to true))))
+            }
+            assertEquals(changed, ImperialWorldCodec.read(coldMeta()), "malformed payload cannot erase imperial state")
+        } finally {
+            jdbc.update("""
+                UPDATE world_state SET meta = CAST(:meta AS jsonb), world_version = :version,
+                    writer_epoch = :epoch, current_year = :year, current_month = :month,
+                    current_phase = :phase, isunited = :isunited WHERE id = 1
+                """.trimIndent(), mapOf(
+                "meta" to before["meta"], "version" to before["world_version"],
+                "epoch" to before["writer_epoch"], "year" to before["current_year"],
+                "month" to before["current_month"], "phase" to before["current_phase"],
+                "isunited" to before["isunited"],
+            ))
+        }
+    }
 
     @Test
     fun `typed event shares the world flush transaction and retry is idempotent`() {
