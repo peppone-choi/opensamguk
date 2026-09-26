@@ -78,16 +78,50 @@ class NpcDispatchSelectorTest {
         }
     }
 
-    @Test fun `non human and non direct targets are never selected`() {
+    @Test fun `unowned NPC direct cards are selected but non direct targets are not`() {
         val world=world()
         for(id in listOf(1,2)) {
             val target=world.getGeneralById(id)!!
             world.applyGeneralDirtyFree(target.copy(userId=null))
         }
-        assertNull(select(world))
+        assertEquals(DispatchRequest(10,1,1),select(world))
         val target=world.getGeneralById(1)!!
-        world.applyGeneralDirtyFree(target.copy(userId="42",nationId=0))
+        world.applyGeneralDirtyFree(target.copy(nationId=0))
+        world.removeRetainer(2)
         assertNull(select(world))
+    }
+
+    @Test fun `NPC order waits twelve phases then accepts and only repeats for another vacant county`() {
+        val world = world()
+        world.removeRetainer(2)
+        for (id in listOf(1,2)) {
+            val target = world.getGeneralById(id)!!
+            world.applyGeneralDirtyFree(target.copy(userId = null))
+        }
+        val recorder = ChangeRecorder()
+        val executor = DispatchExecutor(world, recorder)
+        val request = assertNotNull(select(world))
+        assertEquals(DispatchRequest(10,1,1), request)
+        assertEquals(DispatchFailure.TARGET_NOT_HUMAN,
+            assertIs<DispatchExecution.Rejected>(executor.issue("manual", request)).reason)
+        assertIs<DispatchExecution.Applied>(executor.issue("npc-first", request,
+            targetPolicy = DispatchTargetPolicy.NPC_AUTOMATED))
+        assertEquals(DispatchFailure.TARGET_NOT_HUMAN,
+            assertIs<DispatchExecution.Rejected>(executor.reply(DispatchReplyRequest(1,"npc-first",true))).reason)
+        assertNull(select(world), "pending order cannot be repeated")
+        world.setCurrentDate(200, 4, 1)
+        assertNull(select(world), "deadline has not arrived")
+        world.setCurrentDate(201, 1, 1)
+        assertEquals(DispatchStatus.ACCEPTED,
+            assertIs<DispatchExecution.Applied>(executor.expireDue().single()).dispatch.status)
+        assertEquals(1, CountyAssignment.read(world.getGeneralById(1)!!.meta)?.countyId)
+        assertNull(select(world), "a valid assignment stays in place")
+        val assigned = world.getGeneralById(1)!!
+        world.applyGeneralDirtyFree(assigned.copy(meta = assigned.meta - CountyAssignment.META_KEY))
+        assertEquals(DispatchRequest(10,1,2), select(world), "the last county is not repeated")
+        assertIs<DispatchExecution.Applied>(executor.issue("npc-second", assertNotNull(select(world)),
+            targetPolicy = DispatchTargetPolicy.NPC_AUTOMATED))
+        assertNull(select(world), "a second pending order cannot be repeated")
     }
     @Test fun `duplicate bindings exclude candidate even if one belongs to issuer`() {
         val world=world()

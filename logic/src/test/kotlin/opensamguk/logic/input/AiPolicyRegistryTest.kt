@@ -18,7 +18,8 @@ class AiPolicyRegistryTest {
             .all { it.reason.isNotBlank() })
         assertEquals(AiPolicyBinding.Selector(AiSelectorKey.COURT_DISPATCH),
             AiPolicyRegistry.bindings[catalog["court.dispatch"]!!.aiPolicyId])
-        assertIs<AiPolicyBinding.Unused>(AiPolicyRegistry.bindings[catalog["court.reward"]!!.aiPolicyId])
+        assertEquals(AiPolicyBinding.Selector(AiSelectorKey.COURT_REWARD),
+            AiPolicyRegistry.bindings[catalog["court.reward"]!!.aiPolicyId])
     }
 
     @Test

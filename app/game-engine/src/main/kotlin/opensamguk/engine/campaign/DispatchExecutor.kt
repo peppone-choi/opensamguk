@@ -2,6 +2,7 @@ package opensamguk.engine.campaign
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.domain.NpcType
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.record.AudienceTarget
@@ -21,19 +22,22 @@ class DispatchExecutor(
     private val recorder: ChangeRecorder,
     private val policy: DispatchPolicy = DispatchPolicy(),
 ) {
-    fun assess(request: DispatchRequest): DispatchAssessment = projection()?.let { DispatchRules.assess(request, it) }
+    fun assess(request: DispatchRequest,
+        targetPolicy: DispatchTargetPolicy = DispatchTargetPolicy.HUMAN_ONLY): DispatchAssessment =
+        projection()?.let { DispatchRules.assess(request, it, targetPolicy) }
         ?: DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE)
 
     fun assessAssignment(actorId: Int, assignment: CountyAssignment): DispatchAssessment = projection()?.let {
-        DispatchRules.assessAssignment(actorId, assignment, it)
+        DispatchRules.assessAssignment(actorId, assignment, it, automaticTargetPolicy(it, actorId))
     } ?: DispatchAssessment.Rejected(DispatchFailure.STATE_UNAVAILABLE)
 
     /**
      * @param targetText the target's private record text. An NPC lord passes its reason here so that the
      *   dispatch basis stays in the target's own record (spec §14); a player lord's dispatch uses the default.
      */
-    fun issue(dispatchId: String, request: DispatchRequest, targetText: String? = null): DispatchExecution {
-        val assessment = assess(request)
+    fun issue(dispatchId: String, request: DispatchRequest, targetText: String? = null,
+        targetPolicy: DispatchTargetPolicy = DispatchTargetPolicy.HUMAN_ONLY): DispatchExecution {
+        val assessment = assess(request, targetPolicy)
         if (assessment is DispatchAssessment.Rejected) return reject(assessment.reason)
         assessment as DispatchAssessment.Eligible
         val now = now()
@@ -68,7 +72,9 @@ class DispatchExecutor(
 
     private fun resolve(request: DispatchReplyRequest, automatic: Boolean): DispatchExecution {
         val projection = projection() ?: return reject(DispatchFailure.STATE_UNAVAILABLE)
-        val assessment = DispatchRules.assessReply(request, now(), projection)
+        val targetPolicy = if (automatic) automaticTargetPolicy(projection, request.actorId)
+            else DispatchTargetPolicy.HUMAN_ONLY
+        val assessment = DispatchRules.assessReply(request, now(), projection, targetPolicy)
         if (assessment is DispatchAssessment.Rejected) {
             // A lapsed order cannot resurrect a lost bond, a captured county or a changed owner.
             if (automatic && assessment.reason in setOf(DispatchFailure.NOT_LORD, DispatchFailure.ACTOR_NOT_FOUND,
@@ -133,6 +139,10 @@ class DispatchExecutor(
     private fun humanOwned(generalId: Int): Boolean =
         (world.getGeneralById(generalId)?.userId?.toLongOrNull() ?: 0) > 0
 
+    private fun automaticTargetPolicy(projection: DispatchProjection, targetId: Int): DispatchTargetPolicy =
+        if (projection.people.singleOrNull { it.id == targetId }?.isNpc == true)
+            DispatchTargetPolicy.NPC_AUTOMATED else DispatchTargetPolicy.HUMAN_ONLY
+
     private fun recordDispatch(kind: EventKind, dispatch: DispatchState, recipients: Set<Int>) {
         world.recordEvent(
             kind = kind,
@@ -158,7 +168,9 @@ class DispatchExecutor(
     private fun projection(): DispatchProjection? = try {
         DispatchProjection(world.ruleProfile, world.listGenerals().map {
             DispatchPerson(it.id, it.nationId, LordStatus.read(it.meta),
-                (it.userId?.toLongOrNull() ?: 0) > 0, it.meta)
+                (it.userId?.toLongOrNull() ?: 0) > 0, it.meta,
+                isNpc = it.npcState == NpcType.NPC_LITE &&
+                    (it.userId.isNullOrBlank() || it.userId.toLongOrNull()?.let { id -> id <= 0 } == true))
         }, world.listRetainers().mapNotNull { card -> card.generalId?.let {
             DispatchRetainer(card.id, card.masterGeneralId, it, card.loyalty)
         } }, world.listCities().filter { it.id in world.administrativeCountyIds }.map { DispatchCounty(it.id, it.nationId) })
