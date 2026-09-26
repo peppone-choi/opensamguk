@@ -2,7 +2,6 @@ package opensamguk.gameapi.read
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.logic.record.EventSection
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -63,8 +62,8 @@ class EventFeedReadRepositoryIT {
             assertEquals(3L, first.id)
             assertEquals(listOf(2L), repository.privateCandidates(1, EventSection.RETINUE_NATION,
                 7, 3, 2, first.position, 50).map { it.id })
-            assertTrue(repository.privateCandidates(1, EventSection.RETINUE_NATION,
-                8, 3, 4, null, 50).isEmpty(), "new relation cannot add a historical recipient")
+            assertEquals(listOf(3L), repository.privateCandidates(1, EventSection.RETINUE_NATION,
+                8, 3, 4, null, 50).map { it.id }, "new relation cannot add a historical RETINUE recipient")
         }
     }
 }
