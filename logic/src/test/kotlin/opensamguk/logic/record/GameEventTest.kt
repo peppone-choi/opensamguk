@@ -126,6 +126,7 @@ class GameEventTest {
         assertEquals(facts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(receipt.facts)))
         assertFailsWith<IllegalArgumentException> { receipt.copy(refs = refs - RefRole.ISSUER) }
         assertFailsWith<IllegalArgumentException> { receipt.copy(facts = facts - FactRole.REASON) }
+        assertFailsWith<IllegalArgumentException> { receipt.copy(audience = AudienceTarget.Self(8)) }
         assertFailsWith<IllegalArgumentException> {
             receipt.copy(audience = AudienceTarget.Public, publication = Publication(PublicationState.PUBLISHED))
         }

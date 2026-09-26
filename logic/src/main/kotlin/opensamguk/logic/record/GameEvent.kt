@@ -125,5 +125,9 @@ data class GameEvent(
         require(facts.keys.containsAll(kind.requiredFacts)) { "${kind.code} requires ${kind.requiredFacts - facts.keys}" }
         require(refs.keys.all { it in kind.allowedRefs && it.type.isInstance(refs.getValue(it)) })
         require(facts.keys.all { it in kind.allowedFacts && it.type.isInstance(facts.getValue(it)) })
+        if (kind == EventKind.REWARD_RECEIVED) {
+            require((refs.getValue(RefRole.TARGET) as EventRef.General).id ==
+                (audience as AudienceTarget.Self).generalId) { "reward target must be the private recipient" }
+        }
     }
 }
