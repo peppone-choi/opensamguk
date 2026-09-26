@@ -2,9 +2,6 @@ package opensamguk.logic.misinformation
 
 import opensamguk.common.world.WorldId
 import opensamguk.logic.input.Phase
-import opensamguk.logic.input.DeploymentProjection
-import opensamguk.logic.input.RuleProfile
-import opensamguk.logic.vision.CorpsVisibility
 import opensamguk.logic.vision.ScoutReport
 import opensamguk.logic.vision.ScoutReports
 import opensamguk.logic.vision.ScoutedCorps
@@ -13,9 +10,6 @@ import opensamguk.logic.vision.VisionEntry
 import opensamguk.logic.vision.VisionRules
 import opensamguk.logic.vision.VisionTier
 import opensamguk.logic.vision.VisionView
-import opensamguk.logic.vision.VisionViewer
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -86,25 +80,22 @@ class MisinformationTest {
     }
 
     @Test
-    fun `intel phantom and snapshot sighting share the commandery scouting stamp`() {
+    fun `intel phantom and real snapshot corps share the commandery scouting stamp`() {
         val now = created.plus(2)
         val laterPlanted = planted.copy(createdAt = created.plus(1), expiresAt = created.plus(1 + rules.durationTurns))
         val real = ScoutedCorps("aaaaaaaaaaaaaaaa", 41, 42, 3, "province-1", "B1")
         val report = Misinformation.victimReport(
             ScoutReport("commandery-1", created, emptyList(), listOf(real)), 9, now, listOf(laterPlanted))
-        val index = HanCommanderyIndex("a".repeat(64),
-            listOf(HanCommandery(0, "commandery-1", "군1", "郡1")), mapOf("province-1" to 0), emptySet())
-        val viewer = VisionViewer(9, 1, null, emptyMap(), emptyMap(), emptySet(), emptyList(), emptyList(),
-            ScoutReports(index.tilesContentHash, listOf(report)))
-        val view = Vision.project(viewer, index, VisionRules.CANON, now)
-        val snapshotSightings = CorpsVisibility.project(viewer, view, index,
-            DeploymentProjection(RuleProfile.HWIHA, emptyList(), emptyList(), emptyList(), emptyList()), VisionRules.CANON)
-        assertEquals(2, snapshotSightings.size)
-        assertEquals(setOf(created), snapshotSightings.map { it.seenAt }.toSet())
-        assertEquals(setOf(2), snapshotSightings.map { it.ageTurns }.toSet())
+        val entry = VisionEntry(0, VisionTier.INTEL, report.seenAt, Vision.ageTurns(report.seenAt, now))
+        val view = VisionView(now, listOf(entry), emptyList(), ScoutReports("a".repeat(64), listOf(report)))
+        assertEquals(setOf(real.corpsKey, fake.corpsKey), report.corps.map { it.corpsKey }.toSet())
+        assertEquals(created, report.seenAt)
         val direct = Misinformation.victimPhantoms(9, view, mapOf("commandery-1" to 0),
             mapOf("province-1" to 0), setOf(real.corpsKey), listOf(laterPlanted), VisionRules.CANON).single()
-        assertEquals(snapshotSightings.single { it.corpsKey == fake.corpsKey }, direct)
+        assertEquals(fake.corpsKey, direct.corpsKey)
+        assertEquals(entry.seenAt, direct.seenAt)
+        assertEquals(entry.ageTurns, direct.ageTurns)
+        assertEquals(2, direct.ageTurns)
     }
 
     @Test
