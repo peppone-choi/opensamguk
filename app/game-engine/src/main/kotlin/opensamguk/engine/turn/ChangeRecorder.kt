@@ -263,6 +263,136 @@ class ChangeRecorder(
     private val generalTurnSlotWrites = mutableListOf<GeneralTurnSlotWriteRow>()
     private val reservedNationTurnPulls = mutableListOf<NationTurnPullRow>()
 
+    /**
+     * A recorder-only savepoint for one turn unit. It preserves channel order and the nested maps
+     * that this recorder merges in place. The world must take its own savepoint at the same boundary.
+     * Allocators, [kvWriteObserver], and [generationSession] are external collaborators and are not
+     * rewound here: allocated ids may have gaps after a failed unit, and observer side effects need
+     * their own commit boundary before the runner can use this for exception isolation.
+     */
+    internal class Capture(val target: Any, val restore: () -> Unit)
+
+    class Checkpoint internal constructor(
+        private val owner: ChangeRecorder,
+        private val restores: List<Capture>,
+    ) {
+        internal fun capturedTargets(): List<Any> = restores.map { it.target }
+
+        internal fun restoreInto(recorder: ChangeRecorder) {
+            require(recorder === owner) { "recorder checkpoint belongs to a different recorder" }
+            recorder.gateMutation("restore checkpoint")
+            restores.forEach { it.restore() }
+        }
+    }
+
+    fun checkpoint(): Checkpoint {
+        val savedSpatialWorldId = spatialWorldId
+        return Checkpoint(this, listOf(
+            captureMap(generalPatches, ::copyPatch),
+            captureMap(cityPatches, ::copyPatch),
+            captureMap(nationPatches, ::copyPatch),
+            captureList(eventInserts),
+            captureList(eventDeletes),
+            captureMap(rankPatches) { LinkedHashMap(it) },
+            captureSet(deletedGeneralIds),
+            captureSet(deletedNationIds),
+            captureMap(accessLogUpserts),
+            captureSet(accessLogDeletes),
+            captureSet(generalOwnerDeletes),
+            captureMap(kvDirty, ::copyCheckpointValue),
+            captureMap(diplomacyUpdateDirty),
+            captureMap(votePollUpdates) { copyStringMap(it) },
+            captureList(createdMessages),
+            captureList(messageInvalidates),
+            captureList(diplomacyLetterInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureMap(diplomacyLetterUpdates) { copyStringMap(it) },
+            captureList(auctionUpserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(auctionBidInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(bettingInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureMap(cityLedgerV2Upserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureMap(waterControlWrites),
+            captureMap(provinceControlWrites),
+            captureMap(generalPositionWrites),
+            Capture("spatialWorldId") { spatialWorldId = savedSpatialWorldId },
+            captureList(profileIconUpdates) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(boardPostInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(boardCommentInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(boardReadInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(battleReplayInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(votePollInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(voteInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureSet(pendingVoteKeys),
+            captureList(voteCommentInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(inheritanceKvWrites) { it.copy(value = copyCheckpointValue(it.value)) },
+            captureList(inheritanceLogInserts),
+            captureList(inheritanceResultInserts),
+            captureMap(inheritancePointBase) { it.first to copyCheckpointValue(it.second) },
+            captureList(statisticInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(yearbookInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(gameWinnerUpdates),
+            captureList(emperiorInserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(hallUpserts) { it.copy(columns = copyStringMap(it.columns)) },
+            captureList(selectPoolMutations) { mutation ->
+                mutation.copy(candidates = mutation.candidates.map { it.copy(info = copyStringMap(it.info)) })
+            },
+            captureList(oldGeneralSnapshots) { it.copy(meta = copyStringMap(it.meta)) },
+            captureList(nationSnapshots) { it.copy(
+                nation = it.nation.copy(meta = copyStringMap(it.nation.meta)),
+                generalIds = it.generalIds.toList(),
+            ) },
+            captureList(nationArchiveSnapshots) { copyStringMap(it) },
+            captureList(reservedGeneralTurnPulls),
+            captureList(generalTurnSlotWrites),
+            captureList(reservedNationTurnPulls),
+        ))
+    }
+
+    fun restore(checkpoint: Checkpoint) = checkpoint.restoreInto(this)
+
+    private fun <K, V> captureMap(target: MutableMap<K, V>, copy: (V) -> V = { it }): Capture {
+        val saved = LinkedHashMap<K, V>()
+        target.forEach { (key, value) -> saved[key] = copy(value) }
+        return Capture(target) {
+            target.clear()
+            saved.forEach { (key, value) -> target[key] = copy(value) }
+        }
+    }
+
+    private fun <T> captureList(target: MutableList<T>, copy: (T) -> T = { it }): Capture {
+        val saved = target.map(copy)
+        return Capture(target) {
+            target.clear()
+            saved.forEach { target.add(copy(it)) }
+        }
+    }
+
+    private fun <T> captureSet(target: MutableSet<T>): Capture {
+        val saved = LinkedHashSet(target)
+        return Capture(target) {
+            target.clear()
+            target.addAll(saved)
+        }
+    }
+
+    private fun copyPatch(patch: RowPatch): RowPatch = patch.copy(
+        columns = copyStringMap(patch.columns),
+        meta = copyStringMap(patch.meta),
+    )
+
+    private fun copyStringMap(source: Map<String, Any?>): LinkedHashMap<String, Any?> =
+        LinkedHashMap<String, Any?>().also { target ->
+            source.forEach { (key, value) -> target[key] = copyCheckpointValue(value) }
+        }
+
+    private fun copyCheckpointValue(value: Any?): Any? = when (value) {
+        is Map<*, *> -> LinkedHashMap<Any?, Any?>().also { target ->
+            value.forEach { (key, entry) -> target[key] = copyCheckpointValue(entry) }
+        }
+        is List<*> -> value.map(::copyCheckpointValue)
+        is Set<*> -> value.mapTo(LinkedHashSet(), ::copyCheckpointValue)
+        else -> value
+    }
+
     val isDirty: Boolean
         get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||

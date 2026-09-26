@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "misinformation:rules",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "역정보의 지속·발각·비용은 특정 사료의 수치가 아닌 게임 판정값이다.",
+      "displayBadge": "게임 용어",
+      "values": {
+        "durationTurns": {"value": 6, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "두 달 동안 유효하며 재첩보와 발각으로 조기 제거한다."},
+        "detectionPermille": {"value": 100, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "매 순 독립 판정. 여섯 순 지속 동안 자연 발각 가능성을 둔다."},
+        "counterintelligenceMoneyCost": {"value": 100, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "기존 기본 계책 비용 전 100과 맞추며 실제 차감은 S5-6b 카드 등록 때 연결한다."},
+        "feignedCorpsMoneyCost": {"value": 100, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "기존 기본 계책 비용 전 100과 맞추며 실제 차감은 S5-6b 카드 등록 때 연결한다."}
+      }
+    }
+  ]
+}

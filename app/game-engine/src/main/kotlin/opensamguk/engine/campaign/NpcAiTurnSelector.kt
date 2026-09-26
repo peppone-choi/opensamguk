@@ -29,7 +29,8 @@ internal class NpcAiTurnSelector(
 
     init {
         val generalTurnKeys = AiPolicyRegistry.bindings.values.filterIsInstance<AiPolicyBinding.Selector>()
-            .map { it.key }.toSet() - setOf(AiSelectorKey.ENLIST, AiSelectorKey.COURT_DISPATCH)
+            .map { it.key }.toSet() - setOf(AiSelectorKey.ENLIST, AiSelectorKey.COURT_DISPATCH,
+                AiSelectorKey.COURT_REWARD)
         require(selectors.keys == generalTurnKeys) { "NPC general-turn selector routes do not match aiPolicyId registry" }
     }
 
