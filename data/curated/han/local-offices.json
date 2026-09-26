@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "han-local-offices",
+  "corpus": "後漢書 卷118 百官志 百官五",
+  "countyOfficeAuthority": "PROJECT_EXISTING_MAGISTRATE_PLACEMENT_ONLY",
+  "rows": [
+    {
+      "id": "office.provincial-inspector",
+      "name": "刺史",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "ZHOU",
+      "jurisdictionException": "司隸 is supervised by 司隸校尉, not an additional 刺史",
+      "rankStones": "六百石",
+      "quota": "每州一人; 外十二州",
+      "seatRule": "巡行所部郡國; no fixed 治所 asserted",
+      "period": "建武十八年(42)復置; 漢末州牧轉換은 사건별 근거 필요",
+      "values": {"gameGrade": {"value": 1, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "再設計 §7: 州 is the broadest local jurisdiction; one game grade per jurisdiction tier"}},
+      "sources": [
+        {"book": "後漢書", "volume": "118", "section": "百官志 百官五 州郡", "quote": "外十二州，毎州刺史一人，六百石。", "grade": "PRIMARY"},
+        {"book": "後漢書", "volume": "118", "section": "百官志 百官五 州郡", "quote": "建武十八年}}，-{復}-爲刺史", "grade": "PRIMARY"},
+        {"book": "後漢書", "volume": "118", "section": "百官志 百官五 州郡", "quote": "諸州常以八月巡行所部郡國", "grade": "PRIMARY"}
+      ]
+    },
+    {
+      "id": "office.provincial-governor",
+      "name": "州牧",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "ZHOU",
+      "jurisdictionException": "司隸 not assigned by the twelve-zhou rule",
+      "rankStones": "二千石",
+      "quota": "每州一人 (牧 replaces 刺史, not a concurrent seat)",
+      "seatRule": "UNKNOWN: 百官志 does not define a fixed 治所 for 牧",
+      "period": "成帝改牧; 建武十八年(42)復刺史; later instances require scenario evidence",
+      "values": {"gameGrade": {"value": 1, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "再設計 §7: 州-level office shares the provincial game grade"}},
+      "sources": [{"book": "後漢書", "volume": "118", "section": "百官志 百官五 州郡", "quote": "成帝更爲牧，秩二千石。", "grade": "PRIMARY"}]
+    },
+    {
+      "id": "office.commandery-prefect",
+      "name": "太守",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "JUN",
+      "rankStones": "二千石",
+      "quota": "每郡一人",
+      "seatRule": "world commandery seat; explicit seat source per unit required",
+      "values": {"gameGrade": {"value": 2, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "再設計 §7: 郡 sits below 州 and above 縣"}},
+      "sources": [{"book": "後漢書", "volume": "118", "section": "百官志 百官五 州郡", "quote": "毎郡置太守一人，二千石，丞一人。", "grade": "PRIMARY"}]
+    },
+    {
+      "id": "office.principality-chancellor",
+      "name": "國相",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "JUN",
+      "rankStones": "二千石",
+      "quota": "王國一人",
+      "seatRule": "world principality seat; explicit seat source per unit required",
+      "values": {"gameGrade": {"value": 2, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "後漢書 卷118 says 相如太守; game grade follows 郡國 tier"}},
+      "sources": [
+        {"book": "後漢書", "volume": "118", "section": "百官志 百官五 王國", "quote": "毎置傅一人，相一人，皆二千石。", "grade": "PRIMARY"},
+        {"book": "後漢書", "volume": "118", "section": "百官志 百官五 王國", "quote": "相如太守。", "grade": "PRIMARY"}
+      ]
+    },
+    {
+      "id": "office.county-magistrate",
+      "name": "縣令",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "COUNTY",
+      "rankStones": "千石",
+      "quota": "大縣一人",
+      "seatRule": "existing magistrate placement projection; no separate tenure write",
+      "values": {"gameGrade": {"value": 3, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "再設計 §8.2: 縣令 is the county placement tier"}},
+      "sources": [{"book": "後漢書", "volume": "118", "section": "百官志 百官五 縣鄕", "quote": "大者置令一人，千石", "grade": "PRIMARY"}]
+    },
+    {
+      "id": "office.county-chief",
+      "name": "縣長",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "COUNTY",
+      "rankStones": "四百石或三百石",
+      "quota": "令未置之縣一人",
+      "seatRule": "existing magistrate placement projection; no separate tenure write",
+      "values": {"gameGrade": {"value": 3, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "再設計 §8.2: county head is represented by placement"}},
+      "sources": [{"book": "後漢書", "volume": "118", "section": "百官志 百官五 縣鄕", "quote": "其次置長，四百石；小者置長，三百石", "grade": "PRIMARY"}]
+    },
+    {
+      "id": "office.marquisate-chancellor",
+      "name": "侯國相",
+      "grade": "PRIMARY",
+      "jurisdictionUnit": "COUNTY",
+      "rankStones": "依本縣之令長秩",
+      "quota": "毎侯國一人",
+      "seatRule": "existing magistrate placement projection; no separate tenure write",
+      "values": {"gameGrade": {"value": 3, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "後漢書 卷118 says 秩各如本縣; game grade follows county tier"}},
+      "sources": [{"book": "後漢書", "volume": "118", "section": "百官志 百官五 侯國", "quote": "毎國置相一人，其秩各如本縣。", "grade": "PRIMARY"}]
+    }
+  ]
+}
