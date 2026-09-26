@@ -107,6 +107,14 @@ def noise(y: int, x: int, salt: str = "") -> float:
     return int(hashlib.md5(f"{salt}{y},{x}".encode()).hexdigest()[:4], 16) / 0xFFFF
 
 
+def smooth_noise(y: float, x: float, salt: str = "", scale: int = 6) -> float:
+    """한 점의 부드러운 값 잡음 0..1(격자점 해시 + 보간). 칸마다 따로 뽑는 noise 와 달리 테두리가 들쭉날쭉하지 않다."""
+    gy, gx = y / scale, x / scale; y0, x0 = int(np.floor(gy)), int(np.floor(gx)); fy, fx = gy - y0, gx - x0
+    fy, fx = fy * fy * (3 - 2 * fy), fx * fx * (3 - 2 * fx)
+    v = [[noise(y0 + j, x0 + i, salt + "~") for i in (0, 1)] for j in (0, 1)]
+    return v[0][0] * (1 - fy) * (1 - fx) + v[0][1] * (1 - fy) * fx + v[1][0] * fy * (1 - fx) + v[1][1] * fy * fx
+
+
 # ── 강 ───────────────────────────────────────────────────────────────────────────────
 # NE 10m 이름 → (漢代 이름, 위계, 사료 근거). 위계 1=과장 폭, 2=3칸, 3=한 줄.
 NE_RIVERS = {
@@ -647,6 +655,158 @@ def check_roads(inp, roads) -> list[str]:
     return errs
 
 
+# ── 해안·호수 ───────────────────────────────────────────────────────────────────────
+# 바다·호수 분류도 768 격자 ×4 덩이라 해안선이 4칸 계단이다. 물 칸을 흐려 0.5 근처에서 잘라 해안을 다듬되,
+# 규칙이 읽는 것은 지킨다: 城 둘레·길·강 칸은 바다가 되지 않고, 새 땅은 둘레 땅이 한 省일 때만 그 省에 붙는다.
+# 땅·물 덩어리 수와 省 이웃 쌍은 그대로여야 한다(어기는 변화는 둘레째 되돌린다). 지도 밖(OUT)은 건드리지 않는다.
+WATERS_OUT = "waters-v1.json"
+WATER_PARAMS = dict(edgeRadius=2, edgeNoise=0.45, thickRadius=3, cityClear=2, ownerRadius=2, maxProvinceLoss=0.03, repairRadius=4, repairRounds=4)
+
+
+def _labels(m):
+    return component_sizes(m, labels=True)[1]
+
+
+def _adjacent_pairs(own):
+    a = own[:, :-1]; b = own[:, 1:]; c = own[:-1, :]; d = own[1:, :]
+    pairs = set()
+    for x, y in ((a, b), (c, d)):
+        m = (x != y) & (x >= 0) & (y >= 0)
+        lo = np.minimum(x[m], y[m]).astype(np.int64); hi = np.maximum(x[m], y[m]).astype(np.int64)
+        pairs |= set(np.unique(lo * 100000 + hi).tolist())
+    return pairs
+
+
+def _opening(m, r):
+    """모폴로지 열림(정사각 반경 r): 폭 2r+1 칸보다 가는 줄기·작은 덩어리를 뺀 두꺼운 부분."""
+    core = _box(m.astype(np.float64), r) > 1 - 1e-9
+    return (_box(core.astype(np.float64), r) > 0) & m
+
+
+def compute_waters(inp, tier, width, placements, road):
+    """돌려주는 값: (새 지형 격자, 새 소유 격자, 요약). 새 지형에서 물은 SEA/LAKE, 새 땅은 둘레 땅 분류."""
+    prm = WATER_PARAMS; T = inp["terrain"]; own = inp["owner"]; H, W = T.shape
+    water = np.isin(T, (TERRAIN_SEA, TERRAIN_LAKE)); fixed = T == TERRAIN_OUT; land = ~water & ~fixed
+    sm = smooth_edges(water, prm["edgeRadius"], 3, prm["edgeNoise"], "coast")
+    keep_land = road | (tier > 0)
+    for c in moved_cities(inp, placements):
+        b = SPAN.get(c["level"], 1) // 2 + prm["cityClear"]
+        keep_land[max(0, c["row"] - b):c["row"] + b + 1, max(0, c["col"] - b):c["col"] + b + 1] = True
+    # 위상 보존: 두꺼운 물 가장자리만 땅으로, 두꺼운 땅 가장자리만 물로(좁은 해협·작은 호수·가는 곶은 그대로)
+    thick_w = _opening(water, prm["thickRadius"]); thick_l = _opening(land, prm["thickRadius"])
+    to_sea = sm & land & thick_l & ~keep_land
+    to_land = water & ~sm & thick_w
+    # 새 땅의 省: 반경 ownerRadius 안 땅 칸이 한 省일 때만
+    ys, xs = np.nonzero(to_land); r = prm["ownerRadius"]
+    land_own = np.where(land, own, -1)
+    nb = np.stack([land_own[np.clip(ys + dy, 0, H - 1), np.clip(xs + dx, 0, W - 1)] for dy in range(-r, r + 1) for dx in range(-r, r + 1)])
+    lo = np.where(nb >= 0, nb, np.iinfo(np.int32).max).min(0); hi = np.where(nb >= 0, nb, -1).max(0)
+    single = (hi >= 0) & (lo == hi)
+    to_land[ys[~single], xs[~single]] = False
+    new_own = np.full((H, W), -1, np.int32); new_own[ys[single], xs[single]] = hi[single]
+    # 省마다 잃는 넓이 제한
+    prov_cells = np.bincount(own[own >= 0].ravel(), minlength=int(own.max()) + 1)
+    lost = np.bincount(own[to_sea & (own >= 0)].ravel(), minlength=len(prov_cells))
+    to_sea &= ~np.isin(own, np.nonzero(lost > prm["maxProvinceLoss"] * np.maximum(prov_cells, 1))[0])
+
+    def apply():
+        o2 = np.where(to_sea, -1, own).astype(np.int32); o2[to_land] = new_own[to_land]; return o2
+    base_pairs = _adjacent_pairs(own)
+    for _ in range(prm["repairRounds"]):
+        o2 = apply(); now = _adjacent_pairs(o2)
+        if now == base_pairs:
+            break
+        for pr in now - base_pairs:                          # 새 이웃 쌍: 맞닿은 새 땅을 되돌린다
+            a, b = divmod(pr, 100000)
+            touch = np.zeros((H, W), bool)
+            for x0, x1 in ((a, b), (b, a)):
+                m1 = o2 == x1; nbm = np.zeros((H, W), bool)
+                nbm[1:] |= m1[:-1]; nbm[:-1] |= m1[1:]; nbm[:, 1:] |= m1[:, :-1]; nbm[:, :-1] |= m1[:, 1:]
+                touch |= (o2 == x0) & nbm
+            to_land &= ~(_box((touch & to_land).astype(np.float64), prm["repairRadius"]) > 0)
+        for pr in base_pairs - now:                          # 사라진 이웃 쌍: 둘레의 새 물을 되돌린다
+            a, b = divmod(pr, 100000)
+            near = (_box((own == a).astype(np.float64), prm["repairRadius"]) > 0) & (_box((own == b).astype(np.float64), prm["repairRadius"]) > 0)
+            to_sea &= ~near
+    # 덩어리 붙음: 섬이 본토에 붙거나 호수가 바다와 이어지면, 붙은 원래 덩어리 중 작은 쪽 둘레의 변화를 되돌린다
+    for _ in range(prm["repairRounds"]):
+        changed = False
+        for m0, flip in ((land, "land"), (water, "water")):
+            m1 = (m0 | to_land) & ~to_sea if flip == "land" else (m0 | to_sea) & ~to_land
+            l0 = _labels(m0); l1 = _labels(m1); both = m0 & m1
+            orphan = m1 & ~np.isin(l1, np.unique(l1[both]))           # 새 덩어리(새 섬·새 못): 통째로 되돌린다
+            if orphan.any():
+                if flip == "land":
+                    to_land &= ~orphan
+                else:
+                    to_sea &= ~orphan
+                changed = True
+            pr = np.unique(l0[both].astype(np.int64) * 10**7 + l1[both]); u1, c1 = np.unique(pr % 10**7, return_counts=True)
+            u0, c0 = np.unique(pr // 10**7, return_counts=True)
+            for u in u0[c0 > 1]:                                       # 갈라짐: 떨어진 작은 조각 둘레의 변화를 되돌려 다시 잇는다
+                pieces = pr[pr // 10**7 == u] % 10**7
+                sizes = sorted((int((l1 == q).sum()), int(q)) for q in pieces)
+                for _sz, q in sizes[:-1]:
+                    near = _box((l1 == q).astype(np.float64), prm["repairRadius"]) > 0
+                    if flip == "land":
+                        to_sea &= ~near
+                    else:
+                        to_land &= ~near
+                    changed = True
+            for u in u1[c1 > 1]:
+                parts = pr[pr % 10**7 == u] // 10**7
+                sizes = [(int((l0 == q).sum()), int(q)) for q in parts]
+                for _sz, q in sorted(sizes)[:-1]:                  # 가장 큰 덩어리만 남기고 나머지 둘레를 되돌린다
+                    near = _box((l0 == q).astype(np.float64), prm["repairRadius"]) > 0
+                    if flip == "land":
+                        to_land &= ~near
+                    else:
+                        to_sea &= ~near
+                    changed = True
+        if not changed:
+            break
+    o2 = apply()
+    T2 = T.copy()
+    near_lake = _box((T == TERRAIN_LAKE).astype(np.float64), 3) > _box((T == TERRAIN_SEA).astype(np.float64), 3)
+    T2[to_sea] = np.where(near_lake[to_sea], TERRAIN_LAKE, TERRAIN_SEA)
+    if to_land.any():
+        eff = effective_terrain(inp); land_cls = (1, 2, 5, 6, 7, 8)
+        cnt = np.stack([_box((eff == c).astype(np.float64), 4) for c in land_cls])
+        T2[to_land] = np.array(land_cls, np.uint8)[np.argmax(cnt[:, to_land], axis=0)]
+    stat = dict(landToWater=int(to_sea.sum()), waterToLand=int(to_land.sum()))
+    return T2, o2, stat
+
+
+def waters_summary(T2, o2, T, stat):
+    return dict(terrainSha256=sha256_bytes(T2.tobytes()), ownerSha256=sha256_bytes(o2.astype(np.int32).tobytes()), **stat)
+
+
+def with_waters(inp, tier, width, placements, roads):
+    """설계 길·다듬은 해안을 얹은 입력. terrain·owner 는 설계 층 것으로 바뀌고 원래 것은 terrain0·owner0 에 남는다."""
+    road_all = roads_mask(roads, inp["terrain"].shape, ("BUILT", "UNBUILT"))
+    T2, o2, stat = compute_waters(inp, tier, width, placements, road_all)
+    base = {k: v for k, v in inp.items() if k != "terrain_eff"}
+    out = dict(base, terrain=T2, owner=o2, terrain0=inp.get("terrain0", inp["terrain"]), owner0=inp.get("owner0", inp["owner"]),
+               road=roads_mask(roads, inp["terrain"].shape), roadAll=road_all)
+    errs = check_waters(inp, T2, o2, road_all, tier)
+    return out, dict(waters_summary(T2, o2, inp["terrain"], stat), errors=len(errs))
+
+
+def check_waters(inp, T2, o2, road, tier) -> list[str]:
+    errs = []; T = inp["terrain"]; own = inp["owner"]
+    w0 = np.isin(T, (TERRAIN_SEA, TERRAIN_LAKE)); w1 = np.isin(T2, (TERRAIN_SEA, TERRAIN_LAKE)); fx = T == TERRAIN_OUT
+    if (w1 & ~w0 & (road | (tier > 0))).any():
+        errs.append(f"해안: 길·강 칸 {int((w1 & ~w0 & (road | (tier > 0))).sum())}개가 물이 됐다")
+    if (np.isin(T2, (TERRAIN_SEA, TERRAIN_LAKE)) & (o2 >= 0)).any() or ((~w1 & ~fx) & (o2 < 0) & (own >= 0)).any():
+        errs.append("해안: 물 칸에 省이 있거나 땅 칸에 省이 없다")
+    if _adjacent_pairs(o2) != _adjacent_pairs(own):
+        errs.append("해안: 省 이웃 쌍이 바뀌었다")
+    for label, a, b in (("땅", ~w0 & ~fx, ~w1 & ~fx), ("물", w0, w1)):
+        if len(np.unique(_labels(a))) != len(np.unique(_labels(b))):
+            errs.append(f"해안: {label} 덩어리 수가 바뀌었다")
+    return errs
+
+
 # ── 산 편집 ──────────────────────────────────────────────────────────────────────────
 NAMED_RANGES = [
     dict(name="泰山", kind="blob", at=(36.2558, 117.1075), a=14, b=11, src="https://en.wikipedia.org/wiki/Mount_Tai",
@@ -712,7 +872,7 @@ def compute_mountains(inp, tier, width, placements):
                     for dx in range(-14, 15):
                         q = ctr + np.array([dy, dx], float); y, x = int(round(q[0])), int(round(q[1]))
                         rel = np.array([y - r, x - cc], float); a = rel @ d; bb = rel @ n - off * sgn
-                        if (a / 9) ** 2 + (bb / 5) ** 2 > 1 + 0.35 * (noise(y, x) - 0.5) or abs(rel @ n) < 2.5 or (y, x) in shape:
+                        if (a / 9) ** 2 + (bb / 5) ** 2 > 1 + 0.5 * (smooth_noise(y, x, "pass") - 0.5) or abs(rel @ n) < 2.5 or (y, x) in shape:
                             continue
                         shape.append((y, x))
                         if ok(y, x) and (y, x) not in edits:
@@ -729,7 +889,7 @@ def compute_mountains(inp, tier, width, placements):
             for dy in range(-m["a"] - 4, m["a"] + 5):
                 for dx in range(-m["a"] - 4, m["a"] + 5):
                     y, x = int(cr + dy), int(ccol + dx)
-                    if (dx / m["a"]) ** 2 + (dy / m["b"]) ** 2 > 1 + 0.4 * (noise(y, x, m["name"]) - 0.5) or not ok(y, x) or (y, x) in edits:
+                    if (dx / m["a"]) ** 2 + (dy / m["b"]) ** 2 > 1 + 0.6 * (smooth_noise(y, x, m["name"]) - 0.5) or not ok(y, x) or (y, x) in edits:
                         continue
                     edits[(y, x)] = "NAMED_RANGE"; added += 1
         else:
@@ -741,7 +901,7 @@ def compute_mountains(inp, tier, width, placements):
                     for dy in range(-m["w"] - 2, m["w"] + 3):
                         for dx in range(-m["w"] - 2, m["w"] + 3):
                             y, x = int(q[0] + dy), int(q[1] + dx)
-                            if dy * dy + dx * dx > (m["w"] * (1 + 0.35 * (noise(y, x, m["name"]) - 0.5))) ** 2 or not ok(y, x) or (y, x) in edits:
+                            if dy * dy + dx * dx > (m["w"] * (1 + 0.5 * (smooth_noise(y, x, m["name"]) - 0.5))) ** 2 or not ok(y, x) or (y, x) in edits:
                                 continue
                             edits[(y, x)] = "NAMED_RANGE"; added += 1
         log.append(dict(name=m["name"], reason="NAMED_RANGE", cells=added, why=m["why"], source=m["src"]))
@@ -1132,7 +1292,8 @@ def write_derived(inp, out: Path, rivers_doc) -> dict:
     dump(out / ROADS_OUT, dict(schemaVersion=1, artifactId="map-design-roads-v1", params=ROAD_PARAMS,
                                input=dict(roads=ROADS.relative_to(ROOT).as_posix(), roadsSha256=sha256_bytes(ROADS.read_bytes())),
                                result=roads_summary(roads, rstat)))
-    inp = dict(inp, road=roads_mask(roads, inp["terrain"].shape))      # 아래 단계는 설계 길을 따른다(골짜기·피복)
+    inp, wstat = with_waters(inp, tier, width, placements, roads)   # 아래 단계는 설계 길·다듬은 해안을 따른다
+    dump(out / WATERS_OUT, dict(schemaVersion=1, artifactId="map-design-waters-v1", params=WATER_PARAMS, result=wstat))
     mnt = compute_mountains(inp, tier, width, placements)
     dump(out / MOUNTAINS, dict(schemaVersion=1, artifactId="map-design-mountains-v1", **mnt))
     lv = compute_relief(inp, tier, width, placements, mnt, dem)
@@ -1140,16 +1301,16 @@ def write_derived(inp, out: Path, rivers_doc) -> dict:
     dump(out / RELIEF, dict(schemaVersion=1, artifactId="map-design-relief-v1", params=RELIEF_PARAMS, codes=RELIEF_CODES,
                             input=dict(dem=DEM.relative_to(ROOT).as_posix(), demSha256=sha256_bytes(DEM.read_bytes()),
                                        source="NOAA NCEI ETOPO1 Ice Surface (public domain), web/game/public/map/elevation/manifest-legacy.json"),
-                            result=relief_summary(lv, inp["terrain"]),
-                            plateau=dict(params=PLATEAU_PARAMS, result=plateau_summary(plat, inp["terrain"])),
-                            desert=dict(params=DESERT_PARAMS, result=plateau_summary(des, inp["terrain"], TERRAIN_DESERT))))
+                            result=relief_summary(lv, inp["terrain0"]),
+                            plateau=dict(params=PLATEAU_PARAMS, result=plateau_summary(plat, inp["terrain0"])),
+                            desert=dict(params=DESERT_PARAMS, result=plateau_summary(des, inp["terrain0"], TERRAIN_DESERT))))
     LC = compute_landcover(inp, tier, width, placements, lv, plat, des)
     dump(out / LANDCOVER, dict(schemaVersion=1, artifactId="map-design-landcover-v1", params=LANDCOVER_PARAMS,
                                codes=LANDCOVER_CODES, result=landcover_summary(LC)))
     review = [p["name"] for p in placements if p["status"] == "NEEDS_REVIEW"]
     return dict(moved=sum(1 for p in placements if p["to"]), review=review, roads=rstat, mountainCells=len(mnt["cells"]),
-                relief=relief_summary(lv, inp["terrain"])["counts"], plateau=plateau_summary(plat, inp["terrain"]),
-                desert=plateau_summary(des, inp["terrain"], TERRAIN_DESERT),
+                relief=relief_summary(lv, inp["terrain0"])["counts"], plateau=plateau_summary(plat, inp["terrain0"]),
+                desert=plateau_summary(des, inp["terrain0"], TERRAIN_DESERT), waters={k: wstat[k] for k in ("landToWater", "waterToLand", "errors")},
                 landcover=landcover_summary(LC)["counts"])
 
 
@@ -1175,16 +1336,16 @@ def cmd_build(out: Path) -> int:
     dump(out / RIVERS, rivers_doc)
     r = write_derived(inp, out, rivers_doc)
     print(f"강 선 {len(lines)} · 비키기 미달 {n_bad} · 이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · "
-          f"길 {r['roads']} · 산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
-    return 1 if r["review"] else 0
+          f"길 {r['roads']} · 해안 {r['waters']} · 산 편집 {r['mountainCells']} · 산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
+    return 1 if r["review"] or r["waters"]["errors"] else 0
 
 
 def cmd_write_derived(out: Path) -> int:
     inp = load_inputs()
     r = write_derived(inp, out, json.loads((out / RIVERS).read_text()))
-    print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 길 {r['roads']} · 산 편집 {r['mountainCells']} · "
+    print(f"이동 {r['moved']} · 판정 남음 {len(r['review'])} {r['review']} · 길 {r['roads']} · 해안 {r['waters']} · 산 편집 {r['mountainCells']} · "
           f"산 높이 {r['relief']} · 고원 {r['plateau']} · 사막 {r['desert']} · 피복 {r['landcover']}")
-    return 1 if r["review"] else 0
+    return 1 if r["review"] or r["waters"]["errors"] else 0
 
 
 # 검사 함수는 오류 목록을 돌려준다(테스트의 적색 프로브가 망가뜨린 입력을 넣는다)
@@ -1243,7 +1404,7 @@ def check_mountains(inp, tier, width, placements, mnt) -> list[str]:
 
 
 def run_checks(inp, out: Path) -> list[str]:
-    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, ROADS_OUT, MOUNTAINS, RELIEF, LANDCOVER)}
+    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, ROADS_OUT, WATERS_OUT, MOUNTAINS, RELIEF, LANDCOVER)}
     rivers_doc, pl = docs[RIVERS], docs[PLACEMENTS]["placements"]
     tier, width, name = load_rivers_grid(inp, rivers_doc)
     dem = load_dem(); roads, rstat = compute_roads(inp, tier, width, pl, dem)
@@ -1252,7 +1413,10 @@ def run_checks(inp, out: Path) -> list[str]:
         errs.append(f"{ROADS_OUT} 지문이 재계산과 다르다 — --write-derived")
     if docs[ROADS_OUT]["input"]["roadsSha256"] != sha256_bytes(ROADS.read_bytes()):
         errs.append(f"{ROADS_OUT}: 규칙 길(han-land-roads-v1)이 바뀌었다 — --write-derived")
-    inp = dict(inp, road=roads_mask(roads, inp["terrain"].shape))
+    inp0 = inp; inp, wstat = with_waters(inp, tier, width, pl, roads)
+    errs += check_waters(inp0, inp["terrain"], inp["owner"], inp["roadAll"], tier)
+    if docs[WATERS_OUT]["params"] != WATER_PARAMS or wstat != docs[WATERS_OUT]["result"]:
+        errs.append(f"{WATERS_OUT} 지문이 재계산과 다르다 — --write-derived")
     errs += check_mountains(inp, tier, width, pl, docs[MOUNTAINS])
     # 판정 입력을 고치고 강을 다시 새기지 않은 것
     for k, v in river_input_hashes(out).items():
@@ -1261,7 +1425,7 @@ def run_checks(inp, out: Path) -> list[str]:
     if NE10M.exists() and rivers_doc["inputs"].get("naturalEarth10mSha256") != sha256_bytes(NE10M.read_bytes()):
         errs.append(f"{RIVERS}: NE 10m 원본이 다르다")
     # 결정적 재계산 대조(han-tiles·월드·길·경제 입력이 바뀌면 여기서 낡음이 드러난다)
-    if compute_placements(inp, tier, width, name) != pl:
+    if compute_placements(inp0, tier, width, name) != pl:
         errs.append(f"{PLACEMENTS} 가 재계산과 다르다 — --write-derived")
     if compute_mountains(inp, tier, width, pl)["cells"] != docs[MOUNTAINS]["cells"]:
         errs.append(f"{MOUNTAINS} 가 재계산과 다르다 — --write-derived")
@@ -1270,11 +1434,11 @@ def run_checks(inp, out: Path) -> list[str]:
     errs += check_relief(inp, tier, width, pl, lv) + check_plateau(inp, plat) + check_plateau(inp, des, "사막") + check_plateau_desert(plat, des)
     if docs[RELIEF]["input"]["demSha256"] != sha256_bytes(DEM.read_bytes()):
         errs.append(f"{RELIEF}: 표고 원판({DEM.name})이 바뀌었다 — --write-derived")
-    if docs[RELIEF]["params"] != RELIEF_PARAMS or relief_summary(lv, inp["terrain"]) != docs[RELIEF]["result"]:
+    if docs[RELIEF]["params"] != RELIEF_PARAMS or relief_summary(lv, inp["terrain0"]) != docs[RELIEF]["result"]:
         errs.append(f"{RELIEF} 지문이 재계산과 다르다 — --write-derived")
-    if docs[RELIEF].get("plateau", {}).get("params") != PLATEAU_PARAMS or plateau_summary(plat, inp["terrain"]) != docs[RELIEF]["plateau"]["result"]:
+    if docs[RELIEF].get("plateau", {}).get("params") != PLATEAU_PARAMS or plateau_summary(plat, inp["terrain0"]) != docs[RELIEF]["plateau"]["result"]:
         errs.append(f"{RELIEF} 고원 지문이 재계산과 다르다 — --write-derived")
-    if docs[RELIEF].get("desert", {}).get("params") != DESERT_PARAMS or plateau_summary(des, inp["terrain"], TERRAIN_DESERT) != docs[RELIEF]["desert"]["result"]:
+    if docs[RELIEF].get("desert", {}).get("params") != DESERT_PARAMS or plateau_summary(des, inp["terrain0"], TERRAIN_DESERT) != docs[RELIEF]["desert"]["result"]:
         errs.append(f"{RELIEF} 사막 지문이 재계산과 다르다 — --write-derived")
     if docs[LANDCOVER]["params"] != LANDCOVER_PARAMS or landcover_summary(compute_landcover(inp, tier, width, pl, lv, plat, des)) != docs[LANDCOVER]["result"]:
         errs.append(f"{LANDCOVER} 지문이 재계산과 다르다 — --write-derived")

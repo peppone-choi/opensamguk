@@ -29,27 +29,27 @@ class MapDesignInvariantsTest(unittest.TestCase):
     def setUpClass(cls):
         cls.inp0 = B.load_inputs()
         cls.docs = {k: json.loads((B.OUT / k).read_text())
-                    for k in (B.RIVERS, B.PLACEMENTS, B.ROADS_OUT, B.MOUNTAINS, B.RELIEF, B.LANDCOVER, B.DODGE)}
+                    for k in (B.RIVERS, B.PLACEMENTS, B.ROADS_OUT, B.WATERS_OUT, B.MOUNTAINS, B.RELIEF, B.LANDCOVER, B.DODGE)}
         cls.tier, cls.width, cls.name = B.load_rivers_grid(cls.inp0, cls.docs[B.RIVERS])
         cls.pl = cls.docs[B.PLACEMENTS]["placements"]
         dem = B.load_dem()
         cls.roads, cls.rstat = B.compute_roads(cls.inp0, cls.tier, cls.width, cls.pl, dem)
-        cls.inp = dict(cls.inp0, road=B.roads_mask(cls.roads, cls.inp0["terrain"].shape))    # 아래 단계는 설계 길을 따른다
+        cls.inp, cls.wstat = B.with_waters(cls.inp0, cls.tier, cls.width, cls.pl, cls.roads)   # 아래 단계는 설계 길·다듬은 해안을 따른다
         cls.lv = B.compute_relief(cls.inp, cls.tier, cls.width, cls.pl, cls.docs[B.MOUNTAINS], dem)
         cls.des, cls.plat = B.compute_desert(cls.inp, cls.lv, B.compute_plateau(cls.inp, cls.lv, dem), dem, cls.tier, cls.width)
 
     # ── 초록 ──
     def test_committed_layer_is_clean(self):
         self.assertEqual(B.check_river_lines(self.docs[B.RIVERS]), [])
-        self.assertEqual(B.check_placements(self.inp, self.tier, self.width, self.pl), [])
+        self.assertEqual(B.check_placements(self.inp0, self.tier, self.width, self.pl), [])
         self.assertEqual(B.check_mountains(self.inp, self.tier, self.width, self.pl, self.docs[B.MOUNTAINS]), [])
         self.assertEqual(B.check_relief(self.inp, self.tier, self.width, self.pl, self.lv), [])
-        self.assertEqual(B.relief_summary(self.lv, self.inp["terrain"]), self.docs[B.RELIEF]["result"])
+        self.assertEqual(B.relief_summary(self.lv, self.inp["terrain0"]), self.docs[B.RELIEF]["result"])
         self.assertEqual(B.check_plateau(self.inp, self.plat), [])
         self.assertEqual(B.check_plateau(self.inp, self.des, "사막"), [])
         self.assertEqual(B.check_plateau_desert(self.plat, self.des), [])
-        self.assertEqual(B.plateau_summary(self.plat, self.inp["terrain"]), self.docs[B.RELIEF]["plateau"]["result"])
-        self.assertEqual(B.plateau_summary(self.des, self.inp["terrain"], B.TERRAIN_DESERT), self.docs[B.RELIEF]["desert"]["result"])
+        self.assertEqual(B.plateau_summary(self.plat, self.inp["terrain0"]), self.docs[B.RELIEF]["plateau"]["result"])
+        self.assertEqual(B.plateau_summary(self.des, self.inp["terrain0"], B.TERRAIN_DESERT), self.docs[B.RELIEF]["desert"]["result"])
 
     def test_desert_boundary_is_less_straight_and_stays_off_river_banks(self):
         def straight(m):
@@ -58,13 +58,13 @@ class MapDesignInvariantsTest(unittest.TestCase):
                 d = np.diff(np.pad(a.astype(np.int8), ((0, 0), (1, 1))), axis=1)
                 L = np.nonzero(d == -1)[1] - np.nonzero(d == 1)[1]; tot += L.sum(); long += L[L >= 20].sum()
             return long / max(1, tot)
-        self.assertLess(straight(self.des), straight(self.inp["terrain"] == B.TERRAIN_DESERT) / 2)
+        self.assertLess(straight(self.des), straight(self.inp["terrain0"] == B.TERRAIN_DESERT) / 2)
         rb = B.river_band(self.tier, self.width, B.DESERT_PARAMS["riverMargin"])
         self.assertEqual(int((self.des & rb).sum()), 0)
 
     def test_plateau_escarpment_is_high_mountain(self):
         # 四姑娘山 31.10667°N 102.90167°E(https://en.wikipedia.org/wiki/Mount_Siguniang): 지형 분류는 고원, 蜀 서쪽 산벽이라 높은 산
-        T, P = self.inp["terrain"], self.inp["proj"]
+        T, P = self.inp["terrain0"], self.inp["proj"]
         r, c = (int(round(v)) for v in B.proj_rc(102.90167, 31.10667, P))
         w = (slice(r - 4, r + 5), slice(c - 4, c + 5))
         self.assertTrue((T[w] == B.TERRAIN_PLATEAU).all())
@@ -77,12 +77,12 @@ class MapDesignInvariantsTest(unittest.TestCase):
                 d = np.diff(np.pad(a.astype(np.int8), ((0, 0), (1, 1))), axis=1)
                 L = np.nonzero(d == -1)[1] - np.nonzero(d == 1)[1]; tot += L.sum(); long += L[L >= 20].sum()
             return long / max(1, tot)
-        self.assertLess(straight(self.plat), straight(self.inp["terrain"] == B.TERRAIN_PLATEAU))
+        self.assertLess(straight(self.plat), straight(self.inp["terrain0"] == B.TERRAIN_PLATEAU))
 
     def test_relief_fixes_known_misclassified_places(self):
         # 米倉山 32.631°N 106.823°E(https://peakvisor.com/peak/micang-mountains.html): 지형 분류는 평지, 표고로 산
         # 寶雞(陳倉) 34.363°N 107.238°E(https://en.wikipedia.org/wiki/Baoji): 渭水 골짜기 바닥인데 지형 분류는 산
-        T, P = self.inp["terrain"], self.inp["proj"]
+        T, P = self.inp["terrain0"], self.inp["proj"]
 
         def window(lat, lon, dr, dc):
             r, c = (int(round(v)) for v in B.proj_rc(lon, lat, P))
@@ -144,6 +144,30 @@ class MapDesignInvariantsTest(unittest.TestCase):
         finally:
             B.ROADS = saved
 
+    def test_coast_is_smoothed_without_changing_topology(self):
+        T0, T2 = self.inp["terrain0"], self.inp["terrain"]
+        self.assertEqual(B.check_waters(self.inp0, T2, self.inp["owner"], self.inp["roadAll"], self.tier), [])
+        self.assertEqual(self.wstat, self.docs[B.WATERS_OUT]["result"])
+        fx = T0 == B.TERRAIN_OUT
+
+        def stair(w):
+            v = (w[1:, :] != w[:-1, :]) & ~fx[1:, :] & ~fx[:-1, :]; h = (w[:, 1:] != w[:, :-1]) & ~fx[:, 1:] & ~fx[:, :-1]
+            rv = (np.arange(1, w.shape[0]) % 4 == 0)[:, None]; rh = (np.arange(1, w.shape[1]) % 4 == 0)[None, :]
+            return ((v & rv).sum() + (h & rh).sum()) / max(1, v.sum() + h.sum())
+        self.assertGreater(stair(np.isin(T0, (B.TERRAIN_SEA, B.TERRAIN_LAKE))), 0.95)      # 적색 기준: 옛 해안은 걸린다
+        self.assertLess(stair(np.isin(T2, (B.TERRAIN_SEA, B.TERRAIN_LAKE))), 0.6)          # 설계 해안(0.509)
+
+    def test_red_coast_drowns_road_or_changes_neighbours(self):
+        T2 = self.inp["terrain"].copy(); o2 = self.inp["owner"].copy()
+        ys, xs = np.nonzero(self.inp["roadAll"] & ~np.isin(self.inp["terrain0"], (B.TERRAIN_SEA, B.TERRAIN_LAKE)))
+        T2[ys[0], xs[0]] = B.TERRAIN_SEA; o2[ys[0], xs[0]] = -1
+        self.assertIn("길·강 칸", " | ".join(B.check_waters(self.inp0, T2, o2, self.inp["roadAll"], self.tier)))
+        o2 = self.inp["owner"].copy()
+        # 두 省이 맞닿은 줄 하나를 통째로 바다로 → 이웃 쌍이 사라지거나 덩어리가 바뀐다
+        T3 = self.inp["terrain"].copy(); T3[:, 1500] = B.TERRAIN_SEA; o3 = o2.copy(); o3[:, 1500] = -1
+        errs = " | ".join(B.check_waters(self.inp0, T3, o3, np.zeros_like(self.inp["roadAll"]), self.tier))
+        self.assertIn("이웃 쌍", errs); self.assertIn("덩어리", errs)
+
     def test_every_river_has_a_source_and_every_dodge_city_exists(self):
         self.assertTrue(all(r[2] for r in self.docs[B.RIVERS]["rivers"]))
         ids = {c["id"] for c in self.inp["cities"]}
@@ -151,7 +175,7 @@ class MapDesignInvariantsTest(unittest.TestCase):
 
     def test_no_city_left_for_review_and_ferry_exceptions_are_marked(self):
         self.assertEqual([p["name"] for p in self.pl if p["status"] != "PROPOSED"], [])
-        own = self.inp["owner"]
+        own = self.inp["owner0"]
         crossed = [p for p in self.pl if own[tuple(p["to"])] != own[tuple(p["frm"])]]
         self.assertTrue(all(p["reason"] == "FERRY_MOUTH" for p in crossed), [p["name"] for p in crossed])
 
@@ -188,17 +212,17 @@ class MapDesignInvariantsTest(unittest.TestCase):
     def test_red_dropped_placement_submerges_its_city(self):
         victim = next(p for p in self.pl if p["reason"] == "RIVER_BANK")
         pl = [p for p in self.pl if p is not victim]
-        self.assertIn(f"{victim['name']}: 물에 잠김", B.check_placements(self.inp, self.tier, self.width, pl))
+        self.assertIn(f"{victim['name']}: 물에 잠김", B.check_placements(self.inp0, self.tier, self.width, pl))
 
     def test_red_placement_too_far_or_out_of_province(self):
-        own = self.inp["owner"]; p = copy.deepcopy(next(p for p in self.pl if p["reason"] == "RIVER_BANK"))
+        own = self.inp["owner0"]; p = copy.deepcopy(next(p for p in self.pl if p["reason"] == "RIVER_BANK"))
         r0, c0 = p["frm"]
         far = next((r0 + d, c0) for d in range(13, 60) if own[r0 + d, c0] == own[r0, c0])
         p["to"] = list(far)
-        self.assertTrue(any("칸 > 12" in e for e in B.check_placements(self.inp, self.tier, self.width, [p])))
+        self.assertTrue(any("칸 > 12" in e for e in B.check_placements(self.inp0, self.tier, self.width, [p])))
         other = next((r0 + dy, c0 + dx) for dy in range(-12, 13) for dx in range(-12, 13) if own[r0 + dy, c0 + dx] not in (own[r0, c0], -1))
         p["to"] = list(other)
-        self.assertTrue(any("제 省 밖" in e for e in B.check_placements(self.inp, self.tier, self.width, [p])))
+        self.assertTrue(any("제 省 밖" in e for e in B.check_placements(self.inp0, self.tier, self.width, [p])))
 
     def test_red_mountain_on_protected_cell(self):
         mnt = copy.deepcopy(self.docs[B.MOUNTAINS]); ys, xs = self.inp["road"].nonzero()
@@ -217,7 +241,7 @@ class MapDesignInvariantsTest(unittest.TestCase):
             v = (m[1:, :] != m[:-1, :]) & land[1:, :] & land[:-1, :]; h = (m[:, 1:] != m[:, :-1]) & land[:, 1:] & land[:, :-1]
             rv = (np.arange(1, m.shape[0]) % 4 == 0)[:, None]; rh = (np.arange(1, m.shape[1]) % 4 == 0)[None, :]
             return ((v & rv).sum() + (h & rh).sum()) / max(1, v.sum() + h.sum())
-        self.assertGreater(stair(self.inp["terrain"] == B.TERRAIN_DESERT), 0.95)         # 적색 기준: 옛 분류는 걸린다
+        self.assertGreater(stair(self.inp["terrain0"] == B.TERRAIN_DESERT), 0.95)         # 적색 기준: 옛 분류는 걸린다
         # 기준은 다듬기를 끈 값(사막 0.334 · 고원 0.476 · 산 0.296)과 다듬은 값(0.233 · 0.289 · 0.263) 사이
         for name, m, lim in (("산", self.lv > 0, 0.28), ("2단", self.lv >= 2, 0.28), ("3단", self.lv >= 3, 0.28),
                              ("사막", self.des, 0.30), ("고원", self.plat, 0.32)):
@@ -245,11 +269,10 @@ class MapDesignCliProbeTest(unittest.TestCase):
     def _run(self, d: Path):
         return subprocess.run([sys.executable, str(TOOL), "--check", "--dir", str(d)], capture_output=True, text=True)
 
-    def test_green_copy_then_red_after_stale_edits(self):
+    def test_red_after_stale_edits(self):
         with tempfile.TemporaryDirectory() as tmp:
             d = Path(tmp) / "map-design"; shutil.copytree(B.OUT, d)
-            ok = self._run(d)
-            self.assertEqual(ok.returncode, 0, ok.stdout + ok.stderr)
+            # 커밋본의 CLI 초록은 결합 목록 일괄 검사(check_han_tiles_coupled.py --check)가 CI 에서 돈다. 여기서는 적색만 본다.
             # 판정 입력을 고치고 강을 다시 새기지 않음 · 산 칸 하나 빠짐 · 피복 매개변수만 바꿈 · 이동안 좌표 조작
             dodge = json.loads((d / B.DODGE).read_text()); dodge["cities"].pop(); (d / B.DODGE).write_text(json.dumps(dodge))
             mnt = json.loads((d / B.MOUNTAINS).read_text()); mnt["cells"].pop(); (d / B.MOUNTAINS).write_text(json.dumps(mnt))
@@ -258,11 +281,12 @@ class MapDesignCliProbeTest(unittest.TestCase):
             rf = json.loads((d / B.RELIEF).read_text()); rf["params"]["tier3"] = 900; rf["input"]["demSha256"] = "0" * 64
             rf["plateau"]["params"]["step"] = 200; rf["desert"]["result"]["cells"] += 1
             rd = json.loads((d / B.ROADS_OUT).read_text()); rd["params"]["bendWeight"] = 2.0; (d / B.ROADS_OUT).write_text(json.dumps(rd))
+            wd = json.loads((d / B.WATERS_OUT).read_text()); wd["result"]["waterToLand"] += 1; (d / B.WATERS_OUT).write_text(json.dumps(wd))
             (d / B.RELIEF).write_text(json.dumps(rf))
             bad = self._run(d)
             self.assertEqual(bad.returncode, 1, bad.stdout)
             for needle in ("dodgeSha256", f"{B.MOUNTAINS} 가 재계산과 다르다", f"{B.LANDCOVER} 지문", f"{B.PLACEMENTS} 가 재계산과 다르다",
-                           f"{B.RELIEF} 지문", "표고 원판", f"{B.RELIEF} 고원 지문", f"{B.RELIEF} 사막 지문", f"{B.ROADS_OUT} 지문"):
+                           f"{B.RELIEF} 지문", "표고 원판", f"{B.RELIEF} 고원 지문", f"{B.RELIEF} 사막 지문", f"{B.ROADS_OUT} 지문", f"{B.WATERS_OUT} 지문"):
                 self.assertIn(needle, bad.stdout)
 
 
