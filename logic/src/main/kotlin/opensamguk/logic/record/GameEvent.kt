@@ -57,14 +57,14 @@ sealed interface AudienceTarget {
         init { require(generalId > 0) }
         override val audience = EventAudience.SELF
     }
-    class Retinue(val ownerGeneralId: Int, authorizedGeneralIds: Set<Int>) : AudienceTarget {
+    class Retinue(val ownerGeneralId: Int, val nationId: Int, authorizedGeneralIds: Set<Int>) : AudienceTarget {
         val authorizedGeneralIds: Set<Int> = authorizedGeneralIds.toSet()
-        init { require(ownerGeneralId > 0 && this.authorizedGeneralIds.isNotEmpty() && this.authorizedGeneralIds.all { it > 0 }) }
+        init { require(ownerGeneralId > 0 && nationId > 0 && this.authorizedGeneralIds.isNotEmpty() && this.authorizedGeneralIds.all { it > 0 }) }
         override val audience = EventAudience.RETINUE
-        override fun equals(other: Any?): Boolean = other is Retinue && ownerGeneralId == other.ownerGeneralId &&
+        override fun equals(other: Any?): Boolean = other is Retinue && ownerGeneralId == other.ownerGeneralId && nationId == other.nationId &&
             authorizedGeneralIds == other.authorizedGeneralIds
-        override fun hashCode(): Int = 31 * ownerGeneralId + authorizedGeneralIds.hashCode()
-        override fun toString(): String = "Retinue(ownerGeneralId=$ownerGeneralId, authorizedGeneralIds=$authorizedGeneralIds)"
+        override fun hashCode(): Int = 31 * (31 * ownerGeneralId + nationId) + authorizedGeneralIds.hashCode()
+        override fun toString(): String = "Retinue(ownerGeneralId=$ownerGeneralId, nationId=$nationId, authorizedGeneralIds=$authorizedGeneralIds)"
     }
     data class Nation(val nationId: Int) : AudienceTarget {
         init { require(nationId > 0) }

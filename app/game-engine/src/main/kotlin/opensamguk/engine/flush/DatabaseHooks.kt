@@ -270,6 +270,7 @@ object DatabaseHooks {
             deletedTroops = dirty.deletedTroops,
             updatedTroops = dirty.troops.filter { it.id !in createdTroopIds }.map { toTroopRow(it) },
             logEntries = logEntries,
+            gameEvents = dirty.gameEvents,
             rankWrites = rankWrites,
             kvWrites = toKvWrites(dirty.kvDirty),
             generalOwnerDeletes = dirty.deletedGenerals,
@@ -758,6 +759,7 @@ object DatabaseHooks {
             createdSieges = dirty.createdSieges.map { toSiegeRow(it) },
             updatedSieges = dirty.sieges.filter { it.countyId !in createdSiegeIds }.map { toSiegeRow(it) },
             logEntries = logEntries,
+            gameEvents = dirty.gameEvents,
             rankWrites = toRankWrites(recorder.rankPatches()),
             kvWrites = toKvWrites(recorder.kvDirty()),
             createdMessages = recorder.createdMessages().map {
