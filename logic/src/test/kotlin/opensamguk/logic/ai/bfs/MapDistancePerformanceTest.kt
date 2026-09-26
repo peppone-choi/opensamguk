@@ -6,15 +6,15 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class AiDistanceHanPerformanceTest {
+class MapDistancePerformanceTest {
     @Test
-    fun `han all-city distances preserve order within five second budget`() {
-        val han = CityConstRegistry.of("han")
-        val cityIds = han.all().keys.toList()
+    fun `baseline map all-city distances preserve order within five second budget`() {
+        val map = CityConstRegistry.of("han")
+        val cityIds = map.all().keys.toList()
         lateinit var result: Map<Int, Map<Int, Int>>
 
         val elapsedNanos = measureNanoTime {
-            result = AiDistance.searchAllDistanceByCityList(cityIds, han)
+            result = AiDistance.searchAllDistanceByCityList(cityIds, map)
         }
         val elapsedMillis = elapsedNanos / 1_000_000.0
 
@@ -22,6 +22,6 @@ class AiDistanceHanPerformanceTest {
         assertEquals(cityIds, result.keys.toList())
         assertEquals(cityIds.first(), result.getValue(cityIds.first()).keys.first())
         assertTrue(elapsedMillis < 5_000.0, "774-city distance build took $elapsedMillis ms")
-        println("HAN_DISTANCE_BUDGET elapsedMs=$elapsedMillis budgetMs=5000 cities=${result.size}")
+        println("MAP_DISTANCE_BUDGET elapsedMs=$elapsedMillis budgetMs=5000 cities=${result.size}")
     }
 }
