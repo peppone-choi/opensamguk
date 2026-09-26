@@ -37,6 +37,7 @@ data class GameEventRow(
                     else -> null
                 },
                 audienceNationId = when (target) {
+                    is AudienceTarget.Retinue -> target.nationId
                     is AudienceTarget.Nation -> target.nationId
                     is AudienceTarget.Court -> target.nationId
                     else -> null

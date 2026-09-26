@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class GameEventTest {
     private val whenOccurred = OccurredAt(200, 2, 3, 0)
@@ -73,13 +74,15 @@ class GameEventTest {
         assertFailsWith<IllegalArgumentException> { EventKey.derive("rendered sentence") }
         assertFailsWith<IllegalArgumentException> { OccurredAt(200, 13, 1, 0) }
         assertFailsWith<IllegalArgumentException> { OccurredAt(200, 1, 4, 0) }
-        assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, emptySet()) }
+        assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, 2, emptySet()) }
+        assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, 0, setOf(3)) }
         assertFailsWith<IllegalArgumentException> { Publication(PublicationState.PRIVATE, whenOccurred) }
         val mutable = mutableSetOf(3, 5)
-        val sealed = AudienceTarget.Retinue(1, mutable)
+        val sealed = AudienceTarget.Retinue(1, 2, mutable)
         mutable.add(8)
         assertEquals(setOf(3, 5), sealed.authorizedGeneralIds)
-        assertEquals(sealed, AudienceTarget.Retinue(1, setOf(5, 3)))
+        assertEquals(sealed, AudienceTarget.Retinue(1, 2, setOf(5, 3)))
+        assertTrue(sealed != AudienceTarget.Retinue(1, 3, setOf(5, 3)))
         assertEquals(AudienceTarget.Court(2, setOf(3)), AudienceTarget.Court(2, setOf(3)))
     }
 

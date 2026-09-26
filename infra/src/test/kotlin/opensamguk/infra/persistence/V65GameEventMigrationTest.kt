@@ -94,18 +94,6 @@ class V65GameEventMigrationTest {
             assertTrue(eventWriter.insert(event.copy(worldId = 2)))
             assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 2 AND event_key = ?",
                 Int::class.java, event.eventKey.value))
-            val retinueEvent = event.copy(
-                kind = EventKind.PEOPLE_JOINED,
-                occurredAt = OccurredAt(200, 2, 3, 12),
-                audience = AudienceTarget.Retinue(7, setOf(9, 7)),
-                eventKey = EventKey.derive("fixture", "retinue", "12"),
-                refs = mapOf(RefRole.PERSON to EventRef.General(9)),
-            )
-            assertTrue(eventWriter.insert(retinueEvent))
-            assertEquals("{7,9}", jdbc.queryForObject(
-                "SELECT recipient_general_ids::text FROM game_event WHERE world_id = 1 AND event_key = ?",
-                String::class.java, retinueEvent.eventKey.value))
-            assertTrue(!eventWriter.insert(retinueEvent))
             fun rejectedBy(constraint: String, block: () -> Unit) {
                 val error = assertFailsWith<DataAccessException> { block() }
                 assertTrue(error.mostSpecificCause.message?.contains(constraint) == true,

@@ -42,10 +42,10 @@ class GameEventRowTest {
     @Test
     fun `maps private recipient snapshots in stable order and keeps income facts internal`() {
         val retinue = GameEventRow.from(GameEvent(1, EventKind.PEOPLE_JOINED, at,
-            AudienceTarget.Retinue(7, setOf(9, 2)), privatePublication, key,
+            AudienceTarget.Retinue(7, 3, setOf(9, 2)), privatePublication, key,
             refs = mapOf(RefRole.PERSON to EventRef.General(9))))
         assertEquals(7, retinue.audienceGeneralId)
-        assertNull(retinue.audienceNationId)
+        assertEquals(3, retinue.audienceNationId)
         assertEquals(listOf(2, 9), retinue.recipientGeneralIds)
         assertEquals("PRIVATE", retinue.publicationState)
 
