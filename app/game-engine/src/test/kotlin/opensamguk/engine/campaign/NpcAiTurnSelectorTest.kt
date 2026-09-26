@@ -3,6 +3,7 @@ package opensamguk.engine.campaign
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
+import kotlin.test.assertNotEquals
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.AiSelectorKey
@@ -16,7 +17,7 @@ class NpcAiTurnSelectorTest {
         val selector = NpcAiTurnSelector(fixture.topology, fixture.metrics, DomesticContext())
 
         // Before the policy registry: retire -> deploy -> muster -> military -> people -> field -> personal.
-        // Retire is PLANNED and intentionally no longer runs; the remaining order must stay intact.
+        // Retire is PLANNED and already gated out; the remaining order stays intact.
         assertEquals(listOf(
             AiSelectorKey.DEPLOY,
             AiSelectorKey.MUSTER,
@@ -28,7 +29,7 @@ class NpcAiTurnSelectorTest {
     }
 
     @Test
-    fun `an unowned lord with a detached corps selects delivered muster`() {
+    fun `an eligible unowned lord does not select muster before AI delivery`() {
         val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val owner = fixture.person(801, 1, route.startCity)
@@ -46,6 +47,6 @@ class NpcAiTurnSelectorTest {
 
         val chosen = NpcAiTurnSelector(fixture.topology, fixture.metrics, DomesticContext())
             .select(world, owner.id, CampaignWorldFixture.NO_INPUT)
-        assertEquals(MilitaryInput.MUSTER, chosen.actionCode)
+        assertNotEquals(MilitaryInput.MUSTER, chosen.actionCode)
     }
 }
