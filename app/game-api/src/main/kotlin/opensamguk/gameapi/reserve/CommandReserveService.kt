@@ -81,7 +81,7 @@ class CommandReserveService(
     private val redis: StringRedisTemplate,
     private val registry: CommandRegistry,
     processWorld: GameApiProcessWorld,
-    @Value("\${opensamguk.profile:che:scenario_2}") profile: String,
+    @Value("\${opensamguk.profile:pep:scenario_990002}") profile: String,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
