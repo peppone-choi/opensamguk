@@ -1,6 +1,6 @@
 # 사건 읽기 API 권한 경계 조사
 
-기준: ADR-LITE-069, `docs/superpowers/specs/2026-09-25-game-log-model.md`, #343 시야 계약. 현재는 조사 문서만 작성한다. `app/game-api` 제품 파일, 특히 세계 형식 가드가 소유한 `WorldStateReadRepository.kt`는 편집하지 않는다.
+기준: ADR-LITE-069, `docs/superpowers/specs/2026-09-25-game-log-model.md`, #343 시야 계약. 조사 뒤 별도 draft 읽기 API 구현을 시작했다. 세계 형식 가드가 소유한 `WorldStateReadRepository.kt`는 편집하지 않는다.
 
 ## 현행 소비자와 교체 경계
 
@@ -39,7 +39,7 @@
 | `income.monthly` | NATION: 현재도 사건 당시 세력 소속이고 `p>=2`. | 금·쌀·철·목재·말·영토 수치는 승인된 세력 내부에만. 세력 이동 시 옛 세력 결산 접근 취소. |
 | `march.corps`, `deploy.started`, `encounter.pending`, `encounter.disbanded`, `roadFort.siege` | SELF: 현재 소유자, 이적 후 유지. RETINUE: 당시 봉인 수신자, 현재도 사건 당시 세력 소속이며 `p>=2`. NATION: 현재도 사건 당시 세력 소속이며 `p>=2`. | 아군 군단 key·방향만. 적 군단 ID/key·정확한 병력·행군 목적·봉인 배치/계책·다른 요청 ID는 저장/응답 금지. `CITY`도 #343 시야를 넘는 위치이면 생략/사건 숨김. |
 | `military.musterOrdered` | SELF: 현재 소유자, 이적 후 유지. NATION: 현재도 사건 당시 세력 소속이며 `p>=2`. | 아군 동원 정보만. 적 전력과 계획은 없음. |
-| `court.dispatchIssued`, `court.dispatchReceived`, `court.dispatchAccepted`, `court.dispatchRefused`, `court.dispatchCancelled` | COURT: 당시 봉인 수신자이며 현재도 사건 당시 세력 소속. 발신/수신 **직접 당사자**는 `p>=0`, 그 밖에 명시 수신된 관직자는 `p>=2`. 이 다섯 kind의 `REQUEST`가 국가 내부 발령이므로 직접 당사자도 이적 후에는 COURT 행을 못 본다. | `REQUEST`는 해당 공문 ID만. 발신/수신별 별도 안전 투영. 같은 나라의 수뇌라는 이유만으로 모든 공문에 자동 접근 불가. |
+| `court.dispatchIssued`, `court.dispatchReceived`, `court.dispatchAccepted`, `court.dispatchRefused`, `court.dispatchCancelled` | COURT: 당시 봉인 수신자이며 현재도 사건 당시 세력 소속. 발신/수신 **직접 당사자**는 `p>=0`, 그 밖에 명시 수신된 관직자는 현재 `officerLevel>=2`와 `p>=2`를 모두 요구한다. 이 다섯 kind의 `REQUEST`가 국가 내부 발령이므로 직접 당사자도 이적 후에는 COURT 행을 못 본다. | `REQUEST`는 해당 공문 ID만. 발신/수신별 별도 안전 투영. 같은 나라의 수뇌라는 이유만으로 모든 공문에 자동 접근 불가. |
 | `county.ownerChanged`, `roadFort.captured`, `yuedan.announced` | PUBLIC: 즉시 PUBLISHED이며 비로그인 포함. | V65 `game_event_public_ck`와 `EventKind.publicKinds`가 허용한 공개 refs만, facts는 빈 객체. `county.captured/lost`는 쓰기 금지. |
 
 직접 당사자를 정하려면 COURT 행의 `ISSUER`/`TARGET`와 현재 소유 장수 ID를 타입 검증 후 비교한다. ref가 없거나 손상되면 당사자 예외는 적용하지 않는다. RETINUE `ownerGeneralId`만으로 행을 볼 수 있다는 예외도 만들지 않는다. writer가 주인을 읽히려면 주인 ID를 당시 수신자 배열에 명시해야 한다. 군단 사건의 `CORPS` ref는 EventKind의 타입 검사만으로 아군 여부를 증명할 수 없으므로 writer의 소유 판정과 reader의 안전 투영이 모두 필요하다.
