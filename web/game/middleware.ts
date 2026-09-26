@@ -53,6 +53,15 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   // the v2 experimental namespace as a server ID.
   'v2-lab',
   'vote',
+  'court',
+  'hand',
+  'orders',
+  'posts',
+  'retinue',
+  'siege',
+  'supply',
+  'war-room',
+  'yuedan',
   'world-log',
 ]);
 
@@ -97,18 +106,20 @@ export function middleware(req: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
-  // The serverless HWIHA URL is a legacy address. Keep the selected game
-  // instance in the visible URL, while the existing rewrite serves its page.
-  if (pathname === '/game/hwiha' || pathname.startsWith('/game/hwiha/')) {
-    const serverId = configuredServerId();
-    if (serverId) {
-      const targetUrl = req.nextUrl.clone();
-      targetUrl.pathname = `/game/${serverId}${pathname.slice('/game'.length)}${pathname === '/game/hwiha' ? '/war-room' : ''}`;
-      targetUrl.searchParams.delete('server');
-      const res = NextResponse.redirect(targetUrl, 308);
-      setServerCookie(res, serverId);
-      return res;
-    }
+  // Old campaign URLs redirect to the same screen at its domain route.
+  const segments = pathname.split('/');
+  const oldServerless = segments[1] === 'game' && segments[2] === 'hwiha';
+  const oldServerPath = segments[1] === 'game' && isPublicServerId(segments[2] ?? '') && segments[3] === 'hwiha';
+  if (oldServerless || oldServerPath) {
+    const pathServerId = oldServerPath ? segments[2] : undefined;
+    const serverId = pathServerId ?? configuredServerId();
+    const slug = segments.slice(oldServerPath ? 4 : 3).filter(Boolean).join('/') || 'war-room';
+    const targetUrl = req.nextUrl.clone();
+    targetUrl.pathname = `/game/${serverId ? `${serverId}/` : ''}${slug}`;
+    if (serverId) targetUrl.searchParams.delete('server');
+    const res = NextResponse.redirect(targetUrl, 308);
+    if (serverId && serverId === configuredServerId()) setServerCookie(res, serverId);
+    return res;
   }
 
   // 1) Query-based server selection: preserve existing behavior.
@@ -120,7 +131,6 @@ export function middleware(req: NextRequest) {
   }
 
   // Only rewrite this instance's SERVER_ID path, so `/game/join` remains an ordinary route.
-  const segments = pathname.split('/');
   if (segments.length >= 3 && segments[1] === 'game') {
     const serverId = segments[2];
     if (serverId === configuredServerId()) {

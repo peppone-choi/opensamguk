@@ -9,7 +9,7 @@ internal object PersonalTurn {
             reserved.actionCode == opensamguk.infra.persistence.ReservedTurnRepository.DEFAULT_TURN_ACTION &&
             reserved.argJson.trim() in setOf("", "{}")
 
-    const val META_KEY = "hwihaLastPersonalTurn"
+    const val META_KEY = "lastPersonalTurn"
 
     fun eligible(meta: Map<String, Any?>, state: TurnWorldState): Boolean {
         if (!meta.containsKey(META_KEY)) return true

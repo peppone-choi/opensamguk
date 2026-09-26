@@ -6,8 +6,11 @@ import opensamguk.logic.input.*
 
 /** A first assignment only. Existing dispatch history prevents automatic refusal/cancellation loops. */
 internal object NpcDispatchSelector {
+    private val catalog by lazy { InputCatalog.load() }
+
     fun select(world: InMemoryTurnWorld, issuerId: Int, executor: DispatchExecutor): DispatchRequest? {
-        if (world.ruleProfile != RuleProfile.HWIHA) return null
+        if (world.ruleProfile != RuleProfile.HWIHA ||
+            !AiPolicyRegistry.selectable(catalog, "court.dispatch", AiSelectorKey.COURT_DISPATCH)) return null
         val issuer = world.getGeneralById(issuerId) ?: return null
         if (issuer.npcState != NpcType.NPC_LITE || issuer.nationId <= 0 ||
             issuer.meta[LordStatus.META_KEY] != true ||

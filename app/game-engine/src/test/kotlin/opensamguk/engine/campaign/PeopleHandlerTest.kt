@@ -79,7 +79,7 @@ class PeopleHandlerTest {
         val actor = fixture.person(821, 1, route.startCity, userId = "42")
         val captive = fixture.person(822, 2, route.startCity, lord = false).copy(meta =
             fixture.person(822, 2, route.startCity, lord = false).meta +
-                ("hwihaCaptive" to mapOf("captorGeneralId" to actor.id)))
+                ("captive" to mapOf("captorGeneralId" to actor.id)))
         val world = fixture.world(listOf(actor to route.start, captive to route.start))
         val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test", ready) { seed ->
             object : RandUtil(LiteHashDrbg(seed)) {
@@ -100,7 +100,7 @@ class PeopleHandlerTest {
         val actor = fixture.person(831, 1, route.startCity, userId = "42")
         val lord = fixture.person(832, 2, route.startCity, lord = true).copy(meta =
             fixture.person(832, 2, route.startCity, lord = true).meta +
-                ("hwihaCaptive" to mapOf("captorGeneralId" to actor.id)))
+                ("captive" to mapOf("captorGeneralId" to actor.id)))
         val world = fixture.world(listOf(actor to route.start, lord to route.start))
         val handler = PeopleHandler(world, ChangeRecorder(), DomesticContext(), "test", ready) {
             error("foreign lord gate must run before RNG")

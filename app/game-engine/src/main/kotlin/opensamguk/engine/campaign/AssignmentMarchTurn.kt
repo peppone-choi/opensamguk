@@ -13,7 +13,7 @@ class AssignmentMarchTurn(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex,
+    private val cells: ProvinceCellIndex,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
     private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING,
 ) {

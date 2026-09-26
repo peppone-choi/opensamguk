@@ -74,12 +74,12 @@ class DomesticContext(
             }.toMap(),
             provinceIdsByCounty = if (geography == null) emptyMap() else world.administrativeCountyIds
                 .associateWith(geography::provincesOfCounty),
-            activeSiegeCountyIds = world.listHwihaSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
+            activeSiegeCountyIds = world.listSieges().filter { it.status == "ACTIVE" }.mapTo(hashSetOf()) { it.countyId },
         )
     }
 }
 
-internal fun InMemoryTurnWorld.hwihaNow(): Phase = getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
+internal fun InMemoryTurnWorld.phaseNow(): Phase = getState().let { Phase(it.currentYear, it.currentMonth, it.currentPhase) }
 
 internal fun InMemoryTurnWorld.updateGeneralMeta(recorder: ChangeRecorder, before: TurnGeneral, meta: Map<String, Any?>) {
     if (before.meta == meta) return
@@ -107,7 +107,7 @@ internal fun InMemoryTurnWorld.updateNationMeta(recorder: ChangeRecorder, nation
 internal fun Map<String, Any?>.withKey(key: String, value: Any?): Map<String, Any?> =
     if (value == null) this - key else LinkedHashMap(this).apply { put(key, value) }
 
-/** 정찰 배치의 공개 투영(주인 meta `hwihaScoutPosts`)을 정본 배치에서 다시 쓴다. 시야 스트림이 이 키를 읽는다. */
+/** 정찰 배치의 공개 투영(주인 meta `scoutPosts`)을 정본 배치에서 다시 쓴다. 시야 스트림이 이 키를 읽는다. */
 internal fun InMemoryTurnWorld.syncScoutPosts(recorder: ChangeRecorder, ownerId: Int) {
     val owner = getGeneralById(ownerId) ?: return
     val cards = listRetainers().map { DomesticCard(it.id, it.masterGeneralId, it.generalId, it.relation, it.name) }

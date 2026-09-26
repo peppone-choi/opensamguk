@@ -63,5 +63,5 @@ class TransferHandler(private val world: InMemoryTurnWorld, private val recorder
             mapOf("inputId" to inputId, "requestId" to requestId))
         return TurnOutcome.Applied(inputId, effects)
     }
-    companion object { private const val LAST_TURN_KEY = "hwihaTransferLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "transferLastTurn" }
 }

@@ -17,7 +17,7 @@ import opensamguk.gameapi.dto.CorpsResponse
 import opensamguk.gameapi.dto.ScoutOptionsResponse
 import opensamguk.gameapi.dto.VisibilityResponse
 import opensamguk.gameapi.web.VisionController
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.mockito.Mockito.*
@@ -30,7 +30,7 @@ import kotlin.test.*
  * FULL corps in the very same response proves the check is looking at real output (positive control).
  */
 class VisionReaderTest {
-    private val bundle = HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133)
+    private val bundle = WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133)
     private val index = bundle.commanderyIndex
     private val topology = bundle.projection.topology
 
@@ -52,15 +52,15 @@ class VisionReaderTest {
     private val far = provinces.keys.sorted().first { it != home && it != next && !index.adjacent(home, it) && !index.adjacent(next, it) }
     private fun province(no: Int) = provinces.getValue(no).first()
 
-    private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA")).apply {
+    private val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")).apply {
         currentYear = 190; currentMonth = 3; currentPhase = 2
     }
 
     private fun corpsMeta(owner: Int, order: String, unit: Int, nation: Int) = mapOf(DeploymentState.META_KEY to
         DeploymentState(listOf(DeployedCorps(order, owner, owner, null, nation, listOf(unit), Phase(190, 1, 1)))).toMetaValue())
 
-    private fun setup(profile: String = "HWIHA", actorMeta: Map<String, Any?> = emptyMap(), fullEnemyAtHome: Boolean = true) {
-        world.config = mapOf("ruleProfile" to profile)
+    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN", actorMeta: Map<String, Any?> = emptyMap(), fullEnemyAtHome: Boolean = true) {
+        world.config = mapOf("worldFormat" to profile)
         `when`(worlds.findProcessWorld()).thenReturn(world)
         val actor = GeneralReadEntity(id = 1, worldId = 1, name = "주인공", nationId = 1, userId = "41",
             meta = corpsMeta(1, "req-own-order", 11, 1) + actorMeta)
@@ -104,8 +104,8 @@ class VisionReaderTest {
         assertEquals(403, controller.visibility(41, 99).statusCode.value())
         assertEquals("no-store", controller.visibility(41, 1).headers.cacheControl)
         setup(profile = "SAMMO")
-        assertEquals("WRONG_RULE_PROFILE", (controller.visibility(41, 1).body as VisibilityResponse).status)
-        assertEquals("""{"status":"WRONG_RULE_PROFILE"}""", bytes(controller.corps(41, 1).body))
+        assertEquals("UNSUPPORTED_WORLD_FORMAT", (controller.visibility(41, 1).body as VisibilityResponse).status)
+        assertEquals("""{"status":"UNSUPPORTED_WORLD_FORMAT"}""", bytes(controller.corps(41, 1).body))
     }
 
     // ── 누출 ─────────────────────────────────────────────────────────────

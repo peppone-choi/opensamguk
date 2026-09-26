@@ -977,9 +977,9 @@ test('v1 core live surfaces and durable engine restart', async ({ browser }, tes
 
     const routes: Array<[string, string]> = [
       ['/game', 'general'],
-      ['/game/hwiha/war-room', 'war-room'],
-      ['/game/hwiha/retinue', 'retinue'],
-      ['/game/hwiha/court', 'court'],
+      ['/game/war-room', 'war-room'],
+      ['/game/retinue', 'retinue'],
+      ['/game/court', 'court'],
       ['/game/board', 'board'],
       ['/game/board?secret=1', 'board-secret-deep-link'],
       ['/game/mailbox', 'mailbox'],

@@ -1,9 +1,9 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.infra.seed.HanWorldTopologyPin
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.seed.WorldTopologyPin
+import opensamguk.logic.world.WorldMapVariant
 import org.mockito.Mockito
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -12,9 +12,9 @@ import java.sql.ResultSet
 import kotlin.test.*
 
 class WorldSnapshotLoaderHanVersionTest {
-    private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
+    private val artifacts = WorldArtifactsResolver(Path.of("../.."))
 
-    private fun load(ids: List<Int>, pins: List<HanWorldTopologyPin> = emptyList()): Pair<opensamguk.engine.turn.WorldSnapshot, List<Pair<String,List<Any?>>>> {
+    private fun load(ids: List<Int>, pins: List<WorldTopologyPin> = emptyList()): Pair<opensamguk.engine.turn.WorldSnapshot, List<Pair<String,List<Any?>>>> {
         val queries = mutableListOf<Pair<String,List<Any?>>>()
         val jdbc = Mockito.mock(JdbcTemplate::class.java) { call ->
             when (call.method.name) {
@@ -25,7 +25,7 @@ class WorldSnapshotLoaderHanVersionTest {
                     val rows: List<Map<String,Any?>> = when {
                         " AS channel" in sql -> pins.map { mapOf("channel" to it.channel, "topology_revision" to it.revision, "topology_hash" to it.hash) }
                         "FROM world_state" in sql -> listOf(mapOf("id" to 8, "current_year" to 200, "current_month" to 1, "current_phase" to 1,
-                            "tick_seconds" to 60, "status" to "OPEN", "config" to "{\"mapName\":\"han-world-v3\"}", "meta" to "{}"))
+                            "tick_seconds" to 60, "status" to "OPEN", "config" to "{\"mapName\":\"han-world-v3\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}", "meta" to "{}"))
                         "FROM city WHERE" in sql -> ids.map { mapOf("id" to it, "name" to "renamed-$it", "meta" to "{}") }
                         else -> emptyList()
                     }
@@ -38,7 +38,7 @@ class WorldSnapshotLoaderHanVersionTest {
         }
         val snapshot = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(8)), WorldId(8),
             waterTopologyLoader = { variant -> artifacts.artifacts(variant).projection.topology },
-            hanVariantSelector = { allIds, allPins -> artifacts.resolve(allIds, allPins).variant },
+            mapVariantSelector = { allIds, allPins -> artifacts.resolve(allIds, allPins).variant },
         ).buildSnapshot()
         return snapshot to queries
     }
@@ -56,14 +56,14 @@ class WorldSnapshotLoaderHanVersionTest {
     }
 
     @Test fun `boot selects each historical roster and preserves renamed city labels`() {
-        for (variant in HanWorldVariant.entries) {
+        for (variant in WorldMapVariant.entries) {
             val ids = artifacts.artifacts(variant).cityConst.all().keys.toList()
-            val pins = if (variant == HanWorldVariant.V3_1447_MAP4) {
+            val pins = if (variant == WorldMapVariant.V3_1447_MAP4) {
                 val topology = artifacts.artifacts(variant).projection.topology
-                listOf(HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash))
+                listOf(WorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash))
             } else emptyList()
             val (snapshot, queries) = load(ids, pins)
-            assertEquals(variant, snapshot.state.hanWorldVariant)
+            assertEquals(variant, snapshot.state.worldMapVariant)
             assertEquals("renamed-1", snapshot.cities.first().name)
             assertEquals(artifacts.artifacts(variant).projection.topology.contentHash, snapshot.waterControlSnapshot!!.topologyHash)
             val pinQuery = queries.single { " AS channel" in it.first }
@@ -73,11 +73,11 @@ class WorldSnapshotLoaderHanVersionTest {
     }
 
     @Test fun `boot rejects a mismatched pin from any spatial table`() {
-        val old = artifacts.artifacts(HanWorldVariant.V3_832)
-        val current = artifacts.artifacts(HanWorldVariant.V3_835)
+        val old = artifacts.artifacts(WorldMapVariant.V3_832)
+        val current = artifacts.artifacts(WorldMapVariant.V3_835)
         for (channel in listOf("water_zone_control", "province_control", "general_spatial_position")) {
             assertFailsWith<IllegalArgumentException> {
-                load(old.cityConst.all().keys.toList(), listOf(HanWorldTopologyPin(channel,
+                load(old.cityConst.all().keys.toList(), listOf(WorldTopologyPin(channel,
                     current.projection.topology.topologyRevision, current.projection.topology.contentHash)))
             }
         }

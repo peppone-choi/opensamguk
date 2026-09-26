@@ -10,13 +10,13 @@ import opensamguk.gameapi.dto.WarehousesResponse
 import opensamguk.gameapi.dto.YuedanResponse
 import opensamguk.gameapi.web.CampController
 import opensamguk.infra.entity.GameKvEntity
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.renown.RenownAssessment
 import opensamguk.logic.renown.RenownEvents
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import org.mockito.Mockito.*
 
 class CampReaderTest {
@@ -34,8 +34,8 @@ class CampReaderTest {
     private val reader = CampReader(generals, worlds, nations, cities, retainers, gameKv, resolver, ledgers, geography, mapper)
     private val controller = CampController(reader)
 
-    private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"))
-    private val bundle = mock(ResolvedHanWorldArtifacts::class.java)
+    private val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))
+    private val bundle = mock(ResolvedWorldArtifacts::class.java)
 
     private fun policy(renown: Int, source: String = "synthetic-qa:camp") =
         PersonPolicyState(renown, false, source, "v1", 1).toMetaValue()
@@ -55,8 +55,8 @@ class CampReaderTest {
         meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30)))
     private val other = GeneralReadEntity(id = 9, worldId = 1, name = "남", userId = "42")
 
-    private fun setup(profile: String = "HWIHA") {
-        world.config = mapOf("ruleProfile" to profile)
+    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN") {
+        world.config = mapOf("worldFormat" to profile)
         `when`(worlds.findProcessWorld()).thenReturn(world)
         listOf(lord, xiahou, liubei, dingfeng, other).forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
         `when`(generals.findById(99)).thenReturn(Optional.empty())
@@ -118,14 +118,14 @@ class CampReaderTest {
         verifyNoInteractions(retainers, cities, gameKv, resolver)
     }
 
-    @Test fun `휘하 규칙이 아닌 월드는 200 WRONG_RULE_PROFILE 빈 데이터`() {
+    @Test fun `휘하 규칙이 아닌 월드는 200 UNSUPPORTED_WORLD_FORMAT 빈 데이터`() {
         setup(profile = "SAMMO")
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1, name = "탕거")))
-        assertEquals(YuedanResponse("WRONG_RULE_PROFILE"), reader.yuedan(1, 41))
-        assertEquals(WarehousesResponse("WRONG_RULE_PROFILE"), reader.warehouses(1, 41))
-        assertEquals(CampRetinueResponse("WRONG_RULE_PROFILE"), reader.retinue(1, 41))
+        assertEquals(YuedanResponse("UNSUPPORTED_WORLD_FORMAT"), reader.yuedan(1, 41))
+        assertEquals(WarehousesResponse("UNSUPPORTED_WORLD_FORMAT"), reader.warehouses(1, 41))
+        assertEquals(CampRetinueResponse("UNSUPPORTED_WORLD_FORMAT"), reader.retinue(1, 41))
         val county = assertNotNull(reader.county(5, 1, 41))
-        assertEquals("WRONG_RULE_PROFILE", county.status); assertTrue(county.specialties.isEmpty())
+        assertEquals("UNSUPPORTED_WORLD_FORMAT", county.status); assertTrue(county.specialties.isEmpty())
         verifyNoInteractions(retainers, gameKv, resolver)
     }
 
@@ -374,8 +374,8 @@ class CampReaderTest {
     }
 
     @Test fun `실제 城 표로 본관을 한글로 푼다 - 풀리지 않으면 null`() {
-        val artifacts = mock(ResolvedHanWorldArtifacts::class.java)
-        `when`(artifacts.variant).thenReturn(HanWorldVariant.entries.first())
+        val artifacts = mock(ResolvedWorldArtifacts::class.java)
+        `when`(artifacts.variant).thenReturn(WorldMapVariant.entries.first())
         val runtimeMap = checkNotNull(javaClass.classLoader.getResourceAsStream("map/han-world-v3.json")).use { it.readBytes() }
         val root = generateSequence(java.nio.file.Path.of("").toAbsolutePath()) { it.parent }
             .first { java.nio.file.Files.isRegularFile(it.resolve("data/map/han-tiles.json")) }
@@ -418,8 +418,8 @@ class CampReaderTest {
     }
 
     @Test fun `지리 색인은 런타임 省 index 를 han-tiles 관할 id 로 푼다`() {
-        val artifacts = mock(ResolvedHanWorldArtifacts::class.java)
-        `when`(artifacts.variant).thenReturn(HanWorldVariant.entries.first())
+        val artifacts = mock(ResolvedWorldArtifacts::class.java)
+        `when`(artifacts.variant).thenReturn(WorldMapVariant.entries.first())
         `when`(artifacts.artifactBytes(CityGeography.RUNTIME_MAP)).thenReturn("""{"width":1,"height":1,"cities":[
             {"id":1,"name":"장안","x":1,"y":1,"provinceId":1,"meta":{"jun":"경조윤","junCh":"京兆尹","nameCh":"长安县","displayName":"경조윤 장안현(长安)"}},
             {"id":2,"name":"떠돌이","x":2,"y":2,"provinceId":9},

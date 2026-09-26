@@ -29,7 +29,7 @@ class SiegeReader(
         if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw CampForbidden()
         val world = worlds.findProcessWorld() ?: return SiegesResponse("UNAVAILABLE")
         if (actor.worldId != world.id) return SiegesResponse("UNAVAILABLE")
-        if (world.config["ruleProfile"] != "HWIHA") return SiegesResponse("WRONG_RULE_PROFILE")
+        if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return SiegesResponse("UNSUPPORTED_WORLD_FORMAT")
         val nationNames = nations.findAll().associate { it.id to it.name }
         val rows = sieges.involving(actor.id, actor.nationId).map { row ->
             val city = cities.findById(row.countyId).orElse(null)

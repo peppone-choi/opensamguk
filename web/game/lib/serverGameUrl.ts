@@ -42,7 +42,17 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'tournament',
   'tournament-admin',
   'troop',
+  'v2-lab',
   'vote',
+  'court',
+  'hand',
+  'orders',
+  'posts',
+  'retinue',
+  'siege',
+  'supply',
+  'war-room',
+  'yuedan',
   'world-log',
 ]);
 const SERVER_COOKIE = 'sam_server';

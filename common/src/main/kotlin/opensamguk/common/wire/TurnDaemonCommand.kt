@@ -15,7 +15,7 @@ sealed class TurnDaemonCommand {
     abstract val type: String
 
     @Serializable
-    @SerialName("hwihaCourtInput")
+    @SerialName("immediateInput")
     data class ImmediateInput(
         val requestId: String,
         val generalId: Int,
@@ -23,7 +23,7 @@ sealed class TurnDaemonCommand {
         val inputId: String,
         val argJson: String,
     ) : TurnDaemonCommand() {
-        override val type: String get() = "hwihaCourtInput"
+        override val type: String get() = "immediateInput"
     }
 
     @Serializable

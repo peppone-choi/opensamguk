@@ -45,12 +45,12 @@ class CityConstRegistryTest {
 
     @Test
     fun `Han family recognition includes active version and compatibility keys`() {
-        assertTrue(isHanMapName("han"))
-        assertTrue(isHanMapName("han-world-v2"))
-        assertTrue(isHanMapName("han-world-v3"))
-        assertTrue(isHanMapName("han-780-v1"))
-        assertFalse(isHanMapName("che"))
-        assertFalse(isHanMapName(null))
+        assertTrue(isHistoricalMapName("han"))
+        assertTrue(isHistoricalMapName("han-world-v2"))
+        assertTrue(isHistoricalMapName("han-world-v3"))
+        assertTrue(isHistoricalMapName("han-780-v1"))
+        assertFalse(isHistoricalMapName("che"))
+        assertFalse(isHistoricalMapName(null))
     }
 
     @Test

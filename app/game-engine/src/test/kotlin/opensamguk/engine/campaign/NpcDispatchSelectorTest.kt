@@ -15,12 +15,12 @@ class NpcDispatchSelectorTest {
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
         experience = 0, dedication = 0, officerLevel = if (nation > 0) 12 else 0,
         npcState = 2, userId = null, gold = 100, rice = 200, crew = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to (nation > 0), PersonPolicyState.META_KEY to
+        meta = mapOf("lord" to (nation > 0), PersonPolicyState.META_KEY to
             PersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()))
 
     private fun world(issuer: TurnGeneral = person(10, 1), reverse: Boolean = false, countyIds: Set<Int> = setOf(1,2,3)): InMemoryTurnWorld {
         val persons = listOf(issuer) + listOf(1, 2).map { person(it, 1).copy(userId = "42", officerLevel = 1,
-            meta = person(it, 1).meta + ("hwihaLord" to false)) }
+            meta = person(it, 1).meta + ("lord" to false)) }
         return InMemoryTurnWorld(WorldSnapshot(
             state = TurnWorldState(1, 200, 1, 3600, Instant.EPOCH,
                 config = mapOf("mapName" to "han-world-v3", "ruleProfile" to "HWIHA")), worldId = WorldId(1),

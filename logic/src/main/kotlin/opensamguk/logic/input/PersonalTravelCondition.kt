@@ -34,7 +34,7 @@ data class PersonalTravelCondition(val fatigue: Int, val morale: Int,
         morale = (morale + design.restMoraleRecovery).coerceAtMost(100)) }
 
     companion object {
-        const val META_KEY = "hwihaPersonalTravelCondition"
+        const val META_KEY = "personalTravelCondition"
         val INITIAL = PersonalTravelCondition(0, 100)
 
         fun read(meta: Map<String, Any?>): PersonalTravelCondition? {

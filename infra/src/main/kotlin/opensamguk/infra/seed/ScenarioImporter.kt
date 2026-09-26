@@ -7,6 +7,8 @@ import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.rng.serializeSeed
 import opensamguk.common.world.WorldId
+import opensamguk.logic.content.PersonBond
+import opensamguk.logic.content.PersonBondState
 import opensamguk.logic.event.EventStore
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
@@ -86,7 +88,7 @@ class ScenarioImporter(
     /** The install instant; also `general.turn_time` / `world_state.start_time` / `ng_games.date`. */
     private val installTime: OffsetDateTime = OffsetDateTime.now(),
     /** HWIHA 시드가 위치 행의 위상 핀·城→省 바인딩을 읽을 아티팩트 루트. */
-    private val artifactsRoot: java.nio.file.Path = HanWorldArtifactsResolver.defaultRoot(),
+    private val artifactsRoot: java.nio.file.Path = WorldArtifactsResolver.defaultRoot(),
 ) {
 
     private val activeServerId = "opensamguk_${scenarioNumber}_${installTime.toEpochSecond()}"
@@ -148,7 +150,7 @@ class ScenarioImporter(
         // 4f' — 위치 권위 spec §2.2·§3-3(HWIHA): 전 장수 위치 행. 부팅이 고를 변형과 같은 핀으로.
         val positionCount = if (effectiveProfile == RuleProfile.HWIHA) insertGeneralPositions(jdbc, worldId) else 0
 
-        // 4f'' — HWIHA 초기 부곡(시나리오 `hwihaUnits` 선언만). 선언이 없으면 아무 행도 만들지 않는다.
+        // 4f'' — HWIHA 초기 부곡(시나리오 `units` 선언만). 선언이 없으면 아무 행도 만들지 않는다.
         val unitCount = insertHwihaUnits(jdbc, general, worldId)
 
         // 4g — nation_turn (per nation: officer_levels chiefLevel..12 × 12 turn_idx, all 휴식).
@@ -185,19 +187,19 @@ class ScenarioImporter(
         // Historical resources omit the profile and HWIHA seed declarations. Never turn one
         // into a partial HWIHA world merely because the fresh-import default changed.
         if (scenario.ruleProfile != null) return
-        require(scenario.hwihaWarehouses != null &&
-            scenario.generals.any { it.hwihaLord == true } &&
-            scenario.generals.any { it.hwihaPersonPolicy != null }) {
+        require(scenario.warehouses != null &&
+            scenario.generals.any { it.lord == true } &&
+            scenario.generals.any { it.personPolicy != null }) {
             "$scenarioCode omits ruleProfile without HWIHA warehouse, lord and person-policy declarations"
         }
     }
 
     private fun insertHwihaUnits(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
-        if (scenario.hwihaUnits.isEmpty()) return 0
-        require(effectiveProfile == RuleProfile.HWIHA) { "hwihaUnits requires HWIHA" }
-        val rows = scenario.hwihaUnits.mapIndexed { index, unit ->
+        if (scenario.units.isEmpty()) return 0
+        require(effectiveProfile == RuleProfile.HWIHA) { "units requires HWIHA" }
+        val rows = scenario.units.mapIndexed { index, unit ->
             val owner = generals.singleOrNull { it.src.name == unit.general }
-                ?: throw IllegalArgumentException("hwihaUnits general is not seeded: ${unit.general}")
+                ?: throw IllegalArgumentException("units general is not seeded: ${unit.general}")
             arrayOf<Any>(worldId.value, index + 1, owner.id, unit.name, unit.troops, unit.crewTypeId, unit.training,
                 unit.morale, unit.provisions)
         }
@@ -244,8 +246,8 @@ class ScenarioImporter(
             meta[opensamguk.logic.input.MarchReactions.META_KEY] =
                 opensamguk.logic.input.MarchReactions.Empty.toMetaValue()
         }
-        scenario.hwihaWarehouses?.let { seed ->
-            meta["hwihaWarehouseSeed"] = linkedMapOf(
+        scenario.warehouses?.let { seed ->
+            meta["warehouseSeed"] = linkedMapOf(
                 "version" to 1, "units" to "game-resource-v1", "source" to "GAME_DESIGN",
                 "topologyRevision" to seed.topologyRevision, "topologyHash" to seed.topologyHash,
                 "countyCount" to seed.warehouses.size,
@@ -262,8 +264,10 @@ class ScenarioImporter(
             "fiction" to fiction,
             "refreshLimit" to PHP_REFRESH_LIMIT,
             "ignoreDefaultEvents" to scenario.ignoreDefaultEvents,
-            // Store the resolved profile so later reads never infer from a missing key.
-            "ruleProfile" to effectiveProfile.name,
+            // Only the current product emits a world format marker. Historical imports remain
+            // unmarked and are rejected by runtime boot and API reads.
+            (if (effectiveProfile == RuleProfile.HWIHA) "worldFormat" to "GENERAL_RETAINER_CAMPAIGN"
+                else "ruleProfile" to effectiveProfile.name),
             "map" to mapConfig,
             "mapName" to mapName,
             "unitSet" to unitSet,
@@ -404,12 +408,12 @@ class ScenarioImporter(
 
     /** A fresh 1447 seed uses the reviewed fourfold grid; old worlds are
      * selected independently from their stored topology pins on boot. */
-    private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedHanWorldArtifacts {
-        val resolver = HanWorldArtifactsResolver(artifactsRoot)
+    private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
+        val resolver = WorldArtifactsResolver(artifactsRoot)
         return if (ids.toSet() ==
             opensamguk.logic.world.CityConstRegistry.hanWorld(
-                opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).all().keys)
-            resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4)
+                opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
+            resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
         else resolver.resolve(ids, emptyList())
     }
 
@@ -429,7 +433,7 @@ class ScenarioImporter(
 
     /** Explicit fresh-world inventory only. Never copy legacy treasuries or infer a missing county. */
     internal fun validateWarehouseSeed() {
-        val seed = scenario.hwihaWarehouses ?: return
+        val seed = scenario.warehouses ?: return
         require(effectiveProfile == RuleProfile.HWIHA) {
             "County warehouse seed requires HWIHA"
         }
@@ -479,7 +483,7 @@ class ScenarioImporter(
                 worldId.value, c.id, c.displayName ?: c.name, c.level, cityNationId,
                 pop, c.popMax, agri, c.agriMax, comm, c.commMax, secu, c.secuMax,
                 trust, def, c.defMax, wall, c.wallMax, c.region,
-                jsonb(scenario.hwihaWarehouses?.warehouses?.get(c.id)?.let { stock ->
+                jsonb(scenario.warehouses?.warehouses?.get(c.id)?.let { stock ->
                     mapOf(opensamguk.logic.economy.CountyWarehouse.META_KEY to
                         opensamguk.logic.economy.CountyWarehouse(c.id, 0, stock).toMetaValue())
                 } ?: emptyMap<String, Any?>()),
@@ -529,29 +533,38 @@ class ScenarioImporter(
     internal fun validateSeedContract() {
         val selectedRoster = seedGenerals()
         for (roster in listOf(scenario.generals, selectedRoster)) {
-            val policies = roster.filter { it.hwihaPersonPolicy != null }
+            val policies = roster.filter { it.personPolicy != null }
             require(policies.map { it.name }.distinct().size == policies.size) { "Duplicate person policy in roster" }
-            require(policies.map { it.hwihaPersonPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == policies.size) {
+            require(policies.map { it.personPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == policies.size) {
                 "Duplicate person source identity in roster"
             }
         }
-        val declaredPolicies = (scenario.generals + selectedRoster).distinct().filter { it.hwihaPersonPolicy != null }
+        val declaredPolicies = (scenario.generals + selectedRoster).distinct().filter { it.personPolicy != null }
         require(declaredPolicies.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
             "person policies require HWIHA"
         }
         require(declaredPolicies.map { it.name }.distinct().size == declaredPolicies.size) { "Duplicate person policy name" }
-        require(declaredPolicies.map { it.hwihaPersonPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == declaredPolicies.size) {
+        require(declaredPolicies.map { it.personPolicy!!.let { p -> Triple(p.statSourceId, p.statSourceRevision, p.officerId) } }.distinct().size == declaredPolicies.size) {
             "Duplicate person source identity"
         }
         declaredPolicies.forEach(ScenarioPersonPolicies::validate)
 
-        val declaredLords = scenario.generals.filter { it.hwihaLord == true }
+        val declaredLords = scenario.generals.filter { it.lord == true }
         require(declaredLords.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
             "explicit lord declarations require HWIHA"
         }
         val active = buildGenerals(scenario.startYear).map { it.src }
-        require(declaredLords.all { lord -> active.count { it.name == lord.name && it.hwihaLord == true } == 1 }) {
+        require(declaredLords.all { lord -> active.count { it.name == lord.name && it.lord == true } == 1 }) {
             "declared HWIHA lord must be uniquely included and active at start; deferred lord events are not implemented"
+        }
+        if (scenario.personBonds.isNotEmpty()) {
+            require(effectiveProfile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
+            val activeOfficers = active.mapNotNull { it.picture?.toIntOrNull() }.toSet()
+            require(activeOfficers.size == active.size) { "personBonds requires unique stable active officer IDs" }
+            require(scenario.personBonds.keys.all { name -> active.count { it.name == name } == 1 } &&
+                scenario.personBonds.values.flatten().all { it.targetOfficerId in activeOfficers }) {
+                "personBonds owner and target must be active at start"
+            }
         }
         val contract = scenario.seedContract?.activeGenerals
         if (contract == null) {
@@ -608,6 +621,16 @@ class ScenarioImporter(
         worldId: WorldId,
     ): Int {
         val rngRows = replayInitScenarioGeneralRng(startYear)
+        val bondStates = if (scenario.personBonds.isEmpty()) emptyMap() else {
+            val worldIdByOfficer = generals.associate { built ->
+                requireNotNull(built.src.picture?.toIntOrNull()) { "Bonded roster lacks a stable officer ID" } to built.id
+            }
+            require(worldIdByOfficer.size == generals.size) { "Bonded roster has duplicate officer IDs" }
+            scenario.personBonds.mapValues { (_, bonds) ->
+                PersonBondState(bonds.map { bond -> PersonBond(bond.kind,
+                    "general:${worldIdByOfficer.getValue(bond.targetOfficerId)}", bond.evidenceIds) }.toSet())
+            }
+        }
 
         val sql = """
             INSERT INTO general
@@ -664,7 +687,7 @@ class ScenarioImporter(
                 GameUnitConst.DEFAULT_CREWTYPE,
                 turnTime, age, personal, special.domestic, special.war,
                 // killturn은 장수별 사망년도 파생값(startMonth=1 = world_state 시드 current_month).
-                jsonb(initialGeneralMeta(g, born, dead, startYear, rngRow.killturnJitter, special)),
+                jsonb(initialGeneralMeta(g, born, dead, startYear, rngRow.killturnJitter, special, bondStates[g.name])),
                 g.politics, g.charm,
             )
             n++
@@ -735,6 +758,7 @@ class ScenarioImporter(
         startYear: Int,
         legacyMonthJitter: Int,
         special: ScenarioSpecial,
+        personBonds: PersonBondState? = null,
     ): Map<String, Any?> {
         val meta = linkedMapOf<String, Any?>(
             "killturn" to ScenarioLifecycleMeta.killturnFor(
@@ -767,8 +791,9 @@ class ScenarioImporter(
             meta["rtk14_ideology"] = general.ideology
         }
         if (effectiveProfile == RuleProfile.HWIHA) {
-            meta[opensamguk.logic.input.LordStatus.META_KEY] = general.hwihaLord ?: false
-            general.hwihaPersonPolicy?.let { meta[opensamguk.logic.input.PersonPolicyState.META_KEY] = it.toMetaValue() }
+            meta[opensamguk.logic.input.LordStatus.META_KEY] = general.lord ?: false
+            general.personPolicy?.let { meta[opensamguk.logic.input.PersonPolicyState.META_KEY] = it.toMetaValue() }
+            personBonds?.let { meta[PersonBondState.META_KEY] = it.toMetaValue() }
         }
         if (general.npcType == IMPERIAL_NPC_TYPE) meta["imperial"] = true
         if (general.text != null) meta["npcmsg"] = general.text

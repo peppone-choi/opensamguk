@@ -122,7 +122,7 @@ class PersonalEncounter(
     }
 
     companion object {
-        const val REPLAY_KEY = "hwihaLastPersonalEncounter"
+        const val REPLAY_KEY = "lastPersonalEncounter"
 
         /** A busy defender cannot join another encounter; malformed reaction authority never grants entry. */
         fun entryAt(world: InMemoryTurnWorld, military: MilitaryPresenceProvider,

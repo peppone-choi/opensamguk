@@ -2,7 +2,7 @@ package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.read.*
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.retainer.RetainerRules
@@ -107,7 +107,7 @@ class DeployPrecheckService(private val generals: GeneralReadRepository,
 
     private fun unavailable(reason: DeploymentFailure) = DeployOptions(false, reason.name, DeployRules.reason(reason))
     private data class Ready(val state: DeploymentProjection, val selected: ActiveWorldArtifactSnapshot,
-        val bundle: ResolvedHanWorldArtifacts, val people: List<GeneralReadEntity>, val units: List<GeneralBugokReadEntity>)
+        val bundle: ResolvedWorldArtifacts, val people: List<GeneralReadEntity>, val units: List<GeneralBugokReadEntity>)
     private data class Snapshot(val ready: Ready? = null, val failure: DeploymentFailure? = null)
     private fun snapshot(): Snapshot = try {
         val selected = requireNotNull(artifacts.resolve())

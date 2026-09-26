@@ -2,12 +2,12 @@ package opensamguk.infra.seed
 
 import java.nio.file.Path
 import kotlin.test.*
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 
 /** Reads the pinned 1133 bundle: every administrative county gets the runtime map's commandery, never an inferred one. */
 class CountyGeographyJsonTest {
     @Test fun `administrative counties map to their runtime commandery and a unique jurisdiction`() {
-        val bundle = HanWorldArtifactsResolver(Path.of("..")).artifacts(HanWorldVariant.V3_1133)
+        val bundle = WorldArtifactsResolver(Path.of("..")).artifacts(WorldMapVariant.V3_1133)
         val geography = CountyGeographyJson.load(bundle)
         val admin = bundle.projection.administrativeCountyIds
         assertEquals(admin, geography.byCounty.keys, "every administrative county carries meta.junCh")

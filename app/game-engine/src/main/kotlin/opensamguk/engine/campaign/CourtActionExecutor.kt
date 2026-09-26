@@ -10,7 +10,7 @@ internal data class QueuedCourtAction(val requestId: String, val ownerUserId: In
     fun toMetaValue(): Map<String, Any?> = mapOf("version" to 1, "requestId" to requestId,
         "ownerUserId" to ownerUserId, "inputId" to inputId, "argJson" to argJson)
     companion object {
-        const val META_KEY = "hwihaQueuedLegacyCourt"
+        const val META_KEY = "queuedCourt"
         fun read(meta: Map<String, Any?>): QueuedCourtAction? {
             val value = meta[META_KEY] ?: return null
             val row = value as? Map<*, *> ?: invalid()
@@ -46,11 +46,11 @@ internal class CourtActionExecutor(private val world: InMemoryTurnWorld, private
                 val remaining = deployment.corps.filterNot { it.orderId == corps.orderId }
                 world.updateGeneralMeta(recorder, owner, owner.meta.withKey(DeploymentState.META_KEY,
                     remaining.takeIf { it.isNotEmpty() }?.let { DeploymentState(it).toMetaValue() }) +
-                    ("hwihaLegacyReleaseCorpsLast" to corps.orderId))
+                    ("releaseCorpsLast" to corps.orderId))
                 val commander = world.getGeneralById(corps.commanderGeneralId) ?: return reject(CourtFailure.STATE_UNAVAILABLE)
                 world.updateGeneralMeta(recorder, commander,
                     (commander.meta - CorpsOrder.META_KEY - CorpsMarchState.META_KEY) +
-                        ("hwihaLegacyReleaseCorpsLast" to corps.orderId))
+                        ("releaseCorpsLast" to corps.orderId))
             }
             CourtExpansionInput.ABANDON_COUNTY -> {
                 val county = world.getCityById(ready.county!!.id) ?: return reject(CourtFailure.COUNTY_UNAVAILABLE)

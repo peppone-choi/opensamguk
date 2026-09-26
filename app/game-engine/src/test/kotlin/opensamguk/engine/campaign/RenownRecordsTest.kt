@@ -104,7 +104,7 @@ class RenownRecordsTest {
         assertEquals(mapOf("stamp" to "0200-02", "masterId" to 1, "retainerId" to 22),
             departed.first().meta!![RecordKind.REFS_META_KEY])
         assertTrue(logs.none { it.eventKind == RecordKind.RENOWN_EVENT }, "명망 사건 알림도 없다")
-        assertTrue(world.getGeneralById(3)!!.meta.keys.none { it.startsWith("hwihaDeparture") }, "이탈 표식을 남기지 않는다")
+        assertTrue(world.getGeneralById(3)!!.meta.keys.none { it.startsWith("departure") }, "이탈 표식을 남기지 않는다")
     }
 
     @Test fun `치적 창은 관할 縣 지표가 문턱 이상 오른 달에만 관할 장수에게 치적을 쌓는다`() {

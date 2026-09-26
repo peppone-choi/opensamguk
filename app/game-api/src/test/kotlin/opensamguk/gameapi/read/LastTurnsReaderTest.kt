@@ -20,15 +20,15 @@ class LastTurnsReaderTest {
 
     // 지금: 200년 1월 중순. 12순 창은 199년 9월 상순 … 200년 1월 중순(해를 넘는다).
     private val world = WorldStateReadEntity(id = 1, currentYear = 200, currentMonth = 1, currentPhase = 2,
-        config = mapOf("ruleProfile" to "HWIHA"))
+        config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))
     private val me = GeneralReadEntity(id = 1, worldId = 1, name = "조조", nationId = 3, userId = "41")
     private val other = GeneralReadEntity(id = 9, worldId = 1, name = "남", nationId = 4, userId = "42")
 
     private fun row(id: Long, y: Int, m: Int, p: Int, kind: String, text: String, refs: String? = null) =
         RecordRow(id, y, m, p, kind, text, refs)
 
-    private fun setup(profile: String = "HWIHA") {
-        world.config = mapOf("ruleProfile" to profile)
+    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN") {
+        world.config = mapOf("worldFormat" to profile)
         `when`(worlds.findProcessWorld()).thenReturn(world)
         `when`(generals.findById(1)).thenReturn(Optional.of(me))
         `when`(generals.findById(9)).thenReturn(Optional.of(other))
@@ -54,9 +54,9 @@ class LastTurnsReaderTest {
         verifyNoInteractions(records)
     }
 
-    @Test fun `휘하 규칙이 아니면 WRONG_RULE_PROFILE 빈 데이터`() {
+    @Test fun `휘하 규칙이 아니면 UNSUPPORTED_WORLD_FORMAT 빈 데이터`() {
         setup(profile = "SAMMO")
-        assertEquals(LastTurnsResponse("WRONG_RULE_PROFILE"), reader.lastTurns(1, 41, 12))
+        assertEquals(LastTurnsResponse("UNSUPPORTED_WORLD_FORMAT"), reader.lastTurns(1, 41, 12))
         verifyNoInteractions(records)
     }
 

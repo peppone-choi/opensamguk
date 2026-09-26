@@ -48,15 +48,15 @@ class DomesticController(private val reserve: CommandReserveService, private val
         }
     }
 
-    @GetMapping("/api/hwiha/posts")
+    @GetMapping("/api/posts")
     fun posts(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.posts(generalId, it) }
 
-    @GetMapping("/api/hwiha/policies")
+    @GetMapping("/api/policies")
     fun policies(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.policies(generalId, it) }
 
-    @GetMapping("/api/hwiha/works")
+    @GetMapping("/api/works")
     fun works(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.works(generalId, it) }
 
