@@ -32,7 +32,7 @@ class BattlefieldLayout private constructor(
             else -> throw IllegalArgumentException("Unknown battlefield terrain")
         }
 
-        fun prepare(index: HanProvinceCellIndex, provinceId: String, approachProvinceId: String): Result {
+        fun prepare(index: ProvinceCellIndex, provinceId: String, approachProvinceId: String): Result {
             require(provinceId != approachProvinceId) { "Approach must be a different province" }
             val source = index.cellsOf(provinceId)
             val approach = index.cellsOf(approachProvinceId)

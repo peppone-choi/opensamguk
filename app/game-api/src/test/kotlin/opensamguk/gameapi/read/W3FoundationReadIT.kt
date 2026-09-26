@@ -42,7 +42,7 @@ class W3FoundationReadIT {
 
     private fun seedWorld() {
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'test', 1, 1, 60)",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config) VALUES (1, 'test', 1, 1, 60, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN'))",
         )
     }
 

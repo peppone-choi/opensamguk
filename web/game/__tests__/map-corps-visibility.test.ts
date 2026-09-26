@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Corps } from '@/lib/hwiha-reads';
+import type { Corps } from '@/lib/campaign-reads';
 import { buildVisibleCorps } from '@/lib/map-corps';
 
 const corps = (over: Partial<Corps>): Corps => ({

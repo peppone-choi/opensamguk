@@ -15,7 +15,7 @@ class CountyProductionJsonTest {
     @Test
     fun `committed runtime table matches the generated ledger totals`() {
         val table = CountyProductionJson.table()
-        val ledger = ObjectMapper().readTree(Path.of("../data/curated/han/hwiha-resource-production-v1.json").toFile())
+        val ledger = ObjectMapper().readTree(Path.of("../data/curated/han/resource-production-v1.json").toFile())
         assertEquals(ledger.path("counties").map { it.path("countyId").asInt() }.toSet(), table.keys)
         assertEquals(34_000, table.values.sumOf { it.iron })
         assertEquals(600, table.values.sumOf { it.horses })
@@ -35,7 +35,7 @@ class CountyProductionJsonTest {
 
     @Test
     fun `자원 없는 리소스는 빈 표다`() {
-        assertEquals(emptyMap(), CountyProductionJson.load("hwiha/not-a-real-resource.json"))
+        assertEquals(emptyMap(), CountyProductionJson.load("campaign/not-a-real-resource.json"))
     }
 
     @Test

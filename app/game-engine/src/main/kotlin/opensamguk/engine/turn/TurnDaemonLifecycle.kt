@@ -117,7 +117,7 @@ class TurnDaemonLifecycle(
 
     private fun eligibleInCurrentPhase(general: TurnGeneral): Boolean =
         world.ruleProfile != RuleProfile.HWIHA ||
-            (general.meta["hwihaRetired"] != true && PersonalTurn.eligible(general.meta, world.getState()))
+            (general.meta["retired"] != true && PersonalTurn.eligible(general.meta, world.getState()))
 
     class GeneralDrainCohort internal constructor(
         internal val identityTokens: Map<Int, Long>,

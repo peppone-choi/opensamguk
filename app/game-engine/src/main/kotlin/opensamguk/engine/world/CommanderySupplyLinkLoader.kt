@@ -28,9 +28,9 @@ class CommanderySupplyLinkLoader(
     @Volatile
     private var cached: List<Pair<Int, Int>>? = null
 
-    private val historical = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.HanWorldVariant, List<Pair<Int, Int>>>()
+    private val historical = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.WorldMapVariant, List<Pair<Int, Int>>>()
 
-    fun load(artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null): List<Pair<Int, Int>> {
+    fun load(artifacts: opensamguk.infra.seed.ResolvedWorldArtifacts? = null): List<Pair<Int, Int>> {
         if (artifacts != null) return historical.computeIfAbsent(artifacts.variant) {
             parse(objectMapper.readTree(artifacts.artifactBytes("data/map/han-commandery-supply-links-v1.json")))
         }

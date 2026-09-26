@@ -2,17 +2,17 @@ package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.PersonPolicyState
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import org.springframework.stereotype.Component
 import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 휘하 조회가 읽는 두 원장. 정본은 저장소 루트의 `data/curated/han/` 파일이고 빌드가 classpath
- * `hwiha/` 로 그대로 싣는다(`app/game-api/build.gradle.kts`). 사본을 코드에 두지 않는다.
+ * `campaign/` 로 그대로 싣는다(`app/game-api/build.gradle.kts`). 사본을 코드에 두지 않는다.
  *
- * - `hwiha-resource-production-v1.json` — 縣(`jurisdictionId`, han-tiles 관할 id)별 철·목재·말 설계 산출량(목재는 모든 縣, 면적 축).
+ * - `resource-production-v1.json` — 縣(`jurisdictionId`, han-tiles 관할 id)별 철·목재·말 설계 산출량(목재는 모든 縣, 면적 축).
  * - `officer-native-county-v1.json` — 인물 본관 縣. `method == DIRECT` 행만 쓴다.
  */
 @Component
@@ -26,7 +26,7 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
     }
 
     /** 지명 대조 정규화 — audit 도구와 같은 표·규칙. */
-    val fold: HanPlaceNameFold by lazy { HanPlaceNameFold.loadDefault(objectMapper) }
+    val fold: PlaceNameFold by lazy { PlaceNameFold.loadDefault(objectMapper) }
 
     /**
      * 같은 고향인가. 두 쪽 다 `jurisdictionId` 가 있으면 그것으로, 아니면 정규화한 (郡, 縣) 쌍으로 본다
@@ -65,7 +65,7 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
 
     fun parseProduction(bytes: ByteArray): Map<String, List<Specialty>> {
         val root = objectMapper.readTree(bytes)
-        check(root.path("schemaVersion").asInt() == 2 && root.path("ledgerId").asText() == "hwiha-resource-production-v1") {
+        check(root.path("schemaVersion").asInt() == 2 && root.path("ledgerId").asText() == "resource-production-v1") {
             "Unexpected HWIHA resource production ledger header"
         }
         val result = linkedMapOf<String, List<Specialty>>()
@@ -108,8 +108,8 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
     }
 
     companion object {
-        const val PRODUCTION = "hwiha/hwiha-resource-production-v1.json"
-        const val NATIVE_COUNTY = "hwiha/officer-native-county-v1.json"
+        const val PRODUCTION = "campaign/resource-production-v1.json"
+        const val NATIVE_COUNTY = "campaign/officer-native-county-v1.json"
         const val CREATED_GENERAL_SOURCE = "opensamguk:created-general"
     }
 }
@@ -118,7 +118,7 @@ class CampLedgers(private val objectMapper: ObjectMapper) {
  * 城 id → 郡 이름·縣(관할) id·한글 표시명. 활성 세계 판의 고정 번들에서 읽어 판마다 한 번만 만든다.
  *
  * 縣은 `city.provinceId`(런타임 省 index) → `han-tiles.json provinceRecords[i].jurisdictionId` 로 푼다 —
- * `MapAdministrativeOwnership`·`HanSupplyDisconnectionPolicyLoader` 와 같은 다리다.
+ * `MapAdministrativeOwnership`·`SupplyDisconnectionPolicyLoader` 와 같은 다리다.
  * 郡 이름은 런타임 지도 `meta.jun`(`MapJson.commanderyName` 과 같은 값)이다.
  */
 @Component
@@ -138,7 +138,7 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
     class CountyNames internal constructor(
         private val byJurisdiction: Map<String, List<String>>,
         private val byPair: Map<Pair<String, String>, List<String>>,
-        private val fold: HanPlaceNameFold,
+        private val fold: PlaceNameFold,
     ) {
         fun korean(native: CampLedgers.NativeCounty): String? {
             val hits = if (native.jurisdictionId != null) byJurisdiction[native.jurisdictionId]
@@ -147,10 +147,10 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
         }
     }
 
-    private val cache = ConcurrentHashMap<HanWorldVariant, Map<Int, Place>>()
-    private val names = ConcurrentHashMap<HanWorldVariant, CountyNames>()
+    private val cache = ConcurrentHashMap<WorldMapVariant, Map<Int, Place>>()
+    private val names = ConcurrentHashMap<WorldMapVariant, CountyNames>()
 
-    fun places(artifacts: ResolvedHanWorldArtifacts): Map<Int, Place> = cache.computeIfAbsent(artifacts.variant) {
+    fun places(artifacts: ResolvedWorldArtifacts): Map<Int, Place> = cache.computeIfAbsent(artifacts.variant) {
         val cities = objectMapper.readTree(artifacts.artifactBytes(RUNTIME_MAP)).get("cities")
         check(cities != null && cities.isArray) { "runtime map cities missing" }
         val provinces = objectMapper.readTree(artifacts.artifactBytes(TILES)).get("provinceRecords")
@@ -166,7 +166,7 @@ class CityGeography(private val objectMapper: ObjectMapper, private val ledgers:
         }.toMap()
     }
 
-    fun countyNames(artifacts: ResolvedHanWorldArtifacts): CountyNames = names.computeIfAbsent(artifacts.variant) {
+    fun countyNames(artifacts: ResolvedWorldArtifacts): CountyNames = names.computeIfAbsent(artifacts.variant) {
         val places = places(artifacts).values.filter { it.displayName != null }
         val fold = ledgers.fold
         CountyNames(

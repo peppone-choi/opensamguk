@@ -19,6 +19,35 @@
 
 ## 데이터 모델
 
+### S6-2a 정본 선택 (2026-09-25)
+
+`imperial_line`·`imperial_transition`·`imperial_allegiance`의 세 역할을 하나의
+`world_state.meta.imperialWorld` 스키마 1에 합친다. `world_state`는 이미
+`HotColdCatalog.loadWorldState`의 `ALWAYS_HOT` 대상이다. 따라서 황실만을 위한
+새 표나 별도 부팅 조회는 만들지 않는다. 키가 없으면 시나리오에 황실 상태가
+선언되지 않은 것이며, 키가 있는데 값이 손상됐으면 예외로 중단한다. 향후
+시나리오 키는 `imperialWorld`로 하고, 선언이 없으면 저장 키도 만들지 않는다.
+
+순수 모델 `ImperialWorldState`가 황통·세력별 관계·append-only 전이 이력을
+원자적으로 묶는다. `ImperialHouse`의 `holderGeneralId`가 황제 자리다. 이 값은
+국가 군주와 독립적이며, 황제 사망 시 제위 전이를 먼저 만든 후 국가 군주
+승계가 별도로 실행된다. `regentGeneralId`와 조정 소재지·보호 세력은 황제
+보유자와 별도 필드다. 기존 `ImperialSuccession`의 지정·혈통 후보 순서를
+그대로 쓴다. 후보 입력 순서나 RNG는 결과에 영향을 주지 않는다.
+
+구 설계의 여섯 객체 가운데 `ImperialHouse`는 황통과 제위 보유자를 합치고,
+`ImperialCourt`는 조정 소재지·보호 세력의 최소 정본 필드만 수용한다.
+`ImperialRegalia`는 S6-4의 별도 인장 상태, `CourtProtectorate`와
+`CourtSettlement`는 S6-3 통합 상태로 둔다. 빈 객체를 시드해 황실이
+존재하는 것처럼 보이지 않도록 이 PR의 codec에는 이 세 객체를 넣지 않는다.
+시해와 찬탈은 기존 7 전이와 구별하는 `ASSASSINATION`·`USURPATION`으로
+정의한다. 해당 사건 실행 규칙은 후속 슬라이스가 다룬다.
+
+황실 인물·계통의 사료 원장은 `data/curated/han/imperial-sources.json`이다.
+이 원장에 있는 유굉·유변·유협은 역사적 인물의 출처를 제공하지만, 런타임
+장수 ID를 임의로 정하지 않는다. 시나리오 장수 ID와 원장 id의 매핑은 시드
+통합 때 실제 시나리오를 대조해 연결한다.
+
 ### `imperial_line`
 
 - `world_id`: 세계 식별자

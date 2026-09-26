@@ -21,7 +21,7 @@ class EncounterResolver(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex,
+    private val cells: ProvinceCellIndex,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
 ) {
     sealed interface Resolution {
@@ -220,9 +220,9 @@ class EncounterResolver(
         text = text, generalId = generalId, nationId = world.getGeneralById(generalId)?.nationId))
 
     companion object {
-        const val BATTLE_RECORD_KEY = "hwihaLastBattle"
-        const val DISBAND_RECORD_KEY = "hwihaLastEncounterDisbanded"
-        const val CAPTIVE_KEY = "hwihaCaptive"
+        const val BATTLE_RECORD_KEY = "lastBattle"
+        const val DISBAND_RECORD_KEY = "lastEncounterDisbanded"
+        const val CAPTIVE_KEY = "captive"
         val SEALED_KEYS = listOf(CorpsEncounter.META_KEY, EncounterDeployment.META_KEY,
             EncounterRelations.META_KEY, EncounterForces.META_KEY, EncounterCombatProfiles.META_KEY,
             BattlePlans.META_KEY, BattleJournal.META_KEY)

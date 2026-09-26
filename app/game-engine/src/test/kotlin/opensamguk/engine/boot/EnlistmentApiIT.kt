@@ -121,8 +121,8 @@ class EnlistmentApiIT {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.options[0].availability.code").value("ALREADY_SERVING"))
         // Explicit synthetic passage/reaction authority, using the actual pinned map.
-        val bundle = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
-            .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
+        val bundle = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
+            .artifacts(opensamguk.logic.world.WorldMapVariant.V3_1133)
         val topology = bundle.projection.topology
         val authority = mapOf(
             opensamguk.logic.input.LandPassageState.META_KEY to opensamguk.logic.input.LandPassageState.initialMetaValue(topology),
@@ -140,7 +140,7 @@ class EnlistmentApiIT {
                 bundle.landMarchMetrics) as? opensamguk.logic.world.LandMarchPathResult.Resolved
             node.takeIf { path != null && path.path.totalCostMm in 30_000_001L..120_000_000L }
         }
-        mvc.perform(get("/api/hwiha/deploy/options").param("generalId","1"))
+        mvc.perform(get("/api/deploy/options").param("generalId","1"))
             .andExpect(status().isOk).andExpect(jsonPath("$.available").value(true))
             .andExpect(jsonPath("$.bugoks[0].id").value(7))
         val deployResponse = mvc.perform(post("/api/command/action.deploy").param("generalId","1").param("turnIdx","0")
@@ -164,7 +164,7 @@ class EnlistmentApiIT {
         mvc.perform(get("/api/command/result/{requestId}",deployId)).andExpect(status().isOk)
             .andExpect(jsonPath("$.type").value("executionApplied"))
             .andExpect(jsonPath("$.result.actionCode").value("action.deploy"))
-        mvc.perform(get("/api/hwiha/deploy/options").param("generalId","1"))
+        mvc.perform(get("/api/deploy/options").param("generalId","1"))
             .andExpect(status().isOk).andExpect(jsonPath("$.available").value(false))
             .andExpect(jsonPath("$.order.orderId").value(deployId))
         assertTrue(fixture.service(WorldId(1),deployedCold,deploymentPublished,movement=true).runDueGeneralTurns(deployDue).handled.isEmpty())
@@ -187,7 +187,7 @@ class EnlistmentApiIT {
             cities: opensamguk.gameapi.read.CityReadRepository,
             pins: opensamguk.gameapi.read.WorldArtifactIdentityReadRepository,
         ) = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins,
-            opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../..")))
+            opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../..")))
     }
 
     companion object {

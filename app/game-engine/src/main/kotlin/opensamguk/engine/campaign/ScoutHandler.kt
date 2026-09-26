@@ -19,7 +19,7 @@ import opensamguk.logic.world.*
 data class VisionContext(
     val topology: StrategicTopologySnapshot,
     val metrics: LandMarchMetricSnapshot,
-    val commanderies: HanCommanderyIndex,
+    val commanderies: CommanderyIndex,
     val rules: VisionRules.Rules = VisionRules.CANON,
 )
 
@@ -28,7 +28,7 @@ data class VisionContext(
  * A reserved field action suppresses the automatic movement stage for that turn
  * ([AssignmentMarchTurn.onTurn]), so the position read here is the position of the whole turn.
  *
- * The snapshot is written only to the actor's own meta (`hwihaScoutReports`) through the recorder, together
+ * The snapshot is written only to the actor's own meta (`scoutReports`) through the recorder, together
  * with the personal-turn stamp; it is never shared with the nation (spec §7 has no sharing rule).
  */
 class ScoutHandler(private val world: InMemoryTurnWorld, private val recorder: ChangeRecorder,

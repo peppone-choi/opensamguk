@@ -30,12 +30,9 @@ import opensamguk.engine.intake.PersonnelHandler
 import opensamguk.engine.intake.ProfileIconSyncHandler
 import opensamguk.engine.intake.RaiseInvaderMessageHandler
 import opensamguk.engine.intake.SelectPoolHandler
-import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
 import opensamguk.engine.intake.VotePollState
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
@@ -57,8 +54,8 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.world.RaiseInvaderSpec
 import java.time.Clock
 import java.time.Instant
@@ -222,30 +219,6 @@ class TurnDaemonCommandDispatcher(
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
     private val npcPolicy = NpcPolicyHandler(world, recorder)
-    private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
-    private val tournamentBettingPort =
-        if (gameKvRepository != null && bettingRepository != null && inheritanceRepository != null) {
-            ProductionTournamentBettingPort(world, recorder, gameKvRepository, bettingRepository, inheritanceRepository)
-        } else {
-            null
-        }
-    private val lastTournamentBettingIdReader: () -> Int = gameKvRepository?.let { repo ->
-        {
-            repo.findByTable("game_env").firstNotNullOfOrNull { row ->
-                if (row.namespace == "game_env" && row.key == "last_tournament_betting_id") {
-                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
-                } else {
-                    null
-                }
-            } ?: 0
-        }
-    } ?: { 0 }
-    private val tournamentAdmin = TournamentAdminHandler(
-        world,
-        recorder,
-        lastBettingIdReader = lastTournamentBettingIdReader,
-        bettingPort = tournamentBettingPort,
-    )
     private val inheritReset = InheritResetHandler(
         world,
         recorder,
@@ -399,9 +372,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.SetBlockWar -> nationFinance.handleSetBlockWar(command)
         is TurnDaemonCommand.SetBlockScout -> nationFinance.handleSetBlockScout(command)
         is TurnDaemonCommand.NpcPolicyUpdate -> npcPolicy.handle(command)
-        is TurnDaemonCommand.TournamentEnroll -> tournamentEnroll.handle(command)
-        is TurnDaemonCommand.TournamentStart -> tournamentAdmin.handleStart(command)
-        is TurnDaemonCommand.TournamentReset -> tournamentAdmin.handleReset(command)
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
@@ -534,15 +504,15 @@ private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =
 
 private data class ExpirationFailure(val code: String, val reason: String)
 
-private fun v2PrecheckFailure(command: CityGarrisonRecruit): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityGarrisonRecruit): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
         mapOf("cityId" to command.cityId, "amount" to command.amount),
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
-private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.cityTransportSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityTransport): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.cityTransportSchema.canonicalId,
         buildMap {
             put("fromCityId", command.fromCityId)
             put("toCityId", command.toCityId)
@@ -551,7 +521,7 @@ private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blo
             put("garrison", command.garrison)
             command.routeRevision?.let { put("routeRevision", it) }
         },
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
 private fun expirationFailure(expiresAt: String?, executionAt: Instant): ExpirationFailure? {
     if (expiresAt == null) return null

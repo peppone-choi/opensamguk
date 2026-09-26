@@ -83,7 +83,7 @@ class StratagemHand(
     }
 
     companion object {
-        const val META_KEY = "hwihaStratagemHand"
+        const val META_KEY = "stratagemHand"
         const val HAND_LIMIT = 3
         private val V1_FIELDS = setOf("version", "ownerGeneralId", "hand", "drawPile", "discard", "lastDrawPhase")
 

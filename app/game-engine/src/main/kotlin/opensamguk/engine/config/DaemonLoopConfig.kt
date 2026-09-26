@@ -16,8 +16,6 @@ import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.run.LiveRemainNationEnv
 import opensamguk.engine.status.DaemonPauseGate
 import opensamguk.engine.status.DurableGameLock
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.AiTurnAdapter
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.EngineGeneralActionPipelineBuilder
@@ -55,7 +53,7 @@ import opensamguk.logic.domestic.addDedication
 import opensamguk.logic.domestic.addExperience
 import opensamguk.logic.util.numberFormat
 import opensamguk.engine.world.WorldEventContextFactory
-import opensamguk.engine.world.HanSpatialSupplyProvider
+import opensamguk.engine.world.SpatialSupplyProvider
 import opensamguk.engine.world.SpatialSupplyCity
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventStore
@@ -217,7 +215,7 @@ class DaemonLoopConfig {
         commandInboxRepository: CommandInboxRepository,
         commandOutboxRelay: CommandOutboxRelay,
         daemonPauseGate: DaemonPauseGate,
-        hanSpatialSupplyProvider: HanSpatialSupplyProvider,
+        spatialSupplyProvider: SpatialSupplyProvider,
         // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
         v2CityLedgerProvider: ObjectProvider<opensamguk.engine.v2.V2CityLedgerStore>,
@@ -254,7 +252,7 @@ class DaemonLoopConfig {
             ?: 0
         val activeMapName = ActiveWorldMap.requireName(state.config, state.meta)
         val supplyArtifacts = if (activeMapName == "han-world-v3") {
-            opensamguk.infra.seed.HanWorldArtifactsResolver().artifacts(requireNotNull(state.hanWorldVariant))
+            opensamguk.infra.seed.WorldArtifactsResolver().artifacts(requireNotNull(state.worldMapVariant))
         } else null
         val spatialSupplyNetworkProvider = createSpatialSupplyNetworkProvider(
             activeMapName = activeMapName,
@@ -267,7 +265,7 @@ class DaemonLoopConfig {
             scenarioCode = scenario,
             liveCityNations = { world.listCities().map { it.id to it.nationId } },
             loadNetwork = { mapName, scenarioCode, liveCities ->
-                val network = hanSpatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
+                val network = spatialSupplyProvider.network(mapName, scenarioCode, liveCities, world.waterControlSnapshot(), artifacts = supplyArtifacts)
                 if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                     val artifacts = requireNotNull(supplyArtifacts) { "HWIHA military supply requires pinned Han artifacts" }
                     opensamguk.engine.campaign.MilitaryPresenceProvider(world, artifacts.projection.topology,
@@ -347,7 +345,7 @@ class DaemonLoopConfig {
         } else null
         // Saved reactions use the same pinned commandery sight and land topology as scouting. A missing index
         // cannot silently turn a pending interception into clear passage.
-        val hwihaMarchReactions: opensamguk.engine.campaign.MarchReactionPolicy = visionContext?.let {
+        val marchReactions: opensamguk.engine.campaign.MarchReactionPolicy = visionContext?.let {
             opensamguk.engine.campaign.MarchReactionInterpreter(it.topology, it.metrics, it.commanderies, it.rules)
         } ?: opensamguk.engine.campaign.MarchReactionPolicy { current, _, _ ->
             if (opensamguk.logic.input.MarchReactions.presence(current.getState().meta) ==
@@ -373,7 +371,7 @@ class DaemonLoopConfig {
             hwihaVisionContext = visionContext,
             hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
             hwihaWarOutcomes = hwihaWarOutcomes,
-            hwihaMarchReactions = hwihaMarchReactions,
+            marchReactions = marchReactions,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
                     target = target,
@@ -521,24 +519,15 @@ class DaemonLoopConfig {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.campaign.AssignmentMarchTurn(world, recorder,
                     artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes,
-                    hwihaMarchReactions)
+                    marchReactions)
                 movement::onTurn
             } else { _, _, _ -> },
             hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
-                val deploy = opensamguk.engine.campaign.NpcDeploySelector(artifacts.projection.topology, artifacts.landMarchMetrics)
-                val field = opensamguk.engine.campaign.NpcFieldSelector(domesticContext)
-                val military = opensamguk.engine.campaign.NpcCityMilitarySelector(domesticContext)
-                val personal = opensamguk.engine.campaign.NpcPersonalSelector(domesticContext)
-                val retire = opensamguk.engine.campaign.NpcRetireSelector(domesticContext)
-                val people = opensamguk.engine.campaign.NpcPeopleSelector(domesticContext)
-                val muster = opensamguk.engine.campaign.NpcMusterSelector(artifacts.projection.topology, artifacts.landMarchMetrics)
-                val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn = { generalId, reserved ->
-                    personal.select(world, generalId, field.select(world, generalId,
-                        people.select(world, generalId, military.select(world, generalId,
-                            muster.select(world, generalId, deploy.select(world, generalId,
-                                retire.select(world, generalId, reserved)))))))
-                }
+                val selector = opensamguk.engine.campaign.NpcAiTurnSelector(
+                    artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext)
+                val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn =
+                    { generalId, reserved -> selector.select(world, generalId, reserved) }
                 select
             } else { _, reserved -> reserved },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
@@ -580,18 +569,6 @@ class DaemonLoopConfig {
                 opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
                     artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
             } else null,
-            tournamentDaemon = TournamentDaemon(
-                gameKvRepository = gameKvRepository,
-                bettingFactory = { liveWorld, liveRecorder ->
-                    ProductionTournamentBettingPort(
-                        world = liveWorld,
-                        recorder = liveRecorder,
-                        gameKvRepository = gameKvRepository,
-                        bettingRepository = bettingRepository,
-                        inheritanceRepository = inheritanceRepository,
-                    )
-                },
-            ),
         )
     }
 

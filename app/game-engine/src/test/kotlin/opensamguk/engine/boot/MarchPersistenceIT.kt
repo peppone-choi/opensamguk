@@ -15,7 +15,7 @@ import opensamguk.engine.turn.*
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.flywaydb.core.Flyway
@@ -38,7 +38,7 @@ class MarchPersistenceIT {
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
     private lateinit var fixture: EnlistmentFixture
-    private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
+    private val bundle by lazy { WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133) }
     private val topology get() = bundle.projection.topology
     private val metrics get() = bundle.landMarchMetrics
     private fun edges(rows: Map<String, StrategicEdgeState> = emptyMap()) =
@@ -298,7 +298,7 @@ class MarchPersistenceIT {
         save(world, recorder)
         world = cold(id)
         assertEquals(before.userId, world.getGeneralById(1)!!.userId)
-        assertNull(world.getGeneralById(1)!!.meta["hwihaRetired"])
+        assertNull(world.getGeneralById(1)!!.meta["retired"])
         assertEquals(successorBefore.userId, world.getGeneralById(2)!!.userId)
         assertEquals(bugoksBefore, world.listBugoks())
         assertEquals(retainersBefore, world.listRetainers())
@@ -434,7 +434,7 @@ class MarchPersistenceIT {
         assertEquals(AssignmentMarchFailure.INVALID_ASSIGNMENT,assertIs<AssignmentMarchExecution.Rejected>(
             executor(world,ChangeRecorder()).advance(1,edges()) { error("captured destination") }).reason)
         jdbc.update("UPDATE city SET nation_id=1 WHERE world_id=? AND id=?",id,county)
-        jdbc.update("UPDATE general SET meta=meta || '{\"hwihaMarch\":{\"bad\":true}}'::jsonb WHERE world_id=? AND id=1",id)
+        jdbc.update("UPDATE general SET meta=meta || '{\"march\":{\"bad\":true}}'::jsonb WHERE world_id=? AND id=1",id)
         world=cold(id)
         assertEquals(AssignmentMarchFailure.INVALID_STATE,assertIs<AssignmentMarchExecution.Rejected>(
             executor(world,ChangeRecorder()).advance(1,edges()) { error("corrupt state") }).reason)
@@ -749,7 +749,7 @@ class MarchPersistenceIT {
 
     @Test fun `malformed stored stratagem hand is never silently resupplied`() {
         val id=651;var world=personalDeploymentFixture(id)
-        jdbc.update("UPDATE general SET meta=meta || '{\"hwihaStratagemHand\":{\"version\":99}}'::jsonb WHERE world_id=? AND id=1",id)
+        jdbc.update("UPDATE general SET meta=meta || '{\"stratagemHand\":{\"version\":99}}'::jsonb WHERE world_id=? AND id=1",id)
         world=cold(id);val before=world.getGeneralById(1)
         assertFailsWith<IllegalArgumentException> { runDeploymentTurn(id,world,mutableListOf()) }
         assertEquals(before,cold(id).getGeneralById(1))
@@ -772,13 +772,13 @@ class MarchPersistenceIT {
         assertTrue(runDeploymentTurn(id,world,published).handled.isEmpty())
         assertEquals(listOf("personal-deploy-641"),published)
         val edgeId=first.path.edgeIds[first.cursor.edgeIndex]
-        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['hwihaLandPassage','edges',?,'blockaded'],'true'::jsonb) WHERE id=?",edgeId,id)
+        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['landPassage','edges',?,'blockaded'],'true'::jsonb) WHERE id=?",edgeId,id)
         world=cold(id);nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
         assertEquals(LandMarchStop.EDGE_BLOCKED,corpsState(world,1).checkpoint.stop)
         assertEquals(first.cursor,corpsState(world,1).checkpoint.cursor)
         assertEquals(order,CorpsOrder.read(world.getGeneralById(1)!!.meta,topology))
         first=corpsState(world,1).checkpoint
-        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['hwihaLandPassage','edges',?,'blockaded'],'false'::jsonb) WHERE id=?",edgeId,id)
+        jdbc.update("UPDATE world_state SET meta=jsonb_set(meta,ARRAY['landPassage','edges',?,'blockaded'],'false'::jsonb) WHERE id=?",edgeId,id)
         world=cold(id)
         opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc)).reserve(
             opensamguk.common.world.WorldId(id),1,0,"stratagem.play","{}",requestId="pause-641")
@@ -823,7 +823,7 @@ class MarchPersistenceIT {
         val id=643;var world=personalDeploymentFixture(id);val published=mutableListOf<String>()
         reserveDeployment(id,world,"bound-deploy-643");runDeploymentTurn(id,world,published)
         world=cold(id);val position=world.positionOf(1);val checkpoint=corpsState(world,1).checkpoint.toMetaValue()
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaCorpsOrder,orderId}','\"wrong-order\"'::jsonb) WHERE world_id=? AND id=1",id)
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{corpsOrder,orderId}','\"wrong-order\"'::jsonb) WHERE world_id=? AND id=1",id)
         world=cold(id);nextPhase(world);runDeploymentTurn(id,world,published);world=cold(id)
         assertEquals(position,world.positionOf(1));assertEquals(checkpoint,corpsState(world,1).checkpoint.toMetaValue())
         assertTrue(personalMarchLogs(id).any { it=="출병 명령 상태를 확인할 수 없어 행군을 멈췄습니다." })
@@ -871,7 +871,7 @@ class MarchPersistenceIT {
             jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,
                 crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
                 SELECT world_id,?,'encounter-fixture',0,city_id,2,0,1000,2000,100,70,70,70,70,70,
-                '0300-01-01T00:00:00Z',last_turn,meta || '{"hwihaLord":true}'::jsonb
+                '0300-01-01T00:00:00Z',last_turn,meta || '{"lord":true}'::jsonb
                 FROM general WHERE world_id=? AND id=2""", enemyId, id)
             jdbc.update("""INSERT INTO general_spatial_position(world_id,general_id,topology_revision,topology_hash,node_kind,node_id,revision)
                 VALUES (?,?,?,?,'LAND_PROVINCE',?,1)""", id, enemyId, topology.topologyRevision, topology.contentHash, province)
@@ -992,21 +992,21 @@ class MarchPersistenceIT {
         val storedPlans=assertNotNull(BattlePlans.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
         assertEquals(storedPlans,BattlePlans.read(world.getGeneralById(100)!!.meta,encounter)?.toMetaValue())
         jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
-            '{hwihaBattlePlans,plans,0,commands,0,threshold}','51'::jsonb) WHERE world_id=? AND id=1""",id)
+            '{battlePlans,plans,0,commands,0,threshold}','51'::jsonb) WHERE world_id=? AND id=1""",id)
         world=cold(id)
         assertFailsWith<IllegalArgumentException> { BattlePlans.read(world.getGeneralById(1)!!.meta,encounter) }
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaBattlePlans}',?::jsonb) WHERE world_id=? AND id=1",
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{battlePlans}',?::jsonb) WHERE world_id=? AND id=1",
             com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(storedPlans),id)
         world=cold(id)
         val storedCombat=world.getGeneralById(1)!!.meta[EncounterCombatProfiles.META_KEY]
         jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
-            '{hwihaEncounterCombatProfiles,profiles,0,attackPower}','101'::jsonb) WHERE world_id=? AND id=1""",id)
+            '{encounterCombatProfiles,profiles,0,attackPower}','101'::jsonb) WHERE world_id=? AND id=1""",id)
         world=cold(id)
         assertFailsWith<IllegalArgumentException> {
             EncounterCombatProfiles.read(world.getGeneralById(1)!!.meta,
                 EncounterForces.read(world.getGeneralById(1)!!.meta,encounter)!!,UnitProfilesJson.loadDefault())
         }
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaEncounterCombatProfiles}',?::jsonb) WHERE world_id=? AND id=1",
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{encounterCombatProfiles}',?::jsonb) WHERE world_id=? AND id=1",
             com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(storedCombat),id)
         world=cold(id)
         val frozen=assertNotNull(EncounterForces.read(world.getGeneralById(1)!!.meta,encounter)).toMetaValue()
@@ -1020,11 +1020,11 @@ class MarchPersistenceIT {
         assertNotEquals(world.getGeneralById(1)!!.stats.leadership,snapshot.commanders.single { it.generalId==1 }.leadership)
         assertEquals(relations,EncounterRelations.read(world.getGeneralById(1)!!.meta,encounter)?.toMetaValue())
         jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
-            '{hwihaEncounterForces,units,0,troops}','1'::jsonb) WHERE world_id=? AND id=1""",id)
+            '{encounterForces,units,0,troops}','1'::jsonb) WHERE world_id=? AND id=1""",id)
         world=cold(id)
         assertFailsWith<IllegalArgumentException> { EncounterForces.read(world.getGeneralById(1)!!.meta,encounter) }
         jdbc.update("""UPDATE general SET meta=jsonb_set(meta,
-            '{hwihaEncounterDeployment,tokens,0,position}','null'::jsonb) WHERE world_id=? AND id=1""",id)
+            '{encounterDeployment,tokens,0,position}','null'::jsonb) WHERE world_id=? AND id=1""",id)
         world=cold(id)
         assertFailsWith<IllegalArgumentException> {
             EncounterDeployment.read(world.getGeneralById(1)!!.meta,encounter,bundle.provinceCells)

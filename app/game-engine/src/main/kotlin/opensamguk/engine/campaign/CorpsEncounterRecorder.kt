@@ -17,7 +17,7 @@ class CorpsEncounterRecorder(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex,
+    private val cells: ProvinceCellIndex,
 ) {
     fun defendersAt(actorId: Int, province: StrategicNodeRef.LandProvince): List<DeployedCorps>? {
         val projection = DeploymentExecutor(world, recorder, topology, metrics).projection() ?: return null

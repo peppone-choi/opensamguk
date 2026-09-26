@@ -4,15 +4,15 @@ import opensamguk.logic.input.*
 
 
 import opensamguk.logic.economy.Resources
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import kotlin.test.*
 
 class ScoutTest {
     private val hash = "c".repeat(64)
-    private val index = HanCommanderyIndex(hash,
-        (0..3).map { HanCommandery(it, "PARENT-$it", "군$it", "郡$it") },
+    private val index = CommanderyIndex(hash,
+        (0..3).map { Commandery(it, "PARENT-$it", "군$it", "郡$it") },
         mapOf("p0" to 0, "p1" to 1, "p2" to 2, "p3" to 3), setOf(0 to 1, 1 to 2))
     private val rules = VisionRules.CANON
     private fun land(id: String) = StrategicNodeRef.LandProvince(id)
@@ -82,7 +82,7 @@ class ScoutTest {
         assertEquals(1, rules.radius(VisionSourceKind.SCOUT_POST))
         assertEquals(Resources(), rules.scoutCost)
         assertEquals("B1", rules.band(0).code); assertEquals("B2", rules.band(1000).code); assertEquals("B5", rules.band(Int.MAX_VALUE).code)
-        val text = checkNotNull(javaClass.classLoader.getResource("hwiha/hwiha-vision-rules-v1.json")).readText()
+        val text = checkNotNull(javaClass.classLoader.getResource("campaign/vision-rules-v1.json")).readText()
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"money\": 0", "\"money\": 5")) }
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("SHARED_BORDER_4_NEIGHBOUR", "TOPOLOGY_EDGES")) }
         assertFailsWith<IllegalArgumentException> { VisionRules.parse(text.replace("\"SELF\": 0,", "")) }

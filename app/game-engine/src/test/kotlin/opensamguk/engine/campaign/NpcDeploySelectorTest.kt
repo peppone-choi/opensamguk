@@ -43,7 +43,7 @@ class NpcDeploySelectorTest {
         val held = fixture.world(listOf(
             fixture.person(1, 1, route.startCity, lord = false).let { person -> person.copy(meta = person.meta +
                 (PersonContributionState.META_KEY to PersonContributionState(
-                    setOf("hwiha-stratagem-insight")).toMetaValue())) } to route.first,
+                    setOf("stratagem-insight")).toMetaValue())) } to route.first,
             fixture.person(10, 1, route.startCity) to route.first,
         ), bugoks = listOf(fixture.unit(7, 1, 1000)),
             retainers = listOf(Retainer(1, 10, "EXISTING", 1, "G1", "lieutenant")),
