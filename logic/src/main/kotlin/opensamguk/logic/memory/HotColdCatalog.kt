@@ -323,15 +323,14 @@ object HotColdCatalog {
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnDaemonCommandDispatcher.kt",
             accessType = "command exact readers",
-            relation = "inheritance,game_env,user,betting,vote_poll,message",
+            relation = "inheritance,game_env,user,vote_poll,message",
             temperature = DataTemperature.QUERY_ONLY_COLD,
             boundary = AccessBoundary.COMMAND_BOUNDARY,
             bound = AccessBound.EXACT_KEY,
             ordering = "exact key or first matching deterministic row",
             calls = listOf(
                 RuntimeCall("repo.findByTableAndNamespaceAndKey"),
-                RuntimeCall("repo.findByTable", 3),
-                RuntimeCall("repo.sumAmountByBettingIdAndUserId"),
+                RuntimeCall("repo.findByTable", 2),
                 RuntimeCall("repo.findPollState"),
                 RuntimeCall("reader.findMessage"),
             ),

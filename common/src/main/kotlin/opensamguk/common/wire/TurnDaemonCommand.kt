@@ -619,18 +619,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("placeBet")
-    data class PlaceBet(
-        val requestId: String? = null,
-        val bettingId: Int,
-        val generalId: Int,
-        val bettingType: List<Int>,
-        val amount: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "placeBet"
-    }
-
-    @Serializable
     @SerialName("acceptDiplomaticMessage")
     data class AcceptDiplomaticMessage(
         val requestId: String? = null,
@@ -664,7 +652,7 @@ sealed class TurnDaemonCommand {
     // Faithful ports of the PHP BaseAPI launch() actions (NOT turn-reserved che_* commands): the
     // 내무부 finance setters (sammo/API/Nation/Set*.php), tournament enroll (j_set_my_setting.php tnmt),
     // and the inheritance resets (sammo/API/InheritAction/Reset*.php). They flow exactly like
-    // [PlaceBet]/[AuctionBid]: game-api intake → command stream → TurnDaemonCommandDispatcher →
+    // [AuctionBid]: game-api intake → command stream → TurnDaemonCommandDispatcher →
     // handler → InMemoryTurnWorld mutate → ChangeRecorder delta → JdbcFlushExecutor flush.
 
     /**

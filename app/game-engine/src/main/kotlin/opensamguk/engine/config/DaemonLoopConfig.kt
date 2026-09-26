@@ -557,7 +557,6 @@ class DaemonLoopConfig {
             diplomacyLetterRepository = diplomacyLetterRepository,
             contactReader = contactReader,
             gameKvRepository = gameKvRepository,
-            bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
             processNationCommand = nationProcessor,
