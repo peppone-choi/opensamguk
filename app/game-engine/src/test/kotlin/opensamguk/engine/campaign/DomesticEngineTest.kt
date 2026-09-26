@@ -55,7 +55,7 @@ class DomesticEngineTest {
         stats: GeneralStats = GeneralStats(60, 60, 60, 80, 60)) = TurnGeneral(id = id, name = "G$id", nationId = 1,
         cityId = if (node == "A") 10 else 11, troopId = 0, stats = stats, experience = 0, dedication = 0, officerLevel = level,
         userId = if (human) "42" else null, npcState = if (human) 0 else 2, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to lord))
+        meta = mapOf("lord" to lord))
 
     private fun county(id: Int, stock: Resources = Resources()) = City(id, "縣$id", 1, 1, population = 50_000,
         populationMax = 100_000, agriculture = 1000, agricultureMax = 5000, commerce = 1000, commerceMax = 5000, security = 500,

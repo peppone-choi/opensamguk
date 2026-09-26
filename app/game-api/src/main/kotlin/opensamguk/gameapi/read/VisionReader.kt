@@ -16,10 +16,10 @@ import opensamguk.logic.vision.CorpsVisibility
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.gameapi.dto.*
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.retainer.RetainerRules
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -110,7 +110,7 @@ class VisionReader(
 
     fun scoutOptions(generalId: Int, userId: Long): ScoutOptionsResponse {
         val frame = when (val built = frame(generalId, userId)) {
-            is Built.Failed -> return blocked(built.status, if (built.status == "WRONG_RULE_PROFILE")
+            is Built.Failed -> return blocked(built.status, if (built.status == "UNSUPPORTED_WORLD_FORMAT")
                 ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
             is Built.Ready -> built.frame
         }
@@ -141,7 +141,7 @@ class VisionReader(
     fun assessScout(generalId: Int, userId: Long, commanderyId: String): ScoutAssessment {
         val frame = when (val built = frame(generalId, userId)) {
             is Built.Failed -> return ScoutAssessment.Rejected(
-                if (built.status == "WRONG_RULE_PROFILE") ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
+                if (built.status == "UNSUPPORTED_WORLD_FORMAT") ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
             is Built.Ready -> built.frame
         }
         return ScoutRules.assess(RuleProfile.HWIHA, frame.viewer.actorNode, commanderyId, frame.index)
@@ -150,8 +150,8 @@ class VisionReader(
     // ── 공용 ───────────────────────────────────────────────────────────────
 
     private class Frame(
-        val bundle: ResolvedHanWorldArtifacts,
-        val index: HanCommanderyIndex,
+        val bundle: ResolvedWorldArtifacts,
+        val index: CommanderyIndex,
         val people: List<GeneralReadEntity>,
         val projection: DeploymentProjection,
         val viewer: VisionViewer,
@@ -169,7 +169,7 @@ class VisionReader(
         if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw VisionForbidden()
         val world = worlds.findProcessWorld() ?: return Built.Failed("UNAVAILABLE")
         if (actor.worldId != world.id) return Built.Failed("UNAVAILABLE")
-        if (world.config["ruleProfile"] != "HWIHA") return Built.Failed("WRONG_RULE_PROFILE")
+        if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return Built.Failed("UNSUPPORTED_WORLD_FORMAT")
         // resolve() runs in its own transactional proxy: let its failures propagate instead of swallowing them into
         // a rollback-only outer transaction (see CampReader.county).
         val selected = artifacts.resolve() ?: return Built.Failed("UNAVAILABLE")
@@ -227,7 +227,7 @@ class VisionReader(
     }
 
     /** Remaining land path and destination of the viewer's own corps (current province first). */
-    private fun ownPath(commander: GeneralReadEntity?, bundle: ResolvedHanWorldArtifacts): Pair<List<String>?, String?>? {
+    private fun ownPath(commander: GeneralReadEntity?, bundle: ResolvedWorldArtifacts): Pair<List<String>?, String?>? {
         commander ?: return null
         val topology = bundle.projection.topology
         return try {

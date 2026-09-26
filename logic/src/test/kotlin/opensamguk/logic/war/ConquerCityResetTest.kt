@@ -10,9 +10,9 @@ import opensamguk.common.constants.HanWorldV3CityConst
 import opensamguk.common.constants.HanWorldV3GateIndex
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.CityConstVariant
-import opensamguk.logic.world.HAN_WORLD_V3_MAP_NAME
-import opensamguk.logic.world.HanCityConstVariant
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WORLD_ARCHIVE_MAP_NAME
+import opensamguk.logic.world.HistoricalCityConstVariant
+import opensamguk.logic.world.WorldMapVariant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -102,8 +102,8 @@ class ConquerCityResetTest {
             if (row.id in cut) row.copy(path = emptyList())
             else row.copy(path = row.path.filterNot { it in names })
         }
-        return HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, rows, HanWorldV3GateIndex::keys,
+        return HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, rows, HanWorldV3GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         )
     }
@@ -118,16 +118,16 @@ class ConquerCityResetTest {
         // 「고립 0곳」만 세지 않는다 — 두 덩어리로 갈라져도 path 는 비어 있지 않다. 전수 도달을 본다.
         // 2026-09-17 1133 판은 섬 郡·郡國 밖 취락이 뱃길(build_han_world V3_SEA_ROUTES)로 이어져야 전수 도달한다.
         // 2026-09-23: 현재 판은 결손 縣 56곳을 더한 1224 이다. 동결된 옛 판들은 그대로 같이 본다.
-        for ((variant, size) in listOf(CityConstRegistry.of(HAN_WORLD_V3_MAP_NAME) to 1447,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_848) to 848,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1098) to 1098,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1133) to 1133,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1141) to 1141,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1341) to 1341,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1168) to 1168,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1194) to 1194,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1224) to 1224,
-                                       CityConstRegistry.hanWorld(HanWorldVariant.V3_1447) to 1447)) {
+        for ((variant, size) in listOf(CityConstRegistry.of(WORLD_ARCHIVE_MAP_NAME) to 1447,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_848) to 848,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1098) to 1098,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1133) to 1133,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1141) to 1141,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1341) to 1341,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1168) to 1168,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1194) to 1194,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1224) to 1224,
+                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1447) to 1447)) {
             val all = variant.all()
             assertEquals(size, all.size)
             assertEquals(emptyList(), all.keys.sorted().filter { checkNotNull(variant.byId(it)).path.isEmpty() },
@@ -161,7 +161,7 @@ class ConquerCityResetTest {
 
     @Test
     fun `진짜로 남은 城 이 없을 때만 던진다`() {
-        val v3 = CityConstRegistry.hanWorld(HanWorldVariant.V3_848)
+        val v3 = CityConstRegistry.hanWorld(WorldMapVariant.V3_848)
         assertFailsWith<IllegalStateException> { ConquerCity.findNextCapital(547, emptyMap(), v3) }
     }
 

@@ -110,7 +110,7 @@ class NpcCourtFlowApiIT {
             cities: opensamguk.gameapi.read.CityReadRepository,
             pins: opensamguk.gameapi.read.WorldArtifactIdentityReadRepository,
         ) = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins,
-            opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../..")))
+            opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../..")))
     }
 
     companion object {

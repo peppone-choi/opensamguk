@@ -37,7 +37,7 @@ class SiegeServiceTest {
         fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
         assertEquals(route.destination, world.positionOf(1), "the corps arrived")
         assertEquals(if (defence == 0) SiegeService.FALLEN else SiegeService.ACTIVE,
-            world.getHwihaSiege(county)?.status, "arrival besieges the county seat")
+            world.getSiege(county)?.status, "arrival besieges the county seat")
         return world to recorder
     }
 
@@ -50,24 +50,24 @@ class SiegeServiceTest {
 
     @Test fun `a siege settlement stamp is written all at once`() {
         val (world, recorder) = besieged(grain = 1_000_000)
-        val started = world.getHwihaSiege(county)!!
+        val started = world.getSiege(county)!!
         assertEquals(listOf(null, null, null), listOf(started.settledYear, started.settledMonth, started.settledPhase))
         boundary(world, recorder)
-        val settled = world.getHwihaSiege(county)!!
+        val settled = world.getSiege(county)!!
         assertEquals(listOf(world.getState().currentYear, world.getState().currentMonth, world.getState().currentPhase),
             listOf(settled.settledYear, settled.settledMonth, settled.settledPhase))
         val originalTurns = settled.turns
         PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder)
-        assertEquals(originalTurns, world.getHwihaSiege(county)!!.turns, "the complete stamp prevents a second settlement")
+        assertEquals(originalTurns, world.getSiege(county)!!.turns, "the complete stamp prevents a second settlement")
     }
 
     @Test fun `a starved county surrenders on the fourth boundary and keeps its warehouse in the county`() {
         val (world, recorder) = besieged(defenderCondition = CityMilitaryState(100, 0, 100))
         boundary(world, recorder, 3)
-        assertEquals(listOf(7500, 5000, 2500), world.getHwihaSiege(county)!!.timeline.filter { it["event"] == "TURN" }.map { it["morale"] })
+        assertEquals(listOf(7500, 5000, 2500), world.getSiege(county)!!.timeline.filter { it["event"] == "TURN" }.map { it["morale"] })
         assertEquals(2, world.getCityById(county)!!.nationId)
         boundary(world, recorder)
-        val siege = world.getHwihaSiege(county)!!
+        val siege = world.getSiege(county)!!
         assertEquals(SiegeService.FALLEN, siege.status); assertEquals("STARVED", siege.endReason); assertEquals(4, siege.turns)
         val city = world.getCityById(county)!!
         assertEquals(1, city.nationId, "the county transfers to the besieger")
@@ -85,7 +85,7 @@ class SiegeServiceTest {
         assertNull(DeploymentState.read(world.getGeneralById(1)!!.meta), "the expedition ends at its objective")
         assertEquals(listOf(listOf<Any>(county, 2, 1, listOf(1))), outcomes.captures, "capture reported exactly once")
         boundary(world, recorder)
-        assertEquals(4, world.getHwihaSiege(county)!!.turns, "a fallen siege is not settled again")
+        assertEquals(4, world.getSiege(county)!!.turns, "a fallen siege is not settled again")
         assertEquals(1, outcomes.captures.size)
     }
 
@@ -95,7 +95,7 @@ class SiegeServiceTest {
         world.applyCityDirtyFree(city.copy(meta = city.meta +
             (CityMilitaryState.META_KEY to mapOf("version" to 2, "troops" to "bad"))))
         boundary(world, recorder)
-        assertEquals("STATE_UNAVAILABLE", world.getHwihaSiege(county)?.endReason)
+        assertEquals("STATE_UNAVAILABLE", world.getSiege(county)?.endReason)
     }
 
     @Test fun `a fed garrison eats from its warehouse through the settlement boundary`() {
@@ -103,7 +103,7 @@ class SiegeServiceTest {
         boundary(world, recorder)
         val warehouse = CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!
         assertEquals(990_000L, warehouse.stock.grain); assertEquals(1, warehouse.revision)
-        assertEquals(10_000, world.getHwihaSiege(county)!!.morale)
+        assertEquals(10_000, world.getSiege(county)!!.morale)
         // Settling the same phase twice must not eat twice.
         PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).run(world, recorder)
         assertEquals(990_000L, CountyWarehouse.read(world.getCityById(county)!!.meta, county)!!.stock.grain)
@@ -113,12 +113,12 @@ class SiegeServiceTest {
         val (thin, thinRecorder) = besieged()
         thin.updateBugok(thin.getBugokById(7)!!.copy(troops = 150))
         boundary(thin, thinRecorder)
-        assertEquals("INSUFFICIENT_RATIO", thin.getHwihaSiege(county)!!.endReason)
+        assertEquals("INSUFFICIENT_RATIO", thin.getSiege(county)!!.endReason)
         assertNotNull(DeploymentState.read(thin.getGeneralById(1)!!.meta), "a thin corps keeps its deployment")
         val (hungry, hungryRecorder) = besieged()
         hungry.updateBugok(hungry.getBugokById(7)!!.copy(provisions = 10))
         boundary(hungry, hungryRecorder)
-        assertEquals("BESIEGER_UNFED", hungry.getHwihaSiege(county)!!.endReason)
+        assertEquals("BESIEGER_UNFED", hungry.getSiege(county)!!.endReason)
         assertNull(DeploymentState.read(hungry.getGeneralById(1)!!.meta), "an unfed expedition ends")
         assertEquals(1000, hungry.getBugokById(7)!!.troops, "troops are preserved")
     }
@@ -133,7 +133,7 @@ class SiegeServiceTest {
             fixture.nextPhase(world)
             fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
             assertEquals(route.destination, world.positionOf(1))
-            assertNull(world.getHwihaSiege(county), "troops=$troops provisions=$provisions")
+            assertNull(world.getSiege(county), "troops=$troops provisions=$provisions")
         }
     }
 
@@ -147,7 +147,7 @@ class SiegeServiceTest {
         boundary(world, recorder, CampaignBalance.ASSAULT_MIN_SIEGE_TURNS)
         assertIs<TurnOutcome.Applied>(handler.handle(SiegeHandler.ASSAULT, 1, "{}"))
         assertEquals(1, world.getCityById(county)!!.nationId)
-        assertEquals("ASSAULT", world.getHwihaSiege(county)!!.endReason)
+        assertEquals("ASSAULT", world.getSiege(county)!!.endReason)
         assertTrue(world.getBugokById(7)!!.troops < 5000)
 
         val (demand, demandRecorder) = besieged(trust = 40.0)
@@ -155,7 +155,7 @@ class SiegeServiceTest {
         assertEquals("REFUSED", assertIs<TurnOutcome.Rejected>(demandHandler.handle(SiegeHandler.DEMAND_SURRENDER, 1, "{}")).code)
         boundary(demand, demandRecorder, 3)
         assertIs<TurnOutcome.Applied>(demandHandler.handle(SiegeHandler.DEMAND_SURRENDER, 1, "{}"))
-        assertEquals("SURRENDER_DEMAND", demand.getHwihaSiege(county)!!.endReason)
+        assertEquals("SURRENDER_DEMAND", demand.getSiege(county)!!.endReason)
         assertEquals(1, demand.getCityById(county)!!.nationId)
         assertEquals("NOT_BESIEGING", assertIs<TurnOutcome.Rejected>(demandHandler.handle(SiegeHandler.ASSAULT, 1, null)).code)
     }
@@ -170,13 +170,13 @@ class SiegeServiceTest {
         assertEquals(2, world.getCityById(county)!!.nationId)
         fixture.movement(world, recorder).onTurn(1, CampaignWorldFixture.NO_INPUT)
         assertEquals(1, world.getCityById(county)!!.nationId)
-        assertEquals("ASSAULT", world.getHwihaSiege(county)!!.endReason)
+        assertEquals("ASSAULT", world.getSiege(county)!!.endReason)
     }
 
     @Test fun `an undefended county falls the moment it is besieged`() {
         val (world, _) = besieged(defence = 0)
         assertEquals(1, world.getCityById(county)!!.nationId)
-        assertEquals("UNDEFENDED", world.getHwihaSiege(county)!!.endReason)
+        assertEquals("UNDEFENDED", world.getSiege(county)!!.endReason)
     }
 
     @Test fun `a counter siege after capture faces the occupation garrison instead of retaking at arrival`() {
@@ -190,8 +190,8 @@ class SiegeServiceTest {
         fixture.movement(world, recorder).onTurn(2, CampaignWorldFixture.NO_INPUT)
         assertEquals(route.destination, world.positionOf(2), "counter corps reached the captured county")
         assertEquals(1, world.getCityById(county)!!.nationId, "arrival does not auto recapture a defended county")
-        assertEquals(SiegeService.ACTIVE, world.getHwihaSiege(county)?.status,
-            world.listHwihaSieges().map { "${it.countyId}:${it.status}:${it.endReason}" }.joinToString())
+        assertEquals(SiegeService.ACTIVE, world.getSiege(county)?.status,
+            world.listSieges().map { "${it.countyId}:${it.status}:${it.endReason}" }.joinToString())
     }
 
     @Test fun `red probe removing the occupation garrison restores immediate recapture`() {
@@ -205,6 +205,6 @@ class SiegeServiceTest {
         fixture.nextPhase(world)
         fixture.movement(world, recorder).onTurn(2, CampaignWorldFixture.NO_INPUT)
         assertEquals(2, world.getCityById(county)!!.nationId)
-        assertEquals("UNDEFENDED", world.getHwihaSiege(county)?.endReason)
+        assertEquals("UNDEFENDED", world.getSiege(county)?.endReason)
     }
 }

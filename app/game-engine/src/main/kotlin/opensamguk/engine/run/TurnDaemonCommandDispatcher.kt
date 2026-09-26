@@ -57,8 +57,8 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.logic.betting.BettingInfo
 import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.world.RaiseInvaderSpec
 import java.time.Clock
 import java.time.Instant
@@ -534,15 +534,15 @@ private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =
 
 private data class ExpirationFailure(val code: String, val reason: String)
 
-private fun v2PrecheckFailure(command: CityGarrisonRecruit): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityGarrisonRecruit): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
         mapOf("cityId" to command.cityId, "amount" to command.amount),
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
-private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.cityTransportSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityTransport): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.cityTransportSchema.canonicalId,
         buildMap {
             put("fromCityId", command.fromCityId)
             put("toCityId", command.toCityId)
@@ -551,7 +551,7 @@ private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blo
             put("garrison", command.garrison)
             command.routeRevision?.let { put("routeRevision", it) }
         },
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
 private fun expirationFailure(expiresAt: String?, executionAt: Instant): ExpirationFailure? {
     if (expiresAt == null) return null

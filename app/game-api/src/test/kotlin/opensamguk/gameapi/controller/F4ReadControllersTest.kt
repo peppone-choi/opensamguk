@@ -736,7 +736,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `chief legacy command palette is not a hwiha product endpoint`() {
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved").with(principal(7L)))
             .andExpect(status().isNotFound)
     }

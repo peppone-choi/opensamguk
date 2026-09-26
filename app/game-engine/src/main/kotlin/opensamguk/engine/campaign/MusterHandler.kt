@@ -70,5 +70,5 @@ class MusterHandler(private val world: InMemoryTurnWorld, private val recorder: 
         return TurnOutcome.Applied(MilitaryInput.MUSTER, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaMusterLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "musterLastTurn" }
 }

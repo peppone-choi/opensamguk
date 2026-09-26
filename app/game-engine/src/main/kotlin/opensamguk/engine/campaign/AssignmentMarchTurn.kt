@@ -6,6 +6,11 @@ import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 
 /** Production personal-turn movement: both passage and reactions come from the current saved world. */
 class AssignmentMarchTurn(
@@ -13,7 +18,7 @@ class AssignmentMarchTurn(
     private val recorder: ChangeRecorder,
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val cells: HanProvinceCellIndex,
+    private val cells: ProvinceCellIndex,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
     private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING,
 ) {
@@ -69,6 +74,16 @@ class AssignmentMarchTurn(
                 result.movement.reachedNodes.forEach { reactions.onEntered(world, recorder, generalId, it) }
                 if (previous?.assignment == result.state.assignment && previous.stop == LandMarchStop.ARRIVED &&
                     result.state.stop == LandMarchStop.ARRIVED) return
+                val turn = world.getState()
+                val countyId = result.state.assignment.countyId
+                world.recordEvent(
+                    kind = EventKind.MARCH_ASSIGNMENT,
+                    audience = AudienceTarget.Self(generalId),
+                    eventKey = EventKey.derive("march.assignment", world.worldId.value.toString(),
+                        turn.currentYear.toString(), turn.currentMonth.toString(), turn.currentPhase.toString(),
+                        generalId.toString(), countyId.toString()),
+                    refs = mapOf(RefRole.ACTOR to EventRef.General(generalId), RefRole.CITY to EventRef.City(countyId)),
+                )
                 log(generalId, when (result.state.stop) {
                     LandMarchStop.ARRIVED -> "발령지에 도착했습니다."
                     LandMarchStop.BUDGET_EXHAUSTED -> "발령지로 행군하고 있습니다."

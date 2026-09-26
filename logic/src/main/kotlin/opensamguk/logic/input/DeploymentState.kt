@@ -35,7 +35,7 @@ data class DeploymentState(val corps: List<DeployedCorps>) {
     fun toMetaValue(): Map<String, Any> = linkedMapOf("version" to 1, "corps" to corps.map { it.toMetaValue() })
 
     companion object {
-        const val META_KEY = "hwihaDeployment"
+        const val META_KEY = "deployment"
         private val fields = setOf("orderId", "ownerGeneralId", "commanderGeneralId", "commanderRetainerId", "nationId", "bugokIds", "startedAt")
         fun read(meta: Map<String, Any?>): DeploymentState? {
             if (META_KEY !in meta) return null

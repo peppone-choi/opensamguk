@@ -18,7 +18,7 @@ class CourtActionHandlerTest {
         TurnDaemonCommand.ImmediateInput(requestId, 501, 42, id, args)
 
     private fun catalogWithPlanned(inputId: String, originalState: String): InputCatalog {
-        val resource = checkNotNull(javaClass.classLoader.getResource("command-catalog/hwiha-input-catalog.json"))
+        val resource = checkNotNull(javaClass.classLoader.getResource("command-catalog/input-catalog.json"))
         val original = resource.readText()
         val row = Regex("(\\\"inputId\\\":\\s*\\\"${Regex.escape(inputId)}\\\"[\\s\\S]*?\\\"deliveryState\\\":\\s*\\\")$originalState(\\\")")
         val planned = row.replace(original, "${'$'}1PLANNED${'$'}2")

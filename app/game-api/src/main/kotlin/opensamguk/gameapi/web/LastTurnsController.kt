@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 class LastTurnsController(private val reader: LastTurnsReader) {
-    @GetMapping("/api/hwiha/last-turns")
+    @GetMapping("/api/last-turns")
     fun lastTurns(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam generalId: Int,

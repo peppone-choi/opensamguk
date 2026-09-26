@@ -27,6 +27,6 @@ class RetireRulesTest {
                 state.copy(people = listOf(actor, heir.copy(userOwned = true))))).reason)
         assertEquals(RetireFailure.ALREADY_RETIRED,
             assertIs<RetireAssessment.Rejected>(RetireRules.assess(req,
-                state.copy(people = listOf(actor.copy(meta = actor.meta + ("hwihaRetired" to true)), heir)))).reason)
+                state.copy(people = listOf(actor.copy(meta = actor.meta + ("retired" to true)), heir)))).reason)
     }
 }

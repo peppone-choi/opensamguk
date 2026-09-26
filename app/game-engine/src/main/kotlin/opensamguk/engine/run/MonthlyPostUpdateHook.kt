@@ -201,7 +201,7 @@ class MonthlyPostUpdateHook(
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
         val isUnited = (state.meta["isunited"] as? Int ?: 0) != 0
 
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
         val checkEmperiorContext = WorldActionContext(
             env = mutableMapOf(
                 "year" to year,
@@ -241,7 +241,7 @@ class MonthlyPostUpdateHook(
     private fun checkWander(rng: RandUtil, year: Int, month: Int) {
         val state = world.getState()
         val env = opensamguk.logic.domain.WorldEnv(year = year, startYear = startYear(), develCost = (year - startYear() + 10) * 2,
-            mapName = ActiveWorldMap.requireName(state.config, state.meta), hanWorldVariant = state.hanWorldVariant)
+            mapName = ActiveWorldMap.requireName(state.config, state.meta), worldMapVariant = state.worldMapVariant)
         val wanderers = world.listGenerals()
             .filter { g -> g.officerLevel == 12 && world.getNationById(g.nationId)?.level == 0 }
             .sortedBy { it.id }
@@ -329,7 +329,7 @@ class MonthlyPostUpdateHook(
     private fun runOccupyCityEvent(year: Int, month: Int) {
         val dispatcher = eventDispatcher ?: return
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
         dispatcher.run(
             target = EventTarget.OCCUPY_CITY,
             contextFactory = { env ->
@@ -416,7 +416,7 @@ class MonthlyPostUpdateHook(
 
     private fun setNationFronts(): List<PostFrontResult> {
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
         val cities = world.listCities()
         val frontCities = cities.map { FrontCity(it.id, it.nationId, it.frontState) }
         val diplomacy = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) }

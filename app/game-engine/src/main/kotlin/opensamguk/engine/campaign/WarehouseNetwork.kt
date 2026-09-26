@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory
 
 /**
  * 「카드가 있는 곳의 보급망」(재설계 spec §9.2) — 녹봉·상사가 금을 내는 창고 목록. 2026-09-23 확정 규칙
- * (`hwiha-s3-provisional-v1.json` salary.note):
+ * (`campaign-balance-v1.json` salary.note):
  *
  * - 카드 인물의 기준 城이 지불자 세력의 **보급된** 縣이면: 그 세력의 보급된 縣 창고 전체(수도 먼저, 그다음 id 순).
  * - 지불자 세력의 縣이지만 보급이 끊겼으면(고립): 그 縣 창고만.
@@ -38,13 +38,13 @@ class WarehouseNetwork(private val world: InMemoryTurnWorld, private val recorde
     private fun pay(payerNationId: Int, counties: List<Int>, amount: Long, balance: (Resources) -> Long,
         debit: (Long) -> Resources): Boolean {
         if (amount < 0 || counties.distinct().size != counties.size) {
-            log.warn("hwiha_warehouse_payment_skipped nation={} reason=INVALID_REQUEST", payerNationId)
+            log.warn("campaign_warehouse_payment_skipped nation={} reason=INVALID_REQUEST", payerNationId)
             return false
         }
         if (amount == 0L) return true
         val stocks = counties.mapNotNull { id -> warehouse(id)?.let { id to it } }
         if (stocks.size != counties.size || stocks.any { world.getCityById(it.first)?.nationId != payerNationId }) {
-            log.warn("hwiha_warehouse_payment_skipped nation={} reason=NETWORK_CHANGED", payerNationId)
+            log.warn("campaign_warehouse_payment_skipped nation={} reason=NETWORK_CHANGED", payerNationId)
             return false
         }
         if (stocks.sumOf { balance(it.second.stock) } < amount) return false
@@ -55,7 +55,7 @@ class WarehouseNetwork(private val world: InMemoryTurnWorld, private val recorde
             if (take == 0L) continue
             val result = WarehouseSettlement(world, recorder).settle(county, payerNationId, warehouse.revision, debit(take))
             if (result != WarehouseSettlement.Result.APPLIED) {
-                log.warn("hwiha_warehouse_payment_skipped nation={} county={} reason={}", payerNationId, county, result)
+                log.warn("campaign_warehouse_payment_skipped nation={} county={} reason={}", payerNationId, county, result)
                 return false
             }
             remaining -= take

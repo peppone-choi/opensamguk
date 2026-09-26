@@ -165,6 +165,8 @@ class ReservedTurnHandler(
      * the ruler's own `officer_level=1` demotion and delegate succession. Default = no-op (no heir).
      */
     private val nextRuler: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
+    /** Imperial succession is independent of, and ordered before, national ruler succession. */
+    private val onGeneralDeath: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
     /**
      * Dying-message provider (`General.php:573-580` → `TextDecoration\DyingMessage`). The RNG-selected
      * variant is wired by the G1 gate; the default is the byte-exact PHP `$defaultMessage`
@@ -203,10 +205,10 @@ class ReservedTurnHandler(
     /** Pinned commandery geography for `action.scout`; null outside a Han HWIHA world (the input then rejects). */
     private val hwihaVisionContext: opensamguk.engine.campaign.VisionContext? = null,
     /** HWIHA 강공 격자에 쓰는 핀된 省 칸 색인. 없으면 공성 입력은 상태 없음으로 거절된다. */
-    private val hwihaProvinceCells: opensamguk.logic.world.HanProvinceCellIndex? = null,
+    private val hwihaProvinceCells: opensamguk.logic.world.ProvinceCellIndex? = null,
     /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
     private val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener = opensamguk.engine.campaign.WarOutcomeListener.NONE,
-    private val hwihaMarchReactions: opensamguk.engine.campaign.MarchReactionPolicy = opensamguk.engine.campaign.MarchReactionPolicy.NON_BLOCKING,
+    private val marchReactions: opensamguk.engine.campaign.MarchReactionPolicy = opensamguk.engine.campaign.MarchReactionPolicy.NON_BLOCKING,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
@@ -224,7 +226,7 @@ class ReservedTurnHandler(
     private val siegeHandler by lazy { opensamguk.engine.campaign.SiegeHandler(world, recorder,
         hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
     private val travelHandler by lazy { opensamguk.engine.campaign.TravelHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaMarchReactions, hwihaWarOutcomes) }
+        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, marchReactions, hwihaWarOutcomes) }
     private val fieldHandler by lazy { opensamguk.engine.campaign.FieldHandler(world, recorder, hwihaDomesticContext) }
     private val cityMilitaryHandler by lazy { opensamguk.engine.campaign.CityMilitaryHandler(world, recorder, hwihaDomesticContext) }
     private val personalHandler by lazy { opensamguk.engine.campaign.PersonalHandler(world, recorder, hwihaDomesticContext) }
@@ -492,7 +494,7 @@ class ReservedTurnHandler(
         env["mapName"] = ActiveWorldMap.requireName(state.config, state.meta)
         val worldEnv: WorldEnv = WorldEnvBuilder.worldEnv(year, startYear).copy(
             mapName = ActiveWorldMap.requireName(state.config, state.meta),
-            hanWorldVariant = state.hanWorldVariant,
+            worldMapVariant = state.worldMapVariant,
         )
 
         if (actionCode == "che_전장이동") {
@@ -547,7 +549,7 @@ class ReservedTurnHandler(
             args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
-            hanWorldVariant = world.getState().hanWorldVariant,
+            worldMapVariant = world.getState().worldMapVariant,
         )
         val view = WorldStateViewAdapter(overlay, env = env, args = actionArgs)
         val result = evaluateConstraints(definition.buildConstraints(ctx), ctx, view)
@@ -1011,7 +1013,7 @@ class ReservedTurnHandler(
                 defenderNationGenerals = defenderNationGenerals,
                 allCitiesForBfs = logicCities,
                 diplomacyForFront = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) },
-                cityConstVariant = world.getState().let { ActiveWorldMap.requireVariant(it.config, it.meta, it.hanWorldVariant) },
+                cityConstVariant = world.getState().let { ActiveWorldMap.requireVariant(it.config, it.meta, it.worldMapVariant) },
                 attackerNationName = world.getNationById(attacker.nationId)?.name ?: "",
                 attackerGeneralName = attacker.name,
                 attackerNationChiefIds = world.listGenerals()
@@ -1343,6 +1345,9 @@ class ReservedTurnHandler(
     private fun kill(general: TurnGeneral, env: LifecycleEnv) {
         val generalId = general.id
 
+        // A failing imperial transition aborts this kill before national succession and tombstone.
+        onGeneralDeath(generalId, env)
+
         // 군주였으면 유지 이음 — officer_level==12 → nextRuler() then setVar('officer_level', 1) (:554-558).
         if (general.officerLevel == 12) {
             nextRuler(generalId, env)
@@ -1612,7 +1617,7 @@ class ReservedTurnHandler(
             args = actionArgs,
             env = env,
             mode = ConstraintMode.FULL,
-            hanWorldVariant = world.getState().hanWorldVariant,
+            worldMapVariant = world.getState().worldMapVariant,
         )
         when (val result = evaluateConstraints(
             definition.buildConstraints(constraintContext),

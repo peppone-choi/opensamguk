@@ -12,6 +12,13 @@ import opensamguk.logic.renown.RenownEntry
 import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.renown.RenownRules
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
 /**
@@ -20,7 +27,7 @@ import org.slf4j.LoggerFactory
  * 갱신은 **사건 누적식**이다(2026-09-22 사용자 결정). 사건은 장수 meta 의 [TALLY_META_KEY] 에 쌓이고
  * ([RenownEvents] — 한 달에 종류당 한 번, 2026-09-23 사용자 결정), 월단평이 **이번 달 이전** 사건을
  * 한 번 적용한 뒤 그 줄만 지운다. 이번 달 도장의 사건(같은 경계에서 막 기록된 것 포함)은 다음 달로 넘긴다.
- * 가감값·상하한은 `data/curated/han/hwiha-renown-assessment-v1.json` 에서 온다 — 코드에 박지 않는다.
+ * 가감값·상하한은 `data/curated/han/renown-assessment-v1.json` 에서 온다 — 코드에 박지 않는다.
  *
  * 도장([STAMP_KEY])으로 한 달에 한 번만 돈다. 징세와 같은 방식이고 같은 flush 에 실린다.
  *
@@ -112,6 +119,18 @@ class MonthlyAssessment(
             if (split.applied.isNotEmpty()) {
                 val summary = summarize(split.applied)
                 reasons[general.id.toString()] = summary
+                world.recordEvent(
+                    kind = EventKind.YUEDAN_ASSESSED,
+                    audience = AudienceTarget.Self(general.id),
+                    eventKey = EventKey.derive(EventKind.YUEDAN_ASSESSED.code,
+                        world.worldId.value.toString(), stamp, general.id.toString()),
+                    refs = mapOf(RefRole.ACTOR to EventRef.General(general.id)),
+                    facts = mapOf(
+                        FactRole.RENOWN_BEFORE to EventFact.Amount(before.toLong()),
+                        FactRole.RENOWN_AFTER to EventFact.Amount(outcome.renown.toLong()),
+                        FactRole.RENOWN_CHANGE to EventFact.Change(outcome.delta.toLong()),
+                    ),
+                )
                 Records.general(world, general.id, RecordKind.YUEDAN_ASSESSED,
                     "월단평: 명망 $before → ${outcome.renown} (${summary.joinToString("·") { labelOf(it) }})",
                     linkedMapOf("stamp" to stamp, "before" to before, "after" to outcome.renown,
@@ -154,6 +173,12 @@ class MonthlyAssessment(
         Records.world(world, RecordKind.YUEDAN_ANNOUNCED,
             "【월단평】 ${year}년 ${month}월 월단평이 발표되었습니다.$head",
             linkedMapOf("stamp" to stamp, "top" to ranking.take(ANNOUNCED_TOP)))
+        world.recordEvent(
+            kind = EventKind.YUEDAN_ANNOUNCED,
+            audience = AudienceTarget.Public,
+            eventKey = EventKey.derive(EventKind.YUEDAN_ANNOUNCED.code,
+                world.worldId.value.toString(), stamp),
+        )
     }
 
     /** 종류별 건수와 증감(이번 곡선 기준). 종류 순서는 [RenownEventKind] 선언 순. */
@@ -165,7 +190,7 @@ class MonthlyAssessment(
     private fun labelOf(row: Map<String, Any?>): String {
         val kind = RenownEventKind.ofKey(row["kind"] as? String ?: "")
             ?: run {
-                log.warn("hwiha_monthly_assessment_label_unavailable kind={}", row["kind"])
+                log.warn("campaign_monthly_assessment_label_unavailable kind={}", row["kind"])
                 return "알 수 없는 사건"
             }
         val count = row["count"] as? Int ?: 1
@@ -175,7 +200,7 @@ class MonthlyAssessment(
     private fun apply(before: TurnGeneral, meta: Map<String, Any?>): Boolean {
         val after = before.copy(meta = meta)
         if (world.applyGeneralDirtyFree(after) == null) {
-            log.warn("hwiha_monthly_assessment_skipped general={} reason=APPLY_REJECTED", before.id)
+            log.warn("campaign_monthly_assessment_skipped general={} reason=APPLY_REJECTED", before.id)
             return false
         }
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))

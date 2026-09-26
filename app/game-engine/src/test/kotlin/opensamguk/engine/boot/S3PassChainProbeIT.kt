@@ -10,7 +10,7 @@ import opensamguk.engine.config.EngineProcessWorld
 import opensamguk.engine.campaign.EncounterResolver
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -55,7 +55,7 @@ class S3PassChainProbeIT {
         PassChainSupport.run(service)
         val failure = assertFailsWith<AssertionError> { PassChainSupport.assertChain(world, jdbc, WORLD) }
         assertTrue(listOf("행군", "조우", "공성").any { failure.message.orEmpty().contains(it) }, "끊긴 고리를 짚는다: ${failure.message}")
-        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, WORLD))
+        assertEquals(0, jdbc.queryForObject("SELECT count(*) FROM siege WHERE world_id=?", Int::class.java, WORLD))
         assertTrue(world.listGenerals().none { EncounterResolver.BATTLE_RECORD_KEY in it.meta })
         // 끊긴 고리 밖은 그대로 돈다 — 게이트가 모든 것을 한꺼번에 빨갛게 만드는 가짜가 아님을 같이 본다.
         assertTrue(world.getGeneralById(PassChainSupport.HUMAN)!!.nationId > 0, "출사는 여전히 된다")
@@ -75,11 +75,11 @@ class S3PassChainProbeIT {
             seedBootstrap: SeedBootstrap,
             processWorld: EngineProcessWorld,
         ): WorldSnapshotLoader {
-            val artifacts = HanWorldArtifactsResolver(repoRoot())
+            val artifacts = WorldArtifactsResolver(repoRoot())
             return WorldSnapshotLoader(
                 jdbc, seedBootstrap, processWorld.worldId,
                 waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-                hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+                mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
                 administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
                 cityLandProvinceLoader = { variant ->
                     artifacts.artifacts(variant).projection.bindingsByCityId

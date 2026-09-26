@@ -9,10 +9,17 @@ import opensamguk.logic.economy.Resources
 import opensamguk.infra.seed.CountyProductionJson
 import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
 /**
- * 월 경계에서 縣 창고에 월세입을 넣는다. HWIHA 전용이고, 기존 국가·개인 재정은 같은 프로파일에서
+ * 월 경계에서 縣 창고에 월세입을 넣는다. 캠페인 전용이고, 기존 국가·개인 재정은 같은 프로파일에서
  * 꺼진다(`WorldActionContext.skipsLegacyFinance`) — 두 재정을 함께 켜지 않는다.
  *
  * **한 달에 한 번**을 보장하는 것은 [STAMP_KEY] 다. 도장과 창고는 같은 flush 에 실린다 —
@@ -21,7 +28,7 @@ import org.slf4j.LoggerFactory
  * 창고가 없는 縣 은 건너뛴다. 명시 재고 입력이 없는 시나리오·기존 월드를 조용히 충전하지 않는다.
  *
  * 철·목재·말은 이 클래스가 만들지 않는다 — [production] 표가 준다. 기본값은 생성된 런타임 산출물이고,
- * 철·말의 위치는 사료 산지 원장, 목재는 지도 면적 축이다(tools/map/build_hwiha_resource_production.py).
+ * 철·말의 위치는 사료 산지 원장, 목재는 지도 면적 축이다(tools/map/build_county_resource_production.py).
  */
 class MonthlyCountyIncome(
     private val world: InMemoryTurnWorld,
@@ -72,7 +79,7 @@ class MonthlyCountyIncome(
                 catch (_: ArithmeticException) { overflow++; continue }
             val after = before.copy(meta = before.meta + (CountyWarehouse.META_KEY to next.toMetaValue()))
             if (world.applyCityDirtyFree(after) == null) {
-                log.warn("hwiha_county_income_skipped county={} reason=APPLY_REJECTED", countyId)
+                log.warn("campaign_county_income_skipped county={} reason=APPLY_REJECTED", countyId)
                 invalid++
                 continue
             }
@@ -91,6 +98,21 @@ class MonthlyCountyIncome(
                 "縣 창고 ${count}곳에 월세입이 들어왔습니다.",
                 linkedMapOf("stamp" to stamp, "counties" to count, "money" to sum.money, "grain" to sum.grain,
                     "iron" to sum.iron, "timber" to sum.timber, "horses" to sum.horses))
+            world.recordEvent(
+                kind = EventKind.INCOME_MONTHLY,
+                audience = AudienceTarget.Nation(nationId),
+                eventKey = EventKey.derive("income.monthly", world.worldId.value.toString(),
+                    year.toString(), month.toString(), nationId.toString()),
+                refs = mapOf(RefRole.NATION to EventRef.Nation(nationId)),
+                facts = mapOf(
+                    FactRole.COUNTIES to EventFact.Amount(count.toLong()),
+                    FactRole.MONEY to EventFact.Amount(sum.money),
+                    FactRole.GRAIN to EventFact.Amount(sum.grain),
+                    FactRole.IRON to EventFact.Amount(sum.iron),
+                    FactRole.TIMBER to EventFact.Amount(sum.timber),
+                    FactRole.HORSES to EventFact.Amount(sum.horses),
+                ),
+            )
         }
 
         world.setGameEnvValue(STAMP_KEY, stamp)
@@ -100,7 +122,7 @@ class MonthlyCountyIncome(
 
     companion object {
         private val log = LoggerFactory.getLogger(MonthlyCountyIncome::class.java)
-        const val STAMP_KEY = "hwihaCountyIncomeMonth"
+        const val STAMP_KEY = "countyIncomeMonth"
         fun stampOf(year: Int, month: Int): String = "%04d-%02d".format(year, month)
     }
 }

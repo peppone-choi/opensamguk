@@ -11,7 +11,7 @@ class DomesticRulesTest {
     private val now = Phase(200, 1, 1)
     private fun person(id: Int, nation: Int = 1, human: Boolean = false, lord: Boolean = false, level: Int = 0,
         node: String? = "p$id", npc: Int = 2, meta: Map<String, Any?> = emptyMap()) = DomesticPerson(id, "G$id", nation, human,
-        if (human) 0 else npc, level, 60, 60, 60, 60, 60, node, false, meta + ("hwihaLord" to lord))
+        if (human) 0 else npc, level, 60, 60, 60, 60, 60, node, false, meta + ("lord" to lord))
 
     /** 1 = 군주(사람), 2 = 1의 NPC 부장 카드(4), 3 = 1의 NPC 참모 카드(5), 6 = 다른 사람 장수(1이 거느림, 카드 8). */
     private fun state(

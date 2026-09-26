@@ -26,6 +26,7 @@ import opensamguk.engine.v2.V2CityLedgerEntry
 import opensamguk.engine.v2.V2CityLedgerStore
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
+import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.Troop
@@ -53,6 +54,8 @@ import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.domain.metaDouble
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.domain.withMeta
+import opensamguk.logic.input.LordStatus
+import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventTarget
@@ -203,7 +206,7 @@ class WorldActionContext(
     private fun resolveTurnterm(): Int = (world.getState().meta["turnterm"] as? Number)?.toInt() ?: 1
     private fun activeCityConst(): CityConstVariant {
         val state = world.getState()
-        return ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        return ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
     }
 
     private fun logDraft(
@@ -298,6 +301,26 @@ class WorldActionContext(
         val id = world.allocateGeneralId()
         recorder.recordGeneralCreate(world, general.toTurnGeneral(id, world.getState()))
         return id
+    }
+
+    override fun stageDeclaredRetainer(generalId: Int, masterName: String) {
+        val subject = requireNotNull(world.getGeneralById(generalId)) {
+            "deferred retainer subject $generalId was not staged"
+        }
+        val master = world.listGenerals().singleOrNull { it.name == masterName }
+        require(master != null && master.id != generalId && subject.nationId > 0 &&
+            master.nationId == subject.nationId && LordStatus.read(master.meta)) {
+            "deferred retainer ${subject.name} has no valid same-nation lord $masterName"
+        }
+        require(world.listRetainers().none { it.generalId == generalId }) {
+            "deferred retainer ${subject.name} already has a card"
+        }
+        world.createRetainer(Retainer(
+            id = world.allocateRetainerId(), masterGeneralId = master.id, origin = RetainerRules.ORIGIN_EXISTING,
+            generalId = generalId, name = subject.name, relation = RetainerRules.RELATION_STAFF,
+            role = RetainerRules.ROLE_NONE, releasePolicy = RetainerRules.RELEASE_MUTUAL,
+            loyalty = 50, task = RetainerRules.TASK_NONE,
+        ))
     }
 
     override fun stageNation(nation: LogicNation) {

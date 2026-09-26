@@ -80,11 +80,11 @@ class StratagemHandApiIT {
         login(99)
         mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("READY"))
             .andExpect(jsonPath("$.cards.length()").value(2))
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaStratagemHand,ownerGeneralId}','7') WHERE world_id=1 AND id=1")
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{stratagemHand,ownerGeneralId}','7') WHERE world_id=1 AND id=1")
         mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("UNAVAILABLE"))
             .andExpect(jsonPath("$.cards.length()").value(0))
         jdbc.update("UPDATE world_state SET config=jsonb_set(config,'{ruleProfile}','\"SAMMO\"') WHERE id=1")
-        mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("WRONG_RULE_PROFILE"))
+        mvc.perform(request()).andExpect(status().isConflict)
     }
 
     @org.springframework.boot.test.context.TestConfiguration
@@ -96,7 +96,7 @@ class StratagemHandApiIT {
             cities: opensamguk.gameapi.read.CityReadRepository,
             pins: opensamguk.gameapi.read.WorldArtifactIdentityReadRepository,
         ) = opensamguk.gameapi.read.ActiveWorldArtifactResolver(worlds, cities, pins,
-            opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../..")))
+            opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../..")))
     }
 
     companion object {

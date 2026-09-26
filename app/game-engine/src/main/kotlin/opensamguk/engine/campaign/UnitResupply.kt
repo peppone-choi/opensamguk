@@ -48,6 +48,6 @@ class UnitResupply(private val world: InMemoryTurnWorld, private val recorder: C
     }
 
     companion object {
-        const val STAMP_KEY = "hwihaUnitResupplyMonth"
+        const val STAMP_KEY = "unitResupplyMonth"
     }
 }

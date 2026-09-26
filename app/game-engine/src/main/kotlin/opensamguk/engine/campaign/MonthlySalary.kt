@@ -48,6 +48,6 @@ class MonthlySalary(private val world: InMemoryTurnWorld, private val recorder: 
     }
 
     companion object {
-        const val STAMP_KEY = "hwihaSalaryMonth"
+        const val STAMP_KEY = "salaryMonth"
     }
 }
