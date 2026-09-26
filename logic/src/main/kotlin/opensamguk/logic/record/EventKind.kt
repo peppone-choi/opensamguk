@@ -15,6 +15,7 @@ enum class EventKind(
     val requiredRefs: Set<RefRole> = emptySet(),
     val allowedRefs: Set<RefRole> = requiredRefs,
     val allowedFacts: Set<FactRole> = emptySet(),
+    val requiredFacts: Set<FactRole> = emptySet(),
 ) {
     MARCH_ASSIGNMENT("march.assignment", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR, CITY)),
     MARCH_CORPS("march.corps", BATTLE, setOf(SELF, RETINUE, EventAudience.NATION), allowedRefs = setOf(ACTOR, CORPS, CITY)),
@@ -29,6 +30,8 @@ enum class EventKind(
     DISPATCH_ACCEPTED("court.dispatchAccepted", COURT, setOf(EventAudience.COURT), requiredRefs = setOf(REQUEST), allowedRefs = setOf(REQUEST, ISSUER, TARGET)),
     DISPATCH_REFUSED("court.dispatchRefused", COURT, setOf(EventAudience.COURT), requiredRefs = setOf(REQUEST), allowedRefs = setOf(REQUEST, ISSUER, TARGET)),
     DISPATCH_CANCELLED("court.dispatchCancelled", COURT, setOf(EventAudience.COURT), requiredRefs = setOf(REQUEST), allowedRefs = setOf(REQUEST, ISSUER, TARGET)),
+    REWARD_RECEIVED("court.rewardReceived", PERSONAL, setOf(SELF), requiredRefs = setOf(ISSUER, TARGET),
+        allowedFacts = setOf(MONEY, REASON), requiredFacts = setOf(MONEY, REASON)),
     ENLISTED("enlist.joined", PERSONAL, setOf(SELF), requiredRefs = setOf(NATION), allowedRefs = setOf(NATION, ACTOR)),
     RETAINER_JOINED("enlist.retainerJoined", RETINUE_NATION, setOf(SELF, RETINUE), requiredRefs = setOf(PERSON), allowedRefs = setOf(PERSON, ACTOR)),
     INPUT_REJECTED("input.rejected", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR)),
@@ -37,7 +40,8 @@ enum class EventKind(
     PEOPLE_SEARCHED("people.searched", RETINUE_NATION, setOf(SELF, RETINUE), allowedRefs = setOf(ACTOR, CITY, PERSON)),
     PEOPLE_JOINED("people.joined", RETINUE_NATION, setOf(SELF, RETINUE), requiredRefs = setOf(PERSON), allowedRefs = setOf(ACTOR, PERSON)),
     PEOPLE_RESISTED("people.resisted", RETINUE_NATION, setOf(SELF), allowedRefs = setOf(ACTOR, PERSON)),
-    RENOWN_EVENT("renown.event", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR, CITY), allowedFacts = setOf(RENOWN_CHANGE)),
+    RENOWN_EVENT("renown.event", PERSONAL, setOf(SELF), requiredRefs = setOf(ACTOR),
+        allowedRefs = setOf(ACTOR, CITY), allowedFacts = setOf(SOURCE), requiredFacts = setOf(SOURCE)),
     YUEDAN_ASSESSED("yuedan.assessed", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR),
         allowedFacts = setOf(RENOWN_BEFORE, RENOWN_AFTER, RENOWN_CHANGE)),
     DEPARTURE_JUDGED("retinue.departureJudged", RETINUE_NATION, setOf(SELF), requiredRefs = setOf(PERSON), allowedRefs = setOf(ACTOR, PERSON)),
@@ -56,6 +60,7 @@ enum class EventKind(
 
     init {
         require(requiredRefs.all { it in allowedRefs })
+        require(requiredFacts.all { it in allowedFacts })
         require((section == WORLD) == (PUBLIC in audiences || audiences.isEmpty()))
         require(PUBLIC !in audiences || audiences == setOf(PUBLIC))
     }
