@@ -163,8 +163,8 @@ class ScenarioImporterIT {
         assertEquals(0, jdbc.queryForObject(
             "SELECT count(*) FROM nation n LEFT JOIN city c ON c.world_id=n.world_id AND c.id=n.capital_city_id " +
                 "WHERE n.world_id=1 AND c.id IS NULL", Int::class.java))
-        val topology = HanWorldArtifactsResolver(root).artifacts(
-            opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).projection.topology
+        val topology = WorldArtifactsResolver(root).artifacts(
+            opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection.topology
         val pins = jdbc.queryForList(
             "SELECT DISTINCT topology_hash FROM general_spatial_position WHERE world_id=1", String::class.java)
         assertEquals(listOf(topology.contentHash), pins)
