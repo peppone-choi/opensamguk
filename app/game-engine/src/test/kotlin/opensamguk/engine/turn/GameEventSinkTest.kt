@@ -25,6 +25,9 @@ class GameEventSinkTest {
         assertEquals(first, world.recordEvent(EventKind.PERSONAL_APPLIED, AudienceTarget.Self(1), firstKey))
         assertEquals(listOf(first), world.consumeDirtyState().gameEvents)
         assertTrue(world.consumeDirtyState().gameEvents.isEmpty())
+        assertEquals(first, world.recordEvent(EventKind.PERSONAL_APPLIED, AudienceTarget.Self(1), firstKey))
+        assertEquals(listOf(first), world.consumeDirtyState().gameEvents,
+            "a replay after a failed drain must restore the buffered event")
 
         val second = world.recordEvent(EventKind.PERSONAL_APPLIED, AudienceTarget.Self(1),
             EventKey.derive("fixture", "second"))
