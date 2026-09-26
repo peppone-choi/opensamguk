@@ -18,6 +18,9 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/local-offices.json")) {
         into("office")
     }
+    from(rootProject.file("data/curated/han/office-rules.json")) {
+        into("office")
+    }
     from(rootProject.file("data/commands/input-catalog.json")) {
         into("command-catalog")
     }
