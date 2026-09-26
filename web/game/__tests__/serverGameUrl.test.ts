@@ -63,8 +63,8 @@ describe('serverGameUrl', () => {
     });
 
     it('resolves normalized game routes under the selected server', () => {
-        const normalized = normalizeLegacyGamePath('a_traffic.php');
-        expect(resolveServerGamePath(undefined, 's1', '/game', gameChildPath(normalized))).toBe('/game/s1/rankings/traffic');
+        const normalized = normalizeLegacyGamePath('a_bestGeneral.php');
+        expect(resolveServerGamePath(undefined, 's1', '/game', gameChildPath(normalized))).toBe('/game/s1/rankings/best-generals');
     });
 
   it('accepts only canonical lowercase public server IDs', () => {
