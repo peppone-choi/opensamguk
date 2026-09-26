@@ -2,7 +2,7 @@
  "schemaVersion": 1,
  "artifactId": "map-design-source-fix-candidates-v1",
  "decidedAt": "2026-09-27",
- "note": "강 경유지 조사(2026-09-26) 때 좌표가 의심된 縣을 사료로 확인한 판정 원장. 여섯 곳은 좌표가 틀린 것이 아니라 gap-counties-v1 의 SYNTHETIC_COMMANDERY_CELL(좌표를 못 구해 郡의 빈 칸에 둔 223곳 중 일부)이다. 사료 자리가 다른 縣의 省이고 51–242km 떨어져 있어 설계 층 위치 수정(제 省 안 12칸)으로는 못 고친다. 동명 세 곳(鹵城·高平·平陽) 확인 중 결손 원장의 동명이지 오판정 후보가 나왔다. 이 원장은 생성기가 읽지 않는다.",
+ "note": "강 경유지 조사(2026-09-26) 때 좌표가 의심된 縣을 사료로 확인한 판정 원장. 여섯 곳은 좌표가 틀린 것이 아니라 gap-counties-v1 의 SYNTHETIC_COMMANDERY_CELL(좌표를 못 구해 郡의 빈 칸에 둔 223곳 중 일부)이다. 사료 자리가 다른 縣의 省이고 51–242km 떨어져 있어 설계 층 위치 수정(제 省 안 12칸)으로는 못 고친다. 동명 세 곳(鹵城·高平·平陽) 확인 중 결손 원장의 동명이지 오판정 후보가 나왔다. 이 원장은 생성기가 읽지 않는다. 2026-09-27 재심사(county-gap-source-recheck)로 고쳤다: 葭萌은 汉寿县과 같은 縣이라 옮기지 않는다(중복), 太丘는 CHGIS 좌표를 찾았다, 中山 漢昌·南陽 酇은 결손이 아니다. 합성 城 223곳 중 최소 23곳이 지도에 이미 있는 縣의 중복이다 (사용자 결정: 은퇴). 은퇴할 23곳은 이 층의 강 비키기·위치 수정 목록과 겹치지 않는다.",
  "designLayerMoves": [],
  "syntheticCounties": [
   {
@@ -96,18 +96,10 @@
    "currentBasis": "SYNTHETIC_COMMANDERY_CELL",
    "sourceNote": "四川 廣元 昭化古城(白龍江·嘉陵江 합류)",
    "source": "https://zh.wikipedia.org/wiki/%E6%98%AD%E5%8C%96%E9%95%87",
-   "sourcedLonLat": [
-    105.71422,
-    32.33682
-   ],
-   "sourcedCell": [
-    1139,
-    998
-   ],
-   "moveCells": 163.1,
-   "sourcedProvince": "汉寿县",
-   "verdict": "NEEDS_HAN_TILES_REPLACEMENT",
-   "fixPath": "gap-counties-v1 좌표를 사료 좌표로 바꾸고(coordinateBasis) han-tiles 省 분할·재핀 사슬을 다시 돈다 — 설계 층 한도(제 省 안 12칸) 밖"
+   "sourcedLonLat": null,
+   "verdict": "DUPLICATE_NOT_MOVE",
+   "fixPath": "옮기지 않는다 — 蜀漢이 漢壽로 고친 縣이고 지도의 汉寿县(44587)이 그 縣이다(晉書 「改葭萌曰漢壽」). 이 합성 城은 중복이라 은퇴 대상",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "placeId": "gc-g0010-020",
@@ -120,11 +112,21 @@
     1785
    ],
    "currentBasis": "SYNTHETIC_COMMANDERY_CELL",
-   "sourceNote": "河南 永城 太丘集 서쪽 漢 故城 성벽 흔적 — 좌표 UNKNOWN",
-   "source": "https://www.163.com/dy/article/J7UEDO0B0534H8BG.html",
-   "sourcedLonLat": null,
-   "verdict": "COORDINATE_UNKNOWN",
-   "fixPath": "좌표를 먼저 확보한다(지도·지명 사전)"
+   "sourceNote": "CHGIS 漢 太丘縣 점(TGAZ hvd_82141, 58–219)과 GeoNames Taiqiu 가 0.5km 로 맞는다",
+   "source": "https://chgis.hudci.org/tgaz/placename/hvd_82141",
+   "sourcedLonLat": [
+    116.28903,
+    34.1117
+   ],
+   "verdict": "NEEDS_HAN_TILES_REPLACEMENT",
+   "fixPath": "gap-counties-v1 좌표를 사료 좌표로 바꾸고 han-tiles 省 분할·재핀 사슬을 다시 돈다 — 설계 층 한도 밖",
+   "sourcedCell": [
+    988,
+    1779
+   ],
+   "moveCells": 29.6,
+   "sourcedProvince": "酇县",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "placeId": "gc-g0056-010",
@@ -137,11 +139,12 @@
     893
    ],
    "currentBasis": "SYNTHETIC_COMMANDERY_CELL",
-   "sourceNote": "射洪 남쪽 柳樹鎮 通泉壩 — 좌표 UNKNOWN. 한글 표시가 「엄한」으로 잘못 붙어 있다(广 부수를 음으로 읽음)",
+   "sourceNote": "射洪 남쪽 柳樹鎮 通泉壩 — 좌표 UNKNOWN. 한글 표시가 「엄한」으로 잘못 붙어 있다(广 부수를 음으로 읽음). 후보 射洪 沱牌鎮(옛 柳樹鎮, 105.414 30.728)이 讀史方輿紀要 「射洪縣東南百里」와 맞는지 미확인",
    "source": "http://www.xzqh.org/html/show/sc/21702.html",
    "sourcedLonLat": null,
-   "verdict": "COORDINATE_UNKNOWN",
-   "fixPath": "좌표를 먼저 확보한다(지도·지명 사전)"
+   "verdict": "COORDINATE_CONFLICT",
+   "fixPath": "좌표를 먼저 확보한다(지도·지명 사전)",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   }
  ],
  "homonymSuspects": [
@@ -150,49 +153,59 @@
    "sourceName": "漢昌",
    "matchedIn": "漢昌郡·巴郡",
    "commanderyCentroidKm": 1132,
-   "verdict": "HOMONYM_SUSPECT",
-   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)"
+   "verdict": "FALSE_ABSENCE_POST_220_RENAME",
+   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)",
+   "onMapAs": "魏昌县(44996, 0.0km)",
+   "evidence": "後漢書 卷110 郡國志 中山國 「漢昌，本苦陘，章帝更名。」, 讀史方輿紀要 卷014 「魏主丕改曰魏昌」",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "commandery": "山陽郡",
    "sourceName": "髙平",
    "matchedIn": "安定郡",
    "commanderyCentroidKm": 873,
-   "verdict": "HOMONYM_SUSPECT",
-   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)"
+   "verdict": "HOMONYM_REAL_GAP",
+   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "commandery": "鴈門郡",
    "sourceName": "卤城",
    "matchedIn": "漢陽郡",
    "commanderyCentroidKm": 872,
-   "verdict": "HOMONYM_SUSPECT",
+   "verdict": "HOMONYM_REAL_GAP",
    "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)",
-   "evidence": "後漢書 卷113 郡國志 鴈門郡 「卤城 故属代郡」 — 代郡 옛 땅(山西). 漢陽郡 鹵城(天水 쪽 거점)과 다른 곳"
+   "evidence": "後漢書 卷113 郡國志 鴈門郡 「卤城 故属代郡」 — 代郡 옛 땅(山西). 漢陽郡 鹵城(天水 쪽 거점)과 다른 곳",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "commandery": "上郡",
    "sourceName": "候官",
    "matchedIn": "張掖屬國",
    "commanderyCentroidKm": 861,
-   "verdict": "HOMONYM_SUSPECT",
-   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)"
+   "verdict": "HOMONYM_REAL_GAP",
+   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "commandery": "南陽郡",
    "sourceName": "成都",
    "matchedIn": "蜀郡",
    "commanderyCentroidKm": 839,
-   "verdict": "HOMONYM_SUSPECT",
-   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)"
+   "verdict": "HOMONYM_REAL_GAP",
+   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   },
   {
    "commandery": "南陽郡",
    "sourceName": "酇",
    "matchedIn": "沛國",
    "commanderyCentroidKm": 422,
-   "verdict": "HOMONYM_SUSPECT",
-   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)"
+   "verdict": "FALSE_ABSENCE_VARIANT_GLYPH",
+   "fixPath": "junguozhi-county-gaps-v1 에서 IN_OTHER_COMMANDERY 를 거두고 실결손으로 다시 심사한다(같은 이름의 다른 땅)",
+   "onMapAs": "赞县(45748, 0.0km)",
+   "evidence": "晉書 順陽郡 「酂」, CHGIS 220년 「贊縣」",
+   "correctedBy": "gap-county-source-recheck-v1(county-gap-source-recheck 작업, 2026-09-27 재심사)"
   }
  ]
 }
