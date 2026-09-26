@@ -112,6 +112,8 @@ class ScenarioImporter(
         val generalPosition: Int = 0,
         /** HWIHA 시나리오가 선언한 초기 부곡 수. */
         val bugok: Int = 0,
+        /** 시작 시 존재하는 장수에 대한 명시적 HWIHA 휘하 카드 수. */
+        val retainer: Int = 0,
     )
 
     fun importAll(
@@ -144,6 +146,7 @@ class ScenarioImporter(
 
         val general = buildGenerals(startYear)
         val generalCount = insertGenerals(jdbc, general, startYear, worldId)
+        val retainerCount = insertHwihaRetainers(jdbc, general, worldId)
 
         val generalTurnCount = insertGeneralTurns(jdbc, general, worldId)
 
@@ -180,6 +183,7 @@ class ScenarioImporter(
             event = eventCount,
             generalPosition = positionCount,
             bugok = unitCount,
+            retainer = retainerCount,
         )
     }
 
@@ -211,6 +215,36 @@ class ScenarioImporter(
             rows,
         )
         return rows.size
+    }
+
+    private fun insertHwihaRetainers(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
+        if (scenario.retainers.isEmpty()) return 0
+        require(effectiveProfile == RuleProfile.HWIHA) { "retainers requires HWIHA" }
+        val byName = generals.associateBy { it.src.name }
+        val rows = initialRetainers().map { declaration ->
+            val subject = byName.getValue(declaration.general)
+            val master = requireNotNull(byName[declaration.master]) {
+                "retainers master must be active at start: ${declaration.master}"
+            }
+            subject to master
+        }.mapIndexed { index, (subject, master) ->
+            arrayOf<Any>(worldId.value, index + 1, master.id, subject.id, activeGeneralName(subject.src))
+        }
+        if (rows.isNotEmpty()) jdbc.batchUpdate(
+            """
+            INSERT INTO general_retainers
+                (world_id, id, master_general_id, origin, general_id, name, relation, role, release_policy, loyalty, task)
+            VALUES (?, ?, ?, 'EXISTING', ?, ?, 'staff', 'NONE', 'MUTUAL', 50, 'none')
+            """.trimIndent(),
+            rows,
+        )
+        return rows.size
+    }
+
+    /** Declared future officers have no general FK at bootstrap; their ownership remains explicit. */
+    internal fun initialRetainers(): List<ScenarioRetainer> {
+        val activeNames = buildGenerals(scenario.startYear).map { it.src.name }.toSet()
+        return scenario.retainers.filter { it.general in activeNames }
     }
 
     // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -245,6 +279,9 @@ class ScenarioImporter(
         if (effectiveProfile == RuleProfile.HWIHA) {
             meta[opensamguk.logic.input.MarchReactions.META_KEY] =
                 opensamguk.logic.input.MarchReactions.Empty.toMetaValue()
+        }
+        if (scenario.retainers.isNotEmpty()) {
+            meta["maxRetainerId"] = initialRetainers().size
         }
         scenario.warehouses?.let { seed ->
             meta["warehouseSeed"] = linkedMapOf(
@@ -557,6 +594,13 @@ class ScenarioImporter(
         require(declaredLords.all { lord -> active.count { it.name == lord.name && it.lord == true } == 1 }) {
             "declared HWIHA lord must be uniquely included and active at start; deferred lord events are not implemented"
         }
+        require(scenario.retainers.isEmpty() || effectiveProfile == RuleProfile.HWIHA) {
+            "retainers requires HWIHA"
+        }
+        require(scenario.retainers.all { declaration ->
+            active.any { it.name == declaration.master && it.lord == true } &&
+                seedGenerals().count { it.name == declaration.general } == 1
+        }) { "retainers master must be active and declared general selected for this seed" }
         if (scenario.personBonds.isNotEmpty()) {
             require(effectiveProfile == RuleProfile.HWIHA) { "personBonds requires HWIHA" }
             val activeOfficers = active.mapNotNull { it.picture?.toIntOrNull() }.toSet()
@@ -1135,11 +1179,7 @@ class ScenarioImporter(
                 if (death <= startYear || birth + GameConst.adultAge.toInt() <= startYear) continue
                 birth + GameConst.adultAge.toInt()
             }
-            byAppearance.getOrPut(scheduleYear) { mutableListOf() }.add(
-                listOf(
-                    general.deferredActionName(),
-                ) + general.rawTuple,
-            )
+            byAppearance.getOrPut(scheduleYear) { mutableListOf() }.add(deferredGeneralAction(general))
         }
         return byAppearance.map { (appearanceYear, actions) ->
             EventRowToInsert(
@@ -1150,6 +1190,19 @@ class ScenarioImporter(
                 ),
                 action = opensamguk.infra.persistence.MetaJson.encode(actions + listOf(listOf("DeleteEvent"))),
             )
+        }
+    }
+
+    internal fun deferredGeneralAction(general: ScenarioGeneral): List<Any?> {
+        val masterName = scenario.retainers.singleOrNull { it.general == general.name }?.master
+        return buildList {
+            add(general.deferredActionName())
+            addAll(general.rawTuple)
+            if (masterName != null) {
+                repeat(maxOf(0, 25 - general.rawTuple.size)) { add(null) }
+                val master = scenario.generals.single { it.name == masterName }
+                add(activeGeneralName(master))
+            }
         }
     }
 

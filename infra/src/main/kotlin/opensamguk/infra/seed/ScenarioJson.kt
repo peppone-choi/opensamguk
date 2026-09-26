@@ -151,6 +151,30 @@ object ScenarioJson {
             require(roster.count { it.name == name } == 1) { "personPolicies name must identify exactly one general: $name" }
         }
         val personBonds = ScenarioPersonBonds.decode(root, effectiveProfile, roster)
+        val rawRetainers = root["retainers"]
+        require("retainers" !in root || effectiveProfile == RuleProfile.HWIHA) { "retainers requires HWIHA" }
+        require("retainers" !in root || rawRetainers is List<*>) { "retainers must be an array" }
+        val retainers = arr(rawRetainers).map { raw ->
+            val declaration = asMap(raw)
+            require(declaration.keys == setOf("general", "master")) {
+                "retainers declaration requires only general and master"
+            }
+            val general = declaration["general"] as? String
+            val master = declaration["master"] as? String
+            require(!general.isNullOrBlank() && !master.isNullOrBlank()) { "retainers names must be nonempty" }
+            ScenarioRetainer(general, master)
+        }
+        require(retainers.map { it.general }.distinct().size == retainers.size) {
+            "retainers general must have exactly one master"
+        }
+        for (retainer in retainers) {
+            val subject = roster.singleOrNull { it.name == retainer.general }
+            val master = roster.singleOrNull { it.name == retainer.master }
+            require(subject != null && master != null && subject != master && subject.lord != true &&
+                master.lord == true && subject.nationId > 0 && subject.nationId == master.nationId) {
+                "retainers general and master must be distinct, same-nation affiliated officers with a declared lord: ${retainer.general}"
+            }
+        }
 
         // diplomacy[]: [me, you, state, remainMonths]. Empty in 1010, but decoded for completeness.
         val diplomacy = arr(root["diplomacy"]).map {
@@ -184,6 +208,7 @@ object ScenarioJson {
             seedContract = seedContract,
             warehouses = ScenarioWarehouseSeeds.decode(root, effectiveProfile),
             personBonds = personBonds,
+            retainers = retainers,
             units = ScenarioUnits.decode(root, effectiveProfile).also { units ->
                 for (unit in units) require(roster.count { it.name == unit.general } == 1) {
                     "units general must identify exactly one general: ${unit.general}"
@@ -400,6 +425,8 @@ data class Scenario(
     val warehouses: WarehouseSeed? = null,
     /** Source-backed directed historical/novel links, resolved to active world IDs by the importer. */
     val personBonds: Map<String, List<ScenarioPersonBond>> = emptyMap(),
+    /** PROVISIONAL 190 campaign ownership, not a sourced claim about historical personal hierarchy. */
+    val retainers: List<ScenarioRetainer> = emptyList(),
     /** HWIHA 초기 부곡 선언(`units`). 없으면 빈 목록 — 부곡을 추정해 만들지 않는다. */
     val units: List<ScenarioUnit> = emptyList(),
 ) {
@@ -425,6 +452,8 @@ data class Scenario(
         }
     }
 }
+
+data class ScenarioRetainer(val general: String, val master: String)
 
 data class ScenarioSeedContract(val activeGenerals: ActiveGeneralContract)
 
