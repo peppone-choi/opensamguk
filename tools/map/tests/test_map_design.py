@@ -168,6 +168,17 @@ class MapDesignInvariantsTest(unittest.TestCase):
         errs = " | ".join(B.check_waters(self.inp0, T3, o3, np.zeros_like(self.inp["roadAll"]), self.tier))
         self.assertIn("이웃 쌍", errs); self.assertIn("덩어리", errs)
 
+    def test_facets_follow_tier_cliff_lengths(self):
+        # 3단 산 덩이: 남쪽 절벽 3칸, 동·서 비탈 1칸, 가운데 윗면
+        lv = np.zeros((12, 9), np.uint8); lv[2:10, 2:7] = 3
+        F = B.compute_facets(lv)
+        self.assertEqual(F[7:10, 4].tolist(), [2, 2, 2])          # 남 그늘면 3칸
+        self.assertEqual(F[6, 4], 1)                              # 그 위는 윗면
+        self.assertEqual(F[4, 6], 3); self.assertEqual(F[4, 2], 4)  # 동면·서면 1칸
+        self.assertEqual(F[4, 5], 1); self.assertEqual(F[0, 0], 0)
+        lv[2:10, 2:7] = 1
+        self.assertEqual(B.compute_facets(lv)[8:10, 4].tolist(), [1, 2])   # 낮은 산은 절벽 1칸
+
     def test_every_river_has_a_source_and_every_dodge_city_exists(self):
         self.assertTrue(all(r[2] for r in self.docs[B.RIVERS]["rivers"]))
         ids = {c["id"] for c in self.inp["cities"]}

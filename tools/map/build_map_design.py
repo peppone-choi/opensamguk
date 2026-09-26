@@ -25,6 +25,7 @@
     MAP_DESIGN_NE10M=<경로> python3 tools/map/build_map_design.py --build  # 강 선부터 전부(NE 10m 있는 로컬)
     python3 tools/map/build_map_design.py --write-derived  # 커밋된 강 선에서 위치·산 편집·산 높이·피복만(han-tiles 바뀐 뒤)
     python3 tools/map/build_map_design.py --check          # 불변식 + 결정적 재계산 대조(CI, 결합 목록)
+    python3 tools/map/build_map_design.py --export DIR     # 렌더러용 격자 PNG + 매니페스트(빌드 때, 커밋하지 않음)
 """
 from __future__ import annotations
 
@@ -1272,6 +1273,63 @@ def landcover_summary(LC):
     return dict(sha256=sha256_bytes(LC.tobytes()), shape=list(LC.shape), counts=counts)
 
 
+# ── 화면 내보내기 ───────────────────────────────────────────────────────────────────
+# 렌더러는 설계 층 격자를 빌드 때 이 명령으로 만들어 쓴다(커밋하지 않는 파생물, han-provinces.png 와 같은 방식).
+# 산은 높이 단을 층으로 그린다(2026-09-26 사용자 채택 C안): 칸마다 면(윗면·남 그늘면·동 흙빛면·서 볕면)을 정하고,
+# 렌더러는 면마다 제 타일을 고른다. 남쪽 절벽 길이 = 높이 단(낮은 산 1 · 산 2 · 높은 산 3칸), 동·서 비탈은 1칸.
+FACET_CODES = {"0": "산 아님", "1": "윗면", "2": "남 그늘면(절벽)", "3": "동 흙빛면", "4": "서 볕면"}
+GROUND_CODES = {"0": "바다", "1": "평지", "4": "호수", "5": "사막", "6": "고원", "7": "분지", "8": "구릉", "9": "지도 밖"}
+
+
+def compute_facets(lv):
+    """산 칸의 면. 남쪽 k칸(k = 그 칸의 높이 단) 안에 더 낮은 칸이 있으면 남 그늘면, 동쪽 1칸이 낮으면 동면,
+    서쪽 1칸이 낮으면 서면, 아니면 윗면. 남 > 동 > 서 > 윗면 순으로 앞선다(빛은 북서에서 온다)."""
+    L = lv.astype(np.int16); H, W = L.shape; F = np.zeros((H, W), np.uint8); m = L > 0
+
+    def lower(dy, dx, k):
+        sh = np.full((H, W), 99, np.int16)
+        ys, yd = slice(max(0, -dy * k), H - max(0, dy * k)), slice(max(0, dy * k), H - max(0, -dy * k))
+        xs, xd = slice(max(0, -dx * k), W - max(0, dx * k)), slice(max(0, dx * k), W - max(0, -dx * k))
+        sh[ys, xs] = L[yd, xd]
+        return sh < L
+    south = (lower(1, 0, 1) & (L >= 1)) | (lower(1, 0, 2) & (L >= 2)) | (lower(1, 0, 3) & (L >= 3))
+    F[m] = 1; F[m & lower(0, -1, 1)] = 4; F[m & lower(0, 1, 1)] = 3; F[m & south] = 2
+    return F
+
+
+def export_layers(inp, out: Path, dest: Path) -> dict:
+    """설계 층 격자를 PNG 로 내보낸다. 돌려주는 값: 매니페스트."""
+    from PIL import Image
+    docs = {k: json.loads((out / k).read_text()) for k in (RIVERS, PLACEMENTS, MOUNTAINS)}
+    tier, width, _name = load_rivers_grid(inp, docs[RIVERS]); pl = docs[PLACEMENTS]["placements"]
+    dem = load_dem(); roads, _ = compute_roads(inp, tier, width, pl, dem)
+    inp, _w = with_waters(inp, tier, width, pl, roads)
+    lv = compute_relief(inp, tier, width, pl, docs[MOUNTAINS], dem)
+    des, plat = compute_desert(inp, lv, compute_plateau(inp, lv, dem), dem, tier, width)
+    LC = compute_landcover(inp, tier, width, pl, lv, plat, des)
+    ground = effective_terrain(inp).copy(); ground[ground == TERRAIN_MOUNTAIN] = TERRAIN_PLAIN      # 산은 relief 층이 맡는다
+    ground[des] = TERRAIN_DESERT; ground[plat] = TERRAIN_PLATEAU
+    ground[(ground == TERRAIN_DESERT) & ~des] = TERRAIN_PLAIN; ground[(ground == TERRAIN_PLATEAU) & ~plat] = TERRAIN_PLAIN
+    road = np.zeros(ground.shape, np.uint8)
+    road[roads_mask(roads, ground.shape, ("UNBUILT",))] = 2; road[roads_mask(roads, ground.shape, ("BUILT",))] = 1
+    own = inp["owner"].astype(np.int32)
+    layers = dict(ground=ground.astype(np.uint8), relief=lv.astype(np.uint8), facets=compute_facets(lv), landcover=LC,
+                  riverWidth=width.astype(np.uint8), riverTier=tier.astype(np.uint8), roads=road,
+                  owner=np.where(own >= 0, own + 1, 0).astype(np.uint16))
+    dest.mkdir(parents=True, exist_ok=True); files = {}
+    for k, a in layers.items():
+        fn = f"map-design-{k}.png"; Image.fromarray(a).save(dest / fn, optimize=True)
+        files[k] = dict(file=fn, dtype=str(a.dtype), sha256=sha256_bytes(a.tobytes()))
+    placements = {str(p["cityId"]): p["to"] for p in pl if p.get("to")}
+    man = dict(schemaVersion=1, artifactId="map-design-export-v1", generator="tools/map/build_map_design.py --export",
+               shape=list(ground.shape), codes=dict(ground=GROUND_CODES, relief=RELIEF_CODES, facets=FACET_CODES,
+                                                    landcover=LANDCOVER_CODES, roads={"0": "없음", "1": "건설", "2": "미건설"},
+                                                    owner="0 = 省 없음, n = provinceRecords[n-1]"),
+               cityCells=placements, files=files)
+    dump(dest / "map-design-manifest.json", man)
+    return man
+
+
 # ── 쓰기·검사 ────────────────────────────────────────────────────────────────────────
 def dump(path: Path, obj) -> None:
     path.write_text(json.dumps(obj, ensure_ascii=False, separators=(",", ":")) + "\n")
@@ -1459,12 +1517,17 @@ def main(argv=None) -> int:
     g.add_argument("--build", action="store_true", help="강 선부터 전부 다시 만든다(NE 10m 필요)")
     g.add_argument("--write-derived", action="store_true", help="커밋된 강 선에서 위치·산 편집·산 높이·피복만 다시 만든다")
     g.add_argument("--check", action="store_true", help="불변식 + 결정적 재계산 대조")
+    g.add_argument("--export", type=Path, metavar="DIR", help="렌더러용 설계 층 격자 PNG + 매니페스트를 DIR 에 쓴다(커밋하지 않는 파생물)")
     ap.add_argument("--dir", type=Path, default=OUT, help="설계 층 디렉터리(적색 프로브용)")
     a = ap.parse_args(argv)
     if a.build:
         return cmd_build(a.dir)
     if a.write_derived:
         return cmd_write_derived(a.dir)
+    if a.export:
+        man = export_layers(load_inputs(), a.dir, a.export)
+        print(f"내보냄: {a.export} · 층 {len(man['files'])}개 · 옮긴 城 {len(man['cityCells'])}곳")
+        return 0
     return cmd_check(a.dir)
 
 
