@@ -32,6 +32,11 @@
 | `HanLandMarchMetricJson` | `LandMarchMetricJson` | 중립 지도 개명 | 행군 거리 로더 코드 타입·파일명 변경 |
 | `HanPlaceNameFold` | `PlaceNameFold` | 중립 지도 개명 | 지명 표기 코드 타입·파일명 변경 |
 | `HanHistoricalOwnership`·`HanHistoricalArtifacts` | `HistoricalOwnership`·`HistoricalArtifacts` | 중립 지도 개명 | 사료 기반 자료 로더 코드 타입·파일명 변경 |
+| `HanCityConst`·`HanGateIndex` | `BaselineCityConst`·`BaselineGateIndex` | 생성 상수 재핀 | 현재 지도 상수·게이트 코드 이름만 변경; 저장 `han` 값 유지 |
+| `Han780V1CityConst`·`Han780V1GateIndex` | `Archive780CityConst`·`Archive780GateIndex` | 생성 상수 재핀 | 연도별 보관본 코드 이름; `han-780-v1` 저장 릴리스 ID 유지 |
+| `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
+| `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
+| `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |

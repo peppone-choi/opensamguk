@@ -12,8 +12,8 @@
   },
   "outputs": {
     "worldJsonSha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30",
-    "cityConstSha256": "4243feb660c155c2822f2fa6d32f63e47345cf789a7616ae18191b998d5fa4bb",
-    "gateIndexSha256": "ddcf53040c54e4a77923f62f0885743ffc2ea7bf31f744edcf4e4a9df4551eb7"
+    "cityConstSha256": "d8bc6d21108a220eb6da93aa0230478d7df1b679288604879902aee03fb5580f",
+    "gateIndexSha256": "b11513d90a5d5f25c9128f39aecc65c5e6412b6570ce8b886d05c06b9effb287"
   },
   "routeNodes": [
     {
