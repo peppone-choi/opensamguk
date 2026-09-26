@@ -84,7 +84,7 @@ class StratagemHandApiIT {
         mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("UNAVAILABLE"))
             .andExpect(jsonPath("$.cards.length()").value(0))
         jdbc.update("UPDATE world_state SET config=jsonb_set(config,'{ruleProfile}','\"SAMMO\"') WHERE id=1")
-        mvc.perform(request()).andExpect(status().isOk).andExpect(jsonPath("$.status").value("WRONG_RULE_PROFILE"))
+        mvc.perform(request()).andExpect(status().isConflict)
     }
 
     @org.springframework.boot.test.context.TestConfiguration

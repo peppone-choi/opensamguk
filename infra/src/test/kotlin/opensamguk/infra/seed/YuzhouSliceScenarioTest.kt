@@ -51,7 +51,7 @@ class YuzhouSliceScenarioTest {
         line("{")
         line("  \"title\": ${j("휘하 예주 조각 (합성 운영 후보)")},")
         line("  \"startYear\": $START_YEAR,")
-        line("  \"ruleProfile\": \"HWIHA\",")
+        line("  \"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\",")
         line("  \"map\": {\"mapName\": \"han-world-v3\"},")
         line("  \"seedContract\": {\"activeGenerals\": {\"base\": ${commanderies.size}, \"extended\": ${commanderies.size}}},")
         line("  \"lords\": ${j(commanderies.map(::lordName))},")

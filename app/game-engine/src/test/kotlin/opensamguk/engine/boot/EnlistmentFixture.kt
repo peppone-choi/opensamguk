@@ -16,7 +16,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
     fun seed(id: Int) {
         jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config,meta)
             VALUES (?, 'enlistment-storage-test',200,1,3600,
-            '{"mapName":"han-world-v3","ruleProfile":"HWIHA"}'::jsonb,
+            '{"mapName":"han-world-v3","worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb,
             '{"lastTurnTime":"0200-01-01T00:00:00Z"}'::jsonb)""", id)
         jdbc.batchUpdate("""INSERT INTO city(world_id,id,name,level,nation_id,pop,pop_max,agri,agri_max,comm,comm_max,
             secu,secu_max,def,def_max,wall,wall_max,region) VALUES (?,?,?,1,0,100,1000,10,1000,10,1000,10,1000,10,1000,10,1000,1)""",

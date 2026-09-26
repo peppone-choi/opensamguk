@@ -11,7 +11,7 @@ internal object SyntheticScenario {
         "stats" to linkedMapOf("leadership" to 60, "strength" to 61, "intelligence" to 62, "politics" to 63, "charm" to 64))
     fun root(): Map<String, Any?> = linkedMapOf("title" to "Synthetic QA", "startYear" to 200,
         "seedContract" to mapOf("activeGenerals" to mapOf("base" to 1, "extended" to 1)),
-        "ruleProfile" to "HWIHA", "map" to mapOf("mapName" to "han-world-v3"),
+        "worldFormat" to "GENERAL_RETAINER_CAMPAIGN", "map" to mapOf("mapName" to "han-world-v3"),
         "nation" to listOf(listOf("QA 세력", "#123456", 1000, 1000, "synthetic QA", 0, null, 1, listOf("허창"))),
         "general" to listOf(person()), "lords" to listOf("QA 주공"), "personPolicies" to listOf(policy()))
     fun parse(root: Map<String, Any?> = root()): Scenario = ScenarioJson.loadScenario(MetaJson.encode(root))

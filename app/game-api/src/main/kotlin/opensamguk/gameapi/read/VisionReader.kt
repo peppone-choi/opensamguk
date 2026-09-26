@@ -110,7 +110,7 @@ class VisionReader(
 
     fun scoutOptions(generalId: Int, userId: Long): ScoutOptionsResponse {
         val frame = when (val built = frame(generalId, userId)) {
-            is Built.Failed -> return blocked(built.status, if (built.status == "WRONG_RULE_PROFILE")
+            is Built.Failed -> return blocked(built.status, if (built.status == "UNSUPPORTED_WORLD_FORMAT")
                 ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
             is Built.Ready -> built.frame
         }
@@ -141,7 +141,7 @@ class VisionReader(
     fun assessScout(generalId: Int, userId: Long, commanderyId: String): ScoutAssessment {
         val frame = when (val built = frame(generalId, userId)) {
             is Built.Failed -> return ScoutAssessment.Rejected(
-                if (built.status == "WRONG_RULE_PROFILE") ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
+                if (built.status == "UNSUPPORTED_WORLD_FORMAT") ScoutFailure.WRONG_RULE_PROFILE else ScoutFailure.STATE_UNAVAILABLE)
             is Built.Ready -> built.frame
         }
         return ScoutRules.assess(RuleProfile.HWIHA, frame.viewer.actorNode, commanderyId, frame.index)
@@ -169,7 +169,7 @@ class VisionReader(
         if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw VisionForbidden()
         val world = worlds.findProcessWorld() ?: return Built.Failed("UNAVAILABLE")
         if (actor.worldId != world.id) return Built.Failed("UNAVAILABLE")
-        if (world.config["ruleProfile"] != "HWIHA") return Built.Failed("WRONG_RULE_PROFILE")
+        if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return Built.Failed("UNSUPPORTED_WORLD_FORMAT")
         // resolve() runs in its own transactional proxy: let its failures propagate instead of swallowing them into
         // a rollback-only outer transaction (see CampReader.county).
         val selected = artifacts.resolve() ?: return Built.Failed("UNAVAILABLE")

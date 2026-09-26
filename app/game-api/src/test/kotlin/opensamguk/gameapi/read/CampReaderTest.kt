@@ -34,7 +34,7 @@ class CampReaderTest {
     private val reader = CampReader(generals, worlds, nations, cities, retainers, gameKv, resolver, ledgers, geography, mapper)
     private val controller = CampController(reader)
 
-    private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"))
+    private val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))
     private val bundle = mock(ResolvedHanWorldArtifacts::class.java)
 
     private fun policy(renown: Int, source: String = "synthetic-qa:camp") =
@@ -55,8 +55,8 @@ class CampReaderTest {
         meta = mapOf("npc_org" to 2, PersonPolicyState.META_KEY to policy(30)))
     private val other = GeneralReadEntity(id = 9, worldId = 1, name = "남", userId = "42")
 
-    private fun setup(profile: String = "HWIHA") {
-        world.config = mapOf("ruleProfile" to profile)
+    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN") {
+        world.config = mapOf("worldFormat" to profile)
         `when`(worlds.findProcessWorld()).thenReturn(world)
         listOf(lord, xiahou, liubei, dingfeng, other).forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
         `when`(generals.findById(99)).thenReturn(Optional.empty())
@@ -118,14 +118,14 @@ class CampReaderTest {
         verifyNoInteractions(retainers, cities, gameKv, resolver)
     }
 
-    @Test fun `휘하 규칙이 아닌 월드는 200 WRONG_RULE_PROFILE 빈 데이터`() {
+    @Test fun `휘하 규칙이 아닌 월드는 200 UNSUPPORTED_WORLD_FORMAT 빈 데이터`() {
         setup(profile = "SAMMO")
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, worldId = 1, name = "탕거")))
-        assertEquals(YuedanResponse("WRONG_RULE_PROFILE"), reader.yuedan(1, 41))
-        assertEquals(WarehousesResponse("WRONG_RULE_PROFILE"), reader.warehouses(1, 41))
-        assertEquals(CampRetinueResponse("WRONG_RULE_PROFILE"), reader.retinue(1, 41))
+        assertEquals(YuedanResponse("UNSUPPORTED_WORLD_FORMAT"), reader.yuedan(1, 41))
+        assertEquals(WarehousesResponse("UNSUPPORTED_WORLD_FORMAT"), reader.warehouses(1, 41))
+        assertEquals(CampRetinueResponse("UNSUPPORTED_WORLD_FORMAT"), reader.retinue(1, 41))
         val county = assertNotNull(reader.county(5, 1, 41))
-        assertEquals("WRONG_RULE_PROFILE", county.status); assertTrue(county.specialties.isEmpty())
+        assertEquals("UNSUPPORTED_WORLD_FORMAT", county.status); assertTrue(county.specialties.isEmpty())
         verifyNoInteractions(retainers, gameKv, resolver)
     }
 

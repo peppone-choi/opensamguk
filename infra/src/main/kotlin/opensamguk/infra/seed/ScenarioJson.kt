@@ -80,10 +80,14 @@ object ScenarioJson {
         val ignoreDefaultEvents = boolOf(root["ignoreDefaultEvents"], false)
         // Preserve omission in the model, but validate declarations against the fresh-world default.
         // An explicit JSON null is invalid and must not be confused with an omitted key.
-        val ruleProfile = if ("ruleProfile" in root) {
+        val ruleProfile = if ("worldFormat" in root) {
+            require("ruleProfile" !in root) { "scenario cannot declare both worldFormat and ruleProfile" }
+            opensamguk.logic.world.WorldFormat.require(mapOf("worldFormat" to root["worldFormat"]))
+            RuleProfile.HWIHA
+        } else if ("ruleProfile" in root) {
             val value = root["ruleProfile"]
-            require(value is String) { "ruleProfile must be SAMMO or HWIHA" }
-            RuleProfile.fromWorldConfig(value)
+            require(value == "SAMMO") { "retired scenario key ruleProfile; use worldFormat" }
+            RuleProfile.SAMMO
         } else null
         val effectiveProfile = ruleProfile ?: WorldRuleProfile.defaultProfile()
         val personPolicies = ScenarioPersonPolicies.decode(root, effectiveProfile)

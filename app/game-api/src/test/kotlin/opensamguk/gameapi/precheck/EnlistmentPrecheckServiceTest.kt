@@ -18,7 +18,7 @@ class EnlistmentPrecheckServiceTest {
         meta = mapOf("lord" to lord, PersonPolicyState.META_KEY to
             PersonPolicyState(cap, true, "fixture", "v1", id).toMetaValue()))
     private fun setup(cap: Int = 30) {
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         `when`(generals.findAll()).thenReturn(listOf(general(1), general(10, true, cap)))
         `when`(nations.findAll()).thenReturn(listOf(NationReadEntity(id = 1, worldId = 1)))
         `when`(retainers.findAll()).thenReturn(emptyList())

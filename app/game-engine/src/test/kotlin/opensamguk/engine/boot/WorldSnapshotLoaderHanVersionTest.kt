@@ -25,7 +25,7 @@ class WorldSnapshotLoaderHanVersionTest {
                     val rows: List<Map<String,Any?>> = when {
                         " AS channel" in sql -> pins.map { mapOf("channel" to it.channel, "topology_revision" to it.revision, "topology_hash" to it.hash) }
                         "FROM world_state" in sql -> listOf(mapOf("id" to 8, "current_year" to 200, "current_month" to 1, "current_phase" to 1,
-                            "tick_seconds" to 60, "status" to "OPEN", "config" to "{\"mapName\":\"han-world-v3\"}", "meta" to "{}"))
+                            "tick_seconds" to 60, "status" to "OPEN", "config" to "{\"mapName\":\"han-world-v3\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}", "meta" to "{}"))
                         "FROM city WHERE" in sql -> ids.map { mapOf("id" to it, "name" to "renamed-$it", "meta" to "{}") }
                         else -> emptyList()
                     }

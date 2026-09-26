@@ -299,12 +299,22 @@ data class TurnWorldState(
     /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
     val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
 ) {
-    /** 월드 규칙 프로필(입력 registry 계약 §2). 시드 전 월드는 config 에 없어 SAMMO, 모르는 글자는 부팅 실패. */
+    /** Temporary adapter for input handlers until the retired profile type is removed. */
     val ruleProfile: opensamguk.logic.input.RuleProfile
         get() {
-            val value = config["ruleProfile"]
-            require(value == null || value is String) { "ruleProfile in world config must be a string" }
-            return opensamguk.logic.input.RuleProfile.fromWorldConfig(value as String?)
+            // Product worlds are constructed only by WorldSnapshotLoader, which validates the
+            // full config/meta tree. Directly constructed in-memory test worlds still use the
+            // retired profile field; keep this per-general projection constant-time.
+            val marker = config[opensamguk.logic.world.WorldFormat.CONFIG_KEY]
+            if (marker != null) {
+                require(marker == opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name) {
+                    "unsupported worldFormat in runtime world config"
+                }
+                return opensamguk.logic.input.RuleProfile.HWIHA
+            }
+            val legacy = config["ruleProfile"]
+            require(legacy == null || legacy is String) { "invalid legacy ruleProfile" }
+            return opensamguk.logic.input.RuleProfile.fromWorldConfig(legacy as String?)
         }
 }
 

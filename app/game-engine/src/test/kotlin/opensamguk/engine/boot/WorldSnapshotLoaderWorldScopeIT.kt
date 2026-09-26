@@ -97,10 +97,10 @@ class WorldSnapshotLoaderWorldScopeIT {
     private fun insertTwoWorldsWithIdenticalLocalIds() {
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, meta)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, meta, config)
             VALUES
-              (1, 'world_one', 200, 1, 3600, '{"serverId":"shared-server"}'::jsonb),
-              (2, 'world_two', 201, 2, 1800, '{"serverId":"shared-server"}'::jsonb)
+              (1, 'world_one', 200, 1, 3600, '{"serverId":"shared-server"}'::jsonb, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb),
+              (2, 'world_two', 201, 2, 1800, '{"serverId":"shared-server"}'::jsonb, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
         )
         jdbc.update(

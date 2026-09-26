@@ -20,7 +20,7 @@ class SiegeReaderTest {
     private val sieges = mock(SiegeReadRepository::class.java)
     private val reader = SiegeReader(generals, worlds, nations, cities, retainers, sieges)
     private val controller = SiegeController(reader)
-    private val world = WorldStateReadEntity(id = 1, config = mapOf("ruleProfile" to "HWIHA"))
+    private val world = WorldStateReadEntity(id = 1, config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"))
 
     private val corps = DeployedCorps("order-1", 1, 1, null, 1, listOf(21), Phase(190, 1, 1))
     private val besieger = GeneralReadEntity(id = 1, worldId = 1, name = "공격", nationId = 1, userId = "41",
@@ -30,8 +30,8 @@ class SiegeReaderTest {
     private val row = SiegeReadRow(77, "ACTIVE", 1, 1, "order-1", 1, 2, 190, 1, 1, turns = 3, morale = 2500,
         garrison = 840, endReason = null, timeline = listOf(mapOf("event" to "START")))
 
-    private fun setup(profile: String = "HWIHA") {
-        world.config = mapOf("ruleProfile" to profile)
+    private fun setup(profile: String = "GENERAL_RETAINER_CAMPAIGN") {
+        world.config = mapOf("worldFormat" to profile)
         `when`(worlds.findProcessWorld()).thenReturn(world)
         listOf(besieger, defender, stranger).forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
         `when`(nations.findAll()).thenReturn(listOf(NationReadEntity(id = 1, worldId = 1, name = "양"),
@@ -71,6 +71,6 @@ class SiegeReaderTest {
         assertEquals(HttpStatus.FORBIDDEN, controller.sieges(42, 1).statusCode)
         assertEquals(HttpStatus.OK, controller.sieges(41, 1).statusCode)
         setup("SAMMO")
-        assertEquals("WRONG_RULE_PROFILE", reader.sieges(1, 41).status)
+        assertEquals("UNSUPPORTED_WORLD_FORMAT", reader.sieges(1, 41).status)
     }
 }

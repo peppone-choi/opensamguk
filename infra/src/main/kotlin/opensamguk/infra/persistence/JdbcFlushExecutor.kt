@@ -1042,16 +1042,16 @@ open class JdbcFlushExecutor(
      *     이후 rankVarIncrease/Set UPDATE의 대상; ScenarioImporter.insertRankData와 동일).
      */
     private fun generalCreateMany(worldId: WorldId, rows: List<GeneralCreateRow>) {
-        val hwiha = jdbc.queryForObject(
-            "SELECT config->>'ruleProfile' FROM world_state WHERE id = :world_id",
+        val campaign = jdbc.queryForObject(
+            "SELECT config->>'worldFormat' FROM world_state WHERE id = :world_id",
             MapSqlParameterSource("world_id", worldId.value), String::class.java,
-        ) == "HWIHA"
-        if (hwiha) rows.forEach { row ->
-            require(row.initialTurns.size <= 12) { "HWIHA initial reservations exceed twelve phases" }
+        ) == opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name
+        if (campaign) rows.forEach { row ->
+            require(row.initialTurns.size <= 12) { "campaign initial reservations exceed twelve phases" }
             val actorId = (row.columns["id"] as Number).toInt()
             require(row.initialTurns.all { it.actionCode == "action.enlist" &&
                 opensamguk.logic.input.EnlistmentInput.parse(actorId, it.argJson) != null }) {
-                "unsupported HWIHA initial reservation"
+                "unsupported campaign initial reservation"
             }
         }
         // 1. general 행 INSERT (ScenarioImporter.insertGenerals 컬럼/순서 verbatim).
@@ -1135,10 +1135,10 @@ open class JdbcFlushExecutor(
         val turnBatch = ArrayList<SqlParameterSource>(rows.size * ring)
         for (r in rows) {
             val id = r.columns["id"]
-            require(hwiha || r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
+            require(campaign || r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
                 "created general $id initial turn ring must contain exactly $ring slots"
             }
-            val slots = if (hwiha) r.initialTurns else r.initialTurns.ifEmpty {
+            val slots = if (campaign) r.initialTurns else r.initialTurns.ifEmpty {
                 List(ring) { InitialGeneralTurnRow("휴식", "{}", "휴식") }
             }
             for ((idx, slot) in slots.withIndex()) {
@@ -2872,13 +2872,13 @@ open class JdbcFlushExecutor(
                 .addValue("offset", ReservedTurnRepository.MAX_GENERAL_TURNS * 2)
                 .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS)
                 .addValue("turn_cnt", row.turnCnt)
-            // HWIHA consumes reservations instead of converting them into phantom rest inputs.
-            // The immutable world profile keeps SAMMO's existing thirty-slot ring unchanged.
+            // The campaign world consumes reservations instead of converting them into phantom rest inputs.
+            params.addValue("world_format", opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name)
             if (row.turnCnt > 0) jdbc.update(
                 """
                 DELETE FROM general_turn t USING world_state w
                  WHERE t.world_id = :world_id AND t.general_id = :general_id
-                   AND w.id = t.world_id AND w.config->>'ruleProfile' = 'HWIHA'
+                   AND w.id = t.world_id AND w.config->>'worldFormat' = :world_format
                    AND t.turn_idx < :turn_cnt
                 """.trimIndent(),
                 params,
