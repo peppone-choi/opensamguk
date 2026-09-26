@@ -6,11 +6,11 @@ import opensamguk.logic.world.*
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
-class HanLandMarchMetricIntegrationTest {
-    private val resolver = HanWorldArtifactsResolver(Path.of(".."))
+class LandMarchMetricIntegrationTest {
+    private val resolver = WorldArtifactsResolver(Path.of(".."))
 
     @Test fun `current pinned bundle agrees with independent Python distances including rough terrain`() {
-        val bundle = resolver.artifacts(HanWorldVariant.V3_1133)
+        val bundle = resolver.artifacts(WorldMapVariant.V3_1133)
         val topology = bundle.projection.topology
         val before = topology.traversalEdges.associate { it.id to it.movementCost }
         val snapshot = bundle.landMarchMetrics
@@ -38,16 +38,16 @@ class HanLandMarchMetricIntegrationTest {
     }
 
     @Test fun `historical selection uses its archived geometry instead of checkout tiles`() {
-        val old = resolver.artifacts(HanWorldVariant.V3_832)
-        val current = resolver.artifacts(HanWorldVariant.V3_1133)
+        val old = resolver.artifacts(WorldMapVariant.V3_832)
+        val current = resolver.artifacts(WorldMapVariant.V3_1133)
         val snapshot = old.landMarchMetrics
         assertEquals(old.projection.topology.contentHash, snapshot.topologyHash)
         assertNotEquals(current.landMarchMetrics.tilesHash, snapshot.tilesHash)
         assertFailsWith<IllegalArgumentException> {
-            HanLandMarchMetricJson.load(old.projection.topology,
+            LandMarchMetricJson.load(old.projection.topology,
                 current.artifactBytes(LandMarchMetricSnapshot.TILES_PATH))
         }
-        assertEquals(snapshot.contentHash, HanLandMarchMetricJson.load(old.projection.topology,
+        assertEquals(snapshot.contentHash, LandMarchMetricJson.load(old.projection.topology,
             old.artifactBytes(LandMarchMetricSnapshot.TILES_PATH)).contentHash)
     }
 }

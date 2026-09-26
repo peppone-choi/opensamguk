@@ -6,7 +6,7 @@ import java.util.Collections
  * One 郡國 of the pinned han-tiles. [no] is the index into `parentRegions`/`juns` — the same number the
  * provinces PNG carries in its commandery channel, so the web fog layer and this index agree by construction.
  */
-data class HanCommandery(val no: Int, val id: String, val name: String, val nameCh: String) {
+data class Commandery(val no: Int, val id: String, val name: String, val nameCh: String) {
     init {
         require(no >= 0) { "Commandery number must not be negative" }
         require(id.isNotBlank() && name.isNotBlank()) { "Commandery identity must not be blank" }
@@ -15,17 +15,17 @@ data class HanCommandery(val no: Int, val id: String, val name: String, val name
 
 /**
  * Commandery-level geography used by HWIHA vision: province → commandery and the shared-border graph.
- * Built from the selected world's pinned tiles only (see `HanCommanderyIndexJson`); never from a repository copy.
+ * Built from the selected world's pinned tiles only (see `CommanderyIndexJson`); never from a repository copy.
  */
-class HanCommanderyIndex(
+class CommanderyIndex(
     val tilesContentHash: String,
-    commanderies: List<HanCommandery>,
+    commanderies: List<Commandery>,
     commanderyByProvinceId: Map<String, Int>,
     adjacentPairs: Set<Pair<Int, Int>>,
 ) {
-    val commanderies: List<HanCommandery> = Collections.unmodifiableList(ArrayList(commanderies))
+    val commanderies: List<Commandery> = Collections.unmodifiableList(ArrayList(commanderies))
     private val byProvince: Map<String, Int> = Collections.unmodifiableMap(LinkedHashMap(commanderyByProvinceId))
-    private val byId: Map<String, HanCommandery> = this.commanderies.associateBy { it.id }
+    private val byId: Map<String, Commandery> = this.commanderies.associateBy { it.id }
     private val neighbours: List<List<Int>>
 
     init {
@@ -49,7 +49,7 @@ class HanCommanderyIndex(
 
     fun commanderyOf(node: StrategicNodeRef?): Int? = (node as? StrategicNodeRef.LandProvince)?.let { byProvince[it.id] }
 
-    fun byId(id: String): HanCommandery? = byId[id]
+    fun byId(id: String): Commandery? = byId[id]
 
     /** Neighbours in ascending number order. */
     fun neighbours(no: Int): List<Int> {

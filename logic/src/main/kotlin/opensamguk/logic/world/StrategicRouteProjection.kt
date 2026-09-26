@@ -2,7 +2,7 @@ package opensamguk.logic.world
 
 import java.util.Collections
 
-data class HanStrategicRouteBinding(
+data class StrategicRouteBinding(
     val runtimeCityId: Int,
     val routeNodeKey: String,
     val physicalPlaceRef: String,
@@ -18,18 +18,18 @@ data class HanStrategicRouteBinding(
 }
 
 /** Immutable runtime identity adapter. An unmapped physical place never acquires an ordinal province. */
-class HanStrategicRouteProjection(
+class StrategicRouteProjection(
     val topology: StrategicTopologySnapshot,
-    bindings: List<HanStrategicRouteBinding>,
+    bindings: List<StrategicRouteBinding>,
     activationBlockerCodes: Set<String> = emptySet(),
     val presentation: StrategicMapPresentation? = null,
 ) {
     val activationBlockerCodes: Set<String> = Collections.unmodifiableSet(activationBlockerCodes.toSortedSet())
     val administrativeCountyIds: Set<Int> = Collections.unmodifiableSet(
         bindings.filter { it.isAdministrativeCounty }.mapTo(sortedSetOf()) { it.runtimeCityId })
-    val bindingsByCityId: Map<Int, HanStrategicRouteBinding>
-    val bindingsByRouteKey: Map<String, HanStrategicRouteBinding>
-    val bindingsByPhysicalPlaceRef: Map<String, HanStrategicRouteBinding>
+    val bindingsByCityId: Map<Int, StrategicRouteBinding>
+    val bindingsByRouteKey: Map<String, StrategicRouteBinding>
+    val bindingsByPhysicalPlaceRef: Map<String, StrategicRouteBinding>
 
     init {
         require(bindings.map { it.runtimeCityId }.toSet().size == bindings.size) { "Duplicate runtime city identity" }
@@ -63,7 +63,7 @@ class HanStrategicRouteProjection(
 }
 
 /** Derive only real dry shared borders, using raster indices locally and stable IDs in every edge. */
-fun projectHanDryLandEdges(
+fun projectDryLandEdges(
     provinceIds: List<String>,
     ownerGrid: IntArray,
     terrainRows: List<String>,

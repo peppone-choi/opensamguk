@@ -3,20 +3,20 @@ package opensamguk.logic.world
 import java.util.Collections
 
 /** A source raster cell, not a tactical movement or elevation rule. */
-data class HanProvinceCell(val col: Int, val row: Int, val terrainCode: Char)
+data class ProvinceCell(val col: Int, val row: Int, val terrainCode: Char)
 
 /** Immutable selected-artifact cell inventory. Disconnected components and terrain are preserved. */
-class HanProvinceCellIndex(
+class ProvinceCellIndex(
     val topologyRevision: String,
     val topologyHash: String,
     val tilesContentHash: String,
     val cols: Int,
     val rows: Int,
     terrainLegend: Map<Char, String>,
-    cellsByProvince: Map<String, List<HanProvinceCell>>,
+    cellsByProvince: Map<String, List<ProvinceCell>>,
 ) {
     val terrainLegend: Map<Char, String> = Collections.unmodifiableMap(LinkedHashMap(terrainLegend))
-    private val cellsByProvince: Map<String, List<HanProvinceCell>> = Collections.unmodifiableMap(
+    private val cellsByProvince: Map<String, List<ProvinceCell>> = Collections.unmodifiableMap(
         cellsByProvince.mapValuesTo(linkedMapOf()) { (_, cells) -> Collections.unmodifiableList(ArrayList(cells)) })
     val provinceIds: Set<String> = Collections.unmodifiableSet(LinkedHashSet(this.cellsByProvince.keys))
 
@@ -39,6 +39,6 @@ class HanProvinceCellIndex(
         }
     }
 
-    fun cellsOf(provinceId: String): List<HanProvinceCell> =
+    fun cellsOf(provinceId: String): List<ProvinceCell> =
         requireNotNull(cellsByProvince[provinceId]) { "Unknown Han province identity" }
 }

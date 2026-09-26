@@ -15,7 +15,7 @@ import opensamguk.engine.turn.*
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.flywaydb.core.Flyway
@@ -38,7 +38,7 @@ class MarchPersistenceIT {
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
     private lateinit var fixture: EnlistmentFixture
-    private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
+    private val bundle by lazy { WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133) }
     private val topology get() = bundle.projection.topology
     private val metrics get() = bundle.landMarchMetrics
     private fun edges(rows: Map<String, StrategicEdgeState> = emptyMap()) =

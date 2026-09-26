@@ -4,17 +4,17 @@ import opensamguk.logic.world.*
 import java.security.MessageDigest
 import kotlin.test.*
 
-class HanLandMarchMetricJsonTest {
+class LandMarchMetricJsonTest {
     private val fixture = """{"_meta":{"cols":2,"rows":2,"terrainLegend":{"0":"SEA","1":"PLAIN","2":"MOUNTAIN"}},"provinceRecords":[{"id":"A"},{"id":"B"}],"terrain":["12","00"],"owner":[[0,1],[1,1],[0,1],[1,1]],"cities":[{"col":0,"row":0,"lon":0,"lat":0},{"col":1,"row":1,"lon":1,"lat":1}],"adjacency":{"county":[[0,99]]}}"""
     private fun topology(bytes: ByteArray, mode: TraversalMode = TraversalMode.LAND): StrategicTopologySnapshot {
         val hash = MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
-        val edges = projectHanDryLandEdges(listOf("A", "B"), intArrayOf(0, 1), listOf("11"), setOf('1'), emptyList(), hash)
+        val edges = projectDryLandEdges(listOf("A", "B"), intArrayOf(0, 1), listOf("11"), setOf('1'), emptyList(), hash)
         return StrategicTopologySnapshot("test", setOf("A", "B"), emptyList(), edges.map { it.copy(mode = mode, confidence = EvidenceConfidence.REVIEWED, sourceRefs = listOf("synthetic metric fixture")) },
             emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to hash))
     }
     private fun load(json: String = fixture, mode: TraversalMode = TraversalMode.LAND): LandMarchMetricSnapshot {
         val bytes = json.toByteArray()
-        return HanLandMarchMetricJson.load(topology(bytes, mode), bytes)
+        return LandMarchMetricJson.load(topology(bytes, mode), bytes)
     }
 
     @Test fun `water excluded centroid and rough share reproduce physical distance without adjacency edges`() {
@@ -32,7 +32,7 @@ class HanLandMarchMetricJsonTest {
     }
     @Test fun `selected bytes must match topology pin`() {
         assertFailsWith<IllegalArgumentException> {
-            HanLandMarchMetricJson.load(topology(fixture.toByteArray()), (fixture + " ").toByteArray())
+            LandMarchMetricJson.load(topology(fixture.toByteArray()), (fixture + " ").toByteArray())
         }
     }
     @Test fun `malformed owner geometry identity and calibration fail closed`() {
@@ -55,11 +55,11 @@ class HanLandMarchMetricJsonTest {
         invalid.forEachIndexed { index, json -> assertFailsWith<IllegalArgumentException>("invalid case $index") { load(json) } }
     }
     @Test fun `positive millimetres use half up without coercing zero or overflow`() {
-        assertEquals(1L, HanLandMarchMetricJson.millimetres(0.0000005))
-        assertEquals(2L, HanLandMarchMetricJson.millimetres(0.0000015))
+        assertEquals(1L, LandMarchMetricJson.millimetres(0.0000005))
+        assertEquals(2L, LandMarchMetricJson.millimetres(0.0000015))
         listOf(0.0, -1.0, 0.00000049, Double.NaN, Double.POSITIVE_INFINITY, Double.MAX_VALUE,
             Long.MAX_VALUE.toDouble() / 1_000_000.0).forEach {
-            assertFailsWith<IllegalArgumentException> { HanLandMarchMetricJson.millimetres(it) }
+            assertFailsWith<IllegalArgumentException> { LandMarchMetricJson.millimetres(it) }
         }
     }
 }

@@ -28,8 +28,8 @@ class WarehouseSeedIT {
     }
     // Fresh 1447 seeds select map4; an unpinned resolver intentionally selects the old live release.
     private val bundle by lazy {
-        val variant = opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4
-        HanWorldArtifactsResolver(root).artifacts(variant)
+        val variant = opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4
+        WorldArtifactsResolver(root).artifacts(variant)
     }
     private val counties get() = bundle.projection.administrativeCountyIds.sorted()
 

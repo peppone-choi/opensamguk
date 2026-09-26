@@ -3,7 +3,7 @@ package opensamguk.infra.seed
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 import java.nio.file.Files
 import java.nio.file.Path
 import java.security.MessageDigest
@@ -22,11 +22,11 @@ internal object Han1447Artifacts {
     private val mapper = ObjectMapper().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS)
 
-    fun load(root: Path): ResolvedHanWorldArtifacts = loadPinned(
-        root, HanWorldVariant.V3_1447, "han-world-v3-1447-artifacts-v1", CATALOG_SHA256)
+    fun load(root: Path): ResolvedWorldArtifacts = loadPinned(
+        root, WorldMapVariant.V3_1447, "han-world-v3-1447-artifacts-v1", CATALOG_SHA256)
 
-    internal fun loadPinned(root: Path, variant: HanWorldVariant, directoryName: String,
-                            catalogSha256: String): ResolvedHanWorldArtifacts {
+    internal fun loadPinned(root: Path, variant: WorldMapVariant, directoryName: String,
+                            catalogSha256: String): ResolvedWorldArtifacts {
         val directory = root.resolve("data/map/$directoryName")
         val catalogPath = directory.resolve("catalog.json")
         RepositoryInputTrace.file(catalogPath)
@@ -38,8 +38,8 @@ internal object Han1447Artifacts {
             catalog.path("logicalMapName").asText() == "han-world-v3" &&
             catalog.path("cityCount").asInt() == variant.cityCount) { "1447 release identity mismatch" }
         val entries = catalog.path("files").toList()
-        val paths = HanStrategicTopologyJson.artifactPaths() + ownershipPaths +
-            (if (variant == HanWorldVariant.V3_1447_MAP4) setOf("data/map/han-land-roads-v1.json") else emptySet())
+        val paths = StrategicTopologyJson.artifactPaths() + ownershipPaths +
+            (if (variant == WorldMapVariant.V3_1447_MAP4) setOf("data/map/han-land-roads-v1.json") else emptySet())
         require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
             "1447 release artifact path set mismatch"
         }
@@ -58,8 +58,8 @@ internal object Han1447Artifacts {
             require(data.size == length && sha(data) == hash) { "1447 artifact hash/length mismatch" }
             entry.path("path").asText() to data
         }
-        val projection = HanStrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
-        return ResolvedHanWorldArtifacts(variant, projection, bytes)
+        val projection = StrategicTopologyJson.loadVersion("han-world-v3", variant.cityCount, bytes::getValue)
+        return ResolvedWorldArtifacts(variant, projection, bytes)
     }
 
     private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)

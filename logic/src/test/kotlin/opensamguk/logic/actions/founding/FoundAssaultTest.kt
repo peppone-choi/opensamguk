@@ -34,7 +34,7 @@ import kotlin.test.assertTrue
  * 그만큼 crew 를 잃고 그 城의 def 가 0 이 된다. che·miniche 는 비용이 항상 0 이라 판정·차감·def 초기화가
  * 전부 사라진다 — 이 파일의 마지막 두 테스트가 그 무변을 못 박는다.
  */
-class HanFoundAssaultTest {
+class FoundAssaultTest {
 
     private val pipeline = GeneralActionPipeline()
     private val MONTH = 7
@@ -59,7 +59,7 @@ class HanFoundAssaultTest {
         meta = linkedMapOf("gennum" to 2, "aux" to linkedMapOf<String, Any?>()),
     )
 
-    /** 공백지 縣 (han 영현 등급 10) with `def = 1500` — CityConst.hanBuildInit 의 영현 초기 수비. */
+    /** 공백지 縣 (han 영현 등급 10) with `def = 1500` — CityConst.historicalBuildInit 의 영현 초기 수비. */
     private fun neutralCity(defense: Int = 1500, level: Int = 10) = City(
         id = 5, nationId = 0, level = level,
         commerce = 100, commerceMax = 100, agriculture = 100, agricultureMax = 100,

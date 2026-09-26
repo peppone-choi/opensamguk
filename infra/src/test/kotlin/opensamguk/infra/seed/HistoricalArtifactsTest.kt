@@ -10,14 +10,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotEquals
 
-class HanHistoricalArtifactsTest {
+class HistoricalArtifactsTest {
     @TempDir lateinit var temporary: Path
     private val root = Path.of("..").toAbsolutePath().normalize()
 
     @Test
     fun `frozen 832 and 835 inputs load with their own complete route identities`() {
-        val old = HanHistoricalArtifacts.loadFromDirectory(root, "han-world-v3-832")
-        val current = HanHistoricalArtifacts.loadFromDirectory(root, "han-world-v3-835")
+        val old = HistoricalArtifacts.loadFromDirectory(root, "han-world-v3-832")
+        val current = HistoricalArtifacts.loadFromDirectory(root, "han-world-v3-835")
         assertEquals((1..832).toSet(), old.bindingsByCityId.keys)
         assertEquals((1..835).toSet(), current.bindingsByCityId.keys)
         for ((id, binding) in old.bindingsByCityId) {
@@ -34,7 +34,7 @@ class HanHistoricalArtifactsTest {
         val original = Files.readAllBytes(root.resolve("data/map/han-world-artifacts-v1/catalog.json"))
         Files.write(directory.resolve("catalog.json"), original + byteArrayOf(32))
         val failure = assertFailsWith<IllegalArgumentException> {
-            HanHistoricalArtifacts.loadFromDirectory(temporary, "han-world-v3-832")
+            HistoricalArtifacts.loadFromDirectory(temporary, "han-world-v3-832")
         }
         assertContains(failure.message.orEmpty(), "catalog hash mismatch")
     }
@@ -48,7 +48,7 @@ class HanHistoricalArtifactsTest {
         val firstBlob = ObjectMapper().readTree(original).path("variants")[0].path("files")[0].path("blob").asText()
         Files.write(directory.resolve(firstBlob), "corrupted".toByteArray())
         val failure = assertFailsWith<IllegalArgumentException> {
-            HanHistoricalArtifacts.loadFromDirectory(temporary, "han-world-v3-832")
+            HistoricalArtifacts.loadFromDirectory(temporary, "han-world-v3-832")
         }
         assertContains(failure.message.orEmpty(), "blob hash/length mismatch")
     }
@@ -56,10 +56,10 @@ class HanHistoricalArtifactsTest {
     @Test
     fun `unknown version and missing archive never fall back to current assets`() {
         assertFailsWith<IllegalArgumentException> {
-            HanHistoricalArtifacts.loadFromDirectory(root, "han-world-v3")
+            HistoricalArtifacts.loadFromDirectory(root, "han-world-v3")
         }
         assertFailsWith<IllegalArgumentException> {
-            HanHistoricalArtifacts.loadFromDirectory(root.resolve("missing-archive-root"), "han-world-v3-832")
+            HistoricalArtifacts.loadFromDirectory(root.resolve("missing-archive-root"), "han-world-v3-832")
         }
     }
 }

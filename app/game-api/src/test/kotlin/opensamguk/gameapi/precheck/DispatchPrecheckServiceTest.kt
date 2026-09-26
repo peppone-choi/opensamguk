@@ -4,9 +4,9 @@ import kotlin.test.*
 import org.mockito.Mockito.*
 import opensamguk.gameapi.read.*
 import opensamguk.gameapi.web.DispatchReadController
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 import java.util.Optional
 
 class DispatchPrecheckServiceTest {
@@ -24,8 +24,8 @@ class DispatchPrecheckServiceTest {
         people.forEach { `when`(generals.findById(it.id)).thenReturn(Optional.of(it)) }
         `when`(generals.findAll()).thenReturn(people)
         `when`(retainers.findAll()).thenReturn(listOf(GeneralRetainerReadEntity(worldId = 1, id = 5, masterGeneralId = 1, generalId = 2)))
-        val artifacts = mock(ResolvedHanWorldArtifacts::class.java)
-        val projection = mock(HanStrategicRouteProjection::class.java)
+        val artifacts = mock(ResolvedWorldArtifacts::class.java)
+        val projection = mock(StrategicRouteProjection::class.java)
         `when`(artifacts.projection).thenReturn(projection)
         `when`(projection.administrativeCountyIds).thenReturn(setOf(7))
         `when`(resolver.resolve()).thenReturn(ActiveWorldArtifactSnapshot(

@@ -3,12 +3,12 @@ package opensamguk.engine.world
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.logic.world.SpatialSupplyNetwork
-import opensamguk.logic.world.HanStrategicRouteProjection
+import opensamguk.logic.world.StrategicRouteProjection
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.world.StrategicSupplyNetwork
 import opensamguk.logic.world.TraversalMode
 import opensamguk.logic.world.WaterControlSnapshot
-import opensamguk.infra.seed.HanStrategicTopologyJson
+import opensamguk.infra.seed.StrategicTopologyJson
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import java.nio.file.Path
@@ -45,7 +45,7 @@ class SpatialSupplyProvider(
 ) {
     @Volatile
     private var cached: CanonicalSpatialSupply? = null
-    private val historical = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.HanWorldVariant, CanonicalSpatialSupply>()
+    private val historical = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.WorldMapVariant, CanonicalSpatialSupply>()
 
     fun network(
         scenarioCode: Int,
@@ -57,8 +57,8 @@ class SpatialSupplyProvider(
         scenarioCode: Int,
         liveCities: List<SpatialSupplyCity>,
         waterControl: WaterControlSnapshot? = null,
-        strategicProjection: HanStrategicRouteProjection? = null,
-        artifacts: opensamguk.infra.seed.ResolvedHanWorldArtifacts? = null,
+        strategicProjection: StrategicRouteProjection? = null,
+        artifacts: opensamguk.infra.seed.ResolvedWorldArtifacts? = null,
     ): SpatialSupplyNetwork {
         require(artifacts == null || activeMapName == "han-world-v3")
         val canonical = if (artifacts == null) canonical() else historical.computeIfAbsent(artifacts.variant) {

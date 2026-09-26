@@ -27,9 +27,9 @@ class GridExchangeTest {
             (1..3).map { EncounterCommanderForce(it,leadership,70,70,70,70) })
         val rules = UnitProfiles(1,"c".repeat(64),listOf(UnitProfile(1100,movementSteps,1,power,120,20)),emptySet())
         val combat = EncounterCombatProfiles.capture(forces,rules)
-        val index = HanProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),10,4,mapOf('1' to "PLAIN"),
-            mapOf("A" to listOf(HanProvinceCell(0,1,'1')),
-                "B" to (1..2).flatMap { row -> (1..7).map { col -> HanProvinceCell(col,row,'1') } }))
+        val index = ProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),10,4,mapOf('1' to "PLAIN"),
+            mapOf("A" to listOf(ProvinceCell(0,1,'1')),
+                "B" to (1..2).flatMap { row -> (1..7).map { col -> ProvinceCell(col,row,'1') } }))
         val deployment = assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter,index)).deployment
         return Fixture(GridExchange(encounter,forces,relations,combat,deployment),encounter,forces,relations,combat,deployment)
     }

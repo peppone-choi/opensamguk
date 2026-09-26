@@ -17,7 +17,7 @@ import opensamguk.gameapi.dto.CorpsResponse
 import opensamguk.gameapi.dto.ScoutOptionsResponse
 import opensamguk.gameapi.dto.VisibilityResponse
 import opensamguk.gameapi.web.VisionController
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.mockito.Mockito.*
@@ -30,7 +30,7 @@ import kotlin.test.*
  * FULL corps in the very same response proves the check is looking at real output (positive control).
  */
 class VisionReaderTest {
-    private val bundle = HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133)
+    private val bundle = WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133)
     private val index = bundle.commanderyIndex
     private val topology = bundle.projection.topology
 

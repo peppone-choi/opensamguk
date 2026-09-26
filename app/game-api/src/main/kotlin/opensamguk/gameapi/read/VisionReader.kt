@@ -16,10 +16,10 @@ import opensamguk.logic.vision.CorpsVisibility
 import opensamguk.logic.vision.VisionRules
 
 import opensamguk.gameapi.dto.*
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.retainer.RetainerRules
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -150,8 +150,8 @@ class VisionReader(
     // ── 공용 ───────────────────────────────────────────────────────────────
 
     private class Frame(
-        val bundle: ResolvedHanWorldArtifacts,
-        val index: HanCommanderyIndex,
+        val bundle: ResolvedWorldArtifacts,
+        val index: CommanderyIndex,
         val people: List<GeneralReadEntity>,
         val projection: DeploymentProjection,
         val viewer: VisionViewer,
@@ -227,7 +227,7 @@ class VisionReader(
     }
 
     /** Remaining land path and destination of the viewer's own corps (current province first). */
-    private fun ownPath(commander: GeneralReadEntity?, bundle: ResolvedHanWorldArtifacts): Pair<List<String>?, String?>? {
+    private fun ownPath(commander: GeneralReadEntity?, bundle: ResolvedWorldArtifacts): Pair<List<String>?, String?>? {
         commander ?: return null
         val topology = bundle.projection.topology
         return try {

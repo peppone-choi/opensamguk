@@ -10,7 +10,7 @@ import opensamguk.engine.config.EngineProcessWorld
 import opensamguk.engine.campaign.EncounterResolver
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.springframework.beans.factory.annotation.Autowired
@@ -75,11 +75,11 @@ class S3PassChainProbeIT {
             seedBootstrap: SeedBootstrap,
             processWorld: EngineProcessWorld,
         ): WorldSnapshotLoader {
-            val artifacts = HanWorldArtifactsResolver(repoRoot())
+            val artifacts = WorldArtifactsResolver(repoRoot())
             return WorldSnapshotLoader(
                 jdbc, seedBootstrap, processWorld.worldId,
                 waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-                hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+                mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
                 administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
                 cityLandProvinceLoader = { variant ->
                     artifacts.artifacts(variant).projection.bindingsByCityId
