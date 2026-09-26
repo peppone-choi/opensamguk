@@ -2,7 +2,7 @@ package opensamguk.logic.input
 
 /** The concrete NPC selection path for one input. These keys are bound to selectors by the engine. */
 enum class AiSelectorKey {
-    ENLIST, DEPLOY, COURT_DISPATCH, FIELD, CITY_MILITARY, PEOPLE, PERSONAL,
+    ENLIST, DEPLOY, MUSTER, COURT_DISPATCH, FIELD, CITY_MILITARY, PEOPLE, PERSONAL,
 }
 
 sealed interface AiPolicyBinding {
@@ -24,6 +24,7 @@ object AiPolicyRegistry {
     val bindings: Map<String, AiPolicyBinding> = buildMap {
         putAll(selector(AiSelectorKey.ENLIST, "action.enlist"))
         putAll(selector(AiSelectorKey.DEPLOY, "action.deploy"))
+        putAll(selector(AiSelectorKey.MUSTER, "action.muster"))
         putAll(selector(AiSelectorKey.COURT_DISPATCH, "court.dispatch"))
         putAll(selector(AiSelectorKey.FIELD, "action.farm", "action.commerce", "action.fortify",
             "action.repairWall", "action.security", "action.settle", "action.selectResidents"))
@@ -44,7 +45,7 @@ object AiPolicyRegistry {
         putAll(unused("NPC selector has not been delivered", "action.scout", "action.assault",
             "action.demandSurrender", "action.siegeRoadFort", "court.reward",
             "court.politicalConsent", "placement.assign", "policy.set", "work.start",
-            "action.gift", "action.muster", "action.move", "action.forcedMarch", "action.return",
+            "action.gift", "action.move", "action.forcedMarch", "action.return",
             "action.foundState", "action.abdicate", "action.tour", "action.oath",
             "action.convertProficiency", "action.tradeGrain", "action.transport",
             "court.releaseCorps", "court.abandonCounty", "court.moveCapital"))
