@@ -4,6 +4,8 @@
 
 `OfficeCapabilityResolver.actualJurisdiction`은 수락·부임, 治所 縣 소유, 재임자 위치, 관할 縣 과반 소유, 治所 창고망 연결, 현령 착석 또는 주둔군을 함께 검사한다. 실제 능력 범위는 소유하면서 창고망에도 연결된 縣으로 좁힌다. `OfficeCapabilityResolver.resolve`의 결과만 handler·NPC·사전검사에서 사용한다. 太守/國相은 郡 방침과 실효 관할 縣 공사, 刺史/牧은 州 감찰만 허용한다. 司隸는 州刺史/牧 임명 대상에서 제외한다.
 
+같은 세력은 같은 관할에 같은 종류의 지방 재임을 중복 등록할 수 없다. 서로 다른 세력의 경쟁 재임은 허용하며, 실제 능력은 각 재임의 실효 관할 증거로 판정한다.
+
 게임 문턱은 [`office-rules.json`](../../data/curated/han/office-rules.json) 한 곳에 둔다. 소유 비율 50%, 동시 지방 재임 2개는 구현 에이전트가 정한 게임 값이며 사료 주장으로 표시하지 않는다. 기존 월드와 연결할 때는 R1 縣 소유·월드별 행정 오버레이·창고망·부임 위치를 하나의 `OfficeJurisdictionSnapshot`으로 투영해야 한다. 기본 지도 핀만으로 월드별 治所를 결정하지 않는다.
 
 저장은 `localOfficeTenures`와 `officeCredentials` meta JSON에 version 1로 직렬화한다. 없으면 빈 목록, 손상·중복은 codec이 예외로 거절하고 미해결 credential 참조는 `validateTenures`가 거절한다. 이 슬라이스는 순수 모델·codec·읽기 투영이며 조정 입력, 턴 배선, DB flush, 화면 명령은 후속 통합 슬라이스가 담당한다.

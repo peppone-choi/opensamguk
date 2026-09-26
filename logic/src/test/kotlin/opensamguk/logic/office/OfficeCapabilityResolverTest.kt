@@ -11,6 +11,7 @@ class OfficeCapabilityResolverTest {
     private val rules = OfficeRules.loadClasspath()
     private val prefect = requireNotNull(catalog.definition("office.commandery-prefect"))
     private val inspector = requireNotNull(catalog.definition("office.provincial-inspector"))
+    private val governor = requireNotNull(catalog.definition("office.provincial-governor"))
     private val tenure = OfficeTenure(
         id = "tenure-1", officeId = prefect.id, jurisdictionId = "hhs-group:109:京兆尹",
         holderId = 10, issuerId = 1, nationId = 1, origin = OfficeClaimOrigin.POLITY_APPOINTMENT,
@@ -74,6 +75,28 @@ class OfficeCapabilityResolverTest {
             tenure.copy(id = "third", jurisdictionId = "hhs-group:110:魏郡"),
         )
         assertFailsWith<IllegalArgumentException> { OfficeCapabilityResolver.validateTenures(three, catalog, rules) }
+    }
+
+    @Test
+    fun `rival nations may hold competing tenures for the same jurisdiction`() {
+        val rival = tenure.copy(id = "rival", holderId = 11, nationId = 2)
+        OfficeCapabilityResolver.validateTenures(listOf(tenure, rival), catalog, rules)
+    }
+
+    @Test
+    fun `one nation cannot hold duplicate local jurisdiction tenures`() {
+        val secondPrefect = tenure.copy(id = "second-prefect", holderId = 11)
+        val commanderyConflict = assertFailsWith<IllegalArgumentException> {
+            OfficeCapabilityResolver.validateTenures(listOf(tenure, secondPrefect), catalog, rules)
+        }
+        assertEquals("conflicting local jurisdiction tenure", commanderyConflict.message)
+
+        val provincialInspector = tenure.copy(id = "inspector", officeId = inspector.id, jurisdictionId = "zhou:冀州")
+        val provincialGovernor = tenure.copy(id = "governor", officeId = governor.id, jurisdictionId = "zhou:冀州", holderId = 11)
+        val provincialConflict = assertFailsWith<IllegalArgumentException> {
+            OfficeCapabilityResolver.validateTenures(listOf(provincialInspector, provincialGovernor), catalog, rules)
+        }
+        assertEquals("conflicting local jurisdiction tenure", provincialConflict.message)
     }
 
     @Test
