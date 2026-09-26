@@ -37,8 +37,6 @@
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
 | `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
-
-1447 Map4 번들 검사는 현재 `ArchiveCityConst`·`ArchiveGateIndex`에서 옛 객체 이름과 역사 주석을 복원해 동결 스냅샷을 검산한다. 번들 안의 지도 매니페스트는 저장된 세계의 공간 핀에 포함되므로 기존 바이트와 카탈로그 해시를 유지한다. 과거 원본 출처 필드와 스냅샷 본문도 유지한다.
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
@@ -141,18 +139,15 @@
 | `logic/input/HwihaDomesticVisionContractTest.kt` | `logic/vision/VisionSourceContractTest.kt` | 이 PR | 내정·시야 계약 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName`과 inbox 저장값은 저장·통신 식별자 PR에서 변경 |
-
 | `LegacyCourt*` (API·engine 코드 타입/파일) | `CourtAction*` | #937 draft | 저장 키 `hwihaLegacyCourt*`는 저장 계약 단계에서 처리 |
 | `LegacyDirect*` (API·engine 코드 타입/파일) | `DirectAction*` | #937 draft | 저장 키 `hwihaLegacyDirect*`는 저장 계약 단계에서 처리 |
 | `LegacyStratagem*` (API·engine 코드 타입/파일) | `StratagemAction*` | #937 draft | 저장 키 `hwihaLegacyStratagem*`는 저장 계약 단계에서 처리 |
 | `QueuedLegacyCourt`, `QueuedLegacyStratagem` | `QueuedCourtAction`, `QueuedStratagemAction` | #937 draft | 직렬화 meta 키 값은 별도 처리 |
 | `logic/world/HanMapConnectivityTest.kt` | `logic/world/WorldMapConnectivityTest.kt` | #937 draft | 특정 `han` 지도 픽스처는 유지 |
-
 | `opensamguk.common.wire.v2` | `opensamguk.common.wire.command` | 후속 draft | 코드 패키지, 와이어 값 유지 |
 | `opensamguk.logic.v2.command` | `opensamguk.logic.command` | 후속 draft | 입력 명령 계약 패키지 |
 | `opensamguk.logic.v2.evidence` | `opensamguk.logic.evidence` | 후속 draft | 사료 근거 계약 패키지 |
 | `opensamguk.logic.v2.geo` | `opensamguk.logic.geo` | 후속 draft | 지리 계약 패키지 |
-
 | `V2CommandRegistry` | `CommandSchemaCatalog` | 후속 draft | 삼모 `CommandRegistry`와 이름 충돌 방지 |
 | `V2Command*`, `V2GarrisonRecruit*`, `V2CityTransport*` (common/logic 계약) | 접두사 없는 도메인 타입 | 후속 draft | 명령 코드 문자열 `v2…`은 저장·통신 단계 |
 | `V2CommandResultEnvelope`, `V2TurnEventEnvelope` | `CommandResultEnvelope`, `TurnEventEnvelope` | 후속 draft | `schemaVersion` 값 유지 |
@@ -160,6 +155,7 @@
 
 ## 정한 값의 근거
 
+- 1447 Map4 번들 검사는 현재 `ArchiveCityConst`·`ArchiveGateIndex`에서 옛 객체 이름과 역사 주석을 복원해 동결 스냅샷을 검산한다. 번들 안의 지도 매니페스트는 저장된 세계의 공간 핀에 포함되므로 기존 바이트와 카탈로그 해시를 유지한다. 과거 원본 출처 필드와 스냅샷 본문도 유지한다.
 - `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 첫 코드 개명 PR은 Kotlin 타입만 바꾸고 저장 값을 유지했다. 저장·통신 식별자 PR에서 discriminator `hwihaCourtInput`은 `immediateInput`, `command_inbox.action_code` 값 `HwihaCourtInput`은 `ImmediateInput`으로 바꾸고 producer·consumer·직렬화 테스트를 함께 갱신한다.
 - `worldFormat = GENERAL_RETAINER_CAMPAIGN`은 유일한 제품 세계의 구조를 명시한다. 새 가드는 키·값이 없거나 옛 `ruleProfile`이 있으면 실패한다. 이전 데이터 자동 해석은 넣지 않는다.
 - DB의 `siege`와 `person_card`는 현행 스키마에 같은 이름이 없어 충돌하지 않는다. 이름 변경은 새 Flyway 파일로만 실행한다.
