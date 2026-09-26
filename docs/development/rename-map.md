@@ -1534,3 +1534,11 @@ web/game/lib/hwiha-reads.ts
 | `HanFoundAssaultTest` | `FoundAssaultTest` |
 | `HanGateRegionsTest` | `GateRegionsTest` |
 | `HanProvinceSeatsTest` | `ProvinceSeatsTest` |
+
+## 활성 턴 프로필 기본 식별자
+
+| 설정 | 이전 기본값 | 새 기본값 |
+| --- | --- | --- |
+| `TURN_PROFILE_NAME`·`OPENSAMGUK_PROFILE` | `che:scenario_2` | `pep:scenario_990002` |
+
+새 기본값은 `SERVER_ID=pep`, `SCENARIO_CODE=scenario_990002`와 일치한다. 운영자가 환경 변수로 지정한 프로필은 그대로 적용한다. 기존 Redis 키 접두사 `sammo:`는 저장 데이터 호환성 검토 후 별도로 변경한다.
