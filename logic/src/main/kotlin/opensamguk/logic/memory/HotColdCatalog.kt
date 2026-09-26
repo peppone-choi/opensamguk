@@ -331,7 +331,7 @@ object HotColdCatalog {
             ordering = "exact key or first matching deterministic row",
             calls = listOf(
                 RuntimeCall("repo.findByTableAndNamespaceAndKey"),
-                RuntimeCall("repo.findByTable", 4),
+                RuntimeCall("repo.findByTable", 3),
                 RuntimeCall("repo.sumAmountByBettingIdAndUserId"),
                 RuntimeCall("repo.findPollState"),
                 RuntimeCall("reader.findMessage"),
