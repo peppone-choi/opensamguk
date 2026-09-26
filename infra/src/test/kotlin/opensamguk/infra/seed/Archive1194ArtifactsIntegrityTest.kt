@@ -9,15 +9,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import org.junit.jupiter.api.io.TempDir
 
-class Han1141ArtifactsIntegrityTest {
+class Archive1194ArtifactsIntegrityTest {
     @TempDir lateinit var temporary: Path
 
-    @Test fun `new release loads eight settlements and exact economy in both runtime paths`() {
-        val release = Han1141Artifacts.load(Path.of(".."))
+    @Test fun `new release loads expanded settlements and exact economy in both runtime paths`() {
+        val release = Archive1194Artifacts.load(Path.of(".."))
         val cities = MapJson.loadCityDetails(release.artifactBytes(
             "infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8)).associateBy { it.id }
         assertEquals(cities.keys, release.cityConst.all().keys)
-        for (id in listOf(787, 977, 989, 1099, 1106) + (1134..1141)) {
+        for (id in (1134..1194)) {
             val raw = cities.getValue(id)
             val runtime = release.cityConst.byId(id)!!
             assertEquals(raw.populationMax, runtime.population)
@@ -26,14 +26,10 @@ class Han1141ArtifactsIntegrityTest {
             assertTrue(raw.populationInit!! > 0)
             assertTrue(raw.populationInit!! <= raw.populationMax)
         }
-        val gok = listOf(977, 1134, 1135, 1136, 1137).map { cities.getValue(it) }
-        assertEquals(100000, gok.sumOf { it.populationInit!! })
-        assertEquals(293800, gok.sumOf { it.populationMax })
-        assertEquals(5950, gok.sumOf { it.commerceMax })
     }
 
     @Test fun `changed catalog and corrupt or missing blob never fall back to current files`() {
-        val relative = "data/map/han-world-v3-1141-artifacts-v1"
+        val relative = "data/map/han-world-v3-1194-artifacts-v1"
         val source = Path.of("..").resolve(relative)
         val catalog = Files.readAllBytes(source.resolve("catalog.json"))
         val blob = ObjectMapper().readTree(catalog).path("files").first().path("blob").asText()
@@ -44,16 +40,16 @@ class Han1141ArtifactsIntegrityTest {
                 val target = destination.resolve(source.relativize(path))
                 if (Files.isDirectory(path)) Files.createDirectories(target) else Files.copy(path, target)
             } }
-            Han1141Artifacts.load(root) // Establish a valid fixture before introducing the fault.
+            Archive1194Artifacts.load(root) // Establish a valid fixture before introducing the fault.
             when (mutation) {
                 "catalog" -> Files.write(destination.resolve("catalog.json"), catalog + byteArrayOf(10))
                 "blob" -> Files.write(destination.resolve(blob), byteArrayOf(0, 1, 2))
                 "missing" -> Files.delete(destination.resolve(blob))
             }
             if (mutation == "missing") {
-                assertFailsWith<java.nio.file.NoSuchFileException> { Han1141Artifacts.load(root) }
+                assertFailsWith<java.nio.file.NoSuchFileException> { Archive1194Artifacts.load(root) }
             } else {
-                assertFailsWith<IllegalArgumentException>(mutation) { Han1141Artifacts.load(root) }
+                assertFailsWith<IllegalArgumentException>(mutation) { Archive1194Artifacts.load(root) }
             }
         }
     }

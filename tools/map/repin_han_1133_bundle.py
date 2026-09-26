@@ -9,7 +9,7 @@
      (gzip level 9, mtime 0, 파일명 없음 — 쓰기 전에 안 바뀐 blob 을 같은 방법으로 재현해 방법을 검증한다).
   2. 코틀린 상수 스냅샷(HanWorldV31133*)을 현재 생성물에서 다시 뜨고 runtime-constants.json 을 맞춘다.
   3. catalog.json 을 다시 쓰고 새 CATALOG_SHA256 · runtime-constants 해시를 출력한다
-     (Han1133Artifacts.kt · ArchiveRuntimeConstantsIntegrityTest.kt 의 핀은 사람이 옮긴다 — `--check` 가 대조한다).
+     (Archive1133Artifacts.kt · ArchiveRuntimeConstantsIntegrityTest.kt 의 핀은 사람이 옮긴다 — `--check` 가 대조한다).
 
 사용:
     python3 tools/map/repin_han_1133_bundle.py --check
@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BUNDLE = ROOT / "data/map/han-world-v3-1133-artifacts-v1"
 CONSTANTS = "common/src/main/kotlin/opensamguk/common/constants"
 SNAPSHOT_HEADER = "// Frozen 1133-identity release snapshot. Future generators must not overwrite.\n"
-ARTIFACTS_KT = ROOT / "infra/src/main/kotlin/opensamguk/infra/seed/Han1133Artifacts.kt"
+ARTIFACTS_KT = ROOT / "infra/src/main/kotlin/opensamguk/infra/seed/Archive1133Artifacts.kt"
 CONSTANTS_TEST = ROOT / "infra/src/test/kotlin/opensamguk/infra/seed/ArchiveRuntimeConstantsIntegrityTest.kt"
 
 
@@ -118,7 +118,7 @@ def main() -> int:
     catalog_sha = sha((BUNDLE / "catalog.json").read_bytes())
     constants_sha = sha((BUNDLE / "runtime-constants.json").read_bytes())
     if pinned(ARTIFACTS_KT, r'CATALOG_SHA256 = "([0-9a-f]{64})"') != catalog_sha:
-        problems.append(f"Han1133Artifacts.CATALOG_SHA256 != {catalog_sha}")
+        problems.append(f"Archive1133Artifacts.CATALOG_SHA256 != {catalog_sha}")
     if constants_sha not in CONSTANTS_TEST.read_text(encoding="utf-8"):
         problems.append(f"ArchiveRuntimeConstantsIntegrityTest 1133 핀 != {constants_sha}")
     for problem in problems:

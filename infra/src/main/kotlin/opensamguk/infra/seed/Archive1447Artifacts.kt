@@ -10,7 +10,7 @@ import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
 
 /** Immutable release inputs; never falls back to mutable current-world files. */
-internal object Han1447Artifacts {
+internal object Archive1447Artifacts {
     private const val CATALOG_SHA256 = "e682d047310250d305c96b48a1a27c18ca634ba1e2d924d886a1a4202c87ba12"
     private val ownershipPaths = setOf(
         "data/map/han-scenario-province-ownership-v1.json",

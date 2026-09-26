@@ -7,11 +7,11 @@ import kotlin.test.Test
 import kotlin.test.assertFailsWith
 import org.junit.jupiter.api.io.TempDir
 
-class Han846ArtifactsIntegrityTest {
+class Archive1098ArtifactsIntegrityTest {
     @TempDir lateinit var temporary: Path
 
     @Test fun `changed catalog and corrupt or missing blob never fall back to current files`() {
-        val relative = "data/map/han-world-v3-846-artifacts-v1"
+        val relative = "data/map/han-world-v3-1098-artifacts-v1"
         val source = Path.of("..").resolve(relative)
         val catalog = Files.readAllBytes(source.resolve("catalog.json"))
         val blob = ObjectMapper().readTree(catalog).path("files").first().path("blob").asText()
@@ -22,16 +22,16 @@ class Han846ArtifactsIntegrityTest {
                 val target = destination.resolve(source.relativize(path))
                 if (Files.isDirectory(path)) Files.createDirectories(target) else Files.copy(path, target)
             } }
-            Han846Artifacts.load(root) // Establish a valid fixture before introducing the fault.
+            Archive1098Artifacts.load(root) // Establish a valid fixture before introducing the fault.
             when (mutation) {
                 "catalog" -> Files.write(destination.resolve("catalog.json"), catalog + byteArrayOf(10))
                 "blob" -> Files.write(destination.resolve(blob), byteArrayOf(0, 1, 2))
                 "missing" -> Files.delete(destination.resolve(blob))
             }
             if (mutation == "missing") {
-                assertFailsWith<java.nio.file.NoSuchFileException> { Han846Artifacts.load(root) }
+                assertFailsWith<java.nio.file.NoSuchFileException> { Archive1098Artifacts.load(root) }
             } else {
-                assertFailsWith<IllegalArgumentException>(mutation) { Han846Artifacts.load(root) }
+                assertFailsWith<IllegalArgumentException>(mutation) { Archive1098Artifacts.load(root) }
             }
         }
     }
