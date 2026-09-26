@@ -136,7 +136,7 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
-            hwihaAdmission = EnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
+            enlistmentAdmission = EnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<AdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
         assertEquals("FORBIDDEN", assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)

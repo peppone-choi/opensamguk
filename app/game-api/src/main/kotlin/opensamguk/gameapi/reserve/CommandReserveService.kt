@@ -86,7 +86,7 @@ class CommandReserveService(
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
     private val worldStates: opensamguk.gameapi.read.WorldStateReadRepository,
-    private val hwihaAdmission: EnlistmentAdmission? = null,
+    private val enlistmentAdmission: EnlistmentAdmission? = null,
     private val hwihaCourtAdmission: CourtAdmission? = null,
     private val hwihaDeployAdmission: DeployAdmission? = null,
     private val hwihaScoutAdmission: ScoutAdmission? = null,
@@ -208,7 +208,7 @@ class CommandReserveService(
             if (rejection != null) throw AdmissionDenied(rejection.name, rejection.message)
         }
         val canonicalArgs = if (actionCode in opensamguk.logic.input.EnlistmentInput.INPUT_IDS) {
-            (hwihaAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
+            (enlistmentAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson, actionCode)
         } else if (actionCode == "action.deploy") {
             (hwihaDeployAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
