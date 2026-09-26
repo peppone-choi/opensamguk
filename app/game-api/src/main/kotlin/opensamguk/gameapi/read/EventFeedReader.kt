@@ -53,7 +53,8 @@ object EventFeedPolicy {
         if (audience !in kind.audiences) return null
         val refs = runCatching { EventPayloadCodec.decodeRefs(row.refsJson) }.getOrNull() ?: return null
         val facts = runCatching { EventPayloadCodec.decodeFacts(row.factsJson) }.getOrNull() ?: return null
-        if (!refs.keys.containsAll(kind.requiredRefs) || refs.any { (role, ref) ->
+        if (!refs.keys.containsAll(kind.requiredRefs) || !facts.keys.containsAll(kind.requiredFacts) ||
+            refs.any { (role, ref) ->
                 role !in kind.allowedRefs || !role.type.isInstance(ref)
             } || facts.any { (role, fact) ->
                 role !in kind.allowedFacts || !role.type.isInstance(fact)
@@ -94,6 +95,8 @@ object EventFeedPolicy {
                     facts.isNotEmpty()) return null
             }
         }
+        if (kind == EventKind.REWARD_RECEIVED &&
+            (refs[RefRole.TARGET] as? EventRef.General)?.id != row.audienceGeneralId) return null
 
         // Battle actor, location, corps and replay identifiers need separate vision/replay
         // authorization. Until that projection is available, only classification is returned.
@@ -115,6 +118,7 @@ object EventFeedPolicy {
             is EventFact.Change -> fact.value
             is EventFact.TroopsBand -> fact.value
             is EventFact.Outcome -> fact.code
+            is EventFact.RewardReason -> fact.code.name
         } }.mapKeys { it.key.name }
         return GameEventDto(row.id, kind.code, kind.section.name,
             GameEventTimeDto(row.year, row.month, row.phase, row.ordinal), safeRefs, safeFacts)
@@ -170,7 +174,14 @@ class EventFeedReader(
         }
         val hasMore = visible.size > limit || !exhausted
         val output = visible.take(limit)
-        val nextPosition = if (!hasMore) null else output.lastOrNull()?.second ?: cursor
+        // Keep the extra visible row for the next page. When only the scan cap was
+        // reached, advance past every examined hidden row or the same sparse page
+        // would be rescanned forever.
+        val nextPosition = when {
+            !hasMore -> null
+            visible.size > limit -> output.last().second
+            else -> cursor
+        }
         return GameEventPage(output.map { it.first }, nextPosition?.let { EventFeedCursor.encode(worldId, section, it) })
     }
 

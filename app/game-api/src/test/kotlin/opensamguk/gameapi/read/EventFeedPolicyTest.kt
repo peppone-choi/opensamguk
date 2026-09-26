@@ -12,6 +12,7 @@ import opensamguk.logic.record.EventRef
 import opensamguk.logic.record.EventSection
 import opensamguk.logic.record.FactRole
 import opensamguk.logic.record.RefRole
+import opensamguk.logic.record.RewardReasonCode
 import org.springframework.web.server.ResponseStatusException
 
 class EventFeedPolicyTest {
@@ -86,6 +87,19 @@ class EventFeedPolicyTest {
         assertFailsWith<ResponseStatusException> { EventFeedCursor.decode(cursor, 4, EventSection.BATTLE) }
         assertFailsWith<ResponseStatusException> { EventFeedCursor.decode(cursor, 3, EventSection.WORLD) }
         assertFailsWith<ResponseStatusException> { EventFeedCursor.decode("not a cursor", 3, EventSection.BATTLE) }
+    }
+
+    @Test
+    fun `reward receipt is personal and requires its amount and enumerated reason`() {
+        val refs = mapOf(RefRole.ISSUER to EventRef.General(3), RefRole.TARGET to EventRef.General(7))
+        val facts = mapOf(FactRole.MONEY to EventFact.Amount(50),
+            FactRole.REASON to EventFact.RewardReason(RewardReasonCode.WAR_MERIT))
+        val row = row(EventKind.REWARD_RECEIVED, "SELF", general = 7, refs = refs, facts = facts)
+        assertEquals("WAR_MERIT", EventFeedPolicy.project(row, 7, 1, 0)?.facts?.get("REASON"))
+        assertNull(EventFeedPolicy.project(row, 3, 1, 4))
+        assertNull(EventFeedPolicy.project(row.copy(refsJson = EventPayloadCodec.encodeRefs(
+            refs + (RefRole.TARGET to EventRef.General(8)))), 7, 1, 0))
+        assertNull(EventFeedPolicy.project(row.copy(factsJson = EventPayloadCodec.encodeFacts(facts - FactRole.REASON)), 7, 1, 0))
     }
 
     private fun row(kind: EventKind, audience: String, general: Int? = null, nation: Int? = null,
