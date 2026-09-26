@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "scope": "S6-8a pure identity seeds for the first three profiles; no runtime activation",
+  "rows": [
+    {
+      "id": "identity.confucian",
+      "initialStage": "TERRITORIAL_REGIME",
+      "governanceSeeds": ["county-bureaucracy"],
+      "traditionSeeds": ["school-recommendation"],
+      "startingNetworks": [{"kind": "school", "placeKind": "CITY"}],
+      "commandCapabilities": ["chief.identity.appoint", "personal.network.establish"],
+      "facilityCapabilities": ["school"],
+      "recruitmentCapabilities": ["local-elite-referrals"],
+      "diplomacyCapabilities": ["court-recognition"],
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-26",
+        "basis": "세력 정체성 재설계 §3·§11의 유가 첫 구현을 순수 시작 조건으로 옮겼다. 수치·실제 장소·명령 활성화는 후속 통합에서 별도 결정한다."
+      }
+    },
+    {
+      "id": "identity.taiping",
+      "initialStage": "MOVEMENT",
+      "governanceSeeds": ["fang-leadership"],
+      "traditionSeeds": ["healing-preaching"],
+      "startingNetworks": [{"kind": "fang", "placeKind": "CITY"}],
+      "commandCapabilities": ["chief.identity.proclaim", "personal.network.operate"],
+      "facilityCapabilities": ["gathering-place"],
+      "recruitmentCapabilities": ["adherent-muster"],
+      "diplomacyCapabilities": ["religious-tolerance"],
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-26",
+        "basis": "세력 정체성 재설계 §3·§11의 태평도 첫 구현을 운동·方 조직 시작 조건으로 옮겼다. 수치·실제 장소·명령 활성화는 후속 통합에서 별도 결정한다."
+      }
+    },
+    {
+      "id": "identity.bandit",
+      "initialStage": "CONFEDERATION",
+      "governanceSeeds": ["chieftain-council"],
+      "traditionSeeds": ["mountain-refuge"],
+      "startingNetworks": [{"kind": "hideout", "placeKind": "HIDEOUT"}],
+      "commandCapabilities": ["chief.identity.accommodate", "personal.network.negotiate"],
+      "facilityCapabilities": ["hideout"],
+      "recruitmentCapabilities": ["retainer-compact"],
+      "diplomacyCapabilities": ["amnesty-autonomy"],
+      "designDecision": {
+        "status": "CONFIRMED",
+        "decidedBy": "구현 에이전트",
+        "decidedAt": "2026-09-26",
+        "basis": "세력 정체성 재설계 §3·§11의 도적 첫 구현을 도시 없이 존속 가능한 수령 연맹·산채 시작 조건으로 옮겼다. 수치·실제 장소·명령 활성화는 후속 통합에서 별도 결정한다."
+      }
+    }
+  ]
+}
