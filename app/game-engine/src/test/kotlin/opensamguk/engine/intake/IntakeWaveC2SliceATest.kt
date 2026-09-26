@@ -31,7 +31,7 @@ import kotlin.test.assertTrue
  *   exact builder TurnRunService routes to JdbcFlushExecutor) → assert the flush payload + world.
  *
  * Covered: the 7 nation-finance setters (incl. the SetBlockWar counter-decrement deny + the
- * SetBlockScout game-env gate + the permission gate) + tournament enroll + the resetTurnTime
+ * SetBlockScout game-env gate + the permission gate) + the resetTurnTime
  * inheritance reset (RNG draw + previous deduction + rank bump + inheritance_log).
  */
 class IntakeWaveC2SliceATest {
@@ -220,7 +220,7 @@ class IntakeWaveC2SliceATest {
         assertTrue(recorder.dirtyNationIds().isEmpty())
     }
 
-    // ── tournament enroll ───────────────────────────────────────────────────────
+    // ── inheritance reset: resetTurnTime ────────────────────────────────────────
 
     @Test
     fun `resetTurnTime deducts previous spends rank logs and flushes the full delta`() {
