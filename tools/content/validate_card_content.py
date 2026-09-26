@@ -10,7 +10,7 @@ import json
 from collections import Counter
 from pathlib import Path
 
-from build_hwiha_item_ledgers import split as split_items
+from build_item_ledgers import split as split_items
 
 ROOT = Path(__file__).resolve().parents[2]
 RESOURCE_COLORS = {"money", "grain", "iron", "timber", "horses"}
@@ -141,15 +141,15 @@ def validate_item_ledgers(source: dict, treasures: dict, equipment: dict, exclud
 
 
 def validate_current() -> list[str]:
-    return validate_domestic(load("data/curated/han/hwiha-domestic-v1.json")) + validate_sites(
+    return validate_domestic(load("data/curated/han/domestic-v1.json")) + validate_sites(
         load("data/curated/han/resource-sites-v1.json"),
         load("data/curated/han/resource-site-source-extracts-v1.json"),
-        load("data/curated/han/hwiha-resource-production-v1.json"),
+        load("data/curated/han/resource-production-v1.json"),
     ) + validate_item_ledgers(
         load("data/extracted/item/items.json"),
-        load("data/curated/han/hwiha-treasure-cards-v1.json"),
-        load("data/curated/han/hwiha-equipment-v1.json"),
-        load("data/curated/han/hwiha-items-excluded-v1.json"),
+        load("data/curated/han/treasure-cards-v1.json"),
+        load("data/curated/han/equipment-v1.json"),
+        load("data/curated/han/items-excluded-v1.json"),
     )
 
 

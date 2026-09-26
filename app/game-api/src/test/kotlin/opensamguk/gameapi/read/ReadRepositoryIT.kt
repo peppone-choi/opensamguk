@@ -47,7 +47,7 @@ class ReadRepositoryIT {
 
     private fun seedWorld() {
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, meta) VALUES (1, 'scenario_2', 195, 3, 3600, '{\"startYear\":180}'::jsonb, '{}'::jsonb)",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config, meta) VALUES (1, 'scenario_2', 195, 3, 3600, jsonb_build_object('startYear',180,'worldFormat','GENERAL_RETAINER_CAMPAIGN'), '{}'::jsonb)",
         )
     }
 

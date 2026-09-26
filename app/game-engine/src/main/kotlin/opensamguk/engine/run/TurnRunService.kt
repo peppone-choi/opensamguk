@@ -16,7 +16,6 @@ import opensamguk.engine.flush.FlushRecoveryGateProvider
 import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
-import opensamguk.engine.tournament.TournamentDaemon
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
@@ -122,14 +121,11 @@ open class TurnRunService(
     private val diplomacyLetterRepository: DiplomacyLetterRepository? = null,
     /** 연락처/메시지 조회용 JDBC read seam (W6a 메시지 — DeleteMessage getMessageByID 게이트). */
     private val contactReader: opensamguk.infra.read.ContactReader? = null,
-    /** game_kv read seam (P0-07 베팅 마스터 — PlaceBet 검증의 BettingInfo 조회). */
+    /** game_kv read seam (game_env·user 등 즉시 입력 조회). */
     private val gameKvRepository: opensamguk.infra.read.GameKvRepository? = null,
-    /** ng_betting read seam (P0-07 — user별 누적 베팅 합, PHP Betting.php:135). */
-    private val bettingRepository: opensamguk.infra.read.BettingRepository? = null,
     /** inheritance KV read seam (P0-07 — `inheritance_{owner}` previous[0], PHP Betting.php:133,142). */
     private val inheritanceRepository: opensamguk.infra.read.InheritanceRepository? = null,
     private val selectPoolRepository: SelectPoolRepository? = null,
-    private val tournamentDaemon: TournamentDaemon? = null,
     private val processNationCommand: ProcessNationCommand? = null,
     /** OPENSAM-130 generation session shared with [handler.recorder]. */
     private val generationSession: DeltaGenerationSession = DeltaGenerationSession(),
@@ -142,7 +138,7 @@ open class TurnRunService(
     /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
     private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
     /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
-    private val hwihaPhaseBoundary: opensamguk.engine.hwiha.HwihaPhaseBoundary? = null,
+    private val hwihaPhaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
 ) {
     init {
         handler.recorder.generationSession = generationSession
@@ -171,9 +167,7 @@ open class TurnRunService(
             diplomacyLetterRepository = diplomacyLetterRepository,
             // contactReader는 옵셔널 — null이면 MessageHandler가 stub('메시지가 없습니다')로 동작한다(삭제 게이트만 영향).
             contactReader = contactReader,
-            // P0-07 베팅 read seam 3종 — null이면 PlaceBetHandler가 stub('해당 베팅이 없습니다')로 동작한다.
             gameKvRepository = gameKvRepository,
-            bettingRepository = bettingRepository,
             inheritanceRepository = inheritanceRepository,
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
@@ -333,8 +327,8 @@ open class TurnRunService(
                     if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                         // 치적 창 닫기 — 월간 사건(반기 도시 성장 등) **전** 값으로 지난 달을 잰다.
                         boundaryDate(nextTurn).let { date ->
-                            opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder).close(date.year, date.month)
-                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
+                            opensamguk.engine.campaign.CountyMeritWindow(world, handler.recorder).close(date.year, date.month)
+                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
                                 .closeMonthlyMerit(date.year, date.month)
                         }
                     }
@@ -386,26 +380,26 @@ open class TurnRunService(
                             hwihaPhaseBoundary?.run(world, handler.recorder)
                             // §5.2 3단계 내정 진행(공사·방침·치적) — 포위 정산 뒤(함락된 縣의 공사는 거둔다),
                             // 4단계 월세입보다 먼저, 한 순에 한 번(도장).
-                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
+                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
                                 .run(meritClosedBeforeMonthlyEvents = true)
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
                             // 도장과 창고가 같은 flush 에 실려 한 달에 한 번만 들어간다.
-                            opensamguk.engine.hwiha.HwihaMonthlyCountyIncome(world, handler.recorder)
+                            opensamguk.engine.campaign.MonthlyCountyIncome(world, handler.recorder)
                                 .credit(date.year, date.month)
                             // 녹봉 — 수입 뒤, 월단평 앞(§5.2 4단계). 기존 가신 유지비는 HWIHA 에서 꺼져 있다.
-                            opensamguk.engine.hwiha.HwihaMonthlySalary(world, handler.recorder).pay(date.year, date.month)
-                            opensamguk.engine.hwiha.HwihaUnitResupply(world, handler.recorder).resupply(date.year, date.month)
+                            opensamguk.engine.campaign.MonthlySalary(world, handler.recorder).pay(date.year, date.month)
+                            opensamguk.engine.campaign.UnitResupply(world, handler.recorder).resupply(date.year, date.month)
                             // 보급선 — 자국 縣 밖의 군단으로 군량을 보낸다(보충 뒤, 같은 창고망).
                             hwihaPhaseBoundary?.dispatchConvoys(world, handler.recorder, date.year, date.month)
                             // 월단평 — 명망 갱신·순위 발표. 설계 §5.2 순 경계 순서에서 수입 뒤에 온다.
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
-                            opensamguk.engine.hwiha.HwihaMonthlyAssessment(
+                            opensamguk.engine.campaign.MonthlyAssessment(
                                 world, handler.recorder,
                                 RenownAssessment.CANON,
                             ).assess(date.year, date.month)
                             // 치적 창 열기 — 월간 사건이 끝난 뒤 값으로 이번 달을 연다.
-                            opensamguk.engine.hwiha.HwihaCountyMeritWindow(world, handler.recorder)
+                            opensamguk.engine.campaign.CountyMeritWindow(world, handler.recorder)
                                 .open(date.year, date.month)
                         }
                         handler.courtHandler.expireDue()
@@ -418,7 +412,7 @@ open class TurnRunService(
                         if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                             hwihaPhaseBoundary?.run(world, handler.recorder)
                             // §5.2 3단계 내정 진행 — 포위 정산 뒤, 순 경계마다 한 번(도장).
-                            opensamguk.engine.hwiha.HwihaDomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
+                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
                         }
                         handler.courtHandler.expireDue()
                     }
@@ -434,7 +428,6 @@ open class TurnRunService(
             crossed = 0
         }
 
-        tournamentDaemon?.processTournament(world, handler.recorder, runTime)
         auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).
@@ -690,8 +683,8 @@ open class TurnRunService(
     ): List<CommandResultRow> = mapNotNull { handled ->
         val requestId = handled.requestId ?: return@mapNotNull null
         val hwiha = handled.hwihaOutcome
-        val rejected = hwiha as? opensamguk.engine.hwiha.HwihaTurnOutcome.Rejected
-        val ok = if (hwiha != null) hwiha is opensamguk.engine.hwiha.HwihaTurnOutcome.Applied else !handled.fellBack
+        val rejected = hwiha as? opensamguk.engine.campaign.TurnOutcome.Rejected
+        val ok = if (hwiha != null) hwiha is opensamguk.engine.campaign.TurnOutcome.Applied else !handled.fellBack
         val result = CommandLifecycleResult(
             type = if (ok) "executionApplied" else "executionRejected",
             ok = ok,
@@ -704,7 +697,7 @@ open class TurnRunService(
             inputResolved = hwiha?.let { outcome ->
                 opensamguk.common.wire.InputResolved(outcome.inputId,
                     hwihaInputCatalog[outcome.inputId]?.kind?.name ?: "UNKNOWN",
-                    ok, rejected?.reason, (outcome as? opensamguk.engine.hwiha.HwihaTurnOutcome.Applied)?.effects.orEmpty())
+                    ok, rejected?.reason, (outcome as? opensamguk.engine.campaign.TurnOutcome.Applied)?.effects.orEmpty())
             },
         )
         val sentAt = Instant.now()
@@ -728,7 +721,7 @@ open class TurnRunService(
         )
     }
 
-    private fun List<opensamguk.engine.hwiha.HwihaCourtExecution>.toCourtExecutionRows(
+    private fun List<opensamguk.engine.campaign.CourtExecution>.toCourtExecutionRows(
         committedWorldVersion: Long,
     ): List<CommandResultRow> = map { execution ->
         val sentAt = Instant.now()

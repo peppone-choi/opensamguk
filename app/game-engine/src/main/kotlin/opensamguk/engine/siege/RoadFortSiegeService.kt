@@ -1,6 +1,6 @@
 package opensamguk.engine.siege
 
-import opensamguk.engine.hwiha.*
+import opensamguk.engine.campaign.*
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
@@ -31,7 +31,7 @@ class RoadFortSiegeService(
         if (!ready(actorId, actor.nationId, fort)) return Failure.NOT_AT_GATE
         save(forts.map { if (it.id == fortId) it.copy(besiegerNationId = actor.nationId,
             besiegerGeneralId = actorId, siegeProgress = 0) else it })
-        HwihaRecords.general(world, actorId, RecordKind.ROAD_FORT_SIEGE,
+        Records.general(world, actorId, RecordKind.ROAD_FORT_SIEGE,
             "도로 보루를 포위했습니다.", mapOf("fortId" to fortId, "edgeId" to fort.edgeId))
         return null
     }
@@ -45,15 +45,15 @@ class RoadFortSiegeService(
             val generalId = fort.besiegerGeneralId ?: return@map fort
             val nationId = checkNotNull(fort.besiegerNationId)
             if (!hostile(nationId, fort.ownerNationId) || !ready(generalId, nationId, fort)) {
-                HwihaRecords.general(world, generalId, RecordKind.ROAD_FORT_SIEGE,
+                Records.general(world, generalId, RecordKind.ROAD_FORT_SIEGE,
                     "도로 보루의 포위를 풀었습니다.", mapOf("fortId" to fort.id))
                 return@map fort.copy(besiegerNationId = null, besiegerGeneralId = null, siegeProgress = 0)
             }
             val progress = fort.siegeProgress + 34
             if (progress < 100) return@map fort.copy(siegeProgress = progress)
-            HwihaRecords.general(world, generalId, RecordKind.ROAD_FORT_SIEGE,
+            Records.general(world, generalId, RecordKind.ROAD_FORT_SIEGE,
                 "도로 보루를 점령했습니다.", mapOf("fortId" to fort.id, "edgeId" to fort.edgeId))
-            HwihaRecords.nation(world, nationId, RecordKind.ROAD_FORT_CAPTURED,
+            Records.nation(world, nationId, RecordKind.ROAD_FORT_CAPTURED,
                 "도로 보루를 점령했습니다.", mapOf("fortId" to fort.id, "edgeId" to fort.edgeId))
             fort.copy(ownerNationId = nationId, wall = 50, garrison = 0,
                 besiegerNationId = null, besiegerGeneralId = null, siegeProgress = 0)
@@ -65,7 +65,7 @@ class RoadFortSiegeService(
         val edge = topology.traversalEdges.singleOrNull { it.id == fort.edgeId } ?: return false
         val position = world.positionOf(generalId) as? StrategicNodeRef.LandProvince ?: return false
         if (position != edge.from && position != edge.to) return false
-        val projection = HwihaDeploymentExecutor(world, recorder, topology, metrics).projection() ?: return false
+        val projection = DeploymentExecutor(world, recorder, topology, metrics).projection() ?: return false
         if (projection.people.singleOrNull { it.id == generalId }?.inBattle != false) return false
         val corps = projection.deployed.singleOrNull { it.commanderGeneralId == generalId && it.nationId == nationId }
             ?: return false

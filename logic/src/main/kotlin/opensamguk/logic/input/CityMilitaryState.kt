@@ -8,7 +8,7 @@ data class CityMilitaryState(val training: Int, val morale: Int, val troops: Int
         "morale" to morale, "troops" to troops)
 
     companion object {
-        const val META_KEY = "hwihaCityMilitary"
+        const val META_KEY = "cityMilitary"
         val INITIAL = CityMilitaryState(50, 50)
 
         /** Import legacy garrison once when the city has no independent military state yet. */

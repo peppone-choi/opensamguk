@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "vision-rules-v1",
+  "status": "CONFIRMED",
+  "authorization": "2026-09-23 사용자 결정: 시야 단위는 郡國, 단계는 FULL/INTEL/FOG, 첩보 결과는 본 순간의 스냅숏과 「N순 전」 표시, 갱신은 다시 첩보할 때만. 반경·병력 구간·첩보 비용은 이 데이터 파일의 현행 값으로 확정했다.",
+  "note": "정본 설계 §7 은 시야의 출처(정찰 배치·망루·봉화)만 정하고 반경·구간 수치를 두지 않았다. 아래 수치는 2026-09-23 사용자 결정으로 확정한 게임 기획 값이며 사료 수치가 아니다. 바꾸려면 이 파일만 고친다 — 코드에 사본을 두지 않는다.",
+  "unit": "COMMANDERY",
+  "adjacency": {
+    "rule": "SHARED_BORDER_4_NEIGHBOUR",
+    "note": "郡國 인접 = han-tiles 의 칸 소유(owner → provinceRecords[].parentRegionId → parentRegions 색인)에서 상하좌우로 경계를 맞댄 두 郡國. 바다 칸(-1)은 경계가 아니다. 이 판정은 tiles 의 adjacency.commandery 와 같아야 하며 다르면 로더가 거절한다. 반경은 이 인접 그래프의 걸음 수다."
+  },
+  "sourceRadius": {
+    "SELF": 0,
+    "OWN_CORPS": 0,
+    "RETINUE": 0,
+    "TERRITORY": 0,
+    "SCOUT_POST": 1,
+    "WATCHTOWER_BEACON": 1
+  },
+  "sourceRadiusNotes": {
+    "SELF": "본인이 서 있는 郡國만 본다. §12.1 직접 행동 첩보가 「옆」을 살피는 행동이므로 기본 시야가 옆까지 닿으면 첩보가 무의미해진다.",
+    "OWN_CORPS": "자기가 소유한 출전 군단의 지휘 장수 위치 郡國.",
+    "RETINUE": "자기가 직접 거느린 휘하 인물 카드(장수가 붙은 카드)의 위치 郡國.",
+    "TERRITORY": "자기 세력이 통제하는 省(province_control)이 하나라도 있는 郡國. 무소속(세력 0)은 영토 시야가 없다.",
+    "SCOUT_POST": "§7 「정찰 배치」. 도착해 ACTIVE 인 정찰 자리 省의 郡國과 그 이웃 1걸음.",
+    "WATCHTOWER_BEACON": "§7·§8.2 「망루봉화」 공사. 완공된 縣의 郡國과 그 이웃 1걸음. 자기 세력이 그 縣을 통제할 때만."
+  },
+  "troopBands": [
+    {"code": "B1", "label": "1천 미만", "minInclusive": 0},
+    {"code": "B2", "label": "1천~5천", "minInclusive": 1000},
+    {"code": "B3", "label": "5천~1만", "minInclusive": 5000},
+    {"code": "B4", "label": "1만~3만", "minInclusive": 10000},
+    {"code": "B5", "label": "3만 이상", "minInclusive": 30000}
+  ],
+  "troopBandNote": "남의 군단 병력은 구간으로만 보인다(자기 군단만 정확한 수). 구간 경계는 2026-09-23 확정값이다.",
+  "scout": {
+    "inputId": "action.scout",
+    "target": "ADJACENT_COMMANDERY",
+    "cost": {"money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0},
+    "costNote": "확정 비용 0 — 직접 행동 한 순(명령 목록 한 칸)을 쓰는 것이 대가다. 창고 차감은 보급망 접근 판정과 창고 revision 결속이 먼저 있어야 해서(WarehouseSettlement 계약) 이번 판에 넣지 않았다. 0 이 아닌 값을 넣으면 로더가 거절한다 — 차감 경로 없이 비용을 적어 두면 비용이 있는 척만 하게 된다.",
+    "reveals": ["CITY_OWNER", "CORPS_TROOP_BAND", "WAREHOUSE_PRESENCE"],
+    "revealsNote": "계책 카탈로그 「첩보」 행(병력·창고·설치 카드 유무) 가운데 병력(구간)과 창고 유무를 싣는다. 설치 계책은 아직 모델이 없어(MarchReactions 는 빈 목록뿐) 싣지 않는다."
+  }
+}

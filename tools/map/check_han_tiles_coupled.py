@@ -91,6 +91,9 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("han-world-v3", ("infra/src/main/resources/map/han-world-v3.json", "data/map/han-world-v3-manifest-v1.json"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3", "--check"),
             _t("tools/scenario/build_han_world.py", "--target", "han-world-v3")),
+    # 관직 관할 핀은 지도와 州 축을 함께 고정한다. 새 지도에서는 수치·치소도 사람이 재검토한다.
+    Coupled("administrative-axis-pin", ("data/curated/han/administrative-axis-pin.json",),
+            _t("tools/map/check_administrative_axis_pin.py", "--check"), None),
     Coupled("han-ju-index", ("data/map/han-ju-index-v1.json",),
             _t("tools/map/build_han_ju_index.py", "--check"),
             _t("tools/map/build_han_ju_index.py")),
@@ -124,11 +127,11 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_resource_sites.py")),
     # 산지 위치는 위 근거 원장에서, 산출량은 게임 설계에서 온다. 郡 단위 말 산지를 治所 縣으로 옮기므로
     # han-tiles 의 commanderyRecords 를 읽는다 — 지도가 바뀌면 이 원장도 낡는다.
-    Coupled("hwiha-resource-production",
-            ("data/curated/han/hwiha-resource-production-v1.json",
-             "infra/src/main/resources/hwiha/county-production-v1.json"),
-            _t("tools/map/build_hwiha_resource_production.py", "--check"),
-            _t("tools/map/build_hwiha_resource_production.py")),
+    Coupled("county-resource-production",
+            ("data/curated/han/resource-production-v1.json",
+             "infra/src/main/resources/campaign/county-production-v1.json"),
+            _t("tools/map/build_county_resource_production.py", "--check"),
+            _t("tools/map/build_county_resource_production.py")),
     # 결손 배치 가능성은 han-tiles 의 郡 중심으로 同名異地를 걸러낸다 — 지도가 바뀌면 같이 상해야 한다.
     Coupled("gap-placement-readiness", ("data/curated/han/gap-placement-readiness-v1.json",),
             _t("tools/map/build_gap_placement_readiness.py", "--check"),

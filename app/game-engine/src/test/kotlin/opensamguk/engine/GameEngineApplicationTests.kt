@@ -48,7 +48,7 @@ class GameEngineApplicationTests {
             "http://localhost:$port/admin/turn-daemon/status", String::class.java
         )
         assertTrue(body!!.contains("\"state\":\"idle\""), "status body: $body")
-        assertTrue(body.contains("che:scenario_2"), "status body: $body")
+        assertTrue(body.contains("pep:scenario_990002"), "status body: $body")
         assertEquals(0, messageRepository.findMaxId())
     }
     companion object {

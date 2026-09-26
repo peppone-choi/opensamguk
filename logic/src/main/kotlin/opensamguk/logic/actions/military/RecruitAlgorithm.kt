@@ -240,9 +240,9 @@ open class RecruitAlgorithm(
         val unit = UnitCatalog.byId(unitSet, reqCrewTypeId) ?: return false
         val mapName = activeMapName(ctx)
         val cityConst = if (mapName == "han-world-v3") {
-            CityConstRegistry.hanWorld(ctx.hanWorldVariant ?: return false)
+            CityConstRegistry.hanWorld(ctx.worldMapVariant ?: return false)
         } else {
-            if (ctx.hanWorldVariant != null) return false
+            if (ctx.worldMapVariant != null) return false
             CityConstRegistry.find(mapName) ?: return false
         }
         val ownCities = ownedCityLevels(ctx, view, general, nation)

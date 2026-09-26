@@ -14,7 +14,6 @@ import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.actions.vote.UniqueItemEntry
 import opensamguk.logic.actions.vote.VoteLotteryInputs
-import opensamguk.logic.util.jsonDecodeAny
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -29,8 +28,7 @@ import kotlin.test.assertTrue
  *   command → [VoteHandler] (검증 + 부수 효과) → [ChangeRecorder] 투표 INSERT 채널 +
  *   [diffGeneral] dirty → [DatabaseHooks.toFlushPayload] → flush payload 검증.
  *
- * 투표(VoteCast)는 추가로 voteUnique 추첨 RNG가 매 투표마다 도는 것을 검증하고, 골든 fixture의
- * (voteId, generalId) PINNED 입력을 주입해 당첨/미당첨 outcome을 draw-for-draw e2e로 대조한다.
+ * 투표(VoteCast)는 보상, 중복 방지, 저장 payload를 검증한다.
  */
 class VoteIntakeSliceTest {
 
@@ -38,38 +36,14 @@ class VoteIntakeSliceTest {
     private val hiddenSeed = "4bcea5ec9686d42f64f02329932f35b1"
     private val develCost = 20
 
-    // ── 골든 fixture 로드 (logic VoteLotteryReplayGateTest와 동일한 박제 입력) ─────────────────────
-    private val fixturesJson: Any? by lazy {
-        val stream = javaClass.classLoader.getResourceAsStream("golden/vote/vote-unique-fixtures.json")
-            ?: error("vote-unique-fixtures.json not found on the test classpath")
-        jsonDecodeAny(stream.readBytes().toString(Charsets.UTF_8))
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun fixture(voteId: Int, generalId: Int): Map<String, Any?> {
-        val root = fixturesJson as Map<String, Any?>
-        val fixtures = root["fixtures"] as List<Map<String, Any?>>
-        return fixtures.single {
-            (it["voteId"] as Number).toInt() == voteId && (it["generalId"] as Number).toInt() == generalId
-        }
-    }
-
-    /** fixture의 박제 inputs → 엔진 핸들러에 주입할 [VoteLotteryInputs]. */
-    @Suppress("UNCHECKED_CAST")
-    private fun pinnedInputs(voteId: Int, generalId: Int): VoteLotteryInputs {
-        val inp = fixture(voteId, generalId)["inputs"] as Map<String, Any?>
-        val pool = (inp["itemPool"] as List<Map<String, Any?>>).map {
-            UniqueItemEntry(it["itemType"] as String, it["itemCode"] as String, (it["weight"] as Number).toInt())
-        }
-        return VoteLotteryInputs(
-            genCount = (inp["genCount"] as Number).toInt(),
-            itemTypeCnt = (inp["itemTypeCnt"] as Number).toInt(),
-            maxCnt = (inp["maxCnt"] as Number).toInt(),
-            prob0 = (inp["prob0"] as Number).toDouble(),
-            moreProb = (inp["moreProb"] as Number).toDouble(),
-            itemPool = pool,
-        )
-    }
+    private fun lotteryInputs(probability: Double = 0.0) = VoteLotteryInputs(
+        genCount = 1,
+        itemTypeCnt = 1,
+        maxCnt = 1,
+        prob0 = probability,
+        moreProb = 0.0,
+        itemPool = listOf(UniqueItemEntry("horse", "test_horse", 1)),
+    )
 
     // ── world / handler fixtures ──────────────────────────────────────────────────────────────────
 
@@ -185,76 +159,28 @@ class VoteIntakeSliceTest {
         assertEquals(2, recorder.votePollInserts().single().columns["multiple_options"])
     }
 
-    // ── VoteCast (추첨 e2e 골든 대조) ───────────────────────────────────────────────────────────────
+    // ── VoteCast validation ───────────────────────────────────────────────────────────
 
     @Test
-    fun `voteCast on a WIN fixture records a vote INSERT, gives gold reward, and applies the won item slot`() {
-        // 골든 WIN: voteId=2, generalId=1 → horse / che_명마_10_옥추마.
-        val win = fixture(2, 1)
-        @Suppress("UNCHECKED_CAST")
-        val outcome = win["outcome"] as Map<String, Any?>
-        assertEquals(true, outcome["won"]) // fixture 가드: 이 케이스가 WIN인지 확인.
-
+    fun `voteCast win applies item slot and flushes gold and item together`() {
         val world = world(general(id = 1, gold = 100))
         val recorder = ChangeRecorder()
-        val res = handler(
+        val result = handler(
             world, recorder,
             poll = VotePollState(id = 2, multipleOptions = 1, optionsCount = 2),
-            pinned = pinnedInputs(2, 1),
-        ).handleVoteCast(
-            TurnDaemonCommand.VoteCast(generalId = 1, voteId = 2, selection = listOf(0)),
-        )
+            pinned = lotteryInputs(probability = 1.0),
+        ).handleVoteCast(TurnDaemonCommand.VoteCast(generalId = 1, voteId = 2, selection = listOf(0)))
 
-        assertTrue((res as BoardActionResult).ok)
-        // vote INSERT.
-        val voteRows = recorder.voteInserts()
-        assertEquals(1, voteRows.size)
-        val vc = voteRows.single().columns
-        // FK: vote.vote_id = read한 설문의 DB id(poll.id) — 게임 voteID(=2)와 동일 시퀀스라 여기선 2.
-        assertEquals(2, vc["vote_id"])
-        assertEquals(1, vc["general_id"])
-        assertEquals(1, vc["nation_id"])
-        assertEquals("[0]", vc["selection"]) // jsonEncode(sorted selection)
-        // 보상 골드 develcost*5 = 100 + 100 = 200.
-        val g = world.getGeneralById(1)!!
-        assertEquals(100 + develCost * 5, g.gold)
-        // 당첨 아이템 슬롯 (giveRandomUniqueItem setVar(horse, che_명마_10_옥추마)).
-        assertEquals("che_명마_10_옥추마", g.role.items.horse)
-        // dirty general patch가 gold + horse 둘 다 싣는다.
-        val patch = flush(world, recorder).updatedGenerals.single { it.id == 1 }
-        assertEquals(200, patch.gold)
-        assertEquals("che_명마_10_옥추마", patch.horse)
-        // flush 수렴.
-        assertEquals(1, flush(world, recorder).voteInserts.size)
-    }
-
-    @Test
-    fun `voteCast on a NO-WIN fixture records the vote and gold but leaves item slots empty`() {
-        // 골든 LOSE: voteId=1, generalId=1 → no win (추첨 4 draws 소진, 미당첨).
-        val lose = fixture(1, 1)
-        @Suppress("UNCHECKED_CAST")
-        val outcome = lose["outcome"] as Map<String, Any?>
-        assertEquals(false, outcome["won"])
-
-        val world = world(general(id = 1, gold = 100))
-        val recorder = ChangeRecorder()
-        val res = handler(
-            world, recorder,
-            poll = VotePollState(id = 1, multipleOptions = 1, optionsCount = 2),
-            pinned = pinnedInputs(1, 1),
-        ).handleVoteCast(
-            TurnDaemonCommand.VoteCast(generalId = 1, voteId = 1, selection = listOf(1)),
-        )
-
-        assertTrue((res as BoardActionResult).ok)
+        assertTrue((result as BoardActionResult).ok)
         assertEquals(1, recorder.voteInserts().size)
-        val g = world.getGeneralById(1)!!
-        assertEquals(100 + develCost * 5, g.gold) // 추첨 미당첨이어도 보상 골드는 지급.
-        // 아이템 슬롯 변화 없음.
-        assertNull(g.role.items.horse)
-        assertNull(g.role.items.weapon)
-        assertNull(g.role.items.book)
-        assertNull(g.role.items.item)
+        val general = world.getGeneralById(1)!!
+        assertEquals(100 + develCost * 5, general.gold)
+        assertEquals("test_horse", general.role.items.horse)
+        val payload = flush(world, recorder)
+        val patch = payload.updatedGenerals.single { it.id == 1 }
+        assertEquals(100 + develCost * 5, patch.gold)
+        assertEquals("test_horse", patch.horse)
+        assertEquals(1, payload.voteInserts.size)
     }
 
     @Test
@@ -335,7 +261,7 @@ class VoteIntakeSliceTest {
             votePollReader = { _, _ -> VotePollState(id = 2, multipleOptions = 1, optionsCount = 2) },
             lotteryInputsProvider = {
                 lotteryInputReads += 1
-                pinnedInputs(2, 1)
+                lotteryInputs()
             },
         )
         val command = TurnDaemonCommand.VoteCast(generalId = 1, voteId = 2, selection = listOf(0))
@@ -349,6 +275,7 @@ class VoteIntakeSliceTest {
         assertEquals(1, recorder.voteInserts().size)
         assertEquals(1, lotteryInputReads)
         assertEquals(100 + develCost * 5, world.getGeneralById(1)!!.gold)
+        assertNull(world.getGeneralById(1)!!.role.items.horse)
     }
 
     // ── VoteComment ─────────────────────────────────────────────────────────────────────────────
@@ -491,7 +418,7 @@ class VoteIntakeSliceTest {
         val h = VoteHandler(
             world, recorder,
             votePollReader = { _, _ -> VotePollState(id = 42, multipleOptions = 1, optionsCount = 2) },
-            lotteryInputsProvider = { _ -> pinnedInputs(1, 1) }, // NO-WIN fixture (추첨 RNG는 돌되 미당첨).
+            lotteryInputsProvider = { _ -> lotteryInputs() }, // Deterministic no-win inputs.
         )
         h.handleVoteCast(TurnDaemonCommand.VoteCast(generalId = 1, voteId = 9, selection = listOf(0)))
         // vote.vote_id = poll.id(42), 게임 voteID(9)가 아니다.

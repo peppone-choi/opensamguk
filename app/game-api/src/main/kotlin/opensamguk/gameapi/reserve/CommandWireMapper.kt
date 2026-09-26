@@ -13,11 +13,11 @@ import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.TurnDaemonCommand
-import opensamguk.logic.v2.command.V2CityTransportArgs
-import opensamguk.logic.v2.command.V2CommandArgs
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2CommandSchema
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
+import opensamguk.logic.command.CityTransportArgs
+import opensamguk.logic.command.CommandArgs
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.CommandSchema
+import opensamguk.logic.command.GarrisonRecruitArgs
 
 /**
  * F-INTAKE seam — maps a `POST /api/command/{code}` `{code, argJson, generalId}` onto the EXISTING
@@ -28,7 +28,7 @@ import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
  * AVAILABLE command and reserved the action-code into the `general_turn` ring. That is correct for
  * the **turn-reserved** `che_*` commands (resolved on the general's turn from the ring). But the
  * betting/auction + C2 commands are NOT turn-reserved — their engine handlers
- * ([opensamguk.engine.betting.PlaceBetHandler], …, the C2 intake handlers) are driven by the
+ * (the auction handlers, …, the C2 intake handlers) are driven by the
  * [opensamguk.engine.run.TurnDaemonCommandDispatcher] off a TYPED command on the command stream, NOT
  * by the `general_turn` ring. So they need their typed [TurnDaemonCommand] published verbatim — a
  * `Run(POKE)` would reach the dispatcher and return `null` (no handler), silently dropping the action.
@@ -49,7 +49,6 @@ object CommandWireMapper {
 
     /** The immediate-intake command codes this mapper translates (everything else = turn-reserved). */
     val intakeCodes: Set<String> = setOf(
-        "placeBet",
         "auctionBid",
         "setNotice",
         "setScoutMsg",
@@ -58,9 +57,6 @@ object CommandWireMapper {
         "setSecretLimit",
         "setBlockWar",
         "setBlockScout",
-        "tournamentEnroll",
-        "tournamentStart",
-        "tournamentReset",
         "inheritResetTurnTime",
         "inheritResetSpecialWar",
         "inheritSetNextSpecialWar",
@@ -162,14 +158,14 @@ object CommandWireMapper {
     fun isIntakeCommand(code: String): Boolean = code in intakeCodes
 
     fun toV2Command(
-        schema: V2CommandSchema,
-        args: V2CommandArgs,
+        schema: CommandSchema,
+        args: CommandArgs,
         generalId: Int,
         requestId: String,
         expiresAt: String,
     ): TurnDaemonCommand = when (args) {
-        is V2GarrisonRecruitArgs -> {
-            require(schema === V2CommandRegistry.garrisonRecruitSchema)
+        is GarrisonRecruitArgs -> {
+            require(schema === CommandSchemaCatalog.garrisonRecruitSchema)
             CityGarrisonRecruit(
                 requestId = requestId,
                 generalId = generalId,
@@ -178,8 +174,8 @@ object CommandWireMapper {
                 expiresAt = expiresAt,
             )
         }
-        is V2CityTransportArgs -> {
-            require(schema === V2CommandRegistry.cityTransportSchema)
+        is CityTransportArgs -> {
+            require(schema === CommandSchemaCatalog.cityTransportSchema)
             CityTransport(
                 requestId = requestId,
                 generalId = generalId,
@@ -218,13 +214,6 @@ object CommandWireMapper {
         if (code !in intakeCodes) return null
         val args = parseArgs(argJson)
         return when (code) {
-            "placeBet" -> TurnDaemonCommand.PlaceBet(
-                requestId = requestId,
-                bettingId = args.int("bettingId") ?: 0,
-                generalId = generalId,
-                bettingType = args.intList("bettingType"),
-                amount = args.int("amount") ?: 0,
-            )
             "auctionBid" -> TurnDaemonCommand.AuctionBid(
                 requestId = requestId,
                 auctionId = args.int("auctionId") ?: 0,
@@ -254,18 +243,6 @@ object CommandWireMapper {
             )
             "setBlockScout" -> TurnDaemonCommand.SetBlockScout(
                 requestId = requestId, generalId = generalId, value = args.bool("value") ?: false,
-            )
-            "tournamentEnroll" -> TurnDaemonCommand.TournamentEnroll(
-                requestId = requestId, generalId = generalId, value = args.int("value") ?: 1,
-            )
-            "tournamentStart" -> TurnDaemonCommand.TournamentStart(
-                requestId = requestId,
-                generalId = generalId,
-                tournamentType = args.int("type") ?: args.int("tournamentType") ?: args.int("tnmtType") ?: 0,
-            )
-            "tournamentReset" -> TurnDaemonCommand.TournamentReset(
-                requestId = requestId,
-                generalId = generalId,
             )
             "inheritResetTurnTime" -> TurnDaemonCommand.InheritResetTurnTime(
                 requestId = requestId, generalId = generalId,

@@ -29,7 +29,7 @@ import opensamguk.logic.actions.intake.ResetStatOutcome
 /**
  * 유산 (inheritance) reset/reserve 핸들러 — `ResetTurnTime` / `ResetSpecialWar` / `SetNextSpecialWar`.
  *
- * Mirrors [opensamguk.engine.betting.PlaceBetHandler]. The pure spend/RNG/log logic is in `:logic`
+ * Mirrors the retired PlaceBet handler (#917). The pure spend/RNG/log logic is in `:logic`
  * [InheritResets]; this handler resolves the acting general + the env inputs the PHP reads, runs the
  * resolver, and records the delta through the recorder (the SINGLE dirty source):
  *  - general aux/var mutation → [ChangeRecorder.diffGeneral] (rides `general.meta`).

@@ -10,7 +10,6 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.engine.auction.AuctionBidHandler
 import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.auction.AuctionOpenHandler
-import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.AccountCommandHandler
 import opensamguk.engine.intake.AdminGeneralModerationHandler
@@ -30,12 +29,9 @@ import opensamguk.engine.intake.PersonnelHandler
 import opensamguk.engine.intake.ProfileIconSyncHandler
 import opensamguk.engine.intake.RaiseInvaderMessageHandler
 import opensamguk.engine.intake.SelectPoolHandler
-import opensamguk.engine.intake.TournamentEnrollHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
 import opensamguk.engine.intake.VotePollState
-import opensamguk.engine.tournament.ProductionTournamentBettingPort
-import opensamguk.engine.tournament.TournamentAdminHandler
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
@@ -44,7 +40,6 @@ import opensamguk.engine.v2.V2CityTransportHandler
 import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.infra.read.AuctionBidRepository
 import opensamguk.infra.read.AuctionRepository
-import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.ContactReader
 import opensamguk.infra.read.DiplomacyLetterRepository
@@ -54,11 +49,9 @@ import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.engine.turn.KvKey
-import opensamguk.logic.betting.BettingInfo
-import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
 import opensamguk.logic.world.RaiseInvaderSpec
 import java.time.Clock
 import java.time.Instant
@@ -113,18 +106,11 @@ class TurnDaemonCommandDispatcher(
      * W6a 메시지 연락처/장수 read seam. null이면 [MessageHandler]가 stub-empty(연락처 없음)로 동작한다.
      */
     contactReader: ContactReader? = null,
-    /**
-     * P0-07 베팅 마스터 read seam — game_kv(table='betting'). null이면 [PlaceBetHandler]가
-     * stub('해당 베팅이 없습니다')로 동작한다(다른 read-repo 주입 패턴과 동일).
-     */
+    /** game_kv read seam(game_env·user 등). null이면 해당 핸들러가 stub 으로 동작한다. */
     gameKvRepository: GameKvRepository? = null,
     /**
-     * P0-07 ng_betting 누적 합 read seam — PHP Betting.php:135의 user별 sum. null이면 누적 0 가정.
-     */
-    bettingRepository: BettingRepository? = null,
-    /**
-     * P0-07 유산포인트 read seam — `inheritance_{userID}` `previous[0]`(PHP Betting.php:133,142).
-     * null이면 PlaceBetHandler 기본(world meta `inheritancePrevious` 스냅샷)으로 폴백.
+     * 유산포인트 read seam — `inheritance_{userID}` `previous[0]`.
+     * null이면 world meta `inheritancePrevious` 스냅샷으로 폴백.
      */
     inheritanceRepository: InheritanceRepository? = null,
     processNationCommand: ProcessNationCommand? = null,
@@ -136,12 +122,12 @@ class TurnDaemonCommandDispatcher(
     v2CityLedger: V2CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
-    hwihaCourtHandler: opensamguk.engine.hwiha.HwihaCourtHandler? = null,
+    hwihaCourtHandler: opensamguk.engine.campaign.CourtHandler? = null,
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
-     * [PlaceBetHandler]와 [AuctionBidHandler]가 동일 seam 을 공유한다(바퀴 20 정본).
+     * [AuctionBidHandler]와 유산 초기화가 이 seam 을 쓴다(바퀴 20 정본).
      */
     private val persistedPreviousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
         { ownerId: Int ->
@@ -200,52 +186,9 @@ class TurnDaemonCommandDispatcher(
     )
     private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
 
-    private val placeBet = PlaceBetHandler(
-        world, recorder,
-        // PHP `bettingStor->getValue("id_{n}")`(Betting.php:42-44) — BettingController.loadRawBettingInfo와
-        // 동일하게 table='betting' 전 행을 맵 디코드해 id 일치 행을 찾는다(key 레이아웃 비의존).
-        bettingInfoReader = gameKvRepository?.let { repo ->
-            { bettingId: Int ->
-                repo.findByTable("betting").firstNotNullOfOrNull { row ->
-                    runCatching { jsonDecode(row.value) }.getOrNull()
-                        ?.let { BettingInfo.fromKvMap(it) }
-                        ?.takeIf { it.id == bettingId }
-                }
-            }
-        } ?: { null },
-        prevBetAmountDbReader = bettingRepository?.let { repo ->
-            { bettingId: Int, userId: Int -> repo.sumAmountByBettingIdAndUserId(bettingId, userId).toInt() }
-        } ?: { _, _ -> 0 },
-        previousPointReader = previousPointReader,
-    )
-
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
     private val npcPolicy = NpcPolicyHandler(world, recorder)
-    private val tournamentEnroll = TournamentEnrollHandler(world, recorder)
-    private val tournamentBettingPort =
-        if (gameKvRepository != null && bettingRepository != null && inheritanceRepository != null) {
-            ProductionTournamentBettingPort(world, recorder, gameKvRepository, bettingRepository, inheritanceRepository)
-        } else {
-            null
-        }
-    private val lastTournamentBettingIdReader: () -> Int = gameKvRepository?.let { repo ->
-        {
-            repo.findByTable("game_env").firstNotNullOfOrNull { row ->
-                if (row.namespace == "game_env" && row.key == "last_tournament_betting_id") {
-                    (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
-                } else {
-                    null
-                }
-            } ?: 0
-        }
-    } ?: { 0 }
-    private val tournamentAdmin = TournamentAdminHandler(
-        world,
-        recorder,
-        lastBettingIdReader = lastTournamentBettingIdReader,
-        bettingPort = tournamentBettingPort,
-    )
     private val inheritReset = InheritResetHandler(
         world,
         recorder,
@@ -358,7 +301,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
-    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.hwiha.HwihaCourtHandler(world, recorder)
+    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.campaign.CourtHandler(world, recorder)
 
     // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
     private val profileIconSync = ProfileIconSyncHandler(world, recorder)
@@ -389,7 +332,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
         is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
-        is TurnDaemonCommand.PlaceBet -> placeBet.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
         is TurnDaemonCommand.SetScoutMsg -> nationFinance.handleSetScoutMsg(command)
@@ -399,9 +341,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.SetBlockWar -> nationFinance.handleSetBlockWar(command)
         is TurnDaemonCommand.SetBlockScout -> nationFinance.handleSetBlockScout(command)
         is TurnDaemonCommand.NpcPolicyUpdate -> npcPolicy.handle(command)
-        is TurnDaemonCommand.TournamentEnroll -> tournamentEnroll.handle(command)
-        is TurnDaemonCommand.TournamentStart -> tournamentAdmin.handleStart(command)
-        is TurnDaemonCommand.TournamentReset -> tournamentAdmin.handleReset(command)
         is TurnDaemonCommand.InheritResetTurnTime -> inheritReset.handleResetTurnTime(command)
         is TurnDaemonCommand.InheritResetSpecialWar -> inheritReset.handleResetSpecialWar(command)
         is TurnDaemonCommand.InheritSetNextSpecialWar -> inheritReset.handleSetNextSpecialWar(command)
@@ -534,15 +473,15 @@ private fun invalidSentAt(command: TurnDaemonCommand): TurnDaemonCommandResult =
 
 private data class ExpirationFailure(val code: String, val reason: String)
 
-private fun v2PrecheckFailure(command: CityGarrisonRecruit): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.garrisonRecruitSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityGarrisonRecruit): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.garrisonRecruitSchema.canonicalId,
         mapOf("cityId" to command.cityId, "amount" to command.amount),
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
-private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blocked? =
-    V2CommandRegistry.precheck(
-        V2CommandRegistry.cityTransportSchema.canonicalId,
+private fun v2PrecheckFailure(command: CityTransport): CommandAvailability.Blocked? =
+    CommandSchemaCatalog.precheck(
+        CommandSchemaCatalog.cityTransportSchema.canonicalId,
         buildMap {
             put("fromCityId", command.fromCityId)
             put("toCityId", command.toCityId)
@@ -551,7 +490,7 @@ private fun v2PrecheckFailure(command: CityTransport): V2CommandAvailability.Blo
             put("garrison", command.garrison)
             command.routeRevision?.let { put("routeRevision", it) }
         },
-    ) as? V2CommandAvailability.Blocked
+    ) as? CommandAvailability.Blocked
 
 private fun expirationFailure(expiresAt: String?, executionAt: Instant): ExpirationFailure? {
     if (expiresAt == null) return null

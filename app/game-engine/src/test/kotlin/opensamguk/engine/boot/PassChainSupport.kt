@@ -9,15 +9,15 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
-import opensamguk.engine.hwiha.HwihaEncounterResolver
-import opensamguk.engine.hwiha.HwihaMonthlyAssessment
-import opensamguk.engine.hwiha.HwihaMonthlyCountyIncome
-import opensamguk.engine.hwiha.HwihaMonthlySalary
-import opensamguk.engine.hwiha.HwihaSiegeService
+import opensamguk.engine.campaign.EncounterResolver
+import opensamguk.engine.campaign.MonthlyAssessment
+import opensamguk.engine.campaign.MonthlyCountyIncome
+import opensamguk.engine.campaign.MonthlySalary
+import opensamguk.engine.campaign.SiegeService
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.input.*
@@ -25,7 +25,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /**
- * S3 pass chain shared by [PassChainInvarianceIT] and its red probe [HwihaS3PassChainProbeIT]: the 豫州 slice seeded by
+ * S3 pass chain shared by [PassChainInvarianceIT] and its red probe [S3PassChainProbeIT]: the 豫州 slice seeded by
  * the real importer, one human player who signs up and reserves 출사 through the normal reservation tables, and
  * nothing else. Every later link (발령 → 행군 → 조우 → 공성 → 점령 → 징세 → 월단평) must come from the loop itself.
  */
@@ -44,11 +44,11 @@ internal object PassChainSupport {
     /** Seeds the scenario through the production importer, then the human's own signup and reservation. */
     fun seed(jdbc: JdbcTemplate, world: Int, withUnits: Boolean = true) {
         val root = repoRoot()
-        val scenario = ScenarioJson.loadScenario(Files.readString(root.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
+        val scenario = ScenarioJson.loadScenario(Files.readString(root.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")))
         val cities = ScenarioJson.loadMapCities(Files.readString(root.resolve("infra/src/main/resources/map/han-world-v3.json")))
         ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_990002",
             installTime = OffsetDateTime.ofInstant(START, ZoneOffset.UTC), artifactsRoot = root).importAll(jdbc, WorldId(world))
-        // boundaryDate falls back to Instant.now() without these; pin the calendar like HwihaMonthBoundaryLoopIT.
+        // boundaryDate falls back to Instant.now() without these; pin the calendar like MonthBoundaryLoopIT.
         jdbc.update("""UPDATE world_state SET meta = meta || ?::jsonb WHERE id=?""",
             MetaJson.encode(mapOf("startYear" to 190, "startTime" to START.toString(), "lastTurnTime" to START.toString())), world)
         // The loader takes start_time as the clock authority. The importer writes it (and every turn_time) through
@@ -61,8 +61,8 @@ internal object PassChainSupport {
 
         // The human player: a created character (npc_state 0) standing in the first lord's capital.
         val capital = scenario.nations.first().cities.first().toInt()
-        val projection = HanWorldArtifactsResolver(root)
-            .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).projection
+        val projection = WorldArtifactsResolver(root)
+            .artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection
         val province = requireNotNull(projection.bindingsByCityId[capital]?.landProvinceId)
         val policy = PersonPolicyState(30, false, "synthetic-qa:yuzhou-player", "v1", 900).toMetaValue()
         jdbc.update("""INSERT INTO general(world_id,id,name,user_id,nation_id,city_id,npc_state,officer_level,gold,rice,crew,
@@ -102,19 +102,19 @@ internal object PassChainSupport {
             service.runTick(START.plusSeconds(3600L * k))
             val world = measuredWorld ?: continue
             val human = world.getGeneralById(HUMAN)
-            val sieges = world.listHwihaSieges()
+            val sieges = world.listSieges()
             val meta = world.getState().meta
             val links = linkedMapOf(
                 "enlist" to ((human?.nationId ?: 0) > 0),
                 "dispatch" to (human?.meta?.containsKey(CountyAssignment.META_KEY) == true),
-                "march" to (world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } || sieges.isNotEmpty()),
-                "encounter" to world.listGenerals().any { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta },
+                "march" to (world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || EncounterResolver.BATTLE_RECORD_KEY in it.meta } || sieges.isNotEmpty()),
+                "encounter" to world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta },
                 "siege" to sieges.isNotEmpty(),
-                "capture" to sieges.any { it.status == HwihaSiegeService.FALLEN },
-                "income" to (meta[HwihaMonthlyCountyIncome.STAMP_KEY] != null),
-                "salary" to (meta[HwihaMonthlySalary.STAMP_KEY] != null),
-                "assessment" to (meta[HwihaMonthlyAssessment.STAMP_KEY] != null),
-                "ranking" to ((meta[HwihaMonthlyAssessment.RANKING_KEY] as? List<*>).orEmpty().isNotEmpty()),
+                "capture" to sieges.any { it.status == SiegeService.FALLEN },
+                "income" to (meta[MonthlyCountyIncome.STAMP_KEY] != null),
+                "salary" to (meta[MonthlySalary.STAMP_KEY] != null),
+                "assessment" to (meta[MonthlyAssessment.STAMP_KEY] != null),
+                "ranking" to ((meta[MonthlyAssessment.RANKING_KEY] as? List<*>).orEmpty().isNotEmpty()),
             )
             links.forEach { (name, met) -> if (met && name !in first) first[name] = k }
         }
@@ -130,13 +130,13 @@ internal object PassChainSupport {
         // 발령 (the NPC lord issues it; an unanswered dispatch is accepted at its deadline)
         assertTrue(CountyAssignment.META_KEY in human.meta, "발령: the player holds an accepted county assignment")
         // 행군
-        assertTrue(world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta } ||
-            world.listHwihaSieges().isNotEmpty(), "행군: an NPC corps marched")
+        assertTrue(world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || EncounterResolver.BATTLE_RECORD_KEY in it.meta } ||
+            world.listSieges().isNotEmpty(), "행군: an NPC corps marched")
         // 조우
-        assertTrue(world.listGenerals().any { HwihaEncounterResolver.BATTLE_RECORD_KEY in it.meta }, "조우: a sealed encounter was resolved")
+        assertTrue(world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta }, "조우: a sealed encounter was resolved")
         // 공성 · 점령 (persisted)
-        assertTrue(jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
-        val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM hwiha_siege WHERE world_id=? AND status='FALLEN'", id)
+        assertTrue(jdbc.queryForObject("SELECT count(*) FROM siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
+        val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM siege WHERE world_id=? AND status='FALLEN'", id)
         assertTrue(fallen.isNotEmpty(), "점령: a county fell")
         // A captured county can change hands again later — retaken, or neutralized by the monthly isolation decay
         // (UpdateCitySupply). So each fallen county's owner in the database must equal the live world's (the capture
@@ -151,16 +151,16 @@ internal object PassChainSupport {
         assertTrue(held > 0, "점령: a fallen county is held by its captor in the database")
         // 징세 · 녹봉 · 월단평
         val meta = world.getState().meta
-        assertNotNull(meta[HwihaMonthlyCountyIncome.STAMP_KEY], "징세: the loop credited county warehouses")
-        assertNotNull(meta[HwihaMonthlySalary.STAMP_KEY], "녹봉: the loop paid salaries")
-        assertNotNull(meta[HwihaMonthlyAssessment.STAMP_KEY], "월단평: the loop assessed renown")
-        assertTrue((meta[HwihaMonthlyAssessment.RANKING_KEY] as? List<*>).orEmpty().isNotEmpty(), "월단평: a ranking was published")
+        assertNotNull(meta[MonthlyCountyIncome.STAMP_KEY], "징세: the loop credited county warehouses")
+        assertNotNull(meta[MonthlySalary.STAMP_KEY], "녹봉: the loop paid salaries")
+        assertNotNull(meta[MonthlyAssessment.STAMP_KEY], "월단평: the loop assessed renown")
+        assertTrue((meta[MonthlyAssessment.RANKING_KEY] as? List<*>).orEmpty().isNotEmpty(), "월단평: a ranking was published")
     }
 
     /** Cold reload: the flushed siege rows come back as they are in memory (V61 round trip). */
     fun assertSiegesReload(world: InMemoryTurnWorld, loader: WorldSnapshotLoader) {
-        val cold = loader.buildSnapshot().hwihaSieges.associateBy { it.countyId }
-        val live = world.listHwihaSieges().associateBy { it.countyId }
+        val cold = loader.buildSnapshot().sieges.associateBy { it.countyId }
+        val live = world.listSieges().associateBy { it.countyId }
         assertEquals(live.keys, cold.keys)
         for ((county, siege) in live) {
             val stored = cold.getValue(county)
@@ -168,6 +168,6 @@ internal object PassChainSupport {
                 listOf(stored.status, stored.besiegerGeneralId, stored.turns, stored.morale, stored.garrison, stored.endReason))
             assertEquals(siege.timeline.size, stored.timeline.size)
         }
-        assertTrue(live.values.none { it.status == HwihaSiegeService.ACTIVE && it.besiegerGeneralId !in world.listGenerals().map { g -> g.id } })
+        assertTrue(live.values.none { it.status == SiegeService.ACTIVE && it.besiegerGeneralId !in world.listGenerals().map { g -> g.id } })
     }
 }
