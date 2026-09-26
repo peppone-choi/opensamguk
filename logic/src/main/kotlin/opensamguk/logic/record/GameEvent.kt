@@ -14,7 +14,9 @@ sealed interface EventRef {
     data class City(val id: Int) : EventRef { init { require(id > 0) } }
     data class Nation(val id: Int) : EventRef { init { require(id >= 0) } }
     data class Corps(val id: String) : EventRef { init { require(isStableKey(id)) } }
-    data class Request(val id: String) : EventRef { init { require(isStableKey(id)) } }
+    data class Request(val id: String) : EventRef {
+        init { require(id.matches(Regex("[A-Za-z0-9._:-]{1,128}"))) }
+    }
     data class RoadFort(val id: String) : EventRef { init { require(isStableKey(id)) } }
     data class Replay(val id: String) : EventRef { init { require(isStableKey(id)) } }
 }
