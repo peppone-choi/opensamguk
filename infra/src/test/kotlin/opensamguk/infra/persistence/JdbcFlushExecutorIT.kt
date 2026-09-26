@@ -18,7 +18,6 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -68,11 +67,17 @@ class JdbcFlushExecutorIT {
         assertEquals(1, jdbc.queryForObject(
             "SELECT count(*) FROM game_event WHERE world_id = 1 AND event_key = :key",
             mapOf("key" to event.eventKey.value), Int::class.java))
-        assertFailsWith<DataAccessException> {
+        val coldEvent = event.copy(eventKey = EventKey.derive("flush", "cold", "777"))
+        executor.flush(payload.copy(gameEvents = listOf(coldEvent)))
+        assertEquals(778, jdbc.queryForObject(
+            "SELECT occurred_ordinal FROM game_event WHERE world_id = 1 AND event_key = :key",
+            mapOf("key" to coldEvent.eventKey.value), Int::class.java),
+            "a cold world with a stale counter receives the next committed ordinal")
+        assertFailsWith<IllegalStateException> {
             executor.flush(payload.copy(
                 worldStateUpdate = mapOf("id" to 1, "current_year" to 190, "current_month" to 1,
                     "current_phase" to 2),
-                gameEvents = listOf(event.copy(eventKey = EventKey.derive("flush", "collision", "777"))),
+                gameEvents = listOf(event.copy(refs = mapOf(RefRole.ACTOR to EventRef.General(11)))),
             ))
         }
         assertEquals(1, jdbc.queryForObject("SELECT current_phase FROM world_state WHERE id = 1",

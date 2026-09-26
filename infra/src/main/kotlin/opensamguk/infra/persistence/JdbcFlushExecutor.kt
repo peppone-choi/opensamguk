@@ -7,6 +7,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.record.EventTurn
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.common.world.WorldId
 import org.postgresql.util.PGobject
@@ -49,6 +50,7 @@ open class JdbcFlushExecutor(
     private val transactionTemplate: TransactionTemplate,
 ) {
     private val gameEventWriter = GameEventWriteRepository(jdbc)
+    private val gameEventOrdinals = GameEventOrdinalRepository(jdbc)
     /** Records the op sequence of the most recent [flush] (instrumentation for the IT). */
     private val lastOps = mutableListOf<FlushExecOp>()
 
@@ -313,7 +315,25 @@ open class JdbcFlushExecutor(
                 logEntryCreateMany(payload.worldId, regularLogs)
             }
             if (payload.gameEvents.isNotEmpty()) {
-                val inserted = payload.gameEvents.count { gameEventWriter.insert(it) }
+                // Production bootstraps the in-memory counter, but a cold world can also be
+                // constructed directly (replay, tests, or a recovered process). Reconcile its
+                // proposed ordinal with committed rows inside this flush transaction before the
+                // unique order constraint is reached. The event key still decides semantic retry.
+                val highWaterByTurn = mutableMapOf<EventTurn, Int>()
+                var inserted = 0
+                for (event in payload.gameEvents) {
+                    val at = event.occurredAt
+                    val turn = EventTurn(at.year, at.month, at.phase)
+                    val highWater = highWaterByTurn.getOrPut(turn) {
+                        gameEventOrdinals.maxCommitted(payload.worldId.value, turn) ?: -1
+                    }
+                    val ordinal = if (at.ordinal <= highWater) Math.addExact(highWater, 1) else at.ordinal
+                    val normalized = if (ordinal == at.ordinal) event else event.copy(occurredAt = at.copy(ordinal = ordinal))
+                    if (gameEventWriter.insert(normalized)) {
+                        inserted++
+                        highWaterByTurn[turn] = ordinal
+                    }
+                }
                 if (inserted > 0) lastOps.add(FlushExecOp("game_event", FlushVerb.CREATE_MANY, inserted))
             }
 
