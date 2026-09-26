@@ -80,8 +80,6 @@ class IntakeCommandConsumeDispatchTest {
         gameKv: opensamguk.infra.read.GameKvRepository? = null,
     ) = TurnDaemonCommandDispatcher(
         world, recorder,
-        noopRepo<opensamguk.infra.read.AuctionRepository>(),
-        noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
         noopRepo<opensamguk.infra.read.BoardPostRepository>(),
         gameKvRepository = gameKv,
     )

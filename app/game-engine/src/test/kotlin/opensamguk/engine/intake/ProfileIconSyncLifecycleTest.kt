@@ -88,8 +88,6 @@ class ProfileIconSyncLifecycleTest {
             handler = handler,
             flushExecutor = flush,
             realtimePublisher = RealtimePublisher(redis, "che:test", WorldId(1)),
-            auctionRepository = noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            auctionBidRepository = noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             boardPostRepository = noopRepo<opensamguk.infra.read.BoardPostRepository>(),
             commandOutboxRelay = object : CommandOutboxRelay(
                 mock(CommandResultRepository::class.java),

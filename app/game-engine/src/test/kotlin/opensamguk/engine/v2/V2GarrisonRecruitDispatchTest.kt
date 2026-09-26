@@ -73,8 +73,6 @@ class V2GarrisonRecruitDispatchTest {
         val clock = CountingClock(t0)
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
-            noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
             v2CityLedger = null,
             clock = clock,
@@ -89,8 +87,6 @@ class V2GarrisonRecruitDispatchTest {
     fun `legacy wire without expiresAt remains executable and returns a terminal result`() {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
-            noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
             v2CityLedger = null,
         )
@@ -104,8 +100,6 @@ class V2GarrisonRecruitDispatchTest {
     fun `expired v2 command returns a terminal rejection before handler execution`() {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
-            noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
             v2CityLedger = null,
             clock = Clock.fixed(Instant.parse("0200-01-01T02:00:00Z"), ZoneOffset.UTC),
@@ -138,8 +132,6 @@ class V2GarrisonRecruitDispatchTest {
         )
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
-            noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
             v2CityLedger = null,
         )
@@ -156,8 +148,6 @@ class V2GarrisonRecruitDispatchTest {
     fun `transport wire without route revision is not rejected as malformed`() {
         val d = TurnDaemonCommandDispatcher(
             world(), ChangeRecorder(),
-            noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
             v2CityLedger = null,
         )

@@ -8,7 +8,6 @@ import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
-import opensamguk.engine.auction.AuctionExpiryDaemon
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.flush.DeltaGenerationSession
 import opensamguk.engine.flush.FlushRecoveryGate
@@ -26,8 +25,6 @@ import opensamguk.infra.persistence.CommandResultRow
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.StaleWorldWriterException
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
 import opensamguk.infra.read.SelectPoolRepository
@@ -109,10 +106,6 @@ open class TurnRunService(
     private val worldContextFactory: ((MutableMap<String, Any?>) -> EventActionContext)? = null,
     /** How long [RedisCommandStream.readCommands] blocks for a control command before the tick proceeds. */
     private val commandBlockMs: Long = 0,
-    /** JPA read repository for auction lookups (P6 T0.7). */
-    private val auctionRepository: AuctionRepository? = null,
-    /** JPA read repository for auction bid lookups (P6 T0.7). */
-    private val auctionBidRepository: AuctionBidRepository? = null,
     /** board_post 조회용 JPA read 리포지토리 (F4 C2 슬라이스 C — 댓글의 글 is_secret read). */
     private val boardPostRepository: BoardPostRepository? = null,
     /** vote_poll/vote 조회용 JDBC read seam (F4 Wave 투표 — VoteCast/closeOldVote 설문 cast 가드). */
@@ -152,15 +145,15 @@ open class TurnRunService(
 
 
     /**
-     * Routes drained intake commands (auction bid/finalize, and the P6/P7 commands that follow) to
+     * Routes drained intake commands (the P6/P7 intake commands and HWIHA `ImmediateInput`) to
      * their engine handlers. Built per-run against the live [world] (mirrors the sibling per-run
      * handlers — the world is per-run state, not a Spring bean). 결과는 W0-4부터
      * [RealtimePublisher.publishCommandResultPayload]로 per-requestId 회신된다(위 헤더 참조).
      */
     private val hwihaInputCatalog by lazy { opensamguk.logic.input.InputCatalog.load() }
-    private val commandDispatcher = if (auctionRepository != null && auctionBidRepository != null && boardPostRepository != null) {
+    private val commandDispatcher = if (boardPostRepository != null) {
         TurnDaemonCommandDispatcher(
-            world, handler.recorder, auctionRepository, auctionBidRepository, boardPostRepository,
+            world, handler.recorder, boardPostRepository,
             // votePollRepository는 옵셔널 — null이면 VoteHandler가 기본 stub("설문 없음")로 동작한다.
             votePollRepository,
             // diplomacyLetterRepository는 옵셔널 — null이면 DiplomacyLetterHandler가 stub-empty("서신 없음")로 동작한다.
@@ -183,16 +176,6 @@ open class TurnRunService(
                 context.raiseInvader(spec)
             },
         )
-    } else {
-        null
-    }
-
-    /**
-     * Scans and expires auctions whose closeDate has passed. Built per-run against the live [world].
-     * Runs after command dispatch and before the monthly boundary / flush.
-     */
-    private val auctionExpiryDaemon = if (auctionRepository != null && auctionBidRepository != null) {
-        AuctionExpiryDaemon(auctionRepository, auctionBidRepository)
     } else {
         null
     }
@@ -294,7 +277,7 @@ open class TurnRunService(
         // 1. drain the control-command stream (run/pause/troopJoin/...) AND route each command to its
         //    engine handler via [commandDispatcher] (P6: the intake seam that was previously dropped).
         //    Control commands (run/pause/...) advance the cursor and return null from the dispatcher;
-        //    intake commands (auction bid/finalize, …) route to their handler. The reserved
+        //    intake commands (board/message/ImmediateInput, …) route to their handler. The reserved
         //    general-turn ACTIONS live in the general_turn ring (ReservedTurnRepository), NOT on this
         //    stream.
         val claimed = claimExecutableEnvelopes(commandBlockMs)
@@ -427,8 +410,6 @@ open class TurnRunService(
             handled = lifecycle.runTick(runTime, generalDrainCohort)
             crossed = 0
         }
-
-        auctionExpiryDaemon?.checkExpiredAuctions(world, handler.recorder, runTime)
 
         // 3. flush the recorder's dirty rows + the world's logs in ONE transaction (JDBC-only).
         //

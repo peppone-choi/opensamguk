@@ -31,8 +31,6 @@ import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.toTurnGeneral
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.read.ArchiveHistoryReader
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.GameKvRepository
 import opensamguk.infra.read.InheritanceRepository
@@ -128,8 +126,6 @@ class WorldActionContext(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     override val pipeline: GeneralActionPipeline,
-    private val auctionRepository: AuctionRepository? = null,
-    private val auctionBidRepository: AuctionBidRepository? = null,
     private val archiveHistoryReader: ArchiveHistoryReader? = null,
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
     private val gameKvRepository: GameKvRepository? = null,

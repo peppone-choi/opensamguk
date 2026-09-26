@@ -17,11 +17,8 @@ import opensamguk.engine.turn.OperationUnit
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
-import opensamguk.infra.entity.AuctionEntity
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.operation.OperationRules
 import opensamguk.logic.stats.GeneralActionPipeline
-import java.lang.reflect.Proxy
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -53,14 +50,10 @@ class OperationMonthlyNoopGateTest {
         ),
     )
 
-    private fun auctionRepo(): AuctionRepository = Proxy.newProxyInstance(AuctionRepository::class.java.classLoader, arrayOf(AuctionRepository::class.java)) { _, method, _ ->
-        when (method.returnType) { java.util.List::class.java -> emptyList<AuctionEntity>(); java.lang.Boolean.TYPE -> false; else -> null }
-    } as AuctionRepository
-
     private fun runOnce(wired: Boolean, ops: List<Operation> = emptyList(), units: List<OperationUnit> = emptyList()): Outcome {
         val world = world(ops, units); val recorder = ChangeRecorder()
         MonthlyPostUpdateHook(
-            world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo(),
+            world, recorder, GeneralActionPipeline(),
             retainerMonthly = RetainerMonthlyService(), operationMonthly = if (wired) OperationMonthlyService() else null,
         ).run(ScriptedRng())
         val dirty = world.consumeDirtyState()

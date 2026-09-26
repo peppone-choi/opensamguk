@@ -128,7 +128,7 @@
     "loaderInputs": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["worldState", "ngGames", "archivedNationIds", "statistics", "nationHistoryLogs", "generalHistoryLogs", "systemActionLogs", "systemHistoryLogs", "activeUniqueAuctionItems", "storedUniqueItemNamespaces", "gameEnv", "nationEnv", "inheritancePoints", "generalRankValues", "nations", "cities", "generals", "diplomacy", "generalAccessLogs"],
+      "required": ["worldState", "ngGames", "archivedNationIds", "statistics", "nationHistoryLogs", "generalHistoryLogs", "systemActionLogs", "systemHistoryLogs", "storedUniqueItemNamespaces", "gameEnv", "nationEnv", "inheritancePoints", "generalRankValues", "nations", "cities", "generals", "diplomacy", "generalAccessLogs"],
       "properties": {
         "worldState": { "$ref": "#/$defs/loaderInputMetric" },
         "ngGames": { "$ref": "#/$defs/loaderInputMetric" },
@@ -138,7 +138,6 @@
         "generalHistoryLogs": { "$ref": "#/$defs/loaderInputMetric" },
         "systemActionLogs": { "$ref": "#/$defs/loaderInputMetric" },
         "systemHistoryLogs": { "$ref": "#/$defs/loaderInputMetric" },
-        "activeUniqueAuctionItems": { "$ref": "#/$defs/loaderInputMetric" },
         "storedUniqueItemNamespaces": { "$ref": "#/$defs/loaderInputMetric" },
         "gameEnv": { "$ref": "#/$defs/loaderInputMetric" },
         "nationEnv": { "$ref": "#/$defs/loaderInputMetric" },
@@ -225,7 +224,7 @@
             "enum": [
               "tables.worldState", "tables.city", "tables.nation", "tables.general", "tables.diplomacy", "tables.rankData", "tables.logEntry",
               "snapshot.generals", "snapshot.cities", "snapshot.nations", "snapshot.diplomacy", "snapshot.accessLogs", "snapshot.globalLogs", "snapshot.nationHistoryEntries", "snapshot.generalHistoryEntries",
-              "loaderInputs.worldState", "loaderInputs.ngGames", "loaderInputs.archivedNationIds", "loaderInputs.statistics", "loaderInputs.nationHistoryLogs", "loaderInputs.generalHistoryLogs", "loaderInputs.systemActionLogs", "loaderInputs.systemHistoryLogs", "loaderInputs.activeUniqueAuctionItems", "loaderInputs.storedUniqueItemNamespaces", "loaderInputs.gameEnv", "loaderInputs.nationEnv", "loaderInputs.inheritancePoints", "loaderInputs.generalRankValues", "loaderInputs.nations", "loaderInputs.cities", "loaderInputs.generals", "loaderInputs.diplomacy", "loaderInputs.generalAccessLogs",
+              "loaderInputs.worldState", "loaderInputs.ngGames", "loaderInputs.archivedNationIds", "loaderInputs.statistics", "loaderInputs.nationHistoryLogs", "loaderInputs.generalHistoryLogs", "loaderInputs.systemActionLogs", "loaderInputs.systemHistoryLogs", "loaderInputs.storedUniqueItemNamespaces", "loaderInputs.gameEnv", "loaderInputs.nationEnv", "loaderInputs.inheritancePoints", "loaderInputs.generalRankValues", "loaderInputs.nations", "loaderInputs.cities", "loaderInputs.generals", "loaderInputs.diplomacy", "loaderInputs.generalAccessLogs",
               "fixture.current.fixedHotActionRows", "fixture.current.coldHistoryRows", "fixture.payloadSizeBytes.hotAction", "fixture.payloadSizeBytes.coldHistory"
             ]
           }

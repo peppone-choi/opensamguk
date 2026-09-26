@@ -95,8 +95,6 @@ class LiveGapClosureHandlerTest {
         world,
         recorder,
         noopRepo(),
-        noopRepo(),
-        noopRepo(),
         diplomacyLetterRepository = diplomacyRepo,
         selectPoolRepository = selectPoolRepo,
     )

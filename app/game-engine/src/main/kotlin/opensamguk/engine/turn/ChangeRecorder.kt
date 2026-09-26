@@ -77,8 +77,6 @@ class ChangeRecorder(
      * default 1-based counter is for tests / a fresh world.
      */
     private val messageIdAllocator: () -> Int = AtomicCounter()::next,
-    /** Allocates the next in-memory `ng_auction.id` (T0.7) — DB-seeded at rehydrate; default 1-based. */
-    private val auctionIdAllocator: () -> Int = AtomicCounter()::next,
     /**
      * Allocates the next in-memory `diplomacy_letter.id` (W5d 외교 서신) — DB-seeded at rehydrate
      * (max(id)+1) so the in-memory id matches the flushed SERIAL. PHP `j_diplomacy_send_letter.php`는
@@ -181,12 +179,6 @@ class ChangeRecorder(
      */
     private val diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>()
 
-    /** Auction channel (T0.7) — ng_auction UPSERTs (open INSERT / extend-finish UPDATE), in emit order. */
-    private val auctionUpserts = mutableListOf<AuctionUpsert>()
-
-    /** Auction channel (T0.7) — ng_auction_bid INSERTs (INSERT-only; outbid rows NEVER deleted). */
-    private val auctionBidInserts = mutableListOf<AuctionBidInsert>()
-
     /** Betting channel (P6) — ng_betting insertUpdate 의도(flush가 (general,betting,type) UPSERT amount +=). */
     private val bettingInserts = mutableListOf<BettingInsert>()
 
@@ -272,7 +264,6 @@ class ChangeRecorder(
             votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
             diplomacyLetterInserts.isNotEmpty() || diplomacyLetterUpdates.isNotEmpty() ||
-            auctionUpserts.isNotEmpty() || auctionBidInserts.isNotEmpty() ||
             bettingInserts.isNotEmpty() ||
             cityLedgerV2Upserts.isNotEmpty() ||
             waterControlWrites.isNotEmpty() ||
@@ -700,27 +691,6 @@ class ChangeRecorder(
     fun diplomacyLetterUpdates(): Map<Int, Map<String, Any?>> =
         diplomacyLetterUpdates.mapValues { (_, m) -> LinkedHashMap(m) }
 
-    /**
-     * Record an `ng_auction` UPSERT (T0.7). `id` null → an INSERT (auction open): pre-allocates the
-     * in-memory id and returns it (so bids placed in the same tick can reference it before flush). A
-     * non-null `id` → an UPDATE (extend/finish/shrink). `columns` is the byte-faithful
-     * `AuctionInfo.toArray()` map (the caller supplies the id column for an UPDATE).
-     */
-    fun recordAuctionUpsert(id: Int?, columns: Map<String, Any?>): Int {
-        if (id == null) {
-            val allocated = auctionIdAllocator()
-            auctionUpserts.add(AuctionUpsert(id = null, allocatedId = allocated, columns = columns))
-            return allocated
-        }
-        auctionUpserts.add(AuctionUpsert(id = id, allocatedId = null, columns = columns))
-        return id
-    }
-
-    /** Record an `ng_auction_bid` INSERT (T0.7). INSERT-only — outbid rows are NEVER deleted/deduped. */
-    fun recordAuctionBidInsert(columns: Map<String, Any?>) {
-        auctionBidInserts.add(AuctionBidInsert(columns))
-    }
-
     /** Record an `ng_betting` insertUpdate 의도 (P6 betting intake) — 재베팅은 flush UPSERT가 amount +=. */
     fun recordBettingInsert(columns: Map<String, Any?>) {
         bettingInserts.add(BettingInsert(columns))
@@ -894,12 +864,6 @@ class ChangeRecorder(
         voteCommentInserts.add(VoteCommentInsert(columns))
     }
 
-    /** The recorded ng_auction UPSERTs (the T0.7 flush source), in emit order. */
-    fun auctionUpserts(): List<AuctionUpsert> = auctionUpserts.toList()
-
-    /** The recorded ng_auction_bid INSERTs (the T0.7 flush source), in emit order. */
-    fun auctionBidInserts(): List<AuctionBidInsert> = auctionBidInserts.toList()
-
     /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
     fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
 
@@ -1015,7 +979,7 @@ class ChangeRecorder(
      *
      * 데몬 recorder는 수명이 긴 단일 인스턴스([ReservedTurnHandler.recorder])다. tick 단위 리셋이
      * 없으면 누적된 델타가 매 tick 재-flush된다. 멱등한 UPDATE/patch 채널은 그저 낭비 + 무한증가지만,
-     * INSERT 전용 채널(betting / auction_bid / message / board_post / board_comment / vote_poll / vote /
+     * INSERT 전용 채널(betting / message / board_post / board_comment / vote_poll / vote /
      * vote_comment)은 이후 매 tick마다 행을 중복 INSERT한다. PHP에는 이런 누수가 없다 — 각 AJAX 요청은
      * 한 번 INSERT하고 요청 스코프가 폐기된다.
      *
@@ -1041,8 +1005,6 @@ class ChangeRecorder(
         messageInvalidates.clear()
         diplomacyLetterInserts.clear()
         diplomacyLetterUpdates.clear()
-        auctionUpserts.clear()
-        auctionBidInserts.clear()
         bettingInserts.clear()
         cityLedgerV2Upserts.clear()
         waterControlWrites.clear()
@@ -1173,7 +1135,7 @@ class ChangeRecorder(
      * `FlushPayload.createdGenerals`로 매핑 → executor step-3 `generalCreateMany`(general 행 + 30 general_turn
      * 휴식 + 37 rank_data value 0). recorder에 별도 created-general 채널을 또 두면 *두 개의 생성 진리*가 생겨
      * (world created-set + recorder 채널) 조용히 발산한다(design Risk #4) — INSERT 전용 side-table 채널
-     * (message/auction/betting/board/vote)과 달리 core 엔티티 생성은 world가 유일 소스다. 그래서 이 메서드는
+     * (message/betting/board/vote)과 달리 core 엔티티 생성은 world가 유일 소스다. 그래서 이 메서드는
      * 새 채널을 만들지 않고 world에 위임만 한다(생성된 장수의 UPDATE 패치는 step-7에서 createdGeneralIds로 제외됨).
      *
      * 반환: 생성되어 world에 staged된 [TurnGeneral].

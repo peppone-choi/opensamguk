@@ -1,6 +1,4 @@
 [
-  { "type": "auctionFinalize", "ok": true, "auctionId": 101 },
-  { "type": "auctionFinalize", "ok": false, "auctionId": 101, "reason": "no bids" },
   { "type": "troopJoin", "ok": true, "generalId": 11, "troopId": 7 },
   { "type": "troopJoin", "ok": false, "generalId": 11, "troopId": 7, "reason": "troop full" },
   { "type": "troopExit", "ok": true, "generalId": 11, "wasLeader": false },

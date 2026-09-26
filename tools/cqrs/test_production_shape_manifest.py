@@ -62,7 +62,6 @@ LOADER_INPUT_IDS = {
     "generalHistoryLogs",
     "systemActionLogs",
     "systemHistoryLogs",
-    "activeUniqueAuctionItems",
     "storedUniqueItemNamespaces",
     "gameEnv",
     "nationEnv",

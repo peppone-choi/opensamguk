@@ -13,7 +13,7 @@ package opensamguk.logic.actions.instant
  * 있어 **Model A**(turn-reserved 링: general_turn 예약 row + 데몬 poke, [ReservedTurnHandler]가 해소)로
  * 흐른다. 반면 이 세 instant-action은 [CommandRegistry] 커맨드가 아니라 **이미 `:common`에
  * [opensamguk.common.wire.TurnDaemonCommand] variant**(`DieOnPrestart`/`DropItem`/`InstantRetreat`)가
- * 정의돼 있다 → 따라서 betting/auction/유산-reset과 동일한 **Model B**(typed daemon-command intake:
+ * 정의돼 있다 → 따라서 betting/유산-reset과 동일한 **Model B**(typed daemon-command intake:
  * [opensamguk.gameapi.reserve.CommandWireMapper.toCommand]가 typed 명령을 발행 → 데몬
  * [opensamguk.engine.run.TurnDaemonCommandDispatcher]가 핸들러로 라우팅)로 흐른다. 두 모델 모두
  * **데몬이 ChangeRecorder→JdbcFlushExecutor JDBC batch로만 write**하므로 one-daemon-write-rule을 지킨다
