@@ -23,6 +23,9 @@ DEFAULTS = {
     "app/game-engine/src/main/resources/application.yml": (
         "${TURN_PROFILE_NAME:pep:scenario_990002}",
     ),
+    "app/game-engine/src/test/kotlin/opensamguk/engine/GameEngineApplicationTests.kt": (
+        'body.contains("pep:scenario_990002")',
+    ),
     "app/game-api/src/main/resources/application.yml": (
         "${OPENSAMGUK_PROFILE:pep:scenario_990002}",
     ),
