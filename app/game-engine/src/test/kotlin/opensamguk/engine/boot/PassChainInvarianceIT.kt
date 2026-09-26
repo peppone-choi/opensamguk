@@ -56,6 +56,12 @@ class PassChainInvarianceIT {
     fun `S3 고리 — 출사 발령 행군 조우 공성 점령 징세 월단평이 관리자 개입 없이 이어진다`() {
         PassChainSupport.run(service, measuredWorld = world)
         PassChainSupport.assertChain(world, jdbc, WORLD)
+        assertTrue(world.getGeneralById(PassChainSupport.HUMAN)?.meta?.containsKey("courtRewardHistory") == true,
+            "포상: NPC 주공이 가입한 사람 카드의 포상 이력을 남겼다")
+        assertTrue(jdbc.queryForObject(
+            "SELECT count(*) FROM game_event WHERE world_id=? AND kind='court.rewardReceived' AND audience_general_id=?",
+            Int::class.java, WORLD, PassChainSupport.HUMAN,
+        )!! > 0, "포상: 수혜자 SELF typed 사건이 flush되었다")
         PassChainSupport.assertSiegesReload(world, loader)
         assertEquals(0, world.getCityById(77)?.supplyState, "an unbuilt road must cut city 77 supply")
         WorldStateBaseline.assertMatches("s3-chain-48", world)
