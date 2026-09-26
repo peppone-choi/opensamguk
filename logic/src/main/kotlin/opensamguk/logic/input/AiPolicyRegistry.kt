@@ -2,7 +2,7 @@ package opensamguk.logic.input
 
 /** The concrete NPC selection path for one input. These keys are bound to selectors by the engine. */
 enum class AiSelectorKey {
-    ENLIST, DEPLOY, MUSTER, COURT_DISPATCH, FIELD, CITY_MILITARY, PEOPLE, PERSONAL,
+    ENLIST, DEPLOY, MUSTER, COURT_DISPATCH, COURT_REWARD, FIELD, CITY_MILITARY, PEOPLE, PERSONAL,
 }
 
 sealed interface AiPolicyBinding {
@@ -26,6 +26,7 @@ object AiPolicyRegistry {
         putAll(selector(AiSelectorKey.DEPLOY, "action.deploy"))
         putAll(selector(AiSelectorKey.MUSTER, "action.muster"))
         putAll(selector(AiSelectorKey.COURT_DISPATCH, "court.dispatch"))
+        putAll(selector(AiSelectorKey.COURT_REWARD, "court.reward"))
         putAll(selector(AiSelectorKey.FIELD, "action.farm", "action.commerce", "action.fortify",
             "action.repairWall", "action.security", "action.settle", "action.selectResidents"))
         putAll(selector(AiSelectorKey.CITY_MILITARY, "action.conscript", "action.raiseVolunteers",
@@ -43,7 +44,7 @@ object AiPolicyRegistry {
             "stratagem.raiseMilitia", "stratagem.provokeRivalry", "stratagem.raid",
             "stratagem.reciprocity"))
         putAll(unused("NPC selector has not been delivered", "action.scout", "action.assault",
-            "action.demandSurrender", "action.siegeRoadFort", "court.reward",
+            "action.demandSurrender", "action.siegeRoadFort",
             "court.politicalConsent", "placement.assign", "policy.set", "work.start",
             "action.gift", "action.move", "action.forcedMarch", "action.return",
             "action.foundState", "action.abdicate", "action.tour", "action.oath",

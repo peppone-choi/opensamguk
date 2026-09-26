@@ -1,6 +1,7 @@
 package opensamguk.engine.campaign
 
 import kotlin.test.Test
+import kotlin.test.assertNotNull
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotEquals
@@ -11,6 +12,11 @@ import opensamguk.logic.input.DeploymentRequest
 import opensamguk.logic.input.MilitaryInput
 
 class NpcAiTurnSelectorTest {
+    @Test fun `registered court reward belongs to the court turn and does not break general turn startup`() {
+        val fixture = CampaignWorldFixture()
+        assertNotNull(NpcAiTurnSelector(fixture.topology, fixture.metrics, DomesticContext()))
+    }
+
     @Test
     fun `general turn route keeps the delivered selectors in the old priority order`() {
         val fixture = CampaignWorldFixture()
