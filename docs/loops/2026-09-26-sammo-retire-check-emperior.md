@@ -12,5 +12,6 @@
 
 - `:logic:test --tests PostUpdateMonthlyTailTest` 3/3(순서 기대값에서 Q14 제거)
 - `:app:game-engine:test` — `WorldActionContextRngTest` 2/2, `MonthlyPostUpdateHookTailWiringTest` 9/9, `YuzhouCampaignInvarianceTest` 4/4(豫州 36순 결정론, 해시 불변), `WorldInvaderEndingContextTest` 7/7
-- `naming_lint.py`: retired_reference 5861→5858
+- `naming_lint.py`: retired_reference 5847→5844(#985 병합 뒤 main 기준)
 - 미실행: `PassChainInvarianceIT`(PostgreSQL, CI가 돈다), game-engine 전체 스위트(CI)
+- `HotColdCatalog`: 지운 코드가 쓰던 런타임 읽기 항목 4개(유니크 경매·통계 투영·전역 로그·국가 연혁)를 뺐다. `HotColdWorldCatalogGuardTest`는 카탈로그와 소스의 호출·횟수가 정확히 같아야 통과한다(11/11).
