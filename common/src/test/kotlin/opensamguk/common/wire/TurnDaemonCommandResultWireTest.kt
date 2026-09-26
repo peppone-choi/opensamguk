@@ -6,6 +6,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -46,8 +47,6 @@ class TurnDaemonCommandResultWireTest {
             "$type:$ok" to decode(obj)
         }
 
-        assertIs<AuctionFinalizeOk>(byKey["auctionFinalize:true"])
-        assertIs<AuctionFinalizeFail>(byKey["auctionFinalize:false"])
         assertIs<TroopJoinOk>(byKey["troopJoin:true"])
         assertIs<TroopJoinFail>(byKey["troopJoin:false"])
         assertIs<TroopExitOk>(byKey["troopExit:true"])
@@ -55,6 +54,20 @@ class TurnDaemonCommandResultWireTest {
         // boolean-ok group collapses to GeneralBoolResult regardless of ok
         assertIs<GeneralBoolResult>(byKey["dieOnPrestart:true"])
         assertIs<GeneralBoolResult>(byKey["appoint:false"])
+    }
+
+    @Test
+    fun `retired auctionFinalize result type is no longer decodable`() {
+        // #917 A2: 경매 정산 결과는 와이어에서 은퇴했다. 옛 페이로드는 조용히 다른 클래스로 접히지 않고 거절돼야 한다.
+        for (raw in listOf(
+            """{"type":"auctionFinalize","ok":true,"auctionId":101}""",
+            """{"type":"auctionFinalize","ok":false,"auctionId":101,"reason":"no bids"}""",
+        )) {
+            assertFailsWith<Exception>("expected rejection for $raw") {
+                WireJson.decodeFromString(TurnDaemonCommandResult.serializer(), raw)
+            }
+        }
+        assertTrue(corpus.none { (it as JsonObject)["type"]!!.jsonPrimitive.content == "auctionFinalize" })
     }
 
     @Test

@@ -12,8 +12,6 @@ import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
-import opensamguk.infra.persistence.AuctionBidInsertRow
-import opensamguk.infra.persistence.AuctionUpsertRow
 import opensamguk.infra.persistence.BettingInsertRow
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
@@ -659,8 +657,6 @@ object DatabaseHooks {
         val createdNations = dirty.createdNations.map { PerTurnOverlay.toLogicNation(it) }
         val createdDiplomacy = dirty.createdDiplomacy.map { PerTurnOverlay.toLogicDiplomacy(it) }
         val logEntries = dirty.logs.map { toLogRow(it, state.currentYear, state.currentMonth, state.currentPhase) }
-        val auctionUpserts = recorder.auctionUpserts()
-        refreshActiveUniqueAuctionProjection(world, auctionUpserts)
 
         val deletedNationSnapshots = dirty.deletedNationSnapshots.map { snap ->
             val currentHistory = currentNationHistory(dirty.logs, snap.nation.id)
@@ -777,8 +773,6 @@ object DatabaseHooks {
             diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>().apply {
                 recorder.diplomacyLetterUpdates().forEach { (letterNo, columns) -> put(letterNo, LinkedHashMap(columns)) }
             },
-            auctionUpserts = auctionUpserts.map { AuctionUpsertRow(it.id, it.allocatedId, it.columns) },
-            auctionBidInserts = recorder.auctionBidInserts().map { AuctionBidInsertRow(it.columns) },
             bettingInserts = recorder.bettingInserts().map { BettingInsertRow(it.columns) },
             // OPENSAM-150 (R1) — v2 도시 원장 채널. v1 경로에서는 항상 빈 리스트라 flush step이 미진입한다.
             cityLedgerV2Upserts = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) },
@@ -836,36 +830,6 @@ object DatabaseHooks {
         )
     }
 
-    private fun refreshActiveUniqueAuctionProjection(
-        world: InMemoryTurnWorld,
-        upserts: List<opensamguk.engine.turn.AuctionUpsert>,
-    ) {
-        if (upserts.isEmpty()) return
-
-        val current = LinkedHashMap<Int, String?>()
-        (world.getState().meta["activeUniqueAuctionItemsById"] as? Map<*, *>)?.forEach { (rawId, rawTarget) ->
-            val id = (rawId as? Number)?.toInt() ?: return@forEach
-            current[id] = rawTarget?.toString()
-        }
-
-        upserts.forEach { upsert ->
-            val auctionId = upsert.id ?: upsert.allocatedId ?: return@forEach
-            val type = upsert.columns["type"]?.toString()
-            val finished = upsert.columns["finished"] as? Boolean ?: false
-            val target = upsert.columns["target"]?.toString()
-            if (type == "uniqueItem" && !finished) {
-                current[auctionId] = target
-            } else {
-                current.remove(auctionId)
-            }
-        }
-
-        val ordered = LinkedHashMap<Int, String?>()
-        current.toSortedMap().forEach { (auctionId, target) -> ordered[auctionId] = target }
-        world.setGameEnvValue("activeUniqueAuctionItemsById", ordered)
-        world.setGameEnvValue("activeUniqueAuctionItems", ordered.values.toList())
-    }
-
     /** T0.4 — map the recorder's per-command diplomacy patches to the executor [DiplomacyUpdate] list. */
     internal fun toDiplomacyUpdates(patches: List<DiplomacyRowPatch>): List<DiplomacyUpdate> =
         patches.map {
@@ -915,7 +879,7 @@ object DatabaseHooks {
      * global history를 SYSTEM scope로 본다(`ActionLogger.pushGlobalHistoryLog` → `LogScope.SYSTEM`)
      * → 엔진의 `"global"`을 `SYSTEM`으로 번역한다.
      *
-     * NOTE: betting/auction 핸들러의 scope `"action"`(+ category `"betting"|"auction"`) 위조 로그는
+     * NOTE: betting 핸들러(와 #917 에서 은퇴한 경매 핸들러)의 scope `"action"` 위조 로그는
      * 바퀴 20/23에서 전부 제거됐다(PHP 무로그 + enum 불일치 flush 크래시). else-가지의 "미지(예: action)
      * 보존"은 방어적 잔존 — 새 비-enum scope를 들이지 말 것.
      */

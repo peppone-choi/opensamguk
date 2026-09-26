@@ -10,7 +10,6 @@
     {"id": "generalHistoryLogs", "source": "log_entry scope=GENERAL category=HISTORY", "retainedAs": "state.meta.generalHistory", "loaderColumns": ["general_id", "text"], "payloadColumns": ["text"]},
     {"id": "systemActionLogs", "source": "log_entry scope=SYSTEM category=ACTION", "retainedAs": "state.meta.globalLogs", "loaderColumns": ["category", "year", "month", "text"], "payloadColumns": ["text"]},
     {"id": "systemHistoryLogs", "source": "log_entry scope=SYSTEM category=HISTORY", "retainedAs": "state.meta.globalLogs", "loaderColumns": ["category", "year", "month", "text"], "payloadColumns": ["text"]},
-    {"id": "activeUniqueAuctionItems", "source": "ng_auction active uniqueItem", "retainedAs": "state.meta.activeUniqueAuctionItems", "loaderColumns": ["target"], "payloadColumns": ["target"]},
     {"id": "storedUniqueItemNamespaces", "source": "game_kv namespace ut_*", "retainedAs": "state.meta.storedUniqueItemCounts", "loaderColumns": ["namespace", "cnt"], "payloadColumns": ["namespace", "cnt"]},
     {"id": "gameEnv", "source": "game_kv game_env namespaces", "retainedAs": "TurnWorldState.meta", "loaderColumns": ["key", "value_json"], "payloadColumns": ["key", "value_json"]},
     {"id": "nationEnv", "source": "nation_env", "retainedAs": "Nation.meta.nation_env", "loaderColumns": ["namespace", "key", "value_json"], "payloadColumns": ["namespace", "key", "value_json"]},

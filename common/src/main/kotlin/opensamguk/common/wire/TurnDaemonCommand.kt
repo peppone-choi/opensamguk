@@ -512,15 +512,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("auctionFinalize")
-    data class AuctionFinalize(
-        val requestId: String? = null,
-        val auctionId: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "auctionFinalize"
-    }
-
-    @Serializable
     @SerialName("changePermission")
     data class ChangePermission(
         val requestId: String? = null,

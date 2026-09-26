@@ -20,12 +20,11 @@ class AiProductionWiringGuardTest {
     }
 
     @Test
-    fun `production seeds auction ids from persisted rows`() {
+    fun `production seeds battle replay ids from persisted rows`() {
         val source = source()
 
-        assertTrue(source.contains("auctionRepository.findMaxId()"))
-        assertTrue(!source.contains("auctionRepository.findAll()"))
-        assertTrue(source.contains("auctionIdAllocator = { ++nextAuctionId }"))
+        assertTrue(source.contains("battleReplayRepository.findMaxId()"))
+        assertTrue(source.contains("battleReplayIdAllocator = { ++nextBattleReplayId }"))
     }
 
     @Test

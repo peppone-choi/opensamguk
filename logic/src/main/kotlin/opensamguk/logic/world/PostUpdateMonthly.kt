@@ -14,11 +14,12 @@ import kotlin.math.sqrt
  * **Runs at L10 of the [opensamguk.logic.tick.MonthlyPipeline], AFTER the Month event batch — the side-effect
  * ORDER + the monthlyRng draw order are themselves parity targets** (the G1 log-sequence gate). This file
  * grows across B2's three tasks: POST1 (Q1-Q4 power aggregate + jitter), POST2 (Q5-Q10 diplomacy), POST3
- * (Q11-Q17 tail + the Q4→Q11→Q15→Q16 monthlyRng draw order).
+ * (Q11-Q17 tail + the monthlyRng draw order).
  *
  * The `$monthlyRng` is the ONLY RNG consumer here (the Month batch self-seeds its own DRBGs). The exact
- * consume order across the whole function is **Q4 → Q11 → Q15 → Q16, a single instance** (`:322,425,432,434`):
- * any reordering corrupts the byte-match, so the pure core records each draw into an ordered draw log.
+ * consume order across the whole function is **Q4 → Q11, a single instance** (`:322,425`); Q15 토너먼트와
+ * Q16 중립 경매 등록은 #917 에서 은퇴했다(둘 다 Q11 뒤 꼬리였으므로 남은 추첨 순서는 그대로다).
+ * Any reordering corrupts the byte-match, so the pure core records each draw into an ordered draw log.
  *
  * --- POST1 (Q1-Q4) ---
  *
@@ -359,7 +360,6 @@ fun postUpdateMonthlyTail(
     rng: RandUtil,
     checkWander: RngConsumer,
     updateGeneralNumber: () -> Unit = {},
-    registerAuction: RngConsumer,
     setNationFront: () -> List<PostFrontResult>,
     @Suppress("UNUSED_PARAMETER") isUnited: Boolean = false,
 ): PostUpdateMonthlyTailResult {
@@ -376,10 +376,8 @@ fun postUpdateMonthlyTail(
     // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (Q13 is PHP request-local cache only).
     updateGeneralNumber()
     // Q14 — 삼모 전 城 통일 판정(checkEmperior)은 #917 에서 은퇴했다. RNG 를 쓰지 않던 단계라 뒤 순서는 그대로다.
-
-    // Q16 — registerAuction (next active RNG consumer).
-    registerAuction(rng)
-    drawOrder += "Q16"
+    // Q16 — 중립 경매 등록(registerAuction)도 #917 에서 은퇴했다. 월 RNG 의 마지막 소비자였고(Q17 과 뒤 정산은
+    // RNG 를 받지 않으며 월 RNG 는 달마다 새로 만든다), 그래서 다른 추첨 순서는 바뀌지 않는다.
 
     // Q17 — SetNationFront per active nation, runs LAST (no rng; B3 produces the front 0/1/2/3 results).
     val frontResults = setNationFront()

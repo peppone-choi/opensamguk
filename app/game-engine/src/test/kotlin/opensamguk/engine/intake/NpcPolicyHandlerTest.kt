@@ -118,8 +118,6 @@ class NpcPolicyHandlerTest {
             world,
             recorder,
             noopRepo(),
-            noopRepo(),
-            noopRepo(),
         )
 
         val result = dispatcher.dispatch(

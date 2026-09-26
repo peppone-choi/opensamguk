@@ -114,7 +114,7 @@ class VoteHandler(
         // PHP: opener = userName ?? '[SYSTEM]'.
         val opener = me.name
 
-        // vote_poll INSERT — options/selection은 jsonb(인코딩된 문자열, auction_bid aux 패턴과 동일).
+        // vote_poll INSERT — options/selection은 jsonb(인코딩된 문자열로 싣는다).
         // reveal_mode는 V1 NOT NULL — PHP VoteInfo엔 대응 필드가 없어 기본 'always'(상시 공개)로 싣는다.
         // start_at은 PHP `VoteInfo.startDate = TimeUtil::now()` — 데몬의 현재 시각(world lastTurnTime)을
         // ISO-8601로 싣는다(NOT NULL; executor가 `CAST(:start_at AS timestamptz)`로 항상 바인딩하므로

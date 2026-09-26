@@ -17,7 +17,7 @@ class PostUpdateMonthlyTailTest {
 
         val skipped = postUpdateMonthlyTail(
             year = 185, startYear = 184, rng = rng(),
-            checkWander = consumeWander, registerAuction = {},
+            checkWander = consumeWander,
             setNationFront = { emptyList() },
         )
         assertFalse(wanderRan)
@@ -25,7 +25,7 @@ class PostUpdateMonthlyTailTest {
 
         val active = postUpdateMonthlyTail(
             year = 186, startYear = 184, rng = rng(),
-            checkWander = consumeWander, registerAuction = {},
+            checkWander = consumeWander,
             setNationFront = { emptyList() },
         )
         assertTrue(wanderRan)
@@ -35,27 +35,22 @@ class PostUpdateMonthlyTailTest {
     @Test
     fun `active monthly callbacks share one RNG and preserve order`() {
         val reference = rng()
-        val expected = listOf(
-            reference.nextRange(0.0, 1.0),
-            reference.nextRange(0.0, 1.0),
-            reference.nextRange(0.0, 1.0),
-        )
+        val expectedWanderDraw = reference.nextRange(0.0, 1.0)
+        val expectedNextDraw = reference.nextRange(0.0, 1.0)
+        val live = rng()
         val captured = mutableListOf<Double>()
         val order = mutableListOf<String>()
         val result = postUpdateMonthlyTail(
-            year = 200, startYear = 184, rng = rng(),
+            year = 200, startYear = 184, rng = live,
             checkWander = { captured += it.nextRange(0.0, 1.0); order += "wander" },
             updateGeneralNumber = { order += "generals" },
-            registerAuction = {
-                captured += it.nextRange(0.0, 1.0)
-                captured += it.nextRange(0.0, 1.0)
-                order += "auction"
-            },
             setNationFront = { order += "front"; listOf(PostFrontResult(nationId = 1)) },
         )
-        assertEquals(expected, captured)
-        assertEquals(listOf("wander", "generals", "auction", "front"), order)
-        assertEquals(listOf("Q11", "Q16"), result.rngDrawOrder)
+        assertEquals(listOf(expectedWanderDraw), captured)
+        // Q16(중립 경매) 은퇴 뒤 꼬리는 Q11 말고 월 RNG 를 한 번도 소비하지 않는다.
+        assertEquals(expectedNextDraw, live.nextRange(0.0, 1.0))
+        assertEquals(listOf("wander", "generals", "front"), order)
+        assertEquals(listOf("Q11"), result.rngDrawOrder)
         assertEquals(listOf(PostFrontResult(nationId = 1)), result.frontResults)
     }
 
@@ -65,10 +60,10 @@ class PostUpdateMonthlyTailTest {
         val result = postUpdateMonthlyTail(
             year = 185, startYear = 184, rng = rng(),
             checkWander = { order += "wander" },
-            registerAuction = { order += "auction" },
+            updateGeneralNumber = { order += "generals" },
             setNationFront = { order += "front"; emptyList() },
         )
-        assertEquals(listOf("auction", "front"), order)
-        assertEquals(listOf("Q16"), result.rngDrawOrder)
+        assertEquals(listOf("generals", "front"), order)
+        assertEquals(emptyList<String>(), result.rngDrawOrder)
     }
 }

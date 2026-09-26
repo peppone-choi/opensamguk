@@ -65,8 +65,6 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
             override fun publishCommandResultPayload(requestId: String, payloadJson: String) { published += requestId }
         }
         return opensamguk.engine.run.TurnRunService(active, stream, lifecycle, handler, flush, publisher,
-            auctionRepository = if (intake) org.mockito.Mockito.mock(opensamguk.infra.read.AuctionRepository::class.java) else null,
-            auctionBidRepository = if (intake) org.mockito.Mockito.mock(opensamguk.infra.read.AuctionBidRepository::class.java) else null,
             boardPostRepository = if (intake) org.mockito.Mockito.mock(opensamguk.infra.read.BoardPostRepository::class.java) else null,
             commandInboxRepository = if (intake) opensamguk.infra.persistence.CommandInboxRepository(NamedParameterJdbcTemplate(jdbc)) else null,
             commandOutboxRelay = opensamguk.engine.redis.CommandOutboxRelay(

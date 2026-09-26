@@ -27,7 +27,7 @@ import java.time.Instant
  *
  * 부수 효과는 [ChangeRecorder]를 통해서만 기록한다(one-daemon-write):
  *  - `diplomacy_letter` INSERT(발송, id 선할당=newLetterNo) + state/aux UPDATE(prev→replaced /
- *    회수→cancelled / 파기 state_opt·cancelled) — recorder W5d 채널 (board/auction과 동일, world-state 효과 아님).
+ *    회수→cancelled / 파기 state_opt·cancelled) — recorder W5d 채널 (board와 동일, world-state 효과 아님).
  *  - `message` INSERT(diplomacy type, 양측) — logic [Message] 라우팅(receiver-먼저-sender, body fold).
  *  - `aux` jsonb는 LinkedHashMap 삽입 순서 보존: 발송은 `{src,dest}`, replaced/cancelled/destroy는 기존
  *    `{src,dest}` 뒤에 `reason` 또는 `state_opt`를 **끝에** 추가(PHP `$aux['reason']=…` append 시맨틱).

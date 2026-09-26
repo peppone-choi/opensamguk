@@ -12,7 +12,6 @@
   { "type": "vacation", "requestId": "req-vac-1", "generalId": 15 },
   { "type": "setMySetting", "requestId": "req-sms-1", "generalId": 16, "settings": { "tnmt": 1, "defence_train": 80, "use_treatment": 0, "use_auto_nation_turn": 1 } },
   { "type": "dropItem", "requestId": "req-drop-1", "generalId": 17, "itemType": "weapon" },
-  { "type": "auctionFinalize", "requestId": "req-af-1", "auctionId": 101 },
   { "type": "changePermission", "requestId": "req-cp-1", "generalId": 18, "isAmbassador": true, "targetGeneralIds": [19, 20, 21] },
   { "type": "kick", "requestId": "req-kick-1", "generalId": 18, "destGeneralId": 22 },
   { "type": "appoint", "requestId": "req-app-1", "generalId": 18, "destGeneralId": 23, "destCityId": 5, "officerLevel": 4 },

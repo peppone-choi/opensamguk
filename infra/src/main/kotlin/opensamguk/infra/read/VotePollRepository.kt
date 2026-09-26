@@ -25,7 +25,7 @@ import java.time.Instant
  *
  * READ 전용 — write 경로(vote_poll/vote/vote_comment INSERT·UPDATE)는
  * [opensamguk.infra.persistence.JdbcFlushExecutor] step-8e를 거치며, 절대 여기서 쓰지 않는다
- * (one-daemon-write 규칙). board/auction read-repo와 동일하게 핸들러에 주입된다.
+ * (one-daemon-write 규칙). board read-repo와 동일하게 핸들러에 주입된다.
  */
 class VotePollRepository(
     private val jdbc: NamedParameterJdbcTemplate,

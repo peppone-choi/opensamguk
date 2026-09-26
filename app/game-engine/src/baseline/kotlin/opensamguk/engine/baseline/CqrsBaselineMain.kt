@@ -380,7 +380,6 @@ object CqrsBaselineMain {
         val generalHistory = state.meta["generalHistory"] as? Map<*, *>
         val globalLogs = state.meta["globalLogs"] as? List<*>
         val statisticRows = state.meta["statisticRows"] as? List<*>
-        val activeUniqueAuctionItems = state.meta["activeUniqueAuctionItems"] as? List<*>
         val storedUniqueItemCounts = state.meta["storedUniqueItemCounts"] as? Map<*, *>
         val inheritancePoints = state.meta["inheritancePoints"] as? Map<*, *>
         val archivedNationSource = snapshot.serverId?.let { serverId ->
@@ -400,8 +399,6 @@ object CqrsBaselineMain {
                 .withRetainedItems(globalLogs?.count { (it as? Map<*, *>)?.get("category") == "ACTION" }?.toLong() ?: 0L),
             "systemHistoryLogs" to LoaderInputObservation.aggregate(jdbc, "systemHistoryLogs")
                 .withRetainedItems(globalLogs?.count { (it as? Map<*, *>)?.get("category") == "HISTORY" }?.toLong() ?: 0L),
-            "activeUniqueAuctionItems" to LoaderInputObservation.aggregate(jdbc, "activeUniqueAuctionItems")
-                .withRetainedItems(activeUniqueAuctionItems?.size?.toLong() ?: 0L),
             "storedUniqueItemNamespaces" to LoaderInputObservation.aggregate(jdbc, "storedUniqueItemNamespaces")
                 .withRetainedItems(storedUniqueItemCounts?.size?.toLong() ?: 0L),
             "gameEnv" to LoaderInputObservation.aggregate(jdbc, "gameEnv").withRetainedItems(scalarCount(
@@ -983,12 +980,6 @@ private object LoaderInputObservation {
             "SELECT category, year, month, text FROM log_entry WHERE scope = 'SYSTEM' AND category = 'HISTORY' ORDER BY id DESC",
             listOf("category", "year", "month", "text"),
             listOf("text"),
-        ),
-        LoaderInputObservationDefinition(
-            "activeUniqueAuctionItems",
-            "SELECT target FROM ng_auction WHERE type = 'uniqueItem' AND finished = false ORDER BY id ASC",
-            listOf("target"),
-            listOf("target"),
         ),
         LoaderInputObservationDefinition(
             "storedUniqueItemNamespaces",

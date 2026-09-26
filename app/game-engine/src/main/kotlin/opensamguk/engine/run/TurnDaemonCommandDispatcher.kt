@@ -7,7 +7,6 @@ import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
-import opensamguk.engine.auction.AuctionFinalizeHandler
 import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.AccountCommandHandler
 import opensamguk.engine.intake.AdminGeneralModerationHandler
@@ -36,8 +35,6 @@ import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.v2.V2CityLedgerStore
 import opensamguk.engine.v2.V2CityTransportHandler
 import opensamguk.engine.v2.V2GarrisonRecruitHandler
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.ContactReader
 import opensamguk.infra.read.DiplomacyLetterRepository
@@ -60,9 +57,8 @@ import java.time.format.DateTimeParseException
  *
  * **P6 keystone seam.** Before this, [opensamguk.engine.redis.RedisCommandStream.readCommands]'s
  * result was DISCARDED in [TurnRunService.runTick] (the inline comment admitted the dispatcher was
- * "assembled by the consuming P3 waves" and never built), so every command-intake feature — auction
- * bids/finalize, and the P6/P7 commands that follow — was inert. This dispatcher routes each drained
- * command to the handler that owns its type.
+ * "assembled by the consuming P3 waves" and never built), so every P6/P7 command-intake feature was
+ * inert. This dispatcher routes each drained command to the handler that owns its type.
  *
  * **Partial by design (incremental P6 build).** Only the command types with a built engine handler
  * are routed; everything else returns `null` = "no engine handler wired yet". That covers two
@@ -82,13 +78,11 @@ import java.time.format.DateTimeParseException
 class TurnDaemonCommandDispatcher(
     private val world: InMemoryTurnWorld,
     recorder: ChangeRecorder,
-    auctionRepository: AuctionRepository,
-    auctionBidRepository: AuctionBidRepository,
     boardPostRepository: BoardPostRepository,
     /**
      * vote_poll/vote 설문 상태 read seam (F4 Wave 투표). VoteCast/closeOldVote 게이트가 PHP Vote.php의
      * cast 가드(설문 존재/만료/선택수/이미 투표)를 충실히 재현하려면 설문 행을 read 해야 한다. null이면
-     * VoteHandler는 기본 stub(항상 "설문 없음")로 동작한다(board/auction read-repo와 동일 주입 패턴).
+     * VoteHandler는 기본 stub(항상 "설문 없음")로 동작한다(board read-repo와 동일 주입 패턴).
      */
     private val votePollRepository: VotePollRepository? = null,
     /**
@@ -123,7 +117,7 @@ class TurnDaemonCommandDispatcher(
     hwihaCourtHandler: opensamguk.engine.campaign.CourtHandler? = null,
 ) {
     /**
-     * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
+     * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
      * 유산 초기화가 이 seam 을 쓴다(바퀴 20 정본).
      */
@@ -177,8 +171,6 @@ class TurnDaemonCommandDispatcher(
             ?.mapNotNull { (it as? Number)?.toInt() }
             ?: persistedLastStatResetReader(ownerId)
     }
-
-    private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
@@ -321,7 +313,6 @@ class TurnDaemonCommandDispatcher(
     ): TurnDaemonCommandResult? = when (command) {
         is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
-        is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
         is TurnDaemonCommand.SetScoutMsg -> nationFinance.handleSetScoutMsg(command)

@@ -151,7 +151,13 @@ class HotColdWorldCatalogGuardTest {
         val phaseHot = HotColdCatalog.runtimeReadSeams
             .filter { it.temperature == DataTemperature.PHASE_HOT }
 
-        assertTrue(phaseHot.isNotEmpty(), "catalog must name current phase-hot candidates")
+        // #917 A2: 마지막 phase-hot 후보(경매 월 스캔·만료 데몬)가 은퇴해 지금은 0건이다. 새 후보를 들이면 이
+        // 핀에 이름을 올리고, 아래 규약(활성화 미준비·S5-T1 후속 명시)을 지켜야 한다.
+        assertEquals(
+            emptySet<String>(),
+            phaseHot.mapTo(linkedSetOf()) { "${it.sourceFile}:${it.accessType}" },
+            "catalog must name current phase-hot candidates explicitly",
+        )
         for (entry in phaseHot) {
             assertFalse(entry.relation.isBlank(), entry.accessType)
             assertFalse(entry.ordering.isBlank(), entry.accessType)
@@ -180,12 +186,12 @@ class HotColdWorldCatalogGuardTest {
         val probe = """
             package opensamguk.engine.probe
 
-            import opensamguk.infra.read.AuctionRepository
+            import opensamguk.infra.read.ProbeLedgerRepository
 
-            class Probe(private val auctionRepository: AuctionRepository?) {
+            class Probe(private val probeLedgerRepository: ProbeLedgerRepository?) {
                 fun run() {
-                    auctionRepository!!.loadOpenForPhase()
-                    val repo = auctionRepository ?: return
+                    probeLedgerRepository!!.loadOpenForPhase()
+                    val repo = probeLedgerRepository ?: return
                     repo.findOpenForPhase()
                     repo.fetchOpenForPhase()
                     repo.lookupOpenForPhase()
@@ -198,7 +204,7 @@ class HotColdWorldCatalogGuardTest {
 
         val calls = runtimeReadCalls(path, probe).toSet()
 
-        assertTrue("$path:auctionRepository.loadOpenForPhase" in calls, calls.toString())
+        assertTrue("$path:probeLedgerRepository.loadOpenForPhase" in calls, calls.toString())
         assertTrue("$path:repo.findOpenForPhase" in calls, calls.toString())
         assertTrue("$path:repo.fetchOpenForPhase" in calls, calls.toString())
         assertTrue("$path:repo.lookupOpenForPhase" in calls, calls.toString())

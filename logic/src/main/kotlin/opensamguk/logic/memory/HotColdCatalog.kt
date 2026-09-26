@@ -72,14 +72,6 @@ object HotColdCatalog {
             bound = AccessBound.AGGREGATE,
         ),
         SnapshotAccess(
-            methodName = "loadActiveUniqueAuctionItems",
-            relation = "ng_auction:active uniqueItem",
-            temperature = DataTemperature.ALWAYS_HOT,
-            boundary = AccessBoundary.BOOT_SNAPSHOT,
-            ordering = "ng_auction.id ASC",
-            bound = AccessBound.ACTIVE_SET,
-        ),
-        SnapshotAccess(
             methodName = "loadStoredUniqueItemCounts",
             relation = "game_kv:unique item counts",
             temperature = DataTemperature.QUERY_ONLY_COLD,
@@ -229,7 +221,6 @@ object HotColdCatalog {
     )
 
     val runtimeSourceDirectories: List<String> = listOf(
-        "app/game-engine/src/main/kotlin/opensamguk/engine/auction",
         "app/game-engine/src/main/kotlin/opensamguk/engine/intake",
         "app/game-engine/src/main/kotlin/opensamguk/engine/redis",
         "app/game-engine/src/main/kotlin/opensamguk/engine/run",
@@ -240,15 +231,6 @@ object HotColdCatalog {
     )
 
     val runtimeDirectSqlBoundaries: List<DirectSqlBoundary> = listOf(
-        DirectSqlBoundary(
-            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/turn/RehydrateService.kt",
-            relation = "select_pool,game_kv,ng_auction,ng_auction_bid,ng_betting,message",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
-            boundary = AccessBoundary.REHYDRATE_RECOVERY,
-            bound = AccessBound.BOUNDED_BATCH,
-            ordering = "bounded recovery reloads; active rows or explicit id lists where applicable",
-            followUp = "S5-T2 should convert recovery reload SQL to cataloged bounded projections before activation.",
-        ),
         DirectSqlBoundary(
             sourceFile = "infra/src/main/kotlin/opensamguk/infra/persistence/JdbcFlushExecutor.kt",
             relation = "log_entry:NATION/HISTORY,GENERAL/HISTORY",
@@ -286,12 +268,12 @@ object HotColdCatalog {
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/config/DaemonLoopConfig.kt",
             accessType = "boot allocators",
-            relation = "message,ng_auction",
+            relation = "message,battle_replay",
             temperature = DataTemperature.QUERY_ONLY_COLD,
             boundary = AccessBoundary.BOOT_ALLOCATOR,
             bound = AccessBound.AGGREGATE,
             ordering = "world-scoped max id aggregates",
-            calls = listOf(RuntimeCall("messageRepository.findMaxId"), RuntimeCall("auctionRepository.findMaxId"), RuntimeCall("battleReplayRepository.findMaxId")),
+            calls = listOf(RuntimeCall("messageRepository.findMaxId"), RuntimeCall("battleReplayRepository.findMaxId")),
         ),
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/TurnRunService.kt",
@@ -335,43 +317,6 @@ object HotColdCatalog {
                 RuntimeCall("reader.findMessage"),
             ),
             followUp = "S5-T2 should replace table-wide KV scans with named bounded projections.",
-        ),
-        RuntimeReadSeam(
-            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/run/MonthlyPostUpdateHook.kt",
-            accessType = "open auction month-phase candidate",
-            relation = "ng_auction",
-            temperature = DataTemperature.PHASE_HOT,
-            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
-            bound = AccessBound.ACTIVE_SET,
-            ordering = "not activation-ready: current repository method has no explicit ORDER BY",
-            calls = listOf(RuntimeCall("auctionRepository.findByFinishedFalse")),
-            activationReady = false,
-            followUp = "S5-T1 runtime prefetch migration must move this to an ordered PhaseHotPrefetchStep.",
-        ),
-        RuntimeReadSeam(
-            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/auction/AuctionExpiryDaemon.kt",
-            accessType = "auction expiry month-phase candidate",
-            relation = "ng_auction",
-            temperature = DataTemperature.PHASE_HOT,
-            boundary = AccessBoundary.COMMAND_OR_MONTH_BOUNDARY,
-            bound = AccessBound.ACTIVE_SET,
-            ordering = "not activation-ready: current repository method has no explicit ORDER BY",
-            calls = listOf(RuntimeCall("auctionRepository.findByFinishedFalse")),
-            activationReady = false,
-            followUp = "S5-T1 runtime prefetch migration should share the ordered open-auction phase cache.",
-        ),
-        RuntimeReadSeam(
-            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/auction/AuctionFinalizeHandler.kt",
-            accessType = "auction finalize command readers",
-            relation = "ng_auction,ng_auction_bid",
-            temperature = DataTemperature.QUERY_ONLY_COLD,
-            boundary = AccessBoundary.COMMAND_BOUNDARY,
-            bound = AccessBound.EXACT_KEY,
-            ordering = "auction id exact match; bid amount DESC",
-            calls = listOf(
-                RuntimeCall("auctionRepository.findById", 2),
-                RuntimeCall("bidRepository.findByAuctionIdOrderByAmountDesc"),
-            ),
         ),
         RuntimeReadSeam(
             sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/intake/BoardHandler.kt",
@@ -519,7 +464,6 @@ enum class AccessBoundary {
     COMMAND_OR_MONTH_BOUNDARY,
     COMMAND_OR_PHASE_BOUNDARY,
     COMMAND_OUTBOX_RELAY,
-    REHYDRATE_RECOVERY,
     RESERVED_TURN_PHASE,
 }
 
