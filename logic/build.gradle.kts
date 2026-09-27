@@ -61,6 +61,9 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/personal-encounter-v1.json")) {
         into("campaign")
     }
+    from(rootProject.file("data/battle/waryong-tactical-rules-v1.json")) {
+        into("battle")
+    }
     from(rootProject.file("data/curated/han/march-tempo-targets-v1.json")) {
         into("campaign")
     }
