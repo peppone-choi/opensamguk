@@ -68,17 +68,6 @@ function nCountryLabel(game: ServerGameInfo): string {
 }
 
 type RowState = { loading: boolean; info: ServerBasicInfo | null };
-function possessionEntryHref(href: string): string {
-    const hashIndex = href.indexOf('#');
-    const base = hashIndex === -1 ? href : href.slice(0, hashIndex);
-    const hash = hashIndex === -1 ? '' : href.slice(hashIndex);
-    const queryIndex = base.indexOf('?');
-    const path = queryIndex === -1 ? base : base.slice(0, queryIndex);
-    const params = new URLSearchParams(queryIndex === -1 ? '' : base.slice(queryIndex + 1));
-
-    params.set('entry', 'possession');
-    return `${path}?${params.toString()}${hash}`;
-}
 
 /**
  * 한 서버 행 — 자기 basic-info 를 fan-out 호출해 진입 상태머신(entrance.ts)을 그린다. 실패해도 그 행만
@@ -167,40 +156,19 @@ function ServerRow({ server, filter, onState }: { server: ServerEntry; filter: E
         characterCell = <span className="text-muted">-</span>;
         selectCell = LOBBY_LABELS.registerClosed;
     } else {
+        // 삼모 빙의·장수 선택 풀 입구는 대체 없이 없앴다(ADR-LITE-049 2026-09-26). 들어오는 길은 가입 하나다.
         const canCreate = (game.blockGeneralCreate & 1) === 0;
-        const canSelectNpc = game.npcMode === 1;
-        const canSelectPool = game.npcMode === 2;
         characterCell = <span className="text-muted">{LOBBY_LABELS.unregistered}</span>;
-        selectCell = (
-            <span style={{ display: 'inline-flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                {canCreate && (
-                    <a
-                        href={resolveServerGamePath(gameUrl, server.id, GAME_URL, 'join')}
-                        target="_self"
-                        className="btn-enter"
-                    >
-                        {LOBBY_LABELS.createGeneral}
-                    </a>
-                )}
-                {canSelectNpc && (
-                    <a href={possessionEntryHref(gameUrl)} target="_self" className="btn-enter">
-                        {LOBBY_LABELS.possessGeneral}
-                    </a>
-                )}
-                {canSelectPool && (
-                    <a
-                        href={resolveServerGamePath(gameUrl, server.id, GAME_URL, 'select-pool')}
-                        target="_self"
-                        className="btn-enter"
-                    >
-                        {LOBBY_LABELS.selectGeneral}
-                    </a>
-                )}
-                {/* 셋 다 비활성(불가 서버)이면 등록 경로 없음 — legacy 동일(빈 셀). */}
-                {!canCreate && !canSelectNpc && !canSelectPool && (
-                    <span className="text-muted">-</span>
-                )}
-            </span>
+        selectCell = canCreate ? (
+            <a
+                href={resolveServerGamePath(gameUrl, server.id, GAME_URL, 'join')}
+                target="_self"
+                className="btn-enter"
+            >
+                {LOBBY_LABELS.createGeneral}
+            </a>
+        ) : (
+            <span className="text-muted">-</span>
         );
     }
 
@@ -295,7 +263,7 @@ function LobbyView() {
                 )}
               </div>
             )}
-            <p className="lobby-servers__note">서버 설정에 따라 생성·빙의·선택 중 가능한 진입만 보입니다. 현황을 못 받은 서버는 「{LOBBY_LABELS.closed}」으로 남깁니다.</p>
+            <p className="lobby-servers__note">서버 설정에 따라 가능한 진입만 보입니다. 현황을 못 받은 서버는 「{LOBBY_LABELS.closed}」으로 남깁니다.</p>
           </section>
           {/* 서버 전환 탭 + 선택 서버 세계지도 현황 + 세력 현황 + 전황 로그 (devsam '제 전황' 형태). */}
           <ServerBoard />

@@ -6,6 +6,11 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.retainer.RetainerRules
 
 /** Supplied by the current renown/acceptance policy, never by client arguments. */
@@ -71,6 +76,23 @@ class EnlistmentExecutor(
         recorder.diffNation(PerTurnOverlay.toLogicNation(nation), PerTurnOverlay.toLogicNation(nextNation))
         world.applyNationDirtyFree(nextNation)
         world.createRetainer(card)
+        val turn = world.getState()
+        val eventCoordinates = arrayOf(world.worldId.value.toString(), turn.currentYear.toString(),
+            turn.currentMonth.toString(), turn.currentPhase.toString(), actor.id.toString(),
+            plan.masterId.toString(), card.id.toString())
+        world.recordEvent(
+            kind = EventKind.ENLISTED,
+            audience = AudienceTarget.Self(actor.id),
+            eventKey = EventKey.derive("enlist.joined", *eventCoordinates),
+            refs = mapOf(RefRole.ACTOR to EventRef.General(actor.id),
+                RefRole.NATION to EventRef.Nation(plan.nationId)),
+        )
+        if (plan.masterId != actor.id) world.recordEvent(
+            kind = EventKind.RETAINER_JOINED,
+            audience = AudienceTarget.Self(plan.masterId),
+            eventKey = EventKey.derive("enlist.retainerJoined", *eventCoordinates),
+            refs = mapOf(RefRole.PERSON to EventRef.General(actor.id)),
+        )
         val master = byId[plan.masterId]
         val refs = linkedMapOf<String, Any?>("nationId" to plan.nationId, "masterId" to plan.masterId,
             "generalId" to actor.id, "retainerId" to card.id)

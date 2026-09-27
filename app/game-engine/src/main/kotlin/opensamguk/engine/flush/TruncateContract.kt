@@ -57,6 +57,7 @@ object TruncateContract {
         "yearbook_history",
         "event",
         "log_entry",
+        "game_event",
         // The V1 baseline names (frozen CREATE TABLE statements remain in V1) — kept classified so the
         // baseline-coverage test stays green even though V7 reconciles them to the PHP ng_* names.
         "auction",

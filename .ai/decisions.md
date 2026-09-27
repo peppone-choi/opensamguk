@@ -841,7 +841,7 @@
   - **삭제:** 2026-09-17 개정의 「기존 명령 입력은 같은 라우트 안에서 월드 규칙(삼모/새 게임)에 따라 갈린다」, 「대응표(재설계 §12)를
     도움말에 둔다」, 「새 화면은 기존 라우트를 바로 교체한다」, 그리고 규칙 (5) 전체. 화면은 월드 규칙으로 분기하지 않고 삼모
     라벨·필드·API 를 보존할 의무가 없다.
-  - **메뉴·셸:** 셸은 하나다. 메뉴는 6묶음(휘하·계책·영지·군단·조정·기록) + 작전실 + 광장(회의실·기밀실·서신·커뮤니티는 (3) 대로
+  - **메뉴·셸:** 셸은 하나다. 메뉴는 6묶음(부(막부)·계책·영지·군단·조정·기록) + 작전실 + 광장(회의실·기밀실·서신·커뮤니티는 (3) 대로
     분리)이다. 서버 메뉴(GlobalMenu)·부서 메뉴·휘하 셸 탭·모바일 탭을 이 하나로 합친다.
   - **경로:** 6묶음 기준 새 경로를 쓴다. 옛 경로는 ADR-066 허용 목록 방식의 308 리다이렉트 전용이다. 확정 이름(2026-09-26):
     작전실 `/game/<서버>`, 그 아래 `/retinue`(부)·`/stratagem`(계책)·`/territory`(영지)·`/corps`(군단)·`/court`(조정)·
@@ -859,8 +859,8 @@
   - **삼모 화면:** 빙의·장수 선택 풀, 감찰부, 랭킹 5종(황제·황제 상세·명예의 전당·NPC·접속 통계), 유산·경매·베팅·토너먼트·설문
     보상·NPC 정책·사령턴·모의전투 화면은 대체 없이 삭제한다. 세력 판도는 연감(ADR-LITE-069)이 맡는다. 웹 삭제는 프론트 재구축이,
     API·엔진 삭제는 코드 정리(#917)가 맡고, 순서는 화면 대체 → API 삭제다.
-  - **소유:** `web/`과 화면 전용 읽기 API(삼모 필드 제거·새 조회)는 Claude 가, 턴·입력 로직은 Codex 가 구현한다. 코드 정리 동결
-    해제 전 프론트 PR 은 draft 다.
+  - **소유:** 2026-09-27 결정에 따라 `web/`·화면 전용 읽기 API(삼모 필드 제거·새 조회)·턴·입력 로직은 Codex 가 구현한다.
+    Claude 는 코드 리뷰와 머지 판정을 맡는다. 코드 정리 동결 해제 전 프론트 구현 PR 은 draft 다.
   - Supersedes: 위 「삭제」 항목, 로드맵 「세계와 지도」의 「화면의 정본은 야전 사령부 시안 19장이다」·「전략 지도는
     아이소메트릭」·「국가색은 … 도시·요새 … 본체에는 적용하지 않는다」 문장, ADR-LITE-044 개정의 「아이소 타일 렌더러」 문구(렌더
     방식만; 격자·좌표·province 계약은 유지).
@@ -1407,6 +1407,15 @@
 - Invariants: no id addition/deletion, no topology/edge/cell change, every playable 省 has one valid jurisdiction, every 城 anchor stays in its own 縣, exactly one valid seat per 郡, valid connected non-narrow/no-enclave county geometry, deterministic seed = event replay for equal prior state, and immutable applied delta bytes. Any violation rejects the entire delta. Scale limits and event threshold rules remain explicit user decisions, not silent defaults.
 - Gates: schema/reference/expected-value validation; before/after graph and pin equality; county geometry policy and city-anchor audit; seed/event equivalence and two-world cache isolation; hash mismatch/deleted file/duplicate id/old CAS failures as red probes; exact 190/196/220/221 name and alias checks. Implementation PRs start only after freeze release and #905 merge. No product code or map data changes in this design PR.
 - Sources: local `references/sources/shiliao/corpus/hhs-009.txt` (建安元年 「庚申，遷都許」), `sgz-02.txt` (黃初二年 「改許縣爲許昌縣」), `hhs-110.txt` (郡國志 and correction), `js-014.txt` (later county listings), and `dsfy-047.txt` (later 郡治 account). Micro-boundary reassignment evidence is UNKNOWN; a proposed province reassignment remains a technical probe, not approved historical data.
+
+## ADR-LITE-068 — 지방 관직과 중앙 관직의 임명 출처를 분리한다 (2026-09-25)
+
+- Status: approved (2026-09-26 사용자 승인). 행정 오버레이의 ADR-LITE-067과 별도 결정이다.
+- Approved by: 사용자 (2026-09-26)
+- Context: 조정 화면의 관직 패널은 지방과 중앙을 구분하지만 관직 정의·임명 계약은 아직 없다. 재설계 §2.4·§4·§8.2는 郡·州 관할과 縣令 자리를 구분한다.
+- Decision: 지방 관직 刺史·牧·太守·國相은 2층에서 임명하고 실효 관할을 판정한다. 縣令·縣長·侯國相은 기존 縣 배치·발령의 읽기 투영이며 독립 재임 상태로 이중 기록하지 않는다. 중앙 관직(삼공·구경·상서·장군호 등)은 3층에서 황실 조서로만 부여하며 2층 군주의 임명 입력으로 생성하지 않는다.
+- Consequences: 지방·중앙 관직 원장은 분리하고, 권한 판정은 관직명 문자열이 아닌 검증된 재임과 실효 관할을 쓴다. 司隸는 十二州刺史 정원에 더하지 않는다. 지방 관직의 사료는 『後漢書』 卷118 百官志 百官五의 별도 인용으로 확인한다.
+- Reversal: 사용자가 중앙 관직의 수여권을 변경하거나 정본 설계에서 縣 자리의 쓰기 권위를 옮길 때 별도 ADR과 저장 이전 계획으로 개정한다.
 
 ## ADR-LITE-069 — 게임 기록은 사건·식별자·시각으로 저장하고 화면에서 서술한다 (2026-09-25)
 

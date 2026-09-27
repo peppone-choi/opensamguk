@@ -34,6 +34,7 @@ class WarehouseNetwork(private val world: InMemoryTurnWorld, private val recorde
         pay(payerNationId, counties, amount, { it.grain }, { Resources(grain = it) })
 
     fun grainIn(counties: List<Int>): Long = counties.mapNotNull(::warehouse).sumOf { it.stock.grain }
+    fun moneyIn(counties: List<Int>): Long = counties.mapNotNull(::warehouse).sumOf { it.stock.money }
 
     private fun pay(payerNationId: Int, counties: List<Int>, amount: Long, balance: (Resources) -> Long,
         debit: (Long) -> Resources): Boolean {

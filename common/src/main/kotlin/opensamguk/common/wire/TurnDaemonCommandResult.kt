@@ -207,63 +207,6 @@ data class CommandLifecycleResult(
 ) : TurnDaemonCommandResult()
 
 @Serializable
-data class TournamentRefundOk(
-    override val type: String = "tournamentRefund",
-    override val ok: Boolean = true,
-    val bettingId: Int? = null,
-    val processed: Int,
-    val missing: Int,
-    val totalRefund: Int,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class TournamentRefundFail(
-    override val type: String = "tournamentRefund",
-    override val ok: Boolean = false,
-    val bettingId: Int? = null,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class TournamentBettingPayoutOk(
-    override val type: String = "tournamentBettingPayout",
-    override val ok: Boolean = true,
-    val bettingId: Int? = null,
-    val processed: Int,
-    val missing: Int,
-    val totalPayout: Int,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class TournamentBettingPayoutFail(
-    override val type: String = "tournamentBettingPayout",
-    override val ok: Boolean = false,
-    val bettingId: Int? = null,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class TournamentRewardOk(
-    override val type: String = "tournamentReward",
-    override val ok: Boolean = true,
-    val winnerId: Int,
-    val runnerUpId: Int,
-    val rewarded: Int,
-    val missing: Int,
-    val totalGold: Int,
-    val totalExp: Int,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class TournamentRewardFail(
-    override val type: String = "tournamentReward",
-    override val ok: Boolean = false,
-    val winnerId: Int,
-    val runnerUpId: Int,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
 data class VoteRewardOk(
     override val type: String = "voteReward",
     override val ok: Boolean = true,
@@ -333,27 +276,6 @@ data class AdjustGeneralMetaFail(
 ) : TurnDaemonCommandResult()
 
 @Serializable
-data class TournamentMatchResultOk(
-    override val type: String = "tournamentMatchResult",
-    override val ok: Boolean = true,
-    val tournamentType: Int,
-    val attackerId: Int,
-    val defenderId: Int,
-    val result: MatchResult,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class TournamentMatchResultFail(
-    override val type: String = "tournamentMatchResult",
-    override val ok: Boolean = false,
-    val tournamentType: Int,
-    val attackerId: Int,
-    val defenderId: Int,
-    val result: MatchResult,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
 data class PatchGeneralOk(
     override val type: String = "patchGeneral",
     override val ok: Boolean = true,
@@ -365,39 +287,6 @@ data class PatchGeneralFail(
     override val type: String = "patchGeneral",
     override val ok: Boolean = false,
     val generalId: Int,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class AuctionBidOk(
-    override val type: String = "auctionBid",
-    override val ok: Boolean = true,
-    val auctionId: Int,
-    val closeAt: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class AuctionBidFail(
-    override val type: String = "auctionBid",
-    override val ok: Boolean = false,
-    val auctionId: Int,
-    val reason: String,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class PlaceBetOk(
-    override val type: String = "placeBet",
-    override val ok: Boolean = true,
-    val bettingId: Int,
-    val generalId: Int,
-    val amount: Int,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class PlaceBetFail(
-    override val type: String = "placeBet",
-    override val ok: Boolean = false,
-    val bettingId: Int,
     val reason: String,
 ) : TurnDaemonCommandResult()
 
@@ -602,16 +491,6 @@ data class DeleteMessageResult(
     val reason: String? = null,
 ) : TurnDaemonCommandResult()
 
-// W6c — 경매 개설 (3 코드 collapse, mirrors NationSettingResult). auctionId echo on success.
-@Serializable
-data class AuctionOpenResult(
-    override val type: String,     // auctionOpenBuyRice|auctionOpenSellRice|auctionOpenUnique
-    override val ok: Boolean,
-    val generalId: Int,
-    val auctionId: Int? = null,
-    val reason: String? = null,
-) : TurnDaemonCommandResult()
-
 // W5d — 외교 서신 (4 코드 collapse — W0-7에서 diploRespondLetter 합류). letterNo echo on success.
 @Serializable
 data class DiploLetterResult(
@@ -669,9 +548,6 @@ val BATTLE_PLAN_ACTION_TYPES = setOf("battlePlanSave", "battlePlanSeal", "battle
 // ── W6 REST mutation batch — collapsed intake type sets ──
 // sendMessage/deleteMessage 는 단일-타입 → 아래 `when`에서 직접 처리.
 // buildNationCandidate 는 Q-D1 RESOLVED: BOOLEAN_OK_TYPES 에 유지 → 여기서 다루지 않는다.
-/** 경매 개설 3코드(W6c) — collapsed [AuctionOpenResult] shape. */
-private val AUCTION_OPEN_TYPES = setOf("auctionOpenBuyRice", "auctionOpenSellRice", "auctionOpenUnique")
-
 /** 외교 서신 4코드(W5d + W0-7 respond) — collapsed [DiploLetterResult] shape. */
 private val DIPLO_LETTER_TYPES =
     setOf("diploSendLetter", "diploRollbackLetter", "diploDestroyLetter", "diploRespondLetter")
@@ -718,9 +594,6 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             return BattlePlanActionResult.serializer()
         }
         // ── W6 REST mutation batch — collapsed intake selectors (keyed on `type` only) ──
-        if (type in AUCTION_OPEN_TYPES) {
-            return AuctionOpenResult.serializer()
-        }
         if (type in DIPLO_LETTER_TYPES) {
             return DiploLetterResult.serializer()
         }
@@ -743,17 +616,11 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "auctionFinalize" -> if (ok) AuctionFinalizeOk.serializer() else AuctionFinalizeFail.serializer()
             "troopJoin" -> if (ok) TroopJoinOk.serializer() else TroopJoinFail.serializer()
             "troopExit" -> if (ok) TroopExitOk.serializer() else TroopExitFail.serializer()
-            "tournamentRefund" -> if (ok) TournamentRefundOk.serializer() else TournamentRefundFail.serializer()
-            "tournamentBettingPayout" -> if (ok) TournamentBettingPayoutOk.serializer() else TournamentBettingPayoutFail.serializer()
-            "tournamentReward" -> if (ok) TournamentRewardOk.serializer() else TournamentRewardFail.serializer()
             "voteReward" -> if (ok) VoteRewardOk.serializer() else VoteRewardFail.serializer()
             "setNationMeta" -> if (ok) SetNationMetaOk.serializer() else SetNationMetaFail.serializer()
             "adjustGeneralResources" -> if (ok) AdjustGeneralResourcesOk.serializer() else AdjustGeneralResourcesFail.serializer()
             "adjustGeneralMeta" -> if (ok) AdjustGeneralMetaOk.serializer() else AdjustGeneralMetaFail.serializer()
-            "tournamentMatchResult" -> if (ok) TournamentMatchResultOk.serializer() else TournamentMatchResultFail.serializer()
             "patchGeneral" -> if (ok) PatchGeneralOk.serializer() else PatchGeneralFail.serializer()
-            "auctionBid" -> if (ok) AuctionBidOk.serializer() else AuctionBidFail.serializer()
-            "placeBet" -> if (ok) PlaceBetOk.serializer() else PlaceBetFail.serializer()
             "acceptDiplomaticMessage" -> if (ok) AcceptDiplomaticMessageOk.serializer() else AcceptDiplomaticMessageFail.serializer()
             "acceptRaiseInvaderMessage" -> if (ok) AcceptRaiseInvaderMessageOk.serializer() else AcceptRaiseInvaderMessageFail.serializer()
             "declineDiplomaticMessage" -> if (ok) DeclineDiplomaticMessageOk.serializer() else DeclineDiplomaticMessageFail.serializer()

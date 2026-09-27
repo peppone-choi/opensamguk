@@ -357,7 +357,7 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertLess(materialize, validate)
         self.assertLess(validate, image_build)
         self.assertIn(
-            "opensamguk.infra.seed.ScenarioJsonTest.committed runtime scenarios preserve frozen V2 and opt into new-world-only V3 explicitly",
+            "opensamguk.infra.seed.ScenarioJsonTest.product runtime scenario declares the HWIHA new world and satisfies its seed contract",
             workflow[validate:image_build],
         )
 

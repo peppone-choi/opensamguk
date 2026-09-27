@@ -1,22 +1,23 @@
 package opensamguk.logic.record
 
 import opensamguk.logic.input.RecordKind
+import opensamguk.logic.renown.RenownEventSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class GameEventTest {
     private val whenOccurred = OccurredAt(200, 2, 3, 0)
     private val key = EventKey.derive("turn", "200", "2", "3", "actor-1")
 
     @Test
-    fun `all 31 existing record kinds have a new classification`() {
+    fun `all existing record kinds have a new classification`() {
         val legacy = RecordKind::class.java.declaredFields
             .filter { it.type == String::class.java && it.name != "REFS_META_KEY" }
             .map { it.get(null) as String }.toSet()
-        assertEquals(31, legacy.size)
-        assertEquals(legacy, EventKind.entries.map { it.code }.toSet() - EventKind.OWNER_CHANGED.code)
+        assertTrue(legacy.all { EventKind.fromCode(it) != null })
         assertEquals(5, EventKind.entries.map { it.section }.toSet().size)
     }
 
@@ -73,13 +74,15 @@ class GameEventTest {
         assertFailsWith<IllegalArgumentException> { EventKey.derive("rendered sentence") }
         assertFailsWith<IllegalArgumentException> { OccurredAt(200, 13, 1, 0) }
         assertFailsWith<IllegalArgumentException> { OccurredAt(200, 1, 4, 0) }
-        assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, emptySet()) }
+        assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, 2, emptySet()) }
+        assertFailsWith<IllegalArgumentException> { AudienceTarget.Retinue(1, 0, setOf(3)) }
         assertFailsWith<IllegalArgumentException> { Publication(PublicationState.PRIVATE, whenOccurred) }
         val mutable = mutableSetOf(3, 5)
-        val sealed = AudienceTarget.Retinue(1, mutable)
+        val sealed = AudienceTarget.Retinue(1, 2, mutable)
         mutable.add(8)
         assertEquals(setOf(3, 5), sealed.authorizedGeneralIds)
-        assertEquals(sealed, AudienceTarget.Retinue(1, setOf(5, 3)))
+        assertEquals(sealed, AudienceTarget.Retinue(1, 2, setOf(5, 3)))
+        assertTrue(sealed != AudienceTarget.Retinue(1, 3, setOf(5, 3)))
         assertEquals(AudienceTarget.Court(2, setOf(3)), AudienceTarget.Court(2, setOf(3)))
     }
 
@@ -111,5 +114,39 @@ class GameEventTest {
         val assessment = GameEvent(1, EventKind.YUEDAN_ASSESSED, whenOccurred, AudienceTarget.Self(7),
             Publication(PublicationState.PRIVATE), key, facts = assessmentFacts)
         assertEquals(assessmentFacts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(assessment.facts)))
+    }
+
+    @Test
+    fun `reward receipt requires named participants amount and enumerated reason`() {
+        val refs = mapOf(RefRole.ISSUER to EventRef.General(3), RefRole.TARGET to EventRef.General(7))
+        val facts = mapOf(FactRole.MONEY to EventFact.Amount(50),
+            FactRole.REASON to EventFact.RewardReason(RewardReasonCode.WAR_MERIT))
+        val receipt = GameEvent(1, EventKind.REWARD_RECEIVED, whenOccurred,
+            AudienceTarget.Self(7), Publication(PublicationState.PRIVATE), key, refs, facts)
+        assertEquals(refs, EventPayloadCodec.decodeRefs(EventPayloadCodec.encodeRefs(receipt.refs)))
+        assertEquals(facts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(receipt.facts)))
+        assertFailsWith<IllegalArgumentException> { receipt.copy(refs = refs - RefRole.ISSUER) }
+        assertFailsWith<IllegalArgumentException> { receipt.copy(facts = facts - FactRole.REASON) }
+        assertFailsWith<IllegalArgumentException> { receipt.copy(audience = AudienceTarget.Self(8)) }
+        assertFailsWith<IllegalArgumentException> {
+            receipt.copy(audience = AudienceTarget.Public, publication = Publication(PublicationState.PUBLISHED))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            EventPayloadCodec.decodeFacts("""{"REASON":"unreviewed"}""")
+        }
+    }
+
+    @Test
+    fun `renown source is enumerated and visible only to its actor`() {
+        val refs = mapOf(RefRole.ACTOR to EventRef.General(7))
+        val facts = mapOf(FactRole.SOURCE to EventFact.RenownSource(RenownEventSource.COUNTY_CAPTURE))
+        val event = GameEvent(1, EventKind.RENOWN_EVENT, whenOccurred,
+            AudienceTarget.Self(7), Publication(PublicationState.PRIVATE), key, refs, facts)
+        assertEquals(facts, EventPayloadCodec.decodeFacts(EventPayloadCodec.encodeFacts(event.facts)))
+        assertFailsWith<IllegalArgumentException> { event.copy(facts = emptyMap()) }
+        assertFailsWith<IllegalArgumentException> { event.copy(audience = AudienceTarget.Self(8)) }
+        assertFailsWith<IllegalArgumentException> {
+            EventPayloadCodec.decodeFacts("""{"SOURCE":"invented"}""")
+        }
     }
 }

@@ -41,6 +41,7 @@ interface ScenarioStartEventContext : EventActionContext {
     fun allocateNationId(): Int
 
     fun stageGeneral(general: BuiltGeneral): Int
+    fun stageDeclaredRetainer(generalId: Int, masterName: String)
     fun stageNation(nation: Nation)
     fun stageDiplomacy(diplomacy: Diplomacy)
     fun stageNationTurn(turn: NationTurn)
@@ -88,6 +89,7 @@ class RegNpcAction(
     private val charm: Int = 50,
     private val appearanceYear: Int? = null,
     private val rtkMetadata: Map<String, Any?> = emptyMap(),
+    private val retainerMasterName: String? = null,
 ) : EventAction {
     override fun run(ctx: EventActionContext) {
         val world = ctx as? ScenarioStartEventContext
@@ -122,7 +124,8 @@ class RegNpcAction(
             )
             ?.copy(picture = ScenarioPictureResolver.resolve(world, picture, name))
             ?: return
-        world.stageGeneral(built)
+        val generalId = world.stageGeneral(built)
+        retainerMasterName?.let { world.stageDeclaredRetainer(generalId, it) }
     }
 
     companion object {
@@ -151,6 +154,8 @@ class RegNpcAction(
                 charm = intArg(args, 15, 50),
                 appearanceYear = appearanceYear,
                 rtkMetadata = rtk14Metadata(args, birth, death, appearanceYear),
+                // ScenarioImporter appends the declared master at slot 25 only for future officers.
+                retainerMasterName = nullableStringArg(args, 25),
             )
         }
 

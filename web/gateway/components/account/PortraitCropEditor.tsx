@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { CROP_KINDS, PORTRAIT_FRAMES, clamp, cropAt, cropZoom, initialCrops, moveCrop, validateSource, validateSourceDimensions, zoomCrop, type CropKind, type CropRect, type PortraitCrops } from '@/lib/portraitCrop';
 
 type Props = {
@@ -63,7 +63,9 @@ export default function PortraitCropEditor({ file, initial, disabled = false, on
         if (source && rect) update(zoomCrop(rect, source.w, source.h, kind, value));
     };
     // Native non-passive handler lets wheel zoom the frame without scrolling the page.
-    useEffect(() => {
+    // Layout effect: attach in the same commit that shows the frame. A passive effect can run
+    // after the frame is already on screen, so an early wheel scrolled the page instead.
+    useLayoutEffect(() => {
         const element = viewport.current;
         const wheel = (e: WheelEvent) => {
             if (disabled) return;

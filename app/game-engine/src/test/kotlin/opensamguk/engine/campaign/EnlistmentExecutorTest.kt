@@ -8,6 +8,10 @@ import opensamguk.logic.input.*
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 
 class EnlistmentExecutorTest {
     private fun general(id: Int, nation: Int = 0, lord: Boolean = false, human: Boolean = false) = TurnGeneral(
@@ -66,6 +70,11 @@ class EnlistmentExecutorTest {
         assertEquals(3, world.listRetainers().size)
         assertEquals(result.retainerId, world.getState().meta["maxRetainerId"])
         val payload = opensamguk.engine.flush.DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertEquals(listOf(EventKind.ENLISTED, EventKind.RETAINER_JOINED), payload.gameEvents.map { it.kind })
+        assertEquals(AudienceTarget.Self(1), payload.gameEvents[0].audience)
+        assertEquals(AudienceTarget.Self(10), payload.gameEvents[1].audience)
+        assertEquals(EventRef.Nation(1), payload.gameEvents[0].refs[RefRole.NATION])
+        assertEquals(EventRef.General(1), payload.gameEvents[1].refs[RefRole.PERSON])
         assertEquals(setOf(1, 2), payload.updatedGenerals.map { it.id }.toSet())
         assertTrue(payload.updatedGenerals.all { it.nationId == 1 })
         assertEquals(3, payload.updatedNations.single().gennum)

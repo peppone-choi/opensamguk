@@ -37,22 +37,6 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `placeBet maps the merged extraArgs body and threads the resolved generalId`() {
-        val cmd = CommandWireMapper.toCommand(
-            code = "placeBet",
-            generalId = 42,
-            requestId = "req-bet",
-            argJson = """{"bettingId":7,"bettingType":[1,3],"amount":500}""",
-        )
-        val bet = roundTrip(cmd!!) as TurnDaemonCommand.PlaceBet
-        assertEquals("req-bet", bet.requestId)
-        assertEquals(7, bet.bettingId)
-        assertEquals(42, bet.generalId) // resolved id, NOT from the body
-        assertEquals(listOf(1, 3), bet.bettingType)
-        assertEquals(500, bet.amount)
-    }
-
-    @Test
     fun `json null arguments map to Kotlin null, not the string "null" (4X-B fallbackText)`() {
         val cmd = CommandWireMapper.toCommand(
             code = "operationDeclare", generalId = 10, requestId = "req-op",
@@ -68,18 +52,11 @@ class CommandWireMapperTest {
     }
 
     @Test
-    fun `auctionBid maps auctionId amount and optional tryExtendCloseDate`() {
-        val cmd = CommandWireMapper.toCommand(
-            code = "auctionBid",
-            generalId = 11,
-            requestId = "req-bid",
-            argJson = """{"auctionId":9,"amount":1200,"isUnique":true}""",
-        )
-        val bid = roundTrip(cmd!!) as TurnDaemonCommand.AuctionBid
-        assertEquals(9, bid.auctionId)
-        assertEquals(11, bid.generalId)
-        assertEquals(1200, bid.amount)
-        assertNull(bid.tryExtendCloseDate) // not supplied → null (handler defaults to true)
+    fun `retired auction commands cannot enter the immediate intake wire`() {
+        for (code in listOf("auctionBid", "auctionOpenBuyRice", "auctionOpenSellRice", "auctionOpenUnique")) {
+            assertTrue(!CommandWireMapper.isIntakeCommand(code))
+            assertEquals(null, CommandWireMapper.toCommand(code, 11, "retired", """{"auctionId":9,"amount":1200}"""))
+        }
     }
 
     @Test
@@ -316,10 +293,8 @@ class CommandWireMapperTest {
         assertEquals(15, rate.amount)
 
         // malformed body → empty args → fields fall to their command defaults (handler then denies/validates).
-        val bet = CommandWireMapper.toCommand("placeBet", 10, "r", "not json") as TurnDaemonCommand.PlaceBet
-        assertEquals(0, bet.bettingId)
-        assertEquals(0, bet.amount)
-        assertTrue(bet.bettingType.isEmpty())
+        val malformed = CommandWireMapper.toCommand("setRate", 10, "r", "not json") as TurnDaemonCommand.SetRate
+        assertEquals(0, malformed.amount)
     }
 
     @Test

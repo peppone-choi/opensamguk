@@ -4,6 +4,11 @@ import opensamguk.engine.siege.RoadFortPassage
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.world.*
 
 /** Returns whether a deployed corps owns this commander's movement stage. */
@@ -58,6 +63,24 @@ class CorpsMarchTurn(private val world: InMemoryTurnWorld, private val recorder:
                     }
                 } else null
                 if (before?.checkpoint?.stop == LandMarchStop.ARRIVED && result.state.checkpoint.stop == LandMarchStop.ARRIVED) return true
+                val deployed = requireNotNull(corps)
+                val turn = world.getState()
+                val cityId = world.cityOfLandNode(order.destination)
+                val eventRefs = mutableMapOf<RefRole, EventRef>(RefRole.ACTOR to EventRef.General(commanderId))
+                if (cityId != null) eventRefs[RefRole.CITY] = EventRef.City(cityId)
+                world.recordEvent(
+                    kind = EventKind.MARCH_CORPS,
+                    audience = if (deployed.ownerGeneralId != commanderId && deployed.nationId > 0)
+                        AudienceTarget.Retinue(deployed.ownerGeneralId, deployed.nationId,
+                            setOf(deployed.ownerGeneralId, commanderId))
+                    else AudienceTarget.Self(commanderId),
+                    eventKey = EventKey.derive("march.corps", world.worldId.value.toString(),
+                        turn.currentYear.toString(), turn.currentMonth.toString(), turn.currentPhase.toString(),
+                        commanderId.toString(), *order.orderId.toByteArray(Charsets.UTF_8)
+                            .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+                            .chunked(64).map { "id$it" }.toTypedArray()),
+                    refs = eventRefs,
+                )
                 log(commanderId,when(result.state.checkpoint.stop) {
                     LandMarchStop.ARRIVED -> "출병 목적지에 도착했습니다."
                     LandMarchStop.BUDGET_EXHAUSTED -> "부대를 거느리고 목적지로 행군하고 있습니다."

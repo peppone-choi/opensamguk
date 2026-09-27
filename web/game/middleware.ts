@@ -88,15 +88,17 @@ const RETIRED_GAME_PATHS = new Set([
   'admin1', 'admin2', 'admin5', 'admin7', 'admin8',
   'auction', 'battle-plan', 'betting', 'chief-center', 'coming-soon',
   'diplomacy', 'inherit', 'my-boss', 'nation', 'nation-betting',
-  'nation-finance', 'npc-control', 'simulator', 'tournament',
+  'nation-finance', 'npc-control', 'select-pool', 'simulator', 'tournament',
   'tournament-admin', 'troop', 'v2-lab', 'vote',
 ]);
+// 삼모 전용 랭킹 4종(ADR-LITE-049 2026-09-26: 대체 없이 삭제). 첫 조각만으로는 못 막아 rankings 아래를 따로 본다.
+const RETIRED_RANKING_PATHS = new Set(['emperor', 'hall-of-fame', 'npcs', 'traffic']);
 
 function isRetiredGamePath(pathname: string): boolean {
   const segments = pathname.split('/');
   if (segments[1] !== 'game') return false;
   const rest = segments[2] === configuredServerId() ? segments.slice(3) : segments.slice(2);
-  return RETIRED_GAME_PATHS.has(rest[0]);
+  return RETIRED_GAME_PATHS.has(rest[0]) || (rest[0] === 'rankings' && RETIRED_RANKING_PATHS.has(rest[1]));
 }
 
 export function middleware(req: NextRequest) {
