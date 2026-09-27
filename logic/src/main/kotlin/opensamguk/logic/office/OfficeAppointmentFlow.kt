@@ -23,6 +23,8 @@ data class OfficeAppointmentContext(
     val candidateId: Int,
     val candidateNationId: Int,
     val candidateIsHuman: Boolean,
+    val candidateIsLiving: Boolean,
+    val candidateIsRetired: Boolean,
     val jurisdiction: OfficeJurisdictionSnapshot,
     val activeTenures: List<OfficeTenure>,
     val centralOfficeIds: Set<String>,
@@ -35,6 +37,7 @@ enum class OfficeAppointmentFailure {
     CANDIDATE_MISMATCH,
     NOT_RULER,
     CANDIDATE_OUTSIDE_NATION,
+    CANDIDATE_UNAVAILABLE,
     CENTRAL_REQUIRES_EDICT,
     UNKNOWN_OFFICE,
     COUNTY_OFFICE_USES_PLACEMENT,
@@ -66,6 +69,7 @@ object OfficeAppointmentRules {
         if (context.candidateId != request.candidateId) return OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.CANDIDATE_MISMATCH)
         if (!context.issuerIsRuler) return OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.NOT_RULER)
         if (context.candidateNationId != context.issuerNationId) return OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.CANDIDATE_OUTSIDE_NATION)
+        if (!context.candidateIsLiving || context.candidateIsRetired) return OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.CANDIDATE_UNAVAILABLE)
         if (request.officeId in context.centralOfficeIds) return OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.CENTRAL_REQUIRES_EDICT)
         val definition = catalog.definition(request.officeId)
             ?: return OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.UNKNOWN_OFFICE)

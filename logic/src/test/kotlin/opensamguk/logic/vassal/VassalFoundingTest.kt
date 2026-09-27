@@ -2,7 +2,6 @@ package opensamguk.logic.vassal
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 
 class VassalFoundingTest {
@@ -19,11 +18,10 @@ class VassalFoundingTest {
     fun `human direct retinue founding needs second consent and returns atomic plan`() {
         assertEquals(VassalFoundingAssessment.Allowed(true),
             VassalFounding.assess(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12))
-        assertFailsWith<IllegalArgumentException> {
-            VassalFounding.plan(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, false)
-        }
-        assertEquals(VassalFoundingPlan(1, 2, proposed),
-            VassalFounding.plan(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, true))
+        assertEquals(VassalFoundingCompletion.Denied(VassalFoundingFailure.CANDIDATE_REFUSED),
+            VassalFounding.complete(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, false))
+        assertEquals(VassalFoundingCompletion.Founded(VassalFoundingPlan(1, 2, proposed)),
+            VassalFounding.complete(proposed, issuer, candidate, mapOf(10 to 7), emptyList(), rules, 12, true))
         assertEquals(VassalFoundingAssessment.Allowed(false),
             VassalFounding.assess(proposed, issuer, candidate.copy(isHuman = false), mapOf(10 to 7), emptyList(), rules, 12))
     }

@@ -23,7 +23,7 @@
 | `court.amendVassal` | `{ "contractId":"contract-1", "tributePercent":25 }` | 기존 계약 변경. 변경 가능한 필드와 승인 조건은 실제 handler 배선 시 원장에 고정한다. |
 | `court.endVassal` | `{ "contractId":"contract-1" }` | 계약 종료. 독립은 별도 1층 정치 사건 경로를 탄다. |
 
-`court.appoint`/`court.dismiss`의 거절 코드는 `OfficeAppointmentFailure`, `court.foundVassal`의 거절 코드는 `VassalFoundingFailure`를 사용한다. 예를 들어 치소 상실은 `SEAT_NOT_OWNED`, 동의 대기는 `CANDIDATE_CONSENT_PENDING`, 거절은 `CANDIDATE_REFUSED`다. 아직 정하지 않은 계약 변경·종료 상세 사유를 임의로 성공 처리하지 않는다.
+`court.appoint`/`court.dismiss`의 거절 코드는 `OfficeAppointmentFailure`, `court.foundVassal`의 거절 코드는 `VassalFoundingFailure`를 사용한다. 예를 들어 치소 상실은 `SEAT_NOT_OWNED`, 후보의 사망·은퇴는 `CANDIDATE_UNAVAILABLE`, 봉신 동의 대기는 `CANDIDATE_CONSENT_PENDING`, 거절은 `CANDIDATE_REFUSED`다. 사전검사와 실행 직전 판정 모두 후보의 최신 생존·은퇴 상태를 사용한다. 아직 정하지 않은 계약 변경·종료 상세 사유를 임의로 성공 처리하지 않는다.
 
 ## 저장·재현
 

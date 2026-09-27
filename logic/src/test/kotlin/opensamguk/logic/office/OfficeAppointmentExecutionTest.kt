@@ -12,7 +12,8 @@ class OfficeAppointmentExecutionTest {
     private val request = OfficeAppointmentRequest(1, 2, "office.commandery-prefect", "hhs-group:109:京兆尹", 100)
     private val snapshot = OfficeJurisdictionSnapshot(request.jurisdictionId, setOf(100, 101), 100, 100,
         setOf(100, 101), setOf(100), setOf(100), emptySet())
-    private val context = OfficeAppointmentContext(1, 7, true, 2, 7, true, snapshot, emptyList(), emptySet())
+    private val context = OfficeAppointmentContext(1, 7, true, 2, 7, true, true, false,
+        snapshot, emptyList(), emptySet())
     private val offered = OfficeAppointmentFlow.issue("offer-1", request, Phase(196, 1, 1), true, DispatchPolicy())
 
     @Test
@@ -37,6 +38,17 @@ class OfficeAppointmentExecutionTest {
         assertEquals(OfficeAppointmentCompletion.Denied(OfficeAppointmentFailure.DUPLICATE_TENURE_ID),
             OfficeAppointmentExecution.complete("tenure-1", accepted,
                 context.copy(activeTenures = listOf(applied.tenure.copy(endedTurn = 12))), catalog, rules, 13, 14))
+    }
+
+    @Test
+    fun `accepted offer is denied if the candidate retires or dies before execution`() {
+        val accepted = OfficeAppointmentFlow.respond(offered, null, offered.dueAt)
+        assertEquals(OfficeOfferStatus.ACCEPTED, accepted.status)
+        val unavailable = OfficeAppointmentCompletion.Denied(OfficeAppointmentFailure.CANDIDATE_UNAVAILABLE)
+        assertEquals(unavailable, OfficeAppointmentExecution.complete("tenure-retired", accepted,
+            context.copy(candidateIsRetired = true), catalog, rules, 10, 11))
+        assertEquals(unavailable, OfficeAppointmentExecution.complete("tenure-dead", accepted,
+            context.copy(candidateIsLiving = false), catalog, rules, 10, 11))
     }
 
     @Test

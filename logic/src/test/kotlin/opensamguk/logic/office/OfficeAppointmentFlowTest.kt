@@ -12,7 +12,8 @@ class OfficeAppointmentFlowTest {
     private val request = OfficeAppointmentRequest(1, 2, "office.commandery-prefect", "hhs-group:109:京兆尹", 100)
     private val snapshot = OfficeJurisdictionSnapshot(
         request.jurisdictionId, setOf(100, 101), 100, 100, setOf(100, 101), setOf(100), setOf(100), emptySet())
-    private val context = OfficeAppointmentContext(1, 7, true, 2, 7, true, snapshot, emptyList(), setOf("office.central.chancellor"))
+    private val context = OfficeAppointmentContext(1, 7, true, 2, 7, true, true, false,
+        snapshot, emptyList(), setOf("office.central.chancellor"))
 
     @Test
     fun `ruler can offer local office to human candidate`() {
@@ -21,6 +22,13 @@ class OfficeAppointmentFlowTest {
             OfficeAppointmentRules.assess(request, context.copy(issuerIsRuler = false), catalog, rules))
         assertEquals(OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.CANDIDATE_OUTSIDE_NATION),
             OfficeAppointmentRules.assess(request, context.copy(candidateNationId = 8), catalog, rules))
+    }
+
+    @Test
+    fun `dead or retired candidates cannot receive an office offer`() {
+        val unavailable = OfficeAppointmentAssessment.Denied(OfficeAppointmentFailure.CANDIDATE_UNAVAILABLE)
+        assertEquals(unavailable, OfficeAppointmentRules.assess(request, context.copy(candidateIsLiving = false), catalog, rules))
+        assertEquals(unavailable, OfficeAppointmentRules.assess(request, context.copy(candidateIsRetired = true), catalog, rules))
     }
 
     @Test

@@ -91,22 +91,6 @@ object VassalFounding {
         return VassalFoundingAssessment.Allowed(candidate.isHuman)
     }
 
-    fun plan(
-        proposed: VassalContract,
-        issuer: VassalLord,
-        candidate: VassalFoundingCandidate,
-        countyNationById: Map<Int, Int>,
-        contracts: Collection<VassalContract>,
-        rules: VassalRules,
-        atTurn: Long,
-        candidateConsented: Boolean,
-    ): VassalFoundingPlan {
-        val completion = complete(proposed, issuer, candidate, countyNationById, contracts, rules, atTurn,
-            candidateConsented)
-        require(completion is VassalFoundingCompletion.Founded) { "vassal founding denied: $completion" }
-        return completion.plan
-    }
-
     /** Rechecks the same rule on current state before the handler applies the three writes atomically. */
     fun complete(
         proposed: VassalContract,

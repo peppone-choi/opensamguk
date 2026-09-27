@@ -7,6 +7,8 @@ data class OfficeNpcCandidate(
     val isHuman: Boolean,
     val merit: Int,
     val aptitude: Int,
+    val isLiving: Boolean,
+    val isRetired: Boolean,
 ) {
     init { require(generalId > 0 && nationId >= 0 && merit >= 0 && aptitude >= 0) }
 }
@@ -58,6 +60,7 @@ object OfficeNpcSelector {
                             OfficeAppointmentContext(
                                 vacancy.issuerId, vacancy.issuerNationId, true,
                                 candidate.generalId, candidate.nationId, candidate.isHuman,
+                                candidate.isLiving, candidate.isRetired,
                                 vacancy.jurisdiction, activeTenures.toList(), centralOfficeIds,
                             ),
                             catalog, rules,
