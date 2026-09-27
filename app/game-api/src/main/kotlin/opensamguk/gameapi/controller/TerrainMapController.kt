@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/map")
 class TerrainMapController(
-    @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapFile: String,
+    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapFile: String,
     private val worlds: ActiveWorldArtifactResolver,
 ) {
 

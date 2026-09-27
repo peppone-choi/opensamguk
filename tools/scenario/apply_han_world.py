@@ -38,7 +38,7 @@ import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-SCEN = ROOT / "infra/src/main/resources/scenario"
+SCEN = ROOT / "data/archive/scenarios"
 HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
 HAN_V3_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 HAN_V3_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"

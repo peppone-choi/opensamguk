@@ -39,9 +39,9 @@ internal const val LOCAL_SANITIZED_AGGREGATE_FIXTURE_CONFIG_SCHEMA_VERSION = "cq
 internal const val LOCAL_SANITIZED_AGGREGATE_FIXTURE_KIND = "local-sanitized-aggregate-surrogate"
 private const val PAYLOAD_BYTE_SEMANTICS = "selected-loader-fields-postgres-text-bytes.v1"
 private const val LOADER_INPUT_INVENTORY_SCHEMA_VERSION = "cqrs-loader-input-inventory.v2"
-private const val SCENARIO_CODE = "scenario_1010"
+private const val SCENARIO_CODE = "scenario_990002"
 private const val BASELINE_FIXED_INSTANT = "0184-01-01T00:00:00Z"
-private const val BASELINE_FIXED_SERVER_ID = "opensamguk_baseline_1010"
+private const val BASELINE_FIXED_SERVER_ID = "opensamguk_baseline"
 private const val FIXED_HOT_LOG_ROWS = 256
 private const val LOG_PAYLOAD_CHARACTERS = 192
 private const val MAX_PRODUCTION_PAYLOAD_BYTES = 1024 * 1024
@@ -557,7 +557,7 @@ private data class BaselineRunConfig(
                 ProductionShapeFixtureConfig.read(Path.of(configPath).toAbsolutePath().normalize(), profile)
             }
             require(productionShapeFixture == null || productionShapeFixture.isLocalSanitizedAggregateSurrogate) {
-                "sanitized production-shape capture is blocked: scenario_1010 seed proxy cannot materialize an approved sanitized shape; " +
+                "sanitized production-shape capture is blocked: scenario seed proxy cannot materialize an approved sanitized shape; " +
                     "use --validate-fixture-config until a deterministic sanitized materializer or approved sanitized restore exists"
             }
             val baseRows = productionShapeFixture?.baseRows

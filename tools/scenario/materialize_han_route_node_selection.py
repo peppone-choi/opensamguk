@@ -35,7 +35,7 @@ from tools.scenario.han_route_node_selection import (
 from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
 
 CURATED = ROOT / "data/curated/han"
-SCENARIOS = ROOT / "infra/src/main/resources/scenario"
+SCENARIOS = ROOT / "data/archive/scenarios"
 SOURCE_WITNESS = CURATED / "route-node-source-witness-v1.json"
 
 

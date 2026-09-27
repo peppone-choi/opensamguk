@@ -15,13 +15,13 @@ class SupplyDisconnectionPolicyLoader(
     private val objectMapper: ObjectMapper,
     @Value("\${HAN_SUPPLY_DISCONNECTION_LEDGER_FILE:data/curated/han/supply-disconnection-adjudications-v1.json}")
     private val ledgerPath: String,
-    @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapPath: String,
-    @Value("\${HAN_RUNTIME_MAP_FILE:classpath:map/han.json}") private val runtimeMapPath: String,
+    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapPath: String,
+    @Value("\${MAP_RUNTIME_FILE:classpath:map/han.json}") private val runtimeMapPath: String,
     @Value("\${HAN_SUPPLY_SOURCE_LEDGER_FILE:data/curated/han/territory-disconnection-adjudications-v1.json}")
     private val sourceLedgerPath: String,
     @Value("\${HAN_WORLD_V3_SUPPLY_DISCONNECTION_LEDGER_FILE:data/curated/han/supply-disconnection-adjudications-v3.json}")
     private val v3LedgerPath: String = "data/curated/han/supply-disconnection-adjudications-v3.json",
-    @Value("\${HAN_WORLD_V3_RUNTIME_MAP_FILE:classpath:map/han-world-v3.json}")
+    @Value("\${MAP_RELEASE_RUNTIME_FILE:classpath:map/han-world-v3.json}")
     private val v3RuntimeMapPath: String = "classpath:map/han-world-v3.json",
 ) {
     private val cached = linkedMapOf<String, CanonicalPolicies>()
