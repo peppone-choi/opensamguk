@@ -100,13 +100,13 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
         # 849–1024 는 城 없던 han-tiles 縣 관할 176곳(w2), 1025–1097 은 수·진·관 거점 73곳(w3)이다.
         # 2026-09-17: 同縣 중복 977·989 를 거두고 그 번호와 1099–1133 에 郡國 밖 취락 37곳(w5)이 섰다.
-        self.assertEqual(1447, len({city for group in by_jun.values() for city in group}))
+        self.assertEqual(1428, len({city for group in by_jun.values() for city in group}))
         self.assertIn(781, by_jun["제남국"])
 
     def test_all_15_scenarios_migrate_references_and_licheng_owner_from_source(self) -> None:
         self.assertEqual(15, len(apply_han_world.ACTIVE_GENERAL_CONTRACTS))
         by_jun, id_of, seat_of = apply_han_world.load_world("han-world-v3")
-        known = set(active_numeric_ids(1447))
+        known = set(active_numeric_ids(1428))
         ownership = json.loads(apply_han_world.OWNERSHIP.read_text(encoding="utf-8"))
         che2jun = {
             key: value["jun"]
@@ -155,7 +155,7 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
             migration_doc["appendedRows"][0],
         )
         self.assertEqual(
-            [i for i in active_numeric_ids(1447) if i > 780],
+            [i for i in active_numeric_ids(1428) if i > 780],
             [row["newCityId"] for row in migration_doc["appendedRows"]],
         )
         self.assertEqual(

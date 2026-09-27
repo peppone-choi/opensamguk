@@ -34,6 +34,8 @@ SIMPLIFICATION_PATH = ROOT / "data" / "curated" / "han" / "han-name-simplificati
 TILES_PATH = ROOT / "data" / "map" / "han-tiles.json"
 EXTRACTS_PATH = ROOT / "data" / "curated" / "han" / "officer-native-place-extracts-v1.json"
 LEDGER_PATH = ROOT / "data" / "curated" / "han" / "officer-native-county-v1.json"
+# 지도에 다른 이름(개명·이체자·같은 점)으로 있는 郡國志 縣 → 그 관할. 2026-09-27 중복 합성 城을 거두며 생겼다.
+COUNTY_ALIASES_PATH = ROOT / "data" / "curated" / "han" / "junguozhi-county-aliases-v1.json"
 
 PRODUCT_SCENARIO_PATTERN = re.compile(r"^scenario_1[01]\d\d\.json$")
 GENERAL_KEYS = ("general", "general_ex", "general_neutral")
@@ -314,10 +316,11 @@ def extract(corpus_db: Path, tables: CharTables, wanted: dict[str, str]) -> dict
 
 
 class Gazetteer:
-    def __init__(self, tiles: dict, simplification: dict, tables: CharTables):
+    def __init__(self, tiles: dict, simplification: dict, tables: CharTables, county_aliases: dict | None = None):
         sys.path.insert(0, str(ROOT))
         from tools.map.audit_county_coverage import make_normalizer
         self._audit_county_normalizer = make_normalizer()
+        self._audit_group_normalizer = make_normalizer(group=True)
         self._tables = tables
         self._simplify = {ord(k): v for k, v in simplification["table"].items()}
         for row in simplification.get("reviewedVariantAdditions", []):
@@ -346,6 +349,11 @@ class Gazetteer:
                 continue
             self._county_index.setdefault(self.county_key(record["nameCh"]), []).append(record["id"])
             self._county_commandery[record["id"]] = record.get("commanderyId") or commandery_by_jurisdiction[record["id"]]
+        # (郡, 縣) → 관할. 이름 대조가 못 잇는 사람 판정 별칭이다(junguozhi-county-aliases-v1).
+        self._county_aliases = {
+            (self._audit_group_normalizer(row["commandery"]), self.county_key(row["sourceName"])): row["jurisdictionId"]
+            for row in (county_aliases or {}).get("aliases", [])
+        }
 
     def norm(self, text: str) -> str:
         return self._tables.fold(text).translate(self._simplify)
@@ -396,6 +404,9 @@ class Gazetteer:
             return {"matchStatus": "MATCHED", **base, "jurisdictionId": inside[0]}
         if len(inside) > 1:
             return {"matchStatus": "AMBIGUOUS", **base, "candidateJurisdictionIds": sorted(inside)}
+        alias = self._county_aliases.get((self._audit_group_normalizer(commandery["nameCh"]), key))
+        if not inside and alias is not None:
+            return {"matchStatus": "MATCHED", **base, "jurisdictionId": alias}
         result = {"matchStatus": "COUNTY_NOT_IN_COMMANDERY", **base}
         if everywhere:
             result["candidateJurisdictionIds"] = sorted(everywhere)
@@ -554,6 +565,7 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
             "charMap": "data/curated/han/shinjitai-to-traditional-v1.json",
             "extracts": "data/curated/han/officer-native-place-extracts-v1.json",
             "tiles": "data/map/han-tiles.json",
+            "countyAliases": "data/curated/han/junguozhi-county-aliases-v1.json",
         },
         "stats": stats,
         "officers": rows,
@@ -566,7 +578,8 @@ def build_ledger(registry, name_map, names_by_scenario, tables, extracts, gazett
 def build_from_committed() -> dict:
     tables = CharTables(_load_json(CHAR_MAP_PATH))
     paths = product_scenario_paths()
-    gazetteer = Gazetteer(_load_json(TILES_PATH), _load_json(SIMPLIFICATION_PATH), tables)
+    gazetteer = Gazetteer(_load_json(TILES_PATH), _load_json(SIMPLIFICATION_PATH), tables,
+                          _load_json(COUNTY_ALIASES_PATH))
     return build_ledger(
         _read_tsv(REGISTRY_PATH), _read_tsv(NAME_MAP_PATH), scenario_names(paths), tables,
         _load_json(EXTRACTS_PATH), gazetteer, [p.stem.split("_", 1)[1] for p in paths],

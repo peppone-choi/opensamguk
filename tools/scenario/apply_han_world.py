@@ -151,7 +151,7 @@ def _load_verified_v3_world() -> dict:
         (row["routeNodeKey"], row["id"], row["physicalPlaceRef"])
         for row in world["cities"]
     }
-    if manifest_nodes != world_nodes or len(world_nodes) != 1447:  # 사용자 승인 인공 城 223곳을 더해 1224 → 1447
+    if manifest_nodes != world_nodes or len(world_nodes) != 1428:  # 1224 → 1447(합성 223) → 1428(중복 23 은퇴·동명 4 추가)
         raise ValueError("han-world-v3 manifest route-node set mismatch")
     return world
 

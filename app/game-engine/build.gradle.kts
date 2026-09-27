@@ -172,7 +172,8 @@ tasks.test {
     // 다섯 번째 판(han-world-v3-1098)부터 Gradle 기본 512MB 에서 힙이 찼다(PrecheckFullCrossCallSiteTest).
     // 2026-09-23: 열한 번째 판(han-world-v3-1224)이 등록되자 CI 에서 1g 가 OutOfMemoryError 로 실행기를
     // 죽였다(game-api 가 1168 판 때 같은 이유로 2g 가 됐다).
-    maxHeapSize = "2g"
+    // 2026-09-27: 1428 판(4배 격자 번들)이 더해지자 로컬에서 2g 가 OutOfMemoryError 로 실행기를 죽였다 — 3g.
+    maxHeapSize = "3g"
     inputs.files(v2NamingConventionSources)
         .withPropertyName("v2NamingConventionSources")
         .withPathSensitivity(PathSensitivity.RELATIVE)

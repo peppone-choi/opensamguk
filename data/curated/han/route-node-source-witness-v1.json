@@ -1211,16 +1211,6 @@
       "volume": 109
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-018",
-      "corpusPath": "data/corpus/hhs-109.txt",
-      "lineEnd": 52,
-      "lineStart": 52,
-      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-      "sourceBook": "後漢書",
-      "verbatim": "〖新城{{*|左傳曰文十七年周敗戎于邥垂，杜預曰縣北有垂亭。史記秦遷西周公於{單心}狐，徐廣曰「與陽人聚相近，在雒陽南百五十里梁、新城之閒」。}}〗有高都城。{{*|史記蘇代說韓相國以高都與周者。}}有广成聚。{{*|有廣成菀。}}有[D822]聚，古[D822]氏，今名蛮中。{{*|左傳昭十六年楚殺鄤子，杜預曰縣東南有蠻城。又祭遵獲張滿也。}}",
-      "volume": 109
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-021",
       "corpusPath": "data/corpus/hhs-109.txt",
       "lineEnd": 58,
@@ -1228,16 +1218,6 @@
       "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
       "sourceBook": "後漢書",
       "verbatim": "〖平〗",
-      "volume": 109
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0002-011",
-      "corpusPath": "data/corpus/hhs-109.txt",
-      "lineEnd": 124,
-      "lineStart": 124,
-      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-      "sourceBook": "後漢書",
-      "verbatim": "〖绛〗邑。{{*|縣西有絳邑城，杜預曰故絳也。}}有翼城。{{*|左傳隱五年曲沃伐翼，杜預曰在縣東八十里。}}",
       "volume": 109
     },
     {
@@ -1251,16 +1231,6 @@
       "volume": 109
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0004-002",
-      "corpusPath": "data/corpus/hhs-109.txt",
-      "lineEnd": 172,
-      "lineStart": 172,
-      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-      "sourceBook": "後漢書",
-      "verbatim": "〖霸陵〗有枳道亭。{{*|前書秦王子嬰降於軹道旁，地道記曰霸水西。}}有长门亭。{{*|前書文帝出長門，若見五人於道北，立五帝壇。}}",
-      "volume": 109
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0004-010",
       "corpusPath": "data/corpus/hhs-109.txt",
       "lineEnd": 188,
@@ -1268,16 +1238,6 @@
       "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
       "sourceBook": "後漢書",
       "verbatim": "〖阳陵〗故属冯翊。",
-      "volume": 109
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0005-001",
-      "corpusPath": "data/corpus/hhs-109.txt",
-      "lineEnd": 194,
-      "lineStart": 194,
-      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-      "sourceBook": "後漢書",
-      "verbatim": "〖高陵〗",
       "volume": 109
     },
     {
@@ -1318,16 +1278,6 @@
       "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
       "sourceBook": "後漢書",
       "verbatim": "〖安陵〗{{*|皇覽曰：「縣西北畢陌，秦武王冢。」}}",
-      "volume": 109
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0006-003",
-      "corpusPath": "data/corpus/hhs-109.txt",
-      "lineEnd": 228,
-      "lineStart": 228,
-      "snapshotSha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-      "sourceBook": "後漢書",
-      "verbatim": "〖平陵〗",
       "volume": 109
     },
     {
@@ -1451,16 +1401,6 @@
       "volume": 110
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-004",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 138,
-      "lineStart": 138,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "碭山，出文石。{{*|史記曰高祖隱於芒、碭山澤巖石之閒。有陳勝墓。}}",
-      "volume": 110
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-007",
       "corpusPath": "data/corpus/hhs-110.txt",
       "lineEnd": 144,
@@ -1511,16 +1451,6 @@
       "volume": 110
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0012-001",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 222,
-      "lineStart": 222,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "魯國，古奄國。{{*|帝王世記曰：「黃帝生於壽丘，在魯東門之北。少昊自窮桑登帝位，窮桑在魯北，後徙曲阜。」應劭曰：「曲阜在魯城中，委曲長七八里。」左傳曰伯禽封少昊之墟。僖二十九年介葛盧舍于昌衍，杜預曰縣東南有昌平城。皇覽曰：「奄里伯公冢在城內祥舍中，民傳言魯五德奄里伯公葬其宅。」}}有大庭氏庫。{{*|杜預曰：「大庭氏，古國名，在城內，魯於其處作庫。」}}有鐵。有闕-{里}-，孔子所居。{{*|漢晉春秋曰：「鍾離意相魯，見仲尼廟頹毀，會諸生於廟中，慨然歎曰：『蔽芾甘棠，勿翦勿伐，況見聖人廟乎！』遂躬留治之。周觀輿服之在焉，自仲尼以來，莫之開也。意發視之，得古文策書，曰『亂吾書，董仲舒。治吾堂，鍾離意。璧有七，張伯盜一。』意尋案未了。而卒張伯者、治中庭，治地得六璧，上之。意曰：『此有七，何以不遂？』伯懼，探璧懷中。魯咸以為神。」意別傳曰：「意省堂有孔子小車乘，皆朽敗，意自糶俸雇漆膠之直，請魯民治之，及護几席（嗣）〔劍〕履。後得甕中素書，曰『護吾履，鍾離意』。」又禮記矍相之圃亦在城中西南，近孔子廟。而仲尼墓在魯城門北便之外泗水上，去城一里。葬地蓋一頃，墓墳南北十步，東西十三步，高一丈二尺。墓前有瓴甓為祠壇，方六尺，與地平。塋中異木以百數，魯人莫能識也。皇覽曰：「孔子本無祠堂，塋中不生荊棘及刺人草。伯魚冢在孔子冢東，與孔子冢併，大小相望。子思冢在孔子冢南。」案：今墓書孫在祖前，謂此為驕孫祔。}}有牛首亭。{{*|左傳曰桓十四年宋伐鄭，取牛首。}}有五父衢。{{*|地道記曰在城東。}}",
-      "volume": 110
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0012-002",
       "corpusPath": "data/corpus/hhs-110.txt",
       "lineEnd": 224,
@@ -1528,36 +1458,6 @@
       "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
       "sourceBook": "後漢書",
       "verbatim": "騶，本邾國。{{*|有騶山，高五里，秦始皇刻石焉。劉薈騶山記曰：「邾城在山南，去山二里。城東門外有韋賢墓，北有繹山。左傳文十三年邾遷於繹。郭璞曰繹山純石，積構連屬。城北有牙山，牙山北有唐口山，唐口山北有陽山。城北有孟軻冢焉。」}}",
-      "volume": 110
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0013-011",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 262,
-      "lineStart": 262,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "沙，侯國。{{*|魏都賦注曰有龍山。}}",
-      "volume": 110
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0014-001",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 276,
-      "lineStart": 276,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "陶，有薄落亭。",
-      "volume": 110
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0014-015",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 304,
-      "lineStart": 304,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "南〈糸言糸〉，",
       "volume": 110
     },
     {
@@ -1578,26 +1478,6 @@
       "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
       "sourceBook": "後漢書",
       "verbatim": "南深，澤故屬涿。",
-      "volume": 110
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0018-003",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 402,
-      "lineStart": 402,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "易，故屬涿。",
-      "volume": 110
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0021-008",
-      "corpusPath": "data/corpus/hhs-110.txt",
-      "lineEnd": 470,
-      "lineStart": 470,
-      "snapshotSha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-      "sourceBook": "後漢書",
-      "verbatim": "脩，故屬信都。",
       "volume": 110
     },
     {
@@ -1651,16 +1531,6 @@
       "volume": 111
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0026-006",
-      "corpusPath": "data/corpus/hhs-111.txt",
-      "lineEnd": 127,
-      "lineStart": 127,
-      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-      "sourceBook": "後漢書",
-      "verbatim": "〖山茌〗侯國。",
-      "volume": 111
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0028-010",
       "corpusPath": "data/corpus/hhs-111.txt",
       "lineEnd": 177,
@@ -1681,16 +1551,6 @@
       "volume": 111
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-001",
-      "corpusPath": "data/corpus/hhs-111.txt",
-      "lineEnd": 213,
-      "lineStart": 213,
-      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-      "sourceBook": "後漢書",
-      "verbatim": "〖郯〗本國，刺史治。{{*|博物記曰：「有勇（王）〔士〕亭，卽勇士（萬）〔菑〕丘欣。」}}",
-      "volume": 111
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-008",
       "corpusPath": "data/corpus/hhs-111.txt",
       "lineEnd": 227,
@@ -1698,16 +1558,6 @@
       "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
       "sourceBook": "後漢書",
       "verbatim": "〖陰平〗",
-      "volume": 111
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-010",
-      "corpusPath": "data/corpus/hhs-111.txt",
-      "lineEnd": 231,
-      "lineStart": 231,
-      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-      "sourceBook": "後漢書",
-      "verbatim": "〖合鄕〗{{*|漷水自此南至湖陸。}}",
       "volume": 111
     },
     {
@@ -1738,16 +1588,6 @@
       "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
       "sourceBook": "後漢書",
       "verbatim": "〖菑丘〗",
-      "volume": 111
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0033-009",
-      "corpusPath": "data/corpus/hhs-111.txt",
-      "lineEnd": 309,
-      "lineStart": 309,
-      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-      "sourceBook": "後漢書",
-      "verbatim": "〖輿〗侯國，故屬臨淮。",
       "volume": 111
     },
     {
@@ -1831,16 +1671,6 @@
       "volume": 112
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0039-003",
-      "corpusPath": "data/corpus/hhs-112.txt",
-      "lineEnd": 128,
-      "lineStart": 128,
-      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
-      "sourceBook": "後漢書",
-      "verbatim": "惤，侯國。{{*|地道記曰有百枝萊君祠。三齊記曰：「南有蹲犬山，山似犬蹲，有神，劉寵出西都，經此山，山犬吠之，寵曰『山神謂我人也』。」}}",
-      "volume": 112
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0039-012",
       "corpusPath": "data/corpus/hhs-112.txt",
       "lineEnd": 146,
@@ -1911,16 +1741,6 @@
       "volume": 112
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0053-005",
-      "corpusPath": "data/corpus/hhs-112.txt",
-      "lineEnd": 610,
-      "lineStart": 610,
-      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
-      "sourceBook": "後漢書",
-      "verbatim": "廬陵，{{*|興平元年，孫策分立廬陵郡。}}",
-      "volume": 112
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0055-008",
       "corpusPath": "data/corpus/hhs-113.txt",
       "lineEnd": 51,
@@ -1931,16 +1751,6 @@
       "volume": 113
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0055-012",
-      "corpusPath": "data/corpus/hhs-113.txt",
-      "lineEnd": 59,
-      "lineStart": 59,
-      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-      "sourceBook": "後漢書",
-      "verbatim": "〖充国〗{{YL|永元二年}}分阆中置。",
-      "volume": 113
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0056-007",
       "corpusPath": "data/corpus/hhs-113.txt",
       "lineEnd": 79,
@@ -1948,16 +1758,6 @@
       "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
       "sourceBook": "後漢書",
       "verbatim": "〖白水〗",
-      "volume": 113
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0056-008",
-      "corpusPath": "data/corpus/hhs-113.txt",
-      "lineEnd": 81,
-      "lineStart": 81,
-      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-      "sourceBook": "後漢書",
-      "verbatim": "〖葭萌〗",
       "volume": 113
     },
     {
@@ -1978,16 +1778,6 @@
       "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
       "sourceBook": "後漢書",
       "verbatim": "〖湔氐道〗岷山在西徼外。",
-      "volume": 113
-    },
-    {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0057-009",
-      "corpusPath": "data/corpus/hhs-113.txt",
-      "lineEnd": 107,
-      "lineStart": 107,
-      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-      "sourceBook": "後漢書",
-      "verbatim": "〖八陵〗",
       "volume": 113
     },
     {
@@ -3071,16 +2861,6 @@
       "volume": 113
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-005",
-      "corpusPath": "data/corpus/hhs-113.txt",
-      "lineEnd": 681,
-      "lineStart": 681,
-      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-      "sourceBook": "後漢書",
-      "verbatim": "〖汪陶〗",
-      "volume": 113
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-009",
       "corpusPath": "data/corpus/hhs-113.txt",
       "lineEnd": 689,
@@ -3251,16 +3031,6 @@
       "volume": 113
     },
     {
-      "sourceClaimId": "han-gap-county-claim-v1-gc-g0090-008",
-      "corpusPath": "data/corpus/hhs-113.txt",
-      "lineEnd": 786,
-      "lineStart": 786,
-      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-      "sourceBook": "後漢書",
-      "verbatim": "〖下落〗",
-      "volume": 113
-    },
-    {
       "sourceClaimId": "han-gap-county-claim-v1-gc-g0091-001",
       "corpusPath": "data/corpus/hhs-113.txt",
       "lineEnd": 790,
@@ -3418,6 +3188,46 @@
       "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
       "sourceBook": "後漢書",
       "verbatim": "〖临元〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0028-004",
+      "corpusPath": "data/corpus/hhs-111.txt",
+      "lineEnd": 165,
+      "lineStart": 165,
+      "snapshotSha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+      "sourceBook": "後漢書",
+      "verbatim": "〖髙平〗侯國。故橐，章帝更名。{{*|前漢-{志}-莽改曰髙平，章帝-{復}-莽此號。左傳隱（九）〔元〕年費伯城郎，杜預曰縣東南有鬱郎亭。}}有茅鄕城。{{*|杜預曰茅鄕在昌邑西南。}}",
+      "volume": 111
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0041-033",
+      "corpusPath": "data/corpus/hhs-112.txt",
+      "lineEnd": 238,
+      "lineStart": 238,
+      "snapshotSha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+      "sourceBook": "後漢書",
+      "verbatim": "成都，",
+      "volume": 112
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0080-010",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 583,
+      "lineStart": 583,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖候官〗",
+      "volume": 113
+    },
+    {
+      "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-011",
+      "corpusPath": "data/corpus/hhs-113.txt",
+      "lineEnd": 693,
+      "lineStart": 693,
+      "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+      "sourceBook": "後漢書",
+      "verbatim": "〖卤城〗故属代郡。",
       "volume": 113
     }
   ],

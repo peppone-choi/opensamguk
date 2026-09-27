@@ -64,6 +64,7 @@ class WorldArtifactsResolver(private val root: Path = defaultRoot()) {
         else if (it == WorldMapVariant.V3_1224) Archive1224Artifacts.load(root)
         else if (it == WorldMapVariant.V3_1447) Archive1447Artifacts.load(root)
         else if (it == WorldMapVariant.V3_1447_MAP4) Archive1447Map4Artifacts.load(root)
+        else if (it == WorldMapVariant.V3_1428) Archive1428Artifacts.load(root)
         else if (it == WorldMapVariant.V3_1194) Archive1194Artifacts.load(root)
         else if (it == WorldMapVariant.V3_1341) Archive1341Artifacts.load(root)
         else if (it == WorldMapVariant.V3_1141) Archive1141Artifacts.load(root)

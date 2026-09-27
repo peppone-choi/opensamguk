@@ -26,7 +26,7 @@ import kotlin.test.assertTrue
 /**
  * F1a gate — the scenario-seed importer IT (Testcontainers `postgres:16-alpine` + Flyway baseline).
  *
- * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1447, `general`=230,
+ * Asserts the V3 seed counts (`world_state`=1, `nation`=2, `city`=1428, `general`=230,
  * per-general `rank_data`=37 and `general_turn`=30) and that a SECOND `importAll`/seed is a no-op
  * (the emptiness gate inserts 0 new rows). The macOS Testcontainers quirks (api.version 1.44,
  * DOCKER_CONTEXT=default, Ryuk disabled) are wired in `infra/build.gradle.kts tasks.test`. If Docker
@@ -153,7 +153,7 @@ class ScenarioImporterIT {
         val counts = importer.importAll(jdbc, canonicalWorldId)
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)
-        assertEquals(1447, counts.city)
+        assertEquals(1428, counts.city)
         assertEquals(264, counts.general)
         assertEquals(264, counts.generalPosition)
         assertEquals(42, counts.bugok)
@@ -172,7 +172,7 @@ class ScenarioImporterIT {
             "SELECT count(*) FROM nation n LEFT JOIN city c ON c.world_id=n.world_id AND c.id=n.capital_city_id " +
                 "WHERE n.world_id=1 AND c.id IS NULL", Int::class.java))
         val topology = WorldArtifactsResolver(root).artifacts(
-            opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection.topology
+            opensamguk.logic.world.WorldMapVariant.V3_1428).projection.topology
         val pins = jdbc.queryForList(
             "SELECT DISTINCT topology_hash FROM general_spatial_position WHERE world_id=1", String::class.java)
         assertEquals(listOf(topology.contentHash), pins)
@@ -231,7 +231,7 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"") ||
             config.contains("\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
-        val freshVariant = opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4
+        val freshVariant = opensamguk.logic.world.WorldMapVariant.V3_1428
         val topology = WorldArtifactsResolver(root).artifacts(freshVariant).projection.topology
         val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)
@@ -383,9 +383,11 @@ class ScenarioImporterIT {
         // The 26 retired locality proxies were all neutral in scenario_1010.
         // 2026-09-23: 결손 縣 56곳 = 공백 44 · 후한 5 · 황건 7, 그리고 993 易城이 河閒國으로 귀속을 바로잡으며
         // 공백 → 후한. 1,224 판 911 · 167 · 146에서 합성 城 223곳을 더하고 미해독 3행은 제외했다.
-        assertEquals(1093, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
-        assertEquals(193, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
-        assertEquals(161, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
+        // 2026-09-27 1428 판: 중복 합성 城 23곳(후한 7 · 황건 1 · 공백 15)을 거두고 동명 실결손 4곳이 공백지로 들어와
+        // 1,093 · 193 · 161 → 1,082 · 186 · 160.
+        assertEquals(1082, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 0", Int::class.java))
+        assertEquals(186, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 1", Int::class.java))
+        assertEquals(160, jdbc.queryForObject("SELECT count(*) FROM city WHERE nation_id = 2", Int::class.java))
         // 공백지 초기스탯 = CityConstBase 베이스(점령지 70%max 부스트 없음).
         // 서성(id 75, 西城县) 은 1010 지배표에 없어 공백지다: pop 20000·wall 1000·trust 50.
         // 漢中郡의 縣이지 郡이 아니다 — 등급을 legacy 780 번호에서 물려받던 동안 소도시(5)로

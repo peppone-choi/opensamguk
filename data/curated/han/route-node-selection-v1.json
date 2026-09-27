@@ -10,16 +10,16 @@
         "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
       },
       "candidate": {
-        "sha256": "8aa7713630c9a1f3b73a136b92b13b5e8f2429c19bad6f1f933a118a7e47a0f9"
+        "sha256": "cb0aa4554806c48770d183b392cca4ce26d583ccb98e893c417a4f606aec1c81"
       },
       "externalClaims": {
-        "sha256": "fbf782ecfe93780dbfc5f859f2471dc69b806d17396df70a30d154f21c373049"
+        "sha256": "9928b64b2047c3dc66005cd2f6c69ca853d1971db8b7935dce1be1670ea4a1ee"
       },
       "externalSettlementRouteClaims": {
         "sha256": "7e6fb6f7606a880157db33890a7607ad12bad288ec8645ea1da6eaf983514c8e"
       },
       "jurisdictionRouteClaims": {
-        "sha256": "2c2513a1681f240d5131c3a3a8a65a5c167ab9788f8507075d020daf7b6d24b5"
+        "sha256": "afd94cd0b0487dff69a387468b612c8aea1381b63d47973e2ffef5e578f4d5f5"
       },
       "legacyHanMap": {
         "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
@@ -31,10 +31,10 @@
         "sha256": "e8e1bd5c2881973ff38241a34c565e8a1a01c285454485d91a3b1af3d8657896"
       },
       "reviewPolicy": {
-        "sha256": "b50e8f7298118ce398f2ce2b76eaadd77b76c24263bf75d8ceff42f8fd724617"
+        "sha256": "475a35b4008909656472878a42ce27f95caf20c223fc879db0eaca6b907bb68a"
       },
       "routeNodeKeyRegistry": {
-        "sha256": "28f853dbb6bb29d9531ca209e7dfd532fa90789ac5eb1a97e54f3d5cca497c2e"
+        "sha256": "11361213d62433d27085510e4587390f819db97be138f34e6544523f98b1ba7b"
       },
       "strategicSiteRouteClaims": {
         "sha256": "58759310ca6cfdebb58c1f75b03de716f599e31a9de70ec1315dc513d805ff99"
@@ -27190,7 +27190,7 @@
       "physicalPlaceRef": "chgis:v6:cnty:70741",
       "reviewState": "APPROVED",
       "routeNodeKey": "9ec109a3-b856-423e-9346-a21e9f964af2",
-      "seatRole": "NON_SEAT",
+      "seatRole": "COMMANDERY_SEAT",
       "selectionRationale": {
         "batchId": "w2-cityless-jurisdiction-route-claim",
         "evidenceRefs": [
@@ -27582,7 +27582,7 @@
       "physicalPlaceRef": "chgis:v6:cnty:45180",
       "reviewState": "APPROVED",
       "routeNodeKey": "0132b5bd-e5f8-45f3-8611-c2758c65f499",
-      "seatRole": "NON_SEAT",
+      "seatRole": "COMMANDERY_SEAT",
       "selectionRationale": {
         "batchId": "w2-cityless-jurisdiction-route-claim",
         "evidenceRefs": [
@@ -27722,7 +27722,7 @@
       "physicalPlaceRef": "chgis:v6:cnty:87061",
       "reviewState": "APPROVED",
       "routeNodeKey": "72faa4f2-a013-4282-a1cf-1b0447508598",
-      "seatRole": "NON_SEAT",
+      "seatRole": "COMMANDERY_SEAT",
       "selectionRationale": {
         "batchId": "w2-cityless-jurisdiction-route-claim",
         "evidenceRefs": [
@@ -28506,7 +28506,7 @@
       "physicalPlaceRef": "chgis:v6:cnty:85649",
       "reviewState": "APPROVED",
       "routeNodeKey": "9477af4d-f4b6-4b31-a4f1-6e2984b364b6",
-      "seatRole": "NON_SEAT",
+      "seatRole": "COMMANDERY_SEAT",
       "selectionRationale": {
         "batchId": "w2-cityless-jurisdiction-route-claim",
         "evidenceRefs": [
@@ -37482,35 +37482,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:109:河南尹:018",
-      "canonicalName": "新城",
-      "displayName": "新城",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0000-018"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0000-018",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1399,
-      "parentName": "河南尹",
-      "parentRef": "hhs-group:109:河南尹",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-018",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "7ad6abd6-c1c1-49ed-8880-a5c30cf57d16",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:109:河南尹:021",
       "canonicalName": "平",
       "displayName": "平",
@@ -37527,35 +37498,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-021",
       "reviewState": "APPROVED",
       "routeNodeKey": "f836065f-0e94-469d-bcaa-c26d8bf09704",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:109:河東郡:011",
-      "canonicalName": "绛",
-      "displayName": "绛",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0002-011"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0002-011",
-      "nodeClass": "TOWN_NODE",
-      "numericCityId": 1401,
-      "parentName": "河東郡",
-      "parentRef": "hhs-group:109:河東郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0002-011",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "0ad94e43-27e7-416a-8ad1-607062dd22fa",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -37598,35 +37540,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:109:京兆尹:002",
-      "canonicalName": "霸陵",
-      "displayName": "霸陵",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0004-002"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0004-002",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1403,
-      "parentName": "京兆尹",
-      "parentRef": "hhs-group:109:京兆尹",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0004-002",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "b19201fb-c971-4832-899d-cd9af179eb0e",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:109:京兆尹:010",
       "canonicalName": "阳陵",
       "displayName": "阳陵",
@@ -37644,35 +37557,6 @@
       "reviewState": "APPROVED",
       "routeNodeKey": "43242af1-3233-4236-a75f-b6659b095a48",
       "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:109:左馮翊:001",
-      "canonicalName": "高陵",
-      "displayName": "高陵",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0005-001"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0005-001",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1405,
-      "parentName": "左馮翊",
-      "parentRef": "hhs-group:109:左馮翊",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0005-001",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "10773a49-a015-477a-9432-8483233f5a21",
-      "seatRole": "COMMANDERY_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
         "evidenceRefs": [
@@ -37788,35 +37672,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0006-002",
       "reviewState": "APPROVED",
       "routeNodeKey": "da68f6f9-96fd-4f0f-85e3-3f02266b4184",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:109:右扶風:003",
-      "canonicalName": "平陵",
-      "displayName": "平陵",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0006-003"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0006-003",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1410,
-      "parentName": "右扶風",
-      "parentRef": "hhs-group:109:右扶風",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0006-003",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "4aa4c06b-177c-4b16-8b7d-4e51b8f2e52e",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -38178,35 +38033,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:110:梁國:004",
-      "canonicalName": "碭山",
-      "displayName": "碭山",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0009-004"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0009-004",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1423,
-      "parentName": "梁國",
-      "parentRef": "hhs-group:110:梁國",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0009-004",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "ec400dd2-a883-4a2c-bb91-fbae7498aab7",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:110:梁國:007",
       "canonicalName": "焉",
       "displayName": "焉",
@@ -38352,35 +38178,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:110:魯國:001",
-      "canonicalName": "魯國",
-      "displayName": "魯國",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0012-001"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0012-001",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1429,
-      "parentName": "魯國",
-      "parentRef": "hhs-group:110:魯國",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0012-001",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "e9e923c7-14fc-4318-bdf4-2e1b07c6a97a",
-      "seatRole": "COMMANDERY_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:110:魯國:002",
       "canonicalName": "騶",
       "displayName": "騶",
@@ -38397,93 +38194,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0012-002",
       "reviewState": "APPROVED",
       "routeNodeKey": "6be43a58-573d-4d74-a853-2144b74dd617",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:110:魏郡:011",
-      "canonicalName": "沙",
-      "displayName": "沙",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0013-011"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0013-011",
-      "nodeClass": "MARQUISATE_NODE",
-      "numericCityId": 1431,
-      "parentName": "魏郡",
-      "parentRef": "hhs-group:110:魏郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0013-011",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "2664b725-cdab-4cb9-8198-805152f85e1e",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:110:鉅鹿郡:001",
-      "canonicalName": "陶",
-      "displayName": "陶",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0014-001"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0014-001",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1432,
-      "parentName": "鉅鹿郡",
-      "parentRef": "hhs-group:110:鉅鹿郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0014-001",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "884471a0-9b23-45b9-a8ed-c67132a58afe",
-      "seatRole": "COMMANDERY_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:110:鉅鹿郡:015",
-      "canonicalName": "南〈糸言糸〉",
-      "displayName": "南〈糸言糸〉",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0014-015"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0014-015",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1433,
-      "parentName": "鉅鹿郡",
-      "parentRef": "hhs-group:110:鉅鹿郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0014-015",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "dc5b27b4-cdba-4899-bc79-add3bca2a858",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -38542,64 +38252,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0017-012",
       "reviewState": "APPROVED",
       "routeNodeKey": "9c61ceb3-d49e-44ca-b75d-3dc80dc8dbe1",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:110:河閒國:003",
-      "canonicalName": "易",
-      "displayName": "易",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0018-003"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0018-003",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1436,
-      "parentName": "河閒國",
-      "parentRef": "hhs-group:110:河閒國",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0018-003",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "3f064496-1f4c-49f4-b692-9263c416911e",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:110:勃海郡:008",
-      "canonicalName": "脩",
-      "displayName": "脩",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0021-008"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0021-008",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1437,
-      "parentName": "勃海郡",
-      "parentRef": "hhs-group:110:勃海郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0021-008",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "8dd5b70a-81c3-4aad-a904-d5380ff56cc8",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -38758,35 +38410,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:111:泰山郡:006",
-      "canonicalName": "山茌",
-      "displayName": "山茌",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0026-006"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0026-006",
-      "nodeClass": "MARQUISATE_NODE",
-      "numericCityId": 1443,
-      "parentName": "泰山郡",
-      "parentRef": "hhs-group:111:泰山郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0026-006",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "48e10967-bc13-486a-81cd-3d2a54b4dd29",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:111:山陽郡:010",
       "canonicalName": "防東",
       "displayName": "防東",
@@ -38845,35 +38468,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:111:東海郡:001",
-      "canonicalName": "郯",
-      "displayName": "郯",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-001"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0030-001",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1446,
-      "parentName": "東海郡",
-      "parentRef": "hhs-group:111:東海郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-001",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "e4866a9e-1d43-4d76-a7c1-db1874bc4167",
-      "seatRole": "COMMANDERY_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:111:東海郡:008",
       "canonicalName": "陰平",
       "displayName": "陰平",
@@ -38890,35 +38484,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-008",
       "reviewState": "APPROVED",
       "routeNodeKey": "6f37f8ca-2bcd-4b76-bd28-c4b5ce7bab7a",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:111:東海郡:010",
-      "canonicalName": "合鄕",
-      "displayName": "合鄕",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0030-010"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0030-010",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1448,
-      "parentName": "東海郡",
-      "parentRef": "hhs-group:111:東海郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-010",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "6bd0b232-28f4-42ff-9828-60e437aa58c6",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -39006,35 +38571,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0032-007",
       "reviewState": "APPROVED",
       "routeNodeKey": "f80b2b31-27ce-4814-9553-87af1ce3c644",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:111:廣陵郡:009",
-      "canonicalName": "輿",
-      "displayName": "輿",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0033-009"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0033-009",
-      "nodeClass": "MARQUISATE_NODE",
-      "numericCityId": 1452,
-      "parentName": "廣陵郡",
-      "parentRef": "hhs-group:111:廣陵郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0033-009",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "bbff1121-73ad-4dfc-bb9a-3ab2b8a96d2b",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -39280,35 +38816,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:112:東萊郡:003",
-      "canonicalName": "惤",
-      "displayName": "惤",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0039-003"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0039-003",
-      "nodeClass": "MARQUISATE_NODE",
-      "numericCityId": 1461,
-      "parentName": "東萊郡",
-      "parentRef": "hhs-group:112:東萊郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0039-003",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "94e6257c-cf7a-47a0-b889-e5909f760f3d",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:112:東萊郡:012",
       "canonicalName": "葛盧",
       "displayName": "葛盧",
@@ -39512,35 +39019,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:112:豫章郡:005",
-      "canonicalName": "廬陵",
-      "displayName": "廬陵",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0053-005"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0053-005",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1469,
-      "parentName": "豫章郡",
-      "parentRef": "hhs-group:112:豫章郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0053-005",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "4c5ae91d-a9ec-4d44-89bb-2b653bbd84e7",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:113:巴郡:008",
       "canonicalName": "涪陵",
       "displayName": "涪陵",
@@ -39570,35 +39048,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:113:巴郡:012",
-      "canonicalName": "充国",
-      "displayName": "充国",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0055-012"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0055-012",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1471,
-      "parentName": "巴郡",
-      "parentRef": "hhs-group:113:巴郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0055-012",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "c75a9663-e952-4d06-a9a4-bc6791b80268",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:113:廣漢郡:007",
       "canonicalName": "白水",
       "displayName": "白水",
@@ -39615,35 +39064,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0056-007",
       "reviewState": "APPROVED",
       "routeNodeKey": "e4bff14f-7945-4e42-9bac-2f6700df4f27",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:113:廣漢郡:008",
-      "canonicalName": "葭萌",
-      "displayName": "葭萌",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0056-008"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0056-008",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1473,
-      "parentName": "廣漢郡",
-      "parentRef": "hhs-group:113:廣漢郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0056-008",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "f75eaa39-0d88-4067-8d20-94622a1b0ba8",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -39702,35 +39122,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0057-007",
       "reviewState": "APPROVED",
       "routeNodeKey": "97dc1160-f1ec-4dda-aea6-5bb5685fcb91",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:113:蜀郡:009",
-      "canonicalName": "八陵",
-      "displayName": "八陵",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0057-009"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0057-009",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1476,
-      "parentName": "蜀郡",
-      "parentRef": "hhs-group:113:蜀郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0057-009",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "192bf958-b76c-4834-855d-5798fe09f6f8",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -42876,35 +42267,6 @@
       }
     },
     {
-      "administrativeUnitId": "hhs:113:鴈門郡:005",
-      "canonicalName": "汪陶",
-      "displayName": "汪陶",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-005"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0085-005",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1585,
-      "parentName": "鴈門郡",
-      "parentRef": "hhs-group:113:鴈門郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-005",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "247b8fc0-3f24-42e5-b909-b21620134cf8",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
       "administrativeUnitId": "hhs:113:鴈門郡:009",
       "canonicalName": "埒",
       "displayName": "埒",
@@ -43385,35 +42747,6 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0090-006",
       "reviewState": "APPROVED",
       "routeNodeKey": "3077e958-435f-4772-9c8a-8a09cfc70123",
-      "seatRole": "NON_SEAT",
-      "selectionRationale": {
-        "batchId": "w1-gap-county-location",
-        "evidenceRefs": [
-          "data/curated/han/route-node-review-policy-v1.json",
-          "w1-gap-county-location"
-        ],
-        "method": "APPROVED_REVIEW_BATCH",
-        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
-        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
-      }
-    },
-    {
-      "administrativeUnitId": "hhs:113:上谷郡:008",
-      "canonicalName": "下落",
-      "displayName": "下落",
-      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
-      "locationAdjudication": {
-        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
-        "sourceClaimId": "han-gap-county-claim-v1-gc-g0090-008"
-      },
-      "locationClaimId": "han-gap-county-claim-v1-gc-g0090-008",
-      "nodeClass": "COUNTY_NODE",
-      "numericCityId": 1603,
-      "parentName": "上谷郡",
-      "parentRef": "hhs-group:113:上谷郡",
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0090-008",
-      "reviewState": "APPROVED",
-      "routeNodeKey": "212556b8-c328-433f-bac9-4312be67c7a5",
       "seatRole": "NON_SEAT",
       "selectionRationale": {
         "batchId": "w1-gap-county-location",
@@ -43917,6 +43250,122 @@
         "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
       },
       "sourceClaimId": "han-jurisdiction-route-claim-v1-gc-g0097-005"
+    },
+    {
+      "administrativeUnitId": "hhs:111:山陽郡:004",
+      "canonicalName": "髙平",
+      "displayName": "髙平",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-gap-county-claim-v1-gc-g0028-004"
+      },
+      "locationClaimId": "han-gap-county-claim-v1-gc-g0028-004",
+      "nodeClass": "MARQUISATE_NODE",
+      "numericCityId": 1621,
+      "parentName": "山陽郡",
+      "parentRef": "hhs-group:111:山陽郡",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0028-004",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "87b79c2a-df13-47a6-95d5-f306295d10ba",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-gap-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-gap-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:033",
+      "canonicalName": "成都",
+      "displayName": "成都",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-gap-county-claim-v1-gc-g0041-033"
+      },
+      "locationClaimId": "han-gap-county-claim-v1-gc-g0041-033",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 1622,
+      "parentName": "南陽郡",
+      "parentRef": "hhs-group:112:南陽郡",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0041-033",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "907be425-ca7d-47b4-ab74-2fa04c35152e",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-gap-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-gap-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:上郡:010",
+      "canonicalName": "候官",
+      "displayName": "候官",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-gap-county-claim-v1-gc-g0080-010"
+      },
+      "locationClaimId": "han-gap-county-claim-v1-gc-g0080-010",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 1623,
+      "parentName": "上郡",
+      "parentRef": "hhs-group:113:上郡",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0080-010",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "001f0a04-471e-44e2-8cdc-6afb491549e3",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-gap-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-gap-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
+    },
+    {
+      "administrativeUnitId": "hhs:113:鴈門郡:011",
+      "canonicalName": "卤城",
+      "displayName": "卤城",
+      "historicalBindingBasis": "HHS_ADMINISTRATIVE_UNIT",
+      "locationAdjudication": {
+        "kind": "APPROVED_LOCATION_ONLY_CLAIM",
+        "sourceClaimId": "han-gap-county-claim-v1-gc-g0085-011"
+      },
+      "locationClaimId": "han-gap-county-claim-v1-gc-g0085-011",
+      "nodeClass": "COUNTY_NODE",
+      "numericCityId": 1624,
+      "parentName": "鴈門郡",
+      "parentRef": "hhs-group:113:鴈門郡",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-011",
+      "reviewState": "APPROVED",
+      "routeNodeKey": "3c88fa7d-0ad2-4087-b9c6-cdca996b3413",
+      "seatRole": "NON_SEAT",
+      "selectionRationale": {
+        "batchId": "w1-gap-county-location",
+        "evidenceRefs": [
+          "data/curated/han/route-node-review-policy-v1.json",
+          "w1-gap-county-location"
+        ],
+        "method": "APPROVED_REVIEW_BATCH",
+        "rationale": "승인된 W0-C review batch와 고정 입력 해시에 따른 행별 선정이다.",
+        "reviewPolicyId": "han-w0c-route-node-review-policy-v1"
+      }
     }
   ],
   "runtimeScenarioActivationEnforcement": "NOT_CLAIMED_BY_W0_DATA_CONTRACT",
@@ -44032,105 +43481,105 @@
         "resourceName": "scenario_1010.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1010.json",
         "scenarioId": "1010",
-        "sha256": "015edf30ea78f0f0c342b18bd69f69d0751321c07c48f18b236e2682730bd60f",
+        "sha256": "ba3697033264c4e3da969451abe9530f8d1e90997d31268216ed21e4a68ddff4",
         "startYear": 181
       },
       {
         "resourceName": "scenario_1020.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1020.json",
         "scenarioId": "1020",
-        "sha256": "90eb6bde1ce0c1e236b275fd957a6f8c8e50b6c44c1b6fac0b6597db04253b43",
+        "sha256": "3152ad1356b292f8b58911b359982d1564b1100a33fe366b0a444697c0461896",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1021.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1021.json",
         "scenarioId": "1021",
-        "sha256": "f5621c6a1c6ccf351021c05ca60049c228d44ea1ee3704d58b4c469cc7ead367",
+        "sha256": "3bfe1c67536a019a28e7ac4f2b2de976c25676afe43d6bbeee154dc48d5e4a80",
         "startYear": 187
       },
       {
         "resourceName": "scenario_1030.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1030.json",
         "scenarioId": "1030",
-        "sha256": "531e7670ada7b83674a5826f5d61fa7aaa1eb2e54cafcddc4578621b9611d9d4",
+        "sha256": "56b987bf949922aa46396e76414ef51c53c0e6ab8f3f26bdec2d960b8460e2e5",
         "startYear": 191
       },
       {
         "resourceName": "scenario_1031.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1031.json",
         "scenarioId": "1031",
-        "sha256": "f70da921babf8a3747d7da08ca0fa7fb342363432d7a851c077da23a8fde0bf2",
+        "sha256": "4d4f8b43645ffed488202e1d75364c19a0ca974a1feb353a1d7e6ff0dd3e5fb2",
         "startYear": 192
       },
       {
         "resourceName": "scenario_1040.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1040.json",
         "scenarioId": "1040",
-        "sha256": "cf0d5288f3fe6e59e9de7845fbdad8fd10450cc90d720d2bea4e2162e7285150",
+        "sha256": "8d3dbf7f99fbbb909eb7dbf16b15fb6b133f4c8f61cb557637fee132e6b7b39c",
         "startYear": 193
       },
       {
         "resourceName": "scenario_1041.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1041.json",
         "scenarioId": "1041",
-        "sha256": "77c56d2e29f0ac8a3c9398b071042d99e6f7554d6fa33c3672b23734c2dd1494",
+        "sha256": "5bc18737c8b22f8986f067a58056141b94f538e699b416b0a304f71ed5c1abdb",
         "startYear": 194
       },
       {
         "resourceName": "scenario_1050.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1050.json",
         "scenarioId": "1050",
-        "sha256": "8dff348a96adf727c3a60942fbed5245a3c890a35b1e653ad9b1557056131ece",
+        "sha256": "8ae6a41d49b1e551fb6a71bd3acc41fbd1d87cefb23c862f7dffd1c5ffaaea34",
         "startYear": 197
       },
       {
         "resourceName": "scenario_1060.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1060.json",
         "scenarioId": "1060",
-        "sha256": "9023aadfd627eb0a122c80868d519129404b1ae23d7e6066569da2dc69716d2c",
+        "sha256": "cb01d9d000e6293f1051003ec619e7ab01bb8c5e5afb2f0a4521c3c56f24ce12",
         "startYear": 199
       },
       {
         "resourceName": "scenario_1070.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1070.json",
         "scenarioId": "1070",
-        "sha256": "3add16f9e03b084e7ab14635b80d4e8f4e0baa6426e0df3f6e463185c504e325",
+        "sha256": "a9f6eca0877ae739ef7e9cf35bd592c0e303f13eea5f80e57d54418502f33d48",
         "startYear": 204
       },
       {
         "resourceName": "scenario_1080.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1080.json",
         "scenarioId": "1080",
-        "sha256": "c2dccd7cdc0181a8cc08e8c6da54a4f93c93e595919aa464092b8dc652cd7eac",
+        "sha256": "cc1ae641ffffddc1685c7a4e3c2e2336fcf1bfce09889db17a7f3adf6d3dff16",
         "startYear": 210
       },
       {
         "resourceName": "scenario_1090.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1090.json",
         "scenarioId": "1090",
-        "sha256": "dc65e59864851ba9db100d643cb1af50c7e360cc2584492d2ad5a50d53135971",
+        "sha256": "b329a88a95c3313df433119fce125f3cf15ab0421f655bb3f5be779151b0dadd",
         "startYear": 216
       },
       {
         "resourceName": "scenario_1100.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1100.json",
         "scenarioId": "1100",
-        "sha256": "21911f8ae9da1f233d24e33b89ea927023569dbf8ff94aba0aa4a1fc41b6f73a",
+        "sha256": "d4c5479ea77b8d1362b6d8d0e27c9a910a4451cfc925507a1f9cc2b582c342f9",
         "startYear": 222
       },
       {
         "resourceName": "scenario_1110.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1110.json",
         "scenarioId": "1110",
-        "sha256": "a1196e114bb99272ca056400d2f0fd37e4ecb52adbee2a1ab24798806bcb8501",
+        "sha256": "bc3cca78501463a1c231411c03927c765128489c4859baa5d91366eacfad9cdd",
         "startYear": 225
       },
       {
         "resourceName": "scenario_1120.json",
         "resourcePath": "infra/src/main/resources/scenario/scenario_1120.json",
         "scenarioId": "1120",
-        "sha256": "a5a052e719784489c15d65e53ee33afccd156476ffa01cb15fe747d3c9ecc787",
+        "sha256": "6a0052a4b3116a5156e44b3fa5298923df5bba598d50c4b4d4b73358608ae21b",
         "startYear": 188
       },
       {
@@ -44145,9 +43594,9 @@
   "schemaVersion": 1,
   "selectionId": "han-route-node-selection-v1",
   "summary": {
-    "approvedCount": 1447,
+    "approvedCount": 1428,
     "historicalBindingCounts": {
-      "HHS_ADMINISTRATIVE_UNIT": 1127,
+      "HHS_ADMINISTRATIVE_UNIT": 1108,
       "REVIEWED_SOURCE_CLAIM": 320
     }
   },

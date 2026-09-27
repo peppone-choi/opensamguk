@@ -395,8 +395,10 @@ class CampReaderTest {
         // (tools/map/audit_county_coverage.make_normalizer 로 같은 대조를 파이썬에서 돌린 값). 1224 판(#865, 결손 縣 56곳)에서
         // 새 縣(1342–1397)에 본관이 걸린 7명(여범 세양·주유 서·장료 마읍·서황 양·전예 옹노·진교 동양·가후 고장)이 더 풀려
         // 100명이다 — null 은 27 → 20 명. 1447 판에서 새 城 223곳을 더한 뒤에는 104명이 풀린다.
+        // 1428 판(2026-09-27): 山陽 高平(1621)이 서며 王粲이 풀려 105명. 張旣(馮翊 高陵)는 거둔 합성 城 대신
+        // 별칭(junguozhi-county-aliases-v1)으로 高陸(70741)에 그대로 풀린다.
         assertEquals(120, table.size)
-        assertEquals(104, table.values.count { names.korean(it) != null })
+        assertEquals(105, table.values.count { names.korean(it) != null })
     }
 
     @Test fun `지명 정규화는 audit 도구 규칙이다 - 邑·道·國은 이름의 일부`() {

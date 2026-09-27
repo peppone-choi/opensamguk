@@ -94,6 +94,8 @@ data/map/*
 !data/map/han-world-v3-1224-artifacts-v1/
 !data/map/han-world-v3-1447-artifacts-v1/
 !data/map/han-world-v3-1447-map4-artifacts-v1/
+# 2026-09-27: 중복 합성 城 23곳을 거두고 동명 실결손 4곳을 더한 1428 판.
+!data/map/han-world-v3-1428-artifacts-v1/
 # ADR-LITE-040: 게임이 서빙하는 타일맵만 예외. 원본·중간 산출물은 계속 미커밋.
 !data/map/han-tiles.json
 !data/map/han-land-roads-v1.json

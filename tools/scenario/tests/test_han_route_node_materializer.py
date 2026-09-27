@@ -40,9 +40,9 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
         self.assertEqual("han-world-v3", result.selection["worldVersion"])
         # 849–1024 는 城 없던 縣 관할 176곳 source claim append 다.
         # 1025–1097 은 수·진·관 거점 73곳 source claim append 다.
-        self.assertEqual(1447, len(nodes))
+        self.assertEqual(1428, len(nodes))
         # 1098 = 2026-09-16 河南尹 平陰, 977·989·1099–1133 = 2026-09-17 郡國 밖 취락(w5).
-        self.assertEqual(active_numeric_ids(1447), sorted(row["numericCityId"] for row in nodes))
+        self.assertEqual(active_numeric_ids(1428), sorted(row["numericCityId"] for row in nodes))
         legacy_triples = [
             [
                 row["numericCityId"],
@@ -120,7 +120,7 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
     def test_real_approved_ledgers_materialize_exact_contract(self) -> None:
         result = MODULE.materialize(MODULE.default_inputs())
 
-        self.assertEqual(1447, len(result.selection["routeNodes"]))
+        self.assertEqual(1428, len(result.selection["routeNodes"]))
         self.assertEqual(780, len(result.migration["rows"]))
         self.assertEqual(31, result.selection["scenarioCatalog"]["resourceCount"])
         self.assertEqual(101, result.migration["summary"]["routeNodeReplacementCount"])

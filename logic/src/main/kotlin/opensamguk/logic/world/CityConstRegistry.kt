@@ -21,6 +21,8 @@ import opensamguk.common.constants.Archive1447CityConst
 import opensamguk.common.constants.Archive1447GateIndex
 import opensamguk.common.constants.Archive1447Map4CityConst
 import opensamguk.common.constants.Archive1447Map4GateIndex
+import opensamguk.common.constants.Archive1428CityConst
+import opensamguk.common.constants.Archive1428GateIndex
 import opensamguk.common.constants.Archive1194CityConst
 import opensamguk.common.constants.Archive1194GateIndex
 import opensamguk.common.constants.Archive1341CityConst
@@ -389,6 +391,10 @@ private val historicalWorlds: Map<WorldMapVariant, CityConstVariant> by lazy {
         ),
         WorldMapVariant.V3_1447_MAP4 to HistoricalCityConstVariant(
             WORLD_ARCHIVE_MAP_NAME, Archive1447Map4CityConst.initCity, Archive1447Map4GateIndex::keys,
+            nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
+        ),
+        WorldMapVariant.V3_1428 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1428CityConst.initCity, Archive1428GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
         WorldMapVariant.V3_1194 to HistoricalCityConstVariant(

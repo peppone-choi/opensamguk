@@ -12,7 +12,7 @@ class WorldArtifactsResolverTest {
         val mapPath = Path.of("src/main/resources/map/han-world-v3.json")
         val map = com.fasterxml.jackson.databind.ObjectMapper().readTree(java.nio.file.Files.readAllBytes(mapPath))
         val ids = map.path("cities").map { it.path("id").asInt() }
-        val selected = resolver.artifacts(WorldMapVariant.V3_1447_MAP4)
+        val selected = resolver.artifacts(WorldMapVariant.V3_1428)
         assertEquals(ids.toSet(), selected.cityConst.all().keys)
         assertEquals(ids.toSet(), selected.projection.bindingsByCityId.keys)
         val roadGates = requireNotNull(selected.projection.presentation).roadGates
@@ -40,10 +40,16 @@ class WorldArtifactsResolverTest {
         val currentPin = selected.projection.topology.let {
             WorldTopologyPin("province_control", it.topologyRevision, it.contentHash)
         }
-        assertEquals(WorldMapVariant.V3_1447_MAP4, resolver.resolve(ids, listOf(currentPin)).variant)
-        assertEquals(WorldMapVariant.V3_1447, resolver.resolve(ids, emptyList()).variant)
+        assertEquals(WorldMapVariant.V3_1428, resolver.resolve(ids, listOf(currentPin)).variant)
+        assertEquals(WorldMapVariant.V3_1428, resolver.resolve(ids, emptyList()).variant)
+        // 1447 두 판(동결)은 명부가 같아 저장된 위상 핀으로 가른다. 핀 없는 옛 월드는 옛 판이다.
+        val ids1447 = opensamguk.logic.world.CityConstRegistry.hanWorld(WorldMapVariant.V3_1447).all().keys.toList()
+        val map4Topology = resolver.artifacts(WorldMapVariant.V3_1447_MAP4).projection.topology
+        assertEquals(WorldMapVariant.V3_1447_MAP4, resolver.resolve(ids1447,
+            listOf(WorldTopologyPin("province_control", map4Topology.topologyRevision, map4Topology.contentHash))).variant)
+        assertEquals(WorldMapVariant.V3_1447, resolver.resolve(ids1447, emptyList()).variant)
         val oldTopology = resolver.artifacts(WorldMapVariant.V3_1447).projection.topology
-        assertEquals(WorldMapVariant.V3_1447, resolver.resolve(ids,
+        assertEquals(WorldMapVariant.V3_1447, resolver.resolve(ids1447,
             listOf(WorldTopologyPin("province_control", oldTopology.topologyRevision, oldTopology.contentHash))).variant)
     }
 

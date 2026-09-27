@@ -1,0 +1,956 @@
+{
+ "schemaVersion": 1,
+ "ledgerId": "gap-county-source-recheck-v1",
+ "decidedAt": "2026-09-27",
+ "note": "PR #984 source-fix-candidates-v1 의 후속 심사다. 2026-09-27 사용자 승인(D1 중복 은퇴·D2 실결손 추가)으로 적용했다 — apply_gap_county_recheck.py 가 sourcedCoordinates.applied 를, append_all_gap_counties.py 가 실결손 행의 좌표·존속 판정을 읽는다. 중복·동명 별칭은 junguozhi-county-aliases-v1 이 싣는다. 판정 축은 셋: 사료(郡國志·晉書 地理志·讀史方輿紀要), 좌표(TGAZ 원본 전수 + 웹), 좌표 동일성(후보 점과 지도 城 0–1 km). 南陽郡 酇 은 陰縣에 접힌 贊縣 省이라 접기 해제가 별도 결정으로 남았다.",
+ "counts": {
+  "homonymSuspects": 6,
+  "homonymFalseAbsence": 1,
+  "homonymFoldedIntoOtherCounty": 1,
+  "homonymRealGap": 4,
+  "duplicateSyntheticCounties": 23,
+  "sourcedCoordinates": 4,
+  "ledgerInOtherCommanderyOnMain": 26,
+  "readingDrift": "tools/map/append_all_gap_counties.py --check-readings (13행)"
+ },
+ "homonymAdjudications": [
+  {
+   "commandery": "中山國",
+   "sourceName": "漢昌",
+   "ledgerStatus": "IN_OTHER_COMMANDERY",
+   "nameMatchedTo": [
+    {
+     "id": "44621",
+     "nameCh": "汉昌县",
+     "commandery": "巴郡"
+    },
+    {
+     "id": "42093",
+     "nameCh": "汉昌县",
+     "commandery": "漢昌郡"
+    }
+   ],
+   "verdict": "FALSE_ABSENCE_POST_220_RENAME",
+   "onMapAs": {
+    "id": "44996",
+    "nameCh": "魏昌县",
+    "commandery": "中山國",
+    "km": 0.0
+   },
+   "evidence": [
+    "後漢書 卷110 郡國志 中山國 「漢昌，本苦陘，章帝更名。」",
+    "讀史方輿紀要 卷014 真定府 「章帝北巡，改曰漢昌。魏主丕改曰魏昌。晉因之，仍屬中山國。」",
+    "晉書 卷014 地理志 中山國 「盧奴　魏昌　新市…」",
+    "TGAZ hvd_87104 漢昌縣 76–219 과 hvd_44996 魏昌縣 220–549 가 같은 점(115.01340, 38.31078)이고, 지도 44996 이 그 점에 있다"
+   ],
+   "survival220": "SURVIVED_RENAMED",
+   "matchedPlaceDistanceKm": 1038,
+   "reading": "이름 대조가 巴郡·漢昌郡 의 딴 漢昌 을 물었다(1,038 km). 지도는 이 縣을 220년 이름 魏昌 으로 싣고 있다. 새 城은 필요 없고 원장 상태만 IN_OWN(44996)으로 고치면 된다."
+  },
+  {
+   "commandery": "南陽郡",
+   "sourceName": "酇",
+   "ledgerStatus": "IN_OTHER_COMMANDERY",
+   "nameMatchedTo": [
+    {
+     "id": "82128",
+     "nameCh": "酇县",
+     "commandery": "沛國"
+    }
+   ],
+   "verdict": "FOLDED_INTO_OTHER_COUNTY",
+   "onMapAs": null,
+   "onTilesAs": {
+    "provinceId": "45748",
+    "nameCh": "赞县",
+    "foldedIntoJurisdiction": "45751",
+    "foldedIntoNameCh": "阴县",
+    "gameCity": false,
+    "km": 0.0
+   },
+   "evidence": [
+    "晉書 卷015 地理志 順陽郡 「酂順陽南鄉丹水武當陰筑陽析」 — 陰 과 酂 이 따로 선다",
+    "讀史方輿紀要 卷003 「本魏所置南鄉郡，晉太康中改曰順陽，領酇縣等縣八。酇，今襄陽府光化縣東有故酇城。」",
+    "讀史方輿紀要 卷079 光化縣 「陰城，在縣西…漢置陰縣」 · 「城，縣東北四十里。秦置縣…高祖封蕭何於此」(코퍼스가 酇 자를 잃었다 — county-seed-collisions-v1 이 같은 줄을 인용)",
+    "TGAZ hvd_45746 酂縣 139–216 · hvd_45748 贊縣 220–222 · hvd_45749 贊縣 226–283 · hvd_45750 酂縣 284–576 이 모두 같은 점(111.62382, 32.46271) — CHGIS 안에서 贊=酂 이다. 陰縣 hvd_45751 도 같은 점이라 CHGIS 가 두 縣을 한 점에 뒀다",
+    "cityless-jurisdiction-fold-decisions-v1 이 45748 을 陰縣 45751 에 접었고, county-seed-collisions-v1 은 이 접기를 NEEDS_HUMAN_REVIEW 로 남겼다(贊=酇 미확인)"
+   ],
+   "survival220": "SURVIVED",
+   "matchedPlaceDistanceKm": 448,
+   "reading": "沛國 酇 과 다른 縣이다. 지도 타일에는 贊縣 省(45748)으로 있지만 陰縣 관할에 접혀 게임 城이 아니다. 새 합성 城이 아니라 접기를 풀어 45748 을 제 관할·城으로 세워야 한다 — 좌표는 陰 과 같은 CHGIS 점이라 讀史 「縣東北四十里」 쪽 좌표를 따로 구해야 한다. 2026-09-27 승인 범위(D1·D2) 밖이라 별도 결정으로 남긴다."
+  },
+  {
+   "commandery": "山陽郡",
+   "sourceName": "髙平",
+   "ledgerStatus": "IN_OTHER_COMMANDERY",
+   "nameMatchedTo": [
+    {
+     "id": "45198",
+     "nameCh": "高平县",
+     "commandery": "安定郡"
+    }
+   ],
+   "verdict": "HOMONYM_REAL_GAP",
+   "onMapAs": null,
+   "evidence": [
+    "後漢書 卷111 郡國志 山陽郡 「髙平侯國。故橐，章帝更名。」",
+    "晉書 卷014 地理志 高平國 「晉初分山陽置…昌邑　鉅野　方與　金鄉　湖陸　高平　南平陽」",
+    "TGAZ hvd_45198 高平縣 84–555 (116.71867, 35.15031)",
+    "지도 45198 은 id 는 이 CHGIS 레코드인데 좌표는 安定郡 高平(寧夏 固原, 106.280163, 36.006878)으로 재결속돼 있다(CHGIS 원본 실측 2026-09-11)"
+   ],
+   "survival220": "SURVIVED",
+   "matchedPlaceDistanceKm": 947,
+   "coordinate": {
+    "lon": 116.71867,
+    "lat": 35.15031,
+    "basis": "TGAZ hvd_45198",
+    "crossCheck": {
+     "source": "https://zh.wikipedia.org/zh-hans/%E4%B8%A4%E5%9F%8E%E9%95%87_(%E5%BE%AE%E5%B1%B1%E5%8E%BF)",
+     "lonLat": [
+      116.72974,
+      35.13573
+     ],
+     "represents": "微山 兩城鎮 중심(대리점)",
+     "km": 1.9
+    },
+    "conflict": "讀史方輿紀要 卷033 은 高平城 을 鉅野縣 항목 「在縣東南」 에 둔다(거리 없음)"
+   },
+   "landing": {
+    "cell": [
+     898,
+     1810
+    ],
+    "provinceId": "85155",
+    "provinceNameCh": "任城县",
+    "parentRegion": "任城國"
+   },
+   "reading": "지도의 高平 은 安定郡 高平 이다. 山陽 高平 은 220년에 살아 있었고 지도에 없다 — 실결손.",
+   "nearestMapCity": {
+    "id": "85155",
+    "nameCh": "任城县",
+    "km": 9.8
+   }
+  },
+  {
+   "commandery": "鴈門郡",
+   "sourceName": "卤城",
+   "ledgerStatus": "IN_OTHER_COMMANDERY",
+   "nameMatchedTo": [
+    {
+     "id": "ss-lucheng",
+     "nameCh": "鹵城",
+     "commandery": "漢陽郡",
+     "kind": "STRATEGIC_SITE"
+    }
+   ],
+   "verdict": "HOMONYM_REAL_GAP",
+   "onMapAs": null,
+   "evidence": [
+    "後漢書 卷113 郡國志 鴈門郡 「〖卤城〗故属代郡。」",
+    "漢書 卷028 地理志 代郡 「…廣昌，鹵城。」",
+    "讀史方輿紀要 卷040 太原府 「鹵城，縣東百里。漢鹵城縣，屬代郡。」",
+    "三國志 卷35 諸葛亮傳 「宣王尋亮至於鹵城」 — 지도의 鹵城(漢陽郡 거점)은 이쪽이다",
+    "晉書 卷014 雁門郡 統縣八 「廣武　崞　𣳫陶　平城　葰人　繁畤　原平　馬邑」 — 鹵城 없음",
+    "TGAZ hvd_95106 鹵城縣 23–214 (113.77709, 39.29486)"
+   ],
+   "survival220": "NOT_CONFIRMED",
+   "matchedPlaceDistanceKm": 924,
+   "coordinate": {
+    "lon": 113.77709,
+    "lat": 39.29486,
+    "basis": "TGAZ hvd_95106",
+    "crossCheck": {
+     "source": "https://zh.wikipedia.org/zh-cn/%E5%A4%A7%E8%90%A5%E9%95%87_(%E7%B9%81%E5%B3%99%E5%8E%BF)",
+     "lonLat": [
+      113.7646,
+      39.29509
+     ],
+     "represents": "繁峙 大營鎮 중심(대리점), 故城은 관할 卤城村",
+     "km": 1.1
+    }
+   },
+   "reading": "다른 땅이다. 220년 존속은 확인되지 않는다(CHGIS 214 종료, 晉書 부재). 2026-09-23 방침(ABSENT 는 존속과 무관하게 게임 城)으로는 실결손으로 배치 대상이다.",
+   "landing": {
+    "cell": [
+     545,
+     1593
+    ],
+    "provinceId": "95093",
+    "provinceNameCh": "剧阳县",
+    "parentRegion": "鴈門郡"
+   },
+   "nearestMapCity": {
+    "id": "gc-g0085-009",
+    "nameCh": "埒縣",
+    "km": 48.5
+   }
+  },
+  {
+   "commandery": "上郡",
+   "sourceName": "候官",
+   "ledgerStatus": "IN_OTHER_COMMANDERY",
+   "nameMatchedTo": [
+    {
+     "id": "JURISDICTION-PARENT-0076-SEAT",
+     "nameCh": "候官",
+     "commandery": "張掖屬國"
+    }
+   ],
+   "verdict": "HOMONYM_REAL_GAP",
+   "onMapAs": null,
+   "evidence": [
+    "後漢書 卷113 郡國志 上郡 十城 끝 「〖龟兹属国〗 〖候官〗」",
+    "後漢書 卷113 校勘記 (張掖屬國) 「殿本考證齊召南謂按下有候官、左騎、千人、司馬官、千人官，皆官名，非城名也」",
+    "晉書 卷014·015 地理志 郡 표제에 上郡 없음"
+   ],
+   "survival220": "UNKNOWN",
+   "matchedPlaceDistanceKm": null,
+   "coordinate": null,
+   "reading": "張掖屬國 候官 과 다른 관서다. 위치를 비정한 공개 자료를 찾지 못했다(UNKNOWN). 候官 은 변경 候 의 관서라 縣이 아닐 수 있다."
+  },
+  {
+   "commandery": "南陽郡",
+   "sourceName": "成都",
+   "ledgerStatus": "IN_OTHER_COMMANDERY",
+   "nameMatchedTo": [
+    {
+     "id": "44394",
+     "nameCh": "成都县",
+     "commandery": "蜀郡"
+    }
+   ],
+   "verdict": "HOMONYM_REAL_GAP",
+   "onMapAs": null,
+   "evidence": [
+    "後漢書 卷112 郡國志 南陽郡 「順陽，侯國，故博山。…成都，襄鄉，南鄉」",
+    "漢書 卷028 南陽郡 에 成都 없음. 晉書 南陽國·順陽郡·義陽郡 에 없음",
+    "百度百科 「成都(汉南阳郡下辖县)」 항목이 있으나 403 으로 읽지 못함"
+   ],
+   "survival220": "UNKNOWN",
+   "matchedPlaceDistanceKm": null,
+   "coordinate": null,
+   "reading": "蜀郡 成都 와 다른 縣이다. 위치 UNKNOWN."
+  }
+ ],
+ "duplicateSyntheticCounties": [
+  {
+   "commandery": "河南尹",
+   "sourceName": "新城",
+   "gapCountyId": "hhs:109:河南尹:018",
+   "placeId": "gc-g0000-018",
+   "mapCity": {
+    "id": "82841",
+    "nameCh": "新成县",
+    "name": "신성현"
+   },
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 6.9
+  },
+  {
+   "commandery": "河東郡",
+   "sourceName": "绛",
+   "gapCountyId": "hhs:109:河東郡:011",
+   "placeId": "gc-g0002-011",
+   "mapCity": {
+    "id": "95423",
+    "nameCh": "绛邑县",
+    "name": "강읍현"
+   },
+   "cause": "CATALOG_TRUNCATION",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 187.1
+  },
+  {
+   "commandery": "京兆尹",
+   "sourceName": "霸陵",
+   "gapCountyId": "hhs:109:京兆尹:002",
+   "placeId": "gc-g0004-002",
+   "mapCity": {
+    "id": "70647",
+    "nameCh": "霸城县",
+    "name": "패성현"
+   },
+   "cause": "POST_220_RENAME_ON_MAP",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 99.0
+  },
+  {
+   "commandery": "左馮翊",
+   "sourceName": "高陵",
+   "gapCountyId": "hhs:109:左馮翊:001",
+   "placeId": "gc-g0005-001",
+   "mapCity": {
+    "id": "70741",
+    "nameCh": "高陆县",
+    "name": "고륙현"
+   },
+   "cause": "FALSE_ABSENCE",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 188.2
+  },
+  {
+   "commandery": "梁國",
+   "sourceName": "碭山",
+   "gapCountyId": "hhs:110:梁國:004",
+   "placeId": "gc-g0009-004",
+   "mapCity": {
+    "id": "42794",
+    "nameCh": "砀县",
+    "name": "탕현"
+   },
+   "cause": "CATALOG_TRUNCATION",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 88.9
+  },
+  {
+   "commandery": "魯國",
+   "sourceName": "魯國",
+   "gapCountyId": "hhs:110:魯國:001",
+   "placeId": "gc-g0012-001",
+   "mapCity": {
+    "id": "45180",
+    "nameCh": "鲁县",
+    "name": "노현"
+   },
+   "cause": "FALSE_ABSENCE",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 33.6
+  },
+  {
+   "commandery": "鉅鹿郡",
+   "sourceName": "陶",
+   "gapCountyId": "hhs:110:鉅鹿郡:001",
+   "placeId": "gc-g0014-001",
+   "mapCity": {
+    "id": "87061",
+    "nameCh": "廮陶县",
+    "name": "영도현"
+   },
+   "cause": "CATALOG_TRUNCATION",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 76.9
+  },
+  {
+   "commandery": "河閒國",
+   "sourceName": "易",
+   "gapCountyId": "hhs:110:河閒國:003",
+   "placeId": "gc-g0018-003",
+   "mapCity": {
+    "id": "87297",
+    "nameCh": "易城县",
+    "name": "역성현"
+   },
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 6.6
+  },
+  {
+   "commandery": "東海郡",
+   "sourceName": "郯",
+   "gapCountyId": "hhs:111:東海郡:001",
+   "placeId": "gc-g0030-001",
+   "mapCity": {
+    "id": "85649",
+    "nameCh": "郯城县",
+    "name": "담성현"
+   },
+   "cause": "FALSE_ABSENCE",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 127.2
+  },
+  {
+   "commandery": "東海郡",
+   "sourceName": "合鄕",
+   "gapCountyId": "hhs:111:東海郡:010",
+   "placeId": "gc-g0030-010",
+   "mapCity": {
+    "id": "45299",
+    "nameCh": "合城县",
+    "name": "합성현"
+   },
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 7.6
+  },
+  {
+   "commandery": "廣陵郡",
+   "sourceName": "輿",
+   "gapCountyId": "hhs:111:廣陵郡:009",
+   "placeId": "gc-g0033-009",
+   "mapCity": {
+    "id": "42698",
+    "nameCh": "舆国",
+    "name": "여국"
+   },
+   "cause": "FALSE_ABSENCE",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 195.4
+  },
+  {
+   "commandery": "東萊郡",
+   "sourceName": "惤",
+   "gapCountyId": "hhs:112:東萊郡:003",
+   "placeId": "gc-g0039-003",
+   "mapCity": {
+    "id": "85376",
+    "nameCh": "㡉侯国",
+    "name": "견후국"
+   },
+   "cause": "VARIANT_GLYPH",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 195.7
+  },
+  {
+   "commandery": "豫章郡",
+   "sourceName": "廬陵",
+   "gapCountyId": "hhs:112:豫章郡:005",
+   "placeId": "gc-g0053-005",
+   "mapCity": {
+    "id": "40885",
+    "nameCh": "高昌县",
+    "name": "고창현"
+   },
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 7.1
+  },
+  {
+   "commandery": "蜀郡",
+   "sourceName": "八陵",
+   "gapCountyId": "hhs:113:蜀郡:009",
+   "placeId": "gc-g0057-009",
+   "mapCity": {
+    "id": "96436",
+    "nameCh": "蚕陵县",
+    "name": "잠릉현"
+   },
+   "cause": "SOURCE_TEXT_ERROR",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 238.5
+  },
+  {
+   "commandery": "鴈門郡",
+   "sourceName": "汪陶",
+   "gapCountyId": "hhs:113:鴈門郡:005",
+   "placeId": "gc-g0085-005",
+   "mapCity": {
+    "id": "95061",
+    "nameCh": "浧陶县",
+    "name": "영도현"
+   },
+   "cause": "VARIANT_GLYPH",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 140.4
+  },
+  {
+   "commandery": "上谷郡",
+   "sourceName": "下落",
+   "gapCountyId": "hhs:113:上谷郡:008",
+   "placeId": "gc-g0090-008",
+   "mapCity": {
+    "id": "87638",
+    "nameCh": "下洛县",
+    "name": "하락현"
+   },
+   "cause": "VARIANT_GLYPH",
+   "basis": "PRIOR_LEDGER",
+   "evidence": [
+    "naming-artifact-false-absences-v1 / absent-county-adjudications-v1 이 이미 「지도에 다른 표기로 있다」고 판정"
+   ],
+   "syntheticToMapKm": 69.1
+  },
+  {
+   "commandery": "鉅鹿郡",
+   "sourceName": "南〈糸言糸〉",
+   "gapCountyId": "hhs:110:鉅鹿郡:015",
+   "placeId": "gc-g0014-015",
+   "mapCity": {
+    "id": "87055",
+    "nameCh": "南䜌县",
+    "name": "남련현"
+   },
+   "cause": "MISSING_GLYPH_PLACEHOLDER",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "後漢書 卷001A 光武帝紀 註 「南䜌，縣名，屬鉅鹿郡，故城在今邢州柏人縣東北」",
+    "코퍼스 조합 표기 〈糸言糸〉 = 䜌. 지도 87055 南䜌县(남련현)은 220년 경계로 安平國 에 있고 郡國志 어느 행에도 쓰이지 않는다"
+   ],
+   "syntheticToMapKm": 86.8
+  },
+  {
+   "commandery": "廣漢郡",
+   "sourceName": "葭萌",
+   "gapCountyId": "hhs:113:廣漢郡:008",
+   "placeId": "gc-g0056-008",
+   "mapCity": {
+    "id": "44587",
+    "nameCh": "汉寿县",
+    "name": "한수현"
+   },
+   "cause": "POST_220_RENAME_ON_MAP",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "晉書 卷014 地理志 「劉備據蜀，又分廣漢之葭萌、涪城、梓潼、白水四縣，改葭萌曰漢壽」",
+    "華陽國志 卷二 漢中志 「晉壽縣　本葭萌城。劉氏更曰漢壽」",
+    "TGAZ hvd_44587 漢壽縣 217–279 = 지도 44587. 지도 44587 은 昭化(32.33682, 105.71422)에서 26 km 남쪽이라 좌표는 따로 볼 문제"
+   ],
+   "syntheticToMapKm": 196.8
+  },
+  {
+   "commandery": "右扶風",
+   "sourceName": "平陵",
+   "gapCountyId": "hhs:109:右扶風:003",
+   "placeId": "gc-g0006-003",
+   "mapCity": {
+    "id": "70715",
+    "nameCh": "始平县",
+    "name": "시평현"
+   },
+   "cause": "POST_220_RENAME_ON_MAP",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "讀史方輿紀要 卷053 「始元中，爲平陵縣地。三國魏黃初中，改爲始平縣」",
+    "TGAZ hvd_70714 平陵縣 23–219 · hvd_70715 始平縣 220–356 같은 점, 지도 70715 0.0 km",
+    "晉書 卷014 始平郡 「槐里　始平　武功　鄠　蒯城」"
+   ],
+   "syntheticToMapKm": 86.1
+  },
+  {
+   "commandery": "魏郡",
+   "sourceName": "沙",
+   "gapCountyId": "hhs:110:魏郡:011",
+   "placeId": "gc-g0013-011",
+   "mapCity": {
+    "id": "87150",
+    "nameCh": "涉县",
+    "name": "섭현"
+   },
+   "cause": "POST_220_RENAME_ON_MAP",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "讀史方輿紀要 卷049 「漢置沙縣，屬魏郡。後漢因之，後因漳水溢，人民徒涉，因曰涉縣」",
+    "TGAZ hvd_87148 沙縣 -202–24 · hvd_87150 涉縣 196– 같은 점, 지도 87150 0.0 km"
+   ],
+   "syntheticToMapKm": 62.9
+  },
+  {
+   "commandery": "勃海郡",
+   "sourceName": "脩",
+   "gapCountyId": "hhs:110:勃海郡:008",
+   "placeId": "gc-g0021-008",
+   "mapCity": {
+    "id": "87600",
+    "nameCh": "蓚县",
+    "name": "수현"
+   },
+   "cause": "VARIANT_GLYPH",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "TGAZ hvd_87599 修縣 23–219 · hvd_87600 蓚縣 220– 같은 점, 지도 87600 0.01 km",
+    "晉書 卷014 勃海郡 「…東安陵　蓨　廣川…」"
+   ],
+   "syntheticToMapKm": 197.8
+  },
+  {
+   "commandery": "泰山郡",
+   "sourceName": "山茌",
+   "gapCountyId": "hhs:111:泰山郡:006",
+   "placeId": "gc-g0026-006",
+   "mapCity": {
+    "id": "45127",
+    "nameCh": "茬县",
+    "name": "치현"
+   },
+   "cause": "VARIANT_GLYPH",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "TGAZ hvd_45127 茬縣 -122–231 · hvd_45128 山茌縣 232–422 같은 점, 지도 45127 0.01 km",
+    "晉書 卷014 泰山郡 「山茌{茌山在東北}」"
+   ],
+   "syntheticToMapKm": 141.8
+  },
+  {
+   "commandery": "巴郡",
+   "sourceName": "充国",
+   "gapCountyId": "hhs:113:巴郡:012",
+   "placeId": "gc-g0055-012",
+   "mapCity": {
+    "id": "44564",
+    "nameCh": "西充国县",
+    "name": "서충국현"
+   },
+   "cause": "SUCCESSOR_SPLIT_REVIEW",
+   "basis": "NEW_2026_09_27",
+   "evidence": [
+    "讀史方輿紀要 卷068 「漢充國縣地，晉析置西充國縣」",
+    "TGAZ 充國 레코드와 hvd_44564 西充國縣 193–305 같은 점. 지도에 西充国县 44564·南充国县 44570 이 둘 다 있다",
+    "晉書 卷014 巴西郡 「閬中　西充國…南充國」 — 분할 뒤 두 후계 縣. 합성 充国 은 200 km 떨어진 칸이다"
+   ],
+   "syntheticToMapKm": 198.0
+  }
+ ],
+ "sourcedCoordinates": [
+  {
+   "commandery": "漁陽郡",
+   "sourceName": "泉州",
+   "gapCountyId": "hhs:113:漁陽郡:005",
+   "placeId": "gc-g0091-005",
+   "lonLat": [
+    117.055,
+    39.34528
+   ],
+   "represents": "黃莊街道 중심(城上村 소속 街道, 대리점)",
+   "errorKm": "≤5",
+   "sources": [
+    "https://zh.wikipedia.org/zh-hans/%E6%B3%89%E5%B7%9E%E5%8E%BF",
+    "https://en.wikipedia.org/wiki/Huangzhuang_Subdistrict,_Tianjin"
+   ],
+   "crossChecks": {
+    "namu": {
+     "lonLat": [
+      117.0161,
+      39.3177
+     ],
+     "km": 4.5
+    }
+   },
+   "note": "위키 「治所在今天津市武清区西南城上村」, 街道 관할 마을에 城上",
+   "currentSynthetic": {
+    "lonLat": [
+     118.0646396,
+     41.2598524
+    ],
+    "km": 229.1
+   },
+   "landing": {
+    "cell": [
+     541,
+     1835
+    ],
+    "provinceId": "87436",
+    "provinceNameCh": "潞县",
+    "parentRegion": "漁陽郡"
+   },
+   "verdict": "READY_FOR_REPIN",
+   "applied": {
+    "lonLat": [
+     117.01611,
+     39.31765
+    ],
+    "coordinateBasis": "READY_NAMU",
+    "represents": "나무위키 「톈진시 우칭구」 점 — 위키 「武清区西南城上村」 黃莊街道 점과 4.5 km",
+    "sources": [
+     "https://namu.wiki/w/삼국지/지명/유주",
+     "https://zh.wikipedia.org/zh-hans/%E6%B3%89%E5%B7%9E%E5%8E%BF"
+    ],
+    "chgisDisagreement": {
+     "record": "TGAZ hvd_87439",
+     "lonLat": [
+      116.7163,
+      39.4489
+     ],
+     "km": 29.2,
+     "note": "CHGIS 점은 두 독립 서술(城上村·우칭구)과 어긋나 쓰지 않는다"
+    },
+    "landing": {
+     "cell": [
+      543,
+      1832
+     ],
+     "provinceId": "87436",
+     "provinceNameCh": "潞县",
+     "parentRegion": "漁陽郡"
+    }
+   },
+   "nearestOtherMapPlace": {
+    "id": "gc-g0091-004",
+    "nameCh": "雍奴縣",
+    "kind": "COUNTY",
+    "km": 27.6
+   }
+  },
+  {
+   "commandery": "廣漢屬國",
+   "sourceName": "阴平道",
+   "gapCountyId": "hhs:113:廣漢屬國:001",
+   "placeId": "gc-g0063-001",
+   "lonLat": [
+    104.67775,
+    32.94432
+   ],
+   "represents": "文縣 縣 좌표(城關鎮), 대리점",
+   "errorKm": "5–15",
+   "sources": [
+    "https://zh.wikipedia.org/zh-hans/%E6%96%87%E5%8E%BF"
+   ],
+   "crossChecks": {},
+   "note": "위키 페이지는 陰平道 치소를 직접 말하지 않는다. 縣 단위 비정은 讀史方輿紀要 卷002 「陰平，今陝西文縣也」. 지도 X025(廣漢屬國 郡 표지점, 게임 城 아님)와 같은 점",
+   "currentSynthetic": {
+    "lonLat": [
+     102.2479654,
+     33.4728405
+    ],
+    "km": 233.2
+   },
+   "landing": {
+    "cell": [
+     1087,
+     921
+    ],
+    "provinceId": "96006",
+    "provinceNameCh": "广武县",
+    "parentRegion": "廣漢屬國"
+   },
+   "verdict": "READY_FOR_REPIN",
+   "applied": {
+    "lonLat": [
+     104.67775,
+     32.94432
+    ],
+    "coordinateBasis": "REVIEWED_WEB_PROXY",
+    "represents": "文縣 縣 좌표(城關鎮). 讀史方輿紀要 卷002 「陰平，今陝西文縣也」",
+    "sources": [
+     "https://zh.wikipedia.org/zh-hans/%E6%96%87%E5%8E%BF"
+    ],
+    "landing": {
+     "cell": [
+      1087,
+      921
+     ],
+     "provinceId": "96006",
+     "provinceNameCh": "广武县",
+     "parentRegion": "廣漢屬國"
+    }
+   },
+   "nearestOtherMapPlace": {
+    "id": "X025",
+    "nameCh": "廣漢屬國",
+    "kind": "COMMANDERY",
+    "km": 0.0
+   }
+  },
+  {
+   "commandery": "陳國",
+   "sourceName": "寧平",
+   "gapCountyId": "hhs:110:陳國:003",
+   "placeId": "gc-g0011-003",
+   "lonLat": [
+    115.32525,
+    33.66413
+   ],
+   "represents": "鄲城 寧平鎮 중심(대리점)",
+   "errorKm": "≤5",
+   "sources": [
+    "https://zh.wikipedia.org/zh-hans/%E5%AE%81%E5%B9%B3%E9%95%87"
+   ],
+   "crossChecks": {
+    "tgaz": {
+     "lonLat": [
+      115.3246,
+      33.6648
+     ],
+     "km": 0.1
+    }
+   },
+   "note": "위키 페이지에 漢 寧平縣 서술은 없다. 讀史方輿紀要 卷050 「寧平城，在故苦縣西南」 과 방향이 맞고, CHGIS(TGAZ) 漢 寧平 점과 0.1 km",
+   "currentSynthetic": {
+    "lonLat": [
+     114.7604714,
+     33.6135697
+    ],
+    "km": 52.5
+   },
+   "landing": {
+    "cell": [
+     1025,
+     1707
+    ],
+    "provinceId": "gc-g0008-025",
+    "provinceNameCh": "宜祿縣",
+    "parentRegion": "汝南郡"
+   },
+   "verdict": "READY_FOR_REPIN",
+   "applied": {
+    "lonLat": [
+     115.3246,
+     33.6648
+    ],
+    "coordinateBasis": "READY_TGAZ",
+    "represents": "CHGIS 漢 寧平縣 점(TGAZ hvd_82099, -202–219). 寧平鎮 중심과 0.1 km",
+    "sources": [
+     "https://zh.wikipedia.org/zh-hans/%E5%AE%81%E5%B9%B3%E9%95%87"
+    ],
+    "landing": {
+     "cell": [
+      1025,
+      1707
+     ],
+     "provinceId": "gc-g0008-025",
+     "provinceNameCh": "宜祿縣",
+     "parentRegion": "汝南郡"
+    }
+   },
+   "nearestOtherMapPlace": {
+    "id": "gc-g0008-025",
+    "nameCh": "宜祿縣",
+    "kind": "COUNTY",
+    "km": 8.6
+   }
+  },
+  {
+   "commandery": "沛國",
+   "sourceName": "太丘",
+   "gapCountyId": "hhs:110:沛國:020",
+   "placeId": "gc-g0010-020",
+   "lonLat": [
+    116.28903,
+    34.1117
+   ],
+   "represents": "CHGIS 漢 太丘縣 점(TGAZ hvd_82141, 58–219)",
+   "errorKm": "3–5",
+   "sources": [
+    "https://www.geonames.org/search.html?q=Taiqiu&country=CN",
+    "https://www.163.com/dy/article/J7UEDO0B0534H8BG.html"
+   ],
+   "crossChecks": {
+    "geonames": {
+     "lonLat": [
+      116.2906,
+      34.1075
+     ],
+     "km": 0.5
+    }
+   },
+   "note": "#984 는 UNKNOWN 이었다. TGAZ 漢代 레코드와 GeoNames Taiqiu 취락점이 0.5 km. 讀史方輿紀要 卷050 永城 「縣西北三十里」. zh.wiki 太丘鎮 좌표(33.92560, 116.44029)는 永城 시 중심 좌표를 옮긴 값으로 보여 쓰지 않는다",
+   "currentSynthetic": {
+    "lonLat": [
+     116.3854721,
+     33.7073891
+    ],
+    "km": 45.7
+   },
+   "landing": {
+    "cell": [
+     987,
+     1778
+    ],
+    "provinceId": "82128",
+    "provinceNameCh": "酇县",
+    "parentRegion": "沛國"
+   },
+   "verdict": "READY_FOR_REPIN",
+   "applied": {
+    "lonLat": [
+     116.28903,
+     34.1117
+    ],
+    "coordinateBasis": "READY_TGAZ",
+    "represents": "CHGIS 漢 太丘縣 점(TGAZ hvd_82141, 58–219). GeoNames Taiqiu 와 0.5 km",
+    "sources": [
+     "https://www.geonames.org/search.html?q=Taiqiu&country=CN",
+     "https://www.163.com/dy/article/J7UEDO0B0534H8BG.html"
+    ],
+    "landing": {
+     "cell": [
+      987,
+      1778
+     ],
+     "provinceId": "82128",
+     "provinceNameCh": "酇县",
+     "parentRegion": "沛國"
+    }
+   },
+   "nearestOtherMapPlace": {
+    "id": "42794",
+    "nameCh": "砀县",
+    "kind": "COUNTY",
+    "km": 19.3
+   }
+  }
+ ],
+ "unresolvedCoordinates": [
+  {
+   "commandery": "廣漢郡",
+   "sourceName": "广汉",
+   "gapCountyId": "hhs:113:廣漢郡:010",
+   "placeId": "gc-g0056-010",
+   "verdict": "COORDINATE_CONFLICT",
+   "candidate": {
+    "lonLat": [
+     105.414,
+     30.728
+    ],
+    "represents": "射洪 沱牌鎮(2010년 柳樹鎮에서 개명) 중심",
+    "sources": [
+     "https://zh.wikipedia.org/zh-hans/%E6%B2%B1%E7%89%8C%E9%95%87",
+     "http://www.xzqh.org/html/show/sc/21702.html"
+    ],
+    "landing": {
+     "cell": [
+      1276,
+      975
+     ],
+     "provinceId": "96341",
+     "provinceNameCh": "郪县",
+     "parentRegion": "犍為郡"
+    },
+    "currentSyntheticKm": 142.7
+   },
+   "conflict": "xzqh·四川省情网 스니펫은 「治所在今柳树镇通泉坝」, 讀史方輿紀要 卷071 은 「射洪縣東南百里」 — 두 비정의 거리가 맞는지 미검증. 通泉坝 좌표는 찾지 못했다"
+  },
+  {
+   "commandery": "廣漢郡",
+   "sourceName": "葭萌",
+   "gapCountyId": "hhs:113:廣漢郡:008",
+   "placeId": "gc-g0056-008",
+   "verdict": "DUPLICATE_NOT_MOVE",
+   "note": "#984 는 昭化(32.33682, 105.71422)로 옮기자고 했지만 葭萌 은 蜀漢 이 漢壽 로 고친 縣이고 지도 44587 汉寿县 이 그것이다. 옮기면 26 km 떨어진 곳에 같은 縣이 둘 선다 — duplicateSyntheticCounties 참조"
+  }
+ ]
+}

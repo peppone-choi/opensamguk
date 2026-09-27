@@ -57,7 +57,8 @@ EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT = 72
 CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT = 175
 JURISDICTION_ROUTE_CLAIM_COUNT = (CITYLESS_JURISDICTION_ROUTE_CLAIM_COUNT + STRATEGIC_SITE_ROUTE_CLAIM_COUNT
                                   + EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT)
-HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 278
+# 결손 縣 합성 배치: 278 → 259 (2026-09-27 중복 23 은퇴·동명 실결손 4 추가).
+HHS_APPENDED_ROUTE_NODE_COUNT = 1 + 51 + 3 + 13 + 1 + 259
 APPENDED_ROUTE_NODE_COUNT = HHS_APPENDED_ROUTE_NODE_COUNT + JURISDICTION_ROUTE_CLAIM_COUNT
 ROUTE_NODE_COUNT = 780 + APPENDED_ROUTE_NODE_COUNT
 TEMPORAL_ROOT_KEYS = {
@@ -639,7 +640,7 @@ def _validate_review_chain(
             "externalHistoricalBindingCount": 0,
             "externalLocationClaimCount": 11,
             "frontierCountyClaimCount": 51, "vacatedCountyLocationClaimCount": 1,
-            "gapCountyClaimCount": 278,
+            "gapCountyClaimCount": 259,
             "hhsAdministrativeBindingCount": ROUTE_NODE_COUNT - JURISDICTION_ROUTE_CLAIM_COUNT,
             "overlayUniqueCount": 723,
             "polityPresenceCount": 0,
@@ -670,7 +671,7 @@ def _validate_review_chain(
             ("w3-strategic-site-route-claim", STRATEGIC_SITE_ROUTE_CLAIM_COUNT, "APPROVED"),
             ("w4-vacated-county-location", 1, "APPROVED"),
             ("w5-external-settlement-route-claim", EXTERNAL_SETTLEMENT_ROUTE_CLAIM_COUNT, "APPROVED"),
-            ("w1-gap-county-location", 278, "APPROVED"),
+            ("w1-gap-county-location", 259, "APPROVED"),
         }
     ):
         raise ValueError("closed enum or count mismatch for review policy selection batches")

@@ -212,6 +212,23 @@ class ArchiveRuntimeConstantsIntegrityTest {
             assertEquals(entry.path("sourceSha256").asText(), sha(restored))
         }
     }
+    @Test fun `1428 frozen constants match the reviewed source and snapshots`() {
+        val root = Path.of("..").toAbsolutePath().normalize()
+        val raw = Files.readAllBytes(root.resolve("data/map/han-world-v3-1428-artifacts-v1/runtime-constants.json"))
+        assertEquals("80f2ba758bfd54e78f3e31e818ae842636b557cfc326a3343f956ea5bda676c5", sha(raw))
+        val files = ObjectMapper().readTree(raw).path("files").toList()
+        assertEquals(2, files.size)
+        for (entry in files) {
+            val path = Path.of(entry.path("snapshot").asText())
+            val bytes = Files.readAllBytes(root.resolve(path))
+            assertEquals(entry.path("snapshotSha256").asText(), sha(bytes))
+            val originalName = Path.of(entry.path("source").asText()).fileName.toString().removeSuffix(".kt")
+            val frozenName = path.fileName.toString().removeSuffix(".kt")
+            val restored = bytes.toString(Charsets.UTF_8).substringAfter("\n")
+                .replace(frozenName, originalName).toByteArray(Charsets.UTF_8)
+            assertEquals(entry.path("sourceSha256").asText(), sha(restored))
+        }
+    }
     private fun sha(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)
         .joinToString("") { "%02x".format(it) }
 }

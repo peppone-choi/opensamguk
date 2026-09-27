@@ -5,52 +5,23 @@
   "note": "같은 郡 안에서 han-tiles jurisdictionRecords[].displayName 이 겹치는 관할. 표시명은 바꾸지 않고, 웹이 이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라.",
   "generator": "tools/map/build_county_display_name_collisions.py",
   "inputs": {
-    "hanTilesSha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488",
-    "hanWorldV3Sha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30",
+    "hanTilesSha256": "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",
+    "hanWorldV3Sha256": "db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3",
     "simplificationTableSha256": "1324528b7ee6b22da49bc029114ea038cb7d5934872bb7269ce2671576f8f180",
     "administrativeUnitsSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
   },
   "rule": "key = (commanderyId, displayName) over jurisdictionRecords[]; gloss = traditional(nameCh minus 县/縣)",
   "summary": {
-    "jurisdictions": 1447,
-    "sameCommanderyCollisionGroups": 6,
-    "sameCommanderyCollidingJurisdictions": 12,
-    "commanderiesWithCollisions": 6,
+    "jurisdictions": 1428,
+    "sameCommanderyCollisionGroups": 4,
+    "sameCommanderyCollidingJurisdictions": 8,
+    "commanderiesWithCollisions": 4,
     "byClassification": {
-      "HOMOPHONE": 6
+      "HOMOPHONE": 4
     },
-    "displayNamesSharedAcrossCommanderies": 128
+    "displayNamesSharedAcrossCommanderies": 127
   },
   "collisions": [
-    {
-      "commanderyId": "PARENT-0000",
-      "commanderyDisplayName": "하남윤",
-      "commanderyNameCh": "河南尹",
-      "displayName": "신성현",
-      "classification": "HOMOPHONE",
-      "members": [
-        {
-          "jurisdictionId": "82841",
-          "kind": "COUNTY",
-          "nameCh": "新成县",
-          "simplifiedStem": "新成",
-          "gloss": "新成",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 857,
-          "runtimeDisplayName": "하남윤 신성현(新成)"
-        },
-        {
-          "jurisdictionId": "gc-g0000-018",
-          "kind": "COUNTY",
-          "nameCh": "新城縣",
-          "simplifiedStem": "新城",
-          "gloss": "新城",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 1399,
-          "runtimeDisplayName": "하남윤 신성현(新城)"
-        }
-      ]
-    },
     {
       "commanderyId": "PARENT-0007",
       "commanderyDisplayName": "영천군",
@@ -164,35 +135,6 @@
           "glossBasis": "SIMPLIFICATION_TABLE",
           "runtimeCityId": 527,
           "runtimeDisplayName": "여강군 안풍현(安丰)"
-        }
-      ]
-    },
-    {
-      "commanderyId": "PARENT-0090",
-      "commanderyDisplayName": "상곡군",
-      "commanderyNameCh": "上谷郡",
-      "displayName": "하락현",
-      "classification": "HOMOPHONE",
-      "members": [
-        {
-          "jurisdictionId": "87638",
-          "kind": "COUNTY",
-          "nameCh": "下洛县",
-          "simplifiedStem": "下洛",
-          "gloss": "下雒",
-          "glossBasis": "SIMPLIFICATION_TABLE",
-          "runtimeCityId": 996,
-          "runtimeDisplayName": "상곡군 하락현(下洛)"
-        },
-        {
-          "jurisdictionId": "gc-g0090-008",
-          "kind": "COUNTY",
-          "nameCh": "下落縣",
-          "simplifiedStem": "下落",
-          "gloss": "下落",
-          "glossBasis": "UNCHANGED",
-          "runtimeCityId": 1603,
-          "runtimeDisplayName": "상곡군 하락현(下落)"
         }
       ]
     }

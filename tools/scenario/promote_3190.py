@@ -21,6 +21,9 @@ REPO = Path(__file__).resolve().parents[2]
 MAP_PATH = REPO / "infra/src/main/resources/map/han-world-v3.json"
 TEMPLATE_PATH = REPO / "infra/src/main/resources/scenario/scenario_990002.json"
 OUTPUT_PATH = REPO / "infra/src/main/resources/scenario/scenario_3190.json"
+# 창고 템플릿(scenario_990002)의 위상 핀. 2026-09-27 부터 1428 판(4배 격자)이다 — 그전엔 1447-map4
+# (eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14).
+TEMPLATE_TOPOLOGY_HASH = "e5e6dc09b45b910b1779c4a7931f037028cacb9dacd8b4f64f05b12a4e009fb7"
 
 
 def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
@@ -33,8 +36,8 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
         raise ValueError("190 pilot affiliated roster must contain 249 officers")
 
     warehouse = copy.deepcopy(template["warehouses"])
-    if warehouse["topologyHash"] != "eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14":
-        raise ValueError("warehouse template is not pinned to map4")
+    if warehouse["topologyHash"] != TEMPLATE_TOPOLOGY_HASH:
+        raise ValueError("warehouse template is not pinned to the current release topology")
     stocks = {row["countyId"]: row["stock"] for row in warehouse["warehouses"]}
     if len(stocks) != len(warehouse["warehouses"]):
         raise ValueError("duplicate county warehouse")
@@ -104,6 +107,36 @@ def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
     return seed
 
 
+def rewarehouse(existing: dict, template: dict, map_cities: set[int]) -> dict:
+    """Re-key the promoted seed's county warehouses to the current template without the pilot.
+
+    The gitignored pilot is not needed to follow a roster change: only county warehouses name the
+    administrative county set. Non-zero stocks (capital treasuries) move over unchanged; every
+    other current administrative county starts empty, as promote() seeds it.
+    """
+    seed = copy.deepcopy(existing)
+    warehouse = copy.deepcopy(template["warehouses"])
+    if warehouse["topologyHash"] != TEMPLATE_TOPOLOGY_HASH:
+        raise ValueError("warehouse template is not pinned to the current release topology")
+    rows = {row["countyId"]: row for row in warehouse["warehouses"]}
+    if len(rows) != len(warehouse["warehouses"]):
+        raise ValueError("duplicate county warehouse")
+    for row in rows.values():
+        for resource in ("money", "grain", "iron", "timber", "horses"):
+            row["stock"][resource] = 0
+    for row in seed["warehouses"]["warehouses"]:
+        if any(row["stock"].values()):
+            if row["countyId"] not in rows:
+                raise ValueError(f"stocked county {row['countyId']} is not a current administrative county")
+            rows[row["countyId"]]["stock"] = dict(row["stock"])
+    references = {city for nation in seed["nation"] for city in nation[8]}
+    references.update(row[4] for row in seed["general"] if row[4] is not None)
+    if not references <= map_cities:
+        raise ValueError(f"190 seed references cities outside the current map: {sorted(references - map_cities)}")
+    seed["warehouses"] = warehouse
+    return seed
+
+
 def render(seed: dict) -> str:
     """Keep each officer and county on one line so the reviewed roster stays diffable."""
     def compact(value: object) -> str:
@@ -140,12 +173,19 @@ def render(seed: dict) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("source", type=Path, help="gitignored verify_pilots.py scenario_3190.json")
+    parser.add_argument("source", type=Path, nargs="?", help="gitignored verify_pilots.py scenario_3190.json")
     parser.add_argument("--output", type=Path, default=OUTPUT_PATH)
+    parser.add_argument("--rewarehouse", action="store_true",
+                        help="re-key the committed seed's warehouses to the current template (roster change)")
     args = parser.parse_args()
     template = json.loads(TEMPLATE_PATH.read_text(encoding="utf-8"))
     map_cities = {city["id"] for city in json.loads(MAP_PATH.read_text(encoding="utf-8"))["cities"]}
-    result = promote(args.source.read_bytes(), template, map_cities)
+    if args.rewarehouse:
+        result = rewarehouse(json.loads(args.output.read_text(encoding="utf-8")), template, map_cities)
+    elif args.source is None:
+        parser.error("source is required unless --rewarehouse")
+    else:
+        result = promote(args.source.read_bytes(), template, map_cities)
     rendered = render(result)
     if json.loads(rendered) != result:
         raise ValueError("rendered 190 scenario differs from the promoted model")

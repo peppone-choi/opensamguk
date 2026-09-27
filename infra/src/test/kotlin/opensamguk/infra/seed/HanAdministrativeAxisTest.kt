@@ -15,14 +15,17 @@ class HanAdministrativeAxisTest {
     @Test
     fun `pinned world projects canonical counties and explicitly classifies gaps`() {
         val projection = HanAdministrativeAxis.loadPinned()
-        assertEquals(1447, projection.counties.size)
+        // 2026-09-27 1428 판: 중복 합성 城 23곳(郡國志 단위를 달고 있었다)이 빠지고 동명 실결손 4곳이 들어왔다.
+        assertEquals(1428, projection.counties.size)
         assertEquals(105, projection.commanderyToZhou.size)
-        assertEquals(1127, projection.counties.values.count { it.coverage == AdministrativeCoverage.CANONICAL })
+        assertEquals(1108, projection.counties.values.count { it.coverage == AdministrativeCoverage.CANONICAL })
         assertEquals(61, projection.counties.values.count { it.coverage == AdministrativeCoverage.OUTSIDE_CANON })
         assertEquals(259, projection.counties.values.count { it.coverage == AdministrativeCoverage.UNRESOLVED_PARENT })
         assertEquals(1, projection.baseSeatFor("hhs-group:109:京兆尹"))
-        assertEquals(101, projection.baseCommanderySeatById.size)
-        assertEquals(setOf("hhs-group:110:清河國", "hhs-group:111:泰山郡", "hhs-group:112:齊國", "hhs-group:113:張掖屬國"), projection.unresolvedBaseSeatIds)
+        // 東海·鉅鹿·左馮翊·魯國 治所는 은퇴한 합성 城이 맡고 있었다 — 같은 縣인 기존 城은 아직 郡國志 단위 없이 선다.
+        assertEquals(97, projection.baseCommanderySeatById.size)
+        assertEquals(setOf("hhs-group:110:清河國", "hhs-group:111:泰山郡", "hhs-group:112:齊國", "hhs-group:113:張掖屬國",
+            "hhs-group:111:東海郡", "hhs-group:110:鉅鹿郡", "hhs-group:109:左馮翊", "hhs-group:110:魯國"), projection.unresolvedBaseSeatIds)
         assertNull(projection.baseSeatFor("hhs-group:111:泰山郡"))
         assertTrue(projection.counties.values.filter { it.coverage == AdministrativeCoverage.CANONICAL }.all { it.commanderyId != null && it.zhouId != null })
         assertNull(projection.commanderyFor(849))
