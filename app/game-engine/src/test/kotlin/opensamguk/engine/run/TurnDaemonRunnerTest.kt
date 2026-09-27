@@ -1,6 +1,7 @@
 package opensamguk.engine.run
 
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
 
 import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.redis.RealtimePublisher
@@ -210,6 +211,30 @@ class TurnDaemonRunnerTest {
     }
 
     @Test
+    fun `catch-up drains the earlier personal deadline before the world boundary`() {
+        val order = mutableListOf<String>()
+        val worldLatch = CountDownLatch(1)
+        val now = Instant.now()
+        val worldDeadline = now.minusSeconds(1)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            latch = worldLatch,
+            initialNextRun = worldDeadline,
+            initialNextGeneralRun = now.minusSeconds(2),
+            initialCatchUp = TurnCatchUp.start(worldDeadline, now),
+            callOrder = order,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
+        runner.start()
+        try {
+            assertTrue(worldLatch.await(3, TimeUnit.SECONDS))
+            assertEquals(listOf("general", "world"), order.take(2))
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
     fun `paused runner does not drain a due general until resumed`() {
         val generalLatch = CountDownLatch(1)
         val gate = DaemonPauseGate()
@@ -374,6 +399,7 @@ class TurnDaemonRunnerTest {
         private val killLoopWithError: Boolean = false,
         initialNextRun: Instant = Instant.now().minusSeconds(5),
         initialNextGeneralRun: Instant? = null,
+        private val initialCatchUp: TurnCatchUp? = null,
     ) : TurnRunService(
         world = stubWorld(),
         commandStream = RedisCommandStream(StringRedisTemplate(), "che:test", WorldId(1), startId = "0"),
@@ -390,6 +416,11 @@ class TurnDaemonRunnerTest {
         override fun nextRunTime(): Instant = next
 
         override fun nextGeneralRunTime(): Instant? = nextGeneral
+
+        override fun catchUpPlan(): TurnCatchUp? = initialCatchUp
+        override fun ensureCatchUp(at: Instant, reanchor: Boolean) = Unit
+        override fun refreshCatchUp(at: Instant) = Unit
+        override fun finishCatchUpIfCurrent(at: Instant) = Unit
 
         override fun runIntakeCommands(blockMs: Long): Int {
             val counter = intakeDrains ?: return 0

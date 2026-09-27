@@ -2,6 +2,7 @@ package opensamguk.engine.turn
 
 import opensamguk.engine.flush.DeltaGenerationSession
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.infra.persistence.WaterControlWriteBatch
 import opensamguk.infra.persistence.WaterControlWriteRow
 import opensamguk.logic.world.WaterControlAssessment
@@ -92,6 +93,16 @@ class ChangeRecorder(
     /** OPENSAM-130 generation gate; null = unguarded (unit tests). */
     var generationSession: DeltaGenerationSession? = null,
 ) {
+
+    /** Operational clock plan, stored outside gameplay meta and written only when it changes. */
+    private var catchUpUpdate: TurnCatchUp? = null
+
+    fun recordCatchUp(plan: TurnCatchUp) {
+        gateMutation("record catch-up")
+        catchUpUpdate = plan
+    }
+
+    fun catchUpUpdate(): TurnCatchUp? = catchUpUpdate
 
     private fun gateMutation(action: String) {
         generationSession?.requireMutationAllowed(action)
@@ -279,6 +290,7 @@ class ChangeRecorder(
 
     fun checkpoint(): Checkpoint {
         val savedSpatialWorldId = spatialWorldId
+        val savedCatchUp = catchUpUpdate
         return Checkpoint(this, listOf(
             captureMap(generalPatches, ::copyPatch),
             captureMap(cityPatches, ::copyPatch),
@@ -304,6 +316,7 @@ class ChangeRecorder(
             captureMap(provinceControlWrites),
             captureMap(generalPositionWrites),
             Capture("spatialWorldId") { spatialWorldId = savedSpatialWorldId },
+            Capture("catchUpUpdate") { catchUpUpdate = savedCatchUp },
             captureList(profileIconUpdates) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(boardPostInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(boardCommentInserts) { it.copy(columns = copyStringMap(it.columns)) },
@@ -384,7 +397,7 @@ class ChangeRecorder(
     }
 
     val isDirty: Boolean
-        get() = generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
+        get() = catchUpUpdate != null || generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
             accessLogUpserts.isNotEmpty() || accessLogDeletes.isNotEmpty() || generalOwnerDeletes.isNotEmpty() ||
@@ -1117,6 +1130,7 @@ class ChangeRecorder(
      */
     fun clear() {
         gateMutation("clear")
+        catchUpUpdate = null
         generalPatches.clear()
         cityPatches.clear()
         nationPatches.clear()

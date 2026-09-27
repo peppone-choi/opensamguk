@@ -31,6 +31,7 @@ import opensamguk.logic.world.WaterControlSnapshot
 import opensamguk.logic.world.WaterControlAssessment
 import opensamguk.logic.world.WaterBlockadeState
 import opensamguk.logic.actions.CommandRegistry
+import opensamguk.logic.record.EventKind
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.clearInvocations
@@ -65,6 +66,35 @@ class TurnRunServiceFlushRecoveryTest {
         val recorder: ChangeRecorder,
         val realtimeTemplate: StringRedisTemplate,
     )
+
+    @Test
+    fun `catch-up completion event and inactive plan retry as one retained flush`() {
+        val payloads = mutableListOf<FlushPayload>()
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                payloads += payload
+                if (payloads.size == 2) throw QueryTimeoutException("rolled back")
+            }
+        }
+        val (service, world, recorder) = newFixture(flush)
+        val now = Instant.parse("0200-01-01T20:00:00Z")
+        service.ensureCatchUp(now, reanchor = true)
+        assertTrue(service.catchUpSnapshot(now).active)
+        assertEquals(true, (payloads.single().worldStateUpdate["catch_up"] as Map<*, *>)["active"])
+
+        world.setLastTurnTime(now)
+        assertFailsWith<QueryTimeoutException> { service.finishCatchUpIfCurrent(now) }
+        assertTrue(service.catchUpSnapshot(now).active, "failed flush leaves the in-memory plan active")
+        val completion = payloads[1]
+        assertEquals(false, (completion.worldStateUpdate["catch_up"] as Map<*, *>)["active"])
+        assertEquals(listOf(EventKind.TURN_CATCH_UP_FINISHED), completion.gameEvents.map { it.kind })
+        assertTrue(recorder.isDirty)
+
+        assertTrue(service.retryRetainedFlush())
+        assertSame(completion, payloads[2], "retry must reuse the same state and event batch")
+        assertFalse(service.catchUpSnapshot(now).active)
+        assertFalse(recorder.isDirty)
+    }
 
     @Test
     fun `water flush retry preserves exact coalesced CAS payload and clears only after commit`() {

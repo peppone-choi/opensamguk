@@ -695,6 +695,7 @@ object DatabaseHooks {
                 (state.meta["maxOperationId"] as? Number)?.let { put("max_operation_id", it.toInt()) }
                 (state.meta["maxOperationUnitId"] as? Number)?.let { put("max_operation_unit_id", it.toInt()) }
                 (state.meta["maxBattlePlanId"] as? Number)?.let { put("max_battle_plan_id", it.toInt()) }
+                recorder.catchUpUpdate()?.let { put("catch_up", it.toMeta()) }
             },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,

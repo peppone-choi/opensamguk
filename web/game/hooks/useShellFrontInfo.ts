@@ -39,5 +39,11 @@ export function useShellFrontInfo(): ShellFrontInfo {
 
     useTurnRefresh(reload);
 
+    useEffect(() => {
+        if (!info?.global.catchUp?.active) return;
+        const timer = window.setInterval(reload, 60_000);
+        return () => window.clearInterval(timer);
+    }, [info?.global.catchUp?.active, reload]);
+
     return { info, error, state: info ? 'ready' : error ? 'error' : 'loading', reload };
 }

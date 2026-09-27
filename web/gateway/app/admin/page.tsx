@@ -8,6 +8,7 @@ import BoardControl from '@/components/admin/BoardControl';
 import BoardReportControl from '@/components/admin/BoardReportControl';
 import MemberControl from '@/components/admin/MemberControl';
 import NoticeControl from '@/components/admin/NoticeControl';
+import TurnCatchUpControl, { type AdminCatchUpInfo } from '@/components/admin/TurnCatchUpControl';
 import AdminOverview from '@/components/admin/AdminOverview';
 import {
     runServerLifecycleOperation,
@@ -167,6 +168,7 @@ interface TurnDaemonStatus {
     paused: boolean;
     loopAlive: boolean;
     statusLabel: string; // PHP `_119.php:36` verbatim: "동결중" / "가동중"
+    catchUp?: AdminCatchUpInfo | null;
 }
 interface TurnDaemonControlResult {
     paused: boolean;
@@ -1484,6 +1486,7 @@ function GameEnvControl() {
             setError('데몬 상태를 불러오지 못했습니다.');
         }
     }, []);
+    const reloadSelected = useCallback(() => reload(selectedServer), [reload, selectedServer]);
 
     const loadSharedEnv = useCallback(async () => {
         const data = await getJson<EnvConfigResponse>('admin/env/shared');
@@ -1693,6 +1696,10 @@ function GameEnvControl() {
             </div>
 
             <GameSettingsControl selectedServer={selectedServer} servers={version?.servers ?? []} />
+
+            <div className="env-section">
+                <TurnCatchUpControl catchUp={status?.catchUp} serverId={selectedServer} onChanged={reloadSelected} />
+            </div>
 
             {/* 후속 웨이브 — 시간조정 / 토너시간 / 봉급(금·쌀) / 운영자메시지 / 중원정세추가 /
                 시작시간 / 최대장수·국가 / 시작년도 / 턴시간. 아직 미구현. */}

@@ -46,6 +46,20 @@ class GameEventTest {
     }
 
     @Test
+    fun `catch-up completion is a public world fact without game actor payload`() {
+        val event = GameEvent(1, EventKind.TURN_CATCH_UP_FINISHED, whenOccurred,
+            AudienceTarget.Public, Publication(PublicationState.PUBLISHED), key)
+        assertEquals(EventSection.WORLD, event.section)
+        assertTrue(EventKind.TURN_CATCH_UP_FINISHED in EventKind.publicKinds)
+        assertFailsWith<IllegalArgumentException> {
+            event.copy(refs = mapOf(RefRole.ACTOR to EventRef.General(1)))
+        }
+        assertFailsWith<IllegalArgumentException> {
+            event.copy(facts = mapOf(FactRole.MONEY to EventFact.Amount(1)))
+        }
+    }
+
+    @Test
     fun `private income and court dispatch cannot be published`() {
         val income = GameEvent(1, EventKind.INCOME_MONTHLY, whenOccurred, AudienceTarget.Nation(2),
             Publication(PublicationState.PRIVATE), key,

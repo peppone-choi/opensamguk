@@ -125,6 +125,7 @@ data class FrontGlobalInfo(
     val createdNPCCnt: Int? = null, // npc_state > 0 (NPC 장수)
 
     val serverLocked: Boolean? = null,
+    val catchUp: opensamguk.common.turn.CatchUpSnapshot? = null,
 )
 
 data class AutorunUserInfo(

@@ -1,5 +1,6 @@
 package opensamguk.engine.run
 
+import opensamguk.common.turn.CatchUpSnapshot
 import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.status.DaemonPauseGate
 import org.slf4j.LoggerFactory
@@ -49,6 +50,7 @@ data class TurnDaemonDiagnostics(
     val lastSuccessfulTickAgeSeconds: Long? = null,
     /** [TurnRunService.clockSnapshot] 조회가 실패한 경우의 예외 메시지. 설정 이상(tickSeconds<=0)과 구분된다. */
     val clockError: String? = null,
+    val catchUp: CatchUpSnapshot? = null,
 )
 
 /**
@@ -57,8 +59,8 @@ data class TurnDaemonDiagnostics(
  *
  * **What it does.** On Spring [SmartLifecycle.start] it spins a single dedicated daemon thread that:
  *  1. resolves the next world boundary and the earliest strict per-general deadline,
- *  2. waits (interruptibly) until the earlier instant arrives, while an overdue world boundary
- *     always takes catch-up priority,
+ *  2. when the world is more than two ticks late, paces due events at 2× (or administrator-selected
+ *     4×), taking each personal deadline before the later world boundary,
  *  3. calls [TurnRunService.runTick] for a world boundary or
  *     [TurnRunService.runDueGeneralTurns] for a personal deadline. Both drain immediate intake and flush
  *     exactly once; only the world path runs monthly hooks and advances the world clock,
@@ -107,6 +109,14 @@ class TurnDaemonRunner(
     private val successfulTicks = AtomicLong(0)
     private val failedTicks = AtomicLong(0)
     private val consecutiveFailures = AtomicInteger(0)
+    /** Serializes the runner's flushes with administrator multiplier changes. */
+    private val executionLock = Any()
+
+    fun setCatchUpMultiplier(multiplier: Int): CatchUpSnapshot = synchronized(executionLock) {
+        require(multiplier == 2 || multiplier == 4) { "catch-up multiplier must be 2 or 4" }
+        val activeService = service ?: error("turn daemon has not loaded a world")
+        activeService.switchCatchUpMultiplier(multiplier, Instant.now())
+    }
 
     override fun isAutoStartup(): Boolean = daemonEnabled
 
@@ -159,6 +169,7 @@ class TurnDaemonRunner(
                 ?.let { Duration.between(it, now).seconds },
             lastSuccessfulTickAgeSeconds = lastTickCompletedAt?.let { Duration.between(it, now).seconds },
             clockError = clockError,
+            catchUp = activeService?.catchUpSnapshot(now),
         )
     }
 
@@ -206,6 +217,7 @@ class TurnDaemonRunner(
     private fun loop() {
         log.info("turn-daemon-loop entering run loop")
         var loggedEmptyWorld = false
+        var catchUpInitialized = false
         while (running.get() && !Thread.currentThread().isInterrupted) {
             try {
                 if (service == null) {
@@ -218,6 +230,7 @@ class TurnDaemonRunner(
                         continue
                     }
                     service = turnRunServiceProvider.getObject()
+                    catchUpInitialized = false
                     loggedEmptyWorld = false
                     log.info("turn-daemon-loop materialized TurnRunService after world_state became available")
                 }
@@ -226,7 +239,7 @@ class TurnDaemonRunner(
                     ?: error("TurnRunService unavailable after world_state availability check")
 
                 if (pauseGate.isPaused()) {
-                    if (activeService.runIntakeCommands(blockMs = 1) == 0) {
+                    if (synchronized(executionLock) { activeService.runIntakeCommands(blockMs = 1) } == 0) {
                         Thread.sleep(idlePollMs)
                     }
                     continue
@@ -242,7 +255,7 @@ class TurnDaemonRunner(
                 if (recovery != null && !recovery.ready) {
                     if (recovery.mode == opensamguk.engine.flush.FlushRecoveryGate.Mode.FLUSH_RETRY) {
                         try {
-                            val ok = activeService.retryRetainedFlush()
+                            val ok = synchronized(executionLock) { activeService.retryRetainedFlush() }
                             if (ok) {
                                 log.info(
                                     "turn-daemon-loop FLUSH_RETRY recovered generation={} worldId={}",
@@ -264,43 +277,52 @@ class TurnDaemonRunner(
                     Thread.sleep(idlePollMs)
                     continue
                 }
-                val nextWorldRun = activeService.nextRunTime()
-                val now = Instant.now()
-                if (!now.isBefore(nextWorldRun)) {
-                    // World catch-up has priority so personal turns cannot leapfrog month/phase boundaries.
-                    lastTickStartedAt = Instant.now()
-                    val result = activeService.runTick(nextWorldRun)
-                    lastTickCompletedAt = Instant.now()
-                    successfulTicks.incrementAndGet()
-                    consecutiveFailures.set(0)
-                    log.debug(
-                        "tick at {} — generals={} cities={} logs={}",
-                        result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
-                    )
-                    continue
-                }
+                val waitMs = synchronized(executionLock) {
+                    val now = Instant.now()
+                    activeService.ensureCatchUp(now, reanchor = !catchUpInitialized)
+                    catchUpInitialized = true
+                    activeService.finishCatchUpIfCurrent(now)
+                    activeService.refreshCatchUp(now)
+                    val plan = activeService.catchUpPlan()
+                    val nextWorldRun = activeService.nextRunTime()
+                    val nextGeneralRun = activeService.nextGeneralRunTime()
 
-                val nextGeneralRun = activeService.nextGeneralRunTime()
-                if (nextGeneralRun != null && !now.isBefore(nextGeneralRun)) {
-                    val result = activeService.runDueGeneralTurns(now)
-                    log.debug(
-                        "general deadline at {} — handled={} generals={} cities={} logs={}",
-                        now, result.handled.size, result.flushedGenerals, result.flushedCities, result.flushedLogs,
-                    )
-                    continue
-                }
+                    // In catch-up, each personal deadline and world boundary uses the same accelerated
+                    // clock. A personal deadline strictly before a boundary must execute first.
+                    // Outside catch-up, keep the existing world tick path (which drains the personal
+                    // turns before its own boundary) for small delays.
+                    val personalFirst = nextGeneralRun != null && nextGeneralRun.isBefore(nextWorldRun) &&
+                        (plan?.active == true || now.isBefore(nextWorldRun))
+                    val nextEvent = if (personalFirst) checkNotNull(nextGeneralRun) else nextWorldRun
+                    val wallDeadline = if (plan?.active == true) plan.wallTimeFor(nextEvent) else nextEvent
 
-                if (activeService.runIntakeCommands(blockMs = 1) > 0) {
-                    continue
+                    if (!now.isBefore(wallDeadline)) {
+                        if (personalFirst) {
+                            val result = activeService.runDueGeneralTurns(nextEvent)
+                            log.debug(
+                                "general deadline at {} — handled={} generals={} cities={} logs={}",
+                                nextEvent, result.handled.size, result.flushedGenerals, result.flushedCities, result.flushedLogs,
+                            )
+                        } else {
+                            lastTickStartedAt = Instant.now()
+                            val result = activeService.runTick(nextWorldRun)
+                            lastTickCompletedAt = Instant.now()
+                            successfulTicks.incrementAndGet()
+                            consecutiveFailures.set(0)
+                            log.debug(
+                                "tick at {} — generals={} cities={} logs={}",
+                                result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
+                            )
+                        }
+                        activeService.finishCatchUpIfCurrent(Instant.now())
+                        0L
+                    } else if (activeService.runIntakeCommands(blockMs = 1) > 0) {
+                        0L
+                    } else {
+                        minOf(Duration.between(Instant.now(), wallDeadline).toMillis(), idlePollMs).coerceAtLeast(1)
+                    }
                 }
-                // No deadline is due. Observe intake/clock changes within idlePollMs without busy-spinning.
-                val nextDeadline = if (nextGeneralRun != null && nextGeneralRun.isBefore(nextWorldRun)) {
-                    nextGeneralRun
-                } else {
-                    nextWorldRun
-                }
-                val waitMs = minOf(Duration.between(Instant.now(), nextDeadline).toMillis(), idlePollMs).coerceAtLeast(1)
-                Thread.sleep(waitMs)
+                if (waitMs > 0) Thread.sleep(waitMs)
             } catch (_: InterruptedException) {
                 Thread.currentThread().interrupt()
                 break
