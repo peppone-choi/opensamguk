@@ -31,11 +31,33 @@ class TacticalDuelTest {
         val first = TacticalDuel.resolve(123, challenger, respondent, respondentHuman = true, humanAccepted = true)
         val replay = TacticalDuel.resolve(123, challenger, respondent, respondentHuman = true, humanAccepted = true)
         assertEquals(first, replay)
-        assertTrue(first.rounds.isNotEmpty() && first.rounds.size <= TacticalRules.CANON.duelRoundLimit)
-        assertTrue(first.rounds.all { it.challengerHealth >= 0 && it.respondentHealth >= 0 })
+        assertEquals(listOf(
+            DuelRound(0, 17, 7, 30, 27, 143, 130),
+            DuelRound(1, 5, 1, 29, 26, 117, 101),
+            DuelRound(2, 10, 1, 30, 26, 91, 71),
+            DuelRound(3, 7, 10, 29, 27, 64, 42),
+            DuelRound(4, 13, 13, 30, 28, 36, 12),
+            DuelRound(5, 7, 18, 12, 28, 8, 0),
+        ), first.rounds)
+        assertEquals(1, first.winnerId)
+        assertEquals(mapOf(1 to 25, 2 to -35), first.moraleDeltas)
+        assertEquals("1fb5570c0c2f83fe5a1a96d1cf61f59455df9382a728c891358fc32a46ffb0ac", first.replayHash)
         assertNotEquals(first.replayHash, declined.replayHash)
-        assertNotEquals(first.replayHash,
-            TacticalDuel.resolve(124, challenger, respondent, respondentHuman = true, humanAccepted = true).replayHash)
+        val otherSeed = TacticalDuel.resolve(124, challenger, respondent, respondentHuman = true, humanAccepted = true)
+        assertNotEquals(first.rounds.map { it.challengerRoll to it.respondentRoll },
+            otherSeed.rounds.map { it.challengerRoll to it.respondentRoll })
+        assertNotEquals(first.replayHash, otherSeed.replayHash)
+    }
+
+    @Test
+    fun `simultaneous knockout is a draw without morale change`() {
+        val first = general(3, 80)
+        val second = general(4, 80)
+        val result = TacticalDuel.resolve(0, first, second, respondentHuman = true, humanAccepted = true)
+        assertEquals(0, result.rounds.last().challengerHealth)
+        assertEquals(0, result.rounds.last().respondentHealth)
+        assertEquals(null, result.winnerId)
+        assertTrue(result.moraleDeltas.isEmpty())
     }
 
     @Test

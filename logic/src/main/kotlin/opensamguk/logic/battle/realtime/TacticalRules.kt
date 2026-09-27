@@ -111,6 +111,7 @@ data class TacticalRules(
             require(rules.duelOfferMinimumStrength in 0..100 && rules.duelAiAcceptDifference in 0..100)
             require(rules.duelRoundLimit > 0 && rules.duelDamageDivisor > 0 && rules.duelMinimumDamage > 0)
             require(rules.duelStrengthWeight >= 0 && rules.duelLeadershipWeight >= 0 && rules.duelRollRange in 1..256)
+            require(rules.duelWinnerMoraleBonus >= 0 && rules.duelLoserMoralePenalty >= 0)
             return rules
         }
 
