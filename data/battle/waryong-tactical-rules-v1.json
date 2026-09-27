@@ -77,10 +77,10 @@
     "timeoutScore": "sum(aliveTroops * morale); defender wins exact tie"
   },
   "variety": {
-    "weather": ["CLEAR", "RAIN", "WIND"],
+    "weather": ["CLEAR", "RAIN"],
     "nightRule": "campaign local hour 18-05",
     "seasonRule": "campaign month 3-5 spring, 6-8 summer, 9-11 autumn, 12-2 winter",
-    "objectives": ["ROUT", "HOLD", "BREAK_GATE", "CAPTURE_CENTER"],
+    "objectives": ["SUPPLY_CONVOY", "RIVER_CROSSING", "PASS_BREAKTHROUGH", "PURSUIT", "AMBUSH"],
     "eventEveryTicks": 300,
     "stratagemCooldownTicks": 200
   }
