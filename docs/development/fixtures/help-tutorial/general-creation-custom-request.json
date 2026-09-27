@@ -12,7 +12,7 @@
       "politics": 60,
       "charm": 60
     },
-    "personalityId": "UNAPPROVED_EXAMPLE",
-    "specialtyId": "UNAPPROVED_EXAMPLE"
+    "ideologyId": "왕도",
+    "traitId": "규율"
   }
 }
