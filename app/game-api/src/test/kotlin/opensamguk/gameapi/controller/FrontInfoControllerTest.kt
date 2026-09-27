@@ -242,12 +242,12 @@ class FrontInfoControllerTest {
 
     @Test
     fun `global resolves committed scenario resource title before falling back to raw code`() {
-        seedWorld(scenarioCode = "scenario_1021")
+        seedWorld(scenarioCode = "scenario_990002")
 
         mockMvc().perform(get("/api/front-info"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.global.scenario").value("scenario_1021"))
-            .andExpect(jsonPath("$.global.scenarioText").value("【역사모드2-2】 반동탁연합 결성(정사)"))
+            .andExpect(jsonPath("$.global.scenario").value("scenario_990002"))
+            .andExpect(jsonPath("$.global.scenarioText").value("휘하 예주 조각 (합성 운영 후보)"))
     }
 
     @Test

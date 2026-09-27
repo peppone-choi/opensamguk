@@ -298,8 +298,6 @@ class ChangeRecorder(
             captureList(messageInvalidates),
             captureList(diplomacyLetterInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(diplomacyLetterUpdates) { copyStringMap(it) },
-            captureList(auctionUpserts) { it.copy(columns = copyStringMap(it.columns)) },
-            captureList(auctionBidInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(bettingInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(cityLedgerV2Upserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(waterControlWrites),
