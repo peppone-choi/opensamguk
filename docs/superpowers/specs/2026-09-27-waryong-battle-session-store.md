@@ -30,6 +30,24 @@ JSON은 `TEXT` 원문과 SHA-256으로 저장한다. `jsonb` 정규화가 원래
 4. actor는 checkpoint의 state hash와 ticket/event SHA를 검증한 뒤 snapshot 이후 입력을 재생한다. 손상된 tail은 전투 결과를 추측해 만들지 않고 격리해야 한다. 이 PR의 `recover`는 ticket/event SHA를 검사하며, versioned binary state codec과 격리 전이는 다음 통합 절편에서 연결한다.
 5. `publishResult`는 `BATTLE_RESOLVED` event, result outbox, 세션 상태를 한 트랜잭션에 기록한다. 결과 적용과 전체 리플레이 공개는 캠페인 적용 확인 뒤에만 수행한다.
 
+## 캠페인과 전투 사이의 장애·재시도 계약
+
+### 1. 티켓 생성
+
+캠페인 flush는 잠금 대상의 `lockGeneration`·entity revision, 불변 handoff outbox, 원인 사건별 stable `(worldId,battleId)`를 **한 트랜잭션**에서 확정한다. 전투 레인은 이 커밋 뒤 handoff만 읽어 `open`을 호출한다. `create`는 ticket·session·participant를 별도 **한 battle 트랜잭션**에 넣으며 `(worldId,battleId)` 중복은 동일 원문 SHA와 핀/참가자면 기존 세션을 반환하고 다른 내용이면 충돌로 멈춘다. 따라서 캠페인 커밋 뒤 battle 생성 전에 죽어도 handoff scanner가 같은 ID로 재시도한다. battle 생성 뒤 ACK 전에 죽어도 동일 ID 재시도로 기존 세션을 찾는다. actor는 DB lease를 새 epoch로 인계하며 과거 epoch 쓰기는 거절된다. 캠페인에 없는 고아 ticket은 추측하여 해제하거나 결과를 적용하지 않고 운영 격리 대상으로 남긴다. 현재 PR은 **커밋된 handoff를 입력으로 받는 battle 측**만 구현하며 캠페인 outbox 생성·scanner는 후속 통합 절편이다.
+
+### 2. 결과 적용
+
+`publishResult`는 `(worldId,battleId,resultRevision)` 고유 outbox와 `BATTLE_RESOLVED` event를 같은 battle 트랜잭션에 기록한다. game-engine은 PENDING을 다시 읽을 수 있어야 하고, lock generation·최신 lock set revision·잠긴 entity별 revision을 검사한다. 캠페인 `(worldId,battleId,resultRevision)` 적용 표식, 손실·점령 등 deltas, 잠금 해제, 적용 ACK outbox는 `ChangeRecorder -> JdbcFlushExecutor` **한 flush**에서 확정한다. 같은 결과가 재전송되면 표식에서 기존 ACK를 반환한다. battle `markApplied`가 실패하거나 프로세스가 죽어도 캠페인 ACK를 재전송해 같은 결과 outbox를 APPLIED로 전이한다. revision/잠금 불일치는 캠페인 `BattleResultBlocked` ACK와 잠금 유지 후 battle `markBlocked`로 기록하고 자동 적용하지 않는다. 현재 PR은 battle outbox와 APPLIED/BLOCKED 전이만 구현하며 캠페인 적용 표식·flush hook은 미연결이다.
+
+### 3. 월드 턴과 잠금
+
+원래 전투 진입점은 원인 사건의 티켓·잠금·알림만 확정하고 전투 종료를 기다리지 않는다. 잠금 없는 장수·도시·군단은 계속 턴을 진행한다. 교전 객체의 이동·개인 턴 입력과 같은 대상의 정기 효과는 캠페인 precheck에서 잠금 사유로 거절하거나 원래 순서를 가진 지연 효과로 기록한다. 전투 세션은 캠페인 테이블을 쓰지 않는다. 이 precheck/턴 러너 변경은 현재 PR 범위 밖이며 통합 레인이 기존 심볼 소유를 인계한 뒤 연결한다.
+
+### 4. 참가·AI·재접속 순서
+
+세션은 DB `join_deadline_at`까지 JOINING으로 남고, actor는 입장·배치 변경을 고유 transition ID로 append한다. 60초 뒤 `startRun`은 RUNNING과 `SESSION_STARTED` event를 한 트랜잭션에 확정한다. 미참가 측은 AI로 시작하고, 사람이 중도 입장하거나 이탈할 때 `HUMAN_JOIN`·`HUMAN_LEFT`·`AI_TAKEOVER`를 session epoch·event seq·효력 틱과 함께 append한다. 같은 입력 로그에서는 seq 순서로 재생하고 같은 효력 틱은 seq로 동률을 푼다. 재접속은 새 짧은 JoinTicket의 계정·진영·epoch를 검증한 뒤 마지막 수신 seq 이후의 해당 진영 투영을 준다. 현재 PR은 JOINING 기한, `appendTransition`, event seq 저장까지 제공한다. JoinTicket 서명, WebSocket, 진영별 투영, actor의 10Hz 스케줄러와 사람/AI 인계 호출은 후속 절편이다.
+
 ## 아직 연결할 경계
 
 - 캠페인 handoff 및 잠금 생성: `AssignmentMarchTurn`/`EncounterResolver.resolvePending`, `SiegeService.assault`, `TravelTurn`·`TravelHandler`/`PersonalEncounter.settle`.
