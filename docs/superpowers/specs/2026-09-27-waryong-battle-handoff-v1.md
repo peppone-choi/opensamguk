@@ -22,7 +22,7 @@ ENCOUNTER와 SIEGE에는 다음 필드를 요구한다. 정수·문자열은 JSO
 | `retinues[]` | `id`, `generalId`, `leadership`, `strength`, `intelligence`, `politics`, `charisma`, `troops`, `kind` (`INFANTRY/ARCHER/CAVALRY`), `training`, `morale`, `fatigue`, `supply`, `accompaniesCorps` |
 | `gate` | ENCOUNTER에서는 JSON `null`. SIEGE에서는 `row`, `col`, `hp` 정수. `row/col`은 해당 판의 `W` 칸, `hp>0` |
 
-양측 부곡·장수 ID는 서로도 중복할 수 없다. 부곡은 실제 `troops>0`이고 `accompaniesCorps=true`여야 하며 능력·숙련·사기·피로·군량은 0–100이다. `commanderGeneralId`는 0보다 커야 한다. 자기 측 부곡이 없으면 중앙은 빈다. 주장의 부곡이 있으면 `BattleDeployment.default`가 중앙에 두고 나머지를 원장 순서로 배치한다. 입장 중 변경은 별도 `DEPLOYMENT_SET` 이벤트로만 확정한다. `entityRevisions`는 잠긴 원본 장수·부곡·군단·도시별 revision을 담고, 캠페인 결과 적용 시 다시 검사한다.
+양측 부곡·장수 ID는 서로도 중복할 수 없다. 부곡은 실제 `troops>0`이고 `accompaniesCorps=true`여야 하며 능력·숙련·사기·피로·군량은 0–100이다. `commanderGeneralId`는 0보다 커야 한다. 자기 측 부곡이 없으면 중앙은 빈다. 주장의 부곡이 있으면 `BattleDeployment.default`가 중앙에 둔다. 나머지 부곡 중 무력이 가장 높은 부곡을 선봉에, 나머지는 통솔이 높은 순서로 좌익·우익·좌호위·우호위에 둔다. 동률은 장수 ID 오름차순으로 정한다. 주장 부곡이 없는 측은 다섯 부곡까지만 배치할 수 있으므로, 동결 부곡이 여섯이면 입력을 거절한다. 어느 측이든 동결 부곡 전부가 배치되어야 한다. 입장 중 변경은 별도 `DEPLOYMENT_SET` 이벤트로만 확정한다. `entityRevisions`는 잠긴 원본 장수·부곡·군단·도시별 revision을 담고, 캠페인 결과 적용 시 다시 검사한다.
 
 전장 catalog 원문 SHA가 티켓 `catalogSha256`과 같아야 한다. 선택된 board ID·tileset·지형 행 SHA도 각각 일치해야 한다. ENCOUNTER는 `FIELD`·`landEligible=true`, SIEGE는 `FORTRESS`·`landEligible=true`다. `ruleSha256`은 버전 원장 리소스 원문과 비교한다. `terrainSha256`은 캠페인 producer가 사용한 han-tiles 정본의 핀이며 actor가 새 지형판을 다시 선택하지 않는다. 수전 판은 이 육상 입력에서 거절한다.
 

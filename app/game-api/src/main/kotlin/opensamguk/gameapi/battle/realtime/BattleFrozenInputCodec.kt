@@ -4,6 +4,7 @@ import java.security.MessageDigest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -42,6 +43,7 @@ class BattleFrozenInputCodec(private val catalog: TacticalBoardCatalog) {
             root.long("lockSetRevision") == ticket.lockSetRevision)
         val battleKind = root.string("kind")
         require(battleKind in setOf("ENCOUNTER", "SIEGE")) { "tactical board required" }
+        require("tacticalInput" in root) { "tactical input missing" }
         val input = root.getValue("tacticalInput").jsonObject
         require(input.keys == setOf("schemaVersion", "board", "attacker", "defender", "gate"))
         require(input.int("schemaVersion") == 1)
@@ -49,7 +51,8 @@ class BattleFrozenInputCodec(private val catalog: TacticalBoardCatalog) {
         require(boardPin.keys == setOf("id", "tileset", "terrainRowsSha256"))
         val boardId = boardPin.int("id")
         require(boardId == root.int("battlefieldId"))
-        val board = catalog.boards.single { it.battlefield.id == boardId }
+        val board = catalog.boards.singleOrNull { it.battlefield.id == boardId }
+            ?: throw IllegalArgumentException("battlefield not in catalog")
         require(board.landEligible)
         require(board.tileset == boardPin.int("tileset"))
         require(board.battlefield.kind == if (battleKind == "SIEGE") "FORTRESS" else "FIELD")
@@ -98,7 +101,9 @@ class BattleFrozenInputCodec(private val catalog: TacticalBoardCatalog) {
         require(retinues.map { it.id } == retinues.map { it.id }.sorted())
         require(retinues.map { it.id }.distinct().size == retinues.size)
         require(retinues.map { it.general.id }.distinct().size == retinues.size)
-        return FrozenSide(BattleDeployment.default(side, commander, retinues), retinues)
+        val deployment = BattleDeployment.default(side, commander, retinues)
+        require(deployment.slots.size == retinues.size) { "frozen retinue not deployable" }
+        return FrozenSide(deployment, retinues)
     }
 
     private fun parseRetinue(value: JsonObject): Retinue {
@@ -117,7 +122,13 @@ class BattleFrozenInputCodec(private val catalog: TacticalBoardCatalog) {
     private fun sha(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes).joinToString("") { "%02x".format(it) }
 
-    private fun JsonObject.int(key: String): Int = getValue(key).jsonPrimitive.int
-    private fun JsonObject.long(key: String): Long = getValue(key).jsonPrimitive.content.toLong()
-    private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.content
+    private fun JsonObject.number(key: String): JsonPrimitive = getValue(key).jsonPrimitive.also {
+        require(!it.isString) { "$key must be a JSON number" }
+    }
+
+    private fun JsonObject.int(key: String): Int = number(key).int
+    private fun JsonObject.long(key: String): Long = number(key).content.toLong()
+    private fun JsonObject.string(key: String): String = getValue(key).jsonPrimitive.also {
+        require(it.isString) { "$key must be a JSON string" }
+    }.content
 }
