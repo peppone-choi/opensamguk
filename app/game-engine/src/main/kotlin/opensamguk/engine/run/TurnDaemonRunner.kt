@@ -218,6 +218,8 @@ class TurnDaemonRunner(
         log.info("turn-daemon-loop entering run loop")
         var loggedEmptyWorld = false
         var catchUpInitialized = false
+        var reanchorAfterFailure = false
+        var turnInFlight = false
         while (running.get() && !Thread.currentThread().isInterrupted) {
             try {
                 if (service == null) {
@@ -241,8 +243,11 @@ class TurnDaemonRunner(
                 if (pauseGate.isPaused()) {
                     // A paused wall clock must not keep advancing the accelerated game clock.
                     // The first pending event may run on resume; subsequent events are paced anew.
-                    catchUpInitialized = false
-                    if (synchronized(executionLock) { activeService.runIntakeCommands(blockMs = 1) } == 0) {
+                    // A failed tick may have uncommitted recorder deltas: do not flush them here.
+                    if (!reanchorAfterFailure) catchUpInitialized = false
+                    if (reanchorAfterFailure ||
+                        synchronized(executionLock) { activeService.runIntakeCommands(blockMs = 1) } == 0
+                    ) {
                         Thread.sleep(idlePollMs)
                     }
                     continue
@@ -256,11 +261,15 @@ class TurnDaemonRunner(
                     null
                 }
                 if (recovery != null && !recovery.ready) {
-                    catchUpInitialized = false
+                    if (!reanchorAfterFailure) catchUpInitialized = false
                     if (recovery.mode == opensamguk.engine.flush.FlushRecoveryGate.Mode.FLUSH_RETRY) {
                         try {
                             val ok = synchronized(executionLock) { activeService.retryRetainedFlush() }
                             if (ok) {
+                                // The retained payload committed and cleared the recorder. Reanchor
+                                // once on the next loop, after the recovery transaction is complete.
+                                catchUpInitialized = false
+                                reanchorAfterFailure = false
                                 log.info(
                                     "turn-daemon-loop FLUSH_RETRY recovered generation={} worldId={}",
                                     recovery.generation, recovery.worldId,
@@ -283,10 +292,12 @@ class TurnDaemonRunner(
                 }
                 val waitMs = synchronized(executionLock) {
                     val now = Instant.now()
-                    activeService.ensureCatchUp(now, reanchor = !catchUpInitialized)
-                    catchUpInitialized = true
-                    activeService.finishCatchUpIfCurrent(now)
-                    activeService.refreshCatchUp(now)
+                    if (!reanchorAfterFailure) {
+                        activeService.ensureCatchUp(now, reanchor = !catchUpInitialized)
+                        catchUpInitialized = true
+                        activeService.finishCatchUpIfCurrent(now)
+                        activeService.refreshCatchUp(now)
+                    }
                     val plan = activeService.catchUpPlan()
                     val nextWorldRun = activeService.nextRunTime()
                     val nextGeneralRun = activeService.nextGeneralRunTime()
@@ -302,14 +313,18 @@ class TurnDaemonRunner(
 
                     if (!now.isBefore(wallDeadline)) {
                         if (personalFirst) {
+                            turnInFlight = true
                             val result = activeService.runDueGeneralTurns(nextEvent)
+                            turnInFlight = false
                             log.debug(
                                 "general deadline at {} — handled={} generals={} cities={} logs={}",
                                 nextEvent, result.handled.size, result.flushedGenerals, result.flushedCities, result.flushedLogs,
                             )
                         } else {
                             lastTickStartedAt = Instant.now()
+                            turnInFlight = true
                             val result = activeService.runTick(nextWorldRun)
+                            turnInFlight = false
                             lastTickCompletedAt = Instant.now()
                             successfulTicks.incrementAndGet()
                             consecutiveFailures.set(0)
@@ -318,9 +333,15 @@ class TurnDaemonRunner(
                                 result.turnCompletedAt, result.flushedGenerals, result.flushedCities, result.flushedLogs,
                             )
                         }
+                        if (reanchorAfterFailure) {
+                            // Failed turns can leave recorder deltas in memory. Only a successful
+                            // turn flush makes it safe to persist a fresh clock anchor.
+                            catchUpInitialized = false
+                            reanchorAfterFailure = false
+                        }
                         activeService.finishCatchUpIfCurrent(Instant.now())
                         0L
-                    } else if (activeService.runIntakeCommands(blockMs = 1) > 0) {
+                    } else if (!reanchorAfterFailure && activeService.runIntakeCommands(blockMs = 1) > 0) {
                         0L
                     } else {
                         minOf(Duration.between(Instant.now(), wallDeadline).toMillis(), idlePollMs).coerceAtLeast(1)
@@ -335,7 +356,10 @@ class TurnDaemonRunner(
                     Thread.currentThread().interrupt()
                     break
                 }
-                catchUpInitialized = false
+                // A failed scheduled turn can leave recorder deltas in memory. Wait for one
+                // successful turn flush before persisting a new catch-up anchor.
+                reanchorAfterFailure = reanchorAfterFailure || turnInFlight
+                turnInFlight = false
                 // A tick failed; log and back off one poll interval so we don't hot-spin on a hard error.
                 // The world is the single source of truth — the failed flush left no partial DB write
                 // (JdbcFlushExecutor runs in ONE transaction), so the next tick retries cleanly.

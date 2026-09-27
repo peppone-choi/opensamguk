@@ -1457,9 +1457,15 @@ function GameSettingsControl({ selectedServer, servers }: { selectedServer: stri
  * 시간조정/봉급/운영자메시지/시작시간/최대장수·국가/시작년도/턴시간은 후속 웨이브 — PLACEHOLDER.
  */
 function GameEnvControl() {
-    const [status, setStatus] = useState<TurnDaemonStatus | null>(null);
+    const [statusByServer, setStatusByServer] = useState<{ serverId: string; status: TurnDaemonStatus } | null>(null);
     const [version, setVersion] = useState<VersionResponse | null>(null);
     const [selectedServer, setSelectedServer] = useState<string>('');
+    const selectedServerRef = useRef(selectedServer);
+    const status = statusByServer?.serverId === selectedServer ? statusByServer.status : null;
+    const selectServer = useCallback((serverId: string) => {
+        selectedServerRef.current = serverId;
+        setSelectedServer(serverId);
+    }, []);
     const [sharedEnv, setSharedEnv] = useState<EnvConfigResponse | null>(null);
     const [serverEnv, setServerEnv] = useState<EnvConfigResponse | null>(null);
     const [sharedDrafts, setSharedDrafts] = useState<Record<string, string>>({});
@@ -1473,17 +1479,18 @@ function GameEnvControl() {
     // 데몬 락 상태 재조회. 진입 + 락걸기/락풀기 후 호출.
     const reload = useCallback(async (serverId: string) => {
         if (!serverId) {
-            setStatus(null);
+            setStatusByServer(null);
             return;
         }
         try {
             const st = await getJson<TurnDaemonStatus>(
                 `admin/turn-daemon/status?serverId=${encodeURIComponent(serverId)}`,
             );
-            setStatus(st);
+            if (selectedServerRef.current !== serverId) return;
+            setStatusByServer({ serverId, status: st });
             setError(null);
         } catch {
-            setError('데몬 상태를 불러오지 못했습니다.');
+            if (selectedServerRef.current === serverId) setError('데몬 상태를 불러오지 못했습니다.');
         }
     }, []);
     const reloadSelected = useCallback(() => reload(selectedServer), [reload, selectedServer]);
@@ -1522,7 +1529,7 @@ function GameEnvControl() {
                 if (!alive) return;
                 setVersion(ver);
                 const firstServer = ver.servers[0]?.id ?? '';
-                setSelectedServer(firstServer);
+                selectServer(firstServer);
                 await loadSharedEnv();
             } catch {
                 if (alive) setError('게임 환경 정보를 불러오지 못했습니다.');
@@ -1532,7 +1539,7 @@ function GameEnvControl() {
         return () => {
             alive = false;
         };
-    }, [loadServerEnv, loadSharedEnv, reload]);
+    }, [loadServerEnv, loadSharedEnv, reload, selectServer]);
 
     useEffect(() => {
         if (!selectedServer) return;
@@ -1556,10 +1563,11 @@ function GameEnvControl() {
     // 락걸기(pause) / 락풀기(resume) — POST 후 실 상태로 갱신.
     async function toggleLock(action: 'pause' | 'resume') {
         if (!selectedServer) return;
+        const serverId = selectedServer;
         setBusy(true);
         try {
             const res = await fetch(
-                `/api/proxy/admin/turn-daemon/${action}?serverId=${encodeURIComponent(selectedServer)}`,
+                `/api/proxy/admin/turn-daemon/${action}?serverId=${encodeURIComponent(serverId)}`,
                 {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1568,7 +1576,9 @@ function GameEnvControl() {
             if (res.ok) {
                 const data = (await res.json()) as TurnDaemonControlResult;
                 // 반환 결과로 즉시 라벨 반영 후, 권위 상태로 재조회.
-                setStatus((prev) => (prev ? { ...prev, paused: data.paused, statusLabel: data.statusLabel } : prev));
+                setStatusByServer((prev) => prev?.serverId === serverId
+                    ? { serverId, status: { ...prev.status, paused: data.paused, statusLabel: data.statusLabel } }
+                    : prev);
                 setError(null);
             } else {
                 setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
@@ -1576,7 +1586,7 @@ function GameEnvControl() {
         } catch {
             setError(action === 'pause' ? '락걸기에 실패했습니다.' : '락풀기에 실패했습니다.');
         } finally {
-            await reload(selectedServer);
+            await reload(serverId);
             setBusy(false);
         }
     }
@@ -1644,7 +1654,7 @@ function GameEnvControl() {
                         <select
                             value={selectedServer}
                             disabled={envBusy || !version?.servers.length}
-                            onChange={(e) => setSelectedServer(e.target.value)}
+                            onChange={(e) => selectServer(e.target.value)}
                         >
                             {version?.servers.map((server) => (
                                 <option key={server.id} value={server.id}>

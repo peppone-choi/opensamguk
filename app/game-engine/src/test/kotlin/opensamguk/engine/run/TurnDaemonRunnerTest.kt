@@ -279,7 +279,7 @@ class TurnDaemonRunnerTest {
         try {
             assertTrue(waitUntil(2_000) { ticks.get() >= 1 }, "first pending tick executes")
             assertTrue(gate.lock())
-            Thread.sleep(1_250)
+            Thread.sleep(2_600)
             assertEquals(1, ticks.get(), "pause freezes scheduled ticks")
             assertTrue(gate.unlock())
             assertTrue(waitUntil(2_000) { ticks.get() >= 3 }, "catch-up resumes after pause")
@@ -289,6 +289,52 @@ class TurnDaemonRunnerTest {
                 TimeUnit.NANOSECONDS.toMillis(times[2] - times[1]) >= 700,
                 "only the first pending world tick may run immediately after resume",
             )
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `repeated tick failures do not persist catch-up anchors every poll`() {
+        val now = Instant.now()
+        val firstRun = now.minusSeconds(8)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            initialNextRun = firstRun,
+            initialCatchUp = TurnCatchUp.start(firstRun, now),
+            failTicks = true,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), true, 100)
+        runner.start()
+        try {
+            Thread.sleep(1_000)
+            assertTrue(svc.ticks.get() >= 3, "the failed tick was retried")
+            assertTrue(
+                svc.reanchorCalls.get() <= 1,
+                "a failure streak must not persist a new catch-up anchor on every retry",
+            )
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `catch-up reanchors once after a failed tick finally succeeds`() {
+        val now = Instant.now()
+        val firstRun = now.minusSeconds(8)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            initialNextRun = firstRun,
+            initialCatchUp = TurnCatchUp.start(firstRun, now),
+            tickStep = Duration.ofSeconds(2),
+            failFirstTicks = 3,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), true, 100)
+        runner.start()
+        try {
+            assertTrue(waitUntil(2_000) { svc.ticks.get() >= 4 }, "a retry eventually succeeds")
+            assertTrue(waitUntil(2_000) { svc.reanchorCalls.get() >= 2 }, "the first successful flush permits reanchor")
+            assertEquals(2, svc.reanchorCalls.get(), "the failure streak persisted only one recovery anchor")
         } finally {
             runner.stop()
         }
@@ -455,6 +501,7 @@ class TurnDaemonRunnerTest {
         private val generalDrainLatch: CountDownLatch? = null,
         private val callOrder: MutableList<String>? = null,
         private val failTicks: Boolean = false,
+        failFirstTicks: Int = 0,
         /** `Error`를 던져 루프 스레드를 통째로 죽인다 — loop()의 `catch (e: Exception)`이 못 잡는다. */
         private val killLoopWithError: Boolean = false,
         initialNextRun: Instant = Instant.now().minusSeconds(5),
@@ -474,7 +521,9 @@ class TurnDaemonRunnerTest {
         @Volatile private var nextGeneral: Instant? = initialNextGeneralRun
         @Volatile private var catchUp: TurnCatchUp? = initialCatchUp
         val tickTimesNanos = CopyOnWriteArrayList<Long>()
+        // Production ensureCatchUp persists each active-plan reanchor through the full flush path.
         val reanchorCalls = AtomicInteger()
+        private val remainingFailedTicks = AtomicInteger(failFirstTicks)
         private val pendingIntakeDrains = AtomicInteger(if (intakeDrains == null) 0 else 1)
 
         override fun nextRunTime(): Instant = next
@@ -513,7 +562,7 @@ class TurnDaemonRunnerTest {
             if (killLoopWithError) {
                 throw StackOverflowError("simulated JVM Error — loop() does not catch Error")
             }
-            if (failTicks) {
+            if (failTicks || remainingFailedTicks.getAndUpdate { if (it > 0) it - 1 else 0 } > 0) {
                 throw IllegalStateException("boom")
             }
             next = tickStep?.let { runTime.plus(it) } ?: Instant.now().plusSeconds(3600)
