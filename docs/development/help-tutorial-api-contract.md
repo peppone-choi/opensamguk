@@ -58,8 +58,8 @@ type CreateGeneralRequest = {
     | {
         kind: 'CUSTOM'; name: string; nativeCountyId: number;
         stats: { leadership: number; strength: number; intel: number; politics: number; charm: number };
-        ideologyId: '왕도' | '패도' | '아도' | '할거' | '명리' | '예교';
-        traitId: '규율' | '수전' | '명성' | '논객' | '책사' | '일기';
+        ideologyId: 'WANGDO' | 'PAEDO' | 'ADO' | 'HALGEO' | 'MYEONGRI' | 'YEGYO';
+        traitId: 'DISCIPLINE' | 'WATER_COMBAT' | 'RENOWN' | 'DEBATER' | 'STRATEGIST' | 'SINGLE_RIDER';
       }
     | { kind: 'HISTORICAL'; historicalGeneralId: number };
 };
@@ -106,11 +106,22 @@ type CreateGeneralResult = {
 | 경로 | 요청 | 응답 | 실패 |
 | --- | --- | --- | --- |
 | `POST /api/generals/creation` | 인증 계정, `CreateGeneralRequest` | 202 `CreateGeneralAccepted`; 접수일 뿐 생성 성공이 아님 | 400 `INVALID_REQUEST`, 401 `AUTH_REQUIRED`, 409 `WORLD_CHANGED`·`GENERAL_ALREADY_OWNED`·`REQUEST_ID_REUSED`, 422 `INVALID_NATIVE_COUNTY`·`INVALID_STATS`·`INVALID_IDEOLOGY`·`INVALID_TRAIT`·`HISTORICAL_PERSON_NOT_APPEARED`·`HISTORICAL_PERSON_UNAVAILABLE`, 503 `CREATION_POLICY_UNAVAILABLE`(선택 정책 원장 로드 실패) |
-| `GET /api/generals/creation/{requestId}` | 인증 계정이 제출한 ID만 허용 | 200 `CreateGeneralResult` | 401 `AUTH_REQUIRED`; 타인 ID·없는 ID는 동일한 404 `CREATION_REQUEST_NOT_FOUND` |
+| `GET /api/generals/creation/{requestId}` | 현재 라우팅된 월드에서 인증 계정이 제출한 ID만 허용 | 200 `CreateGeneralResult` | 401 `AUTH_REQUIRED`; 타인 ID·다른 월드 ID·없는 ID는 동일한 404 `CREATION_REQUEST_NOT_FOUND` |
 
-`clientRequestId`는 호출자가 만든 안정된 UUID 문자열이다. 같은 계정·월드·ID·동일 본문 재시도는 같은 `requestId`를 반환한다. 같은 ID에 다른 본문을 제출하면 409 `REQUEST_ID_REUSED`다. 서버는 라우팅된 월드를 선택하고 `expectedWorldId`가 그 월드와 다르면 409 `WORLD_CHANGED`로 거절한다. 요청으로 임의의 월드를 바꾸지 못한다. 생성 성공은 데몬이 영속 flush를 끝낸 뒤 `CREATED` 결과와 본인 장수 소유가 함께 확인될 때만 표시한다. `PENDING`과 `REJECTED`를 성공으로 표시하지 않는다. 쓰기 중 발견된 점유 경쟁·유효성 오류는 `REJECTED.error`로 반환한다.
+`clientRequestId`는 호출자가 만든 안정된 UUID 문자열이다. 서버는 별도 UUID를 발급하지 않고 제출된 `clientRequestId`를 응답과 GET 경로의 `requestId`로 그대로 쓴다. 요청 기록의 유일 키는 `(accountId, worldId, clientRequestId)`이며 다른 계정이나 월드는 같은 UUID를 독립적으로 사용할 수 있다. 같은 계정·월드·ID·동일 본문 재시도는 새 생성 작업을 만들지 않고 같은 `requestId`의 202 접수 응답을 반환한다. 같은 키에 다른 본문을 제출하면 409 `REQUEST_ID_REUSED`다. 서버는 라우팅된 월드를 선택하고 `expectedWorldId`가 그 월드와 다르면 409 `WORLD_CHANGED`로 거절한다. 요청으로 임의의 월드를 바꾸지 못한다. 생성 성공은 데몬이 영속 flush를 끝낸 뒤 `CREATED` 결과와 본인 장수 소유가 함께 확인될 때만 표시한다. `PENDING`과 `REJECTED`를 성공으로 표시하지 않는다. 접수 전 검사 실패는 표의 동기 4xx로, 접수 뒤 쓰기 경로의 점유 경쟁·유효성 오류는 같은 오류 코드를 `REJECTED.error`로 반환한다. 클라이언트는 두 경로를 모두 처리한다.
 
-`CUSTOM`은 플레이어가 이름·본관 縣·통솔·무력·지력·정치·매력·주의(主義)·개성(個性)을 직접 고른다(2026-09-27 사용자 결정). 다섯 능력치는 각각 **정수 20–85**, 합계는 **정확히 300**이다. 주의는 `왕도`·`패도`·`아도`·`할거`·`명리`·`예교` 중 하나다. 첫 공개 개성 목록은 `규율`·`수전`·`명성`·`논객`·`책사`·`일기` 중 하나로 제한한다. 이 이름들은 [Koei 공식 매뉴얼의 주의](https://www.gamecity.ne.jp/manual/sangokushi14-pk/ce/jp/3100.html), [공식 개성 예시](https://www.gamecity.ne.jp/sangokushi14/chara-personality.html), [외교·계략 예시](https://www.gamecity.ne.jp/sangokushi14/system-strategy.html), [전투 예시](https://www.gamecity.ne.jp/sangokushi14/system-battle.html)에서 확인했다. 서버는 본관 縣, 능력치, 두 선택 목록을 쓰기 경로에서 재검증한다. 주의·개성은 효과 설계와 검증 전까지 **표시용 태그로만 저장**한다. 원작의 효과·상성 수치나 숨은 보너스를 휘하에 복사하지 않는다. 공식 자료에서 별도 창작 상성 숫자 입력은 확인하지 못해 이 요청에도 넣지 않는다. 선택 조합 금지는 없다. 정책 원장을 로드하지 못하면 503으로 닫는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물 ID를 제출한다. 서버는 190 시드의 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 본관 배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 역사 인물의 기존 능력·성향·개성·명망 값은 결손까지 그대로 보존하고 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
+`CUSTOM`은 플레이어가 이름·본관 縣·통솔·무력·지력·정치·매력·주의(主義)·개성(個性)을 직접 고른다(2026-09-27 사용자 결정). 다섯 능력치는 각각 **정수 20–85**, 합계는 **정확히 300**이다. 주의·개성의 `ideologyId`·`traitId`는 아래 안정 코드로 저장하며 표시명과 분리한다. 선택 정책 원장이 코드와 표시명을 함께 관리하고, 프론트 레인 소유의 후보 읽기 API가 둘을 내려준다. 표시명을 바꿔도 저장 ID는 바꾸지 않는다.
+
+| 주의 ID | 표시명 | 개성 ID | 표시명 |
+| --- | --- | --- | --- |
+| `WANGDO` | 왕도 | `DISCIPLINE` | 규율 |
+| `PAEDO` | 패도 | `WATER_COMBAT` | 수전 |
+| `ADO` | 아도 | `RENOWN` | 명성 |
+| `HALGEO` | 할거 | `DEBATER` | 논객 |
+| `MYEONGRI` | 명리 | `STRATEGIST` | 책사 |
+| `YEGYO` | 예교 | `SINGLE_RIDER` | 일기 |
+
+이 이름들은 [Koei 공식 매뉴얼의 주의](https://www.gamecity.ne.jp/manual/sangokushi14-pk/ce/jp/3100.html), [공식 개성 예시](https://www.gamecity.ne.jp/sangokushi14/chara-personality.html), [외교·계략 예시](https://www.gamecity.ne.jp/sangokushi14/system-strategy.html), [전투 예시](https://www.gamecity.ne.jp/sangokushi14/system-battle.html)에서 확인했다. 서버는 본관 縣, 능력치, 두 선택 목록을 쓰기 경로에서 재검증한다. 주의·개성은 효과 설계와 검증 전까지 **표시용 태그로만 저장**한다. 원작의 효과·상성 수치나 숨은 보너스를 부의 규칙으로 복사하지 않는다. 공식 자료에서 별도 창작 상성 숫자 입력은 확인하지 못해 이 요청에도 넣지 않는다. 선택 조합 금지는 없다. 정책 원장을 로드하지 못하면 503으로 닫는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물 ID를 제출한다. 서버는 190 시드의 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 본관 배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 역사 인물의 기존 능력·성향·개성·명망 값은 결손까지 그대로 보존하고 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
 
 각 계정은 해당 서버·월드에 사람 장수 한 명만 소유할 수 있다. 두 동시 요청도 한 장만 성공하고 나머지는 `GENERAL_ALREADY_OWNED`로 끝나야 한다. 역사 인물은 기존 한 장을 소유로 전환하며 복제하지 않는다. 두 계정의 동시 선택도 한 쪽만 성공한다. 튜토리얼 월드의 생성·점유는 본 서버 월드로 전파하지 않는다. 사람에게 보이는 도움말 글은 이 레인이 초안을 쓰고 사용자가 검수한다.
 
