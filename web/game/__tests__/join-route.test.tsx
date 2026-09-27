@@ -68,13 +68,6 @@ describe('JoinPage route guard', () => {
                 imageServer: 0,
                 canUsePicture: true,
             },
-            inheritTotalPoint: 20000,
-            inheritCosts: {
-                special: 6000,
-                turntime: 2500,
-                city: 1000,
-                stat: 1000,
-            },
             turnTermMinutes: 60,
             cities: [{ id: 10, name: '낙양', region: '사예' }],
             availableSpecialWar: {

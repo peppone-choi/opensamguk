@@ -4,7 +4,6 @@ import CommandModal from '@/components/CommandModal';
 
 const mocks = vi.hoisted(() => ({
     command: vi.fn(),
-    nationBulk: vi.fn(),
     pollCommandResultResponse: vi.fn(),
 }));
 
@@ -15,16 +14,12 @@ vi.mock('@/lib/api', async importOriginal => {
         api: {
             ...actual.api,
             command: mocks.command,
-            commandQueue: {
-                ...actual.api.commandQueue,
-                nationBulk: mocks.nationBulk,
-            },
         },
         pollCommandResultResponse: mocks.pollCommandResultResponse,
     };
 });
 
-function renderModal(isNationCommand = false) {
+function renderModal() {
     const onClose = vi.fn();
     const onReserved = vi.fn();
     const onToast = vi.fn();
@@ -39,7 +34,6 @@ function renderModal(isNationCommand = false) {
             pinnedCommand="che_test"
             pinnedLabel="시험"
             pinnedArgType={null}
-            isNationCommand={isNationCommand}
         />,
     );
 
@@ -49,7 +43,6 @@ function renderModal(isNationCommand = false) {
 describe('CommandModal terminal result handling', () => {
     beforeEach(() => {
         mocks.command.mockReset();
-        mocks.nationBulk.mockReset();
         mocks.pollCommandResultResponse.mockReset();
     });
 
@@ -106,30 +99,5 @@ describe('CommandModal terminal result handling', () => {
         expect(onToast).not.toHaveBeenCalled();
         expect(onReserved).not.toHaveBeenCalled();
         expect(onClose).not.toHaveBeenCalled();
-    });
-
-    it('reports the real nation queue mutation as reserved instead of executed', async () => {
-        mocks.nationBulk.mockResolvedValueOnce({ status: 'AVAILABLE', requestId: 'nation-applied' });
-        mocks.pollCommandResultResponse.mockResolvedValueOnce({
-            status: 'RESOLVED',
-            requestId: 'nation-applied',
-            ok: true,
-            type: 'queueMutation',
-            result: { commandKind: 'QUEUE_MUTATION' },
-        });
-        const { onClose, onReserved, onToast } = renderModal(true);
-
-        fireEvent.click(screen.getByRole('button', { name: '예약' }));
-
-        await waitFor(() =>
-            expect(mocks.nationBulk).toHaveBeenCalledWith(7, [
-                { action: 'che_test', turnList: [2], arg: {} },
-            ]),
-        );
-        await waitFor(() => expect(mocks.pollCommandResultResponse).toHaveBeenCalledWith('nation-applied', expect.any(AbortSignal)));
-
-        expect(onToast).toHaveBeenCalledWith('시험 명령이 예약되었습니다.', 'success');
-        expect(onReserved).toHaveBeenCalledOnce();
-        expect(onClose).toHaveBeenCalledOnce();
     });
 });

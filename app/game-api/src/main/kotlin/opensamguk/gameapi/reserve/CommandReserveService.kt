@@ -59,7 +59,7 @@ import java.util.UUID
  *     The reserve is ordered DB-first then publish: the durable reservation must exist before the
  *     daemon is woken, so a poke can never race ahead of its reserved action.
  *
- *  B. **Immediate daemon-command intake** (betting/auction + F4 Wave C2 single-actor commands). These
+ *  B. **Immediate daemon-command intake** (F4 Wave C2 single-actor commands). These
  *     are NOT turn-reserved: their engine handlers are driven by the
  *     [opensamguk.engine.run.TurnDaemonCommandDispatcher] off a TYPED [TurnDaemonCommand] on the
  *     command stream, NOT by the `general_turn` ring. For these we SKIP the ring write and publish the
@@ -81,7 +81,7 @@ class CommandReserveService(
     private val redis: StringRedisTemplate,
     private val registry: CommandRegistry,
     processWorld: GameApiProcessWorld,
-    @Value("\${opensamguk.profile:che:scenario_2}") profile: String,
+    @Value("\${opensamguk.profile:pep:scenario_990002}") profile: String,
     private val clock: Clock = Clock.systemUTC(),
     private val requestIds: () -> String = { UUID.randomUUID().toString() },
     private val transactions: TransactionOperations,
@@ -111,7 +111,7 @@ class CommandReserveService(
     /**
      * Submit the AVAILABLE command. Selects the intake model from [actionCode] ([CommandWireMapper]):
      *
-     *  - **immediate daemon-command** intake (betting/auction + C2): publish the TYPED command (mapped
+     *  - **immediate daemon-command** intake (C2): publish the TYPED command (mapped
      *    from `{actionCode, argJson, generalId}`) — NO `general_turn` ring write (the daemon dispatches
      *    the typed command directly to its handler).
      *  - **turn-reserved `che_*`**: write the reserved action into the `general_turn` ring FIRST (DB is

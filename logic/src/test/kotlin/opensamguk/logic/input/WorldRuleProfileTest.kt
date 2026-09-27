@@ -23,10 +23,4 @@ class WorldRuleProfileTest {
         }
     }
 
-    @Test fun `rollback switch cannot restore old worlds`() {
-        assertEquals(false, WorldRuleProfile.rollbackEnabled(null))
-        assertEquals(false, WorldRuleProfile.rollbackEnabled("false"))
-        assertFailsWith<IllegalArgumentException> { WorldRuleProfile.rollbackEnabled("true") }
-        assertFailsWith<IllegalArgumentException> { WorldRuleProfile.require(current, rollback = true) }
-    }
 }

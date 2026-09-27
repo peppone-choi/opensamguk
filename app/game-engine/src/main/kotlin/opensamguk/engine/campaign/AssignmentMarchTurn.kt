@@ -43,7 +43,7 @@ class AssignmentMarchTurn(
             return
         }
         if (TravelTurn(world, recorder, topology, metrics, reactions, outcomes).onTurn(generalId)) return
-        // A placed card (배치) marches to its post on its own turn (§4); NPC cards never hold a dispatch assignment.
+        // A placed card (배치) marches to its post on its own turn (§4); dispatch follows only if placement did not move it.
         if (PlacementMarchTurn(world, recorder, topology, metrics, reactions).onTurn(generalId)) return
         val actor = world.getGeneralById(generalId) ?: return
         if (CountyAssignment.META_KEY !in actor.meta) return

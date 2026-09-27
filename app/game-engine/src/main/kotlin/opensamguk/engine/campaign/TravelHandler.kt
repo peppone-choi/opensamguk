@@ -3,6 +3,11 @@ package opensamguk.engine.campaign
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.world.*
 
 /** Starts a direct personal march; later empty turns resume its pinned route. */
@@ -53,6 +58,20 @@ class TravelHandler(
 
     companion object {
         internal fun record(world: InMemoryTurnWorld, actorId: Int, result: TravelExecution.Applied) {
+            val turn = world.getState()
+            val cityId = world.cityOfLandNode(result.state.destination)
+            val refs = mutableMapOf<RefRole, EventRef>(RefRole.ACTOR to EventRef.General(actorId))
+            if (cityId != null) refs[RefRole.CITY] = EventRef.City(cityId)
+            world.recordEvent(
+                kind = EventKind.MARCH_DIRECT,
+                audience = AudienceTarget.Self(actorId),
+                eventKey = EventKey.derive("march.direct", world.worldId.value.toString(),
+                    turn.currentYear.toString(), turn.currentMonth.toString(), turn.currentPhase.toString(),
+                    actorId.toString(), *result.state.orderId.toByteArray(Charsets.UTF_8)
+                        .joinToString("") { "%02x".format(it.toInt() and 0xff) }
+                        .chunked(64).map { "id$it" }.toTypedArray()),
+                refs = refs,
+            )
             val text = when (result.state.checkpoint.stop) {
                 LandMarchStop.ARRIVED -> "목적 省에 도착했습니다."
                 LandMarchStop.BUDGET_EXHAUSTED -> "목적 省으로 이동하고 있습니다."

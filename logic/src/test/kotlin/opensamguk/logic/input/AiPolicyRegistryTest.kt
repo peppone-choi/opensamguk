@@ -18,7 +18,8 @@ class AiPolicyRegistryTest {
             .all { it.reason.isNotBlank() })
         assertEquals(AiPolicyBinding.Selector(AiSelectorKey.COURT_DISPATCH),
             AiPolicyRegistry.bindings[catalog["court.dispatch"]!!.aiPolicyId])
-        assertIs<AiPolicyBinding.Unused>(AiPolicyRegistry.bindings[catalog["court.reward"]!!.aiPolicyId])
+        assertEquals(AiPolicyBinding.Selector(AiSelectorKey.COURT_REWARD),
+            AiPolicyRegistry.bindings[catalog["court.reward"]!!.aiPolicyId])
     }
 
     @Test
@@ -36,6 +37,7 @@ class AiPolicyRegistryTest {
     @Test
     fun `undelivered and wrong selector policies cannot choose an NPC input`() {
         assertTrue(AiPolicyRegistry.selectable(catalog, "action.deploy", AiSelectorKey.DEPLOY))
+        assertTrue(AiPolicyRegistry.selectable(catalog, "action.muster", AiSelectorKey.MUSTER))
         assertFalse(AiPolicyRegistry.selectable(catalog, "action.deploy", AiSelectorKey.PERSONAL))
         assertFalse(AiPolicyRegistry.selectable(catalog, "action.retire", AiSelectorKey.PERSONAL))
         assertFalse(AiPolicyRegistry.selectable(catalog, "action.unknown", AiSelectorKey.DEPLOY))

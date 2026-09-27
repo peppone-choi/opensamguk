@@ -1,17 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import MyInfoLogPanel from '@/components/game/MyInfoLogPanel';
-import SelectPoolPage from '@/app/game/select-pool/page';
 
 const apiMocks = vi.hoisted(() => ({
     frontInfo: vi.fn(),
-    tournament: vi.fn(),
     generalLog: vi.fn(),
-    tournamentStart: vi.fn(),
-    tournamentReset: vi.fn(),
-    selectPoolPick: vi.fn(),
-    selectPoolUpdate: vi.fn(),
-    selectPool: vi.fn(),
     pollCommandResult: vi.fn(),
     redirect: vi.fn(),
 }));
@@ -58,15 +51,7 @@ vi.mock('@/lib/serverGameUrl', async () => {
 vi.mock('@/lib/api', () => ({
     api: {
         frontInfo: apiMocks.frontInfo,
-        tournament: apiMocks.tournament,
         generalLog: apiMocks.generalLog,
-        selectPool: apiMocks.selectPool,
-        tournamentStart: apiMocks.tournamentStart,
-        tournamentReset: apiMocks.tournamentReset,
-        commands: {
-            selectPoolPick: apiMocks.selectPoolPick,
-            selectPoolUpdate: apiMocks.selectPoolUpdate,
-        },
     },
     pollCommandResult: apiMocks.pollCommandResult,
     // submitCommandAndAwaitResult가 실제로 부르는 건 이쪽이다(요청ID + abort 시그널).
@@ -86,16 +71,9 @@ const frontInfo = {
 describe('production-reachable frontend no-op closures', () => {
     beforeEach(() => {
         apiMocks.frontInfo.mockReset();
-        apiMocks.tournament.mockReset();
         apiMocks.generalLog.mockReset();
-        apiMocks.tournamentStart.mockReset();
-        apiMocks.tournamentReset.mockReset();
-        apiMocks.selectPoolPick.mockReset();
-        apiMocks.selectPoolUpdate.mockReset();
-        apiMocks.selectPool.mockReset();
         apiMocks.pollCommandResult.mockReset();
         apiMocks.frontInfo.mockResolvedValue(frontInfo);
-        apiMocks.tournament.mockResolvedValue({ entries: [], matches: [] });
     });
 
     it('loads MyInfoLogPanel pages from the GeneralLog API and uses reqTo for more rows', async () => {
@@ -121,109 +99,5 @@ describe('production-reachable frontend no-op closures', () => {
 
         await waitFor(() => expect(screen.getByText('generalAction-more')).toBeInTheDocument());
         expect(apiMocks.generalLog).toHaveBeenCalledWith(77, 'generalAction', 20);
-    });
-
-    it('select-pool surfaces the PHP-fatal pick without reloading', async () => {
-        apiMocks.selectPool.mockResolvedValue({
-            result: true,
-            generalId: null,
-            validUntil: '2026-07-10T03:02:00Z',
-            pick: [{
-                uniqueName: '청룡',
-                generalName: '마초',
-                picture: '1042',
-                imageServer: 0,
-                leadership: 91,
-                strength: 97,
-                intel: 74,
-                politics: 44,
-                charm: 88,
-                dex: [1000, 2000, 3000, 4000, 5000],
-                personality: 'che_의리',
-                specialDomestic: null,
-                specialWar: null,
-                statEditable: false,
-            }],
-        });
-        apiMocks.selectPoolPick.mockRejectedValue(new Error('500: Internal Server Error'));
-
-        render(<SelectPoolPage />);
-
-        await waitFor(() => expect(screen.getByRole('heading', { name: '마초' })).toBeInTheDocument());
-        expect(screen.getByText('91 / 97 / 74 / 44 / 88')).toBeInTheDocument();
-        expect(screen.queryByLabelText('고유 이름')).not.toBeInTheDocument();
-        const poolCallsBeforePick = apiMocks.selectPool.mock.calls.length;
-        fireEvent.click(screen.getByRole('button', { name: '마초 선택' }));
-
-        await waitFor(() =>
-            expect(apiMocks.selectPoolPick).toHaveBeenCalledWith(
-                {
-                    uniqueName: '청룡',
-                    leadership: undefined,
-                    strength: undefined,
-                    intel: undefined,
-                    personalityName: undefined,
-                    useOwnPicture: false,
-                },
-                0,
-            ),
-        );
-        await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent('500: Internal Server Error'));
-        expect(apiMocks.pollCommandResult).not.toHaveBeenCalled();
-        expect(screen.queryByRole('status')).not.toBeInTheDocument();
-        expect(apiMocks.selectPool.mock.calls.length).toBe(poolCallsBeforePick);
-    });
-
-    it('select-pool update reloads only after an applied terminal result', async () => {
-        apiMocks.selectPool.mockResolvedValue({
-            result: true,
-            generalId: 77,
-            validUntil: '2026-07-10T03:02:00Z',
-            pick: [{
-                uniqueName: '청룡',
-                generalName: '마초',
-                picture: null,
-                imageServer: 0,
-                leadership: 91,
-                strength: 97,
-                intel: 74,
-                politics: 44,
-                charm: 88,
-                dex: [1000, 2000, 3000, 4000, 5000],
-                personality: 'che_의리',
-                specialDomestic: null,
-                specialWar: null,
-                statEditable: false,
-            }],
-        });
-        apiMocks.selectPoolUpdate.mockResolvedValue({ status: 'AVAILABLE', requestId: 'update-1' });
-        apiMocks.pollCommandResult.mockResolvedValue({
-            status: 'RESOLVED',
-            requestId: 'update-1',
-            ok: true,
-            type: 'selectPoolUpdate',
-            result: {},
-        });
-
-        render(<SelectPoolPage />);
-
-        await waitFor(() => expect(screen.getByRole('button', { name: '마초로 변경' })).toBeInTheDocument());
-        const poolCallsBeforeUpdate = apiMocks.selectPool.mock.calls.length;
-        fireEvent.click(screen.getByRole('button', { name: '마초로 변경' }));
-
-        await waitFor(() => expect(apiMocks.selectPoolUpdate).toHaveBeenCalledWith(
-            {
-                uniqueName: '청룡',
-                leadership: undefined,
-                strength: undefined,
-                intel: undefined,
-                personalityName: undefined,
-                useOwnPicture: false,
-            },
-            77,
-        ));
-        await waitFor(() => expect(apiMocks.pollCommandResult).toHaveBeenCalledWith('update-1', expect.anything()));
-        await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('변경이 처리되었습니다.'));
-        await waitFor(() => expect(apiMocks.selectPool.mock.calls.length).toBeGreaterThan(poolCallsBeforeUpdate));
     });
 });

@@ -1,7 +1,7 @@
 package opensamguk.logic.actions.military
 
 import opensamguk.common.constants.GameUnitConst
-import opensamguk.common.constants.HanGateIndex
+import opensamguk.common.constants.BaselineGateIndex
 import opensamguk.common.constants.UnitCatalog
 import opensamguk.common.constants.UnitConstraint
 import opensamguk.logic.domain.General
@@ -12,7 +12,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
- * han 병종의 게이트 키 판정 — [HanGateIndex] (생성물) 가 실제로 물리는지 고정한다.
+ * han 병종의 게이트 키 판정 — [BaselineGateIndex] (생성물) 가 실제로 물리는지 고정한다.
  *
  * 규칙(확정): `ReqRegions` = 국가가 **보유한 城** 중 하나라도 그 키를 가지면 통과(인접은 보지 않는다).
  * `ForbidRegions` = 장수가 **서 있는 城**의 키로 판정한다.
@@ -30,11 +30,11 @@ class GateRegionsTest {
     private val che = CityConstRegistry.of("che")
 
     // 城 id 는 생성기가 州 → 郡 순으로 다시 매기면 통째로 밀린다. 박아두지 말고 게이트 키로 찾는다.
-    private fun cityWithKey(key: String) = han.all().keys.first { key in HanGateIndex.keys(it) }
+    private fun cityWithKey(key: String) = han.all().keys.first { key in BaselineGateIndex.keys(it) }
 
     /** 주어진 키를 **전부** 가진 城. 郡+부족 AND 게이트가 실제로 같은 城에서 만나는지 증명할 때 쓴다. */
     private fun cityWithKeys(vararg keys: String) =
-        han.all().keys.firstOrNull { id -> keys.all { it in HanGateIndex.keys(id) } }
+        han.all().keys.firstOrNull { id -> keys.all { it in BaselineGateIndex.keys(id) } }
 
     /** 幽州 게이트 키를 가진 城. */
     private val youzhouCity = cityWithKey("幽州")
@@ -85,7 +85,7 @@ class GateRegionsTest {
     @Test
     fun `烏桓 거점은 보유해야 통과하고 인접만으로는 안 된다`() {
         val wuhuanOnly = youzhouTuqi.copy(reqConstraints = listOf(UnitConstraint.ReqRegions(listOf("烏桓"))))
-        val neighbour = han.byId(wuhuanCity)!!.path.keys.first { "幽州" in HanGateIndex.keys(it) }
+        val neighbour = han.byId(wuhuanCity)!!.path.keys.first { "幽州" in BaselineGateIndex.keys(it) }
 
         assertTrue(canRecruit(wuhuanOnly, standingAt = wuhuanCity, own = listOf(wuhuanCity)))
         assertFalse(canRecruit(wuhuanOnly, standingAt = neighbour, own = listOf(neighbour)))
@@ -152,7 +152,7 @@ class GateRegionsTest {
             val city = cityWithKeys(commandery, tribe)
             assertTrue(
                 city != null,
-                "${unit.name}($id): $commandery+$tribe 를 같이 가진 城이 HanGateIndex 에 없다",
+                "${unit.name}($id): $commandery+$tribe 를 같이 가진 城이 BaselineGateIndex 에 없다",
             )
             assertTrue(
                 canRecruit(unit, standingAt = city!!, own = listOf(city)),
@@ -174,7 +174,7 @@ class GateRegionsTest {
             val groups = unit.reqConstraints.filterIsInstance<UnitConstraint.ReqRegions>().map { it.reqRegions }
             if (groups.isEmpty()) return@mapNotNull null
             val covered = han.all().keys.any { id ->
-                val gate = HanGateIndex.keys(id)
+                val gate = BaselineGateIndex.keys(id)
                 groups.all { g -> g.any { it in gate } }
             }
             if (covered) null else "${unit.name}(${unit.id}): $groups"

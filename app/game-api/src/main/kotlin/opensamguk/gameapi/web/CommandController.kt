@@ -76,7 +76,7 @@ class CommandController(
     private val redis: StringRedisTemplate,
     /** 엔진 발행 result JSON을 응답 트리로 그대로 옮기는 변환기(타입별 부가 필드 보존). */
     private val objectMapper: ObjectMapper,
-    @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
+    @Value("\${opensamguk.profile:pep:scenario_990002}") private val profile: String,
     processWorld: GameApiProcessWorld,
     private val worlds: WorldStateReadRepository,
 ) {

@@ -16,17 +16,21 @@ internal class NpcAiTurnSelector(
     context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load(),
 ) {
-    private val selectors: Map<AiSelectorKey, (InMemoryTurnWorld, Int, ReservedTurn) -> ReservedTurn> = mapOf(
+    private val selectors: Map<AiSelectorKey, (InMemoryTurnWorld, Int, ReservedTurn) -> ReservedTurn> = linkedMapOf(
         AiSelectorKey.DEPLOY to NpcDeploySelector(topology, metrics)::select,
+        AiSelectorKey.MUSTER to NpcMusterSelector(topology, metrics, catalog)::select,
         AiSelectorKey.CITY_MILITARY to NpcCityMilitarySelector(context, catalog = catalog)::select,
         AiSelectorKey.PEOPLE to NpcPeopleSelector(context, catalog = catalog)::select,
         AiSelectorKey.FIELD to NpcFieldSelector(context, catalog)::select,
         AiSelectorKey.PERSONAL to NpcPersonalSelector(context, catalog = catalog)::select,
     )
 
+    internal val selectionOrder: List<AiSelectorKey> get() = selectors.keys.toList()
+
     init {
         val generalTurnKeys = AiPolicyRegistry.bindings.values.filterIsInstance<AiPolicyBinding.Selector>()
-            .map { it.key }.toSet() - setOf(AiSelectorKey.ENLIST, AiSelectorKey.COURT_DISPATCH)
+            .map { it.key }.toSet() - setOf(AiSelectorKey.ENLIST, AiSelectorKey.COURT_DISPATCH,
+                AiSelectorKey.COURT_REWARD)
         require(selectors.keys == generalTurnKeys) { "NPC general-turn selector routes do not match aiPolicyId registry" }
     }
 

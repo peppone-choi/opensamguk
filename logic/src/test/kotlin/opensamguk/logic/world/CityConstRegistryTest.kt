@@ -58,7 +58,7 @@ class CityConstRegistryTest {
         val v2 = CityConstRegistry.of("han-world-v2")
         assertEquals(CityConstRegistry.of("han").all(), v2.all())
         assertEquals((1..774).toList(), v2.all().keys.toList())
-        val generated = opensamguk.common.constants.HanWorldV3CityConst.initCity
+        val generated = opensamguk.common.constants.ArchiveCityConst.initCity
         val v3 = CityConstRegistry.of("han-world-v3")
         assertEquals(generated.map { it.id }.toSet(), v3.all().keys)
         val byName = generated.associateBy { it.name }

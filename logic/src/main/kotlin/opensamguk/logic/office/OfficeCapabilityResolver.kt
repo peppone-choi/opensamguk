@@ -113,7 +113,7 @@ object OfficeCapabilityResolver {
             require(tenure.jurisdictionId !in definition.excludedJurisdictions) { "excluded local jurisdiction" }
         }
         require(active.groupBy { it.holderId }.values.all { it.size <= rules.maximumConcurrentLocalTenures }) { "local office concurrency exceeded" }
-        require(active.groupBy { it.jurisdictionId }.values.all { samePlace ->
+        require(active.groupBy { it.nationId to it.jurisdictionId }.values.all { samePlace ->
             samePlace.map { catalog.definition(it.officeId)!!.jurisdiction }.distinct().size == samePlace.size
         }) { "conflicting local jurisdiction tenure" }
     }

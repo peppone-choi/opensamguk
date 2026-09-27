@@ -4,6 +4,10 @@ import kotlin.test.*
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 
 class MusterHandlerTest {
     private val fixture = CampaignWorldFixture()
@@ -31,6 +35,10 @@ class MusterHandlerTest {
         assertEquals(10, world.getGeneralById(owner.id)!!.experience)
         val denied = assertIs<TurnOutcome.Rejected>(handler.handle(owner.id, "{}", "different-request", 42))
         assertEquals("ALREADY_PROCESSED", denied.code)
+        val event = world.consumeDirtyState().gameEvents.single { it.kind == EventKind.MUSTER_ORDERED }
+        assertEquals(AudienceTarget.Self(owner.id), event.audience)
+        assertEquals(EventRef.General(owner.id), event.refs[RefRole.ACTOR])
+        assertEquals(EventRef.City(route.startCity), event.refs[RefRole.CITY])
     }
 
     @Test fun `muster rejects when the owner commands no deployed corps`() {
@@ -58,6 +66,10 @@ class MusterHandlerTest {
         val result = MusterHandler(world, recorder, fixture.topology, fixture.metrics)
             .handle(owner.id, "{}", "muster-707", 42)
         assertEquals("NO_GATHER_TARGET", assertIs<TurnOutcome.Rejected>(result).code)
+        val event = world.consumeDirtyState().gameEvents.single { it.kind == EventKind.DEPLOY_STARTED }
+        assertEquals(AudienceTarget.Self(owner.id), event.audience)
+        assertEquals(EventRef.General(owner.id), event.refs[RefRole.ACTOR])
+        assertEquals(EventRef.City(route.destinationCounty), event.refs[RefRole.CITY])
     }
 
     @Test fun `proposed military rates cannot execute`() {
