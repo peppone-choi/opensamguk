@@ -65,6 +65,10 @@ class WorldStateReadEntity(
 
     @Column(name = "updated_at")
     var updatedAt: Instant? = null,
+
+    @Convert(converter = MetaJsonConverter::class)
+    @Column(name = "catch_up", columnDefinition = "jsonb")
+    var catchUp: Map<String, Any?>? = null,
 )
 
 interface WorldStateReadRawRepository : SpringDataRepository<WorldStateReadEntity, Int> {

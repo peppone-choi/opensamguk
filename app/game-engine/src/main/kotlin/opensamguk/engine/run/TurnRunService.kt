@@ -1,6 +1,8 @@
 package opensamguk.engine.run
 
 import java.time.Instant
+import opensamguk.common.turn.CatchUpSnapshot
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.common.rng.RandUtil
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
@@ -33,6 +35,9 @@ import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventCondition
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.renown.RenownAssessment
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
 import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
@@ -136,6 +141,42 @@ open class TurnRunService(
     init {
         handler.recorder.generationSession = generationSession
         recoveryGateProvider?.bind(recoveryGate)
+    }
+
+    private val catchUpCoordinator = TurnCatchUpCoordinator(
+        nextWorldRun = ::nextRunTime,
+        tickSeconds = { world.getState().tickSeconds },
+        current = { world.getState().catchUp },
+        persist = ::persistCatchUp,
+    )
+
+    open fun catchUpPlan(): TurnCatchUp? = catchUpCoordinator.plan()
+
+    open fun catchUpSnapshot(at: Instant): CatchUpSnapshot = catchUpCoordinator.snapshot(at)
+
+    open fun ensureCatchUp(at: Instant, reanchor: Boolean) = catchUpCoordinator.ensure(at, reanchor)
+
+    open fun refreshCatchUp(at: Instant) = catchUpCoordinator.refresh(at)
+
+    open fun finishCatchUpIfCurrent(at: Instant) = catchUpCoordinator.finishIfCurrent(at)
+
+    open fun switchCatchUpMultiplier(multiplier: Int, at: Instant): CatchUpSnapshot =
+        catchUpCoordinator.switchMultiplier(multiplier, at)
+
+    private fun persistCatchUp(plan: TurnCatchUp, completed: Boolean) {
+        recoveryGate.requireIntakeOrTickAllowed("catch-up transition")
+        handler.recorder.recordCatchUp(plan)
+        if (completed) {
+            world.recordEvent(
+                EventKind.TURN_CATCH_UP_FINISHED,
+                AudienceTarget.Public,
+                EventKey.derive("turnCatchUpFinished", world.worldId.value.toString(), plan.startedAt.toString()),
+            )
+        }
+        val state = world.getState()
+        val base = buildFlushPayload()
+        val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
+        flushWithGeneration(base.copy(worldStateUpdate = worldState))
     }
 
     /** OPENSAM-132: non-sensitive recovery snapshot for status/health. */
@@ -492,6 +533,9 @@ open class TurnRunService(
         try {
             flushExecutor.flush(payload)
             generationSession.commit(generation)
+            if (payload.worldStateUpdate.containsKey("catch_up")) {
+                world.setCatchUp(TurnCatchUp.fromMeta(payload.worldStateUpdate["catch_up"]))
+            }
             handler.recorder.clear()
             // OPENSAM-131: only advance local fence after durable commit.
             if (payload.worldStateUpdate.containsKey("expected_world_version")) {

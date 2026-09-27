@@ -1,6 +1,7 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.common.constants.GameConst
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
@@ -69,6 +70,26 @@ class ServerBasicInfoControllerTest {
                 NationReadEntity(id = 2, name = "촉", color = "#0f0", level = 5),
             ),
         )
+    }
+
+    @Test
+    fun `server basic info exposes the persisted catch-up plan`() {
+        seedWorld(emptyMap())
+        val now = Instant.now()
+        val next = now.minusSeconds(72000)
+        val plan = TurnCatchUp.start(next, now)
+        `when`(world.findById(0)).thenReturn(Optional.of(WorldStateReadEntity(
+            id = 0, scenarioCode = "scenario_1010", currentYear = 200, currentMonth = 3,
+            tickSeconds = 3600,
+            meta = mapOf("lastTurnTime" to next.minusSeconds(3600).toString()),
+            catchUp = plan.toMeta(),
+        )))
+
+        mockMvc().perform(get("/api/server-basic-info"))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.game.catchUp.active").value(true))
+            .andExpect(jsonPath("$.game.catchUp.multiplier").value(2))
+            .andExpect(jsonPath("$.game.catchUp.initialBacklogSeconds").value(72000))
     }
 
     @Test

@@ -55,6 +55,7 @@ enum class EventKind(
     ROAD_FORT_CAPTURED("roadFort.captured", WORLD, setOf(PUBLIC), requiredRefs = setOf(ROAD_FORT, TO_NATION),
         allowedRefs = setOf(ROAD_FORT, FROM_NATION, TO_NATION)),
     YUEDAN_ANNOUNCED("yuedan.announced", WORLD, setOf(PUBLIC)),
+    TURN_CATCH_UP_FINISHED("server.catchUpFinished", WORLD, setOf(PUBLIC)),
     OWNER_CHANGED("county.ownerChanged", WORLD, setOf(PUBLIC), requiredRefs = setOf(CITY, FROM_NATION, TO_NATION)),
     ;
 

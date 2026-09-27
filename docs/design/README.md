@@ -38,6 +38,7 @@ PHP와 draw-for-draw, byte-for-byte로 일치해야 한다는 의무와 PHP UI�
 
 | 문서 | 답하는 질문 |
 |---|---|
+| [밀린 턴 따라잡기](./turn-catch-up.md) | 서버 중단 뒤 예약 턴을 어떤 배속과 순서로 복구하고 ETA를 어떻게 보여 주는가? |
 | [ui-redesign-2026-09/](./ui-redesign-2026-09/README.md) | 화면은 어떻게 생겨야 하는가 — 야전 사령부(Concept A) 시안 19장 소스, 팔레트·초상·부서 메뉴·세 게시 공간 규칙 (ADR-LITE-049) |
 | [장수·휘하 캠페인 재설계](../superpowers/specs/2026-09-17-general-and-retinue-campaign-redesign.md) | 삼모 명령 체계를 무엇으로 바꾸는가 — 장수·휘하 카드·결속, 입력 6종, 장수 턴과 순 경계 처리 순서, 자원 5종 (ADR-LITE-057·065, 2026-09-24 정식 승인). 카드 목록은 [계책 카드 카탈로그 초안](../superpowers/specs/2026-09-17-stratagem-card-catalog-draft.md) |
 | [현재 로드맵](./roadmap.md) | 무엇이 승인·구현·진행·제안 상태인가? |

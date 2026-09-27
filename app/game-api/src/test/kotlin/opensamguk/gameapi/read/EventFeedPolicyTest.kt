@@ -81,6 +81,15 @@ class EventFeedPolicyTest {
     }
 
     @Test
+    fun `catch-up completion is visible to everyone without private payload`() {
+        val completion = row(EventKind.TURN_CATCH_UP_FINISHED, "PUBLIC", published = true)
+        assertEquals("server.catchUpFinished", EventFeedPolicy.project(completion, null, 0, -1)?.kind)
+        assertNull(EventFeedPolicy.project(completion.copy(publicationState = "PRIVATE"), null, 0, -1))
+        assertNull(EventFeedPolicy.project(completion.copy(factsJson = EventPayloadCodec.encodeFacts(
+            mapOf(FactRole.MONEY to EventFact.Amount(1)))), null, 0, -1))
+    }
+
+    @Test
     fun `cursor is fixed to world and section`() {
         val position = EventFeedPosition(200, 12, 3, 51, 99)
         val cursor = EventFeedCursor.encode(3, EventSection.BATTLE, position)

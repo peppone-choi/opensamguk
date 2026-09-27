@@ -46,6 +46,7 @@ import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.GameConst
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.UnitCatalog
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.common.constants.getCityLevelList
 import opensamguk.logic.domestic.getBillByLevel
 import opensamguk.logic.domestic.getDedLevel
@@ -661,6 +662,16 @@ class FrontInfoController(
         val profile = if (w == null) null else opensamguk.logic.input.WorldRuleProfile.resolve(config)
         return FrontGlobalInfo(
             ruleProfile = profile,
+            catchUp = w?.let {
+                TurnCatchUp.snapshotFromStored(
+                    it.catchUp,
+                    (it.meta["lastTurnTime"] as? String)?.let { value ->
+                        runCatching { Instant.parse(value) }.getOrNull()
+                    },
+                    it.tickSeconds,
+                    now,
+                )
+            },
             year = w?.currentYear ?: 0,
             month = w?.currentMonth ?: 0,
             turnPhase = turnPhase,

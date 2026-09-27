@@ -1,6 +1,9 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
+import opensamguk.infra.persistence.MetaJson
+import java.time.Instant
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnDiplomacy
@@ -17,6 +20,7 @@ import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WorldSnapshotLoaderWorldScopeIT {
@@ -50,6 +54,18 @@ class WorldSnapshotLoaderWorldScopeIT {
     @AfterAll
     fun tearDown() {
         if (this::postgres.isInitialized) postgres.stop()
+    }
+
+    @Test
+    fun `cold boot restores catch-up only for the world with a stored plan`() {
+        assertNull(loader(WorldId(1)).buildSnapshot().state.catchUp, "existing NULL world is inactive")
+        assertNull(loader(WorldId(2)).buildSnapshot().state.catchUp)
+        val now = Instant.parse("2026-09-27T00:00:00Z")
+        val plan = TurnCatchUp.start(now.minusSeconds(72000), now).switchMultiplier(4, now)
+        jdbc.update("UPDATE world_state SET catch_up = ?::jsonb WHERE id = 1", MetaJson.encode(plan.toMeta()))
+
+        assertEquals(plan, loader(WorldId(1)).buildSnapshot().state.catchUp)
+        assertNull(loader(WorldId(2)).buildSnapshot().state.catchUp)
     }
 
     @Test
