@@ -24,9 +24,23 @@
 5. 3,000틱 전에 섬멸/후퇴/목표 달성으로 종료할 수 있다. 시간 초과 시 생존 병력×사기의 합계를 비교하고 동률이면 수비 측을 지킨 것으로 처리한다. 종결 뒤 입력은 거절한다.
 6. `BattleResolved`와 결과 outbox가 durable해진 뒤 game-engine이 `(battleId,resultRevision)` 멱등성·lock generation·entity revision을 검사하고 `ChangeRecorder -> JdbcFlushExecutor` 단일 flush로 사상자·사기·퇴로·포로/부상/사망·점령·성벽/성문/공성 상태를 반영한다. 불일치면 결과를 추측해 적용하지 않고 blocked 사건을 남긴다. 결과 적용 확인 뒤 전체 관전 리플레이를 공개한다.
 
+### actor 배포와 클라이언트 통신
+
+첫 수직 절편의 actor 조정 코드는 인증·티켓 발급·battle 저장소를 이미 가진 `app/game-api` 아래에 둔다. 이 소스 위치는 연결 부위를 먼저 검증하기 위한 것이며, ADR-LITE-025의 전용 `battle-engine` 런타임을 대체하는 배포 결정은 아니다. 제품 가동 전 전투 actor와 DB 재발견을 요청 스레드/월드 턴 실행기에서 떼어 전용 프로세스·배포 단위로 분리하고 CPU·메모리·연결 수 한도와 100ms 틱 지연을 부하 시험한다. battle 런타임은 `battle_*`만 쓰고, 캠페인 변경은 game-engine의 단일 flush에만 맡긴다. 재시작·다중 인스턴스에서 `(worldId,battleId)`의 한 actor만 원자적 `sessionEpoch` claim과 lease 갱신으로 쓰게 하며, 이전 epoch의 명령·체크포인트·결과는 거부한다. 분리 전 co-location은 개발/검증 상태이며 운영 수용 기준을 충족하지 않는다.
+
+클라이언트 실시간 전송은 **WebSocket**으로 고정한다. 인증된 game-api HTTP join 요청은 계정과 현재 전투 권한을 확인한 뒤 60초 이내 만료하는 서명 JoinTicket을 발급한다. 브라우저/모바일은 `JoinTicket`, `lastSeenEventSeq`로 전투 WebSocket에 접속하며 장기 gateway access token을 전투 런타임에 넘기지 않는다. 서버는 토큰의 계정·참가자·진영·authority revision·`sessionEpoch`을 저장된 티켓 및 현재 권한과 다시 대조한다. HTTPS POST+SSE는 이 계약의 대체 전송이 아니다.
+
+| 방향 | 메시지 계약 |
+| --- | --- |
+| 서버→클라이언트 | `SNAPSHOT(worldId,battleId,sessionEpoch,tick,eventSeq,sideProjection)` 뒤 증가하는 `DELTA(eventSeq,tick,sideProjection)`; 상대의 비공개 카드·안개 속 좌표/ID는 제외한다. |
+| 클라이언트→서버 | `COMMAND(clientCommandId,expectedEpoch,expectedAuthorityRevision,issuedTick,scope,intentType,intentPayload)`; 서버가 계정·seat·진영을 JoinTicket과 현재 상태에서 결정한다. 클라이언트는 위치·피해·난수·효력 틱을 지정하지 않는다. |
+| 서버→클라이언트 | `ACK(clientCommandId,ACCEPTED|REJECTED,serverTick,acceptedTick?,effectiveTick?,eventSeq?,reasonCode?,currentAuthorityRevision)`; 같은 ID와 같은 정규화 입력은 최초 ACK를 되돌리고 같은 ID의 다른 입력은 `IDEMPOTENCY_CONFLICT`로 거절한다. |
+
+재접속에는 새 JoinTicket과 마지막으로 **적용한** `eventSeq`를 사용한다. 같은 epoch에서 누락분을 안전하게 이어줄 수 있으면 진영별 delta를 순서대로 보낸다. epoch가 바뀌었거나 gap/투영 검증에 실패하면 해당 진영 snapshot과 그 이후 delta를 보낸다. 클라이언트는 snapshot 기준보다 오래된 delta를 버리고 seq 누락 시 재동기화를 요청한다. 단절 중인 편제는 기록된 DB deadline 뒤 AI로 인계되며 재접속은 다음 안전 틱에서 사람에게 권한을 돌려준다. 재접속 이전 epoch의 미확인 명령은 새 권한 revision으로 재검증하며, 명령 ID 중복 응답은 저장된 영수증을 쓴다. 전체 replay는 결과 적용 ACK 뒤에만 공개한다.
+
 ## 전장과 판정
 
-`BATTLE.MAP`의 앞 512바이트는 판별 타일셋 표, 뒤는 214×4096바이트다. 원작 바이트는 어느 Git 저장소에도 넣지 않는다. `opensamguk-images`의 owner-accepted 파생 export와 타일 번호·지형 분류 목록만 배포한다. 각 판에 벽 타일이 있으면 성새판, 없으면 야전판으로 분류한다. 판마다 평지·숲·산·강·성벽 구성비와 통행 가능 칸을 사전 계산한다. 전투 省의 고정된 han-tiles 판본에서 같은 범주의 지형 구성비를 계산하고, 일치도가 가장 높은 상위 후보 중 `battleId` 시드로 하나를 선택한다. 공성은 성새판, 조우는 야전판으로 한정한다. 전장 ID·타일셋·분류 목록 해시·han-tiles 해시를 티켓과 결과·리플레이에 핀한다. #995 지형 변경은 새 티켓에만 적용한다.
+`BATTLE.MAP`의 앞 512바이트는 판별 타일셋 표, 뒤는 214×4096바이트다. 원작 바이트는 어느 Git 저장소에도 넣지 않는다. `opensamguk-images`의 owner-accepted 파생 export와 타일 번호·지형 분류 목록만 배포한다. 성새/야전 구분은 파생 카탈로그의 검증된 분류를 쓰며, 단순 벽 타일 번호 존재 여부로 재분류하지 않는다. 판마다 평지·숲·산·강·성벽 구성비와 통행 가능 칸을 사전 계산한다. 전투 省의 고정된 han-tiles 판본에서 같은 범주의 지형 구성비를 계산하고, 일치도가 가장 높은 상위 후보 중 `battleId` 시드로 하나를 선택한다. 공성은 성새판, 조우는 야전판으로 한정한다. 전장 ID·타일셋·분류 목록 해시·지형 입력 해시를 티켓과 결과·리플레이에 핀한다. #995 지형 변경은 새 티켓에만 적용한다. #984의 지도 설계 층이 규칙 입력으로 배선되면 그 뒤 생성하는 티켓부터 해당 판본과 해시를 지형 입력으로 사용한다. 이미 발행한 티켓은 기존 han-tiles 핀을 유지한다.
 
 칸 점유는 분대 하나에 한 칸이다. 매 틱 시작의 점유 스냅숏으로 이동 요청을 판정하며 점유 칸 교환·꼬리물기는 허용하지 않는다. 같은 빈 칸 경합은 고정 우선도 뒤 분대 ID로 푼다. 지형의 이동/방어 보정은 원장에 둔다. 병력·사기·훈련·피로·군량과 통솔·무력·지력·정치·매력은 티켓에 고정한다. 사기 임계 아래면 후퇴 AI를 우선하고 그 상태에서 패배하면 괴멸한다. 실명 부대 고유 능력과 병종 상성도 버전된 원장만 읽는다. 날씨·계절·밤, 계책 카드, 목표, 극적 사건은 티켓에 기록한 시드와 순서로 결정한다. 장수 컷인·대사·전장 효과는 결과 상태/사건을 읽는 연출이다. 개막 연출·실황 자막·소리·사료 명장면은 이 버전에 넣지 않는다.
 
