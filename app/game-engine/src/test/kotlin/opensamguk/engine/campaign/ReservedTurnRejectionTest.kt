@@ -28,7 +28,7 @@ class ReservedTurnRejectionTest {
     @Test fun `retired general is excluded from both next run time and due cohort`() {
         val world = world("HWIHA")
         val actor = world.getGeneralById(1)!!
-        world.applyGeneralDirtyFree(actor.copy(meta = actor.meta + ("hwihaRetired" to true)))
+        world.applyGeneralDirtyFree(actor.copy(meta = actor.meta + ("retired" to true)))
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184)
         val lifecycle = TurnDaemonLifecycle(world, handler, reservedActionOf = { ReservedTurn("", "") })
         assertNull(lifecycle.nextGeneralRunTime())
@@ -127,7 +127,7 @@ class ReservedTurnRejectionTest {
             assertEquals("blocked-request", result.requestId)
             assertEquals("stratagem.play", result.reservedActionCode)
             assertEquals(original.copy(turnTime = Instant.EPOCH.plusSeconds(interval.toLong()),
-                meta = if (profile == "HWIHA") PersonalTurn.after(original.meta + ("hwihaStratagemHand" to mapOf(
+                meta = if (profile == "HWIHA") PersonalTurn.after(original.meta + ("stratagemHand" to mapOf(
                     "version" to 1,"ownerGeneralId" to 1,"hand" to listOf(1,2),"drawPile" to listOf(3,4),
                     "discard" to emptyList<Int>(),"lastDrawPhase" to mapOf("year" to 200,"month" to 1,"phase" to 1))), world.getState()) else original.meta), world.getGeneralById(1))
             assertEquals(1, pulls)

@@ -28,10 +28,11 @@ VOLUMES = {'game-postgres': ('game-pgdata', '/var/lib/postgresql/data'),
            'game-redis': ('game-redisdata', '/data')}
 PAYLOADS = {'server.env', 'compose.yml', 'images.tar', 'postgres.tar', 'redis.tar'}
 RESERVED = set('all admin1 admin2 admin5 admin7 admin8 auction battle-center betting board '
-               'chief-center city coming-soon diplomacy generals global-diplomacy history '
+               'chief-center city coming-soon court diplomacy generals global-diplomacy hand history '
                'inherit join mailbox main map my my-boss my-cities my-generals my-nation nation '
                'nation-betting nation-finance npc-control rankings register select-pool simulator '
-               'tournament tournament-admin troop vote world-log'.split())
+               'orders posts retinue siege supply tournament tournament-admin troop v2-lab vote '
+               'war-room world-log yuedan'.split())
 LABEL = 'org.opensamguk.recovery'
 REDIS_CMD = ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb',
              '--maxmemory-policy', 'allkeys-lru']

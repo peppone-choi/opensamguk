@@ -14,18 +14,6 @@ export const MAP_CDN = `${IMAGE_CDN_BASE}/game/map`;
 // 새는 문제를 제거하고, devsam/image(=ground truth) 미러와 동일한 전체 상태셋(event0~9,31~34,41~43,51)을 보장한다.
 export const ICON_CDN = `${IMAGE_CDN_BASE}/game`;
 
-export const TYPE_LABEL: Record<string, string> = {
-    buyRice: '쌀 구매',
-    sellRice: '쌀 판매',
-    uniqueItem: '유니크 아이템',
-};
-
-export const RES_LABEL: Record<string, string> = {
-    gold: '금',
-    rice: '쌀',
-    inheritPoint: '유산 포인트',
-};
-
 export const DIPLOMACY_LABEL: Record<string, string> = {
     war: '전쟁',
     peace: '평화',
@@ -42,17 +30,6 @@ export const INFINITE_DATE = '9999-12-31';
 /** 토스트 자동 사라짐 시간(ms). */
 export const TOAST_DURATION_MS = 3000;
 
-/** 투표 항목 기본 색상 팔레트 — legacy css-color-names 7색 (red/orange/yellow/green/blue/navy/purple). */
-export const VOTE_COLORS = [
-    '#ff0000', // red
-    '#ffa500', // orange
-    '#ffff00', // yellow
-    '#008000', // green
-    '#0000ff', // blue
-    '#000080', // navy
-    '#800080', // purple
-];
-
 /** isBrightColor 판정 임계값 — legacy perceived-luminance (r*.299 + g*.587 + b*.114) > threshold. */
 export const BRIGHT_COLOR_THRESHOLD = 140;
 
@@ -68,12 +45,6 @@ export const JOIN_STAT_MIN = 15;
 /** 장수 등록 능력치 최대값. */
 export const JOIN_STAT_MAX = 80;
 
-/** 유산 버프 최대 레벨. */
-export const INHERIT_BUFF_MAX_LEVEL = 5;
-
-/** 유산 버프 구매 비용表 (누적 차액). */
-export const INHERIT_COSTS = [0, 200, 600, 1200, 2000, 3000];
-
 /** 댓글 최대 길이. */
 export const COMMENT_MAX_LENGTH = 250;
 
@@ -82,9 +53,6 @@ export const ARTICLE_TITLE_MAX_LENGTH = 250;
 
 /** 부대명/장수명 최대 길이. */
 export const NAME_MAX_LENGTH = 18;
-
-/** 투표 댓글 최대 길이. */
-export const VOTE_COMMENT_MAX_LENGTH = 200;
 
 /** 도시 게이지 — 민심 최대값. */
 export const CITY_TRUST_MAX = 100;
@@ -114,22 +82,6 @@ export const TOAST_Z_INDEX = 200;
 export const COLOR_BLACK = '#000000';
 export const COLOR_WHITE = '#ffffff';
 export const COLOR_DARK_GRAY = '#555555';
-
-/** 토너먼트 매치 상태 → StatusBadge variant 매핑. */
-export const TOURNAMENT_STATUS_VARIANT: Record<string, 'jade' | 'gold' | 'crimson' | 'muted'> = {
-    PENDING: 'muted',
-    ONGOING: 'gold',
-    FINISHED: 'jade',
-    CANCELLED: 'crimson',
-};
-
-/** 토너먼트 매치 상태 → 표시 한글 라벨. */
-export const TOURNAMENT_STATUS_LABEL: Record<string, string> = {
-    PENDING: '대기',
-    ONGOING: '진행 중',
-    FINISHED: '종료',
-    CANCELLED: '취소',
-};
 
 // game-api AdminWriteController.SERVER_STATUSES 와 같은 집합(서버 상태 변경 허용값).
 export const SERVER_STATUSES = ['OPEN', 'PRE_OPEN', 'CLOSED'] as const;

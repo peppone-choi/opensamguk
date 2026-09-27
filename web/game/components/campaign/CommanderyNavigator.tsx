@@ -1,7 +1,7 @@
 'use client';
 
 import { Chip, type CommanderyVisibility, type CommanderyCell } from '@opensamguk/ui';
-import { HWIHA_DIRECTIONS, neighborInDirection } from '@/lib/hwiha-fog';
+import { COMMANDERY_DIRECTIONS, neighborInDirection } from '@/lib/campaign-fog';
 
 const ARROW_CELLS = ['NW', 'N', 'NE', 'W', null, 'E', 'SW', 'S', 'SE'] as const;
 const ARROW_GLYPH: Record<string, string> = {
@@ -39,7 +39,7 @@ export function CommanderyNavigator({ commanderies, focus, home, onFocus, visibi
                     style={{ minWidth: 0, padding: 0, fontSize: 11, color: 'var(--bronze)' }}
                     onClick={home ? () => onFocus(home.no) : undefined} disabled={!home || focus.no === home.no}
                     title={home ? `내 자리 — ${home.name}` : '내 자리를 모릅니다'}>여기</button>;
-                const dir = HWIHA_DIRECTIONS.find((entry) => entry.key === cell)!;
+                const dir = COMMANDERY_DIRECTIONS.find((entry) => entry.key === cell)!;
                 const next = neighborInDirection(commanderies, focus, dir);
                 return <button key={dir.key} type="button" className="os-button os-button--ghost os-button--sm"
                     style={{ minWidth: 0, padding: 0 }} onClick={next ? () => onFocus(next.no) : undefined}

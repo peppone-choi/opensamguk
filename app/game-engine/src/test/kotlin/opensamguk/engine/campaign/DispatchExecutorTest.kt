@@ -10,13 +10,18 @@ import opensamguk.logic.renown.RenownEntry
 import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventPayloadCodec
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.world.*
 
 class DispatchExecutorTest {
     private fun person(id: Int, lord: Boolean = false) = TurnGeneral(id=id, name="G$id", nationId=1, cityId=10,
         userId=if(lord) null else "42", npcState=2, troopId=0, stats=GeneralStats(70,70,70), experience=500,
         dedication=600, officerLevel=0, gold=1000, rice=2000, crew=300, turnTime=Instant.EPOCH,
-        meta=mapOf("hwihaLord" to lord, "keep" to "preserved", PersonPolicyState.META_KEY to
+        meta=mapOf("lord" to lord, "keep" to "preserved", PersonPolicyState.META_KEY to
             PersonPolicyState(30,true,"synthetic-test","1",id).toMetaValue()))
     private fun world(): InMemoryTurnWorld {
         val hash="b".repeat(64)
@@ -87,15 +92,31 @@ class DispatchExecutorTest {
         ),records)
         assertTrue(world.peekLogs().all { it.scope=="general" && it.category=="action" })
         // The kind reaches the flush row (log_entry.event_kind), refs stay in meta.
-        val rows=DatabaseHooks.toFlushPayload(world,recorder,world.consumeDirtyState()).logEntries
+        val payload=DatabaseHooks.toFlushPayload(world,recorder,world.consumeDirtyState())
+        val rows=payload.logEntries
         assertEquals(records.map { it.second },rows.map { it.eventKind })
         assertEquals("dispatch-1",(rows.first().meta[RecordKind.REFS_META_KEY] as Map<*,*>)["dispatchId"])
         assertEquals(listOf(12),rows.map { it.month }.distinct()); assertEquals(listOf(1),rows.map { it.phase }.distinct())
+        assertEquals(listOf(EventKind.DISPATCH_RECEIVED, EventKind.DISPATCH_ISSUED, EventKind.DISPATCH_ACCEPTED),
+            payload.gameEvents.map { it.kind })
+        assertEquals(listOf(AudienceTarget.Court(1,setOf(2)), AudienceTarget.Court(1,setOf(1)),
+            AudienceTarget.Court(1,setOf(1,2))), payload.gameEvents.map { it.audience })
+        assertTrue(payload.gameEvents.all { it.refs[RefRole.REQUEST] == EventRef.Request("dispatch-1") })
     }
     @Test fun `an NPC lord keeps no dispatch record`() {
         val world=world(); val recorder=ChangeRecorder()
         issue(world,recorder); DispatchExecutor(world,recorder).reply(DispatchReplyRequest(2,"dispatch-1",false))
         assertEquals(setOf(2),world.peekLogs().map { it.generalId }.toSet())
+    }
+    @Test fun `valid punctuation-leading dispatch ID remains a stable typed request ref`() {
+        val world=world(); val recorder=ChangeRecorder()
+        val id="." + "request".repeat(18) + "x" // 128 characters, valid DispatchState ID.
+        assertEquals(128,id.length)
+        assertIs<DispatchExecution.Applied>(DispatchExecutor(world,recorder).issue(id,DispatchRequest(1,2,10)))
+        val event=world.consumeDirtyState().gameEvents.single()
+        assertEquals(EventKind.DISPATCH_RECEIVED,event.kind)
+        assertEquals(EventRef.Request(id),event.refs[RefRole.REQUEST])
+        assertEquals(event.refs,EventPayloadCodec.decodeRefs(EventPayloadCodec.encodeRefs(event.refs)))
     }
     @Test fun `deadline is twelve world phases across year and late refusal accepts without cost`() {
         val world=world(); val recorder=ChangeRecorder(); val pending=issue(world,recorder)
@@ -113,6 +134,8 @@ class DispatchExecutorTest {
         assertIs<DispatchExecution.Rejected>(executor.expireDue().single())
         assertEquals(DispatchStatus.CANCELLED,DispatchState.read(world.getGeneralById(2)!!.meta)!!.status)
         assertEquals(before,world.getGeneralById(2)!!.copy(meta=before.meta)); assertTrue(executor.expireDue().isEmpty())
+        val cancelled = world.consumeDirtyState().gameEvents.single { it.kind == EventKind.DISPATCH_CANCELLED }
+        assertEquals(AudienceTarget.Court(1,setOf(2)), cancelled.audience)
     }
     @Test fun `pending dispatch cannot be overwritten and missing refusal policy makes no partial writes`() {
         val world=world(); val recorder=ChangeRecorder(); issue(world,recorder)

@@ -261,13 +261,13 @@ class ChangeRecorderTest {
 
     @Test
     fun `removing the only changed meta key marks the general dirty`() {
-        val pre = general(meta = linkedMapOf("hwihaDirectTravel" to mapOf("version" to 1)))
+        val pre = general(meta = linkedMapOf("directTravel" to mapOf("version" to 1)))
         val post = pre.copy(meta = emptyMap())
         val recorder = ChangeRecorder()
 
         val patch = recorder.diffGeneral(pre, post)!!
 
-        assertEquals(mapOf("hwihaDirectTravel" to null), patch.meta)
+        assertEquals(mapOf("directTravel" to null), patch.meta)
         assertEquals(setOf(pre.id), recorder.dirtyGeneralIds())
     }
 

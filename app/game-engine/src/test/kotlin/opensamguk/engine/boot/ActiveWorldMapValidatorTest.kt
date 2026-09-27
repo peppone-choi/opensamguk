@@ -17,7 +17,7 @@ class ActiveWorldMapValidatorTest {
     @Test
     fun `resolved 832 runtime identity survives state copy without changing stored map config`() {
         val original = snapshot("han-world-v3", 1..832)
-        val state = original.state.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_832)
+        val state = original.state.copy(worldMapVariant = opensamguk.logic.world.WorldMapVariant.V3_832)
         ActiveWorldMapValidator.validate(original.copy(state = state.copy(currentMonth = 2)))
         assertEquals(original.state.config, state.config)
         assertEquals(original.state.meta, state.meta)

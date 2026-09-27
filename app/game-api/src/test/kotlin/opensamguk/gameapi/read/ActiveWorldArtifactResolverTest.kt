@@ -1,9 +1,9 @@
 package opensamguk.gameapi.read
 
 import java.nio.file.Path
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.infra.seed.HanWorldTopologyPin
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.seed.WorldTopologyPin
+import opensamguk.logic.world.WorldMapVariant
 import org.mockito.Mockito.*
 import kotlin.test.*
 
@@ -11,21 +11,21 @@ class ActiveWorldArtifactResolverTest {
     private val worlds = mock(WorldStateReadRepository::class.java)
     private val cities = mock(CityReadRepository::class.java)
     private val pins = mock(WorldArtifactIdentityReadRepository::class.java)
-    private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
+    private val artifacts = WorldArtifactsResolver(Path.of("../.."))
     private val resolver = ActiveWorldArtifactResolver(worlds, cities, pins, artifacts)
 
-    private fun roster(variant: HanWorldVariant) = artifacts.artifacts(variant).cityConst.all().keys.map {
+    private fun roster(variant: WorldMapVariant) = artifacts.artifacts(variant).cityConst.all().keys.map {
         CityReadEntity(id = it, worldId = 8, name = "changed-$it")
     }
 
     @Test fun `reset changes selection and live labels without a cached world identity`() {
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 8, config = mapOf("mapName" to "han-world-v3")))
         `when`(pins.readPins(8)).thenReturn(emptyList())
-        for (variant in HanWorldVariant.entries) {
+        for (variant in WorldMapVariant.entries) {
             `when`(cities.findAll()).thenReturn(roster(variant))
             val topology = artifacts.artifacts(variant).projection.topology
-            `when`(pins.readPins(8)).thenReturn(if (variant == HanWorldVariant.V3_1447_MAP4)
-                listOf(HanWorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
+            `when`(pins.readPins(8)).thenReturn(if (variant == WorldMapVariant.V3_1447_MAP4)
+                listOf(WorldTopologyPin("province_control", topology.topologyRevision, topology.contentHash)) else emptyList())
             val selected = assertNotNull(resolver.resolve())
             assertEquals(variant, selected.artifacts!!.variant)
             val expectedNames = opensamguk.infra.seed.MapJson.loadMap(
@@ -39,12 +39,12 @@ class ActiveWorldArtifactResolverTest {
     @Test fun `partial roster foreign city and wrong stored pin are rejected`() {
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 8, config = mapOf("mapName" to "han-world-v3")))
         `when`(pins.readPins(8)).thenReturn(emptyList())
-        `when`(cities.findAll()).thenReturn(roster(HanWorldVariant.V3_832).take(2))
+        `when`(cities.findAll()).thenReturn(roster(WorldMapVariant.V3_832).take(2))
         assertFailsWith<IllegalArgumentException> { resolver.resolve() }
-        `when`(cities.findAll()).thenReturn(roster(HanWorldVariant.V3_832).onEach { it.worldId = 9 })
+        `when`(cities.findAll()).thenReturn(roster(WorldMapVariant.V3_832).onEach { it.worldId = 9 })
         assertFailsWith<IllegalArgumentException> { resolver.resolve() }
-        `when`(cities.findAll()).thenReturn(roster(HanWorldVariant.V3_832))
-        `when`(pins.readPins(8)).thenReturn(listOf(HanWorldTopologyPin("province_control", "wrong", "wrong")))
+        `when`(cities.findAll()).thenReturn(roster(WorldMapVariant.V3_832))
+        `when`(pins.readPins(8)).thenReturn(listOf(WorldTopologyPin("province_control", "wrong", "wrong")))
         assertFailsWith<IllegalArgumentException> { resolver.resolve() }
     }
 

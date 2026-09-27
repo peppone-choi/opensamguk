@@ -9,7 +9,7 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.logic.input.*
 
 /**
- * 요격·회피 군단 방침(현행)을 월드 `hwihaMarchReactions` 의 두 목록으로 다시 쓴다. 출전 기록이 사라진 군단은 빠진다.
+ * 요격·회피 군단 방침(현행)을 월드 `marchReactions` 의 두 목록으로 다시 쓴다. 출전 기록이 사라진 군단은 빠진다.
  *
  * 저장: 월드 상태 meta 는 flush 가 정해진 열만 쓰므로 이 키는 game_env KV(`game_kv` table=game_env)로 영속하고
  * 메모리에서는 [InMemoryTurnWorld.setGameEnvValue] 로 반영한다 — 부팅 로더가 world_state.meta 위에 game_env 를 덮어 읽는다.

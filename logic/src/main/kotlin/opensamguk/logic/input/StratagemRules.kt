@@ -62,7 +62,7 @@ data class StratagemStock(val period: String, val used: Set<String>) {
     fun consume(inputId: String) = copy(used = used + inputId)
     fun toMetaValue(): Map<String, Any?> = mapOf("version" to 1, "period" to period, "used" to used.sorted())
     companion object {
-        const val META_KEY = "hwihaLegacyStratagemStock"
+        const val META_KEY = "stratagemStock"
         fun forPhase(meta: Map<String, Any?>, now: Phase): StratagemStock {
             val period = "${now.year}-${now.month}"
             val raw = meta[META_KEY] ?: return StratagemStock(period, emptySet())

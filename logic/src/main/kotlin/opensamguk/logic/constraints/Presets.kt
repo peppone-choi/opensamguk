@@ -9,7 +9,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.metaInt
 import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.foundAssaultCrewCost
-import opensamguk.logic.world.isHanMapName
+import opensamguk.logic.world.isHistoricalMapName
 import opensamguk.logic.world.isFoundableCityLevel
 
 private fun gen(ctx: ConstraintContext, view: StateView) = view.get(RequirementKey.General(ctx.actorId)) as? General
@@ -25,12 +25,12 @@ fun activeMapDestCity() = object : Constraint {
         val cityId = ctx.destCityId ?: return ConstraintResult.Deny("Invalid destination city.", name)
         val mapName = ctx.env["mapName"] as? String
             ?: return ConstraintResult.Deny("Invalid active map.", name)
-        if (mapName == "han-world-v3" && ctx.hanWorldVariant == null) {
+        if (mapName == "han-world-v3" && ctx.worldMapVariant == null) {
             return ConstraintResult.Deny("Invalid active map.", name)
         }
-        val variant = if (ctx.hanWorldVariant != null) {
+        val variant = if (ctx.worldMapVariant != null) {
             if (mapName != "han-world-v3") return ConstraintResult.Deny("Invalid active map.", name)
-            CityConstRegistry.hanWorld(ctx.hanWorldVariant)
+            CityConstRegistry.hanWorld(ctx.worldMapVariant)
         } else CityConstRegistry.find(mapName)
             ?: return ConstraintResult.Deny("Invalid active map.", name)
         return if (variant.byId(cityId) != null && view.has(RequirementKey.DestCity(cityId))) {
@@ -91,13 +91,13 @@ fun recruitableCity() = object : Constraint {
         // PHP OccupiedCity::REQ_VALUES = REQ_GENERAL|REQ_CITY (no nation) — che 는 그대로,
         // han 완화 분기만 nation()을 읽으니 그 대역에서만 얹는다.
         val base = listOf(RequirementKey.General(ctx.actorId), RequirementKey.City(ctx.cityId ?: 0))
-        return if (isHanMapName(ctx.env["mapName"])) base + RequirementKey.Nation(ctx.nationId ?: 0) else base
+        return if (isHistoricalMapName(ctx.env["mapName"])) base + RequirementKey.Nation(ctx.nationId ?: 0) else base
     }
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         val g = gen(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
         if (c.nationId == g.nationId) return ConstraintResult.Allow
-        if (isHanMapName(ctx.env["mapName"]) && g.nationId != 0 && c.nationId == 0) {
+        if (isHistoricalMapName(ctx.env["mapName"]) && g.nationId != 0 && c.nationId == 0) {
             val n = nation(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))
             if (n.level == 0) return ConstraintResult.Allow
         }
@@ -423,7 +423,7 @@ fun constructableCity() = object : Constraint {
         // PHP ConstructableCity::REQ_VALUES = REQ_CITY only (no general) — che 는 그대로,
         // han 전용 수비병 돌파 분기만 gen()을 읽으니 그 대역에서만 얹는다.
         val base = listOf(RequirementKey.City(ctx.cityId ?: 0))
-        return if (isHanMapName(ctx.env["mapName"])) base + RequirementKey.General(ctx.actorId) else base
+        return if (isHistoricalMapName(ctx.env["mapName"])) base + RequirementKey.General(ctx.actorId) else base
     }
     override fun test(ctx: ConstraintContext, view: StateView): ConstraintResult {
         val c = city(ctx, view) ?: return ConstraintResult.Unknown(requires(ctx))

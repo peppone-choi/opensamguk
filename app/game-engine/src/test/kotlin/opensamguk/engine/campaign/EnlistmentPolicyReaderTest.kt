@@ -15,7 +15,7 @@ class EnlistmentPolicyReaderTest {
         id = id, name = "G$id", nationId = if (id == 1) 0 else 1, cityId = 1, troopId = 0,
         stats = GeneralStats(50, 50, 50, 50, 50), experience = 0, dedication = 0,
         officerLevel = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to lord, PersonPolicyState.META_KEY to
+        meta = mapOf("lord" to lord, PersonPolicyState.META_KEY to
             PersonPolicyState(capacity, true, "fixture", "pin", id).toMetaValue()),
     )
     private fun card(id: Int, master: Int, general: Int?) = Retainer(
@@ -76,7 +76,7 @@ class EnlistmentPolicyReaderTest {
     @Test fun `malformed lord status anywhere rejects before executor can read it`() {
         for (corruptId in listOf(1, 2, 10)) {
             val generals = listOf(general(1), general(2).copy(nationId = 0), general(10, true)).map {
-                if (it.id == corruptId) it.copy(meta = it.meta + ("hwihaLord" to "true")) else it
+                if (it.id == corruptId) it.copy(meta = it.meta + ("lord" to "true")) else it
             }
             val result = EnlistmentPolicyReader(world(generals)).current(request)
             assertEquals(EnlistmentPolicyUnavailable.INVALID_LORD_STATUS,

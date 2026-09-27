@@ -162,10 +162,10 @@ data class Bugok(
 )
 
 /**
- * HWIHA 縣城 포위(V61 `hwiha_siege`). 縣治 城 id 가 키다. 규칙·판정은 `opensamguk.logic.war.SiegeRules`,
+ * HWIHA 縣城 포위(V61 `siege`). 縣治 城 id 가 키다. 규칙·판정은 `opensamguk.logic.war.SiegeRules`,
  * 저장은 world dirty 집합 → JdbcFlushExecutor. [timeline] 은 순마다 한 줄씩 쌓는 조회용 기록이다.
  */
-data class HwihaSiege(
+data class Siege(
     val countyId: Int,
     val status: String,
     val besiegerGeneralId: Int,
@@ -297,14 +297,24 @@ data class TurnWorldState(
     /** OPENSAM-131: active writer fence epoch observed at load. */
     val writerEpoch: Long = 0L,
     /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
-    val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
+    val worldMapVariant: opensamguk.logic.world.WorldMapVariant? = null,
 ) {
-    /** 월드 규칙 프로필(입력 registry 계약 §2). 시드 전 월드는 config 에 없어 SAMMO, 모르는 글자는 부팅 실패. */
+    /** Temporary adapter for input handlers until the retired profile type is removed. */
     val ruleProfile: opensamguk.logic.input.RuleProfile
         get() {
-            val value = config["ruleProfile"]
-            require(value == null || value is String) { "ruleProfile in world config must be a string" }
-            return opensamguk.logic.input.RuleProfile.fromWorldConfig(value as String?)
+            // Product worlds are constructed only by WorldSnapshotLoader, which validates the
+            // full config/meta tree. Directly constructed in-memory test worlds still use the
+            // retired profile field; keep this per-general projection constant-time.
+            val marker = config[opensamguk.logic.world.WorldFormat.CONFIG_KEY]
+            if (marker != null) {
+                require(marker == opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name) {
+                    "unsupported worldFormat in runtime world config"
+                }
+                return opensamguk.logic.input.RuleProfile.HWIHA
+            }
+            val legacy = config["ruleProfile"]
+            require(legacy == null || legacy is String) { "invalid legacy ruleProfile" }
+            return opensamguk.logic.input.RuleProfile.fromWorldConfig(legacy as String?)
         }
 }
 

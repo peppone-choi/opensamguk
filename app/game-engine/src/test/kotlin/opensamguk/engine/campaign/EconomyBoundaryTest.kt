@@ -11,6 +11,13 @@ import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.retainer.RetainerRules
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
+import opensamguk.logic.record.RewardReasonCode
 import opensamguk.logic.war.CampaignBalance
 
 /** 순 경계 보급 재계산, 녹봉(창고망), 기존 가신 유지비 끔, 상사 — in-memory, real map. */
@@ -194,11 +201,61 @@ class EconomyBoundaryTest {
         court.onIssuerTurn(1)
         assertEquals(1500L, money(world, capital)); assertEquals(55, world.getRetainerById(4)!!.loyalty)
         assertTrue(court.takeExecutions().single().result.ok)
+        val receipt = world.consumeDirtyState().gameEvents.single { it.kind == EventKind.REWARD_RECEIVED }
+        assertEquals(AudienceTarget.Self(2), receipt.audience)
+        assertEquals(mapOf(RefRole.ISSUER to EventRef.General(1), RefRole.TARGET to EventRef.General(2)), receipt.refs)
+        assertEquals(mapOf(FactRole.MONEY to EventFact.Amount(500),
+            FactRole.REASON to EventFact.RewardReason(RewardReasonCode.ROUTINE_SERVICE)), receipt.facts)
+        assertNull(RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 500), "reward-1"))
+        assertEquals(1500L, money(world, capital), "repeating the same request does not pay again")
+        assertTrue(world.consumeDirtyState().gameEvents.none { it.kind == EventKind.REWARD_RECEIVED })
         fun bondEvents() = RenownEvents.entries(world.getGeneralById(2)!!.meta).filter { it.kind == RenownEventKind.BOND_EVENT }
         assertEquals(listOf(RenownEventSource.REWARD), bondEvents().map { it.source })
         assertEquals(RewardExecutor.Failure.INSUFFICIENT_STOCK, RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 5000)))
         assertNull(RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 100)))
         assertEquals(1, bondEvents().size, "one bond event a month")
         assertEquals(RewardExecutor.Failure.CARD_UNAVAILABLE, RewardExecutor(world, recorder).reward(RewardRequest(2, 4, 100)))
+    }
+
+    @Test fun `NPC lord rotates direct cards with one affordable reward per turn and month`() {
+        val people = listOf(1,2,3).map { id ->
+            fixture.person(id, 1, capital, lord = id == 1) to route.start
+        }
+        val first = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 50)
+        val second = Retainer(5, 1, RetainerRules.ORIGIN_EXISTING, 3, "G3", RetainerRules.RELATION_LIEUTENANT, loyalty = 60)
+        val world = realm(capitalMoney = 2000, card = first, people = people)
+        world.createRetainer(second)
+        val recorder = ChangeRecorder()
+        val court = CourtHandler(world, recorder)
+        court.onIssuerTurn(1)
+        assertEquals(55, world.getRetainerById(4)!!.loyalty)
+        assertEquals(60, world.getRetainerById(5)!!.loyalty)
+        assertEquals(1500L, money(world, capital))
+        court.onIssuerTurn(1)
+        assertEquals(1500L, money(world, capital), "retrying one issuer turn cannot pay a second card")
+        world.setCurrentDate(200, 1, 2)
+        court.onIssuerTurn(1)
+        assertEquals(65, world.getRetainerById(5)!!.loyalty)
+        assertEquals(1000L, money(world, capital))
+        world.setCurrentDate(200, 2, 1)
+        court.onIssuerTurn(1)
+        assertEquals(60, world.getRetainerById(4)!!.loyalty)
+        assertEquals(500L, money(world, capital))
+        val receipts = world.consumeDirtyState().gameEvents.filter { it.kind == EventKind.REWARD_RECEIVED }
+        assertEquals(listOf(2,3,2), receipts.map { (it.audience as AudienceTarget.Self).generalId })
+        assertEquals(3, receipts.map { it.eventKey }.toSet().size)
+        assertEquals(listOf(RewardReasonCode.LOYALTY_SUPPORT, RewardReasonCode.LOYALTY_SUPPORT,
+            RewardReasonCode.LOYALTY_SUPPORT), receipts.map { (it.facts.getValue(FactRole.REASON) as EventFact.RewardReason).code })
+    }
+
+    @Test fun `NPC reward skips an unaffordable warehouse without changing loyalty`() {
+        val card = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 50)
+        val people = listOf(fixture.person(1, 1, capital) to route.start,
+            fixture.person(2, 1, capital, lord = false) to route.start)
+        val world = realm(capitalMoney = 50, card = card, people = people)
+        CourtHandler(world, ChangeRecorder()).onIssuerTurn(1)
+        assertEquals(50L, money(world, capital))
+        assertEquals(50, world.getRetainerById(4)!!.loyalty)
+        assertTrue(world.consumeDirtyState().gameEvents.none { it.kind == EventKind.REWARD_RECEIVED })
     }
 }

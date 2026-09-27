@@ -6,8 +6,8 @@ import opensamguk.logic.input.*
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
-import opensamguk.logic.world.HanCommandery
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.Commandery
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 import java.security.MessageDigest
 
@@ -39,13 +39,13 @@ enum class ScoutFailure {
 }
 
 sealed interface ScoutAssessment {
-    data class Eligible(val origin: HanCommandery, val target: HanCommandery) : ScoutAssessment
+    data class Eligible(val origin: Commandery, val target: Commandery) : ScoutAssessment
     data class Rejected(val reason: ScoutFailure) : ScoutAssessment
 }
 
 /** Shared by the API precheck, the reservation admission and the personal-turn re-check (§5 contract). */
 object ScoutRules {
-    fun assess(profile: RuleProfile, actorNode: StrategicNodeRef?, commanderyId: String, index: HanCommanderyIndex): ScoutAssessment {
+    fun assess(profile: RuleProfile, actorNode: StrategicNodeRef?, commanderyId: String, index: CommanderyIndex): ScoutAssessment {
         if (profile != RuleProfile.HWIHA) return ScoutAssessment.Rejected(ScoutFailure.WRONG_RULE_PROFILE)
         val origin = index.commanderyOf(actorNode) ?: return ScoutAssessment.Rejected(ScoutFailure.POSITION_UNAVAILABLE)
         val target = index.byId(commanderyId) ?: return ScoutAssessment.Rejected(ScoutFailure.UNKNOWN_COMMANDERY)
@@ -128,7 +128,7 @@ data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutRep
         "version" to 1, "tilesContentHash" to tilesContentHash, "reports" to reports.map { it.toMetaValue() })
 
     companion object {
-        const val META_KEY = "hwihaScoutReports"
+        const val META_KEY = "scoutReports"
 
         /** @throws IllegalArgumentException on a malformed notebook (the caller decides how to fail closed). */
         fun read(meta: Map<String, Any?>): ScoutReports? {
@@ -159,7 +159,7 @@ data class ScoutReports(val tilesContentHash: String, val reports: List<ScoutRep
             })
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA scout reports")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid scout reports")
     }
 }
 
@@ -172,15 +172,15 @@ object ScoutCapture {
      * never shown to anyone else.
      */
     fun corpsKey(orderId: String): String = MessageDigest.getInstance("SHA-256")
-        .digest("hwiha-corps:$orderId".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }.take(16)
+        .digest("corps:$orderId".toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }.take(16)
 
     /**
      * Snapshot of [target] now. Corps positions come from the commander's authoritative position; corps whose
      * relationships no longer hold (see [DeploymentRules.assessActive]) are not reported as seen.
      */
     fun capture(
-        target: HanCommandery,
-        index: HanCommanderyIndex,
+        target: Commandery,
+        index: CommanderyIndex,
         cities: List<ScoutCityFact>,
         projection: DeploymentProjection,
         rules: VisionRules.Rules,

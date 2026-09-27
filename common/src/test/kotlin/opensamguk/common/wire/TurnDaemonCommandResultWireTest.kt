@@ -52,8 +52,6 @@ class TurnDaemonCommandResultWireTest {
         assertIs<TroopJoinFail>(byKey["troopJoin:false"])
         assertIs<TroopExitOk>(byKey["troopExit:true"])
         assertIs<TroopExitFail>(byKey["troopExit:false"])
-        assertIs<TournamentMatchResultOk>(byKey["tournamentMatchResult:true"])
-        assertIs<TournamentMatchResultFail>(byKey["tournamentMatchResult:false"])
         // boolean-ok group collapses to GeneralBoolResult regardless of ok
         assertIs<GeneralBoolResult>(byKey["dieOnPrestart:true"])
         assertIs<GeneralBoolResult>(byKey["appoint:false"])

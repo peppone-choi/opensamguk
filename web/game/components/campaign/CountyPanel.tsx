@@ -2,16 +2,16 @@
 
 import { Chip, Gauge, Panel, SectionHeader } from '@opensamguk/ui';
 import { api } from '@/lib/api';
-import { useHwihaRead } from '@/lib/hwiha-reads';
+import { useCampaignRead } from '@/lib/campaign-reads';
 import type { FrontCityInfo } from '@/lib/types';
 import { Empty } from './GameStates';
 
 /**
  * 내가 선 현 — `front-info.city` 의 실제 값과 특산 조회. 내정·징세·징병은 현 단위다.
  */
-export default function CountyPanel({ city, isHwihaWorld }: { city: FrontCityInfo | null; isHwihaWorld: boolean }) {
-    const county = useHwihaRead(
-        (generalId, signal) => (city ? api.hwihaCounty(generalId, city.id, signal) : Promise.resolve(null)),
+export default function CountyPanel({ city, isCampaignWorld }: { city: FrontCityInfo | null; isCampaignWorld: boolean }) {
+    const county = useCampaignRead(
+        (generalId, signal) => (city ? api.campaignCounty(generalId, city.id, signal) : Promise.resolve(null)),
         [city?.id],
     );
     if (!city) {
@@ -64,7 +64,7 @@ export default function CountyPanel({ city, isHwihaWorld }: { city: FrontCityInf
                 <div>
                     <div style={{ fontSize: 12, color: 'var(--muted)' }}>특산</div>
                     <div style={{ paddingTop: 4, display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                        {!isHwihaWorld ? (
+                        {!isCampaignWorld ? (
                             <span style={{ fontSize: 12, color: 'var(--muted)' }}>휘하 규칙 서버에서 보입니다</span>
                         ) : county.loading ? (
                             <span style={{ fontSize: 12, color: 'var(--muted)' }}>불러오는 중</span>

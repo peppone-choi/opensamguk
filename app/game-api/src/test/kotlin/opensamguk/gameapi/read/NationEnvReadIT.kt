@@ -35,7 +35,7 @@ class NationEnvReadIT {
     @Test
     fun `nation_env jsonb round-trips through the read repo and decodes`() {
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'test', 1, 1, 60)",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config) VALUES (1, 'test', 1, 1, 60, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN'))",
         )
         // 데몬 nationEnvKvWrite가 쓰는 형태 그대로: namespace = nationId, key, value = jsonb.
         jdbc.update(

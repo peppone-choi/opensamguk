@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server';
-import { redirectLegacyHwiha } from '@/lib/hwihaLegacyRoute';
+import { redirectLegacyCampaign } from '@/lib/legacyCampaignRoute';
 
 export function GET(req: NextRequest) {
-  return redirectLegacyHwiha(req, []);
+  return redirectLegacyCampaign(req, []);
 }

@@ -18,7 +18,7 @@ class InstantActionControllerProfileTest {
         val resolver = mock(GeneralResolver::class.java)
         val worlds = mock(WorldStateReadRepository::class.java)
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         val response = InstantActionController(reserve, resolver, worlds).instantAction(7L, "unknownLegacyCode", 10)
 
         assertEquals(HttpStatus.OK, response.statusCode)

@@ -5,7 +5,7 @@ import opensamguk.infra.persistence.MetaJson
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.stereotype.Repository
 
-/** V61 `hwiha_siege` 한 행(읽기 전용). 쓰기는 엔진 flush 뿐이다. */
+/** V61 `siege` 한 행(읽기 전용). 쓰기는 엔진 flush 뿐이다. */
 data class SiegeReadRow(
     val countyId: Int,
     val status: String,
@@ -30,7 +30,7 @@ class SiegeReadRepository(private val jdbc: NamedParameterJdbcTemplate, processW
     private val worldId = processWorld.worldId.value
 
     fun activeCountyIds(): Set<Int> = jdbc.queryForList(
-        "SELECT county_id FROM hwiha_siege WHERE world_id = :world AND status = 'ACTIVE'",
+        "SELECT county_id FROM siege WHERE world_id = :world AND status = 'ACTIVE'",
         mapOf("world" to worldId), Int::class.java,
     ).toSet()
 
@@ -39,7 +39,7 @@ class SiegeReadRepository(private val jdbc: NamedParameterJdbcTemplate, processW
         SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id,
                defender_nation_id, started_year, started_month, started_phase, turns, morale, garrison, end_reason,
                timeline::text AS timeline
-          FROM hwiha_siege
+          FROM siege
          WHERE world_id = :world
            AND (besieger_general_id = :general OR (:nation > 0 AND (besieger_nation_id = :nation OR defender_nation_id = :nation)))
          ORDER BY (status = 'ACTIVE') DESC, county_id

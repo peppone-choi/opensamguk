@@ -194,13 +194,13 @@ def _scenario_rows(rows: list[dict[str, str]]) -> list[dict]:
             status = row.get("身分")
             location = row.get("所在")
             faction = row.get("勢力")
-            office = row.get("官職")
+            office = row.get("官職") or row.get("爵位/官職")
         elif len(row) == 1:
             parts = next(iter(row.values())).split("|")
             if len(parts) < 5:
                 continue
             label, status, location, faction = parts[0], parts[2], parts[3], parts[4]
-            office = parts[6] if len(parts) > 6 else None
+            office = parts[5] if len(parts) > 5 else None
         else:
             continue
         year_month = _year_month(label)
@@ -226,6 +226,7 @@ def parse_officer_page(html: str, *, name_kanji: str, name_reading: str, page_ke
         "name_kanji": name_kanji,
         "name_reading": _normal_text(name_reading),
         "page_key": page_key,
+        "appearanceYear": _integer(values.get("登場") or values.get("登場年")),
         **fingerprint,
         "scenarios": _scenario_rows(rows),
     }

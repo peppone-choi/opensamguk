@@ -110,5 +110,5 @@ class FieldHandler(
         return TurnOutcome.Applied(inputId, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaFieldLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "fieldLastTurn" }
 }

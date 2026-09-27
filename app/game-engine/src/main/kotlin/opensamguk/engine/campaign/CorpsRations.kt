@@ -10,7 +10,7 @@ import opensamguk.logic.world.*
 import org.slf4j.LoggerFactory
 
 /**
- * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, 확정 `hwiha-s3-provisional-v1.json` rations).
+ * 군단 군량 — 출병 적재와 보급선(2026-09-23 사용자 결정, 확정 `campaign-balance-v1.json` rations).
  *
  * - **출병 적재**: 출병하는 순간 출발지 창고망의 곡으로 부곡 휴대 군량을 (병력 × [CampaignBalance.DEPLOY_LOAD_MONTHS] 개월)까지 채운다.
  *   출발지가 자국 縣이 아니면(적지·무주지) 싣지 못한다. 창고가 모자라면 있는 만큼만 싣는다.
@@ -50,7 +50,7 @@ class CorpsRations(
             val add = minOf(want, network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION)
             if (add <= 0) break
             if (!network.payGrain(corps.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
-                log.warn("hwiha_corps_load_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
+                log.warn("campaign_corps_load_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
                 break
             }
             world.updateBugok(unit.copy(provisions = (unit.provisions + add).toInt()))
@@ -59,7 +59,7 @@ class CorpsRations(
         return loaded
     }
 
-    /** 월 경계 보급선 출발. @return 보낸 수송 건수(부곡 단위), HWIHA 가 아니면 null. */
+    /** 월 경계 보급선 출발. @return 보낸 수송 건수(부곡 단위), 캠페인 세계가 아니면 null. */
     fun dispatch(year: Int, month: Int): Int? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
         val stamp = "%04d-%02d".format(year, month)
@@ -92,7 +92,7 @@ class CorpsRations(
                 val counties = network.countiesFor(corps.nationId, source.second)
                 val delay = maxOf(1L, (source.first + LandMarchMetricSnapshot.NORMAL_BUDGET_MM - 1) / LandMarchMetricSnapshot.NORMAL_BUDGET_MM)
                 if (delay > Int.MAX_VALUE) {
-                    log.warn("hwiha_convoy_skipped commander={} reason=ROUTE_TOO_LONG", corps.commanderGeneralId)
+                    log.warn("campaign_convoy_skipped commander={} reason=ROUTE_TOO_LONG", corps.commanderGeneralId)
                     continue
                 }
                 val arrive = now().plus(delay.toInt())
@@ -105,7 +105,7 @@ class CorpsRations(
                     val add = minOf(want, network.grainIn(counties) / CampaignBalance.GRAIN_PER_PROVISION)
                     if (add <= 0) break
                     if (!network.payGrain(corps.nationId, counties, add * CampaignBalance.GRAIN_PER_PROVISION)) {
-                        log.warn("hwiha_convoy_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
+                        log.warn("campaign_convoy_skipped commander={} unit={} reason=GRAIN_DEBIT_REJECTED", corps.commanderGeneralId, id)
                         break
                     }
                     inFlight += Convoy(id, corps.nationId, add, arrive)
@@ -131,7 +131,7 @@ class CorpsRations(
             val unit = world.getBugokById(convoy.bugokId) ?: continue
             val replenished = unit.provisions.toLong() + convoy.provisions
             if (replenished > Int.MAX_VALUE)
-                log.warn("hwiha_convoy_delivery_capped unit={} excess={}", convoy.bugokId, replenished - Int.MAX_VALUE)
+                log.warn("campaign_convoy_delivery_capped unit={} excess={}", convoy.bugokId, replenished - Int.MAX_VALUE)
             world.updateBugok(unit.copy(provisions = replenished.coerceAtMost(Int.MAX_VALUE.toLong()).toInt()))
         }
         if (arrived.isNotEmpty()) save(pending)
@@ -154,8 +154,8 @@ class CorpsRations(
 
     companion object {
         private val log = LoggerFactory.getLogger(CorpsRations::class.java)
-        const val STAMP_KEY = "hwihaSupplyConvoyMonth"
-        const val CONVOYS_KEY = "hwihaSupplyConvoys"
+        const val STAMP_KEY = "supplyConvoyMonth"
+        const val CONVOYS_KEY = "supplyConvoys"
 
         /** 장수가 실제로 선 省의 城(위치 정본). 기준 城이 그 省이면 그것을, 아니면 그 省의 城을, 城 없는 省이면 null. */
         fun cityAt(world: InMemoryTurnWorld, generalId: Int): Int? {

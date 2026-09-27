@@ -27,7 +27,7 @@ class MapAdministrativeOwnershipTest {
 
     @Test
     fun `selected 1133 custom scenario has exact live authority without current files`() {
-        val artifacts=opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../..")).artifacts(opensamguk.logic.world.HanWorldVariant.V3_1133)
+        val artifacts=opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../..")).artifacts(opensamguk.logic.world.WorldMapVariant.V3_1133)
         val map=opensamguk.infra.seed.MapJson.loadMap(artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
         val cities=map.cities.map { LiveCityOwnership(it.id,requireNotNull(it.provinceId),if(it.id%2==0) 7 else 0) }
         val projection=MapAdministrativeOwnership(ObjectMapper(),"/missing/tiles","/missing/owners","/missing/allowlist")
@@ -37,9 +37,9 @@ class MapAdministrativeOwnershipTest {
 
     @Test
     fun `historical ownership survives absent runtime files and applies a live conquest`() {
-        val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val resolver = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
         val projection = MapAdministrativeOwnership(ObjectMapper(), "/missing/tiles", "/missing/owners", "/missing/allowlist")
-        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+        for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
             val artifacts = resolver.artifacts(variant)
             val map = opensamguk.infra.seed.MapJson.loadMap(artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8))
             val city = map.cities.first { it.provinceId != null }
@@ -58,8 +58,8 @@ class MapAdministrativeOwnershipTest {
         // 하나도 안 칠해졌다. 848 판에서 그 城은 provinceId 가 없어 live 점령 투영(城 → 省 → 관할)에서
         // 빠졌고, 땅은 시나리오 초기 주인 색으로 남았다. 1098 판은 대리 治所 省 규칙으로 704·833–835 를
         // 직할 省에 앉힌다 — 신생 국가가 그 城 하나만 가져도 제 관할 省을 칠해야 한다.
-        val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
-        val artifacts = resolver.artifacts(opensamguk.logic.world.HanWorldVariant.V3_1098)
+        val resolver = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
+        val artifacts = resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1098)
         val map = opensamguk.infra.seed.MapJson.loadMap(
             artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8),
         )
@@ -81,9 +81,9 @@ class MapAdministrativeOwnershipTest {
         // 2026-09-17 사용자 결정 「절대 소속 없는 프로빈스가 있어선 안돼」. 한 세력이 모든 城을 가지면 모든 省이
         // 그 세력 색이어야 한다 — 城 없는 관할의 省은 초기 배정 색에 영원히 묶인다. 1133 판은 城 없는 관할을
         // 같은 실체 城 관할에 접고(fold_cityless_jurisdictions) 郡國 밖 취락에 城을 세웠다(w5).
-        val resolver = opensamguk.infra.seed.HanWorldArtifactsResolver(Path.of("../.."))
+        val resolver = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
         val projection = MapAdministrativeOwnership(ObjectMapper(), "/missing/tiles", "/missing/owners", "/missing/allowlist")
-        fun unpainted(variant: opensamguk.logic.world.HanWorldVariant): List<String> {
+        fun unpainted(variant: opensamguk.logic.world.WorldMapVariant): List<String> {
             val artifacts = resolver.artifacts(variant)
             val map = opensamguk.infra.seed.MapJson.loadMap(
                 artifacts.artifactBytes("infra/src/main/resources/map/han-world-v3.json").toString(Charsets.UTF_8),
@@ -92,9 +92,9 @@ class MapAdministrativeOwnershipTest {
             return projection.project("scenario_1020", everything, artifacts)
                 .provinceOccupancy.filter { it.nationId != 7 }.map { it.provinceRecordId }
         }
-        assertEquals(emptyList<String>(), unpainted(opensamguk.logic.world.HanWorldVariant.V3_1133))
+        assertEquals(emptyList<String>(), unpainted(opensamguk.logic.world.WorldMapVariant.V3_1133))
         // 앞 판은 城 없는 관할 46곳의 省 174 가 남는다 — 이 검사가 살아 있음을 같은 축으로 보인다.
-        assertEquals(174, unpainted(opensamguk.logic.world.HanWorldVariant.V3_1098).size)
+        assertEquals(174, unpainted(opensamguk.logic.world.WorldMapVariant.V3_1098).size)
     }
 
     @Test

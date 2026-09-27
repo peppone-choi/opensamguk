@@ -25,7 +25,7 @@ data class CountyWarehouse(val countyId: Int, val revision: Long, val stock: Res
     fun toMetaValue(): Map<String, Any> = linkedMapOf(
         "version" to 1, "countyId" to countyId, "revision" to revision, "stock" to stock.toMetaValue())
     companion object {
-        const val META_KEY = "hwihaCountyWarehouse"
+        const val META_KEY = "countyWarehouse"
         fun read(meta: Map<String, Any?>, countyId: Int): CountyWarehouse? {
             require(countyId > 0)
             if (META_KEY !in meta) return null

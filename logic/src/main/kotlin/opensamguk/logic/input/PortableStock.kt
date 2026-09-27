@@ -4,7 +4,7 @@ import opensamguk.logic.economy.Resources
 
 /** Five-resource ledger. Existing gold/rice columns remain current when older systems change them. */
 object PortableStock {
-    const val META_KEY = "hwihaPortableStock"
+    const val META_KEY = "portableStock"
 
     fun read(meta: Map<String, Any?>, money: Int, grain: Int): Resources {
         require(money >= 0 && grain >= 0)

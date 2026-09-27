@@ -8,7 +8,7 @@ import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/
 import { getMaxRelativeTechLevel } from '@/lib/utilGame';
 import { useMapLayers, type MapLayerScope } from '@/lib/use-map-layers';
 import { buildVisibleCorps } from '@/lib/map-corps';
-import { commanderyOfCity } from '@/lib/hwiha-fog';
+import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CommanderyNavigator } from '@/components/campaign/CommanderyNavigator';
 
 const NEUTRAL_NAME = '공백지';
@@ -94,7 +94,7 @@ export function mapTitleTooltip(
 
 export interface MapViewerProps {
     mapData?: MapPreviewResponse | null;
-    hwihaLayers?: MapLayerScope;
+    mapLayers?: MapLayerScope;
     disallowClick?: boolean;
     currentCityId?: number | null;
     generalId?: number | null;
@@ -148,7 +148,7 @@ function mergeLive(preview: MapPreviewResponse, world: WorldMapResponse) {
 
 export default function MapViewer({
     mapData,
-    hwihaLayers,
+    mapLayers,
     disallowClick,
     currentCityId,
     generalId,
@@ -189,7 +189,7 @@ export default function MapViewer({
         if (!signal.aborted) setLiveMyCity(merged.myCity);
         return merged.data;
     }, [live, showMe]);
-    const layerScope = hwihaLayers ?? (mapData != null ? 'none' : 'full');
+    const layerScope = mapLayers ?? (mapData != null ? 'none' : 'full');
     const layers = useMapLayers(layerScope, refreshKey, generalId);
     const map = useWorldMap({ loadPreview, mapData, refreshKey, cacheScope: readServerCookie(),
         works: layers.works, sieges: layers.sieges });

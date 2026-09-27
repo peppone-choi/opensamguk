@@ -1,0 +1,6 @@
+{
+  "error": {
+    "code": "AUTH_REQUIRED",
+    "message": "로그인이 필요합니다."
+  }
+}

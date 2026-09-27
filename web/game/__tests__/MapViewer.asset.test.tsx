@@ -1,16 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import type { ComponentProps } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { WorldMapCanvas as HanMapCanvasType } from '@opensamguk/ui';
+import type { WorldMapCanvas as WorldMapCanvasType } from '@opensamguk/ui';
 import type { MapPreviewResponse } from '@/lib/types';
 
 const shared = vi.hoisted(() => ({
-  props: null as ComponentProps<typeof HanMapCanvasType> | null,
+  props: null as ComponentProps<typeof WorldMapCanvasType> | null,
   fetch: vi.fn(),
 }));
 vi.mock('@opensamguk/ui', async () => {
   const actual = await vi.importActual<typeof import('@opensamguk/ui')>('@opensamguk/ui');
-  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof HanMapCanvasType>) => {
+  return { ...actual, WorldMapCanvas: (props: ComponentProps<typeof WorldMapCanvasType>) => {
     shared.props = props;
     return <div data-testid="shared-map" />;
   } };

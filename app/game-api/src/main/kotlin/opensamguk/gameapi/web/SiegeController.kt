@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController
 /** 공성 조회(읽기 전용). 인증 규칙은 [CampController] 와 같다: 401(principal 없음) · 403(남의 장수) · 200 + status. */
 @RestController
 class SiegeController(private val reader: SiegeReader) {
-    @GetMapping("/api/hwiha/sieges")
+    @GetMapping("/api/sieges")
     fun sieges(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()

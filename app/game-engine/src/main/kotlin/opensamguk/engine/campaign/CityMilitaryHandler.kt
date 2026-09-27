@@ -95,5 +95,5 @@ class CityMilitaryHandler(
         return TurnOutcome.Applied(inputId, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaCityMilitaryLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "cityMilitaryLastTurn" }
 }

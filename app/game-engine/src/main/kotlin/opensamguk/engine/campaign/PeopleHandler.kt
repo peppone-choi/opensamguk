@@ -9,6 +9,11 @@ import opensamguk.logic.domestic.PlacementState
 import opensamguk.logic.input.*
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.retainer.RetainerRules
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 
 /** Local talent search and consent or resistance adjudication use one personal-turn RNG. */
 class PeopleHandler(
@@ -55,6 +60,7 @@ class PeopleHandler(
         val effects = mutableListOf<String>()
         var recordKind = RecordKind.PEOPLE_SEARCHED
         var recordText = "현재 지역에서 인재를 탐색했습니다."
+        var joinedTargetId: Int? = null
         if (inputId == PeopleInput.SEARCH) {
             val remaining = ready.candidateIds.toMutableList()
             repeat(minOf(design.searchDiscoverCount, remaining.size)) {
@@ -113,6 +119,7 @@ class PeopleHandler(
                 effects += "retainerId:${card.id}"
                 effects += "joinedGeneralId:${target.id}"
                 recordKind = RecordKind.PEOPLE_JOINED
+                joinedTargetId = target.id
                 recordText = "${JosaUtil.put(target.name, "이")} 동의하여 휘하에 들어왔습니다."
                 Records.general(world, target.id, RecordKind.RETAINER_JOINED,
                     "${actor.name}의 휘하에 들어갔습니다.", mapOf("masterGeneralId" to actorId, "retainerId" to card.id))
@@ -136,8 +143,30 @@ class PeopleHandler(
         RenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_PEOPLE_ACTION)
         Records.general(world, actorId, recordKind, recordText,
             mapOf("inputId" to inputId, "targetGeneralId" to request.targetGeneralId, "requestId" to requestId))
+        val eventKind = when (recordKind) {
+            RecordKind.PEOPLE_JOINED -> EventKind.PEOPLE_JOINED
+            RecordKind.PEOPLE_RESISTED -> EventKind.PEOPLE_RESISTED
+            else -> EventKind.PEOPLE_SEARCHED
+        }
+        val coordinates = arrayOf(world.worldId.value.toString(), now.currentYear.toString(),
+            now.currentMonth.toString(), now.currentPhase.toString(), actorId.toString(), inputId,
+            (request.targetGeneralId ?: 0).toString())
+        world.recordEvent(
+            kind = eventKind,
+            audience = AudienceTarget.Self(actorId),
+            eventKey = EventKey.derive(eventKind.code, *coordinates),
+            refs = if (joinedTargetId == null) mapOf(RefRole.ACTOR to EventRef.General(actorId))
+                else mapOf(RefRole.ACTOR to EventRef.General(actorId),
+                    RefRole.PERSON to EventRef.General(joinedTargetId)),
+        )
+        if (joinedTargetId != null) world.recordEvent(
+            kind = EventKind.RETAINER_JOINED,
+            audience = AudienceTarget.Self(joinedTargetId),
+            eventKey = EventKey.derive(EventKind.RETAINER_JOINED.code, *coordinates),
+            refs = mapOf(RefRole.PERSON to EventRef.General(actorId)),
+        )
         return TurnOutcome.Applied(inputId, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaPeopleLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "peopleLastTurn" }
 }

@@ -17,7 +17,7 @@ data class MarchState(
     ) + checkpoint.toMetaValue()
 
     companion object {
-        const val META_KEY = "hwihaMarch"
+        const val META_KEY = "march"
         private val fields = setOf("version", "assignment", "path", "edgeIndex", "paidMm", "lastAdvancedAt", "stop")
         fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): MarchState? {
             if (META_KEY !in meta) return null

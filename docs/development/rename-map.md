@@ -13,6 +13,31 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
+| `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
+| `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
+| `web/game/lib/hwiha-scout.ts` | `web/game/lib/campaign-scout.ts` | 저장·통신 draft | 정찰 예약 함수 개명 |
+| `web/game/lib/hwiha-session.tsx` | `web/game/lib/campaign-session.tsx` | 저장·통신 draft | 세션 훅·판정 필드 개명 |
+| `web/game/lib/hwiha-map.ts` | `web/game/lib/campaign-map.ts` | 저장·통신 draft | 지도 훅·상수 개명; `han` 지도 번들 ID는 유지 |
+| `HanMapCanvasType` 테스트 별칭 | `WorldMapCanvasType` | 저장·통신 draft | 범용 캔버스 이름과 일치 |
+| `HanWorldVariant`·`hanWorldVariant` | `WorldMapVariant`·`worldMapVariant` | 중립 지도 개명 | 코드 타입·필드만 변경; 저장 번들 ID `han-world-v3*`와 핀 값은 그대로 둔다 |
+| `HanWorldArtifactsResolver` | `WorldArtifactsResolver` | 중립 지도 개명 | 지도 아카이브 선택기 타입·파일명 변경 |
+| `HanWorldTopologyPin` | `WorldTopologyPin` | 중립 지도 개명 | 저장 핀을 읽는 코드 타입만 변경 |
+| `ResolvedHanWorldArtifacts` | `ResolvedWorldArtifacts` | 중립 지도 개명 | 아카이브 해석 결과 타입만 변경 |
+| `hanVariantSelector` | `mapVariantSelector` | 중립 지도 개명 | 로더 주입 매개변수 이름만 변경 |
+| `HanStrategicTopologyJson` | `StrategicTopologyJson` | 중립 지도 개명 | 저장된 topology revision/hash 값은 유지 |
+| `HanStrategicRouteProjection`·`HanStrategicRouteBinding` | `StrategicRouteProjection`·`StrategicRouteBinding` | 중립 지도 개명 | 행군 경로 코드 타입만 변경 |
+| `HanProvinceCell`·`HanProvinceCellIndex`·`HanProvinceCellJson` | `ProvinceCell`·`ProvinceCellIndex`·`ProvinceCellJson` | 중립 지도 개명 | 지형 그리드 코드 타입·파일명 변경 |
+| `HanCommandery`·`HanCommanderyIndex`·`HanCommanderyIndexJson` | `Commandery`·`CommanderyIndex`·`CommanderyIndexJson` | 중립 지도 개명 | 郡 인덱스 코드 타입·파일명 변경 |
+| `HanLandMarchMetricJson` | `LandMarchMetricJson` | 중립 지도 개명 | 행군 거리 로더 코드 타입·파일명 변경 |
+| `HanPlaceNameFold` | `PlaceNameFold` | 중립 지도 개명 | 지명 표기 코드 타입·파일명 변경 |
+| `HanHistoricalOwnership`·`HanHistoricalArtifacts` | `HistoricalOwnership`·`HistoricalArtifacts` | 중립 지도 개명 | 사료 기반 자료 로더 코드 타입·파일명 변경 |
+| `HanCityConst`·`HanGateIndex` | `BaselineCityConst`·`BaselineGateIndex` | 생성 상수 재핀 | 현재 지도 상수·게이트 코드 이름만 변경; 저장 `han` 값 유지 |
+| `Han780V1CityConst`·`Han780V1GateIndex` | `Archive780CityConst`·`Archive780GateIndex` | 생성 상수 재핀 | 연도별 보관본 코드 이름; `han-780-v1` 저장 릴리스 ID 유지 |
+| `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
+| `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
+| `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
+| `Han<연도>Artifacts`·`Han1447Map4Artifacts` | `Archive<연도>Artifacts`·`Archive1447Map4Artifacts` | 보관본 로더 개명 | 11개 릴리스 번들 로더와 10개 무결성 테스트를 순수 개명; `han-world-v3-*` 번들 ID·catalog SHA 불변 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
 | `opensamguk.logic.input.HwihaDomesticDesign` (`logic/input/HwihaDomesticDesign.kt`) | `opensamguk.logic.domestic.DomesticDesign` (`logic/domestic/DomesticDesign.kt`) | 이 PR | Kotlin 타입·파일·패키지 개명; 데이터 파일 `hwiha-domestic-v1.json`은 저장 식별자 단계 |
 | `opensamguk.logic.input.HwihaDomesticRules` (`logic/input/HwihaDomesticRules.kt`) | `opensamguk.logic.domestic.DomesticRules` (`logic/domestic/DomesticRules.kt`) | 이 PR | 순수 타입·파일·패키지 개명 |
@@ -114,36 +139,85 @@
 | `opensamguk.logic.input.SourceRead` | `opensamguk.logic.vision.SourceRead` | 이 PR | 시야 출처 읽기 결과 타입 패키지 이동 |
 | `logic/input/HwihaDomesticVisionContractTest.kt` | `logic/vision/VisionSourceContractTest.kt` | 이 PR | 내정·시야 계약 테스트 파일·타입·패키지 개명 |
 | `opensamguk.engine.hwiha.HwihaCourtHandler` | `opensamguk.engine.court.CourtHandler` | 예정 | 도메인 패키지 이동 |
-| `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName` 변경은 저장·통신 단계에서 별도 처리 |
-
+| `opensamguk.common.wire.TurnDaemonCommand.HwihaCourtInput` | `opensamguk.common.wire.TurnDaemonCommand.ImmediateInput` | 이 PR | `@SerialName`과 inbox 저장값은 저장·통신 식별자 PR에서 변경 |
 | `LegacyCourt*` (API·engine 코드 타입/파일) | `CourtAction*` | #937 draft | 저장 키 `hwihaLegacyCourt*`는 저장 계약 단계에서 처리 |
 | `LegacyDirect*` (API·engine 코드 타입/파일) | `DirectAction*` | #937 draft | 저장 키 `hwihaLegacyDirect*`는 저장 계약 단계에서 처리 |
 | `LegacyStratagem*` (API·engine 코드 타입/파일) | `StratagemAction*` | #937 draft | 저장 키 `hwihaLegacyStratagem*`는 저장 계약 단계에서 처리 |
 | `QueuedLegacyCourt`, `QueuedLegacyStratagem` | `QueuedCourtAction`, `QueuedStratagemAction` | #937 draft | 직렬화 meta 키 값은 별도 처리 |
 | `logic/world/HanMapConnectivityTest.kt` | `logic/world/WorldMapConnectivityTest.kt` | #937 draft | 특정 `han` 지도 픽스처는 유지 |
+| `opensamguk.common.wire.v2` | `opensamguk.common.wire.command` | 후속 draft | 코드 패키지, 와이어 값 유지 |
+| `opensamguk.logic.v2.command` | `opensamguk.logic.command` | 후속 draft | 입력 명령 계약 패키지 |
+| `opensamguk.logic.v2.evidence` | `opensamguk.logic.evidence` | 후속 draft | 사료 근거 계약 패키지 |
+| `opensamguk.logic.v2.geo` | `opensamguk.logic.geo` | 후속 draft | 지리 계약 패키지 |
+| `V2CommandRegistry` | `CommandSchemaCatalog` | 후속 draft | 삼모 `CommandRegistry`와 이름 충돌 방지 |
+| `V2Command*`, `V2GarrisonRecruit*`, `V2CityTransport*` (common/logic 계약) | 접두사 없는 도메인 타입 | 후속 draft | 명령 코드 문자열 `v2…`은 저장·통신 단계 |
+| `V2CommandResultEnvelope`, `V2TurnEventEnvelope` | `CommandResultEnvelope`, `TurnEventEnvelope` | 후속 draft | `schemaVersion` 값 유지 |
+| `V2_*` (공용 와이어·명령 수치 상수) | 접두사 없는 상수 | 후속 draft | 값 유지 |
 
 ## 정한 값의 근거
 
-- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 이 PR은 Kotlin 타입 이름만 바꾸고 저장된 discriminator `hwihaCourtInput`과 `command_inbox.action_code` 값 `HwihaCourtInput`은 유지한다. 저장·통신 단계에서 새 도메인별 와이어 이름을 정해 같은 변경 안에서 producer·consumer·직렬화 테스트를 갱신한다.
+- 1447 Map4 번들 검사는 현재 `ArchiveCityConst`·`ArchiveGateIndex`에서 옛 객체 이름과 역사 주석을 복원해 동결 스냅샷을 검산한다. 번들 안의 지도 매니페스트는 저장된 세계의 공간 핀에 포함되므로 기존 바이트와 카탈로그 해시를 유지한다. 과거 원본 출처 필드와 스냅샷 본문도 유지한다.
+- `ImmediateInput`은 조정 결정뿐 아니라 배치·방침·공사·계책도 운반하는 즉시 입력 와이어 타입이다. 첫 코드 개명 PR은 Kotlin 타입만 바꾸고 저장 값을 유지했다. 저장·통신 식별자 PR에서 discriminator `hwihaCourtInput`은 `immediateInput`, `command_inbox.action_code` 값 `HwihaCourtInput`은 `ImmediateInput`으로 바꾸고 producer·consumer·직렬화 테스트를 함께 갱신한다.
 - `worldFormat = GENERAL_RETAINER_CAMPAIGN`은 유일한 제품 세계의 구조를 명시한다. 새 가드는 키·값이 없거나 옛 `ruleProfile`이 있으면 실패한다. 이전 데이터 자동 해석은 넣지 않는다.
 - DB의 `siege`와 `person_card`는 현행 스키마에 같은 이름이 없어 충돌하지 않는다. 이름 변경은 새 Flyway 파일로만 실행한다.
 - 상태 키 79종의 새 이름은 `hwiha` 접두사를 제거하되 현행 제품 의미가 남은 `Legacy`를 도메인 이름으로 풀어 썼다. 키 이름이 같은 다른 JSON 층(예: `corpsPolicies`)과 합쳐지지 않는지는 reader·writer별 픽스처에서 확인한다.
+
+## 결정론 해시 도메인 구분자
+
+| 이전 | 확정 이름 | 이유 |
+|---|---|---|
+| `hwihaBattlePlayback:v1` | `battlePlayback:v1` | 제품 접두사 제거; 재생 해시가 달라짐 |
+| `hwihaEncounterResolution:v${RULE_VERSION}` | `encounterResolution:v${RULE_VERSION}` | 제품 접두사 제거; 조우 스냅샷 해시가 달라짐 |
+| `hwihaSiegeAssault:v${RULE_VERSION}` | `siegeAssault:v${RULE_VERSION}` | 제품 접두사 제거; 공성 결과 해시가 달라짐 |
+| `hwihaBattleJournal:v1` | `battleJournal:v1` | 전투 기록 해시 입력의 제품 접두사 제거 |
+| `hwihaBattlePlans:v1` | `battlePlans:v1` | 전투 계획 해시 입력의 제품 접두사 제거 |
+| `hwiha-corps:<orderId>` | `corps:<orderId>` | #950에서 정찰 관측 ID의 해시 도메인 변경; 기존 관측 ID는 재사용하지 않음 |
 
 ## 저장·통신 식별자
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
-| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | 도메인별 즉시 입력 값 | 예정 | #919에서는 기존 값 고정; 새 값은 저장·통신 단계에서 확정 |
-| `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 예정 | 값 없는 세계·옛 키·삼모 세계 fail closed |
-| `hwiha_siege` | `siege` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
-| `hwiha_person_card` | `person_card` | 예정 | 새 Flyway 마이그레이션, 옛 파일 유지 |
-| `/api/hwiha/*` | 도메인별 `/api/*` | 예정 | 엔드포인트별 경로 확정 필요 |
-| `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 예정 | 옛 경로 308 리다이렉트 |
-| `data/**/hwiha-*.json` | 도메인별 파일명 | 예정 | 해시·핀·패키징 동시 갱신 |
+| `command_inbox.action_code` (IMMEDIATE) 값 `HwihaCourtInput` | `ImmediateInput` | 저장·통신 draft | #919에서는 기존 값 고정; reset 전 새 값으로 확정 |
+| 와이어 discriminator `hwihaCourtInput` | `immediateInput` | 저장·통신 draft | `@SerialName`과 `type` 갱신 |
+| `world_state.config.ruleProfile` | `worldFormat = GENERAL_RETAINER_CAMPAIGN` | 세계 형식 가드 PR | 값 없는 세계·옛 키·삼모 세계 fail closed |
+| `hwiha_siege` | `siege` | DB 식별자 draft | V64에서 표·제약·인덱스 개명, V61 원본 유지 |
+| `hwiha_person_card` | `person_card` | DB 식별자 draft | V64에서 뷰 개명과 새 meta 키 투영, V63 원본 유지 |
+| `/api/hwiha/*` | 같은 도메인명 `/api/*` | 저장·통신 draft | 13개 조회 경로와 웹 클라이언트 호출 동시 갱신; `/api/game` 프록시는 그대로 전달 |
+| `/game/<server>/hwiha/<screen>` | `/game/<server>/<screen>` | 저장·통신 draft | Next 경로 그룹 `(campaign)`으로 화면 이동; 옛 서버 경로와 서버 없는 경로 308 리다이렉트 |
+| `data/**/hwiha-*.json` | 도메인별 파일명 | 저장·통신 draft | 18개 파일·내부 ID·빌드 패키징·로더·생성기 경로 동시 갱신 |
+| `hwiha-stratagem-fortify`, `hwiha-stratagem-insight` | `stratagem-fortify`, `stratagem-insight` | 카드 ID 후속 | 카드 원장·기여 상태의 저장 ID 변경; pep 리셋 전 적용 |
+| `hwiha_*` 엔진 경고 이벤트 이름 | `campaign_*` | 카드 ID 후속 | 캠페인 경고 로그의 제품 접두사 제거 |
+
+## 데이터 파일·리소스 대응
+
+| 이전 | 확정 이름 |
+|---|---|
+| `data/battle/hwiha-unit-profiles-v1.json` | `data/battle/unit-profiles-v1.json` |
+| `data/commands/hwiha-input-catalog.json` | `data/commands/input-catalog.json` |
+| `data/curated/han/hwiha-aptitude-weights-v1.json` | `data/curated/han/aptitude-weights-v1.json` |
+| `data/curated/han/hwiha-s3-provisional-v1.json` | `data/curated/han/campaign-balance-v1.json` |
+| `data/curated/han/hwiha-legacy-direct-v1.json` | `data/curated/han/direct-actions-v1.json` |
+| `data/curated/han/hwiha-domestic-v1.json` | `data/curated/han/domestic-v1.json` |
+| `data/curated/han/hwiha-equipment-v1.json` | `data/curated/han/equipment-v1.json` |
+| `data/curated/han/hwiha-items-excluded-v1.json` | `data/curated/han/items-excluded-v1.json` |
+| `data/curated/han/hwiha-military-v1.json` | `data/curated/han/military-v1.json` |
+| `data/curated/han/hwiha-people-v1.json` | `data/curated/han/people-v1.json` |
+| `data/curated/han/hwiha-personal-encounter-v1.json` | `data/curated/han/personal-encounter-v1.json` |
+| `data/curated/han/hwiha-personal-v1.json` | `data/curated/han/personal-v1.json` |
+| `data/curated/han/hwiha-political-v1.json` | `data/curated/han/political-v1.json` |
+| `data/curated/han/hwiha-renown-assessment-v1.json` | `data/curated/han/renown-assessment-v1.json` |
+| `data/curated/han/hwiha-renown-events-v1.json` | `data/curated/han/renown-events-v1.json` |
+| `data/curated/han/hwiha-resource-production-v1.json` | `data/curated/han/resource-production-v1.json` |
+| `data/curated/han/hwiha-treasure-cards-v1.json` | `data/curated/han/treasure-cards-v1.json` |
+| `data/curated/han/hwiha-vision-rules-v1.json` | `data/curated/han/vision-rules-v1.json` |
+
+classpath `hwiha/`는 `campaign/`으로 옮겼다. `tools/map/build_hwiha_resource_production.py`는 `build_county_resource_production.py`, `tools/content/build_hwiha_item_ledgers.py`는 `build_item_ledgers.py`가 되었으며, 생성 원장과 런타임 파일의 내부 ID·generator·sourceLedger도 새 이름을 쓴다. 지도 번들 판 ID(`han-world-v3-1447` 등)는 세계 핀 계약이므로 유지한다.
+
+E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 각각 `court`, `yuzhou`로 옮겼다. 라이브 스펙은 `court-live.spec.ts`, `yuzhou-live.spec.ts`이며 실행 환경 변수는 `E2E_COURT_LIVE`, `E2E_YUZHOU_LIVE`다. 예약 서버 ID 목록 8곳은 드리프트 검사 `tools/ci/check_reserved_server_ids.py`로 묶었다.
 
 ## 상태·시나리오 필드 대응
 
-소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 변경 PR에서는 reader·writer·fixture의 동일 키 교체와 옛 키 거절을 함께 검증한다.
+소스에서 인용 부호로 읽고 쓰는 `hwiha…` 키 81종을 조사했다. 아래 79종은 장수·국가·縣 상태 및 시나리오 필드다. 와이어 타입 `hwihaCourtInput`과 DB 표 `hwiha_siege`는 위 표에 따로 적었다. 이름은 제품 접두사를 제거하며, 현행 제품 기능인 옛 `Legacy` 이름도 도메인 뜻으로 바꾼다. 저장 식별자 PR에서 reader·writer·fixture 130파일의 347참조를 같은 이름으로 교체했다. 옛 키 거절은 후속 세계 형식 가드에서 검증할 예정이다. 그 가드와 pep C단계 리셋 전에는 이 코드로 게임 서버를 승격하지 않는다.
 
 | 이전 키 | 확정 키 | 현행 사용 위치 예시 |
 |---|---|---|
@@ -1402,3 +1476,69 @@ web/game/app/game/hwiha/siege/page.tsx
 web/game/components/hwiha/DomesticPanels.tsx
 web/game/lib/hwiha-reads.ts
 ```
+
+## 엔진 공성 상태 후속 개명
+
+| 이전 코드 이름 | 새 코드 이름 | 범위 |
+|---|---|---|
+| `HwihaSiege` | `Siege` | 엔진 월드 상태 타입; DB `siege`와 의미 일치 |
+| `listHwihaSieges`·`getHwihaSiege`·`putHwihaSiege` | `listSieges`·`getSiege`·`putSiege` | 인메모리 월드 접근자 |
+| `hwihaSieges`·`createdHwihaSieges`·`updatedHwihaSieges` | `sieges`·`createdSieges`·`updatedSieges` | 스냅샷·flush 계약의 Kotlin 필드 |
+| `loadHwihaSieges`·`toHwihaSiegeRow`·`hwihaSiegeCreateMany`·`hwihaSiegeUpdate` | `loadSieges`·`toSiegeRow`·`siegeCreateMany`·`siegeUpdate` | 부팅 로더·flush 함수 |
+| `hwihaNow()` | `phaseNow()` | 현재 세계 순의 `Phase` 값 |
+
+## 지도 보급 런타임 이름
+
+| 이전 코드 이름 | 새 코드 이름 | 범위 |
+|---|---|---|
+| `HanSpatialSupplyProvider` | `SpatialSupplyProvider` | 월별 보급망을 구성하는 Spring 컴포넌트·테스트 타입 |
+| `HanSupplyDisconnectionPolicyLoader` | `SupplyDisconnectionPolicyLoader` | 보급 단절 심사 원장 로더·테스트 타입 |
+| `hanSpatialSupplyProvider` | `spatialSupplyProvider` | 엔진 배선 인자 |
+
+지도 자료의 `han-world-v3`·`han-tiles.json` 등 저장된 판 ID와 입력 파일명은 그대로 둔다. 해당 값은 세계 핀과 심사 원장이 참조하는 역사 지도 계약이다.
+
+## 세계 형식 가드
+
+새 시드는 `world_state.config.worldFormat = GENERAL_RETAINER_CAMPAIGN`을 기록한다. 엔진 부팅과 API 처리 월드 조회는 이 값이 없거나 다르거나, `ruleProfile` 또는 `hwiha*` 옛 키가 config·meta에 남으면 명시적으로 거절한다. API는 `409 Conflict`와 원인을 돌려준다. 운영 세계 데이터를 자동 이전하지 않으므로 pep C단계 리셋 전 게임 서버를 승격하지 않는다.
+
+`WorldRuleProfile`과 API의 `ruleProfile` 응답은 남은 입력 핸들러·웹 소비자가 쓰는 임시 내부 어댑터다. 저장된 세계의 판정은 오직 `WorldFormat`이 한다. 옛 `/game/hwiha/*`와 `/game/<server>/hwiha/*`의 308 리다이렉트는 `web/game/middleware.ts` 및 기존 9화면 계약 테스트가 유지한다.
+
+### 역사 지도 런타임 이름 추가
+
+| 옛 이름 | 새 이름 |
+| --- | --- |
+| `HanCityConstVariant` | `HistoricalCityConstVariant` |
+| `generateHanCities` | `generateHistoricalCities` |
+| `isHanMapName` | `isHistoricalMapName` |
+| `projectHanDryLandEdges` | `projectDryLandEdges` |
+
+### 지도 판 이름 상수
+
+| 옛 코드 이름 | 새 코드 이름 | 저장 값 |
+| --- | --- | --- |
+| `HAN_MAP_NAME` | `HISTORICAL_MAP_NAME` | `han` 유지 |
+| `HAN_780_V1_MAP_NAME` | `LEGACY_MAP_ARCHIVE_NAME` | `han-780-v1` 유지 |
+| `HAN_WORLD_V2_MAP_NAME` | `EARLY_WORLD_ARCHIVE_NAME` | `han-world-v2` 유지 |
+| `HAN_WORLD_V3_MAP_NAME` | `WORLD_ARCHIVE_MAP_NAME` | `han-world-v3` 유지 |
+| `currentHan`·`legacyHan`·`hanWorldV3`·`historicalHanWorlds` | `currentHistoricalMap`·`legacyHistoricalMap`·`worldArchiveMap`·`historicalWorlds` | 코드 지역 이름만 변경 |
+
+### 지도 테스트 이름
+
+| 옛 테스트 | 새 테스트 |
+| --- | --- |
+| `HanHistoricalWorldRoundTripIT` | `HistoricalWorldRoundTripIT` |
+| `HanStrategicSupplyProviderTest` | `StrategicSupplyProviderTest` |
+| `HanCityLevelLabelsTest` | `CityLevelLabelsTest` |
+| `HanAdministrativeCountyTest` | `AdministrativeCountyTest` |
+| `HanLandMarchMetricIntegrationTest` | `LandMarchMetricIntegrationTest` |
+| `HanFoundAssaultTest` | `FoundAssaultTest` |
+| `HanGateRegionsTest` | `GateRegionsTest` |
+| `HanProvinceSeatsTest` | `ProvinceSeatsTest` |
+
+## 활성 턴 프로필 기본 식별자
+
+| 설정 | 이전 기본값 | 새 기본값 |
+| --- | --- | --- |
+| `TURN_PROFILE_NAME`·`OPENSAMGUK_PROFILE` | `che:scenario_2` | `pep:scenario_990002` |
+
+새 기본값은 `SERVER_ID=pep`, `SCENARIO_CODE=scenario_990002`와 일치한다. 운영자가 환경 변수로 지정한 프로필은 그대로 적용한다. 기존 Redis 키 접두사 `sammo:`는 저장 데이터 호환성 검토 후 별도로 변경한다.

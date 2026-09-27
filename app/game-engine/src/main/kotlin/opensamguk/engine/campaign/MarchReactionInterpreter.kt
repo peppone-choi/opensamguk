@@ -19,7 +19,7 @@ import opensamguk.logic.war.CampaignBalance
 class MarchReactionInterpreter(
     private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
-    private val commanderies: HanCommanderyIndex,
+    private val commanderies: CommanderyIndex,
     private val visionRules: VisionRules.Rules = VisionRules.CANON,
 ) : MarchReactionPolicy {
     private data class Decision(

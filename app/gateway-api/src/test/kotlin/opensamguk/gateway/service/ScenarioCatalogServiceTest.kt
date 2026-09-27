@@ -11,27 +11,14 @@ class ScenarioCatalogServiceTest {
         val scenarios = ScenarioCatalogService(ObjectMapper()).list().scenarios
         val byCode = scenarios.associateBy { it.code }
 
-        val activeCodes = listOf(
-            "scenario_1010",
-            "scenario_1020",
-            "scenario_1021",
-            "scenario_1030",
-            "scenario_1031",
-            "scenario_1040",
-            "scenario_1041",
-            "scenario_1050",
-            "scenario_1060",
-            "scenario_1070",
-            "scenario_1080",
-            "scenario_1090",
-            "scenario_1100",
-            "scenario_1110",
-            "scenario_1120",
-            "scenario_990002",
-        )
+        // importer 가 받는 세계 형식 선언 시나리오만 고를 수 있다(#917).
+        val activeCodes = listOf("scenario_990002")
         assertEquals(activeCodes, scenarios.map { it.code })
 
         val retiredCodes = listOf(
+            "scenario_1010", "scenario_1020", "scenario_1021", "scenario_1030", "scenario_1031",
+            "scenario_1040", "scenario_1041", "scenario_1050", "scenario_1060", "scenario_1070",
+            "scenario_1080", "scenario_1090", "scenario_1100", "scenario_1110", "scenario_1120",
             "scenario_0",
             "scenario_1",
             "scenario_2",
@@ -56,9 +43,6 @@ class ScenarioCatalogServiceTest {
             )
             assertTrue(byCode[code] == null, "은퇴 시나리오 $code 가 런타임 목록에 노출됐다")
         }
-        assertEquals("【역사모드1】 황건적의 난", byCode["scenario_1010"]?.title)
-        assertEquals("【역사모드11】 출사표", byCode["scenario_1110"]?.title)
-        assertEquals("【IF모드1】 백마장군의 위세", byCode["scenario_1120"]?.title)
         assertEquals("휘하 예주 조각 (합성 운영 후보)", byCode["scenario_990002"]?.title)
         assertEquals(
             scenarios.map { it.code }.sortedBy { it.removePrefix("scenario_").toInt() },

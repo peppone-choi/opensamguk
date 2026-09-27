@@ -26,7 +26,7 @@ OUTPUT = ROOT / "data/map/han-land-roads-v1.json"
 OWNERSHIP = ROOT / "data/map/han-scenario-province-ownership-v1.json"
 WORLD = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 SCENARIOS = ROOT / "infra/src/main/resources/scenario"
-CAMPAIGN_SCENARIO = ROOT / "tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json"
+CAMPAIGN_SCENARIO = ROOT / "tools/e2e/fixtures/yuzhou/scenario_990002.json"
 DRY_COST = {"PLAIN": 1, "BASIN": 2, "HILL": 3, "PLATEAU": 4, "MOUNTAIN": 6, "DESERT": 7}
 HISTORICAL_CORRIDORS = (
     {"id": "jingxing", "name": "井陘道", "waypointCityIds": ("gc-g0079-001", "87093", "88410"),

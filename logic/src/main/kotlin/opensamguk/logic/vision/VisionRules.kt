@@ -15,12 +15,12 @@ enum class VisionSourceKind { SELF, OWN_CORPS, RETINUE, TERRITORY, SCOUT_POST, W
 data class TroopBand(val code: String, val label: String, val minInclusive: Int)
 
 /**
- * Confirmed vision numbers (2026-09-23 user decision). The only source is `data/curated/han/hwiha-vision-rules-v1.json`; this object
+ * Confirmed vision numbers (2026-09-23 user decision). The only source is `data/curated/han/vision-rules-v1.json`; this object
  * copies nothing into code and fails closed when the file is missing or malformed.
  */
 object VisionRules {
     const val ADJACENCY_RULE = "SHARED_BORDER_4_NEIGHBOUR"
-    private const val RESOURCE = "hwiha/hwiha-vision-rules-v1.json"
+    private const val RESOURCE = "campaign/vision-rules-v1.json"
 
     class Rules internal constructor(
         val sourceRadius: Map<VisionSourceKind, Int>,
@@ -60,7 +60,7 @@ object VisionRules {
     fun parse(payload: String): Rules {
         val root = Json.parseToJsonElement(payload).jsonObject
         require(root.getValue("schemaVersion").jsonPrimitive.int == 1) { "unsupported vision rules schemaVersion" }
-        require(root.getValue("ledgerId").jsonPrimitive.content == "hwiha-vision-rules-v1") { "unexpected ledgerId" }
+        require(root.getValue("ledgerId").jsonPrimitive.content == "vision-rules-v1") { "unexpected ledgerId" }
         require(root.getValue("unit").jsonPrimitive.content == "COMMANDERY") { "vision unit must be COMMANDERY" }
         require(root.getValue("adjacency").jsonObject.getValue("rule").jsonPrimitive.content == ADJACENCY_RULE) {
             "vision adjacency rule differs from the implemented shared-border rule"

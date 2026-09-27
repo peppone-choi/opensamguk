@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CityTransportArgs
 import opensamguk.logic.world.ResolvedStrategicPath
 import com.fasterxml.jackson.annotation.JsonInclude
 
@@ -78,10 +78,10 @@ class V2CityTransportController(
         }
         val available = validateLegacyV2Arguments("v2CityTransport", argJson)
         val preview = when (available) {
-            is V2CommandAvailability.Available -> contextual.previewTransport(generalId, available.args as V2CityTransportArgs)
-            is V2CommandAvailability.Blocked -> V2CityTransportRoutePreview("BLOCKED", available.code, available.reason)
-            is V2CommandAvailability.NeedsInput -> V2CityTransportRoutePreview("BLOCKED", "INVALID_ARGUMENTS", "수송 인자가 부족합니다.")
-            is V2CommandAvailability.Unknown -> V2CityTransportRoutePreview("BLOCKED", available.code, "수송 명령을 찾을 수 없습니다.")
+            is CommandAvailability.Available -> contextual.previewTransport(generalId, available.args as CityTransportArgs)
+            is CommandAvailability.Blocked -> V2CityTransportRoutePreview("BLOCKED", available.code, available.reason)
+            is CommandAvailability.NeedsInput -> V2CityTransportRoutePreview("BLOCKED", "INVALID_ARGUMENTS", "수송 인자가 부족합니다.")
+            is CommandAvailability.Unknown -> V2CityTransportRoutePreview("BLOCKED", available.code, "수송 명령을 찾을 수 없습니다.")
         }
         return ResponseEntity.ok(preview.copy(worldId = worldId))
     }
@@ -103,14 +103,14 @@ class V2CityTransportController(
         // A proxy server may be reset to another world with the same immutable topology.
         // Optional only for existing clients; scoped preview consumers must echo the origin.
         if (expectedWorldId != null && expectedWorldId != worldId) {
-            return V2CommandAvailability.Blocked(
+            return CommandAvailability.Blocked(
                 "ROUTE_WORLD_STALE", "세계가 변경되었습니다. 수송 경로를 다시 확인해주세요.",
             ).legacyError("v2CityTransport")
         }
         val availability = validateLegacyV2Arguments("v2CityTransport", argJson)
-        if (availability !is V2CommandAvailability.Available) return availability.legacyError("v2CityTransport")
+        if (availability !is CommandAvailability.Available) return availability.legacyError("v2CityTransport")
         val checked = contextual.precheck(generalId, availability)
-        if (checked !is V2CommandAvailability.Available) return checked.legacyError("v2CityTransport")
+        if (checked !is CommandAvailability.Available) return checked.legacyError("v2CityTransport")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
             actionCode = "v2CityTransport",

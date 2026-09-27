@@ -86,7 +86,7 @@ data class CorpsEncounter(
                 field(row.nationId.toString()); field(row.bugokIds.size.toString())
                 row.bugokIds.sorted().forEach { field(it.toString()) }
             }
-            field("hwihaCorpsEncounter:v1"); field(topologyRevision); field(topologyHash)
+            field("corpsEncounter:v1"); field(topologyRevision); field(topologyHash)
             field(province.canonicalKey); field(approachFrom.canonicalKey)
             field(phase.year.toString()); field(phase.month.toString()); field(phase.phase.toString())
             participant(attacker); field(defenders.size.toString()); orderedDefenders.forEach(::participant)
@@ -108,7 +108,7 @@ data class CorpsEncounter(
     )
 
     companion object {
-        const val META_KEY = "hwihaCorpsEncounter"
+        const val META_KEY = "corpsEncounter"
         private val fields = setOf("version", "encounterId", "attacker", "defenders", "province", "approachFrom",
             "phase", "topologyRevision", "topologyHash")
 

@@ -370,13 +370,13 @@ class GeneralCreateFlushIT {
             ),
         )
     }
-    private fun seedHwihaWorld(id: Int) {
+    private fun seedCampaignWorld(id: Int) {
         jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config)
-            VALUES (:id,'hwiha-create-fixture',200,1,3600,'{"ruleProfile":"HWIHA"}'::jsonb)""",
+            VALUES (:id,'hwiha-create-fixture',200,1,3600,'{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)""",
             MapSqlParameterSource("id", id))
     }
 
-    private fun hwihaGeneral(id: Int) = linkedMapOf<String, Any?>(
+    private fun campaignGeneral(id: Int) = linkedMapOf<String, Any?>(
             "id" to id,
             "user_id" to null,
             "name" to "부대장",
@@ -426,10 +426,10 @@ class GeneralCreateFlushIT {
             21 to emptyList(),
             22 to listOf(InitialGeneralTurnRow("action.enlist", """{"mode":"RANDOM"}""", "출사")),
         )) {
-            seedHwihaWorld(world)
+            seedCampaignWorld(world)
             executor.flush(FlushPayload(worldId = WorldId(world),
                 worldStateUpdate = linkedMapOf("id" to world, "current_year" to 200, "current_month" to 1),
-                createdGenerals = listOf(GeneralCreateRow(hwihaGeneral(9200), turns))))
+                createdGenerals = listOf(GeneralCreateRow(campaignGeneral(9200), turns))))
             val params = MapSqlParameterSource("world", world)
             assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM general WHERE world_id=:world AND id=9200", params, Int::class.java))
             assertEquals(turns.size, jdbc.queryForObject("SELECT count(*) FROM general_turn WHERE world_id=:world AND general_id=9200", params, Int::class.java))
@@ -445,17 +445,36 @@ class GeneralCreateFlushIT {
     }
 
     @Test
+    fun `current world format consumes a reserved input instead of making a phantom rest slot`() {
+        val world = 26
+        seedCampaignWorld(world)
+        val update = linkedMapOf<String, Any?>("id" to world, "current_year" to 200, "current_month" to 1)
+        executor.flush(FlushPayload(worldId = WorldId(world), worldStateUpdate = update,
+            createdGenerals = listOf(GeneralCreateRow(campaignGeneral(9202),
+                listOf(InitialGeneralTurnRow("action.enlist", """{"mode":"RANDOM"}""", "출사"))))))
+        val params = MapSqlParameterSource("world", world)
+        assertEquals(1, jdbc.queryForObject(
+            "SELECT count(*) FROM general_turn WHERE world_id=:world AND general_id=9202", params, Int::class.java))
+
+        executor.flush(FlushPayload(worldId = WorldId(world),
+            worldStateUpdate = linkedMapOf("id" to world, "current_year" to 200, "current_month" to 2),
+            reservedGeneralTurnPulls = listOf(GeneralTurnPullRow(generalId = 9202))))
+        assertEquals(0, jdbc.queryForObject(
+            "SELECT count(*) FROM general_turn WHERE world_id=:world AND general_id=9202", params, Int::class.java))
+    }
+
+    @Test
     fun `HWIHA oversized legacy and malformed initial commands reject with full rollback`() {
         val valid = InitialGeneralTurnRow("action.enlist", """{"mode":"RANDOM"}""", "출사")
         val cases = listOf(List(13) { valid }, listOf(InitialGeneralTurnRow("휴식", "{}", "휴식")),
             listOf(InitialGeneralTurnRow("action.enlist", """{"mode":"NATION","targetId":1.5}""", "출사")))
         for ((index, turns) in cases.withIndex()) {
             val world = 23 + index
-            seedHwihaWorld(world)
+            seedCampaignWorld(world)
             assertFailsWith<IllegalArgumentException> {
                 executor.flush(FlushPayload(worldId = WorldId(world),
                     worldStateUpdate = linkedMapOf("id" to world, "current_year" to 200, "current_month" to 2),
-                    createdGenerals = listOf(GeneralCreateRow(hwihaGeneral(9201), turns))))
+                    createdGenerals = listOf(GeneralCreateRow(campaignGeneral(9201), turns))))
             }
             val params = MapSqlParameterSource("world", world)
             assertEquals(1, jdbc.queryForObject("SELECT current_month FROM world_state WHERE id=:world", params, Int::class.java))

@@ -15,10 +15,10 @@ def ledger(name):
 
 class CardContentValidationTest(unittest.TestCase):
     def setUp(self):
-        self.domestic = ledger("hwiha-domestic-v1.json")
+        self.domestic = ledger("domestic-v1.json")
         self.sites = ledger("resource-sites-v1.json")
         self.extracts = ledger("resource-site-source-extracts-v1.json")
-        self.production = ledger("hwiha-resource-production-v1.json")
+        self.production = ledger("resource-production-v1.json")
 
     def test_current_ledgers_pass_without_exact_count_requirement(self):
         self.assertEqual([], validate_current())

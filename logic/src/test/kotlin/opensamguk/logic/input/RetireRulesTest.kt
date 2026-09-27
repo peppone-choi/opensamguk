@@ -27,6 +27,32 @@ class RetireRulesTest {
                 state.copy(people = listOf(actor, heir.copy(userOwned = true))))).reason)
         assertEquals(RetireFailure.ALREADY_RETIRED,
             assertIs<RetireAssessment.Rejected>(RetireRules.assess(req,
-                state.copy(people = listOf(actor.copy(meta = actor.meta + ("hwihaRetired" to true)), heir)))).reason)
+                state.copy(people = listOf(actor.copy(meta = actor.meta + ("retired" to true)), heir)))).reason)
+    }
+
+    @Test fun `retirement rejects a name collision in the successor's cards before any write`() {
+        val ownFollower = DomesticCard(11, actor.id, null, "guest", "동명")
+        val successorFollower = DomesticCard(12, heir.id, null, "guest", "동명")
+        val conflict = state.copy(cards = state.cards + ownFollower + successorFollower)
+
+        assertEquals(RetireFailure.RETAINER_NAME_CONFLICT,
+            assertIs<RetireAssessment.Rejected>(RetireRules.assess(RetireRequest(1, 2), conflict)).reason)
+    }
+
+    @Test fun `retirement rejects renaming an outer card onto another card's name`() {
+        val outerCard = DomesticCard(20, 3, actor.id, "guest", actor.name)
+        val sameName = DomesticCard(21, 3, null, "guest", heir.name)
+        val conflict = state.copy(cards = state.cards + outerCard + sameName)
+
+        assertEquals(RetireFailure.RETAINER_NAME_CONFLICT,
+            assertIs<RetireAssessment.Rejected>(RetireRules.assess(RetireRequest(1, 2), conflict)).reason)
+    }
+
+    @Test fun `retirement rejects a reciprocal retainer link in shared assessment`() {
+        val reciprocal = DomesticCard(20, heir.id, actor.id, "guest", actor.name)
+        val conflict = state.copy(cards = state.cards + reciprocal)
+
+        assertEquals(RetireFailure.STATE_UNAVAILABLE,
+            assertIs<RetireAssessment.Rejected>(RetireRules.assess(RetireRequest(1, 2), conflict)).reason)
     }
 }

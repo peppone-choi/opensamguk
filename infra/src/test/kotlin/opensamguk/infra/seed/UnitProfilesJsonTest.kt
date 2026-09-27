@@ -23,7 +23,7 @@ class UnitProfilesJsonTest {
         }
         assertNull(profiles.find(1)); assertNull(profiles.find(999999))
         assertFalse(999999 in profiles.unsupportedCrewTypeIds)
-        val bytes = javaClass.classLoader.getResourceAsStream("battle/hwiha-unit-profiles-v1.json")!!.use { it.readBytes() }
+        val bytes = javaClass.classLoader.getResourceAsStream("battle/unit-profiles-v1.json")!!.use { it.readBytes() }
         assertEquals(MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) },profiles.contentHash)
     }
     @Test fun `strict schema rejects duplicate keys trailing values coercion overflow and identity overlap`() {

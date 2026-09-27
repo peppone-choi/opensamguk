@@ -104,7 +104,7 @@ class EncounterForces(
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
             fun text(value: String) { val b = value.toByteArray(Charsets.UTF_8); out.writeInt(b.size); out.write(b) }
-            text("hwihaEncounterForces:v1"); text(encounterId)
+            text("encounterForces:v1"); text(encounterId)
             out.writeInt(units.size)
             units.forEach { unit -> unit.toMetaValue().values.forEach { value ->
                 out.writeBoolean(value != null); if (value != null) out.writeInt(value as Int)
@@ -117,7 +117,7 @@ class EncounterForces(
     fun toMetaValue(): Map<String, Any> = linkedMapOf("version" to 1, "encounterId" to encounterId,
         "snapshotId" to snapshotId, "units" to units.map { it.toMetaValue() }, "commanders" to commanders.map { it.toMetaValue() })
     companion object {
-        const val META_KEY = "hwihaEncounterForces"
+        const val META_KEY = "encounterForces"
         fun read(meta: Map<String, Any?>, encounter: CorpsEncounter): EncounterForces? {
             if (META_KEY !in meta) return null
             val row = meta[META_KEY] as? Map<*, *> ?: invalidForce()
