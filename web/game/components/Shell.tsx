@@ -4,6 +4,7 @@
 import { useCallback, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
 import Header from './Header';
+import CatchUpBanner from './CatchUpBanner';
 import BackBar from './BackBar';
 import BottomNav from './BottomNav';
 import DeptNav from './DeptNav';
@@ -35,6 +36,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     return (
         <div className="shell">
             <Header info={info} error={error} />
+            <CatchUpBanner catchUp={info?.global.catchUp} />
             <DeptNav gating={gating} gatingState={state} />
             <div className="shell-body">
                 <main className="shell-main shell-scroll-surface" aria-label="게임 콘텐츠">
