@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "local-office-rules",
+  "rows": [
+    {
+      "id": "office.actual-jurisdiction",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "실효 관할 판정의 수치 문턱은 역사 기록의 관제 수치가 아닌 게임 규칙이다.",
+      "displayBadge": "게임 용어",
+      "values": {
+        "minimumOwnedPercent": {"value": 50, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "再設計 §7과 관직 설계 §5.3: 과반 지역 점유와 치소·보급·현지 집행 근거를 함께 요구"},
+        "maximumConcurrentLocalTenures": {"value": 2, "status": "CONFIRMED", "decidedBy": "구현 에이전트", "decidedAt": "2026-09-25", "basis": "관직 설계 §5.2: 겸직은 허용하되 무제한 겸직으로 효과를 누적하지 않음"}
+      }
+    }
+  ]
+}

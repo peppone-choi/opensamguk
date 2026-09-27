@@ -37,18 +37,16 @@ class RealtimeEventWireTest {
         val envelope = TurnDaemonCommandEnvelope(
             requestId = "req-1",
             sentAt = "0200-01-01T00:00:00.000Z",
-            command = TurnDaemonCommand.AuctionBid(
+            command = TurnDaemonCommand.TroopJoin(
                 requestId = "req-1",
-                auctionId = 101,
                 generalId = 70,
-                amount = 1500,
-                tryExtendCloseDate = true,
+                troopId = 101,
             ),
         )
         val payload = encodeCommandPayload(envelope)
         val decoded = decodeCommandEnvelope(payload)
         assertEquals(envelope, decoded)
-        assertIs<TurnDaemonCommand.AuctionBid>(decoded.command)
+        assertIs<TurnDaemonCommand.TroopJoin>(decoded.command)
     }
 
     @Test

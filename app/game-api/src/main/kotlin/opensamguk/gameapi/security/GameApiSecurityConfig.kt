@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *
  * Public (no identity needed): the lobby map preview, the health probe, the const/global-menu reads,
  * and — during the F2 transition — the existing read controllers that still accept `?generalId=`
- * (auction/betting/mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
+ * (mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
  * web/game Wave 2 can migrate incrementally; the proxy injects the Bearer where it has one.
  *
  * Identity-required: the possession + my-* endpoints, which resolve the caller's general from the

@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 /**
  * F1b — the missing boot wiring: the `@Bean InMemoryTurnWorld` that every consumer
  * (`EngineEventConfig.monthlyPostUpdateHook` / `monthlyPipeline`, `TurnRunService`,
- * `ReservedTurnHandler`, `AiTurnAdapter`, the auction/betting handlers, …) injects but which did NOT
+ * `ReservedTurnHandler`, `AiTurnAdapter`, the betting handlers, …) injects but which did NOT
  * exist in production — only tests hand-built a `WorldSnapshot`. This bean closes that gap by loading
  * the snapshot from the seeded DB at construction time.
  *

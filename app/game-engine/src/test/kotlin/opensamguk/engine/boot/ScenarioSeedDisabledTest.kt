@@ -14,7 +14,7 @@ class ScenarioSeedDisabledTest {
     @Test
     fun `disabled seed fence returns without touching the database`() {
         val bootstrap = SeedBootstrap(
-            scenarioCode = "scenario_1010",
+            scenarioCode = "scenario_990002",
             seedEnabled = false,
             worldId = opensamguk.common.world.WorldId(1),
         )
@@ -28,10 +28,10 @@ class ScenarioSeedDisabledTest {
     fun `seed bootstrap resolves a same-name external scenario before the bundled scenario`() {
         val dir = Files.createTempDirectory("scenario-dir").toFile()
         try {
-            val scenario = File(dir, "scenario_1010.json")
+            val scenario = File(dir, "scenario_990002.json")
             scenario.writeText("""{"title":"external","startYear":180,"map":{},"const":{},"nation":[],"general":[],"general_ex":[],"diplomacy":[]}""")
             val bootstrap = SeedBootstrap(
-                scenarioCode = "scenario_1010",
+                scenarioCode = "scenario_990002",
                 seedEnabled = true,
                 scenarioDir = scenario.parentFile.absolutePath,
                 worldId = opensamguk.common.world.WorldId(1),
@@ -47,9 +47,9 @@ class ScenarioSeedDisabledTest {
     fun `seed bootstrap does not fall back after a selected external scenario fails to parse`() {
         val dir = Files.createTempDirectory("scenario-dir").toFile()
         try {
-            File(dir, "scenario_1010.json").writeText("{ malformed")
+            File(dir, "scenario_990002.json").writeText("{ malformed")
             val bootstrap = SeedBootstrap(
-                scenarioCode = "scenario_1010",
+                scenarioCode = "scenario_990002",
                 scenarioDir = dir.absolutePath,
                 worldId = opensamguk.common.world.WorldId(1),
             )

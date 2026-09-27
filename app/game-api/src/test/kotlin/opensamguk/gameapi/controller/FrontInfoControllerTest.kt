@@ -51,7 +51,6 @@ class FrontInfoControllerTest {
     private val cities = mock(CityReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
     private val ranks = mock(opensamguk.gameapi.read.RankDataReadRepository::class.java)
-    private val auctions = mock(opensamguk.gameapi.read.AuctionCountReadRepository::class.java)
     private val votePolls = mock(opensamguk.gameapi.read.VotePollReadRepository::class.java)
     private val votes = mock(opensamguk.gameapi.read.VoteReadRepository::class.java)
     private val troops = mock(opensamguk.gameapi.read.TroopReadRepository::class.java)
@@ -76,7 +75,6 @@ class FrontInfoControllerTest {
                 nations,
                 cities,
                 ranks,
-                auctions,
                 votePolls,
                 votes,
                 troops,
@@ -244,12 +242,12 @@ class FrontInfoControllerTest {
 
     @Test
     fun `global resolves committed scenario resource title before falling back to raw code`() {
-        seedWorld(scenarioCode = "scenario_1021")
+        seedWorld(scenarioCode = "scenario_990002")
 
         mockMvc().perform(get("/api/front-info"))
             .andExpect(status().isOk)
-            .andExpect(jsonPath("$.global.scenario").value("scenario_1021"))
-            .andExpect(jsonPath("$.global.scenarioText").value("【역사모드2-2】 반동탁연합 결성(정사)"))
+            .andExpect(jsonPath("$.global.scenario").value("scenario_990002"))
+            .andExpect(jsonPath("$.global.scenarioText").value("휘하 예주 조각 (합성 운영 후보)"))
     }
 
     @Test

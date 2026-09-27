@@ -22,13 +22,13 @@ import opensamguk.logic.command.GarrisonRecruitArgs
 /**
  * F-INTAKE seam — maps a `POST /api/command/{code}` `{code, argJson, generalId}` onto the EXISTING
  * typed [TurnDaemonCommand] variants for the **immediate daemon-command** intake commands (the
- * betting/auction + F4 Wave C2 single-actor commands).
+ * F4 Wave C2 single-actor commands).
  *
  * **Why this exists.** Before this, [CommandReserveService] published a `Run(POKE)` for EVERY
  * AVAILABLE command and reserved the action-code into the `general_turn` ring. That is correct for
  * the **turn-reserved** `che_*` commands (resolved on the general's turn from the ring). But the
- * betting/auction + C2 commands are NOT turn-reserved — their engine handlers
- * (the auction handlers, …, the C2 intake handlers) are driven by the
+ * C2 commands are NOT turn-reserved — their engine handlers
+ * (the C2 intake handlers) are driven by the
  * [opensamguk.engine.run.TurnDaemonCommandDispatcher] off a TYPED command on the command stream, NOT
  * by the `general_turn` ring. So they need their typed [TurnDaemonCommand] published verbatim — a
  * `Run(POKE)` would reach the dispatcher and return `null` (no handler), silently dropping the action.
@@ -38,7 +38,7 @@ import opensamguk.logic.command.GarrisonRecruitArgs
  * path, which [CommandReserveService] keeps handling via the ring + `Run(POKE)`).
  *
  * The arg shape is the JSON body the frontend `CommandModal`/`api.command(code, args, …)` posts —
- * the page-fixed `extraArgs` (auctionId/bettingId/…) merged with the picked arg (amount/value/…). The
+ * the page-fixed `extraArgs` (nationId/…) merged with the picked arg (amount/value/…). The
  * `generalId` is the RESOLVED owner (from the controller, NOT from the body) so a caller can never
  * act as another general. NO new wire variant is introduced — every command here already exists in
  * `:common` ([TurnDaemonCommand]) and round-trips through the existing wire serializer.
@@ -49,7 +49,6 @@ object CommandWireMapper {
 
     /** The immediate-intake command codes this mapper translates (everything else = turn-reserved). */
     val intakeCodes: Set<String> = setOf(
-        "auctionBid",
         "setNotice",
         "setScoutMsg",
         "setRate",
@@ -106,10 +105,6 @@ object CommandWireMapper {
         "setMySetting",
         "vacation",
         "acceptRaiseInvaderMessage",
-        // W6c 경매 개설 — 쌀 매수/매도/유니크.
-        "auctionOpenBuyRice",
-        "auctionOpenSellRice",
-        "auctionOpenUnique",
         // W5d 외교 서신 — 발송/회수/파기.
         "diploSendLetter",
         "diploRollbackLetter",
@@ -214,15 +209,6 @@ object CommandWireMapper {
         if (code !in intakeCodes) return null
         val args = parseArgs(argJson)
         return when (code) {
-            "auctionBid" -> TurnDaemonCommand.AuctionBid(
-                requestId = requestId,
-                auctionId = args.int("auctionId") ?: 0,
-                generalId = generalId,
-                amount = args.int("amount") ?: 0,
-                // 동결된 역사 PHP/Vue 참고는 `extendCloseDate`를 보냈다(ADR-LITE-042; 현재 제품 정본 아님).
-                // 내부 wire 키 `tryExtendCloseDate`도 하위호환 수용.
-                tryExtendCloseDate = args.bool("extendCloseDate") ?: args.bool("tryExtendCloseDate"),
-            )
             "setNotice" -> TurnDaemonCommand.SetNotice(
                 requestId = requestId, generalId = generalId, msg = args.str("msg") ?: "",
             )
@@ -422,26 +408,6 @@ object CommandWireMapper {
                 requestId = requestId,
                 messageId = args.int("messageId") ?: args.int("msgID") ?: 0,
                 generalId = generalId,
-            )
-            // ── W6c 경매 개설 — 쌀 매수/매도/유니크. 검증 순서(3개월→턴수→거래량→입찰가)는 엔진이 적용. ──
-            "auctionOpenBuyRice" -> TurnDaemonCommand.AuctionOpenBuyRice(
-                requestId = requestId, generalId = generalId,
-                amount = args.int("amount") ?: 0,
-                closeTurnCnt = args.int("closeTurnCnt") ?: 0,
-                startBidAmount = args.int("startBidAmount") ?: 0,
-                finishBidAmount = args.int("finishBidAmount") ?: 0,
-            )
-            "auctionOpenSellRice" -> TurnDaemonCommand.AuctionOpenSellRice(
-                requestId = requestId, generalId = generalId,
-                amount = args.int("amount") ?: 0,
-                closeTurnCnt = args.int("closeTurnCnt") ?: 0,
-                startBidAmount = args.int("startBidAmount") ?: 0,
-                finishBidAmount = args.int("finishBidAmount") ?: 0,
-            )
-            "auctionOpenUnique" -> TurnDaemonCommand.AuctionOpenUnique(
-                requestId = requestId, generalId = generalId,
-                itemId = args.str("itemId") ?: args.str("itemKey") ?: "",
-                amount = args.int("amount") ?: 0,
             )
             // ── W5d 외교 서신 — 발송/회수/파기. prevLetterNo는 <1 → null(PHP)로 '이전 문서 없음' 게이트 유지. ──
             "diploSendLetter" -> TurnDaemonCommand.DiploSendLetter(

@@ -164,7 +164,7 @@ jobs:
         if: matrix.app == 'game-api' || matrix.app == 'game-engine'
         run: >-
           ./gradlew :infra:test --no-daemon
-          --tests 'opensamguk.infra.seed.ScenarioJsonTest.committed runtime scenarios preserve frozen V2 and opt into new-world-only V3 explicitly'
+          --tests 'opensamguk.infra.seed.ScenarioJsonTest.product runtime scenario declares the HWIHA new world and satisfies its seed contract'
 
       - name: Log in to GHCR
         uses: docker/login-action@v3

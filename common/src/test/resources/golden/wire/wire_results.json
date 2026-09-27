@@ -1,6 +1,4 @@
 [
-  { "type": "auctionFinalize", "ok": true, "auctionId": 101 },
-  { "type": "auctionFinalize", "ok": false, "auctionId": 101, "reason": "no bids" },
   { "type": "troopJoin", "ok": true, "generalId": 11, "troopId": 7 },
   { "type": "troopJoin", "ok": false, "generalId": 11, "troopId": 7, "reason": "troop full" },
   { "type": "troopExit", "ok": true, "generalId": 11, "wasLeader": false },
@@ -32,7 +30,5 @@
   { "type": "adjustGeneralMeta", "ok": true, "processed": 1, "missing": 0 },
   { "type": "adjustGeneralMeta", "ok": false, "reason": "general missing" },
   { "type": "patchGeneral", "ok": true, "generalId": 60 },
-  { "type": "patchGeneral", "ok": false, "generalId": 60, "reason": "general not found" },
-  { "type": "auctionBid", "ok": true, "auctionId": 101, "closeAt": "0200-01-01T00:10:00.000Z" },
-  { "type": "auctionBid", "ok": false, "auctionId": 101, "reason": "bid too low" }
+  { "type": "patchGeneral", "ok": false, "generalId": 60, "reason": "general not found" }
 ]

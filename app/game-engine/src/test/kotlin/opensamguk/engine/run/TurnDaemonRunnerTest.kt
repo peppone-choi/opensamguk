@@ -1,6 +1,7 @@
 package opensamguk.engine.run
 
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
 
 import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.redis.RealtimePublisher
@@ -18,8 +19,10 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.springframework.beans.factory.ObjectProvider
 import org.springframework.data.redis.core.StringRedisTemplate
+import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.Test
@@ -210,6 +213,134 @@ class TurnDaemonRunnerTest {
     }
 
     @Test
+    fun `catch-up drains the earlier personal deadline before the world boundary`() {
+        val order = mutableListOf<String>()
+        val worldLatch = CountDownLatch(1)
+        val now = Instant.now()
+        val worldDeadline = now.minusSeconds(1)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            latch = worldLatch,
+            initialNextRun = worldDeadline,
+            initialNextGeneralRun = now.minusSeconds(2),
+            initialCatchUp = TurnCatchUp.start(worldDeadline, now),
+            callOrder = order,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), daemonEnabled = true, idlePollMs = 10)
+        runner.start()
+        try {
+            assertTrue(worldLatch.await(3, TimeUnit.SECONDS))
+            assertEquals(listOf("general", "world"), order.take(2))
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `catch-up runner waits between consecutive world ticks`() {
+        val now = Instant.now()
+        val firstRun = now.minusSeconds(8)
+        val ticks = AtomicInteger()
+        val svc = StubService(
+            ticks = ticks,
+            initialNextRun = firstRun,
+            initialCatchUp = TurnCatchUp.start(firstRun, now),
+            tickStep = Duration.ofSeconds(2),
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), true, 10)
+        runner.start()
+        try {
+            assertTrue(waitUntil(3_000) { ticks.get() >= 2 }, "two catch-up ticks execute")
+            val times = svc.tickTimesNanos.toList()
+            assertTrue(times.size >= 2)
+            assertTrue(
+                TimeUnit.NANOSECONDS.toMillis(times[1] - times[0]) >= 700,
+                "two-second game ticks at 2x must wait about one wall-clock second",
+            )
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `resume reanchors catch-up before another world tick can burst`() {
+        val now = Instant.now()
+        val firstRun = now.minusSeconds(8)
+        val gate = DaemonPauseGate()
+        val ticks = AtomicInteger()
+        val svc = StubService(
+            ticks = ticks,
+            initialNextRun = firstRun,
+            initialCatchUp = TurnCatchUp.start(firstRun, now),
+            tickStep = Duration.ofSeconds(2),
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, gate, true, 10)
+        runner.start()
+        try {
+            assertTrue(waitUntil(2_000) { ticks.get() >= 1 }, "first pending tick executes")
+            assertTrue(gate.lock())
+            Thread.sleep(2_600)
+            assertEquals(1, ticks.get(), "pause freezes scheduled ticks")
+            assertTrue(gate.unlock())
+            assertTrue(waitUntil(2_000) { ticks.get() >= 3 }, "catch-up resumes after pause")
+            val times = svc.tickTimesNanos.toList()
+            assertTrue(svc.reanchorCalls.get() >= 2, "resume reanchors the persisted plan")
+            assertTrue(
+                TimeUnit.NANOSECONDS.toMillis(times[2] - times[1]) >= 700,
+                "only the first pending world tick may run immediately after resume",
+            )
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `repeated tick failures do not persist catch-up anchors every poll`() {
+        val now = Instant.now()
+        val firstRun = now.minusSeconds(8)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            initialNextRun = firstRun,
+            initialCatchUp = TurnCatchUp.start(firstRun, now),
+            failTicks = true,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), true, 100)
+        runner.start()
+        try {
+            Thread.sleep(1_000)
+            assertTrue(svc.ticks.get() >= 3, "the failed tick was retried")
+            assertTrue(
+                svc.reanchorCalls.get() <= 1,
+                "a failure streak must not persist a new catch-up anchor on every retry",
+            )
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
+    fun `catch-up reanchors once after a failed tick finally succeeds`() {
+        val now = Instant.now()
+        val firstRun = now.minusSeconds(8)
+        val svc = StubService(
+            ticks = AtomicInteger(),
+            initialNextRun = firstRun,
+            initialCatchUp = TurnCatchUp.start(firstRun, now),
+            tickStep = Duration.ofSeconds(2),
+            failFirstTicks = 3,
+        )
+        val runner = TurnDaemonRunner(provider(svc), WORLD_EXISTS, DaemonPauseGate(), true, 100)
+        runner.start()
+        try {
+            assertTrue(waitUntil(2_000) { svc.ticks.get() >= 4 }, "a retry eventually succeeds")
+            assertTrue(waitUntil(2_000) { svc.reanchorCalls.get() >= 2 }, "the first successful flush permits reanchor")
+            assertEquals(2, svc.reanchorCalls.get(), "the failure streak persisted only one recovery anchor")
+        } finally {
+            runner.stop()
+        }
+    }
+
+    @Test
     fun `paused runner does not drain a due general until resumed`() {
         val generalLatch = CountDownLatch(1)
         val gate = DaemonPauseGate()
@@ -370,10 +501,13 @@ class TurnDaemonRunnerTest {
         private val generalDrainLatch: CountDownLatch? = null,
         private val callOrder: MutableList<String>? = null,
         private val failTicks: Boolean = false,
+        failFirstTicks: Int = 0,
         /** `Error`를 던져 루프 스레드를 통째로 죽인다 — loop()의 `catch (e: Exception)`이 못 잡는다. */
         private val killLoopWithError: Boolean = false,
         initialNextRun: Instant = Instant.now().minusSeconds(5),
         initialNextGeneralRun: Instant? = null,
+        initialCatchUp: TurnCatchUp? = null,
+        private val tickStep: Duration? = null,
     ) : TurnRunService(
         world = stubWorld(),
         commandStream = RedisCommandStream(StringRedisTemplate(), "che:test", WorldId(1), startId = "0"),
@@ -385,11 +519,31 @@ class TurnDaemonRunnerTest {
         // Past ⇒ due now; after the first tick push it far out so the loop idles (one observable drive).
         @Volatile private var next: Instant = initialNextRun
         @Volatile private var nextGeneral: Instant? = initialNextGeneralRun
+        @Volatile private var catchUp: TurnCatchUp? = initialCatchUp
+        val tickTimesNanos = CopyOnWriteArrayList<Long>()
+        // Production ensureCatchUp persists each active-plan reanchor through the full flush path.
+        val reanchorCalls = AtomicInteger()
+        private val remainingFailedTicks = AtomicInteger(failFirstTicks)
         private val pendingIntakeDrains = AtomicInteger(if (intakeDrains == null) 0 else 1)
 
         override fun nextRunTime(): Instant = next
 
         override fun nextGeneralRunTime(): Instant? = nextGeneral
+
+        override fun catchUpPlan(): TurnCatchUp? = catchUp
+        override fun ensureCatchUp(at: Instant, reanchor: Boolean) {
+            val existing = catchUp ?: return
+            if (reanchor && existing.active) {
+                catchUp = existing.copy(
+                    anchorAt = at,
+                    anchorGameAt = minOf(existing.virtualTime(at), next),
+                    lastCalculatedAt = at,
+                )
+                reanchorCalls.incrementAndGet()
+            }
+        }
+        override fun refreshCatchUp(at: Instant) = Unit
+        override fun finishCatchUpIfCurrent(at: Instant) = Unit
 
         override fun runIntakeCommands(blockMs: Long): Int {
             val counter = intakeDrains ?: return 0
@@ -403,14 +557,15 @@ class TurnDaemonRunnerTest {
 
         override fun runTick(runTime: Instant): TickResult {
             callOrder?.add("world")
+            tickTimesNanos.add(System.nanoTime())
             ticks.incrementAndGet()
             if (killLoopWithError) {
                 throw StackOverflowError("simulated JVM Error — loop() does not catch Error")
             }
-            if (failTicks) {
+            if (failTicks || remainingFailedTicks.getAndUpdate { if (it > 0) it - 1 else 0 } > 0) {
                 throw IllegalStateException("boom")
             }
-            next = Instant.now().plusSeconds(3600)
+            next = tickStep?.let { runTime.plus(it) } ?: Instant.now().plusSeconds(3600)
             latch?.countDown()
             return TickResult(
                 handled = emptyList(),
