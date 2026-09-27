@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "status": "CONFIRMED",
+  "decidedBy": "Codex game-design implementation under 2026-09-27 user delegation D1-D5",
+  "basis": "Playability-first fixed integer values; original KI.EXE damage, speed, range, gate/ladder duration, duel control, and battle limit remain UNKNOWN",
+  "originalUnknown": [
+    "damageFormula",
+    "movementSpeed",
+    "attackRange",
+    "gateAndLadderTime",
+    "duelProcedure",
+    "battleTimeLimit"
+  ],
+  "session": {
+    "joinWaitSeconds": 60,
+    "tickMillis": 100,
+    "battleTicks": 3000,
+    "checkpointTicks": 50
+  },
+  "morale": {
+    "scaleMax": 200,
+    "retreatBelow": 100,
+    "initialBase": 80,
+    "generalStrengthDivisor": 4,
+    "bugokMoraleDivisor": 2,
+    "lossPerCasualtyPercent": 1,
+    "duelWinnerBonus": 25,
+    "duelLoserPenalty": 35
+  },
+  "movement": {
+    "infantryTicksPerTile": 12,
+    "archerTicksPerTile": 14,
+    "cavalryTicksPerTile": 8,
+    "forestExtraTicks": 4,
+    "hillExtraTicks": 5,
+    "riverExtraTicks": 9,
+    "mountainPassable": false
+  },
+  "combat": {
+    "attackIntervalTicks": 10,
+    "infantryRangeTiles": 1,
+    "archerRangeTiles": 3,
+    "cavalryRangeTiles": 1,
+    "baseDamagePercent": 2,
+    "minimumDamage": 1,
+    "forestDefensePercent": 15,
+    "hillDefensePercent": 20,
+    "riverDefensePercent": -20,
+    "nightAccuracyPercent": -15,
+    "rainArcherDamagePercent": -20,
+    "cavalryVsArcherPercent": 25,
+    "infantryVsCavalryPercent": 15,
+    "archerVsInfantryPercent": 15,
+    "supplyShortageDamagePercent": -20
+  },
+  "siege": {
+    "wallHpPerWall": 10,
+    "gateHpPerDefence": 8,
+    "gateDamagePerAttack": 2,
+    "ladderDeployTicks": 150,
+    "defenderWallDamageReductionPercent": 50,
+    "ramGateDamageBonusPercent": 100,
+    "towerArcherDamageBonusPercent": 20
+  },
+  "duel": {
+    "offerMinimumStrength": 70,
+    "aiAcceptStrengthDifferenceAtMost": 15,
+    "roundLimit": 8,
+    "powerStrengthWeight": 2,
+    "powerLeadershipWeight": 1,
+    "damageDivisor": 9,
+    "minimumDamage": 4
+  },
+  "victory": {
+    "casualtyPercentToForceRetreat": 70,
+    "moraleRoutBelow": 50,
+    "timeoutScore": "sum(aliveTroops * morale); defender wins exact tie"
+  },
+  "variety": {
+    "weather": ["CLEAR", "RAIN"],
+    "nightRule": "campaign local hour 18-05",
+    "seasonRule": "campaign month 3-5 spring, 6-8 summer, 9-11 autumn, 12-2 winter",
+    "objectives": ["SUPPLY_CONVOY", "RIVER_CROSSING", "PASS_BREAKTHROUGH", "PURSUIT", "AMBUSH"],
+    "eventEveryTicks": 300,
+    "stratagemCooldownTicks": 200
+  }
+}
