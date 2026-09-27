@@ -1,5 +1,6 @@
 package opensamguk.gameapi.battle.realtime
 
+import java.util.Base64
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
@@ -16,9 +17,11 @@ class BattleJoinTicketServiceTest {
     private val ticket = FrozenBattleTicket(world, "battle-1", "{}", "a".repeat(64),
         "a".repeat(64), "a".repeat(64), "a".repeat(64), 17, 4, 2,
         now.minusSeconds(60), now.plusSeconds(300), listOf(participant))
-    private fun head(epoch: Long = 1, leaseUntil: Instant = now.plusSeconds(30)) =
-        BattleSessionHead(world, "battle-1", BattleSessionPhase.RUNNING, epoch, 0, 0, 0,
-            "actor", leaseUntil, ticket.joinDeadlineAt, ticket.deadlineAt)
+    private fun head(epoch: Long = 1, leaseUntil: Instant = now.plusSeconds(30),
+                     phase: BattleSessionPhase = BattleSessionPhase.RUNNING,
+                     deadlineAt: Instant = ticket.deadlineAt) =
+        BattleSessionHead(world, "battle-1", phase, epoch, 0, 0, 0,
+            "actor", leaseUntil, ticket.joinDeadlineAt, deadlineAt)
     private fun service(store: FakeStore, at: Instant = now, secret: ByteArray = ByteArray(32) { 7 }) =
         BattleJoinTicketService(store, secret, Clock.fixed(at, ZoneOffset.UTC))
 
@@ -29,6 +32,7 @@ class BattleJoinTicketServiceTest {
         val token = signer.issue(world, "battle-1", 42)
         val claims = signer.verify(token, world, "battle-1", 42)
         assertEquals(1, claims.participantId)
+        assertEquals(7, claims.generalId)
         assertEquals("ATTACKER", claims.side)
         assertEquals(1L, claims.sessionEpoch)
         assertEquals(now.plusSeconds(60), claims.expiresAt)
@@ -41,7 +45,16 @@ class BattleJoinTicketServiceTest {
         val token = signer.issue(world, "battle-1", 42)
         assertFailsWith<SecurityException> { signer.verify(token, world, "battle-1", 43) }
         assertFailsWith<SecurityException> { signer.verify(token, WorldId(2), "battle-1", 42) }
-        assertFailsWith<SecurityException> { signer.verify(token.dropLast(1) + "A", world, "battle-1", 42) }
+        val parts = token.split('.')
+        val changedPayload = Base64.getUrlDecoder().decode(parts[1]).also {
+            it[0] = (it[0].toInt() xor 1).toByte()
+        }
+        val forged = "${parts[0]}.${Base64.getUrlEncoder().withoutPadding().encodeToString(changedPayload)}.${parts[2]}"
+        assertFailsWith<SecurityException> { signer.verify(forged, world, "battle-1", 42) }
+        val changedFirst = if (parts[2].first() == 'A') 'B' else 'A'
+        assertFailsWith<SecurityException> {
+            signer.verify("${parts[0]}.${parts[1]}.$changedFirst${parts[2].drop(1)}", world, "battle-1", 42)
+        }
         assertFailsWith<SecurityException> { signer.issue(world, "battle-1", 43) }
     }
 
@@ -57,7 +70,37 @@ class BattleJoinTicketServiceTest {
         }
     }
 
-    private class FakeStore(val currentTicket: FrozenBattleTicket, var currentHead: BattleSessionHead) : BattleSessionStore {
+    @Test
+    fun `lease phase participant revision and general identity fence admission`() {
+        val store = FakeStore(ticket, head())
+        val token = service(store).issue(world, "battle-1", 42)
+        store.currentHead = head(leaseUntil = now.minusSeconds(1))
+        assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
+        assertFailsWith<SecurityException> { service(store).issue(world, "battle-1", 42) }
+        store.currentHead = head(phase = BattleSessionPhase.RESOLVING)
+        assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
+        assertFailsWith<SecurityException> { service(store).issue(world, "battle-1", 42) }
+        store.currentHead = head()
+        store.currentTicket = ticket.copy(participants = listOf(participant.copy(authorityRevision = 4)))
+        assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
+        store.currentTicket = ticket.copy(participants = listOf(participant.copy(generalId = 8)))
+        assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
+    }
+
+    @Test
+    fun `ticket expiry is cut to battle deadline`() {
+        val shortDeadline = now.plusSeconds(25)
+        val shortTicket = ticket.copy(deadlineAt = shortDeadline)
+        val store = FakeStore(shortTicket, head(leaseUntil = now.plusSeconds(120), deadlineAt = shortDeadline))
+        val signer = service(store)
+        val token = signer.issue(world, "battle-1", 42)
+        assertEquals(shortDeadline, signer.verify(token, world, "battle-1", 42).expiresAt)
+        assertFailsWith<SecurityException> {
+            service(store, shortDeadline).verify(token, world, "battle-1", 42)
+        }
+    }
+
+    private class FakeStore(var currentTicket: FrozenBattleTicket, var currentHead: BattleSessionHead) : BattleSessionStore {
         override fun ticket(worldId: WorldId, battleId: String) = currentTicket
         override fun head(worldId: WorldId, battleId: String) = currentHead
         override fun create(ticket: FrozenBattleTicket) = error("unused")

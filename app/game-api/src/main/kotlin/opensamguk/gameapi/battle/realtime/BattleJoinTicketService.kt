@@ -23,17 +23,18 @@ data class BattleJoinIdentity(
     val battleId: String,
     val accountId: Int,
     val participantId: Int,
+    val generalId: Int,
     val side: String,
     val sessionEpoch: Long,
     val authorityRevision: Long,
     val expiresAt: Instant,
 )
 
-/** Issues a short-lived capability only after a normal authenticated request supplies accountId. */
+/** The caller must supply a clock in the DB lease/deadline time domain when wiring this service. */
 class BattleJoinTicketService(
     private val store: BattleSessionStore,
     secret: ByteArray,
-    private val clock: Clock = Clock.systemUTC(),
+    private val clock: Clock,
 ) {
     private val key = secret.copyOf().also { require(it.size >= 32) { "battle join secret must be at least 32 bytes" } }
     private val encoder = Base64.getUrlEncoder().withoutPadding()
@@ -53,6 +54,7 @@ class BattleJoinTicketService(
             out.writeUTF(battleId)
             out.writeInt(authenticatedAccountId)
             out.writeInt(participant.participantId)
+            out.writeInt(participant.generalId)
             out.writeUTF(participant.side)
             out.writeLong(head.sessionEpoch)
             out.writeLong(participant.authorityRevision)
@@ -81,6 +83,7 @@ class BattleJoinTicketService(
                 val signedBattleId = input.readUTF()
                 val signedAccountId = input.readInt()
                 val participantId = input.readInt()
+                val generalId = input.readInt()
                 val side = input.readUTF()
                 val epoch = input.readLong()
                 val authorityRevision = input.readLong()
@@ -92,13 +95,14 @@ class BattleJoinTicketService(
                 require(!issuedAt.isAfter(now.plusSeconds(5)) && expiresAt.isAfter(now) &&
                     expiresAt.isAfter(issuedAt) && !expiresAt.isAfter(issuedAt.plusSeconds(60)))
                 BattleJoinIdentity(signedWorldId, signedBattleId, signedAccountId,
-                    participantId, side, epoch, authorityRevision, expiresAt)
+                    participantId, generalId, side, epoch, authorityRevision, expiresAt)
             }
             require(source.available() == 0)
             val ticket = store.ticket(worldId, battleId) ?: error("battle ticket missing")
             val head = store.head(worldId, battleId) ?: error("battle session missing")
             val participant = activeParticipant(ticket, head, authenticatedAccountId, clock.instant())
-            require(claims.participantId == participant.participantId && claims.side == participant.side &&
+            require(claims.participantId == participant.participantId &&
+                claims.generalId == participant.generalId && claims.side == participant.side &&
                 claims.authorityRevision == participant.authorityRevision &&
                 claims.sessionEpoch == head.sessionEpoch && !claims.expiresAt.isAfter(head.deadlineAt))
             return claims
