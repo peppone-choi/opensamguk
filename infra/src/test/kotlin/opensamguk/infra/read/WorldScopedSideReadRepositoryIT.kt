@@ -2,7 +2,6 @@ package opensamguk.infra.read
 
 import opensamguk.common.world.WorldId
 import opensamguk.infra.worldstate.WorldStateRepository
-import opensamguk.logic.auction.AuctionType
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -31,8 +30,6 @@ import kotlin.test.assertTrue
 @Import(SideReadRepositoryConfiguration::class, WorldOneScopeConfiguration::class)
 class WorldScopedSideReadRepositoryIT {
     @Autowired lateinit var jdbc: JdbcTemplate
-    @Autowired lateinit var auctions: AuctionRepository
-    @Autowired lateinit var bids: AuctionBidRepository
     @Autowired lateinit var betting: BettingRepository
     @Autowired lateinit var boardPosts: BoardPostRepository
     @Autowired lateinit var gameKv: GameKvRepository
@@ -57,11 +54,6 @@ class WorldScopedSideReadRepositoryIT {
             updateSelectPoolConfig(worldId)
         }
 
-        insertAuction(worldId = 1, id = 7, target = "world-one")
-        insertAuction(worldId = 2, id = 7, target = "world-two")
-        insertAuction(worldId = 2, id = 99, target = "world-two-max")
-        insertBid(worldId = 1, no = 1, auctionId = 7, amount = 100)
-        insertBid(worldId = 2, no = 1, auctionId = 7, amount = 999)
         insertBet(worldId = 1, id = 1, amount = 120)
         insertBet(worldId = 2, id = 1, amount = 900)
         insertBoardPost(worldId = 1, id = 5, title = "world-one")
@@ -78,16 +70,6 @@ class WorldScopedSideReadRepositoryIT {
 
     @Test
     fun `identical local ids stay inside the process world across side reads`() {
-        assertEquals("world-one", auctions.findById(7).orElseThrow().target)
-        assertEquals(listOf(7), auctions.findByFinishedFalse().mapNotNull { it.id })
-        assertEquals(7, auctions.findMaxId())
-
-        assertEquals(100, bids.findTopByAuctionIdOrderByAmountDesc(7)?.amount)
-        assertEquals(
-            listOf(100),
-            bids.findHighestBidsByAuctionIds(listOf(7)).map { it.amount },
-        )
-
         assertEquals(120L, betting.aggregateTotalAmountByBetting().single().sumAmount)
         assertEquals(120L, betting.aggregateAmountByType(3).single().sumAmount)
         assertEquals(120L, betting.sumAmountByBettingIdAndUserId(3, 100))
@@ -148,33 +130,6 @@ class WorldScopedSideReadRepositoryIT {
             generalId,
         )
     }
-    private fun insertAuction(worldId: Int, id: Int, target: String) {
-        jdbc.update(
-            """
-            INSERT INTO ng_auction (
-                world_id, id, type, finished, target, host_general_id, req_resource,
-                open_date, close_date, detail
-            ) VALUES (?, ?, 'uniqueItem', false, ?, 0, 'gold', now(), now() + interval '1 day', '{}')
-            """.trimIndent(),
-            worldId,
-            id,
-            target,
-        )
-    }
-
-    private fun insertBid(worldId: Int, no: Int, auctionId: Int, amount: Int) {
-        jdbc.update(
-            """
-            INSERT INTO ng_auction_bid (world_id, no, auction_id, owner, general_id, amount, date, aux)
-            VALUES (?, ?, ?, 100, 10, ?, now(), '{}')
-            """.trimIndent(),
-            worldId,
-            no,
-            auctionId,
-            amount,
-        )
-    }
-
     private fun insertBet(worldId: Int, id: Int, amount: Int) {
         jdbc.update(
             """

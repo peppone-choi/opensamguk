@@ -514,7 +514,7 @@ class IntakeWaveC2SliceATest {
     // ── dispatcher binding ──────────────────────────────────────────────────────
 
     /**
-     * A no-op [AuctionRepository]/[AuctionBidRepository] via a reflection proxy — the intake commands
+     * A no-op read repository (e.g. [opensamguk.infra.read.BoardPostRepository]) via a reflection proxy — the intake commands
      * never call any repo method, so the proxy only needs to satisfy the dispatcher's constructor.
      */
     private inline fun <reified T> noopRepo(): T = java.lang.reflect.Proxy.newProxyInstance(
@@ -535,8 +535,6 @@ class IntakeWaveC2SliceATest {
         // repos are no-op proxies — only the intake handlers fire (they never touch a repo).
         val dispatcher = TurnDaemonCommandDispatcher(
             world, recorder,
-            noopRepo<opensamguk.infra.read.AuctionRepository>(),
-            noopRepo<opensamguk.infra.read.AuctionBidRepository>(),
             noopRepo<opensamguk.infra.read.BoardPostRepository>(),
         )
 

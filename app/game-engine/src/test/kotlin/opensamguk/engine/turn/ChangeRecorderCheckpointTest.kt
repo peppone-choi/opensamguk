@@ -4,9 +4,29 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.assertTrue
+import java.time.Instant
+import opensamguk.common.turn.TurnCatchUp
 import java.lang.reflect.Modifier
 
 class ChangeRecorderCheckpointTest {
+    @Test
+    fun `catch-up delta is restored with checkpoint and cleared only after commit`() {
+        val recorder = ChangeRecorder()
+        val start = Instant.parse("2026-09-27T00:00:00Z")
+        val original = TurnCatchUp.start(start.minusSeconds(72000), start)
+        recorder.recordCatchUp(original)
+        val checkpoint = recorder.checkpoint()
+        recorder.recordCatchUp(original.switchMultiplier(4, start.plusSeconds(1)))
+        recorder.restore(checkpoint)
+        assertEquals(original, recorder.catchUpUpdate())
+        assertTrue(recorder.isDirty)
+        recorder.clear()
+        assertNull(recorder.catchUpUpdate())
+        assertFalse(recorder.isDirty)
+    }
+
     @Test
     fun `checkpoint covers every recorder mutable channel exactly once`() {
         val recorder = ChangeRecorder()

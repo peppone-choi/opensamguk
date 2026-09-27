@@ -2481,8 +2481,6 @@ class ReservedTurnHandler(
                 if (code != null && isUniqueItem(code, uniqueCatalog)) occupied[code] = (occupied[code] ?: 0) + 1
             }
         }
-        val auctionItems = world.getState().meta["activeUniqueAuctionItems"] as? Iterable<*>
-        auctionItems?.forEach { code -> code?.toString()?.let { occupied[it] = (occupied[it] ?: 0) + 1 } }
         val stored = world.getState().meta["storedUniqueItemCounts"] as? Map<*, *>
         stored?.forEach { (code, count) ->
             val key = code?.toString() ?: return@forEach

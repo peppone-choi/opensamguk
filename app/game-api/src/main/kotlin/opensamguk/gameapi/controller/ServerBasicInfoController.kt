@@ -1,5 +1,7 @@
 package opensamguk.gameapi.controller
 
+import java.time.Instant
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.ServerBasicInfoResponse
 import opensamguk.gameapi.dto.ServerGameInfo
@@ -92,6 +94,12 @@ class ServerBasicInfoController(
             defaultStatTotal = GameConst.defaultStatTotal,
             otherTextInfo = otherTextInfo,
             status = w.status,
+            catchUp = TurnCatchUp.snapshotFromStored(
+                w.catchUp,
+                (w.meta["lastTurnTime"] as? String)?.let { runCatching { Instant.parse(it) }.getOrNull() },
+                w.tickSeconds,
+                Instant.now(),
+            ),
         )
     }
 

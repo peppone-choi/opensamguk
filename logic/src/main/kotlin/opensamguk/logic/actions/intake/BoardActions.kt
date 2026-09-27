@@ -6,7 +6,7 @@ package opensamguk.logic.actions.intake
  * 전혀 없다. side effect는 엔진의 `BoardHandler`가 소유한다(댓글을 위한 게시물 존재 여부 read +
  * social-content 채널로의 ChangeRecorder INSERT).
  *
- * 게시판 글/댓글은 social content(InMemoryTurnWorld의 game-state가 아님)이므로, betting/auction
+ * 게시판 글/댓글은 social content(InMemoryTurnWorld의 game-state가 아님)이므로, betting
  * 선례를 따라 ChangeRecorder INSERT 채널을 통해 flush된다 — 절대 game-api JPA write가 아니다
  * (locked rule 2).
  *

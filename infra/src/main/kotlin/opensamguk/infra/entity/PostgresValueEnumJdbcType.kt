@@ -16,7 +16,7 @@ import java.sql.Types
  * PHP `.value` 라벨을 쓰는 Postgres ENUM 컬럼용 JdbcType.
  *
  * 이 저장소의 PG ENUM 라벨은 PHP 문자열 백킹 enum 의 `.value` 다 — `message_type` 은
- * `private`/`public`/`national`/`diplomacy`, `ng_auction_type` 은 `buyRice` 등 **소문자·캐멀**이며
+ * `private`/`public`/`national`/`diplomacy` 처럼 **소문자(·캐멀)**이며
  * Kotlin enum 상수명(`PRIVATE`)과 다르다. 그래서 Hibernate 내장 타입을 쓸 수 없다.
  *
  *  - `@Enumerated(STRING)` / `SqlTypes.NAMED_ENUM`(`PostgreSQLEnumJdbcType`) 은 `.name()`(대문자)을
