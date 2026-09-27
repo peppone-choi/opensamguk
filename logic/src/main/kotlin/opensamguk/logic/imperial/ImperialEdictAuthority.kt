@@ -21,9 +21,12 @@ object ImperialEdictAuthority {
         require(artifact.kind == RegaliaKind.STATE_REGALIA) { "office instrument cannot seal an imperial edict" }
         require(custodianGeneralId in authorizedCustodianIds) { "custodian lacks court authority" }
         require(artifact.custodianGeneralId == custodianGeneralId && artifact.cityId == courtCityId)
-        require(artifact.authenticityClaims.any {
-            it.assertedIdentity == artifact.claimedIdentity &&
-                it.assessment == AuthenticityAssessment.CORROBORATED && it.evidenceIds.isNotEmpty()
+        val identityClaims = artifact.authenticityClaims.filter { it.assertedIdentity == artifact.claimedIdentity }
+        require(identityClaims.none {
+            it.assessment == AuthenticityAssessment.DISPUTED || it.assessment == AuthenticityAssessment.REJECTED
+        }) { "seal identity is disputed or rejected" }
+        require(identityClaims.any {
+            it.assessment == AuthenticityAssessment.CORROBORATED && it.evidenceIds.isNotEmpty()
         }) { "no corroborated seal identity" }
         return ImperialEdictPipeline.seal(edict, artifact.id, authorizedForEdicts = true)
     }

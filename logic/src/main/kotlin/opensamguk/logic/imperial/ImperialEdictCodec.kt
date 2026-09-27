@@ -57,6 +57,9 @@ object ImperialEdictCodec {
             if (receipt.decision == EdictRecipientDecision.ACCEPT && officeId != null) {
                 require(officeId in receipt.acceptedOfficeIds)
             }
+            if (receipt.decision == EdictRecipientDecision.PARTIAL_ACCEPT) {
+                require(officeId != null)
+            }
         }
     }
 
