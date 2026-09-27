@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "ledgerId": "imperial-edict-response-rules",
+  "rows": [
+    {
+      "id": "edict.response-rules",
+      "grade": "GAME_TERM",
+      "sources": [],
+      "gameTermReason": "조서 응답의 관계 변화량은 사료 수치가 아닌 게임 규칙이다.",
+      "displayBadge": "게임 용어",
+      "values": {
+        "ACCEPT": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "조서를 수락한 세력에는 불복 비용을 부과하지 않는다."
+        },
+        "PARTIAL_ACCEPT": {
+          "value": 0,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "부분 수락 자체는 외교적 불복으로 보지 않고 집행 범위만 줄인다."
+        },
+        "DELAY": {
+          "value": -2,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "전달 뒤 지연은 조정과의 관계를 작게 깎는다."
+        },
+        "REFUSE": {
+          "value": -8,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "공식 거부는 조정 권위를 부정하므로 지연보다 큰 비용을 둔다."
+        },
+        "DENOUNCE": {
+          "value": -15,
+          "status": "CONFIRMED",
+          "decidedBy": "구현 에이전트",
+          "decidedAt": "2026-09-25",
+          "basis": "공개 비난은 공식 거부보다 큰 외교적 파열이다."
+        }
+      }
+    }
+  ]
+}
