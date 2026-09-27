@@ -1,6 +1,8 @@
 package opensamguk.infra.persistence
 
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
+import java.time.Instant
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -56,6 +58,40 @@ class WorldVersionCasIT {
     @AfterAll
     fun tearDown() {
         if (this::postgres.isInitialized) postgres.stop()
+    }
+
+    @Test
+    fun `catch-up column survives CAS and non-CAS flushes`() {
+        val start = Instant.parse("2026-09-27T00:00:00Z")
+        val plan = TurnCatchUp.start(start.minusSeconds(72000), start)
+        jdbc.update(
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, world_version, writer_epoch) " +
+                "VALUES (2, 'catchup', 200, 1, 300, 0, 9)",
+            MapSqlParameterSource(),
+        )
+        val version = jdbc.queryForObject(
+            "SELECT world_version FROM world_state WHERE id = 2", MapSqlParameterSource(), Long::class.java,
+        )!!
+        executor.flush(testFlushPayload(WorldId(2), mutableMapOf(
+            "id" to 2, "current_year" to 200, "current_month" to 1,
+            "expected_world_version" to version, "writer_epoch" to 9L,
+            "catch_up" to plan.toMeta(),
+        )))
+        fun stored() = TurnCatchUp.fromMeta(MetaJson.decode(jdbc.queryForObject(
+            "SELECT catch_up::text FROM world_state WHERE id = 2", MapSqlParameterSource(), String::class.java,
+        )))
+        assertEquals(plan, stored())
+
+        executor.flush(testFlushPayload(WorldId(2), mapOf(
+            "id" to 2, "current_year" to 200, "current_month" to 1,
+        )))
+        assertEquals(plan, stored(), "an ordinary flush must preserve the active plan")
+
+        val finished = plan.copy(active = false)
+        executor.flush(testFlushPayload(WorldId(2), mapOf(
+            "id" to 2, "current_year" to 200, "current_month" to 1, "catch_up" to finished.toMeta(),
+        )))
+        assertEquals(finished, stored())
     }
 
     @Test

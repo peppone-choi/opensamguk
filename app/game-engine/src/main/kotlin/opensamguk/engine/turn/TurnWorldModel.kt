@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.turn.TurnCatchUp
+
 import java.time.Instant
 
 /**
@@ -298,6 +300,8 @@ data class TurnWorldState(
     val writerEpoch: Long = 0L,
     /** Runtime-only archive identity; reconstructed at boot, never written into config/meta. */
     val worldMapVariant: opensamguk.logic.world.WorldMapVariant? = null,
+    /** Operational wall-clock pacing; excluded from gameplay metadata and the golden world hash. */
+    val catchUp: TurnCatchUp? = null,
 ) {
     /** Temporary adapter for input handlers until the retired profile type is removed. */
     val ruleProfile: opensamguk.logic.input.RuleProfile

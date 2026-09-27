@@ -8,6 +8,7 @@ import opensamguk.gateway.dto.EnvProxyResponse
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.client.SimpleClientHttpRequestFactory
 import org.springframework.stereotype.Service
 import org.springframework.web.client.RestClient
@@ -465,11 +466,21 @@ class DeployService(
     fun turnDaemonResume(serverId: String?): EnvProxyResponse =
         proxyEngine(method = "POST", serverId = serverId, path = "/admin/turn-daemon/resume")
 
+    fun turnDaemonCatchUp(serverId: String?, multiplier: Int): EnvProxyResponse {
+        if (multiplier != 2 && multiplier != 4) {
+            return json(400, """{"ok":false,"message":"배속은 2 또는 4만 허용됩니다."}""")
+        }
+        return proxyEngine(
+            method = "POST", serverId = serverId, path = "/admin/turn-daemon/catch-up",
+            body = mapOf("multiplier" to multiplier),
+        )
+    }
+
     /**
      * 대상 서버의 game-engine 내부 URL로 raw forward. serverId 미지정 시 기본(첫) 서버.
      * 인증 헤더 없음(game-engine 내부망 전용). 응답 JSON은 EnvProxyResponse로 그대로 통과.
      */
-    private fun proxyEngine(method: String, serverId: String?, path: String): EnvProxyResponse {
+    private fun proxyEngine(method: String, serverId: String?, path: String, body: Any? = null): EnvProxyResponse {
         val server = resolve(serverId)
             ?: return json(400, """{"ok":false,"message":"알 수 없는 서버입니다: ${serverId ?: "(없음)"}"}""")
         return try {
@@ -477,7 +488,9 @@ class DeployService(
             val raw = if (method == "GET") {
                 rest.get().uri(uri).retrieve().body(String::class.java)
             } else {
-                rest.post().uri(uri).retrieve().body(String::class.java)
+                val request = rest.post().uri(uri)
+                (if (body == null) request else request.contentType(MediaType.APPLICATION_JSON).body(body))
+                    .retrieve().body(String::class.java)
             }
             json(200, raw ?: "{}")
         } catch (e: RestClientResponseException) {

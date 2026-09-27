@@ -7,7 +7,10 @@ import org.springframework.beans.factory.ObjectProvider
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 
 /**
  * B1b — StatusController가 실 상태(하드코딩 stub 아님)를 반환하고 pause/resume가 그 상태를 토글하는지 검증.
@@ -81,6 +84,22 @@ class StatusControllerTest {
         val r = c.resume()
         assertFalse(r.paused)
         assertFalse(r.changed, "동결 아니었으므로 unlock changed=false")
+    }
+
+    @Test
+    fun `catch-up rejects any speed except two or four`() {
+        val error = assertFailsWith<ResponseStatusException> {
+            controller().catchUp(CatchUpMultiplierRequest(3))
+        }
+        assertEquals(HttpStatus.BAD_REQUEST, error.statusCode)
+    }
+
+    @Test
+    fun `catch-up speed change requires an active recovery`() {
+        val error = assertFailsWith<ResponseStatusException> {
+            controller().catchUp(CatchUpMultiplierRequest(4))
+        }
+        assertEquals(HttpStatus.CONFLICT, error.statusCode)
     }
 
     /**
