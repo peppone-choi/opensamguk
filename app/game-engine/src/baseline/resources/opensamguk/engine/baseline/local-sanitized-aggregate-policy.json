@@ -4,7 +4,6 @@
       "cold10x": {
         "coldHistoryRows": 100000,
         "loaderInputs": {
-          "activeUniqueAuctionItems": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "archivedNationIds": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "cities": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "diplomacy": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
@@ -49,7 +48,6 @@
       "current": {
         "coldHistoryRows": 10000,
         "loaderInputs": {
-          "activeUniqueAuctionItems": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "archivedNationIds": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "cities": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
           "diplomacy": {"payloadBytes": 0, "retainedItems": 0, "sourceRows": 0},
@@ -93,10 +91,10 @@
       }
     }
   },
-  "loaderInputInventorySha256": "419cb24848e9cdbaae930633ba50ca79d2520f5844ff8c3b514790cb716fc104",
+  "loaderInputInventorySha256": "b090c4aec20d9b18b8b726dec55ad212d3e90cd206d78b97fbdd0c196f8953a9",
   "payloadByteSemantics": "selected-loader-fields-postgres-text-bytes.v1",
   "schemaVersion": "cqrs-local-sanitized-aggregate-policy.v1",
-  "sha256": "8bd5f8ce68a173f27fecd0ffc8fc100b5e844c184767efdcdc1e44eadabb9020",
+  "sha256": "6eac5cade74fa8f4da49455a1339c4ebd071fda5a597b021b357e48c8b4923a6",
   "source": {
     "policyId": "op123-local-sanitized-aggregate-v1",
     "provenance": "checked-in deterministic local aggregate policy; no production, live, or seeded-db observation",

@@ -3,7 +3,7 @@ package opensamguk.logic.util
 /**
  * Logic-side byte-faithful `Json::encode`/`Json::decode` (PHP `sammo\Json`,
  * `JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES`). Mirrors the infra `MetaJson` codec but lives in
- * `:logic` (no infra dep) so the message / auction / betting DTO `#[JsonString]` payloads are encoded
+ * `:logic` (no infra dep) so the message / betting DTO `#[JsonString]` payloads are encoded
  * byte-identically to the PHP golden:
  *  - compact (NO spaces after `:`/`,`)
  *  - UTF-8 literal (non-ASCII NOT \uXXXX-escaped)

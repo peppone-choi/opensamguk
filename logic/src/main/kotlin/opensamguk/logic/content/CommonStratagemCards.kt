@@ -6,7 +6,7 @@ import opensamguk.logic.input.StratagemCardType
 object CommonStratagemCards {
     val headers: Map<StratagemCardType, CardHeader> = mapOf(
         StratagemCardType.FORTIFY to CardHeader(
-            id = "hwiha-stratagem-fortify",
+            id = "stratagem-fortify",
             name = "견벽",
             kind = CardKind.STRATAGEM,
             availability = CardAvailability.COMMON,
@@ -16,7 +16,7 @@ object CommonStratagemCards {
             tags = setOf("전투", "대응"),
         ),
         StratagemCardType.INSIGHT to CardHeader(
-            id = "hwiha-stratagem-insight",
+            id = "stratagem-insight",
             name = "간파",
             kind = CardKind.STRATAGEM,
             availability = CardAvailability.COMMON,

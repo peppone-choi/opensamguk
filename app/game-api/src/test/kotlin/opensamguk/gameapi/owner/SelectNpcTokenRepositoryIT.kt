@@ -249,7 +249,7 @@ class SelectNpcTokenRepositoryIT {
 
     private fun seedWorld(id: Int) {
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (?, ?, 1, 1, 60) ON CONFLICT (id) DO NOTHING",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config) VALUES (?, ?, 1, 1, 60, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN')) ON CONFLICT (id) DO NOTHING",
             id,
             "world-$id",
         )

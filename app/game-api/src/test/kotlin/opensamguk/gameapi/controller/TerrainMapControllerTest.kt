@@ -21,9 +21,9 @@ class TerrainMapControllerTest {
     @Test
     fun `V3 terrain uses selected historical bytes and revalidates private caches`() {
         val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
-        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
         val mvc = MockMvcBuilders.standaloneSetup(TerrainMapController("/nonexistent/han-tiles.json", worlds)).build()
-        for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+        for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
             val selected = artifacts.artifacts(variant)
             org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
                 opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), selected))
@@ -46,14 +46,14 @@ class TerrainMapControllerTest {
         val image = dir.resolve("han-world-v3-provinces.png")
         val metadata = dir.resolve("han-world-v3-provinces.meta.json")
         val worlds = org.mockito.Mockito.mock(opensamguk.gameapi.read.ActiveWorldArtifactResolver::class.java)
-        val artifacts = opensamguk.infra.seed.HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+        val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(java.nio.file.Path.of("../.."))
         val controller = TerrainMapController(dir.resolve("han-tiles.json").toString(), worlds)
         fun hash(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }
         val bytes = byteArrayOf(1, 2, 3)
         try {
             Files.write(image, bytes)
-            for (variant in opensamguk.logic.world.HanWorldVariant.entries) {
+            for (variant in opensamguk.logic.world.WorldMapVariant.entries) {
                 val bundle = artifacts.artifacts(variant)
                 org.mockito.Mockito.`when`(worlds.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
                     opensamguk.gameapi.read.WorldStateReadEntity(id = 7), emptyList(), bundle))

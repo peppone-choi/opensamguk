@@ -110,5 +110,5 @@ class DirectActionHandler(private val world: InMemoryTurnWorld, private val reco
         world.updateCityMeta(recorder, countyId,
             county.meta + (CountyWarehouse.META_KEY to current.replace(next).toMetaValue()))
     }
-    companion object { private const val LAST_TURN_KEY = "hwihaLegacyDirectLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "directActionLastTurn" }
 }

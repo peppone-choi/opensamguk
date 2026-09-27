@@ -89,12 +89,16 @@ object VassalReinforcement {
         rules: VassalRules,
     ): ReinforcementDecision {
         require(contract.activeAt(request.issuedTurn) && request.contractId == contract.id && nowTurn >= request.issuedTurn)
+        val obligated = minOf(request.requestedTroops, contract.reinforcementTroops)
+        if (obligated == 0) {
+            response?.let { require(it.answeredTurn in request.issuedTurn..nowTurn) }
+            return ReinforcementDecision(ReinforcementOutcome.ACCEPTED, 0, request.issuedTurn)
+        }
         val deadline = Math.addExact(request.issuedTurn, rules.reinforcementReplyTurns.toLong())
         if (response == null) return ReinforcementDecision(
             if (nowTurn > deadline) ReinforcementOutcome.BREACH else ReinforcementOutcome.PENDING, 0, deadline)
         require(response.answeredTurn in request.issuedTurn..nowTurn)
         if (response.answeredTurn > deadline) return ReinforcementDecision(ReinforcementOutcome.BREACH, 0, deadline)
-        val obligated = minOf(request.requestedTroops, contract.reinforcementTroops)
         return when (response.kind) {
             ReinforcementReply.ACCEPT -> {
                 if (response.offeredTroops < obligated) ReinforcementDecision(ReinforcementOutcome.BREACH, 0, deadline)

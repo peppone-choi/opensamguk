@@ -100,7 +100,7 @@ def physical_place_ref(county: dict) -> str:
 
 
 def project_cell(projection: dict, latitude: float, longitude: float) -> tuple[float, float]:
-    """web/shared/src/HanMapCanvas.tsx projectBattlefieldTarget 과 같은 식이다."""
+    """web/shared/src/WorldMapCanvas.tsx projectBattlefieldTarget 과 같은 식이다."""
     col = (longitude * projection["k"] - projection["x0"] + projection["pad"]) / projection["cell"]
     row = (projection["y1"] + projection["pad"] - latitude) / projection["cell"]
     return col, row

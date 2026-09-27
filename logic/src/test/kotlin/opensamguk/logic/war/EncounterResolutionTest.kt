@@ -19,8 +19,8 @@ class EncounterResolutionTest {
         val relations = EncounterRelations.capture(encounter, state, setOf(1 to 2))
         val combat = EncounterCombatProfiles.capture(forces, UnitProfiles(1, "c".repeat(64),
             listOf(UnitProfile(1100, 1, 1, 100, 120, 20)), emptySet()))
-        val index = HanProvinceCellIndex("qa", "a".repeat(64), "b".repeat(64), width + 1, 1, mapOf('1' to "PLAIN"),
-            mapOf("A" to listOf(HanProvinceCell(0, 0, '1')), "B" to (1..width).map { HanProvinceCell(it, 0, '1') }))
+        val index = ProvinceCellIndex("qa", "a".repeat(64), "b".repeat(64), width + 1, 1, mapOf('1' to "PLAIN"),
+            mapOf("A" to listOf(ProvinceCell(0, 0, '1')), "B" to (1..width).map { ProvinceCell(it, 0, '1') }))
         val deployment = assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter, index)).deployment
         val plans = BattlePlans.defaultFor(encounter)
         val journal = BattlePlayback(encounter, forces, relations, combat, plans, deployment).initialJournal()

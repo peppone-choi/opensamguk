@@ -831,6 +831,41 @@
   - 명령 목록 12순은 장수 행동을 담고, 배치·방침 예약이 효력을 갖기 시작하는 순에 표식을 단다.
   - 라벨은 재설계 용어(주공·휘하·결속·명망·순)를 쓴다. 삼모 명령 라벨은 새 게임 월드에서 쓰지 않고 대응표(재설계 §12)를 도움말에 둔다.
   - 게이팅은 (7) 대로 점선 + 사유이고, 사유 문구는 입력 registry 의 실패 사유와 같은 계약을 쓴다.
+- Amendment (2026-09-26, 사용자 결정 — 프론트 전면 재구축, ADR-LITE-065·066 정합): 전 화면 감사(메타
+  `reports/opensamguk/tasks/2026-09-26-frontend-full-audit.md`) 결과, 페이지 47개 중 휘하 화면은 9개뿐이고 메뉴 네 벌·셸 두 벌·
+  월드 분기가 삼모 틀을 붙잡고 있었다. 다음으로 바꾼다. 규칙 (1)(3)(4)(6)은 그대로다.
+  - **정본:** 정보 구조·내용은 새 화면 캔버스(2026-09-18, 메타 `docs/opensamguk/ui-new-screens-2026-09-18/`)의 새 게임 화면
+    24장 중 「00b′ 옛 명령 70개 → 새 자리」를 뺀 23장을 최신 결정으로 고친 **캔버스 v3**다. 시각은 19장 S1 System의 토큰·
+    타이포·초상 3종이다. 19장 아트보드 가운데 13 커뮤니티·14 회의실만 그대로 쓰고, 나머지는 배치 참고다. v3 소스 사본은
+    `docs/design/ui-v3/`에 두고, 화면 묶음 단위로 사용자 승인을 받은 뒤 구현한다.
+  - **삭제:** 2026-09-17 개정의 「기존 명령 입력은 같은 라우트 안에서 월드 규칙(삼모/새 게임)에 따라 갈린다」, 「대응표(재설계 §12)를
+    도움말에 둔다」, 「새 화면은 기존 라우트를 바로 교체한다」, 그리고 규칙 (5) 전체. 화면은 월드 규칙으로 분기하지 않고 삼모
+    라벨·필드·API 를 보존할 의무가 없다.
+  - **메뉴·셸:** 셸은 하나다. 메뉴는 6묶음(부(막부)·계책·영지·군단·조정·기록) + 작전실 + 광장(회의실·기밀실·서신·커뮤니티는 (3) 대로
+    분리)이다. 서버 메뉴(GlobalMenu)·부서 메뉴·휘하 셸 탭·모바일 탭을 이 하나로 합친다.
+  - **경로:** 6묶음 기준 새 경로를 쓴다. 옛 경로는 ADR-066 허용 목록 방식의 308 리다이렉트 전용이다. 확정 이름(2026-09-26):
+    작전실 `/game/<서버>`, 그 아래 `/retinue`(부)·`/stratagem`(계책)·`/territory`(영지)·`/corps`(군단)·`/court`(조정)·
+    `/records`(기록)·`/council`(회의실·기밀실)·`/mail`(서신). 하위 화면 경로의 정본은 `docs/design/ui-v3/v3common.py`의 `NAV`다.
+  - **모바일:** 모바일에서도 같은 게임이다 — 1·2·3층 모든 입력과 화면이 좁은 폭·터치에서 동작한다. 규칙 (2)의 모바일 해석은
+    「지도 전면 + 12순 명령 목록은 한 번 탭으로 여는 하단 시트」다. 규칙 (7)의 사유는 탭으로 열 수 있어야 한다(비활성 조작은
+    `aria-disabled`로 누를 수 있게 두고, 호버·`title` 전용 정보를 쓰지 않는다). 브레이크포인트는 토큰 3단(모바일·태블릿·
+    데스크톱), 터치 목표는 44px 이상이다. 입력의 UI_READY 는 데스크톱·모바일 e2e 성공·실패 경로를 모두 요구한다.
+  - **지도 표시:** 전략 지도는 아이소를 버리고 와룡전(1995)풍 고전 탑다운 타일로 그린다 — 지도 칸 하나가 타일 하나다. 세력색은
+    경계 띠·깃발·城 지붕·1칸 거점 아이콘(수·진·관·이)에 칠하고, 지형·유적 아이콘 본체에는 칠하지 않는다. 城 깃발은 술 끝 +
+    세력 첫 글자, 부대 깃발은 제비꼬리 + 장수 첫 글자다. 지도 설계 층(강·산·땅 피복·城 크기·성문)은 설계가 확정될 때 지도 설계
+    작업이 ADR-LITE-044 개정으로 따로 올린다. 그 전까지 `han-tiles.json` 격자·좌표·province 계약은 그대로다.
+  - **표기:** 한글 우선(縣→현, 郡→군, 城→성, 省→구역; 한자는 상세 머리 병기 한 번·카드 이름 보조만), 돈·곡식은 「금」「쌀」,
+    게임 화면에 사료 원문·출처·고증 이야기를 넣지 않는다, 계책 화면은 「계책 덱」(손에 든 칸은 「손패」). 제품 문자열 lint 로 강제한다.
+  - **삼모 화면:** 빙의·장수 선택 풀, 감찰부, 랭킹 5종(황제·황제 상세·명예의 전당·NPC·접속 통계), 유산·경매·베팅·토너먼트·설문
+    보상·NPC 정책·사령턴·모의전투 화면은 대체 없이 삭제한다. 세력 판도는 연감(ADR-LITE-069)이 맡는다. 웹 삭제는 프론트 재구축이,
+    API·엔진 삭제는 코드 정리(#917)가 맡고, 순서는 화면 대체 → API 삭제다.
+  - **소유:** 2026-09-27 결정에 따라 `web/`·화면 전용 읽기 API(삼모 필드 제거·새 조회)·턴·입력 로직은 Codex 가 구현한다.
+    Claude 는 코드 리뷰와 머지 판정을 맡는다. 코드 정리 동결 해제 전 프론트 구현 PR 은 draft 다.
+  - Supersedes: 위 「삭제」 항목, 로드맵 「세계와 지도」의 「화면의 정본은 야전 사령부 시안 19장이다」·「전략 지도는
+    아이소메트릭」·「국가색은 … 도시·요새 … 본체에는 적용하지 않는다」 문장, ADR-LITE-044 개정의 「아이소 타일 렌더러」 문구(렌더
+    방식만; 격자·좌표·province 계약은 유지).
+  - Approved by: 사용자 (2026-09-26, 감사 보고서 §7 결정 1–7 「추천대로」, 모바일 작전실 「추천대로」, 캔버스 v3 1묶음 8장·새 경로 이름 「추천대로」, 지도 방식·세력색·깃발은
+    지도 설계 결정 — 메타 `docs/map-design-plan.md` §1).
 
 ## ADR-LITE-050 게임 로그 색 토큰은 저장·와이어 계약으로 남기고 렌더만 `LogText`로 바꾼다 (2026-09-06)
 - Decision: 엔진이 기록하는 로그 문자열의 devsam 색/태그 토큰(`<C>●</>`, `<Y>이름</>`, `<M>기술</>`,
@@ -1082,7 +1117,7 @@
 
 ## ADR-LITE-057 — 삼모 명령 체계를 「장수·휘하」 캠페인 설계로 교체한다 (2026-09-17)
 
-- Status: accepted (2026-09-24 사용자 승인). S3 게임 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)에서 확정했다. 정본은 `data/curated/han/hwiha-s3-provisional-v1.json`·`hwiha-domestic-v1.json`·`hwiha-vision-rules-v1.json`이며, 그 밖의 미정 수치는 각 원장 상태를 따른다.
+- Status: accepted (2026-09-24 사용자 승인). S3 게임 수치는 [#872](https://github.com/peppone-choi/opensamguk/issues/872)에서 확정했다. 정본은 `data/curated/han/campaign-balance-v1.json`·`domestic-v1.json`·`vision-rules-v1.json`이며, 그 밖의 미정 수치는 각 원장 상태를 따른다.
 - Context: 지도는 城 1,133 · 省 1,594 의 면(面) 세계가 됐지만(ADR-LITE-055·056) 규칙은 삼모전의 점(點) 구조다.
   시나리오 1020 개시 활성 장수는 231명(확장 299, `seedContract.activeGenerals`)이라 1,133城에서 城당 약 0.20명이다.
   이동은 인접 城 1칸이 1턴이고 이동 비용에 지형 계수가 없다. 지형은 전투·명령 코드에서 참조되지 않고 보급·경로 위상에 물/마른땅
@@ -1153,6 +1188,19 @@
   Amendment(2026-09-17), `CLAUDE.md` 5스탯 문장, ADR-LITE-056 정정 노트, `docs/superpowers/plans/2026-09-17-general-retinue-portfolio-plan.md`(삭제),
   대체 배너 7건(plans 08-27 포트폴리오·명령 기반·08-22 마스터, specs 08-27 rebaseline·contract-freeze·07-12 v2 product·09-06 province-front),
   `docs/design/README.md`·`roadmap.md` 의 계획 링크. 코드 변경이 없으므로 되돌릴 구현은 없다.
+- Amendment (2026-09-26, 사용자 결정 — 용어 교체): 상위 개념 「휘하」를 **부(府)** 로 바꾼다. 부는 장수가 거느린
+  인물·부대·계책·보물 카드 묶음이다(뜻은 그대로). 화면 이름은 그 장수의 가장 높은 자리에 따라 바뀐다: **막부**(기본, 모든 장수) →
+  **군부**(태수) → **주부**(자사·주목) → **장군부**(개부할 수 있는 장군호) → **공부**(삼공) → **승상부**(승상). 어느 자리가 어느 부를
+  여는지의 정확한 목록은 2·3층 관직 원장이 정한다.
+  - 근거: 「幕府董統鷹揚」(三國志 卷06 袁紹傳), 「傕又遷車騎將軍，開府」(後漢書 卷072 董卓列傳), 「開府治事」(三國志 卷35 諸葛亮傳),
+    「建安中，入丞相府」(三國志 卷23), 「殺害州府」(三國志 卷08 公孫瓚傳), 「日南叛蠻攻郡府」(後漢書 卷006), 「辟公府」(後漢書 卷068).
+  - **화면과 설명은 쉬운 말로 쓴다**(사용자 결정). 옛말은 개념 이름(부 이름)처럼 꼭 필요한 곳에만 쓰고, 소속 표시 같은 곳은 쉬운 말을 쓴다.
+  - 표기: 「휘하 편성」 → 「(이름)의 막부」 편성, 「조조 휘하」(소속 표시) → 「조조 소속」, 기록 분류 「휘하·세력」(ADR-LITE-069) →
+    「부·세력」. 「부가 겹친다」 — 장수가 주공의 부에 들면 그 장수의 부곡·부장·보물도 딸려 간다.
+  - 용어 풀이: 막부·군부·주부 같은 부 이름과 순·구역·명망·결속 같은 게임 용어는 화면에서 점선 밑줄을 긋고, 누르면 게임 안에서의 뜻을
+    짧은 쉬운 말로 보인다(모바일은 하단 시트, 호버 전용 금지). 풀이에는 사료 인용을 넣지 않는다. 도움말에 용어 사전을 두고 튜토리얼 첫 단계에서 한 번 짚는다.
+  - 코드·저장 식별자는 ADR-LITE-066 의 도메인 영문 이름(`retinue` 등)을 그대로 쓴다. 한글 문서의 「휘하」는 이 개정 이후 「부」로 읽고,
+    문서는 손대는 김에 고친다.
 
 ## ADR-LITE-058 — 산으로 칠해진 이름 있는 저지를 표고로 되돌리고, 1133 릴리스를 제자리에서 재핀한다 (2026-09-17)
 
@@ -1254,9 +1302,15 @@
 - Reversal: 원장에서 `portLinks` 를 비우고(유도 집합이 비지 않으므로 구간·흐름 추가분도 함께 되돌린다) 같은 순서로
   재생성·재핀한다. 역시 월드 리셋이 든다.
 
-## ADR-LITE-061 — 조우 전투는 조작 없이 두고, 계획에 조건부 명령과 계책 공개 시점을 넣는다 (2026-09-18)
+## ADR-LITE-061 — 조우 전투 계약: 실시간 조작·원작 전장으로 개정 (2026-09-18 원결정, 2026-09-27 개정)
 
-- Status: accepted (사용자 결정 2026-09-18 「승인」, GH #786 / #782). 문서 전용 — 코드·스키마 변경 없음.
+- Status: **revised 2026-09-27** (사용자 D1–D5 확정). 아래 2026-09-18 무조작 결정과 2026-09-25 보존 문장은 당시 이력이며 현행 전투 계약이 아니다.
+- Amendment (2026-09-27, 사용자 D1–D5): 조우와 강공은 **항상 실시간 조작하는 서버 권위 전투 세션**이고 부재·이탈 측은 AI가 맡는다. 개인 조우는 일기토 세션이다. 60초 참가 대기, 기본 10Hz 고정 틱·5분 제한, 6분대(주장 중앙·무력 내림차순/ID 오름차순 선봉·나머지 통솔 내림차순/ID 오름차순)의 실제 장수/부곡 한 칸씩 배치, 원작 6명령과 집결점, 성벽·성문·사다리, 결과 단일 flush와 입력 로그 리플레이를 사용한다. 교전 당사자만 잠그고 나머지 월드 턴은 계속한다. 전술 정지·사전 계획 자동전투 fallback은 이 전투에 적용하지 않는다.
+- Amendment (전장): 조우 省의 han-tiles 칸에서 전장 격자를 **파생하지 않는다**. 원작 `BATTLE.MAP`의 214개 64×64판을 검증된 파생 카탈로그의 야전/성새 분류로 읽고, 핀된 省 지형 비율에 가까운 후보 중 전투 ID 시드로 판을 결정론 선택한다. 성새 강공은 성새판만 쓴다. 원작 파일은 Git에 넣지 않고 `opensamguk-images`의 owner-accepted 파생 export만 앱에 전달한다.
+- Relationship: ADR-LITE-025의 권위 battle actor·WebSocket·재접속·epoch fence·durable 입력/결과/리플레이와 P-4 `ReplayEnvelope`의 작전 단위 계약은 유지한다. 이 전투의 5분/10Hz/6분대/일기토 범위는 그 ADR의 12–15분/200ms/16편제·전술 정지·fallback과 다르다. 원작의 피해식·속도·사거리·성문/사다리 공략 시간·일기토 진행·시간 제한은 UNKNOWN이며, 확인 전 실행값은 `data/battle/waryong-tactical-rules-v1.json`에 근거·`decidedBy`·`CONFIRMED`로 기록한다. 새 실행 정본은 `docs/superpowers/specs/2026-09-27-waryong-realtime-tactical-battle.md`; 기존 2026-09-17 명세 §5.1.1·개인 조우 자동 원장은 역사/전환 경계로 개정한다.
+- Runtime boundary (2026-09-27): 현재 첫 구현의 actor 조정 코드는 `app/game-api`에 두어 기존 인증·서명 JoinTicket·DB 진입점과 같은 소스 경계에서 세션 계약을 검증한다. 이는 ADR-LITE-025의 **전용 battle-engine 배포 요건을 완화한 결정이 아니다**. 제품 가동 전 100ms actor·재발견을 요청 처리기와 분리한 전용 프로세스/배포 단위로 옮기고, battle 전용 실행기·DB 소유권·부하 격리 및 epoch lease 탈취/재접속 검증을 통과해야 한다. 코드 위치만으로 부하 격리나 7월 WebSocket 계약이 구현됐다고 간주하지 않는다. game-api에 함께 배포하는 대안은 별도 ADR 개정과 동등한 격리 증거가 있어야 한다.
+- Consequences (2026-09-27): 기존 선계획 조건부 명령·공개 회차 자동 해결 스키마는 새 실시간 전투의 필수 입력이 아니다. 원작 6명령과 참가/AI 인계, 전장·룰셋 해시, 양측 승인 입력 로그, 결과 outbox 및 `ChangeRecorder -> JdbcFlushExecutor` 단일 쓰기가 새 실행 계약이다. 미공개 카드·진영 시야는 권위 세션의 진영별 투영으로 보호한다. 원작의 UNKNOWN이 확인되면 별도 규칙 버전을 추가하고 이전 리플레이의 핀은 보존한다.
+- Historical status (2026-09-18): accepted (사용자 결정 2026-09-18 「승인」, GH #786 / #782). 문서 전용 — 코드·스키마 변경 없음.
 - 번호: 060 은 `origin/work/opensamguk/river-routes` 가 쓰고 있어(강 뱃길, 미머지) 061 을 잡았다.
 - Context: 정본 설계 §5.1 5단계의 조우 전투는 「함께 공개 → 결정론 전투 → 리플레이」 한 줄이었고, 현행 V57 계획 입력은 태세 1개 +
   퇴각 조건 2개가 전부다(`V57__battle_plan_replay.sql:10-12`, `BattlePlanRules.kt:80-91`). 전투가 단조롭다는 문제에 대해 실시간 조작을
@@ -1362,8 +1416,24 @@
 
 ## ADR-LITE-068 — 지방 관직과 중앙 관직의 임명 출처를 분리한다 (2026-09-25)
 
-- Status: proposed (2026-09-23 사용자 결정의 문서화 초안; 승인 표시 필요). 행정 오버레이의 ADR-LITE-067과 별도 결정이다.
+- Status: approved (2026-09-26 사용자 승인). 행정 오버레이의 ADR-LITE-067과 별도 결정이다.
+- Approved by: 사용자 (2026-09-26)
 - Context: 조정 화면의 관직 패널은 지방과 중앙을 구분하지만 관직 정의·임명 계약은 아직 없다. 재설계 §2.4·§4·§8.2는 郡·州 관할과 縣令 자리를 구분한다.
 - Decision: 지방 관직 刺史·牧·太守·國相은 2층에서 임명하고 실효 관할을 판정한다. 縣令·縣長·侯國相은 기존 縣 배치·발령의 읽기 투영이며 독립 재임 상태로 이중 기록하지 않는다. 중앙 관직(삼공·구경·상서·장군호 등)은 3층에서 황실 조서로만 부여하며 2층 군주의 임명 입력으로 생성하지 않는다.
 - Consequences: 지방·중앙 관직 원장은 분리하고, 권한 판정은 관직명 문자열이 아닌 검증된 재임과 실효 관할을 쓴다. 司隸는 十二州刺史 정원에 더하지 않는다. 지방 관직의 사료는 『後漢書』 卷118 百官志 百官五의 별도 인용으로 확인한다.
 - Reversal: 사용자가 중앙 관직의 수여권을 변경하거나 정본 설계에서 縣 자리의 쓰기 권위를 옮길 때 별도 ADR과 저장 이전 계획으로 개정한다.
+
+## ADR-LITE-069 — 게임 기록은 사건·식별자·시각으로 저장하고 화면에서 서술한다 (2026-09-25)
+
+- Date: 2026-09-25
+- Status: approved for design by the user's six decisions; implementation deferred until the code-cleanup freeze ends. This ADR is not evidence of a migrated world or running API.
+- Context: `log_entry` currently combines text-only legacy rows and `event_kind` rows whose `meta.refs` coexist with stored `text`. Public `WorldLogReadRepository` reads every `SYSTEM/HISTORY|SUMMARY` row, while the last-turn reader selects only specific kinds. The monthly yearbook stores text arrays. This leaves prose, audience and archival policy split across writers and readers. The full inventory and exact source lines are in [the spec](../docs/superpowers/specs/2026-09-25-game-log-model.md).
+- Decision:
+  1. A new world writes one canonical event with a stable `kind`, typed `refs`, year/month/phase, sequence and explicit audience. The five feed sections are **개인 행적 / 휘하·세력 / 조정 공문 / 전장 보고 / 천하 정세**; the **연감** remains a separate public screen. Event kind and audience are separate dimensions. A public event is visible immediately in 천하 정세. Another faction's internal event stays private. A future `publishAfter` field is reserved but v1 neither schedules nor emits delayed publication.
+  2. Persist no rendered Korean sentence, markup token or fallback sentence as event data. Server validates kind/refs/audience; the client renders a fixed, calm notification template from authorized refs and versioned names. It never invents a missing actor, place or quantity. Server summary fields are allowed only for derived, non-secret numeric facts or compact aggregation, not prose.
+  3. Both write and read enforce audience. An owner-only fact cannot become public by appearing in `SYSTEM/SUMMARY`, a public yearbook, a replay link or another faction's API. Publication is a deliberate write-side fact with an allowlisted kind and safe refs; read-side authorization checks it again. A public ownership change is one event with former/new owner refs, not separate winner/loser public rows.
+  4. At each year close, collect that year's **published** world events and a public, pinned end-of-year faction-territory snapshot. Build the yearbook's major-event and balance-of-power summary deterministically from those inputs. Monthly archive rows may be replaced by a new forward migration; the annual product contract does not depend on old `global_history`/`global_action` text arrays.
+  5. Apply only to worlds created after a world reset. Do not migrate, convert, retain for compatibility, or backfill old logs. Old Flyway files remain immutable history; a forward migration and new-world schema guard replace active text-log readers/writers. Product code uses domain names such as `GameEvent`, `EventKind`, `EventFeedReader`, `EventRecorder`, without a `Hwiha` prefix.
+- Sequence: after the code-cleanup freeze, implement record model and DB contract → move every required writer (including surviving monthly and battle producers) → authorized read APIs → five-section screens and yearbook → remove old log routes, enum use and text producers. Do not delete a shared monthly or war producer merely because it has a legacy name; audit runtime dependence first.
+- Gates: compare all live action/outcome paths against a kind/refs ledger; owner/nation/public cross-view tests with deliberately secret opposing data; public feed and annual archive tests; deterministic order/replay and administrative-overlay name tests; a lint that fails on new tagged prose in an event writer and a red probe proving the lint can fail. Use the spec's quantitative pagination and index checks. No product implementation or operational reset is authorized by this document.
+- Supersedes: the last-turn UI's five-kind summary allowlist and text-first record contract only when the new-world implementation lands; earlier designs remain historical evidence until then. ADR-LITE-065/066 cutover and name rules, ADR-LITE-067 world projection pins, and #343 information hiding remain in force.

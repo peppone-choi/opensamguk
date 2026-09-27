@@ -5,7 +5,7 @@ import kotlin.test.*
 class EnlistmentPrecheckTest {
     private fun person(id: Int, nation: Int = 0, lord: Boolean = false, capacity: Int = 30,
                        npc: Int = 2, user: String? = null) = EnlistmentPersonRow(
-        PersonPolicyInput(id, nation, 70, 70, 70, 70, 70, mapOf("hwihaLord" to lord,
+        PersonPolicyInput(id, nation, 70, 70, 70, 70, 70, mapOf("lord" to lord,
             PersonPolicyState.META_KEY to PersonPolicyState(capacity, true, "fixture", "v1", id).toMetaValue())),
         "G$id", if (lord && nation > 0) 12 else 0, npc, user)
     private fun state() = EnlistmentProjection(RuleProfile.HWIHA,
@@ -28,7 +28,7 @@ class EnlistmentPrecheckTest {
     @Test fun `missing target policy is distinct from real capacity shortage and random excludes only that lord`() {
         val base = state()
         val missing = base.copy(persons = base.persons.map { if (it.policy.id == 10)
-            it.copy(policy = it.policy.copy(meta = mapOf("hwihaLord" to true))) else it })
+            it.copy(policy = it.policy.copy(meta = mapOf("lord" to true))) else it })
         assertEquals(EnlistmentFailure.POLICY_UNAVAILABLE, reason(missing))
         val random = assertIs<EnlistmentAssessment.Eligible>(EnlistmentPrecheck.assess(
             EnlistmentRequest(1, EnlistmentMode.RANDOM), missing))

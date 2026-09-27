@@ -63,7 +63,7 @@ class WorldSnapshotLoaderArchiveIT {
 
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, meta)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, meta, config)
             VALUES (
                 1,
                 'scenario_0',
@@ -76,7 +76,8 @@ class WorldSnapshotLoaderArchiveIT {
                     "nationHistory":{"7":["stale nation"]},
                     "generalHistory":{"7":["stale general"]},
                     "globalLogs":[{"category":"action","year":200,"month":1,"text":"stale global"}]
-                }'::jsonb
+                }'::jsonb,
+                '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb
             )
             """.trimIndent(),
         )
@@ -183,15 +184,6 @@ class WorldSnapshotLoaderArchiveIT {
               (1, 'game_env', 'game_env', 'develcost', '99'::jsonb)
             """.trimIndent(),
         )
-        jdbc.update(
-            """
-            INSERT INTO ng_auction
-                (world_id, type, finished, target, host_general_id, req_resource, open_date, close_date)
-            VALUES
-              (1, 'uniqueItem', false, 'che_명마_07_백마', 1, 'inheritPoint', now(), now() + interval '1 day'),
-              (1, 'uniqueItem', true, 'che_명마_07_기주마', 1, 'inheritPoint', now(), now() + interval '1 day')
-            """.trimIndent(),
-        )
     }
 
     @AfterAll
@@ -230,7 +222,8 @@ class WorldSnapshotLoaderArchiveIT {
         assertEquals("세계 추가 기록 65", globalLogTexts.first())
         assertEquals("세계 최근 기록", globalLogTexts.last())
         assertEquals(listOf(7), snapshot.archivedNationIds)
-        assertEquals(listOf("che_명마_07_백마"), snapshot.state.meta["activeUniqueAuctionItems"])
+        // #917 A2: 경매 스냅숏 meta 는 은퇴했다(옛 로더는 행이 없어도 빈 목록을 심었다).
+        assertFalse(snapshot.state.meta.containsKey("activeUniqueAuctionItems"))
         assertEquals(mapOf("che_의술_정력견혈산" to 2), snapshot.state.meta["storedUniqueItemCounts"])
         assertEquals(mapOf(77 to 1200.0), snapshot.state.meta["inheritancePrevious"])
         val inheritancePoints = snapshot.state.meta["inheritancePoints"] as Map<*, *>
@@ -248,8 +241,8 @@ class WorldSnapshotLoaderArchiveIT {
     fun `configured world only loads its world-scoped state cohorts`() {
         jdbc.update(
             """
-            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds)
-            VALUES (2, 'other_world', 201, 2, 1800)
+            INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config)
+            VALUES (2, 'other_world', 201, 2, 1800, '{"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb)
             """.trimIndent(),
         )
         jdbc.update(

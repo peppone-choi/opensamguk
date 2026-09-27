@@ -15,7 +15,7 @@ describe('휘하 제품 부서 메뉴', () => {
     const routes = DEPT_GROUPS.flatMap((group) => group.entries.map((entry) => entry.href));
     expect(DEPT_GROUPS.map((group) => group.label)).toEqual(['작전실', '국가 운영', '군사', '정보', '광장', '기록']);
     for (const slug of ['war-room', 'retinue', 'hand', 'posts', 'orders', 'supply', 'siege', 'court', 'yuedan']) {
-      expect(routes).toContain(`/game/hwiha/${slug}`);
+      expect(routes).toContain(`/game/${slug}`);
     }
     expect(routes).toContain('/game/board');
     expect(routes).toContain('/game/mailbox');
@@ -32,8 +32,8 @@ describe('휘하 제품 부서 메뉴', () => {
 
   it('모바일 다섯 탭과 데스크톱 세력 정보가 같은 권한 사유를 쓴다', () => {
     expect(MOBILE_TABS.map((tab) => tab.href)).toEqual([
-      '/game/hwiha/war-room', '/game/map',
-      '/game/hwiha/war-room#reservedCommandPanel', '/game/my-nation', '#dept-more',
+      '/game/war-room', '/game/map',
+      '/game/war-room#reservedCommandPanel', '/game/my-nation', '#dept-more',
     ]);
     const nation = MOBILE_TABS.find((tab) => tab.key === 'nation')!;
     const desktopNation = DEPT_GROUPS.flatMap((group) => group.entries).find((entry) => entry.href === '/game/my-nation')!;

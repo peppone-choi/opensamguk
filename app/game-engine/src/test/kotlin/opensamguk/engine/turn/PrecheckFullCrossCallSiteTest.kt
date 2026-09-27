@@ -17,9 +17,9 @@ import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.CityConstRegistry
-import opensamguk.logic.world.HanWorldVariant
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.infra.seed.HanWorldTopologyPin
+import opensamguk.logic.world.WorldMapVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.seed.WorldTopologyPin
 import opensamguk.gameapi.read.ActiveWorldArtifactResolver
 import opensamguk.gameapi.read.WorldArtifactIdentityReadRepository
 import org.mockito.Mockito.mock
@@ -56,7 +56,7 @@ class PrecheckFullCrossCallSiteTest {
 
     private val pipeline = GeneralActionPipeline()
     private val registry = CommandRegistry(pipeline)
-    private val historicalArtifacts = HanWorldArtifactsResolver(java.nio.file.Path.of("../.."))
+    private val historicalArtifacts = WorldArtifactsResolver(java.nio.file.Path.of("../.."))
 
     private val ACTION = "che_농지개간"
     private val RECRUIT_ACTION = "che_징병"
@@ -97,7 +97,7 @@ class PrecheckFullCrossCallSiteTest {
         val nationRice: Int = 100_000,
         val mapName: String? = "che",
         val unitSet: String? = null,
-        val historicalVariant: HanWorldVariant = HanWorldVariant.V3_835,
+        val historicalVariant: WorldMapVariant = WorldMapVariant.V3_835,
     )
 
     private fun Fixture.historicalBundle() = if (mapName == "han-world-v3") {
@@ -106,10 +106,10 @@ class PrecheckFullCrossCallSiteTest {
         historicalArtifacts.resolve(bundle.cityConst.all().keys, historicalPins(historicalVariant))
     } else null
 
-    private fun historicalPins(variant: HanWorldVariant): List<HanWorldTopologyPin> {
+    private fun historicalPins(variant: WorldMapVariant): List<WorldTopologyPin> {
         val topology = historicalArtifacts.artifacts(variant).projection.topology
         return listOf("water_zone_control", "province_control", "general_spatial_position").map {
-            HanWorldTopologyPin(it, topology.topologyRevision, topology.contentHash)
+            WorldTopologyPin(it, topology.topologyRevision, topology.contentHash)
         }
     }
 
@@ -246,7 +246,7 @@ class PrecheckFullCrossCallSiteTest {
         val state = TurnWorldState(
             id = 1, currentYear = YEAR, currentMonth = MONTH, tickSeconds = 3600, lastTurnTime = t0,
             config = f.worldConfig(),
-            hanWorldVariant = f.historicalBundle()?.variant,
+            worldMapVariant = f.historicalBundle()?.variant,
         )
         val world = InMemoryTurnWorld(
             WorldSnapshot(
@@ -304,7 +304,7 @@ class PrecheckFullCrossCallSiteTest {
 
     @Test
     fun `Han world v3 Lu to Licheng is allowed by PRECHECK and FULL`() {
-        HanWorldVariant.entries.forEach { variant ->
+        WorldMapVariant.entries.forEach { variant ->
             val fixture = Fixture(cityId = 273, destCityId = 781, mapName = "han-world-v3", historicalVariant = variant)
             assertAvailableAgreement(
                 action = "che_이동",

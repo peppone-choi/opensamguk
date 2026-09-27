@@ -3,7 +3,7 @@ package opensamguk.logic.input
 /**
  * 휘하 기록(`log_entry.event_kind`)의 종류 — 「지난 순」 화면이 순마다 묶고 종류로 가르는 열쇠다.
  *
- * 쓰는 쪽(엔진)과 읽는 쪽(game-api `/api/hwiha/last-turns`)이 같은 문자열을 쓰도록 여기 한 곳에 둔다.
+ * 쓰는 쪽(엔진)과 읽는 쪽(game-api `/api/last-turns`)이 같은 문자열을 쓰도록 여기 한 곳에 둔다.
  * 구체 식별자는 `meta.refs` 에 싣는다([REFS_META_KEY]).
  *
  * ### 누가 무엇을 보는가(#343)

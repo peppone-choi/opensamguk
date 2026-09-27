@@ -3,38 +3,38 @@ package opensamguk.logic.world
 import opensamguk.common.constants.CityConst
 import opensamguk.common.constants.CityConst.RawCity
 import opensamguk.common.constants.CityInitialDetail
-import opensamguk.common.constants.HanCityConst
-import opensamguk.common.constants.HanGateIndex
-import opensamguk.common.constants.Han780V1CityConst
-import opensamguk.common.constants.Han780V1GateIndex
-import opensamguk.common.constants.HanWorldV3832CityConst
-import opensamguk.common.constants.HanWorldV3832GateIndex
-import opensamguk.common.constants.HanWorldV3846CityConst
-import opensamguk.common.constants.HanWorldV3846GateIndex
-import opensamguk.common.constants.HanWorldV31098CityConst
-import opensamguk.common.constants.HanWorldV31098GateIndex
-import opensamguk.common.constants.HanWorldV31168CityConst
-import opensamguk.common.constants.HanWorldV31168GateIndex
-import opensamguk.common.constants.HanWorldV31224CityConst
-import opensamguk.common.constants.HanWorldV31224GateIndex
-import opensamguk.common.constants.HanWorldV31447CityConst
-import opensamguk.common.constants.HanWorldV31447GateIndex
-import opensamguk.common.constants.HanWorldV31447Map4CityConst
-import opensamguk.common.constants.HanWorldV31447Map4GateIndex
-import opensamguk.common.constants.HanWorldV31194CityConst
-import opensamguk.common.constants.HanWorldV31194GateIndex
-import opensamguk.common.constants.HanWorldV31341CityConst
-import opensamguk.common.constants.HanWorldV31341GateIndex
-import opensamguk.common.constants.HanWorldV31141CityConst
-import opensamguk.common.constants.HanWorldV31141GateIndex
-import opensamguk.common.constants.HanWorldV31133CityConst
-import opensamguk.common.constants.HanWorldV31133GateIndex
-import opensamguk.common.constants.HanWorldV3848CityConst
-import opensamguk.common.constants.HanWorldV3848GateIndex
-import opensamguk.common.constants.HanWorldV3835CityConst
-import opensamguk.common.constants.HanWorldV3835GateIndex
-import opensamguk.common.constants.HanWorldV3CityConst
-import opensamguk.common.constants.HanWorldV3GateIndex
+import opensamguk.common.constants.BaselineCityConst
+import opensamguk.common.constants.BaselineGateIndex
+import opensamguk.common.constants.Archive780CityConst
+import opensamguk.common.constants.Archive780GateIndex
+import opensamguk.common.constants.Archive832CityConst
+import opensamguk.common.constants.Archive832GateIndex
+import opensamguk.common.constants.Archive846CityConst
+import opensamguk.common.constants.Archive846GateIndex
+import opensamguk.common.constants.Archive1098CityConst
+import opensamguk.common.constants.Archive1098GateIndex
+import opensamguk.common.constants.Archive1168CityConst
+import opensamguk.common.constants.Archive1168GateIndex
+import opensamguk.common.constants.Archive1224CityConst
+import opensamguk.common.constants.Archive1224GateIndex
+import opensamguk.common.constants.Archive1447CityConst
+import opensamguk.common.constants.Archive1447GateIndex
+import opensamguk.common.constants.Archive1447Map4CityConst
+import opensamguk.common.constants.Archive1447Map4GateIndex
+import opensamguk.common.constants.Archive1194CityConst
+import opensamguk.common.constants.Archive1194GateIndex
+import opensamguk.common.constants.Archive1341CityConst
+import opensamguk.common.constants.Archive1341GateIndex
+import opensamguk.common.constants.Archive1141CityConst
+import opensamguk.common.constants.Archive1141GateIndex
+import opensamguk.common.constants.Archive1133CityConst
+import opensamguk.common.constants.Archive1133GateIndex
+import opensamguk.common.constants.Archive848CityConst
+import opensamguk.common.constants.Archive848GateIndex
+import opensamguk.common.constants.Archive835CityConst
+import opensamguk.common.constants.Archive835GateIndex
+import opensamguk.common.constants.ArchiveCityConst
+import opensamguk.common.constants.ArchiveGateIndex
 
 /**
  * F6 Task FM1 — per-map CityConst variant registry, keyed by `mapName`.
@@ -81,17 +81,17 @@ fun isFoundableCityLevel(level: Int): Boolean = level in 5..6 || level >= 10
 const val FOUND_ASSAULT_RATIO: Double = 2.0
 
 /** [CityConstVariant.mapName] of the han map — the ONLY map the founding assault applies to. */
-const val HAN_MAP_NAME: String = "han"
-const val HAN_780_V1_MAP_NAME: String = "han-780-v1"
-const val HAN_WORLD_V2_MAP_NAME: String = "han-world-v2"
-const val HAN_WORLD_V3_MAP_NAME: String = "han-world-v3"
+const val HISTORICAL_MAP_NAME: String = "han"
+const val LEGACY_MAP_ARCHIVE_NAME: String = "han-780-v1"
+const val EARLY_WORLD_ARCHIVE_NAME: String = "han-world-v2"
+const val WORLD_ARCHIVE_MAP_NAME: String = "han-world-v3"
 
-fun isHanMapName(mapName: Any?): Boolean =
-    mapName == HAN_MAP_NAME || mapName == HAN_780_V1_MAP_NAME ||
-        mapName == HAN_WORLD_V2_MAP_NAME || mapName == HAN_WORLD_V3_MAP_NAME
+fun isHistoricalMapName(mapName: Any?): Boolean =
+    mapName == HISTORICAL_MAP_NAME || mapName == LEGACY_MAP_ARCHIVE_NAME ||
+        mapName == EARLY_WORLD_ARCHIVE_NAME || mapName == WORLD_ARCHIVE_MAP_NAME
 
 fun foundingDefenseAfterCapture(mapName: Any?, currentDefense: Int, postDefense: Int): Int =
-    if (isHanMapName(mapName)) postDefense else currentDefense
+    if (isHistoricalMapName(mapName)) postDefense else currentDefense
 
 /**
  * 건국에 필요한 돌파 병력 = `ceil(city.def * FOUND_ASSAULT_RATIO)`.
@@ -100,7 +100,7 @@ fun foundingDefenseAfterCapture(mapName: Any?, currentDefense: Int, postDefense:
  * (패러티 골든 무변). 수비병이 없는 城(def<=0)도 0 = 판정 없음.
  */
 fun foundAssaultCrewCost(mapName: String?, cityDefense: Int): Int =
-    if (!isHanMapName(mapName) || cityDefense <= 0) 0
+    if (!isHistoricalMapName(mapName) || cityDefense <= 0) 0
     else kotlin.math.ceil(cityDefense * FOUND_ASSAULT_RATIO).toInt()
 
 sealed interface CityConstVariant {
@@ -200,18 +200,18 @@ internal class InitCityOverrideVariant(
 }
 
 /**
- * 'han' — 續漢書 郡國志 + CHGIS 격자에서 구운 178 郡 지도([HanCityConst], 생성물).
+ * 'han' — 續漢書 郡國志 + CHGIS 격자에서 구운 178 郡 지도([BaselineCityConst], 생성물).
  * region 라벨이 州 이름이라 base 의 8개 라벨 대신 자기 [regionMap] 을 쓰고,
- * 게이트 키는 같은 생성기가 낸 [HanGateIndex] 에서 온다.
+ * 게이트 키는 같은 생성기가 낸 [BaselineGateIndex] 에서 온다.
  */
-internal class HanCityConstVariant(
+internal class HistoricalCityConstVariant(
     override val mapName: String,
     rawRows: List<RawCity>,
     private val gateKeysFor: (Int) -> Set<String>,
     override val nationLevelCityThresholds: List<Int>,
 ) : CityConstVariant {
     /** han.json `_meta.regions` 순서 그대로 — build_han_world.py 의 `ju_order`(1-based). */
-    private val hanRegions: Map<Any, Any> = linkedMapOf<Any, Any>().apply {
+    private val historicalRegions: Map<Any, Any> = linkedMapOf<Any, Any>().apply {
         listOf(
             "사예", "예주", "기주", "연주", "서주", "청주", "형주",
             "양주", "익주", "량주", "병주", "유주", "교주", "동이",
@@ -222,7 +222,7 @@ internal class HanCityConstVariant(
     }
 
     /** Han-only generation view; the shared table also exposes these labels to API readers. */
-    private val hanLevels: Map<Any, Any> =
+    private val historicalLevels: Map<Any, Any> =
         LinkedHashMap<Any, Any>(CityConst.levelMap).apply {
             put("경", 9); put(9, "경")
             // 治所가 아닌 縣. 續漢書 百官志 「萬戶以上為令，不滿為長」 — 令이 앉는 縣이 '영현',
@@ -232,7 +232,7 @@ internal class HanCityConstVariant(
         }
 
     /** '경'·'영현'·'장현'의 초기값 — che 계단(def/wall +1000, pop 100k→150k)을 한 칸 더 이은 밸런스값이다. */
-    private val hanBuildInit: Map<String, Map<String, Int>> =
+    private val historicalBuildInit: Map<String, Map<String, Int>> =
         LinkedHashMap(CityConst.buildInit).apply {
             put("경", linkedMapOf("pop" to 200000, "agri" to 1000, "comm" to 1000,
                                  "secu" to 1000, "def" to 6000, "wall" to 6000))
@@ -243,10 +243,10 @@ internal class HanCityConstVariant(
                                    "secu" to 500, "def" to 1000, "wall" to 1000))
         }
 
-    private val generated = generateHanCities(rawRows)
+    private val generated = generateHistoricalCities(rawRows)
 
-    private fun generateHanCities(rawRows: List<RawCity>): CityConst.GeneratedCities {
-        val base = CityConst.generateCities(rawRows, hanRegions, hanLevels)
+    private fun generateHistoricalCities(rawRows: List<RawCity>): CityConst.GeneratedCities {
+        val base = CityConst.generateCities(rawRows, historicalRegions, historicalLevels)
         val rowsByName = rawRows.groupBy { it.name }
         val constId = LinkedHashMap<Int, CityInitialDetail>()
         val constName = LinkedHashMap<String, CityInitialDetail>()
@@ -280,7 +280,7 @@ internal class HanCityConstVariant(
      */
     override fun byName(name: String): CityInitialDetail? = generated.constName[name]
     override fun byRegion(region: Int): CityInitialDetail? = generated.constRegion[region]
-    override fun regionIdByName(name: String): Int? = hanRegions[name] as? Int
+    override fun regionIdByName(name: String): Int? = historicalRegions[name] as? Int
 
     /** 郡治(이 4 ~ 경 9)만 센다. 영현(10)·장현(11)은 郡의 하급 행정구역이라 세지 않는다. */
     override fun countsForNationLevel(level: Int): Boolean = level in 4..9
@@ -311,7 +311,7 @@ internal class HanCityConstVariant(
      * 직접 단언하지 않는다(2026-08-24 measured, `grep -rln nationLevelCityThresholds *Test.kt` = 0건).
      */
     override fun gateKeys(cityId: Int): Set<String> = gateKeysFor(cityId)
-    override val buildInit: Map<String, Map<String, Int>> get() = hanBuildInit
+    override val buildInit: Map<String, Map<String, Int>> get() = historicalBuildInit
     override val buildInitCommon: Map<String, Int> get() = CityConst.buildInitCommon
 
     override val supportsThreeAxisRank: Boolean = true
@@ -332,90 +332,90 @@ internal class HanCityConstVariant(
 
     /** Current-Han facade retained for existing package-level seat callers. */
     companion object {
-        fun all(): Map<Int, CityInitialDetail> = currentHan.all()
-        fun countsForNationLevel(level: Int): Boolean = currentHan.countsForNationLevel(level)
-        val seatCountByProvince: Map<Int, Int> get() = currentHan.seatCountByProvince
+        fun all(): Map<Int, CityInitialDetail> = currentHistoricalMap.all()
+        fun countsForNationLevel(level: Int): Boolean = currentHistoricalMap.countsForNationLevel(level)
+        val seatCountByProvince: Map<Int, Int> get() = currentHistoricalMap.seatCountByProvince
     }
 }
 
-private val currentHan = HanCityConstVariant(
-    mapName = HAN_MAP_NAME,
-    rawRows = HanCityConst.initCity,
-    gateKeysFor = HanGateIndex::keys,
+private val currentHistoricalMap = HistoricalCityConstVariant(
+    mapName = HISTORICAL_MAP_NAME,
+    rawRows = BaselineCityConst.initCity,
+    gateKeysFor = BaselineGateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
 )
-private val legacyHan = HanCityConstVariant(
-    mapName = HAN_780_V1_MAP_NAME,
-    rawRows = Han780V1CityConst.initCity,
-    gateKeysFor = Han780V1GateIndex::keys,
+private val legacyHistoricalMap = HistoricalCityConstVariant(
+    mapName = LEGACY_MAP_ARCHIVE_NAME,
+    rawRows = Archive780CityConst.initCity,
+    gateKeysFor = Archive780GateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 13, 20, 28, 41, 53, 71, 91),
 )
-private val hanWorldV3 = HanCityConstVariant(
-    mapName = HAN_WORLD_V3_MAP_NAME,
-    rawRows = HanWorldV3CityConst.initCity,
-    gateKeysFor = HanWorldV3GateIndex::keys,
+private val worldArchiveMap = HistoricalCityConstVariant(
+    mapName = WORLD_ARCHIVE_MAP_NAME,
+    rawRows = ArchiveCityConst.initCity,
+    gateKeysFor = ArchiveGateIndex::keys,
     nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
 )
 
-private val historicalHanWorlds: Map<HanWorldVariant, CityConstVariant> by lazy {
+private val historicalWorlds: Map<WorldMapVariant, CityConstVariant> by lazy {
     mapOf(
-        HanWorldVariant.V3_832 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV3832CityConst.initCity, HanWorldV3832GateIndex::keys,
+        WorldMapVariant.V3_832 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive832CityConst.initCity, Archive832GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_846 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV3846CityConst.initCity, HanWorldV3846GateIndex::keys,
+        WorldMapVariant.V3_846 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive846CityConst.initCity, Archive846GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_848 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV3848CityConst.initCity, HanWorldV3848GateIndex::keys,
+        WorldMapVariant.V3_848 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive848CityConst.initCity, Archive848GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1098 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31098CityConst.initCity, HanWorldV31098GateIndex::keys,
+        WorldMapVariant.V3_1098 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1098CityConst.initCity, Archive1098GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1168 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31168CityConst.initCity, HanWorldV31168GateIndex::keys,
+        WorldMapVariant.V3_1168 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1168CityConst.initCity, Archive1168GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1224 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31224CityConst.initCity, HanWorldV31224GateIndex::keys,
+        WorldMapVariant.V3_1224 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1224CityConst.initCity, Archive1224GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1447 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31447CityConst.initCity, HanWorldV31447GateIndex::keys,
+        WorldMapVariant.V3_1447 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1447CityConst.initCity, Archive1447GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1447_MAP4 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31447Map4CityConst.initCity, HanWorldV31447Map4GateIndex::keys,
+        WorldMapVariant.V3_1447_MAP4 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1447Map4CityConst.initCity, Archive1447Map4GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1194 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31194CityConst.initCity, HanWorldV31194GateIndex::keys,
+        WorldMapVariant.V3_1194 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1194CityConst.initCity, Archive1194GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1341 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31341CityConst.initCity, HanWorldV31341GateIndex::keys,
+        WorldMapVariant.V3_1341 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1341CityConst.initCity, Archive1341GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1141 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31141CityConst.initCity, HanWorldV31141GateIndex::keys,
+        WorldMapVariant.V3_1141 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1141CityConst.initCity, Archive1141GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_1133 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV31133CityConst.initCity, HanWorldV31133GateIndex::keys,
+        WorldMapVariant.V3_1133 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive1133CityConst.initCity, Archive1133GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
-        HanWorldVariant.V3_835 to HanCityConstVariant(
-            HAN_WORLD_V3_MAP_NAME, HanWorldV3835CityConst.initCity, HanWorldV3835GateIndex::keys,
+        WorldMapVariant.V3_835 to HistoricalCityConstVariant(
+            WORLD_ARCHIVE_MAP_NAME, Archive835CityConst.initCity, Archive835GateIndex::keys,
             nationLevelCityThresholds = listOf(0, 1, 5, 12, 20, 27, 40, 52, 70, 90),
         ),
     )
 }
 
 object CityConstRegistry {
-    fun hanWorld(variant: HanWorldVariant): CityConstVariant = historicalHanWorlds.getValue(variant)
+    fun hanWorld(variant: WorldMapVariant): CityConstVariant = historicalWorlds.getValue(variant)
 
     const val DEFAULT_MAP_NAME = "che"
 
@@ -508,10 +508,10 @@ object CityConstRegistry {
             "miniche" to miniche,
             "miniche_b" to miniche,
             "miniche_clean" to miniche,
-            HAN_MAP_NAME to currentHan,
-            HAN_WORLD_V2_MAP_NAME to currentHan,
-            HAN_WORLD_V3_MAP_NAME to hanWorldV3,
-            HAN_780_V1_MAP_NAME to legacyHan,
+            HISTORICAL_MAP_NAME to currentHistoricalMap,
+            EARLY_WORLD_ARCHIVE_NAME to currentHistoricalMap,
+            WORLD_ARCHIVE_MAP_NAME to worldArchiveMap,
+            LEGACY_MAP_ARCHIVE_NAME to legacyHistoricalMap,
         )
     }
 

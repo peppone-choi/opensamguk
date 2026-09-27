@@ -20,7 +20,7 @@ data class ScenarioUnit(
 }
 
 /**
- * `hwihaUnits` — HWIHA 새 월드의 초기 부곡을 명시적으로 선언한다. HWIHA 에는 부곡을 편성하는 입력이 아직 없어서,
+ * `units` — HWIHA 새 월드의 초기 부곡을 명시적으로 선언한다. HWIHA 에는 부곡을 편성하는 입력이 아직 없어서,
  * NPC 가 출병할 병력을 시나리오가 직접 준다. 병력·군량 등 수치는 시나리오 작성자의 게임 기획 값이며
  * 사료 수치가 아니다. 선언이 없으면 부곡을 만들지 않는다(추정·보충 없음).
  */
@@ -28,18 +28,18 @@ object ScenarioUnits {
     private val fields = setOf("general", "name", "troops", "crewTypeId", "training", "morale", "provisions")
 
     fun decode(root: Map<String, Any?>, profile: RuleProfile?): List<ScenarioUnit> {
-        if ("hwihaUnits" !in root) return emptyList()
-        require(profile == RuleProfile.HWIHA) { "hwihaUnits requires HWIHA" }
-        val rows = root["hwihaUnits"] as? List<*> ?: throw IllegalArgumentException("hwihaUnits must be an array")
+        if ("units" !in root) return emptyList()
+        require(profile == RuleProfile.HWIHA) { "units requires HWIHA" }
+        val rows = root["units"] as? List<*> ?: throw IllegalArgumentException("units must be an array")
         return rows.map { raw ->
-            val row = raw as? Map<*, *> ?: throw IllegalArgumentException("Invalid hwihaUnits row")
-            require(row.keys == fields) { "Unexpected hwihaUnits fields: ${row.keys}" }
-            fun text(key: String) = row[key] as? String ?: throw IllegalArgumentException("hwihaUnits.$key must be a string")
-            fun int(key: String) = row[key] as? Int ?: throw IllegalArgumentException("hwihaUnits.$key must be an integer")
+            val row = raw as? Map<*, *> ?: throw IllegalArgumentException("Invalid units row")
+            require(row.keys == fields) { "Unexpected units fields: ${row.keys}" }
+            fun text(key: String) = row[key] as? String ?: throw IllegalArgumentException("units.$key must be a string")
+            fun int(key: String) = row[key] as? Int ?: throw IllegalArgumentException("units.$key must be an integer")
             ScenarioUnit(text("general"), text("name"), int("troops"), int("crewTypeId"), int("training"),
                 int("morale"), int("provisions"))
         }.also { units ->
-            require(units.map { it.general to it.name }.distinct().size == units.size) { "Duplicate hwihaUnits name for a general" }
+            require(units.map { it.general to it.name }.distinct().size == units.size) { "Duplicate units name for a general" }
         }
     }
 }

@@ -4,6 +4,8 @@
 
 `OfficeCapabilityResolver.actualJurisdiction`은 수락·부임, 治所 縣 소유, 재임자 위치, 관할 縣 과반 소유, 治所 창고망 연결, 현령 착석 또는 주둔군을 함께 검사한다. 실제 능력 범위는 소유하면서 창고망에도 연결된 縣으로 좁힌다. `OfficeCapabilityResolver.resolve`의 결과만 handler·NPC·사전검사에서 사용한다. 太守/國相은 郡 방침과 실효 관할 縣 공사, 刺史/牧은 州 감찰만 허용한다. 司隸는 州刺史/牧 임명 대상에서 제외한다.
 
+같은 세력은 같은 관할에 같은 종류의 지방 재임을 중복 등록할 수 없다. 서로 다른 세력의 경쟁 재임은 허용하며, 실제 능력은 각 재임의 실효 관할 증거로 판정한다.
+
 게임 문턱은 [`office-rules.json`](../../data/curated/han/office-rules.json) 한 곳에 둔다. 소유 비율 50%, 동시 지방 재임 2개는 구현 에이전트가 정한 게임 값이며 사료 주장으로 표시하지 않는다. 기존 월드와 연결할 때는 R1 縣 소유·월드별 행정 오버레이·창고망·부임 위치를 하나의 `OfficeJurisdictionSnapshot`으로 투영해야 한다. 기본 지도 핀만으로 월드별 治所를 결정하지 않는다.
 
 #905 지도 병합 뒤 1,447개 城의 ID·`administrativeUnitId`·`meta.ju/jun/junCh`는 전수 비교에서 변화가 없었다. 관직 모델의 郡國 ID는 `hhs-group:<권>:<郡國명>`이고 기존 `DomesticCounty.commanderyId`는 `meta.junCh` 표기 문자열이다. 두 값을 문자열 그대로 비교하면 관할이 빗나가므로 城 ID→`administrativeUnitId`→행정 축 郡國 ID로 명시 변환한다. `administrativeUnitId`가 없는 320개 城에는 관직 권한을 부여하지 않는다. 월드별 오버레이가 실제로 구현되면 治所·명칭을 기본 지도에서 고정하지 않고 해당 월드의 투영에서 읽는다.

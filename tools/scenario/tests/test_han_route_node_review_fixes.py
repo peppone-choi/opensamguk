@@ -48,6 +48,8 @@ class HanRouteNodeReviewFixesTest(unittest.TestCase):
             self.assertEqual(row["resourceSha256"], MODULE._digest(path), row["code"])
 
         self.assertTrue((inputs.scenario_dir / "scenario_990002.json").is_file())
+        self.assertTrue((inputs.scenario_dir / "scenario_3190.json").is_file())
+        self.assertFalse(MODULE.is_route_node_scenario_resource(inputs.scenario_dir / "scenario_3190.json"))
         self.assertEqual(
             expected_codes,
             {row["scenarioId"] for row in MODULE._scenario_resources(candidate, inputs.scenario_dir)},

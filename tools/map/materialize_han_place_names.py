@@ -32,7 +32,7 @@ HAN_CITY_CONST = (
     / "opensamguk"
     / "common"
     / "constants"
-    / "HanCityConst.kt"
+    / "BaselineCityConst.kt"
 )
 
 
@@ -81,20 +81,20 @@ def normalize_city_const(source: str) -> str:
         result = "".join(lines)
         if replacements not in {0, expected}:
             raise ValueError(
-                f"HanCityConst runtime source occurrence drift for {old}: "
+                f"BaselineCityConst runtime source occurrence drift for {old}: "
                 f"expected {expected} or 0 reviewed rows, got {replacements}"
             )
         canonical_occurrences = result.count(f'"{new}"')
         if canonical_occurrences != normalization["runtimeCanonicalOccurrences"]:
             raise ValueError(
-                f"HanCityConst canonical runtime occurrence drift for {new}: "
+                f"BaselineCityConst canonical runtime occurrence drift for {new}: "
                 f"expected {normalization['runtimeCanonicalOccurrences']}, "
                 f"got {canonical_occurrences}"
             )
         target = f'RawCity({normalization["runtimeCityId"]}, "{new}",'
         if result.count(target) != 1:
             raise ValueError(
-                f"HanCityConst canonical runtime city drift for "
+                f"BaselineCityConst canonical runtime city drift for "
                 f"{normalization['runtimeCityId']}: {new}"
             )
     return result

@@ -12,7 +12,7 @@ class ImmediateInputWireTest {
             "court.dispatchReply" to "{\"dispatchId\":\"req-1\",\"accept\":false}")) {
             val command = TurnDaemonCommand.ImmediateInput("req-1", 1, 42, input, args)
             val encoded = WireJson.encodeToString(TurnDaemonCommand.serializer(), command)
-            assertTrue(encoded.contains("\"type\":\"hwihaCourtInput\""))
+            assertTrue(encoded.contains("\"type\":\"immediateInput\""))
             assertEquals(command, WireJson.decodeFromString(TurnDaemonCommand.serializer(), encoded))
         }
     }
@@ -20,7 +20,7 @@ class ImmediateInputWireTest {
     @Test fun `missing owner cannot silently decode`() {
         assertFailsWith<SerializationException> {
             WireJson.decodeFromString(TurnDaemonCommand.serializer(),
-                """{"type":"hwihaCourtInput","requestId":"req-1","generalId":1,"inputId":"court.dispatch","argJson":"{}"}""")
+                """{"type":"immediateInput","requestId":"req-1","generalId":1,"inputId":"court.dispatch","argJson":"{}"}""")
         }
     }
 }

@@ -89,5 +89,5 @@ class TravelTurn(
         world.applyGeneralDirtyFree(after)
     }
 
-    private companion object { const val RECOVERY_AT = "hwihaPersonalTravelRecoveryAt" }
+    private companion object { const val RECOVERY_AT = "personalTravelRecoveryAt" }
 }

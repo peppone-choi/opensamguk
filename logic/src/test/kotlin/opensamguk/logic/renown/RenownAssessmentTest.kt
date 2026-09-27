@@ -114,7 +114,7 @@ class RenownAssessmentTest {
     @Test
     fun `정본 데이터 파일이 유효한 곡선으로 읽힌다`() {
         // 코드와 데이터가 갈라지지 않게 하는 두 번째 축: 파일이 그대로 Curve 가 되어야 한다.
-        val file = repoRoot().resolve("data/curated/han/hwiha-renown-assessment-v1.json")
+        val file = repoRoot().resolve("data/curated/han/renown-assessment-v1.json")
         assertTrue(Files.isRegularFile(file), "정본 파일이 있다: $file")
         val text = Files.readString(file)
         fun intOf(key: String): Int {

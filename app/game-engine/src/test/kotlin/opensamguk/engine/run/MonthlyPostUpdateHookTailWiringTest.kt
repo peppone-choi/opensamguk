@@ -13,9 +13,6 @@ import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
-import opensamguk.infra.entity.AuctionEntity
-import opensamguk.infra.read.AuctionRepository
-import opensamguk.logic.auction.AuctionType
 import opensamguk.logic.event.EventAction
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventActionFactory
@@ -25,12 +22,10 @@ import opensamguk.logic.event.EventStore
 import opensamguk.logic.event.LightActionWorld
 import opensamguk.logic.event.RawAction
 import opensamguk.logic.stats.GeneralActionPipeline
-import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.world.PostNationPowerInput
 import opensamguk.logic.world.PowerCity
 import opensamguk.logic.world.PowerGeneral
 import opensamguk.logic.world.postUpdateMonthlyPower
-import java.lang.reflect.Proxy
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,13 +40,11 @@ class MonthlyPostUpdateHookTailWiringTest {
         private val bools: ArrayDeque<Boolean> = ArrayDeque(),
         private val ints: ArrayDeque<Int> = ArrayDeque(),
     ) : RandUtil(LiteHashDrbg("monthly-post-tail-test")) {
-        var shuffleCalls: Int = 0
 
         override fun nextRange(min: Double, max: Double): Double = 1.0
         override fun nextBool(prob: Double): Boolean = bools.removeFirst()
         override fun nextRangeInt(minInclusive: Int, maxInclusive: Int): Int = ints.removeFirst()
         override fun <T> shuffle(srcArray: List<T>): List<T> {
-            shuffleCalls++
             return srcArray
         }
     }
@@ -65,8 +58,8 @@ class MonthlyPostUpdateHookTailWiringTest {
         )
         val recorder = ChangeRecorder()
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline())
+            .run(ScriptedRng())
 
         assertEquals(null, world.getNationById(7))
         assertEquals(0, world.getGeneralById(70)!!.nationId)
@@ -91,9 +84,8 @@ class MonthlyPostUpdateHookTailWiringTest {
             world,
             recorder,
             GeneralActionPipeline(),
-            auctionRepository = auctionRepo(),
             eventDispatcher = dispatcher,
-        ).run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        ).run(ScriptedRng())
 
         assertEquals(
             listOf("nation=null,generals=0/0,cities=0/0"),
@@ -133,9 +125,8 @@ class MonthlyPostUpdateHookTailWiringTest {
             world,
             recorder,
             GeneralActionPipeline(),
-            auctionRepository = auctionRepo(),
             eventDispatcher = occupyCityDispatcher(world, dispatchObservations),
-        ).run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        ).run(ScriptedRng())
 
         assertEquals(emptyList(), dispatchObservations)
         assertEquals(null, recorder.deletedNationIds().singleOrNull())
@@ -174,8 +165,8 @@ class MonthlyPostUpdateHookTailWiringTest {
         )
         val recorder = ChangeRecorder()
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline())
+            .run(ScriptedRng())
 
         assertEquals(1, (world.getNationById(1)!!.meta["gennum"] as Number).toInt())
         assertEquals(1, (world.getNationById(2)!!.meta["gennum"] as Number).toInt())
@@ -212,8 +203,8 @@ class MonthlyPostUpdateHookTailWiringTest {
         )
         val recorder = ChangeRecorder()
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline())
+            .run(ScriptedRng())
 
         val kv = recorder.kvDirty()
         @Suppress("UNCHECKED_CAST")
@@ -233,8 +224,8 @@ class MonthlyPostUpdateHookTailWiringTest {
         )
         val recorder = ChangeRecorder()
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline())
+            .run(ScriptedRng())
 
         @Suppress("UNCHECKED_CAST")
         val maxPower = recorder.kvDirty()
@@ -260,8 +251,8 @@ class MonthlyPostUpdateHookTailWiringTest {
         recorder.recordRankIncrease(10, RankColumn.KILLCREW_PERSON, 50)
         recorder.recordRankIncrease(10, RankColumn.DEATHCREW_PERSON, -40)
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(bools = ArrayDeque(listOf(false, false))))
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline())
+            .run(ScriptedRng())
 
         val expected = postUpdateMonthlyPower(
             nations = listOf(
@@ -301,131 +292,45 @@ class MonthlyPostUpdateHookTailWiringTest {
     }
 
     @Test
-    fun `Q15 triggerTournament writes game env and resets participant flags when monthly gate hits`() {
+    fun `monthly settlement ignores retired tournament trigger flags`() {
         val world = world(
             meta = mapOf(
                 "tournament" to 0,
                 "tnmt_trig" to true,
                 "tnmt_pattern" to listOf(0, 1),
-                "turnterm" to 60,
             ),
             nations = listOf(nation(1, "후한", level = 7, meta = mapOf("gennum" to 1))),
-            generals = listOf(
-                general(
-                    10,
-                    name = "유비",
-                    nationId = 1,
-                    officerLevel = 12,
-                    npc = 0,
-                    tournament = 7,
-                    politics = 77,
-                    charm = 66,
-                ),
-            ),
+            generals = listOf(general(10, nationId = 1, officerLevel = 12, npc = 0, tournament = 7)),
             cities = listOf(city(1, "낙양", nationId = 1)),
         )
         val recorder = ChangeRecorder()
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(bools = ArrayDeque(listOf(true, false, false))))
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline())
+            .run(ScriptedRng())
 
-        val kv = recorder.kvDirty()
-        assertEquals(listOf(0), kv.getValue(opensamguk.engine.turn.KvKey("game_env", "game_env", "tnmt_pattern")))
-        assertEquals(true, kv.getValue(opensamguk.engine.turn.KvKey("game_env", "game_env", "tnmt_auto")))
-        assertEquals(1, kv.getValue(opensamguk.engine.turn.KvKey("game_env", "game_env", "tournament")))
-        assertEquals(1, kv.getValue(opensamguk.engine.turn.KvKey("game_env", "game_env", "tnmt_type")))
-        assertEquals(0, kv.getValue(opensamguk.engine.turn.KvKey("game_env", "game_env", "last_tournament_betting_id")))
-        assertEquals(0, kv.getValue(opensamguk.engine.turn.KvKey("game_env", "game_env", "phase")))
-        assertEquals(0, (world.getGeneralById(10)!!.meta["tournament"] as Number).toInt())
-        assertEquals(77, world.getGeneralById(10)!!.stats.politics)
-        assertEquals(66, world.getGeneralById(10)!!.stats.charm)
+        val changedKeys = recorder.kvDirty().keys.map { it.key }
+        assertFalse(changedKeys.any { it.startsWith("tnmt_") || it == "tournament" || it == "phase" })
+        assertEquals(7, (world.getGeneralById(10)!!.meta["tournament"] as Number).toInt())
     }
 
     @Test
-    fun `Q15 ambient tournament pattern does not consume the monthly RNG shuffle cursor`() {
+    fun `Q16 neutral auction registration is retired and draws no monthly bool or int`() {
         val world = world(
-            meta = mapOf(
-                "tournament" to 0,
-                "tnmt_trig" to true,
-                "tnmt_pattern" to emptyList<Int>(),
-            ),
-            nations = listOf(nation(1, "후한", level = 7, meta = mapOf("gennum" to 1))),
-            generals = listOf(general(10, name = "유비", nationId = 1, officerLevel = 12, npc = 0)),
-            cities = listOf(city(1, "낙양", nationId = 1)),
-        )
-        val recorder = ChangeRecorder()
-        val rng = ScriptedRng(bools = ArrayDeque(listOf(true, false, false)))
-
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(rng)
-
-        assertEquals(0, rng.shuffleCalls)
-        val log = world.consumeDirtyState().logs.single { it.scope == "global" }.text
-        assertTrue(log.contains("황제 <Y>유비</>의 명으로 "))
-        assertTrue(log.contains("대회가 개최됩니다! 천하의 "))
-        assertTrue(log.contains("</span>들을 모집하고 있습니다!"))
-    }
-
-    @Test
-    fun `Q15 sanctioned tournament divergence is repeatable without claiming PHP shuffle parity`() {
-        fun runPattern(): List<Int> {
-            val world = world(
-                meta = mapOf(
-                    "hiddenSeed" to "0123456789abcdef0123456789abcdef",
-                    "tournament" to 0,
-                    "tnmt_trig" to true,
-                    "tnmt_pattern" to emptyList<Int>(),
-                ),
-                nations = listOf(nation(1, "후한", level = 7, meta = mapOf("gennum" to 1))),
-                generals = listOf(general(10, name = "유비", nationId = 1, officerLevel = 12, npc = 0)),
-                cities = listOf(city(1, "낙양", nationId = 1)),
-            )
-            val recorder = ChangeRecorder()
-            val rng = ScriptedRng(bools = ArrayDeque(listOf(true, false, false)))
-
-            MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-                .run(rng)
-
-            assertEquals(0, rng.shuffleCalls)
-            val kv = recorder.kvDirty()
-            @Suppress("UNCHECKED_CAST")
-            val remaining = kv.getValue(KvKey("game_env", "game_env", "tnmt_pattern")) as List<Int>
-            val selected = kv.getValue(KvKey("game_env", "game_env", "tnmt_type")) as Int
-            return remaining + selected
-        }
-
-        assertEquals(1, List(12) { runPattern() }.toSet().size)
-    }
-
-    @Test
-    fun `Q16 registerAuction records neutral buyRice and sellRice auction inserts`() {
-        val world = world(
-            nations = listOf(nation(1, "후한", level = 7, meta = mapOf("gennum" to 2))),
+            nations = listOf(nation(1, "후한", level = 7, meta = mapOf("gennum" to 0))),
             generals = listOf(
                 general(10, nationId = 1, officerLevel = 12, npc = 0, gold = 30_000, rice = 8_000),
                 general(11, nationId = 1, officerLevel = 1, npc = 1, gold = 10_000, rice = 12_000),
             ),
-            cities = listOf(city(1, "낙양", nationId = 1)),
+            cities = listOf(city(1, "낙양", nationId = 1, front = 0)),
         )
         val recorder = ChangeRecorder()
 
-        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo())
-            .run(ScriptedRng(
-                bools = ArrayDeque(listOf(true, true)),
-                ints = ArrayDeque(listOf(1, 3, 1, 3)),
-            ))
+        // 빈 스크립트: 옛 Q16 처럼 nextBool/nextRangeInt 를 한 번이라도 부르면 NoSuchElementException 으로 깨진다.
+        MonthlyPostUpdateHook(world, recorder, GeneralActionPipeline()).run(ScriptedRng())
 
-        val upserts = recorder.auctionUpserts()
-        assertEquals(2, upserts.size)
-        assertEquals("buyRice", upserts[0].columns["type"])
-        assertEquals(0, upserts[0].columns["host_general_id"])
-        assertEquals("gold", upserts[0].columns["req_resource"])
-        assertEquals("sellRice", upserts[1].columns["type"])
-        assertEquals("rice", upserts[1].columns["req_resource"])
-        val buyDetail = jsonDecode(upserts[0].columns["detail"] as String)
-        val sellDetail = jsonDecode(upserts[1].columns["detail"] as String)
-        assertEquals("쌀 500 경매", buyDetail["title"])
-        assertEquals("금 1000 경매", sellDetail["title"])
+        // Q16 자리 앞뒤(Q12 gennum 재계산, Q17 전선)는 그대로 끝까지 돈다.
+        assertEquals(2, (world.getNationById(1)!!.meta["gennum"] as Number).toInt())
+        assertTrue(recorder.nationPatches().any { it.id == 1 && it.meta["gennum"] == 2 })
     }
 
     private fun world(
@@ -492,22 +397,6 @@ class MonthlyPostUpdateHookTailWiringTest {
 
     private fun city(id: Int, name: String, nationId: Int, front: Int = 0) =
         City(id = id, name = name, nationId = nationId, level = 5, frontState = front, supplyState = 1)
-
-    private fun auctionRepo(active: List<AuctionEntity> = emptyList()): AuctionRepository =
-        Proxy.newProxyInstance(
-            AuctionRepository::class.java.classLoader,
-            arrayOf(AuctionRepository::class.java),
-        ) { _, method, args ->
-            when (method.name) {
-                "findByFinishedFalse" -> active
-                "findByFinishedFalseAndTypeValue" -> active.filter { it.type.value == args?.get(0) }
-                else -> when (method.returnType) {
-                    java.util.List::class.java -> emptyList<Any>()
-                    java.lang.Boolean.TYPE -> false
-                    else -> null
-                }
-            }
-        } as AuctionRepository
 
     private fun occupyCityDispatcher(
         world: InMemoryTurnWorld,

@@ -170,7 +170,7 @@ class HanPlaceNameNormalizationTest(unittest.TestCase):
 
         city_const = (
             ROOT
-            / "common/src/main/kotlin/opensamguk/common/constants/HanCityConst.kt"
+            / "common/src/main/kotlin/opensamguk/common/constants/BaselineCityConst.kt"
         ).read_text(encoding="utf-8")
         self.assertNotIn("영현（영현）", city_const)
         self.assertNotIn("곡성（성）", city_const)
@@ -187,7 +187,7 @@ class HanPlaceNameNormalizationTest(unittest.TestCase):
     def test_runtime_constant_rejects_post_normalization_target_drift(self) -> None:
         source = normalize_city_const((
             ROOT
-            / "common/src/main/kotlin/opensamguk/common/constants/HanCityConst.kt"
+            / "common/src/main/kotlin/opensamguk/common/constants/BaselineCityConst.kt"
         ).read_text(encoding="utf-8"))
         corrupted = source.replace('RawCity(200, "청하국 영",', 'RawCity(200, "임의",')
 

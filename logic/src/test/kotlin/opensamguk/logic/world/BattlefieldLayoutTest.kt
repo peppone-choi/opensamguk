@@ -4,13 +4,13 @@ import kotlin.test.*
 import opensamguk.logic.world.BattlefieldGeometry.Position
 
 class BattlefieldLayoutTest {
-    private fun source(battle: List<HanProvinceCell>, approach: List<HanProvinceCell>) = HanProvinceCellIndex(
+    private fun source(battle: List<ProvinceCell>, approach: List<ProvinceCell>) = ProvinceCellIndex(
         "qa", "a".repeat(64), "b".repeat(64), 20, 20,
         mapOf('0' to "SEA", '1' to "PLAIN", '2' to "MOUNTAIN", '3' to "RIVER", '4' to "LAKE"),
-        mapOf("battle" to battle.sortedWith(compareBy(HanProvinceCell::row, HanProvinceCell::col)),
-            "approach" to approach.sortedWith(compareBy(HanProvinceCell::row, HanProvinceCell::col))))
-    private fun cell(col: Int, row: Int = 1, terrain: Char = '1') = HanProvinceCell(col, row, terrain)
-    private fun prepare(battle: List<HanProvinceCell>, approach: List<HanProvinceCell> = listOf(cell(0))) =
+        mapOf("battle" to battle.sortedWith(compareBy(ProvinceCell::row, ProvinceCell::col)),
+            "approach" to approach.sortedWith(compareBy(ProvinceCell::row, ProvinceCell::col))))
+    private fun cell(col: Int, row: Int = 1, terrain: Char = '1') = ProvinceCell(col, row, terrain)
+    private fun prepare(battle: List<ProvinceCell>, approach: List<ProvinceCell> = listOf(cell(0))) =
         BattlefieldLayout.prepare(source(battle, approach), "battle", "approach")
     private fun ready(result: BattlefieldLayout.Result) = assertIs<BattlefieldLayout.Result.Ready>(result).layout
     private fun reason(result: BattlefieldLayout.Result) = assertIs<BattlefieldLayout.Result.Unavailable>(result).reason

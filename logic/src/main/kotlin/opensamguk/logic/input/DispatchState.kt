@@ -4,7 +4,7 @@ package opensamguk.logic.input
  * Game-design defaults, measured in world phases rather than wall-clock time.
  *
  * A refusal costs loyalty here, at once (spec §2.4). Its renown cost is not a policy field: it is the
- * monthly assessment's `dispatchRefusal` event (-4, `hwiha-renown-assessment-v1.json`), recorded at most once per
+ * monthly assessment's `dispatchRefusal` event (-4, `renown-assessment-v1.json`), recorded at most once per
  * month (2026-09-23 user decision — the former immediate -1 was removed so that renown moves on one path only).
  */
 data class DispatchPolicy(
@@ -60,7 +60,7 @@ data class DispatchState(
         "dueAt" to dueAt.toMetaValue(), "status" to status.name,
     )
     companion object {
-        const val META_KEY = "hwihaDispatch"
+        const val META_KEY = "dispatch"
         private val fields = setOf("dispatchId", "issuerId", "targetId", "nationId", "countyId", "issuedAt", "dueAt", "status")
         fun read(meta: Map<String, Any?>): DispatchState? {
             if (META_KEY !in meta) return null
@@ -83,7 +83,7 @@ data class CountyAssignment(val dispatchId: String, val issuerId: Int, val natio
     fun toMetaValue(): Map<String, Any> = linkedMapOf("dispatchId" to dispatchId, "issuerId" to issuerId,
         "nationId" to nationId, "countyId" to countyId)
     companion object {
-        const val META_KEY = "hwihaCountyAssignment"
+        const val META_KEY = "countyAssignment"
         fun read(meta: Map<String, Any?>): CountyAssignment? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalidDispatchState()

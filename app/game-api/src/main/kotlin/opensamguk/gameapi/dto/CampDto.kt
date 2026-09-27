@@ -3,7 +3,7 @@ package opensamguk.gameapi.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 
 /**
- * 휘하 조회 경로의 응답(`/api/hwiha/yuedan` · `warehouses` · `county/{cityId}` · `retinue` · `last-turns`).
+ * 휘하 조회 경로의 응답(`/api/yuedan` · `warehouses` · `county/{cityId}` · `retinue` · `last-turns`).
  *
  * 부드러운 상태는 HTTP 오류가 아니라 [status] 로 알린다:
  * `READY` · `NOT_ASSESSED`(월단평 전) · `UNAVAILABLE`(월드·원장을 읽지 못함) · `WRONG_RULE_PROFILE`(휘하 규칙 아님).
@@ -73,7 +73,7 @@ data class WarehousesResponse(
 /**
  * 현 특산 한 줄.
  *
- * [ledgerMonthly] 는 `hwiha-resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 월 세입
+ * [ledgerMonthly] 는 `resource-production-v1` 원장의 설계 산출량이다. [monthly] 는 월 세입
  * (`MonthlyCountyIncome`)이 이번 달 이 縣 창고에 실제로 넣을 양이다 — 주인 없음·보급 끊김·창고 없음이면 0,
  * 창고 meta 가 깨져 엔진도 건너뛰면 `null` 이다. 평소에는 두 값이 같다.
  */
@@ -155,7 +155,7 @@ data class NationSummaryEntryDto(
     val refs: Map<String, Any?>,
 )
 
-/** `/api/hwiha/last-turns` 응답. [turns] 는 최근 순부터다. */
+/** `/api/last-turns` 응답. [turns] 는 최근 순부터다. */
 data class LastTurnsResponse(
     val status: String,
     val turns: List<LastTurnDto> = emptyList(),

@@ -28,7 +28,7 @@ class RoadFortReader(
         if (userId <= 0 || userId > Int.MAX_VALUE || actor.userId?.toLongOrNull() != userId) throw CampForbidden()
         val world = worlds.findProcessWorld() ?: return RoadFortsResponse("UNAVAILABLE")
         if (actor.worldId != world.id) return RoadFortsResponse("UNAVAILABLE")
-        if (world.config["ruleProfile"] != "HWIHA") return RoadFortsResponse("WRONG_RULE_PROFILE")
+        if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return RoadFortsResponse("UNSUPPORTED_WORLD_FORMAT")
         val selected = artifacts.resolve() ?: return RoadFortsResponse("UNAVAILABLE")
         val bundle = selected.artifacts ?: return RoadFortsResponse("UNAVAILABLE")
         val topology = bundle.projection.topology

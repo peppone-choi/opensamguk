@@ -17,7 +17,7 @@ import opensamguk.engine.campaign.SiegeService
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.infra.persistence.MetaJson
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.infra.seed.ScenarioJson
 import opensamguk.logic.input.*
@@ -44,7 +44,7 @@ internal object PassChainSupport {
     /** Seeds the scenario through the production importer, then the human's own signup and reservation. */
     fun seed(jdbc: JdbcTemplate, world: Int, withUnits: Boolean = true) {
         val root = repoRoot()
-        val scenario = ScenarioJson.loadScenario(Files.readString(root.resolve("tools/e2e/fixtures/hwiha-yuzhou/scenario_990002.json")))
+        val scenario = ScenarioJson.loadScenario(Files.readString(root.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")))
         val cities = ScenarioJson.loadMapCities(Files.readString(root.resolve("infra/src/main/resources/map/han-world-v3.json")))
         ScenarioImporter(scenario = scenario, cities = cities, scenarioCode = "scenario_990002",
             installTime = OffsetDateTime.ofInstant(START, ZoneOffset.UTC), artifactsRoot = root).importAll(jdbc, WorldId(world))
@@ -61,8 +61,8 @@ internal object PassChainSupport {
 
         // The human player: a created character (npc_state 0) standing in the first lord's capital.
         val capital = scenario.nations.first().cities.first().toInt()
-        val projection = HanWorldArtifactsResolver(root)
-            .artifacts(opensamguk.logic.world.HanWorldVariant.V3_1447_MAP4).projection
+        val projection = WorldArtifactsResolver(root)
+            .artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection
         val province = requireNotNull(projection.bindingsByCityId[capital]?.landProvinceId)
         val policy = PersonPolicyState(30, false, "synthetic-qa:yuzhou-player", "v1", 900).toMetaValue()
         jdbc.update("""INSERT INTO general(world_id,id,name,user_id,nation_id,city_id,npc_state,officer_level,gold,rice,crew,
@@ -102,7 +102,7 @@ internal object PassChainSupport {
             service.runTick(START.plusSeconds(3600L * k))
             val world = measuredWorld ?: continue
             val human = world.getGeneralById(HUMAN)
-            val sieges = world.listHwihaSieges()
+            val sieges = world.listSieges()
             val meta = world.getState().meta
             val links = linkedMapOf(
                 "enlist" to ((human?.nationId ?: 0) > 0),
@@ -131,12 +131,12 @@ internal object PassChainSupport {
         assertTrue(CountyAssignment.META_KEY in human.meta, "발령: the player holds an accepted county assignment")
         // 행군
         assertTrue(world.listGenerals().any { CorpsMarchState.META_KEY in it.meta || EncounterResolver.BATTLE_RECORD_KEY in it.meta } ||
-            world.listHwihaSieges().isNotEmpty(), "행군: an NPC corps marched")
+            world.listSieges().isNotEmpty(), "행군: an NPC corps marched")
         // 조우
         assertTrue(world.listGenerals().any { EncounterResolver.BATTLE_RECORD_KEY in it.meta }, "조우: a sealed encounter was resolved")
         // 공성 · 점령 (persisted)
-        assertTrue(jdbc.queryForObject("SELECT count(*) FROM hwiha_siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
-        val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM hwiha_siege WHERE world_id=? AND status='FALLEN'", id)
+        assertTrue(jdbc.queryForObject("SELECT count(*) FROM siege WHERE world_id=?", Int::class.java, id)!! > 0, "공성: a siege row was flushed")
+        val fallen = jdbc.queryForList("SELECT county_id, besieger_nation_id FROM siege WHERE world_id=? AND status='FALLEN'", id)
         assertTrue(fallen.isNotEmpty(), "점령: a county fell")
         // A captured county can change hands again later — retaken, or neutralized by the monthly isolation decay
         // (UpdateCitySupply). So each fallen county's owner in the database must equal the live world's (the capture
@@ -159,8 +159,8 @@ internal object PassChainSupport {
 
     /** Cold reload: the flushed siege rows come back as they are in memory (V61 round trip). */
     fun assertSiegesReload(world: InMemoryTurnWorld, loader: WorldSnapshotLoader) {
-        val cold = loader.buildSnapshot().hwihaSieges.associateBy { it.countyId }
-        val live = world.listHwihaSieges().associateBy { it.countyId }
+        val cold = loader.buildSnapshot().sieges.associateBy { it.countyId }
+        val live = world.listSieges().associateBy { it.countyId }
         assertEquals(live.keys, cold.keys)
         for ((county, siege) in live) {
             val stored = cold.getValue(county)

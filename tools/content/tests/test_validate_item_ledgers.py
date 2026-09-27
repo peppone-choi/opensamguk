@@ -16,9 +16,9 @@ def read(path):
 class ItemLedgerValidationTest(unittest.TestCase):
     def setUp(self):
         self.source = read("data/extracted/item/items.json")
-        self.treasures = read("data/curated/han/hwiha-treasure-cards-v1.json")
-        self.equipment = read("data/curated/han/hwiha-equipment-v1.json")
-        self.excluded = read("data/curated/han/hwiha-items-excluded-v1.json")
+        self.treasures = read("data/curated/han/treasure-cards-v1.json")
+        self.equipment = read("data/curated/han/equipment-v1.json")
+        self.excluded = read("data/curated/han/items-excluded-v1.json")
 
     def validate(self):
         return validate_item_ledgers(self.source, self.treasures, self.equipment, self.excluded)

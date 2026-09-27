@@ -97,18 +97,10 @@ data class FrontGlobalInfo(
     val apiLimit: Int? = null, // game_env.refreshLimit
     val serverCnt: Int? = null,
     val isunited: Boolean? = null,
-    val tournamentTermMinutes: Int? = null,
 
     /** 현재 요청의 게임 서버 식별자 — middleware/프록시가 `sam_server` 쿠키로 고정한 값. */
     val serverId: String? = null,
 
-    // 토너먼트/베팅 상태(game_env.tournament/tnmt_type) — config 미기재 시 null.
-    val tournamentState: Int? = null,
-    val tournamentType: String? = null,
-    val isTournamentActive: Boolean? = null, // tournament > 0
-    val isTournamentApplicationOpen: Boolean? = null, // tournament == 1
-    val isBettingActive: Boolean? = null, // tournament == 6
-    val nationBetting: Boolean? = null, // 천통국 베팅 하이라이트(isBettingActive와 동치 — PHP 계산 게이트)
 
     // 설문(투표) 진행 여부 — vote_poll에서 미만료 폴 존재 시 true(아래 컨트롤러에서 계산).
     val vote: Boolean? = null,
@@ -132,10 +124,8 @@ data class FrontGlobalInfo(
     val createdUserCnt: Int? = null, // npc_state == 0 (사용자 점유 가능 장수)
     val createdNPCCnt: Int? = null, // npc_state > 0 (NPC 장수)
 
-    // ng_auction.finished = 0 진행중 경매 수(아래 AuctionCountReadRepository).
-    val auctionCount: Int? = null,
-
     val serverLocked: Boolean? = null,
+    val catchUp: opensamguk.common.turn.CatchUpSnapshot? = null,
 )
 
 data class AutorunUserInfo(

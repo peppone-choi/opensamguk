@@ -64,7 +64,7 @@ object WorldEventContextFactory {
         v2CityLedger: V2CityLedgerStore? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
         return { env ->
             // 스칼라/스토어 env 키 (env-read leaf가 직접 읽음).
             // 케이싱 분열 주의: 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) 키는 소문자 `startyear`(GameConstBase getValues + DateRelative.php +

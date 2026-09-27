@@ -74,6 +74,20 @@ class VassalContractTest {
     }
 
     @Test
+    fun `zero reinforcement obligation cannot breach on refusal or silence`() {
+        val noTroopsContract = contract.copy(reinforcementTroops = 0)
+        val request = ReinforcementRequest(contract.id, "operation-no-obligation", 100, 12)
+        val expiredTurn = request.issuedTurn + rules.reinforcementReplyTurns + 1L
+        val fulfilled = ReinforcementDecision(ReinforcementOutcome.ACCEPTED, 0, request.issuedTurn)
+        assertEquals(fulfilled, VassalReinforcement.assess(noTroopsContract, request, null, 12, rules))
+        assertEquals(fulfilled, VassalReinforcement.assess(noTroopsContract, request, null, expiredTurn, rules))
+        assertEquals(fulfilled, VassalReinforcement.assess(noTroopsContract, request,
+            ReinforcementResponse(ReinforcementReply.REFUSE, 0, 13), 13, rules))
+        assertEquals(fulfilled, VassalReinforcement.assess(noTroopsContract, request,
+            ReinforcementResponse(ReinforcementReply.REFUSE, 0, expiredTurn), expiredTurn, rules))
+    }
+
+    @Test
     fun `breach changes loyalty but does not itself end the contract`() {
         val kinds = VassalContracts.breachKinds(contract, rules.missedTributeMonthsForBreach, false, false, rules)
         assertEquals(setOf(VassalBreachKind.MISSED_TRIBUTE), kinds)

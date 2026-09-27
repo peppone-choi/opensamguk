@@ -1,12 +1,18 @@
 package opensamguk.engine.status
 
+import opensamguk.common.turn.CatchUpSnapshot
 import opensamguk.engine.run.TurnDaemonRunner
 import opensamguk.engine.run.TurnClockSnapshot
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.HttpStatus
+import org.springframework.web.server.ResponseStatusException
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.RequestBody
+
+data class CatchUpMultiplierRequest(val multiplier: Int)
 
 /**
  * 턴 데몬 상태 + 동결(pause)/해제(resume) 제어 평면.
@@ -53,6 +59,7 @@ data class TurnDaemonStatus(
     val lastSuccessfulTickAgeSeconds: Long? = null,
     /** 클럭 스냅샷 조회가 실패한 경우의 예외 메시지 — 설정 이상(tickSeconds<=0)과 구분된다. */
     val clockError: String? = null,
+    val catchUp: CatchUpSnapshot? = null,
 )
 
 /** pause/resume 호출 결과 — 호출 후 실제 상태 + 호출이 상태를 바꿨는지(`changed`). */
@@ -122,6 +129,7 @@ class StatusController(
             loopUptimeSeconds = diagnostics.loopUptimeSeconds,
             lastSuccessfulTickAgeSeconds = diagnostics.lastSuccessfulTickAgeSeconds,
             clockError = diagnostics.clockError,
+            catchUp = diagnostics.catchUp,
         )
     }
 
@@ -137,5 +145,21 @@ class StatusController(
     fun resume(): TurnDaemonControlResult {
         val changed = pauseGate.unlock()
         return TurnDaemonControlResult(paused = false, changed = changed, statusLabel = "가동중")
+    }
+
+    @PostMapping("/catch-up")
+    fun catchUp(@RequestBody request: CatchUpMultiplierRequest): CatchUpSnapshot {
+        if (request.multiplier != 2 && request.multiplier != 4) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "배속은 2 또는 4만 허용됩니다.")
+        }
+        if (runner.diagnostics().catchUp?.active != true) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "따라잡기가 진행 중이지 않습니다.")
+        }
+        return try {
+            runner.setCatchUpMultiplier(request.multiplier)
+        } catch (e: IllegalStateException) {
+            if (e.message != "catch-up is not active" && e.message != "turn daemon has not loaded a world") throw e
+            throw ResponseStatusException(HttpStatus.CONFLICT, "따라잡기가 진행 중이지 않습니다.")
+        }
     }
 }

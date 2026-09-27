@@ -26,14 +26,6 @@ class SideReadRepositoryConfiguration {
         DiplomacyLetterRepository(jdbc, scope.worldId)
 
     @Bean
-    fun auctionRepository(context: ApplicationContext, scope: SideReadWorldScope): AuctionRepository =
-        WorldScopedAuctionRepository(context.getBean(AuctionRawRepository::class.java), scope.worldId)
-
-    @Bean
-    fun auctionBidRepository(context: ApplicationContext, scope: SideReadWorldScope): AuctionBidRepository =
-        WorldScopedAuctionBidRepository(context.getBean(AuctionBidRawRepository::class.java), scope.worldId)
-
-    @Bean
     fun bettingRepository(context: ApplicationContext, scope: SideReadWorldScope): BettingRepository =
         WorldScopedBettingRepository(context.getBean(BettingRawRepository::class.java), scope.worldId)
 

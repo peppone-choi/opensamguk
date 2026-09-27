@@ -10,10 +10,10 @@ class EncounterDeploymentTest {
     private fun encounter(defenders: List<EncounterParticipant> = listOf(defender, third)) = CorpsEncounter(
         attacker, defenders, StrategicNodeRef.LandProvince("B"), StrategicNodeRef.LandProvince("A"),
         Phase(200,1,1), "qa", "a".repeat(64))
-    private fun index(width: Int = 7, terrain: Char = '1') = HanProvinceCellIndex("qa", "a".repeat(64),
+    private fun index(width: Int = 7, terrain: Char = '1') = ProvinceCellIndex("qa", "a".repeat(64),
         "b".repeat(64), 10, 3, mapOf('1' to "PLAIN", '2' to "MOUNTAIN"),
-        mapOf("A" to listOf(HanProvinceCell(0,1,'1')), "B" to (1..width).map { HanProvinceCell(it,1,terrain) }))
-    private fun ready(state: CorpsEncounter = encounter(), index: HanProvinceCellIndex = index()) =
+        mapOf("A" to listOf(ProvinceCell(0,1,'1')), "B" to (1..width).map { ProvinceCell(it,1,terrain) }))
+    private fun ready(state: CorpsEncounter = encounter(), index: ProvinceCellIndex = index()) =
         assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(state,index)).deployment
 
     @Test fun `every actual bugok is retained as one token with excess in reserve`() {

@@ -7,6 +7,7 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.record.EventTurn
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.common.world.WorldId
 import org.postgresql.util.PGobject
@@ -48,6 +49,8 @@ open class JdbcFlushExecutor(
     private val jdbc: NamedParameterJdbcTemplate,
     private val transactionTemplate: TransactionTemplate,
 ) {
+    private val gameEventWriter = GameEventWriteRepository(jdbc)
+    private val gameEventOrdinals = GameEventOrdinalRepository(jdbc)
     /** Records the op sequence of the most recent [flush] (instrumentation for the IT). */
     private val lastOps = mutableListOf<FlushExecOp>()
 
@@ -60,6 +63,9 @@ open class JdbcFlushExecutor(
             lastOps.clear()
             check(payload.worldStateUpdate["id"] == payload.worldId.value) {
                 "FlushPayload worldStateUpdate.id must equal worldId=${payload.worldId.value}"
+            }
+            check(payload.gameEvents.all { it.worldId == payload.worldId.value }) {
+                "FlushPayload gameEvents must belong to worldId=${payload.worldId.value}"
             }
 
             val (preArchiveLogs, regularLogs) = payload.logEntries.partition { it.flushBeforeArchive }
@@ -76,10 +82,6 @@ open class JdbcFlushExecutor(
             if (isUnificationFlush) {
                 if (payload.statisticInserts.isNotEmpty()) statisticInsertMany(payload.worldId, payload.statisticInserts)
                 if (nationHistoryLogs.isNotEmpty()) logEntryCreateMany(payload.worldId, nationHistoryLogs)
-                if (payload.auctionUpserts.isNotEmpty()) auctionUpsertMany(payload.worldId, payload.auctionUpserts)
-                if (payload.auctionBidInserts.isNotEmpty()) {
-                    auctionBidInsertMany(payload.worldId, payload.auctionBidInserts)
-                }
                 if (payload.eventInserts.isNotEmpty()) eventInsertMany(payload.worldId, payload.eventInserts)
                 if (payload.eventDeletes.isNotEmpty()) eventDeleteMany(payload.worldId, payload.eventDeletes)
                 if (earlierMessages.isNotEmpty()) messageCreateMany(payload.worldId, earlierMessages)
@@ -192,14 +194,7 @@ open class JdbcFlushExecutor(
                 rankDataNationSync(payload.worldId, payload.rankNationSync)
             }
 
-            // 8b. auction channel (T0.7): ng_auction UPSERT (open INSERT / extend-finish UPDATE) then
-            //     ng_auction_bid INSERT (INSERT-only — outbid rows are NEVER deleted, research §3).
-            if (!isUnificationFlush && payload.auctionUpserts.isNotEmpty()) {
-                auctionUpsertMany(payload.worldId, payload.auctionUpserts)
-            }
-            if (!isUnificationFlush && payload.auctionBidInserts.isNotEmpty()) {
-                auctionBidInsertMany(payload.worldId, payload.auctionBidInserts)
-            }
+            // 8b. betting channel (경매 채널은 #917 에서 은퇴).
             if (payload.bettingInserts.isNotEmpty()) {
                 // W0-8: PHP insertUpdate 패러티 — 동일 (general,betting,type) 재베팅은 amount 누적 UPSERT.
                 bettingUpsertMany(payload.worldId, payload.bettingInserts)
@@ -294,8 +289,8 @@ open class JdbcFlushExecutor(
 
             // 8j. HWIHA 포위 채널(V61): 행을 지우지 않는다 — CREATE → UPDATE. 5단계 general DELETE 의 CASCADE 로
             //     사라진 행은 엔진 메모리에서도 함께 내렸으므로 pending 작업이 남지 않는다.
-            if (payload.createdHwihaSieges.isNotEmpty()) hwihaSiegeCreateMany(payload.worldId, payload.createdHwihaSieges)
-            if (payload.updatedHwihaSieges.isNotEmpty()) hwihaSiegeUpdate(payload.worldId, payload.updatedHwihaSieges)
+            if (payload.createdSieges.isNotEmpty()) siegeCreateMany(payload.worldId, payload.createdSieges)
+            if (payload.updatedSieges.isNotEmpty()) siegeUpdate(payload.worldId, payload.updatedSieges)
 
             if (!isUnificationFlush && payload.eventInserts.isNotEmpty()) {
                 eventInsertMany(payload.worldId, payload.eventInserts)
@@ -307,6 +302,28 @@ open class JdbcFlushExecutor(
             // 9. log_entry createMany.
             if (!isUnificationFlush && regularLogs.isNotEmpty()) {
                 logEntryCreateMany(payload.worldId, regularLogs)
+            }
+            if (payload.gameEvents.isNotEmpty()) {
+                // Production bootstraps the in-memory counter, but a cold world can also be
+                // constructed directly (replay, tests, or a recovered process). Reconcile its
+                // proposed ordinal with committed rows inside this flush transaction before the
+                // unique order constraint is reached. The event key still decides semantic retry.
+                val highWaterByTurn = mutableMapOf<EventTurn, Int>()
+                var inserted = 0
+                for (event in payload.gameEvents) {
+                    val at = event.occurredAt
+                    val turn = EventTurn(at.year, at.month, at.phase)
+                    val highWater = highWaterByTurn.getOrPut(turn) {
+                        gameEventOrdinals.maxCommitted(payload.worldId.value, turn) ?: -1
+                    }
+                    val ordinal = if (at.ordinal <= highWater) Math.addExact(highWater, 1) else at.ordinal
+                    val normalized = if (ordinal == at.ordinal) event else event.copy(occurredAt = at.copy(ordinal = ordinal))
+                    if (gameEventWriter.insert(normalized)) {
+                        inserted++
+                        highWaterByTurn[turn] = ordinal
+                    }
+                }
+                if (inserted > 0) lastOps.add(FlushExecOp("game_event", FlushVerb.CREATE_MANY, inserted))
             }
 
             // 10. KV writes (nation_env int-ns + game_kv string-ns, delete-on-null) + reserved_turns
@@ -552,6 +569,7 @@ open class JdbcFlushExecutor(
         params.addValue("status", worldState["status"] as? String)
         params.addValue("tick_seconds", (worldState["tick_seconds"] as? Number)?.toInt())
         params.addValue("config", (worldState["config"] as? Map<*, *>)?.let(MetaJson::encode))
+        params.addValue("catch_up", (worldState["catch_up"] as? Map<*, *>)?.let(MetaJson::encode))
         params.addValue("start_time", worldState["start_time"]?.toString())
         // lastTurnTime 영속화 — WorldSnapshotLoader 가 부팅 시 meta['lastTurnTime'] 을 1순위로 읽는데
         // 이 키를 쓰는 경로가 없어서 매 엔진 재기동마다 start_time 폴백 → MonthBoundaryDriver 가
@@ -604,6 +622,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    world_version = world_version + 1,
@@ -626,6 +645,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    meta = meta || jsonb_build_object(
@@ -1042,16 +1062,16 @@ open class JdbcFlushExecutor(
      *     이후 rankVarIncrease/Set UPDATE의 대상; ScenarioImporter.insertRankData와 동일).
      */
     private fun generalCreateMany(worldId: WorldId, rows: List<GeneralCreateRow>) {
-        val hwiha = jdbc.queryForObject(
-            "SELECT config->>'ruleProfile' FROM world_state WHERE id = :world_id",
+        val campaign = jdbc.queryForObject(
+            "SELECT config->>'worldFormat' FROM world_state WHERE id = :world_id",
             MapSqlParameterSource("world_id", worldId.value), String::class.java,
-        ) == "HWIHA"
-        if (hwiha) rows.forEach { row ->
-            require(row.initialTurns.size <= 12) { "HWIHA initial reservations exceed twelve phases" }
+        ) == opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name
+        if (campaign) rows.forEach { row ->
+            require(row.initialTurns.size <= 12) { "campaign initial reservations exceed twelve phases" }
             val actorId = (row.columns["id"] as Number).toInt()
             require(row.initialTurns.all { it.actionCode == "action.enlist" &&
                 opensamguk.logic.input.EnlistmentInput.parse(actorId, it.argJson) != null }) {
-                "unsupported HWIHA initial reservation"
+                "unsupported campaign initial reservation"
             }
         }
         // 1. general 행 INSERT (ScenarioImporter.insertGenerals 컬럼/순서 verbatim).
@@ -1135,10 +1155,10 @@ open class JdbcFlushExecutor(
         val turnBatch = ArrayList<SqlParameterSource>(rows.size * ring)
         for (r in rows) {
             val id = r.columns["id"]
-            require(hwiha || r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
+            require(campaign || r.initialTurns.isEmpty() || r.initialTurns.size == ring) {
                 "created general $id initial turn ring must contain exactly $ring slots"
             }
-            val slots = if (hwiha) r.initialTurns else r.initialTurns.ifEmpty {
+            val slots = if (campaign) r.initialTurns else r.initialTurns.ifEmpty {
                 List(ring) { InitialGeneralTurnRow("휴식", "{}", "휴식") }
             }
             for ((idx, slot) in slots.withIndex()) {
@@ -1540,81 +1560,6 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("log_entry", FlushVerb.CREATE_MANY, logs.size))
     }
 
-    // --- step 8b: auction channel (T0.7) -------------------------------------------------------
-
-    /**
-     * UPSERT the `ng_auction` rows. An INSERT (open) carries [AuctionUpsertRow.allocatedId] (the
-     * pre-assigned in-memory id, so bids reference it before flush); an UPDATE (extend/finish/shrink)
-     * carries [AuctionUpsertRow.id]. `type`/`req_resource` bind through `CAST(... AS ng_auction_*)`,
-     * `open_date`/`close_date` through `CAST(... AS timestamptz)`, `detail` is a raw json String.
-     */
-    private fun auctionUpsertMany(worldId: WorldId, rows: List<AuctionUpsertRow>) {
-        for (r in rows) {
-            val c = r.columns
-            val src = MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("type", c["type"])
-                .addValue("finished", c["finished"])
-                .addValue("target", c["target"])
-                .addValue("host_general_id", c["host_general_id"])
-                .addValue("req_resource", c["req_resource"])
-                .addValue("open_date", c["open_date"]?.toString())
-                .addValue("close_date", c["close_date"]?.toString())
-                .addValue("detail", jsonb(c["detail"] as? String))
-            if (r.id == null) {
-                src.addValue("id", r.allocatedId)
-                val affected = jdbc.update(
-                    """
-                    INSERT INTO ng_auction
-                        (world_id, id, type, finished, target, host_general_id, req_resource,
-                         open_date, close_date, detail)
-                    VALUES (:world_id, :id, CAST(:type AS ng_auction_type), :finished, :target, :host_general_id,
-                            CAST(:req_resource AS ng_auction_resource), CAST(:open_date AS timestamptz),
-                            CAST(:close_date AS timestamptz), :detail)
-                    """.trimIndent(),
-                    src,
-                )
-                check(affected == 1) { "ng_auction INSERT affected $affected rows; expected exactly 1" }
-            } else {
-                src.addValue("id", r.id)
-                val affected = jdbc.update(
-                    """
-                    UPDATE ng_auction SET type = CAST(:type AS ng_auction_type), finished = :finished, target = :target,
-                        host_general_id = :host_general_id, req_resource = CAST(:req_resource AS ng_auction_resource),
-                        open_date = CAST(:open_date AS timestamptz), close_date = CAST(:close_date AS timestamptz), detail = :detail
-                     WHERE world_id = :world_id AND id = :id
-                    """.trimIndent(),
-                    src,
-                )
-                check(affected == 1) { "ng_auction UPDATE affected $affected rows; expected exactly 1" }
-            }
-        }
-        lastOps.add(FlushExecOp("ng_auction", FlushVerb.UPSERT, rows.size))
-    }
-
-    /** INSERT the `ng_auction_bid` rows (INSERT-only; outbid rows persist). `aux` is a raw json String. */
-    private fun auctionBidInsertMany(worldId: WorldId, rows: List<AuctionBidInsertRow>) {
-        val batch: Array<SqlParameterSource> = rows.map { r ->
-            val c = r.columns
-            MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("auction_id", c["auction_id"])
-                .addValue("owner", c["owner"])
-                .addValue("general_id", c["general_id"])
-                .addValue("amount", c["amount"])
-                .addValue("date", c["date"]?.toString())
-                .addValue("aux", jsonb(c["aux"] as? String))
-        }.toTypedArray()
-        jdbc.batchUpdate(
-            """
-            INSERT INTO ng_auction_bid (world_id, auction_id, owner, general_id, amount, date, aux)
-            VALUES (:world_id, :auction_id, :owner, :general_id, :amount, CAST(:date AS timestamptz), :aux)
-            """.trimIndent(),
-            batch,
-        )
-        lastOps.add(FlushExecOp("ng_auction_bid", FlushVerb.CREATE_MANY, rows.size))
-    }
-
     /**
      * `ng_betting` UPSERT (P6 베팅 — W0-8에서 INSERT 전용 → upsert로 확장, P0-07 flush 측).
      *
@@ -1846,7 +1791,7 @@ open class JdbcFlushExecutor(
     }
 
     // --- step 8j: HWIHA 포위 채널 (V61) --------------------------------------------------------------
-    private fun hwihaSiegeParams(worldId: WorldId, r: SiegeRow): MapSqlParameterSource = MapSqlParameterSource()
+    private fun siegeParams(worldId: WorldId, r: SiegeRow): MapSqlParameterSource = MapSqlParameterSource()
         .addValue("world_id", worldId.value).addValue("county_id", r.countyId).addValue("status", r.status)
         .addValue("besieger_general_id", r.besiegerGeneralId).addValue("besieger_owner_general_id", r.besiegerOwnerGeneralId)
         .addValue("besieger_order_id", r.besiegerOrderId).addValue("besieger_nation_id", r.besiegerNationId)
@@ -1858,10 +1803,10 @@ open class JdbcFlushExecutor(
         .addValue("turns", r.turns).addValue("morale", r.morale).addValue("garrison", r.garrison)
         .addValue("end_reason", r.endReason, java.sql.Types.VARCHAR).addValue("timeline", r.timelineJson)
 
-    private fun hwihaSiegeCreateMany(worldId: WorldId, rows: List<SiegeRow>) {
+    private fun siegeCreateMany(worldId: WorldId, rows: List<SiegeRow>) {
         jdbc.batchUpdate(
             """
-            INSERT INTO hwiha_siege
+            INSERT INTO siege
                 (world_id, county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id,
                  besieger_nation_id, defender_nation_id, approach_province_id, started_year, started_month, started_phase,
                  settled_year, settled_month, settled_phase, turns, morale, garrison, end_reason, timeline)
@@ -1870,15 +1815,15 @@ open class JdbcFlushExecutor(
                  :besieger_nation_id, :defender_nation_id, :approach_province_id, :started_year, :started_month, :started_phase,
                  :settled_year, :settled_month, :settled_phase, :turns, :morale, :garrison, :end_reason, CAST(:timeline AS jsonb))
             """.trimIndent(),
-            rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
+            rows.map { siegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
         )
-        lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.CREATE_MANY, rows.size))
+        lastOps.add(FlushExecOp("siege", FlushVerb.CREATE_MANY, rows.size))
     }
 
-    private fun hwihaSiegeUpdate(worldId: WorldId, rows: List<SiegeRow>) {
+    private fun siegeUpdate(worldId: WorldId, rows: List<SiegeRow>) {
         val affected = jdbc.batchUpdate(
             """
-            UPDATE hwiha_siege
+            UPDATE siege
                SET status = :status, besieger_general_id = :besieger_general_id,
                    besieger_owner_general_id = :besieger_owner_general_id, besieger_order_id = :besieger_order_id,
                    besieger_nation_id = :besieger_nation_id, defender_nation_id = :defender_nation_id,
@@ -1888,10 +1833,10 @@ open class JdbcFlushExecutor(
                    garrison = :garrison, end_reason = :end_reason, timeline = CAST(:timeline AS jsonb), updated_at = now()
              WHERE world_id = :world_id AND county_id = :county_id
             """.trimIndent(),
-            rows.map { hwihaSiegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
+            rows.map { siegeParams(worldId, it) }.toTypedArray<SqlParameterSource>(),
         )
-        requireExactlyOneAffected("hwiha_siege UPDATE", affected)
-        lastOps.add(FlushExecOp("hwiha_siege", FlushVerb.UPDATE, rows.size))
+        requireExactlyOneAffected("siege UPDATE", affected)
+        lastOps.add(FlushExecOp("siege", FlushVerb.UPDATE, rows.size))
     }
 
     // --- step 8h: 작전 채널 (Phase 4X-B) ---------------------------------------------------------
@@ -2872,13 +2817,13 @@ open class JdbcFlushExecutor(
                 .addValue("offset", ReservedTurnRepository.MAX_GENERAL_TURNS * 2)
                 .addValue("max_turn", ReservedTurnRepository.MAX_GENERAL_TURNS)
                 .addValue("turn_cnt", row.turnCnt)
-            // HWIHA consumes reservations instead of converting them into phantom rest inputs.
-            // The immutable world profile keeps SAMMO's existing thirty-slot ring unchanged.
+            // The campaign world consumes reservations instead of converting them into phantom rest inputs.
+            params.addValue("world_format", opensamguk.logic.world.WorldFormat.GENERAL_RETAINER_CAMPAIGN.name)
             if (row.turnCnt > 0) jdbc.update(
                 """
                 DELETE FROM general_turn t USING world_state w
                  WHERE t.world_id = :world_id AND t.general_id = :general_id
-                   AND w.id = t.world_id AND w.config->>'ruleProfile' = 'HWIHA'
+                   AND w.id = t.world_id AND w.config->>'worldFormat' = :world_format
                    AND t.turn_idx < :turn_cnt
                 """.trimIndent(),
                 params,
@@ -2996,7 +2941,7 @@ data class FlushPayload(
     val oldGeneralSnapshots: List<OldGeneralArchiveRow> = emptyList(),
     // --- B1 장수생성 foundation: 신규 장수 INSERT (step-3 createMany) ---
     // 새로 만든 장수 행 + 30개 general_turn(휴식) + 37개 rank_data(value 0). 컬럼맵 운반체
-    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board/auction
+    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board
     // INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
     val createdGenerals: List<GeneralCreateRow> = emptyList(),
     val generalAccessLogUpserts: List<GeneralAccessLogWriteRow> = emptyList(),
@@ -3022,8 +2967,6 @@ data class FlushPayload(
     // --- W5d 외교 서신: diplomacy_letter INSERT(발송) + UPDATE(회수/파기/대체) ---
     val diplomacyLetterInserts: List<DiplomacyLetterInsertRow> = emptyList(), // step-8f diplomacy_letter INSERT
     val diplomacyLetterUpdates: LinkedHashMap<Int, LinkedHashMap<String, Any?>> = LinkedHashMap(), // step-8f UPDATE
-    val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
-    val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
     val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
     // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE. generalUpdate
     // SET 절이 이 두 표시-컬럼을 방출하지 않으므로(officer_city #17류 누락) 전용 채널로 영속한다.
@@ -3080,11 +3023,13 @@ data class FlushPayload(
     val deletedBattlePlanIds: List<Int> = emptyList(),
     val battleReplayInserts: List<BattleReplayInsertRow> = emptyList(),
     // --- HWIHA 포위(V61, step-8j, 8i 뒤; CREATE → UPDATE, 삭제 없음) ---
-    val createdHwihaSieges: List<SiegeRow> = emptyList(),
-    val updatedHwihaSieges: List<SiegeRow> = emptyList(),
+    val createdSieges: List<SiegeRow> = emptyList(),
+    val updatedSieges: List<SiegeRow> = emptyList(),
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
+    /** Canonical structured events share the world-state flush transaction. */
+    val gameEvents: List<opensamguk.logic.record.GameEvent> = emptyList(),
 )
 
 data class GeneralTurnPullRow(
@@ -3181,12 +3126,6 @@ data class OldGeneralArchiveRow(
     val pendingHistory: List<String>? = null,
 )
 
-/** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
-data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
-
-/** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
-data class AuctionBidInsertRow(val columns: Map<String, Any?>)
-
 /**
  * One `ng_betting` UPSERT (P6 betting intake). W0-8: INSERT 전용 → PHP `insertUpdate` 패러티의
  * amount-누적 UPSERT (UNIQUE(general_id,betting_id,betting_type) 충돌 시 amount += EXCLUDED.amount).
@@ -3226,7 +3165,7 @@ data class InitialGeneralTurnRow(
 /**
  * `diplomacy_letter` INSERT 한 건 (W5d 외교 서신 발송, INSERT 전용). `id`는 recorder가 선할당한
  * letterNo(= PHP `insertId()`)를 명시적으로 싣는다(in-memory 단조 id가 flushed SERIAL과 일치 —
- * message/auction open INSERT 패턴). `columns`는 byte-faithful diplomacy_letter 컬럼 맵.
+ * message INSERT 선할당 패턴). `columns`는 byte-faithful diplomacy_letter 컬럼 맵.
  */
 data class DiplomacyLetterInsertRow(val id: Int, val columns: Map<String, Any?>)
 

@@ -12,27 +12,20 @@ import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.world.WorldActionContext
-import opensamguk.engine.tournament.TournamentAdminService
 import opensamguk.infra.read.ArchiveHistoryReader
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.founding.CheHaesan
-import opensamguk.logic.auction.AuctionType
-import opensamguk.logic.auction.registerNeutralAuctions
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.util.phpRound
-import opensamguk.logic.tick.MonthScopedRng
 import opensamguk.logic.tick.PostUpdateMonthly
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.DiplomacyRow
 import opensamguk.logic.world.FrontCity
 import opensamguk.logic.world.PowerKv
-import opensamguk.logic.world.checkEmperior
 import opensamguk.logic.world.PostNationPowerInput
 import opensamguk.logic.world.PostFrontResult
 import opensamguk.logic.world.PowerCity
@@ -57,9 +50,6 @@ class MonthlyPostUpdateHook(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val pipeline: GeneralActionPipeline,
-    private val auctionRepository: AuctionRepository? = null,
-    private val auctionBidRepository: AuctionBidRepository? = null,
-    private val tournamentAdmin: TournamentAdminService = TournamentAdminService(),
     private val eventDispatcher: EventDispatcher? = null,
     private val archiveHistoryReader: ArchiveHistoryReader? = null,
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
@@ -201,34 +191,13 @@ class MonthlyPostUpdateHook(
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
         val isUnited = (state.meta["isunited"] as? Int ?: 0) != 0
 
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
-        val checkEmperiorContext = WorldActionContext(
-            env = mutableMapOf(
-                "year" to year,
-                "month" to state.currentMonth,
-                "phase" to state.currentPhase,
-                "cityConst" to cityConst,
-                WorldActionContext.ENV_EVENT_DISPATCHER to eventDispatcher,
-            ),
-            world = world,
-            recorder = recorder,
-            pipeline = pipeline,
-            auctionRepository = auctionRepository,
-            auctionBidRepository = auctionBidRepository,
-            archiveHistoryReader = archiveHistoryReader,
-            statisticSnapshotReader = statisticSnapshotReader,
-        )
-
         postUpdateMonthlyTail(
             year = year,
             startYear = startYear,
             rng = monthlyRng,
             checkWander = { rng -> checkWander(rng, year, state.currentMonth) },
             updateGeneralNumber = { updateGeneralNumber() },
-            triggerTournament = { rng -> triggerTournament(rng) },
-            registerAuction = { rng -> registerAuction(rng) },
             setNationFront = { setNationFronts() },
-            checkEmperior = { checkEmperior(checkEmperiorContext) },
             isUnited = isUnited,
         )
 
@@ -241,7 +210,7 @@ class MonthlyPostUpdateHook(
     private fun checkWander(rng: RandUtil, year: Int, month: Int) {
         val state = world.getState()
         val env = opensamguk.logic.domain.WorldEnv(year = year, startYear = startYear(), develCost = (year - startYear() + 10) * 2,
-            mapName = ActiveWorldMap.requireName(state.config, state.meta), hanWorldVariant = state.hanWorldVariant)
+            mapName = ActiveWorldMap.requireName(state.config, state.meta), worldMapVariant = state.worldMapVariant)
         val wanderers = world.listGenerals()
             .filter { g -> g.officerLevel == 12 && world.getNationById(g.nationId)?.level == 0 }
             .sortedBy { it.id }
@@ -329,7 +298,7 @@ class MonthlyPostUpdateHook(
     private fun runOccupyCityEvent(year: Int, month: Int) {
         val dispatcher = eventDispatcher ?: return
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
         dispatcher.run(
             target = EventTarget.OCCUPY_CITY,
             contextFactory = { env ->
@@ -338,8 +307,6 @@ class MonthlyPostUpdateHook(
                     world = world,
                     recorder = recorder,
                     pipeline = pipeline,
-                    auctionRepository = auctionRepository,
-                    auctionBidRepository = auctionBidRepository,
                     archiveHistoryReader = archiveHistoryReader,
                     statisticSnapshotReader = statisticSnapshotReader,
                 )
@@ -373,50 +340,9 @@ class MonthlyPostUpdateHook(
         }
     }
 
-    private fun triggerTournament(rng: RandUtil) {
-        val state = world.getState()
-        if (((state.meta["tournament"] as? Number)?.toInt() ?: 0) != 0) return
-        if (!boolMeta("tnmt_trig")) return
-        if (!rng.nextBool(0.4)) return
-
-        val rawPattern = state.meta["tnmt_pattern"] as? List<*> ?: emptyList<Any?>()
-        val pattern = rawPattern.mapNotNull { (it as? Number)?.toInt() }.toMutableList()
-        if (pattern.isEmpty()) {
-            // PHP shuffle() is ambient and does not advance the monthly RandUtil passed to Q15.
-            // Sanctioned deterministic divergence: preserve the monthly stream boundary and replayability.
-            val hiddenSeed = state.meta["hiddenSeed"] as? String ?: ""
-            val shuffleRng = MonthScopedRng.forMonth(hiddenSeed, state.currentYear, state.currentMonth)
-            pattern.addAll(shuffleRng.shuffle(listOf(0, 0, 1, 2, 3)))
-        }
-        val tournamentType = pattern.removeAt(pattern.lastIndex)
-        recorder.recordKv("game_env", "game_env", "tnmt_pattern", pattern)
-        tournamentAdmin.startTournament(world, recorder, tournamentType, Instant.now())
-    }
-
-    private fun registerAuction(rng: RandUtil) {
-        val active = auctionRepository?.findByFinishedFalse().orEmpty()
-        val neutralBuyRiceCount = active.count { it.hostGeneralId == 0 && it.type == AuctionType.BUY_RICE }
-        val neutralSellRiceCount = active.count { it.hostGeneralId == 0 && it.type == AuctionType.SELL_RICE }
-        val targetGenerals = world.listGenerals().filter { it.npcState < 2 }
-        val avgGold = targetGenerals.map { it.gold }.average().takeUnless { it.isNaN() }
-        val avgRice = targetGenerals.map { it.rice }.average().takeUnless { it.isNaN() }
-        val result = registerNeutralAuctions(
-            avgGold = avgGold,
-            avgRice = avgRice,
-            neutralBuyRiceCount = neutralBuyRiceCount,
-            neutralSellRiceCount = neutralSellRiceCount,
-            rng = rng,
-            now = Instant.now(),
-            turnTermMinutes = turnTerm(),
-        )
-        for (opened in result.opened) {
-            recorder.recordAuctionUpsert(id = null, columns = opened.info.toArray())
-        }
-    }
-
     private fun setNationFronts(): List<PostFrontResult> {
         val state = world.getState()
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
         val cities = world.listCities()
         val frontCities = cities.map { FrontCity(it.id, it.nationId, it.frontState) }
         val diplomacy = world.listDiplomacy().map { PerTurnOverlay.toLogicDiplomacy(it) }
@@ -436,19 +362,10 @@ class MonthlyPostUpdateHook(
         return result
     }
 
-    private fun boolMeta(key: String): Boolean = when (val raw = world.getState().meta[key]) {
-        is Boolean -> raw
-        is Number -> raw.toInt() != 0
-        else -> false
-    }
-
     private fun startYear(): Int =
         (world.getState().meta["startYear"] as? Number)?.toInt()
             ?: (world.getState().meta["startyear"] as? Number)?.toInt()
             ?: world.getState().currentYear
-
-    private fun turnTerm(): Int =
-        (world.getState().meta["turnterm"] as? Number)?.toInt() ?: (world.getState().tickSeconds / 60)
 
     private fun turnTimeHm(turnTime: Instant): String {
         val value = turnTime.toString()

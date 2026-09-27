@@ -10,7 +10,7 @@ class ScenarioWarehouseSeedsTest {
     private fun declaration(): Map<String, Any> = mapOf("version" to 1, "units" to "game-resource-v1",
         "source" to "GAME_DESIGN", "topologyRevision" to "fixture-v1", "topologyHash" to "a".repeat(64),
         "warehouses" to listOf(row()))
-    private fun decode(value: Any?) = ScenarioWarehouseSeeds.decode(mapOf("hwihaWarehouses" to value), RuleProfile.HWIHA)
+    private fun decode(value: Any?) = ScenarioWarehouseSeeds.decode(mapOf("warehouses" to value), RuleProfile.HWIHA)
 
     @Test fun `explicit inventory preserves exact quantities and returns immutable independent map`() {
         val rows = mutableListOf(row(42), row(3))
@@ -33,7 +33,7 @@ class ScenarioWarehouseSeedsTest {
         }
         for (profile in listOf(null, RuleProfile.SAMMO)) {
             assertFailsWith<IllegalArgumentException> {
-                ScenarioWarehouseSeeds.decode(mapOf("hwihaWarehouses" to declaration()), profile)
+                ScenarioWarehouseSeeds.decode(mapOf("warehouses" to declaration()), profile)
             }
         }
         for (bad in listOf(null, "{}", declaration() - "source", declaration() + ("extra" to 1),

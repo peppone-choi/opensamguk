@@ -3,6 +3,7 @@ package opensamguk.engine.boot
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.GeneralItems
@@ -26,9 +27,9 @@ import opensamguk.infra.persistence.WaterControlRowCodec
 import opensamguk.infra.persistence.ProvinceControlRowCodec
 import opensamguk.infra.seed.HistoricalBattlefieldCatalog
 import opensamguk.infra.persistence.GeneralPositionRowCodec
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.infra.seed.HanWorldTopologyPin
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.seed.WorldTopologyPin
+import opensamguk.logic.world.WorldMapVariant
 import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.StrategicTopologySnapshot
 import opensamguk.logic.world.WaterControlSnapshot
@@ -69,13 +70,13 @@ class WorldSnapshotLoader(
     private val seedBootstrap: SeedBootstrap,
     private val worldId: WorldId,
     private val snapshotValidator: (WorldSnapshot) -> Unit = ActiveWorldMapValidator::validate,
-    private val waterTopologyLoader: (HanWorldVariant) -> StrategicTopologySnapshot = { historicalArtifacts.artifacts(it).projection.topology },
-    private val hanVariantSelector: (Collection<Int>, Collection<HanWorldTopologyPin>) -> HanWorldVariant =
+    private val waterTopologyLoader: (WorldMapVariant) -> StrategicTopologySnapshot = { historicalArtifacts.artifacts(it).projection.topology },
+    private val mapVariantSelector: (Collection<Int>, Collection<WorldTopologyPin>) -> WorldMapVariant =
         { ids, pins -> historicalArtifacts.resolve(ids, pins).variant },
-    private val administrativeCountyIdsLoader: (HanWorldVariant) -> Set<Int> = { variant ->
+    private val administrativeCountyIdsLoader: (WorldMapVariant) -> Set<Int> = { variant ->
         historicalArtifacts.artifacts(variant).projection.administrativeCountyIds
     },
-    private val cityLandProvinceLoader: (HanWorldVariant) -> Map<Int, String> = { variant ->
+    private val cityLandProvinceLoader: (WorldMapVariant) -> Map<Int, String> = { variant ->
         historicalArtifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap()
     },
@@ -116,10 +117,10 @@ class WorldSnapshotLoader(
             }
             loaded.copy(meta = merged)
         }
+        opensamguk.logic.world.WorldFormat.require(loadedState.config, loadedState.meta)
         val activeGame = resolveActiveGame(loadedState.meta)
         val activeServerId = activeGame?.serverId
         val serverCount = loadServerCount()
-        val activeUniqueAuctionsById = loadActiveUniqueAuctionItems()
         val storedUniqueItemCounts = loadStoredUniqueItemCounts()
         val inheritancePoints = loadInheritancePoints()
         val inheritancePrevious = inheritancePoints.mapValues { (_, values) ->
@@ -140,8 +141,6 @@ class WorldSnapshotLoader(
                     activeGame.map?.let { this["map_theme"] = it }
                 }
                 this["serverCount"] = serverCount
-                this["activeUniqueAuctionItems"] = activeUniqueAuctionsById.values.toList()
-                this["activeUniqueAuctionItemsById"] = LinkedHashMap(activeUniqueAuctionsById)
                 this["storedUniqueItemCounts"] = storedUniqueItemCounts
                 this["inheritancePoints"] = inheritancePoints
                 this["inheritancePrevious"] = inheritancePrevious
@@ -160,7 +159,7 @@ class WorldSnapshotLoader(
         val cities = loadCities()
         val hasMap = listOf(state.config, state.meta).any { it.containsKey("mapName") || it.containsKey("map") }
         if (hasMap && ActiveWorldMap.requireName(state.config, state.meta) == "han-world-v3") {
-            state = state.copy(hanWorldVariant = hanVariantSelector(cities.map { it.id }, loadHistoricalMapPins()))
+            state = state.copy(worldMapVariant = mapVariantSelector(cities.map { it.id }, loadHistoricalMapPins()))
         }
         val generals = loadGenerals(state)
         val diplomacy = loadDiplomacy()
@@ -172,7 +171,7 @@ class WorldSnapshotLoader(
         val operations = loadOperations()
         val operationUnits = loadOperationUnits()
         val battlePlans = loadBattlePlans()
-        val hwihaSieges = loadHwihaSieges()
+        val sieges = loadSieges()
         log.info(
             "WorldSnapshot loaded — generals={} cities={} nations={} archivedNations={} diplomacy={} accessLogs={} troops={}",
             generals.size,
@@ -199,14 +198,14 @@ class WorldSnapshotLoader(
             operations = operations,
             operationUnits = operationUnits,
             battlePlans = battlePlans,
-            hwihaSieges = hwihaSieges,
+            sieges = sieges,
             archivedNationIds = archivedNationIds,
             waterControlSnapshot = topology?.let(::loadWaterControlSnapshot),
             provinceControlSnapshot = topology?.let(::loadProvinceControlSnapshot),
             generalPositionSnapshot = topology?.let(::loadGeneralPositionSnapshot),
             // SAMMO 는 바인딩을 읽지 않는다(무변경). HWIHA 만 읽고, 못 읽으면 여기서 실패한다.
             administrativeCountyIds = if (topology != null && state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA)
-                java.util.Collections.unmodifiableSet(administrativeCountyIdsLoader(requireNotNull(state.hanWorldVariant)).toSortedSet()) else emptySet(),
+                java.util.Collections.unmodifiableSet(administrativeCountyIdsLoader(requireNotNull(state.worldMapVariant)).toSortedSet()) else emptySet(),
             cityLandProvinceById = if (topology != null && state.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) cityLandProvinceBindings(state) else emptyMap(),
         )
         snapshotValidator(snapshot)
@@ -215,16 +214,16 @@ class WorldSnapshotLoader(
 
     /** 城 → 省 (부팅이 고른 변형의 projection). 외부 거점처럼 省 없는 城은 빠진다 — HWIHA 부팅 검사가 잡는다. */
     private fun cityLandProvinceBindings(state: TurnWorldState): Map<Int, String> =
-        cityLandProvinceLoader(requireNotNull(state.hanWorldVariant) { "Han world archive was not selected at boot" })
+        cityLandProvinceLoader(requireNotNull(state.worldMapVariant) { "Han world archive was not selected at boot" })
 
     private fun spatialTopologyFor(state: TurnWorldState): StrategicTopologySnapshot? {
         // Small historical test snapshots may omit map identity; the production map validator still rejects them.
         val hasMap = listOf(state.config, state.meta).any { it.containsKey("mapName") || it.containsKey("map") }
         if (!hasMap || ActiveWorldMap.requireName(state.config, state.meta) != "han-world-v3") return null
-        return waterTopologyLoader(requireNotNull(state.hanWorldVariant) { "Han world archive was not selected at boot" })
+        return waterTopologyLoader(requireNotNull(state.worldMapVariant) { "Han world archive was not selected at boot" })
     }
 
-    private fun loadHistoricalMapPins(): List<HanWorldTopologyPin> = jdbc.query(
+    private fun loadHistoricalMapPins(): List<WorldTopologyPin> = jdbc.query(
         """SELECT 'water_zone_control' AS channel, topology_revision, topology_hash
             FROM water_zone_control WHERE world_id = ?
             UNION ALL
@@ -233,7 +232,7 @@ class WorldSnapshotLoader(
             UNION ALL
             SELECT 'general_spatial_position' AS channel, topology_revision, topology_hash
             FROM general_spatial_position WHERE world_id = ?""".trimIndent(),
-        { row, _ -> HanWorldTopologyPin(row.getString("channel"), row.getString("topology_revision"), row.getString("topology_hash")) },
+        { row, _ -> WorldTopologyPin(row.getString("channel"), row.getString("topology_revision"), row.getString("topology_hash")) },
         worldId.value, worldId.value, worldId.value,
     )
 
@@ -299,17 +298,17 @@ class WorldSnapshotLoader(
     )
 
     /** HWIHA 포위(V61) 적재 — 끝난 포위도 조회·기록용으로 싣는다. 행 0 이면 빈 목록. */
-    private fun loadHwihaSieges(): List<opensamguk.engine.turn.HwihaSiege> = jdbc.query(
+    private fun loadSieges(): List<opensamguk.engine.turn.Siege> = jdbc.query(
         "SELECT county_id, status, besieger_general_id, besieger_owner_general_id, besieger_order_id, besieger_nation_id, " +
             "defender_nation_id, approach_province_id, started_year, started_month, started_phase, settled_year, settled_month, " +
             "settled_phase, turns, morale, garrison, end_reason, timeline::text AS timeline " +
-            "FROM hwiha_siege WHERE world_id = ? ORDER BY county_id",
+            "FROM siege WHERE world_id = ? ORDER BY county_id",
         { rs, _ ->
             fun nullableInt(column: String): Int? = rs.getObject(column)?.let { (it as Number).toInt() }
             @Suppress("UNCHECKED_CAST")
             val timeline = (opensamguk.infra.persistence.MetaJson.decode("{\"timeline\":${rs.getString("timeline")}}")["timeline"]
-                as? List<Map<String, Any?>>) ?: error("hwiha_siege.timeline is not an array")
-            opensamguk.engine.turn.HwihaSiege(
+                as? List<Map<String, Any?>>) ?: error("siege.timeline is not an array")
+            opensamguk.engine.turn.Siege(
                 countyId = rs.getInt("county_id"), status = rs.getString("status"),
                 besiegerGeneralId = rs.getInt("besieger_general_id"),
                 besiegerOwnerGeneralId = rs.getInt("besieger_owner_general_id"),
@@ -379,10 +378,11 @@ class WorldSnapshotLoader(
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time, world_version, writer_epoch FROM world_state WHERE id = ?",
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time, world_version, writer_epoch, catch_up FROM world_state WHERE id = ?",
             { rs, _ ->
                 val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
                 val config = LinkedHashMap(MetaJson.decode(rs.getString("config")))
+                opensamguk.logic.world.WorldFormat.require(config, meta)
                 val persistedStartTime = rs.getObject("start_time", OffsetDateTime::class.java)?.toInstant()
                     ?: parseStartTime(config["startTime"] ?: meta["startTime"])
                 persistedStartTime?.toString()?.let { startTime ->
@@ -417,6 +417,7 @@ class WorldSnapshotLoader(
                     config = config,
                     worldVersion = rs.getLong("world_version"),
                     writerEpoch = rs.getLong("writer_epoch"),
+                    catchUp = TurnCatchUp.fromMeta(MetaJson.decode(rs.getString("catch_up"))),
                 )
             },
             worldId.value,
@@ -506,23 +507,6 @@ class WorldSnapshotLoader(
         Int::class.java,
         worldId.value,
     ) ?: 0
-
-    private fun loadActiveUniqueAuctionItems(): Map<Int, String?> {
-        val auctions = LinkedHashMap<Int, String?>()
-        jdbc.query(
-            """
-            SELECT id, target
-              FROM ng_auction
-             WHERE world_id = ?
-               AND type = 'uniqueItem'
-               AND finished = false
-             ORDER BY id ASC
-            """.trimIndent(),
-            { rs -> auctions[rs.getInt("id")] = rs.getString("target") },
-            worldId.value,
-        )
-        return auctions
-    }
 
     private fun loadStoredUniqueItemCounts(): Map<String, Int> {
         val counts = LinkedHashMap<String, Int>()
@@ -858,7 +842,7 @@ class WorldSnapshotLoader(
     )
 
     private companion object {
-        val historicalArtifacts = HanWorldArtifactsResolver()
+        val historicalArtifacts = WorldArtifactsResolver()
         val coldBootMetaKeys: Set<String> = setOf("statisticRows", "nationHistory", "generalHistory", "globalLogs")
     }
 

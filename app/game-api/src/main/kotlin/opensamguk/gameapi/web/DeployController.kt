@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 class DeployController(private val precheck: DeployPrecheckService) {
-    @GetMapping("/api/hwiha/deploy/options")
+    @GetMapping("/api/deploy/options")
     fun options(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong())
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()

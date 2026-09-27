@@ -34,6 +34,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
+data class TurnCatchUpMultiplierRequest(val multiplier: Int)
+
 /**
  * 어드민 "서버 제어" API — 서버별 현재 버전 표시 + 스테이트리스 서비스 업데이트 트리거.
  *
@@ -89,6 +91,13 @@ class AdminController(
     @PostMapping("/turn-daemon/resume", produces = [MediaType.APPLICATION_JSON_VALUE])
     fun turnDaemonResume(@RequestParam(required = false) serverId: String?): ResponseEntity<String> =
         deployService.turnDaemonResume(serverId).toResponse()
+
+    /** 관리자 배속 전환 — pause/resume과 같은 ADMIN 권한으로 게임엔진에 전달한다. */
+    @PostMapping("/turn-daemon/catch-up", produces = [MediaType.APPLICATION_JSON_VALUE])
+    fun turnDaemonCatchUp(
+        @RequestParam(required = false) serverId: String?,
+        @RequestBody request: TurnCatchUpMultiplierRequest,
+    ): ResponseEntity<String> = deployService.turnDaemonCatchUp(serverId, request.multiplier).toResponse()
 
     /**
      * 한 게임 서버([DeployRequest.serverId])의 스테이트리스 서비스(game-api/web-game)를 목표 버전으로

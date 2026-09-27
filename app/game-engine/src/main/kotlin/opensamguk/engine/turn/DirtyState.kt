@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import opensamguk.infra.persistence.KvWrite
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.record.GameEvent
 import java.time.Instant
 
 /**
@@ -59,23 +60,10 @@ data class MessageInvalidate(
 /**
  * A `diplomacy_letter` INSERT intent (W5d 외교 서신 발송). INSERT 전용. `allocatedId`는 recorder가
  * 선할당한 in-memory id(=PHP `insertId()` = newLetterNo)로, 같은 tick의 메시지/결과가 flush 전에
- * letterNo를 참조한다(in-memory 단조 id가 flushed SERIAL과 일치 — auction open INSERT 패턴). `columns`는
+ * letterNo를 참조한다(in-memory 단조 id가 flushed SERIAL과 일치 — message INSERT 선할당 패턴). `columns`는
  * byte-faithful diplomacy_letter 컬럼 맵.
  */
 data class DiplomacyLetterInsert(val allocatedId: Int, val columns: Map<String, Any?>)
-
-/**
- * An `ng_auction` UPSERT intent (T0.7). `id` null → INSERT (open); non-null → UPDATE (extend/finish/
- * shrink). `columns` is the byte-faithful `AuctionInfo.toArray()` map. `allocatedId` carries the
- * pre-assigned in-memory id for an INSERT (so bids can reference it before flush).
- */
-data class AuctionUpsert(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
-
-/**
- * An `ng_auction_bid` INSERT intent (T0.7). Outbid rows are NEVER deleted (research §3 — the refund is
- * a resource credit + Message, not a tombstone) — INSERT-only. `columns` is `AuctionBidItem.toArray()`.
- */
-data class AuctionBidInsert(val columns: Map<String, Any?>)
 
 /**
  * An `ng_betting` write intent (P6 betting intake). `columns` mirrors `NgBettingEntity` fields:
@@ -220,8 +208,8 @@ data class DirtyState(
     val createdBattlePlans: List<BattlePlan> = emptyList(),
     val deletedBattlePlans: List<Int> = emptyList(),
     /** HWIHA 포위(V61) — step-8j(8i 뒤), CREATE → UPDATE. 행은 지우지 않는다. */
-    val hwihaSieges: List<HwihaSiege> = emptyList(),
-    val createdHwihaSieges: List<HwihaSiege> = emptyList(),
+    val sieges: List<Siege> = emptyList(),
+    val createdSieges: List<Siege> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
     /**
      * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).
@@ -248,10 +236,6 @@ data class DirtyState(
      * 키별 LinkedHashMap, 컬럼별 last-write-wins, 삽입 순서 보존(diplomacyUpdateDirty와 동일 형태).
      */
     val votePollUpdates: Map<Int, Map<String, Any?>> = emptyMap(),
-    /** [auctionUpserts]: the ng_auction INSERT/UPDATE intents (T0.7). */
-    val auctionUpserts: List<AuctionUpsert> = emptyList(),
-    /** [auctionBidInserts]: the ng_auction_bid INSERT intents (T0.7, INSERT-only — no outbid delete). */
-    val auctionBidInserts: List<AuctionBidInsert> = emptyList(),
     /** [bettingInserts]: the ng_betting INSERT intents (P6 betting intake, INSERT-only). */
     val bettingInserts: List<BettingInsert> = emptyList(),
     /** [inheritanceKvWrites]: the inheritance-channel KV writes (T0.8). */
@@ -262,4 +246,6 @@ data class DirtyState(
     val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(),
     /** [statisticInserts]: the `statistic` INSERT intents (W1 checkStatistic). INSERT-only. */
     val statisticInserts: List<StatisticInsert> = emptyList(),
+    /** Canonical, typed events drained with the same turn flush as world state. */
+    val gameEvents: List<GameEvent> = emptyList(),
 )

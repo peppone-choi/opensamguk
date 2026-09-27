@@ -157,9 +157,9 @@ interface LogFeedReadRawRepository : SpringDataRepository<WorldLogReadEntity, In
      * (DatabaseHooks.kt scopeLiteral NOTE) — 정본 리터럴 확정 후 호출부가 그 값을 넘긴다.
      *
      * ※ 이 메서드만 의도적으로 `::text` 컬럼 비교를 유지한다(인덱스 비친화 — OPENSAM-14 예외 항목):
-     * 라이브 호출부(AuctionController)가 위 P6 버그 리터럴("action"/"auction")을 그대로 넘기는데,
-     * 파라미터를 enum으로 CAST하면 '없는 값 → 0행' 계약이 '없는 값 → SQL 에러'로 바뀌어 경매 페이지가
-     * 500이 된다. P6 리터럴 정정 시 함께 enum-네이티브로 전환한다.
+     * 옛 호출부(경매 조회 API, #917에서 은퇴)가 위 P6 버그 리터럴("action"/"auction")을 그대로 넘겼고,
+     * 파라미터를 enum으로 CAST하면 '없는 값 → 0행' 계약이 '없는 값 → SQL 에러'로 바뀐다.
+     * P6 리터럴 정정 시 함께 enum-네이티브로 전환한다.
      */
     @Query(
         value = """

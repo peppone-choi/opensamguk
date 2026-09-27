@@ -1,6 +1,6 @@
 package opensamguk.gameapi.read
 
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.springframework.beans.factory.annotation.Value
@@ -58,12 +58,12 @@ class MapAdministrativeOwnership(
 ) {
     @Volatile
     private var cached: CachedCanonicalData? = null
-    private val historicalData = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.HanWorldVariant, CanonicalData>()
+    private val historicalData = java.util.concurrent.ConcurrentHashMap<opensamguk.logic.world.WorldMapVariant, CanonicalData>()
 
     fun project(
         scenarioCode: String,
         liveCities: List<LiveCityOwnership>,
-        artifacts: ResolvedHanWorldArtifacts? = null,
+        artifacts: ResolvedWorldArtifacts? = null,
     ): AdministrativeOwnershipSnapshot {
         val canonical = if (artifacts == null) canonicalData() else historicalData.computeIfAbsent(artifacts.variant) {
             loadCanonicalData(objectMapper.readTree(artifacts.artifactBytes("data/map/han-tiles.json")),

@@ -12,6 +12,7 @@ import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.logic.domain.Nation as LogicNation
 import java.time.Instant
 import kotlin.test.Test
@@ -50,6 +51,19 @@ class FlushPayloadConvergenceTest {
             worldId = opensamguk.common.world.WorldId((baseState()).id),
         ),
     )
+
+    @Test
+    fun `catch-up operational delta is present only for an explicit transition`() {
+        val world = world()
+        val recorder = ChangeRecorder()
+        val before = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertTrue("catch_up" !in before.worldStateUpdate)
+
+        val plan = TurnCatchUp.start(t0.minusSeconds(72000), t0)
+        recorder.recordCatchUp(plan)
+        val transition = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
+        assertEquals(plan.toMeta(), transition.worldStateUpdate["catch_up"])
+    }
 
     @Test
     fun `nation gold delta survives the converged flush builder (no longer dropped)`() {

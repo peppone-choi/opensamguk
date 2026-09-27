@@ -5,7 +5,7 @@ import opensamguk.logic.input.CountyAssignment
 /**
  * 월단평 사건 종류 — 정본 설계 §2.8 의 오르는 경로(전공·치적·관직·결속)와 떨어지는 경로(패전·배신·실정·발령 거절).
  *
- * [key] 는 [RenownAssessment.Tally]·`hwiha-renown-assessment-v1.json` 의 필드 이름과 같다. 종류와 라벨은
+ * [key] 는 [RenownAssessment.Tally]·`renown-assessment-v1.json` 의 필드 이름과 같다. 종류와 라벨은
  * 월단평 발표(§2.8)에 실리는 공개 정보다 — 무슨 일이 있었는지(어느 조우·어느 縣)는 싣지 않는다.
  */
 enum class RenownEventKind(val key: String, val label: String) {
@@ -101,7 +101,7 @@ data class RenownEntry(
  * 읽을 수 없는 줄은 건너뛴다 — 월 경계에서 던지면 턴 루프가 영구히 멈춘다.
  */
 object RenownEvents {
-    const val META_KEY = "hwihaRenownTally"
+    const val META_KEY = "renownTally"
     private const val ENTRIES = "entries"
     private val STAMP = Regex("""(\d{4})-(\d{2})""")
 
@@ -270,7 +270,7 @@ object RenownHooks {
  * 한 달은 **순 경계 사건을 뺀** 창이다: 월 경계의 월간 사건(반기 도시 성장 등)이 끝난 뒤 값을 열고, 다음
  * 월 경계의 월간 사건 **전** 값으로 닫는다. 그래야 가만히 있어도 오르는 자연 성장이 치적이 되지 않는다.
  *
- * [MIN_RISE_BASIS_POINTS] 는 2026-09-23 사용자 결정으로 확정됐다(`data/curated/han/hwiha-renown-events-v1.json`).
+ * [MIN_RISE_BASIS_POINTS] 는 2026-09-23 사용자 결정으로 확정됐다(`data/curated/han/renown-events-v1.json`).
  */
 object DomesticMerit {
     /** 확정 — 지표 상한의 2%. 근거와 상태는 데이터 파일에 있다. */

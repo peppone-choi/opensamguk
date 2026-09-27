@@ -15,7 +15,7 @@ sealed class TurnDaemonCommand {
     abstract val type: String
 
     @Serializable
-    @SerialName("hwihaCourtInput")
+    @SerialName("immediateInput")
     data class ImmediateInput(
         val requestId: String,
         val generalId: Int,
@@ -23,7 +23,7 @@ sealed class TurnDaemonCommand {
         val inputId: String,
         val argJson: String,
     ) : TurnDaemonCommand() {
-        override val type: String get() = "hwihaCourtInput"
+        override val type: String get() = "immediateInput"
     }
 
     @Serializable
@@ -512,15 +512,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("auctionFinalize")
-    data class AuctionFinalize(
-        val requestId: String? = null,
-        val auctionId: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "auctionFinalize"
-    }
-
-    @Serializable
     @SerialName("changePermission")
     data class ChangePermission(
         val requestId: String? = null,
@@ -551,42 +542,6 @@ sealed class TurnDaemonCommand {
         val officerLevel: Int,
     ) : TurnDaemonCommand() {
         override val type: String get() = "appoint"
-    }
-
-    @Serializable
-    @SerialName("tournamentRefund")
-    data class TournamentRefund(
-        val requestId: String? = null,
-        val bettingId: Int? = null,
-        val reason: String? = null,
-        val refunds: List<AmountEntry>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentRefund"
-    }
-
-    @Serializable
-    @SerialName("tournamentBettingPayout")
-    data class TournamentBettingPayout(
-        val requestId: String? = null,
-        val bettingId: Int? = null,
-        val reason: String? = null,
-        val payouts: List<AmountEntry>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentBettingPayout"
-    }
-
-    @Serializable
-    @SerialName("tournamentReward")
-    data class TournamentReward(
-        val requestId: String? = null,
-        val tournamentType: Int,
-        val winnerId: Int,
-        val runnerUpId: Int,
-        val top16: List<Int>,
-        val top8: List<Int>,
-        val top4: List<Int>,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReward"
     }
 
     @Serializable
@@ -633,18 +588,6 @@ sealed class TurnDaemonCommand {
     }
 
     @Serializable
-    @SerialName("tournamentMatchResult")
-    data class TournamentMatchResult(
-        val requestId: String? = null,
-        val tournamentType: Int,
-        val attackerId: Int,
-        val defenderId: Int,
-        val result: MatchResult,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentMatchResult"
-    }
-
-    @Serializable
     @SerialName("patchGeneral")
     data class PatchGeneral(
         val requestId: String? = null,
@@ -652,30 +595,6 @@ sealed class TurnDaemonCommand {
         val patch: GeneralPatch,
     ) : TurnDaemonCommand() {
         override val type: String get() = "patchGeneral"
-    }
-
-    @Serializable
-    @SerialName("auctionBid")
-    data class AuctionBid(
-        val requestId: String? = null,
-        val auctionId: Int,
-        val generalId: Int,
-        val amount: Int,
-        val tryExtendCloseDate: Boolean? = null,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "auctionBid"
-    }
-
-    @Serializable
-    @SerialName("placeBet")
-    data class PlaceBet(
-        val requestId: String? = null,
-        val bettingId: Int,
-        val generalId: Int,
-        val bettingType: List<Int>,
-        val amount: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "placeBet"
     }
 
     @Serializable
@@ -712,7 +631,7 @@ sealed class TurnDaemonCommand {
     // Faithful ports of the PHP BaseAPI launch() actions (NOT turn-reserved che_* commands): the
     // 내무부 finance setters (sammo/API/Nation/Set*.php), tournament enroll (j_set_my_setting.php tnmt),
     // and the inheritance resets (sammo/API/InheritAction/Reset*.php). They flow exactly like
-    // [PlaceBet]/[AuctionBid]: game-api intake → command stream → TurnDaemonCommandDispatcher →
+    // the other intake commands: game-api intake → command stream → TurnDaemonCommandDispatcher →
     // handler → InMemoryTurnWorld mutate → ChangeRecorder delta → JdbcFlushExecutor flush.
 
     /**
@@ -810,39 +729,6 @@ sealed class TurnDaemonCommand {
         val data: kotlinx.serialization.json.JsonElement,
     ) : TurnDaemonCommand() {
         override val type: String get() = "npcPolicyUpdate"
-    }
-
-    /**
-     * 토너먼트 참가 (enroll) — `j_set_my_setting.php` 의 `tnmt` 토글. Writes the acting general's
-     * `tnmt` (0/1) into the general row. `value` clamps to 0..1 (PHP: `< 0 || > 1 → 1`).
-     */
-    @Serializable
-    @SerialName("tournamentEnroll")
-    data class TournamentEnroll(
-        val requestId: String? = null,
-        val generalId: Int,
-        val value: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentEnroll"
-    }
-
-    @Serializable
-    @SerialName("tournamentStart")
-    data class TournamentStart(
-        val requestId: String? = null,
-        val generalId: Int,
-        val tournamentType: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentStart"
-    }
-
-    @Serializable
-    @SerialName("tournamentReset")
-    data class TournamentReset(
-        val requestId: String? = null,
-        val generalId: Int,
-    ) : TurnDaemonCommand() {
-        override val type: String get() = "tournamentReset"
     }
 
     /**
@@ -963,41 +849,6 @@ sealed class TurnDaemonCommand {
         val messageType: String,
         val msgID: Int,
     ) : TurnDaemonCommand() { override val type: String get() = "readLatestMessage" }
-
-    // ── W6c 경매 개설 (BuyRice / SellRice / Unique) — OpenBuyRiceAuction.php 등 ──
-    /** 쌀 매수 경매 개설 (OpenBuyRiceAuction.php → AuctionBasicResource::openResourceAuction). */
-    @Serializable
-    @SerialName("auctionOpenBuyRice")
-    data class AuctionOpenBuyRice(
-        val requestId: String? = null,
-        val generalId: Int,
-        val amount: Int,
-        val closeTurnCnt: Int,
-        val startBidAmount: Int,
-        val finishBidAmount: Int,
-    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenBuyRice" }
-
-    /** 쌀 매도 경매 개설 (OpenSellRiceAuction.php → AuctionBasicResource::openResourceAuction). */
-    @Serializable
-    @SerialName("auctionOpenSellRice")
-    data class AuctionOpenSellRice(
-        val requestId: String? = null,
-        val generalId: Int,
-        val amount: Int,
-        val closeTurnCnt: Int,
-        val startBidAmount: Int,
-        val finishBidAmount: Int,
-    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenSellRice" }
-
-    /** 유니크 아이템 경매 개설 (AuctionUniqueItem). [itemId]는 유니크 아이템 키. */
-    @Serializable
-    @SerialName("auctionOpenUnique")
-    data class AuctionOpenUnique(
-        val requestId: String? = null,
-        val generalId: Int,
-        val itemId: String,
-        val amount: Int,
-    ) : TurnDaemonCommand() { override val type: String get() = "auctionOpenUnique" }
 
     // ── W5d 외교 서신 (Send / Rollback / Destroy) — j_diplomacy_*_letter.php ──
     /**
@@ -1196,10 +1047,3 @@ data class PatchStats(
     val strength: Int? = null,
     val intelligence: Int? = null,
 )
-
-@Serializable
-enum class MatchResult {
-    @SerialName("attacker") ATTACKER,
-    @SerialName("defender") DEFENDER,
-    @SerialName("draw") DRAW,
-}

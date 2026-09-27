@@ -59,5 +59,5 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/administrative-axis-pin.json")) {
         into("administration")
     }
-    from(rootProject.file("data/battle/hwiha-unit-profiles-v1.json")) { into("battle") }
+    from(rootProject.file("data/battle/unit-profiles-v1.json")) { into("battle") }
 }

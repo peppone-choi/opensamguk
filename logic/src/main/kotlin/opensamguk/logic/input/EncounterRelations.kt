@@ -21,7 +21,7 @@ class EncounterRelations private constructor(val encounterId: String, pairs: Lis
     val snapshotId: String get() {
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { stream ->
-            stream.writeUTF("hwihaEncounterRelations:v1"); stream.writeUTF(encounterId)
+            stream.writeUTF("encounterRelations:v1"); stream.writeUTF(encounterId)
             stream.writeInt(pairs.size)
             pairs.forEach { stream.writeInt(it.firstCommanderId); stream.writeInt(it.secondCommanderId); stream.writeBoolean(it.hostile) }
         }
@@ -47,7 +47,7 @@ class EncounterRelations private constructor(val encounterId: String, pairs: Lis
             "firstCommanderId" to it.firstCommanderId, "secondCommanderId" to it.secondCommanderId, "hostile" to it.hostile) })
 
     companion object {
-        const val META_KEY = "hwihaEncounterRelations"
+        const val META_KEY = "encounterRelations"
 
         fun capture(encounter: CorpsEncounter, state: DeploymentProjection, activeWars: Set<Pair<Int, Int>>): EncounterRelations {
             val participants = (listOf(encounter.attacker)+encounter.defenders).sortedBy { it.commanderGeneralId }
