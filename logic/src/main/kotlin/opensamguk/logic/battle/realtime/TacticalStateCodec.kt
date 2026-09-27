@@ -65,7 +65,15 @@ object TacticalStateCodec {
         return compressed.toByteArray().also { require(it.size <= MAX_COMPRESSED) }
     }
 
-    fun decode(compressed: ByteArray, expectedHash: String): TacticalState {
+    fun decode(compressed: ByteArray, expectedHash: String): TacticalState = try {
+        decodeChecked(compressed, expectedHash)
+    } catch (error: IllegalArgumentException) {
+        throw error
+    } catch (error: Exception) {
+        throw IllegalArgumentException("battle checkpoint corrupt", error)
+    }
+
+    private fun decodeChecked(compressed: ByteArray, expectedHash: String): TacticalState {
         require(compressed.isNotEmpty() && compressed.size <= MAX_COMPRESSED)
         require(expectedHash.matches(Regex("[0-9a-f]{64}")))
         val plain = ByteArrayOutputStream()

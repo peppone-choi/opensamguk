@@ -1,5 +1,9 @@
 package opensamguk.logic.battle.realtime
 
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.util.zip.DeflaterOutputStream
+import java.util.zip.InflaterInputStream
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -28,12 +32,37 @@ class TacticalStateCodecTest {
         val state = TacticalState(1, field, 0, emptyList(), emptySet())
         val body = TacticalStateCodec.encode(state)
         assertFailsWith<IllegalArgumentException> { TacticalStateCodec.decode(body, "0".repeat(64)) }
-        assertFailsWith<Exception> {
+        assertFailsWith<IllegalArgumentException> {
             TacticalStateCodec.decode(byteArrayOf(0, 1, 2), TacticalBattle.stateHash(state))
         }
         assertFailsWith<IllegalArgumentException> {
             TacticalStateCodec.decode(body + byteArrayOf(0), TacticalBattle.stateHash(state))
         }
+    }
+
+    @Test
+    fun `version trailing plain bytes and inflated size limit reject corrupt checkpoints`() {
+        val state = TacticalState(1, field, 0, emptyList(), emptySet())
+        val expectedHash = TacticalBattle.stateHash(state)
+        val plain = InflaterInputStream(ByteArrayInputStream(TacticalStateCodec.encode(state)))
+            .use { it.readBytes() }
+        fun deflate(bytes: ByteArray): ByteArray = ByteArrayOutputStream().let { output ->
+            DeflaterOutputStream(output).use { it.write(bytes) }
+            output.toByteArray()
+        }
+        val wrongVersion = plain.copyOf().apply { this[0] = (this[0].toInt() xor 1).toByte() }
+        assertEquals("battle checkpoint version mismatch", assertFailsWith<IllegalArgumentException> {
+            TacticalStateCodec.decode(deflate(wrongVersion), expectedHash)
+        }.message)
+        assertEquals("battle checkpoint has trailing bytes", assertFailsWith<IllegalArgumentException> {
+            TacticalStateCodec.decode(deflate(plain + byteArrayOf(0)), expectedHash)
+        }.message)
+        assertEquals("battle checkpoint exceeds codec limit", assertFailsWith<IllegalArgumentException> {
+            TacticalStateCodec.decode(deflate(ByteArray(70_000)), expectedHash)
+        }.message)
+        assertEquals("battle checkpoint corrupt", assertFailsWith<IllegalArgumentException> {
+            TacticalStateCodec.decode(deflate(plain.copyOf(4)), expectedHash)
+        }.message)
     }
 
     @Test
