@@ -58,7 +58,8 @@ type CreateGeneralRequest = {
     | {
         kind: 'CUSTOM'; name: string; nativeCountyId: number;
         stats: { leadership: number; strength: number; intel: number; politics: number; charm: number };
-        personalityId: string; specialtyId: string;
+        personalityId: '신중' | '진취' | '협력' | '독립';
+        specialtyId: '농정' | '상업' | '군율' | '정찰' | '공역';
       }
     | { kind: 'HISTORICAL'; historicalGeneralId: number };
 };
@@ -104,15 +105,15 @@ type CreateGeneralResult = {
 
 | 경로 | 요청 | 응답 | 실패 |
 | --- | --- | --- | --- |
-| `POST /api/generals/creation` | 인증 계정, `CreateGeneralRequest` | 202 `CreateGeneralAccepted`; 접수일 뿐 생성 성공이 아님 | 400 `INVALID_REQUEST`, 401 `AUTH_REQUIRED`, 409 `WORLD_CHANGED`·`GENERAL_ALREADY_OWNED`·`REQUEST_ID_REUSED`, 422 `INVALID_NATIVE_COUNTY`·`INVALID_STATS`·`INVALID_PERSONALITY`·`INVALID_SPECIALTY`·`HISTORICAL_PERSON_NOT_APPEARED`·`HISTORICAL_PERSON_UNAVAILABLE`, 503 `CREATION_POLICY_UNAVAILABLE`(창작 정책 미확정) |
+| `POST /api/generals/creation` | 인증 계정, `CreateGeneralRequest` | 202 `CreateGeneralAccepted`; 접수일 뿐 생성 성공이 아님 | 400 `INVALID_REQUEST`, 401 `AUTH_REQUIRED`, 409 `WORLD_CHANGED`·`GENERAL_ALREADY_OWNED`·`REQUEST_ID_REUSED`, 422 `INVALID_NATIVE_COUNTY`·`INVALID_STATS`·`INVALID_PERSONALITY`·`INVALID_SPECIALTY`·`HISTORICAL_PERSON_NOT_APPEARED`·`HISTORICAL_PERSON_UNAVAILABLE`, 503 `CREATION_POLICY_UNAVAILABLE`(정책 원장 로드 실패) |
 | `GET /api/generals/creation/{requestId}` | 인증 계정이 제출한 ID만 허용 | 200 `CreateGeneralResult` | 401 `AUTH_REQUIRED`; 타인 ID·없는 ID는 동일한 404 `CREATION_REQUEST_NOT_FOUND` |
 
 `clientRequestId`는 호출자가 만든 안정된 UUID 문자열이다. 같은 계정·월드·ID·동일 본문 재시도는 같은 `requestId`를 반환한다. 같은 ID에 다른 본문을 제출하면 409 `REQUEST_ID_REUSED`다. 서버는 라우팅된 월드를 선택하고 `expectedWorldId`가 그 월드와 다르면 409 `WORLD_CHANGED`로 거절한다. 요청으로 임의의 월드를 바꾸지 못한다. 생성 성공은 데몬이 영속 flush를 끝낸 뒤 `CREATED` 결과와 본인 장수 소유가 함께 확인될 때만 표시한다. `PENDING`과 `REJECTED`를 성공으로 표시하지 않는다. 쓰기 중 발견된 점유 경쟁·유효성 오류는 `REJECTED.error`로 반환한다.
 
-`CUSTOM`은 플레이어가 이름·본관 縣·통솔·무력·지력·정치·매력·성격·특기를 직접 고른다(2026-09-27 사용자 결정). 서버는 시나리오의 縣, 허용 능력치 범위·합계·상호 제약, 성격·특기 선택 목록과 조합 제약을 승인된 제품 정책 원장에서 검증한다. **수치 범위와 선택 목록은 아직 미결정**이므로 그 정책이 확정되기 전 `CUSTOM`을 202로 접수하거나 임의 기본값으로 생성하지 않는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물 ID를 제출한다. 서버는 190 시드의 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 본관 배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 역사 인물의 기존 능력·성격·특기·명망은 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
+`CUSTOM`은 플레이어가 이름·본관 縣·통솔·무력·지력·정치·매력·성격·특기를 직접 고른다(2026-09-27 사용자 결정). 다섯 능력치는 각각 **정수 20–85**, 합계는 **정확히 300**이다. 성격은 `신중`·`진취`·`협력`·`독립` 중 하나, 특기는 `농정`·`상업`·`군율`·`정찰`·`공역` 중 하나다. 조합 금지는 없다. 성격·특기는 효과 설계 전까지 **표시용 태그**로 영속 저장하고 숨은 수치 효과를 부여하지 않는다. 서버는 시나리오의 본관 縣과 위 선택 규칙을 쓰기 경로에서 재검증한다. 정책 원장을 로드하지 못하면 503으로 닫는다. 삼모 `PageJoin`의 합계·범위·무작위 규칙을 가져오지 않는다. `HISTORICAL`은 시나리오 시점에 이미 등장한 기존 인물 ID를 제출한다. 서버는 190 시드의 등장 여부, 현 시점의 점유·소속·생존·선택 가능성, 본관 배치와 서버당 단 한 장 제약을 **같은 쓰기 경로에서** 다시 확인한다. 역사 인물의 기존 능력·성격·특기·명망은 다시 추첨하지 않는다. 후보 읽기 화면은 등장 인물 전체를 보여 줄 수 있으나 점유된 인물은 선택 불가로 표시한다.
 
 각 계정은 해당 서버·월드에 사람 장수 한 명만 소유할 수 있다. 두 동시 요청도 한 장만 성공하고 나머지는 `GENERAL_ALREADY_OWNED`로 끝나야 한다. 역사 인물은 기존 한 장을 소유로 전환하며 복제하지 않는다. 두 계정의 동시 선택도 한 쪽만 성공한다. 튜토리얼 월드의 생성·점유는 본 서버 월드로 전파하지 않는다. 사람에게 보이는 도움말 글은 이 레인이 초안을 쓰고 사용자가 검수한다.
 
 ## 예시와 게이트
 
-fixture는 `docs/development/fixtures/help-tutorial/`에 있다. `general-creation-historical-request.json`은 역사 인물 요청, `general-creation-custom-shape.json`은 **필드 구조만 보여 주는 미승인 예시**다. 후자의 수치와 성격·특기 ID는 유효한 선택값으로 확정되지 않았으며 정책 확정 전에는 `general-creation-policy-unavailable.json`처럼 거절한다. `general-creation-accepted.json`은 접수, `general-creation-created.json`과 `general-creation-rejected.json`은 서로 다른 최종 결과 예시다. 내용은 계약 예시이며 실제 제공·진척 증거가 아니다. E8은 모든 `helpTopicId`의 실체·고아 없음·원장 수치 중복 없음·모든 실패 사유의 설명을 적색 프로브로 검증한다. E9는 실제 사건 발화, 소유권, 사건 중복, flush 뒤 콜드 재로드를 검증한다. E10은 목표 또는 사유 있는 N/A 및 단계별 증거 없이는 승격을 거절한다. 실제 UI 성공·실패 경로와 문서는 해당 화면/입력 소유 PR에서 검증한다.
+fixture는 `docs/development/fixtures/help-tutorial/`에 있다. `general-creation-historical-request.json`과 `general-creation-custom-request.json`은 두 생성 방식의 요청 예시다. `general-creation-policy-unavailable.json`은 정책 원장 로드 실패 예시다. `general-creation-accepted.json`은 접수, `general-creation-created.json`과 `general-creation-rejected.json`은 서로 다른 최종 결과 예시다. 내용은 계약 예시이며 실제 제공·진척 증거가 아니다. E8은 모든 `helpTopicId`의 실체·고아 없음·원장 수치 중복 없음·모든 실패 사유의 설명을 적색 프로브로 검증한다. E9는 실제 사건 발화, 소유권, 사건 중복, flush 뒤 콜드 재로드를 검증한다. E10은 목표 또는 사유 있는 N/A 및 단계별 증거 없이는 승격을 거절한다. 실제 UI 성공·실패 경로와 문서는 해당 화면/입력 소유 PR에서 검증한다.
