@@ -19,6 +19,13 @@ export interface User {
 // flags default to falsy (the legacy filterMenu drops a condShow item whose flag is absent anyway).
 export interface FrontGlobalInfo {
   ruleProfile?: 'SAMMO' | 'HWIHA' | null;
+  catchUp?: {
+    active: boolean;
+    multiplier: 2 | 4;
+    backlogSeconds: number;
+    remainingSeconds: number;
+    etaAt: string | null;
+  } | null;
   year: number;
   month: number;
   turnPhase?: number | null;

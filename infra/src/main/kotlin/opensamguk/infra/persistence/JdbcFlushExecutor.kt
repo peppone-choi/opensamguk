@@ -570,6 +570,7 @@ open class JdbcFlushExecutor(
         params.addValue("status", worldState["status"] as? String)
         params.addValue("tick_seconds", (worldState["tick_seconds"] as? Number)?.toInt())
         params.addValue("config", (worldState["config"] as? Map<*, *>)?.let(MetaJson::encode))
+        params.addValue("catch_up", (worldState["catch_up"] as? Map<*, *>)?.let(MetaJson::encode))
         params.addValue("start_time", worldState["start_time"]?.toString())
         // lastTurnTime 영속화 — WorldSnapshotLoader 가 부팅 시 meta['lastTurnTime'] 을 1순위로 읽는데
         // 이 키를 쓰는 경로가 없어서 매 엔진 재기동마다 start_time 폴백 → MonthBoundaryDriver 가
@@ -628,6 +629,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    world_version = world_version + 1,
@@ -650,6 +652,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    meta = meta || jsonb_build_object(

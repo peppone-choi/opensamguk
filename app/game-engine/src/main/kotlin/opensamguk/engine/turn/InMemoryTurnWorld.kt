@@ -1,5 +1,7 @@
 package opensamguk.engine.turn
 
+import opensamguk.common.turn.TurnCatchUp
+
 import opensamguk.common.world.WorldId
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.world.ActiveWorldMap
@@ -948,6 +950,10 @@ class InMemoryTurnWorld(
             lastTurnTime = turnTime,
             meta = state.meta + mapOf("lastTurnTime" to turnTime.toString()),
         )
+    }
+
+    fun setCatchUp(catchUp: TurnCatchUp?) {
+        state = state.copy(catchUp = catchUp)
     }
 
     fun setCurrentDate(year: Int, month: Int, phase: Int = 1) {
