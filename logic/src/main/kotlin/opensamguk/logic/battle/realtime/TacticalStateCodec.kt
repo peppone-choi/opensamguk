@@ -103,7 +103,8 @@ object TacticalStateCodec {
             val gateRow = input.readInt().takeUnless { it == -1 }
             val gateCol = input.readInt().takeUnless { it == -1 }
             val gateHp = input.readInt()
-            val outcome = enumOrNull<BattleOutcome>(input.readInt())
+            val outcomeOrdinal = input.readInt()
+            val outcome = if (outcomeOrdinal == -1) null else enumAt<BattleOutcome>(outcomeOrdinal)
             val sideMask = input.readInt()
             require(sideMask and 0b11.inv() == 0)
             val humanSides = BattleSide.entries.filterTo(linkedSetOf()) {
@@ -137,6 +138,4 @@ object TacticalStateCodec {
     private inline fun <reified T : Enum<T>> enumAt(ordinal: Int): T =
         enumValues<T>().getOrNull(ordinal) ?: error("battle checkpoint enum invalid")
 
-    private inline fun <reified T : Enum<T>> enumOrNull(ordinal: Int): T? =
-        if (ordinal == -1) null else enumAt(ordinal)
 }
