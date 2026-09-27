@@ -1,6 +1,6 @@
 # RTK14 무장 항목 참고 원장
 
-`officer-catalog-v1.json`은 삼국지 14 무장 항목의 **이름과 분류**만 정리한 참고 자료다. 휘하 규칙이나 플레이어에게 공개된 선택 목록을 자동으로 늘리지 않는다. `hwihaState=REFERENCE_ONLY`인 행은 효과·장착·배정이 없다. `CREATION_DISPLAY_ONLY`는 현재 장수 생성 계약의 주의 6종과 개성 6종을 가리키며 효과는 없다.
+`officer-catalog-v1.json`은 삼국지 14 무장 항목의 **이름과 분류**만 정리한 참고 자료다. 휘하 규칙이나 플레이어에게 공개된 선택 목록을 자동으로 늘리지 않는다. `availabilityState=REFERENCE_ONLY`인 행은 효과·장착·배정이 없다. `CREATION_DISPLAY_ONLY`는 현재 장수 생성 계약의 주의 6종과 개성 6종을 가리키며 효과는 없다.
 
 ## 대조 범위
 
