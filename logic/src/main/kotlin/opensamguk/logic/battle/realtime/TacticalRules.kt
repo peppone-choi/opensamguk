@@ -9,22 +9,29 @@ import kotlinx.serialization.json.jsonPrimitive
 /** Game numbers are product decisions. The original game's numeric formulas remain UNKNOWN. */
 data class TacticalRules(
     val battleTicks: Int,
+    val moraleScaleMax: Int,
     val moraleRetreatBelow: Int,
     val initialMoraleBase: Int,
     val strengthMoraleDivisor: Int,
     val retinueMoraleDivisor: Int,
+    val moraleLossPerCasualtyPercent: Int,
     val infantryMoveTicks: Int,
     val archerMoveTicks: Int,
     val cavalryMoveTicks: Int,
     val forestExtraTicks: Int,
     val riverExtraTicks: Int,
     val attackIntervalTicks: Int,
+    val infantryRange: Int,
     val archerRange: Int,
+    val cavalryRange: Int,
     val baseDamagePercent: Int,
+    val minimumDamage: Int,
     val cavalryVsArcherPercent: Int,
     val infantryVsCavalryPercent: Int,
     val archerVsInfantryPercent: Int,
     val forestDefensePercent: Int,
+    val riverDefensePercent: Int,
+    val supplyShortageDamagePercent: Int,
     val gateDamagePerAttack: Int,
 ) {
     companion object {
@@ -46,25 +53,35 @@ data class TacticalRules(
             require(session.int("tickMillis") == 100 && session.int("joinWaitSeconds") == 60)
             val rules = TacticalRules(
                 battleTicks = session.int("battleTicks"),
+                moraleScaleMax = morale.int("scaleMax"),
                 moraleRetreatBelow = morale.int("retreatBelow"),
                 initialMoraleBase = morale.int("initialBase"),
                 strengthMoraleDivisor = morale.int("generalStrengthDivisor"),
                 retinueMoraleDivisor = morale.int("bugokMoraleDivisor"),
+                moraleLossPerCasualtyPercent = morale.int("lossPerCasualtyPercent"),
                 infantryMoveTicks = movement.int("infantryTicksPerTile"),
                 archerMoveTicks = movement.int("archerTicksPerTile"),
                 cavalryMoveTicks = movement.int("cavalryTicksPerTile"),
                 forestExtraTicks = movement.int("forestExtraTicks"),
                 riverExtraTicks = movement.int("riverExtraTicks"),
                 attackIntervalTicks = combat.int("attackIntervalTicks"),
+                infantryRange = combat.int("infantryRangeTiles"),
                 archerRange = combat.int("archerRangeTiles"),
+                cavalryRange = combat.int("cavalryRangeTiles"),
                 baseDamagePercent = combat.int("baseDamagePercent"),
+                minimumDamage = combat.int("minimumDamage"),
                 cavalryVsArcherPercent = combat.int("cavalryVsArcherPercent"),
                 infantryVsCavalryPercent = combat.int("infantryVsCavalryPercent"),
                 archerVsInfantryPercent = combat.int("archerVsInfantryPercent"),
                 forestDefensePercent = combat.int("forestDefensePercent"),
+                riverDefensePercent = combat.int("riverDefensePercent"),
+                supplyShortageDamagePercent = combat.int("supplyShortageDamagePercent"),
                 gateDamagePerAttack = siege.int("gateDamagePerAttack"),
             )
-            require(rules.battleTicks > 0 && rules.attackIntervalTicks > 0 && rules.archerRange > 0)
+            require(rules.battleTicks > 0 && rules.attackIntervalTicks > 0 &&
+                rules.moraleScaleMax > 0 && rules.moraleLossPerCasualtyPercent >= 0 &&
+                rules.minimumDamage > 0 && listOf(rules.infantryRange, rules.archerRange,
+                    rules.cavalryRange).all { it > 0 })
             require(listOf(rules.strengthMoraleDivisor, rules.retinueMoraleDivisor, rules.infantryMoveTicks,
                 rules.archerMoveTicks, rules.cavalryMoveTicks).all { it > 0 })
             return rules

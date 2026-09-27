@@ -10,7 +10,7 @@ enum class UnitKind { INFANTRY, ARCHER, CAVALRY }
 enum class BattleOrder { CHARGE, ATTACK, FORMATION, DEFEND, WALL, RETREAT }
 enum class RallyPoint { HOME, CENTER, ENEMY }
 enum class BattleOutcome { ATTACKER, DEFENDER, DRAW }
-enum class TacticalEventKind { ORDER, MOVE, BLOCKED, HIT, ROUT, GATE_DAMAGE, RESOLVED }
+enum class TacticalEventKind { ORDER, MOVE, HIT, ROUT, GATE_DAMAGE, RESOLVED }
 
 data class GeneralStats(
     val id: Int,
@@ -51,6 +51,7 @@ data class Deployment(val side: BattleSide, val slots: Map<FormationSlot, Retinu
 
     fun move(from: FormationSlot, to: FormationSlot): Deployment {
         require(from in slots)
+        if (from == to) return this
         val next = slots.toMutableMap()
         val displaced = next.remove(to)
         next[to] = next.remove(from)!!
@@ -98,7 +99,7 @@ data class TacticalUnit(
     val troops: Int = retinue.troops,
     val morale: Int = (TacticalRules.CANON.initialMoraleBase +
         retinue.general.strength / TacticalRules.CANON.strengthMoraleDivisor +
-        retinue.morale / TacticalRules.CANON.retinueMoraleDivisor).coerceIn(0, 200),
+        retinue.morale / TacticalRules.CANON.retinueMoraleDivisor).coerceIn(0, TacticalRules.CANON.moraleScaleMax),
     val order: BattleOrder = BattleOrder.FORMATION,
     val rally: RallyPoint = RallyPoint.CENTER,
     val moveWait: Int = 0,
@@ -106,7 +107,8 @@ data class TacticalUnit(
     val escaped: Boolean = false,
 ) {
     init {
-        require(row in 0..63 && col in 0..63 && troops in 0..retinue.troops && morale in 0..200)
+        require(row in 0..63 && col in 0..63 && troops in 0..retinue.troops &&
+            morale in 0..TacticalRules.CANON.moraleScaleMax)
         require(moveWait >= 0 && attackWait >= 0)
     }
 
@@ -247,7 +249,8 @@ object TacticalBattle {
         val afterCombat = moved.map { unit ->
             val loss = damage.getOrDefault(unit.retinue.id, 0L).coerceAtMost(unit.troops.toLong()).toInt()
             if (loss > 0) events += TacticalEvent(state.tick, TacticalEventKind.HIT, unit.retinue.id, loss)
-            val nextMorale = (unit.morale - if (unit.troops == 0) 0 else (loss * 100L / unit.troops).toInt()).coerceAtLeast(0)
+            val nextMorale = (unit.morale - if (unit.troops == 0) 0 else
+                (loss * 100L * rules.moraleLossPerCasualtyPercent / unit.troops).toInt()).coerceAtLeast(0)
             if (unit.morale >= rules.moraleRetreatBelow && nextMorale < rules.moraleRetreatBelow)
                 events += TacticalEvent(state.tick, TacticalEventKind.ROUT, unit.retinue.id)
             unit.copy(troops = unit.troops - loss, morale = nextMorale,
@@ -387,7 +390,11 @@ object TacticalBattle {
     private fun distance(a: TacticalUnit, b: TacticalUnit): Int =
         kotlin.math.abs(a.row - b.row) + kotlin.math.abs(a.col - b.col)
 
-    private fun range(unit: TacticalUnit): Int = if (unit.retinue.kind == UnitKind.ARCHER) rules.archerRange else 1
+    private fun range(unit: TacticalUnit): Int = when (unit.retinue.kind) {
+        UnitKind.INFANTRY -> rules.infantryRange
+        UnitKind.ARCHER -> rules.archerRange
+        UnitKind.CAVALRY -> rules.cavalryRange
+    }
 
     private fun lineOfSight(a: TacticalUnit, b: TacticalUnit, map: Battlefield, state: TacticalState): Boolean {
         return lineOfSight(a.row, a.col, b.row, b.col, map, state)
@@ -406,7 +413,8 @@ object TacticalBattle {
     }
 
     private fun damage(attacker: TacticalUnit, defender: TacticalUnit, map: Battlefield): Int {
-        val base = (attacker.troops.toLong() * rules.baseDamagePercent / 100).coerceAtLeast(1)
+        val base = (attacker.troops.toLong() * rules.baseDamagePercent / 100)
+            .coerceAtLeast(rules.minimumDamage.toLong())
         val triangle = when (attacker.retinue.kind to defender.retinue.kind) {
             UnitKind.CAVALRY to UnitKind.ARCHER -> 100 + rules.cavalryVsArcherPercent
             UnitKind.INFANTRY to UnitKind.CAVALRY -> 100 + rules.infantryVsCavalryPercent
@@ -415,12 +423,15 @@ object TacticalBattle {
         }
         val terrain = when (map.at(defender.row, defender.col)) {
             'F' -> 100 - rules.forestDefensePercent
+            'R' -> 100 - rules.riverDefensePercent
             else -> 100
         }
-        val supply = if (attacker.retinue.supply == 0) 80 else 100
+        val supply = if (attacker.retinue.supply == 0) 100 + rules.supplyShortageDamagePercent else 100
         return (base * (100 + attacker.retinue.training) * (100 + attacker.retinue.general.leadership) *
             triangle * terrain * supply /
-            (100L * 200 * 200 * 100 * 100)).coerceIn(1, defender.troops.toLong()).toInt()
+            (100L * 200 * 200 * 100 * 100))
+            .coerceIn(rules.minimumDamage.toLong().coerceAtMost(defender.troops.toLong()),
+                defender.troops.toLong()).toInt()
     }
 
     private fun resolve(units: List<TacticalUnit>, tick: Int): BattleOutcome? {

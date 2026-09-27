@@ -33,6 +33,7 @@ class TacticalBattleTest {
         val changed = result.move(FormationSlot.LEFT_WING, FormationSlot.RIGHT_GUARD)
         assertEquals(3, changed.slots[FormationSlot.RIGHT_GUARD]?.general?.id)
         assertTrue(FormationSlot.LEFT_WING !in changed.slots)
+        assertEquals(result, result.move(FormationSlot.CENTER, FormationSlot.CENTER))
     }
 
     @Test
@@ -85,7 +86,8 @@ class TacticalBattleTest {
     fun `wall blocks fire and a gate remains passable only after destruction`() {
         val wallRows = List(64) { row -> if (row == 10) "P".repeat(11) + "W" + "P".repeat(52) else "P".repeat(64) }
         val field = Battlefield(0, "FORTRESS", wallRows)
-        val attacker = TacticalUnit(BattleSide.ATTACKER, FormationSlot.CENTER, retinue(1, 80, 80),
+        val attacker = TacticalUnit(BattleSide.ATTACKER, FormationSlot.CENTER,
+            retinue(1, 80, 80, kind = UnitKind.ARCHER),
             row = 10, col = 10, order = BattleOrder.ATTACK)
         val defender = TacticalUnit(BattleSide.DEFENDER, FormationSlot.CENTER, retinue(2, 80, 80),
             row = 10, col = 12, order = BattleOrder.DEFEND)
@@ -96,7 +98,23 @@ class TacticalBattleTest {
         assertTrue(first.events.any { it.kind == TacticalEventKind.GATE_DAMAGE })
         assertEquals(100, first.state.units.first { it.retinue.id == 2 }.troops)
         val after = TacticalBattle.replay(first.state, emptyList(), 15)
-        assertTrue(after.units.first { it.retinue.id == 1 }.col >= 11)
+        assertEquals(10, after.units.first { it.retinue.id == 1 }.col)
+        assertTrue(after.units.first { it.retinue.id == 2 }.troops < 100)
+    }
+
+    @Test
+    fun `river defense penalty increases incoming damage`() {
+        val riverRows = List(64) { row ->
+            if (row == 10) "P".repeat(11) + "R" + "P".repeat(52) else "P".repeat(64)
+        }
+        val attacker = TacticalUnit(BattleSide.ATTACKER, FormationSlot.CENTER,
+            retinue(1, 80, 80, troops = 1000), row = 10, col = 10, order = BattleOrder.DEFEND)
+        val defender = TacticalUnit(BattleSide.DEFENDER, FormationSlot.CENTER,
+            retinue(2, 80, 80, troops = 1000), row = 10, col = 11, order = BattleOrder.DEFEND)
+        fun remaining(field: Battlefield) = TacticalBattle.step(TacticalState(1, field, 0,
+            listOf(attacker, defender), setOf(BattleSide.ATTACKER, BattleSide.DEFENDER))).state
+            .units.first { it.retinue.id == 2 }.troops
+        assertTrue(remaining(Battlefield(193, "FIELD", riverRows)) < remaining(plain))
     }
 
     @Test
