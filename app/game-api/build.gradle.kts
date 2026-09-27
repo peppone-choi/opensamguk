@@ -14,6 +14,7 @@ kotlin { jvmToolchain(21) }
 tasks.named("jar") { enabled = false }
 
 tasks.processResources {
+    from(rootProject.file("data/help")) { into("help") }
     from(rootProject.file("data/commands/public-alpha-command-catalog.json")) {
         into("command-catalog")
     }
