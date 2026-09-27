@@ -1,5 +1,7 @@
 # OpenSamguk v2 실시간 전투 세션·지휘권·명령·리플레이 설계
 
+> 2026-09-27 적용 범위 개정: 군단 조우·성새 강공·개인 조우의 구체 규칙은 [와룡전식 실시간 전술 전투 계약](2026-09-27-waryong-realtime-tactical-battle.md)을 따른다. 이 문서의 권위 액터·WebSocket·epoch fence·입력 로그·재접속·결과 outbox는 기반 계약으로 유지하되, 12–15분/200ms·전술 정지·자동전투 fallback·16편제 상한은 해당 새 전투에 적용하지 않는다. 수전은 별도 전투 종류로 남는다.
+
 - Date: 2026-07-30
 - Status: **APPROVED — written spec confirmed by the user on 2026-07-30**
 - Product: OpenSamguk New Version (v2)
