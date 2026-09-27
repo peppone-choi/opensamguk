@@ -83,8 +83,6 @@ class JdbcBattleSessionStoreIT {
         assertTrue((store.admit(command) as CommandAdmission.Receipt).value.replayed)
         assertEquals(CommandAdmission.IdempotencyConflict,
             store.admit(command.copy(intentJson = "{}", intentSha256 = sha("{}"))))
-        val oldTick = (store.admit(command.copy(clientCommandId = "cmd-old-tick")) as CommandAdmission.Receipt).value
-        assertEquals("STALE_TICK", oldTick.reasonCode)
         val raced = (store.admit(command.copy(clientCommandId = "cmd-race", issuedTick = 1))
             as CommandAdmission.Receipt).value
         assertEquals(3L, raced.eventSeq)
@@ -133,5 +131,65 @@ class JdbcBattleSessionStoreIT {
         assertEquals(BattleSessionPhase.APPLIED, store.head(world, ticket.battleId)?.phase)
         assertEquals(5, store.eventsAfter(world, ticket.battleId, 0).size)
         assertTrue((store.admit(command) as CommandAdmission.Receipt).value.replayed)
+    }
+
+    @Test
+    fun `observed tick lag window accepts recent commands and rejects old or future ticks`() {
+        val now = Instant.now()
+        val payload = """{"schemaVersion":1,"battleId":"battle-lag-it"}"""
+        val ticket = FrozenBattleTicket(world, "battle-lag-it", payload, sha(payload), "a".repeat(64),
+            "b".repeat(64), "c".repeat(64), 18, 5, 3,
+            now.minusSeconds(5), now.plusSeconds(300),
+            listOf(FrozenBattleParticipant(1, 43, 8, "ATTACKER", 4)))
+        assertTrue(store.create(ticket))
+        val epoch = assertNotNull(store.claimEpoch(world, ticket.battleId, "actor-lag", 30_000))
+        assertTrue(store.startRun(world, ticket.battleId, "actor-lag", epoch.sessionEpoch))
+        (0 until 11).forEach { tick ->
+            assertTrue(store.advanceTick(world, ticket.battleId, "actor-lag", epoch.sessionEpoch, tick, 1))
+        }
+        val intent = """{"order":"HOLD"}"""
+        val command = BattleCommandRecord(world, ticket.battleId, 1, "cmd-lag-one", sha(intent),
+            epoch.sessionEpoch, 4, 10, "ATTACKER", intent)
+        val oneTickOld = (store.admit(command) as CommandAdmission.Receipt).value
+        assertEquals(BattleCommandVerdict.ACCEPTED, oneTickOld.verdict)
+        assertEquals(12, oneTickOld.effectiveTick)
+        val atWindow = (store.admit(command.copy(clientCommandId = "cmd-lag-boundary", issuedTick = 1))
+            as CommandAdmission.Receipt).value
+        assertEquals(BattleCommandVerdict.ACCEPTED, atWindow.verdict)
+        val tooOld = (store.admit(command.copy(clientCommandId = "cmd-lag-old", issuedTick = 0))
+            as CommandAdmission.Receipt).value
+        assertEquals("STALE_TICK", tooOld.reasonCode)
+        val future = (store.admit(command.copy(clientCommandId = "cmd-lag-future", issuedTick = 12))
+            as CommandAdmission.Receipt).value
+        assertEquals("STALE_TICK", future.reasonCode)
+    }
+
+    @Test
+    fun `expired running session can be claimed to publish timeout result but cannot advance`() {
+        val now = Instant.now()
+        val payload = """{"schemaVersion":1,"battleId":"battle-expired-it"}"""
+        val ticket = FrozenBattleTicket(world, "battle-expired-it", payload, sha(payload), "a".repeat(64),
+            "b".repeat(64), "c".repeat(64), 19, 6, 4,
+            now.minusSeconds(5), now.plusSeconds(300),
+            listOf(FrozenBattleParticipant(1, 44, 9, "ATTACKER", 5)))
+        assertTrue(store.create(ticket))
+        val first = assertNotNull(store.claimEpoch(world, ticket.battleId, "actor-expired-a", 30_000))
+        assertTrue(store.startRun(world, ticket.battleId, "actor-expired-a", first.sessionEpoch))
+        jdbc.update("""
+            UPDATE battle_session
+               SET deadline_at = clock_timestamp() - interval '1 second',
+                   lease_until = clock_timestamp() - interval '1 second'
+             WHERE world_id = 1 AND battle_id = 'battle-expired-it'
+        """.trimIndent(), MapSqlParameterSource())
+        val second = assertNotNull(store.claimEpoch(world, ticket.battleId, "actor-expired-b", 30_000))
+        assertEquals(first.sessionEpoch + 1, second.sessionEpoch)
+        assertEquals(BattleSessionPhase.RUNNING, second.phase)
+        assertFalse(store.advanceTick(world, ticket.battleId, "actor-expired-b", second.sessionEpoch, 0, 1))
+        val resultJson = """{"outcome":"TIMEOUT_SCORE"}"""
+        val result = BattleResultRecord(world, ticket.battleId, second.sessionEpoch, "actor-expired-b",
+            1, resultJson, sha(resultJson), "f".repeat(64), 6, 4)
+        assertTrue(store.publishResult(result))
+        assertEquals(BattleSessionPhase.RESULT_PENDING, store.head(world, ticket.battleId)?.phase)
+        assertTrue(store.pendingResults(world, 10).any { it.battleId == ticket.battleId })
     }
 }

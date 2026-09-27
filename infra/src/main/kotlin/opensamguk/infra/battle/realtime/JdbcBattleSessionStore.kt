@@ -124,9 +124,9 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
                    lease_owner = :owner,
                    lease_until = clock_timestamp() + (:lease_millis * interval '1 millisecond')
              WHERE world_id = :world_id AND battle_id = :battle_id
-               AND phase IN ('READY', 'JOINING', 'RUNNING')
+               AND phase IN ('READY', 'JOINING', 'RUNNING', 'RESOLVING')
                AND (lease_until IS NULL OR lease_until < clock_timestamp())
-               AND deadline_at > clock_timestamp()
+               AND (phase IN ('RUNNING', 'RESOLVING') OR deadline_at > clock_timestamp())
             RETURNING phase, session_epoch, current_tick, latest_event_seq, latest_snapshot_seq,
                       lease_owner, lease_until, join_deadline_at, deadline_at
         """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
@@ -141,7 +141,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
                SET lease_until = clock_timestamp() + (:lease_millis * interval '1 millisecond')
              WHERE world_id = :world_id AND battle_id = :battle_id AND session_epoch = :session_epoch
                AND lease_owner = :owner AND lease_until > clock_timestamp()
-               AND phase IN ('JOINING', 'RUNNING')
+               AND phase IN ('JOINING', 'RUNNING', 'RESOLVING')
         """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
             .addValue("session_epoch", sessionEpoch).addValue("lease_millis", leaseMillis)) == 1
     }
@@ -211,7 +211,8 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             head.phase != BattleSessionPhase.RUNNING || head.leaseUntil == null ||
                 !head.leaseUntil.isAfter(dbNow()) || !head.deadlineAt.isAfter(dbNow()) -> "SESSION_CLOSED"
             head.currentTick >= TacticalRules.CANON.battleTicks -> "SESSION_CLOSED"
-            head.currentTick != command.issuedTick -> "STALE_TICK"
+            command.issuedTick > head.currentTick ||
+                head.currentTick - command.issuedTick > TacticalRules.CANON.commandIssuedTickMaxLag -> "STALE_TICK"
             else -> null
         }
         val eventSeq = if (reason == null) head.latestEventSeq + 1 else null
