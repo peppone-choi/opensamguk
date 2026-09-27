@@ -71,6 +71,7 @@
     "roundLimit": 8,
     "powerStrengthWeight": 2,
     "powerLeadershipWeight": 1,
+    "rollRange": 21,
     "damageDivisor": 9,
     "minimumDamage": 4
   },

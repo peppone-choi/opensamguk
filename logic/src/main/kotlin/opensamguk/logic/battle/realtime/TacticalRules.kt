@@ -34,6 +34,16 @@ data class TacticalRules(
     val riverDefensePercent: Int,
     val supplyShortageDamagePercent: Int,
     val gateDamagePerAttack: Int,
+    val duelOfferMinimumStrength: Int,
+    val duelAiAcceptDifference: Int,
+    val duelRoundLimit: Int,
+    val duelStrengthWeight: Int,
+    val duelLeadershipWeight: Int,
+    val duelDamageDivisor: Int,
+    val duelMinimumDamage: Int,
+    val duelRollRange: Int,
+    val duelWinnerMoraleBonus: Int,
+    val duelLoserMoralePenalty: Int,
 ) {
     companion object {
         private const val RESOURCE = "battle/waryong-tactical-rules-v1.json"
@@ -52,6 +62,7 @@ data class TacticalRules(
             val combat = root.section("combat")
             val siege = root.section("siege")
             val mapSelection = root.section("mapSelection")
+            val duel = root.section("duel")
             require(session.int("tickMillis") == 100 && session.int("joinWaitSeconds") == 60)
             val rules = TacticalRules(
                 battleTicks = session.int("battleTicks"),
@@ -80,6 +91,16 @@ data class TacticalRules(
                 riverDefensePercent = combat.int("riverDefensePercent"),
                 supplyShortageDamagePercent = combat.int("supplyShortageDamagePercent"),
                 gateDamagePerAttack = siege.int("gateDamagePerAttack"),
+                duelOfferMinimumStrength = duel.int("offerMinimumStrength"),
+                duelAiAcceptDifference = duel.int("aiAcceptStrengthDifferenceAtMost"),
+                duelRoundLimit = duel.int("roundLimit"),
+                duelStrengthWeight = duel.int("powerStrengthWeight"),
+                duelLeadershipWeight = duel.int("powerLeadershipWeight"),
+                duelDamageDivisor = duel.int("damageDivisor"),
+                duelMinimumDamage = duel.int("minimumDamage"),
+                duelRollRange = duel.int("rollRange"),
+                duelWinnerMoraleBonus = morale.int("duelWinnerBonus"),
+                duelLoserMoralePenalty = morale.int("duelLoserPenalty"),
             )
             require(rules.battleTicks > 0 && rules.attackIntervalTicks > 0 &&
                 rules.topMapCandidates > 0 && rules.moraleScaleMax > 0 && rules.moraleLossPerCasualtyPercent >= 0 &&
@@ -87,6 +108,10 @@ data class TacticalRules(
                     rules.cavalryRange).all { it > 0 })
             require(listOf(rules.strengthMoraleDivisor, rules.retinueMoraleDivisor, rules.infantryMoveTicks,
                 rules.archerMoveTicks, rules.cavalryMoveTicks).all { it > 0 })
+            require(rules.duelOfferMinimumStrength in 0..100 && rules.duelAiAcceptDifference in 0..100)
+            require(rules.duelRoundLimit > 0 && rules.duelDamageDivisor > 0 && rules.duelMinimumDamage > 0)
+            require(rules.duelStrengthWeight >= 0 && rules.duelLeadershipWeight >= 0 && rules.duelRollRange in 1..256)
+            require(rules.duelWinnerMoraleBonus >= 0 && rules.duelLoserMoralePenalty >= 0)
             return rules
         }
 
