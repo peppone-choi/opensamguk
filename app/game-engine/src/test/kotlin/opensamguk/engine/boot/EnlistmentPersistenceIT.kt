@@ -192,7 +192,7 @@ class EnlistmentPersistenceIT {
         val after = load(4)
         assertEquals(before.generals.map { if (it.id == 1) it.copy(
             turnTime = it.turnTime.plusSeconds(3600),
-            meta = PersonalTurn.after(it.meta + ("hwihaStratagemHand" to mapOf(
+            meta = PersonalTurn.after(it.meta + ("stratagemHand" to mapOf(
                 "version" to 1,"ownerGeneralId" to 1,"hand" to listOf(1,2),"drawPile" to listOf(3,4),
                 "discard" to emptyList<Int>(),"lastDrawPhase" to mapOf("year" to 200,"month" to 1,"phase" to 1))), world.getState()),
             initialTurns = it.initialTurns.drop(1),
@@ -302,7 +302,7 @@ class EnlistmentPersistenceIT {
 
     @Test fun `unreserved NPC enlistment commits through normal flush and cannot repeat after cold restart`() {
         seed(7)
-        jdbc.update("UPDATE general SET npc_state=2, user_id=NULL, meta=jsonb_set(meta,'{hwihaLord}','false') WHERE world_id=7 AND id=1")
+        jdbc.update("UPDATE general SET npc_state=2, user_id=NULL, meta=jsonb_set(meta,'{lord}','false') WHERE world_id=7 AND id=1")
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=7 AND id<>1")
         val id = WorldId(7)
         val before = load(7)
@@ -329,7 +329,7 @@ class EnlistmentPersistenceIT {
 
     @Test fun `explicit rest without request id suppresses NPC enlistment only for that reserved phase`() {
         seed(8)
-        jdbc.update("UPDATE general SET npc_state=2, user_id=NULL, meta=jsonb_set(meta,'{hwihaLord}','false') WHERE world_id=8 AND id=1")
+        jdbc.update("UPDATE general SET npc_state=2, user_id=NULL, meta=jsonb_set(meta,'{lord}','false') WHERE world_id=8 AND id=1")
         jdbc.update("UPDATE general SET turn_time='0200-01-02T00:00:00Z' WHERE world_id=8 AND id<>1")
         val id = WorldId(8)
         val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))

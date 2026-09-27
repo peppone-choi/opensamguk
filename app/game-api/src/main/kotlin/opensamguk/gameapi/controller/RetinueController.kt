@@ -89,7 +89,7 @@ class RetinueController(
         private fun crewTypeName(crewTypeId: Int): String =
             if (crewTypeId >= 1000) UnitCatalog.byId(crewTypeId)?.name ?: "-" else "-"
 
-        /** 부곡 한 행 — `/api/my-retinue` 와 휘하 카드 조회(`/api/hwiha/retinue`)가 같은 모양을 쓴다. */
+        /** 부곡 한 행 — `/api/my-retinue` 와 휘하 카드 조회(`/api/retinue`)가 같은 모양을 쓴다. */
         fun bugokDto(it: GeneralBugokReadEntity) = RetinueBugokDto(
             id = it.id, name = it.name, troops = it.troops, crewTypeId = it.crewTypeId,
             crewTypeName = crewTypeName(it.crewTypeId), training = it.training, morale = it.morale,

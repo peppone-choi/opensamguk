@@ -104,7 +104,7 @@ class CommandControllerSecurityTest {
 
     @Test
     fun `hwiha rejects legacy unknown and undelivered inputs before precheck or reservation`() {
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         val cases = mapOf(
             "che_요양" to "WRONG_RULE_PROFILE",
@@ -132,7 +132,7 @@ class CommandControllerSecurityTest {
     }
 
     @Test fun `hwiha allowed planned input reaches reserve ledger rejection`() {
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         `when`(reserve.reserveForOwnerWithRuleProfile(10, "action.resign", 0, "{}", 7, RuleProfile.HWIHA))
             .thenThrow(opensamguk.gameapi.reserve.AdmissionDenied("NOT_DELIVERED", "아직 제공되지 않는 입력입니다."))
@@ -146,7 +146,7 @@ class CommandControllerSecurityTest {
 
     @Test
     fun `hwiha keeps shared board intake available without the legacy catalog`() {
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
         val body = """{"isSecret":false,"title":"소식","text":"본문","kind":"general"}"""
         `when`(precheck.precheck(10, "boardArticle", mapOf(
@@ -395,7 +395,7 @@ class CommandControllerSecurityTest {
 
     @Test
     fun `hwiha first general selection fails before the frozen engine stub`() {
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         val body = """{"uniqueName":"장수"}"""
 
         mockMvc().perform(post("/api/command/selectPoolPick").param("generalId", "0")

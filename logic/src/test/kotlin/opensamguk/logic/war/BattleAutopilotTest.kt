@@ -18,8 +18,8 @@ class BattleAutopilotTest {
         val relations=EncounterRelations.capture(encounter,state,if(allHostile) setOf(1 to 2,1 to 3,2 to 3) else (2..count).map { 1 to it }.toSet())
         val combat=EncounterCombatProfiles.capture(forces,UnitProfiles(1,"c".repeat(64),
             listOf(UnitProfile(1100,1,range,100,120,20)),emptySet()))
-        val index=HanProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),6,2,mapOf('1' to "PLAIN"),
-            mapOf("A" to listOf(HanProvinceCell(0,0,'1')),"B" to (0 until rows).flatMap { row -> (1..width).map { HanProvinceCell(it,row,'1') } }))
+        val index=ProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),6,2,mapOf('1' to "PLAIN"),
+            mapOf("A" to listOf(ProvinceCell(0,0,'1')),"B" to (0 until rows).flatMap { row -> (1..width).map { ProvinceCell(it,row,'1') } }))
         val deployment=assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter,index)).deployment
         val plans=if(bothAdvance) BattlePlans(encounter.encounterId,(1..count).map {
             CommanderBattlePlan(it,BattlePlanAction.ADVANCE,emptyList())

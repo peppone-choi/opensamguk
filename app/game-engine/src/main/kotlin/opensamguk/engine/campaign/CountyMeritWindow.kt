@@ -84,6 +84,6 @@ class CountyMeritWindow(private val world: InMemoryTurnWorld, private val record
     }
 
     companion object {
-        const val KEY = "hwihaCountyMeritWindow"
+        const val KEY = "countyMeritWindow"
     }
 }

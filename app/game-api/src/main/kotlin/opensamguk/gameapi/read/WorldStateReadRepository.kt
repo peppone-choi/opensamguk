@@ -9,7 +9,10 @@ import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.input.WorldRuleProfile
+import opensamguk.logic.world.WorldFormat
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Repository
+import org.springframework.web.server.ResponseStatusException
 import java.time.Instant
 import java.util.Optional
 import org.springframework.data.repository.Repository as SpringDataRepository
@@ -76,13 +79,19 @@ class WorldStateReadRepository(
     private val worldId: WorldId = processWorld.worldId
 
     fun findById(id: Int): Optional<WorldStateReadEntity> =
-        if (id == worldId.value) raw.findById(id) else Optional.empty()
+        if (id == worldId.value) Optional.ofNullable(findProcessWorld()) else Optional.empty()
 
     /** Process world only — never returns rows from another world. */
     fun findAll(): List<WorldStateReadEntity> =
-        raw.findById(worldId.value).map { listOf(it) }.orElse(emptyList())
+        findProcessWorld()?.let(::listOf) ?: emptyList()
 
-    fun findProcessWorld(): WorldStateReadEntity? = raw.findById(worldId.value).orElse(null)
+    fun findProcessWorld(): WorldStateReadEntity? = raw.findById(worldId.value).orElse(null)?.also { world ->
+        try {
+            WorldFormat.require(world.config, world.meta)
+        } catch (cause: IllegalArgumentException) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, cause.message, cause)
+        }
+    }
 
 }
 

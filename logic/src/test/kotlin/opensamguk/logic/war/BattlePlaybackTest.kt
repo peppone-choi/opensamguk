@@ -19,8 +19,8 @@ class BattlePlaybackTest {
         val relations=EncounterRelations.capture(encounter,state,setOf(1 to 2))
         val combat=EncounterCombatProfiles.capture(forces,UnitProfiles(1,"c".repeat(64),
             listOf(UnitProfile(1100,1,1,100,120,20)),emptySet()))
-        val index=HanProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),3,2,mapOf('1' to "PLAIN"),
-            mapOf("A" to listOf(HanProvinceCell(0,0,'1')),"B" to listOf(HanProvinceCell(1,0,'1'),HanProvinceCell(2,0,'1'))))
+        val index=ProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),3,2,mapOf('1' to "PLAIN"),
+            mapOf("A" to listOf(ProvinceCell(0,0,'1')),"B" to listOf(ProvinceCell(1,0,'1'),ProvinceCell(2,0,'1'))))
         val deployment=assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter,index)).deployment
         val plans=if(retreatAtOne || noConditions) BattlePlans(encounter.encounterId,(1..2).map {
             CommanderBattlePlan(it,if(it==1)BattlePlanAction.ADVANCE else BattlePlanAction.HOLD,

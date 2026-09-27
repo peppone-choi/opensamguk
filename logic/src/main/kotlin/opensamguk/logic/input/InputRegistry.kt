@@ -89,14 +89,14 @@ class InputCatalog internal constructor(
     }
 
     companion object {
-        private const val RESOURCE = "command-catalog/hwiha-input-catalog.json"
+        private const val RESOURCE = "command-catalog/input-catalog.json"
         private val LEGACY_CODE = Regex("^(che|cr|event)_.+$|^휴식$")
 
         fun load(): InputCatalog = parse(
             checkNotNull(InputCatalog::class.java.classLoader.getResource(RESOURCE)) {
                 "hwiha input catalog resource is missing: $RESOURCE"
             }.readText(),
-        )
+        ).also(AiPolicyRegistry::validate)
 
         fun parse(payload: String): InputCatalog {
             CatalogDuplicateKeys(payload).check()

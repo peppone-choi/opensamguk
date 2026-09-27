@@ -6,9 +6,9 @@ import Shell from '../components/Shell';
 import GameCard from '../components/GameCard';
 
 const GAME_PAGES: readonly { href: string; label: string; desc: string; icon: IconName }[] = [
-    { href: '/game/hwiha/war-room', label: '작전실', desc: '지도와 12순 행동 확인', icon: 'hub-kingdoms' },
-    { href: '/game/hwiha/retinue', label: '휘하 편성', desc: '인물과 부곡 편성', icon: 'members' },
-    { href: '/game/hwiha/court', label: '조정 구상', desc: '관직·외교·천도 입력 준비 중', icon: 'diplomacy' },
+    { href: '/game/war-room', label: '작전실', desc: '지도와 12순 행동 확인', icon: 'hub-kingdoms' },
+    { href: '/game/retinue', label: '휘하 편성', desc: '인물과 부곡 편성', icon: 'members' },
+    { href: '/game/court', label: '조정 구상', desc: '관직·외교·천도 입력 준비 중', icon: 'diplomacy' },
     { href: '/game/mailbox', label: '메일함', desc: '외교 메시지 및 알림 확인', icon: 'mail' },
     { href: '/game/my-nation', label: '국가 정보', desc: '소속 국가와 도시 확인', icon: 'hub-kingdoms' },
     { href: '/game/rankings', label: '랭킹', desc: '장수와 국가 기록', icon: 'hub-hall-of-fame' },

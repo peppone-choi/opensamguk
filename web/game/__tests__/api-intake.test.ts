@@ -29,7 +29,7 @@ afterEach(() => {
 describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
     it('200 BLOCKED는 reject가 아니라 status/reason으로 resolve된다 (성공 위장 금지)', async () => {
         mockFetchOnce(200, { status: 'BLOCKED', reason: '자금이 부족합니다.', constraintName: 'ReqGold' });
-        const out = await api.command('auctionBid', { auctionId: 1, amount: 100 }, 7);
+        const out = await api.command('diploSendLetter', { destNation: 2, brief: '화친' }, 7);
         expect(out.status).toBe('BLOCKED');
         expect(isIntakeDenied(out)).toBe(true);
         expect(isIntakeQueued(out)).toBe(false);
@@ -40,7 +40,7 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
 
     it('200 UNKNOWN도 denied로 판별된다', async () => {
         mockFetchOnce(200, { status: 'UNKNOWN', reason: '명령을 확인할 수 없습니다.' });
-        const out = await api.commands.placeBet({ bettingId: 3, bettingType: [1], amount: 10 }, 7);
+        const out = await api.commands.deleteMessage({ msgID: 3 }, 7);
         expect(isIntakeDenied(out)).toBe(true);
     });
 
@@ -92,7 +92,7 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
 
     it('202 AVAILABLE은 queued로 판별된다 — 단, 성공 확정이 아니라 큐잉이다', async () => {
         mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'req-1', turnIdx: 0 });
-        const out = await api.commands.auctionBid({ auctionId: 1, amount: 100 }, 7);
+        const out = await api.commands.deleteMessage({ msgID: 1 }, 7);
         expect(isIntakeQueued(out)).toBe(true);
         expect(isIntakeDenied(out)).toBe(false);
         if (isIntakeQueued(out)) {
@@ -100,18 +100,9 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
         }
     });
 
-    it('registered CheckOwner posts the PHP argument shape and resolves the intake', async () => {
-        mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'owner-1', code: 'CheckOwner' });
-        const out = await api.instantAction('CheckOwner', 7, { destGeneralID: 27 });
-        expect(isIntakeQueued(out)).toBe(true);
-        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
-        expect(fetchMock.mock.calls[0][0]).toBe('/api/game/api/instant-action/CheckOwner?generalId=7');
-        expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({ destGeneralID: 27 });
-    });
-
     it('4xx는 reject — BE 본문의 실제 사유(error)를 그대로 싣는다', async () => {
-        mockFetchOnce(400, { error: '대상 장수가 존재하지 않습니다.', code: 'CheckOwner' });
-        await expect(api.instantAction('CheckOwner', 7, {})).rejects.toThrow('대상 장수가 존재하지 않습니다.');
+        mockFetchOnce(400, { error: '대상 장수가 존재하지 않습니다.' });
+        await expect(api.command('diploSendLetter', {}, 7)).rejects.toThrow('대상 장수가 존재하지 않습니다.');
     });
 
     it('본문 없는 4xx는 상태줄로 reject된다 (사유 날조 없음)', async () => {
@@ -142,21 +133,21 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
     });
 });
 
-describe('큐 조작 헬퍼 (push/repeat/bulk × general/nation)', () => {
-    it('nationPush는 /api/command/nation/push에 {amount}를 싣는다', async () => {
+describe('큐 조작 헬퍼 (push/repeat/bulk)', () => {
+    it('push는 /api/command/push에 {amount}를 싣는다', async () => {
         mockFetchOnce(202, { status: 'AVAILABLE' });
-        await api.commandQueue.nationPush(7, 3);
+        await api.commandQueue.push(7, 3);
         const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-        expect(url).toBe('/api/game/api/command/nation/push?generalId=7');
+        expect(url).toBe('/api/game/api/command/push?generalId=7');
         expect(JSON.parse(init.body as string)).toEqual({ amount: 3 });
     });
 
-    it('nationRepeat deny(200 BLOCKED)는 reason과 함께 resolve된다', async () => {
-        mockFetchOnce(200, { status: 'BLOCKED', reason: '수뇌부가 아닙니다.' });
-        const out = await api.commandQueue.nationRepeat(7, 2);
+    it('repeat deny(200 BLOCKED)는 reason과 함께 resolve된다', async () => {
+        mockFetchOnce(200, { status: 'BLOCKED', reason: '반복할 수 없습니다.' });
+        const out = await api.commandQueue.repeat(7, 2);
         expect(isIntakeDenied(out)).toBe(true);
-        if (isIntakeDenied(out)) expect(out.reason).toBe('수뇌부가 아닙니다.');
+        if (isIntakeDenied(out)) expect(out.reason).toBe('반복할 수 없습니다.');
     });
 
     it('bulk 202는 briefList를 동봉한 queued로 resolve된다', async () => {

@@ -40,7 +40,7 @@ class DomesticBoundary(
 
     fun run(meritClosedBeforeMonthlyEvents: Boolean = false): Outcome? {
         if (world.ruleProfile != RuleProfile.HWIHA) return null
-        val now = world.hwihaNow()
+        val now = world.phaseNow()
         val stamp = stampOf(now)
         if (world.getState().meta[STAMP_KEY] == stamp) return Outcome(stamp, alreadyStamped = true)
         activateCommanderyPolicies(now)
@@ -239,7 +239,7 @@ class DomesticBoundary(
     }
 
     private fun missingCounty(actorId: Int, countyId: Int): WorkResult {
-        logger.warn("hwiha_domestic_work_skipped county={} reason=MISSING_COUNTY", countyId)
+        logger.warn("campaign_domestic_work_skipped county={} reason=MISSING_COUNTY", countyId)
         log(actorId, "현 $countyId 정보를 확인할 수 없어 공사 진행을 건너뛰었습니다.")
         return WorkResult.STOPPED
     }
@@ -251,7 +251,7 @@ class DomesticBoundary(
 
     companion object {
         private val logger = LoggerFactory.getLogger(DomesticBoundary::class.java)
-        const val STAMP_KEY = "hwihaDomesticPhase"
+        const val STAMP_KEY = "domesticPhase"
         fun stampOf(phase: Phase): String = "%04d-%02d-%d".format(phase.year, phase.month, phase.phase)
     }
 }

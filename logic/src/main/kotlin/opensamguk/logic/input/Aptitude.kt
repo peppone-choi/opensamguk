@@ -9,8 +9,8 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * 휘하 인물 카드의 적성 네 축(장·리·사·사자) — 다섯 능력치의 가중 평균.
  *
- * **게임 설계 수치다.** 가중값은 `data/curated/han/hwiha-aptitude-weights-v1.json` 한 곳이 정본이고
- * (2026-09-23 사용자 승인), 이 객체는 그 파일을 classpath(`hwiha/`)로 받아 쓴다 — 코드에 박지 않는다.
+ * **게임 설계 수치다.** 가중값은 `data/curated/han/aptitude-weights-v1.json` 한 곳이 정본이고
+ * (2026-09-23 사용자 승인), 이 객체는 그 파일을 classpath(`campaign/`)로 받아 쓴다 — 코드에 박지 않는다.
  *
  * 가중은 정수이고 축마다 합이 `denominator` 와 같아야 한다. 계산은 정수로 하고 0.5 는 올린다
  * (실수 0.6·0.4 로 곱하면 72.5 가 72.4999… 로 떨어져 반올림이 갈린다).
@@ -50,7 +50,7 @@ object Aptitude {
         }
     }
 
-    private const val RESOURCE = "hwiha/hwiha-aptitude-weights-v1.json"
+    private const val RESOURCE = "campaign/aptitude-weights-v1.json"
 
     /** 정본 가중값. classpath 에 없으면 빌드가 잘못된 것이다 — 조용히 기본값으로 가지 않는다. */
     val CANON: Weights by lazy {
@@ -62,7 +62,7 @@ object Aptitude {
     fun parse(payload: String): Weights {
         val root = Json.parseToJsonElement(payload).jsonObject
         require(root.getValue("schemaVersion").jsonPrimitive.int == 1) { "unsupported aptitude weights schemaVersion" }
-        require(root.getValue("ledgerId").jsonPrimitive.content == "hwiha-aptitude-weights-v1") { "unexpected ledgerId" }
+        require(root.getValue("ledgerId").jsonPrimitive.content == "aptitude-weights-v1") { "unexpected ledgerId" }
         val axesNode = root.getValue("axes").jsonObject
         require(axesNode.keys == Axis.entries.map { it.key }.toSet()) { "unexpected aptitude axes: ${axesNode.keys}" }
         val axes = Axis.entries.associateWith { axis ->

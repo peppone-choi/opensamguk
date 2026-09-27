@@ -124,6 +124,11 @@ def load_xlsx_rows(path: Path) -> list[dict]:
             if value is None:
                 raise ValueError(f"XLSX row for {name} has invalid {label}")
             record[field] = value
+        if "등장년" in headers:
+            appearance = _integer(row.get(headers["등장년"]))
+            if appearance is None:
+                raise ValueError(f"XLSX row for {name} has invalid 등장년")
+            record["appearanceYear"] = appearance
         output.append(record)
     return sorted(output, key=lambda row: (row["name_korean"], _fingerprint(row), str(row.get("officer_number") or "")))
 
@@ -146,6 +151,17 @@ def _stable_key(record: dict) -> str:
     if not all(isinstance(value, str) and value for value in (identity["name_kanji"], identity["page_key"])):
         raise ValueError("raw officer requires name_kanji and page_key")
     return hashlib.sha256(json.dumps(identity, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest()
+
+
+def _enrich_from_xlsx(record: dict, candidate: dict) -> dict:
+    enriched = copy.deepcopy(record)
+    enriched["name_korean"] = candidate["name_korean"]
+    appearance = candidate.get("appearanceYear")
+    if appearance is not None:
+        if enriched.get("appearanceYear") is not None and enriched["appearanceYear"] != appearance:
+            raise ValueError(f"appearance year mismatch for {record.get('page_key')}")
+        enriched["appearanceYear"] = appearance
+    return enriched
 
 
 def _raw_sort_key(record: dict) -> tuple[str, str, str]:
@@ -231,8 +247,7 @@ def join_korean_names(raw: list[dict], xlsx_rows: list[dict], overrides: dict[tu
         if candidate_id in used_candidates:
             report["collisions"].append({"kind": "xlsx_candidate_reused", "candidate": candidate_id})
             continue
-        enriched = copy.deepcopy(record)
-        enriched["name_korean"] = candidate["name_korean"]
+        enriched = _enrich_from_xlsx(record, candidate)
         joined.append(enriched)
         used_candidates.add(candidate_id)
         report["exact_join_count"] += 1
@@ -264,8 +279,7 @@ def join_korean_names(raw: list[dict], xlsx_rows: list[dict], overrides: dict[tu
         ]
         if mismatch_fields != [override["expected_mismatch_field"]]:
             raise ValueError(f"override for {key} no longer has exactly the reviewed six-of-seven fingerprint match")
-        enriched = copy.deepcopy(record)
-        enriched["name_korean"] = candidate["name_korean"]
+        enriched = _enrich_from_xlsx(record, candidate)
         joined.append(enriched)
         used_candidates.add(candidate_id)
         applied_overrides.add(key)
@@ -343,6 +357,10 @@ def refine(raw: list[dict], xlsx_rows: list[dict], existing_registry: list[dict]
     joined, report = join_korean_names(raw, xlsx_rows, overrides)
     if report["unresolved"] or report["ambiguous"]:
         return [], [], report
+    return _refine_joined(joined, existing_registry, report)
+
+
+def _refine_joined(joined: list[dict], existing_registry: list[dict], report: dict) -> tuple[list[dict], list[dict], dict]:
     keyed: dict[str, dict] = {}
     for record in joined:
         stable_key = _stable_key(record)
@@ -395,6 +413,52 @@ def refine(raw: list[dict], xlsx_rows: list[dict], existing_registry: list[dict]
         key=lambda entry: json.dumps(entry, ensure_ascii=False, sort_keys=True, separators=(",", ":")),
     )
     return refined, registry, report
+
+
+def load_existing_name_map(path: Path) -> dict[int, str]:
+    with path.open(encoding="utf-8", newline="") as source:
+        reader = csv.DictReader(source, delimiter="\t")
+        if reader.fieldnames != ["id", "name_korean"]:
+            raise ValueError("name map headers are invalid")
+        names: dict[int, str] = {}
+        for row in reader:
+            officer_id = _integer(row["id"])
+            name = row["name_korean"]
+            if officer_id is None or not name or officer_id in names:
+                raise ValueError("name map row is invalid")
+            names[officer_id] = name
+    return names
+
+
+def refine_from_registry(raw: list[dict], existing_registry: list[dict], names: dict[int, str]) -> tuple[list[dict], list[dict], dict]:
+    """Use the reviewed stable IDs and Korean names when no XLSX is available.
+
+    This path accepts only the exact 1,000 identities and seven-field
+    fingerprints already frozen in the tracked registry; drift fails closed.
+    """
+    if len(raw) != 1000 or len(existing_registry) != 1000 or len(names) != 1000:
+        raise ValueError("registry name join requires the complete reviewed 1,000 officers")
+    by_key, by_id = _registry_index(existing_registry)
+    if set(names) != set(by_id):
+        raise ValueError("registry and Korean name map IDs differ")
+    joined = []
+    seen = set()
+    for record in raw:
+        key = _stable_key(record)
+        if key in seen or key not in by_key:
+            raise ValueError("raw officer identity is duplicate or absent from registry")
+        seen.add(key)
+        entry = by_key[key]
+        if _fingerprint_sha256(record) != entry["fingerprint_sha256"]:
+            raise ValueError("registry fingerprint drift detected")
+        enriched = copy.deepcopy(record)
+        enriched["name_korean"] = names[int(entry["id"])]
+        joined.append(enriched)
+    if seen != set(by_key):
+        raise ValueError("raw officers do not cover the reviewed registry")
+    report = _blank_report()
+    report["registry_join_count"] = len(joined)
+    return _refine_joined(joined, existing_registry, report)
 
 
 def _reject_duplicate_pairs(pairs: list[tuple[str, object]]) -> dict[str, object]:
@@ -526,7 +590,7 @@ def _parse_arguments(arguments: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     scenario_directory = Path(__file__).resolve().parent
     parser.add_argument("--raw", type=Path, required=True)
-    parser.add_argument("--xlsx", type=Path, required=True)
+    parser.add_argument("--xlsx", type=Path, help="optional workbook; without it, use the frozen registry and Korean name map")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--report", type=Path, required=True)
     parser.add_argument("--registry", type=Path, default=scenario_directory / "officer-id-registry.tsv")
@@ -539,13 +603,17 @@ def main(arguments: list[str] | None = None) -> int:
     options = _parse_arguments(arguments if arguments is not None else sys.argv[1:])
     try:
         city_map, remap = validate_tracked_location_maps()
-        overrides = load_name_join_overrides(options.name_join_overrides)
-        if len(overrides) != 22:
-            raise ValueError("name join override table must contain exactly 22 reviewed rows")
         raw = json.loads(options.raw.read_text(encoding="utf-8"))
         if not isinstance(raw, list):
             raise ValueError("raw officer input must be a list")
-        refined, registry, report = refine(raw, load_xlsx_rows(options.xlsx), load_registry(options.registry), overrides)
+        existing_registry = load_registry(options.registry)
+        if options.xlsx is None:
+            refined, registry, report = refine_from_registry(raw, existing_registry, load_existing_name_map(options.name_map))
+        else:
+            overrides = load_name_join_overrides(options.name_join_overrides)
+            if len(overrides) != 22:
+                raise ValueError("name join override table must contain exactly 22 reviewed rows")
+            refined, registry, report = refine(raw, load_xlsx_rows(options.xlsx), existing_registry, overrides)
         report["unresolved"].extend(_location_failures(refined, city_map, remap))
         if report["unresolved"] or report["ambiguous"] or report["collisions"]:
             _write_json(options.report, report)

@@ -14,7 +14,7 @@ import kotlinx.serialization.Serializable
  * 신규 파일 추가는 게이트 ②(`--diff-filter=MD`)에 잡히지 않는다.
  *
  * 설계안이 U9로 남긴 미확인 사항은 "`@Serializable` sealed 직렬화기가 파일 밖 서브클래스를 자동 등록하는가"
- * 였다. `V2CityGarrisonRecruitWireTest`의 왕복 직렬화 테스트가 그 답이다 — 그 테스트가 이 파일의 존재 이유다.
+ * 였다. `CityGarrisonRecruitWireTest`의 왕복 직렬화 테스트가 그 답이다 — 그 테스트가 이 파일의 존재 이유다.
  *
  * ## 왜 이름에 `V2` 접두사가 없는가
  *

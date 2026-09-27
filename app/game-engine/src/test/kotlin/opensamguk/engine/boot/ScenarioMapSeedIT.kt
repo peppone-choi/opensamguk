@@ -79,26 +79,31 @@ class ScenarioMapSeedIT {
     }
 
     @Test
-    fun `scenario_2 seed uses Han world city catalog`(@TempDir scenarioDir: Path) {
+    fun `bundled scenario_990002 seed uses its declared Han world city catalog`() {
         assumeTrue(dockerAvailable, "Docker unavailable - scenario map seed IT skipped (not failed)")
 
-        LegacySammoScenarioFixture.copyResource("scenario_2", scenarioDir)
-        val bootstrap = SeedBootstrap(scenarioCode = "scenario_2", scenarioDir = scenarioDir.toString(),
+        val bootstrap = SeedBootstrap(scenarioCode = "scenario_990002", artifactsRoot = Path.of("../.."),
             worldId = opensamguk.common.world.WorldId(1))
+        val scenario = bootstrap.loadScenario()
+        assertEquals("han-world-v3", scenario.map["mapName"])
+        val catalog = ScenarioJson.loadMapCities(readResource("map/${MapJson.resourceCode("han-world-v3")}.json"))
 
-        assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_2 world is seeded")
-        assertEquals(0, count("nation"))
-        assertEquals(0, count("general"))
+        assertTrue(bootstrap.ensureSeeded(jdbc), "fresh scenario_990002 world is seeded")
+        assertEquals(scenario.nations.size, count("nation"))
+        assertEquals(scenario.seedContract!!.activeGenerals.extended, count("general"))
+        assertEquals(catalog.map { it.id }.sorted(),
+            jdbc.queryForList("SELECT id FROM city ORDER BY id", Int::class.java))
 
+        // name 컬럼은 v3 카탈로그의 표기(displayName)다.
         val city = jdbc.queryForMap("SELECT name, level, pop_max, agri_max, comm_max FROM city WHERE id = 1")
-        assertEquals("장안", city["name"].toString())
+        assertEquals("경조윤 장안현", city["name"].toString())
         assertEquals(9, (city["level"] as Number).toInt())
         assertEquals(754800, (city["pop_max"] as Number).toInt())
         assertEquals(14000, (city["agri_max"] as Number).toInt())
         assertEquals(14800, (city["comm_max"] as Number).toInt())
 
         val config = jdbc.queryForObject("SELECT config::text FROM world_state WHERE id = 1", String::class.java)!!
-        assertTrue(config.contains("\"mapName\":\"han-world-v2\"") || config.contains("\"mapName\": \"han-world-v2\""), config)
+        assertTrue(config.contains("\"mapName\":\"han-world-v3\"") || config.contains("\"mapName\": \"han-world-v3\""), config)
     }
 
     @Test
@@ -314,8 +319,7 @@ class ScenarioMapSeedIT {
         assertTrue(!disabled.ensureSeeded(jdbc), "disabled gate precedes scenario-code parsing")
         assertEquals(0, count("world_state"))
 
-        LegacySammoScenarioFixture.copyResource("scenario_2", tempDir)
-        assertTrue(SeedBootstrap(scenarioCode = "scenario_2", scenarioDir = tempDir.toString(),
+        assertTrue(SeedBootstrap(scenarioCode = "scenario_990002", artifactsRoot = Path.of("../.."),
             worldId = opensamguk.common.world.WorldId(1)).ensureSeeded(jdbc))
         assertTrue(
             !SeedBootstrap(

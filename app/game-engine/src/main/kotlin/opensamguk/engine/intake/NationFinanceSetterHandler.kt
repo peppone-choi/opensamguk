@@ -13,7 +13,7 @@ import opensamguk.logic.actions.intake.NationFinanceSetters
 /**
  * 내무부 (nation-finance) 설정 핸들러 — the 7 `sammo/API/Nation/Set*.php` immediate actions.
  *
- * Mirrors [opensamguk.engine.betting.PlaceBetHandler]: a per-run plain class built against the live
+ * Mirrors the retired PlaceBet handler (#917): a per-run plain class built against the live
  * [InMemoryTurnWorld] + [ChangeRecorder] (NOT a Spring bean). The pure validation/permission/value
  * logic lives in `:logic` [NationFinanceSetters]; this handler resolves the acting general, runs the
  * resolver, applies the world mutation, and records the delta through the recorder (the SINGLE dirty

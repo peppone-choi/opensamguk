@@ -8,6 +8,13 @@ import opensamguk.logic.input.RecordKind
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.renown.RenownHooks
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
 /**
@@ -58,7 +65,7 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
      */
     fun onCountyCaptured(countyId: Int, previousNationId: Int, captorNationId: Int, capturerIds: Collection<Int>): List<Int> {
         if (previousNationId == captorNationId) {
-            log.warn("hwiha_renown_capture_skipped county={} reason=SAME_OWNER nation={}", countyId, captorNationId)
+            log.warn("campaign_renown_capture_skipped county={} reason=SAME_OWNER nation={}", countyId, captorNationId)
             return emptyList()
         }
         val holders = if (previousNationId == 0) emptyList() else RenownHooks.countyHolderIds(countyId,
@@ -73,13 +80,26 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
             "${JosaUtil.put(name, "을")} 점령했습니다.", refs)
         if (previousNationId != 0) Records.nation(world, previousNationId, RecordKind.COUNTY_LOST,
             "${JosaUtil.put(name, "을")} 잃었습니다.", refs)
+        world.recordEvent(
+            kind = EventKind.OWNER_CHANGED,
+            audience = AudienceTarget.Public,
+            eventKey = EventKey.derive(EventKind.OWNER_CHANGED.code,
+                world.worldId.value.toString(), state.currentYear.toString(),
+                state.currentMonth.toString(), state.currentPhase.toString(),
+                countyId.toString(), previousNationId.toString(), captorNationId.toString()),
+            refs = mapOf(
+                RefRole.CITY to EventRef.City(countyId),
+                RefRole.FROM_NATION to EventRef.Nation(previousNationId),
+                RefRole.TO_NATION to EventRef.Nation(captorNationId),
+            ),
+        )
         return updated
     }
 
     private fun applyAll(updates: List<RenownHooks.MetaUpdate>): List<Int> = updates.mapNotNull { update ->
         val source = update.entry.source
         if (source == null) {
-            log.warn("hwiha_renown_event_skipped general={} reason=MISSING_SOURCE", update.generalId)
+            log.warn("campaign_renown_event_skipped general={} reason=MISSING_SOURCE", update.generalId)
             return@mapNotNull null
         }
         if (!apply(update.generalId, update.meta)) return@mapNotNull null
@@ -90,12 +110,12 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
     private fun apply(generalId: Int, meta: Map<String, Any?>): Boolean {
         val before = world.getGeneralById(generalId)
         if (before == null) {
-            log.warn("hwiha_renown_event_skipped general={} reason=MISSING_GENERAL", generalId)
+            log.warn("campaign_renown_event_skipped general={} reason=MISSING_GENERAL", generalId)
             return false
         }
         val after = before.copy(meta = meta)
         if (world.applyGeneralDirtyFree(after) == null) {
-            log.warn("hwiha_renown_event_skipped general={} reason=APPLY_REJECTED", generalId)
+            log.warn("campaign_renown_event_skipped general={} reason=APPLY_REJECTED", generalId)
             return false
         }
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
@@ -110,9 +130,19 @@ class RenownEventRecorder(private val world: InMemoryTurnWorld, private val reco
             generalId: Int,
             source: RenownEventSource,
             stamp: String = currentStamp(world),
-        ) = Records.general(world, generalId, RecordKind.RENOWN_EVENT,
-            "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
-            linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
+        ) {
+            world.recordEvent(
+                kind = EventKind.RENOWN_EVENT,
+                audience = AudienceTarget.Self(generalId),
+                eventKey = EventKey.derive(EventKind.RENOWN_EVENT.code,
+                    world.worldId.value.toString(), stamp, generalId.toString(), source.kind.name),
+                refs = mapOf(RefRole.ACTOR to EventRef.General(generalId)),
+                facts = mapOf(FactRole.SOURCE to EventFact.RenownSource(source)),
+            )
+            Records.general(world, generalId, RecordKind.RENOWN_EVENT,
+                "월단평 사건 「${source.kind.label}」(${source.label})이 기록되었습니다. 다음 월단평에 반영됩니다.",
+                linkedMapOf("kind" to source.kind.key, "source" to source.name, "stamp" to stamp))
+        }
 
         internal fun currentStamp(world: InMemoryTurnWorld): String =
             world.getState().let { RenownEvents.stampOf(it.currentYear, it.currentMonth) }

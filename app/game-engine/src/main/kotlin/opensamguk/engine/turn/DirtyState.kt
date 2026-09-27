@@ -3,6 +3,7 @@ package opensamguk.engine.turn
 import opensamguk.infra.persistence.KvWrite
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.record.GameEvent
 import java.time.Instant
 
 /**
@@ -220,8 +221,8 @@ data class DirtyState(
     val createdBattlePlans: List<BattlePlan> = emptyList(),
     val deletedBattlePlans: List<Int> = emptyList(),
     /** HWIHA 포위(V61) — step-8j(8i 뒤), CREATE → UPDATE. 행은 지우지 않는다. */
-    val hwihaSieges: List<HwihaSiege> = emptyList(),
-    val createdHwihaSieges: List<HwihaSiege> = emptyList(),
+    val sieges: List<Siege> = emptyList(),
+    val createdSieges: List<Siege> = emptyList(),
     val kvDirty: Map<KvKey, Any?> = emptyMap(),
     /**
      * [diplomacyUpdateDirty]: per-command diplomacy-row UPDATE patches keyed `(from, to)` (T0.4).
@@ -262,4 +263,6 @@ data class DirtyState(
     val inheritanceResultInserts: List<InheritanceResultRow> = emptyList(),
     /** [statisticInserts]: the `statistic` INSERT intents (W1 checkStatistic). INSERT-only. */
     val statisticInserts: List<StatisticInsert> = emptyList(),
+    /** Canonical, typed events drained with the same turn flush as world state. */
+    val gameEvents: List<GameEvent> = emptyList(),
 )

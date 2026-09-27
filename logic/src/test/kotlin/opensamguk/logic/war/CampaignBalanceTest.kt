@@ -10,7 +10,7 @@ class CampaignBalanceTest {
     private val root: JsonObject by lazy {
         var at: Path? = Path.of("").toAbsolutePath()
         while (at != null && !Files.isDirectory(at.resolve("data/curated"))) at = at.parent
-        val file = requireNotNull(at).resolve("data/curated/han/hwiha-s3-provisional-v1.json")
+        val file = requireNotNull(at).resolve("data/curated/han/campaign-balance-v1.json")
         Json.parseToJsonElement(Files.readString(file)).jsonObject
     }
     private fun long(section: String, key: String) = root.getValue(section).jsonObject.getValue(key).jsonPrimitive.long

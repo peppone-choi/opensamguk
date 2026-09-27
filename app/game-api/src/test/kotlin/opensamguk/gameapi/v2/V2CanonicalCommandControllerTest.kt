@@ -3,10 +3,10 @@ package opensamguk.gameapi.v2
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.logic.v2.command.V2CommandAvailability
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2GarrisonRecruitArgs
-import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.command.CommandAvailability
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.GarrisonRecruitArgs
+import opensamguk.logic.command.CityTransportArgs
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
@@ -25,13 +25,13 @@ class V2CanonicalCommandControllerTest {
         `when`(resolver.resolveGeneralId(11)).thenReturn(7)
     }
 
-    private val recruitAvailable = V2CommandAvailability.Available(
-        V2CommandRegistry.garrisonRecruitSchema,
-        V2GarrisonRecruitArgs(cityId = 4, amount = 100),
+    private val recruitAvailable = CommandAvailability.Available(
+        CommandSchemaCatalog.garrisonRecruitSchema,
+        GarrisonRecruitArgs(cityId = 4, amount = 100),
     )
-    private val transportAvailable = V2CommandAvailability.Available(
-        V2CommandRegistry.cityTransportSchema,
-        V2CityTransportArgs(1, 9, 100, 0, 0, null),
+    private val transportAvailable = CommandAvailability.Available(
+        CommandSchemaCatalog.cityTransportSchema,
+        CityTransportArgs(1, 9, 100, 0, 0, null),
     )
 
     @Test
@@ -67,7 +67,7 @@ class V2CanonicalCommandControllerTest {
     @Test
     fun `accepted intake acknowledgement is distinct from terminal result`() {
         `when`(contextual.precheck(7, recruitAvailable)).thenReturn(recruitAvailable)
-        `when`(reserve.reserveV2(7, V2CommandRegistry.garrisonRecruitSchema, recruitAvailable.args, 11))
+        `when`(reserve.reserveV2(7, CommandSchemaCatalog.garrisonRecruitSchema, recruitAvailable.args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-7", 0))
 
         val response = controller.submit(
@@ -113,8 +113,8 @@ class V2CanonicalCommandControllerTest {
         val args = "{\"fromCityId\":4,\"toCityId\":5,\"gold\":1}"
         `when`(reserve.reserveForOwner(7, "v2CityTransport", 0, args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-transport", 0))
-        val available = V2CommandAvailability.Available(
-            V2CommandRegistry.cityTransportSchema, V2CityTransportArgs(4, 5, 1, 0, 0, null),
+        val available = CommandAvailability.Available(
+            CommandSchemaCatalog.cityTransportSchema, CityTransportArgs(4, 5, 1, 0, 0, null),
         )
         `when`(contextual.precheck(7, available)).thenReturn(available)
 
@@ -131,7 +131,7 @@ class V2CanonicalCommandControllerTest {
     @Test
     fun `canonical transport without route revision reaches typed reservation`() {
         `when`(contextual.precheck(7, transportAvailable)).thenReturn(transportAvailable)
-        `when`(reserve.reserveV2(7, V2CommandRegistry.cityTransportSchema, transportAvailable.args, 11))
+        `when`(reserve.reserveV2(7, CommandSchemaCatalog.cityTransportSchema, transportAvailable.args, 11))
             .thenReturn(CommandReserveService.ReserveResult("req-canonical-transport", 0))
 
         val response = controller.submit(
@@ -165,7 +165,7 @@ class V2CanonicalCommandControllerTest {
     @Test
     fun `contextual deny is returned unchanged and not reserved`() {
         `when`(contextual.precheck(7, recruitAvailable)).thenReturn(
-            V2CommandAvailability.Blocked("CITY_GOLD_INSUFFICIENT", "도시의 금이 부족합니다."),
+            CommandAvailability.Blocked("CITY_GOLD_INSUFFICIENT", "도시의 금이 부족합니다."),
         )
 
         val response = controller.submit(

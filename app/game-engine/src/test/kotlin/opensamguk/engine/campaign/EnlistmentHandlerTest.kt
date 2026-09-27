@@ -17,7 +17,7 @@ class EnlistmentHandlerTest {
         stats = GeneralStats(70, 70, 70, politics = 70, charm = 70),
         experience = 0, dedication = 0, officerLevel = if (nation > 0) 12 else 0,
         npcState = 2, userId = null, gold = 100, rice = 200, crew = 0, turnTime = Instant.EPOCH,
-        meta = mapOf("hwihaLord" to (nation > 0), PersonPolicyState.META_KEY to
+        meta = mapOf("lord" to (nation > 0), PersonPolicyState.META_KEY to
             PersonPolicyState(30, true, "synthetic-test", "v1", id).toMetaValue()),
     )
     private fun world(profile: String = "HWIHA", reverse: Boolean = false): InMemoryTurnWorld {

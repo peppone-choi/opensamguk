@@ -15,7 +15,7 @@ class BattlefieldGeometry private constructor(
     cells: List<Cell>,
 ) {
     data class Position(val col: Int, val row: Int)
-    data class Cell(val position: Position, val source: HanProvinceCell, val terrain: String)
+    data class Cell(val position: Position, val source: ProvinceCell, val terrain: String)
 
     val cells: List<Cell> = Collections.unmodifiableList(ArrayList(cells))
     private val byPosition = this.cells.associateBy { it.position }
@@ -35,7 +35,7 @@ class BattlefieldGeometry private constructor(
     }
 
     /** Physical shared-border candidates only; this does not validate a strategic route. */
-    fun borderFacing(index: HanProvinceCellIndex, approachProvinceId: String): List<Cell> {
+    fun borderFacing(index: ProvinceCellIndex, approachProvinceId: String): List<Cell> {
         require(index.topologyRevision == topologyRevision && index.topologyHash == topologyHash &&
             index.tilesContentHash == tilesContentHash) { "Battlefield source pins differ" }
         require(approachProvinceId != provinceId) { "Approach must be a different province" }
@@ -51,7 +51,7 @@ class BattlefieldGeometry private constructor(
         const val RULE_VERSION = 1
 
         /** Keep every owned source cell, including water and disconnected components. */
-        fun extract(index: HanProvinceCellIndex, provinceId: String): BattlefieldGeometry {
+        fun extract(index: ProvinceCellIndex, provinceId: String): BattlefieldGeometry {
             val source = index.cellsOf(provinceId)
             require(source.isNotEmpty()) { "Province has no source cells" }
             val col = source.minOf { it.col }

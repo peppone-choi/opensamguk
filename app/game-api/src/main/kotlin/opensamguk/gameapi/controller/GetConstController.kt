@@ -156,7 +156,6 @@ class GetConstController(
         "phasesPerMonth" to GameConst.phasesPerMonth,
         "turnsPerYear" to GameConst.turnsPerYear,
         "openingLimitTurns" to GameConst.openingLimitTurns,
-        "minGoldRequiredWhenBetting" to GameConst.minGoldRequiredWhenBetting,
         "maxResourceActionAmount" to GameConst.maxResourceActionAmount,
         "resourceActionAmountGuide" to GameConst.resourceActionAmountGuide,
         // 장수 생성/빙의 스탯 캡(d_setting) — PageJoin 폼·진입(server-basic-info) defaultStatTotal 노출.

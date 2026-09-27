@@ -183,7 +183,7 @@ export default function SelectCityField({ commandKey, commandName, value, onChan
             {data && (
                 <MapViewer
                     mapData={data}
-                    hwihaLayers="fog"
+                    mapLayers="fog"
                     currentCityId={currentCityId}
                     generalId={frontInfo?.general.generalId}
                     selectedCityId={value}

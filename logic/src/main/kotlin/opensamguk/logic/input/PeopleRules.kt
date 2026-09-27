@@ -114,7 +114,7 @@ object PeopleRules {
                 val target = request.targetGeneralId?.let(state::person) ?: return reject(PeopleFailure.TARGET_UNAVAILABLE)
                 if (target.userOwned || target.npcState != 2) return reject(PeopleFailure.TARGET_NOT_CAPTIVE)
                 if (target.node != node) return reject(PeopleFailure.TARGET_UNAVAILABLE)
-                val marker = target.meta["hwihaCaptive"] as? Map<*, *>
+                val marker = target.meta["captive"] as? Map<*, *>
                 if (marker?.get("captorGeneralId") != actor.id ||
                     state.cards.any { it.generalId == target.id && it.masterId == actor.id } ||
                     state.cards.count { it.generalId == target.id } > 1)

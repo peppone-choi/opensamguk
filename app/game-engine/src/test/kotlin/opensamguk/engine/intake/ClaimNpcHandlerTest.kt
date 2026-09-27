@@ -20,7 +20,7 @@ import kotlin.test.assertIs
 class ClaimNpcHandlerTest {
     @Test fun `possession preserves reduced renown instead of reseeding initial capacity`() {
         val policy = opensamguk.logic.input.PersonPolicyState(29, false, "synthetic-claim-fixture", "v1", 10)
-        val meta = mapOf("hwihaLord" to false, "hwihaPersonPolicy" to policy.toMetaValue())
+        val meta = mapOf("lord" to false, "personPolicy" to policy.toMetaValue())
         val positions = opensamguk.logic.world.GeneralPositionSnapshot("fixture", "a".repeat(64), setOf("p"), emptySet())
             .withState(opensamguk.logic.world.GeneralPositionState("fixture", "a".repeat(64), 10,
                 opensamguk.logic.world.StrategicNodeRef.LandProvince("p"), 1))

@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentHashMap
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.logic.input.CountyGeography
 import opensamguk.logic.input.CountyPlace
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.logic.world.WorldMapVariant
 
 /**
  * 부팅이 고른 판의 고정 번들에서 縣治 城 → 郡(런타임 지도 `meta.junCh`/`meta.jun`)·관할(`han-tiles provinceRecords[provinceId]
@@ -13,9 +13,9 @@ import opensamguk.logic.world.HanWorldVariant
 object CountyGeographyJson {
     const val RUNTIME_MAP = "infra/src/main/resources/map/han-world-v3.json"
     const val TILES = "data/map/han-tiles.json"
-    private val cache = ConcurrentHashMap<HanWorldVariant, CountyGeography>()
+    private val cache = ConcurrentHashMap<WorldMapVariant, CountyGeography>()
 
-    fun load(artifacts: ResolvedHanWorldArtifacts): CountyGeography = cache.computeIfAbsent(artifacts.variant) {
+    fun load(artifacts: ResolvedWorldArtifacts): CountyGeography = cache.computeIfAbsent(artifacts.variant) {
         parse(artifacts.artifactBytes(RUNTIME_MAP), artifacts.artifactBytes(TILES), artifacts.projection.administrativeCountyIds)
     }
 

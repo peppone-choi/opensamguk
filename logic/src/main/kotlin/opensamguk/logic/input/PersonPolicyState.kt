@@ -20,14 +20,14 @@ data class PersonPolicyState(
     )
 
     companion object {
-        const val META_KEY = "hwihaPersonPolicy"
+        const val META_KEY = "personPolicy"
         private val fields = setOf("renownCapacity", "acceptsEnlistment", "statSourceId", "statSourceRevision", "officerId")
 
         /** Absence is unavailable, never an implicit initial capacity or acceptance. */
         fun read(meta: Map<String, Any?>): PersonPolicyState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: errorValue()
-            require(value.keys == fields) { "hwihaPersonPolicy fields must match the contract" }
+            require(value.keys == fields) { "personPolicy fields must match the contract" }
             return PersonPolicyState(
                 value["renownCapacity"] as? Int ?: errorValue(),
                 value["acceptsEnlistment"] as? Boolean ?: errorValue(),
@@ -37,6 +37,6 @@ data class PersonPolicyState(
             )
         }
 
-        private fun errorValue(): Nothing = throw IllegalArgumentException("invalid hwihaPersonPolicy metadata")
+        private fun errorValue(): Nothing = throw IllegalArgumentException("invalid personPolicy metadata")
     }
 }

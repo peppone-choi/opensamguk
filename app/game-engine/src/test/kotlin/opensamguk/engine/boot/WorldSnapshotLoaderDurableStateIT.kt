@@ -56,7 +56,7 @@ class WorldSnapshotLoaderDurableStateIT {
             ) VALUES (
                 1, 'durable_lock', 200, 1, 1800, 'PRE_OPEN',
                 '{"startTime":"obsolete"}'::jsonb,
-                '{"turnterm":30,"startTime":"obsolete"}'::jsonb,
+                '{"turnterm":30,"startTime":"obsolete","worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb,
                 TIMESTAMPTZ '0200-01-01 00:00:00+00'
             )
             """.trimIndent(),

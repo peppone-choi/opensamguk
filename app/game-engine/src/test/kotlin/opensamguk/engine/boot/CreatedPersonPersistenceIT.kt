@@ -71,7 +71,7 @@ class CreatedPersonPersistenceIT {
 
         // Fixture transition models a prior rejection and released NPC; possession must preserve it.
         val reduced = PersonPolicyState.read(reloaded.meta)!!.copy(renownCapacity = 29)
-        jdbc.update("UPDATE general SET user_id=NULL,npc_state=2,meta=jsonb_set(meta,'{hwihaPersonPolicy,renownCapacity}','29') WHERE world_id=81 AND id=?", created.id)
+        jdbc.update("UPDATE general SET user_id=NULL,npc_state=2,meta=jsonb_set(meta,'{personPolicy,renownCapacity}','29') WHERE world_id=81 AND id=?", created.id)
         val claimWorld = InMemoryTurnWorld(fixture.load(81))
         val claimRecorder = ChangeRecorder()
         val claim = opensamguk.engine.intake.ClaimNpcHandler(claimWorld, claimRecorder).handle(

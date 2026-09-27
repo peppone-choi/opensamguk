@@ -34,7 +34,7 @@ class EncounterCombatProfiles private constructor(
     )
 
     companion object {
-        const val META_KEY = "hwihaEncounterCombatProfiles"
+        const val META_KEY = "encounterCombatProfiles"
 
         fun capture(forces: EncounterForces, rules: UnitProfiles): EncounterCombatProfiles {
             val profiles = mutableListOf<UnitProfile>()

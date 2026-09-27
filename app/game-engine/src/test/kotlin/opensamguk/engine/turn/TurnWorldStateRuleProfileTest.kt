@@ -7,31 +7,20 @@ import kotlin.test.assertFailsWith
 import opensamguk.logic.input.RuleProfile
 
 class TurnWorldStateRuleProfileTest {
-    private fun state(config: Map<String, Any?>) =
-        TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60, lastTurnTime = Instant.EPOCH, config = config)
+    private fun state(config: Map<String, Any?>, meta: Map<String, Any?> = emptyMap()) =
+        TurnWorldState(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 60,
+            lastTurnTime = Instant.EPOCH, config = config, meta = meta)
 
-    @Test
-    fun `worlds seeded before the field exist are SAMMO`() {
+    @Test fun `current world uses the temporary input profile`() {
+        assertEquals(RuleProfile.HWIHA,
+            state(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")).ruleProfile)
+    }
+
+    @Test fun `direct in-memory fixtures retain their profile projection`() {
         assertEquals(RuleProfile.SAMMO, state(emptyMap()).ruleProfile)
-    }
-
-    @Test
-    fun `hwiha worlds read the seeded value`() {
         assertEquals(RuleProfile.HWIHA, state(mapOf("ruleProfile" to "HWIHA")).ruleProfile)
-    }
-
-    @Test
-    fun `unknown text fails instead of quietly becoming SAMMO`() {
-        assertFailsWith<IllegalArgumentException> { state(mapOf("ruleProfile" to "hwiha")).ruleProfile }
-    }
-
-    @Test
-    fun `non string config values fail instead of quietly becoming SAMMO`() {
-        for (value in listOf(1, true, listOf("HWIHA"), mapOf("name" to "HWIHA"))) {
-            assertFailsWith<IllegalArgumentException>("invalid ruleProfile: $value") {
-                state(mapOf("ruleProfile" to value)).ruleProfile
-            }
+        assertFailsWith<IllegalArgumentException> {
+            state(mapOf("worldFormat" to "SAMMO")).ruleProfile
         }
     }
-
 }

@@ -36,7 +36,7 @@ class BattlePlayback(
         DataOutputStream(bytes).use { out ->
             fun text(value:String) { val b=value.toByteArray(Charsets.UTF_8);out.writeInt(b.size);out.write(b) }
             fun position(value:BattlefieldGeometry.Position) { out.writeInt(value.col);out.writeInt(value.row) }
-            text("hwihaBattlePlayback:v1");text(encounter.encounterId);text(forces.snapshotId);text(relations.snapshotId);text(plans.snapshotId)
+            text("battlePlayback:v1");text(encounter.encounterId);text(forces.snapshotId);text(relations.snapshotId);text(plans.snapshotId)
             out.writeInt(combat.rulesVersion);text(combat.rulesContentHash)
             out.writeInt(combat.profiles.size)
             combat.profiles.forEach { p -> listOf(p.crewTypeId,p.movementSteps,p.attackRange,p.attackPower,p.defencePower,p.initiative).forEach(out::writeInt) }

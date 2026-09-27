@@ -661,7 +661,7 @@ class AiTurnAdapter(
                 destNationId = (rawArgs["destNationID"] as? Number)?.toInt(),
                 env = stagedEnv,
                 mode = ConstraintMode.FULL,
-            hanWorldVariant = world.getState().hanWorldVariant,
+            worldMapVariant = world.getState().worldMapVariant,
             )
             candidateVerdict(actionCode, rawArgs, ctx, view) { code -> resolveDef(code) }
         }
@@ -781,7 +781,7 @@ class AiTurnAdapter(
         world.getNationById(nationId)?.tech?.toInt() ?: 0
 
     private fun activeCityConst(state: TurnWorldState = world.getState()): CityConstVariant {
-        return ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        return ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
     }
 
     private fun commandEnvMap(

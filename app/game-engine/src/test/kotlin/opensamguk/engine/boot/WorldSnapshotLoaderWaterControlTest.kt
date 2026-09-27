@@ -25,7 +25,7 @@ class WorldSnapshotLoaderWaterControlTest {
         positions: List<Map<String, Any?>> = emptyList()): Pair<opensamguk.engine.turn.WorldSnapshot, List<Pair<String, List<Any?>>>> {
         val queries = mutableListOf<Pair<String, List<Any?>>>()
         val world = mapOf("id" to 8, "current_year" to 200, "current_month" to 1, "current_phase" to 1,
-            "tick_seconds" to 60, "status" to "OPEN", "config" to "{\"mapName\":\"$map\"}", "meta" to "{}")
+            "tick_seconds" to 60, "status" to "OPEN", "config" to "{\"mapName\":\"$map\",\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\"}", "meta" to "{}")
         val jdbc = Mockito.mock(JdbcTemplate::class.java) { invocation ->
             when (invocation.method.name) {
                 "query" -> {
@@ -48,7 +48,8 @@ class WorldSnapshotLoaderWaterControlTest {
         }
         val snapshot = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(8)),
             WorldId(8), snapshotValidator = {}, waterTopologyLoader = { topology },
-            hanVariantSelector = { _, _ -> HanWorldVariant.V3_835 }).buildSnapshot()
+            mapVariantSelector = { _, _ -> WorldMapVariant.V3_835 },
+            administrativeCountyIdsLoader = { emptySet() }).buildSnapshot()
         return snapshot to queries
     }
 

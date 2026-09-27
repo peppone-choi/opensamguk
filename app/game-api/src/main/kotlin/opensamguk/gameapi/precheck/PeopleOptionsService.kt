@@ -39,7 +39,7 @@ class PeopleOptionsService(private val reader: DomesticReader,
                 projection.people.filter { it.id in known && it.node == node }
             }
             else -> projection.people.filter { it.node == node &&
-                (it.meta["hwihaCaptive"] as? Map<*, *>)?.get("captorGeneralId") == actorId }
+                (it.meta["captive"] as? Map<*, *>)?.get("captorGeneralId") == actorId }
         }.sortedBy { it.id }
         val targetOptions = candidates.map { target ->
             when (val check = PeopleRules.assess(PeopleRequest(actorId, inputId, target.id), projection)) {

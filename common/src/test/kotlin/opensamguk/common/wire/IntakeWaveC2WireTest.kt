@@ -39,10 +39,6 @@ class IntakeWaveC2WireTest {
             cmdRoundTrip(TurnDaemonCommand.SetBlockWar(generalId = 10, value = true)),
         )
         assertEquals(
-            TurnDaemonCommand.TournamentEnroll(generalId = 10, value = 1),
-            cmdRoundTrip(TurnDaemonCommand.TournamentEnroll(generalId = 10, value = 1)),
-        )
-        assertEquals(
             TurnDaemonCommand.InheritResetTurnTime(generalId = 10),
             cmdRoundTrip(TurnDaemonCommand.InheritResetTurnTime(generalId = 10)),
         )
@@ -63,8 +59,6 @@ class IntakeWaveC2WireTest {
         assertIs<NationSettingResult>(rfail)
         assertEquals(fail, rfail)
 
-        val enroll = NationSettingResult(type = "tournamentEnroll", ok = true, generalId = 10, nationId = 1)
-        assertIs<NationSettingResult>(resRoundTrip(enroll))
     }
 
     @Test

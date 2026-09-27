@@ -73,8 +73,8 @@ class LogEntryReadRepositoryIT {
     @BeforeEach
     fun seed() {
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) " +
-                "VALUES (1, 'test', 1, 1, 60)",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds, config) " +
+                "VALUES (1, 'test', 1, 1, 60, jsonb_build_object('worldFormat','GENERAL_RETAINER_CAMPAIGN'))",
         )
         insertLog(1, "SYSTEM", "HISTORY", 189, 1, "h1")
         insertLog(2, "SYSTEM", "SUMMARY", 189, 1, "s1")

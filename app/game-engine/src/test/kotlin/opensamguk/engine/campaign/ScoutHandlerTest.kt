@@ -13,7 +13,7 @@ import kotlin.test.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.turn.*
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.*
@@ -21,7 +21,7 @@ import opensamguk.logic.world.*
 
 /** `action.scout` on the pinned 1133 map, in memory (the DB round trip is ScoutPersistenceIT). */
 class ScoutHandlerTest {
-    private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
+    private val bundle by lazy { WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133) }
     private val index by lazy { bundle.commanderyIndex }
     private val context by lazy { VisionContext(bundle.projection.topology, bundle.landMarchMetrics, index) }
 

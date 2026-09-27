@@ -3,15 +3,15 @@
 import Link from 'next/link';
 import { Chip } from '@opensamguk/ui';
 import {
-    HWIHA_INPUT_TABS,
-    HWIHA_HUB_SLUG,
-    hwihaHref,
-    hwihaTabLanding,
+    CAMPAIGN_INPUT_TABS,
+    CAMPAIGN_HUB_SLUG,
+    campaignHref,
+    campaignTabLanding,
     type InputTab,
-} from '../lib/hwiha-screens';
-import { Blocked, hwihaBlockReason } from './campaign/GameStates';
-import { useHwihaRenown } from '../lib/hwiha-reads';
-import { useHwihaSession } from '../lib/hwiha-session';
+} from '../lib/campaign-screens';
+import { Blocked, campaignBlockReason } from './campaign/GameStates';
+import { useRenown } from '../lib/campaign-reads';
+import { useGameSession } from '../lib/campaign-session';
 import styles from './GameShell.module.css';
 
 export interface GameShellProps {
@@ -36,25 +36,25 @@ export interface GameShellProps {
  * 그 탭에 아직 화면이 없으면 숨기지 않고 점선으로 남긴다(표시 원칙).
  */
 export default function GameShell({ title, tab, showBack = true, requiresHwiha = true, children }: GameShellProps) {
-    const session = useHwihaSession();
+    const session = useGameSession();
     const { frontInfo, serverId } = session;
-    const renown = useHwihaRenown();
+    const renown = useRenown();
     const generalName = frontInfo?.general.name ?? null;
     const allegiance = frontInfo?.nation?.name ?? '재야';
-    const blocked = hwihaBlockReason(session);
+    const blocked = campaignBlockReason(session);
     return (
         <>
             <div className={styles.head}>
                 <div className={styles.left}>
                     {showBack ? (
-                        <Link className="os-button os-button--ghost os-button--sm" href={hwihaHref(HWIHA_HUB_SLUG, serverId)}>
+                        <Link className="os-button os-button--ghost os-button--sm" href={campaignHref(CAMPAIGN_HUB_SLUG, serverId)}>
                             ← 작전실
                         </Link>
                     ) : null}
                     <span className={styles.title}>{title}</span>
                     <nav className={styles.tabs} aria-label="입력 여섯 가지">
-                        {HWIHA_INPUT_TABS.map((t) => {
-                            const landing = hwihaTabLanding(t);
+                        {CAMPAIGN_INPUT_TABS.map((t) => {
+                            const landing = campaignTabLanding(t);
                             const on = t === tab;
                             if (!landing) {
                                 return (
@@ -71,7 +71,7 @@ export default function GameShell({ title, tab, showBack = true, requiresHwiha =
                                 <Link
                                     key={t}
                                     className={`${styles.tab}${on ? ` ${styles.tabOn}` : ''}`}
-                                    href={hwihaHref(landing.slug, serverId)}
+                                    href={campaignHref(landing.slug, serverId)}
                                     aria-current={on ? 'page' : undefined}
                                 >
                                     {t}
@@ -82,7 +82,7 @@ export default function GameShell({ title, tab, showBack = true, requiresHwiha =
                 </div>
                 <div className={styles.right}>
                     {generalName ? <Chip>{`${generalName} · ${allegiance}`}</Chip> : null}
-                    {session.isHwihaWorld ? (
+                    {session.isCampaignWorld ? (
                         <Chip tone="bronze">{`명망 ${renown ?? '—'}`}</Chip>
                     ) : null}
                     {session.gameDate ? <Chip>{session.gameDate}</Chip> : null}
