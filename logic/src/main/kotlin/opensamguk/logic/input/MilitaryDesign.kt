@@ -37,7 +37,7 @@ data class MilitaryDesign(
     }
 
     companion object {
-        const val RESOURCE = "hwiha/hwiha-military-v1.json"
+        const val RESOURCE = "campaign/military-v1.json"
         const val CONFIRMED = "CONFIRMED"
         val CANON by lazy { parse(checkNotNull(MilitaryDesign::class.java.classLoader.getResource(RESOURCE)).readText()) }
 
@@ -47,7 +47,7 @@ data class MilitaryDesign(
                 "volunteerHouseholdPermille", "grainPerTroop", "moneyPerVolunteer", "trainingGain", "moraleGain",
                 "demobilizeTroopPermille", "experience", "dedication", "npcPolicy"))
             require(root.getValue("schemaVersion").jsonPrimitive.int == 1 &&
-                root.getValue("ledgerId").jsonPrimitive.content == "hwiha-military-v1")
+                root.getValue("ledgerId").jsonPrimitive.content == "military-v1")
             require(root.getValue("note").jsonPrimitive.content.isNotBlank())
             fun count(name: String) = root.getValue(name).jsonPrimitive.int
             fun resource(name: String) = root.getValue(name).jsonPrimitive.long

@@ -85,5 +85,5 @@ class PersonalHandler(
         return TurnOutcome.Applied(inputId, effects)
     }
 
-    companion object { private const val LAST_TURN_KEY = "hwihaPersonalLastTurn" }
+    companion object { private const val LAST_TURN_KEY = "personalLastTurn" }
 }

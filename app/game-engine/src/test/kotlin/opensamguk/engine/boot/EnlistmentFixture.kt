@@ -4,19 +4,19 @@ import java.nio.file.Path
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
-import opensamguk.logic.world.HanWorldVariant
+import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.logic.world.WorldMapVariant
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /** Synthetic people on the actual archived map; shared only by database boundary tests. */
 internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flush: JdbcFlushExecutor) {
-    private val artifacts = HanWorldArtifactsResolver(Path.of("../.."))
-    private val bundle by lazy { artifacts.artifacts(HanWorldVariant.V3_1133) }
+    private val artifacts = WorldArtifactsResolver(Path.of("../.."))
+    private val bundle by lazy { artifacts.artifacts(WorldMapVariant.V3_1133) }
     fun seed(id: Int) {
         jdbc.update("""INSERT INTO world_state(id,scenario_code,current_year,current_month,tick_seconds,config,meta)
             VALUES (?, 'enlistment-storage-test',200,1,3600,
-            '{"mapName":"han-world-v3","ruleProfile":"HWIHA"}'::jsonb,
+            '{"mapName":"han-world-v3","worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb,
             '{"lastTurnTime":"0200-01-01T00:00:00Z"}'::jsonb)""", id)
         jdbc.batchUpdate("""INSERT INTO city(world_id,id,name,level,nation_id,pop,pop_max,agri,agri_max,comm,comm_max,
             secu,secu_max,def,def_max,wall,wall_max,region) VALUES (?,?,?,1,0,100,1000,10,1000,10,1000,10,1000,10,1000,10,1000,1)""",
@@ -27,7 +27,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
             jdbc.update("""INSERT INTO general(world_id,id,name,nation_id,city_id,npc_state,officer_level,gold,rice,crew,leadership,strength,intel,politics,charm,turn_time,last_turn,meta)
                 VALUES (?,?,?,?,?,?,?,1000,2000,300,70,70,70,70,70,'0200-01-01T00:00:00Z','{"command":"휴식"}'::jsonb,?::jsonb)""",
                 id, generalId, "G$generalId", nation, binding.key, npc, if (generalId == 10) 12 else 0,
-                """{"hwihaLord":${generalId != 2},"keep":"unchanged","hwihaPersonPolicy":{
+                """{"lord":${generalId != 2},"keep":"unchanged","personPolicy":{
                     "renownCapacity":30,"acceptsEnlistment":true,"statSourceId":"synthetic-storage-fixture",
                     "statSourceRevision":"fixture-v1","officerId":$generalId}}""")
             val topology = bundle.projection.topology
@@ -41,7 +41,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
     }
     fun load(id: Int) = WorldSnapshotLoader(jdbc, SeedBootstrap(seedEnabled = false, worldId = WorldId(id)), WorldId(id),
         waterTopologyLoader = { artifacts.artifacts(it).projection.topology },
-        hanVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
+        mapVariantSelector = { ids, pins -> artifacts.resolve(ids, pins).variant },
         administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()

@@ -1,18 +1,18 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ frontInfo: vi.fn(), hwihaVisibility: vi.fn(), hwihaCorps: vi.fn(),
-  hwihaWorks: vi.fn(), hwihaSieges: vi.fn(), hwihaScoutOptions: vi.fn() }));
+const mocks = vi.hoisted(() => ({ frontInfo: vi.fn(), campaignVisibility: vi.fn(), campaignCorps: vi.fn(),
+  campaignWorks: vi.fn(), campaignSieges: vi.fn(), campaignScoutOptions: vi.fn() }));
 vi.mock('@/lib/api', () => ({ api: mocks }));
 import { useMapLayers } from '@/lib/use-map-layers';
 
 beforeEach(() => {
   mocks.frontInfo.mockReset().mockResolvedValue({ general: { generalId: 7 } });
-  mocks.hwihaVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [{ no: 1, tier: 'INTEL', ageTurns: 2 }] });
-  mocks.hwihaCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [{ corpsId: 'seen', commanderyNo: 1 }] });
-  mocks.hwihaWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
-  mocks.hwihaSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
-  mocks.hwihaScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
+  mocks.campaignVisibility.mockReset().mockResolvedValue({ status: 'READY', commanderies: [{ no: 1, tier: 'INTEL', ageTurns: 2 }] });
+  mocks.campaignCorps.mockReset().mockResolvedValue({ status: 'READY', corps: [{ corpsId: 'seen', commanderyNo: 1 }] });
+  mocks.campaignWorks.mockReset().mockResolvedValue({ status: 'READY', counties: [] });
+  mocks.campaignSieges.mockReset().mockResolvedValue({ status: 'READY', sieges: [] });
+  mocks.campaignScoutOptions.mockReset().mockResolvedValue({ status: 'READY', options: [] });
 });
 
 describe('map layer refresh', () => {
@@ -22,7 +22,7 @@ describe('map layer refresh', () => {
     await waitFor(() => expect(result.current.visibility?.get(1)).toBe('INTEL'));
     await waitFor(() => expect(result.current.corps).toHaveLength(1));
     let finish!: (value: unknown) => void;
-    mocks.hwihaVisibility.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
+    mocks.campaignVisibility.mockImplementationOnce(() => new Promise((resolve) => { finish = resolve; }));
     rerender({ refreshKey: 1 });
     await waitFor(() => expect(finish).toBeTypeOf('function'));
     expect(result.current.visibility?.get(1)).toBe('INTEL');
@@ -37,7 +37,7 @@ describe('map layer refresh', () => {
     const { result, rerender } = renderHook(({ refreshKey }) => useMapLayers('full', refreshKey, 7),
       { initialProps: { refreshKey: 0 } });
     await waitFor(() => expect(result.current.intelAge.get(1)).toBe(2));
-    mocks.hwihaVisibility.mockRejectedValueOnce(new Error('offline'));
+    mocks.campaignVisibility.mockRejectedValueOnce(new Error('offline'));
     rerender({ refreshKey: 1 });
     await waitFor(() => expect(result.current.visibilityError).toBe(true));
     expect(result.current.visibility).toBeNull();

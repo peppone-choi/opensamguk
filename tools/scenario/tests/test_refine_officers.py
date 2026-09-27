@@ -12,11 +12,14 @@ REPOSITORY_ROOT = SCENARIO_DIR.parents[1]
 sys.path.insert(0, str(SCENARIO_DIR))
 
 from refine_officers import (
+    _fingerprint_sha256,
+    _stable_key,
     join_korean_names,
     load_mapping,
     load_name_join_overrides,
     load_xlsx_rows,
     refine,
+    refine_from_registry,
     validate_location_maps,
     validate_location_remaps,
 )
@@ -74,6 +77,9 @@ def numbered_xlsx_row(number: str, name: str, offset: int = 0) -> dict:
 def write_xlsx(path: Path, rows: list[dict]) -> None:
     headers = ["무장", "생년", "몰년", "통솔", "무력", "지력", "정치", "매력"]
     fields = ["name_korean", *FINGERPRINT_FIELDS]
+    if any("appearanceYear" in row for row in rows):
+        headers.append("등장년")
+        fields.append("appearanceYear")
 
     def sheet_row(number: int, values: list[object]) -> str:
         cells = []
@@ -93,11 +99,43 @@ def write_xlsx(path: Path, rows: list[dict]) -> None:
 
 
 class RefineOfficersTest(unittest.TestCase):
+    def test_registry_names_replace_missing_workbook_only_for_frozen_full_roster(self) -> None:
+        raw = [raw_record(f"name-{index}", f"page-{index}", index) for index in range(1000)]
+        registry = [{"id": 10001 + index, "stable_key": _stable_key(record),
+                     "fingerprint_sha256": _fingerprint_sha256(record),
+                     "name_kanji": record["name_kanji"],
+                     "name_reading": record["name_reading"]}
+                    for index, record in enumerate(raw)]
+        names = {10001 + index: f"한글-{index}" for index in range(1000)}
+        refined, emitted_registry, report = refine_from_registry(raw, registry, names)
+        self.assertEqual(len(refined), 1000)
+        self.assertEqual(refined[0]["name_korean"], "한글-0")
+        self.assertEqual(emitted_registry, registry)
+        self.assertEqual(report["registry_join_count"], 1000)
+        altered = [dict(record) for record in raw]
+        altered[0]["birth"] += 1
+        with self.assertRaisesRegex(ValueError, "fingerprint drift"):
+            refine_from_registry(altered, registry, names)
+
     def test_load_xlsx_rows_reads_the_complete_fingerprint(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             path = Path(temporary_directory) / "officers.xlsx"
             write_xlsx(path, [xlsx_row("한글장수")])
             self.assertEqual(load_xlsx_rows(path), [xlsx_row("한글장수")])
+
+    def test_appearance_year_joins_and_detects_source_drift(self) -> None:
+        source = raw_record("甲", "page-a")
+        candidate = xlsx_row("한글장수")
+        candidate["appearanceYear"] = 192
+        joined, _ = join_korean_names([source], [candidate])
+        self.assertEqual(joined[0]["appearanceYear"], 192)
+        source["appearanceYear"] = 191
+        with self.assertRaisesRegex(ValueError, "appearance year mismatch"):
+            join_korean_names([source], [candidate])
+        with tempfile.TemporaryDirectory() as temporary_directory:
+            path = Path(temporary_directory) / "officers.xlsx"
+            write_xlsx(path, [candidate])
+            self.assertEqual(load_xlsx_rows(path), [candidate])
 
     def test_join_only_accepts_one_exact_fingerprint_candidate(self) -> None:
         unique = raw_record("甲", "page-a", 0)

@@ -40,7 +40,7 @@ class CommandQueueTest {
     }
 
     @Test fun `hwiha missing and corrupt world profiles block all six queue mutations`() {
-        for (config in listOf(null, mapOf("ruleProfile" to "HWIHA"), mapOf("ruleProfile" to null),
+        for (config in listOf(null, mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN"), mapOf("ruleProfile" to null),
             mapOf("ruleProfile" to 1), mapOf("ruleProfile" to "unknown"))) {
             val repo = mock(ReservedTurnRepository::class.java)
             val inbox = RecordingInbox()

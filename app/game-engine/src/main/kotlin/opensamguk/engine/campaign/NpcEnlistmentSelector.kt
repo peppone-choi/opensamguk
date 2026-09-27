@@ -7,8 +7,11 @@ import opensamguk.logic.input.*
 
 /** Chooses an input only; the existing handler owns RNG, transition and recording. */
 internal object NpcEnlistmentSelector {
+    private val catalog by lazy { InputCatalog.load() }
+
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
-        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists) return reserved
+        if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
+            !AiPolicyRegistry.selectable(catalog, EnlistmentHandler.INPUT_ID, AiSelectorKey.ENLIST)) return reserved
         val actor = world.getGeneralById(actorId) ?: return reserved
         // Other NPC variants have separate lifecycle semantics and are not opted in.
         if (actor.npcState != NpcType.NPC_LITE || actor.nationId != 0 ||

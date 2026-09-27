@@ -83,38 +83,45 @@ describe('game middleware server path selection', () => {
   });
 
   it.each(['war-room', 'retinue', 'hand', 'posts', 'orders', 'supply', 'siege', 'court', 'yuedan'])(
-    'serves the primary HWIHA %s route under the server ID',
+    'serves the campaign %s route under the server ID',
     (slug) => {
-      middleware(makeRequest(`/game/pep/hwiha/${slug}`));
+      middleware(makeRequest(`/game/pep/${slug}`));
       expect(nextServerMocks.rewrite).toHaveBeenCalledTimes(1);
       const target = nextServerMocks.rewrite.mock.calls[0][0] as URL;
-      expect(target.pathname).toBe(`/game/hwiha/${slug}`);
+      expect(target.pathname).toBe(`/game/${slug}`);
       expect(target.searchParams.get('server')).toBe('pep');
       expect(nextServerMocks.redirect).not.toHaveBeenCalled();
     },
   );
 
-  it('redirects old HWIHA paths to the server path with the query intact', () => {
+  it('redirects old campaign paths to the domain route with the query intact', () => {
     middleware(makeRequest('/game/hwiha/retinue?person=17&server=pep'));
 
     expect(nextServerMocks.redirect).toHaveBeenCalledTimes(1);
     const [target, status] = nextServerMocks.redirect.mock.calls[0] as [URL, number];
     expect(status).toBe(308);
-    expect(target.pathname).toBe('/game/pep/hwiha/retinue');
+    expect(target.pathname).toBe('/game/pep/retinue');
     expect(target.searchParams.get('person')).toBe('17');
     expect(target.searchParams.has('server')).toBe(false);
     expect(redirectResponse.cookies.set).toHaveBeenCalledWith('sam_server', 'pep', expect.any(Object));
 
     nextServerMocks.redirect.mockClear();
     middleware(makeRequest('/game/hwiha'));
-    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/hwiha/war-room');
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/war-room');
+
+    nextServerMocks.redirect.mockClear();
+    middleware(makeRequest('/game/pep/hwiha/siege?county=7'));
+    expect(nextServerMocks.redirect).toHaveBeenCalledTimes(1);
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/siege');
+    expect((nextServerMocks.redirect.mock.calls[0][1] as number)).toBe(308);
   });
 
-  it('keeps the HWIHA page available when no public server ID is configured', () => {
+  it('redirects the old serverless path to the domain route when no server ID is configured', () => {
     delete process.env.SERVER_ID;
     middleware(makeRequest('/game/hwiha/war-room'));
-    expect(nextServerMocks.next).toHaveBeenCalledTimes(1);
-    expect(nextServerMocks.redirect).not.toHaveBeenCalled();
+    expect(nextServerMocks.redirect).toHaveBeenCalledTimes(1);
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/war-room');
+    expect((nextServerMocks.redirect.mock.calls[0][1] as number)).toBe(308);
   });
 
   it('preserves ordinary child routes and mismatched alphanumeric path segments', () => {

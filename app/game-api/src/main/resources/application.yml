@@ -29,7 +29,7 @@ jwt:
   legacy-accept-until: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:}
 opensamguk:
   world-id: ${OPENSAMGUK_WORLD_ID}
-  profile: ${OPENSAMGUK_PROFILE:che:scenario_2}
+  profile: ${OPENSAMGUK_PROFILE:pep:scenario_990002}
   read-barrier:
     max-wait-ms: ${OPENSAMGUK_READ_BARRIER_MAX_WAIT_MS:400}
     poll-interval-ms: ${OPENSAMGUK_READ_BARRIER_POLL_INTERVAL_MS:25}

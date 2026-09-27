@@ -10,7 +10,7 @@ import opensamguk.logic.domain.General
 import opensamguk.logic.domain.GetNationColors
 import opensamguk.logic.domain.LastTurn
 import opensamguk.logic.world.isFoundableCityLevel
-import opensamguk.logic.world.isHanMapName
+import opensamguk.logic.world.isHistoricalMapName
 import opensamguk.logic.world.foundAssaultCrewCost
 
 /**
@@ -461,7 +461,7 @@ object GenFoundFamily {
     }
 
     private fun prepareHanFounding(ctx: GeneralAiContext): ChosenCommand? {
-        if (!isHanMapName(ctx.cityConst.mapName)) return null
+        if (!isHistoricalMapName(ctx.cityConst.mapName)) return null
         val city = ctx.selfCity ?: return null
         if (ctx.instance.nation.level != 0 || ctx.instance.nation.nation == 0 ||
             ctx.selfOfficerLevel != 12 || city.nationId != 0 || !isFoundableCityLevel(city.level) ||

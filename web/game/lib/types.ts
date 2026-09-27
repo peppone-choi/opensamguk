@@ -3,8 +3,6 @@
 //  - Front-info / global-menu / const / identity shapes mirror game-api F2 Wave 1 DTOs (IdentityDto.kt).
 // Field names are STABLE (Jackson default camelCase). Keep in sync with the Kotlin DTOs.
 
-import type { VoteInfo } from '../types/game';
-
 // ── auth (gateway-api UserResponse) ──────────────────────────────────────────
 export interface User {
   id: number;
@@ -40,44 +38,14 @@ export interface FrontGlobalInfo {
   serverId?: string;
   extendedGeneral?: boolean;
   isFiction?: boolean;
-  npcMode?: number; // 0 불가능 / 1 가능 / 2 선택 생성
-  npcModeText?: string;
-  npcSummaryText?: string;
-  autorunUser?: {
-    limit_minutes: number;
-    options: Record<string, number>;
-  } | null;
-  otherSettingText?: string;
   onlineUserCnt?: number;
   apiLimit?: number;
   createdUserCnt?: number;
   generalCntLimit?: number;
   blockGeneralCreate?: number;
-  createdNPCCnt?: number;
-  auctionCount?: number;
   onlineNations?: string | null;
-  // [P1-002] legacy GetFrontInfo.php:183-189,231 — lastVote는 VoteInfo 전체
-  // ({id,title,multipleOptions,opener,startDate,endDate,options}, 만료 시 null).
-  // 새 설문 토스트 판정엔 id가 필수(lastVoteID > 저장 커서 && > aux.myLastVote — PageFront.vue:472-474).
-  // TODO(P1-002, W0-2): BE FrontInfoController가 lastVoteID/lastVote/aux.myLastVote 배출 시 소비.
-  lastVote?: VoteInfo | null;
-  /** legacy `lastVoteID` — 최신 설문 id(없으면 0). */
-  lastVoteID?: number;
   lastExecuted?: string | null;
   serverLocked?: boolean;
-  isTournamentActive?: boolean;
-  tournamentTermMinutes?: number;
-  tournamentType?: string;
-  tournamentState?: string;
-  // ── GlobalMenu flags (spec §4) — drive condHighlight/condShow + control-bar highlight ──
-  nationBetting?: boolean;
-  vote?: boolean;
-  isTournamentApplicationOpen?: boolean;
-  isBettingActive?: boolean;
-  /** legacy `develcost`(개발비) — 설문 보상금 산정 원천(voteReward = develcost*5). 부재 시 미정. */
-  develCost?: number;
-  /** legacy v_vote.php:30 `voteReward` = develcost*5 — 설문 제목 "(N금 + 추첨 유니크템)" 안내. */
-  voteReward?: number;
 }
 
 export interface FrontGeneralInfo {
@@ -265,9 +233,6 @@ export interface FrontInfoResponse {
   nation: FrontNationInfo | null;
   city: FrontCityInfo | null;
   recentRecord: FrontRecentRecord;
-  // [P1-002] legacy GetFrontInfo 봉투의 aux 블록(defs/API/Global.ts:224-226) — 내가 마지막으로
-  // 참여한 설문 id. 새 설문 토스트 중복 억제에 사용. TODO(P1-002, W0-2): BE 배출 후 소비.
-  aux?: { myLastVote?: number } | null;
 }
 
 // ── city detail (game-api CityDetailController.CityDetailResponse) ────────────
@@ -391,26 +356,6 @@ export interface WorldMapResponse {
   myNation: number | null;
 }
 
-// ── global-menu (game-api GlobalMenuResponse) ────────────────────────────────
-export interface MenuNode {
-  type: 'item' | 'split' | 'multi' | 'line';
-  name?: string;
-  url?: string;
-  newTab?: boolean;
-  funcCall?: string;
-  icon?: string;
-  condHighlightVar?: string;
-  condShowVar?: string;
-  main?: MenuNode;
-  subMenu?: MenuNode[];
-}
-
-export interface GlobalMenuResponse {
-  result: boolean;
-  version: number;
-  menu: MenuNode[];
-}
-
 // ── const (game-api GameConstResponse) ───────────────────────────────────────
 export interface GameConstResponse {
   result: boolean;
@@ -484,43 +429,6 @@ export interface IActionConstItem {
   value: string;
   name?: string | null;
   info?: string[] | null;
-}
-
-// ── possession (game-api Claimable/Claim) ────────────────────────────────────
-export interface ClaimableGeneral {
-  generalId: number;
-  name: string;
-  nationId: number;
-  nationName: string | null;
-  leadership: number;
-  strength: number;
-  intel: number;
-  politics?: number; // 정치/매력 (RTK14 divergence)
-  charm?: number;
-  picture: string | null;
-  imageServer: number;
-  // legacy select_npc.ts NPCPick 카드 필드 — 한글 표시명(서버 해석). officerLevel은 카드에 없어 제거됨.
-  special: string | null; // 내정특기명 (SpecialityHelper.domesticName)
-  special2: string | null; // 전투특기명 (SpecialityHelper.warName)
-  personal: string | null; // 성격명 (GameConst.personalityNameOf)
-  keepCnt?: number;
-}
-
-export interface ClaimableResponse {
-  result: boolean;
-  hasGeneral: boolean;
-  candidates: ClaimableGeneral[];
-  validUntil?: string;
-  pickMoreFrom?: string;
-  pickMoreSeconds?: number;
-  reason?: string | null;
-}
-
-export interface ClaimResponse {
-  result: boolean;
-  generalId: number | null;
-  reason: string | null;
-  requestId?: string | null;
 }
 
 // ── my-* identity reads (game-api IdentityDto.kt) ────────────────────────────
@@ -751,11 +659,6 @@ export type {
   GeneralListItem,
   GeneralListResponse,
   PublicGeneral,
-  TournamentTypeText,
-  TournamentEntrant,
-  TournamentBracketMatch,
-  TournamentRankRow,
-  TournamentResponse,
   DiplomacyLetterParty,
   DiplomacyLetter,
   DiplomacyLetterNation,
@@ -767,19 +670,6 @@ export type {
   NationFinanceIncome,
   NationFinanceWarSettingCnt,
   NationFinanceResponse,
-  ChiefReservedTurn,
-  ChiefPost,
-  ChiefCommand,
-  ChiefCommandCategory,
-  ChiefReservedResponse,
-  NpcPolicyLastSetter,
-  NpcPolicyResponse,
-  InheritSpecialWar,
-  InheritUnique,
-  InheritActionCost,
-  InheritPointLog,
-  InheritCurrentStat,
-  InheritPointResponse,
   BoardPerson,
   BoardKind,
   BoardVoteOption,
@@ -789,11 +679,6 @@ export type {
   BoardComment,
   BoardArticle,
   BoardResponse,
-  VoteInfo,
-  VoteListResponse,
-  VoteComment,
-  VoteResultRow,
-  VoteDetailResponse,
   TroopInfo,
   TroopMember,
   TroopListResponse,

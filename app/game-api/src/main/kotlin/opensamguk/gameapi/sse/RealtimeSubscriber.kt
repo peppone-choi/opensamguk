@@ -15,7 +15,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer
 /**
  * Subscribes to the per-profile realtime pub/sub channel and relays each message into the SSE
  * fan-out. The channel name is built from the `:common` [gameEventChannel] using the configured
- * profile (default `che:scenario_2`).
+ * profile (default `pep:scenario_990002`).
  *
  * The container is created with `autoStartup = false` and started from a background daemon thread
  * that retries until Redis is reachable. This keeps a transiently-unavailable Redis at boot from
@@ -25,7 +25,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer
  */
 @Configuration
 class RealtimeSubscriber(
-    @Value("\${opensamguk.profile:che:scenario_2}") private val profile: String,
+    @Value("\${opensamguk.profile:pep:scenario_990002}") private val profile: String,
     processWorld: GameApiProcessWorld,
 ) {
     private val worldId = processWorld.worldId

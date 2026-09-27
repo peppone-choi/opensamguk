@@ -17,7 +17,7 @@ data class PersonalEncounterDesign(
     val restFatigueRecovery: Int, val restMoraleRecovery: Int,
 ) {
     companion object {
-        const val RESOURCE = "hwiha/hwiha-personal-encounter-v1.json"
+        const val RESOURCE = "campaign/personal-encounter-v1.json"
         val CANON: PersonalEncounterDesign by lazy {
             parse(checkNotNull(PersonalEncounterDesign::class.java.classLoader.getResource(RESOURCE)).readText())
         }

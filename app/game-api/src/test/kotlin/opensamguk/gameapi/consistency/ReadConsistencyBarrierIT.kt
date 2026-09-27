@@ -56,7 +56,8 @@ class ReadConsistencyBarrierIT {
             INSERT INTO world_state (
                 id, scenario_code, current_year, current_month, tick_seconds, world_version, writer_epoch, config, meta
             ) VALUES (
-                1, 'scenario_2', 200, 3, 3600, 7, 10, '{"startYear":190}'::jsonb, '{}'::jsonb
+                1, 'scenario_2', 200, 3, 3600, 7, 10,
+                '{"startYear":190,"worldFormat":"GENERAL_RETAINER_CAMPAIGN"}'::jsonb, '{}'::jsonb
             )
             """.trimIndent(),
         )

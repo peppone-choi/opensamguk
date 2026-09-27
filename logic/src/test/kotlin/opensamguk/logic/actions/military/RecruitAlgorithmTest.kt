@@ -41,8 +41,8 @@ class RecruitAlgorithmTest {
         for (mode in listOf(ConstraintMode.PRECHECK, ConstraintMode.FULL)) {
             val base = constraintCtx(emptyMap(), mode = mode, cityId = 834,
                 env = mapOf("mapName" to "han-world-v3", "unitSet" to "han", "ownCities" to mapOf(834 to 5)))
-            val older = base.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_832)
-            val newer = base.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_835)
+            val older = base.copy(worldMapVariant = opensamguk.logic.world.WorldMapVariant.V3_832)
+            val newer = base.copy(worldMapVariant = opensamguk.logic.world.WorldMapVariant.V3_835)
             assertTrue(jingbyeong().crewTypeAvailability(older, state, 2144) is ConstraintResult.Deny)
             assertEquals(ConstraintResult.Allow, jingbyeong().crewTypeAvailability(newer, state, 2144))
             assertTrue(jingbyeong().crewTypeAvailability(base, state, 2144) is ConstraintResult.Deny)
@@ -55,7 +55,7 @@ class RecruitAlgorithmTest {
         val legacy = constraintCtx(emptyMap(), cityId = 3, env = mapOf("mapName" to "che"))
         assertEquals(ConstraintResult.Allow, jingbyeong().crewTypeAvailability(legacy, state, 1104))
         assertTrue(jingbyeong().crewTypeAvailability(
-            legacy.copy(hanWorldVariant = opensamguk.logic.world.HanWorldVariant.V3_835), state, 1104,
+            legacy.copy(worldMapVariant = opensamguk.logic.world.WorldMapVariant.V3_835), state, 1104,
         ) is ConstraintResult.Deny)
     }
 

@@ -28,14 +28,14 @@ interface VisionSourceReader {
 /**
  * Default reader over general/city meta.
  *
- * - General meta `hwihaScoutPosts`: `{"version":1,"posts":[{"retainerId":int,"provinceId":str,"status":"ACTIVE"|…}]}`.
+ * - General meta `scoutPosts`: `{"version":1,"posts":[{"retainerId":int,"provinceId":str,"status":"ACTIVE"|…}]}`.
  *   Only `ACTIVE` (the card physically arrived) gives vision; any other status is ignored, not invalid.
- * - City meta `hwihaCountyWorks`: `{"version":1,"works":[{"kind":str,"status":str}]}`. Vision reads only
+ * - City meta `countyWorks`: `{"version":1,"works":[{"kind":str,"status":str}]}`. Vision reads only
  *   `kind == WATCHTOWER_BEACON && status == COMPLETE`; other kinds/statuses belong to the works stream.
  */
 object MetaVisionSourceReader : VisionSourceReader {
-    const val SCOUT_POSTS_KEY = "hwihaScoutPosts"
-    const val COUNTY_WORKS_KEY = "hwihaCountyWorks"
+    const val SCOUT_POSTS_KEY = "scoutPosts"
+    const val COUNTY_WORKS_KEY = "countyWorks"
     const val ACTIVE = "ACTIVE"
     const val WATCHTOWER_BEACON = "WATCHTOWER_BEACON"
     const val COMPLETE = "COMPLETE"

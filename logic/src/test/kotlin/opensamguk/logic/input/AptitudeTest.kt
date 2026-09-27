@@ -12,8 +12,8 @@ class AptitudeTest {
     @Test
     fun `classpath 가중값은 저장소 정본 파일과 같다`() {
         val root = generateSequence(Path.of("").toAbsolutePath()) { it.parent }
-            .first { Files.isRegularFile(it.resolve("data/curated/han/hwiha-aptitude-weights-v1.json")) }
-        val file = Aptitude.parse(Files.readString(root.resolve("data/curated/han/hwiha-aptitude-weights-v1.json")))
+            .first { Files.isRegularFile(it.resolve("data/curated/han/aptitude-weights-v1.json")) }
+        val file = Aptitude.parse(Files.readString(root.resolve("data/curated/han/aptitude-weights-v1.json")))
         assertEquals(file.denominator, Aptitude.CANON.denominator)
         assertEquals(file.axes, Aptitude.CANON.axes)
     }
@@ -49,13 +49,13 @@ class AptitudeTest {
 
     @Test
     fun `축 합이 분모와 다르거나 모르는 능력치면 거부한다`() {
-        val bad = """{"schemaVersion":1,"ledgerId":"hwiha-aptitude-weights-v1","denominator":10,"axes":{
+        val bad = """{"schemaVersion":1,"ledgerId":"aptitude-weights-v1","denominator":10,"axes":{
             "command":{"leadership":6,"strength":3},"administration":{"politics":7,"intelligence":3},
             "strategy":{"intelligence":8,"politics":2},"envoy":{"charm":6,"politics":4}}}"""
         assertFailsWith<IllegalArgumentException> { Aptitude.parse(bad) }
         val unknown = bad.replace("\"strength\":3", "\"luck\":4")
         assertFailsWith<IllegalArgumentException> { Aptitude.parse(unknown) }
-        val missingAxis = """{"schemaVersion":1,"ledgerId":"hwiha-aptitude-weights-v1","denominator":10,"axes":{
+        val missingAxis = """{"schemaVersion":1,"ledgerId":"aptitude-weights-v1","denominator":10,"axes":{
             "command":{"leadership":6,"strength":4}}}"""
         assertFailsWith<IllegalArgumentException> { Aptitude.parse(missingAxis) }
     }

@@ -312,7 +312,6 @@ object GameConst {
     const val maxAvailableWarSettingCnt = 10
     const val incAvailableWarSettingCnt = 2
 
-    const val minGoldRequiredWhenBetting = 500
 
     const val minMonthToAllowInheritItem = 4
     const val inheritBornSpecialPoint = 6000

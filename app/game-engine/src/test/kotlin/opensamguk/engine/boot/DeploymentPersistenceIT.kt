@@ -6,7 +6,7 @@ import opensamguk.engine.flush.DatabaseHooks
 import opensamguk.engine.campaign.*
 import opensamguk.engine.turn.*
 import opensamguk.infra.persistence.JdbcFlushExecutor
-import opensamguk.infra.seed.HanWorldArtifactsResolver
+import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
 import org.flywaydb.core.Flyway
@@ -29,7 +29,7 @@ class DeploymentPersistenceIT {
     private lateinit var jdbc: JdbcTemplate
     private lateinit var flush: JdbcFlushExecutor
     private lateinit var fixture: EnlistmentFixture
-    private val bundle by lazy { HanWorldArtifactsResolver(Path.of("../..")).artifacts(HanWorldVariant.V3_1133) }
+    private val bundle by lazy { WorldArtifactsResolver(Path.of("../..")).artifacts(WorldMapVariant.V3_1133) }
     private fun executor(world: InMemoryTurnWorld, recorder: ChangeRecorder) =
         DeploymentExecutor(world,recorder,bundle.projection.topology,bundle.landMarchMetrics)
 
@@ -85,7 +85,7 @@ class DeploymentPersistenceIT {
         save(world,recorder);world=cold(id)
         val state=executor(world,ChangeRecorder()).projection()!!
         assertIs<DeploymentAssessment.Eligible>(DeploymentRules.assessActive(result.corps,state))
-        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{hwihaDeployment}','null'::jsonb) WHERE world_id=? AND id=1",id)
+        jdbc.update("UPDATE general SET meta=jsonb_set(meta,'{deployment}','null'::jsonb) WHERE world_id=? AND id=1",id)
         world=cold(id)
         assertNull(executor(world,ChangeRecorder()).projection())
         assertEquals(DeploymentFailure.STATE_UNAVAILABLE,assertIs<DeploymentExecution.Rejected>(

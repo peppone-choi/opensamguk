@@ -29,7 +29,7 @@ class DomesticViewsTest {
     private val now = Phase(200, 1, 2)
     private fun person(id: Int, human: Boolean, lord: Boolean = false, level: Int = 0, node: String = "p$id",
         meta: Map<String, Any?> = emptyMap()) = DomesticPerson(id, "G$id", 1, human, if (human) 0 else 2, level,
-        50, 50, 50, 50, 50, node, false, meta + ("hwihaLord" to lord))
+        50, 50, 50, 50, 50, node, false, meta + ("lord" to lord))
     private val warehouse = mapOf(CountyWarehouse.META_KEY to
         CountyWarehouse(7, 3, Resources(money = 100_000)).toMetaValue())
     private fun snapshot(people: List<DomesticPerson>, counties: List<DomesticCounty> = listOf(

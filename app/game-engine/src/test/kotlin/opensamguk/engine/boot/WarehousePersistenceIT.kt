@@ -86,7 +86,7 @@ class WarehousePersistenceIT {
         assertEquals(APPLIED, WarehouseSettlement(world, recorder).settle(county, 1, 1, cost))
         save(world, recorder)
         assertEquals(2L, stored(cold(701))!!.revision)
-        jdbc.update("UPDATE city SET meta=jsonb_set(meta,'{hwihaCountyWarehouse,stock,grain}','-1') WHERE world_id=701 AND id=?", county)
+        jdbc.update("UPDATE city SET meta=jsonb_set(meta,'{countyWarehouse,stock,grain}','-1') WHERE world_id=701 AND id=?", county)
         world = cold(701)
         assertEquals(INVALID_STATE, WarehouseSettlement(world, ChangeRecorder()).settle(county, 1, 2, cost))
     }

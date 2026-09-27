@@ -28,7 +28,7 @@ data class CorpsMarchState(
     )
 
     companion object {
-        const val META_KEY = "hwihaCorpsMarch"
+        const val META_KEY = "corpsMarch"
         private val fields = setOf("version", "deploymentOrderId", "ownerGeneralId", "commanderGeneralId", "checkpoint")
 
         fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): CorpsMarchState? {

@@ -1,7 +1,7 @@
 package opensamguk.gameapi.precheck
 
 import opensamguk.gameapi.read.*
-import opensamguk.infra.seed.ResolvedHanWorldArtifacts
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.logic.input.*
 import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.world.*
@@ -74,7 +74,7 @@ class TravelPrecheckService(
     }
 
     private data class Ready(val actor: GeneralReadEntity, val selected: ActiveWorldArtifactSnapshot,
-        val bundle: ResolvedHanWorldArtifacts, val positions: GeneralPositionSnapshot,
+        val bundle: ResolvedWorldArtifacts, val positions: GeneralPositionSnapshot,
         val deployedCommanders: Set<Int>) {
         private val namesByProvince by lazy {
             buildMap {

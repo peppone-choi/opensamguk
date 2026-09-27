@@ -4,6 +4,11 @@ import opensamguk.engine.siege.RoadFortPassage
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.world.*
 
 /** Starts a durable personal order. The single movement stage owns all actual advancement. */
@@ -45,6 +50,17 @@ class DeployHandler(private val world: InMemoryTurnWorld, private val recorder: 
                 val after = before.copy(meta=before.meta+(CorpsOrder.META_KEY to order.toMetaValue()))
                 recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before),PerTurnOverlay.toLogicGeneral(after))
                 world.applyGeneralDirtyFree(after)
+                val cityId = world.cityOfLandNode(order.destination)
+                val eventRefs = mutableMapOf<RefRole, EventRef>(RefRole.ACTOR to EventRef.General(actorId))
+                if (cityId != null) eventRefs[RefRole.CITY] = EventRef.City(cityId)
+                world.recordEvent(
+                    kind = EventKind.DEPLOY_STARTED,
+                    audience = AudienceTarget.Self(actorId),
+                    eventKey = EventKey.derive("deploy.started", world.worldId.value.toString(), actorId.toString(),
+                        *order.orderId.toByteArray(Charsets.UTF_8).joinToString("") { "%02x".format(it.toInt() and 0xff) }
+                            .chunked(64).map { "id$it" }.toTypedArray()),
+                    refs = eventRefs,
+                )
                 Records.general(world, actorId, RecordKind.DEPLOY_STARTED, "부대를 거느리고 출병했습니다.",
                     linkedMapOf("orderId" to order.orderId, "destination" to order.destination.canonicalKey,
                         "bugokIds" to result.corps.bugokIds), nationId = after.nationId)

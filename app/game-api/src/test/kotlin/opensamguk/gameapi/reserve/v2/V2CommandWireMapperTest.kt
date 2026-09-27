@@ -8,8 +8,8 @@ import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.decodeCommandEnvelope
 import opensamguk.common.wire.encodeCommandPayload
 import opensamguk.gameapi.reserve.CommandWireMapper
-import opensamguk.logic.v2.command.V2CommandRegistry
-import opensamguk.logic.v2.command.V2CityTransportArgs
+import opensamguk.logic.command.CommandSchemaCatalog
+import opensamguk.logic.command.CityTransportArgs
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -26,14 +26,14 @@ class V2CommandWireMapperTest {
 
     @Test
     fun `every registered v2 wire command has exactly one canonical schema`() {
-        val schemaAliases = V2CommandRegistry.schemas.flatMap { it.legacyAliases }.toSet()
+        val schemaAliases = CommandSchemaCatalog.schemas.flatMap { it.legacyAliases }.toSet()
         val v2WireTypes = TurnDaemonCommand::class.sealedSubclasses.mapNotNull { type ->
             type.annotations.filterIsInstance<SerialName>().singleOrNull()?.value?.takeIf { it.startsWith("v2") }
         }.toSet()
 
         assertEquals(schemaAliases, CommandWireMapper.v2IntakeCodes)
         assertEquals(v2WireTypes, schemaAliases)
-        assertEquals(V2CommandRegistry.schemas.size, schemaAliases.size)
+        assertEquals(CommandSchemaCatalog.schemas.size, schemaAliases.size)
     }
 
     private fun roundTrip(command: TurnDaemonCommand): TurnDaemonCommand {
@@ -110,8 +110,8 @@ class V2CommandWireMapperTest {
     @Test
     fun `canonical mapper uses validated typed args without reparsing json`() {
         val command = CommandWireMapper.toV2Command(
-            schema = V2CommandRegistry.cityTransportSchema,
-            args = V2CityTransportArgs(5, 6, 1000, 500, 300, 9, "v3:abc", "path:123"),
+            schema = CommandSchemaCatalog.cityTransportSchema,
+            args = CityTransportArgs(5, 6, 1000, 500, 300, 9, "v3:abc", "path:123"),
             generalId = 42,
             requestId = "typed-1",
             expiresAt = "0200-01-01T01:00:00Z",

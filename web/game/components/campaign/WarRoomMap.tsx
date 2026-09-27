@@ -2,10 +2,10 @@
 
 import { useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
-import { commanderyOfCity } from '@/lib/hwiha-fog';
-import { HWIHA_MAP_CODE, HWIHA_PROVINCES_URL, useHwihaWorldMap } from '@/lib/hwiha-map';
+import { commanderyOfCity } from '@/lib/campaign-fog';
+import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps } from '@/lib/map-corps';
-import type { Corps, Sieges, Works } from '@/lib/hwiha-reads';
+import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
 
@@ -24,7 +24,7 @@ export interface WarRoomMapProps {
 
 export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onScout, scoutPending, scoutable,
     intelAge, corps, works, sieges }: WarRoomMapProps) {
-    const map = useHwihaWorldMap(refreshKey, works, sieges);
+    const map = useCampaignWorldMap(refreshKey, works, sieges);
     const [focusNo, setFocusNo] = useState<number | null>(null);
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
     const ready = map.kind === 'ready' ? map : null;
@@ -43,12 +43,12 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
         {map.kind === 'loading' ? <Empty>지도를 불러오는 중입니다.</Empty> : null}
         {map.kind === 'error' ? <Empty>{`지도를 불러오지 못했습니다 — ${map.message}`}</Empty> : null}
-        {map.kind === 'unsupported' ? <Empty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${HWIHA_MAP_CODE})가 아닙니다.`}</Empty> : null}
+        {map.kind === 'unsupported' ? <Empty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${CAMPAIGN_MAP_CODE})가 아닙니다.`}</Empty> : null}
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
-                <WorldMapCanvas key={focus.no} mapCode={HWIHA_MAP_CODE} tiles={ready.tiles}
+                <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
-                    provinceUrl={ready.provinceMap ? undefined : HWIHA_PROVINCES_URL}
+                    provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
                     sourceSize={ready.sourceSize} markerPositions={ready.markerPositions}
                     currentCityId={focusCityId ?? undefined} initialFocus="current-commandery"

@@ -1,0 +1,610 @@
+{
+  "schemaVersion": 1,
+  "worldVersion": "han-world-v3",
+  "reviewBasis": "190 pilot aliases reviewed against han-world-v3 map4 at main merge 04fa428a2; all 50 aliases resolve to distinct runtime city ids",
+  "mapRecheck": "Completed against #905 map4: 50 aliases resolve to 50 distinct city ids. Six former proxies use added commandery seats; the Koei Hangu pass uses the distinct curated pass node.",
+  "bindings": [
+    {
+      "alias": "강릉",
+      "physicalPlaceRef": "chgis:v6:cnty:43676",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/강릉/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/396",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 397
+    },
+    {
+      "alias": "강주",
+      "physicalPlaceRef": "chgis:v6:cnty:44662",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/강주/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/571",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 572
+    },
+    {
+      "alias": "강하",
+      "physicalPlaceRef": "chgis:v6:cnty:43503",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/강하/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/457",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 458
+    },
+    {
+      "alias": "건녕",
+      "physicalPlaceRef": "chgis:v6:cnty:45514",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/건녕/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/705",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 706
+    },
+    {
+      "alias": "건업",
+      "physicalPlaceRef": "chgis:v6:cnty:40523",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/건업/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/933",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 934
+    },
+    {
+      "alias": "계",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0088-001",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/계/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1419",
+        "data/curated/han/namu-source-records-v1.json#2f716f957c9cdecd7bfc5432d70b260004c0ee95458c1a8ab84f4ba9edf713a2:74"
+      ],
+      "bindingMode": "CURATED_GAP_COUNTY_SEAT",
+      "cityIdAtReview": 1593
+    },
+    {
+      "alias": "계양",
+      "physicalPlaceRef": "chgis:v6:cnty:41682",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/계양/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/438",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 439
+    },
+    {
+      "alias": "광릉",
+      "physicalPlaceRef": "chgis:v6:cnty:42687",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/광릉/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/311",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 312
+    },
+    {
+      "alias": "교지",
+      "physicalPlaceRef": "external:v1:X000",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/교지/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/735",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 736
+    },
+    {
+      "alias": "낙양",
+      "physicalPlaceRef": "chgis:v6:cnty:82828",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/낙양/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/45",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 46
+    },
+    {
+      "alias": "남피",
+      "physicalPlaceRef": "chgis:v6:cnty:87076",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/남피/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/160",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 161
+    },
+    {
+      "alias": "남해",
+      "physicalPlaceRef": "chgis:v6:cnty:42193",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/남해/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/736",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 737
+    },
+    {
+      "alias": "면죽",
+      "physicalPlaceRef": "chgis:v6:cnty:96137",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/면죽/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/584",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 585
+    },
+    {
+      "alias": "무릉",
+      "physicalPlaceRef": "chgis:v6:cnty:41906",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/무릉/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/447",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 448
+    },
+    {
+      "alias": "복양",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0023-001",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/복양/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1266",
+        "data/curated/han/namu-source-records-v1.json#107784c7757c73c16c9f847573f929383cb0bc5211ae2bbb66e71c7f1af1fa19:68"
+      ],
+      "bindingMode": "CURATED_GAP_COUNTY_SEAT",
+      "cityIdAtReview": 1440
+    },
+    {
+      "alias": "북평",
+      "physicalPlaceRef": "chgis:v6:cnty:87458",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/북평/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/714",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 715
+    },
+    {
+      "alias": "북해",
+      "physicalPlaceRef": "chgis:v6:cnty:85272",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/북해/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/346",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 347
+    },
+    {
+      "alias": "사수",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hulaoguan",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/사수/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1045",
+        "data/curated/han/strategic-passes-v1.json"
+      ],
+      "bindingMode": "ATTESTED_PASS_SITE",
+      "cityIdAtReview": 1046
+    },
+    {
+      "alias": "상용",
+      "physicalPlaceRef": "chgis:v6:cnty:45934",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/상용/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/593",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 594
+    },
+    {
+      "alias": "서량",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0072-001",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/서량/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1194",
+        "data/curated/han/namu-source-records-v1.json#5241113b8e208c57749418210fdd2e61be57247c3a7363282310cb2bd445a4e2:75"
+      ],
+      "bindingMode": "CURATED_GAP_COUNTY_SEAT",
+      "cityIdAtReview": 1368
+    },
+    {
+      "alias": "성도",
+      "physicalPlaceRef": "chgis:v6:cnty:44394",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/성도/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/612",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 613
+    },
+    {
+      "alias": "수춘",
+      "physicalPlaceRef": "chgis:v6:cnty:43153",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/수춘/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/542",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 543
+    },
+    {
+      "alias": "시상",
+      "physicalPlaceRef": "chgis:v6:cnty:41145",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/시상/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/561",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 562
+    },
+    {
+      "alias": "신야",
+      "physicalPlaceRef": "chgis:v6:cnty:82749",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/신야/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/418",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 419
+    },
+    {
+      "alias": "안정",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0070-001",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/안정/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1183",
+        "data/curated/han/namu-place-locations-v1.json#安定郡/臨涇"
+      ],
+      "bindingMode": "CURATED_GAP_COUNTY_SEAT",
+      "cityIdAtReview": 1357
+    },
+    {
+      "alias": "양양",
+      "physicalPlaceRef": "chgis:v6:cnty:45651",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/양양/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/471",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 472
+    },
+    {
+      "alias": "업",
+      "physicalPlaceRef": "chgis:v6:cnty:82196",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/업/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/222",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 223
+    },
+    {
+      "alias": "여강",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0050-001",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/여강/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1188",
+        "data/curated/han/namu-source-records-v1.json#89c8afe1d1e88a7a660a5dcf4cfe750060dd4eb4267cb413eac4be8145656a56:226"
+      ],
+      "bindingMode": "CURATED_GAP_COUNTY_SEAT",
+      "cityIdAtReview": 1362
+    },
+    {
+      "alias": "여남",
+      "physicalPlaceRef": "chgis:v6:cnty:83172",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/여남/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/84",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 85
+    },
+    {
+      "alias": "역경",
+      "physicalPlaceRef": "chgis:v6:cnty:87297",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/역경/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/992",
+        "data/curated/han/strategic-strongholds-v1.json#易京",
+        "data/curated/han/namu-source-records-v1.json#易城縣"
+      ],
+      "bindingMode": "ATTESTED_RENAME_NEAR_SITE",
+      "cityIdAtReview": 993
+    },
+    {
+      "alias": "영릉",
+      "physicalPlaceRef": "chgis:v6:cnty:41958",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/영릉/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/485",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 486
+    },
+    {
+      "alias": "영안",
+      "physicalPlaceRef": "chgis:v6:cnty:44482",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/영안/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/598",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 599
+    },
+    {
+      "alias": "오",
+      "physicalPlaceRef": "chgis:v6:cnty:40404",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/오/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/846",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 847
+    },
+    {
+      "alias": "완",
+      "physicalPlaceRef": "chgis:v6:cnty:82612",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/완/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/411",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 412
+    },
+    {
+      "alias": "운남",
+      "physicalPlaceRef": "chgis:v6:cnty:45372",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/운남/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/765",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 766
+    },
+    {
+      "alias": "자동",
+      "physicalPlaceRef": "chgis:v6:cnty:96107",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/자동/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/586",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 587
+    },
+    {
+      "alias": "장사",
+      "physicalPlaceRef": "chgis:v6:cnty:41716",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/장사/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/473",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 474
+    },
+    {
+      "alias": "장안",
+      "physicalPlaceRef": "chgis:v6:cnty:70623",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/장안/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/0",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 1
+    },
+    {
+      "alias": "진류",
+      "physicalPlaceRef": "chgis:v6:cnty:44324",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/진류/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/285",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 286
+    },
+    {
+      "alias": "진양",
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0079-001",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/진양/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1369",
+        "data/curated/han/namu-source-records-v1.json#538467d8b236e72159c2b7006ffd46eb4383e880bb9be59b3150d96069446594:108"
+      ],
+      "bindingMode": "CURATED_GAP_COUNTY_SEAT",
+      "cityIdAtReview": 1543
+    },
+    {
+      "alias": "천수",
+      "physicalPlaceRef": "chgis:v6:cnty:70040",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/천수/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/648",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 649
+    },
+    {
+      "alias": "패",
+      "physicalPlaceRef": "chgis:v6:cnty:42807",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/패/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/111",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 112
+    },
+    {
+      "alias": "평원",
+      "physicalPlaceRef": "chgis:v6:cnty:45100",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/평원/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/360",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 361
+    },
+    {
+      "alias": "하비",
+      "physicalPlaceRef": "chgis:v6:cnty:42821",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/하비/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/298",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 299
+    },
+    {
+      "alias": "한중",
+      "physicalPlaceRef": "chgis:v6:cnty:70983",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/한중/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/592",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 593
+    },
+    {
+      "alias": "함곡",
+      "physicalPlaceRef": "curated:strategic-site-v1:ss-hanguguan",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "data/curated/han/strategic-passes-v1.json#/passes/0/placementNote",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/1040"
+      ],
+      "bindingMode": "GAME_PASS_TO_CURATED_SITE",
+      "cityIdAtReview": 1041,
+      "mapVariantNote": "The distinct mapped pass is the Later Han relocated site; the older Qin pass near Hongnong is not a separate V3 city."
+    },
+    {
+      "alias": "허창",
+      "physicalPlaceRef": "chgis:v6:cnty:83011",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/허창/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/129",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 130
+    },
+    {
+      "alias": "호관",
+      "physicalPlaceRef": "chgis:v6:cnty:95318",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/호관/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/668",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 669
+    },
+    {
+      "alias": "홍농",
+      "physicalPlaceRef": "chgis:v6:cnty:83053",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/홍농/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/21",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 22
+    },
+    {
+      "alias": "회계",
+      "physicalPlaceRef": "chgis:v6:cnty:40758",
+      "reviewState": "APPROVED",
+      "sourceRefs": [
+        "tools/scenario/che_to_jun.json#/map/회계/basis",
+        "infra/src/main/resources/map/han-world-v3.json#/cities/535",
+        "data/curated/han/administrative-units.json"
+      ],
+      "bindingMode": "SOURCE_COUNTY_OR_ATTESTED_SITE",
+      "cityIdAtReview": 536
+    }
+  ],
+  "mapRevision": "04fa428a2"
+}

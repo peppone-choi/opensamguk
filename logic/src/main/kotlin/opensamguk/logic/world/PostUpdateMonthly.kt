@@ -333,15 +333,9 @@ fun postUpdateMonthlyDiplomacy(
 }
 
 // ===========================================================================================
-// POST3 (Q11-Q17) — the tail: checkWander / tournament / auction RNG order + SetNationFront last.
-// PHP frozen historical baseline (ADR-LITE-042; not current product authority) `func_gamerule.php:423-442` (+ `:445-467` checkWander).
-// ===========================================================================================
+// Monthly tail: active world settlement callbacks share one month-scoped RNG.
 
-/**
- * A monthlyRng consumer (the SAME `RandUtil` instance threaded Q4→Q11→Q15→Q16). Each Q-step that needs
- * RNG receives the live instance and draws its OWN deterministic count; the pure core only enforces the
- * ORDER + the gate conditions (the daemon supplies the faithful command/tournament/auction bodies).
- */
+/** An active monthly RNG consumer, called with the same RandUtil instance. */
 typealias RngConsumer = (RandUtil) -> Unit
 
 /**
@@ -358,38 +352,15 @@ data class PostUpdateMonthlyTailResult(
     val frontResults: List<PostFrontResult>,
 )
 
-/**
- * POST3 — Q11-Q17 tail. Enforces the EXACT monthlyRng consume order on a SINGLE instance and the gate
- * conditions, delegating each RNG-consuming step to an injected consumer (so the faithful command /
- * tournament / auction bodies — and their exact draw counts — live where they belong while the ORDER is
- * pinned here). PINNED per-call draw counts (consolidated OQ #1-residual blocker, PR-7):
- *
- *   Q11 checkWander($rng)        — runs ONLY if `year >= startYear+2`; draws inside the che_해산 command run
- *                                  per wanderer (routes through the P2 CommandRegistry + 9-source pipeline).
- *   Q12 updateGeneralNumber()    — no rng (recompute nation.gennum; daemon side-effect).
- *   Q13 refreshNationStaticInfo()— no rng. PHP `func.php:87-92` invalidates only a request-local static
- *                                  nation cache; the Kotlin daemon has no equivalent persistent cache here.
- *   Q14 checkEmperior()          — NO rng (천통 detection → isunited / UNITED target; verified takes no rng).
- *   Q15 triggerTournament($rng)  — at most ONE `nextBool(0.4)`; if it proceeds AND tnmt_pattern is empty, a
- *                                  5-element `shuffle`. (Default golden: tnmt_trig off → ZERO draws; the
- *                                  injected consumer reproduces the faithful count.)
- *   Q16 registerAuction($rng)    — EXACTLY two `nextBool(1/(cnt+5))` gates (buy-rice then sell-rice), each
- *                                  optionally followed by `nextRangeInt(1,5)` + `nextRangeInt(3,12)`.
- *   Q17 SetNationFront(nation)   — per level>0 nation in static-info order, runs LAST, NO rng (B3 body).
- *
- * **The monthlyRng is consumed in EXACT order Q4 (POST1) → Q11 → Q15 → Q16, a single instance** (`:322,425,
- * 432,434`). [isUnited] is the Q14 checkEmperior outcome the daemon supplies; it changes NO draw count.
- */
+/** Monthly tail: preserves active settlement callbacks in their existing order. */
 fun postUpdateMonthlyTail(
     year: Int,
     startYear: Int,
     rng: RandUtil,
     checkWander: RngConsumer,
     updateGeneralNumber: () -> Unit = {},
-    triggerTournament: RngConsumer,
     registerAuction: RngConsumer,
     setNationFront: () -> List<PostFrontResult>,
-    checkEmperior: () -> Unit = {},
     @Suppress("UNUSED_PARAMETER") isUnited: Boolean = false,
 ): PostUpdateMonthlyTailResult {
     val drawOrder = mutableListOf<String>()
@@ -404,14 +375,9 @@ fun postUpdateMonthlyTail(
 
     // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (Q13 is PHP request-local cache only).
     updateGeneralNumber()
-    // Q14 — checkEmperior (no rng; 천하통일 detection → isunited transition + 전토통일 log; ZERO draws).
-    checkEmperior()
+    // Q14 — 삼모 전 城 통일 판정(checkEmperior)은 #917 에서 은퇴했다. RNG 를 쓰지 않던 단계라 뒤 순서는 그대로다.
 
-    // Q15 — triggerTournament (THIRD consumer).
-    triggerTournament(rng)
-    drawOrder += "Q15"
-
-    // Q16 — registerAuction (FOURTH consumer).
+    // Q16 — registerAuction (next active RNG consumer).
     registerAuction(rng)
     drawOrder += "Q16"
 

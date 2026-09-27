@@ -52,7 +52,7 @@ class PrecheckStateViewFactory(
         val view: MemoryStateView,
         val env: Map<String, Any?>,
         val diplomacy: List<Diplomacy>,
-        val hanWorldVariant: opensamguk.logic.world.HanWorldVariant? = null,
+        val worldMapVariant: opensamguk.logic.world.WorldMapVariant? = null,
     )
 
     /** Load + assemble the precheck state for [generalId], or `null` when the general row is absent. */
@@ -111,7 +111,7 @@ class PrecheckStateViewFactory(
         val variant = if (env["mapName"] == "han-world-v3") {
             requireNotNull(requireNotNull(worldArtifacts) { "V3 precheck requires a complete-world artifact resolver" }.resolve()?.artifacts).variant
         } else null
-        return PrecheckState(actor = actor, view = view, env = env, diplomacy = diplomacy, hanWorldVariant = variant)
+        return PrecheckState(actor = actor, view = view, env = env, diplomacy = diplomacy, worldMapVariant = variant)
     }
 
     /** Build the `ConstraintContext.env` map from the singleton `world_state` via the shared builder. */

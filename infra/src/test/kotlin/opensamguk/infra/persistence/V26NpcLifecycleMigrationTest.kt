@@ -100,8 +100,10 @@ class V26NpcLifecycleMigrationTest {
     }
 
     private fun seedLegacyWorld() {
+        // V26 은 world_state.scenario_code 로 클래스패스 `scenario/<code>.json` 을 읽는다. 은퇴한 1010 대신
+        // 그 유변·유협 두 행만 옮긴 테스트 리소스(scenario_v26_imperial_minors.json)를 가리킨다.
         jdbc.update(
-            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'scenario_1010', 181, 1, 3600)",
+            "INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (1, 'scenario_v26_imperial_minors', 181, 1, 3600)",
         )
         jdbc.update("INSERT INTO nation (id, name, color, meta) VALUES (1, '한', '#fff', '{\"gennum\":2}')")
         jdbc.update(

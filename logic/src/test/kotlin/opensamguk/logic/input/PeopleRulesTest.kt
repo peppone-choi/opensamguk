@@ -50,7 +50,7 @@ class PeopleRulesTest {
     }
 
     @Test fun `captor alone may persuade the captive at their current location`() {
-        val captive = free.copy(nationId = 2, meta = free.meta + ("hwihaCaptive" to mapOf("captorGeneralId" to 7)))
+        val captive = free.copy(nationId = 2, meta = free.meta + ("captive" to mapOf("captorGeneralId" to 7)))
         val request = PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8)
         assertEquals(captive, assertIs<PeopleAssessment.Eligible>(PeopleRules.assess(request,
             base.copy(people = listOf(actor, captive)))).target)
@@ -68,7 +68,7 @@ class PeopleRulesTest {
     @Test fun `foreign lord captive requires nation resolution before persuasion`() {
         val request = PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8)
         val captive = free.copy(nationId = 2, meta = free.meta + mapOf(
-            "hwihaCaptive" to mapOf("captorGeneralId" to 7), LordStatus.META_KEY to true))
+            "captive" to mapOf("captorGeneralId" to 7), LordStatus.META_KEY to true))
         assertEquals(PeopleFailure.TARGET_IS_LORD,
             assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(request,
                 base.copy(people = listOf(actor, captive)))).reason)
@@ -91,7 +91,7 @@ class PeopleRulesTest {
             assertIs<PeopleAssessment.Rejected>(PeopleRules.assess(
                 PeopleRequest(7, PeopleInput.EMPLOY, 8), base.copy(
                     people = listOf(met, free, namesake), cards = listOf(DomesticCard(1, 7, 9, "guest"))))).reason)
-        val captive = free.copy(nationId = 2, meta = free.meta + ("hwihaCaptive" to mapOf("captorGeneralId" to 7)))
+        val captive = free.copy(nationId = 2, meta = free.meta + ("captive" to mapOf("captorGeneralId" to 7)))
         assertIs<PeopleAssessment.Eligible>(PeopleRules.assess(
             PeopleRequest(7, PeopleInput.PERSUADE_CAPTIVE, 8), base.copy(
                 people = listOf(actor, captive), cards = listOf(DomesticCard(2, 9, 8, "guest")))))

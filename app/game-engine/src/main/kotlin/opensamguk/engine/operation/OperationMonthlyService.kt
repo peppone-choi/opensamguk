@@ -23,7 +23,7 @@ class OperationMonthlyService {
         if (ops.isEmpty()) return
         val state = world.getState()
         val now = GameDate(state.currentYear, state.currentMonth, state.currentPhase)
-        val variant = ActiveWorldMap.requireVariant(state.config, state.meta, state.hanWorldVariant)
+        val variant = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
 
         for (op in ops) {
             if (world.getNationById(op.nationId) == null) continue

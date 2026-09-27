@@ -68,7 +68,7 @@ class AvailableCommandsControllerTest {
 
     @Test
     fun `legacy catalog and recruit options are absent from hwiha product API`() {
-        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "HWIHA")))
+        `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         mockMvc().perform(get("/api/commands/available")).andExpect(status().isNotFound)
         mockMvc().perform(get("/api/commands/recruit/availability")).andExpect(status().isNotFound)
     }

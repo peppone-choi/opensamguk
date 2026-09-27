@@ -33,10 +33,10 @@ SKIPPED_XML = """<?xml version="1.0" encoding="UTF-8"?>
 """
 
 OTHER_SKIPPED_XML = """<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="fake.LongSimReplayGateTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-08-24T00:00:00" hostname="fixture" time="0.01">
+<testsuite name="fake.SlowOptionalReplayTest" tests="1" skipped="1" failures="0" errors="0" timestamp="2026-08-24T00:00:00" hostname="fixture" time="0.01">
   <properties/>
-  <testcase name="12 month structural replay matches PHP golden()" classname="fake.LongSimReplayGateTest" time="0.01">
-    <skipped message="LONGSIM_SCHEMA4_CANDIDATE_DIR not set - IT skipped"/>
+  <testcase name="optional replay uses unavailable input()" classname="fake.SlowOptionalReplayTest" time="0.01">
+    <skipped message="OPTIONAL_REPLAY_INPUT not set - IT skipped"/>
   </testcase>
 </testsuite>
 """
@@ -141,11 +141,11 @@ class CheckTestXmlTests(unittest.TestCase):
         # quarantine, one not. Quarantine must not blanket-silence the run —
         # only the exact registered key passes; the other still fails it.
         _write_suite(self.root, "skipped-mod", "TEST-fake.ScenarioBlankUnificationIT.xml", SKIPPED_XML)
-        _write_suite(self.root, "skipped-mod", "TEST-fake.LongSimReplayGateTest.xml", OTHER_SKIPPED_XML)
+        _write_suite(self.root, "skipped-mod", "TEST-fake.SlowOptionalReplayTest.xml", OTHER_SKIPPED_XML)
         quarantine_path = self.root / "quarantine.json"
         quarantine_path.write_text(
             json.dumps({
-                "fake.LongSimReplayGateTest#12 month structural replay matches PHP golden()": {
+                "fake.SlowOptionalReplayTest#optional replay uses unavailable input()": {
                     "ticket": "https://example.invalid/issues/521",
                     "reason": "test fixture",
                 },
@@ -154,9 +154,9 @@ class CheckTestXmlTests(unittest.TestCase):
         )
         result = _run(self.root, "skipped-mod", extra_args=["--quarantine", str(quarantine_path)])
         self.assertEqual(result.returncode, 1, result.stderr)
-        self.assertIn("QUARANTINED: fake.LongSimReplayGateTest", result.stderr)
+        self.assertIn("QUARANTINED: fake.SlowOptionalReplayTest", result.stderr)
         self.assertIn("SKIPPED: fake.ScenarioBlankUnificationIT", result.stderr)
-        self.assertNotIn("SKIPPED: fake.LongSimReplayGateTest", result.stderr)
+        self.assertNotIn("SKIPPED: fake.SlowOptionalReplayTest", result.stderr)
 
     def test_quarantine_entry_without_ticket_is_rejected(self):
         # A quarantine registration with no ticket is worse than no guard —

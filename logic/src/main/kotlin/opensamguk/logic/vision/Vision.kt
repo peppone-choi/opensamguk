@@ -3,7 +3,7 @@ package opensamguk.logic.vision
 import opensamguk.logic.input.*
 
 
-import opensamguk.logic.world.HanCommanderyIndex
+import opensamguk.logic.world.CommanderyIndex
 import opensamguk.logic.world.StrategicNodeRef
 
 enum class VisionTier { FULL, INTEL, FOG }
@@ -57,7 +57,7 @@ data class VisionViewer(
 
 object Vision {
     /** Deterministic source list: kind order, then commandery, then province, then reference id. */
-    fun sources(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules): List<VisionSource> {
+    fun sources(viewer: VisionViewer, index: CommanderyIndex, rules: VisionRules.Rules): List<VisionSource> {
         val out = mutableListOf<VisionSource>()
         fun add(kind: VisionSourceKind, node: StrategicNodeRef?, ref: Int?) {
             val province = (node as? StrategicNodeRef.LandProvince)?.id ?: return
@@ -82,7 +82,7 @@ object Vision {
      * FULL = within a source's radius. INTEL = not FULL but scouted (snapshot stamp and age). FOG = neither.
      * Reports bound to other tiles are ignored — they cannot name a commandery of this map.
      */
-    fun project(viewer: VisionViewer, index: HanCommanderyIndex, rules: VisionRules.Rules, now: Phase): VisionView {
+    fun project(viewer: VisionViewer, index: CommanderyIndex, rules: VisionRules.Rules, now: Phase): VisionView {
         val sources = sources(viewer, index, rules)
         val full = sortedSetOf<Int>()
         sources.forEach { full += index.within(it.commanderyNo, it.radius) }
@@ -144,7 +144,7 @@ data class CorpsSighting(
  * the rule-allowed last sighting — and nothing live. FOG commanderies emit nothing at all.
  */
 object CorpsVisibility {
-    fun project(viewer: VisionViewer, view: VisionView, index: HanCommanderyIndex, projection: DeploymentProjection,
+    fun project(viewer: VisionViewer, view: VisionView, index: CommanderyIndex, projection: DeploymentProjection,
         rules: VisionRules.Rules): List<CorpsSighting> {
         val nodes = projection.people.associate { it.id to it.node }
         val live = projection.deployed.mapNotNull { corps ->

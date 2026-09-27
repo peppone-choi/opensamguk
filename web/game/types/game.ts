@@ -149,28 +149,6 @@ export interface Nation {
   capital: number;
 }
 
-export interface AuctionItem {
-  id: number;
-  type: string;
-  title: string;
-  hostName: string;
-  amount: number;
-  reqResource: string;
-  closeDate: string;
-  finished: boolean;
-  highestBid?: number;
-  highestBidder?: string;
-}
-
-export interface BettingRound {
-  id: number;
-  type: string;
-  title: string;
-  odds: number;
-  open: boolean;
-  result?: string;
-}
-
 export interface DiplomacyRelation {
   nation: number;
   state: string; // 'war', 'peace', 'neutral', 'ally'
@@ -315,33 +293,6 @@ export interface KingdomRank {
   capitalName: string;
 }
 
-// GET /api/rankings/npcs → 빙의일람(a_npcList.php). WHERE npc_state=1, no rank field.
-// 12컬럼: 희생장수(name,npc색) | 악령이름(ownerName, BLOCKED→null) | Lv(explevel) | 국가 | 성격(personalText)
-//        | 특기(specialDomesticName/specialWarName) | 종능(total) | 통무지 | 명성(experience raw) | 계급(devotion raw)
-export interface NpcGeneral {
-  generalId: number;
-  name: string;
-  npc: number; // getNPCColor용(formatName 동치)
-  nation: string;
-  nationColor: string;
-  officerLevel: number;
-  ownerName: string | null; // 악령 이름 — BLOCKED(owner_name 컬럼 부재) → null
-  explevel: number; // Lv
-  personalText: string; // 성격 한글명
-  specialDomesticName: string; // 내정 특기명
-  specialWarName: string; // 전투 특기명
-  leadership: number;
-  strength: number;
-  intel: number;
-  politics?: number;
-  charm?: number;
-  total: number; // 종능 = 통+무+지
-  experience: number; // 명성 컬럼 raw 값
-  devotion: number; // 계급 컬럼 raw 값(= general.dedication)
-  crew: number; // non-PHP 잉여(미렌더)
-  cityName: string; // non-PHP 잉여(미렌더)
-}
-
 // GET /api/rankings/kingdom-roster → 세력일람(a_kingdomList.php) ROSTER. leaderboard와 별개.
 export interface KingdomRoster {
   nations: KingdomRosterNation[]; // 국력 DESC
@@ -382,77 +333,6 @@ export interface KingdomRosterNeutral {
   cityCount: number;
   cities: KingdomRosterCity[];
   generals: KingdomRosterGeneral[];
-}
-
-// GET /api/rankings/hall-of-fame → F3 default [] (hall empty in 1010).
-export interface HallRecord {
-  id: number;
-  category: string;
-  name: string;
-  nation: string;
-  nationColor: string;
-  value: number;
-  valueLabel: string;
-  achievedAt: string;
-  turn: number;
-}
-
-export interface TrafficStat {
-  year: number;
-  month: number;
-  date: string;
-  refresh: number;
-  online: number;
-}
-
-export interface TrafficUser {
-  name: string;
-  refresh: number;
-  refreshScoreTotal: number;
-}
-
-export interface TrafficSummary {
-  refresh: number;
-  maxRefresh: number;
-  currentOnline: number;
-  maxOnline: number;
-  history: TrafficStat[];
-  totalRefresh: number;
-  totalRefreshScore: number;
-  topRefreshers: TrafficUser[];
-}
-
-// GET /api/rankings/emperor → F3 default [] (no unification-history table, OQ-1).
-export interface EmperorRecord {
-  id: number;
-  name: string;
-  nation: string;
-  nationColor: string;
-  unifiedAt: string;
-  turn: number;
-  year: number;
-  month: number;
-  generalCount: number;
-  cityCount: number;
-}
-
-// GET /api/rankings/emperor/{id} → 404 in F3 (no emperior table; page .catch handles).
-export interface EmperorDetail {
-  id: number;
-  name: string;
-  nation: string;
-  nationColor: string;
-  unifiedAt: string;
-  turn: number;
-  year: number;
-  month: number;
-  generalCount: number;
-  cityCount: number;
-  totalGold: number;
-  totalRice: number;
-  totalPop: number;
-  generals: { name: string; leadership: number; strength: number; intel: number }[];
-  cities: { name: string; level: number; pop: number }[];
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -728,61 +608,6 @@ export interface MyBossResponse {
   citySlots: MyBossOfficerSlot[];
 }
 
-// ── page 12/13/11-bracket · 토너먼트 (GET /api/tournament) ────────────────────
-export type TournamentTypeText = '전력전' | '통솔전' | '일기토' | '설전';
-export type TournamentGroupStage = 'MAIN' | 'PRELIMINARY';
-
-export interface TournamentEntrant {
-  readonly generalId: number;
-  readonly npc: number;
-  readonly generalName: string;
-  readonly stage: TournamentGroupStage;
-  readonly groupNo: number;
-  readonly groupRank: number;
-  readonly ability: number;
-  readonly games: number;
-  readonly win: number;
-  readonly draw: number;
-  readonly lose: number;
-  readonly points: number;
-  readonly goalDifference: number;
-  readonly promoted: boolean;
-}
-
-export interface TournamentBracketMatch {
-  readonly round: number;
-  readonly matchIdx: number;
-  readonly leftGeneralId: number | null;
-  readonly leftName: string | null;
-  readonly rightGeneralId: number | null;
-  readonly rightName: string | null;
-  readonly winnerGeneralId: number | null;
-  readonly winnerName: string | null;
-}
-
-export interface TournamentRankRow {
-  readonly rank: number;
-  readonly generalName: string;
-  readonly nationName: string;
-  readonly value: number;
-}
-
-export interface TournamentRankingBoard {
-  readonly type: TournamentTypeText;
-  readonly rows: readonly TournamentRankRow[];
-}
-
-export interface TournamentResponse {
-  readonly state: number;
-  readonly tnmtType: number;
-  readonly tnmtTypeText: TournamentTypeText;
-  readonly tnmtMsg: string;
-  readonly turnTerm: number;
-  readonly entrants: readonly TournamentEntrant[];
-  readonly bracket: readonly TournamentBracketMatch[];
-  readonly rankings: readonly TournamentRankingBoard[];
-}
-
 // ── page 1 · 외교부 (GET /api/diplomacy/letters) ──────────────────────────────
 // Mirrors j_diplomacy_get_letter.php. State text map rendered by page verbatim:
 // 제안됨/승인됨/거부됨/대체됨, 송신측의 파기 요청 …. text_detail masked to
@@ -923,165 +748,6 @@ export interface NationFinanceResponse {
 }
 
 // ── page 7 · 사령부 (GET /api/nation/chief-reserved) ──────────────────────────
-// Mirrors game-api ChiefReservedResponse (dto/F4Dto.kt). The 8 chief posts ride the
-// `posts[]` array (NOT a map), each holding a reserved-command `reservedTurns[]` up to
-// maxChiefTurn. `commandList` is the chief command palette (getChiefCommandTable).
-// officerLevel>=5(=myOfficerLevel) gate to edit. POST reserve rides nation_turn ring.
-export interface ChiefReservedTurn {
-  turnIdx: number; // 예약 슬롯 인덱스
-  actionCode: string; // command class key
-  brief: string; // rendered verbatim (color/tag markup 포함)
-  arg: Record<string, unknown> | null;
-}
-
-export interface ChiefPost {
-  officerLevel: number; // 12/11/10/9/8/7/6/5
-  title: string; // 정본 직책명(군주/참모/…)
-  name: string | null; // occupant general name (null = vacant)
-  turnTime: string | null;
-  npcType: number | null;
-  officerLevelText: string;
-  reservedTurns: ChiefReservedTurn[];
-}
-
-// 사령부 명령 팔레트의 1개 명령(getChiefCommandTable values[]). argType는 game-api가
-// argsSchema 키에서 파생(city/nation/general/amount); 인자 없으면 null.
-export interface ChiefCommand {
-  value: string; // 예약 액션 코드(e.g. "che_급습")
-  simpleName: string;
-  title: string;
-  compensation: number;
-  possible: boolean; // 실제 precheck 결과(deny면 false) — AvailableCommand.possible와 동일
-  reqArg: boolean;
-  argType: CommandArgType | null;
-  reason?: string | null; // deny 사유(possible=false일 때) — 임파서블 명령 툴팁에 노출
-  canonicalId?: string;
-  normalizedIntentId?: string | null;
-  layer?: string;
-  sourceRing?: string;
-  authorityPolicyId?: string;
-  adapterPolicy?: string;
-  parityStatus?: string;
-  contractStatus?: string;
-  deliveryState?: string;
-}
-
-// 1개 카테고리(휴식/인사/외교/특수/전략/기타).
-export interface ChiefCommandCategory {
-  category: string;
-  values: ChiefCommand[];
-}
-
-export interface ChiefReservedResponse {
-  result: boolean;
-  myGeneralId: number; // 호출자(나)의 장수 id
-  myOfficerLevel: number; // 호출자(나)의 officer_level
-  nationId: number;
-  nationName: string | null;
-  nationLevel: number;
-  year: number;
-  month: number;
-  turnTerm: number;
-  maxChiefTurn: number;
-  posts: ChiefPost[];
-  troopList: Record<string, string>; // troopLeaderId → troopName
-  commandList: ChiefCommandCategory[];
-  isChief: boolean;
-  autorunLimit: number | null;
-}
-
-// ── page 8 · NPC 정책 (GET /api/nation/npc-policy) ────────────────────────────
-// Mirrors v_NPCControl.php. Heaviest page: 30+ number policy fields + 2 draggable
-// priority lists. 초깃값으로/이전값으로/설정 rendered verbatim. permission>=1 gate.
-// Policy values are an open numeric map (legacy AutorunNationPolicy::$defaultPolicy).
-export interface NpcPolicyLastSetter {
-  setter: string | null;
-  date: string | null;
-}
-
-export type NpcPolicyValue = number | string[] | number[] | Record<string, unknown>;
-
-export interface NpcPolicyResponse {
-  result: boolean;
-  nationId: number;
-  defaultNationPolicy: Record<string, NpcPolicyValue>;
-  currentNationPolicy: Record<string, NpcPolicyValue>;
-  zeroPolicy: Record<string, NpcPolicyValue>;
-  defaultNationPriority: string[];
-  currentNationPriority: string[];
-  availableNationPriorityItems: string[];
-  defaultGeneralActionPriority: string[];
-  currentGeneralActionPriority: string[];
-  availableGeneralActionPriorityItems: string[];
-  lastSetters: {
-    policy: NpcPolicyLastSetter;
-    nation: NpcPolicyLastSetter;
-    general: NpcPolicyLastSetter;
-  };
-  defaultStatNPCMax: number;
-  defaultStatMax: number;
-}
-
-// ── page 15 · 유산 (GET /api/inherit-point) ───────────────────────────────────
-// Mirrors v_inheritPoint.php. items keyed by InheritanceKey; reset costs follow a
-// Fibonacci base (resetTurnTime/resetSpecialWar). availableSpecialWar/availableUnique
-// are catalog maps. logs = last 30 inheritPoint user_record rows.
-export interface InheritSpecialWar {
-  title: string;
-  info: string;
-}
-
-export interface InheritUnique {
-  title: string;
-  rawName: string;
-  info: string;
-}
-
-export interface InheritActionCost {
-  buff: number[]; // GameConst inheritBuffPoints (per-step)
-  resetTurnTime: number; // Fibonacci(resetTurnTimeLevel)
-  resetSpecialWar: number; // Fibonacci(resetSpecialWarLevel)
-  randomUnique: number;
-  nextSpecial: number;
-  minSpecificUnique: number;
-  checkOwner: number;
-  bornStatPoint: number;
-}
-
-export interface InheritPointLog {
-  id: number;
-  serverId: string; // legacy `server_id`
-  year: number;
-  month: number;
-  date: string;
-  text: string; // rendered verbatim
-}
-
-export interface InheritCurrentStat {
-  leadership: number;
-  strength: number;
-  intel: number;
-  politics?: number;
-  charm?: number;
-  statMin: number;
-  statMax: number;
-}
-
-export interface InheritPointResponse {
-  result: boolean;
-  items: Record<string, number>; // InheritanceKey → point balance
-  currentInheritBuff: Record<string, number>; // buffKey → level
-  maxInheritBuff: number;
-  resetTurnTimeLevel: number;
-  resetSpecialWarLevel: number;
-  inheritActionCost: InheritActionCost;
-  availableSpecialWar: Record<string, InheritSpecialWar>;
-  availableUnique: Record<string, InheritUnique>;
-  lastInheritPointLogs: InheritPointLog[]; // [] when none
-  availableTargetGeneral: Record<number, string>; // generalId → name (npc<2)
-  currentStat: InheritCurrentStat;
-}
-
 // ── page 4 · 회의실 / 기밀실 (GET /api/board?secret=) ─────────────────────────
 // Mirrors j_board_get_articles.php. Labels 회의실/기밀실/등록/댓글 달기 verbatim.
 // Permission gates render as INFO (not error): '국가에 소속되어있지 않습니다.' /
@@ -1173,47 +839,6 @@ export interface BoardResponse {
   chiefCount?: number;
   myGeneralId?: number | null;
   myPermission?: number;
-}
-
-// ── page 5 · 설문 조사 (GET /api/votes, GET /api/votes/{id}) ──────────────────
-// Mirrors Vote/GetVoteList + GetVoteDetail. multipleOptions drives single/multi
-// select. wonLottery toast handled by intake (not F4 read). EMPTY votes[] in 1010.
-export interface VoteInfo {
-  id: number;
-  title: string;
-  multipleOptions: number; // 0 single / N max selections
-  opener: string | null;
-  startDate: string;
-  endDate: string | null;
-  options: string[]; // rendered verbatim
-}
-
-export interface VoteListResponse {
-  result: boolean;
-  votes: Record<number, VoteInfo>; // keyed by voteId; {} when none
-}
-
-export interface VoteComment {
-  id: number | null;
-  voteID: number; // legacy RawName vote_id
-  generalID: number;
-  nationID: number;
-  nationName: string;
-  generalName: string;
-  text: string;
-  date: string;
-}
-
-// [selectionArray, count] — selection is the decoded option-index array.
-export type VoteResultRow = [number[], number];
-
-export interface VoteDetailResponse {
-  result: boolean;
-  voteInfo: VoteInfo;
-  votes: VoteResultRow[]; // tallies grouped by selection; [] when none
-  comments: VoteComment[];
-  myVote: number[] | null; // caller's selection (null if not voted / not logged in)
-  userCnt: number; // total eligible voters (general npc<2)
 }
 
 // ── page 6 · 부대 편성 (GET /api/troops) ──────────────────────────────────────

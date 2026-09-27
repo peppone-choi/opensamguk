@@ -10,7 +10,7 @@ import opensamguk.logic.world.BattlefieldGeometry.Position
 /** Measures the selected source bundle; unavailable layouts are evidence, not test failures. */
 class BattlefieldLayoutArtifactTest {
     @Test fun `all selected land edges in both directions retain source geometry and valid deployment zones`() {
-        val bundle = HanWorldArtifactsResolver(Path.of("..")).artifacts(HanWorldVariant.V3_1133)
+        val bundle = WorldArtifactsResolver(Path.of("..")).artifacts(WorldMapVariant.V3_1133)
         val topology = bundle.projection.topology
         val index = bundle.provinceCells
         val edges = topology.traversalEdges.filter { it.mode in setOf(TraversalMode.LAND, TraversalMode.FORD, TraversalMode.BRIDGE) }.sortedBy { it.id }

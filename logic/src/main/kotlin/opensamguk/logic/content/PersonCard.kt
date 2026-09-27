@@ -33,7 +33,7 @@ data class PersonBondState(val bonds: Set<PersonBond>) {
         "kind" to bond.kind.name, "targetId" to bond.targetId, "evidenceIds" to bond.evidenceIds.sorted()) })
 
     companion object {
-        const val META_KEY = "hwihaPersonBonds"
+        const val META_KEY = "personBonds"
 
         fun read(meta: Map<String, Any?>): PersonBondState? {
             if (META_KEY !in meta) return null
@@ -119,7 +119,7 @@ data class PersonContributionState(val stratagemCardIds: Set<String>) {
     fun toMetaValue(): Map<String, Any> = mapOf("version" to 1, "stratagemCardIds" to stratagemCardIds.sorted())
 
     companion object {
-        const val META_KEY = "hwihaPersonContribution"
+        const val META_KEY = "personContribution"
 
         fun read(meta: Map<String, Any?>): PersonContributionState? {
             if (META_KEY !in meta) return null

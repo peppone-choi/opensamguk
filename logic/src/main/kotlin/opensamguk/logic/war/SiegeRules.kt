@@ -7,7 +7,7 @@ package opensamguk.logic.war
  * ([SiegeMorale], `siegeResolution`). 나머지(수비병 식량, 포위군 급식 판정, 항복 권고 문턱)는
  * [CampaignBalance] 의 확정값이다.
  *
- * 수비병 수는 縣治 城의 `defence`(수비) 값을 쓴다(`hwiha-s3-provisional-v1.json` 확정값).
+ * 수비병 수는 縣治 城의 `defence`(수비) 값을 쓴다(`campaign-balance-v1.json` 확정값).
  */
 object SiegeRules {
     /** 포위 유지에 필요한 최소 병력비(승인값). */

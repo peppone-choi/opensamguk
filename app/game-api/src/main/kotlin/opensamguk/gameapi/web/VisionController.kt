@@ -16,15 +16,15 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 class VisionController(private val reader: VisionReader) {
-    @GetMapping("/api/hwiha/visibility")
+    @GetMapping("/api/visibility")
     fun visibility(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.visibility(generalId, it) }
 
-    @GetMapping("/api/hwiha/corps")
+    @GetMapping("/api/corps")
     fun corps(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.corps(generalId, it) }
 
-    @GetMapping("/api/hwiha/scout-options")
+    @GetMapping("/api/scout-options")
     fun scoutOptions(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.scoutOptions(generalId, it) }
 

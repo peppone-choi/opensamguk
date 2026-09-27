@@ -5,7 +5,7 @@ import kotlin.test.*
 class LandMarchMetricSnapshotTest {
     private val hash = "a".repeat(64)
     private fun topology() = StrategicTopologySnapshot("test", setOf("A", "B", "C"), emptyList(),
-        projectHanDryLandEdges(listOf("A", "B", "C"), intArrayOf(0, 1, 2), listOf("111"), setOf('1'), emptyList(), hash),
+        projectDryLandEdges(listOf("A", "B", "C"), intArrayOf(0, 1, 2), listOf("111"), setOf('1'), emptyList(), hash),
         emptyList(), mapOf(LandMarchMetricSnapshot.TILES_PATH to hash))
     private fun metrics(topology: StrategicTopologySnapshot) = topology.traversalEdges.map { LandMarchEdgeMetric(it.id, 20_000_000, 25_000_000) }
 

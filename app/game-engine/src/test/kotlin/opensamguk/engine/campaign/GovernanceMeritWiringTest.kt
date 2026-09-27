@@ -49,7 +49,7 @@ class GovernanceMeritWiringTest {
 
     /** G1: 사람 주공(카드 5 = G3 의 주인). [holder] 면 縣 10 발령 관할 장수이기도 하다. */
     private fun world(holder: Boolean): InMemoryTurnWorld {
-        val lordMeta = mapOf("hwihaLord" to true,
+        val lordMeta = mapOf("lord" to true,
             PersonPolicyState.META_KEY to PersonPolicyState(30, false, "synthetic-test", "1", 1).toMetaValue()) +
             if (holder) mapOf(CountyAssignment.META_KEY to CountyAssignment("d-10", 1, 1, 10).toMetaValue()) else emptyMap()
         val positions = listOf(1 to a, 2 to a, 3 to b).fold(GeneralPositionSnapshot("qa", topology.contentHash, setOf("A", "B"), emptySet())) { s, (id, node) ->
@@ -59,8 +59,8 @@ class GovernanceMeritWiringTest {
                 config = mapOf("ruleProfile" to "HWIHA", "mapName" to "han-world-v3"),
                 meta = mapOf(LandPassageState.META_KEY to LandPassageState.initialMetaValue(topology),
                     MarchReactions.META_KEY to MarchReactions.Empty.toMetaValue())),
-            generals = listOf(general(1, "A", human = true, meta = lordMeta), general(2, "A", meta = mapOf("hwihaLord" to false)),
-                general(3, "B", meta = mapOf("hwihaLord" to false))),
+            generals = listOf(general(1, "A", human = true, meta = lordMeta), general(2, "A", meta = mapOf("lord" to false)),
+                general(3, "B", meta = mapOf("lord" to false))),
             nations = listOf(Nation(1, "N1", "#000", capitalCityId = 10), Nation(2, "N2", "#fff", capitalCityId = 11)),
             cities = listOf(county(10), county(11)),
             retainers = listOf(Retainer(4, 1, "EXISTING", 2, "G2", "lieutenant"), Retainer(5, 1, "EXISTING", 3, "G3", "staff")),

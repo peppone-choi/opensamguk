@@ -3,7 +3,7 @@ package opensamguk.logic.war
 /**
  * S3 수치 — 2026-09-23 사용자 결정으로 현행 값을 확정했다.
  *
- * 정본은 `data/curated/han/hwiha-s3-provisional-v1.json` 이다. Kotlin 런타임은 `data/curated` 를 읽지
+ * 정본은 `data/curated/han/campaign-balance-v1.json` 이다. Kotlin 런타임은 `data/curated` 를 읽지
  * 않으므로(월단평 곡선·포위 사기와 같은 방식) 같은 값을 여기 두고, `CampaignBalanceTest` 가 파일과
  * 대조해 두 곳이 갈라지지 않게 한다. 사료 수치가 아니다. 승인된 값(포위 사기·항복, 병력비 2배 등)은
  * `march-tempo-targets-v1.json` 을 옮긴 [SiegeMorale]·[SiegeRules] 쪽에 있고 여기 두지 않는다.

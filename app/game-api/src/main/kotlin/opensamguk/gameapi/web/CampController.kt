@@ -17,19 +17,19 @@ import org.springframework.web.bind.annotation.RestController
  */
 @RestController
 class CampController(private val reader: CampReader) {
-    @GetMapping("/api/hwiha/yuedan")
+    @GetMapping("/api/yuedan")
     fun yuedan(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.yuedan(generalId, it) }
 
-    @GetMapping("/api/hwiha/warehouses")
+    @GetMapping("/api/warehouses")
     fun warehouses(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.warehouses(generalId, it) }
 
-    @GetMapping("/api/hwiha/county/{cityId}")
+    @GetMapping("/api/county/{cityId}")
     fun county(@AuthenticationPrincipal userId: Long?, @PathVariable cityId: Int, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.county(cityId, generalId, it) }
 
-    @GetMapping("/api/hwiha/retinue")
+    @GetMapping("/api/retinue")
     fun retinue(@AuthenticationPrincipal userId: Long?, @RequestParam generalId: Int): ResponseEntity<Any> =
         guarded(userId) { reader.retinue(generalId, it) }
 
