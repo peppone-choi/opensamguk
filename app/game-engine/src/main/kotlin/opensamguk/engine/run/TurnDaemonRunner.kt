@@ -239,6 +239,9 @@ class TurnDaemonRunner(
                     ?: error("TurnRunService unavailable after world_state availability check")
 
                 if (pauseGate.isPaused()) {
+                    // A paused wall clock must not keep advancing the accelerated game clock.
+                    // The first pending event may run on resume; subsequent events are paced anew.
+                    catchUpInitialized = false
                     if (synchronized(executionLock) { activeService.runIntakeCommands(blockMs = 1) } == 0) {
                         Thread.sleep(idlePollMs)
                     }
@@ -253,6 +256,7 @@ class TurnDaemonRunner(
                     null
                 }
                 if (recovery != null && !recovery.ready) {
+                    catchUpInitialized = false
                     if (recovery.mode == opensamguk.engine.flush.FlushRecoveryGate.Mode.FLUSH_RETRY) {
                         try {
                             val ok = synchronized(executionLock) { activeService.retryRetainedFlush() }
@@ -331,6 +335,7 @@ class TurnDaemonRunner(
                     Thread.currentThread().interrupt()
                     break
                 }
+                catchUpInitialized = false
                 // A tick failed; log and back off one poll interval so we don't hot-spin on a hard error.
                 // The world is the single source of truth — the failed flush left no partial DB write
                 // (JdbcFlushExecutor runs in ONE transaction), so the next tick retries cleanly.
