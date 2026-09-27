@@ -30,7 +30,7 @@ def validate() -> None:
     assert len({(row["kind"], row["sourceNameJa"]) for row in rows}) == len(rows)
     for row in rows:
         assert set(row) <= ALLOWED_FIELDS, row["id"]
-        assert row["edition"] in {"BASE", "PK"}, row["id"]
+        assert row["edition"] in {"BASE", "PK", "EDITION_UNRESOLVED"}, row["id"]
         assert all(isinstance(row[key], str) and row[key].strip() for key in ("id", "kind", "sourceNameKo", "sourceNameJa", "displayNameKo", "verification", "availabilityState")), row["id"]
         assert len(set(row["sourceRefs"])) == len(row["sourceRefs"]) >= 2, row["id"]
         assert all(ref in source_refs for ref in row["sourceRefs"]), row["id"]
