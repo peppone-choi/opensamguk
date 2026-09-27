@@ -27,6 +27,7 @@ JSON은 `TEXT` 원문과 SHA-256으로 저장한다. `jsonb` 정규화가 원래
 1. `claimEpoch`는 DB 시각으로 만료된 lease만 인계하고 epoch를 올린다. `renewLease`, 체크포인트, 결과 쓰기는 epoch·owner·DB lease가 맞을 때만 허용한다.
 2. JOINING은 handoff의 DB 참가 기한까지 유지한다. `startRun`은 기한 뒤 RUNNING과 `SESSION_STARTED` 이벤트를 한 트랜잭션에서 확정한다. 입장·이탈·AI 전이는 `appendTransition`으로 event seq와 함께 durable하게 남긴다.
 3. 명령 승인에서 `(battleId,participantId,clientCommandId)`의 기존 receipt를 먼저 확인한다. 같은 hash는 최초 ACK를 재현하고 다른 hash는 `IdempotencyConflict`다. 새 명령은 session row lock 아래 권한·epoch·상태·deadline·tick을 확인하고 event와 receipt를 한 트랜잭션에 기록한다.
+   액터는 매 100ms 틱 뒤 `advanceTick(expectedTick, expectedEventSeq)`로 session row를 정확히 1틱 CAS 전진시킨다. 입력 조회 뒤 새 event가 커밋되면 `latest_event_seq`가 달라 CAS가 실패하므로 새 꼬리를 읽고 같은 틱을 다시 계산한다. 50틱 간격 checkpoint는 이미 durable해진 `current_tick`과 같은 틱만 기록한다. 재시작 때 마지막 checkpoint부터 durable `current_tick`까지 event seq 순서로 다시 계산한다.
 4. actor는 checkpoint의 state hash와 ticket/event SHA를 검증한 뒤 snapshot 이후 입력을 재생한다. 손상된 tail은 전투 결과를 추측해 만들지 않고 격리해야 한다. 이 PR의 `recover`는 ticket/event SHA를 검사하며, versioned binary state codec과 격리 전이는 다음 통합 절편에서 연결한다.
 5. `publishResult`는 `BATTLE_RESOLVED` event, result outbox, 세션 상태를 한 트랜잭션에 기록한다. 결과 적용과 전체 리플레이 공개는 캠페인 적용 확인 뒤에만 수행한다.
 

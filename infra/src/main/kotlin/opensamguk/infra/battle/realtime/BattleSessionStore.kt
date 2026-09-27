@@ -175,6 +175,9 @@ interface BattleSessionStore {
     fun startRun(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long): Boolean
     fun admit(command: BattleCommandRecord): CommandAdmission
     fun appendTransition(transition: BattleTransition): Long?
+    /** Advances exactly one 100ms tick only if no new input was committed after the actor read its event tail. */
+    fun advanceTick(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long,
+                    expectedTick: Int, expectedEventSeq: Long): Boolean
     fun checkpoint(checkpoint: BattleCheckpoint): Boolean
     fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long): List<BattleEventRecord>
     fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint?

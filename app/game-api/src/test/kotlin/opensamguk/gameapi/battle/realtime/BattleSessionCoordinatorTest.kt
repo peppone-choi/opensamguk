@@ -85,6 +85,8 @@ class BattleSessionCoordinatorTest {
                 command.expectedAuthorityRevision))
         }
         override fun appendTransition(transition: BattleTransition): Long? = null
+        override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
+                                 sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long) = false
         override fun checkpoint(checkpoint: BattleCheckpoint) = false
         override fun eventsAfter(worldId: WorldId, battleId: String, eventSeq: Long) = eventLog
         override fun latestCheckpoint(worldId: WorldId, battleId: String): BattleCheckpoint? = null

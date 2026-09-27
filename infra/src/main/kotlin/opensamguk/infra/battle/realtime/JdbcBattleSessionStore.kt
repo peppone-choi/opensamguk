@@ -276,7 +276,8 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             head.leaseUntil == null || !head.leaseUntil.isAfter(dbNow()) ||
             !head.deadlineAt.isAfter(dbNow()) ||
             head.phase !in setOf(BattleSessionPhase.JOINING, BattleSessionPhase.RUNNING) ||
-            head.currentTick != transition.tick) return@execute null
+            head.currentTick != transition.tick ||
+            transition.effectiveTick > head.currentTick + 1) return@execute null
         val seq = head.latestEventSeq + 1
         db.update("""
             INSERT INTO battle_event (world_id, battle_id, event_seq, session_epoch, accepted_tick,
@@ -295,6 +296,24 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         seq
     }
 
+    override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
+                             sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+        require(owner.isNotBlank() && sessionEpoch > 0)
+        require(expectedTick in 0 until TacticalRules.CANON.battleTicks && expectedEventSeq >= 0)
+        return db.update("""
+            UPDATE battle_session
+               SET current_tick = :next_tick
+             WHERE world_id = :world_id AND battle_id = :battle_id
+               AND phase = 'RUNNING' AND session_epoch = :session_epoch
+               AND lease_owner = :owner AND lease_until > clock_timestamp()
+               AND deadline_at > clock_timestamp()
+               AND current_tick = :expected_tick AND latest_event_seq = :expected_event_seq
+        """.trimIndent(), key(worldId, battleId).addValue("owner", owner)
+            .addValue("session_epoch", sessionEpoch).addValue("expected_tick", expectedTick)
+            .addValue("next_tick", expectedTick + 1)
+            .addValue("expected_event_seq", expectedEventSeq)) == 1
+    }
+
     override fun checkpoint(checkpoint: BattleCheckpoint): Boolean = tx.execute {
         val params = key(checkpoint.worldId, checkpoint.battleId)
         val head = db.query("""
@@ -306,7 +325,13 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
         if (head.sessionEpoch != checkpoint.sessionEpoch || head.phase != BattleSessionPhase.RUNNING ||
             head.leaseOwner != checkpoint.leaseOwner || head.leaseUntil == null ||
             !head.leaseUntil.isAfter(dbNow()) ||
-            checkpoint.tick < head.currentTick || checkpoint.eventSeq > head.latestEventSeq) return@execute false
+            checkpoint.tick != head.currentTick || checkpoint.eventSeq > head.latestEventSeq) return@execute false
+        val previousEventSeq = db.query("""
+            SELECT event_seq FROM battle_snapshot
+             WHERE world_id = :world_id AND battle_id = :battle_id
+             ORDER BY snapshot_seq DESC LIMIT 1
+        """.trimIndent(), params) { rs, _ -> rs.getLong("event_seq") }.firstOrNull() ?: 0L
+        if (checkpoint.eventSeq < previousEventSeq) return@execute false
         val seq = head.latestSnapshotSeq + 1
         db.update("""
             INSERT INTO battle_snapshot (world_id, battle_id, snapshot_seq, session_epoch,

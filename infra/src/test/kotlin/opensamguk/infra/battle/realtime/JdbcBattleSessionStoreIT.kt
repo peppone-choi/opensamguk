@@ -76,25 +76,52 @@ class JdbcBattleSessionStoreIT {
         val accepted = (store.admit(command) as CommandAdmission.Receipt).value
         assertEquals(BattleCommandVerdict.ACCEPTED, accepted.verdict)
         assertEquals(2L, accepted.eventSeq)
+        assertFalse(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 0, 1))
+        assertTrue(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 0, 2))
+        assertEquals(1, store.head(world, ticket.battleId)?.currentTick)
+        assertFalse(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 0, 2))
         assertTrue((store.admit(command) as CommandAdmission.Receipt).value.replayed)
         assertEquals(CommandAdmission.IdempotencyConflict,
             store.admit(command.copy(intentJson = "{}", intentSha256 = sha("{}"))))
+        val oldTick = (store.admit(command.copy(clientCommandId = "cmd-old-tick")) as CommandAdmission.Receipt).value
+        assertEquals("STALE_TICK", oldTick.reasonCode)
+        val raced = (store.admit(command.copy(clientCommandId = "cmd-race", issuedTick = 1))
+            as CommandAdmission.Receipt).value
+        assertEquals(3L, raced.eventSeq)
+        assertFalse(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 1, 2))
+        assertTrue(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 1, 3))
+        val joinPayload = """{"side":"ATTACKER"}"""
+        assertEquals(4L, store.appendTransition(BattleTransition(world, ticket.battleId,
+            firstEpoch.sessionEpoch, "actor-a", "join-after-start", "HUMAN_JOIN", 1,
+            2, 3, joinPayload, sha(joinPayload))))
+        assertFalse(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 2, 3))
+        assertTrue(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 2, 4))
+        assertEquals(3, store.head(world, ticket.battleId)?.currentTick)
         assertNull(store.claimEpoch(world, ticket.battleId, "actor-b", 30_000))
         jdbc.update("""
             UPDATE battle_session SET lease_until = clock_timestamp() - interval '1 second'
              WHERE world_id = 1 AND battle_id = 'battle-it'
         """.trimIndent(), MapSqlParameterSource())
+        assertFalse(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 3, 4))
         val secondEpoch = assertNotNull(store.claimEpoch(world, ticket.battleId, "actor-b", 30_000))
         assertEquals(firstEpoch.sessionEpoch + 1, secondEpoch.sessionEpoch)
         assertFalse(store.checkpoint(BattleCheckpoint(world, ticket.battleId, firstEpoch.sessionEpoch,
-            "actor-a", 1, accepted.eventSeq!!, "d".repeat(64), byteArrayOf(1))))
+            "actor-a", 3, 4, "d".repeat(64), byteArrayOf(1))))
         val stale = (store.admit(command.copy(clientCommandId = "cmd-stale")) as CommandAdmission.Receipt).value
         assertEquals("STALE_EPOCH", stale.reasonCode)
         assertTrue((store.admit(command.copy(clientCommandId = "cmd-stale")) as CommandAdmission.Receipt).value.replayed)
+        assertFalse(store.checkpoint(BattleCheckpoint(world, ticket.battleId, secondEpoch.sessionEpoch,
+            "actor-b", 50, 4, "d".repeat(64), byteArrayOf(1, 2))))
+        (3 until 50).forEach { tick ->
+            assertTrue(store.advanceTick(world, ticket.battleId, "actor-b", secondEpoch.sessionEpoch, tick, 4))
+        }
+        assertEquals(50, store.head(world, ticket.battleId)?.currentTick)
         assertTrue(store.checkpoint(BattleCheckpoint(world, ticket.battleId, secondEpoch.sessionEpoch,
-            "actor-b", 5, accepted.eventSeq!!, "d".repeat(64), byteArrayOf(1, 2))))
-        assertEquals(5, store.latestCheckpoint(world, ticket.battleId)?.tick)
-        assertEquals(2, store.eventsAfter(world, ticket.battleId, 0).size)
+            "actor-b", 50, 4, "d".repeat(64), byteArrayOf(1, 2))))
+        assertFalse(store.checkpoint(BattleCheckpoint(world, ticket.battleId, secondEpoch.sessionEpoch,
+            "actor-b", 50, 3, "d".repeat(64), byteArrayOf(1, 2))))
+        assertEquals(50, store.latestCheckpoint(world, ticket.battleId)?.tick)
+        assertEquals(4, store.eventsAfter(world, ticket.battleId, 0).size)
         val resultJson = """{"outcome":"ATTACKER"}"""
         val result = BattleResultRecord(world, ticket.battleId, secondEpoch.sessionEpoch, "actor-b",
             1, resultJson, sha(resultJson), "e".repeat(64), 4, 2)
@@ -104,7 +131,7 @@ class JdbcBattleSessionStoreIT {
         assertTrue(store.markApplied(world, ticket.battleId, 1))
         assertFalse(store.markApplied(world, ticket.battleId, 1))
         assertEquals(BattleSessionPhase.APPLIED, store.head(world, ticket.battleId)?.phase)
-        assertEquals(3, store.eventsAfter(world, ticket.battleId, 0).size)
+        assertEquals(5, store.eventsAfter(world, ticket.battleId, 0).size)
         assertTrue((store.admit(command) as CommandAdmission.Receipt).value.replayed)
     }
 }
