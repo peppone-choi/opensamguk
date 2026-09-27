@@ -19,7 +19,7 @@ import java.time.Instant
  * 순수 검증 + 권한 게이트는 [BoardActions]에 있다. 이 핸들러는 PHP가 `DB::db()`로 수행하는
  * 부수 효과를 담당한다: 댓글의 게시물 존재 여부 `SELECT board WHERE no AND nation_no`
  * ([boardPostRepository]를 통해, 게시물의 `is_secret`을 산출) 와 board_post/board_comment
- * INSERT로, [ChangeRecorder]의 social-content 채널에 기록된다 (betting/auction을 미러링 —
+ * INSERT로, [ChangeRecorder]의 social-content 채널에 기록된다 (betting을 미러링 —
  * board 게시물은 InMemoryTurnWorld 게임 상태가 아니므로 world create/update 경로를 절대 건드리지 않는다).
  *
  * 권한: 기본값을 사용한 `SecretPermission.check(me)` (checkSecretLimit = false) — 두 board 게이트 모두에 대해

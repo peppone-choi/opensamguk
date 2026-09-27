@@ -27,7 +27,6 @@ class WorldSnapshotLoaderWorldScopeContractTest {
             "resolveActiveGame",
             "loadArchivedNationIds",
             "loadServerCount",
-            "loadActiveUniqueAuctionItems",
             "loadStoredUniqueItemCounts",
             "loadGameEnv",
             "loadNationEnv",
