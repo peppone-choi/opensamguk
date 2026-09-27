@@ -34,6 +34,7 @@ CREATE TABLE battle_participant (
     side                 VARCHAR(8)    NOT NULL,
     authority_revision   BIGINT        NOT NULL,
     CONSTRAINT battle_participant_pk PRIMARY KEY (world_id, battle_id, participant_id),
+    CONSTRAINT battle_participant_world_fk FOREIGN KEY (world_id) REFERENCES world_state(id),
     CONSTRAINT battle_participant_ticket_fk FOREIGN KEY (world_id, battle_id)
         REFERENCES battle_ticket(world_id, battle_id),
     CONSTRAINT battle_participant_account_uq UNIQUE (world_id, battle_id, account_id),
@@ -56,6 +57,7 @@ CREATE TABLE battle_session (
     deadline_at          TIMESTAMPTZ   NOT NULL,
     resolved_at          TIMESTAMPTZ   NULL,
     CONSTRAINT battle_session_pk PRIMARY KEY (world_id, battle_id),
+    CONSTRAINT battle_session_world_fk FOREIGN KEY (world_id) REFERENCES world_state(id),
     CONSTRAINT battle_session_ticket_fk FOREIGN KEY (world_id, battle_id)
         REFERENCES battle_ticket(world_id, battle_id),
     CONSTRAINT battle_session_phase_ck CHECK (phase IN (
@@ -83,6 +85,7 @@ CREATE TABLE battle_event (
     payload_sha256   VARCHAR(64)   NOT NULL,
     created_at       TIMESTAMPTZ   NOT NULL DEFAULT clock_timestamp(),
     CONSTRAINT battle_event_pk PRIMARY KEY (world_id, battle_id, event_seq),
+    CONSTRAINT battle_event_world_fk FOREIGN KEY (world_id) REFERENCES world_state(id),
     CONSTRAINT battle_event_ticket_fk FOREIGN KEY (world_id, battle_id)
         REFERENCES battle_ticket(world_id, battle_id),
     CONSTRAINT battle_event_count_ck CHECK (
@@ -109,6 +112,7 @@ CREATE TABLE battle_command_receipt (
     created_at           TIMESTAMPTZ   NOT NULL DEFAULT clock_timestamp(),
     CONSTRAINT battle_command_receipt_pk PRIMARY KEY
         (world_id, battle_id, participant_id, client_command_id),
+    CONSTRAINT battle_command_receipt_world_fk FOREIGN KEY (world_id) REFERENCES world_state(id),
     CONSTRAINT battle_command_receipt_participant_fk FOREIGN KEY (world_id, battle_id, participant_id)
         REFERENCES battle_participant(world_id, battle_id, participant_id),
     CONSTRAINT battle_command_receipt_event_fk FOREIGN KEY (world_id, battle_id, event_seq)
@@ -133,6 +137,7 @@ CREATE TABLE battle_snapshot (
     compressed_state  BYTEA         NOT NULL,
     created_at        TIMESTAMPTZ   NOT NULL DEFAULT clock_timestamp(),
     CONSTRAINT battle_snapshot_pk PRIMARY KEY (world_id, battle_id, snapshot_seq),
+    CONSTRAINT battle_snapshot_world_fk FOREIGN KEY (world_id) REFERENCES world_state(id),
     CONSTRAINT battle_snapshot_ticket_fk FOREIGN KEY (world_id, battle_id)
         REFERENCES battle_ticket(world_id, battle_id),
     CONSTRAINT battle_snapshot_count_ck CHECK (
@@ -158,6 +163,7 @@ CREATE TABLE battle_result_outbox (
     blocked_at           TIMESTAMPTZ   NULL,
     block_reason         VARCHAR(512)  NULL,
     CONSTRAINT battle_result_outbox_pk PRIMARY KEY (world_id, battle_id, result_revision),
+    CONSTRAINT battle_result_outbox_world_fk FOREIGN KEY (world_id) REFERENCES world_state(id),
     CONSTRAINT battle_result_outbox_ticket_fk FOREIGN KEY (world_id, battle_id)
         REFERENCES battle_ticket(world_id, battle_id),
     CONSTRAINT battle_result_outbox_count_ck CHECK (
