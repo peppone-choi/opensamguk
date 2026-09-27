@@ -197,7 +197,7 @@ object CqrsBaselineMain {
         val handled = lifecycle.runTick(runTime)
         val tickDurationMs = elapsedMillis(tickStartedAt)
         check(handled.isNotEmpty()) { "The representative tick must handle the seeded due generals" }
-        check(handled.all { it.definition.key == "휴식" }) { "Scenario seed fixture must resolve only 휴식" }
+        check(handled.all { it.definition?.key == "휴식" }) { "Scenario seed fixture must resolve only 휴식" }
 
         val heapBeforeGc = HeapSnapshot.read()
         val rssBeforeGc = residentSetBytes()
