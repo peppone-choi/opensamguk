@@ -74,6 +74,22 @@ class JdbcBattleSessionDiscoveryIT {
         """.trimIndent(), params)
         assertEquals(listOf(ref), discovery.claimable(10))
         jdbc.update("""
+            UPDATE battle_session SET phase = 'RUNNING'
+             WHERE world_id = :world_id AND battle_id = :battle_id
+        """.trimIndent(), params)
+        assertEquals(listOf(ref), discovery.claimable(10))
+        jdbc.update("""
+            UPDATE battle_session SET join_deadline_at = clock_timestamp() - interval '2 seconds',
+                                      deadline_at = clock_timestamp() - interval '1 second'
+             WHERE world_id = :world_id AND battle_id = :battle_id
+        """.trimIndent(), params)
+        assertEquals(emptyList(), discovery.claimable(10))
+        jdbc.update("""
+            UPDATE battle_session SET join_deadline_at = clock_timestamp() + interval '1 minute',
+                                      deadline_at = clock_timestamp() + interval '2 minutes'
+             WHERE world_id = :world_id AND battle_id = :battle_id
+        """.trimIndent(), params)
+        jdbc.update("""
             UPDATE battle_session SET phase = 'RESULT_PENDING'
              WHERE world_id = :world_id AND battle_id = :battle_id
         """.trimIndent(), params)
