@@ -49,4 +49,22 @@ class ImperialEdictCodecTest {
             ImperialEdictCodec.read(mapOf(ImperialEdictCodec.META_KEY to (encoded + ("schemaVersion" to 2))))
         }
     }
+
+    @Test
+    @Suppress("UNCHECKED_CAST")
+    fun `cold reload rejects partial acceptance without a requested office`() {
+        val noOffice = accepted().copy(
+            proposal = proposal.copy(requestedOffice = null),
+            receipt = EdictReceipt(8, EdictRecipientDecision.ACCEPT),
+        )
+        val encoded = ImperialEdictCodec.write(listOf(noOffice))
+        val edictRecord = (encoded.getValue("edicts") as List<Map<String, Any?>>).single()
+        val receiptRecord = edictRecord.getValue("receipt") as Map<String, Any?>
+        val malformed = encoded + ("edicts" to listOf(
+            edictRecord + ("receipt" to (receiptRecord + ("decision" to "PARTIAL_ACCEPT"))),
+        ))
+        assertFailsWith<IllegalArgumentException> {
+            ImperialEdictCodec.read(mapOf(ImperialEdictCodec.META_KEY to malformed))
+        }
+    }
 }

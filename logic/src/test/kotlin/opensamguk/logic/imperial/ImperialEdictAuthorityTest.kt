@@ -72,6 +72,21 @@ class ImperialEdictAuthorityTest {
     }
 
     @Test
+    fun `a corroborated seal cannot sign after its identity is rejected or disputed`() {
+        for (assessment in listOf(AuthenticityAssessment.REJECTED, AuthenticityAssessment.DISPUTED)) {
+            val contraryClaim = AuthenticityClaim(
+                "claim-2", seal.claimedIdentity, 2, assessment, listOf("contrary-evidence"),
+            )
+            val contradicted = ImperialRegaliaState(listOf(seal.copy(
+                authenticityClaims = seal.authenticityClaims + contraryClaim,
+            )))
+            assertFailsWith<IllegalArgumentException> {
+                ImperialEdictAuthority.sealWithRegalia(registered(), world, contradicted, "seal-1", 4, setOf(4))
+            }
+        }
+    }
+
+    @Test
     fun `refused delivery yields no court confirmation proof`() {
         val sealed = ImperialEdictAuthority.sealWithRegalia(registered(), world, regalia, "seal-1", 4, setOf(4))
         val delivered = ImperialEdictPipeline.deliver(ImperialEdictPipeline.dispatch(sealed, 5), 8)
