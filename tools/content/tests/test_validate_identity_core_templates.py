@@ -34,6 +34,11 @@ class IdentityCoreTemplateTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "CONFIRMED"):
             validate(broken, self.sources)
 
+    def test_confirmed_user_decision_is_accepted(self):
+        user_confirmed = copy.deepcopy(self.templates)
+        user_confirmed["rows"][0]["designDecision"]["decidedBy"] = "사용자"
+        self.assertEqual(3, validate(user_confirmed, self.sources))
+
     def test_duplicate_capability_is_rejected(self):
         broken = copy.deepcopy(self.templates)
         row = broken["rows"][0]

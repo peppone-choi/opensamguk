@@ -57,6 +57,23 @@ class FactionIdentityCoreTest {
     }
 
     @Test
+    fun `readopting a former identity removes its seeds from tensions`() {
+        val bandit = templates.getValue("identity.bandit")
+        val confucian = templates.getValue("identity.confucian")
+        val initial = FactionIdentityState(
+            bandit.seedProfile(9, legitimacy, IdentityContentProfile.CHRONICLE),
+            emptyList(),
+        )
+        val restored = initial
+            .adopt(confucian, IdentityStage.TERRITORIAL_REGIME)
+            .adopt(bandit, IdentityStage.CONFEDERATION)
+        assertEquals(bandit.governanceSeeds, restored.profile.governanceForms)
+        assertEquals(bandit.traditionSeeds, restored.profile.traditions)
+        assertEquals(setOf("county-bureaucracy", "school-recommendation"), restored.profile.institutionalTensions)
+        assertEquals(initial.profile.version + 2, restored.profile.version)
+    }
+
+    @Test
     fun `profile requires explicit legitimacy for every audience`() {
         assertFailsWith<IllegalArgumentException> {
             templates.getValue("identity.taiping").seedProfile(7, mapOf(IdentityAudience.COMMONERS to 1), IdentityContentProfile.CHRONICLE)
@@ -77,5 +94,11 @@ class FactionIdentityCoreTest {
     fun `template fails closed when a first profile is missing`() {
         val broken = templatesPayload.replaceFirst("\"id\": \"identity.bandit\"", "\"id\": \"identity.unknown\"")
         assertFailsWith<IllegalArgumentException> { IdentityCoreTemplates.parse(broken, sourcesPayload) }
+    }
+
+    @Test
+    fun `confirmed user decision is a valid template source`() {
+        val userConfirmed = templatesPayload.replaceFirst("\"decidedBy\": \"구현 에이전트\"", "\"decidedBy\": \"사용자\"")
+        assertEquals(3, IdentityCoreTemplates.parse(userConfirmed, sourcesPayload).size)
     }
 }

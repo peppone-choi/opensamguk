@@ -51,8 +51,8 @@ def validate(templates: dict, sources: dict) -> int:
         if len(network_keys) != len(set(network_keys)):
             raise ValueError(f"{row_id}.startingNetworks has a duplicate place binding")
         decision = row.get("designDecision")
-        if not isinstance(decision, dict) or decision.get("status") != "CONFIRMED" or decision.get("decidedBy") != "구현 에이전트":
-            raise ValueError(f"{row_id}.designDecision requires CONFIRMED agent decision")
+        if not isinstance(decision, dict) or decision.get("status") != "CONFIRMED" or decision.get("decidedBy") not in {"구현 에이전트", "사용자"}:
+            raise ValueError(f"{row_id}.designDecision requires a CONFIRMED agent or user decision")
         if not decision.get("decidedAt") or not decision.get("basis"):
             raise ValueError(f"{row_id}.designDecision needs date and basis")
     return len(rows)

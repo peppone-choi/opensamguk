@@ -132,7 +132,8 @@ data class FactionIdentityState(
             stage = approvedStage,
             governanceForms = template.governanceSeeds,
             traditions = template.traditionSeeds,
-            institutionalTensions = profile.institutionalTensions + displaced,
+            institutionalTensions = (profile.institutionalTensions + displaced) -
+                template.governanceSeeds - template.traditionSeeds,
             version = profile.version + 1,
         ))
     }
@@ -152,7 +153,7 @@ object IdentityCoreTemplates {
             require(id in firstIds)
             val decision = row.getValue("designDecision").jsonObject
             require(decision.getValue("status").jsonPrimitive.content == "CONFIRMED")
-            require(decision.getValue("decidedBy").jsonPrimitive.content == "구현 에이전트")
+            require(decision.getValue("decidedBy").jsonPrimitive.content in setOf("구현 에이전트", "사용자"))
             require(decision.getValue("decidedAt").jsonPrimitive.content.isNotBlank())
             require(decision.getValue("basis").jsonPrimitive.content.isNotBlank())
             val networkSeeds = row.getValue("startingNetworks").jsonArray.map { seedNode ->
