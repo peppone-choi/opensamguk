@@ -16,11 +16,8 @@ import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
-import opensamguk.infra.entity.AuctionEntity
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.stats.GeneralActionPipeline
-import java.lang.reflect.Proxy
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -31,7 +28,7 @@ import kotlin.test.assertTrue
  * spec v3 §8 **적색 프로브**: 같은 fixture 로 world+recorder 를 두 벌 새로 만들어 [MonthlyPostUpdateHook] 을
  * 각각 한 번 돌린다 — 한 벌은 `retainerMonthly = null`, 한 벌은 배선. 행 0 이면 `consumeDirtyState()`·recorder
  * 패치·로그·world_state meta 가 deep-equal 이어야 하고(골든 불변의 증거), 부곡 1행이 있으면 **달라져야** 한다
- * (게이트가 경로를 실제로 보는 증거). Q15/Q16 이 RNG·벽시계를 읽으므로 ScriptedRng + 빈 경매 repo 로 고정한다.
+ * (게이트가 경로를 실제로 보는 증거). 월 RNG(Q4·Q11)는 ScriptedRng 로 고정한다.
  */
 class RetainerMonthlyNoopGateTest {
 
@@ -75,21 +72,11 @@ class RetainerMonthlyNoopGateTest {
         ),
     )
 
-    private fun auctionRepo(): AuctionRepository = Proxy.newProxyInstance(
-        AuctionRepository::class.java.classLoader, arrayOf(AuctionRepository::class.java),
-    ) { _, method, _ ->
-        when (method.returnType) {
-            java.util.List::class.java -> emptyList<AuctionEntity>()
-            java.lang.Boolean.TYPE -> false
-            else -> null
-        }
-    } as AuctionRepository
-
     private fun runOnce(wired: Boolean, retainers: List<Retainer> = emptyList(), bugoks: List<Bugok> = emptyList()): Outcome {
         val world = world(retainers, bugoks)
         val recorder = ChangeRecorder()
         MonthlyPostUpdateHook(
-            world, recorder, GeneralActionPipeline(), auctionRepository = auctionRepo(),
+            world, recorder, GeneralActionPipeline(),
             retainerMonthly = if (wired) RetainerMonthlyService() else null,
         ).run(ScriptedRng())
         val dirty = world.consumeDirtyState()

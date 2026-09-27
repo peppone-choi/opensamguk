@@ -46,39 +46,6 @@ class P6RowMappersTest {
     }
 
     @Test
-    fun `AuctionRow round-trips finished boolean and resource enum`() {
-        val open = Instant.parse("2026-05-31T00:00:00Z")
-        val close = Instant.parse("2026-05-31T01:00:00Z")
-        val row = linkedMapOf<String, Any?>(
-            "id" to 7, "type" to "uniqueItem", "finished" to false, "target" to "che_보검",
-            "host_general_id" to 0, "req_resource" to "inheritPoint",
-            "open_date" to open, "close_date" to close, "detail" to """{"amount":5000}""",
-        )
-        val a = AuctionRowMapper.fromRow(row)
-        assertEquals("uniqueItem", a.type)
-        assertEquals(false, a.finished)
-        assertEquals("inheritPoint", a.reqResource)
-        val cols = AuctionRowMapper.toColumns(a)
-        assertTrue("id" !in cols)
-        assertEquals("inheritPoint", cols["req_resource"])
-        assertEquals(close, cols["close_date"])
-    }
-
-    @Test
-    fun `AuctionBidRow round-trips a nullable owner`() {
-        val date = Instant.parse("2026-05-31T00:30:00Z")
-        val row = linkedMapOf<String, Any?>(
-            "no" to 2, "auction_id" to 7, "owner" to null, "general_id" to 42,
-            "amount" to 6060, "date" to date, "aux" to """{"raise":"1.01"}""",
-        )
-        val b = AuctionBidRowMapper.fromRow(row)
-        assertNull(b.owner)
-        assertEquals(6060, b.amount)
-        val cols = AuctionBidRowMapper.toColumns(b)
-        assertTrue("no" !in cols, "INSERT column map must omit the SERIAL no")
-    }
-
-    @Test
     fun `GameKvRow carries a null value (delete-on-null) and a present value`() {
         val present = GameKvRowMapper.fromRow(
             linkedMapOf("table" to "game_env", "namespace" to "global", "key" to "last_betting_id", "value" to "5"),

@@ -1,0 +1,14 @@
+{
+  "paths": [
+    {
+      "path": "web/shared/src/iso/countyNameGloss.generated.ts",
+      "kinds": ["hanja"],
+      "reason": "ADR-LITE-049 2026-09-26: 같은 郡 안 동명 현을 가르는 한자 병기표(상세 머리 병기 허용). tools/map/build_county_display_name_collisions.py 생성물이며 --check 가 따로 지킨다."
+    },
+    {
+      "path": "web/shared/src/iso/cityName.ts",
+      "kinds": ["hanja"],
+      "reason": "데이터 원 표기(nameCh)의 행정 접미사(县·縣·國 등)를 떼는 정규화 표다. 화면 문구가 아니다."
+    }
+  ]
+}

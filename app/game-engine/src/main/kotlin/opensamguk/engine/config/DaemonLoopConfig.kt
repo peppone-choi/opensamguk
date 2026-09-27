@@ -31,8 +31,6 @@ import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.ArchiveHistoryReader
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.DiplomacyLetterRepository
@@ -197,8 +195,6 @@ class DaemonLoopConfig {
         generalActionPipeline: GeneralActionPipeline,
         eventDispatcher: EventDispatcher,
         eventStore: EventStore,
-        auctionRepository: AuctionRepository,
-        auctionBidRepository: AuctionBidRepository,
         boardPostRepository: BoardPostRepository,
         votePollRepository: VotePollRepository,
         diplomacyLetterRepository: DiplomacyLetterRepository,
@@ -276,7 +272,6 @@ class DaemonLoopConfig {
         )
 
         var nextMessageId = messageRepository.findMaxId()
-        var nextAuctionId = auctionRepository.findMaxId()
         var nextBattleReplayId = battleReplayRepository.findMaxId()
 
         // ONE recorder shared by the handler + the ruler-succession hook (single dirty source, P2 Risk #4).
@@ -285,7 +280,6 @@ class DaemonLoopConfig {
         // markNationDeleted deltas that must flush alongside the rest of the tick.
         val recorder = ChangeRecorder(
             messageIdAllocator = { ++nextMessageId },
-            auctionIdAllocator = { ++nextAuctionId },
             battleReplayIdAllocator = { ++nextBattleReplayId },
             kvWriteObserver = world::applyKvDirtyFree,
             initialInheritancePoints = state.meta["inheritancePoints"] as? Map<*, *> ?: emptyMap<Any?, Any?>(),
@@ -456,8 +450,6 @@ class DaemonLoopConfig {
                 world,
                 handler.recorder,
                 generalActionPipeline,
-                auctionRepository = auctionRepository,
-                auctionBidRepository = auctionBidRepository,
                 eventDispatcher = eventDispatcher,
                 archiveHistoryReader = archiveHistoryReader,
                 statisticSnapshotReader = statisticSnapshotReader,
@@ -551,8 +543,6 @@ class DaemonLoopConfig {
             pipeline = monthlyPipeline,
             eventDispatcher = eventDispatcher,
             worldContextFactory = worldContextFactory,
-            auctionRepository = auctionRepository,
-            auctionBidRepository = auctionBidRepository,
             boardPostRepository = boardPostRepository,
             v2CityLedger = v2CityLedgerProvider.getIfAvailable(),
             votePollRepository = votePollRepository,
