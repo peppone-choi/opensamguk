@@ -1,13 +1,11 @@
 package opensamguk.engine.turn
 
 import opensamguk.common.world.WorldId
-import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.imperial.ImperialHouse
 import opensamguk.logic.imperial.ImperialLineStatus
 import opensamguk.logic.imperial.ImperialTransitionType
 import opensamguk.logic.imperial.ImperialWorldCodec
 import opensamguk.logic.imperial.ImperialWorldState
-import opensamguk.logic.stats.GeneralActionPipeline
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -36,7 +34,10 @@ class ImperialDeathHookTest {
     }
 
     private fun handler(world: InMemoryTurnWorld, nextRuler: (Int, LifecycleEnv) -> Unit) =
-        ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "0".repeat(32), 184,
+        ReservedTurnHandler(world,
+            EngineGeneralActionPipelineBuilder(world, 184)
+                .registryFor(assertNotNull(world.getGeneralById(1))),
+            "0".repeat(32), 184,
             nextRuler = nextRuler,
             onGeneralDeath = { id, lifecycle -> ImperialDeathHook.apply(world, id, lifecycle) })
 
