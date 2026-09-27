@@ -7,6 +7,18 @@ import opensamguk.logic.world.WaterControlSnapshot
 import opensamguk.logic.world.ProvinceControlSnapshot
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventOrdinalAllocator
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.EventTurn
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.GameEvent
+import opensamguk.logic.record.Publication
+import opensamguk.logic.record.PublicationState
+import opensamguk.logic.record.RefRole
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -99,6 +111,7 @@ interface LegacyDiplomacyIdentityOracle {
 class InMemoryTurnWorld(
     snapshot: WorldSnapshot,
     private val legacyDiplomacyIdentityOracle: LegacyDiplomacyIdentityOracle? = null,
+    private val lastCommittedEventOrdinal: (EventTurn) -> Int? = { null },
 ) {
     val worldId: WorldId = snapshot.worldId
     private val generals = LinkedHashMap<Int, TurnGeneral>()
@@ -163,6 +176,10 @@ class InMemoryTurnWorld(
     private val deletedNationIds = LinkedHashSet<Int>()
     private val deletedNationSnapshots = mutableListOf<DeletedNationSnapshot>()
     private val logs = mutableListOf<LogEntryDraft>()
+    private val gameEvents = mutableListOf<GameEvent>()
+    private val gameEventByKey = LinkedHashMap<EventKey, GameEvent>()
+    private var gameEventKeyTurn: EventTurn? = null
+    private var eventOrdinalAllocator: EventOrdinalAllocator? = null
 
     // 액추에이터/어드민 HTTP 스레드가 데몬 스레드의 `state = state.copy(...)`와 동시에 읽는다.
     // [TurnWorldState]는 불변 data class라 torn object는 없지만, @Volatile 없이는 가시성 보장이 없다.
@@ -605,6 +622,49 @@ class InMemoryTurnWorld(
         )
     }
 
+    /** Record a typed fact at the world's current turn; no rendered sentence enters this channel. */
+    fun recordEvent(
+        kind: EventKind,
+        audience: AudienceTarget,
+        eventKey: EventKey,
+        refs: Map<RefRole, EventRef> = emptyMap(),
+        facts: Map<FactRole, EventFact> = emptyMap(),
+    ): GameEvent {
+        val turn = EventTurn(state.currentYear, state.currentMonth, state.currentPhase)
+        if (gameEventKeyTurn != turn) {
+            gameEventByKey.clear()
+            gameEventKeyTurn = turn
+        }
+        val existing = gameEventByKey[eventKey]
+        if (existing != null) {
+            check(existing.kind == kind && existing.audience == audience && existing.refs == refs && existing.facts == facts) {
+                "game event key reused with changed payload"
+            }
+            // A flush may have drained the buffer before its transaction failed. Requeueing
+            // the same semantic event is safe after a successful flush too: the DB key is
+            // idempotent, and no new ordinal is consumed here.
+            if (existing !in gameEvents) gameEvents.add(existing)
+            return existing
+        }
+        val allocator = eventOrdinalAllocator ?: EventOrdinalAllocator(turn, lastCommittedEventOrdinal(turn)).also {
+            eventOrdinalAllocator = it
+        }
+        val event = GameEvent(
+            worldId = worldId.value,
+            kind = kind,
+            occurredAt = allocator.allocate(turn),
+            audience = audience,
+            publication = Publication(if (audience == AudienceTarget.Public) PublicationState.PUBLISHED else PublicationState.PRIVATE),
+            eventKey = eventKey,
+            refs = refs,
+            facts = facts,
+        )
+        gameEvents.add(event)
+        gameEventByKey[eventKey] = event
+        return event
+    }
+
+
     fun updateGeneral(next: TurnGeneral): TurnGeneral? {
         if (!generals.containsKey(next.id)) return null
         generals[next.id] = next
@@ -971,6 +1031,7 @@ class InMemoryTurnWorld(
         val deletedNations = deletedNationIds.toList()
         val deletedSnapshots = deletedNationSnapshots.toList()
         val logsOut = logs.toList()
+        val gameEventsOut = gameEvents.toList()
         val retainersOut = dirtyRetainerIds.mapNotNull { retainers[it] }
         val createdRetainers = createdRetainerIds.mapNotNull { retainers[it] }
         val deletedRetainers = deletedRetainerIds.toList()
@@ -1006,6 +1067,7 @@ class InMemoryTurnWorld(
         deletedNationIds.clear()
         deletedNationSnapshots.clear()
         logs.clear()
+        gameEvents.clear()
         dirtyRetainerIds.clear()
         createdRetainerIds.clear()
         deletedRetainerIds.clear()
@@ -1035,6 +1097,7 @@ class InMemoryTurnWorld(
             deletedNationSnapshots = deletedSnapshots,
             diplomacy = diplomacyOut,
             logs = logsOut,
+            gameEvents = gameEventsOut,
             createdGenerals = createdGenerals,
             createdNations = createdNations,
             createdTroops = createdTroops,

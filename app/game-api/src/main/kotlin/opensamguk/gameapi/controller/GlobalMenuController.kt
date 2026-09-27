@@ -48,7 +48,6 @@ class GlobalMenuController {
          * targets are remapped to App-Router routes by the client later.
          */
         private val DEFAULT_MENU: List<MenuNode> = listOf(
-            item("천통국 베팅", "v_nationBetting.php", condHighlightVar = "nationBetting"),
             MenuNode(
                 type = "multi", name = "게임정보",
                 subMenu = listOf(

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "id": "regalia.transmission_seal_claim",
+      "kind": "STATE_REGALIA",
+      "name": "傳國璽",
+      "claimScope": "reportedPossession",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷075",
+          "section": "劉焉袁術呂布列傳 第六十五",
+          "quote": "又聞孫堅得傳國璽，遂拘堅妻奪之。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "instrument.prefect_seal",
+      "kind": "OFFICE_INSTRUMENT",
+      "name": "太守印綬",
+      "claimScope": "officeCredential",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷086",
+          "section": "南蠻西南夷列傳 第七十",
+          "quote": "長貴遣使上三年計，天子即授越巂太守印綬。",
+          "grade": "PRIMARY"
+        }
+      ]
+    },
+    {
+      "id": "instrument.tiger_tally",
+      "kind": "OFFICE_INSTRUMENT",
+      "name": "虎符",
+      "claimScope": "splitTally",
+      "grade": "PRIMARY",
+      "sources": [
+        {
+          "book": "後漢書",
+          "volume": "卷116",
+          "section": "百官志 百官三 宗正 大司農 少府",
+          "quote": "旧二人在中，主玺及虎符、竹符之半者。",
+          "grade": "PRIMARY"
+        }
+      ]
+    }
+  ]
+}

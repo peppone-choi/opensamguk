@@ -96,7 +96,7 @@ class InputCatalog internal constructor(
             checkNotNull(InputCatalog::class.java.classLoader.getResource(RESOURCE)) {
                 "hwiha input catalog resource is missing: $RESOURCE"
             }.readText(),
-        )
+        ).also(AiPolicyRegistry::validate)
 
         fun parse(payload: String): InputCatalog {
             CatalogDuplicateKeys(payload).check()

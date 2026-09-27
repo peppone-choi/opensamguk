@@ -9,6 +9,13 @@ import opensamguk.logic.economy.Resources
 import opensamguk.infra.seed.CountyProductionJson
 import opensamguk.logic.input.RecordKind
 import opensamguk.logic.input.RuleProfile
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
 /**
@@ -91,6 +98,21 @@ class MonthlyCountyIncome(
                 "縣 창고 ${count}곳에 월세입이 들어왔습니다.",
                 linkedMapOf("stamp" to stamp, "counties" to count, "money" to sum.money, "grain" to sum.grain,
                     "iron" to sum.iron, "timber" to sum.timber, "horses" to sum.horses))
+            world.recordEvent(
+                kind = EventKind.INCOME_MONTHLY,
+                audience = AudienceTarget.Nation(nationId),
+                eventKey = EventKey.derive("income.monthly", world.worldId.value.toString(),
+                    year.toString(), month.toString(), nationId.toString()),
+                refs = mapOf(RefRole.NATION to EventRef.Nation(nationId)),
+                facts = mapOf(
+                    FactRole.COUNTIES to EventFact.Amount(count.toLong()),
+                    FactRole.MONEY to EventFact.Amount(sum.money),
+                    FactRole.GRAIN to EventFact.Amount(sum.grain),
+                    FactRole.IRON to EventFact.Amount(sum.iron),
+                    FactRole.TIMBER to EventFact.Amount(sum.timber),
+                    FactRole.HORSES to EventFact.Amount(sum.horses),
+                ),
+            )
         }
 
         world.setGameEnvValue(STAMP_KEY, stamp)

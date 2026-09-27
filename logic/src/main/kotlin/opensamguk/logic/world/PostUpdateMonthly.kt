@@ -361,7 +361,6 @@ fun postUpdateMonthlyTail(
     updateGeneralNumber: () -> Unit = {},
     registerAuction: RngConsumer,
     setNationFront: () -> List<PostFrontResult>,
-    checkEmperior: () -> Unit = {},
     @Suppress("UNUSED_PARAMETER") isUnited: Boolean = false,
 ): PostUpdateMonthlyTailResult {
     val drawOrder = mutableListOf<String>()
@@ -376,8 +375,7 @@ fun postUpdateMonthlyTail(
 
     // Q12/Q13 — updateGeneralNumber + refreshNationStaticInfo (Q13 is PHP request-local cache only).
     updateGeneralNumber()
-    // Q14 — checkEmperior (no rng; 천하통일 detection → isunited transition + 전토통일 log; ZERO draws).
-    checkEmperior()
+    // Q14 — 삼모 전 城 통일 판정(checkEmperior)은 #917 에서 은퇴했다. RNG 를 쓰지 않던 단계라 뒤 순서는 그대로다.
 
     // Q16 — registerAuction (next active RNG consumer).
     registerAuction(rng)

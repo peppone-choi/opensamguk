@@ -226,26 +226,6 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$[0].killturn").value(38))
     }
 
-    // ── GET /api/tournament (state-0 default, no table) ──────────────────────────────────────────────
-    @Test
-    fun `tournament returns state-0 default with 4 empty ranking boards`() {
-        `when`(gameKv.findByTableAndNamespaceAndKey(anyString(), anyString(), anyString())).thenReturn(null)
-
-        mvc(TournamentController(gameKv, objectMapper)).perform(get("/api/tournament"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.state").value(0))
-            .andExpect(jsonPath("$.tnmtType").value(0))
-            .andExpect(jsonPath("$.tnmtTypeText").value("전력전"))
-            .andExpect(jsonPath("$.tnmtMsg").value(""))
-            .andExpect(jsonPath("$.entrants.length()").value(0))
-            .andExpect(jsonPath("$.bracket.length()").value(0))
-            .andExpect(jsonPath("$.rankings.length()").value(4))
-            .andExpect(jsonPath("$.rankings[0].type").value("전력전"))
-            .andExpect(jsonPath("$.rankings[1].type").value("통솔전"))
-            .andExpect(jsonPath("$.rankings[2].type").value("일기토"))
-            .andExpect(jsonPath("$.rankings[3].type").value("설전"))
-    }
-
     private fun diplomacyController() =
         DiplomacyController(diplomacy, letters, nations, cities, resolver, SecretPermissionReader(nations))
 

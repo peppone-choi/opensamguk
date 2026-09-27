@@ -1,6 +1,7 @@
 package opensamguk.logic.world
 
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
@@ -344,6 +345,20 @@ class RegNpcActionTest {
     }
 
     @Test
+    fun `deferred affiliated officer stages exactly one declared retainer with its general`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val args = rtkRegNpcTuple(appearanceYear = 190).toMutableList<JsonElement>()
+        while (args.size < 25) args += JsonNull
+        args += JsonPrimitive("주공")
+        val context = FakeContext(year = 190, month = 1)
+
+        factory.create(RawAction("RegNPC", args)).run(context)
+
+        assertEquals(1, context.staged.size)
+        assertEquals(listOf(1 to "주공"), context.stagedRetainers)
+    }
+
+    @Test
     fun `RTK neutral tuple appears at its explicit year even when younger than fourteen`() {
         val factory = WorldActions.register(EventActionFactory())
         val context = FakeContext(year = 192, month = 1)
@@ -553,6 +568,7 @@ class RegNpcActionTest {
             "stored_icons" to storedIcons,
         )
         val staged = mutableListOf<BuiltGeneral>()
+        val stagedRetainers = mutableListOf<Pair<Int, String>>()
         val actionLogs = mutableListOf<String>()
         val operations = mutableListOf<String>()
         var npcNationShuffleCalled = false
@@ -586,6 +602,9 @@ class RegNpcActionTest {
             operations += "stage"
             staged += general
             return staged.size
+        }
+        override fun stageDeclaredRetainer(generalId: Int, masterName: String) {
+            stagedRetainers += generalId to masterName
         }
         override fun stageNation(nation: Nation) = Unit
         override fun stageDiplomacy(diplomacy: Diplomacy) = Unit

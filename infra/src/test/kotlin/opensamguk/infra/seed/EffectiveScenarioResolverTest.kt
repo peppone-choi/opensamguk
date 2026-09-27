@@ -13,35 +13,35 @@ class EffectiveScenarioResolverTest {
 
     @Test
     fun `same-name external scenario overrides the bundled scenario`(@TempDir scenarioDir: Path) {
-        Files.writeString(scenarioDir.resolve("scenario_1010.json"), scenarioJson("external"), StandardCharsets.UTF_8)
+        Files.writeString(scenarioDir.resolve("scenario_990002.json"), scenarioJson("external"), StandardCharsets.UTF_8)
 
-        val scenario = EffectiveScenarioResolver(scenarioDir.toString()).resolve("scenario_1010")
+        val scenario = EffectiveScenarioResolver(scenarioDir.toString()).resolve("scenario_990002")
 
         assertEquals("external", scenario.title)
     }
 
     @Test
     fun `missing external scenario falls back to the bundled scenario`(@TempDir scenarioDir: Path) {
-        val scenario = EffectiveScenarioResolver(scenarioDir.toString()).resolve("scenario_1010")
+        val scenario = EffectiveScenarioResolver(scenarioDir.toString()).resolve("scenario_990002")
 
         assertTrue(scenario.generals.isNotEmpty())
     }
 
     @Test
     fun `malformed selected external scenario does not fall back to the bundled scenario`(@TempDir scenarioDir: Path) {
-        Files.writeString(scenarioDir.resolve("scenario_1010.json"), "{ malformed", StandardCharsets.UTF_8)
+        Files.writeString(scenarioDir.resolve("scenario_990002.json"), "{ malformed", StandardCharsets.UTF_8)
 
         assertFails {
-            EffectiveScenarioResolver(scenarioDir.toString()).resolve("scenario_1010")
+            EffectiveScenarioResolver(scenarioDir.toString()).resolve("scenario_990002")
         }
     }
 
     @Test
     fun `unreadable selected external scenario does not fall back to the bundled scenario`(@TempDir scenarioDir: Path) {
-        Files.createDirectory(scenarioDir.resolve("scenario_1010.json"))
+        Files.createDirectory(scenarioDir.resolve("scenario_990002.json"))
 
         assertFails {
-            EffectiveScenarioResolver(scenarioDir.toString()).readScenarioJson("scenario_1010")
+            EffectiveScenarioResolver(scenarioDir.toString()).readScenarioJson("scenario_990002")
         }
     }
 

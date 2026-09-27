@@ -12,6 +12,13 @@ import opensamguk.logic.renown.RenownEntry
 import opensamguk.logic.renown.RenownEventKind
 import opensamguk.logic.renown.RenownEvents
 import opensamguk.logic.renown.RenownRules
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
 import org.slf4j.LoggerFactory
 
 /**
@@ -112,6 +119,18 @@ class MonthlyAssessment(
             if (split.applied.isNotEmpty()) {
                 val summary = summarize(split.applied)
                 reasons[general.id.toString()] = summary
+                world.recordEvent(
+                    kind = EventKind.YUEDAN_ASSESSED,
+                    audience = AudienceTarget.Self(general.id),
+                    eventKey = EventKey.derive(EventKind.YUEDAN_ASSESSED.code,
+                        world.worldId.value.toString(), stamp, general.id.toString()),
+                    refs = mapOf(RefRole.ACTOR to EventRef.General(general.id)),
+                    facts = mapOf(
+                        FactRole.RENOWN_BEFORE to EventFact.Amount(before.toLong()),
+                        FactRole.RENOWN_AFTER to EventFact.Amount(outcome.renown.toLong()),
+                        FactRole.RENOWN_CHANGE to EventFact.Change(outcome.delta.toLong()),
+                    ),
+                )
                 Records.general(world, general.id, RecordKind.YUEDAN_ASSESSED,
                     "월단평: 명망 $before → ${outcome.renown} (${summary.joinToString("·") { labelOf(it) }})",
                     linkedMapOf("stamp" to stamp, "before" to before, "after" to outcome.renown,
@@ -154,6 +173,12 @@ class MonthlyAssessment(
         Records.world(world, RecordKind.YUEDAN_ANNOUNCED,
             "【월단평】 ${year}년 ${month}월 월단평이 발표되었습니다.$head",
             linkedMapOf("stamp" to stamp, "top" to ranking.take(ANNOUNCED_TOP)))
+        world.recordEvent(
+            kind = EventKind.YUEDAN_ANNOUNCED,
+            audience = AudienceTarget.Public,
+            eventKey = EventKey.derive(EventKind.YUEDAN_ANNOUNCED.code,
+                world.worldId.value.toString(), stamp),
+        )
     }
 
     /** 종류별 건수와 증감(이번 곡선 기준). 종류 순서는 [RenownEventKind] 선언 순. */

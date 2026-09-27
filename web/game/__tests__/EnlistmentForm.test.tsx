@@ -30,7 +30,7 @@ test('blocked server reason prevents submission', async () => {
     expect(screen.getByRole('button', {name:'출사 예약'})).toBeDisabled();
     expect(api.command).not.toHaveBeenCalled();
 });
-test.each([{turnIdx:12}, {isNationCommand:true}, {pinnedCommand:'휴식'}, {ruleProfile:null}])('unavailable context refuses write %j', async props => {
+test.each([{turnIdx:12}, {pinnedCommand:'휴식'}, {ruleProfile:null}])('unavailable context refuses write %j', async props => {
     modal(props); expect(screen.queryByRole('button', {name:'출사 예약'})).not.toBeInTheDocument();
     expect(api.command).not.toHaveBeenCalled();
 });

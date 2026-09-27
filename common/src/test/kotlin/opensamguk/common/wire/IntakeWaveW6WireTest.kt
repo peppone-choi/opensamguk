@@ -7,11 +7,11 @@ import kotlin.test.assertIs
 /**
  * W6/W5 REST mutation batch wire round-trip — the new intake command + result variants (FOUNDATION).
  *
- * Confirms (a) each new [TurnDaemonCommand] variant (sendMessage/deleteMessage, auctionOpen{BuyRice,
- * SellRice,Unique}, diplo{Send,Rollback,Destroy}Letter, selectPool{Pick,Update}) encodes/decodes
+ * Confirms (a) each new [TurnDaemonCommand] variant (sendMessage/deleteMessage,
+ * diplo{Send,Rollback,Destroy}Letter, selectPool{Pick,Update}) encodes/decodes
  * through the union discriminator, and (b) the [TurnDaemonCommandResultSerializer] `(type, ok)`
- * selector routes the new result classes: sendMessage/deleteMessage → single-type; the 3 auction-open
- * codes collapse to [AuctionOpenResult]; the 3 diplo-letter codes collapse to [DiploLetterResult]; the
+ * selector routes the new result classes: sendMessage/deleteMessage → single-type;
+ * the 3 diplo-letter codes collapse to [DiploLetterResult]; the
  * 2 select-pool codes collapse to [SelectPoolActionResult]. `buildNationCandidate` stays in the
  * boolean-ok group ([GeneralBoolResult]) — Q-D1 RESOLVED — so it is asserted here too.
  *
@@ -31,25 +31,12 @@ class IntakeWaveW6WireTest {
     }
 
     @Test
-    fun `message + auction-open + diplo-letter + select-pool commands round-trip`() {
+    fun `message + diplo-letter + select-pool commands round-trip`() {
         val send = TurnDaemonCommand.SendMessage(generalId = 10, mailbox = 9999, text = "안녕")
         assertEquals(send, cmdRoundTrip(send))
 
         val del = TurnDaemonCommand.DeleteMessage(generalId = 10, msgID = 42)
         assertEquals(del, cmdRoundTrip(del))
-
-        val buyRice = TurnDaemonCommand.AuctionOpenBuyRice(
-            generalId = 10, amount = 1000, closeTurnCnt = 12, startBidAmount = 100, finishBidAmount = 150,
-        )
-        assertEquals(buyRice, cmdRoundTrip(buyRice))
-
-        val sellRice = TurnDaemonCommand.AuctionOpenSellRice(
-            generalId = 10, amount = 1000, closeTurnCnt = 12, startBidAmount = 100, finishBidAmount = 150,
-        )
-        assertEquals(sellRice, cmdRoundTrip(sellRice))
-
-        val unique = TurnDaemonCommand.AuctionOpenUnique(generalId = 10, itemId = "che_명마", amount = 5000)
-        assertEquals(unique, cmdRoundTrip(unique))
 
         // prevLetterNo nullable — 부재(이전 문서 없음) 보존.
         val diploSend = TurnDaemonCommand.DiploSendLetter(
@@ -137,18 +124,6 @@ class IntakeWaveW6WireTest {
         assertEquals(delFail, rd)
         assertEquals(42, (rd as DeleteMessageResult).msgID)
         assertEquals("5분 이내의 메시지만 삭제할 수 있습니다.", rd.reason)
-    }
-
-    @Test
-    fun `auction-open result collapses to AuctionOpenResult on both ok and fail`() {
-        val ok = AuctionOpenResult(type = "auctionOpenBuyRice", ok = true, generalId = 10, auctionId = 5)
-        val rok = resRoundTrip(ok)
-        assertIs<AuctionOpenResult>(rok)
-        assertEquals(ok, rok)
-
-        val fail = AuctionOpenResult(type = "auctionOpenUnique", ok = false, generalId = 10, reason = "미구현")
-        assertIs<AuctionOpenResult>(resRoundTrip(fail))
-        assertIs<AuctionOpenResult>(resRoundTrip(AuctionOpenResult(type = "auctionOpenSellRice", ok = true, generalId = 10, auctionId = 6)))
     }
 
     @Test

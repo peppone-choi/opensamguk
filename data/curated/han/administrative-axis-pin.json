@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "worldPath": "infra/src/main/resources/map/han-world-v3.json",
+  "worldSha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30",
+  "zhouAxisPath": "data/curated/han/administrative-zhou-axis-v1.json",
+  "zhouAxisSha256": "eec0fc4a3f5b81c106d1d89a721c69903bcca5badb798a52217c6526de131e97",
+  "sourceAxisRows": 105,
+  "knownCountyRows": 1127,
+  "outsideCanonRows": 61,
+  "unresolvedParentRows": 259,
+  "knownCommanderySeats": 101,
+  "unresolvedCommanderySeats": 4,
+  "note": "Map4 world bundle after #905; city ID, administrativeUnitId, and meta ju/jun/junCh assignments match the previous pinned world. Missing parent IDs grant no jurisdiction."
+}

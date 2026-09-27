@@ -6,11 +6,23 @@ import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.JdbcTemplate
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
+import opensamguk.logic.record.EventTurn
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.GameEvent
+import opensamguk.logic.record.OccurredAt
+import opensamguk.logic.record.Publication
+import opensamguk.logic.record.PublicationState
+import opensamguk.logic.record.RefRole
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class V65GameEventMigrationTest {
@@ -50,6 +62,38 @@ class V65GameEventMigrationTest {
             assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE publication_state = 'PUBLISHED'", Int::class.java))
             insert("5".repeat(64), 3, "RETINUE", "RETINUE_NATION", "people.joined", general = 7,
                 recipients = "{7,9}", refs = """{"PERSON":9}""")
+            val ordinalReader = GameEventOrdinalRepository(NamedParameterJdbcTemplate(jdbc))
+            assertEquals(3, ordinalReader.maxCommitted(1, EventTurn(200, 2, 3)))
+            assertNull(ordinalReader.maxCommitted(1, EventTurn(200, 2, 2)))
+            jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) VALUES (2, 'fixture', 200, 1, 3600)")
+            jdbc.update("""INSERT INTO game_event (world_id, event_key, kind, section, audience,
+                occurred_year, occurred_month, occurred_phase, occurred_ordinal, publication_state)
+                VALUES (2, ?, 'yuedan.announced', 'WORLD', 'PUBLIC', 200, 2, 3, 10, 'PUBLISHED')""",
+                "6".repeat(64))
+            assertEquals(3, ordinalReader.maxCommitted(1, EventTurn(200, 2, 3)))
+            assertEquals(10, ordinalReader.maxCommitted(2, EventTurn(200, 2, 3)))
+            val eventWriter = GameEventWriteRepository(NamedParameterJdbcTemplate(jdbc))
+            val event = GameEvent(
+                worldId = 1,
+                kind = EventKind.PERSONAL_APPLIED,
+                occurredAt = OccurredAt(200, 2, 3, 11),
+                audience = AudienceTarget.Self(5),
+                publication = Publication(PublicationState.PRIVATE),
+                eventKey = EventKey.derive("fixture", "personal", "11"),
+                refs = mapOf(RefRole.ACTOR to EventRef.General(5)),
+            )
+            assertTrue(eventWriter.insert(event))
+            assertTrue(!eventWriter.insert(event))
+            // A restart may bootstrap the next ordinal from committed rows before replaying the same event key.
+            assertTrue(!eventWriter.insert(event.copy(occurredAt = OccurredAt(200, 2, 3, 13))))
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 1 AND event_key = ?",
+                Int::class.java, event.eventKey.value))
+            assertFailsWith<IllegalStateException> {
+                eventWriter.insert(event.copy(refs = mapOf(RefRole.ACTOR to EventRef.General(6))))
+            }
+            assertTrue(eventWriter.insert(event.copy(worldId = 2)))
+            assertEquals(1, jdbc.queryForObject("SELECT count(*) FROM game_event WHERE world_id = 2 AND event_key = ?",
+                Int::class.java, event.eventKey.value))
             fun rejectedBy(constraint: String, block: () -> Unit) {
                 val error = assertFailsWith<DataAccessException> { block() }
                 assertTrue(error.mostSpecificCause.message?.contains(constraint) == true,

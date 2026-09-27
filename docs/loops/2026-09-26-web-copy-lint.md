@@ -19,10 +19,10 @@
 ## 검증
 
 - `python3 -m unittest discover -s tools/ci -p 'test_web_copy_lint.py'` 10/10. 적색 프로브: JSX·문자열·템플릿의 한자, 은퇴 용어, 기준선 초과·미달.
-- 실제 파일 적색 프로브: `web/game/lib/types.ts`에 위반 한 줄을 넣으면 두 종류 모두 FAIL(66→67, 92→93), 되돌리면 통과.
+- 실제 파일 적색 프로브: `web/game/lib/types.ts`에 위반 한 줄을 넣으면 두 종류 모두 FAIL(분기 시점 66→67, 92→93), 되돌리면 통과. 최신 main 병합 뒤 기준선은 아래처럼 다시 쟀다.
 - `python3 tools/ci/naming_lint.py` 4종 기준선과 같음.
 
 ## 남은 것
 
-- 기준선 한자 66·은퇴 용어 92는 화면 재구축(F2~F7)에서 줄인다. 섬 지도 배지 한자(`cityBadgeLayer.ts`)는 탑다운 렌더러로 바꿀 때 없어진다.
+- 기준선 한자 66·은퇴 용어 72(2026-09-27 최신 main 병합 뒤 `--counts` 실측)는 화면 재구축(F2~F7)에서 더 줄인다. 섬 지도 배지 한자(`cityBadgeLayer.ts`)는 탑다운 렌더러로 바꿀 때 없어진다.
 - 원장 표시 이름(숙련전환·군량매매)은 `data/commands/input-catalog.json` 쪽이라 이 lint 밖이다. 원장 소유 레인이 고친다.

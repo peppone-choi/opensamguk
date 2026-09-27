@@ -46,7 +46,6 @@ class PostUpdateMonthlyTailTest {
             year = 200, startYear = 184, rng = rng(),
             checkWander = { captured += it.nextRange(0.0, 1.0); order += "wander" },
             updateGeneralNumber = { order += "generals" },
-            checkEmperior = { order += "unification" },
             registerAuction = {
                 captured += it.nextRange(0.0, 1.0)
                 captured += it.nextRange(0.0, 1.0)
@@ -55,7 +54,7 @@ class PostUpdateMonthlyTailTest {
             setNationFront = { order += "front"; listOf(PostFrontResult(nationId = 1)) },
         )
         assertEquals(expected, captured)
-        assertEquals(listOf("wander", "generals", "unification", "auction", "front"), order)
+        assertEquals(listOf("wander", "generals", "auction", "front"), order)
         assertEquals(listOf("Q11", "Q16"), result.rngDrawOrder)
         assertEquals(listOf(PostFrontResult(nationId = 1)), result.frontResults)
     }
@@ -66,11 +65,10 @@ class PostUpdateMonthlyTailTest {
         val result = postUpdateMonthlyTail(
             year = 185, startYear = 184, rng = rng(),
             checkWander = { order += "wander" },
-            checkEmperior = { order += "unification" },
             registerAuction = { order += "auction" },
             setNationFront = { order += "front"; emptyList() },
         )
-        assertEquals(listOf("unification", "auction", "front"), order)
+        assertEquals(listOf("auction", "front"), order)
         assertEquals(listOf("Q16"), result.rngDrawOrder)
     }
 }
