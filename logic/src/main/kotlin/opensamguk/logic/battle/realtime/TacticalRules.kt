@@ -10,6 +10,7 @@ import kotlinx.serialization.json.jsonPrimitive
 data class TacticalRules(
     val battleTicks: Int,
     val moraleScaleMax: Int,
+    val topMapCandidates: Int,
     val moraleRetreatBelow: Int,
     val initialMoraleBase: Int,
     val strengthMoraleDivisor: Int,
@@ -50,10 +51,12 @@ data class TacticalRules(
             val movement = root.section("movement")
             val combat = root.section("combat")
             val siege = root.section("siege")
+            val mapSelection = root.section("mapSelection")
             require(session.int("tickMillis") == 100 && session.int("joinWaitSeconds") == 60)
             val rules = TacticalRules(
                 battleTicks = session.int("battleTicks"),
                 moraleScaleMax = morale.int("scaleMax"),
+                topMapCandidates = mapSelection.int("topCandidates"),
                 moraleRetreatBelow = morale.int("retreatBelow"),
                 initialMoraleBase = morale.int("initialBase"),
                 strengthMoraleDivisor = morale.int("generalStrengthDivisor"),
@@ -79,7 +82,7 @@ data class TacticalRules(
                 gateDamagePerAttack = siege.int("gateDamagePerAttack"),
             )
             require(rules.battleTicks > 0 && rules.attackIntervalTicks > 0 &&
-                rules.moraleScaleMax > 0 && rules.moraleLossPerCasualtyPercent >= 0 &&
+                rules.topMapCandidates > 0 && rules.moraleScaleMax > 0 && rules.moraleLossPerCasualtyPercent >= 0 &&
                 rules.minimumDamage > 0 && listOf(rules.infantryRange, rules.archerRange,
                     rules.cavalryRange).all { it > 0 })
             require(listOf(rules.strengthMoraleDivisor, rules.retinueMoraleDivisor, rules.infantryMoveTicks,

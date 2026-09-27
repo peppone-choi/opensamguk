@@ -17,6 +17,9 @@
     "battleTicks": 3000,
     "checkpointTicks": 50
   },
+  "mapSelection": {
+    "topCandidates": 5
+  },
   "morale": {
     "scaleMax": 200,
     "retreatBelow": 100,
