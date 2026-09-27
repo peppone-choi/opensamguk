@@ -4,24 +4,25 @@ data class ImperialPresenceBadge(
     val lineCode: String,
     val lineName: String,
     val emperorGeneralId: Int,
+    /** Reference city from general.city_id; it is not the spatial position. */
     val emperorCityId: Int,
     val courtCityId: Int?,
 )
 
-/** The emperor's mapped position comes from the person, never from the court seat. */
+/** The emperor's reference city comes from the person, never from the court seat. */
 object ImperialPresenceProjection {
     fun badges(
         world: ImperialWorldState,
-        generalCityIds: Map<Int, Int>,
+        generalBaseCityIds: Map<Int, Int>,
     ): List<ImperialPresenceBadge> {
-        require(generalCityIds.all { (generalId, cityId) -> generalId > 0 && cityId > 0 })
+        require(generalBaseCityIds.all { (generalId, cityId) -> generalId > 0 && cityId > 0 })
         return world.houses.asSequence()
             .filter { it.status == ImperialLineStatus.ACTIVE }
             .sortedBy { it.code }
             .map { house ->
                 val emperorId = requireNotNull(house.holderGeneralId)
-                val emperorCityId = requireNotNull(generalCityIds[emperorId]) {
-                    "active emperor has no mapped physical position"
+                val emperorCityId = requireNotNull(generalBaseCityIds[emperorId]) {
+                    "active emperor has no reference city"
                 }
                 ImperialPresenceBadge(house.code, house.name, emperorId, emperorCityId, house.courtCityId)
             }

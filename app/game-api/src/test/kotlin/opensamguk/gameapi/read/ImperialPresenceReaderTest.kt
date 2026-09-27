@@ -37,7 +37,7 @@ class ImperialPresenceReaderTest {
     )
 
     @Test
-    fun `ready response uses the general city and matches the public fixture`() {
+    fun `ready response uses the emperor reference city and matches the public fixture`() {
         `when`(worlds.findProcessWorld()).thenReturn(seeded())
         `when`(generals.findById(101)).thenReturn(Optional.of(
             GeneralReadEntity(id = 101, worldId = 1, name = "황제", cityId = 12)
@@ -48,7 +48,7 @@ class ImperialPresenceReaderTest {
     }
 
     @Test
-    fun `missing seed is explicit and does not read general positions`() {
+    fun `missing seed is explicit and does not read generals`() {
         `when`(worlds.findProcessWorld()).thenReturn(WorldStateReadEntity(id = 1))
         val response = controller.presence()
         assertEquals(HttpStatus.OK, response.statusCode)
@@ -57,7 +57,7 @@ class ImperialPresenceReaderTest {
     }
 
     @Test
-    fun `missing emperor position is unavailable rather than the court city`() {
+    fun `missing emperor general is unavailable rather than the court city`() {
         `when`(worlds.findProcessWorld()).thenReturn(seeded())
         `when`(generals.findById(101)).thenReturn(Optional.empty())
         val response = controller.presence()

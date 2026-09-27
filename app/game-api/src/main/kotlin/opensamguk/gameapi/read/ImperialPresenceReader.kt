@@ -17,12 +17,13 @@ data class ImperialPresenceBadgeResponse(
     val lineCode: String,
     val lineName: String,
     val emperorGeneralId: Int,
+    /** The emperor's reference city, which may differ from the current spatial province. */
     val emperorCityId: Int,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
     val courtCityId: Int?,
 )
 
-/** Read the process world and its general positions from one database snapshot. */
+/** Read imperial state and the emperor's reference city from one database snapshot. */
 @Component
 class ImperialPresenceReader(
     private val worlds: WorldStateReadRepository,
@@ -35,12 +36,12 @@ class ImperialPresenceReader(
         return try {
             val imperial = ImperialWorldCodec.read(world.meta)
                 ?: return ImperialPresenceResponse("NOT_SEEDED", emptyList())
-            val positions = imperial.houses.asSequence()
+            val referenceCities = imperial.houses.asSequence()
                 .filter { it.status == ImperialLineStatus.ACTIVE }
                 .mapNotNull { it.holderGeneralId }
                 .mapNotNull { id -> generals.findById(id).orElse(null)?.let { id to it.cityId } }
                 .toMap()
-            val badges = ImperialPresenceProjection.badges(imperial, positions).map {
+            val badges = ImperialPresenceProjection.badges(imperial, referenceCities).map {
                 ImperialPresenceBadgeResponse(it.lineCode, it.lineName, it.emperorGeneralId,
                     it.emperorCityId, it.courtCityId)
             }

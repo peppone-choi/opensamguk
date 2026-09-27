@@ -9,7 +9,7 @@ class ImperialPresenceProjectionTest {
         1, null, emptyList(), null, 5, 46, 70)
 
     @Test
-    fun `emperor badge uses physical location even when the court seat differs`() {
+    fun `emperor badge uses reference city even when the court seat differs`() {
         val world = ImperialWorldState(listOf(house), emptyList(), emptyList())
         assertEquals(listOf(ImperialPresenceBadge("later_han", "後漢", 1, 130, 46)),
             ImperialPresenceProjection.badges(world, mapOf(1 to 130)))
