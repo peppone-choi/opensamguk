@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "worldId": "tutorial-world-example",
+  "worldId": 1,
   "accountId": "123",
   "generalId": null,
   "objectives": [
