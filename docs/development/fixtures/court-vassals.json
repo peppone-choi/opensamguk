@@ -1,0 +1,37 @@
+{
+  "status": "READY",
+  "now": { "year": 196, "month": 1, "phase": 1 },
+  "contracts": [
+    {
+      "contractId": "contract-1",
+      "sovereignLordId": 1,
+      "vassalLordId": 2,
+      "vassalName": "봉신 예시",
+      "fiefCountyIds": [100, 101],
+      "tributePercent": 20,
+      "reinforcementTroops": 100,
+      "autonomy": ["COUNTY_POLICY"],
+      "diplomacyRight": "WITH_APPROVAL",
+      "loyalty": 60,
+      "signedTurn": 12,
+      "tributeHistory": [
+        {
+          "year": 196,
+          "month": 1,
+          "due": { "money": 20, "grain": 40, "iron": 0, "timber": 0, "horses": 0 },
+          "paid": { "money": 20, "grain": 40, "iron": 0, "timber": 0, "horses": 0 },
+          "unpaid": { "money": 0, "grain": 0, "iron": 0, "timber": 0, "horses": 0 }
+        }
+      ]
+    }
+  ],
+  "foundingOptions": [
+    {
+      "candidateId": 3,
+      "candidateName": "후보 예시",
+      "isHuman": true,
+      "available": true,
+      "blocked": null
+    }
+  ]
+}
