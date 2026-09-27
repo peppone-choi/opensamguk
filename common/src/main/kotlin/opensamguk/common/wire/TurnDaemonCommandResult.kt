@@ -17,7 +17,7 @@ import kotlinx.serialization.json.jsonPrimitive
  * Faithful port of `TurnDaemonCommandResult` (`turnDaemon/types.ts:188-371`).
  *
  * Unlike [TurnDaemonCommand], results share a `type` but split into Ok / Fail on the
- * boolean `ok` field (e.g. `auctionFinalize` Ok = `{type, ok, auctionId}`; Fail adds
+ * boolean `ok` field (e.g. `troopJoin` Ok = `{type, ok, generalId, troopId}`; Fail adds
  * `reason`). A single kotlinx `classDiscriminator = "type"` cannot model that, so this
  * file uses a [JsonContentPolymorphicSerializer] keyed on `(type, ok)`. Every concrete
  * class re-emits `type` and `ok` so encode round-trips.
@@ -31,21 +31,6 @@ sealed class TurnDaemonCommandResult {
     abstract val type: String
     abstract val ok: Boolean
 }
-
-@Serializable
-data class AuctionFinalizeOk(
-    override val type: String = "auctionFinalize",
-    override val ok: Boolean = true,
-    val auctionId: Int,
-) : TurnDaemonCommandResult()
-
-@Serializable
-data class AuctionFinalizeFail(
-    override val type: String = "auctionFinalize",
-    override val ok: Boolean = false,
-    val auctionId: Int,
-    val reason: String,
-) : TurnDaemonCommandResult()
 
 @Serializable
 data class TroopJoinOk(
@@ -613,7 +598,6 @@ object TurnDaemonCommandResultSerializer : KSerializer<TurnDaemonCommandResult> 
             "resetStat" -> if (ok) ResetStatOk.serializer() else ResetStatFail.serializer()
             "buyHiddenBuff" -> if (ok) BuyHiddenBuffOk.serializer() else BuyHiddenBuffFail.serializer()
             "buyRandomUnique" -> if (ok) BuyRandomUniqueOk.serializer() else BuyRandomUniqueFail.serializer()
-            "auctionFinalize" -> if (ok) AuctionFinalizeOk.serializer() else AuctionFinalizeFail.serializer()
             "troopJoin" -> if (ok) TroopJoinOk.serializer() else TroopJoinFail.serializer()
             "troopExit" -> if (ok) TroopExitOk.serializer() else TroopExitFail.serializer()
             "voteReward" -> if (ok) VoteRewardOk.serializer() else VoteRewardFail.serializer()

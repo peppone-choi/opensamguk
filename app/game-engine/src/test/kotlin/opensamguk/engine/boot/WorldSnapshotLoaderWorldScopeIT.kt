@@ -16,6 +16,7 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WorldSnapshotLoaderWorldScopeIT {
@@ -60,8 +61,9 @@ class WorldSnapshotLoaderWorldScopeIT {
         assertEquals("two", second.state.meta["world_marker"])
         assertEquals(1, first.state.meta["serverCount"])
         assertEquals(2, second.state.meta["serverCount"])
-        assertEquals(listOf("one-item"), first.state.meta["activeUniqueAuctionItems"])
-        assertEquals(listOf("two-item"), second.state.meta["activeUniqueAuctionItems"])
+        // #917 A2: 경매 스냅숏 meta 는 은퇴했다(옛 로더는 행이 없어도 빈 목록을 심었다).
+        assertFalse(first.state.meta.containsKey("activeUniqueAuctionItems"))
+        assertFalse(second.state.meta.containsKey("activeUniqueAuctionItems"))
         assertEquals(mapOf("scope" to 1), first.state.meta["storedUniqueItemCounts"])
         assertEquals(mapOf("scope" to 2), second.state.meta["storedUniqueItemCounts"])
         assertEquals(mapOf(100 to 1200.0), first.state.meta["inheritancePrevious"])
@@ -179,15 +181,6 @@ class WorldSnapshotLoaderWorldScopeIT {
             VALUES
               (1, 1, 'shared-server', 10, '{}'::jsonb),
               (2, 1, 'shared-server', 11, '{}'::jsonb)
-            """.trimIndent(),
-        )
-        jdbc.update(
-            """
-            INSERT INTO ng_auction
-                (world_id, id, type, finished, target, host_general_id, req_resource, open_date, close_date)
-            VALUES
-              (1, 1, 'uniqueItem', false, 'one-item', 30, 'inheritPoint', now(), now() + interval '1 day'),
-              (2, 1, 'uniqueItem', false, 'two-item', 30, 'inheritPoint', now(), now() + interval '1 day')
             """.trimIndent(),
         )
         jdbc.update(
