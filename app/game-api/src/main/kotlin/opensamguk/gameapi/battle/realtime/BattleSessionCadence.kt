@@ -61,6 +61,9 @@ class BattleSessionCadence(private val store: BattleSessionStore,
 
     fun activeCount(): Int = entries.size
 
+    fun isAttached(worldId: WorldId, battleId: String): Boolean =
+        entries.containsKey(worldId to battleId)
+
     override fun close() {
         val active = synchronized(this) {
             closed = true
