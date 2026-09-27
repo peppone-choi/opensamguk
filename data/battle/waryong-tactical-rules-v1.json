@@ -15,7 +15,8 @@
     "joinWaitSeconds": 60,
     "tickMillis": 100,
     "battleTicks": 3000,
-    "checkpointTicks": 50
+    "checkpointTicks": 50,
+    "commandIssuedTickMaxLag": 10
   },
   "mapSelection": {
     "topCandidates": 5

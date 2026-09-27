@@ -9,6 +9,7 @@ import kotlinx.serialization.json.jsonPrimitive
 /** Game numbers are product decisions. The original game's numeric formulas remain UNKNOWN. */
 data class TacticalRules(
     val battleTicks: Int,
+    val commandIssuedTickMaxLag: Int,
     val moraleScaleMax: Int,
     val topMapCandidates: Int,
     val moraleRetreatBelow: Int,
@@ -66,6 +67,7 @@ data class TacticalRules(
             require(session.int("tickMillis") == 100 && session.int("joinWaitSeconds") == 60)
             val rules = TacticalRules(
                 battleTicks = session.int("battleTicks"),
+                commandIssuedTickMaxLag = session.int("commandIssuedTickMaxLag"),
                 moraleScaleMax = morale.int("scaleMax"),
                 topMapCandidates = mapSelection.int("topCandidates"),
                 moraleRetreatBelow = morale.int("retreatBelow"),
@@ -103,6 +105,7 @@ data class TacticalRules(
                 duelLoserMoralePenalty = morale.int("duelLoserPenalty"),
             )
             require(rules.battleTicks > 0 && rules.attackIntervalTicks > 0 &&
+                rules.commandIssuedTickMaxLag in 1 until rules.battleTicks &&
                 rules.topMapCandidates > 0 && rules.moraleScaleMax > 0 && rules.moraleLossPerCasualtyPercent >= 0 &&
                 rules.minimumDamage > 0 && listOf(rules.infantryRange, rules.archerRange,
                     rules.cavalryRange).all { it > 0 })

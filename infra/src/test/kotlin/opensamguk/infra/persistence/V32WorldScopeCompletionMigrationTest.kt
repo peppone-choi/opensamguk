@@ -667,6 +667,13 @@ class V32WorldScopeCompletionMigrationTest {
             "water_zone_control",
             "province_control",
             "general_spatial_position",
+            "battle_ticket", // V68 — 실시간 전투 티켓과 세션 상태
+            "battle_participant",
+            "battle_session",
+            "battle_event",
+            "battle_command_receipt",
+            "battle_snapshot",
+            "battle_result_outbox",
         )
         private val v32WorldOwnedTables = firstCohort + remainingWorldTables
         private val worldOwnedTables = v32WorldOwnedTables + postV32WorldTables
