@@ -85,6 +85,23 @@ class BattleSessionTickRunnerTest {
         assertFalse(store.advanced)
     }
 
+    @Test
+    fun `checkpoint ahead of a stale head is retried as contention`() {
+        val store = FakeStore(ticket())
+        val state50 = TacticalBattle.replay(initial(), emptyList(), 50)
+        store.session = store.session.copy(currentTick = 50, latestSnapshotSeq = 1)
+        store.snapshot = BattleCheckpoint(world, "battle-test", 1, "actor", 50, 0,
+            TacticalBattle.stateHash(state50), TacticalStateCodec.encode(state50))
+        store.staleHeadOnce = store.session.copy(currentTick = 49, latestSnapshotSeq = 0)
+        val actor = runner(store)
+        assertEquals(BattleTickAttempt.Contended, actor.tick())
+        assertFalse(store.advanced)
+        val resumed = assertIs<BattleTickAttempt.Advanced>(actor.tick())
+        assertEquals(51, resumed.state.tick)
+        assertEquals(TacticalBattle.stateHash(TacticalBattle.step(state50).state),
+            TacticalBattle.stateHash(resumed.state))
+    }
+
     private class FakeStore(private val frozen: FrozenBattleTicket) : BattleSessionStore {
         var session = BattleSessionHead(frozen.worldId, frozen.battleId, BattleSessionPhase.RUNNING,
             1, 0, 0, 0, "actor", Instant.now().plusSeconds(300), frozen.joinDeadlineAt,
@@ -92,10 +109,15 @@ class BattleSessionTickRunnerTest {
         var log = mutableListOf<BattleEventRecord>()
         var snapshot: BattleCheckpoint? = null
         var injectOnce: BattleEventRecord? = null
+        var staleHeadOnce: BattleSessionHead? = null
         var advanced = false
         override fun create(ticket: FrozenBattleTicket) = false
         override fun ticket(worldId: WorldId, battleId: String) = frozen
-        override fun head(worldId: WorldId, battleId: String) = session
+        override fun head(worldId: WorldId, battleId: String): BattleSessionHead {
+            val stale = staleHeadOnce
+            staleHeadOnce = null
+            return stale ?: session
+        }
         override fun claimEpoch(worldId: WorldId, battleId: String, owner: String,
                                 leaseMillis: Long): BattleSessionHead? = null
         override fun renewLease(worldId: WorldId, battleId: String, owner: String,

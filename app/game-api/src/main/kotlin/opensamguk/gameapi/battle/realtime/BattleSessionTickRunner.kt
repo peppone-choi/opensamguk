@@ -40,7 +40,7 @@ class BattleSessionTickRunner(
             return BattleTickAttempt.NotRunning
         }
         val base = cached?.takeIf { it.state.tick == head.currentTick } ?: restore(head.currentTick,
-            head.latestEventSeq)
+            head.latestEventSeq) ?: return BattleTickAttempt.Contended
         val tail = store.eventsAfter(worldId, battleId, base.consumedEventSeq)
         val current = BattleEventTimeline.replay(base.state, base.consumedEventSeq, tail,
             head.currentTick)
@@ -67,7 +67,7 @@ class BattleSessionTickRunner(
         return BattleTickAttempt.Advanced(next.state, next.consumedEventSeq, checkpointed)
     }
 
-    private fun restore(durableTick: Int, latestEventSeq: Long): BattleTimelineState {
+    private fun restore(durableTick: Int, latestEventSeq: Long): BattleTimelineState? {
         val ticket = requireNotNull(store.ticket(worldId, battleId)) { "battle ticket missing" }
         require(ticket.worldId == worldId && ticket.battleId == battleId)
         require(sha(ticket.payloadJson) == ticket.payloadSha256) { "battle ticket checksum mismatch" }
@@ -75,7 +75,8 @@ class BattleSessionTickRunner(
         require(frozen.tick == 0 && frozen.seed == ticket.seed)
         val checkpoint = store.latestCheckpoint(worldId, battleId)
             ?: return BattleTimelineState(frozen, 0)
-        require(checkpoint.tick <= durableTick && checkpoint.eventSeq <= latestEventSeq)
+        // Head and checkpoint are separate reads. Another actor may have advanced between them.
+        if (checkpoint.tick > durableTick || checkpoint.eventSeq > latestEventSeq) return null
         val state = TacticalStateCodec.decode(checkpoint.compressedState, checkpoint.stateHash)
         require(state.tick == checkpoint.tick && state.seed == frozen.seed &&
             state.battlefield == frozen.battlefield && state.gateRow == frozen.gateRow &&
