@@ -11,6 +11,8 @@ import opensamguk.logic.imperial.ImperialLineStatus
 import opensamguk.logic.imperial.ImperialPresenceProjection
 import opensamguk.logic.imperial.ImperialWorldCodec
 import opensamguk.logic.imperial.ImperialWorldState
+import opensamguk.logic.world.GeneralPositionState
+import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventKey
 import opensamguk.logic.record.EventKind
@@ -83,7 +85,9 @@ class JdbcFlushExecutorIT {
             assertEquals(changed, ImperialWorldCodec.read(first))
             assertEquals(mapOf("keep" to 7), first["unrelated"])
             assertEquals(false, "imperial_world" in first, "the persisted codec key is camelCase")
-            val badge = ImperialPresenceProjection.badges(changed, mapOf(11 to 5)).single()
+            val badge = ImperialPresenceProjection.badges(changed, mapOf(11 to 5),
+                mapOf(11 to GeneralPositionState("test-revision", "a".repeat(64), 11,
+                    StrategicNodeRef.LandProvince("province-5"), 1)), mapOf(5 to "province-5")).single()
             assertEquals(5, badge.emperorCityId)
             assertEquals(7, badge.courtCityId)
 
