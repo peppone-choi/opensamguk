@@ -14,7 +14,7 @@ GitHub Actions의 `External Health Monitor`와 `External Health Watchdog`는 Git
 
 공개 `game.lastTurnTime`이 존재하고 `status=OPEN`이며 `turnTerm`이 양수일 때만, 마지막 턴 뒤 `3 × turnTerm` 분을 넘기면 턴 정지로 분류한다. 이 배포의 공개 응답에는 아직 턴 시각이 없으므로 이 신호는 **UNKNOWN**이다. `year`·`month`·`turnPhase`가 같다는 이유만으로 턴 정지라고 단정하지 않는다. 턴 정지 판단에는 VM 내부 상세 검사 결과를 함께 본다.
 
-두 호스트 감시기는 GitHub Actions API에서 서로의 마지막 `schedule` 실행을 본다. 취소·실패·미시작을 구분하며, 마지막 일정 실행이 15분보다 오래되면 일정 누락·지연으로 표시한다. 15분은 5분 간격 세 번이다. GitHub 일정은 지연·누락될 수 있으므로 실행 시각과 실제 상태를 대조한다. GitHub 자체가 두 일정을 모두 실행하지 못하면 이 상호 감시만으로는 경보를 낼 수 없다.
+두 호스트 감시기는 GitHub Actions API에서 서로의 최근 `schedule` 실행을 본다. 최근 15분의 취소·분류기 실행 전 실패는 더 새 실행이 있어도 구분하며, 마지막 일정 실행이 15분보다 오래되면 일정 누락·지연으로 표시한다. 15분은 5분 간격 세 번이다. GitHub 일정은 지연·누락될 수 있으므로 실행 시각과 실제 상태를 대조한다. GitHub 자체가 두 일정을 모두 실행하지 못하면 이 상호 감시만으로는 경보를 낼 수 없다.
 
 ## 알림과 상태
 

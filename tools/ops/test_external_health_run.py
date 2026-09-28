@@ -134,6 +134,18 @@ class ArtifactTest(unittest.TestCase):
             from datetime import datetime, timezone
             self.assertIsNone(runner.peer_result("watchdog", datetime(2026, 9, 28, 12, tzinfo=timezone.utc), 100))
 
+    def test_failed_peer_without_artifact_remains_visible_after_new_success(self):
+        runs = {"workflow_runs": [
+            {"id": 101, "event": "schedule", "created_at": "2026-09-28T11:58:00Z",
+             "status": "completed", "conclusion": "success"},
+            {"id": 99, "event": "schedule", "created_at": "2026-09-28T11:55:00Z",
+             "status": "completed", "conclusion": "failure"},
+        ]}
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo"}), \
+                patch.object(runner, "github_api", side_effect=[runs, {"artifacts": []}]):
+            from datetime import datetime, timezone
+            self.assertEqual("peer_failed", runner.peer_result("watchdog", datetime(2026, 9, 28, 12, tzinfo=timezone.utc), 100))
+
 
 class SecretSafetyTest(unittest.TestCase):
     def test_webhook_failure_does_not_print_exception_or_url(self):

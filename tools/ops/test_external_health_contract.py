@@ -50,6 +50,9 @@ class HeartbeatTest(unittest.TestCase):
         runs = [{"id": 99, "event": "schedule", "created_at": "2026-09-28T11:55:00Z",
                  "status": "completed", "conclusion": "cancelled"}]
         self.assertEqual("peer_cancelled", classify_peer_runs(runs, NOW, 100))
+        runs.append({"id": 101, "event": "schedule", "created_at": "2026-09-28T11:58:00Z",
+                     "status": "queued", "conclusion": None})
+        self.assertEqual("peer_cancelled", classify_peer_runs(runs, NOW, 100))
 
     def test_missing_or_delayed_schedule_is_not_success(self):
         runs = [{"id": 99, "event": "schedule", "created_at": "2026-09-28T11:40:00Z",

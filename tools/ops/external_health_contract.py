@@ -93,9 +93,11 @@ def classify_peer_runs(runs: list[dict[str, Any]], now: datetime, current_run_id
         return "peer_not_started"
     run, created = max(scheduled, key=lambda item: item[1])
     age = (now - created).total_seconds()
-    if run.get("conclusion") == "cancelled":
+    recent = [entry for entry, at in scheduled if 0 <= (now - at).total_seconds() <= MISSED_SCHEDULE_SECONDS]
+    # 더 새 실행이 큐에 들어와도 직전 취소·실패가 정상으로 묻히지 않아야 한다.
+    if any(entry.get("conclusion") == "cancelled" for entry in recent):
         return "peer_cancelled"
-    if run.get("conclusion") in {"failure", "timed_out", "startup_failure"}:
+    if any(entry.get("conclusion") in {"failure", "timed_out", "startup_failure"} for entry in recent):
         return "peer_failed"
     if age > MISSED_SCHEDULE_SECONDS:
         return "peer_schedule_missing"

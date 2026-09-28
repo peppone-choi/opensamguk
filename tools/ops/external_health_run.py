@@ -14,7 +14,9 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
-from external_health_contract import MAX_BODY_BYTES, classify_http, classify_peer_runs, transition
+from external_health_contract import (
+    MAX_BODY_BYTES, MISSED_SCHEDULE_SECONDS, classify_http, classify_peer_runs, parse_time, transition,
+)
 
 URLS = {
     "origin": "https://sam.peppone.dev/health",
@@ -121,15 +123,19 @@ def peer_result(mode: str, now: datetime, run_id: int) -> str | None:
             raise ValueError("workflow run list missing")
         finding = classify_peer_runs(runs, now, run_id)
         if finding == "peer_failed":
-            scheduled = [item for item in runs if item.get("event") == "schedule" and item.get("id") != run_id]
-            latest = max(scheduled, key=lambda item: item.get("created_at", ""))
-            artifacts = github_api(f"/repos/{repository()}/actions/runs/{latest['id']}/artifacts?per_page=100")["artifacts"]
-            if not isinstance(artifacts, list):
-                raise ValueError("workflow artifacts missing")
-            # A red health result is expected for a real incident. A secret-free state artifact
-            # proves that the peer ran its classifier; its own notification handles that incident.
-            if any(item.get("name") == f"external-health-state-{peer_mode}" for item in artifacts):
-                return None
+            recent_failed = [item for item in runs if item.get("event") == "schedule"
+                             and item.get("conclusion") in {"failure", "timed_out", "startup_failure"}
+                             and (at := parse_time(item.get("created_at"))) is not None
+                             and 0 <= (now - at).total_seconds() <= MISSED_SCHEDULE_SECONDS]
+            for failed in recent_failed:
+                artifacts = github_api(f"/repos/{repository()}/actions/runs/{failed['id']}/artifacts?per_page=100")["artifacts"]
+                if not isinstance(artifacts, list):
+                    raise ValueError("workflow artifacts missing")
+                # Red public-health checks are expected. Their state artifact proves that the
+                # classifier ran and its own notification owns the incident.
+                if not any(item.get("name") == f"external-health-state-{peer_mode}" for item in artifacts):
+                    return "peer_failed"
+            return None
         return finding
     except (KeyError, ValueError, urllib.error.URLError, TimeoutError):
         return "peer_api_unavailable"
