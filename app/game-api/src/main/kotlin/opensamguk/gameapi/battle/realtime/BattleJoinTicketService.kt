@@ -19,6 +19,7 @@ import opensamguk.infra.battle.realtime.FrozenBattleParticipant
 import opensamguk.infra.battle.realtime.FrozenBattleTicket
 
 data class BattleJoinIdentity(
+    val serverId: String,
     val worldId: WorldId,
     val battleId: String,
     val accountId: Int,
@@ -35,11 +36,13 @@ class BattleJoinTicketService(
     private val store: BattleSessionStore,
     secret: ByteArray,
     private val clock: Clock,
+    val serverId: String,
 ) {
+    init { require(serverId.matches(Regex("[a-z0-9]{1,48}"))) }
     private val key = secret.copyOf().also { require(it.size >= 32) { "battle join secret must be at least 32 bytes" } }
     private val encoder = Base64.getUrlEncoder().withoutPadding()
     private val decoder = Base64.getUrlDecoder()
-    private val prefix = "BTJ1"
+    private val prefix = "BTJ2"
 
     fun issue(worldId: WorldId, battleId: String, authenticatedAccountId: Int,
               ownedGeneralId: Int): String {
@@ -52,6 +55,7 @@ class BattleJoinTicketService(
         val expiresAt = minOf(now.plusSeconds(60), head.deadlineAt)
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->
+            out.writeUTF(serverId)
             out.writeInt(worldId.value)
             out.writeUTF(battleId)
             out.writeInt(authenticatedAccountId)
@@ -69,8 +73,16 @@ class BattleJoinTicketService(
 
     fun verify(token: String, worldId: WorldId, battleId: String,
                authenticatedAccountId: Int): BattleJoinIdentity {
+        val identity = verifyBearer(token, serverId, worldId, battleId)
+        if (identity.accountId != authenticatedAccountId) throw SecurityException("invalid battle join ticket")
+        return identity
+    }
+
+    /** The signed token is the short-lived bearer; current ownership is checked by the socket admission layer. */
+    fun verifyBearer(token: String, expectedServerId: String, worldId: WorldId,
+                     battleId: String): BattleJoinIdentity {
         try {
-            require(authenticatedAccountId > 0 && token.length in 20..1024)
+            require(expectedServerId == serverId && token.length in 20..1024)
             val pieces = token.split('.')
             require(pieces.size == 3 && pieces[0] == prefix)
             val unsigned = "${pieces[0]}.${pieces[1]}"
@@ -81,6 +93,7 @@ class BattleJoinTicketService(
             require(MessageDigest.isEqual(signature, mac(unsigned)))
             val source = ByteArrayInputStream(payload)
             val claims = DataInputStream(source).use { input ->
+                val signedServerId = input.readUTF()
                 val signedWorldId = WorldId(input.readInt())
                 val signedBattleId = input.readUTF()
                 val signedAccountId = input.readInt()
@@ -91,18 +104,19 @@ class BattleJoinTicketService(
                 val authorityRevision = input.readLong()
                 val issuedAt = Instant.ofEpochMilli(input.readLong())
                 val expiresAt = Instant.ofEpochMilli(input.readLong())
-                require(signedWorldId == worldId && signedBattleId == battleId &&
-                    signedAccountId == authenticatedAccountId && side in setOf("ATTACKER", "DEFENDER"))
+                require(signedServerId == expectedServerId && signedWorldId == worldId &&
+                    signedBattleId == battleId && signedAccountId > 0 &&
+                    side in setOf("ATTACKER", "DEFENDER"))
                 val now = clock.instant()
                 require(!issuedAt.isAfter(now.plusSeconds(5)) && expiresAt.isAfter(now) &&
                     expiresAt.isAfter(issuedAt) && !expiresAt.isAfter(issuedAt.plusSeconds(60)))
-                BattleJoinIdentity(signedWorldId, signedBattleId, signedAccountId,
+                BattleJoinIdentity(signedServerId, signedWorldId, signedBattleId, signedAccountId,
                     participantId, generalId, side, epoch, authorityRevision, expiresAt)
             }
             require(source.available() == 0)
             val ticket = store.ticket(worldId, battleId) ?: error("battle ticket missing")
             val head = store.head(worldId, battleId) ?: error("battle session missing")
-            val participant = activeParticipant(ticket, head, authenticatedAccountId, clock.instant())
+            val participant = activeParticipant(ticket, head, claims.accountId, clock.instant())
             require(claims.participantId == participant.participantId &&
                 claims.generalId == participant.generalId && claims.side == participant.side &&
                 claims.authorityRevision == participant.authorityRevision &&
