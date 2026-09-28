@@ -29,8 +29,11 @@ object BattleEventTimeline {
         val decoded = events.mapIndexed { index, event ->
             require(event.eventSeq == afterEventSeq + index + 1) { "battle event sequence gap" }
             require(event.sessionEpoch > 0) { "battle event epoch invalid" }
-            require(event.tick in 0..TacticalRules.CANON.battleTicks &&
-                event.effectiveTick in event.tick..event.tick + 1)
+            require(event.tick in 0..TacticalRules.CANON.battleTicks)
+            require(event.effectiveTick == event.tick + 1 ||
+                (event.tick == 0 && event.effectiveTick == 0)) {
+                "battle event cannot apply retroactively at a checkpoint tick"
+            }
             require(event.effectiveTick >= initial.tick) { "event predates checkpoint" }
             require(event.effectiveTick <= TacticalRules.CANON.battleTicks)
             require(sha(event.payloadJson) == event.payloadSha256) { "battle event checksum mismatch" }

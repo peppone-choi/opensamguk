@@ -90,4 +90,21 @@ class BattleEventTimelineTest {
         assertEquals(TacticalBattle.stateHash(expected), replayed.stateHash)
         assertEquals(3L, replayed.consumedEventSeq)
     }
+
+    @Test
+    fun `control event cannot apply retroactively at a checkpoint tick`() {
+        val join = event(1, 0, 0, "HUMAN_JOIN", """{"schemaVersion":1,"side":"ATTACKER"}""")
+        val order = event(2, 0, 1, "COMMAND_ACCEPTED",
+            """{"schemaVersion":1,"side":"ATTACKER","slot":null,"order":"CHARGE","rally":"CENTER"}""")
+        val lateLeft = event(3, 1, 1, "HUMAN_LEFT", """{"schemaVersion":1,"side":"ATTACKER"}""")
+        val checkpoint = BattleEventTimeline.replay(initial(), 0, listOf(join, order), 1)
+
+        assertFailsWith<IllegalArgumentException> {
+            BattleEventTimeline.replay(initial(), 0, listOf(join, order, lateLeft), 1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            BattleEventTimeline.replay(checkpoint.state, checkpoint.consumedEventSeq,
+                listOf(lateLeft), 1)
+        }
+    }
 }
