@@ -14,6 +14,7 @@ import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.run.TurnRunService
+import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralStats
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ReservedTurnHandler
@@ -26,9 +27,8 @@ import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.read.BoardPostRepository
-import opensamguk.logic.actions.CommandRegistry
-import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import org.springframework.dao.QueryTimeoutException
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -66,7 +66,8 @@ class OfflineDelegationFlushRetryTest {
                 if (payloads.size == 1) throw QueryTimeoutException("injected rollback")
             }
         }
-        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184)
+        val handler = mock(ReservedTurnHandler::class.java)
+        `when`(handler.recorder).thenReturn(ChangeRecorder())
         val lifecycle = TurnDaemonLifecycle(world, handler,
             reservedActionOf = { ReservedTurn("휴식", "") })
         val publisher = RealtimePublisher(redis, "hwiha:test", worldId)
