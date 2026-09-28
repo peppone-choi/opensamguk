@@ -1,19 +1,25 @@
 package opensamguk.logic.imperial
 
+import opensamguk.logic.world.GeneralPositionState
+import opensamguk.logic.world.StrategicNodeRef
+
 data class ImperialPresenceBadge(
     val lineCode: String,
     val lineName: String,
     val emperorGeneralId: Int,
-    /** Reference city from general.city_id; it is not the spatial position. */
-    val emperorCityId: Int,
+    val emperorNode: StrategicNodeRef,
+    /** Present only when the emperor is physically at the reference city. */
+    val emperorCityId: Int?,
     val courtCityId: Int?,
 )
 
-/** The emperor's reference city comes from the person, never from the court seat. */
+/** The spatial position is authoritative; general.city_id only identifies a possible city at that node. */
 object ImperialPresenceProjection {
     fun badges(
         world: ImperialWorldState,
         generalBaseCityIds: Map<Int, Int>,
+        positions: Map<Int, GeneralPositionState>,
+        cityProvinceById: Map<Int, String>,
     ): List<ImperialPresenceBadge> {
         require(generalBaseCityIds.all { (generalId, cityId) -> generalId > 0 && cityId > 0 })
         return world.houses.asSequence()
@@ -21,10 +27,20 @@ object ImperialPresenceProjection {
             .sortedBy { it.code }
             .map { house ->
                 val emperorId = requireNotNull(house.holderGeneralId)
-                val emperorCityId = requireNotNull(generalBaseCityIds[emperorId]) {
+                val referenceCityId = requireNotNull(generalBaseCityIds[emperorId]) {
                     "active emperor has no reference city"
                 }
-                ImperialPresenceBadge(house.code, house.name, emperorId, emperorCityId, house.courtCityId)
+                val provinceId = requireNotNull(cityProvinceById[referenceCityId]) {
+                    "active emperor reference city has no province"
+                }
+                val position = requireNotNull(positions[emperorId]) {
+                    "active emperor has no spatial position"
+                }
+                val emperorCityId = referenceCityId.takeIf {
+                    position.battlefield == null && position.node == StrategicNodeRef.LandProvince(provinceId)
+                }
+                ImperialPresenceBadge(house.code, house.name, emperorId, position.node,
+                    emperorCityId, house.courtCityId)
             }
             .toList()
     }
