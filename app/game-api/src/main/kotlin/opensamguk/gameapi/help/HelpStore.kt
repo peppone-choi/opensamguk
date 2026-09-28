@@ -27,9 +27,12 @@ data class HistoricalSource(
     val passage: String?,
 )
 
+enum class HelpReviewState { DRAFT, APPROVED }
+
 data class HelpTopic(
     val id: String,
     val title: String,
+    val reviewState: HelpReviewState,
     val sections: HelpSection,
     val sources: List<HistoricalSource>,
     val relatedTopicIds: List<String>,
@@ -37,6 +40,7 @@ data class HelpTopic(
 
 data class FailureReasonHelp(
     val code: String,
+    val reviewState: HelpReviewState,
     val explanation: String,
     val recoveryAdvice: String,
     val byInputId: Map<String, FailureReasonOverride>,
@@ -67,7 +71,7 @@ class HelpStore private constructor(
             "explanation" -> topic.sections.explanation
             else -> topic.sections.example
         }
-        HelpSearchHit(topic.id, topic.title, excerpt, section)
+        HelpSearchHit(topic.id, topic.title, topic.reviewState, excerpt, section)
     }.sortedWith(compareBy<HelpSearchHit> { when (it.matchedSection) {
         "title" -> 0; "explanation" -> 1; else -> 2
     } }.thenBy { it.id }).take(limit)
@@ -119,6 +123,7 @@ class HelpStore private constructor(
         }
         private fun JsonObject.optionalText(key: String): String? = get(key)?.takeUnless { it == JsonNull }?.jsonPrimitive?.content
         private fun JsonObject.texts(key: String): List<String> = getValue(key).jsonArray.map { it.jsonPrimitive.content }
+        private fun JsonObject.reviewState(): HelpReviewState = HelpReviewState.valueOf(text("reviewState"))
 
         private fun parseTopic(element: JsonElement): HelpTopic {
             val row = element.jsonObject
@@ -128,7 +133,7 @@ class HelpStore private constructor(
                 HistoricalSource(source.text("tradition"), source.text("work"), source.text("book"), source.optionalText("passage"))
             }
             return HelpTopic(
-                row.text("id"), row.text("title"),
+                row.text("id"), row.text("title"), row.reviewState(),
                 HelpSection(section.text("explanation"), section.text("example"), section.text("successExample"),
                     section.text("failureExample"), section.text("recoveryAdvice"), section.optionalText("historicalContext")),
                 sources, row.texts("relatedTopicIds"),
@@ -141,12 +146,12 @@ class HelpStore private constructor(
                 val item = value.jsonObject
                 FailureReasonOverride(item.text("explanation"), item.text("recoveryAdvice"))
             }
-            return FailureReasonHelp(row.text("code"), row.text("explanation"), row.text("recoveryAdvice"), overrides)
+            return FailureReasonHelp(row.text("code"), row.reviewState(), row.text("explanation"), row.text("recoveryAdvice"), overrides)
         }
     }
 }
 
-data class HelpSearchHit(val id: String, val title: String, val excerpt: String, val matchedSection: String)
+data class HelpSearchHit(val id: String, val title: String, val reviewState: HelpReviewState, val excerpt: String, val matchedSection: String)
 
 @Component
 class HelpStoreProvider {

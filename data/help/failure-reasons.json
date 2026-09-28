@@ -3,624 +3,728 @@
   "reasons": [
     {
       "code": "ACTOR_NOT_FOUND",
+      "reviewState": "DRAFT",
       "explanation": "행동할 장수를 찾을 수 없습니다.",
       "recoveryAdvice": "현재 계정에 연결된 장수와 선택한 장수 ID를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "AGREEMENT_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "해당 약속을 찾거나 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_AT_WAR",
+      "reviewState": "DRAFT",
       "explanation": "대상 세력과 이미 전쟁 중입니다.",
       "recoveryAdvice": "현재 교전 상태를 확인하고 중복 선전포고를 하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_BESIEGED",
+      "reviewState": "DRAFT",
       "explanation": "대상이 이미 포위 중입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_BOUND",
+      "reviewState": "DRAFT",
       "explanation": "이미 다른 관계로 묶여 있습니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_DEPLOYED",
+      "reviewState": "DRAFT",
       "explanation": "이미 출병한 상태입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_FOUNDED",
+      "reviewState": "DRAFT",
       "explanation": "이미 세력이 세워진 상태입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_HEALTHY",
+      "reviewState": "DRAFT",
       "explanation": "이미 회복된 상태입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_LORD",
+      "reviewState": "DRAFT",
       "explanation": "이미 주공인 장수입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_MAX",
+      "reviewState": "DRAFT",
       "explanation": "더 올릴 수 없는 최대 상태입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_PENDING",
+      "reviewState": "DRAFT",
       "explanation": "이 결정이 이미 대기 중입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_PROCESSED",
+      "reviewState": "DRAFT",
       "explanation": "이 요청은 이미 처리되었습니다.",
       "recoveryAdvice": "기존 요청의 확정 결과를 조회하세요. 같은 요청을 다시 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_QUEUED",
+      "reviewState": "DRAFT",
       "explanation": "같은 종류의 요청이 이미 대기 중입니다.",
       "recoveryAdvice": "대기 중인 요청의 결과를 확인한 뒤 다음 입력을 제출하세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_RESOLVED",
+      "reviewState": "DRAFT",
       "explanation": "이미 결론이 난 요청입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_RETIRED",
+      "reviewState": "DRAFT",
       "explanation": "이미 물러난 상태입니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_SERVING",
+      "reviewState": "DRAFT",
       "explanation": "이미 다른 주공을 섬기고 있습니다.",
       "recoveryAdvice": "현재 소속 관계를 확인한 뒤 출사 가능한 상태에서 다시 시도하세요.",
       "byInputId": {}
     },
     {
       "code": "ALREADY_THERE",
+      "reviewState": "DRAFT",
       "explanation": "이미 목적지에 있습니다.",
       "recoveryAdvice": "이미 진행 중이거나 완료된 상태를 확인하고, 중복 요청을 제출하지 마세요.",
       "byInputId": {}
     },
     {
       "code": "ARMY_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "선택한 군대를 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "ASSAULT_NOT_READY",
+      "reviewState": "DRAFT",
       "explanation": "강공을 시작할 준비가 되지 않았습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "AT_CAPACITY",
+      "reviewState": "DRAFT",
       "explanation": "수용 가능한 한도에 도달했습니다.",
       "recoveryAdvice": "현재 수용량과 이미 맡은 인물·부대를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "BATTLEFIELD_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "전투를 시작할 전장 상태가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "BATTLE_PENDING",
+      "reviewState": "DRAFT",
       "explanation": "진행 중인 전투가 끝나지 않았습니다.",
       "recoveryAdvice": "진행 중인 전투의 결과가 확정된 뒤 다시 시도하세요.",
       "byInputId": {}
     },
     {
       "code": "BESIEGED",
+      "reviewState": "DRAFT",
       "explanation": "대상이 포위된 상태입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "BUGOK_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "지정한 부곡을 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CAPACITY_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "대상에게 남은 수용 여력이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CAPITAL_REQUIRED",
+      "reviewState": "DRAFT",
       "explanation": "이 결정에는 수도가 필요합니다.",
       "recoveryAdvice": "현재 세력의 수도와 해당 결정이 가능한 위치를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "CARD_DEPLOYED",
+      "reviewState": "DRAFT",
       "explanation": "카드가 이미 출병 중입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CARD_IN_BATTLE",
+      "reviewState": "DRAFT",
       "explanation": "카드가 전투 중입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CARD_NOT_FOUND",
+      "reviewState": "DRAFT",
       "explanation": "지정한 카드를 찾을 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CARD_NOT_ON_MAP",
+      "reviewState": "DRAFT",
       "explanation": "카드가 지도에 배치되어 있지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CARD_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "선택한 카드를 사용할 수 없습니다.",
       "recoveryAdvice": "카드의 소유·배치·전투 상태를 확인한 뒤 사용 가능한 카드를 고르세요.",
       "byInputId": {}
     },
     {
       "code": "COMMANDER_CHANGED",
+      "reviewState": "DRAFT",
       "explanation": "요청 뒤 지휘관이 바뀌었습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "COMMANDER_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "지휘할 장수를 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CONSENT_DECLINED",
+      "reviewState": "DRAFT",
       "explanation": "상대가 제안을 거절했습니다.",
       "recoveryAdvice": "거절된 제안의 결과를 확인하고 다른 선택지를 고르세요.",
       "byInputId": {}
     },
     {
       "code": "CONSENT_REQUIRED",
+      "reviewState": "DRAFT",
       "explanation": "상대의 동의가 필요합니다.",
       "recoveryAdvice": "상대에게 동의를 요청하고 응답이 확정될 때까지 기다리세요.",
       "byInputId": {}
     },
     {
       "code": "CORPS_BUSY",
+      "reviewState": "DRAFT",
       "explanation": "군단이 다른 일을 수행 중입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CORPS_DEPLOYED",
+      "reviewState": "DRAFT",
       "explanation": "군단이 이미 출병 중입니다.",
       "recoveryAdvice": "군단의 현재 출병과 귀환 상태를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "CORPS_NOT_FOUND",
+      "reviewState": "DRAFT",
       "explanation": "지정한 군단을 찾을 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "CORPS_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "선택한 군단을 사용할 수 없습니다.",
       "recoveryAdvice": "군단 목록에서 현재 지휘하고 사용할 수 있는 군단을 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "COUNTY_NOT_AVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "현의 현재 상태가 입력 조건에 맞지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "COUNTY_OCCUPIED",
+      "reviewState": "DRAFT",
       "explanation": "현이 이미 점유되어 있습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "COUNTY_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "지정한 현을 사용할 수 없습니다.",
       "recoveryAdvice": "현의 소유·점유·포위 상태와 현재 선택 가능 여부를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "DIFFERENT_NATION",
+      "reviewState": "DRAFT",
       "explanation": "서로 다른 세력이어야 합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "DUPLICATE_RETAINER_NAME",
+      "reviewState": "DRAFT",
       "explanation": "같은 이름의 직속 인물이 이미 있습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "ENVOY_REQUIRED",
+      "reviewState": "DRAFT",
       "explanation": "사자를 지정해야 합니다.",
       "recoveryAdvice": "직접 거느린 인물 중 사자 역할을 맡을 수 있는 사람을 고르세요.",
       "byInputId": {}
     },
     {
       "code": "FORBIDDEN",
+      "reviewState": "DRAFT",
       "explanation": "현재 장수에게 이 행동을 할 권한이 없습니다.",
       "recoveryAdvice": "소유 관계와 현재 맡은 자리에서 해당 결정을 내릴 수 있는지 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "FOREIGN_COUNTY",
+      "reviewState": "DRAFT",
       "explanation": "다른 세력이 소유한 현입니다.",
       "recoveryAdvice": "자기 세력이 관리할 수 있는 현을 고르세요.",
       "byInputId": {}
     },
     {
       "code": "FORT_NOT_FOUND",
+      "reviewState": "DRAFT",
       "explanation": "지정한 보루를 찾을 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "HUMAN_CARD",
+      "reviewState": "DRAFT",
       "explanation": "이 입력은 사람 장수 카드에 적용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "HUMAN_RETAINER_REQUIRES_LORD",
+      "reviewState": "DRAFT",
       "explanation": "사람 장수를 직접 거느린 상태에서는 주공이어야 합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INSUFFICIENT_RENOWN",
+      "reviewState": "DRAFT",
       "explanation": "필요한 명망이 부족합니다.",
       "recoveryAdvice": "현재 명망과 직접 거느린 인물의 명망 비용을 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "INSUFFICIENT_STOCK",
+      "reviewState": "DRAFT",
       "explanation": "필요한 물자가 부족합니다.",
       "recoveryAdvice": "대상 현 창고의 물자와 입력 비용을 확인하세요. 비용은 실제 사전 확인 결과를 따르세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_COMMANDERY",
+      "reviewState": "DRAFT",
       "explanation": "郡國 선택이 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_COUNTY",
+      "reviewState": "DRAFT",
       "explanation": "현 식별자나 선택이 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_CREW_TYPE",
+      "reviewState": "DRAFT",
       "explanation": "선택한 병종이 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_DESTINATION",
+      "reviewState": "DRAFT",
       "explanation": "목적지가 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_INPUT",
+      "reviewState": "DRAFT",
       "explanation": "입력 값이나 조합이 올바르지 않습니다.",
       "recoveryAdvice": "이 코드만으로는 원인을 특정할 수 없습니다. 함께 반환된 상세 메시지와 선택한 입력의 조건을 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_INPUT_CHANNEL",
+      "reviewState": "DRAFT",
       "explanation": "이 경로로는 해당 입력을 제출할 수 없습니다.",
       "recoveryAdvice": "현재 월드와 화면에서 제공되는 다른 입력을 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_NATION",
+      "reviewState": "DRAFT",
       "explanation": "세력 선택이 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_PROVINCE",
+      "reviewState": "DRAFT",
       "explanation": "州 선택이 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_REQUEST",
+      "reviewState": "DRAFT",
       "explanation": "요청 형식이 올바르지 않습니다.",
       "recoveryAdvice": "화면에서 필수 항목을 다시 선택하고 제출 내용을 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_RETINUE",
+      "reviewState": "DRAFT",
       "explanation": "소속 관계가 올바르지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "INVALID_TURN_SLOT",
+      "reviewState": "DRAFT",
       "explanation": "선택한 개인 행동 순서가 유효하지 않습니다.",
       "recoveryAdvice": "비어 있는 개인 행동 순서를 다시 고르세요.",
       "byInputId": {}
     },
     {
       "code": "LAST_COUNTY",
+      "reviewState": "DRAFT",
       "explanation": "마지막 현이라 이 처리를 할 수 없습니다.",
       "recoveryAdvice": "마지막 현을 유지한 상태에서 다른 선택지를 고르세요.",
       "byInputId": {}
     },
     {
       "code": "MUST_ASSEMBLE",
+      "reviewState": "DRAFT",
       "explanation": "먼저 지정한 곳에 집합해야 합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NATION_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "지정한 세력을 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOTHING_TO_CLEAR",
+      "reviewState": "DRAFT",
       "explanation": "지울 대상이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_ADJACENT",
+      "reviewState": "DRAFT",
       "explanation": "현재 위치와 맞닿은 대상이 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_AT_GATE",
+      "reviewState": "DRAFT",
       "explanation": "보루 입구에 도착하지 않았습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_AT_WAR",
+      "reviewState": "DRAFT",
       "explanation": "대상 세력과 전쟁 중이 아닙니다.",
       "recoveryAdvice": "교전 중인 상대인지 확인한 뒤 입력을 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_A_SUBJECT",
+      "reviewState": "DRAFT",
       "explanation": "대상이 이 세력의 신하가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_BESIEGING",
+      "reviewState": "DRAFT",
       "explanation": "현재 포위 중인 목표가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_COUNTY_AUTHORITY",
+      "reviewState": "DRAFT",
       "explanation": "해당 현을 관리할 권한이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_DELIVERED",
+      "reviewState": "DRAFT",
       "explanation": "아직 제공되지 않는 입력입니다.",
       "recoveryAdvice": "현재 월드와 화면에서 제공되는 다른 입력을 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_DIRECT_RETAINER",
+      "reviewState": "DRAFT",
       "explanation": "직접 거느린 인물이 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_FREE",
+      "reviewState": "DRAFT",
       "explanation": "대상이 재야 상태가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_HOSTILE",
+      "reviewState": "DRAFT",
       "explanation": "대상이 적대 관계가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_LIEUTENANT",
+      "reviewState": "DRAFT",
       "explanation": "대상이 해당 부장 지위가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_LORD",
+      "reviewState": "DRAFT",
       "explanation": "주공만 할 수 있는 결정입니다.",
       "recoveryAdvice": "주공 장수로 로그인했는지 또는 해당 결정을 맡을 권한이 있는지 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_RECIPIENT",
+      "reviewState": "DRAFT",
       "explanation": "이 요청의 수신자가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NOT_RULER",
+      "reviewState": "DRAFT",
       "explanation": "세력의 통치자만 할 수 있는 결정입니다.",
       "recoveryAdvice": "세력 통치자 권한이 있는 장수로 결정하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_CANDIDATE",
+      "reviewState": "DRAFT",
       "explanation": "조건에 맞는 후보가 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_CITY_TROOPS",
+      "reviewState": "DRAFT",
       "explanation": "현에 사용할 병력이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_COMMANDED_CORPS",
+      "reviewState": "DRAFT",
       "explanation": "지휘하는 군단이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_DISPATCH",
+      "reviewState": "DRAFT",
       "explanation": "응답할 발령이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_ELIGIBLE_NATION",
+      "reviewState": "DRAFT",
       "explanation": "출사할 수 있는 세력이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_GATHER_TARGET",
+      "reviewState": "DRAFT",
       "explanation": "집합할 대상을 찾을 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_HOUSEHOLDS",
+      "reviewState": "DRAFT",
       "explanation": "사용할 수 있는 가구가 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_PLACEMENT",
+      "reviewState": "DRAFT",
       "explanation": "해제할 배치가 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_RETURN_ASSIGNMENT",
+      "reviewState": "DRAFT",
       "explanation": "돌아갈 배치 정보가 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "NO_ROUTE",
+      "reviewState": "DRAFT",
       "explanation": "목적지까지 갈 수 있는 경로가 없습니다.",
       "recoveryAdvice": "지도에서 현재 위치와 목적지 사이의 연결을 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "OWNER_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "입력 소유자를 확인할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "POLICY_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "선택한 방침을 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "POPULATION_FULL",
+      "reviewState": "DRAFT",
       "explanation": "현의 인구 수용 한도에 도달했습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "POSITION_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "지정한 자리를 사용할 수 없습니다.",
       "recoveryAdvice": "현재 자리와 이동·부임 상태를 확인한 뒤 다른 자리를 고르세요.",
       "byInputId": {}
     },
     {
       "code": "REFUSED",
+      "reviewState": "DRAFT",
       "explanation": "상대가 요청을 받아들이지 않았습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "RELATION_CHANGED",
+      "reviewState": "DRAFT",
       "explanation": "요청 뒤 인물 관계가 바뀌었습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "RETAINER_NAME_CONFLICT",
+      "reviewState": "DRAFT",
       "explanation": "직속 인물의 이름이 겹칩니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "ROUTE_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "현재 사용할 수 있는 이동 경로가 없습니다.",
       "recoveryAdvice": "현재 위치와 목적지 사이의 사용 가능한 경로를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "SAME_CREW_TYPE",
+      "reviewState": "DRAFT",
       "explanation": "이미 같은 병종입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "SAME_NATION_REQUIRED",
+      "reviewState": "DRAFT",
       "explanation": "같은 세력 소속이어야 합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "SAME_PROVINCE_REQUIRED",
+      "reviewState": "DRAFT",
       "explanation": "같은 州 안에 있어야 합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "SOURCE_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "출발지나 원천 대상을 사용할 수 없습니다.",
       "recoveryAdvice": "출발지의 소유·재고·현재 상태를 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "STATE_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "현재 게임 상태에서 이 입력을 실행할 수 없습니다.",
       "recoveryAdvice": "이 코드만으로는 원인을 특정할 수 없습니다. 함께 반환된 상세 메시지와 선택한 입력의 조건을 확인하세요.",
       "byInputId": {
@@ -640,180 +744,210 @@
     },
     {
       "code": "STOCK_OVERFLOW",
+      "reviewState": "DRAFT",
       "explanation": "물자가 보관 한도를 넘습니다.",
       "recoveryAdvice": "대상 창고의 여유 용량을 확인하고 보낼 양을 줄이세요.",
       "byInputId": {}
     },
     {
       "code": "SUCCESSOR_NOT_RETAINER",
+      "reviewState": "DRAFT",
       "explanation": "후임 후보가 직접 거느린 인물이 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "SUCCESSOR_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "후임 후보를 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "SUCCESSOR_UNAVAILABLE_FOR_CONTROL",
+      "reviewState": "DRAFT",
       "explanation": "후임 후보에게 통제권을 넘길 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_COUNTY_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "대상 현을 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_IS_LORD",
+      "reviewState": "DRAFT",
       "explanation": "대상이 주공입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_ACCEPTING",
+      "reviewState": "DRAFT",
       "explanation": "상대 주공이 출사를 받지 않습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_CAPTIVE",
+      "reviewState": "DRAFT",
       "explanation": "대상이 포로 상태가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_DISCOVERED",
+      "reviewState": "DRAFT",
       "explanation": "대상 인물을 아직 발견하지 못했습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_FOUND",
+      "reviewState": "DRAFT",
       "explanation": "지정한 대상을 찾을 수 없습니다.",
       "recoveryAdvice": "목록에서 현재 존재하는 대상을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_FREE",
+      "reviewState": "DRAFT",
       "explanation": "대상이 재야 상태가 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_HUMAN",
+      "reviewState": "DRAFT",
       "explanation": "대상이 사람 장수가 아닙니다.",
       "recoveryAdvice": "사람 장수를 대상으로 고르세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_NOT_LORD",
+      "reviewState": "DRAFT",
       "explanation": "지정한 장수가 주공이 아닙니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TARGET_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "현재 대상에 입력을 적용할 수 없습니다.",
       "recoveryAdvice": "이 코드는 여러 입력에서 다르게 쓰입니다. 실제 결과의 상세 사유와 대상 상태를 함께 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "TOO_SMALL",
+      "reviewState": "DRAFT",
       "explanation": "필요한 최소 규모에 미치지 못합니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TRAINING_MAXED",
+      "reviewState": "DRAFT",
       "explanation": "훈련이 더 오르지 않는 상태입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TREASURE_ISSUED",
+      "reviewState": "DRAFT",
       "explanation": "보물이 이미 지급되었습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TREASURE_NOT_OWNED",
+      "reviewState": "DRAFT",
       "explanation": "해당 보물을 소유하지 않았습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "TREASURE_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "지정한 보물을 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "UNAUTHORIZED",
+      "reviewState": "DRAFT",
       "explanation": "인증이나 소유 권한을 확인할 수 없습니다.",
       "recoveryAdvice": "다시 로그인하고 자신에게 속한 장수·요청인지 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "UNCHANGED",
+      "reviewState": "DRAFT",
       "explanation": "기존 설정과 같아 바뀔 내용이 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "UNIT_UNAVAILABLE",
+      "reviewState": "DRAFT",
       "explanation": "선택한 부대를 사용할 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "UNKNOWN_COMMANDERY",
+      "reviewState": "DRAFT",
       "explanation": "지정한 郡國을 찾을 수 없습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "UNKNOWN_INPUT",
+      "reviewState": "DRAFT",
       "explanation": "원장에 등록되지 않은 입력입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "UPPER_POLICY_IN_FORCE",
+      "reviewState": "DRAFT",
       "explanation": "상위 방침이 현재 적용 중입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "WAREHOUSE_NOT_READY",
+      "reviewState": "DRAFT",
       "explanation": "창고가 아직 이 입력에 사용할 수 있는 상태가 아닙니다.",
       "recoveryAdvice": "현 창고의 사용 가능 상태와 적용 시점을 확인하세요.",
       "byInputId": {}
     },
     {
       "code": "WORK_COMPLETED",
+      "reviewState": "DRAFT",
       "explanation": "공사가 이미 완료되었습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "WORK_IN_PROGRESS",
+      "reviewState": "DRAFT",
       "explanation": "현에서 이미 공사가 진행 중입니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "WORK_NOT_COMPLETED",
+      "reviewState": "DRAFT",
       "explanation": "공사가 아직 완료되지 않았습니다.",
       "recoveryAdvice": "반환된 상세 사유와 현재 상태를 확인하고, 조건에 맞게 대상이나 입력을 다시 선택하세요.",
       "byInputId": {}
     },
     {
       "code": "WRONG_RULE_PROFILE",
+      "reviewState": "DRAFT",
       "explanation": "이 월드의 규칙에서 사용할 수 없는 입력입니다.",
       "recoveryAdvice": "현재 월드와 화면에서 제공되는 다른 입력을 선택하세요.",
       "byInputId": {}

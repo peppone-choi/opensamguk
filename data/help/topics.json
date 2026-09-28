@@ -4,6 +4,7 @@
     {
       "id": "commands.action.enlist",
       "title": "출사",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "섬길 주공을 정해 그 세력에 들어가는 직접 행동입니다.",
         "example": "섬길 주공을 고르고 출사를 제출합니다.",
@@ -18,6 +19,7 @@
     {
       "id": "commands.action.deploy",
       "title": "출병",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "맡은 군단을 목적지로 출병시키는 직접 행동입니다.",
         "example": "지휘하는 군단과 출병할 목적지를 고릅니다.",
@@ -32,6 +34,7 @@
     {
       "id": "commands.action.scout",
       "title": "첩보",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "인접한 郡國의 제한된 정보를 조사하는 직접 행동입니다.",
         "example": "현재 위치와 맞닿은 郡國 중 조사할 곳을 고릅니다.",
@@ -46,6 +49,7 @@
     {
       "id": "commands.action.assault",
       "title": "강공",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "포위 중인 목표에 강공을 시도하는 직접 행동입니다.",
         "example": "강공을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -60,6 +64,7 @@
     {
       "id": "commands.action.demandSurrender",
       "title": "항복 권고",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "포위한 상대에게 항복을 권하는 직접 행동입니다.",
         "example": "항복 권고을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -74,6 +79,7 @@
     {
       "id": "commands.action.siegeRoadFort",
       "title": "보루 포위",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "길목의 보루를 포위하는 직접 행동입니다.",
         "example": "보루 포위을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -88,6 +94,7 @@
     {
       "id": "commands.court.dispatch",
       "title": "발령",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "주공이 직접 거느린 사람 장수를 아군 현의 자리로 보내는 결정입니다.",
         "example": "직접 거느린 사람 장수와 아군 현의 빈 자리를 고릅니다.",
@@ -102,6 +109,7 @@
     {
       "id": "commands.court.dispatchReply",
       "title": "발령 응답",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "받은 발령을 수락하거나 거절하는 응답입니다.",
         "example": "받은 발령을 열어 수락 또는 거절을 선택합니다.",
@@ -116,6 +124,7 @@
     {
       "id": "commands.court.reward",
       "title": "상사",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "공을 세운 인물에게 상사를 내리는 조정 결정입니다.",
         "example": "상사을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -130,6 +139,7 @@
     {
       "id": "commands.court.politicalConsent",
       "title": "정치 동의",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "제안된 정치 결정에 동의 여부를 밝히는 조정 응답입니다.",
         "example": "정치 동의을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -144,6 +154,7 @@
     {
       "id": "commands.placement.assign",
       "title": "배치",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "직접 거느린 인물 카드를 적합한 자리에 맡기는 지속 입력입니다.",
         "example": "직접 거느린 인물 카드와 맡길 자리를 고릅니다.",
@@ -158,6 +169,7 @@
     {
       "id": "commands.policy.set",
       "title": "방침 설정",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "맡은 현이나 부대의 운영 방침을 정하는 지속 입력입니다.",
         "example": "관할 대상과 적용할 운영 방침을 고릅니다.",
@@ -172,6 +184,7 @@
     {
       "id": "commands.work.start",
       "title": "공사 시작",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현 또는 길목에서 공사를 착수하는 지속 입력입니다.",
         "example": "관할 현에서 착수 가능한 공사와 위치를 고릅니다.",
@@ -186,6 +199,7 @@
     {
       "id": "commands.stratagem.rumor",
       "title": "유언비어",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "소문을 퍼뜨려 상대의 판단에 영향을 주는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 유언비어 화면에서 대상과 조건을 확인합니다.",
@@ -200,6 +214,7 @@
     {
       "id": "commands.stratagem.play",
       "title": "계책 사용",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "보유한 계책 카드를 골라 사용하는 입력입니다.",
         "example": "제공 상태가 바뀐 뒤 계책 사용 화면에서 대상과 조건을 확인합니다.",
@@ -214,6 +229,7 @@
     {
       "id": "commands.action.farm",
       "title": "농지개간",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현의 농지를 개간해 농업 기반을 키우는 직접 행동입니다.",
         "example": "농지개간을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -228,6 +244,7 @@
     {
       "id": "commands.action.commerce",
       "title": "상업투자",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현의 상업 기반에 투자하는 직접 행동입니다.",
         "example": "상업투자을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -242,6 +259,7 @@
     {
       "id": "commands.action.fortify",
       "title": "수비강화",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현의 수비 태세를 강화하는 직접 행동입니다.",
         "example": "수비강화을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -256,6 +274,7 @@
     {
       "id": "commands.action.repairWall",
       "title": "성벽보수",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "손상된 성벽을 보수하는 직접 행동입니다.",
         "example": "성벽보수을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -270,6 +289,7 @@
     {
       "id": "commands.action.security",
       "title": "치안강화",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현의 치안을 개선하는 직접 행동입니다.",
         "example": "치안강화을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -284,6 +304,7 @@
     {
       "id": "commands.action.settle",
       "title": "정착장려",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "사람들이 현에 정착하도록 장려하는 직접 행동입니다.",
         "example": "정착장려을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -298,6 +319,7 @@
     {
       "id": "commands.action.selectResidents",
       "title": "주민선정",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현의 주민을 골라 필요한 일에 배치하는 직접 행동입니다.",
         "example": "주민선정을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -312,6 +334,7 @@
     {
       "id": "commands.action.conscript",
       "title": "징병",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "징병으로 병력을 모으는 직접 행동입니다.",
         "example": "징병을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -326,6 +349,7 @@
     {
       "id": "commands.action.raiseVolunteers",
       "title": "모병",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "지원자를 모아 병력을 늘리는 직접 행동입니다.",
         "example": "모병을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -340,6 +364,7 @@
     {
       "id": "commands.action.train",
       "title": "훈련",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "부대의 훈련을 진행하는 직접 행동입니다.",
         "example": "훈련을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -354,6 +379,7 @@
     {
       "id": "commands.action.boostMorale",
       "title": "사기진작",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "부대의 사기를 높이는 직접 행동입니다.",
         "example": "사기진작을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -368,6 +394,7 @@
     {
       "id": "commands.action.demobilize",
       "title": "소집해제",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "소집된 병력을 해산하는 직접 행동입니다.",
         "example": "소집해제을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -382,6 +409,7 @@
     {
       "id": "commands.action.search",
       "title": "인재탐색",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "주변의 인재를 찾는 직접 행동입니다.",
         "example": "인재탐색을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -396,6 +424,7 @@
     {
       "id": "commands.action.employ",
       "title": "등용",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "찾아낸 인물을 등용해 소속으로 맞이하는 직접 행동입니다.",
         "example": "발견한 인물 중 등용할 대상을 고릅니다.",
@@ -410,6 +439,7 @@
     {
       "id": "commands.action.travel",
       "title": "견문",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "다른 지역을 다니며 견문을 넓히는 직접 행동입니다.",
         "example": "견문을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -424,6 +454,7 @@
     {
       "id": "commands.action.selfTrain",
       "title": "단련",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "자신의 능력을 단련하는 직접 행동입니다.",
         "example": "단련을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -438,6 +469,7 @@
     {
       "id": "commands.action.recuperate",
       "title": "요양",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "부상이나 피로를 회복하는 직접 행동입니다.",
         "example": "요양을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -452,6 +484,7 @@
     {
       "id": "commands.action.gift",
       "title": "증여",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "보유한 물품을 다른 인물에게 주는 직접 행동입니다.",
         "example": "증여을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -466,6 +499,7 @@
     {
       "id": "commands.action.donate",
       "title": "헌납",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "보유한 자원을 세력에 바치는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 헌납 화면에서 대상과 조건을 확인합니다.",
@@ -480,6 +514,7 @@
     {
       "id": "commands.action.muster",
       "title": "집합",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "군단과 인물을 지정한 장소에 모으는 직접 행동입니다.",
         "example": "집합을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -494,6 +529,7 @@
     {
       "id": "commands.action.move",
       "title": "이동",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "정해진 경로를 따라 다른 지역으로 이동하는 직접 행동입니다.",
         "example": "이동할 목적지와 화면에 표시된 경로를 확인합니다.",
@@ -508,6 +544,7 @@
     {
       "id": "commands.action.forcedMarch",
       "title": "강행",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "더 빠른 이동을 위해 강행을 선택하는 직접 행동입니다.",
         "example": "강행을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -522,6 +559,7 @@
     {
       "id": "commands.action.return",
       "title": "귀환",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "맡은 자리나 부대에서 돌아오는 직접 행동입니다.",
         "example": "귀환을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -536,6 +574,7 @@
     {
       "id": "commands.action.retire",
       "title": "은퇴",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현재의 직무에서 물러나는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 은퇴 화면에서 대상과 조건을 확인합니다.",
@@ -550,6 +589,7 @@
     {
       "id": "commands.action.resign",
       "title": "하야",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "맡은 관직이나 소속을 내려놓는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 하야 화면에서 대상과 조건을 확인합니다.",
@@ -564,6 +604,7 @@
     {
       "id": "commands.action.rise",
       "title": "거병",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "새 세력을 세우기 위해 거병하는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 거병 화면에서 대상과 조건을 확인합니다.",
@@ -578,6 +619,7 @@
     {
       "id": "commands.action.foundState",
       "title": "건국",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "요건을 갖춰 나라를 세우는 직접 행동입니다.",
         "example": "건국을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -592,6 +634,7 @@
     {
       "id": "commands.action.abdicate",
       "title": "선양",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "권력을 다른 인물에게 넘기는 직접 행동입니다.",
         "example": "선양을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -606,6 +649,7 @@
     {
       "id": "commands.action.dissolve",
       "title": "세력 해산",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "자신이 이끄는 세력을 해산하는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 세력 해산 화면에서 대상과 조건을 확인합니다.",
@@ -620,6 +664,7 @@
     {
       "id": "commands.action.tour",
       "title": "순행",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "관할 지역을 돌아보는 직접 행동입니다.",
         "example": "순행을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -634,6 +679,7 @@
     {
       "id": "commands.action.persuadeCaptive",
       "title": "포로 설득",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "포로에게 귀순을 권하는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 포로 설득 화면에서 대상과 조건을 확인합니다.",
@@ -648,6 +694,7 @@
     {
       "id": "commands.action.oath",
       "title": "결의",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "다른 인물과 결의를 맺는 직접 행동입니다.",
         "example": "결의을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -662,6 +709,7 @@
     {
       "id": "commands.action.independence",
       "title": "독립",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "기존 세력에서 갈라져 독립을 선언하는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 독립 화면에서 대상과 조건을 확인합니다.",
@@ -676,6 +724,7 @@
     {
       "id": "commands.action.convertProficiency",
       "title": "숙련전환",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "쌓은 숙련을 다른 분야로 전환하는 직접 행동입니다.",
         "example": "숙련전환을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -690,6 +739,7 @@
     {
       "id": "commands.action.tradeEquipment",
       "title": "장비매매",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "장비를 사고파는 직접 행동입니다.",
         "example": "제공 상태가 바뀐 뒤 장비매매 화면에서 대상과 조건을 확인합니다.",
@@ -704,6 +754,7 @@
     {
       "id": "commands.action.tradeGrain",
       "title": "군량매매",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "군량을 사고파는 직접 행동입니다.",
         "example": "군량매매을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -718,6 +769,7 @@
     {
       "id": "commands.action.transport",
       "title": "물자조달",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "다른 곳으로 물자를 보내는 직접 행동입니다.",
         "example": "물자조달을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -732,6 +784,7 @@
     {
       "id": "commands.court.releaseCorps",
       "title": "군단 해제",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "세력이 소유한 군단의 편제를 해제하는 조정 결정입니다.",
         "example": "군단 해제을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -746,6 +799,7 @@
     {
       "id": "commands.court.diplomacy",
       "title": "외교",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "다른 세력과 관계를 조정하는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 외교 화면에서 대상과 조건을 확인합니다.",
@@ -760,6 +814,7 @@
     {
       "id": "commands.court.abandonCounty",
       "title": "현 포기",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "세력이 차지한 현을 포기하는 조정 결정입니다.",
         "example": "현 포기을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -774,6 +829,7 @@
     {
       "id": "commands.court.institution",
       "title": "제도 결정",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "세력의 제도를 정하거나 바꾸는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 제도 결정 화면에서 대상과 조건을 확인합니다.",
@@ -788,6 +844,7 @@
     {
       "id": "commands.court.moveCapital",
       "title": "천도",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "세력의 수도를 다른 현으로 옮기는 조정 결정입니다.",
         "example": "천도을 선택하고 화면에 표시된 대상과 조건을 확인한 뒤 제출합니다.",
@@ -802,6 +859,7 @@
     {
       "id": "commands.court.confiscate",
       "title": "몰수",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "대상 인물의 재산이나 물품을 몰수하는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 몰수 화면에서 대상과 조건을 확인합니다.",
@@ -816,6 +874,7 @@
     {
       "id": "commands.court.nonAggression",
       "title": "불가침",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "다른 세력에 불가침을 제안하는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 불가침 화면에서 대상과 조건을 확인합니다.",
@@ -830,6 +889,7 @@
     {
       "id": "commands.court.declareWar",
       "title": "선전포고",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "다른 세력에 전쟁을 선언하는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 선전포고 화면에서 대상과 조건을 확인합니다.",
@@ -844,6 +904,7 @@
     {
       "id": "commands.court.offerPeace",
       "title": "강화 제안",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "교전 상대에게 강화를 제안하는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 강화 제안 화면에서 대상과 조건을 확인합니다.",
@@ -858,6 +919,7 @@
     {
       "id": "commands.court.breakNonAggression",
       "title": "불가침 파기",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "맺은 불가침 약속을 파기하는 조정 결정입니다.",
         "example": "제공 상태가 바뀐 뒤 불가침 파기 화면에서 대상과 조건을 확인합니다.",
@@ -872,6 +934,7 @@
     {
       "id": "commands.work.reduce",
       "title": "공사 감축",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "진행 중인 공사의 규모나 부담을 줄이도록 요청하는 지속 입력입니다.",
         "example": "제공 상태가 바뀐 뒤 공사 감축 화면에서 대상과 조건을 확인합니다.",
@@ -886,6 +949,7 @@
     {
       "id": "commands.stratagem.steal",
       "title": "절도",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "상대가 지닌 것을 빼앗으려는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 절도 화면에서 대상과 조건을 확인합니다.",
@@ -900,6 +964,7 @@
     {
       "id": "commands.stratagem.sabotage",
       "title": "파괴공작",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "상대의 시설이나 준비를 방해하는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 파괴공작 화면에서 대상과 조건을 확인합니다.",
@@ -914,6 +979,7 @@
     {
       "id": "commands.stratagem.fire",
       "title": "방화",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "불을 이용해 상대를 압박하는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 방화 화면에서 대상과 조건을 확인합니다.",
@@ -928,6 +994,7 @@
     {
       "id": "commands.stratagem.lastStand",
       "title": "배수진",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "물러설 곳을 줄이고 결전을 준비하는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 배수진 화면에서 대상과 조건을 확인합니다.",
@@ -942,6 +1009,7 @@
     {
       "id": "commands.stratagem.mobilizePeople",
       "title": "민심 동원",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "주변 사람들의 협력을 끌어내는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 민심 동원 화면에서 대상과 조건을 확인합니다.",
@@ -956,6 +1024,7 @@
     {
       "id": "commands.stratagem.flood",
       "title": "수공",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "물을 이용해 적의 움직임을 방해하는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 수공 화면에서 대상과 조건을 확인합니다.",
@@ -970,6 +1039,7 @@
     {
       "id": "commands.stratagem.falseReport",
       "title": "거짓 보고",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "거짓 정보를 보내 상대의 결정을 흐리는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 거짓 보고 화면에서 대상과 조건을 확인합니다.",
@@ -984,6 +1054,7 @@
     {
       "id": "commands.stratagem.raiseMilitia",
       "title": "의병 봉기",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "현지 사람들을 모아 의병을 일으키는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 의병 봉기 화면에서 대상과 조건을 확인합니다.",
@@ -998,6 +1069,7 @@
     {
       "id": "commands.stratagem.provokeRivalry",
       "title": "이간",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "상대 내부의 불화를 유도하는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 이간 화면에서 대상과 조건을 확인합니다.",
@@ -1012,6 +1084,7 @@
     {
       "id": "commands.stratagem.raid",
       "title": "기습",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "틈을 노려 기습하는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 기습 화면에서 대상과 조건을 확인합니다.",
@@ -1026,6 +1099,7 @@
     {
       "id": "commands.stratagem.reciprocity",
       "title": "보답",
+      "reviewState": "DRAFT",
       "sections": {
         "explanation": "받은 도움에 보답해 관계를 다지는 계책입니다.",
         "example": "제공 상태가 바뀐 뒤 보답 화면에서 대상과 조건을 확인합니다.",

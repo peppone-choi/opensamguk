@@ -18,6 +18,8 @@ class HelpStoreTest {
         assertEquals(catalog.entries.flatMap { it.failureReasons }.toSet(), store.reasons.keys)
         assertEquals("STATE_UNAVAILABLE", store.reason("STATE_UNAVAILABLE")?.code)
         assertTrue(store.reason("STATE_UNAVAILABLE")!!.byInputId.containsKey("work.start"))
+        assertTrue(store.topics.values.all { it.reviewState == HelpReviewState.DRAFT })
+        assertTrue(store.reasons.values.all { it.reviewState == HelpReviewState.DRAFT })
     }
 
     @Test
@@ -39,12 +41,21 @@ class HelpStoreTest {
     }
 
     @Test
+    fun `human prose must declare a known review state`() {
+        val missing = topics.replaceFirst("\"reviewState\": \"DRAFT\",", "")
+        assertFailsWith<NoSuchElementException> { HelpStore.parse(missing, reasons, catalog) }
+        val unknown = reasons.replaceFirst("\"reviewState\": \"DRAFT\"", "\"reviewState\": \"UNKNOWN\"")
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(topics, unknown, catalog) }
+    }
+
+    @Test
     fun `search prefers title before body and never emits unknown topic`() {
         val store = HelpStore.parse(topics, reasons, catalog)
         val hits = store.search("출사", 20)
         assertTrue(hits.isNotEmpty())
         assertEquals("commands.action.enlist", hits.first().id)
         assertEquals("title", hits.first().matchedSection)
+        assertEquals(HelpReviewState.DRAFT, hits.first().reviewState)
         assertTrue(hits.all { it.id in store.topics })
     }
 

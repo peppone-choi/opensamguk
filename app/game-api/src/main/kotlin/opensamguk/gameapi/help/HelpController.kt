@@ -59,6 +59,7 @@ class HelpController(
             .filter { reason in it.failureReasons }.map { it.helpTopicId }.distinct().sorted()
         ResponseEntity.ok<Any>(mapOf(
             "schemaVersion" to 1, "reason" to reason,
+            "reviewState" to help.reviewState,
             "explanation" to (contextual?.explanation ?: help.explanation),
             "recoveryAdvice" to (contextual?.recoveryAdvice ?: help.recoveryAdvice),
             "relatedTopicIds" to related,

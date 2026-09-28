@@ -22,6 +22,10 @@ class HelpControllerTest {
         val context = controller.context("action.enlist")
         assertEquals(HttpStatus.OK, context.statusCode)
         assertNotNull(context.body)
+        val topic = (controller.topic("commands.action.enlist").body as Map<*, *>)["topic"] as HelpTopic
+        assertEquals(HelpReviewState.DRAFT, topic.reviewState)
+        val reason = controller.failure("ALREADY_SERVING", "action.enlist").body as Map<*, *>
+        assertEquals(HelpReviewState.DRAFT, reason["reviewState"])
         assertEquals(HttpStatus.OK, controller.search("출사", "1").statusCode)
     }
 
