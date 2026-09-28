@@ -1,6 +1,7 @@
 package opensamguk.gameapi.battle.realtime
 
 import java.sql.Timestamp
+import java.time.Clock
 import java.time.Instant
 import java.time.ZoneOffset
 import java.util.Base64
@@ -52,7 +53,8 @@ class BattleJoinTicketBoundaryTest {
             .run { result ->
                 assertEquals(null, result.startupFailure)
                 assertTrue(result.containsBean("battleJoinTicketService"))
-                assertTrue(result.containsBean("battleJoinDbClock"))
+                assertTrue(result.getBeanNamesForType(Clock::class.java).isEmpty())
+                assertFalse(result.containsBean("battleJoinDbClock"))
             }
     }
 

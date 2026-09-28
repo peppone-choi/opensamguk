@@ -7,7 +7,6 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.util.Base64
 import opensamguk.infra.battle.realtime.BattleSessionStore
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
@@ -28,13 +27,10 @@ class BattleJoinDbClock(private val jdbc: JdbcOperations, private val zone: Zone
 @Configuration(proxyBeanMethods = false)
 @ConditionalOnProperty(prefix = "battle.join-ticket", name = ["enabled"], havingValue = "true")
 class BattleJoinTicketConfiguration {
-    @Bean("battleJoinDbClock")
-    fun battleJoinDbClock(jdbc: NamedParameterJdbcTemplate): Clock = BattleJoinDbClock(jdbc.jdbcOperations)
-
     @Bean
     fun battleJoinTicketService(
         store: BattleSessionStore,
-        @Qualifier("battleJoinDbClock") clock: Clock,
+        jdbc: NamedParameterJdbcTemplate,
         @Value("\${battle.join-ticket.key-base64:}") encodedKey: String,
     ): BattleJoinTicketService {
         val key = try {
@@ -46,7 +42,7 @@ class BattleJoinTicketConfiguration {
             require(key.size >= 32 && Base64.getEncoder().encodeToString(key) == encodedKey) {
                 "battle join ticket key configuration is invalid"
             }
-            return BattleJoinTicketService(store, key, clock)
+            return BattleJoinTicketService(store, key, BattleJoinDbClock(jdbc.jdbcOperations))
         } finally {
             key.fill(0)
         }
