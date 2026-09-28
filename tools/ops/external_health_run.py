@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import http.client
 import json
 import os
 import re
@@ -85,7 +86,7 @@ def find_state(mode: str, current_run_id: int) -> int:
     lookup_error = False
     try:
         previous_run = previous_artifact_run(mode, current_run_id)
-    except (KeyError, ValueError, urllib.error.URLError, TimeoutError):
+    except (KeyError, ValueError, OSError, http.client.HTTPException, urllib.error.URLError, TimeoutError):
         print("::warning::previous monitor artifact lookup failed")
         previous_run = None
         lookup_error = True
@@ -137,7 +138,7 @@ def peer_result(mode: str, now: datetime, run_id: int) -> str | None:
                     return "peer_failed"
             return None
         return finding
-    except (KeyError, ValueError, urllib.error.URLError, TimeoutError):
+    except (KeyError, ValueError, OSError, http.client.HTTPException, urllib.error.URLError, TimeoutError):
         return "peer_api_unavailable"
 
 

@@ -2,6 +2,7 @@
 """워크플로 어댑터 계약. 실제 공개 URL·웹훅에는 접속하지 않는다."""
 
 import io
+import http.client
 import json
 import os
 import sys
@@ -145,6 +146,22 @@ class ArtifactTest(unittest.TestCase):
                 patch.object(runner, "github_api", side_effect=[runs, {"artifacts": []}]):
             from datetime import datetime, timezone
             self.assertEqual("peer_failed", runner.peer_result("watchdog", datetime(2026, 9, 28, 12, tzinfo=timezone.utc), 100))
+
+    def test_remote_disconnect_is_an_api_incident(self):
+        from datetime import datetime, timezone
+        with patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo"}), \
+                patch.object(runner, "github_api", side_effect=http.client.RemoteDisconnected("connection dropped")):
+            self.assertEqual("peer_api_unavailable",
+                             runner.peer_result("probe", datetime(2026, 9, 28, 12, tzinfo=timezone.utc), 100))
+
+    def test_incomplete_artifact_lookup_sets_error_output(self):
+        with tempfile.TemporaryDirectory(prefix="external-health-output-") as temp:
+            output = Path(temp) / "github-output"
+            with patch.dict(os.environ, {"GITHUB_REPOSITORY": "owner/repo", "GITHUB_OUTPUT": str(output)}), \
+                    patch.object(runner, "github_api", side_effect=http.client.IncompleteRead(b"partial")), \
+                    redirect_stdout(io.StringIO()):
+                self.assertEqual(0, runner.find_state("probe", 100))
+            self.assertIn("lookup_error=true", output.read_text())
 
 
 class SecretSafetyTest(unittest.TestCase):

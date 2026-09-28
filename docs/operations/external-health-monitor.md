@@ -27,7 +27,7 @@ GitHub Actions의 `External Health Monitor`와 `External Health Watchdog`는 Git
 ## 확인과 대응
 
 1. GitHub Actions의 두 호스트 워크플로에서 최근 실행 시각·결론과 로그의 분류 코드, `Daemon Health Alert` 자체 호스트 검사 실행을 함께 본다.
-2. `origin_cloudflare_52x`·`origin_unreachable`은 Cloudflare 원점과 VM 도달성을 확인한다. `gateway_*`는 게이트웨이 경로, `game_api_down`은 서버 `pep`의 game-api 경로를 확인한다. `turn_stalled`는 내부 데몬 status와 마지막 성공 턴, recovery gate를 확인한다.
+2. `origin_cloudflare_52x`·`origin_unreachable`은 Cloudflare 원점과 VM 도달성을 확인한다. `gateway_*`는 게이트웨이 경로, `game_api_down`은 서버 `pep`의 game-api 경로를 확인한다. 두 코드가 같이 뜨면 게이트웨이를 먼저 확인한다. `turn_stalled`는 내부 데몬 status와 마지막 성공 턴, recovery gate를 확인한다.
 3. `peer_cancelled`·`peer_schedule_missing`·`peer_not_started`는 GitHub Actions 일정과 runner 상태를 본다. 감시 실패와 서비스 장애를 같은 원인으로 취급하지 않는다.
 4. 복구 뒤 첫 정상 실행의 복구 알림과 두 워크플로의 최근 정상 일정을 확인한다. 경보 채널 실패 시 워크플로 경고·실패와 `delivered=false` 상태를 확인한다.
 
