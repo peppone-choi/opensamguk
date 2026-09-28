@@ -1,4 +1,4 @@
-package opensamguk.gameapi.battle.realtime
+package opensamguk.battlewebsockettest
 
 import java.net.Socket
 import java.time.Instant
@@ -7,6 +7,9 @@ import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import opensamguk.common.world.WorldId
+import opensamguk.gameapi.battle.realtime.BattleJoinIdentity
+import opensamguk.gameapi.battle.realtime.BattleJoinTicketService
+import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
 import org.mockito.Mockito.*
