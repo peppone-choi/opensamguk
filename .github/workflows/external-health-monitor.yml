@@ -1,6 +1,12 @@
 name: External Health Monitor
 
 on:
+  pull_request:
+    paths:
+      - '.github/workflows/external-health-*.yml'
+      - 'tools/ops/external_health_*.py'
+      - 'tools/ops/test_external_health_*.py'
+      - 'docs/operations/external-health-monitor.md'
   schedule:
     - cron: '1-59/5 * * * *'
   workflow_dispatch:
@@ -19,6 +25,16 @@ permissions:
   contents: read
 
 jobs:
+  contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify external health classifier and adapter
+        run: python3 -m unittest tools/ops/test_external_health_contract.py tools/ops/test_external_health_run.py -q
+      - name: Preserve VM-side detailed checks
+        run: bash tools/ops/daemon_health_alert_contract_test.sh
   probe:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
