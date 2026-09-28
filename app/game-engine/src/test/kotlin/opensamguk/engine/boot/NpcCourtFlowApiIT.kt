@@ -78,17 +78,23 @@ class NpcCourtFlowApiIT {
         assertEquals(opensamguk.logic.input.DispatchStatus.PENDING,dispatch.status)
         assertTrue(dispatch.dispatchId.startsWith("npc-dispatch:"))
         assertEquals(listOf(enlistRequest,enlistRequest),published)
-        assertEquals(1,jdbc.queryForObject("SELECT count(*) FROM command_inbox",Int::class.java))
+        val presenceRequest = "$enlistRequest:presence"
+        assertEquals(mapOf(enlistRequest to "action.enlist", presenceRequest to "presencePulse"),
+            jdbc.query("SELECT request_id, action_code FROM command_inbox") { rs, _ ->
+                rs.getString("request_id") to rs.getString("action_code")
+            }.toMap())
         mvc.perform(get("/api/commands/dispatches").param("generalId","1"))
             .andExpect(status().isOk).andExpect(jsonPath("$.dispatches[0].dispatchId").value(dispatch.dispatchId))
         val reply = json.readTree(mvc.perform(post("/api/commands/court/dispatchReply").param("generalId","1")
             .contentType("application/json").content("""{"dispatchId":"${dispatch.dispatchId}","accept":true}"""))
             .andExpect(status().isAccepted).andReturn().response.contentAsString)["requestId"].asText()
         val cold = fixture.service(WorldId(1),InMemoryTurnWorld(issued),published,intake=true)
-        assertEquals(1,cold.runIntakeCommands())
+        // The reservation POKE was terminalized on acceptance; only activity and the court reply remain.
+        assertEquals(2,cold.runIntakeCommands())
         val accepted = fixture.load(1)
         val after = accepted.generals.single { it.id==1 }
         assertEquals(actor,after.copy(meta=actor.meta))
+        assertEquals(42, opensamguk.engine.campaign.OfflineDelegationLease.read(after.meta)?.ownerUserId)
         assertEquals(issued.generalPositionSnapshot!!.statesByGeneralId,accepted.generalPositionSnapshot!!.statesByGeneralId)
         assertEquals(issued.retainers,accepted.retainers)
         assertEquals(county,opensamguk.logic.input.CountyAssignment.read(after.meta)!!.countyId)
@@ -97,7 +103,7 @@ class NpcCourtFlowApiIT {
         mvc.perform(get("/api/command/result/{requestId}",reply)).andExpect(status().isOk)
             .andExpect(jsonPath("$.type").value("executionApplied"))
         assertEquals(0,fixture.service(WorldId(1),InMemoryTurnWorld(accepted),published,intake=true).runIntakeCommands())
-        assertEquals(listOf(enlistRequest,enlistRequest,reply),published)
+        assertEquals(listOf(enlistRequest,enlistRequest,presenceRequest,reply),published)
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM general_turn",Int::class.java))
     }
 
