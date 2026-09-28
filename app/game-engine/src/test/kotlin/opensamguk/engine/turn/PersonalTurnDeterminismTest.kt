@@ -9,6 +9,10 @@ import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.world.GeneralPositionSnapshot
 import opensamguk.logic.world.GeneralPositionState
 import opensamguk.logic.world.StrategicNodeRef
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
+import opensamguk.engine.campaign.OfflineDelegationPresence
+import opensamguk.logic.record.EventKind
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -78,6 +82,26 @@ class PersonalTurnDeterminismTest {
             )
         },
     )
+
+    @Test
+    fun `offline owner starts after two completed phases and same tick return ends the mode`() {
+        val prior = OfflineDelegationLease(7, 12, 19, DelegationPhase(200, 5, 1))
+        val actor = gen(12).copy(userId = "19", meta = gen(12).meta +
+            (OfflineDelegationLease.META_KEY to prior.toMetaValue()))
+        val active = world(RuleProfile.HWIHA, listOf(actor), worldId = 7)
+        val handler = handler(active)
+        val lifecycle = TurnDaemonLifecycle(active, handler,
+            reservedActionOf = { opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn("휴식", "{}", rowExists = false) })
+
+        assertEquals("휴식", lifecycle.runTick(t0.plusSeconds(3601)).single().reservedActionCode)
+        assertEquals(EventKind.OFFLINE_DELEGATION_STARTED, active.consumeDirtyState().gameEvents.single().kind)
+        assertEquals(emptyList(), lifecycle.runTick(t0.plusSeconds(3601)))
+        active.setCurrentDate(200, 6, 2)
+        assertEquals(OfflineDelegationPresence.Result.RECORDED,
+            OfflineDelegationPresence(active, handler.recorder).record(12, 19))
+        assertEquals("휴식", lifecycle.runTick(t0.plusSeconds(7201)).single().reservedActionCode)
+        assertEquals(EventKind.OFFLINE_DELEGATION_ENDED, active.consumeDirtyState().gameEvents.single().kind)
+    }
 
     // ---- G1 ----
 

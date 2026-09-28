@@ -37,6 +37,8 @@ enum class EventKind(
     INPUT_REJECTED("input.rejected", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR)),
     FIELD_APPLIED("field.applied", RETINUE_NATION, setOf(SELF), allowedRefs = setOf(ACTOR, CITY)),
     PERSONAL_APPLIED("personal.applied", PERSONAL, setOf(SELF), allowedRefs = setOf(ACTOR)),
+    OFFLINE_DELEGATION_STARTED("offlineDelegation.started", PERSONAL, setOf(SELF)),
+    OFFLINE_DELEGATION_ENDED("offlineDelegation.ended", PERSONAL, setOf(SELF)),
     PEOPLE_SEARCHED("people.searched", RETINUE_NATION, setOf(SELF, RETINUE), allowedRefs = setOf(ACTOR, CITY, PERSON)),
     PEOPLE_JOINED("people.joined", RETINUE_NATION, setOf(SELF, RETINUE), requiredRefs = setOf(PERSON), allowedRefs = setOf(ACTOR, PERSON)),
     PEOPLE_RESISTED("people.resisted", RETINUE_NATION, setOf(SELF), allowedRefs = setOf(ACTOR, PERSON)),

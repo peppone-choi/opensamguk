@@ -8,6 +8,9 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.PerTurnOverlay
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
+import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.util.jsonDecodeAny
 import java.time.Instant
 
@@ -62,6 +65,11 @@ class ClaimNpcHandler(
         // aux 누적
         val aux = LinkedHashMap<String, Any?>(pre.meta)
         aux["pickYearMonth"] = pickYearMonth
+        if (world.ruleProfile == RuleProfile.HWIHA && command.userId in 1L..Int.MAX_VALUE.toLong()) {
+            val phase = runCatching { DelegationPhase(year, month, state.currentPhase) }.getOrNull()
+            if (phase != null) aux[OfflineDelegationLease.META_KEY] =
+                OfflineDelegationLease(world.worldId.value, generalId, command.userId.toInt(), phase).toMetaValue()
+        }
         val userPenalty = runCatching { jsonDecodeAny(command.userPenaltyJson) as? Map<String, Any?> }.getOrNull() ?: emptyMap<String, Any?>()
         if (userPenalty.isNotEmpty()) {
             aux["penalty"] = LinkedHashMap(userPenalty)

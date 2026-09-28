@@ -29,6 +29,7 @@ import opensamguk.engine.intake.SelectPoolHandler
 import opensamguk.engine.intake.TroopHandler
 import opensamguk.engine.intake.VoteHandler
 import opensamguk.engine.intake.VotePollState
+import opensamguk.engine.campaign.OfflineDelegationPresence
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
@@ -186,6 +187,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── F4 Wave C2 (slice B) — troop intake handler ──
     private val troop = TroopHandler(world, recorder)
+    private val offlinePresence = OfflineDelegationPresence(world, recorder)
 
     // ── F4 Wave C2 (슬라이스 C) — 게시판(회의실/기밀실) 인테이크 핸들러 ──
     private val board = BoardHandler(world, recorder, boardPostRepository)
@@ -311,6 +313,19 @@ class TurnDaemonCommandDispatcher(
         sentAt: Instant,
         executionAt: Instant,
     ): TurnDaemonCommandResult? = when (command) {
+        is TurnDaemonCommand.PresencePulse -> {
+            val result = offlinePresence.record(command.generalId, command.ownerUserId)
+            val accepted = result != OfflineDelegationPresence.Result.REJECTED
+            CommandLifecycleResult(
+                type = if (accepted) "executionApplied" else "executionRejected",
+                ok = accepted,
+                commandKind = "PRESENCE",
+                actionCode = "presencePulse",
+                generalId = command.generalId,
+                code = if (accepted) null else "PRESENCE_REJECTED",
+                reason = if (accepted) null else "현재 소유 장수의 활동만 기록할 수 있습니다.",
+            )
+        }
         is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──

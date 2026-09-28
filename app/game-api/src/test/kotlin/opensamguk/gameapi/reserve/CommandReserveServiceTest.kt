@@ -35,7 +35,7 @@ class CommandReserveServiceTest {
         val turns = RecordingReservedTurns()
         val inbox = RecordingInbox()
         val results = RecordingResults()
-        val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
+        val service = CommandReserveService(turns, inbox, results, redis(), registry(),
             GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
             worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
         for ((inputId, expected) in mapOf(
@@ -69,6 +69,8 @@ class CommandReserveServiceTest {
             service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
         }.code)
     }
+
+    private fun registry() = CommandRegistry(GeneralActionPipeline())
 
     private fun catalogFor(inputId: String, kind: String, state: String) =
         opensamguk.logic.input.InputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
@@ -151,7 +153,11 @@ class CommandReserveServiceTest {
         assertEquals(0, turns.reserves.size)
         `when`(precheck.assess(request)).thenReturn(opensamguk.logic.input.EnlistmentAssessment.Eligible(listOf(opensamguk.logic.input.EnlistmentPlan(10, 20, 3, listOf(10), false, 5))))
         service.reserveForOwner(10, "action.enlist", 11, raw, 42)
-        assertEquals(42, inbox.accepted.single().ownerUserId)
+        assertEquals(42, inbox.accepted.single { it.requestId == "hwiha-req" }.ownerUserId)
+        val pulse = inbox.accepted.single { it.requestId == "hwiha-req:presence" }
+        assertEquals(42, pulse.ownerUserId)
+        assertEquals(10, pulse.generalId)
+        assertEquals("presencePulse", pulse.actionCode)
         assertEquals("hwiha-req", turns.reserves.single().requestId)
         assertEquals("테스트", turns.reserves.single().brief)
         assertEquals("""{"mode":"NATION","targetId":3}""", turns.reserves.single().argJson)
@@ -180,6 +186,28 @@ class CommandReserveServiceTest {
             assertEquals(1, inbox.accepted.size)
             assertEquals(42, inbox.accepted.single().ownerUserId)
         }
+    }
+
+    @Test fun `typed presence requires the authenticated owner and stores a scoped inbox row`() {
+        val inbox = RecordingInbox()
+        val service = CommandReserveService(RecordingReservedTurns(), inbox, RecordingResults(), redis(),
+            registry(), GameApiProcessWorld(1), "fixture",
+            requestIds = { "pulse-req" }, transactions = TestTransactions,
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
+        val pulse = opensamguk.common.wire.TurnDaemonCommand.PresencePulse(10, 42)
+        assertEquals("UNAUTHORIZED", assertFailsWith<AdmissionDenied> {
+            service.publishImmediate(pulse)
+        }.code)
+        assertEquals("WRONG_RULE_PROFILE", assertFailsWith<AdmissionDenied> {
+            service.publishImmediate(pulse, 43)
+        }.code)
+        assertEquals(0, inbox.accepted.size)
+
+        assertEquals("pulse-req", service.publishImmediate(pulse, 42).requestId)
+        val stored = inbox.accepted.single()
+        assertEquals(10, stored.generalId)
+        assertEquals(42, stored.ownerUserId)
+        assertEquals("presencePulse", stored.actionCode)
     }
 
     @Test fun `domestic standing inputs publish canonical immediate commands without a turn slot`() {
