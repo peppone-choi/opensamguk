@@ -11,7 +11,8 @@ data class ImperialEdictProposal(
     val requestedOffice: CentralOfficeGrant? = null,
 ) {
     init {
-        require(id.isNotBlank() && imperialLineCode.isNotBlank() && proposedText.isNotBlank())
+        require(id.matches(Regex("[A-Za-z0-9._:-]{1,128}")))
+        require(imperialLineCode.matches(Regex("[a-z][a-z0-9_]{1,63}")) && proposedText.isNotBlank())
         require(proposerId > 0 && emperorId > 0 && recipientFactionId > 0)
     }
 }

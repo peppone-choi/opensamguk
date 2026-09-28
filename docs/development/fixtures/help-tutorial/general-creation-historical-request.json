@@ -1,0 +1,8 @@
+{
+  "expectedWorldId": 1,
+  "clientRequestId": "713deefa-245e-48cd-bd6f-7f6d4eb96a62",
+  "choice": {
+    "kind": "HISTORICAL",
+    "historicalGeneralId": 127
+  }
+}
