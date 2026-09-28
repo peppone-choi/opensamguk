@@ -15,7 +15,11 @@
     "joinWaitSeconds": 60,
     "tickMillis": 100,
     "battleTicks": 3000,
-    "checkpointTicks": 50
+    "checkpointTicks": 50,
+    "commandIssuedTickMaxLag": 10
+  },
+  "mapSelection": {
+    "topCandidates": 5
   },
   "morale": {
     "scaleMax": 200,
@@ -68,6 +72,7 @@
     "roundLimit": 8,
     "powerStrengthWeight": 2,
     "powerLeadershipWeight": 1,
+    "rollRange": 21,
     "damageDivisor": 9,
     "minimumDamage": 4
   },
