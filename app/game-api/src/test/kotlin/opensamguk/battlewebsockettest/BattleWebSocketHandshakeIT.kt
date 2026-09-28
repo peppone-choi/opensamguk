@@ -1,17 +1,23 @@
 package opensamguk.battlewebsockettest
 
 import java.net.Socket
+import java.time.Clock
 import java.time.Instant
+import java.time.ZoneOffset
+import org.junit.jupiter.api.BeforeEach
 import kotlin.test.Test
 import kotlin.test.assertContains
-import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import opensamguk.common.world.WorldId
-import opensamguk.gameapi.battle.realtime.BattleJoinIdentity
 import opensamguk.gameapi.battle.realtime.BattleJoinTicketService
 import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.infra.battle.realtime.BattleSessionHead
+import opensamguk.infra.battle.realtime.BattleSessionPhase
+import opensamguk.infra.battle.realtime.BattleSessionStore
+import opensamguk.infra.battle.realtime.FrozenBattleParticipant
+import opensamguk.infra.battle.realtime.FrozenBattleTicket
 import org.mockito.Mockito.*
 import org.springframework.boot.SpringBootConfiguration
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration
@@ -35,7 +41,10 @@ import org.springframework.beans.factory.annotation.Autowired
     UserDetailsServiceAutoConfiguration::class, ManagementWebSecurityAutoConfiguration::class])
 @Import(BattleWebSocketConfiguration::class)
 private class BattleWebSocketTestApplication {
-    @Bean fun tickets(): BattleJoinTicketService = mock(BattleJoinTicketService::class.java)
+    @Bean fun store(): BattleSessionStore = mock(BattleSessionStore::class.java)
+    @Bean fun tickets(store: BattleSessionStore): BattleJoinTicketService =
+        BattleJoinTicketService(store, ByteArray(32) { 7 },
+            Clock.fixed(Instant.parse("2026-09-29T00:00:00Z"), ZoneOffset.UTC), "pep")
     @Bean fun generals(): GeneralResolver = mock(GeneralResolver::class.java)
     @Bean fun processWorld() = GameApiProcessWorld(1)
 }
@@ -46,11 +55,29 @@ private class BattleWebSocketTestApplication {
 class BattleWebSocketHandshakeIT @Autowired constructor(
     private val tickets: BattleJoinTicketService,
     private val generals: GeneralResolver,
+    private val store: BattleSessionStore,
 ) {
     @LocalServerPort private var port: Int = 0
-    private val token = "BTJ2.abc.${"A".repeat(43)}"
+    private val world = WorldId(1)
+    private val now = Instant.parse("2026-09-29T00:00:00Z")
+    private val participant = FrozenBattleParticipant(1, 42, 7, "ATTACKER", 3)
+    private val ticket = FrozenBattleTicket(world, "battle-1", "{}", "a".repeat(64),
+        "a".repeat(64), "a".repeat(64), "a".repeat(64), 17, 4, 2,
+        now.minusSeconds(60), now.plusSeconds(300), listOf(participant))
+    private fun head(epoch: Long = 1) = BattleSessionHead(world, "battle-1", BattleSessionPhase.RUNNING,
+        epoch, 0, 0, 0, "actor", now.plusSeconds(30), ticket.joinDeadlineAt, ticket.deadlineAt)
 
-    private fun handshake(protocols: String = "battle.v1, $token", origin: String = "http://localhost",
+    @BeforeEach
+    fun resetStore() { reset(store, generals) }
+
+    private fun validTicket(): String {
+        `when`(store.ticket(world, "battle-1")).thenReturn(ticket)
+        `when`(store.head(world, "battle-1")).thenReturn(head())
+        `when`(generals.resolveGeneralId(42L)).thenReturn(7)
+        return tickets.issue(world, "battle-1", 42, 7)
+    }
+
+    private fun handshake(protocols: String, origin: String = "http://localhost",
                           path: String = "/ws/battles/pep/1/battle-1"): String = Socket("127.0.0.1", port).use { socket ->
         socket.soTimeout = 5000
         socket.getOutputStream().write(("GET $path HTTP/1.1\r\n" +
@@ -72,23 +99,21 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
 
     @Test
     fun `valid short ticket upgrades with only fixed protocol echoed`() {
-        val identity = BattleJoinIdentity("pep", WorldId(1), "battle-1", 42, 1, 7,
-            "ATTACKER", 1, 3, Instant.parse("2026-09-29T00:01:00Z"))
-        `when`(tickets.verifyBearer(token, "pep", WorldId(1), "battle-1")).thenReturn(identity)
-        `when`(generals.resolveGeneralId(42L)).thenReturn(7)
-        val response = handshake()
+        val token = validTicket()
+        val response = handshake("battle.v1, $token")
         assertContains(response, "101")
         assertContains(response.lowercase(), "sec-websocket-protocol: battle.v1")
         assertFalse(response.contains(token))
-        reset(tickets, generals)
     }
 
     @Test
-    fun `invalid ticket and foreign origin do not upgrade`() {
-        `when`(tickets.verifyBearer(token, "pep", WorldId(1), "battle-1"))
-            .thenThrow(SecurityException("invalid battle join ticket"))
-        assertContains(handshake(), "403")
-        assertContains(handshake(origin = "http://other.example"), "403")
-        reset(tickets, generals)
+    fun `invalid ticket foreign origin server and epoch do not upgrade`() {
+        val token = validTicket()
+        val badSignature = token.dropLast(1) + if (token.last() == 'A') 'B' else 'A'
+        assertContains(handshake("battle.v1, $badSignature"), "403")
+        assertContains(handshake("battle.v1, $token", origin = "http://other.example"), "403")
+        assertContains(handshake("battle.v1, $token", path = "/ws/battles/other/1/battle-1"), "403")
+        `when`(store.head(world, "battle-1")).thenReturn(head(epoch = 2))
+        assertContains(handshake("battle.v1, $token"), "403")
     }
 }
