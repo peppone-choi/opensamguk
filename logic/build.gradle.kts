@@ -21,6 +21,9 @@ tasks.processResources {
     from(rootProject.file("data/curated/han/office-rules.json")) {
         into("office")
     }
+    from(rootProject.file("data/curated/han/vassal-rules.json")) {
+        into("vassal")
+    }
     from(rootProject.file("data/commands/input-catalog.json")) {
         into("command-catalog")
     }
@@ -60,6 +63,9 @@ tasks.processResources {
     }
     from(rootProject.file("data/curated/han/personal-encounter-v1.json")) {
         into("campaign")
+    }
+    from(rootProject.file("data/battle/waryong-tactical-rules-v1.json")) {
+        into("battle")
     }
     from(rootProject.file("data/curated/han/march-tempo-targets-v1.json")) {
         into("campaign")
