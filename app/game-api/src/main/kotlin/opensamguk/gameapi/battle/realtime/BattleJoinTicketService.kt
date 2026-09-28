@@ -41,12 +41,14 @@ class BattleJoinTicketService(
     private val decoder = Base64.getUrlDecoder()
     private val prefix = "BTJ1"
 
-    fun issue(worldId: WorldId, battleId: String, authenticatedAccountId: Int): String {
-        require(authenticatedAccountId > 0)
+    fun issue(worldId: WorldId, battleId: String, authenticatedAccountId: Int,
+              ownedGeneralId: Int): String {
+        require(authenticatedAccountId > 0 && ownedGeneralId > 0)
         val ticket = store.ticket(worldId, battleId) ?: throw SecurityException("battle join unavailable")
         val head = store.head(worldId, battleId) ?: throw SecurityException("battle join unavailable")
         val now = clock.instant()
         val participant = activeParticipant(ticket, head, authenticatedAccountId, now)
+        if (participant.generalId != ownedGeneralId) throw SecurityException("battle participant unavailable")
         val expiresAt = minOf(now.plusSeconds(60), head.deadlineAt)
         val bytes = ByteArrayOutputStream()
         DataOutputStream(bytes).use { out ->

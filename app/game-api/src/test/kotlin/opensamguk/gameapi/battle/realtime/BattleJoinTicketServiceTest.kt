@@ -29,7 +29,7 @@ class BattleJoinTicketServiceTest {
     fun `authenticated participant receives a short ticket scoped to current epoch`() {
         val store = FakeStore(ticket, head())
         val signer = service(store)
-        val token = signer.issue(world, "battle-1", 42)
+        val token = signer.issue(world, "battle-1", 42, 7)
         val claims = signer.verify(token, world, "battle-1", 42)
         assertEquals(1, claims.participantId)
         assertEquals(7, claims.generalId)
@@ -42,9 +42,10 @@ class BattleJoinTicketServiceTest {
     fun `different account and changed signature cannot borrow authority`() {
         val store = FakeStore(ticket, head())
         val signer = service(store)
-        val token = signer.issue(world, "battle-1", 42)
+        val token = signer.issue(world, "battle-1", 42, 7)
         assertFailsWith<SecurityException> { signer.verify(token, world, "battle-1", 43) }
         assertFailsWith<SecurityException> { signer.verify(token, WorldId(2), "battle-1", 42) }
+        assertFailsWith<SecurityException> { signer.verify(token, world, "battle-2", 42) }
         val parts = token.split('.')
         val changedPayload = Base64.getUrlDecoder().decode(parts[1]).also {
             it[0] = (it[0].toInt() xor 1).toByte()
@@ -55,13 +56,14 @@ class BattleJoinTicketServiceTest {
         assertFailsWith<SecurityException> {
             signer.verify("${parts[0]}.${parts[1]}.$changedFirst${parts[2].drop(1)}", world, "battle-1", 42)
         }
-        assertFailsWith<SecurityException> { signer.issue(world, "battle-1", 43) }
+        assertFailsWith<SecurityException> { signer.issue(world, "battle-1", 43, 7) }
+        assertFailsWith<SecurityException> { signer.issue(world, "battle-1", 42, 8) }
     }
 
     @Test
     fun `epoch change and expiry invalidate a formerly valid ticket`() {
         val store = FakeStore(ticket, head())
-        val token = service(store).issue(world, "battle-1", 42)
+        val token = service(store).issue(world, "battle-1", 42, 7)
         store.currentHead = head(epoch = 2)
         assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
         store.currentHead = head(epoch = 1, leaseUntil = now.plusSeconds(120))
@@ -71,15 +73,24 @@ class BattleJoinTicketServiceTest {
     }
 
     @Test
+    fun `database clock regression beyond allowed skew invalidates issued ticket`() {
+        val store = FakeStore(ticket, head())
+        val token = service(store).issue(world, "battle-1", 42, 7)
+        assertFailsWith<SecurityException> {
+            service(store, now.minusSeconds(6)).verify(token, world, "battle-1", 42)
+        }
+    }
+
+    @Test
     fun `lease phase participant revision and general identity fence admission`() {
         val store = FakeStore(ticket, head())
-        val token = service(store).issue(world, "battle-1", 42)
+        val token = service(store).issue(world, "battle-1", 42, 7)
         store.currentHead = head(leaseUntil = now.minusSeconds(1))
         assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
-        assertFailsWith<SecurityException> { service(store).issue(world, "battle-1", 42) }
+        assertFailsWith<SecurityException> { service(store).issue(world, "battle-1", 42, 7) }
         store.currentHead = head(phase = BattleSessionPhase.RESOLVING)
         assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
-        assertFailsWith<SecurityException> { service(store).issue(world, "battle-1", 42) }
+        assertFailsWith<SecurityException> { service(store).issue(world, "battle-1", 42, 7) }
         store.currentHead = head()
         store.currentTicket = ticket.copy(participants = listOf(participant.copy(authorityRevision = 4)))
         assertFailsWith<SecurityException> { service(store).verify(token, world, "battle-1", 42) }
@@ -93,7 +104,7 @@ class BattleJoinTicketServiceTest {
         val shortTicket = ticket.copy(deadlineAt = shortDeadline)
         val store = FakeStore(shortTicket, head(leaseUntil = now.plusSeconds(120), deadlineAt = shortDeadline))
         val signer = service(store)
-        val token = signer.issue(world, "battle-1", 42)
+        val token = signer.issue(world, "battle-1", 42, 7)
         assertEquals(shortDeadline, signer.verify(token, world, "battle-1", 42).expiresAt)
         assertFailsWith<SecurityException> {
             service(store, shortDeadline).verify(token, world, "battle-1", 42)
