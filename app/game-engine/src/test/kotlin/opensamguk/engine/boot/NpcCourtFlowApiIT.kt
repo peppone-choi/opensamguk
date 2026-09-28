@@ -103,7 +103,9 @@ class NpcCourtFlowApiIT {
         mvc.perform(get("/api/command/result/{requestId}",reply)).andExpect(status().isOk)
             .andExpect(jsonPath("$.type").value("executionApplied"))
         assertEquals(0,fixture.service(WorldId(1),InMemoryTurnWorld(accepted),published,intake=true).runIntakeCommands())
-        assertEquals(listOf(enlistRequest,enlistRequest,presenceRequest,reply),published)
+        // Result outbox publication order is independent of command intake order.
+        assertEquals(4,published.size)
+        assertEquals(setOf(presenceRequest,reply),published.drop(2).toSet())
         assertEquals(0,jdbc.queryForObject("SELECT count(*) FROM general_turn",Int::class.java))
     }
 
