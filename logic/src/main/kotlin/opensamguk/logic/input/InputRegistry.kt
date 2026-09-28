@@ -66,7 +66,9 @@ data class InputEntry(
     val aiPolicyId: String,
     val helpTopicId: String,
     val tutorialObjectiveId: String,
+    val tutorialNaReason: String?,
     val deliveryState: InputDeliveryState,
+    val evidence: JsonObject,
     val displayName: String?,
 )
 
@@ -101,7 +103,7 @@ class InputCatalog internal constructor(
         fun parse(payload: String): InputCatalog {
             CatalogDuplicateKeys(payload).check()
             val root = Json.parseToJsonElement(payload).jsonObject
-            require(root.requiredInt("schemaVersion") == 3) { "unsupported hwiha input catalog schemaVersion" }
+            require(root.requiredInt("schemaVersion") == 4) { "unsupported hwiha input catalog schemaVersion" }
             require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs")) {
                 "unexpected or missing hwiha catalog field"
             }
@@ -147,6 +149,19 @@ class InputCatalog internal constructor(
                     }
                 }
                 require(row.requiredText("resultType") == "InputResolved") { "wrong resultType: $inputId" }
+                val objectiveId = row.requiredText("tutorialObjectiveId")
+                val naReason = row.getValue("tutorialNaReason")
+                require((objectiveId == "N/A") == (naReason != JsonNull)) {
+                    "tutorialNaReason must accompany only N/A objective: $inputId"
+                }
+                val evidence = row.getValue("evidence").jsonObject
+                require(evidence.keys.all { it in EVIDENCE_STAGES }) { "unknown evidence stage: $inputId" }
+                evidence.forEach { (stage, value) ->
+                    val refs = value.stringArray("evidence.$stage")
+                    require(refs.isNotEmpty() && refs.all { it.isNotBlank() } && refs.size == refs.toSet().size) {
+                        "blank or duplicate evidence: $inputId/$stage"
+                    }
+                }
                 InputEntry(
                     inputId = inputId,
                     kind = kind,
@@ -162,8 +177,10 @@ class InputCatalog internal constructor(
                     replayContract = replay,
                     aiPolicyId = row.requiredText("aiPolicyId"),
                     helpTopicId = row.requiredText("helpTopicId"),
-                    tutorialObjectiveId = row.requiredText("tutorialObjectiveId"),
+                    tutorialObjectiveId = objectiveId,
+                    tutorialNaReason = if (naReason == JsonNull) null else row.requiredText("tutorialNaReason"),
                     deliveryState = enumValueOfOrFail(row.getValue("deliveryState").jsonPrimitive.content, inputId),
+                    evidence = evidence,
                     displayName = if (kind == InputKind.GENERAL_ACTION) row.requiredText("displayName") else null,
                 )
             }
@@ -173,7 +190,8 @@ class InputCatalog internal constructor(
 
         private val ENTRY_FIELDS = setOf("inputId", "kind", "layer", "actor", "authorityRule", "targetSchema",
             "costSchema", "timing", "effectScope", "failureReasons", "resultType", "replayContract",
-            "aiPolicyId", "helpTopicId", "tutorialObjectiveId", "deliveryState")
+            "aiPolicyId", "helpTopicId", "tutorialObjectiveId", "tutorialNaReason", "deliveryState", "evidence")
+        private val EVIDENCE_STAGES = InputDeliveryState.entries.drop(1).map { it.name }.toSet()
         private val COST_FIELDS = setOf("status", "source", "money", "grain", "iron", "timber", "horses")
         private val TARGET_FIELDS = setOf("status", "source")
         private val REPLAY_FIELDS = setOf("status", "key")

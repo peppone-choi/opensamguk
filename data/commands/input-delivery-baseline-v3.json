@@ -1,0 +1,302 @@
+{
+  "schemaVersion": 1,
+  "sourceCatalogSchemaVersion": 3,
+  "entries": [
+    {
+      "inputId": "action.abdicate",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.assault",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.boostMorale",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.commerce",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.conscript",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.convertProficiency",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.demandSurrender",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.demobilize",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.deploy",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.dissolve",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.donate",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.employ",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.enlist",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.farm",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.forcedMarch",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.fortify",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.foundState",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.gift",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.independence",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.move",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.muster",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.oath",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.persuadeCaptive",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.raiseVolunteers",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.recuperate",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.repairWall",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.resign",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.retire",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.return",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.rise",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.scout",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.search",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.security",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.selectResidents",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.selfTrain",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.settle",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.siegeRoadFort",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.tour",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.tradeEquipment",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "action.tradeGrain",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.train",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.transport",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "action.travel",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "court.abandonCounty",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "court.breakNonAggression",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.confiscate",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.declareWar",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.diplomacy",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.dispatch",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.dispatchReply",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.institution",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.moveCapital",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "court.nonAggression",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.offerPeace",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "court.politicalConsent",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "court.releaseCorps",
+      "deliveryState": "UI_READY"
+    },
+    {
+      "inputId": "court.reward",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "placement.assign",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "policy.set",
+      "deliveryState": "HANDLER_READY"
+    },
+    {
+      "inputId": "stratagem.falseReport",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.fire",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.flood",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.lastStand",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.mobilizePeople",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.play",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.provokeRivalry",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.raid",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.raiseMilitia",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.reciprocity",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.rumor",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.sabotage",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "stratagem.steal",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "work.reduce",
+      "deliveryState": "PLANNED"
+    },
+    {
+      "inputId": "work.start",
+      "deliveryState": "HANDLER_READY"
+    }
+  ]
+}

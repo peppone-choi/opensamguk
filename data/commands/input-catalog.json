@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "catalogId": "input-catalog",
   "status": "DRAFT",
   "note": "휘하 입력 원장. PLANNED 행은 구현 아님. null 비용과 PLANNED 계약은 후속 슬라이스에서 확정하며 NOT_DELIVERED 로 거절한다. 직접 행동의 표시 이름은 displayName 이 정본이다.",
@@ -54,8 +54,10 @@
       "aiPolicyId": "ai.action.enlist",
       "helpTopicId": "commands.action.enlist",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "출사",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.deploy",
@@ -107,8 +109,10 @@
       "aiPolicyId": "ai.action.deploy",
       "helpTopicId": "commands.action.deploy",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "출병",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.scout",
@@ -152,8 +156,10 @@
       "aiPolicyId": "ai.action.scout",
       "helpTopicId": "commands.action.scout",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "첩보",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.assault",
@@ -199,8 +205,10 @@
       "aiPolicyId": "ai.action.assault",
       "helpTopicId": "commands.action.assault",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "강공",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.demandSurrender",
@@ -246,8 +254,10 @@
       "aiPolicyId": "ai.action.demandSurrender",
       "helpTopicId": "commands.action.demandSurrender",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "항복 권고",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.siegeRoadFort",
@@ -293,8 +303,10 @@
       "aiPolicyId": "ai.action.siegeRoadFort",
       "helpTopicId": "commands.action.siegeRoadFort",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "보루 포위",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.dispatch",
@@ -351,7 +363,9 @@
       "aiPolicyId": "ai.court.dispatch",
       "helpTopicId": "commands.court.dispatch",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "HANDLER_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.dispatchReply",
@@ -408,7 +422,9 @@
       "aiPolicyId": "ai.court.dispatchReply",
       "helpTopicId": "commands.court.dispatchReply",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "HANDLER_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.reward",
@@ -450,7 +466,9 @@
       "aiPolicyId": "ai.court.reward",
       "helpTopicId": "commands.court.reward",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "HANDLER_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.politicalConsent",
@@ -513,7 +531,9 @@
       "aiPolicyId": "ai.court.politicalConsent",
       "helpTopicId": "commands.court.politicalConsent",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "UI_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "placement.assign",
@@ -579,7 +599,9 @@
       "aiPolicyId": "ai.placement.assign",
       "helpTopicId": "commands.placement.assign",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "HANDLER_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "policy.set",
@@ -645,7 +667,9 @@
       "aiPolicyId": "ai.policy.set",
       "helpTopicId": "commands.policy.set",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "HANDLER_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "work.start",
@@ -711,7 +735,9 @@
       "aiPolicyId": "ai.work.start",
       "helpTopicId": "commands.work.start",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "HANDLER_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.rumor",
@@ -763,7 +789,9 @@
       "aiPolicyId": "ai.stratagem.rumor",
       "helpTopicId": "commands.stratagem.rumor",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.play",
@@ -815,7 +843,9 @@
       "aiPolicyId": "ai.stratagem.play",
       "helpTopicId": "commands.stratagem.play",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.farm",
@@ -870,8 +900,10 @@
       "aiPolicyId": "ai.action.farm",
       "helpTopicId": "commands.action.farm",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "농지개간",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.commerce",
@@ -926,8 +958,10 @@
       "aiPolicyId": "ai.action.commerce",
       "helpTopicId": "commands.action.commerce",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "상업투자",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.fortify",
@@ -982,8 +1016,10 @@
       "aiPolicyId": "ai.action.fortify",
       "helpTopicId": "commands.action.fortify",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "수비강화",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.repairWall",
@@ -1038,8 +1074,10 @@
       "aiPolicyId": "ai.action.repairWall",
       "helpTopicId": "commands.action.repairWall",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "성벽보수",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.security",
@@ -1094,8 +1132,10 @@
       "aiPolicyId": "ai.action.security",
       "helpTopicId": "commands.action.security",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "치안강화",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.settle",
@@ -1150,8 +1190,10 @@
       "aiPolicyId": "ai.action.settle",
       "helpTopicId": "commands.action.settle",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "정착장려",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.selectResidents",
@@ -1206,8 +1248,10 @@
       "aiPolicyId": "ai.action.selectResidents",
       "helpTopicId": "commands.action.selectResidents",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "주민선정",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.conscript",
@@ -1265,8 +1309,10 @@
       "aiPolicyId": "ai.action.conscript",
       "helpTopicId": "commands.action.conscript",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "징병",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.raiseVolunteers",
@@ -1324,8 +1370,10 @@
       "aiPolicyId": "ai.action.raiseVolunteers",
       "helpTopicId": "commands.action.raiseVolunteers",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "모병",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.train",
@@ -1383,8 +1431,10 @@
       "aiPolicyId": "ai.action.train",
       "helpTopicId": "commands.action.train",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "훈련",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.boostMorale",
@@ -1442,8 +1492,10 @@
       "aiPolicyId": "ai.action.boostMorale",
       "helpTopicId": "commands.action.boostMorale",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "사기진작",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.demobilize",
@@ -1502,8 +1554,10 @@
       "aiPolicyId": "ai.action.demobilize",
       "helpTopicId": "commands.action.demobilize",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "소집해제",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.search",
@@ -1561,8 +1615,10 @@
       "aiPolicyId": "ai.action.search",
       "helpTopicId": "commands.action.search",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "인재탐색",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.employ",
@@ -1620,8 +1676,10 @@
       "aiPolicyId": "ai.action.employ",
       "helpTopicId": "commands.action.employ",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "등용",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.travel",
@@ -1672,8 +1730,10 @@
       "aiPolicyId": "ai.action.travel",
       "helpTopicId": "commands.action.travel",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "견문",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.selfTrain",
@@ -1724,8 +1784,10 @@
       "aiPolicyId": "ai.action.selfTrain",
       "helpTopicId": "commands.action.selfTrain",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "단련",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.recuperate",
@@ -1776,8 +1838,10 @@
       "aiPolicyId": "ai.action.recuperate",
       "helpTopicId": "commands.action.recuperate",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "요양",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.gift",
@@ -1831,8 +1895,10 @@
       "aiPolicyId": "ai.action.gift",
       "helpTopicId": "commands.action.gift",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "증여",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.donate",
@@ -1886,8 +1952,10 @@
       "aiPolicyId": "ai.action.donate",
       "helpTopicId": "commands.action.donate",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "헌납",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.muster",
@@ -1942,8 +2010,10 @@
       "aiPolicyId": "ai.action.muster",
       "helpTopicId": "commands.action.muster",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "집합",
-      "deliveryState": "HANDLER_READY"
+      "deliveryState": "HANDLER_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.move",
@@ -1995,8 +2065,10 @@
       "aiPolicyId": "ai.action.move",
       "helpTopicId": "commands.action.move",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "이동",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.forcedMarch",
@@ -2048,8 +2120,10 @@
       "aiPolicyId": "ai.action.forcedMarch",
       "helpTopicId": "commands.action.forcedMarch",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "강행",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.return",
@@ -2101,8 +2175,10 @@
       "aiPolicyId": "ai.action.return",
       "helpTopicId": "commands.action.return",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "귀환",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.retire",
@@ -2155,8 +2231,10 @@
       "aiPolicyId": "ai.action.retire",
       "helpTopicId": "commands.action.retire",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "은퇴",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.resign",
@@ -2220,8 +2298,10 @@
       "aiPolicyId": "ai.action.resign",
       "helpTopicId": "commands.action.resign",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "하야",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.rise",
@@ -2285,8 +2365,10 @@
       "aiPolicyId": "ai.action.rise",
       "helpTopicId": "commands.action.rise",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "거병",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.foundState",
@@ -2350,8 +2432,10 @@
       "aiPolicyId": "ai.action.foundState",
       "helpTopicId": "commands.action.foundState",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "건국",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.abdicate",
@@ -2415,8 +2499,10 @@
       "aiPolicyId": "ai.action.abdicate",
       "helpTopicId": "commands.action.abdicate",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "선양",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.dissolve",
@@ -2480,8 +2566,10 @@
       "aiPolicyId": "ai.action.dissolve",
       "helpTopicId": "commands.action.dissolve",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "세력 해산",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.tour",
@@ -2536,8 +2624,10 @@
       "aiPolicyId": "ai.action.tour",
       "helpTopicId": "commands.action.tour",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "순행",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.persuadeCaptive",
@@ -2595,8 +2685,10 @@
       "aiPolicyId": "ai.action.persuadeCaptive",
       "helpTopicId": "commands.action.persuadeCaptive",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "포로 설득",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.oath",
@@ -2660,8 +2752,10 @@
       "aiPolicyId": "ai.action.oath",
       "helpTopicId": "commands.action.oath",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "결의",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.independence",
@@ -2725,8 +2819,10 @@
       "aiPolicyId": "ai.action.independence",
       "helpTopicId": "commands.action.independence",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "독립",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.convertProficiency",
@@ -2787,8 +2883,10 @@
       "aiPolicyId": "ai.action.convertProficiency",
       "helpTopicId": "commands.action.convertProficiency",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "숙련전환",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.tradeEquipment",
@@ -2849,8 +2947,10 @@
       "aiPolicyId": "ai.action.tradeEquipment",
       "helpTopicId": "commands.action.tradeEquipment",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "장비매매",
-      "deliveryState": "PLANNED"
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "action.tradeGrain",
@@ -2911,8 +3011,10 @@
       "aiPolicyId": "ai.action.tradeGrain",
       "helpTopicId": "commands.action.tradeGrain",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "군량매매",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "action.transport",
@@ -2973,8 +3075,10 @@
       "aiPolicyId": "ai.action.transport",
       "helpTopicId": "commands.action.transport",
       "tutorialObjectiveId": "N/A",
+      "tutorialNaReason": "E9_PENDING_U3",
       "displayName": "물자조달",
-      "deliveryState": "UI_READY"
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.releaseCorps",
@@ -3031,7 +3135,9 @@
       "aiPolicyId": "ai.court.releaseCorps",
       "helpTopicId": "commands.court.releaseCorps",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "UI_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.diplomacy",
@@ -3088,7 +3194,9 @@
       "aiPolicyId": "ai.court.diplomacy",
       "helpTopicId": "commands.court.diplomacy",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "court.abandonCounty",
@@ -3145,7 +3253,9 @@
       "aiPolicyId": "ai.court.abandonCounty",
       "helpTopicId": "commands.court.abandonCounty",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "UI_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.institution",
@@ -3202,7 +3312,9 @@
       "aiPolicyId": "ai.court.institution",
       "helpTopicId": "commands.court.institution",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "court.moveCapital",
@@ -3259,7 +3371,9 @@
       "aiPolicyId": "ai.court.moveCapital",
       "helpTopicId": "commands.court.moveCapital",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "UI_READY"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "UI_READY",
+      "evidence": {}
     },
     {
       "inputId": "court.confiscate",
@@ -3316,7 +3430,9 @@
       "aiPolicyId": "ai.court.confiscate",
       "helpTopicId": "commands.court.confiscate",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "court.nonAggression",
@@ -3373,7 +3489,9 @@
       "aiPolicyId": "ai.court.nonAggression",
       "helpTopicId": "commands.court.nonAggression",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "court.declareWar",
@@ -3430,7 +3548,9 @@
       "aiPolicyId": "ai.court.declareWar",
       "helpTopicId": "commands.court.declareWar",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "court.offerPeace",
@@ -3487,7 +3607,9 @@
       "aiPolicyId": "ai.court.offerPeace",
       "helpTopicId": "commands.court.offerPeace",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "court.breakNonAggression",
@@ -3544,7 +3666,9 @@
       "aiPolicyId": "ai.court.breakNonAggression",
       "helpTopicId": "commands.court.breakNonAggression",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "work.reduce",
@@ -3592,7 +3716,9 @@
       "aiPolicyId": "ai.work.reduce",
       "helpTopicId": "commands.work.reduce",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.steal",
@@ -3644,7 +3770,9 @@
       "aiPolicyId": "ai.stratagem.steal",
       "helpTopicId": "commands.stratagem.steal",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.sabotage",
@@ -3696,7 +3824,9 @@
       "aiPolicyId": "ai.stratagem.sabotage",
       "helpTopicId": "commands.stratagem.sabotage",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.fire",
@@ -3748,7 +3878,9 @@
       "aiPolicyId": "ai.stratagem.fire",
       "helpTopicId": "commands.stratagem.fire",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.lastStand",
@@ -3800,7 +3932,9 @@
       "aiPolicyId": "ai.stratagem.lastStand",
       "helpTopicId": "commands.stratagem.lastStand",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.mobilizePeople",
@@ -3852,7 +3986,9 @@
       "aiPolicyId": "ai.stratagem.mobilizePeople",
       "helpTopicId": "commands.stratagem.mobilizePeople",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.flood",
@@ -3904,7 +4040,9 @@
       "aiPolicyId": "ai.stratagem.flood",
       "helpTopicId": "commands.stratagem.flood",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.falseReport",
@@ -3956,7 +4094,9 @@
       "aiPolicyId": "ai.stratagem.falseReport",
       "helpTopicId": "commands.stratagem.falseReport",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.raiseMilitia",
@@ -4008,7 +4148,9 @@
       "aiPolicyId": "ai.stratagem.raiseMilitia",
       "helpTopicId": "commands.stratagem.raiseMilitia",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.provokeRivalry",
@@ -4060,7 +4202,9 @@
       "aiPolicyId": "ai.stratagem.provokeRivalry",
       "helpTopicId": "commands.stratagem.provokeRivalry",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.raid",
@@ -4112,7 +4256,9 @@
       "aiPolicyId": "ai.stratagem.raid",
       "helpTopicId": "commands.stratagem.raid",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     },
     {
       "inputId": "stratagem.reciprocity",
@@ -4164,7 +4310,9 @@
       "aiPolicyId": "ai.stratagem.reciprocity",
       "helpTopicId": "commands.stratagem.reciprocity",
       "tutorialObjectiveId": "N/A",
-      "deliveryState": "PLANNED"
+      "tutorialNaReason": "E9_PENDING_U3",
+      "deliveryState": "PLANNED",
+      "evidence": {}
     }
   ]
 }

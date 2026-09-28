@@ -1,0 +1,186 @@
+{
+  "schemaVersion": 1,
+  "count": 45,
+  "entries": [
+    {
+      "inputId": "action.abdicate",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.assault",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.boostMorale",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.commerce",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.conscript",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.convertProficiency",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.demandSurrender",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.demobilize",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.deploy",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.employ",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.enlist",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.farm",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.forcedMarch",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.fortify",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.foundState",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.gift",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.move",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.muster",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.oath",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.raiseVolunteers",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.recuperate",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.repairWall",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.return",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.scout",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.search",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.security",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.selectResidents",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.selfTrain",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.settle",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.siegeRoadFort",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "action.tour",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.tradeGrain",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.train",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.transport",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "action.travel",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "court.abandonCounty",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "court.dispatch",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.dispatchReply",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "court.moveCapital",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "court.politicalConsent",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "court.releaseCorps",
+      "frozenState": "UI_READY"
+    },
+    {
+      "inputId": "court.reward",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "placement.assign",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "policy.set",
+      "frozenState": "HANDLER_READY"
+    },
+    {
+      "inputId": "work.start",
+      "frozenState": "HANDLER_READY"
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+# 입력 배달 증거 게이트 (E10)
+
+`data/commands/input-catalog.json`의 v4 행은 `tutorialNaReason`과 `evidence`를 가진다. `tutorialObjectiveId`가 `N/A`이면 비어 있지 않은 이유가 필요하고, 그 외에는 `tutorialNaReason: null`이다. 현재 `E9_PENDING_U3`은 튜토리얼 연계 결정을 기다리는 표식으로서 `TUTORIAL_READY`의 증거가 아니다.
+
+## 동결 기준선과 부채
+
+`data/commands/input-delivery-baseline-v3.json`은 v3의 74개 상태를 고정한다(PLANNED 29, HANDLER_READY 13, UI_READY 32). SHA-256을 `tools/ci/input_evidence_gate.py`에 고정하여 기준선 재생성을 거절한다. 기존 45개 READY 행에는 이전 단계의 단계별 증거가 아직 없으며, `data/commands/input-evidence-debt-v1.json`에 각각 기록한다. 이 상태를 임의로 내리거나 증거 없이 `VERIFIED`로 간주하지 않는다. 기존 상태까지 소급 증명하면 부채 목록을 같은 변경에서 갱신한다.
+
+## 승격 방법
+
+신규 행은 `PLANNED`부터, 기존 행은 동결된 상태부터 연속된 다음 단계의 증거가 있어야 올라간다. `deliveryState`는 이 증거로 계산된 최고 단계와 같아야 한다. 단계 하나를 건너뛰거나 선언만 올리면 CI가 실패한다.
+
+```json
+"evidence": {
+  "UI_READY": ["ui-e2e:web/game/e2e/example.spec.ts#action.example"],
+  "AI_READY": [
+    "ai-selector:app/game-engine/src/main/kotlin/example/Example.kt#action.example",
+    "ai-test:app/game-engine/src/test/kotlin/example/ExampleTest.kt#action.example"
+  ],
+  "HELP_READY": ["help-topic:data/help/topics.json#commands.action.example"]
+}
+```
+
+각 참조는 `역할:저장소 상대경로#앵커` 형식이다. 게이트는 파일 존재, 역할별 허용 경로, 앵커와 입력 ID를 검사한다. 단계별 역할은 `domain-rule`, `handler-test`, `ui-e2e`, `ai-selector`와 `ai-test` 양쪽, `help-topic`, `tutorial-step` 또는 `tutorial-na`, `replay-test`, `campaign-test`다. `help-topic`은 해당 토픽 ID와 `reviewState: APPROVED`도 요구한다. 튜토리얼이 정말 해당하지 않는다는 결정이 나면 `tutorialNaReason`에 확정 사유를 쓰고 `tutorial-na:<사유>`를 증거로 연결한다. E9 대기 표식은 허용하지 않는다.
+
+검사는 `python3 tools/ci/input_evidence_gate.py` 또는 `python3 -m unittest discover -s tools/ci -p 'test_*.py'`로 실행한다. CI의 `contracts` 작업이 후자를 실행한다. 원장 파서는 v4 필드 형식과 중복 키를 검사하고, `AiPolicyRegistry`는 AI_READY 이상인 행에 실제 selector 바인딩을 요구한다.

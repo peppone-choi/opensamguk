@@ -58,13 +58,13 @@ ruleProfile = SAMMO | HWIHA          월드마다 하나. 삼모 월드는 기�
 inputId, kind, layer(1|2|3), actor(GENERAL|LORD|RULER|OFFICE_HOLDER),
 authorityRule, targetSchema, costSchema(전·곡·철·목재·말), timing, effectScope,
 failureReasons[], resultType, replayContract, aiPolicyId, helpTopicId,
-tutorialObjectiveId|N/A, deliveryState; GENERAL_ACTION 행은 displayName 필수
+tutorialObjectiveId|N/A, tutorialNaReason, deliveryState, evidence; GENERAL_ACTION 행은 displayName 필수
 ```
 
 - (구현 PR #815 에서 추가한 어휘) `deliveryState` 맨 앞에 **`PLANNED`** 를 둔다 — 원장에 올랐지만 핸들러가 없는 입력이다. registry와 예약 API는 같은 원장 판정으로 이런 입력을 `NOT_DELIVERED`로 거절한다. registry 거절 사유는 `MALFORMED_INPUT_ID` · `WRONG_RULE_PROFILE` · `UNKNOWN_INPUT` · `NOT_DELIVERED` 네 가지다. 원장에 있고 핸들러도 있지만 잘못된 API 경로로 들어온 입력은 API가 `INVALID_INPUT_CHANNEL`로 거절한다. 핸들러 유무는 `HANDLER_READY` 이상과 정확히 일치해야 하고, 어긋나면 registry 생성이 실패한다.
 - `PLANNED` 뒤는 기존 파이프라인을 그대로 쓴다: `DOMAIN_READY → HANDLER_READY → UI_READY → AI_READY → HELP_READY → TUTORIAL_READY → REPLAY_READY → VERIFIED`(재기준선 §3 보존).
-- 원장 파일: `data/commands/hwiha-input-catalog.json`(현행 파일). 알파 카탈로그와 삼모 제품 경로는 코드 정리 단계에서 삭제한다.
-- schemaVersion 3은 삼모 대응 필드를 제거하고 직접 행동의 `displayName`을 요구한다. 필수 필드 누락·미지 필드·중복 객체 키를 거절한다. 원장 행 수, 원장↔핸들러, 실패 사유 계약 게이트는 유지한다.
+- 원장 파일: `data/commands/input-catalog.json`. 알파 카탈로그와 삼모 제품 경로는 코드 정리 단계에서 삭제한다.
+- schemaVersion 4는 삼모 대응 필드를 제거한 v3의 직접 행동 `displayName` 계약을 유지하며, `tutorialNaReason`과 단계별 `evidence`를 필수로 둔다. 필수 필드 누락·미지 필드·중복 객체 키를 거절한다. 원장 행 수, 원장↔핸들러, 실패 사유 계약 게이트는 유지한다. 증거와 기존 상태 동결 규칙은 [입력 증거 게이트](../../development/input-evidence-gate.md)를 따른다.
 
 ## 4. 시점(timing)
 
