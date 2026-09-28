@@ -23,7 +23,7 @@ class BattleJoinTicketServiceTest {
         BattleSessionHead(world, "battle-1", phase, epoch, 0, 0, 0,
             "actor", leaseUntil, ticket.joinDeadlineAt, deadlineAt)
     private fun service(store: FakeStore, at: Instant = now, secret: ByteArray = ByteArray(32) { 7 }) =
-        BattleJoinTicketService(store, secret, Clock.fixed(at, ZoneOffset.UTC))
+        BattleJoinTicketService(store, secret, Clock.fixed(at, ZoneOffset.UTC), "pep")
 
     @Test
     fun `authenticated participant receives a short ticket scoped to current epoch`() {
@@ -32,6 +32,7 @@ class BattleJoinTicketServiceTest {
         val token = signer.issue(world, "battle-1", 42, 7)
         val claims = signer.verify(token, world, "battle-1", 42)
         assertEquals(1, claims.participantId)
+        assertEquals("pep", claims.serverId)
         assertEquals(7, claims.generalId)
         assertEquals("ATTACKER", claims.side)
         assertEquals(1L, claims.sessionEpoch)
@@ -46,6 +47,10 @@ class BattleJoinTicketServiceTest {
         assertFailsWith<SecurityException> { signer.verify(token, world, "battle-1", 43) }
         assertFailsWith<SecurityException> { signer.verify(token, WorldId(2), "battle-1", 42) }
         assertFailsWith<SecurityException> { signer.verify(token, world, "battle-2", 42) }
+        assertFailsWith<SecurityException> { signer.verifyBearer(token, "other", world, "battle-1") }
+        assertFailsWith<SecurityException> {
+            service(store, secret = ByteArray(32) { 8 }).verifyBearer(token, "pep", world, "battle-1")
+        }
         val parts = token.split('.')
         val changedPayload = Base64.getUrlDecoder().decode(parts[1]).also {
             it[0] = (it[0].toInt() xor 1).toByte()

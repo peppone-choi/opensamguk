@@ -32,7 +32,9 @@ class BattleJoinTicketConfiguration {
         store: BattleSessionStore,
         jdbc: NamedParameterJdbcTemplate,
         @Value("\${battle.join-ticket.key-base64:}") encodedKey: String,
+        @Value("\${battle.join-ticket.server-id:}") serverId: String,
     ): BattleJoinTicketService {
+        require(serverId.matches(Regex("[a-z0-9]{1,48}"))) { "battle join server id configuration is invalid" }
         val key = try {
             Base64.getDecoder().decode(encodedKey)
         } catch (_: IllegalArgumentException) {
@@ -42,7 +44,7 @@ class BattleJoinTicketConfiguration {
             require(key.size >= 32 && Base64.getEncoder().encodeToString(key) == encodedKey) {
                 "battle join ticket key configuration is invalid"
             }
-            return BattleJoinTicketService(store, key, BattleJoinDbClock(jdbc.jdbcOperations))
+            return BattleJoinTicketService(store, key, BattleJoinDbClock(jdbc.jdbcOperations), serverId)
         } finally {
             key.fill(0)
         }

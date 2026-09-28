@@ -45,11 +45,16 @@ class BattleJoinTicketBoundaryTest {
     @Test
     fun `enabled mode requires a dedicated canonical key of at least 32 bytes`() {
         for (key in listOf("", Base64.getEncoder().encodeToString(ByteArray(16)), "invalid!!")) {
-            context.withPropertyValues("battle.join-ticket.enabled=true", "battle.join-ticket.key-base64=$key")
+            context.withPropertyValues("battle.join-ticket.enabled=true", "battle.join-ticket.key-base64=$key", "battle.join-ticket.server-id=pep")
                 .run { result -> assertNotNull(result.startupFailure) }
         }
         val key = Base64.getEncoder().encodeToString(ByteArray(32) { 4 })
-        context.withPropertyValues("battle.join-ticket.enabled=true", "battle.join-ticket.key-base64=$key")
+        for (serverId in listOf("", "PEP", "a".repeat(49))) {
+            context.withPropertyValues("battle.join-ticket.enabled=true", "battle.join-ticket.key-base64=$key",
+                "battle.join-ticket.server-id=$serverId")
+                .run { result -> assertNotNull(result.startupFailure) }
+        }
+        context.withPropertyValues("battle.join-ticket.enabled=true", "battle.join-ticket.key-base64=$key", "battle.join-ticket.server-id=pep")
             .run { result ->
                 assertEquals(null, result.startupFailure)
                 assertTrue(result.containsBean("battleJoinTicketService"))
