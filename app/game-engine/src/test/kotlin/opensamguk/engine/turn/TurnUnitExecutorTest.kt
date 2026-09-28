@@ -7,6 +7,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
+import opensamguk.logic.event.EventStore
 import opensamguk.logic.record.AudienceTarget
 import opensamguk.logic.record.EventKey
 import opensamguk.logic.record.EventKind
@@ -171,5 +172,26 @@ class TurnUnitExecutorTest {
         val error = kotlin.runCatching { other.restore(checkpoint) }.exceptionOrNull()
         assertNotNull(error)
         assertIs<IllegalArgumentException>(error)
+    }
+
+    @Test
+    fun `failed event row mutation restores rows without reusing serial ids`() {
+        val world = world(general(1))
+        val recorder = ChangeRecorder()
+        val store = EventStore.withDefaults()
+        store.bindMutationSink(recorder::recordEventMutation)
+        val initialRows = store.allRows()
+        val executor = TurnUnitExecutor(world, recorder, store)
+
+        assertIs<TurnUnitExecutor.Outcome.Failed>(executor.run {
+            store.delete(initialRows.first().id)
+            store.insert("month", 1, initialRows.first().condition, initialRows.first().actions)
+            throw IllegalStateException("failed event row mutation")
+        })
+
+        assertEquals(initialRows, store.allRows())
+        assertTrue(!recorder.isDirty)
+        val nextId = store.insert("month", 1, initialRows.first().condition, initialRows.first().actions)
+        assertEquals(initialRows.maxOf { it.id } + 2, nextId)
     }
 }
