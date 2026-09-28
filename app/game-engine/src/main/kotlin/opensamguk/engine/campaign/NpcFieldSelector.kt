@@ -15,6 +15,42 @@ import opensamguk.logic.input.*
 /** Autonomous county work uses only the NPC's own current county and the human handler. */
 internal class NpcFieldSelector(private val context: DomesticContext,
     private val catalog: InputCatalog = InputCatalog.load()) {
+    fun select(observation: NpcObservation, actorId: Int, reserved: ReservedTurn): ReservedTurn {
+        if (observation.actor.id != actorId || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
+            context.design.directActionStatus != DomesticDesign.CONFIRMED) return reserved
+        val actor = observation.actor
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.nationId <= 0 || actor.npcState < 2 ||
+            observation.heldByAnotherGeneral) return reserved
+        val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }
+            catch (_: IllegalArgumentException) { return reserved }
+        if (deployed.isNotEmpty() || CorpsOrder.META_KEY in actor.meta) return reserved
+        val state = observation.domestic ?: return reserved
+        val available = FieldRules.assess(FieldRequest(actorId, FieldInput.FARM), state)
+            as? FieldAssessment.Eligible ?: return reserved
+        val city = observation.ownCities[available.county.id] ?: return reserved
+        val levels = DomesticCountyEffects.levelsOf(city)
+        val stock = try { CountyWarehouse.read(city.meta, city.id)?.stock }
+            catch (_: IllegalArgumentException) { null }
+        val candidates = FieldInput.INPUT_IDS.toList().mapIndexedNotNull { index, inputId ->
+            if (catalog[inputId]?.deliveryState?.hasHandler != true) return@mapIndexedNotNull null
+            val economy = FieldRules.assessEconomy(inputId, available.person, city.id, levels, stock, context.design)
+                as? FieldEconomyAssessment.Eligible ?: return@mapIndexedNotNull null
+            val after = economy.outcome.levels
+            fun gap(before: Int, next: Int, max: Int) = if (max <= 0) 0L else (next - before).coerceAtLeast(0).toLong() * 1000 / max
+            val score = gap(levels.population, after.population, levels.populationMax) +
+                gap(levels.agriculture, after.agriculture, levels.agricultureMax) +
+                gap(levels.commerce, after.commerce, levels.commerceMax) +
+                gap(levels.security, after.security, levels.securityMax) +
+                gap(levels.defence, after.defence, levels.defenceMax) +
+                gap(levels.wall, after.wall, levels.wallMax) +
+                ((after.trust - levels.trust).coerceAtLeast(0.0) * 10).toLong()
+            if (score <= 0) null else Triple(score, index, inputId)
+        }
+        val selected = candidates.sortedWith(compareByDescending<Triple<Long, Int, String>> { it.first }.thenBy { it.second })
+            .firstOrNull()?.third ?: return reserved
+        return ReservedTurn(selected, "{}", brief = selected, rowExists = false)
+    }
+
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             context.design.directActionStatus != DomesticDesign.CONFIRMED) return reserved

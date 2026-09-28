@@ -10,6 +10,19 @@ import opensamguk.logic.world.StrategicTopologySnapshot
 internal class NpcMusterSelector(private val topology: StrategicTopologySnapshot,
     private val metrics: LandMarchMetricSnapshot,
     private val catalog: InputCatalog = InputCatalog.load()) {
+    fun select(observation: NpcObservation, actorId: Int, reserved: ReservedTurn): ReservedTurn {
+        if (observation.actor.id != actorId || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
+            (catalog[MilitaryInput.MUSTER]?.deliveryState ?: InputDeliveryState.PLANNED) < InputDeliveryState.AI_READY)
+            return reserved
+        val actor = observation.actor
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
+            observation.heldByAnotherGeneral) return reserved
+        val musterMeta = observation.musterMeta ?: return reserved
+        if (MusterRules.assess(actorId, observation.ownDeployment, topology, metrics, musterMeta)
+            !is MusterAssessment.Eligible) return reserved
+        return ReservedTurn(MilitaryInput.MUSTER, "{}", brief = MilitaryInput.MUSTER, rowExists = false)
+    }
+
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             (catalog[MilitaryInput.MUSTER]?.deliveryState ?: InputDeliveryState.PLANNED) < InputDeliveryState.AI_READY)
