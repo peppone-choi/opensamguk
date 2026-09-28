@@ -15,6 +15,7 @@ import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
+import opensamguk.engine.turn.TurnFailureLedgerCodec
 import opensamguk.engine.turn.Bugok
 import opensamguk.engine.turn.Operation
 import opensamguk.engine.turn.OperationMilestones
@@ -108,6 +109,7 @@ class WorldSnapshotLoader(
                 "maxOperationId",
                 "maxOperationUnitId",
                 "maxBattlePlanId",
+                TurnFailureLedgerCodec.META_KEY,
             )
             for (key in snapshotKeys) {
                 if (loaded.meta.containsKey(key)) merged[key] = loaded.meta[key]
@@ -117,6 +119,7 @@ class WorldSnapshotLoader(
             }
             loaded.copy(meta = merged)
         }
+        TurnFailureLedgerCodec.decode(loadedState.meta)
         opensamguk.logic.world.WorldFormat.require(loadedState.config, loadedState.meta)
         val activeGame = resolveActiveGame(loadedState.meta)
         val activeServerId = activeGame?.serverId

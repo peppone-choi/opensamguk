@@ -56,6 +56,8 @@ data class RowPatch(
     val meta: Map<String, Any?>,
 )
 
+internal data class TurnFailureLedgerWrite(val payload: Map<String, Any?>?)
+
 /**
  * F2 — the Immer-`produceWithPatches` replacement and the **single dirty source**.
  *
@@ -96,6 +98,7 @@ class ChangeRecorder(
 
     /** Operational clock plan, stored outside gameplay meta and written only when it changes. */
     private var catchUpUpdate: TurnCatchUp? = null
+    private var turnFailureLedgerWrite: TurnFailureLedgerWrite? = null
 
     fun recordCatchUp(plan: TurnCatchUp) {
         gateMutation("record catch-up")
@@ -103,6 +106,13 @@ class ChangeRecorder(
     }
 
     fun catchUpUpdate(): TurnCatchUp? = catchUpUpdate
+
+    fun recordTurnFailureLedger(states: Map<TurnFailureUnit, TurnFailureState>) {
+        gateMutation("record turn failure ledger")
+        turnFailureLedgerWrite = TurnFailureLedgerWrite(TurnFailureLedgerCodec.encode(states))
+    }
+
+    internal fun turnFailureLedgerWrite(): TurnFailureLedgerWrite? = turnFailureLedgerWrite
 
     private fun gateMutation(action: String) {
         generationSession?.requireMutationAllowed(action)
@@ -291,6 +301,9 @@ class ChangeRecorder(
     fun checkpoint(): Checkpoint {
         val savedSpatialWorldId = spatialWorldId
         val savedCatchUp = catchUpUpdate
+        val savedTurnFailureLedger = turnFailureLedgerWrite?.let { write ->
+            write.copy(payload = write.payload?.let(::copyStringMap))
+        }
         return Checkpoint(this, listOf(
             captureMap(generalPatches, ::copyPatch),
             captureMap(cityPatches, ::copyPatch),
@@ -317,6 +330,11 @@ class ChangeRecorder(
             captureMap(generalPositionWrites),
             Capture("spatialWorldId") { spatialWorldId = savedSpatialWorldId },
             Capture("catchUpUpdate") { catchUpUpdate = savedCatchUp },
+            Capture("turnFailureLedgerWrite") {
+                turnFailureLedgerWrite = savedTurnFailureLedger?.let { write ->
+                    write.copy(payload = write.payload?.let(::copyStringMap))
+                }
+            },
             captureList(profileIconUpdates) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(boardPostInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureList(boardCommentInserts) { it.copy(columns = copyStringMap(it.columns)) },
@@ -397,7 +415,8 @@ class ChangeRecorder(
     }
 
     val isDirty: Boolean
-        get() = catchUpUpdate != null || generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
+        get() = catchUpUpdate != null || turnFailureLedgerWrite != null ||
+            generalPatches.isNotEmpty() || cityPatches.isNotEmpty() ||
             nationPatches.isNotEmpty() || rankPatches.isNotEmpty() ||
             deletedGeneralIds.isNotEmpty() || deletedNationIds.isNotEmpty() ||
             accessLogUpserts.isNotEmpty() || accessLogDeletes.isNotEmpty() || generalOwnerDeletes.isNotEmpty() ||
@@ -1131,6 +1150,7 @@ class ChangeRecorder(
     fun clear() {
         gateMutation("clear")
         catchUpUpdate = null
+        turnFailureLedgerWrite = null
         generalPatches.clear()
         cityPatches.clear()
         nationPatches.clear()

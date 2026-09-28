@@ -610,6 +610,16 @@ open class JdbcFlushExecutor(
                 params.addValue("max_battle_plan_id", it.toInt())
                 append(" || jsonb_build_object('maxBattlePlanId', CAST(:max_battle_plan_id AS INTEGER))")
             }
+            if ("turn_failure_ledger" in worldState) {
+                val ledger = worldState["turn_failure_ledger"]
+                if (ledger == null) {
+                    append(" - 'turnFailureLedger'")
+                } else {
+                    require(ledger is Map<*, *>) { "invalid turn failure ledger flush payload" }
+                    params.addValue("turn_failure_ledger", MetaJson.encode(ledger))
+                    append(" || jsonb_build_object('turnFailureLedger', CAST(:turn_failure_ledger AS jsonb))")
+                }
+            }
         }
         // OPENSAM-131: optional CAS fence. When expected_world_version is present, require
         // matching (world_version, writer_epoch) and bump world_version by 1 atomically.
