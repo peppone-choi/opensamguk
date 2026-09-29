@@ -625,17 +625,26 @@ jobs:
       contents: read
     outputs:
       sha: ${{ steps.pin.outputs.sha }}
+      battle_sink_ready: ${{ steps.pin.outputs.battle_sink_ready }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: main
       - id: pin
-        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        run: |
+          set -euo pipefail
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          if git cat-file -e HEAD:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/BattleOutcomePostFlush.kt \
+            && git cat-file -e HEAD:app/game-engine/src/main/kotlin/opensamguk/engine/campaign/QaBattleOutcomeFileSink.kt; then
+            echo 'battle_sink_ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'battle_sink_ready=false' >> "$GITHUB_OUTPUT"
+          fi
 
   # Draft #1026 evidence lane. Product code, map and scenario all come from
   # the pin job's one main SHA; the PR checkout only supplies the collector.
   yuzhou-isolated-evidence:
-    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026 && needs.yuzhou-pin-main.outputs.battle_sink_ready == 'true'
     needs: yuzhou-pin-main
     runs-on: ubuntu-latest
     timeout-minutes: 150
