@@ -5,7 +5,7 @@ import opensamguk.logic.world.BattlefieldGeometry.Position
 
 class BattlefieldLayoutTest {
     private fun source(battle: List<ProvinceCell>, approach: List<ProvinceCell>) = ProvinceCellIndex(
-        "qa", "a".repeat(64), "b".repeat(64), 20, 20,
+        "qa", "a".repeat(64), "b".repeat(64), maxOf(20, (battle + approach).maxOf { it.col } + 1), 20,
         mapOf('0' to "SEA", '1' to "PLAIN", '2' to "MOUNTAIN", '3' to "RIVER", '4' to "LAKE"),
         mapOf("battle" to battle.sortedWith(compareBy(ProvinceCell::row, ProvinceCell::col)),
             "approach" to approach.sortedWith(compareBy(ProvinceCell::row, ProvinceCell::col))))
@@ -22,6 +22,20 @@ class BattlefieldLayoutTest {
         assertEquals((0..6).toList(), grid.distancesFromEntry.values.toList())
         assertEquals("b".repeat(64), grid.geometry.tilesContentHash)
         assertEquals("approach", grid.approachProvinceId)
+    }
+
+    @Test fun `frontline v2 narrows a deep field without changing geometry or legacy zones`() {
+        val index = source((1..40).map { cell(it) }, listOf(cell(0)))
+        val legacy = ready(BattlefieldLayout.prepare(index, "battle", "approach"))
+        val frontline = ready(BattlefieldLayout.prepare(index, "battle", "approach",
+            BattlefieldLayout.FRONTLINE_RULE_VERSION))
+        assertEquals(BattlefieldLayout.RULE_VERSION, legacy.ruleVersion)
+        assertEquals(BattlefieldLayout.FRONTLINE_RULE_VERSION, frontline.ruleVersion)
+        assertEquals(legacy.geometry.cells, frontline.geometry.cells)
+        assertEquals(legacy.distancesFromEntry, frontline.distancesFromEntry)
+        assertEquals(12, legacy.attackerZone.maxOf { legacy.distancesFromEntry.getValue(it) })
+        assertEquals(3, frontline.defenderZone.minOf { frontline.distancesFromEntry.getValue(it) } -
+            frontline.attackerZone.maxOf { a -> frontline.distancesFromEntry.getValue(a) })
     }
 
     @Test fun `both sides of entry must be passable and diagonal contact is insufficient`() {

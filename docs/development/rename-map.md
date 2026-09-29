@@ -13,6 +13,7 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `SammoBar`·`.sammo-bar*` | `ProgressBar`·`.progress-bar*` | 중립 이름 후속 | 城 상세 화면의 진행 표시 컴포넌트와 CSS 선택자; 표시·수치 불변 |
 | `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
 | `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
 | `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
@@ -1566,3 +1567,14 @@ web/game/lib/hwiha-reads.ts
 | --- | --- | --- |
 | `MapPreview.han.test.tsx` | `MapPreview.world.test.tsx` | 지도 미리보기 테스트 파일 |
 | 테스트 DOM ID `han-map` | `world-map` | 테스트 내부 선택자 |
+
+## 시나리오 적재·지도 소스 코드 이름
+
+| 옛 코드 이름 | 새 코드 이름 | 저장 계약 |
+| --- | --- | --- |
+| `ScenarioImporter.insertHwihaUnits` | `insertScenarioUnits` | `general_bugok` 행·시나리오 `units` 필드 불변 |
+| `ScenarioImporter.insertHwihaRetainers` | `insertScenarioRetainers` | `general_retainers` 행·시나리오 `retainers` 필드 불변 |
+| `apply_han_world.HAN_MAP` | `SOURCE_CITY_MAP` | 입력 경로 `map/han.json` 불변 |
+| `PINNED_LEGACY_HAN_MAP_SHA256` | `PINNED_SOURCE_CITY_MAP_SHA256` | provenance `legacyHanMap` 키·SHA-256 불변 |
+
+`legacyHanMap`은 이미 핀된 route-node provenance와 불변 blob의 키다. 이 PR은 Python·Kotlin 코드 식별자만 바꿨고 JSON 번들 입력·해시를 다시 쓰지 않았다.

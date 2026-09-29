@@ -3,7 +3,9 @@ package opensamguk.engine.boot
 import java.nio.file.Path
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
+import opensamguk.engine.campaign.TurnOutcome
 import opensamguk.infra.persistence.JdbcFlushExecutor
+import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.infra.seed.WorldArtifactsResolver
 import opensamguk.logic.world.WorldMapVariant
 import org.springframework.jdbc.core.JdbcTemplate
@@ -45,9 +47,13 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
         administrativeCountyIdsLoader = { artifacts.artifacts(it).projection.administrativeCountyIds },
         cityLandProvinceLoader = { variant -> artifacts.artifacts(variant).projection.bindingsByCityId
             .mapNotNull { (city, binding) -> binding.landProvinceId?.let { city to it } }.toMap() }).buildSnapshot()
-    fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>, intake: Boolean = false, movement: Boolean = false): opensamguk.engine.run.TurnRunService {
+    fun service(id: WorldId, active: InMemoryTurnWorld, published: MutableList<String>, intake: Boolean = false,
+        movement: Boolean = false,
+        movementFactory: ((ChangeRecorder) -> (Int, ReservedTurn, TurnOutcome?) -> Unit)? = null,
+        redisTemplate: org.springframework.data.redis.core.StringRedisTemplate? = null,
+    ): opensamguk.engine.run.TurnRunService {
         val reservations = opensamguk.infra.persistence.ReservedTurnRepository(NamedParameterJdbcTemplate(jdbc))
-        val redis = org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
+        val redis = redisTemplate ?: org.mockito.Mockito.mock(org.springframework.data.redis.core.StringRedisTemplate::class.java)
         val recorder = ChangeRecorder()
         val deploymentContext = if (movement) bundle.projection.topology to bundle.landMarchMetrics else null
         val handler = ReservedTurnHandler(active,
@@ -55,7 +61,7 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
             recorder=recorder,hwihaDeploymentContext=deploymentContext)
         val lifecycle = TurnDaemonLifecycle(active, handler,
             pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
-            hwihaMovementOf = if (movement) opensamguk.engine.campaign.AssignmentMarchTurn(active, handler.recorder,
+            hwihaMovementOf = movementFactory?.invoke(handler.recorder) ?: if (movement) opensamguk.engine.campaign.AssignmentMarchTurn(active, handler.recorder,
                 bundle.projection.topology, bundle.landMarchMetrics, bundle.provinceCells)::onTurn else { _, _, _ -> },
             reservedActionOf = { reservations.readReserved(id, it, 0) })
         val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
