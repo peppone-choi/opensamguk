@@ -4,6 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import opensamguk.gateway.controller.AuthController
 import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
+import opensamguk.infra.content.CityCatalogAdapter
 import opensamguk.infra.content.ContentCatalog
 import opensamguk.infra.sandbox.SandboxGate
 import opensamguk.infra.sandbox.SandboxMarker
@@ -27,7 +28,7 @@ import org.springframework.test.context.DynamicPropertySource
  * H2 and disables Flyway through `src/test/resources/application-test.yml`; Docker and Testcontainers are unnecessary.
  */
 internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
-    beansByTypePrefix("opensamguk.").filterValues { it.contains(".v2.") }
+    beansByTypePrefix("opensamguk.").filterValues(SandboxGate::isGatedTypeName)
 
 /**
  * Judges by bean **type**, not **name**. Component-scan bean-definition names are decapitalized simple names rather
@@ -56,7 +57,8 @@ abstract class V2BeanGateContract {
         )
         assertEquals(0, context.getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
         assertEquals(0, context.getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
-        assertEquals(emptyMap(), context.v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
+        assertEquals(0, context.getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
+        assertEquals(emptyMap(), context.v2PackageBeans(), "sandbox feature beans")
     }
 
     companion object {

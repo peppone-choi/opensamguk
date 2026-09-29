@@ -34,14 +34,14 @@ import org.testcontainers.junit.jupiter.Testcontainers
 internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
     beanDefinitionNames.mapNotNull { name ->
         val type = runCatching { getType(name, false) }.getOrNull()?.name ?: return@mapNotNull null
-        if (type.startsWith("opensamguk.") && type.contains(".v2.")) name to type else null
+        if (SandboxGate.isGatedTypeName(type)) name to type else null
     }.toMap()
 
 internal fun ApplicationContext.assertNoV2Beans() {
     assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
     assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
     assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
-    assertEquals(emptyMap(), v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
+    assertEquals(emptyMap(), v2PackageBeans(), "sandbox feature beans")
 }
 
 private fun postgresProps(

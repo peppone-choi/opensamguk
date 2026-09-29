@@ -21,6 +21,13 @@ object SandboxGate {
 
     /** Profile enabled by `SPRING_PROFILES_ACTIVE=v2-sandbox`. */
     const val PROFILE: String = "v2-sandbox"
+
+    /** Type packages whose beans must remain behind the sandbox gate in all three applications. */
+    fun isGatedTypeName(type: String): Boolean =
+        type.startsWith("opensamguk.") &&
+            (type.contains(".v2.") ||
+                type.startsWith("opensamguk.infra.content.") ||
+                type.startsWith("opensamguk.infra.sandbox."))
 }
 
 /**

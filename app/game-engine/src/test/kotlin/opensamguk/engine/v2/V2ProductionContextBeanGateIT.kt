@@ -48,14 +48,14 @@ private const val SECURITY_EXCLUDES =
         "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"
 
 /**
- * A defense that does not depend on hard-coded type names. It scans **all bean definitions** for types from a v2
- * package, so a new v2 bean cannot silently bypass the gate merely because nobody added it to this test's type
+ * A defense that does not depend on hard-coded type names. It scans **all bean definitions** for sandbox feature types,
+ * including the current infra content and gate packages, so a new bean cannot silently bypass the gate merely because nobody added it to this test's type
  * list. `allowFactoryBeanInit = false` resolves types without creating beans.
  */
 internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
     beanDefinitionNames.mapNotNull { name ->
         val type = runCatching { getType(name, false) }.getOrNull()?.name ?: return@mapNotNull null
-        if (type.startsWith("opensamguk.") && type.contains(".v2.")) name to type else null
+        if (SandboxGate.isGatedTypeName(type)) name to type else null
     }.toMap()
 
 /**
@@ -87,7 +87,7 @@ internal fun ApplicationContext.assertNoV2Beans() {
     assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
     assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
     assertEquals(0, getBeansOfType(V2CityLedgerStore::class.java).size, "V2CityLedgerStore beans")
-    assertEquals(emptyMap(), v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
+    assertEquals(emptyMap(), v2PackageBeans(), "sandbox feature beans")
 }
 
 private fun postgresProps(
