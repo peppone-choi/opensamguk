@@ -1,4 +1,9 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.command
+
+import opensamguk.gameapi.city.CityTransportController
+import opensamguk.gameapi.city.GarrisonRecruitController
+import opensamguk.gameapi.command.CanonicalCommandController
+import opensamguk.gameapi.command.CityCommandPrecheckService
 
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
@@ -15,11 +20,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 
-class V2CanonicalCommandControllerTest {
+class CanonicalCommandControllerTest {
     private val reserve = mock(CommandReserveService::class.java)
     private val resolver = mock(GeneralResolver::class.java)
-    private val contextual = mock(V2CommandPrecheckService::class.java)
-    private val controller = V2CanonicalCommandController(reserve, resolver, contextual)
+    private val contextual = mock(CityCommandPrecheckService::class.java)
+    private val controller = CanonicalCommandController(reserve, resolver, contextual)
 
     init {
         `when`(resolver.resolveGeneralId(11)).thenReturn(7)
@@ -88,7 +93,7 @@ class V2CanonicalCommandControllerTest {
     fun `legacy v2 facade preserves frozen AVAILABLE acknowledgement`() {
         `when`(reserve.reserveForOwner(7, "v2GarrisonRecruit", 0, "{\"cityId\":4,\"amount\":100}", 11))
             .thenReturn(CommandReserveService.ReserveResult("req-legacy", 0))
-        val legacy = V2GarrisonRecruitController(reserve, resolver)
+        val legacy = GarrisonRecruitController(reserve, resolver)
 
         val response = legacy.recruit(11, 7, "{\"cityId\":4,\"amount\":100}")
         val body = response.body as IntakeAcceptedResponse
@@ -101,7 +106,7 @@ class V2CanonicalCommandControllerTest {
 
     @Test
     fun `legacy v2 facade rejects anonymous mutation`() {
-        val response = V2GarrisonRecruitController(reserve, resolver)
+        val response = GarrisonRecruitController(reserve, resolver)
             .recruit(null, 7, "{\"cityId\":4,\"amount\":100}")
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.statusCode)
@@ -118,7 +123,7 @@ class V2CanonicalCommandControllerTest {
         )
         `when`(contextual.precheck(7, available)).thenReturn(available)
 
-        val response = V2CityTransportController(reserve, resolver, contextual,
+        val response = CityTransportController(reserve, resolver, contextual,
             opensamguk.gameapi.config.GameApiProcessWorld(1)).transport(11, 7, args)
         val body = response.body as IntakeAcceptedResponse
 

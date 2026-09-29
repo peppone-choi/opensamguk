@@ -1,4 +1,6 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.command
+
+import opensamguk.gameapi.command.CityCommandPrecheckService
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
@@ -34,7 +36,7 @@ import opensamguk.logic.world.*
 import opensamguk.infra.seed.StrategicTopologyJson
 import java.nio.file.Path
 
-class V2CommandPrecheckServiceTest {
+class CityCommandPrecheckServiceTest {
     private val transportArgs = CityTransportArgs(1, 2, 100, 0, 0, null)
 
     @Test
@@ -145,7 +147,7 @@ class V2CommandPrecheckServiceTest {
         mapName: String, crew: Int,
         loadTopology: () -> StrategicRouteProjection = { error("legacy must not load V3 topology") },
         fromCityId: Int = 1, toCityId: Int = 2, deployed: Boolean = false,
-    ): V2CommandPrecheckService {
+    ): CityCommandPrecheckService {
         val generals = mock(GeneralReadRepository::class.java)
         val cities = mock(CityReadRepository::class.java)
         val nations = mock(NationReadRepository::class.java)
@@ -209,6 +211,6 @@ class V2CommandPrecheckServiceTest {
         `when`(worldArtifacts.resolve()).thenReturn(opensamguk.gameapi.read.ActiveWorldArtifactSnapshot(
             WorldStateReadEntity(id = 1), emptyList(), bundle))
         val states = PrecheckStateViewFactory(generals, cities, nations, diplomacies, worlds, fields, worldArtifacts)
-        return V2CommandPrecheckService(states, jdbc, GameApiProcessWorld(1), loadTopology)
+        return CityCommandPrecheckService(states, jdbc, GameApiProcessWorld(1), loadTopology)
     }
 }

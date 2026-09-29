@@ -1,5 +1,7 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.city
 
+import opensamguk.gameapi.command.validateCommandArguments
+import opensamguk.gameapi.command.commandError
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
@@ -31,7 +33,7 @@ import opensamguk.logic.command.CommandAvailability
 @Profile(SandboxGate.PROFILE)
 @ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/garrison-recruit")
-class V2GarrisonRecruitController(
+class GarrisonRecruitController(
     private val reserve: CommandReserveService,
     private val resolver: GeneralResolver,
 ) {
@@ -51,8 +53,8 @@ class V2GarrisonRecruitController(
         if (generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val availability = validateLegacyV2Arguments("v2GarrisonRecruit", argJson)
-        if (availability !is CommandAvailability.Available) return availability.legacyError("v2GarrisonRecruit")
+        val availability = validateCommandArguments("v2GarrisonRecruit", argJson)
+        if (availability !is CommandAvailability.Available) return availability.commandError("v2GarrisonRecruit")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
             actionCode = "v2GarrisonRecruit",

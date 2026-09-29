@@ -1645,3 +1645,17 @@ web/game/lib/hwiha-reads.ts
 | `engine.v2.V2WorldActions` | `engine.world.CityWorldActions` | 도시 사건 등록기 |
 
 사건 액션 이름 `V2CityGarrisonAttrition`·`V2ProcessCityIncome`, 명령 코드와 DB 객체 이름은 저장·통신 식별자 계약이므로 유지했다. 원래 함수명에 붙은 `v2` 접두사만 제거했다.
+
+### game-api 도시·명령 샌드박스 코드 이름 (2026-09-30)
+
+| 이전 이름 | 현재 이름 | 범위 |
+|---|---|---|
+| `gameapi.v2.V2CanonicalCommandController` | `gameapi.command.CanonicalCommandController` | 코드 타입·파일·패키지 |
+| `gameapi.v2.V2CommandPrecheckService` | `gameapi.command.CityCommandPrecheckService` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2CityLedgerReadController` | `gameapi.city.CityLedgerReadController` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2CityTransportController` | `gameapi.city.CityTransportController` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2GarrisonRecruitController` | `gameapi.city.GarrisonRecruitController` | 코드 타입·파일·패키지·Spring 빈 |
+| `V2CommandIntakeResponse`/`V2CommandArgumentParser` | `CommandIntakeResponse`/`CommandArgumentParser` | 코드 타입 |
+| `validateLegacyV2Arguments`/`legacyError` | `validateCommandArguments`/`commandError` | 코드 함수 |
+
+`/api/v2/*` 경로, `v2CityTransport`·`v2GarrisonRecruit` 명령 ID, `v2.enabled`·`v2-sandbox` 설정은 저장·통신 계약이므로 이 코드 이름 PR에서는 유지한다. 저장 식별자 개명 단계에서 함께 바꾼다.

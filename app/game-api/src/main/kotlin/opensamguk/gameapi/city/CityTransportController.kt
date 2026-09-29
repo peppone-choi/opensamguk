@@ -1,5 +1,9 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.city
 
+import opensamguk.gameapi.command.CityCommandPrecheckService
+
+import opensamguk.gameapi.command.validateCommandArguments
+import opensamguk.gameapi.command.commandError
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
@@ -20,16 +24,16 @@ import opensamguk.logic.command.CityTransportArgs
 import opensamguk.logic.world.ResolvedStrategicPath
 import com.fasterxml.jackson.annotation.JsonInclude
 
-data class V2CityTransportRoutePreview(
+data class CityTransportRoutePreview(
     val status: String,
     val code: String? = null,
     val reason: String? = null,
     @get:JsonInclude(JsonInclude.Include.ALWAYS)
-    val route: V2CityTransportRoute? = null,
+    val route: CityTransportRoute? = null,
     val worldId: Int? = null,
 )
 
-data class V2CityTransportRoute(
+data class CityTransportRoute(
     val nodeKeys: List<String>,
     val edgeIds: List<String>,
     val modes: List<String>,
@@ -40,7 +44,7 @@ data class V2CityTransportRoute(
     val pathHash: String,
 ) {
     companion object {
-        fun from(path: ResolvedStrategicPath): V2CityTransportRoute = V2CityTransportRoute(
+        fun from(path: ResolvedStrategicPath): CityTransportRoute = CityTransportRoute(
             path.nodeKeys, path.edgeIds, path.modes.map { it.name }, path.totalCost, path.capacity,
             path.topologyRevision, path.topologyHash, path.pathHash,
         )
@@ -50,16 +54,16 @@ data class V2CityTransportRoute(
 /**
  * OPENSAM-154 (v2 R5) — v2 도시 자원 수송 인테이크 엔드포인트. **v2 샌드박스 전용, 새 파일**
  * (v1 인테이크 분류기를 확장하지 않는다). 게이트·소유권 가드·202 회신 규약은
- * [V2GarrisonRecruitController](R4)와 동형이다.
+ * [GarrisonRecruitController](R4)와 동형이다.
  */
 @RestController
 @Profile(SandboxGate.PROFILE)
 @ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/city-transport")
-class V2CityTransportController(
+class CityTransportController(
     private val reserve: CommandReserveService,
     private val resolver: GeneralResolver,
-    private val contextual: V2CommandPrecheckService,
+    private val contextual: CityCommandPrecheckService,
     processWorld: GameApiProcessWorld,
 ) {
     private val worldId = processWorld.worldId.value
@@ -69,19 +73,19 @@ class V2CityTransportController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam generalId: Int,
         @RequestBody(required = false) argJson: String? = null,
-    ): ResponseEntity<V2CityTransportRoutePreview> {
+    ): ResponseEntity<CityTransportRoutePreview> {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
         if (generalId != resolver.resolveGeneralId(userId)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build()
         }
-        val available = validateLegacyV2Arguments("v2CityTransport", argJson)
+        val available = validateCommandArguments("v2CityTransport", argJson)
         val preview = when (available) {
             is CommandAvailability.Available -> contextual.previewTransport(generalId, available.args as CityTransportArgs)
-            is CommandAvailability.Blocked -> V2CityTransportRoutePreview("BLOCKED", available.code, available.reason)
-            is CommandAvailability.NeedsInput -> V2CityTransportRoutePreview("BLOCKED", "INVALID_ARGUMENTS", "수송 인자가 부족합니다.")
-            is CommandAvailability.Unknown -> V2CityTransportRoutePreview("BLOCKED", available.code, "수송 명령을 찾을 수 없습니다.")
+            is CommandAvailability.Blocked -> CityTransportRoutePreview("BLOCKED", available.code, available.reason)
+            is CommandAvailability.NeedsInput -> CityTransportRoutePreview("BLOCKED", "INVALID_ARGUMENTS", "수송 인자가 부족합니다.")
+            is CommandAvailability.Unknown -> CityTransportRoutePreview("BLOCKED", available.code, "수송 명령을 찾을 수 없습니다.")
         }
         return ResponseEntity.ok(preview.copy(worldId = worldId))
     }
@@ -105,12 +109,12 @@ class V2CityTransportController(
         if (expectedWorldId != null && expectedWorldId != worldId) {
             return CommandAvailability.Blocked(
                 "ROUTE_WORLD_STALE", "세계가 변경되었습니다. 수송 경로를 다시 확인해주세요.",
-            ).legacyError("v2CityTransport")
+            ).commandError("v2CityTransport")
         }
-        val availability = validateLegacyV2Arguments("v2CityTransport", argJson)
-        if (availability !is CommandAvailability.Available) return availability.legacyError("v2CityTransport")
+        val availability = validateCommandArguments("v2CityTransport", argJson)
+        if (availability !is CommandAvailability.Available) return availability.commandError("v2CityTransport")
         val checked = contextual.precheck(generalId, availability)
-        if (checked !is CommandAvailability.Available) return checked.legacyError("v2CityTransport")
+        if (checked !is CommandAvailability.Available) return checked.commandError("v2CityTransport")
         val reserved = reserve.reserveForOwner(
             generalId = generalId,
             actionCode = "v2CityTransport",

@@ -1,4 +1,4 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.command
 
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
-data class V2CommandIntakeResponse(
+data class CommandIntakeResponse(
     val status: String,
     val commandId: String? = null,
     val requestId: String? = null,
@@ -38,10 +38,10 @@ data class V2CommandIntakeResponse(
 @Profile(SandboxGate.PROFILE)
 @ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/commands")
-class V2CanonicalCommandController(
+class CanonicalCommandController(
     private val reserve: CommandReserveService,
     private val resolver: GeneralResolver,
-    private val contextualPrecheck: V2CommandPrecheckService,
+    private val contextualPrecheck: CityCommandPrecheckService,
 ) {
     @PostMapping("/{commandId}/precheck")
     fun precheck(
@@ -49,7 +49,7 @@ class V2CanonicalCommandController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam generalId: Int,
         @RequestBody(required = false) argJson: String? = null,
-    ): ResponseEntity<V2CommandIntakeResponse> {
+    ): ResponseEntity<CommandIntakeResponse> {
         val authFailure = authenticate(userId, generalId)
         if (authFailure != null) return authFailure
         return availability(commandId, generalId, argJson)
@@ -61,7 +61,7 @@ class V2CanonicalCommandController(
         @AuthenticationPrincipal userId: Long?,
         @RequestParam generalId: Int,
         @RequestBody(required = false) argJson: String? = null,
-    ): ResponseEntity<V2CommandIntakeResponse> {
+    ): ResponseEntity<CommandIntakeResponse> {
         val authFailure = authenticate(userId, generalId)
         if (authFailure != null) return authFailure
         val schema = CommandSchemaCatalog.resolve(commandId)
@@ -73,7 +73,7 @@ class V2CanonicalCommandController(
         if (checked !is CommandAvailability.Available) return response(commandId, checked)
         val reserved = reserve.reserveV2(generalId, schema, checked.args, Math.toIntExact(userId!!))
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(
-            V2CommandIntakeResponse(
+            CommandIntakeResponse(
                 status = "ACCEPTED",
                 commandId = schema.canonicalId,
                 requestId = reserved.requestId,
@@ -86,7 +86,7 @@ class V2CanonicalCommandController(
         commandId: String,
         generalId: Int,
         argJson: String?,
-    ): ResponseEntity<V2CommandIntakeResponse> {
+    ): ResponseEntity<CommandIntakeResponse> {
         val schema = CommandSchemaCatalog.resolve(commandId)
         if (schema == null || schema.canonicalId != commandId) return unknown(commandId)
         val parsed = parseAvailability(commandId, argJson)
@@ -99,7 +99,7 @@ class V2CanonicalCommandController(
     }
 
     private fun parseAvailability(commandId: String, argJson: String?): CommandAvailability {
-        val args = V2CommandArgumentParser.parse(argJson)
+        val args = CommandArgumentParser.parse(argJson)
             ?: return CommandAvailability.Blocked("INVALID_ARGUMENTS", "명령 인자 형식이 올바르지 않습니다.")
         return CommandSchemaCatalog.precheck(commandId, args)
     }
@@ -107,21 +107,21 @@ class V2CanonicalCommandController(
     private fun response(
         commandId: String,
         result: CommandAvailability,
-    ): ResponseEntity<V2CommandIntakeResponse> {
+    ): ResponseEntity<CommandIntakeResponse> {
         val canonicalId = CommandSchemaCatalog.resolve(commandId)?.canonicalId
         return when (result) {
             is CommandAvailability.Available -> ResponseEntity.ok(
-                V2CommandIntakeResponse(status = "AVAILABLE", commandId = canonicalId),
+                CommandIntakeResponse(status = "AVAILABLE", commandId = canonicalId),
             )
             is CommandAvailability.NeedsInput -> ResponseEntity.unprocessableEntity().body(
-                V2CommandIntakeResponse(status = "NEEDS_INPUT", commandId = canonicalId, missing = result.missing),
+                CommandIntakeResponse(status = "NEEDS_INPUT", commandId = canonicalId, missing = result.missing),
             )
             is CommandAvailability.Blocked -> blocked(result.code, result.reason, canonicalId)
             is CommandAvailability.Unknown -> unknown(commandId)
         }
     }
 
-    private fun authenticate(userId: Long?, generalId: Int): ResponseEntity<V2CommandIntakeResponse>? {
+    private fun authenticate(userId: Long?, generalId: Int): ResponseEntity<CommandIntakeResponse>? {
         if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
         }
@@ -129,21 +129,21 @@ class V2CanonicalCommandController(
         return null
     }
 
-    private fun unknown(commandId: String): ResponseEntity<V2CommandIntakeResponse> =
+    private fun unknown(commandId: String): ResponseEntity<CommandIntakeResponse> =
         ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-            V2CommandIntakeResponse(status = "UNKNOWN", commandId = commandId, code = "UNKNOWN_COMMAND"),
+            CommandIntakeResponse(status = "UNKNOWN", commandId = commandId, code = "UNKNOWN_COMMAND"),
         )
 
     private fun blocked(
         code: String,
         reason: String,
         commandId: String? = null,
-    ): ResponseEntity<V2CommandIntakeResponse> = ResponseEntity.unprocessableEntity().body(
-        V2CommandIntakeResponse(status = "BLOCKED", commandId = commandId, code = code, reason = reason),
+    ): ResponseEntity<CommandIntakeResponse> = ResponseEntity.unprocessableEntity().body(
+        CommandIntakeResponse(status = "BLOCKED", commandId = commandId, code = code, reason = reason),
     )
 }
 
-object V2CommandArgumentParser {
+object CommandArgumentParser {
     private val json = Json { ignoreUnknownKeys = false; isLenient = false }
 
     fun parse(raw: String?): Map<String, Any?>? = try {
@@ -167,22 +167,22 @@ object V2CommandArgumentParser {
         CommandAvailability.Blocked("INVALID_ARGUMENTS", "명령 인자 형식이 올바르지 않습니다.")
 }
 
-private fun CommandAvailability.toLegacyError(commandId: String): ResponseEntity<Any> = when (this) {
+private fun CommandAvailability.toCommandError(commandId: String): ResponseEntity<Any> = when (this) {
     is CommandAvailability.NeedsInput -> ResponseEntity.unprocessableEntity().body(
-        V2CommandIntakeResponse(status = "NEEDS_INPUT", commandId = commandId, missing = missing),
+        CommandIntakeResponse(status = "NEEDS_INPUT", commandId = commandId, missing = missing),
     )
     is CommandAvailability.Blocked -> ResponseEntity.unprocessableEntity().body(
-        V2CommandIntakeResponse(status = "BLOCKED", commandId = commandId, code = code, reason = reason),
+        CommandIntakeResponse(status = "BLOCKED", commandId = commandId, code = code, reason = reason),
     )
     is CommandAvailability.Unknown -> ResponseEntity.status(HttpStatus.NOT_FOUND).body(
-        V2CommandIntakeResponse(status = "UNKNOWN", commandId = commandId, code = code),
+        CommandIntakeResponse(status = "UNKNOWN", commandId = commandId, code = code),
     )
     is CommandAvailability.Available -> error("available command is not an error")
 }
 
-fun validateLegacyV2Arguments(commandId: String, argJson: String?): CommandAvailability {
-    val args = V2CommandArgumentParser.parse(argJson) ?: return V2CommandArgumentParser.invalid()
+fun validateCommandArguments(commandId: String, argJson: String?): CommandAvailability {
+    val args = CommandArgumentParser.parse(argJson) ?: return CommandArgumentParser.invalid()
     return CommandSchemaCatalog.precheck(commandId, args)
 }
 
-fun CommandAvailability.legacyError(commandId: String): ResponseEntity<Any> = toLegacyError(commandId)
+fun CommandAvailability.commandError(commandId: String): ResponseEntity<Any> = toCommandError(commandId)

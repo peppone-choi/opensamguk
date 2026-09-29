@@ -1,4 +1,9 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.city
+
+import opensamguk.gameapi.city.CityTransportController
+import opensamguk.gameapi.city.CityTransportRoute
+import opensamguk.gameapi.city.CityTransportRoutePreview
+import opensamguk.gameapi.command.CityCommandPrecheckService
 
 import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -24,11 +29,11 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class V2CityTransportRouteControllerTest {
+class CityTransportRouteControllerTest {
     private val reserve = mock(CommandReserveService::class.java)
     private val resolver = mock(GeneralResolver::class.java)
-    private val precheck = mock(V2CommandPrecheckService::class.java)
-    private val controller = V2CityTransportController(reserve, resolver, precheck, GameApiProcessWorld(8))
+    private val precheck = mock(CityCommandPrecheckService::class.java)
+    private val controller = CityTransportController(reserve, resolver, precheck, GameApiProcessWorld(8))
     private val args = CityTransportArgs(1, 2, 100, 0, 0, null)
     private val json = """{"fromCityId":1,"toCityId":2,"gold":100}"""
 
@@ -36,8 +41,8 @@ class V2CityTransportRouteControllerTest {
 
     @Test
     fun `route endpoint exposes complete V3 path without reserving transport`() {
-        `when`(precheck.previewTransport(10, args)).thenReturn(V2CityTransportRoutePreview(
-            "AVAILABLE", route = V2CityTransportRoute(listOf("land:a", "land:b"), listOf("dry:ab"),
+        `when`(precheck.previewTransport(10, args)).thenReturn(CityTransportRoutePreview(
+            "AVAILABLE", route = CityTransportRoute(listOf("land:a", "land:b"), listOf("dry:ab"),
                 listOf("LAND"), 1, 1000, "v3:abc", "topology:abc", "path:123"),
         ))
         val mvc = MockMvcBuilders.standaloneSetup(controller).setCustomArgumentResolvers(
@@ -75,7 +80,7 @@ class V2CityTransportRouteControllerTest {
 
     @Test
     fun `preview returns domain denial without enqueue and malformed amounts never query state`() {
-        val blocked = V2CityTransportRoutePreview("BLOCKED", "NO_LAND_CONNECTION", "연결된 육로가 없습니다.")
+        val blocked = CityTransportRoutePreview("BLOCKED", "NO_LAND_CONNECTION", "연결된 육로가 없습니다.")
         `when`(precheck.previewTransport(10, args)).thenReturn(blocked)
         assertEquals(blocked.copy(worldId = 8), controller.route(11, 10, json).body)
         assertEquals("INVALID_ARGUMENTS", controller.route(11, 10, """{"fromCityId":1,"toCityId":2,"gold":"100"}""").body?.code)
@@ -84,7 +89,7 @@ class V2CityTransportRouteControllerTest {
 
     @Test
     fun `legacy AVAILABLE response keeps explicit route null under NON_NULL serialization`() {
-        `when`(precheck.previewTransport(10, args)).thenReturn(V2CityTransportRoutePreview("AVAILABLE"))
+        `when`(precheck.previewTransport(10, args)).thenReturn(CityTransportRoutePreview("AVAILABLE"))
         val response = controller.route(11, 10, json)
         assertEquals(HttpStatus.OK, response.statusCode)
         val mapper = ObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL)

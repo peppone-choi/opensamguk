@@ -2,6 +2,7 @@ package opensamguk.gameapi.v2
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
@@ -18,6 +19,13 @@ import org.springframework.context.ApplicationContext
  * The matching game-engine test measures relaxed binding from env `V2_ENABLED` to `v2.enabled` once.
  */
 class V2SandboxConfigurationTest {
+    @Test
+    fun `sandbox bean scan includes moved city and command packages`() {
+        assertTrue(SandboxGate.isGatedTypeName("opensamguk.gameapi.city.CityTransportController"))
+        assertTrue(SandboxGate.isGatedTypeName("opensamguk.gameapi.command.CityCommandPrecheckService"))
+        assertFalse(SandboxGate.isGatedTypeName("opensamguk.gameapi.web.CommandController"))
+    }
+
     private fun runner() = ApplicationContextRunner()
         .withUserConfiguration(GameApiProcessWorldIdConfiguration::class.java, V2SandboxConfiguration::class.java)
 

@@ -1,4 +1,7 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.command
+
+import opensamguk.gameapi.city.CityTransportRoute
+import opensamguk.gameapi.city.CityTransportRoutePreview
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
@@ -32,7 +35,7 @@ import org.springframework.beans.factory.annotation.Autowired
 @Service
 @Profile(SandboxGate.PROFILE)
 @ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
-class V2CommandPrecheckService(
+class CityCommandPrecheckService(
     private val states: PrecheckStateViewFactory,
     private val jdbc: NamedParameterJdbcTemplate,
     processWorld: GameApiProcessWorld,
@@ -91,14 +94,14 @@ class V2CommandPrecheckService(
         }
     }
 
-    fun previewTransport(generalId: Int, args: CityTransportArgs): V2CityTransportRoutePreview {
+    fun previewTransport(generalId: Int, args: CityTransportArgs): CityTransportRoutePreview {
         val (decision, path) = evaluateTransport(generalId, args, preview = true)
         return when (decision) {
-            is CityTransportDecision.Denied -> V2CityTransportRoutePreview(
+            is CityTransportDecision.Denied -> CityTransportRoutePreview(
                 status = "BLOCKED", code = decision.code, reason = decision.reason,
             )
-            is CityTransportDecision.Applied -> V2CityTransportRoutePreview(
-                status = "AVAILABLE", route = path?.let(V2CityTransportRoute::from),
+            is CityTransportDecision.Applied -> CityTransportRoutePreview(
+                status = "AVAILABLE", route = path?.let(CityTransportRoute::from),
             )
         }
     }

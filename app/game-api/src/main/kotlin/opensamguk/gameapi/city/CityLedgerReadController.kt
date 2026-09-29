@@ -1,4 +1,4 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.city
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.infra.sandbox.SandboxGate
@@ -34,7 +34,7 @@ import org.springframework.web.bind.annotation.RestController
 @Profile(SandboxGate.PROFILE)
 @ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/city-ledger")
-class V2CityLedgerReadController(
+class CityLedgerReadController(
     private val jdbc: NamedParameterJdbcTemplate,
     processWorld: GameApiProcessWorld,
 ) {

@@ -1,4 +1,6 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.city
+
+import opensamguk.gameapi.city.CityLedgerReadController
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import org.mockito.Mockito.mock
@@ -20,7 +22,7 @@ import kotlin.test.assertTrue
  * 컨트롤러가 JPA를 쓰지 않으므로 검증 대상은 (1) SQL이 항상 월드로 좁혀지는가, (2) 정렬이 결정적인가,
  * (3) 행이 없는 도시가 404가 아니라 0/0/0인가 — 세 가지다.
  */
-class V2CityLedgerReadControllerTest {
+class CityLedgerReadControllerTest {
 
     /** `query(sql, params, rowMapper)` 만 가로채고 나머지는 손대지 않는 fake. */
     private class FakeJdbc(private val rows: List<List<Number>>) :
@@ -45,9 +47,9 @@ class V2CityLedgerReadControllerTest {
         }
     }
 
-    private fun controller(rows: List<List<Number>>): Pair<V2CityLedgerReadController, FakeJdbc> {
+    private fun controller(rows: List<List<Number>>): Pair<CityLedgerReadController, FakeJdbc> {
         val jdbc = FakeJdbc(rows)
-        return V2CityLedgerReadController(jdbc, GameApiProcessWorld(7)) to jdbc
+        return CityLedgerReadController(jdbc, GameApiProcessWorld(7)) to jdbc
     }
 
     @Test
@@ -58,8 +60,8 @@ class V2CityLedgerReadControllerTest {
 
         assertEquals(
             listOf(
-                V2CityLedgerReadController.CityLedgerView(3, 1_200, 800, 5_000),
-                V2CityLedgerReadController.CityLedgerView(9, 0, 0, 100),
+                CityLedgerReadController.CityLedgerView(3, 1_200, 800, 5_000),
+                CityLedgerReadController.CityLedgerView(9, 0, 0, 100),
             ),
             entries,
         )
@@ -81,7 +83,7 @@ class V2CityLedgerReadControllerTest {
     fun `single city read is scoped by both world and city`() {
         val (api, jdbc) = controller(listOf(listOf(4, 50L, 60L, 70)))
 
-        assertEquals(V2CityLedgerReadController.CityLedgerView(4, 50, 60, 70), api.one(4))
+        assertEquals(CityLedgerReadController.CityLedgerView(4, 50, 60, 70), api.one(4))
         assertEquals(7, jdbc.lastParams["world_id"])
         assertEquals(4, jdbc.lastParams["city_id"])
         assertTrue(jdbc.lastSql!!.contains("city_id = :city_id"), jdbc.lastSql!!)
@@ -92,6 +94,6 @@ class V2CityLedgerReadControllerTest {
     fun `a city without a ledger row reads as zeros, not as missing`() {
         val (api, _) = controller(emptyList())
 
-        assertEquals(V2CityLedgerReadController.CityLedgerView(11, 0, 0, 0), api.one(11))
+        assertEquals(CityLedgerReadController.CityLedgerView(11, 0, 0, 0), api.one(11))
     }
 }
