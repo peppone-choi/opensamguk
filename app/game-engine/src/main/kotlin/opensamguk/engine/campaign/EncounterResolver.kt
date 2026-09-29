@@ -23,6 +23,7 @@ class EncounterResolver(
     private val metrics: LandMarchMetricSnapshot,
     private val cells: ProvinceCellIndex,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
+    private val observations: BattleOutcomeObserver = BattleOutcomeObserver.NONE,
 ) {
     sealed interface Resolution {
         data object NotPending : Resolution
@@ -56,6 +57,26 @@ class EncounterResolver(
         }
         val result = EncounterResolution.resolve(encounter, forces, relations, combat, plans, deployment, journal)
         settle(encounter, forces, result)
+        // QA evidence is provisional until the containing tick's JDBC flush commits. Its consumer
+        // owns that boundary; observation failure must not alter the settled battle or turn.
+        if (observations !== BattleOutcomeObserver.NONE) {
+            try {
+                val state = world.getState()
+                observations.onResolved(BattleOutcomeObservation.from(
+                    worldId = world.worldId.value,
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    phase = state.currentPhase,
+                    worldMapVariant = state.worldMapVariant?.name,
+                    encounter = encounter,
+                    deployment = deployment,
+                    result = result,
+                    callbackInvoked = result.winners.isNotEmpty(),
+                ))
+            } catch (_: Throwable) {
+                // A missing QA observation is a QA-gate failure, never a game-state change.
+            }
+        }
         return Resolution.Resolved(result, encounter)
     }
 
