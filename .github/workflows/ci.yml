@@ -824,6 +824,10 @@ jobs:
         with:
           ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
           path: runtime
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: collector
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -866,6 +870,8 @@ jobs:
         working-directory: runtime
         run: |
           set -euo pipefail
+          python3 -m unittest discover -s ../collector/tools/e2e \
+            -p test_check_boundary_exceptions.py -q
           files=(
             app/game-engine/src/main/kotlin/opensamguk/engine/campaign/SiegeService.kt
             app/game-engine/src/main/kotlin/opensamguk/engine/campaign/DomesticBoundary.kt
@@ -875,11 +881,9 @@ jobs:
             app/game-engine/src/main/kotlin/opensamguk/engine/campaign/UnitResupply.kt
             app/game-engine/src/main/kotlin/opensamguk/engine/campaign/MonthlyCountyIncome.kt
           )
-          if rg -n 'check(NotNull)?\(|require(NotNull)?\(|error\(|!!' "${files[@]}" \
-            > "$RUNNER_TEMP/yuzhou-w0-w2/forced-boundary-exceptions.txt"; then
-            echo 'Forced phase-boundary exceptions remain; W2 requires reviewed proofs or local stop+record probes.' >&2
-            exit 1
-          fi
+          python3 ../collector/tools/e2e/check_boundary_exceptions.py \
+            --output "$RUNNER_TEMP/yuzhou-w0-w2/forced-boundary-exceptions.txt" \
+            "${files[@]}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

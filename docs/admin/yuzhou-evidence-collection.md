@@ -70,6 +70,8 @@ python3 tools/e2e/compare_campaign_rows.py \
 
 W2는 함락 수비대, 수도·보급망, 풀 수 없는 조우, 월 경계 외교 만료, map4 도로/보루/보급, 경계 예외 20곳의 회귀 결과를 기록한다. 예를 들어 다음 선택 테스트는 W2의 **일부**만 다루며, 20곳 전체의 도달 불가 또는 건너뛰기+기록 판정을 대신하지 않는다.
 
+CI의 `yuzhou-w0-w2-evidence`는 선택 원본 파일의 강제 예외를 `check_boundary_exceptions.py`로 검사한다. 파일 누락·읽기 실패는 검사 실패이며, `forced-boundary-exceptions.txt`가 비어 있어도 검사 단계 자체가 성공했는지 확인한다. 2026-09-29 run `36581447829`의 정적 단계는 runner에 `rg`가 없어 실행되지 않았으므로 그 artifact의 W2 성공 표시는 무효다. 수정된 검사와 내정 경계 수정이 함께 들어간 최종 main SHA에서 다시 실행한다.
+
 ```sh
 JAVA_HOME="$(/usr/libexec/java_home -v 21)" ./gradlew :app:game-engine:test \
   --tests 'opensamguk.engine.campaign.SiegeServiceTest' \
