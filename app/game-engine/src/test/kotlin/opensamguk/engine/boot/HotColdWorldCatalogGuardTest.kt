@@ -264,6 +264,9 @@ class HotColdWorldCatalogGuardTest {
     @Test
     fun `turn runtime source scope includes reachable helper directories`() {
         assertTrue(
+            "app/game-engine/src/main/kotlin/opensamguk/engine/sandbox" in HotColdCatalog.runtimeSourceDirectories,
+        )
+        assertTrue(
             "app/game-engine/src/main/kotlin/opensamguk/engine/turn" in HotColdCatalog.runtimeSourceDirectories,
         )
         assertTrue(
