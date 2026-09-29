@@ -66,6 +66,16 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 `reset_executor_available=false`를 반환하는 **드라이런 계약**이다. 이 출력은 워크플로를
 호출하지 않으며 운영 GO를 뜻하지 않는다.
 
+`tools/ops/pep_qa_provenance.py`는 읽기 전용 GitHub API 검증기다. #1026 현재 head의
+성공한 동일 run/attempt에서 나온 W0/W2·W3·격리 실행 artifact 세 개의 ID·이름·GitHub
+SHA-256 digest를 조회하고 ZIP 원본을 재해시한다. run의 저장소·PR 번호·collector SHA,
+현재 main의 runtime SHA, 네 필수 job의 성공, 각 ZIP 내부 runtime/map/scenario pin,
+실제 1447 城 세계·여섯 이미지 ID·세 컨테이너 mounted 시나리오 해시를 대조한다.
+GitHub `gh` CLI가 없는 운영 VM에서도 Python 표준 라이브러리와 토큰으로 조회할 수 있다.
+이 검증기의 결과는 언제나 `w4_verified=false`, `production_stop_authorized=false`다.
+W1 세 차례 XML과 최종 W2 적색 probe, DB 기반 W4 콜백·postflush 원본의 별도 검증이
+아직 연결되지 않았으므로 이 출처 검증만으로 운영 정지를 허용하지 않는다.
+
 `scenario_990002`와 1447 城은 새 QA 목표다. 현재 PEP의 원본
 `scenario_1020`·이미지·DB는 냉간 bundle과 격리 복원에서 그대로 보존한다.
 기존 외부 `data/scenarios`의 31개 파일은 구세계 입력이다. 새 QA 세계에는 최종 main의
