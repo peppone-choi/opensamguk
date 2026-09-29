@@ -53,6 +53,14 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 다섯 컨테이너 정지 뒤 예외가 나면 `status.json`에 실패 단계가 남고 원본을 자동 재시작하지 않는다.
 따라서 원본 재개/QA reset과 최종 후보 pin을 포함한 검토 완료 전체 harness는 아직 없다.
 
+현재 두 GitHub 워크플로를 이 냉간 캡처에 그대로 이어 붙일 수도 없다.
+`reset-game-server.yml`의 기본 `create_backup=true`는 실행 중인 PostgreSQL에서 `pg_dump`를
+요구하지만, 냉간 캡처는 구 PostgreSQL을 정지한 채 끝난다. 이 워크플로는 후보 `IMAGE_TAG`도
+설정하지 않는다. 반대로 `promote-game-server.yml`은 태그를 설정한 직후 `compose up`으로
+새 엔진을 **기존 세계 DB에 먼저 기동**한다. 검증된 cold bundle을 backup으로 인정하는 조건,
+최종 후보 이미지 pin, 구 DB에 새 엔진을 기동하지 않는 reset 순서가 한 실행 경계에 묶이기 전에는
+두 워크플로를 연속 실행하지 않는다.
+
 `scenario_990002`와 1447 城은 새 QA 목표다. 현재 PEP의 원본
 `scenario_1020`·이미지·DB는 냉간 bundle과 격리 복원에서 그대로 보존한다.
 기존 외부 `data/scenarios`의 31개 파일은 구세계 입력이다. 새 QA 세계에는 최종 main의
