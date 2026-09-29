@@ -20,6 +20,7 @@ class FakeDocker:
         self.calls = []
         self.maintenance_ok = True
         self.stop_failure = None
+        self.inbox_result = b'0'
 
     def run(self, args, *, stdin=None):
         self.calls.append(args)
@@ -31,7 +32,7 @@ class FakeDocker:
                 raise RecoveryError('simulated stop transport failure')
             return b''
         if 'psql' in args:
-            return b'0'
+            return self.inbox_result
         return b'{"capability":"maintenance-v1","state":"drained"}'
 
 
@@ -327,6 +328,43 @@ class PepColdCapturePreflightTest(unittest.TestCase):
             PepColdCaptureOperator(self.recovery, FakeDrill()).capture_and_prove(
                 stack=self.stack, backup_root=backup_root, qa_gate=gate)
         self.assertEqual(self.recovery.docker.calls, [])
+
+    def test_nonterminal_inbox_blocks_storage_stop_and_records_failed_phase(self):
+        backup_root = self.stack / 'backups'
+        backup_root.mkdir(mode=0o700)
+        self.recovery.docker.inbox_result = b'2'
+        gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
+                'scenario_code': 'scenario_990002', 'city_count': 1447}
+        with self.assertRaisesRegex(RecoveryError, 'nonterminal command inbox'):
+            PepColdCaptureOperator(self.recovery, FakeDrill(), qa_attestor=FakeAttestor()).capture_and_prove(
+                stack=self.stack, backup_root=backup_root, qa_gate=gate)
+        status_file = next(backup_root.glob('pep-cold-operation-*/status.json'))
+        status = json.loads(status_file.read_text())
+        self.assertEqual(status['phase'], 'failed-after-stopped-game-engine')
+        self.assertFalse(status['old_stack_stopped'])
+        self.assertEqual(self.recovery.stopped, {'web-game', 'game-api', 'game-engine'})
+        self.assertFalse(any(args[:2] == ['container', 'start'] for args in self.recovery.docker.calls))
+
+    def test_changed_isolated_postgres_hash_blocks_handoff_after_capture(self):
+        backup_root = self.stack / 'backups'
+        backup_root.mkdir(mode=0o700)
+        original_verify = self.recovery.verify
+        def drifted_verify(**kwargs):
+            report = original_verify(**kwargs)
+            report['postgres']['logical_dump_sha256'] = 'f' * 64
+            return report
+        self.recovery.verify = drifted_verify
+        gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
+                'scenario_code': 'scenario_990002', 'city_count': 1447}
+        with self.assertRaisesRegex(RecoveryError, 'isolated storage does not match committed source'):
+            PepColdCaptureOperator(self.recovery, FakeDrill(), qa_attestor=FakeAttestor()).capture_and_prove(
+                stack=self.stack, backup_root=backup_root, qa_gate=gate)
+        status_file = next(backup_root.glob('pep-cold-operation-*/status.json'))
+        status = json.loads(status_file.read_text())
+        self.assertEqual(status['phase'], 'failed-after-captured')
+        self.assertTrue(status['old_stack_stopped'])
+        self.assertEqual(self.recovery.stopped, set(SERVICES))
+        self.assertFalse(any(args[:2] == ['container', 'start'] for args in self.recovery.docker.calls))
 
 
 if __name__ == '__main__':

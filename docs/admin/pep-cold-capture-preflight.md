@@ -28,7 +28,8 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 1. 유지보수 controller가 `drained`이고 production lock을 독점했는지 다시 검사한다. 다른 lifecycle 작업과
    Gateway 서버 정의를 읽어 pending/repair-required가 없음을 확인한다.
 2. 기존 API·web intake를 차단·정지한 뒤 engine을 정상 종료한다. `RELOAD_REQUIRED`는 성공한 flush의 증거가
-   아니므로 마지막 committed DB 상태와 미완료 inbox를 별도로 기록한다.
+   아니므로 마지막 committed DB 상태를 별도로 기록한다. `ACCEPTED`·`CLAIMED` inbox가 0건이 아니면
+   PG/Redis를 정지하기 전에 중단한다. 이 경우 web·API·engine은 정지된 채 남으며 자동 재시작하지 않는다.
 3. 실행 중인 PG/Redis에서 비공개 row count·Flyway·정규화 논리 dump hash·AOF key count를 수집한다.
    `data/scenarios` 전 파일을 `preserve_scenario_tree`로 비공개 동반 bundle에 복사하고 원본·복사본의
    파일별 SHA-256, bundle manifest 연계를 대조한다. 불완전한 복사본은 `INCOMPLETE` 표지를 남긴다.
