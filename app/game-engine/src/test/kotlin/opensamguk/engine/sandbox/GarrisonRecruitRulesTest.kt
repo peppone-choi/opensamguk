@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.GarrisonRecruitHandler
 import opensamguk.engine.city.RecruitDecision
@@ -23,7 +23,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
-class V2GarrisonRecruitRulesTest {
+class GarrisonRecruitRulesTest {
 
     // ── recruitDecision — 순수 함수 ──────────────────────────────────────────────────────────
 

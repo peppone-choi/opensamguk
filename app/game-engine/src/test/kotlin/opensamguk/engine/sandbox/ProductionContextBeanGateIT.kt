@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.sandbox.SandboxConfiguration
 
@@ -37,9 +37,9 @@ import org.testcontainers.junit.jupiter.Testcontainers
  * context shaped like the v1 process and count [ApplicationContext.getBeansOfType]. Existing repository
  * architecture tests such as `DaemonNoEntityManagerTest` are static scans and cannot replace this layer.
  *
- * The first four classes are the four cells of the decision matrix. [V2BothConditionsBeanGateIT] is the
+ * The first four classes are the four cells of the decision matrix. [BothConditionsBeanGateIT] is the
  * **positive control**, proving that an all-zero result comes from a running context.
- * [V2BeanAllowlistSelfCheckTest] then checks the allowlist those assertions read.
+ * [BeanAllowlistSelfCheckTest] then checks the allowlist those assertions read.
  */
 private const val SECURITY_EXCLUDES =
     // As in GameEngineApplicationTests, game-api(:mainClassesForTest)'s transitive security starter reaches the
@@ -108,7 +108,7 @@ private fun postgresProps(
     registry.add("opensamguk.daemon.enabled") { "false" }
 }
 
-internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
+internal class EnabledEnvironmentInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
     override fun initialize(context: ConfigurableApplicationContext) {
         context.environment.propertySources.addFirst(
             SystemEnvironmentPropertySource(
@@ -125,7 +125,7 @@ internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<C
 /** ① Production shape — `SANDBOX_ENABLED` unset and profile inactive. Expect zero v2 beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
-class V2ProductionShapeBeanGateIT {
+class ProductionShapeBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
     @Autowired lateinit var flyway: Flyway
     @Autowired lateinit var dataSource: DataSource
@@ -136,7 +136,7 @@ class V2ProductionShapeBeanGateIT {
     @Test
     fun `production context resolves application default Flyway location and excludes V900`() {
         assertEquals(V1_FLYWAY_LOCATION, context.environment.getProperty("spring.flyway.locations"))
-        V2FlywayIsolationAssertions(flyway, dataSource).assertV1DefaultRuntime()
+        FlywayIsolationAssertions(flyway, dataSource).assertV1DefaultRuntime()
     }
 
     companion object {
@@ -151,7 +151,7 @@ class V2ProductionShapeBeanGateIT {
 /** ② `sandbox.enabled=true` only — no profile. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = [SECURITY_EXCLUDES, "${SandboxGate.PROPERTY}=true"])
-class V2PropertyOnlyBeanGateIT {
+class PropertyOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
@@ -170,7 +170,7 @@ class V2PropertyOnlyBeanGateIT {
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles(SandboxGate.PROFILE)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
-class V2ProfileOnlyBeanGateIT {
+class ProfileOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
@@ -193,9 +193,9 @@ class V2ProfileOnlyBeanGateIT {
  */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles(SandboxGate.PROFILE)
-@ContextConfiguration(initializers = [V2EnabledEnvironmentInitializer::class])
+@ContextConfiguration(initializers = [EnabledEnvironmentInitializer::class])
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
-class V2BothConditionsBeanGateIT {
+class BothConditionsBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
     @Autowired lateinit var flyway: Flyway
     @Autowired lateinit var dataSource: DataSource
@@ -226,13 +226,13 @@ class V2BothConditionsBeanGateIT {
         assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
         assertEquals("true", context.environment.getProperty(SandboxGate.PROPERTY))
         assertEquals(SANDBOX_FLYWAY_LOCATIONS, context.environment.getProperty("spring.flyway.locations"))
-        V2FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertV2SandboxRuntime()
+        FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertV2SandboxRuntime()
     }
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
 
-        private val v1CatalogBaseline: Set<V2CatalogRelation> by lazy {
+        private val v1CatalogBaseline: Set<CatalogRelation> by lazy {
             v1PersistentTableBaseline(
                 DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password),
             )
@@ -253,7 +253,7 @@ class V2BothConditionsBeanGateIT {
  * while it names concrete beans, so an emptied or widened list must fail here rather than silently turn ④'s
  * subset assertion into a no-op.
  */
-class V2BeanAllowlistSelfCheckTest {
+class BeanAllowlistSelfCheckTest {
     @Test
     fun `allowlist names concrete v2 beans and never widens to a pattern`() {
         assertTrue(

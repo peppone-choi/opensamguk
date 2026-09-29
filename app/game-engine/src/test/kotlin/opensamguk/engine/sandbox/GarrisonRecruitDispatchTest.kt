@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CityTransport
@@ -29,7 +29,7 @@ import kotlin.test.assertNotNull
  * command when the v2 city ledger bean is absent (the FE result-poll would hang PENDING forever on a
  * null dispatch result).
  */
-class V2GarrisonRecruitDispatchTest {
+class GarrisonRecruitDispatchTest {
 
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
 

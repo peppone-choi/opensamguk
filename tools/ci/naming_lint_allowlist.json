@@ -1,6 +1,20 @@
 {
   "paths": [
     {
+      "path": "web/gateway/app/hwiha/route.ts",
+      "kinds": [
+        "product_path"
+      ],
+      "reason": "ADR-LITE-066: required compatibility route redirects the retired URL with HTTP 308."
+    },
+    {
+      "path": "web/gateway/app/hwiha/[...slug]/route.ts",
+      "kinds": [
+        "product_path"
+      ],
+      "reason": "ADR-LITE-066: required compatibility route redirects nested retired URLs with HTTP 308."
+    },
+    {
       "path": "infra/src/main/resources/db/migration_sandbox/V901__v2_city_ledger.sql",
       "kinds": [],
       "sha256": "3acf88e7fb38d00900c251ba899e863857fcec0bd9312ea5f513cd12dc1deb07",

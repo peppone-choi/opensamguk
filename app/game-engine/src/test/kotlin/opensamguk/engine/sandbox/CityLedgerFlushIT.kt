@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.CityLedgerEntry
 import opensamguk.engine.city.CityLedgerStore
@@ -42,7 +42,7 @@ import kotlin.test.assertTrue
  * Docker 미가용 시 skip — fail이 아니다.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class V2CityLedgerFlushIT {
+class CityLedgerFlushIT {
 
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var jdbc: NamedParameterJdbcTemplate

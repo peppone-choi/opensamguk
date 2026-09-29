@@ -1,4 +1,4 @@
-package opensamguk.gameapi.v2
+package opensamguk.gameapi.sandbox
 
 import opensamguk.gameapi.sandbox.SandboxConfiguration
 
@@ -33,7 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
  * OPENSAM-35 0A-f (S4) — measures v2 bean counts in game-api's **actual booted context**.
  *
  * S2 installed the gate in both game-engine and game-api, so both applications measure it. The structure matches
- * `opensamguk.engine.v2.V2ProductionContextBeanGateIT`; the only difference is one observed type:
+ * `opensamguk.engine.sandbox.ProductionContextBeanGateIT`; the only difference is one observed type:
  * `ContentCatalog` is registered only in game-engine (S3-a), so it must be **zero in every case**, including
  * when the gate is open.
  */
@@ -62,7 +62,7 @@ private fun postgresProps(
     registry.add("management.health.redis.enabled") { "false" }
 }
 
-internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
+internal class EnabledEnvironmentInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
     override fun initialize(context: ConfigurableApplicationContext) {
         context.environment.propertySources.addFirst(
             SystemEnvironmentPropertySource("test-systemEnvironment", mapOf("SANDBOX_ENABLED" to "true")),
@@ -74,7 +74,7 @@ internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<C
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
-class V2ProductionShapeBeanGateIT {
+class ProductionShapeBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
@@ -93,7 +93,7 @@ class V2ProductionShapeBeanGateIT {
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
-class V2PropertyOnlyBeanGateIT {
+class PropertyOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
@@ -112,7 +112,7 @@ class V2PropertyOnlyBeanGateIT {
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest
-class V2ProfileOnlyBeanGateIT {
+class ProfileOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
@@ -134,9 +134,9 @@ class V2ProfileOnlyBeanGateIT {
  */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test", SandboxGate.PROFILE)
-@ContextConfiguration(initializers = [V2EnabledEnvironmentInitializer::class])
+@ContextConfiguration(initializers = [EnabledEnvironmentInitializer::class])
 @SpringBootTest
-class V2BothConditionsBeanGateIT {
+class BothConditionsBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test

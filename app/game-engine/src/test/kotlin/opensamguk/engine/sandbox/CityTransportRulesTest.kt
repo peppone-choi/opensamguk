@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.CityTransportHandler
 import opensamguk.engine.city.TRANSPORT_MAX_GARRISON
@@ -40,7 +40,7 @@ import kotlin.test.assertTrue
 /**
  * OPENSAM-154 (v2 R5) — 수송 판정 + 핸들러 적용 경로. RNG 를 쓰지 않는다(두 함수 모두 `RandUtil` 인자 없음).
  */
-class V2CityTransportRulesTest {
+class CityTransportRulesTest {
 
     @Test
     fun `transport topology follows boot selected historical identity`() {

@@ -1,4 +1,4 @@
-package opensamguk.gateway.v2
+package opensamguk.gateway.sandbox
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -45,7 +45,7 @@ internal fun ApplicationContext.beansByTypePrefix(prefix: String): Map<String, S
  * no v2 bean to use as a positive control. Instead, it also confirms that a specific production-scanned
  * application bean is available by **type** (observed 30 type-prefixed beans on 2026-08-08).
  */
-abstract class V2BeanGateContract {
+abstract class BeanGateContract {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
@@ -74,22 +74,22 @@ abstract class V2BeanGateContract {
 @ActiveProfiles("test")
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
-class V2ProductionShapeBeanGateIT : V2BeanGateContract()
+class ProductionShapeBeanGateIT : BeanGateContract()
 
 /** ② `sandbox.enabled=true` only. */
 @ActiveProfiles("test")
 @SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
-class V2PropertyOnlyBeanGateIT : V2BeanGateContract()
+class PropertyOnlyBeanGateIT : BeanGateContract()
 
 /** ③ Profile `sandbox` only. */
 @ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
-class V2ProfileOnlyBeanGateIT : V2BeanGateContract()
+class ProfileOnlyBeanGateIT : BeanGateContract()
 
 /** ④ Both conditions are true — still zero because gateway-api has no `SandboxConfiguration`. */
 @ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
-class V2BothConditionsBeanGateIT : V2BeanGateContract()
+class BothConditionsBeanGateIT : BeanGateContract()

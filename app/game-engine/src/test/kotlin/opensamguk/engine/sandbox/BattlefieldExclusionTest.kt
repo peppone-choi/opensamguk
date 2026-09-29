@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.CityTransportHandler
 import opensamguk.engine.city.GarrisonRecruitHandler
@@ -14,7 +14,7 @@ import org.mockito.Mockito.*
 import java.time.Instant
 import kotlin.test.*
 
-class V2BattlefieldExclusionTest {
+class BattlefieldExclusionTest {
     private fun world(): InMemoryTurnWorld {
         val hash = "a".repeat(64)
         return InMemoryTurnWorld(WorldSnapshot(
