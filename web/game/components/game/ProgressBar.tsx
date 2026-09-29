@@ -2,7 +2,7 @@
 
 import { ICON_CDN } from '@/lib/constants';
 
-interface SammoBarProps {
+interface ProgressBarProps {
     percent: number;
     height?: 7 | 10;
     className?: string;
@@ -14,26 +14,26 @@ function clampPercent(value: number): number {
     return Math.min(100, Math.max(0, value));
 }
 
-export default function SammoBar({ percent, height = 7, className, title }: SammoBarProps) {
+export default function ProgressBar({ percent, height = 7, className, title }: ProgressBarProps) {
     const pct = clampPercent(percent);
     const assetHeight = height - 2;
     return (
         <div
-            className={className ? `sammo-bar ${className}` : 'sammo-bar'}
+            className={className ? `progress-bar ${className}` : 'progress-bar'}
             title={title ?? `${pct.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`}
             style={{
                 height: height + 2,
             }}
         >
             <div
-                className="sammo-bar-base"
+                className="progress-bar-base"
                 style={{
                     height,
                     backgroundImage: `url(${ICON_CDN}/pr${assetHeight}.gif)`,
                 }}
             />
             <div
-                className="sammo-bar-fill"
+                className="progress-bar-fill"
                 style={{
                     width: `${pct}%`,
                     height,
