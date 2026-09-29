@@ -437,6 +437,14 @@ jobs:
           path: |
             app/game-engine/build/reports/tests/
             app/game-engine/build/test-results/test/
+      - name: Upload battle evidence commit-boundary XML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: battle-evidence-postflush-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: app/game-engine/build/test-results/test/TEST-opensamguk.engine.campaign.BattleEvidencePostFlushIT.xml
       - name: Upload HWIHA S3 gate traces
         if: always()
         uses: actions/upload-artifact@v4

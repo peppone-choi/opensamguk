@@ -7,6 +7,7 @@ import opensamguk.logic.world.BattlefieldGeometry.Position
 class BattlefieldLayout private constructor(
     val geometry: BattlefieldGeometry,
     val approachProvinceId: String,
+    val ruleVersion: Int,
     distances: Map<Position, Int>,
     attackerZone: List<Position>,
     defenderZone: List<Position>,
@@ -24,6 +25,7 @@ class BattlefieldLayout private constructor(
 
     companion object {
         const val RULE_VERSION = 1
+        const val FRONTLINE_RULE_VERSION = 2
         private val positionOrder = compareBy(Position::row, Position::col)
 
         fun isLandPassable(terrain: String): Boolean = when (terrain) {
@@ -32,7 +34,9 @@ class BattlefieldLayout private constructor(
             else -> throw IllegalArgumentException("Unknown battlefield terrain")
         }
 
-        fun prepare(index: ProvinceCellIndex, provinceId: String, approachProvinceId: String): Result {
+        fun prepare(index: ProvinceCellIndex, provinceId: String, approachProvinceId: String,
+            ruleVersion: Int = RULE_VERSION): Result {
+            require(ruleVersion == RULE_VERSION || ruleVersion == FRONTLINE_RULE_VERSION)
             require(provinceId != approachProvinceId) { "Approach must be a different province" }
             val source = index.cellsOf(provinceId)
             val approach = index.cellsOf(approachProvinceId)
@@ -87,10 +91,13 @@ class BattlefieldLayout private constructor(
             }
             val depth = distances.values.max()
             if (depth == 0) return Result.Unavailable(Reason.INSUFFICIENT_DEPTH)
-            // Outer thirds leave a separating band whenever the source component permits one.
-            val zoneDepth = (depth - 1) / 3
+            // V1 keeps outer thirds. V2 brings the front edges toward one another on deep Map4 fields;
+            // source cells and the passable component remain unchanged.
+            val outerThird = (depth - 1) / 3
+            val zoneDepth = if (ruleVersion == FRONTLINE_RULE_VERSION)
+                maxOf(outerThird, (depth - 2).coerceAtLeast(0) / 2) else outerThird
             val orderedDistances = component.associateWith { distances.getValue(it) }
-            return Result.Ready(BattlefieldLayout(geometry, approachProvinceId, orderedDistances,
+            return Result.Ready(BattlefieldLayout(geometry, approachProvinceId, ruleVersion, orderedDistances,
                 component.filter { distances.getValue(it) <= zoneDepth },
                 component.filter { distances.getValue(it) >= depth - zoneDepth }))
         }
