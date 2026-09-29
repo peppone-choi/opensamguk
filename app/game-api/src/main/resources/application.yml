@@ -27,6 +27,13 @@ jwt:
   public-key: ${JWT_PUBLIC_KEY}
   legacy-secret: ${JWT_LEGACY_SECRET:}
   legacy-accept-until: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:}
+battle:
+  join-ticket:
+    enabled: ${BATTLE_JOIN_TICKET_ENABLED:false}
+    key-base64: ${BATTLE_JOIN_TICKET_KEY_BASE64:}
+    server-id: ${SERVER_ID:}
+  websocket:
+    allowed-origins: ${BATTLE_WS_ALLOWED_ORIGINS:}
 opensamguk:
   world-id: ${OPENSAMGUK_WORLD_ID}
   profile: ${OPENSAMGUK_PROFILE:pep:scenario_990002}
