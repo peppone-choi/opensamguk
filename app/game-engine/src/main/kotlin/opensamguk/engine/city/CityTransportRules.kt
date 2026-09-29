@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import opensamguk.engine.city.CityLedgerEntry
 
@@ -16,9 +16,9 @@ import opensamguk.logic.command.decideCityTransport
  *
  * 주민은 수송 대상이 아니다(원문이 금·병량·도시병사 셋만 든다).
  */
-sealed interface V2TransportDecision {
-    data class Denied(val reason: String) : V2TransportDecision
-    data class Applied(val gold: Long, val rice: Long, val garrison: Int) : V2TransportDecision
+sealed interface TransportDecision {
+    data class Denied(val reason: String) : TransportDecision
+    data class Applied(val gold: Long, val rice: Long, val garrison: Int) : TransportDecision
 }
 
 /** 묘섭 원문 값 — 금·병량 각각 5만(`:364`). */
@@ -59,7 +59,7 @@ fun transportDecision(
     hopDistance: Int?,
     escortCrew: Int,
     from: CityLedgerEntry,
-): V2TransportDecision {
+): TransportDecision {
     return when (
         val decision = decideCityTransport(
             CityTransportArgs(1, 2, gold, rice, garrison, null),
@@ -76,8 +76,8 @@ fun transportDecision(
             ),
         )
     ) {
-        is opensamguk.logic.command.CityTransportDecision.Denied -> V2TransportDecision.Denied(decision.reason)
+        is opensamguk.logic.command.CityTransportDecision.Denied -> TransportDecision.Denied(decision.reason)
         is opensamguk.logic.command.CityTransportDecision.Applied ->
-            V2TransportDecision.Applied(decision.gold, decision.rice, decision.garrison)
+            TransportDecision.Applied(decision.gold, decision.rice, decision.garrison)
     }
 }

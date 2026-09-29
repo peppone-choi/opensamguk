@@ -1,5 +1,9 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.GarrisonRecruitHandler
+import opensamguk.engine.city.RecruitDecision
+import opensamguk.engine.city.recruitDecision
+
 import opensamguk.engine.city.CityLedgerStore
 
 import opensamguk.common.wire.CityGarrisonRecruit
@@ -26,67 +30,67 @@ class V2GarrisonRecruitRulesTest {
     @Test
     fun `100명 미만은 deny`() {
         val d = recruitDecision(amount = 99, leadership = 100, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertEquals(V2RecruitDecision.Denied("최소 100명부터 보충할 수 있습니다."), d)
+        assertEquals(RecruitDecision.Denied("최소 100명부터 보충할 수 있습니다."), d)
     }
 
     @Test
     fun `정확히 100명은 통과`() {
         val d = recruitDecision(amount = 100, leadership = 100, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertIs<V2RecruitDecision.Applied>(d)
+        assertIs<RecruitDecision.Applied>(d)
     }
 
     @Test
     fun `통솔 100배 정확히 경계는 통과`() {
         val d = recruitDecision(amount = 5000, leadership = 50, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertIs<V2RecruitDecision.Applied>(d)
+        assertIs<RecruitDecision.Applied>(d)
     }
 
     @Test
     fun `통솔 100배 초과는 deny`() {
         val d = recruitDecision(amount = 5001, leadership = 50, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertEquals(V2RecruitDecision.Denied("통솔로 보충할 수 있는 한도를 넘었습니다."), d)
+        assertEquals(RecruitDecision.Denied("통솔로 보충할 수 있는 한도를 넘었습니다."), d)
     }
 
     @Test
     fun `인구가 딱 최소치로 남으면 통과`() {
         // population - amount == minAvailableRecruitPop(30000)
         val d = recruitDecision(amount = 100, leadership = 100, cityPopulation = 30_100, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertIs<V2RecruitDecision.Applied>(d)
+        assertIs<RecruitDecision.Applied>(d)
     }
 
     @Test
     fun `인구가 최소치보다 1 부족하면 deny`() {
         val d = recruitDecision(amount = 100, leadership = 100, cityPopulation = 30_099, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertEquals(V2RecruitDecision.Denied("주민이 부족합니다."), d)
+        assertEquals(RecruitDecision.Denied("주민이 부족합니다."), d)
     }
 
     @Test
     fun `금이 부족하면 deny`() {
         // amount=100 → goldCost = round(100*0.09) = 9
         val d = recruitDecision(amount = 100, leadership = 100, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 8)
-        assertEquals(V2RecruitDecision.Denied("도시의 금이 부족합니다."), d)
+        assertEquals(RecruitDecision.Denied("도시의 금이 부족합니다."), d)
     }
 
     @Test
     fun `금이 정확히 비용과 같으면 통과`() {
         val d = recruitDecision(amount = 100, leadership = 100, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 9)
-        assertIs<V2RecruitDecision.Applied>(d)
-        assertEquals(9L, (d as V2RecruitDecision.Applied).goldCost)
+        assertIs<RecruitDecision.Applied>(d)
+        assertEquals(9L, (d as RecruitDecision.Applied).goldCost)
     }
 
     @Test
     fun `비용 반올림은 PhpRound half-away-from-zero`() {
         // 105 * 0.09 = 9.45 -> phpRound = 9
         val d = recruitDecision(amount = 105, leadership = 100, cityPopulation = 1_000_000, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertIs<V2RecruitDecision.Applied>(d)
-        assertEquals(9L, (d as V2RecruitDecision.Applied).goldCost)
+        assertIs<RecruitDecision.Applied>(d)
+        assertEquals(9L, (d as RecruitDecision.Applied).goldCost)
     }
 
     @Test
     fun `인구·치안 차감값`() {
         val d = recruitDecision(amount = 1000, leadership = 100, cityPopulation = 100_000, cityTrust = 80.0, ledgerGold = 1_000_000)
-        assertIs<V2RecruitDecision.Applied>(d)
-        d as V2RecruitDecision.Applied
+        assertIs<RecruitDecision.Applied>(d)
+        d as RecruitDecision.Applied
         assertEquals(99_000, d.popAfter)
         // trust = 80 - (1000/100000)*100 = 80 - 1 = 79
         assertEquals(79.0, d.trustAfter, 1e-9)
@@ -95,8 +99,8 @@ class V2GarrisonRecruitRulesTest {
     @Test
     fun `치안이 0 아래로 내려가지 않는다`() {
         val d = recruitDecision(amount = 90_000, leadership = 1000, cityPopulation = 200_000, cityTrust = 1.0, ledgerGold = 1_000_000)
-        assertIs<V2RecruitDecision.Applied>(d)
-        assertEquals(0.0, (d as V2RecruitDecision.Applied).trustAfter)
+        assertIs<RecruitDecision.Applied>(d)
+        assertEquals(0.0, (d as RecruitDecision.Applied).trustAfter)
     }
 
     @Test
@@ -114,7 +118,7 @@ class V2GarrisonRecruitRulesTest {
     private lateinit var lastRecorder: ChangeRecorder
     private lateinit var lastLedger: CityLedgerStore
 
-    private fun handler(cities: List<opensamguk.engine.turn.City>): V2GarrisonRecruitHandler {
+    private fun handler(cities: List<opensamguk.engine.turn.City>): GarrisonRecruitHandler {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state = TurnWorldState(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600, lastTurnTime = t0),
@@ -135,7 +139,7 @@ class V2GarrisonRecruitRulesTest {
         lastWorld = world
         lastRecorder = recorder
         lastLedger = ledger
-        return V2GarrisonRecruitHandler(world, recorder, ledger)
+        return GarrisonRecruitHandler(world, recorder, ledger)
     }
 
     private fun city(id: Int, nationId: Int) =

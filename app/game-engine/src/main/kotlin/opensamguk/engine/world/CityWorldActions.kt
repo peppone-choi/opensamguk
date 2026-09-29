@@ -1,4 +1,7 @@
-package opensamguk.engine.v2
+package opensamguk.engine.world
+
+import opensamguk.engine.city.CityGarrisonAttritionAction
+import opensamguk.engine.city.ProcessCityIncomeAction
 
 import opensamguk.logic.event.EventActionFactory
 
@@ -12,7 +15,7 @@ import opensamguk.logic.event.EventActionFactory
  * 등록은 **이름만** 추가한다. v2 leaf는 시나리오의 `event` 행이 이름으로 호출하지 않는 한 절대 돌지
  * 않으므로, 등록 자체는 v1 월드의 동작을 바꾸지 않는다(v1 시나리오에는 그 이름을 쓰는 행이 없다).
  */
-object V2WorldActions {
+object CityWorldActions {
     fun register(factory: EventActionFactory): EventActionFactory =
-        V2CityGarrisonAttritionAction.register(V2ProcessCityIncomeAction.register(factory))
+        CityGarrisonAttritionAction.register(ProcessCityIncomeAction.register(factory))
 }

@@ -1633,3 +1633,15 @@ web/game/lib/hwiha-reads.ts
 | `V2CityLedgerEntry` | `CityLedgerEntry` | 도시 원장 값 객체 |
 
 `HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.
+
+## 도시 처리 엔진 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `engine.v2.V2CityGarrisonAttrition*`·`V2Attrition*` | `engine.city.CityGarrisonAttrition*`·`Attrition*` | 재난 뒤 도시 병사 감소 처리 |
+| `engine.v2.V2ProcessCityIncome*`·`V2CityIncome*`·`V2CityLedgerDelta` | `engine.city.ProcessCityIncome*`·`CityIncome*`·`CityLedgerDelta` | 도시 세입 처리 |
+| `engine.v2.V2GarrisonRecruitHandler`·`V2RecruitDecision` | `engine.city.GarrisonRecruitHandler`·`RecruitDecision` | 모병 |
+| `engine.v2.V2CityTransportHandler`·`V2TransportDecision` | `engine.city.CityTransportHandler`·`TransportDecision` | 자원 수송 |
+| `engine.v2.V2WorldActions` | `engine.world.CityWorldActions` | 도시 사건 등록기 |
+
+사건 액션 이름 `V2CityGarrisonAttrition`·`V2ProcessCityIncome`, 명령 코드와 DB 객체 이름은 저장·통신 식별자 계약이므로 유지했다. 원래 함수명에 붙은 `v2` 접두사만 제거했다.

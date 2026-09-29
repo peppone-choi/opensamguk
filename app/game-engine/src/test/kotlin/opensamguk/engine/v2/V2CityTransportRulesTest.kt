@@ -1,5 +1,14 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityTransportHandler
+import opensamguk.engine.city.TRANSPORT_MAX_GARRISON
+import opensamguk.engine.city.TRANSPORT_MAX_GOLD
+import opensamguk.engine.city.TRANSPORT_MAX_RICE
+import opensamguk.engine.city.TRANSPORT_MIN_ESCORT_CREW
+import opensamguk.engine.city.TransportDecision
+import opensamguk.engine.city.historicalTransportTopology
+import opensamguk.engine.city.transportDecision
+
 import opensamguk.engine.city.CityLedgerEntry
 import opensamguk.engine.city.CityLedgerStore
 
@@ -58,37 +67,37 @@ class V2CityTransportRulesTest {
 
     @Test
     fun `아무것도 지정하지 않으면 deny`() {
-        assertEquals(V2TransportDecision.Denied("수송할 자원을 지정해야 합니다."), decide())
+        assertEquals(TransportDecision.Denied("수송할 자원을 지정해야 합니다."), decide())
     }
 
     @Test
     fun `음수는 deny`() {
-        assertEquals(V2TransportDecision.Denied("수송량은 음수일 수 없습니다."), decide(gold = -1))
+        assertEquals(TransportDecision.Denied("수송량은 음수일 수 없습니다."), decide(gold = -1))
     }
 
     @Test
     fun `인접 1홉이 아니면 deny - 0홉(같은 도시)도 2홉도 도달 불가도 막는다`() {
         val reason = "인접한 도시로만 수송할 수 있습니다."
-        assertEquals(V2TransportDecision.Denied(reason), decide(gold = 100, hop = 0))
-        assertEquals(V2TransportDecision.Denied(reason), decide(gold = 100, hop = 2))
-        assertEquals(V2TransportDecision.Denied(reason), decide(gold = 100, hop = null))
+        assertEquals(TransportDecision.Denied(reason), decide(gold = 100, hop = 0))
+        assertEquals(TransportDecision.Denied(reason), decide(gold = 100, hop = 2))
+        assertEquals(TransportDecision.Denied(reason), decide(gold = 100, hop = null))
     }
 
     /** 묘섭 원문 값 — "수송에 필요한 최소병사량은 2000명"(`:364`). */
     @Test
     fun `호송 병사 2000명 미만은 deny, 정확히 2000은 통과`() {
-        assertIs<V2TransportDecision.Denied>(decide(gold = 100, crew = 1999))
-        assertIs<V2TransportDecision.Applied>(decide(gold = 100, crew = 2000))
+        assertIs<TransportDecision.Denied>(decide(gold = 100, crew = 1999))
+        assertIs<TransportDecision.Applied>(decide(gold = 100, crew = 2000))
         assertEquals(2000, TRANSPORT_MIN_ESCORT_CREW)
     }
 
     /** 묘섭 원문 값 — 금·병량 각 5만(`:364`). 경계는 통과, +1은 deny. */
     @Test
     fun `금·병량 상한은 5만`() {
-        assertIs<V2TransportDecision.Applied>(decide(gold = 50_000))
-        assertIs<V2TransportDecision.Denied>(decide(gold = 50_001))
-        assertIs<V2TransportDecision.Applied>(decide(rice = 50_000))
-        assertIs<V2TransportDecision.Denied>(decide(rice = 50_001))
+        assertIs<TransportDecision.Applied>(decide(gold = 50_000))
+        assertIs<TransportDecision.Denied>(decide(gold = 50_001))
+        assertIs<TransportDecision.Applied>(decide(rice = 50_000))
+        assertIs<TransportDecision.Denied>(decide(rice = 50_001))
         assertEquals(50_000L, TRANSPORT_MAX_GOLD)
         assertEquals(50_000L, TRANSPORT_MAX_RICE)
     }
@@ -96,19 +105,19 @@ class V2CityTransportRulesTest {
     /** 도시병사 상한은 **묘섭 미명시(U6)** — 임시로 금·병량과 같은 5만이며, 값이 바뀌어도 구조는 불변이다. */
     @Test
     fun `도시병사 상한은 임시로 5만이다 - 묘섭 미명시`() {
-        assertIs<V2TransportDecision.Applied>(decide(garrison = 50_000))
-        assertIs<V2TransportDecision.Denied>(decide(garrison = 50_001))
+        assertIs<TransportDecision.Applied>(decide(garrison = 50_000))
+        assertIs<TransportDecision.Denied>(decide(garrison = 50_001))
         assertEquals(50_000, TRANSPORT_MAX_GARRISON)
     }
 
     @Test
     fun `출발 도시 잔액이 모자라면 자원별 사유로 deny`() {
         val poor = CityLedgerEntry(gold = 10, rice = 10, garrison = 10)
-        assertEquals(V2TransportDecision.Denied("도시의 금이 부족합니다."), decide(gold = 11, from = poor))
-        assertEquals(V2TransportDecision.Denied("도시의 병량이 부족합니다."), decide(rice = 11, from = poor))
-        assertEquals(V2TransportDecision.Denied("도시의 병사가 부족합니다."), decide(garrison = 11, from = poor))
+        assertEquals(TransportDecision.Denied("도시의 금이 부족합니다."), decide(gold = 11, from = poor))
+        assertEquals(TransportDecision.Denied("도시의 병량이 부족합니다."), decide(rice = 11, from = poor))
+        assertEquals(TransportDecision.Denied("도시의 병사가 부족합니다."), decide(garrison = 11, from = poor))
         // 잔액과 정확히 같으면 통과한다.
-        assertIs<V2TransportDecision.Applied>(decide(gold = 10, rice = 10, garrison = 10, from = poor))
+        assertIs<TransportDecision.Applied>(decide(gold = 10, rice = 10, garrison = 10, from = poor))
     }
 
     @Test
@@ -137,7 +146,7 @@ class V2CityTransportRulesTest {
         cityIds: List<Int>, crew: Int = 2000, nationId: Int = 1, mapName: String? = "che",
         worldMapVariant: WorldMapVariant? = null,
         loadTopology: () -> StrategicRouteProjection = { StrategicTopologyJson.loadFromDirectory(Path.of("../.."), "han-world-v3") },
-    ): V2CityTransportHandler {
+    ): CityTransportHandler {
         val world = InMemoryTurnWorld(
             WorldSnapshot(
                 state = TurnWorldState(
@@ -164,7 +173,7 @@ class V2CityTransportRulesTest {
         val ledger = CityLedgerStore(Mockito.mock(NamedParameterJdbcTemplate::class.java))
         val recorder = ChangeRecorder()
         lastWorld = world; lastRecorder = recorder; lastLedger = ledger
-        return V2CityTransportHandler(world, recorder, ledger, loadTopology)
+        return CityTransportHandler(world, recorder, ledger, loadTopology)
     }
 
     private fun reasonOf(result: opensamguk.common.wire.TurnDaemonCommandResult) =

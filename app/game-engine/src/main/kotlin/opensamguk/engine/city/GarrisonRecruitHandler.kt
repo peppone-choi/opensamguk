@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import opensamguk.engine.city.CityLedgerStore
 
@@ -33,7 +33,7 @@ import opensamguk.logic.command.decideGarrisonRecruit
  * (`COMMAND_LIFECYCLE_TYPES` in `TurnDaemonCommandResult.kt`) — the exact shape
  * `opensamguk.engine.intake.ProfileIconSyncHandler` already uses for its own typed-intake result.
  */
-class V2GarrisonRecruitHandler(
+class GarrisonRecruitHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val ledger: CityLedgerStore,

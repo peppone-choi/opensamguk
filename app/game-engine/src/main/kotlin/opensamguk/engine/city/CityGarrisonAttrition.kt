@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import kotlinx.serialization.json.JsonElement
 import opensamguk.logic.event.EventAction
@@ -12,7 +12,7 @@ import opensamguk.logic.event.EventActionFactory
  *
  * ## draw 0 — 타입 수준 보장
  *
- * 이 파일의 어떤 함수도 `RandUtil`을 인자로 받지 않고 [V2CityGarrisonAttritionAction]의 생성자에도
+ * 이 파일의 어떤 함수도 `RandUtil`을 인자로 받지 않고 [CityGarrisonAttritionAction]의 생성자에도
  * rng 파라미터가 없다. v1 draw 순서·횟수에 영향을 줄 물리적 경로 자체가 없다.
  *
  * ## 트리거 — 명시하는 divergence
@@ -79,7 +79,7 @@ fun attritionLoss(garrison: Int, activeGeneralCount: Int): Int {
 }
 
 /** leaf 입력 1행 — `city_id ASC` 순으로 공급된다. */
-data class V2AttritionCity(
+data class AttritionCity(
     val cityId: Int,
     val name: String,
     val nationId: Int,
@@ -88,7 +88,7 @@ data class V2AttritionCity(
 )
 
 /** 도시 하나의 판정 결과. */
-data class V2AttritionCityOutcome(
+data class AttritionCityOutcome(
     val cityId: Int,
     val before: Int,
     val after: Int,
@@ -98,7 +98,7 @@ data class V2AttritionCityOutcome(
 )
 
 /** leaf 전체 결과. 월 게이트에 걸리면 [outcomes]가 비어 있다. */
-data class V2AttritionResult(val outcomes: List<V2AttritionCityOutcome>)
+data class AttritionResult(val outcomes: List<AttritionCityOutcome>)
 
 private fun attritionLine(name: String, before: Int, after: Int): String =
     "<M><b>【도시병사】</b></> <G><b>$name</b></>의 도시병사가 ${before}에서 ${after}(으)로 줄었습니다."
@@ -112,14 +112,14 @@ private fun vacatedLine(name: String, before: Int): String =
  * 공백지화는 `city.nationId = 0`만 쓴다. 관직·부대 등 부수 정리는 v1 `ConquerCity`의 영역이라
  * **재사용하지 않는다** — v1 정복 경로를 부르면 그 경로의 로그·draw를 끌어들이게 된다.
  */
-fun v2CityGarrisonAttrition(
+fun cityGarrisonAttrition(
     month: Int,
-    cities: List<V2AttritionCity>,
+    cities: List<AttritionCity>,
     activeGeneralCount: Int,
-): V2AttritionResult {
-    if (month !in ATTRITION_MONTHS) return V2AttritionResult(emptyList())
+): AttritionResult {
+    if (month !in ATTRITION_MONTHS) return AttritionResult(emptyList())
 
-    val outcomes = ArrayList<V2AttritionCityOutcome>()
+    val outcomes = ArrayList<AttritionCityOutcome>()
     for (city in cities) {
         if (city.state !in BAD_STATE_CODES) continue
 
@@ -132,23 +132,23 @@ fun v2CityGarrisonAttrition(
         if (vacated) lines.add(vacatedLine(city.name, before))
 
         if (after == before && !vacated) continue
-        outcomes.add(V2AttritionCityOutcome(city.cityId, before, after, vacated, lines))
+        outcomes.add(AttritionCityOutcome(city.cityId, before, after, vacated, lines))
     }
-    return V2AttritionResult(outcomes)
+    return AttritionResult(outcomes)
 }
 
 /**
  * v2 월간 leaf. **생성자에 `RandUtil` 파라미터가 없다** — draw 0이 타입 수준에서 보장된다.
  *
- * 컨텍스트가 [V2CityGarrisonAttritionContext]가 아니면 **죽는다.** 무음 no-op이면 "재난이 나도 병사가
+ * 컨텍스트가 [CityGarrisonAttritionContext]가 아니면 **죽는다.** 무음 no-op이면 "재난이 나도 병사가
  * 안 줄어드는 월드"가 테스트 그린으로 보인다 — R2가 같은 이유로 같은 선택을 했다.
  */
-class V2CityGarrisonAttritionAction : EventAction {
+class CityGarrisonAttritionAction : EventAction {
     override fun run(ctx: EventActionContext) {
-        val vc = ctx as? V2CityGarrisonAttritionContext
-            ?: error("V2CityGarrisonAttritionAction requires a V2CityGarrisonAttritionContext (v2 도시 원장 없음)")
+        val vc = ctx as? CityGarrisonAttritionContext
+            ?: error("CityGarrisonAttritionAction requires a CityGarrisonAttritionContext (v2 도시 원장 없음)")
         vc.applyV2Attrition(
-            v2CityGarrisonAttrition(vc.attritionMonth(), vc.attritionCities(), vc.activeGeneralCount()),
+            cityGarrisonAttrition(vc.attritionMonth(), vc.attritionCities(), vc.activeGeneralCount()),
         )
     }
 
@@ -156,19 +156,19 @@ class V2CityGarrisonAttritionAction : EventAction {
         const val NAME = "V2CityGarrisonAttrition"
 
         fun register(factory: EventActionFactory): EventActionFactory =
-            factory.register(NAME) { _: List<JsonElement> -> V2CityGarrisonAttritionAction() }
+            factory.register(NAME) { _: List<JsonElement> -> CityGarrisonAttritionAction() }
     }
 }
 
 /** leaf가 필요로 하는 월드 seam. 프로덕션 구현자는 `WorldActionContext` 하나다. */
-interface V2CityGarrisonAttritionContext : EventActionContext {
+interface CityGarrisonAttritionContext : EventActionContext {
     fun attritionMonth(): Int
 
     /** `city_id ASC` 순서로 준다 — 순회 순서가 결과의 일부다. */
-    fun attritionCities(): List<V2AttritionCity>
+    fun attritionCities(): List<AttritionCity>
 
     /** 묘섭의 "등록 장수" 대응 — 월드에 살아 있는 장수 수. */
     fun activeGeneralCount(): Int
 
-    fun applyV2Attrition(result: V2AttritionResult)
+    fun applyV2Attrition(result: AttritionResult)
 }
