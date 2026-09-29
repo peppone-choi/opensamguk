@@ -30,7 +30,7 @@ fun activeMapDestCity() = object : Constraint {
         }
         val variant = if (ctx.worldMapVariant != null) {
             if (mapName != "han-world-v3") return ConstraintResult.Deny("Invalid active map.", name)
-            CityConstRegistry.hanWorld(ctx.worldMapVariant)
+            CityConstRegistry.forVariant(ctx.worldMapVariant)
         } else CityConstRegistry.find(mapName)
             ?: return ConstraintResult.Deny("Invalid active map.", name)
         return if (variant.byId(cityId) != null && view.has(RequirementKey.DestCity(cityId))) {

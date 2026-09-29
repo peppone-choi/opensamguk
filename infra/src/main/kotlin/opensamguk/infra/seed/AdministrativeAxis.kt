@@ -19,7 +19,7 @@ data class AdministrativeCounty(
 )
 
 /** Read-only 州→郡國→縣 projection; missing source parents never become appointable jurisdiction. */
-class HanAdministrativeAxis private constructor(
+class AdministrativeAxis private constructor(
     val counties: Map<Int, AdministrativeCounty>,
     val commanderyToZhou: Map<String, String>,
     val baseCommanderySeatById: Map<String, Int>,
@@ -39,14 +39,14 @@ class HanAdministrativeAxis private constructor(
         private val mapper = ObjectMapper()
         private val canonicalUnit = Regex("^hhs:([0-9]+):([^:]+):([0-9]+)$")
 
-        fun loadPinned(): HanAdministrativeAxis {
+        fun loadPinned(): AdministrativeAxis {
             val world = resource("/map/han-world-v3.json")
             val axis = resource("/administration/administrative-zhou-axis.json")
             val pin = resource("/administration/administrative-axis-pin.json")
             return fromPinned(world, axis, pin)
         }
 
-        fun fromPinned(world: ByteArray, axis: ByteArray, pinBytes: ByteArray): HanAdministrativeAxis {
+        fun fromPinned(world: ByteArray, axis: ByteArray, pinBytes: ByteArray): AdministrativeAxis {
             val pin = mapper.readTree(pinBytes)
             require(sha256(world) == pin.text("worldSha256")) { "administrative axis world pin mismatch" }
             require(sha256(axis) == pin.text("zhouAxisSha256")) { "administrative axis source pin mismatch" }
@@ -61,7 +61,7 @@ class HanAdministrativeAxis private constructor(
             return projection
         }
 
-        fun project(worldBytes: ByteArray, axisBytes: ByteArray): HanAdministrativeAxis {
+        fun project(worldBytes: ByteArray, axisBytes: ByteArray): AdministrativeAxis {
             val world = mapper.readTree(worldBytes)
             val axis = mapper.readTree(axisBytes)
             val groups = linkedMapOf<String, String>()
@@ -101,10 +101,10 @@ class HanAdministrativeAxis private constructor(
                 "administrative axis contains an unrepresented 郡國"
             }
             require(seatCandidates.values.all { it.size == 1 }) { "multiple base seats in a 郡國" }
-            return HanAdministrativeAxis(counties, groups, seatCandidates.mapValues { it.value.single() })
+            return AdministrativeAxis(counties, groups, seatCandidates.mapValues { it.value.single() })
         }
 
-        private fun resource(path: String): ByteArray = requireNotNull(HanAdministrativeAxis::class.java.getResourceAsStream(path)) {
+        private fun resource(path: String): ByteArray = requireNotNull(AdministrativeAxis::class.java.getResourceAsStream(path)) {
             "missing administrative resource $path"
         }.use { it.readBytes() }
 
