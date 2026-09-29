@@ -261,9 +261,9 @@ jobs:
       - name: Verify Han world scenario materialization
         if: '!cancelled()'
         run: python3 tools/scenario/apply_han_world.py --map han-world-v3 --check
-      - name: Verify v2 sandbox compose contract
+      - name: Verify sandbox compose contract
         if: '!cancelled()'
-        run: bash tools/ops/v2_sandbox_compose_contract_test.sh
+        run: bash tools/ops/sandbox_compose_contract_test.sh
       - name: Verify JWT rollout contract
         if: '!cancelled()'
         run: python3 tools/ops/jwt_rollout_contract_test.py

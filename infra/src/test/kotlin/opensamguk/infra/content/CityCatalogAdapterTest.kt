@@ -37,7 +37,7 @@ class CityCatalogAdapterTest {
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
-        assertEquals("v2 city source sha256 does not match metadata", error.message)
+        assertEquals("city source sha256 does not match metadata", error.message)
     }
 
     @Test
@@ -46,7 +46,7 @@ class CityCatalogAdapterTest {
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
-        assertEquals("v2 city source count does not match metadata", error.message)
+        assertEquals("city source count does not match metadata", error.message)
     }
 
     @Test
@@ -55,7 +55,7 @@ class CityCatalogAdapterTest {
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
-        assertEquals("v2 owned city count does not match metadata", error.message)
+        assertEquals("owned city count does not match metadata", error.message)
     }
 
     @Test
@@ -64,13 +64,13 @@ class CityCatalogAdapterTest {
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
-        assertEquals("v2 city source contains duplicate city ids", error.message)
+        assertEquals("city source contains duplicate city ids", error.message)
     }
 
     private companion object {
-        const val HASH_MISMATCH_LOCATION = "v2-catalog-fixture/hash-mismatch/content/v2"
-        const val CITY_COUNT_MISMATCH_LOCATION = "v2-catalog-fixture/city-count-mismatch/content/v2"
-        const val OWNED_COUNT_MISMATCH_LOCATION = "v2-catalog-fixture/owned-count-mismatch/content/v2"
-        const val DUPLICATE_CITY_ID_LOCATION = "v2-catalog-fixture/duplicate-city-id/content/v2"
+        const val HASH_MISMATCH_LOCATION = "catalog-fixture/hash-mismatch/content/catalog"
+        const val CITY_COUNT_MISMATCH_LOCATION = "catalog-fixture/city-count-mismatch/content/catalog"
+        const val OWNED_COUNT_MISMATCH_LOCATION = "catalog-fixture/owned-count-mismatch/content/catalog"
+        const val DUPLICATE_CITY_ID_LOCATION = "catalog-fixture/duplicate-city-id/content/catalog"
     }
 }

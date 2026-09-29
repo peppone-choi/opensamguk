@@ -1661,3 +1661,22 @@ web/game/lib/hwiha-reads.ts
 | `validateLegacyV2Arguments`/`legacyError` | `validateCommandArguments`/`commandError` | 코드 함수 |
 
 `/api/v2/*` 경로, `v2CityTransport`·`v2GarrisonRecruit` 명령 ID, `v2.enabled`·`v2-sandbox` 설정은 저장·통신 계약이므로 이 코드 이름 PR에서는 유지한다. 저장 식별자 개명 단계에서 함께 바꾼다.
+
+## 샌드박스 설정·콘텐츠 경로 (2026-09-30)
+
+| 이전 이름 | 중립 이름 | 범위 |
+| --- | --- | --- |
+| `v2.enabled`·`V2_ENABLED` | `sandbox.enabled`·`SANDBOX_ENABLED` | 두 서버의 빈 등록 게이트 |
+| `v2-sandbox` | `sandbox` | Spring 프로필·Compose 이름 |
+| `V2_*` | `SANDBOX_*` | 샌드박스 Compose 치환 변수 |
+| `content/v2` | `content/catalog` | 콘텐츠 카탈로그 classpath |
+| `db/migration_v2` | `db/migration_sandbox` | 샌드박스 Flyway location |
+| `V2SandboxConfiguration` | `SandboxConfiguration` | 엔진·API 설정 타입 |
+
+샌드박스의 데이터베이스·볼륨 이름은 새 네임스페이스를 사용한다. 기존 실행 스택의 데이터를 자동 이전하지 않으며, 동결 지도 릴리스와 과거 Flyway 버전 `V901`의 파일 내용은 유지한다.
+
+## 샌드박스 테스트 이름 (2026-09-30)
+
+엔진·API·게이트웨이의 `.../v2/V2*Test.kt` 및 `V2*IT.kt`는 `.../sandbox/*Test.kt` 및 `*IT.kt`로 옮겼다. 명령 매퍼 테스트는 `gameapi.reserve.command.CommandWireMapperTest`, 역사적 Flyway V2 brief 검사는 `BriefMigrationTest`로 개명했다. 테스트용 `V900`과 과거 `V901`의 Flyway 버전 번호 및 원본 SQL 바이트는 유지한다.
+
+이름 lint의 제품 경로·패키지 잔여는 0건이다. `web/gateway/app/hwiha` 두 경로는 옛 URL을 308로 보내야 하므로 정확한 경로만 예외로 기록했다.
