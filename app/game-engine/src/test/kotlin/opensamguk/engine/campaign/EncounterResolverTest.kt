@@ -159,6 +159,46 @@ class EncounterResolverTest {
         }
     }
 
+    @Test fun `post flush evidence is immutable retryable and quarantines uncommitted observations`() {
+        fun resolveInto(observer: BattleOutcomeObserver) {
+            val (world, recorder) = sealed(1000, 100)
+            fixture.nextPhase(world)
+            AssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = observer).onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+
+        val published = mutableListOf<CommittedBattleOutcomeBatch>()
+        val normal = BattleOutcomePostFlush { published.add(it) }
+        resolveInto(normal)
+        assertTrue(published.isEmpty(), "resolution alone must not publish")
+        normal.afterSuccessfulFlush(1, 7)
+        assertEquals(1, published.size)
+        assertEquals(7, published.single().generation)
+        assertEquals(1, published.single().observations.size)
+        assertFailsWith<UnsupportedOperationException> {
+            (published.single().observations as MutableList).clear()
+        }
+        normal.afterSuccessfulFlush(1, 8)
+        assertEquals(1, published.size, "an empty later flush must not repeat the result")
+
+        val quarantined = BattleOutcomePostFlush { published.add(it) }
+        resolveInto(quarantined)
+        quarantined.quarantineUncommitted()
+        quarantined.afterSuccessfulFlush(1, 9)
+        assertEquals(1, published.size, "a stale uncommitted result must stay private")
+
+        var failFirst = true
+        val retried = BattleOutcomePostFlush { batch ->
+            if (failFirst) { failFirst = false; throw IllegalStateException("QA export unavailable") }
+            published.add(batch)
+        }
+        resolveInto(retried)
+        assertFailsWith<IllegalStateException> { retried.afterSuccessfulFlush(1, 10) }
+        retried.afterSuccessfulFlush(1, 11)
+        assertEquals(2, published.size)
+        assertEquals(10, published.last().generation, "retry keeps the original committed batch")
+    }
+
     @Test fun `an unprepared encounter retries two phases then disbands without battle`() {
         val (world, recorder) = sealed(1000, 100)
         for (id in listOf(1, 100)) {
