@@ -616,7 +616,7 @@ jobs:
       - name: Check reserved game server IDs
         run: python3 tools/ci/check_reserved_server_ids.py
 
-  # Pick main once: independent W0/W2, W3 and W4 runners must use the same
+  # Pick main once: independent W0-W4 runners must use the same
   # product SHA even if main advances while these jobs are queued.
   yuzhou-pin-main:
     if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026
@@ -923,6 +923,107 @@ jobs:
             runtime/app/game-engine/build/test-results/test/TEST-*StrategicSupplyProviderTest.xml
             runtime/app/game-engine/build/test-results/test/TEST-*SpatialSupplyProviderTest.xml
             runtime/app/game-engine/build/test-results/test/TEST-*MonthBoundaryLoopIT.xml
+          retention-days: 7
+          if-no-files-found: warn
+
+  # Three runners execute the DB/Redis 48-phase chain and its red pair, plus
+  # the 36-phase in-memory baseline, independently on the one pinned main SHA.
+  yuzhou-w1-attempt:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026 && needs.yuzhou-pin-main.outputs.battle_sink_ready == 'true'
+    needs: yuzhou-pin-main
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        attempt: [1, 2, 3]
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.yuzhou-pin-main.outputs.sha }}
+          path: runtime
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: Pin product and baseline inputs
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/yuzhou-w1"
+          test "$(git rev-parse HEAD)" = '${{ needs.yuzhou-pin-main.outputs.sha }}'
+          git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-w1/pin-git-sha.txt"
+          sha256sum infra/src/main/resources/map/han-world-v3.json \
+            infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json \
+            > "$RUNNER_TEMP/yuzhou-w1/pin-sha256.txt"
+          cmp infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json
+          cp app/game-engine/src/test/resources/invariance/world-state-sha256.txt \
+            "$RUNNER_TEMP/yuzhou-w1/world-state-sha256.txt"
+      - name: Run W1 real DB/Redis chain, red pair and 36-phase baseline
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          ./gradlew :app:game-engine:test \
+            --tests 'opensamguk.engine.boot.PassChainInvarianceIT' \
+            --tests 'opensamguk.engine.boot.S3PassChainProbeIT' \
+            --tests 'opensamguk.engine.invariance.YuzhouCampaignInvarianceTest' \
+            --rerun-tasks --no-daemon > "$RUNNER_TEMP/yuzhou-w1/gradle.log" 2>&1
+          python3 tools/agent-system/check_test_xml.py app/game-engine
+      - name: Copy exact XML suites
+        if: always()
+        working-directory: runtime
+        run: |
+          for suite in \
+            opensamguk.engine.boot.PassChainInvarianceIT \
+            opensamguk.engine.boot.S3PassChainProbeIT \
+            opensamguk.engine.invariance.YuzhouCampaignInvarianceTest; do
+            file="app/game-engine/build/test-results/test/TEST-$suite.xml"
+            if [[ -f "$file" ]]; then cp "$file" "$RUNNER_TEMP/yuzhou-w1/"; fi
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-w1-${{ github.run_id }}-${{ github.run_attempt }}-${{ matrix.attempt }}
+          path: ${{ runner.temp }}/yuzhou-w1/
+          retention-days: 7
+          if-no-files-found: error
+
+  yuzhou-w1-compare:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026 && needs.yuzhou-w1-attempt.result == 'success'
+    needs: [yuzhou-pin-main, yuzhou-w1-attempt]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: collector
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: yuzhou-w1-${{ github.run_id }}-${{ github.run_attempt }}-*
+          path: attempts
+      - name: Compare three XML runs and normalized checksums
+        run: |
+          set -euo pipefail
+          python3 collector/tools/e2e/verify_yuzhou_w1.py attempts \
+            --run-id '${{ github.run_id }}' \
+            --run-attempt '${{ github.run_attempt }}' \
+            --product-sha '${{ needs.yuzhou-pin-main.outputs.sha }}' \
+            --output "$RUNNER_TEMP/yuzhou-w1-compare/w1-manifest.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-w1-compare-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/yuzhou-w1-compare/
           retention-days: 7
           if-no-files-found: warn
 
