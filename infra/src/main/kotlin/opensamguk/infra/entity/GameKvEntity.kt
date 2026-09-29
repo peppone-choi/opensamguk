@@ -10,7 +10,7 @@ import jakarta.persistence.Table
 /**
  * JPA entity for `game_kv` table (V7 string-namespace KV store).
  *
- * Backs `game_env`, `betting`, `inheritance_{id}` string namespaces.
+ * Backs `game_env` and `inheritance_{id}` string namespaces.
  * `value` is jsonb; delete-on-null is enforced by the flush executor.
  */
 @Entity

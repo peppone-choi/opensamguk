@@ -92,9 +92,11 @@ class EncounterResolverTest {
     @Test fun `outcome observation carries sealed pins and observer failure leaves battle unchanged`() {
         var observed: BattleOutcomeObservation? = null
         var observationCount = 0
+        val deliveredOutcomes = CampaignWorldFixture.RecordingOutcomes()
         val (normalWorld, normalRecorder) = sealed(1000, 100)
         fixture.nextPhase(normalWorld)
         AssignmentMarchTurn(normalWorld, normalRecorder, fixture.topology, fixture.metrics, fixture.cells,
+            outcomes = deliveredOutcomes,
             observations = BattleOutcomeObserver {
                 observed = it
                 observationCount++
@@ -121,6 +123,7 @@ class EncounterResolverTest {
         assertEquals(listOf(1, 100), observation.statuses.map { it.generalId })
         assertTrue(observation.initialSeparationSteps!! > 0)
         assertTrue(observation.callbackInvoked)
+        assertEquals(listOf(listOf(1) to listOf(100)), deliveredOutcomes.encounters)
 
         val (failureWorld, failureRecorder) = sealed(1000, 100)
         fixture.nextPhase(failureWorld)
@@ -130,6 +133,30 @@ class EncounterResolverTest {
         assertEquals(normalRecord, failureWorld.getGeneralById(1)!!.meta[EncounterResolver.BATTLE_RECORD_KEY])
         assertEquals(normalWorld.positionOf(1), failureWorld.positionOf(1))
         assertEquals(normalWorld.getBugokById(7), failureWorld.getBugokById(7))
+    }
+
+    @Test fun `fatal observer errors escape instead of hiding a broken JVM`() {
+        val (outOfMemoryWorld, outOfMemoryRecorder) = sealed(1000, 100)
+        fixture.nextPhase(outOfMemoryWorld)
+        assertFailsWith<OutOfMemoryError> {
+            AssignmentMarchTurn(outOfMemoryWorld, outOfMemoryRecorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = BattleOutcomeObserver { throw OutOfMemoryError("synthetic QA failure") })
+                .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+        val (threadDeathWorld, threadDeathRecorder) = sealed(1000, 100)
+        fixture.nextPhase(threadDeathWorld)
+        assertFailsWith<ThreadDeath> {
+            AssignmentMarchTurn(threadDeathWorld, threadDeathRecorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = BattleOutcomeObserver { throw ThreadDeath() })
+                .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+        val (linkageWorld, linkageRecorder) = sealed(1000, 100)
+        fixture.nextPhase(linkageWorld)
+        assertFailsWith<LinkageError> {
+            AssignmentMarchTurn(linkageWorld, linkageRecorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = BattleOutcomeObserver { throw LinkageError("synthetic QA failure") })
+                .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
     }
 
     @Test fun `an unprepared encounter retries two phases then disbands without battle`() {

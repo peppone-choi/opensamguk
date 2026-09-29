@@ -23,6 +23,6 @@ data class CityMilitaryState(val training: Int, val morale: Int, val troops: Int
                 value["troops"] as? Int ?: invalid())
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA city military state")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid city military state")
     }
 }
