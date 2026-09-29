@@ -89,6 +89,49 @@ class EncounterResolverTest {
         assertFalse(RenownEvents.recordRenownEvent(once.meta, RenownEventSource.REWARD, "0200-01").recorded)
     }
 
+    @Test fun `outcome observation carries sealed pins and observer failure leaves battle unchanged`() {
+        var observed: BattleOutcomeObservation? = null
+        var observationCount = 0
+        val (normalWorld, normalRecorder) = sealed(1000, 100)
+        fixture.nextPhase(normalWorld)
+        AssignmentMarchTurn(normalWorld, normalRecorder, fixture.topology, fixture.metrics, fixture.cells,
+            observations = BattleOutcomeObserver {
+                observed = it
+                observationCount++
+            })
+            .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        assertEquals(1, observationCount)
+        val observation = assertNotNull(observed)
+        val normalRecord = normalWorld.getGeneralById(1)!!.meta[EncounterResolver.BATTLE_RECORD_KEY] as Map<*, *>
+        assertEquals(normalWorld.worldId.value, observation.worldId)
+        assertEquals(normalWorld.getState().currentYear, observation.resolvedYear)
+        assertEquals(normalWorld.getState().currentMonth, observation.resolvedMonth)
+        assertEquals(normalWorld.getState().currentPhase, observation.resolvedPhase)
+        assertEquals(normalWorld.getState().worldMapVariant?.name, observation.worldMapVariant)
+        assertEquals(fixture.cells.topologyRevision, observation.topologyRevision)
+        assertEquals(fixture.cells.topologyHash, observation.topologyHash)
+        assertEquals(fixture.cells.tilesContentHash, observation.tilesContentHash)
+        assertEquals(normalRecord["encounterId"], observation.encounterId)
+        assertEquals(normalRecord["outcome"], observation.outcome)
+        assertEquals(normalRecord["barrier"], observation.barrier)
+        assertEquals(normalRecord["rounds"], observation.rounds)
+        assertEquals(normalRecord["replayHash"], observation.replayHash)
+        assertEquals(normalRecord["ruleVersion"], observation.resolutionRuleVersion)
+        assertEquals(listOf(1), observation.winners)
+        assertEquals(listOf(1, 100), observation.statuses.map { it.generalId })
+        assertTrue(observation.initialSeparationSteps!! > 0)
+        assertTrue(observation.callbackInvoked)
+
+        val (failureWorld, failureRecorder) = sealed(1000, 100)
+        fixture.nextPhase(failureWorld)
+        AssignmentMarchTurn(failureWorld, failureRecorder, fixture.topology, fixture.metrics, fixture.cells,
+            observations = BattleOutcomeObserver { throw AssertionError("QA sink unavailable") })
+            .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        assertEquals(normalRecord, failureWorld.getGeneralById(1)!!.meta[EncounterResolver.BATTLE_RECORD_KEY])
+        assertEquals(normalWorld.positionOf(1), failureWorld.positionOf(1))
+        assertEquals(normalWorld.getBugokById(7), failureWorld.getBugokById(7))
+    }
+
     @Test fun `an unprepared encounter retries two phases then disbands without battle`() {
         val (world, recorder) = sealed(1000, 100)
         for (id in listOf(1, 100)) {
