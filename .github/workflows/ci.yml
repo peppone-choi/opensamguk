@@ -413,7 +413,7 @@ jobs:
             exit 1
           fi
       - name: Test game-engine
-        run: ./gradlew :app:game-engine:test --no-daemon --no-configuration-cache
+        run: ./gradlew :app:game-engine:test --no-daemon
       - name: Fail on skipped game-engine tests
         env:
           OPENSAM_ALLOW_SKIPPED_IT: ""
