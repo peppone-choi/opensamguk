@@ -2,6 +2,7 @@ package opensamguk.battlewebsockettest
 
 import java.net.Socket
 import java.time.Clock
+import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
 import org.junit.jupiter.api.BeforeEach
@@ -12,6 +13,7 @@ import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.battle.realtime.BattleJoinTicketService
 import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
+import opensamguk.gameapi.battle.realtime.BattleWebSocketSessions
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.infra.battle.realtime.BattleSessionHead
@@ -34,6 +36,8 @@ import org.springframework.boot.test.web.server.LocalServerPort
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Import
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.scheduling.config.FixedDelayTask
+import org.springframework.scheduling.config.ScheduledTaskHolder
 
 @SpringBootConfiguration
 @EnableAutoConfiguration(exclude = [DataSourceAutoConfiguration::class,
@@ -57,6 +61,8 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
     private val tickets: BattleJoinTicketService,
     private val generals: GeneralResolver,
     private val store: BattleSessionStore,
+    private val sessions: BattleWebSocketSessions,
+    private val scheduledTasks: ScheduledTaskHolder,
 ) {
     @LocalServerPort private var port: Int = 0
     private val world = WorldId(1)
@@ -100,6 +106,15 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
 
     private fun assertStatus(response: String, code: Int) {
         assertTrue(response.lineSequence().firstOrNull()?.startsWith("HTTP/1.1 $code") == true)
+    }
+
+    @Test
+    fun `session revalidation sweep is scheduled by the Spring context`() {
+        assertTrue(scheduledTasks.scheduledTasks.any { scheduled ->
+            val task = scheduled.task as? FixedDelayTask ?: return@any false
+            task.runnable.toString() == "${BattleWebSocketSessions::class.java.name}.sweep" &&
+                task.intervalDuration == Duration.ofSeconds(5)
+        }, "registered tasks: ${scheduledTasks.scheduledTasks.map { "${it.task}:${it.task.runnable}" }}")
     }
 
     @Test
