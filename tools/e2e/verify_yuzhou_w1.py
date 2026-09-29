@@ -17,7 +17,7 @@ SUITES = {
 }
 BASELINES = {"s3-chain-48", "yuzhou-36-seed-00", "yuzhou-36-seed-01"}
 LINKS = {"enlist", "dispatch", "march", "encounter", "siege", "capture", "income", "salary", "assessment", "ranking"}
-HEX = re.compile(r"[0-9a-f]{64}\Z")
+GIT_SHA1 = re.compile(r"[0-9a-f]{40}\Z")
 FIRST = re.compile(r"^s3-first-phase (.+)$", re.MULTILINE)
 STATE = re.compile(r"^behavior-baseline (\S+) ([0-9a-f]{64})$", re.MULTILINE)
 
@@ -122,7 +122,7 @@ def inspect_xml(directory: Path, expected: dict[str, str]) -> tuple[dict[str, in
 
 
 def verify(root: Path, run_id: str, run_attempt: str, product_sha: str) -> dict:
-    require(HEX.fullmatch(product_sha) is not None, "invalid product SHA")
+    require(GIT_SHA1.fullmatch(product_sha) is not None, "invalid 40-character product Git SHA")
     attempts = []
     for number in (1, 2, 3):
         directory = root / f"yuzhou-w1-{run_id}-{run_attempt}-{number}"

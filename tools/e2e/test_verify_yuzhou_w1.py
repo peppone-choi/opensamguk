@@ -6,7 +6,7 @@ from pathlib import Path
 from verify_yuzhou_w1 import BASELINES, SUITES, verify
 
 
-SHA = "a" * 64
+SHA = "a" * 40
 PIN = "b" * 64
 FIRST = "enlist=1 march=1 siege=1 income=3 salary=3 assessment=3 ranking=3 encounter=4 capture=4 dispatch=12"
 
@@ -53,6 +53,16 @@ class VerifyW1Test(unittest.TestCase):
     def test_missing_attempt_fails(self):
         (self.root / "yuzhou-w1-77-1-3" / "pin-git-sha.txt").unlink()
         with self.assertRaisesRegex(ValueError, "missing"):
+            verify(self.root, "77", "1", SHA)
+
+    def test_sha256_cannot_be_used_as_product_git_sha(self):
+        with self.assertRaisesRegex(ValueError, "40-character product Git SHA"):
+            verify(self.root, "77", "1", PIN)
+
+    def test_different_pinned_product_sha_fails(self):
+        path = self.root / "yuzhou-w1-77-1-2" / "pin-git-sha.txt"
+        path.write_text("c" * 40 + "\n")
+        with self.assertRaisesRegex(ValueError, "different product SHA"):
             verify(self.root, "77", "1", SHA)
 
     def test_different_event_order_fails(self):
