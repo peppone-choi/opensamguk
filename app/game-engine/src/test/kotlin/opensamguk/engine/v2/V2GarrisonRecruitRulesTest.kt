@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralStats
@@ -110,7 +112,7 @@ class V2GarrisonRecruitRulesTest {
 
     private lateinit var lastWorld: InMemoryTurnWorld
     private lateinit var lastRecorder: ChangeRecorder
-    private lateinit var lastLedger: V2CityLedgerStore
+    private lateinit var lastLedger: CityLedgerStore
 
     private fun handler(cities: List<opensamguk.engine.turn.City>): V2GarrisonRecruitHandler {
         val world = InMemoryTurnWorld(
@@ -128,7 +130,7 @@ class V2GarrisonRecruitRulesTest {
                 worldId = opensamguk.common.world.WorldId(1),
             ),
         )
-        val ledger = V2CityLedgerStore(Mockito.mock(NamedParameterJdbcTemplate::class.java))
+        val ledger = CityLedgerStore(Mockito.mock(NamedParameterJdbcTemplate::class.java))
         val recorder = ChangeRecorder()
         lastWorld = world
         lastRecorder = recorder

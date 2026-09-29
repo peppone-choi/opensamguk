@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+
 import kotlinx.serialization.json.JsonPrimitive
 import opensamguk.logic.domestic.calcCityGoldIncome
 import opensamguk.logic.domestic.calcCityRiceIncome
@@ -43,7 +45,7 @@ import opensamguk.logic.world.IncomeNation
  *  - RNG draw 0개. 이 leaf는 난수를 뽑지 않는다(v1 `ProcessIncome`도 같다).
  */
 
-/** 한 도시의 원장 델타. [V2CityLedgerStore.adjust]가 소비하는 증분(절대값 아님). */
+/** 한 도시의 원장 델타. [CityLedgerStore.adjust]가 소비하는 증분(절대값 아님). */
 data class V2CityLedgerDelta(val cityId: Int, val delta: Long)
 
 /**

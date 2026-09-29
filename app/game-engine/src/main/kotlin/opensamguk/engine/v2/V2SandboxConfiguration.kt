@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+
 import opensamguk.infra.content.ContentCatalog
 import opensamguk.infra.content.CityCatalogAdapter
 import opensamguk.infra.sandbox.SandboxGate
@@ -59,5 +61,5 @@ class V2SandboxConfiguration {
      * `V2ProcessCityIncomeAction`에서 죽는다.
      */
     @Bean
-    fun v2CityLedgerStore(jdbc: NamedParameterJdbcTemplate): V2CityLedgerStore = V2CityLedgerStore(jdbc)
+    fun v2CityLedgerStore(jdbc: NamedParameterJdbcTemplate): CityLedgerStore = CityLedgerStore(jdbc)
 }

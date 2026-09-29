@@ -134,7 +134,7 @@ open class TurnRunService(
     private val commandInboxRepository: CommandInboxRepository? = null,
     private val commandOutboxRelay: CommandOutboxRelay? = null,
     /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
-    private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
+    private val v2CityLedger: opensamguk.engine.city.CityLedgerStore? = null,
     /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
     private val phaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
 ) {

@@ -27,7 +27,8 @@ object SandboxGate {
         type.startsWith("opensamguk.") &&
             (type.contains(".v2.") ||
                 type.startsWith("opensamguk.infra.content.") ||
-                type.startsWith("opensamguk.infra.sandbox."))
+                type.startsWith("opensamguk.infra.sandbox.") ||
+                type.startsWith("opensamguk.engine.city."))
 }
 
 /**

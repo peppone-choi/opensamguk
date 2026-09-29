@@ -1624,3 +1624,12 @@ web/game/lib/hwiha-reads.ts
 | `V2SandboxGate`·`V2SandboxMarker` | `SandboxGate`·`SandboxMarker` | `opensamguk.infra.sandbox` 패키지 |
 
 이 변경은 Kotlin 선언과 참조만 바꾼다. `v2.enabled`·`v2-sandbox`와 `content/v2`는 배포 설정·콘텐츠 경로 계약이므로 별도 저장·통신 식별자 변경에서 함께 다룬다.
+
+## 엔진 도시 원장 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `opensamguk.engine.v2.V2CityLedgerStore` | `opensamguk.engine.city.CityLedgerStore` | 도시 원장 조회·증분 기록 |
+| `V2CityLedgerEntry` | `CityLedgerEntry` | 도시 원장 값 객체 |
+
+`HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.

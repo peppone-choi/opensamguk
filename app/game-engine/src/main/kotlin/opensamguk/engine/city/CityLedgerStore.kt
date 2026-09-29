@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.ChangeRecorder
@@ -6,9 +6,9 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /** v2 도시 원장 한 도시의 상태 (OPENSAM-150 R1, 설계안 §2.1). 셋 다 음수가 될 수 없다. */
-data class V2CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) {
+data class CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) {
     companion object {
-        val EMPTY = V2CityLedgerEntry(0, 0, 0)
+        val EMPTY = CityLedgerEntry(0, 0, 0)
     }
 }
 
@@ -44,14 +44,14 @@ data class V2CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) 
  * **쓰기 경로**: 절대 직접 쓰지 않는다. 변경은 [ChangeRecorder]에 절대값 UPSERT 델타로 기록되고
  * `JdbcFlushExecutor`의 v2 step이 v1 델타와 **같은 트랜잭션**에서 커밋한다(one-daemon-write rule).
  */
-class V2CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
+class CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
 
     private var loadedWorldId: WorldId? = null
-    private val entries = linkedMapOf<Int, V2CityLedgerEntry>()
+    private val entries = linkedMapOf<Int, CityLedgerEntry>()
 
-    /** 도시의 현재 원장. 미적재면 이 호출이 적재한다. 행이 없는 도시는 [V2CityLedgerEntry.EMPTY]. */
-    fun entry(worldId: WorldId, cityId: Int): V2CityLedgerEntry =
-        load(worldId)[cityId] ?: V2CityLedgerEntry.EMPTY
+    /** 도시의 현재 원장. 미적재면 이 호출이 적재한다. 행이 없는 도시는 [CityLedgerEntry.EMPTY]. */
+    fun entry(worldId: WorldId, cityId: Int): CityLedgerEntry =
+        load(worldId)[cityId] ?: CityLedgerEntry.EMPTY
 
     /**
      * 적재된 월드 전체 원장, **도시 id 오름차순**.
@@ -60,7 +60,7 @@ class V2CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
      * [adjust]가 아직 행이 없던 도시를 처음 만지면 그 도시가 **맨 뒤에 append** 되어 오름차순이 깨진다.
      * 설계안 §8 R3이 이 순회를 `city_id ASC`로 못박았으므로(공백지화 판정 순서) 반환 시점에 정렬한다.
      */
-    fun entries(worldId: WorldId): Map<Int, V2CityLedgerEntry> = load(worldId).toSortedMap()
+    fun entries(worldId: WorldId): Map<Int, CityLedgerEntry> = load(worldId).toSortedMap()
 
     /**
      * 도시 원장을 델타만큼 움직이고 결과 **절대 상태**를 recorder에 기록한다.
@@ -76,10 +76,10 @@ class V2CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
         goldDelta: Long = 0,
         riceDelta: Long = 0,
         garrisonDelta: Int = 0,
-    ): V2CityLedgerEntry {
+    ): CityLedgerEntry {
         val loaded = load(worldId)
-        val before = loaded[cityId] ?: V2CityLedgerEntry.EMPTY
-        val after = V2CityLedgerEntry(
+        val before = loaded[cityId] ?: CityLedgerEntry.EMPTY
+        val after = CityLedgerEntry(
             gold = (before.gold + goldDelta).coerceAtLeast(0),
             rice = (before.rice + riceDelta).coerceAtLeast(0),
             garrison = (before.garrison + garrisonDelta).coerceAtLeast(0),
@@ -97,14 +97,14 @@ class V2CityLedgerStore(private val jdbc: NamedParameterJdbcTemplate) {
         return after
     }
 
-    private fun load(worldId: WorldId): MutableMap<Int, V2CityLedgerEntry> {
+    private fun load(worldId: WorldId): MutableMap<Int, CityLedgerEntry> {
         if (loadedWorldId == worldId) return entries
         entries.clear()
         jdbc.query(
             "SELECT city_id, gold, rice, garrison FROM v2_city_ledger WHERE world_id = :world_id ORDER BY city_id",
             MapSqlParameterSource("world_id", worldId.value),
         ) { rs ->
-            entries[rs.getInt("city_id")] = V2CityLedgerEntry(
+            entries[rs.getInt("city_id")] = CityLedgerEntry(
                 gold = rs.getLong("gold"),
                 rice = rs.getLong("rice"),
                 garrison = rs.getInt("garrison"),
