@@ -97,6 +97,29 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "differ from DB-backed march events"):
             summarize_battle_export(BATTLE_FIXTURE, {"different-encounter"})
 
+    def test_reported_callback_cannot_promote_db_export_to_observed_evidence(self):
+        data = json.loads(BATTLE_FIXTURE.read_text())
+        data["origin"]["evidenceSource"] = "DB_BACKED"
+        data["origin"]["publishBoundary"] = "AFTER_SUCCESSFUL_FLUSH"
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "db-backed.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            summary = summarize_battle_export(path,
+                                              {"qa-draft-round-limit", "qa-draft-decisive"})
+        self.assertEqual(summary["evidence_source"], "DB_BACKED")
+        self.assertEqual(summary["callback_count"], 1)
+        self.assertEqual(summary["callback_evidence_status"], "UNVERIFIED_PRODUCER")
+        self.assertEqual(summary["status"], "CONTRACT_DRAFT")
+
+    def test_reported_callback_must_match_winner_boundary(self):
+        data = json.loads(BATTLE_FIXTURE.read_text())
+        data["rows"][1]["callbackInvoked"] = False
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "callback-mismatch.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "reported callback flag"):
+                summarize_battle_export(path)
+
     def test_sealed_ids_require_encounter_stop_and_matching_count(self):
         events = [
             {"kind": "march.corps", "refs": {"stop": "BUDGET_EXHAUSTED"}},
