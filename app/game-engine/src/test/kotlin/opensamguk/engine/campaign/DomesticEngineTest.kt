@@ -9,6 +9,7 @@ import opensamguk.logic.domestic.PlacementMarch
 import opensamguk.logic.domestic.PolicyApplication
 import opensamguk.logic.domestic.CountyPolicyState
 import opensamguk.logic.domestic.CommanderyPolicies
+import opensamguk.logic.domestic.ActiveWork
 import opensamguk.logic.domestic.CompletedWork
 import opensamguk.logic.domestic.CountyWorks
 import opensamguk.logic.domestic.CountyMonthly
@@ -289,6 +290,35 @@ class DomesticEngineTest {
         assertNull(CountyWorks.read(world.getCityById(10)!!.meta)!!.active)
         assertTrue(LandPassageState.read(world.getState().meta, topology)!!.edgeStates.getValue("ab").active)
         assertTrue(recorder.kvDirty().keys.any { it.key == LandPassageState.META_KEY })
+    }
+
+    @Test fun `overflowing work cost stops only its county and records the failure`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000))
+        val recorder = ChangeRecorder()
+        val requested = Phase(200, 1, 1)
+        fun install(countyId: Int, work: ActiveWork) {
+            val city = world.getCityById(countyId)!!
+            assertNotNull(world.applyCityDirtyFree(city.copy(meta = city.meta +
+                (CountyWorks.META_KEY to CountyWorks(work, emptyList()).toMetaValue()))))
+        }
+        install(10, ActiveWork(DomesticWork.FORTIFICATION, "qa-overflow", 1, requested,
+            progress = 1, required = 2, cost = Resources(money = Long.MAX_VALUE), charged = Resources(),
+            lastProgressAt = null, stopReason = null))
+        install(11, ActiveWork(DomesticWork.FORTIFICATION, "qa-neighbor", 3, requested,
+            progress = 0, required = 1, cost = Resources(), charged = Resources(),
+            lastProgressAt = null, stopReason = null))
+        val beforeStock = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+
+        world.setCurrentDate(200, 1, 2)
+        val outcome = assertNotNull(DomesticBoundary(world, recorder, context).run())
+
+        assertEquals(1, outcome.worksStopped)
+        assertEquals(1, outcome.worksCompleted)
+        assertEquals("WORK_PROGRESS_OVERFLOW", CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!.stopReason)
+        assertEquals(beforeStock, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
+        assertTrue(world.peekLogs().any { it.generalId == 1 && it.text.contains("공사가 멈췄습니다") })
+        assertNull(CountyWorks.read(world.getCityById(11)!!.meta)!!.active)
+        assertEquals(DomesticBoundary.stampOf(Phase(200, 1, 2)), world.getState().meta[DomesticBoundary.STAMP_KEY])
     }
 
     @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
