@@ -1,6 +1,14 @@
 {
   "paths": [
     {
+      "path": "app/game-engine/src/test/kotlin/opensamguk/engine/campaign/BattleEvidencePostFlushIT.kt",
+      "kinds": [
+        "product_identifier",
+        "retired_reference"
+      ],
+      "reason": "DB commit-boundary test must wire existing legacy-named lifecycle and command registry APIs; it introduces no production identifier."
+    },
+    {
       "path": "infra/src/main/resources/db/migration/V1__baseline.sql",
       "kinds": [
         "retired_reference"
