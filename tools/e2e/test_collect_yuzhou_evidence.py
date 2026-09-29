@@ -6,7 +6,7 @@ import unittest
 
 from collect_yuzhou_evidence import (
     API_COUNTS, SCREENS, collect, render_tsv, sealed_encounter_ids, summarize_battle_export,
-    summarize_row_diff, write_once,
+    summarize_committed_battle_files, summarize_row_diff, write_once,
 )
 from compare_campaign_rows import CITY_FIELDS, SIEGE_FIELDS, compare_rows, read_rows
 
@@ -127,6 +127,27 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
             path.write_text(json.dumps(data), encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "reported callback flag"):
                 summarize_battle_export(path)
+
+    def test_committed_files_require_sealed_coverage_and_independent_db_hash(self):
+        row = json.loads(BATTLE_FIXTURE.read_text())["rows"][1]
+        row.update(schemaVersion="qa-committed-battle-v1", generation=1, resolvedPhase=3)
+        encounter_id = row["encounterId"]
+        db = {"lastBattles": [{"generalId": 1001, "encounterId": encounter_id,
+                               "replayHash": row["replayHash"]}],
+              "activeEncounterIds": [], "disbandedEncounterIds": []}
+        with tempfile.TemporaryDirectory() as directory:
+            from hashlib import sha256
+            path = Path(directory) / f"battle-990002-{sha256(encounter_id.encode()).hexdigest()}.json"
+            path.write_text(json.dumps(row), encoding="utf-8")
+            summary = summarize_committed_battle_files(Path(directory), {encounter_id}, db)
+            self.assertEqual(summary["status"], "DB_BACKED_COVERAGE")
+            self.assertEqual(summary["phase3_winning_count"], 1)
+            self.assertEqual(summary["callback_count"], 1)
+            with self.assertRaisesRegex(ValueError, "sealed encounter partition"):
+                summarize_committed_battle_files(Path(directory), {encounter_id, "missing"}, db)
+            db["lastBattles"][0]["replayHash"] = "0" * 64
+            with self.assertRaisesRegex(ValueError, "lastBattle differs"):
+                summarize_committed_battle_files(Path(directory), {encounter_id}, db)
 
     def test_failed_junit_rows_remain_diagnostic_and_require_review(self):
         with tempfile.TemporaryDirectory() as directory:

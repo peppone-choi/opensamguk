@@ -276,6 +276,108 @@ def sealed_encounter_ids(phase_events: list[dict], phase_evidence: dict) -> set[
     return ids
 
 
+def summarize_committed_battle_files(directory: Path, sealed_ids: set[str], db: dict) -> dict:
+    """Check the post-flush files against independently committed march and general rows."""
+    require(directory.is_dir(), "missing committed battle file directory")
+    files = sorted(directory.glob("battle-*.json"))
+    require(bool(files), "no committed battle files")
+    require(isinstance(db, dict), "invalid DB battle attachment")
+    groups = {}
+    for field in ("disbandedEncounterIds", "activeEncounterIds"):
+        values = db.get(field) or []
+        require(isinstance(values, list) and all(isinstance(value, str) and value for value in values),
+                f"invalid DB {field}")
+        groups[field] = set(values)
+    disbanded, active = groups["disbandedEncounterIds"], groups["activeEncounterIds"]
+    require(disbanded <= sealed_ids and active <= sealed_ids and not disbanded & active,
+            "DB disbanded/active encounter partition differs from sealed encounters")
+    records = {}
+    hashes = {}
+    for path in files:
+        raw = path.read_bytes()
+        row = json.loads(raw)
+        require(isinstance(row, dict) and row.get("schemaVersion") == "qa-committed-battle-v1"
+                and row.get("worldId") == 990002, "invalid committed battle file origin")
+        encounter_id = row.get("encounterId")
+        require(isinstance(encounter_id, str) and encounter_id and encounter_id not in records,
+                "missing or duplicate committed encounter ID")
+        expected_name = "battle-990002-" + hashlib.sha256(encounter_id.encode()).hexdigest() + ".json"
+        require(path.name == expected_name, "committed battle filename differs from encounter ID")
+        require(type(row.get("generation")) is int and row["generation"] > 0
+                and all(type(row.get(field)) is int and row[field] > 0
+                        for field in ("resolvedYear", "resolvedMonth", "resolvedPhase", "rounds"))
+                and 1 <= row["resolvedMonth"] <= 12 and 1 <= row["resolvedPhase"] <= 3
+                and row["rounds"] <= 24, "invalid committed battle phase or round count")
+        require(all(type(row.get(field)) is int and row[field] > 0
+                    for field in ("deploymentRuleVersion", "layoutRuleVersion",
+                                  "geometryRuleVersion", "resolutionRuleVersion"))
+                and (row.get("worldMapVariant") is None or isinstance(row["worldMapVariant"], str))
+                and (row.get("initialSeparationSteps") is None
+                     or (type(row["initialSeparationSteps"]) is int
+                         and row["initialSeparationSteps"] >= 0)),
+                "invalid committed battle rule or layout pin")
+        require(all(isinstance(row.get(field), str) and row[field]
+                    for field in ("provinceId", "approachProvinceId", "topologyRevision",
+                                  "outcome", "barrier"))
+                and all(isinstance(row.get(field), str) and SHA256.fullmatch(row[field])
+                        for field in ("topologyHash", "tilesContentHash", "replayHash")),
+                "committed battle lacks place, topology, or replay pin")
+        require(row["outcome"] in ("ATTACKER_VICTORY", "DEFENDER_VICTORY")
+                and row["barrier"] in ("RETREAT_REQUIRED", "DESTRUCTION_REQUIRED", "ROUND_LIMIT"),
+                "invalid committed battle outcome or barrier")
+        winners, statuses = row.get("winners"), row.get("statuses")
+        require(isinstance(winners, list) and winners == sorted(set(winners))
+                and all(type(value) is int and value > 0 for value in winners)
+                and isinstance(statuses, list) and len(statuses) >= 2,
+                "invalid committed battle winners or statuses")
+        status_by_id = {}
+        for status in statuses:
+            require(isinstance(status, dict) and type(status.get("generalId")) is int
+                    and status["generalId"] > 0 and status.get("status") in ("HOLDING", "RETREATED", "DESTROYED")
+                    and status["generalId"] not in status_by_id,
+                    "invalid committed commander status")
+            status_by_id[status["generalId"]] = status["status"]
+        require(all(status_by_id.get(winner) == "HOLDING" for winner in winners)
+                and [item["generalId"] for item in statuses] == sorted(status_by_id),
+                "committed winners/statuses disagree")
+        require(type(row.get("callbackInvoked")) is bool
+                and row["callbackInvoked"] == bool(winners),
+                "committed callback observation disagrees with winners")
+        records[encounter_id] = row
+        hashes[path.name] = hashlib.sha256(raw).hexdigest()
+    require(set(records) == sealed_ids - disbanded - active,
+            "committed battle files do not cover the sealed encounter partition")
+    last_battles = db.get("lastBattles") or []
+    require(isinstance(last_battles, list) and bool(last_battles),
+            "no independently committed general battle rows")
+    for entry in last_battles:
+        require(isinstance(entry, dict) and type(entry.get("generalId")) is int
+                and isinstance(entry.get("encounterId"), str)
+                and isinstance(entry.get("replayHash"), str)
+                and entry["encounterId"] in records
+                and records[entry["encounterId"]]["replayHash"] == entry["replayHash"],
+                "DB general lastBattle differs from committed file")
+    phase3_winners = [row for row in records.values() if row["resolvedPhase"] == 3
+                      and row["winners"] and row["callbackInvoked"]]
+    require(bool(phase3_winners), "no actual phase-3 winning battle and callback")
+    return {
+        "status": "DB_BACKED_COVERAGE",
+        "source": "POST_FLUSH_FILE_SINK",
+        "resolved_count": len(records),
+        "sealed_count": len(sealed_ids),
+        "disbanded_count": len(disbanded),
+        "active_count": len(active),
+        "winnerless_count": sum(not row["winners"] for row in records.values()),
+        "callback_count": sum(row["callbackInvoked"] for row in records.values()),
+        "phase3_winning_count": len(phase3_winners),
+        "first_phase3_winning_encounter": sorted(phase3_winners,
+            key=lambda row: (row["resolvedYear"], row["resolvedMonth"], row["resolvedPhase"],
+                             row["encounterId"]))[0]["encounterId"],
+        "files_sha256": hashes,
+        "db_last_battle_rows": len(last_battles),
+    }
+
+
 def summarize_row_diff(source: Path) -> dict:
     """Attach the diagnostic row comparison without turning it into a W1/W4 pass."""
     document = json.loads(source.read_text(encoding="utf-8"))
@@ -365,6 +467,8 @@ def main() -> int:
     parser.add_argument("--check-only", action="store_true", help="validate without writing attachments")
     parser.add_argument("--battle-export", type=Path,
                         help="optional draft QA projection of per-encounter results; never marks W4 passed")
+    parser.add_argument("--battle-files-dir", type=Path,
+                        help="post-flush committed battle files from the isolated QA engine")
     parser.add_argument("--row-diff", type=Path,
                         help="optional diagnostic normalized-row comparison; never marks W1 or W4 passed")
     args = parser.parse_args()
@@ -374,6 +478,13 @@ def main() -> int:
         phase_events = json.loads(decoded["phase-events.json"])
         expected_ids = sealed_encounter_ids(phase_events, summary["phase_evidence"])
         summary["battle_result_gate"] = summarize_battle_export(args.battle_export, expected_ids)
+    if args.battle_files_dir is not None:
+        require(args.battle_export is None, "choose one battle evidence source")
+        phase_events = json.loads(decoded["phase-events.json"])
+        expected_ids = sealed_encounter_ids(phase_events, summary["phase_evidence"])
+        db = json.loads(decoded["db-hwiha-slice.json"])
+        summary["battle_result_gate"] = summarize_committed_battle_files(
+            args.battle_files_dir, expected_ids, db)
     if args.row_diff is not None:
         summary["row_diff_gate"] = summarize_row_diff(args.row_diff)
     if not args.check_only:

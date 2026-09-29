@@ -99,6 +99,26 @@ while IFS= read -r service; do
   separator=,
 done <<<"$service_names"
 printf '}}\n' >>"$container_override"
+if [[ "${E2E_YUZHOU_LIVE:-false}" == "true" ]]; then
+  battle_output_dir="$artifact_dir/battle-outcomes"
+  mkdir -p "$battle_output_dir"
+  python3 - "$container_override" "$battle_output_dir" <<'PY_BATTLE_MOUNT'
+import json
+from pathlib import Path
+import sys
+
+override = Path(sys.argv[1])
+host_dir = Path(sys.argv[2]).resolve(strict=True)
+document = json.loads(override.read_text(encoding="utf-8"))
+engine = document["services"]["game-engine"]
+engine["environment"] = {
+    "QA_BATTLE_OUTCOME_FILE_ENABLED": "true",
+    "QA_BATTLE_OUTCOME_FILE_DIRECTORY": "/qa-battle-outcomes",
+}
+engine["volumes"] = [f"{host_dir}:/qa-battle-outcomes"]
+override.write_text(json.dumps(document) + "\n", encoding="utf-8")
+PY_BATTLE_MOUNT
+fi
 compose_files+=(-f "$container_override")
 
 reserve_isolated_cleanup_resources() {

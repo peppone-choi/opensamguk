@@ -692,6 +692,15 @@ jobs:
           } >> "$GITHUB_ENV"
           unset qa_private_der qa_public_der qa_db_password qa_internal_token
           rm "$RUNNER_TEMP/yuzhou-jwt.key"
+      - name: Pin the QA browser spec from this collector
+        run: |
+          set -euo pipefail
+          cp collector/web/game/e2e/yuzhou-live.spec.ts runtime/web/game/e2e/yuzhou-live.spec.ts
+          cp collector/tools/e2e/local_v1_gate.sh runtime/tools/e2e/local_v1_gate.sh
+          sha256sum collector/web/game/e2e/yuzhou-live.spec.ts \
+            > "$RUNNER_TEMP/yuzhou-evidence/qa-browser-spec-sha256.txt"
+          sha256sum collector/tools/e2e/local_v1_gate.sh \
+            > "$RUNNER_TEMP/yuzhou-evidence/qa-runner-sha256.txt"
       - name: Run isolated PG, Redis and browser flow
         id: gate
         working-directory: runtime
@@ -792,15 +801,21 @@ jobs:
         if: steps.gate.outcome == 'success'
         run: |
           set -euo pipefail
-          python3 collector/tools/e2e/collect_yuzhou_evidence.py \
-            "$E2E_ARTIFACT_DIR"
-          python3 - "$E2E_ARTIFACT_DIR/yuzhou-evidence-manifest.json" <<'PY'
+          if [[ -f runtime/app/game-engine/src/main/kotlin/opensamguk/engine/campaign/QaBattleOutcomeFileSink.kt ]]; then
+            python3 collector/tools/e2e/collect_yuzhou_evidence.py \
+              "$E2E_ARTIFACT_DIR" --battle-files-dir "$E2E_ARTIFACT_DIR/battle-outcomes"
+            expected_status=DB_BACKED_COVERAGE
+          else
+            python3 collector/tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR"
+            expected_status=NOT_COLLECTED
+          fi
+          python3 - "$E2E_ARTIFACT_DIR/yuzhou-evidence-manifest.json" "$expected_status" <<'PY'
           import json
           import sys
           from pathlib import Path
           manifest = json.loads(Path(sys.argv[1]).read_text())
-          assert manifest['battle_result_gate']['status'] == 'NOT_COLLECTED', manifest
-          print('W4 callback gate remains BLOCKED pending main producer/DB export')
+          assert manifest['battle_result_gate']['status'] == sys.argv[2], manifest
+          print('W4 battle result status:', sys.argv[2])
           PY
       - uses: actions/upload-artifact@v4
         if: always()
