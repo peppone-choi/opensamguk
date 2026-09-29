@@ -1642,3 +1642,11 @@ web/game/lib/hwiha-reads.ts
 | `V2CityLedgerEntry` | `CityLedgerEntry` | 도시 원장 값 객체 |
 
 `HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.
+
+### Redis 스트림 네임스페이스 (2026-09-30)
+
+| 이전 저장 키 접두사 | 현재 접두사 | 근거 |
+|---|---|---|
+| `sammo:<profile>:w<worldId>:` | `game:<profile>:w<worldId>:` | 명령·사건 스트림, 실시간 채널, 요청 결과 키를 같은 세계 범위에서 중립화 |
+
+PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽거나 이행하지 않는다. 기존 구세계는 형식 가드에서 거절된다.
