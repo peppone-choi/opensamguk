@@ -33,6 +33,6 @@ data class QueuedDispatch(
             )
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("invalid HWIHA court queue")
+        private fun invalid(): Nothing = throw IllegalArgumentException("invalid court queue")
     }
 }

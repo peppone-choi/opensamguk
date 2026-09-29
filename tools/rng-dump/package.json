@@ -1,6 +1,0 @@
-{
-  "name": "opensamguk-rng-dump",
-  "private": true,
-  "type": "module",
-  "scripts": { "dump": "npx tsx dumpRngFixtures.mjs" }
-}

@@ -95,4 +95,4 @@ data class CountyAssignment(val dispatchId: String, val issuerId: Int, val natio
     }
 }
 
-private fun invalidDispatchState(): Nothing = throw IllegalArgumentException("invalid HWIHA dispatch state")
+private fun invalidDispatchState(): Nothing = throw IllegalArgumentException("invalid dispatch state")

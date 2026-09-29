@@ -26,10 +26,6 @@ class SideReadRepositoryConfiguration {
         DiplomacyLetterRepository(jdbc, scope.worldId)
 
     @Bean
-    fun bettingRepository(context: ApplicationContext, scope: SideReadWorldScope): BettingRepository =
-        WorldScopedBettingRepository(context.getBean(BettingRawRepository::class.java), scope.worldId)
-
-    @Bean
     fun boardPostRepository(context: ApplicationContext, scope: SideReadWorldScope): BoardPostRepository =
         WorldScopedBoardPostRepository(context.getBean(BoardPostRawRepository::class.java), scope.worldId)
 

@@ -46,7 +46,6 @@ class JdbcFlushExecutorWorldScopeTest {
             "nationEnvKvWrite",
             "gameKvWrite",
             "logEntryCreateMany",
-            "bettingUpsertMany",
             "boardPostInsertMany",
             "boardCommentInsertMany",
             "votePollInsertMany",

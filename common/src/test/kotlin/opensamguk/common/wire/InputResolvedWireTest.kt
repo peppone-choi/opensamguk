@@ -4,7 +4,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
-class HwihaInputResolvedWireTest {
+class InputResolvedWireTest {
     @Test fun `input resolved round trips inside the existing command result envelope`() {
         val result = CommandLifecycleResult(type = "executionApplied", ok = true, commandKind = "RESERVED_TURN",
             actionCode = "action.farm", generalId = 7,

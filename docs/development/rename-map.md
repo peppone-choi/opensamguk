@@ -36,6 +36,12 @@
 | `Han780V1CityConst`·`Han780V1GateIndex` | `Archive780CityConst`·`Archive780GateIndex` | 생성 상수 재핀 | 연도별 보관본 코드 이름; `han-780-v1` 저장 릴리스 ID 유지 |
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
+| `HanAdministrativeAxis` | `AdministrativeAxis` | 잔여 지도 코드 개명 | 판에 고정된 원본 지도 경로와 관리 축 핀 바이트는 유지 |
+| `isHanCounty`·`is_han_county` | `isAdministrativeCounty`·`is_administrative_county` | 행정 縣 판정 함수 개명 | 웹 표시·지도 생성기의 코드 식별자만 변경; 지도 데이터와 표시 규칙은 유지 |
+| `CityConstRegistry.hanWorld` | `CityConstRegistry.forVariant` | 잔여 지도 코드 개명 | `WorldMapVariant`별 상수 조회 함수만 개명 |
+| `WorldMapCanvas.test.ts`의 로컬 `hanTiles` | `worldTiles` | 잔여 지도 코드 개명 | 불러오는 `han-tiles.json` 판 ID는 유지 |
+| `HwihaInputResolvedWireTest` | `InputResolvedWireTest` | 잔여 테스트 이름 개명 | 와이어 직렬화 값과 단언은 유지 |
+| 지도 테스트 설명·배지 주석의 `Hwiha` | `campaign` | 잔여 설명 개명 | 사용자 표시 문구와 동작 불변 |
 | `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
 | `Han<연도>Artifacts`·`Han1447Map4Artifacts` | `Archive<연도>Artifacts`·`Archive1447Map4Artifacts` | 보관본 로더 개명 | 11개 릴리스 번들 로더와 10개 무결성 테스트를 순수 개명; `han-world-v3-*` 번들 ID·catalog SHA 불변 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
@@ -1579,3 +1585,20 @@ web/game/lib/hwiha-reads.ts
 | `HwihaPositionWriteTest` | `PositionWriteTest` | 테스트 클래스 |
 
 이 표는 코드 식별자만 다룬다. 저장 world/profile 값과 적용된 Flyway의 과거 이름은 별도 저장 계약 검토 대상이다.
+## 게이트웨이 지도 테스트 이름
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `MapPreview.han.test.tsx` | `MapPreview.world.test.tsx` | 지도 미리보기 테스트 파일 |
+| 테스트 DOM ID `han-map` | `world-map` | 테스트 내부 선택자 |
+
+## 시나리오 적재·지도 소스 코드 이름
+
+| 옛 코드 이름 | 새 코드 이름 | 저장 계약 |
+| --- | --- | --- |
+| `ScenarioImporter.insertHwihaUnits` | `insertScenarioUnits` | `general_bugok` 행·시나리오 `units` 필드 불변 |
+| `ScenarioImporter.insertHwihaRetainers` | `insertScenarioRetainers` | `general_retainers` 행·시나리오 `retainers` 필드 불변 |
+| `apply_han_world.HAN_MAP` | `SOURCE_CITY_MAP` | 입력 경로 `map/han.json` 불변 |
+| `PINNED_LEGACY_HAN_MAP_SHA256` | `PINNED_SOURCE_CITY_MAP_SHA256` | provenance `legacyHanMap` 키·SHA-256 불변 |
+
+`legacyHanMap`은 이미 핀된 route-node provenance와 불변 blob의 키다. 이 PR은 Python·Kotlin 코드 식별자만 바꿨고 JSON 번들 입력·해시를 다시 쓰지 않았다.

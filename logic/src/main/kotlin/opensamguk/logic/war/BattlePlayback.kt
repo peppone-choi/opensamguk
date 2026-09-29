@@ -6,7 +6,6 @@ import java.security.MessageDigest
 import java.util.Collections
 import opensamguk.logic.input.*
 import opensamguk.logic.world.BattlefieldGeometry
-import opensamguk.logic.world.BattlefieldLayout
 
 /** Internal tactical input playback. It does not claim card processing, retreat or live resource settlement. */
 class BattlePlayback(
@@ -40,8 +39,8 @@ class BattlePlayback(
             out.writeInt(combat.rulesVersion);text(combat.rulesContentHash)
             out.writeInt(combat.profiles.size)
             combat.profiles.forEach { p -> listOf(p.crewTypeId,p.movementSteps,p.attackRange,p.attackPower,p.defencePower,p.initiative).forEach(out::writeInt) }
-            out.writeInt(BattlefieldGeometry.RULE_VERSION);out.writeInt(BattlefieldLayout.RULE_VERSION)
-            out.writeInt(EncounterDeployment.RULE_VERSION);out.writeInt(GridMovement.RULE_VERSION)
+            out.writeInt(BattlefieldGeometry.RULE_VERSION);out.writeInt(deployment.layout.ruleVersion)
+            out.writeInt(deployment.ruleVersion);out.writeInt(GridMovement.RULE_VERSION)
             out.writeInt(GridExchange.RULE_VERSION);out.writeInt(GridReach.RULE_VERSION)
             val geometry=deployment.layout.geometry
             text(geometry.provinceId);text(geometry.topologyRevision);text(geometry.topologyHash);text(geometry.tilesContentHash)

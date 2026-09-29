@@ -57,5 +57,5 @@ object LandPassageState {
             },
         )
     }
-    private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA land passage state")
+    private fun invalid(): Nothing = throw IllegalArgumentException("Invalid land passage state")
 }

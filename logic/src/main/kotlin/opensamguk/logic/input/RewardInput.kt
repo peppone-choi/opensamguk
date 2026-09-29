@@ -54,6 +54,6 @@ data class QueuedReward(val requestId: String, val ownerUserId: Int, val retaine
                 value["retainerId"] as? Int ?: invalid(), money)
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("invalid HWIHA reward queue")
+        private fun invalid(): Nothing = throw IllegalArgumentException("invalid reward queue")
     }
 }
