@@ -192,7 +192,7 @@ def audit_repository(root: Path) -> list[RuntimeProvinceFillAudit]:
     audits: list[RuntimeProvinceFillAudit] = []
     map_resources: dict[str, Mapping[str, Any]] = {}
     for scenario_code in sorted(ownership_by_code):
-        resource_path = root / f"infra/src/main/resources/scenario/scenario_{scenario_code}.json"
+        resource_path = root / f"data/archive/scenarios/scenario_{scenario_code}.json"
         normalized_code = normalize_scenario_code(resource_path.stem)
         scenario = _load_json(resource_path)
         map_name = scenario.get("map", {}).get("mapName")
