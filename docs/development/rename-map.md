@@ -1250,6 +1250,8 @@ E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 �
 
 공용 지도 UI의 `HanMapCanvas`·`HanTiles`도 실제 사용 범위에 맞춰 `WorldMapCanvas`·`WorldTiles`로 바꾼다. 저장 세계가 핀으로 가리키는 `han-world-v3`는 데이터 계약 예외로 유지한다. 웹 경로와 API 경로는 저장·통신 단계에서 바꾼다.
 
+현재 지도 선정 provenance의 `legacyHanMap`은 `sourceCityMap`, `legacyTileMap`은 `sourceTileMap`으로 개명한다. 생성기·검증기·현재 후보 및 선정 JSON과 의존 SHA를 함께 갱신한다. 이미 발행된 `han-world-v3-1447-map4` 번들 및 이전 판의 콘텐츠 주소 blob은 저장 세계의 고정 계약이므로 원래 바이트를 보존한다. 이 코드 변경 후 QA W0–W4는 새 main SHA에서 다시 수집한다.
+
 | 이전 파일 | 새 파일 |
 |---|---|
 | `web/game/__tests__/HwihaCourtForm.test.tsx` | `web/game/__tests__/CourtForm.test.tsx` |
