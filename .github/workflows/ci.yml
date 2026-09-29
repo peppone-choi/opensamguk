@@ -615,3 +615,134 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs
         run: python3 tools/ci/check_reserved_server_ids.py
+
+  # Draft #1026 evidence lane. It checks out the PR base commit explicitly so
+  # product code, map and scenario all come from one exact main SHA. The PR
+  # checkout supplies only the fail-closed evidence collector.
+  yuzhou-isolated-evidence:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: runtime
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: collector
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable
+      - name: Pin the exact candidate
+        working-directory: runtime
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = '${{ github.event.pull_request.base.sha }}'
+          mkdir -p "$RUNNER_TEMP/yuzhou-evidence"
+          git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-evidence/pin-git-sha.txt"
+          sha256sum infra/src/main/resources/map/han-world-v3.json \
+            infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json \
+            > "$RUNNER_TEMP/yuzhou-evidence/pin-sha256.txt"
+          cmp infra/src/main/resources/scenario/scenario_990002.json \
+            tools/e2e/fixtures/yuzhou/scenario_990002.json
+      - name: Prepare isolated QA credentials and ports
+        run: |
+          set -euo pipefail
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
+            -out "$RUNNER_TEMP/yuzhou-jwt.key" 2>/dev/null
+          openssl pkey -in "$RUNNER_TEMP/yuzhou-jwt.key" -pubout \
+            -out "$RUNNER_TEMP/yuzhou-jwt.pub" 2>/dev/null
+          {
+            echo 'JWT_PRIVATE_KEY<<YUZHOU_PRIVATE_KEY_END'
+            cat "$RUNNER_TEMP/yuzhou-jwt.key"
+            echo 'YUZHOU_PRIVATE_KEY_END'
+            echo 'JWT_PUBLIC_KEY<<YUZHOU_PUBLIC_KEY_END'
+            cat "$RUNNER_TEMP/yuzhou-jwt.pub"
+            echo 'YUZHOU_PUBLIC_KEY_END'
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 32)"
+            echo "INTERNAL_SERVICE_TOKEN=$(openssl rand -hex 32)"
+            echo "SCENARIO_HOST_DIR=$GITHUB_WORKSPACE/runtime/tools/e2e/fixtures/yuzhou"
+            echo "E2E_ARTIFACT_DIR=$RUNNER_TEMP/yuzhou-evidence"
+          } >> "$GITHUB_ENV"
+      - name: Run isolated PG, Redis and browser flow
+        id: gate
+        working-directory: runtime
+        env:
+          SCENARIO_CODE: scenario_990002
+          TURN_PROFILE_NAME: che:scenario_990002
+          OPENSAMGUK_WORLD_ID: '990002'
+          SCENARIO_QA_TURNTERM: '1'
+          E2E_ENABLE_AUTH: 'true'
+          E2E_YUZHOU_LIVE: 'true'
+          E2E_TEST_SPEC: e2e/yuzhou-live.spec.ts
+          E2E_TEST_TIMEOUT_MS: '3000000'
+          E2E_BUILD_MODE: sequential
+          POSTGRES_PORT: '15432'
+          REDIS_PORT: '16379'
+          GATEWAY_API_PORT: '18080'
+          BOARD_API_PORT: '18083'
+          GAME_API_PORT: '18081'
+          GAME_ENGINE_PORT: '18082'
+          WEB_GATEWAY_PORT: '13000'
+          WEB_GAME_PORT: '13001'
+          NGINX_HTTP_PORT: '18000'
+          NEXT_PUBLIC_GATEWAY_URL: http://localhost:13000
+          NEXT_PUBLIC_GAME_URL: http://localhost:13001
+          GATEWAY_WEB_URL: http://web-gateway:3000
+        run: |
+          set -euo pipefail
+          bash tools/e2e/local_v1_gate.sh &
+          gate_pid=$!
+          for _ in $(seq 1 720); do
+            if [[ -f "$E2E_ARTIFACT_DIR/compose-project-name.txt" ]]; then
+              project="$(cat "$E2E_ARTIFACT_DIR/compose-project-name.txt")"
+              override="$E2E_ARTIFACT_DIR/$project-containers.json"
+              if [[ -f "$override" ]]; then
+                : > "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp"
+                for service in gateway-api board-api game-api game-engine web-gateway web-game; do
+                  container="$(docker compose --project-name "$project" --env-file /dev/null \
+                    -f docker-compose.yml -f "$override" ps -q "$service" 2>/dev/null || true)"
+                  if [[ -n "$container" ]]; then
+                    image="$(docker inspect --format '{{.Image}}' "$container" 2>/dev/null || true)"
+                    [[ -z "$image" ]] || printf '%s\t%s\n' "$service" "$image" \
+                      >> "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp"
+                  fi
+                done
+                if [[ "$(wc -l < "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp")" -eq 6 ]]; then
+                  mv "$E2E_ARTIFACT_DIR/container-image-ids.tsv.tmp" \
+                    "$E2E_ARTIFACT_DIR/container-image-ids.tsv"
+                  break
+                fi
+              fi
+            fi
+            kill -0 "$gate_pid" 2>/dev/null || break
+            sleep 5
+          done
+          wait "$gate_pid"
+      - name: Validate captured evidence without upgrading the callback gate
+        if: steps.gate.outcome == 'success'
+        run: |
+          set -euo pipefail
+          python3 collector/tools/e2e/collect_yuzhou_evidence.py \
+            "$E2E_ARTIFACT_DIR"
+          python3 - "$E2E_ARTIFACT_DIR/yuzhou-evidence-manifest.json" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          manifest = json.loads(Path(sys.argv[1]).read_text())
+          assert manifest['battle_result_gate']['status'] == 'NOT_COLLECTED', manifest
+          print('W4 callback gate remains BLOCKED pending main producer/DB export')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: yuzhou-isolated-evidence-${{ github.event.pull_request.base.sha }}
+          path: ${{ runner.temp }}/yuzhou-evidence/
+          retention-days: 3
+          if-no-files-found: warn
