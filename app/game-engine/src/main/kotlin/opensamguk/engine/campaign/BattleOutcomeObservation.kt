@@ -6,7 +6,6 @@ import opensamguk.logic.input.EncounterDeployment
 import opensamguk.logic.war.EncounterResolution
 import opensamguk.logic.world.BattlefieldGeometry.Position
 import opensamguk.logic.world.BattlefieldGeometry
-import opensamguk.logic.world.BattlefieldLayout
 
 /** QA-only evidence from a resolved, sealed battle. It is never a game event or a replay input. */
 class BattleOutcomeObservation private constructor(
@@ -61,8 +60,8 @@ class BattleOutcomeObservation private constructor(
                 topologyRevision = geometry.topologyRevision,
                 topologyHash = geometry.topologyHash,
                 tilesContentHash = geometry.tilesContentHash,
-                deploymentRuleVersion = EncounterDeployment.RULE_VERSION,
-                layoutRuleVersion = BattlefieldLayout.RULE_VERSION,
+                deploymentRuleVersion = deployment.ruleVersion,
+                layoutRuleVersion = deployment.layout.ruleVersion,
                 geometryRuleVersion = BattlefieldGeometry.RULE_VERSION,
                 resolutionRuleVersion = EncounterResolution.RULE_VERSION,
                 initialSeparationSteps = initialSeparationSteps(encounter, deployment),

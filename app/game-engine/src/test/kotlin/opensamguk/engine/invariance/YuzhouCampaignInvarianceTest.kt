@@ -8,9 +8,13 @@ import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.*
 import opensamguk.engine.campaign.*
 import opensamguk.infra.seed.WorldArtifactsResolver
+import opensamguk.infra.seed.WorldTopologyPin
+import opensamguk.infra.seed.ResolvedWorldArtifacts
 import opensamguk.infra.seed.ScenarioJson
+import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.input.*
+import opensamguk.logic.war.*
 import opensamguk.logic.util.phpRound
 import opensamguk.logic.world.*
 
@@ -24,14 +28,19 @@ class YuzhouCampaignInvarianceTest {
     private val repo: Path = generateSequence(Path.of("").toAbsolutePath()) { it.parent }.first { Files.isDirectory(it.resolve("data/map")) }
     private val mapCities = ScenarioJson.loadMapCities(Files.readString(repo.resolve("infra/src/main/resources/map/han-world-v3.json")))
     private val bundle = WorldArtifactsResolver(repo).resolve(mapCities.map { it.id }, emptyList())
-    private val topology = bundle.projection.topology
-    private val metrics = bundle.landMarchMetrics
-    private val cells = bundle.provinceCells
+    private val map4Bundle by lazy { WorldArtifactsResolver(repo).resolve(mapCities.map { it.id },
+        listOf(WorldTopologyPin("province_control", "han-water-topology-v1",
+            "eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14"))) }
 
     private class Campaign(val world: InMemoryTurnWorld, val lifecycle: TurnDaemonLifecycle, val boundary: PhaseBoundary,
-        val recorder: ChangeRecorder, val outcomes: CampaignWorldFixture.RecordingOutcomes)
+        val recorder: ChangeRecorder, val outcomes: CampaignWorldFixture.RecordingOutcomes,
+        val observations: List<BattleOutcomeObservation>)
 
-    private fun campaign(npcDeploy: Boolean = true, seed: String = "00"): Campaign {
+    private fun campaign(npcDeploy: Boolean = true, seed: String = "00",
+        bundle: ResolvedWorldArtifacts = this.bundle, captureBattle: Boolean = false): Campaign {
+        val topology = bundle.projection.topology
+        val metrics = bundle.landMarchMetrics
+        val cells = bundle.provinceCells
         val scenario = ScenarioJson.loadScenario(Files.readString(repo.resolve("tools/e2e/fixtures/yuzhou/scenario_990002.json")))
         val owner = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
         val warehouses = requireNotNull(scenario.warehouses).warehouses
@@ -75,16 +84,19 @@ class YuzhouCampaignInvarianceTest {
             administrativeCountyIds = bundle.projection.administrativeCountyIds))
         val recorder = ChangeRecorder()
         val outcomes = CampaignWorldFixture.RecordingOutcomes()
+        val observations = mutableListOf<BattleOutcomeObservation>()
         val handler = ReservedTurnHandler(world, opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
             seed, 190, recorder = recorder, hwihaDeploymentContext = topology to metrics, hwihaProvinceCells = cells,
             hwihaWarOutcomes = outcomes)
         val selector = NpcDeploySelector(topology, metrics)
         val lifecycle = TurnDaemonLifecycle(world, handler,
             hwihaMovementOf = AssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes,
+                observations = if (captureBattle) BattleOutcomeObserver { observations.add(it) } else BattleOutcomeObserver.NONE,
                 reactions = MarchReactionInterpreter(topology, metrics, bundle.commanderyIndex))::onTurn,
             hwihaNpcInputOf = if (npcDeploy) { id, reserved -> selector.select(world, id, reserved) } else { _, reserved -> reserved },
             reservedActionOf = { CampaignWorldFixture.NO_INPUT })
-        return Campaign(world, lifecycle, PhaseBoundary(topology, metrics, cells, outcomes = outcomes), recorder, outcomes)
+        return Campaign(world, lifecycle, PhaseBoundary(topology, metrics, cells, outcomes = outcomes), recorder,
+            outcomes, observations)
     }
 
     /** One phase: every general's personal turn, then the world boundary into the next phase. */
@@ -147,5 +159,118 @@ class YuzhouCampaignInvarianceTest {
         repeat(12) { run.phase(it) }
         assertTrue(run.world.listSieges().isEmpty())
         assertTrue(run.outcomes.captures.isEmpty() && run.outcomes.encounters.isEmpty())
+    }
+
+    @Test fun `Map4 first sealed encounter reaches a winner before the round cap`() {
+        val run = campaign(bundle = map4Bundle, captureBattle = true)
+        repeat(3) { run.phase(it) }
+        val encounter = run.world.listGenerals().mapNotNull {
+            CorpsEncounter.read(it.meta, map4Bundle.projection.topology)
+        }.distinctBy { it.encounterId }.single()
+        val meta = run.world.getGeneralById(encounter.attacker.commanderGeneralId)!!.meta
+        val deployment = assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.read(meta, encounter, map4Bundle.provinceCells)).deployment
+        val attacker = deployment.tokens.filter { it.commanderGeneralId == encounter.attacker.commanderGeneralId }
+            .mapNotNull { it.position }
+        val defenders = deployment.tokens.filter { it.commanderGeneralId != encounter.attacker.commanderGeneralId }
+            .mapNotNull { it.position }
+        val gap = attacker.minOf { a -> defenders.minOf { d ->
+            kotlin.math.abs(a.col - d.col) + kotlin.math.abs(a.row - d.row)
+        } }
+        assertEquals(3, gap, "Map4 opening deployment must keep its measured front gap")
+        val forces = assertNotNull(EncounterForces.read(meta, encounter))
+        val relations = assertNotNull(EncounterRelations.read(meta, encounter))
+        val rules = UnitProfilesJson.loadDefault()
+        val combat = assertNotNull(EncounterCombatProfiles.read(meta, forces, rules))
+        val plans = assertNotNull(BattlePlans.read(meta, encounter))
+        val journal = assertNotNull(BattleJournal.read(meta))
+        val replay = EncounterResolution.resolve(encounter, forces, relations, combat, plans, deployment, journal)
+        assertEquals(replay.replayHash,
+            EncounterResolution.resolve(encounter, forces, relations, combat, plans, deployment, journal).replayHash)
+
+        val swapped = encounter.copy(attacker = encounter.defenders.single(), defenders = listOf(encounter.attacker))
+        val swappedForces = EncounterForces(swapped.encounterId, forces.units, forces.commanders)
+        val projection = assertNotNull(DeploymentExecutor(run.world, run.recorder, map4Bundle.projection.topology,
+            map4Bundle.landMarchMetrics).projection())
+        val activeWars = run.world.listDiplomacy().filter { it.state == 0 }
+            .mapTo(linkedSetOf()) { it.fromNationId to it.toNationId }
+        val swappedRelations = EncounterRelations.capture(swapped, projection, activeWars)
+        val swappedCombat = EncounterCombatProfiles.capture(swappedForces, rules)
+        val swappedPlans = BattlePlans.defaultFor(swapped)
+        val swappedDeployment = assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.prepareDefault(swapped, map4Bundle.provinceCells,
+                EncounterDeployment.RULE_VERSION)).deployment
+        val swappedJournal = BattlePlayback(swapped, swappedForces, swappedRelations, swappedCombat,
+            swappedPlans, swappedDeployment).initialJournal()
+        val swappedReplay = EncounterResolution.resolve(swapped, swappedForces, swappedRelations, swappedCombat,
+            swappedPlans, swappedDeployment, swappedJournal)
+        assertEquals(swappedReplay.replayHash,
+            EncounterResolution.resolve(swapped, swappedForces, swappedRelations, swappedCombat,
+                swappedPlans, swappedDeployment, swappedJournal).replayHash)
+
+        val legacyRun = campaign()
+        repeat(3) { legacyRun.phase(it) }
+        val legacyEncounter = legacyRun.world.listGenerals().mapNotNull {
+            CorpsEncounter.read(it.meta, bundle.projection.topology)
+        }.distinctBy { it.encounterId }.single()
+        val legacyMeta = legacyRun.world.getGeneralById(legacyEncounter.attacker.commanderGeneralId)!!.meta
+        val legacyForces = assertNotNull(EncounterForces.read(legacyMeta, legacyEncounter))
+        val legacyRelations = assertNotNull(EncounterRelations.read(legacyMeta, legacyEncounter))
+        val legacyCombat = assertNotNull(EncounterCombatProfiles.read(legacyMeta, legacyForces, rules))
+        val legacyPlans = assertNotNull(BattlePlans.read(legacyMeta, legacyEncounter))
+        val legacyDeployment = assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.read(legacyMeta, legacyEncounter, bundle.provinceCells)).deployment
+        val legacyJournal = assertNotNull(BattleJournal.read(legacyMeta))
+        val legacyReplay = EncounterResolution.resolve(legacyEncounter, legacyForces, legacyRelations, legacyCombat,
+            legacyPlans, legacyDeployment, legacyJournal)
+        val legacySwapped = legacyEncounter.copy(attacker = legacyEncounter.defenders.single(),
+            defenders = listOf(legacyEncounter.attacker))
+        val legacySwappedForces = EncounterForces(legacySwapped.encounterId, legacyForces.units, legacyForces.commanders)
+        val legacyActiveWars = legacyRun.world.listDiplomacy().filter { it.state == 0 }
+            .mapTo(linkedSetOf()) { it.fromNationId to it.toNationId }
+        val legacySwappedRelations = EncounterRelations.capture(legacySwapped,
+            assertNotNull(DeploymentExecutor(legacyRun.world, legacyRun.recorder, bundle.projection.topology,
+                bundle.landMarchMetrics).projection()), legacyActiveWars)
+        val legacySwappedCombat = EncounterCombatProfiles.capture(legacySwappedForces, rules)
+        val legacySwappedPlans = BattlePlans.defaultFor(legacySwapped)
+        val legacySwappedDeployment = assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.prepareDefault(legacySwapped, bundle.provinceCells)).deployment
+        val legacySwappedJournal = BattlePlayback(legacySwapped, legacySwappedForces, legacySwappedRelations,
+            legacySwappedCombat, legacySwappedPlans, legacySwappedDeployment).initialJournal()
+        val legacySwappedReplay = EncounterResolution.resolve(legacySwapped, legacySwappedForces, legacySwappedRelations,
+            legacySwappedCombat, legacySwappedPlans, legacySwappedDeployment, legacySwappedJournal)
+        assertEquals(20, swappedReplay.rounds)
+        assertEquals(listOf(swapped.attacker.commanderGeneralId), swappedReplay.winners)
+        assertEquals(23, legacyReplay.rounds)
+        assertEquals(listOf(legacyEncounter.attacker.commanderGeneralId), legacyReplay.winners)
+        assertEquals(23, legacySwappedReplay.rounds)
+        assertEquals(listOf(legacySwapped.attacker.commanderGeneralId), legacySwappedReplay.winners)
+
+        run.phase(3)
+        val record = run.world.getGeneralById(encounter.attacker.commanderGeneralId)!!.meta[EncounterResolver.BATTLE_RECORD_KEY]
+            as? Map<*, *>
+        assertEquals(replay.replayHash, record?.get("replayHash"))
+        assertTrue(run.outcomes.encounters.isNotEmpty(),
+            "Map4 opening gap=$gap outcome=${record?.get("outcome")} statuses=${record?.get("statuses")} " +
+                "barrier=${record?.get("barrier")} rounds=${record?.get("rounds")} produced no winner callback")
+        val observation = run.observations.single { it.encounterId == encounter.encounterId }
+        assertTrue(observation.winners.isNotEmpty())
+        assertTrue(observation.callbackInvoked)
+        assertEquals(20, observation.rounds)
+        assertEquals(listOf(encounter.attacker.commanderGeneralId), observation.winners)
+        assertEquals(EncounterDeployment.RULE_VERSION, observation.deploymentRuleVersion)
+        assertEquals(BattlefieldLayout.FRONTLINE_RULE_VERSION, observation.layoutRuleVersion)
+        val repeatedHashes = listOf("00", "01").map { seed ->
+            val repeated = campaign(seed = seed, bundle = map4Bundle, captureBattle = true)
+            repeat(4) { repeated.phase(it) }
+            repeated.observations.single { it.encounterId == encounter.encounterId }.replayHash
+        }
+        assertEquals(listOf(observation.replayHash, observation.replayHash), repeatedHashes)
+        println("map4-opening gap=$gap rounds=${observation.rounds} winners=${observation.winners} " +
+            "callback=${observation.callbackInvoked} replayHash=${observation.replayHash} " +
+            "swappedRounds=${swappedReplay.rounds} swappedWinners=${swappedReplay.winners} " +
+            "swappedReplayHash=${swappedReplay.replayHash} legacyRounds=${legacyReplay.rounds} " +
+            "legacyWinners=${legacyReplay.winners} legacySwappedRounds=${legacySwappedReplay.rounds} " +
+            "legacySwappedWinners=${legacySwappedReplay.winners} seedHashes=$repeatedHashes")
     }
 }
