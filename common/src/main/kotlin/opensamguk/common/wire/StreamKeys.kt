@@ -14,8 +14,8 @@ import opensamguk.common.world.WorldId
 data class TurnDaemonStreamKeys(val commandStream: String, val eventStream: String) {
     companion object {
         fun of(profileName: String, worldId: WorldId) = TurnDaemonStreamKeys(
-            "sammo:$profileName:w${worldId.value}:turn-daemon:commands",
-            "sammo:$profileName:w${worldId.value}:turn-daemon:events",
+            "game:$profileName:w${worldId.value}:turn-daemon:commands",
+            "game:$profileName:w${worldId.value}:turn-daemon:events",
         )
     }
 }
@@ -23,7 +23,7 @@ data class TurnDaemonStreamKeys(val commandStream: String, val eventStream: Stri
 fun gameEventChannel(profileName: String, worldId: WorldId): String {
     val trimmed = profileName.trim()
     val normalized = if (trimmed.isNotEmpty()) trimmed else "unknown"
-    return "sammo:$normalized:w${worldId.value}:realtime:events"
+    return "game:$normalized:w${worldId.value}:realtime:events"
 }
 
 /**
@@ -31,4 +31,4 @@ fun gameEventChannel(profileName: String, worldId: WorldId): String {
  * World-scoped so two process worlds never share result keys for the same requestId.
  */
 fun commandResultKey(profileName: String, worldId: WorldId, requestId: String): String =
-    "sammo:$profileName:w${worldId.value}:turn-daemon:result:$requestId"
+    "game:$profileName:w${worldId.value}:turn-daemon:result:$requestId"
