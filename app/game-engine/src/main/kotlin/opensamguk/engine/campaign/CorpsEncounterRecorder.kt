@@ -60,7 +60,9 @@ class CorpsEncounterRecorder(
             require(BattleJournal.META_KEY !in general.meta)
         }
         val value = encounter.toMetaValue()
-        val deployment = EncounterDeployment.defaultMetaValue(encounter, cells)
+        val deployment = EncounterDeployment.defaultMetaValue(encounter, cells,
+            if (world.getState().worldMapVariant == WorldMapVariant.V3_1447_MAP4)
+                EncounterDeployment.RULE_VERSION else EncounterDeployment.LEGACY_RULE_VERSION)
         val projection = requireNotNull(DeploymentExecutor(world, recorder, topology, metrics).projection())
         val relations = EncounterRelations.capture(encounter, projection,
             world.listDiplomacy().filter { it.state == 0 }.mapTo(linkedSetOf()) { it.fromNationId to it.toNationId })
