@@ -6,7 +6,8 @@ import opensamguk.logic.world.*
 import opensamguk.logic.world.BattlefieldGeometry.Position
 
 class BattlePlaybackTest {
-    private fun playback(troops:Int=100, morale:Int=50, retreatAtOne:Boolean=false, noConditions:Boolean=false):BattlePlayback {
+    private fun playback(troops:Int=100, morale:Int=50, retreatAtOne:Boolean=false, noConditions:Boolean=false,
+        deploymentVersion:Int=EncounterDeployment.LEGACY_RULE_VERSION):BattlePlayback {
         val phase=Phase(200,1,1);val node=StrategicNodeRef.LandProvince("B")
         val state=DeploymentProjection(RuleProfile.HWIHA,(1..2).map { DeploymentPerson(it,it,true,node,true) },
             (1..2).map { DeploymentUnit(it*10,it,troops,null) },emptyList(),
@@ -21,7 +22,8 @@ class BattlePlaybackTest {
             listOf(UnitProfile(1100,1,1,100,120,20)),emptySet()))
         val index=ProvinceCellIndex("qa","a".repeat(64),"b".repeat(64),3,2,mapOf('1' to "PLAIN"),
             mapOf("A" to listOf(ProvinceCell(0,0,'1')),"B" to listOf(ProvinceCell(1,0,'1'),ProvinceCell(2,0,'1'))))
-        val deployment=assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(encounter,index)).deployment
+        val deployment=assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.prepareDefault(encounter,index,deploymentVersion)).deployment
         val plans=if(retreatAtOne || noConditions) BattlePlans(encounter.encounterId,(1..2).map {
             CommanderBattlePlan(it,if(it==1)BattlePlanAction.ADVANCE else BattlePlanAction.HOLD,
                 if(retreatAtOne)listOf(BattlePlanCommand(0,BattlePlanCondition.ROUND_AT_LEAST,1,BattlePlanAction.RETREAT)) else emptyList())
@@ -50,6 +52,20 @@ class BattlePlaybackTest {
         assertEquals(result.actions,replay.actions)
         assertFailsWith<IllegalArgumentException> { playback(morale=51).replay(loaded) }
         assertFailsWith<IllegalArgumentException> { playback(noConditions=true).replay(loaded) }
+    }
+    @Test fun `sealed v1 journal remains replayable and v2 cannot impersonate its context`() {
+        val legacy = playback()
+        val sealed = legacy.initialJournal()
+        assertEquals("d38399b7e17827e083bf4ea0975ba071020add89ffa08b1b13ed2463370af293",
+            legacy.contextHash)
+        assertEquals("68c57fb115b3c4850220482d58b8737db2edc9860a4f2e8a5eee0d85f03d4d9a",
+            sealed.snapshotId)
+        val loaded = assertNotNull(BattleJournal.read(mapOf(BattleJournal.META_KEY to sealed.toMetaValue())))
+        assertEquals(sealed.snapshotId, loaded.snapshotId)
+        assertEquals(legacy.replay(sealed).units, legacy.replay(loaded).units)
+        val frontline = playback(deploymentVersion = EncounterDeployment.RULE_VERSION)
+        assertNotEquals(legacy.contextHash, frontline.contextHash)
+        assertFailsWith<IllegalArgumentException> { frontline.replay(loaded) }
     }
     @Test fun `retreat and destruction are barriers not fake settlement and duplicate remains harmless`() {
         val p=playback(retreatAtOne=true);val input=RoundInput(1,emptyList(),emptyList())

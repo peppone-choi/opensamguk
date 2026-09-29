@@ -11,7 +11,7 @@ class EncounterDeploymentTest {
         attacker, defenders, StrategicNodeRef.LandProvince("B"), StrategicNodeRef.LandProvince("A"),
         Phase(200,1,1), "qa", "a".repeat(64))
     private fun index(width: Int = 7, terrain: Char = '1') = ProvinceCellIndex("qa", "a".repeat(64),
-        "b".repeat(64), 10, 3, mapOf('1' to "PLAIN", '2' to "MOUNTAIN"),
+        "b".repeat(64), maxOf(10, width + 1), 3, mapOf('1' to "PLAIN", '2' to "MOUNTAIN"),
         mapOf("A" to listOf(ProvinceCell(0,1,'1')), "B" to (1..width).map { ProvinceCell(it,1,terrain) }))
     private fun ready(state: CorpsEncounter = encounter(), index: ProvinceCellIndex = index()) =
         assertIs<EncounterDeployment.Result.Ready>(EncounterDeployment.prepareDefault(state,index)).deployment
@@ -38,6 +38,31 @@ class EncounterDeploymentTest {
             defender.copy(bugokIds=listOf(23,21,22)))).copy(attacker=attacker.copy(bugokIds=listOf(13,11,12))))
         assertEquals(ordered.encounterId,reversed.encounterId)
         assertEquals(ordered.tokens,reversed.tokens)
+    }
+
+    @Test fun `frontline v2 seals all six units in staggered ranks while v1 remains readable`() {
+        val state = encounter(listOf(defender))
+        val source = index(width = 40)
+        val legacyMeta = EncounterDeployment.defaultMetaValue(state, source)
+        val frontlineMeta = EncounterDeployment.defaultMetaValue(state, source, EncounterDeployment.RULE_VERSION)
+        val legacy = assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.read(mapOf(EncounterDeployment.META_KEY to legacyMeta), state, source)).deployment
+        val frontline = assertIs<EncounterDeployment.Result.Ready>(
+            EncounterDeployment.read(mapOf(EncounterDeployment.META_KEY to frontlineMeta), state, source)).deployment
+        assertEquals(EncounterDeployment.LEGACY_RULE_VERSION, legacy.ruleVersion)
+        assertEquals(EncounterDeployment.RULE_VERSION, frontline.ruleVersion)
+        assertEquals(BattlefieldLayout.RULE_VERSION, legacy.layout.ruleVersion)
+        assertEquals(BattlefieldLayout.FRONTLINE_RULE_VERSION, frontline.layout.ruleVersion)
+        assertEquals(6, frontline.tokens.mapNotNull { it.position }.distinct().size)
+        val attackerDepths = frontline.tokens.filter { it.commanderGeneralId == attacker.commanderGeneralId }
+            .map { frontline.layout.distancesFromEntry.getValue(it.position!!) }
+        assertEquals(listOf(18, 14, 10), attackerDepths)
+        val defenderDepths = frontline.tokens.filter { it.commanderGeneralId == defender.commanderGeneralId }
+            .map { frontline.layout.distancesFromEntry.getValue(it.position!!) }
+        assertEquals(listOf(21, 25, 29), defenderDepths)
+        assertFailsWith<IllegalArgumentException> {
+            EncounterDeployment.read(mapOf(EncounterDeployment.META_KEY to (legacyMeta + ("version" to 2))), state, source)
+        }
     }
 
     @Test fun `too few defender cells never excludes an actual participant`() {
