@@ -1,6 +1,5 @@
 package opensamguk.gameapi.read
 
-import opensamguk.common.constants.GameConst
 
 /**
  * F4 — shared READ-only state-text / permission projection helper (the tiny Tier-0 the F4 read
@@ -142,14 +141,6 @@ object F4StateText {
         }
         return out
     }
-
-    /**
-     * 사령부 명령 팔레트의 카테고리 → 명령 코드 목록. PHP `GameConst::$availableChiefCommand`
-     * (GameConstBase.php:378-415) byte-for-byte. ChiefCenter `commandList`(=`getChiefCommandTable`)의
-     * 정본 순서/카테고리 원천 — 컨트롤러가 각 코드를 CommandRegistry로 풀어 표시 메타를 만든다.
-     */
-    val CHIEF_COMMAND_TABLE: List<Pair<String, List<String>>> =
-        GameConst.availableChiefCommand.map { (category, commands) -> category to commands }
 
     /**
      * 역사 PHP `getHonor($experience)` 비교를 보존한 동결 회귀(ADR-LITE-042; 현재 제품 정본 아님) — 경험치 구간별 명성 한글명.
