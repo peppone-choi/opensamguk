@@ -1,11 +1,12 @@
 import contextlib
+import json
 import tempfile
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
 
-from game_server_recovery import REDIS_CMD, VOLUMES, RecoveryError
-from pep_cold_capture_operator import (PepColdCapturePreflight, SERVICES,
+from game_server_recovery import REDIS_CMD, VOLUMES, RecoveryError, digest
+from pep_cold_capture_operator import (PepColdCaptureOperator, PepColdCapturePreflight, SERVICES,
                                        preserve_scenario_tree,
                                        require_complete_old_application_proof)
 
@@ -14,22 +15,32 @@ IMAGE = 'sha256:' + 'a' * 64
 
 
 class FakeDocker:
-    def __init__(self):
+    def __init__(self, recovery):
+        self.recovery = recovery
         self.calls = []
         self.maintenance_ok = True
+        self.stop_failure = None
 
-    def run(self, args):
+    def run(self, args, *, stdin=None):
         self.calls.append(args)
         if not self.maintenance_ok:
             raise RecoveryError('maintenance is not drained')
+        if args[:2] == ['container', 'stop']:
+            self.recovery.stopped.add(args[-1].removesuffix('-id'))
+            if args[-1] == self.stop_failure:
+                raise RecoveryError('simulated stop transport failure')
+            return b''
+        if 'psql' in args:
+            return b'0'
         return b'{"capability":"maintenance-v1","state":"drained"}'
 
 
 class FakeRecovery:
     def __init__(self, stack):
         self.stack = stack
-        self.docker = FakeDocker()
+        self.docker = FakeDocker(self)
         self.running = True
+        self.stopped = set()
         self.owner = 'opensamguk-spep'
         self.locked_calls = 0
 
@@ -56,17 +67,49 @@ class FakeRecovery:
             suffix, destination = VOLUMES[service]
             mounts = [{'Type': 'volume', 'Name': 'spep-' + suffix,
                        'Destination': destination, 'RW': True}]
-        env = ['OPENSAMGUK_WORLD_ID=1'] if service in ('game-api', 'game-engine') else []
+        env = (['OPENSAMGUK_WORLD_ID=1', 'GAME_DB_USER=sammo',
+                'GAME_DATABASE_URL=jdbc:postgresql://db/sammo', 'TURN_PROFILE_NAME=che:scenario_1020']
+               if service in ('game-api', 'game-engine') else [])
         if service == 'game-postgres':
             env = ['POSTGRES_USER=sammo', 'POSTGRES_DB=sammo']
-        return {'Name': '/' + name, 'Id': 'b' * 64, 'Image': IMAGE,
-                'State': {'Running': self.running, 'Status': 'running' if self.running else 'exited',
-                          'OOMKilled': False},
+        active = self.running and service not in self.stopped
+        return {'Name': '/' + name, 'Id': service + '-id', 'Image': IMAGE,
+                'State': {'Running': active, 'Status': 'running' if active else 'exited',
+                          'OOMKilled': False, 'ExitCode': 0 if service in VOLUMES else 143},
                 'Config': {'Labels': {'com.docker.compose.project': self.owner,
                                       'com.docker.compose.service': service},
                            'Env': env,
                            'Cmd': REDIS_CMD if service == 'game-redis' else ['postgres']},
+                'HostConfig': {'Memory': 1024},
                 'Mounts': mounts}
+
+    def postgres_check(self, *args, **kwargs):
+        return {'counts': {'world_state': 1, 'city': 774, 'nation': 1, 'general': 1},
+                'versions': ['59'], 'migration_success': True, 'selected_world_matches': True,
+                'city_min': 1, 'city_max': 774, 'logical_dump_sha256': 'e' * 64}
+
+    def redis_check(self, *args, **kwargs):
+        return {'pong': True, 'loading': False, 'appendonly': True,
+                'persistence_ok': True, 'key_count': 1}
+
+    def capture(self, **kwargs):
+        assert self.stopped == set(SERVICES)
+        bundle = self.stack / 'backups/pep-abcdefgh'
+        bundle.mkdir(mode=0o700)
+        (bundle / 'manifest.json').write_text('{}')
+        (bundle / 'manifest.json').chmod(0o600)
+        return bundle
+
+    def verify(self, **kwargs):
+        return {'success': True, 'manifest_sha256': digest(kwargs['bundle'] / 'manifest.json')['sha256'],
+                'postgres': self.postgres_check(), 'redis': self.redis_check()}
+
+
+class FakeDrill:
+    def prove(self, recovery, bundle, source_inputs, tree, scenario):
+        return SimpleNamespace(bundle_manifest_sha256=digest(bundle / 'manifest.json')['sha256'],
+                               world_id=1, status={'serviceMaterialized': True, 'recoveryReady': True},
+                               cleanup={'success': True, 'remaining_resources': []})
 
 
 class PepColdCapturePreflightTest(unittest.TestCase):
@@ -169,6 +212,44 @@ class PepColdCapturePreflightTest(unittest.TestCase):
             require_complete_old_application_proof(storage, engine, alleged)
         alleged['checks']['map_read'] = True
         require_complete_old_application_proof(storage, engine, alleged)
+
+    def test_w4_gate_blocks_cold_stop_and_proof_leaves_reset_blocked(self):
+        backup_root = self.stack / 'backups'
+        backup_root.mkdir(mode=0o700)
+        (self.stack / 'data/scenarios/scenario_1020.json').write_text('{}')
+        operator = PepColdCaptureOperator(self.recovery, FakeDrill())
+        with self.assertRaisesRegex(RecoveryError, 'W4 PASS'):
+            operator.capture_and_prove(stack=self.stack, backup_root=backup_root, qa_gate={})
+        self.assertEqual(self.recovery.docker.calls, [])
+        gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
+                'scenario_code': 'scenario_990002', 'city_count': 1447}
+        proof = operator.capture_and_prove(stack=self.stack, backup_root=backup_root, qa_gate=gate)
+        self.assertTrue(proof['storage_verified'])
+        self.assertTrue(proof['old_engine_materialized'])
+        self.assertFalse(proof['authenticated_read_verified'])
+        self.assertFalse(proof['ready_for_reset'])
+        self.assertEqual(self.recovery.stopped, set(SERVICES))
+        self.assertEqual([args[-1] for args in self.recovery.docker.calls if args[:2] == ['container', 'stop']],
+                         ['web-game-id', 'game-api-id', 'game-engine-id',
+                          'game-redis-id', 'game-postgres-id'])
+
+    def test_stop_transport_failure_is_recorded_without_blind_restart(self):
+        backup_root = self.stack / 'backups'
+        backup_root.mkdir(mode=0o700)
+        self.recovery.docker.stop_failure = 'game-api-id'
+        gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
+                'scenario_code': 'scenario_990002', 'city_count': 1447}
+        with self.assertRaisesRegex(RecoveryError, 'transport failure'):
+            PepColdCaptureOperator(self.recovery, FakeDrill()).capture_and_prove(
+                stack=self.stack, backup_root=backup_root, qa_gate=gate)
+        status_files = list(backup_root.glob('pep-cold-operation-*/status.json'))
+        self.assertEqual(len(status_files), 1)
+        status = json.loads(status_files[0].read_text())
+        self.assertEqual(status['phase'], 'failed-after-stopping-game-api')
+        self.assertFalse(status['success'])
+        self.assertEqual(self.recovery.stopped, {'web-game', 'game-api'})
+        self.assertFalse(any(args[:2] == ['container', 'start']
+                             for args in self.recovery.docker.calls))
 
 
 if __name__ == '__main__':

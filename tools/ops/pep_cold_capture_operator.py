@@ -5,16 +5,18 @@ This command is read-only. It intentionally has no stop, restart, or reset mode.
 """
 
 import argparse
+import io
 import json
 from pathlib import Path
 import re
 import shutil
 import stat
+import uuid
 
 from game_server_recovery import (REDIS_CMD, VOLUMES, Recovery, RecoveryError,
                                   checked_path, digest, json_bytes, require, selected_env,
                                   write_private)
-from pep_application_drill import ScenarioTreeDigest
+from pep_application_drill import PepApplicationDrill, ScenarioTreeDigest, SourceEngineInputs
 
 
 SERVICES = ('web-game', 'game-api', 'game-engine', 'game-postgres', 'game-redis')
@@ -127,6 +129,17 @@ def require_complete_old_application_proof(storage, application, authenticated_r
             'isolated authenticated read proof required')
 
 
+def require_qa_gate(gate):
+    require(isinstance(gate, dict) and set(gate) ==
+            {'battle', 'w4', 'head_sha', 'scenario_code', 'city_count'} and
+            gate['battle'] == 'PASS' and gate['w4'] == 'PASS' and
+            isinstance(gate['head_sha'], str) and
+            re.fullmatch(r'[0-9a-f]{40}', gate['head_sha']) is not None and
+            gate['scenario_code'] == 'scenario_990002' and
+            type(gate['city_count']) is int and gate['city_count'] == 1447,
+            'battle and W4 PASS for exact 1447-city QA candidate required')
+
+
 class PepColdCapturePreflight:
     def __init__(self, recovery=None):
         self.recovery = recovery or Recovery()
@@ -216,6 +229,96 @@ class PepColdCapturePreflight:
     def prepare(self, stack):
         with self.recovery.locked():
             return self.inspect(Path(stack))
+
+
+class PepColdCaptureOperator(PepColdCapturePreflight):
+    """Programmatic cold capture stage; no CLI entry exists while auth drill is missing."""
+
+    def __init__(self, recovery=None, drill=None):
+        super().__init__(recovery)
+        self.drill = drill or PepApplicationDrill()
+
+    def _stop(self, service, source_id, *, storage=False):
+        name = 'spep-' + service
+        self.recovery.docker.run(['container', 'stop', '--time', '120', source_id])
+        state = self.recovery.inspect('container', name)
+        require(state['Id'] == source_id and state['State']['Running'] is False and
+                state['State']['Status'] == 'exited' and
+                not state['State'].get('OOMKilled') and
+                state['State'].get('ExitCode') in ((0,) if storage else (0, 143)),
+                'source shutdown did not complete cleanly')
+
+    def _nonterminal_inbox(self, env):
+        query = ("SELECT count(*) FROM command_inbox WHERE world_id = " +
+                 env['OPENSAMGUK_WORLD_ID'] + " AND status IN ('ACCEPTED','CLAIMED');")
+        command = ['container', 'exec', '-e', 'PGOPTIONS=-c default_transaction_read_only=on',
+                   '-i', 'spep-game-postgres', 'psql', '-X', '-A', '-t', '-v', 'ON_ERROR_STOP=1',
+                   '-h', '/var/run/postgresql', '-U', env['GAME_POSTGRES_USER'],
+                   '-d', env['GAME_POSTGRES_DB']]
+        result = self.recovery.docker.run(command, stdin=io.BytesIO(query.encode())).strip()
+        require(result == b'0', 'nonterminal command inbox must be empty')
+
+    def capture_and_prove(self, *, stack, backup_root, qa_gate):
+        """Leave the old stack stopped; a separate reviewed cutover owns final recovery."""
+        require_qa_gate(qa_gate)
+        stack = checked_path(stack, directory=True)
+        backup_root = checked_path(backup_root, directory=True, private=True)
+        with self.recovery.locked():
+            before = self.inspect(stack)
+            env = selected_env(stack / 'servers/spep.env', 'pep')
+            inspections = {service: self.recovery.inspect('container', 'spep-' + service)
+                           for service in (*SERVICES,)}
+            source_inputs = SourceEngineInputs.from_inspections('pep', inspections)
+            token = uuid.uuid4().hex
+            operation = backup_root / ('pep-cold-operation-' + token)
+            operation.mkdir(mode=0o700)
+            status = {'phase': 'preflight', 'success': False, 'old_stack_stopped': False,
+                      'authenticated_read_verified': False, 'bundle': None}
+            write_private(operation / 'status.json', json_bytes(status))
+            try:
+                for service in ('web-game', 'game-api', 'game-engine'):
+                    status['phase'] = 'stopping-' + service
+                    write_private(operation / 'status.json', json_bytes(status), replace=True)
+                    self._stop(service, before['source_container_ids'][service])
+                    status['phase'] = 'stopped-' + service
+                    write_private(operation / 'status.json', json_bytes(status), replace=True)
+                source_pg = self.recovery.postgres_check('spep-game-postgres', env,
+                    socket='/var/run/postgresql', read_only=True)
+                self._nonterminal_inbox(env)
+                source_redis = self.recovery.redis_check('spep-game-redis', socket=None)
+                for service in ('game-redis', 'game-postgres'):
+                    status['phase'] = 'stopping-' + service
+                    write_private(operation / 'status.json', json_bytes(status), replace=True)
+                    self._stop(service, before['source_container_ids'][service], storage=True)
+                    status['phase'] = 'stopped-' + service
+                    write_private(operation / 'status.json', json_bytes(status), replace=True)
+                status['old_stack_stopped'] = True
+                bundle = self.recovery.capture(server='pep', confirm='BACKUP pep',
+                    stack_dir=stack, backup_root=backup_root)
+                status['phase'], status['bundle'] = 'captured', str(bundle)
+                write_private(operation / 'status.json', json_bytes(status), replace=True)
+                verified = self.recovery.verify(server='pep', confirm='VERIFY pep', bundle=bundle)
+                require(verified['success'] is True and verified['postgres'] == source_pg and
+                        verified['redis'] == source_redis,
+                        'isolated storage does not match committed source')
+                status['phase'] = 'storage-verified'
+                write_private(operation / 'status.json', json_bytes(status), replace=True)
+                tree, scenario = preserve_scenario_tree(stack / 'data/scenarios', bundle)
+                application = self.drill.prove(self.recovery, bundle, source_inputs, tree, scenario)
+                require(application.bundle_manifest_sha256 == verified['manifest_sha256'] and
+                        application.status.get('serviceMaterialized') is True and
+                        application.status.get('recoveryReady') is True and
+                        application.cleanup == {'success': True, 'remaining_resources': []},
+                        'isolated old engine did not rehydrate cleanly')
+                status['phase'] = 'old-engine-materialized'
+                write_private(operation / 'status.json', json_bytes(status), replace=True)
+                return {'operation': str(operation), 'bundle': str(bundle),
+                        'storage_verified': True, 'old_engine_materialized': True,
+                        'authenticated_read_verified': False, 'ready_for_reset': False}
+            except BaseException:
+                status['phase'] = 'failed-after-' + status['phase']
+                write_private(operation / 'status.json', json_bytes(status), replace=True)
+                raise
 
 
 def main():
