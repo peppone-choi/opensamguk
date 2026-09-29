@@ -195,11 +195,6 @@ open class JdbcFlushExecutor(
                 rankDataNationSync(payload.worldId, payload.rankNationSync)
             }
 
-            // 8b. betting channel (경매 채널은 #917 에서 은퇴).
-            if (payload.bettingInserts.isNotEmpty()) {
-                // W0-8: PHP insertUpdate 패러티 — 동일 (general,betting,type) 재베팅은 amount 누적 UPSERT.
-                bettingUpsertMany(payload.worldId, payload.bettingInserts)
-            }
             if (payload.profileIconUpdates.isNotEmpty()) {
                 // OPENSAM-94: general.picture/image_server 전용 컬럼 UPDATE (owner/npc 재-단언 predicate).
                 profileIconUpdateMany(payload.worldId, payload.profileIconUpdates)
@@ -404,7 +399,7 @@ open class JdbcFlushExecutor(
             }
 
             // 14. v2 도시 원장 (OPENSAM-150 R1) — v2_city_ledger 멱등 UPSERT. v1 payload에서는 리스트가
-            //     비어 있어 이 분기가 미진입하고 SQL이 0건이다(P6 betting 채널 선례). v1 델타와 같은
+            //     비어 있어 이 분기가 미진입하고 SQL이 0건이다. v1 델타와 같은
             //     transactionTemplate 블록 안이므로 한 커밋에 함께 반영된다.
             if (payload.cityLedgerV2Upserts.isNotEmpty()) {
                 cityLedgerV2UpsertMany(payload.worldId, payload.cityLedgerV2Upserts)
@@ -1449,7 +1444,7 @@ open class JdbcFlushExecutor(
     /**
      * Flush the KV write-set (`KVStorage.php` delete-on-null). A [KvWrite] now carries its target
      * `table`: `nation_env` (int namespace = nation id) routes to the V3 table; every string namespace
-     * (`game_env`, `betting`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
+     * (`game_env`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
      * `table` discriminator. A `null` value DELETEs the row; a non-null value UPSERTs the
      * [MetaJson]-encoded jsonb (bare int for `next_execute_*`, object for `turn_last_{officer_level}`,
      * etc.). Every value is encoded here, matching `KVStorage::setDBValue`'s unconditional
@@ -1568,43 +1563,10 @@ open class JdbcFlushExecutor(
     }
 
     /**
-     * `ng_betting` UPSERT (P6 베팅 — W0-8에서 INSERT 전용 → upsert로 확장, P0-07 flush 측).
-     *
-     * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) Betting::bet(Betting.php:160-164)은
-     * `insertUpdate('ng_betting', row, ['amount' => sqleval('amount + %i', $amount)])` —
-     * UNIQUE(general_id, betting_id, betting_type)(V7, PHP by_general 인덱스 동일) 충돌 시
-     * amount만 누적하고 user_id 등 나머지 컬럼은 기존 행을 유지한다. 동일 키 재베팅이 행을
-     * 중복 적재하던 INSERT-only 결함의 정본 경로. (검증 체인 포팅은 W1-C PlaceBetHandler 소관.)
-     */
-    private fun bettingUpsertMany(worldId: WorldId, rows: List<BettingInsertRow>) {
-        val batch: Array<SqlParameterSource> = rows.map { r ->
-            val c = r.columns
-            MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("betting_id", c["betting_id"])
-                .addValue("general_id", c["general_id"])
-                .addValue("user_id", c["user_id"])
-                .addValue("betting_type", c["betting_type"])
-                .addValue("amount", c["amount"])
-        }.toTypedArray()
-        jdbc.batchUpdate(
-            """
-            INSERT INTO ng_betting (world_id, betting_id, general_id, user_id, betting_type, amount)
-            VALUES (:world_id, :betting_id, :general_id, :user_id, :betting_type, :amount)
-            ON CONFLICT (world_id, general_id, betting_id, betting_type)
-                DO UPDATE SET amount = ng_betting.amount + EXCLUDED.amount
-            """.trimIndent(),
-            batch,
-        )
-        lastOps.add(FlushExecOp("ng_betting", FlushVerb.UPSERT, rows.size))
-    }
-
-    /**
      * OPENSAM-150 (R1) — v2 도시 원장 `v2_city_ledger` 멱등 UPSERT (설계안 §2.1).
      *
      * `gold`/`rice`/`garrison`은 누적 델타가 아니라 **엔진이 계산한 절대 상태**라 `DO UPDATE SET`이
-     * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전). betting 채널이 amount를
-     * `+=` 누적하는 것과 의도적으로 다르며, 그쪽은 PHP `insertUpdate` 패러티가 이유다.
+     * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전).
      *
      * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_v2`) — 대신 v1
      * payload가 이 채널을 채우지 않아 호출 자체가 없다.
@@ -2948,8 +2910,7 @@ data class FlushPayload(
     val oldGeneralSnapshots: List<OldGeneralArchiveRow> = emptyList(),
     // --- B1 장수생성 foundation: 신규 장수 INSERT (step-3 createMany) ---
     // 새로 만든 장수 행 + 30개 general_turn(휴식) + 37개 rank_data(value 0). 컬럼맵 운반체
-    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board
-    // INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
+    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(board INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
     val createdGenerals: List<GeneralCreateRow> = emptyList(),
     val generalAccessLogUpserts: List<GeneralAccessLogWriteRow> = emptyList(),
     val generalAccessLogDeletes: List<Int> = emptyList(),
@@ -2974,7 +2935,6 @@ data class FlushPayload(
     // --- W5d 외교 서신: diplomacy_letter INSERT(발송) + UPDATE(회수/파기/대체) ---
     val diplomacyLetterInserts: List<DiplomacyLetterInsertRow> = emptyList(), // step-8f diplomacy_letter INSERT
     val diplomacyLetterUpdates: LinkedHashMap<Int, LinkedHashMap<String, Any?>> = LinkedHashMap(), // step-8f UPDATE
-    val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
     // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE. generalUpdate
     // SET 절이 이 두 표시-컬럼을 방출하지 않으므로(officer_city #17류 누락) 전용 채널로 영속한다.
     val profileIconUpdates: List<ProfileIconUpdateRow> = emptyList(), // step-8b general portrait UPDATE (OPENSAM-94)
@@ -3133,11 +3093,6 @@ data class OldGeneralArchiveRow(
     val pendingHistory: List<String>? = null,
 )
 
-/**
- * One `ng_betting` UPSERT (P6 betting intake). W0-8: INSERT 전용 → PHP `insertUpdate` 패러티의
- * amount-누적 UPSERT (UNIQUE(general_id,betting_id,betting_type) 충돌 시 amount += EXCLUDED.amount).
- */
-data class BettingInsertRow(val columns: Map<String, Any?>)
 
 /**
  * OPENSAM-150 (R1) — `v2_city_ledger` 한 행의 멱등 UPSERT. `columns`는 `city_id`/`gold`/`rice`/

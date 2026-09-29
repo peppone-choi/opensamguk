@@ -5,8 +5,8 @@ import java.sql.ResultSet
 /**
  * One `game_kv` row (V7 string-namespace KV store — the PHP `storage` shape generalized with a
  * `table` discriminator). Backs the string-namespace KV families the V3 int-namespace `nation_env`
- * cannot hold: `game_env` (obfuscatedNamePool, last_betting_id, last천도Trial), `betting`
- * (id_{id}), `inheritance_{id}` (the per-user survivor currency).
+ * cannot hold: `game_env` (obfuscatedNamePool, last천도Trial) and `inheritance_{id}`
+ * (the per-user survivor currency).
  *
  * `valueJson` is the byte-faithful jsonb string (insertion-order preserved). Delete-on-null
  * (KVStorage.php) is enforced by the flush executor: a null value DELETEs the `(table,namespace,key)`

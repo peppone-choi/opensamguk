@@ -6,9 +6,13 @@ import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.owner.GeneralResolver
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
+import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpStatus
+import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.web.socket.BinaryMessage
 import org.springframework.web.socket.CloseStatus
+import org.springframework.web.socket.PongMessage
 import org.springframework.web.socket.SubProtocolCapable
 import org.springframework.web.socket.TextMessage
 import org.springframework.web.socket.WebSocketSession
@@ -26,6 +30,7 @@ class BattleWebSocketAdmission(
     private val processWorld: GameApiProcessWorld,
     private val generals: GeneralResolver,
     allowedOrigins: String,
+    private val sessions: BattleWebSocketSessions,
 ) : HandshakeInterceptor {
     private val origins = allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toSet().also {
         require(it.isNotEmpty() && it.all { origin ->
@@ -60,8 +65,10 @@ class BattleWebSocketAdmission(
         } catch (_: SecurityException) { return deny() }
         val owned = runCatching { generals.resolveGeneralId(identity.accountId.toLong()) }.getOrNull()
         if (owned != identity.generalId) return deny()
+        val reservation = sessions.reserve(identity)
         attributes[IDENTITY] = identity
         attributes[LAST_SEEN_ATTRIBUTE] = lastSeen ?: 0L
+        attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE] = reservation
         return true
     }
 
@@ -80,16 +87,42 @@ class BattleWebSocketAdmission(
 }
 
 /** Admission-only endpoint: later slices add faction projection and command dispatch. */
-class BattleWebSocketHandler : TextWebSocketHandler(), SubProtocolCapable {
+class BattleWebSocketHandler(private val sessions: BattleWebSocketSessions) : TextWebSocketHandler(), SubProtocolCapable {
     override fun getSubProtocols(): List<String> = listOf(BattleWebSocketAdmission.PROTOCOL)
 
+    override fun afterConnectionEstablished(session: WebSocketSession) {
+        val reservation = session.attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
+            as? BattleWebSocketSessions.Reservation
+        if (reservation == null || !sessions.attach(reservation, session)) {
+            session.close(CloseStatus.POLICY_VIOLATION)
+        }
+    }
+
+    override fun afterConnectionClosed(session: WebSocketSession, status: CloseStatus) {
+        (session.attributes[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
+            as? BattleWebSocketSessions.Reservation)?.let(sessions::release)
+    }
+
+    override fun handleTransportError(session: WebSocketSession, exception: Throwable) {
+        sessions.close(session, CloseStatus.GOING_AWAY)
+    }
+
     override fun handleTextMessage(session: WebSocketSession, message: TextMessage) {
-        session.close(CloseStatus.POLICY_VIOLATION)
+        sessions.close(session, CloseStatus.POLICY_VIOLATION)
+    }
+
+    override fun handleBinaryMessage(session: WebSocketSession, message: BinaryMessage) {
+        sessions.close(session, CloseStatus.POLICY_VIOLATION)
+    }
+
+    override fun handlePongMessage(session: WebSocketSession, message: PongMessage) {
+        sessions.pong(session)
     }
 }
 
 @Configuration(proxyBeanMethods = false)
 @EnableWebSocket
+@EnableScheduling
 @ConditionalOnProperty(prefix = "battle.join-ticket", name = ["enabled"], havingValue = "true")
 class BattleWebSocketConfiguration(
     tickets: BattleJoinTicketService,
@@ -97,10 +130,14 @@ class BattleWebSocketConfiguration(
     generals: GeneralResolver,
     @Value("\${battle.websocket.allowed-origins:}") private val allowedOrigins: String,
 ) : WebSocketConfigurer {
-    private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins)
+    private val sessions = BattleWebSocketSessions(tickets, generals)
+    private val admission = BattleWebSocketAdmission(tickets, processWorld, generals, allowedOrigins, sessions)
+
+    @Bean
+    fun battleWebSocketSessions(): BattleWebSocketSessions = sessions
 
     override fun registerWebSocketHandlers(registry: WebSocketHandlerRegistry) {
-        registry.addHandler(BattleWebSocketHandler(), "/ws/battles/*/*/*")
+        registry.addHandler(BattleWebSocketHandler(sessions), "/ws/battles/*/*/*")
             .addInterceptors(admission)
             .setAllowedOrigins(*allowedOrigins.split(',').map(String::trim).filter(String::isNotEmpty).toTypedArray())
     }

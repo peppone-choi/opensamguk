@@ -127,10 +127,30 @@ class BattleJoinTicketService(
         }
     }
 
+    /** Rechecks a connected socket without treating the short admission ticket as a session lifetime. */
+    fun isCurrent(identity: BattleJoinIdentity): Boolean = try {
+        if (identity.serverId != serverId) false else {
+            val ticket = store.ticket(identity.worldId, identity.battleId)
+                ?: throw SecurityException("battle ticket missing")
+            val head = store.head(identity.worldId, identity.battleId)
+                ?: throw SecurityException("battle session missing")
+            val participant = activeParticipant(ticket, head, identity.accountId, clock.instant())
+            ticket.worldId == identity.worldId && ticket.battleId == identity.battleId &&
+                head.worldId == identity.worldId && head.battleId == identity.battleId &&
+                identity.participantId == participant.participantId &&
+                identity.generalId == participant.generalId && identity.side == participant.side &&
+                identity.authorityRevision == participant.authorityRevision &&
+                identity.sessionEpoch == head.sessionEpoch
+        }
+    } catch (_: Exception) {
+        false
+    }
+
     private fun activeParticipant(ticket: FrozenBattleTicket, head: BattleSessionHead,
                                   accountId: Int, now: Instant): FrozenBattleParticipant {
         if (ticket.worldId != head.worldId || ticket.battleId != head.battleId ||
             ticket.deadlineAt != head.deadlineAt || head.sessionEpoch <= 0 ||
+            head.leaseOwner.isNullOrBlank() ||
             head.phase !in setOf(BattleSessionPhase.JOINING, BattleSessionPhase.RUNNING) ||
             head.leaseUntil?.isAfter(now) != true || !head.deadlineAt.isAfter(now))
             throw SecurityException("battle join unavailable")
