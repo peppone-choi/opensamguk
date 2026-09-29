@@ -45,8 +45,9 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 
 `PepColdCaptureOperator.capture_and_prove`는 위 1–5단계의 저장소·격리 엔진·인증 읽기를 코드로
 표현하지만 CLI에서 호출할 수 없고 운영 검증·독립 리뷰를 통과하지 않았다. W4/전투 PASS 후보를
-인자로 요구해도 그 값의 출처와 실제 이미지 SHA를 아직 독립적으로 인증하지 못한다. 성공 반환도
-`ready_for_reset=false`다. 원격 운영 실행에 사용하지 않는다.
+인자로 요구해도 그 값의 출처와 실제 이미지 SHA를 아직 독립적으로 인증하지 못한다. 기본
+`UnavailableQAAttestor`는 잘 형성된 PASS 입력까지 정지 전에 거부한다. 아래 단계 시험은 주입한
+가짜 attestor로만 실행하며, 성공 반환도 `ready_for_reset=false`다. 원격 운영 실행에 사용하지 않는다.
 다섯 컨테이너 정지 뒤 예외가 나면 `status.json`에 실패 단계가 남고 원본을 자동 재시작하지 않는다.
 따라서 원본 재개/QA reset과 최종 후보 pin을 포함한 검토 완료 전체 harness는 아직 없다.
 

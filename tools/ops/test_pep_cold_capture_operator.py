@@ -8,7 +8,7 @@ from types import SimpleNamespace
 from game_server_recovery import REDIS_CMD, VOLUMES, RecoveryError, digest
 from pep_cold_capture_operator import (PepColdCaptureOperator, PepColdCapturePreflight, SERVICES,
                                        preserve_scenario_tree,
-                                       require_complete_old_application_proof)
+                                       require_complete_old_application_proof, require_qa_gate)
 
 
 IMAGE = 'sha256:' + 'a' * 64
@@ -125,6 +125,11 @@ class EngineOnlyDrill(FakeDrill):
         return proof
 
 
+class FakeAttestor:
+    def verify(self, gate):
+        require_qa_gate(gate)
+
+
 class PepColdCapturePreflightTest(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
@@ -230,7 +235,7 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         backup_root = self.stack / 'backups'
         backup_root.mkdir(mode=0o700)
         (self.stack / 'data/scenarios/scenario_1020.json').write_text('{}')
-        operator = PepColdCaptureOperator(self.recovery, FakeDrill())
+        operator = PepColdCaptureOperator(self.recovery, FakeDrill(), qa_attestor=FakeAttestor())
         with self.assertRaisesRegex(RecoveryError, 'W4 PASS'):
             operator.capture_and_prove(stack=self.stack, backup_root=backup_root, qa_gate={})
         self.assertEqual(self.recovery.docker.calls, [])
@@ -253,7 +258,7 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
                 'scenario_code': 'scenario_990002', 'city_count': 1447}
         with self.assertRaisesRegex(RecoveryError, 'authenticated read proof'):
-            PepColdCaptureOperator(self.recovery, EngineOnlyDrill()).capture_and_prove(
+            PepColdCaptureOperator(self.recovery, EngineOnlyDrill(), qa_attestor=FakeAttestor()).capture_and_prove(
                 stack=self.stack, backup_root=backup_root, qa_gate=gate)
         status_file = next(backup_root.glob('pep-cold-operation-*/status.json'))
         self.assertFalse(json.loads(status_file.read_text())['authenticated_read_verified'])
@@ -265,7 +270,7 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
                 'scenario_code': 'scenario_990002', 'city_count': 1447}
         with self.assertRaisesRegex(RecoveryError, 'transport failure'):
-            PepColdCaptureOperator(self.recovery, FakeDrill()).capture_and_prove(
+            PepColdCaptureOperator(self.recovery, FakeDrill(), qa_attestor=FakeAttestor()).capture_and_prove(
                 stack=self.stack, backup_root=backup_root, qa_gate=gate)
         status_files = list(backup_root.glob('pep-cold-operation-*/status.json'))
         self.assertEqual(len(status_files), 1)
@@ -275,6 +280,16 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         self.assertEqual(self.recovery.stopped, {'web-game', 'game-api'})
         self.assertFalse(any(args[:2] == ['container', 'start']
                              for args in self.recovery.docker.calls))
+
+    def test_default_attestor_refuses_even_well_formed_pass_before_any_stop(self):
+        backup_root = self.stack / 'backups'
+        backup_root.mkdir(mode=0o700)
+        gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
+                'scenario_code': 'scenario_990002', 'city_count': 1447}
+        with self.assertRaisesRegex(RecoveryError, 'attestation unavailable'):
+            PepColdCaptureOperator(self.recovery, FakeDrill()).capture_and_prove(
+                stack=self.stack, backup_root=backup_root, qa_gate=gate)
+        self.assertEqual(self.recovery.docker.calls, [])
 
 
 if __name__ == '__main__':

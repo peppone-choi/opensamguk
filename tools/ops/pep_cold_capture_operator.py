@@ -141,6 +141,14 @@ def require_qa_gate(gate):
             'battle and W4 PASS for exact 1447-city QA candidate required')
 
 
+class UnavailableQAAttestor:
+    """Do not permit a caller-supplied PASS dict to stop the live stack."""
+
+    def verify(self, gate):
+        require_qa_gate(gate)
+        raise RecoveryError('independent final W4 and candidate image attestation unavailable')
+
+
 class PepColdCapturePreflight:
     def __init__(self, recovery=None):
         self.recovery = recovery or Recovery()
@@ -235,10 +243,11 @@ class PepColdCapturePreflight:
 class PepColdCaptureOperator(PepColdCapturePreflight):
     """Programmatic cold capture stage; no CLI entry exists while auth drill is missing."""
 
-    def __init__(self, recovery=None, drill=None, authenticated_probe=None):
+    def __init__(self, recovery=None, drill=None, authenticated_probe=None, qa_attestor=None):
         super().__init__(recovery)
         self.drill = drill or PepApplicationDrill()
         self.authenticated_probe = authenticated_probe or PepAuthenticatedReadProbe()
+        self.qa_attestor = qa_attestor or UnavailableQAAttestor()
 
     def _stop(self, service, source_id, *, storage=False):
         name = 'spep-' + service
@@ -262,7 +271,7 @@ class PepColdCaptureOperator(PepColdCapturePreflight):
 
     def capture_and_prove(self, *, stack, backup_root, qa_gate):
         """Leave the old stack stopped; a separate reviewed cutover owns final recovery."""
-        require_qa_gate(qa_gate)
+        self.qa_attestor.verify(qa_gate)
         stack = checked_path(stack, directory=True)
         backup_root = checked_path(backup_root, directory=True, private=True)
         with self.recovery.locked():
