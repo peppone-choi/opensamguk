@@ -168,6 +168,21 @@ python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
   --battle-export "$E2E_ARTIFACT_DIR/battle-outcomes.json"
 ```
 
+#1045 후처리 생산자와 #1046 격리 QA 파일 sink가 함께 main에 들어가면, 격리 엔진은
+`QA_BATTLE_OUTCOME_FILE_ENABLED=true`와 출력 디렉터리 마운트로 조우마다
+`battle-outcomes/battle-<worldId>-<encounterId SHA-256>.json`을 기록한다. #1026 CI의 W4 전체
+흐름은 두 코드가 pinned main에 있을 때만 시작한다. 그 전의 W0/W2·W3 결과는 진단이며
+W4를 통과시키지 않는다. 이 파일 경로의 최종 수집 명령은 다음과 같다.
+
+```sh
+python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
+  --battle-files-dir "$E2E_ARTIFACT_DIR/battle-outcomes"
+```
+
+수집기는 DB 봉인 조우 ID를 해결 파일·해산 기록·현재 미해결 ID로 정확히 분할하고,
+`general.meta.lastBattle`의 ID/replayHash와 파일 결과를 대조한다. 실제 3순 승자와 callback
+관측이 없거나 DB 대조가 어긋나면 `DB_BACKED_COVERAGE` 상태로 승격하지 않는다.
+
 ## 4. 산출물과 판정표
 
 `E2E_ARTIFACT_DIR` 아래 `playwright-results.json`은 원본이다. 수집기는 건너뛴/재시도한/실패한 Playwright 결과와 화면·API·DB 첨부 누락을 거절하고, 이미 있는 다른 바이트의 파일을 덮어쓰지 않는다. `--check-only`는 출력 없이 형식만 확인한다. 산출물은 개인 계정·장수 데이터와 게임 응답을 포함할 수 있으므로 PR에 원문을 넣지 않고 검토 가능한 보안 저장 위치와 요약·해시만 보고한다.
@@ -185,6 +200,7 @@ python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
 | `yuzhou-evidence-manifest.json` | 원본 결과와 추출 첨부의 SHA256, 화면/API/사건 수. 내부 계정 정보가 섞인 `phase_evidence`는 공개 PR 첨부에서 제외 |
 | `row-diff.json` / manifest `row_diff_gate` | 기준·후보 Git/지도/시나리오 핀, 정규화 행 SHA/종류별 수, 城 구조 23/4와 공통 값 79의 구분, 공성·부곡 등 결과 변화. 진단이며 단독 합격 불가 |
 | 별도 조우별 전투 결과표 | `encounterId`, 봉인·해결 순, 전장 해시/크기·시작 거리, 결과·승자/무승자·지휘관 상태·라운드/장벽·callback. 현재 수집 불가이면 `BLOCKED` |
+| `battle-outcomes/battle-*.json` | 명시적으로 켠 격리 QA sink가 성공 DB flush 뒤 게시한 조우별 결과. 파일 해시·DB 봉인/해산/미해결 분할·최종 `lastBattle` 해시·실제 3순 callback 대조가 모두 맞아야 `DB_BACKED_COVERAGE` |
 | `--battle-export` QA JSON | 위 초안 계약 검증과 결과 분포 요약. 현재는 `CONTRACT_DRAFT`; 제품/DB 결과의 최종 합격 판정 아님 |
 | `docker-compose-build-*.log`, `health-*`, `cleanup-resources.txt` | 이미지 순차 빌드, 서비스 상태, 격리 볼륨·컨테이너 정리 |
 | `container-image-ids.tsv` | 살아 있는 격리 컨테이너의 정확한 이미지 ID. 별도 터미널에서 수집 |
