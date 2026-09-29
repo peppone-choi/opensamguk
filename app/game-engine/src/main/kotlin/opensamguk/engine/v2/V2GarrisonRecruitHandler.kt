@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+
 import opensamguk.common.wire.CityGarrisonRecruit
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -34,7 +36,7 @@ import opensamguk.logic.command.decideGarrisonRecruit
 class V2GarrisonRecruitHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val ledger: V2CityLedgerStore,
+    private val ledger: CityLedgerStore,
 ) {
     fun handle(command: CityGarrisonRecruit): TurnDaemonCommandResult {
         if (!world.isGeneralAtCity(command.generalId)) {

@@ -3,9 +3,9 @@ package opensamguk.engine.v2
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import opensamguk.infra.v2.V2CityCatalogAdapter
-import opensamguk.infra.v2.V2ContentCatalog
-import opensamguk.infra.v2.V2SandboxGate
+import opensamguk.infra.content.CityCatalogAdapter
+import opensamguk.infra.content.ContentCatalog
+import opensamguk.infra.sandbox.SandboxGate
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.CommandLineRunner
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
@@ -14,7 +14,7 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 
 /**
  * OPENSAM-35 0A-d — measures, with the same [ApplicationContextRunner] approach as S2, that the loader bean
- * exists **only inside the gate**. `infra`'s `V2ContentCatalogTest` judges the loader's scope and read-only nature.
+ * exists **only inside the gate**. `infra`'s `ContentCatalogTest` judges the loader's scope and read-only nature.
  */
 class V2ContentCatalogBeanTest {
 
@@ -26,29 +26,29 @@ class V2ContentCatalogBeanTest {
     @Test
     fun `gate closed - no content catalog or city adapter bean`() {
         runner.run {
-            assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size)
-            assertEquals(0, it.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+            assertEquals(0, it.getBeansOfType(ContentCatalog::class.java).size)
+            assertEquals(0, it.getBeansOfType(CityCatalogAdapter::class.java).size)
         }
-        runner.withPropertyValues("${V2SandboxGate.PROPERTY}=true")
+        runner.withPropertyValues("${SandboxGate.PROPERTY}=true")
             .run {
-                assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size)
-                assertEquals(0, it.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+                assertEquals(0, it.getBeansOfType(ContentCatalog::class.java).size)
+                assertEquals(0, it.getBeansOfType(CityCatalogAdapter::class.java).size)
             }
-        runner.withPropertyValues("spring.profiles.active=${V2SandboxGate.PROFILE}")
+        runner.withPropertyValues("spring.profiles.active=${SandboxGate.PROFILE}")
             .run {
-                assertEquals(0, it.getBeansOfType(V2ContentCatalog::class.java).size)
-                assertEquals(0, it.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+                assertEquals(0, it.getBeansOfType(ContentCatalog::class.java).size)
+                assertEquals(0, it.getBeansOfType(CityCatalogAdapter::class.java).size)
             }
     }
 
     @Test
     fun `gate open - content catalog and city adapter beans are registered`() {
         gateOpen().run { context ->
-            val catalog = context.getBean(V2ContentCatalog::class.java)
+            val catalog = context.getBean(ContentCatalog::class.java)
             assertNotNull(catalog)
             assertEquals(listOf("cities_1010.json"), catalog.names())
 
-            val adapter = context.getBean(V2CityCatalogAdapter::class.java)
+            val adapter = context.getBean(CityCatalogAdapter::class.java)
             assertNotNull(adapter)
             assertNotNull(adapter.load().cities.firstOrNull())
         }
@@ -70,7 +70,7 @@ class V2ContentCatalogBeanTest {
     }
 
     private fun gateOpen() = runner.withPropertyValues(
-        "spring.profiles.active=${V2SandboxGate.PROFILE}",
-        "${V2SandboxGate.PROPERTY}=true",
+        "spring.profiles.active=${SandboxGate.PROFILE}",
+        "${SandboxGate.PROPERTY}=true",
     )
 }

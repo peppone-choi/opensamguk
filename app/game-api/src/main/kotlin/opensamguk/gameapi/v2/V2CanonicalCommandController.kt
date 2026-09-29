@@ -9,7 +9,7 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.longOrNull
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.infra.v2.V2SandboxGate
+import opensamguk.infra.sandbox.SandboxGate
 import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.command.CommandSchemaCatalog
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
@@ -35,8 +35,8 @@ data class V2CommandIntakeResponse(
 )
 
 @RestController
-@Profile(V2SandboxGate.PROFILE)
-@ConditionalOnProperty(name = [V2SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
+@Profile(SandboxGate.PROFILE)
+@ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/commands")
 class V2CanonicalCommandController(
     private val reserve: CommandReserveService,

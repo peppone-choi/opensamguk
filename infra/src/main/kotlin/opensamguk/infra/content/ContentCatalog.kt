@@ -1,4 +1,4 @@
-package opensamguk.infra.v2
+package opensamguk.infra.content
 
 import opensamguk.infra.persistence.MetaJson
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
@@ -7,7 +7,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver
  * [names] and [read] are diagnostic-only direct-resource probes. [load] is the sole consumer API and returns
  * only typed ACTIVE metadata after fail-closed validation.
  */
-class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
+class ContentCatalog(location: String = DEFAULT_LOCATION) {
 
     private val location = validatedDirectory(location)
     private val resolver = PathMatchingResourcePatternResolver()
@@ -24,23 +24,23 @@ class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
         }
     }
 
-    fun load(id: String): V2ContentMetadata {
+    fun load(id: String): ContentMetadata {
         require(ENTRY_ID.matches(id)) { "v2 content id is invalid: $id" }
         val raw = read("$id.json") ?: throw IllegalArgumentException("v2 content metadata not found: $id")
         val metadata = decode(raw, id)
-        require(metadata.status == V2ContentStatus.ACTIVE) {
+        require(metadata.status == ContentStatus.ACTIVE) {
             "v2 content '${metadata.id}' is ${metadata.status} and cannot be loaded"
         }
         return metadata
     }
 
-    private fun decode(raw: String, requestedId: String): V2ContentMetadata {
+    private fun decode(raw: String, requestedId: String): ContentMetadata {
         rejectDuplicateRootKeys(raw)
         val root = MetaJson.decode(raw)
         require(root.keys == APPROVED_METADATA_ROOT_KEYS) {
             "v2 content metadata must contain exactly the approved root keys"
         }
-        val metadata = V2ContentMetadata(
+        val metadata = ContentMetadata(
             schemaVersion = requiredInt(root, "schemaVersion"),
             id = requiredString(root, "id"),
             status = statusOf(requiredString(root, "status")),
@@ -49,7 +49,7 @@ class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
             cityCount = requiredInt(root, "cityCount"),
             scenarioOwnedCityCount = requiredInt(root, "scenarioOwnedCityCount"),
         )
-        require(metadata.schemaVersion == V2ContentMetadata.SCHEMA_VERSION) {
+        require(metadata.schemaVersion == ContentMetadata.SCHEMA_VERSION) {
             "unsupported v2 content schema version: ${metadata.schemaVersion}"
         }
         require(metadata.id == requestedId) {
@@ -116,11 +116,11 @@ class V2ContentCatalog(location: String = DEFAULT_LOCATION) {
             else -> throw IllegalArgumentException("v2 content metadata field '$field' must be an integer")
         }
 
-        private fun statusOf(value: String): V2ContentStatus = when (value) {
-            V2ContentStatus.ACTIVE.name -> V2ContentStatus.ACTIVE
-            V2ContentStatus.CANDIDATE.name -> V2ContentStatus.CANDIDATE
-            V2ContentStatus.EXCLUDED.name -> V2ContentStatus.EXCLUDED
-            V2ContentStatus.BUDGET_ONLY.name -> V2ContentStatus.BUDGET_ONLY
+        private fun statusOf(value: String): ContentStatus = when (value) {
+            ContentStatus.ACTIVE.name -> ContentStatus.ACTIVE
+            ContentStatus.CANDIDATE.name -> ContentStatus.CANDIDATE
+            ContentStatus.EXCLUDED.name -> ContentStatus.EXCLUDED
+            ContentStatus.BUDGET_ONLY.name -> ContentStatus.BUDGET_ONLY
             else -> throw IllegalArgumentException("unknown v2 content status: $value")
         }
 

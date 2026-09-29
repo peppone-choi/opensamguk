@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerEntry
+
 import opensamguk.logic.command.CityTransportArgs
 import opensamguk.logic.command.CityTransportContext
 import opensamguk.logic.command.decideCityTransport
@@ -56,7 +58,7 @@ fun transportDecision(
     garrison: Int,
     hopDistance: Int?,
     escortCrew: Int,
-    from: V2CityLedgerEntry,
+    from: CityLedgerEntry,
 ): V2TransportDecision {
     return when (
         val decision = decideCityTransport(
