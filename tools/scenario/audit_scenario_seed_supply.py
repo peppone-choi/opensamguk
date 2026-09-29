@@ -38,7 +38,7 @@ import audit_han_supply_disagreements as disagreements
 
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE_PATH = ROOT / "data/curated/han/scenario-seed-supply-baseline-v1.json"
-SCENARIO_DIR = ROOT / "infra/src/main/resources/scenario"
+SCENARIO_DIR = ROOT / "data/archive/scenarios"
 
 
 def _owner_by_city(scenario_code: int) -> dict[int, str]:

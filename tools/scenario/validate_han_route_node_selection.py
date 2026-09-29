@@ -30,7 +30,7 @@ DEFAULT_OVERLAY = ROOT / "data/curated/han/administrative-place-bindings-v1.json
 DEFAULT_CLAIMS = ROOT / "data/curated/han/route-node-source-claims-v1.json"
 DEFAULT_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
 DEFAULT_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
-DEFAULT_SCENARIOS = ROOT / "infra/src/main/resources/scenario"
+DEFAULT_SCENARIOS = ROOT / "data/archive/scenarios"
 PROVENANCE_DEPENDENCIES = {
     "legacyHanMap": Path("infra/src/main/resources/map/han-780-v1.json"),
     "legacyTileMap": Path("data/map/han-780-v1-tiles.json"),

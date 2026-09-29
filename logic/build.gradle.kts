@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
 }
@@ -13,13 +15,31 @@ dependencies {
     testImplementation(kotlin("test"))
 }
 
+val waryongCatalogFile = rootProject.file("data/battle/waryong/catalog-v1.json")
+val verifyWaryongCatalog by tasks.registering {
+    inputs.file(waryongCatalogFile)
+    doLast {
+        val bytes = inputs.files.singleFile.readBytes()
+        check(bytes.size == 954_038) { "Waryong catalog export byte count changed" }
+        val actual = MessageDigest.getInstance("SHA-256").digest(bytes)
+            .joinToString("") { "%02x".format(it) }
+        check(actual == "2eb021038ccf36178127247d25c18f03f538e6f139a2e699fdb40e5ed5f4bb27") {
+            "Waryong catalog export SHA-256 drifted: $actual"
+        }
+    }
+}
+
 // 입력 원장은 저장소 루트의 JSON 하나가 정본이다(game-api 의 public-alpha 카탈로그와 같은 방식).
 tasks.processResources {
+    dependsOn(verifyWaryongCatalog)
     from(rootProject.file("data/curated/han/local-offices.json")) {
         into("office")
     }
     from(rootProject.file("data/curated/han/office-rules.json")) {
         into("office")
+    }
+    from(rootProject.file("data/curated/han/vassal-rules.json")) {
+        into("vassal")
     }
     from(rootProject.file("data/commands/input-catalog.json")) {
         into("command-catalog")
@@ -60,6 +80,15 @@ tasks.processResources {
     }
     from(rootProject.file("data/curated/han/personal-encounter-v1.json")) {
         into("campaign")
+    }
+    from(rootProject.file("data/battle/waryong-tactical-rules-v1.json")) {
+        into("battle")
+    }
+    from(waryongCatalogFile) {
+        into("battle/waryong")
+    }
+    from(rootProject.file("data/battle/waryong/NOTICE.md")) {
+        into("battle/waryong")
     }
     from(rootProject.file("data/curated/han/march-tempo-targets-v1.json")) {
         into("campaign")

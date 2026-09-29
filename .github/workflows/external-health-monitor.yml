@@ -1,0 +1,75 @@
+name: External Health Monitor
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/external-health-*.yml'
+      - 'tools/ops/external_health_*.py'
+      - 'tools/ops/test_external_health_*.py'
+      - 'docs/operations/external-health-monitor.md'
+  schedule:
+    - cron: '1-59/5 * * * *'
+  workflow_dispatch:
+    inputs:
+      exercise_alert_recovery:
+        description: '기존 웹훅에 시험 경보와 복구를 한 번씩 보냅니다'
+        type: boolean
+        default: false
+
+concurrency:
+  group: external-health-monitor
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  contract:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify external health classifier and adapter
+        run: python3 -m unittest tools/ops/test_external_health_contract.py tools/ops/test_external_health_run.py -q
+      - name: Preserve VM-side detailed checks
+        run: bash tools/ops/daemon_health_alert_contract_test.sh
+  probe:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find previous secret-free state
+        id: previous
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tools/ops/external_health_run.py find-state probe
+      - name: Download previous state
+        if: steps.previous.outputs.run_id != ''
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: external-health-state-probe
+          path: previous-state
+          run-id: ${{ steps.previous.outputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Check public health and peer heartbeat
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PREVIOUS_STATE_EXPECTED: ${{ steps.previous.outputs.run_id != '' }}
+          STATE_LOOKUP_ERROR: ${{ steps.previous.outcome == 'failure' || steps.previous.outputs.lookup_error == 'true' }}
+          EXERCISE_ALERT_RECOVERY: ${{ inputs.exercise_alert_recovery }}
+          DAEMON_ALERT_WEBHOOK_URL: ${{ secrets.DAEMON_ALERT_WEBHOOK_URL }}
+        run: python3 tools/ops/external_health_run.py execute probe
+      - name: Save secret-free state
+        if: always() && hashFiles('current-state/monitor-state.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-health-state-probe
+          path: current-state/monitor-state.json
+          retention-days: 7
+          if-no-files-found: error

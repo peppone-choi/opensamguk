@@ -1542,3 +1542,14 @@ web/game/lib/hwiha-reads.ts
 | `TURN_PROFILE_NAME`·`OPENSAMGUK_PROFILE` | `che:scenario_2` | `pep:scenario_990002` |
 
 새 기본값은 `SERVER_ID=pep`, `SCENARIO_CODE=scenario_990002`와 일치한다. 운영자가 환경 변수로 지정한 프로필은 그대로 적용한다. 기존 Redis 키 접두사 `sammo:`는 저장 데이터 호환성 검토 후 별도로 변경한다.
+
+## 시나리오 보관과 지도 설정 이름
+
+| 이전 이름·경로 | 새 이름·경로 | 범위 |
+| --- | --- | --- |
+| `HAN_MAP_FILE` | `MAP_TILES_FILE` | API·엔진 지도 타일 파일 설정 |
+| `HAN_RUNTIME_MAP_FILE` | `MAP_RUNTIME_FILE` | 엔진 초기 지도 파일 설정 |
+| `HAN_WORLD_V3_RUNTIME_MAP_FILE` | `MAP_RELEASE_RUNTIME_FILE` | 엔진 릴리스 지도 파일 설정 |
+| `infra/src/main/resources/scenario/scenario_{0,1,2,900…914,9200,1010…1120}.json` | `data/archive/scenarios/`의 같은 파일명 | 은퇴 시나리오 31개; 파일 바이트와 SHA-256 유지 |
+
+런타임 classpath에는 `scenario_990002.json`과 `scenario_3190.json`만 남긴다. 역사 지도 route-node manifest의 `resourcePath`는 승인된 provenance 레이블이라 원래 classpath 경로를 유지한다. 파일은 보관 경로에서 읽고 SHA-256으로 검증한다. `han-world-v3` 등 저장된 세계의 지도 번들 ID와 해시 핀도 변경하지 않는다.

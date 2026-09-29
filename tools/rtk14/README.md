@@ -18,7 +18,7 @@ assignment. The following exact input identities are reviewed:
 | 루반 | 65 / 76 / 39 | 178 / 207 | 누반 / 楼班, 10502 |
 | 곽씨 | 42 / 4 / 55 | 184 / 235 | 곽여왕 / 郭女王, 10815 |
 
-The input fingerprints occur in `infra/src/main/resources/scenario/scenario_1021.json`.
+The input fingerprints occur in `data/archive/scenarios/scenario_1021.json`.
 Registry Korean names are recorded in `tools/scenario/officer-name-map.tsv`;
 Japanese identities are recorded in `tools/scenario/officer-id-registry.tsv`.
 Corroborating identity dates: [楼班](https://wikiwiki.jp/sangokushi14/楼班)

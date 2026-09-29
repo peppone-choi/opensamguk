@@ -37,6 +37,7 @@ class CommandMutationSecurityChainTest {
     @RestController
     class Probe {
         @PostMapping("/api/command/{*path}") fun mutate() = "ok"
+        @PostMapping("/api/battles/{worldId}/{battleId}/join-ticket") fun join() = "ok"
         @GetMapping("/api/command/metadata") fun metadata() = "ok"
     }
     @Autowired lateinit var context: WebApplicationContext
@@ -55,6 +56,11 @@ class CommandMutationSecurityChainTest {
             .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN).claim(GatewayJwtClaims.ROLE, "USER")
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
         mvc.perform(post("/api/command/bulk").header("Authorization", "Bearer $token")).andExpect(status().isOk)
+        mvc.perform(post("/api/battles/1/battle-1/join-ticket")).andExpect(status().is4xxClientError)
+        mvc.perform(post("/api/battles/1/battle-1/join-ticket").header("Authorization", "Bearer invalid"))
+            .andExpect(status().is4xxClientError)
+        mvc.perform(post("/api/battles/1/battle-1/join-ticket").header("Authorization", "Bearer $token"))
+            .andExpect(status().isOk)
     }
     companion object { const val SECRET = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU=" }
 }

@@ -165,6 +165,8 @@ class ReservedTurnHandler(
      * the ruler's own `officer_level=1` demotion and delegate succession. Default = no-op (no heir).
      */
     private val nextRuler: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
+    /** Imperial succession is independent of, and ordered before, national ruler succession. */
+    private val onGeneralDeath: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
     /**
      * Dying-message provider (`General.php:573-580` → `TextDecoration\DyingMessage`). The RNG-selected
      * variant is wired by the G1 gate; the default is the byte-exact PHP `$defaultMessage`
@@ -1342,6 +1344,9 @@ class ReservedTurnHandler(
      */
     private fun kill(general: TurnGeneral, env: LifecycleEnv) {
         val generalId = general.id
+
+        // A failing imperial transition aborts this kill before national succession and tombstone.
+        onGeneralDeath(generalId, env)
 
         // 군주였으면 유지 이음 — officer_level==12 → nextRuler() then setVar('officer_level', 1) (:554-558).
         if (general.officerLevel == 12) {

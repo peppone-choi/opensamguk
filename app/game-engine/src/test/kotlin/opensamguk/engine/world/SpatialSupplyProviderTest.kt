@@ -144,7 +144,7 @@ class SpatialSupplyProviderTest {
 
         for (scenarioCode in scenarioCodes) {
             val scenario = ScenarioJson.loadScenario(
-                Path("../../infra/src/main/resources/scenario/scenario_$scenarioCode.json").readText(),
+                Path("../../data/archive/scenarios/scenario_$scenarioCode.json").readText(),
             )
             val ownerByCity = scenario.nations.flatMap { nation ->
                 nation.cities.map { cityToken -> cityToken.toInt() to nation.id }
