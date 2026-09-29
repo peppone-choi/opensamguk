@@ -123,6 +123,25 @@ done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 
 현재 `phase-evidence.json`의 `liveEncounterCount`는 행군 사건의 조우 ID 수이고 `npcBattles`는 최종 장수 meta에 `lastBattle`이 남은 사람 수다. `lastBattle`은 마지막 결과로 덮이므로 **전체 전투 결과 분포를 복원할 수 없다**. 현 수집기는 전투 결과 자료가 없음을 `NOT_COLLECTED`로 표시한다. L1의 계측·슬롯 합의 뒤 격리 시험이나 읽기 전용 관측에서 조우별 원본 결과를 확보해 출처 SHA·전장 핀과 함께 붙이기 전에는 W4 전투 관문을 `BLOCKED`로 둔다. 승자 없는 24라운드 종료가 재현되면 조우 수가 양수여도 밸런스·전장 계약 판정 전에는 통과로 적지 않는다.
 
+### QA 결과 export 소비 계약 초안
+
+`tools/e2e/collect_yuzhou_evidence.py --battle-export <경로>`는 제품 기록 종류가 정해지기 전의 **QA 전용 정규화 JSON**을 검증한다. 예제 `tools/e2e/testdata/encounter-outcomes-draft.json`의 값은 합성 fixture이며 실측이 아니다. `origin`에는 정확한 Git·지도·시나리오 해시와 world ID를 적는다. 출처가 `MEMORY_ONLY`면 발행 경계는 `IN_MEMORY_TEST`, `DB_BACKED`면 `AFTER_SUCCESSFUL_FLUSH`로 구분한다. `sealedEncounterIds`는 독립된 DB `march.corps` 사건의 조우 ID와 일치해야 한다. 해결 `rows`와 `disbandedEncounterIds`·`unresolvedEncounterIds`는 이 집합을 빠짐없이 분할해야 하며 `(worldId, encounterId)` 중복을 거절한다.
+
+L1과 맞춘 한 행의 DTO 필드는 `worldId`, `encounterId`, `resolvedYear/Month/Phase`, `provinceId`, `approachProvinceId`, `worldMapVariant`, `topologyRevision/Hash`, `tilesContentHash`, `deploymentRuleVersion/layoutRuleVersion/geometryRuleVersion/resolutionRuleVersion`, `initialSeparationSteps`, `outcome`, 정렬된 `winners`/`statuses`, `barrier`, `rounds`, `replayHash`, 실제 `callbackInvoked`다. 전장 가로·세로 칸 수와 이동 속도는 DTO 값으로 가장하지 않고, `tilesContentHash`·규칙 버전이 가리키는 별도 고정 산출물과 대조한다.
+
+`initialSeparationSteps`는 봉인된 `EncounterDeployment.tokens`의 실제 좌표를 가진 공격 측과 수비 측 토큰 집합 사이, 선택된 `BattlefieldLayout`의 육상 통과 가능 칸에서 4방향 BFS로 구한 최소 이동 수다. 점유·충돌·사거리·속도는 제외하고, 양측 배치가 없으면 `null`이다. 수집기는 이 값을 재계산하지 않고 L1 관측값과 전장 핀을 그대로 묶는다.
+
+전투 결과 observer는 성공한 `flushWithGeneration` 또는 `retryRetainedFlush` 뒤에만 export를 공개하고, 실패 flush에서는 행을 내지 않는다. DB commit 뒤 export 전 크래시로 행이 사라져도 위 독립 DB 조우 ID 대조가 실패해야 한다. 현재 이 producer 연결은 없고, consumer가 유효한 초안 JSON을 읽더라도 상태는 `CONTRACT_DRAFT`다. `MEMORY_ONLY`는 최종 W4 DB 영속 근거가 아니다. L1의 immutable DTO/게임 로그 `kind+refs+facts`와 공개 범위가 확정되면 매핑과 합격 조건을 함께 갱신한다. 그 전에는 제품 호출 파일을 수정하지 않는다.
+
+프로그램으로 구성한 DB harness는 `runTick` 정상 반환 또는 retained retry true 뒤 pending batch를 게시할 수 있다. `runTick`은 flush 뒤 후속 단계에서도 예외가 날 수 있으므로 그 batch를 다음 tick과 섞어 게시하지 않고 격리한다. 기존 Docker 브라우저 W4는 `DaemonLoopConfig`가 `AssignmentMarchTurn`을 직접 구성하므로 observer 주입 경로가 아직 없다. B2가 소유한 해당 파일은 main 착지 전 편집하지 않으며, 격리 브라우저 스택의 producer 연결은 별도 작업으로 남는다.
+
+producer가 격리 스택 산출물에 `battle-outcomes.json`을 내기 시작한 뒤에는 다음과 같이 원본 Playwright 첨부와 함께 읽는다. 현재는 해당 파일이 생성되지 않으므로 이 명령을 W4 완료 기록으로 실행하지 않는다.
+
+```sh
+python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
+  --battle-export "$E2E_ARTIFACT_DIR/battle-outcomes.json"
+```
+
 ## 4. 산출물과 판정표
 
 `E2E_ARTIFACT_DIR` 아래 `playwright-results.json`은 원본이다. 수집기는 건너뛴/재시도한/실패한 Playwright 결과와 화면·API·DB 첨부 누락을 거절하고, 이미 있는 다른 바이트의 파일을 덮어쓰지 않는다. `--check-only`는 출력 없이 형식만 확인한다. 산출물은 개인 계정·장수 데이터와 게임 응답을 포함할 수 있으므로 PR에 원문을 넣지 않고 검토 가능한 보안 저장 위치와 요약·해시만 보고한다.
@@ -137,6 +156,7 @@ done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 | `attachments/phase-evidence.json` | 행군 진척, 포위·NPC 전투, 조우, 중립 재점령, 적대 기간, 월단평 |
 | `yuzhou-evidence-manifest.json` | 원본 결과와 추출 첨부의 SHA256, 화면/API/사건 수. 내부 계정 정보가 섞인 `phase_evidence`는 공개 PR 첨부에서 제외 |
 | 별도 조우별 전투 결과표 | `encounterId`, 봉인·해결 순, 전장 해시/크기·시작 거리, 결과·승자/무승자·지휘관 상태·라운드/장벽·callback. 현재 수집 불가이면 `BLOCKED` |
+| `--battle-export` QA JSON | 위 초안 계약 검증과 결과 분포 요약. 현재는 `CONTRACT_DRAFT`; 제품/DB 결과의 최종 합격 판정 아님 |
 | `docker-compose-build-*.log`, `health-*`, `cleanup-resources.txt` | 이미지 순차 빌드, 서비스 상태, 격리 볼륨·컨테이너 정리 |
 | `container-image-ids.tsv` | 살아 있는 격리 컨테이너의 정확한 이미지 ID. 별도 터미널에서 수집 |
 

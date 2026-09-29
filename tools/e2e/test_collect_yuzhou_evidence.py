@@ -4,7 +4,10 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from collect_yuzhou_evidence import SCREENS, collect, render_tsv, write_once
+from collect_yuzhou_evidence import SCREENS, collect, render_tsv, summarize_battle_export, write_once
+
+
+BATTLE_FIXTURE = Path(__file__).parent / "testdata" / "encounter-outcomes-draft.json"
 
 
 def attachment(name: str, body: bytes) -> dict:
@@ -17,7 +20,8 @@ def fixture() -> dict:
         attachments.append(attachment(f"screen-{screen}", b"\x89PNG\r\n\x1a\nimage"))
         attachments.append(attachment(f"api-{screen}-0", b"{}"))
     attachments.extend((
-        attachment("db-hwiha-slice", b"{}"),
+        attachment("db-hwiha-slice", b'{"sieges":[{"status":"FALLEN","turns":3},'
+                   b'{"status":"FALLEN","turns":18},{"status":"FALLEN","turns":25}]}'),
         attachment("phase-events", json.dumps([
             {"year": 190, "month": 1, "phase": 1, "kind": "march.corps"},
             {"year": 190, "month": 1, "phase": 1, "kind": "march.corps"},
@@ -45,6 +49,8 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
         self.assertEqual(summary["first_event_by_kind"]["march.corps"],
                          {"year": 190, "month": 1, "phase": 1})
         self.assertEqual(summary["battle_result_gate"]["status"], "NOT_COLLECTED")
+        self.assertEqual(summary["siege_tempo"],
+                         {"fallen_turns": [3, 18, 25], "within_12_to_24": 1})
         self.assertIn(b"190\t1\t1\tmarch.corps\t2\n", render_tsv(rows))
 
     def test_missing_screen_is_rejected(self):
@@ -66,6 +72,42 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "existing evidence differs"):
                 write_once(path, b"different")
             self.assertEqual(path.read_bytes(), b"original")
+
+    def test_draft_battle_projection_counts_winnerless_round_limit(self):
+        summary = summarize_battle_export(BATTLE_FIXTURE,
+                                          {"qa-draft-round-limit", "qa-draft-decisive"})
+        self.assertEqual(summary["status"], "CONTRACT_DRAFT")
+        self.assertEqual(summary["resolved_count"], 2)
+        self.assertEqual(summary["winnerless_count"], 1)
+        self.assertEqual(summary["round_24_count"], 1)
+        self.assertEqual(summary["barriers"]["ROUND_LIMIT"], 1)
+        self.assertEqual(summary["callback_count"], 1)
+        self.assertEqual(summary["evidence_source"], "MEMORY_ONLY")
+        self.assertEqual(summary["commander_statuses"], {"HOLDING": 1, "RETREATED": 3})
+        self.assertEqual(summary["initial_separation_steps"], [9, 45])
+        self.assertEqual(summary["world_map_variants"], {"MAP4": 2})
+
+    def test_battle_export_requires_db_backed_sealed_ids(self):
+        with self.assertRaisesRegex(ValueError, "differ from DB-backed march events"):
+            summarize_battle_export(BATTLE_FIXTURE, {"different-encounter"})
+
+    def test_duplicate_battle_id_is_rejected(self):
+        data = json.loads(BATTLE_FIXTURE.read_text())
+        data["rows"][1]["encounterId"] = data["rows"][0]["encounterId"]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "duplicate.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate encounterId"):
+                summarize_battle_export(path)
+
+    def test_missing_resolved_battle_id_is_rejected(self):
+        data = json.loads(BATTLE_FIXTURE.read_text())
+        data["rows"].pop()
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "missing.json"
+            path.write_text(json.dumps(data), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "missing or adds resolved encounter IDs"):
+                summarize_battle_export(path)
 
 
 if __name__ == "__main__":

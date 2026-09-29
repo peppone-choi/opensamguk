@@ -1,0 +1,72 @@
+{
+  "schemaVersion": "qa-encounter-outcomes-draft-v0",
+  "origin": {
+    "worldId": 990002,
+    "evidenceSource": "MEMORY_ONLY",
+    "publishBoundary": "IN_MEMORY_TEST",
+    "gitSha": "0000000000000000000000000000000000000000",
+    "mapSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "scenarioSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "sealedEncounterIds": ["qa-draft-round-limit", "qa-draft-decisive"],
+  "disbandedEncounterIds": [],
+  "unresolvedEncounterIds": [],
+  "rows": [
+    {
+      "worldId": 990002,
+      "encounterId": "qa-draft-round-limit",
+      "resolvedYear": 190,
+      "resolvedMonth": 1,
+      "resolvedPhase": 3,
+      "provinceId": "land:42791",
+      "approachProvinceId": "land:42790",
+      "worldMapVariant": "MAP4",
+      "topologyRevision": "qa-draft-r1",
+      "topologyHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "tilesContentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "deploymentRuleVersion": 1,
+      "layoutRuleVersion": 1,
+      "geometryRuleVersion": 1,
+      "resolutionRuleVersion": 1,
+      "initialSeparationSteps": 45,
+      "outcome": "DEFENDER_VICTORY",
+      "barrier": "ROUND_LIMIT",
+      "rounds": 24,
+      "winners": [],
+      "statuses": [
+        { "generalId": 1001, "status": "RETREATED" },
+        { "generalId": 1002, "status": "RETREATED" }
+      ],
+      "replayHash": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "callbackInvoked": false
+    },
+    {
+      "worldId": 990002,
+      "encounterId": "qa-draft-decisive",
+      "resolvedYear": 190,
+      "resolvedMonth": 2,
+      "resolvedPhase": 1,
+      "provinceId": "land:42791",
+      "approachProvinceId": "land:42790",
+      "worldMapVariant": "MAP4",
+      "topologyRevision": "qa-draft-r1",
+      "topologyHash": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "tilesContentHash": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "deploymentRuleVersion": 1,
+      "layoutRuleVersion": 1,
+      "geometryRuleVersion": 1,
+      "resolutionRuleVersion": 1,
+      "initialSeparationSteps": 9,
+      "outcome": "ATTACKER_VICTORY",
+      "barrier": "RETREAT_REQUIRED",
+      "rounds": 23,
+      "winners": [1001],
+      "statuses": [
+        { "generalId": 1001, "status": "HOLDING" },
+        { "generalId": 1002, "status": "RETREATED" }
+      ],
+      "replayHash": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "callbackInvoked": true
+    }
+  ]
+}
