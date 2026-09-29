@@ -411,7 +411,7 @@ class AiTurnAdapterE2ETest {
 
     private fun hanWanderingWorld(crew: Int, followers: Boolean = true, defense: Int = 2000): InMemoryTurnWorld {
         val variant = opensamguk.logic.world.WorldMapVariant.V3_835
-        val county = CityConstRegistry.hanWorld(variant).all().values.first { it.level >= 10 }
+        val county = CityConstRegistry.forVariant(variant).all().values.first { it.level >= 10 }
         val state = baseState().copy(config = linkedMapOf("mapName" to "han-world-v3", "unitSet" to "han", "ruleProfile" to "SAMMO"),
             worldMapVariant = variant)
         val ruler = general(id = 20, nationId = 20, cityId = county.id, officerLevel = 12).copy(crew = crew)

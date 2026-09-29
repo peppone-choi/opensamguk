@@ -36,6 +36,9 @@
 | `Han780V1CityConst`·`Han780V1GateIndex` | `Archive780CityConst`·`Archive780GateIndex` | 생성 상수 재핀 | 연도별 보관본 코드 이름; `han-780-v1` 저장 릴리스 ID 유지 |
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
+| `HanAdministrativeAxis` | `AdministrativeAxis` | 잔여 지도 코드 개명 | 판에 고정된 원본 지도 경로와 관리 축 핀 바이트는 유지 |
+| `CityConstRegistry.hanWorld` | `CityConstRegistry.forVariant` | 잔여 지도 코드 개명 | `WorldMapVariant`별 상수 조회 함수만 개명 |
+| `WorldMapCanvas.test.ts`의 로컬 `hanTiles` | `worldTiles` | 잔여 지도 코드 개명 | 불러오는 `han-tiles.json` 판 ID는 유지 |
 | `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
 | `Han<연도>Artifacts`·`Han1447Map4Artifacts` | `Archive<연도>Artifacts`·`Archive1447Map4Artifacts` | 보관본 로더 개명 | 11개 릴리스 번들 로더와 10개 무결성 테스트를 순수 개명; `han-world-v3-*` 번들 ID·catalog SHA 불변 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |

@@ -40,7 +40,7 @@ data class ConstraintContext(
         val mapName = if ("mapName" !in env) opensamguk.logic.world.CityConstRegistry.DEFAULT_MAP_NAME
             else env["mapName"] as? String ?: return null
         return if (mapName == "han-world-v3") {
-            worldMapVariant?.let(opensamguk.logic.world.CityConstRegistry::hanWorld)
+            worldMapVariant?.let(opensamguk.logic.world.CityConstRegistry::forVariant)
         } else {
             if (worldMapVariant != null) null else opensamguk.logic.world.CityConstRegistry.find(mapName)
         }
