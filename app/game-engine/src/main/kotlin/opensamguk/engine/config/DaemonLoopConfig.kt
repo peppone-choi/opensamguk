@@ -1,6 +1,9 @@
 package opensamguk.engine.config
 
 import opensamguk.engine.flush.FlushRecoveryGateProvider
+import opensamguk.engine.campaign.BattleOutcomeBatchSink
+import opensamguk.engine.campaign.BattleOutcomeObserver
+import opensamguk.engine.campaign.BattleOutcomePostFlush
 
 import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.constants.GameConst
@@ -215,6 +218,7 @@ class DaemonLoopConfig {
         // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
         v2CityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
+        battleOutcomeBatchSinkProvider: ObjectProvider<BattleOutcomeBatchSink>,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -225,6 +229,8 @@ class DaemonLoopConfig {
 
         val registry = CommandRegistry(generalActionPipeline)
         val pipelineBuilder = EngineGeneralActionPipelineBuilder(world, startYear)
+        val battleOutcomePostFlush = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA)
+            battleOutcomeBatchSinkProvider.getIfAvailable()?.let(::BattleOutcomePostFlush) else null
 
         // ONE GeneralAI per general per turn — its single RandUtil is threaded through BOTH the nation
         // pass (chooseNationTurn, stream PREFIX) and the general pass (chooseGeneralTurn, continuation).
@@ -510,7 +516,7 @@ class DaemonLoopConfig {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.campaign.AssignmentMarchTurn(world, recorder,
                     artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, warOutcomes,
-                    marchReactions)
+                    marchReactions, observations = battleOutcomePostFlush ?: BattleOutcomeObserver.NONE)
                 movement::onTurn
             } else { _, _, _ -> },
             npcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
@@ -557,6 +563,7 @@ class DaemonLoopConfig {
                 opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
                     artifacts.provinceCells, spatialSupplyNetworkProvider, warOutcomes)
             } else null,
+            battleOutcomePostFlush = battleOutcomePostFlush,
         )
     }
 
