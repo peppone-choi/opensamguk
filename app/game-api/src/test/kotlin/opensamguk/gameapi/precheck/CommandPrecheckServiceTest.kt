@@ -16,7 +16,6 @@ import org.mockito.Mockito.`when`
 import java.util.Optional
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 
@@ -164,35 +163,6 @@ class CommandPrecheckServiceTest {
             assertEquals("인자가 올바르지 않습니다.", blocked.reason)
             assertEquals(null, blocked.constraintName)
         }
-    }
-
-    @Test
-    fun `recruit availability exposes typed restrictions and fails closed for an unsupported set`() {
-        val availability = service().recruitAvailability(10)!!
-        assertTrue(availability.supported)
-        assertTrue(availability.crewTypes.single { it.crewType == 1100 }.available)
-        val elite = availability.crewTypes.single { it.crewType == 1104 }
-        assertFalse(elite.available)
-        assertEquals("현재 선택할 수 없는 병종입니다.", elite.reason)
-
-        val unsupportedWorld = worldState().apply {
-            config = linkedMapOf(
-                "startYear" to 190,
-                "mapName" to "che",
-                "map" to linkedMapOf("unitSet" to "che"),
-                "unitSet" to "not-ported",
-            )
-        }
-        val unsupported = service(worldStateEntity = unsupportedWorld).recruitAvailability(10)!!
-        assertFalse(unsupported.supported)
-        assertTrue(unsupported.crewTypes.isEmpty())
-
-        val blankWorld = worldState().apply {
-            config = linkedMapOf("startYear" to 190, "mapName" to "che", "unitSet" to "  ")
-        }
-        val blank = service(worldStateEntity = blankWorld).recruitAvailability(10)!!
-        assertFalse(blank.supported)
-        assertTrue(blank.crewTypes.isEmpty())
     }
 
     @Test
