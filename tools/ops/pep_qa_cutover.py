@@ -91,6 +91,30 @@ class DeployerLeaseReset:
         return receipt
 
 
+class DeployerBinaryVerifier:
+    """Pin the separately promoted Docker #60 binary before touching PEP."""
+
+    def __init__(self, recovery, expected_sha256):
+        require(isinstance(expected_sha256, str) and SHA64.fullmatch(expected_sha256),
+                'reviewed deployer binary SHA-256 required')
+        self.recovery = recovery
+        self.expected_sha256 = expected_sha256
+
+    def verify(self):
+        container = self.recovery.inspect('container', 'opensamguk-deployer')
+        labels = container.get('Config', {}).get('Labels') or {}
+        require(container.get('Name') == '/opensamguk-deployer' and
+                container.get('State', {}).get('Running') is True and
+                labels.get('com.docker.compose.project') == 'opensamguk-shared' and
+                labels.get('com.docker.compose.service') == 'deployer',
+                'reviewed deployer is not running')
+        raw = self.recovery.docker.run(
+            ['container', 'exec', 'opensamguk-deployer',
+             'sha256sum', '/usr/local/bin/deployer']).decode().strip()
+        require(raw == self.expected_sha256 + '  /usr/local/bin/deployer',
+                'running deployer binary differs from reviewed build')
+
+
 class GitHubFinalEvidenceVerifier:
     def __init__(self, token):
         self.client = GitHubEvidenceClient(token)
@@ -209,7 +233,7 @@ class PepQACutover:
 
     def __init__(self, *, recovery=None, evidence_verifier=None,
                  candidate_verifier=None, cold_operator_factory=None,
-                 reset_client=None, post_probe=None):
+                 deployer_verifier=None, reset_client=None, post_probe=None):
         self.recovery = recovery or Recovery()
         self.evidence_verifier = evidence_verifier
         self.candidate_verifier = candidate_verifier
@@ -218,6 +242,7 @@ class PepQACutover:
                                                     qa_attestor=attestor))
         self.reset_client = reset_client
         self.post_probe = post_probe
+        self.deployer_verifier = deployer_verifier
 
     def run(self, *, stack, backup_root, run_identity, w1_artifact_ids,
             operation_id, lease):
@@ -229,9 +254,11 @@ class PepQACutover:
                 'private maintenance lease required')
         require(all(dependency is not None for dependency in
                     (self.evidence_verifier, self.candidate_verifier,
+                     self.deployer_verifier,
                      self.reset_client, self.post_probe)),
-                'reviewed evidence, candidate, reset and post probes required')
+                'reviewed evidence, candidate, deployer, reset and post probes required')
         with self.recovery.locked():
+            self.deployer_verifier.verify()
             evidence = self.evidence_verifier.verify(run_identity, w1_artifact_ids)
             candidate = self.candidate_verifier.verify(evidence, Path(stack))
             attestor = BoundQAAttestor(evidence, candidate)
@@ -265,6 +292,7 @@ class PepQACutover:
                 require(current == evidence, 'QA evidence changed after cold capture')
                 require_candidate(current,
                                   self.candidate_verifier.verify(current, Path(stack)))
+                self.deployer_verifier.verify()
                 status['phase'] = 'reset-submitted'
                 write_private(status_path, json_bytes(status), replace=True)
                 receipt = self.reset_client.reset(

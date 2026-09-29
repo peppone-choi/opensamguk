@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 
 from game_server_recovery import RecoveryError
-from pep_qa_cutover import DeployerLeaseReset, PepQACutover
+from pep_qa_cutover import DeployerBinaryVerifier, DeployerLeaseReset, PepQACutover
 
 
 SHA = 'a' * 40
@@ -64,6 +64,15 @@ class Candidate:
         return self.value
 
 
+class Deployer:
+    def __init__(self, recovery):
+        self.recovery = recovery
+
+    def verify(self):
+        assert self.recovery.held
+        self.recovery.events.append('deployer')
+
+
 class Cold:
     def __init__(self, recovery, attestor, directory):
         self.recovery, self.attestor, self.directory = recovery, attestor, directory
@@ -120,11 +129,13 @@ class CutoverTest(unittest.TestCase):
         self.recovery = Recovery()
         self.evidence = Evidence(self.recovery)
         self.candidate = Candidate(self.recovery)
+        self.deployer = Deployer(self.recovery)
         self.reset = Reset(self.recovery)
         self.post = Post(self.recovery)
         self.subject = PepQACutover(
             recovery=self.recovery, evidence_verifier=self.evidence,
             candidate_verifier=self.candidate,
+            deployer_verifier=self.deployer,
             cold_operator_factory=lambda attestor: Cold(self.recovery, attestor, self.root),
             reset_client=self.reset, post_probe=self.post)
 
@@ -136,8 +147,8 @@ class CutoverTest(unittest.TestCase):
     def test_one_lock_covers_proofs_cold_reset_and_observation(self):
         self.assertTrue(self.run_cutover()['observed'])
         self.assertEqual(self.recovery.events,
-                         ['lock', 'evidence', 'candidate', 'cold', 'evidence',
-                          'candidate', 'reset', 'post', 'unlock'])
+                         ['lock', 'deployer', 'evidence', 'candidate', 'cold',
+                          'evidence', 'candidate', 'deployer', 'reset', 'post', 'unlock'])
         status = json.loads((self.root / 'operation/cutover-status.json').read_text())
         self.assertTrue(status['success'])
 
@@ -152,7 +163,7 @@ class CutoverTest(unittest.TestCase):
         self.evidence.fail_on = 1
         with self.assertRaises(RecoveryError):
             self.run_cutover()
-        self.assertEqual(self.recovery.events, ['lock', 'evidence', 'unlock'])
+        self.assertEqual(self.recovery.events, ['lock', 'deployer', 'evidence', 'unlock'])
 
     def test_changed_evidence_leaves_old_stack_stopped_without_reset(self):
         self.evidence.fail_on = 2
@@ -207,6 +218,24 @@ class CutoverTest(unittest.TestCase):
         self.assertEqual(payload['scenarioCode'], 'scenario_990002')
         self.assertEqual(payload['imageTag'], SHA)
         self.assertFalse(any('e' * 32 in arg for arg in args))
+
+    def test_deployer_binary_pin_rejects_old_runtime(self):
+        class Docker:
+            def run(self, args):
+                return (b'f' * 64) + b'  /usr/local/bin/deployer\n'
+
+        class Runtime:
+            docker = Docker()
+
+            def inspect(self, kind, name):
+                return {'Name': '/opensamguk-deployer', 'State': {'Running': True},
+                        'Config': {'Labels': {'com.docker.compose.project':
+                                              'opensamguk-shared',
+                                              'com.docker.compose.service': 'deployer'}}}
+
+        verifier = DeployerBinaryVerifier(Runtime(), HASH)
+        with self.assertRaisesRegex(RecoveryError, 'differs'):
+            verifier.verify()
 
 
 if __name__ == '__main__':
