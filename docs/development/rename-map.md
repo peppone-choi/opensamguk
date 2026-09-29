@@ -37,6 +37,7 @@
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
 | `HanAdministrativeAxis` | `AdministrativeAxis` | 잔여 지도 코드 개명 | 판에 고정된 원본 지도 경로와 관리 축 핀 바이트는 유지 |
+| `isHanCounty`·`is_han_county` | `isAdministrativeCounty`·`is_administrative_county` | 행정 縣 판정 함수 개명 | 웹 표시·지도 생성기의 코드 식별자만 변경; 지도 데이터와 표시 규칙은 유지 |
 | `CityConstRegistry.hanWorld` | `CityConstRegistry.forVariant` | 잔여 지도 코드 개명 | `WorldMapVariant`별 상수 조회 함수만 개명 |
 | `WorldMapCanvas.test.ts`의 로컬 `hanTiles` | `worldTiles` | 잔여 지도 코드 개명 | 불러오는 `han-tiles.json` 판 ID는 유지 |
 | `HwihaInputResolvedWireTest` | `InputResolvedWireTest` | 잔여 테스트 이름 개명 | 와이어 직렬화 값과 단언은 유지 |
