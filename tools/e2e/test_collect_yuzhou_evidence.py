@@ -4,7 +4,9 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from collect_yuzhou_evidence import SCREENS, collect, render_tsv, summarize_battle_export, write_once
+from collect_yuzhou_evidence import (
+    SCREENS, collect, render_tsv, sealed_encounter_ids, summarize_battle_export, write_once,
+)
 
 
 BATTLE_FIXTURE = Path(__file__).parent / "testdata" / "encounter-outcomes-draft.json"
@@ -90,6 +92,20 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
     def test_battle_export_requires_db_backed_sealed_ids(self):
         with self.assertRaisesRegex(ValueError, "differ from DB-backed march events"):
             summarize_battle_export(BATTLE_FIXTURE, {"different-encounter"})
+
+    def test_sealed_ids_require_encounter_stop_and_matching_count(self):
+        events = [
+            {"kind": "march.corps", "refs": {"stop": "BUDGET_EXHAUSTED"}},
+            {"kind": "march.corps", "refs": {"stop": "ENCOUNTER", "encounterId": "battle-1"}},
+        ]
+        self.assertEqual(sealed_encounter_ids(events, {"liveEncounterCount": 1}), {"battle-1"})
+        with self.assertRaisesRegex(ValueError, "count differs"):
+            sealed_encounter_ids(events, {"liveEncounterCount": 2})
+
+    def test_sealed_march_without_id_is_rejected(self):
+        events = [{"kind": "march.corps", "refs": {"stop": "ENCOUNTER"}}]
+        with self.assertRaisesRegex(ValueError, "missing encounterId"):
+            sealed_encounter_ids(events, {"liveEncounterCount": 0})
 
     def test_duplicate_battle_id_is_rejected(self):
         data = json.loads(BATTLE_FIXTURE.read_text())

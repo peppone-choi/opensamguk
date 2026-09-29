@@ -125,7 +125,7 @@ done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 
 ### QA 결과 export 소비 계약 초안
 
-`tools/e2e/collect_yuzhou_evidence.py --battle-export <경로>`는 제품 기록 종류가 정해지기 전의 **QA 전용 정규화 JSON**을 검증한다. 예제 `tools/e2e/testdata/encounter-outcomes-draft.json`의 값은 합성 fixture이며 실측이 아니다. `origin`에는 정확한 Git·지도·시나리오 해시와 world ID를 적는다. 출처가 `MEMORY_ONLY`면 발행 경계는 `IN_MEMORY_TEST`, `DB_BACKED`면 `AFTER_SUCCESSFUL_FLUSH`로 구분한다. `sealedEncounterIds`는 독립된 DB `march.corps` 사건의 조우 ID와 일치해야 한다. 해결 `rows`와 `disbandedEncounterIds`·`unresolvedEncounterIds`는 이 집합을 빠짐없이 분할해야 하며 `(worldId, encounterId)` 중복을 거절한다.
+`tools/e2e/collect_yuzhou_evidence.py --battle-export <경로>`는 제품 기록 종류가 정해지기 전의 **QA 전용 정규화 JSON**을 검증한다. 예제 `tools/e2e/testdata/encounter-outcomes-draft.json`의 값은 합성 fixture이며 실측이 아니다. `origin`에는 정확한 Git·지도·시나리오 해시와 world ID를 적는다. 출처가 `MEMORY_ONLY`면 발행 경계는 `IN_MEMORY_TEST`, `DB_BACKED`면 `AFTER_SUCCESSFUL_FLUSH`로 구분한다. `sealedEncounterIds`는 DB `log_entry`의 `march.corps` 중 `refs.stop=ENCOUNTER`인 행에 기록된 조우 ID 집합과 일치해야 한다. 일반 행군 기록에는 조우 ID가 없으므로 그 행은 집합에 넣지 않는다. 조우 행에 ID가 없거나 이 집합의 크기가 `phase-evidence.liveEncounterCount`와 다르면 거절한다. 해결 `rows`와 `disbandedEncounterIds`·`unresolvedEncounterIds`는 이 집합을 빠짐없이 분할해야 하며 `(worldId, encounterId)` 중복을 거절한다.
 
 L1과 맞춘 한 행의 DTO 필드는 `worldId`, `encounterId`, `resolvedYear/Month/Phase`, `provinceId`, `approachProvinceId`, `worldMapVariant`, `topologyRevision/Hash`, `tilesContentHash`, `deploymentRuleVersion/layoutRuleVersion/geometryRuleVersion/resolutionRuleVersion`, `initialSeparationSteps`, `outcome`, 정렬된 `winners`/`statuses`, `barrier`, `rounds`, `replayHash`, 실제 `callbackInvoked`다. 전장 가로·세로 칸 수와 이동 속도는 DTO 값으로 가장하지 않고, `tilesContentHash`·규칙 버전이 가리키는 별도 고정 산출물과 대조한다.
 

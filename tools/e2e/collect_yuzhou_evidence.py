@@ -247,6 +247,29 @@ def summarize_battle_export(source: Path, expected_encounter_ids: set[str] | Non
     }
 
 
+def sealed_encounter_ids(phase_events: list[dict], phase_evidence: dict) -> set[str]:
+    """Read sealed encounters from committed march logs, rejecting incomplete encounter rows."""
+    require(isinstance(phase_evidence, dict), "invalid phase evidence")
+    ids: set[str] = set()
+    for event in phase_events:
+        if event.get("kind") != "march.corps":
+            continue
+        refs = event.get("refs")
+        require(isinstance(refs, dict), "march.corps event missing refs")
+        encounter_id = refs.get("encounterId")
+        if refs.get("stop") == "ENCOUNTER":
+            require(isinstance(encounter_id, str) and encounter_id,
+                    "sealed march.corps event missing encounterId")
+            ids.add(encounter_id)
+        else:
+            require(encounter_id is None,
+                    "non-encounter march.corps event carries encounterId")
+    require(ids, "no DB-backed sealed encounter IDs")
+    require(phase_evidence.get("liveEncounterCount") == len(ids),
+            "phase evidence encounter count differs from DB-backed march events")
+    return ids
+
+
 def render_tsv(rows: list[tuple[int, int, int, str, int]]) -> bytes:
     output = io.StringIO(newline="")
     writer = csv.writer(output, delimiter="\t", lineterminator="\n")
@@ -273,9 +296,7 @@ def main() -> int:
     decoded, rows, summary = collect(source)
     if args.battle_export is not None:
         phase_events = json.loads(decoded["phase-events.json"])
-        expected_ids = {event["refs"]["encounterId"] for event in phase_events
-                        if event["kind"] == "march.corps" and isinstance(event.get("refs"), dict)
-                        and isinstance(event["refs"].get("encounterId"), str)}
+        expected_ids = sealed_encounter_ids(phase_events, summary["phase_evidence"])
         summary["battle_result_gate"] = summarize_battle_export(args.battle_export, expected_ids)
     if not args.check_only:
         attachment_dir = args.artifact_dir / "attachments"
