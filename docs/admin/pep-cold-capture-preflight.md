@@ -52,3 +52,7 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 
 `scenario_990002`와 1447 城은 새 QA 목표다. 현재 PEP의 원본
 `scenario_1020`·이미지·DB는 냉간 bundle과 격리 복원에서 그대로 보존한다.
+기존 외부 `data/scenarios`의 31개 파일은 구세계 입력이다. 새 QA 세계에는 최종 main의
+`scenario_990002.json` SHA-256과 지도 SHA-256을 핀하고, 외부 bind가 번들보다 우선하는
+실제 loader 경로에서 어느 파일이 선택됐는지 검증해야 한다. 과거 reset 기본값인
+`scenario_1020` 또는 835 城을 새 세계의 입력으로 재사용하지 않는다.
