@@ -328,7 +328,6 @@ class ChangeRecorderTest {
     fun `clear empties every channel so the long-lived recorder does not re-emit deltas next tick`() {
         val recorder = ChangeRecorder()
         recorder.diffGeneral(general(id = 1), general(id = 1, gold = 10))   // UPDATE/patch 채널
-        recorder.recordBettingInsert(linkedMapOf("betting_id" to 1, "general_id" to 1))  // INSERT 전용 채널
         recorder.recordBoardPostInsert(linkedMapOf("nation_id" to 1, "title" to "t"))    // 게시판 INSERT 전용
         recorder.recordBoardCommentInsert(linkedMapOf("post_id" to 1, "content_text" to "c"))
         recorder.recordYearbookInsert(linkedMapOf("profile_name" to "sc", "year" to 181, "month" to 1)) // W0-8 연감 채널
@@ -339,7 +338,6 @@ class ChangeRecorderTest {
         // 모든 채널이 비워짐 → clear 후 재-flush는 아무것도 방출하지 않는다(다음 tick INSERT 중복 없음).
         assertFalse(recorder.isDirty, "clear()가 dirty 플래그를 리셋한다")
         assertTrue(recorder.dirtyGeneralIds().isEmpty())
-        assertTrue(recorder.bettingInserts().isEmpty())
         assertTrue(recorder.boardPostInserts().isEmpty(), "board_post INSERT는 다음 tick으로 넘어가면 안 된다")
         assertTrue(recorder.boardCommentInserts().isEmpty(), "board_comment INSERT는 다음 tick으로 넘어가면 안 된다")
         assertTrue(recorder.yearbookInserts().isEmpty(), "yearbook UPSERT는 다음 tick으로 넘어가면 안 된다")
