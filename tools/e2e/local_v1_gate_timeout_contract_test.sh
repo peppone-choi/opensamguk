@@ -472,7 +472,7 @@ export E2E_DOCKER_CAPTURE_FILE="$tmp_dir/runner-isolation-docker.txt"
 export E2E_ARGS_CAPTURE_FILE="$tmp_dir/runner-args.txt"
 export E2E_TIMEOUT_CAPTURE_FILE="$tmp_dir/runner-timeout.txt"
 OPENSAMGUK_WORLD_ID=1 JWT_PRIVATE_KEY=fixture JWT_PUBLIC_KEY=fixture \
- E2E_TEST_SPEC=e2e/v1-core-live.spec.ts E2E_ARTIFACT_DIR="$runner_artifacts" "$gate"
+ E2E_TEST_SPEC=e2e/campaign-core-live.spec.ts E2E_ARTIFACT_DIR="$runner_artifacts" "$gate"
 python3 - "$runner_artifacts" <<'PYTEST'
 import json, pathlib, sys
 root=pathlib.Path(sys.argv[1])
@@ -481,12 +481,12 @@ services=json.loads((root/(project+'-containers.json')).read_text())['services']
 assert set(services)==set('postgres redis gateway-api board-api game-api game-engine web-gateway web-game nginx'.split())
 assert all(v=={'container_name':project+'-'+k} for k,v in services.items())
 PYTEST
-[[ "$(tail -n 1 "$E2E_ARGS_CAPTURE_FILE")" == 'e2e/v1-core-live.spec.ts' ]] || fail 'spec not passed as single argument'
+[[ "$(tail -n 1 "$E2E_ARGS_CAPTURE_FILE")" == 'e2e/campaign-core-live.spec.ts' ]] || fail 'spec not passed as single argument'
 [[ "$(wc -l < "$E2E_ARGS_CAPTURE_FILE" | tr -d ' ')" == 4 ]] || fail 'spec arguments split or expanded'
 grep -Fq 'ps -q postgres' "$E2E_DOCKER_CAPTURE_FILE" || fail 'postgres health not project scoped'
 grep -Fq 'ps -q redis' "$E2E_DOCKER_CAPTURE_FILE" || fail 'redis health not project scoped'
 if grep -Eq 'inspect .*opensamguk-(postgres|redis)' "$E2E_DOCKER_CAPTURE_FILE"; then fail 'fixed container health remains'; fi
-for bad_spec in '--help' '../e2e/v1-core-live.spec.ts' 'e2e/missing.spec.ts' 'e2e/v1-core-live.spec.ts --workers=99' 'e2e/$(touch injected).spec.ts'; do
+for bad_spec in '--help' '../e2e/campaign-core-live.spec.ts' 'e2e/missing.spec.ts' 'e2e/campaign-core-live.spec.ts --workers=99' 'e2e/$(touch injected).spec.ts'; do
   if OPENSAMGUK_WORLD_ID=1 JWT_PRIVATE_KEY=fixture JWT_PUBLIC_KEY=fixture E2E_TEST_SPEC="$bad_spec" \
     E2E_ARTIFACT_DIR="$tmp_dir/invalid-spec" "$gate" >"$tmp_dir/invalid-spec.log" 2>&1; then
     fail 'unsafe or nonexistent spec accepted'
