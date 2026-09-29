@@ -95,6 +95,10 @@ def collect(source: Path) -> tuple[dict[str, bytes], list[tuple[int, int, int, s
         "event_count": len(events),
         "event_counts_by_kind": dict(sorted(totals_by_kind.items())),
         "first_event_by_kind": dict(sorted(first_by_kind.items())),
+        "battle_result_gate": {
+            "status": "NOT_COLLECTED",
+            "reason": "phase-events and final lastBattle values do not provide every resolved encounter outcome",
+        },
         "phase_evidence": phase,
         "attachments_sha256": {name: hashlib.sha256(body).hexdigest()
                                for name, body in sorted(decoded.items())},
@@ -134,6 +138,7 @@ def main() -> int:
                    (json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n").encode("utf-8"))
     print(f"Yuzhou evidence: {len(summary['screens'])} screens, "
           f"{summary['api_count']} API responses, {summary['event_count']} events")
+    print("W4 battle-result gate: NOT_COLLECTED (requires per-encounter outcome evidence)")
     return 0
 
 

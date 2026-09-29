@@ -44,6 +44,7 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
         self.assertEqual(summary["event_counts_by_kind"]["march.corps"], 2)
         self.assertEqual(summary["first_event_by_kind"]["march.corps"],
                          {"year": 190, "month": 1, "phase": 1})
+        self.assertEqual(summary["battle_result_gate"]["status"], "NOT_COLLECTED")
         self.assertIn(b"190\t1\t1\tmarch.corps\t2\n", render_tsv(rows))
 
     def test_missing_screen_is_rejected(self):

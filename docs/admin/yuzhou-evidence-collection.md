@@ -113,7 +113,15 @@ for service in gateway-api board-api game-api game-engine web-gateway web-game; 
 done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 ```
 
-실행 전 `docker-compose.yml`의 공개 URL 변수 이름과 현재 빌드 인자를 다시 대조한다. 스크립트는 합성 QA 세계에서만 가입·장수 생성·출사·발령·행군·NPC 공성/점령·월 정산을 진행한다. 사람 장수의 `killturn`을 96으로 올리기 위한 유일한 사후 DB write는 엔진 정지 중 이루어지고, 재시작 뒤 보존을 확인한다. 이 격리 write를 운영 DB에 적용하지 않는다. 포위 12–24순 목표와 월단평 편향은 사건표를 읽어 별도 판정한다. 실스택 E2E는 조우 >0, 중립 재점령 0, 수비대가 남은 점령 縣의 중립화 0, 첫 월 뒤 적대 30관계, 월단평 READY, 엔진 로그 `tick failed` 0을 단언한다.
+실행 전 `docker-compose.yml`의 공개 URL 변수 이름과 현재 빌드 인자를 다시 대조한다. 스크립트는 합성 QA 세계에서만 가입·장수 생성·출사·발령·행군·NPC 공성/점령·월 정산을 진행한다. 사람 장수의 `killturn`을 96으로 올리기 위한 유일한 사후 DB write는 엔진 정지 중 이루어지고, 재시작 뒤 보존을 확인한다. 이 격리 write를 운영 DB에 적용하지 않는다. 포위 12–24순 목표와 월단평 편향은 사건표를 읽어 별도 판정한다. 실스택 E2E는 조우 >0, 중립 재점령 0, 수비대가 남은 점령 縣의 중립화 0, 첫 월 뒤 적대 30관계, 월단평 READY, 엔진 로그 `tick failed` 0을 단언한다. **이 단언들만으로 전투 결과 관문은 통과하지 않는다.**
+
+### W4 전투 결과 관문
+
+최종 map4 전장과 이미지 SHA에서 실제 봉인·해결된 조우를 `encounterId`별로 한 줄씩 수집한다. 조우 진입 횟수, 해결·준비 불가/해산 횟수, `outcome`별 분포(`ATTACKER_VICTORY`/`DEFENDER_VICTORY`), `winners`가 빈 결과와 있는 결과, 지휘관 `HOLDING`/`RETREATED`/`DESTROYED` 분포, `barrier=ROUND_LIMIT`, `rounds=24`, `WarOutcomeListener.onEncounterResolved` 호출 여부를 **별도** 표에 낸다. 지도 전장 타일 해시·가로/세로 칸 수, 양측 시작 좌표/거리, 이동량을 함께 기록해 전장 크기·속도·라운드 제한의 영향을 볼 수 있게 한다. 함락된 각 포위의 `turns`와 12–24순 목표 대비 분포도 같은 최종 SHA에서 보고한다.
+
+`EncounterResolution`은 24라운드 상한 뒤 양측이 `RETREATED`해 `winners=[]`여도 `outcome=DEFENDER_VICTORY`로 분류할 수 있다. 이 경우 `EncounterResolver`는 승자 callback을 호출하지 않는다. 따라서 `outcome` 이름만으로 승자가 있었다고 세거나, `WarOutcomeListener` 계수 0을 조우 0으로 해석하지 않는다. L7 통제 실험에서는 1447 world/fixture에서도 Map4 격자만 사용하면 24라운드 양측 후퇴·승자 없음·callback 0이 관측됐다. 이는 #995 城 은퇴 효과와 분리된 전장 크기/속도/라운드 계약의 검토 대상이다.
+
+현재 `phase-evidence.json`의 `liveEncounterCount`는 행군 사건의 조우 ID 수이고 `npcBattles`는 최종 장수 meta에 `lastBattle`이 남은 사람 수다. `lastBattle`은 마지막 결과로 덮이므로 **전체 전투 결과 분포를 복원할 수 없다**. 현 수집기는 전투 결과 자료가 없음을 `NOT_COLLECTED`로 표시한다. L1의 계측·슬롯 합의 뒤 격리 시험이나 읽기 전용 관측에서 조우별 원본 결과를 확보해 출처 SHA·전장 핀과 함께 붙이기 전에는 W4 전투 관문을 `BLOCKED`로 둔다. 승자 없는 24라운드 종료가 재현되면 조우 수가 양수여도 밸런스·전장 계약 판정 전에는 통과로 적지 않는다.
 
 ## 4. 산출물과 판정표
 
@@ -128,6 +136,7 @@ done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 | `attachments/phase-events.json`, `phase-event-counts.tsv` | `year,month,phase,event_kind,count` 순별 사건표. 조우·포위·점령·징세·녹봉 실측 |
 | `attachments/phase-evidence.json` | 행군 진척, 포위·NPC 전투, 조우, 중립 재점령, 적대 기간, 월단평 |
 | `yuzhou-evidence-manifest.json` | 원본 결과와 추출 첨부의 SHA256, 화면/API/사건 수. 내부 계정 정보가 섞인 `phase_evidence`는 공개 PR 첨부에서 제외 |
+| 별도 조우별 전투 결과표 | `encounterId`, 봉인·해결 순, 전장 해시/크기·시작 거리, 결과·승자/무승자·지휘관 상태·라운드/장벽·callback. 현재 수집 불가이면 `BLOCKED` |
 | `docker-compose-build-*.log`, `health-*`, `cleanup-resources.txt` | 이미지 순차 빌드, 서비스 상태, 격리 볼륨·컨테이너 정리 |
 | `container-image-ids.tsv` | 살아 있는 격리 컨테이너의 정확한 이미지 ID. 별도 터미널에서 수집 |
 
