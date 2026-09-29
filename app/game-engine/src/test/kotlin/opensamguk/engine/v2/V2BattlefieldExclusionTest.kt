@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+
 import opensamguk.common.wire.*
 import opensamguk.common.world.WorldId
 import opensamguk.engine.run.TurnDaemonCommandDispatcher
@@ -28,14 +30,14 @@ class V2BattlefieldExclusionTest {
         assertEquals("BATTLEFIELD_LOCATION",denial.code)
     }
     @Test fun `deployed actor cannot recruit city garrison before ledger access`() {
-        val world=world();val recorder=ChangeRecorder();val ledger=mock(V2CityLedgerStore::class.java)
+        val world=world();val recorder=ChangeRecorder();val ledger=mock(CityLedgerStore::class.java)
         val before=world.getGeneralById(10)
         assertDenied(V2GarrisonRecruitHandler(world,recorder,ledger).handle(CityGarrisonRecruit(generalId=10,cityId=405,amount=100)))
         verifyNoInteractions(ledger)
         assertFalse(recorder.isDirty);assertEquals(before,world.getGeneralById(10))
     }
     @Test fun `deployed actor cannot escort transport from compatibility city`() {
-        val world=world();val recorder=ChangeRecorder();val ledger=mock(V2CityLedgerStore::class.java)
+        val world=world();val recorder=ChangeRecorder();val ledger=mock(CityLedgerStore::class.java)
         assertDenied(V2CityTransportHandler(world,recorder,ledger) { error("must not resolve a route") }
             .handle(CityTransport(generalId=10,fromCityId=405,toCityId=406,gold=1)))
         verifyNoInteractions(ledger);assertFalse(recorder.isDirty)

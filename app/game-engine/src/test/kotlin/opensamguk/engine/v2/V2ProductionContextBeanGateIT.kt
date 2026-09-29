@@ -5,6 +5,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.config.EngineProcessWorld
 import opensamguk.infra.content.CityCatalogAdapter
 import opensamguk.infra.content.ContentCatalog
@@ -86,7 +87,7 @@ internal fun ApplicationContext.assertNoV2Beans() {
     assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
     assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
     assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
-    assertEquals(0, getBeansOfType(V2CityLedgerStore::class.java).size, "V2CityLedgerStore beans")
+    assertEquals(0, getBeansOfType(CityLedgerStore::class.java).size, "CityLedgerStore beans")
     assertEquals(emptyMap(), v2PackageBeans(), "sandbox feature beans")
 }
 

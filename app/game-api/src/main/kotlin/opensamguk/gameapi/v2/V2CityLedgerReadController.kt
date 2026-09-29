@@ -40,7 +40,7 @@ class V2CityLedgerReadController(
 ) {
     private val worldId = processWorld.worldId
 
-    /** 도시 한 곳의 원장. 행이 없으면 0/0/0 — 엔진 `V2CityLedgerEntry.EMPTY`와 같은 시멘틱. */
+    /** 도시 한 곳의 원장. 행이 없으면 0/0/0 — 엔진 `CityLedgerEntry.EMPTY`와 같은 시멘틱. */
     data class CityLedgerView(val cityId: Int, val gold: Long, val rice: Long, val garrison: Int)
 
     data class CityLedgerListResponse(val entries: List<CityLedgerView>)

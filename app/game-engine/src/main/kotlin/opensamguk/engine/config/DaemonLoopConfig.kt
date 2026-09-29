@@ -214,7 +214,7 @@ class DaemonLoopConfig {
         spatialSupplyProvider: SpatialSupplyProvider,
         // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
-        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.v2.V2CityLedgerStore>,
+        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 

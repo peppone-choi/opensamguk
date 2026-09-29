@@ -20,8 +20,8 @@ import opensamguk.engine.v2.V2CityGarrisonAttritionContext
 import opensamguk.engine.v2.V2CityIncomeContext
 import opensamguk.engine.v2.V2CityIncomeNation
 import opensamguk.engine.v2.V2CityIncomeResult
-import opensamguk.engine.v2.V2CityLedgerEntry
-import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.city.CityLedgerEntry
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnDiplomacy
@@ -122,7 +122,7 @@ class WorldActionContext(
     private val spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
     // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼진 프로덕션에서는 null이고, 그 상태에서
     // V2ProcessCityIncome leaf가 돌면 fail-closed로 죽는다(무음 no-op이면 수입이 통째로 사라진다).
-    private val v2CityLedger: V2CityLedgerStore? = null,
+    private val v2CityLedger: CityLedgerStore? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
     V2CityIncomeContext,
@@ -397,7 +397,7 @@ class WorldActionContext(
 
     // ── V2CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
 
-    private fun requireV2Ledger(): V2CityLedgerStore = v2CityLedger
+    private fun requireV2Ledger(): CityLedgerStore = v2CityLedger
         ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 V2ProcessCityIncome 이 디스패치됐다")
 
     override fun v2CityIncomeNations(resource: String): List<V2CityIncomeNation> {
@@ -409,7 +409,7 @@ class WorldActionContext(
                 nation = n,
                 generalCityIds = n.generals.mapNotNull { g -> world.getGeneralById(g.id)?.let { g.id to it.cityId } }.toMap(),
                 ledger = n.cities.associate { c ->
-                    val e = ledger[c.id] ?: V2CityLedgerEntry.EMPTY
+                    val e = ledger[c.id] ?: CityLedgerEntry.EMPTY
                     c.id to (if (resource == "gold") e.gold else e.rice)
                 },
             )
@@ -459,7 +459,7 @@ class WorldActionContext(
                 name = it.name,
                 nationId = it.nationId,
                 state = it.state,
-                garrison = (ledger[it.id] ?: V2CityLedgerEntry.EMPTY).garrison,
+                garrison = (ledger[it.id] ?: CityLedgerEntry.EMPTY).garrison,
             )
         }
     }
