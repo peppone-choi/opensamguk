@@ -37,7 +37,7 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 5. `PepApplicationDrill.prove`로 기존 이미지의 격리 engine 세계 재적재·READY/paused 상태를 증명한다.
    `PepAuthenticatedReadProbe`가 동일 격리 네트워크에 캡처된 game-api 이미지와 외부 시나리오 사본을
    붙이고, 기존 Gateway의 설정된 ADMIN 계정으로 합법 로그인한 뒤 토큰 검증 키 일치·보호 API의
-   무인증 거부/인증 읽기·지도 읽기를 확인한다. 토큰과 응답 본문은 보고서에 저장하지 않는다.
+   무인증 거부(401/403)/인증 읽기·지도 읽기를 확인한다. 토큰과 응답 본문은 보고서에 저장하지 않는다.
    `require_complete_old_application_proof`는 login·identity·server entry·world·map 읽기 다섯 증거가
    동일 bundle/world에 묶이지 않으면 성공 판정을 거부한다. ADMIN에게 이 세계의 장수가 없으면
    `/api/my-page`의 404는 허용하지만 `/api/my-cities`의 인증 200과 지도 城 수 일치는 필수다.

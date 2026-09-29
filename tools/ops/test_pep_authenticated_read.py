@@ -59,6 +59,7 @@ class ReadDocker:
         self.calls = []
         self.configs = []
         self.city_count = 2
+        self.anonymous_status = 403
         self.stopped = False
 
     def run(self, args, *, stdin=None):
@@ -75,7 +76,7 @@ class ReadDocker:
         if '/actuator/health' in config:
             status, body = 200, {'status': 'UP'}
         elif '/api/my-page' in config and 'Authorization:' not in config:
-            status, body = 401, {}
+            status, body = self.anonymous_status, {}
         elif '/api/my-page' in config:
             status, body = 404, {}
         elif '/api/my-cities' in config:
@@ -161,6 +162,13 @@ class AuthenticatedReadTests(unittest.TestCase):
         recovery.docker.city_count = 1
         context, _ = self.context(recovery)
         with self.assertRaisesRegex(RecoveryError, 'map read differs'):
+            PepAuthenticatedReadProbe(TokenProvider())(**context)
+
+    def test_anonymous_protected_read_must_be_rejected(self):
+        recovery = ReadRecovery()
+        recovery.docker.anonymous_status = 200
+        context, _ = self.context(recovery)
+        with self.assertRaisesRegex(RecoveryError, 'did not reject missing token'):
             PepAuthenticatedReadProbe(TokenProvider())(**context)
 
 

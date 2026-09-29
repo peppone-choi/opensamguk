@@ -149,7 +149,7 @@ class PepAuthenticatedReadProbe:
             recovery.sleep(1)
         require(ready, 'isolated old API did not become healthy')
         status, _ = self._read(recovery, api, '/api/my-page')
-        require(status == 401, 'protected isolated read did not reject missing token')
+        require(status in (401, 403), 'protected isolated read did not reject missing token')
         session = self.token_provider.login(recovery)
         require(hashlib.sha256(api_env['JWT_PUBLIC_KEY'].encode()).hexdigest() == session.public_key_sha256,
                 'Gateway signer and old API verifier differ')
