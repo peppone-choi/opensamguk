@@ -656,20 +656,25 @@ jobs:
           set -euo pipefail
           openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 \
             -out "$RUNNER_TEMP/yuzhou-jwt.key" 2>/dev/null
-          openssl pkey -in "$RUNNER_TEMP/yuzhou-jwt.key" -pubout \
-            -out "$RUNNER_TEMP/yuzhou-jwt.pub" 2>/dev/null
+          qa_private_der="$(openssl pkcs8 -topk8 -nocrypt \
+            -in "$RUNNER_TEMP/yuzhou-jwt.key" -outform DER | openssl base64 -A)"
+          qa_public_der="$(openssl pkey -in "$RUNNER_TEMP/yuzhou-jwt.key" \
+            -pubout -outform DER 2>/dev/null | openssl base64 -A)"
+          qa_db_password="$(openssl rand -hex 32)"
+          qa_internal_token="$(openssl rand -hex 32)"
+          for value in "$qa_private_der" "$qa_public_der" "$qa_db_password" "$qa_internal_token"; do
+            echo "::add-mask::$value"
+          done
           {
-            echo 'JWT_PRIVATE_KEY<<YUZHOU_PRIVATE_KEY_END'
-            cat "$RUNNER_TEMP/yuzhou-jwt.key"
-            echo 'YUZHOU_PRIVATE_KEY_END'
-            echo 'JWT_PUBLIC_KEY<<YUZHOU_PUBLIC_KEY_END'
-            cat "$RUNNER_TEMP/yuzhou-jwt.pub"
-            echo 'YUZHOU_PUBLIC_KEY_END'
-            echo "POSTGRES_PASSWORD=$(openssl rand -hex 32)"
-            echo "INTERNAL_SERVICE_TOKEN=$(openssl rand -hex 32)"
+            echo "JWT_PRIVATE_KEY=$qa_private_der"
+            echo "JWT_PUBLIC_KEY=$qa_public_der"
+            echo "POSTGRES_PASSWORD=$qa_db_password"
+            echo "INTERNAL_SERVICE_TOKEN=$qa_internal_token"
             echo "SCENARIO_HOST_DIR=$GITHUB_WORKSPACE/runtime/tools/e2e/fixtures/yuzhou"
             echo "E2E_ARTIFACT_DIR=$RUNNER_TEMP/yuzhou-evidence"
           } >> "$GITHUB_ENV"
+          unset qa_private_der qa_public_der qa_db_password qa_internal_token
+          rm "$RUNNER_TEMP/yuzhou-jwt.key"
       - name: Run isolated PG, Redis and browser flow
         id: gate
         working-directory: runtime
