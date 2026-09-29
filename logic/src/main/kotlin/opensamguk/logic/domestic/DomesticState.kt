@@ -23,7 +23,7 @@ import opensamguk.logic.world.StrategicTopologySnapshot
  * | `corpsPolicies` | 군단 주인 장수 meta | 군단 방침 대기·현행 |
  */
 
-private fun invalid(what: String): Nothing = throw IllegalArgumentException("invalid HWIHA $what")
+private fun invalid(what: String): Nothing = throw IllegalArgumentException("invalid $what")
 private fun Map<*, *>.int(key: String, what: String): Int = this[key] as? Int ?: invalid(what)
 private fun Map<*, *>.string(key: String, what: String): String = this[key] as? String ?: invalid(what)
 private fun Map<*, *>.exactLong(key: String, what: String): Long = when (val value = this[key]) {
@@ -57,7 +57,7 @@ data class PlacementOrder(
         private val fields = setOf("requestId", "ownerGeneralId", "retainerId", "post", "target", "requestedAt")
         fun read(raw: Any?): PlacementOrder {
             val value = raw as? Map<*, *> ?: invalid("placement order")
-            require(value.keys == fields) { "invalid HWIHA placement order fields" }
+            require(value.keys == fields) { "invalid placement order fields" }
             val post = PlacementPost.valueOf(value.string("post", "placement post"))
             return PlacementOrder(value.string("requestId", "placement"), value.int("ownerGeneralId", "placement"),
                 value.int("retainerId", "placement"), post, PlacementTarget.read(value["target"]),
@@ -80,7 +80,7 @@ data class ActivePlacement(val order: PlacementOrder, val since: Phase, val arri
     companion object {
         fun read(raw: Any?): ActivePlacement {
             val value = raw as? Map<*, *> ?: invalid("active placement")
-            require(value.keys == setOf("order", "since", "arrivedAt")) { "invalid HWIHA active placement fields" }
+            require(value.keys == setOf("order", "since", "arrivedAt")) { "invalid active placement fields" }
             return ActivePlacement(PlacementOrder.read(value["order"]), Phase.read(value["since"]),
                 value.phaseOrNull("arrivedAt"))
         }
@@ -106,7 +106,7 @@ data class PlacementState(val active: ActivePlacement?, val pending: PlacementOr
         fun read(meta: Map<String, Any?>): PlacementState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("placement")
-            require(value.keys == setOf("version", "active", "pending") && value["version"] == 1) { "invalid HWIHA placement schema" }
+            require(value.keys == setOf("version", "active", "pending") && value["version"] == 1) { "invalid placement schema" }
             return PlacementState(value["active"]?.let(ActivePlacement::read), value["pending"]?.let(PlacementOrder::read))
         }
     }
@@ -122,7 +122,7 @@ data class PlacementMarch(val requestId: String, val checkpoint: MarchCheckpoint
         fun read(meta: Map<String, Any?>, topology: StrategicTopologySnapshot, metrics: LandMarchMetricSnapshot): PlacementMarch? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("placement march")
-            require(value.keys == setOf("version", "requestId", "checkpoint") && value["version"] == 1) { "invalid HWIHA placement march schema" }
+            require(value.keys == setOf("version", "requestId", "checkpoint") && value["version"] == 1) { "invalid placement march schema" }
             return PlacementMarch(value.string("requestId", "placement march"), MarchCheckpoint.read(value["checkpoint"], topology, metrics))
         }
     }
@@ -202,7 +202,7 @@ data class CountyPolicyState(val slot: PolicySlot, val lastApplied: PolicyApplic
         fun read(meta: Map<String, Any?>): CountyPolicyState? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("county policy")
-            require(value.keys == setOf("version", "slot", "lastApplied") && value["version"] == 1) { "invalid HWIHA county policy schema" }
+            require(value.keys == setOf("version", "slot", "lastApplied") && value["version"] == 1) { "invalid county policy schema" }
             val slot = PolicySlot.read(value["slot"])
             slot.pending?.policy?.let { require(CountyPolicy.entries.any { p -> p.name == it }) }
             return CountyPolicyState(slot, value["lastApplied"]?.let(PolicyApplication::read))
@@ -232,7 +232,7 @@ data class CommanderyPolicies(val entries: List<CommanderyPolicy>) {
         fun read(meta: Map<String, Any?>): CommanderyPolicies? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("commandery policies")
-            require(value.keys == setOf("version", "commanderies") && value["version"] == 1) { "invalid HWIHA commandery policy schema" }
+            require(value.keys == setOf("version", "commanderies") && value["version"] == 1) { "invalid commandery policy schema" }
             val rows = value["commanderies"] as? List<*> ?: invalid("commandery policies")
             return CommanderyPolicies(rows.map { raw ->
                 val row = raw as? Map<*, *> ?: invalid("commandery policy")
@@ -269,7 +269,7 @@ data class CorpsPolicyAssignments(val entries: List<CorpsPolicyAssignment>) {
         fun read(meta: Map<String, Any?>): CorpsPolicyAssignments? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("corps policies")
-            require(value.keys == setOf("version", "corps") && value["version"] == 1) { "invalid HWIHA corps policy schema" }
+            require(value.keys == setOf("version", "corps") && value["version"] == 1) { "invalid corps policy schema" }
             val rows = value["corps"] as? List<*> ?: invalid("corps policies")
             return CorpsPolicyAssignments(rows.map { raw ->
                 val row = raw as? Map<*, *> ?: invalid("corps policy")
@@ -320,7 +320,7 @@ data class ActiveWork(
         fun read(raw: Any?): ActiveWork {
             val value = raw as? Map<*, *> ?: invalid("active work")
             require(value.keys == fields || value.keys == fields + "edgeId" ||
-                value.keys == fields + setOf("edgeId", "row", "col")) { "invalid HWIHA active work fields" }
+                value.keys == fields + setOf("edgeId", "row", "col")) { "invalid active work fields" }
             require(value["status"] == CountyWorks.IN_PROGRESS)
             return ActiveWork(DomesticWork.valueOf(value.string("kind", "work")), value.string("requestId", "work"),
                 value.int("actorId", "work"), Phase.read(value["requestedAt"]), value.int("progress", "work"),
@@ -388,7 +388,7 @@ data class CountyWorks(val active: ActiveWork?, val completed: List<CompletedWor
         fun read(meta: Map<String, Any?>): CountyWorks? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("county works")
-            require(value.keys == setOf("version", "works") && value["version"] == 1) { "invalid HWIHA county works schema" }
+            require(value.keys == setOf("version", "works") && value["version"] == 1) { "invalid county works schema" }
             val rows = value["works"] as? List<*> ?: invalid("county works")
             val done = rows.filter { (it as? Map<*, *>)?.get("status") == COMPLETE }.map(CompletedWork::read)
             val open = rows.filter { (it as? Map<*, *>)?.get("status") != COMPLETE }.map(ActiveWork::read)
@@ -439,7 +439,7 @@ data class CountyMonthly(val stamp: String, val indicators: CountyIndicators) {
         fun read(meta: Map<String, Any?>): CountyMonthly? {
             if (META_KEY !in meta) return null
             val value = meta[META_KEY] as? Map<*, *> ?: invalid("county monthly")
-            require(value.keys == setOf("version", "stamp", "indicators") && value["version"] == 1) { "invalid HWIHA county monthly schema" }
+            require(value.keys == setOf("version", "stamp", "indicators") && value["version"] == 1) { "invalid county monthly schema" }
             return CountyMonthly(value.string("stamp", "county monthly"), CountyIndicators.read(value["indicators"]))
         }
     }
