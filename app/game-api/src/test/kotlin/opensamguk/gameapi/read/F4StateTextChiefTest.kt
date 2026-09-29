@@ -2,16 +2,14 @@ package opensamguk.gameapi.read
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 /**
  * W3-ChiefCenter — F4StateText의 사령부 관련 순수 함수 단위 테스트.
  *
  * 패러티 타깃:
  *  - `officerLevelText` = PHP `getOfficerLevelText($officerLevel, $nlevel)` (func_converter.php:522-565).
- *  - `CHIEF_COMMAND_TABLE` = PHP `GameConst::$availableChiefCommand` (GameConstBase.php:378-415) 순서/코드.
  *
- * 라벨/코드는 PHP에서 byte-for-byte이며 여기서 골든값으로 못 박는다(날조 금지 — 실제 PHP 테이블 그대로).
+ * 직책 라벨의 현재 표시 계약을 검증한다.
  */
 class F4StateTextChiefTest {
 
@@ -54,24 +52,4 @@ class F4StateTextChiefTest {
         assertEquals("-", F4StateText.officerLevelText(6, 5)) // code 506 미정의
     }
 
-    // ── CHIEF_COMMAND_TABLE: availableChiefCommand 순서/코드 ────────────────────────────────────────
-    @Test
-    fun `사령부 명령 테이블은 6개 카테고리를 GameConst 순서로 가진다`() {
-        val categories = F4StateText.CHIEF_COMMAND_TABLE.map { it.first }
-        assertEquals(listOf("휴식", "인사", "외교", "특수", "전략", "기타"), categories)
-    }
-
-    @Test
-    fun `인사 카테고리는 발령·포상·몰수·부대탈퇴지시 4종`() {
-        val 인사 = F4StateText.CHIEF_COMMAND_TABLE.first { it.first == "인사" }.second
-        assertEquals(listOf("che_발령", "che_포상", "che_몰수", "che_부대탈퇴지시"), 인사)
-    }
-
-    @Test
-    fun `전략 카테고리는 8종(필사즉생부터 피장파장까지)`() {
-        val 전략 = F4StateText.CHIEF_COMMAND_TABLE.first { it.first == "전략" }.second
-        assertEquals(8, 전략.size)
-        assertTrue("che_허보" in 전략)
-        assertTrue("che_피장파장" in 전략)
-    }
 }

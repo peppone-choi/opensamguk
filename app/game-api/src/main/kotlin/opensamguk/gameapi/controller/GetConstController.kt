@@ -171,9 +171,6 @@ class GetConstController(
         "availableSpecialDomestic" to GameConst.availableSpecialDomestic,
         "availableSpecialWar" to GameConst.availableSpecialWar,
         "availablePersonality" to GameConst.availablePersonality,
-        // 장수/수뇌 명령 메뉴(카테고리→명령 키 목록) — 프론트 명령창 구성.
-        "availableGeneralCommand" to GameConst.availableGeneralCommand,
-        "availableChiefCommand" to GameConst.availableChiefCommand,
     )
 
     /**
