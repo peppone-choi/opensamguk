@@ -491,9 +491,12 @@ class Recovery:
                 self.sleep(1)
         raise RecoveryError('restored database did not become ready')
 
-    def postgres_check(self, name, env):
+    def postgres_check(self, name, env, *, socket='/tmp', read_only=False):
         user, database = env['GAME_POSTGRES_USER'], env['GAME_POSTGRES_DB']
-        self.wait_ready(['container', 'exec', name, 'pg_isready', '-h', '/tmp', '-U', user, '-d', database])
+        prefix = ['container', 'exec']
+        if read_only:
+            prefix += ['-e', 'PGOPTIONS=-c default_transaction_read_only=on']
+        self.wait_ready([*prefix, name, 'pg_isready', '-h', socket, '-U', user, '-d', database])
         query = f"""SELECT json_build_object(
           'world_state', (SELECT count(*) FROM world_state),
           'city', (SELECT count(*) FROM city), 'nation', (SELECT count(*) FROM nation),
@@ -505,8 +508,8 @@ class Recovery:
                        FROM flyway_schema_history WHERE version IS NOT NULL),
           'city_min', (SELECT min(id) FROM city), 'city_max', (SELECT max(id) FROM city));
 """
-        result = json.loads(self.docker.run(['container', 'exec', '-i', name, 'psql', '-X', '-A', '-t',
-            '-v', 'ON_ERROR_STOP=1', '-h', '/tmp', '-U', user, '-d', database], stdin=io.BytesIO(query.encode())))
+        result = json.loads(self.docker.run([*prefix, '-i', name, 'psql', '-X', '-A', '-t',
+            '-v', 'ON_ERROR_STOP=1', '-h', socket, '-U', user, '-d', database], stdin=io.BytesIO(query.encode())))
         require(result['world_state'] > 0 and result['city'] > 0 and result['selected_world'] == 1,
                 'restored world/city identity assertion failed')
         require(result['failed_migrations'] == 0 and result['migration_count'] > 0 and bool(result['versions']),
@@ -514,8 +517,8 @@ class Recovery:
         # Anonymous temporary spool never publishes dump content or world/player identifiers.
         import tempfile
         with tempfile.TemporaryFile() as dump:
-            self.docker.run(['container', 'exec', name, 'pg_dump', '--no-owner', '--no-privileges',
-                '-h', '/tmp', '-U', user, '-d', database], stdout=dump)
+            self.docker.run([*prefix, name, 'pg_dump', '--no-owner', '--no-privileges',
+                '-h', socket, '-U', user, '-d', database], stdout=dump)
             dump.seek(0)
             fingerprint = logical_dump_hash(dump)
         return {'counts': {table: result[table] for table in ['world_state', 'city', 'nation', 'general']},
@@ -523,8 +526,11 @@ class Recovery:
                 'city_min': result['city_min'], 'city_max': result['city_max'],
                 'logical_dump_sha256': fingerprint}
 
-    def redis_check(self, name):
-        base = ['container', 'exec', name, 'redis-cli', '-s', '/tmp/redis.sock', '--raw']
+    def redis_check(self, name, *, socket='/tmp/redis.sock'):
+        base = ['container', 'exec', name, 'redis-cli']
+        if socket is not None:
+            base += ['-s', socket]
+        base += ['--raw']
         require(self.wait_ready([*base, 'PING']).strip() == b'PONG', 'restored Redis PING failed')
         info = dict(line.split(':', 1) for line in self.docker.run([*base, 'INFO', 'persistence']).decode().splitlines()
                     if ':' in line and not line.startswith('#'))

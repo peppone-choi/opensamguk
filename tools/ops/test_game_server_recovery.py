@@ -230,6 +230,24 @@ class RecoveryTests(unittest.TestCase):
         args.update(changes)
         return self.helper.verify(**args)
 
+    def test_live_storage_fingerprint_uses_read_only_session_and_local_socket(self):
+        env = recovery.selected_env(self.stack / 'servers/spep.env', 'pep')
+        report = self.helper.postgres_check('spep-game-postgres', env,
+                                             socket='/var/run/postgresql', read_only=True)
+        self.assertTrue(report['selected_world_matches'])
+        self.assertEqual(len(self.docker.pg_queries), 1)
+        relevant = [args for args in self.docker.calls if 'pg_isready' in args or
+                    'psql' in args or 'pg_dump' in args]
+        self.assertEqual(len(relevant), 3)
+        for args in relevant:
+            self.assertIn('PGOPTIONS=-c default_transaction_read_only=on', args)
+            self.assertEqual(args[args.index('-h') + 1], '/var/run/postgresql')
+        redis = self.helper.redis_check('spep-game-redis', socket=None)
+        self.assertEqual(redis['key_count'], 1)
+        for args in self.docker.calls:
+            if 'redis-cli' in args:
+                self.assertNotIn('-s', args)
+
     def rejected(self, action):
         with self.assertRaises(recovery.RecoveryError):
             action()
