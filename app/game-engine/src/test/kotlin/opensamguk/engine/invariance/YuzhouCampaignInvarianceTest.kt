@@ -76,13 +76,13 @@ class YuzhouCampaignInvarianceTest {
         val recorder = ChangeRecorder()
         val outcomes = CampaignWorldFixture.RecordingOutcomes()
         val handler = ReservedTurnHandler(world, opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()),
-            seed, 190, recorder = recorder, hwihaDeploymentContext = topology to metrics, hwihaProvinceCells = cells,
-            hwihaWarOutcomes = outcomes)
+            seed, 190, recorder = recorder, deploymentContext = topology to metrics, provinceCells = cells,
+            warOutcomes = outcomes)
         val selector = NpcDeploySelector(topology, metrics)
         val lifecycle = TurnDaemonLifecycle(world, handler,
-            hwihaMovementOf = AssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes,
+            movementOf = AssignmentMarchTurn(world, recorder, topology, metrics, cells, outcomes,
                 reactions = MarchReactionInterpreter(topology, metrics, bundle.commanderyIndex))::onTurn,
-            hwihaNpcInputOf = if (npcDeploy) { id, reserved -> selector.select(world, id, reserved) } else { _, reserved -> reserved },
+            npcInputOf = if (npcDeploy) { id, reserved -> selector.select(world, id, reserved) } else { _, reserved -> reserved },
             reservedActionOf = { CampaignWorldFixture.NO_INPUT })
         return Campaign(world, lifecycle, PhaseBoundary(topology, metrics, cells, outcomes = outcomes), recorder, outcomes)
     }

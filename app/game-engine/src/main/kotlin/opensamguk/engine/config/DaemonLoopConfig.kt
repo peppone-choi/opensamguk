@@ -324,7 +324,7 @@ class DaemonLoopConfig {
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
         // 전쟁 결과 → 명망 사건 경계: 기록 스트림(RenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
-        val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener =
+        val warOutcomes: opensamguk.engine.campaign.WarOutcomeListener =
             opensamguk.engine.campaign.WarOutcomeRenownListener(world, recorder)
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
@@ -360,13 +360,13 @@ class DaemonLoopConfig {
             onGeneralDeath = { generalId, env -> ImperialDeathHook.apply(world, generalId, env) },
             recorder = recorder,
             // 휘하 내정 입력(배치·방침·공사)의 지리·원장·행군 핀.
-            hwihaDomesticContext = domesticContext,
+            domesticContext = domesticContext,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
-            hwihaDeploymentContext = deploymentContext,
-            hwihaVisionContext = visionContext,
-            hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
-            hwihaWarOutcomes = hwihaWarOutcomes,
+            deploymentContext = deploymentContext,
+            visionContext = visionContext,
+            provinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
+            warOutcomes = warOutcomes,
             marchReactions = marchReactions,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
@@ -509,14 +509,14 @@ class DaemonLoopConfig {
                 recorder.recordGeneralTurnPull(generalId)
                 ai.drainGeneralPassDeltas(recorder)
             },
-            hwihaMovementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            movementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.campaign.AssignmentMarchTurn(world, recorder,
-                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes,
+                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, warOutcomes,
                     marchReactions)
                 movement::onTurn
             } else { _, _, _ -> },
-            hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            npcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
                 val selector = opensamguk.engine.campaign.NpcAiTurnSelector(
                     artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext)
@@ -555,10 +555,10 @@ class DaemonLoopConfig {
             recoveryGateProvider = recoveryGateProvider,
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
-            hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            phaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
                 opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
-                    artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
+                    artifacts.provinceCells, spatialSupplyNetworkProvider, warOutcomes)
             } else null,
         )
     }

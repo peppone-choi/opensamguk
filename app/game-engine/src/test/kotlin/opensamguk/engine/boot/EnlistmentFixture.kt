@@ -52,10 +52,10 @@ internal class EnlistmentFixture(private val jdbc: JdbcTemplate, private val flu
         val deploymentContext = if (movement) bundle.projection.topology to bundle.landMarchMetrics else null
         val handler = ReservedTurnHandler(active,
             opensamguk.logic.actions.CommandRegistry(opensamguk.logic.stats.GeneralActionPipeline()), "00", 200,
-            recorder=recorder,hwihaDeploymentContext=deploymentContext)
+            recorder=recorder,deploymentContext=deploymentContext)
         val lifecycle = TurnDaemonLifecycle(active, handler,
             pullGeneralTurnOf = { handler.recorder.recordGeneralTurnPull(it) },
-            hwihaMovementOf = if (movement) opensamguk.engine.campaign.AssignmentMarchTurn(active, handler.recorder,
+            movementOf = if (movement) opensamguk.engine.campaign.AssignmentMarchTurn(active, handler.recorder,
                 bundle.projection.topology, bundle.landMarchMetrics, bundle.provinceCells)::onTurn else { _, _, _ -> },
             reservedActionOf = { reservations.readReserved(id, it, 0) })
         val stream = object : opensamguk.engine.redis.RedisCommandStream(redis, "fixture", id, startId = "0") {
