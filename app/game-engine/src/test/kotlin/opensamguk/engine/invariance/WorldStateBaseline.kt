@@ -13,12 +13,12 @@ internal object WorldStateBaseline {
             .bufferedReader(Charsets.UTF_8).use { it.readLines() }
         val expected = lines.filter { it.isNotBlank() && !it.startsWith("#") }
             .associate { line -> line.substringBefore(' ') to line.substringAfter(' ').trim() }
-        val actual = sha256(world, dumpRows = case == "s3-chain-48")
+        val actual = sha256(world)
         println("behavior-baseline $case $actual")
         assertEquals(expected.getValue(case), actual, "$case final normalized world SHA-256")
     }
 
-    fun sha256(world: InMemoryTurnWorld, dumpRows: Boolean = false): String {
+    fun sha256(world: InMemoryTurnWorld): String {
         val state = world.getState()
         val rows = buildList {
             add(listOf("calendar", state.currentYear, state.currentMonth, state.currentPhase, state.status,
@@ -78,13 +78,7 @@ internal object WorldStateBaseline {
                 add(listOf("position", id, p.node.canonicalKey, p.revision))
             }
         }
-        val normalizedRows = rows.map(::canonical).sorted()
-        if (dumpRows) {
-            println("behavior-rows-begin s3-chain-48")
-            normalizedRows.forEach { println("behavior-row $it") }
-            println("behavior-rows-end s3-chain-48")
-        }
-        val bytes = normalizedRows.joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8)
+        val bytes = rows.map(::canonical).sorted().joinToString("\n", postfix = "\n").toByteArray(Charsets.UTF_8)
         return MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
     }
 
