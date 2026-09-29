@@ -8,20 +8,15 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
+import opensamguk.engine.boot.EnlistmentFixture
 import opensamguk.engine.flush.FlushRecoveryGate
-import opensamguk.engine.redis.RealtimePublisher
-import opensamguk.engine.redis.RedisCommandStream
 import opensamguk.engine.run.TurnRunService
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.ReservedTurnHandler
-import opensamguk.engine.turn.TurnDaemonLifecycle
 import opensamguk.infra.persistence.FlushPayload
 import opensamguk.infra.persistence.JdbcFlushExecutor
 import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.persistence.StaleWorldWriterException
-import opensamguk.logic.actions.CommandRegistry
-import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.input.CorpsEncounter
 import opensamguk.logic.world.StrategicNodeRef
 import org.flywaydb.core.Flyway
@@ -133,19 +128,9 @@ class BattleEvidencePostFlushIT {
         world.consumeDirtyState() // The seed is the committed pre-tick state, not another pending batch.
         recorder.clear()
 
-        val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 200,
-            recorder = recorder)
-        val movement = AssignmentMarchTurn(world, recorder, campaign.topology, campaign.metrics,
-            campaign.cells, observations = evidence)
-        val lifecycle = TurnDaemonLifecycle(world, handler,
-            hwihaMovementOf = movement::onTurn,
-            reservedActionOf = { CampaignWorldFixture.NO_INPUT })
         val redis = mock(StringRedisTemplate::class.java)
         if (failAfterCommit) doThrow(IllegalStateException("post-commit realtime publish failed"))
             .`when`(redis).convertAndSend(anyString(), anyString())
-        val stream = object : RedisCommandStream(redis, "battle-evidence", worldId, startId = "0") {
-            override fun readEnvelopes(blockMs: Long) = emptyList<opensamguk.common.wire.TurnDaemonCommandEnvelope>()
-        }
         var flushCalls = 0
         val flush = object : JdbcFlushExecutor(named, tx) {
             override fun flush(payload: FlushPayload) {
@@ -155,8 +140,10 @@ class BattleEvidencePostFlushIT {
                 super.flush(payload)
             }
         }
-        val service = TurnRunService(world, stream, lifecycle, handler, flush,
-            RealtimePublisher(redis, "battle-evidence", worldId))
+        val service = EnlistmentFixture(jdbc, flush).service(worldId, world, mutableListOf(),
+            movementFactory = { movementRecorder -> AssignmentMarchTurn(world, movementRecorder,
+                campaign.topology, campaign.metrics, campaign.cells, observations = evidence)::onTurn },
+            redisTemplate = redis)
         return RunFixture(world, service, evidence, encounterId)
     }
 
