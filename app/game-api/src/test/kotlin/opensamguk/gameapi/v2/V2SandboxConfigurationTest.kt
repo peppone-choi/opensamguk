@@ -6,10 +6,10 @@ import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.config.GameApiProcessWorldIdConfiguration
-import opensamguk.infra.v2.V2CityCatalogAdapter
-import opensamguk.infra.v2.V2ContentCatalog
-import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.v2.V2SandboxMarker
+import opensamguk.infra.content.CityCatalogAdapter
+import opensamguk.infra.content.ContentCatalog
+import opensamguk.infra.sandbox.SandboxGate
+import opensamguk.infra.sandbox.SandboxMarker
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.context.ApplicationContext
 
@@ -22,10 +22,10 @@ class V2SandboxConfigurationTest {
         .withUserConfiguration(GameApiProcessWorldIdConfiguration::class.java, V2SandboxConfiguration::class.java)
 
     private fun ApplicationContextRunner.withProfile() =
-        withPropertyValues("spring.profiles.active=${V2SandboxGate.PROFILE}")
+        withPropertyValues("spring.profiles.active=${SandboxGate.PROFILE}")
 
     private fun ApplicationContextRunner.withEnabled(value: String) =
-        withPropertyValues("${V2SandboxGate.PROPERTY}=$value")
+        withPropertyValues("${SandboxGate.PROPERTY}=$value")
 
     private fun ApplicationContextRunner.withWorldId(value: Int) =
         withPropertyValues("opensamguk.world-id=$value")
@@ -51,15 +51,15 @@ class V2SandboxConfigurationTest {
     fun `both conditions register the existing sandbox process world and only the game api marker`() {
         runner().withWorldId(9001).withProfile().withEnabled("true")
             .run { context ->
-                assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
+                assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
 
                 val processWorlds = context.getBeansOfType(GameApiProcessWorld::class.java)
                 assertEquals(1, processWorlds.size, "GameApiProcessWorld beans")
                 assertEquals(WorldId(9001), processWorlds.values.single().worldId)
 
-                assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size)
-                assertEquals(0, context.getBeansOfType(V2ContentCatalog::class.java).size)
-                assertEquals(0, context.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+                assertEquals(1, context.getBeansOfType(SandboxMarker::class.java).size)
+                assertEquals(0, context.getBeansOfType(ContentCatalog::class.java).size)
+                assertEquals(0, context.getBeansOfType(CityCatalogAdapter::class.java).size)
             }
     }
 
@@ -70,8 +70,8 @@ class V2SandboxConfigurationTest {
     }
 
     private fun ApplicationContext.assertNoGameApiRuntimeV2Beans() {
-        assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
-        assertEquals(0, getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
-        assertEquals(0, getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
+        assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
+        assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
+        assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
     }
 }

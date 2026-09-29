@@ -5,6 +5,9 @@ import opensamguk.common.wire.RunReason
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.engine.flush.FlushRecoveryGate
+import opensamguk.engine.campaign.BattleOutcomeObservation
+import opensamguk.engine.campaign.BattleOutcomePostFlush
+import opensamguk.engine.campaign.CommittedBattleOutcomeBatch
 import opensamguk.engine.redis.CommandOutboxRelay
 import opensamguk.engine.redis.RealtimePublisher
 import opensamguk.engine.redis.RedisCommandStream
@@ -34,6 +37,7 @@ import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.record.EventKind
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.`when`
 import org.mockito.Mockito.clearInvocations
 import org.mockito.Mockito.verifyNoInteractions
 import org.springframework.dao.QueryTimeoutException
@@ -59,6 +63,52 @@ import kotlin.test.assertSame
  * on the production path after [runTick]/[retryRetainedFlush].
  */
 class TurnRunServiceFlushRecoveryTest {
+
+    private fun battleObservation(): BattleOutcomeObservation = mock(BattleOutcomeObservation::class.java).also {
+        `when`(it.worldId).thenReturn(1)
+        `when`(it.encounterId).thenReturn("a".repeat(64))
+    }
+
+    @Test
+    fun `battle evidence waits for retained flush and publishes exactly once after commit`() {
+        val published = mutableListOf<CommittedBattleOutcomeBatch>()
+        val buffer = BattleOutcomePostFlush { published.add(it) }
+        val observation = battleObservation()
+        buffer.onResolved(observation)
+        var attempts = 0
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) {
+                attempts++
+                if (attempts == 1) throw QueryTimeoutException("rolled back")
+            }
+        }
+        val service = newFixture(flush, battleOutcomePostFlush = buffer).service
+        assertFailsWith<QueryTimeoutException> { service.runTick(Instant.parse("0200-01-01T01:00:00Z")) }
+        assertTrue(published.isEmpty())
+        assertTrue(service.retryRetainedFlush())
+        assertEquals(2, attempts)
+        assertEquals(1, published.size)
+        assertEquals(1, published.single().worldId)
+        assertEquals(2L, published.single().generation)
+        assertSame(observation, published.single().observations.single())
+        buffer.afterSuccessfulFlush(1, 3)
+        assertEquals(1, published.size)
+    }
+
+    @Test
+    fun `stale battle flush quarantines its uncommitted evidence`() {
+        val published = mutableListOf<CommittedBattleOutcomeBatch>()
+        val buffer = BattleOutcomePostFlush { published.add(it) }
+        buffer.onResolved(battleObservation())
+        val flush = object : JdbcFlushExecutor(dummyJdbc(), dummyTx()) {
+            override fun flush(payload: FlushPayload) { throw StaleWorldWriterException(1, 0L, 1L) }
+        }
+        val service = newFixture(flush, battleOutcomePostFlush = buffer).service
+        assertFailsWith<StaleWorldWriterException> { service.runTick(Instant.parse("0200-01-01T01:00:00Z")) }
+        assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, service.recoverySnapshot().mode)
+        buffer.afterSuccessfulFlush(1, 2)
+        assertTrue(published.isEmpty())
+    }
 
     private data class Fixture(
         val service: TurnRunService,
@@ -431,6 +481,7 @@ class TurnRunServiceFlushRecoveryTest {
         withDueGeneral: Boolean = false,
         reservedTurn: ReservedTurn = ReservedTurn("휴식", ""),
         waterControlSnapshot: WaterControlSnapshot? = null,
+        battleOutcomePostFlush: BattleOutcomePostFlush? = null,
     ): Fixture {
         val t0 = Instant.parse("0200-01-01T00:00:00Z")
         val world = InMemoryTurnWorld(
@@ -521,6 +572,7 @@ class TurnRunServiceFlushRecoveryTest {
             realtimePublisher = RealtimePublisher(redis, "che:test", WorldId(1)),
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
+            battleOutcomePostFlush = battleOutcomePostFlush,
         )
         return Fixture(service, world, handler.recorder, redis)
     }

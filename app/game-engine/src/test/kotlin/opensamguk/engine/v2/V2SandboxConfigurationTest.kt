@@ -1,15 +1,17 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.engine.config.EngineProcessWorld
 import opensamguk.engine.config.WorldIdConfig
-import opensamguk.infra.v2.V2CityCatalogAdapter
-import opensamguk.infra.v2.V2ContentCatalog
-import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.v2.V2SandboxMarker
+import opensamguk.infra.content.CityCatalogAdapter
+import opensamguk.infra.content.ContentCatalog
+import opensamguk.infra.sandbox.SandboxGate
+import opensamguk.infra.sandbox.SandboxMarker
 import org.springframework.boot.test.context.runner.ApplicationContextRunner
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
@@ -31,10 +33,10 @@ class V2SandboxConfigurationTest {
         .withBean(NamedParameterJdbcTemplate::class.java, { NamedParameterJdbcTemplate(JdbcTemplate()) })
 
     private fun ApplicationContextRunner.withProfile() =
-        withPropertyValues("spring.profiles.active=${V2SandboxGate.PROFILE}")
+        withPropertyValues("spring.profiles.active=${SandboxGate.PROFILE}")
 
     private fun ApplicationContextRunner.withEnabled(value: String) =
-        withPropertyValues("${V2SandboxGate.PROPERTY}=$value")
+        withPropertyValues("${SandboxGate.PROPERTY}=$value")
 
     private fun ApplicationContextRunner.withWorldId(value: Int) =
         withPropertyValues("OPENSAMGUK_WORLD_ID=$value")
@@ -60,15 +62,15 @@ class V2SandboxConfigurationTest {
     fun `both conditions register the existing sandbox process world and exact engine v2 beans`() {
         runner().withWorldId(9001).withProfile().withEnabled("true")
             .run { context ->
-                assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
+                assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
 
                 val processWorlds = context.getBeansOfType(EngineProcessWorld::class.java)
                 assertEquals(1, processWorlds.size, "EngineProcessWorld beans")
                 assertEquals(WorldId(9001), processWorlds.values.single().worldId)
 
-                assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size)
-                assertEquals(1, context.getBeansOfType(V2ContentCatalog::class.java).size)
-                assertEquals(1, context.getBeansOfType(V2CityCatalogAdapter::class.java).size)
+                assertEquals(1, context.getBeansOfType(SandboxMarker::class.java).size)
+                assertEquals(1, context.getBeansOfType(ContentCatalog::class.java).size)
+                assertEquals(1, context.getBeansOfType(CityCatalogAdapter::class.java).size)
             }
     }
 
@@ -88,7 +90,7 @@ class V2SandboxConfigurationTest {
         for (value in listOf("TRUE", "True", "tRuE")) {
             runner().withWorldId(1).withProfile().withEnabled(value)
                 .run { context ->
-                    assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size, "v2.enabled=$value")
+                    assertEquals(1, context.getBeansOfType(SandboxMarker::class.java).size, "v2.enabled=$value")
                 }
         }
     }
@@ -106,12 +108,12 @@ class V2SandboxConfigurationTest {
                     SystemEnvironmentPropertySource("test-systemEnvironment", mapOf("V2_ENABLED" to "true")),
                 )
             }
-            .run { context -> assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size) }
+            .run { context -> assertEquals(1, context.getBeansOfType(SandboxMarker::class.java).size) }
     }
 
     private fun ApplicationContext.assertNoEngineRuntimeV2Beans() {
-        assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
-        assertEquals(0, getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
-        assertEquals(0, getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
+        assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
+        assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
+        assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
     }
 }

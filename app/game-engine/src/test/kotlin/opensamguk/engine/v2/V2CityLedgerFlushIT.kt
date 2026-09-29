@@ -1,5 +1,8 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerEntry
+import opensamguk.engine.city.CityLedgerStore
+
 import opensamguk.common.world.WorldId
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.infra.persistence.FlushPayload
@@ -26,10 +29,10 @@ import kotlin.test.assertTrue
 
 /**
  * OPENSAM-150 (R1) — v2 도시 원장 쓰기 경로의 실DB 증명:
- * [V2CityLedgerStore] → [ChangeRecorder] → `FlushPayload` → [JdbcFlushExecutor]의 v2 step.
+ * [CityLedgerStore] → [ChangeRecorder] → `FlushPayload` → [JdbcFlushExecutor]의 v2 step.
  *
  * **왜 infra가 아니라 engine 테스트인가.** DoD는 "infra flush IT"라고 적었으나 이 체인의 앞 두 마디
- * ([ChangeRecorder]·[V2CityLedgerStore])는 `:app:game-engine` 소속이고 `:infra`는 엔진에 의존하지
+ * ([ChangeRecorder]·[CityLedgerStore])는 `:app:game-engine` 소속이고 `:infra`는 엔진에 의존하지
  * 않는다. 엔진 쪽에 두면 executor를 그대로 쓰면서 채널 전체를 한 번에 증명할 수 있다 — 반대 방향은
  * 불가능하다. 증명 대상(멱등 UPSERT · v1 델타와 같은 트랜잭션)은 동일하다.
  *
@@ -100,7 +103,7 @@ class V2CityLedgerFlushIT {
 
     @Test
     fun `store adjust 델타가 recorder를 거쳐 v2_city_ledger에 절대값으로 영속된다`() {
-        val store = V2CityLedgerStore(jdbc)
+        val store = CityLedgerStore(jdbc)
         val recorder = recorder()
 
         val after = store.adjust(worldId, recorder, cityId = 5, goldDelta = 1200, riceDelta = 800, garrisonDelta = 300)
@@ -120,7 +123,7 @@ class V2CityLedgerFlushIT {
 
     @Test
     fun `같은 payload 재적용은 멱등이다 -- 누적이 아니라 덮어쓰기`() {
-        val store = V2CityLedgerStore(jdbc)
+        val store = CityLedgerStore(jdbc)
         val recorder = recorder()
         store.adjust(worldId, recorder, cityId = 6, goldDelta = 500, riceDelta = 100, garrisonDelta = 40)
         val rows = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) }
@@ -148,8 +151,8 @@ class V2CityLedgerFlushIT {
             MapSqlParameterSource(),
         )
         // 행이 이미 있는 상태에서 처음 생성된 store: 생성 시점이 아니라 첫 접근에 적재한다.
-        val store = V2CityLedgerStore(jdbc)
-        assertEquals(V2CityLedgerEntry(9, 8, 7), store.entry(worldId, 7))
+        val store = CityLedgerStore(jdbc)
+        assertEquals(CityLedgerEntry(9, 8, 7), store.entry(worldId, 7))
 
         val recorder = recorder()
         store.adjust(worldId, recorder, cityId = 7, goldDelta = 1)
@@ -159,10 +162,10 @@ class V2CityLedgerFlushIT {
 
     @Test
     fun `원장은 음수로 내려가지 않는다`() {
-        val store = V2CityLedgerStore(jdbc)
+        val store = CityLedgerStore(jdbc)
         val recorder = recorder()
         val after = store.adjust(worldId, recorder, cityId = 8, goldDelta = -50, riceDelta = -1, garrisonDelta = -9)
-        assertEquals(V2CityLedgerEntry(0, 0, 0), after)
+        assertEquals(CityLedgerEntry(0, 0, 0), after)
         flush(185, recorder)
         assertEquals(0L, ledgerRow(8)!!["gold"])
     }
@@ -201,7 +204,7 @@ class V2CityLedgerFlushIT {
                 "VALUES (1, 40, 1, 1, 1), (1, 60, 1, 1, 1)",
             MapSqlParameterSource(),
         )
-        val store = V2CityLedgerStore(jdbc)
+        val store = CityLedgerStore(jdbc)
         val recorder = recorder()
         // 40/60 적재 후 그 사이 번호(50)를 처음 만진다 — LinkedHashMap이면 40,60,50 순이 된다.
         store.adjust(worldId, recorder, cityId = 50, goldDelta = 5)

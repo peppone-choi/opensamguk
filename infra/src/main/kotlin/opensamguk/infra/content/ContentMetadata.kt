@@ -1,16 +1,16 @@
-package opensamguk.infra.v2
+package opensamguk.infra.content
 
-enum class V2ContentStatus {
+enum class ContentStatus {
     ACTIVE,
     CANDIDATE,
     EXCLUDED,
     BUDGET_ONLY,
 }
 
-data class V2ContentMetadata(
+data class ContentMetadata(
     val schemaVersion: Int,
     val id: String,
-    val status: V2ContentStatus,
+    val status: ContentStatus,
     val source: String,
     val sha256: String,
     val cityCount: Int,

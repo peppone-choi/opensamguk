@@ -4,7 +4,7 @@ import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
-import opensamguk.infra.v2.V2SandboxGate
+import opensamguk.infra.sandbox.SandboxGate
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.http.HttpStatus
@@ -53,8 +53,8 @@ data class V2CityTransportRoute(
  * [V2GarrisonRecruitController](R4)와 동형이다.
  */
 @RestController
-@Profile(V2SandboxGate.PROFILE)
-@ConditionalOnProperty(name = [V2SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
+@Profile(SandboxGate.PROFILE)
+@ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/city-transport")
 class V2CityTransportController(
     private val reserve: CommandReserveService,

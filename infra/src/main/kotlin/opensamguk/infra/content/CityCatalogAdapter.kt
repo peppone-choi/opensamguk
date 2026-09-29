@@ -1,15 +1,15 @@
-package opensamguk.infra.v2
+package opensamguk.infra.content
 
 import java.security.MessageDigest
 import opensamguk.infra.seed.ScenarioCity
 import opensamguk.infra.seed.ScenarioJson
 import org.springframework.core.io.ClassPathResource
 
-class V2CityCatalogAdapter(
-    private val catalog: V2ContentCatalog = V2ContentCatalog(),
+class CityCatalogAdapter(
+    private val catalog: ContentCatalog = ContentCatalog(),
 ) {
 
-    fun load(): V2CityCatalogSnapshot {
+    fun load(): CityCatalogSnapshot {
         val metadata = catalog.load(CITY_CONTENT_ID)
         val sourceBytes = ClassPathResource(metadata.source).inputStream.use { it.readBytes() }
         val actualSha256 = MessageDigest.getInstance("SHA-256")
@@ -29,7 +29,7 @@ class V2CityCatalogAdapter(
         require(cities.map(ScenarioCity::id).toSet().size == cities.size) {
             "v2 city source contains duplicate city ids"
         }
-        return V2CityCatalogSnapshot(metadata, cities)
+        return CityCatalogSnapshot(metadata, cities)
     }
 
     companion object {
@@ -37,14 +37,14 @@ class V2CityCatalogAdapter(
     }
 }
 
-data class V2CityCatalogSnapshot(
-    val metadata: V2ContentMetadata,
+data class CityCatalogSnapshot(
+    val metadata: ContentMetadata,
     val cities: List<ScenarioCity>,
 ) {
-    fun diff(other: V2CityCatalogSnapshot): V2CityCatalogDiff {
+    fun diff(other: CityCatalogSnapshot): CityCatalogDiff {
         val firstById = cities.associateBy(ScenarioCity::id)
         val secondById = other.cities.associateBy(ScenarioCity::id)
-        return V2CityCatalogDiff(
+        return CityCatalogDiff(
             metadataChanged = metadata != other.metadata,
             onlyInFirst = (firstById.keys - secondById.keys).sorted(),
             onlyInSecond = (secondById.keys - firstById.keys).sorted(),
@@ -55,7 +55,7 @@ data class V2CityCatalogSnapshot(
     }
 }
 
-data class V2CityCatalogDiff(
+data class CityCatalogDiff(
     val metadataChanged: Boolean,
     val onlyInFirst: List<Int>,
     val onlyInSecond: List<Int>,

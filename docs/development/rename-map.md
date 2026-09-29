@@ -1622,3 +1622,23 @@ web/game/lib/hwiha-reads.ts
 | 같은 파일의 `SAMMO` 명령 카탈로그 분기·`che_요양` 운영 스모크 | 삭제 | 은퇴한 제품 경로와 전용 Redis·틱·브라우저 관측 헬퍼 제거 |
 
 현행 `ruleProfile=HWIHA` 확인은 아직 적용 중인 와이어 계약에 맞춘다. 세계 형식 가드 개명 PR에서 `worldFormat`으로 옮길 때 이 E2E 단언도 함께 바꾼다. 로컬 게이트의 명시적 spec 경로 계약은 새 파일명으로 갱신했다. Sammo 전용 `E2E_OPERATIONAL_SMOKE=true` 모드는 새 캠페인 스모크를 가장하지 않도록 명시적으로 거절한다.
+
+## 콘텐츠 카탈로그와 샌드박스 게이트 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `opensamguk.infra.v2`의 콘텐츠 타입 | `opensamguk.infra.content` | Kotlin 패키지·파일·테스트 |
+| `V2ContentCatalog`·`V2ContentMetadata`·`V2ContentStatus` | `ContentCatalog`·`ContentMetadata`·`ContentStatus` | 메타데이터 로더·계약 |
+| `V2CityCatalogAdapter`·`V2CityCatalogSnapshot`·`V2CityCatalogDiff` | `CityCatalogAdapter`·`CityCatalogSnapshot`·`CityCatalogDiff` | 도시 카탈로그 조회 |
+| `V2SandboxGate`·`V2SandboxMarker` | `SandboxGate`·`SandboxMarker` | `opensamguk.infra.sandbox` 패키지 |
+
+이 변경은 Kotlin 선언과 참조만 바꾼다. `v2.enabled`·`v2-sandbox`와 `content/v2`는 배포 설정·콘텐츠 경로 계약이므로 별도 저장·통신 식별자 변경에서 함께 다룬다.
+
+## 엔진 도시 원장 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `opensamguk.engine.v2.V2CityLedgerStore` | `opensamguk.engine.city.CityLedgerStore` | 도시 원장 조회·증분 기록 |
+| `V2CityLedgerEntry` | `CityLedgerEntry` | 도시 원장 값 객체 |
+
+`HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.
