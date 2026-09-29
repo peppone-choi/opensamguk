@@ -114,6 +114,7 @@ def collect(source: Path) -> tuple[dict[str, bytes], list[tuple[int, int, int, s
             "status": "NOT_COLLECTED",
             "reason": "phase-events and final lastBattle values do not provide every resolved encounter outcome",
         },
+        "row_diff_gate": {"status": "NOT_COLLECTED"},
         "siege_tempo": {"fallen_turns": sorted(fallen_turns),
                         "within_12_to_24": sum(12 <= turns <= 24 for turns in fallen_turns)},
         "phase_evidence": phase,
@@ -270,6 +271,66 @@ def sealed_encounter_ids(phase_events: list[dict], phase_evidence: dict) -> set[
     return ids
 
 
+def summarize_row_diff(source: Path) -> dict:
+    """Attach the diagnostic row comparison without turning it into a W1/W4 pass."""
+    document = json.loads(source.read_text(encoding="utf-8"))
+    require(document.get("schemaVersion") == "campaign-row-diff-v1"
+            and document.get("status") in ("NO_ROW_DIFF", "REVIEW_REQUIRED"),
+            "unsupported campaign row diff")
+    pins = document.get("pins")
+    require(isinstance(pins, dict), "row diff missing source pins")
+    for field in ("baseline_git", "candidate_git", "baseline_map_sha",
+                  "candidate_map_sha", "scenario_sha"):
+        value = pins.get(field)
+        pattern = GIT_SHA if field.endswith("git") else SHA256
+        require(isinstance(value, str) and pattern.fullmatch(value) is not None,
+                f"row diff missing {field} pin")
+    baseline, candidate = document.get("baseline"), document.get("candidate")
+    require(isinstance(baseline, dict) and isinstance(candidate, dict),
+            "row diff missing source counts")
+    for part in (baseline, candidate):
+        require(isinstance(part.get("row_count"), int) and part["row_count"] > 0
+                and isinstance(part.get("rows_sha256"), str)
+                and SHA256.fullmatch(part["rows_sha256"]) is not None,
+                "invalid row diff source count or hash")
+    types = document.get("row_types")
+    require(isinstance(types, dict) and "city" in types and "siege" in types and "bugok" in types,
+            "row diff missing city, siege, or bugok counts")
+    city = document.get("structural_map", {}).get("city_ids", {})
+    shared = document.get("shared_city_values", {})
+    require(all(isinstance(city.get(field), list) for field in ("baseline_only_ids", "candidate_only_ids"))
+            and isinstance(shared.get("common_changed_ids"), list)
+            and isinstance(shared.get("field_change_counts"), dict),
+            "row diff missing structural or shared-city changes")
+    old_ids, new_ids, changed = (city["baseline_only_ids"], city["candidate_only_ids"],
+                                 shared["common_changed_ids"])
+    require(all(isinstance(value, int) and value > 0 for group in (old_ids, new_ids, changed)
+                for value in group)
+            and len(set(old_ids + new_ids + changed)) == len(old_ids + new_ids + changed),
+            "row diff city IDs are invalid or overlap")
+    city_counts = types["city"]
+    require(city_counts.get("baseline_only_rows") == len(old_ids) + len(changed)
+            and city_counts.get("candidate_only_rows") == len(new_ids) + len(changed),
+            "row diff symmetric city row counts do not match ID changes")
+    require(sum(row["baseline"] for row in types.values()) == baseline["row_count"]
+            and sum(row["candidate"] for row in types.values()) == candidate["row_count"],
+            "row diff type totals do not match source rows")
+    return {
+        "status": document["status"],
+        "reason": "diagnostic row differences require cause review; W1 repetitions and W4 measurements remain separate",
+        "summary_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+        "pins": pins,
+        "rows": {"baseline": baseline["row_count"], "candidate": candidate["row_count"]},
+        "city": {"baseline_only_ids": old_ids, "candidate_only_ids": new_ids,
+                 "common_changed_count": len(changed),
+                 "field_change_counts": shared["field_change_counts"],
+                 "baseline_only_rows": city_counts["baseline_only_rows"],
+                 "candidate_only_rows": city_counts["candidate_only_rows"]},
+        "campaign_outcomes": {kind: types[kind] for kind in ("siege", "bugok", "general", "nation",
+                                                              "position", "calendar") if kind in types},
+    }
+
+
 def render_tsv(rows: list[tuple[int, int, int, str, int]]) -> bytes:
     output = io.StringIO(newline="")
     writer = csv.writer(output, delimiter="\t", lineterminator="\n")
@@ -291,6 +352,8 @@ def main() -> int:
     parser.add_argument("--check-only", action="store_true", help="validate without writing attachments")
     parser.add_argument("--battle-export", type=Path,
                         help="optional draft QA projection of per-encounter results; never marks W4 passed")
+    parser.add_argument("--row-diff", type=Path,
+                        help="optional diagnostic normalized-row comparison; never marks W1 or W4 passed")
     args = parser.parse_args()
     source = args.artifact_dir / "playwright-results.json"
     decoded, rows, summary = collect(source)
@@ -298,6 +361,8 @@ def main() -> int:
         phase_events = json.loads(decoded["phase-events.json"])
         expected_ids = sealed_encounter_ids(phase_events, summary["phase_evidence"])
         summary["battle_result_gate"] = summarize_battle_export(args.battle_export, expected_ids)
+    if args.row_diff is not None:
+        summary["row_diff_gate"] = summarize_row_diff(args.row_diff)
     if not args.check_only:
         attachment_dir = args.artifact_dir / "attachments"
         attachment_dir.mkdir(exist_ok=True)

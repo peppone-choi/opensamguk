@@ -47,6 +47,21 @@ done
 
 각 XML의 `failures=0`, `errors=0`, `skipped=0`과 `BUILD SUCCESSFUL`을 확인한다. 결과 본문에서 첫 `enlist/march/siege/income/salary/assessment/rank/encounter/capture/dispatch` 순과 `world-state-sha256`을 표로 비교한다. 기준선 변경은 원인과 설계 근거를 별도로 판정한다. [결정론 기준선 README](../../app/game-engine/src/test/resources/invariance/README.md)가 SHA 투영 범위를 설명한다.
 
+### 정규화 행 차이의 별도 진단
+
+세계 상태 SHA가 다르면 지도 구조와 캠페인 결과를 나눠 확인한다. `compare_campaign_rows.py`는 `WorldStateBaseline`이 출력한 `behavior-row ` 행이 들어 있는 `PassChainInvarianceIT.xml` 또는 개행으로 끝나는 행 파일 두 개를 받아, 원본/정규화 행 SHA와 출처 Git·지도·시나리오 핀을 가진 `row-diff.json`을 만든다. 구조 항목은 城 ID의 제거·추가, 공통 城의 값 변경은 별도 혼합 항목, 공성·부곡·장수·국가·위치·달력은 캠페인 결과 항목에 둔다. 城 값 변화의 원인을 지도 입력이나 전투로 자동 귀속하지 않는다. 진단 계측을 임시 commit에 붙였다면 그 계측 SHA와 artifact ID를 기록하고, 최종 SHA의 W1 세 번을 대체하지 않는다.
+
+```sh
+python3 tools/e2e/compare_campaign_rows.py \
+  "$BASELINE_JUNIT_XML" "$CANDIDATE_JUNIT_XML" \
+  --baseline-git "$BASELINE_GIT_SHA" --candidate-git "$CANDIDATE_GIT_SHA" \
+  --baseline-map-sha "$BASELINE_MAP_SHA256" --candidate-map-sha "$CANDIDATE_MAP_SHA256" \
+  --baseline-artifact-id "$BASELINE_ARTIFACT_ID" --candidate-artifact-id "$CANDIDATE_ARTIFACT_ID" \
+  --scenario-sha "$SCENARIO_SHA256" --output "$EVIDENCE_DIR/row-diff.json"
+```
+
+2026-09-29의 1447 Map4 기준 대 1428 Map4 후보 진단은 1,540→1,523행, 동일 1,409행이었다. 城은 기준 전용 23·후보 전용 4·공통 ID 값 변경 79개여서 완전히 같은 행 기준 대칭 차이가 **102/83 = 23+79 / 4+79**다. 후보 전용 4개는 1621–1624, 기준 전용 23개는 승인된 은퇴 원장과 일치한다. 그 밖에 공성 30→31, 부곡 11→12, 장수·국가·위치·달력 값도 달랐다. 따라서 지도 城 수 또는 기준 SHA만 바꿔 합격 처리하지 않는다. 공통 城 79개와 전쟁·부곡 결과의 원인은 최종 지도 SHA의 W1 3회·W4 사건표/조우별 전투 결과/월단평 실측과 대조해 판정한다.
+
 ## 2. W2·W3 독립 증거
 
 W2는 함락 수비대, 수도·보급망, 풀 수 없는 조우, 월 경계 외교 만료, map4 도로/보루/보급, 경계 예외 20곳의 회귀 결과를 기록한다. 예를 들어 다음 선택 테스트는 W2의 **일부**만 다루며, 20곳 전체의 도달 불가 또는 건너뛰기+기록 판정을 대신하지 않는다.
@@ -85,6 +100,7 @@ set -euo pipefail
 : "${WEB_GATEWAY_PORT:?unused host port required}"
 : "${WEB_GAME_PORT:?unused host port required}"
 : "${NGINX_HTTP_PORT:?unused host port required}"
+: "${ROW_DIFF_JSON:?pinned W1 diagnostic row diff required}"
 export SCENARIO_CODE=scenario_990002 TURN_PROFILE_NAME=che:scenario_990002
 export OPENSAMGUK_WORLD_ID=990002 SCENARIO_HOST_DIR="$PWD/tools/e2e/fixtures/yuzhou"
 export SCENARIO_QA_TURNTERM=1 E2E_ENABLE_AUTH=true E2E_YUZHOU_LIVE=true
@@ -95,7 +111,7 @@ export NEXT_PUBLIC_GAME_URL="http://localhost:${WEB_GAME_PORT}"
 export GATEWAY_WEB_URL=http://web-gateway:3000
 export E2E_ARTIFACT_DIR="$(mktemp -d "${TMPDIR:-/tmp}/yuzhou-w4-$(git rev-parse --short=12 HEAD)-XXXXXX")"
 tools/e2e/local_v1_gate.sh
-python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR"
+python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" --row-diff "$ROW_DIFF_JSON"
 ```
 
 위 변수명은 현재 격리 fixture의 계약이다. #917의 식별자 은퇴와 최종 SHA에서 `SCENARIO_CODE`, `TURN_PROFILE_NAME`, 시나리오 실제 적재 경로를 다시 대조한다.
@@ -148,6 +164,8 @@ python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
 
 `E2E_ARTIFACT_DIR` 아래 `playwright-results.json`은 원본이다. 수집기는 건너뛴/재시도한/실패한 Playwright 결과와 화면·API·DB 첨부 누락을 거절하고, 이미 있는 다른 바이트의 파일을 덮어쓰지 않는다. `--check-only`는 출력 없이 형식만 확인한다. 산출물은 개인 계정·장수 데이터와 게임 응답을 포함할 수 있으므로 PR에 원문을 넣지 않고 검토 가능한 보안 저장 위치와 요약·해시만 보고한다.
 
+행 비교를 함께 보관할 때는 위의 `row-diff.json`을 `--row-diff "$EVIDENCE_DIR/row-diff.json"`으로 수집기에 넘긴다. 수집기는 핀·행 수·城 대칭 차이의 일관성을 확인해 manifest에 구조/값/캠페인 결과를 나눠 싣는다. 행이 같아도 `NO_ROW_DIFF`는 W1·W4 합격 마커가 아니며, 차이가 있으면 `REVIEW_REQUIRED`, 미수집이면 `NOT_COLLECTED`다.
+
 | 파일 | 내용·판정 |
 |---|---|
 | `playwright.log`, `playwright-results.json` | 단일 흐름 1/1, skip 0, 191-01 월 경계 도달과 소요 시간 |
@@ -157,6 +175,7 @@ python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
 | `attachments/phase-events.json`, `phase-event-counts.tsv` | `year,month,phase,event_kind,count` 순별 사건표. 조우·포위·점령·징세·녹봉 실측 |
 | `attachments/phase-evidence.json` | 행군 진척, 포위·NPC 전투, 조우, 중립 재점령, 적대 기간, 월단평 |
 | `yuzhou-evidence-manifest.json` | 원본 결과와 추출 첨부의 SHA256, 화면/API/사건 수. 내부 계정 정보가 섞인 `phase_evidence`는 공개 PR 첨부에서 제외 |
+| `row-diff.json` / manifest `row_diff_gate` | 기준·후보 Git/지도/시나리오 핀, 정규화 행 SHA/종류별 수, 城 구조 23/4와 공통 값 79의 구분, 공성·부곡 등 결과 변화. 진단이며 단독 합격 불가 |
 | 별도 조우별 전투 결과표 | `encounterId`, 봉인·해결 순, 전장 해시/크기·시작 거리, 결과·승자/무승자·지휘관 상태·라운드/장벽·callback. 현재 수집 불가이면 `BLOCKED` |
 | `--battle-export` QA JSON | 위 초안 계약 검증과 결과 분포 요약. 현재는 `CONTRACT_DRAFT`; 제품/DB 결과의 최종 합격 판정 아님 |
 | `docker-compose-build-*.log`, `health-*`, `cleanup-resources.txt` | 이미지 순차 빌드, 서비스 상태, 격리 볼륨·컨테이너 정리 |
