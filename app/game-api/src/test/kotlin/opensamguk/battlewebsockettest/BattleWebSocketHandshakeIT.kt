@@ -8,6 +8,7 @@ import org.junit.jupiter.api.BeforeEach
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.battle.realtime.BattleJoinTicketService
 import opensamguk.gameapi.battle.realtime.BattleWebSocketConfiguration
@@ -97,11 +98,15 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
         lines.joinToString("\n")
     }
 
+    private fun assertStatus(response: String, code: Int) {
+        assertTrue(response.lineSequence().firstOrNull()?.startsWith("HTTP/1.1 $code") == true)
+    }
+
     @Test
     fun `valid short ticket upgrades with only fixed protocol echoed`() {
         val token = validTicket()
         val response = handshake("battle.v1, $token")
-        assertContains(response, "101")
+        assertStatus(response, 101)
         assertContains(response.lowercase(), "sec-websocket-protocol: battle.v1")
         assertFalse(response.contains(token))
     }
@@ -110,10 +115,10 @@ class BattleWebSocketHandshakeIT @Autowired constructor(
     fun `invalid ticket foreign origin server and epoch do not upgrade`() {
         val token = validTicket()
         val badSignature = token.dropLast(1) + if (token.last() == 'A') 'B' else 'A'
-        assertContains(handshake("battle.v1, $badSignature"), "403")
-        assertContains(handshake("battle.v1, $token", origin = "http://other.example"), "403")
-        assertContains(handshake("battle.v1, $token", path = "/ws/battles/other/1/battle-1"), "403")
+        assertStatus(handshake("battle.v1, $badSignature"), 403)
+        assertStatus(handshake("battle.v1, $token", origin = "http://other.example"), 403)
+        assertStatus(handshake("battle.v1, $token", path = "/ws/battles/other/1/battle-1"), 403)
         `when`(store.head(world, "battle-1")).thenReturn(head(epoch = 2))
-        assertContains(handshake("battle.v1, $token"), "403")
+        assertStatus(handshake("battle.v1, $token"), 403)
     }
 }

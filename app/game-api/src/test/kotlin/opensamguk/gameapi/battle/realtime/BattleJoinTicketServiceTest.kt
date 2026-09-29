@@ -7,6 +7,8 @@ import java.time.ZoneOffset
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.infra.battle.realtime.*
 
@@ -114,6 +116,24 @@ class BattleJoinTicketServiceTest {
         assertFailsWith<SecurityException> {
             service(store, shortDeadline).verify(token, world, "battle-1", 42)
         }
+    }
+
+    @Test
+    fun `connected identity closes on epoch lease owner and authority changes while short ticket expiry only gates entry`() {
+        val store = FakeStore(ticket, head(leaseUntil = now.plusSeconds(120)))
+        val signer = service(store)
+        val identity = signer.verifyBearer(signer.issue(world, "battle-1", 42, 7), "pep", world, "battle-1")
+        assertTrue(signer.isCurrent(identity))
+        assertTrue(service(store, now.plusSeconds(61)).isCurrent(identity))
+        store.currentHead = head(epoch = 2, leaseUntil = now.plusSeconds(120))
+        assertFalse(signer.isCurrent(identity))
+        store.currentHead = head(leaseUntil = now.minusSeconds(1))
+        assertFalse(signer.isCurrent(identity))
+        store.currentHead = head().copy(leaseOwner = null)
+        assertFalse(signer.isCurrent(identity))
+        store.currentHead = head()
+        store.currentTicket = ticket.copy(participants = listOf(participant.copy(authorityRevision = 4)))
+        assertFalse(signer.isCurrent(identity))
     }
 
     private class FakeStore(var currentTicket: FrozenBattleTicket, var currentHead: BattleSessionHead) : BattleSessionStore {
