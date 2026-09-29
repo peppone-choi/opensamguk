@@ -26,7 +26,7 @@ vi.mock('@opensamguk/ui', async () => {
     },
     WorldMapCanvas: (props: ComponentProps<typeof WorldMapCanvasType>) => {
       shared.props = props;
-      return <div data-testid="han-map" aria-label={props.ariaLabel}>
+      return <div data-testid="world-map" aria-label={props.ariaLabel}>
         <button type="button" onClick={() => props.onCityActivate?.(props.cities![0])}>첫 城 누르기</button>
         <button type="button" onClick={() => props.onCityHover?.(props.cities![0], { x: 40, y: 60 })}>첫 城 얹기</button>
         <button type="button" onClick={() => props.onCityHover?.(null)}>城 밖으로</button>
@@ -69,7 +69,7 @@ describe('MapPreview 작전실 2D 판', () => {
     expect(shared.props?.provinceUrl).toBe('/api/game/api/map/provinces?server=s%201%26%3F&mapCode=han-world-v3');
     expect(shared.props?.cities?.[0]).toMatchObject({ id: 11, regionName: '사예' });
     expect(shared.props?.currentCityId).toBe(11);
-    expect(screen.getByTestId('han-map')).toHaveAttribute('aria-label', `${mapCode} 서버 지도`);
+    expect(screen.getByTestId('world-map')).toHaveAttribute('aria-label', `${mapCode} 서버 지도`);
   });
 
   it('소유색은 유효한 국가에만 붙이고 건물 색은 따로 둔다', () => {

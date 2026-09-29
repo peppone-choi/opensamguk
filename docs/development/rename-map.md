@@ -1558,3 +1558,10 @@ web/game/lib/hwiha-reads.ts
 | `infra/src/main/resources/scenario/scenario_{0,1,2,900…914,9200,1010…1120}.json` | `data/archive/scenarios/`의 같은 파일명 | 은퇴 시나리오 31개; 파일 바이트와 SHA-256 유지 |
 
 런타임 classpath에는 `scenario_990002.json`과 `scenario_3190.json`만 남긴다. 역사 지도 route-node manifest의 `resourcePath`는 승인된 provenance 레이블이라 원래 classpath 경로를 유지한다. 파일은 보관 경로에서 읽고 SHA-256으로 검증한다. `han-world-v3` 등 저장된 세계의 지도 번들 ID와 해시 핀도 변경하지 않는다.
+
+## 게이트웨이 지도 테스트 이름
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `MapPreview.han.test.tsx` | `MapPreview.world.test.tsx` | 지도 미리보기 테스트 파일 |
+| 테스트 DOM ID `han-map` | `world-map` | 테스트 내부 선택자 |
