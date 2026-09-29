@@ -67,7 +67,7 @@ class FakeRecovery:
             suffix, destination = VOLUMES[service]
             mounts = [{'Type': 'volume', 'Name': 'spep-' + suffix,
                        'Destination': destination, 'RW': True}]
-        env = (['OPENSAMGUK_WORLD_ID=1', 'GAME_DB_USER=sammo',
+        env = (['OPENSAMGUK_WORLD_ID=1', 'SCENARIO_DIR=', 'GAME_DB_USER=sammo',
                 'GAME_DATABASE_URL=jdbc:postgresql://db/sammo', 'TURN_PROFILE_NAME=che:scenario_1020']
                if service in ('game-api', 'game-engine') else [])
         if service == 'game-postgres':
@@ -187,6 +187,19 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         env.write_text(env.read_text().replace('SCENARIO_LOOKUP_DIR=\n',
                                               'SCENARIO_LOOKUP_DIR=/tmp/other\n'))
         with self.assertRaisesRegex(RecoveryError, 'lookup'):
+            self.subject.prepare(self.stack)
+
+    def test_declared_lookup_must_match_effective_container_environment(self):
+        original = self.recovery.inspect
+        def drifted(kind, name):
+            value = original(kind, name)
+            if kind == 'container' and name == 'spep-game-api':
+                value['Config']['Env'] = [entry for entry in value['Config']['Env']
+                                           if not entry.startswith('SCENARIO_DIR=')]
+                value['Config']['Env'].append('SCENARIO_DIR=/data/scenarios')
+            return value
+        self.recovery.inspect = drifted
+        with self.assertRaisesRegex(RecoveryError, 'effective scenario lookup differ'):
             self.subject.prepare(self.stack)
 
     def test_scenario_companion_is_private_and_tied_to_bundle_manifest(self):

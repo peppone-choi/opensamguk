@@ -197,6 +197,8 @@ class PepColdCapturePreflight:
                 config_env = dict(part.split('=', 1) for part in obj['Config'].get('Env', []) if '=' in part)
                 require(config_env.get('OPENSAMGUK_WORLD_ID') == selected['OPENSAMGUK_WORLD_ID'],
                         'source world identity mismatch')
+                require(config_env.get('SCENARIO_DIR') == runtime['SCENARIO_LOOKUP_DIR'],
+                        'declared and effective scenario lookup differ')
             elif service in VOLUMES:
                 suffix, destination = VOLUMES[service]
                 mounts = obj['Mounts']

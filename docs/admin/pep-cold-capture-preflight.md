@@ -16,6 +16,8 @@ python3 tools/ops/pep_cold_capture_operator.py prepare \
 이 명령은 같은 production flock을 잡은 상태에서 `maintenance-v1/drained`, marker 존재와 lifecycle journal 부재,
 PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API/engine 시나리오 읽기 전용 bind,
 선택된 세계와 시나리오 코드, 이미지 pin 형식을 검증한다. 결과에는 비밀 env·월드 ID·계정 정보가 없다.
+시나리오 조회 방식은 env 파일의 `SCENARIO_LOOKUP_DIR`와 실행 중인 API·엔진 컨테이너의
+`SCENARIO_DIR`가 둘 다 일치해야 한다. 현재 PEP의 두 컨테이너는 빈 값으로 번들 입력을 사용한다.
 실패하면 어떤 컨테이너도 바꾸지 않는다. 성공도 **냉간 백업·격리 복원·앱 재적재·인증 읽기 성공을 뜻하지 않는다**.
 
 ## 실제 냉간 작업의 미완료 관문
