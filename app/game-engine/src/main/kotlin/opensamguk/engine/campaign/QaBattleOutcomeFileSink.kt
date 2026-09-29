@@ -39,7 +39,7 @@ class QaBattleOutcomeFileSink(
                 "initialSeparationSteps" to observation.initialSeparationSteps,
                 "outcome" to observation.outcome,
                 "winners" to observation.winners,
-                "statuses" to observation.statuses.map { linkedMapOf(
+                "statuses" to observation.statuses.sortedBy { it.generalId }.map { linkedMapOf(
                     "generalId" to it.generalId, "status" to it.status) },
                 "barrier" to observation.barrier,
                 "rounds" to observation.rounds,
