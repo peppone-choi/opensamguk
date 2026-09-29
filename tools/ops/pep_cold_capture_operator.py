@@ -17,6 +17,7 @@ from game_server_recovery import (REDIS_CMD, VOLUMES, Recovery, RecoveryError,
                                   checked_path, digest, json_bytes, require, selected_env,
                                   write_private)
 from pep_application_drill import PepApplicationDrill, ScenarioTreeDigest, SourceEngineInputs
+from pep_authenticated_read import PepAuthenticatedReadProbe
 
 
 SERVICES = ('web-game', 'game-api', 'game-engine', 'game-postgres', 'game-redis')
@@ -234,9 +235,10 @@ class PepColdCapturePreflight:
 class PepColdCaptureOperator(PepColdCapturePreflight):
     """Programmatic cold capture stage; no CLI entry exists while auth drill is missing."""
 
-    def __init__(self, recovery=None, drill=None):
+    def __init__(self, recovery=None, drill=None, authenticated_probe=None):
         super().__init__(recovery)
         self.drill = drill or PepApplicationDrill()
+        self.authenticated_probe = authenticated_probe or PepAuthenticatedReadProbe()
 
     def _stop(self, service, source_id, *, storage=False):
         name = 'spep-' + service
@@ -304,17 +306,16 @@ class PepColdCaptureOperator(PepColdCapturePreflight):
                 status['phase'] = 'storage-verified'
                 write_private(operation / 'status.json', json_bytes(status), replace=True)
                 tree, scenario = preserve_scenario_tree(stack / 'data/scenarios', bundle)
-                application = self.drill.prove(self.recovery, bundle, source_inputs, tree, scenario)
-                require(application.bundle_manifest_sha256 == verified['manifest_sha256'] and
-                        application.status.get('serviceMaterialized') is True and
-                        application.status.get('recoveryReady') is True and
-                        application.cleanup == {'success': True, 'remaining_resources': []},
-                        'isolated old engine did not rehydrate cleanly')
-                status['phase'] = 'old-engine-materialized'
+                application = self.drill.prove(self.recovery, bundle, source_inputs, tree, scenario,
+                                               authenticated_probe=self.authenticated_probe)
+                require_complete_old_application_proof(verified, application,
+                                                       application.authenticated_read)
+                status['phase'] = 'old-application-verified'
+                status['authenticated_read_verified'] = True
                 write_private(operation / 'status.json', json_bytes(status), replace=True)
                 return {'operation': str(operation), 'bundle': str(bundle),
                         'storage_verified': True, 'old_engine_materialized': True,
-                        'authenticated_read_verified': False, 'ready_for_reset': False}
+                        'authenticated_read_verified': True, 'ready_for_reset': False}
             except BaseException:
                 status['phase'] = 'failed-after-' + status['phase']
                 write_private(operation / 'status.json', json_bytes(status), replace=True)

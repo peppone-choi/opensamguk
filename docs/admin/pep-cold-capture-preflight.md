@@ -33,19 +33,22 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 4. PG/Redis를 정상 종료한 뒤 동일 `Recovery` 인스턴스로 `capture`·`verify`를 호출한다. manifest/payload
    SHA-256, 원본 DB/Redis 수치, 정확한 이미지 ID와 env를 비교한다.
 5. `PepApplicationDrill.prove`로 기존 이미지의 격리 engine 세계 재적재·READY/paused 상태를 증명한다.
-   이 도구만으로 격리 인증/API 읽기는 증명되지 않으므로, 계정 경로가 분리된 격리 앱 읽기 검증을 추가한다.
+   `PepAuthenticatedReadProbe`가 동일 격리 네트워크에 캡처된 game-api 이미지와 외부 시나리오 사본을
+   붙이고, 기존 Gateway의 설정된 ADMIN 계정으로 합법 로그인한 뒤 토큰 검증 키 일치·보호 API의
+   무인증 거부/인증 읽기·지도 읽기를 확인한다. 토큰과 응답 본문은 보고서에 저장하지 않는다.
    `require_complete_old_application_proof`는 login·identity·server entry·world·map 읽기 다섯 증거가
-   동일 bundle/world에 묶이지 않으면 성공 판정을 거부한다. 현재 격리 인증 증거 생산자는 미구현이다.
+   동일 bundle/world에 묶이지 않으면 성공 판정을 거부한다. ADMIN에게 이 세계의 장수가 없으면
+   `/api/my-page`의 404는 허용하지만 `/api/my-cities`의 인증 200과 지도 城 수 일치는 필수다.
 6. 검증 실패는 성공으로 기록하거나 맹목적으로 재시작하지 않는다. 원본 다섯 컨테이너와 유지보수 창을
    그대로 보존하고 정확한 실패 단계를 보고한다. 전체 검증 성공 후에도 원본 재개·QA reset·새 이미지 승격은
    각각 그 단계의 W4/전투·세계 형식·시나리오·CI 게이트를 재확인한 뒤 수행한다.
 
-`PepColdCaptureOperator.capture_and_prove`는 위 1–5단계의 저장소·격리 엔진 부분을 코드로 표현하지만
-CLI에서 호출할 수 없고 운영 검증·독립 리뷰를 통과하지 않았다. W4/전투 PASS 후보를 인자로 요구해도
-그 값의 출처와 실제 이미지 SHA를 아직 독립적으로 인증하지 못한다. 성공 반환도
-`authenticated_read_verified=false`, `ready_for_reset=false`다. 원격 운영 실행에 사용하지 않는다.
+`PepColdCaptureOperator.capture_and_prove`는 위 1–5단계의 저장소·격리 엔진·인증 읽기를 코드로
+표현하지만 CLI에서 호출할 수 없고 운영 검증·독립 리뷰를 통과하지 않았다. W4/전투 PASS 후보를
+인자로 요구해도 그 값의 출처와 실제 이미지 SHA를 아직 독립적으로 인증하지 못한다. 성공 반환도
+`ready_for_reset=false`다. 원격 운영 실행에 사용하지 않는다.
 다섯 컨테이너 정지 뒤 예외가 나면 `status.json`에 실패 단계가 남고 원본을 자동 재시작하지 않는다.
-따라서 원본 재개/QA reset과 격리 인증 읽기를 포함한 검토 완료 전체 harness는 아직 없다.
+따라서 원본 재개/QA reset과 최종 후보 pin을 포함한 검토 완료 전체 harness는 아직 없다.
 
 `scenario_990002`와 1447 城은 새 QA 목표다. 현재 PEP의 원본
 `scenario_1020`·이미지·DB는 냉간 bundle과 격리 복원에서 그대로 보존한다.

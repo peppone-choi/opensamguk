@@ -106,10 +106,23 @@ class FakeRecovery:
 
 
 class FakeDrill:
-    def prove(self, recovery, bundle, source_inputs, tree, scenario):
-        return SimpleNamespace(bundle_manifest_sha256=digest(bundle / 'manifest.json')['sha256'],
+    def prove(self, recovery, bundle, source_inputs, tree, scenario, *, authenticated_probe):
+        assert authenticated_probe is not None
+        manifest_sha = digest(bundle / 'manifest.json')['sha256']
+        return SimpleNamespace(bundle_manifest_sha256=manifest_sha,
                                world_id=1, status={'serviceMaterialized': True, 'recoveryReady': True},
-                               cleanup={'success': True, 'remaining_resources': []})
+                               cleanup={'success': True, 'remaining_resources': []},
+                               authenticated_read={'source': 'isolated',
+                                   'bundle_manifest_sha256': manifest_sha, 'world_id': 1,
+                                   'checks': {'login': True, 'identity': True, 'server_entry': True,
+                                              'world_read': True, 'map_read': True}})
+
+
+class EngineOnlyDrill(FakeDrill):
+    def prove(self, *args, **kwargs):
+        proof = super().prove(*args, **kwargs)
+        proof.authenticated_read = None
+        return proof
 
 
 class PepColdCapturePreflightTest(unittest.TestCase):
@@ -213,7 +226,7 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         alleged['checks']['map_read'] = True
         require_complete_old_application_proof(storage, engine, alleged)
 
-    def test_w4_gate_blocks_cold_stop_and_proof_leaves_reset_blocked(self):
+    def test_w4_gate_blocks_cold_stop_and_full_proof_leaves_reset_blocked(self):
         backup_root = self.stack / 'backups'
         backup_root.mkdir(mode=0o700)
         (self.stack / 'data/scenarios/scenario_1020.json').write_text('{}')
@@ -226,12 +239,24 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         proof = operator.capture_and_prove(stack=self.stack, backup_root=backup_root, qa_gate=gate)
         self.assertTrue(proof['storage_verified'])
         self.assertTrue(proof['old_engine_materialized'])
-        self.assertFalse(proof['authenticated_read_verified'])
+        self.assertTrue(proof['authenticated_read_verified'])
         self.assertFalse(proof['ready_for_reset'])
         self.assertEqual(self.recovery.stopped, set(SERVICES))
         self.assertEqual([args[-1] for args in self.recovery.docker.calls if args[:2] == ['container', 'stop']],
                          ['web-game-id', 'game-api-id', 'game-engine-id',
                           'game-redis-id', 'game-postgres-id'])
+
+    def test_engine_only_result_cannot_claim_old_application_recovery(self):
+        backup_root = self.stack / 'backups'
+        backup_root.mkdir(mode=0o700)
+        (self.stack / 'data/scenarios/scenario_1020.json').write_text('{}')
+        gate = {'battle': 'PASS', 'w4': 'PASS', 'head_sha': 'f' * 40,
+                'scenario_code': 'scenario_990002', 'city_count': 1447}
+        with self.assertRaisesRegex(RecoveryError, 'authenticated read proof'):
+            PepColdCaptureOperator(self.recovery, EngineOnlyDrill()).capture_and_prove(
+                stack=self.stack, backup_root=backup_root, qa_gate=gate)
+        status_file = next(backup_root.glob('pep-cold-operation-*/status.json'))
+        self.assertFalse(json.loads(status_file.read_text())['authenticated_read_verified'])
 
     def test_stop_transport_failure_is_recorded_without_blind_restart(self):
         backup_root = self.stack / 'backups'
