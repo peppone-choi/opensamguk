@@ -13,6 +13,7 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `SammoBar`·`.sammo-bar*` | `ProgressBar`·`.progress-bar*` | 중립 이름 후속 | 城 상세 화면의 진행 표시 컴포넌트와 CSS 선택자; 표시·수치 불변 |
 | `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
 | `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
 | `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
@@ -1560,6 +1561,31 @@ web/game/lib/hwiha-reads.ts
 
 런타임 classpath에는 `scenario_990002.json`과 `scenario_3190.json`만 남긴다. 역사 지도 route-node manifest의 `resourcePath`는 승인된 provenance 레이블이라 원래 classpath 경로를 유지한다. 파일은 보관 경로에서 읽고 SHA-256으로 검증한다. `han-world-v3` 등 저장된 세계의 지도 번들 ID와 해시 핀도 변경하지 않는다.
 
+## 남은 턴·API 코드 식별자
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `hwihaOutcome` | `inputOutcome` | 예약 턴 처리 결과 필드 |
+| `hwihaCatalog`·`hwihaInputCatalog` | `inputCatalog` | 입력 카탈로그 참조 |
+| `hwihaDomesticContext` | `domesticContext` | 내정 처리 문맥 |
+| `hwihaDeploymentContext` | `deploymentContext` | 배치·행군 문맥 |
+| `hwihaWarOutcomes` | `warOutcomes` | 전쟁 결과 수신기 |
+| `hwihaMovementOf` | `movementOf` | 장수 턴 이동 처리 함수 |
+| `hwihaPhaseBoundary` | `phaseBoundary` | 월 경계 처리기 |
+| `hwihaVisionContext` | `visionContext` | 시야 처리 문맥 |
+| `hwihaProvinceCells` | `provinceCells` | 州 셀 색인 |
+| `hwihaNpcInputOf` | `npcInputOf` | NPC 입력 선택 함수 |
+| `hwihaGuarded` | `guardCampaignRead` | 조회 컨트롤러 가드 |
+| `hwihaGate` | `campaignReadGate` | 조회 접근 판정 |
+| `hwihaCourtAdmission`·`hwihaDeployAdmission`·`hwihaScoutAdmission`·`hwihaTravelAdmission` | `courtAdmission`·`deployAdmission`·`scoutAdmission`·`travelAdmission` | 예약 입력 판정기 |
+| `hwihaFieldAdmission`·`hwihaMilitaryAdmission`·`hwihaPersonalAdmission`·`hwihaRetireAdmission` | `fieldAdmission`·`militaryAdmission`·`personalAdmission`·`retireAdmission` | 예약 입력 판정기 |
+| `hwihaPeopleAdmission`·`hwihaPoliticalAdmission`·`hwihaTransferAdmission` | `peopleAdmission`·`politicalAdmission`·`transferAdmission` | 예약 입력 판정기 |
+| `hwihaInputRejection` | `inputRejection` | 입력 거절 분류 함수 |
+| `hwihaCourt`·`hwihaCourtHandler` | `court`·`courtHandler` | 법정 처리기 참조 |
+| `hwihaWorld` | `campaignWorld` | 테스트 세계 생성 함수 |
+| `HwihaPositionWriteTest` | `PositionWriteTest` | 테스트 클래스 |
+
+이 표는 코드 식별자만 다룬다. 저장 world/profile 값과 적용된 Flyway의 과거 이름은 별도 저장 계약 검토 대상이다.
 ## 게이트웨이 지도 테스트 이름
 
 | 옛 이름 | 새 이름 | 범위 |
@@ -1577,3 +1603,13 @@ web/game/lib/hwiha-reads.ts
 | `PINNED_LEGACY_HAN_MAP_SHA256` | `PINNED_SOURCE_CITY_MAP_SHA256` | provenance `legacyHanMap` 키·SHA-256 불변 |
 
 `legacyHanMap`은 이미 핀된 route-node provenance와 불변 blob의 키다. 이 PR은 Python·Kotlin 코드 식별자만 바꿨고 JSON 번들 입력·해시를 다시 쓰지 않았다.
+
+## 사용하지 않는 웹 실험 코드 은퇴
+
+| 이전 경로 | 처리 | 근거 |
+| --- | --- | --- |
+| `web/game/lib/v2/`·`web/game/components/v2/` | 삭제 | 현행 페이지의 import가 없고 종료된 `v2-lab`의 컴포넌트·테스트에서만 소비 |
+| `web/game/next.config.mjs`의 `createV2ClientStubPlugin` | 삭제 | 가로챌 `components/v2` 진입점이 없어짐 |
+| `web/game/__tests__/v2-lab-route.test.tsx` | `retired-routes.test.tsx` | 종료 경로의 404 가드는 유지 |
+
+`/game/v2-lab` 차단 문자열은 기존 URL의 우회 접근을 막기 위해 남긴다. 이 삭제는 활성 캠페인 화면·지도 번들과 무관하다.
