@@ -284,6 +284,7 @@ jobs:
           python3 tools/ops/test_pep_cold_capture_operator.py
           python3 tools/ops/test_pep_qa_provenance.py
           python3 tools/ops/test_pep_qa_final_gate.py
+          python3 tools/ops/test_pep_qa_w1_attestor.py
       - name: Verify main CI red/recovery alert decisions
         if: '!cancelled()'
         run: python3 tools/ops/test_main_ci_alert.py
