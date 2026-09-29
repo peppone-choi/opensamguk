@@ -145,7 +145,7 @@ class ScenarioImporter(
 
         val general = buildGenerals(startYear)
         val generalCount = insertGenerals(jdbc, general, startYear, worldId)
-        val retainerCount = insertHwihaRetainers(jdbc, general, worldId)
+        val retainerCount = insertScenarioRetainers(jdbc, general, worldId)
 
         val generalTurnCount = insertGeneralTurns(jdbc, general, worldId)
 
@@ -153,7 +153,7 @@ class ScenarioImporter(
         val positionCount = if (effectiveProfile == RuleProfile.HWIHA) insertGeneralPositions(jdbc, worldId) else 0
 
         // 4f'' — HWIHA 초기 부곡(시나리오 `units` 선언만). 선언이 없으면 아무 행도 만들지 않는다.
-        val unitCount = insertHwihaUnits(jdbc, general, worldId)
+        val unitCount = insertScenarioUnits(jdbc, general, worldId)
 
         // 4g — nation_turn (per nation: officer_levels chiefLevel..12 × 12 turn_idx, all 휴식).
         val nationTurnCount = insertNationTurns(jdbc, worldId)
@@ -197,7 +197,7 @@ class ScenarioImporter(
         }
     }
 
-    private fun insertHwihaUnits(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
+    private fun insertScenarioUnits(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
         if (scenario.units.isEmpty()) return 0
         require(effectiveProfile == RuleProfile.HWIHA) { "units requires HWIHA" }
         val rows = scenario.units.mapIndexed { index, unit ->
@@ -216,7 +216,7 @@ class ScenarioImporter(
         return rows.size
     }
 
-    private fun insertHwihaRetainers(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
+    private fun insertScenarioRetainers(jdbc: JdbcTemplate, generals: List<BuiltGeneral>, worldId: WorldId): Int {
         if (scenario.retainers.isEmpty()) return 0
         require(effectiveProfile == RuleProfile.HWIHA) { "retainers requires HWIHA" }
         val byName = generals.associateBy { it.src.name }
