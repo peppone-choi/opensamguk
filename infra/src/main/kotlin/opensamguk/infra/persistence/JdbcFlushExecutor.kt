@@ -3222,7 +3222,7 @@ data class DiplomacyUpdate(
  *
  *  - `table == "nation_env"` → the V3 int-namespace store (`namespace` is the nation id as a
  *    decimal string; values: bare int for `next_execute_*`, object for `turn_last_{officer_level}`).
- *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`/…) → the V7 string-namespace
+ *  - any other `table` (`game_env`/`inheritance_{id}`/…) → the V7 string-namespace
  *    `game_kv` store keyed by `(table, namespace, key)`.
  *
  * Every non-null `value` is [MetaJson]-encoded at flush, matching PHP `Json::encode`.
