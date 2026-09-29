@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.ProcessCityIncomeAction
+
 import opensamguk.engine.city.CityLedgerStore
 
 import opensamguk.infra.content.ContentCatalog
@@ -55,10 +57,10 @@ class V2SandboxConfiguration {
     fun v2CityCatalogAdapter(catalog: ContentCatalog): CityCatalogAdapter = CityCatalogAdapter(catalog)
 
     /**
-     * OPENSAM-151 — 도시 금·쌀·수비병 원장 스토어(OPENSAM-150이 만든 것). [V2ProcessCityIncomeAction]이
+     * OPENSAM-151 — 도시 금·쌀·수비병 원장 스토어(OPENSAM-150이 만든 것). [ProcessCityIncomeAction]이
      * 유일한 소비처이고, 데몬은 `ObjectProvider`로 **있으면 쓰고 없으면 null**로 받는다. 그래서 게이트가
      * 꺼진 v1 프로덕션에서는 이 빈이 아예 없고, v2 leaf가 (시나리오 실수로) 돌면 조용한 no-op이 아니라
-     * `V2ProcessCityIncomeAction`에서 죽는다.
+     * `ProcessCityIncomeAction`에서 죽는다.
      */
     @Bean
     fun v2CityLedgerStore(jdbc: NamedParameterJdbcTemplate): CityLedgerStore = CityLedgerStore(jdbc)

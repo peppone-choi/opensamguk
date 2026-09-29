@@ -1,5 +1,11 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.ATTRITION_BASE_LOSS
+import opensamguk.engine.city.AttritionCity
+import opensamguk.engine.city.BAD_STATE_CODES
+import opensamguk.engine.city.attritionLoss
+import opensamguk.engine.city.cityGarrisonAttrition
+
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,13 +14,13 @@ import kotlin.test.assertTrue
 /**
  * OPENSAM-152 (v2 R3) — 도시병사 감소·공백지화 순수 판정 테스트.
  *
- * RNG 를 쓰지 않는다. `attritionLoss`/`v2CityGarrisonAttrition` 어느 쪽도 `RandUtil` 을 인자로 받지
+ * RNG 를 쓰지 않는다. `attritionLoss`/`cityGarrisonAttrition` 어느 쪽도 `RandUtil` 을 인자로 받지
  * 않으므로 draw 0 은 타입 수준에서 이미 참이고, 여기서 고정하는 것은 **판정 절차**(§2.4)다.
  */
 class V2CityGarrisonAttritionTest {
 
     private fun city(id: Int, state: Int, garrison: Int, nationId: Int = 1) =
-        V2AttritionCity(cityId = id, name = "성$id", nationId = nationId, state = state, garrison = garrison)
+        AttritionCity(cityId = id, name = "성$id", nationId = nationId, state = state, garrison = garrison)
 
     // ── attritionLoss (순수 함수) ──────────────────────────────────────────────────────────────
 
@@ -79,16 +85,16 @@ class V2CityGarrisonAttritionTest {
     fun `months outside 1-4-7-10 do nothing at all`() {
         val cities = listOf(city(1, state = 5, garrison = 10_000))
         for (m in listOf(2, 3, 5, 6, 8, 9, 11, 12)) {
-            assertTrue(v2CityGarrisonAttrition(m, cities, 300).outcomes.isEmpty(), "month $m")
+            assertTrue(cityGarrisonAttrition(m, cities, 300).outcomes.isEmpty(), "month $m")
         }
-        assertTrue(v2CityGarrisonAttrition(1, cities, 300).outcomes.isNotEmpty())
+        assertTrue(cityGarrisonAttrition(1, cities, 300).outcomes.isNotEmpty())
     }
 
     /** 재난 코드 3~9 만 대상 — 호황 2·풍작 1·재난없음 0 은 제외(`RaiseDisaster.kt:104-133`). */
     @Test
     fun `only disaster state codes 3 to 9 are touched`() {
         val cities = (0..10).map { city(id = it, state = it, garrison = 10_000) }
-        val hit = v2CityGarrisonAttrition(1, cities, 300).outcomes.map { it.cityId }
+        val hit = cityGarrisonAttrition(1, cities, 300).outcomes.map { it.cityId }
         assertEquals(listOf(3, 4, 5, 6, 7, 8, 9), hit)
         assertEquals(BAD_STATE_CODES, hit.toSet())
     }
@@ -97,24 +103,24 @@ class V2CityGarrisonAttritionTest {
     @Test
     fun `outcomes follow the supplied city order`() {
         val cities = listOf(city(7, 5, 10_000), city(2, 5, 10_000), city(9, 5, 10_000))
-        assertEquals(listOf(7, 2, 9), v2CityGarrisonAttrition(4, cities, 300).outcomes.map { it.cityId })
+        assertEquals(listOf(7, 2, 9), cityGarrisonAttrition(4, cities, 300).outcomes.map { it.cityId })
     }
 
     @Test
     fun `garrison is reduced and never goes below zero`() {
-        val o = v2CityGarrisonAttrition(7, listOf(city(1, 5, 10_000)), 300).outcomes.single()
+        val o = cityGarrisonAttrition(7, listOf(city(1, 5, 10_000)), 300).outcomes.single()
         assertEquals(10_000, o.before)
         assertEquals(7_000, o.after) // 10000 - 3000(묘섭 기준 감소량)
         assertFalse(o.vacated)
 
-        val wiped = v2CityGarrisonAttrition(7, listOf(city(1, 5, 30)), 300).outcomes.single()
+        val wiped = cityGarrisonAttrition(7, listOf(city(1, 5, 30)), 300).outcomes.single()
         assertEquals(0, wiped.after)
     }
 
     /** 공백지화는 감소 **직후 같은 반복 안에서** 결정된다 — 별도 스캔이 아니다. */
     @Test
     fun `hitting zero vacates the city in the same iteration`() {
-        val o = v2CityGarrisonAttrition(10, listOf(city(1, 9, 30, nationId = 4)), 300).outcomes.single()
+        val o = cityGarrisonAttrition(10, listOf(city(1, 9, 30, nationId = 4)), 300).outcomes.single()
         assertEquals(0, o.after)
         assertTrue(o.vacated)
         assertTrue(o.logLines.any { "30" in it && "공백지" in it }, o.logLines.toString())
@@ -123,7 +129,7 @@ class V2CityGarrisonAttritionTest {
     /** 이미 공백지(nationId=0)인 도시는 다시 공백지화되지 않는다. */
     @Test
     fun `an already-neutral city is not vacated again`() {
-        val o = v2CityGarrisonAttrition(1, listOf(city(1, 9, 30, nationId = 0)), 300).outcomes.single()
+        val o = cityGarrisonAttrition(1, listOf(city(1, 9, 30, nationId = 0)), 300).outcomes.single()
         assertEquals(0, o.after)
         assertFalse(o.vacated)
     }
@@ -134,7 +140,7 @@ class V2CityGarrisonAttritionTest {
      */
     @Test
     fun `a city that already has zero garrison is vacated on disaster`() {
-        val o = v2CityGarrisonAttrition(1, listOf(city(1, 3, 0, nationId = 2)), 300).outcomes.single()
+        val o = cityGarrisonAttrition(1, listOf(city(1, 3, 0, nationId = 2)), 300).outcomes.single()
         assertEquals(0, o.before)
         assertEquals(0, o.after)
         assertTrue(o.vacated)
@@ -143,13 +149,13 @@ class V2CityGarrisonAttritionTest {
     /** 변화도 공백지화도 없으면 결과 행 자체가 없다(불필요한 flush 델타 금지). */
     @Test
     fun `a neutral zero-garrison city produces no outcome row`() {
-        assertTrue(v2CityGarrisonAttrition(1, listOf(city(1, 3, 0, nationId = 0)), 300).outcomes.isEmpty())
+        assertTrue(cityGarrisonAttrition(1, listOf(city(1, 3, 0, nationId = 0)), 300).outcomes.isEmpty())
     }
 
     @Test
     fun `the same input always yields the same result - no rng anywhere`() {
         val cities = (1..20).map { city(it, state = it % 11, garrison = it * 137) }
-        val first = v2CityGarrisonAttrition(4, cities, 77)
-        repeat(5) { assertEquals(first, v2CityGarrisonAttrition(4, cities, 77)) }
+        val first = cityGarrisonAttrition(4, cities, 77)
+        repeat(5) { assertEquals(first, cityGarrisonAttrition(4, cities, 77)) }
     }
 }

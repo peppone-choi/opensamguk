@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import opensamguk.logic.command.GarrisonRecruitArgs
 import opensamguk.logic.command.GarrisonRecruitContext
@@ -9,9 +9,9 @@ import opensamguk.logic.command.decideGarrisonRecruit
  *
  * PHP 근거는 `legacy/devsam-core/hwe/sammo/Command/General/che_징병.php`(이하 그냥 che_징병).
  */
-sealed interface V2RecruitDecision {
-    data class Denied(val reason: String) : V2RecruitDecision
-    data class Applied(val goldCost: Long, val amount: Int, val popAfter: Int, val trustAfter: Double) : V2RecruitDecision
+sealed interface RecruitDecision {
+    data class Denied(val reason: String) : RecruitDecision
+    data class Applied(val goldCost: Long, val amount: Int, val popAfter: Int, val trustAfter: Double) : RecruitDecision
 }
 
 /** 100명당 금 9(che_징병 GameUnitConstBase보병 cost=9) → 1명당 0.09. 기술 계수는 곱하지 않는다 — divergence, 아래 함수 KDoc 참고. */
@@ -31,7 +31,7 @@ fun recruitDecision(
     cityPopulation: Int,
     cityTrust: Double,
     ledgerGold: Long,
-): V2RecruitDecision {
+): RecruitDecision {
     return when (
         val decision = decideGarrisonRecruit(
             GarrisonRecruitArgs(cityId = 1, amount = amount),
@@ -46,8 +46,8 @@ fun recruitDecision(
             ),
         )
     ) {
-        is opensamguk.logic.command.GarrisonRecruitDecision.Denied -> V2RecruitDecision.Denied(decision.reason)
-        is opensamguk.logic.command.GarrisonRecruitDecision.Applied -> V2RecruitDecision.Applied(
+        is opensamguk.logic.command.GarrisonRecruitDecision.Denied -> RecruitDecision.Denied(decision.reason)
+        is opensamguk.logic.command.GarrisonRecruitDecision.Applied -> RecruitDecision.Applied(
             decision.goldCost,
             decision.amount,
             decision.popAfter,

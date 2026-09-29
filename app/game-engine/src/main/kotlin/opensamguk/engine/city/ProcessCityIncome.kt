@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import opensamguk.engine.city.CityLedgerStore
 
@@ -29,7 +29,7 @@ import opensamguk.logic.world.IncomeNation
  *  1. **도시별 `base` = 0 (금·쌀 둘 다).** v1의 `GameConst.baserice`(2000)는 *국가* 하한선이라
  *     도시마다 적용하면 도시 수만큼 곱해진 하한이 된다. v2는 국고(`nation.gold`)가 별도 계정이므로
  *     도시 원장에는 하한을 두지 않는다.
- *  2. **봉록 귀속 도시 = 장수의 소속 도시**([V2CityIncomeNation.generalCityIds]). 그 도시가 이 국가의
+ *  2. **봉록 귀속 도시 = 장수의 소속 도시**([CityIncomeNation.generalCityIds]). 그 도시가 이 국가의
  *     도시가 아니면(타국 도시에 있는 장수) 수도로 되돌린다. 국가가 도시를 하나도 안 가지면 봉록 없음.
  *  3. **잔차(residual) 규칙 없음.** 도시별 3분기 정산이 각자 끝나고, 못 준 봉록을 다른 도시가 대신
  *     메우지 않는다. v1의 국가 단일 계정에서는 존재할 수 없던 상황이라 대응하는 PHP 동작이 없다.
@@ -46,7 +46,7 @@ import opensamguk.logic.world.IncomeNation
  */
 
 /** 한 도시의 원장 델타. [CityLedgerStore.adjust]가 소비하는 증분(절대값 아님). */
-data class V2CityLedgerDelta(val cityId: Int, val delta: Long)
+data class CityLedgerDelta(val cityId: Int, val delta: Long)
 
 /**
  * 한 국가의 도시 수입 입력. v1 [IncomeNation]을 **그대로 재사용**하고(도시·장수·세율·bill·수도·국가타입
@@ -55,16 +55,16 @@ data class V2CityLedgerDelta(val cityId: Int, val delta: Long)
  * @param generalCityIds 장수 id → 소속 도시 id (봉록 귀속처).
  * @param ledger 도시 id → 해당 자원의 현재 원장 잔액.
  */
-data class V2CityIncomeNation(
+data class CityIncomeNation(
     val nation: IncomeNation,
     val generalCityIds: Map<Int, Int>,
     val ledger: Map<Int, Long>,
 )
 
 /** 적용 대상 델타 묶음. 국가 자원은 건드리지 않는다 — v2에서 수입은 도시 원장으로만 들어간다. */
-data class V2CityIncomeResult(
+data class CityIncomeResult(
     val resource: String,
-    val ledgerDeltas: List<V2CityLedgerDelta>,
+    val ledgerDeltas: List<CityLedgerDelta>,
     val prevIncome: Map<Int, Double>,
     val generalPayouts: List<IncomeGeneralPayout>,
     val globalHistory: String,
@@ -77,15 +77,15 @@ data class V2CityIncomeResult(
  * `nation_env.prev_income_{gold,rice}` KV 소비처(랭킹·내정 화면)가 국가 단위라서 도시별로 쪼개면
  * 소비처가 전부 깨진다.
  */
-fun v2ProcessCityIncome(
+fun processCityIncome(
     resource: String,
-    nations: List<V2CityIncomeNation>,
+    nations: List<CityIncomeNation>,
     pipeline: GeneralActionPipeline,
-): V2CityIncomeResult {
+): CityIncomeResult {
     require(resource == "gold" || resource == "rice") { "잘못된 자원 타입" }
     val isGold = resource == "gold"
 
-    val ledgerDeltas = ArrayList<V2CityLedgerDelta>()
+    val ledgerDeltas = ArrayList<CityLedgerDelta>()
     val prevIncome = LinkedHashMap<Int, Double>()
     val generalPayouts = ArrayList<IncomeGeneralPayout>()
 
@@ -139,7 +139,7 @@ fun v2ProcessCityIncome(
             res = valueFit(res, base)
 
             val delta = phpRound(res).toLong() - before
-            if (delta != 0L) ledgerDeltas.add(V2CityLedgerDelta(city.id, delta))
+            if (delta != 0L) ledgerDeltas.add(CityLedgerDelta(city.id, delta))
 
             // 수입 표시줄은 v1 토큰 그대로 쓰되 값이 **그 도시의** 수입이다(v2에서 수입은 도시가 번다).
             val cityIncomeRounded = phpRound(income)
@@ -157,7 +157,7 @@ fun v2ProcessCityIncome(
     }
 
     val globalHistory = if (isGold) HistoryTokens.springIncomeGlobal() else HistoryTokens.autumnIncomeGlobal()
-    return V2CityIncomeResult(resource, ledgerDeltas, prevIncome, generalPayouts, globalHistory)
+    return CityIncomeResult(resource, ledgerDeltas, prevIncome, generalPayouts, globalHistory)
 }
 
 /**
@@ -165,7 +165,7 @@ fun v2ProcessCityIncome(
  * `ignoreDefaultEvents: true` + 자체 event 행으로 1월/7월 자리에 이 leaf를 넣는다 — 두 leaf가 같은 월드에서
  * 같이 돌면 수입이 두 번 걷힌다.
  */
-class V2ProcessCityIncomeAction(val resource: String) : EventAction {
+class ProcessCityIncomeAction(val resource: String) : EventAction {
     init {
         require(resource == "gold" || resource == "rice") { "잘못된 자원 타입" }
     }
@@ -173,9 +173,9 @@ class V2ProcessCityIncomeAction(val resource: String) : EventAction {
     override fun run(ctx: EventActionContext) {
         // fail-closed: v2 컨텍스트(도시 원장)가 없으면 조용한 no-op이 아니라 죽는다. 무음 no-op이면
         // 수입이 통째로 사라진 월드가 그린으로 보인다.
-        val vc = ctx as? V2CityIncomeContext
-            ?: error("V2ProcessCityIncomeAction requires a V2CityIncomeContext (v2 city ledger unavailable)")
-        vc.applyV2CityIncome(v2ProcessCityIncome(resource, vc.v2CityIncomeNations(resource), vc.pipeline))
+        val vc = ctx as? CityIncomeContext
+            ?: error("ProcessCityIncomeAction requires a CityIncomeContext (v2 city ledger unavailable)")
+        vc.applyV2CityIncome(processCityIncome(resource, vc.v2CityIncomeNations(resource), vc.pipeline))
     }
 
     companion object {
@@ -183,15 +183,15 @@ class V2ProcessCityIncomeAction(val resource: String) : EventAction {
 
         fun register(factory: EventActionFactory): EventActionFactory =
             factory.register(NAME) { args ->
-                V2ProcessCityIncomeAction((args[0] as JsonPrimitive).content)
+                ProcessCityIncomeAction((args[0] as JsonPrimitive).content)
             }
     }
 }
 
-/** [V2ProcessCityIncomeAction]이 요구하는 디스패치 컨텍스트. 데몬이 공급한다. */
-interface V2CityIncomeContext : EventActionContext {
+/** [ProcessCityIncomeAction]이 요구하는 디스패치 컨텍스트. 데몬이 공급한다. */
+interface CityIncomeContext : EventActionContext {
     val pipeline: GeneralActionPipeline
-    /** [resource]는 "gold"|"rice" — [V2CityIncomeNation.ledger]가 어느 원장 칸을 담을지 결정한다. */
-    fun v2CityIncomeNations(resource: String): List<V2CityIncomeNation>
-    fun applyV2CityIncome(result: V2CityIncomeResult)
+    /** [resource]는 "gold"|"rice" — [CityIncomeNation.ledger]가 어느 원장 칸을 담을지 결정한다. */
+    fun v2CityIncomeNations(resource: String): List<CityIncomeNation>
+    fun applyV2CityIncome(result: CityIncomeResult)
 }

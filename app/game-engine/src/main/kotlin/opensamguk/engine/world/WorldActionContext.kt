@@ -14,12 +14,12 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation as EngineNation
 import opensamguk.engine.turn.PerTurnOverlay
-import opensamguk.engine.v2.V2AttritionCity
-import opensamguk.engine.v2.V2AttritionResult
-import opensamguk.engine.v2.V2CityGarrisonAttritionContext
-import opensamguk.engine.v2.V2CityIncomeContext
-import opensamguk.engine.v2.V2CityIncomeNation
-import opensamguk.engine.v2.V2CityIncomeResult
+import opensamguk.engine.city.AttritionCity
+import opensamguk.engine.city.AttritionResult
+import opensamguk.engine.city.CityGarrisonAttritionContext
+import opensamguk.engine.city.CityIncomeContext
+import opensamguk.engine.city.CityIncomeNation
+import opensamguk.engine.city.CityIncomeResult
 import opensamguk.engine.city.CityLedgerEntry
 import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.turn.RankColumn
@@ -125,8 +125,8 @@ class WorldActionContext(
     private val v2CityLedger: CityLedgerStore? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
-    V2CityIncomeContext,
-    V2CityGarrisonAttritionContext,
+    CityIncomeContext,
+    CityGarrisonAttritionContext,
     ProcessWarIncomeContext,
     RandomizeCityTradeRateContext,
     ProcessSemiAnnualContext,
@@ -395,17 +395,17 @@ class WorldActionContext(
         world.pushLog(logDraft("global", "history", result.globalHistory))
     }
 
-    // ── V2CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
+    // ── CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
 
     private fun requireV2Ledger(): CityLedgerStore = v2CityLedger
         ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 V2ProcessCityIncome 이 디스패치됐다")
 
-    override fun v2CityIncomeNations(resource: String): List<V2CityIncomeNation> {
+    override fun v2CityIncomeNations(resource: String): List<CityIncomeNation> {
         val ledger = requireV2Ledger().entries(world.worldId)
         // 국가/도시/장수 스냅샷은 v1 [incomeNations]를 **그대로** 재사용한다(세율 rate_tmp, npcState!=5 제외,
         // officerCntByCity 집계까지 동일해야 하므로 두 벌로 갈라 두지 않는다).
         return incomeNations().map { n ->
-            V2CityIncomeNation(
+            CityIncomeNation(
                 nation = n,
                 generalCityIds = n.generals.mapNotNull { g -> world.getGeneralById(g.id)?.let { g.id to it.cityId } }.toMap(),
                 ledger = n.cities.associate { c ->
@@ -416,7 +416,7 @@ class WorldActionContext(
         }
     }
 
-    override fun applyV2CityIncome(result: V2CityIncomeResult) {
+    override fun applyV2CityIncome(result: CityIncomeResult) {
         val resource = result.resource
         val store = requireV2Ledger()
         // v1과 달리 nation.gold/rice 는 건드리지 않는다 — v2에서 수입은 도시 원장에만 들어간다.
@@ -444,17 +444,17 @@ class WorldActionContext(
         world.pushLog(logDraft("global", "history", result.globalHistory))
     }
 
-    // ── V2CityGarrisonAttritionContext (OPENSAM-152) ───────────────────────────────────────────
+    // ── CityGarrisonAttritionContext (OPENSAM-152) ───────────────────────────────────────────
 
     override fun attritionMonth(): Int = resolveMonth()
 
     /** 묘섭의 "등록 장수" 대응 — 월드에 살아 있는 장수 수(NPC 포함, 전 국가 합산). */
     override fun activeGeneralCount(): Int = world.listGenerals().size
 
-    override fun attritionCities(): List<V2AttritionCity> {
+    override fun attritionCities(): List<AttritionCity> {
         val ledger = requireV2Ledger().entries(world.worldId)
         return world.listCities().sortedBy { it.id }.map {
-            V2AttritionCity(
+            AttritionCity(
                 cityId = it.id,
                 name = it.name,
                 nationId = it.nationId,
@@ -464,7 +464,7 @@ class WorldActionContext(
         }
     }
 
-    override fun applyV2Attrition(result: V2AttritionResult) {
+    override fun applyV2Attrition(result: AttritionResult) {
         val store = requireV2Ledger()
         for (o in result.outcomes) {
             val delta = o.after - o.before

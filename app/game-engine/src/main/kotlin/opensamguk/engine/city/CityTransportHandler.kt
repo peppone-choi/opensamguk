@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.city
 
 import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.city.CityLedgerEntry
@@ -33,13 +33,13 @@ import opensamguk.logic.world.StrategicRouteProjection
  * 즉시 수송은 LAND 1구간뿐이다. 기존 han/V2/che 인접 판정은 [CalcCityDistance]를 유지한다.
  *
  * 결과 타입으로 `CommandLifecycleResult`(`executionApplied`/`executionRejected`)를 재사용하는 이유는
- * [V2GarrisonRecruitHandler]에 적은 것과 같다 — `TurnDaemonCommandResultSerializer`가 닫힌
+ * [GarrisonRecruitHandler]에 적은 것과 같다 — `TurnDaemonCommandResultSerializer`가 닫힌
  * 화이트리스트라 신규 결과 타입은 T1 편집 없이는 불가능하다.
  *
  * **출발·도착 원장 델타는 같은 [ChangeRecorder]에 실린다** = `JdbcFlushExecutor`의 같은 트랜잭션에서
  * 커밋된다(티켓 DoD "같은 트랜잭션"). 한쪽만 반영되는 상태는 만들어지지 않는다.
  */
-class V2CityTransportHandler(
+class CityTransportHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val ledger: CityLedgerStore,

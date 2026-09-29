@@ -24,7 +24,7 @@ import opensamguk.logic.command.CommandAvailability
  * 빈이 등록되므로 v1 프로덕션 컨텍스트에는 존재하지 않는다([opensamguk.gameapi.v2.V2SandboxConfiguration]과
  * 같은 게이트). 소유권 가드·인테이크 패턴은 `InstantActionController`와 동형 — `CommandReserveService.reserve`
  * 로 typed [opensamguk.common.wire.CityGarrisonRecruit]를 command stream에 발행하고(Model B, ring 없음)
- * 202 + requestId를 회신한다. 도메인 규칙(비용·상한)은 [opensamguk.engine.v2.V2GarrisonRecruitHandler]가
+ * 202 + requestId를 회신한다. 도메인 규칙(비용·상한)은 [opensamguk.engine.city.GarrisonRecruitHandler]가
  * OPENSAM-153 도메인 파트에서 채운다 — 이 컨트롤러는 배선만 한다.
  */
 @RestController
