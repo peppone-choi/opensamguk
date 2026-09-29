@@ -321,6 +321,36 @@ class DomesticEngineTest {
         assertEquals(DomesticBoundary.stampOf(Phase(200, 1, 2)), world.getState().meta[DomesticBoundary.STAMP_KEY])
     }
 
+    @Test fun `invalid fort completion stops before debit while the next county completes`() {
+        val world = world(Resources(money = 1_000_000, timber = 100_000))
+        val recorder = ChangeRecorder()
+        val requested = Phase(200, 1, 1)
+        for ((countyId, work) in listOf(
+            10 to ActiveWork(DomesticWork.FORTIFICATION, "qa-bad-fort", 1, requested,
+                progress = 0, required = 1, cost = Resources(money = 100), charged = Resources(),
+                lastProgressAt = null, stopReason = null, edgeId = "ab"),
+            11 to ActiveWork(DomesticWork.FORTIFICATION, "qa-next-county", 3, requested,
+                progress = 0, required = 1, cost = Resources(), charged = Resources(),
+                lastProgressAt = null, stopReason = null),
+        )) {
+            val city = world.getCityById(countyId)!!
+            assertNotNull(world.applyCityDirtyFree(city.copy(meta = city.meta +
+                (CountyWorks.META_KEY to CountyWorks(work, emptyList()).toMetaValue()))))
+        }
+        val beforeStock = CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock
+
+        world.setCurrentDate(200, 1, 2)
+        val outcome = assertNotNull(DomesticBoundary(world, recorder, context).run())
+
+        assertEquals(1, outcome.worksStopped)
+        assertEquals(1, outcome.worksCompleted)
+        assertEquals("INVALID_FORT_SITE", CountyWorks.read(world.getCityById(10)!!.meta)!!.active!!.stopReason)
+        assertEquals(beforeStock, CountyWarehouse.read(world.getCityById(10)!!.meta, 10)!!.stock)
+        assertTrue(world.peekLogs().any { it.generalId == 1 && it.text.contains("공사가 멈췄습니다") })
+        assertNull(CountyWorks.read(world.getCityById(11)!!.meta)!!.active)
+        assertEquals(DomesticBoundary.stampOf(Phase(200, 1, 2)), world.getState().meta[DomesticBoundary.STAMP_KEY])
+    }
+
     @Test fun `work reduction waits for a defined timing contract and keeps completed work`() {
         val world = world(Resources(money = 1000)); val recorder = ChangeRecorder()
         val city = world.getCityById(10)!!
