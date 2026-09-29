@@ -5,7 +5,7 @@
 --
 -- world_id 타입: 설계안 §2.1 스케치는 bigint이나 실제 참조 대상 `world_state.id`는 serial(integer)이고
 -- (`db/migration/V1__baseline.sql:11`) `WorldId.value`도 Int다 (`common/.../world/WorldId.kt:17`).
--- 0A-c 규약(`db/migration_sandbox/README.md` §4)과 V900 probe도 integer이므로 integer로 맞춘다.
+-- 0A-c 규약(`db/migration_v2/README.md` §4)과 V900 probe도 integer이므로 integer로 맞춘다.
 CREATE TABLE v2_city_ledger (
     world_id integer NOT NULL REFERENCES world_state(id),
     city_id  integer NOT NULL,

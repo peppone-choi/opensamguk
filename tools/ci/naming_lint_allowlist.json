@@ -1,6 +1,12 @@
 {
   "paths": [
     {
+      "path": "infra/src/main/resources/db/migration_sandbox/V901__v2_city_ledger.sql",
+      "kinds": [],
+      "sha256": "3acf88e7fb38d00900c251ba899e863857fcec0bd9312ea5f513cd12dc1deb07",
+      "reason": "ADR-LITE-066: applied Flyway migration bytes and checksum are immutable after the sandbox location rename."
+    },
+    {
       "path": "infra/src/main/resources/db/migration/V1__baseline.sql",
       "kinds": [
         "retired_reference"

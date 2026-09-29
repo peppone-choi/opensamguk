@@ -1,4 +1,4 @@
-# opensamguk — sandbox SANDBOX stack (OPENSAM-35 / 0A-e).
+# opensamguk — sandbox stack (OPENSAM-35 / 0A-e).
 #
 #   docker compose -f docker-compose.sandbox.yml up -d
 #
@@ -54,7 +54,7 @@ services:
       TZ: ${TZ:-Asia/Seoul}
       POSTGRES_DB: ${SANDBOX_POSTGRES_DB:-sandbox}
       POSTGRES_USER: ${SANDBOX_POSTGRES_USER:-sandbox}
-      POSTGRES_PASSWORD: ${SANDBOX_POSTGRES_PASSWORD:?SANDBOX_POSTGRES_PASSWORD required — sandbox sandbox never shares v1 credentials}
+      POSTGRES_PASSWORD: ${SANDBOX_POSTGRES_PASSWORD:?SANDBOX_POSTGRES_PASSWORD required — sandbox never shares v1 credentials}
     ports:
       - "${SANDBOX_POSTGRES_PORT:-55432}:5432"
     volumes:
@@ -108,7 +108,7 @@ services:
       GAME_API_PORT: 8081
       # ② sandbox 월드 식별자 — v1과 절대 같은 값을 쓰지 않는다.
       OPENSAMGUK_WORLD_ID: ${SANDBOX_WORLD_ID:-9001}
-      OPENSAMGUK_PROFILE: ${SANDBOX_TURN_PROFILE_NAME:-pep:scenario_990002}
+      OPENSAMGUK_PROFILE: ${SANDBOX_TURN_PROFILE_NAME:-pep:scenario_9001}
       SERVER_ID: ${SANDBOX_SERVER_ID:-sandbox}
       SERVER_NAME: ${SANDBOX_SERVER_NAME:-샌드박스}
       SERVER_GENERATION: ${SANDBOX_SERVER_GENERATION:-1}
@@ -158,7 +158,7 @@ services:
       GAME_ENGINE_PORT: 8082
       # ② sandbox 월드 식별자.
       OPENSAMGUK_WORLD_ID: ${SANDBOX_WORLD_ID:-9001}
-      TURN_PROFILE_NAME: ${SANDBOX_TURN_PROFILE_NAME:-pep:scenario_990002}
+      TURN_PROFILE_NAME: ${SANDBOX_TURN_PROFILE_NAME:-pep:scenario_9001}
       # C1: production compose의 `SCENARIO_SEED_ENABLED=false` 불변식은 그 파일에만 걸린다.
       SCENARIO_SEED_ENABLED: ${SANDBOX_SCENARIO_SEED_ENABLED:-true}
       # ③④ sandbox 시나리오 — 상속하면 v1 기본 이벤트 12행이 조용히 적재된다. 기본값을 주지 않는다.
