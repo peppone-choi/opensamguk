@@ -120,6 +120,16 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "reported callback flag"):
                 summarize_battle_export(path)
 
+    def test_failed_junit_rows_remain_diagnostic_and_require_review(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "failed.xml"
+            path.write_text('<testsuite tests="1" failures="1" errors="0" skipped="0">'
+                            '<system-out>behavior-row [S7:general,D1]</system-out></testsuite>', encoding="utf-8")
+            self.assertEqual(read_rows(path)["tests"]["failures"], 1)
+            summary = compare_rows(path, path)
+            self.assertEqual(summary["source_test_failures"], 2)
+            self.assertEqual(summary["status"], "REVIEW_REQUIRED")
+
     def test_sealed_ids_require_encounter_stop_and_matching_count(self):
         events = [
             {"kind": "march.corps", "refs": {"stop": "BUDGET_EXHAUSTED"}},

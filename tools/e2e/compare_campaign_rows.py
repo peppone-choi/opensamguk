@@ -136,6 +136,8 @@ def keyed_diff(before: dict[int, list], after: dict[int, list], fields: tuple[st
 
 def compare_rows(baseline: Path, candidate: Path) -> dict:
     old, new = read_rows(baseline), read_rows(candidate)
+    source_test_failures = sum(source["tests"]["failures"] for source in (old, new)
+                               if source["tests"] is not None)
     old_counts = Counter(row[0] for row in old["parsed"])
     new_counts = Counter(row[0] for row in new["parsed"])
     old_multiset, new_multiset = Counter(old["rows"]), Counter(new["rows"])
@@ -154,7 +156,9 @@ def compare_rows(baseline: Path, candidate: Path) -> dict:
         }
     return {
         "schemaVersion": "campaign-row-diff-v1",
-        "status": "NO_ROW_DIFF" if old_multiset == new_multiset else "REVIEW_REQUIRED",
+        "status": "NO_ROW_DIFF" if old_multiset == new_multiset and source_test_failures == 0
+                  else "REVIEW_REQUIRED",
+        "source_test_failures": source_test_failures,
         "baseline": {"source_sha256": old["source_sha256"], "rows_sha256": old["rows_sha256"],
                      "row_count": len(old["rows"]), "junit": old["tests"]},
         "candidate": {"source_sha256": new["source_sha256"], "rows_sha256": new["rows_sha256"],
@@ -172,7 +176,7 @@ def compare_rows(baseline: Path, candidate: Path) -> dict:
             "row_types": {kind: type_counts.get(kind, {"baseline": 0, "candidate": 0,
                 "baseline_only_rows": 0, "candidate_only_rows": 0}) for kind in DYNAMIC_KINDS},
         },
-        "judgement": "Row differences require cause review; map ID changes alone cannot approve W1 or W4.",
+        "judgement": "Row differences or failed JUnit sources require cause review; map ID changes alone cannot approve W1 or W4.",
     }
 
 

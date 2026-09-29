@@ -51,6 +51,8 @@ done
 
 세계 상태 SHA가 다르면 지도 구조와 캠페인 결과를 나눠 확인한다. `compare_campaign_rows.py`는 `WorldStateBaseline`이 출력한 `behavior-row ` 행이 들어 있는 `PassChainInvarianceIT.xml` 또는 개행으로 끝나는 행 파일 두 개를 받아, 원본/정규화 행 SHA와 출처 Git·지도·시나리오 핀을 가진 `row-diff.json`을 만든다. 구조 항목은 城 ID의 제거·추가, 공통 城의 값 변경은 별도 혼합 항목, 공성·부곡·장수·국가·위치·달력은 캠페인 결과 항목에 둔다. 城 값 변화의 원인을 지도 입력이나 전투로 자동 귀속하지 않는다. 진단 계측을 임시 commit에 붙였다면 그 계측 SHA와 artifact ID를 기록하고, 최종 SHA의 W1 세 번을 대체하지 않는다.
 
+기준선 불일치로 `failures>0`인 JUnit XML의 행은 원인 분석을 위해 읽을 수 있지만, 양쪽 행이 같아도 비교 상태를 `REVIEW_REQUIRED`로 둔다. `errors>0` 또는 `skipped>0`인 XML은 읽지 않는다. W1 합격은 위의 독립 조건대로 각 XML의 failures/errors/skipped가 모두 0이어야 한다.
+
 L7의 1447 기준/1428 후보 판정용 통제 비교는 **동일한 최신 엔진 Git SHA와 동일한 시나리오 SHA**에서 phase 0과 phase 48을 각각 수집한다. 이 경우 아래 명령에 `--require-same-git`을 붙이고 두 Git 핀을 같은 값으로 설정한다. 과거의 서로 다른 커밋을 비교한 진단은 참고 자료로만 둔다. phase 0과 phase 48의 `row-diff.json`·원본 SHA·artifact ID를 서로 다른 파일로 보존하고 두 단계 중 하나라도 차이가 나면 원인을 분리해 심사한다.
 
 ```sh

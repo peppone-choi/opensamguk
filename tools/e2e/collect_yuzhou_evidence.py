@@ -294,6 +294,14 @@ def summarize_row_diff(source: Path) -> dict:
                 and isinstance(part.get("rows_sha256"), str)
                 and SHA256.fullmatch(part["rows_sha256"]) is not None,
                 "invalid row diff source count or hash")
+        junit = part.get("junit")
+        if junit is not None:
+            require(isinstance(junit, dict) and type(junit.get("tests")) is int and junit["tests"] > 0
+                    and type(junit.get("failures")) is int and junit["failures"] >= 0
+                    and all(junit.get(field) == 0 for field in ("errors", "skipped")),
+                    "row diff JUnit source was not executed cleanly")
+            require(junit["failures"] == 0 or document["status"] == "REVIEW_REQUIRED",
+                    "failed JUnit row source cannot be NO_ROW_DIFF")
     types = document.get("row_types")
     require(isinstance(types, dict) and "city" in types and "siege" in types and "bugok" in types,
             "row diff missing city, siege, or bugok counts")
