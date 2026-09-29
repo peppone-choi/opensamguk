@@ -16,6 +16,10 @@ import sys
 SCREENS = (
     "court", "hand", "orders", "posts", "retinue", "siege", "supply", "war-room", "yuedan"
 )
+API_COUNTS = {
+    "court": 2, "hand": 1, "orders": 2, "posts": 1, "retinue": 1,
+    "siege": 1, "supply": 1, "war-room": 3, "yuedan": 1,
+}
 JSON_ATTACHMENTS = {"db-hwiha-slice", "phase-events", "phase-evidence"}
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 SHA256 = re.compile(r"[0-9a-f]{64}\Z")
@@ -70,9 +74,9 @@ def collect(source: Path) -> tuple[dict[str, bytes], list[tuple[int, int, int, s
     require(screens == {f"screen-{screen}.png" for screen in SCREENS},
             "the nine required screen captures are incomplete")
     api_names = {name for name in decoded if name.startswith("api-")}
-    for screen in SCREENS:
-        require(any(name.startswith(f"api-{screen}-") for name in api_names),
-                f"missing API response for {screen}")
+    expected_api_names = {f"api-{screen}-{index}.json"
+                          for screen, count in API_COUNTS.items() for index in range(count)}
+    require(api_names == expected_api_names, "the thirteen required screen API responses are incomplete")
     require({f"{name}.json" for name in JSON_ATTACHMENTS} <= decoded.keys(),
             "missing DB, phase event, or phase evidence attachment")
 

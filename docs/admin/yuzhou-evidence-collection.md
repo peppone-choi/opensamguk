@@ -176,7 +176,7 @@ python3 tools/e2e/collect_yuzhou_evidence.py "$E2E_ARTIFACT_DIR" \
 |---|---|
 | `playwright.log`, `playwright-results.json` | 단일 흐름 1/1, skip 0, 191-01 월 경계 도달과 소요 시간 |
 | `attachments/screen-{court,hand,orders,posts,retinue,siege,supply,war-room,yuedan}.png` | 실제 데이터 로딩 뒤 9화면을 사람이 열어 확인 |
-| `attachments/api-<screen>-<index>.json` | 각 화면의 200 응답. 현 스펙은 13개 경로이며 이전 1224 城 실행은 12개였다. 이름·개수는 결과에서 재측정 |
+| `attachments/api-<screen>-<index>.json` | 각 화면의 200 응답. 현 스펙의 화면별 2/1/2/1/1/1/1/3/1, 총 13개가 모두 있어야 수집기가 통과한다. 이전 1224 城 실행의 12개는 이번 관문의 합격 증거가 아니다. |
 | `attachments/db-hwiha-slice.json` | 포위 상태/지속 순, 사람 발령·위치, 창고, 월 징세·녹봉·월단평 도장/순위 |
 | `attachments/phase-events.json`, `phase-event-counts.tsv` | `year,month,phase,event_kind,count` 순별 사건표. 조우·포위·점령·징세·녹봉 실측 |
 | `attachments/phase-evidence.json` | 행군 진척, 포위·NPC 전투, 조우, 중립 재점령, 적대 기간, 월단평 |

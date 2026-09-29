@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 from collect_yuzhou_evidence import (
-    SCREENS, collect, render_tsv, sealed_encounter_ids, summarize_battle_export,
+    API_COUNTS, SCREENS, collect, render_tsv, sealed_encounter_ids, summarize_battle_export,
     summarize_row_diff, write_once,
 )
 from compare_campaign_rows import CITY_FIELDS, SIEGE_FIELDS, compare_rows, read_rows
@@ -22,7 +22,8 @@ def fixture() -> dict:
     attachments = []
     for screen in SCREENS:
         attachments.append(attachment(f"screen-{screen}", b"\x89PNG\r\n\x1a\nimage"))
-        attachments.append(attachment(f"api-{screen}-0", b"{}"))
+        for index in range(API_COUNTS[screen]):
+            attachments.append(attachment(f"api-{screen}-{index}", b"{}"))
     attachments.extend((
         attachment("db-hwiha-slice", b'{"sieges":[{"status":"FALLEN","turns":3},'
                    b'{"status":"FALLEN","turns":18},{"status":"FALLEN","turns":25}]}'),
@@ -47,7 +48,7 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
     def test_extracts_nine_screens_and_phase_counts(self):
         decoded, rows, summary = self.collect_fixture(fixture())
         self.assertEqual(len([name for name in decoded if name.startswith("screen-")]), 9)
-        self.assertEqual(summary["api_count"], 9)
+        self.assertEqual(summary["api_count"], 13)
         self.assertEqual(rows, [(190, 1, 1, "march.corps", 2)])
         self.assertEqual(summary["event_counts_by_kind"]["march.corps"], 2)
         self.assertEqual(summary["first_event_by_kind"]["march.corps"],
@@ -62,6 +63,13 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
         data = fixture()
         data["suites"][0]["specs"][0]["tests"][0]["results"][0]["attachments"].pop(0)
         with self.assertRaisesRegex(ValueError, "nine required screen"):
+            self.collect_fixture(data)
+
+    def test_missing_second_api_of_a_screen_is_rejected(self):
+        data = fixture()
+        attachments = data["suites"][0]["specs"][0]["tests"][0]["results"][0]["attachments"]
+        attachments[:] = [item for item in attachments if item["name"] != "api-court-1"]
+        with self.assertRaisesRegex(ValueError, "thirteen required screen API"):
             self.collect_fixture(data)
 
     def test_skipped_gate_is_rejected(self):
