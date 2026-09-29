@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TILES_PATH = ROOT / "data/map/han-tiles.json"
 OWNERSHIP_PATH = ROOT / "data/map/han-scenario-province-ownership-v1.json"
 SOURCE_LEDGER_PATH = ROOT / "data/curated/han/territory-disconnection-adjudications-v1.json"
-SCENARIO_DIR = ROOT / "infra/src/main/resources/scenario"
+SCENARIO_DIR = ROOT / "data/archive/scenarios"
 DOMAIN_PATHS = {
     "han": (
         ROOT / "infra/src/main/resources/map/han.json",

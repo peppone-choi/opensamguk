@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[3]
 
 class Scenario9200CityIdentityTest(unittest.TestCase):
     def test_capitals_and_generals_resolve_to_the_reviewed_v3_physical_cities(self) -> None:
-        scenario = json.loads((ROOT / "infra/src/main/resources/scenario/scenario_9200.json").read_text())
+        scenario = json.loads((ROOT / "data/archive/scenarios/scenario_9200.json").read_text())
         world = json.loads((ROOT / "infra/src/main/resources/map/han-world-v3.json").read_text())
         self.assertEqual("han-world-v3", scenario["map"]["mapName"])
         self.assertEqual("han-world-v3", scenario["cityIdentityVersion"])

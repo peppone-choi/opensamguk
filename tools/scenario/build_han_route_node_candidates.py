@@ -37,7 +37,7 @@ CATALOG = ROOT / "data/curated/han/administrative-units.json"
 OVERLAY = ROOT / "data/curated/han/administrative-place-bindings-v1.json"
 TILES = ROOT / "data/map/han-780-v1-tiles.json"
 HAN = ROOT / "infra/src/main/resources/map/han-780-v1.json"
-SCENARIOS = ROOT / "infra/src/main/resources/scenario"
+SCENARIOS = ROOT / "data/archive/scenarios"
 
 
 def load_document(path: Path) -> JsonObject:
@@ -171,6 +171,10 @@ def _sha256(path: Path) -> str:
 def _source_label(path: Path) -> str:
     resolved = path.resolve()
     try:
+        # The approved route-node manifest pins the original resource label.
+        # Archived scenario bytes remain identical, so preserve that label.
+        if resolved.parent == SCENARIOS.resolve():
+            return f"infra/src/main/resources/scenario/{resolved.name}"
         return resolved.relative_to(ROOT).as_posix()
     except ValueError:
         return f"external:{resolved.name}"

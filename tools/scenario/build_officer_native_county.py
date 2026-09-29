@@ -26,7 +26,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-SCENARIO_DIR = ROOT / "infra" / "src" / "main" / "resources" / "scenario"
+SCENARIO_DIR = ROOT / "data" / "archive" / "scenarios"
 REGISTRY_PATH = ROOT / "tools" / "scenario" / "officer-id-registry.tsv"
 NAME_MAP_PATH = ROOT / "tools" / "scenario" / "officer-name-map.tsv"
 CHAR_MAP_PATH = ROOT / "data" / "curated" / "han" / "shinjitai-to-traditional-v1.json"
