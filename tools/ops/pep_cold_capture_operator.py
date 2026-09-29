@@ -8,9 +8,13 @@ import argparse
 import json
 from pathlib import Path
 import re
+import shutil
+import stat
 
 from game_server_recovery import (REDIS_CMD, VOLUMES, Recovery, RecoveryError,
-                                  checked_path, require, selected_env)
+                                  checked_path, digest, json_bytes, require, selected_env,
+                                  write_private)
+from pep_application_drill import ScenarioTreeDigest
 
 
 SERVICES = ('web-game', 'game-api', 'game-engine', 'game-postgres', 'game-redis')
@@ -55,6 +59,72 @@ def selected_runtime_fields(path):
         require(re.fullmatch(r'[0-9a-f]{40}', fields.get(key, '')) is not None,
                 'immutable image tag required')
     return fields
+
+
+def scenario_inventory(tree):
+    """Capture relative names and bytes without following scenario links."""
+    tree = checked_path(tree, directory=True)
+    inventory = {}
+    for path in sorted(tree.rglob('*')):
+        relative = path.relative_to(tree).as_posix()
+        mode = path.lstat().st_mode
+        if stat.S_ISDIR(mode):
+            inventory[relative] = {'type': 'directory'}
+        else:
+            require(stat.S_ISREG(mode) and path.stat().st_nlink == 1,
+                    'scenario tree contains a link or special file')
+            inventory[relative] = {'type': 'file', **digest(path)}
+    return inventory
+
+
+def preserve_scenario_tree(source, bundle):
+    """Make a private exact companion for a completed cold bundle."""
+    bundle = checked_path(bundle, directory=True, private=True)
+    checked_path(bundle / 'manifest.json', private=True)
+    source = checked_path(source, directory=True)
+    before = scenario_inventory(source)
+    companion = bundle.with_name(bundle.name + '.scenario')
+    require(not companion.exists() and not companion.is_symlink(),
+            'existing scenario companion refused')
+    companion.mkdir(mode=0o700)
+    write_private(companion / 'INCOMPLETE', b'Scenario copy has not been verified.\n')
+    tree = companion / 'tree'
+    shutil.copytree(source, tree, symlinks=True)
+    for path in sorted(tree.rglob('*')):
+        if path.is_dir() and not path.is_symlink():
+            path.chmod(0o700)
+        elif path.is_file() and not path.is_symlink():
+            path.chmod(0o600)
+    tree.chmod(0o700)
+    require(scenario_inventory(source) == before == scenario_inventory(tree),
+            'effective scenario tree changed during capture')
+    manifest_sha = digest(bundle / 'manifest.json')['sha256']
+    scenario = ScenarioTreeDigest.capture(tree, manifest_sha)
+    write_private(companion / 'manifest.json', json_bytes(scenario.manifest()))
+    (companion / 'INCOMPLETE').unlink()
+    return tree, scenario
+
+
+def require_complete_old_application_proof(storage, application, authenticated_read):
+    """Refuse a recovery success claim without isolated login and API reads."""
+    require(isinstance(storage, dict) and storage.get('success') is True and
+            isinstance(storage.get('manifest_sha256'), str),
+            'successful storage verification required')
+    require(application is not None and
+            application.bundle_manifest_sha256 == storage['manifest_sha256'] and
+            application.status.get('serviceMaterialized') is True and
+            application.status.get('recoveryReady') is True and
+            application.cleanup == {'success': True, 'remaining_resources': []},
+            'matching isolated engine materialization required')
+    require(isinstance(authenticated_read, dict) and
+            authenticated_read.get('source') == 'isolated' and
+            authenticated_read.get('bundle_manifest_sha256') == storage['manifest_sha256'] and
+            authenticated_read.get('world_id') == application.world_id and
+            isinstance(authenticated_read.get('checks'), dict) and
+            set(authenticated_read['checks']) == {'login', 'identity', 'server_entry',
+                                                  'world_read', 'map_read'} and
+            all(value is True for value in authenticated_read['checks'].values()),
+            'isolated authenticated read proof required')
 
 
 class PepColdCapturePreflight:
@@ -139,7 +209,7 @@ class PepColdCapturePreflight:
             'scenario_lookup': 'bundled' if runtime['SCENARIO_LOOKUP_DIR'] == '' else 'external',
             'external_scenario_file_count': sum(1 for p in scenario_tree.iterdir() if p.is_file()),
             'source_images': images, 'source_container_ids': source_ids,
-            'world_identity_checked': selected['OPENSAMGUK_WORLD_ID'].isdigit(),
+            'world_id_syntax_checked': True,
             'cold_capture_executed': False,
         }
 

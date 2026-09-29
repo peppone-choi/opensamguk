@@ -28,11 +28,14 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 2. 기존 API·web intake를 차단·정지한 뒤 engine을 정상 종료한다. `RELOAD_REQUIRED`는 성공한 flush의 증거가
    아니므로 마지막 committed DB 상태와 미완료 inbox를 별도로 기록한다.
 3. 실행 중인 PG/Redis에서 비공개 row count·Flyway·정규화 논리 dump hash·AOF key count를 수집한다.
-   `data/scenarios` 전 파일을 비공개 동반 bundle로 복사하고 원본·복사본의 파일별 SHA-256을 대조한다.
+   `data/scenarios` 전 파일을 `preserve_scenario_tree`로 비공개 동반 bundle에 복사하고 원본·복사본의
+   파일별 SHA-256, bundle manifest 연계를 대조한다. 불완전한 복사본은 `INCOMPLETE` 표지를 남긴다.
 4. PG/Redis를 정상 종료한 뒤 동일 `Recovery` 인스턴스로 `capture`·`verify`를 호출한다. manifest/payload
    SHA-256, 원본 DB/Redis 수치, 정확한 이미지 ID와 env를 비교한다.
 5. `PepApplicationDrill.prove`로 기존 이미지의 격리 engine 세계 재적재·READY/paused 상태를 증명한다.
    이 도구만으로 격리 인증/API 읽기는 증명되지 않으므로, 계정 경로가 분리된 격리 앱 읽기 검증을 추가한다.
+   `require_complete_old_application_proof`는 login·identity·server entry·world·map 읽기 다섯 증거가
+   동일 bundle/world에 묶이지 않으면 성공 판정을 거부한다. 현재 격리 인증 증거 생산자는 미구현이다.
 6. 검증 실패는 성공으로 기록하거나 맹목적으로 재시작하지 않는다. 원본 다섯 컨테이너와 유지보수 창을
    그대로 보존하고 정확한 실패 단계를 보고한다. 전체 검증 성공 후에도 원본 재개·QA reset·새 이미지 승격은
    각각 그 단계의 W4/전투·세계 형식·시나리오·CI 게이트를 재확인한 뒤 수행한다.

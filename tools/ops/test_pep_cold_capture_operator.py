@@ -2,9 +2,12 @@ import contextlib
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 from game_server_recovery import REDIS_CMD, VOLUMES, RecoveryError
-from pep_cold_capture_operator import PepColdCapturePreflight, SERVICES
+from pep_cold_capture_operator import (PepColdCapturePreflight, SERVICES,
+                                       preserve_scenario_tree,
+                                       require_complete_old_application_proof)
 
 
 IMAGE = 'sha256:' + 'a' * 64
@@ -124,6 +127,48 @@ class PepColdCapturePreflightTest(unittest.TestCase):
                                               'SCENARIO_LOOKUP_DIR=/tmp/other\n'))
         with self.assertRaisesRegex(RecoveryError, 'lookup'):
             self.subject.prepare(self.stack)
+
+    def test_scenario_companion_is_private_and_tied_to_bundle_manifest(self):
+        source = self.stack / 'data/scenarios'
+        (source / 'scenario_1020.json').write_text('{"map":"old"}')
+        bundle = self.stack / 'pep-abcdefgh'
+        bundle.mkdir(mode=0o700)
+        (bundle / 'manifest.json').write_text('{"server":"pep"}')
+        (bundle / 'manifest.json').chmod(0o600)
+        tree, scenario = preserve_scenario_tree(source, bundle)
+        self.assertEqual(scenario.file_count, 1)
+        self.assertEqual((tree / 'scenario_1020.json').read_text(), '{"map":"old"}')
+        self.assertEqual((tree / 'scenario_1020.json').stat().st_mode & 0o777, 0o600)
+        self.assertEqual(tree.stat().st_mode & 0o777, 0o700)
+        self.assertFalse((tree.parent / 'INCOMPLETE').exists())
+        self.assertIn(scenario.tree_sha256, (tree.parent / 'manifest.json').read_text())
+
+    def test_scenario_link_refused_before_companion_creation(self):
+        source = self.stack / 'data/scenarios'
+        (source / 'scenario_1020.json').symlink_to('/tmp/other')
+        bundle = self.stack / 'pep-abcdefgh'
+        bundle.mkdir(mode=0o700)
+        (bundle / 'manifest.json').write_text('{}')
+        (bundle / 'manifest.json').chmod(0o600)
+        with self.assertRaisesRegex(RecoveryError, 'link'):
+            preserve_scenario_tree(source, bundle)
+        self.assertFalse(bundle.with_name(bundle.name + '.scenario').exists())
+
+    def test_engine_only_proof_cannot_claim_cold_recovery_success(self):
+        storage = {'success': True, 'manifest_sha256': 'e' * 64}
+        engine = SimpleNamespace(bundle_manifest_sha256='e' * 64, world_id=1,
+                                 status={'serviceMaterialized': True, 'recoveryReady': True},
+                                 cleanup={'success': True, 'remaining_resources': []})
+        with self.assertRaisesRegex(RecoveryError, 'authenticated read'):
+            require_complete_old_application_proof(storage, engine, None)
+        alleged = {'source': 'isolated', 'bundle_manifest_sha256': 'e' * 64,
+                   'world_id': 1, 'checks': {'login': True, 'identity': True,
+                                             'server_entry': True, 'world_read': True,
+                                             'map_read': False}}
+        with self.assertRaisesRegex(RecoveryError, 'authenticated read'):
+            require_complete_old_application_proof(storage, engine, alleged)
+        alleged['checks']['map_read'] = True
+        require_complete_old_application_proof(storage, engine, alleged)
 
 
 if __name__ == '__main__':
