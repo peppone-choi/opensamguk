@@ -60,6 +60,11 @@ PEP 다섯 컨테이너의 실행·소유권·이미지 ID, PG/Redis 볼륨, API
 새 엔진을 **기존 세계 DB에 먼저 기동**한다. 검증된 cold bundle을 backup으로 인정하는 조건,
 최종 후보 이미지 pin, 구 DB에 새 엔진을 기동하지 않는 reset 순서가 한 실행 경계에 묶이기 전에는
 두 워크플로를 연속 실행하지 않는다.
+`cold_handoff_contract`는 동일 bundle의 저장소·엔진·인증 읽기와 구 다섯 서비스의 정지가
+확인된 경우에만 `workflow_create_backup=false`를 제시한다. 동시에
+`old_engine_restart_allowed=false`, `candidate_image_pin_required=true`,
+`reset_executor_available=false`를 반환하는 **드라이런 계약**이다. 이 출력은 워크플로를
+호출하지 않으며 운영 GO를 뜻하지 않는다.
 
 `scenario_990002`와 1447 城은 새 QA 목표다. 현재 PEP의 원본
 `scenario_1020`·이미지·DB는 냉간 bundle과 격리 복원에서 그대로 보존한다.

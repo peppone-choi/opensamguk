@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from game_server_recovery import REDIS_CMD, VOLUMES, RecoveryError, digest
 from pep_cold_capture_operator import (PepColdCaptureOperator, PepColdCapturePreflight, SERVICES,
-                                       preserve_scenario_tree,
+                                       cold_handoff_contract, preserve_scenario_tree,
                                        require_complete_old_application_proof, require_qa_gate)
 
 
@@ -259,6 +259,10 @@ class PepColdCapturePreflightTest(unittest.TestCase):
         self.assertTrue(proof['old_engine_materialized'])
         self.assertTrue(proof['authenticated_read_verified'])
         self.assertFalse(proof['ready_for_reset'])
+        self.assertFalse(proof['handoff']['workflow_create_backup'])
+        self.assertFalse(proof['handoff']['old_engine_restart_allowed'])
+        self.assertTrue(proof['handoff']['candidate_image_pin_required'])
+        self.assertFalse(proof['handoff']['reset_executor_available'])
         self.assertEqual(self.recovery.stopped, set(SERVICES))
         self.assertEqual([args[-1] for args in self.recovery.docker.calls if args[:2] == ['container', 'stop']],
                          ['web-game-id', 'game-api-id', 'game-engine-id',
@@ -275,6 +279,26 @@ class PepColdCapturePreflightTest(unittest.TestCase):
                 stack=self.stack, backup_root=backup_root, qa_gate=gate)
         status_file = next(backup_root.glob('pep-cold-operation-*/status.json'))
         self.assertFalse(json.loads(status_file.read_text())['authenticated_read_verified'])
+
+    def test_handoff_contract_refuses_unstopped_or_unverified_source(self):
+        bundle_sha = 'e' * 64
+        application = SimpleNamespace(bundle_manifest_sha256=bundle_sha, world_id=1,
+            status={'serviceMaterialized': True, 'recoveryReady': True},
+            cleanup={'success': True, 'remaining_resources': []},
+            authenticated_read={'source': 'isolated', 'bundle_manifest_sha256': bundle_sha,
+                'world_id': 1, 'checks': {'login': True, 'identity': True, 'server_entry': True,
+                                           'world_read': True, 'map_read': True}})
+        storage = {'success': True, 'manifest_sha256': bundle_sha}
+        status = {'phase': 'old-application-verified', 'old_stack_stopped': False,
+                  'authenticated_read_verified': True, 'bundle': '/private/bundle'}
+        with self.assertRaisesRegex(RecoveryError, 'stopped-source'):
+            cold_handoff_contract(status, storage, application, '/private/bundle')
+        status['old_stack_stopped'] = True
+        with self.assertRaisesRegex(RecoveryError, 'stopped-source'):
+            cold_handoff_contract(status, storage, application, '/other/bundle')
+        application.authenticated_read['checks']['map_read'] = False
+        with self.assertRaisesRegex(RecoveryError, 'authenticated read proof'):
+            cold_handoff_contract(status, storage, application, '/private/bundle')
 
     def test_stop_transport_failure_is_recorded_without_blind_restart(self):
         backup_root = self.stack / 'backups'

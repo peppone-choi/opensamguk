@@ -130,6 +130,24 @@ def require_complete_old_application_proof(storage, application, authenticated_r
             'isolated authenticated read proof required')
 
 
+def cold_handoff_contract(status, storage, application, bundle):
+    """Describe the only safe backup handoff; this is not a reset executor."""
+    require(isinstance(status, dict) and status.get('phase') == 'old-application-verified' and
+            status.get('old_stack_stopped') is True and
+            status.get('authenticated_read_verified') is True and
+            status.get('bundle') == str(bundle),
+            'complete stopped-source operation status required')
+    require_complete_old_application_proof(storage, application,
+                                           getattr(application, 'authenticated_read', None))
+    return {
+        'bundle_manifest_sha256': storage['manifest_sha256'],
+        'workflow_create_backup': False,
+        'old_engine_restart_allowed': False,
+        'candidate_image_pin_required': True,
+        'reset_executor_available': False,
+    }
+
+
 def require_qa_gate(gate):
     require(isinstance(gate, dict) and set(gate) ==
             {'battle', 'w4', 'head_sha', 'scenario_code', 'city_count'} and
@@ -324,9 +342,11 @@ class PepColdCaptureOperator(PepColdCapturePreflight):
                 status['phase'] = 'old-application-verified'
                 status['authenticated_read_verified'] = True
                 write_private(operation / 'status.json', json_bytes(status), replace=True)
+                handoff = cold_handoff_contract(status, verified, application, bundle)
                 return {'operation': str(operation), 'bundle': str(bundle),
                         'storage_verified': True, 'old_engine_materialized': True,
-                        'authenticated_read_verified': True, 'ready_for_reset': False}
+                        'authenticated_read_verified': True, 'handoff': handoff,
+                        'ready_for_reset': False}
             except BaseException:
                 status['phase'] = 'failed-after-' + status['phase']
                 write_private(operation / 'status.json', json_bytes(status), replace=True)
