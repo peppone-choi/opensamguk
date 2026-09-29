@@ -177,7 +177,7 @@ class YuzhouCampaignInvarianceTest {
         val gap = attacker.minOf { a -> defenders.minOf { d ->
             kotlin.math.abs(a.col - d.col) + kotlin.math.abs(a.row - d.row)
         } }
-        assertTrue(gap <= 9, "Map4 opening gap=$gap exceeds the 24-round contact budget")
+        assertEquals(3, gap, "Map4 opening deployment must keep its measured front gap")
         val forces = assertNotNull(EncounterForces.read(meta, encounter))
         val relations = assertNotNull(EncounterRelations.read(meta, encounter))
         val rules = UnitProfilesJson.loadDefault()
@@ -239,6 +239,12 @@ class YuzhouCampaignInvarianceTest {
             legacySwappedCombat, legacySwappedPlans, legacySwappedDeployment).initialJournal()
         val legacySwappedReplay = EncounterResolution.resolve(legacySwapped, legacySwappedForces, legacySwappedRelations,
             legacySwappedCombat, legacySwappedPlans, legacySwappedDeployment, legacySwappedJournal)
+        assertEquals(20, swappedReplay.rounds)
+        assertEquals(listOf(swapped.attacker.commanderGeneralId), swappedReplay.winners)
+        assertEquals(23, legacyReplay.rounds)
+        assertEquals(listOf(legacyEncounter.attacker.commanderGeneralId), legacyReplay.winners)
+        assertEquals(23, legacySwappedReplay.rounds)
+        assertEquals(listOf(legacySwapped.attacker.commanderGeneralId), legacySwappedReplay.winners)
 
         run.phase(3)
         val record = run.world.getGeneralById(encounter.attacker.commanderGeneralId)!!.meta[EncounterResolver.BATTLE_RECORD_KEY]
@@ -250,7 +256,8 @@ class YuzhouCampaignInvarianceTest {
         val observation = run.observations.single { it.encounterId == encounter.encounterId }
         assertTrue(observation.winners.isNotEmpty())
         assertTrue(observation.callbackInvoked)
-        assertTrue(observation.rounds in 1..24)
+        assertEquals(20, observation.rounds)
+        assertEquals(listOf(encounter.attacker.commanderGeneralId), observation.winners)
         assertEquals(EncounterDeployment.RULE_VERSION, observation.deploymentRuleVersion)
         assertEquals(BattlefieldLayout.FRONTLINE_RULE_VERSION, observation.layoutRuleVersion)
         val repeatedHashes = listOf("00", "01").map { seed ->
