@@ -1616,6 +1616,15 @@ web/game/lib/hwiha-reads.ts
 
 `/game/v2-lab` 차단 문자열은 기존 URL의 우회 접근을 막기 위해 남긴다. 이 삭제는 활성 캠페인 화면·지도 번들과 무관하다.
 
+## 캠페인 E2E에서 삼모 분기 제거
+
+| 이전 | 새 이름 | 처리 |
+| --- | --- | --- |
+| `web/game/e2e/v1-core-live.spec.ts` | `web/game/e2e/campaign-core-live.spec.ts` | 현행 캠페인 화면·예약 입력·재시작 검사만 유지 |
+| 같은 파일의 `SAMMO` 명령 카탈로그 분기·`che_요양` 운영 스모크 | 삭제 | 은퇴한 제품 경로와 전용 Redis·틱·브라우저 관측 헬퍼 제거 |
+
+현행 `ruleProfile=HWIHA` 확인은 아직 적용 중인 와이어 계약에 맞춘다. 세계 형식 가드 개명 PR에서 `worldFormat`으로 옮길 때 이 E2E 단언도 함께 바꾼다. 로컬 게이트의 명시적 spec 경로 계약은 새 파일명으로 갱신했다. Sammo 전용 `E2E_OPERATIONAL_SMOKE=true` 모드는 새 캠페인 스모크를 가장하지 않도록 명시적으로 거절한다.
+
 ## 콘텐츠 카탈로그와 샌드박스 게이트 코드 이름
 
 | 이전 | 새 이름 | 범위 |
@@ -1635,3 +1644,11 @@ web/game/lib/hwiha-reads.ts
 | `V2CityLedgerEntry` | `CityLedgerEntry` | 도시 원장 값 객체 |
 
 `HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.
+
+### Redis 스트림 네임스페이스 (2026-09-30)
+
+| 이전 저장 키 접두사 | 현재 접두사 | 근거 |
+|---|---|---|
+| `sammo:<profile>:w<worldId>:` | `game:<profile>:w<worldId>:` | 명령·사건 스트림, 실시간 채널, 요청 결과 키를 같은 세계 범위에서 중립화 |
+
+PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽거나 이행하지 않는다. 기존 구세계는 형식 가드에서 거절된다.
