@@ -1,11 +1,14 @@
 import contextlib
+import hashlib
 import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from game_server_recovery import RecoveryError
-from pep_qa_cutover import DeployerBinaryVerifier, DeployerLeaseReset, PepQACutover
+from pep_qa_cutover import (DeployerBinaryVerifier, DeployerLeaseReset,
+                            LocalCandidateVerifier, PepQACutover)
 
 
 SHA = 'a' * 40
@@ -58,10 +61,14 @@ class Candidate:
         self.recovery = recovery
         self.value = dict(CANDIDATE)
 
-    def verify(self, evidence, stack):
+    def verify(self, evidence, stack, *, require_staged=False):
         assert self.recovery.held
         self.recovery.events.append('candidate')
         return self.value
+
+    def stage(self, evidence, stack):
+        assert self.recovery.held
+        self.recovery.events.append('stage')
 
 
 class Deployer:
@@ -148,7 +155,7 @@ class CutoverTest(unittest.TestCase):
         self.assertTrue(self.run_cutover()['observed'])
         self.assertEqual(self.recovery.events,
                          ['lock', 'deployer', 'evidence', 'candidate', 'cold',
-                          'evidence', 'candidate', 'deployer', 'reset', 'post', 'unlock'])
+                          'evidence', 'stage', 'candidate', 'deployer', 'reset', 'post', 'unlock'])
         status = json.loads((self.root / 'operation/cutover-status.json').read_text())
         self.assertTrue(status['success'])
 
@@ -170,6 +177,7 @@ class CutoverTest(unittest.TestCase):
         with self.assertRaises(RecoveryError):
             self.run_cutover()
         self.assertIn('cold', self.recovery.events)
+        self.assertNotIn('stage', self.recovery.events)
         self.assertNotIn('reset', self.recovery.events)
         self.assertIn('failed-after-cold-verified',
                       (self.root / 'operation/cutover-status.json').read_text())
@@ -236,6 +244,52 @@ class CutoverTest(unittest.TestCase):
         verifier = DeployerBinaryVerifier(Runtime(), HASH)
         with self.assertRaisesRegex(RecoveryError, 'differs'):
             verifier.verify()
+
+    def test_candidate_stages_scenario_only_after_cold_boundary(self):
+        source = self.root / 'source'
+        scenario = source / 'infra/src/main/resources/scenario/scenario_990002.json'
+        world_map = source / 'infra/src/main/resources/map/han-world-v3.json'
+        scenario.parent.mkdir(parents=True)
+        world_map.parent.mkdir(parents=True)
+        scenario.write_bytes(b'candidate-world')
+        world_map.write_bytes(b'candidate-world')
+        external = self.root / 'data/scenarios'
+        external.mkdir(parents=True)
+        (external / 'scenario_1020.json').write_bytes(b'old-world')
+        input_sha = hashlib.sha256(b'candidate-world').hexdigest()
+        evidence = {**EVIDENCE, 'map_sha256': input_sha,
+                    'scenario_sha256': input_sha}
+
+        class Runtime:
+            shared_image = 'sha256:' + 'c' * 64
+
+            def inspect(self, kind, name):
+                if kind == 'image':
+                    return {'Id': 'sha256:' + 'c' * 64}
+                service = name.removeprefix('opensamguk-')
+                return {'Name': '/' + name, 'Image': self.shared_image,
+                        'State': {'Running': True},
+                        'Config': {'Labels': {'com.docker.compose.project':
+                                              'opensamguk-shared',
+                                              'com.docker.compose.service': service}}}
+
+        runtime = Runtime()
+        verifier = LocalCandidateVerifier(source, runtime)
+        with patch('pep_qa_cutover.subprocess.check_output', return_value=(SHA + '\n').encode()):
+            verifier.verify(evidence, self.root)
+            self.assertFalse((external / 'scenario_990002.json').exists())
+            with self.assertRaisesRegex(RecoveryError, 'not been staged'):
+                verifier.verify(evidence, self.root, require_staged=True)
+            runtime.shared_image = 'sha256:' + 'f' * 64
+            with self.assertRaisesRegex(RecoveryError, 'shared candidate'):
+                verifier.verify(evidence, self.root)
+            runtime.shared_image = 'sha256:' + 'c' * 64
+            verifier.stage(evidence, self.root)
+            verifier.verify(evidence, self.root, require_staged=True)
+        self.assertEqual((external / 'scenario_990002.json').read_bytes(),
+                         b'candidate-world')
+        self.assertEqual((external / 'scenario_1020.json').read_bytes(),
+                         b'old-world')
 
 
 if __name__ == '__main__':

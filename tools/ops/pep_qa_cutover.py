@@ -9,6 +9,7 @@ from pathlib import Path
 import re
 import io
 import json
+import os
 import subprocess
 
 from game_server_recovery import (Recovery, RecoveryError, checked_path, digest,
@@ -22,6 +23,7 @@ SHA64 = re.compile(r'[0-9a-f]{64}\Z')
 IMAGE_ID = re.compile(r'sha256:[0-9a-f]{64}\Z')
 IMAGE_SERVICES = {'gateway-api', 'board-api', 'game-api', 'game-engine',
                   'web-gateway', 'web-game'}
+SHARED_SERVICES = {'gateway-api', 'board-api', 'web-gateway'}
 SCENARIO_PATH = 'infra/src/main/resources/scenario/scenario_990002.json'
 MAP_PATH = 'infra/src/main/resources/map/han-world-v3.json'
 LEASED_RESET = r'''
@@ -131,7 +133,7 @@ class LocalCandidateVerifier:
         self.source_tree = Path(source_tree).resolve()
         self.recovery = recovery
 
-    def verify(self, evidence, stack):
+    def verify(self, evidence, stack, *, require_staged=False):
         try:
             sha = subprocess.check_output(
                 ['git', '-C', str(self.source_tree), 'rev-parse', 'HEAD'],
@@ -141,15 +143,29 @@ class LocalCandidateVerifier:
         require(sha == evidence.get('runtime_sha'), 'candidate source is not QA main')
         scenario_sha = digest(self.source_tree / SCENARIO_PATH)['sha256']
         map_sha = digest(self.source_tree / MAP_PATH)['sha256']
-        external_sha = digest(Path(stack) / 'data/scenarios/scenario_990002.json')['sha256']
-        require(scenario_sha == external_sha == evidence.get('scenario_sha256') and
+        require(scenario_sha == evidence.get('scenario_sha256') and
                 map_sha == evidence.get('map_sha256'),
-                'effective scenario or map bytes differ from QA candidate')
+                'source scenario or map bytes differ from QA candidate')
+        staged = Path(stack) / 'data/scenarios/scenario_990002.json'
+        if staged.exists() or staged.is_symlink():
+            require(digest(checked_path(staged))['sha256'] == scenario_sha,
+                    'effective scenario differs from QA candidate')
+        else:
+            require(not require_staged, 'candidate scenario has not been staged')
         images = {}
         for service in sorted(IMAGE_SERVICES):
             reference = ('ghcr.io/peppone-choi/opensamguk:' + service + '-' + sha)
             image = self.recovery.inspect('image', reference)
             images[service] = image.get('Id')
+        for service in sorted(SHARED_SERVICES):
+            live = self.recovery.inspect('container', 'opensamguk-' + service)
+            labels = live.get('Config', {}).get('Labels') or {}
+            require(live.get('Name') == '/opensamguk-' + service and
+                    live.get('State', {}).get('Running') is True and
+                    labels.get('com.docker.compose.project') == 'opensamguk-shared' and
+                    labels.get('com.docker.compose.service') == service and
+                    live.get('Image') == images[service],
+                    'shared candidate service is not live at QA image ID')
         candidate = {'runtime_sha': sha, 'image_tag': sha, 'web_game_tag': sha,
                      'scenario_code': 'scenario_990002', 'city_count': 1447,
                      'scenario_sha256': scenario_sha, 'map_sha256': map_sha,
@@ -157,6 +173,31 @@ class LocalCandidateVerifier:
                      'scenario_file_verified': True, 'map_file_verified': True}
         require_candidate(evidence, candidate)
         return candidate
+
+    def stage(self, evidence, stack):
+        """Add only the QA scenario after the old-world cold proof succeeds."""
+        source = checked_path(self.source_tree / SCENARIO_PATH)
+        expected = evidence.get('scenario_sha256')
+        require(digest(source)['sha256'] == expected,
+                'candidate scenario bytes changed before staging')
+        directory = checked_path(Path(stack) / 'data/scenarios', directory=True)
+        destination = directory / 'scenario_990002.json'
+        if destination.exists() or destination.is_symlink():
+            require(digest(checked_path(destination))['sha256'] == expected,
+                    'existing external QA scenario differs')
+            return
+        fd = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o644)
+        try:
+            with os.fdopen(fd, 'wb') as output, source.open('rb') as payload:
+                for chunk in iter(lambda: payload.read(1024 * 1024), b''):
+                    output.write(chunk)
+                output.flush()
+                os.fsync(output.fileno())
+            require(digest(checked_path(destination))['sha256'] == expected,
+                    'staged QA scenario differs')
+        except BaseException:
+            destination.unlink(missing_ok=True)
+            raise
 
 
 def verify_final_evidence(client, *, run_identity, w1_artifact_ids):
@@ -290,8 +331,9 @@ class PepQACutover:
                 # the old services remain stopped and the same lock is held.
                 current = self.evidence_verifier.verify(run_identity, w1_artifact_ids)
                 require(current == evidence, 'QA evidence changed after cold capture')
-                require_candidate(current,
-                                  self.candidate_verifier.verify(current, Path(stack)))
+                self.candidate_verifier.stage(current, Path(stack))
+                require_candidate(current, self.candidate_verifier.verify(
+                    current, Path(stack), require_staged=True))
                 self.deployer_verifier.verify()
                 status['phase'] = 'reset-submitted'
                 write_private(status_path, json_bytes(status), replace=True)
