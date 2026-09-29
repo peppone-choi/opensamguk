@@ -143,7 +143,9 @@ done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 
 `tools/e2e/collect_yuzhou_evidence.py --battle-export <경로>`는 제품 기록 종류가 정해지기 전의 **QA 전용 정규화 JSON**을 검증한다. 예제 `tools/e2e/testdata/encounter-outcomes-draft.json`의 값은 합성 fixture이며 실측이 아니다. `origin`에는 정확한 Git·지도·시나리오 해시와 world ID를 적는다. 출처가 `MEMORY_ONLY`면 발행 경계는 `IN_MEMORY_TEST`, `DB_BACKED`면 `AFTER_SUCCESSFUL_FLUSH`로 구분한다. `sealedEncounterIds`는 DB `log_entry`의 `march.corps` 중 `refs.stop=ENCOUNTER`인 행에 기록된 조우 ID 집합과 일치해야 한다. 일반 행군 기록에는 조우 ID가 없으므로 그 행은 집합에 넣지 않는다. 조우 행에 ID가 없거나 이 집합의 크기가 `phase-evidence.liveEncounterCount`와 다르면 거절한다. 해결 `rows`와 `disbandedEncounterIds`·`unresolvedEncounterIds`는 이 집합을 빠짐없이 분할해야 하며 `(worldId, encounterId)` 중복을 거절한다.
 
-L1과 맞춘 한 행의 DTO 필드는 `worldId`, `encounterId`, `resolvedYear/Month/Phase`, `provinceId`, `approachProvinceId`, `worldMapVariant`, `topologyRevision/Hash`, `tilesContentHash`, `deploymentRuleVersion/layoutRuleVersion/geometryRuleVersion/resolutionRuleVersion`, `initialSeparationSteps`, `outcome`, 정렬된 `winners`/`statuses`, `barrier`, `rounds`, `replayHash`, 실제 `callbackInvoked`다. 전장 가로·세로 칸 수와 이동 속도는 DTO 값으로 가장하지 않고, `tilesContentHash`·규칙 버전이 가리키는 별도 고정 산출물과 대조한다.
+L1과 맞춘 한 행의 DTO 필드는 `worldId`, `encounterId`, `resolvedYear/Month/Phase`, `provinceId`, `approachProvinceId`, `worldMapVariant`, `topologyRevision/Hash`, `tilesContentHash`, `deploymentRuleVersion/layoutRuleVersion/geometryRuleVersion/resolutionRuleVersion`, `initialSeparationSteps`, `outcome`, 정렬된 `winners`/`statuses`, `barrier`, `rounds`, `replayHash`, `callbackInvoked`다. 전장 가로·세로 칸 수와 이동 속도는 DTO 값으로 가장하지 않고, `tilesContentHash`·규칙 버전이 가리키는 별도 고정 산출물과 대조한다.
+
+현재 #1029의 `callbackInvoked`는 실제 listener 호출을 직접 관측한 값이 아니라 `winners` 유무로 산출한다. 수집기는 둘의 일관성만 검사하고 `callback_count`를 **보고된 값의 합계**로 둔다. manifest의 `callback_evidence_status=UNVERIFIED_PRODUCER`와 `CONTRACT_DRAFT`는 이 수치가 실제 호출 증거가 아님을 나타낸다. L1이 실제 호출 뒤 값을 채우는 변경을 병합하고 그 정확한 제품 SHA에서 DB 경계 export를 재수집하기 전에는 W4 callback 관문을 통과시키지 않는다.
 
 `provinceId`와 `approachProvinceId`는 `land:`를 붙인 경로 키가 아니라 `LandProvince.id` 원문이다. `worldMapVariant`는 `WorldMapVariant.name` 또는 `null`이며, 합성 fixture의 `V3_1447_MAP4`는 예시일 뿐 최종 지도 판정값을 고정하지 않는다.
 

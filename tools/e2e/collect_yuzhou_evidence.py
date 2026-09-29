@@ -207,7 +207,7 @@ def summarize_battle_export(source: Path, expected_encounter_ids: set[str] | Non
                 "commander statuses must be sorted by general ID")
         callback = row.get("callbackInvoked")
         require(type(callback) is bool and callback == bool(winners),
-                "callback evidence does not match winner boundary")
+                "reported callback flag does not match winner boundary")
         separation = row.get("initialSeparationSteps")
         require(separation is None or (isinstance(separation, int) and not isinstance(separation, bool)
                 and separation >= 0), "invalid initial BFS separation")
@@ -229,7 +229,7 @@ def summarize_battle_export(source: Path, expected_encounter_ids: set[str] | Non
                 "battle export sealed IDs differ from DB-backed march events")
     return {
         "status": "CONTRACT_DRAFT",
-        "reason": "kind/refs/facts producer and complete W4 coverage await L1 contract",
+        "reason": "actual callback invocation, post-flush producer, and complete W4 coverage remain unverified",
         "export_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
         "evidence_source": origin["evidenceSource"],
         "resolved_count": len(rows),
@@ -245,6 +245,7 @@ def summarize_battle_export(source: Path, expected_encounter_ids: set[str] | Non
         "winnerless_count": winnerless,
         "round_24_count": max_rounds,
         "callback_count": callbacks,
+        "callback_evidence_status": "UNVERIFIED_PRODUCER",
     }
 
 

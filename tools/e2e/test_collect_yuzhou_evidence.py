@@ -87,6 +87,7 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
         self.assertEqual(summary["round_24_count"], 1)
         self.assertEqual(summary["barriers"]["ROUND_LIMIT"], 1)
         self.assertEqual(summary["callback_count"], 1)
+        self.assertEqual(summary["callback_evidence_status"], "UNVERIFIED_PRODUCER")
         self.assertEqual(summary["evidence_source"], "MEMORY_ONLY")
         self.assertEqual(summary["commander_statuses"], {"HOLDING": 1, "RETREATED": 3})
         self.assertEqual(summary["initial_separation_steps"], [9, 45])
