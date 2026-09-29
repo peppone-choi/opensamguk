@@ -55,7 +55,7 @@ object Aptitude {
     /** 정본 가중값. classpath 에 없으면 빌드가 잘못된 것이다 — 조용히 기본값으로 가지 않는다. */
     val CANON: Weights by lazy {
         parse(checkNotNull(Aptitude::class.java.classLoader.getResource(RESOURCE)) {
-            "hwiha aptitude weights resource is missing: $RESOURCE"
+            "aptitude weights resource is missing: $RESOURCE"
         }.readText())
     }
 

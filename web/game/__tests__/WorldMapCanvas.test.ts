@@ -11,10 +11,10 @@ import {
     type CountyAdministrativeIndex, type WorldTiles, type IsoCityOverlay, type IsoSceneOptions, type ProvinceIdentityMap,
 } from '@opensamguk/ui';
 
-const hanTiles: WorldTiles = JSON.parse(
+const worldTiles: WorldTiles = JSON.parse(
     readFileSync(resolve(__dirname, '../../../data/map/han-tiles.json'), 'utf8'),
 );
-const grid = { cols: hanTiles._meta.cols, rows: hanTiles._meta.rows };
+const grid = { cols: worldTiles._meta.cols, rows: worldTiles._meta.rows };
 const MIN_MARKER_K = Math.min(...Object.values(TIER2_MARKER_ZOOM));
 
 describe('비플레이 지형', () => {
@@ -370,12 +370,12 @@ describe('지도 아이콘 배율과 앵커', () => {
         const runtime = JSON.parse(
             readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han.json'), 'utf8'),
         ) as { width: number; height: number; cities: IsoCityOverlay[] };
-        const cells = hanTiles._meta.cols * hanTiles._meta.rows;
+        const cells = worldTiles._meta.cols * worldTiles._meta.rows;
         const provinceMap: ProvinceIdentityMap = {
-            width: hanTiles._meta.cols,
-            height: hanTiles._meta.rows,
-            provinces: expandOwner(hanTiles.owner, cells),
-            commanderies: expandOwner(hanTiles.parentOwner!, cells),
+            width: worldTiles._meta.cols,
+            height: worldTiles._meta.rows,
+            provinces: expandOwner(worldTiles.owner, cells),
+            commanderies: expandOwner(worldTiles.parentOwner!, cells),
             provinceEdges: [],
             commanderyEdges: [],
         };
@@ -386,7 +386,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         ]));
 
         expect(() => completeJurisdictionOverlays(
-            hanTiles,
+            worldTiles,
             runtime.cities,
             anchors,
             { width: runtime.width, height: runtime.height },
@@ -403,17 +403,17 @@ describe('지도 아이콘 배율과 앵커', () => {
         expect(provinceCities.some((city) => city.id === 199)).toBe(false);
         expect(provinceCities.some((city) => city.id === 200)).toBe(true);
         const scenePositions = new Map(runtime.cities.map((city) => [city.id, {
-            col: city.x * hanTiles._meta.cols / runtime.width,
-            row: city.y * hanTiles._meta.rows / runtime.height,
+            col: city.x * worldTiles._meta.cols / runtime.width,
+            row: city.y * worldTiles._meta.rows / runtime.height,
             provinceId: city.provinceId ?? 691,
         }]));
-        const scene = buildIsoScene(hanTiles, provinceCities, {
+        const scene = buildIsoScene(worldTiles, provinceCities, {
             width: runtime.width,
             height: runtime.height,
         }, {
             markerPositions: scenePositions,
-            provinceRecords: hanTiles.provinceRecords,
-            jurisdictionRecords: hanTiles.jurisdictionRecords,
+            provinceRecords: worldTiles.provinceRecords,
+            jurisdictionRecords: worldTiles.jurisdictionRecords,
         });
         expect(scene.cities.some((city) => city.id === 199)).toBe(false);
         expect(scene.cities.filter((city) => city.provinceId === 691)).toHaveLength(1);
@@ -423,12 +423,12 @@ describe('지도 아이콘 배율과 앵커', () => {
         const runtime = JSON.parse(
             readFileSync(resolve(__dirname, '../../../infra/src/main/resources/map/han.json'), 'utf8'),
         ) as { width: number; height: number; cities: IsoCityOverlay[] };
-        const cells = hanTiles._meta.cols * hanTiles._meta.rows;
+        const cells = worldTiles._meta.cols * worldTiles._meta.rows;
         const provinceMap: ProvinceIdentityMap = {
-            width: hanTiles._meta.cols,
-            height: hanTiles._meta.rows,
-            provinces: expandOwner(hanTiles.owner, cells),
-            commanderies: expandOwner(hanTiles.parentOwner!, cells),
+            width: worldTiles._meta.cols,
+            height: worldTiles._meta.rows,
+            provinces: expandOwner(worldTiles.owner, cells),
+            commanderies: expandOwner(worldTiles.parentOwner!, cells),
             provinceEdges: [],
             commanderyEdges: [],
         };
@@ -438,7 +438,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         )));
 
         const jurisdictions = completeJurisdictionOverlays(
-            hanTiles,
+            worldTiles,
             runtime.cities,
             anchors,
             { width: runtime.width, height: runtime.height },
@@ -448,7 +448,7 @@ describe('지도 아이콘 배율과 앵커', () => {
             provinceMap,
         );
         expect(jurisdictions.map((city) => city.jurisdictionId).sort()).toEqual(
-            (hanTiles.jurisdictionRecords ?? []).map((record) => record.id).sort(),
+            (worldTiles.jurisdictionRecords ?? []).map((record) => record.id).sort(),
         );
         expect(jurisdictions.filter((city) => city.jurisdictionId === '87436')).toHaveLength(1);
         expect(jurisdictions.find((city) => city.jurisdictionId === '87436')).toMatchObject({
@@ -457,7 +457,7 @@ describe('지도 아이콘 배율과 앵커', () => {
         });
 
         const commanderies = completeJurisdictionOverlays(
-            hanTiles,
+            worldTiles,
             runtime.cities,
             anchors,
             { width: runtime.width, height: runtime.height },
@@ -647,14 +647,14 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
             width,
             height,
             grid,
-            hanTiles,
+            worldTiles,
             dpr,
             current,
             'current-city-close',
         );
         const [x, y] = cellToScreen(current.col, current.row, focused);
 
-        expect(focused.scale * hanTiles._meta.resolutionScale!).toBe(10 * dpr);
+        expect(focused.scale * worldTiles._meta.resolutionScale!).toBe(10 * dpr);
         expect(x).toBeCloseTo(width / 2, 6);
         expect(y).toBeCloseTo(height / 2, 6);
     });
@@ -663,29 +663,29 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
         const width = 1000 * dpr;
         const height = 500 * dpr;
         const current = { col: 180, row: 240 };
-        const fit = initialView(width, height, grid, hanTiles, dpr);
-        const focused = initialFocusedView(width, height, grid, hanTiles, dpr, current);
+        const fit = initialView(width, height, grid, worldTiles, dpr);
+        const focused = initialFocusedView(width, height, grid, worldTiles, dpr, current);
         const [x, y] = cellToScreen(current.col, current.row, focused);
 
         expect(focused.scale).toBeGreaterThan(fit.scale);
-        expect(focused.scale).toBeGreaterThanOrEqual(labelZoomFor('COUNTY', fit.scale, dpr, hanTiles._meta.resolutionScale)!);
+        expect(focused.scale).toBeGreaterThanOrEqual(labelZoomFor('COUNTY', fit.scale, dpr, worldTiles._meta.resolutionScale)!);
         expect(x).toBeCloseTo(width / 2, 6);
         expect(y).toBeCloseTo(height / 2, 6);
     });
 
     it('현재 현이 없으면 전체 지도를 맞추는 기존 초기값을 유지한다', () => {
-        expect(initialFocusedView(1000, 500, grid, hanTiles, 1)).toEqual(
-            initialView(1000, 500, grid, hanTiles, 1),
+        expect(initialFocusedView(1000, 500, grid, worldTiles, 1)).toEqual(
+            initialView(1000, 500, grid, worldTiles, 1),
         );
         expect(initialFocusedView(
             1000,
             500,
             grid,
-            hanTiles,
+            worldTiles,
             1,
             undefined,
             'current-city-close',
-        )).toEqual(initialView(1000, 500, grid, hanTiles, 1));
+        )).toEqual(initialView(1000, 500, grid, worldTiles, 1));
     });
 
     it.each([
@@ -697,7 +697,7 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
     ])('컨테이너 %sx%s, DPR %s에서 전체 격자를 잘리지 않게 맞춘다', (cssWidth, cssHeight, dpr) => {
         const width = cssWidth * dpr;
         const height = cssHeight * dpr;
-        const view = initialView(width, height, grid, hanTiles, dpr);
+        const view = initialView(width, height, grid, worldTiles, dpr);
         const corners = [
             cellToScreen(-0.5, -0.5, view),
             cellToScreen(grid.cols - 0.5, -0.5, view),
@@ -756,7 +756,7 @@ describe('등급 → 최소 표시 zoom 매핑', () => {
                 const fit = fitScale(width, height, grid);
                 const markerThreshold = MIN_MARKER_K * fit;
                 expect(fit).toBeLessThan(markerThreshold);
-                expect(initialView(width, height, grid, hanTiles, dpr).scale).toBeLessThan(markerThreshold);
+                expect(initialView(width, height, grid, worldTiles, dpr).scale).toBeLessThan(markerThreshold);
             }
         }
     });

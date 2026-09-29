@@ -53,6 +53,6 @@ data class DeploymentState(val corps: List<DeployedCorps>) {
                     Phase.read(row["startedAt"]))
             })
         }
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA deployment metadata")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid deployment metadata")
     }
 }

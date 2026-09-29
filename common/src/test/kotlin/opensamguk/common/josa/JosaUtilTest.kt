@@ -13,6 +13,22 @@ class JosaUtilTest {
     @Test fun `explicit woJongsung bypasses map`() = assertEquals("AA", JosaUtil.pick("사과", "BB", "AA"))
     @Test fun `put concatenates`() = assertEquals("한국은", JosaUtil.put("한국", "은"))
     @Test fun `null text treated as empty`() = assertEquals("는", JosaUtil.pick(null, "은"))
+    @Test fun `compatibility jamo and final rieul`() {
+        assertEquals("은", JosaUtil.pick("ㄱ", "은"))
+        assertEquals("로", JosaUtil.pick("ㄹ", "으로"))
+    }
+    @Test fun `digits latin and hanja endings`() {
+        assertEquals("은", JosaUtil.pick("100", "은"))
+        assertEquals("는", JosaUtil.pick("12", "은"))
+        assertEquals("로", JosaUtil.pick("1", "으로"))
+        assertEquals("은", JosaUtil.pick("Kim", "은"))
+        assertEquals("는", JosaUtil.pick("Lee", "은"))
+        assertEquals("은", JosaUtil.pick("一", "은"))
+        assertEquals("은", JosaUtil.pick("廓", "은"))
+        assertEquals("은", JosaUtil.pick("국廔", "은"))
+    }
+    @Test fun `trailing punctuation and space retain the last spoken syllable`() =
+        assertEquals("은", JosaUtil.pick("한국!! ", "은"))
     @Test fun `unknown josa with empty woJongsung throws exact message`() {
         val ex = assertFailsWith<IllegalArgumentException> { JosaUtil.pick("진", "부터") }
         assertEquals("올바르지 않은 조사 지정", ex.message)

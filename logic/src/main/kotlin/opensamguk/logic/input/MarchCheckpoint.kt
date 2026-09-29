@@ -39,6 +39,6 @@ data class MarchCheckpoint(
             return checkpoint
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA march checkpoint")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid march checkpoint")
     }
 }

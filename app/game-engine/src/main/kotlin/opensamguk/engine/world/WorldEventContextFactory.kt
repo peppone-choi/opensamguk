@@ -4,9 +4,7 @@ import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.v2.V2CityLedgerStore
 import opensamguk.infra.read.ArchiveHistoryReader
-import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.GameKvRepository
-import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventActionContext
@@ -55,8 +53,6 @@ object WorldEventContextFactory {
         archiveHistoryReader: ArchiveHistoryReader? = null,
         statisticSnapshotReader: StatisticSnapshotReader? = null,
         gameKvRepository: GameKvRepository? = null,
-        bettingRepository: BettingRepository? = null,
-        inheritanceRepository: InheritanceRepository? = null,
         lockGame: () -> Boolean = { false },
         unlockGame: () -> Unit = {},
         spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
@@ -89,8 +85,6 @@ object WorldEventContextFactory {
                 archiveHistoryReader = archiveHistoryReader,
                 statisticSnapshotReader = statisticSnapshotReader,
                 gameKvRepository = gameKvRepository,
-                bettingRepository = bettingRepository,
-                inheritanceRepository = inheritanceRepository,
                 lockGame = lockGame,
                 unlockGame = unlockGame,
                 spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
