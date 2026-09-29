@@ -116,8 +116,15 @@ class DomesticBoundary(
                 state.homeCountyByGeneral[person.id] == countyId)
         }
         val levels = DomesticCountyEffects.levelsOf(city)
-        return when (val step = DomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels,
-            seat, works.completed.any { it.work == active.work && it.edgeId == null })) {
+        val step = try {
+            DomesticEffects.progressWork(context.design, active, now, warehouse.stock, levels,
+                seat, works.completed.any { it.work == active.work && it.edgeId == null })
+        } catch (_: ArithmeticException) {
+            return stop(countyId, works, active, now, "WORK_PROGRESS_OVERFLOW")
+        } catch (_: IllegalArgumentException) {
+            return stop(countyId, works, active, now, "WORK_PROGRESS_INVALID")
+        }
+        return when (step) {
             is WorkStep.Stopped -> stop(countyId, works, step.work, now, step.reason)
             is WorkStep.Advanced -> {
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
@@ -127,6 +134,17 @@ class DomesticBoundary(
                 WorkResult.ADVANCED
             }
             is WorkStep.Completed -> {
+                // Prepare all strategic effects before warehouse debit or county mutation. A bad
+                // work record stops this county while the remaining county boundaries continue.
+                val roadEdgeId = if (step.completed.work == DomesticWork.ROAD) step.completed.edgeId else null
+                val roadPassage = if (roadEdgeId != null) {
+                    val topology = context.topology
+                        ?: return stop(countyId, works, active, now, "ROAD_TOPOLOGY_MISSING")
+                    try { LandPassageState.activate(world.getState().meta, topology, roadEdgeId) }
+                    catch (_: IllegalArgumentException) {
+                        return stop(countyId, works, active, now, "ROAD_STATE_INVALID")
+                    }
+                } else null
                 val fortProvinceId = if (step.completed.work == DomesticWork.FORTIFICATION &&
                     step.completed.edgeId != null) {
                     val edgeId = step.completed.edgeId
@@ -135,6 +153,26 @@ class DomesticBoundary(
                     context.roadGates.singleOrNull { it.edgeId == edgeId }?.fortCells
                         ?.singleOrNull { it.row == row && it.col == col }?.provinceId
                         ?: return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                } else null
+                val fortValue = if (fortProvinceId != null) {
+                    val edgeId = step.completed.edgeId
+                        ?: return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                    val row = step.completed.row
+                        ?: return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                    val col = step.completed.col
+                        ?: return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                    val forts = try { RoadFortState.read(world.getState().meta) }
+                        catch (_: IllegalArgumentException) {
+                            return stop(countyId, works, active, now, "FORT_STATE_INVALID")
+                        }
+                    if (forts.any { it.row == row && it.col == col })
+                        return stop(countyId, works, active, now, "FORT_SITE_OCCUPIED")
+                    val fort = try { RoadFort(RoadFort.siteId(edgeId, row, col), edgeId, fortProvinceId,
+                        row, col, city.nationId, wall = 100, garrison = 0) }
+                        catch (_: IllegalArgumentException) {
+                            return stop(countyId, works, active, now, "INVALID_FORT_SITE")
+                        }
+                    RoadFortState.toMetaValue(forts + fort)
                 } else null
                 if (!settle(countyId, city.nationId, warehouse.revision, step)) return stop(countyId, works, active, now, "STALE_WAREHOUSE")
                 val after = world.getCityById(countyId) ?: return missingCounty(active.actorId, countyId)
@@ -149,25 +187,13 @@ class DomesticBoundary(
                     wall = step.levels.wall, meta = meta)
                 if (world.applyCityDirtyFree(next) == null) return missingCounty(active.actorId, countyId)
                 recorder.diffCity(opensamguk.engine.turn.PerTurnOverlay.toLogicCity(after), opensamguk.engine.turn.PerTurnOverlay.toLogicCity(next))
-                if (step.completed.work == DomesticWork.ROAD && step.completed.edgeId != null) {
-                    val topology = checkNotNull(context.topology)
-                    val passage = LandPassageState.activate(world.getState().meta, topology,
-                        checkNotNull(step.completed.edgeId))
-                    world.setGameEnvValue(LandPassageState.META_KEY, passage)
-                    recorder.recordKv("game_env", "game_env", LandPassageState.META_KEY, passage)
+                if (roadPassage != null) {
+                    world.setGameEnvValue(LandPassageState.META_KEY, roadPassage)
+                    recorder.recordKv("game_env", "game_env", LandPassageState.META_KEY, roadPassage)
                 }
-                if (step.completed.work == DomesticWork.FORTIFICATION && step.completed.edgeId != null) {
-                    val edgeId = checkNotNull(step.completed.edgeId)
-                    val row = checkNotNull(step.completed.row)
-                    val col = checkNotNull(step.completed.col)
-                    val fort = RoadFort(
-                        RoadFort.siteId(edgeId, row, col),
-                        edgeId, checkNotNull(fortProvinceId),
-                        row, col, city.nationId, wall = 100, garrison = 0,
-                    )
-                    val value = RoadFortState.toMetaValue(RoadFortState.read(world.getState().meta) + fort)
-                    world.setGameEnvValue(RoadFortState.META_KEY, value)
-                    recorder.recordKv("game_env", "game_env", RoadFortState.META_KEY, value)
+                if (fortValue != null) {
+                    world.setGameEnvValue(RoadFortState.META_KEY, fortValue)
+                    recorder.recordKv("game_env", "game_env", RoadFortState.META_KEY, fortValue)
                 }
                 log(active.actorId, "${city.name}의 ${active.work.label} 공사를 마쳤습니다.")
                 WorkResult.COMPLETED
@@ -235,6 +261,8 @@ class DomesticBoundary(
         "WAREHOUSE_NOT_READY" -> "현의 창고를 확인할 수 없습니다."
         "STALE_WAREHOUSE" -> "창고 정산이 어긋났습니다."
         "SEAT_PERSON_MISSING" -> "현령 인물 정보를 확인할 수 없습니다."
+        "WORK_PROGRESS_OVERFLOW" -> "공사 진척 수치가 범위를 벗어났습니다."
+        "WORK_PROGRESS_INVALID" -> "공사 진척 상태를 확인할 수 없습니다."
         else -> reason
     }
 
