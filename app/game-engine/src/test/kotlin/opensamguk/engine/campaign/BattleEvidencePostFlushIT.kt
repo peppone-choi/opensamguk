@@ -265,6 +265,21 @@ class BattleEvidencePostFlushIT {
     }
 
     @Test
+    fun `seeded seal cannot hide missing committed battle settlement`() {
+        val run = fixture()
+        run.service.runTick(runTime)
+        run.evidence.publishAfterCommit()
+        assertEquals(1L, committedVersion())
+        val battleRows = jdbc.queryForObject(
+            "SELECT count(*) FROM general WHERE world_id=? AND meta->'lastBattle' IS NOT NULL",
+            Long::class.java, worldId.value)!!
+        assertTrue(battleRows > 0, "the tick must persist a battle before this probe removes it")
+        jdbc.update("UPDATE general SET meta=meta - 'lastBattle' WHERE world_id=?", worldId.value)
+        assertEquals(setOf(run.encounterId), sealedIds(), "the pre-tick seed remains after settlement removal")
+        assertFailsWith<IllegalStateException> { requireFullCoverage(run.evidence) }
+    }
+
+    @Test
     fun `post commit exception quarantines result and exposes missing export`() {
         val run = fixture(failAfterCommit = true)
         assertFailsWith<IllegalStateException> { run.service.runTick(runTime) }
