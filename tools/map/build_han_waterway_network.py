@@ -158,7 +158,7 @@ def build(tiles: dict, tiles_bytes: bytes, strongholds: dict, strongholds_bytes:
     need(ledger.get("activation") == "NON_ACTIVATING",
          "slice 1 must stay NON_ACTIVATING: no runtime may consume these edges yet")
     base = ledger["base"]
-    need(base["hanTiles"]["sha256"] == sha256(tiles_bytes), "han-tiles base pin drift")
+    need(base["tileMap"]["sha256"] == sha256(tiles_bytes), "han-tiles base pin drift")
     need(base["strongholds"]["sha256"] == sha256(strongholds_bytes), "stronghold ledger base pin drift")
 
     # This evidence ledger is a non-activating historical witness in the

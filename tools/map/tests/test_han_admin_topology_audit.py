@@ -490,7 +490,7 @@ class HanAdminTopologyAuditTest(unittest.TestCase):
             materialize(TILES, UNITS, BINDINGS, EXTERNAL_POLICY),
             first_result,
         )
-        self.assertNotIn("path", first_result["inputs"]["hanTiles"])
+        self.assertNotIn("path", first_result["inputs"]["tileMap"])
 
 
 if __name__ == "__main__":
