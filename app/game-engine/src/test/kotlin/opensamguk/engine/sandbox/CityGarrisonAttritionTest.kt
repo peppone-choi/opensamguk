@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.ATTRITION_BASE_LOSS
 import opensamguk.engine.city.AttritionCity
@@ -17,7 +17,7 @@ import kotlin.test.assertTrue
  * RNG 를 쓰지 않는다. `attritionLoss`/`cityGarrisonAttrition` 어느 쪽도 `RandUtil` 을 인자로 받지
  * 않으므로 draw 0 은 타입 수준에서 이미 참이고, 여기서 고정하는 것은 **판정 절차**(§2.4)다.
  */
-class V2CityGarrisonAttritionTest {
+class CityGarrisonAttritionTest {
 
     private fun city(id: Int, state: Int, garrison: Int, nationId: Int = 1) =
         AttritionCity(cityId = id, name = "성$id", nationId = nationId, state = state, garrison = garrison)

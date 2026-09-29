@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import javax.sql.DataSource
 import kotlin.test.Test
@@ -18,14 +18,14 @@ internal const val V1_FLYWAY_LOCATION = "classpath:db/migration"
 internal const val V2_FLYWAY_LOCATION = "classpath:db/migration_sandbox"
 internal const val SANDBOX_FLYWAY_LOCATIONS = "$V1_FLYWAY_LOCATION,$V2_FLYWAY_LOCATION"
 
-internal fun v1PersistentTableBaseline(dataSource: DataSource): Set<V2CatalogRelation> {
+internal fun v1PersistentTableBaseline(dataSource: DataSource): Set<CatalogRelation> {
     Flyway.configure()
         .dataSource(dataSource)
         .locations(V1_FLYWAY_LOCATION)
         .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
         .load()
         .migrate()
-    return V2FlywayIsolationAssertions.persistentTableRelations(dataSource)
+    return FlywayIsolationAssertions.persistentTableRelations(dataSource)
 }
 
 private fun v2SandboxFlyway(dataSource: DataSource): Flyway = Flyway.configure()
@@ -35,7 +35,7 @@ private fun v2SandboxFlyway(dataSource: DataSource): Flyway = Flyway.configure()
     .load()
 
 @Testcontainers(disabledWithoutDocker = true)
-class V2FlywayIsolationConstraintMutationIT {
+class FlywayIsolationConstraintMutationIT {
 
     @Test
     fun `runtime guard rejects an unscoped standalone unique index and accepts a scoped one`() {
@@ -111,13 +111,13 @@ class V2FlywayIsolationConstraintMutationIT {
             ${'$'}${'$'};
         """.trimIndent()
 
-        assertEquals(emptyList(), V2MigrationConvention.createdTables(dynamicTableSql))
+        assertEquals(emptyList(), MigrationConvention.createdTables(dynamicTableSql))
         jdbc.execute(dynamicTableSql)
 
         try {
             assertTrue(
-                V2FlywayIsolationAssertions.persistentTableRelations(sandbox.dataSource).any { relation ->
-                    relation.table == V2CreatedTable("public", "v2_catalog_dynamic_unscoped") && relation.kind == "r"
+                FlywayIsolationAssertions.persistentTableRelations(sandbox.dataSource).any { relation ->
+                    relation.table == CreatedTable("public", "v2_catalog_dynamic_unscoped") && relation.kind == "r"
                 },
                 "pg_class catalog diff must include the dynamic ordinary relation",
             )
@@ -142,7 +142,7 @@ class V2FlywayIsolationConstraintMutationIT {
             ) SERVER v2_catalog_foreign_server OPTIONS (table_name 'world_state');
         """.trimIndent()
 
-        assertEquals(emptyList(), V2MigrationConvention.createdTables(foreignTableSql))
+        assertEquals(emptyList(), MigrationConvention.createdTables(foreignTableSql))
         try {
             jdbc.execute("CREATE EXTENSION IF NOT EXISTS postgres_fdw")
             jdbc.execute("DROP SERVER IF EXISTS v2_catalog_foreign_server CASCADE")
@@ -152,8 +152,8 @@ class V2FlywayIsolationConstraintMutationIT {
             )
             jdbc.execute(foreignTableSql)
             assertTrue(
-                V2FlywayIsolationAssertions.persistentTableRelations(sandbox.dataSource).any { relation ->
-                    relation.table == V2CreatedTable("public", "v2_catalog_unscoped_foreign") && relation.kind == "f"
+                FlywayIsolationAssertions.persistentTableRelations(sandbox.dataSource).any { relation ->
+                    relation.table == CreatedTable("public", "v2_catalog_unscoped_foreign") && relation.kind == "f"
                 },
                 "pg_class catalog diff must include the foreign relation",
             )
@@ -169,13 +169,13 @@ class V2FlywayIsolationConstraintMutationIT {
         sandbox.assertions().assertV2SandboxRuntime()
     }
 
-    private fun SandboxFixture.assertions(): V2FlywayIsolationAssertions =
-        V2FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline)
+    private fun SandboxFixture.assertions(): FlywayIsolationAssertions =
+        FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline)
 
     private data class SandboxFixture(
         val dataSource: DataSource,
         val flyway: Flyway,
-        val v1CatalogBaseline: Set<V2CatalogRelation>,
+        val v1CatalogBaseline: Set<CatalogRelation>,
     )
 
     private companion object {
@@ -191,10 +191,10 @@ class V2FlywayIsolationConstraintMutationIT {
     }
 }
 
-internal class V2FlywayIsolationAssertions(
+internal class FlywayIsolationAssertions(
     private val flyway: Flyway,
     dataSource: DataSource,
-    private val v1CatalogBaseline: Set<V2CatalogRelation>? = null,
+    private val v1CatalogBaseline: Set<CatalogRelation>? = null,
 ) {
     private val jdbc = JdbcTemplate(dataSource)
 
@@ -229,7 +229,7 @@ internal class V2FlywayIsolationAssertions(
         val createdRelations = persistentTableRelations(jdbc).filterNot { it.oid in baselineOids }
         assertTrue(createdRelations.isNotEmpty(), "v2 migrations must create at least one persistent table-like relation")
         assertTrue(
-            createdRelations.any { it.table == V2CreatedTable("public", "v2_sandbox_probe") },
+            createdRelations.any { it.table == CreatedTable("public", "v2_sandbox_probe") },
             "the V900 probe must appear in the v1-to-v2 PostgreSQL catalog diff",
         )
         createdRelations.forEach(::assertWorldScoped)
@@ -238,20 +238,20 @@ internal class V2FlywayIsolationAssertions(
     private fun resolvedLocations(): List<String> = flyway.configuration.locations.map { it.descriptor }
 
     private fun appliedV2Migrations(): List<MigrationInfo> = flyway.info().applied().filter { migration ->
-        migration.version?.toString()?.toIntOrNull()?.let { it >= V2MigrationConvention.MINIMUM_VERSION } == true
+        migration.version?.toString()?.toIntOrNull()?.let { it >= MigrationConvention.MINIMUM_VERSION } == true
     }
 
     private fun assertV2SourceConventions(appliedMigrations: List<MigrationInfo>) {
         val violations = appliedMigrations.flatMap { migration ->
-            val source = V2MigrationSources.sourceForAppliedScript(migration.script)
-            V2MigrationConvention.validate(migration.script, source.readText()).map { violation ->
+            val source = MigrationSources.sourceForAppliedScript(migration.script)
+            MigrationConvention.validate(migration.script, source.readText()).map { violation ->
                 "${migration.script}: $violation"
             }
         }
         assertEquals(emptyList(), violations, "applied v2 source conventions")
     }
 
-    private fun assertWorldScoped(relation: V2CatalogRelation) {
+    private fun assertWorldScoped(relation: CatalogRelation) {
         val label = "pg_class ${relation.kind} ${relation.table.schema}.${relation.table.name} (oid=${relation.oid})"
         assertTrue(worldIdIsNotNull(relation), "$label must keep world_id NOT NULL")
         assertTrue(
@@ -262,7 +262,7 @@ internal class V2FlywayIsolationAssertions(
     }
 
     private fun probeTableExists(): Boolean = persistentTableRelations(jdbc).any { relation ->
-        relation.table == V2CreatedTable("public", "v2_sandbox_probe")
+        relation.table == CreatedTable("public", "v2_sandbox_probe")
     }
 
     private fun appliedProbeMigrations(): Int = jdbc.queryForObject(
@@ -270,7 +270,7 @@ internal class V2FlywayIsolationAssertions(
         Int::class.java,
     ) ?: 0
 
-    private fun worldIdIsNotNull(relation: V2CatalogRelation): Boolean = queryBoolean(
+    private fun worldIdIsNotNull(relation: CatalogRelation): Boolean = queryBoolean(
         """
         SELECT EXISTS (
             SELECT 1
@@ -285,7 +285,7 @@ internal class V2FlywayIsolationAssertions(
         relation.oid,
     )
 
-    private fun everyPrimaryOrUniqueIndexContainsWorldId(relation: V2CatalogRelation): Boolean = queryBoolean(
+    private fun everyPrimaryOrUniqueIndexContainsWorldId(relation: CatalogRelation): Boolean = queryBoolean(
         """
         SELECT EXISTS (
             SELECT 1
@@ -314,7 +314,7 @@ internal class V2FlywayIsolationAssertions(
         relation.oid,
     )
 
-    private fun worldIdReferencesWorldState(relation: V2CatalogRelation): Boolean = queryBoolean(
+    private fun worldIdReferencesWorldState(relation: CatalogRelation): Boolean = queryBoolean(
         """
         SELECT EXISTS (
             SELECT foreign_key.oid
@@ -358,10 +358,10 @@ internal class V2FlywayIsolationAssertions(
     companion object {
         const val SANDBOX_PROBE_SCRIPT = "V900__sandbox_probe.sql"
 
-        fun persistentTableRelations(dataSource: DataSource): Set<V2CatalogRelation> =
+        fun persistentTableRelations(dataSource: DataSource): Set<CatalogRelation> =
             persistentTableRelations(JdbcTemplate(dataSource))
 
-        private fun persistentTableRelations(jdbc: JdbcTemplate): Set<V2CatalogRelation> = jdbc.query(
+        private fun persistentTableRelations(jdbc: JdbcTemplate): Set<CatalogRelation> = jdbc.query(
             """
             SELECT relation.oid,
                    namespace.nspname AS schema_name,
@@ -373,9 +373,9 @@ internal class V2FlywayIsolationAssertions(
                AND relation.relpersistence IN ('p', 'u')
             """.trimIndent(),
         ) { resultSet, _ ->
-            V2CatalogRelation(
+            CatalogRelation(
                 oid = resultSet.getLong("oid"),
-                table = V2CreatedTable(
+                table = CreatedTable(
                     schema = resultSet.getString("schema_name"),
                     name = resultSet.getString("relname"),
                 ),
@@ -385,8 +385,8 @@ internal class V2FlywayIsolationAssertions(
     }
 }
 
-internal data class V2CatalogRelation(
+internal data class CatalogRelation(
     val oid: Long,
-    val table: V2CreatedTable,
+    val table: CreatedTable,
     val kind: String,
 )

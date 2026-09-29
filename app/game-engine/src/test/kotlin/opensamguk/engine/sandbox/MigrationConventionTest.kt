@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import java.io.File
 import kotlin.test.Test
@@ -6,16 +6,16 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-class V2MigrationConventionTest {
+class MigrationConventionTest {
 
     @Test
     fun `v2 migrations are V900 plus world-scoped and forward-only`() {
-        val files = V2MigrationSources.v2SqlFiles()
+        val files = MigrationSources.v2SqlFiles()
         assertTrue(files.isNotEmpty(), "the test-only V900 probe must remain covered by this convention")
 
         val violations = files.flatMap { file ->
-            V2MigrationConvention.validate(file.name, file.readText()).map { violation ->
-                "${V2MigrationSources.relativePath(file)}: $violation"
+            MigrationConvention.validate(file.name, file.readText()).map { violation ->
+                "${MigrationSources.relativePath(file)}: $violation"
             }
         }
 
@@ -24,10 +24,10 @@ class V2MigrationConventionTest {
 
     @Test
     fun `validator requires the exact forward-only header on the first line`() {
-        val sql = "\n${V2MigrationConvention.FORWARD_ONLY_HEADER}\n" +
+        val sql = "\n${MigrationConvention.FORWARD_ONLY_HEADER}\n" +
             "CREATE TABLE v2_example (world_id integer NOT NULL REFERENCES world_state(id), PRIMARY KEY (world_id));"
 
-        val violations = V2MigrationConvention.validate("V900__v2_example.sql", sql)
+        val violations = MigrationConvention.validate("V900__v2_example.sql", sql)
 
         assertTrue(violations.any { it.contains("first line") }, "header placement violations: $violations")
     }
@@ -42,7 +42,7 @@ class V2MigrationConventionTest {
             );
         """.trimIndent()
 
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_example.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_example.sql", sql))
     }
 
     @Test
@@ -56,7 +56,7 @@ class V2MigrationConventionTest {
             SELECT world_id INTO v2_select_into_bypass FROM v2_example;
         """.trimIndent()
 
-        val violations = V2MigrationConvention.validate("V900__v2_example.sql", sql)
+        val violations = MigrationConvention.validate("V900__v2_example.sql", sql)
 
         assertTrue(
             violations.any { it.contains("SELECT ... INTO") },
@@ -75,7 +75,7 @@ class V2MigrationConventionTest {
             (SELECT world_id INTO v2_parenthesized_select_into FROM v2_example);
         """.trimIndent()
 
-        val violations = V2MigrationConvention.validate("V900__v2_example.sql", sql)
+        val violations = MigrationConvention.validate("V900__v2_example.sql", sql)
 
         assertTrue(
             violations.any { it.contains("SELECT ... INTO") },
@@ -94,7 +94,7 @@ class V2MigrationConventionTest {
             SELECT 1 AS INTO;
         """.trimIndent()
 
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_example.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_example.sql", sql))
     }
 
     @Test
@@ -112,7 +112,7 @@ class V2MigrationConventionTest {
             SELECT world_id INTO v2_after_dollar_body FROM v2_example;
         """.trimIndent()
 
-        val violations = V2MigrationConvention.validate("V900__v2_example.sql", sql)
+        val violations = MigrationConvention.validate("V900__v2_example.sql", sql)
 
         assertTrue(
             violations.any { it.contains("SELECT ... INTO") },
@@ -134,7 +134,7 @@ class V2MigrationConventionTest {
             */
         """.trimIndent()
 
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_example.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_example.sql", sql))
     }
 
     @Test
@@ -148,7 +148,7 @@ class V2MigrationConventionTest {
             SELECT E'escaped quote: \' SELECT world_id INTO v2_e_string' AS note;
         """.trimIndent()
 
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_example.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_example.sql", sql))
     }
 
     @Test
@@ -167,12 +167,12 @@ class V2MigrationConventionTest {
 
         assertEquals(
             listOf(
-                V2CreatedTable("public", "v2_scoped_dollar"),
-                V2CreatedTable("public", "v2_unscoped_dollar"),
+                CreatedTable("public", "v2_scoped_dollar"),
+                CreatedTable("public", "v2_unscoped_dollar"),
             ),
-            V2MigrationConvention.createdTables(sql),
+            MigrationConvention.createdTables(sql),
         )
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_dollar_mask.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_dollar_mask.sql", sql))
     }
 
     @Test
@@ -191,12 +191,12 @@ class V2MigrationConventionTest {
 
         assertEquals(
             listOf(
-                V2CreatedTable("public", "v2_scoped_e_string"),
-                V2CreatedTable("public", "v2_unscoped_e_string"),
+                CreatedTable("public", "v2_scoped_e_string"),
+                CreatedTable("public", "v2_unscoped_e_string"),
             ),
-            V2MigrationConvention.createdTables(sql),
+            MigrationConvention.createdTables(sql),
         )
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_e_string_mask.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_e_string_mask.sql", sql))
     }
 
     @Test
@@ -216,12 +216,12 @@ class V2MigrationConventionTest {
 
         assertEquals(
             listOf(
-                V2CreatedTable("public", "v2_scoped_dollar_identifier"),
-                V2CreatedTable("public", "v2_unscoped_dollar_identifier"),
+                CreatedTable("public", "v2_scoped_dollar_identifier"),
+                CreatedTable("public", "v2_unscoped_dollar_identifier"),
             ),
-            V2MigrationConvention.createdTables(sql),
+            MigrationConvention.createdTables(sql),
         )
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_dollar_identifier.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_dollar_identifier.sql", sql))
     }
 
     @Test
@@ -239,12 +239,12 @@ class V2MigrationConventionTest {
 
         assertEquals(
             listOf(
-                V2CreatedTable("public", "v2_scoped_decoy"),
-                V2CreatedTable("public", "v2_scoped_decoy${'$'}hidden"),
+                CreatedTable("public", "v2_scoped_decoy"),
+                CreatedTable("public", "v2_scoped_decoy${'$'}hidden"),
             ),
-            V2MigrationConvention.createdTables(sql),
+            MigrationConvention.createdTables(sql),
         )
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_dollar_table_name.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_dollar_table_name.sql", sql))
     }
 
     @Test
@@ -260,10 +260,10 @@ class V2MigrationConventionTest {
         """.trimIndent()
 
         assertEquals(
-            listOf(V2CreatedTable("public", "v2_real_dollar_quote")),
-            V2MigrationConvention.createdTables(sql),
+            listOf(CreatedTable("public", "v2_real_dollar_quote")),
+            MigrationConvention.createdTables(sql),
         )
-        assertEquals(emptyList(), V2MigrationConvention.validate("V900__v2_dollar_quotes.sql", sql))
+        assertEquals(emptyList(), MigrationConvention.validate("V900__v2_dollar_quotes.sql", sql))
     }
 
     @Test
@@ -277,7 +277,7 @@ class V2MigrationConventionTest {
             /* world_id integer NOT NULL */
         """.trimIndent()
 
-        val violations = V2MigrationConvention.validate("V900__v2_example.sql", sql)
+        val violations = MigrationConvention.validate("V900__v2_example.sql", sql)
 
         assertTrue(violations.any { it.contains("world_id") }, "comment-only world_id must not satisfy the contract: $violations")
     }
@@ -302,11 +302,11 @@ class V2MigrationConventionTest {
             """.trimIndent()
 
             assertEquals(
-                listOf(V2CreatedTable("public", tableName)),
-                V2MigrationConvention.createdTables(sql),
+                listOf(CreatedTable("public", tableName)),
+                MigrationConvention.createdTables(sql),
                 "$modifier CREATE TABLE must reach runtime world-scope checks",
             )
-            assertEquals(emptyList(), V2MigrationConvention.validate("V900__${tableName}.sql", sql))
+            assertEquals(emptyList(), MigrationConvention.validate("V900__${tableName}.sql", sql))
 
             val unscopedSql = """
                 -- V2-FORWARD-ONLY: rollback is a new compensating V900+ migration.
@@ -314,7 +314,7 @@ class V2MigrationConventionTest {
                     external_code integer NOT NULL PRIMARY KEY
                 );
             """.trimIndent()
-            val violations = V2MigrationConvention.validate("V900__${tableName}.sql", unscopedSql)
+            val violations = MigrationConvention.validate("V900__${tableName}.sql", unscopedSql)
             assertTrue(
                 violations.any { it.contains("world_id") },
                 "$modifier CREATE TABLE without world_id must not bypass validation: $violations",
@@ -333,9 +333,9 @@ class V2MigrationConventionTest {
         """.trimIndent()
 
         assertFailsWith<IllegalArgumentException> {
-            V2MigrationConvention.createdTables(sql)
+            MigrationConvention.createdTables(sql)
         }
-        val violations = V2MigrationConvention.validate("V900__invalid_modifier_order.sql", sql)
+        val violations = MigrationConvention.validate("V900__invalid_modifier_order.sql", sql)
         assertTrue(
             violations.any { it.contains("cannot be world-scope checked") },
             "unparsed recognized CREATE TABLE modifier sequence must fail closed: $violations",
@@ -343,7 +343,7 @@ class V2MigrationConventionTest {
     }
 }
 
-internal object V2MigrationConvention {
+internal object MigrationConvention {
     const val MINIMUM_VERSION = 900
     const val FORWARD_ONLY_HEADER = "-- V2-FORWARD-ONLY: rollback is a new compensating V900+ migration."
 
@@ -386,14 +386,14 @@ internal object V2MigrationConvention {
         }
     }
 
-    fun createdTables(sql: String): List<V2CreatedTable> = createdTablesFromExecutableSql(maskedExecutableSql(sql))
+    fun createdTables(sql: String): List<CreatedTable> = createdTablesFromExecutableSql(maskedExecutableSql(sql))
 
-    private fun createdTablesFromExecutableSql(executableSql: String): List<V2CreatedTable> {
+    private fun createdTablesFromExecutableSql(executableSql: String): List<CreatedTable> {
         require(!containsSelectIntoTableCreation(executableSql)) {
             "unsupported PostgreSQL SELECT ... INTO table creation"
         }
         val declarations = createTable.findAll(executableSql).map { match ->
-            V2CreatedTable(
+            CreatedTable(
                 schema = match.groupValues[1].ifEmpty { "public" }.lowercase(),
                 name = match.groupValues[2].lowercase(),
             )
@@ -601,12 +601,12 @@ internal object V2MigrationConvention {
 
 }
 
-internal data class V2CreatedTable(
+internal data class CreatedTable(
     val schema: String,
     val name: String,
 )
 
-internal object V2MigrationSources {
+internal object MigrationSources {
     private val migrationDirectories = listOf(
         "infra/src/main/resources/db/migration_sandbox",
         "app/game-engine/src/test/resources/db/migration_sandbox",

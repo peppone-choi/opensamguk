@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.CityLedgerStore
 
@@ -9,7 +9,7 @@ import kotlin.test.fail
 
 /**
  * OPENSAM-35 GATE-f2 F1 — naming-heuristic layer for plan §4-2 convention 1: **v2 runtime code belongs in an
- * `opensamguk.*.v2.*` package**. `V2ProductionContextBeanGateIT` detects leakage only when a bean's **type name
+ * `opensamguk.*.v2.*` package**. `ProductionContextBeanGateIT` detects leakage only when a bean's **type name
  * contains `.v2.`**, so a declaration such as `opensamguk.engine.ledger.CityLedgerStore` can silently evade the
  * gate. This source scan closes the naming-convention half of that gap.
  *
@@ -21,7 +21,7 @@ import kotlin.test.fail
  * with `V2` (for example, `SandboxCityLedger` or `LedgerV2Store`) remains a review concern. As a source-text scan,
  * it also cannot distinguish the same pattern in a string literal or comment; there are currently none.
  */
-class V2NamingConventionGuardTest {
+class NamingConventionGuardTest {
 
     /** `class V2X` / `object V2X` / `interface V2X`: only declarations with an uppercase letter after `V2`; `V26__` is excluded. */
     private val declaration = Regex("""\b(class|object|interface)\s+(V2[A-Z]\w*)""")

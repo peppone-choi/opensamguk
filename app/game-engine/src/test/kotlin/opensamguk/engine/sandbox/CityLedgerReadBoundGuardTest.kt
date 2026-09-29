@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.CityLedgerStore
 
@@ -23,9 +23,9 @@ import kotlin.test.fail
  * 빼도, `jdbc.update`로 직접 쓰기를 넣어도(`isDirectSqlMethod`는 `update`도 통과시킨다) 카탈로그 가드는
  * 여전히 green이다. 무제한 스캔 금지와 읽기 전용(쓰기는 `ChangeRecorder` 경유)은 여기서만 단언된다.
  *
- * 소스 텍스트 스캔이라는 한계는 `V2NamingConventionGuardTest`와 동일하다(문자열/주석 구분 불가).
+ * 소스 텍스트 스캔이라는 한계는 `NamingConventionGuardTest`와 동일하다(문자열/주석 구분 불가).
  */
-class V2CityLedgerReadBoundGuardTest {
+class CityLedgerReadBoundGuardTest {
 
     private val storePath = "app/game-engine/src/main/kotlin/opensamguk/engine/city/CityLedgerStore.kt"
 

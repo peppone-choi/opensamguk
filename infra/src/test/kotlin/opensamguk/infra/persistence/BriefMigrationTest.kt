@@ -21,7 +21,7 @@ import kotlin.test.assertEquals
  * `'brief'=>'휴식'` on all 24 rows; research OQ11). V1 (frozen baseline) is untouched.
  */
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-class V2BriefMigrationTest {
+class BriefMigrationTest {
 
     private lateinit var postgres: PostgreSQLContainer<*>
     private lateinit var dataSource: DataSource

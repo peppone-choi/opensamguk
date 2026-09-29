@@ -1,4 +1,4 @@
-package opensamguk.gameapi.reserve.v2
+package opensamguk.gameapi.reserve.command
 
 import kotlinx.serialization.SerialName
 import opensamguk.common.wire.CityGarrisonRecruit
@@ -22,7 +22,7 @@ import kotlin.test.assertTrue
  * 세그먼트뿐이므로(OPENSAM-190), v2 케이스는 이렇게 별도 파일로 둔다. `roundTrip` 헬퍼는 원본이
  * private 이라 같은 모양으로 다시 적었다 — 검증 대상(데몬이 실제로 읽는 payload 바이트)은 동일하다.
  */
-class V2CommandWireMapperTest {
+class CommandWireMapperTest {
 
     @Test
     fun `every registered v2 wire command has exactly one canonical schema`() {

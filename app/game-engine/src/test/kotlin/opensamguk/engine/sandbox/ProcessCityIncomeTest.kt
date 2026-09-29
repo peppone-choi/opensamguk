@@ -1,4 +1,4 @@
-package opensamguk.engine.v2
+package opensamguk.engine.sandbox
 
 import opensamguk.engine.city.CityIncomeNation
 import opensamguk.engine.city.processCityIncome
@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
  *   ② 도시 하한은 0이다 — v1 `GameConst.baserice`(2000)를 도시마다 적용하면 안 된다.
  *   ③ 봉록은 장수의 소속 도시 원장에서 나가고, 타국 도시에 있는 장수는 수도로 fallback한다.
  */
-class V2ProcessCityIncomeTest {
+class ProcessCityIncomeTest {
 
     private val pipeline = GeneralActionPipeline(emptyList())
 
