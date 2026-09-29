@@ -1,7 +1,7 @@
 package opensamguk.gameapi.v2
 
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.infra.v2.V2SandboxGate
+import opensamguk.infra.sandbox.SandboxGate
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Profile
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
@@ -31,8 +31,8 @@ import org.springframework.web.bind.annotation.RestController
  * 배치다(one-daemon-write rule).
  */
 @RestController
-@Profile(V2SandboxGate.PROFILE)
-@ConditionalOnProperty(name = [V2SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
+@Profile(SandboxGate.PROFILE)
+@ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 @RequestMapping("/api/v2/city-ledger")
 class V2CityLedgerReadController(
     private val jdbc: NamedParameterJdbcTemplate,
@@ -40,7 +40,7 @@ class V2CityLedgerReadController(
 ) {
     private val worldId = processWorld.worldId
 
-    /** 도시 한 곳의 원장. 행이 없으면 0/0/0 — 엔진 `V2CityLedgerEntry.EMPTY`와 같은 시멘틱. */
+    /** 도시 한 곳의 원장. 행이 없으면 0/0/0 — 엔진 `CityLedgerEntry.EMPTY`와 같은 시멘틱. */
     data class CityLedgerView(val cityId: Int, val gold: Long, val rice: Long, val garrison: Int)
 
     data class CityLedgerListResponse(val entries: List<CityLedgerView>)

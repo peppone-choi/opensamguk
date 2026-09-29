@@ -226,6 +226,7 @@ object HotColdCatalog {
         "app/game-engine/src/main/kotlin/opensamguk/engine/run",
         "app/game-engine/src/main/kotlin/opensamguk/engine/turn",
         "app/game-engine/src/main/kotlin/opensamguk/engine/v2",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/city",
         "app/game-engine/src/main/kotlin/opensamguk/engine/war",
         "app/game-engine/src/main/kotlin/opensamguk/engine/world",
     )
@@ -241,7 +242,7 @@ object HotColdCatalog {
             followUp = "S5-T2 moves archive history reads from boot meta to flush-time exact-key JDBC reads.",
         ),
         DirectSqlBoundary(
-            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/v2/V2CityLedgerStore.kt",
+            sourceFile = "app/game-engine/src/main/kotlin/opensamguk/engine/city/CityLedgerStore.kt",
             relation = "v2_city_ledger",
             temperature = DataTemperature.QUERY_ONLY_COLD,
             boundary = AccessBoundary.BOOT_SNAPSHOT,

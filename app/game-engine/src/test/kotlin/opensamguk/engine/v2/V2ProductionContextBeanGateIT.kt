@@ -5,11 +5,12 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.config.EngineProcessWorld
-import opensamguk.infra.v2.V2CityCatalogAdapter
-import opensamguk.infra.v2.V2ContentCatalog
-import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.v2.V2SandboxMarker
+import opensamguk.infra.content.CityCatalogAdapter
+import opensamguk.infra.content.ContentCatalog
+import opensamguk.infra.sandbox.SandboxGate
+import opensamguk.infra.sandbox.SandboxMarker
 import org.flywaydb.core.Flyway
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
@@ -48,14 +49,14 @@ private const val SECURITY_EXCLUDES =
         "org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration"
 
 /**
- * A defense that does not depend on hard-coded type names. It scans **all bean definitions** for types from a v2
- * package, so a new v2 bean cannot silently bypass the gate merely because nobody added it to this test's type
+ * A defense that does not depend on hard-coded type names. It scans **all bean definitions** for sandbox feature types,
+ * including the current infra content and gate packages, so a new bean cannot silently bypass the gate merely because nobody added it to this test's type
  * list. `allowFactoryBeanInit = false` resolves types without creating beans.
  */
 internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
     beanDefinitionNames.mapNotNull { name ->
         val type = runCatching { getType(name, false) }.getOrNull()?.name ?: return@mapNotNull null
-        if (type.startsWith("opensamguk.") && type.contains(".v2.")) name to type else null
+        if (SandboxGate.isGatedTypeName(type)) name to type else null
     }.toMap()
 
 /**
@@ -83,11 +84,11 @@ internal val APPROVED_V2_BEAN_NAMES: Set<String> = setOf(
 )
 
 internal fun ApplicationContext.assertNoV2Beans() {
-    assertEquals(0, getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
-    assertEquals(0, getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
-    assertEquals(0, getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
-    assertEquals(0, getBeansOfType(V2CityLedgerStore::class.java).size, "V2CityLedgerStore beans")
-    assertEquals(emptyMap(), v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
+    assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
+    assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
+    assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
+    assertEquals(0, getBeansOfType(CityLedgerStore::class.java).size, "CityLedgerStore beans")
+    assertEquals(emptyMap(), v2PackageBeans(), "sandbox feature beans")
 }
 
 private fun postgresProps(
@@ -147,7 +148,7 @@ class V2ProductionShapeBeanGateIT {
 
 /** ② `v2.enabled=true` only — no profile. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
-@SpringBootTest(properties = [SECURITY_EXCLUDES, "${V2SandboxGate.PROPERTY}=true"])
+@SpringBootTest(properties = [SECURITY_EXCLUDES, "${SandboxGate.PROPERTY}=true"])
 class V2PropertyOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
@@ -165,7 +166,7 @@ class V2PropertyOnlyBeanGateIT {
 
 /** ③ Profile `v2-sandbox` only — no property. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
-@ActiveProfiles(V2SandboxGate.PROFILE)
+@ActiveProfiles(SandboxGate.PROFILE)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
 class V2ProfileOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
@@ -189,7 +190,7 @@ class V2ProfileOnlyBeanGateIT {
  * the three preceding zeros were measured in a live context.
  */
 @Testcontainers(disabledWithoutDocker = true)
-@ActiveProfiles(V2SandboxGate.PROFILE)
+@ActiveProfiles(SandboxGate.PROFILE)
 @ContextConfiguration(initializers = [V2EnabledEnvironmentInitializer::class])
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
 class V2BothConditionsBeanGateIT {
@@ -199,16 +200,16 @@ class V2BothConditionsBeanGateIT {
 
     @Test
     fun `both conditions register the v2 beans`() {
-        assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
-        assertEquals("true", context.environment.getProperty(V2SandboxGate.PROPERTY))
+        assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
+        assertEquals("true", context.environment.getProperty(SandboxGate.PROPERTY))
 
         val processWorlds = context.getBeansOfType(EngineProcessWorld::class.java)
         assertEquals(1, processWorlds.size, "EngineProcessWorld beans")
         assertEquals(WorldId(9001), processWorlds.values.single().worldId)
 
-        assertEquals(1, context.getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
-        assertEquals(1, context.getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
-        assertEquals(1, context.getBeansOfType(V2CityCatalogAdapter::class.java).size, "V2CityCatalogAdapter beans")
+        assertEquals(1, context.getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
+        assertEquals(1, context.getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
+        assertEquals(1, context.getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
         val byPackage = context.v2PackageBeans()
         assertEquals(
             emptySet(),
@@ -220,8 +221,8 @@ class V2BothConditionsBeanGateIT {
 
     @Test
     fun `v2 sandbox resolves the literal environment Flyway override and applies V900`() {
-        assertTrue(V2SandboxGate.PROFILE in context.environment.activeProfiles)
-        assertEquals("true", context.environment.getProperty(V2SandboxGate.PROPERTY))
+        assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
+        assertEquals("true", context.environment.getProperty(SandboxGate.PROPERTY))
         assertEquals(V2_SANDBOX_FLYWAY_LOCATIONS, context.environment.getProperty("spring.flyway.locations"))
         V2FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertV2SandboxRuntime()
     }

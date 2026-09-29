@@ -32,7 +32,7 @@ import opensamguk.engine.intake.VotePollState
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
-import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.v2.V2CityTransportHandler
 import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.infra.read.BoardPostRepository
@@ -111,7 +111,7 @@ class TurnDaemonCommandDispatcher(
      * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
      * `dispatch`가 [V2GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
-    v2CityLedger: V2CityLedgerStore? = null,
+    v2CityLedger: CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
     courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
