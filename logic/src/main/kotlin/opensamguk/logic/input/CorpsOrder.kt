@@ -51,6 +51,6 @@ data class CorpsOrder(
             require(topology.containsNode(order.destination)) { "Unknown corps land destination" }
             return order
         }
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA corps destination order")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid corps destination order")
     }
 }
