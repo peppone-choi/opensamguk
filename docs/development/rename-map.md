@@ -1615,3 +1615,12 @@ web/game/lib/hwiha-reads.ts
 | `web/game/__tests__/v2-lab-route.test.tsx` | `retired-routes.test.tsx` | 종료 경로의 404 가드는 유지 |
 
 `/game/v2-lab` 차단 문자열은 기존 URL의 우회 접근을 막기 위해 남긴다. 이 삭제는 활성 캠페인 화면·지도 번들과 무관하다.
+
+### 현행 縣 표시 충돌 목록 입력 키 (2026-09-30)
+
+| 이전 필드 | 중립 필드 | 범위 |
+|---|---|---|
+| `hanTilesSha256` | `tileMapSha256` | 縣 표시 충돌 생성 JSON의 지도 격자 입력 핀 |
+| `hanWorldV3Sha256` | `worldMapSha256` | 같은 JSON의 세계 지도 입력 핀 |
+
+이 목록은 현재 생성 파일이다. 생성기와 웹 병기표의 핀 주석을 함께 재생성했다. 과거 동결 지도 번들의 바이트는 수정하지 않았다.
