@@ -240,7 +240,7 @@ open class RecruitAlgorithm(
         val unit = UnitCatalog.byId(unitSet, reqCrewTypeId) ?: return false
         val mapName = activeMapName(ctx)
         val cityConst = if (mapName == "han-world-v3") {
-            CityConstRegistry.hanWorld(ctx.worldMapVariant ?: return false)
+            CityConstRegistry.forVariant(ctx.worldMapVariant ?: return false)
         } else {
             if (ctx.worldMapVariant != null) return false
             CityConstRegistry.find(mapName) ?: return false

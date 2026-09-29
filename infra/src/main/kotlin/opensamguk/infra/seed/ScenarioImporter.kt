@@ -447,7 +447,7 @@ class ScenarioImporter(
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
         val resolver = WorldArtifactsResolver(artifactsRoot)
         return if (ids.toSet() ==
-            opensamguk.logic.world.CityConstRegistry.hanWorld(
+            opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).all().keys)
             resolver.artifacts(opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4)
         else resolver.resolve(ids, emptyList())
