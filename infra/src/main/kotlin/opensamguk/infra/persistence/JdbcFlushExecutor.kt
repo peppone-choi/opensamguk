@@ -583,6 +583,8 @@ open class JdbcFlushExecutor(
         params.addValue("max_nation_id", (worldState["max_nation_id"] as? Number)?.toInt() ?: 0)
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
         // Phase 4X-A 고수위 — 키가 있을 때만 meta 에 병합한다(행 0 세계의 meta 바이트 동일, spec v3 P1).
+        val removeTurnFailureLedger = "turn_failure_ledger" in worldState && worldState["turn_failure_ledger"] == null
+        val removeTurnFailureLedgerSql = if (removeTurnFailureLedger) " - 'turnFailureLedger'" else ""
         val extraMeta = buildString {
             if ("imperial_world" in worldState) {
                 val imperial = requireNotNull(ImperialWorldCodec.read(
@@ -612,9 +614,7 @@ open class JdbcFlushExecutor(
             }
             if ("turn_failure_ledger" in worldState) {
                 val ledger = worldState["turn_failure_ledger"]
-                if (ledger == null) {
-                    append(" - 'turnFailureLedger'")
-                } else {
+                if (ledger != null) {
                     require(ledger is Map<*, *>) { "invalid turn failure ledger flush payload" }
                     params.addValue("turn_failure_ledger", MetaJson.encode(ledger))
                     append(" || jsonb_build_object('turnFailureLedger', CAST(:turn_failure_ledger AS jsonb))")
@@ -643,11 +643,11 @@ open class JdbcFlushExecutor(
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    world_version = world_version + 1,
-                   meta = meta || jsonb_build_object(
+                   meta = (meta || jsonb_build_object(
                        'lastTurnTime', CAST(:last_turn_time AS text),
                        'maxNationId', :max_nation_id,
                        'maxGeneralId', :max_general_id
-                   )$extraMeta,
+                   )$extraMeta)$removeTurnFailureLedgerSql,
                    updated_at = now()
              WHERE id = :id
                AND world_version = :expected_world_version
@@ -665,11 +665,11 @@ open class JdbcFlushExecutor(
                    catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
-                   meta = meta || jsonb_build_object(
+                   meta = (meta || jsonb_build_object(
                        'lastTurnTime', CAST(:last_turn_time AS text),
                        'maxNationId', :max_nation_id,
                        'maxGeneralId', :max_general_id
-                   )$extraMeta,
+                   )$extraMeta)$removeTurnFailureLedgerSql,
                    updated_at = now()
              WHERE id = :id
             """.trimIndent()

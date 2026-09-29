@@ -131,6 +131,9 @@ class WorldSnapshotLoaderDurableStateIT {
             flush(3)
             assertEquals(states, TurnFailureLedgerCodec.decode(coldState().meta), "unrelated flush preserves ledger")
             flush(4, mapOf("turn_failure_ledger" to null))
+            assertEquals(false, jdbc.queryForObject(
+                "SELECT (meta -> 'turnFailureLedger') IS NOT NULL FROM world_state WHERE id = 2", Boolean::class.java,
+            ))
             assertEquals(emptyMap(), TurnFailureLedgerCodec.decode(coldState().meta))
             assertEquals(false, TurnFailureLedgerCodec.META_KEY in coldState().meta)
         } finally {

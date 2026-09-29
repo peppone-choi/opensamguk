@@ -773,7 +773,9 @@ class InMemoryTurnWorld(
         if (gameEventKeyTurn != turn) {
             gameEventByKey.clear()
             gameEventKeyTurn = turn
-            eventOrdinalAllocator = null
+            // The live allocator starts a fresh forward turn at zero. Rebuild only when
+            // a rolled-back unit already consumed ordinals for this date.
+            if (eventOrdinalHighwaterByTurn.containsKey(turn)) eventOrdinalAllocator = null
         }
         val existing = gameEventByKey[eventKey]
         if (existing != null) {
