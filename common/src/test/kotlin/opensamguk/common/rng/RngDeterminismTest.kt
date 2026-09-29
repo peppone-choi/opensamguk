@@ -1,6 +1,6 @@
 package opensamguk.common.rng
 import kotlin.test.Test; import kotlin.test.assertEquals
-class RngKernelParityGateTest {
+class RngDeterminismTest {
     @Test fun `same seed yields identical draw streams`() {
         fun draw(): List<Any> {
             val ru = RandUtil(LiteHashDrbg(serializeSeed("ConquerCity", 190, 3, 42L)))
