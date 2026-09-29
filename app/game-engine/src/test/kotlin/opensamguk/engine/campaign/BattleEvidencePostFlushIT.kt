@@ -197,9 +197,29 @@ class BattleEvidencePostFlushIT {
         FROM log_entry WHERE world_id=? AND event_kind='march.corps'
           AND meta->'refs'->>'stop'='ENCOUNTER'""", String::class.java, worldId.value).toSet()
 
+    private data class CommittedBattle(val generalId: Int, val encounterId: String, val replayHash: String)
+
+    /** These rows are written by the turn's JDBC flush, never by seedCommittedEncounter. */
+    private fun committedBattles(): List<CommittedBattle> = jdbc.queryForList("""
+        SELECT id AS general_id, meta->'lastBattle'->>'encounterId' AS encounter_id,
+            meta->'lastBattle'->>'replayHash' AS replay_hash
+        FROM general WHERE world_id=? AND meta->'lastBattle' IS NOT NULL
+        ORDER BY id""", worldId.value).map { row ->
+        CommittedBattle((row["general_id"] as Number).toInt(),
+            row["encounter_id"] as? String ?: error("committed battle has no encounter ID"),
+            row["replay_hash"] as? String ?: error("committed battle has no replay hash"))
+    }
+
     private fun requireFullCoverage(evidence: PendingEvidence) {
-        check(sealedIds() == evidence.published.map { it.encounterId }.toSet()) {
+        val published = evidence.published.associate { it.encounterId to it.replayHash }
+        check(published.size == evidence.published.size) { "duplicate published encounter ID" }
+        check(sealedIds() == published.keys) {
             "DB sealed encounter IDs differ from published QA battle outcomes"
+        }
+        val committed = committedBattles()
+        check(committed.isNotEmpty() && committed.map { it.encounterId }.toSet() == published.keys &&
+            committed.all { published[it.encounterId] == it.replayHash }) {
+            "committed battle encounter IDs or replay hashes differ from published QA outcomes"
         }
     }
 
@@ -210,6 +230,9 @@ class BattleEvidencePostFlushIT {
         assertEquals(1L, committedVersion())
         assertEquals(listOf(run.encounterId), run.evidence.pending.map { it.encounterId })
         assertTrue(run.evidence.published.isEmpty())
+        assertEquals(setOf(1, 100), committedBattles().map { it.generalId }.toSet())
+        assertTrue(committedBattles().all { it.encounterId == run.encounterId &&
+            it.replayHash == run.evidence.pending.single().replayHash })
         run.evidence.publishAfterCommit()
         requireFullCoverage(run.evidence)
         assertEquals(1, run.evidence.published.size)
@@ -220,11 +243,15 @@ class BattleEvidencePostFlushIT {
         val run = fixture(failFirstFlush = true)
         assertFailsWith<QueryTimeoutException> { run.service.runTick(runTime) }
         assertEquals(0L, committedVersion())
+        assertTrue(committedBattles().isEmpty(), "failed flush must not publish the battle in DB")
         assertEquals(FlushRecoveryGate.Mode.FLUSH_RETRY, run.service.recoverySnapshot().mode)
         assertEquals(1, run.evidence.pending.size)
         assertTrue(run.evidence.published.isEmpty())
         assertTrue(run.service.retryRetainedFlush())
         assertEquals(1L, committedVersion())
+        assertEquals(setOf(1, 100), committedBattles().map { it.generalId }.toSet())
+        assertTrue(committedBattles().all { it.encounterId == run.encounterId &&
+            it.replayHash == run.evidence.pending.single().replayHash })
         run.evidence.publishAfterCommit()
         run.evidence.publishAfterCommit() // Empty batch: never publishes the retained result twice.
         requireFullCoverage(run.evidence)
@@ -236,6 +263,7 @@ class BattleEvidencePostFlushIT {
         val run = fixture(failCas = true)
         assertFailsWith<StaleWorldWriterException> { run.service.runTick(runTime) }
         assertEquals(0L, committedVersion())
+        assertTrue(committedBattles().isEmpty(), "stale writer must not publish the battle in DB")
         assertEquals(FlushRecoveryGate.Mode.RELOAD_REQUIRED, run.service.recoverySnapshot().mode)
         assertFailsWith<IllegalStateException> { run.service.retryRetainedFlush() }
         run.evidence.quarantine()
@@ -284,6 +312,7 @@ class BattleEvidencePostFlushIT {
         val run = fixture(failAfterCommit = true)
         assertFailsWith<IllegalStateException> { run.service.runTick(runTime) }
         assertEquals(1L, committedVersion(), "JDBC commit happened before realtime publication")
+        assertEquals(setOf(1, 100), committedBattles().map { it.generalId }.toSet())
         assertTrue(run.service.recoverySnapshot().ready)
         assertFalse(run.evidence.pending.isEmpty())
         run.evidence.quarantine()
