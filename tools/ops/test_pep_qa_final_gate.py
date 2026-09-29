@@ -3,12 +3,16 @@
 import hashlib
 import json
 import unittest
+from unittest.mock import patch
 
 from game_server_recovery import RecoveryError
-from pep_qa_final_gate import BOUNDARY_SUITES, inspect_current_artifacts
+from pep_qa_final_gate import BOUNDARY_SUITES, inspect_current_artifacts, inspect_verified_run
+from pep_qa_provenance import _zip_entries
+from test_pep_qa_provenance import (ATTEMPT, COLLECTOR, IDS, MAP, RUN, RUNTIME,
+                                     SCENARIO, FakeClient, archive)
 
 
-SHA = 'a' * 40
+SHA = RUNTIME
 
 
 def fixture():
@@ -100,6 +104,18 @@ class FinalGateTest(unittest.TestCase):
         with self.assertRaisesRegex(RecoveryError, 'Playwright case'):
             self.inspect()
 
+    def test_null_browser_file_fails_cleanly(self):
+        browser = json.loads(self.isolated['playwright-results.json'])
+        browser['suites'][0]['file'] = None
+        browser['suites'][0]['title'] = None
+        body = json.dumps(browser).encode()
+        self.isolated['playwright-results.json'] = body
+        manifest = self.manifest()
+        manifest['source_sha256'] = hashlib.sha256(body).hexdigest()
+        self.replace_manifest(manifest)
+        with self.assertRaisesRegex(RecoveryError, 'Playwright case'):
+            self.inspect()
+
     def test_manifest_must_bind_playwright_bytes(self):
         manifest = self.manifest()
         manifest['source_sha256'] = '0' * 64
@@ -114,6 +130,13 @@ class FinalGateTest(unittest.TestCase):
         with self.assertRaisesRegex(RecoveryError, 'phase-3 winner'):
             self.inspect()
 
+    def test_live_encounters_must_equal_sealed_count(self):
+        manifest = self.manifest()
+        manifest['phase_evidence']['liveEncounterCount'] = 2
+        self.replace_manifest(manifest)
+        with self.assertRaisesRegex(RecoveryError, 'world progression'):
+            self.inspect()
+
     def test_battle_file_hash_mismatch_refuses(self):
         manifest = self.manifest()
         name = next(iter(manifest['battle_result_gate']['files_sha256']))
@@ -125,6 +148,35 @@ class FinalGateTest(unittest.TestCase):
         self.w3['pin-git-sha.txt'] = ('c' * 40).encode()
         with self.assertRaisesRegex(RecoveryError, 'SHA/provenance mismatch'):
             self.inspect()
+
+    def test_verified_archive_bytes_are_inspected_without_second_download(self):
+        client = FakeClient()
+        for artifact_id, additions in ((11, self.isolated), (12, self.w0), (13, self.w3)):
+            entries = _zip_entries(client.zips[artifact_id])
+            entries.update(additions)
+            client.zips[artifact_id] = archive(entries)
+        original_get = client.get
+        downloads = []
+
+        def counted(path, *, archive=False):
+            if archive:
+                downloads.append(path)
+            return original_get(path, archive=archive)
+
+        client.get = counted
+        result = inspect_verified_run(client, run_id=RUN, run_attempt=ATTEMPT,
+            collector_sha=COLLECTOR, runtime_sha=RUNTIME, map_sha=MAP,
+            scenario_sha=SCENARIO, artifact_ids=IDS)
+        self.assertEqual(result['w4_phase3_winning_count'], 1)
+        self.assertFalse(result['production_stop_authorized'])
+        self.assertEqual(len(downloads), 3)
+        self.assertEqual(len(set(downloads)), 3)
+
+    def test_missing_verified_archive_capture_refuses(self):
+        with patch('pep_qa_final_gate.verify_run_artifacts', return_value={
+            'artifact_ids': IDS, 'runtime_sha': RUNTIME}):
+            with self.assertRaisesRegex(RecoveryError, 'digest-verified'):
+                inspect_verified_run(FakeClient())
 
 
 if __name__ == '__main__':

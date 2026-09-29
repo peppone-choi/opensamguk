@@ -114,9 +114,9 @@ def inspect_current_artifacts(*, provenance, isolated, w0_w2, w3):
             'W4 browser run did not pass cleanly')
     suites = browser.get('suites')
     matches = [spec for suite in suites if isinstance(suite, dict) and
-               (suite.get('file', '').endswith('yuzhou-live.spec.ts') or
-                suite.get('title', '').endswith('yuzhou-live.spec.ts'))
-               for spec in suite.get('specs', [])] if isinstance(suites, list) else []
+               (str(suite.get('file') or '').endswith('yuzhou-live.spec.ts') or
+                str(suite.get('title') or '').endswith('yuzhou-live.spec.ts'))
+               for spec in suite.get('specs', []) if isinstance(spec, dict)] if isinstance(suites, list) else []
     require(len(matches) == 1 and len(matches[0].get('tests', [])) == 1 and
             len(matches[0]['tests'][0].get('results', [])) == 1 and
             matches[0]['tests'][0]['results'][0].get('status') == 'passed',
@@ -132,6 +132,7 @@ def inspect_current_artifacts(*, provenance, isolated, w0_w2, w3):
     require(isinstance(battle, dict) and battle.get('status') == 'DB_BACKED_COVERAGE' and
             battle.get('source') == 'POST_FLUSH_FILE_SINK' and
             type(battle.get('resolved_count')) is int and battle['resolved_count'] > 0 and
+            type(battle.get('sealed_count')) is int and battle['sealed_count'] > 0 and
             type(battle.get('phase3_winning_count')) is int and battle['phase3_winning_count'] > 0 and
             type(battle.get('callback_count')) is int and battle['callback_count'] > 0 and
             type(battle.get('db_last_battle_rows')) is int and battle['db_last_battle_rows'] > 0,
@@ -147,7 +148,7 @@ def inspect_current_artifacts(*, provenance, isolated, w0_w2, w3):
     phase = manifest.get('phase_evidence')
     require(isinstance(phase, dict) and type(phase.get('npcBattles')) is int and
             phase['npcBattles'] > 0 and type(phase.get('liveEncounterCount')) is int and
-            phase['liveEncounterCount'] >= battle['sealed_count'] and
+            phase['liveEncounterCount'] == battle['sealed_count'] and
             phase.get('repeatedNeutralCaptures') == 0 and
             phase.get('abandonedWithGarrison') == 0 and
             isinstance(phase.get('yuedan'), dict) and phase['yuedan'].get('status') == 'READY',
@@ -156,7 +157,7 @@ def inspect_current_artifacts(*, provenance, isolated, w0_w2, w3):
         'runtime_sha': provenance['runtime_sha'],
         'w0_w2_xml_tests': test_count,
         'w2_forced_exceptions': 0,
-        'w3_verified': True,
+        'w3_verified': True,  # successful W3 Actions job is checked by provenance
         'w4_db_backed_battles': battle['resolved_count'],
         'w4_phase3_winning_count': battle['phase3_winning_count'],
         'w1_verified': False,
