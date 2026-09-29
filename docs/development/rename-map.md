@@ -1561,6 +1561,31 @@ web/game/lib/hwiha-reads.ts
 
 런타임 classpath에는 `scenario_990002.json`과 `scenario_3190.json`만 남긴다. 역사 지도 route-node manifest의 `resourcePath`는 승인된 provenance 레이블이라 원래 classpath 경로를 유지한다. 파일은 보관 경로에서 읽고 SHA-256으로 검증한다. `han-world-v3` 등 저장된 세계의 지도 번들 ID와 해시 핀도 변경하지 않는다.
 
+## 남은 턴·API 코드 식별자
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `hwihaOutcome` | `inputOutcome` | 예약 턴 처리 결과 필드 |
+| `hwihaCatalog`·`hwihaInputCatalog` | `inputCatalog` | 입력 카탈로그 참조 |
+| `hwihaDomesticContext` | `domesticContext` | 내정 처리 문맥 |
+| `hwihaDeploymentContext` | `deploymentContext` | 배치·행군 문맥 |
+| `hwihaWarOutcomes` | `warOutcomes` | 전쟁 결과 수신기 |
+| `hwihaMovementOf` | `movementOf` | 장수 턴 이동 처리 함수 |
+| `hwihaPhaseBoundary` | `phaseBoundary` | 월 경계 처리기 |
+| `hwihaVisionContext` | `visionContext` | 시야 처리 문맥 |
+| `hwihaProvinceCells` | `provinceCells` | 州 셀 색인 |
+| `hwihaNpcInputOf` | `npcInputOf` | NPC 입력 선택 함수 |
+| `hwihaGuarded` | `guardCampaignRead` | 조회 컨트롤러 가드 |
+| `hwihaGate` | `campaignReadGate` | 조회 접근 판정 |
+| `hwihaCourtAdmission`·`hwihaDeployAdmission`·`hwihaScoutAdmission`·`hwihaTravelAdmission` | `courtAdmission`·`deployAdmission`·`scoutAdmission`·`travelAdmission` | 예약 입력 판정기 |
+| `hwihaFieldAdmission`·`hwihaMilitaryAdmission`·`hwihaPersonalAdmission`·`hwihaRetireAdmission` | `fieldAdmission`·`militaryAdmission`·`personalAdmission`·`retireAdmission` | 예약 입력 판정기 |
+| `hwihaPeopleAdmission`·`hwihaPoliticalAdmission`·`hwihaTransferAdmission` | `peopleAdmission`·`politicalAdmission`·`transferAdmission` | 예약 입력 판정기 |
+| `hwihaInputRejection` | `inputRejection` | 입력 거절 분류 함수 |
+| `hwihaCourt`·`hwihaCourtHandler` | `court`·`courtHandler` | 법정 처리기 참조 |
+| `hwihaWorld` | `campaignWorld` | 테스트 세계 생성 함수 |
+| `HwihaPositionWriteTest` | `PositionWriteTest` | 테스트 클래스 |
+
+이 표는 코드 식별자만 다룬다. 저장 world/profile 값과 적용된 Flyway의 과거 이름은 별도 저장 계약 검토 대상이다.
 ## 게이트웨이 지도 테스트 이름
 
 | 옛 이름 | 새 이름 | 범위 |

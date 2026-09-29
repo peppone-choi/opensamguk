@@ -87,19 +87,19 @@ class CommandReserveService(
     private val transactions: TransactionOperations,
     private val worldStates: opensamguk.gameapi.read.WorldStateReadRepository,
     private val enlistmentAdmission: EnlistmentAdmission? = null,
-    private val hwihaCourtAdmission: CourtAdmission? = null,
-    private val hwihaDeployAdmission: DeployAdmission? = null,
-    private val hwihaScoutAdmission: ScoutAdmission? = null,
-    private val hwihaTravelAdmission: TravelAdmission? = null,
-    private val hwihaFieldAdmission: FieldAdmission? = null,
-    private val hwihaMilitaryAdmission: MilitaryAdmission? = null,
-    private val hwihaPersonalAdmission: PersonalAdmission? = null,
-    private val hwihaRetireAdmission: RetireAdmission? = null,
-    private val hwihaPeopleAdmission: PeopleAdmission? = null,
-    private val hwihaPoliticalAdmission: PoliticalAdmission? = null,
-    private val hwihaTransferAdmission: TransferAdmission? = null,
+    private val courtAdmission: CourtAdmission? = null,
+    private val deployAdmission: DeployAdmission? = null,
+    private val scoutAdmission: ScoutAdmission? = null,
+    private val travelAdmission: TravelAdmission? = null,
+    private val fieldAdmission: FieldAdmission? = null,
+    private val militaryAdmission: MilitaryAdmission? = null,
+    private val personalAdmission: PersonalAdmission? = null,
+    private val retireAdmission: RetireAdmission? = null,
+    private val peopleAdmission: PeopleAdmission? = null,
+    private val politicalAdmission: PoliticalAdmission? = null,
+    private val transferAdmission: TransferAdmission? = null,
     private val directActionAdmission: DirectActionAdmission? = null,
-    private val hwihaCatalog: InputCatalog = InputCatalog.load(),
+    private val inputCatalog: InputCatalog = InputCatalog.load(),
 ) {
     private val log = LoggerFactory.getLogger(javaClass)
     private val worldId: WorldId = processWorld.worldId
@@ -203,7 +203,7 @@ class CommandReserveService(
             if (opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode) != null)
                 throw AdmissionDenied(InputRejection.WRONG_RULE_PROFILE.name,
                     InputRejection.WRONG_RULE_PROFILE.message)
-            val rejection = hwihaCatalog.rejectionFor(worldProfile, actionCode)
+            val rejection = inputCatalog.rejectionFor(worldProfile, actionCode)
                 ?: if (actionCode !in HWIHA_RESERVABLE_ACTIONS) InputRejection.INVALID_INPUT_CHANNEL else null
             if (rejection != null) throw AdmissionDenied(rejection.name, rejection.message)
         }
@@ -211,11 +211,11 @@ class CommandReserveService(
             (enlistmentAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name, opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson, actionCode)
         } else if (actionCode == "action.deploy") {
-            (hwihaDeployAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (deployAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode == "action.scout") {
-            (hwihaScoutAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (scoutAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode == opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID) {
@@ -224,35 +224,35 @@ class CommandReserveService(
                 ?: throw AdmissionDenied("INVALID_REQUEST", "점령할 보루를 골라 주세요.")
             "{\"fortId\":\"$fortId\"}"
         } else if (actionCode in opensamguk.logic.input.TravelInput.INPUT_IDS) {
-            (hwihaTravelAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (travelAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.domestic.FieldInput.INPUT_IDS) {
-            (hwihaFieldAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (fieldAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.MilitaryInput.INPUT_IDS) {
-            (hwihaMilitaryAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (militaryAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.PersonalInput.FIELD_IDS) {
-            (hwihaPersonalAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (personalAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode == opensamguk.logic.input.RetireInput.INPUT_ID) {
-            (hwihaRetireAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (retireAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.PeopleInput.INPUT_IDS) {
-            (hwihaPeopleAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (peopleAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.PoliticalInput.INPUT_IDS) {
-            (hwihaPoliticalAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (politicalAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.TransferInput.INPUT_IDS) {
-            (hwihaTransferAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
+            (transferAdmission ?: throw AdmissionDenied(opensamguk.logic.input.InputRejection.NOT_DELIVERED.name,
                 opensamguk.logic.input.InputRejection.NOT_DELIVERED.message))
                 .canonicalArguments(actionCode, generalId, ownerUserId, turnIdx, argJson)
         } else if (actionCode in opensamguk.logic.input.DirectInput.INPUT_IDS) {
@@ -342,7 +342,7 @@ class CommandReserveService(
                     actionCode = actionCode,
                     argJson = canonicalArgs,
                     brief = if (worldProfile == RuleProfile.HWIHA)
-                        requireNotNull(hwihaCatalog[actionCode]?.displayName) { "missing action displayName: $actionCode" }
+                        requireNotNull(inputCatalog[actionCode]?.displayName) { "missing action displayName: $actionCode" }
                     else registry.resolve(actionCode).name,
                     requestId = requestId,
                 )
@@ -384,7 +384,7 @@ class CommandReserveService(
         val boundCommand = if (command is TurnDaemonCommand.ImmediateInput) {
             val owner = ownerUserId?.takeIf { it > 0 }
                 ?: throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
-            val admission = hwihaCourtAdmission ?: throw AdmissionDenied("POLICY_UNAVAILABLE", "발령 정책을 확인할 수 없습니다.")
+            val admission = courtAdmission ?: throw AdmissionDenied("POLICY_UNAVAILABLE", "발령 정책을 확인할 수 없습니다.")
             command.copy(requestId = requestId, ownerUserId = owner,
                 argJson = admission.canonicalArguments(command.generalId, owner, command.inputId, command.argJson))
         } else command

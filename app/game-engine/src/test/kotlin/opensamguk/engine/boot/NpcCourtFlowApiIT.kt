@@ -69,7 +69,7 @@ class NpcCourtFlowApiIT {
         val late = Instant.parse("0200-01-01T03:00:01Z")
         val result = fixture.service(WorldId(1),InMemoryTurnWorld(fixture.load(1)),published).runDueGeneralTurns(late)
         assertEquals(listOf(1,10),result.handled.map { it.generalId })
-        assertIs<TurnOutcome.Applied>(result.handled.first().hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(result.handled.first().inputOutcome)
         val issued = fixture.load(1)
         val actor = issued.generals.single { it.id==1 }
         val dispatch = assertNotNull(opensamguk.logic.input.DispatchState.read(actor.meta))
