@@ -36,7 +36,7 @@ data class CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) {
  * `V2BothConditionsBeanGateIT`가 **모든** `opensamguk.*.v2.*` 빈 이름 집합을 인라인 리터럴과
  * `assertEquals`해서 신규 v2 빈이 무조건 실패했다. 그 단언은 이제 명시 allowlist
  * (`V2ProductionContextBeanGateIT.kt`의 `APPROVED_V2_BEAN_NAMES`) 부분집합 검사다. R2가 이 store를
- * [V2SandboxConfiguration]의 `@Bean`으로 올릴 때 그 allowlist에 빈 이름 한 줄을 **의도적으로** 추가하면
+ * [SandboxConfiguration]의 `@Bean`으로 올릴 때 그 allowlist에 빈 이름 한 줄을 **의도적으로** 추가하면
  * 된다(그 편집 = 리뷰 지점). 프로덕션 컨텍스트에서 v2 빈 0을 요구하는 같은 파일의 `assertNoV2Beans()`는
  * allowlist와 무관하게 그대로이므로 0A-b 게이트 밖 등록은 여전히 불가능하다. 그때까지 이 클래스는
  * 직접 생성해 쓴다(IT가 그 경로를 증명).

@@ -608,8 +608,8 @@ internal data class V2CreatedTable(
 
 internal object V2MigrationSources {
     private val migrationDirectories = listOf(
-        "infra/src/main/resources/db/migration_v2",
-        "app/game-engine/src/test/resources/db/migration_v2",
+        "infra/src/main/resources/db/migration_sandbox",
+        "app/game-engine/src/test/resources/db/migration_sandbox",
     )
 
     fun v2SqlFiles(): List<File> {

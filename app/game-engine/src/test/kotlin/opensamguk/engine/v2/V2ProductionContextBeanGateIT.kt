@@ -1,5 +1,7 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.sandbox.SandboxConfiguration
+
 import javax.sql.DataSource
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -74,13 +76,13 @@ internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
  * v2 bean set is empty, allowlist or not.
  */
 internal val APPROVED_V2_BEAN_NAMES: Set<String> = setOf(
-    "v2SandboxConfiguration",
-    "v2SandboxMarker",
-    "v2ContentCatalog",
-    "v2CityCatalogAdapter",
+    "sandboxConfiguration",
+    "sandboxMarker",
+    "contentCatalog",
+    "cityCatalogAdapter",
     // OPENSAM-151 — R2 도시 수입 leaf의 유일한 원장 소비처. 데몬은 ObjectProvider 로 받으므로
     // 게이트 밖(v1 프로덕션)에서는 이 빈이 없고 leaf 는 fail-closed 로 죽는다.
-    "v2CityLedgerStore",
+    "cityLedgerStore",
 )
 
 internal fun ApplicationContext.assertNoV2Beans() {
@@ -112,15 +114,15 @@ internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<C
             SystemEnvironmentPropertySource(
                 "test-systemEnvironment",
                 mapOf(
-                    "V2_ENABLED" to "true",
-                    "SPRING_FLYWAY_LOCATIONS" to V2_SANDBOX_FLYWAY_LOCATIONS,
+                    "SANDBOX_ENABLED" to "true",
+                    "SPRING_FLYWAY_LOCATIONS" to SANDBOX_FLYWAY_LOCATIONS,
                 ),
             ),
         )
     }
 }
 
-/** ① Production shape — `V2_ENABLED` unset and profile inactive. Expect zero v2 beans. */
+/** ① Production shape — `SANDBOX_ENABLED` unset and profile inactive. Expect zero v2 beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
 class V2ProductionShapeBeanGateIT {
@@ -146,7 +148,7 @@ class V2ProductionShapeBeanGateIT {
     }
 }
 
-/** ② `v2.enabled=true` only — no profile. Expect zero beans. */
+/** ② `sandbox.enabled=true` only — no profile. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = [SECURITY_EXCLUDES, "${SandboxGate.PROPERTY}=true"])
 class V2PropertyOnlyBeanGateIT {
@@ -164,7 +166,7 @@ class V2PropertyOnlyBeanGateIT {
     }
 }
 
-/** ③ Profile `v2-sandbox` only — no property. Expect zero beans. */
+/** ③ Profile `sandbox` only — no property. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles(SandboxGate.PROFILE)
 @SpringBootTest(properties = [SECURITY_EXCLUDES])
@@ -223,7 +225,7 @@ class V2BothConditionsBeanGateIT {
     fun `v2 sandbox resolves the literal environment Flyway override and applies V900`() {
         assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
         assertEquals("true", context.environment.getProperty(SandboxGate.PROPERTY))
-        assertEquals(V2_SANDBOX_FLYWAY_LOCATIONS, context.environment.getProperty("spring.flyway.locations"))
+        assertEquals(SANDBOX_FLYWAY_LOCATIONS, context.environment.getProperty("spring.flyway.locations"))
         V2FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertV2SandboxRuntime()
     }
 

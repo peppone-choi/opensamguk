@@ -36,7 +36,7 @@ import kotlin.test.assertTrue
  * 않는다. 엔진 쪽에 두면 executor를 그대로 쓰면서 채널 전체를 한 번에 증명할 수 있다 — 반대 방향은
  * 불가능하다. 증명 대상(멱등 UPSERT · v1 델타와 같은 트랜잭션)은 동일하다.
  *
- * Flyway location은 v2 스택 운영값과 같은 sibling 쌍이다(`db/migration_v2/README.md` §2 — 오버라이드는
+ * Flyway location은 v2 스택 운영값과 같은 sibling 쌍이다(`db/migration_sandbox/README.md` §2 — 오버라이드는
  * 치환이라 v1 location을 반드시 함께 넣는다).
  *
  * Docker 미가용 시 skip — fail이 아니다.
@@ -70,7 +70,7 @@ class V2CityLedgerFlushIT {
             password = postgres.password
         }
         Flyway.configure().dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
-            .locations("classpath:db/migration", "classpath:db/migration_v2")
+            .locations("classpath:db/migration", "classpath:db/migration_sandbox")
             .configuration(mapOf("flyway.postgresql.transactional.lock" to "false")).load().migrate()
         jdbc = NamedParameterJdbcTemplate(ds)
         executor = JdbcFlushExecutor(jdbc, TransactionTemplate(DataSourceTransactionManager(ds)))

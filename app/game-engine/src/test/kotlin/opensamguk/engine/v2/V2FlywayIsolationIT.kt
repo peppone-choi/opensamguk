@@ -15,8 +15,8 @@ import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
 internal const val V1_FLYWAY_LOCATION = "classpath:db/migration"
-internal const val V2_FLYWAY_LOCATION = "classpath:db/migration_v2"
-internal const val V2_SANDBOX_FLYWAY_LOCATIONS = "$V1_FLYWAY_LOCATION,$V2_FLYWAY_LOCATION"
+internal const val V2_FLYWAY_LOCATION = "classpath:db/migration_sandbox"
+internal const val SANDBOX_FLYWAY_LOCATIONS = "$V1_FLYWAY_LOCATION,$V2_FLYWAY_LOCATION"
 
 internal fun v1PersistentTableBaseline(dataSource: DataSource): Set<V2CatalogRelation> {
     Flyway.configure()
@@ -200,7 +200,7 @@ internal class V2FlywayIsolationAssertions(
 
     fun assertV1DefaultRuntime() {
         assertEquals(listOf(V1_FLYWAY_LOCATION), resolvedLocations(), "resolved v1 Flyway locations")
-        assertFalse(probeTableExists(), "v1 defaults must not discover db/migration_v2")
+        assertFalse(probeTableExists(), "v1 defaults must not discover db/migration_sandbox")
         assertEquals(0, appliedProbeMigrations(), "v1 Flyway history must not contain V900")
         assertTrue(appliedV2Migrations().isEmpty(), "v1 Flyway must not apply any V900+ migration")
     }
@@ -216,7 +216,7 @@ internal class V2FlywayIsolationAssertions(
 
         val appliedV2Migrations = appliedV2Migrations()
         assertTrue(
-            appliedV2Migrations.any { it.script == V2_SANDBOX_PROBE_SCRIPT },
+            appliedV2Migrations.any { it.script == SANDBOX_PROBE_SCRIPT },
             "the applied V900 migration must be the test-only v2 sandbox probe",
         )
         assertV2SourceConventions(appliedV2Migrations)
@@ -356,7 +356,7 @@ internal class V2FlywayIsolationAssertions(
         jdbc.queryForObject(sql, Boolean::class.java, *arguments) ?: false
 
     companion object {
-        const val V2_SANDBOX_PROBE_SCRIPT = "V900__v2_sandbox_probe.sql"
+        const val SANDBOX_PROBE_SCRIPT = "V900__sandbox_probe.sql"
 
         fun persistentTableRelations(dataSource: DataSource): Set<V2CatalogRelation> =
             persistentTableRelations(JdbcTemplate(dataSource))

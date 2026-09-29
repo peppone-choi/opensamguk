@@ -1659,3 +1659,16 @@ web/game/lib/hwiha-reads.ts
 | `validateLegacyV2Arguments`/`legacyError` | `validateCommandArguments`/`commandError` | 코드 함수 |
 
 `/api/v2/*` 경로, `v2CityTransport`·`v2GarrisonRecruit` 명령 ID, `v2.enabled`·`v2-sandbox` 설정은 저장·통신 계약이므로 이 코드 이름 PR에서는 유지한다. 저장 식별자 개명 단계에서 함께 바꾼다.
+
+## 샌드박스 설정·콘텐츠 경로 (2026-09-30)
+
+| 이전 이름 | 중립 이름 | 범위 |
+| --- | --- | --- |
+| `v2.enabled`·`V2_ENABLED` | `sandbox.enabled`·`SANDBOX_ENABLED` | 두 서버의 빈 등록 게이트 |
+| `v2-sandbox` | `sandbox` | Spring 프로필·Compose 이름 |
+| `V2_*` | `SANDBOX_*` | 샌드박스 Compose 치환 변수 |
+| `content/v2` | `content/catalog` | 콘텐츠 카탈로그 classpath |
+| `db/migration_v2` | `db/migration_sandbox` | 샌드박스 Flyway location |
+| `V2SandboxConfiguration` | `SandboxConfiguration` | 엔진·API 설정 타입 |
+
+샌드박스의 데이터베이스·볼륨 이름은 새 네임스페이스를 사용한다. 기존 실행 스택의 데이터를 자동 이전하지 않으며, 동결 지도 릴리스와 과거 Flyway 버전 `V901`의 파일 내용은 유지한다.

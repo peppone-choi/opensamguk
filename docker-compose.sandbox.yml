@@ -1,0 +1,298 @@
+# opensamguk — sandbox SANDBOX stack (OPENSAM-35 / 0A-e).
+#
+#   docker compose -f docker-compose.sandbox.yml up -d
+#
+# WHY A SEPARATE FILE (계획 §2 C1 — 2026-08-08 사용자 결정)
+#   `docker-compose.production.yml`은 `SCENARIO_SEED_ENABLED=false`를 유지해야 하므로
+#   sandbox 시드 스택을 그 파일에 얹을 수 없다. 그래서 sandbox는 **별도 스택 파일**로 분리한다.
+#
+# WHY WORLD-ISOLATION VALUES USE A `SANDBOX_`-PREFIXED SUBSTITUTION VARIABLE
+#   같은 호스트/같은 `.env`에서 v1 스택과 나란히 뜨는 것이 이 파일의 존재 이유다.
+#   `${OPENSAMGUK_WORLD_ID}`처럼 v1과 같은 이름을 쓰면 sandbox가 v1 값을 **조용히 상속**한다.
+#   특히 `SCENARIO_CODE`/`SCENARIO_DIR` 상속은 무증상이다 — `ignoreDefaultEvents=false`가 되어
+#   `ScenarioImporter.kt:888` defaults 분기가 v1 기본 이벤트 12행을 적재하는데
+#   부팅·시드·헬스체크는 전부 성공한다(계획 §0.2). 그래서 sandbox 전용 이름 + fail-closed `:?`를 쓴다.
+#
+#   ADR-LITE-023 예외: `shared-gateway-relay`만 필수 external `SHARED_GATEWAY_NETWORK`에 붙어 기존
+#   v1 gateway로 프록시한다. sandbox network에서는 relay만 `gateway-api` alias를 가져 기존 URL을 보존한다.
+#   sandbox는 gateway 계정 DB·admin seed·profile writer를 만들지 않으며, gateway의 공개 검증 키만 공유한다.
+#   world DB·world_id·시나리오만 계속 `SANDBOX_*`로 들어간다.
+#
+# 필수 env (미설정 시 compose가 뜨지 않는다 — 상속 대신 실패):
+#   SANDBOX_SCENARIO_CODE · SANDBOX_SCENARIO_HOST_DIR · SANDBOX_POSTGRES_PASSWORD ·
+#   SHARED_GATEWAY_NETWORK · SHARED_GATEWAY_UPSTREAM · SHARED_GATEWAY_PROFILE_ICONS_VOLUME · JWT_PUBLIC_KEY
+#   ⇒ 필수·선택 변수 전수와 각 한 줄 설명은 **`sandbox.env.example`** (이 파일 옆)에 있다.
+#
+# `:?` FAIL-CLOSED의 한계 — 값의 **내용**은 검증하지 않는다 (GATE-f Q2)
+#   `:?`가 막는 것은 변수 미설정 하나뿐이다. `SANDBOX_SCENARIO_HOST_DIR`을 v1 시나리오 호스트
+#   디렉터리로 두고 `SANDBOX_SCENARIO_CODE`에 v1 시나리오 코드를 넣으면 **v1 콘텐츠가 sandbox DB에 시드된다**
+#   — 그리고 부팅·시드·헬스체크는 전부 성공한다. 콘텐츠 방향(v1→sandbox)은 운영자 신뢰에 의존한다.
+#   game-api/game-engine의 반대 방향(sandbox 스키마 → v1 게임 월드 DB)은 막혀 있다: 별도 postgres
+#   컨테이너·별도 볼륨·별도 DB명이고 두 서비스는 이 파일의 `postgres`만 참조한다. gateway는
+#   ADR-LITE-023에 따라 relay를 통한 external shared 서비스만 쓰며, sandbox가 계정 DB에 직접 붙지 않는다.
+#   값 내용 검증은 이 티켓 범위 밖 — 한계로 명시만 한다.
+#
+# FLYWAY (S0/S1 실측): `SPRING_FLYWAY_LOCATIONS`는 병합이 아니라 **치환**이다. v1 location을
+# 빼면 V1~V38이 통째로 사라진다(fail-closed 부팅 실패). sandbox location은 v1의 하위가 아니라
+# **형제 경로**여야 한다 — Flyway가 location을 재귀 탐색해 v1이 하위 sandbox를 삼킨다.
+#
+# DB 분리가 1차 방어선 (S1 U4-d): sandbox 마이그레이션이 적용된 DB에 v1 스택이 붙으면 Flyway는
+# WARN만 내고 **정상 부팅한다.** 즉 Flyway는 sandbox→v1 방향 게이트가 아니다. 별도 postgres 컨테이너 +
+# 별도 볼륨 + 별도 DB 이름이 sandbox 스키마가 production DB로 새지 않게 막는 유일한 층이다.
+name: opensamguk-sandbox
+
+x-sandbox-flyway-locations: &sandbox-flyway-locations
+  # 치환 semantics — v1 location을 반드시 앞에 포함한다 (S0 Run B).
+  SPRING_FLYWAY_LOCATIONS: classpath:db/migration,classpath:db/migration_sandbox
+
+services:
+  # ------------------------------------------------------------------ data
+  postgres:
+    image: postgres:16-alpine
+    container_name: opensamguk-sandbox-postgres
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      POSTGRES_DB: ${SANDBOX_POSTGRES_DB:-sandbox}
+      POSTGRES_USER: ${SANDBOX_POSTGRES_USER:-sandbox}
+      POSTGRES_PASSWORD: ${SANDBOX_POSTGRES_PASSWORD:?SANDBOX_POSTGRES_PASSWORD required — sandbox sandbox never shares v1 credentials}
+    ports:
+      - "${SANDBOX_POSTGRES_PORT:-55432}:5432"
+    volumes:
+      - sandbox-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${SANDBOX_POSTGRES_USER:-sandbox} -d ${SANDBOX_POSTGRES_DB:-sandbox}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    networks:
+      - opensamguk-sandbox
+
+  redis:
+    image: redis:7-alpine
+    container_name: opensamguk-sandbox-redis
+    command: redis-server --appendonly yes
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+    ports:
+      - "${SANDBOX_REDIS_PORT:-56379}:6379"
+    volumes:
+      - sandbox-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 3s
+    networks:
+      - opensamguk-sandbox
+
+  # ------------------------------------------------------------- jvm services
+  game-api:
+    build:
+      context: .
+      dockerfile: docker/game-api.Dockerfile
+    image: opensamguk-sandbox/game-api:${SANDBOX_IMAGE_TAG:-dev}
+    container_name: opensamguk-sandbox-game-api
+    environment:
+      <<: *sandbox-flyway-locations
+      TZ: ${TZ:-Asia/Seoul}
+      # ① 별도 DB — sandbox 스키마가 v1 DB로 새지 않게 하는 유일한 1차 방어선 (S1 U4-d).
+      GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${SANDBOX_POSTGRES_DB:-sandbox}
+      GAME_DB_USER: ${SANDBOX_POSTGRES_USER:-sandbox}
+      GAME_DB_PASSWORD: ${SANDBOX_POSTGRES_PASSWORD:?SANDBOX_POSTGRES_PASSWORD required}
+      # ④ sandbox 시나리오 디렉터리 — 상속 금지 (계획 §0.2).
+      SCENARIO_DIR: ${SANDBOX_SCENARIO_DIR:-/data/scenarios-sandbox}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GAME_API_PORT: 8081
+      # ② sandbox 월드 식별자 — v1과 절대 같은 값을 쓰지 않는다.
+      OPENSAMGUK_WORLD_ID: ${SANDBOX_WORLD_ID:-9001}
+      OPENSAMGUK_PROFILE: ${SANDBOX_TURN_PROFILE_NAME:-pep:scenario_990002}
+      SERVER_ID: ${SANDBOX_SERVER_ID:-sandbox}
+      SERVER_NAME: ${SANDBOX_SERVER_NAME:-샌드박스}
+      SERVER_GENERATION: ${SANDBOX_SERVER_GENERATION:-1}
+      JWT_PUBLIC_KEY: ${JWT_PUBLIC_KEY:?JWT_PUBLIC_KEY required — same public key as gateway-api}
+      JWT_LEGACY_SECRET: ${JWT_LEGACY_SECRET:-}
+      JWT_LEGACY_ACCESS_ACCEPT_UNTIL: ${JWT_LEGACY_ACCESS_ACCEPT_UNTIL:-}
+      # ⑤⑥ 빈 게이트 두 조건 — 프로퍼티와 프로파일이 **둘 다** 참일 때만 sandbox 빈이 등록된다 (S2).
+      SANDBOX_ENABLED: "true"
+      SPRING_PROFILES_ACTIVE: sandbox
+      SENTRY_DSN: ${SANDBOX_SENTRY_DSN_GAME_API:-}
+      SENTRY_ENVIRONMENT: ${SANDBOX_SENTRY_ENVIRONMENT:-sandbox}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
+      JAVA_OPTS: ${GAME_API_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${SANDBOX_GAME_API_PORT:-58081}:8081"
+    volumes:
+      - ${SANDBOX_SCENARIO_HOST_DIR:?SANDBOX_SCENARIO_HOST_DIR required}:${SANDBOX_SCENARIO_DIR:-/data/scenarios-sandbox}:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 60s
+    networks:
+      - opensamguk-sandbox
+
+  game-engine:
+    build:
+      context: .
+      dockerfile: docker/game-engine.Dockerfile
+    image: opensamguk-sandbox/game-engine:${SANDBOX_IMAGE_TAG:-dev}
+    container_name: opensamguk-sandbox-game-engine
+    environment:
+      <<: *sandbox-flyway-locations
+      TZ: ${TZ:-Asia/Seoul}
+      # ① 별도 DB.
+      GAME_DATABASE_URL: jdbc:postgresql://postgres:5432/${SANDBOX_POSTGRES_DB:-sandbox}
+      GAME_DB_USER: ${SANDBOX_POSTGRES_USER:-sandbox}
+      GAME_DB_PASSWORD: ${SANDBOX_POSTGRES_PASSWORD:?SANDBOX_POSTGRES_PASSWORD required}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      GAME_ENGINE_PORT: 8082
+      # ② sandbox 월드 식별자.
+      OPENSAMGUK_WORLD_ID: ${SANDBOX_WORLD_ID:-9001}
+      TURN_PROFILE_NAME: ${SANDBOX_TURN_PROFILE_NAME:-pep:scenario_990002}
+      # C1: production compose의 `SCENARIO_SEED_ENABLED=false` 불변식은 그 파일에만 걸린다.
+      SCENARIO_SEED_ENABLED: ${SANDBOX_SCENARIO_SEED_ENABLED:-true}
+      # ③④ sandbox 시나리오 — 상속하면 v1 기본 이벤트 12행이 조용히 적재된다. 기본값을 주지 않는다.
+      SCENARIO_CODE: ${SANDBOX_SCENARIO_CODE:?SANDBOX_SCENARIO_CODE required — inheriting v1 SCENARIO_CODE silently seeds the 12 v1 default events}
+      SCENARIO_DIR: ${SANDBOX_SCENARIO_DIR:-/data/scenarios-sandbox}
+      SCENARIO_QA_TURNTERM: ${SANDBOX_SCENARIO_QA_TURNTERM:-}
+      # 리셋 옵션은 v1과 마찬가지로 기본값을 넣지 않는다 — 미설정의 의미는 SeedBootstrap 소유다.
+      RESET_TURNTERM: ${SANDBOX_RESET_TURNTERM:-}
+      RESET_FICTION: ${SANDBOX_RESET_FICTION:-}
+      RESET_EXTEND: ${SANDBOX_RESET_EXTEND:-}
+      RESET_BLOCK_GENERAL_CREATE: ${SANDBOX_RESET_BLOCK_GENERAL_CREATE:-}
+      RESET_NPCMODE: ${SANDBOX_RESET_NPCMODE:-}
+      RESET_SHOW_IMG_LEVEL: ${SANDBOX_RESET_SHOW_IMG_LEVEL:-}
+      # ⑤⑥ 빈 게이트 두 조건.
+      SANDBOX_ENABLED: "true"
+      SPRING_PROFILES_ACTIVE: sandbox
+      SENTRY_DSN: ${SANDBOX_SENTRY_DSN_GAME_ENGINE:-}
+      SENTRY_ENVIRONMENT: ${SANDBOX_SENTRY_ENVIRONMENT:-sandbox}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=${TZ:-Asia/Seoul}
+      JAVA_OPTS: ${GAME_ENGINE_JAVA_OPTS:--XX:+UseG1GC -Djava.security.egd=file:/dev/./urandom}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${SANDBOX_GAME_ENGINE_PORT:-58082}:8082"
+    volumes:
+      - ${SANDBOX_SCENARIO_HOST_DIR:?SANDBOX_SCENARIO_HOST_DIR required}:${SANDBOX_SCENARIO_DIR:-/data/scenarios-sandbox}:ro
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
+    networks:
+      - opensamguk-sandbox
+
+  shared-gateway-relay:
+    image: nginx:1.27-alpine
+    environment:
+      SHARED_GATEWAY_UPSTREAM: ${SHARED_GATEWAY_UPSTREAM:?SHARED_GATEWAY_UPSTREAM required — unique existing v1 gateway DNS host:port, never gateway-api:8080}
+    volumes:
+      - ./infra/nginx/shared-gateway-relay.conf.template:/etc/nginx/templates/default.conf.template:ro
+    networks:
+      opensamguk-sandbox:
+        aliases:
+          - gateway-api
+      shared-gateway: {}
+
+  # --------------------------------------------------------------- web fronts
+  web-gateway:
+    build:
+      context: .
+      dockerfile: docker/web-gateway.Dockerfile
+      args:
+        NEXT_PUBLIC_GAME_URL: ${SANDBOX_NEXT_PUBLIC_GAME_URL:-http://localhost:53001}
+    image: opensamguk-sandbox/web-gateway:${SANDBOX_IMAGE_TAG:-dev}
+    container_name: opensamguk-sandbox-web-gateway
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3000
+      COOKIE_SECURE: ${SANDBOX_COOKIE_SECURE:-false}
+      GATEWAY_API_URL: http://gateway-api:8080
+      GAME_API_ORIGIN: http://game-api:8081
+      SERVER_ID: ${SANDBOX_SERVER_ID:-sandbox}
+      SERVER_REGISTRY_JSON: ${SANDBOX_SERVER_REGISTRY_JSON:-[]}
+    depends_on:
+      shared-gateway-relay:
+        condition: service_started
+    ports:
+      - "${SANDBOX_WEB_GATEWAY_PORT:-53000}:3000"
+    networks:
+      - opensamguk-sandbox
+
+  web-game:
+    build:
+      context: .
+      dockerfile: docker/web-game.Dockerfile
+      args:
+        NEXT_PUBLIC_GATEWAY_URL: ${SANDBOX_NEXT_PUBLIC_GATEWAY_URL:-http://localhost:53000}
+        ASSET_PREFIX: /game
+    image: opensamguk-sandbox/web-game:${SANDBOX_IMAGE_TAG:-dev}
+    container_name: opensamguk-sandbox-web-game
+    environment:
+      TZ: ${TZ:-Asia/Seoul}
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: 3001
+      SERVER_ID: ${SANDBOX_SERVER_ID:-sandbox}
+      GAME_API_URL: http://game-api:8081
+      GATEWAY_API_URL: http://gateway-api:8080
+    depends_on:
+      shared-gateway-relay:
+        condition: service_started
+      game-api:
+        condition: service_healthy
+      game-engine:
+        condition: service_healthy
+    ports:
+      - "${SANDBOX_WEB_GAME_PORT:-53001}:3001"
+    networks:
+      - opensamguk-sandbox
+
+  # ------------------------------------------------------------------- proxy
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: opensamguk-sandbox-nginx
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - shared-gateway-profile-icons:/var/lib/opensamguk/profile-icons:ro
+    depends_on:
+      - shared-gateway-relay
+      - game-api
+      - game-engine
+      - web-gateway
+      - web-game
+    ports:
+      - "${SANDBOX_NGINX_HTTP_PORT:-58090}:80"
+    networks:
+      - opensamguk-sandbox
+
+volumes:
+  sandbox-pgdata:
+    driver: local
+  sandbox-redisdata:
+    driver: local
+  shared-gateway-profile-icons:
+    name: ${SHARED_GATEWAY_PROFILE_ICONS_VOLUME:?SHARED_GATEWAY_PROFILE_ICONS_VOLUME required — must name the existing v1 gateway profile-icons volume}
+    external: true
+
+networks:
+  opensamguk-sandbox:
+    driver: bridge
+  shared-gateway:
+    name: ${SHARED_GATEWAY_NETWORK:?SHARED_GATEWAY_NETWORK required — must name the existing v1 gateway network}
+    external: true

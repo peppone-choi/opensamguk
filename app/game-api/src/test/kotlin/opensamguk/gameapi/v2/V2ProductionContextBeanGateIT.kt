@@ -1,5 +1,7 @@
 package opensamguk.gameapi.v2
 
+import opensamguk.gameapi.sandbox.SandboxConfiguration
+
 import opensamguk.gameapi.city.CityLedgerReadController
 import opensamguk.gameapi.city.CityTransportController
 import opensamguk.gameapi.city.GarrisonRecruitController
@@ -63,12 +65,12 @@ private fun postgresProps(
 internal class V2EnabledEnvironmentInitializer : ApplicationContextInitializer<ConfigurableApplicationContext> {
     override fun initialize(context: ConfigurableApplicationContext) {
         context.environment.propertySources.addFirst(
-            SystemEnvironmentPropertySource("test-systemEnvironment", mapOf("V2_ENABLED" to "true")),
+            SystemEnvironmentPropertySource("test-systemEnvironment", mapOf("SANDBOX_ENABLED" to "true")),
         )
     }
 }
 
-/** ① Production shape — `V2_ENABLED` unset and profile inactive. Expect zero v2 beans. */
+/** ① Production shape — `SANDBOX_ENABLED` unset and profile inactive. Expect zero v2 beans. */
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest
@@ -87,7 +89,7 @@ class V2ProductionShapeBeanGateIT {
     }
 }
 
-/** ② `v2.enabled=true` only — no profile. Expect zero beans. */
+/** ② `sandbox.enabled=true` only — no profile. Expect zero beans. */
 @ActiveProfiles("test")
 @Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
@@ -106,7 +108,7 @@ class V2PropertyOnlyBeanGateIT {
     }
 }
 
-/** ③ Profile `v2-sandbox` only — no property. Expect zero beans. */
+/** ③ Profile `sandbox` only — no property. Expect zero beans. */
 @Testcontainers(disabledWithoutDocker = true)
 @ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest
@@ -158,8 +160,8 @@ class V2BothConditionsBeanGateIT {
             // OPENSAM-155 (v2 R6) — CityLedgerReadController is read-only but sits behind the SAME gate,
             // so a closed gate hides the ledger endpoint too (404), not just the intake ones.
             setOf(
-                "v2SandboxConfiguration",
-                "v2SandboxMarker",
+                "sandboxConfiguration",
+                "sandboxMarker",
                 "garrisonRecruitController",
                 "cityTransportController",
                 "cityLedgerReadController",

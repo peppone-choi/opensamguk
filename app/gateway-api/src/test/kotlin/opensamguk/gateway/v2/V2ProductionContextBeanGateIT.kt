@@ -20,7 +20,7 @@ import org.springframework.test.context.DynamicPropertySource
  * OPENSAM-35 0A-f (S4) — measures v2 bean counts in gateway-api's **actual booted context**.
  *
  * It is the same gate as the identically named game-engine and game-api ITs, but one expectation differs:
- * gateway-api has **no** `V2SandboxConfiguration`. It is an authentication/profile service with no consumer for
+ * gateway-api has **no** `SandboxConfiguration`. It is an authentication/profile service with no consumer for
  * a v2 marker bean, so it does not duplicate an unused third conditional configuration. Therefore it must remain
  * **zero even when the gate is fully open (④)**. This test catches v2 code that leaks into gateway-api later.
  *
@@ -70,25 +70,25 @@ abstract class V2BeanGateContract {
     }
 }
 
-/** ① Production shape — `V2_ENABLED` unset and profile inactive. */
+/** ① Production shape — `SANDBOX_ENABLED` unset and profile inactive. */
 @ActiveProfiles("test")
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2ProductionShapeBeanGateIT : V2BeanGateContract()
 
-/** ② `v2.enabled=true` only. */
+/** ② `sandbox.enabled=true` only. */
 @ActiveProfiles("test")
 @SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2PropertyOnlyBeanGateIT : V2BeanGateContract()
 
-/** ③ Profile `v2-sandbox` only. */
+/** ③ Profile `sandbox` only. */
 @ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2ProfileOnlyBeanGateIT : V2BeanGateContract()
 
-/** ④ Both conditions are true — still zero because gateway-api has no `V2SandboxConfiguration`. */
+/** ④ Both conditions are true — still zero because gateway-api has no `SandboxConfiguration`. */
 @ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
