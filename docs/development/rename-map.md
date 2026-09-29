@@ -1578,3 +1578,13 @@ web/game/lib/hwiha-reads.ts
 | `PINNED_LEGACY_HAN_MAP_SHA256` | `PINNED_SOURCE_CITY_MAP_SHA256` | provenance `legacyHanMap` 키·SHA-256 불변 |
 
 `legacyHanMap`은 이미 핀된 route-node provenance와 불변 blob의 키다. 이 PR은 Python·Kotlin 코드 식별자만 바꿨고 JSON 번들 입력·해시를 다시 쓰지 않았다.
+
+## 사용하지 않는 웹 실험 코드 은퇴
+
+| 이전 경로 | 처리 | 근거 |
+| --- | --- | --- |
+| `web/game/lib/v2/`·`web/game/components/v2/` | 삭제 | 현행 페이지의 import가 없고 종료된 `v2-lab`의 컴포넌트·테스트에서만 소비 |
+| `web/game/next.config.mjs`의 `createV2ClientStubPlugin` | 삭제 | 가로챌 `components/v2` 진입점이 없어짐 |
+| `web/game/__tests__/v2-lab-route.test.tsx` | `retired-routes.test.tsx` | 종료 경로의 404 가드는 유지 |
+
+`/game/v2-lab` 차단 문자열은 기존 URL의 우회 접근을 막기 위해 남긴다. 이 삭제는 활성 캠페인 화면·지도 번들과 무관하다.
