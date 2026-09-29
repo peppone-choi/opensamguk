@@ -129,6 +129,8 @@ done >"$E2E_ARTIFACT_DIR/container-image-ids.tsv"
 
 L1과 맞춘 한 행의 DTO 필드는 `worldId`, `encounterId`, `resolvedYear/Month/Phase`, `provinceId`, `approachProvinceId`, `worldMapVariant`, `topologyRevision/Hash`, `tilesContentHash`, `deploymentRuleVersion/layoutRuleVersion/geometryRuleVersion/resolutionRuleVersion`, `initialSeparationSteps`, `outcome`, 정렬된 `winners`/`statuses`, `barrier`, `rounds`, `replayHash`, 실제 `callbackInvoked`다. 전장 가로·세로 칸 수와 이동 속도는 DTO 값으로 가장하지 않고, `tilesContentHash`·규칙 버전이 가리키는 별도 고정 산출물과 대조한다.
 
+`provinceId`와 `approachProvinceId`는 `land:`를 붙인 경로 키가 아니라 `LandProvince.id` 원문이다. `worldMapVariant`는 `WorldMapVariant.name` 또는 `null`이며, 합성 fixture의 `V3_1447_MAP4`는 예시일 뿐 최종 지도 판정값을 고정하지 않는다.
+
 `initialSeparationSteps`는 봉인된 `EncounterDeployment.tokens`의 실제 좌표를 가진 공격 측과 수비 측 토큰 집합 사이, 선택된 `BattlefieldLayout`의 육상 통과 가능 칸에서 4방향 BFS로 구한 최소 이동 수다. 점유·충돌·사거리·속도는 제외하고, 양측 배치가 없으면 `null`이다. 수집기는 이 값을 재계산하지 않고 L1 관측값과 전장 핀을 그대로 묶는다.
 
 전투 결과 observer는 성공한 `flushWithGeneration` 또는 `retryRetainedFlush` 뒤에만 export를 공개하고, 실패 flush에서는 행을 내지 않는다. DB commit 뒤 export 전 크래시로 행이 사라져도 위 독립 DB 조우 ID 대조가 실패해야 한다. 현재 이 producer 연결은 없고, consumer가 유효한 초안 JSON을 읽더라도 상태는 `CONTRACT_DRAFT`다. `MEMORY_ONLY`는 최종 W4 DB 영속 근거가 아니다. L1의 immutable DTO/게임 로그 `kind+refs+facts`와 공개 범위가 확정되면 매핑과 합격 조건을 함께 갱신한다. 그 전에는 제품 호출 파일을 수정하지 않는다.

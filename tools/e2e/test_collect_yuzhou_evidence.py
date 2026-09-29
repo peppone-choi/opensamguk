@@ -87,7 +87,7 @@ class CollectYuzhouEvidenceTest(unittest.TestCase):
         self.assertEqual(summary["evidence_source"], "MEMORY_ONLY")
         self.assertEqual(summary["commander_statuses"], {"HOLDING": 1, "RETREATED": 3})
         self.assertEqual(summary["initial_separation_steps"], [9, 45])
-        self.assertEqual(summary["world_map_variants"], {"MAP4": 2})
+        self.assertEqual(summary["world_map_variants"], {"V3_1447_MAP4": 2})
 
     def test_battle_export_requires_db_backed_sealed_ids(self):
         with self.assertRaisesRegex(ValueError, "differ from DB-backed march events"):
