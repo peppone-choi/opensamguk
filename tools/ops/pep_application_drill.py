@@ -89,6 +89,7 @@ class SourceEngineInputs:
     server: str
     services: object = field(repr=False)
     engine_env: object = field(repr=False)
+    api_env: object = field(repr=False)
     engine_mounts: tuple = field(repr=False)
     api_mounts: tuple = field(repr=False)
 
@@ -99,16 +100,18 @@ class SourceEngineInputs:
     def from_inspections(cls, server, inspections):
         validate_target(server, 'VERIFY ' + server, 'VERIFY')
         try:
-            env = {}
-            for entry in inspections['game-engine']['Config']['Env']:
-                key, separator, value = entry.partition('=')
-                require(separator and key and key not in env and '\0' not in entry,
-                        'invalid or duplicate engine environment')
-                env[key] = value
+            def selected_env(service):
+                env = {}
+                for entry in inspections[service]['Config']['Env']:
+                    key, separator, value = entry.partition('=')
+                    require(separator and key and key not in env and '\0' not in entry,
+                            'invalid or duplicate source environment')
+                    env[key] = value
+                return MappingProxyType(env)
             services = {s: SourceService(inspections[s]['Id'], inspections[s]['Image'],
                                          inspections[s]['HostConfig']['Memory']) for s in (*SERVICES, 'game-api')}
             mounts = lambda s: tuple(MappingProxyType(dict(m)) for m in inspections[s]['Mounts'])
-            return cls(server, MappingProxyType(services), MappingProxyType(env),
+            return cls(server, MappingProxyType(services), selected_env('game-engine'), selected_env('game-api'),
                        mounts('game-engine'), mounts('game-api'))
         except (KeyError, TypeError, ValueError, AttributeError):
             raise RecoveryError('invalid source engine inspection') from None
@@ -174,6 +177,7 @@ class ApplicationProof:
     cleanup: dict
     captured_engine_image_id: str
     tested_engine_image_id: str
+    authenticated_read: dict | None = None
 
 
 class PepApplicationDrill:
@@ -363,7 +367,8 @@ class PepApplicationDrill:
         return dict(updated_rows=int(bool(before) and not already_paused), inserted_rows=int(not before),
                     loader_visible_rows=len(after), effective_value=1)
 
-    def prove(self, recovery, bundle, source_inputs, preserved_scenario, scenario, *, candidate_engine_image_id=None):
+    def prove(self, recovery, bundle, source_inputs, preserved_scenario, scenario, *,
+              candidate_engine_image_id=None, authenticated_probe=None):
         bundle, tree = Path(bundle), Path(preserved_scenario)
         self.owned = []
         self.last_cleanup = {'success': True, 'remaining_resources': []}
@@ -385,13 +390,15 @@ class PepApplicationDrill:
             self.token = self.token_factory()
             require(isinstance(self.token, str) and re.fullmatch('[a-z0-9]{8,40}', self.token), 'invalid resource token')
             prefix = 'pep-drill-' + self.token + '-'
-            names = {k: prefix + k for k in ('network', 'pgdata', 'redisdata', 'extract', *SERVICES)}
+            names = {k: prefix + k for k in ('network', 'pgdata', 'redisdata', 'extract', *SERVICES, 'game-api')}
             for kind in ('container', 'volume', 'network'):
                 existing = set(recovery.docker.run([kind, 'ls', *(['--all'] if kind == 'container' else []),
                                                     '--format', '{{.Names}}' if kind == 'container' else '{{.Name}}']).decode().splitlines())
                 require(not existing.intersection(names.values()), 'clone resource collision')
+            authenticated_read = None
             try:
-                images = {source_inputs.services[s].image_id for s in SERVICES}
+                image_services = (*SERVICES, 'game-api') if authenticated_probe is not None else SERVICES
+                images = {source_inputs.services[s].image_id for s in image_services}
                 missing = []
                 for image in sorted(images):
                     try:
@@ -472,6 +479,12 @@ class PepApplicationDrill:
                         pass
                     recovery.sleep(1)
                 require(verified is not None, 'archived engine did not satisfy strict paused recovery diagnostics')
+                if authenticated_probe is not None:
+                    authenticated_read = authenticated_probe(
+                        recovery=recovery, source=source_inputs, manifest=manifest, bundle=bundle,
+                        network=network, postgres=pg, redis=redis, scenario_tree=tree,
+                        create_container=container, verified_storage=paused_database,
+                        manifest_sha256=manifest_sha)
                 recovery.docker.run(['container', 'stop', '--time', '120', engine])
                 stopped = recovery.inspect('container', engine)['State']
                 require(not stopped['Running'] and not stopped.get('OOMKilled') and
@@ -483,4 +496,5 @@ class PepApplicationDrill:
                 cleanup = self._cleanup(recovery)
             require(cleanup['success'], 'application drill cleanup failed; inspect remaining private resources')
             return ApplicationProof(manifest_sha, scenario.tree_sha256, int(env['OPENSAMGUK_WORLD_ID']),
-                                    clone_env['TURN_PROFILE_NAME'], clock, delta, verified, cleanup, captured_engine, tested_engine)
+                                    clone_env['TURN_PROFILE_NAME'], clock, delta, verified, cleanup,
+                                    captured_engine, tested_engine, authenticated_read)
