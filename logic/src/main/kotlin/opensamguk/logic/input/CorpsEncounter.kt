@@ -127,6 +127,6 @@ data class CorpsEncounter(
             require(encounter.defenders == encounter.orderedDefenders) { "Encounter defenders must be canonical" }
             return encounter
         }
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA corps encounter")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid corps encounter")
     }
 }

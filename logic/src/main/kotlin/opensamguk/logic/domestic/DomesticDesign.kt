@@ -65,14 +65,14 @@ class DomesticDesign internal constructor(
 
         val CANON: DomesticDesign by lazy {
             parse(checkNotNull(DomesticDesign::class.java.classLoader.getResource(RESOURCE)) {
-                "hwiha domestic design resource is missing: $RESOURCE"
+                "domestic design resource is missing: $RESOURCE"
             }.readText())
         }
 
         fun parse(payload: String): DomesticDesign {
             val root = Json.parseToJsonElement(payload).jsonObject
-            require(root.int("schemaVersion") == 1) { "unsupported hwiha domestic schemaVersion" }
-            require(root.text("ledgerId") == "domestic-v1") { "unexpected hwiha domestic ledgerId" }
+            require(root.int("schemaVersion") == 1) { "unsupported domestic schemaVersion" }
+            require(root.text("ledgerId") == "domestic-v1") { "unexpected domestic ledgerId" }
             val status = root.text("status")
             val scalingNode = root.obj("scaling")
             val scaling = Scaling(scalingNode.int("neutralStat"), scalingNode.int("permillePerStatPoint"),

@@ -53,7 +53,7 @@ object VisionRules {
 
     val CANON: Rules by lazy {
         parse(checkNotNull(VisionRules::class.java.classLoader.getResource(RESOURCE)) {
-            "hwiha vision rules resource is missing: $RESOURCE"
+            "vision rules resource is missing: $RESOURCE"
         }.readText())
     }
 
