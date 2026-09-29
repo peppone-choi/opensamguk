@@ -1621,4 +1621,4 @@ web/game/lib/hwiha-reads.ts
 | `web/game/e2e/v1-core-live.spec.ts` | `web/game/e2e/campaign-core-live.spec.ts` | 현행 캠페인 화면·예약 입력·재시작 검사만 유지 |
 | 같은 파일의 `SAMMO` 명령 카탈로그 분기·`che_요양` 운영 스모크 | 삭제 | 은퇴한 제품 경로와 전용 Redis·틱·브라우저 관측 헬퍼 제거 |
 
-현행 `ruleProfile=HWIHA` 확인은 아직 적용 중인 와이어 계약에 맞춘다. 세계 형식 가드 개명 PR에서 `worldFormat`으로 옮길 때 이 E2E 단언도 함께 바꾼다. 로컬 게이트의 명시적 spec 경로 계약은 새 파일명으로 갱신했다.
+현행 `ruleProfile=HWIHA` 확인은 아직 적용 중인 와이어 계약에 맞춘다. 세계 형식 가드 개명 PR에서 `worldFormat`으로 옮길 때 이 E2E 단언도 함께 바꾼다. 로컬 게이트의 명시적 spec 경로 계약은 새 파일명으로 갱신했다. Sammo 전용 `E2E_OPERATIONAL_SMOKE=true` 모드는 새 캠페인 스모크를 가장하지 않도록 명시적으로 거절한다.
