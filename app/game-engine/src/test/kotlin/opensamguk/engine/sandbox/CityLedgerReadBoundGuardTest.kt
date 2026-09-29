@@ -13,7 +13,7 @@ import kotlin.test.fail
  *
  * **OPENSAM-189으로 달라진 것.** 원래 이 파일에는 "engine/v2가 아직 S5 카탈로그 밖"이라는 사실을 고정하는
  * 세 번째 케이스가 있었고, 그 미등재가 이 파일 전체의 존재 이유였다. 이제
- * `app/game-engine/src/main/kotlin/opensamguk/engine/v2`가 `HotColdCatalog.runtimeSourceDirectories`에,
+ * `app/game-engine/src/main/kotlin/opensamguk/engine/sandbox`가 `HotColdCatalog.runtimeSourceDirectories`에,
  * `CityLedgerStore.kt`가 `runtimeDirectSqlBoundaries`에 등재됐으므로 그 케이스는 삭제했고,
  * "이 파일의 JDBC 호출이 카탈로그에 있는가"는 이제 `HotColdWorldCatalogGuardTest`의
  * `direct SQL calls stay in cataloged cold boundaries`가 `assertEquals`로 직접 판정한다.
