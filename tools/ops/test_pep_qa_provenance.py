@@ -2,6 +2,7 @@ import hashlib
 import io
 import json
 import unittest
+import warnings
 import zipfile
 
 from game_server_recovery import RecoveryError
@@ -133,9 +134,11 @@ class EvidenceProvenanceTest(unittest.TestCase):
         with self.assertRaisesRegex(RecoveryError, 'unsafe'):
             _zip_entries(archive({'../secret': b'no'}))
         stream = io.BytesIO()
-        with zipfile.ZipFile(stream, 'w') as output:
-            output.writestr('same', 'first')
-            output.writestr('same', 'second')
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', UserWarning)
+            with zipfile.ZipFile(stream, 'w') as output:
+                output.writestr('same', 'first')
+                output.writestr('same', 'second')
         with self.assertRaisesRegex(RecoveryError, 'duplicate'):
             _zip_entries(stream.getvalue())
 
