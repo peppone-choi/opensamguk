@@ -136,11 +136,11 @@ class DomesticBoundary(
             is WorkStep.Completed -> {
                 // Prepare all strategic effects before warehouse debit or county mutation. A bad
                 // work record stops this county while the remaining county boundaries continue.
-                val roadPassage = if (step.completed.work == DomesticWork.ROAD &&
-                    step.completed.edgeId != null) {
+                val roadEdgeId = if (step.completed.work == DomesticWork.ROAD) step.completed.edgeId else null
+                val roadPassage = if (roadEdgeId != null) {
                     val topology = context.topology
                         ?: return stop(countyId, works, active, now, "ROAD_TOPOLOGY_MISSING")
-                    try { LandPassageState.activate(world.getState().meta, topology, step.completed.edgeId) }
+                    try { LandPassageState.activate(world.getState().meta, topology, roadEdgeId) }
                     catch (_: IllegalArgumentException) {
                         return stop(countyId, works, active, now, "ROAD_STATE_INVALID")
                     }
