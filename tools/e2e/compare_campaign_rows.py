@@ -187,12 +187,17 @@ def main() -> None:
     parser.add_argument("--scenario-sha", required=True)
     parser.add_argument("--baseline-artifact-id", type=int)
     parser.add_argument("--candidate-artifact-id", type=int)
+    parser.add_argument("--require-same-git", action="store_true",
+                        help="reject different engine commits for a controlled map-only comparison")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     for name in ("baseline_git", "candidate_git", "baseline_map_sha", "candidate_map_sha", "scenario_sha"):
         value = getattr(args, name)
         pattern = GIT_SHA if name.endswith("git") else SHA256
         require(pattern.fullmatch(value) is not None, f"invalid {name} pin")
+    if args.require_same_git:
+        require(args.baseline_git == args.candidate_git,
+                "controlled map comparison requires the same engine Git SHA")
     summary = compare_rows(args.baseline, args.candidate)
     summary["pins"] = {name: getattr(args, name) for name in
                        ("baseline_git", "candidate_git", "baseline_map_sha", "candidate_map_sha", "scenario_sha")}
