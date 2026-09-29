@@ -1566,3 +1566,14 @@ web/game/lib/hwiha-reads.ts
 | --- | --- | --- |
 | `MapPreview.han.test.tsx` | `MapPreview.world.test.tsx` | 지도 미리보기 테스트 파일 |
 | 테스트 DOM ID `han-map` | `world-map` | 테스트 내부 선택자 |
+
+## 시나리오 적재·지도 소스 코드 이름
+
+| 옛 코드 이름 | 새 코드 이름 | 저장 계약 |
+| --- | --- | --- |
+| `ScenarioImporter.insertHwihaUnits` | `insertScenarioUnits` | `general_bugok` 행·시나리오 `units` 필드 불변 |
+| `ScenarioImporter.insertHwihaRetainers` | `insertScenarioRetainers` | `general_retainers` 행·시나리오 `retainers` 필드 불변 |
+| `apply_han_world.HAN_MAP` | `SOURCE_CITY_MAP` | 입력 경로 `map/han.json` 불변 |
+| `PINNED_LEGACY_HAN_MAP_SHA256` | `PINNED_SOURCE_CITY_MAP_SHA256` | provenance `legacyHanMap` 키·SHA-256 불변 |
+
+`legacyHanMap`은 이미 핀된 route-node provenance와 불변 blob의 키다. 이 PR은 Python·Kotlin 코드 식별자만 바꿨고 JSON 번들 입력·해시를 다시 쓰지 않았다.
