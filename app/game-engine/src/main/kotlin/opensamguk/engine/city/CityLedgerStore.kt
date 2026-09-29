@@ -16,7 +16,7 @@ data class CityLedgerEntry(val gold: Long, val rice: Long, val garrison: Int) {
  * OPENSAM-150 (R1) — v2 도시 원장(`v2_city_ledger`)의 메모리 보유자 겸 델타 기록기.
  *
  * **S5 카탈로그 등재 완료 (OPENSAM-189).** 이 파일은 `HotColdCatalog.runtimeDirectSqlBoundaries`에,
- * `engine/v2` 디렉터리는 `runtimeSourceDirectories`에 등재돼 있다. 따라서 아래 `load()`의 `jdbc.query`는
+ * `engine/city` 디렉터리는 `runtimeSourceDirectories`에 등재돼 있다. 따라서 아래 `load()`의 `jdbc.query`는
  * `HotColdWorldCatalogGuardTest`의 `assertEquals`에 묶여 있고, 등재를 지우거나 이 패키지에 새 JDBC
  * 수신자를 들이면 그 가드가 빨개진다. SQL **본문**(world-scoped·`SELECT *` 금지·결정적 정렬·직접 쓰기
  * 금지)은 카탈로그가 보지 않으므로 [V2CityLedgerReadBoundGuardTest]가 별도로 고정한다.
