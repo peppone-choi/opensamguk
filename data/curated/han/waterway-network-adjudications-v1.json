@@ -5,7 +5,7 @@
   "note": "#826 1차. 런타임이 읽지 않는 별도 원장이다. han-water-topology-v1 과 그 원장은 1133 번들·contentHash 에 물려 있어 건드리지 않는다. 비용·용량은 증거가 없어 적지 않는다. 2026-09-18 추가: portLinks 는 항구와 항구를 잇는 물길 표다 — 타입 간선(EMBARK/RIVER_*)은 여전히 NON_ACTIVATING 이고, portLinks 만 han-world-v3 의 城↔城 연결(강 뱃길)로 쓰인다(사용자 결정 2026-09-18).",
   "bankRule": "나루의 양안 省 = 노드 칸에서 3칸 안, 구간 물 칸에 붙은 마른 칸의 소유 省. 사료는 「그 물을 그 나루에서 건넜다」까지만 증명하고 省 은 han-tiles 소유 격자에서 읽는다.",
   "base": {
-    "tileMap": {
+    "hanTiles": {
       "path": "data/map/han-tiles.json",
       "sha256": "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488"
     },

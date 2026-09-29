@@ -1625,11 +1625,10 @@ web/game/lib/hwiha-reads.ts
 
 이 목록은 현재 생성 파일이다. 생성기와 웹 병기표의 핀 주석을 함께 재생성했다. 과거 동결 지도 번들의 바이트는 수정하지 않았다.
 
-### 현행 행정 감사·수로망 입력 키 (2026-09-30)
+### 현행 행정 감사 입력 키 (2026-09-30)
 
 | 이전 필드 | 중립 필드 | 범위 |
 |---|---|---|
 | `inputs.hanTiles` | `inputs.tileMap` | 행정 위상 감사 스냅샷 |
-| `base.hanTiles` | `base.tileMap` | 수로망 판정 원장·생성 네트워크 |
 
-입력 경로 `data/map/han-tiles.json`은 현행 지도 번들과 연결된 파일 경로라 이 PR에서 유지한다. 해당 파일명과 세계·전략 manifest의 `hanTilesSha256`·`baseHanTiles`는 번들 핀 재생성 작업으로 분리한다.
+수로망의 `base.hanTiles`와 입력 경로 `data/map/han-tiles.json`, 세계·전략 manifest의 `hanTilesSha256`·`baseHanTiles`는 세계 지도 매니페스트와 1447 번들 해시를 함께 재생성하는 작업에서 개명한다.

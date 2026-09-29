@@ -175,7 +175,7 @@ class WaterwayNetworkTest(unittest.TestCase):
         ledger["activation"] = "ACTIVE"
         self.assertRed(ledger, "NON_ACTIVATING")
         ledger = self.mutated()
-        ledger["base"]["tileMap"]["sha256"] = "0" * 64
+        ledger["base"]["hanTiles"]["sha256"] = "0" * 64
         self.assertRed(ledger, "han-tiles base pin drift")
 
     def test_reach_geometry_is_pinned(self):
