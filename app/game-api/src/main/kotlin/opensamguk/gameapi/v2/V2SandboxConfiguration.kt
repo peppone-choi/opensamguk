@@ -1,7 +1,7 @@
 package opensamguk.gameapi.v2
 
-import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.v2.V2SandboxMarker
+import opensamguk.infra.sandbox.SandboxGate
+import opensamguk.infra.sandbox.SandboxMarker
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -22,9 +22,9 @@ import org.springframework.context.annotation.Profile
  * Future concrete v2 beans, including read/intake controllers, belong here as `@Bean` methods.
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(V2SandboxGate.PROFILE)
-@ConditionalOnProperty(name = [V2SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
+@Profile(SandboxGate.PROFILE)
+@ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 class V2SandboxConfiguration {
     @Bean
-    fun v2SandboxMarker(): V2SandboxMarker = V2SandboxMarker()
+    fun v2SandboxMarker(): SandboxMarker = SandboxMarker()
 }

@@ -1,19 +1,19 @@
-package opensamguk.infra.v2
+package opensamguk.infra.content
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
-class V2CityCatalogAdapterTest {
+class CityCatalogAdapterTest {
 
     @Test
     fun `loads the pinned production city source with verified provenance`() {
-        val snapshot = V2CityCatalogAdapter().load()
+        val snapshot = CityCatalogAdapter().load()
 
         assertEquals(1, snapshot.metadata.schemaVersion)
         assertEquals("cities_1010", snapshot.metadata.id)
-        assertEquals(V2ContentStatus.ACTIVE, snapshot.metadata.status)
+        assertEquals(ContentStatus.ACTIVE, snapshot.metadata.status)
         assertEquals("scenario/cities_1010.json", snapshot.metadata.source)
         assertEquals("6759a68255cae1a6b9c05cbbaf5736ed8fc9fcb50c6623be44d7e3dfe0b4d393", snapshot.metadata.sha256)
         assertEquals(snapshot.cities.size, snapshot.metadata.cityCount)
@@ -22,7 +22,7 @@ class V2CityCatalogAdapterTest {
 
     @Test
     fun `independent city loads are equal and produce an empty diff`() {
-        val adapter = V2CityCatalogAdapter()
+        val adapter = CityCatalogAdapter()
 
         val first = adapter.load()
         val second = adapter.load()
@@ -33,7 +33,7 @@ class V2CityCatalogAdapterTest {
 
     @Test
     fun `rejects a city source whose bytes do not match metadata`() {
-        val adapter = V2CityCatalogAdapter(V2ContentCatalog(HASH_MISMATCH_LOCATION))
+        val adapter = CityCatalogAdapter(ContentCatalog(HASH_MISMATCH_LOCATION))
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
@@ -42,7 +42,7 @@ class V2CityCatalogAdapterTest {
 
     @Test
     fun `rejects a city source whose total count does not match metadata`() {
-        val adapter = V2CityCatalogAdapter(V2ContentCatalog(CITY_COUNT_MISMATCH_LOCATION))
+        val adapter = CityCatalogAdapter(ContentCatalog(CITY_COUNT_MISMATCH_LOCATION))
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
@@ -51,7 +51,7 @@ class V2CityCatalogAdapterTest {
 
     @Test
     fun `rejects a city source whose owned count does not match metadata`() {
-        val adapter = V2CityCatalogAdapter(V2ContentCatalog(OWNED_COUNT_MISMATCH_LOCATION))
+        val adapter = CityCatalogAdapter(ContentCatalog(OWNED_COUNT_MISMATCH_LOCATION))
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 
@@ -60,7 +60,7 @@ class V2CityCatalogAdapterTest {
 
     @Test
     fun `rejects duplicate city ids after valid source verification`() {
-        val adapter = V2CityCatalogAdapter(V2ContentCatalog(DUPLICATE_CITY_ID_LOCATION))
+        val adapter = CityCatalogAdapter(ContentCatalog(DUPLICATE_CITY_ID_LOCATION))
 
         val error = assertFailsWith<IllegalArgumentException> { adapter.load() }
 

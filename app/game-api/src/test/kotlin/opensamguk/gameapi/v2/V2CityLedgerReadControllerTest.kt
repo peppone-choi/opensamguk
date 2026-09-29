@@ -87,7 +87,7 @@ class V2CityLedgerReadControllerTest {
         assertTrue(jdbc.lastSql!!.contains("city_id = :city_id"), jdbc.lastSql!!)
     }
 
-    /** 원장 행이 아직 없는 도시는 "없는 도시"가 아니다 — 엔진 `V2CityLedgerEntry.EMPTY`와 같은 값. */
+    /** 원장 행이 아직 없는 도시는 "없는 도시"가 아니다 — 엔진 `CityLedgerEntry.EMPTY`와 같은 값. */
     @Test
     fun `a city without a ledger row reads as zeros, not as missing`() {
         val (api, _) = controller(emptyList())

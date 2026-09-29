@@ -2,7 +2,7 @@ package opensamguk.gameapi.v2
 
 import opensamguk.gameapi.config.GameApiProcessWorld
 import opensamguk.gameapi.precheck.PrecheckStateViewFactory
-import opensamguk.infra.v2.V2SandboxGate
+import opensamguk.infra.sandbox.SandboxGate
 import opensamguk.infra.seed.StrategicTopologyJson
 import opensamguk.logic.constraints.RequirementKey
 import opensamguk.logic.domain.City
@@ -30,8 +30,8 @@ import org.springframework.stereotype.Service
 import org.springframework.beans.factory.annotation.Autowired
 
 @Service
-@Profile(V2SandboxGate.PROFILE)
-@ConditionalOnProperty(name = [V2SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
+@Profile(SandboxGate.PROFILE)
+@ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 class V2CommandPrecheckService(
     private val states: PrecheckStateViewFactory,
     private val jdbc: NamedParameterJdbcTemplate,

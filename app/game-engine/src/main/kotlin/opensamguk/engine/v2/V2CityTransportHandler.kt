@@ -1,5 +1,8 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerStore
+import opensamguk.engine.city.CityLedgerEntry
+
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommandResult
@@ -39,7 +42,7 @@ import opensamguk.logic.world.StrategicRouteProjection
 class V2CityTransportHandler(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
-    private val ledger: V2CityLedgerStore,
+    private val ledger: CityLedgerStore,
     private val loadTopology: () -> StrategicRouteProjection = {
         historicalTransportTopology(world.getState(), historicalArtifacts)
     },
@@ -51,7 +54,7 @@ class V2CityTransportHandler(
         val general = world.getGeneralById(command.generalId)
         val from = world.getCityById(command.fromCityId)
         val to = world.getCityById(command.toCityId)
-        val resources = from?.let { ledger.entry(world.worldId, it.id) } ?: V2CityLedgerEntry.EMPTY
+        val resources = from?.let { ledger.entry(world.worldId, it.id) } ?: CityLedgerEntry.EMPTY
         val state = world.getState()
         val mapName = runCatching { ActiveWorldMap.requireName(state.config, state.meta) }.getOrNull()
         val strategic = mapName == WORLD_ARCHIVE_MAP_NAME
