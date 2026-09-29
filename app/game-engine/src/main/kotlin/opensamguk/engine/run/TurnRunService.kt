@@ -11,6 +11,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.campaign.BattleOutcomePostFlush
 import opensamguk.engine.flush.DeltaGenerationSession
 import opensamguk.engine.flush.FlushRecoveryGate
 import opensamguk.engine.flush.FlushRecoveryGateProvider
@@ -42,6 +43,7 @@ import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.RaiseInvaderContext
+import org.slf4j.LoggerFactory
 
 data class TurnClockSnapshot(
     val currentYear: Int,
@@ -137,7 +139,10 @@ open class TurnRunService(
     private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
     /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
     private val phaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
+    /** Optional QA evidence export. The observer queues before commit; this service releases it after flush. */
+    private val battleOutcomePostFlush: BattleOutcomePostFlush? = null,
 ) {
+    private val log = LoggerFactory.getLogger(TurnRunService::class.java)
     init {
         handler.recorder.generationSession = generationSession
         recoveryGateProvider?.bind(recoveryGate)
@@ -176,7 +181,9 @@ open class TurnRunService(
         val state = world.getState()
         val base = buildFlushPayload()
         val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
-        flushWithGeneration(base.copy(worldStateUpdate = worldState))
+        val payload = base.copy(worldStateUpdate = worldState)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
     }
 
     /** OPENSAM-132: non-sensitive recovery snapshot for status/health. */
@@ -272,7 +279,8 @@ open class TurnRunService(
         val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
         val commandResults = intakeResults.toCommandResultRows(committedWorldVersion = state.worldVersion + 1)
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
         return claimed.size
@@ -299,7 +307,8 @@ open class TurnRunService(
                 handled.toExecutionCommandResultRows(committedWorldVersion) +
                 handler.courtHandler.takeExecutions().toCourtExecutionRows(committedWorldVersion)
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
         return TickResult(
@@ -495,7 +504,8 @@ open class TurnRunService(
             worldStateUpdate = worldState,
             commandResults = commandResults,
         )
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
 
@@ -528,7 +538,7 @@ open class TurnRunService(
     /**
      * OPENSAM-130: prepare → JDBC flush → commit (clear deltas) or abort (keep deltas for retry).
      */
-    private fun flushWithGeneration(payload: FlushPayload) {
+    private fun flushWithGeneration(payload: FlushPayload): Long {
         val generation = generationSession.prepare()
         try {
             flushExecutor.flush(payload)
@@ -544,10 +554,22 @@ open class TurnRunService(
             if (recoveryGate.mode() != FlushRecoveryGate.Mode.READY) {
                 recoveryGate.markRecovered()
             }
+            return generation
         } catch (e: Exception) {
             generationSession.abort(generation)
             onFlushFailure(generation, payload, e)
             throw e
+        }
+    }
+
+    private fun publishCommittedBattleOutcomes(payload: FlushPayload, generation: Long) {
+        try {
+            battleOutcomePostFlush?.afterSuccessfulFlush(payload.worldId.value, generation)
+        } catch (e: Exception) {
+            // The JDBC commit already succeeded. Keep the batch for a later export attempt without
+            // misclassifying an optional QA sink failure as a database flush failure.
+            log.error("Committed battle evidence export failed for world={} generation={}",
+                payload.worldId.value, generation, e)
         }
     }
 
@@ -567,7 +589,8 @@ open class TurnRunService(
         val payload = recoveryGate.retainedPayload()
             ?: error("FLUSH_RETRY without retained payload")
         val previousTurnTime = world.getState().lastTurnTime
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         if (recoveryGate.isReady()) {
             commandOutboxRelay?.publishPending()
             applyCommittedWorldClockFromPayload(payload, previousTurnTime)
@@ -647,6 +670,9 @@ open class TurnRunService(
                     generation = generation,
                     reason = "unexpected READY classify: $reason",
                 )
+        }
+        if (recoveryGate.mode() == FlushRecoveryGate.Mode.RELOAD_REQUIRED) {
+            battleOutcomePostFlush?.quarantineUncommitted()
         }
     }
 
