@@ -19,9 +19,10 @@ class BattleWebSocketAdmissionTest {
     private val token = "BTJ2.abc.${"A".repeat(43)}"
     private val tickets = mock(BattleJoinTicketService::class.java)
     private val generals = mock(GeneralResolver::class.java)
+    private val sessions = BattleWebSocketSessions(tickets, generals)
     private val admission = BattleWebSocketAdmission(tickets, GameApiProcessWorld(1), generals,
-        "https://game.example")
-    private val handler = BattleWebSocketHandler()
+        "https://game.example", sessions)
+    private val handler = BattleWebSocketHandler(sessions)
     private val identity = BattleJoinIdentity("pep", WorldId(1), "battle-1", 42, 1, 7,
         "ATTACKER", 1, 3, Instant.parse("2026-09-29T00:01:00Z"))
 
@@ -84,5 +85,23 @@ class BattleWebSocketAdmissionTest {
         `when`(generals.resolveGeneralId(42L)).thenReturn(8)
         assertFalse(attempt().first)
         assertFalse(attempt(path = "/ws/battles/other/1/battle-1").first)
+    }
+
+    @Test
+    fun `new valid join replaces the previous account and battle reservation`() {
+        `when`(tickets.verifyBearer(token, "pep", WorldId(1), "battle-1")).thenReturn(identity)
+        `when`(generals.resolveGeneralId(42L)).thenReturn(7)
+        val first = attempt()
+        assertTrue(first.first)
+        val second = attempt()
+        assertTrue(second.first)
+        val old = first.second.second[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
+            as BattleWebSocketSessions.Reservation
+        val current = second.second.second[BattleWebSocketSessions.RESERVATION_ATTRIBUTE]
+            as BattleWebSocketSessions.Reservation
+        val staleSocket = mock(org.springframework.web.socket.WebSocketSession::class.java)
+        assertFalse(sessions.attach(old, staleSocket))
+        sessions.release(old)
+        assertTrue(sessions.attach(current, mock(org.springframework.web.socket.WebSocketSession::class.java)))
     }
 }
