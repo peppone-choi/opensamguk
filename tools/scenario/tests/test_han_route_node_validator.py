@@ -1222,7 +1222,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         self.assertEqual("哀牢", node["canonicalName"])
         MODULE.validate_documents(documents)
 
-    def test_ninth_unused_location_claim_is_rejected(self) -> None:
+    def test_extra_unused_location_claim_is_rejected(self) -> None:
         documents = real_documents()
         extra = json.loads(json.dumps(documents.external_claims["claims"][0], ensure_ascii=False))
         extra["sourceClaimId"] = "han-location-claim-v1-unused"
@@ -1231,7 +1231,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         extra["locationResolution"]["physicalPlaceId"] = "external:v1:X999"
         documents.external_claims["claims"].append(extra)
 
-        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 341|unused"):
+        with self.assertRaisesRegex(MODULE.SelectionContractError, "exactly 322|unused"):
             MODULE.validate_documents(documents)
 
     def test_location_claim_source_snapshot_hash_is_verified(self) -> None:

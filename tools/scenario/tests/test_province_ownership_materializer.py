@@ -233,8 +233,8 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         generated = materialize_all(parsed, catalog)
 
         self.assertEqual(15, len(generated))
-        self.assertEqual(24_405, sum(len(rows) for rows in generated.values()))  # 15 시나리오 × 구역 1,627.
-        self.assertTrue(all(len(rows) == 1_627 for rows in generated.values()))
+        self.assertEqual(24_120, sum(len(rows) for rows in generated.values()))  # 15 시나리오 × 구역 1,608.
+        self.assertTrue(all(len(rows) == 1_608 for rows in generated.values()))
 
     def test_generated_artifact_is_canonical_complete_and_path_independent(self):
         first = generate_document(ROOT)
@@ -243,7 +243,7 @@ class ProvinceOwnershipMaterializerTest(unittest.TestCase):
         self.assertEqual(canonical_bytes(first), canonical_bytes(second))
         self.assertEqual(15, len(first["scenarios"]))
         self.assertEqual(
-            24_405,  # 15 시나리오 × 현재 판 省 1,627
+            24_120,  # 15 시나리오 × 현재 판 省 1,608
             sum(len(scenario["assignments"]) for scenario in first["scenarios"]),
         )
         self.assertNotIn(str(ROOT), canonical_bytes(first).decode("utf-8"))

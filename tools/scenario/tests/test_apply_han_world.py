@@ -143,7 +143,8 @@ class HanWorldOwnershipOverrideTest(unittest.TestCase):
         # 같은 append-only 규약으로 붙은 행이다 — 濟南國 歷城(781) 행은 바이트 그대로 남아야 하고,
         # 1025–1097 거점 73곳까지 총 317행, 2026-09-16 河南尹 平陰(1098) 을 더해 318행이어야 한다(귀속 충돌 5곳은 defer).
         # 2026-09-17: 郡國 밖 취락 37곳 중 새 번호 35곳(1099–1133)이 더해져 353행이다 — 977·989 는 기존 행을 재결속한다.
-        self.assertEqual(667, len(migration_doc["appendedRows"]))
+        # 2026-09-27 D1: 합성 중복 23 城을 은퇴하고 실결손 4 城을 더해 667 - 23 + 4 = 648.
+        self.assertEqual(648, len(migration_doc["appendedRows"]))
         self.assertEqual(
             {
                 "administrativeUnitId": "hhs:112:濟南國:010",

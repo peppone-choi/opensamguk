@@ -81,9 +81,10 @@ class HanRouteNodeMaterializerTest(unittest.TestCase):
             },
             migration["appendedRows"][0],
         )
-        self.assertEqual(667, len(migration["appendedRows"]))
+        # 2026-09-27 D1: 1447 판 append 667 - 중복 은퇴 23 + 실결손 4 = 648.
+        self.assertEqual(648, len(migration["appendedRows"]))
         self.assertEqual(780, len(migration["rows"]))
-        self.assertEqual(667, migration["summary"]["appendedIdentityCount"])
+        self.assertEqual(648, migration["summary"]["appendedIdentityCount"])
         self.assertEqual(
             "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670",
             MODULE._digest(inputs.han),
