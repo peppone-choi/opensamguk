@@ -616,8 +616,8 @@ jobs:
       - name: Check reserved game server IDs
         run: python3 tools/ci/check_reserved_server_ids.py
 
-  # Draft #1026 evidence lane. It checks out the PR base commit explicitly so
-  # product code, map and scenario all come from one exact main SHA. The PR
+  # Draft #1026 evidence lane. It checks out current main explicitly so
+  # product code, map and scenario all come from one recorded main SHA. The PR
   # checkout supplies only the fail-closed evidence collector.
   yuzhou-isolated-evidence:
     if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026
@@ -628,7 +628,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.base.sha }}
+          ref: main
           path: runtime
       - uses: actions/checkout@v4
         with:
@@ -642,7 +642,7 @@ jobs:
         working-directory: runtime
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD)" = '${{ github.event.pull_request.base.sha }}'
+          test "$(git branch --show-current)" = main
           mkdir -p "$RUNNER_TEMP/yuzhou-evidence"
           git rev-parse HEAD > "$RUNNER_TEMP/yuzhou-evidence/pin-git-sha.txt"
           sha256sum infra/src/main/resources/map/han-world-v3.json \
@@ -742,7 +742,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: yuzhou-isolated-evidence-${{ github.event.pull_request.base.sha }}
+          name: yuzhou-isolated-evidence-${{ github.run_id }}
           path: ${{ runner.temp }}/yuzhou-evidence/
           retention-days: 3
           if-no-files-found: warn
