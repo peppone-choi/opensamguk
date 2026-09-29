@@ -1,9 +1,9 @@
 package opensamguk.engine.v2
 
-import opensamguk.infra.v2.V2ContentCatalog
-import opensamguk.infra.v2.V2CityCatalogAdapter
-import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.v2.V2SandboxMarker
+import opensamguk.infra.content.ContentCatalog
+import opensamguk.infra.content.CityCatalogAdapter
+import opensamguk.infra.sandbox.SandboxGate
+import opensamguk.infra.sandbox.SandboxMarker
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -32,25 +32,25 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
  * bean outside the gate (for example, an `@Component`) violates 0A-b.
  */
 @Configuration(proxyBeanMethods = false)
-@Profile(V2SandboxGate.PROFILE)
-@ConditionalOnProperty(name = [V2SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
+@Profile(SandboxGate.PROFILE)
+@ConditionalOnProperty(name = [SandboxGate.PROPERTY], havingValue = "true", matchIfMissing = false)
 class V2SandboxConfiguration {
     @Bean
-    fun v2SandboxMarker(): V2SandboxMarker = V2SandboxMarker()
+    fun v2SandboxMarker(): SandboxMarker = SandboxMarker()
 
     /**
      * OPENSAM-35 0A-d — read-only `content/v2/` catalog loader.
      *
      * It exists only inside the gate. It reads nothing at boot (it is not an `ApplicationRunner`) and writes
-     * nothing to the database. `V2ContentCatalogTest` proves the former by constant-pool scan, while
+     * nothing to the database. `ContentCatalogTest` proves the former by constant-pool scan, while
      * `V2ContentCatalogBeanTest` measures the gate's 0/1 state. Contract:
      * `infra/src/main/resources/content/v2/README.md`.
      */
     @Bean
-    fun v2ContentCatalog(): V2ContentCatalog = V2ContentCatalog()
+    fun v2ContentCatalog(): ContentCatalog = ContentCatalog()
 
     @Bean
-    fun v2CityCatalogAdapter(catalog: V2ContentCatalog): V2CityCatalogAdapter = V2CityCatalogAdapter(catalog)
+    fun v2CityCatalogAdapter(catalog: ContentCatalog): CityCatalogAdapter = CityCatalogAdapter(catalog)
 
     /**
      * OPENSAM-151 — 도시 금·쌀·수비병 원장 스토어(OPENSAM-150이 만든 것). [V2ProcessCityIncomeAction]이

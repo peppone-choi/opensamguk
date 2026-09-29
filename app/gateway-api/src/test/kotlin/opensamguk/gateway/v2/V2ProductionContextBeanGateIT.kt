@@ -4,9 +4,9 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import opensamguk.gateway.controller.AuthController
 import opensamguk.gateway.profile.ProfileIconSecureStorageTestConfiguration
-import opensamguk.infra.v2.V2ContentCatalog
-import opensamguk.infra.v2.V2SandboxGate
-import opensamguk.infra.v2.V2SandboxMarker
+import opensamguk.infra.content.ContentCatalog
+import opensamguk.infra.sandbox.SandboxGate
+import opensamguk.infra.sandbox.SandboxMarker
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.context.ApplicationContext
@@ -54,8 +54,8 @@ abstract class V2BeanGateContract {
             context.getBeansOfType(AuthController::class.java).size,
             "context did not actually boot the production AuthController",
         )
-        assertEquals(0, context.getBeansOfType(V2SandboxMarker::class.java).size, "V2SandboxMarker beans")
-        assertEquals(0, context.getBeansOfType(V2ContentCatalog::class.java).size, "V2ContentCatalog beans")
+        assertEquals(0, context.getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
+        assertEquals(0, context.getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
         assertEquals(emptyMap(), context.v2PackageBeans(), "beans whose type lives in an opensamguk *.v2.* package")
     }
 
@@ -76,18 +76,18 @@ class V2ProductionShapeBeanGateIT : V2BeanGateContract()
 
 /** ② `v2.enabled=true` only. */
 @ActiveProfiles("test")
-@SpringBootTest(properties = ["${V2SandboxGate.PROPERTY}=true"])
+@SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2PropertyOnlyBeanGateIT : V2BeanGateContract()
 
 /** ③ Profile `v2-sandbox` only. */
-@ActiveProfiles("test", V2SandboxGate.PROFILE)
+@ActiveProfiles("test", SandboxGate.PROFILE)
 @SpringBootTest
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2ProfileOnlyBeanGateIT : V2BeanGateContract()
 
 /** ④ Both conditions are true — still zero because gateway-api has no `V2SandboxConfiguration`. */
-@ActiveProfiles("test", V2SandboxGate.PROFILE)
-@SpringBootTest(properties = ["${V2SandboxGate.PROPERTY}=true"])
+@ActiveProfiles("test", SandboxGate.PROFILE)
+@SpringBootTest(properties = ["${SandboxGate.PROPERTY}=true"])
 @Import(ProfileIconSecureStorageTestConfiguration::class)
 class V2BothConditionsBeanGateIT : V2BeanGateContract()

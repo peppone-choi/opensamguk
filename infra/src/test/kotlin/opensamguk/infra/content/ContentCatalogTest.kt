@@ -1,4 +1,4 @@
-package opensamguk.infra.v2
+package opensamguk.infra.content
 
 import java.io.File
 import java.net.URLClassLoader
@@ -11,9 +11,9 @@ import kotlin.test.fail
 import org.springframework.boot.ApplicationRunner
 import org.springframework.boot.CommandLineRunner
 
-class V2ContentCatalogTest {
+class ContentCatalogTest {
 
-    private val fixture = V2ContentCatalog(FIXTURE_LOCATION)
+    private val fixture = ContentCatalog(FIXTURE_LOCATION)
 
     @Test
     fun `loads active metadata as the typed v2 catalog contract`() {
@@ -21,7 +21,7 @@ class V2ContentCatalogTest {
 
         assertEquals(1, metadata.schemaVersion)
         assertEquals("active", metadata.id)
-        assertEquals(V2ContentStatus.ACTIVE, metadata.status)
+        assertEquals(ContentStatus.ACTIVE, metadata.status)
         assertEquals("v2-catalog-fixture/scenario/cities.json", metadata.source)
         assertEquals("2dc5ec3c107b828044d331acaa3a294a4de3e53915474000566143f1b959c9ee", metadata.sha256)
         assertEquals(2, metadata.cityCount)
@@ -75,7 +75,7 @@ class V2ContentCatalogTest {
     @Test
     fun `rejects duplicate classpath metadata instead of selecting one arbitrarily`() {
         val originalClassLoader = Thread.currentThread().contextClassLoader
-        val duplicateRoot = V2ContentCatalogTest::class.java.classLoader
+        val duplicateRoot = ContentCatalogTest::class.java.classLoader
             .getResource(DUPLICATE_CLASSPATH_ROOT)
             ?: fail("duplicate classpath fixture root not found")
 
@@ -83,7 +83,7 @@ class V2ContentCatalogTest {
             Thread.currentThread().contextClassLoader = duplicateClassLoader
             try {
                 val error = assertFailsWith<IllegalArgumentException> {
-                    V2ContentCatalog(FIXTURE_LOCATION).load("active")
+                    ContentCatalog(FIXTURE_LOCATION).load("active")
                 }
 
                 assertEquals("v2 content metadata is ambiguous: active", error.message)
@@ -96,10 +96,10 @@ class V2ContentCatalogTest {
     @Test
     fun `catalog entry lookups reject traversal and preserve direct-entry scope`() {
         assertTrue(
-            V2ContentCatalogTest::class.java.classLoader.getResource("$FIXTURE_LOCATION/nested/deep.json") != null,
+            ContentCatalogTest::class.java.classLoader.getResource("$FIXTURE_LOCATION/nested/deep.json") != null,
         )
         assertTrue(
-            V2ContentCatalogTest::class.java.classLoader
+            ContentCatalogTest::class.java.classLoader
                 .getResource("v2-catalog-fixture/content/v2-decoy/decoy.json") != null,
         )
 
@@ -115,8 +115,8 @@ class V2ContentCatalogTest {
 
     @Test
     fun `is not a startup runner`() {
-        assertTrue(!ApplicationRunner::class.java.isAssignableFrom(V2ContentCatalog::class.java))
-        assertTrue(!CommandLineRunner::class.java.isAssignableFrom(V2ContentCatalog::class.java))
+        assertTrue(!ApplicationRunner::class.java.isAssignableFrom(ContentCatalog::class.java))
+        assertTrue(!CommandLineRunner::class.java.isAssignableFrom(ContentCatalog::class.java))
     }
 
     @Test
@@ -134,9 +134,9 @@ class V2ContentCatalogTest {
             "opensamguk/infra/seed",
         )
         val classFile = listOf(
-            File("build/classes/kotlin/main/opensamguk/infra/v2/V2ContentCatalog.class"),
-            File("infra/build/classes/kotlin/main/opensamguk/infra/v2/V2ContentCatalog.class"),
-        ).firstOrNull { it.isFile } ?: fail("compiled V2ContentCatalog.class not found")
+            File("build/classes/kotlin/main/opensamguk/infra/content/ContentCatalog.class"),
+            File("infra/build/classes/kotlin/main/opensamguk/infra/content/ContentCatalog.class"),
+        ).firstOrNull { it.isFile } ?: fail("compiled ContentCatalog.class not found")
 
         val text = String(classFile.readBytes(), Charsets.ISO_8859_1)
         for (needle in forbidden) {

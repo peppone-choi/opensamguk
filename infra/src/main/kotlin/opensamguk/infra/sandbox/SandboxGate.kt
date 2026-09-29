@@ -1,4 +1,4 @@
-package opensamguk.infra.v2
+package opensamguk.infra.sandbox
 
 /**
  * OPENSAM-35 0A-b — canonical names for the v2 bean-registration gate.
@@ -10,7 +10,7 @@ package opensamguk.infra.v2
  *
  * Both applications use constants from this single owner so a spelling divergence cannot silently open the gate.
  */
-object V2SandboxGate {
+object SandboxGate {
     /**
      * Spring property key. Container environment variable `V2_ENABLED` maps here through Spring relaxed binding
      * (`SystemEnvironmentPropertySource`: `_` becomes `.`, then lowercased).
@@ -32,4 +32,4 @@ object V2SandboxGate {
  * Future v2 beans (ledger stores, command handlers, read/intake controllers, and so on) belong inside each
  * application's `V2SandboxConfiguration`; do not create a new v2 bean outside the gate.
  */
-class V2SandboxMarker
+class SandboxMarker

@@ -1613,3 +1613,14 @@ web/game/lib/hwiha-reads.ts
 | `web/game/__tests__/v2-lab-route.test.tsx` | `retired-routes.test.tsx` | 종료 경로의 404 가드는 유지 |
 
 `/game/v2-lab` 차단 문자열은 기존 URL의 우회 접근을 막기 위해 남긴다. 이 삭제는 활성 캠페인 화면·지도 번들과 무관하다.
+
+## 콘텐츠 카탈로그와 샌드박스 게이트 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `opensamguk.infra.v2`의 콘텐츠 타입 | `opensamguk.infra.content` | Kotlin 패키지·파일·테스트 |
+| `V2ContentCatalog`·`V2ContentMetadata`·`V2ContentStatus` | `ContentCatalog`·`ContentMetadata`·`ContentStatus` | 메타데이터 로더·계약 |
+| `V2CityCatalogAdapter`·`V2CityCatalogSnapshot`·`V2CityCatalogDiff` | `CityCatalogAdapter`·`CityCatalogSnapshot`·`CityCatalogDiff` | 도시 카탈로그 조회 |
+| `V2SandboxGate`·`V2SandboxMarker` | `SandboxGate`·`SandboxMarker` | `opensamguk.infra.sandbox` 패키지 |
+
+이 변경은 Kotlin 선언과 참조만 바꾼다. `v2.enabled`·`v2-sandbox`와 `content/v2`는 배포 설정·콘텐츠 경로 계약이므로 별도 저장·통신 식별자 변경에서 함께 다룬다.
