@@ -8,18 +8,8 @@ import kotlin.test.assertEquals
 import kotlin.test.fail
 
 /**
- * OPENSAM-35 GATE-f2 F1 — naming-heuristic layer for plan §4-2 convention 1: **v2 runtime code belongs in an
- * `opensamguk.*.v2.*` package**. `ProductionContextBeanGateIT` detects leakage only when a bean's **type name
- * contains `.v2.`**, so a declaration such as `opensamguk.engine.ledger.CityLedgerStore` can silently evade the
- * gate. This source scan closes the naming-convention half of that gap.
- *
- * Measurement (2026-08-08): there are six `class|object|interface V2…` declarations across main sources. Five
- * are already in `opensamguk.*.v2.*`; the other is Flyway's `V26__npc_lifecycle_phase_units`, which is excluded
- * because a digit follows `V2`. There are therefore zero false positives.
- *
- * **Limit (intentional):** this enforces only the naming convention. v2 code with names that do **not** start
- * with `V2` (for example, `SandboxCityLedger` or `LedgerV2Store`) remains a review concern. As a source-text scan,
- * it also cannot distinguish the same pattern in a string literal or comment; there are currently none.
+ * Guards against reintroducing design-era version prefixes in product declarations.
+ * The package and file-name rule is enforced separately by naming_lint.py.
  */
 class NamingConventionGuardTest {
 
@@ -46,7 +36,7 @@ class NamingConventionGuardTest {
     }
 
     @Test
-    fun `V2-prefixed declarations live in an opensamguk v2 package`() {
+    fun `version-prefixed declarations stay absent`() {
         val root = repoRoot()
         val sourceDirs = scannedRoots.map { File(root, it) }.filter { it.isDirectory }
         if (sourceDirs.size != scannedRoots.size) {
@@ -56,24 +46,15 @@ class NamingConventionGuardTest {
         val violations = sourceDirs
             .flatMap { dir -> dir.walkTopDown().filter { it.isFile && it.extension == "kt" } }
             .flatMap { file ->
-                val text = file.readText()
-                val pkg = Regex("""^\s*package\s+([\w.]+)""", RegexOption.MULTILINE)
-                    .find(text)?.groupValues?.get(1).orEmpty()
-                val segments = pkg.split('.')
-                val inV2Package = segments.firstOrNull() == "opensamguk" && "v2" in segments
-                if (inV2Package) {
-                    emptyList()
-                } else {
-                    declaration.findAll(text).map { m ->
-                        "${file.relativeTo(root).path}: ${m.groupValues[2]} (package '$pkg')"
-                    }.toList()
-                }
+                declaration.findAll(file.readText()).map { m ->
+                    "${file.relativeTo(root).path}: ${m.groupValues[2]}"
+                }.toList()
             }
             .sorted()
 
         assertEquals(
             emptyList(), violations,
-            "V2-prefixed declarations must live in an opensamguk.*.v2.* package (plan §4-2 convention 1)",
+            "version-prefixed product declarations must stay absent",
         )
     }
 }

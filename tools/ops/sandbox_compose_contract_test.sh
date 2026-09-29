@@ -20,7 +20,7 @@ cleanup() {
 trap cleanup EXIT
 
 printf '%s\n' \
-  'SANDBOX_SCENARIO_CODE=scenario_990002' \
+  'SANDBOX_SCENARIO_CODE=scenario_9001' \
   'SANDBOX_SCENARIO_HOST_DIR=./data/scenarios' \
   'SANDBOX_POSTGRES_PASSWORD=placeholder-sandbox-postgres-password' \
   'SHARED_GATEWAY_NETWORK=opensamguk-shared-gateway' \

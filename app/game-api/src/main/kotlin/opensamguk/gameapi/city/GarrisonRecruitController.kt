@@ -23,7 +23,7 @@ import opensamguk.logic.command.CommandAvailability
  * ([opensamguk.gameapi.controller.InstantActionController]의 v1 분류기를 확장하지 않는다).
  *
  * `@Profile`/`@ConditionalOnProperty` 게이트는 [SandboxGate]와 동일 조합 — 두 조건이 모두 참일 때만
- * 빈이 등록되므로 v1 프로덕션 컨텍스트에는 존재하지 않는다([opensamguk.gameapi.v2.SandboxConfiguration]과
+ * 빈이 등록되므로 v1 프로덕션 컨텍스트에는 존재하지 않는다([opensamguk.gameapi.sandbox.SandboxConfiguration]과
  * 같은 게이트). 소유권 가드·인테이크 패턴은 `InstantActionController`와 동형 — `CommandReserveService.reserve`
  * 로 typed [opensamguk.common.wire.CityGarrisonRecruit]를 command stream에 발행하고(Model B, ring 없음)
  * 202 + requestId를 회신한다. 도메인 규칙(비용·상한)은 [opensamguk.engine.city.GarrisonRecruitHandler]가

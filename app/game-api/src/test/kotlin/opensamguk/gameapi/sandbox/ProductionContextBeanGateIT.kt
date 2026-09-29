@@ -33,7 +33,7 @@ import org.testcontainers.junit.jupiter.Testcontainers
  * OPENSAM-35 0A-f (S4) — measures v2 bean counts in game-api's **actual booted context**.
  *
  * S2 installed the gate in both game-engine and game-api, so both applications measure it. The structure matches
- * `opensamguk.engine.v2.ProductionContextBeanGateIT`; the only difference is one observed type:
+ * `opensamguk.engine.sandbox.ProductionContextBeanGateIT`; the only difference is one observed type:
  * `ContentCatalog` is registered only in game-engine (S3-a), so it must be **zero in every case**, including
  * when the gate is open.
  */
