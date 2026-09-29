@@ -78,9 +78,9 @@ class TurnDaemonLifecycle(
     private val observeGeneralTurnStart: (generalId: Int) -> Unit = { },
     private val observeHandledTurn: (ReservedTurnHandler.HandledTurn) -> Unit = { },
     /** HWIHA movement stage, after political input and before the one-phase stamp/atomic flush. */
-    private val hwihaMovementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.campaign.TurnOutcome?) -> Unit = { _, _, _ -> },
+    private val movementOf: (generalId: Int, reserved: ReservedTurn, outcome: opensamguk.engine.campaign.TurnOutcome?) -> Unit = { _, _, _ -> },
     /** HWIHA NPC input chooser (출병) for a general with no reservation; identity by default. */
-    private val hwihaNpcInputOf: (generalId: Int, reserved: ReservedTurn) -> ReservedTurn = { _, reserved -> reserved },
+    private val npcInputOf: (generalId: Int, reserved: ReservedTurn) -> ReservedTurn = { _, reserved -> reserved },
     /**
      * How the lifecycle obtains the reserved `(actionCode, argJson)` for a due general (the
      * `general_turn` ring / enqueued command). Widened from `(Int)->String` to carry the stored `arg`
@@ -189,7 +189,7 @@ class TurnDaemonLifecycle(
                 // §5.1 1단계 재검사: 배치·방침은 해당 카드의 다음 턴부터 효력(대기 → 현행).
                 handler.domesticTurn.beforeMovement(g.id)
                 handler.courtHandler.onIssuerTurn(g.id)
-                val reserved = hwihaNpcInputOf(g.id,
+                val reserved = npcInputOf(g.id,
                     opensamguk.engine.campaign.NpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
                 // §5.1 현장 행동은 이동·조우 단계가 지난 뒤 현재 위치에서 실행한다.
                 val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
@@ -199,10 +199,10 @@ class TurnDaemonLifecycle(
                         reserved.actionCode in opensamguk.logic.input.PeopleInput.INPUT_IDS ||
                         reserved.actionCode in opensamguk.logic.input.TransferInput.INPUT_IDS ||
                         reserved.actionCode in opensamguk.logic.input.DirectInput.INPUT_IDS)
-                if (fieldAction) hwihaMovementOf(g.id, reserved, null)
+                if (fieldAction) movementOf(g.id, reserved, null)
                 val result = handler.handle(g.id, reserved, state.currentYear, state.currentMonth, date)
                     .copy(requestId = reserved.requestId, reservedActionCode = reserved.actionCode)
-                if (world.ruleProfile == RuleProfile.HWIHA && !fieldAction) hwihaMovementOf(g.id, reserved, result.hwihaOutcome)
+                if (world.ruleProfile == RuleProfile.HWIHA && !fieldAction) movementOf(g.id, reserved, result.inputOutcome)
                 handled.add(result)
                 observeHandledTurn(result)
                 pullGeneralTurnOf(g.id)
@@ -292,7 +292,7 @@ class TurnDaemonLifecycle(
                 // autorunMode는 PER-GENERAL 신호다(PHP `$autorunMode`, :333-336 — AI가 예약 명령을 다른 명령으로
                 // 교체했을 때만 true). handle()이 HandledTurn.autorunMode로 노출하므로, 틱-레벨 env를 그 값으로
                 // copy해 :159 autorun 분기가 정확히 동작하게 한다(틱 env의 autorunMode 기본 false는 비-AI/AI-동일예약).
-                val commandClassName = result.hwihaOutcome?.inputId
+                val commandClassName = result.inputOutcome?.inputId
                     ?: if (result.fellBack) reserved.actionCode else checkNotNull(result.definition).name
                 handler.applyKillturnDecrement(g.id, commandClassName, env.copy(autorunMode = result.autorunMode))
             }

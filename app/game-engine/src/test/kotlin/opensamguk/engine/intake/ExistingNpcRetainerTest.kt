@@ -31,7 +31,7 @@ class ExistingNpcRetainerTest {
             TurnDaemonCommand.RetainerPledge(generalId = master, targetGeneralId = target, random = random, relation = "lieutenant"),
         ) as RetainerActionResult
 
-    private fun hwihaWorld(capacity: Int): InMemoryTurnWorld {
+    private fun campaignWorld(capacity: Int): InMemoryTurnWorld {
         val fixture = CampaignWorldFixture()
         val route = fixture.route()
         val owner = fixture.person(10, 1, route.startCity, lord = false).copy(npcState = 0, gold = 5000,
@@ -44,13 +44,13 @@ class ExistingNpcRetainerTest {
 
     @Test fun `HWIHA pledge charges the holder for the NPC card and moves its allegiance`() {
         assertNull(RetainerRules.pledgeDeny(5, emptyList(), "추가", 5000, enforceLegacySlotLimit = false))
-        val insufficient = hwihaWorld(6)
+        val insufficient = campaignWorld(6)
         assertFalse(pledge(insufficient).ok)
         assertTrue(insufficient.listRetainers().isEmpty())
         assertEquals(0, insufficient.getGeneralById(20)!!.nationId)
         assertEquals(5000, insufficient.getGeneralById(10)!!.gold)
 
-        val enough = hwihaWorld(7)
+        val enough = campaignWorld(7)
         assertTrue(pledge(enough).ok)
         assertEquals(1, enough.getGeneralById(20)!!.nationId)
         assertEquals(10, enough.listRetainers().single().masterGeneralId)

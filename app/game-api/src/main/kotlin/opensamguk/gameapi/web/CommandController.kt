@@ -81,7 +81,7 @@ class CommandController(
     private val worlds: WorldStateReadRepository,
 ) {
     private val worldId = processWorld.worldId
-    private val hwihaCatalog by lazy { InputCatalog.load() }
+    private val inputCatalog by lazy { InputCatalog.load() }
 
     /** The JSON body of a 202 reserve response. */
     data class ReservedResponse(val status: String, val requestId: String, val turnIdx: Int)
@@ -116,7 +116,7 @@ class CommandController(
             ?: return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to "POLICY_UNAVAILABLE", "reason" to "세계 규칙을 확인할 수 없습니다."))
         if (worldProfile == RuleProfile.HWIHA && code !in CommandReserveService.HWIHA_RESERVABLE_ACTIONS &&
             code !in CommandReserveService.COMMON_INTAKE_COMMANDS) {
-            val rejection = hwihaInputRejection(code)
+            val rejection = inputRejection(code)
             return ResponseEntity.ok(mapOf("status" to "BLOCKED", "code" to rejection.name, "reason" to rejection.message))
         }
         if (code == SELECT_POOL_PICK && worldProfile == RuleProfile.SAMMO) {
@@ -184,10 +184,10 @@ class CommandController(
         }
     }
 
-    private fun hwihaInputRejection(code: String): InputRejection {
+    private fun inputRejection(code: String): InputRejection {
         // The frozen engine pick handler always rejects; never publish a misleading 202.
         if (code == SELECT_POOL_PICK) return InputRejection.NOT_DELIVERED
-        val rejection = hwihaCatalog.rejectionFor(RuleProfile.HWIHA, code)
+        val rejection = inputCatalog.rejectionFor(RuleProfile.HWIHA, code)
         if (rejection != null) return rejection
         // This registered input has a handler, but this generic route has no matching typed intake.
         return InputRejection.INVALID_INPUT_CHANNEL
