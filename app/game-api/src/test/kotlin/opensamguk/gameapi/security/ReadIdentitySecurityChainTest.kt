@@ -159,16 +159,28 @@ class ReadIdentitySecurityChainTest {
     }
 
     @Test
-    fun `anonymous and invalid bearer cannot impersonate via generalId and verified caller cannot substitute another body`() {
-        for (path in listOf("/api/city/5", "/api/front-info", "/api/map")) {
-            mvc.perform(get(path).param("generalId", "202")).andExpect(status().isUnauthorized)
-            mvc.perform(get(path).param("generalId", "202").header("Authorization", "Bearer invalid"))
-                .andExpect(status().isUnauthorized)
-            mvc.perform(get(path).param("generalId", "202").header("Authorization", "Bearer ${token()}"))
-                .andExpect(status().isForbidden)
-            mvc.perform(get(path).param("generalId", "101").header("Authorization", "Bearer ${token(8)}"))
-                .andExpect(status().isForbidden)
-        }
+    fun `city query identity rejects anonymous invalid bearer foreign body and unresolved account`() {
+        assertQueryIdentityBoundary("/api/city/5")
+    }
+
+    @Test
+    fun `front query identity rejects anonymous invalid bearer foreign body and unresolved account`() {
+        assertQueryIdentityBoundary("/api/front-info")
+    }
+
+    @Test
+    fun `map query identity rejects anonymous invalid bearer foreign body and unresolved account`() {
+        assertQueryIdentityBoundary("/api/map")
+    }
+
+    private fun assertQueryIdentityBoundary(path: String) {
+        mvc.perform(get(path).param("generalId", "202")).andExpect(status().isUnauthorized)
+        mvc.perform(get(path).param("generalId", "202").header("Authorization", "Bearer invalid"))
+            .andExpect(status().isUnauthorized)
+        mvc.perform(get(path).param("generalId", "202").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isForbidden)
+        mvc.perform(get(path).param("generalId", "101").header("Authorization", "Bearer ${token(8)}"))
+            .andExpect(status().isForbidden)
         verifyNoInteractions(world, cities, generals, nations)
     }
 
