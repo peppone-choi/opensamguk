@@ -59,6 +59,12 @@ def note(t, style=''):
     return f'<span class="note" style="{style}">{t}</span>'
 
 
+def req(kind, who_key, who, what, due, consequence='', input_id=''):
+    """K3 request_card — 입력 id 가 정해지지 않은 요청(K8-02 등)은 data-input-id 를 달지 않는다."""
+    html = request_card(kind, who_key, who, what, due, consequence, input_id=input_id or 'X')
+    return html if input_id else html.replace(' data-input-id=X', '')
+
+
 def lordchip():
     return chip('군주가 볼 때', 'bronze')
 
@@ -167,22 +173,20 @@ def card_pei(lord=False):
             f'{btn("치소 상현 보기", "", "war", href="#")}</div>')
     inner = (warnbar('명목입니다 — 치소 상현을 잃어 이 자리로 할 수 있는 일이 없습니다.')
              + f'<div style="padding:10px 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">'
-             f'{kv("앉은 사람", "[인물]")}{kv("상태", "명목", "rs")}{kv("부임", "[값]년 [값]월")}</div>'
+             f'{kv("앉은 사람", "[인물]")}{kv("상태", "명목", "rs")}{kv("부임", "[값]년 [값]월 [값]순")}</div>'
              f'<div style="padding:4px 12px 6px;font-size:11.5px" class="muted">실효 판정 — 모두 맞아야 실권이 있습니다</div>'
              + evid_list(missing, ex) + can + acts)
     return panel('패국 국상', '예주 · 치소 상현', inner)
 
 
 def offer_panel():
-    card = (f'<div style="padding:10px 12px;display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;align-items:start">'
-            f'{portrait("jojo", "조조", 44, 62)}<div style="display:flex;flex-direction:column;gap:4px">'
-            f'<span style="font-size:13px"><span class="serif" style="font-weight:700">조조</span> — 하후돈을 <span class="bz">진류군 태수</span>로 임명</span>'
-            f'<span class="muted" style="font-size:11.5px">수락하면 진류현으로 부임 이동을 시작합니다. [값]까지 답하지 않으면 수락으로 봅니다.</span>'
-            f'<span class="t2" style="font-size:11.5px">지금 영천군 태수와 함께 맡습니다 · 함께 맡을 수 있는 지방 관직 [값]개</span></div></div>')
-    acts = (f'<div style="padding:0 12px 10px;display:flex;gap:8px">{btn("수락", "primary", style="flex:1")}{btn("사양", "", style="flex:1")}</div>'
-            + note('응답 입력 이름은 서버 설계 대기(K8-02).', 'padding:0 12px 10px;display:block'))
+    card = req('임명 제안', 'jojo', '조조', '하후돈을 <span class="bz">진류군 태수</span>로 — 받아들이면 진류현으로 부임 이동', '[값]까지 · 넘기면 수락')
+    more = (f'<div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:4px">'
+            f'<span class="t2" style="font-size:11.5px">지금 영천군 태수와 함께 맡습니다 · 함께 맡을 수 있는 지방 관직 [값]개</span>'
+            + note('응답 입력 이름은 서버 설계 대기(K8-02).') + '</div>')
     return panel('받은 임명 제안', '1건 · 응답은 장수 행동을 쓰지 않는다',
-                 f'<div style="padding:8px 12px 0">{help_strip("[도움말 문장 — 주제 대기]")}</div>' + card + acts, 'flex-grow:1')
+                 f'<div style="padding:8px 12px 0">{help_strip("[도움말 문장 — 주제 대기]")}</div>'
+                 f'<div style="padding:8px 12px 0">{card}</div>' + more, 'flex-grow:1')
 
 
 def board_offices():
@@ -216,7 +220,9 @@ def board_offices_lord():
            + opt('양국', '예주 · 국상 자리 · 치소 하읍현', ok_chip(), sel=True, h=48)
            + opt('예주', '자사 자리 · 주 감찰', ok_chip(), h=48)
            + opt('영천군', '예주 · 태수 자리', why_tag('앉은 사람이 있음'), no=True, h=48)
-           + opt('진류군', '연주 · 태수 자리', why_tag('앉은 사람이 있음'), no=True, h=48) + '</div></section>')
+           + opt('진류군', '연주 · 태수 자리', why_tag('앉은 사람이 있음'), no=True, h=48) + '</div>'
+           f'<div style="margin-top:auto;padding:8px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid #2c342f">'
+           f'<span class="t2" style="font-size:12.5px;flex:1">고름 — <b class="bz">양국</b> · 국상 자리</span>{btn("이 관할로 정하기", "primary")}</div></section>')
     left = col(mp, lst)
     cands = (f'<div role="listbox" aria-label="후보" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">'
              + person_row('sunuk', '순욱', '사람', '조조 소속', '허현', sel=True, h=56)
@@ -324,7 +330,7 @@ def contract_detail(lord=True):
              f'{kv("상납률", "[값]% — 봉토 수입에서")}{kv("원군 의무", "[값]명 · 응답 [값]순")}'
              f'{kv("외교권", "군주 승인 뒤")}{kv("충성", "[값]")}</div>'
              f'<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="muted" style="font-size:11.5px">자치</span>'
-             f'{chip("현 방침", "moss")}{chip("세금 배분")}{chip("수비군 지휘")}<span class="muted" style="font-size:11px;margin-left:auto">맺은 때 200년 [값]월 · {""}</span>{game_term()}</div>')
+             f'{chip("현 방침", "moss")}{chip("세금 배분")}{chip("수비군 지휘")}<span class="muted" style="font-size:11px;margin-left:auto">맺은 때 200년 [값]월 [값]순</span>{game_term()}</div>')
     hist_rows = [['1월', *(f'<span class="mono">[값]</span>' for _ in RES5), chip('완납', 'moss')],
                  ['2월', *(f'<span class="mono">[값]</span>' for _ in RES5), chip('완납', 'moss')],
                  ['3월', *(f'<span class="mono rs">[값]</span>' if r in ('쌀', '금') else '<span class="mono">[값]</span>' for r, _ in RES5), chip('미납', 'rust')]]
@@ -385,15 +391,15 @@ def board_mvassal_found():
 
 def board_mvassal_side():
     offer = (f'<section class="panel">{sec("받은 봉신 제안", "동의해야 맺어진다")}'
-             f'<div style="padding:10px 12px;display:grid;grid-template-columns:40px minmax(0,1fr);gap:10px">{portrait("jojo", "조조", 40, 56)}'
-             f'<div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:13px"><b class="serif">조조</b> — 하후돈을 봉신 주공으로</span>'
-             f'<span class="muted" style="font-size:11.5px">봉토 양성현 · 영양현 · 상납 [값]%</span>'
-             f'<span class="t2" style="font-size:11.5px">봉신이 되면 조조의 부를 떠나 스스로 주공이 됩니다. 내 부는 나를 따릅니다.</span></div></div>'
-             f'<div style="padding:0 12px 10px;display:flex;gap:8px">{btn("동의", "primary", style="flex:1")}{btn("거절", "", style="flex:1")}</div>'
-             + note('응답 입력 이름은 서버 설계 대기(K8-02).', 'padding:0 12px 10px;display:block') + '</section>')
+             f'<div style="padding:10px 12px 0">{req("봉신 제안", "jojo", "조조", "하후돈을 봉신 주공으로 — 봉토 양성현 · 영양현 · 상납 [값]%", "[값]까지")}</div>'
+             f'<div style="padding:8px 12px 10px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:11.5px">봉신이 되면 조조의 부를 떠나 스스로 주공이 됩니다. 내 부는 나를 따릅니다.</span>'
+             + note('응답 입력 이름은 서버 설계 대기(K8-02).') + '</div></section>')
     reinf = (f'<section class="panel">{sec("받은 원군 요청", "봉신의 의무")}'
-             + warnbar('의무보다 적게 보내거나 기한을 넘기면 계약 위반입니다.', 'bronze')
-             + f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px"><span style="font-size:13px"><b class="serif">조조</b> — 원군 [값]명 · 기한 [값]순</span>'
+             f'<article class="req" aria-label="원군 요청 — 조조" style="margin:10px 12px 0"><div style="display:flex;gap:10px;padding:10px 12px">{portrait("jojo", "조조", 30, 42)}'
+             f'<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1"><div style="display:flex;align-items:center;gap:6px">{chip("원군 요청", "bronze")}'
+             f'<span class="serif" style="font-weight:700;font-size:14px">조조</span><span class="mono muted" style="font-size:11px;margin-left:auto">기한 [값]순</span></div>'
+             f'<span style="font-size:13px">원군 [값]명을 보내라</span><span class="rs" style="font-size:12px">거절하거나 적게 보내면 — 계약 위반</span></div></div></article>'
+             + f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
              + field('보낼 병력', inp('[값]', unit='명'), '의무 [값]명 · 줄여 보내면 축소 이행')
              + f'</div><div style="padding:0 12px 10px;display:grid;grid-template-columns:1fr 1fr;gap:8px">{btn("수락", "primary")}{btn("지연")}{btn("축소해서 보냄")}{btn("거절", "danger")}</div>'
              + note('원군 응답 입력은 서버 설계 대기(C5).', 'padding:0 12px 10px;display:block') + '</section>')
@@ -424,7 +430,7 @@ def line_card(mini=True, w_map=260):
     hx, hy = DESK_PX(*CELLS['허현'])
     mp = (f'<div style="position:relative;width:{w_map}px;height:112px;overflow:hidden;border:1px solid #3d4740;flex-shrink:0">'
           f'{mapimg("desk", 1048, 952, "허현 일대", -(hx - w_map // 2), -(hy - 56))}'
-          f'<span aria-label="황제 — 허현" style="position:absolute;left:{w_map // 2 - 18}px;top:38px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;'
+          f'<span aria-label="황제 — 허현" style="pointer-events:none;position:absolute;left:{w_map // 2 - 18}px;top:38px;width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;'
           f'background:rgba(12,15,14,.85);border:2px solid #d3b064">{crown(20)}</span></div>') if mini else ''
     facts = (f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;flex:1;min-width:0">'
              f'{kv("황제", "유협")}{kv("있는 곳", "허현 · 성 안")}{kv("조정", "허현")}{kv("섭정", "—")}'
@@ -549,9 +555,11 @@ ZHOU = [('사례', '司隸'), ('기주', '冀州'), ('예주', '豫州'), ('서�
 ZSTATE = {'연주': ('조조', True), '기주': ('원소', True), '예주': ('조조', False), '형주': ('유표', False)}
 
 
+ZNAME = dict(zip(ZHOU, places(ZHOU)))  # 揚州 · 涼州가 둘 다 「양주」 — 한 화면에 함께 나오므로 한자를 붙인다(K3 twin · places)
+
+
 def zhou_tile(n, hz, w=176, h=132, small=False):
-    dup = n == '양주'
-    hj = f'<span class="muted" style="font-family:inherit;font-weight:400;font-size:11px"> {hz[0]}</span>' if dup else ''
+    label = ZNAME[(n, hz)]
     who, full = ZSTATE.get(n, (None, False))
     if full:
         st = f'<span style="display:flex;align-items:center;gap:4px">{nat_dot(who)}{chip("모두 — " + who, "bronze")}</span>'
@@ -561,10 +569,10 @@ def zhou_tile(n, hz, w=176, h=132, small=False):
         st = '<span class="muted" style="font-size:11.5px">모두 쥔 세력 없음</span>'
     if small:
         return (f'<a href="#" style="min-height:52px;display:flex;flex-direction:column;justify-content:center;gap:2px;padding:4px 8px;border:1px solid {"#9c7f3f" if full else "#3d4740"};background:#141816;color:#ece6d8">'
-                f'<span class="serif" style="font-weight:900;font-size:13px">{n}{hj}</span>{chip("모두 " + who, "bronze") if full else "<span class=muted style=font-size:10.5px>[값] / [값]</span>"}</a>')
+                f'<span class="serif" style="font-weight:900;font-size:13px">{label}</span>{chip("모두 " + who, "bronze") if full else "<span class=muted style=font-size:10.5px>[값] / [값]</span>"}</a>')
     return (f'<a href="#" style="width:{w}px;height:{h}px;display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid {"#9c7f3f" if full else "#3d4740"};'
             f'background:{"rgba(211,176,100,.06)" if full else "#141816"};color:#ece6d8">'
-            f'<span class="serif" style="font-weight:900;font-size:17px">{n}{hj}</span><span class="mono muted" style="font-size:11px">군국 [값]</span>{st}'
+            f'<span class="serif" style="font-weight:900;font-size:17px">{label}</span><span class="mono muted" style="font-size:11px">군국 [값]</span>{st}'
             f'<span class="muted" style="font-size:11px;margin-top:auto">누르면 군국별로</span></a>')
 
 
@@ -713,7 +721,7 @@ def board_frontier():
            + f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">'
            f'<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">{kv("우리와의 관계", "적대", "rs")}{kv("맞닿은 현", "[현] · [현]")}</div>'
            f'<span class="muted" style="font-size:11.5px">일어난 일</span>'
-           + tbl(['때', '일', '곳', '결과'], [['200년 [값]월', '변경 침입', '[현]', '<span class="rs">창고 ▼ 민심 ▼</span>'], ['199년 [값]월', '교역', '[현]', '<span class="ms">금 ▲</span>']], 'font-size:12px')
+           + tbl(['때', '일', '곳', '결과'], [['200년 [값]월 [값]순', '변경 침입', '[현]', '<span class="rs">창고 ▼ 민심 ▼</span>'], ['199년 [값]월 [값]순', '교역', '[현]', '<span class="ms">금 ▲</span>']], 'font-size:12px')
            + f'{btn("기록에서 모두 보기", "", "records", href="#")}'
            f'<div class="inset" style="padding:10px 12px;display:flex;flex-direction:column;gap:4px"><span class="t2" style="font-size:12.5px">사자를 보내 조공 · 교역을 청할 수 있게 됩니다.</span>'
            f'<span class="muted" style="font-size:11.5px">사자 배치 · 제의 입력은 서버 설계 대기(K8-09).</span></div></div></section>')
@@ -746,7 +754,7 @@ def board_misinfo():
             f'<div style="flex-grow:1;display:flex">{state_empty("건 역정보가 없습니다", "계책 덱의 의병 · 반간 카드로 겁니다.", btn("계책 덱으로", "sm", href="#"), pad=8)}</div></section>')
     sx, sy = DESK_PX(*CELLS['신정현'])
     mp = (f'<div style="position:relative;height:220px;overflow:hidden;border:1px solid #3d4740">{mapimg("desk", 1048, 952, "신정현 일대", -(sx - 200), -(sy - 110))}'
-          f'<span aria-label="가짜 군세 — 나에게만" style="position:absolute;left:178px;top:88px;width:44px;height:44px;border-radius:50%;border:2px dashed #d3b064;background:rgba(12,15,14,.7);'
+          f'<span aria-label="가짜 군세 — 나에게만" style="pointer-events:none;position:absolute;left:178px;top:88px;width:44px;height:44px;border-radius:50%;border:2px dashed #d3b064;background:rgba(12,15,14,.7);'
           f'display:inline-flex;align-items:center;justify-content:center;font-family:\'Noto Serif KR\',serif;font-weight:900;color:#d3b064">가</span>'
           f'<span class="mlab" style="left:200px;top:136px">가짜 군세 · 나에게만</span></div>')
     art = pic(ART.get('의병', ''), 96, 104, '의병 카드 그림')
