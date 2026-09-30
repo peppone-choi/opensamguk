@@ -244,7 +244,7 @@ STEPS = [('tutorial.register', '가입', '계정을 만듭니다.', '게이트�
 DONE_AT = ['가입 때', '20:12', '20:40', '21:05', '21:18']
 
 
-def step_bar(done, cur):
+def tut_bar(done, cur):
     cells = ''.join(f'<i style="flex:1 1 0;height:12px;display:block;{"background:#d3b064" if k < done else ("border:2px solid #d3b064;background:transparent" if k == cur - 1 else "background:#2c342f")}"></i>'
                     for k in range(8))
     return (f'<div role="img" aria-label="첫걸음 {done} / 8 완료, 지금 {cur}단계" style="display:flex;flex-direction:column;gap:6px">'
@@ -440,7 +440,7 @@ def board_tutorial():
     cont = (f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">'
             f'{pagehead("조정", ["발령 · 포상 · 조정 결정", "관직 · 봉신", "외교"], "발령 · 포상 · 조정 결정")}'
             f'<div style="flex-grow:1;min-height:0;display:flex;gap:12px;padding:12px 16px;align-items:flex-start">{court_list()}{card}</div></main>')
-    tb = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">{step_bar(3, 4)}'
+    tb = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">{tut_bar(3, 4)}'
           + step_card(4, ['조정 › 발령 응답을 엽니다.', '발령 내용(자리 · 기한)을 봅니다.', '「수락」을 누릅니다.'],
                       '주공 조조의 발령이 왔습니다 — 답하면 됩니다.', where_here=True, help_name='발령 응답') + '</div>'
           + step_list(3, 4)
@@ -474,7 +474,7 @@ def board_mtutorial():
 def board_mtutorial_list():
     """P-A02 모바일 — 도움말 시트의 「첫걸음」: 막대 · 지금 단계 · 8단계 목록(찾기칸은 이 보기에서 접는다)."""
     body = (f'<div style="height:52px;flex-shrink:0;padding:0 12px 8px">{seg(["이 화면", "분류", "첫걸음"], "첫걸음", "도움말 보기", style="width:100%")}</div>'
-            f'<div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">{step_bar(5, 6)}'
+            f'<div style="padding:0 12px 10px;display:flex;flex-direction:column;gap:10px;flex-shrink:0">{tut_bar(5, 6)}'
             + step_card(6, ['이번 순에 할 일 › 인물 › 인재탐색을 예약합니다.', '찾은 인물을 다음 빈 순에 등용합니다.'],
                         '인재탐색을 04순에 예약했습니다 — 다음 개인 턴 21:40에 처리됩니다.', 'info', help_name='등용') + '</div>'
             + step_list(5, 6, fold=True))
