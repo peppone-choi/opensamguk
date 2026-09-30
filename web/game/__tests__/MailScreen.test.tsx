@@ -40,7 +40,7 @@ beforeEach(() => {
     vi.mocked(api.mailboxRecent).mockResolvedValue(envelope as never);
     vi.mocked(api.generalsList).mockResolvedValue([general(1, '나'), general(2, '가'), general(3, '나무', 2)] as never);
     vi.mocked(api.commands.readLatestMessage).mockResolvedValue({ status: 'AVAILABLE' } as never);
-    vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'applied', result: { result: { recipientId: 2, recipientName: '가' } } } as never; });
+    vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'applied', result: { result: { msgType: 'private', recipientId: 2, recipientName: '가' } } } as never; });
 });
 
 test('받은 · 보낸 서신을 방향으로 가르고, 엔진 지우기 표식 행은 빼며, 받은 서신까지 읽음 표시한다', async () => {
@@ -176,5 +176,92 @@ describe('외교 서신', () => {
         expect(done).toHaveTextContent('답함');
         expect(done).toHaveTextContent('종전합시다');
         expect(within(done).queryByText('제의에 답하기는 서버 준비 중입니다')).toBeNull();
+    });
+});
+
+// 옛 메일함(app/game/mailbox) 시험이 잠그던 것 — 새 화면에서도 같게(MailboxPage.command · .delete · EditorMailDiplomacySurface).
+describe('옛 메일함 잠금 옮김', () => {
+    const pickAndWrite = async (text: string) => {
+        const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+        fireEvent.click((await within(compose).findByText('가')).closest('button')!);
+        fireEvent.change(within(compose).getByLabelText('서신 내용'), { target: { value: text } });
+        return compose;
+    };
+
+    test('개인 서신 결과의 유형 · id · 이름이 하나라도 다르면 성공이라 하지 않고 글을 남긴다', async () => {
+        for (const result of [{ msgType: 'national', recipientId: 2, recipientName: '가' }, { msgType: 'private', recipientId: 2, recipientName: '다른 이' }, {}]) {
+            vi.mocked(submitCommandAndAwaitResult).mockImplementationOnce(async (submit) => { await submit(); return { status: 'applied', result: { result } } as never; });
+            const { unmount } = render(<MailScreen me={me} />);
+            const compose = await pickAndWrite('<p>확인</p>');
+            fireEvent.click(within(compose).getByRole('button', { name: '보내기' }));
+            expect(await within(compose).findByText('보냈지만 받는 사람을 확인하지 못했습니다 — 서신함을 확인해 주세요')).toBeInTheDocument();
+            expect(within(compose).getByLabelText('서신 내용')).toHaveValue('<p>확인</p>');
+            unmount();
+        }
+    });
+
+    test('결과가 늦으면(pending) 성공이라 하지 않고 글을 남긴다', async () => {
+        vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'pending', reason: '대기' } as never; });
+        render(<MailScreen me={me} />);
+        const compose = await pickAndWrite('<p>늦음</p>');
+        fireEvent.click(within(compose).getByRole('button', { name: '보내기' }));
+        expect(await within(compose).findByText('처리가 늦어지고 있습니다 — 잠시 뒤 서신함을 확인해 주세요')).toBeInTheDocument();
+        expect(within(compose).getByLabelText('서신 내용')).toHaveValue('<p>늦음</p>');
+    });
+
+    test('개인 받는 사람 id를 세력 · 전체 서신함 주소로 다시 쓰지 않는다', async () => {
+        vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'applied', result: { result: {} } } as never; });
+        render(<MailScreen me={me} />);
+        await pickAndWrite('<p>모두에게</p>');
+        for (const [tab, mailbox] of [['전체', 9999], ['세력', 9003]] as const) {
+            fireEvent.click(screen.getByRole('tab', { name: tab }));
+            const compose = await screen.findByRole('region', { name: '서신 쓰기' });
+            fireEvent.change(within(compose).getByLabelText('서신 내용'), { target: { value: `<p>${tab}</p>` } });
+            fireEvent.click(within(compose).getByRole('button', { name: '보내기' }));
+            await waitFor(() => expect(api.commands.sendMessage).toHaveBeenLastCalledWith({ mailbox, text: `<p>${tab}</p>` }, 1));
+        }
+        expect(api.commands.sendMessage).not.toHaveBeenCalledWith(expect.objectContaining({ mailbox: 2 }), 1);
+    });
+
+    test('보이는 글자 500자를 넘으면 보내지 않는다(서식 태그는 세지 않는다)', async () => {
+        render(<MailScreen me={me} />);
+        const compose = await pickAndWrite(`<p><b>${'가'.repeat(500)}</b></p>`);
+        expect(within(compose).getByRole('button', { name: '보내기' })).not.toHaveAttribute('aria-disabled');
+        fireEvent.change(within(compose).getByLabelText('서신 내용'), { target: { value: `<p>${'가'.repeat(501)}</p>` } });
+        const send = within(compose).getByRole('button', { name: '보내기' });
+        expect(send).toHaveAttribute('aria-disabled', 'true');
+        fireEvent.click(send);
+        expect(api.commands.sendMessage).not.toHaveBeenCalled();
+        expect(within(compose).getAllByText('500자까지 쓸 수 있습니다').length).toBeGreaterThan(0);
+    });
+
+    test('지우기를 서버가 거절하면 그 사유를 그대로 보이고 다시 읽지 않는다 · 늦으면 받았다고만 하고 다시 읽는다', async () => {
+        vi.mocked(submitCommandAndAwaitResult).mockImplementationOnce(async (submit) => { await submit(); return { status: 'rejected', reason: '5분이 지나 지울 수 없습니다.' } as never; });
+        render(<MailScreen me={me} />);
+        const list = await screen.findByRole('list', { name: '개인 서신' });
+        fireEvent.click(within(list).getAllByRole('button')[0]);
+        const card = await screen.findByRole('article', { name: '보낸 서신 — 가' });
+        const reads = vi.mocked(api.mailboxRecent).mock.calls.length;
+        fireEvent.click(within(card).getByRole('button', { name: '지우기' }));
+        fireEvent.click((await screen.findAllByRole('button', { name: '지우기' })).at(-1)!);
+        expect(await screen.findByText('5분이 지나 지울 수 없습니다.')).toBeInTheDocument();
+        expect(vi.mocked(api.mailboxRecent).mock.calls.length).toBe(reads);
+
+        vi.mocked(submitCommandAndAwaitResult).mockImplementationOnce(async (submit) => { await submit(); return { status: 'pending', reason: '대기' } as never; });
+        fireEvent.click(within(await screen.findByRole('article', { name: '보낸 서신 — 가' })).getByRole('button', { name: '지우기' }));
+        fireEvent.click((await screen.findAllByRole('button', { name: '지우기' })).at(-1)!);
+        expect(await screen.findByText('지우기를 받았습니다 — 곧 목록에서 사라집니다')).toBeInTheDocument();
+        await waitFor(() => expect(vi.mocked(api.mailboxRecent).mock.calls.length).toBeGreaterThan(reads));
+    });
+
+    test('저장된 서식은 살리고 위험한 표식은 지운다', async () => {
+        vi.mocked(api.mailboxRecent).mockResolvedValue({ ...envelope, private: [
+            { id: 90, msgType: 'private', src: party(2, '가'), dest: party(1, '나'), text: '<p><strong>서식 서신</strong><img src=x onerror=alert(1)></p>', option: null, time: now },
+        ] } as never);
+        render(<MailScreen me={me} variant="drawer" />);
+        const card = await screen.findByRole('article', { name: '받은 서신 — 가' });
+        // SafeHtml 은 마운트 뒤 effect 에서 정리한다(첫 그림은 글자 그대로 이스케이프) — 옛 시험처럼 기다린다.
+        await waitFor(() => expect(card.querySelector('strong')).toHaveTextContent('서식 서신'));
+        expect(card.querySelector('img')).toBeNull();
     });
 });

@@ -112,8 +112,11 @@ export async function sendMail(me: MailMe, scope: MailScope, recipient: MailReci
     if (out.status === 'rejected') return { kind: 'error', text: out.reason ?? '서버가 이 서신을 받지 않았습니다', ...(out.code ? { code: out.code } : {}) };
     if (out.status === 'pending') return { kind: 'info', text: '처리가 늦어지고 있습니다 — 잠시 뒤 서신함을 확인해 주세요' };
     if (out.status === 'applied' && recipient?.kind === 'general') {
-        const r = out.result.result as { recipientId?: unknown; recipientName?: unknown };
-        if (r.recipientId !== recipient.generalId) return { kind: 'info', text: '보냈지만 받는 사람을 확인하지 못했습니다 — 서신함을 확인해 주세요' };
+        // 엔진 결과의 유형 · 받는 장수 id · 이름이 고른 사람과 모두 같아야 성공이다(지금 메일함과 같은 확인).
+        const r = out.result.result as { msgType?: unknown; recipientId?: unknown; recipientName?: unknown };
+        if (r.msgType !== 'private' || r.recipientId !== recipient.generalId || r.recipientName !== recipient.name) {
+            return { kind: 'info', text: '보냈지만 받는 사람을 확인하지 못했습니다 — 서신함을 확인해 주세요' };
+        }
         return { kind: 'ok', text: `${recipient.name}에게 보냈습니다` };
     }
     if (out.status === 'applied' && recipient?.kind === 'nation') {
