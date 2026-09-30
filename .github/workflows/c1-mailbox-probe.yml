@@ -1,0 +1,48 @@
+name: C1 서신 권한 회귀 검증
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - app/game-api/src/main/kotlin/opensamguk/gameapi/controller/MailboxController.kt
+      - app/game-api/src/main/kotlin/opensamguk/gameapi/security/GameApiSecurityConfig.kt
+      - app/game-api/src/test/kotlin/opensamguk/gameapi/controller/MailboxControllerTest.kt
+      - app/game-api/src/test/kotlin/opensamguk/gameapi/security/MailboxSecurityChainTest.kt
+      - app/game-api/src/test/kotlin/opensamguk/gameapi/security/CommandMutationSecurityChainTest.kt
+      - tools/ci/mailbox_contract_probe.py
+      - .github/workflows/c1-mailbox-probe.yml
+
+permissions:
+  contents: read
+
+# 보안 리뷰 중인 PR 한 건의 검증. 일반 CI와 운영 워크플로는 수정하지 않는다.
+jobs:
+  mailbox-probe:
+    if: github.event.pull_request.number == 1066
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: true
+      - name: 전체 트리에서 서신 권한 적색 및 바이트 복원 검증
+        run: |
+          python3 tools/ci/mailbox_contract_probe.py \
+            --root "$GITHUB_WORKSPACE" \
+            --evidence "$RUNNER_TEMP/c1-mailbox-evidence" --execute
+      - name: 실제 테스트 XML 및 소스 지문 보존
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: c1-mailbox-probe-${{ github.event.pull_request.head.sha }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: ${{ runner.temp }}/c1-mailbox-evidence/
