@@ -12,7 +12,7 @@ import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.TurnWorldState
-import opensamguk.infra.persistence.BettingInsertRow
+import opensamguk.logic.imperial.ImperialWorldCodec
 import opensamguk.infra.persistence.BoardCommentInsertRow
 import opensamguk.infra.persistence.BoardPostInsertRow
 import opensamguk.infra.persistence.BoardReadInsertRow
@@ -254,7 +254,9 @@ object DatabaseHooks {
                 // NOT serial). Prevents cross-tick id reuse after restart.
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
-            ),
+            ).apply {
+                ImperialWorldCodec.read(state.meta)?.let { put("imperial_world", ImperialWorldCodec.write(it)) }
+            },
             archiveServerId = state.serverId,
             updatedGenerals = updatedGenerals,
             updatedCities = updatedCities,
@@ -689,6 +691,7 @@ object DatabaseHooks {
                 "max_nation_id" to ((state.meta["maxNationId"] as? Number)?.toInt() ?: 0),
                 "max_general_id" to ((state.meta["maxGeneralId"] as? Number)?.toInt() ?: 0),
             ).apply {
+                ImperialWorldCodec.read(state.meta)?.let { put("imperial_world", ImperialWorldCodec.write(it)) }
                 // Phase 4X-A 고수위(spec v3 P1): 값이 있을 때만 싣는다 — 행 0 세계의 world_state.meta 바이트 동일.
                 (state.meta["maxRetainerId"] as? Number)?.let { put("max_retainer_id", it.toInt()) }
                 (state.meta["maxBugokId"] as? Number)?.let { put("max_bugok_id", it.toInt()) }
@@ -774,17 +777,15 @@ object DatabaseHooks {
             diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>().apply {
                 recorder.diplomacyLetterUpdates().forEach { (letterNo, columns) -> put(letterNo, LinkedHashMap(columns)) }
             },
-            bettingInserts = recorder.bettingInserts().map { BettingInsertRow(it.columns) },
             // OPENSAM-150 (R1) — v2 도시 원장 채널. v1 경로에서는 항상 빈 리스트라 flush step이 미진입한다.
             cityLedgerV2Upserts = recorder.cityLedgerV2Upserts().map { CityLedgerV2UpsertRow(it.columns) },
             waterControlWrites = recorder.waterControlWritesFor(world.worldId),
             provinceControlWrites = recorder.provinceControlWritesFor(world.worldId),
             generalPositionWrites = recorder.generalPositionWritesFor(world.worldId),
             // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE (recorder
-            // 채널, betting과 동일; world-state 효과 아님 — 표시-컬럼은 generalUpdate SET 절에 없다).
+            // 채널; world-state 효과 아님 — 표시-컬럼은 generalUpdate SET 절에 없다).
             profileIconUpdates = recorder.profileIconUpdates().map { ProfileIconUpdateRow(it.columns) },
-            // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT (recorder 채널, betting과
-            // 동일; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
+            // F4 Wave C2 슬라이스 C — 게시판(회의실/기밀실) 소셜-콘텐츠 INSERT (recorder 채널; world-state 효과 아님). 글-먼저-댓글 순서는 step-8d에서 보존된다.
             boardPostInserts = recorder.boardPostInserts().map { BoardPostInsertRow(it.columns) },
             boardCommentInserts = recorder.boardCommentInserts().map { BoardCommentInsertRow(it.columns) },
             boardReadInserts = recorder.boardReadInserts().map { BoardReadInsertRow(it.columns) },
@@ -880,7 +881,7 @@ object DatabaseHooks {
      * global history를 SYSTEM scope로 본다(`ActionLogger.pushGlobalHistoryLog` → `LogScope.SYSTEM`)
      * → 엔진의 `"global"`을 `SYSTEM`으로 번역한다.
      *
-     * NOTE: betting 핸들러(와 #917 에서 은퇴한 경매 핸들러)의 scope `"action"` 위조 로그는
+     * NOTE: 퇴역한 핸들러의 scope `"action"` 위조 로그는
      * 바퀴 20/23에서 전부 제거됐다(PHP 무로그 + enum 불일치 flush 크래시). else-가지의 "미지(예: action)
      * 보존"은 방어적 잔존 — 새 비-enum scope를 들이지 말 것.
      */

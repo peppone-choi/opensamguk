@@ -21,12 +21,11 @@ package opensamguk.engine.flush
  * Truncated (per-season game tables; DROP/TRUNCATEd by reset.sql or re-seeded by the scenario
  * builder): world_state, nation, city, general, troop, general_turn, nation_turn, diplomacy,
  * diplomacy_letter, rank_data, yearbook_history (연감 — world_history is dropped in reset.sql),
- * event, log_entry, ng_auction, ng_auction_bid, board_post, board_comment, vote_poll, vote,
- * vote_comment, message, ng_betting (P6 — the messaging/economy per-season tables).
+ * event, log_entry, board_post, board_comment, vote_poll, vote, vote_comment, message.
  *
  * NOTE: `game_kv` (the V7 string-namespace KV store) is deliberately in NEITHER set — it is
  * namespace-partitioned like the PHP `storage` table: its `inheritance_{id}` namespaces SURVIVE
- * (cross-season currency) while `game_env`/`betting` namespaces are per-season. PHP resets it by a
+ * (cross-season currency) while `game_env` namespaces are per-season. PHP resets it by a
  * `WHERE namespace LIKE 'general_%'`-style predicate, never a whole-table truncate, so a future
  * reset must filter game_kv by namespace rather than truncate it wholesale.
  */
@@ -62,9 +61,6 @@ object TruncateContract {
         // baseline-coverage test stays green even though V7 reconciles them to the PHP ng_* names.
         "auction",
         "auction_bid",
-        // The live V7 PHP-shaped names the economy families actually read/write.
-        "ng_auction",
-        "ng_auction_bid",
         "board_post",
         "board_comment",
         "board_post_read",
@@ -79,7 +75,6 @@ object TruncateContract {
         "vote",
         "vote_comment",
         "message",
-        "ng_betting",
     )
 
     fun isExcludedFromTruncate(table: String): Boolean = table in SURVIVE

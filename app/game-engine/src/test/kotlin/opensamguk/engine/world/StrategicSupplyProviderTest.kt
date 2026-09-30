@@ -84,7 +84,7 @@ class StrategicSupplyProviderTest {
         val newCuts = mutableMapOf<Int, Set<Int>>()
         for (code in scenarios + 990002) {
             val path = if (code == 990002) "../../tools/e2e/fixtures/yuzhou/scenario_990002.json"
-                else "../../infra/src/main/resources/scenario/scenario_$code.json"
+                else "../../data/archive/scenarios/scenario_$code.json"
             val scenario = ScenarioJson.loadScenario(Path.of(path).toFile().readText())
             val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
             val live = cities(owners)
@@ -107,7 +107,7 @@ class StrategicSupplyProviderTest {
 
     @Test fun `closing an initial road makes the no new supply cuts gate red`() {
         val code = 1100
-        val scenario = ScenarioJson.loadScenario(Path.of("../../infra/src/main/resources/scenario/scenario_$code.json").toFile().readText())
+        val scenario = ScenarioJson.loadScenario(Path.of("../../data/archive/scenarios/scenario_$code.json").toFile().readText())
         val owners = scenario.nations.flatMap { n -> n.cities.map { it.toInt() to n.id } }.toMap()
         val live = cities(owners)
         val owned = live.filter { it.nationId > 0 }.map { SupplyCity(it.cityId, it.nationId) }

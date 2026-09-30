@@ -31,24 +31,9 @@ class P6RowMappersTest {
     }
 
     @Test
-    fun `NgBettingRow round-trips with a null user_id`() {
-        val row = linkedMapOf<String, Any?>(
-            "id" to 1, "betting_id" to 3, "general_id" to 0, "user_id" to null,
-            "betting_type" to "[-1]", "amount" to 500,
-        )
-        val b = NgBettingRowMapper.fromRow(row)
-        assertNull(b.userId)
-        assertEquals("[-1]", b.bettingType)
-        assertEquals(500, b.amount)
-        val cols = NgBettingRowMapper.toColumns(b)
-        assertNull(cols["user_id"])
-        assertTrue("id" !in cols)
-    }
-
-    @Test
     fun `GameKvRow carries a null value (delete-on-null) and a present value`() {
         val present = GameKvRowMapper.fromRow(
-            linkedMapOf("table" to "game_env", "namespace" to "global", "key" to "last_betting_id", "value" to "5"),
+            linkedMapOf("table" to "game_env", "namespace" to "global", "key" to "lastNpcTroopLeaderID", "value" to "5"),
         )
         assertEquals("game_env", present.table)
         assertEquals("5", present.valueJson)

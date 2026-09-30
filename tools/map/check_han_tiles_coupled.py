@@ -97,7 +97,7 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("han-ju-index", ("data/map/han-ju-index-v1.json",),
             _t("tools/map/build_han_ju_index.py", "--check"),
             _t("tools/map/build_han_ju_index.py")),
-    Coupled("scenario-materialization", ("infra/src/main/resources/scenario/",),
+    Coupled("scenario-materialization", ("data/archive/scenarios/", "infra/src/main/resources/scenario/"),
             _t("tools/scenario/apply_han_world.py", "--map", "han-world-v3", "--check"),
             _t("tools/scenario/apply_han_world.py", "--map", "han-world-v3")),
     Coupled("route-node-candidates", ("data/curated/han/route-node-selection-candidates-v1.json",),

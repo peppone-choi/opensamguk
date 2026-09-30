@@ -2,11 +2,9 @@ package opensamguk.engine.world
 
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.infra.read.ArchiveHistoryReader
-import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.GameKvRepository
-import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventActionContext
@@ -55,13 +53,11 @@ object WorldEventContextFactory {
         archiveHistoryReader: ArchiveHistoryReader? = null,
         statisticSnapshotReader: StatisticSnapshotReader? = null,
         gameKvRepository: GameKvRepository? = null,
-        bettingRepository: BettingRepository? = null,
-        inheritanceRepository: InheritanceRepository? = null,
         lockGame: () -> Boolean = { false },
         unlockGame: () -> Unit = {},
         spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
         // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼져 있으면 null(= v1 프로덕션 기본값).
-        v2CityLedger: V2CityLedgerStore? = null,
+        v2CityLedger: CityLedgerStore? = null,
     ): (MutableMap<String, Any?>) -> EventActionContext {
         val state = world.getState()
         val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
@@ -89,8 +85,6 @@ object WorldEventContextFactory {
                 archiveHistoryReader = archiveHistoryReader,
                 statisticSnapshotReader = statisticSnapshotReader,
                 gameKvRepository = gameKvRepository,
-                bettingRepository = bettingRepository,
-                inheritanceRepository = inheritanceRepository,
                 lockGame = lockGame,
                 unlockGame = unlockGame,
                 spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,

@@ -40,6 +40,6 @@ data class CorpsMarchState(
                 MarchCheckpoint.read(value["checkpoint"], topology, metrics))
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA corps march metadata")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid corps march metadata")
     }
 }

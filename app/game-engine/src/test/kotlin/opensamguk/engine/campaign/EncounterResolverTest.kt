@@ -89,6 +89,116 @@ class EncounterResolverTest {
         assertFalse(RenownEvents.recordRenownEvent(once.meta, RenownEventSource.REWARD, "0200-01").recorded)
     }
 
+    @Test fun `outcome observation carries sealed pins and observer failure leaves battle unchanged`() {
+        var observed: BattleOutcomeObservation? = null
+        var observationCount = 0
+        val deliveredOutcomes = CampaignWorldFixture.RecordingOutcomes()
+        val (normalWorld, normalRecorder) = sealed(1000, 100)
+        fixture.nextPhase(normalWorld)
+        AssignmentMarchTurn(normalWorld, normalRecorder, fixture.topology, fixture.metrics, fixture.cells,
+            outcomes = deliveredOutcomes,
+            observations = BattleOutcomeObserver {
+                observed = it
+                observationCount++
+            })
+            .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        assertEquals(1, observationCount)
+        val observation = assertNotNull(observed)
+        val normalRecord = normalWorld.getGeneralById(1)!!.meta[EncounterResolver.BATTLE_RECORD_KEY] as Map<*, *>
+        assertEquals(normalWorld.worldId.value, observation.worldId)
+        assertEquals(normalWorld.getState().currentYear, observation.resolvedYear)
+        assertEquals(normalWorld.getState().currentMonth, observation.resolvedMonth)
+        assertEquals(normalWorld.getState().currentPhase, observation.resolvedPhase)
+        assertEquals(normalWorld.getState().worldMapVariant?.name, observation.worldMapVariant)
+        assertEquals(fixture.cells.topologyRevision, observation.topologyRevision)
+        assertEquals(fixture.cells.topologyHash, observation.topologyHash)
+        assertEquals(fixture.cells.tilesContentHash, observation.tilesContentHash)
+        assertEquals(normalRecord["encounterId"], observation.encounterId)
+        assertEquals(normalRecord["outcome"], observation.outcome)
+        assertEquals(normalRecord["barrier"], observation.barrier)
+        assertEquals(normalRecord["rounds"], observation.rounds)
+        assertEquals(normalRecord["replayHash"], observation.replayHash)
+        assertEquals(normalRecord["ruleVersion"], observation.resolutionRuleVersion)
+        assertEquals(listOf(1), observation.winners)
+        assertEquals(listOf(1, 100), observation.statuses.map { it.generalId })
+        assertTrue(observation.initialSeparationSteps!! > 0)
+        assertTrue(observation.callbackInvoked)
+        assertEquals(listOf(listOf(1) to listOf(100)), deliveredOutcomes.encounters)
+
+        val (failureWorld, failureRecorder) = sealed(1000, 100)
+        fixture.nextPhase(failureWorld)
+        AssignmentMarchTurn(failureWorld, failureRecorder, fixture.topology, fixture.metrics, fixture.cells,
+            observations = BattleOutcomeObserver { throw AssertionError("QA sink unavailable") })
+            .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        assertEquals(normalRecord, failureWorld.getGeneralById(1)!!.meta[EncounterResolver.BATTLE_RECORD_KEY])
+        assertEquals(normalWorld.positionOf(1), failureWorld.positionOf(1))
+        assertEquals(normalWorld.getBugokById(7), failureWorld.getBugokById(7))
+    }
+
+    @Test fun `fatal observer errors escape instead of hiding a broken JVM`() {
+        val (outOfMemoryWorld, outOfMemoryRecorder) = sealed(1000, 100)
+        fixture.nextPhase(outOfMemoryWorld)
+        assertFailsWith<OutOfMemoryError> {
+            AssignmentMarchTurn(outOfMemoryWorld, outOfMemoryRecorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = BattleOutcomeObserver { throw OutOfMemoryError("synthetic QA failure") })
+                .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+        val (threadDeathWorld, threadDeathRecorder) = sealed(1000, 100)
+        fixture.nextPhase(threadDeathWorld)
+        assertFailsWith<ThreadDeath> {
+            AssignmentMarchTurn(threadDeathWorld, threadDeathRecorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = BattleOutcomeObserver { throw ThreadDeath() })
+                .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+        val (linkageWorld, linkageRecorder) = sealed(1000, 100)
+        fixture.nextPhase(linkageWorld)
+        assertFailsWith<LinkageError> {
+            AssignmentMarchTurn(linkageWorld, linkageRecorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = BattleOutcomeObserver { throw LinkageError("synthetic QA failure") })
+                .onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+    }
+
+    @Test fun `post flush evidence is immutable retryable and quarantines uncommitted observations`() {
+        fun resolveInto(observer: BattleOutcomeObserver) {
+            val (world, recorder) = sealed(1000, 100)
+            fixture.nextPhase(world)
+            AssignmentMarchTurn(world, recorder, fixture.topology, fixture.metrics, fixture.cells,
+                observations = observer).onTurn(1, CampaignWorldFixture.NO_INPUT)
+        }
+
+        val published = mutableListOf<CommittedBattleOutcomeBatch>()
+        val normal = BattleOutcomePostFlush { published.add(it) }
+        resolveInto(normal)
+        assertTrue(published.isEmpty(), "resolution alone must not publish")
+        normal.afterSuccessfulFlush(1, 7)
+        assertEquals(1, published.size)
+        assertEquals(7, published.single().generation)
+        assertEquals(1, published.single().observations.size)
+        assertFailsWith<UnsupportedOperationException> {
+            (published.single().observations as MutableList).clear()
+        }
+        normal.afterSuccessfulFlush(1, 8)
+        assertEquals(1, published.size, "an empty later flush must not repeat the result")
+
+        val quarantined = BattleOutcomePostFlush { published.add(it) }
+        resolveInto(quarantined)
+        quarantined.quarantineUncommitted()
+        quarantined.afterSuccessfulFlush(1, 9)
+        assertEquals(1, published.size, "a stale uncommitted result must stay private")
+
+        var failFirst = true
+        val retried = BattleOutcomePostFlush { batch ->
+            if (failFirst) { failFirst = false; throw IllegalStateException("QA export unavailable") }
+            published.add(batch)
+        }
+        resolveInto(retried)
+        assertFailsWith<IllegalStateException> { retried.afterSuccessfulFlush(1, 10) }
+        retried.afterSuccessfulFlush(1, 11)
+        assertEquals(2, published.size)
+        assertEquals(10, published.last().generation, "retry keeps the original committed batch")
+    }
+
     @Test fun `an unprepared encounter retries two phases then disbands without battle`() {
         val (world, recorder) = sealed(1000, 100)
         for (id in listOf(1, 100)) {

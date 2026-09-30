@@ -67,7 +67,7 @@ class V32WorldScopeCompletionMigrationTest {
         assertEquals(
             (setOf("world_state", "game_kv") + worldOwnedTables + globalAllowlist).toSortedSet(),
             physicalTables.toSortedSet(),
-            "every current physical table must be classified exactly once",
+            "every V68 physical table must be classified exactly once",
         )
 
         worldOwnedTables.forEach { table ->
@@ -383,6 +383,9 @@ class V32WorldScopeCompletionMigrationTest {
             .dataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             .locations("classpath:db/migration")
             .configuration(sessionLockConfig)
+            // This suite covers V32 world scoping through the V68 inventory. V69 retires
+            // betting/auction tables; its current-schema behavior has a separate migration IT.
+            .target(MigrationVersion.fromVersion("68"))
             .load()
             .migrate()
     }

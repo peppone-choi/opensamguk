@@ -94,16 +94,16 @@ class InputCatalog internal constructor(
 
         fun load(): InputCatalog = parse(
             checkNotNull(InputCatalog::class.java.classLoader.getResource(RESOURCE)) {
-                "hwiha input catalog resource is missing: $RESOURCE"
+                "input catalog resource is missing: $RESOURCE"
             }.readText(),
         ).also(AiPolicyRegistry::validate)
 
         fun parse(payload: String): InputCatalog {
             CatalogDuplicateKeys(payload).check()
             val root = Json.parseToJsonElement(payload).jsonObject
-            require(root.requiredInt("schemaVersion") == 3) { "unsupported hwiha input catalog schemaVersion" }
+            require(root.requiredInt("schemaVersion") == 3) { "unsupported input catalog schemaVersion" }
             require(root.keys == setOf("schemaVersion", "catalogId", "status", "note", "inputs")) {
-                "unexpected or missing hwiha catalog field"
+                "unexpected or missing input catalog field"
             }
             root.requiredText("catalogId")
             root.requiredText("status")
@@ -167,7 +167,7 @@ class InputCatalog internal constructor(
                     displayName = if (kind == InputKind.GENERAL_ACTION) row.requiredText("displayName") else null,
                 )
             }
-            require(entries.map { it.inputId }.toSet().size == entries.size) { "duplicate inputId in hwiha input catalog" }
+            require(entries.map { it.inputId }.toSet().size == entries.size) { "duplicate inputId in input catalog" }
             return InputCatalog(entries)
         }
 

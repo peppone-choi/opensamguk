@@ -6,8 +6,8 @@ import kotlin.test.*
 /** These counts identify archived save fixtures, not a limit on current or future maps. */
 class WorldMapVariantTest {
     @Test fun `historical roster has no path to new cities and retains its logical name`() {
-        val old = CityConstRegistry.hanWorld(WorldMapVariant.V3_832)
-        val current = CityConstRegistry.hanWorld(WorldMapVariant.V3_835)
+        val old = CityConstRegistry.forVariant(WorldMapVariant.V3_832)
+        val current = CityConstRegistry.forVariant(WorldMapVariant.V3_835)
         assertEquals("han-world-v3", old.mapName)
         assertEquals((1..832).toSet(), old.all().keys)
         assertEquals((1..835).toSet(), current.all().keys)
@@ -31,7 +31,7 @@ class WorldMapVariantTest {
             for (mode in opensamguk.logic.constraints.ConstraintMode.entries) {
                 val constraint = opensamguk.logic.constraints.ConstraintContext(actorId = 1,
                     env = mapOf("mapName" to env.mapName), mode = mode, worldMapVariant = variant)
-                assertSame(CityConstRegistry.hanWorld(variant), env.cityConst)
+                assertSame(CityConstRegistry.forVariant(variant), env.cityConst)
                 assertSame(env.cityConst, constraint.selectedCityConst())
             }
         }

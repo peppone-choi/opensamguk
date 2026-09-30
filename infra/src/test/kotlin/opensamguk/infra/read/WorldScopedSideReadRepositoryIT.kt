@@ -30,7 +30,6 @@ import kotlin.test.assertTrue
 @Import(SideReadRepositoryConfiguration::class, WorldOneScopeConfiguration::class)
 class WorldScopedSideReadRepositoryIT {
     @Autowired lateinit var jdbc: JdbcTemplate
-    @Autowired lateinit var betting: BettingRepository
     @Autowired lateinit var boardPosts: BoardPostRepository
     @Autowired lateinit var gameKv: GameKvRepository
     @Autowired lateinit var inheritance: InheritanceRepository
@@ -54,12 +53,10 @@ class WorldScopedSideReadRepositoryIT {
             updateSelectPoolConfig(worldId)
         }
 
-        insertBet(worldId = 1, id = 1, amount = 120)
-        insertBet(worldId = 2, id = 1, amount = 900)
         insertBoardPost(worldId = 1, id = 5, title = "world-one")
         insertBoardPost(worldId = 2, id = 5, title = "world-two")
-        insertKv(worldId = 1, id = 10, table = "betting", value = "\"world-one\"")
-        insertKv(worldId = 2, id = 11, table = "betting", value = "\"world-two\"")
+        insertKv(worldId = 1, id = 10, table = "game_env", value = "\"world-one\"")
+        insertKv(worldId = 2, id = 11, table = "game_env", value = "\"world-two\"")
         insertKv(worldId = null, id = 20, table = "inheritance", value = "[77]")
         insertDiplomacy(worldId = 1, id = 3, stateCode = 1)
         insertDiplomacy(worldId = 2, id = 3, stateCode = 5)
@@ -70,11 +67,8 @@ class WorldScopedSideReadRepositoryIT {
 
     @Test
     fun `identical local ids stay inside the process world across side reads`() {
-        assertEquals(120L, betting.aggregateTotalAmountByBetting().single().sumAmount)
-        assertEquals(120L, betting.aggregateAmountByType(3).single().sumAmount)
-        assertEquals(120L, betting.sumAmountByBettingIdAndUserId(3, 100))
         assertEquals("world-one", boardPosts.findByIdAndNationId(5, 10)?.title)
-        assertEquals(listOf("\"world-one\""), gameKv.findByTable("betting").map { it.value })
+        assertEquals(listOf("\"world-one\""), gameKv.findByTable("game_env").map { it.value })
         assertEquals("[77]", inheritance.findByInheritanceNamespace("inheritance_100").single().value)
         assertEquals(1, diplomacy.findBySrcNationIdAndDestNationId(10, 11)?.stateCode)
         assertEquals(1, worldState.findProcessWorld()?.id)
@@ -130,18 +124,6 @@ class WorldScopedSideReadRepositoryIT {
             generalId,
         )
     }
-    private fun insertBet(worldId: Int, id: Int, amount: Int) {
-        jdbc.update(
-            """
-            INSERT INTO ng_betting (world_id, id, betting_id, general_id, user_id, betting_type, amount)
-            VALUES (?, ?, 3, 10, 100, '[0]', ?)
-            """.trimIndent(),
-            worldId,
-            id,
-            amount,
-        )
-    }
-
     private fun insertBoardPost(worldId: Int, id: Int, title: String) {
         jdbc.update(
             """

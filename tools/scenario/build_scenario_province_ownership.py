@@ -26,7 +26,7 @@ from tools.scenario.province_ownership_materializer import (
 OUTPUT_RELATIVE = Path("data/map/han-scenario-province-ownership-v1.json")
 CLAIMS_RELATIVE = Path("data/curated/han/scenario-province-claims-v1.json")
 MAP_RELATIVE = Path("data/map/han-tiles.json")
-SCENARIO_RELATIVE = Path("infra/src/main/resources/scenario")
+SCENARIO_RELATIVE = Path("data/archive/scenarios")
 
 
 def canonical_bytes(document: Mapping[str, Any]) -> bytes:

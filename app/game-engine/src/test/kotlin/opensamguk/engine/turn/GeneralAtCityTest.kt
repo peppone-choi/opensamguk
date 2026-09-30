@@ -62,7 +62,7 @@ class GeneralAtCityTest {
 }
 
 /** spec §2.2·§3-2·§3-3: 이동 진입점 하나, 생성 = 위치 행 생성. */
-class HwihaPositionWriteTest {
+class PositionWriteTest {
     private val hash = "c".repeat(64)
     private val p1 = StrategicNodeRef.LandProvince("p1")
     private val p2 = StrategicNodeRef.LandProvince("p2")
