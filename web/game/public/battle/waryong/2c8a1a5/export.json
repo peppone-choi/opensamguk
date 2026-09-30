@@ -7,8 +7,8 @@
       "source": "waryong/battle/kit/boards.bin.gz"
     },
     "kit.json": {
-      "bytes": 42870,
-      "sha256": "d5743cbf88893d8cc2747b0d8fc594a55a69abddb2d012a4de5fd42b44cec097",
+      "bytes": 61713,
+      "sha256": "64dc86fa3e9eab7c81e1b1ca8cd5b5f9bc4c389e9a396070fe226f455cf7e5eb",
       "source": "waryong/battle/kit/kit.json"
     },
     "pieces.bin.gz": {
@@ -32,11 +32,11 @@
       "source": "waryong/battle/kit/units.bin.gz"
     }
   },
-  "kitId": "3ef1ecd",
+  "kitId": "2c8a1a5",
   "schemaVersion": 1,
   "source": {
     "directory": "waryong/battle/kit/",
-    "mergeCommit": "3ef1ecd82b360d51e652aef558746c206f4d9725",
+    "mergeCommit": "2c8a1a526c65ad4b4a7ee1fee47392c302f0b157",
     "repository": "peppone-choi/opensamguk-images"
   }
 }

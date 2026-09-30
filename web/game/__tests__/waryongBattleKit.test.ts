@@ -5,9 +5,9 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
-import { composeBoard, parseBattleKit, type KitJson } from '../../shared/src/battle/battleBoard';
+import { boardClassification, composeBoard, parseBattleKit, type KitJson } from '../../shared/src/battle/battleBoard';
 
-const KIT_ID = '3ef1ecd';
+const KIT_ID = '2c8a1a5';
 const GAME = resolve(__dirname, '../public/battle/waryong', KIT_ID);
 const GATEWAY = resolve(__dirname, '../../gateway/public/battle/waryong', KIT_ID);
 const sha256 = (data: Uint8Array) => createHash('sha256').update(data).digest('hex');
@@ -42,4 +42,20 @@ describe('와룡전 전장 조각 키트', () => {
         const mismatched = kit.boardInfo.filter((info) => sha256(composeBoard(kit, info.id).indices) !== info.composedSha256).map((info) => info.id);
         expect(mismatched).toEqual([]);
     }, 60_000);
+
+    it('판 분류가 서버 카탈로그(terrainRows)와 214판 모두 같고 terrainSha256과 맞는다', () => {
+        const json = JSON.parse(readFileSync(join(GAME, 'kit.json'), 'utf8')) as KitJson;
+        const kit = parseBattleKit(json, {
+            pieces: arrayBuffer(gunzipSync(readFileSync(join(GAME, 'pieces.bin.gz')))),
+            records: arrayBuffer(readFileSync(join(GAME, 'records.bin'))),
+            boards: arrayBuffer(gunzipSync(readFileSync(join(GAME, 'boards.bin.gz')))),
+        });
+        const catalog = JSON.parse(readFileSync(resolve(__dirname, '../../../data/battle/waryong/catalog-v1.json'), 'utf8')) as {
+            boards: { id: number; terrainRows: string[] }[];
+        };
+        const different = catalog.boards.filter((board) => boardClassification(kit, board.id) !== board.terrainRows.join('')).map((b) => b.id);
+        expect(different).toEqual([]);
+        const hashMismatch = kit.boardInfo.filter((info) => sha256(Buffer.from(boardClassification(kit, info.id), 'ascii')) !== info.terrainSha256).map((i) => i.id);
+        expect(hashMismatch).toEqual([]);
+    });
 });
