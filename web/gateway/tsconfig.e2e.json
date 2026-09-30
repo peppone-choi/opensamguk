@@ -1,0 +1,11 @@
+{
+  "//": "e2e 전용 타입 검사 — 앱 tsconfig 는 e2e 를 뺀다(Docker 빌드엔 web/game 이 없어 parity 상대 경로가 깨진다). CI smoke 단계가 돌린다.",
+  "extends": "./tsconfig.json",
+  "include": [
+    "e2e/**/*.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}

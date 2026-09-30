@@ -79,6 +79,12 @@ class ChangedPathsTest(unittest.TestCase):
                 self.assertTrue(result["contracts"])
                 self.assertFalse(result["map"])
 
+    def test_web_quality_tools_run_the_web_job(self):
+        # tools/web 의 적색 프로브는 web (game) 행 안에서 돈다 — 도구만 바꾼 PR 도 그 잡을 깨워야 한다.
+        for path in ("tools/web/measure-pages.mjs", "tools/web/board-lint.test.mjs"):
+            with self.subTest(path=path):
+                self.assertTrue(classify([path], self.patterns)["web"])
+
     def test_unknown_top_level_path_runs_everything_heavy(self):
         result = classify(["docker/game-api.Dockerfile"], self.patterns)
         self.assertTrue(all(result[key] for key in ("jvm", "contracts", "map", "map_slow", "web")))

@@ -13,6 +13,7 @@ import {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
   loadProvinceIdentityMap,
+  loadSharedProvinceIdentityMap,
   formatProvinceTooltip,
   type IsoCityOverlay,
   type IsoSourceSize,
@@ -953,6 +954,80 @@ describe('province identity map', () => {
 describe('province identity image loader', () => {
   afterEach(() => {
     vi.unstubAllGlobals();
+  });
+
+  /** 운영 省 PNG 처럼 머리에 크기를 먼저 밝히는 응답. 본문을 끊었는지 센다. */
+  function declaredResponse(contentLength: number) {
+    const cancel = vi.fn().mockResolvedValue(undefined);
+    const arrayBuffer = vi.fn();
+    return {
+      cancel,
+      arrayBuffer,
+      response: {
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'Content-Type': 'image/png', 'Content-Length': String(contentLength) }),
+        body: { cancel },
+        arrayBuffer,
+      },
+    };
+  }
+
+  it('cancels the body of an oversized PNG as soon as the headers show its size', async () => {
+    // 2026-09-30 운영: 3072×2676 무압축 PNG 24,666,640B — 상한(16 MiB)을 넘어 버려지는데 본문은 끝까지 받았다.
+    const { response, cancel, arrayBuffer } = declaredResponse(24_666_640);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
+    vi.stubGlobal('createImageBitmap', vi.fn());
+
+    await expect(loadProvinceIdentityMap('/province.png')).rejects.toThrow(/Content-Length.*limit/);
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(arrayBuffer).not.toHaveBeenCalled();
+  });
+
+  it('shares one request between every map on the page and keeps a contract failure', async () => {
+    const { response } = declaredResponse(24_666_640);
+    const fetchMock = vi.fn().mockResolvedValue(response);
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', vi.fn());
+
+    // 지도 훅과 지도판이 같은 주소를 따로 부른다 — 요청은 하나다.
+    const hook = loadSharedProvinceIdentityMap('/api/game/api/map/provinces?server=pep', 'a'.repeat(64));
+    const board = loadSharedProvinceIdentityMap('/api/game/api/map/provinces?server=pep');
+    await expect(hook).rejects.toThrow(/limit/);
+    await expect(board).rejects.toThrow(/limit/);
+    // 다시 붙어도(화면 이동) 같은 계약 위반을 또 받지 않는다.
+    await expect(loadSharedProvinceIdentityMap('/api/game/api/map/provinces?server=pep')).rejects.toThrow(/limit/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks again after a request that did not arrive', async () => {
+    installBitmap(1, 1);
+    installDecodeCanvas({
+      drawImage: vi.fn(),
+      getImageData: vi.fn().mockReturnValue({ data: new Uint8ClampedArray([0, 16, 1, 255]) }),
+    } as unknown as CanvasRenderingContext2D);
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response(REAL_RGB8_PNG, { status: 200, headers: { 'Content-Type': 'image/png' } }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await expect(loadSharedProvinceIdentityMap('/province.png')).rejects.toThrow('province map fetch failed: 503');
+    const map = await loadSharedProvinceIdentityMap('/province.png');
+    expect(Array.from(map.provinces)).toEqual([0]);
+    await loadSharedProvinceIdentityMap('/province.png');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks again when the terrain fingerprint changes', async () => {
+    const fetchMock = vi.fn().mockImplementation(async () => declaredResponse(24_666_640).response);
+    vi.stubGlobal('fetch', fetchMock);
+    vi.stubGlobal('createImageBitmap', vi.fn());
+
+    await expect(loadSharedProvinceIdentityMap('/province.png', 'a'.repeat(64))).rejects.toThrow(/limit/);
+    await expect(loadSharedProvinceIdentityMap('/province.png', 'a'.repeat(64))).rejects.toThrow(/limit/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    await expect(loadSharedProvinceIdentityMap('/province.png', 'b'.repeat(64))).rejects.toThrow(/limit/);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 
   it('fetches, decodes literal pixels, and closes the acquired bitmap', async () => {

@@ -148,6 +148,13 @@ export function drawSite(sheet: SpriteSheet, site: SiteKind, colourHex: string |
   return out;
 }
 
+/** One 16 × 16 cell of a marker sheet, fill role recoloured (see paintCell). */
+export function drawSheetCell(sheet: SpriteSheet, index: number, colourHex: string): OffscreenCanvas {
+  const out = canvas(16, 16);
+  out.getContext('2d')!.putImageData(paintCell(sheet, index, parseHex(colourHex)), 0, 0);
+  return out;
+}
+
 export function sheetFrom(bitmapRgba: ImageData, roles: Uint8Array): SpriteSheet {
   return { width: bitmapRgba.width, height: bitmapRgba.height, rgba: bitmapRgba.data, roles };
 }
