@@ -38,3 +38,20 @@ describe('천하 정세 경로 /api/server-events/{id}', () => {
         expect(down.headers.get('cache-control')).toBe('no-store');
     });
 });
+
+describe('응답 형식은 정확히 application/json 만(C8 #1098 P3)', () => {
+    const typed = (contentType: string) => new Response(JSON.stringify({ events: [], nextCursor: null }), { status: 200, headers: { 'content-type': contentType } });
+
+    it.each(['application/jsonp', 'application/json-seq', 'application/jsonx; charset=utf-8', 'text/json', 'application/javascript'])('%s 는 502 no-store', async (contentType) => {
+        vi.mocked(fetch).mockResolvedValueOnce(typed(contentType));
+        const response = await events(new NextRequest('http://gw.test/api/server-events/pep'), ctx('pep'));
+        expect(response.status).toBe(502);
+        expect(response.headers.get('cache-control')).toBe('no-store');
+    });
+
+    it.each(['application/json', 'application/json; charset=utf-8', 'Application/JSON;charset=UTF-8'])('%s 는 받는다', async (contentType) => {
+        vi.mocked(fetch).mockResolvedValueOnce(typed(contentType));
+        const response = await events(new NextRequest('http://gw.test/api/server-events/pep'), ctx('pep'));
+        expect(response.status).toBe(200);
+    });
+});

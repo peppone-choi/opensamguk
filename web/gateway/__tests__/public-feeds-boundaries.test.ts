@@ -15,6 +15,14 @@ describe('선택 역할 FROM_NATION(보루 차지)', () => {
         expect(kept({ ...base, refs: { ROAD_FORT: 'fort-hulao', FROM_NATION: 0, TO_NATION: 3 } })).toBe(true);
         expect(kept({ ...base, refs: { ROAD_FORT: 'fort-hulao', FROM_NATION: 2 } })).toBe(false); // 필수 TO_NATION 없음
     });
+
+    it('선택 역할 FROM_NATION: 0 은 버리지 않고 그대로 낸다(C8 #1098 권장)', () => {
+        const base = { id: 2, kind: 'roadFort.captured', section: 'WORLD', occurredAt: at, facts: {} };
+        expect(publicWorldEvents({ events: [{ ...base, refs: { ROAD_FORT: 'fort-hulao', FROM_NATION: 0, TO_NATION: 3 } }] }, 5)?.events[0].refs)
+            .toEqual({ ROAD_FORT: 'fort-hulao', FROM_NATION: 0, TO_NATION: 3 });
+        expect(publicWorldEvents({ events: [{ ...base, refs: { ROAD_FORT: 'fort-hulao', TO_NATION: 3 } }] }, 5)?.events[0].refs)
+            .toEqual({ ROAD_FORT: 'fort-hulao', TO_NATION: 3 });
+    });
 });
 
 describe('한 응답에 공개 · 비공개가 섞이면 공개만 남는다', () => {

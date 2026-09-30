@@ -63,8 +63,9 @@ export async function readPublicJson(url: string, readStatuses: readonly number[
         await response.body?.cancel().catch(() => undefined);
         return { kind: 'status', status: response.status };
     }
-    const type = (response.headers.get('content-type') ?? '').toLowerCase();
-    if (!type.startsWith('application/json')) return { kind: 'fail' };
+    // 매개변수(charset 등)를 뗀 형식이 정확히 application/json 이어야 한다 — 앞글자만 보면 jsonp · json-seq 가 통과한다(C8 #1098 P3).
+    const mediaType = (response.headers.get('content-type') ?? '').split(';')[0].trim().toLowerCase();
+    if (mediaType !== 'application/json') return { kind: 'fail' };
     const text = await readLimited(response, PROPOSED_MAX_BODY_BYTES).catch(() => null);
     if (text === null) return { kind: 'fail' };
     try {
