@@ -1,8 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { Icon } from '../Icon';
-import type { IconName } from '../icons';
+import { PartIcon, type PartIconName } from './PartIcon';
 import type { HelpTopicRef, StatusKind } from './types';
 
 type Common = {
@@ -38,13 +37,13 @@ export const STATUS_TEXT = {
   maintenanceBody: '끝나면 이 화면이 저절로 바뀝니다. 걸어 둔 예약은 그대로 남습니다.',
 } as const;
 
-const ICON: Record<Exclude<StatusKind, 'loading'>, { readonly name: IconName; readonly tone: string }> = {
-  empty: { name: 'filter', tone: 'muted' },
-  error: { name: 'cmd-no', tone: 'rust' },
-  denied: { name: 'cmd-sealed', tone: 'rust' },
-  waiting: { name: 'cmd-need', tone: 'info' },
-  stale: { name: 'refresh', tone: 'bronze' },
-  'not-found': { name: 'arrow-left', tone: 'muted' },
+const ICON: Record<Exclude<StatusKind, 'loading'>, { readonly name: PartIconName; readonly tone: string }> = {
+  empty: { name: 'list', tone: 'muted' },
+  error: { name: 'alert', tone: 'rust' },
+  denied: { name: 'lock', tone: 'rust' },
+  waiting: { name: 'clock', tone: 'info' },
+  stale: { name: 'unplug', tone: 'bronze' },
+  'not-found': { name: 'back', tone: 'muted' },
   maintenance: { name: 'tools', tone: 'info' },
 };
 
@@ -118,7 +117,7 @@ export function StatusView(props: StatusViewProps) {
 
   return (
     <div className={root} role={role}>
-      <span className={`os-status__icon os-status__icon--${icon.tone}`}><Icon name={icon.name} size={20} /></span>
+      <span className={`os-status__icon os-status__icon--${icon.tone}`}><PartIcon name={icon.name} /></span>
       <span className="os-status__title">{title}</span>
       {body ? <span className="os-status__body">{body}</span> : null}
       {extra}
@@ -164,6 +163,7 @@ function ErrorCode({ code }: { readonly code: string }) {
         void navigator.clipboard?.writeText(code).then(() => setCopied(true), () => setCopied(false));
       }}
     >
+      <PartIcon name="copy" size={16} />
       <span className="os-status__mono">오류 번호 {code}</span>
       {copied ? <span className="os-status__copied">복사함</span> : null}
     </button>

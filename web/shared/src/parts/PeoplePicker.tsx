@@ -32,6 +32,11 @@ export type PeoplePickerProps = Selection & {
   readonly emptyAction?: ReactNode;
   /** 목록 이름(스크린리더). 예: 「받는 사람」. */
   readonly label?: string;
+  /**
+   * 보일 묶음 탭(쓰는 곳마다 다르다). 기본은 4개 전부. 서버가 묶음을 안 주는 곳은 ['all'] — 탭 줄을 그리지 않는다
+   * (「내 부 0」 처럼 모르는 것을 0 이라고 말하지 않는다).
+   */
+  readonly groups?: readonly PeopleGroup[];
 };
 
 /**
@@ -39,8 +44,10 @@ export type PeoplePickerProps = Selection & {
  * 빈 묶음 · 찾기 없음 · 불러오기 실패를 따로 보인다. 담는 틀(데스크톱 380 패널 · 모바일 가득 시트)은 부른 쪽이 정한다.
  */
 export function PeoplePicker(props: PeoplePickerProps) {
-  const { load, initialGroup = 'all', emptyAction, label = '사람 목록' } = props;
-  const [group, setGroup] = useState<PeopleGroup>(initialGroup);
+  const { load, initialGroup = 'all', emptyAction, label = '사람 목록', groups: shownGroups = GROUP_ORDER } = props;
+  const tabs = GROUP_ORDER.filter((g) => shownGroups.includes(g));
+  const [picked, setGroup] = useState<PeopleGroup>(initialGroup);
+  const group = tabs.includes(picked) ? picked : (tabs[0] ?? 'all');
   const [query, setQuery] = useState('');
   const people = load.state === 'ready' ? load.people : [];
 
@@ -121,8 +128,8 @@ export function PeoplePicker(props: PeoplePickerProps) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        <div className="os-seg os-seg--scroll" role="radiogroup" aria-label="묶음">
-          {GROUP_ORDER.map((g) => (
+        {tabs.length > 1 ? <div className="os-seg os-seg--scroll" role="radiogroup" aria-label="묶음">
+          {tabs.map((g) => (
             <button
               key={g}
               type="button"
@@ -134,7 +141,7 @@ export function PeoplePicker(props: PeoplePickerProps) {
               {PEOPLE_GROUP_LABEL[g]} <span className="os-seg__n">{load.state === 'ready' ? counts[g] : '—'}</span>
             </button>
           ))}
-        </div>
+        </div> : null}
       </div>
       {body}
     </div>
@@ -147,7 +154,9 @@ function PersonRow({ person: p, selected, multiple, onPick }: {
   readonly multiple: boolean;
   readonly onPick: (generalId: number) => void;
 }) {
-  const where = p.location === null ? '자리 모름(시야 밖)' : `자리 ${p.location}`;
+  const where = p.location === undefined ? null : p.location === null ? '자리 모름(시야 밖)' : `자리 ${p.location}`;
+  const affiliation = p.nation === undefined ? null : p.nation === null ? '재야' : p.nation.name;
+  const sub = [affiliation, where].filter(Boolean).join(' · ');
   const content = (
     <>
       {multiple ? <span className={['os-people__box', selected ? 'os-people__box--on' : ''].filter(Boolean).join(' ')} aria-hidden="true" /> : null}
@@ -157,10 +166,12 @@ function PersonRow({ person: p, selected, multiple, onPick }: {
           <span className="os-opt__name">{p.name}</span>
           {p.isHuman ? <span className="os-chip os-chip--info">사람</span> : null}
         </span>
-        <span className="os-opt__sub">
-          {p.nation ? <i className="os-opt__nation" style={{ background: p.nation.color }} aria-hidden="true" /> : null}
-          {p.nation ? p.nation.name : '재야'} · {where}
-        </span>
+        {sub ? (
+          <span className="os-opt__sub">
+            {p.nation ? <i className="os-opt__nation" style={{ background: p.nation.color }} aria-hidden="true" /> : null}
+            {sub}
+          </span>
+        ) : null}
       </span>
     </>
   );
