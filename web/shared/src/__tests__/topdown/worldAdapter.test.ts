@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { joinUrl } from '../../map/topdown/loaders';
 import { topdownScreensEnabled, topdownSourceFor, worldFromPreview, TOPDOWN_KIT_URL } from '../../map/topdown/worldAdapter';
 
 const nations = [{ id: 3, name: '위', color: '#4f7fbf' }];
@@ -32,8 +33,10 @@ describe('미리보기 → 세계 상태', () => {
 describe('원천 · 스위치', () => {
   const id = 'a'.repeat(64);
   it('64자리 bakeId만 받고 서버는 따로 붙인다', () => {
-    expect(topdownSourceFor(id, 'pep')).toEqual({ bakeUrl: `/api/game/api/map/topdown/${id}`, kitUrl: TOPDOWN_KIT_URL, query: 'server=pep' });
-    expect(topdownSourceFor(id)?.query).toBe('');
+    expect(topdownSourceFor(id, 'pep')).toEqual({ bakeUrl: `/api/game/api/map/topdown/${id}?server=pep`, kitUrl: TOPDOWN_KIT_URL });
+    expect(topdownSourceFor(id)?.bakeUrl).toBe(`/api/game/api/map/topdown/${id}`);
+    // bake 파일마다 서버 query가 붙는다
+    expect(joinUrl(topdownSourceFor(id, 'pep')!.bakeUrl, 'grid/L0/5_3.bin.gz')).toBe(`/api/game/api/map/topdown/${id}/grid/L0/5_3.bin.gz?server=pep`);
     expect(topdownSourceFor(null)).toBeNull();
     expect(topdownSourceFor('abc')).toBeNull();
     expect(topdownSourceFor('A'.repeat(64))).toBeNull();

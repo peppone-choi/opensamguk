@@ -38,15 +38,13 @@ const BAKE_ID = /^[0-9a-f]{64}$/;
 
 /**
  * Where to read the bake for a preview's `topdownBakeId` (via the game proxy). Null when the server offered none —
- * the screen then keeps the old map. `serverId` picks the game server the way the other map reads do.
+ * the screen then keeps the old map. `serverId` picks the game server the way the other map reads do; the query
+ * rides on `bakeUrl` and joinUrl keeps it on every bake file.
  */
-export function topdownSourceFor(bakeId: string | null | undefined, serverId?: string): (TopdownSource & { query: string }) | null {
+export function topdownSourceFor(bakeId: string | null | undefined, serverId?: string): TopdownSource | null {
   if (!bakeId || !BAKE_ID.test(bakeId)) return null;
-  return {
-    bakeUrl: `/api/game/api/map/topdown/${bakeId}`,
-    kitUrl: TOPDOWN_KIT_URL,
-    query: serverId ? `server=${encodeURIComponent(serverId)}` : '',
-  };
+  const query = serverId ? `?server=${encodeURIComponent(serverId)}` : '';
+  return { bakeUrl: `/api/game/api/map/topdown/${bakeId}${query}`, kitUrl: TOPDOWN_KIT_URL };
 }
 
 /** Product-screen switch. Separate from NEXT_PUBLIC_MAP_RENDERER (lab pages and the CI smoke build turn that one on). */
