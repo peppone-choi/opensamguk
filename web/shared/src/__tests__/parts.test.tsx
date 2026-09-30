@@ -229,6 +229,19 @@ describe('MapTargetPicker — 가능 · 불가를 같이, 지도와 목록이 �
     expect(screen.getByTestId('sel')).toHaveTextContent('c1');
   });
 
+  it('사유 시트가 열려 있을 때 Esc 는 시트만 닫고 고르기는 이어진다', () => {
+    const onCancel = vi.fn();
+    render(<Picker onCancel={onCancel} />);
+    const blocked = screen.getByRole('option', { name: /신정현/ });
+    fireEvent.click(blocked);
+    expect(screen.getByRole('dialog', { name: '신정현 — 고를 수 없습니다' })).toBeVisible();
+    fireEvent.keyDown(blocked, { key: 'Escape' });
+    expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.queryByRole('dialog', { name: '신정현 — 고를 수 없습니다' })).toBeNull();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onCancel).toHaveBeenCalledTimes(1);
+  });
+
   it('Esc 와 「그만 고르기」는 onCancel', () => {
     const onCancel = vi.fn();
     render(<Picker onCancel={onCancel} />);
@@ -342,6 +355,19 @@ describe('TimeBar', () => {
     expect(screen.getByText('0:20 / 1:40')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: '1×' })).toHaveAttribute('aria-checked', 'true');
     expectNoNativeDisabledOrTitle(container);
+  });
+
+  it('사건 단추는 슬라이더 밖(형제)이고, 단추에서 방향키는 슬라이더를 움직이지 않는다', () => {
+    const onSeek = vi.fn();
+    render(
+      <TimeBar mode="replay" duration={100_000} position={20_000} events={EVENTS} nowText="—"
+        onSeek={onSeek} playing={false} onPlayPause={vi.fn()} speed={1} onSpeed={vi.fn()} />,
+    );
+    const slider = screen.getByRole('slider', { name: '시간' });
+    const event = screen.getByRole('button', { name: '성문 — 90% 지점으로' });
+    expect(slider.contains(event)).toBe(false);
+    fireEvent.keyDown(event, { key: 'ArrowRight' });
+    expect(onSeek).not.toHaveBeenCalled();
   });
 
   it('실시간 — 지나간 데까지만 표식을 보이고 「지금으로」', () => {

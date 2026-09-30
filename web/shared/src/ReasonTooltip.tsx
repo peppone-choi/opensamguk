@@ -102,7 +102,11 @@ export function ReasonTooltip({
       }}
       onKeyDown={(event) => {
         onKeyDown?.(event);
-        if (event.key === 'Escape') close();
+        // 열려 있을 때만 Esc 를 먹는다 — 기본 동작을 막아 바깥(지도 고르기 등)의 Esc 처리가 이어서 돌지 않게 한다.
+        if (event.key === 'Escape' && (pinned || previewed)) {
+          event.preventDefault();
+          close();
+        }
       }}
       {...props}
     >

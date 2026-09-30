@@ -84,7 +84,11 @@ test.describe('공용 부품 미리보기', () => {
     await press(list.getByRole('option', { name: /신정현/ }), test.info());
     await expect(page.getByRole('dialog', { name: '신정현 — 고를 수 없습니다' })).toBeVisible();
     await expect(page.getByTestId('lab-picked')).toHaveText('—');
+    // 시트가 열려 있을 때 Esc 는 시트만 닫는다 — 고르기 띠는 남고 「고르기 그만」은 일어나지 않는다
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: '신정현 — 고를 수 없습니다' })).toBeHidden();
+    await expect(sec.getByRole('region', { name: '갈 곳 고르기 — 이동 · 04순' })).toBeVisible();
+    await expect(page.getByTestId('lab-log')).toHaveText('—');
 
     // 지도 표지 가운데를 누르면 그 표지가 맞는다(띠 · 무늬가 먹지 않는다) — 고르면 목록도 「고름」
     const marker = sec.getByRole('button', { name: '밀현 표지' });

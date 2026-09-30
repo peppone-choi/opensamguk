@@ -104,41 +104,44 @@ export function TimeBar(props: TimeBarProps) {
 
   const height = HIT * layout.count + 14;
   const lineY = HIT * layout.count + 2;
+  // 사건 단추는 슬라이더의 형제 층이다 — role="slider" 의 자식은 보조기술에서 사라지고, 단추에서 누른 방향키가
+  // 슬라이더를 움직인다. 층 바탕은 누르기를 먹지 않아 빈 곳 누르기는 아래 슬라이더로 간다.
   const trackEl = (
-    <div
-      ref={track}
-      className="os-timebar__track"
-      role="slider"
-      tabIndex={0}
-      aria-label="시간"
-      aria-valuemin={0}
-      aria-valuemax={Math.round(end / 1000)}
-      aria-valuenow={Math.round(position / 1000)}
-      aria-valuetext={formatClock(position)}
-      style={{ height }}
-      onPointerDown={(event) => {
-        if ((event.target as HTMLElement).closest('.os-timebar__event')) return;
-        event.currentTarget.setPointerCapture?.(event.pointerId);
-        seekFromPointer(event);
-      }}
-      onPointerMove={(event) => { if (event.buttons === 1) seekFromPointer(event); }}
-      onKeyDown={onKey}
-    >
-      <i className="os-timebar__rail" style={{ top: lineY, right: `${100 - pct(end)}%` }} aria-hidden="true" />
-      <i className="os-timebar__fill" style={{ top: lineY, width: `${pct(position)}%` }} aria-hidden="true" />
-      {visible.map((e) => (
-        <button
-          key={e.id}
-          type="button"
-          className={`os-timebar__event os-timebar__event--${e.tone ?? 'bronze'}`}
-          style={{ left: `${pct(e.at)}%`, top: HIT * (layout.rows.get(e.id) ?? 0) }}
-          aria-label={`${e.label} — ${Math.round(pct(e.at))}% 지점으로`}
-          onClick={() => onSeek(e.at)}
-        >
-          <i aria-hidden="true" />
-        </button>
-      ))}
-      <i className="os-timebar__thumb" style={{ left: `${pct(position)}%`, top: lineY - 6 }} aria-hidden="true" />
+    <div ref={track} className="os-timebar__track" style={{ height }}>
+      <div
+        className="os-timebar__slider"
+        role="slider"
+        tabIndex={0}
+        aria-label="시간"
+        aria-valuemin={0}
+        aria-valuemax={Math.round(end / 1000)}
+        aria-valuenow={Math.round(position / 1000)}
+        aria-valuetext={formatClock(position)}
+        onPointerDown={(event) => {
+          event.currentTarget.setPointerCapture?.(event.pointerId);
+          seekFromPointer(event);
+        }}
+        onPointerMove={(event) => { if (event.buttons === 1) seekFromPointer(event); }}
+        onKeyDown={onKey}
+      >
+        <i className="os-timebar__rail" style={{ top: lineY, right: `${100 - pct(end)}%` }} aria-hidden="true" />
+        <i className="os-timebar__fill" style={{ top: lineY, width: `${pct(position)}%` }} aria-hidden="true" />
+        <i className="os-timebar__thumb" style={{ left: `${pct(position)}%`, top: lineY - 6 }} aria-hidden="true" />
+      </div>
+      <div className="os-timebar__events" role="group" aria-label="사건">
+        {visible.map((e) => (
+          <button
+            key={e.id}
+            type="button"
+            className={`os-timebar__event os-timebar__event--${e.tone ?? 'bronze'}`}
+            style={{ left: `${pct(e.at)}%`, top: HIT * (layout.rows.get(e.id) ?? 0) }}
+            aria-label={`${e.label} — ${Math.round(pct(e.at))}% 지점으로`}
+            onClick={() => onSeek(e.at)}
+          >
+            <i aria-hidden="true" />
+          </button>
+        ))}
+      </div>
     </div>
   );
 
