@@ -4,7 +4,34 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from changed_paths import city_patterns, classify  # noqa: E402
+from changed_paths import ROOT, city_patterns, classify  # noqa: E402
+
+# Files outside data/ and tools/ that a Han map gate was traced reading (2026-09-30). Changing any
+# of them must run the map steps; a missing file means the gate moved and MAP_INPUTS needs review.
+TRACED_MAP_INPUTS = (
+    "common/src/main/kotlin/opensamguk/common/constants/BaselineCityConst.kt",
+    "common/src/main/kotlin/opensamguk/common/constants/ArchiveCityConst.kt",
+    "common/src/main/kotlin/opensamguk/common/constants/BaselineGateIndex.kt",
+    "infra/src/main/resources/map/han.json",
+    "infra/src/main/resources/map/han-world-v3.json",
+    "infra/src/main/resources/map/han-780-v1.json",
+    "infra/src/main/resources/map/che.json",
+    "infra/src/main/resources/campaign/county-production-v1.json",
+    "infra/src/main/resources/scenario/scenario_990002.json",
+    "infra/src/main/kotlin/opensamguk/infra/seed/Archive1447Artifacts.kt",
+    "infra/src/test/kotlin/opensamguk/infra/seed/ArchiveRuntimeConstantsIntegrityTest.kt",
+    "web/game/public/map/elevation/han-world-v3-metres.png",
+    "web/gateway/public/map/elevation/han-world-v3-metres.png",
+    "web/shared/src/iso/countyNameGloss.generated.ts",
+    "docs/superpowers/research/2026-09-17-march-tempo-baseline.md",
+    "docs/superpowers/research/2026-09-17-siege-supply-baseline.md",
+    ".ai/research/2026-08-24-namu-places-crosscheck.md",
+    ".github/workflows/ci.yml",
+    "tools/map/seat_sources.json",
+    "tools/scenario/city_map.json",
+    "tools/e2e/fixtures/yuzhou/scenario_990002.json",
+    "tools/ops/jwt_rollout_contract_test.py",   # any tools/**/*.py: the coupled test rglobs them
+)
 
 
 class ChangedPathsTest(unittest.TestCase):
@@ -25,6 +52,36 @@ class ChangedPathsTest(unittest.TestCase):
 
     def test_docs_only_keeps_heavy_jobs_skipped(self):
         self.assertFalse(any(classify(["docs/development/example.md", ".ai/decisions.md"], self.patterns).values()))
+
+    def test_kotlin_only_change_skips_map_gates_but_keeps_contracts(self):
+        for path in ("app/game-api/src/main/kotlin/opensamguk/gameapi/security/GameApiJwtVerifier.kt",
+                     "logic/src/main/kotlin/opensamguk/logic/actions/military/CheJingbyeong.kt",
+                     "common/src/main/kotlin/opensamguk/common/model/Example.kt",
+                     "infra/src/main/kotlin/opensamguk/infra/persistence/Example.kt",
+                     "app/game-engine/build.gradle.kts"):
+            with self.subTest(path=path):
+                result = classify([path], self.patterns)
+                self.assertTrue(result["jvm"] and result["contracts"])
+                self.assertFalse(result["map"] or result["map_slow"])
+
+    def test_every_traced_map_input_runs_map_gates(self):
+        for path in TRACED_MAP_INPUTS:
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).exists(), "traced input moved; review MAP_INPUTS")
+                result = classify([path], self.patterns)
+                self.assertTrue(result["map"] and result["map_slow"] and result["contracts"])
+
+    def test_non_map_contract_inputs_run_contracts_only(self):
+        for path in ("web/gateway/app/admin/page.tsx", "docs/admin/game-server-recovery.md",
+                     "tools/ci/naming_lint_baseline.json", ".github/workflows/reset-game-server.yml"):
+            with self.subTest(path=path):
+                result = classify([path], self.patterns)
+                self.assertTrue(result["contracts"])
+                self.assertFalse(result["map"])
+
+    def test_unknown_top_level_path_runs_everything_heavy(self):
+        result = classify(["docker/game-api.Dockerfile"], self.patterns)
+        self.assertTrue(all(result[key] for key in ("jvm", "contracts", "map", "map_slow", "web")))
 
     def test_city_task_definition_triggers_city(self):
         self.assertTrue(classify(["app/game-engine/build.gradle.kts"], self.patterns)["city"])

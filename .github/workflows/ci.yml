@@ -19,6 +19,7 @@ jobs:
     outputs:
       jvm: ${{ steps.filter.outputs.jvm }}
       contracts: ${{ steps.filter.outputs.contracts }}
+      map: ${{ steps.filter.outputs.map }}
       map_slow: ${{ steps.filter.outputs.map_slow }}
       external_places: ${{ steps.filter.outputs.external_places }}
       web: ${{ steps.filter.outputs.web }}
@@ -71,8 +72,11 @@ jobs:
       # this job silently skipped everything after it, including the unittest
       # discover that PRs #517/#519 both needed CI evidence for). Not
       # `always()` — a cancelled job still shouldn't keep grinding.
+      # Han map/scenario steps below run only when a PR touches what they read
+      # (tools/ci/changed_paths.py MAP_INPUTS, traced 2026-09-30). A Kotlin-only PR skips ~15 minutes
+      # here; ops/CI-tooling steps further down still run on every contracts change.
       - name: Verify Han map data contract tests
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         # 느린 두 파일은 map-slow-tests 잡이 병렬로 돈다(2026-09-18 로컬 실측: 전체 2,045초 중
         # test_build_han_parent_reconciliation 888초 + test_territory_disconnection_adjudications 797초).
         # 빼는 이름이 실제 파일이 아니면 실패한다 — 이름이 바뀌어 아무 데서도 안 도는 일을 막는다.
@@ -84,31 +88,31 @@ jobs:
           files=$(ls tools/map/tests/test_*.py | grep -v -e test_build_han_parent_reconciliation.py -e test_territory_disconnection_adjudications.py)
           python3 -m unittest $files
       - name: Test march tempo simulator (tools/sim)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 -m unittest discover -s tools/sim/tests -p 'test_*.py'
       # Every disconnected commandery/county piece in han-tiles.json must have a
       # reviewed row (exclave / island / grid defect / misassignment) with the
       # evidence its verdict needs. The ledger never moves cells; it only records
       # what may stay and what a later parent-ledger PR has to fix.
       - name: Verify Han territory disconnection ledger
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/audit_territory_disconnections.py --check
       - name: Verify Han supply disagreements (fail closed)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/audit_han_supply_disagreements.py --map han-world-v3 --check
       # 위 게이트는 두 보급 모델의 **불일치**만 본다 — 둘 다 「끊겼다」에 동의하면 무료 통과다.
       # 그래서 공융이 16城 중 14城을 개시부터 잃은 채로 초록이었다. 이 게이트가 그 절대 축이다.
       - name: Verify scenario seed supply reachability (baseline pinned)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/audit_scenario_seed_supply.py --check
       # ADR-LITE-051 — 郡 내부 보급선. 이 산출물이 낡거나 비면 공융의 北海國 이 다시 끊긴다.
       - name: Verify commandery supply links
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_commandery_supply_links.py --check
       # 철·말·목재 산지 원장(GH #776). 커밋된 추출본을 han-tiles 에 다시 붙여 커밋본과 비교한다 —
       # 縣이 생기거나 郡이 바뀌면 빨개진다. 사료 원문(data/corpus)은 gitignore 라 여기서 다시 뽑지 않는다.
       - name: Resource-site ledger is current
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_resource_sites.py --check
       # GH #542 — external-places.json 은 입력이 **Wikidata SPARQL(네트워크)** 하나뿐이라 두 축으로 나눈다.
       #   1) --check-offline (fail closed): 생성기의 PLACES 표가 네트워크 없이 정하는 필드(kind·level·
@@ -118,38 +122,38 @@ jobs:
       #      공개 엔드포인트의 502/504 나 제3자의 Wikidata 편집이 무관한 PR 을 죽이면 안 되므로 job 을
       #      죽이지 않는다 — 대신 「드리프트(1)」와 「조회 실패라 판정 불가(2)」를 갈라서 경고한다.
       - name: Verify external places table vs artifact (offline, fail closed)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_external_places.py --check-offline
       - name: Verify reviewed Han route candidate regeneration
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/build_han_route_node_candidates.py --output data/curated/han/route-node-selection-candidates-v1.json --check
       # 변경 縣 51 곳(交趾·九真·日南·遼東·玄菟·樂浪·遼東屬國)은 han-tiles 에 縣 구획으로 서 있다.
       # 결정론 재생성이라 --check 가 곧 드리프트 게이트다 — 원장(frontier-county-placements-v1)의
       # priorStage 로 이전 단계를 복원해 다시 세우고 바이트 비교한다(약 35초).
       - name: Verify frontier county materialization
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/materialize_frontier_counties.py --check
       # 省 → 城 귀속 원장. 한 縣이 여러 省을 가지고 城이 없는 縣도 239 곳이라, 인접 간선을
       # 省의 cityIndex 로만 풀면 그래프가 성분 36 개로 쪼개진다(실측). 결정론 재생성이라
       # --check 가 곧 드리프트 게이트다.
       - name: Verify province to city attribution ledger
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/build_province_city_attribution.py --check
       # OPENSAM-255 — 인물 본관 縣 원장. 입력은 전부 커밋된 파일이다(등록부·이름표·시나리오·글자표·
       # 추출 원장·han-tiles). 사료 색인은 저장소 밖이라 --extract 는 CI 에서 돌지 않는다 — 추출 원장이 증거다.
       - name: Verify officer native county ledger
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/build_officer_native_county.py --check
       - name: Verify new-world Han V3 artifacts
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/build_han_world.py --target han-world-v3 --check
       - name: Verify reviewed Han water topology (activation remains evidence-gated)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: |
           python3 tools/map/build_han_water_topology.py --check
           python3 tools/map/audit_han_water_topology.py --check
       - name: Verify scenario data contract tests
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 -m unittest discover -s tools/scenario/tests -p 'test_*.py'
       - name: Verify identity source and core template ledgers
         if: '!cancelled()'
@@ -185,7 +189,7 @@ jobs:
         # /han.json drift (which DOES need junguozhi.json) is still not
         # CI-gated — verify those manually before merging changes to
         # build_han_world.py or its inputs.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/build_han_world.py --check-gate
       - name: Warn on ungated HanCityConst.kt/han.json drift
         # HanCityConst.kt/han.json (unlike HanGateIndex.kt above) genuinely
@@ -196,7 +200,7 @@ jobs:
         # (2026-08-24 independent critique of GH #534's own first commit,
         # dede1024, which had this warning and lost it when --check-gate
         # replaced the guarded skip). See GH #536.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: |
           if [ -f data/map/junguozhi.json ]; then
             python3 tools/scenario/build_han_world.py --check \
@@ -207,20 +211,20 @@ jobs:
       - name: Verify county economy inputs (data/curated/han/county-economy-inputs-v1.json drift)
         # 입력은 전부 커밋본(han-tiles.json · han-world-v3.json · administrative-units.json · params).
         # 적색 프로브: tools/map/tests/test_build_county_economy_inputs.py CheckGateRedProbeTest.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_county_economy_inputs.py --check
       - name: Verify Junguozhi county gap ledger (name match vs han-tiles jurisdictions)
         # 입력은 전부 커밋본. 적색 프로브: tools/map/tests/test_build_junguozhi_county_gaps.py.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/build_junguozhi_county_gaps.py --check
       # han-tiles.json·han-world-v3.json 에 묶인 커밋 산출물의 결합 목록을 한 번에 돈다(GH #818). 개별 스텝과
       # 겹치지만(약 25초) 중간에 멈추지 않고 낡은 산출물을 전부 지목하고 재생성 명령을 찍는다. 목록의
       # 완전성·배선은 tools/map/tests/test_check_han_tiles_coupled.py 가 지킨다. slow 항목은 위 개별 스텝.
       - name: Verify han-tiles coupled artifacts (batch, names every stale artifact)
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/check_han_tiles_coupled.py --check
       - name: Verify city growth clearance and province escape routes
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/audit_province_clearance.py --check
       - name: Verify unitset build (data/unitset/units.json drift)
         # build_unitset.py's only input is data/unitset/units.json itself
@@ -237,29 +241,29 @@ jobs:
         if: '!cancelled()'
         run: python3 tools/unitset/build_unitset.py --check
       - name: Verify Han route-node selection materialization
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/materialize_han_route_node_selection.py --check
       - name: Verify Han route-node selection validator
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/validate_han_route_node_selection.py
       - name: Verify Han lowland terrain reclassification stage
         # 저지 지형 재분류 단계(han-tiles 최상단)를 벗겼다 다시 얹어, 검토 원장(이름 붙은 저지·표고 기준)과
         # 커밋된 ETOPO1 표고에서 커밋된 han-tiles.json 의 terrain 이 그대로 재현되는지 본다. owner 가 움직였거나
         # 결정 원장·표고 PNG 해시가 바뀌어도 잡는다. 아래 접기·분할 검사는 이 단계를 먼저 벗기고 돈다.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/reclassify_han_lowland_terrain.py --check
       - name: Verify Han cityless-jurisdiction fold stage
         # 城 없는 관할 접기·省 이관 단계(han-tiles 최상단)를 벗겼다 다시 얹어 원장의 행·출력 digest 가 커밋된
         # han-tiles.json 과 바이트 단위로 같은지 본다. 결정 원장 해시 변경도 잡는다.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/fold_cityless_jurisdictions.py --check
       - name: Verify Han strategic-site province carve stage
         # 수·진·관 거점 省 분할 단계(han-tiles 최상단)를 벗겼다 다시 얹어 원장의 배치·셀 델타·출력 digest 가
         # 커밋된 han-tiles.json 과 바이트 단위로 같은지 본다. 원장 입력(거점 원장) 해시 변경도 잡는다.
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/map/carve_strategic_site_provinces.py --check
       - name: Verify Han world scenario materialization
-        if: '!cancelled()'
+        if: "!cancelled() && needs.changes.outputs.map == 'true'"
         run: python3 tools/scenario/apply_han_world.py --map han-world-v3 --check
       - name: Verify v2 sandbox compose contract
         if: '!cancelled()'
