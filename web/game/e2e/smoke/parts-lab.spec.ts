@@ -54,6 +54,11 @@ test.describe('공용 부품 미리보기', () => {
     await expect(page.getByTestId('lab-log')).toHaveText('도움말 input:court.dispatch!NOT_RULER');
 
     await expect(lab.getByRole('button', { name: '성방 허물기' })).toHaveAttribute('aria-disabled', 'true');
+    // 좁은 칸에서도 보이는 사유는 잘리지 않는다(말줄임 · 넘침 없음)
+    const clipped = await page.getByTestId('lab-narrow').locator('.os-ia__why').evaluateAll((tags) =>
+      tags.filter((t) => t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 1).map((t) => t.textContent));
+    expect(clipped).toEqual([]);
+    await expect(page.getByTestId('lab-narrow').locator('.os-ia__why').first()).toHaveText('기한이 지났습니다');
     await expect(lab.locator('[data-input-id="action.unknown"]')).toHaveCount(0);
   });
 

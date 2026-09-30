@@ -88,6 +88,11 @@ export default function PartsLab() {
           <InputAction inputId="work.reduce" availability={{ inputId: 'work.reduce', status: 'NOT_DELIVERED' }} label="성방 허물기" onAct={() => setLog('준비 중이 불리면 안 된다')} />
           <InputAction inputId="action.unknown" availability={null} label="원장에 없는 입력" onAct={() => undefined} />
         </div>
+        {/* 좁은 칸 — 요청 카드처럼 두 입력을 반씩 나눈 자리(모바일 ≈ 170). 보이는 사유가 잘리지 않아야 한다. */}
+        <div className="parts-lab__narrow" data-testid="lab-narrow">
+          <InputAction inputId="court.dispatchReply" availability={{ inputId: 'court.dispatchReply', status: 'BLOCKED', reason: '기한이 지났습니다' }} label="거절" onAct={() => undefined} variant="ghost" block />
+          <InputAction inputId="court.dispatchReply" availability={{ inputId: 'court.dispatchReply', status: 'BLOCKED', reason: '기한이 지났습니다' }} label="수락" onAct={() => undefined} block />
+        </div>
       </Section>
 
       <Section id="status" title="상태 — 빈 · 실패 · 권한 · 서버 대기 · 끊김 · 없음 · 점검">
@@ -179,6 +184,7 @@ export default function PartsLab() {
         .parts-lab__marker--selected::after { border-color: var(--focus); background: var(--focus); }
         .parts-lab__marker--here::after { border-color: var(--bronze); background: rgba(211, 176, 100, 0.4); }
         .parts-lab__gap { height: 8px; }
+        .parts-lab__narrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 340px; max-width: 100%; margin-top: 8px; }
         @media (max-width: 767.98px) {
           .parts-lab { padding: 12px 16px; }
           .parts-lab__grid, .parts-lab__grid--2 { grid-template-columns: minmax(0, 1fr); }
