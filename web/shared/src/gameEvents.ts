@@ -2,7 +2,10 @@
 // 문장은 화면이 만든다 — 모두 알림체(「…했습니다」). 이름은 화면이 이미 가진 자료(지도 미리보기의 현 · 세력)에서 푼다.
 // 풀지 못한 이름은 지어내지 않고 「어느 현」 · 「어느 세력」으로 적는다(설계서 P-H01 · K5-07 이름 사전 전까지).
 
-export type GameEventSection = 'PERSONAL' | 'RETINUE_NATION' | 'COURT' | 'BATTLE' | 'WORLD';
+import type { RecordSection } from './recordSections';
+
+/** 기록 5분류 — K4 recordSections 의 RecordSection 과 같은 타입(먼저 병합된 쪽을 따른다, K4 · K5 합의 2026-10-01). */
+export type GameEventSection = RecordSection;
 
 export interface GameEventTime {
   readonly year: number;

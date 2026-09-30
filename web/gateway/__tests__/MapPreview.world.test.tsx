@@ -133,6 +133,6 @@ describe('MapPreview 작전실 2D 판', () => {
     ['재야', 0, [{ id: 0, name: '표시 금지', color: '#ff0000' }]],
   ])('%s 소유는 城의 국가색이 되지 않는다', (_label, nationId, nations) => {
     render(<MapPreview mapData={{ ...MAP, cities: [{ ...MAP.cities[0], nationId }], nations }} />);
-    expect(shared.props?.cities?.[0]).toMatchObject({ nationId, nationName: '공백지', nationColor: undefined });
+    expect(shared.props?.cities?.[0]).toMatchObject({ nationId, nationName: '무주', nationColor: undefined });
   });
 });

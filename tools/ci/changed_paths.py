@@ -106,7 +106,7 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
             outputs["map"] = outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
-        if path.startswith(("web/", "data/", "infra/src/main/resources/map/", ".github/")):
+        if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/")):
             outputs["web"] = True
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",

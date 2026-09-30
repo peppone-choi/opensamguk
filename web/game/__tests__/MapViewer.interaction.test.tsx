@@ -200,7 +200,7 @@ describe('MapViewer 메인 2D 지도', () => {
 
     expect(shared.props?.cities?.[0]).toEqual(expect.objectContaining({
       nationId: 0,
-      nationName: '공백지',
+      nationName: '무주',
       nationColor: undefined,
     }));
     fireEvent.click(screen.getByRole('button', { name: 'hover county' }));
