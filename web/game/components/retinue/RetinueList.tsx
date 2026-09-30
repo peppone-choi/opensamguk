@@ -1,5 +1,6 @@
 'use client';
 
+import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
 import { Chip, Portrait } from '@opensamguk/ui';
 import { RETINUE_FILTER_LABEL, RETINUE_SORT_LABEL, type RetinueFilter, type RetinueRow, type RetinueSort } from '@/lib/retinue-view';
 import styles from './retinue.module.css';
@@ -20,6 +21,25 @@ export function postText(row: RetinueRow): string {
     return pending ? `${now} → ${pending}` : now;
 }
 
+/**
+ * 목록 칸이 넘쳐 스크롤이 생겼는가. 첫 측정 전에는 null(숨김 — 깜빡임 없게). 칸 크기 · 줄 수가 바뀌면 다시 잰다.
+ * 칸 높이는 화면 배치가 정한다(데스크톱 세 칸 · 모바일 머리와 아래 단추 줄 사이) — 수치를 여기서 짓지 않는다.
+ */
+function useOverflows(ref: RefObject<HTMLElement | null>, count: number): boolean | null {
+    const [over, setOver] = useState<boolean | null>(null);
+    useLayoutEffect(() => {
+        const el = ref.current;
+        if (!el) return;
+        const measure = () => setOver(el.scrollHeight > el.clientHeight + 1);
+        measure();
+        if (typeof ResizeObserver === 'undefined') return;
+        const ro = new ResizeObserver(measure);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [ref, count]);
+    return over;
+}
+
 export interface RetinueListProps {
     readonly rows: readonly RetinueRow[];
     readonly sort: RetinueSort;
@@ -29,7 +49,8 @@ export interface RetinueListProps {
     readonly onSelect: (row: RetinueRow) => void;
     readonly mobile?: boolean;
     /**
-     * 많은 부(3190 주공 등)의 찾기 · 거르기 줄. 넘기면 보인다 — 언제 보일지는 화면이 정한다.
+     * 찾기 · 거르기 줄. 목록이 자기 칸을 넘칠 때만 보인다(K0 2026-10-01 — 수치 대신 배치 기준, 인물 몇 명 보드와 같은 모양).
+     * 찾기 · 거르기를 걸어 둔 동안은 줄어든 목록이 넘치지 않아도 계속 보인다(풀 수 있어야 하므로).
      * `total` = 거르기 전 인물 수(「n명 중 m」).
      */
     readonly search?: {
@@ -43,9 +64,13 @@ export interface RetinueListProps {
 
 /** 부의 인물 목록(보드 person_list_row) — 정렬 칩 + 줄 목록. 줄 전체가 누를 영역(데스크톱 68 · 모바일 72). */
 export function RetinueList({ rows, sort, onSortChange, selectedId = null, onSelect, mobile = false, search }: RetinueListProps) {
+    const rowsRef = useRef<HTMLDivElement>(null);
+    const over = useOverflows(rowsRef, rows.length);
+    const narrowed = !!search && (search.query.trim() !== '' || search.filter !== 'all');
+    const showSearch = !!search && (narrowed || over === true);
     return (
         <div className={styles.list}>
-            {search ? (
+            {search && showSearch ? (
                 <div className={styles.search}>
                     <input
                         type="search"
@@ -86,7 +111,7 @@ export function RetinueList({ rows, sort, onSortChange, selectedId = null, onSel
                     </button>
                 ))}
             </div>
-            <div role="listbox" aria-label="부의 인물" className={styles.rows}>
+            <div ref={rowsRef} role="listbox" aria-label="부의 인물" className={styles.rows}>
                 {rows.map((row) => {
                     const sel = !mobile && row.retainerId === selectedId;
                     return (

@@ -70,6 +70,46 @@ test('인물 상세 — 배치 행이 없으면 단추를 그리지 않고, BLOC
     expect(onAssign).toHaveBeenCalledTimes(1);
 });
 
+test('사람 장수 구분 — 서버가 안 주면 「준비 중」 한 줄, 사람이면 배치 대신 조정 발령 고리', () => {
+    const avail = { inputId: 'placement.assign', status: 'AVAILABLE' } as const;
+    const { rerender, container } = render(<PersonDetail row={rows[0]} assign={avail} onAssign={() => {}} />);
+    expect(container.querySelector('[data-waiting="human-flag"]')).toHaveTextContent('준비 중');
+    expect(screen.getByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
+
+    rerender(<PersonDetail row={rows[0]} assign={avail} onAssign={() => {}} isHuman dispatchHref="/game/pep/court?dispatch=101" />);
+    expect(container.querySelector('[data-waiting="human-flag"]')).toBeNull();
+    expect(screen.queryByRole('button', { name: '자리에 배치' })).toBeNull();
+    expect(screen.getByRole('link', { name: '발령은 조정에서 →' })).toHaveAttribute('href', '/game/pep/court?dispatch=101');
+
+    rerender(<PersonDetail row={rows[0]} assign={avail} onAssign={() => {}} isHuman={false} />);
+    expect(container.querySelector('[data-waiting="human-flag"]')).toBeNull();
+    expect(screen.getByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
+});
+
+test('찾기 · 거르기 줄은 목록이 칸을 넘칠 때만, 걸어 둔 동안은 계속 보인다', () => {
+    const search = { query: '', onQueryChange: () => {}, filter: 'all' as const, onFilterChange: () => {}, total: 2 };
+    const { rerender } = render(<RetinueList rows={rows} sort="registered" onSortChange={() => {}} onSelect={() => {}} search={search} />);
+    // jsdom 은 크기가 0 — 넘치지 않는다.
+    expect(screen.queryByRole('searchbox', { name: '이름 찾기' })).toBeNull();
+
+    rerender(<RetinueList rows={rows.slice(0, 1)} sort="registered" onSortChange={() => {}} onSelect={() => {}} search={{ ...search, filter: 'risk' }} />);
+    expect(screen.getByRole('searchbox', { name: '이름 찾기' })).toBeInTheDocument();
+    expect(screen.getByRole('status')).toHaveTextContent('2명 중 1');
+});
+
+test('찾기 줄 — 칸이 넘치면 보인다', () => {
+    const sh = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockReturnValue(900);
+    const ch = vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(400);
+    try {
+        const search = { query: '', onQueryChange: () => {}, filter: 'all' as const, onFilterChange: () => {}, total: 2 };
+        render(<RetinueList rows={rows} sort="registered" onSortChange={() => {}} onSelect={() => {}} search={search} />);
+        expect(screen.getByRole('searchbox', { name: '이름 찾기' })).toBeInTheDocument();
+    } finally {
+        sh.mockRestore();
+        ch.mockRestore();
+    }
+});
+
 test('부대 카드 — 지휘 없는 부대는 움직일 수 없다고 적는다, 쌀은 달 분', () => {
     render(<UnitCards units={unitRows(retinue)} />);
     const [a, b] = screen.getAllByRole('listitem');
