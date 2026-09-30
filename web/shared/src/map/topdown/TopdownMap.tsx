@@ -311,7 +311,7 @@ export function TopdownMap(props: TopdownMapProps) {
           지도를 불러오지 못했습니다. {status.message}
         </p>
       )}
-      {minimap && picture && (
+      {minimap && picture && status.kind !== 'unsupported' && (
         <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 20 }}>
           <MapMinimap
             picture={picture}
