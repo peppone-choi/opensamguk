@@ -135,9 +135,21 @@ allprojects {
     require({s["name"]: s["tests"] for s in suites} == expected, phase + ": suite/count mismatch")
     require((dest / "classpath.json").is_file(), phase + ": actual classpath evidence missing")
     classpath = json.loads((dest / "classpath.json").read_text())
-    require(classpath["javaVersion"].startswith("21.") and classpath["entries"] and
-            all(entry["sha256"] != "MISSING" for entry in classpath["entries"]),
-            phase + ": JDK/classpath mismatch")
+    require(classpath["javaVersion"].startswith("21.") and classpath["entries"], phase + ": JDK/classpath mismatch")
+    for entry in classpath["entries"]:
+        if entry["sha256"] == "MISSING":
+            # Gradle lists Java outputs even when a Kotlin-only module has no Java source set.
+            relative = Path(entry["path"]).relative_to(tree).as_posix()
+            java_output = {module + "/build/classes/java/main", module + "/build/classes/java/test"}
+            require(relative in java_output and not list((tree / module / "src").rglob("*.java")),
+                    phase + ": missing runtime classpath entry " + relative)
+            entry["classification"] = "NO_JAVA_SOURCE_OUTPUT"
+    for source_set in ("main", "test"):
+        kotlin_output = str(tree / module / "build/classes/kotlin" / source_set)
+        require(any(entry["path"] == kotlin_output and entry.get("files", 0) > 0 and
+                    entry["sha256"] != "MISSING" for entry in classpath["entries"]),
+                phase + ": Kotlin runtime classes missing")
+    (dest / "classpath.json").write_text(json.dumps(classpath, indent=2) + "\n")
     return {"exit_code": done.returncode, "started_unix": at, "suites": suites,
             **{k: sum(s[k] for s in suites) for k in ("tests", "failures", "errors", "skipped")}}
 
