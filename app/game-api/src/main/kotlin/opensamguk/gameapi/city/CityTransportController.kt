@@ -6,7 +6,7 @@ import opensamguk.gameapi.command.validateCommandArguments
 import opensamguk.gameapi.command.commandError
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.config.GameApiProcessWorld
-import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
+import opensamguk.gameapi.dto.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.infra.sandbox.SandboxGate
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
