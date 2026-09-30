@@ -761,7 +761,8 @@ def county_body(intel=False):
     right = (f'<div style="width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">'
              f'{panel("이 현에 있는 사람 · 군단", "", here)}'
              f'<section class="panel" style="flex:1;display:flex;flex-direction:column">{sec("수비군", "병력 · 훈련 · 사기")}{state_waiting("수비군 — 준비 중", "수비군 값을 주는 읽기가 아직 없습니다(K4-04).", pad=8)}</section>'
-             f'<section class="panel" style="flex:1;display:flex;flex-direction:column">{sec("최근 사건", "이 현")}{state_waiting("현 사건 — 준비 중", "기록 피드의 현 거르기(K5-07)가 오면 보입니다.", pad=8)}</section>'
+             f'<section class="panel" style="flex:1;display:flex;flex-direction:column">{sec("최근 사건", "이 현")}{state_waiting("현 사건 — 준비 중", "기록 피드의 현 거르기(K5-07)가 오면 보입니다.", pad=8)}'
+             f'<div style="padding:0 12px;border-top:1px solid #2c342f">{link("이 현 기록 모두 보기 →")}</div></section>'
              + (f'<section class="panel">{sec("다시 보기", "")}<div style="padding:10px 12px">{input_btn("다시 첩보 — 명령 목록에 넣기", "AVAILABLE", input_id="action.scout", style="width:100%")}</div></section>' if intel else
                 f'<section class="panel">{sec("여기서 할 일", "")}<div style="padding:8px 12px;display:flex;flex-direction:column;gap:8px">'
                 f'{note("하후돈은 지금 이 현에 없습니다. 내정 · 징병 같은 직접 행동은 이 현에 서 있을 때만 됩니다.")}{btn("여기로 명령", "primary", style="width:100%", href="#")}</div></section>')
