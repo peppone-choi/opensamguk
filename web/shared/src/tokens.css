@@ -105,7 +105,7 @@
   --motion-turn: 300ms;
 
   /* ---- v3.1 틀 치수 · 화면 폭 · 층 · 떠 있는 것의 그림자 ----
-     값의 출처: docs/design/ui-v3/v31system.py(LAYOUT · BP · Z · SHADOW) — v3.1 승인 묶음(사용자 승인 전) 값이다.
+     값의 출처: docs/design/ui-v3/v31system.py(LAYOUT · BP · Z · SHADOW) — 2026-09-30 승인 값이다(ADR-LITE-049 「v3.1 전체 승인」).
      승인에서 값이 바뀌면 이 파일과 breakpoints.ts 를 고친다. 지금은 정의만 두고 쓰는 곳이 없다.
      화면 폭은 3단뿐이다: 모바일 < 768 ≤ 태블릿 < 1200 ≤ 데스크톱. @media 안에서는 CSS 변수를 못 쓰므로
      미디어 조건은 breakpoints.ts(BREAKPOINTS · MEDIA)를 쓰고, 아래 --bp-* 는 같은 값을 적어 둔 참고값이다. */
@@ -173,7 +173,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
+  /* 누르는 것은 모두 44(v3.1 RULES 「누르는 것 44」, 2026-09-30 승인 — 09-18 「작은 단추 보조용 예외」 폐기). */
+  min-height: 44px;
   padding: 0 14px;
   font: inherit;
   font-size: 13px;
@@ -231,7 +232,7 @@
   opacity: 1;
 }
 
-.os-button.os-button--sm { min-height: 28px; padding: 0 10px; font-size: 12px; }
+.os-button.os-button--sm { min-height: 44px; padding: 0 12px; font-size: 12px; }
 .os-button.os-button--block { width: 100%; }
 
 /* ============================================================================
