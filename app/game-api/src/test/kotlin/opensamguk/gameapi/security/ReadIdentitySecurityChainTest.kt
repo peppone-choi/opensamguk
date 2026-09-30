@@ -31,7 +31,7 @@ import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.web.CityDetailController
 import opensamguk.gameapi.web.ReservedCommandsController
-import opensamguk.logic.actions.CommandRegistry
+import opensamguk.gameapi.precheck.PrecheckBeans
 import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -99,7 +99,7 @@ class ReadIdentitySecurityChainTest {
                 polls, votes, troops, turns, feeds, env, ObjectMapper(), ScenarioTitleResolver())
         @Bean open fun reserved(resolver: GeneralResolver, turns: GeneralTurnReadRepository, world: WorldStateReadRepository,
             generals: GeneralReadRepository) = ReservedCommandsController(resolver, turns, world, generals,
-                CommandRegistry(GeneralActionPipeline()))
+                PrecheckBeans().commandRegistry(GeneralActionPipeline()))
         @Bean open fun board(posts: BoardPostReadRepository, comments: BoardCommentReadRepository, resolver: GeneralResolver,
             generals: GeneralReadRepository, polls: VotePollReadRepository, votes: VoteReadRepository,
             reads: BoardPostReadLogRepository, world: WorldStateReadRepository) =
