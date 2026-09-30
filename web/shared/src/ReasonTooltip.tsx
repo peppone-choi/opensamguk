@@ -41,6 +41,7 @@ export function ReasonTooltip({
   code,
   inputId,
   recovery,
+  recoveryDraft = false,
   helpTopic,
   onHelp,
   children,
@@ -116,7 +117,9 @@ export function ReasonTooltip({
         <span className="os-reason__body">{reason}</span>
         {recovery ? (
           <span className="os-reason__recovery">
-            <span className="os-reason__recovery-head">이렇게 하면 됩니다</span>
+            <span className="os-reason__recovery-head">
+              이렇게 하면 됩니다{recoveryDraft ? <span className="os-chip os-reason__draft">초안</span> : null}
+            </span>
             <span>{recovery}</span>
           </span>
         ) : null}

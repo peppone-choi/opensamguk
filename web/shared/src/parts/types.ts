@@ -39,8 +39,10 @@ export interface ReasonContent {
   readonly title?: string;
   readonly code?: string;
   readonly inputId?: string;
-  /** 「이렇게 하면 됩니다」 칸. */
+  /** 「이렇게 하면 됩니다」 칸. K7 `useReasonHelp(code, inputId)` 가 채운다. */
   readonly recovery?: string;
+  /** recovery 가 승인 전 초안이면 참 — 「초안」 칩을 붙인다(K7 recoveryDraft). */
+  readonly recoveryDraft?: boolean;
   readonly helpTopic?: HelpTopicRef;
 }
 
