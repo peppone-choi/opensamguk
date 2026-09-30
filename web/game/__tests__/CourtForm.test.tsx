@@ -77,7 +77,7 @@ test('accepted request remains tracked after result polling throws',async()=>{
 test('modal remount clears old actor selections and ignores their in-flight outcome',async()=>{
  let finish!: (value:any)=>void;
  vi.mocked(submitCommandAndAwaitResult).mockImplementation(async send=>{await send();return await new Promise(resolve=>{finish=resolve;});});
- const props={courtMode:true,ruleProfile:'HWIHA',onClose:vi.fn(),onToast:vi.fn()};
+ const props={courtMode:true,onClose:vi.fn(),onToast:vi.fn()};
  const view=render(<CommandModal {...props} generalId={1}/>);await selectDestination();fireEvent.click(screen.getByRole('button',{name:'발령 접수'}));
  await waitFor(()=>expect(api.courtDispatch).toHaveBeenCalledOnce());
  view.rerender(<CommandModal {...props} generalId={3}/>);
