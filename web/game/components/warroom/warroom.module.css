@@ -1,0 +1,32 @@
+/* 작전실(P-W01) 지도 밖 부품 — 치수는 승인 보드 V31K4WarRoom · V31K4MWarRoom 그대로. 색은 공용 토큰만. */
+
+.entrusted { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; }
+.cell {
+  display: flex; flex-direction: column; justify-content: center; gap: 2px; min-height: 52px; padding: 4px 8px;
+  color: var(--text); background: var(--inset); border: 1px solid var(--line); text-decoration: none;
+}
+.cell:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.cellLabel { font-size: 11px; color: var(--muted); }
+.cellValue { font-size: 14px; font-weight: 700; }
+
+/* ---- 지도 위 카드(선택 카드 320 · 내 위치 카드) ---- */
+.card {
+  width: 320px; max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px;
+  background: var(--panel); border: 1px solid var(--line-2); box-shadow: var(--shadow-md);
+}
+.cardHead { display: flex; align-items: center; gap: 8px; }
+.cardTitle { margin: 0; font-size: 18px; font-weight: 900; flex: 1; min-width: 0; }
+.close {
+  width: 44px; height: 44px; flex-shrink: 0; font: inherit; font-size: 20px; color: var(--text-2);
+  background: transparent; border: 0; cursor: pointer;
+}
+.close:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.muted { margin: 0; font-size: 12px; color: var(--muted); }
+.warn { margin: 0; font-size: 12.5px; color: var(--rust-2); }
+.cardActions { display: flex; flex-direction: column; gap: 6px; }
+.cardActions :global(.os-button) { min-height: 44px; }
+
+@media (max-width: 767.98px) {
+  .card { width: 100%; max-height: none; }
+}
