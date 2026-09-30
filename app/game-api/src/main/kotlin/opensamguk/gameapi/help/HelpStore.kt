@@ -147,6 +147,7 @@ class HelpStore private constructor(
             require(reasons.size == reasonRows.size) { "duplicate failure reason" }
             val expectedTopics = catalog.entries.map { it.helpTopicId }.toSet()
             val expectedReasons = catalog.entries.flatMap { it.failureReasons }.toSet()
+            require(expectedTopics.size == catalog.entries.size) { "duplicate catalog help topic" }
             require(registered.keys.intersect(expectedTopics).isEmpty()) { "extra help topic replaces catalog input topic" }
             require(topics.keys == expectedTopics + registered.keys) {
                 "help topics differ from input catalog and registry: missing=${(expectedTopics + registered.keys) - topics.keys}, " +

@@ -50,7 +50,7 @@ class HelpStoreTest {
     @Test
     fun `human prose must declare a known review state`() {
         val missing = topics.replaceFirst("\"reviewState\": \"DRAFT\",", "")
-        assertFailsWith<NoSuchElementException> { HelpStore.parse(missing, reasons, catalog) }
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(missing, reasons, catalog) }
         val unknown = reasons.replaceFirst("\"reviewState\": \"DRAFT\"", "\"reviewState\": \"UNKNOWN\"")
         assertFailsWith<IllegalArgumentException> { HelpStore.parse(topics, unknown, catalog) }
     }
