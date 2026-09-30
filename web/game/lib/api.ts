@@ -4,6 +4,7 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
+import { countiesPath, peoplePath } from './directory-paths';
 import type {
     FrontInfoResponse,
     GameConstResponse,
@@ -483,6 +484,13 @@ export const api = {
         get<import('./campaign-reads').Policies>(`/api/policies?generalId=${generalId}`, signal),
     campaignWorks: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Works>(`/api/works?generalId=${generalId}`, signal),
+    /** 인물 일람 — 본인 계정으로 본다(`generalId` 없음). 시야 · 권한 밖 칸은 null. */
+    people: (query: import('./directory-reads').PeopleQuery, cursor: string | null, signal?: AbortSignal) =>
+        get<import('./directory-reads').PeoplePage>(peoplePath(query, cursor), signal),
+    nationSummary: (generalId: number, signal?: AbortSignal) =>
+        get<import('./directory-reads').NationSummary>(`/api/nation/summary?generalId=${generalId}`, signal),
+    counties: (generalId: number, scope: import('./directory-reads').CountyScope, commanderyId?: string | null, signal?: AbortSignal) =>
+        get<import('./directory-reads').CountyDirectory>(countiesPath(generalId, scope, commanderyId), signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
     campaignDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
         post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),
