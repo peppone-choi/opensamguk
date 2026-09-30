@@ -9,7 +9,8 @@ import { useEffect, useState } from 'react';
 import { api } from './api';
 import { useGameSession } from './campaign-session';
 
-export type ReadStatus = 'READY' | 'NOT_ASSESSED' | 'NOT_READY' | 'UNAVAILABLE' | 'WRONG_RULE_PROFILE';
+/** `UNSUPPORTED_WORLD_FORMAT` — 부 조회 공통 게이트가 옛 형식 월드에 준다(`CampReader.kt` 등). 빈 목록이 아니다. */
+export type ReadStatus = 'READY' | 'NOT_ASSESSED' | 'NOT_READY' | 'UNAVAILABLE' | 'WRONG_RULE_PROFILE' | 'UNSUPPORTED_WORLD_FORMAT';
 
 // ── 계책 손패 (`GET /api/commands/stratagem-hand`) ─────────────────────────────
 export interface StratagemCard {
