@@ -10,8 +10,8 @@
   }
 }
 
-/* 모바일: 셸 하단 탭 막대(z-sheet 50, sticky)를 가린다(설계 「아래 탭 막대는 가린다 — 닫으면 돌아온다」).
-   서신 · 도움말 서랍(55)과 대화 상자 · 사유 시트(z-dialog 60)보다는 아래다. */
+/* 모바일: 전체 시트 층(--z-sheet 50). 셸 하단 탭 막대(--z-float 30) · 도움말 서랍(--z-drawer 40)을 가리고
+   (설계 「아래 탭 막대는 가린다 — 닫으면 돌아온다」) 대화 상자(--z-dialog 60)보다는 아래다. */
 @media (max-width: 767.98px) {
-  .host { z-index: calc(var(--z-sheet, 50) + 1); top: var(--header-h-mobile, 56px); left: 0; width: auto; box-shadow: var(--shadow-sheet, 0 -12px 32px rgba(0, 0, 0, 0.55)); }
+  .host { z-index: var(--z-sheet, 50); top: var(--header-h-mobile, 56px); left: 0; width: auto; box-shadow: var(--shadow-sheet, 0 -12px 32px rgba(0, 0, 0, 0.55)); }
 }
