@@ -20,7 +20,7 @@ python3 tools/map/bake_topdown_map.py \
 
 생성 명령에 `--bundle-root data/map/topdown`을 추가하면 검사 후 `<bundle-root>/<bakeId>/`로 필요한 파일만 패키징한다. 같은 ID가 이미 있으면 바이트가 같은 경우만 수용하고 다른 파일을 덮어쓰지 않는다. 검사는 모든 전송/raw 해시·파일 크기·격자 길이·범위·입력 지문을 검사하고 정해진 표본 조각을 다시 굽는다. 전 조각의 의미를 재합성하는 전수 검사는 아니다.
 
-결합 검사 `check_han_tiles_coupled.py --check`에도 등록되어 있다. 공개 번들이 없으면 `SKIPPED`이며 검증 통과로 세지 않는다. 번들이 있으면 입력 export/키트가 없거나 낡은 경우에도 적색이다. 입력을 바꾸면 export와 번들을 새 ID로 다시 생성한다.
+결합 검사 `check_han_tiles_coupled.py --check`에도 등록되어 있다. 공개 번들이 없으면 `SKIPPED`이며 검증 통과로 세지 않는다. 임시 staging 디렉터리만 남은 경우도 같다. 결합 목록의 `data/map/topdown`은 현재 입력으로 검증하는 생성 루트이며, 운영에서 보존하는 과거 불변 번들은 각 버전의 export·키트·생성기 검증 근거와 함께 별도 보관한다. 번들이 있으면 입력 export/키트가 없거나 낡은 경우에도 적색이다. 입력을 바꾸면 export와 번들을 새 ID로 다시 생성한다.
 
 ## 파일 계약
 

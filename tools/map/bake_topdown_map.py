@@ -609,7 +609,8 @@ def load_export(export_dir: Path):
 
 REPO_FILES = dict(world=WORLD, hanTiles=HAN_TILES, juIndex=JU_INDEX, placements=PLACEMENTS, economy=ECONOMY,
                   roads=ROOT / "data/map/han-land-roads-v1.json",
-                  dem=ROOT / "web/game/public/map/elevation/han-world-v3-metres.png")
+                  dem=ROOT / "web/game/public/map/elevation/han-world-v3-metres.png",
+                  artifactCatalog=ROOT / "data/map/han-world-v3-1428-artifacts-v1/catalog.json")
 
 
 def repo_inputs(repo=None):
@@ -916,9 +917,12 @@ def current_inputs(export_dir, kit, repo=None):
     docs, rh = repo_inputs(repo)
     source = man["inputFingerprint"]
     for key, name in (("hanTilesSha256", "hanTiles"), ("worldJsonSha256", "world"),
-                      ("roadsSha256", "roads"), ("demSha256", "dem")):
+                      ("roadsSha256", "roads"), ("demSha256", "dem"),
+                      ("economySha256", "economy"), ("artifactCatalogSha256", "artifactCatalog")):
         if source.get(key) != rh[f"repo/{name}"]:
             raise ValueError(f"export source fingerprint differs from current {name}")
+    if source.get("exportGeneratorSha256") != sha256((ROOT / "tools/map/build_map_design.py").read_bytes()):
+        raise ValueError("export generator fingerprint differs; regenerate the export")
     for path, digest in source["designJsonSha256"].items():
         source_path = Path((repo or {}).get(path, ROOT / path))
         if sha256(source_path.read_bytes()) != digest:
@@ -1091,13 +1095,12 @@ def package_bundle(export_dir, kit_dir, out, bundle_root, log=print, repo=None):
 
 def check_published(export_dir, kit_dir, bundle_root, log=print):
     root = Path(bundle_root)
-    if not root.exists() or not any(root.iterdir()):
+    bundles = [path for path in sorted(root.iterdir()) if not path.name.startswith(".topdown-stage-")] if root.exists() else []
+    if not bundles:
         log("SKIPPED topdown-bake: no published bundle (not verified)")
         return 77
     errors = []
-    for bundle in sorted(root.iterdir()):
-        if bundle.name.startswith(".topdown-stage-"):
-            continue
+    for bundle in bundles:
         try:
             if bundle.is_symlink() or not bundle.is_dir():
                 raise ValueError("expected an immutable bundle directory")

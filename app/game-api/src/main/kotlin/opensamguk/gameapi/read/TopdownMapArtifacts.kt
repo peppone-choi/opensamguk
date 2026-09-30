@@ -82,6 +82,8 @@ class TopdownMapArtifacts(
         require(manifest.path("chunkSize").asInt() == 256 && manifest.path("undrawnTile").asInt() == 65535)
         require(manifest.path("shape").path("cols").asInt() > 0 && manifest.path("shape").path("rows").asInt() > 0)
         require(manifest.path("files").isArray && manifest.path("chunks").isArray)
+        require(manifest.path("partial").isBoolean && !manifest.path("partial").asBoolean())
+        require(manifest.path("inputFingerprint").path("region").isNull)
         require(identityHash(manifest, mapper) == bakeId)
         val entries = manifest.path("files").map { item ->
             require(item.path("bytes").isIntegralNumber)

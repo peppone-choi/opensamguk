@@ -158,7 +158,9 @@ class TopdownMapControllerTest {
         assertEquals(fixture.bakeId, service(fixture).binding(selected))
         Mockito.`when`(selected.artifactBytes("data/map/han-tiles.json")).thenReturn("reset-source".toByteArray())
         assertNull(service(fixture).binding(selected))
-        assertNull(service(fixture(partial = true)).binding(selected()))
+        val partial = fixture(partial = true)
+        assertNull(service(partial).binding(selected()))
+        assertNull(service(partial).asset(partial.bakeId, "manifest.json"))
     }
 
     @Test

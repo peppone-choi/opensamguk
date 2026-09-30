@@ -96,7 +96,7 @@ def make_repo(d: Path) -> dict:
                 juIndex=json.dumps(dict(byTerrainSha256={hashlib.sha256(raw).hexdigest(): ["사예"]}), ensure_ascii=False).encode(),
                 placements=json.dumps(dict(placements=[dict(cityId=5, to=[201, 151])])).encode(),
                 economy=json.dumps(dict(jurisdictions=[dict(cityId=3, households=5000)])).encode(),
-                roads=json.dumps(dict(edges=[])).encode(), dem=b"fixture DEM")
+                roads=json.dumps(dict(edges=[])).encode(), dem=b"fixture DEM", artifactCatalog=b"fixture catalog")
     paths = {}
     for k, b in docs.items():
         (d / f"{k}.json").write_bytes(b); paths[k] = d / f"{k}.json"
@@ -121,6 +121,9 @@ class BakeFixture(unittest.TestCase):
         manifest["inputFingerprint"] = dict(hanTilesSha256=B.sha256(cls.repo["hanTiles"].read_bytes()),
             worldJsonSha256=B.sha256(cls.repo["world"].read_bytes()), roadsSha256=B.sha256(cls.repo["roads"].read_bytes()),
             demSha256=B.sha256(cls.repo["dem"].read_bytes()),
+            economySha256=B.sha256(cls.repo["economy"].read_bytes()),
+            artifactCatalogSha256=B.sha256(cls.repo["artifactCatalog"].read_bytes()),
+            exportGeneratorSha256=B.sha256((B.ROOT / "tools/map/build_map_design.py").read_bytes()),
             designJsonSha256={"data/curated/han/map-design/fixture.json":B.sha256(cls.repo["placements"].read_bytes())})
         cls.repo["data/curated/han/map-design/fixture.json"] = cls.repo["placements"]
         path.write_text(json.dumps(manifest))
@@ -378,6 +381,20 @@ class IntegrityTest(BakeFixture):
         finally:
             path.write_bytes(original)
 
+    def test_economy_catalog_and_export_generator_drift_are_rejected(self):
+        path = self.root / "export/map-design-manifest.json"
+        original = path.read_bytes()
+        try:
+            for key, message in (("economySha256", "current economy"),
+                                 ("artifactCatalogSha256", "current artifactCatalog"),
+                                 ("exportGeneratorSha256", "export generator")):
+                manifest = json.loads(original); manifest["inputFingerprint"][key] = "0" * 64
+                path.write_text(json.dumps(manifest))
+                errors = B.check(self.root / "export", self.root / "kit", self.out, log=lambda *_: None, repo=self.repo)
+                self.assertTrue(any(message in error for error in errors), errors)
+        finally:
+            path.write_bytes(original)
+
 
 class PackagingTest(BakeFixture):
     def test_package_is_identical_idempotent_and_never_overwrites(self):
@@ -405,7 +422,9 @@ class PackagingTest(BakeFixture):
     def test_absent_published_artifacts_are_skipped_but_bad_present_artifacts_are_red(self):
         root = self.root / "bad-published"
         self.assertEqual(77, B.check_published(self.root / "export", self.root / "kit", root, log=lambda *_: None))
-        root.mkdir(); (root / "invalid-id").mkdir()
+        root.mkdir(); (root / ".topdown-stage-orphan").mkdir()
+        self.assertEqual(77, B.check_published(self.root / "export", self.root / "kit", root, log=lambda *_: None))
+        (root / "invalid-id").mkdir()
         self.assertEqual(1, B.check_published(self.root / "export", self.root / "kit", root, log=lambda *_: None))
 
 
