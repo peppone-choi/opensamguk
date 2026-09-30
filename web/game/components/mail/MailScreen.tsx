@@ -41,7 +41,9 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
     const [busyId, setBusyId] = useState<number | null>(null);
     const [notice, setNotice] = useState<MailOutcome | null>(null);
     const scope: MailScope = tab === 'requests' ? 'private' : tab;
-    const box = useMailbox(tab === 'requests' ? null : me, scope, refreshKey);
+    // 재야가 외교 칸만 연 경우처럼 남는 탭이 없으면 아무 서신함도 읽지 않는다(개인 서신으로 떨어지지 않게).
+    const none = tabs.length === 0;
+    const box = useMailbox(none || tab === 'requests' ? null : me, scope, refreshKey);
     const items = box.load.state === 'ready' ? box.load.items : [];
     const open = items.find((it) => it.id === openId) ?? null;
     // 외교 서신을 볼 권한이 없으면 서버가 모든 행을 가린다 — 목록 대신 한 줄(§3.7).
@@ -107,6 +109,14 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
             ) : null}
         </div>
     );
+
+    if (none) {
+        return (
+            <section className={styles.mail} data-variant={variant} aria-label="서신" data-testid="mail-screen">
+                <StatusView kind="empty" title={wanted.includes('diplomacy') ? '소속 세력이 없어 외교 서신이 없습니다' : '소속 세력이 없어 볼 서신함이 없습니다'} body="세력에 들어가면 이곳이 열립니다." />
+            </section>
+        );
+    }
 
     return (
         <section className={styles.mail} data-variant={variant} data-screen={screen} aria-label="서신" data-testid="mail-screen">
