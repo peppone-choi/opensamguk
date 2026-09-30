@@ -129,6 +129,43 @@ test.describe('탑다운 지도 시험 화면', () => {
     await expect(page.getByTestId('map-lab-hit')).toContainText('corps c1');
   });
 
+  test('WebGL2가 없으면 안내문과 천하 그림 한 장, 작은 지도는 없다', { tag: '@both' }, async ({ page }) => {
+    await page.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+        return type === 'webgl2' ? null : (original as (...a: unknown[]) => RenderingContext | null).call(this, type, ...rest);
+      } as typeof HTMLCanvasElement.prototype.getContext;
+    });
+    await serveFixture(page);
+    await page.goto(LAB);
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'unsupported', { timeout: 60_000 });
+    await expect(page.getByRole('status').filter({ hasText: '이 브라우저에서는 지도를 그릴 수 없습니다' })).toBeVisible();
+    const picture = page.getByRole('img', { name: '천하 지도(그림만)' });
+    await expect(picture).toBeVisible();
+    // 개관 격자(합성 굽기)를 1px 밉 색으로 칠한 그림: 합성 조각의 빨강 · 초록이 그림 안에 있다
+    const shot = await picture.screenshot();
+    const counts = await page.evaluate(async ({ png, red, green }) => {
+      const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bitmap, 0, 0);
+      const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+      const close = (i: number, c: number[]) => Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2]) < 36;
+      let r = 0;
+      let g = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (close(i, red)) r += 1;
+        else if (close(i, green)) g += 1;
+      }
+      return { r, g };
+    }, { png: shot.toString('base64'), red: RED, green: GREEN });
+    expect(counts.r, '빨강 화소').toBeGreaterThan(0);
+    expect(counts.g, '초록 화소').toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: /작은 지도/ })).toHaveCount(0);
+  });
+
   test('모바일: 탭으로 고르고 누를 것은 44px 이상', { tag: '@mobile-only' }, async ({ page }) => {
     const map = await openLab(page);
     const box = (await map.boundingBox())!;

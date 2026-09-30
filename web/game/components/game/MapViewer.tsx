@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { cityBadgeLabel, formatCompactMapTooltipMeta, WorldMapCanvas, isOwnedNationVisual, isUprisingNation, useWorldMap, worldProvincesUrl, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
+import { cityBadgeLabel, formatCompactMapTooltipMeta, WorldMapCanvas, isOwnedNationVisual, UNOWNED_NATION_NAME, isUprisingNation, useWorldMap, worldProvincesUrl, type IsoActivation, type IsoCityOverlay, type IsoCountyHover, type IsoHoverPoint, type InitialFocusProfile, sameStrategicBinding, type StrategicMapSnapshot, type StrategicMapRoute, type StrategicTopologyBinding, EmptyState, PlaceNameWithGloss } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { readServerCookie, useServerGameUrl } from '@/lib/serverGameUrl';
 import type { GameConstResponse, MapPreviewResponse, WorldMapResponse } from '@/lib/types';
@@ -11,7 +11,6 @@ import { buildVisibleCorps } from '@/lib/map-corps';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CommanderyNavigator } from '@/components/campaign/CommanderyNavigator';
 
-const NEUTRAL_NAME = '공백지';
 const DEFAULT_PHASES_PER_MONTH = 3;
 const DEFAULT_TURNS_PER_YEAR = 36;
 const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
@@ -308,7 +307,7 @@ export default function MapViewer({
     const tooltip = mapTitleTooltip(data.startYear, data.year, data.month, data.turnPhase ?? 1, gameConst);
     const legacyHoverOwnerName = hoverCounty?.nationName
         && (isOwnedNationVisual(hoverCounty.nationId, hoverCounty.nationColor)
-            || hoverCounty.nationName !== NEUTRAL_NAME)
+            || hoverCounty.nationName !== UNOWNED_NATION_NAME)
         ? hoverCounty.nationName : undefined;
     const displayedOwnerName = hoverCounty?.displayedOwnerNationName ?? legacyHoverOwnerName;
     const hoverMeta = formatCompactMapTooltipMeta({
