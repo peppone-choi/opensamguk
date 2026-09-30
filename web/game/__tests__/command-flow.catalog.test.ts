@@ -2,7 +2,16 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { FLOW_CATEGORIES, FLOW_COMMANDS, RENAMED, filterCommands, flowCommand, orderForPlace } from '@/lib/command-flow/catalog';
+import { FLOW_CATEGORIES, FLOW_COMMANDS, filterCommands, flowCommand, orderForPlace } from '@/lib/command-flow/catalog';
+
+/**
+ * 사용자 승인(2026-09-30)으로 화면 이름만 바꾼 명령 — 원장 displayName(C1이 고친다) → 화면 이름.
+ * 원장이 고쳐지면 이 표에서 지운다. 옛 이름은 쓰지 않는 말이라 화면 코드(찾기 별칭 포함)에 두지 않는다.
+ */
+const RENAMED: Readonly<Record<string, { from: string; to: string }>> = {
+    'action.convertProficiency': { from: '숙련전환', to: '병종 바꿔 익히기' },
+    'action.tradeGrain': { from: '군량매매', to: '쌀 사고팔기' },
+};
 
 interface CatalogRow { inputId: string; kind: string; displayName?: string; deliveryState: string }
 const catalog: CatalogRow[] = JSON.parse(readFileSync(resolve(__dirname, '../../../data/commands/input-catalog.json'), 'utf-8')).inputs;
@@ -47,7 +56,8 @@ describe('분류 · 찾기', () => {
         expect(filterCommands('전체', '출병').map(c => c.inputId)).toEqual(['action.deploy']);
         expect(filterCommands('전체', 'ㅊㅂ').map(c => c.inputId)).toContain('action.deploy');
         expect(filterCommands('전체', '임관').map(c => c.inputId)).toEqual(['action.enlist']);
-        expect(filterCommands('전체', '군량매매').map(c => c.inputId)).toEqual(['action.tradeGrain']);
+        expect(filterCommands('전체', '쌀').map(c => c.inputId)).toContain('action.tradeGrain');
+        expect(filterCommands('전체', '군량매매')).toEqual([]);
         expect(filterCommands('이동', '출병')).toEqual([]);
     });
 

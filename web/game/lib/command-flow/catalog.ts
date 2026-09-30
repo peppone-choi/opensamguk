@@ -4,7 +4,8 @@
 // 생기기 전까지 화면은 이 표로 목록을 그린다. 원장과 어긋나면 `__tests__/command-flow.catalog.test.ts`가 깨진다
 // (행 수 · 전달 상태 · 표시 이름). 분류 · 한 줄 효과 · 인자 종류는 화면 사전이다(K6 설계서 §2.1).
 //
-// 이름: 원장 displayName을 쓴다. 2026-09-30 사용자 승인으로 바꾼 두 이름만 예외다(RENAMED) — 원장은 C1이 고친다.
+// 이름: 원장 displayName을 쓴다. 2026-09-30 사용자 승인으로 바꾼 두 이름(쌀 사고팔기 · 병종 바꿔 익히기)만 예외다 —
+// 원장은 C1이 고친다. 대조표는 __tests__/command-flow.catalog.test.ts(옛 이름은 쓰지 않는 말이라 화면 코드에 두지 않는다).
 import { matchesQuery, toChosung } from '../chosung';
 import { INPUT_DELIVERY, type DeliveryState } from '../input-delivery.generated';
 
@@ -32,12 +33,6 @@ export interface FlowCommand {
     /** 찾기 별칭 — 옛 이름 · 흔한 말. 원장에 삼모 역참조를 넣지 않으므로 화면 사전으로 둔다. */
     readonly aliases?: readonly string[];
 }
-
-/** 사용자 승인(2026-09-30)으로 바꾼 표시 이름. 원장 displayName → 화면 이름. */
-export const RENAMED: Readonly<Record<string, { from: string; to: string }>> = {
-    'action.convertProficiency': { from: '숙련전환', to: '병종 바꿔 익히기' },
-    'action.tradeGrain': { from: '군량매매', to: '쌀 사고팔기' },
-};
 
 const C = (
     inputId: string, name: string, category: FlowCategory, blurb: string, args: readonly ArgKind[],
@@ -79,7 +74,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
     C('action.selfTrain', '단련', '개인', '한 능력을 단련한다', ['choice']),
     C('action.recuperate', '요양', '개인', '부상과 피로를 회복한다', []),
     C('action.retire', '은퇴', '개인', '물러나고 부를 승계한다', ['person']),
-    C('action.convertProficiency', '병종 바꿔 익히기', '개인', '부곡의 병종을 바꿔 익힌다', ['choice'], ['숙련전환']),
+    C('action.convertProficiency', '병종 바꿔 익히기', '개인', '부곡의 병종을 바꿔 익힌다', ['choice']),
     // 나라 8
     C('action.enlist', '출사', '나라', '섬길 주공을 정한다', ['choice'], ['임관']),
     C('action.resign', '하야', '나라', '섬기던 주공을 떠난다', []),
@@ -92,7 +87,7 @@ export const FLOW_COMMANDS: readonly FlowCommand[] = [
     // 물자 5
     C('action.gift', '증여', '물자', '내 금 · 쌀을 다른 장수에게 준다', ['person', 'resource', 'amount']),
     C('action.donate', '헌납', '물자', '내 금 · 쌀을 나라에 바친다', ['resource', 'amount']),
-    C('action.tradeGrain', '쌀 사고팔기', '물자', '금과 쌀을 바꾼다', ['choice'], ['군량매매']),
+    C('action.tradeGrain', '쌀 사고팔기', '물자', '금과 쌀을 바꾼다', ['choice']),
     C('action.tradeEquipment', '장비매매', '물자', '보물을 사고판다', ['choice']),
     C('action.transport', '물자조달', '물자', '이웃 현으로 물자를 나른다', ['choice', 'amount']),
 ];

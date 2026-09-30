@@ -84,7 +84,7 @@ describe('URL', () => {
     it('?do · slot · target 을 읽고 모르는 값은 버린다', () => {
         const q = parseFlowQuery(new URLSearchParams('do=action.deploy&slot=4&target=province:P-1203'));
         expect(q).toEqual({ open: true, inputId: 'action.deploy', slot: 3, target: { kind: 'province', id: 'P-1203' } });
-        const bad = parseFlowQuery(new URLSearchParams('do=che_징병&slot=13&target=city:1'));
+        const bad = parseFlowQuery(new URLSearchParams('do=없는.명령&slot=13&target=city:1'));
         expect(bad).toEqual({ open: true, inputId: null, slot: null, target: null });
         expect(parseFlowQuery(new URLSearchParams('x=1')).open).toBe(false);
         expect(parseTarget('general:<script>')).toBeNull();

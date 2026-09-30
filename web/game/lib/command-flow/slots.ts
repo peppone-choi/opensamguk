@@ -1,4 +1,4 @@
-// 순 띠(TurnStrip) 모델 — 지금은 `GET /api/reserved-commands`(삼모 CommandRegistry 기반, 계약판 K4-02
+// 순 띠(TurnStrip) 모델 — 지금은 `GET /api/reserved-commands`(옛 명령 등록부 기반, 계약판 K4-02
 // `turn-slots`가 오면 바꾼다)를 12칸으로 편다. 서버가 안 준 값(월 · 순 · 시각)은 지어내지 않는다 — null.
 import type { ReservedCommandsResponse, ReservedSlot } from '../types';
 import { flowCommand } from './catalog';
