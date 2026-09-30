@@ -23,7 +23,7 @@ TEMPLATE_PATH = REPO / "infra/src/main/resources/scenario/scenario_990002.json"
 OUTPUT_PATH = REPO / "infra/src/main/resources/scenario/scenario_3190.json"
 # 창고 템플릿(scenario_990002)의 위상 핀. 2026-09-27 부터 1428 판(4배 격자)이다 — 그전엔 1447-map4
 # (eaf06460f978cbfb16a08cbaa65edf6ba71bc82cd12426a7a823baaba847db14).
-TEMPLATE_TOPOLOGY_HASH = "e5e6dc09b45b910b1779c4a7931f037028cacb9dacd8b4f64f05b12a4e009fb7"
+TEMPLATE_TOPOLOGY_HASH = "2c8c731e90f7ca2050f216506fb06dcba0ceffe3d249e5b1551cdf0a7dd9f52a"
 
 
 def promote(source_bytes: bytes, template: dict, map_cities: set[int]) -> dict:
