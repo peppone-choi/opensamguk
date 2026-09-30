@@ -441,7 +441,8 @@ def iso_px(kind, r, c, s=1.0, ox=0, oy=0):
     return int(((r + c) * 8 + x0 + 8) * s + ox), int(((r - c) * 4 + y0) * s + oy)
 
 
-def diamond(x, y, s, stroke, dash='', fill='none', width=2, grow=2.0):
+def diamond(x, y, s, stroke, dash='', fill='none', width=2, grow=None):
+    grow = grow if grow is not None else (2.0 if s < 2 else 1.0)  # 작게 볼 때만 부풀린다 — 크게 볼 때는 칸 크기 그대로
     hw, hh = 8 * s * grow, 4 * s * grow
     d = f' stroke-dasharray="{dash}"' if dash else ''
     return f'<polygon points="{x - hw:.0f},{y:.0f} {x:.0f},{y - hh:.0f} {x + hw:.0f},{y:.0f} {x:.0f},{y + hh:.0f}" stroke="{stroke}" stroke-width="{width}"{d} fill="{fill}"></polygon>'
@@ -483,21 +484,23 @@ def unit_sprite(kind, side, k=1):
             f'<img src="{src}" alt="" style="position:absolute;left:{-UNIT_COL[kind] * w}px;top:{-UNIT_ROW[side] * w}px;width:{160 * k}px;height:{64 * k}px;max-width:none;image-rendering:pixelated"></span>')
 
 
-def unit_sprite_btn(x, y, kind, ch, side, label, ai=False, sel=False, est=False):
+def unit_sprite_btn(x, y, kind, ch, side, label, ai=False, sel=False, est=False, k=1):
     """원작 유닛 그림(발끝 = 칸 자리) + 머리 위 작은 깃발(장수 첫 글자 · 세력색). 누름 상자 44 × 52."""
     col = SIDE_COLOR[side]
     dash = ' stroke-dasharray="2 2"' if est else ''
-    flag = (f'<svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true" style="display:block"><path d="M2 0v14" stroke="#1b201d" stroke-width="1.5"></path>'
+    fw, fh = (20, 14) if k == 1 else (30, 21)
+    flag = (f'<svg width="{fw}" height="{fh}" viewBox="0 0 20 14" aria-hidden="true" style="display:block"><path d="M2 0v14" stroke="#1b201d" stroke-width="1.5"></path>'
             f'<path d="M3 1h15l-4 5 4 5H3z" fill="{col}" stroke="{"#ffd36d" if sel else "#0c0f0e"}" stroke-width="{1.5 if sel else 1}"{dash}></path>'
             f'<text x="9" y="9" text-anchor="middle" font-family="Noto Serif KR,serif" font-weight="900" font-size="8" fill="#fff">{ch}</text></svg>')
-    body = unit_sprite(kind, side) if kind else '<span aria-hidden="true" style="display:block;width:32px;height:32px"></span>'
+    body = unit_sprite(kind, side, k) if kind else f'<span aria-hidden="true" style="display:block;width:{32 * k}px;height:{32 * k}px"></span>'
     badge = ('<span style="position:absolute;right:-4px;top:-4px;height:14px;padding:0 3px;font-size:9px;font-weight:700;line-height:14px;color:#161410;background:#b9b2a3">AI</span>'
              if ai else '')
-    return (f'<button type="button" aria-label="{label}" aria-pressed="{"true" if sel else "false"}" style="position:absolute;left:{x - 22}px;top:{y - 52}px;width:44px;height:52px;padding:0;'
+    bw, bh = max(44, 32 * k), 32 * k + fh + 2
+    return (f'<button type="button" aria-label="{label}" aria-pressed="{"true" if sel else "false"}" style="position:absolute;left:{x - bw // 2}px;top:{y - bh}px;width:{bw}px;height:{bh}px;padding:0;'
             f'border:0;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px">{flag}{body}{badge}</button>')
 
 
-def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=False, fog=None, extra='', sprite_kind=None):
+def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=False, fog=None, extra='', sprite_kind=None, sprite_k=1):
     """아이소 판 한 장 — 보는 창(vw × vh) 안에 그림을 s 배로 놓고 ox · oy 만큼 민다. units = (r, c, 글자, 편, 이름표, ai, sel, est),
     marks = (r, c, kind, 글) — kind: sel(고른 분대 칸) · rally(집결점) · target(목표). small = 판 전체 보기(표지는 점, 누르지 않음)."""
     key, W, H, _, _, alt = ISO[kind]
@@ -520,8 +523,8 @@ def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=Fals
         x, y = iso_px(kind, r, c, s, ox, oy)
         if small:
             ulay += unit_dot(x, y, side, sel)
-        elif sprite_kind and 22 <= x <= vw - 23 and 52 <= y <= vh - 5:
-            ulay += unit_sprite_btn(x, y, sprite_kind.get(label), ch, side, label, ai, sel, est)
+        elif sprite_kind and 16 * sprite_k + 6 <= x <= vw - 16 * sprite_k - 7 and 32 * sprite_k + 24 <= y <= vh - 5:
+            ulay += unit_sprite_btn(x, y, sprite_kind.get(label), ch, side, label, ai, sel, est, sprite_k)
         elif not sprite_kind and 22 <= x <= vw - 23 and 40 <= y <= vh - 5:  # 누름 상자(44)가 보는 창 안에 다 들어올 때만 — 창 밖 분대는 작은 판 · 가장자리로 본다
             ulay += unit_btn(x, y, ch, side, label, ai, sel, est)
     if gate and not small:
@@ -749,12 +752,43 @@ FIELD_KIND = {'선봉 허저 — 조작 나': 'inf', '중앙 하후돈 — 조�
 SIEGE_KIND = {'중앙 하후돈 — 조작 나, 성 안': 'general', '좌익 이전 — 조작 AI': 'archer', '[적] 분대 — 다리 앞': 'inf', '[적] 분대 — 길 위': 'cav'}
 
 
+# B안 데스크톱은 원작 2배가 기본(K0 2026-09-30: 원작은 640×400을 화면 가득 봤다 — 지금 화면에서 「원작처럼」은 2배, 사용자 「크게크게 시원하게」).
+# 절반 그림 기준 4배 = 원작 2배 → 유닛 64px. 「−」로 1배 · 전체 보기. 한 창(736 × 740)에 들도록 예시 칸을 가깝게 둔다.
+FIELD_UNITS_B = [(34, 15, '허', 'me', '선봉 허저 — 조작 나', False, True, False), (34, 6, '하', 'me', '중앙 하후돈 — 조작 나', False, False, False),
+                 (25, 10, '이', 'me', '좌익 이전 — 조작 AI', True, False, False), (36, 19, '적', 'enemy', '[적] 선봉 — 기병', False, False, False)]
+B_S, B_OX, B_OY = 4.0, -1136, -1106
+
+
 def live_board_units():
-    s, ox, oy = 2.0, -560, -330  # 절반 그림의 2배 = 원작 1:1 — 유닛 32px 가 원작 크기로 보인다
-    marks = [(34, 15, 'sel', ''), (35, 23, 'rally', '1'), (37, 32, 'target', '')]
-    mini = board_mini('field', 200, -ox / s, -oy / s, 736 / s, 740 / s, FIELD_UNITS)
-    tag = ('<span class="chip bronze" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">B안 — 원작 유닛 그림 + 머리 위 깃발 · 원작 1:1</span>')
-    return iso_board('field', 736, 740, s, ox, oy, FIELD_UNITS, marks, extra=mini + board_zoom() + tag, sprite_kind=FIELD_KIND)
+    s, ox, oy = B_S, B_OX, B_OY
+    marks = [(34, 15, 'sel', ''), (35, 18, 'rally', '1'), (36, 19, 'target', '')]
+    mini = board_mini('field', 200, -ox / s, -oy / s, 736 / s, 740 / s, FIELD_UNITS_B)
+    tag = ('<span class="chip bronze" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">B안 — 원작 유닛 · 원작 2배(기본)</span>')
+    zoomlab = ('<span class="chip" style="position:absolute;right:10px;bottom:176px;background:rgba(20,24,22,.94)">2배 · 「−」 1배 · 「전체」 판 전체</span>')
+    return iso_board('field', 736, 740, s, ox, oy, FIELD_UNITS_B, marks, extra=mini + board_zoom() + zoomlab + tag, sprite_kind=FIELD_KIND, sprite_k=2)
+
+
+def ab_cells(variant):
+    """비교 칸 — 같은 네 분대를 판 위 제 자리 그림 조각(원작 2배) 위에. variant = 'A'(깃발) · 'B'(유닛 + 작은 깃발). 누르지 않는 그림."""
+    out = ''
+    for r, c, ch, side, label, ai, sel, est in FIELD_UNITS_B:
+        x, y = iso_px('field', r, c, B_S, 0, 0)
+        bg = mapimg('battle_field', int(1024 * B_S), int(544 * B_S), '', -(x - 32), -(y - 70))
+        if variant == 'A':
+            col = SIDE_COLOR[side]
+            tok = (f'<svg width="30" height="26" viewBox="0 0 30 26" aria-hidden="true" style="position:absolute;left:18px;top:44px"><path d="M3 1v24" stroke="#1b201d" stroke-width="2"></path>'
+                   f'<path d="M4 2h24l-6 7 6 7H4z" fill="{col}" stroke="#0c0f0e" stroke-width="1"></path>'
+                   f'<text x="13" y="13" text-anchor="middle" font-family="Noto Serif KR,serif" font-weight="900" font-size="11" fill="#fff">{ch}</text></svg>')
+        else:
+            fl = (f'<svg width="30" height="21" viewBox="0 0 20 14" aria-hidden="true" style="position:absolute;left:18px;top:0"><path d="M2 0v14" stroke="#1b201d" stroke-width="1.5"></path>'
+                  f'<path d="M3 1h15l-4 5 4 5H3z" fill="{SIDE_COLOR[side]}" stroke="#0c0f0e" stroke-width="1"></path>'
+                  f'<text x="9" y="9" text-anchor="middle" font-family="Noto Serif KR,serif" font-weight="900" font-size="8" fill="#fff">{ch}</text></svg>')
+            tok = fl + f'<span style="position:absolute;left:0;top:6px">{unit_sprite(FIELD_KIND.get(label), side, 2)}</span>'
+        name = label.split(' — ')[0].replace('[적] ', '적 ')
+        out += (f'<figure style="margin:0;display:flex;flex-direction:column;align-items:center;gap:2px">'
+                f'<div aria-hidden="true" style="position:relative;width:64px;height:72px;overflow:hidden;border:1px solid #3d4740">{bg}{tok}</div>'
+                f'<figcaption class="t2" style="font-size:10.5px;white-space:nowrap">{name}</figcaption></figure>')
+    return f'<div style="display:flex;gap:4px;justify-content:space-between">{out}</div>'
 
 
 def board_battlelive_units():
@@ -767,12 +801,13 @@ def board_battlelive_units():
     left = (f'<section class="panel" style="width:300px;flex-shrink:0">{sec("우리 분대", "숫자키 1–6 · 누르면 고른다")}'
             f'<div style="padding:8px;display:flex;flex-direction:column;gap:6px">{squads}'
             f'<div style="border:1px dashed #3d4740;padding:8px 10px;font-size:12px" class="muted">좌비 · 우익 · 우비 — 빈 자리</div></div></section>')
-    compare = ('<ul class="ul" style="padding:4px 12px">'
-               '<li><b>A안(깃발)</b> — 전략 지도 · 리플레이와 같은 표기. 세력 · 장수가 한눈에. 병종은 분대 카드 글자로.</li>'
-               '<li><b>B안(원작 유닛)</b> — 원작 그림 그대로, 세력색은 역할층으로 칠함(원본 대조 99.1%). 병종이 그림으로 보인다.</li>'
-               '<li><b>B안 한계</b> — 보병은 몇 픽셀이라 숲 위에서 구분이 약하다 → 머리 위 작은 깃발(장수 첫 글자)로 보완.</li></ul>')
+    compare = (f'<div style="padding:8px 10px;display:flex;flex-direction:column;gap:6px">'
+               f'<span class="bz" style="font-size:12px;font-weight:700">A — 깃발</span>{ab_cells("A")}'
+               f'<span class="t2" style="font-size:11.5px">세력 · 장수가 먼저 보인다 — 전략 지도와 같은 표기</span>'
+               f'<span class="bz" style="font-size:12px;font-weight:700;margin-top:4px">B — 원작 유닛 + 작은 깃발</span>{ab_cells("B")}'
+               f'<span class="t2" style="font-size:11.5px">병종이 그림으로 보인다 — 보병은 작아 깃발로 보완</span></div>')
     right = (f'<div style="width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;min-height:0">'
-             f'<section class="panel">{sec("A안 · B안", "사용자 선택 — K0 추천 B")}{compare}</section>'
+             f'<section class="panel">{sec("A · B — 같은 2배", "사용자 선택 · K0 추천 B")}{compare}</section>'
              f'<section class="panel" style="flex-grow:1;min-height:0">{sec("사건", "")}<ul class="ul" style="padding:4px 12px">'
              f'<li><span class="mono muted">3:12</span> 적 선봉이 좌익에 닿았다</li><li><span class="mono muted">3:20</span> <b>명령 받음</b> — 허저 돌격</li>'
              f'<li><span class="mono muted">3:31</span> <span class="rs">명령 거절</span> — 이전 공격: 사기가 낮아 물러나는 중</li></ul></section></div>')
