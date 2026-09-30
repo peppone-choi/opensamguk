@@ -35,3 +35,13 @@ test('보루 후보 — 도로가 난 접경의 이 현 쪽 칸, 이미 보루�
     expect(candidateBody(null)).toBeNull();
     expect(candidateBody('weird')).toBeNull();
 });
+
+test('이름을 못 풀어 겹치면 순번으로 가른다(내부 id 없이)', () => {
+    const r: RoadForts = { status: 'READY', roadMode: true, forts: [], gates: [
+        { edgeId: 'e7', fromProvinceId: 'p-a', toProvinceId: 'p-q', active: false, buildable: true, historicalRouteIds: [], fortCells: [] },
+        { edgeId: 'e8', fromProvinceId: 'p-a', toProvinceId: 'p-r', active: false, buildable: true, historicalRouteIds: [], fortCells: [] },
+    ] };
+    const c = roadCandidates(r, { provinceIds: ['p-a'] }, () => null);
+    expect(c.map((x) => x.name)).toEqual([`${UNKNOWN_PROVINCE} ↔ ${UNKNOWN_PROVINCE} 접경 1`, `${UNKNOWN_PROVINCE} ↔ ${UNKNOWN_PROVINCE} 접경 2`]);
+    expect(c.map((x) => x.name).join(' ')).not.toContain('e7');
+});

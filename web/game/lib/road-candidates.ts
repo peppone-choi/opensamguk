@@ -20,17 +20,33 @@ function edgeName(gate: RoadForts['gates'][number], county: Pick<CountyWorks, 'p
     return `${name(here) ?? UNKNOWN_PROVINCE} ↔ ${name(there) ?? UNKNOWN_PROVINCE} 접경`;
 }
 
+/**
+ * 이름을 못 풀어 같은 이름이 된 후보끼리 가를 수 있게, 겹치는 이름에만 순번을 붙인다(「… 접경 1」 · 「… 접경 2」).
+ * 방향(북 · 동 · 남 · 서)은 구역 중심 좌표가 있어야 해서 지금은 쓰지 않는다. 내부 id 는 여전히 싣지 않는다.
+ */
+function numberDuplicates(list: TargetCandidate[]): TargetCandidate[] {
+    const total = new Map<string, number>();
+    for (const c of list) total.set(c.name, (total.get(c.name) ?? 0) + 1);
+    const seen = new Map<string, number>();
+    return list.map((c) => {
+        if ((total.get(c.name) ?? 0) < 2) return c;
+        const n = (seen.get(c.name) ?? 0) + 1;
+        seen.set(c.name, n);
+        return { ...c, name: `${c.name} ${n}` };
+    });
+}
+
 export function roadCandidates(roads: RoadForts, county: Pick<CountyWorks, 'provinceIds'>, name: Namer): TargetCandidate[] {
-    return roads.gates
+    return numberDuplicates(roads.gates
         .filter((g) => county.provinceIds.includes(g.fromProvinceId) || county.provinceIds.includes(g.toProvinceId))
         .map((g) => {
             const reason = g.active ? '이미 도로가 난 접경입니다.' : !g.buildable ? '도로를 낼 수 없는 접경입니다.' : undefined;
-            return { targetKind: 'place', targetId: `road|${g.edgeId}`, name: edgeName(g, county, name), available: reason == null, reason };
-        });
+            return { targetKind: 'place' as const, targetId: `road|${g.edgeId}`, name: edgeName(g, county, name), available: reason == null, reason };
+        }));
 }
 
 export function fortCandidates(roads: RoadForts, county: Pick<CountyWorks, 'provinceIds'>, name: Namer): TargetCandidate[] {
-    return roads.gates.filter((g) => g.active).flatMap((g) => {
+    return numberDuplicates(roads.gates.filter((g) => g.active).flatMap((g) => {
         const cells = g.fortCells.filter((c) => county.provinceIds.includes(c.provinceId));
         return cells.map((c, i) => {
             const taken = roads.forts.some((f) => f.row === c.row && f.col === c.col);
@@ -42,7 +58,7 @@ export function fortCandidates(roads: RoadForts, county: Pick<CountyWorks, 'prov
                 reason: taken ? '이미 보루가 있는 길목입니다.' : undefined,
             };
         });
-    });
+    }));
 }
 
 /** 고른 후보 → 공사 입력의 더할 인자(`{edgeId}` · `{edgeId, row, col}`). 모르는 모양이면 null. */
