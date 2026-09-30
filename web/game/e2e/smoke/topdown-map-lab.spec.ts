@@ -42,7 +42,8 @@ async function openLab(page: Page) {
   await serveFixture(page);
   await page.goto(LAB);
   const map = page.locator('[data-map-renderer="topdown"]');
-  await expect(map).toHaveAttribute('data-map-status', 'ready');
+  // 개발 서버는 첫 요청에 화면을 컴파일한다(20초 넘게 걸릴 수 있다)
+  await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
   await page.waitForTimeout(300);
   return map;
 }
