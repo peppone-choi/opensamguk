@@ -129,7 +129,13 @@ class ReadIdentitySecurityChainTest {
         resolve()
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "본국", gold = 321,
             rice = 654, meta = mapOf("spy" to mapOf("5" to 2)))))
-        `when`(generals.findById(202)).thenReturn(Optional.of(GeneralReadEntity(id = 202, name = "타인 비밀", nationId = 2, cityId = 5)))
+        val foreign = GeneralReadEntity(id = 202, name = "타인 비밀", nationId = 2, cityId = 5, crew = 999,
+            troopId = 202, turnTime = Instant.EPOCH)
+        `when`(generals.findById(202)).thenReturn(Optional.of(foreign))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(202)).thenReturn(listOf(foreign))
+        `when`(troops.findAll()).thenReturn(listOf(TroopReadEntity(troopLeader = 202, nation = 2, name = "타국 부대")))
+        `when`(posts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(listOf(BoardPostReadEntity(
+            id = 2, nationId = 2, title = "타국 비밀", contentHtml = "타국 작전")))
         `when`(cities.findById(1)).thenReturn(Optional.of(CityReadEntity(id = 1, nationId = 1, population = 1234)))
         `when`(cities.findById(5)).thenReturn(Optional.of(CityReadEntity(id = 5, nationId = 2, population = 9876)))
         `when`(cities.findById(6)).thenReturn(Optional.of(CityReadEntity(id = 6, nationId = 2, population = 8888)))
