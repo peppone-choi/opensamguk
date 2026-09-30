@@ -11,7 +11,7 @@ from v31system import *  # noqa: F401,F403
 from v31system import (P, DESK_PX, MOB_PX, CELLS, HERE, TURNS, TURN_WORD, HAVE_ASSETS, sec, kv, icon, res,
                        page31, shell_desk, shell_mob, pagehead, btn, btn_off, ibtn, chip, why_tag, search, seg, opt,
                        sheet, pop, toast, help_strip, band, state_empty, state_error, state_waiting, _state,
-                       mapimg, mlab, me_marker, view_bar, tabbar31, portrait)
+                       mapimg, mlab, me_marker, view_bar, tabbar31, portrait, cmd_label, CARD_RENAME)
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..'))
 
@@ -41,8 +41,19 @@ def topic(iid):
     return TOP[CAT[iid]['helpTopicId']]
 
 
+# 도움말 본문 속 옛 이름(K0 3.1.2 규칙) — 저장소 글이 고쳐지면(U5) 이 표를 지운다.
+OLD_WORDS = [('숙련전환', '병종 바꿔 익히기'), ('군량매매', '쌀 사고팔기'), *CARD_RENAME.items(), ('군량', '쌀')]
+
+
+def say(text):
+    for a, b in OLD_WORDS:
+        text = text.replace(a, b)
+    return text
+
+
 def nm(iid):
-    return CAT[iid].get('displayName') or topic(iid)['title']
+    """명령 이름 — 원장 displayName(없으면 주제 제목), 옛 말은 cmd_label 로 새 이름 + 「이름 승인 대기」."""
+    return cmd_label(iid, CAT[iid].get('displayName') or topic(iid)['title'])
 
 
 def when(iid):
@@ -84,7 +95,7 @@ def trow(iid, h=52, sel=False):
     """도움말 목록 한 줄 — 입력 이름 · 설명 한 줄 · 초안 / 준비 중."""
     end = chip('준비 중', 'rust') if CAT[iid]['deliveryState'] == 'PLANNED' else ''
     end += chip('초안', 'info') if topic(iid)['reviewState'] == 'DRAFT' else ''
-    return opt(nm(iid), topic(iid)['sections']['explanation'], end, sel=sel, h=h)
+    return opt(nm(iid), say(topic(iid)['sections']['explanation']), end, sel=sel, h=h)
 
 
 def ghead(t, sub=''):
@@ -141,7 +152,7 @@ def okno(iid, stacked=False):
     box = lambda c, t, x: (f'<div style="flex:1 1 0;min-width:0;border:1px solid {c};padding:8px 10px;display:flex;flex-direction:column;gap:3px">'  # noqa: E731
                            f'<span style="font-size:11.5px;font-weight:700;color:{c}">{t}</span><span class="t2" style="font-size:12px;line-height:1.45">{x}</span></div>')
     return (f'<div style="display:flex;flex-direction:{"column" if stacked else "row"};gap:8px;flex-shrink:0">'
-            f'{box("#8fa77a", "잘 되면", s["successExample"])}{box("#e08a7c", "안 되면", s["failureExample"])}</div>')
+            f'{box("#8fa77a", "잘 되면", say(s["successExample"]))}{box("#e08a7c", "안 되면", say(s["failureExample"]))}</div>')
 
 
 def rules(iid, compact=False):
@@ -165,7 +176,7 @@ def fails(iid, show=4, open_=True, hi=None):
     if hi and hi in codes and hi not in pick:
         pick = [hi] + pick[:show - 1]
     rows = ''.join(f'<button type="button" class="opt" style="min-height:44px;font-size:12.5px;{"background:rgba(201,107,93,.10);box-shadow:inset 3px 0 0 #c96b5d" if c == hi else ""}">'
-                   f'<span style="min-width:0">{FR[c]["explanation"]}</span><span class="end">{icon("next", 14, "#8a8477")}</span></button>' for c in pick)
+                   f'<span style="min-width:0">{say(FR[c]["explanation"])}</span><span class="end">{icon("next", 14, "#8a8477")}</span></button>' for c in pick)
     return (f'<div style="display:flex;flex-direction:column">{headb}<div role="list" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{rows}</div>'
             f'<span class="muted" style="font-size:11.5px;padding:6px 0 0">{len(codes) - len(pick)}가지 더 — 누르면 설명과 다시 하는 법</span></div>')
 
@@ -174,7 +185,7 @@ def topic_body(iid, mobile=False, fails_open=True, show=4, hi=None, go=True):
     t = topic(iid)
     s = t['sections']
     planned = CAT[iid]['deliveryState'] == 'PLANNED'
-    head = (f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0"><h3 class="serif" style="margin:0;font-size:20px;font-weight:900">{t["title"]}</h3>'
+    head = (f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0"><h3 class="serif" style="margin:0;font-size:20px;font-weight:900">{cmd_label(iid, t["title"])}</h3>'
             f'{chip(KIND[CAT[iid]["kind"]])}{chip("초안", "info") if t["reviewState"] == "DRAFT" else ""}{chip("준비 중", "rust") if planned else ""}</div>')
     note = ('<span class="rs" style="font-size:12px">아직 준비 중인 명령입니다. 설명만 볼 수 있습니다.</span>' if planned
             else '<span class="muted" style="font-size:11.5px">초안 — 아직 검수 전인 설명입니다.</span>')
@@ -182,8 +193,8 @@ def topic_body(iid, mobile=False, fails_open=True, show=4, hi=None, go=True):
              else btn('이 명령 하러 가기', 'primary', 'next', style='width:100%', attrs=f'data-input-id="{iid}"'))
     g = 6 if mobile else 10
     body = (f'<div style="padding:12px;display:flex;flex-direction:column;gap:{g}px;min-height:0">{head}{note}'
-            f'{para("설명", s["explanation"])}{para("이렇게 합니다", s["example"])}{okno(iid, stacked=mobile)}'
-            f'{para("다시 하려면", s["recoveryAdvice"])}{rules(iid, compact=mobile)}{fails(iid, show, fails_open, hi)}</div>')
+            f'{para("설명", say(s["explanation"]))}{para("이렇게 합니다", say(s["example"]))}{okno(iid, stacked=mobile)}'
+            f'{para("다시 하려면", say(s["recoveryAdvice"]))}{rules(iid, compact=mobile)}{fails(iid, show, fails_open, hi)}</div>')
     if go:
         body += f'<div style="margin-top:auto;padding:8px 12px 12px;border-top:1px solid #2c342f;flex-shrink:0">{goact}</div>'
     return body
@@ -211,8 +222,13 @@ def desk_map(w, ox=100, label='지도'):
     labs = ''.join(mlab(n, DESK_PX(*CELLS[n])[0] - ox, DESK_PX(*CELLS[n])[1] + 26, dim=False)
                    for n in ('장사현', '영양현', '신정현', '영음현', '번창현') if 40 < DESK_PX(*CELLS[n])[0] - ox < w - 40)
     return (f'<main aria-label="{label}" style="position:relative;width:{w}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
-            f'{mapimg("desk", 1048, 952, "영천 일대 지도 — 현 보기", -ox, 0)}{labs}{me_marker(hx - ox, hy - 22, "in")}'
+            f'{mapimg("desk", 1048, 952, "영천 일대 지도 — 현 보기", -ox, 0)}{deco(labs)}{me_marker(hx - ox, hy - 22, "in")}'
             f'{view_bar(style="left:12px;bottom:12px")}</main>')
+
+
+def deco(inner):
+    """장식 층(이름표 · 어둡게) — 누르기를 먹지 않는다(3.1.2 「덮지 않기」). 표식은 이 층 뒤에 그려 맨 위."""
+    return f'<div aria-hidden="true" style="position:absolute;inset:0;pointer-events:none">{inner}</div>'
 
 
 def coach_ring(inner, block=False):
@@ -310,7 +326,7 @@ def board_help_search():
             hits.append((sect, t['id'], t))
     hits.sort(key=lambda h: ({'title': 0, 'explanation': 1, 'example': 2}[h[0]], h[1]))
     word = {'title': '제목', 'explanation': '설명', 'example': '예'}
-    rows = ''.join(opt(t['title'], t['sections']['example'] if sect == 'example' else t['sections']['explanation'],
+    rows = ''.join(opt(say(t['title']), say(t['sections']['example'] if sect == 'example' else t['sections']['explanation']),
                        chip(word[sect]) + chip('초안', 'info'), h=60) for sect, _, t in hits[:9])
     left = (f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("찾기", "제목 → 설명 → 예 순서")}'
             f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px">{search("도움말 찾기 — 두 글자 이상", q)}'
@@ -344,7 +360,7 @@ def board_mhelp():
     body = (f'<div style="height:60px;flex-shrink:0;padding:8px 12px">{search("도움말 찾기 — 두 글자 이상")}</div>'
             f'<div style="height:52px;flex-shrink:0;padding:0 12px 8px">{seg(["이 화면", "분류", "첫걸음"], "이 화면", "도움말 보기", style="width:100%")}</div>'
             f'<div style="display:flex;flex-direction:column;min-height:0;overflow:hidden">{home_body(rows=5, mobile=True)}</div>')
-    main = (f'<main style="position:relative;height:724px;flex-shrink:0;overflow:hidden">{mob_map_bg()}<div class="dim"></div>'
+    main = (f'<main style="position:relative;height:724px;flex-shrink:0;overflow:hidden">{mob_map_bg()}<div class="dim" style="pointer-events:none"></div>'
             f'{sheet("도움말", body, top=0)}</main>')
     page31('V31K7MHelp.dc.html', 'K7 도움말 시트 — 이 화면(모바일)', shell_mob(main, 'war'), w=390, h=844)
 
@@ -357,7 +373,7 @@ def board_mhelp_topic():
             f'<span style="margin-left:auto">{ibtn("close", "도움말 닫기", style="border:0;background:transparent")}</span></div>')
     body = (f'<section class="sheet" role="dialog" aria-label="도움말 — {topic(iid)["title"]}" style="top:0;bottom:0"><div class="grip"></div>{head}'
             f'<div style="flex-grow:1;min-height:0;display:flex;flex-direction:column;overflow:hidden">{topic_body(iid, mobile=True, fails_open=False)}</div></section>')
-    main = f'<main style="position:relative;height:724px;flex-shrink:0;overflow:hidden">{mob_map_bg()}<div class="dim"></div>{body}</main>'
+    main = f'<main style="position:relative;height:724px;flex-shrink:0;overflow:hidden">{mob_map_bg()}<div class="dim" style="pointer-events:none"></div>{body}</main>'
     page31('V31K7MHelpTopic.dc.html', 'K7 도움말 주제 — 방화 · 준비 중(모바일)', shell_mob(main, 'stratagem', '계책 덱', '작전실'), w=390, h=844)
 
 
@@ -389,7 +405,7 @@ def dispatch_card(coach=False):
     if coach:
         accept = coach_ring(accept, block=True)
     return (f'<section class="panel" style="position:relative;overflow:visible">{sec("발령 응답", "응답 대기 1")}'
-            f'<div style="padding:12px;display:flex;flex-direction:column;gap:10px">{help_strip(topic(iid)["sections"]["explanation"])}'
+            f'<div style="padding:12px;display:flex;flex-direction:column;gap:10px">{help_strip(say(topic(iid)["sections"]["explanation"]))}'
             f'<div style="display:flex;gap:10px;align-items:center">{portrait("jojo", "조조", 40, 56)}<span style="font-size:14px;line-height:1.5">'
             f'주공 <b class="serif">조조</b>가 <b class="serif">하후돈</b>을 <b class="bz">양적현 현령</b> 자리로 발령했습니다.</span></div>'
             f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">{kv("자리", "양적현 현령", "bz")}{kv("받은 때", "3월 상순")}{kv("답할 기한", "[미정]")}</div>'
@@ -466,7 +482,7 @@ def board_mtutorial():
     coach = coach_card(6, '첫 등용', '먼저 인재탐색으로 재야 인물을 찾으세요. 찾으면 다음 순에 그 인물을 등용합니다.', 'left:8px;right:8px;bottom:204px', None,
                        '저항해도 이 단계는 끝납니다. 성공하면 부에 들어옵니다.')
     main = (f'<main aria-label="지도" style="position:relative;width:390px;height:844px;overflow:hidden">{mapimg("mob", 390, 844, "양적 일대 지도 — 현 보기")}'
-            f'{mlab("밀", *MOB_PX(*CELLS["밀현"]), dim=False)}{mlab("영양", *MOB_PX(*CELLS["영양현"]), dim=False)}{me_marker(hx, hy, "in")}'
+            f'{deco(mlab("밀", *MOB_PX(*CELLS["밀현"]), dim=False) + mlab("영양", *MOB_PX(*CELLS["영양현"]), dim=False))}{me_marker(hx, hy, "in")}'
             f'{top}{view_bar(style="left:8px;top:64px", lod=False)}{coach}{sh}<div style="position:absolute;left:0;right:0;bottom:0">{tabbar31("war")}</div></main>')
     page31('V31K7MTutorial.dc.html', 'K7 첫걸음 — 6단계 첫 등용(모바일 · 연습 서버)', main, w=390, h=844)
 
@@ -478,7 +494,7 @@ def board_mtutorial_list():
             + step_card(6, ['이번 순에 할 일 › 인물 › 인재탐색을 예약합니다.', '찾은 인물을 다음 빈 순에 등용합니다.'],
                         '인재탐색을 04순에 예약했습니다 — 다음 개인 턴 21:40에 처리됩니다.', 'info', help_name='등용') + '</div>'
             + step_list(5, 6, fold=True))
-    main = f'<main style="position:relative;height:724px;flex-shrink:0;overflow:hidden">{mob_map_bg()}<div class="dim"></div>{sheet("도움말", body, top=0)}</main>'
+    main = f'<main style="position:relative;height:724px;flex-shrink:0;overflow:hidden">{mob_map_bg()}<div class="dim" style="pointer-events:none"></div>{sheet("도움말", body, top=0)}</main>'
     page31('V31K7MTutorialList.dc.html', 'K7 첫걸음 목록(모바일 · 연습 서버)', shell_mob(main, 'menu'), w=390, h=844)
 
 
@@ -489,8 +505,7 @@ def board_tutorial_states():
                 f'<div style="flex-grow:1;min-height:0;display:flex;flex-direction:column;padding:10px 12px;gap:8px;overflow:hidden">{inner}</div></section>')
 
     sent = step_card(3, ['주공 카드에서 「출사」를 누릅니다.'], '제출했습니다 — 다음 개인 턴 21:40에 처리됩니다.', 'info', help_name='출사')
-    achieved = (f'<div class="band tutorial" role="status" style="border:1px solid #4b6d87">{icon("check", 18, "#7aa7c7")}'
-                f'<span><b>첫걸음 4 / 8</b> — 첫 발령을 마쳤습니다.</span>{btn("다음: 첫 공사", "sm", style="margin-left:auto;background:transparent")}</div>'
+    achieved = (f'<div style="border:1px solid #4b6d87">{band("tutorial")}</div>'
                 f'<span class="note">알림 띠(P-W05)의 「첫걸음 달성」. 6초 뒤 접히고 머리줄 칩이 3 / 8 → 4 / 8 로 바뀐다. 서버 진척에 새로 늘어난 목표에만, 한 번.</span>'
                 f'<span class="note">칩 = 완료 수, 카드 = 단계 번호(「5단계 · 첫 공사」).</span>')
     waiting = step_card(4, ['주공이 발령을 보내면 조정 › 발령 응답에 옵니다.'], '주공 조조의 발령을 기다립니다. 목표 표시는 발령이 오면 켜집니다.', 't2', help_name='발령 응답')
