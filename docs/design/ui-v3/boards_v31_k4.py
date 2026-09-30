@@ -37,8 +37,14 @@ def desk_main(head, body, pad=True):
             f'<div style="flex-grow:1;min-height:0;display:flex;gap:12px;{p}overflow:hidden">{body}</div></main>')
 
 
-def mob_main(inner, tabs=None, on=None, h=724, foot=''):
-    t = mtabs_row(tabs, on) if tabs else ''
+def mob_first_line(title, sub=''):
+    """모바일 묶음 첫 화면의 페이지 첫 줄(K0 판정 2026-09-30) — 부 이름 = me.buName. K3 가 부품으로 정하면 그것으로 바꾼다."""
+    return (f'<div style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f">'
+            f'<h2 class="serif" style="margin:0;font-size:19px;font-weight:900;white-space:nowrap">{title}</h2>{f"<span class=muted style=font-size:11.5px>{sub}</span>" if sub else ""}</div>')
+
+
+def mob_main(inner, tabs=None, on=None, h=724, foot='', first=''):
+    t = (mob_first_line(first) if first else '') + (mtabs_row(tabs, on) if tabs else '')
     f = (f'<div style="position:absolute;left:0;right:0;bottom:0;min-height:64px;display:flex;gap:8px;padding:10px 12px;background:#1b201d;'
          f'border-top:1px solid #3d4740">{foot}</div>') if foot else ''
     return (f'<main style="height:{h}px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column">{t}'
@@ -194,7 +200,8 @@ def turns_aside(h_slot=52):
     return (f'<aside aria-label="명령 목록 12순" style="width:336px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #3d4740">'
             f'{sec("명령 목록 12순", "직접 행동 · 한 순에 하나")}{slots(h_slot)}{sec("맡겨 둔 일", "순마다 스스로 굴러간다")}'
             f'<div style="padding:8px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px">{STANDING6}</div>'
-            f'<div style="padding:8px;margin-top:auto;border-top:1px solid #2c342f;display:flex">{btn("이번 순에 할 일 — 02순", "primary", style="flex:1", href="#")}</div></aside>')
+            f'<div style="padding:8px;margin-top:auto;border-top:1px solid #2c342f;display:flex;gap:6px">{btn("이번 순에 할 일 — 02순", "primary", style="flex:1", href="#")}'
+            f'{btn("당기기", "", attrs="aria-label=\"12순 전체를 한 칸 앞으로\"")}{btn("밀기", "", attrs="aria-label=\"12순 전체를 한 칸 뒤로\"")}</div></aside>')
 
 
 def warroom_map(drawer=''):
@@ -409,7 +416,7 @@ def mretinue():
              + note('인물을 누르면 인물 상세(자리에 배치 · 내보내기). 사람 장수는 조정에서 발령합니다.'))
     foot = f'{input_btn("인재탐색", "AVAILABLE", input_id="action.search", kind="", style="flex:1")}{input_btn("등용", "AVAILABLE", input_id="action.employ", style="flex:1")}'
     page31('V31K4MRetinue.dc.html', 'K4 P-R01 편성 — 모바일',
-           shell_mob(mob_main(inner, RET_TABS, '편성 · 결속', foot=foot), 'retinue', BU, None), w=390, h=844)
+           shell_mob(mob_main(inner, RET_TABS, '편성 · 결속', foot=foot, first=BU), 'retinue', None, None), w=390, h=844)
 
 
 @board
@@ -436,7 +443,7 @@ def mretinue_empty():
              + state_empty('아직 거느린 인물이 없습니다', '인재탐색으로 재야 인물을 찾고 등용하면 인물 카드가 생깁니다.', pad=10) + '</div>')
     foot = f'{input_btn("인재탐색", "AVAILABLE", input_id="action.search", style="flex:1")}{input_btn("등용", "BLOCKED", "찾은 인재 없음", input_id="action.employ", kind="")}'
     page31('V31K4MRetinueEmpty.dc.html', 'K4 P-R01 편성 — 모바일 빈 상태',
-           shell_mob(mob_main(inner, RET_TABS, '편성 · 결속', foot=foot), 'retinue', BU, None), w=390, h=844)
+           shell_mob(mob_main(inner, RET_TABS, '편성 · 결속', foot=foot, first=BU), 'retinue', None, None), w=390, h=844)
 
 
 # ------------------------------------------------------------------ P-R02 인물 일람
@@ -699,7 +706,7 @@ def mterritory():
              + ''.join(f'<button type="button" class="btn sm" data-input-id="work.start"{" aria-disabled=\"true\" style=\"border-style:dashed;color:#8a8477\"" if n == "성방" else ""}>{n}</button>' for n in WORKS9)
              + f'</div>{note("성방 — 이미 지었음. 누르면 사유.")}{chip("시설 분기 — 준비 중", "info")}</div>')
     page31('V31K4MTerritory.dc.html', 'K4 P-T01 배치 · 방침 · 공사 — 모바일',
-           shell_mob(mob_main(inner, TER_TABS, '배치 · 방침 · 공사'), 'territory', '배치 · 방침 · 공사', '영지'), w=390, h=844)
+           shell_mob(mob_main(inner, TER_TABS, '배치 · 방침 · 공사'), 'territory', '영지', '전체 메뉴'), w=390, h=844)
 
 
 # ------------------------------------------------------------------ P-T02 현 상세
