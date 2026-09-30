@@ -80,8 +80,9 @@ class EnginePauseObservationCollector(
     private val source: EnginePauseSource,
     private val clock: Clock,
 ) : AutoCloseable {
-    private data class Entry(val epoch: Long, val resetCompletedAt: Instant?, val observation: TurnDaemonObservation?)
-    private val cache = AtomicReference(Entry(0, null, null))
+    private data class Entry(val epoch: Long, val resetCompletedAt: Instant?,
+        val observation: TurnDaemonObservation?, val unknownSince: Instant?)
+    private val cache = AtomicReference(Entry(0, null, null, clock.instant()))
     private var scheduler: ScheduledExecutorService? = null
 
     @Synchronized
@@ -107,26 +108,45 @@ class EnginePauseObservationCollector(
                 (before.observation == null || it.sourceObservedAt >= before.observation.sourceObservedAt)
         }
         // A reset or another collector update during HTTP makes the old response unusable.
-        cache.compareAndSet(before, before.copy(observation = valid))
+        val since = if (valid != null) null else unknownStartedAt(before, now)
+        cache.compareAndSet(before, before.copy(observation = valid, unknownSince = since))
     }
 
     internal fun snapshot(): TurnDaemonObservation? = cache.get().observation
 
     /** The API and session must share this one projection using their single observation time. */
     fun project(serverTime: Instant, lastTickExecutedAt: Instant?, nextTurnAt: Instant?,
-        tickSeconds: Int, catchUpActive: Boolean): TurnDaemonProjection.Result =
-        TurnDaemonProjection.observe(settings.serverId, settings.worldId, serverTime, snapshot(),
-            settings.maxAge, lastTickExecutedAt, nextTurnAt, tickSeconds, catchUpActive)
+        tickSeconds: Int, catchUpActive: Boolean): TurnDaemonProjection.Result {
+        val entry = cache.get()
+        val initial = TurnDaemonProjection.observe(settings.serverId, settings.worldId, serverTime, entry.observation,
+            settings.maxAge, lastTickExecutedAt, nextTurnAt, tickSeconds, catchUpActive, resetCompletedAt = entry.resetCompletedAt)
+        if (initial.state != TurnDaemonProjection.State.UNKNOWN) return initial
+        val since = unknownStartedAt(entry, serverTime)
+        cache.compareAndSet(entry, entry.copy(unknownSince = since))
+        return TurnDaemonProjection.observe(settings.serverId, settings.worldId, serverTime, entry.observation,
+            settings.maxAge, lastTickExecutedAt, nextTurnAt, tickSeconds, catchUpActive, since, entry.resetCompletedAt)
+    }
+
+    private fun unknownStartedAt(entry: Entry, now: Instant): Instant {
+        entry.unknownSince?.takeIf { it <= now }?.let { return it }
+        val expiresAt = entry.observation?.let { it.sourceObservedAt.plus(settings.maxAge) }
+        return expiresAt?.takeIf { it < now } ?: now
+    }
 
     /** Reset completion must explicitly invalidate both old cache and any in-flight request. */
-    fun invalidateAfterReset(completedAt: Instant) {
-        cache.updateAndGet { Entry(it.epoch + 1, completedAt, null) }
+    fun invalidateAfterReset(serverId: String, worldId: Int, completedAt: Instant) {
+        require(serverId == settings.serverId && worldId == settings.worldId) { "Reset observation identity mismatch" }
+        require(completedAt <= clock.instant()) { "Reset completion cannot be in the future" }
+        cache.updateAndGet {
+            if (it.resetCompletedAt != null && completedAt <= it.resetCompletedAt) it
+            else Entry(it.epoch + 1, completedAt, null, completedAt)
+        }
     }
 
     @Synchronized
     override fun close() {
         scheduler?.shutdownNow()
         scheduler = null
-        cache.updateAndGet { Entry(it.epoch + 1, it.resetCompletedAt, null) }
+        cache.updateAndGet { Entry(it.epoch + 1, it.resetCompletedAt, null, it.unknownSince ?: clock.instant()) }
     }
 }

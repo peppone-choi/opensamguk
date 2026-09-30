@@ -26,7 +26,21 @@ object TurnDaemonProjection {
         val sourceObservedAt: Instant?,
         val receivedAt: Instant?,
         val staleSeconds: Long?,
-    )
+        val nextTurnAt: Instant?,
+        val unknownSince: Instant?,
+        val unknownSeconds: Long?,
+        val unknownAlertDue: Boolean,
+        val resetCompletedAt: Instant?,
+    ) {
+        val healthy: Boolean get() = state in setOf(State.RUNNING, State.CATCHING_UP, State.WAITING)
+        val healthStatus: String get() = if (healthy) "healthy" else "degraded"
+        val failureReason: String? get() = when (state) {
+            State.UNKNOWN -> "pause_observation_unavailable"
+            State.STALLED -> "turn_stalled"
+            State.PAUSED -> "turn_paused"
+            else -> null
+        }
+    }
 
     fun observe(
         serverId: String,
@@ -38,6 +52,8 @@ object TurnDaemonProjection {
         nextTurnAt: Instant?,
         tickSeconds: Int,
         catchUpActive: Boolean,
+        unknownSince: Instant? = null,
+        resetCompletedAt: Instant? = null,
     ): Result {
         require(!maxObservationAge.isZero && !maxObservationAge.isNegative)
         val observationState = when {
@@ -60,6 +76,8 @@ object TurnDaemonProjection {
             catchUpActive -> State.CATCHING_UP
             else -> State.RUNNING
         }
+        val since = unknownSince?.takeIf { state == State.UNKNOWN && it <= serverTime }
+        val unknownAge = since?.let { Duration.between(it, serverTime) }
         return Result(
             serverTime = serverTime,
             state = state,
@@ -69,6 +87,12 @@ object TurnDaemonProjection {
             sourceObservedAt = observation?.sourceObservedAt,
             receivedAt = observation?.receivedAt,
             staleSeconds = age?.coerceAtLeast(0),
+            nextTurnAt = nextTurnAt.takeIf { state in setOf(State.RUNNING, State.CATCHING_UP, State.WAITING) },
+            unknownSince = since,
+            unknownSeconds = unknownAge?.seconds,
+            // UNKNOWN uses only the existing 3tick budget, without the incident-regression cap.
+            resetCompletedAt = resetCompletedAt?.takeIf { it <= serverTime },
+            unknownAlertDue = unknownAge != null && tickSeconds > 0 && unknownAge > Duration.ofSeconds(tickSeconds.toLong() * 3L),
         )
     }
 }

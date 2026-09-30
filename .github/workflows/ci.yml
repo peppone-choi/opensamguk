@@ -438,6 +438,20 @@ jobs:
           fi
       - name: Test game-engine
         run: ./gradlew :app:game-engine:test --no-daemon
+      - name: Verify actual pause gate mutation and source restoration
+        if: success() && hashFiles('tools/ci/pause-gate-mutation/check.sh') != ''
+        run: bash tools/ci/pause-gate-mutation/check.sh
+      - name: Preserve actual pause gate mutation evidence
+        if: always() && hashFiles('tools/ci/pause-gate-mutation/check.sh') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-actual-pause-gate-mutation-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            build/pause-gate-mutation/summary.json
+            build/pause-gate-mutation/mutant/xml/TEST-opensamguk.engine.status.StatusControllerTest.xml
+            build/pause-gate-mutation/restored/xml/TEST-opensamguk.engine.status.StatusControllerTest.xml
       - name: Fail on skipped game-engine tests
         env:
           OPENSAM_ALLOW_SKIPPED_IT: ""

@@ -5,6 +5,8 @@ import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class TurnDaemonProjectionTest {
     private val now = Instant.parse("2026-09-30T12:00:00Z")
@@ -85,4 +87,37 @@ class TurnDaemonProjectionTest {
         assertEquals(TurnDaemonProjection.State.STALLED, observe(lastTick = now.plusSeconds(301)).state)
         assertEquals(TurnDaemonProjection.State.STALLED, observe(lastTick = now.minusSeconds(26 * 3600L), tickSeconds = 86400).state)
     }
+
+    @Test
+    fun `only running catching-up and waiting expose next turn while all stopped states return null`() {
+        val next = now.plusSeconds(60)
+        for (result in listOf(observe(nextTurn = next), observe(nextTurn = next, catchUp = true),
+            observe(lastTick = null, nextTurn = next))) {
+            assertEquals(next, result.nextTurnAt)
+            assertTrue(result.healthy)
+        }
+        for (result in listOf(observe(source(true), nextTurn = next),
+            observe(lastTick = now.minusSeconds(181), nextTurn = next), observe(null, nextTurn = next))) {
+            assertNull(result.nextTurnAt)
+            assertFalse(result.healthy)
+            assertEquals("degraded", result.healthStatus)
+        }
+    }
+
+    @Test
+    fun `unknown degrades immediately and becomes alert due strictly after three ticks without a cap`() {
+        fun unknown(since: Instant, tick: Int = 60) = TurnDaemonProjection.observe("pep", 1, now, null,
+            budget, now.minusSeconds(1), now.plusSeconds(60), tick, false, since)
+        val boundary = unknown(now.minusSeconds(180))
+        assertEquals("pause_observation_unavailable", boundary.failureReason)
+        assertEquals("degraded", boundary.healthStatus)
+        assertNull(boundary.paused)
+        assertNull(boundary.nextTurnAt)
+        assertEquals(180L, boundary.unknownSeconds)
+        assertFalse(boundary.unknownAlertDue)
+        assertTrue(unknown(now.minusSeconds(181)).unknownAlertDue)
+        assertFalse(unknown(now.minusSeconds(26 * 3600L), 86400).unknownAlertDue)
+        assertTrue(unknown(now.minusSeconds(3 * 86400L + 1), 86400).unknownAlertDue)
+    }
+
 }

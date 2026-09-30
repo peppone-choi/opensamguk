@@ -6,10 +6,13 @@ import java.time.Clock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneOffset
+import java.time.ZoneId
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class EnginePauseObservationCollectorTest {
     private val now = Instant.parse("2026-09-30T12:00:00Z")
@@ -62,7 +65,7 @@ class EnginePauseObservationCollectorTest {
     fun `reset discards old cache and even an in flight response cannot restore it`() {
         lateinit var collector: EnginePauseObservationCollector
         collector = EnginePauseObservationCollector(settings, EnginePauseSource {
-            collector.invalidateAfterReset(now)
+            collector.invalidateAfterReset("pep", 1, now)
             current
         }, clock)
         collector.collectOnce()
@@ -74,8 +77,98 @@ class EnginePauseObservationCollectorTest {
         val collector = EnginePauseObservationCollector(settings, EnginePauseSource { current }, clock)
         collector.collectOnce()
         assertEquals(current, collector.snapshot())
-        collector.invalidateAfterReset(now)
+        collector.invalidateAfterReset("pep", 1, now)
         collector.collectOnce()
         assertNull(collector.snapshot())
     }
+
+    private class MutableClock(var time: Instant) : Clock() {
+        override fun getZone(): ZoneId = ZoneOffset.UTC
+        override fun withZone(zone: ZoneId): Clock = this
+        override fun instant(): Instant = time
+    }
+
+    @Test
+    fun `continuous unknown starts at collector boot and repeated failures do not restart the clock`() {
+        val time = MutableClock(now)
+        val collector = EnginePauseObservationCollector(settings, EnginePauseSource { null }, time)
+        time.time = now.plusSeconds(900)
+        collector.collectOnce()
+        val boundary = collector.project(time.instant(), time.instant(), time.instant().plusSeconds(300), 300, false)
+        assertEquals(now, boundary.unknownSince)
+        assertFalse(boundary.unknownAlertDue)
+        assertFalse(boundary.healthy)
+        time.time = now.plusSeconds(901)
+        collector.collectOnce()
+        assertTrue(collector.project(time.instant(), time.instant(), null, 300, false).unknownAlertDue)
+    }
+
+    @Test
+    fun `expiry uses source freshness boundary and recovery clears before the next unknown streak`() {
+        val time = MutableClock(now)
+        var candidate: TurnDaemonObservation? = current
+        val collector = EnginePauseObservationCollector(settings, EnginePauseSource { candidate }, time)
+        collector.collectOnce()
+        time.time = now.plusSeconds(16)
+        val expired = collector.project(time.instant(), time.instant(), null, 300, false)
+        assertEquals(now.plusSeconds(14), expired.unknownSince)
+        candidate = null
+        collector.collectOnce()
+        assertEquals(expired.unknownSince, collector.project(time.instant(), time.instant(), null, 300, false).unknownSince)
+        time.time = now.plusSeconds(20)
+        candidate = current.copy(sourceObservedAt = time.instant(), receivedAt = time.instant(), paused = false)
+        collector.collectOnce()
+        val normal = collector.project(time.instant(), time.instant(), time.instant().plusSeconds(300), 300, false)
+        assertTrue(normal.healthy)
+        assertNull(normal.unknownSince)
+        time.time = now.plusSeconds(25)
+        candidate = null
+        collector.collectOnce()
+        assertEquals(time.instant(), collector.project(time.instant(), time.instant(), null, 300, false).unknownSince)
+    }
+
+    @Test
+    fun `reset completion begins a distinct unknown interval and discards pre-reset timing`() {
+        val time = MutableClock(now)
+        val collector = EnginePauseObservationCollector(settings, EnginePauseSource { null }, time)
+        time.time = now.plusSeconds(300)
+        collector.invalidateAfterReset("pep", 1, time.instant())
+        collector.collectOnce()
+        assertEquals(time.instant(), collector.project(time.instant(), null, null, 300, false).unknownSince)
+    }
+
+
+    @Test
+    fun `future source and received timestamps cannot postpone an existing unknown incident`() {
+        val time = MutableClock(now)
+        var candidate: TurnDaemonObservation? = null
+        val collector = EnginePauseObservationCollector(settings, EnginePauseSource { candidate }, time)
+        time.time = now.plusSeconds(901)
+        for (bad in listOf(current.copy(sourceObservedAt = time.instant().plusSeconds(10000)),
+            current.copy(receivedAt = time.instant().plusSeconds(10000)))) {
+            candidate = bad
+            collector.collectOnce()
+            val result = collector.project(time.instant(), time.instant(), null, 300, false)
+            assertEquals(now, result.unknownSince)
+            assertTrue(result.unknownAlertDue)
+        }
+    }
+
+    @Test
+    fun `reset identity future timestamps and duplicate completion cannot erase an unknown interval`() {
+        val time = MutableClock(now)
+        val collector = EnginePauseObservationCollector(settings, EnginePauseSource { null }, time)
+        time.time = now.plusSeconds(300)
+        assertFailsWith<IllegalArgumentException> { collector.invalidateAfterReset("other", 1, time.instant()) }
+        assertFailsWith<IllegalArgumentException> { collector.invalidateAfterReset("pep", 2, time.instant()) }
+        assertFailsWith<IllegalArgumentException> { collector.invalidateAfterReset("pep", 1, time.instant().plusSeconds(1)) }
+        assertEquals(now, collector.project(time.instant(), null, null, 300, false).unknownSince)
+        collector.invalidateAfterReset("pep", 1, time.instant())
+        time.time = now.plusSeconds(1201)
+        collector.invalidateAfterReset("pep", 1, now.plusSeconds(300))
+        val result = collector.project(time.instant(), null, null, 300, false)
+        assertEquals(now.plusSeconds(300), result.unknownSince)
+        assertTrue(result.unknownAlertDue)
+    }
+
 }

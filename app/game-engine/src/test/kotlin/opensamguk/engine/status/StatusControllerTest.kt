@@ -1,6 +1,9 @@
 package opensamguk.engine.status
 
 import java.time.Instant
+import java.time.Duration
+import opensamguk.common.turn.TurnDaemonObservation
+import opensamguk.common.turn.TurnDaemonProjection
 import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.run.TurnDaemonRunner
 import opensamguk.engine.run.TurnRunService
@@ -142,4 +145,21 @@ class StatusControllerTest {
             runner.stop()
         }
     }
+
+    @Test
+    fun `open world PAUSED projection consumes the actual gate read even with an old successful tick`() {
+        val c = controller()
+        c.pause()
+        val status = c.status()
+        val receivedAt = Instant.now()
+        val observation = TurnDaemonObservation("pep", 1, Instant.parse(status.serverTime), receivedAt, status.paused)
+        val result = TurnDaemonProjection.observe("pep", 1, receivedAt, observation, Duration.ofSeconds(15),
+            receivedAt.minusSeconds(901), receivedAt.plusSeconds(300), 300, false)
+        assertEquals(TurnDaemonProjection.State.PAUSED, result.state)
+        assertEquals(true, result.paused)
+        assertEquals("UNKNOWN", result.pausedReason)
+        assertEquals("degraded", result.healthStatus)
+        assertEquals(null, result.nextTurnAt)
+    }
+
 }
