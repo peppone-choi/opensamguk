@@ -147,8 +147,8 @@ def build(tiles: dict, world: dict, table_doc: dict, units: dict) -> dict:
                  "이 목록의 관할에만 작은 漢字 병기(gloss)를 붙인다. 생성물이다 — 손으로 고치지 말고 빌더를 돌려라."),
         "generator": "tools/map/build_county_display_name_collisions.py",
         "inputs": {
-            "hanTilesSha256": _sha256(TILES),
-            "hanWorldV3Sha256": _sha256(WORLD),
+            "tileMapSha256": _sha256(TILES),
+            "worldMapSha256": _sha256(WORLD),
             "simplificationTableSha256": _sha256(TABLE),
             "administrativeUnitsSha256": _sha256(UNITS),
         },
@@ -176,7 +176,7 @@ def render_web(doc: dict) -> str:
     return (
         "// 생성물 — tools/map/build_county_display_name_collisions.py 가 쓴다. 손으로 고치지 마라(--check 가 적색이 된다).\n"
         "// 원본 목록: data/curated/han/county-display-name-collisions-v1.json (이슈 #838).\n"
-        f"// han-tiles sha256 {doc['inputs']['hanTilesSha256']}\n\n"
+        f"// tile map sha256 {doc['inputs']['tileMapSha256']}\n\n"
         "/** 같은 郡 안에서 한글 표시명이 겹치는 관할(jurisdictionId) → 漢字 병기(繁體, 县/縣 꼬리 없음). */\n"
         "export const COUNTY_GLOSS_BY_JURISDICTION_ID: Readonly<Record<string, string>> = {\n"
         f"{obj(by_id)}\n"
