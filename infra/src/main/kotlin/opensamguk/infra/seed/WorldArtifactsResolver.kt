@@ -28,7 +28,7 @@ class ResolvedWorldArtifacts internal constructor(
         CommanderyIndexJson.load(projection.topology,
             artifactBytes(opensamguk.logic.world.LandMarchMetricSnapshot.TILES_PATH))
     }
-    val cityConst get() = CityConstRegistry.hanWorld(variant)
+    val cityConst get() = CityConstRegistry.forVariant(variant)
     init {
         require(cityConst.all().keys == projection.bindingsByCityId.keys) { "Han runtime constants and topology roster differ" }
     }
@@ -76,7 +76,7 @@ class WorldArtifactsResolver(private val root: Path = defaultRoot()) {
     fun resolve(completeCityIds: Collection<Int>, pins: Collection<WorldTopologyPin>): ResolvedWorldArtifacts {
         val ids = completeCityIds.toSet()
         require(ids.size == completeCityIds.size) { "Duplicate world city identities" }
-        val candidates = WorldMapVariant.entries.filter { CityConstRegistry.hanWorld(it).all().keys == ids }
+        val candidates = WorldMapVariant.entries.filter { CityConstRegistry.forVariant(it).all().keys == ids }
         require(candidates.isNotEmpty()) { "World city identities do not select a registered Han artifact set" }
         val selected = if (candidates.size == 1) {
             artifacts(candidates.single())

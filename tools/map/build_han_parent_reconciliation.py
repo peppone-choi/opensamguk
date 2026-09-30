@@ -195,12 +195,12 @@ EMBEDDED_HASH_EDGES = (
     ),
     (
         "data/curated/han/route-node-selection-v1.json",
-        ("provenance", "inputs", "legacyHanMap", "sha256"),
+        ("provenance", "inputs", "sourceCityMap", "sha256"),
         "infra/src/main/resources/map/han-780-v1.json",
     ),
     (
         "data/curated/han/route-node-selection-v1.json",
-        ("provenance", "inputs", "legacyTileMap", "sha256"),
+        ("provenance", "inputs", "sourceTileMap", "sha256"),
         "data/map/han-780-v1-tiles.json",
     ),
     (
@@ -225,12 +225,12 @@ EMBEDDED_HASH_EDGES = (
     ),
     (
         "data/curated/han/route-node-selection-candidates-v1.json",
-        ("provenance", "inputs", "legacyHanMap", "sha256"),
+        ("provenance", "inputs", "sourceCityMap", "sha256"),
         "infra/src/main/resources/map/han-780-v1.json",
     ),
     (
         "data/curated/han/route-node-selection-candidates-v1.json",
-        ("provenance", "inputs", "legacyTileMap", "sha256"),
+        ("provenance", "inputs", "sourceTileMap", "sha256"),
         "data/map/han-780-v1-tiles.json",
     ),
 )
@@ -510,14 +510,14 @@ def _validate_embedded_hash_edges(
         "candidate administrativePlaceOverlay path",
     )
     _require_equal(
-        candidate_inputs.get("legacyHanMap", {}).get("path"),
+        candidate_inputs.get("sourceCityMap", {}).get("path"),
         "infra/src/main/resources/map/han-780-v1.json",
-        "candidate legacyHanMap path",
+        "candidate sourceCityMap path",
     )
     _require_equal(
-        candidate_inputs.get("legacyTileMap", {}).get("path"),
+        candidate_inputs.get("sourceTileMap", {}).get("path"),
         "data/map/han-780-v1-tiles.json",
-        "candidate legacyTileMap path",
+        "candidate sourceTileMap path",
     )
 
 

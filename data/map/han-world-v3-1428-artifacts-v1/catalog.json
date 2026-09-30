@@ -38,25 +38,25 @@
       "sha256": "db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3"
     },
     {
-      "blob": "blobs/cf403ecf4f0c7ff86194406675a71a3c0c3c7a4efa5b0dbf167dedf083e4a89b.json.gz",
+      "blob": "blobs/807a4c2a908e2e70df5a3c3f4c966149ac885abf62b9492a19e95627690c1810.json.gz",
       "bytes": 515943,
-      "compressedSha256": "939cbb8ed3c72eaf325095ed0714e1fe501ff3a2ba4d3213c76635672840caf4",
+      "compressedSha256": "cdd2afd9df1732a21dfd3e3b556393dd031d3ff5e8718494a012752a12ed1dc9",
       "path": "data/map/han-world-v3-manifest-v1.json",
-      "sha256": "cf403ecf4f0c7ff86194406675a71a3c0c3c7a4efa5b0dbf167dedf083e4a89b"
+      "sha256": "807a4c2a908e2e70df5a3c3f4c966149ac885abf62b9492a19e95627690c1810"
     },
     {
-      "blob": "blobs/91ab80d63c8ac95648d6dbaad0d42c079e217cfc4fa4a69317a0d7d7d83f8425.json.gz",
-      "bytes": 1767750,
-      "compressedSha256": "51472484c9ca20c253f2568c7744d9e0f7bc57a3dc7d255ccc25fe4c83afc7fa",
+      "blob": "blobs/33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6.json.gz",
+      "bytes": 1767751,
+      "compressedSha256": "9e533275d7d22665e975968ec0fbde3fed84bfc7437d359a8ce1515c54271d3b",
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "91ab80d63c8ac95648d6dbaad0d42c079e217cfc4fa4a69317a0d7d7d83f8425"
+      "sha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6"
     },
     {
-      "blob": "blobs/4af5efd53fbcd4f1758eef292f02d75ab5007ead6b395e1621918c0959f2f2f4.json.gz",
+      "blob": "blobs/c29fcfb60773334576440d180be0b8cc58fa366fbcb121d096fba05d4cf9175f.json.gz",
       "bytes": 386659,
-      "compressedSha256": "ea9a648d1a230400537bab2ef325eb96277fb418a65010ddf1503d7c72a6290f",
+      "compressedSha256": "32fa351bf5f4ca23523fd30cbc68ad99f2ef74cff0a940a581f7037bb841f2f4",
       "path": "data/curated/han/route-node-migration-v1.json",
-      "sha256": "4af5efd53fbcd4f1758eef292f02d75ab5007ead6b395e1621918c0959f2f2f4"
+      "sha256": "c29fcfb60773334576440d180be0b8cc58fa366fbcb121d096fba05d4cf9175f"
     },
     {
       "blob": "blobs/a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670.json.gz",

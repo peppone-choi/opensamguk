@@ -69,7 +69,7 @@ const COUNTY_UNITS = ['县', '縣', '侯国', '侯國'] as const;
 const NON_COUNTY_UNITS = ['属国', '屬國', '郡', '国', '國'] as const;
 
 /** 이 城 이 중국 郡縣制 안의 縣 인가. */
-export function isHanCounty(city: CityNameInput): boolean {
+export function isAdministrativeCounty(city: CityNameInput): boolean {
   // 郡國 밖 세력(EXTERNAL_PLACE)은 음수 번호로 온다. 縣 이 아니다.
   if (city.id < 0) return false;
   const nameCh = city.nameCh ?? '';
@@ -107,7 +107,7 @@ export function cityDisplayName(city: CityNameInput): string {
   // 있어서, 규칙 재계산은 그 값이 없을 때의 대비책이다.
   if (city.displayName) return city.displayName;
   const stem = city.name.replace(QUALIFIER, '');
-  if (!isHanCounty(city)) return stem;
+  if (!isAdministrativeCounty(city)) return stem;
   const county = stem.endsWith('현') ? stem : `${stem}현`;
   return city.jun ? `${city.jun} ${county}` : county;
 }

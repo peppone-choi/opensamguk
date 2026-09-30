@@ -192,8 +192,8 @@ NON_COUNTY_UNITS = ("属国", "屬國", "郡", "国", "國")
 NAME_QUALIFIER = re.compile(r"(?:\([^()]*\)|#\d+)+$")
 
 
-def is_han_county(city_id: int, level_name: str, name_ch: str) -> bool:
-    """이 城이 중국 郡縣制 안의 縣인가. cityName.ts isHanCounty 와 같은 판정이다."""
+def is_administrative_county(city_id: int, level_name: str, name_ch: str) -> bool:
+    """이 城이 중국 郡縣制 안의 縣인가. cityName.ts isAdministrativeCounty 와 같은 판정이다."""
     if city_id < 0:                       # 郡國 밖 세력(EXTERNAL_PLACE)은 음수 번호다.
         return False
     name_ch = name_ch or ""
@@ -216,7 +216,7 @@ def display_name(city_id: int, name: str, level_name: str, name_ch: str,
     郡縣制 밖(이민족·屬國·郡 자체인 城)은 縣 이 아니므로 郡 도 붙이지 않는다.
     """
     stem = NAME_QUALIFIER.sub("", name)
-    if not is_han_county(city_id, level_name, name_ch):
+    if not is_administrative_county(city_id, level_name, name_ch):
         return stem
     county = stem if stem.endswith("현") else stem + "현"
     return f"{jun} {county}" if jun else county

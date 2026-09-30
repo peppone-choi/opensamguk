@@ -286,10 +286,7 @@ object ConquerCity {
             logs += ConquerLog.generalAction(chiefId, input.attacker.nationId, resourceLog, ConquerLogFormat.PLAIN)
         }
 
-        // DestroyNation EventTarget SLOT (process_war.php:700) — a no-op in P4 (the OpenNationBetting handler
-        // is P6). The slot + its position AFTER the winner reward are preserved so P6 betting attaches
-        // without shifting the P4 collapse side-effect stream.
-        // (no draw, no delta in P4)
+        // Nation destruction has no additional event action at this point.
     }
 
     /**

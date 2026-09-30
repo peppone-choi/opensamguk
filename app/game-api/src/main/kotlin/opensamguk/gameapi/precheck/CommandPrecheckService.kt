@@ -2,8 +2,6 @@ package opensamguk.gameapi.precheck
 
 import opensamguk.logic.actions.CommandRegistry
 import opensamguk.logic.actions.GeneralActionDefinition
-import opensamguk.logic.actions.military.RecruitAlgorithm
-import opensamguk.logic.actions.military.UnitSetTable
 import opensamguk.logic.constraints.ConstraintContext
 import opensamguk.logic.constraints.ConstraintMode
 import opensamguk.logic.constraints.ConstraintResult
@@ -29,18 +27,6 @@ sealed interface PrecheckResult {
     /** PRECHECK mode hit an absent requirement (a row not loaded) → the missing keys. */
     data class Unknown(val missing: List<RequirementKey>) : PrecheckResult
 }
-
-data class RecruitCrewTypeAvailability(
-    val crewType: Int,
-    val available: Boolean,
-    val reason: String? = null,
-)
-
-data class RecruitAvailability(
-    val unitSet: String,
-    val supported: Boolean,
-    val crewTypes: List<RecruitCrewTypeAvailability>,
-)
 
 /**
  * Task E2 — `CommandPrecheckService`. Loads the actor's general (via [PrecheckStateViewFactory]),
@@ -68,44 +54,6 @@ class CommandPrecheckService(
             return PrecheckResult.Blocked(INVALID_ARGS_DENY_REASON)
         }
         return evaluate(state, definition, parsedArgs)
-    }
-
-    /**
-     * Catalog-mode precheck — builds the actor state ONCE (one DB read pass) and evaluates EACH
-     * [GeneralActionDefinition] in [definitions] against it, returning the per-command
-     * [PrecheckResult]. Used by the available-commands catalog so the `possible`/`reason` flags are
-     * the REAL `:logic` constraint outcome (precheck == full), not a fabricated default.
-     *
-     * Returns `null` when the actor general row is absent (the whole catalog is then unavailable);
-     * the caller decides whether to surface a registry-only catalog with `possible=true`.
-     */
-    fun precheckAll(generalId: Int, definitions: List<GeneralActionDefinition>): Map<String, PrecheckResult>? {
-        val state = stateViewFactory.build(generalId, loadAllCities = true) ?: return null
-        return definitions.associate { def -> def.key to evaluate(state, def) }
-    }
-
-    fun recruitAvailability(generalId: Int): RecruitAvailability? {
-        val state = stateViewFactory.build(generalId) ?: return null
-        val unitSet = state.env["unitSet"] as? String ?: UnitSetTable.CHE_UNIT_SET
-        if (!UnitSetTable.isSupported(unitSet)) {
-            return RecruitAvailability(unitSet = unitSet, supported = false, crewTypes = emptyList())
-        }
-        val definition = registry.resolve("che_징병") as? RecruitAlgorithm
-            ?: return RecruitAvailability(unitSet = unitSet, supported = false, crewTypes = emptyList())
-        val crewTypes = UnitSetTable.all(unitSet).map { unit ->
-            val ctx = context(state, linkedMapOf("crewType" to unit.id, "amount" to 0))
-            val result = definition.crewTypeAvailability(ctx, state.view, unit.id)
-            when (result) {
-                ConstraintResult.Allow -> RecruitCrewTypeAvailability(unit.id, available = true)
-                is ConstraintResult.Deny -> RecruitCrewTypeAvailability(unit.id, available = false, reason = result.reason)
-                is ConstraintResult.Unknown -> RecruitCrewTypeAvailability(
-                    unit.id,
-                    available = false,
-                    reason = "현재 선택할 수 없는 병종입니다.",
-                )
-            }
-        }
-        return RecruitAvailability(unitSet = unitSet, supported = true, crewTypes = crewTypes)
     }
 
     private fun evaluate(

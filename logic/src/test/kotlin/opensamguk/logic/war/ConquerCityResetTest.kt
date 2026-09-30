@@ -120,17 +120,17 @@ class ConquerCityResetTest {
         // 2026-09-23: 현재 판은 결손 縣 56곳을 더한 1224 이다. 동결된 옛 판들은 그대로 같이 본다.
         // 2026-09-27: 현재 판은 중복 합성 城 23곳을 거두고 동명 실결손 4곳을 더한 1428 이다.
         for ((variant, size) in listOf(CityConstRegistry.of(WORLD_ARCHIVE_MAP_NAME) to 1428,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_848) to 848,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1098) to 1098,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1133) to 1133,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1141) to 1141,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1341) to 1341,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1168) to 1168,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1194) to 1194,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1224) to 1224,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1447) to 1447,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1447_MAP4) to 1447,
-                                       CityConstRegistry.hanWorld(WorldMapVariant.V3_1428) to 1428)) {
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_848) to 848,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1098) to 1098,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1133) to 1133,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1141) to 1141,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1341) to 1341,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1168) to 1168,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1194) to 1194,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1224) to 1224,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1447) to 1447,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1447_MAP4) to 1447,
+                                       CityConstRegistry.forVariant(WorldMapVariant.V3_1428) to 1428)) {
             val all = variant.all()
             assertEquals(size, all.size)
             assertEquals(emptyList(), all.keys.sorted().filter { checkNotNull(variant.byId(it)).path.isEmpty() },
@@ -164,7 +164,7 @@ class ConquerCityResetTest {
 
     @Test
     fun `진짜로 남은 城 이 없을 때만 던진다`() {
-        val v3 = CityConstRegistry.hanWorld(WorldMapVariant.V3_848)
+        val v3 = CityConstRegistry.forVariant(WorldMapVariant.V3_848)
         assertFailsWith<IllegalStateException> { ConquerCity.findNextCapital(547, emptyMap(), v3) }
     }
 

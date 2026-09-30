@@ -32,8 +32,8 @@ DEFAULT_SELECTION = ROOT / "data/curated/han/route-node-selection-v1.json"
 DEFAULT_MIGRATION = ROOT / "data/curated/han/route-node-migration-v1.json"
 DEFAULT_SCENARIOS = ROOT / "data/archive/scenarios"
 PROVENANCE_DEPENDENCIES = {
-    "legacyHanMap": Path("infra/src/main/resources/map/han-780-v1.json"),
-    "legacyTileMap": Path("data/map/han-780-v1-tiles.json"),
+    "sourceCityMap": Path("infra/src/main/resources/map/han-780-v1.json"),
+    "sourceTileMap": Path("data/map/han-780-v1-tiles.json"),
     "locationAdjudications": Path("data/curated/han/route-node-location-adjudications-v1.json"),
     "reviewPolicy": Path("data/curated/han/route-node-review-policy-v1.json"),
     "routeNodeKeyRegistry": Path("data/curated/han/route-node-key-registry-v1.json"),
@@ -156,11 +156,11 @@ IDENTITY_REVIEW_EVIDENCE_REFS = (
 PINNED_ROUTE_KEY_REGISTRY_SHA256 = "11361213d62433d27085510e4587390f819db97be138f34e6544523f98b1ba7b"
 PINNED_SOURCE_WITNESS_SHA256 = "ae065075409eb2edde6db015d91f41adf8a26566a1d0628e333062cfcd7a675f"
 PINNED_ADMINISTRATIVE_CATALOG_SHA256 = "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a"
-PINNED_REVIEWED_CANDIDATE_SHA256 = "cb0aa4554806c48770d183b392cca4ce26d583ccb98e893c417a4f606aec1c81"
-PINNED_REVIEW_POLICY_SHA256 = "475a35b4008909656472878a42ce27f95caf20c223fc879db0eaca6b907bb68a"
+PINNED_REVIEWED_CANDIDATE_SHA256 = "95002e2fff0b38940d1512ce9d4c9654e80d934f026a13b482dc6d0d2cf96c2b"
+PINNED_REVIEW_POLICY_SHA256 = "599e4c242240faa68eaa374d42dd25d86500f73fd047a9e738f275c681cf4e3c"
 PINNED_VALIDATION_CONTRACT_SHA256 = "b00fce73ac7b4d4d74032a0766d4f3ec05b0bf28dca5b2a8894e3bec93fb8f05"
-PINNED_LEGACY_HAN_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
-PINNED_LEGACY_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
+PINNED_SOURCE_CITY_MAP_SHA256 = "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
+PINNED_SOURCE_TILE_MAP_SHA256 = "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
 PINNED_REPLACEMENT_DECISION_SHA256 = "639fe3ddf0ecb72d3e70afa5d1693ce0899744f261b2b64bbbf6177a38595ac8"
 PINNED_CONFLICT_DECISION_SHA256 = "ab4f5ed35a03dfc47070d5dd985845d990cbab77c922480027461912cf44c1c7"
 EXPECTED_REVIEW_POLICY_ID = "han-w0c-route-node-review-policy-v1"
@@ -222,7 +222,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
         candidate_provenance = _mapping(documents.candidate.get("provenance"), "candidate provenance")
         _allowed_keys(candidate_provenance, frozenset({"generator", "inputs", "scenarioResourceCount"}), "candidate provenance")
         candidate_inputs = _mapping(candidate_provenance.get("inputs"), "candidate provenance inputs")
-        _allowed_keys(candidate_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "legacyHanMap", "legacyTileMap"}), "candidate provenance inputs")
+        _allowed_keys(candidate_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "sourceCityMap", "sourceTileMap"}), "candidate provenance inputs")
         for value in candidate_inputs.values():
             _allowed_keys(_mapping(value, "candidate provenance input"), frozenset({"path", "sha256"}), "candidate provenance input")
     for row in _rows(documents.candidate, "scenarioCatalog"):
@@ -308,7 +308,7 @@ def _validate_closed_schemas(documents: ValidationDocuments) -> None:
     selection_provenance = _mapping(documents.selection.get("provenance"), "selection provenance")
     _allowed_keys(selection_provenance, frozenset({"generator", "inputs"}), "selection provenance")
     selection_inputs = _mapping(selection_provenance.get("inputs"), "selection provenance inputs")
-    _allowed_keys(selection_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "candidate", "candidateConnections", "externalClaims", "jurisdictionRouteClaims", "strategicSiteRouteClaims", "externalSettlementRouteClaims", "legacyHanMap", "legacyTileMap", "locationAdjudications", "reviewPolicy", "routeNodeKeyRegistry"}), "selection provenance inputs")
+    _allowed_keys(selection_inputs, frozenset({"administrativeCatalog", "administrativePlaceOverlay", "candidate", "candidateConnections", "externalClaims", "jurisdictionRouteClaims", "strategicSiteRouteClaims", "externalSettlementRouteClaims", "sourceCityMap", "sourceTileMap", "locationAdjudications", "reviewPolicy", "routeNodeKeyRegistry"}), "selection provenance inputs")
     for value in selection_inputs.values():
         _allowed_keys(_mapping(value, "selection provenance input"), frozenset({"sha256"}), "selection provenance input")
     selection_summary = _mapping(documents.selection.get("summary"), "selection summary")
@@ -1319,10 +1319,10 @@ def _validate_candidate_provenance(documents: ValidationDocuments) -> None:
             Path("data/curated/han/administrative-place-bindings-v1.json"),
             documents.overlay_sha256,
         ),
-        "legacyHanMap": (PROVENANCE_DEPENDENCIES["legacyHanMap"], PINNED_LEGACY_HAN_MAP_SHA256),
-        "legacyTileMap": (
-            PROVENANCE_DEPENDENCIES["legacyTileMap"],
-            PINNED_LEGACY_TILE_MAP_SHA256,
+        "sourceCityMap": (PROVENANCE_DEPENDENCIES["sourceCityMap"], PINNED_SOURCE_CITY_MAP_SHA256),
+        "sourceTileMap": (
+            PROVENANCE_DEPENDENCIES["sourceTileMap"],
+            PINNED_SOURCE_TILE_MAP_SHA256,
         ),
     }
     _require_exact_keys(inputs, set(expected), "candidate provenance inputs")

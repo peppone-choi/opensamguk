@@ -99,7 +99,7 @@ export default function WarRoomPage() {
                     {vision.error || vision.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">시야를 불러오지 못해 안개 레이어를 비웠습니다.</p> : null}
                     {corps.error || corps.data?.status === 'WRONG_RULE_PROFILE' ? <p role="status">군단을 불러오지 못해 군단 레이어를 비웠습니다.</p> : null}
                     {isCampaignWorld && <p style={{ margin: 0, color: 'var(--muted)', fontSize: 12 }}>
-                        요격·회피 반응은 현재 기록만 남으며 이동이나 전투에 효과가 없습니다.
+                        요격은 시야·거리 조건을 만족한 적의 진입에 조우로 대응합니다. 회피는 조건을 만족하면 이동 가능한 인접 아군 지역으로 후퇴합니다.
                     </p>}
                     {frontInfo && generalId != null ? (
                         <>

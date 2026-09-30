@@ -400,7 +400,7 @@ object StrategicTopologyJson {
         fun identities(rows: List<JsonNode>, idField: String): Set<Identity> {
             // 1168·1224 판은 명부 id 가 연속이 아니다 — 은퇴 id 26 개를 되쓰지 않으므로
             // 최댓값이 명부 수보다 크다. 그 판은 등록부에서 실제 id 집합을 읽는다.
-            val expectedIds = if (cityCount in setOf(1168, 1224, 1447, 1428)) opensamguk.logic.world.CityConstRegistry.hanWorld(
+            val expectedIds = if (cityCount in setOf(1168, 1224, 1447, 1428)) opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.entries.first { it.cityCount == cityCount }).all().keys
                 else (1..cityCount).toSet()
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }

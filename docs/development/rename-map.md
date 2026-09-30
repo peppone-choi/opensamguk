@@ -13,6 +13,7 @@
 
 | 이전 | 확정 이름 | 처리 PR | 비고 |
 |---|---|---|---|
+| `SammoBar`·`.sammo-bar*` | `ProgressBar`·`.progress-bar*` | 중립 이름 후속 | 城 상세 화면의 진행 표시 컴포넌트와 CSS 선택자; 표시·수치 불변 |
 | `web/game/lib/hwiha-reads.ts` | `web/game/lib/campaign-reads.ts` | 저장·통신 draft | 조회 타입과 훅의 제품 접두사 제거 |
 | `web/game/lib/hwiha-screens.ts` | `web/game/lib/campaign-screens.ts` | 저장·통신 draft | 화면 등록부와 URL 생성 함수 개명 |
 | `web/game/lib/hwiha-fog.ts` | `web/game/lib/campaign-fog.ts` | 저장·통신 draft | 郡 시야 함수와 방향 상수 개명 |
@@ -36,6 +37,12 @@
 | `Han780V1CityConst`·`Han780V1GateIndex` | `Archive780CityConst`·`Archive780GateIndex` | 생성 상수 재핀 | 연도별 보관본 코드 이름; `han-780-v1` 저장 릴리스 ID 유지 |
 | `HanWorldV3CityConst`·`HanWorldV3GateIndex` | `ArchiveCityConst`·`ArchiveGateIndex` | 생성 상수 재핀 | 생성기 출력 타입·파일명, `han-world-v3` 저장 릴리스 ID 유지 |
 | `HanWorldV3<연도>CityConst`·`HanWorldV3<연도>GateIndex` | `Archive<연도>CityConst`·`Archive<연도>GateIndex` | 생성 상수 재핀 | 832~1447 및 1447 Map4 보관본 26개 파일·클래스, runtime-constants 핀 재계산 |
+| `HanAdministrativeAxis` | `AdministrativeAxis` | 잔여 지도 코드 개명 | 판에 고정된 원본 지도 경로와 관리 축 핀 바이트는 유지 |
+| `isHanCounty`·`is_han_county` | `isAdministrativeCounty`·`is_administrative_county` | 행정 縣 판정 함수 개명 | 웹 표시·지도 생성기의 코드 식별자만 변경; 지도 데이터와 표시 규칙은 유지 |
+| `CityConstRegistry.hanWorld` | `CityConstRegistry.forVariant` | 잔여 지도 코드 개명 | `WorldMapVariant`별 상수 조회 함수만 개명 |
+| `WorldMapCanvas.test.ts`의 로컬 `hanTiles` | `worldTiles` | 잔여 지도 코드 개명 | 불러오는 `han-tiles.json` 판 ID는 유지 |
+| `HwihaInputResolvedWireTest` | `InputResolvedWireTest` | 잔여 테스트 이름 개명 | 와이어 직렬화 값과 단언은 유지 |
+| 지도 테스트 설명·배지 주석의 `Hwiha` | `campaign` | 잔여 설명 개명 | 사용자 표시 문구와 동작 불변 |
 | `HanRuntimeConstantsIntegrityTest` | `ArchiveRuntimeConstantsIntegrityTest` | 생성 상수 재핀 | 12개 runtime-constants 매니페스트의 새 해시 검사 |
 | `Han<연도>Artifacts`·`Han1447Map4Artifacts` | `Archive<연도>Artifacts`·`Archive1447Map4Artifacts` | 보관본 로더 개명 | 11개 릴리스 번들 로더와 10개 무결성 테스트를 순수 개명; `han-world-v3-*` 번들 ID·catalog SHA 불변 |
 | `opensamguk.logic.input.HwihaDomesticRules` | `opensamguk.logic.domestic.DomesticRules` | 예정 | 도메인 패키지 이동 |
@@ -1243,6 +1250,8 @@ E2E 시나리오 픽스처 `tools/e2e/fixtures/hwiha-court`, `hwiha-yuzhou`는 �
 
 공용 지도 UI의 `HanMapCanvas`·`HanTiles`도 실제 사용 범위에 맞춰 `WorldMapCanvas`·`WorldTiles`로 바꾼다. 저장 세계가 핀으로 가리키는 `han-world-v3`는 데이터 계약 예외로 유지한다. 웹 경로와 API 경로는 저장·통신 단계에서 바꾼다.
 
+현재 지도 선정 provenance의 `legacyHanMap`은 `sourceCityMap`, `legacyTileMap`은 `sourceTileMap`으로 개명한다. 생성기·검증기·현재 후보 및 선정 JSON과 의존 SHA를 함께 갱신한다. 이미 발행된 `han-world-v3-1447-map4` 번들 및 이전 판의 콘텐츠 주소 blob은 저장 세계의 고정 계약이므로 원래 바이트를 보존한다. 이 코드 변경 후 QA W0–W4는 새 main SHA에서 다시 수집한다.
+
 | 이전 파일 | 새 파일 |
 |---|---|
 | `web/game/__tests__/HwihaCourtForm.test.tsx` | `web/game/__tests__/CourtForm.test.tsx` |
@@ -1553,3 +1562,155 @@ web/game/lib/hwiha-reads.ts
 | `infra/src/main/resources/scenario/scenario_{0,1,2,900…914,9200,1010…1120}.json` | `data/archive/scenarios/`의 같은 파일명 | 은퇴 시나리오 31개; 파일 바이트와 SHA-256 유지 |
 
 런타임 classpath에는 `scenario_990002.json`과 `scenario_3190.json`만 남긴다. 역사 지도 route-node manifest의 `resourcePath`는 승인된 provenance 레이블이라 원래 classpath 경로를 유지한다. 파일은 보관 경로에서 읽고 SHA-256으로 검증한다. `han-world-v3` 등 저장된 세계의 지도 번들 ID와 해시 핀도 변경하지 않는다.
+
+## 남은 턴·API 코드 식별자
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `hwihaOutcome` | `inputOutcome` | 예약 턴 처리 결과 필드 |
+| `hwihaCatalog`·`hwihaInputCatalog` | `inputCatalog` | 입력 카탈로그 참조 |
+| `hwihaDomesticContext` | `domesticContext` | 내정 처리 문맥 |
+| `hwihaDeploymentContext` | `deploymentContext` | 배치·행군 문맥 |
+| `hwihaWarOutcomes` | `warOutcomes` | 전쟁 결과 수신기 |
+| `hwihaMovementOf` | `movementOf` | 장수 턴 이동 처리 함수 |
+| `hwihaPhaseBoundary` | `phaseBoundary` | 월 경계 처리기 |
+| `hwihaVisionContext` | `visionContext` | 시야 처리 문맥 |
+| `hwihaProvinceCells` | `provinceCells` | 州 셀 색인 |
+| `hwihaNpcInputOf` | `npcInputOf` | NPC 입력 선택 함수 |
+| `hwihaGuarded` | `guardCampaignRead` | 조회 컨트롤러 가드 |
+| `hwihaGate` | `campaignReadGate` | 조회 접근 판정 |
+| `hwihaCourtAdmission`·`hwihaDeployAdmission`·`hwihaScoutAdmission`·`hwihaTravelAdmission` | `courtAdmission`·`deployAdmission`·`scoutAdmission`·`travelAdmission` | 예약 입력 판정기 |
+| `hwihaFieldAdmission`·`hwihaMilitaryAdmission`·`hwihaPersonalAdmission`·`hwihaRetireAdmission` | `fieldAdmission`·`militaryAdmission`·`personalAdmission`·`retireAdmission` | 예약 입력 판정기 |
+| `hwihaPeopleAdmission`·`hwihaPoliticalAdmission`·`hwihaTransferAdmission` | `peopleAdmission`·`politicalAdmission`·`transferAdmission` | 예약 입력 판정기 |
+| `hwihaInputRejection` | `inputRejection` | 입력 거절 분류 함수 |
+| `hwihaCourt`·`hwihaCourtHandler` | `court`·`courtHandler` | 법정 처리기 참조 |
+| `hwihaWorld` | `campaignWorld` | 테스트 세계 생성 함수 |
+| `HwihaPositionWriteTest` | `PositionWriteTest` | 테스트 클래스 |
+
+이 표는 코드 식별자만 다룬다. 저장 world/profile 값과 적용된 Flyway의 과거 이름은 별도 저장 계약 검토 대상이다.
+## 게이트웨이 지도 테스트 이름
+
+| 옛 이름 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `MapPreview.han.test.tsx` | `MapPreview.world.test.tsx` | 지도 미리보기 테스트 파일 |
+| 테스트 DOM ID `han-map` | `world-map` | 테스트 내부 선택자 |
+
+## 시나리오 적재·지도 소스 코드 이름
+
+| 옛 코드 이름 | 새 코드 이름 | 저장 계약 |
+| --- | --- | --- |
+| `ScenarioImporter.insertHwihaUnits` | `insertScenarioUnits` | `general_bugok` 행·시나리오 `units` 필드 불변 |
+| `ScenarioImporter.insertHwihaRetainers` | `insertScenarioRetainers` | `general_retainers` 행·시나리오 `retainers` 필드 불변 |
+| `apply_han_world.HAN_MAP` | `SOURCE_CITY_MAP` | 입력 경로 `map/han.json` 불변 |
+| `PINNED_LEGACY_HAN_MAP_SHA256` | `PINNED_SOURCE_CITY_MAP_SHA256` | provenance `legacyHanMap` 키·SHA-256 불변 |
+
+`legacyHanMap`은 이미 핀된 route-node provenance와 불변 blob의 키다. 이 PR은 Python·Kotlin 코드 식별자만 바꿨고 JSON 번들 입력·해시를 다시 쓰지 않았다.
+
+## 사용하지 않는 웹 실험 코드 은퇴
+
+| 이전 경로 | 처리 | 근거 |
+| --- | --- | --- |
+| `web/game/lib/v2/`·`web/game/components/v2/` | 삭제 | 현행 페이지의 import가 없고 종료된 `v2-lab`의 컴포넌트·테스트에서만 소비 |
+| `web/game/next.config.mjs`의 `createV2ClientStubPlugin` | 삭제 | 가로챌 `components/v2` 진입점이 없어짐 |
+| `web/game/__tests__/v2-lab-route.test.tsx` | `retired-routes.test.tsx` | 종료 경로의 404 가드는 유지 |
+
+`/game/v2-lab` 차단 문자열은 기존 URL의 우회 접근을 막기 위해 남긴다. 이 삭제는 활성 캠페인 화면·지도 번들과 무관하다.
+
+### 현행 縣 표시 충돌 목록 입력 키 (2026-09-30)
+
+| 이전 필드 | 중립 필드 | 범위 |
+|---|---|---|
+| `hanTilesSha256` | `tileMapSha256` | 縣 표시 충돌 생성 JSON의 지도 격자 입력 핀 |
+| `hanWorldV3Sha256` | `worldMapSha256` | 같은 JSON의 세계 지도 입력 핀 |
+
+이 목록은 현재 생성 파일이다. 생성기와 웹 병기표의 핀 주석을 함께 재생성했다. 과거 동결 지도 번들의 바이트는 수정하지 않았다.
+
+### 현행 행정 감사 입력 키 (2026-09-30)
+
+| 이전 필드 | 중립 필드 | 범위 |
+|---|---|---|
+| `inputs.hanTiles` | `inputs.tileMap` | 행정 위상 감사 스냅샷 |
+
+수로망의 `base.hanTiles`와 입력 경로 `data/map/han-tiles.json`, 세계·전략 manifest의 `hanTilesSha256`·`baseHanTiles`는 세계 지도 매니페스트와 1447 번들 해시를 함께 재생성하는 작업에서 개명한다.
+
+## 캠페인 E2E에서 삼모 분기 제거
+
+| 이전 | 새 이름 | 처리 |
+| --- | --- | --- |
+| `web/game/e2e/v1-core-live.spec.ts` | `web/game/e2e/campaign-core-live.spec.ts` | 현행 캠페인 화면·예약 입력·재시작 검사만 유지 |
+| 같은 파일의 `SAMMO` 명령 카탈로그 분기·`che_요양` 운영 스모크 | 삭제 | 은퇴한 제품 경로와 전용 Redis·틱·브라우저 관측 헬퍼 제거 |
+
+현행 `ruleProfile=HWIHA` 확인은 아직 적용 중인 와이어 계약에 맞춘다. 세계 형식 가드 개명 PR에서 `worldFormat`으로 옮길 때 이 E2E 단언도 함께 바꾼다. 로컬 게이트의 명시적 spec 경로 계약은 새 파일명으로 갱신했다. Sammo 전용 `E2E_OPERATIONAL_SMOKE=true` 모드는 새 캠페인 스모크를 가장하지 않도록 명시적으로 거절한다.
+
+## 콘텐츠 카탈로그와 샌드박스 게이트 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `opensamguk.infra.v2`의 콘텐츠 타입 | `opensamguk.infra.content` | Kotlin 패키지·파일·테스트 |
+| `V2ContentCatalog`·`V2ContentMetadata`·`V2ContentStatus` | `ContentCatalog`·`ContentMetadata`·`ContentStatus` | 메타데이터 로더·계약 |
+| `V2CityCatalogAdapter`·`V2CityCatalogSnapshot`·`V2CityCatalogDiff` | `CityCatalogAdapter`·`CityCatalogSnapshot`·`CityCatalogDiff` | 도시 카탈로그 조회 |
+| `V2SandboxGate`·`V2SandboxMarker` | `SandboxGate`·`SandboxMarker` | `opensamguk.infra.sandbox` 패키지 |
+
+이 변경은 Kotlin 선언과 참조만 바꾼다. `v2.enabled`·`v2-sandbox`와 `content/v2`는 배포 설정·콘텐츠 경로 계약이므로 별도 저장·통신 식별자 변경에서 함께 다룬다.
+
+## 엔진 도시 원장 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `opensamguk.engine.v2.V2CityLedgerStore` | `opensamguk.engine.city.CityLedgerStore` | 도시 원장 조회·증분 기록 |
+| `V2CityLedgerEntry` | `CityLedgerEntry` | 도시 원장 값 객체 |
+
+`HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.
+
+## 도시 처리 엔진 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `engine.v2.V2CityGarrisonAttrition*`·`V2Attrition*` | `engine.city.CityGarrisonAttrition*`·`Attrition*` | 재난 뒤 도시 병사 감소 처리 |
+| `engine.v2.V2ProcessCityIncome*`·`V2CityIncome*`·`V2CityLedgerDelta` | `engine.city.ProcessCityIncome*`·`CityIncome*`·`CityLedgerDelta` | 도시 세입 처리 |
+| `engine.v2.V2GarrisonRecruitHandler`·`V2RecruitDecision` | `engine.city.GarrisonRecruitHandler`·`RecruitDecision` | 모병 |
+| `engine.v2.V2CityTransportHandler`·`V2TransportDecision` | `engine.city.CityTransportHandler`·`TransportDecision` | 자원 수송 |
+| `engine.v2.V2WorldActions` | `engine.world.CityWorldActions` | 도시 사건 등록기 |
+
+사건 액션 이름 `V2CityGarrisonAttrition`·`V2ProcessCityIncome`, 명령 코드와 DB 객체 이름은 저장·통신 식별자 계약이므로 유지했다. 원래 함수명에 붙은 `v2` 접두사만 제거했다.
+
+### game-api 도시·명령 샌드박스 코드 이름 (2026-09-30)
+
+| 이전 이름 | 현재 이름 | 범위 |
+|---|---|---|
+| `gameapi.v2.V2CanonicalCommandController` | `gameapi.command.CanonicalCommandController` | 코드 타입·파일·패키지 |
+| `gameapi.v2.V2CommandPrecheckService` | `gameapi.command.CityCommandPrecheckService` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2CityLedgerReadController` | `gameapi.city.CityLedgerReadController` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2CityTransportController` | `gameapi.city.CityTransportController` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2GarrisonRecruitController` | `gameapi.city.GarrisonRecruitController` | 코드 타입·파일·패키지·Spring 빈 |
+| `V2CommandIntakeResponse`/`V2CommandArgumentParser` | `CommandIntakeResponse`/`CommandArgumentParser` | 코드 타입 |
+| `validateLegacyV2Arguments`/`legacyError` | `validateCommandArguments`/`commandError` | 코드 함수 |
+
+`/api/v2/*` 경로, `v2CityTransport`·`v2GarrisonRecruit` 명령 ID, `v2.enabled`·`v2-sandbox` 설정은 저장·통신 계약이므로 이 코드 이름 PR에서는 유지한다. 저장 식별자 개명 단계에서 함께 바꾼다.
+
+## 샌드박스 설정·콘텐츠 경로 (2026-09-30)
+
+| 이전 이름 | 중립 이름 | 범위 |
+| --- | --- | --- |
+| `v2.enabled`·`V2_ENABLED` | `sandbox.enabled`·`SANDBOX_ENABLED` | 두 서버의 빈 등록 게이트 |
+| `v2-sandbox` | `sandbox` | Spring 프로필·Compose 이름 |
+| `V2_*` | `SANDBOX_*` | 샌드박스 Compose 치환 변수 |
+| `content/v2` | `content/catalog` | 콘텐츠 카탈로그 classpath |
+| `db/migration_v2` | `db/migration_sandbox` | 샌드박스 Flyway location |
+| `V2SandboxConfiguration` | `SandboxConfiguration` | 엔진·API 설정 타입 |
+
+샌드박스의 데이터베이스·볼륨 이름은 새 네임스페이스를 사용한다. 기존 실행 스택의 데이터를 자동 이전하지 않으며, 동결 지도 릴리스와 과거 Flyway 버전 `V901`의 파일 내용은 유지한다.
+
+## 샌드박스 테스트 이름 (2026-09-30)
+
+엔진·API·게이트웨이의 `.../v2/V2*Test.kt` 및 `V2*IT.kt`는 `.../sandbox/*Test.kt` 및 `*IT.kt`로 옮겼다. 명령 매퍼 테스트는 `gameapi.reserve.command.CommandWireMapperTest`, 역사적 Flyway V2 brief 검사는 `BriefMigrationTest`로 개명했다. 테스트용 `V900`과 과거 `V901`의 Flyway 버전 번호 및 원본 SQL 바이트는 유지한다.
+
+이름 lint의 제품 경로·패키지 잔여는 0건이다. `web/gateway/app/hwiha` 두 경로는 옛 URL을 308로 보내야 하므로 정확한 경로만 예외로 기록했다.
+
+### Redis 스트림 네임스페이스 (2026-09-30)
+
+| 이전 저장 키 접두사 | 현재 접두사 | 근거 |
+|---|---|---|
+| `sammo:<profile>:w<worldId>:` | `game:<profile>:w<worldId>:` | 명령·사건 스트림, 실시간 채널, 요청 결과 키를 같은 세계 범위에서 중립화 |
+
+PEP 새 세계 전환 전에 적용하며 옛 Redis 큐를 새 이름으로 읽거나 이행하지 않는다. 기존 구세계는 형식 가드에서 거절된다.

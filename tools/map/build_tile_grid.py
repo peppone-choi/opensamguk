@@ -183,7 +183,7 @@ def validate_han_place_names(document: dict) -> None:
     failures: list[str] = []
     for collection_name, rows, display_key in _normalizable_collections(document):
         for row in rows:
-            is_han_county = (
+            is_administrative_county = (
                 row.get("kind") in {"COUNTY", "MARQUISATE"}
                 or (
                     row.get("kind") == "SPATIAL_PROVINCE"
@@ -193,8 +193,8 @@ def validate_han_place_names(document: dict) -> None:
             # Small unit fixtures may omit kind; they still exercise the public
             # validator and therefore remain subject to the same text contract.
             if row.get("kind") is None:
-                is_han_county = True
-            if not is_han_county:
+                is_administrative_county = True
+            if not is_administrative_county:
                 continue
             display_name, name_ch = row.get(display_key), row.get("nameCh")
             if any(

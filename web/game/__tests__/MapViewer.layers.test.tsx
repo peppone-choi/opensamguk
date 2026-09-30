@@ -55,7 +55,7 @@ beforeEach(() => {
   vi.stubGlobal('matchMedia', () => ({ matches: false, addListener() {}, removeListener() {} }));
 });
 
-describe('MapViewer Hwiha layers', () => {
+describe('MapViewer campaign layers', () => {
   it('passes projected corps and dim visibility into the main war room without hidden corps', async () => {
     render(<MapViewer mapData={PREVIEW} mapLayers="full" currentCityId={7} />);
     await waitFor(() => expect(mocks.props?.commanderyVisibility?.get(1)).toBe('INTEL'));
@@ -66,7 +66,7 @@ describe('MapViewer Hwiha layers', () => {
     expect(mocks.campaignCorps).toHaveBeenCalledWith(7, expect.any(AbortSignal));
   });
 
-  it('keeps the map and clears only the rejected Hwiha layers', async () => {
+  it('keeps the map and clears only the rejected campaign layers', async () => {
     mocks.campaignVisibility.mockResolvedValue({ status: 'WRONG_RULE_PROFILE' });
     mocks.campaignCorps.mockRejectedValue(new Error('unavailable'));
     render(<MapViewer mapData={PREVIEW} mapLayers="full" />);

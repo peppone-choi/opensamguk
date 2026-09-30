@@ -222,15 +222,15 @@
     },
     "data/curated/han/route-node-review-policy-v1.json": {
       "path": "data/curated/han/route-node-review-policy-v1.json",
-      "sha256": "475a35b4008909656472878a42ce27f95caf20c223fc879db0eaca6b907bb68a"
+      "sha256": "599e4c242240faa68eaa374d42dd25d86500f73fd047a9e738f275c681cf4e3c"
     },
     "data/curated/han/route-node-selection-candidates-v1.json": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "cb0aa4554806c48770d183b392cca4ce26d583ccb98e893c417a4f606aec1c81"
+      "sha256": "95002e2fff0b38940d1512ce9d4c9654e80d934f026a13b482dc6d0d2cf96c2b"
     },
     "data/curated/han/route-node-selection-v1.json": {
       "path": "data/curated/han/route-node-selection-v1.json",
-      "sha256": "91ab80d63c8ac95648d6dbaad0d42c079e217cfc4fa4a69317a0d7d7d83f8425"
+      "sha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6"
     },
     "data/curated/han/route-node-validation-contract-v1.json": {
       "path": "data/curated/han/route-node-validation-contract-v1.json",

@@ -791,7 +791,7 @@ def materialize(
         _load(external_policy) if external_policy is not None else None,
     )
     result["inputs"] = {
-        "hanTiles": {"sha256": _sha256(tiles)},
+        "tileMap": {"sha256": _sha256(tiles)},
         "administrativeUnits": {"sha256": _sha256(units)},
         "administrativePlaceBindings": {"sha256": _sha256(bindings)},
     }

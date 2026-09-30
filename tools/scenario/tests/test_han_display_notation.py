@@ -45,7 +45,7 @@ HANJA_STEM_DISPLAYS = {
 IDENTIFIER_QUALIFIER = re.compile(r"(?:\([^()]*\)|#\d+)+$")
 
 
-def is_han_county(city):
+def is_administrative_county(city):
     if city["id"] < 0:
         return False
     name_ch = (city.get("meta") or {}).get("nameCh", "")
@@ -68,7 +68,7 @@ class DisplayNotationTest(unittest.TestCase):
 
     def test_county_formal_names_cover_jun_and_hyeon(self):
         for city in self.cities:
-            if not is_han_county(city):
+            if not is_administrative_county(city):
                 continue
             with self.subTest(city=city["id"]):
                 meta = city.get("meta") or {}
@@ -99,7 +99,7 @@ class DisplayNotationTest(unittest.TestCase):
                 self.assertIsNone(IDENTIFIER_QUALIFIER.search(display), display)
 
     def test_non_county_places_keep_current_notation(self):
-        non_county = [c for c in self.cities if not is_han_county(c)]
+        non_county = [c for c in self.cities if not is_administrative_county(c)]
         self.assertGreater(len(non_county), 0)
         for city in non_county:
             with self.subTest(city=city["id"]):

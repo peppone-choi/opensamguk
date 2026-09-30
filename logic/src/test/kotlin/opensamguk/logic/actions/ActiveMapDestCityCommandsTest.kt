@@ -32,8 +32,8 @@ class ActiveMapDestCityCommandsTest {
     fun `same logical map restricts destination by historical variant in both modes`() {
         val old = opensamguk.logic.world.WorldMapVariant.V3_832
         val newer = opensamguk.logic.world.WorldMapVariant.V3_835
-        val added = (opensamguk.logic.world.CityConstRegistry.hanWorld(newer).all().keys -
-            opensamguk.logic.world.CityConstRegistry.hanWorld(old).all().keys).first()
+        val added = (opensamguk.logic.world.CityConstRegistry.forVariant(newer).all().keys -
+            opensamguk.logic.world.CityConstRegistry.forVariant(old).all().keys).first()
         for (mode in ConstraintMode.entries) {
             val context = ConstraintContext(actorId = 1, destCityId = added, env = mapOf("mapName" to "han-world-v3"), mode = mode, worldMapVariant = old)
             val gate = opensamguk.logic.constraints.activeMapDestCity()
