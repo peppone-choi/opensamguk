@@ -79,18 +79,26 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isInt = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value);
 const positive = (value: unknown): value is number => isInt(value) && value > 0;
 const nonNegative = (value: unknown): value is number => isInt(value) && value >= 0;
-/** 도로 edge 안정 ID. 128자 한도는 edge 부분에만 건다(han-land-roads-v1.json edges[] 4,241개 모두 이 안, 최장 112자). */
-const ROAD_EDGE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
-/** 서버 보루 ID = RoadFort.siteId(edgeId, row, col) = "$edgeId@$row,$col"(RoadFortState.kt). 좌표는 음 아닌 정규 십진. */
-const ROAD_FORT_SITE_ID = /^([A-Za-z0-9][A-Za-z0-9_.:-]{0,127})@(0|[1-9][0-9]*),(0|[1-9][0-9]*)$/;
+// 보루 참조 계약(C8 2026-10-01 · meta reports/opensamguk/tasks/2026-10-01-c8-roadfort-ref-contract.md).
+// 서버 보루 ID 는 RoadFort.siteId(edgeId, row, col) = "$edgeId@$row,$col"(RoadFortState.kt), legacy 안정 ID 도 그대로 받는다.
+/** legacy 보루 ID · 도로 edge ID(서버 isStableKey). 128자 한도는 이 부분에만 건다. */
+const ROAD_STABLE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+/** site 좌표 한 칸: 문자열 전체가 0 또는 앞자리 0 없는 10자리 이하 십진(유니코드 숫자 · 부호 · 소수 · 지수 거절). */
+const ROAD_FORT_CELL = /^(0|[1-9][0-9]{0,9})$/;
 const KOTLIN_INT_MAX = 2147483647;
-const intCoord = (digits: string) => Number(digits) <= KOTLIN_INT_MAX;
+/** edge 128 + '@' + 10 + ',' + 10. 구성 한도에서 이미 따라 나오는 값이라, 이 검사는 긴 입력을 split 전에 끊는 몫이다. */
+const ROAD_FORT_SITE_MAX_LENGTH = 150;
+const roadFortCell = (part: string) => ROAD_FORT_CELL.test(part) && Number(part) <= KOTLIN_INT_MAX;
 
+/** ROAD_FORT 전용 검사. 판정만 하고 원문을 고치지 않는다(trim · 치환 · parseInt 없음). 공용 ref 검사는 넓히지 않는다. */
 function roadFortId(value: unknown): boolean {
     if (typeof value !== 'string') return false;
-    if (ROAD_EDGE_ID.test(value)) return true; // @ 없는 안정 ID
-    const site = ROAD_FORT_SITE_ID.exec(value);
-    return site !== null && intCoord(site[2]) && intCoord(site[3]);
+    if (ROAD_STABLE_ID.test(value)) return true;
+    if (value.length > ROAD_FORT_SITE_MAX_LENGTH) return false;
+    const [edge, cells, ...extraAt] = value.split('@');
+    if (extraAt.length > 0 || cells === undefined || !ROAD_STABLE_ID.test(edge)) return false;
+    const [row, col, ...extraComma] = cells.split(',');
+    return extraComma.length === 0 && col !== undefined && roadFortCell(row) && roadFortCell(col);
 }
 
 type RefCheck = (value: unknown) => boolean;
