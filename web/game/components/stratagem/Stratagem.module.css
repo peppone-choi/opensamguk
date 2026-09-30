@@ -1,0 +1,46 @@
+/* 계책 덱(P-S01) — 보드 V31K6Hand(데스크톱: 세 칸 · 손패 | 오른쪽 380) · MHand(모바일: 손패 가로 밀기 → 단추 → 세 칸). */
+.deck { display: flex; gap: 12px; padding: 12px; min-height: 0; color: var(--text); }
+.main { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+.side { width: 380px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 12px; }
+
+.zones { display: flex; gap: 12px; }
+.zone, .hand, .sideBox { border: 1px solid var(--line); border-radius: 4px; background: var(--panel); min-width: 0; }
+.zone { flex: 1 1 0; display: flex; flex-direction: column; }
+.zoneHead, .handHead, .sideHead {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0; padding: 8px 12px;
+  border-bottom: 1px solid var(--line); font-size: 14px; font-weight: 700;
+}
+.zoneHead > span:last-child { font-weight: 400; font-size: 12px; color: var(--muted); }
+.zoneEmpty { margin: 10px; padding: 16px 8px; border: 1px dashed var(--line-2); border-radius: 3px; text-align: center; font-size: 12px; color: var(--muted); }
+
+.hand { display: flex; flex-direction: column; }
+.cards { display: flex; gap: 14px; padding: 20px 12px; overflow-x: auto; justify-content: center; }
+.card {
+  width: 156px; min-height: 220px; flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; padding: 0 0 12px;
+  border: 1px solid var(--line-2); border-radius: 3px; background: var(--inset); color: var(--text); font: inherit; text-align: left; cursor: pointer;
+}
+.card[aria-selected='true'] { border-color: var(--bronze); box-shadow: 0 0 24px rgba(211, 176, 100, 0.22); transform: translateY(-8px); }
+.card:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.cardTop { display: flex; min-height: 32px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+.cardArt { display: block; width: 100%; height: auto; aspect-ratio: 2 / 3; object-fit: cover; border-bottom: 1px solid var(--line); }
+.cardName { padding: 0 10px; font-family: var(--font-serif); font-size: 18px; font-weight: 900; }
+.cardEffect { padding: 0 10px; font-size: 12px; line-height: 1.45; color: var(--text-2, var(--muted)); }
+.actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 16px; border-top: 1px solid var(--line); }
+.actions :global(.os-button) { min-height: var(--row-h, 44px); }
+.muted { font-size: 12px; color: var(--muted); font-weight: 400; }
+.sideBox { display: flex; flex-direction: column; }
+
+/* 태블릿 이하: 오른쪽 칸을 아래로. 모바일: 손패를 위로 올리고 가로로 민다, 세 칸은 목록. */
+@media (max-width: 1199.98px) {
+  .deck { flex-direction: column; }
+  .side { width: auto; }
+}
+@media (max-width: 767.98px) {
+  .deck { padding: 8px; }
+  .main { flex-direction: column-reverse; }
+  .zones { flex-direction: column; gap: 0; }
+  .zone { border-radius: 0; }
+  .zoneEmpty { margin: 0 12px 10px; padding: 8px; }
+  .cards { justify-content: flex-start; scroll-snap-type: x proximity; }
+  .card { width: 150px; scroll-snap-align: start; }
+}
