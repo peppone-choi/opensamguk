@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { Chip, RECORD_SECTION_LABEL, RECORD_SECTION_ORDER, ReasonTooltip, Seg, type RecordSection } from '@opensamguk/ui';
 import { LAST_TURN_TAB_LABEL, type LastTurnGroup, type LastTurnItem, type LastTurnTab } from '@/lib/last-turn-view';
 import styles from './lastturn.module.css';
@@ -49,6 +50,9 @@ export interface LastTurnListProps {
     readonly groups: readonly LastTurnGroup[];
     /** 조정 공문 「응답하기」 — 같은 요청 카드(K6)를 그 자리에서 연다. */
     readonly onReply: (dispatchId: string) => void;
+    /** 지금 펼친 응답(발령 id) — 그 항목 아래에 replySlot 을 그린다(K6 요청 카드 한 장, 그 자리에서 응답). */
+    readonly replyOpen?: string | null;
+    readonly replySlot?: (dispatchId: string) => ReactNode;
     readonly yuedanHref?: string;
     readonly countyHref?: (countyId: number) => string;
     readonly recordsHref?: string;
@@ -56,7 +60,7 @@ export interface LastTurnListProps {
 
 const WHY = '처리되지 않은 입력입니다 — 비용은 들지 않았습니다.';
 
-function Item({ it, onReply, yuedanHref, countyHref }: { readonly it: LastTurnItem } & Omit<LastTurnListProps, 'groups' | 'recordsHref'>) {
+function Item({ it, onReply, replyOpen, replySlot, yuedanHref, countyHref }: { readonly it: LastTurnItem } & Omit<LastTurnListProps, 'groups' | 'recordsHref'>) {
     return (
         <li className={styles.item} data-section={it.section ?? undefined}>
             <span className={styles.chips}>
@@ -85,6 +89,7 @@ function Item({ it, onReply, yuedanHref, countyHref }: { readonly it: LastTurnIt
                     })}
                 </span>
             ) : null}
+            {it.dispatchId && replyOpen === it.dispatchId && replySlot ? <div className={styles.reply}>{replySlot(it.dispatchId)}</div> : null}
         </li>
     );
 }
@@ -93,7 +98,7 @@ function Item({ it, onReply, yuedanHref, countyHref }: { readonly it: LastTurnIt
  * 12순 목록 — 순 묶음(새것부터), 기록 없는 순은 접은 한 줄. 항목 = 분류 칩 + 상태 칩 / 서버 문장 / 바로가기.
  * 모두 비면 빈 상태 한 줄. 맨 아래 「기록 전체 보기 →」(P-H01, K5).
  */
-export function LastTurnList({ groups, onReply, yuedanHref, countyHref, recordsHref }: LastTurnListProps) {
+export function LastTurnList({ groups, onReply, replyOpen, replySlot, yuedanHref, countyHref, recordsHref }: LastTurnListProps) {
     const empty = groups.every((g) => g.items.length === 0);
     return (
         <div className={styles.list}>
@@ -107,7 +112,7 @@ export function LastTurnList({ groups, onReply, yuedanHref, countyHref, recordsH
                         <li key={g.key} className={styles.group}>
                             <h4 className={`os-mono ${styles.when}`}>{g.when}</h4>
                             <ul className={styles.items}>
-                                {g.items.map((it) => <Item key={it.key} it={it} onReply={onReply} yuedanHref={yuedanHref} countyHref={countyHref} />)}
+                                {g.items.map((it) => <Item key={it.key} it={it} onReply={onReply} replyOpen={replyOpen} replySlot={replySlot} yuedanHref={yuedanHref} countyHref={countyHref} />)}
                             </ul>
                         </li>
                     ))}
