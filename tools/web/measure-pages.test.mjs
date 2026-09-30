@@ -25,6 +25,8 @@ const BAD = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta na
 <div class="has">마우스를 올리면<span class="tip">드러남</span></div>
 <div class="os-iso-map" style="width:600px;height:400px"><canvas width="600" height="400"></canvas></div>
 <div style="width:2000px;height:10px"></div>
+<div style="overflow:hidden;width:100%"><p style="width:3000px;text-align:right;margin:0">오른쪽 끝에서 잘리는 글자</p></div>
+<div style="overflow-x:auto;width:100%"><p style="width:3000px;text-align:right;margin:0">스크롤 영역 안 글자</p></div>
 <script>
 // 본문을 읽어야 전송이 끝난다(안 읽으면 망이 잠잠해지지 않는다).
 for (const u of ['/big.bin', '/big.bin', '/missing']) fetch(u, { cache: 'no-store' }).then((r) => r.arrayBuffer());
@@ -78,6 +80,8 @@ test('나쁜 화면: 심은 위반이 전부 걸린다(적색)', async () => {
   assert.ok(full.firstMapDrawMs != null && full.firstMapDrawMs >= 3000, `지도 첫 그림 ${full.firstMapDrawMs}`);
   assert.equal(full.duplicates.count, 1);
   assert.ok(full.layout.horizontalOverflowPx > 0);
+  assert.equal(full.layout.textCutRight, 1, JSON.stringify(full.layout.textCutRightSamples));
+  assert.equal(full.layout.textCutRightInScroller, 1, JSON.stringify(full.layout.textCutRightInScrollerSamples));
   assert.ok(full.layout.textUnder12px >= 1);
   assert.ok(full.layout.hoverRevealRules >= 1);
   assert.equal(full.map.hitTest.isCanvas, true);
@@ -91,6 +95,7 @@ test('깨끗한 화면: 걸리는 기준이 없다(모바일)', async () => {
   assert.deepEqual(row.failedChecks, []);
   assert.equal(row.firstMapDrawMs, null);
   assert.equal(row.overflowPx, 0);
+  assert.equal(row.textCutRight, 0);
   assert.ok(fs.existsSync(path.join(outDir, 'summary.md')));
 });
 

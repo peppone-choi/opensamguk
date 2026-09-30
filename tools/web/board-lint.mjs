@@ -13,9 +13,13 @@
 //   title   title 속성에만 있는 정보 — V3System 「호버 · title 로만 보이는 정보는 두지 않는다」
 //   hover   :hover 로 display · visibility · opacity 를 드러내는 CSS 규칙(추정)
 //   emoji   이모지 — BRIEF 「이모지 금지」 (▲▼ 같은 글자 기호는 세지 않는다)
-//   words   V3System 「쓰지 않는 말」 표의 말. 취소선을 그은 글자(그 표 자체)는 세지 않는다
+//   words   V3System 「쓰지 않는 말」 표의 말(한자 칸은 hanja 가 센다). 취소선을 그은 글자(그 표 자체)는 세지 않는다
+//   hanja   class="hj"(같은 읽기 지명 병기) · data-lint="skip" · 취소선 밖의 한자 전부 — 시스템 3.1.4 표기 규칙
 //   covered 가운데가 다른 요소에 덮인 누를 것 — 결함(겹친 투명 상자 · 장식이 조작을 먹는 부류, 2026-09-30 K0 판정).
-//           열린 층(대화상자 · 시트 · 딤 · 떠 있는 카드) 아래 덮인 것은 정상이라 underLayer 로 따로 센다. 지도 표식 .mk 는 층 아래여도 결함
+//           열린 층(대화상자 · 시트 · 딤 · 떠 있는 카드 · 열린 목록 role=listbox/menu) 아래 덮인 것은 정상이라 underLayer 로 따로 센다.
+//           지도 표식 .mk 는 층 아래여도 결함
+//   placeholder 보이는 글자에 남은 그림 파일 이름(「logo-wordmark.png」 같은 자리 표시) — 3.1.2 부터 결함
+//   logo    워드마크(img alt="오픈삼국")가 한 화면에 둘 이상 — 시스템 3.1.4 「로고 한 번」, 둘째부터 센다
 //   clipped 보드 뿌리(고정 크기, overflow hidden) 밖으로 나가 잘린 글자 · 누를 것 — BRIEF 「내용이 넘치면 잘린다」
 //           (지도 SVG 글자 · 화면 읽기 전용 글자 · 안쪽 상자가 일부러 자른 줄은 빼고, 마지막 것은 innerCropped 로 센다)
 //
@@ -30,22 +34,23 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const webRequire = createRequire(path.join(ROOT, 'web/game/package.json'));
 
-export const KEYS = ['small', 'fake', 'title', 'hover', 'emoji', 'words', 'clipped', 'covered'];
+export const KEYS = ['small', 'fake', 'title', 'hover', 'emoji', 'words', 'hanja', 'clipped', 'covered', 'placeholder', 'logo'];
 
 // V3System 「쓰지 않는 말」(docs/design/ui-v3/boards_v3_shell.py WORDS). 표가 바뀌면 board-lint.test.mjs 가 깨진다.
 // 「전(錢)」의 「전」 · 「곡(穀)」의 「곡」은 한 글자라 다른 말과 겹친다 — 한자만 센다.
 // 「년 월(표기)」은 날짜를 「200년 3월 중순」처럼 순까지 쓰라는 뜻으로 읽고, 순이 없는 「N년 N월」을 센다(해석).
+// hanja: true 인 말은 class="hj"(같은 읽기 지명의 한자 병기, 시스템 3.1.2) 안에서는 세지 않는다.
 export const FORBIDDEN = [
   { word: '휘하', use: '부', re: '휘하' },
-  { word: '縣', use: '현', re: '縣' },
-  { word: '郡', use: '군', re: '郡' },
-  { word: '城', use: '성', re: '城' },
-  { word: '省', use: '구역', re: '省' },
+  { word: '縣', use: '현', re: '縣' , hanja: true },
+  { word: '郡', use: '군', re: '郡' , hanja: true },
+  { word: '城', use: '성', re: '城' , hanja: true },
+  { word: '省', use: '구역', re: '省' , hanja: true },
   { word: '자금', use: '금', re: '자금' },
-  { word: '錢', use: '금', re: '錢' },
+  { word: '錢', use: '금', re: '錢' , hanja: true },
   { word: '국고', use: '수도 창고', re: '국고' },
   { word: '군량', use: '쌀', re: '군량' },
-  { word: '穀', use: '쌀', re: '穀' },
+  { word: '穀', use: '쌀', re: '穀' , hanja: true },
   { word: '병량', use: '쌀', re: '병량' },
   { word: '예턴', use: '명령 목록 · 예약', re: '예턴' },
   { word: '사령턴', use: '명령 목록 · 예약', re: '사령턴' },
@@ -56,7 +61,8 @@ export const FORBIDDEN = [
   { word: '계급', use: '쓰지 않는다', re: '계급' },
   { word: '삭턴', use: '쓰지 않는다', re: '삭턴' },
   { word: '벌점', use: '쓰지 않는다', re: '벌점' },
-  { word: 'N년 N월(순 없음)', use: '200년 3월 중순', re: '\\d+\\s*년\\s*\\d+\\s*월(?!\\s*[상중하]순)' },
+  // 시스템 3.1.4 V31SystemIndex 「날짜」: 달마다 하는 일(월단평 등)만 순 없이 적어도 된다 — 알려진 것은 월단평뿐이라 그것만 뺀다.
+  { word: 'N년 N월(순 없음)', use: '200년 3월 중순', re: '\\d+\\s*년\\s*\\d+\\s*월(?!\\s*(?:[상중하]순|월단평))' },
 ];
 
 function parseArgs(argv) {
@@ -160,8 +166,8 @@ function lintInPage({ forbidden, minTarget }) {
     return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1, covered: false };
   };
   // 열린 층(2026-09-30 K0 판정): 대화상자 · 하단 시트 · 딤이 열린 보드에서 그 아래가 덮인 것은 정상이다.
-  const LAYER = '[role=dialog],[role=alertdialog],[aria-modal="true"],dialog[open],.sheet,.scrim,.dim,.pop';
-  const layerKind = (l) => (l.matches('.scrim,.dim') ? '딤' : l.matches('.sheet') ? '시트' : l.matches('.pop') ? '떠 있는 카드' : '대화상자');
+  const LAYER = '[role=dialog],[role=alertdialog],[aria-modal="true"],dialog[open],.sheet,.scrim,.dim,.pop,[role=listbox],[role=menu]';
+  const layerKind = (l) => (l.matches('.scrim,.dim') ? '딤' : l.matches('.sheet') ? '시트' : l.matches('.pop') ? '떠 있는 카드' : l.matches('[role=listbox],[role=menu]') ? '열린 목록' : '대화상자');
   const pathOf = (node) => {
     const parts = [];
     for (let e = node; e && e !== root && parts.length < 3; e = e.parentElement) parts.unshift(describe(e).el);
@@ -208,13 +214,13 @@ function lintInPage({ forbidden, minTarget }) {
       if (croppedInside(el, r)) innerCropped += 1; else clipped.push({ ...describe(el), kind: 'text' });
     }
     if (el.closest('[data-lint="skip"]')) continue; // 보드 주석(설계 설명) — 표기 검사에서 뺀다
-    pieces.push({ text: n.textContent, struck: struck(el), where: describe(el).el });
+    pieces.push({ text: n.textContent, struck: struck(el), hj: !!el.closest('.hj'), field: !!el.closest('input,textarea,select,.inp,[role=textbox]'), where: describe(el).el });
   }
   for (const el of root.querySelectorAll('[alt],[title],[aria-label],[placeholder]')) {
     if (el.closest('[data-lint="skip"]')) continue;
     for (const a of ['alt', 'title', 'aria-label', 'placeholder']) {
       const v = el.getAttribute(a);
-      if (v && v.trim()) pieces.push({ text: v, struck: false, where: `${el.tagName.toLowerCase()}[${a}]` });
+      if (v && v.trim()) pieces.push({ text: v, struck: false, hj: !!el.closest('.hj'), attr: true, where: `${el.tagName.toLowerCase()}[${a}]` });
     }
   }
 
@@ -222,6 +228,7 @@ function lintInPage({ forbidden, minTarget }) {
   for (const f of forbidden) {
     const re = new RegExp(f.re, 'gu');
     let count = 0;
+    if (f.hanja) continue; // 한자는 아래 hanja 항목이 모두 센다(縣 · 郡 · 城 · 省 · 錢 · 穀 포함) — 두 번 세지 않는다
     for (const p of pieces) {
       if (p.struck) continue;
       for (const m of p.text.matchAll(re)) {
@@ -235,10 +242,32 @@ function lintInPage({ forbidden, minTarget }) {
     if (count) words[f.word] = count;
   }
 
+  // 한자(시스템 3.1.4 「표기」 · 「같은 읽기 지명」): 화면 글자는 한글이다. 한자는 같은 읽기 지명을 가를 때만 class="hj" 로 단다.
+  // 그래서 hj · data-lint="skip" · 취소선 밖의 한자는 모두 센다. 범위는 Unicode Han 전체(확장 · 호환 글자 포함).
+  // 2026-09-30 까지는 「쓰지 않는 말」 표의 縣 · 郡 · 城 · 省 · 錢 · 穀만 세서 陳留 · 許褚 · 荀彧 같은 병기를 놓쳤다.
+  const HAN = /\p{Script=Han}+/gu;
+  const hanja = [];
+  for (const p of pieces) {
+    if (p.struck || p.hj) continue;
+    for (const m of p.text.matchAll(HAN)) {
+      const i = m.index;
+      hanja.push({ text: m[0], at: p.where, context: p.text.slice(Math.max(0, i - 10), i + m[0].length + 10).replace(/\s+/g, ' ').trim() });
+    }
+  }
+
   // 이모지: 기본이 그림 표시인 글자, 또는 VS16(U+FE0F)을 붙인 그림 글자, 키캡.
   const EMOJI = /\p{Emoji_Presentation}|\p{Extended_Pictographic}️|[#*0-9]️?⃣/gu;
   const emoji = [];
   for (const p of pieces) for (const m of p.text.matchAll(EMOJI)) emoji.push({ ch: m[0], at: p.where });
+
+  // 그림 자리 표시: 보이는 글자에 그림 파일 이름이 남은 것(예: 「logo-wordmark.png」) — 로고 · 그림이 실제 그림으로 바뀐 뒤(3.1.2)엔 결함이다.
+  const PLACEHOLDER = /[\w-]+\.(?:png|jpe?g|webp|gif|svg)\b/giu;
+  const placeholder = [];
+  // 입력칸 안의 파일 이름(올린 그림 이름 등)은 화면 내용이라 뺀다.
+  for (const p of pieces) if (!p.attr && !p.field) for (const m of p.text.matchAll(PLACEHOLDER)) placeholder.push({ text: m[0], at: p.where });
+
+  // 로고 한 번(시스템 3.1.4 「로고 한 번」): 한 화면에 워드마크(img alt="오픈삼국")는 하나. 둘째부터 결함으로 센다.
+  const logos = [...root.querySelectorAll('img[alt="오픈삼국"]')].filter(rendered).map((el) => { const r = el.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top - rr.top) }; });
 
   const titleOnly = [];
   for (const el of root.querySelectorAll('[title]')) {
@@ -266,7 +295,7 @@ function lintInPage({ forbidden, minTarget }) {
     targets: real.size + fake.length,
     counts: {
       small: small.length, fake: fake.length, title: titleOnly.length, hover: hover.length,
-      emoji: emoji.length, words: Object.values(words).reduce((a, b) => a + b, 0), clipped: clipped.length, covered: covered.length,
+      emoji: emoji.length, words: Object.values(words).reduce((a, b) => a + b, 0), hanja: hanja.length, clipped: clipped.length, covered: covered.length, placeholder: placeholder.length, logo: Math.max(0, logos.length - 1),
     },
     smallInline: smallInline.length,
     underLayer: underLayer.length,
@@ -277,7 +306,7 @@ function lintInPage({ forbidden, minTarget }) {
     words,
     samples: {
       small: small.slice(0, 25), fake: fake.slice(0, 15).map(describe), title: titleOnly.slice(0, 15), hover: hover.slice(0, 10),
-      emoji: emoji.slice(0, 15), words: wordSamples, clipped: clipped.slice(0, 15), covered: covered.slice(0, 20), underLayer: underLayer.slice(0, 10),
+      emoji: emoji.slice(0, 15), words: wordSamples, hanja: hanja.slice(0, 20), clipped: clipped.slice(0, 15), covered: covered.slice(0, 20), underLayer: underLayer.slice(0, 10), placeholder: placeholder.slice(0, 10), logo: logos,
     },
   };
 }
@@ -332,7 +361,7 @@ export function toMarkdown(results) {
   const allWords = {};
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
-  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} |`);
+  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} |`);
   const kinds = {};
   for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
   const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
@@ -340,10 +369,10 @@ export function toMarkdown(results) {
     '# 설계 보드 일관성 검사 — tools/web/board-lint.mjs', '',
     `- 보드 ${results.length}장. 기준: V3System(44px · 호버/title 전용 금지 · 쓰지 않는 말), 09-18 BRIEF(진짜 button · 이모지 금지 · 고정 크기에서 잘림).`,
     '- 「N년 N월(순 없음)」은 V3System 「년 월(표기) → 200년 3월 중순」의 해석이다.', '',
-    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
   ].join('\n');
 }
 

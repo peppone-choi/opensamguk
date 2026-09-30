@@ -264,6 +264,25 @@ function layoutChecks(minTarget) {
   for (const sheet of document.styleSheets) {
     try { walk(sheet.cssRules); } catch { unreadableSheets += 1; }
   }
+  // 오른쪽으로 잘린 글자: 문서 폭은 그대로인데(안쪽 상자가 overflow 로 숨김) 글자가 화면 오른쪽 밖으로 나간 것.
+  // horizontalOverflowPx 만으로는 못 잡는다(2026-09-30 pep 모바일 작전실). 가로 스크롤 줄(overflow-x auto · scroll) 안은 의도라 뺀다.
+  // 가로 스크롤 영역 안에서 잘린 글자는 따로 센다(textCutRightInScroller). 칩 · 탭 줄이면 의도지만, 본문 전체가 가로 스크롤
+  // 영역이면 모바일에서 화면이 잘려 보인다(2026-09-30 pep 모바일 작전실) — 영역 크기를 함께 적어 판정에 쓴다.
+  const cutRight = []; const cutRightInScroller = [];
+  for (const el of document.body.querySelectorAll('*')) {
+    const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+    if (!own || !shown(el)) continue;
+    const r = el.getBoundingClientRect();
+    if (r.right <= vw + 1) continue;
+    let scroller = null;
+    for (let a = el.parentElement; a && a !== document.body; a = a.parentElement) {
+      const ox = getComputedStyle(a).overflowX;
+      if (ox === 'auto' || ox === 'scroll') { scroller = a; break; }
+    }
+    if (!scroller) { cutRight.push(describe(el)); continue; }
+    const sr = scroller.getBoundingClientRect();
+    cutRightInScroller.push({ ...describe(el), scroller: describe(scroller).el, scrollerW: Math.round(sr.width), scrollerH: Math.round(sr.height) });
+  }
   let tinyText = 0; const tinySamples = [];
   for (const el of document.body.querySelectorAll('*')) {
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
@@ -277,6 +296,10 @@ function layoutChecks(minTarget) {
     viewport: { w: vw, h: vh },
     viewportMeta: document.querySelector('meta[name=viewport]')?.getAttribute('content') ?? null,
     horizontalOverflowPx: Math.max(0, se.scrollWidth - se.clientWidth),
+    textCutRight: cutRight.length,
+    textCutRightSamples: cutRight.slice(0, 15),
+    textCutRightInScroller: cutRightInScroller.length,
+    textCutRightInScrollerSamples: cutRightInScroller.slice(0, 15),
     pageHeightPx: se.scrollHeight,
     targets: targets.length,
     smallTargets: small.length,
@@ -568,7 +591,7 @@ export function summaryRow({ tag, result: r }) {
     fcpMs: r.fcpMs, lcpMs: r.lcpMs, firstMapDrawMs: r.firstMapDrawMs, settledMs: r.networkSettledMs, cls: r.cls,
     requests: r.requests, MB: Number(mb(r.transferBytes)), duplicates: r.duplicates.count, duplicateExtraMB: Number(mb(r.duplicates.extraBytes)),
     uncompressed: r.uncompressed.count, failed: r.failedCount, consoleErrors: r.consoleErrorCount,
-    overflowPx: r.layout.horizontalOverflowPx, smallTargets: r.layout.smallTargets, coveredTargets: r.layout.coveredTargets, titleOnly: r.layout.titleOnly, textUnder12px: r.layout.textUnder12px,
+    overflowPx: r.layout.horizontalOverflowPx, textCutRight: r.layout.textCutRight, smallTargets: r.layout.smallTargets, coveredTargets: r.layout.coveredTargets, titleOnly: r.layout.titleOnly, textUnder12px: r.layout.textUnder12px,
     axe: r.axe && !r.axe.error ? r.axe.byImpact : null, axeNodes: r.axe && !r.axe.error ? r.axe.nodes : null,
     mapFirstViewportPct: r.map?.geometry?.firstViewportVisiblePct ?? null, mapHitCanvas: r.map?.hitTest?.isCanvas ?? null,
     wheelChangedMap: r.map?.probe?.wheelChangedMap ?? null, failedChecks: r.checks.filter((c) => c.applies && !c.pass).map((c) => c.id),
@@ -576,9 +599,9 @@ export function summaryRow({ tag, result: r }) {
 }
 
 export function summaryMarkdown(rows, meta) {
-  const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 중복 | 무압축 | 실패 | 콘솔 오류 | 가로 넘침 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
-  const sep = '|' + '---|'.repeat(19);
-  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.consoleErrors} | ${x.overflowPx} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
+  const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 중복 | 무압축 | 실패 | 콘솔 오류 | 가로 넘침 | 오른쪽 잘린 글자 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
+  const sep = '|' + '---|'.repeat(20);
+  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.consoleErrors} | ${x.overflowPx} | ${x.textCutRight} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
   return [`# 페이지 측정 — ${meta.base}`, '', `- 시각: ${meta.at} · 도구: tools/web/measure-pages.mjs · 브라우저: ${meta.browser}`, '- 시간 단위 ms. FCP · LCP 는 탐색 시작 기준, 지도 첫 그림 · 잠잠은 goto 호출 기준(M1 기준선과 같은 식).', `- 측정 기계 부하(1분 평균 / CPU 수): ${rows.filter((x) => !x.error).map((x) => `${x.loadavg1}`).join(' · ')} / ${rows.find((x) => !x.error)?.cpus ?? '—'} — 부하가 CPU 수보다 크게 높으면 시간 값은 상한으로 읽는다(요청 수 · 바이트는 영향 없음).`, '', head, sep, ...lines, ''].join('\n');
 }
 
