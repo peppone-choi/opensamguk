@@ -10,3 +10,14 @@ data class ProvinceNamesDto(
     val sourceSha256: String,
     val names: List<ProvinceNameDto>,
 )
+
+data class ProvinceNamesMetadataDto(
+    val worldId: Int,
+    val mapRelease: String,
+    val topologyRevision: String,
+    val topologyHash: String,
+    val sourceSha256: String,
+    val representationSha256: String,
+    /** A server API path; the client must use its currently selected server's normal API transport. */
+    val representationPath: String,
+)

@@ -9,17 +9,18 @@ import opensamguk.infra.seed.ResolvedWorldArtifacts
 import java.security.MessageDigest
 import java.util.Collections
 
-/** Prepared projection only: HTTP/public security wiring requires the geographic DTO contract review. */
-internal class ProvinceNamesRepresentation(val dto: ProvinceNamesDto, bytes: ByteArray) {
+/** Immutable label response and its exact byte identity. */
+class ProvinceNamesRepresentation(val dto: ProvinceNamesDto, bytes: ByteArray) {
     private val payload = bytes.copyOf()
-    val etag: String = "\"sha256-${provinceNamesSha256(payload)}\""
+    val sha256: String = provinceNamesSha256(payload)
+    val etag: String = "\"sha256-$sha256\""
     fun body(): ByteArray = payload.copyOf()
 }
 
 /**
  * Cache immutable responses, never active-world selection. The caller must resolve the current world
  * and persisted spatial pins on every request, before consulting this cache or a conditional ETag.
- * No Spring bean or HTTP endpoint is registered by this preparation.
+ * The cache itself is not a Spring bean; ProvinceNamesReader supplies verified current selection.
  */
 internal class ProvinceNamesCache(mapper: ObjectMapper = ObjectMapper()) {
     private val mapper = mapper.copy().enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)

@@ -1,25 +1,34 @@
-# 구역 이름 읽기 준비 계약 (K4-21)
+# 구역 이름 읽기 계약 (K4-21)
 
-## 구현 상태
+## 구현과 승인 상태
 
-ProvinceNamesDto/ProvinceNamesCache와 작은 합성 fixture만 준비했다. HTTP controller·Spring bean·익명 security matcher는 아직 등록하지 않았고 운영·화면 제공 기능이 아니다. C9 원천/릴리스 검토와 공개 DTO·명시 GET 보안 규칙 검토 후 연결한다.
+ProvinceNamesReader의 실제 Spring bean과 ProvinceNamesController의 두 GET을 등록한다. source/cache/HTTP 합성 fixture를 준비했으며 현재 head의 원격 CI와 C9 원천 공개 검토, C1/C8 공개 경계 검토는 별도 관문이다. C1 소유 GameApiSecurityConfig는 이 PR이 수정하지 않는다. 명시 exact GET permitAll → 같은 경로 다른 method denyAll patch가 main에 들어오고 실제 chain fixture로 확인되기 전 draft를 유지한다. 기존 catch-all permitAll은 새 공개 API 승인 근거가 아니다. 운영 제공 완료 표시가 아니다.
 
-## 제안 경로와 cache
+## 현재 핀 취득과 immutable URL
 
-`GET /api/map/provinces/names` → `{worldId,mapRelease,topologyRevision,topologyHash,sourceSha256,names:[{provinceId,displayName}]}`. mapRelease는 활성 ResolvedWorldArtifacts.variant.artifactId, stable provinceId/displayName은 같은 bundle의 han-tiles provinceRecords 원문이다. 숫자 배열 인덱스·cityId나 다른 release 이름을 대체로 쓰지 않는다. 지도 정본의 이름 자료를 읽으며 새 번역·역사 이름을 만들지 않는다.
+- `GET /api/map/provinces/names`: query 없음. `{worldId,mapRelease,topologyRevision,topologyHash,sourceSha256,representationSha256,representationPath}` metadata. `Cache-Control: public, no-cache, must-revalidate`, 정확 metadata bytes SHA256 ETag.
+- `GET /api/map/provinces/names/v1`: 필수 query 정확6개 `worldId/mapRelease/topologyRevision/topologyHash/sourceSha256/representationSha256`. `{worldId,mapRelease,topologyRevision,topologyHash,sourceSha256,names:[{provinceId,displayName}]}` 이름 본문. `Cache-Control: public, max-age=31536000, immutable`, 정확 본문 bytes SHA256 ETag.
+- 두 경로 GET만 공개 계약. HEAD/OPTIONS/POST/PUT/PATCH/DELETE 등 나머지 method는 C1 exact matcher가 denyAll한다. wildcard `/api/map/**` 공개 확장 없음.
+- missing/blank/duplicate/extra query는400/no-store. 요청 핀과 현재 핀 불일치는409/no-store. 지원 세계/자료 부재404/no-store, 검증 실패503/no-store·빈 본문. 내부 예외/저장 경로/원문을 노출하지 않는다.
 
-미버전 경로는 `Cache-Control: public, no-cache, must-revalidate`, 강한 ETag는 정확 응답 JSON bytes의 SHA256을 제안한다. 매 요청 ActiveWorldArtifactResolver가 current world·완전 city roster·저장 spatial pin을 검증한 **다음** 캐시/조건 헤더를 검사한다. reset/release/source가 바뀌면 old ETag를304로 처리하지 않는다. K4-21 연결 시 저장 spatial pin 부재는 no-store 실패 응답으로 거부한다. 기존 WorldArtifactsResolver는 빈 pin의 구1447 release 선택을 허용하므로 그것만으로 strict pin을 증명하지 않는다. 같은 transaction의 WorldArtifactIdentityReadRepository 결과에 nonempty·revision/hash 일치를 추가 검증한 뒤 cache에 전달해야 한다. invalid/missing identity는 no-store 실패 응답이고 이름 추정/fallback은 없다. immutable은 사용하지 않는다. 이 문서는 공개 접근 승인 자체가 아니다.
+world/release/revision/topology/source뿐 아니라 정확 representation SHA까지 URL에 넣는다. 직렬화/schema가 달라지면 URL도 달라져 같은 immutable URL에 다른 bytes를 반환하지 않는다. mapRelease는 활성 bundle variant.artifactId이며 provinceId/displayName은 같은 han-tiles provinceRecords 원문이다. 배열 index/cityId/다른 release/추정 이름을 대신 쓰지 않는다.
 
-cache key는 worldId/mapRelease/topologyRevision/topologyHash/sourceSHA, 최대4개 LRU. miss에서 검증된 bundle bytes를 한 번 가져와 SHA대조 후 streaming parser로 id/displayName만 추출한다. 완전한 stable land ID집합·중복·문자열·빈 이름·후행JSON을 검사하고 정렬·직렬화한다. hit에서 source bytes복사/해시/JSON재파싱이 없다. 반환byte는 방어적복사, 이름목록은 불변. 캐시는 세계 선택/핀 검증을 대체하지 않는다. 기존 WorldArtifactsResolver cold bundle 로드와 DB roster/pin 조회 비용은 별도다.
+소비자는 서버 진입·세계 reset·서버 전환 때 선택 서버의 API transport로 미버전 metadata를 재검증한 뒤 반환 representationPath만 사용한다. 기존 preview binding은 world/topology/baseTilesSHA를 제공하지만 mapRelease/representationSHA가 없으므로 preview만으로 URL을 만들 수 없다. preview에서 알고 있는 world/topology/source를 metadata와 대조하고 불일치 때 다시 현재 binding을 취득한다. 세계/서버 정체성이 바뀌면 이전 URL과 이름 선택을 폐기한다. 브라우저는 immutable 캐시를 네트워크 없이 반환할 수 있으므로 서버의 네트워크 검증만으로 소비자 reset 처리를 대체할 수 없다. frontend 구현은 이 PR 범위 밖이다.
 
-## 공개 범위와 기존 API
+## read 검증과 cache
 
-DTO allowlist는 static 이름과 검증된 map 지문뿐이다. live owner/fog/부대/장수·사용자 신원/개인 위치/geometry/raw 원장을 싣지 않는다. anyRequest().permitAll()로 익명 승인 여부를 판단하지 않는다. 명시 GET matcher와 실제 SecurityFilterChain 테스트는 C1 소유와 합의해 연결한다. 익명 preview가 주는 동적 소유 payload를 그대로 재사용하지 않는다.
+매 네트워크 요청 동일 REPEATABLE_READ read transaction에서 process world → 지원 map → 저장 spatial pin nonempty → ActiveWorldArtifactResolver 현재 세계/완전 roster/정본 선택 → 선택 world 일치 → 저장 revision/hash 전부 일치 → cache → 요청 fulltuple → If-None-Match 순서다. pin 부재 때 cold resolver의 구1447 fallback을 호출하지 않는다. cache hit과 strong/weak/list/* 조건에도 이 검증을 생략하지 않는다. reset/릴리스 변경 뒤 이전 URL은304가 될 수 없다.
 
-기존 terrain=전체 source JSON, provinces=PNG, ju=parent별州번호index, preview=runtime city이름+동적소유다. 권한있는 counties income/commandery 읽기를 새 목록으로 복제하지 않는다. 첫범위province만이고 郡/縣 확장은 기존 API/preview·M2 places와 중복 검토 후 별도다.
+메모리 cache key는 worldId/mapRelease/topologyRevision/topologyHash/sourceSHA, 최대4개 LRU. cache miss에서 검증된 bundle bytes SHA를 대조하고 streaming parser로 provinceRecords의 id/displayName만 읽는다. complete stable land ID집합·중복 JSON field/ID·문자열·빈 이름·후행JSON을 검사하고 ID정렬 후 직렬화한다. hit은 terrain bytes복사/해시/JSON재파싱0. 본문 방어적복사, 이름 목록 불변. 세계 선택/핀 검증과 WorldArtifactsResolver cold 로드/DB조회는 별도 비용이다.
 
-## 검증 경로
+## 공개 범위와 중복
 
-로컬 JVM·대형지도 파싱/전수bake 금지 상황에서 작은 합성 fixture5건을 준비한다. 필드allowlist·exactbyte ETag·cachehit byte읽기1회/외부변경불가·world/release/source 변경tag·결손/손상/중복/핀불일치 거부·LRUeviction을 확인한다. Kotlin 시험을 실행한 것으로 표시하지 않는다.
+공개 allowlist는 정적인 지명과 검증된 지문뿐이다. owner/fog/장수·부대/개인 위치/신원/geometry/raw 원장을 내보내지 않는다. invalid/missing Bearer는 현 정책대로 익명이며 같은 공개 DTO. query로 actor/archive/world를 선택하지 않는다.
 
-후속 draft PR의 현재 head 원격 CI `jvm-core`로 컴파일/reader tests, 실제 XML skip0 gate를 확인한다. HTTP 연결 이후에는 actual anonymous/JWT chain·GET외메서드·strong/weak/list/* 조건헤더·reset후old ETag304 거부·failclosed no-store 시험을 더한다. CI 대기 중 repeated sync/취소를 하지 않는다. 운영DB·VM/config·image승격0. cf7 actualweb→PNG API 별도 승인 순서와 신규API의 별도운영반영 경계를 유지한다.
+기존 terrain=전체 source JSON, provinces=PNG, ju=parent별州번호index, preview=runtime city이름+동적소유다. authenticated counties income/commandery 읽기를 복제하지 않는다. 첫 범위province만; 郡/縣 확장은 기존 API/preview/M2 places와 중복 검토 후 별도다.
+
+## 검증과 운영 경계
+
+작은 합성 cache5건, reader4건, actual GameApiSecurityConfig/JwtVerifyFilter + controller HTTP5건을 준비한다. cache identity/방어복사/LRU/손상, 저장핀부재·drift·crossworld, anonymous/invalidBearer allowlist·조건헤더·reset·query오염·unrelated401을 다룬다. C1 patch main 반영 후 같은 chain에 nonGET 거부·reader무호출과 signedUSER/ADMIN 동등성 fixture를 보강한다. 시험 준비를 실행PASS로 표시하지 않는다.
+
+새 로컬 JVM/대형지도 파싱·bake 없이 현재 head 원격 jvm-core와 game-engine 결과/XML skip0을 확인한다. CI 실행 중 repeated sync/취소0. 운영DB·VM/config·image승격0. cf7 actual web → PNG API 별도 승인 순서를 유지한다. 신규 이름 API의 운영 반영은 별도 승인 대상이다.
