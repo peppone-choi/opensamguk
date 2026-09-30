@@ -205,6 +205,7 @@ export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
+export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
   buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,
