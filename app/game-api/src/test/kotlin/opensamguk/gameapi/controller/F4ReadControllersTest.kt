@@ -449,6 +449,22 @@ class F4ReadControllersTest {
     }
 
     @Test
+    fun `board 기밀실 blocked for own nation ordinary general with INFO reason`() {
+        ownedBoardGeneral(1)
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+            .perform(get("/api/board?secret=true").with(principal(7L)))
+            .andExpect(status().isOk)
+            .andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.secret").value(true))
+            .andExpect(jsonPath("$.title").value("기밀실"))
+            .andExpect(jsonPath("$.blockedReason").value("권한이 부족합니다. 수뇌부가 아닙니다."))
+            .andExpect(jsonPath("$.articles.length()").value(0))
+            .andExpect(jsonPath("$.participants.length()").value(0))
+            .andExpect(jsonPath("$.myGeneralId").value(10))
+            .andExpect(jsonPath("$.myPermission").value(0))
+    }
+
+    @Test
     fun `board 기밀실 rejects anonymous caller`() {
         mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
             .perform(get("/api/board?secret=true"))

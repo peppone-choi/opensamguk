@@ -34,7 +34,8 @@ import java.time.Instant
  * 기밀실(secret=true).
  *
  * Both boards are internal to the verified caller's positive nation. Anonymous callers are rejected,
- * nationless callers cannot fall back to a global query, and secret boards require chief permission.
+ * nationless callers cannot fall back to a global query. Same-nation callers without chief permission
+ * receive an empty secret board with an INFO reason, without reading board data.
  * Optional nationId only confirms the caller's nation; it never selects another nation's posts.
  *
  * ADR-LITE-049 14 확장: 글 종류(kind)·표결 요약(vote_poll/vote 읽기)·기밀실 열람 기록(board_post_read)·
@@ -66,9 +67,21 @@ class BoardController(
         if (nationId <= 0 || (requestedNationId != null && requestedNationId != nationId)) {
             return ResponseEntity.status(403).build()
         }
-        if (secret && resolved.permission < 2) return ResponseEntity.status(403).build()
         val title = F4StateText.boardTitle(secret)
         val myPermission = resolved.permission
+        if (secret && myPermission < 2) {
+            return ResponseEntity.ok(
+                BoardResponse(
+                    result = true,
+                    secret = true,
+                    title = title,
+                    articles = emptyList(),
+                    blockedReason = "권한이 부족합니다. 수뇌부가 아닙니다.",
+                    myGeneralId = resolved.general.id,
+                    myPermission = myPermission,
+                ),
+            )
+        }
         val nationLevel = resolved.nationLevel
         val postRows = posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(nationId, secret)
         // 국가 장수 — 초상·직책·참여 스택·수뇌부 정원의 단일 원천(한 번만 읽는다).

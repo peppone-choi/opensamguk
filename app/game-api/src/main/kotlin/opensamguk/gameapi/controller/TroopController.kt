@@ -24,7 +24,8 @@ import org.springframework.web.bind.annotation.RequestParam
  * `(N명)` member count for the list header.
  *
  * Internal nation read. Verified principal resolves the owned general's positive nation; anonymous,
- * nationless and foreign nation requests cannot fall back to an all-troop query.
+ * and foreign nation requests are rejected. Owned nationless generals receive an empty list without
+ * querying troops; no request can fall back to an all-troop query.
  */
 @RestController
 @RequestMapping("/api/troops")
@@ -43,11 +44,16 @@ class TroopController(
         if (userId == null || userId <= 0) return ResponseEntity.status(401).build()
         val resolved = resolver.resolve(userId) ?: return ResponseEntity.status(403).build()
         val nationId = resolved.nationId
-        if (nationId <= 0 || (requestedNationId != null && requestedNationId != nationId)) {
+        if (nationId < 0 || (requestedNationId != null && requestedNationId != nationId)) {
             return ResponseEntity.status(403).build()
         }
         val myGeneralId = resolved.general.id
         val permission = resolved.permission
+        if (nationId == 0) {
+            return ResponseEntity.ok(
+                TroopsResponse(result = true, troops = emptyList(), myGeneralId = myGeneralId, permission = permission),
+            )
+        }
         val troopRows = troops.findByNationOrderByTroopLeaderAsc(nationId)
         if (troopRows.isEmpty()) {
             return ResponseEntity.ok(

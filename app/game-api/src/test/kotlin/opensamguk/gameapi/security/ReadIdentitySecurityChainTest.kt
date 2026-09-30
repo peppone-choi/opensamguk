@@ -120,11 +120,15 @@ class ReadIdentitySecurityChainTest {
     @Autowired lateinit var troops: TroopReadRepository
     @Autowired lateinit var turns: GeneralTurnReadRepository
     @Autowired lateinit var posts: BoardPostReadRepository
+    @Autowired lateinit var comments: BoardCommentReadRepository
+    @Autowired lateinit var reads: BoardPostReadLogRepository
+    @Autowired lateinit var polls: VotePollReadRepository
+    @Autowired lateinit var votes: VoteReadRepository
     private lateinit var mvc: MockMvc
 
     @BeforeEach
     fun setup() {
-        reset(resolver, world, generals, nations, cities, turns, posts, troops)
+        reset(resolver, world, generals, nations, cities, turns, posts, troops, comments, reads, polls, votes)
         mvc = MockMvcBuilders.webAppContextSetup(context).apply<DefaultMockMvcBuilder>(springSecurity()).build()
         resolve()
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "본국", gold = 321,
@@ -264,8 +268,6 @@ class ReadIdentitySecurityChainTest {
         mvc.perform(get("/api/board?nationId=1").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(jsonPath("$.articles.length()").value(1))
             .andExpect(jsonPath("$.articles[0].nationId").value(1)).andExpect(jsonPath("$.articles[0].title").value("본국 회의"))
-        mvc.perform(get("/api/board?secret=true").header("Authorization", "Bearer ${token()}"))
-            .andExpect(status().isForbidden)
         verify(posts, never()).findByIsSecretOrderByCreatedAtDescIdDesc(false)
         resolve(officerLevel = 5)
         `when`(posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, true)).thenReturn(listOf(BoardPostReadEntity(
@@ -275,7 +277,20 @@ class ReadIdentitySecurityChainTest {
     }
 
     @Test
-    fun `troops reject anonymous unresolved nationless and foreign nation without global fallback`() {
+    fun `same nation secret board denial returns INFO without reading private data`() {
+        mvc.perform(get("/api/board?secret=true&nationId=1").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isOk).andExpect(jsonPath("$.result").value(true))
+            .andExpect(jsonPath("$.secret").value(true)).andExpect(jsonPath("$.title").value("기밀실"))
+            .andExpect(jsonPath("$.blockedReason").value("권한이 부족합니다. 수뇌부가 아닙니다."))
+            .andExpect(jsonPath("$.articles.length()").value(0))
+            .andExpect(jsonPath("$.participants.length()").value(0))
+            .andExpect(jsonPath("$.chiefCount").value(0))
+            .andExpect(jsonPath("$.myGeneralId").value(101)).andExpect(jsonPath("$.myPermission").value(0))
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `troops reject anonymous unresolved and foreign nation but return empty for owned nationless general`() {
         mvc.perform(get("/api/troops")).andExpect(status().isUnauthorized)
         mvc.perform(get("/api/troops").header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
         mvc.perform(get("/api/troops").header("Authorization", "Bearer ${token(8)}"))
@@ -283,8 +298,14 @@ class ReadIdentitySecurityChainTest {
         mvc.perform(get("/api/troops?nationId=2").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isForbidden)
         resolve(nationId = 0)
-        mvc.perform(get("/api/troops").header("Authorization", "Bearer ${token()}"))
+        mvc.perform(get("/api/troops?nationId=2").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isForbidden)
+        for (path in listOf("/api/troops", "/api/troops?nationId=0")) {
+            mvc.perform(get(path).header("Authorization", "Bearer ${token()}"))
+                .andExpect(status().isOk).andExpect(jsonPath("$.result").value(true))
+                .andExpect(jsonPath("$.troops.length()").value(0))
+                .andExpect(jsonPath("$.myGeneralId").value(101)).andExpect(jsonPath("$.permission").value(0))
+        }
         verifyNoInteractions(troops, generals, cities)
     }
 
