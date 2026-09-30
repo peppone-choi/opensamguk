@@ -28,3 +28,22 @@
 @media (max-width: 767.98px) {
   .links { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---- 화면 조립(CourtScreen) ---- */
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; overflow-y: auto; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; }
+.band { padding: 10px 12px; }
+.bandList { display: flex !important; flex-wrap: wrap; gap: 8px; }
+.columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.column { min-width: 0; }
+.okLine { margin: 0; font-size: 12.5px; color: var(--moss-2); }
+.errLine { margin: 0; font-size: 12.5px; color: var(--rust-2); }
+.sheetRight { justify-content: flex-end; align-items: stretch; }
+.sheetRight > :global(.os-modal) { width: 480px; max-width: 100%; height: 100%; max-height: none; overflow-y: auto; }
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; max-height: 80vh; overflow-y: auto; }
+
+@media (max-width: 1199.98px) {
+  .columns { grid-template-columns: minmax(0, 1fr); }
+}
