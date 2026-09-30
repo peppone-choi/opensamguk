@@ -1,5 +1,6 @@
 package opensamguk.engine.status
 
+import java.time.Instant
 import opensamguk.engine.boot.WorldStateAvailability
 import opensamguk.engine.run.TurnDaemonRunner
 import opensamguk.engine.run.TurnRunService
@@ -35,7 +36,11 @@ class StatusControllerTest {
 
     @Test
     fun `status is not the hardcoded stub - defaults to not paused`() {
+        val before = Instant.now()
         val status = controller().status()
+        val after = Instant.now()
+        val sourceTime = Instant.parse(status.serverTime)
+        assertTrue(sourceTime >= before && sourceTime <= after)
         assertFalse(status.paused, "초기 동결 아님")
         assertEquals("가동중", status.statusLabel)
         assertEquals("che", status.profile)

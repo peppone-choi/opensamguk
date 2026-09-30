@@ -395,6 +395,17 @@ jobs:
           for m in common logic infra app/gateway-api app/game-api app/board-api; do
             printf '%-22s %s\n' "$m" "$(find "$m/build/test-results/test" -name 'TEST-*.xml' 2>/dev/null | wc -l)"
           done
+      - name: Preserve pause projection JVM XML
+        if: always() && hashFiles('common/src/test/kotlin/opensamguk/common/turn/TurnDaemonProjectionTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-pause-projection-jvm-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: |
+            common/build/test-results/test/TEST-opensamguk.common.turn.TurnDaemonProjectionTest.xml
+            app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.EnginePauseObservationCollectorTest.xml
+            app/game-api/build/test-results/test/TEST-opensamguk.gameapi.read.InternalEnginePauseSourceTest.xml
       - name: Upload failed JVM test reports
         if: failure()
         uses: actions/upload-artifact@v4
@@ -434,6 +445,14 @@ jobs:
       - name: Surface game-engine test results
         if: always()
         run: find app/game-engine/build/test-results/test -name 'TEST-*.xml' -print 2>/dev/null | head -50 || true
+      - name: Preserve pause source engine XML
+        if: always() && hashFiles('common/src/test/kotlin/opensamguk/common/turn/TurnDaemonProjectionTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-pause-source-engine-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 7
+          path: app/game-engine/build/test-results/test/TEST-opensamguk.engine.status.StatusControllerTest.xml
       - name: Upload game-engine test failures
         if: failure()
         uses: actions/upload-artifact@v4
