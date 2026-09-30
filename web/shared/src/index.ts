@@ -55,6 +55,8 @@ export {
   cityLabelMetrics,
   cityMarkerDrawBox,
   cityMarkerAssetScale,
+  cityFitSpriteKeys,
+  cityMapLabel,
   cityMarkerHitBox,
   cityMarkerRadius,
   cityMarkerZoomStep,
@@ -69,6 +71,7 @@ export {
   labelZoomFor,
   mapCityToTile,
   provinceLayerRuntimeCities,
+  resetMapSpriteCache,
   cityPixelVisualBox,
   provinceAtScreenPoint,
   sceneGolden,
@@ -125,6 +128,9 @@ export {
   composeProvincePixels,
   decodeProvincePixels,
   loadProvinceIdentityMap,
+  loadSharedProvinceIdentityMap,
+  resetSharedProvinceIdentityMaps,
+  ProvinceIdentityFetchError,
   formatProvinceTooltip,
   type ProvinceColor,
   type ProvinceEdge,
@@ -144,6 +150,7 @@ export {
 export {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
+  UNOWNED_NATION_NAME,
   type CompactMapTooltipMetaInput,
 } from './nationVisual';
 export {
