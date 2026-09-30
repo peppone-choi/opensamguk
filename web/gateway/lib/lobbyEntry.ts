@@ -1,34 +1,80 @@
-// 로비 서버 행의 진입 상태와 필터(ADR-LITE-049 02). 페이지 파일은 default/metadata 만 export 할 수 있어 여기 둔다.
-export interface EntryGameInfo {
-    isUnited: number;
-}
-export interface EntryInfo {
-    game: EntryGameInfo | null;
-    me: { name: string } | null;
+// 로비 서버 카드의 진입 판정과 거르기(설계서 P-G04 §2.4 판정 표). 페이지 파일은 default/metadata 만 export 할 수 있어 여기 둔다.
+//
+// 서버 기본 정보(/api/server-basic-info)는 아직 옛 형태다 — 새 형태(계약판 K3-03: status · 열림 시각 · season · creation ·
+// npcCount · me.affiliation)가 오기 전에는 지금 있는 칸을 같은 뜻으로 쓴다:
+//   season.state ≠ RUNNING  ← isUnited 2 · 3(통일 · 이벤트 끝)
+//   creation.allowed        ← 장수 생성 금지 비트(blockGeneralCreate & 1)가 없고 사람 수가 정원 미만
+// K3-03 이 오면 이 파일의 `lobbyVerdict` 만 바꾼다. 화면은 판정(LobbyVerdict)만 본다.
+
+export interface BasicInfoGame {
+    readonly status?: string;
+    readonly year: number;
+    readonly month: number;
+    readonly turnPhaseText?: string | null;
+    readonly scenario: string;
+    readonly maxUserCnt: number;
+    readonly userCnt: number;
+    readonly npcCnt: number;
+    readonly nationCnt: number;
+    readonly turnTerm: number;
+    readonly isUnited: number;
+    readonly blockGeneralCreate: number;
+    readonly catchUp?: { readonly active: boolean; readonly multiplier: number } | null;
 }
 
-/** 참가 중(내 장수 있음) / 참가 가능 / 종료(천하통일·이벤트 종료) / 폐쇄(현황 없음). */
-export type EntryState = 'loading' | 'joined' | 'open' | 'ended' | 'closed';
-export type EntryFilter = 'all' | 'joined' | 'open' | 'ended';
+export interface BasicInfoMe {
+    readonly name: string;
+    readonly picture: string | null;
+    readonly imageServer: number;
+}
 
-export function entryStateOf(loading: boolean, info: EntryInfo | null): EntryState {
-    if (loading) return 'loading';
+export interface BasicInfo {
+    readonly game: BasicInfoGame | null;
+    readonly me: BasicInfoMe | null;
+}
+
+/** 판정 표 1–8(위에서부터 처음 맞는 줄). */
+export type LobbyVerdict =
+    | { readonly kind: 'loading' }
+    | { readonly kind: 'noResponse' }
+    | { readonly kind: 'maintenance' }
+    | { readonly kind: 'preOpen' }
+    | { readonly kind: 'joined'; readonly me: BasicInfoMe }
+    | { readonly kind: 'seasonEnded'; readonly unified: boolean }
+    | { readonly kind: 'full'; readonly reason: string }
+    | { readonly kind: 'recruiting' };
+
+export function lobbyVerdict(loading: boolean, info: BasicInfo | null): LobbyVerdict {
+    if (loading) return { kind: 'loading' };
     const game = info?.game ?? null;
-    if (!game) return 'closed';
-    if (info?.me?.name) return 'joined';
-    if (game.isUnited === 2 || game.isUnited === 3) return 'ended';
-    return 'open';
+    if (!game) return { kind: 'noResponse' };
+    if (game.status === 'CLOSED') return { kind: 'maintenance' };
+    if (game.status === 'PRE_OPEN') return { kind: 'preOpen' };
+    if (info?.me?.name) return { kind: 'joined', me: info.me };
+    if (game.isUnited === 2 || game.isUnited === 3) return { kind: 'seasonEnded', unified: game.isUnited === 2 };
+    if ((game.blockGeneralCreate & 1) !== 0) return { kind: 'full', reason: '이 서버는 지금 장수를 만들 수 없습니다' };
+    if (game.userCnt >= game.maxUserCnt) return { kind: 'full', reason: `사람 장수 ${game.userCnt} / ${game.maxUserCnt}` };
+    return { kind: 'recruiting' };
 }
 
-export function matchesFilter(state: EntryState, filter: EntryFilter): boolean {
-    if (filter === 'all') return true;
-    if (state === 'loading') return true;
-    return state === filter;
-}
+export type LobbyFilter = 'all' | 'joined' | 'available' | 'ended' | 'closed';
 
-export const ENTRY_FILTERS: { key: EntryFilter; label: string }[] = [
+export const LOBBY_FILTERS: readonly { readonly key: LobbyFilter; readonly label: string }[] = [
     { key: 'all', label: '전체' },
     { key: 'joined', label: '참가 중' },
-    { key: 'open', label: '참가 가능' },
-    { key: 'ended', label: '종료' },
+    { key: 'available', label: '참가 가능' },
+    { key: 'ended', label: '끝난 서버' },
+    { key: 'closed', label: '닫힘' },
 ];
+
+/** 거르기: 참가 중 = 5, 참가 가능 = 8만(마감 · 생성 금지는 빼기), 끝난 서버 = 6, 닫힘 = 2 · 3 · 4. 불러오는 중은 어디서나 보인다. */
+export function matchesFilter(verdict: LobbyVerdict, filter: LobbyFilter): boolean {
+    if (filter === 'all' || verdict.kind === 'loading') return true;
+    switch (filter) {
+        case 'joined': return verdict.kind === 'joined';
+        case 'available': return verdict.kind === 'recruiting';
+        case 'ended': return verdict.kind === 'seasonEnded';
+        case 'closed': return verdict.kind === 'noResponse' || verdict.kind === 'maintenance' || verdict.kind === 'preOpen';
+        default: return true;
+    }
+}

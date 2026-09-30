@@ -1,6 +1,6 @@
 // 게이트웨이 한글 라벨 + 상수. 화면 문구는 v3.1 설계(2026-09-30 전체 승인, K5 설계서 §2)를 따른다 — 쉬운 말.
 // 로그인 · 가입 오류는 설계서 LG12 · J11 의 쉬운 말로 바꿨다. 서버가 보낸 거절 문장은 받은 그대로 보인다.
-// 삼모 원문(LOBBY_LABELS · LOBBY_FOOTNOTES)은 로비 재구현(P-G04)에서 바꾼다.
+// LOBBY_LABELS 는 아직 옛 Topbar(계정 · 커뮤니티 · 운영 콘솔)가 쓴다 — 그 화면들을 다시 지을 때 MemberHeader 로 바꾸고 지운다.
 
 export const BRAND = '오픈삼국';
 
@@ -69,9 +69,3 @@ export const LOBBY_LABELS = {
     closed: '- 폐 쇄 중 -',
     preparing: '- 준 비 중 -', // 백엔드/현황은 떴으나 입장(인게임 라우팅) 미완 — 입장 비활성
 } as const;
-
-// 각주 (legacy entrance.php, verbatim)
-export const LOBBY_FOOTNOTES = [
-    '★ 1명이 2개 이상의 계정을 사용하거나 타 유저의 턴을 대신 입력하는 것이 적발될 경우 차단 될 수 있습니다.',
-    '계정은 한번 등록으로 계속 사용합니다. 각 서버 리셋시 캐릭터만 새로 생성하면 됩니다.',
-] as const;

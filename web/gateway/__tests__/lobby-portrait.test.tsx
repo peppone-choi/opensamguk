@@ -3,8 +3,9 @@ import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/components/AuthGate', () => ({ default: ({ children }: { children: React.ReactNode }) => children }));
-vi.mock('@/components/Topbar', () => ({ default: () => <div>topbar</div> }));
-vi.mock('@/components/ServerBoard', () => ({ default: () => <div>server board</div> }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn() }) }));
+// 서버 목록은 로비 서버 렌더가 등록부에서 읽는다(P-G04 — `/api/servers` 를 부르지 않는다).
+vi.mock('@/lib/serverRegistry', () => ({ getServers: () => [{ id: 'alpha', name: '알파' }], isValidEmptyServerRegistry: () => false }));
 
 import LobbyPage from '@/app/lobby/page';
 import { IMAGE_CDN_BASE } from '@/lib/constants';
@@ -39,9 +40,6 @@ function response(body: unknown): Response {
 function renderLobby(me: { name: string; picture: string | null; imageServer: number }) {
     vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL) => {
         const url = String(input);
-        if (url === '/api/servers') {
-            return response({ servers: [{ id: 'alpha', name: '알파' }] });
-        }
         if (url === '/api/server-basic-info/alpha') {
             return response({ game: GAME, me });
         }
