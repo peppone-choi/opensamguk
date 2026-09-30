@@ -27,6 +27,21 @@
 .warn { font-size: 12px; color: var(--rust-2); }
 .reduce { display: flex; flex-direction: column; gap: 4px; }
 
+/* ---- 창고망 ---- */
+.ok { font-size: 13px; color: var(--moss-2); margin: 0; padding: 12px; }
+.alert { font-size: 12.5px; color: var(--rust-2); margin: 8px 12px 0; padding: 8px 10px; border: 1px dashed var(--rust); }
+.whDesk { display: flex; flex-direction: column; min-height: 0; }
+.whRow td { height: 44px; }
+.whRow[data-cut] td:first-child { box-shadow: inset 3px 0 0 var(--rust); }
+.whTotal td { border-top: 1px solid var(--line-2); }
+.whMobile { display: flex; flex-direction: column; gap: 8px; }
+.totalCard { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--bronze-dim); }
+.whCards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.whCard { display: flex; flex-direction: column; gap: 4px; min-height: 60px; padding: 8px 10px; background: var(--panel); border: 1px solid var(--line-2); }
+.whCard[data-cut] { border-color: var(--rust); }
+.transport { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.transport .note { padding: 0; }
+
 /* ---- 시트(데스크톱 오른쪽 겹침 480 · 모바일 하단 시트 — 틀은 화면이 준다) ---- */
 .sheet { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .sheetTitle { margin: 0; padding: 0 12px; font-size: 16px; font-weight: 800; }
