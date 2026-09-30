@@ -55,6 +55,20 @@ describe('submitCommandAndAwaitResult', () => {
         });
     });
 
+    it('keeps the server rejection code — intake deny and engine result', async () => {
+        const denied = await submitCommandAndAwaitResult(async () => ({ status: 'BLOCKED', reason: '전투 중입니다', code: 'BATTLE_LOCKED' }));
+        expect(denied).toEqual({ status: 'rejected', reason: '전투 중입니다', code: 'BATTLE_LOCKED' });
+        const plain = await submitCommandAndAwaitResult(async () => ({ status: 'BLOCKED', reason: '사용할 수 없는 커맨드입니다.' }));
+        expect(plain).toEqual({ status: 'rejected', reason: '사용할 수 없는 커맨드입니다.' });
+
+        mocks.pollCommandResultResponse.mockResolvedValueOnce({
+            status: 'RESOLVED', requestId: 'req-code', ok: false, type: 'executionRejected',
+            reason: '성 밖입니다', result: { code: 'OUTSIDE_CITY' },
+        });
+        const engine = await submitCommandAndAwaitResult(async () => ({ status: 'AVAILABLE', requestId: 'req-code' }));
+        expect(engine).toMatchObject({ status: 'rejected', reason: '성 밖입니다', code: 'OUTSIDE_CITY' });
+    });
+
     it('reports a reservation admission as reserved instead of applied', async () => {
         mocks.pollCommandResultResponse.mockResolvedValueOnce({
             status: 'RESOLVED',

@@ -1,7 +1,7 @@
 // 탑다운 지도 엔진(기능 플래그 뒤 /map-lab) — 합성 키트 · 굽기(e2e/fixtures/topdown, 원작 그림 없음)를
 // page.route로 대 준다. 백엔드 없이 돈다(e2e/smoke 규칙: @both = 데스크톱 · 모바일 두 프로필, @mobile-only).
 // 「그려졌다」(스크린샷 화소)와 「조작된다」(상태 속성 · 누르기 결과)를 따로 본다.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
@@ -13,7 +13,12 @@ const GREEN = [40, 160, 60];
 async function serveFixture(page: Page) {
   await page.route((url) => url.pathname.startsWith('/e2e-topdown/'), async (route) => {
     const path = new URL(route.request().url()).pathname.replace(/^\/e2e-topdown\//, '');
-    const body = readFileSync(join(FIXTURE, path));
+    const file = join(FIXTURE, path);
+    if (!existsSync(file)) {
+      await route.fulfill({ status: 404, body: '' });
+      return;
+    }
+    const body = readFileSync(file);
     const type = path.endsWith('.png') ? 'image/png' : path.endsWith('.json') ? 'application/json' : 'application/octet-stream';
     await route.fulfill({ status: 200, body, contentType: type });
   });
@@ -110,6 +115,55 @@ test.describe('탑다운 지도 시험 화면', () => {
     await minimap.click({ position: { x: 4, y: 4 } }); // 지도 왼쪽 위 끝으로
     await expect.poll(async () => Number((await map.getAttribute('data-map-center'))!.split(',')[0])).toBeLessThan(400);
     expect(mini.width).toBeGreaterThanOrEqual(44);
+  });
+
+  test('부대 표지를 누르면 그 부대가 잡힌다', { tag: '@both' }, async ({ page }) => {
+    await serveFixture(page);
+    await page.goto('/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1522,936&z=16');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await page.waitForTimeout(300);
+    const box = (await map.boundingBox())!;
+    // 시험 부대 c1은 칸 (1522, 936) — 화면 가운데 + 반 칸
+    await page.mouse.click(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8);
+    await expect(page.getByTestId('map-lab-hit')).toContainText('corps c1');
+  });
+
+  test('WebGL2가 없으면 안내문과 천하 그림 한 장, 작은 지도는 없다', { tag: '@both' }, async ({ page }) => {
+    await page.addInitScript(() => {
+      const original = HTMLCanvasElement.prototype.getContext;
+      HTMLCanvasElement.prototype.getContext = function (this: HTMLCanvasElement, type: string, ...rest: unknown[]) {
+        return type === 'webgl2' ? null : (original as (...a: unknown[]) => RenderingContext | null).call(this, type, ...rest);
+      } as typeof HTMLCanvasElement.prototype.getContext;
+    });
+    await serveFixture(page);
+    await page.goto(LAB);
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'unsupported', { timeout: 60_000 });
+    await expect(page.getByRole('status').filter({ hasText: '이 브라우저에서는 지도를 그릴 수 없습니다' })).toBeVisible();
+    const picture = page.getByRole('img', { name: '천하 지도(그림만)' });
+    await expect(picture).toBeVisible();
+    // 개관 격자(합성 굽기)를 1px 밉 색으로 칠한 그림: 합성 조각의 빨강 · 초록이 그림 안에 있다
+    const shot = await picture.screenshot();
+    const counts = await page.evaluate(async ({ png, red, green }) => {
+      const bytes = Uint8Array.from(atob(png), (c) => c.charCodeAt(0));
+      const bitmap = await createImageBitmap(new Blob([bytes], { type: 'image/png' }));
+      const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(bitmap, 0, 0);
+      const data = ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
+      const close = (i: number, c: number[]) => Math.abs(data[i] - c[0]) + Math.abs(data[i + 1] - c[1]) + Math.abs(data[i + 2] - c[2]) < 36;
+      let r = 0;
+      let g = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        if (close(i, red)) r += 1;
+        else if (close(i, green)) g += 1;
+      }
+      return { r, g };
+    }, { png: shot.toString('base64'), red: RED, green: GREEN });
+    expect(counts.r, '빨강 화소').toBeGreaterThan(0);
+    expect(counts.g, '초록 화소').toBeGreaterThan(0);
+    await expect(page.getByRole('button', { name: /작은 지도/ })).toHaveCount(0);
   });
 
   test('모바일: 탭으로 고르고 누를 것은 44px 이상', { tag: '@mobile-only' }, async ({ page }) => {

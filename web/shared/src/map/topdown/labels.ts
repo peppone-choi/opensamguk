@@ -53,6 +53,8 @@ export type MeasureLabel = (text: string, fontPx: number, bold: boolean) => { wi
 export interface LayoutLabelOptions {
   padding?: number;
   hidden?: ReadonlySet<LabelKind>;
+  /** Screen boxes labels must not cover (corps markers and flags); a label hitting one is dropped. */
+  avoid?: ReadonlyArray<{ x: number; y: number; width: number; height: number }>;
 }
 
 interface Box { x: number; y: number; width: number; height: number }
@@ -109,6 +111,7 @@ export function layoutLabels(
       height: height + padding * 2,
     };
     if (placed.some((other) => intersects(padded, other))) continue;
+    if (options.avoid?.some((box) => intersects(padded, box))) continue;
     placed.push({
       id: candidate.id,
       text: candidate.text,

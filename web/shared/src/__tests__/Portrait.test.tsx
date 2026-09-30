@@ -11,6 +11,7 @@ describe('Portrait 3종 규칙', () => {
     ['card', `${SERVING}/portrait/10001.png`],
     ['card-126', `${SERVING}/portrait/10001.png`],
     ['card-36', `${SERVING}/portrait/10001.png`],
+    ['card-24', `${SERVING}/portrait/10001.png`],
     ['icon', `${SERVING}/icon/10001.png`],
     ['icon-48', `${SERVING}/icon/10001.png`],
     ['icon-20', `${SERVING}/icon/10001.png`],
@@ -28,6 +29,7 @@ describe('Portrait 3종 규칙', () => {
     expect(hero.querySelector('.os-portrait')).toHaveStyle({ width: '100%', height: '100%' });
     expect(portraitVariantForSize('card-56')).toBe('portrait');
     expect(PORTRAIT_SIZES['icon-32'].w).toBe(32);
+    expect(PORTRAIT_SIZES['card-24']).toEqual({ w: 24, h: 34, variant: 'portrait' });
   });
 
   it('draws the nation ring only when a reason is given', () => {

@@ -64,6 +64,17 @@ def main() -> None:
     flag_roles[3:12, 3:15] = 1
     flag_roles[3:12, 19:31] = 1
     (KIT / "flags.png").write_bytes(png(flags, "RGBA"))
+    # 부대 표지 시트(16칸 × 17줄): 앞 네 칸(방향)만 채운 네모, 채움은 세력색 역할 1, 테두리는 대비 역할 3
+    markers = np.zeros((17 * 16, 16 * 16, 4), np.uint8)
+    marker_roles = np.zeros((17 * 16, 16 * 16), np.uint8)
+    for frame in range(4):
+        x0 = frame * 16
+        markers[2:14, x0 + 2 : x0 + 14] = (255, 255, 255, 255)
+        marker_roles[2:14, x0 + 2 : x0 + 14] = 3
+        markers[4:12, x0 + 4 : x0 + 12] = (200, 40, 40, 255)
+        marker_roles[4:12, x0 + 4 : x0 + 12] = 1
+    (KIT / "markers.png").write_bytes(png(markers, "RGBA"))
+    (KIT / "markers-roles.png").write_bytes(png(marker_roles, "L"))
     (KIT / "flags-roles.png").write_bytes(png(flag_roles, "L"))
 
     # 조각 (5,3): 왼쪽 반 빨강 · 구역 1, 오른쪽 반 초록 · 구역 2, (1400, 900)에 지붕 타일
