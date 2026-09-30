@@ -198,7 +198,6 @@ function CandidateRow({ candidate: c, picker, height }: { readonly candidate: Ta
             role="option"
             aria-selected="false"
             aria-disabled="true"
-            aria-haspopup="dialog"
             aria-describedby={describedBy}
             className="os-opt os-opt--no"
             style={{ minHeight: height }}

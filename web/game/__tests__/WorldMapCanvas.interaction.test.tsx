@@ -1840,6 +1840,54 @@ describe('shared WorldMapCanvas viewport interaction', () => {
       expect(lastFrame()).toContain('fillText:내 위치');
     });
 
+    describe('省 지도가 늦게 와서 초점 城 이 옮겨 갈 때', () => {
+      // 운영 실측: 省 지도 없이 잡은 칸과 치소 칸의 차이는 중앙값 2칸이지만 선무 210 · 이석 99 · 구자속국 82칸이다.
+      const cities = [{ ...CHE_OVERLAYS_FIXTURE[0], id: 1, name: '선무', x: 60, y: 60, state: 0 }];
+      const projected = new Map([[1, { col: 6, row: 6 }]]);
+      const seated = new Map([[1, { col: 34, row: 31, provinceId: 0 }]]);
+      // 지형은 한 벌이다 — 실제 화면도 지도 훅이 준 같은 지형을 계속 넘긴다(새 지형이면 지도판이 처음부터 다시 맞춘다).
+      const tiles = wideTiles(40);
+      const board = (markerPositions: Map<number, { col: number; row: number; provinceId?: number }>,
+        onViewChange: (view: IsoView) => void) => (
+        <WorldMapCanvas mapCode="che" tiles={tiles} provinceMap={null} cities={cities}
+          markerPositions={markerPositions} currentCityId={1} initialFocus="current-city-close"
+          sourceSize={{ width: 400, height: 400 }} onViewChange={onViewChange} />
+      );
+      const centreOf = (view: IsoView, cell: { col: number; row: number }) => {
+        const [x, y] = cellToScreen(cell.col, cell.row, view);
+        return { dx: Math.abs(x - measuredWidth), dy: Math.abs(y - measuredHeight) };
+      };
+
+      it('re-centres on the seated 城 while the view is untouched', () => {
+        countingImage();
+        const views: IsoView[] = [];
+        const { rerender } = render(board(projected, (view) => views.push({ ...view })));
+        expect(centreOf(views.at(-1)!, projected.get(1)!)).toEqual({ dx: expect.closeTo(0, 6), dy: expect.closeTo(0, 6) });
+        rerender(board(seated, (view) => views.push({ ...view })));
+        // 캔버스 400×212(DPR 2) 가운데 = (measuredWidth, measuredHeight) 에 치소 칸이 와야 한다.
+        expect(centreOf(views.at(-1)!, seated.get(1)!)).toEqual({ dx: expect.closeTo(0, 6), dy: expect.closeTo(0, 6) });
+      });
+
+      it('keeps the view once the user has moved the map', () => {
+        countingImage();
+        const views: IsoView[] = [];
+        const { rerender } = render(board(projected, (view) => views.push({ ...view })));
+        fireEvent.click(screen.getByRole('button', { name: '지도 확대' }));
+        const touched = views.at(-1)!;
+        rerender(board(seated, (view) => views.push({ ...view })));
+        expect(views.at(-1)).toEqual(touched);
+      });
+
+      it('does not re-centre when polling brings the same cell again', () => {
+        countingImage();
+        const views: IsoView[] = [];
+        const { rerender } = render(board(projected, (view) => views.push({ ...view })));
+        const count = views.length;
+        rerender(board(new Map([[1, { col: 6, row: 6 }]]), (view) => views.push({ ...view })));
+        expect(views).toHaveLength(count);
+      });
+    });
+
     it('skips 城 that are wholly off screen', () => {
       countingImage();
       render(

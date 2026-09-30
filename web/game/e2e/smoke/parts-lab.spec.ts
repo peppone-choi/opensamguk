@@ -9,6 +9,8 @@ const LAB = '/parts-lab';
 async function open(page: Page) {
   await page.goto(LAB, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: '공용 부품 미리보기' })).toBeVisible({ timeout: 60_000 });
+  // SSR 제목은 수화 전에 보인다 — 리스너가 붙은 뒤에 누른다.
+  await expect(page.locator('main[data-hydrated="true"]')).toBeVisible();
 }
 
 /** 보이는 누를 것 가운데 44 × 44 보다 작은 것(보이는 크기와 상관없이 누를 영역 기준). */
@@ -52,6 +54,11 @@ test.describe('공용 부품 미리보기', () => {
     await expect(page.getByTestId('lab-log')).toHaveText('도움말 input:court.dispatch!NOT_RULER');
 
     await expect(lab.getByRole('button', { name: '성방 허물기' })).toHaveAttribute('aria-disabled', 'true');
+    // 좁은 칸에서도 보이는 사유는 잘리지 않는다(말줄임 · 넘침 없음)
+    const clipped = await page.getByTestId('lab-narrow').locator('.os-ia__why').evaluateAll((tags) =>
+      tags.filter((t) => t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 1).map((t) => t.textContent));
+    expect(clipped).toEqual([]);
+    await expect(page.getByTestId('lab-narrow').locator('.os-ia__why').first()).toHaveText('기한이 지났습니다');
     await expect(lab.locator('[data-input-id="action.unknown"]')).toHaveCount(0);
   });
 
@@ -63,6 +70,13 @@ test.describe('공용 부품 미리보기', () => {
     const vp = page.viewportSize()!;
     expect(Math.round(box.y + box.height)).toBe(vp.height);
     expect(Math.round(box.width)).toBe(vp.width);
+    // 닫기 단추(시트 오른쪽 아래)가 시트 내용을 덮지 않는다
+    const close = (await page.getByRole('button', { name: '닫기' }).boundingBox())!;
+    for (const part of await sheet.locator('.os-reason__title, .os-reason__body, .os-reason__recovery, .os-reason__help').all()) {
+      const r = (await part.boundingBox())!;
+      const overlap = r.x < close.x + close.width && close.x < r.x + r.width && r.y < close.y + close.height && close.y < r.y + r.height;
+      expect(overlap, `닫기 단추가 ${await part.getAttribute('class')} 를 덮는다`).toBe(false);
+    }
   });
 
   test('지도 대상 고르기: 표지와 목록이 같은 상태, 띠는 표지를 덮지 않는다', { tag: BOTH }, async ({ page }) => {
@@ -75,7 +89,11 @@ test.describe('공용 부품 미리보기', () => {
     await press(list.getByRole('option', { name: /신정현/ }), test.info());
     await expect(page.getByRole('dialog', { name: '신정현 — 고를 수 없습니다' })).toBeVisible();
     await expect(page.getByTestId('lab-picked')).toHaveText('—');
+    // 시트가 열려 있을 때 Esc 는 시트만 닫는다 — 고르기 띠는 남고 「고르기 그만」은 일어나지 않는다
     await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: '신정현 — 고를 수 없습니다' })).toBeHidden();
+    await expect(sec.getByRole('region', { name: '갈 곳 고르기 — 이동 · 04순' })).toBeVisible();
+    await expect(page.getByTestId('lab-log')).toHaveText('—');
 
     // 지도 표지 가운데를 누르면 그 표지가 맞는다(띠 · 무늬가 먹지 않는다) — 고르면 목록도 「고름」
     const marker = sec.getByRole('button', { name: '밀현 표지' });

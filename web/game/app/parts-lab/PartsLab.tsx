@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   InputAction,
   PeoplePicker,
@@ -61,9 +61,12 @@ export default function PartsLab() {
   const [pos, setPos] = useState(92_000);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<TimeBarSpeed>(1);
+  // 수화가 끝나 창 키 리스너(Esc)까지 붙은 뒤에만 시험이 누른다 — SSR 제목이 먼저 보여 경합했다(CI 1회 흔들림).
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   return (
-    <main className="parts-lab">
+    <main className="parts-lab" data-hydrated={hydrated ? 'true' : undefined}>
       <header className="parts-lab__head">
         <h1 className="parts-lab__title">공용 부품 미리보기</h1>
         <output className="parts-lab__log" data-testid="lab-log">{log}</output>
@@ -84,6 +87,11 @@ export default function PartsLab() {
           />
           <InputAction inputId="work.reduce" availability={{ inputId: 'work.reduce', status: 'NOT_DELIVERED' }} label="성방 허물기" onAct={() => setLog('준비 중이 불리면 안 된다')} />
           <InputAction inputId="action.unknown" availability={null} label="원장에 없는 입력" onAct={() => undefined} />
+        </div>
+        {/* 좁은 칸 — 요청 카드처럼 두 입력을 반씩 나눈 자리(모바일 ≈ 170). 보이는 사유가 잘리지 않아야 한다. */}
+        <div className="parts-lab__narrow" data-testid="lab-narrow">
+          <InputAction inputId="court.dispatchReply" availability={{ inputId: 'court.dispatchReply', status: 'BLOCKED', reason: '기한이 지났습니다' }} label="거절" onAct={() => undefined} variant="ghost" block />
+          <InputAction inputId="court.dispatchReply" availability={{ inputId: 'court.dispatchReply', status: 'BLOCKED', reason: '기한이 지났습니다' }} label="수락" onAct={() => undefined} block />
         </div>
       </Section>
 
@@ -176,6 +184,7 @@ export default function PartsLab() {
         .parts-lab__marker--selected::after { border-color: var(--focus); background: var(--focus); }
         .parts-lab__marker--here::after { border-color: var(--bronze); background: rgba(211, 176, 100, 0.4); }
         .parts-lab__gap { height: 8px; }
+        .parts-lab__narrow { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 340px; max-width: 100%; margin-top: 8px; }
         @media (max-width: 767.98px) {
           .parts-lab { padding: 12px 16px; }
           .parts-lab__grid, .parts-lab__grid--2 { grid-template-columns: minmax(0, 1fr); }
