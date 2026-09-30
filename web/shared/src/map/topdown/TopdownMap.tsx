@@ -10,6 +10,7 @@ import type { HitResult } from './hitTest';
 import { MapMinimap } from './MapMinimap';
 import { loadOverviewPicture } from './overviewPicture';
 import type { MyLocation } from './myLocation';
+import type { CorpsMarker } from './corps';
 import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
 
 export interface TopdownMapHandle {
@@ -24,6 +25,8 @@ export interface TopdownMapProps {
   layers?: MapLayers;
   /** 내 위치 표지(M2-11). */
   me?: MyLocation | null;
+  /** 부대 표지(K2-08). */
+  corps?: readonly CorpsMarker[];
   /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). */
   minimap?: boolean;
   /** 'fit' shows the whole map (州 보기); otherwise centre and zoom (CSS px per cell). */
@@ -43,7 +46,7 @@ const SETTLE_MS = 150;
 const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
-  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false } = props;
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false, corps } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -131,6 +134,10 @@ export function TopdownMap(props: TopdownMapProps) {
   useEffect(() => {
     rendererRef.current?.setMe(me);
   }, [me, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setCorps(corps ?? []);
+  }, [corps, status.kind]);
 
   // 크기 · 기기 픽셀 비율
   useEffect(() => {
