@@ -31,3 +31,5 @@ reset 완료 경로는 invalidateAfterReset(completedAt)을 호출해야 한다.
 ## CI 증거
 
 전체 test/skip gate 명령은 유지하고 common/API 지정3 XML 및 engine StatusController XML을 성공/실패 시7일 보존한다. 파일 수와 실제 testcase 결과를 확인하기 전 통과로 계산하지 않는다.
+
+- 추가 remote 회귀는 격리 loopback HTTP의 6초 응답을 설정 deadline2초로 끊는지 확인한다. 운영 origin/URL을 호출하지 않는다. 신규 common/API 회귀는16개이며 실행 증거 전 합격으로 세지 않는다.
