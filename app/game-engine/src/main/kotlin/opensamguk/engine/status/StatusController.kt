@@ -1,5 +1,6 @@
 package opensamguk.engine.status
 
+import java.time.Instant
 import opensamguk.common.turn.CatchUpSnapshot
 import opensamguk.engine.run.TurnDaemonRunner
 import opensamguk.engine.run.TurnClockSnapshot
@@ -60,6 +61,8 @@ data class TurnDaemonStatus(
     /** 클럭 스냅샷 조회가 실패한 경우의 예외 메시지 — 설정 이상(tickSeconds<=0)과 구분된다. */
     val clockError: String? = null,
     val catchUp: CatchUpSnapshot? = null,
+    /** Source wall time captured immediately before reading the current pause gate. */
+    val serverTime: String? = null,
 )
 
 /** pause/resume 호출 결과 — 호출 후 실제 상태 + 호출이 상태를 바꿨는지(`changed`). */
@@ -90,6 +93,7 @@ class StatusController(
 
     @GetMapping("/status")
     fun status(): TurnDaemonStatus {
+        val observedAt = Instant.now()
         val paused = pauseGate.isPaused()
         val diagnostics = runner.diagnostics()
         // OPENSAM-175 — `runner.isRunning`(플래그)이 아니라 헬스와 **같은 신호**를 쓴다. `Error`로 루프
@@ -130,6 +134,7 @@ class StatusController(
             lastSuccessfulTickAgeSeconds = diagnostics.lastSuccessfulTickAgeSeconds,
             clockError = diagnostics.clockError,
             catchUp = diagnostics.catchUp,
+            serverTime = observedAt.toString(),
         )
     }
 

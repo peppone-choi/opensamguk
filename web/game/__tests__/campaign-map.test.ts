@@ -100,13 +100,15 @@ describe('campaign-fog neighborInDirection', () => {
 
 describe('campaign-screens links', () => {
     it('puts screens under the game server path', () => {
-        expect(campaignHref('war-room')).toBe('/game/war-room');
-        expect(campaignHref('war-room', 'pep')).toBe('/game/pep/war-room');
+        expect(campaignHref('')).toBe('/game');
+        expect(campaignHref('', 'pep')).toBe('/game/pep');
+        expect(campaignHref('retinue/yuedan', 'pep')).toBe('/game/pep/retinue/yuedan');
+        expect(campaignHref('court?tab=orders', 'pep')).toBe('/game/pep/court?tab=orders');
     });
 
     it('lands a tab only on a screen that exists', () => {
-        expect(campaignTabLanding('조정 결정')?.slug).toBe('orders');
-        expect(campaignTabLanding('계책')?.slug).toBe('hand');
+        expect(campaignTabLanding('조정 결정')?.slug).toBe('court?tab=orders');
+        expect(campaignTabLanding('계책')?.slug).toBe('stratagem');
         expect(campaignTabLanding('공사')).toBeUndefined();
         for (const tab of ['장수 행동', '배치', '방침', '계책', '조정 결정'] as const) {
             const landing = campaignTabLanding(tab);
