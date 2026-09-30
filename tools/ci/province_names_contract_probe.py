@@ -135,15 +135,21 @@ allprojects {
     require({s["name"]: s["tests"] for s in suites} == expected, phase + ": suite/count mismatch")
     require((dest / "classpath.json").is_file(), phase + ": actual classpath evidence missing")
     classpath = json.loads((dest / "classpath.json").read_text())
+    gradle_log = (evidence / (phase + ".log")).read_text()
     require(classpath["javaVersion"].startswith("21.") and classpath["entries"], phase + ": JDK/classpath mismatch")
     for entry in classpath["entries"]:
         if entry["sha256"] == "MISSING":
             # Gradle lists Java outputs even when a Kotlin-only module has no Java source set.
             relative = Path(entry["path"]).relative_to(tree).as_posix()
             java_output = {module + "/build/classes/java/main", module + "/build/classes/java/test"}
-            require(relative in java_output and not list((tree / module / "src").rglob("*.java")),
+            source_set = relative.rsplit("/", 1)[-1]
+            java_task = "compileJava" if source_set == "main" else "compileTestJava"
+            no_source_task = "> Task :" + module.replace("/", ":") + ":" + java_task + " NO-SOURCE"
+            require(relative in java_output and not list((tree / module).rglob("*.java")) and
+                    no_source_task in gradle_log,
                     phase + ": missing runtime classpath entry " + relative)
             entry["classification"] = "NO_JAVA_SOURCE_OUTPUT"
+            entry["gradle_no_source_task"] = no_source_task
     for source_set in ("main", "test"):
         kotlin_output = str(tree / module / "build/classes/kotlin" / source_set)
         require(any(entry["path"] == kotlin_output and entry.get("files", 0) > 0 and
