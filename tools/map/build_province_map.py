@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a deterministic lossless province-identity PNG from map tile RLE data."""
+"""Build a lossless province-identity PNG from map tile RLE data."""
 
 import argparse
 import hashlib
@@ -17,6 +17,7 @@ PROVINCE_LIMIT = (1 << PROVINCE_BITS) - 1
 COMMANDERY_LIMIT = 255
 MAX_DIMENSION = 4096
 MAX_CELLS = 8_388_608  # map4 is 3072 × 2676 = 8,220,672 cells.
+MAX_PNG_BYTES = 16 * 1024 * 1024  # The province identity browser loader's file limit.
 MAP_CODE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_-]*$")
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
 
@@ -108,19 +109,6 @@ def _png_chunk(kind: bytes, payload: bytes) -> bytes:
     return struct.pack(">I", len(payload)) + kind + payload + struct.pack(">I", zlib.crc32(kind + payload) & 0xFFFFFFFF)
 
 
-def _stored_deflate(data: bytes) -> bytes:
-    blocks = bytearray(b"\x78\x01")
-    for offset in range(0, len(data) or 1, 65535):
-        block = data[offset:offset + 65535]
-        final = offset + 65535 >= len(data)
-        blocks.append(1 if final else 0)
-        blocks.extend(struct.pack("<H", len(block)))
-        blocks.extend(struct.pack("<H", 0xFFFF ^ len(block)))
-        blocks.extend(block)
-    blocks.extend(struct.pack(">I", zlib.adler32(data) & 0xFFFFFFFF))
-    return bytes(blocks)
-
-
 def _make_png(width: int, height: int, pixels: bytes) -> bytes:
     expected = width * height * 3
     if len(pixels) != expected:
@@ -128,7 +116,10 @@ def _make_png(width: int, height: int, pixels: bytes) -> bytes:
     stride = width * 3
     raw = b"".join(b"\0" + pixels[offset:offset + stride] for offset in range(0, len(pixels), stride))
     ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
-    return PNG_SIGNATURE + _png_chunk(b"IHDR", ihdr) + _png_chunk(b"IDAT", _stored_deflate(raw)) + _png_chunk(b"IEND", b"")
+    png = PNG_SIGNATURE + _png_chunk(b"IHDR", ihdr) + _png_chunk(b"IDAT", zlib.compress(raw, level=9)) + _png_chunk(b"IEND", b"")
+    if len(png) >= MAX_PNG_BYTES:
+        raise ValueError(f"PNG has {len(png)} bytes; must be below {MAX_PNG_BYTES}")
+    return png
 
 
 def _decode_emitted_png(png_bytes: bytes) -> tuple[int, int, list[int], list[int]]:
@@ -153,6 +144,8 @@ def _decode_emitted_png(png_bytes: bytes) -> tuple[int, int, list[int], list[int
         position = end
     if [kind for kind, _ in chunks] != [b"IHDR", b"IDAT", b"IEND"]:
         raise ValueError("PNG chunk order is not canonical")
+    if chunks[-1][1]:
+        raise ValueError("PNG IEND payload must be empty")
 
     ihdr = chunks[0][1]
     if len(ihdr) != 13:
@@ -275,6 +268,8 @@ def _render_assets(source_bytes: bytes, map_data: dict) -> tuple[bytes, bytes, i
             "terrainWaterPoliticalCovered": terrain_water_covered,
         },
         "dimensions": {"cols": cols, "rows": rows},
+        # Pin row-major RGB pixels independently of the zlib implementation.
+        "pixelRowsSha256": hashlib.sha256(pixels).hexdigest(),
         "pngSha256": hashlib.sha256(png_bytes).hexdigest(),
         "schemaVersion": 1,
         "sourceSha256": hashlib.sha256(source_bytes).hexdigest(),
@@ -321,13 +316,21 @@ def check_assets(input_path: Path | str, output_dir: Path | str, map_code: str) 
         return False
     if not isinstance(map_data, dict):
         return False
-    png_bytes, metadata_bytes, cols, rows, _, _, provinces, commanderies = _render_assets(source_bytes, map_data)
+    _, metadata_bytes, cols, rows, _, _, provinces, commanderies = _render_assets(source_bytes, map_data)
     png_path = output_dir / f"{map_code}-provinces.png"
     metadata_path = output_dir / f"{map_code}-provinces.meta.json"
     if not png_path.is_file() or not metadata_path.is_file():
         return False
     emitted_png = png_path.read_bytes()
-    if emitted_png != png_bytes or metadata_path.read_bytes() != metadata_bytes:
+    if len(emitted_png) >= MAX_PNG_BYTES:
+        return False
+    try:
+        expected_metadata = json.loads(metadata_bytes)
+        emitted_metadata = json.loads(metadata_path.read_bytes())
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return False
+    expected_metadata["pngSha256"] = hashlib.sha256(emitted_png).hexdigest()
+    if emitted_metadata != expected_metadata:
         return False
     try:
         _verify_png_round_trip(emitted_png, provinces, commanderies, cols, rows)
