@@ -1,95 +1,78 @@
 'use client';
 
-import { Chip } from '@opensamguk/ui';
-import {
-    CAMPAIGN_INPUT_TABS,
-    CAMPAIGN_HUB_SLUG,
-    campaignTabLanding,
-    type InputTab,
-} from '../lib/campaign-screens';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { ReasonTooltip } from '@opensamguk/ui';
 import CampaignLink from './campaign/CampaignLink';
 import { Blocked, campaignBlockReason } from './campaign/GameStates';
-import { useRenown } from '../lib/campaign-reads';
 import { useGameSession } from '../lib/campaign-session';
+import { locateScreen, screenHref, type NavScreen } from '../lib/nav31';
+import { normalizeGamePathname } from '../lib/serverGameUrl';
 import styles from './GameShell.module.css';
 
 export interface GameShellProps {
     readonly title: string;
-    /** 켜진 입력 탭. 탭에 속하지 않는 화면은 null. */
-    readonly tab: InputTab | null;
-    /** 작전실 자신에서는 「← 작전실」을 숨긴다. */
+    /** @deprecated 옛 「입력 여섯 가지」 탭. 새 셸은 하위 탭을 경로(NAV31)로 찾는다 — 화면 PR 이 들어오면서 지운다. */
+    readonly tab?: unknown;
+    /** @deprecated 「← 작전실」은 이제 레일 · 하단 탭이 한다. */
     readonly showBack?: boolean;
-    /**
-     * 휘하 규칙 월드에서만 뜻이 있는 화면인지. 참이면 규칙이 다른 월드·장수 없음에서 본문 대신
-     * 사유를 보인다. 작전실은 지도만으로도 쓸모가 있어 거짓이다.
-     */
+    /** 장수가 있어야 뜻이 있는 화면인지. 참이면 불러오는 중 · 실패 · 장수 없음에서 본문 대신 사유를 보인다. */
     readonly requiresHwiha?: boolean;
-    readonly children: React.ReactNode;
+    readonly children: ReactNode;
 }
 
+const NOT_READY = '아직 준비 중인 화면입니다';
+
 /**
- * 새 시대(휘하) 화면의 공용 셸.
- *
- * 시안 `ui.py` 의 `head(title, on)` 을 옮긴 것이다 — 높이 56, 왼쪽에 「← 작전실」·제목·입력 여섯
- * 탭, 오른쪽에 장수·명망·날짜 칩. 시안의 탭은 정적 `<span>` 이지만 여기서는 진짜 링크로 만든다.
- * 그 탭에 아직 화면이 없으면 숨기지 않고 점선으로 남긴다(표시 원칙).
+ * 페이지 머리(보드 V31SystemPage · MPage) — 제목과, 지금 묶음의 하위 화면 탭. 머리줄 · 레일 · 하단 탭은 /game 레이아웃의
+ * GameFrame 이 그린다. 하위 화면이 아직 없으면 숨기지 않고 점선으로 두고 누르면 사유가 열린다(표시 원칙).
+ * 모바일은 탭 한 줄을 가로로 밀고, 고른 탭이 보이게 밀어 둔다.
  */
-export default function GameShell({ title, tab, showBack = true, requiresHwiha = true, children }: GameShellProps) {
+export default function GameShell({ title, requiresHwiha = true, children }: GameShellProps) {
     const session = useGameSession();
-    const { frontInfo } = session;
-    const renown = useRenown();
-    const generalName = frontInfo?.general.name ?? null;
-    const allegiance = frontInfo?.nation?.name ?? '재야';
+    const pathname = usePathname() ?? '';
+    const search = useSearchParams();
+    const rest = normalizeGamePathname(pathname, session.serverId).replace(/^\/game\/?/, '');
+    const located = locateScreen(rest, search?.toString() ?? '');
+    const screens = located?.group.screens ?? [];
     const blocked = campaignBlockReason(session);
+    const current = useRef<HTMLAnchorElement | null>(null);
+
+    useEffect(() => {
+        current.current?.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    }, [located?.screen?.label]);
+
     return (
         <>
             <div className={styles.head}>
-                <div className={styles.left}>
-                    {showBack ? (
-                        <CampaignLink className="os-button os-button--ghost os-button--sm" slug={CAMPAIGN_HUB_SLUG}>
-                            ← 작전실
-                        </CampaignLink>
-                    ) : null}
-                    <span className={styles.title}>{title}</span>
-                    <nav className={styles.tabs} aria-label="입력 여섯 가지">
-                        {CAMPAIGN_INPUT_TABS.map((t) => {
-                            const landing = campaignTabLanding(t);
-                            const on = t === tab;
-                            if (!landing) {
-                                return (
-                                    <span
-                                        key={t}
-                                        className={`${styles.tab} ${styles.tabEmpty}`}
-                                        title="아직 화면이 없습니다"
-                                    >
-                                        {t}
-                                    </span>
-                                );
-                            }
-                            return (
-                                <CampaignLink
-                                    key={t}
-                                    className={`${styles.tab}${on ? ` ${styles.tabOn}` : ''}`}
-                                    slug={landing.slug}
-                                    aria-current={on ? 'page' : undefined}
-                                >
-                                    {t}
-                                </CampaignLink>
-                            );
-                        })}
+                <h2 className={styles.title}>{title}</h2>
+                {screens.length > 1 ? (
+                    <nav className={styles.tabs} aria-label="하위 화면">
+                        {screens.map((screen) => (
+                            <SubTab key={screen.label} screen={screen} on={located?.screen === screen} anchor={located?.screen === screen ? current : undefined} />
+                        ))}
                     </nav>
-                </div>
-                <div className={styles.right}>
-                    {generalName ? <Chip>{`${generalName} · ${allegiance}`}</Chip> : null}
-                    {session.isCampaignWorld ? (
-                        <Chip tone="bronze">{`명망 ${renown ?? '—'}`}</Chip>
-                    ) : null}
-                    {session.gameDate ? <Chip>{session.gameDate}</Chip> : null}
-                </div>
+                ) : null}
             </div>
             <div className={styles.body}>
                 {requiresHwiha && blocked ? <Blocked reason={blocked} /> : children}
             </div>
         </>
+    );
+}
+
+function SubTab({ screen, on, anchor }: { readonly screen: NavScreen; readonly on: boolean; readonly anchor?: React.RefObject<HTMLAnchorElement | null> }) {
+    const href = screenHref(screen);
+    if (href === null) {
+        return (
+            <ReasonTooltip reason={NOT_READY}>
+                <button type="button" className={`${styles.tab} ${styles.tabEmpty}`} aria-disabled="true" aria-haspopup="dialog">{screen.label}</button>
+            </ReasonTooltip>
+        );
+    }
+    return (
+        <CampaignLink ref={anchor} slug={href} className={`${styles.tab}${on ? ` ${styles.tabOn}` : ''}`} aria-current={on ? 'page' : undefined}>
+            {screen.label}
+        </CampaignLink>
     );
 }

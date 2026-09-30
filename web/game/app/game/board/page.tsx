@@ -21,7 +21,7 @@ import { useSearchParams } from 'next/navigation';
 import { Chip, Flag, Modal, Panel, PillTabs, Portrait, PortraitStack, SectionHeader, type ChipTone, EmptyState } from '@opensamguk/ui';
 import Shell from '../../../components/Shell';
 import PageHead from '../../../components/PageHead';
-import { COMMUNITY_HREF } from '../../../components/DeptNav';
+import { COMMUNITY_HREF } from '@/lib/gatewayLinks';
 import { RichTextEditor } from '../../../components/RichTextEditor';
 import { SafeHtml } from '../../../components/SafeHtml';
 import { api } from '../../../lib/api';
