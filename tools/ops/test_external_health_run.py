@@ -50,12 +50,14 @@ class ExecuteTest(unittest.TestCase):
             "CURRENT_STATE_FILE": str(self.current),
         }
 
-    def execute(self, broken, delivered=True):
+    def execute(self, broken=False, delivered=True, game=None, peer=None):
         reply = responses(broken)
+        if game is not None:
+            reply[runner.URLS["game_api"]] = (200, game, None)
         output = io.StringIO()
         with patch.dict(os.environ, self.env, clear=True), \
                 patch.object(runner, "public_get", side_effect=lambda url: reply[url]), \
-                patch.object(runner, "peer_result", return_value=None), \
+                patch.object(runner, "peer_result", return_value=peer), \
                 patch.object(runner, "deployment_result", return_value=None), \
                 patch.object(runner, "operations_heartbeat_result", return_value=None), \
                 patch.object(runner, "deliver", return_value=delivered) as send, \
@@ -122,6 +124,87 @@ class ExecuteTest(unittest.TestCase):
         self.assertEqual(2, send.call_count)
         self.assertIn("[전송 시험]", send.call_args_list[0].args[0]["embeds"][0]["title"])
         self.assertEqual([], json.loads(self.current.read_text())["codes"])
+
+
+    def stopped_body(self, state="UNKNOWN", age=1):
+        value = json.loads(responses()[runner.URLS["game_api"]][1])
+        game = value["game"]
+        server_time = datetime.fromisoformat(game["serverTime"])
+        game["nextTurnAt"] = None
+        game["turnLoop"] = {"state": state, "staleSeconds": 300,
+                            "paused": True if state == "PAUSED" else None,
+                            "unknownSince": (server_time - timedelta(seconds=age)).isoformat(),
+                            "resetCompletedAt": None}
+        return json.dumps(value).encode()
+
+    def test_unknown_boundary_stays_degraded_then_uses_the_same_incident_grade_as_stalled(self):
+        status, send = self.execute(game=self.stopped_body(age=1800))
+        self.assertEqual(1, status)
+        send.assert_not_called()
+        first = json.loads(self.current.read_text())
+        self.assertEqual(["pause_observation_unavailable"], first["codes"])
+        self.assertEqual([], first["notificationCodes"])
+        self.promote_state()
+        status, send = self.execute(game=self.stopped_body(age=1801))
+        self.assertEqual(1, status)
+        send.assert_called_once()
+        self.assertEqual(0xE74C3C, send.call_args.args[0]["embeds"][0]["color"])
+        self.assertEqual("[운영 공개 감시 장애]", send.call_args.args[0]["embeds"][0]["title"])
+        self.promote_state()
+        _, send = self.execute(game=self.stopped_body(age=1802))
+        send.assert_not_called()
+        self.promote_state()
+        status, send = self.execute(broken=False)
+        self.assertEqual(0, status)
+        send.assert_called_once()
+        self.assertIsNone(json.loads(self.current.read_text())["unknown"])
+
+    def test_paused_alone_has_no_new_dispatch_and_cannot_acknowledge_a_prior_incident_as_recovered(self):
+        self.execute(broken=True)
+        self.promote_state()
+        status, send = self.execute(game=self.stopped_body("PAUSED"))
+        self.assertEqual(1, status)
+        send.assert_not_called()
+        state = json.loads(self.current.read_text())
+        self.assertEqual(["turn_paused"], state["codes"])
+        self.assertEqual(["game_api_down"], state["notificationCodes"])
+        self.promote_state()
+        status, send = self.execute(broken=False)
+        self.assertEqual(0, status)
+        send.assert_called_once()
+        self.assertEqual("[운영 공개 감시 복구]", send.call_args.args[0]["embeds"][0]["title"])
+
+    def test_paused_does_not_mute_other_incidents_or_retry_of_a_failed_delivery(self):
+        self.execute(broken=True, delivered=False)
+        self.promote_state()
+        status, send = self.execute(game=self.stopped_body("PAUSED"))
+        self.assertEqual(1, status)
+        send.assert_called_once()
+        self.assertIn("게임 API 연결 실패", send.call_args.args[0]["embeds"][0]["description"])
+        self.promote_state()
+        status, send = self.execute(game=self.stopped_body("PAUSED"), peer="peer_failed")
+        self.assertEqual(1, status)
+        send.assert_called_once()
+        self.assertIn("상대 감시기 실행 실패", send.call_args.args[0]["embeds"][0]["description"])
+
+    def test_paused_without_a_prior_alert_does_not_send_a_fake_recovery(self):
+        status, send = self.execute(game=self.stopped_body("PAUSED"))
+        self.assertEqual(1, status)
+        send.assert_not_called()
+        self.promote_state()
+        status, send = self.execute(broken=False)
+        self.assertEqual(0, status)
+        send.assert_not_called()
+
+    def test_future_persisted_unknown_timestamp_is_an_incident_not_a_later_deadline(self):
+        self.previous.parent.mkdir(parents=True, exist_ok=True)
+        self.previous.write_text(json.dumps({"codes": ["pause_observation_unavailable"], "delivered": False,
+            "notificationCodes": [], "unknown": {"since": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat(),
+                                                    "resetCompletedAt": None}}))
+        status, send = self.execute(game=self.stopped_body(age=1))
+        self.assertEqual(1, status)
+        send.assert_called_once()
+        self.assertIn("state_unavailable", json.loads(self.current.read_text())["codes"])
 
 
 class ArtifactTest(unittest.TestCase):

@@ -52,4 +52,16 @@ class HealthCheckControllerTest {
         ))
         assertEquals("degraded", controller.health().body?.status)
     }
+
+    @Test
+    fun `paused lifecycle is HTTP 200 degraded rather than a healthy recovery`() {
+        healthyDependencies()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(status = "PRE_OPEN", tickSeconds = 300,
+            meta = mapOf("lastTickExecutedAt" to Instant.now().toString())))
+        val response = controller.health()
+        assertEquals(200, response.statusCode.value())
+        assertEquals("degraded", response.body?.status)
+        assertEquals(opensamguk.gameapi.read.TurnLoopHealth.State.PAUSED, response.body?.world?.turnLoop?.state)
+    }
+
 }

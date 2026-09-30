@@ -16,7 +16,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from external_health_contract import (
-    MAX_BODY_BYTES, MISSED_SCHEDULE_SECONDS, classify_http, classify_peer_runs, parse_time, transition,
+    MAX_BODY_BYTES, MISSED_SCHEDULE_SECONDS, classify_http, classify_peer_runs, parse_time, transition, unknown_notification,
 )
 from production_ops_contract import deployment_failure_streak
 
@@ -30,6 +30,8 @@ MESSAGES = {
     "delivery_test": "전송 시험: 실제 서비스 장애가 아닙니다",
     "game_api_down": "게임 API 연결 실패(502)",
     "turn_stalled": "공개 턴 시각 정지",
+    "pause_observation_unavailable": "실제 턴 동결 관측을 연속 3tick 넘게 확인하지 못했습니다",
+    "turn_paused": "실제 턴 동결 상태를 확인했습니다. 사유는 확인 중입니다",
     "peer_not_started": "상대 감시기 일정 실행 없음",
     "peer_cancelled": "상대 감시기 실행 취소",
     "peer_failed": "상대 감시기 실행 실패",
@@ -188,10 +190,37 @@ def read_previous(path: Path) -> tuple[list[str], bool, bool]:
         return [], False, True
 
 
-def write_state(path: Path, codes: list[str], delivered: bool) -> None:
+def write_state(path: Path, codes: list[str], delivered: bool, *, notification_codes: list[str] | None = None,
+                unknown: dict | None = None) -> None:
+    value = {"schemaVersion": 1, "codes": sorted(set(codes)), "delivered": delivered}
+    if notification_codes is not None:
+        value.update(schemaVersion=2, notificationCodes=sorted(set(notification_codes)), unknown=unknown)
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps({"schemaVersion": 1, "codes": sorted(set(codes)), "delivered": delivered},
-                               separators=(",", ":")) + "\n", encoding="utf-8")
+    path.write_text(json.dumps(value, separators=(",", ":")) + "\n", encoding="utf-8")
+
+
+def read_notification_state(path: Path, legacy_codes: list[str]) -> tuple[list[str], dict | None, bool]:
+    if not path.exists():
+        return legacy_codes, None, False
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("invalid state object")
+        codes = value.get("notificationCodes", legacy_codes)
+        unknown = value.get("unknown")
+        if not isinstance(codes, list) or not all(isinstance(code, str) for code in codes):
+            raise ValueError("invalid notification ledger")
+        if unknown is not None:
+            if not isinstance(unknown, dict):
+                raise ValueError("invalid unknown ledger")
+            since = parse_time(unknown.get("since"))
+            reset = parse_time(unknown.get("resetCompletedAt"))
+            if since is None or unknown.get("resetCompletedAt") is not None and (reset is None or reset > since):
+                raise ValueError("invalid unknown timestamps")
+            unknown = {"since": since.isoformat(), "resetCompletedAt": reset.isoformat() if reset else None}
+        return codes, unknown, False
+    except (OSError, ValueError, TypeError):
+        return legacy_codes, None, True
 
 
 def description(code: str) -> str:
@@ -254,8 +283,10 @@ def execute(mode: str, current_run_id: int) -> int:
     previous_path = Path(os.environ.get("PREVIOUS_STATE_FILE", "previous-state/monitor-state.json"))
     state_path = Path(os.environ.get("CURRENT_STATE_FILE", "current-state/monitor-state.json"))
     previous, previously_delivered, invalid_previous = read_previous(previous_path)
+    notified, unknown, invalid_notification = read_notification_state(previous_path, previous)
+    unknown_due = False
     findings: list[str] = []
-    if invalid_previous:
+    if invalid_previous or invalid_notification:
         findings.append("state_unavailable")
     if os.environ.get("PREVIOUS_STATE_EXPECTED") == "true" and not previous_path.exists():
         findings.append("state_unavailable")
@@ -267,6 +298,14 @@ def execute(mode: str, current_run_id: int) -> int:
             code = classify_http(endpoint, status, response, transport, now)
             if code:
                 findings.append(code)
+            if endpoint == "game_api":
+                if code == "pause_observation_unavailable":
+                    try:
+                        unknown_due, unknown = unknown_notification(response, unknown)
+                    except (KeyError, ValueError, TypeError):
+                        findings.append("state_unavailable")
+                elif code in {None, "turn_paused", "turn_stalled"}:
+                    unknown = None
         for finding in (deployment_result(), operations_heartbeat_result(now, current_run_id)):
             if finding:
                 findings.append(finding)
@@ -274,13 +313,24 @@ def execute(mode: str, current_run_id: int) -> int:
     if peer:
         findings.append(peer)
     findings = sorted(set(findings))
-    kind = transition(previous, findings, previously_delivered)
-    delivered = previously_delivered if kind is None else deliver(payload(kind, findings, mode, now, current_run_id))
-    # 복구 전송 실패 시 이전 사고를 보존해 다음 실행에서 재시도한다.
+    alertable = [code for code in findings if code != "turn_paused"
+                 and (code != "pause_observation_unavailable" or unknown_due)]
+    # Pending UNKNOWN/known PAUSED stay degraded. They cannot acknowledge a prior incident as recovered.
+    if not alertable and findings:
+        kind = "incident" if notified and not previously_delivered else None
+        outgoing = notified
+    else:
+        kind = transition(notified, alertable, previously_delivered)
+        outgoing = alertable
+    delivered = previously_delivered if kind is None else deliver(payload(kind, outgoing, mode, now, current_run_id))
+    if kind == "incident":
+        notified = outgoing
+    elif kind == "recovered" and delivered:
+        notified = []
     stored = previous if kind == "recovered" and not delivered else findings
-    write_state(state_path, stored, delivered)
+    write_state(state_path, stored, delivered, notification_codes=notified, unknown=unknown)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
-    line = f"{mode}: {', '.join(findings) if findings else 'healthy'}; notification={kind or 'suppressed'}; delivered={delivered}\n"
+    line = f"{mode}: {', '.join(findings) if findings else 'healthy'}; notification={kind or ('degraded_pending' if findings else 'none')}; delivered={delivered}\n"
     print(line, end="")
     if summary:
         with open(summary, "a", encoding="utf-8") as stream:

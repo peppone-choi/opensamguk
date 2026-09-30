@@ -76,4 +76,16 @@ class TurnLoopHealthTest {
         waiting.status = "PRE_OPEN"
         assertEquals(TurnLoopHealth.State.PAUSED, TurnLoopHealth.observe(waiting, now).state)
     }
+
+    @Test
+    fun `paused and stalled schedules are null without deleting the game clock`() {
+        for (sample in listOf(world(now.minusSeconds(60), status = "PRE_OPEN"),
+            world(now.minusSeconds(26 * 3600L), executed = now.minusSeconds(26 * 3600L)))) {
+            val result = TurnLoopHealth.observe(sample, now)
+            assertEquals(null, result.nextTurnAt)
+            assertEquals(sample.meta["lastTurnTime"], result.lastTurnAt)
+            assertEquals(false, result.healthy)
+        }
+    }
+
 }

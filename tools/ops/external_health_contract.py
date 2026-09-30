@@ -71,7 +71,7 @@ def classify_http(
             and game["turnTerm"] >= 0):
         return "game_api_invalid_response"
     turn_loop = game.get("turnLoop")
-    if not isinstance(turn_loop, dict) or turn_loop.get("state") not in {"RUNNING", "CATCHING_UP", "WAITING", "PAUSED", "STALLED"}:
+    if not isinstance(turn_loop, dict) or turn_loop.get("state") not in {"RUNNING", "CATCHING_UP", "WAITING", "PAUSED", "STALLED", "UNKNOWN"}:
         return "game_api_invalid_response"
     if "staleSeconds" not in turn_loop or any(key not in game for key in (
             "serverTime", "lastTurnAt", "nextTurnAt", "lastTickExecutedAt")):
@@ -89,8 +89,19 @@ def classify_http(
             or next_time is not None and parse_time(next_time) is None
             or executed_time is not None and parse_time(executed_time) is None):
         return "game_api_invalid_response"
+    if turn_loop["state"] in {"PAUSED", "STALLED", "UNKNOWN"} and next_time is not None:
+        return "game_api_invalid_response"
+    if turn_loop["state"] == "UNKNOWN":
+        since = parse_time(turn_loop.get("unknownSince"))
+        reset = parse_time(turn_loop.get("resetCompletedAt"))
+        if (server_time > now or "paused" not in turn_loop or turn_loop["paused"] is not None or since is None or since > server_time
+                or turn_loop.get("resetCompletedAt") is not None and (reset is None or reset > since)):
+            return "game_api_invalid_response"
+        return "pause_observation_unavailable"
+    if turn_loop["state"] == "PAUSED":
+        return "turn_paused"
     if game["status"] != "OPEN" or game["turnTerm"] == 0:
-        return None if turn_loop["state"] == "PAUSED" else "game_api_invalid_response"
+        return "game_api_invalid_response"
     if turn_loop["state"] == "STALLED":
         return "turn_stalled"
     if turn_loop["state"] == "WAITING":
@@ -141,3 +152,29 @@ def transition(previous: list[str], current: list[str], previously_delivered: bo
     if after:
         return "incident" if after != before or not previously_delivered else None
     return "recovered" if before else None
+
+
+def unknown_notification(body: bytes, previous: dict | None = None) -> tuple[bool, dict]:
+    """UNKNOWN 연속 시각은 서버 관측과 보존 artifact만 사용한다. 25h cap 없음."""
+    game = json.loads(body)["game"]
+    loop = game["turnLoop"]
+    server_time = parse_time(game["serverTime"])
+    since = parse_time(loop.get("unknownSince"))
+    reset = parse_time(loop.get("resetCompletedAt"))
+    if server_time is None or since is None or since > server_time or reset is not None and reset > since:
+        raise ValueError("invalid unknown observation timeline")
+    prior_since = parse_time(previous.get("since")) if previous else None
+    prior_reset = parse_time(previous.get("resetCompletedAt")) if previous else None
+    if previous and (prior_since is None or prior_since > server_time
+                     or previous.get("resetCompletedAt") is not None and (prior_reset is None or prior_reset > prior_since)):
+        raise ValueError("invalid previous unknown timeline")
+    confirmed_new_reset = (reset is not None and (prior_reset is None or reset > prior_reset)
+                           and (prior_since is None or reset > prior_since))
+    if prior_since is not None and not confirmed_new_reset:
+        since = min(since, prior_since)
+    effective_reset = max((value for value in (reset, prior_reset) if value is not None), default=None)
+    tick_seconds = game["turnTerm"] * 60
+    if type(game["turnTerm"]) is not int or tick_seconds <= 0:
+        raise ValueError("invalid unknown cadence")
+    due = (server_time - since).total_seconds() > 3 * tick_seconds
+    return due, {"since": since.isoformat(), "resetCompletedAt": effective_reset.isoformat() if effective_reset else None}

@@ -2,6 +2,8 @@
 
 ## 안 된 것
 
+K10-01f 후속 Kotlin/전체 CI는 새 head에서 검증 대기다. 이전 green은 후속 합격 근거가 아니다. 실제 gate/common Result 공개 연결은 #1088 main 선행 후이며 branch copy/merge는 하지 않는다.
+
 - 경보 수신 측 도착·pep 적용·운영 rehearsal은 미확인이다. 실제 발송 시험·운영 maintenance 조회/해제·디스크 apply·운영 DB migration은 실행하지 않았다.
 - 최초 중단 실행은 XML0이었다. 새 로컬 집중 검증30건 및 infra 테스트 컴파일 성공, remote JVM5750건/엔진1372건 모두 skip0이다. 경보 수신·운영 적용 증거는 남았다.
 - merge로 즉시 적용되는 워크플로와 V70은 대상 운영/DB 승인 전 draft로 보존한다.
@@ -32,3 +34,7 @@
 ## 위험
 
 새 엔진 적용 후 첫 성공 세계 턴까지 기존 meta에는 wall clock이 없어 STALLED로 보일 수 있다. 시각은 world UPDATE 시점이고 transaction commit 후 공개되므로 긴 flush에서는 완료 시각보다 앞선다. 웹훅 HTTP 진단만으로 전달 완료라 할 수 없으며 수신 측 캡처가 필요하다. 운영 lock 없이 의도적으로 연 maintenance도 drained 경보 대상이므로 확인 후 대상별 승인으로 해제한다.
+
+## K10-01f 후속
+
+PAUSED/STALLED countdown null 및 PAUSED health degraded를 준비했다. UNKNOWN enum은 수신 준비이며 실제 producer는 미연결이다. 감시 수신은 >3tick, 최초 UNKNOWN 지속, reset 확인, 미래 시각 거절, PAUSED prior incident/전송 실패 보존 및 다른 사고 비억제를 구현했다. 자세한 계약은 docs/operations/external-health-monitor.md를 따른다. 모든 회귀는 fixture/mock이며 실제 웹훅 전송0이다.

@@ -67,7 +67,7 @@ class HealthCheckController(
             .getOrNull()
         val worldHealth = WorldHealth(observed?.lastTurnAt, observed?.lastTickExecutedAt, observed?.stale ?: true,
                                      TurnLoopInfo(observed?.state ?: TurnLoopHealth.State.STALLED, observed?.staleSeconds))
-        val status = if (services.values.all { it == "up" } && !worldHealth.stale) "up" else "degraded"
+        val status = if (services.values.all { it == "up" } && observed?.healthy == true) "up" else "degraded"
         return ResponseEntity.ok().header("Cache-Control", "no-store")
             .body(HealthResponse(status = status, services = services, world = worldHealth, serverTime = now.toString()))
     }

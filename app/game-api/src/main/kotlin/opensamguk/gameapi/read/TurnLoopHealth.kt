@@ -17,9 +17,10 @@ object TurnLoopHealth {
         val staleSeconds: Long?,
     ) {
         val stale: Boolean get() = state == State.STALLED
+        val healthy: Boolean get() = state in setOf(State.RUNNING, State.CATCHING_UP, State.WAITING)
     }
 
-    enum class State { RUNNING, CATCHING_UP, WAITING, PAUSED, STALLED }
+    enum class State { RUNNING, CATCHING_UP, WAITING, PAUSED, STALLED, UNKNOWN }
 
     fun observe(world: WorldStateReadEntity, now: Instant): Observation {
         val last = parse(world.meta["lastTurnTime"])
@@ -36,7 +37,8 @@ object TurnLoopHealth {
             world.catchUp?.get("active") == true -> State.CATCHING_UP
             else -> State.RUNNING
         }
-        return Observation(last?.toString(), next?.toString(), executed?.toString(), state, age?.coerceAtLeast(0))
+        val publishedNext = next.takeIf { state in setOf(State.RUNNING, State.CATCHING_UP, State.WAITING) }
+        return Observation(last?.toString(), publishedNext?.toString(), executed?.toString(), state, age?.coerceAtLeast(0))
     }
 
     private fun parse(value: Any?): Instant? = (value as? String)?.let { runCatching { Instant.parse(it) }.getOrNull() }

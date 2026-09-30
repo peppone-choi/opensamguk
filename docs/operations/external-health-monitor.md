@@ -19,10 +19,11 @@ GitHub Actions의 `External Health Monitor`와 `External Health Watchdog`는 Git
 | RUNNING | OPEN, 최근 성공 flush 벽시각 있음 |
 | CATCHING_UP | 최근 성공 flush 벽시각 있음, catchUp.active=true |
 | WAITING | 첫 실행 전이고 nextTurnAt이 아직 미래 |
-| PAUSED | OPEN이 아니거나 tick_seconds≤0 |
+| PAUSED | 현재 공개 producer에서는 비OPEN/유효하지 않은 tick 설정. 실제 gate 연결 후 신선 true |
 | STALLED | 실행 예정 이후 벽시각 누락·비정상·지연 |
+| UNKNOWN | 후속 common collector의 실제 gate 관측 누락·만료·미래·식별 불일치. 공개 producer 연결 전 |
 
-OPEN의 마지막 실제 실행이 `min(3 × tick_seconds, 25시간)`을 넘으면 `turn_stalled`다. 주 정지 정책은 기존 3tick이며 25시간은 §2 J의 정지 회귀를 막는 cap으로 구분한다. 20시간 전 게임 턴을 처리하는 catch-up도 최근 벽시각이 있으면 정상이고, 배속과 관계없이 실제 실행이 멈추면 장애다. 필수 상태/응답 시각·벽시각 계약이 누락되면 UNKNOWN/healthy로 처리하지 않는다. game-api `/health`는 HTTP 200을 유지하면서 `world.stale`, `world.turnLoop`, `lastTurnAt`, `lastTickExecutedAt`과 `serverTime`을 제공하고 정지·DB/Redis 비정상이면 `status=degraded`다. 기존 내부 상세 actuator 검사는 계속 유지한다.
+OPEN의 마지막 실제 실행이 `min(3 × tick_seconds, 25시간)`을 넘으면 `turn_stalled`다. 주 정지 정책은 기존 3tick이며 25시간은 §2 J의 정지 회귀를 막는 cap으로 구분한다. 20시간 전 게임 턴을 처리하는 catch-up도 최근 벽시각이 있으면 정상이고, 배속과 관계없이 실제 실행이 멈추면 장애다. 필수 상태/응답 시각·벽시각 계약이 누락되면 UNKNOWN/healthy로 처리하지 않는다. game-api `/health`는 HTTP 200을 유지하면서 `world.stale`, `world.turnLoop`, `lastTurnAt`, `lastTickExecutedAt`과 `serverTime`을 제공하고 PAUSED·정지·DB/Redis 비정상이면 `status=degraded`다. 기존 내부 상세 actuator 검사는 계속 유지한다.
 
 마지막 벽시각은 엔진의 세계 턴 flush에만 기록한다. 일반 intake·개인 턴은 갱신하지 않으며 transaction 실패 시 함께 롤백된다. 새 엔진 적용 뒤 첫 성공 턴까지 기존 월드에 필드가 없어 STALLED로 표시될 수 있으므로 전환 시점을 승인 후 확인한다.
 
@@ -52,3 +53,11 @@ OPEN의 마지막 실제 실행이 `min(3 × tick_seconds, 25시간)`을 넘으�
 - `Production Ops Monitor`는 운영 VM에서 5분마다 공유 `/tmp/opensamguk-production.lock`을 비차단으로 잡고 deployer의 GET `/maintenance`만 읽는다. 배포가 잠금을 보유하면 점검을 보류한다. 잠금 없이 drained면 `maintenance_orphaned`, 조회 실패면 `maintenance_unavailable`이며 자동 해제하지 않는다. 출력은 capability/state만 허용하고 토큰·lease·응답 본문은 보존하지 않는다.
 - `Production Disk Cleanup`은 수동 실행이다. `minimum_age_hours`는 대상 승인 때 지정한다. 기본 plan은 `df`와 Docker 용량만 읽는다. apply는 별도 운영 승인과 `CLEAN BUILD CACHE AND DANGLING IMAGES` 확인이 필요하다. 동일 운영 잠금 아래 해당 시간보다 오래된 dangling image와 사용하지 않는 build cache만 정리한다. volume·container·태그 있는 rollback image에는 prune하지 않는다.
 - 새 워크플로 활성화·실제 경보 수신 시험·디스크 apply는 각각 대상 승인 후 실행한다. 경보 전송 성공 응답만으로 완료라 하지 않고 수신 측 캡처를 증거로 남긴다.
+
+## 동결 관측 수신 후속 (연결 전)
+
+RUNNING/CATCHING_UP/WAITING만 nextTurnAt을 노출한다. PAUSED/STALLED/UNKNOWN은 null이고 year/month/turnPhase 게임 달력은 보존한다. PAUSED는 degraded이며 사유를 ADMIN으로 만들지 않는다. 현재 #1073 producer에는 실제 gate 연결이 없고, 별도 #1088 기반이 main에 들어온 뒤 ServerBasicInfo/HealthCheck/TurnLoopHealth가 동일 Result/observedAt을 소비해야 한다. 운영 opt-in은 별도 대상 승인이다.
+
+수신기는 UNKNOWN의 paused=null/unknownSince/resetCompletedAt을 검사한다. 첫 연속 관측과 artifact의 시작 시각 중 이전 값을 유지하며, 같은 세계의 새로운 확인된 reset 완료 시각만 구간을 다시 시작한다. 미래 API·시작·reset 시각은 실패다. UNKNOWN은 즉시 HTTP200/degraded 및 pause_observation_unavailable이며 빨간 감시 실행으로 남는다. 알림은 기존 정책인 엄격한 >3tick에서 같은 incident 경로로 승격하고 UNKNOWN에는25시간 cap을 적용하지 않는다.
+
+신선한 실제 PAUSED는 새 paused 전송이나 오래된 tick만으로 STALLED 전송을 만들지 않는다. outstanding incident와 전송 실패 재시도는 보존하고 healthy/recovered로 확인하지 않는다. peer·배포·maintenance 등 다른 사고는 계속 판정한다. 관측 만료/실패는 UNKNOWN 정책을 적용한다. 외부 감시 artifact schema2는 codes/delivered에 notificationCodes 및 정규화한 unknown 시각만 추가한다. 운영 감시기의 기존 schema1은 유지한다. 실제 전송 시험은 대상 승인 후이며 이번 fixture 검증에는 발송이 없다.
