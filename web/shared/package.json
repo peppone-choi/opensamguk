@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./battle": "./src/battle/index.ts",
+    "./map/topdown": "./src/map/topdown/index.ts",
     "./tokens.css": "./src/tokens.css"
   },
   "scripts": {
