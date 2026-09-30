@@ -20,7 +20,6 @@ import type {
     IntakeQueued,
     IntakeDenied,
     ReservedCommandsResponse,
-    RecruitAvailabilityResponse,
 } from './types';
 
 // ── 전황 (World-Log) read 계약 ────────────────────────────────────────────────
@@ -605,10 +604,6 @@ export const api = {
     //    isIntakeQueued/isIntakeDenied로 분기한다(202=큐잉이지 성공 확정 아님 — P0-04/06).
     command: <T = unknown>(code: string, args: unknown, generalId: number, turnIdx = 0) =>
         post<IntakeOutcome & T>(`/api/command/${code}?generalId=${generalId}&turnIdx=${turnIdx}`, args),
-    availableCommands: <T>(generalId?: number) =>
-        get<T>(generalId == null ? '/api/commands/available' : `/api/commands/available?generalId=${generalId}`),
-    recruitAvailability: (generalId: number) =>
-        get<RecruitAvailabilityResponse>(`/api/commands/recruit/availability?generalId=${generalId}`),
 
     // 예약 명령 링 read — `GET /api/reserved-commands` (P0-01). 인증 principal 우선, generalId fallback.
     reservedCommands: (generalId?: number) =>

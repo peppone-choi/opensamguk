@@ -1304,7 +1304,7 @@ def main():
     src.add_argument("--xlsx")
     src.add_argument("--rtk-source-json")
     ap.add_argument("--dump-rtk-source-json")
-    ap.add_argument("--scenario-dir", default="infra/src/main/resources/scenario")
+    ap.add_argument("--scenario-dir", default="data/archive/scenarios")
     ap.add_argument("--out-dir", default="infra/src/main/resources/rtk14-scenarios.local")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--report-json")

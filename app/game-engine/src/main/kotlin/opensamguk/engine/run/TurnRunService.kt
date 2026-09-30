@@ -11,6 +11,7 @@ import opensamguk.common.wire.TurnDaemonEvent
 import opensamguk.common.wire.TurnDaemonEventEnvelope
 import opensamguk.common.wire.WireJson
 import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.campaign.BattleOutcomePostFlush
 import opensamguk.engine.flush.DeltaGenerationSession
 import opensamguk.engine.flush.FlushRecoveryGate
 import opensamguk.engine.flush.FlushRecoveryGateProvider
@@ -42,6 +43,7 @@ import opensamguk.logic.tick.GameDate
 import opensamguk.logic.tick.MonthlyPipeline
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.world.RaiseInvaderContext
+import org.slf4j.LoggerFactory
 
 data class TurnClockSnapshot(
     val currentYear: Int,
@@ -134,10 +136,13 @@ open class TurnRunService(
     private val commandInboxRepository: CommandInboxRepository? = null,
     private val commandOutboxRelay: CommandOutboxRelay? = null,
     /** OPENSAM-153 (v2 R4) — v2 도시 원장 pass-through. null이면 v2GarrisonRecruit는 fail-closed deny. */
-    private val v2CityLedger: opensamguk.engine.v2.V2CityLedgerStore? = null,
+    private val v2CityLedger: opensamguk.engine.city.CityLedgerStore? = null,
     /** HWIHA 순 경계(§5.2) — 포위·보급. null 은 미배선(SAMMO·테스트). */
-    private val hwihaPhaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
+    private val phaseBoundary: opensamguk.engine.campaign.PhaseBoundary? = null,
+    /** Optional QA evidence export. The observer queues before commit; this service releases it after flush. */
+    private val battleOutcomePostFlush: BattleOutcomePostFlush? = null,
 ) {
+    private val log = LoggerFactory.getLogger(TurnRunService::class.java)
     init {
         handler.recorder.generationSession = generationSession
         recoveryGateProvider?.bind(recoveryGate)
@@ -176,7 +181,9 @@ open class TurnRunService(
         val state = world.getState()
         val base = buildFlushPayload()
         val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
-        flushWithGeneration(base.copy(worldStateUpdate = worldState))
+        val payload = base.copy(worldStateUpdate = worldState)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
     }
 
     /** OPENSAM-132: non-sensitive recovery snapshot for status/health. */
@@ -191,7 +198,7 @@ open class TurnRunService(
      * handlers — the world is per-run state, not a Spring bean). 결과는 W0-4부터
      * [RealtimePublisher.publishCommandResultPayload]로 per-requestId 회신된다(위 헤더 참조).
      */
-    private val hwihaInputCatalog by lazy { opensamguk.logic.input.InputCatalog.load() }
+    private val inputCatalog by lazy { opensamguk.logic.input.InputCatalog.load() }
     private val commandDispatcher = if (boardPostRepository != null) {
         TurnDaemonCommandDispatcher(
             world, handler.recorder, boardPostRepository,
@@ -206,7 +213,7 @@ open class TurnRunService(
             selectPoolRepository = selectPoolRepository,
             processNationCommand = processNationCommand,
             v2CityLedger = v2CityLedger,
-            hwihaCourtHandler = handler.courtHandler,
+            courtHandler = handler.courtHandler,
             raiseInvader = { spec ->
                 val env = mutableMapOf<String, Any?>(
                     "year" to world.getState().currentYear,
@@ -272,7 +279,8 @@ open class TurnRunService(
         val worldState = currentWorldStateUpdate(base.worldStateUpdate, state)
         val commandResults = intakeResults.toCommandResultRows(committedWorldVersion = state.worldVersion + 1)
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
         return claimed.size
@@ -299,7 +307,8 @@ open class TurnRunService(
                 handled.toExecutionCommandResultRows(committedWorldVersion) +
                 handler.courtHandler.takeExecutions().toCourtExecutionRows(committedWorldVersion)
         val payload = base.copy(worldStateUpdate = worldState, commandResults = commandResults)
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
         return TickResult(
@@ -352,7 +361,7 @@ open class TurnRunService(
                         // 치적 창 닫기 — 월간 사건(반기 도시 성장 등) **전** 값으로 지난 달을 잰다.
                         boundaryDate(nextTurn).let { date ->
                             opensamguk.engine.campaign.CountyMeritWindow(world, handler.recorder).close(date.year, date.month)
-                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
+                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.domesticContext)
                                 .closeMonthlyMerit(date.year, date.month)
                         }
                     }
@@ -401,10 +410,10 @@ open class TurnRunService(
                         boundaryDate(nextTurn).let { date ->
                             world.setCurrentDate(date.year, date.month, date.phase)
                             // §5.2 1·2단계(보급·포위)가 징세보다 먼저다 — 같은 순에 함락된 縣의 월세입은 새 주인에게 간다.
-                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                            phaseBoundary?.run(world, handler.recorder)
                             // §5.2 3단계 내정 진행(공사·방침·치적) — 포위 정산 뒤(함락된 縣의 공사는 거둔다),
                             // 4단계 월세입보다 먼저, 한 순에 한 번(도장).
-                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext)
+                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.domesticContext)
                                 .run(meritClosedBeforeMonthlyEvents = true)
                             // 縣 창고 월세입. 기존 국가·개인 재정은 같은 프로파일에서 꺼져 있다
                             // (WorldActionContext.skipsLegacyFinance) — 이중 재정을 만들지 않는다.
@@ -415,7 +424,7 @@ open class TurnRunService(
                             opensamguk.engine.campaign.MonthlySalary(world, handler.recorder).pay(date.year, date.month)
                             opensamguk.engine.campaign.UnitResupply(world, handler.recorder).resupply(date.year, date.month)
                             // 보급선 — 자국 縣 밖의 군단으로 군량을 보낸다(보충 뒤, 같은 창고망).
-                            hwihaPhaseBoundary?.dispatchConvoys(world, handler.recorder, date.year, date.month)
+                            phaseBoundary?.dispatchConvoys(world, handler.recorder, date.year, date.month)
                             // 월단평 — 명망 갱신·순위 발표. 설계 §5.2 순 경계 순서에서 수입 뒤에 온다.
                             // 도장이 따로라 징세와 독립적으로 한 달에 한 번만 돈다.
                             opensamguk.engine.campaign.MonthlyAssessment(
@@ -434,9 +443,9 @@ open class TurnRunService(
                     boundaryDate(nextTurn).let { date ->
                         world.setCurrentDate(date.year, date.month, date.phase)
                         if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
-                            hwihaPhaseBoundary?.run(world, handler.recorder)
+                            phaseBoundary?.run(world, handler.recorder)
                             // §5.2 3단계 내정 진행 — 포위 정산 뒤, 순 경계마다 한 번(도장).
-                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.hwihaDomesticContext).run()
+                            opensamguk.engine.campaign.DomesticBoundary(world, handler.recorder, handler.domesticContext).run()
                         }
                         handler.courtHandler.expireDue()
                     }
@@ -495,7 +504,8 @@ open class TurnRunService(
             worldStateUpdate = worldState,
             commandResults = commandResults,
         )
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         acknowledgeClaimedWakes(claimed)
         publishCommandResults(commandResults)
 
@@ -528,7 +538,7 @@ open class TurnRunService(
     /**
      * OPENSAM-130: prepare → JDBC flush → commit (clear deltas) or abort (keep deltas for retry).
      */
-    private fun flushWithGeneration(payload: FlushPayload) {
+    private fun flushWithGeneration(payload: FlushPayload): Long {
         val generation = generationSession.prepare()
         try {
             flushExecutor.flush(payload)
@@ -544,10 +554,22 @@ open class TurnRunService(
             if (recoveryGate.mode() != FlushRecoveryGate.Mode.READY) {
                 recoveryGate.markRecovered()
             }
+            return generation
         } catch (e: Exception) {
             generationSession.abort(generation)
             onFlushFailure(generation, payload, e)
             throw e
+        }
+    }
+
+    private fun publishCommittedBattleOutcomes(payload: FlushPayload, generation: Long) {
+        try {
+            battleOutcomePostFlush?.afterSuccessfulFlush(payload.worldId.value, generation)
+        } catch (e: Exception) {
+            // The JDBC commit already succeeded. Keep the batch for a later export attempt without
+            // misclassifying an optional QA sink failure as a database flush failure.
+            log.error("Committed battle evidence export failed for world={} generation={}",
+                payload.worldId.value, generation, e)
         }
     }
 
@@ -567,7 +589,8 @@ open class TurnRunService(
         val payload = recoveryGate.retainedPayload()
             ?: error("FLUSH_RETRY without retained payload")
         val previousTurnTime = world.getState().lastTurnTime
-        flushWithGeneration(payload)
+        val generation = flushWithGeneration(payload)
+        publishCommittedBattleOutcomes(payload, generation)
         if (recoveryGate.isReady()) {
             commandOutboxRelay?.publishPending()
             applyCommittedWorldClockFromPayload(payload, previousTurnTime)
@@ -648,6 +671,9 @@ open class TurnRunService(
                     reason = "unexpected READY classify: $reason",
                 )
         }
+        if (recoveryGate.mode() == FlushRecoveryGate.Mode.RELOAD_REQUIRED) {
+            battleOutcomePostFlush?.quarantineUncommitted()
+        }
     }
 
     /** OPENSAM-131: stamp CAS keys so JdbcFlushExecutor enforces order-preserving world_version fence. */
@@ -707,7 +733,7 @@ open class TurnRunService(
         committedWorldVersion: Long,
     ): List<CommandResultRow> = mapNotNull { handled ->
         val requestId = handled.requestId ?: return@mapNotNull null
-        val hwiha = handled.hwihaOutcome
+        val hwiha = handled.inputOutcome
         val rejected = hwiha as? opensamguk.engine.campaign.TurnOutcome.Rejected
         val ok = if (hwiha != null) hwiha is opensamguk.engine.campaign.TurnOutcome.Applied else !handled.fellBack
         val result = CommandLifecycleResult(
@@ -721,7 +747,7 @@ open class TurnRunService(
             code = rejected?.code,
             inputResolved = hwiha?.let { outcome ->
                 opensamguk.common.wire.InputResolved(outcome.inputId,
-                    hwihaInputCatalog[outcome.inputId]?.kind?.name ?: "UNKNOWN",
+                    inputCatalog[outcome.inputId]?.kind?.name ?: "UNKNOWN",
                     ok, rejected?.reason, (outcome as? opensamguk.engine.campaign.TurnOutcome.Applied)?.effects.orEmpty())
             },
         )

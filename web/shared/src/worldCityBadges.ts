@@ -1,4 +1,4 @@
-/** Map markers from the same Hwiha reads used by the domestic and siege panels. */
+/** Map markers from the same campaign reads used by the domestic and siege panels. */
 import { citySnapshotBadges, type IsoCityBadge } from './iso/cityBadgeLayer';
 
 export const WORK_BADGE_LABELS = {

@@ -2,54 +2,54 @@ import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
-import { cityDisplayName, isHanCounty } from '../iso/cityName';
+import { cityDisplayName, isAdministrativeCounty } from '../iso/cityName';
 
 // 값은 전부 infra/src/main/resources/map/han.json 실측이다(2026-09-10). 지어낸 城 은 없다.
 const city = (id: number, name: string, level: number, nameCh?: string) =>
   ({ id, name, level, nameCh });
 
-describe('isHanCounty', () => {
+describe('isAdministrativeCounty', () => {
   it('nameCh 가 县 으로 끝나면 郡治라도 縣 이다', () => {
     // 홍농은 弘農郡의 治所이자 弘農縣 이다. 등급은 5(소군)라 등급만으로는 안 잡힌다.
-    expect(isHanCounty(city(22, '홍농', 5, '弘农县'))).toBe(true);
-    expect(isHanCounty(city(1, '장안', 9, '长安县'))).toBe(true);
+    expect(isAdministrativeCounty(city(22, '홍농', 5, '弘农县'))).toBe(true);
+    expect(isAdministrativeCounty(city(1, '장안', 9, '长安县'))).toBe(true);
   });
 
   it('侯國은 등급이 郡급이어도 縣 이다 — 屬國은 아니다', () => {
     // 실측(han-world-v3): 이 세 侯國이 등급 5·6 을 달고 있어 등급 규칙으로는 안 잡힌다.
-    expect(isHanCounty(city(211, '낙평', 6, '乐平侯国'))).toBe(true);
-    expect(isHanCounty(city(311, '곡양(下邳國)', 5, '曲阳侯国'))).toBe(true);
-    expect(isHanCounty(city(430, '안중', 5, '安众侯国'))).toBe(true);
+    expect(isAdministrativeCounty(city(211, '낙평', 6, '乐平侯国'))).toBe(true);
+    expect(isAdministrativeCounty(city(311, '곡양(下邳國)', 5, '曲阳侯国'))).toBe(true);
+    expect(isAdministrativeCounty(city(430, '안중', 5, '安众侯国'))).toBe(true);
     // 屬國은 郡 한 급이다.
-    expect(isHanCounty(city(638, '구자속국', 5, '龜茲屬國'))).toBe(false);
+    expect(isAdministrativeCounty(city(638, '구자속국', 5, '龜茲屬國'))).toBe(false);
   });
 
   it('등급 10·11(영현·장현)은 nameCh 가 侯國·道 여도 縣 이다', () => {
-    expect(isHanCounty(city(404, '원록', 10, '原鹿侯国'))).toBe(true);
-    expect(isHanCounty(city(600, '문강', 10, '汶江道'))).toBe(true);
+    expect(isAdministrativeCounty(city(404, '원록', 10, '原鹿侯国'))).toBe(true);
+    expect(isAdministrativeCounty(city(600, '문강', 10, '汶江道'))).toBe(true);
     // 두릉은 nameCh 에 단위가 안 붙어 있다. 등급 11 이 縣 임을 말한다.
-    expect(isHanCounty(city(5, '두릉', 11, '杜陵'))).toBe(true);
+    expect(isAdministrativeCounty(city(5, '두릉', 11, '杜陵'))).toBe(true);
   });
 
   it('縣 기록이 없는 郡·屬國은 縣 이 아니다 — 「감릉현」을 새로 만들지 않는다', () => {
-    expect(isHanCounty(city(199, '감릉군', 6, '甘陵郡'))).toBe(false);
-    expect(isHanCounty(city(629, '장액속국', 5, '張掖屬國'))).toBe(false);
-    expect(isHanCounty(city(723, '요동속국', 5, '遼東屬國'))).toBe(false);
+    expect(isAdministrativeCounty(city(199, '감릉군', 6, '甘陵郡'))).toBe(false);
+    expect(isAdministrativeCounty(city(629, '장액속국', 5, '張掖屬國'))).toBe(false);
+    expect(isAdministrativeCounty(city(723, '요동속국', 5, '遼東屬國'))).toBe(false);
   });
 
   it('이민족 거점과 동이는 郡縣制 밖이다', () => {
-    expect(isHanCounty(city(676, '흉노', 4, '南匈奴'))).toBe(false);
-    expect(isHanCounty(city(754, '백제국', 5, '伯濟國'))).toBe(false);
-    expect(isHanCounty(city(763, '안야국', 5, '安邪國'))).toBe(false);
+    expect(isAdministrativeCounty(city(676, '흉노', 4, '南匈奴'))).toBe(false);
+    expect(isAdministrativeCounty(city(754, '백제국', 5, '伯濟國'))).toBe(false);
+    expect(isAdministrativeCounty(city(763, '안야국', 5, '安邪國'))).toBe(false);
   });
 
   it('음수 id(郡國 밖 세력)는 등급이 뭐든 縣 이 아니다', () => {
-    expect(isHanCounty(city(-3, '졸본', 11))).toBe(false);
+    expect(isAdministrativeCounty(city(-3, '졸본', 11))).toBe(false);
   });
 
   it('nameCh 가 아예 없으면 등급만으로 가른다', () => {
-    expect(isHanCounty(city(2, '상락', 11))).toBe(true);
-    expect(isHanCounty(city(9, '시평', 5))).toBe(false);
+    expect(isAdministrativeCounty(city(2, '상락', 11))).toBe(true);
+    expect(isAdministrativeCounty(city(9, '시평', 5))).toBe(false);
   });
 });
 
@@ -136,14 +136,14 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 847 오현이 吳郡 治所로 선 것이다(848 비릉현은 장현).
     // 2026-09-15: w2 治所 18곳이 더해져 郡治 99. 수·진·관 거점 73곳(등급 1–3)은 縣 이 아니라 따로 센다.
     const sites = world.cities.filter((c) => c.level >= 1 && c.level <= 3);
-    expect(sites.filter((c) => isHanCounty({
+    expect(sites.filter((c) => isAdministrativeCounty({
       id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
     }))).toEqual([]);
     const outside = world.cities.filter((c) => c.level !== 10 && c.level !== 11 && c.level > 3);
     // 2026-09-17: 郡國 밖 취락 37 곳(등급 이·소·중·대)이 더해져 136.
     // 2026-09-21: 조선반도·만주 취락 재검토로 197 → 171. 근거 없는 취락 26 곳을 거두었다(2288e886).
     const rest = outside
-      .filter((c) => c.id <= 1133 && !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
+      .filter((c) => c.id <= 1133 && !isAdministrativeCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))
       .map((c) => c.name)
       .sort();
     // 郡治는 이제 한 곳만 남는다 — 邊境 郡 7 곳도 제 治所 縣(朝鮮縣·襄平縣…)을 nameCh 로
@@ -162,9 +162,9 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 좁히고, 뒤에 붙은 결손 縣 묶음(1342–)에는 반대 단언을 따로 세운다 — 그쪽은 전부 縣 이어야 한다.
     const settlements = world.cities.filter((c) => c.id > 1133 && c.id <= 1194);
     // 2026-09-21: 61 → 35. 거둔 취락 26 곳이 전부 이 구간(1134–)에 있었다.
-    expect(settlements.filter((c) => isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
+    expect(settlements.filter((c) => isAdministrativeCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
     const gapCounties = world.cities.filter((c) => c.id > 1194);
-    expect(gapCounties.filter((c) => !isHanCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
+    expect(gapCounties.filter((c) => !isAdministrativeCounty({ id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh }))).toEqual([]);
   });
 
   it('屬國은 縣 등급을 달고 있어도 縣 이 아니다', () => {
@@ -172,7 +172,7 @@ describe('han-world-v3 의 meta.nameCh', () => {
     // 되어 없는 縣 을 만든다 — nameCh 꼬리가 등급보다 앞선다.
     const gucha = world.cities.find((c) => c.meta.nameCh === '龜茲屬國')!;
     expect(gucha.level).toBe(11);
-    expect(isHanCounty({
+    expect(isAdministrativeCounty({
       id: gucha.id, name: gucha.name, level: gucha.level, nameCh: gucha.meta.nameCh,
     })).toBe(false);
   });
@@ -185,7 +185,7 @@ describe('han-world-v3 의 meta.nameCh', () => {
         && !c.meta.nameCh.endsWith('侯国') && !c.meta.nameCh.endsWith('侯國'),
     );
     const wrong = sample
-      .filter((c) => isHanCounty({
+      .filter((c) => isAdministrativeCounty({
         id: c.id, name: c.name, level: c.level, nameCh: c.meta.nameCh,
       }))
       .map((c) => c.meta.nameCh);

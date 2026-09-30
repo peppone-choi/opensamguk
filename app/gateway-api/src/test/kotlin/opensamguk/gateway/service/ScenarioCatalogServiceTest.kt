@@ -38,8 +38,8 @@ class ScenarioCatalogServiceTest {
         )
         retiredCodes.forEach { code ->
             assertTrue(
-                ScenarioCatalogServiceTest::class.java.getResource("/scenario/$code.json") != null,
-                "$code.json 회귀 픽스처가 클래스패스에서 사라졌다",
+                ScenarioCatalogServiceTest::class.java.getResource("/scenario/$code.json") == null,
+                "$code.json 은퇴 시나리오가 클래스패스에 남았다",
             )
             assertTrue(byCode[code] == null, "은퇴 시나리오 $code 가 런타임 목록에 노출됐다")
         }

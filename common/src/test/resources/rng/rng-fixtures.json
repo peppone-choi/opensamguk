@@ -684,9 +684,7 @@
   },
   "seeds": {
     "mixed": "str(11,ConquerCity)|int(190)|int(3)|str(10,attacker가나)|int(42)",
-    "floored": "int(3)|int(-3)",
-    "tournamentNoGame": "Tournament|open:200-1|stage:0|phase:0|match:0|participant:0|seed:base",
-    "tournamentWithGame": "Tournament|open:200-1|stage:0|phase:0|match:0|participant:0||game:7||extra:xs|seed:base"
+    "floored": "int(3)|int(-3)"
   },
   "seedDrawMixed": "a447cc34fdcd62aa6a4f16075df4eba1"
 }

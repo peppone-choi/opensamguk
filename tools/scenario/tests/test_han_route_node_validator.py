@@ -1271,7 +1271,7 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         self.documents.selection["provenance"]["inputs"]["candidate"]["sha256"] = "0" * 64
         self.assert_invalid("candidate hash")
         for name in (
-            "legacyHanMap", "legacyTileMap", "locationAdjudications", "reviewPolicy",
+            "sourceCityMap", "sourceTileMap", "locationAdjudications", "reviewPolicy",
             "routeNodeKeyRegistry",
         ):
             with self.subTest(name=name):
@@ -1468,8 +1468,8 @@ class HanRouteNodeValidatorTest(unittest.TestCase):
         mutations = (
             ("administrativeCatalog", "path", "data/curated/han/other.json"),
             ("administrativePlaceOverlay", "sha256", "0" * 64),
-            ("legacyHanMap", "sha256", "1" * 64),
-            ("legacyTileMap", "path", "data/map/other.json"),
+            ("sourceCityMap", "sha256", "1" * 64),
+            ("sourceTileMap", "path", "data/map/other.json"),
         )
         for name, field, value in mutations:
             with self.subTest(name=name, field=field):

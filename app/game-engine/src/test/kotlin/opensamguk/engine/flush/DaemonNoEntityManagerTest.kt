@@ -13,7 +13,7 @@ import kotlin.test.fail
  *
  * The write path = the packages listed in [DaemonWriteGuard.writePathPackages]
  * (`opensamguk.engine.flush` + `opensamguk.engine.turn` + `opensamguk.engine.run` +
- * `opensamguk.engine.nationbulk`), and the banned
+ * `opensamguk.engine.nationbulk` + `opensamguk.engine.sandbox` + `opensamguk.engine.city`), and the banned
  * types = [DaemonWriteGuard.forbiddenInternalNames]. Both lists are read from [DaemonWriteGuard] so
  * the invariant and its enforcement can never drift. The `:infra` half of the same write path is
  * covered by the sibling `InfraNoEntityManagerTest`.
@@ -49,6 +49,7 @@ class DaemonNoEntityManagerTest {
             "opensamguk/engine/flush",
             "opensamguk/engine/turn",
             "opensamguk/engine/nationbulk",
+            "opensamguk/engine/sandbox",
         )) {
             assertTrue(
                 present.any { (pkg, _) -> pkg == required },

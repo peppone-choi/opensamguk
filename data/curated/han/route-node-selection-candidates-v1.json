@@ -27858,11 +27858,11 @@
         "path": "data/curated/han/administrative-place-bindings-v1.json",
         "sha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88"
       },
-      "legacyHanMap": {
+      "sourceCityMap": {
         "path": "infra/src/main/resources/map/han-780-v1.json",
         "sha256": "a61cbd8aa6fd0dd2f7f794df6d0ebdc026c0b6c351568c60efb8d115f54b3670"
       },
-      "legacyTileMap": {
+      "sourceTileMap": {
         "path": "data/map/han-780-v1-tiles.json",
         "sha256": "1979c193de6774af7c3cf5a9ddfd1c81bf94ead5b8c5b46dafd06bed03c6888d"
       }

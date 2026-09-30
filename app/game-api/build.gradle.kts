@@ -14,9 +14,6 @@ kotlin { jvmToolchain(21) }
 tasks.named("jar") { enabled = false }
 
 tasks.processResources {
-    from(rootProject.file("data/commands/public-alpha-command-catalog.json")) {
-        into("command-catalog")
-    }
     // 휘하 조회(현 특산·향당) 원장 — 저장소 루트 파일이 정본이고 여기서는 그대로 싣기만 한다.
     from(rootProject.file("data/curated/han/resource-production-v1.json")) { into("campaign") }
     from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("campaign") }
@@ -45,6 +42,7 @@ dependencies {
     implementation(kotlin("reflect"))
     implementation(libs.kotlinx.serialization.json)
     implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.boot:spring-boot-starter-websocket")
     implementation("org.springframework.boot:spring-boot-starter-actuator")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")

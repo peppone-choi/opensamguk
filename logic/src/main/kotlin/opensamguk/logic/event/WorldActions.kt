@@ -31,7 +31,6 @@ object WorldActions {
         var f = factory
         f = LightActions.register(f)
         f = A3EventActions.register(f)
-        f = BettingActions.register(f)
         f = ProcessIncomeAction.register(f)
         f = ProcessWarIncomeAction.register(f)
         f = RandomizeCityTradeRateAction.register(f)

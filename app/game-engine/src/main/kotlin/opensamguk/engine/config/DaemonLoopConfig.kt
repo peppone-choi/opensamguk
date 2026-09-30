@@ -1,6 +1,9 @@
 package opensamguk.engine.config
 
 import opensamguk.engine.flush.FlushRecoveryGateProvider
+import opensamguk.engine.campaign.BattleOutcomeBatchSink
+import opensamguk.engine.campaign.BattleOutcomeObserver
+import opensamguk.engine.campaign.BattleOutcomePostFlush
 
 import opensamguk.common.constants.EffectiveGameConst
 import opensamguk.common.constants.GameConst
@@ -202,7 +205,6 @@ class DaemonLoopConfig {
         battleReplayRepository: opensamguk.infra.read.BattleReplayRepository,
         contactReader: opensamguk.infra.read.ContactReader,
         gameKvRepository: opensamguk.infra.read.GameKvRepository,
-        bettingRepository: opensamguk.infra.read.BettingRepository,
         inheritanceRepository: opensamguk.infra.read.InheritanceRepository,
         archiveHistoryReader: ArchiveHistoryReader,
         statisticSnapshotReader: StatisticSnapshotReader,
@@ -213,9 +215,10 @@ class DaemonLoopConfig {
         commandOutboxRelay: CommandOutboxRelay,
         daemonPauseGate: DaemonPauseGate,
         spatialSupplyProvider: SpatialSupplyProvider,
-        // OPENSAM-151 — v2 도시 원장. V2SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
+        // OPENSAM-151 — v2 도시 원장. SandboxConfiguration 게이트가 꺼진 v1 프로덕션에는 빈이
         // 없으므로 ObjectProvider 로 받아 null 을 통과시킨다(빈 부재가 부팅 실패가 되면 안 된다).
-        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.v2.V2CityLedgerStore>,
+        v2CityLedgerProvider: ObjectProvider<opensamguk.engine.city.CityLedgerStore>,
+        battleOutcomeBatchSinkProvider: ObjectProvider<BattleOutcomeBatchSink>,
     ): TurnRunService {
         installNationActionResolvers(generalActionPipeline)
 
@@ -226,6 +229,8 @@ class DaemonLoopConfig {
 
         val registry = CommandRegistry(generalActionPipeline)
         val pipelineBuilder = EngineGeneralActionPipelineBuilder(world, startYear)
+        val battleOutcomePostFlush = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA)
+            battleOutcomeBatchSinkProvider.getIfAvailable()?.let(::BattleOutcomePostFlush) else null
 
         // ONE GeneralAI per general per turn — its single RandUtil is threaded through BOTH the nation
         // pass (chooseNationTurn, stream PREFIX) and the general pass (chooseGeneralTurn, continuation).
@@ -298,8 +303,6 @@ class DaemonLoopConfig {
             archiveHistoryReader = archiveHistoryReader,
             statisticSnapshotReader = statisticSnapshotReader,
             gameKvRepository = gameKvRepository,
-            bettingRepository = bettingRepository,
-            inheritanceRepository = inheritanceRepository,
             lockGame = durableGameLock::tryLock,
             unlockGame = durableGameLock::unlock,
             spatialSupplyNetworkProvider = spatialSupplyNetworkProvider,
@@ -324,7 +327,7 @@ class DaemonLoopConfig {
         // The general-pass AI interpose (R-SEAM §2): the handler gates this hook on isAiControlled
         // internally, so a human general runs its reserved command verbatim and an NPC runs the AI choice.
         // 전쟁 결과 → 명망 사건 경계: 기록 스트림(RenownEventRecorder)이 같은 recorder 에 전공·패전·縣 점령/상실을 쌓는다.
-        val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener =
+        val warOutcomes: opensamguk.engine.campaign.WarOutcomeListener =
             opensamguk.engine.campaign.WarOutcomeRenownListener(world, recorder)
         val deploymentContext = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
             val artifacts = requireNotNull(supplyArtifacts) { "HWIHA deployment requires pinned Han artifacts" }
@@ -360,13 +363,13 @@ class DaemonLoopConfig {
             onGeneralDeath = { generalId, env -> ImperialDeathHook.apply(world, generalId, env) },
             recorder = recorder,
             // 휘하 내정 입력(배치·방침·공사)의 지리·원장·행군 핀.
-            hwihaDomesticContext = domesticContext,
+            domesticContext = domesticContext,
             aiHook = { generalId, reserved -> ai.chooseGeneralTurn(generalId, reserved) },
             pipelineBuilder = pipelineBuilder,
-            hwihaDeploymentContext = deploymentContext,
-            hwihaVisionContext = visionContext,
-            hwihaProvinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
-            hwihaWarOutcomes = hwihaWarOutcomes,
+            deploymentContext = deploymentContext,
+            visionContext = visionContext,
+            provinceCells = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) supplyArtifacts?.provinceCells else null,
+            warOutcomes = warOutcomes,
             marchReactions = marchReactions,
             dynamicEventHandler = { target: EventTarget ->
                 eventDispatcher.run(
@@ -509,14 +512,14 @@ class DaemonLoopConfig {
                 recorder.recordGeneralTurnPull(generalId)
                 ai.drainGeneralPassDeltas(recorder)
             },
-            hwihaMovementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            movementOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA movement requires pinned Han artifacts" }
                 val movement = opensamguk.engine.campaign.AssignmentMarchTurn(world, recorder,
-                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, hwihaWarOutcomes,
-                    marchReactions)
+                    artifacts.projection.topology, artifacts.landMarchMetrics, artifacts.provinceCells, warOutcomes,
+                    marchReactions, observations = battleOutcomePostFlush ?: BattleOutcomeObserver.NONE)
                 movement::onTurn
             } else { _, _, _ -> },
-            hwihaNpcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            npcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
                 val selector = opensamguk.engine.campaign.NpcAiTurnSelector(
                     artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext)
@@ -555,11 +558,12 @@ class DaemonLoopConfig {
             recoveryGateProvider = recoveryGateProvider,
             commandInboxRepository = commandInboxRepository,
             commandOutboxRelay = commandOutboxRelay,
-            hwihaPhaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
+            phaseBoundary = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA phase boundary requires pinned Han artifacts" }
                 opensamguk.engine.campaign.PhaseBoundary(artifacts.projection.topology, artifacts.landMarchMetrics,
-                    artifacts.provinceCells, spatialSupplyNetworkProvider, hwihaWarOutcomes)
+                    artifacts.provinceCells, spatialSupplyNetworkProvider, warOutcomes)
             } else null,
+            battleOutcomePostFlush = battleOutcomePostFlush,
         )
     }
 

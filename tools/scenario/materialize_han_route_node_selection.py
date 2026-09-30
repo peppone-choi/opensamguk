@@ -35,7 +35,7 @@ from tools.scenario.han_route_node_selection import (
 from tools.scenario.han_route_node_scenario_scope import is_route_node_scenario_resource
 
 CURATED = ROOT / "data/curated/han"
-SCENARIOS = ROOT / "infra/src/main/resources/scenario"
+SCENARIOS = ROOT / "data/archive/scenarios"
 SOURCE_WITNESS = CURATED / "route-node-source-witness-v1.json"
 
 
@@ -226,7 +226,7 @@ def _verify_policy(inputs: MaterializerInputs, policy: JsonObject, candidate: Js
     }
     candidate_inputs = obj(obj(candidate, "provenance"), "inputs")
     for label, path in (("administrativeCatalog", inputs.catalog), ("administrativePlaceOverlay", inputs.overlay),
-                        ("legacyTileMap", inputs.tiles), ("legacyHanMap", inputs.han)):
+                        ("sourceTileMap", inputs.tiles), ("sourceCityMap", inputs.han)):
         actual = _verify_hash(f"candidate {label}", obj(candidate_inputs, label), path)
         hashes[label] = actual
     return {"generator": "tools/scenario/materialize_han_route_node_selection.py", "inputs": {
