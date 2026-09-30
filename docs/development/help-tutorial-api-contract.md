@@ -23,11 +23,11 @@ type HistoricalSource = {
   tradition: 'CHRONICLE' | 'ROMANCE'; work: string; book: string; passage?: string | null;
 };
 type HelpTopic = {
-  id: string; title: string; sections: HelpSection;
+  id: string; title: string; reviewState: 'DRAFT' | 'APPROVED'; sections: HelpSection;
   sources: HistoricalSource[]; relatedTopicIds: string[];
 };
 type HelpTopicResponse = { schemaVersion: 1; topic: HelpTopic };
-type HelpSearchHit = { id: string; title: string; excerpt: string; matchedSection: string };
+type HelpSearchHit = { id: string; title: string; reviewState: 'DRAFT' | 'APPROVED'; excerpt: string; matchedSection: string };
 type HelpSearchResponse = { schemaVersion: 1; query: string; hits: HelpSearchHit[] };
 type InputContract = {
   inputId: string;
@@ -39,7 +39,7 @@ type InputContract = {
 };
 type ContextHelpResponse = { schemaVersion: 1; topic: HelpTopic; input: InputContract };
 type FailureHelpResponse = {
-  schemaVersion: 1; reason: string; explanation: string;
+  schemaVersion: 1; reason: string; reviewState: 'DRAFT' | 'APPROVED'; explanation: string;
   recoveryAdvice: string; relatedTopicIds: string[];
 };
 type ObjectiveProgress = {
@@ -74,7 +74,7 @@ type CreateGeneralResult = {
 };
 ```
 
-`costSchema`의 `null`은 무료가 아니라 아직 확정 수치가 없다는 뜻이다. `PLANNED` 입력은 설명할 수 있지만 실행 가능하다고 표시하지 않는다. `tutorialObjectiveId=null`은 원장에 사유가 기록된 N/A만 투영한다. 미기록 N/A는 게이트 실패다.
+`reviewState=DRAFT`는 사람 글이 사용자 검수 전인 **초안**이라는 뜻이다. 화면은 초안임을 표시하고, 검수한 행만 `APPROVED`로 바꾼다. 이는 입력의 `deliveryState`와 별개다. `costSchema`의 `null`은 무료가 아니라 아직 확정 수치가 없다는 뜻이다. `PLANNED` 입력은 설명할 수 있지만 실행 가능하다고 표시하지 않는다. `tutorialObjectiveId=null`은 원장에 사유가 기록된 N/A만 투영한다. 미기록 N/A는 게이트 실패다.
 
 ## 도움말 읽기
 

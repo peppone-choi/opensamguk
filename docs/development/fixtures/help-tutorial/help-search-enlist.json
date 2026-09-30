@@ -5,7 +5,8 @@
     {
       "id": "commands.action.enlist",
       "title": "출사",
-      "excerpt": "주공 밑으로 들어가 소속이 되는 직접 행동입니다.",
+      "reviewState": "DRAFT",
+      "excerpt": "섬길 주공을 정해 그 세력에 들어가는 직접 행동입니다.",
       "matchedSection": "title"
     }
   ]
