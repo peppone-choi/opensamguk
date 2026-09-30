@@ -144,6 +144,8 @@ def _decode_emitted_png(png_bytes: bytes) -> tuple[int, int, list[int], list[int
         position = end
     if [kind for kind, _ in chunks] != [b"IHDR", b"IDAT", b"IEND"]:
         raise ValueError("PNG chunk order is not canonical")
+    if chunks[-1][1]:
+        raise ValueError("PNG IEND payload must be empty")
 
     ihdr = chunks[0][1]
     if len(ihdr) != 13:

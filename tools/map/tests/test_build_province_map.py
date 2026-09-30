@@ -178,6 +178,18 @@ class ProvinceMapGeneratorTest(unittest.TestCase):
         (original.output_dir / "han-provinces.meta.json").write_text(json.dumps(metadata))
         self.assertFalse(check_assets(original.input_path, original.output_dir, "han"))
 
+    def test_check_rejects_nonempty_iend_even_when_pixels_and_png_hash_match(self):
+        result = build_fixture(valid_fixture)
+        self.addCleanup(result.temporary_directory.cleanup)
+        chunk = b"IEND" + b"extra"
+        malformed = result.png_bytes[:-12] + struct.pack(">I", 5) + chunk
+        malformed += struct.pack(">I", zlib.crc32(chunk) & 0xFFFFFFFF)
+        result.png_path.write_bytes(malformed)
+        metadata = json.loads(result.metadata_bytes)
+        metadata["pngSha256"] = hashlib.sha256(malformed).hexdigest()
+        (result.output_dir / "han-provinces.meta.json").write_text(json.dumps(metadata))
+        self.assertFalse(check_assets(result.input_path, result.output_dir, "han"))
+
     def test_generic_hierarchy_allows_direct_territory_without_city(self):
         result = build_fixture(generic_fixture)
         self.addCleanup(result.temporary_directory.cleanup)
