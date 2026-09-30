@@ -30,7 +30,7 @@ class HanRouteNodeReviewFixesTest(unittest.TestCase):
         self.assertEqual(["chgis:v6:cnty:45022"], row["physicalPlaceRefs"])
         self.assertEqual("PENDING", row["reviewState"])
 
-    def test_real_active_scenario_catalog_contains_every_product_scenario(self) -> None:
+    def test_historical_scenario_catalog_preserves_every_pinned_resource(self) -> None:
         inputs = MODULE.default_inputs()
         candidate = json.loads(inputs.candidate.read_text(encoding="utf-8"))
         resources = candidate["scenarioCatalog"]
@@ -44,11 +44,17 @@ class HanRouteNodeReviewFixesTest(unittest.TestCase):
         self.assertEqual(expected_codes, {row["code"] for row in resources})
         self.assertEqual(31, len(resources))
         for row in resources:
-            path = ROOT / row["resourcePath"]
+            path = inputs.scenario_dir / Path(row["resourcePath"]).name
+            self.assertEqual(
+                f"infra/src/main/resources/scenario/{path.name}", row["resourcePath"],
+            )
             self.assertEqual(row["resourceSha256"], MODULE._digest(path), row["code"])
 
-        self.assertTrue((inputs.scenario_dir / "scenario_990002.json").is_file())
-        self.assertTrue((inputs.scenario_dir / "scenario_3190.json").is_file())
+        runtime_dir = ROOT / "infra/src/main/resources/scenario"
+        self.assertTrue((runtime_dir / "scenario_990002.json").is_file())
+        self.assertTrue((runtime_dir / "scenario_3190.json").is_file())
+        self.assertFalse((inputs.scenario_dir / "scenario_990002.json").exists())
+        self.assertFalse((inputs.scenario_dir / "scenario_3190.json").exists())
         self.assertFalse(MODULE.is_route_node_scenario_resource(inputs.scenario_dir / "scenario_3190.json"))
         self.assertEqual(
             expected_codes,

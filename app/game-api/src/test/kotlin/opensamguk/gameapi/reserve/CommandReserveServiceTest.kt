@@ -63,7 +63,7 @@ class CommandReserveServiceTest {
             .thenThrow(AdmissionDenied("ADMISSION_REACHED", "배달된 입력은 전용 사전검사로 전달됩니다."))
         val service = CommandReserveService(RecordingReservedTurns(), RecordingInbox(), RecordingResults(), redis(),
             CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture", transactions = TestTransactions,
-            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), hwihaDeployAdmission = deploy)
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), deployAdmission = deploy)
 
         assertEquals("ADMISSION_REACHED", assertFailsWith<AdmissionDenied> {
             service.reserveForOwner(10, "action.deploy", 0, "{}", 42)
@@ -138,7 +138,7 @@ class CommandReserveServiceTest {
         val results = RecordingResults()
         val service = CommandReserveService(turns, inbox, results, redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "che:scenario_2", requestIds = { "hwiha-req" }, transactions = TestTransactions, worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")),
-            enlistmentAdmission = EnlistmentAdmission(generals, precheck, catalog), hwihaCatalog = catalog)
+            enlistmentAdmission = EnlistmentAdmission(generals, precheck, catalog), inputCatalog = catalog)
         val raw = """{ "targetId":3, "mode":"NATION" }"""
         assertEquals("UNAUTHORIZED", assertFailsWith<AdmissionDenied> { service.reserve(10, "action.enlist", 0, raw) }.code)
         assertEquals("FORBIDDEN", assertFailsWith<AdmissionDenied> { service.reserveForOwner(10, "action.enlist", 0, raw, 43) }.code)
@@ -179,7 +179,7 @@ class CommandReserveServiceTest {
             val service = CommandReserveService(RecordingReservedTurns(), inbox, RecordingResults(), redis(),
                 CommandRegistry(GeneralActionPipeline()), GameApiProcessWorld(1), "fixture",
                 requestIds = { "court-collision" }, transactions = TestTransactions,
-                worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), hwihaCourtAdmission = admission)
+                worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), courtAdmission = admission)
             service.publishImmediate(base, 42)
             service.publishImmediate(base.copy(requestId = "another-client-id", ownerUserId = 777), 42)
             assertFailsWith<IllegalStateException> { service.publishImmediate(variant, owner) }
@@ -228,7 +228,7 @@ class CommandReserveServiceTest {
         val turns = RecordingReservedTurns()
         val service = CommandReserveService(turns, inbox, RecordingResults(), redis(), CommandRegistry(GeneralActionPipeline()),
             GameApiProcessWorld(1), "fixture", requestIds = { "domestic-req" }, transactions = TestTransactions,
-            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), hwihaCourtAdmission = court)
+            worldStates = worlds(mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")), courtAdmission = court)
         service.publishImmediate(opensamguk.common.wire.TurnDaemonCommand.ImmediateInput("client", 10, 999,
             "placement.assign", """{ "countyId":7, "post":"MAGISTRATE", "cardId":5 }"""), 42)
         val stored = inbox.accepted.single()

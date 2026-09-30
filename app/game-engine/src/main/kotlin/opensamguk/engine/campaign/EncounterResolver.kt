@@ -5,6 +5,7 @@ import opensamguk.infra.seed.UnitProfilesJson
 import opensamguk.logic.input.*
 import opensamguk.logic.war.*
 import opensamguk.logic.world.*
+import org.slf4j.LoggerFactory
 
 /**
  * Resolves a sealed pending encounter on the attacker commander's personal turn (§5.1 step 5) and
@@ -23,6 +24,7 @@ class EncounterResolver(
     private val metrics: LandMarchMetricSnapshot,
     private val cells: ProvinceCellIndex,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
+    private val observations: BattleOutcomeObserver = BattleOutcomeObserver.NONE,
 ) {
     sealed interface Resolution {
         data object NotPending : Resolution
@@ -55,7 +57,30 @@ class EncounterResolver(
             if (SEALED_KEYS.any { meta[it] != actor.meta[it] }) return unavailable(encounter, "PARTICIPANT_MISMATCH")
         }
         val result = EncounterResolution.resolve(encounter, forces, relations, combat, plans, deployment, journal)
-        settle(encounter, forces, result)
+        val callbackInvoked = settle(encounter, forces, result)
+        // QA evidence is provisional until the containing tick's JDBC flush commits. Its consumer
+        // owns that boundary; observation failure must not alter the settled battle or turn.
+        if (observations !== BattleOutcomeObserver.NONE) {
+            try {
+                val state = world.getState()
+                observations.onResolved(BattleOutcomeObservation.from(
+                    worldId = world.worldId.value,
+                    year = state.currentYear,
+                    month = state.currentMonth,
+                    phase = state.currentPhase,
+                    worldMapVariant = state.worldMapVariant?.name,
+                    encounter = encounter,
+                    deployment = deployment,
+                    result = result,
+                    callbackInvoked = callbackInvoked,
+                ))
+            } catch (failure: Throwable) {
+                // QA observer errors must not alter a settled turn, but a failing JVM cannot continue safely.
+                if (failure is VirtualMachineError || failure is ThreadDeath || failure is LinkageError) throw failure
+                logger.warn("campaign_battle_observation_failed world={} encounter={} errorType={}",
+                    world.worldId.value, encounter.encounterId, failure.javaClass.simpleName)
+            }
+        }
         return Resolution.Resolved(result, encounter)
     }
 
@@ -108,7 +133,7 @@ class EncounterResolver(
     }
 
     private fun settle(encounter: CorpsEncounter, forces: EncounterForces,
-        result: EncounterResolution.Result) {
+        result: EncounterResolution.Result): Boolean {
         val state = world.getState()
         val now = Phase(state.currentYear, state.currentMonth, state.currentPhase)
         // 1. Losses: subtract the battle's casualties from the live units (never overwrite later changes).
@@ -172,7 +197,10 @@ class EncounterResolver(
             }
         }
         // 6. Renown events go through the war-outcome boundary exactly once; a battle with no winner is not reported.
-        if (result.winners.isNotEmpty()) outcomes.onEncounterResolved(result.winners, result.losers)
+        val callbackInvoked = if (result.winners.isNotEmpty()) {
+            outcomes.onEncounterResolved(result.winners, result.losers)
+            true
+        } else false
         // The provisional captive marker.
         for ((captive, captor) in result.captives) {
             updateMeta(captive) { meta -> meta + (CAPTIVE_KEY to linkedMapOf("version" to 1, "captorGeneralId" to captor,
@@ -191,6 +219,7 @@ class EncounterResolver(
             } + if (id in result.captives) " 지휘관이 사로잡혔습니다." else ""
             log(id, text)
         }
+        return callbackInvoked
     }
 
     private fun endDeployment(participant: EncounterParticipant) {
@@ -220,6 +249,7 @@ class EncounterResolver(
         text = text, generalId = generalId, nationId = world.getGeneralById(generalId)?.nationId))
 
     companion object {
+        private val logger = LoggerFactory.getLogger(EncounterResolver::class.java)
         const val BATTLE_RECORD_KEY = "lastBattle"
         const val DISBAND_RECORD_KEY = "lastEncounterDisbanded"
         const val CAPTIVE_KEY = "captive"

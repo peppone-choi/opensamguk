@@ -10,7 +10,7 @@
 
 #905 지도 병합 뒤 1,447개 城의 ID·`administrativeUnitId`·`meta.ju/jun/junCh`는 전수 비교에서 변화가 없었다. 관직 모델의 郡國 ID는 `hhs-group:<권>:<郡國명>`이고 기존 `DomesticCounty.commanderyId`는 `meta.junCh` 표기 문자열이다. 두 값을 문자열 그대로 비교하면 관할이 빗나가므로 城 ID→`administrativeUnitId`→행정 축 郡國 ID로 명시 변환한다. `administrativeUnitId`가 없는 320개 城에는 관직 권한을 부여하지 않는다. 월드별 오버레이가 실제로 구현되면 治所·명칭을 기본 지도에서 고정하지 않고 해당 월드의 투영에서 읽는다.
 
-핀된 `han-world-v3` 관직 축의 105 郡國/13州는 220년 `han-tiles` 전체 parent 173개의 시기별 관직 권한 원장이 아니다. F2 지도 읽기 감사에서 `han-tiles` parent 36개는 이 축 밖에 있고, registry ACTIVE만으로 190년 유효성이나 州 귀속이 입증되지 않았다. #931 오버레이 v1도 郡 소속 재편을 표현하지 못한다. 세계별 투영과 NPC 공석 생성은 이 36개를 별도 map pin·scenario-year 郡 유효성/州 귀속 원장과 검증이 마련될 때까지 임명·실효 권한 후보에서 제외한다. 현 `HanAdministrativeAxis.project`는 행정 단위가 축 밖 group을 가리키면 실패하도록 닫혀 있다.
+핀된 `han-world-v3` 관직 축의 105 郡國/13州는 220년 `han-tiles` 전체 parent 173개의 시기별 관직 권한 원장이 아니다. F2 지도 읽기 감사에서 `han-tiles` parent 36개는 이 축 밖에 있고, registry ACTIVE만으로 190년 유효성이나 州 귀속이 입증되지 않았다. #931 오버레이 v1도 郡 소속 재편을 표현하지 못한다. 세계별 투영과 NPC 공석 생성은 이 36개를 별도 map pin·scenario-year 郡 유효성/州 귀속 원장과 검증이 마련될 때까지 임명·실효 권한 후보에서 제외한다. 현 `AdministrativeAxis.project`는 행정 단위가 축 밖 group을 가리키면 실패하도록 닫혀 있다.
 
 저장은 `localOfficeTenures`와 `officeCredentials` meta JSON에 version 1로 직렬화한다. 없으면 빈 목록, 손상·중복은 codec이 예외로 거절하고 미해결 credential 참조는 `validateTenures`가 거절한다. 이 슬라이스는 순수 모델·codec·읽기 투영이며 조정 입력, 턴 배선, DB flush, 화면 명령은 후속 통합 슬라이스가 담당한다.
 

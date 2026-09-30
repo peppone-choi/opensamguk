@@ -159,7 +159,7 @@ export {
   type TintMode,
 } from './iso/tint';
 export {
-  isHanCounty,
+  isAdministrativeCounty,
   cityDisplayName,
   type CityNameInput,
 } from './iso/cityName';

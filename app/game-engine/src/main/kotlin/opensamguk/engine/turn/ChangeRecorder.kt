@@ -190,8 +190,6 @@ class ChangeRecorder(
      */
     private val diplomacyLetterUpdates = LinkedHashMap<Int, LinkedHashMap<String, Any?>>()
 
-    /** Betting channel (P6) — ng_betting insertUpdate 의도(flush가 (general,betting,type) UPSERT amount +=). */
-    private val bettingInserts = mutableListOf<BettingInsert>()
 
     /**
      * v2 도시 원장 채널 (OPENSAM-150 R1) — `v2_city_ledger` 멱등 UPSERT 의도. 값이 **절대값**이므로
@@ -310,7 +308,6 @@ class ChangeRecorder(
             captureList(messageInvalidates),
             captureList(diplomacyLetterInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(diplomacyLetterUpdates) { copyStringMap(it) },
-            captureList(bettingInserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(cityLedgerV2Upserts) { it.copy(columns = copyStringMap(it.columns)) },
             captureMap(waterControlWrites),
             captureMap(provinceControlWrites),
@@ -405,7 +402,6 @@ class ChangeRecorder(
             votePollUpdates.isNotEmpty() ||
             createdMessages.isNotEmpty() || messageInvalidates.isNotEmpty() ||
             diplomacyLetterInserts.isNotEmpty() || diplomacyLetterUpdates.isNotEmpty() ||
-            bettingInserts.isNotEmpty() ||
             cityLedgerV2Upserts.isNotEmpty() ||
             waterControlWrites.isNotEmpty() ||
             provinceControlWrites.isNotEmpty() || generalPositionWrites.isNotEmpty() ||
@@ -645,7 +641,7 @@ class ChangeRecorder(
      * the writes in the order the resolver produced them.
      *
      *  - `table == "nation_env"` → V3 int-namespace store (`namespace` = nation id as a decimal string).
-     *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`) → V7 `game_kv` string-namespace store.
+     *  - any other `table` (`game_env`/`inheritance_{id}`) → V7 `game_kv` string-namespace store.
      */
     fun recordKv(table: String, namespace: String, key: String, value: Any?) {
         gateMutation("recordKv")
@@ -832,10 +828,6 @@ class ChangeRecorder(
     fun diplomacyLetterUpdates(): Map<Int, Map<String, Any?>> =
         diplomacyLetterUpdates.mapValues { (_, m) -> LinkedHashMap(m) }
 
-    /** Record an `ng_betting` insertUpdate 의도 (P6 betting intake) — 재베팅은 flush UPSERT가 amount +=. */
-    fun recordBettingInsert(columns: Map<String, Any?>) {
-        bettingInserts.add(BettingInsert(columns))
-    }
 
     /**
      * OPENSAM-150 (R1) — v2 도시 원장 UPSERT 기록. `columns`는 `city_id`/`gold`/`rice`/`garrison`
@@ -1005,8 +997,6 @@ class ChangeRecorder(
         voteCommentInserts.add(VoteCommentInsert(columns))
     }
 
-    /** The recorded ng_betting INSERTs (P6 flush source), in emit order. */
-    fun bettingInserts(): List<BettingInsert> = bettingInserts.toList()
 
     /** 기록된 v2 도시 원장 UPSERT (OPENSAM-150 R1 flush 소스), 최초 기록 순서대로. */
     fun cityLedgerV2Upserts(): List<CityLedgerV2Upsert> = cityLedgerV2Upserts.values.toList()
@@ -1120,7 +1110,7 @@ class ChangeRecorder(
      *
      * 데몬 recorder는 수명이 긴 단일 인스턴스([ReservedTurnHandler.recorder])다. tick 단위 리셋이
      * 없으면 누적된 델타가 매 tick 재-flush된다. 멱등한 UPDATE/patch 채널은 그저 낭비 + 무한증가지만,
-     * INSERT 전용 채널(betting / message / board_post / board_comment / vote_poll / vote /
+     * INSERT 전용 채널(message / board_post / board_comment / vote_poll / vote /
      * vote_comment)은 이후 매 tick마다 행을 중복 INSERT한다. PHP에는 이런 누수가 없다 — 각 AJAX 요청은
      * 한 번 INSERT하고 요청 스코프가 폐기된다.
      *
@@ -1147,7 +1137,6 @@ class ChangeRecorder(
         messageInvalidates.clear()
         diplomacyLetterInserts.clear()
         diplomacyLetterUpdates.clear()
-        bettingInserts.clear()
         cityLedgerV2Upserts.clear()
         waterControlWrites.clear()
         provinceControlWrites.clear()
@@ -1184,7 +1173,7 @@ class ChangeRecorder(
     /**
      * Record an inheritance KV write (T0.8) — `game_kv` 행의 `"table"` 판별자는 PHP storage 이름
      * 'inheritance'다(물리 테이블명 'game_kv' 아님 — reader 전부가 'inheritance'로 조회:
-     * InheritanceRepository / InheritPointController / BettingController. V15가 과거 오기록 백필).
+     * InheritanceRepository / InheritPointController. V15가 과거 오기록 백필).
      */
     fun recordInheritancePointSet(ownerID: Int, key: String, value: Double, aux: Any?) {
         inheritancePointBase[ownerID to key] = value to aux
@@ -1277,7 +1266,7 @@ class ChangeRecorder(
      * `FlushPayload.createdGenerals`로 매핑 → executor step-3 `generalCreateMany`(general 행 + 30 general_turn
      * 휴식 + 37 rank_data value 0). recorder에 별도 created-general 채널을 또 두면 *두 개의 생성 진리*가 생겨
      * (world created-set + recorder 채널) 조용히 발산한다(design Risk #4) — INSERT 전용 side-table 채널
-     * (message/betting/board/vote)과 달리 core 엔티티 생성은 world가 유일 소스다. 그래서 이 메서드는
+     * (message/board/vote)과 달리 core 엔티티 생성은 world가 유일 소스다. 그래서 이 메서드는
      * 새 채널을 만들지 않고 world에 위임만 한다(생성된 장수의 UPDATE 패치는 step-7에서 createdGeneralIds로 제외됨).
      *
      * 반환: 생성되어 world에 staged된 [TurnGeneral].

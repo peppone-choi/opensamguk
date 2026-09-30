@@ -18,4 +18,10 @@ class LogFormatterTest {
     @Test fun noticeYearMonth() = assertEquals("<R>★</>190년 3월:X", formatLogText("X", LogFormat.NOTICE_YEAR_MONTH, 190, 3))
     @Test fun monthWithPhase() = assertEquals("<C>●</>3월 중순:X", formatLogText("X", LogFormat.MONTH, 190, 3, 2))
     @Test fun yearMonthWithPhase() = assertEquals("<C>●</>190년 3월 하순:X", formatLogText("X", LogFormat.YEAR_MONTH, 190, 3, 3))
+    @Test fun `formatted log renders for display`() {
+        assertEquals(
+            "<font color=cyan>●</font>190년 3월:<font color=cyan>점수</font> 상승",
+            convertLog(formatLogText("<C>점수</> 상승", LogFormat.YEAR_MONTH, 190, 3)),
+        )
+    }
 }

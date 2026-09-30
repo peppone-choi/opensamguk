@@ -64,7 +64,7 @@ class NpcEnlistmentSelectorTest {
         val lifecycle = TurnDaemonLifecycle(world, handler, pullGeneralTurnOf = { pulls++ },
             reservedActionOf = { reads++; missing })
         val first = lifecycle.runTick(Instant.EPOCH.plusSeconds(10801)).single()
-        assertIs<TurnOutcome.Applied>(first.hwihaOutcome)
+        assertIs<TurnOutcome.Applied>(first.inputOutcome)
         assertNull(first.requestId)
         assertEquals(1, world.getGeneralById(1)!!.nationId)
         assertTrue(lifecycle.runTick(Instant.EPOCH.plusSeconds(10801)).isEmpty())

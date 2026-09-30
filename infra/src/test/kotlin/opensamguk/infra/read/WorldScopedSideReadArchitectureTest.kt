@@ -35,11 +35,6 @@ class WorldScopedSideReadArchitectureTest {
                 """fun findByWorldIdAndIdAndNationId\(\s*@Param\("worldId"\) worldId: Int,""",
             ).containsMatchIn(sources),
         )
-        assertTrue(
-            sources.contains(
-                """fun aggregateTotalAmountByBetting(@Param("worldId") worldId: Int)""",
-            ),
-        )
         assertTrue(sources.contains("findByWorldIdAndIdAndNationId"))
         assertTrue(sources.contains("findByWorldIdAndTable"))
         assertTrue(sources.contains("kv.worldId IS NULL"))
@@ -49,7 +44,6 @@ class WorldScopedSideReadArchitectureTest {
         val repositoryRoot: Path = Path.of("src/main/kotlin/opensamguk/infra")
         val repositorySources = listOf(
             "read/MessageRepository.kt",
-            "read/BettingRepository.kt",
             "read/BoardPostRepository.kt",
             "read/GameKvRepository.kt",
             "read/InheritanceRepository.kt",

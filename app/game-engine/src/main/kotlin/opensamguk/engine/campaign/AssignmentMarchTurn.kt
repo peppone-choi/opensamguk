@@ -21,12 +21,13 @@ class AssignmentMarchTurn(
     private val cells: ProvinceCellIndex,
     private val outcomes: WarOutcomeListener = WarOutcomeListener.NONE,
     private val reactions: MarchReactionPolicy = MarchReactionPolicy.NON_BLOCKING,
+    private val observations: BattleOutcomeObserver = BattleOutcomeObserver.NONE,
 ) {
     fun onTurn(generalId: Int, reserved: ReservedTurn, outcome: TurnOutcome? = null) {
         if (world.ruleProfile != RuleProfile.HWIHA) return
         // §5.1 step 5: a sealed encounter resolves on the attacker's turn whatever it reserved. The battle
         // ends this turn's movement; an unprepared battle stays pending and the march reports it below.
-        when (EncounterResolver(world, recorder, topology, metrics, cells, outcomes).resolvePending(generalId)) {
+        when (EncounterResolver(world, recorder, topology, metrics, cells, outcomes, observations).resolvePending(generalId)) {
             is EncounterResolver.Resolution.Resolved,
             is EncounterResolver.Resolution.Disbanded -> return
             else -> Unit

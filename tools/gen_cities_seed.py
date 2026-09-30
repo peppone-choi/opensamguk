@@ -18,7 +18,7 @@ import json, os, sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MAP_CHE = os.path.join(ROOT, "legacy/devsam-core2026/resources/map/map_che.json")
 CITIES = os.path.join(ROOT, "infra/src/main/resources/scenario/cities_1010.json")
-SCENARIO = os.path.join(ROOT, "infra/src/main/resources/scenario/scenario_1010.json")
+SCENARIO = os.path.join(ROOT, "data/archive/scenarios/scenario_1010.json")
 
 LEVEL_GLYPH = {1: "수", 2: "진", 3: "관", 4: "이", 5: "소", 6: "중", 7: "대", 8: "특"}
 REGION_NAME = {1: "하북", 2: "중원", 3: "서북", 4: "서촉", 5: "남중", 6: "초", 7: "오월", 8: "동이"}
