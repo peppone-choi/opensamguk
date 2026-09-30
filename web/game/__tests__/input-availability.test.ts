@@ -34,6 +34,17 @@ describe('availabilityOf', () => {
         expect(availabilityOf('action.move')).toEqual({ inputId: 'action.move', status: 'AVAILABLE' });
     });
 
+    it('옵션을 읽는 중이면 누를 수 있게 둔다 — 막힘으로 그리지 않는다', () => {
+        expect(availabilityOf('action.move', { options: 'loading' })).toEqual({ inputId: 'action.move', status: 'AVAILABLE' });
+        expect(availabilityOf('action.retire', { options: 'loading' })?.status).toBe('NOT_DELIVERED');
+    });
+
+    it('서버가 제출을 거절했으면 그 code · reason으로 막는다(옵션이 가능이어도)', () => {
+        expect(availabilityOf('action.move', { options: { available: true }, rejected: { code: 'SLOT_LOCKED', reason: '전투 중입니다' } }))
+            .toEqual({ inputId: 'action.move', status: 'BLOCKED', code: 'SLOT_LOCKED', reason: '전투 중입니다' });
+        expect(availabilityOf('action.move', { rejected: { reason: null } })).toEqual({ inputId: 'action.move', status: 'BLOCKED' });
+    });
+
     it('서버 K6-01 행이 있으면 그것이 정본이다', () => {
         const server = { inputId: 'action.retire', status: 'AVAILABLE' as const };
         expect(availabilityOf('action.retire', { server })).toBe(server);
