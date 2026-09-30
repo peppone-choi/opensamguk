@@ -108,19 +108,24 @@ export interface PlacementSheetProps {
     readonly help?: ReactNode;
     /** 현을 고를 때 목록 위에 그릴 지도(시트 안 480×320, 모바일은 위 절반). 화면이 K2 지도로 채운다. */
     readonly mapSlot?: (picker: TargetPicker) => ReactNode;
+    /** 미리 채움(현 상세 「현령 앉히기」 — 자리 MAGISTRATE · 대상 이 현). 그 자리가 불가면 채우지 않는다. */
+    readonly initialPost?: string;
+    readonly initialTarget?: string;
 }
 
 /**
  * 배치 시트(설계서 P-T01 입력 표) — 자리 종류 → (현령이면 현 · 사자면 세력 · 정찰이면 지금 선 구역) → 「이 자리로」.
  * 불가 자리 · 맡은 사람 있는 현도 사유와 함께 보인다. 입력 몸통은 placementBody 가 만든다.
  */
-export function PlacementSheet({ card, posts, busy, onSubmit, onCancel, help, mapSlot }: PlacementSheetProps) {
+export function PlacementSheet({ card, posts, busy, onSubmit, onCancel, help, mapSlot, initialPost, initialTarget }: PlacementSheetProps) {
     const kinds = useMemo(() => postKindChoices(posts), [posts]);
-    const [post, setPost] = useState<string | null>(null);
+    const startPost = initialPost && kinds.some((k) => k.post === initialPost && k.available) ? initialPost : null;
+    const [post, setPost] = useState<string | null>(startPost);
     const chosen = kinds.find((k) => k.post === post) ?? null;
     const option = posts.posts.find((p) => p.post === post) ?? null;
     const candidates = useMemo(() => (option ? targetCandidates(option) : []), [option]);
-    const picker = useTargetPicker({ kind: 'place', candidates, onCancel });
+    const startTarget = startPost && initialTarget && candidates.some((c) => c.targetId === initialTarget && c.available) ? [initialTarget] : [];
+    const picker = useTargetPicker({ kind: 'place', candidates, onCancel, initialSelected: startTarget });
     const target = picker.selected[0] ?? null;
     const result = post ? placementBody(card, post, target) : { error: '자리 종류를 고르세요.' };
     const submit = () => { if ('body' in result && !busy) onSubmit(result.body); };

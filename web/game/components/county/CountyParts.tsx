@@ -11,7 +11,8 @@ import styles from './county.module.css';
 export interface CountyHeaderProps {
     readonly name: string;
     readonly commanderyName: string | null;
-    readonly nation: CountyNation;
+    /** 소속. 모르면(우리 현이 아니고 서버가 소유를 주지 않음) null — 칩을 그리지 않는다(「무주」 로 짐작하지 않는다). */
+    readonly nation: CountyNation | null;
     /** 수도와 끊김(창고 supplied=false). 모르면 null — 칩 없음. */
     readonly isolated: boolean | null;
     /** 내 장수가 지금 이 현에 있다. */
@@ -27,10 +28,12 @@ export function CountyHeader({ name, commanderyName, nation, isolated, here, act
             <h2 className={`os-serif ${styles.name}`}>{name}</h2>
             <span className={styles.chips}>
                 {commanderyName ? <Chip>{commanderyName}</Chip> : null}
-                <Chip>
-                    {nation.color ? <i className={styles.swatch} style={{ background: nation.color }} aria-hidden="true" /> : null}
-                    {nation.label}
-                </Chip>
+                {nation ? (
+                    <Chip>
+                        {nation.color ? <i className={styles.swatch} style={{ background: nation.color }} aria-hidden="true" /> : null}
+                        {nation.label}
+                    </Chip>
+                ) : null}
                 {isolated ? <Chip tone="rust">고립</Chip> : null}
                 {here ? <Chip tone="bronze">지금 여기</Chip> : null}
             </span>
