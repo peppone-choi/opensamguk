@@ -30,7 +30,7 @@ function setSession(generalId: number | null, global: { npcMode?: number; blockG
     frontInfo: { global: { serverId: 'pep', ...global } },
     generalId,
     serverId: 'pep',
-    isCampaignWorld: true,
+   
     gameDate: '',
     refresh: mocks.refresh,
   } as unknown as GameSession);

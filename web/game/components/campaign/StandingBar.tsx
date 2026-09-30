@@ -11,12 +11,11 @@ import { useGameSession } from '@/lib/campaign-session';
  * 출병 명령(배치), 발령(조정 결정), 계책 손패(계책). 방침·공사는 입력이 아직 없어 싣지 않는다.
  */
 export default function StandingBar() {
-    const { isCampaignWorld, generalId } = useGameSession();
+    const { generalId } = useGameSession();
     const deploy = useCampaignRead((id) => api.deployOptions(id));
     const dispatches = useCampaignRead((id) => api.dispatchPending(id));
     const hand = useCampaignRead((id, signal) => api.stratagemHand(id, signal));
 
-    if (!isCampaignWorld) return null;
     const open = (dispatches.data?.dispatches ?? []).filter((d) => d.status === 'PENDING');
     // 나에게 온 발령만 내가 응답한다. 내가 낸 발령은 상대의 응답을 기다린다.
     const toMe = open.filter((d) => d.targetId === generalId).length;

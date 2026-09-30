@@ -13,7 +13,7 @@ const mock = vi.hoisted(() => ({
 vi.mock('@/components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
 vi.mock('@/components/command/CourtForm', () => ({ default: () => <div>발령 폼</div> }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({
-    generalId: 9, isCampaignWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
+    generalId: 9, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
 }) }));
 vi.mock('@/lib/api', () => ({ api: {
     campaignSieges: mock.campaignSieges, roadForts: mock.roadForts,
