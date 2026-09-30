@@ -18,6 +18,8 @@
 
 기존 `deploy.yml`은 이 workflow/tools 변경의 main 병합에도 자동 반응한다. 준비 PR은 draft로 유지하며, 정상 PR CI와 독립 검토 이후 C0가 자동 운영 경로에 대한 대상 승인을 확인하기 전 ready/merge하지 않는다. 이 준비로 기존 배포 trigger나 운영 제어를 변경하지 않는다.
 
+최초 수동 실행에는 workflow가 default branch에 등록되어 있어야 한다([GitHub workflow_dispatch 규칙](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch)). 새 draft 브랜치만으로 바로 발급할 수 있다고 가정하지 않는다. C0는 main 편입에 따르는 기존 자동 배포와 최초 발급을 각각 승인된 경로로 준비해야 한다. 이 전제가 해결되기 전에는 발급 실행 가능 상태가 아니다.
+
 성공 artifact의 `candidate.json`과 Actions summary에서 다음을 확인한다.
 
 | 필드 | 의미 |
