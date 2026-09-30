@@ -151,7 +151,7 @@ export function CommanderyPolicyCard({ row, availability, onChange }: Commandery
                     {row.since ? <span className={styles.muted}>{`${row.since}부터`}</span> : null}
                     {row.pending ? <Chip tone="bronze">{`대기 — 다음 턴부터 ${row.pending}`}</Chip> : null}
                 </span>
-            ) : <p className={styles.muted}>군 방침은 군주가 정합니다.</p>}
+            ) : null}
             <InputAction inputId="policy.set" availability={availability} label="군 방침 바꾸기" onAct={onChange} block />
         </section>
     );
