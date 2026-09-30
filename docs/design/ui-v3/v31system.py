@@ -21,7 +21,7 @@
 import os
 import re
 
-V31_VERSION = '3.1.5'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5 · 3.1.3 = d6912a10e · 3.1.4 = a3d35db35
+V31_VERSION = '3.1.6'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5 · 3.1.3 = d6912a10e · 3.1.4 = a3d35db35 · 3.1.5 = 2a11833e9
 
 from v3common import *  # noqa: F401,F403 — CSS · V3CSS · sec · kv · icon · IC · cat · CATS · res · RES · LOGO …
 from v3common import CSS, V3CSS, IC, P, LOGO, LOGO_M, apply_terms, icon, sec, kv, cat, CATS, res
@@ -515,15 +515,20 @@ def state_notfound(pad=16):
 BANDS = {
     # 턴 루프 공개 상태(계약판 K10-01 · 01f turnLoop.state)별 띠. 시각 · 배속은 서버가 준 값만 쓰고, 기기 시계로 다시 계산하지 않는다.
     'catch': ('catch', 'clock', '#d3b064', '<b>따라잡는 중</b> — 서버가 멈췄던 동안 밀린 순을 2배 빠르기로 돌립니다. 다 따라잡는 때 <span class="mono">21:40</span>', '자세히'),
-    'stop': ('stop', 'alert', '#e08a7c', '<b>턴이 멈췄습니다</b> — 마지막 순 3월 중순, 멈춘 지 <span class="mono">42분</span>. 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
+    'stop': ('stop', 'alert', '#e08a7c', '<b>턴이 멈췄습니다</b> — 마지막 순 3월 중순, 멈춘 지 <span class="mono">42분</span> <span class="muted">(21:52 확인)</span>. 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
     'paused': ('paused', 'pausec', '#7aa7c7', '<b>턴이 멈춰 있습니다</b> — 멈춘 까닭은 아직 알 수 없습니다. 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
     'paused_admin': ('paused', 'pausec', '#7aa7c7', '<b>운영진이 턴을 잠시 멈췄습니다</b> — 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
-    'unknown': ('unknown', 'question', '#b9b2a3', '<b>운영 상태 확인 중</b> — 지금은 턴이 도는지 확인할 수 없습니다. 다음 턴 시각은 확인될 때까지 보이지 않습니다', '다시 확인'),
+    'unknown': ('unknown', 'question', '#b9b2a3', '<b>운영 상태 확인 중</b> — 지금은 턴이 도는지 확인할 수 없습니다. 다음 턴 시각은 확인될 때까지 보이지 않습니다 <span class="muted">(마지막 확인 21:40)</span>', '다시 확인'),
     'waiting': ('waiting', 'clock', '#7aa7c7', '<b>첫 순 전입니다</b> — 첫 순은 <span class="mono">10월 3일 20:00</span>에 시작합니다', '공지 보기'),
     'notice': ('notice', 'tools', '#7aa7c7', '<b>점검 예정</b> — 오늘 <span class="mono">22:00</span>부터 [미정]분. 그동안 턴이 돌지 않습니다', '공지 보기'),
     'tutorial': ('tutorial', 'check', '#7aa7c7', '<b>첫걸음 4 / 8</b> — 첫 발령을 마쳤습니다. 다음: 첫 공사', '다음 보기'),  # 수 = 마친 걸음 수(머리줄 칩과 같다)
 }
 BAND_ORDER = '점검 중(전체 화면) > 턴 멈춤 > 턴 멈춰 있음 > 운영 상태 확인 중 > 따라잡기 > 점검 예고 > 첫 순 전 > 첫걸음 달성(6초 뒤 접힘)'
+# 읽어 주기(K10): 턴 멈춤만 role=alert(바로 읽음), 나머지 띠는 role=status(차례로 읽음).
+BAND_ROLE = {'stop': 'alert'}
+# 다시 부르는 주기: 기존 셸 폴링 [미정]초(K10-01e — SSE 없음으로 정지를 놓치지 않는다). 기기 시계로 「멈춘 지 n분」을 늘리지 않으므로
+# 띠의 시간은 다시 부를 때만 바뀌고, 그 값을 받은 때(serverTime)를 「(21:52 확인)」처럼 같이 적는다.
+REFRESH_NOTE = '다시 부르는 주기 [미정]초(기존 폴링) — 멈춘 시간 · 마지막 확인은 서버 값과 그 값을 받은 때(serverTime)로 적는다'
 
 # 턴 루프 상태 → 셸이 보이는 것(K10-01f 수신 합의안). 시각 칸: 'time' = 서버 시각 그대로, '미정' · '확인 중' = 시각을 짐작해 보이지 않는다.
 TURN_LOOP_UI = [
@@ -547,11 +552,12 @@ def turn_clock(state):
 
 def band(kind, mobile=False):
     cls, ic, c, text, act = BANDS[kind]
+    role = BAND_ROLE.get(kind, 'status')
     if mobile:
-        return (f'<div class="band {cls}" role="status" style="height:72px;align-items:flex-start;padding:8px 4px 8px 12px;gap:8px">{icon(ic, 18, c)}'
+        return (f'<div class="band {cls}" role="{role}" style="height:72px;align-items:flex-start;padding:8px 4px 8px 12px;gap:8px">{icon(ic, 18, c)}'
                 f'<span style="font-size:12px;line-height:1.45;flex:1;min-width:0">{text}</span>'
                 f'<button type="button" class="btn sm" style="flex-shrink:0;background:transparent">{act}</button></div>')
-    return (f'<div class="band {cls}" role="status">{icon(ic, 18, c)}<span>{text}</span>'
+    return (f'<div class="band {cls}" role="{role}">{icon(ic, 18, c)}<span>{text}</span>'
             f'<button type="button" class="btn sm" style="margin-left:auto;background:transparent">{act}</button></div>')
 
 
@@ -1638,20 +1644,19 @@ def board_mnotfound():
 
 def board_banner():
     """P-W05 알림 띠 — 지금 띠는 UNKNOWN(운영 상태 확인 중). 머리줄 「다음 개인 턴」 · 12순 시각도 「확인 중」. 상태별 표는 TURN_LOOP_UI."""
-    hx, hy = DESK_PX(*CELLS[HERE])
     rows = ''.join(f'<tr><td class="mono bz" style="height:30px">{st}</td><td class="t2" style="height:30px;white-space:normal">{rs}</td>'
                    f'<td style="height:30px">{b}</td><td class="mono" style="height:30px">{h}</td><td class="mono" style="height:30px">{c}</td>'
                    f'<td class="muted" style="height:30px;white-space:normal;font-size:11px">{n}</td></tr>' for st, rs, b, h, c, n in TURN_LOOP_UI)
     table = (f'<table class="table" style="font-size:11.5px"><thead><tr><th>turnLoop.state</th><th>pausedReason</th><th>띠</th><th>다음 개인 턴</th><th>12순 시각</th><th>규칙</th></tr></thead>'
              f'<tbody>{rows}</tbody></table>')
     mapst = (f'<main style="position:relative;flex-grow:1;min-width:0;overflow:hidden;background:#0c0f0e">{mapimg("desk", 1048, 908, "영천 일대 지도")}'
-             f'{me_marker(hx, hy - 22, "in")}'
              f'<section class="panel" style="position:absolute;left:84px;top:40px;width:940px;background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5)">'
              f'{sec("알림 띠 — 한 번에 하나, 머리줄 바로 아래", "우선: " + BAND_ORDER)}'
              f'<div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px">{band("stop")}{band("paused")}{band("catch")}{band("waiting")}{band("notice")}'
              f'<div style="padding:6px 0">{table}</div>'
              f'<span class="note">띠는 닫지 않는다 — 상태가 풀리면 저절로 사라진다(첫걸음 달성만 6초 뒤 접힘). 시각 · 배속 · 멈춘 시간은 서버 공개 응답(K10-01 · 01f)의 값만 쓰고 기기 시계로 다시 재지 않는다. '
-             f'관측이 없거나 낡으면(UNKNOWN) 멈춤 · 정지로 짐작하지 않고 「확인 중」으로 둔다.</span></div></section>{view_bar()}</main>')
+             f'관측이 없거나 낡으면(UNKNOWN) 멈춤 · 정지로 짐작하지 않고 「확인 중」으로 둔다. {REFRESH_NOTE}. '
+             f'읽어 주기: 턴 멈춤은 role=alert, 나머지는 role=status. 띠 단추는 누를 영역 44.</span></div></section>{view_bar()}</main>')
     aside = (f'<aside aria-label="명령 목록 12순" style="width:336px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #3d4740">'
              f'{sec("명령 목록 12순", "직접 행동 · 한 순에 하나")}<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{turn_strip(2, 6, 3)}{turn_caption(2, "UNKNOWN")}</div></aside>')
     page31('V31SystemBanner.dc.html', '시스템 v3.1 — 공통 알림 띠(P-W05 데스크톱)', shell_desk('작전실', 'war', mapst + aside, band('unknown'), turn_state='UNKNOWN'))
