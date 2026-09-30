@@ -8,6 +8,7 @@ import { Inertia, keyAction, keyPanCells, panBy, pinch, wheelZoomFactor } from '
 import { DEFAULT_LAYERS, TopdownRenderer, type MapLayers, type TopdownSource, type WorldState } from './renderer';
 import type { HitResult } from './hitTest';
 import { MapMinimap } from './MapMinimap';
+import { loadOverviewPicture } from './overviewPicture';
 import type { MyLocation } from './myLocation';
 import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
 
@@ -78,6 +79,8 @@ export function TopdownMap(props: TopdownMapProps) {
       renderer = new TopdownRenderer(gl, overlay);
     } catch {
       setStatus({ kind: 'unsupported' });
+      // WebGL2가 없으면 천하 그림 한 장만 보인다(장소는 목록 · 검색으로 고른다)
+      loadOverviewPicture(source.bakeUrl, source.kitUrl).then(setPicture, () => undefined);
       return undefined;
     }
     rendererRef.current = renderer;
@@ -291,6 +294,7 @@ export function TopdownMap(props: TopdownMapProps) {
     >
       <canvas ref={glRef} style={fill} />
       <canvas ref={overlayRef} style={{ ...fill, pointerEvents: 'none' }} />
+      {status.kind === 'unsupported' && picture && <FallbackPicture picture={picture} />}
       {status.kind === 'unsupported' && (
         <p role="status" style={{ position: 'absolute', inset: 'auto 16px 16px 16px', margin: 0, color: '#ece6d8' }}>
           이 브라우저에서는 지도를 그릴 수 없습니다. 장소는 목록에서 고를 수 있습니다.
@@ -316,5 +320,24 @@ export function TopdownMap(props: TopdownMapProps) {
       )}
       {props.children}
     </div>
+  );
+}
+
+function FallbackPicture({ picture }: { picture: OffscreenCanvas }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    canvas.width = picture.width;
+    canvas.height = picture.height;
+    canvas.getContext('2d')?.drawImage(picture, 0, 0);
+  }, [picture]);
+  return (
+    <canvas
+      ref={ref}
+      role="img"
+      aria-label="천하 지도(그림만)"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }}
+    />
   );
 }
