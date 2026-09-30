@@ -1,0 +1,54 @@
+/* 조정(P-K01) 본문 부품 — 치수는 승인 보드 V31K4Court · V31K4MCourt 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); margin: 0; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.link { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; min-width: 44px; padding: 0 6px; font-size: 12px; color: var(--bronze); }
+.col { display: flex; flex-direction: column; gap: 10px; min-height: 0; padding: 10px 12px; }
+.rows { list-style: none; margin: 0; padding: 0; }
+.row { display: flex; align-items: center; gap: 10px; min-height: 56px; border-bottom: 1px solid var(--line); }
+.rowText { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.block { display: flex; flex-direction: column; gap: 8px; }
+.sub { margin: 0; font-size: 13px; font-weight: 700; color: var(--text-2); }
+.list { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.field { display: flex; flex-direction: column; gap: 4px; }
+.field :global(.os-input) { min-height: 44px; }
+.sheet { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.targets { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.actions { display: flex; justify-content: flex-end; gap: 8px; }
+.links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.linkCard {
+  display: flex; align-items: center; min-height: 56px; padding: 0 14px; font-size: 13px;
+  color: var(--text); background: var(--panel); border: 1px solid var(--line-2); text-decoration: none;
+}
+.linkCard:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.decisions { list-style: none; margin: 0; padding: 0; }
+.decision.decision { min-height: 60px; }
+/* 결정 설명은 규칙 안내라 자르지 않고 줄을 바꾼다 — 공용 os-opt__sub 는 한 줄 · flex 라 말줄임표 없이 오른쪽이 잘린다. */
+.decision :global(.os-opt__text) { flex: 1; }
+.decision :global(.os-opt__sub) { white-space: normal; word-break: keep-all; }
+
+@media (max-width: 767.98px) {
+  .links { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---- 화면 조립(CourtScreen) ---- */
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* 셸 .body 여백 대기(K3) — 셸이 여백(보드 desk_main 12 · mob_main 10/12)을 주면 아래 두 padding 을 지운다(안 지우면 두 번). */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; overflow-y: auto; padding: 12px; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.band { padding: 10px 12px; }
+.bandList { display: flex !important; flex-wrap: wrap; gap: 8px; }
+.columns { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.column { min-width: 0; }
+.okLine { margin: 0; font-size: 12.5px; color: var(--moss-2); }
+.errLine { margin: 0; font-size: 12.5px; color: var(--rust-2); }
+.sheetRight { justify-content: flex-end; align-items: stretch; }
+.sheetRight > :global(.os-modal) { width: 480px; max-width: 100%; height: 100%; max-height: none; overflow-y: auto; }
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; max-height: 80vh; overflow-y: auto; }
+.sheetHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 8px 8px 12px; margin-bottom: 8px; border-bottom: 1px solid var(--line); }
+.sheetTitle { margin: 0; font-family: var(--font-serif); font-size: 16px; font-weight: 700; }
+
+@media (max-width: 1199.98px) {
+  .columns { grid-template-columns: minmax(0, 1fr); }
+}
