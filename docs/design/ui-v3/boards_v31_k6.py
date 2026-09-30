@@ -531,7 +531,7 @@ def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=Fals
         gr, gc, gtxt = gate
         x, y = iso_px(kind, gr, gc, s, ox, oy)
         ulay += (f'<button type="button" aria-haspopup="dialog" style="position:absolute;left:{x - 40}px;top:{y + 6}px;height:44px;padding:0 10px;display:flex;align-items:center;gap:6px;'
-                 f'font:inherit;font-size:12px;font-weight:700;color:#ece6d8;background:rgba(27,32,29,.94);border:1px solid #d3b064;cursor:pointer">성문 · {gtxt}</button>')
+                 f'font:inherit;font-size:12px;font-weight:700;color:#ece6d8;background:rgba(27,32,29,.94);border:1px solid #d3b064;cursor:pointer">성문 · {gtxt}{chip("여닫기 서버 대기", "info")}</button>')
     fogl = ''
     if fog:
         fogl = (f'<svg width="{vw}" height="{vh}" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true">'
@@ -716,7 +716,9 @@ def board_battlelive():
              f'<section class="panel" style="flex-grow:1;min-height:0">{sec("사건", "")}<ul class="ul" style="padding:4px 12px">{log}</ul></section>'
              f'<section class="panel">{sec("상대 — 보이는 만큼", "")}<div style="padding:8px 12px">{fieldrow("[적] 선봉", "기병 · 병력 [값]")}{fieldrow("[적] 중앙", "안개 속", cls="muted")}</div></section>'
              f'<section class="panel">{sec("다른 상태", "")}<div style="padding:8px;display:flex;flex-direction:column;gap:6px">'
-             f'{warnbox("연결이 끊겼습니다 — 다시 잇는 중. 그동안 AI 가 맡습니다.")}{infobox("다시 이음 — 받지 못한 사건을 이어 받았습니다.")}</div></section></div>')
+             f'{warnbox("연결이 끊겼습니다 — 다시 잇는 중. 그동안 AI 가 맡습니다.")}{infobox("다시 이음 — 받지 못한 사건을 이어 받았습니다.")}'
+             f'<div style="display:flex;flex-direction:column;gap:6px">{warnbox("전장 자료가 서버와 다릅니다. 새로 고침해 주세요 — 판을 그리지 않고, 그동안 AI 가 대신 싸웁니다.")}'
+             f'{btn("다시 불러오기", "sm", "refresh")}</div></div></section></div>')
     body = (top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}'
             f'<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{live_board()}</div>{right}</div>' + cmdbar())
     page31('V31K6BattleLive.dc.html', 'K6 실시간 전투(데스크톱)', shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
@@ -737,13 +739,13 @@ def board_mbattlelive():
     rx, ry, rw, rh = (-zox / zs) * fs, (-zoy / zs) * fs, (374 / zs) * fs, (200 / zs) * fs
     full = iso_board('siege', 374, 191, fs, 0, 0, SIEGE_UNITS, small=True,
                      extra=f'<span style="position:absolute;left:{rx:.0f}px;top:{ry:.0f}px;width:{rw:.0f}px;height:{rh:.0f}px;border:2px solid #ffd36d"></span>')
-    zoom = iso_board('siege', 374, 200, zs, zox, zoy, SIEGE_UNITS, [(28, 52, 'sel', '')], gate=(31, 42, '닫힘'))
+    zoom = iso_board('siege', 374, 200, zs, zox, zoy, SIEGE_UNITS, [(28, 52, 'sel', '')], gate=(31, 42, '막힘 · HP [값]'))
     inner = (f'<div style="height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #3d4740">'
              f'<span class="mono bz" style="font-size:20px;font-weight:700">3:12</span><span class="t2" style="font-size:12px;flex:1">성새전 · 장사현 수비 · 적이 다리 앞에</span>{chip("AI 1", "")}</div>'
              f'<div style="padding:6px 8px 0">{full}</div>'
              f'<div style="padding:4px 8px 0;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:11px">누른 자리 확대 — 깃발 · 칸 · 성문을 눌러 고른다</span>{zoom}</div>'
              f'<div style="display:flex;gap:4px;padding:6px 8px 4px">{sq}</div>'
-             f'<div style="padding:0 8px"><span class="t2" style="font-size:12px">중앙 하후돈 · 성 안 · <span class="ms">명령 받음</span> · 성문은 수비만 연다</span></div>'
+             f'<div style="padding:0 8px"><span class="t2" style="font-size:12px">중앙 하후돈 · 성 안 · <span class="ms">명령 받음</span> · 성문 여닫기는 서버 대기</span></div>'
              + cmdbar(mobile=True))
     page31('V31K6MBattleLive.dc.html', 'K6 실시간 전투 — 성새전(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
@@ -826,7 +828,7 @@ def board_mbattlelive_units():
     rx, ry, rw, rh = (-zox / zs) * fs, (-zoy / zs) * fs, (374 / zs) * fs, (300 / zs) * fs
     full = iso_board('siege', 374, 191, fs, 0, 0, SIEGE_UNITS, small=True,
                      extra=f'<span style="position:absolute;left:{rx:.0f}px;top:{ry:.0f}px;width:{rw:.0f}px;height:{rh:.0f}px;border:2px solid #ffd36d"></span>')
-    zoom = iso_board('siege', 374, 300, zs, zox, zoy, SIEGE_UNITS, [(28, 52, 'sel', '')], gate=(31, 42, '닫힘'), sprite_kind=SIEGE_KIND)
+    zoom = iso_board('siege', 374, 300, zs, zox, zoy, SIEGE_UNITS, [(28, 52, 'sel', '')], gate=(31, 42, '막힘 · HP [값]'), sprite_kind=SIEGE_KIND)
     inner = (f'<div style="height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #3d4740">'
              f'<span class="mono bz" style="font-size:20px;font-weight:700">3:12</span><span class="t2" style="font-size:12px;flex:1">성새전 · 장사현 수비</span>{chip("B안", "info")}</div>'
              f'<div style="padding:6px 8px 0">{full}</div>'
