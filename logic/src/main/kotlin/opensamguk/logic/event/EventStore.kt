@@ -51,6 +51,21 @@ class EventStore {
     private var nextId = 1
     private var mutationSink: ((Mutation) -> Unit)? = null
 
+    /** Preserve dispatched rows while keeping consumed serial IDs above the rollback boundary. */
+    class Checkpoint internal constructor(
+        internal val owner: EventStore,
+        internal val rows: LinkedHashMap<Int, EventRow>,
+    )
+
+    fun checkpoint(): Checkpoint = Checkpoint(this, LinkedHashMap(rows))
+
+    fun restore(checkpoint: Checkpoint) {
+        require(checkpoint.owner === this) { "event checkpoint belongs to a different store" }
+        rows.clear()
+        rows.putAll(checkpoint.rows)
+        // Keep nextId: a failed unit must not reuse a serial ID already observed by its actions.
+    }
+
     fun bindMutationSink(sink: (Mutation) -> Unit) {
         mutationSink = sink
     }
