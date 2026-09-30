@@ -1,10 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { Chip, Panel } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
-import { campaignHref } from '@/lib/campaign-screens';
+import CampaignLink from './CampaignLink';
 import { useGameSession } from '@/lib/campaign-session';
 
 /**
@@ -12,7 +11,7 @@ import { useGameSession } from '@/lib/campaign-session';
  * 출병 명령(배치), 발령(조정 결정), 계책 손패(계책). 방침·공사는 입력이 아직 없어 싣지 않는다.
  */
 export default function StandingBar() {
-    const { serverId, isCampaignWorld, generalId } = useGameSession();
+    const { isCampaignWorld, generalId } = useGameSession();
     const deploy = useCampaignRead((id) => api.deployOptions(id));
     const dispatches = useCampaignRead((id) => api.dispatchPending(id));
     const hand = useCampaignRead((id, signal) => api.stratagemHand(id, signal));
@@ -36,9 +35,9 @@ export default function StandingBar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 12, color: 'var(--muted)', whiteSpace: 'nowrap' }}>걸려 있는 것</span>
                 {items.map((item) => (
-                    <Link key={item.key} className="os-button os-button--ghost os-button--sm" href={campaignHref(item.slug, serverId)}>
+                    <CampaignLink key={item.key} className="os-button os-button--ghost os-button--sm" slug={item.slug}>
                         {item.label}
-                    </Link>
+                    </CampaignLink>
                 ))}
                 {toMe ? <Chip tone="rust">{`내 응답 필요 ${toMe}`}</Chip> : null}
             </div>

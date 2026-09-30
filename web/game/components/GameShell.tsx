@@ -1,14 +1,13 @@
 'use client';
 
-import Link from 'next/link';
 import { Chip } from '@opensamguk/ui';
 import {
     CAMPAIGN_INPUT_TABS,
     CAMPAIGN_HUB_SLUG,
-    campaignHref,
     campaignTabLanding,
     type InputTab,
 } from '../lib/campaign-screens';
+import CampaignLink from './campaign/CampaignLink';
 import { Blocked, campaignBlockReason } from './campaign/GameStates';
 import { useRenown } from '../lib/campaign-reads';
 import { useGameSession } from '../lib/campaign-session';
@@ -37,7 +36,7 @@ export interface GameShellProps {
  */
 export default function GameShell({ title, tab, showBack = true, requiresHwiha = true, children }: GameShellProps) {
     const session = useGameSession();
-    const { frontInfo, serverId } = session;
+    const { frontInfo } = session;
     const renown = useRenown();
     const generalName = frontInfo?.general.name ?? null;
     const allegiance = frontInfo?.nation?.name ?? '재야';
@@ -47,9 +46,9 @@ export default function GameShell({ title, tab, showBack = true, requiresHwiha =
             <div className={styles.head}>
                 <div className={styles.left}>
                     {showBack ? (
-                        <Link className="os-button os-button--ghost os-button--sm" href={campaignHref(CAMPAIGN_HUB_SLUG, serverId)}>
+                        <CampaignLink className="os-button os-button--ghost os-button--sm" slug={CAMPAIGN_HUB_SLUG}>
                             ← 작전실
-                        </Link>
+                        </CampaignLink>
                     ) : null}
                     <span className={styles.title}>{title}</span>
                     <nav className={styles.tabs} aria-label="입력 여섯 가지">
@@ -68,14 +67,14 @@ export default function GameShell({ title, tab, showBack = true, requiresHwiha =
                                 );
                             }
                             return (
-                                <Link
+                                <CampaignLink
                                     key={t}
                                     className={`${styles.tab}${on ? ` ${styles.tabOn}` : ''}`}
-                                    href={campaignHref(landing.slug, serverId)}
+                                    slug={landing.slug}
                                     aria-current={on ? 'page' : undefined}
                                 >
                                     {t}
-                                </Link>
+                                </CampaignLink>
                             );
                         })}
                     </nav>
