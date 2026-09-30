@@ -21,7 +21,7 @@
 import os
 import re
 
-V31_VERSION = '3.1.2'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813
+V31_VERSION = '3.1.3'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5
 
 from v3common import *  # noqa: F401,F403 — CSS · V3CSS · sec · kv · icon · IC · cat · CATS · res · RES · LOGO …
 from v3common import CSS, V3CSS, IC, P, LOGO, LOGO_M, apply_terms, icon, sec, kv, cat, CATS, res
@@ -44,6 +44,17 @@ except ImportError:  # v31assets.py 가 아직 이 브랜치에 없으면 그림
     PT = {k: '' for k in ('jojo', 'hahoudon', 'sunuk', 'heojeo', 'join', 'ijeon')}
     ART, FIELD, MAP = {}, '', {}
     HAVE_ASSETS = False
+try:  # 로고 — 기존 public/logo-wordmark.png(1200×448)를 줄여 올린 캔버스 그림. 구현 때는 public 파일을 그대로 쓴다.
+    from v31assets import LOGO as LOGO_SRC
+except ImportError:
+    LOGO_SRC = ''
+
+
+def logo(h=28):
+    """워드마크(ADR-049 규칙 6 — 그림 로고만). 그림 id 가 없으면 점선 자리 표시."""
+    if LOGO_SRC:
+        return f'<img src="{LOGO_SRC}" alt="오픈삼국" style="height:{h}px;width:auto;display:block;flex-shrink:0">'
+    return LOGO if h >= 28 else LOGO_M
 
 # ------------------------------------------------------------------ 토큰(제품 web/shared/src/tokens.css 이름과 같게 옮긴다)
 # 브레이크포인트 3단: 모바일 < 768 ≤ 태블릿 < 1200 ≤ 데스크톱. 화면별 임의 px 금지.
@@ -273,7 +284,7 @@ def topbar31(title, practice=False, season_dot=False, season_open=False, tablet=
            if practice else '')
     return (f'<header style="height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px 0 16px;border-bottom:1px solid #3d4740;'
             f'background:linear-gradient(180deg,#232a26,#1b201d);flex-shrink:0">'
-            f'<div style="display:flex;align-items:center;gap:14px;min-width:0">{LOGO}<h1 class="serif" style="margin:0;font-size:18px;font-weight:900;white-space:nowrap">{title}</h1></div>'
+            f'<div style="display:flex;align-items:center;gap:14px;min-width:0">{logo(28)}<h1 class="serif" style="margin:0;font-size:18px;font-weight:900;white-space:nowrap">{title}</h1></div>'
             f'<div style="display:flex;align-items:center;gap:6px">{season_chip(dot=season_dot, pressed=season_open)}{nxt}{tut}'
             f'<button type="button" class="ibtn" aria-label="서신 2통 — 서신 서랍">{icon("mail")}<span class="badge">2</span></button>'
             f'<button type="button" class="ibtn" aria-label="이 화면 도움말">{icon("help")}</button>'
@@ -282,7 +293,7 @@ def topbar31(title, practice=False, season_dot=False, season_open=False, tablet=
 
 def mtop31(title=None, back=None, season_dot=False):
     left = (f'<a href="#" class="ibtn" aria-label="{back}로 돌아가기">{icon("back")}</a><span class="serif" style="font-size:17px;font-weight:900;white-space:nowrap">{title}</span>'
-            if back else f'{LOGO_M}{season_chip("봄 · 3월 중순", dot=season_dot)}')
+            if back else f'{logo(24)}{season_chip("봄 · 3월 중순", dot=season_dot)}')
     return (f'<header style="height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 0 12px;border-bottom:1px solid #3d4740;background:#1b201d">'
             f'<div style="display:flex;align-items:center;gap:8px;min-width:0">{left}</div>'
             f'<div style="display:flex;gap:6px"><button type="button" class="ibtn" aria-label="서신 2통 — 서신 시트">{icon("mail")}<span class="badge">2</span></button>'
@@ -896,13 +907,13 @@ def gw_topbar(state='in', on='로비', admin=True, transparent=False):
         nav = ''
         right = btn('회원가입' if state == 'login' else '로그인', 'sm', href='#')
     return (f'<header style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 8px 0 16px;{bg};position:relative;z-index:2">'
-            f'{LOGO}<span class="chip info">공개 알파</span>{nav}<div style="margin-left:auto;display:flex;align-items:center;gap:8px">{right}</div></header>')
+            f'{logo(28)}<span class="chip info">공개 알파</span>{nav}<div style="margin-left:auto;display:flex;align-items:center;gap:8px">{right}</div></header>')
 
 
 def gw_mtop(transparent=False):
     bg = 'background:rgba(12,15,14,.74)' if transparent else 'background:#1b201d;border-bottom:1px solid #3d4740'
     return (f'<header style="height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 0 12px;{bg};position:relative;z-index:2">'
-            f'<div style="display:flex;align-items:center;gap:8px">{LOGO_M}<span class="chip info">공개 알파</span></div>'
+            f'<div style="display:flex;align-items:center;gap:8px">{logo(24)}<span class="chip info">공개 알파</span></div>'
             f'<button type="button" class="btn sm" aria-haspopup="dialog" style="background:rgba(20,24,22,.9)">{icon("menu", 18)}메뉴</button></header>')
 
 
@@ -915,7 +926,7 @@ def gw_menu_sheet(admin=True):
 def entry_topbar(server='pep', gen='1기', date='200년 3월 중순'):
     """입장 머리줄(EntryHeader) 48 — 레일 없음(장수가 생긴 뒤에만 메뉴가 뜻이 있다)."""
     return (f'<header style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">'
-            f'{LOGO}<span class="serif" style="font-size:17px;font-weight:900">{server}</span>{chip(gen)}{chip(date)}'
+            f'{logo(28)}<span class="serif" style="font-size:17px;font-weight:900">{server}</span>{chip(gen)}{chip(date)}'
             f'<div style="margin-left:auto;display:flex;gap:6px">{btn("로비로", "sm", "lobby", href="#")}{ibtn("help", "이 화면 도움말")}</div></header>')
 
 
