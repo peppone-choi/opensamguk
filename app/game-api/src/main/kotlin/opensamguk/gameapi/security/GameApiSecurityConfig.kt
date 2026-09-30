@@ -39,6 +39,9 @@ class GameApiSecurityConfig {
             .logout { it.disable() }
             .authorizeHttpRequests { auth ->
                 auth
+                    // K4-21: 공개 이름표는 이 두 경로의 GET만 허용한다.
+                    .requestMatchers(HttpMethod.GET, "/api/map/provinces/names", "/api/map/provinces/names/v1").permitAll()
+                    .requestMatchers("/api/map/provinces/names", "/api/map/provinces/names/v1").denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
