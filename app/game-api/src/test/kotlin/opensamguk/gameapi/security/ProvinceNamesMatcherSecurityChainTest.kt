@@ -57,7 +57,8 @@ class ProvinceNamesMatcherSecurityChainTest {
     @RestController
     class DispatchProbe(private val reader: ReadProbe) {
         // Deliberately accepts all methods: removing denyAll must reach this probe and fail the test.
-        @RequestMapping("/api/map/provinces/names", "/api/map/provinces/names/v1")
+        @RequestMapping(value = ["/api/map/provinces/names", "/api/map/provinces/names/v1"],
+            produces = ["application/json;charset=UTF-8"])
         fun names() = reader.read()
 
         @RequestMapping("/api/map/provinces/names-extra", "/api/map/provinces/names/v1/extra")
