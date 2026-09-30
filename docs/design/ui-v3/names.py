@@ -80,3 +80,17 @@ if __name__ == '__main__':
     import sys
     for n in sys.argv[1:]:
         print(n, ko(n, '?'), source(n))
+
+
+# 관직 한글 표기(K8 설계서 §2.5, K0 확정 2026-09-30). 서버 officeName 은 한자로 온다(docs/development/fixtures/court-local-offices.json).
+# 중앙 관직 22종(data/curated/han/imperial-central-offices.json)은 읽기를 확인한 뒤 더한다.
+OFFICE_KO = {'刺史': '자사', '州牧': '주목', '太守': '태수', '國相': '국상', '縣令': '현령', '縣長': '현장', '侯國相': '후국상'}
+
+
+def office_ko(name, default=None):
+    """관직 한자 → 화면 한글. 표에 없으면 default(없으면 KeyError) — 지어서 읽지 않는다."""
+    if name in OFFICE_KO:
+        return OFFICE_KO[name]
+    if default is not None:
+        return default
+    raise KeyError(name)

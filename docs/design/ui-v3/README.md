@@ -18,6 +18,8 @@ python3 boards_v3_shell.py   # project/V3*.dc.html 을 만든다
 | `v3map.py` | 작전실 지도 개략도. 국가색은 의미색과 겹치지 않는 예시 색이다 |
 | `v3common.py` | v3 공용: 셸 하나, 메뉴 한 벌(`NAV`), 모바일 탭, 사유 시트, 자원색, 기록 5분류 |
 | `boards_*.py` | 묶음별 보드 |
+| `v31system.py` | **v3.1 디자인 시스템(전 페이지 설계 공용)**: 셸 v3.1 · 부품 · 상태 · 명령 흐름 · 지도 대상 고르기 · 내 위치 · 사람 고르기. 설계 레인은 `from v31system import *`. 부품 id 는 `PARTS`, 규칙은 `RULES`. `python3 v31system.py` → `project/V31System*.dc.html` |
+| `v31assets.py` | v3.1 캔버스(KCFDJTVgSGFa9N4qzrQ6By) 그림 id(K0 관리). 없으면 v31system 이 그림 자리를 점선 상자로 그린다 |
 
 이미지(초상·카드 그림)는 아티팩트 저장소의 `/_blob/…` 참조라 이 저장소에서는 그려지지 않는다.
 
@@ -26,6 +28,7 @@ python3 boards_v3_shell.py   # project/V3*.dc.html 을 만든다
 | 묶음 | 보드 | 상태 |
 |---|---|---|
 | 1 셸·메뉴·작전실·시스템 | V3WarRoom, V3WarRoomTablet, V3MWarRoom, V3MSheet, V3MReason, V3MMenu, V3Nav, V3System | 승인(2026-09-26) |
+| 시스템 v3.1(전 페이지 설계 공용) | V31SystemIndex · Nav · Shell · Tokens · Parts · MParts · Page · MPage · Command · MCommand · MCommandArgs · MapPick · MMapPick · MapModes · Marker · MMarker · People · MPeople · States · MStates · MNotFound · Banner · MBanner · MMaint · Season · MSeason | 잠금 초안(2026-09-30) — 전 페이지와 함께 한 번 승인 |
 
 ## 규칙
 
