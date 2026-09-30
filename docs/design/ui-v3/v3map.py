@@ -85,4 +85,3 @@ def mapsvg(viewbox,fs=13,sel='guandu',supply=False,vision=False,admin=False,sub=
     o.append(f'<g><circle cx="470" cy="195" r="13" fill="#0c0f0e" stroke="#7aa7c7" stroke-width="2" stroke-dasharray="4 3"></circle><path d="M462 195c3-5 13-5 16 0c-3 5-13 5-16 0M463 203L477 187" fill="none" stroke="#7aa7c7" stroke-width="1.8"></path><text x="488" y="192" font-size="{fs-1}" fill="#7aa7c7" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">설치 · 매복</text>'+(f'<text x="488" y="{192+fs+2}" font-size="{fs-2}" fill="#8a8477" stroke="#0c0f0e" stroke-width="3" paint-order="stroke">나에게만 보인다</text>' if sub else '')+'</g>')
     o.append('</svg>')
     return ''.join(o)
-

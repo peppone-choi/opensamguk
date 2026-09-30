@@ -42,9 +42,10 @@ class Scenario3190SeedTest {
         assertEquals(42, scenario.units.size)
         assertEquals(6, scenario.personBonds.values.sumOf { it.size })
         assertTrue(scenario.personBonds.values.flatten().all { it.evidenceIds == setOf("novel:三國演義:第一回") })
-        assertEquals(1447, cities.size)
+        // 2026-09-27 1428 판: 중복 합성 城 23곳을 거두고 동명 실결손 4곳을 더했다(창고는 promote_3190 --rewarehouse).
+        assertEquals(1428, cities.size)
         val warehouses = assertNotNull(scenario.warehouses).warehouses
-        assertEquals(1301, warehouses.size)
+        assertEquals(1282, warehouses.size)
         assertEquals(21, warehouses.values.count { stock ->
             stock.money > 0 || stock.grain > 0 || stock.iron > 0 || stock.timber > 0 || stock.horses > 0 })
         assertEquals(169000L, warehouses.values.sumOf { it.money })

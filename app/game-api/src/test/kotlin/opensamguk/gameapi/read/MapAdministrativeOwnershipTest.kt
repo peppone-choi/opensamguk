@@ -252,7 +252,8 @@ class MapAdministrativeOwnershipTest {
             val snapshot = projection.project(scenarioCode.toString(), emptyList())
             // 2026-09-16 1098: + 平陰 省 1 + 수·진·관 거점 省 73 = 1,594.
             // 2026-09-21 #848 한반도 임시 거점 정리: 1,558 → data/map/han-tiles.json provinceRecords 1,374.
-            assertEquals(1_627, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 4배 지도 구역 재편 후
+            // 2026-09-27 1428 판: 중복 합성 城 23곳의 省을 거두고 동명 실결손 4곳의 省을 더해 1,627 → 1,608.
+            assertEquals(1_608, snapshot.provinceOccupancy.size, "scenario $scenarioCode provinces")  // 4배 지도 구역 재편 후
             assertEquals(jurisdictionIds, snapshot.jurisdictionOwnership.map { it.jurisdictionId }.toSet(),
                 "scenario $scenarioCode jurisdictions")
             // 2026-09-21 #848: 176 → commanderyRecords 173.

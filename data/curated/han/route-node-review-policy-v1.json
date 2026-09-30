@@ -1,7 +1,7 @@
 {
   "expectedSelection": {
-    "routeNodeCount": 1447,
-    "hhsAdministrativeBindingCount": 1127,
+    "routeNodeCount": 1428,
+    "hhsAdministrativeBindingCount": 1108,
     "externalHistoricalBindingCount": 0,
     "overlayUniqueCount": 723,
     "reviewedAmbiguousCount": 50,
@@ -10,7 +10,7 @@
     "polityPresenceCount": 0,
     "remoteGateCount": 0,
     "frontierCountyClaimCount": 51,
-    "gapCountyClaimCount": 278,
+    "gapCountyClaimCount": 259,
     "vacatedCountyLocationClaimCount": 1,
     "reviewedSourceClaimBindingCount": 320
   },
@@ -29,7 +29,7 @@
     "administrativeCatalogSha256": "28594ebd84922fd4b6deb571e699bf0a31f4a60157ac10804d09330f72b5235a",
     "candidateManifest": {
       "path": "data/curated/han/route-node-selection-candidates-v1.json",
-      "sha256": "88012864bd95a5edb4979c479f8d15fd825e49a5d583430f9678408ce953c19f"
+      "sha256": "95002e2fff0b38940d1512ce9d4c9654e80d934f026a13b482dc6d0d2cf96c2b"
     },
     "coordinateOverlaySha256": "4b45abdfb311373144ee0b24076e46439f5db08b4165a00b83c217d2379c8e88",
     "locationAdjudications": {
@@ -38,15 +38,15 @@
     },
     "locationClaims": {
       "path": "data/curated/han/route-node-source-claims-v1.json",
-      "sha256": "fbf782ecfe93780dbfc5f859f2471dc69b806d17396df70a30d154f21c373049"
+      "sha256": "9928b64b2047c3dc66005cd2f6c69ca853d1971db8b7935dce1be1670ea4a1ee"
     },
     "routeNodeKeyRegistry": {
       "path": "data/curated/han/route-node-key-registry-v1.json",
-      "sha256": "28f853dbb6bb29d9531ca209e7dfd532fa90789ac5eb1a97e54f3d5cca497c2e"
+      "sha256": "11361213d62433d27085510e4587390f819db97be138f34e6544523f98b1ba7b"
     },
     "jurisdictionRouteClaims": {
       "path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
-      "sha256": "2c2513a1681f240d5131c3a3a8a65a5c167ab9788f8507075d020daf7b6d24b5"
+      "sha256": "afd94cd0b0487dff69a387468b612c8aea1381b63d47973e2ffef5e578f4d5f5"
     },
     "strategicSiteRouteClaims": {
       "path": "data/curated/han/route-node-strategic-site-claims-v1.json",
@@ -383,9 +383,9 @@
     {
       "batchId": "w1-gap-county-location",
       "criteria": "HHS gap county identity (gap-counties-v1) with APPROVED W0_ROUTE_NODE_PLACE_IDENTITY_ONLY point claim",
-      "expectedCount": 278,
+      "expectedCount": 259,
       "reviewState": "APPROVED",
-      "selectionRationale": "郡國志 항목에 대응하는 게임 城 279곳이다. 기존 56곳은 사료 판정과 좌표를 갖췄다. 추가 223곳은 사용자 승인 인공 격자로, 역사적 존속이나 실제 縣治 좌표를 뜻하지 않는다. 각 행의 위치 근거는 gap-counties-v1 에 있다."
+      "selectionRationale": "郡國志 항목에 대응하는 게임 城 260곳이다. 62곳은 좌표 출처를 갖췄다. 198곳은 사용자 승인 인공 격자로, 역사적 존속이나 실제 縣治 좌표를 뜻하지 않는다. 합성 23곳은 지도에 다른 이름으로 이미 있는 縣이라 2026-09-27 거뒀다. 각 행의 위치 근거는 gap-counties-v1 에 있다."
     }
   ],
   "status": "APPROVED",

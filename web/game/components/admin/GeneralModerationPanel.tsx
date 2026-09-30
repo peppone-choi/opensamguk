@@ -6,6 +6,7 @@ import GameCard from '@/components/GameCard';
 import { api } from '@/lib/api';
 import type { AdminBlockedWrite, AdminGeneralModerationResponse, AdminGeneralModerationRow } from '@/lib/api';
 import { useTurnRefresh } from '@/hooks/useTurnRefresh';
+import { ReasonTooltip } from '@opensamguk/ui';
 
 function errorText(e: unknown, fallback = '데이터를 불러올 수 없습니다.'): string {
     const msg = e instanceof Error ? e.message : '';
@@ -23,6 +24,15 @@ function optionClass(g: AdminGeneralModerationRow): string | undefined {
     return classes.length > 0 ? classes.join(' ') : undefined;
 }
 
+function messageBlocked(action: AdminBlockedWrite | undefined, selectedCount: number): boolean {
+    return selectedCount === 0 || !action?.enabled || !action?.code;
+}
+
+function messageBlockedReason(action: AdminBlockedWrite | undefined, selectedCount: number): string {
+    if (selectedCount === 0) return '받을 장수를 먼저 고르세요';
+    return action?.reason || '지금은 보낼 수 없습니다';
+}
+
 function ActionButtons({
     actions,
     disabled,
@@ -34,16 +44,22 @@ function ActionButtons({
 }) {
     return (
         <div className="u-row-sm">
-            {actions.map((a) => (
-                <button
-                    key={a.label}
-                    disabled={disabled || !a.enabled || !a.code}
-                    title={a.enabled ? a.reason : a.reason}
-                    onClick={() => onAction(a)}
-                >
-                    {a.label}
-                </button>
-            ))}
+            {actions.map((a) => {
+                // 막힌 조작은 누르면 사유가 열린다(title 전용 금지). 처리 중(disabled)만 잠깐 네이티브로 막는다.
+                const blocked = !a.enabled || !a.code;
+                const button = (
+                    <button
+                        key={a.label}
+                        type="button"
+                        disabled={disabled && !blocked}
+                        aria-disabled={blocked ? true : undefined}
+                        onClick={() => { if (!blocked) onAction(a); }}
+                    >
+                        {a.label}
+                    </button>
+                );
+                return blocked ? <ReasonTooltip key={a.label} reason={a.reason || '지금은 쓸 수 없습니다'}>{button}</ReasonTooltip> : button;
+            })}
         </div>
     );
 }
@@ -196,18 +212,15 @@ export default function GeneralModerationPanel() {
                                         maxLength={255}
                                         className="adm-console-input"
                                     />
-                                    <button
-                                        disabled={
-                                            actionLoading != null ||
-                                            selected.length === 0 ||
-                                            !data.selectedActions[15]?.enabled ||
-                                            !data.selectedActions[15]?.code
-                                        }
-                                        title={data.selectedActions[15]?.reason}
-                                        onClick={() => runAction(data.selectedActions[15])}
-                                    >
-                                        {actionLoading === data.selectedActions[15]?.code ? '처리 중...' : '메세지 전달'}
-                                    </button>
+                                    {messageBlocked(data.selectedActions[15], selected.length) ? (
+                                        <ReasonTooltip reason={messageBlockedReason(data.selectedActions[15], selected.length)}>
+                                            <button type="button" aria-disabled="true">메세지 전달</button>
+                                        </ReasonTooltip>
+                                    ) : (
+                                        <button type="button" disabled={actionLoading != null} onClick={() => runAction(data.selectedActions[15])}>
+                                            {actionLoading === data.selectedActions[15]?.code ? '처리 중...' : '메세지 전달'}
+                                        </button>
+                                    )}
                                 </section>
                             </div>
                         </div>

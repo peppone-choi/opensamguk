@@ -26,9 +26,9 @@ class WarehouseSeedIT {
         ScenarioJson.loadMapCities(checkNotNull(javaClass.classLoader.getResourceAsStream("map/han-world-v3.json"))
             .bufferedReader().use { it.readText() })
     }
-    // Fresh 1447 seeds select map4; an unpinned resolver intentionally selects the old live release.
+    // Fresh seeds on the live 1428 map resolve to the 1428 release (the only one with that roster).
     private val bundle by lazy {
-        val variant = opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4
+        val variant = opensamguk.logic.world.WorldMapVariant.V3_1428
         WorldArtifactsResolver(root).artifacts(variant)
     }
     private val counties get() = bundle.projection.administrativeCountyIds.sorted()

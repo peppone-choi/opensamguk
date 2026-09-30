@@ -61,7 +61,8 @@ class CorpsEncounterRecorder(
         }
         val value = encounter.toMetaValue()
         val deployment = EncounterDeployment.defaultMetaValue(encounter, cells,
-            if (world.getState().worldMapVariant == WorldMapVariant.V3_1447_MAP4)
+            // 1428 is built on the Map4 grid (see PhaseBoundary), so it needs the same centred frontline.
+            if (world.getState().worldMapVariant.let { it == WorldMapVariant.V3_1447_MAP4 || it == WorldMapVariant.V3_1428 })
                 EncounterDeployment.RULE_VERSION else EncounterDeployment.LEGACY_RULE_VERSION)
         val projection = requireNotNull(DeploymentExecutor(world, recorder, topology, metrics).projection())
         val relations = EncounterRelations.capture(encounter, projection,

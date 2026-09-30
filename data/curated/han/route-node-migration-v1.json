@@ -3116,25 +3116,11 @@
       "routeNodeKey": "52fff14c-d180-4883-88d5-c705d92d4758"
     },
     {
-      "administrativeUnitId": "hhs:109:河南尹:018",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1399,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-018",
-      "routeNodeKey": "7ad6abd6-c1c1-49ed-8880-a5c30cf57d16"
-    },
-    {
       "administrativeUnitId": "hhs:109:河南尹:021",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1400,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0000-021",
       "routeNodeKey": "f836065f-0e94-469d-bcaa-c26d8bf09704"
-    },
-    {
-      "administrativeUnitId": "hhs:109:河東郡:011",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1401,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0002-011",
-      "routeNodeKey": "0ad94e43-27e7-416a-8ad1-607062dd22fa"
     },
     {
       "administrativeUnitId": "hhs:109:河東郡:018",
@@ -3144,25 +3130,11 @@
       "routeNodeKey": "0a3a7911-357d-4215-8a63-827846d33841"
     },
     {
-      "administrativeUnitId": "hhs:109:京兆尹:002",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1403,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0004-002",
-      "routeNodeKey": "b19201fb-c971-4832-899d-cd9af179eb0e"
-    },
-    {
       "administrativeUnitId": "hhs:109:京兆尹:010",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1404,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0004-010",
       "routeNodeKey": "43242af1-3233-4236-a75f-b6659b095a48"
-    },
-    {
-      "administrativeUnitId": "hhs:109:左馮翊:001",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1405,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0005-001",
-      "routeNodeKey": "10773a49-a015-477a-9432-8483233f5a21"
     },
     {
       "administrativeUnitId": "hhs:109:左馮翊:004",
@@ -3191,13 +3163,6 @@
       "newCityId": 1409,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0006-002",
       "routeNodeKey": "da68f6f9-96fd-4f0f-85e3-3f02266b4184"
-    },
-    {
-      "administrativeUnitId": "hhs:109:右扶風:003",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1410,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0006-003",
-      "routeNodeKey": "4aa4c06b-177c-4b16-8b7d-4e51b8f2e52e"
     },
     {
       "administrativeUnitId": "hhs:109:右扶風:004",
@@ -3284,13 +3249,6 @@
       "routeNodeKey": "a238ba22-2352-417e-831f-09564fb84dd5"
     },
     {
-      "administrativeUnitId": "hhs:110:梁國:004",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1423,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0009-004",
-      "routeNodeKey": "ec400dd2-a883-4a2c-bb91-fbae7498aab7"
-    },
-    {
       "administrativeUnitId": "hhs:110:梁國:007",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1424,
@@ -3326,39 +3284,11 @@
       "routeNodeKey": "7e59cc95-7d23-4bde-94c6-93b9b5f7986f"
     },
     {
-      "administrativeUnitId": "hhs:110:魯國:001",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1429,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0012-001",
-      "routeNodeKey": "e9e923c7-14fc-4318-bdf4-2e1b07c6a97a"
-    },
-    {
       "administrativeUnitId": "hhs:110:魯國:002",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1430,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0012-002",
       "routeNodeKey": "6be43a58-573d-4d74-a853-2144b74dd617"
-    },
-    {
-      "administrativeUnitId": "hhs:110:魏郡:011",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1431,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0013-011",
-      "routeNodeKey": "2664b725-cdab-4cb9-8198-805152f85e1e"
-    },
-    {
-      "administrativeUnitId": "hhs:110:鉅鹿郡:001",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1432,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0014-001",
-      "routeNodeKey": "884471a0-9b23-45b9-a8ed-c67132a58afe"
-    },
-    {
-      "administrativeUnitId": "hhs:110:鉅鹿郡:015",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1433,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0014-015",
-      "routeNodeKey": "dc5b27b4-cdba-4899-bc79-add3bca2a858"
     },
     {
       "administrativeUnitId": "hhs:110:常山國:003",
@@ -3373,20 +3303,6 @@
       "newCityId": 1435,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0017-012",
       "routeNodeKey": "9c61ceb3-d49e-44ca-b75d-3dc80dc8dbe1"
-    },
-    {
-      "administrativeUnitId": "hhs:110:河閒國:003",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1436,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0018-003",
-      "routeNodeKey": "3f064496-1f4c-49f4-b692-9263c416911e"
-    },
-    {
-      "administrativeUnitId": "hhs:110:勃海郡:008",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1437,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0021-008",
-      "routeNodeKey": "8dd5b70a-81c3-4aad-a904-d5380ff56cc8"
     },
     {
       "administrativeUnitId": "hhs:111:陳留郡:010",
@@ -3424,13 +3340,6 @@
       "routeNodeKey": "73c4f21b-bdb7-42ea-949b-050550b5611e"
     },
     {
-      "administrativeUnitId": "hhs:111:泰山郡:006",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1443,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0026-006",
-      "routeNodeKey": "48e10967-bc13-486a-81cd-3d2a54b4dd29"
-    },
-    {
       "administrativeUnitId": "hhs:111:山陽郡:010",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1444,
@@ -3445,25 +3354,11 @@
       "routeNodeKey": "d6563a11-f113-4114-a0cf-10d7fc0dd4b3"
     },
     {
-      "administrativeUnitId": "hhs:111:東海郡:001",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1446,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-001",
-      "routeNodeKey": "e4866a9e-1d43-4d76-a7c1-db1874bc4167"
-    },
-    {
       "administrativeUnitId": "hhs:111:東海郡:008",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1447,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-008",
       "routeNodeKey": "6f37f8ca-2bcd-4b76-bd28-c4b5ce7bab7a"
-    },
-    {
-      "administrativeUnitId": "hhs:111:東海郡:010",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1448,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0030-010",
-      "routeNodeKey": "6bd0b232-28f4-42ff-9828-60e437aa58c6"
     },
     {
       "administrativeUnitId": "hhs:111:琅邪國:005",
@@ -3485,13 +3380,6 @@
       "newCityId": 1451,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0032-007",
       "routeNodeKey": "f80b2b31-27ce-4814-9553-87af1ce3c644"
-    },
-    {
-      "administrativeUnitId": "hhs:111:廣陵郡:009",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1452,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0033-009",
-      "routeNodeKey": "bbff1121-73ad-4dfc-bb9a-3ab2b8a96d2b"
     },
     {
       "administrativeUnitId": "hhs:111:下邳國:008",
@@ -3550,13 +3438,6 @@
       "routeNodeKey": "fe4b1742-bb3c-4b61-a80a-b1a48aec9aed"
     },
     {
-      "administrativeUnitId": "hhs:112:東萊郡:003",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1461,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0039-003",
-      "routeNodeKey": "94e6257c-cf7a-47a0-b889-e5909f760f3d"
-    },
-    {
       "administrativeUnitId": "hhs:112:東萊郡:012",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1462,
@@ -3606,13 +3487,6 @@
       "routeNodeKey": "307d62d2-967c-4322-8866-fd39197cb253"
     },
     {
-      "administrativeUnitId": "hhs:112:豫章郡:005",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1469,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0053-005",
-      "routeNodeKey": "4c5ae91d-a9ec-4d44-89bb-2b653bbd84e7"
-    },
-    {
       "administrativeUnitId": "hhs:113:巴郡:008",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1470,
@@ -3620,25 +3494,11 @@
       "routeNodeKey": "1b5f2e72-5941-453c-b816-5ba5900524e8"
     },
     {
-      "administrativeUnitId": "hhs:113:巴郡:012",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1471,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0055-012",
-      "routeNodeKey": "c75a9663-e952-4d06-a9a4-bc6791b80268"
-    },
-    {
       "administrativeUnitId": "hhs:113:廣漢郡:007",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1472,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0056-007",
       "routeNodeKey": "e4bff14f-7945-4e42-9bac-2f6700df4f27"
-    },
-    {
-      "administrativeUnitId": "hhs:113:廣漢郡:008",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1473,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0056-008",
-      "routeNodeKey": "f75eaa39-0d88-4067-8d20-94622a1b0ba8"
     },
     {
       "administrativeUnitId": "hhs:113:廣漢郡:010",
@@ -3653,13 +3513,6 @@
       "newCityId": 1475,
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0057-007",
       "routeNodeKey": "97dc1160-f1ec-4dda-aea6-5bb5685fcb91"
-    },
-    {
-      "administrativeUnitId": "hhs:113:蜀郡:009",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1476,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0057-009",
-      "routeNodeKey": "192bf958-b76c-4834-855d-5798fe09f6f8"
     },
     {
       "administrativeUnitId": "hhs:113:牂牁郡:002",
@@ -4418,13 +4271,6 @@
       "routeNodeKey": "6aa01f42-33e7-496f-a87c-b8bc08b3cb2d"
     },
     {
-      "administrativeUnitId": "hhs:113:鴈門郡:005",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1585,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-005",
-      "routeNodeKey": "247b8fc0-3f24-42e5-b909-b21620134cf8"
-    },
-    {
       "administrativeUnitId": "hhs:113:鴈門郡:009",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1586,
@@ -4544,13 +4390,6 @@
       "routeNodeKey": "3077e958-435f-4772-9c8a-8a09cfc70123"
     },
     {
-      "administrativeUnitId": "hhs:113:上谷郡:008",
-      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
-      "newCityId": 1603,
-      "physicalPlaceRef": "curated:gap-county-v1:gc-g0090-008",
-      "routeNodeKey": "212556b8-c328-433f-bac9-4312be67c7a5"
-    },
-    {
       "administrativeUnitId": "hhs:113:漁陽郡:001",
       "disposition": "APPENDED_NEW_WORLD_IDENTITY",
       "newCityId": 1604,
@@ -4668,6 +4507,34 @@
       "physicalPlaceRef": "curated:gap-county-v1:gc-g0097-005",
       "routeNodeKey": "c693c674-46d4-44f5-846c-8baf0344646c",
       "sourceClaimId": "han-jurisdiction-route-claim-v1-gc-g0097-005"
+    },
+    {
+      "administrativeUnitId": "hhs:111:山陽郡:004",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1621,
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0028-004",
+      "routeNodeKey": "87b79c2a-df13-47a6-95d5-f306295d10ba"
+    },
+    {
+      "administrativeUnitId": "hhs:112:南陽郡:033",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1622,
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0041-033",
+      "routeNodeKey": "907be425-ca7d-47b4-ab74-2fa04c35152e"
+    },
+    {
+      "administrativeUnitId": "hhs:113:上郡:010",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1623,
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0080-010",
+      "routeNodeKey": "001f0a04-471e-44e2-8cdc-6afb491549e3"
+    },
+    {
+      "administrativeUnitId": "hhs:113:鴈門郡:011",
+      "disposition": "APPENDED_NEW_WORLD_IDENTITY",
+      "newCityId": 1624,
+      "physicalPlaceRef": "curated:gap-county-v1:gc-g0085-011",
+      "routeNodeKey": "3c88fa7d-0ad2-4087-b9c6-cdca996b3413"
     }
   ],
   "migrationId": "han-route-node-migration-v1",
@@ -10192,11 +10059,11 @@
     }
   ],
   "schemaVersion": 1,
-  "sourceCandidateSha256": "88012864bd95a5edb4979c479f8d15fd825e49a5d583430f9678408ce953c19f",
+  "sourceCandidateSha256": "95002e2fff0b38940d1512ce9d4c9654e80d934f026a13b482dc6d0d2cf96c2b",
   "sourceSelectionId": "han-route-node-selection-v1",
-  "sourceSelectionSha256": "8e5163b9c9bd7bd6c9edccc2c625211fad9b79440aa8cbd929560b795ddd9d1e",
+  "sourceSelectionSha256": "33837957575531fa1f12a4f1577b5ad2ce587fbe41fdd4feec27592831b602e6",
   "summary": {
-    "appendedIdentityCount": 667,
+    "appendedIdentityCount": 648,
     "displayNameChangeCount": 778,
     "historicalBindingCorrectionCount": 25,
     "numericCityIdChangeCount": 0,

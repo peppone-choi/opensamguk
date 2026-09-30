@@ -55,7 +55,8 @@ class GapLedgerTest(unittest.TestCase):
                             if c["status"] == "ABSENT"))
         ledger = json.loads((B.ROOT / "data/curated/han/gap-counties-v1.json").read_text(encoding="utf-8"))
         synthetic = [row for row in ledger["counties"] if row.get("positionStatus") == "SYNTHETIC"]
-        self.assertEqual(len(synthetic), 223)
+        # 223 − 중복 은퇴 23 − 출처 좌표로 바꾼 4 + 동명 실결손 중 합성 칸 2(候官·成都) = 198 (2026-09-27)
+        self.assertEqual(len(synthetic), 198)
         self.assertEqual({row["sourceName"] for row in ledger["excludedUndeciphered"]},
                          {name for _, name in absent})
         self.assertTrue(all(not row["syntheticPlacement"]["historicalSeatClaim"] for row in synthetic))

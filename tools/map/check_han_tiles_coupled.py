@@ -150,6 +150,9 @@ COUPLED: tuple[Coupled, ...] = (
     Coupled("junguozhi-county-gaps", ("data/curated/han/junguozhi-county-gaps-v1.json",),
             _t("tools/map/build_junguozhi_county_gaps.py", "--check"),
             _t("tools/map/build_junguozhi_county_gaps.py")),
+    # 2026-09-27 동명 재심·중복 은퇴 판정이 결손 縣 원장에 적용된 상태인지(사람 판정 원장 → gap-counties).
+    Coupled("gap-county-recheck-applied", ("data/curated/han/gap-counties-v1.json",),
+            _t("tools/map/apply_gap_county_recheck.py", "--check"), None),
     Coupled("administrative-topology-audit", ("data/curated/han/administrative-topology-audit-v1.json",),
             _t("tools/map/audit_han_admin_topology.py", "--check"),
             _t("tools/map/audit_han_admin_topology.py")),
@@ -189,6 +192,18 @@ COUPLED: tuple[Coupled, ...] = (
             _t("tools/map/build_province_relocations.py", "--write")),
     Coupled("release-1447-map4-bundle", ("data/map/han-world-v3-1447-map4-artifacts-v1/catalog.json",),
             _t("tools/map/build_han_1447_map4_bundle.py", "--check"), None),
+    # 2026-09-27 부터 현재 입력을 재현하는 판은 1428 이다. 1447·1447-map4 는 무결성만 본다.
+    Coupled("release-1428-bundle", ("data/map/han-world-v3-1428-artifacts-v1/catalog.json",),
+            _t("tools/map/build_han_1428_bundle.py", "--check"), None),
+    # 지도 설계 층(ADR-LITE-044 개정 2): 강 선은 NE 10m(gitignored)이 있는 로컬에서만 --build 로 다시 새긴다.
+    # 위치 수정·산 편집·피복은 커밋된 강 선과 han-tiles·월드·길·경제 입력에서 결정적으로 다시 만든다.
+    Coupled("map-design-layer",
+            ("data/curated/han/map-design/rivers-v1.json", "data/curated/han/map-design/placements-v1.json",
+             "data/curated/han/map-design/roads-v1.json", "data/curated/han/map-design/waters-v1.json",
+             "data/curated/han/map-design/mountains-v1.json", "data/curated/han/map-design/relief-v1.json",
+             "data/curated/han/map-design/landcover-v1.json"),
+            _t("tools/map/build_map_design.py", "--check"),
+            _t("tools/map/build_map_design.py", "--write-derived")),
 )
 
 

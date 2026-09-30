@@ -9,13 +9,13 @@
  },
  "source": "後漢書 郡國志 郡 戶數 × 治所 위계·지형 가중; 三國志 東夷傳 권역 경제는 historicalEconomy로 별도 보존",
  "counts": {
-  "jurisdictions": 1447,
-  "withHouseholds": 1289,
-  "zeroArable": 288,
-  "zeroFieldCapacity": 288,
+  "jurisdictions": 1428,
+  "withHouseholds": 1270,
+  "zeroArable": 281,
+  "zeroFieldCapacity": 281,
   "zeroMarketCapacity": 0,
-  "missingInputRows": 432,
-  "commanderiesWithFewerCountiesThanSource": 10
+  "missingInputRows": 425,
+  "commanderiesWithFewerCountiesThanSource": 11
  },
  "limitations": [
   "보존 단위는 永和五年(140) 郡이다. 타일의 郡이 그 뒤 분할돼 縣이 줄었으면(南陽郡 37城→29縣, 떨어져 나간 襄陽·章陵·南鄉郡 縣은 NO_SOURCE_HOUSEHOLDS) 郡 戶數 전부가 남은 縣에 몰린다 — 타일에 縣이 빠져서 적은 郡(汝南郡 37→26 등)도 같은 쏠림을 겪는다. counts.commanderiesWithFewerCountiesThanSource 는 원인을 가리지 않고 타일 縣 수 < 郡國志 城數 인 郡을 센 값이다."
@@ -1606,37 +1606,13 @@
    ]
   },
   {
-   "jurisdictionId": "gc-g0000-018",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
    "jurisdictionId": "gc-g0000-021",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
   },
   {
-   "jurisdictionId": "gc-g0002-011",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
-   "jurisdictionId": "gc-g0004-002",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
    "jurisdictionId": "gc-g0004-010",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
-   "jurisdictionId": "gc-g0005-001",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
@@ -1667,12 +1643,6 @@
   },
   {
    "jurisdictionId": "gc-g0006-002",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
-   "jurisdictionId": "gc-g0006-003",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
@@ -1726,12 +1696,6 @@
    ]
   },
   {
-   "jurisdictionId": "gc-g0013-011",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
    "jurisdictionId": "gc-g0015-003",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
@@ -1739,6 +1703,12 @@
   },
   {
    "jurisdictionId": "gc-g0041-032",
+   "states": [
+    "GEOMETRIC_ZERO_FIELD_CAPACITY"
+   ]
+  },
+  {
+   "jurisdictionId": "gc-g0041-033",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
@@ -1768,19 +1738,7 @@
    ]
   },
   {
-   "jurisdictionId": "gc-g0056-008",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
    "jurisdictionId": "gc-g0057-007",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
-   "jurisdictionId": "gc-g0057-009",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
@@ -1859,12 +1817,6 @@
   },
   {
    "jurisdictionId": "gc-g0062-005",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
-   "jurisdictionId": "gc-g0063-001",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
@@ -2236,6 +2188,12 @@
    ]
   },
   {
+   "jurisdictionId": "gc-g0080-010",
+   "states": [
+    "GEOMETRIC_ZERO_FIELD_CAPACITY"
+   ]
+  },
+  {
    "jurisdictionId": "gc-g0081-002",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
@@ -2368,12 +2326,6 @@
    ]
   },
   {
-   "jurisdictionId": "gc-g0085-005",
-   "states": [
-    "GEOMETRIC_ZERO_FIELD_CAPACITY"
-   ]
-  },
-  {
    "jurisdictionId": "gc-g0085-007",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
@@ -2387,6 +2339,12 @@
   },
   {
    "jurisdictionId": "gc-g0085-010",
+   "states": [
+    "GEOMETRIC_ZERO_FIELD_CAPACITY"
+   ]
+  },
+  {
+   "jurisdictionId": "gc-g0085-011",
    "states": [
     "GEOMETRIC_ZERO_FIELD_CAPACITY"
    ]
@@ -3209,8 +3167,8 @@
    "fieldCapacityCells": 1648,
    "terrainScore": 1648.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
+   "connections": 7,
+   "marketCapacityCells": 7,
    "households": 13319,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -3420,17 +3378,17 @@
    "cityId": 858,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 3744,
+   "landCells": 3776,
    "terrainCells": {
-    "MOUNTAIN": 3744
+    "MOUNTAIN": 3776
    },
    "arableCells": 0,
    "fieldCapacityCells": 0,
-   "terrainScore": 374.4,
+   "terrainScore": 377.6,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
-   "households": 5037,
+   "connections": 8,
+   "marketCapacityCells": 8,
+   "households": 5081,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -3496,8 +3454,8 @@
    "fieldCapacityCells": 2320,
    "terrainScore": 2467.2,
    "wetAdjacentCells": 204,
-   "connections": 6,
-   "marketCapacityCells": 210,
+   "connections": 7,
+   "marketCapacityCells": 211,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS"
   },
@@ -3563,8 +3521,8 @@
    "fieldCapacityCells": 1200,
    "terrainScore": 1569.6,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
+   "connections": 8,
+   "marketCapacityCells": 8,
    "households": 23272,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -3586,8 +3544,8 @@
    "fieldCapacityCells": 128,
    "terrainScore": 972.8,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 14424,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -3743,8 +3701,8 @@
    "fieldCapacityCells": 32,
    "terrainScore": 270.4,
    "wetAdjacentCells": 8,
-   "connections": 10,
-   "marketCapacityCells": 18,
+   "connections": 9,
+   "marketCapacityCells": 17,
    "households": 476,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -4072,17 +4030,17 @@
    "cityId": 100,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 688,
+   "landCells": 640,
    "terrainCells": {
-    "PLAIN": 688
+    "PLAIN": 640
    },
-   "arableCells": 688,
-   "fieldCapacityCells": 688,
-   "terrainScore": 688.0,
+   "arableCells": 640,
+   "fieldCapacityCells": 640,
+   "terrainScore": 640.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
-   "households": 8346,
+   "connections": 7,
+   "marketCapacityCells": 7,
+   "households": 7764,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -4230,8 +4188,8 @@
    "fieldCapacityCells": 4800,
    "terrainScore": 4840.0,
    "wetAdjacentCells": 369,
-   "connections": 6,
-   "marketCapacityCells": 375,
+   "connections": 5,
+   "marketCapacityCells": 374,
    "households": 32878,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -4361,7 +4319,7 @@
    "wetAdjacentCells": 160,
    "connections": 8,
    "marketCapacityCells": 168,
-   "households": 10747,
+   "households": 10748,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -4487,8 +4445,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 614.4,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
+   "connections": 8,
+   "marketCapacityCells": 8,
    "households": 373,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -4975,7 +4933,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 32737,
+   "households": 32738,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5055,18 +5013,18 @@
    "cityId": 960,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 784,
+   "landCells": 928,
    "terrainCells": {
-    "PLAIN": 704,
+    "PLAIN": 848,
     "RIVER": 80
    },
-   "arableCells": 704,
-   "fieldCapacityCells": 704,
-   "terrainScore": 744.0,
+   "arableCells": 848,
+   "fieldCapacityCells": 848,
+   "terrainScore": 888.0,
    "wetAdjacentCells": 135,
-   "connections": 6,
-   "marketCapacityCells": 141,
-   "households": 3247,
+   "connections": 5,
+   "marketCapacityCells": 140,
+   "households": 3875,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -5151,8 +5109,8 @@
    "fieldCapacityCells": 1376,
    "terrainScore": 1376.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 6004,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -7616,18 +7574,18 @@
    "cityId": 910,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 5376,
+   "landCells": 5440,
    "terrainCells": {
-    "PLAIN": 5360,
+    "PLAIN": 5424,
     "RIVER": 16
    },
-   "arableCells": 5360,
-   "fieldCapacityCells": 5360,
-   "terrainScore": 5368.0,
+   "arableCells": 5424,
+   "fieldCapacityCells": 5424,
+   "terrainScore": 5432.0,
    "wetAdjacentCells": 86,
-   "connections": 10,
-   "marketCapacityCells": 96,
-   "households": 17335,
+   "connections": 9,
+   "marketCapacityCells": 95,
+   "households": 17542,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -7835,8 +7793,8 @@
    "fieldCapacityCells": 400,
    "terrainScore": 400.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 5883,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -7858,7 +7816,7 @@
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 9317,
+   "households": 9316,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8131,7 +8089,7 @@
    "wetAdjacentCells": 51,
    "connections": 7,
    "marketCapacityCells": 58,
-   "households": 30620,
+   "households": 25055,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8163,17 +8121,17 @@
    "cityId": 905,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 1200,
+   "landCells": 1264,
    "terrainCells": {
-    "PLAIN": 1200
+    "PLAIN": 1264
    },
-   "arableCells": 1200,
-   "fieldCapacityCells": 1200,
-   "terrainScore": 1200.0,
+   "arableCells": 1264,
+   "fieldCapacityCells": 1264,
+   "terrainScore": 1264.0,
    "wetAdjacentCells": 64,
-   "connections": 7,
-   "marketCapacityCells": 71,
-   "households": 21872,
+   "connections": 6,
+   "marketCapacityCells": 70,
+   "households": 18851,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8195,7 +8153,7 @@
    "wetAdjacentCells": 0,
    "connections": 3,
    "marketCapacityCells": 3,
-   "households": 3355,
+   "households": 2745,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8238,7 +8196,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 21289,
+   "households": 17419,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8592,17 +8550,17 @@
    "cityId": 120,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 688,
+   "landCells": 720,
    "terrainCells": {
-    "PLAIN": 688
+    "PLAIN": 720
    },
-   "arableCells": 688,
-   "fieldCapacityCells": 688,
-   "terrainScore": 688.0,
+   "arableCells": 720,
+   "fieldCapacityCells": 720,
+   "terrainScore": 720.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
-   "households": 8346,
+   "connections": 5,
+   "marketCapacityCells": 5,
+   "households": 8734,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -8915,8 +8873,8 @@
    "fieldCapacityCells": 1296,
    "terrainScore": 1296.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
+   "connections": 5,
+   "marketCapacityCells": 5,
    "households": 19405,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -10174,18 +10132,18 @@
    "cityId": 583,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 944,
+   "landCells": 1008,
    "terrainCells": {
     "BASIN": 896,
-    "PLATEAU": 48
+    "PLATEAU": 112
    },
    "arableCells": 896,
    "fieldCapacityCells": 896,
-   "terrainScore": 910.4,
+   "terrainScore": 929.6,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
-   "households": 11951,
+   "connections": 5,
+   "marketCapacityCells": 5,
+   "households": 12204,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10229,7 +10187,7 @@
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 35465,
+   "households": 35466,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -10402,7 +10360,7 @@
    "wetAdjacentCells": 272,
    "connections": 5,
    "marketCapacityCells": 277,
-   "households": 1923,
+   "households": 1924,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11252,7 +11210,7 @@
    "commanderyId": "PARENT-0012",
    "commanderyNameCh": "魯國",
    "cityId": 874,
-   "cityLevel": 10,
+   "cityLevel": 6,
    "isCommanderySeat": true,
    "landCells": 512,
    "terrainCells": {
@@ -11262,9 +11220,9 @@
    "fieldCapacityCells": 512,
    "terrainScore": 512.0,
    "wetAdjacentCells": 0,
-   "connections": 8,
-   "marketCapacityCells": 8,
-   "households": 20243,
+   "connections": 7,
+   "marketCapacityCells": 7,
+   "households": 33028,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11304,8 +11262,8 @@
    "fieldCapacityCells": 336,
    "terrainScore": 336.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 11149,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -11338,17 +11296,17 @@
    "cityId": 147,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 624,
+   "landCells": 688,
    "terrainCells": {
-    "PLAIN": 624
+    "PLAIN": 688
    },
-   "arableCells": 624,
-   "fieldCapacityCells": 624,
-   "terrainScore": 624.0,
+   "arableCells": 688,
+   "fieldCapacityCells": 688,
+   "terrainScore": 688.0,
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 24671,
+   "households": 22191,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11367,9 +11325,9 @@
    "fieldCapacityCells": 112,
    "terrainScore": 112.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
-   "households": 4429,
+   "connections": 4,
+   "marketCapacityCells": 4,
+   "households": 3613,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11390,7 +11348,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 7592,
+   "households": 6194,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11411,7 +11369,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 7000,
+   "households": 5728,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11432,7 +11390,7 @@
    "wetAdjacentCells": 23,
    "connections": 6,
    "marketCapacityCells": 29,
-   "households": 4667,
+   "households": 3819,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11453,7 +11411,7 @@
    "wetAdjacentCells": 0,
    "connections": 4,
    "marketCapacityCells": 4,
-   "households": 6125,
+   "households": 5012,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11474,7 +11432,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 11374,
+   "households": 9307,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11642,7 +11600,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 6327,
+   "households": 5162,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11716,17 +11674,17 @@
    "cityId": 906,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 320,
+   "landCells": 384,
    "terrainCells": {
-    "PLAIN": 320
+    "PLAIN": 384
    },
-   "arableCells": 320,
-   "fieldCapacityCells": 320,
-   "terrainScore": 320.0,
+   "arableCells": 384,
+   "fieldCapacityCells": 384,
+   "terrainScore": 384.0,
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 5833,
+   "households": 5727,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -11893,8 +11851,8 @@
    "fieldCapacityCells": 400,
    "terrainScore": 400.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
+   "connections": 5,
+   "marketCapacityCells": 5,
    "households": 7663,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -12541,7 +12499,7 @@
    "wetAdjacentCells": 0,
    "connections": 10,
    "marketCapacityCells": 10,
-   "households": 32421,
+   "households": 32420,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -12618,19 +12576,19 @@
    "cityId": 423,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 3104,
+   "landCells": 3040,
    "terrainCells": {
-    "MOUNTAIN": 1392,
+    "MOUNTAIN": 1328,
     "PLAIN": 1472,
     "RIVER": 240
    },
    "arableCells": 1472,
    "fieldCapacityCells": 1472,
-   "terrainScore": 1731.2,
+   "terrainScore": 1724.8,
    "wetAdjacentCells": 390,
-   "connections": 8,
-   "marketCapacityCells": 398,
-   "households": 43848,
+   "connections": 9,
+   "marketCapacityCells": 399,
+   "households": 43686,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13004,8 +12962,8 @@
    "fieldCapacityCells": 3792,
    "terrainScore": 7779.2,
    "wetAdjacentCells": 394,
-   "connections": 13,
-   "marketCapacityCells": 407,
+   "connections": 12,
+   "marketCapacityCells": 406,
    "households": 1580,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -13234,19 +13192,19 @@
    "cityId": 11,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 1504,
+   "landCells": 1568,
    "terrainCells": {
-    "MOUNTAIN": 912,
+    "MOUNTAIN": 976,
     "PLAIN": 480,
     "PLATEAU": 112
    },
    "arableCells": 480,
    "fieldCapacityCells": 480,
-   "terrainScore": 604.8,
+   "terrainScore": 611.2,
    "wetAdjacentCells": 0,
    "connections": 9,
    "marketCapacityCells": 9,
-   "households": 1679,
+   "households": 1697,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13267,7 +13225,7 @@
    "wetAdjacentCells": 4,
    "connections": 7,
    "marketCapacityCells": 11,
-   "households": 2026,
+   "households": 1907,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13278,18 +13236,18 @@
    "cityId": 21,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 2032,
+   "landCells": 2096,
    "terrainCells": {
-    "PLATEAU": 1984,
+    "PLATEAU": 2048,
     "RIVER": 48
    },
    "arableCells": 0,
    "fieldCapacityCells": 0,
-   "terrainScore": 619.2,
+   "terrainScore": 638.4,
    "wetAdjacentCells": 97,
-   "connections": 7,
-   "marketCapacityCells": 104,
-   "households": 5226,
+   "connections": 6,
+   "marketCapacityCells": 103,
+   "households": 5070,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13311,7 +13269,7 @@
    "wetAdjacentCells": 97,
    "connections": 5,
    "marketCapacityCells": 102,
-   "households": 1567,
+   "households": 1475,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13356,7 +13314,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 1986,
+   "households": 1869,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13377,7 +13335,7 @@
    "wetAdjacentCells": 0,
    "connections": 14,
    "marketCapacityCells": 14,
-   "households": 9600,
+   "households": 9035,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13398,7 +13356,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 560,
+   "households": 561,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -13409,20 +13367,20 @@
    "cityId": 772,
    "cityLevel": 11,
    "isCommanderySeat": true,
-   "landCells": 31984,
+   "landCells": 31840,
    "terrainCells": {
-    "DESERT": 10992,
+    "DESERT": 10848,
     "PLAIN": 1664,
     "PLATEAU": 19040,
     "RIVER": 288
    },
    "arableCells": 1664,
    "fieldCapacityCells": 1664,
-   "terrainScore": 7739.84,
+   "terrainScore": 7736.96,
    "wetAdjacentCells": 472,
    "connections": 17,
    "marketCapacityCells": 489,
-   "households": 4692,
+   "households": 4688,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14076,8 +14034,8 @@
    "fieldCapacityCells": 208,
    "terrainScore": 329.6,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 4435,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -14100,7 +14058,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 3795,
+   "households": 3571,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14122,7 +14080,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 1378,
+   "households": 1379,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14144,7 +14102,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 2310,
+   "households": 2174,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14265,7 +14223,7 @@
    "commanderyId": "PARENT-0005",
    "commanderyNameCh": "左馮翊",
    "cityId": 860,
-   "cityLevel": 11,
+   "cityLevel": 5,
    "isCommanderySeat": true,
    "landCells": 496,
    "terrainCells": {
@@ -14278,7 +14236,7 @@
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 2485,
+   "households": 4677,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14298,8 +14256,8 @@
    "fieldCapacityCells": 208,
    "terrainScore": 408.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 1133,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -14311,17 +14269,17 @@
    "cityId": 6,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 1424,
+   "landCells": 1536,
    "terrainCells": {
-    "MOUNTAIN": 1424
+    "MOUNTAIN": 1536
    },
    "arableCells": 0,
    "fieldCapacityCells": 0,
-   "terrainScore": 142.4,
+   "terrainScore": 153.6,
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 1917,
+   "households": 2067,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14342,7 +14300,7 @@
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 3727,
+   "households": 3508,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14365,7 +14323,7 @@
    "wetAdjacentCells": 0,
    "connections": 4,
    "marketCapacityCells": 4,
-   "households": 2620,
+   "households": 2466,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14477,8 +14435,8 @@
    "fieldCapacityCells": 7392,
    "terrainScore": 8076.8,
    "wetAdjacentCells": 839,
-   "connections": 12,
-   "marketCapacityCells": 851,
+   "connections": 11,
+   "marketCapacityCells": 850,
    "households": 14183,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -14697,8 +14655,8 @@
    "fieldCapacityCells": 192,
    "terrainScore": 192.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
+   "connections": 4,
+   "marketCapacityCells": 4,
    "households": 5750,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -14710,17 +14668,17 @@
    "cityId": 139,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 816,
+   "landCells": 880,
    "terrainCells": {
-    "PLAIN": 816
+    "PLAIN": 880
    },
-   "arableCells": 816,
-   "fieldCapacityCells": 816,
-   "terrainScore": 816.0,
+   "arableCells": 880,
+   "fieldCapacityCells": 880,
+   "terrainScore": 880.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
-   "households": 23449,
+   "connections": 6,
+   "marketCapacityCells": 6,
+   "households": 25288,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -14920,17 +14878,17 @@
    "cityId": 81,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 736,
+   "landCells": 800,
    "terrainCells": {
-    "PLAIN": 736
+    "PLAIN": 800
    },
-   "arableCells": 736,
-   "fieldCapacityCells": 736,
-   "terrainScore": 736.0,
+   "arableCells": 800,
+   "fieldCapacityCells": 800,
+   "terrainScore": 800.0,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
-   "households": 10824,
+   "connections": 8,
+   "marketCapacityCells": 8,
+   "households": 11765,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15004,17 +14962,17 @@
    "cityId": 142,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 688,
+   "landCells": 624,
    "terrainCells": {
-    "PLAIN": 688
+    "PLAIN": 624
    },
-   "arableCells": 688,
-   "fieldCapacityCells": 688,
-   "terrainScore": 688.0,
+   "arableCells": 624,
+   "fieldCapacityCells": 624,
+   "terrainScore": 624.0,
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 19771,
+   "households": 17932,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15033,8 +14991,8 @@
    "fieldCapacityCells": 400,
    "terrainScore": 400.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 11495,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -15046,17 +15004,17 @@
    "cityId": 119,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 976,
+   "landCells": 912,
    "terrainCells": {
-    "PLAIN": 976
+    "PLAIN": 912
    },
-   "arableCells": 976,
-   "fieldCapacityCells": 976,
-   "terrainScore": 976.0,
+   "arableCells": 912,
+   "fieldCapacityCells": 912,
+   "terrainScore": 912.0,
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 11839,
+   "households": 11063,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -15138,8 +15096,8 @@
    "fieldCapacityCells": 288,
    "terrainScore": 288.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
+   "connections": 4,
+   "marketCapacityCells": 4,
    "households": 8277,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -15224,8 +15182,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 171.2,
    "wetAdjacentCells": 0,
-   "connections": 10,
-   "marketCapacityCells": 10,
+   "connections": 9,
+   "marketCapacityCells": 9,
    "households": 3280,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -15460,7 +15418,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 11340,
+   "households": 11341,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16678,7 +16636,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 33843,
+   "households": 33844,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -16698,8 +16656,8 @@
    "fieldCapacityCells": 32,
    "terrainScore": 62.4,
    "wetAdjacentCells": 4,
-   "connections": 6,
-   "marketCapacityCells": 10,
+   "connections": 5,
+   "marketCapacityCells": 9,
    "households": 2341,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -16719,8 +16677,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 70.4,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 2641,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -16732,19 +16690,19 @@
    "cityId": 58,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 432,
+   "landCells": 496,
    "terrainCells": {
-    "MOUNTAIN": 368,
+    "MOUNTAIN": 432,
     "PLAIN": 32,
     "RIVER": 32
    },
    "arableCells": 32,
    "fieldCapacityCells": 32,
-   "terrainScore": 84.8,
+   "terrainScore": 91.2,
    "wetAdjacentCells": 47,
-   "connections": 10,
-   "marketCapacityCells": 57,
-   "households": 3181,
+   "connections": 9,
+   "marketCapacityCells": 56,
+   "households": 3421,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17625,7 +17583,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 12741,
+   "households": 12742,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17878,8 +17836,8 @@
    "fieldCapacityCells": 368,
    "terrainScore": 368.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 11535,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -17920,9 +17878,9 @@
    "fieldCapacityCells": 496,
    "terrainScore": 496.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
-   "households": 16458,
+   "connections": 8,
+   "marketCapacityCells": 8,
+   "households": 16457,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -17933,17 +17891,17 @@
    "cityId": 243,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 496,
+   "landCells": 432,
    "terrainCells": {
-    "PLAIN": 496
+    "PLAIN": 432
    },
-   "arableCells": 496,
-   "fieldCapacityCells": 496,
-   "terrainScore": 496.0,
+   "arableCells": 432,
+   "fieldCapacityCells": 432,
+   "terrainScore": 432.0,
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 16458,
+   "households": 14334,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18025,8 +17983,8 @@
    "fieldCapacityCells": 1088,
    "terrainScore": 1088.0,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
+   "connections": 8,
+   "marketCapacityCells": 8,
    "households": 41119,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -18038,17 +17996,17 @@
    "cityId": 226,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 224,
+   "landCells": 272,
    "terrainCells": {
-    "PLAIN": 224
+    "PLAIN": 272
    },
-   "arableCells": 224,
-   "fieldCapacityCells": 224,
-   "terrainScore": 224.0,
+   "arableCells": 272,
+   "fieldCapacityCells": 272,
+   "terrainScore": 272.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
-   "households": 5128,
+   "connections": 5,
+   "marketCapacityCells": 5,
+   "households": 5694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18576,7 +18534,7 @@
    "wetAdjacentCells": 41,
    "connections": 4,
    "marketCapacityCells": 45,
-   "households": 5923,
+   "households": 5924,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18587,17 +18545,17 @@
    "cityId": 373,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 2832,
+   "landCells": 2976,
    "terrainCells": {
-    "PLAIN": 2832
+    "PLAIN": 2976
    },
-   "arableCells": 2832,
-   "fieldCapacityCells": 2832,
-   "terrainScore": 2832.0,
-   "wetAdjacentCells": 204,
-   "connections": 3,
-   "marketCapacityCells": 207,
-   "households": 20556,
+   "arableCells": 2976,
+   "fieldCapacityCells": 2976,
+   "terrainScore": 2976.0,
+   "wetAdjacentCells": 222,
+   "connections": 2,
+   "marketCapacityCells": 224,
+   "households": 21601,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -18721,8 +18679,8 @@
    "fieldCapacityCells": 1344,
    "terrainScore": 1344.0,
    "wetAdjacentCells": 43,
-   "connections": 5,
-   "marketCapacityCells": 48,
+   "connections": 4,
+   "marketCapacityCells": 47,
    "households": 9756,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -19080,7 +19038,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 10207,
+   "households": 8352,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19183,8 +19141,8 @@
    "fieldCapacityCells": 608,
    "terrainScore": 608.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 560,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -19225,8 +19183,8 @@
    "fieldCapacityCells": 1408,
    "terrainScore": 1408.0,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
+   "connections": 8,
+   "marketCapacityCells": 8,
    "households": 2829,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -19238,17 +19196,17 @@
    "cityId": 898,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 848,
+   "landCells": 896,
    "terrainCells": {
-    "PLAIN": 848
+    "PLAIN": 896
    },
-   "arableCells": 848,
-   "fieldCapacityCells": 848,
-   "terrainScore": 848.0,
+   "arableCells": 896,
+   "fieldCapacityCells": 896,
+   "terrainScore": 896.0,
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 780,
+   "households": 824,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19288,8 +19246,8 @@
    "fieldCapacityCells": 960,
    "terrainScore": 960.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 1929,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -19322,17 +19280,17 @@
    "cityId": 269,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 1312,
+   "landCells": 1408,
    "terrainCells": {
-    "PLAIN": 1312
+    "PLAIN": 1408
    },
-   "arableCells": 1312,
-   "fieldCapacityCells": 1312,
-   "terrainScore": 1312.0,
+   "arableCells": 1408,
+   "fieldCapacityCells": 1408,
+   "terrainScore": 1408.0,
    "wetAdjacentCells": 0,
    "connections": 8,
    "marketCapacityCells": 8,
-   "households": 1206,
+   "households": 1295,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19341,7 +19299,7 @@
    "commanderyId": "PARENT-0030",
    "commanderyNameCh": "東海郡",
    "cityId": 907,
-   "cityLevel": 10,
+   "cityLevel": 7,
    "isCommanderySeat": false,
    "landCells": 1152,
    "terrainCells": {
@@ -19353,7 +19311,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 20997,
+   "households": 45814,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19417,7 +19375,7 @@
    "wetAdjacentCells": 0,
    "connections": 4,
    "marketCapacityCells": 4,
-   "households": 7592,
+   "households": 6194,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19757,7 +19715,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 3297,
+   "households": 3015,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19787,7 +19745,7 @@
    "commanderyId": "PARENT-0014",
    "commanderyNameCh": "鉅鹿郡",
    "cityId": 879,
-   "cityLevel": 11,
+   "cityLevel": 6,
    "isCommanderySeat": true,
    "landCells": 288,
    "terrainCells": {
@@ -19799,7 +19757,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 6593,
+   "households": 18083,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -19969,7 +19927,7 @@
    "wetAdjacentCells": 0,
    "connections": 11,
    "marketCapacityCells": 11,
-   "households": 6983,
+   "households": 6984,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20023,17 +19981,17 @@
    "cityId": 707,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 1248,
+   "landCells": 1312,
    "terrainCells": {
-    "PLAIN": 1248
+    "PLAIN": 1312
    },
-   "arableCells": 1248,
-   "fieldCapacityCells": 1248,
-   "terrainScore": 1248.0,
+   "arableCells": 1312,
+   "fieldCapacityCells": 1312,
+   "terrainScore": 1312.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
-   "households": 891,
+   "connections": 5,
+   "marketCapacityCells": 5,
+   "households": 936,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20094,8 +20052,8 @@
    "fieldCapacityCells": 544,
    "terrainScore": 544.0,
    "wetAdjacentCells": 0,
-   "connections": 8,
-   "marketCapacityCells": 8,
+   "connections": 7,
+   "marketCapacityCells": 7,
    "households": 10421,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -20180,7 +20138,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 6227,
+   "households": 5694,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20201,7 +20159,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 2564,
+   "households": 2345,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20222,7 +20180,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 10621,
+   "households": 9712,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20243,7 +20201,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 13917,
+   "households": 12726,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20296,17 +20254,17 @@
    "cityId": 217,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 608,
+   "landCells": 672,
    "terrainCells": {
-    "PLAIN": 608
+    "PLAIN": 672
    },
-   "arableCells": 608,
-   "fieldCapacityCells": 608,
-   "terrainScore": 608.0,
+   "arableCells": 672,
+   "fieldCapacityCells": 672,
+   "terrainScore": 672.0,
    "wetAdjacentCells": 0,
-   "connections": 9,
-   "marketCapacityCells": 9,
-   "households": 13917,
+   "connections": 8,
+   "marketCapacityCells": 8,
+   "households": 14065,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20700,17 +20658,17 @@
    "cityId": 201,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 2704,
+   "landCells": 2768,
    "terrainCells": {
-    "PLAIN": 2704
+    "PLAIN": 2768
    },
-   "arableCells": 2704,
-   "fieldCapacityCells": 2704,
-   "terrainScore": 2704.0,
+   "arableCells": 2768,
+   "fieldCapacityCells": 2768,
+   "terrainScore": 2768.0,
    "wetAdjacentCells": 90,
-   "connections": 8,
-   "marketCapacityCells": 98,
-   "households": 48920,
+   "connections": 7,
+   "marketCapacityCells": 97,
+   "households": 50078,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20771,8 +20729,8 @@
    "fieldCapacityCells": 608,
    "terrainScore": 608.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 4914,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -20877,8 +20835,8 @@
    "fieldCapacityCells": 1584,
    "terrainScore": 1584.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
+   "connections": 6,
+   "marketCapacityCells": 6,
    "households": 21576,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -20921,7 +20879,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 9523,
+   "households": 8707,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -20953,17 +20911,17 @@
    "cityId": 198,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 464,
+   "landCells": 528,
    "terrainCells": {
-    "PLAIN": 464
+    "PLAIN": 528
    },
-   "arableCells": 464,
-   "fieldCapacityCells": 464,
-   "terrainScore": 464.0,
+   "arableCells": 528,
+   "fieldCapacityCells": 528,
+   "terrainScore": 528.0,
    "wetAdjacentCells": 0,
-   "connections": 6,
-   "marketCapacityCells": 6,
-   "households": 3751,
+   "connections": 5,
+   "marketCapacityCells": 5,
+   "households": 4268,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21110,7 +21068,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 12158,
+   "households": 12159,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21152,7 +21110,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 14094,
+   "households": 14095,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21300,8 +21258,8 @@
    "fieldCapacityCells": 23104,
    "terrainScore": 23104.0,
    "wetAdjacentCells": 0,
-   "connections": 24,
-   "marketCapacityCells": 24,
+   "connections": 23,
+   "marketCapacityCells": 23,
    "households": 65717,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -21321,8 +21279,8 @@
    "fieldCapacityCells": 4160,
    "terrainScore": 4160.0,
    "wetAdjacentCells": 0,
-   "connections": 5,
-   "marketCapacityCells": 5,
+   "connections": 4,
+   "marketCapacityCells": 4,
    "households": 2338,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -21363,8 +21321,8 @@
    "fieldCapacityCells": 3920,
    "terrainScore": 3920.0,
    "wetAdjacentCells": 52,
-   "connections": 6,
-   "marketCapacityCells": 58,
+   "connections": 5,
+   "marketCapacityCells": 57,
    "households": 4405,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -21470,7 +21428,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 1832,
+   "households": 1675,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21491,7 +21449,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 1832,
+   "households": 1675,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21512,7 +21470,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 2564,
+   "households": 2345,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21523,17 +21481,17 @@
    "cityId": 214,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 336,
+   "landCells": 352,
    "terrainCells": {
-    "PLAIN": 336
+    "PLAIN": 352
    },
-   "arableCells": 336,
-   "fieldCapacityCells": 336,
-   "terrainScore": 336.0,
+   "arableCells": 352,
+   "fieldCapacityCells": 352,
+   "terrainScore": 352.0,
    "wetAdjacentCells": 0,
-   "connections": 7,
-   "marketCapacityCells": 7,
-   "households": 7691,
+   "connections": 6,
+   "marketCapacityCells": 6,
+   "households": 7368,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21554,7 +21512,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 4029,
+   "households": 3684,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21575,7 +21533,7 @@
    "wetAdjacentCells": 0,
    "connections": 7,
    "marketCapacityCells": 7,
-   "households": 6593,
+   "households": 6029,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21617,7 +21575,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 1832,
+   "households": 1675,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21638,7 +21596,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 2198,
+   "households": 2010,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -21659,7 +21617,7 @@
    "wetAdjacentCells": 0,
    "connections": 5,
    "marketCapacityCells": 5,
-   "households": 3297,
+   "households": 3015,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -22136,18 +22094,18 @@
    "cityId": 700,
    "cityLevel": 11,
    "isCommanderySeat": true,
-   "landCells": 3776,
+   "landCells": 3632,
    "terrainCells": {
-    "MOUNTAIN": 3088,
+    "MOUNTAIN": 2944,
     "PLAIN": 688
    },
    "arableCells": 688,
    "fieldCapacityCells": 688,
-   "terrainScore": 996.8,
+   "terrainScore": 982.4,
    "wetAdjacentCells": 0,
-   "connections": 11,
-   "marketCapacityCells": 11,
-   "households": 1880,
+   "connections": 12,
+   "marketCapacityCells": 12,
+   "households": 1853,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -22167,8 +22125,8 @@
    "fieldCapacityCells": 1216,
    "terrainScore": 1403.2,
    "wetAdjacentCells": 0,
-   "connections": 11,
-   "marketCapacityCells": 11,
+   "connections": 12,
+   "marketCapacityCells": 12,
    "households": 2646,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -22201,18 +22159,18 @@
    "cityId": 701,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 4592,
+   "landCells": 4656,
    "terrainCells": {
-    "MOUNTAIN": 4480,
+    "MOUNTAIN": 4544,
     "PLAIN": 112
    },
    "arableCells": 112,
    "fieldCapacityCells": 112,
-   "terrainScore": 560.0,
+   "terrainScore": 566.4,
    "wetAdjacentCells": 0,
-   "connections": 14,
-   "marketCapacityCells": 14,
-   "households": 1056,
+   "connections": 13,
+   "marketCapacityCells": 13,
+   "households": 1068,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -22388,7 +22346,7 @@
    "wetAdjacentCells": 0,
    "connections": 6,
    "marketCapacityCells": 6,
-   "households": 2424,
+   "households": 2425,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -22492,17 +22450,17 @@
    "cityId": 878,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 2080,
+   "landCells": 2144,
    "terrainCells": {
-    "MOUNTAIN": 2080
+    "MOUNTAIN": 2144
    },
    "arableCells": 0,
    "fieldCapacityCells": 0,
-   "terrainScore": 208.0,
+   "terrainScore": 214.4,
    "wetAdjacentCells": 0,
    "connections": 10,
    "marketCapacityCells": 10,
-   "households": 3985,
+   "households": 4108,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -22674,8 +22632,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 126.4,
    "wetAdjacentCells": 0,
-   "connections": 8,
-   "marketCapacityCells": 8,
+   "connections": 7,
+   "marketCapacityCells": 7,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS"
   },
@@ -22697,8 +22655,8 @@
    "fieldCapacityCells": 144,
    "terrainScore": 971.2,
    "wetAdjacentCells": 258,
-   "connections": 8,
-   "marketCapacityCells": 266,
+   "connections": 7,
+   "marketCapacityCells": 265,
    "households": 10217,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -23110,19 +23068,19 @@
    "cityId": 856,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 3904,
+   "landCells": 3968,
    "terrainCells": {
     "PLAIN": 1296,
-    "PLATEAU": 2416,
+    "PLATEAU": 2480,
     "RIVER": 192
    },
    "arableCells": 1296,
    "fieldCapacityCells": 1296,
-   "terrainScore": 2116.8,
+   "terrainScore": 2136.0,
    "wetAdjacentCells": 302,
    "connections": 9,
    "marketCapacityCells": 311,
-   "households": 22267,
+   "households": 22469,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -23282,20 +23240,20 @@
    "cityId": 985,
    "cityLevel": 10,
    "isCommanderySeat": true,
-   "landCells": 21312,
+   "landCells": 21232,
    "terrainCells": {
     "MOUNTAIN": 848,
-    "PLAIN": 13088,
-    "PLATEAU": 7296,
-    "RIVER": 80
+    "PLAIN": 12944,
+    "PLATEAU": 7344,
+    "RIVER": 96
    },
-   "arableCells": 13088,
-   "fieldCapacityCells": 13088,
-   "terrainScore": 15401.6,
-   "wetAdjacentCells": 109,
+   "arableCells": 12944,
+   "fieldCapacityCells": 12944,
+   "terrainScore": 15280.0,
+   "wetAdjacentCells": 136,
    "connections": 15,
-   "marketCapacityCells": 124,
-   "households": 36974,
+   "marketCapacityCells": 151,
+   "households": 36586,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -23353,18 +23311,18 @@
    "cityId": 634,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 21184,
+   "landCells": 21248,
    "terrainCells": {
-    "PLATEAU": 20528,
+    "PLATEAU": 20592,
     "RIVER": 656
    },
    "arableCells": 0,
    "fieldCapacityCells": 0,
-   "terrainScore": 6486.4,
+   "terrainScore": 6505.6,
    "wetAdjacentCells": 1053,
-   "connections": 7,
-   "marketCapacityCells": 1060,
-   "households": 96170,
+   "connections": 6,
+   "marketCapacityCells": 1059,
+   "households": 96455,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -23405,8 +23363,8 @@
    "fieldCapacityCells": 6240,
    "terrainScore": 6240.0,
    "wetAdjacentCells": 0,
-   "connections": 11,
-   "marketCapacityCells": 11,
+   "connections": 12,
+   "marketCapacityCells": 12,
    "households": 81911,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -23481,19 +23439,19 @@
    "cityId": 575,
    "cityLevel": 10,
    "isCommanderySeat": false,
-   "landCells": 6576,
+   "landCells": 6640,
    "terrainCells": {
     "BASIN": 384,
     "MOUNTAIN": 2192,
-    "PLAIN": 4000
+    "PLAIN": 4064
    },
-   "arableCells": 4384,
-   "fieldCapacityCells": 4384,
-   "terrainScore": 4603.2,
+   "arableCells": 4448,
+   "fieldCapacityCells": 4448,
+   "terrainScore": 4667.2,
    "wetAdjacentCells": 0,
-   "connections": 11,
-   "marketCapacityCells": 11,
-   "households": 26851,
+   "connections": 10,
+   "marketCapacityCells": 10,
+   "households": 27224,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -23648,8 +23606,8 @@
    "fieldCapacityCells": 144,
    "terrainScore": 3848.0,
    "wetAdjacentCells": 249,
-   "connections": 8,
-   "marketCapacityCells": 257,
+   "connections": 7,
+   "marketCapacityCells": 256,
    "households": 57053,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -23830,8 +23788,8 @@
    "fieldCapacityCells": 5120,
    "terrainScore": 6158.08,
    "wetAdjacentCells": 978,
-   "connections": 25,
-   "marketCapacityCells": 1003,
+   "connections": 24,
+   "marketCapacityCells": 1002,
    "households": 5530,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -24155,8 +24113,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 217.28,
    "wetAdjacentCells": 0,
-   "connections": 11,
-   "marketCapacityCells": 11,
+   "connections": 12,
+   "marketCapacityCells": 12,
    "households": null,
    "householdsBasis": "NO_SOURCE_HOUSEHOLDS"
   },
@@ -28501,27 +28459,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0000-018",
-   "nameCh": "新城縣",
-   "commanderyId": "PARENT-0000",
-   "commanderyNameCh": "河南尹",
-   "cityId": 1399,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "MOUNTAIN": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 6.4,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 241,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0000-021",
    "nameCh": "平縣",
    "commanderyId": "PARENT-0000",
@@ -28565,27 +28502,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0002-011",
-   "nameCh": "绛縣",
-   "commanderyId": "PARENT-0002",
-   "commanderyNameCh": "河東郡",
-   "cityId": 1401,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLATEAU": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 19.2,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 203,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0002-018",
    "nameCh": "蒲子縣",
    "commanderyId": "PARENT-0002",
@@ -28604,27 +28520,6 @@
    "connections": 3,
    "marketCapacityCells": 3,
    "households": 674,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0004-002",
-   "nameCh": "霸陵縣",
-   "commanderyId": "PARENT-0004",
-   "commanderyNameCh": "京兆尹",
-   "cityId": 1403,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 144,
-   "terrainCells": {
-    "MOUNTAIN": 144
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 14.4,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "marketCapacityCells": 4,
-   "households": 195,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -28649,27 +28544,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0005-001",
-   "nameCh": "高陵縣",
-   "commanderyId": "PARENT-0005",
-   "commanderyNameCh": "左馮翊",
-   "cityId": 1405,
-   "cityLevel": 5,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLATEAU": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 19.2,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 325,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0005-004",
    "nameCh": "祋祤縣",
    "commanderyId": "PARENT-0005",
@@ -28687,7 +28561,7 @@
    "wetAdjacentCells": 0,
    "connections": 3,
    "marketCapacityCells": 3,
-   "households": 163,
+   "households": 153,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -28708,7 +28582,7 @@
    "wetAdjacentCells": 0,
    "connections": 4,
    "marketCapacityCells": 4,
-   "households": 366,
+   "households": 344,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -28729,7 +28603,7 @@
    "wetAdjacentCells": 0,
    "connections": 3,
    "marketCapacityCells": 3,
-   "households": 366,
+   "households": 344,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -28750,7 +28624,7 @@
    "wetAdjacentCells": 0,
    "connections": 2,
    "marketCapacityCells": 2,
-   "households": 365,
+   "households": 344,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -28772,27 +28646,6 @@
    "connections": 3,
    "marketCapacityCells": 3,
    "households": 41,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0006-003",
-   "nameCh": "平陵縣",
-   "commanderyId": "PARENT-0006",
-   "commanderyNameCh": "右扶風",
-   "cityId": 1410,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "MOUNTAIN": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 6.4,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "marketCapacityCells": 4,
-   "households": 19,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29086,8 +28939,8 @@
    "fieldCapacityCells": 64,
    "terrainScore": 64.0,
    "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
+   "connections": 4,
+   "marketCapacityCells": 4,
    "households": 959,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -29176,27 +29029,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0009-004",
-   "nameCh": "碭山縣",
-   "commanderyId": "PARENT-0009",
-   "commanderyNameCh": "梁國",
-   "cityId": 1423,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 942,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0009-006",
    "nameCh": "穀熟縣",
    "commanderyId": "PARENT-0009",
@@ -29256,7 +29088,7 @@
    "wetAdjacentCells": 0,
    "connections": 2,
    "marketCapacityCells": 2,
-   "households": 2118,
+   "households": 2119,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29330,17 +29162,17 @@
    "cityId": 1427,
    "cityLevel": 11,
    "isCommanderySeat": false,
-   "landCells": 64,
+   "landCells": 144,
    "terrainCells": {
-    "PLAIN": 64
+    "PLAIN": 144
    },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
+   "arableCells": 144,
+   "fieldCapacityCells": 144,
+   "terrainScore": 144.0,
    "wetAdjacentCells": 0,
    "connections": 4,
    "marketCapacityCells": 4,
-   "households": 777,
+   "households": 1748,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29359,30 +29191,9 @@
    "fieldCapacityCells": 64,
    "terrainScore": 64.0,
    "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 1840,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0012-001",
-   "nameCh": "魯國縣",
-   "commanderyId": "PARENT-0012",
-   "commanderyNameCh": "魯國",
-   "cityId": 1429,
-   "cityLevel": 6,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
    "connections": 4,
    "marketCapacityCells": 4,
-   "households": 5062,
+   "households": 1840,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29403,70 +29214,7 @@
    "wetAdjacentCells": 0,
    "connections": 3,
    "marketCapacityCells": 3,
-   "households": 2531,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0013-011",
-   "nameCh": "沙縣",
-   "commanderyId": "PARENT-0013",
-   "commanderyNameCh": "魏郡",
-   "cityId": 1431,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "MOUNTAIN": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 6.4,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "marketCapacityCells": 4,
-   "households": 124,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0014-001",
-   "nameCh": "陶縣",
-   "commanderyId": "PARENT-0014",
-   "commanderyNameCh": "鉅鹿郡",
-   "cityId": 1432,
-   "cityLevel": 6,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 4396,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0014-015",
-   "nameCh": "南〈糸言糸〉縣",
-   "commanderyId": "PARENT-0014",
-   "commanderyNameCh": "鉅鹿郡",
-   "cityId": 1433,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "marketCapacityCells": 4,
-   "households": 1466,
+   "households": 2065,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29527,51 +29275,9 @@
    "fieldCapacityCells": 144,
    "terrainScore": 144.0,
    "wetAdjacentCells": 0,
-   "connections": 4,
-   "marketCapacityCells": 4,
-   "households": 2145,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0018-003",
-   "nameCh": "易縣",
-   "commanderyId": "PARENT-0018",
-   "commanderyNameCh": "河閒國",
-   "cityId": 1436,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 518,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0021-008",
-   "nameCh": "脩縣",
-   "commanderyId": "PARENT-0021",
-   "commanderyNameCh": "勃海郡",
-   "cityId": 1437,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
    "connections": 3,
    "marketCapacityCells": 3,
-   "households": 1159,
+   "households": 2145,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29702,27 +29408,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0026-006",
-   "nameCh": "山茌縣",
-   "commanderyId": "PARENT-0026",
-   "commanderyNameCh": "泰山郡",
-   "cityId": 1443,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 144,
-   "terrainCells": {
-    "PLAIN": 144
-   },
-   "arableCells": 144,
-   "fieldCapacityCells": 144,
-   "terrainScore": 144.0,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 133,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0028-002",
    "nameCh": "東緡縣",
    "commanderyId": "PARENT-0028",
@@ -29741,6 +29426,27 @@
    "connections": 4,
    "marketCapacityCells": 4,
    "households": 4779,
+   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
+  },
+  {
+   "jurisdictionId": "gc-g0028-004",
+   "nameCh": "髙平縣",
+   "commanderyId": "PARENT-0028",
+   "commanderyNameCh": "山陽郡",
+   "cityId": 1621,
+   "cityLevel": 10,
+   "isCommanderySeat": false,
+   "landCells": 64,
+   "terrainCells": {
+    "PLAIN": 64
+   },
+   "arableCells": 64,
+   "fieldCapacityCells": 64,
+   "terrainScore": 64.0,
+   "wetAdjacentCells": 0,
+   "connections": 4,
+   "marketCapacityCells": 4,
+   "households": 2124,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29786,27 +29492,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0030-001",
-   "nameCh": "郯縣",
-   "commanderyId": "PARENT-0030",
-   "commanderyNameCh": "東海郡",
-   "cityId": 1446,
-   "cityLevel": 7,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 3111,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0030-008",
    "nameCh": "陰平縣",
    "commanderyId": "PARENT-0030",
@@ -29824,28 +29509,7 @@
    "wetAdjacentCells": 0,
    "connections": 2,
    "marketCapacityCells": 2,
-   "households": 1167,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0030-010",
-   "nameCh": "合鄕縣",
-   "commanderyId": "PARENT-0030",
-   "commanderyNameCh": "東海郡",
-   "cityId": 1448,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 4,
-   "marketCapacityCells": 4,
-   "households": 1167,
+   "households": 955,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -29917,27 +29581,6 @@
    "commanderyId": "PARENT-0033",
    "commanderyNameCh": "廣陵郡",
    "cityId": 1361,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 208,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0033-009",
-   "nameCh": "輿縣",
-   "commanderyId": "PARENT-0033",
-   "commanderyNameCh": "廣陵郡",
-   "cityId": 1452,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 64,
@@ -30122,27 +29765,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0039-003",
-   "nameCh": "惤縣",
-   "commanderyId": "PARENT-0039",
-   "commanderyNameCh": "東萊郡",
-   "cityId": 1461,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 144,
-   "terrainCells": {
-    "PLAIN": 144
-   },
-   "arableCells": 144,
-   "fieldCapacityCells": 144,
-   "terrainScore": 144.0,
-   "wetAdjacentCells": 18,
-   "connections": 2,
-   "marketCapacityCells": 20,
-   "households": 1046,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0039-012",
    "nameCh": "葛盧縣",
    "commanderyId": "PARENT-0039",
@@ -30181,6 +29803,27 @@
    "wetAdjacentCells": 0,
    "connections": 3,
    "marketCapacityCells": 3,
+   "households": 163,
+   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
+  },
+  {
+   "jurisdictionId": "gc-g0041-033",
+   "nameCh": "成都縣",
+   "commanderyId": "PARENT-0041",
+   "commanderyNameCh": "南陽郡",
+   "cityId": 1622,
+   "cityLevel": 10,
+   "isCommanderySeat": false,
+   "landCells": 64,
+   "terrainCells": {
+    "MOUNTAIN": 64
+   },
+   "arableCells": 0,
+   "fieldCapacityCells": 0,
+   "terrainScore": 6.4,
+   "wetAdjacentCells": 0,
+   "connections": 2,
+   "marketCapacityCells": 2,
    "households": 163,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -30565,27 +30208,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0053-005",
-   "nameCh": "廬陵縣",
-   "commanderyId": "PARENT-0053",
-   "commanderyNameCh": "豫章郡",
-   "cityId": 1469,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 144,
-   "terrainCells": {
-    "PLAIN": 144
-   },
-   "arableCells": 144,
-   "fieldCapacityCells": 144,
-   "terrainScore": 144.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 629,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0055-008",
    "nameCh": "涪陵縣",
    "commanderyId": "PARENT-0055",
@@ -30607,27 +30229,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0055-012",
-   "nameCh": "充国縣",
-   "commanderyId": "PARENT-0055",
-   "commanderyNameCh": "巴郡",
-   "cityId": 1471,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 374,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0056-007",
    "nameCh": "白水縣",
    "commanderyId": "PARENT-0056",
@@ -30646,27 +30247,6 @@
    "connections": 3,
    "marketCapacityCells": 3,
    "households": 841,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0056-008",
-   "nameCh": "葭萌縣",
-   "commanderyId": "PARENT-0056",
-   "commanderyNameCh": "廣漢郡",
-   "cityId": 1473,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLATEAU": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 19.2,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 253,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -30709,27 +30289,6 @@
    "connections": 2,
    "marketCapacityCells": 2,
    "households": 642,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0057-009",
-   "nameCh": "八陵縣",
-   "commanderyId": "PARENT-0057",
-   "commanderyNameCh": "蜀郡",
-   "cityId": 1476,
-   "cityLevel": 10,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLATEAU": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 19.2,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 286,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -31140,18 +30699,17 @@
    "cityId": 1492,
    "cityLevel": 5,
    "isCommanderySeat": false,
-   "landCells": 64,
+   "landCells": 144,
    "terrainCells": {
-    "PLATEAU": 48,
-    "RIVER": 16
+    "PLAIN": 144
    },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 22.4,
-   "wetAdjacentCells": 27,
-   "connections": 3,
-   "marketCapacityCells": 30,
-   "households": 73,
+   "arableCells": 144,
+   "fieldCapacityCells": 144,
+   "terrainScore": 144.0,
+   "wetAdjacentCells": 0,
+   "connections": 2,
+   "marketCapacityCells": 2,
+   "households": 461,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -31212,8 +30770,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 19.2,
    "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
+   "connections": 2,
+   "marketCapacityCells": 2,
    "households": 153,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -32631,6 +32189,27 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
+   "jurisdictionId": "gc-g0080-010",
+   "nameCh": "候官縣",
+   "commanderyId": "PARENT-0080",
+   "commanderyNameCh": "上郡",
+   "cityId": 1623,
+   "cityLevel": 11,
+   "isCommanderySeat": false,
+   "landCells": 144,
+   "terrainCells": {
+    "DESERT": 144
+   },
+   "arableCells": 0,
+   "fieldCapacityCells": 0,
+   "terrainScore": 2.88,
+   "wetAdjacentCells": 0,
+   "connections": 2,
+   "marketCapacityCells": 2,
+   "households": 4,
+   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
+  },
+  {
    "jurisdictionId": "gc-g0081-002",
    "nameCh": "平定縣",
    "commanderyId": "PARENT-0081",
@@ -32667,8 +32246,8 @@
    "fieldCapacityCells": 0,
    "terrainScore": 6.4,
    "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
+   "connections": 2,
+   "marketCapacityCells": 2,
    "households": 4,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
@@ -33417,27 +32996,6 @@
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
-   "jurisdictionId": "gc-g0085-005",
-   "nameCh": "汪陶縣",
-   "commanderyId": "PARENT-0085",
-   "commanderyNameCh": "鴈門郡",
-   "cityId": 1585,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "MOUNTAIN": 64
-   },
-   "arableCells": 0,
-   "fieldCapacityCells": 0,
-   "terrainScore": 6.4,
-   "wetAdjacentCells": 0,
-   "connections": 3,
-   "marketCapacityCells": 3,
-   "households": 13,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
    "jurisdictionId": "gc-g0085-007",
    "nameCh": "崞縣",
    "commanderyId": "PARENT-0085",
@@ -33485,6 +33043,27 @@
    "commanderyId": "PARENT-0085",
    "commanderyNameCh": "鴈門郡",
    "cityId": 1397,
+   "cityLevel": 11,
+   "isCommanderySeat": false,
+   "landCells": 144,
+   "terrainCells": {
+    "MOUNTAIN": 144
+   },
+   "arableCells": 0,
+   "fieldCapacityCells": 0,
+   "terrainScore": 14.4,
+   "wetAdjacentCells": 0,
+   "connections": 2,
+   "marketCapacityCells": 2,
+   "households": 28,
+   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
+  },
+  {
+   "jurisdictionId": "gc-g0085-011",
+   "nameCh": "卤城縣",
+   "commanderyId": "PARENT-0085",
+   "commanderyNameCh": "鴈門郡",
+   "cityId": 1624,
    "cityLevel": 11,
    "isCommanderySeat": false,
    "landCells": 144,
@@ -33876,27 +33455,6 @@
    "connections": 2,
    "marketCapacityCells": 2,
    "households": 47,
-   "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
-  },
-  {
-   "jurisdictionId": "gc-g0090-008",
-   "nameCh": "下落縣",
-   "commanderyId": "PARENT-0090",
-   "commanderyNameCh": "上谷郡",
-   "cityId": 1603,
-   "cityLevel": 11,
-   "isCommanderySeat": false,
-   "landCells": 64,
-   "terrainCells": {
-    "PLAIN": 64
-   },
-   "arableCells": 64,
-   "fieldCapacityCells": 64,
-   "terrainScore": 64.0,
-   "wetAdjacentCells": 0,
-   "connections": 2,
-   "marketCapacityCells": 2,
-   "households": 46,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {
@@ -34765,7 +34323,7 @@
    "wetAdjacentCells": 0,
    "connections": 2,
    "marketCapacityCells": 2,
-   "households": 163,
+   "households": 153,
    "householdsBasis": "JUNGUOZHI_COMMANDERY_SPLIT"
   },
   {

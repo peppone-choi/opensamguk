@@ -20,6 +20,8 @@ import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.RankColumn
 import opensamguk.engine.turn.TurnGeneral
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.logic.input.LordStatus
 import opensamguk.logic.input.PersonPolicyState
 import opensamguk.logic.input.RuleProfile
@@ -190,6 +192,12 @@ class MakeGeneralHandler(
             generalMeta[PersonPolicyState.META_KEY] = PersonPolicyState(
                 RenownRules.INITIAL_CAPACITY, false, "opensamguk:created-general", "v1", generalId,
             ).toMetaValue()
+            if (command.userId > 0) {
+                val phase = runCatching { DelegationPhase(state.currentYear, state.currentMonth, state.currentPhase) }
+                    .getOrNull()
+                if (phase != null) generalMeta[OfflineDelegationLease.META_KEY] =
+                    OfflineDelegationLease(world.worldId.value, generalId, command.userId, phase).toMetaValue()
+            }
         }
         command.ownerName?.takeIf { it.isNotBlank() }?.let { generalMeta["owner_name"] = it }
         val turnGeneral = TurnGeneral(

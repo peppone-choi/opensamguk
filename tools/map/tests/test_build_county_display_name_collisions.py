@@ -65,7 +65,8 @@ class CommittedListTest(unittest.TestCase):
         original_commandery_names = {"영천군", "영릉군", "여강군", "단양군", "회계군"}
         reviewed = [c for c in self.doc["collisions"] if c["commanderyDisplayName"] in original_commandery_names]
         self.assertEqual(len(reviewed), 3)
-        self.assertEqual(self.doc["summary"]["sameCommanderyCollisionGroups"], 6)
+        # 2026-09-27: 新城/新成(河南尹)·下落/下洛(上谷郡)의 겹침은 중복 합성 城이 은퇴하며 사라졌다 — 6 → 4.
+        self.assertEqual(self.doc["summary"]["sameCommanderyCollisionGroups"], 4)
 
         reverted = copy.deepcopy(self.tiles)
         previous = {"41305": "완릉현", "40663": "시령현", "40775": "시령현"}
@@ -75,7 +76,7 @@ class CommittedListTest(unittest.TestCase):
         red = B.build(reverted, self.world, self.table, self.units)
         red_original = [c for c in red["collisions"] if c["commanderyDisplayName"] in original_commandery_names]
         self.assertEqual(len(red_original), 5)
-        self.assertEqual(red["summary"]["sameCommanderyCollisionGroups"], 8)
+        self.assertEqual(red["summary"]["sameCommanderyCollisionGroups"], 6)
         self.assertEqual({(c["commanderyDisplayName"], c["displayName"]) for c in red_original} -
                          {(c["commanderyDisplayName"], c["displayName"]) for c in reviewed},
                          {("단양군", "완릉현"), ("회계군", "시령현")})

@@ -4,6 +4,10 @@ import opensamguk.logic.domestic.FieldInput
 
 import opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn
 import opensamguk.engine.campaign.PersonalTurn
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
+import opensamguk.engine.campaign.OfflineDelegationSelector
+import opensamguk.engine.campaign.OfflineDelegationTransition
 import opensamguk.logic.input.RuleProfile
 import opensamguk.logic.ai.ChosenCommand
 import opensamguk.logic.domain.LastTurn
@@ -93,6 +97,9 @@ class TurnDaemonLifecycle(
      */
     private val reservedActionOf: (generalId: Int) -> ReservedTurn,
 ) {
+    private val offlineDelegation by lazy { OfflineDelegationSelector(handler.domesticContext) }
+    private val offlineTransition = OfflineDelegationTransition(world, handler.recorder)
+
     /** Resolve the next run time: the previous run time + the world's tick interval. */
     fun nextRunTime(): Instant {
         val state = world.getState()
@@ -189,8 +196,16 @@ class TurnDaemonLifecycle(
                 // §5.1 1단계 재검사: 배치·방침은 해당 카드의 다음 턴부터 효력(대기 → 현행).
                 handler.domesticTurn.beforeMovement(g.id)
                 handler.courtHandler.onIssuerTurn(g.id)
-                val reserved = npcInputOf(g.id,
+                val afterNpc = npcInputOf(g.id,
                     opensamguk.engine.campaign.NpcEnlistmentSelector.select(world, g.id, dueGeneral.reserved))
+                val current = world.getGeneralById(g.id) ?: g
+                val ownerId = current.userId?.toIntOrNull()?.takeIf { it > 0 }
+                val phase = runCatching { DelegationPhase(state.currentYear, state.currentMonth, state.currentPhase) }
+                    .getOrNull()
+                val delegated = ownerId != null && phase != null &&
+                    OfflineDelegationLease.mayDelegate(current.meta, world.worldId.value, g.id, ownerId, phase)
+                if (ownerId != null && phase != null) offlineTransition.update(g.id, ownerId, delegated, phase)
+                val reserved = if (delegated) offlineDelegation.select(world, g.id, afterNpc) else afterNpc
                 // §5.1 현장 행동은 이동·조우 단계가 지난 뒤 현재 위치에서 실행한다.
                 val fieldAction = world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA &&
                     (reserved.actionCode in opensamguk.logic.domestic.FieldInput.INPUT_IDS ||

@@ -4,6 +4,8 @@ import opensamguk.common.wire.MakeGeneralFail
 import opensamguk.common.wire.MakeGeneralOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralStats
@@ -38,8 +40,10 @@ class MakeGeneralHandlerTest {
         assertEquals(legacy.stats, created.stats)
         assertEquals(legacy.turnTime, created.turnTime)
         assertEquals(legacy.role, created.role)
-        assertEquals(legacy.meta, created.meta - setOf("lord", "personPolicy"))
+        assertEquals(legacy.meta, created.meta - setOf("lord", "personPolicy", OfflineDelegationLease.META_KEY))
         assertEquals(false, created.meta["lord"])
+        assertEquals(OfflineDelegationLease(1, b.generalId, 7, DelegationPhase(200, 1, 1)),
+            OfflineDelegationLease.read(created.meta))
         val policy = opensamguk.logic.input.PersonPolicyState.read(created.meta)!!
         assertEquals(opensamguk.logic.input.PersonPolicyState(30, false, "opensamguk:created-general", "v1", b.generalId), policy)
         val stats = created.stats

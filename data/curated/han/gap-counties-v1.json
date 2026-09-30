@@ -2,24 +2,26 @@
   "schemaVersion": 1,
   "ledgerId": "gap-counties-v1",
   "scope": "COUNTY_IDENTITY_AND_APPROXIMATE_POSITION",
-  "note": "여섯 심사 원장이 220 년 존속을 확정하고 좌표까지 확보한 결손 縣이다. materialize_frontier_counties 와 같은 입력 규약을 쓰되 변경 7 郡이 아니라 내지·邊郡 전역을 덮는다. 2026-09-23: 배치 뒤 좌표 대조에서 4 곳(東海郡 合鄕·豫章郡 廬陵·河南尹 新城·河閒國 易)이 기존 城과 0 km 로 같은 점임이 드러나 뺐다 — 이름 축만으로 지도 부재를 판정한 탓이다. naming-artifact-false-absences-v1 의 SAME_POINT_UNDER_OTHER_NAME 행이 그 근거다. 2026-09-23: 사용자 승인으로 해독 불가 3행을 제외한 223개 ABSENT를 각각 게임 城으로 배치한다. SYNTHETIC_COMMANDERY_CELL은 해당 郡의 빈 격자 칸이며 역사적 縣治의 좌표가 아니다.",
+  "note": "여섯 심사 원장이 220 년 존속을 확정하고 좌표까지 확보한 결손 縣이다. materialize_frontier_counties 와 같은 입력 규약을 쓰되 변경 7 郡이 아니라 내지·邊郡 전역을 덮는다. 2026-09-23: 배치 뒤 좌표 대조에서 4 곳(東海郡 合鄕·豫章郡 廬陵·河南尹 新城·河閒國 易)이 기존 城과 0 km 로 같은 점임이 드러나 뺐다 — 이름 축만으로 지도 부재를 판정한 탓이다. naming-artifact-false-absences-v1 의 SAME_POINT_UNDER_OTHER_NAME 행이 그 근거다. 2026-09-23: 사용자 승인으로 해독 불가 3행을 제외한 223개 ABSENT를 각각 게임 城으로 배치한다. SYNTHETIC_COMMANDERY_CELL은 해당 郡의 빈 격자 칸이며 역사적 縣治의 좌표가 아니다. 2026-09-27: 합성 城 중 지도에 다른 이름으로 이미 있는 縣 23곳을 retiredAsDuplicate 로 옮기고(junguozhi-county-aliases-v1), 출처 좌표를 확보한 합성 4곳의 좌표를 바꿨다(gap-county-source-recheck-v1).",
   "positionBasis": "좌표는 전부 APPROXIMATE 다. 출처는 namu-place-locations-v1 또는 TGAZ 이름 조인이며 gap-placement-readiness-v1 이 그 확보 상태와 同名異地 검사를 싣는다. 두 출처가 겹치는 縣 21 건 중 16 건이 소수점 5 자리까지 같으므로 **둘은 독립 출처가 아니다** — CHGIS 를 공유한다. 새 223행의 합성 위치는 SYNTHETIC_COMMANDERY_CELL로 별도 표시한다.",
   "nameBasis": "nameHan 은 정본 카탈로그의 sourceName 을 그대로 싣는다. 卷113 저본이 簡體라 11 건이 簡體이고 그 행은 countySuffix 를 县 으로 둔다 — 繁簡 변환을 발명하지 않는다. 繁→簡 표(han-name-simplification-v1)를 역전해서 繁體를 만들면 안 된다: 그 표는 정본 표기를 CHGIS 표준형으로 접는 것이라 異體字 쌍(髙→高)이 섞여 있고, 역전하면 高柳가 髙柳로 뒤집힌다.",
   "readingBasis": "nameKo 는 hanja 패키지(substitution)의 출력이다. build_readings.py 와 같은 도구이고 OVERRIDES 는 이민족·소국명 전용이라 이 결손 縣과 겹치지 않는다. 지명에서 hanja 가 틀리는 2 건만 지도 자신의 용례를 근거로 재정의했고 nameKoBasis 에 적었다. 검증: 당시 60/60 에 한자 잔존 0, 지도 유래 글자표와 불일치는 그 2 건뿐이었다.",
   "totals": {
-    "counties": 279,
+    "counties": 260,
     "byCoordinateBasis": {
-      "READY_NAMU": 22,
-      "READY_TGAZ": 26,
+      "READY_NAMU": 23,
+      "READY_TGAZ": 30,
       "READY_BOTH_SOURCES": 8,
-      "SYNTHETIC_COMMANDERY_CELL": 223
+      "SYNTHETIC_COMMANDERY_CELL": 198,
+      "REVIEWED_WEB_PROXY": 1
     },
     "byNameScript": {
       "TRADITIONAL": 40,
       "SIMPLIFIED_IN_SOURCE": 16,
-      "SOURCE_LITERAL": 223
+      "SOURCE_LITERAL": 204
     },
-    "commanderies": 80
+    "commanderies": 74,
+    "retiredAsDuplicate": 23
   },
   "counties": [
     {
@@ -2636,55 +2638,6 @@
       ]
     },
     {
-      "id": "hhs:109:河南尹:018",
-      "nameHan": "新城",
-      "nameKo": "신성",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "河南尹",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 34.4579445,
-        "longitude": 112.3771369
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 239,
-        "col": 372,
-        "donorProvinceId": "82841",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": "jinshu-token-adjudications-v1",
-        "verdict": "REAL_GAP",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 109,
-        "ordinal": 18,
-        "sourceName": "新城",
-        "declaredCities": 21
-      },
-      "placeSlug": "g0000",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·河南尹 新城",
-          "volume": 109,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-109.txt",
-          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-          "line": 52,
-          "quote": "〖新城{{*|左傳曰文十七年周敗戎于邥垂，杜預曰縣北有垂亭。史記秦遷西周公於{單心}狐，徐廣曰「與陽人聚相近，在雒陽南百五十里梁、新城之閒」。}}〗有高都城。{{*|史記蘇代說韓相國以高都與周者。}}有广成聚。{{*|有廣成菀。}}有[D822]聚，古[D822]氏，今名蛮中。{{*|左傳昭十六年楚殺鄤子，杜預曰縣東南有蠻城。又祭遵獲張滿也。}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:109:河南尹:021",
       "nameHan": "平",
       "nameKo": "평",
@@ -2726,55 +2679,6 @@
           "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
           "line": 58,
           "quote": "〖平〗",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:109:河東郡:011",
-      "nameHan": "绛",
-      "nameKo": "강",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "河東郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 36.7096105,
-        "longitude": 109.8313023
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 191,
-        "col": 325,
-        "donorProvinceId": "95667",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 109,
-        "ordinal": 11,
-        "sourceName": "绛",
-        "declaredCities": 20
-      },
-      "placeSlug": "g0002",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·河东郡 绛",
-          "volume": 109,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-109.txt",
-          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-          "line": 124,
-          "quote": "〖绛〗邑。{{*|縣西有絳邑城，杜預曰故絳也。}}有翼城。{{*|左傳隱五年曲沃伐翼，杜預曰在縣東八十里。}}",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -2832,55 +2736,6 @@
       ]
     },
     {
-      "id": "hhs:109:京兆尹:002",
-      "nameHan": "霸陵",
-      "nameKo": "패릉",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "京兆尹",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 33.4728405,
-        "longitude": 109.181302
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 260,
-        "col": 313,
-        "donorProvinceId": "70749",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 109,
-        "ordinal": 2,
-        "sourceName": "霸陵",
-        "declaredCities": 10
-      },
-      "placeSlug": "g0004",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·京兆尹 霸陵",
-          "volume": 109,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-109.txt",
-          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-          "line": 172,
-          "quote": "〖霸陵〗有枳道亭。{{*|前書秦王子嬰降於軹道旁，地道記曰霸水西。}}有长门亭。{{*|前書文帝出長門，若見五人於道北，立五帝壇。}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:109:京兆尹:010",
       "nameHan": "阳陵",
       "nameKo": "양릉",
@@ -2922,55 +2777,6 @@
           "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
           "line": 188,
           "quote": "〖阳陵〗故属冯翊。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:109:左馮翊:001",
-      "nameHan": "高陵",
-      "nameKo": "고릉",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "左馮翊",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 36.0059649,
-        "longitude": 110.1021358
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 206,
-        "col": 330,
-        "donorProvinceId": "70307",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 109,
-        "ordinal": 1,
-        "sourceName": "高陵",
-        "declaredCities": 13
-      },
-      "placeSlug": "g0005",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·左冯翊 高陵",
-          "volume": 109,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-109.txt",
-          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-          "line": 194,
-          "quote": "〖高陵〗",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -3167,55 +2973,6 @@
           "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
           "line": 226,
           "quote": "〖安陵〗{{*|皇覽曰：「縣西北畢陌，秦武王冢。」}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:109:右扶風:003",
-      "nameHan": "平陵",
-      "nameKo": "평릉",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "右扶風",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 33.7073891,
-        "longitude": 108.0438015
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 255,
-        "col": 292,
-        "donorProvinceId": "70249",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 109,
-        "ordinal": 3,
-        "sourceName": "平陵",
-        "declaredCities": 15
-      },
-      "placeSlug": "g0006",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·右扶风 平陵",
-          "volume": 109,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-109.txt",
-          "sha256": "d1119e73b55efcbe639a0ad8e13256fe65081dd91ad24f488ef11bb256228818",
-          "line": 228,
-          "quote": "〖平陵〗",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -3812,55 +3569,6 @@
       ]
     },
     {
-      "id": "hhs:110:梁國:004",
-      "nameHan": "碭山",
-      "nameKo": "탕산",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "梁國",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 34.2233959,
-        "longitude": 115.5188051
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 244,
-        "col": 430,
-        "donorProvinceId": "82072",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 4,
-        "sourceName": "碭山",
-        "declaredCities": 9
-      },
-      "placeSlug": "g0009",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·梁國 碭山",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 138,
-          "quote": "碭山，出文石。{{*|史記曰高祖隱於芒、碭山澤巖石之閒。有陳勝墓。}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:110:梁國:007",
       "nameHan": "焉",
       "nameKo": "언",
@@ -4015,19 +3723,12 @@
       "countySuffix": "縣",
       "commanderyHan": "沛國",
       "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
+      "positionStatus": "APPROXIMATE",
       "coordinates": {
-        "latitude": 33.7073891,
-        "longitude": 116.3854721
+        "latitude": 34.1117,
+        "longitude": 116.28903
       },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 255,
-        "col": 446,
-        "donorProvinceId": "82128",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
+      "coordinateBasis": "READY_TGAZ",
       "survivalVerdict": {
         "ledger": null,
         "verdict": "UNKNOWN",
@@ -4054,7 +3755,23 @@
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
           ]
         }
-      ]
+      ],
+      "supersededSyntheticPlacement": {
+        "row": 255,
+        "col": 446,
+        "donorProvinceId": "82128",
+        "historicalSeatClaim": false,
+        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
+      },
+      "coordinateEvidence": {
+        "ledger": "data/curated/han/gap-county-source-recheck-v1.json",
+        "represents": "CHGIS 漢 太丘縣 점(TGAZ hvd_82141, 58–219). GeoNames Taiqiu 와 0.5 km",
+        "sources": [
+          "https://www.geonames.org/search.html?q=Taiqiu&country=CN",
+          "https://www.163.com/dy/article/J7UEDO0B0534H8BG.html"
+        ],
+        "errorKm": "3–5"
+      }
     },
     {
       "id": "hhs:110:陳國:003",
@@ -4064,19 +3781,12 @@
       "countySuffix": "縣",
       "commanderyHan": "陳國",
       "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
+      "positionStatus": "APPROXIMATE",
       "coordinates": {
-        "latitude": 33.6135697,
-        "longitude": 114.7604714
+        "latitude": 33.6648,
+        "longitude": 115.3246
       },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 257,
-        "col": 416,
-        "donorProvinceId": "82008",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
+      "coordinateBasis": "READY_TGAZ",
       "survivalVerdict": {
         "ledger": null,
         "verdict": "UNKNOWN",
@@ -4103,56 +3813,22 @@
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
           ]
         }
-      ]
-    },
-    {
-      "id": "hhs:110:魯國:001",
-      "nameHan": "魯國",
-      "nameKo": "노국",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "魯國",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 35.4430484,
-        "longitude": 117.3063059
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 218,
-        "col": 463,
-        "donorProvinceId": "45199",
+      ],
+      "supersededSyntheticPlacement": {
+        "row": 257,
+        "col": 416,
+        "donorProvinceId": "82008",
         "historicalSeatClaim": false,
         "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
       },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 1,
-        "sourceName": "魯國",
-        "declaredCities": 6
-      },
-      "placeSlug": "g0012",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·魯國 魯國",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 222,
-          "quote": "魯國，古奄國。{{*|帝王世記曰：「黃帝生於壽丘，在魯東門之北。少昊自窮桑登帝位，窮桑在魯北，後徙曲阜。」應劭曰：「曲阜在魯城中，委曲長七八里。」左傳曰伯禽封少昊之墟。僖二十九年介葛盧舍于昌衍，杜預曰縣東南有昌平城。皇覽曰：「奄里伯公冢在城內祥舍中，民傳言魯五德奄里伯公葬其宅。」}}有大庭氏庫。{{*|杜預曰：「大庭氏，古國名，在城內，魯於其處作庫。」}}有鐵。有闕-{里}-，孔子所居。{{*|漢晉春秋曰：「鍾離意相魯，見仲尼廟頹毀，會諸生於廟中，慨然歎曰：『蔽芾甘棠，勿翦勿伐，況見聖人廟乎！』遂躬留治之。周觀輿服之在焉，自仲尼以來，莫之開也。意發視之，得古文策書，曰『亂吾書，董仲舒。治吾堂，鍾離意。璧有七，張伯盜一。』意尋案未了。而卒張伯者、治中庭，治地得六璧，上之。意曰：『此有七，何以不遂？』伯懼，探璧懷中。魯咸以為神。」意別傳曰：「意省堂有孔子小車乘，皆朽敗，意自糶俸雇漆膠之直，請魯民治之，及護几席（嗣）〔劍〕履。後得甕中素書，曰『護吾履，鍾離意』。」又禮記矍相之圃亦在城中西南，近孔子廟。而仲尼墓在魯城門北便之外泗水上，去城一里。葬地蓋一頃，墓墳南北十步，東西十三步，高一丈二尺。墓前有瓴甓為祠壇，方六尺，與地平。塋中異木以百數，魯人莫能識也。皇覽曰：「孔子本無祠堂，塋中不生荊棘及刺人草。伯魚冢在孔子冢東，與孔子冢併，大小相望。子思冢在孔子冢南。」案：今墓書孫在祖前，謂此為驕孫祔。}}有牛首亭。{{*|左傳曰桓十四年宋伐鄭，取牛首。}}有五父衢。{{*|地道記曰在城東。}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
+      "coordinateEvidence": {
+        "ledger": "data/curated/han/gap-county-source-recheck-v1.json",
+        "represents": "CHGIS 漢 寧平縣 점(TGAZ hvd_82099, -202–219). 寧平鎮 중심과 0.1 km",
+        "sources": [
+          "https://zh.wikipedia.org/zh-hans/%E5%AE%81%E5%B9%B3%E9%95%87"
+        ],
+        "errorKm": "≤5"
+      }
     },
     {
       "id": "hhs:110:魯國:002",
@@ -4196,153 +3872,6 @@
           "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
           "line": 224,
           "quote": "騶，本邾國。{{*|有騶山，高五里，秦始皇刻石焉。劉薈騶山記曰：「邾城在山南，去山二里。城東門外有韋賢墓，北有繹山。左傳文十三年邾遷於繹。郭璞曰繹山純石，積構連屬。城北有牙山，牙山北有唐口山，唐口山北有陽山。城北有孟軻冢焉。」}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:110:魏郡:011",
-      "nameHan": "沙",
-      "nameKo": "사",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "魏郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 37.1317979,
-        "longitude": 113.8938043
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 182,
-        "col": 400,
-        "donorProvinceId": "95304",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 11,
-        "sourceName": "沙",
-        "declaredCities": 15
-      },
-      "placeSlug": "g0013",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·魏郡 沙",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 262,
-          "quote": "沙，侯國。{{*|魏都賦注曰有龍山。}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:110:鉅鹿郡:001",
-      "nameHan": "陶",
-      "nameKo": "도",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "鉅鹿郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 37.1317979,
-        "longitude": 115.5729718
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 182,
-        "col": 431,
-        "donorProvinceId": "87200",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 1,
-        "sourceName": "陶",
-        "declaredCities": 15
-      },
-      "placeSlug": "g0014",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·鉅鹿郡 陶",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 276,
-          "quote": "陶，有薄落亭。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:110:鉅鹿郡:015",
-      "nameHan": "南〈糸言糸〉",
-      "nameKo": "남〈멱언멱〉",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "鉅鹿郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 36.475062,
-        "longitude": 114.9771381
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 196,
-        "col": 420,
-        "donorProvinceId": "87494",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 15,
-        "sourceName": "南〈糸言糸〉",
-        "declaredCities": 15
-      },
-      "placeSlug": "g0014",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·鉅鹿郡 南〈糸言糸〉",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 304,
-          "quote": "南〈糸言糸〉，",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -4441,104 +3970,6 @@
           "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
           "line": 392,
           "quote": "南深，澤故屬涿。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:110:河閒國:003",
-      "nameHan": "易",
-      "nameKo": "역",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "河閒國",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 39.055096,
-        "longitude": 116.060472
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 141,
-        "col": 440,
-        "donorProvinceId": "87297",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": "dushi-disposition-adjudications-v1",
-        "verdict": "REAL_GAP",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 3,
-        "sourceName": "易",
-        "declaredCities": 11
-      },
-      "placeSlug": "g0018",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·河間國 易",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 402,
-          "quote": "易，故屬涿。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:110:勃海郡:008",
-      "nameHan": "脩",
-      "nameKo": "수",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "勃海郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 39.055096,
-        "longitude": 117.6313061
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 141,
-        "col": 469,
-        "donorProvinceId": "87283",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 110,
-        "ordinal": 8,
-        "sourceName": "脩",
-        "declaredCities": 8
-      },
-      "placeSlug": "g0021",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·勃海郡 脩",
-          "volume": 110,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-110.txt",
-          "sha256": "54a16e588eb68d8e8df0f4c8d164aa781ae1b40658ae53993f08a768313e962d",
-          "line": 470,
-          "quote": "脩，故屬信都。",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -4792,55 +4223,6 @@
       ]
     },
     {
-      "id": "hhs:111:泰山郡:006",
-      "nameHan": "山茌",
-      "nameKo": "산치",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "泰山郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 35.7714163,
-        "longitude": 118.2271397
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 211,
-        "col": 480,
-        "donorProvinceId": "85642",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": "jinshu-token-adjudications-v1",
-        "verdict": "REAL_GAP",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 111,
-        "ordinal": 6,
-        "sourceName": "山茌",
-        "declaredCities": 12
-      },
-      "placeSlug": "g0026",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·泰山郡 山茌",
-          "volume": 111,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-111.txt",
-          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-          "line": 127,
-          "quote": "〖山茌〗侯國。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:111:山陽郡:010",
       "nameHan": "防東",
       "nameKo": "방동",
@@ -4939,55 +4321,6 @@
       ]
     },
     {
-      "id": "hhs:111:東海郡:001",
-      "nameHan": "郯",
-      "nameKo": "담",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "東海郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 35.3961387,
-        "longitude": 119.3646402
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 219,
-        "col": 501,
-        "donorProvinceId": "42888",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 111,
-        "ordinal": 1,
-        "sourceName": "郯",
-        "declaredCities": 13
-      },
-      "placeSlug": "g0030",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·東海郡 郯",
-          "volume": 111,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-111.txt",
-          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-          "line": 213,
-          "quote": "〖郯〗本國，刺史治。{{*|博物記曰：「有勇（王）〔士〕亭，卽勇士（萬）〔菑〕丘欣。」}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:111:東海郡:008",
       "nameHan": "陰平",
       "nameKo": "음평",
@@ -5029,55 +4362,6 @@
           "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
           "line": 227,
           "quote": "〖陰平〗",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:111:東海郡:010",
-      "nameHan": "合鄕",
-      "nameKo": "합향",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "東海郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 35.1615901,
-        "longitude": 117.1979725
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 224,
-        "col": 461,
-        "donorProvinceId": "45299",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": "abolished-verdict-corrections-v1",
-        "verdict": "REAL_GAP",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 111,
-        "ordinal": 10,
-        "sourceName": "合鄕",
-        "declaredCities": 13
-      },
-      "placeSlug": "g0030",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·東海郡 合鄕",
-          "volume": 111,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-111.txt",
-          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-          "line": 231,
-          "quote": "〖合鄕〗{{*|漷水自此南至湖陸。}}",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -5225,55 +4509,6 @@
           "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
           "line": 285,
           "quote": "〖菑丘〗",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:111:廣陵郡:009",
-      "nameHan": "輿",
-      "nameKo": "여",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "廣陵郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 32.4408269,
-        "longitude": 121.3146412
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 282,
-        "col": 537,
-        "donorProvinceId": "42702",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 111,
-        "ordinal": 9,
-        "sourceName": "輿",
-        "declaredCities": 11
-      },
-      "placeSlug": "g0033",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·廣陵郡 輿",
-          "volume": 111,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-111.txt",
-          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
-          "line": 309,
-          "quote": "〖輿〗侯國，故屬臨淮。",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -5674,55 +4909,6 @@
       ]
     },
     {
-      "id": "hhs:112:東萊郡:003",
-      "nameHan": "惤",
-      "nameKo": "현",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "東萊郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 37.4132562,
-        "longitude": 122.6688085
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 176,
-        "col": 562,
-        "donorProvinceId": "85381",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 112,
-        "ordinal": 3,
-        "sourceName": "惤",
-        "declaredCities": 13
-      },
-      "placeSlug": "g0039",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·東萊郡 惤",
-          "volume": 112,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-112.txt",
-          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
-          "line": 128,
-          "quote": "惤，侯國。{{*|地道記曰有百枝萊君祠。三齊記曰：「南有蹲犬山，山似犬蹲，有神，劉寵出西都，經此山，山犬吠之，寵曰『山神謂我人也』。」}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:112:東萊郡:012",
       "nameHan": "葛盧",
       "nameKo": "갈로",
@@ -6066,55 +5252,6 @@
       ]
     },
     {
-      "id": "hhs:112:豫章郡:005",
-      "nameHan": "廬陵",
-      "nameKo": "여릉",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "豫章郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 26.9993006,
-        "longitude": 114.8146381
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 398,
-        "col": 417,
-        "donorProvinceId": "40885",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": "dushi-disposition-adjudications-v1",
-        "verdict": "REAL_GAP",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 112,
-        "ordinal": 5,
-        "sourceName": "廬陵",
-        "declaredCities": 21
-      },
-      "placeSlug": "g0053",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·豫章郡 廬陵",
-          "volume": 112,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-112.txt",
-          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
-          "line": 610,
-          "quote": "廬陵，{{*|興平元年，孫策分立廬陵郡。}}",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:113:巴郡:008",
       "nameHan": "涪陵",
       "nameKo": "부릉",
@@ -6156,55 +5293,6 @@
           "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
           "line": 51,
           "quote": "〖涪陵〗出丹。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:113:巴郡:012",
-      "nameHan": "充国",
-      "nameKo": "충국",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "巴郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 32.0655492,
-        "longitude": 107.8271347
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 290,
-        "col": 288,
-        "donorProvinceId": "96259",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 113,
-        "ordinal": 12,
-        "sourceName": "充国",
-        "declaredCities": 14
-      },
-      "placeSlug": "g0055",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·巴陵秦置 充国",
-          "volume": 113,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-113.txt",
-          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-          "line": 59,
-          "quote": "〖充国〗{{YL|永元二年}}分阆中置。",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -6262,58 +5350,9 @@
       ]
     },
     {
-      "id": "hhs:113:廣漢郡:008",
-      "nameHan": "葭萌",
-      "nameKo": "가맹",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "廣漢郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 31.3619036,
-        "longitude": 103.8187995
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 305,
-        "col": 214,
-        "donorProvinceId": "44422",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 113,
-        "ordinal": 8,
-        "sourceName": "葭萌",
-        "declaredCities": 11
-      },
-      "placeSlug": "g0056",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·广汉郡 葭萌",
-          "volume": 113,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-113.txt",
-          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-          "line": 81,
-          "quote": "〖葭萌〗",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:113:廣漢郡:010",
       "nameHan": "广汉",
-      "nameKo": "엄한",
+      "nameKo": "광한",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "廣漢郡",
@@ -6401,55 +5440,6 @@
           "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
           "line": 103,
           "quote": "〖湔氐道〗岷山在西徼外。",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
-      "id": "hhs:113:蜀郡:009",
-      "nameHan": "八陵",
-      "nameKo": "팔릉",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "蜀郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 31.5495424,
-        "longitude": 101.2187982
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 301,
-        "col": 166,
-        "donorProvinceId": "SUB-96055-ca002cdb2917",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 113,
-        "ordinal": 9,
-        "sourceName": "八陵",
-        "declaredCities": 11
-      },
-      "placeSlug": "g0057",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·蜀郡 八陵",
-          "volume": 113,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-113.txt",
-          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-          "line": 107,
-          "quote": "〖八陵〗",
           "evidenceKind": "RECEIVED_TEXT",
           "supports": [
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
@@ -7200,19 +6190,12 @@
       "countySuffix": "縣",
       "commanderyHan": "廣漢屬國",
       "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
+      "positionStatus": "APPROXIMATE",
       "coordinates": {
-        "latitude": 33.4728405,
-        "longitude": 102.2479654
+        "latitude": 32.94432,
+        "longitude": 104.67775
       },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 260,
-        "col": 185,
-        "donorProvinceId": "SUB-96006-05359103bff1",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
+      "coordinateBasis": "REVIEWED_WEB_PROXY",
       "survivalVerdict": {
         "ledger": null,
         "verdict": "UNKNOWN",
@@ -7239,7 +6222,22 @@
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
           ]
         }
-      ]
+      ],
+      "supersededSyntheticPlacement": {
+        "row": 260,
+        "col": 185,
+        "donorProvinceId": "SUB-96006-05359103bff1",
+        "historicalSeatClaim": false,
+        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
+      },
+      "coordinateEvidence": {
+        "ledger": "data/curated/han/gap-county-source-recheck-v1.json",
+        "represents": "文縣 縣 좌표(城關鎮). 讀史方輿紀要 卷002 「陰平，今陝西文縣也」",
+        "sources": [
+          "https://zh.wikipedia.org/zh-hans/%E6%96%87%E5%8E%BF"
+        ],
+        "errorKm": "5–15"
+      }
     },
     {
       "id": "hhs:113:廣漢屬國:002",
@@ -9057,7 +8055,7 @@
     {
       "id": "hhs:113:武威郡:008",
       "nameHan": "媪围",
-      "nameKo": "오위",
+      "nameKo": "온위",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "武威郡",
@@ -9449,7 +8447,7 @@
     {
       "id": "hhs:113:敦煌郡:005",
       "nameHan": "广至",
-      "nameKo": "엄지",
+      "nameKo": "광지",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "敦煌郡",
@@ -10233,7 +9231,7 @@
     {
       "id": "hhs:113:西河郡:004",
       "nameHan": "乐街",
-      "nameKo": "악가",
+      "nameKo": "낙가",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "西河郡",
@@ -10625,7 +9623,7 @@
     {
       "id": "hhs:113:西河郡:013",
       "nameHan": "广衍",
-      "nameKo": "엄연",
+      "nameKo": "광연",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "西河郡",
@@ -11360,7 +10358,7 @@
     {
       "id": "hhs:113:雲中郡:010",
       "nameHan": "成乐",
-      "nameKo": "성악",
+      "nameKo": "성락",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "雲中郡",
@@ -11750,55 +10748,6 @@
       ]
     },
     {
-      "id": "hhs:113:鴈門郡:005",
-      "nameHan": "汪陶",
-      "nameKo": "왕도",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "鴈門郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 38.6798184,
-        "longitude": 111.6729699
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 149,
-        "col": 359,
-        "donorProvinceId": "95126",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 113,
-        "ordinal": 5,
-        "sourceName": "汪陶",
-        "declaredCities": 14
-      },
-      "placeSlug": "g0085",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·雁门郡 汪陶",
-          "volume": 113,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-113.txt",
-          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-          "line": 681,
-          "quote": "〖汪陶〗",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:113:鴈門郡:009",
       "nameHan": "埒",
       "nameKo": "날",
@@ -12046,7 +10995,7 @@
     {
       "id": "hhs:113:朔方郡:005",
       "nameHan": "广牧",
-      "nameKo": "엄목",
+      "nameKo": "광목",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "朔方郡",
@@ -12193,7 +11142,7 @@
     {
       "id": "hhs:113:廣陽郡:002",
       "nameHan": "广阳",
-      "nameKo": "엄양",
+      "nameKo": "광양",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "廣陽郡",
@@ -12632,55 +11581,6 @@
       ]
     },
     {
-      "id": "hhs:113:上谷郡:008",
-      "nameHan": "下落",
-      "nameKo": "하락",
-      "nameScript": "SOURCE_LITERAL",
-      "countySuffix": "縣",
-      "commanderyHan": "上谷郡",
-      "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
-      "coordinates": {
-        "latitude": 39.7587417,
-        "longitude": 115.2479716
-      },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 126,
-        "col": 425,
-        "donorProvinceId": "87128",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
-      "survivalVerdict": {
-        "ledger": null,
-        "verdict": "UNKNOWN",
-        "reading": "게임 배치는 220년 존속 증거가 아니다."
-      },
-      "catalogRef": {
-        "sourceVolume": 113,
-        "ordinal": 8,
-        "sourceName": "下落",
-        "declaredCities": 8
-      },
-      "placeSlug": "g0090",
-      "primaryEvidence": [
-        {
-          "book": "續漢書·郡國志·上谷郡 下落",
-          "volume": 113,
-          "sourceRepository": "shiliao",
-          "sourcePath": "corpus/hhs-113.txt",
-          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
-          "line": 786,
-          "quote": "〖下落〗",
-          "evidenceKind": "RECEIVED_TEXT",
-          "supports": [
-            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
-          ]
-        }
-      ]
-    },
-    {
       "id": "hhs:113:漁陽郡:001",
       "nameHan": "渔阳",
       "nameKo": "어양",
@@ -12737,19 +11637,12 @@
       "countySuffix": "縣",
       "commanderyHan": "漁陽郡",
       "role": "COUNTY",
-      "positionStatus": "SYNTHETIC",
+      "positionStatus": "APPROXIMATE",
       "coordinates": {
-        "latitude": 41.2598524,
-        "longitude": 118.0646396
+        "latitude": 39.31765,
+        "longitude": 117.01611
       },
-      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
-      "syntheticPlacement": {
-        "row": 94,
-        "col": 477,
-        "donorProvinceId": "SUB-87436-eaa97d5acbea",
-        "historicalSeatClaim": false,
-        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
-      },
+      "coordinateBasis": "READY_NAMU",
       "survivalVerdict": {
         "ledger": null,
         "verdict": "UNKNOWN",
@@ -12776,7 +11669,23 @@
             "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
           ]
         }
-      ]
+      ],
+      "supersededSyntheticPlacement": {
+        "row": 94,
+        "col": 477,
+        "donorProvinceId": "SUB-87436-eaa97d5acbea",
+        "historicalSeatClaim": false,
+        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
+      },
+      "coordinateEvidence": {
+        "ledger": "data/curated/han/gap-county-source-recheck-v1.json",
+        "represents": "나무위키 「톈진시 우칭구」 점 — 위키 「武清区西南城上村」 黃莊街道 점과 4.5 km",
+        "sources": [
+          "https://namu.wiki/w/삼국지/지명/유주",
+          "https://zh.wikipedia.org/zh-hans/%E6%B3%89%E5%B7%9E%E5%8E%BF"
+        ],
+        "errorKm": "≤5"
+      }
     },
     {
       "id": "hhs:113:漁陽郡:006",
@@ -12977,7 +11886,7 @@
     {
       "id": "hhs:113:遼西郡:001",
       "nameHan": "阳乐",
-      "nameKo": "양악",
+      "nameKo": "양락",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "遼西郡",
@@ -13026,7 +11935,7 @@
     {
       "id": "hhs:113:樂浪郡:002",
       "nameHan": "𧦦邯",
-      "nameKo": "𧦦감",
+      "nameKo": "남감",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "樂浪郡",
@@ -13075,7 +11984,7 @@
     {
       "id": "hhs:113:樂浪郡:018",
       "nameHan": "乐都",
-      "nameKo": "악도",
+      "nameKo": "낙도",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "樂浪郡",
@@ -13222,7 +12131,7 @@
     {
       "id": "hhs:113:鬱林郡:004",
       "nameHan": "广郁",
-      "nameKo": "엄욱",
+      "nameKo": "광울",
       "nameScript": "SOURCE_LITERAL",
       "countySuffix": "縣",
       "commanderyHan": "鬱林郡",
@@ -13512,6 +12421,214 @@
           ]
         }
       ]
+    },
+    {
+      "id": "hhs:111:山陽郡:004",
+      "nameHan": "髙平",
+      "nameKo": "고평",
+      "nameScript": "SOURCE_LITERAL",
+      "countySuffix": "縣",
+      "commanderyHan": "山陽郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 35.15031,
+        "longitude": 116.71867
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "survivalVerdict": {
+        "ledger": "gap-county-source-recheck-v1",
+        "verdict": "SURVIVED",
+        "reading": "게임 배치는 220년 존속 증거가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 111,
+        "ordinal": 4,
+        "sourceName": "髙平",
+        "declaredCities": 10
+      },
+      "placeSlug": "g0028",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·山陽郡 髙平",
+          "volume": 111,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-111.txt",
+          "sha256": "78baef4b029d8af0d2b7255c69c97d81d5c140ad2b9db9ed4abe11dd9ed66476",
+          "line": 165,
+          "quote": "〖髙平〗侯國。故橐，章帝更名。{{*|前漢-{志}-莽改曰髙平，章帝-{復}-莽此號。左傳隱（九）〔元〕年費伯城郎，杜預曰縣東南有鬱郎亭。}}有茅鄕城。{{*|杜預曰茅鄕在昌邑西南。}}",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
+          ]
+        }
+      ],
+      "coordinateEvidence": {
+        "ledger": "data/curated/han/gap-county-source-recheck-v1.json",
+        "record": "TGAZ hvd_45198",
+        "crossCheck": {
+          "source": "https://zh.wikipedia.org/zh-hans/%E4%B8%A4%E5%9F%8E%E9%95%87_(%E5%BE%AE%E5%B1%B1%E5%8E%BF)",
+          "lonLat": [
+            116.72974,
+            35.13573
+          ],
+          "represents": "微山 兩城鎮 중심(대리점)",
+          "km": 1.9
+        }
+      }
+    },
+    {
+      "id": "hhs:112:南陽郡:033",
+      "nameHan": "成都",
+      "nameKo": "성도",
+      "nameScript": "SOURCE_LITERAL",
+      "countySuffix": "縣",
+      "commanderyHan": "南陽郡",
+      "role": "COUNTY",
+      "positionStatus": "SYNTHETIC",
+      "coordinates": {
+        "latitude": 33.0565169,
+        "longitude": 110.6234902
+      },
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "survivalVerdict": {
+        "ledger": "gap-county-source-recheck-v1",
+        "verdict": "UNKNOWN",
+        "reading": "게임 배치는 220년 존속 증거가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 112,
+        "ordinal": 33,
+        "sourceName": "成都",
+        "declaredCities": 37
+      },
+      "placeSlug": "g0041",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·南陽郡 成都",
+          "volume": 112,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-112.txt",
+          "sha256": "47c577c0f9f8cbce40ed069b8521cf3efa3a46233ddf6560c25ff273ba8407a3",
+          "line": 238,
+          "quote": "成都，",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
+          ]
+        }
+      ],
+      "syntheticPlacement": {
+        "row": 1077,
+        "col": 1360,
+        "donorProvinceId": "45755",
+        "historicalSeatClaim": false,
+        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
+      }
+    },
+    {
+      "id": "hhs:113:上郡:010",
+      "nameHan": "候官",
+      "nameKo": "후관",
+      "nameScript": "SOURCE_LITERAL",
+      "countySuffix": "縣",
+      "commanderyHan": "上郡",
+      "role": "COUNTY",
+      "positionStatus": "SYNTHETIC",
+      "coordinates": {
+        "latitude": 37.7826702,
+        "longitude": 109.1474478
+      },
+      "coordinateBasis": "SYNTHETIC_COMMANDERY_CELL",
+      "survivalVerdict": {
+        "ledger": "gap-county-source-recheck-v1",
+        "verdict": "UNKNOWN",
+        "reading": "게임 배치는 220년 존속 증거가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 10,
+        "sourceName": "候官",
+        "declaredCities": 10
+      },
+      "placeSlug": "g0080",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·上郡 候官",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 583,
+          "quote": "〖候官〗",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
+          ]
+        }
+      ],
+      "syntheticPlacement": {
+        "row": 674,
+        "col": 1251,
+        "donorProvinceId": "SUB-70418-ed39b6a1f977",
+        "historicalSeatClaim": false,
+        "reason": "USER_APPROVED_DISTINCT_GAME_CITY"
+      }
+    },
+    {
+      "id": "hhs:113:鴈門郡:011",
+      "nameHan": "卤城",
+      "nameKo": "노성",
+      "nameScript": "SOURCE_LITERAL",
+      "countySuffix": "縣",
+      "commanderyHan": "鴈門郡",
+      "role": "COUNTY",
+      "positionStatus": "APPROXIMATE",
+      "coordinates": {
+        "latitude": 39.29486,
+        "longitude": 113.77709
+      },
+      "coordinateBasis": "READY_TGAZ",
+      "survivalVerdict": {
+        "ledger": "gap-county-source-recheck-v1",
+        "verdict": "NOT_CONFIRMED",
+        "reading": "게임 배치는 220년 존속 증거가 아니다."
+      },
+      "catalogRef": {
+        "sourceVolume": 113,
+        "ordinal": 11,
+        "sourceName": "卤城",
+        "declaredCities": 14
+      },
+      "placeSlug": "g0085",
+      "primaryEvidence": [
+        {
+          "book": "續漢書·郡國志·雁门郡 卤城",
+          "volume": 113,
+          "sourceRepository": "shiliao",
+          "sourcePath": "corpus/hhs-113.txt",
+          "sha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142",
+          "line": 693,
+          "quote": "〖卤城〗故属代郡。",
+          "evidenceKind": "RECEIVED_TEXT",
+          "supports": [
+            "SOURCE_CATALOG_ENTRY_FOR_GAME_CITY"
+          ]
+        }
+      ],
+      "coordinateEvidence": {
+        "ledger": "data/curated/han/gap-county-source-recheck-v1.json",
+        "record": "TGAZ hvd_95106",
+        "crossCheck": {
+          "source": "https://zh.wikipedia.org/zh-cn/%E5%A4%A7%E8%90%A5%E9%95%87_(%E7%B9%81%E5%B3%99%E5%8E%BF)",
+          "lonLat": [
+            113.7646,
+            39.29509
+          ],
+          "represents": "繁峙 大營鎮 중심(대리점), 故城은 관할 卤城村",
+          "km": 1.1
+        }
+      }
     }
   ],
   "placeIdBasis": "물리 지점 id 는 거점 분할 단계가 `gc-<placeSlug>-<郡國志 순번>` 으로 만든다. placeSlug 는 `g<parentRegions 番號>` 로 郡國志 소속 郡의 안정 id 꼬리다 — 지도의 220 년 경계가 다른 郡을 가리켜도(재배정) 물리 id 는 고정된다. 소속 郡은 배치 원장의 commanderyId 가 싣는다.",
@@ -13552,6 +12669,284 @@
         "snapshotSha256": "55e8450051ffbca24be3b4dbc8661fb2bfd9ac97e4b161a5072d313dda021142"
       },
       "reason": "USER_EXCLUDED_UNDECIPHERED_NAME_FROM_MAP"
+    }
+  ],
+  "retiredAsDuplicate": [
+    {
+      "id": "hhs:109:河南尹:018",
+      "placeId": "gc-g0000-018",
+      "nameHan": "新城",
+      "nameKo": "신성",
+      "commanderyHan": "河南尹",
+      "keptJurisdictionId": "82841",
+      "keptJurisdictionNameCh": "新成县",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:109:河東郡:011",
+      "placeId": "gc-g0002-011",
+      "nameHan": "绛",
+      "nameKo": "강",
+      "commanderyHan": "河東郡",
+      "keptJurisdictionId": "95423",
+      "keptJurisdictionNameCh": "绛邑县",
+      "cause": "CATALOG_TRUNCATION",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:109:京兆尹:002",
+      "placeId": "gc-g0004-002",
+      "nameHan": "霸陵",
+      "nameKo": "패릉",
+      "commanderyHan": "京兆尹",
+      "keptJurisdictionId": "70647",
+      "keptJurisdictionNameCh": "霸城县",
+      "cause": "POST_220_RENAME_ON_MAP",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:109:左馮翊:001",
+      "placeId": "gc-g0005-001",
+      "nameHan": "高陵",
+      "nameKo": "고릉",
+      "commanderyHan": "左馮翊",
+      "keptJurisdictionId": "70741",
+      "keptJurisdictionNameCh": "高陆县",
+      "cause": "FALSE_ABSENCE",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:109:右扶風:003",
+      "placeId": "gc-g0006-003",
+      "nameHan": "平陵",
+      "nameKo": "평릉",
+      "commanderyHan": "右扶風",
+      "keptJurisdictionId": "70715",
+      "keptJurisdictionNameCh": "始平县",
+      "cause": "POST_220_RENAME_ON_MAP",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:梁國:004",
+      "placeId": "gc-g0009-004",
+      "nameHan": "碭山",
+      "nameKo": "탕산",
+      "commanderyHan": "梁國",
+      "keptJurisdictionId": "42794",
+      "keptJurisdictionNameCh": "砀县",
+      "cause": "CATALOG_TRUNCATION",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:魯國:001",
+      "placeId": "gc-g0012-001",
+      "nameHan": "魯國",
+      "nameKo": "노국",
+      "commanderyHan": "魯國",
+      "keptJurisdictionId": "45180",
+      "keptJurisdictionNameCh": "鲁县",
+      "cause": "FALSE_ABSENCE",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:魏郡:011",
+      "placeId": "gc-g0013-011",
+      "nameHan": "沙",
+      "nameKo": "사",
+      "commanderyHan": "魏郡",
+      "keptJurisdictionId": "87150",
+      "keptJurisdictionNameCh": "涉县",
+      "cause": "POST_220_RENAME_ON_MAP",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:鉅鹿郡:001",
+      "placeId": "gc-g0014-001",
+      "nameHan": "陶",
+      "nameKo": "도",
+      "commanderyHan": "鉅鹿郡",
+      "keptJurisdictionId": "87061",
+      "keptJurisdictionNameCh": "廮陶县",
+      "cause": "CATALOG_TRUNCATION",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:鉅鹿郡:015",
+      "placeId": "gc-g0014-015",
+      "nameHan": "南〈糸言糸〉",
+      "nameKo": "남〈멱언멱〉",
+      "commanderyHan": "鉅鹿郡",
+      "keptJurisdictionId": "87055",
+      "keptJurisdictionNameCh": "南䜌县",
+      "cause": "MISSING_GLYPH_PLACEHOLDER",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:河閒國:003",
+      "placeId": "gc-g0018-003",
+      "nameHan": "易",
+      "nameKo": "역",
+      "commanderyHan": "河閒國",
+      "keptJurisdictionId": "87297",
+      "keptJurisdictionNameCh": "易城县",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:110:勃海郡:008",
+      "placeId": "gc-g0021-008",
+      "nameHan": "脩",
+      "nameKo": "수",
+      "commanderyHan": "勃海郡",
+      "keptJurisdictionId": "87600",
+      "keptJurisdictionNameCh": "蓚县",
+      "cause": "VARIANT_GLYPH",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:111:泰山郡:006",
+      "placeId": "gc-g0026-006",
+      "nameHan": "山茌",
+      "nameKo": "산치",
+      "commanderyHan": "泰山郡",
+      "keptJurisdictionId": "45127",
+      "keptJurisdictionNameCh": "茬县",
+      "cause": "VARIANT_GLYPH",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:111:東海郡:001",
+      "placeId": "gc-g0030-001",
+      "nameHan": "郯",
+      "nameKo": "담",
+      "commanderyHan": "東海郡",
+      "keptJurisdictionId": "85649",
+      "keptJurisdictionNameCh": "郯城县",
+      "cause": "FALSE_ABSENCE",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:111:東海郡:010",
+      "placeId": "gc-g0030-010",
+      "nameHan": "合鄕",
+      "nameKo": "합향",
+      "commanderyHan": "東海郡",
+      "keptJurisdictionId": "45299",
+      "keptJurisdictionNameCh": "合城县",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:111:廣陵郡:009",
+      "placeId": "gc-g0033-009",
+      "nameHan": "輿",
+      "nameKo": "여",
+      "commanderyHan": "廣陵郡",
+      "keptJurisdictionId": "42698",
+      "keptJurisdictionNameCh": "舆国",
+      "cause": "FALSE_ABSENCE",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:112:東萊郡:003",
+      "placeId": "gc-g0039-003",
+      "nameHan": "惤",
+      "nameKo": "현",
+      "commanderyHan": "東萊郡",
+      "keptJurisdictionId": "85376",
+      "keptJurisdictionNameCh": "㡉侯国",
+      "cause": "VARIANT_GLYPH",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:112:豫章郡:005",
+      "placeId": "gc-g0053-005",
+      "nameHan": "廬陵",
+      "nameKo": "여릉",
+      "commanderyHan": "豫章郡",
+      "keptJurisdictionId": "40885",
+      "keptJurisdictionNameCh": "高昌县",
+      "cause": "SAME_POINT_UNDER_OTHER_NAME",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:113:巴郡:012",
+      "placeId": "gc-g0055-012",
+      "nameHan": "充国",
+      "nameKo": "충국",
+      "commanderyHan": "巴郡",
+      "keptJurisdictionId": "44564",
+      "keptJurisdictionNameCh": "西充国县",
+      "cause": "SUCCESSOR_SPLIT_REVIEW",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:113:廣漢郡:008",
+      "placeId": "gc-g0056-008",
+      "nameHan": "葭萌",
+      "nameKo": "가맹",
+      "commanderyHan": "廣漢郡",
+      "keptJurisdictionId": "44587",
+      "keptJurisdictionNameCh": "汉寿县",
+      "cause": "POST_220_RENAME_ON_MAP",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:113:蜀郡:009",
+      "placeId": "gc-g0057-009",
+      "nameHan": "八陵",
+      "nameKo": "팔릉",
+      "commanderyHan": "蜀郡",
+      "keptJurisdictionId": "96436",
+      "keptJurisdictionNameCh": "蚕陵县",
+      "cause": "SOURCE_TEXT_ERROR",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:113:鴈門郡:005",
+      "placeId": "gc-g0085-005",
+      "nameHan": "汪陶",
+      "nameKo": "왕도",
+      "commanderyHan": "鴈門郡",
+      "keptJurisdictionId": "95061",
+      "keptJurisdictionNameCh": "浧陶县",
+      "cause": "VARIANT_GLYPH",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
+    },
+    {
+      "id": "hhs:113:上谷郡:008",
+      "placeId": "gc-g0090-008",
+      "nameHan": "下落",
+      "nameKo": "하락",
+      "commanderyHan": "上谷郡",
+      "keptJurisdictionId": "87638",
+      "keptJurisdictionNameCh": "下洛县",
+      "cause": "VARIANT_GLYPH",
+      "retiredAt": "2026-09-27",
+      "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json"
     }
   ]
 }

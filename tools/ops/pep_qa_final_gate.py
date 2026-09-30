@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Read-only checks on pinned PEP QA artifacts.
 
-The collector currently has no three-run W1 evidence.  Even a successful
-inspection here cannot authorize a production stop or reset.
+W1 is checked only when all four W1 artifact IDs are supplied. Even a
+successful inspection cannot authorize a production stop or reset.
 """
 
 import argparse
@@ -15,6 +15,7 @@ import xml.etree.ElementTree as ET
 from game_server_recovery import RecoveryError, require
 from pep_qa_provenance import (ARTIFACT_PREFIXES, REPOSITORY, GitHubEvidenceClient,
                                _one, _zip_entries, verify_run_artifacts)
+from pep_qa_w1_attestor import inspect_verified_w1
 
 
 BOUNDARY_SUITES = (
@@ -24,7 +25,7 @@ BOUNDARY_SUITES = (
 )
 
 
-def inspect_verified_run(client, **run_identity):
+def inspect_verified_run(client, *, w1_artifact_ids=None, **run_identity):
     """Inspect the exact archive bytes whose IDs and digests GitHub verified."""
     archives = {}
 
@@ -42,12 +43,18 @@ def inspect_verified_run(client, **run_identity):
         path = f'/repos/{REPOSITORY}/actions/artifacts/{artifact_ids[prefix]}/zip'
         require(path in archives, 'digest-verified artifact bytes unavailable')
         entries[prefix] = _zip_entries(archives[path])
-    return inspect_current_artifacts(
+    result = inspect_current_artifacts(
         provenance=provenance,
         isolated=entries['yuzhou-isolated-evidence'],
         w0_w2=entries['yuzhou-w0-w2'],
         w3=entries['yuzhou-w3'],
     )
+    if w1_artifact_ids is not None:
+        w1 = inspect_verified_w1(client, provenance=provenance,
+                                 artifact_ids=w1_artifact_ids)
+        result['w1_verified'] = w1['w1_verified']
+        result['w1_attempts'] = w1['w1_attempts']
+    return result
 
 
 def _json_entry(entries, name):
@@ -169,10 +176,21 @@ def main():
     parser.add_argument('--isolated-artifact-id', type=int, required=True)
     parser.add_argument('--w0-w2-artifact-id', type=int, required=True)
     parser.add_argument('--w3-artifact-id', type=int, required=True)
+    parser.add_argument('--w1-attempt-1-artifact-id', type=int)
+    parser.add_argument('--w1-attempt-2-artifact-id', type=int)
+    parser.add_argument('--w1-attempt-3-artifact-id', type=int)
+    parser.add_argument('--w1-compare-artifact-id', type=int)
     args = parser.parse_args()
     try:
+        w1_ids = (args.w1_attempt_1_artifact_id, args.w1_attempt_2_artifact_id,
+                  args.w1_attempt_3_artifact_id, args.w1_compare_artifact_id)
+        require(all(value is None for value in w1_ids) or
+                all(value is not None for value in w1_ids),
+                'all four W1 artifact IDs must be provided together')
         result = inspect_verified_run(
             GitHubEvidenceClient(os.environ.get('GITHUB_TOKEN', '')),
+            w1_artifact_ids=None if w1_ids[0] is None else {
+                1: w1_ids[0], 2: w1_ids[1], 3: w1_ids[2], 'compare': w1_ids[3]},
             run_id=args.run_id, run_attempt=args.run_attempt,
             collector_sha=args.collector_sha, runtime_sha=args.runtime_sha,
             map_sha=args.map_sha256, scenario_sha=args.scenario_sha256,

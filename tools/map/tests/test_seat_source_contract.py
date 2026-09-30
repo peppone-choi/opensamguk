@@ -244,10 +244,12 @@ class KeySurfacesAreAmbiguous(unittest.TestCase):
         # 2026-09-15: 수·진·관 거점이 들어오며 「와구」(渦口·瓦口) 한 이름이 새로 겹쳤다.
         # 결손 縣 223곳이 들어오며 겹치는 이름이 늘었다. U47 始平 이름 보정과
         # 宛陵 이름 보정 뒤의 1447 城 실측이다. 키 표면은 여전히 郡뿐이다.
-        self.assertEqual(136, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
-        self.assertEqual(308, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
+        # 2026-09-27 1428 판: 중복 합성 城이 빠져 강현·사현·신성현·역현·하락현 겹침이 사라지고, 동명 실결손
+        # 山陽 高平·南陽 成都가 들어와 고평현·성도현이 새로 겹친다(136·308·118 → 133·300·115). U57 판정은 그대로다.
+        self.assertEqual(133, len(dup), "한글명 충돌 이름 수가 변했다 — U57 을 재판정해라")
+        self.assertEqual(300, nodes, "충돌에 걸린 노드 수가 변했다 — U57 을 재판정해라")
         self.assertEqual(
-            118, len(different),
+            115, len(different),
             f"nameCh 가 실제로 다른 충돌 수가 변했다 — U57 을 재판정해라: {sorted(different)}",
         )
 

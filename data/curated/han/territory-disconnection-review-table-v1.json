@@ -6,8 +6,8 @@
  "counts": {
   "rows": 67,
   "humanDecisionRequired": 15,
-  "currentExact": 54,
-  "currentChanged": 9,
+  "currentExact": 56,
+  "currentChanged": 7,
   "currentAbsent": 4
  },
  "rows": [
@@ -548,7 +548,7 @@
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "TIEBREAK_RESOLVED",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "85186",
     "87051",
@@ -562,9 +562,7 @@
     "87499",
     "87506",
     "87510",
-    "87513",
-    "gc-g0014-001",
-    "gc-g0014-015"
+    "87513"
    ],
    "currentCellCount": 163,
    "status": "DRAFT_RECHECK_GEOMETRY",
@@ -865,11 +863,10 @@
    "draftVerdict": "GEOMETRY_DEFECT",
    "sourceReviewState": "UPHELD",
    "sourceConfidence": "HIGH",
-   "currentGeometry": "CHANGED",
+   "currentGeometry": "EXACT",
    "currentMemberIds": [
     "85381",
-    "85410",
-    "gc-g0039-003"
+    "85410"
    ],
    "currentCellCount": 270,
    "status": "DRAFT_RECHECK_GEOMETRY",

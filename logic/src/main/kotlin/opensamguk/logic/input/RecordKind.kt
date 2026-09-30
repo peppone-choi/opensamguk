@@ -35,6 +35,8 @@ object RecordKind {
     const val INPUT_REJECTED = "input.rejected"
     const val FIELD_APPLIED = "field.applied"
     const val PERSONAL_APPLIED = "personal.applied"
+    const val OFFLINE_DELEGATION_STARTED = "offlineDelegation.started"
+    const val OFFLINE_DELEGATION_ENDED = "offlineDelegation.ended"
     const val PEOPLE_SEARCHED = "people.searched"
     const val PEOPLE_JOINED = "people.joined"
     const val PEOPLE_RESISTED = "people.resisted"

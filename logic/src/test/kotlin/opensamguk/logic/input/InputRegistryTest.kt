@@ -294,6 +294,14 @@ class InputRegistryTest {
     }
 
     @Test
+    fun `AI ready row must bind a concrete NPC selector`() {
+        val promoted = InputCatalog(catalog.entries.map { entry ->
+            if (entry.inputId == "action.scout") entry.copy(deliveryState = InputDeliveryState.AI_READY) else entry
+        })
+        assertFailsWith<IllegalArgumentException> { AiPolicyRegistry.validate(promoted) }
+    }
+
+    @Test
     fun `rule profile defaults to SAMMO only when absent and fails closed on unknown text`() {
         assertEquals(RuleProfile.SAMMO, RuleProfile.fromWorldConfig(null))
         assertEquals(RuleProfile.HWIHA, RuleProfile.fromWorldConfig("HWIHA"))
@@ -316,11 +324,11 @@ class InputRegistryTest {
             "targetSchema":{"status":"PLANNED","source":"test"},"costSchema":{"status":"PLANNED","source":"test","money":null,"grain":null,"iron":null,"timber":null,"horses":null},
             "timing":$timing,"effectScope":"ACTOR_LOCATION","failureReasons":[],"resultType":"InputResolved",
             "replayContract":{"status":"PLANNED","key":"requestId"},"aiPolicyId":"ai.test","helpTopicId":"help.test","tutorialObjectiveId":"N/A",
-            $displayName"deliveryState":"PLANNED"}"""
+            "tutorialNaReason":"E9_PENDING_U3","evidence":{},$displayName"deliveryState":"PLANNED"}"""
     }
 
     private fun ledger(vararg rows: String) =
-        InputCatalog.parse("""{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
+        InputCatalog.parse("""{"schemaVersion":4,"catalogId":"test","status":"DRAFT","note":"test",
         "inputs":[${rows.joinToString(",")}]}""")
 
     private fun assertStratagemRows(source: InputCatalog) {
@@ -390,10 +398,20 @@ class InputRegistryTest {
     }
 
     @Test
+    fun `v4 requires a tutorial reason and typed evidence map`() {
+        val valid = row("action.a", "GENERAL_ACTION")
+        assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"tutorialNaReason\":\"E9_PENDING_U3\",", "")) }
+        assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"tutorialNaReason\":\"E9_PENDING_U3\"", "\"tutorialNaReason\":null")) }
+        assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"evidence\":{}", "\"evidence\":null")) }
+        assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"evidence\":{}", "\"evidence\":{\"UNKNOWN\":[\"x\"]}")) }
+        assertFailsWith<IllegalArgumentException> { ledger(valid.replace("\"evidence\":{}", "\"evidence\":{\"UI_READY\":[]}")) }
+    }
+
+    @Test
     fun `numeric and nested contracts reject type pollution`() {
         val valid = row("action.a", "GENERAL_ACTION")
         for ((from, to) in listOf(
-            "\"schemaVersion\":3" to "\"schemaVersion\":\"2\"",
+            "\"schemaVersion\":4" to "\"schemaVersion\":\"2\"",
             "\"layer\":1" to "\"layer\":\"1\"",
             "\"turnSlots\":12" to "\"turnSlots\":\"12\"",
             "\"money\":null" to "\"money\":\"100\"",
@@ -411,6 +429,6 @@ class InputRegistryTest {
         }
     }
 
-    private fun ledgerPayload(row: String) = """{"schemaVersion":3,"catalogId":"test","status":"DRAFT","note":"test",
+    private fun ledgerPayload(row: String) = """{"schemaVersion":4,"catalogId":"test","status":"DRAFT","note":"test",
         "inputs":[$row]}"""
 }

@@ -214,14 +214,15 @@ class CityTransportRulesTest {
     }
 
     @Test
-    fun `historical pinned routes apply one hop and reject map4 multi hop without moving escort`() {
+    fun `historical pinned routes apply one hop and reject multi hop without moving escort`() {
         val artifacts = opensamguk.infra.seed.WorldArtifactsResolver(Path.of("../.."))
         for (variant in WorldMapVariant.entries) {
+        val requiresMultipleHops = variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428
         val load = { artifacts.artifacts(variant).projection }
         val route = assertIs<StrategicPathResult.Resolved>(resolveImmediateCityTransportRoute(
             CityTransportArgs(273, 781, 100, 0, 0, null), load,
         )).path
-        assertEquals(if (variant == WorldMapVariant.V3_1447_MAP4)
+        assertEquals(if (requiresMultipleHops)
             listOf("land:45098", "land:45127", "land:45022")
         else listOf("land:45098", "land:45022"), route.nodeKeys)
         val h = handler(listOf(273, 781), mapName = "han-world-v3", worldMapVariant = variant,
@@ -231,7 +232,7 @@ class CityTransportRulesTest {
             generalId = 10, fromCityId = 273, toCityId = 781, gold = 100, rice = 200, garrison = 300,
             topologyRevision = route.topologyRevision, routePathHash = route.pathHash,
         ))
-        if (variant == WorldMapVariant.V3_1447_MAP4) {
+        if (requiresMultipleHops) {
             assertFalse(result.ok)
             assertEquals("ROUTE_REQUIRES_MULTI_TURN", (result as CommandLifecycleResult).code)
             assertEquals(CityLedgerEntry(1000, 1000, 1000), lastLedger.entry(lastWorld.worldId, 273))

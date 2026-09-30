@@ -904,7 +904,7 @@
         {
           "jurisdictionId": "gc-g0093-001",
           "cityId": 1610,
-          "name": "양악",
+          "name": "양락",
           "nameCh": "阳乐縣",
           "longitude": 120.0688072,
           "latitude": 40.9783941,
@@ -1306,7 +1306,7 @@
         {
           "jurisdictionId": "gc-g0096-002",
           "cityId": 1611,
-          "name": "𧦦감",
+          "name": "남감",
           "nameCh": "𧦦邯縣",
           "longitude": 124.347976,
           "latitude": 39.8994708,
@@ -1318,7 +1318,7 @@
         {
           "jurisdictionId": "gc-g0096-018",
           "cityId": 1612,
-          "name": "악도",
+          "name": "낙도",
           "nameCh": "乐都縣",
           "longitude": 125.1063097,
           "latitude": 40.0401999,

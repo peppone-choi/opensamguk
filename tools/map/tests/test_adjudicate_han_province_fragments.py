@@ -705,7 +705,8 @@ class HanProvinceFragmentCanonicalTest(unittest.TestCase):
         # 縣 안 재분할 省 200 으로 줄어 1,594 → 1,331(縣·城 없는 省 1,258 + 거점 73). 관할·郡 수는 그대로다.
         # 2026-09-23: 기존 56곳과 새 합성 223곳이 국소 carve 로 제 省·관할을 받았다.
         # 빈 막다른 26구역을 같은 郡 이웃에 접어 1,627 省·1,447 관할이다.
-        self.assertEqual((1627, 1447, 173), (
+        # 2026-09-27: 중복 합성 23곳을 거두고 동명 실결손 4곳을 더해 1,608 省·1,428 관할이다.
+        self.assertEqual((1608, 1428, 173), (
             len(tiles["provinceRecords"]),
             len(tiles["jurisdictionRecords"]),
             len(tiles["commanderyRecords"]),

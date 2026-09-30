@@ -33,11 +33,11 @@ on:
         required: true
         default: "current"
         type: string
-      # Active map release: 1447 cities (미해독 3행을 제외한 결손 縣 223곳 추가).
+      # Active map release: 1428 cities (1447 에서 중복 합성 城 23곳 은퇴, 동명 실결손 4곳 추가 — 2026-09-27).
       expected_city_count:
         description: "Optional public API city count assertion (blank = skip)"
         required: false
-        default: "1447"
+        default: "1428"
         type: string
       expected_first_city:
         description: "Optional public API first-city assertion (blank = skip)"

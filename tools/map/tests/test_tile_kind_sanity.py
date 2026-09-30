@@ -48,7 +48,8 @@ class TileKindSanityTest(unittest.TestCase):
         self.assertEqual(
             # 2026-09-16 1098: 河南尹 平陰縣(82879) 점이 더해졌다.
             # 결손 縣 223곳이 COUNTY 점으로 더해졌다(다른 등급은 불변) — 1069 → 1292.
-            {"COUNTY": 1292, "COMMANDERY": 120, "KINGDOM": 17,
+            # 2026-09-27: 중복 합성 縣 23곳을 거두고 동명 실결손 4곳을 더했다(다른 등급은 불변) — 1292 → 1273.
+            {"COUNTY": 1273, "COMMANDERY": 120, "KINGDOM": 17,
              "EXTERNAL_PLACE": 72, "PROVINCE": 3, "STRATEGIC_SITE": 73},
             dict(kinds),
             "han-tiles.json 의 등급 분포가 바뀌었다 — 아래 KINGDOM 회귀의 전제가 달라졌다",

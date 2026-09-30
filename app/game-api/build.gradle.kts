@@ -14,6 +14,7 @@ kotlin { jvmToolchain(21) }
 tasks.named("jar") { enabled = false }
 
 tasks.processResources {
+    from(rootProject.file("data/help")) { into("help") }
     // 휘하 조회(현 특산·향당) 원장 — 저장소 루트 파일이 정본이고 여기서는 그대로 싣기만 한다.
     from(rootProject.file("data/curated/han/resource-production-v1.json")) { into("campaign") }
     from(rootProject.file("data/curated/han/officer-native-county-v1.json")) { into("campaign") }

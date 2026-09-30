@@ -116,17 +116,17 @@ class InMemoryTurnWorld(
     private val lastCommittedEventOrdinal: (EventTurn) -> Int? = { null },
 ) {
     val worldId: WorldId = snapshot.worldId
-    private val generals = LinkedHashMap<Int, TurnGeneral>()
+    private val generals = UnitJournalMap<Int, TurnGeneral> { it.copy(meta = copyMeta(it.meta), initialTurns = it.initialTurns.toList()) }
     private val generalIdentityTokens = LinkedHashMap<Int, Long>()
     private var nextGeneralIdentityToken = 0L
-    private val cities = LinkedHashMap<Int, City>()
-    private val nations = LinkedHashMap<Int, Nation>()
-    private val troops = LinkedHashMap<Int, Troop>()
-    private val diplomacy = LinkedHashMap<String, TurnDiplomacy>()
-    private val accessLogs = LinkedHashMap<Int, GeneralAccessLog>()
+    private val cities = UnitJournalMap<Int, City> { it.copy(meta = copyMeta(it.meta)) }
+    private val nations = UnitJournalMap<Int, Nation> { it.copy(meta = copyMeta(it.meta)) }
+    private val troops = UnitJournalMap<Int, Troop> { it }
+    private val diplomacy = UnitJournalMap<String, TurnDiplomacy> { it.copy(meta = copyMeta(it.meta)) }
+    private val accessLogs = UnitJournalMap<Int, GeneralAccessLog> { it }
     // Phase 4X-A 가신·부곡 — troops 와 같은 세계 상태 + dirty/created/deleted 집합(spec v3 §3).
-    private val retainers = LinkedHashMap<Int, Retainer>()
-    private val bugoks = LinkedHashMap<Int, Bugok>()
+    private val retainers = UnitJournalMap<Int, Retainer> { it }
+    private val bugoks = UnitJournalMap<Int, Bugok> { it }
     private val dirtyRetainerIds = LinkedHashSet<Int>()
     private val createdRetainerIds = LinkedHashSet<Int>()
     private val deletedRetainerIds = LinkedHashSet<Int>()
@@ -136,8 +136,8 @@ class InMemoryTurnWorld(
     private var maxRetainerId: Int = 0
     private var maxBugokId: Int = 0
     // Phase 4X-B 작전 — 같은 규약.
-    private val operations = LinkedHashMap<Int, Operation>()
-    private val operationUnits = LinkedHashMap<Int, OperationUnit>()
+    private val operations = UnitJournalMap<Int, Operation> { it }
+    private val operationUnits = UnitJournalMap<Int, OperationUnit> { it }
     private val dirtyOperationIds = LinkedHashSet<Int>()
     private val createdOperationIds = LinkedHashSet<Int>()
     private val deletedOperationIds = LinkedHashSet<Int>()
@@ -147,7 +147,7 @@ class InMemoryTurnWorld(
     private var maxOperationId: Int = 0
     private var maxOperationUnitId: Int = 0
     // Phase 4X-C 출병 계획 — 같은 규약.
-    private val battlePlans = LinkedHashMap<Int, BattlePlan>()
+    private val battlePlans = UnitJournalMap<Int, BattlePlan> { it }
     private val dirtyBattlePlanIds = LinkedHashSet<Int>()
     private val createdBattlePlanIds = LinkedHashSet<Int>()
     private val deletedBattlePlanIds = LinkedHashSet<Int>()
@@ -182,6 +182,8 @@ class InMemoryTurnWorld(
     private val gameEventByKey = LinkedHashMap<EventKey, GameEvent>()
     private var gameEventKeyTurn: EventTurn? = null
     private var eventOrdinalAllocator: EventOrdinalAllocator? = null
+    // Allocated ordinals are never reused after a unit rollback, including a failed date change.
+    private val eventOrdinalHighwaterByTurn = LinkedHashMap<EventTurn, Int>()
 
     // 액추에이터/어드민 HTTP 스레드가 데몬 스레드의 `state = state.copy(...)`와 동시에 읽는다.
     // [TurnWorldState]는 불변 data class라 torn object는 없지만, @Volatile 없이는 가시성 보장이 없다.
@@ -262,6 +264,141 @@ class InMemoryTurnWorld(
     }
 
     fun getState(): TurnWorldState = state
+
+    internal class Capture(val target: Any, val commit: () -> Unit = {}, val restore: () -> Unit)
+
+    /** A savepoint for one unit. ID and event-ordinal high-water marks deliberately survive restore. */
+    class Checkpoint private constructor(
+        private val owner: InMemoryTurnWorld,
+        private val captures: List<Capture>,
+    ) {
+        internal fun restoreInto(world: InMemoryTurnWorld) {
+            require(world === owner) { "world checkpoint belongs to a different world" }
+            captures.forEach { it.restore() }
+            // Rebuild the allocator from the preserved high-water mark on the next event.
+            world.eventOrdinalAllocator = null
+            world.recordMaxNationId()
+            world.recordMaxGeneralId()
+            world.recordMaxRetainerId()
+            world.recordMaxBugokId()
+            world.recordMaxOperationId()
+            world.recordMaxOperationUnitId()
+            world.recordMaxBattlePlanId()
+        }
+
+        internal fun commitInto(world: InMemoryTurnWorld) {
+            require(world === owner) { "world checkpoint belongs to a different world" }
+            captures.forEach { it.commit() }
+        }
+
+        companion object {
+            internal fun create(owner: InMemoryTurnWorld, captures: List<Capture>) = Checkpoint(owner, captures)
+        }
+    }
+
+    private fun <K, V> captureMap(target: MutableMap<K, V>, copy: (V) -> V = { it }): Capture {
+        val saved = target.mapValuesTo(LinkedHashMap()) { (_, value) -> copy(value) }
+        return Capture(target) {
+            target.clear()
+            saved.forEach { (key, value) -> target[key] = copy(value) }
+        }
+    }
+
+    private fun <K, V> captureMap(target: UnitJournalMap<K, V>): Capture {
+        val journal = target.checkpoint()
+        return Capture(target, commit = journal::commit, restore = journal::restore)
+    }
+
+    private fun <T> captureSet(target: MutableSet<T>): Capture {
+        val saved = target.toList()
+        return Capture(target) { target.clear(); target.addAll(saved) }
+    }
+
+    private fun <T> captureList(target: MutableList<T>, copy: (T) -> T = { it }): Capture {
+        val saved = target.map(copy)
+        return Capture(target) { target.clear(); target.addAll(saved.map(copy)) }
+    }
+
+    private fun copyValue(value: Any?): Any? = when (value) {
+        is Map<*, *> -> LinkedHashMap<Any?, Any?>().apply {
+            value.forEach { (key, entry) -> put(key, copyValue(entry)) }
+        }
+        is List<*> -> value.map(::copyValue)
+        is Set<*> -> value.mapTo(LinkedHashSet(), ::copyValue)
+        is ByteArray -> value.copyOf()
+        is IntArray -> value.copyOf()
+        is LongArray -> value.copyOf()
+        else -> value
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun copyMeta(meta: Map<String, Any?>): Map<String, Any?> = copyValue(meta) as Map<String, Any?>
+
+    /** Capture every mutable world channel before a general, envelope, or monthly step runs. */
+    fun checkpoint(): Checkpoint {
+        val savedState = state.copy(meta = copyMeta(state.meta), config = copyMeta(state.config))
+        val savedWater = waterControl
+        val savedProvince = provinceControl
+        val savedPosition = generalPosition
+        val savedEventTurn = gameEventKeyTurn
+        return try {
+            Checkpoint.create(this, listOf(
+                captureMap(generals),
+                captureMap(generalIdentityTokens),
+                captureMap(cities),
+                captureMap(nations),
+                captureMap(troops),
+                captureMap(diplomacy),
+                captureMap(accessLogs),
+                captureMap(retainers),
+                captureMap(bugoks),
+                captureSet(dirtyRetainerIds), captureSet(createdRetainerIds), captureSet(deletedRetainerIds),
+                captureSet(dirtyBugokIds), captureSet(createdBugokIds), captureSet(deletedBugokIds),
+                captureMap(operations), captureMap(operationUnits),
+                captureSet(dirtyOperationIds), captureSet(createdOperationIds), captureSet(deletedOperationIds),
+                captureSet(dirtyOperationUnitIds), captureSet(createdOperationUnitIds), captureSet(deletedOperationUnitIds),
+                captureMap(battlePlans),
+                captureSet(dirtyBattlePlanIds), captureSet(createdBattlePlanIds), captureSet(deletedBattlePlanIds),
+                captureMap(sieges) { it.copy(timeline = it.timeline.map(::copyMeta)) },
+                captureSet(dirtySiegeIds), captureSet(createdSiegeIds),
+                captureSet(dirtyGeneralIds), captureSet(dirtyCityIds), captureSet(dirtyNationIds),
+                captureSet(dirtyTroopIds), captureSet(dirtyDiplomacyKeys),
+                captureSet(createdGeneralIds), captureSet(createdNationIds), captureSet(createdTroopIds),
+                captureSet(createdDiplomacyKeys),
+                captureList(createdNationTurns) { it.copy(arg = it.arg?.let(::copyMeta)) },
+                captureSet(deletedTroopIds), captureSet(deletedGeneralIds), captureSet(deletedNationIds),
+                captureList(deletedNationSnapshots) {
+                    it.copy(nation = it.nation.copy(meta = copyMeta(it.nation.meta)), generalIds = it.generalIds.toList())
+                },
+                captureList(logs) { it.copy(meta = it.meta?.let(::copyMeta)) },
+                captureList(gameEvents) { it.copy(refs = LinkedHashMap(it.refs), facts = LinkedHashMap(it.facts)) },
+                captureMap(gameEventByKey) { it.copy(refs = LinkedHashMap(it.refs), facts = LinkedHashMap(it.facts)) },
+                Capture("state") { state = savedState.copy(meta = copyMeta(savedState.meta), config = copyMeta(savedState.config)) },
+                Capture("waterControl") { waterControl = savedWater },
+                Capture("provinceControl") { provinceControl = savedProvince },
+                Capture("generalPosition") { generalPosition = savedPosition },
+                Capture("gameEventKeyTurn") { gameEventKeyTurn = savedEventTurn },
+            ))
+        } catch (error: Throwable) {
+            // A later capture can fail after earlier entity maps started journaling.
+            generals.abandonCheckpoint()
+            cities.abandonCheckpoint()
+            nations.abandonCheckpoint()
+            troops.abandonCheckpoint()
+            diplomacy.abandonCheckpoint()
+            accessLogs.abandonCheckpoint()
+            retainers.abandonCheckpoint()
+            bugoks.abandonCheckpoint()
+            operations.abandonCheckpoint()
+            operationUnits.abandonCheckpoint()
+            battlePlans.abandonCheckpoint()
+            throw error
+        }
+    }
+
+    fun restore(checkpoint: Checkpoint) = checkpoint.restoreInto(this)
+
+    fun commit(checkpoint: Checkpoint) = checkpoint.commitInto(this)
 
     /** Immutable read projection; legacy worlds have no water state, absent V3 rows stay unknown. */
     fun waterControlSnapshot(): WaterControlSnapshot? = waterControl
@@ -636,6 +773,9 @@ class InMemoryTurnWorld(
         if (gameEventKeyTurn != turn) {
             gameEventByKey.clear()
             gameEventKeyTurn = turn
+            // The live allocator starts a fresh forward turn at zero. Rebuild only when
+            // a rolled-back unit already consumed ordinals for this date.
+            if (eventOrdinalHighwaterByTurn.containsKey(turn)) eventOrdinalAllocator = null
         }
         val existing = gameEventByKey[eventKey]
         if (existing != null) {
@@ -648,13 +788,17 @@ class InMemoryTurnWorld(
             if (existing !in gameEvents) gameEvents.add(existing)
             return existing
         }
-        val allocator = eventOrdinalAllocator ?: EventOrdinalAllocator(turn, lastCommittedEventOrdinal(turn)).also {
+        val allocator = eventOrdinalAllocator ?: EventOrdinalAllocator(
+            turn, maxOf(lastCommittedEventOrdinal(turn) ?: -1, eventOrdinalHighwaterByTurn[turn] ?: -1),
+        ).also {
             eventOrdinalAllocator = it
         }
+        val occurredAt = allocator.allocate(turn)
+        eventOrdinalHighwaterByTurn[turn] = occurredAt.ordinal
         val event = GameEvent(
             worldId = worldId.value,
             kind = kind,
-            occurredAt = allocator.allocate(turn),
+            occurredAt = occurredAt,
             audience = audience,
             publication = Publication(if (audience == AudienceTarget.Public) PublicationState.PUBLISHED else PublicationState.PRIVATE),
             eventKey = eventKey,

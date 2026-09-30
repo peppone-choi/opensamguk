@@ -69,9 +69,9 @@ import java.util.UUID
  *     silently dropping the action.
  *
  * In BOTH models the envelope is the EXISTING [TurnDaemonCommandEnvelope], encoded into the one
- * `payload` field the engine-side `RedisCommandStream` consumer reads. NO new wire variant and NO
- * `:common`/wire change is introduced (OQ6 LEAD RULING) — game-api ONLY publishes; the daemon applies
- * (one-daemon-write rule).
+ * `payload` field the engine-side `RedisCommandStream` consumer reads. The authenticated HWIHA owner
+ * reservation also records a separate typed presence pulse in the same inbox transaction, and
+ * publishes it before the original wake. The daemon alone applies the activity lease.
  */
 @Service
 class CommandReserveService(
@@ -288,6 +288,7 @@ class CommandReserveService(
                 command = intake,
             )
             val payload = encodeCommandPayload(envelope)
+            val presence = presenceForAcceptedReservation(requestId, acceptedAt, generalId, ownerUserId, worldProfile)
             transactions.executeWithoutResult {
                 commandInbox.insertAccepted(
                     AcceptedCommand(
@@ -304,7 +305,9 @@ class CommandReserveService(
                         ownerUserId = ownerUserId,
                     ),
                 ).throwIfConflict()
+                presence?.let(::insertPresence)
             }
+            presence?.let(::publishAfterCommit)
             publishAfterCommit(envelope)
             return ReserveResult(requestId = requestId, turnIdx = turnIdx)
         }
@@ -317,6 +320,7 @@ class CommandReserveService(
         )
         val payload = encodeCommandPayload(envelope)
         val fingerprint = intentFingerprint(CommandKind.RESERVED_TURN, generalId, turnIdx, actionCode, canonicalArgs, ownerUserId)
+        val presence = presenceForAcceptedReservation(requestId, acceptedAt, generalId, ownerUserId, worldProfile)
         var inserted = false
         transactions.executeWithoutResult {
             val result = commandInbox.insertAccepted(
@@ -335,6 +339,7 @@ class CommandReserveService(
             result.throwIfConflict()
             inserted = result is CommandInboxRepository.InsertResult.Inserted
             if (inserted) {
+                presence?.let(::insertPresence)
                 reservedTurns.reserve(
                     worldId = worldId,
                     generalId = generalId,
@@ -363,7 +368,10 @@ class CommandReserveService(
             }
         }
 
-        if (inserted) publishAfterCommit(envelope)
+        if (inserted) {
+            presence?.let(::publishAfterCommit)
+            publishAfterCommit(envelope)
+        }
         return ReserveResult(requestId = requestId, turnIdx = turnIdx)
     }
 
@@ -387,6 +395,13 @@ class CommandReserveService(
             val admission = courtAdmission ?: throw AdmissionDenied("POLICY_UNAVAILABLE", "발령 정책을 확인할 수 없습니다.")
             command.copy(requestId = requestId, ownerUserId = owner,
                 argJson = admission.canonicalArguments(command.generalId, owner, command.inputId, command.argJson))
+        } else if (command is TurnDaemonCommand.PresencePulse) {
+            val owner = ownerUserId?.takeIf { it > 0 }
+                ?: throw AdmissionDenied("UNAUTHORIZED", "제출자 인증이 필요합니다.")
+            if (command.ownerUserId != owner || command.generalId <= 0 ||
+                worldStates.processRuleProfile() != RuleProfile.HWIHA)
+                throw AdmissionDenied("WRONG_RULE_PROFILE", "활동 기록을 사용할 수 없습니다.")
+            command
         } else command
         val envelope = TurnDaemonCommandEnvelope(
             requestId = requestId,
@@ -400,13 +415,18 @@ class CommandReserveService(
                     worldId = worldId,
                     requestId = requestId,
                     commandKind = CommandKind.IMMEDIATE,
-                    intentFingerprint = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
+                    intentFingerprint = if (boundCommand is TurnDaemonCommand.PresencePulse) {
+                        intentFingerprint(CommandKind.IMMEDIATE, boundCommand.generalId, 0,
+                            "presencePulse", null, boundCommand.ownerUserId)
+                    } else if (boundCommand is TurnDaemonCommand.ImmediateInput) {
                         intentFingerprint(CommandKind.IMMEDIATE, boundCommand.generalId, 0,
                             boundCommand.inputId, boundCommand.argJson, boundCommand.ownerUserId)
                     } else intentFingerprint(CommandKind.IMMEDIATE, null, 0, command::class.simpleName, null, null),
-                    generalId = null,
+                    generalId = (boundCommand as? TurnDaemonCommand.PresencePulse)?.generalId,
                     turnIdx = 0,
-                    actionCode = if (boundCommand is TurnDaemonCommand.ImmediateInput) {
+                    actionCode = if (boundCommand is TurnDaemonCommand.PresencePulse) {
+                        "presencePulse"
+                    } else if (boundCommand is TurnDaemonCommand.ImmediateInput) {
                         // Store the neutral immediate-input action code for the reset world.
                         "ImmediateInput"
                     } else command::class.simpleName,
@@ -417,6 +437,29 @@ class CommandReserveService(
         }
         publishAfterCommit(envelope)
         return ReserveResult(requestId = requestId, turnIdx = 0)
+    }
+
+    private fun presenceForAcceptedReservation(
+        requestId: String, acceptedAt: Instant, generalId: Int, ownerUserId: Int?, profile: RuleProfile,
+    ): TurnDaemonCommandEnvelope? = ownerUserId?.takeIf { it > 0 && profile == RuleProfile.HWIHA }?.let { owner ->
+        TurnDaemonCommandEnvelope("$requestId:presence", acceptedAt.toString(),
+            TurnDaemonCommand.PresencePulse(generalId, owner))
+    }
+
+    private fun insertPresence(envelope: TurnDaemonCommandEnvelope) {
+        val pulse = envelope.command as TurnDaemonCommand.PresencePulse
+        commandInbox.insertAccepted(AcceptedCommand(
+            worldId = worldId,
+            requestId = envelope.requestId,
+            commandKind = CommandKind.IMMEDIATE,
+            intentFingerprint = intentFingerprint(CommandKind.IMMEDIATE, pulse.generalId, 0,
+                "presencePulse", null, pulse.ownerUserId),
+            generalId = pulse.generalId,
+            turnIdx = 0,
+            actionCode = "presencePulse",
+            payloadJson = encodeCommandPayload(envelope),
+            ownerUserId = pulse.ownerUserId,
+        )).throwIfConflict()
     }
 
     private fun publishAfterCommit(envelope: TurnDaemonCommandEnvelope) {

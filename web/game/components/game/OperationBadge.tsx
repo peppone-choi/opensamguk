@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { OperationsResponse } from '@/types/game';
+import { ReasonTooltip } from '@opensamguk/ui';
 
 type Props = { readonly generalId: number | null; readonly href: string };
 
@@ -26,7 +27,11 @@ export default function OperationBadge({ generalId, href }: Props) {
 
     if (state.kind !== 'ok') {
         const reason = state.kind === 'loading' ? '불러오는 중' : '작전 정보를 불러오지 못했습니다';
-        return <button type="button" className="os-button os-button--ghost os-button--sm subject-target-operation" disabled aria-disabled="true" title={reason} data-reason={reason}>작전</button>;
+        return (
+            <ReasonTooltip reason={reason}>
+                <button type="button" className="os-button os-button--ghost os-button--sm subject-target-operation" aria-disabled="true" data-reason={reason}>작전</button>
+            </ReasonTooltip>
+        );
     }
     if (state.count === 0) {
         return <a className="os-button os-button--ghost os-button--sm subject-target-operation subject-target-operation--empty" href={`${href}#operations`} title="수뇌부가 선언하면 나옵니다">작전 없음</a>;

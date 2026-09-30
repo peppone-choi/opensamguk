@@ -264,7 +264,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         expected_reassigned.add(("chgis:v6:cnty:82841", "弘農郡", "河南尹"))
         expected_reassigned.add(("chgis:v6:cnty:87297", "涿郡", "河閒國"))
         self.assertEqual(expected_reassigned, reassigned)
-        self.assertEqual(1447, len(actual))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertEqual(1428, len(actual))  # 2026-09-27 D1: 합성 중복 23곳 은퇴·실결손 4곳 추가.
         tiles = json.loads((ROOT / "data/map/han-tiles.json").read_text())
         physical = {str(city["id"]): city for city in tiles["cities"]}
         for city in world["cities"]:
@@ -444,7 +444,7 @@ class ArchiveMapGenerationTest(unittest.TestCase):
         self.assertEqual(72, settlements)
         # 704 + 변경 縣 51 + w1 11 + 847·848 중 縣 1(848) = 767, 여기에 w2 縣 158 (郡治는 縣으로 오지 않는다).
         # + 2026-09-16 河南尹 平陰(1098) 縣, − 2026-09-17 同縣 중복 977 漢昌·989 富平.
-        self.assertEqual(1187, counties)  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입. 縣 등급이 50곳 늘었다(나머지 6곳은 治所).
+        self.assertEqual(1168, counties)  # 2026-09-27 D1: 앞 판 縣 1187 - 중복 23 + 실결손 4.
         self.assertEqual(73, sites)
         # '이'(이민족)는 郡國 밖 이민족 거점 7곳만 단다(2026-09-17 w5) — 漢 縣에는 한 곳도 없다.
         self.assertEqual(
@@ -545,7 +545,7 @@ class DisplayNameTest(unittest.TestCase):
                 city["meta"].get("jun", ""),
             )
         ]
-        # 같은 郡 안 同音異字 6 城만 漢字 어간이 뒤에 붙는다 — 순수 규칙 밖의 충돌 해소다.
+        # 같은 郡 안 同音異字 城은 漢字 어간이 뒤에 붙는다 — 순수 규칙 밖의 충돌 해소다.
         # 뒤 7 城은 郡 표시 점 위에 선 邊郡 治所다. legacy 런타임 이름이 郡(「낙랑군」)이라
         # 이름에서 어간을 뽑으면 「낙랑군 낙랑군현」이 된다 — 어간을 治所 관할(朝鮮縣)에서
         # 읽는 것이 그 자리의 규칙이다(build_han_world.display_stem_by_id).
@@ -566,14 +566,10 @@ class DisplayNameTest(unittest.TestCase):
                 (745, "일남군", "일남군 서권현"),
                 # 같은 郡 같은 글자 두 縣 — CHGIS 가 자리를 둘 적었다. 앞선 城은 표기를 지키고 새 城만 가른다.
                 # 같은 한글 독음의 두 거점(渦口·瓦口) — 거점은 郡을 앞에 세우지 않아 漢字 어간으로만 갈린다.
-                (857, "신성(河南尹)#857", "하남윤 신성현(新成)"),
                 (869, "신양(汝南郡)#869", "여남군 신양현(慎阳)"),
-                (996, "하락(上谷郡)#996", "상곡군 하락현(下洛)"),
                 (1039, "와구(九江郡)", "와구(渦口)"),
                 (1080, "와구(巴郡)", "와구(瓦口)"),
-                (1399, "신성(河南尹)#1399", "하남윤 신성현(新城)"),
                 (1417, "신양(汝南郡)#1417", "여남군 신양현(新陽)"),
-                (1603, "하락(上谷郡)#1603", "상곡군 하락현(下落)"),
             ],
             mismatched,
         )
@@ -582,9 +578,9 @@ class DisplayNameTest(unittest.TestCase):
             city for city in world["cities"]
             if city["meta"]["displayName"] != city["name"]
         ]
-        self.assertEqual(1447, len(world["cities"]))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertEqual(1428, len(world["cities"]))  # 2026-09-27 D1: 1447 - 23 + 4.
         # 2026-09-17: 977·989 가 이름이 곧 표기인 취락으로 바뀌고 1099–1133 취락도 이름 그대로라 1028.
-        self.assertEqual(1310, len(changed))  # 2026-09-23: 결손 縣 56곳(城 1342–1397) 편입.
+        self.assertEqual(1292, len(changed))  # D1 은퇴·추가와 991·1057·1123 이름 한정자 변경 반영.
 
     def test_kotlin_table_carries_the_display_name(self) -> None:
         """RawCity 14 번째 인자로 실려 나간다 — 로그가 읽는 자리가 여기다."""

@@ -90,6 +90,7 @@ class CommandReserveServiceIT {
         assertEquals("""{"mode": "NATION", "targetId": 3}""", reserved.argJson)
         assertEquals(result.requestId, reserved.requestId)
         assertEquals(1, inboxCount(result.requestId))
+        assertEquals(1, inboxCount("${result.requestId}:presence"))
         // 결과 조회 소유권의 근거 행이 실제로 읽히고 제출 계정까지 보존된다.
         assertEquals(
             CommandInboxRepository.RequestOwner(generalId = 10, ownerUserId = 42),
@@ -98,12 +99,15 @@ class CommandReserveServiceIT {
         val redisWakePublishedAt = assertNotNull(readRedisWakePublishedAt(result.requestId))
         assertEquals(Instant.parse("0200-01-01T00:00:00Z"), redisWakePublishedAt.toInstant())
 
-        // --- Redis: exactly one message, decoding to Run(POKE) with the returned requestId ---
+        // --- Redis: owner activity precedes the wake for the accepted reservation. ---
         val records = redisTemplate.opsForStream<Any, Any>()
             .read(StreamOffset.create(commandStream, ReadOffset.from("0")))
             .orEmpty()
-        assertEquals(1, records.size, "exactly one poke published")
-        val payload = records.single().value[WIRE_PAYLOAD_FIELD].toString()
+        assertEquals(2, records.size)
+        val presence = decodeCommandEnvelope(records.first().value[WIRE_PAYLOAD_FIELD].toString())
+        assertEquals("${result.requestId}:presence", presence.requestId)
+        assertEquals(TurnDaemonCommand.PresencePulse(10, 42), presence.command)
+        val payload = records.last().value[WIRE_PAYLOAD_FIELD].toString()
         val envelope = decodeCommandEnvelope(payload)
         assertEquals(result.requestId, envelope.requestId)
         val command = assertIs<TurnDaemonCommand.Run>(envelope.command)

@@ -41,7 +41,28 @@ def sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def refresh_dataset_hash() -> int:
+    """gap-counties-v1 이 바뀐 뒤 합성 중복 城 claim 의 증거 해시와 정책 입력 핀만 맞춘다(파생 핀)."""
+    claims, policy = read(CLAIMS), read(POLICY)
+    changed = 0
+    for claim in claims["claims"]:
+        evidence = claim.get("evidence", {})
+        if evidence.get("kind") == "USER_APPROVED_SYNTHETIC_GAME_CITY" and evidence.get("datasetSha256") != sha(GAPS):
+            evidence["datasetSha256"] = sha(GAPS)
+            changed += 1
+    write(CLAIMS, claims)
+    policy["inputs"]["jurisdictionRouteClaims"] = {"path": "data/curated/han/route-node-jurisdiction-claims-v1.json",
+                                                    "sha256": sha(CLAIMS)}
+    policy["inputs"]["routeNodeKeyRegistry"] = {"path": "data/curated/han/route-node-key-registry-v1.json",
+                                                  "sha256": sha(REGISTRY)}
+    write(POLICY, policy)
+    print(f"refreshed {changed} synthetic duplicate county evidence hash(es)")
+    return 0
+
+
 def main() -> int:
+    if sys.argv[1:] == ["--refresh-dataset-hash"]:
+        return refresh_dataset_hash()
     gap, carves, claims, registry, policy, tiles = map(read, (GAPS, CARVES, CLAIMS, REGISTRY, POLICY, TILES))
     placement = {row["countyId"]: row for row in carves["geometry"]["stages"][0]["gapCountyPlacements"]}
     jurisdictions = {row["id"]: row for row in tiles["jurisdictionRecords"]}

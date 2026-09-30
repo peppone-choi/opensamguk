@@ -39,7 +39,8 @@ internal object Archive1447Artifacts {
             catalog.path("cityCount").asInt() == variant.cityCount) { "1447 release identity mismatch" }
         val entries = catalog.path("files").toList()
         val paths = StrategicTopologyJson.artifactPaths() + ownershipPaths +
-            (if (variant == WorldMapVariant.V3_1447_MAP4) setOf("data/map/han-land-roads-v1.json") else emptySet())
+            (if (variant == WorldMapVariant.V3_1447_MAP4 || variant == WorldMapVariant.V3_1428)
+                setOf("data/map/han-land-roads-v1.json") else emptySet())
         require(entries.size == paths.size && entries.map { it.path("path").asText() }.toSet() == paths) {
             "1447 release artifact path set mismatch"
         }

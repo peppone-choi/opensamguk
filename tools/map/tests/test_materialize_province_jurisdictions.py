@@ -56,13 +56,13 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertNotEqual("45022", commanderies["PARENT-0035"]["seatJurisdictionId"])
         self.assertFalse(cities["45022"]["zhi"])
         # 1,520 → 1,593 · 1,070 → 1,143: 수·진·관 거점 73 곳(2026-09-15)이 제 省·관할을 받았다.
-        self.assertEqual(1_627, len(tiles["provinceRecords"]))
+        self.assertEqual(1_608, len(tiles["provinceRecords"]))  # 2026-09-27 1428 판: −23 +4
         # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
         # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1_447, len(tiles["jurisdictionRecords"]))
+        self.assertEqual(1_428, len(tiles["jurisdictionRecords"]))
         self.assertEqual(173, len(tiles["commanderyRecords"]))
         # Preserve the original Licheng geometry proof before the separate Geuk stage.
         from tools.map.tests.frozen_geuk_map import input_bytes
@@ -126,13 +126,13 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         self.assertNotIn("45277", commanderies["PARENT-0028"]["jurisdictionIds"])
         self.assertNotEqual("45277", commanderies["PARENT-0024"]["seatJurisdictionId"])
         # 1,520 → 1,593 · 1,070 → 1,143: 수·진·관 거점 73 곳(2026-09-15)이 제 省·관할을 받았다.
-        self.assertEqual(1_627, len(document["provinceRecords"]))
+        self.assertEqual(1_608, len(document["provinceRecords"]))  # 2026-09-27 1428 판: −23 +4
         # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
         # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1_447, len(document["jurisdictionRecords"]))
+        self.assertEqual(1_428, len(document["jurisdictionRecords"]))
         self.assertEqual(173, len(document["commanderyRecords"]))
 
     def test_ningyang_row_reparents_a_pristine_in_memory_source_parent_fixture(self) -> None:
@@ -469,13 +469,13 @@ class ProvinceJurisdictionMaterializationTest(unittest.TestCase):
         commandery_ids = {record["id"] for record in commanderies}
 
         # 1,520 → 1,593 · 1,070 → 1,143: 수·진·관 거점 73 곳(2026-09-15)이 제 省·관할을 받았다.
-        self.assertEqual(1627, len(provinces))  # 4배 지도에서 포위·좁은 구역을 접은 현재 省 수
+        self.assertEqual(1608, len(provinces))  # 4배 지도에서 포위·좁은 구역을 접은 현재 省 수(2026-09-27 1428 판: −23 +4)
         # 1,071 → 1,070: 南鄉郡(PARENT-0113)의 합성 치소 관할
         # JURISDICTION-PARENT-0113-SEAT 이 접혔다. 동명이지에 묶여 있던 진짜 南鄉縣(71022)이
         # 제자리로 돌아와 같은 칸에 서면서 임시 관할의 seat 가 제 省 밖으로 나가기 때문이다.
         # data/curated/han/county-misbinding-rebindings-v1.json 의
         # supersedesJurisdictionSeatRecovery 참조.
-        self.assertEqual(1447, len(jurisdictions))  # 결손 縣 223곳 추가 후
+        self.assertEqual(1428, len(jurisdictions))  # 결손 縣 223곳 추가 후 · 2026-09-27 중복 23 은퇴·동명 4 추가
         self.assertEqual(173, len(commanderies))
         self.assertEqual({"SPATIAL_PROVINCE"}, {record["kind"] for record in provinces})
         self.assertEqual(len(provinces), len({record["id"] for record in provinces}))

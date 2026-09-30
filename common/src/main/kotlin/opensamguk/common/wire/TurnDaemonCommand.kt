@@ -26,6 +26,16 @@ sealed class TurnDaemonCommand {
         override val type: String get() = "immediateInput"
     }
 
+    /** Authenticated owner activity; the daemon stamps its own current phase on intake. */
+    @Serializable
+    @SerialName("presencePulse")
+    data class PresencePulse(
+        val generalId: Int,
+        val ownerUserId: Int,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "presencePulse"
+    }
+
     @Serializable
     @SerialName("run")
     data class Run(
