@@ -45,14 +45,28 @@ test('세 칸 · 머리 띠, 한 칸 실패는 그 칸만(다시 시도), 방침
     expect(vi.mocked(api.campaignDomestic)).toHaveBeenCalledWith(7, 'policy', { scope: 'COUNTY', countyId: 129, policy: 'FARM' });
 });
 
-test('도로 모드의 도로 공사는 지도 고르기 전까지 사유로 막힌다(보내지 않는다)', async () => {
-    render(<TerritoryScreen hrefs={hrefs} />);
+test('도로 공사 — 접경 후보(한글 구역 이름, 내부 id 안 보임 · 이름 모름은 빼지 않음), 고르기 전엔 막힘, 고르면 edgeId 를 더해 보낸다', async () => {
+    vi.mocked(api.roadForts).mockResolvedValue({ status: 'READY', roadMode: true, forts: [], gates: [
+        { edgeId: 'edge-yang-xu', fromProvinceId: 'p-yang', toProvinceId: 'p-xu', active: false, buildable: true, historicalRouteIds: ['route-slug'], fortCells: [] },
+        { edgeId: 'edge-yang-x', fromProvinceId: 'p-x', toProvinceId: 'p-yang', active: true, buildable: true, historicalRouteIds: [], fortCells: [] },
+    ] } as never);
+    vi.mocked(api.campaignWorks).mockResolvedValue({ status: 'READY', counties: [{ countyId: 129, provinceId: null, provinceIds: ['p-yang'], name: '양성현', commanderyName: '영천군',
+        warehouse: null, active: null, completed: [], startable: [{ work: 'ROAD', label: '도로', available: true, blocked: null, cost: zero, estimatedPhases: 9 }] }] } as never);
+    vi.mocked(api.campaignDomestic).mockResolvedValue({ status: 'AVAILABLE' } as never);
+    const names: Record<string, string> = { 'p-yang': '양성 북', 'p-xu': '허현 서' };
+    render(<TerritoryScreen hrefs={hrefs} provinceName={(id) => names[id] ?? null} />);
     fireEvent.click(await within(screen.getByRole('region', { name: '공사' })).findByRole('button', { name: '새 공사' }));
     const sheet = await screen.findByRole('region', { name: '양성현 새 공사' });
     fireEvent.click(within(sheet).getByRole('option', { name: /도로/ }));
+    const list = within(sheet).getByRole('listbox', { name: '도로를 낼 접경' });
+    expect(within(list).getByRole('option', { name: /양성 북 ↔ 허현 서 접경/ })).toBeInTheDocument();
+    expect(within(list).getByRole('option', { name: /양성 북 ↔ 이름 모를 구역 접경/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(sheet).not.toHaveTextContent('edge-');
+    expect(sheet).not.toHaveTextContent('route-slug');
     expect(within(sheet).getByRole('button', { name: '이 공사로' })).toHaveAttribute('aria-disabled', 'true');
-    expect(sheet).toHaveTextContent('지도에서 접경 · 길목을 고르는 칸이 곧 들어옵니다.');
-    expect(vi.mocked(api.campaignDomestic)).not.toHaveBeenCalled();
+    fireEvent.click(within(list).getByRole('option', { name: /허현 서/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 공사로' }));
+    await waitFor(() => expect(vi.mocked(api.campaignDomestic)).toHaveBeenCalledWith(7, 'work', { countyId: 129, work: 'ROAD', edgeId: 'edge-yang-xu' }));
 });
 
 test('모바일 — 배치 · 방침 · 공사 세그먼트', async () => {

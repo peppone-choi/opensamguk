@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Modal, Seg, StatusView } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
@@ -9,10 +9,12 @@ import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead, type CountyWorks, type Read 
 import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
 import { connectedTotal, stockLine, warehouseRows } from '@/lib/supply-view';
+import { candidateBody, fortCandidates, roadCandidates } from '@/lib/road-candidates';
 import { FORTIFICATION, placementRows, type PolicyRow, type WorkRow } from '@/lib/territory-view';
 import { useIsMobile } from '@/lib/use-viewport';
 import { PlacementList, PlacementSheet } from './PlacementParts';
 import { PolicyPanel, PolicySheet } from './PolicyParts';
+import { RoadPicker } from './RoadPicker';
 import { WorkSheet, WorksPanel, type WorkExtra } from './WorkParts';
 import styles from './territory.module.css';
 
@@ -25,13 +27,13 @@ const OK_TEXT: Readonly<Record<Kind, string>> = {
     work: '공사를 접수했습니다 — 다음 순 경계부터 진척합니다.',
 };
 
-/** 도로 · 보루(도로 모드)는 지도에서 접경 · 길목 칸을 골라야 한다 — 지도 고르기(K2) 전까지 사유로 막는다. */
-const MAP_PICK_WAITING = '지도에서 접경 · 길목을 고르는 칸이 곧 들어옵니다.';
 
 export interface TerritoryScreenProps {
     readonly hrefs: { readonly supply: string; readonly court: string };
-    /** 도로 · 보루 인자 고르기(지도, K2) — 없으면 그 공사는 사유로 막힌다. */
+    /** 도로 · 보루 인자 고르기를 지도(K2)로 바꿀 때 — 없으면 K3 후보 목록(RoadPicker)으로 고른다. */
     readonly extraFor?: (county: CountyWorks, work: string) => WorkExtra | null;
+    /** 구역 한글 이름(지도 구역 기록). 못 풀면 null → 「이름 모를 구역」. */
+    readonly provinceName?: (provinceId: string) => string | null;
 }
 
 function panelState<T extends { status: string }>(read: Read<T>, title: string, retry: () => void) {
@@ -47,7 +49,7 @@ function panelState<T extends { status: string }>(read: Read<T>, title: string, 
  * 영지 첫 화면 본문(P-T01) — 머리 띠(본망 자원 합 · 창고망 →) + 세 칸(배치 · 방침 · 공사) / 모바일 세그먼트.
  * 칸마다 따로 읽고 따로 실패한다(한 칸 실패가 다른 칸을 가리지 않는다). 시트는 화면 안 Modal, 제출 결과는 한 줄 알림.
  */
-export function TerritoryScreen({ hrefs, extraFor }: TerritoryScreenProps) {
+export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScreenProps) {
     const { generalId } = useGameSession();
     const mobile = useIsMobile();
     const [reload, setReload] = useState(0);
@@ -62,6 +64,8 @@ export function TerritoryScreen({ hrefs, extraFor }: TerritoryScreenProps) {
     const [sheet, setSheet] = useState<Sheet | null>(null);
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
+    const [roadPick, setRoadPick] = useState<string | null>(null);
+    const onRoadPick = useCallback((id: string | null) => setRoadPick(id), []);
 
     const submit = async (kind: Kind, body: Readonly<Record<string, unknown>>) => {
         if (generalId == null) return;
@@ -86,10 +90,19 @@ export function TerritoryScreen({ hrefs, extraFor }: TerritoryScreenProps) {
 
     const faces = new Map((retinue.data?.people ?? []).map((p) => [p.retainerId, { picture: p.picture, imageServer: p.imageServer }]));
     const roadMode = roads.data?.roadMode === true;
+    const name = provinceName ?? (() => null);
     const pickExtra = (county: CountyWorks) => (work: string): WorkExtra | null => {
-        const needsMap = roadMode && (work === 'ROAD' || work === FORTIFICATION);
-        if (!needsMap) return null;
-        return extraFor?.(county, work) ?? { node: <p className={styles.muted}>{MAP_PICK_WAITING}</p>, body: null, missing: MAP_PICK_WAITING };
+        const road = work === 'ROAD';
+        if (!roadMode || !roads.data || (!road && work !== FORTIFICATION)) return null;
+        const custom = extraFor?.(county, work);
+        if (custom) return custom;
+        const candidates = road ? roadCandidates(roads.data, county, name) : fortCandidates(roads.data, county, name);
+        const picked = roadPick?.startsWith(road ? 'road|' : 'fort|') ? roadPick : null;
+        return {
+            node: <RoadPicker key={work} label={road ? '도로를 낼 접경' : '보루를 지을 길목'} candidates={candidates} onPick={onRoadPick} onCancel={() => setSheet(null)} />,
+            body: candidateBody(picked),
+            missing: road ? '도로를 낼 접경을 고르세요.' : '보루를 지을 길목을 고르세요.',
+        };
     };
 
     const whRows = warehouses.data?.status === 'READY' ? warehouseRows(warehouses.data) : [];
