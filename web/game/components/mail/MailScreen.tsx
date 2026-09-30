@@ -28,9 +28,11 @@ export interface MailScreenProps {
     readonly requests?: UseRequests;
     /** 서랍(머리줄 서신 단추) — 좁은 폭, 읽기는 목록 안에서 펼친다. */
     readonly variant?: 'page' | 'drawer';
+    /** 바뀌면 서신함을 다시 읽는다(페이지 「새로고침」). 턴이 끝날 때는 스스로 다시 읽는다. */
+    readonly refreshKey?: number;
 }
 
-export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page' }: MailScreenProps) {
+export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page', refreshKey = 0 }: MailScreenProps) {
     const tabs = wanted.filter((t) => (t !== 'national' && t !== 'diplomacy') || me.nationId > 0);
     const [tab, setTab] = useState<MailTab>(initialTab && tabs.includes(initialTab) ? initialTab : tabs[0] ?? 'private');
     const [screen, setScreen] = useState<'list' | 'read' | 'write'>(initialRecipientId != null ? 'write' : 'list');
@@ -39,7 +41,7 @@ export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, i
     const [busyId, setBusyId] = useState<number | null>(null);
     const [notice, setNotice] = useState<MailOutcome | null>(null);
     const scope: MailScope = tab === 'requests' ? 'private' : tab;
-    const box = useMailbox(tab === 'requests' ? null : me, scope);
+    const box = useMailbox(tab === 'requests' ? null : me, scope, refreshKey);
     const items = box.load.state === 'ready' ? box.load.items : [];
     const open = items.find((it) => it.id === openId) ?? null;
     // 외교 서신을 볼 권한이 없으면 서버가 모든 행을 가린다 — 목록 대신 한 줄(§3.7).

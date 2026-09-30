@@ -65,7 +65,7 @@ describe('외교 서신', () => {
             row({ id: 51, msgType: 'diplomacy', src: who(1, 3), dest: nationOnly(5, '[원소]'), text: '삭제된 메시지입니다.', option: { invalid: true } }),
             row({ id: 52, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '불가침을 청합니다', option: { action: 'no_aggression', used: true, invalid: true } }),
             row({ id: 53, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '종전합시다', option: { action: 'stop_war' } }),
-            row({ id: 54, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '모르는 제의', option: { action: 'che_모름' } }),
+            row({ id: 54, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '모르는 제의', option: { action: 'unknown_offer' } }),
         ]), 'diplomacy', me);
         expect(items.map((i) => [i.id, i.hidden, i.html != null, i.proposal])).toEqual([
             [50, true, false, null],

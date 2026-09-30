@@ -15,7 +15,7 @@ export type MailScope = 'private' | 'national' | 'public' | 'diplomacy';
 export const MAIL_SCOPES: readonly MailScope[] = ['private', 'national', 'public'];
 export const MAIL_SCOPE_LABEL: Readonly<Record<MailScope, string>> = { private: '개인', national: '세력', public: '전체', diplomacy: '외교' };
 
-/** 외교 서신에 붙은 제의(option.action) — 엔진이 받는 세 가지(InstantNationCommandRegistry.acceptCommandKeyFor). */
+/** 외교 서신에 붙은 제의(option.action) — 엔진이 수락 명령을 아는 세 가지(즉시 국가 명령 표 acceptCommandKeyFor). */
 export type DiplomacyProposal = 'no_aggression' | 'stop_war' | 'cancel_na';
 export const PROPOSAL_LABEL: Readonly<Record<DiplomacyProposal, string>> = {
     no_aggression: '불가침 제의', stop_war: '종전 제의', cancel_na: '불가침 파기 제의',
