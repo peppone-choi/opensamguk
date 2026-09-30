@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import WarRoomPage from '@/app/game/(campaign)/war-room/page';
+import WarRoomPage from '@/components/campaign/WarRoomPage';
 import { useGameSession } from '@/lib/campaign-session';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 

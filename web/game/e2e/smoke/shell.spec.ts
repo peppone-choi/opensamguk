@@ -37,3 +37,108 @@ test('화면 규칙 도우미가 어긴 것을 실제로 찾는다', { tag: [BOT
   expect(await smallTouchTargets(page, 'main')).toEqual(['button "작은" 30×20']);
   expect(await titleOnlyInfo(page, 'main')).toEqual(['span title="이유는 호버로만"']);
 });
+
+// ---- v3.1 셸 하나(2026-10-01 셸 통합) ----------------------------------------------------------------
+// 합성 로그인 · front-info 로 부 · 월단평을 연다(백엔드 없음 — 게임 읽기는 503, 턴 루프 읽기는 404 → 「운영 상태 확인 중」).
+async function openShell(page: import('@playwright/test').Page, path = '/game/retinue/yuedan') {
+  // 서버를 알아야 셸이 턴 루프를 읽는다(운영은 경로에 서버가 있다) — 쿠키로 서버를 준다.
+  const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
+  await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
+  await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
+  await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
+    result: true,
+    global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
+    general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
+    nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
+  } }));
+  await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
+  await page.route((url) => url.pathname.startsWith('/api/game/') && !url.pathname.endsWith('/front-info'), (r) => r.fulfill({ status: 503, json: {} }));
+  await page.goto(path, { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
+}
+
+/**
+ * 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」과 같은 방법 — elementFromPoint).
+ * 로컬은 `next start`(운영 빌드)로 돌린다 — `next dev` 의 개발 표시기(NEXTJS-PORTAL)가 레일 「도움말」 · 탭 「작전실」 자리를
+ * 덮어 빨개진다(devIndicators 를 끄면 초록, K6 확인). CI 는 next start 라 해당 없다.
+ */
+async function coveredIn(page: import('@playwright/test').Page, selector: string): Promise<string[]> {
+  return page.locator(selector).first().evaluate((root) => {
+    const out: string[] = [];
+    for (const el of Array.from(root.querySelectorAll<HTMLElement>('a, button'))) {
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 || r.height === 0) continue;
+      const cx = r.x + r.width / 2;
+      const cy = r.y + r.height / 2;
+      if (cx < 0 || cy < 0 || cx > innerWidth || cy > innerHeight) continue;
+      const hit = document.elementFromPoint(cx, cy);
+      if (hit !== el && !el.contains(hit)) out.push(`${(el.textContent ?? '').trim()} ← ${hit?.tagName}.${hit?.className}`);
+    }
+    return out;
+  });
+}
+
+test('셸: 데스크톱은 레일, 모바일은 하단 탭 — 누를 것 44 · 덮임 0 · 넘침 0', { tag: [BOTH] }, async ({ page }, testInfo) => {
+  await openShell(page);
+  const menus = page.getByRole('navigation', { name: '게임 메뉴' });
+  await expect(menus).toHaveCount(1); // 보이는 것 하나(다른 하나는 display:none)
+  const visible = menus.first();
+  if (isMobile(testInfo)) {
+    await expect(visible.getByRole('link')).toHaveText(['작전실', '부', '계책', '기록']);
+    await expect(visible.getByRole('button', { name: '전체' })).toBeVisible();
+  } else {
+    await expect(visible.getByRole('link')).toHaveText(['작전실', '부', '계책', '영지', '군단', '조정', '기록', '광장', '도움말']);
+  }
+  await expect(visible.getByRole('link', { name: '부' })).toHaveAttribute('aria-current', 'page');
+  expect(await coveredIn(page, 'body')).toEqual([]);
+  expect(await smallTouchTargets(page, 'header')).toEqual([]);
+  expect(await smallTouchTargets(page, 'nav[aria-label="게임 메뉴"]:visible')).toEqual([]);
+  expect(await smallTouchTargets(page, 'nav[aria-label="하위 화면"]')).toEqual([]);
+  expect(await titleOnlyInfo(page, 'header')).toEqual([]);
+  await expectNoHorizontalOverflow(page);
+  await expect(page.locator('[data-band="unknown"]')).toContainText('운영 상태 확인 중');
+});
+
+test('셸: 모바일 「전체」 시트는 모든 묶음을 연다', { tag: ['@mobile-only'] }, async ({ page }) => {
+  await openShell(page);
+  await page.getByRole('button', { name: '전체' }).tap();
+  const sheet = page.getByRole('dialog', { name: '전체 메뉴' });
+  await expect(sheet).toBeVisible();
+  for (const group of ['작전실', '부', '계책', '영지', '군단', '조정', '기록', '광장']) await expect(sheet.getByText(group, { exact: true }).first()).toBeVisible();
+  expect(await coveredIn(page, '[role="dialog"]')).toEqual([]);
+  await sheet.getByRole('button', { name: '메뉴 닫기' }).tap();
+  await expect(sheet).toBeHidden();
+});
+
+test('셸: 모바일 하단 탭은 시트(--z-sheet) 아래 층 — 시트 아래쪽 제출 단추 가운데가 단추 자신', { tag: ['@mobile-only'] }, async ({ page }) => {
+  await openShell(page);
+  // 레인 화면이 쓰는 하단 시트와 같은 층 · 자리(K6 명령 흐름이 잡은 경우) — 탭 막대 위에 제출 단추가 온다.
+  await page.evaluate(() => {
+    const sheet = document.createElement('section');
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-label', '층 확인 시트');
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;height:240px;z-index:var(--z-sheet);background:var(--panel);display:flex;align-items:flex-end;padding:8px';
+    const submit = document.createElement('button');
+    submit.type = 'button';
+    submit.textContent = '예약';
+    submit.style.cssText = 'width:100%;height:44px';
+    sheet.append(submit);
+    // 화면 본문 안(DOM 에서 탭 막대보다 앞) — 같은 z 면 뒤에 오는 탭 막대가 이긴다. 층 토큰으로만 풀려야 한다.
+    document.querySelector('main[aria-label="게임 콘텐츠"]')!.append(sheet);
+  });
+  expect(await coveredIn(page, '[aria-label="층 확인 시트"]')).toEqual([]);
+});
+
+test('옮긴 캠페인 화면의 옛 주소는 새 주소로 한 번에 308', { tag: [BOTH] }, async ({ page }) => {
+  const cases: Array<[string, string]> = [
+    ['/game/yuedan', '/game/retinue/yuedan'], ['/game/hand', '/game/stratagem'], ['/game/posts', '/game/territory'],
+    ['/game/supply', '/game/territory/supply'], ['/game/siege?county=7', '/game/corps/siege?county=7'],
+    ['/game/orders', '/game/court?tab=orders'], ['/game/war-room', '/game'], ['/game/hwiha/war-room', '/game'],
+  ];
+  for (const [from, to] of cases) {
+    const res = await page.request.get(from, { maxRedirects: 0 });
+    expect(res.status(), from).toBe(308);
+    const location = new URL(res.headers()['location'] ?? '', 'http://x');
+    expect(`${location.pathname}${location.search}`, from).toBe(to);
+  }
+});

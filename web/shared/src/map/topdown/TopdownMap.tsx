@@ -8,7 +8,9 @@ import { Inertia, keyAction, keyPanCells, panBy, pinch, wheelZoomFactor } from '
 import { DEFAULT_LAYERS, TopdownRenderer, type MapLayers, type TopdownSource, type WorldState } from './renderer';
 import type { HitResult } from './hitTest';
 import { MapMinimap } from './MapMinimap';
+import { loadOverviewPicture } from './overviewPicture';
 import type { MyLocation } from './myLocation';
+import type { CorpsMarker } from './corps';
 import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
 
 export interface TopdownMapHandle {
@@ -23,6 +25,8 @@ export interface TopdownMapProps {
   layers?: MapLayers;
   /** 내 위치 표지(M2-11). */
   me?: MyLocation | null;
+  /** 부대 표지(K2-08). */
+  corps?: readonly CorpsMarker[];
   /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). */
   minimap?: boolean;
   /** 'fit' shows the whole map (州 보기); otherwise centre and zoom (CSS px per cell). */
@@ -42,7 +46,7 @@ const SETTLE_MS = 150;
 const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
-  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false } = props;
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false, corps } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -73,19 +77,29 @@ export function TopdownMap(props: TopdownMapProps) {
     const gl = glRef.current;
     const overlay = overlayRef.current;
     if (!gl || !overlay) return undefined;
+    let cancelled = false;
+    setStatus({ kind: 'loading' });
+    setPicture(null);
     let renderer: TopdownRenderer;
     try {
       renderer = new TopdownRenderer(gl, overlay);
     } catch {
       setStatus({ kind: 'unsupported' });
-      return undefined;
+      // WebGL2가 없으면 천하 그림 한 장만 보인다(장소는 목록 · 검색으로 고른다)
+      loadOverviewPicture(source.bakeUrl, source.kitUrl).then((next) => { if (!cancelled) setPicture(next); }, () => undefined);
+      return () => {
+        cancelled = true;
+      };
     }
     rendererRef.current = renderer;
-    let cancelled = false;
+    const fail = (error: unknown) => {
+      if (!cancelled) setStatus({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+    };
     renderer.load(source).then(() => {
       if (cancelled) return;
       setStatus({ kind: 'ready' });
-      setPicture(renderer.overviewPicture());
+      // 뒤로 미룬 자료(밉 · 개관 · 장소 · 그림 판)가 실패하면 지형이 보여도 오류로 알린다
+      renderer.complete.then(() => { if (!cancelled) setPicture(renderer.overviewPicture()); }, fail);
       if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
       callbacks.current.onReady?.({
         setLevel: (level) => {
@@ -101,9 +115,7 @@ export function TopdownMap(props: TopdownMapProps) {
           apply({ center: cell, zoom: zoom ?? cam?.zoom ?? 16 });
         },
       });
-    }, (error: unknown) => {
-      if (!cancelled) setStatus({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
-    });
+    }, fail);
     return () => {
       cancelled = true;
       renderer.dispose();
@@ -122,6 +134,10 @@ export function TopdownMap(props: TopdownMapProps) {
   useEffect(() => {
     rendererRef.current?.setMe(me);
   }, [me, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setCorps(corps ?? []);
+  }, [corps, status.kind]);
 
   // 크기 · 기기 픽셀 비율
   useEffect(() => {
@@ -291,6 +307,7 @@ export function TopdownMap(props: TopdownMapProps) {
     >
       <canvas ref={glRef} style={fill} />
       <canvas ref={overlayRef} style={{ ...fill, pointerEvents: 'none' }} />
+      {status.kind === 'unsupported' && picture && <FallbackPicture picture={picture} />}
       {status.kind === 'unsupported' && (
         <p role="status" style={{ position: 'absolute', inset: 'auto 16px 16px 16px', margin: 0, color: '#ece6d8' }}>
           이 브라우저에서는 지도를 그릴 수 없습니다. 장소는 목록에서 고를 수 있습니다.
@@ -301,7 +318,7 @@ export function TopdownMap(props: TopdownMapProps) {
           지도를 불러오지 못했습니다. {status.message}
         </p>
       )}
-      {minimap && picture && (
+      {minimap && picture && status.kind !== 'unsupported' && (
         <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 20 }}>
           <MapMinimap
             picture={picture}
@@ -316,5 +333,24 @@ export function TopdownMap(props: TopdownMapProps) {
       )}
       {props.children}
     </div>
+  );
+}
+
+function FallbackPicture({ picture }: { picture: OffscreenCanvas }) {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    canvas.width = picture.width;
+    canvas.height = picture.height;
+    canvas.getContext('2d')?.drawImage(picture, 0, 0);
+  }, [picture]);
+  return (
+    <canvas
+      ref={ref}
+      role="img"
+      aria-label="천하 지도(그림만)"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'pixelated' }}
+    />
   );
 }

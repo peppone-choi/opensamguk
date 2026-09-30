@@ -1,5 +1,7 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
 export { BREAKPOINTS, MEDIA, viewportClass, type ViewportClass } from './breakpoints';
+export { useViewportClass } from './useViewportClass';
+export { VIEWPORT_WIDTHS, installViewport, mediaMatches } from './viewportTesting';
 export * from './strategicMap';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
@@ -38,7 +40,8 @@ export {
   type PortraitResolver,
   type PortraitVariant,
 } from './portraitResolver';
-export { ReasonTooltip, type ReasonTooltipProps } from './ReasonTooltip';
+export { ReasonSheet, ReasonTooltip, type ReasonSheetProps, type ReasonTooltipProps } from './ReasonTooltip';
+export * from './parts';
 export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
 export { Slot, type SlotProps, type SlotState } from './Slot';
 export { StatRow, type StatRowProps } from './StatRow';
@@ -54,6 +57,8 @@ export {
   cityLabelMetrics,
   cityMarkerDrawBox,
   cityMarkerAssetScale,
+  cityFitSpriteKeys,
+  cityMapLabel,
   cityMarkerHitBox,
   cityMarkerRadius,
   cityMarkerZoomStep,
@@ -68,6 +73,7 @@ export {
   labelZoomFor,
   mapCityToTile,
   provinceLayerRuntimeCities,
+  resetMapSpriteCache,
   cityPixelVisualBox,
   provinceAtScreenPoint,
   sceneGolden,
@@ -124,6 +130,9 @@ export {
   composeProvincePixels,
   decodeProvincePixels,
   loadProvinceIdentityMap,
+  loadSharedProvinceIdentityMap,
+  resetSharedProvinceIdentityMaps,
+  ProvinceIdentityFetchError,
   formatProvinceTooltip,
   type ProvinceColor,
   type ProvinceEdge,
@@ -143,6 +152,7 @@ export {
 export {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
+  UNOWNED_NATION_NAME,
   type CompactMapTooltipMetaInput,
 } from './nationVisual';
 export {
@@ -197,6 +207,7 @@ export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
+export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
   buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,
@@ -205,3 +216,8 @@ export {
 } from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+export {
+  PHASE_LABELS, formatGameDate, hasFinalConsonant, withParticle, worldEventSentence,
+  type EventNames, type GameEvent, type GameEventPage, type GameEventSection, type GameEventTime,
+} from './gameEvents';
+export { RECORD_KIND_SECTION, RECORD_SECTION_LABEL, RECORD_SECTION_ORDER, recordSection, type RecordSection } from './recordSections';
