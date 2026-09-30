@@ -34,7 +34,7 @@ class BattleSessionTickRunner(
     @Synchronized
     fun tick(): BattleTickAttempt {
         val head = store.head(worldId, battleId) ?: return BattleTickAttempt.NotRunning
-        if (head.phase != BattleSessionPhase.RUNNING || head.leaseOwner != owner ||
+        if (head.phase !in setOf(BattleSessionPhase.RUNNING, BattleSessionPhase.RESOLVING) || head.leaseOwner != owner ||
             head.sessionEpoch != epoch) {
             cached = null
             return BattleTickAttempt.NotRunning
@@ -44,6 +44,11 @@ class BattleSessionTickRunner(
         val tail = store.eventsAfter(worldId, battleId, base.consumedEventSeq)
         val current = BattleEventTimeline.replay(base.state, base.consumedEventSeq, tail,
             head.currentTick)
+        if (head.phase == BattleSessionPhase.RESOLVING) {
+            require(current.state.outcome != null) { "resolving session lacks terminal state" }
+            cached = current
+            return BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
+        }
         require(current.state.tick < TacticalRules.CANON.battleTicks || current.state.outcome != null) {
             "battle maximum tick lacks resolution"
         }
@@ -55,7 +60,9 @@ class BattleSessionTickRunner(
             tail.filter { it.eventSeq > current.consumedEventSeq }, head.currentTick + 1)
         val observedSeq = tail.lastOrNull()?.eventSeq ?: base.consumedEventSeq
         if (observedSeq < head.latestEventSeq || next.consumedEventSeq != observedSeq ||
-            !store.advanceTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq)) {
+            !(if (next.state.outcome != null)
+                store.advanceResolvedTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq)
+              else store.advanceTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq))) {
             cached = null
             return BattleTickAttempt.Contended
         }
@@ -64,7 +71,9 @@ class BattleSessionTickRunner(
         val checkpointed = due && store.checkpoint(BattleCheckpoint(worldId, battleId, epoch,
             owner, next.state.tick, next.consumedEventSeq, next.stateHash,
             TacticalStateCodec.encode(next.state)))
-        return BattleTickAttempt.Advanced(next.state, next.consumedEventSeq, checkpointed)
+        return if (next.state.outcome != null)
+            BattleTickAttempt.Resolved(next.state, next.consumedEventSeq)
+        else BattleTickAttempt.Advanced(next.state, next.consumedEventSeq, checkpointed)
     }
 
     private fun restore(durableTick: Int, latestEventSeq: Long): BattleTimelineState? {

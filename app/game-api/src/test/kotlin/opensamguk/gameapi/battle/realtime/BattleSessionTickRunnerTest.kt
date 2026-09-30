@@ -8,6 +8,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.infra.battle.realtime.*
 import opensamguk.logic.battle.realtime.*
@@ -102,6 +103,25 @@ class BattleSessionTickRunnerTest {
             TacticalBattle.stateHash(resumed.state))
     }
 
+    @Test
+    fun `terminal tick closes admission atomically and recovers as resolved`() {
+        val store = FakeStore(ticket())
+        val actor = runner(store)
+        var result: BattleTickAttempt.Resolved? = null
+        for (tick in 1..TacticalRules.CANON.battleTicks) {
+            when (val attempt = actor.tick()) {
+                is BattleTickAttempt.Resolved -> { result = attempt; break }
+                is BattleTickAttempt.Advanced -> Unit
+                else -> error("unexpected tick result: $attempt")
+            }
+        }
+        val resolved = assertNotNull(result)
+        assertEquals(BattleSessionPhase.RESOLVING, store.session.phase)
+        assertTrue(resolved.state.tick <= TacticalRules.CANON.battleTicks)
+        val recovered = assertIs<BattleTickAttempt.Resolved>(runner(store).tick())
+        assertEquals(TacticalBattle.stateHash(resolved.state), TacticalBattle.stateHash(recovered.state))
+    }
+
     private class FakeStore(private val frozen: FrozenBattleTicket) : BattleSessionStore {
         var session = BattleSessionHead(frozen.worldId, frozen.battleId, BattleSessionPhase.RUNNING,
             1, 0, 0, 0, "actor", Instant.now().plusSeconds(300), frozen.joinDeadlineAt,
@@ -136,6 +156,12 @@ class BattleSessionTickRunnerTest {
                 session.sessionEpoch != sessionEpoch || session.leaseOwner != owner) return false
             session = session.copy(currentTick = expectedTick + 1)
             advanced = true
+            return true
+        }
+        override fun advanceResolvedTick(worldId: WorldId, battleId: String, owner: String,
+                                         sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
+            if (!advanceTick(worldId, battleId, owner, sessionEpoch, expectedTick, expectedEventSeq)) return false
+            session = session.copy(phase = BattleSessionPhase.RESOLVING)
             return true
         }
         override fun checkpoint(checkpoint: BattleCheckpoint): Boolean {

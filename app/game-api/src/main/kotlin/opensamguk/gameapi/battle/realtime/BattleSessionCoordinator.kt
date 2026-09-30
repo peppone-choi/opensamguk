@@ -104,6 +104,8 @@ class BattleSessionCoordinator(private val store: BattleSessionStore) {
         require(root.string("kind") in setOf("ENCOUNTER", "SIEGE", "PERSONAL_DUEL"))
         val participants = root.getValue("participants").jsonArray.map { parseParticipant(it.jsonObject) }
         require(participants == ticket.participants)
+        // V68 tickets predate the explicit field; V71 freezes the same decision in a column.
+        root["pacingMode"]?.let { require(it.jsonPrimitive.content == ticket.pacingMode.name) }
         if (root.string("kind") != "PERSONAL_DUEL") {
             require(root.int("battlefieldId") in 0..213)
         }

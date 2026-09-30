@@ -41,6 +41,7 @@ class BattleFrozenInputCodec(private val catalog: TacticalBoardCatalog) {
             root.string("terrainSha256") == ticket.terrainSha256)
         require(root.long("seed") == ticket.seed && root.long("lockGeneration") == ticket.lockGeneration &&
             root.long("lockSetRevision") == ticket.lockSetRevision)
+        root["pacingMode"]?.let { require(it.jsonPrimitive.content == ticket.pacingMode.name) }
         val battleKind = root.string("kind")
         require(battleKind in setOf("ENCOUNTER", "SIEGE")) { "tactical board required" }
         require("tacticalInput" in root) { "tactical input missing" }
