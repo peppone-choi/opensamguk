@@ -50,6 +50,9 @@ data class MapPreviewResponse(
     /** 사료로 확인한 뱃길(城 id 쌍). 화면이 한 줄의 곡선으로 그린다. 없는 맵이면 생략한다. */
     @get:JsonInclude(JsonInclude.Include.NON_EMPTY)
     val seaRoutes: List<MapPreviewSeaRoute> = emptyList(),
+    /** Immutable strategic bake selected only when its source fingerprints match the active world. */
+    @get:JsonInclude(JsonInclude.Include.NON_NULL)
+    val topdownBakeId: String? = null,
 )
 
 data class MapPreviewSeaRoute(val fromCityId: Int, val toCityId: Int, val source: String)
