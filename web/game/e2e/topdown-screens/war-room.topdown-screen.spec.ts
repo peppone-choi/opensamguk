@@ -1,4 +1,4 @@
-// 작전실 새 지도(탑다운) — 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts).
+// 작전실(게임 첫 화면 /game) 새 지도(탑다운) — 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts).
 // 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
 // bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
 // 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
@@ -79,7 +79,17 @@ function provincePng(): Buffer {
 
 const contentType = (path: string) => (path.endsWith('.png') ? 'image/png' : path.endsWith('.json') ? 'application/json' : 'application/octet-stream');
 
+/** 셸 통합(#1107) 뒤 작전실은 게임 첫 화면(/game)이다 — 장수가 있어야 열린다(front-info 합성, 서버는 쿠키로). */
+const FRONT_INFO = {
+  result: true,
+  global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
+  general: { hasGeneral: true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
+  nation: { id: 1, name: '위', color: '#b03a2e' }, city: { id: 1, name: '선무' }, recentRecord: {},
+};
+
 async function serve(page: Page, withBake: boolean) {
+  const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
+  await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
   const png = provincePng();
   await page.route((url) => url.pathname.startsWith('/map/waryong/273d596/'), async (route) => {
     const file = new URL(route.request().url()).pathname.replace('/map/waryong/273d596/', '');
@@ -103,6 +113,7 @@ async function serve(page: Page, withBake: boolean) {
     if (url.pathname === '/api/auth/me') {
       return route.fulfill({ json: { user: { id: 1, username: 'smoke', email: null, nickname: '스모크', role: 'USER' } } });
     }
+    if (url.pathname.endsWith('/front-info')) return route.fulfill({ json: FRONT_INFO });
     if (url.pathname.endsWith('/api/const')) {
       return route.fulfill({ json: { result: true, mapName: 'han-world-v3', mapWidth: 700, mapHeight: 610, maxTurn: 12 } });
     }
@@ -116,7 +127,7 @@ async function serve(page: Page, withBake: boolean) {
 test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
   test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, true);
-    await page.goto('/game/war-room');
+    await page.goto('/game');
     const map = page.locator('[data-map-renderer="topdown"]');
     await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
     await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
@@ -142,7 +153,7 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
 
   test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
     await serve(page, false);
-    await page.goto('/game/war-room');
+    await page.goto('/game');
     await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
   });
