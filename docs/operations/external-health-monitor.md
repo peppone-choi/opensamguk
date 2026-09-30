@@ -22,7 +22,7 @@ GitHub Actions의 `External Health Monitor`와 `External Health Watchdog`는 Git
 | PAUSED | OPEN이 아니거나 tick_seconds≤0 |
 | STALLED | 실행 예정 이후 벽시각 누락·비정상·지연 |
 
-OPEN의 마지막 실제 실행이 `min(3 × tick_seconds, 25시간)`을 넘으면 `turn_stalled`다. 20시간 전 게임 턴을 처리하는 catch-up도 최근 벽시각이 있으면 정상이고, 배속과 관계없이 실제 실행이 멈추면 장애다. 필수 상태/응답 시각·벽시각 계약이 누락되면 UNKNOWN/healthy로 처리하지 않는다. game-api `/health`는 HTTP 200을 유지하면서 `world.stale`, `world.turnLoop`, `lastTurnAt`, `lastTickExecutedAt`과 `serverTime`을 제공하고 정지·DB/Redis 비정상이면 `status=degraded`다. 기존 내부 상세 actuator 검사는 계속 유지한다.
+OPEN의 마지막 실제 실행이 `min(3 × tick_seconds, 25시간)`을 넘으면 `turn_stalled`다. 주 정지 정책은 기존 3tick이며 25시간은 §2 J의 정지 회귀를 막는 cap으로 구분한다. 20시간 전 게임 턴을 처리하는 catch-up도 최근 벽시각이 있으면 정상이고, 배속과 관계없이 실제 실행이 멈추면 장애다. 필수 상태/응답 시각·벽시각 계약이 누락되면 UNKNOWN/healthy로 처리하지 않는다. game-api `/health`는 HTTP 200을 유지하면서 `world.stale`, `world.turnLoop`, `lastTurnAt`, `lastTickExecutedAt`과 `serverTime`을 제공하고 정지·DB/Redis 비정상이면 `status=degraded`다. 기존 내부 상세 actuator 검사는 계속 유지한다.
 
 마지막 벽시각은 엔진의 세계 턴 flush에만 기록한다. 일반 intake·개인 턴은 갱신하지 않으며 transaction 실패 시 함께 롤백된다. 새 엔진 적용 뒤 첫 성공 턴까지 기존 월드에 필드가 없어 STALLED로 표시될 수 있으므로 전환 시점을 승인 후 확인한다.
 

@@ -3,7 +3,7 @@
 ## 안 된 것
 
 - 경보 수신 측 도착·pep 적용·운영 rehearsal은 미확인이다. 실제 발송 시험·운영 maintenance 조회/해제·디스크 apply·운영 DB migration은 실행하지 않았다.
-- 최초 로컬 Kotlin 실행은 중단되어 XML 0건이다. 새 Kotlin 및 DB 집중 검증은 C0 슬롯 또는 원격 CI 대기다.
+- 최초 중단 실행은 XML0이었다. 새 로컬 집중 검증30건 및 infra 테스트 컴파일 성공, remote JVM5750건/엔진1372건 모두 skip0이다. 경보 수신·운영 적용 증거는 남았다.
 - merge로 즉시 적용되는 워크플로와 V70은 대상 운영/DB 승인 전 draft로 보존한다.
 
 ## 변경
@@ -17,7 +17,7 @@
 ## 수치 근거
 
 - 3×tick: 기존 TurnDaemonHealthIndicator.STALE_TICK_MULTIPLIER와 #1018 운영 계약.
-- 25시간 상한: 2026-09-30 full-scope-requirements §2 J. K10/C0 검토 CONFIRMED.
+- 25시간 cap: 2026-09-30 full-scope-requirements §2 J의 정지 회귀 보호. 일반 정지 정책 근거는 기존 3tick이고, 이 cap을 일반 정책의 출처로 확대하지 않는다. K10/C0 검토 CONFIRMED.
 - serverTime/no-store·별도 wall clock·CATCHING_UP·PRE_OPEN PAUSED: K10/C0 계약판 K10-01.
 - 배포 2회 연속: 연속 실패 감시의 최소 횟수. 이전 13회 실패 근거는 메타 C8 보고서에 기록했다.
 - 디스크 보존 시간은 고정하지 않으며 적용 승인 때 사용자가 지정한다.
@@ -27,7 +27,7 @@
 - `python3 -m unittest tools/ops/test_external_health_contract.py tools/ops/test_external_health_run.py tools/ops/test_production_ops.py tools/ops/test_production_disk_cleanup.py -q`: 37건 성공. 모든 API·Docker·웹훅은 fixture/mock.
 - `bash tools/ops/daemon_health_alert_contract_test.sh`: exit0.
 - `git diff --check`: 성공. 변경 워크플로 3개 YAML 파싱 성공, actionlint는 미설치.
-- Kotlin 집중 테스트와 JDBC atomic rollback·V65/V69 적색 재현/V70 허용/민감 payload 거절 테스트는 작성했으나 아직 실행 증거가 없다. 골든·해시 게이트·정규화는 변경하지 않았다.
+- 로컬 지정5클래스 XML30건(실패/오류/skip0), infra compileTestKotlin 성공. remote CI run36704359608 headce9c907e5: jvm-core721 suites/5750 tests/skip0, engine239 suites/1372 tests/skip0. CI는 infra 전체 테스트(JDBC rollback·V65/V69 거절→V70 허용/민감 payload 차단)를 포함하며 성공 XML artifact는 업로드하지 않으므로 전수 명령/게이트 로그가 근거다. 골든·해시 게이트·정규화는 변경하지 않았다.
 
 ## 위험
 
