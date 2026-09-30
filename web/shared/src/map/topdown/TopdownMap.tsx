@@ -1,0 +1,287 @@
+'use client';
+
+// 탑다운 지도 React 감싸개: 캔버스 두 장(WebGL2 지형 + 2D 겹층)과 입력(휠 · 끌기 · 핀치 · 키보드).
+// 화면 모양(단추 · 카드 · 시트)은 v3.1 설계 승인 뒤 붙인다. 지금은 기능 플래그 뒤 시험용이다.
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { clampCamera, fitZoom, levelZoom, nearestStop, stepStop, viewLevel, zoomAt, zoomStops } from './camera';
+import { Inertia, keyAction, keyPanCells, panBy, pinch, wheelZoomFactor } from './input';
+import { DEFAULT_LAYERS, TopdownRenderer, type MapLayers, type TopdownSource, type WorldState } from './renderer';
+import type { HitResult } from './hitTest';
+import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
+
+export interface TopdownMapHandle {
+  setLevel: (level: ViewLevel) => void;
+  zoomStep: (dir: 1 | -1) => void;
+  centerOn: (cell: CellPoint, zoom?: number) => void;
+}
+
+export interface TopdownMapProps {
+  source: TopdownSource;
+  world?: WorldState;
+  layers?: MapLayers;
+  /** 'fit' shows the whole map (州 보기); otherwise centre and zoom (CSS px per cell). */
+  initialView?: 'fit' | { center: CellPoint; zoom: number };
+  onSelect?: (hit: HitResult) => void;
+  onViewChange?: (view: { camera: Camera; level: ViewLevel }) => void;
+  onReady?: (handle: TopdownMapHandle) => void;
+  ariaLabel?: string;
+  className?: string;
+  style?: CSSProperties;
+  children?: ReactNode;
+}
+
+type Status = { kind: 'loading' } | { kind: 'ready' } | { kind: 'error'; message: string } | { kind: 'unsupported' };
+
+const SETTLE_MS = 150;
+const TAP_SLOP_PX = 6;
+
+export function TopdownMap(props: TopdownMapProps) {
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady } = props;
+  const boxRef = useRef<HTMLDivElement>(null);
+  const glRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLCanvasElement>(null);
+  const rendererRef = useRef<TopdownRenderer | null>(null);
+  const cameraRef = useRef<Camera | null>(null);
+  const viewportRef = useRef<Viewport>({ width: 0, height: 0, dpr: 1 });
+  const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [debug, setDebug] = useState<{ zoom: number; level: ViewLevel; col: number; row: number }>();
+  const callbacks = useRef({ onSelect, onViewChange, onReady });
+  callbacks.current = { onSelect, onViewChange, onReady };
+
+  const shape = HAN_MAP_SHAPE;
+
+  const apply = useCallback((next: Camera) => {
+    const viewport = viewportRef.current;
+    if (!viewport.width) return;
+    const camera = clampCamera(next, viewport, shape);
+    cameraRef.current = camera;
+    rendererRef.current?.setView(camera, viewport);
+    const level = viewLevel(camera.zoom);
+    setDebug({ zoom: camera.zoom, level, col: camera.center.col, row: camera.center.row });
+    callbacks.current.onViewChange?.({ camera, level });
+  }, [shape]);
+
+  // 렌더러 만들기 · 싣기
+  useEffect(() => {
+    const gl = glRef.current;
+    const overlay = overlayRef.current;
+    if (!gl || !overlay) return undefined;
+    let renderer: TopdownRenderer;
+    try {
+      renderer = new TopdownRenderer(gl, overlay);
+    } catch {
+      setStatus({ kind: 'unsupported' });
+      return undefined;
+    }
+    rendererRef.current = renderer;
+    let cancelled = false;
+    renderer.load(source).then(() => {
+      if (cancelled) return;
+      setStatus({ kind: 'ready' });
+      if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
+      callbacks.current.onReady?.({
+        setLevel: (level) => {
+          const cam = cameraRef.current;
+          if (cam) apply({ center: cam.center, zoom: levelZoom(level, viewportRef.current, shape) });
+        },
+        zoomStep: (dir) => {
+          const cam = cameraRef.current;
+          if (cam) apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape), dir) });
+        },
+        centerOn: (cell, zoom) => {
+          const cam = cameraRef.current;
+          apply({ center: cell, zoom: zoom ?? cam?.zoom ?? 16 });
+        },
+      });
+    }, (error: unknown) => {
+      if (!cancelled) setStatus({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+    });
+    return () => {
+      cancelled = true;
+      renderer.dispose();
+      rendererRef.current = null;
+    };
+  }, [source.bakeUrl, source.kitUrl]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (world) rendererRef.current?.setWorld(world);
+  }, [world, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setLayers(layers);
+  }, [layers, status.kind]);
+
+  // 크기 · 기기 픽셀 비율
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return undefined;
+    const measure = () => {
+      const rect = box.getBoundingClientRect();
+      viewportRef.current = { width: rect.width, height: rect.height, dpr: window.devicePixelRatio || 1 };
+      if (!cameraRef.current) {
+        const start = initialView === 'fit'
+          ? { center: { col: shape.cols / 2, row: shape.rows / 2 }, zoom: fitZoom(viewportRef.current, shape) }
+          : initialView;
+        apply(start);
+      } else {
+        apply(cameraRef.current);
+      }
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [apply]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 휠: 커서 기준 연속 확대 → 멈추면 가까운 멈춤 자리로 붙는다
+  useEffect(() => {
+    const box = boxRef.current;
+    if (!box) return undefined;
+    let settleTimer = 0;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const cam = cameraRef.current;
+      if (!cam) return;
+      const rect = box.getBoundingClientRect();
+      const anchor = { x: event.clientX - rect.left, y: event.clientY - rect.top };
+      const factor = wheelZoomFactor(event.deltaY, event.deltaMode as 0 | 1 | 2);
+      apply(zoomAt(cam, anchor, cam.zoom * factor, viewportRef.current, shape));
+      window.clearTimeout(settleTimer);
+      settleTimer = window.setTimeout(() => {
+        const now = cameraRef.current;
+        if (now) apply(zoomAt(now, anchor, nearestStop(now.zoom, zoomStops(viewportRef.current, shape)), viewportRef.current, shape));
+      }, SETTLE_MS);
+    };
+    box.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      box.removeEventListener('wheel', onWheel);
+      window.clearTimeout(settleTimer);
+    };
+  }, [apply, shape]);
+
+  // 끌기 · 핀치 · 누르기
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const gesture = useRef({ moved: 0, startX: 0, startY: 0, inertia: new Inertia(), raf: 0 });
+
+  const local = (event: React.PointerEvent) => {
+    const rect = boxRef.current!.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  };
+
+  const onPointerDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    event.currentTarget.setPointerCapture(event.pointerId);
+    const point = local(event);
+    pointers.current.set(event.pointerId, point);
+    const g = gesture.current;
+    cancelAnimationFrame(g.raf);
+    if (pointers.current.size === 1) {
+      g.moved = 0;
+      g.startX = point.x;
+      g.startY = point.y;
+      g.inertia.stop();
+      g.inertia.track(0, 0, event.timeStamp);
+    }
+  };
+
+  const onPointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
+    const previous = pointers.current.get(event.pointerId);
+    if (!previous) return;
+    const point = local(event);
+    const cam = cameraRef.current;
+    const g = gesture.current;
+    if (pointers.current.size === 2 && cam) {
+      const [a, b] = [...pointers.current.entries()];
+      const prev: [{ x: number; y: number }, { x: number; y: number }] = [a[1], b[1]];
+      pointers.current.set(event.pointerId, point);
+      const [c, d] = [...pointers.current.values()];
+      apply(pinch(prev, [c, d], cam, viewportRef.current, shape));
+      g.moved += TAP_SLOP_PX;
+      return;
+    }
+    pointers.current.set(event.pointerId, point);
+    if (!cam) return;
+    const dx = point.x - previous.x;
+    const dy = point.y - previous.y;
+    g.moved = Math.max(g.moved, Math.hypot(point.x - g.startX, point.y - g.startY));
+    g.inertia.track(dx, dy, event.timeStamp);
+    apply(panBy(cam, dx, dy));
+  };
+
+  const onPointerUp = (event: React.PointerEvent<HTMLDivElement>) => {
+    const point = local(event);
+    const wasPinch = pointers.current.size > 1;
+    pointers.current.delete(event.pointerId);
+    const g = gesture.current;
+    if (wasPinch) {
+      const cam = cameraRef.current;
+      if (cam && pointers.current.size === 0) apply({ center: cam.center, zoom: nearestStop(cam.zoom, zoomStops(viewportRef.current, shape)) });
+      return;
+    }
+    if (g.moved < TAP_SLOP_PX) {
+      const hit = rendererRef.current?.hit(point);
+      if (hit) callbacks.current.onSelect?.(hit);
+      return;
+    }
+    g.inertia.release(event.timeStamp);
+    let last = performance.now();
+    const glide = (now: number) => {
+      const step = g.inertia.step(now - last);
+      last = now;
+      const cam = cameraRef.current;
+      if (cam) apply(panBy(cam, step.dx, step.dy));
+      if (!g.inertia.done) g.raf = requestAnimationFrame(glide);
+    };
+    g.raf = requestAnimationFrame(glide);
+  };
+
+  const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const action = keyAction(event.key);
+    const cam = cameraRef.current;
+    if (!action || !cam) return;
+    event.preventDefault();
+    if (action.type === 'pan') {
+      const step = keyPanCells(viewportRef.current, cam.zoom);
+      apply({ center: { col: cam.center.col + action.dx * step, row: cam.center.row + action.dy * step }, zoom: cam.zoom });
+    } else if (action.type === 'zoom') {
+      apply({ center: cam.center, zoom: stepStop(cam.zoom, zoomStops(viewportRef.current, shape), action.dir) });
+    } else {
+      callbacks.current.onSelect?.({ kind: 'none', id: null, cell: { col: Math.floor(cam.center.col), row: Math.floor(cam.center.row) } });
+    }
+  };
+
+  const fill: CSSProperties = { position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' };
+  return (
+    <div
+      ref={boxRef}
+      className={props.className}
+      role="application"
+      aria-label={props.ariaLabel ?? '천하 지도 — 방향키로 옮기고 + · − 로 확대합니다'}
+      tabIndex={0}
+      data-map-renderer="topdown"
+      data-map-status={status.kind}
+      data-map-zoom={debug?.zoom.toFixed(3)}
+      data-map-level={debug?.level}
+      data-map-center={debug ? `${debug.col.toFixed(1)},${debug.row.toFixed(1)}` : undefined}
+      style={{ position: 'relative', overflow: 'hidden', touchAction: 'none', userSelect: 'none', background: '#0c0f0e', ...props.style }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+      onKeyDown={onKeyDown}
+    >
+      <canvas ref={glRef} style={fill} />
+      <canvas ref={overlayRef} style={{ ...fill, pointerEvents: 'none' }} />
+      {status.kind === 'unsupported' && (
+        <p role="status" style={{ position: 'absolute', inset: 'auto 16px 16px 16px', margin: 0, color: '#ece6d8' }}>
+          이 브라우저에서는 지도를 그릴 수 없습니다. 장소는 목록에서 고를 수 있습니다.
+        </p>
+      )}
+      {status.kind === 'error' && (
+        <p role="alert" style={{ position: 'absolute', inset: 'auto 16px 16px 16px', margin: 0, color: '#e08a7c' }}>
+          지도를 불러오지 못했습니다. {status.message}
+        </p>
+      )}
+      {props.children}
+    </div>
+  );
+}
