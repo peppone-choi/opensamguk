@@ -45,3 +45,22 @@
 .previewName { margin: 0; font-size: 18px; font-weight: 900; }
 .previewBlock { padding: 0 12px 10px; }
 .previewActions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+
+/* ---- 인물 상세(P-R03) ---- */
+.hero { display: flex; flex-direction: column; gap: 10px; width: 360px; flex-shrink: 0; padding: 12px; }
+.heroMobile { display: flex; flex-direction: column; gap: 8px; }
+.heroPortrait { display: flex; justify-content: center; }
+.hero .heroPortrait :global(.os-portrait) { width: 240px; height: 340px; }
+.heroMobile .heroPortrait :global(.os-portrait) { width: 100%; height: 220px; }
+.heroName { margin: 0; font-size: 24px; font-weight: 900; }
+.heroActions { display: flex; flex-direction: column; gap: 8px; margin-top: auto; }
+.heroMobile .heroActions { flex-direction: row; flex-wrap: wrap; }
+.heroMobile .heroActions > * { flex: 1 1 calc(50% - 4px); }
+.stateGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.stateCell { display: flex; flex-direction: column; gap: 1px; padding: 6px 8px; margin: 0; }
+.stateCell dd { margin: 0; font-size: 13px; font-weight: 700; }
+.stateCell[data-hidden] dd { color: var(--muted); font-weight: 400; }
+
+@media (max-width: 767.98px) {
+  .stateGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
