@@ -65,6 +65,9 @@ object AiPolicyRegistry {
             require(binding !is AiPolicyBinding.Selector || entry.deliveryState.hasHandler) {
                 "NPC selector for undelivered input: ${entry.inputId}"
             }
+            require(entry.deliveryState < InputDeliveryState.AI_READY || binding is AiPolicyBinding.Selector) {
+                "AI_READY input has no NPC selector: ${entry.inputId}"
+            }
         }
     }
 
