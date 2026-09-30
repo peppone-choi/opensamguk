@@ -2212,6 +2212,9 @@ export function WorldMapCanvas({
       ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
       : mapLod(2 * view.scale * (loadedTiles?._meta.resolutionScale ?? 1) / sizeRef.current.dpr);
     canvas.dataset.mapLod = selectedLod === 'JU' && !juLayerRef.current ? 'COMMANDERY' : selectedLod;
+    // 카메라가 비추는 가운데 칸 — 「조작된다」 · 초점 검증(e2e)이 그림 없이 읽는다.
+    const [viewCenterCol, viewCenterRow] = screenToCell(canvas.width / 2, canvas.height / 2, view);
+    canvas.dataset.viewCenter = `${viewCenterCol.toFixed(1)},${viewCenterRow.toFixed(1)}`;
     hitRef.current = drawScene(
       canvas,
       terrain,
