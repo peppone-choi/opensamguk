@@ -140,9 +140,11 @@ class CampaignDirectoryReaderTest {
 
     @Test fun `ruler uses canonical office and lord flag including ambiguity`() {
         setup()
-        `when`(generals.findAll()).thenReturn(listOf(self.copy(meta = mapOf("lord" to false)), sameNation))
+        `when`(generals.findAll()).thenReturn(listOf(GeneralReadEntity(id = 1, worldId = 7, nationId = 10,
+            officerLevel = 12, meta = mapOf("lord" to false)), sameNation))
         assertNull(reader.nationSummary(1, 41).lord)
-        `when`(generals.findAll()).thenReturn(listOf(self, sameNation.copy(officerLevel = 12)))
+        `when`(generals.findAll()).thenReturn(listOf(self, GeneralReadEntity(id = 3, worldId = 7, nationId = 10,
+            officerLevel = 12, meta = mapOf("lord" to true))))
         assertNull(reader.nationSummary(1, 41).lord)
     }
 
