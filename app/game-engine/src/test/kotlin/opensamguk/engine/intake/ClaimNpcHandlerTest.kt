@@ -4,6 +4,8 @@ import opensamguk.common.wire.GeneralBoolResult
 import opensamguk.common.wire.MakeGeneralOk
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.engine.flush.DatabaseHooks
+import opensamguk.engine.campaign.DelegationPhase
+import opensamguk.engine.campaign.OfflineDelegationLease
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.GeneralStats
@@ -33,8 +35,12 @@ class ClaimNpcHandlerTest {
             TurnDaemonCommand.ClaimNpc(generalId = 10, userId = 7L, userNick = "빙의"))
         assertEquals(true, assertIs<GeneralBoolResult>(result).ok)
         assertEquals(policy, opensamguk.logic.input.PersonPolicyState.read(world.getGeneralById(10)!!.meta))
+        assertEquals(OfflineDelegationLease(1, 10, 7, DelegationPhase(200, 3, 1)),
+            OfflineDelegationLease.read(world.getGeneralById(10)!!.meta))
         val payload = DatabaseHooks.toFlushPayload(world, recorder, world.consumeDirtyState())
         assertEquals(policy, opensamguk.logic.input.PersonPolicyState.read(payload.updatedGenerals.single().meta))
+        assertEquals(OfflineDelegationLease(1, 10, 7, DelegationPhase(200, 3, 1)),
+            OfflineDelegationLease.read(payload.updatedGenerals.single().meta))
     }
 
 

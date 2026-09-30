@@ -9,6 +9,7 @@ import BackBar from './BackBar';
 import BottomNav from './BottomNav';
 import DeptNav from './DeptNav';
 import { useSSE } from '../hooks/useSSE';
+import { usePresencePulse } from '../hooks/usePresencePulse';
 import { useShellFrontInfo } from '../hooks/useShellFrontInfo';
 import { deliverTurnCompleted } from '../lib/turnEvents';
 import { normalizeGamePathname, useServerId } from '../lib/serverGameUrl';
@@ -27,6 +28,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     const { info, error, state } = useShellFrontInfo();
 
     useSSE(refresh);
+    usePresencePulse(info?.global.ruleProfile === 'HWIHA' && info.general.hasGeneral,
+        `${serverId}:${info?.global.year ?? ''}:${info?.global.month ?? ''}:${info?.global.turnPhase ?? ''}`);
 
     const gating: ControlGating | null = useMemo(() => {
         if (!info?.general.hasGeneral) return null;
