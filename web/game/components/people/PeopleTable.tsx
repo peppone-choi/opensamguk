@@ -65,7 +65,7 @@ export function PeopleTable({ rows, selectedId, onSelect, cityName }: PeopleTabl
                                 <td className={`os-mono ${styles.muted}`}>{r.rank}</td>
                                 <td>
                                     <button type="button" className={styles.pick} aria-pressed={sel} onClick={() => onSelect(r)}>
-                                        <Portrait picture={r.picture} imageServer={r.imageServer} size="icon-28" alt="" />
+                                        <Portrait picture={r.picture} imageServer={r.imageServer} size="card-24" alt="" />
                                         <span className="os-serif" style={{ fontWeight: 700 }}>{r.name}</span>
                                         <NameChips row={r} />
                                     </button>
