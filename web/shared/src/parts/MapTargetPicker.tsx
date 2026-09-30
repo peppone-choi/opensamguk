@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ReasonTooltip } from '../ReasonTooltip';
 import { PartIcon } from './PartIcon';
+import { Seg } from './Seg';
 import type { TargetCandidate, TargetKind, TargetMarkerState } from './types';
 
 // ---------------------------------------------------------------- 상태(지도 층 · 목록 · 띠가 함께 쓴다)
@@ -161,20 +162,7 @@ export function TargetCandidateList({ picker, candidates, groups = [], label = '
   return (
     <div className="os-cands">
       <div className="os-cands__head">
-        <div className="os-seg" role="radiogroup" aria-label="후보 묶음">
-          {tabs.map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              role="radio"
-              aria-checked={tab === group}
-              className={['os-seg__item', tab === group ? 'os-seg__item--on' : ''].filter(Boolean).join(' ')}
-              onClick={() => setGroup(tab)}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
+        <Seg label="후보 묶음" options={tabs.map((t) => ({ value: t, label: t }))} value={group} onChange={setGroup} scroll />
         <label className="os-check">
           <input type="checkbox" checked={onlyAvailable} onChange={(event) => setOnlyAvailable(event.target.checked)} />
           <span>가능만</span>

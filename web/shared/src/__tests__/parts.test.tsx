@@ -8,6 +8,7 @@ import {
   PART_ICON_SOURCE,
   PeoplePicker,
   PickBar,
+  Seg,
   StatusView,
   TargetCandidateList,
   TimeBar,
@@ -357,5 +358,34 @@ describe('PartIcon 대체 표', () => {
   it('정본이 아닌 아이콘은 모두 표 한 곳에서 대체로 표시된다', () => {
     const substitutes = Object.entries(PART_ICON_SOURCE).filter(([, s]) => !('sprite' in s) || s.substitute).map(([n]) => n).sort();
     expect(substitutes).toEqual(['alert', 'back', 'clock', 'copy', 'help', 'list', 'lock', 'next', 'pause', 'play', 'prev', 'target', 'unplug']);
+  });
+});
+
+describe('Seg — 나눔 선택', () => {
+  function Speed() {
+    const [v, setV] = useState<string>('1×');
+    return <Seg label="빠르기" options={['0.5×', '1×', '2×'].map((x) => ({ value: x, label: x }))} value={v} onChange={setV} />;
+  }
+
+  it('고른 칸만 Tab 순서에 들고, 화살표 · Home · End 로 옮기면 바로 고른다', () => {
+    render(<Speed />);
+    const group = screen.getByRole('radiogroup', { name: '빠르기' });
+    expect(screen.getByRole('radio', { name: '1×' })).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('radio', { name: '2×' })).toHaveAttribute('tabindex', '-1');
+    fireEvent.keyDown(group, { key: 'ArrowRight' });
+    expect(screen.getByRole('radio', { name: '2×' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: '2×' })).toHaveFocus();
+    fireEvent.keyDown(group, { key: 'ArrowRight' });
+    expect(screen.getByRole('radio', { name: '0.5×' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.keyDown(group, { key: 'End' });
+    expect(screen.getByRole('radio', { name: '2×' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(screen.getByRole('radio', { name: '1×' }));
+    expect(screen.getByRole('radio', { name: '1×' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('수 붙임 — null 은 「—」(모름)', () => {
+    render(<Seg label="묶음" options={[{ value: 'a', label: '내 부', count: 2 }, { value: 'b', label: '전체', count: null }]} value="a" onChange={vi.fn()} />);
+    expect(screen.getByRole('radio', { name: '내 부 2' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: '전체 —' })).toBeInTheDocument();
   });
 });
