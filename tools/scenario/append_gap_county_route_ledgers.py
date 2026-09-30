@@ -75,6 +75,7 @@ def build_rows(ledger: dict, carves: dict, already_bound: set[str] | None = None
             "worldCommanderyHan": placement["worldCommanderyHan"],
             "coordinateBasis": county["coordinateBasis"],
             "positionStatus": county["positionStatus"],
+            "recheckSourced": "coordinateEvidence" in county,
             "sourceRecord": {
                 "corpusPath": f"data/corpus/hhs-{evidence['volume']}.txt",
                 "lineEnd": evidence["line"],
@@ -105,17 +106,30 @@ def append_authority(document: dict, rows: list[dict]) -> int:
     return added
 
 
+def _claim_rationale(row: dict) -> str:
+    # rationale 은 **place identity 만** 말해야 한다 — 검증기의 FORBIDDEN_IDENTITY_LIFECYCLE 가
+    # 연도(\d{3,4}년)·존속·시점 같은 생애 주장을 막는다. 사료 판정은 심사 원장에만 산다.
+    reassigned = ("" if row["worldCommanderyHan"] == row["commanderyHan"]
+                  else f" 투영 칸의 세계 소속 郡은 {row['worldCommanderyHan']} 이다.")
+    synthetic = row["positionStatus"] == "SYNTHETIC"
+    return (
+        f"郡國志 {row['commanderyHan']} 항목 {row['canonicalName']}의 게임 城 위치를 "
+        f"gap-counties-v1 의 {row['coordinateBasis']}로 지정한 record다. "
+        + ("사용자 승인 합성 격자이며 역사적 위치 주장이 아니다. " if synthetic else
+           "좌표 출처와 同名異地 검사는 gap-county-source-recheck-v1 에 있다. " if row["recheckSourced"] else
+           "좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. ")
+        + reassigned
+    )
+
+
 def append_claims(document: dict, rows: list[dict], authority_sha: str) -> int:
-    existing = {row["sourceClaimId"] for row in document["claims"]}
+    existing = {row["sourceClaimId"]: row for row in document["claims"]}
     added = 0
     for row in rows:
         if row["claimId"] in existing:
+            # 좌표 근거가 바뀐 행(2026-09-27 합성 → 출처 좌표)은 파생 사유만 다시 쓴다 — 정체성은 그대로다.
+            existing[row["claimId"]]["conflictDisposition"]["rationale"] = _claim_rationale(row)
             continue
-        # rationale 은 **place identity 만** 말해야 한다 — 검증기의 FORBIDDEN_IDENTITY_LIFECYCLE 가
-        # 연도(\d{3,4}년)·존속·시점 같은 생애 주장을 막는다. 사료 판정은 심사 원장에만 산다.
-        reassigned = ("" if row["worldCommanderyHan"] == row["commanderyHan"]
-                      else f" 투영 칸의 세계 소속 郡은 {row['worldCommanderyHan']} 이다.")
-        synthetic = row["positionStatus"] == "SYNTHETIC"
         document["claims"].append({
             "aliases": [],
             "canonicalName": row["canonicalName"],
@@ -123,13 +137,7 @@ def append_claims(document: dict, rows: list[dict], authority_sha: str) -> int:
             "conflictDisposition": {
                 "rationaleCode": "PLACE_IDENTITY_ONLY",
                 "competingRefs": [],
-                "rationale": (
-                    f"郡國志 {row['commanderyHan']} 항목 {row['canonicalName']}의 게임 城 위치를 "
-                    f"gap-counties-v1 의 {row['coordinateBasis']}로 지정한 record다. "
-                    + ("사용자 승인 합성 격자이며 역사적 위치 주장이 아니다. " if synthetic else
-                       "좌표 출처와 同名異地 검사는 gap-placement-readiness-v1 에 있다. ")
-                    + reassigned
-                ),
+                "rationale": _claim_rationale(row),
                 "status": "NONE",
             },
             "locationResolution": {
@@ -156,7 +164,8 @@ def append_claims(document: dict, rows: list[dict], authority_sha: str) -> int:
         document["policy"]["purpose"] = (
             "CHGIS V6 county coverage 밖의 HHS administrative unit 에만 유한 W0 물리 anchor를 제공한다 — "
             "변경 郡治 8건(OPENSAM-225)과 frontier-counties-v1 의 변경 屬縣 51건, "
-            "gap-counties-v1 의 게임 城 279건(기존 실결손 56건과 사용자 승인 합성 223건)."
+            "gap-counties-v1 의 게임 城 260건(좌표 출처가 있는 62건과 사용자 승인 합성 198건 — "
+            "합성 23건은 2026-09-27 중복으로 거뒀다, gap-county-duplicate-retirements-v1)."
         )
     return added
 
@@ -237,8 +246,9 @@ def update_policy(document: dict, rows: list[dict]) -> None:
         batches.append(batch)
     batch["expectedCount"] = len(rows)
     batch["selectionRationale"] = (
-        "郡國志 항목에 대응하는 게임 城 279곳이다. 기존 56곳은 사료 판정과 좌표를 갖췄다. "
-        "추가 223곳은 사용자 승인 인공 격자로, 역사적 존속이나 실제 縣治 좌표를 뜻하지 않는다. "
+        "郡國志 항목에 대응하는 게임 城 260곳이다. 62곳은 좌표 출처를 갖췄다. "
+        "198곳은 사용자 승인 인공 격자로, 역사적 존속이나 실제 縣治 좌표를 뜻하지 않는다. "
+        "합성 23곳은 지도에 다른 이름으로 이미 있는 縣이라 2026-09-27 거뒀다. "
         "각 행의 위치 근거는 gap-counties-v1 에 있다."
     )
     # expectedSelection 의 정본은 코드의 EXPECTED_SELECTION 이다 — 배치 합으로 직접 계산하면

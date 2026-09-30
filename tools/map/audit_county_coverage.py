@@ -42,6 +42,8 @@ TABLE_PATH = ROOT / "data/curated/han/han-name-simplification-v1.json"
 TILES_PATH = ROOT / "data/map/han-tiles.json"
 RUNTIME_MAP_PATH = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 NAMU_PATH = ROOT / "data/curated/han/namu-place-locations-v1.json"
+# 사람 판정 별칭: 지도에 다른 이름으로 이미 있는 郡國志 縣. build_junguozhi_county_gaps 와 같은 표다.
+ALIASES_PATH = ROOT / "data/curated/han/junguozhi-county-aliases-v1.json"
 
 _GROUP_SUFFIXES = ("侯国", "侯國", "属国", "屬國", "公国", "公國")
 _COUNTY_SUFFIXES = ("县", "縣")
@@ -158,8 +160,14 @@ def audit() -> dict[str, Any]:
     diagnostics: dict[str, list] = {"invalidCoordinates": [], "ambiguousCoordinates": [],
                                     "unresolvedTileIdentity": []}
     placed_by_jun: dict[str, set[str]] = defaultdict(set)
+    placed_places: set[str] = set()
     for city in runtime["cities"]:
         placed_by_jun[normalize_group(city["meta"].get("junCh"))].add(normalize(city["meta"].get("nameCh")))
+        placed_places.add(str(city.get("physicalPlaceRef", "")).rsplit(":", 1)[-1])
+    # 별칭은 그 관할의 城이 런타임에 있을 때만 배치로 센다.
+    for row in _load(ALIASES_PATH)["aliases"]:
+        if row["jurisdictionId"] in placed_places:
+            placed_by_jun[normalize_group(row["commandery"])].add(normalize(row["sourceName"]))
     tile_pairs = _located_pairs(_tile_coordinate_rows(tiles, diagnostics), "tiles", normalize,
                                 normalize_group, diagnostics)
     namu_pairs = _located_pairs(namu["rows"], "namu", normalize, normalize_group, diagnostics)

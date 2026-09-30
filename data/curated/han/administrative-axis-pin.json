@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
   "worldPath": "infra/src/main/resources/map/han-world-v3.json",
-  "worldSha256": "57501d9b638688ae89d9f2c70ed6bcc541934a7c4e37850e8fa44b1e07e3ef30",
+  "worldSha256": "db0913cee9296d1c4326d118c42bad0bb71f75c7f6215141bd3e3d7fffee88e3",
   "zhouAxisPath": "data/curated/han/administrative-zhou-axis-v1.json",
   "zhouAxisSha256": "eec0fc4a3f5b81c106d1d89a721c69903bcca5badb798a52217c6526de131e97",
   "sourceAxisRows": 105,
-  "knownCountyRows": 1127,
+  "knownCountyRows": 1108,
   "outsideCanonRows": 61,
   "unresolvedParentRows": 259,
-  "knownCommanderySeats": 101,
-  "unresolvedCommanderySeats": 4,
-  "note": "Map4 world bundle after #905; city ID, administrativeUnitId, and meta ju/jun/junCh assignments match the previous pinned world. Missing parent IDs grant no jurisdiction."
+  "knownCommanderySeats": 97,
+  "unresolvedCommanderySeats": 8,
+  "note": "1428 world bundle (2026-09-27): 23 duplicate synthetic county cities retired, 4 homonym gap counties added. The retired cities carried canonical HHS units; their surviving same-county cities are still bound by w2 jurisdiction claims without an administrativeUnitId, so canonical rows drop 1127→1108 and the commandery seats of 東海郡·鉅鹿郡·左馮翊·魯國 are unresolved here (the runtime isSeat flag moved to the surviving cities). Missing parent IDs grant no jurisdiction."
 }

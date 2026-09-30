@@ -52,7 +52,7 @@ class StrategicSupplyProviderTest {
     @Test fun `V3 uses pinned dry land and keeps water out of political province ownership`() {
         val network = provider.network("han-world-v3", 1020, cities(),
             WaterControlSnapshot.fromTopology(projection.topology), projection)
-        assertEquals(1627, network.provinceOwners.size)  // 4배 지도 구역 재편 후
+        assertEquals(1608, network.provinceOwners.size)  // 4배 지도 구역 재편 후 · 2026-09-27 1428 판 −23 +4
         val provinceIndex = network.strategicSupply!!.provinceIds.withIndex().associate { it.value to it.index }
         projection.topology.traversalEdges.filter { it.mode == TraversalMode.LAND }.forEach { edge ->
             val a = provinceIndex.getValue((edge.from as StrategicNodeRef.LandProvince).id)

@@ -38,14 +38,23 @@ def _near(a: str, b: str) -> bool:
     return abs(len(a) - len(b)) == 1 and (a in b or b in a)
 
 
-def build(units: dict, tiles: dict, world: dict, gap_ledger: dict | None = None) -> dict:
+def build(units: dict, tiles: dict, world: dict, gap_ledger: dict | None = None,
+          aliases: dict | None = None) -> dict:
     if gap_ledger is None:
         gap_ledger = json.loads(GAP_LEDGER.read_text(encoding="utf-8"))
+    if aliases is None:
+        aliases = json.loads(audit_county_coverage.ALIASES_PATH.read_text(encoding="utf-8"))
     excluded = {(row["commandery"], row["sourceName"]): row["reason"]
                 for row in gap_ledger.get("excludedUndeciphered", [])}
     fold = audit_county_coverage.make_normalizer()
     fold_group = audit_county_coverage.make_normalizer(group=True)
+    # 사람 판정: 지도에 다른 이름으로 있는 縣(별칭)과, 이름만 같은 딴 땅(동명 거부).
+    alias_to = {(fold_group(row["commandery"]), fold(row["sourceName"])): row["jurisdictionId"]
+                for row in aliases["aliases"]}
+    not_same = {(fold_group(row["commandery"]), fold(row["sourceName"])) for row in aliases["homonymsNotSame"]}
+    jurisdiction_name = {j["id"]: j["nameCh"] for j in tiles["jurisdictionRecords"]}
     commandery_name = {c["id"]: c["nameCh"] for c in tiles["commanderyRecords"]}
+    commandery_of = {j["id"]: commandery_name[j["commanderyId"]] for j in tiles["jurisdictionRecords"]}
     by_commandery: dict[str, dict[str, str]] = collections.defaultdict(dict)
     anywhere: dict[str, list[str]] = collections.defaultdict(list)
     for j in tiles["jurisdictionRecords"]:
@@ -71,7 +80,13 @@ def build(units: dict, tiles: dict, world: dict, gap_ledger: dict | None = None)
             elif key in source_own:
                 status, extra = "IN_OWN_COMMANDERY", {"basis": "CITY_SOURCE_JUN", "cityId": source_own[key],
                                                       "tileCommanderies": sorted(set(anywhere.get(key, [])))}
-            elif key in anywhere:
+            elif (fold_group(g["canonicalGroup"]), key) in alias_to:
+                target = alias_to[(fold_group(g["canonicalGroup"]), key)]
+                if target not in jurisdiction_name:
+                    raise ValueError(f"alias target is not a tile jurisdiction: {g['canonicalGroup']} {u['sourceName']} -> {target}")
+                status, extra = "IN_OWN_COMMANDERY", {"basis": "REVIEWED_ALIAS", "jurisdictionId": target,
+                                                      "tileCommanderies": [commandery_of[target]]}
+            elif key in anywhere and (fold_group(g["canonicalGroup"]), key) not in not_same:
                 status, extra = "IN_OTHER_COMMANDERY", {"foundIn": sorted(set(anywhere[key]))}
             else:
                 status, extra = "ABSENT", {}
@@ -81,6 +96,8 @@ def build(units: dict, tiles: dict, world: dict, gap_ledger: dict | None = None)
             rows.append({"ordinal": u["ordinal"], "sourceName": u["sourceName"], "status": status, **extra, "_key": key})
         # 부재 후보에 같은 郡의 「아직 안 맞은」 타일 縣 중 한 글자 차이 이름을 단다(異體字·개명 후보). 승격하지 않는다.
         taken = {r["_key"] for r in rows if r["status"] != "ABSENT"}
+        # 별칭이 문 관할(霸城·魏昌 …)은 이미 제 행이 있다 — 다른 부재 행의 근접 후보가 아니다.
+        taken |= {fold(jurisdiction_name[r["jurisdictionId"]]) for r in rows if r.get("basis") == "REVIEWED_ALIAS"}
         free = sorted(set(own) - taken)
         # 한 타일 縣이 여러 부재 행에 달리면(汝南 慎阳 → 新陽·灌陽·細陽·鮦陽·愼陽) 그 후보는 어느 행의 것도 아니다.
         # 행마다 달지 않고 따로 모은다(#813).

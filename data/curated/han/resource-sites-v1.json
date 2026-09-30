@@ -124,12 +124,13 @@
    "HORSE/LATER_HAN/MATCHED_COMMANDERY": 6,
    "HORSE/LATER_HAN/REGION_ONLY": 1,
    "HORSE/LATER_HAN/UNKNOWN_NO_SOURCE": 1,
-   "IRON/FORMER_HAN/MATCHED": 28,
+   "IRON/FORMER_HAN/MATCHED": 27,
    "IRON/FORMER_HAN/MATCHED_COMMANDERY": 4,
    "IRON/FORMER_HAN/MATCHED_COMMANDERY_SUCCESSION": 1,
    "IRON/FORMER_HAN/MATCHED_REVIEWED_ALIAS": 1,
    "IRON/FORMER_HAN/MATCHED_TRANSFER_ATTESTED": 4,
    "IRON/FORMER_HAN/UNKNOWN_NO_SOURCE": 1,
+   "IRON/FORMER_HAN/UNMATCHED_NO_JURISDICTION": 1,
    "IRON/LATER_HAN/MATCHED": 32,
    "IRON/LATER_HAN/MATCHED_PARENT_DIFFERS": 1,
    "IRON/LATER_HAN/MATCHED_REVIEWED_ALIAS": 1,
@@ -147,9 +148,17 @@
    "REGION": 3
   },
   "distinctSites": 104,
-  "missingRows": 9
+  "missingRows": 10
  },
  "missingRows": [
+  {
+   "entryId": "hs:028A:河東郡:絳:IRON",
+   "resource": "IRON",
+   "era": "FORMER_HAN",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "disposition": "UNBOUND_JURISDICTION",
+   "reason": "han-tiles jurisdictionRecords 에 「絳」 縣이 없다"
+  },
   {
    "entryId": "hs:028A:東萊郡:〈巾弦〉:SALT",
    "resource": "SALT",
@@ -1402,11 +1411,11 @@
    "sourceCommandery": "河東郡",
    "sourceMarker": "鐵官",
    "countyAttribution": "LEXICON",
-   "jurisdictionId": "gc-g0002-011",
+   "jurisdictionId": null,
    "commanderyId": "PARENT-0002",
-   "matchStatus": "MATCHED",
-   "matchReason": "前漢 郡名·縣名이 後漢 同名 郡 안의 縣과 일치(縣治 이동 미검증)",
-   "confidence": "MEDIUM",
+   "matchStatus": "UNMATCHED_NO_JURISDICTION",
+   "matchReason": "han-tiles jurisdictionRecords 에 「絳」 縣이 없다",
+   "confidence": "LOW",
    "evidence": {
     "book": "漢書",
     "volume": "卷028上 地理志上(顏師古註본 班固 自注)",

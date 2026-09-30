@@ -141,7 +141,7 @@ class ScenarioImporterIT {
     }
 
     @Test
-    fun `190 HWIHA pilot imports the full map4 world and remains idempotent`() {
+    fun `190 HWIHA pilot imports the full 1428 world and remains idempotent`() {
         assumeTrue(dockerAvailable, "Docker unavailable — 190 seed IT skipped")
         val scenario = ScenarioJson.loadScenario(readResource("scenario/scenario_3190.json"))
         val root = java.nio.file.Path.of("..").toAbsolutePath().normalize()
@@ -150,7 +150,7 @@ class ScenarioImporterIT {
         val counts = importer.importAll(jdbc, canonicalWorldId)
         assertEquals(1, counts.worldState)
         assertEquals(21, counts.nation)
-        assertEquals(1447, counts.city)
+        assertEquals(1428, counts.city)
         assertEquals(264, counts.general)
         assertEquals(264, counts.generalPosition)
         assertEquals(42, counts.bugok)
@@ -169,7 +169,7 @@ class ScenarioImporterIT {
             "SELECT count(*) FROM nation n LEFT JOIN city c ON c.world_id=n.world_id AND c.id=n.capital_city_id " +
                 "WHERE n.world_id=1 AND c.id IS NULL", Int::class.java))
         val topology = WorldArtifactsResolver(root).artifacts(
-            opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4).projection.topology
+            opensamguk.logic.world.WorldMapVariant.V3_1428).projection.topology
         val pins = jdbc.queryForList(
             "SELECT DISTINCT topology_hash FROM general_spatial_position WHERE world_id=1", String::class.java)
         assertEquals(listOf(topology.contentHash), pins)
@@ -230,7 +230,7 @@ class ScenarioImporterIT {
         assertTrue(config.contains("\"worldFormat\": \"GENERAL_RETAINER_CAMPAIGN\"") ||
             config.contains("\"worldFormat\":\"GENERAL_RETAINER_CAMPAIGN\""))
         // 핀은 부팅이 고를 변형의 위상과 같아야 한다 — 다른 핀이면 부팅 검증이 거부한다.
-        val freshVariant = opensamguk.logic.world.WorldMapVariant.V3_1447_MAP4
+        val freshVariant = opensamguk.logic.world.WorldMapVariant.V3_1428
         val topology = WorldArtifactsResolver(root).artifacts(freshVariant).projection.topology
         val pins = jdbc.queryForList("SELECT DISTINCT topology_revision || ':' || topology_hash FROM general_spatial_position WHERE world_id = 1", String::class.java)
         assertEquals(listOf("${topology.topologyRevision}:${topology.contentHash}"), pins)

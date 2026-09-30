@@ -8,6 +8,15 @@ WITHDRAWN_1341_RELEASE_IDS = frozenset(range(1195, 1342))
 # 은퇴 이전에 동결된 판은 1 부터 명부 수까지 연속이다(1194·1341 판).
 PRE_RETIREMENT_CONTIGUOUS_COUNTS = frozenset({1194, 1341})
 
+# 2026-09-27 사용자 승인(D1): 지도에 다른 이름으로 이미 있는 縣의 합성 城 23곳을 거뒀다
+# (gap-county-duplicate-retirements-v1). 그 번호는 다시 쓰지 않는다. 이 은퇴 전에 발급된 명부(1168·1224·1447)는
+# 종전 번호 목록을 그대로 준다 — 동결 판의 번호를 바꾸지 않는다.
+RETIRED_DUPLICATE_GAP_COUNTY_IDS = frozenset([
+    1399, 1401, 1403, 1405, 1410, 1423, 1429, 1431, 1432, 1433, 1436, 1437,
+    1443, 1446, 1448, 1452, 1461, 1469, 1471, 1473, 1476, 1585, 1603,
+])
+ISSUED_BEFORE_DUPLICATE_RETIREMENT = frozenset({1168, 1224, 1447})
+
 
 def active_numeric_ids(count: int) -> list[int]:
     """명부 수 `count` 인 판의 도시 번호. 은퇴 뒤의 판은 예약 번호를 건너뛰며 앞에서부터 센다.
@@ -23,6 +32,8 @@ def active_numeric_ids(count: int) -> list[int]:
     if count < 1168 or count in PRE_RETIREMENT_CONTIGUOUS_COUNTS:
         return list(range(1, count + 1))
     reserved = RETIRED_CURRENT_CITY_IDS | WITHDRAWN_1341_RELEASE_IDS
+    if count not in ISSUED_BEFORE_DUPLICATE_RETIREMENT:
+        reserved |= RETIRED_DUPLICATE_GAP_COUNTY_IDS
     ids: list[int] = []
     candidate = 1
     while len(ids) < count:

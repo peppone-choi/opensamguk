@@ -46,7 +46,7 @@ object StrategicTopologyJson {
 
     /** The reader also permits classpath packaging without introducing Spring into the route contract. */
     fun load(mapName: String, readArtifact: (String) -> ByteArray): StrategicRouteProjection =
-        loadVersion(mapName, 1447, readArtifact)
+        loadVersion(mapName, 1428, readArtifact)
 
     internal fun artifactPaths(): Set<String> = paths.toSet()
 
@@ -54,7 +54,7 @@ object StrategicTopologyJson {
      * 판마다의 省 수. 848 판까지는 1,520 省이다. 뒤 판은 수·진·관 거점 省을 縣 省에서 떼어
      * 배열 끝에 붙였다(tools/map/carve_strategic_site_provinces.py) — 앞 인덱스는 그대로다.
      */
-    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594, 1133 to 1331, 1141 to 1336, 1341 to 1742, 1194 to 1558, 1168 to 1374, 1224 to 1430, 1447 to 1653)
+    private val landCountByRoster = mapOf(832 to 1520, 835 to 1520, 846 to 1520, 848 to 1520, 1098 to 1594, 1133 to 1331, 1141 to 1336, 1341 to 1742, 1194 to 1558, 1168 to 1374, 1224 to 1430, 1447 to 1653, 1428 to 1608)
 
     /** 대리 治所 省 규칙(standInSeatProvince)은 이 판부터 쓴다 — 앞 판 번들은 省 없는 城을 그대로 싣는다. */
     private const val FIRST_STAND_IN_SEAT_ROSTER = 849
@@ -180,7 +180,8 @@ object StrategicTopologyJson {
             }
             validateCounts(manifest, water)
             val dryEdges = projectDryLandEdges(landIds, owner, terrain, dryCodes, barriers, hashes.getValue(TILES))
-            val map4 = cityCount == 1447 && meta.path("resolutionScale").asInt(1) == 4
+            // 4배 격자 판(1447-map4 · 1428)은 땅길 원장을 같이 싣는다.
+            val map4 = cityCount in setOf(1447, 1428) && meta.path("resolutionScale").asInt(1) == 4
             val roadBytes = if (map4) readArtifact(ROADS) else null
             val roadRows = if (roadBytes != null) {
                 val road = mapper.readTree(roadBytes)
@@ -399,7 +400,7 @@ object StrategicTopologyJson {
         fun identities(rows: List<JsonNode>, idField: String): Set<Identity> {
             // 1168·1224 판은 명부 id 가 연속이 아니다 — 은퇴 id 26 개를 되쓰지 않으므로
             // 최댓값이 명부 수보다 크다. 그 판은 등록부에서 실제 id 집합을 읽는다.
-            val expectedIds = if (cityCount in setOf(1168, 1224, 1447)) opensamguk.logic.world.CityConstRegistry.forVariant(
+            val expectedIds = if (cityCount in setOf(1168, 1224, 1447, 1428)) opensamguk.logic.world.CityConstRegistry.forVariant(
                 opensamguk.logic.world.WorldMapVariant.entries.first { it.cityCount == cityCount }).all().keys
                 else (1..cityCount).toSet()
             val result = rows.map { Identity(it.integer(idField), it.text("routeNodeKey"), it.text("physicalPlaceRef")) }

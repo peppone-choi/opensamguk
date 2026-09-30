@@ -5,8 +5,8 @@
  "totals": {
   "counties": 1180,
   "ABSENT": 3,
-  "IN_OTHER_COMMANDERY": 26,
-  "IN_OWN_COMMANDERY": 1151,
+  "IN_OTHER_COMMANDERY": 21,
+  "IN_OWN_COMMANDERY": 1156,
   "undisposedAbsent": 0,
   "commanderiesWithAbsentFirstCounty": 0
  },
@@ -146,8 +146,11 @@
      "ordinal": 18,
      "sourceName": "新城",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0000-018"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "82841",
+     "tileCommanderies": [
+      "河南尹"
+     ]
     },
     {
      "ordinal": 19,
@@ -399,8 +402,11 @@
      "ordinal": 11,
      "sourceName": "绛",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0002-011"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "95423",
+     "tileCommanderies": [
+      "河東郡"
+     ]
     },
     {
      "ordinal": 12,
@@ -565,8 +571,11 @@
      "ordinal": 2,
      "sourceName": "霸陵",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0004-002"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "70647",
+     "tileCommanderies": [
+      "京兆尹"
+     ]
     },
     {
      "ordinal": 3,
@@ -641,8 +650,11 @@
      "ordinal": 1,
      "sourceName": "高陵",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0005-001"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "70741",
+     "tileCommanderies": [
+      "左馮翊"
+     ]
     },
     {
      "ordinal": 2,
@@ -759,8 +771,11 @@
      "ordinal": 3,
      "sourceName": "平陵",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0006-003"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "70715",
+     "tileCommanderies": [
+      "右扶風"
+     ]
     },
     {
      "ordinal": 4,
@@ -1294,8 +1309,11 @@
      "ordinal": 4,
      "sourceName": "碭山",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0009-004"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "42794",
+     "tileCommanderies": [
+      "梁國"
+     ]
     },
     {
      "ordinal": 5,
@@ -1591,8 +1609,11 @@
      "ordinal": 1,
      "sourceName": "魯國",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0012-001"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "45180",
+     "tileCommanderies": [
+      "魯國"
+     ]
     },
     {
      "ordinal": 2,
@@ -1719,8 +1740,11 @@
      "ordinal": 11,
      "sourceName": "沙",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0013-011"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "87150",
+     "tileCommanderies": [
+      "魏郡"
+     ]
     },
     {
      "ordinal": 12,
@@ -1767,8 +1791,11 @@
      "ordinal": 1,
      "sourceName": "陶",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0014-001"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "87061",
+     "tileCommanderies": [
+      "鉅鹿郡"
+     ]
     },
     {
      "ordinal": 2,
@@ -1868,8 +1895,11 @@
      "ordinal": 15,
      "sourceName": "南〈糸言糸〉",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0014-015"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "87055",
+     "tileCommanderies": [
+      "安平國"
+     ]
     }
    ]
   },
@@ -2050,10 +2080,11 @@
     {
      "ordinal": 9,
      "sourceName": "漢昌",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "巴郡",
-      "漢昌郡"
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "44996",
+     "tileCommanderies": [
+      "中山國"
      ]
     },
     {
@@ -2215,8 +2246,11 @@
      "ordinal": 3,
      "sourceName": "易",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0018-003"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "87297",
+     "tileCommanderies": [
+      "河閒國"
+     ]
     },
     {
      "ordinal": 4,
@@ -2457,8 +2491,11 @@
      "ordinal": 8,
      "sourceName": "脩",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0021-008"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "87600",
+     "tileCommanderies": [
+      "河閒國"
+     ]
     }
    ]
   },
@@ -2862,8 +2899,11 @@
      "ordinal": 6,
      "sourceName": "山茌",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0026-006"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "45127",
+     "tileCommanderies": [
+      "泰山郡"
+     ]
     },
     {
      "ordinal": 7,
@@ -2993,10 +3033,9 @@
     {
      "ordinal": 4,
      "sourceName": "髙平",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "安定郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0028-004"
     },
     {
      "ordinal": 5,
@@ -3151,8 +3190,11 @@
      "ordinal": 1,
      "sourceName": "郯",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0030-001"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "85649",
+     "tileCommanderies": [
+      "東海郡"
+     ]
     },
     {
      "ordinal": 2,
@@ -3217,8 +3259,11 @@
      "ordinal": 10,
      "sourceName": "合鄕",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0030-010"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "45299",
+     "tileCommanderies": [
+      "東海郡"
+     ]
     },
     {
      "ordinal": 11,
@@ -3490,8 +3535,11 @@
      "ordinal": 9,
      "sourceName": "輿",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0033-009"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "42698",
+     "tileCommanderies": [
+      "廣陵郡"
+     ]
     },
     {
      "ordinal": 10,
@@ -4045,8 +4093,11 @@
      "ordinal": 3,
      "sourceName": "惤",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0039-003"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "85376",
+     "tileCommanderies": [
+      "東萊郡"
+     ]
     },
     {
      "ordinal": 4,
@@ -4420,10 +4471,9 @@
     {
      "ordinal": 33,
      "sourceName": "成都",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "蜀郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0041-033"
     },
     {
      "ordinal": 34,
@@ -5716,8 +5766,11 @@
      "ordinal": 5,
      "sourceName": "廬陵",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0053-005"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "40885",
+     "tileCommanderies": [
+      "豫章郡"
+     ]
     },
     {
      "ordinal": 6,
@@ -6020,8 +6073,11 @@
      "ordinal": 12,
      "sourceName": "充国",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0055-012"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "44564",
+     "tileCommanderies": [
+      "巴西郡"
+     ]
     },
     {
      "ordinal": 13,
@@ -6106,8 +6162,11 @@
      "ordinal": 8,
      "sourceName": "葭萌",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0056-008"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "44587",
+     "tileCommanderies": [
+      "巴郡"
+     ]
     },
     {
      "ordinal": 9,
@@ -6209,8 +6268,11 @@
      "ordinal": 9,
      "sourceName": "八陵",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0057-009"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "96436",
+     "tileCommanderies": [
+      "蜀郡"
+     ]
     },
     {
      "ordinal": 10,
@@ -8011,10 +8073,9 @@
     {
      "ordinal": 10,
      "sourceName": "候官",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "張掖屬國"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0080-010"
     }
    ]
   },
@@ -8386,8 +8447,11 @@
      "ordinal": 5,
      "sourceName": "汪陶",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0085-005"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "95061",
+     "tileCommanderies": [
+      "鴈門郡"
+     ]
     },
     {
      "ordinal": 6,
@@ -8427,10 +8491,9 @@
     {
      "ordinal": 11,
      "sourceName": "卤城",
-     "status": "IN_OTHER_COMMANDERY",
-     "foundIn": [
-      "漢陽郡"
-     ]
+     "status": "IN_OWN_COMMANDERY",
+     "basis": "TILE_COMMANDERY",
+     "jurisdictionId": "gc-g0085-011"
     },
     {
      "ordinal": 12,
@@ -8776,8 +8839,11 @@
      "ordinal": 8,
      "sourceName": "下落",
      "status": "IN_OWN_COMMANDERY",
-     "basis": "TILE_COMMANDERY",
-     "jurisdictionId": "gc-g0090-008"
+     "basis": "REVIEWED_ALIAS",
+     "jurisdictionId": "87638",
+     "tileCommanderies": [
+      "上谷郡"
+     ]
     }
    ]
   },

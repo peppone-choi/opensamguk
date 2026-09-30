@@ -442,8 +442,8 @@ class ScenarioImporter(
     private val cityIdByName: Map<String, Int> = cities.associate { it.name to it.id }
     private val cityIds: Set<Int> = cities.mapTo(HashSet()) { it.id }
 
-    /** A fresh 1447 seed uses the reviewed fourfold grid; old worlds are
-     * selected independently from their stored topology pins on boot. */
+    /** A fresh 1447 seed uses the reviewed fourfold grid; a fresh 1428 seed resolves to the
+     * only release with that roster. Old worlds are selected from their stored topology pins on boot. */
     private fun freshWorldArtifacts(ids: Collection<Int>): ResolvedWorldArtifacts {
         val resolver = WorldArtifactsResolver(artifactsRoot)
         return if (ids.toSet() ==

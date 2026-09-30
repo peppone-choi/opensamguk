@@ -731,11 +731,12 @@ class WaterOverlayBaseContractTest(unittest.TestCase):
             # 2026-09-21: 취락 표시명 교체가 옛 郡 이름 별칭(aliases)을 같이 내리게 고치면서 재핀했다.
             # parentRegions 3 곳(반로·본피·고동람)이 aliases 를 얻은 것뿐이라 아래 격자·투영 단언은 그대로 산다.
             # 2026-09-25: 잠현의 치소를 연결된 여강군 땅으로 옮긴 map4 타일 판.
-            "bc25b1afccb9122585221d85d0049ebbb42e3c149ce47e1ccbc29484d8a20488",  # 4배 정밀 격자·전 구역 7×7 공간
+            # 2026-09-27: 중복 합성 城 23곳 은퇴·동명 실결손 4곳 추가·합성 좌표 4곳 교체·簡體 읽기 12곳 수정.
+            "9ba39f9bbdc3d1b636351f0265dc90b00496b427a8ef3e667efad070b073b05d",  # 4배 정밀 격자·전 구역 7×7 공간
             binding["sha256"],
         )
         self.assertEqual((3072, 2676), (binding["cols"], binding["rows"]))
-        self.assertEqual(1_627, len(binding["landProvinceIds"]))
+        self.assertEqual(1_608, len(binding["landProvinceIds"]))
 
 
 if __name__ == "__main__":

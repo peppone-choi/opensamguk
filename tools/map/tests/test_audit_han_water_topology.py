@@ -25,7 +25,7 @@ class HanWaterTopologyAuditTest(unittest.TestCase):
         result = self.audit.audit_materialized()
 
         # 결손 223 城의 省을 포함하며, 미해독 세 城의 省은 제외한다.
-        self.assertEqual(1_627, result["counts"]["landProvinceIds"])
+        self.assertEqual(1_608, result["counts"]["landProvinceIds"])  # 2026-09-27 1428 판: −23 +4
         self.assertEqual(2, result["counts"]["waterZones"])
         self.assertEqual({"COASTAL_SEA": 1, "LAKE_BASIN": 1}, result["zoneKinds"])
         self.assertEqual({}, result["edgeModes"])

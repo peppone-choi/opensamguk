@@ -62,7 +62,8 @@ describe('splitCountyGloss', () => {
       .map((c) => ({ id: c.id, ...splitCountyGloss(c.meta.displayName) }))
       .filter((c) => c.gloss);
     // 런타임은 同音 3쌍(陽城·襄城 / 泠道·營道 / 安豐·安風)만 꼬리로 가른다. 0건 통과가 아님을 못박는다.
-    expect(split.map((c) => c.id).sort((a, b) => a - b)).toEqual([129, 134, 490, 495, 527, 528, 857, 869, 996, 1399, 1417, 1603]);
+    // 2026-09-27: 新城(1399)·下落(1603) 중복 합성 城을 거두어 新成(857)·下洛(996) 짝도 꼬리가 없어졌다.
+    expect(split.map((c) => c.id).sort((a, b) => a - b)).toEqual([129, 134, 490, 495, 527, 528, 869, 1417]);
     const shown = new Set(split.map((c) => `${c.name}|${c.gloss}`));
     expect(shown.size).toBe(split.length);
   });

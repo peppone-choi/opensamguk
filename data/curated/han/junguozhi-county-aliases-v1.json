@@ -1,0 +1,257 @@
+{
+ "schemaVersion": 1,
+ "ledgerId": "junguozhi-county-aliases-v1",
+ "decidedAt": "2026-09-27",
+ "note": "郡國志 縣 이름 대조의 사람 판정 입력이다. aliases 는 지도에 다른 이름(개명·이체자·조합 표기·같은 점)으로 이미 있는 縣을 그 관할에 붙인다 — 합성 城을 따로 세우지 않는다. homonymsNotSame 은 이름이 같아도 다른 땅이라 다른 郡의 동명 관할을 물지 않게 한다. 근거는 gap-county-source-recheck-v1 에 있다. build_junguozhi_county_gaps.py 와 audit_county_coverage.py 가 같은 표를 읽는다(두 도구의 배치 수가 같아야 한다). 南陽郡 酇 은 陰縣에 접힌 贊縣 省(45748)이라 별칭이 아니라 접기 해제가 필요하다(별도 결정).",
+ "evidenceLedger": "data/curated/han/gap-county-source-recheck-v1.json",
+ "aliases": [
+  {
+   "commandery": "河南尹",
+   "sourceName": "新城",
+   "jurisdictionId": "82841",
+   "jurisdictionNameCh": "新成县",
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "retiredGapCountyId": "hhs:109:河南尹:018",
+   "retiredPlaceId": "gc-g0000-018"
+  },
+  {
+   "commandery": "河東郡",
+   "sourceName": "绛",
+   "jurisdictionId": "95423",
+   "jurisdictionNameCh": "绛邑县",
+   "cause": "CATALOG_TRUNCATION",
+   "retiredGapCountyId": "hhs:109:河東郡:011",
+   "retiredPlaceId": "gc-g0002-011"
+  },
+  {
+   "commandery": "京兆尹",
+   "sourceName": "霸陵",
+   "jurisdictionId": "70647",
+   "jurisdictionNameCh": "霸城县",
+   "cause": "POST_220_RENAME_ON_MAP",
+   "retiredGapCountyId": "hhs:109:京兆尹:002",
+   "retiredPlaceId": "gc-g0004-002"
+  },
+  {
+   "commandery": "左馮翊",
+   "sourceName": "高陵",
+   "jurisdictionId": "70741",
+   "jurisdictionNameCh": "高陆县",
+   "cause": "FALSE_ABSENCE",
+   "retiredGapCountyId": "hhs:109:左馮翊:001",
+   "retiredPlaceId": "gc-g0005-001"
+  },
+  {
+   "commandery": "梁國",
+   "sourceName": "碭山",
+   "jurisdictionId": "42794",
+   "jurisdictionNameCh": "砀县",
+   "cause": "CATALOG_TRUNCATION",
+   "retiredGapCountyId": "hhs:110:梁國:004",
+   "retiredPlaceId": "gc-g0009-004"
+  },
+  {
+   "commandery": "魯國",
+   "sourceName": "魯國",
+   "jurisdictionId": "45180",
+   "jurisdictionNameCh": "鲁县",
+   "cause": "FALSE_ABSENCE",
+   "retiredGapCountyId": "hhs:110:魯國:001",
+   "retiredPlaceId": "gc-g0012-001"
+  },
+  {
+   "commandery": "鉅鹿郡",
+   "sourceName": "陶",
+   "jurisdictionId": "87061",
+   "jurisdictionNameCh": "廮陶县",
+   "cause": "CATALOG_TRUNCATION",
+   "retiredGapCountyId": "hhs:110:鉅鹿郡:001",
+   "retiredPlaceId": "gc-g0014-001"
+  },
+  {
+   "commandery": "河閒國",
+   "sourceName": "易",
+   "jurisdictionId": "87297",
+   "jurisdictionNameCh": "易城县",
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "retiredGapCountyId": "hhs:110:河閒國:003",
+   "retiredPlaceId": "gc-g0018-003"
+  },
+  {
+   "commandery": "東海郡",
+   "sourceName": "郯",
+   "jurisdictionId": "85649",
+   "jurisdictionNameCh": "郯城县",
+   "cause": "FALSE_ABSENCE",
+   "retiredGapCountyId": "hhs:111:東海郡:001",
+   "retiredPlaceId": "gc-g0030-001"
+  },
+  {
+   "commandery": "東海郡",
+   "sourceName": "合鄕",
+   "jurisdictionId": "45299",
+   "jurisdictionNameCh": "合城县",
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "retiredGapCountyId": "hhs:111:東海郡:010",
+   "retiredPlaceId": "gc-g0030-010"
+  },
+  {
+   "commandery": "廣陵郡",
+   "sourceName": "輿",
+   "jurisdictionId": "42698",
+   "jurisdictionNameCh": "舆国",
+   "cause": "FALSE_ABSENCE",
+   "retiredGapCountyId": "hhs:111:廣陵郡:009",
+   "retiredPlaceId": "gc-g0033-009"
+  },
+  {
+   "commandery": "東萊郡",
+   "sourceName": "惤",
+   "jurisdictionId": "85376",
+   "jurisdictionNameCh": "㡉侯国",
+   "cause": "VARIANT_GLYPH",
+   "retiredGapCountyId": "hhs:112:東萊郡:003",
+   "retiredPlaceId": "gc-g0039-003"
+  },
+  {
+   "commandery": "豫章郡",
+   "sourceName": "廬陵",
+   "jurisdictionId": "40885",
+   "jurisdictionNameCh": "高昌县",
+   "cause": "SAME_POINT_UNDER_OTHER_NAME",
+   "retiredGapCountyId": "hhs:112:豫章郡:005",
+   "retiredPlaceId": "gc-g0053-005"
+  },
+  {
+   "commandery": "蜀郡",
+   "sourceName": "八陵",
+   "jurisdictionId": "96436",
+   "jurisdictionNameCh": "蚕陵县",
+   "cause": "SOURCE_TEXT_ERROR",
+   "retiredGapCountyId": "hhs:113:蜀郡:009",
+   "retiredPlaceId": "gc-g0057-009"
+  },
+  {
+   "commandery": "鴈門郡",
+   "sourceName": "汪陶",
+   "jurisdictionId": "95061",
+   "jurisdictionNameCh": "浧陶县",
+   "cause": "VARIANT_GLYPH",
+   "retiredGapCountyId": "hhs:113:鴈門郡:005",
+   "retiredPlaceId": "gc-g0085-005"
+  },
+  {
+   "commandery": "上谷郡",
+   "sourceName": "下落",
+   "jurisdictionId": "87638",
+   "jurisdictionNameCh": "下洛县",
+   "cause": "VARIANT_GLYPH",
+   "retiredGapCountyId": "hhs:113:上谷郡:008",
+   "retiredPlaceId": "gc-g0090-008"
+  },
+  {
+   "commandery": "鉅鹿郡",
+   "sourceName": "南〈糸言糸〉",
+   "jurisdictionId": "87055",
+   "jurisdictionNameCh": "南䜌县",
+   "cause": "MISSING_GLYPH_PLACEHOLDER",
+   "retiredGapCountyId": "hhs:110:鉅鹿郡:015",
+   "retiredPlaceId": "gc-g0014-015"
+  },
+  {
+   "commandery": "廣漢郡",
+   "sourceName": "葭萌",
+   "jurisdictionId": "44587",
+   "jurisdictionNameCh": "汉寿县",
+   "cause": "POST_220_RENAME_ON_MAP",
+   "retiredGapCountyId": "hhs:113:廣漢郡:008",
+   "retiredPlaceId": "gc-g0056-008"
+  },
+  {
+   "commandery": "右扶風",
+   "sourceName": "平陵",
+   "jurisdictionId": "70715",
+   "jurisdictionNameCh": "始平县",
+   "cause": "POST_220_RENAME_ON_MAP",
+   "retiredGapCountyId": "hhs:109:右扶風:003",
+   "retiredPlaceId": "gc-g0006-003"
+  },
+  {
+   "commandery": "魏郡",
+   "sourceName": "沙",
+   "jurisdictionId": "87150",
+   "jurisdictionNameCh": "涉县",
+   "cause": "POST_220_RENAME_ON_MAP",
+   "retiredGapCountyId": "hhs:110:魏郡:011",
+   "retiredPlaceId": "gc-g0013-011"
+  },
+  {
+   "commandery": "勃海郡",
+   "sourceName": "脩",
+   "jurisdictionId": "87600",
+   "jurisdictionNameCh": "蓚县",
+   "cause": "VARIANT_GLYPH",
+   "retiredGapCountyId": "hhs:110:勃海郡:008",
+   "retiredPlaceId": "gc-g0021-008"
+  },
+  {
+   "commandery": "泰山郡",
+   "sourceName": "山茌",
+   "jurisdictionId": "45127",
+   "jurisdictionNameCh": "茬县",
+   "cause": "VARIANT_GLYPH",
+   "retiredGapCountyId": "hhs:111:泰山郡:006",
+   "retiredPlaceId": "gc-g0026-006"
+  },
+  {
+   "commandery": "巴郡",
+   "sourceName": "充国",
+   "jurisdictionId": "44564",
+   "jurisdictionNameCh": "西充国县",
+   "cause": "SUCCESSOR_SPLIT_REVIEW",
+   "retiredGapCountyId": "hhs:113:巴郡:012",
+   "retiredPlaceId": "gc-g0055-012"
+  },
+  {
+   "commandery": "中山國",
+   "sourceName": "漢昌",
+   "jurisdictionId": "44996",
+   "jurisdictionNameCh": "魏昌县",
+   "cause": "FALSE_ABSENCE_POST_220_RENAME"
+  }
+ ],
+ "homonymsNotSame": [
+  {
+   "commandery": "山陽郡",
+   "sourceName": "髙平",
+   "rejectedMatches": [
+    "45198"
+   ],
+   "cause": "HOMONYM_REAL_GAP"
+  },
+  {
+   "commandery": "鴈門郡",
+   "sourceName": "卤城",
+   "rejectedMatches": [
+    "ss-lucheng"
+   ],
+   "cause": "HOMONYM_REAL_GAP"
+  },
+  {
+   "commandery": "上郡",
+   "sourceName": "候官",
+   "rejectedMatches": [
+    "JURISDICTION-PARENT-0076-SEAT"
+   ],
+   "cause": "HOMONYM_REAL_GAP"
+  },
+  {
+   "commandery": "南陽郡",
+   "sourceName": "成都",
+   "rejectedMatches": [
+    "44394"
+   ],
+   "cause": "HOMONYM_REAL_GAP"
+  }
+ ]
+}

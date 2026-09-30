@@ -25,7 +25,8 @@
   "nameMap": "tools/scenario/officer-name-map.tsv",
   "charMap": "data/curated/han/shinjitai-to-traditional-v1.json",
   "extracts": "data/curated/han/officer-native-place-extracts-v1.json",
-  "tiles": "data/map/han-tiles.json"
+  "tiles": "data/map/han-tiles.json",
+  "countyAliases": "data/curated/han/junguozhi-county-aliases-v1.json"
  },
  "stats": {
   "officers": 750,
@@ -39,8 +40,8 @@
    "NO_BIOGRAPHY_STATEMENT": 536
   },
   "byMatchStatus": {
-   "COUNTY_NOT_IN_COMMANDERY": 22,
-   "MATCHED": 108,
+   "COUNTY_NOT_IN_COMMANDERY": 20,
+   "MATCHED": 110,
    "NO_COUNTY": 19,
    "UNSPLIT": 16
   },
@@ -49,7 +50,7 @@
    "HOMONYM": 80
   },
   "unlinkedScenarioNames": 70,
-  "homonymPlaceKeys": 4
+  "homonymPlaceKeys": 5
  },
  "officers": [
   {
@@ -1506,16 +1507,13 @@
    "nativeCommandery": "山陽郡",
    "commanderyId": "PARENT-0028",
    "nativeCounty": "高平",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0028-004",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷06",
     "quote": "劉表字景升，山陽高平人也"
    },
-   "candidateJurisdictionIds": [
-    "45198"
-   ],
    "courtesyName": "景升",
    "corroboration": [
     {
@@ -4550,7 +4548,7 @@
    "nativeCommandery": "左馮翊",
    "commanderyId": "PARENT-0005",
    "nativeCounty": "高陵",
-   "jurisdictionId": "gc-g0005-001",
+   "jurisdictionId": "70741",
    "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
@@ -8633,16 +8631,13 @@
    "nativeCommandery": "山陽郡",
    "commanderyId": "PARENT-0028",
    "nativeCounty": "高平",
-   "jurisdictionId": null,
-   "matchStatus": "COUNTY_NOT_IN_COMMANDERY",
+   "jurisdictionId": "gc-g0028-004",
+   "matchStatus": "MATCHED",
    "evidence": {
     "book": "三國志",
     "volume": "卷21",
     "quote": "王粲字仲宣，山陽高平人也"
    },
-   "candidateJurisdictionIds": [
-    "45198"
-   ],
    "courtesyName": "仲宣"
   },
   {
@@ -17919,6 +17914,18 @@
    "commanderyIds": [
     "PARENT-0046",
     "PARENT-0055"
+   ],
+   "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"
+  },
+  {
+   "normalizedCountyKey": "高平",
+   "jurisdictionIds": [
+    "45198",
+    "gc-g0028-004"
+   ],
+   "commanderyIds": [
+    "PARENT-0028",
+    "PARENT-0070"
    ],
    "disposition": "KEEP_DISTINCT_IDS_QIAOZHI_NOT_AUTO_MERGED"
   }
