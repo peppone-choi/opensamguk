@@ -10,7 +10,8 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
-import { defaultOptions, duplicateTransfers, run, slugOf } from './measure-pages.mjs';
+import { defaultOptions, duplicateTransfers, inPageSnippet, run, slugOf } from './measure-pages.mjs';
+import { createRequire } from 'node:module';
 
 const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
@@ -67,11 +68,13 @@ test('duplicateTransfers 는 304 · 0바이트를 세지 않는다', () => {
 
 test('나쁜 화면: 심은 위반이 전부 걸린다(적색)', async () => {
   const [row] = await run(defaultOptions({ base, pages: ['/bad'], profiles: ['desktop'], throttles: ['broadband'], out: outDir }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
   const full = JSON.parse(fs.readFileSync(path.join(outDir, 'bad-desktop-broadband.json'), 'utf8'));
   for (const id of ['map-first-draw-3s', 'no-duplicate-transfer', 'console-errors-0', 'network-failures-0', 'axe-critical-0', 'touch-target-44', 'no-title-only-info']) {
     assert.ok(row.failedChecks.includes(id), `${id} 가 걸려야 한다: ${row.failedChecks}`);
   }
-  assert.ok(full.firstMapDrawMs >= 3000 && full.firstMapDrawMs < 20_000, `지도 첫 그림 ${full.firstMapDrawMs}`);
+  // 상한은 두지 않는다 — 기계 부하가 높으면 3.5초 타이머가 수십 초 늦게 돈다(부하 500 에서 34초). 잡혔는지와 3초 초과만 본다.
+  assert.ok(full.firstMapDrawMs != null && full.firstMapDrawMs >= 3000, `지도 첫 그림 ${full.firstMapDrawMs}`);
   assert.equal(full.duplicates.count, 1);
   assert.ok(full.layout.horizontalOverflowPx > 0);
   assert.ok(full.layout.textUnder12px >= 1);
@@ -83,8 +86,27 @@ test('나쁜 화면: 심은 위반이 전부 걸린다(적색)', async () => {
 
 test('깨끗한 화면: 걸리는 기준이 없다(모바일)', async () => {
   const [row] = await run(defaultOptions({ base, pages: ['/good'], profiles: ['mobile'], throttles: ['none'], out: outDir }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
   assert.deepEqual(row.failedChecks, []);
   assert.equal(row.firstMapDrawMs, null);
   assert.equal(row.overflowPx, 0);
   assert.ok(fs.existsSync(path.join(outDir, 'summary.md')));
+});
+
+test('탭 안 스니펫: 같은 배치 검사를 CDP 없이 낸다', async () => {
+  const { chromium } = createRequire(new URL('../../web/game/package.json', import.meta.url))('@playwright/test');
+  const browser = await chromium.launch({ channel: 'chrome', headless: true });
+  try {
+    const page = await (await browser.newContext({ viewport: { width: 1440, height: 900 } })).newPage();
+    await page.goto(`${base}/bad`, { waitUntil: 'load' });
+    await page.waitForTimeout(4000);
+    const r = JSON.parse(await page.evaluate(inPageSnippet()));
+    assert.equal(r.mode, 'in-page');
+    assert.equal(r.layout.smallTargets, 1);
+    assert.equal(r.layout.titleOnly, 1);
+    assert.ok(r.layout.horizontalOverflowPx > 0);
+    assert.equal(r.map.hitTest.isCanvas, true);
+    assert.ok(r.network.sameUrlRepeated.some((d) => d.url === '/big.bin' && d.count === 2), JSON.stringify(r.network.sameUrlRepeated));
+    assert.ok(r.network.transferBytes > 400_000, `전송 ${r.network.transferBytes}`);
+  } finally { await browser.close(); }
 });

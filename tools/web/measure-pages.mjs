@@ -8,6 +8,7 @@
 //   node tools/web/measure-pages.mjs --out <dir> [--base https://sam.peppone.dev]
 //        [--pages /login,/join,/board] [--profiles desktop,mobile] [--throttle none,broadband]
 //        [--repeat 1] [--no-axe] [--no-probe] [--map-selector .os-iso-map] [--cdp-url http://127.0.0.1:9222]
+//   node tools/web/measure-pages.mjs --print-snippet   # 사용자 브라우저 탭 안에서 돌릴 JS(아래 inPageSnippet)
 //
 // - 실행마다 새 브라우저 컨텍스트(콜드 캐시)다. 시스템 Chrome(channel=chrome)을 쓴다 — 브라우저를 내려받지 않는다.
 // - --cdp-url 은 사용자가 직접 로그인해 둔 Chrome(--remote-debugging-port)에 붙는다. 로그인 뒤 화면용이다.
@@ -74,6 +75,7 @@ function parseArgs(argv) {
     else if (a === '--timeout-ms') opts.timeoutMs = Number(next());
     else if (a === '--channel') opts.channel = next();
     else if (a === '--cdp-url') opts.cdpUrl = next();
+    else if (a === '--print-snippet') { console.log(inPageSnippet()); process.exit(0); }
     else if (a === '-h' || a === '--help') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(0, 20).join('\n')); process.exit(0); }
     else throw new Error(`모르는 인자: ${a}`);
   }
@@ -332,6 +334,35 @@ function stopFrameCounter() {
   return { frames: f.n, seconds: Math.round(sec * 100) / 100, fps: Math.round(f.n / sec), maxFrameGapMs: Math.round(f.maxGap) };
 }
 
+// ---- 탭 안 스니펫 (CDP 없는 사용자 브라우저용) ----
+// 사용자가 직접 로그인한 탭에서 개발자 도구나 브라우저 도구의 JS 실행으로 돌린다. 결과는 JSON 문자열 하나다.
+// 콜드가 아니다(그 브라우저의 캐시가 그대로다). 전송 크기는 Resource Timing 의 transferSize 합이고,
+// 캐시에서 온 것은 0 으로 세어 cachedResources 로 따로 적는다. 버퍼(기본 250개)가 차면 resourceBufferFull 이 참이고
+// 요청 수는 하한이다. axe 는 돌리지 않는다(바깥 스크립트를 사용자 화면에 넣지 않는다).
+export function inPageSnippet(mapSelector = '.os-iso-map') {
+  const fns = [initObservers, pageMetrics, layoutChecks, mapGeometry, mapHitTest].map((f) => f.toString()).join('\n');
+  return `(async () => {
+${fns}
+initObservers();
+await new Promise((r) => setTimeout(r, 300));
+const sel = ${JSON.stringify(mapSelector)};
+const res = performance.getEntriesByType('resource');
+const nav = performance.getEntriesByType('navigation')[0];
+const byName = {};
+for (const r of res) byName[r.name] = (byName[r.name] || 0) + 1;
+const dups = Object.entries(byName).filter(([, n]) => n > 1).map(([u, n]) => ({ url: u.replace(location.origin, '').slice(0, 140), count: n }));
+const net = {
+  requests: res.length + 1,
+  transferBytes: res.reduce((a, r) => a + (r.transferSize || 0), nav ? nav.transferSize || 0 : 0),
+  cachedResources: res.filter((r) => r.transferSize === 0 && r.decodedBodySize > 0).length,
+  resourceBufferFull: res.length >= 250,
+  sameUrlRepeated: dups.slice(0, 15),
+  top10: [...res].sort((a, b) => b.transferSize - a.transferSize).slice(0, 10).map((r) => ({ url: r.name.replace(location.origin, '').slice(0, 140), bytes: r.transferSize })),
+};
+return JSON.stringify({ tool: 'tools/web/measure-pages.mjs --print-snippet', mode: 'in-page', at: new Date().toISOString(), ...pageMetrics(), network: net, layout: layoutChecks(44), map: mapGeometry(sel) ? { geometry: mapGeometry(sel), hitTest: mapHitTest(sel) } : null, axe: '미실행(탭 안 모드)' });
+})()`;
+}
+
 // ---- 한 번 적재 ----
 
 async function measureOnce({ browser, cdpMode, opts, AxeBuilder, pagePath, profile, throttle, runIndex }) {
@@ -516,8 +547,8 @@ export function summaryRow({ tag, result: r }) {
 export function summaryMarkdown(rows, meta) {
   const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 중복 | 무압축 | 실패 | 콘솔 오류 | 가로 넘침 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
   const sep = '|' + '---|'.repeat(19);
-  const lines = rows.map((x) => `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.consoleErrors} | ${x.overflowPx} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
-  return [`# 페이지 측정 — ${meta.base}`, '', `- 시각: ${meta.at} · 도구: tools/web/measure-pages.mjs · 브라우저: ${meta.browser}`, '- 시간 단위 ms. FCP · LCP 는 탐색 시작 기준, 지도 첫 그림 · 잠잠은 goto 호출 기준(M1 기준선과 같은 식).', `- 측정 기계 부하(1분 평균 / CPU 수): ${rows.map((x) => `${x.loadavg1}`).join(' · ')} / ${rows[0]?.cpus ?? '—'} — 부하가 CPU 수보다 크게 높으면 시간 값은 상한으로 읽는다(요청 수 · 바이트는 영향 없음).`, '', head, sep, ...lines, ''].join('\n');
+  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.consoleErrors} | ${x.overflowPx} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
+  return [`# 페이지 측정 — ${meta.base}`, '', `- 시각: ${meta.at} · 도구: tools/web/measure-pages.mjs · 브라우저: ${meta.browser}`, '- 시간 단위 ms. FCP · LCP 는 탐색 시작 기준, 지도 첫 그림 · 잠잠은 goto 호출 기준(M1 기준선과 같은 식).', `- 측정 기계 부하(1분 평균 / CPU 수): ${rows.filter((x) => !x.error).map((x) => `${x.loadavg1}`).join(' · ')} / ${rows.find((x) => !x.error)?.cpus ?? '—'} — 부하가 CPU 수보다 크게 높으면 시간 값은 상한으로 읽는다(요청 수 · 바이트는 영향 없음).`, '', head, sep, ...lines, ''].join('\n');
 }
 
 export function defaultOptions(overrides = {}) {
@@ -530,11 +561,30 @@ export async function run(opts) {
   const axeMod = load('@axe-core/playwright');
   const AxeBuilder = axeMod.default ?? axeMod.AxeBuilder ?? axeMod;
   const cdpMode = !!opts.cdpUrl;
-  const browser = cdpMode ? await chromium.connectOverCDP(opts.cdpUrl) : await chromium.launch({ channel: opts.channel, headless: true });
+  const launch = () => (cdpMode ? chromium.connectOverCDP(opts.cdpUrl) : chromium.launch({ channel: opts.channel, headless: true }));
+  let browser = await launch();
   const results = [];
   try {
     for (const pagePath of opts.pages) for (const profile of opts.profiles) for (const throttle of opts.throttles) for (let i = 0; i < opts.repeat; i++) {
-      const out = await measureOnce({ browser, cdpMode, opts, AxeBuilder, pagePath, profile, throttle, runIndex: i });
+      // 기계가 버거우면(스왑 · 부하) 헤드리스 Chrome 이 측정 중 닫힌다. 한 번만 다시 띄워 재고, 그래도 안 되면 오류 행으로 남긴다.
+      let out = null; let lastError = null;
+      for (let attempt = 0; attempt < 2 && !out; attempt++) {
+        try {
+          out = await measureOnce({ browser, cdpMode, opts, AxeBuilder, pagePath, profile, throttle, runIndex: i });
+        } catch (e) {
+          lastError = e;
+          if (cdpMode || !/closed|crash|disconnected/i.test(String(e.message))) break;
+          console.error(`브라우저가 닫혔다(${pagePath} ${profile} ${throttle}) — 다시 띄운다`);
+          await browser.close().catch(() => {});
+          browser = await launch();
+        }
+      }
+      if (!out) {
+        const row = { tag: `${slugOf(pagePath)}-${profile}-${throttle}`, page: pagePath, profile, throttle, run: i + 1, error: String(lastError?.message ?? lastError).slice(0, 300) };
+        results.push(row);
+        console.log(JSON.stringify(row));
+        continue;
+      }
       const row = summaryRow(out);
       results.push(row);
       console.log(JSON.stringify(row));
