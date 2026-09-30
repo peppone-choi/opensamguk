@@ -108,7 +108,8 @@ class GatewayBoardDefinitionSecurityTest {
         val active = posts.saveAndFlush(GatewayBoardPostEntity(GatewayBoardCategory("SOURCE"), member.id, "작성자", "살아 있는 글", "본문"))
         val archived = posts.saveAndFlush(GatewayBoardPostEntity(GatewayBoardCategory("SOURCE"), member.id, "작성자", "지운 글", "본문", deletedAt = Instant.now()))
         val comment = comments.saveAndFlush(GatewayBoardCommentEntity(requireNotNull(active.id), member.id, "작성자", "댓글"))
-        val report = reports.saveAndFlush(GatewayBoardReportEntity(postId = active.id, reporterAccountId = member.id, reason = "신고"))
+        val report = reports.saveAndFlush(GatewayBoardReportEntity(postId = active.id, commentId = null,
+            reporterAccountId = member.id, reason = "신고"))
         mvc.perform(delete("/board/admin/boards/$source").with(user(admin))).andExpect(status().isConflict)
         mvc.perform(delete("/board/admin/boards/$source?moveTo=$source").with(user(admin))).andExpect(status().isBadRequest)
         mvc.perform(delete("/board/admin/boards/$source?moveTo=999999").with(user(admin))).andExpect(status().isNotFound)

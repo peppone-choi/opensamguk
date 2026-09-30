@@ -27,7 +27,7 @@ class V72GatewayBoardDefinitionsMigrationTest {
             }
             migrate("69")
             val jdbc = JdbcTemplate(DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password))
-            jdbc.update("INSERT INTO users (id, username, password) VALUES (1, 'fixture', 'encoded')")
+            jdbc.update("INSERT INTO users (id, username, password, nickname) VALUES (1, 'fixture', 'encoded', '작성자')")
             jdbc.update("""INSERT INTO gateway_board_post (id, category, author_name, title, content_html)
                 VALUES (1, 'FREE', '작성자', '기존 글', '<p>본문</p>')""")
             jdbc.update("""INSERT INTO gateway_board_post (id, category, author_name, title, content_html, deleted_at)
