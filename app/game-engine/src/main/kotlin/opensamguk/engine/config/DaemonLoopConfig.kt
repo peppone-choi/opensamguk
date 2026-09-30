@@ -521,10 +521,14 @@ class DaemonLoopConfig {
             } else { _, _, _ -> },
             npcInputOf = if (world.ruleProfile == opensamguk.logic.input.RuleProfile.HWIHA) {
                 val artifacts = requireNotNull(supplyArtifacts) { "HWIHA NPC deployment requires pinned Han artifacts" }
-                val selector = opensamguk.engine.campaign.NpcAiTurnSelector(
-                    artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext)
+                val selector = visionContext?.let { sight ->
+                    opensamguk.engine.campaign.NpcAiTurnSelector(
+                        artifacts.projection.topology, artifacts.landMarchMetrics, domesticContext,
+                        opensamguk.engine.campaign.NpcObservationFactory(
+                            sight.topology, sight.metrics, sight.commanderies, sight.rules, domesticContext))
+                }
                 val select: (Int, ReservedTurnRepository.ReservedTurn) -> ReservedTurnRepository.ReservedTurn =
-                    { generalId, reserved -> selector.select(world, generalId, reserved) }
+                    { generalId, reserved -> selector?.select(world, generalId, reserved) ?: reserved }
                 select
             } else { _, reserved -> reserved },
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
