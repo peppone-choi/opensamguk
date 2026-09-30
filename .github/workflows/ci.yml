@@ -552,7 +552,9 @@ jobs:
     # build 만 돌 때 game 1m54s · gateway 1m39s 였다. vitest 를 더하면서 15 로 올린다
     # (로컬 실측 game 707 건 47s · gateway 266 건 27s). 한도 초과는 실패 로그가 아니라
     # 취소로 나타나 원인을 찾기 어렵다.
-    timeout-minutes: 15
+    # 2026-10-01: smoke e2e 를 더해 20. 실측(run 36731759847): 설치+빌드 1m42s · vitest 1m02s ·
+    # `playwright install --with-deps` 의 apt 가 5m14s(브라우저 받기는 7s) — 그래서 --with-deps 를 뺐다.
+    timeout-minutes: 20
     strategy:
       matrix:
         app: [gateway, game]
@@ -571,6 +573,13 @@ jobs:
       - name: Install + build web/${{ matrix.app }}
         if: needs.changes.outputs.web == 'true'
         working-directory: web/${{ matrix.app }}
+        # 시험 화면 두 장(/map-lab · /parts-lab)을 여는 플래그 — smoke e2e 가 그 화면을 연다. 빌드 때 박힌다.
+        # 2026-10-01 git grep: 두 플래그를 읽는 곳은 app/map-lab/page.tsx · app/parts-lab/page.tsx 뿐이라 제품 화면은
+        # 이 빌드와 운영 빌드가 같다. 이 플래그가 제품 화면을 바꾸게 되면 smoke 를 기본 빌드 · 플래그 빌드 두 번 돌려야 한다
+        # (제품 화면 전환은 다른 이름의 플래그를 쓴다).
+        env:
+          NEXT_PUBLIC_MAP_RENDERER: topdown
+          NEXT_PUBLIC_PARTS_LAB: '1'
         run: |
           corepack pnpm install --no-frozen-lockfile
           corepack pnpm build
@@ -586,6 +595,32 @@ jobs:
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         run: corepack pnpm test
+      # 2026-09-30: 데스크톱 · 모바일은 같은 게임이다(ADR-LITE-049 2026-09-26 개정 — 화면은 데스크톱 · 모바일
+      # e2e 를 모두 요구한다). 백엔드 없이 도는 spec 만 web/game/e2e/smoke/ 에 두고(합성 자료는 page.route 로
+      # 가로챈다) 위에서 만든 빌드를 next start 로 띄워 desktop · mobile 두 Playwright 프로젝트로 돌린다.
+      # 실스택 spec(e2e/ 바로 아래)은 유주 증거 잡이 돈다. smoke 가 비면 Playwright 가 「No tests found」로 실패한다.
+      - name: Smoke e2e web/game (desktop · mobile)
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        working-directory: web/game
+        env:
+          E2E_GAME_URL: http://127.0.0.1:3001
+        run: |
+          # 브라우저만 받는다(7s). 러너에 Chrome 이 깔려 있어 공유 라이브러리가 있다 — --with-deps 의 apt 는 5분이 넘었다.
+          corepack pnpm exec playwright install chromium
+          corepack pnpm start > "$RUNNER_TEMP/next-start.log" 2>&1 &
+          for _ in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/game/smoke-ready || true)
+            [ "$code" != "000" ] && break
+            sleep 1
+          done
+          corepack pnpm exec playwright test e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+      - name: Upload smoke e2e results
+        if: failure() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-game-smoke-e2e
+          path: web/game/test-results
+          retention-days: 7
 
   # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.
   # 위 web 잡은 build 만 돌고, web/game·web/gateway 의 vitest include 는 각 앱 디렉터리
