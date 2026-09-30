@@ -27,8 +27,9 @@ describe('useViewportClass', () => {
     expect(screen.getByTestId('v')).toHaveTextContent('tablet');
     act(() => viewport.resize(1440));
     expect(screen.getByTestId('v')).toHaveTextContent('desktop');
+    expect(viewport.listenerCount()).toBeGreaterThan(0);
     unmount();
-    // 뗀 뒤 resize 가 풀린 컴포넌트를 건드리지 않는다(React 경고 · 오류 없음)
-    act(() => viewport.resize(390));
+    // 풀면 리스너를 모두 뗀다 — 훅의 정리 함수를 지우면 여기서 빨개진다(적색 확인)
+    expect(viewport.listenerCount()).toBe(0);
   });
 });

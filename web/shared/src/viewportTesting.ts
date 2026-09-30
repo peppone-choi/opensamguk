@@ -11,7 +11,12 @@ import { BREAKPOINTS } from './breakpoints';
  *
  * matchMedia 만 흉내 낸다 — `window.innerWidth` · `resize` 이벤트는 바꾸지 않는다(그것을 읽는 부품은 따로 흉내 낸다).
  */
-export function installViewport(width: number): { readonly resize: (next: number) => void; readonly restore: () => void } {
+export function installViewport(width: number): {
+  readonly resize: (next: number) => void;
+  /** 지금 붙어 있는 리스너 수(모든 쿼리 합) — 풀린 컴포넌트가 리스너를 뗐는지 단언할 때. */
+  readonly listenerCount: () => number;
+  readonly restore: () => void;
+} {
   type Listener = (event: MediaQueryListEvent) => void;
   interface Query { readonly media: string; last: boolean; readonly listeners: Set<Listener> }
   let current = width;
@@ -42,6 +47,9 @@ export function installViewport(width: number): { readonly resize: (next: number
         const event = { matches, media: query.media } as MediaQueryListEvent;
         for (const fn of [...query.listeners]) fn(event);
       }
+    },
+    listenerCount() {
+      return queries.reduce((n, query) => n + query.listeners.size, 0);
     },
     restore() {
       window.matchMedia = original;
