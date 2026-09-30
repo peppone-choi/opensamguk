@@ -157,7 +157,7 @@ def board_command_edit():
             + cmd_row('결의', '같은 구역의 장수와 맺는다', 'ok', input_id='action.oath')
             + cmd_row('세력 해산', '세력을 흩는다', 'wait', input_id='action.dissolve'))
     popw = pop('거병 — 아직 열리지 않은 명령입니다', '서버에 이 명령의 처리가 아직 없습니다. 열리면 이 자리에서 바로 예약할 수 있습니다.',
-               '열리면: 무주 현에서 새 세력을 일으켜 주공이 됩니다.', '거병', 'left:120px;top:250px;width:300px')
+               '열리면: 무주 현에서 새 세력을 일으켜 주공이 됩니다.', '거병', 'left:252px;top:470px;width:316px')
     args = (args_head('훈련', '02순', '3월 하순 22:40') + help_strip('내 부대의 훈련을 올립니다.')
             + inset('<span class="muted" style="font-size:11px">지금 예약된 값 — 바꾸기 전까지 그대로</span>'
                     + fieldrow('대상', '지금 선 현 — 장사현') + fieldrow('훈련', '[값] → [값]') + fieldrow('쌀 · 금', '[미정]'))
@@ -238,7 +238,15 @@ def board_mpick():
 
 # ================================================================== 계책 덱 · 계책 쓰기
 # 지금 서버 공급 v1: 소유 장수별 견벽 · 간파(설계 §6.4 「최초 공용 손패 공급 v1」), 손패 상한 3. 쓰기 · 걸기 입력은 13행 모두 PLANNED.
-HAND = [('견벽', '대응', '공격받으면 방비가 오르고, 대신 쌀을 더 쓴다', '수공 · 군량 습격'),
+# 원장 표시 이름을 바꿔 그린 것 — 전체 승인 때 사용자 문구로 올라간다(K0 추천안, 2026-09-30). 승인되면 C1이 원장 displayName을 고친다.
+NAME_WAIT = {'보급 습격': '군량 습격', '쌀 사고팔기': '군량매매', '병종 바꿔 익히기': '숙련전환'}
+
+
+def name_wait(text):
+    return (chip('이름 승인 대기', 'info') + ' ') if any(k in text for k in NAME_WAIT) else ''
+
+
+HAND = [('견벽', '대응', '공격받으면 방비가 오르고, 대신 쌀을 더 쓴다', '수공 · 보급 습격'),
         ('간파', '대응', '상대 계책 한 장을 무효로 한다', '—')]
 MODE_TONE = {'즉시': 'bronze', '설치': 'info', '대응': 'moss'}
 CORPS_SUB = ['군단 · 세력 작전', '공성', '전투', '시야 · 첩보']
@@ -252,7 +260,7 @@ def card(name, mode, eff, block, sel=False, w=156, h=404):
             f'<span class="muted" style="font-size:11px">비용 [미정]</span></span>{img}'
             f'<span style="padding:8px;display:flex;flex-direction:column;gap:4px;flex-grow:1"><span class="serif" style="font-size:17px;font-weight:900">{name}</span>'
             f'<span class="t2" style="font-size:11.5px;line-height:1.45">{eff}</span></span>'
-            f'<span style="padding:6px 8px;border-top:1px solid #2c342f;font-size:10.5px" class="muted">막는 법 · {block}</span></button>')
+            f'<span style="padding:6px 8px;border-top:1px solid #2c342f;font-size:10.5px;display:flex;flex-wrap:wrap;gap:4px;align-items:center" class="muted">막는 법 · {block}{name_wait(block)}</span></button>')
 
 
 def zone(title, sub, inner, h=176):
@@ -404,7 +412,7 @@ def board_mcorps():
             f'<div style="padding:0 12px 10px;display:flex;flex-wrap:wrap;gap:6px">'
             + input_btn('부대 모으기', 'AVAILABLE', input_id='action.muster', kind='')
             + input_btn('출병', 'BLOCKED', '출전 중', input_id='action.deploy', kind='') + btn('방침 바꾸기', href='#') + '</div>')
-    inner = (f'{mapimg("mob", 390, 844, "양적 일대 지도", 0, -60)}{mk(hx + 34, hy - 60, "corps", "하후돈 군단")}{me_marker(hx, hy - 82, "corps", tag=False)}'
+    inner = (f'{mapimg("mob", 390, 844, "양적 일대 지도", 0, -150)}{mk(hx + 40, hy - 150, "corps", "하후돈 군단")}{me_marker(hx, hy - 172, "corps", tag=False)}'
              f'<div style="position:absolute;left:8px;right:8px;top:8px">{seg(["보이는 군단", "세력 작전"], "보이는 군단", "보기")}</div>'
              f'{sheet("군단", body, height=340)}')
     page31('V31K6MCorps.dc.html', 'K6 군단(모바일)', shell_mob(mmain(inner), 'menu', '군단', '전체 메뉴'), w=MW, h=MH)
@@ -478,7 +486,10 @@ def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=Fals
     ulay = ''
     for r, c, ch, side, label, ai, sel, est in units:
         x, y = iso_px(kind, r, c, s, ox, oy)
-        ulay += unit_dot(x, y, side, sel) if small else unit_btn(x, y, ch, side, label, ai, sel, est)
+        if small:
+            ulay += unit_dot(x, y, side, sel)
+        elif 22 <= x <= vw - 23 and 40 <= y <= vh - 5:  # 누름 상자(44)가 보는 창 안에 다 들어올 때만 — 창 밖 분대는 작은 판 · 가장자리로 본다
+            ulay += unit_btn(x, y, ch, side, label, ai, sel, est)
     if gate and not small:
         gr, gc, gtxt = gate
         x, y = iso_px(kind, gr, gc, s, ox, oy)
@@ -513,7 +524,7 @@ def board_mini(kind, w, sx, sy, sw, sh, units=()):
 # 야전(영천 북쪽 구릉) 예시 칸 — 우리(조조)는 왼쪽 아래 풀밭, 적은 오른쪽 높은 평지.
 FIELD_UNITS = [(34, 15, '허', 'me', '선봉 허저 — 조작 나', False, True, False), (34, 6, '하', 'me', '중앙 하후돈 — 조작 나', False, False, False),
                (25, 10, '이', 'me', '좌익 이전 — 조작 AI', True, False, False), (37, 32, '적', 'enemy', '[적] 선봉 — 기병', False, False, False),
-               (44, 40, '?', 'enemy', '[적] 분대 — 추정', False, False, True)]
+               (44, 38, '?', 'enemy', '[적] 분대 — 추정', False, False, True)]
 FIELD_FOG = None
 def battle_row(kind, where, sides, seat, st, stxt):
     act = {'join': btn('입장', 'primary', attrs='data-guide="tutorial.battle"'), 'live': btn('입장'), 'apply': btn('결과 보기'),
@@ -554,7 +565,7 @@ def board_mbattles():
                 f'<span class="serif" style="font-weight:700">{where}</span><span class="t2" style="font-size:12px">{sides} · {seat}</span><div style="display:flex">{act}</div></div>')
     inner = (mtabs_row(CORPS_SUB, '전투') + ''.join(mcard(*b) for b in BATTLES[:3])
              + f'<div style="padding:10px 12px"><button type="button" class="btn" style="width:100%">내가 없을 때 — 방침 · 대응 칸 보기</button></div>')
-    page31('V31K6MBattles.dc.html', 'K6 전투(모바일)', shell_mob(mmain(inner), 'menu', '전투', '전체 메뉴',
+    page31('V31K6MBattles.dc.html', 'K6 전투(모바일)', shell_mob(mmain(inner, h=MAIN_M - 72), 'menu', '전투', '전체 메뉴',
                                                                    band_html=band('stop', mobile=True).replace('턴이 멈췄습니다', '전투가 열렸습니다').replace(
                                                                        '— 마지막 순 3월 중순 <span class="mono">21:40</span>. 운영진이 살피는 중입니다. 예약은 그대로 남습니다', '— 영천 북쪽 · 42초 뒤 개전').replace('상태 보기', '입장')), w=MW, h=MH)
 
@@ -786,9 +797,9 @@ def board_intel():
 
 
 def board_mintel():
-    pos = {'영천군': (195, 250), '하남윤': (92, 110), '진류군': (292, 110), '양국': (320, 330), '여남군': (270, 420)}
+    pos = {'영천군': (195, 230), '하남윤': (92, 100), '진류군': (292, 100), '양국': (320, 300), '여남군': (250, 370)}
     rows = ''.join(tier_row(*t) for t in TIERS[:4])
-    inner = (f'{mapimg("jun", 1478, 844, "영천 일대 — 군 보기", -227, -80)}{intel_rgns(pos)}{me_marker(262, 216, "in", tag=False)}'
+    inner = (f'{mapimg("jun", 1478, 844, "영천 일대 — 군 보기", -227, -80)}{intel_rgns(pos)}{me_marker(262, 196, "in", tag=False)}'
              f'{sheet("군마다 시야", f"<div role=list aria-label=군 style=display:flex;flex-direction:column>{rows}</div>", height=300)}')
     page31('V31K6MIntel.dc.html', 'K6 시야 · 첩보(모바일)', shell_mob(mmain(inner), 'menu', '시야 · 첩보', '전체 메뉴'), w=MW, h=MH)
 
@@ -926,8 +937,8 @@ REACH = [
     ('action.demobilize', '소집해제', 'ok', '흐름'), ('action.muster', '집합', 'new', '흐름 · 군단'), ('action.search', '인재탐색', 'ok', '흐름'),
     ('action.employ', '등용', 'ok', '흐름 · 인물카드 · 부'), ('action.persuadeCaptive', '포로 설득', 'wait', '흐름 · 포로'), ('action.travel', '견문', 'ok', '흐름'),
     ('action.selfTrain', '단련', 'ok', '흐름'), ('action.recuperate', '요양', 'ok', '흐름'), ('action.retire', '은퇴', 'wait', '흐름'),
-    ('action.convertProficiency', '숙련전환', 'ok', '흐름'), ('action.gift', '증여', 'ok', '흐름 · 인물카드'), ('action.donate', '헌납', 'wait', '흐름'),
-    ('action.tradeGrain', '군량매매', 'ok', '흐름'), ('action.tradeEquipment', '장비매매', 'wait', '흐름'), ('action.transport', '물자조달', 'ok', '흐름'),
+    ('action.convertProficiency', '병종 바꿔 익히기', 'ok', '흐름'), ('action.gift', '증여', 'ok', '흐름 · 인물카드'), ('action.donate', '헌납', 'wait', '흐름'),
+    ('action.tradeGrain', '쌀 사고팔기', 'ok', '흐름'), ('action.tradeEquipment', '장비매매', 'wait', '흐름'), ('action.transport', '물자조달', 'ok', '흐름'),
     ('action.move', '이동', 'ok', '흐름 · 지도카드'), ('action.forcedMarch', '강행', 'ok', '흐름 · 지도카드'), ('action.return', '귀환', 'ok', '흐름'),
     ('action.resign', '하야', 'wait', '흐름'), ('action.rise', '거병', 'wait', '흐름'), ('action.independence', '독립', 'wait', '흐름'),
     ('action.foundState', '건국', 'ok', '흐름'), ('action.abdicate', '선양', 'ok', '흐름 · 인물카드'), ('action.oath', '결의', 'ok', '흐름 · 인물카드'),
@@ -954,9 +965,9 @@ def board_inputreach():
     per = 25
     cols = ''
     for c in range(3):
-        rows = ''.join(f'<div style="height:28px;display:grid;grid-template-columns:150px 86px minmax(0,1fr) 74px;gap:6px;align-items:center;padding:0 8px;border-bottom:1px solid #2c342f;font-size:11.5px">'
+        rows = ''.join(f'<div style="height:28px;display:grid;grid-template-columns:138px 112px minmax(0,1fr) 74px;gap:6px;align-items:center;padding:0 8px;border-bottom:1px solid #2c342f;font-size:11.5px">'
                        f'<span class="mono t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{i}</span><span class="serif" style="font-weight:700;white-space:nowrap">{n}</span>'
-                       f'<span class="t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{p}</span>{chip(*ST_CHIP[s])}</div>'
+                       f'<span class="t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{name_wait(n)}{p}</span>{chip(*ST_CHIP[s])}</div>'
                        for i, n, s, p in REACH[c * per:(c + 1) * per])
         cols += f'<section class="panel" style="flex:1 1 0;min-width:0">{sec("입력", f"{c * per + 1}–{min(74, (c + 1) * per)}")}{rows}</section>'
     head = (f'<div style="display:flex;gap:8px;align-items:center;padding:0 16px;height:52px;border-bottom:1px solid #2c342f">'
