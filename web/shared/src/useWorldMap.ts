@@ -206,6 +206,16 @@ export function useWorldMap<P extends WorldMapPreview>({
 
   useEffect(() => {
     const controller = new AbortController();
+    // 省 지도는 첫 그림을 기다리게 하지 않는다 — 지형 · 城 을 먼저 그리고, 省 지도(3072×2676 래스터를 풀고
+    // 훑는 데 수 초)는 온 뒤에 채운다. 지도판도 같은 주소를 청하므로 요청은 하나다(공유 로더).
+    // A missing PNG only disables overlays.
+    const fillProvinces = (base: string | null, tiles: WorldTiles) => {
+      loadSharedProvinceIdentityMap(worldProvincesUrl(serverId), base ?? undefined).catch(() => null).then((provinceMap) => {
+        if (controller.signal.aborted || !provinceMap) return;
+        if (terrainCache.current?.tiles === tiles) terrainCache.current.provinceMap = provinceMap;
+        setRaw((previous) => previous.kind === 'loaded' && previous.tiles === tiles ? { ...previous, provinceMap } : previous);
+      });
+    };
     (async () => {
       const preview = mapData ?? await loadPreview(controller.signal);
       if (controller.signal.aborted) return;
@@ -218,15 +228,15 @@ export function useWorldMap<P extends WorldMapPreview>({
       const cached = terrainCache.current;
       if (base && cached?.base === base && cached.scope === cacheScope && cached.serverId === serverId) {
         setRaw({ kind: 'loaded', preview: { ...preview }, tiles: cached.tiles, hash: cached.hash, provinceMap: cached.provinceMap });
+        if (!cached.provinceMap) fillProvinces(base, cached.tiles);
         return;
       }
       const terrainUrl = worldTerrainUrl(base, serverId);
-      // 지형 · 省 지도 · 州 색인은 서로의 응답을 기다리지 않는다 — 한꺼번에 청하고 다 온 뒤에 맞춘다.
-      // A missing PNG only disables overlays; a missing Ju index only hides the 州 level.
+      // 지형과 州 색인은 서로의 응답을 기다리지 않는다 — 한꺼번에 청하고 다 온 뒤에 맞춘다.
+      // A missing Ju index only hides the 州 level.
       const juAddress = juUrlForTerrain(terrainUrl);
-      const [response, provinceMap, juIndex] = await Promise.all([
+      const [response, juIndex] = await Promise.all([
         fetch(terrainUrl, { signal: controller.signal }),
-        loadSharedProvinceIdentityMap(worldProvincesUrl(serverId), base ?? undefined).catch(() => null),
         juAddress
           ? fetch(juAddress, { signal: controller.signal })
             .then(async (juResponse) => (juResponse.ok ? await juResponse.json() as JuIndexResponse : null))
@@ -241,9 +251,9 @@ export function useWorldMap<P extends WorldMapPreview>({
         const assigned = verifiedJuByParent(juIndex, hash, tiles.parentRegions.length);
         if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));
       }
-      if (controller.signal.aborted) return;
-      if (base) terrainCache.current = { base, scope: cacheScope, serverId, tiles, hash, provinceMap };
-      setRaw({ kind: 'loaded', preview: { ...preview }, tiles, hash, provinceMap });
+      if (base) terrainCache.current = { base, scope: cacheScope, serverId, tiles, hash, provinceMap: null };
+      setRaw({ kind: 'loaded', preview: { ...preview }, tiles, hash, provinceMap: null });
+      fillProvinces(base, tiles);
     })().catch((error: unknown) => {
       if (!controller.signal.aborted) {
         const message = error instanceof Error ? error.message : '지도를 불러오지 못했습니다.';

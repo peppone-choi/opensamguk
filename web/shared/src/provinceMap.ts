@@ -478,11 +478,37 @@ export function buildCountyAdministrativeIndex(
   };
 }
 
+/**
+* 같은 省 지도 · 같은 기록으로 만든 색인은 한 번만 만든다 — 지도 훅(城 자리)과 지도판(경계 · 소유)이 따로
+* 만들던 것이 3072×2676 래스터를 두 번 훑었다(09-30 실데이터 벤치에서 한 번에 수 초).
+*/
+const NO_JURISDICTIONS: readonly JurisdictionRecordDto[] = [];
+const administrativeIndexes = new WeakMap<ProvinceIdentityMap, {
+  provinces: readonly ProvinceRecordDto[];
+  parentRegions: readonly ParentRegionRecordDto[];
+  jurisdictions: readonly JurisdictionRecordDto[];
+  index: CountyAdministrativeIndex;
+}>();
+
 export function buildProvinceAdministrativeIndex(
   map: ProvinceIdentityMap,
   provinces: readonly ProvinceRecordDto[],
   parentRegions: readonly ParentRegionRecordDto[],
-  jurisdictions: readonly JurisdictionRecordDto[] = [],
+  jurisdictions: readonly JurisdictionRecordDto[] = NO_JURISDICTIONS,
+): CountyAdministrativeIndex {
+  const cached = administrativeIndexes.get(map);
+  if (cached && cached.provinces === provinces && cached.parentRegions === parentRegions
+    && cached.jurisdictions === jurisdictions) return cached.index;
+  const index = computeProvinceAdministrativeIndex(map, provinces, parentRegions, jurisdictions);
+  administrativeIndexes.set(map, { provinces, parentRegions, jurisdictions, index });
+  return index;
+}
+
+function computeProvinceAdministrativeIndex(
+  map: ProvinceIdentityMap,
+  provinces: readonly ProvinceRecordDto[],
+  parentRegions: readonly ParentRegionRecordDto[],
+  jurisdictions: readonly JurisdictionRecordDto[],
 ): CountyAdministrativeIndex {
   const parentById = new Map(parentRegions.map((parent, index) => [parent.id, index]));
   const commanderyByProvince = new Int16Array(provinces.length);
