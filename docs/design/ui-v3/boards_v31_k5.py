@@ -6,6 +6,7 @@
 import v31system as _S
 from v31system import *  # noqa: F401,F403
 from v31system import NATION, PT, MAP, DESK_PX, CELLS
+import v31assets as _A  # 워드마크 그림 id(_A.LOGO). v3common 의 LOGO(머리줄 자리 표시)와 이름이 같아 모듈로 부른다.
 
 W, H = 1440, 1000
 MW, MH = 390, 844
@@ -24,6 +25,13 @@ WORLD = [('200년 3월 중순', '허현의 소유 세력이 원소에서 조조�
          ('200년 2월 상순', '서버가 밀린 순을 모두 따라잡았습니다.')]
 NOTICES = [('09.30', True, 'pep 1기 공개 알파 안내'), ('09.29', False, '점검 완료 — 턴 처리 다시 시작'), ('09.26', False, '초상 올리기 방식이 바뀌었습니다')]
 DASH = '—'  # 코에이 능력치 자리(저장소 사본)
+
+
+def wordmark(w):
+    """오픈삼국 워드마크(금색 붓글씨, 원본 1200×448 비율). 어두운 판 위에만 놓는다."""
+    src = getattr(_A, 'LOGO', '')
+    h = round(w * 448 / 1200)
+    return pic(src, w, h, '오픈삼국', 'object-fit:contain')
 
 
 def flag(c, w=10, h=14):
@@ -131,7 +139,7 @@ def login_card(err=''):
 
 def board_login():
     intro = (f'<div style="position:absolute;left:32px;top:80px;width:520px;padding:22px 24px;background:rgba(12,15,14,.78);display:flex;flex-direction:column;gap:12px">'
-             f'{pic("", 300, 72, "logo-wordmark.png — 로그인 히어로 · 폭 280–340")}'
+             f'{wordmark(420)}'
              f'<h2 class="serif" style="margin:0;font-size:30px;font-weight:900;line-height:1.3">한 명의 장수에서 천하까지.</h2>'
              f'<p class="t2" style="margin:0;font-size:14px;line-height:1.6">{LOGIN_COPY}</p><span style="display:flex">{draft_chip()}</span></div>')
     nat = floatp('세력 현황', 'pep 1기 · 세력 5', nat_rows(h=40), 'left:32px;top:668px;width:320px')
@@ -162,7 +170,8 @@ def board_login_empty():
 
 def board_mlogin():
     top = (f'<div style="position:relative;height:480px;flex-shrink:0;overflow:hidden">{mapimg("hero_m", MW, 480, "낙양 일대 지도 — pep 1기 판도")}'
-           f'{over(gw_mtop(transparent=True))}<span class="chip" style="position:absolute;left:12px;top:392px;height:32px;background:rgba(20,24,22,.94);font-size:12px">pep 1기 · 3월 중순 · 세력 5</span>'
+           f'{over(gw_mtop(transparent=True))}<div style="position:absolute;left:12px;top:292px;padding:6px 10px;background:rgba(12,15,14,.72)">{wordmark(220)}</div>'
+           f'<span class="chip" style="position:absolute;left:12px;top:392px;height:32px;background:rgba(20,24,22,.94);font-size:12px">pep 1기 · 3월 중순 · 세력 5</span>'
            f'<div style="position:absolute;right:8px;top:64px;display:flex;flex-direction:column;gap:2px">'
            f'<button type="button" class="ibtn" aria-label="확대" style="background:rgba(20,24,22,.92);font-size:20px">+</button>'
            f'<button type="button" class="ibtn" aria-label="축소" style="background:rgba(20,24,22,.92);font-size:20px">−</button></div></div>')
@@ -202,7 +211,7 @@ def join_intro():
 
 def board_join():
     intro = (f'<div style="position:absolute;left:32px;top:80px;width:520px;padding:22px 24px;background:rgba(12,15,14,.8);display:flex;flex-direction:column;gap:12px">'
-             f'{pic("", 300, 72, "logo-wordmark.png — 폭 280–340")}{join_intro()}</div>')
+             f'{wordmark(360)}{join_intro()}</div>')
     card = (f'<section class="panel" aria-label="회원 가입" style="position:absolute;right:32px;top:80px;width:420px;background:rgba(27,32,29,.97);border-color:#9c7f3f;box-shadow:0 10px 28px rgba(0,0,0,.5)">'
             f'<div style="padding:14px 16px 0"><h1 class="serif" style="margin:0;font-size:22px;font-weight:900">회원 가입</h1></div>'
             f'<div style="padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px">{join_fields()}{btn("회원가입", "primary", style="width:100%")}'
