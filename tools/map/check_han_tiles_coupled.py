@@ -204,6 +204,12 @@ COUPLED: tuple[Coupled, ...] = (
              "data/curated/han/map-design/landcover-v1.json"),
             _t("tools/map/build_map_design.py", "--check"),
             _t("tools/map/build_map_design.py", "--write-derived")),
+    # Generated bundles are local until accepted; absence is SKIPPED, existing stale files are red.
+    Coupled("topdown-bake",
+            ("data/curated/han/map-design/placements-v1.json", "data/map/han-tiles.json"),
+            _t("tools/map/bake_topdown_map.py", "--check-published", "--export-dir", "build/map-design-export",
+               "--kit-dir", "data/map/waryong/273d596", "--bundle-root", "data/map/topdown"),
+            None, local_only=True),
 )
 
 
