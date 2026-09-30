@@ -204,3 +204,4 @@ export {
 } from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+export { RECORD_KIND_SECTION, RECORD_SECTION_LABEL, RECORD_SECTION_ORDER, recordSection, type RecordSection } from './recordSections';

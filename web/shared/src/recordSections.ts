@@ -1,6 +1,6 @@
 // 기록 5분류 — 사건 종류 → 분류. 정본은 서버 `logic/.../record/EventKind.kt` 의 section 이다(K4 · K5 합의 2026-09-30).
-// 화면은 다시 묶지 않는다: 지난 순 서랍(P-W04)과 기록(P-H01)이 이 표 하나를 쓴다.
-// 서버에 종류가 늘면 `__tests__/record-sections.test.ts` 가 EventKind.kt 와 대조해 빨개진다.
+// 화면은 다시 묶지 않는다: 지난 순 서랍(P-W04 · K4)과 기록(P-H01 · K5)이 이 표 하나를 쓴다. 문장 · 조사 · 날짜는 gameEvents.ts(K5).
+// 서버에 종류가 늘면 `__tests__/recordSections.test.ts` 가 EventKind.kt 와 대조해 빨개진다.
 
 export type RecordSection = 'PERSONAL' | 'RETINUE_NATION' | 'COURT' | 'BATTLE' | 'WORLD';
 

@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { expect, test } from 'vitest';
-import { RECORD_KIND_SECTION, recordSection } from '../lib/record-sections';
+import { RECORD_KIND_SECTION, recordSection } from '../recordSections';
 
 // 두 번째 축: 서버 정본 EventKind.kt 를 직접 읽어 대조한다(화면 표가 스스로를 검사하지 않게).
-const EVENT_KIND = resolve(__dirname, '../../../logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt');
+const EVENT_KIND = resolve(__dirname, '../../../../logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt');
 
 function serverTable(): Record<string, string> {
     const src = readFileSync(EVENT_KIND, 'utf-8');
