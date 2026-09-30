@@ -60,8 +60,9 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         return { cell, state: 'IN_CITY', nationColor: nation?.color ?? null, portrait: null, name: city.name };
     }, [places, homeCityId, preview]);
 
-    const pickedCity = picked?.kind === 'city' || picked?.kind === 'flag'
-        ? preview.cities.find((entry) => String(entry.id) === String(picked.id)) : undefined;
+    // 내 위치 표지를 누르면 내 城(성 안), 城 · 깃발을 누르면 그 城
+    const pickedCityId = picked?.kind === 'me' ? homeCityId : picked?.kind === 'city' || picked?.kind === 'flag' ? picked.id : null;
+    const pickedCity = pickedCityId != null ? preview.cities.find((entry) => String(entry.id) === String(pickedCityId)) : undefined;
 
     return <div style={{ position: 'relative' }}>
         <TopdownMap
@@ -80,6 +81,7 @@ export default function WarRoomTopdownMap({ source, preview, homeCityId, focusCi
         {world && !world.ok ? <p role="alert" style={{ margin: '6px 0 0', color: 'var(--danger, #e08a7c)' }}>
             {`세력 색을 칠하지 못했습니다 — ${world.reason}`}</p> : null}
         {pickedCity ? <p role="status" data-testid="war-room-picked" style={{ margin: '6px 0 0' }}>
+            {picked?.kind === 'me' ? '내 위치 — ' : null}
             <strong>{pickedCity.commanderyName ? `${pickedCity.commanderyName} ${pickedCity.name}` : pickedCity.name}</strong>
         </p> : null}
     </div>;

@@ -141,9 +141,10 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
     }, { x: cx, y: cy });
     expect(top).toBe('CANVAS:true');
-    // 초점 = 합성 城 1(선무) 발자국 가운데 — 누르면 그 城이 잡힌다
+    // 초점 = 합성 城 1(선무) 발자국 가운데. 내 城도 선무라 내 위치 표지가 그 위에 선다 — 누르면 「내 위치 — 선무」
     await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
     await page.mouse.click(cx, cy);
+    await expect(page.getByTestId('war-room-picked')).toContainText('내 위치');
     await expect(page.getByTestId('war-room-picked')).toContainText('선무');
     const before = Number(await map.getAttribute('data-map-zoom'));
     await page.mouse.move(cx, cy);
