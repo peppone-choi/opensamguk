@@ -16,18 +16,18 @@ class CityCatalogAdapter(
             .digest(sourceBytes)
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
         require(actualSha256 == metadata.sha256) {
-            "v2 city source sha256 does not match metadata"
+            "city source sha256 does not match metadata"
         }
 
         val cities = ScenarioJson.loadCities(sourceBytes.toString(Charsets.UTF_8))
         require(cities.size == metadata.cityCount) {
-            "v2 city source count does not match metadata"
+            "city source count does not match metadata"
         }
         require(cities.count { it.nationId != 0 } == metadata.scenarioOwnedCityCount) {
-            "v2 owned city count does not match metadata"
+            "owned city count does not match metadata"
         }
         require(cities.map(ScenarioCity::id).toSet().size == cities.size) {
-            "v2 city source contains duplicate city ids"
+            "city source contains duplicate city ids"
         }
         return CityCatalogSnapshot(metadata, cities)
     }

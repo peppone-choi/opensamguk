@@ -18,7 +18,7 @@
 
 `CardContentValidator`는 콘텐츠·근거·주장·입력 소비·출력 생성의 ID 중복, 이중 소비, 부분 생성, dangling, claim→evidence를 검사한다. `tools/content/validate_card_content.py`는 현재 내정·산지·생산 원장을 읽어 같은 참조 원칙과 출처 책/권 일치를 검사한다. 어느 쪽도 전체 개수를 상수로 고정하지 않는다. 실행: `python3 tools/content/validate_card_content.py`, `python3 -m unittest discover -s tools/content/tests -v`.
 
-이 계약은 새 카드 콘텐츠 표면이다. `content/v2`의 read-only 샌드박스 로더와 과거 프로필 계약을 신규 카드의 생명주기나 월드 분리로 재사용하지 않는다.
+이 계약은 새 카드 콘텐츠 표면이다. `content/catalog`의 read-only 샌드박스 로더와 과거 프로필 계약을 신규 카드의 생명주기나 월드 분리로 재사용하지 않는다.
 
 ## 보물 카드와 장비 분리 (§6.5)
 

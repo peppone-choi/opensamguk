@@ -1568,7 +1568,7 @@ open class JdbcFlushExecutor(
      * `gold`/`rice`/`garrison`은 누적 델타가 아니라 **엔진이 계산한 절대 상태**라 `DO UPDATE SET`이
      * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전).
      *
-     * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_v2`) — 대신 v1
+     * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_sandbox`) — 대신 v1
      * payload가 이 채널을 채우지 않아 호출 자체가 없다.
      */
     private fun cityLedgerV2UpsertMany(worldId: WorldId, rows: List<CityLedgerV2UpsertRow>) {

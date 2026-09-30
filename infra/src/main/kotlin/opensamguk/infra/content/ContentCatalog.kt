@@ -20,16 +20,16 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
         return when (matches.size) {
             0 -> null
             1 -> matches.single().inputStream.use { it.readBytes().toString(Charsets.UTF_8) }
-            else -> throw IllegalArgumentException("v2 content metadata is ambiguous: ${name.removeSuffix(".json")}")
+            else -> throw IllegalArgumentException("catalog content metadata is ambiguous: ${name.removeSuffix(".json")}")
         }
     }
 
     fun load(id: String): ContentMetadata {
-        require(ENTRY_ID.matches(id)) { "v2 content id is invalid: $id" }
-        val raw = read("$id.json") ?: throw IllegalArgumentException("v2 content metadata not found: $id")
+        require(ENTRY_ID.matches(id)) { "catalog content id is invalid: $id" }
+        val raw = read("$id.json") ?: throw IllegalArgumentException("catalog content metadata not found: $id")
         val metadata = decode(raw, id)
         require(metadata.status == ContentStatus.ACTIVE) {
-            "v2 content '${metadata.id}' is ${metadata.status} and cannot be loaded"
+            "catalog content '${metadata.id}' is ${metadata.status} and cannot be loaded"
         }
         return metadata
     }
@@ -38,7 +38,7 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
         rejectDuplicateRootKeys(raw)
         val root = MetaJson.decode(raw)
         require(root.keys == APPROVED_METADATA_ROOT_KEYS) {
-            "v2 content metadata must contain exactly the approved root keys"
+            "catalog content metadata must contain exactly the approved root keys"
         }
         val metadata = ContentMetadata(
             schemaVersion = requiredInt(root, "schemaVersion"),
@@ -50,15 +50,15 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
             scenarioOwnedCityCount = requiredInt(root, "scenarioOwnedCityCount"),
         )
         require(metadata.schemaVersion == ContentMetadata.SCHEMA_VERSION) {
-            "unsupported v2 content schema version: ${metadata.schemaVersion}"
+            "unsupported catalog content schema version: ${metadata.schemaVersion}"
         }
         require(metadata.id == requestedId) {
-            "v2 content id '${metadata.id}' does not match requested id '$requestedId'"
+            "catalog content id '${metadata.id}' does not match requested id '$requestedId'"
         }
-        require(ENTRY_ID.matches(metadata.id)) { "v2 content id is invalid: ${metadata.id}" }
-        require(metadata.cityCount >= 0) { "v2 city count must not be negative" }
+        require(ENTRY_ID.matches(metadata.id)) { "catalog content id is invalid: ${metadata.id}" }
+        require(metadata.cityCount >= 0) { "city count must not be negative" }
         require(metadata.scenarioOwnedCityCount in 0..metadata.cityCount) {
-            "v2 owned city count must be within the city count"
+            "owned city count must be within the city count"
         }
         return metadata
     }
@@ -66,7 +66,7 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
     private fun entries() = resolver.getResources("classpath*:$location/*.json")
 
     companion object {
-        const val DEFAULT_LOCATION: String = "content/v2"
+        const val DEFAULT_LOCATION: String = "content/catalog"
 
         private val ENTRY_ID = Regex("[A-Za-z0-9][A-Za-z0-9_-]*")
         private val SAFE_PATH_SEGMENT = Regex("[A-Za-z0-9][A-Za-z0-9._-]*")
@@ -85,13 +85,13 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
             name.endsWith(".json") && ENTRY_ID.matches(name.removeSuffix(".json"))
 
         private fun validatedDirectory(directory: String): String {
-            require(isSafeClasspathPath(directory)) { "v2 catalog location is unsafe: $directory" }
+            require(isSafeClasspathPath(directory)) { "catalog location is unsafe: $directory" }
             return directory
         }
 
         private fun validatedSource(source: String): String {
             require(source.endsWith(".json") && isSafeClasspathPath(source)) {
-                "v2 content source is unsafe: $source"
+                "catalog content source is unsafe: $source"
             }
             return source
         }
@@ -102,18 +102,18 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
         private fun requiredString(root: Map<String, Any?>, field: String): String =
             root[field].let { value ->
                 if (value is String && value.isNotBlank()) value
-                else throw IllegalArgumentException("v2 content metadata field '$field' must be a non-blank string")
+                else throw IllegalArgumentException("catalog content metadata field '$field' must be a non-blank string")
             }
 
         private fun requiredInt(root: Map<String, Any?>, field: String): Int = when (val value = root[field]) {
             is Int -> value
             is Long -> {
                 require(value in Int.MIN_VALUE.toLong()..Int.MAX_VALUE.toLong()) {
-                    "v2 content metadata field '$field' is outside the integer range"
+                    "catalog content metadata field '$field' is outside the integer range"
                 }
                 value.toInt()
             }
-            else -> throw IllegalArgumentException("v2 content metadata field '$field' must be an integer")
+            else -> throw IllegalArgumentException("catalog content metadata field '$field' must be an integer")
         }
 
         private fun statusOf(value: String): ContentStatus = when (value) {
@@ -121,11 +121,11 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
             ContentStatus.CANDIDATE.name -> ContentStatus.CANDIDATE
             ContentStatus.EXCLUDED.name -> ContentStatus.EXCLUDED
             ContentStatus.BUDGET_ONLY.name -> ContentStatus.BUDGET_ONLY
-            else -> throw IllegalArgumentException("unknown v2 content status: $value")
+            else -> throw IllegalArgumentException("unknown catalog content status: $value")
         }
 
         private fun validatedSha256(value: String): String {
-            require(SHA256.matches(value)) { "v2 content sha256 must be lowercase hexadecimal" }
+            require(SHA256.matches(value)) { "catalog content sha256 must be lowercase hexadecimal" }
             return value
         }
 
@@ -155,7 +155,7 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
                             val value = readString()
                             if (depth == 1 && nextNonWhitespace() == ':') {
                                 require(keys.add(value)) {
-                                    "v2 content metadata must not contain duplicate keys: $value"
+                                    "catalog content metadata must not contain duplicate keys: $value"
                                 }
                             }
                         }
@@ -175,11 +175,11 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
                         else -> value.append(character)
                     }
                 }
-                throw IllegalArgumentException("unterminated string in v2 content metadata")
+                throw IllegalArgumentException("unterminated string in catalog content metadata")
             }
 
             private fun readEscape(): Char {
-                require(index < raw.length) { "unterminated escape in v2 content metadata" }
+                require(index < raw.length) { "unterminated escape in catalog content metadata" }
                 return when (val escape = raw[index++]) {
                     '"', '\\', '/' -> escape
                     'b' -> '\b'
@@ -188,12 +188,12 @@ class ContentCatalog(location: String = DEFAULT_LOCATION) {
                     'r' -> '\r'
                     't' -> '\t'
                     'u' -> readUnicodeEscape()
-                    else -> throw IllegalArgumentException("invalid escape in v2 content metadata: \\$escape")
+                    else -> throw IllegalArgumentException("invalid escape in catalog content metadata: \\$escape")
                 }
             }
 
             private fun readUnicodeEscape(): Char {
-                require(index + 4 <= raw.length) { "unterminated unicode escape in v2 content metadata" }
+                require(index + 4 <= raw.length) { "unterminated unicode escape in catalog content metadata" }
                 val hex = raw.substring(index, index + 4)
                 index += 4
                 return hex.toInt(16).toChar()
