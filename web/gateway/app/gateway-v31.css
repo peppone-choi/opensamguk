@@ -202,11 +202,14 @@
 @media (max-width: 1199.98px) {
   .gw31-login__map { position: relative; height: 480px; overflow: hidden; }
   .gw31-login__stage { margin-top: -40px; display: flex; flex-direction: column; gap: 12px; padding: 0 0 0; }
+  /* 소개 묶음은 지도 띠 아래쪽에 겹쳐 뜬다 — 무대(stage, 지도 띠 아래 -40 에서 시작) 위쪽 끝에 밑변을 붙인다.
+     높이가 글 길이에 따라 달라도 로그인 시트를 덮지 않는다(스모크: top 고정값이 무대 기준이라 시트 · 칩을 덮었다). */
   .gw31-intro {
     position: absolute;
     left: 12px;
     right: 12px;
-    top: 232px;
+    top: 0;
+    transform: translateY(calc(-100% - 8px));
     padding: 10px 12px;
     gap: 6px;
     max-width: 520px;

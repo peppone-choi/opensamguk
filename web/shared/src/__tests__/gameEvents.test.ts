@@ -6,7 +6,7 @@ const names = {
   nation: (id: number) => ({ 1: '조조', 2: '원소', 3: '손권', 4: '유표' } as Record<number, string>)[id],
 };
 
-function event(kind: string, refs: Record<string, number> = {}, at = { year: 200, month: 3, phase: 2, ordinal: 0 }): GameEvent {
+function event(kind: string, refs: Record<string, number | string> = {}, at = { year: 200, month: 3, phase: 2, ordinal: 0 }): GameEvent {
   return { id: 1, kind, section: 'WORLD', occurredAt: at, refs, facts: {} };
 }
 
@@ -60,8 +60,10 @@ describe('worldEventSentence', () => {
   it('모르는 이름은 지어내지 않는다', () => {
     expect(worldEventSentence(event('county.ownerChanged', { CITY: 999, FROM_NATION: 77, TO_NATION: 1 }), names))
       .toBe('어느 현의 소유 세력이 어느 세력에서 조조로 바뀌었습니다.');
-    expect(worldEventSentence(event('roadFort.captured', { ROAD_FORT: 5, TO_NATION: 2 }), names))
+    expect(worldEventSentence(event('roadFort.captured', { ROAD_FORT: 'fort-hulao', TO_NATION: 2 }), names))
       .toBe('어느 보루를 원소가 차지했습니다.');
+    expect(worldEventSentence(event('roadFort.captured', { ROAD_FORT: 'fort-hulao', TO_NATION: 2 }), { ...names, roadFort: (id) => (id === 'fort-hulao' ? '호뢰관' : undefined) }))
+      .toBe('호뢰관을 원소가 차지했습니다.');
   });
   it('월단평 · 따라잡기 끝', () => {
     expect(worldEventSentence(event('yuedan.announced', {}, { year: 200, month: 7, phase: 1, ordinal: 0 }), names))

@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
     esbuild: { jsx: 'automatic' },
@@ -13,5 +13,7 @@ export default defineConfig({
     test: {
         environment: 'jsdom',
         setupFiles: ['./vitest.setup.ts'],
+        // Playwright 스모크(e2e/)는 vitest 가 돌리지 않는다 — playwright.config.ts(K3 게이트웨이 틀)가 돌린다.
+        exclude: [...configDefaults.exclude, 'e2e/**'],
     },
 });

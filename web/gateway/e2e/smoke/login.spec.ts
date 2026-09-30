@@ -1,11 +1,9 @@
 // P-G02 로그인(게이트웨이) — 데스크톱 · 모바일 같은 흐름 스모크(@both). 백엔드 없이 돈다: 서버 현황 자료는 page.route 로 대 준다.
-// 게이트웨이 서버가 필요하다 — E2E_GATEWAY_URL(기본 http://localhost:3000), 서버 목록은
-// SERVER_REGISTRY_JSON='[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]' 로 띄운다.
+// 게이트웨이 틀(K3): web/gateway/playwright.config.ts 의 desktop · mobile 프로젝트, baseURL = E2E_GATEWAY_URL.
+// 서버 목록은 SERVER_REGISTRY_JSON='[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]' 로 띄운다.
 // 목록이 비어 있으면 조용히 건너뛰지 않고 실패한다(0건이 「검사가 안 돌았다」를 뜻하면 안 된다).
-// 도우미는 K3 e2e/support/parity.ts(front-k3-f1, 병합 전)와 같은 모양이다 — 병합되면 그쪽 것을 쓴다.
-import { expect, test, type Page, type TestInfo } from '@playwright/test';
-
-const gatewayUrl = process.env.E2E_GATEWAY_URL ?? 'http://localhost:3000';
+import { expect, test, type Page } from '@playwright/test';
+import { BOTH, expectNoHorizontalOverflow, isMobile, titleOnlyInfo } from '../../../game/e2e/support/parity';
 
 const PREVIEW = {
   serverName: 'pep', year: 200, month: 3, turnPhaseText: '중순',
@@ -37,15 +35,12 @@ async function serveStatus(page: Page) {
 
 async function open(page: Page) {
   await serveStatus(page);
-  await page.goto(`${gatewayUrl}/login`);
+  await page.goto('/login');
   await expect(page.getByRole('button', { name: /^pep/ }), '서버 목록이 비었다 — SERVER_REGISTRY_JSON 으로 게이트웨이를 띄웠는지 확인').toBeVisible();
 }
 
-function isMobile(testInfo: TestInfo) {
-  return testInfo.project.name === 'mobile';
-}
-
-/** 누를 영역(가운데에서 훑은 elementFromPoint 적중 범위, K10 board-lint 과 같은 뜻)이 44 미만인 것. */
+/** 누를 영역(가운데에서 훑은 elementFromPoint 적중 범위, K10 board-lint 과 같은 뜻)이 44 미만이거나 가운데가 덮인 것.
+ *  parity.smallTouchTargets 는 상자 크기를 잰다 — 지도 위에 떠 있는 패널은 겹침까지 봐야 해서 적중 범위로 잰다. */
 async function smallHitAreas(page: Page, root: string): Promise<string[]> {
   return page.locator(root).first().evaluate((node) => {
     const out: string[] = [];
@@ -58,7 +53,12 @@ async function smallHitAreas(page: Page, root: string): Promise<string[]> {
         const hit = document.elementFromPoint(x, y);
         return !!hit && (hit === el || el.contains(hit));
       };
-      if (!mine(cx, cy)) continue; // 가운데가 덮인 것은 크기 문제가 아니다(열린 층 등)
+      if (!mine(cx, cy)) {
+        // 가운데가 다른 요소에 덮였다 — 이 화면엔 열린 층(대화상자 · 시트)이 없으니 결함이다(K10 board-lint 「덮인 누를 것」).
+        const top = document.elementFromPoint(cx, cy);
+        out.push(`덮임 ${el.tagName.toLowerCase()} "${(el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 20)}" ← ${top ? top.className || top.tagName : '없음'}`);
+        continue;
+      }
       const reach = (dx: number, dy: number) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
       const w = reach(-1, 0) + reach(1, 0) + 1;
       const h = reach(0, -1) + reach(0, 1) + 1;
@@ -69,7 +69,7 @@ async function smallHitAreas(page: Page, root: string): Promise<string[]> {
 }
 
 test.describe('P-G02 로그인 — 데스크톱 · 모바일 같은 흐름', () => {
-  test('그려진다: 소개 · 로그인 · 서버 현황 · 공지 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: '@both' }, async ({ page }) => {
+  test('그려진다: 소개 · 로그인 · 서버 현황 · 공지 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }) => {
     await open(page);
     await expect(page.getByRole('heading', { level: 1, name: '로그인' })).toBeVisible();
     await expect(page.getByRole('region', { name: '소개' })).toBeVisible();
@@ -77,12 +77,12 @@ test.describe('P-G02 로그인 — 데스크톱 · 모바일 같은 흐름', () 
     await expect(page.getByRole('region', { name: '천하 정세' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: '정책' }).getByRole('link', { name: '이용약관' })).toHaveAttribute('href', '/terms');
     await expect(page.getByAltText('오픈삼국')).toHaveCount(1);
-    expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(0);
+    await expectNoHorizontalOverflow(page);
     expect(await smallHitAreas(page, '.gw31-login__stage')).toEqual([]);
-    expect(await page.locator('[title]').count(), 'title 전용 정보 금지').toBe(0);
+    expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
   });
 
-  test('서버 현황: 현 수 · 알림체 문장 · 서버 바꾸기', { tag: '@both' }, async ({ page }) => {
+  test('서버 현황: 현 수 · 알림체 문장 · 서버 바꾸기', { tag: BOTH }, async ({ page }) => {
     await open(page);
     const nations = page.getByRole('region', { name: '세력 현황' });
     await expect(nations.getByRole('listitem')).toHaveText(['원소현 2', '조조현 1']);
@@ -96,18 +96,20 @@ test.describe('P-G02 로그인 — 데스크톱 · 모바일 같은 흐름', () 
     await expect(events.getByText('아직 공개된 사건이 없습니다')).toBeVisible();
   });
 
-  test('로그인 폼: 빈 칸 오류 · 비밀번호 표시', { tag: '@both' }, async ({ page }) => {
+  test('로그인 폼: 빈 칸 오류 · 비밀번호 표시', { tag: BOTH }, async ({ page }) => {
     await open(page);
-    await page.getByRole('button', { name: '로그인', exact: true }).click();
-    await expect(page.getByRole('alert')).toHaveText('계정명을 입력하세요');
-    await page.getByLabel('계정명').fill('tester');
-    await page.getByRole('button', { name: '로그인', exact: true }).click();
-    await expect(page.getByRole('alert')).toHaveText('비밀번호를 입력하세요');
-    await page.getByRole('button', { name: '표시' }).click();
-    await expect(page.getByLabel('비밀번호', { exact: true })).toHaveAttribute('type', 'text');
+    // Next 경로 알림(__next-route-announcer__)도 role=alert 라 로그인 패널 안에서만 찾는다.
+    const card = page.getByRole('region', { name: '로그인' });
+    await card.getByRole('button', { name: '로그인', exact: true }).click();
+    await expect(card.getByRole('alert')).toHaveText('계정명을 입력하세요');
+    await card.getByLabel('계정명').fill('tester');
+    await card.getByRole('button', { name: '로그인', exact: true }).click();
+    await expect(card.getByRole('alert')).toHaveText('비밀번호를 입력하세요');
+    await card.getByRole('button', { name: '표시' }).click();
+    await expect(card.getByLabel('비밀번호', { exact: true })).toHaveAttribute('type', 'text');
   });
 
-  test('지도 위 빈 곳은 지도가 받는다(떠 있는 층이 누르기를 먹지 않는다)', { tag: '@both' }, async ({ page }, testInfo) => {
+  test('지도 위 빈 곳은 지도가 받는다(떠 있는 층이 누르기를 먹지 않는다)', { tag: BOTH }, async ({ page }, testInfo) => {
     await open(page);
     // 데스크톱: 소개 판과 로그인 패널 사이 가운데 빈 곳. 모바일: 위 지도 띠의 머리줄 아래.
     const point = isMobile(testInfo) ? { x: 195, y: 150 } : { x: 800, y: 420 };

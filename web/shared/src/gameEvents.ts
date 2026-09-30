@@ -38,7 +38,8 @@ export function formatGameDate(time: { readonly year: number; readonly month: nu
 export interface EventNames {
   city(id: number): string | undefined;
   nation(id: number): string | undefined;
-  roadFort?(id: number): string | undefined;
+  /** 보루 id 는 안정 문자열이다(C0 인계). */
+  roadFort?(id: string): string | undefined;
 }
 
 const HANGUL_BASE = 0xac00;
@@ -108,7 +109,8 @@ export function worldEventSentence(event: GameEvent, names: EventNames): string 
       return `${withParticle(city, '의')} 소유 세력이 ${from}에서 ${withParticle(to, '로/으로')} 바뀌었습니다.`;
     }
     case 'roadFort.captured': {
-      const fort = nameOr('어느 보루', refId(event, 'ROAD_FORT'), names.roadFort ? (id) => names.roadFort!(id) : undefined);
+      const fortId = event.refs.ROAD_FORT;
+      const fort = (typeof fortId === 'string' && names.roadFort?.(fortId)) || '어느 보루';
       const to = nameOr('어느 세력', refId(event, 'TO_NATION'), (id) => names.nation(id));
       return `${withParticle(fort, '을/를')} ${withParticle(to, '이/가')} 차지했습니다.`;
     }
