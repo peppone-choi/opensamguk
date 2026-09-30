@@ -115,6 +115,19 @@ export {
   type MyLocationState,
 } from './myLocation';
 export {
+  CORPS_FLAG_PX,
+  CORPS_HIT_Z,
+  CORPS_MIN_HIT_PX,
+  corpsMarkerSize,
+  corpsPlacement,
+  headingOf,
+  type CorpsArt,
+  type CorpsMarker,
+  type CorpsPlacement,
+  type Heading,
+} from './corps';
+export { createKitCorpsArt, type KitCorpsArtDeps } from './corpsArt';
+export {
   topdownScreensEnabled,
   topdownSourceFor,
   worldFromPreview,
