@@ -239,7 +239,7 @@ def board_mpick():
 # ================================================================== 계책 덱 · 계책 쓰기
 # 지금 서버 공급 v1: 소유 장수별 견벽 · 간파(설계 §6.4 「최초 공용 손패 공급 v1」), 손패 상한 3. 쓰기 · 걸기 입력은 13행 모두 PLANNED.
 # 원장 표시 이름을 바꿔 그린 것 — 전체 승인 때 사용자 문구로 올라간다(K0 추천안, 2026-09-30). 승인되면 C1이 원장 displayName을 고친다.
-NAME_WAIT = {'보급 습격': '군량 습격', '쌀 사고팔기': '군량매매', '병종 바꿔 익히기': '숙련전환'}
+NAME_WAIT = set(CMD_RENAME.values()) | set(CARD_RENAME.values())  # K3 v31system 3.1.2 표가 정본
 
 
 def name_wait(text):
@@ -977,20 +977,17 @@ def board_mdiplomacy():
 
 
 # ================================================================== 서신(P-Q02) · 서신 서랍 · 요청 카드
-def request_card(kind, who_key, who, what, due, consequence, state='wait', compact=False):
-    """요청 카드(RequestCard, K4 · K6 공용) — 발령 응답 · 정치 동의 · 외교 제의. 순을 쓰지 않는다 — 어디서 보든 그 자리에서 답한다."""
-    iid = {'발령': 'court.dispatchReply', '정치 동의': 'court.politicalConsent'}.get(kind, '')
-    acts = (f'<div style="display:flex;gap:6px">{btn("거절", "danger", style="flex:1", attrs=f"data-input-id=\"{iid}\"")}'
-            f'{btn("수락", "primary", style="flex:1", attrs=f"data-input-id=\"{iid}\"")}</div>') if state == 'wait' else f'<div>{chip("수락함", "moss")}</div>'
-    return (f'<div style="padding:10px 12px;border-bottom:1px solid #2c342f;display:flex;flex-direction:column;gap:8px">'
-            f'<div style="display:flex;gap:10px;align-items:flex-start">{portrait(who_key, who, 30, 42)}<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">'
-            f'<span style="display:flex;gap:6px;align-items:center">{chip(kind, "bronze")}<span class="serif" style="font-weight:700">{who}</span></span>'
-            f'<span style="font-size:13px">{what}</span><span class="muted" style="font-size:11px">응답 기한 {due}{" · 순을 쓰지 않는다" if not compact else ""}</span>'
-            f'<span class="rs" style="font-size:11px">{consequence}</span></div></div>{acts}</div>')
+REQ_INPUT = {'발령': 'court.dispatchReply', '정치 동의': 'court.politicalConsent'}
 
 
-REQS = [('발령', 'jojo', '조조', '하후돈을 진류군 태수로 발령', '[미정] — 지나면 수락', '거절하면 충성 ▼ 명망 ▼'),
-        ('정치 동의', 'sunuk', '순욱', '하후돈과 결의를 청함', '[미정]', '거절해도 불이익 없음 — 결의가 열리지 않는다')]
+def req_card(r, compact=False):
+    """요청 카드 — K3 v31system.request_card(3.1.2) 를 부른다. 입력 id 는 종류에서."""
+    kind, key, who, what, due, consequence = r
+    return request_card(kind, key, who, what, due, consequence, compact=compact, input_id=REQ_INPUT[kind])
+
+
+REQS = [('발령', 'jojo', '조조', '하후돈을 진류군 태수로 발령', '기한 [미정] · 지나면 수락', '충성 ▼ 명망 ▼'),
+        ('정치 동의', 'sunuk', '순욱', '하후돈과 결의를 청함', '기한 [미정]', '불이익 없음 — 결의가 열리지 않는다')]
 MAILS = [('개인', '받음', '순욱', '관도 북쪽 소식', '3월 중순 21:12', True), ('개인', '보냄', '허저', '장사현 수비를 부탁한다', '3월 상순 20:40', False),
          ('세력', '받음', '조조', '영천 방면 모든 장수에게', '3월 상순 19:02', False), ('전체', '받음', '[장수]', '천하 모두에게', '2월 하순 18:30', False)]
 
@@ -1023,7 +1020,7 @@ def board_mail():
 
 def board_mmail():
     tabs = f'<div style="padding:8px 12px;border-bottom:1px solid #2c342f">{seg([("개인", 3), ("세력", None), ("전체", None), ("요청", 2)], "요청", "서신 묶음", style="flex-wrap:nowrap")}</div>'
-    cards = ''.join(request_card(*r) for r in REQS)
+    cards = ''.join(req_card(r) for r in REQS)
     deny = f'<div style="border-top:1px solid #3d4740">{sec("다른 상태 — 볼 수 없음", "서버 401 · 403 · 빈 목록과 다른 모양")}</div><div style="height:190px;display:flex">{state_denied("이 서신함은 볼 수 없습니다", "로그인이 풀렸거나 내 서신함이 아닙니다. 다시 로그인해 보세요.", "서신", pad=8)}</div>'
     inner = tabs + cards + deny
     page31('V31K6MMail.dc.html', 'K6 서신 — 요청(모바일)', shell_mob(mmain(inner), 'war', '서신', '작전실'), w=MW, h=MH)
@@ -1044,7 +1041,7 @@ def board_maildrawer():
               f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 4px 0 16px;border-bottom:1px solid #3d4740">'
               f'<span class="serif" style="font-size:18px;font-weight:900">서신</span>{chip("요청 2", "bronze")}'
               f'<a href="#" class="btn sm" style="margin-left:auto;background:transparent;border:0">전체 화면</a>{ibtn("close", "서랍 닫기", style="border:0;background:transparent")}</div>'
-              f'{tabs}<div style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{"".join(request_card(*r, compact=True) for r in REQS)}</div>'
+              f'{tabs}<div style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{"".join(req_card(r, compact=True) for r in REQS)}</div>'
               f'<div style="padding:8px 12px"><a href="#" style="font-size:12px;min-height:44px;display:inline-flex;align-items:center">조정에서 모두 보기 →</a></div>'
               f'<div style="margin-top:auto">{quick}</div></aside>')
     page31('V31K6MailDrawer.dc.html', 'K6 서신 서랍 — 요청 카드(데스크톱)', shell_desk('작전실', 'war', mapst + drawer))
