@@ -15,12 +15,12 @@ import {
     type ArgValue, type Draft, type FlowState,
 } from '@/lib/command-flow/flow-state';
 import { buildArgs, fetchCommandOptions, type ArgField } from '@/lib/command-flow/options';
-import { buildStrip, filledSet, type StripSlot } from '@/lib/command-flow/slots';
 import type { FlowTarget } from '@/lib/command-flow/url';
+import { TurnSlots } from '@/components/turn-slots/TurnSlots';
+import { announceTurnSlotsChanged, filledSet, fromReservedCommands, useTurnSlots, type TurnSlotView } from '@/lib/turn-slots';
 import ArgsPanel, { type FlowResult, type OptionsLoad } from './ArgsPanel';
 
 import CommandList, { type ListCategory } from './CommandList';
-import TurnStrip from './TurnStrip';
 import styles from './CommandFlow.module.css';
 
 export interface CommandFlowProps {
@@ -57,9 +57,9 @@ export default function CommandFlow(props: CommandFlowProps) {
         return initialInputId && flowCommand(initialInputId) ? selectCommand(start, initialInputId) : start;
     });
     const [slotChosen, setSlotChosen] = useState(initialSlot != null);
-    const [strip, setStrip] = useState<StripSlot[] | null>(null);
-    const [stripError, setStripError] = useState<string | null>(null);
-    const [stripKey, setStripKey] = useState(0);
+    // 12순 — 작전실 12순 열과 같은 한 읽기(lib/turn-slots). 예약하면 알림으로 다른 사용처도 다시 읽는다.
+    const { load: slotsLoad, reload: reloadSlots } = useTurnSlots(generalId, refreshKey);
+    const strip = slotsLoad.state === 'ready' ? slotsLoad.slots : null;
     const [optionsById, setOptionsById] = useState<Record<string, OptionsLoad>>({});
     const [category, setCategory] = useState<ListCategory>('전체');
     const [query, setQuery] = useState('');
@@ -73,25 +73,13 @@ export default function CommandFlow(props: CommandFlowProps) {
     const [rejected, setRejected] = useState<{ seq: number; code?: string; reason?: string } | null>(null);
     const [pendingArgs, setPendingArgs] = useState<Record<string, unknown> | null>(null);
 
-    // 12순 — 지금은 /api/reserved-commands(K4-02 turn-slots가 오면 바꾼다).
+    // 순을 정하지 않고 열었으면 12순을 처음 읽은 뒤 다음 빈 순을 고른다(다 찼으면 01순 + 「다 찼습니다」).
     useEffect(() => {
-        let alive = true;
-        api.reservedCommands(generalId)
-            .then((res) => {
-                if (!alive) return;
-                const next = buildStrip(res);
-                setStrip(next);
-                setStripError(null);
-                if (!slotChosen) {
-                    const first = firstEmptySlot(filledSet(next));
-                    setFlow((f) => ({ ...selectSlot(f, first.slot), full: first.full }));
-                    setSlotChosen(true);
-                }
-            })
-            .catch((e: unknown) => { if (alive) setStripError(e instanceof Error ? e.message : '12순을 불러오지 못했습니다.'); });
-        return () => { alive = false; };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [generalId, refreshKey, stripKey]);
+        if (slotChosen || !strip) return;
+        const first = firstEmptySlot(filledSet(strip));
+        setFlow((f) => ({ ...selectSlot(f, first.slot), full: first.full }));
+        setSlotChosen(true);
+    }, [slotChosen, strip]);
 
     // 명령별 옵션 — 흐름 안에서 한 번 받는다(설계서 §2.1 옵션 재사용).
     const loadOptions = useCallback((inputId: string) => {
@@ -142,7 +130,7 @@ export default function CommandFlow(props: CommandFlowProps) {
     }, [category, query, targetArg]);
 
     const command = flow.inputId ? flowCommand(flow.inputId) ?? null : null;
-    const current: StripSlot = strip?.[flow.slot] ?? { turnIdx: flow.slot, state: 'empty', inputId: null, name: null, brief: null };
+    const current: TurnSlotView = strip?.[flow.slot] ?? fromReservedCommands(null)[flow.slot];
     const draft = currentDraft(flow);
 
     const choose = (inputId: string) => {
@@ -168,14 +156,13 @@ export default function CommandFlow(props: CommandFlowProps) {
                 setRejected({ seq: Date.now(), ...(r.code ? { code: r.code } : {}), ...(r.reason ? { reason: r.reason } : {}) });
             } else if (r.status === 'pending') {
                 setResult({ kind: 'info', text: '처리가 늦어지고 있습니다 — 순 띠에서 결과를 확인해 주세요.' });
-                setStripKey((k) => k + 1);
+                announceTurnSlotsChanged();
             } else {
                 const no = String(slot + 1).padStart(2, '0');
                 setResult({ kind: 'ok', text: r.status === 'applied' ? `「${command.name}」 — 바로 처리했습니다.` : `「${command.name}」 — ${no}순에 예약했습니다.` });
-                const res = await api.reservedCommands(generalId).catch(() => null);
-                const next = res ? buildStrip(res) : strip;
-                if (next) setStrip(next);
-                setFlow((f) => afterReserved(f, next ? filledSet(next) : new Set([slot])));
+                // 방금 채운 순은 afterReserved가 채운 것으로 친다 — 다시 읽기를 기다리지 않고 다음 빈 순으로 간다.
+                setFlow((f) => afterReserved(f, strip ? filledSet(strip) : new Set([slot])));
+                announceTurnSlotsChanged();
                 onReserved?.();
             }
         } catch (e: unknown) {
@@ -201,7 +188,7 @@ export default function CommandFlow(props: CommandFlowProps) {
                 : '선택지를 먼저 불러와야 합니다 — 「다시 시도」를 누르세요.' });
             return;
         }
-        if (current.state === 'reserved') { setPendingArgs(args); setConfirmOverwrite(true); return; }
+        if (current.state !== 'empty') { setPendingArgs(args); setConfirmOverwrite(true); return; }
         void send(args);
     };
 
@@ -224,16 +211,17 @@ export default function CommandFlow(props: CommandFlowProps) {
                 </button>
             </header>
 
-            {strip ? <TurnStrip slots={strip} current={flow.slot} onSelect={(i) => { setFlow((f) => selectSlot(f, i)); setResult(null); setRejected(null); }} /> : null}
-            {!strip && !stripError ? <div className={styles.band} role="status">12순을 불러오는 중…</div> : null}
-            {stripError ? (
-                <div className={styles.band} role="alert">
-                    <span className={styles.bandWarn}>12순을 불러오지 못했습니다 — {stripError}</span>
-                    <button type="button" className="os-button os-button--ghost" onClick={() => setStripKey((k) => k + 1)}>다시 시도</button>
-                </div>
-            ) : null}
+            <div className={styles.stripWrap}>
+                <TurnSlots
+                    mode="strip"
+                    load={slotsLoad}
+                    current={flow.slot}
+                    onSelect={(i) => { setFlow((f) => selectSlot(f, i)); setResult(null); setRejected(null); }}
+                    onRetry={reloadSlots}
+                />
+            </div>
             {flow.full ? <div className={styles.band} role="status">12순이 다 찼습니다 — 채운 순을 눌러 바꾸세요.</div> : null}
-            {current.state === 'reserved' ? (
+            {current.state !== 'empty' ? (
                 <div className={styles.band} data-testid="slot-reserved">
                     <span>{no}순 지금 예약: <strong>{current.name}</strong></span>
                     <span style={{ color: 'var(--muted)', fontSize: 12 }}>다른 명령을 고르고 예약하면 바꿉니다.</span>

@@ -19,6 +19,10 @@
 .answers { display: flex; gap: 6px; padding: 0 12px 10px; }
 .answers > * { flex: 1 1 0; min-width: 0; }
 .answer { min-height: var(--row-h, 44px); }
+/* 서버가 막으면 단추 옆 사유 꼬리표(K3 InputAction)가 반쪽 폭에서 잘린다 — 막혔을 때만 두 입력을 세로로 쌓아
+   각자 한 줄을 쓰게 하고, 꼬리표는 줄지 않게 한다(가능할 때는 보드대로 나란히). */
+.answers:has(:global(.os-ia__why)) { flex-direction: column; }
+.answers :global(.os-ia__why) { flex: 0 0 auto; }
 .done { display: flex; justify-content: flex-end; padding: 0 12px 10px; }
 .foot { padding: 0 12px 10px; font-size: 13px; }
 

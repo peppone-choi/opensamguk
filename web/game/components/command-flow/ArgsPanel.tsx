@@ -7,7 +7,7 @@ import type { FlowCommand } from '@/lib/command-flow/catalog';
 import type { ArgValue, Draft } from '@/lib/command-flow/flow-state';
 import { amountMax, type ArgField } from '@/lib/command-flow/options';
 import { submitAvailability, type OptionsLoad } from '@/lib/command-flow/parts-adapter';
-import type { StripSlot } from '@/lib/command-flow/slots';
+import type { TurnSlotView } from '@/lib/turn-slots';
 import ArgFieldView from './ArgFields';
 import styles from './CommandFlow.module.css';
 
@@ -20,7 +20,7 @@ export interface FlowResult {
 
 export interface ArgsPanelProps {
     readonly command: FlowCommand | null;
-    readonly slot: StripSlot;
+    readonly slot: TurnSlotView;
     readonly options: OptionsLoad | undefined;
     readonly draft: Draft;
     readonly carried: readonly string[];

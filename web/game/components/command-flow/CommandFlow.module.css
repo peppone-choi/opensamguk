@@ -30,35 +30,8 @@
   min-height: var(--row-h, 44px);
 }
 
-/* ── 순 띠 ── */
-.strip {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 4px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--line);
-}
-.slot {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  min-height: var(--row-h, 44px);
-  padding: 2px 6px;
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  background: var(--inset);
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-.slot[data-empty='true'] { border-style: dotted; border-color: var(--line-2); background: transparent; color: var(--muted); }
-.slot[aria-pressed='true'] { border: 2px solid var(--bronze); padding: 1px 5px; }
-.slot:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
-.slotNo { font-family: var(--font-mono); font-size: 11px; color: var(--muted); flex: 0 0 auto; }
-.slotName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-.slot[data-empty='false'] .slotName { font-weight: 700; }
+/* ── 순 띠 — 12순 공용 부품(components/turn-slots, strip 모드)을 담는 칸 ── */
+.stripWrap { padding: 8px 12px; border-bottom: 1px solid var(--line); }
 
 .band {
   display: flex;
@@ -235,6 +208,4 @@
 
 @media (max-width: 767.98px) {
   .flow { width: 100%; border-radius: 0; border-left: 0; border-right: 0; }
-  .strip { display: flex; overflow-x: auto; scroll-snap-type: x proximity; }
-  .slot { flex: 0 0 96px; scroll-snap-align: start; }
 }
