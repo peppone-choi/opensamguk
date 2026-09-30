@@ -3,7 +3,7 @@ package opensamguk.gameapi.web
 import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.common.world.WorldId
 import opensamguk.common.wire.NationSettingResult
-import opensamguk.common.wire.PlaceBetFail
+import opensamguk.common.wire.TroopJoinFail
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommandResult
 import opensamguk.common.wire.TurnDaemonEvent
@@ -349,7 +349,7 @@ class CommandResultLookupTest {
             "req-b",
             storedPayload(
                 "req-b",
-                PlaceBetFail(bettingId = 7, reason = "금이 부족합니다."),
+                TroopJoinFail(generalId = 10, troopId = 3, reason = "부대가 가득 찼습니다."),
             ),
         )
 
@@ -357,8 +357,8 @@ class CommandResultLookupTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.status").value("RESOLVED"))
             .andExpect(jsonPath("$.ok").value(false))
-            .andExpect(jsonPath("$.type").value("placeBet"))
-            .andExpect(jsonPath("$.reason").value("금이 부족합니다."))
+            .andExpect(jsonPath("$.type").value("troopJoin"))
+            .andExpect(jsonPath("$.reason").value("부대가 가득 찼습니다."))
     }
 
     @Test

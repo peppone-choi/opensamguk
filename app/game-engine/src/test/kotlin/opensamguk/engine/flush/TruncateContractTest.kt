@@ -38,9 +38,16 @@ class TruncateContractTest {
 
     @Test
     fun `per-season tables are truncated not survived`() {
-        for (table in listOf("general", "city", "nation", "diplomacy", "log_entry")) {
+        for (table in listOf("general", "city", "nation", "diplomacy", "log_entry", "game_event")) {
             assertTrue(table in TruncateContract.TRUNCATED, "$table must be truncated")
             assertFalse(TruncateContract.isExcludedFromTruncate(table), "$table must not survive")
+        }
+    }
+
+    @Test
+    fun `retired V7 economy tables are absent from the reset contract`() {
+        for (table in listOf("ng_auction_bid", "ng_auction", "ng_betting")) {
+            assertFalse(table in TruncateContract.TRUNCATED, "$table was dropped by V69")
         }
     }
 

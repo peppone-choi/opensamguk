@@ -43,7 +43,7 @@ object ItemCatalogJson {
 
     val CANON: ItemCatalog by lazy {
         fun read(path: String) = checkNotNull(javaClass.classLoader.getResource(path)) {
-            "missing HWIHA item catalogue resource: $path"
+            "missing item catalogue resource: $path"
         }.readText()
         parse(read(TREASURE_RESOURCE), read(EQUIPMENT_RESOURCE))
     }

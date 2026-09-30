@@ -6,6 +6,13 @@ import opensamguk.common.rng.RandUtil
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.Retainer
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventFact
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.FactRole
+import opensamguk.logic.record.RefRole
+import opensamguk.logic.renown.RenownEventSource
 
 class PeopleHandlerTest {
     private val fixture = CampaignWorldFixture()
@@ -24,6 +31,13 @@ class PeopleHandlerTest {
         assertTrue(result.effects.contains("discoveredGeneralId:802"))
         assertEquals(setOf(free.id), TalentDiscovery.read(world.getGeneralById(actor.id)!!.meta))
         assertEquals(result, handler.handle(PeopleInput.SEARCH, actor.id, "{}", "search-801", 42))
+        val searchEvents = world.consumeDirtyState().gameEvents
+        assertEquals(listOf(EventKind.RENOWN_EVENT, EventKind.PEOPLE_SEARCHED), searchEvents.map { it.kind })
+        val searched = searchEvents.single { it.kind == EventKind.PEOPLE_SEARCHED }
+        assertEquals(AudienceTarget.Self(actor.id), searched.audience)
+        assertFalse(RefRole.PERSON in searched.refs, "hidden candidate is not stored in the event")
+        assertEquals(EventFact.RenownSource(RenownEventSource.DIRECT_PEOPLE_ACTION),
+            searchEvents.first().facts[FactRole.SOURCE])
         assertTrue(world.listRetainers().isEmpty())
         assertEquals(ready.experience, world.getGeneralById(actor.id)!!.experience)
     }
@@ -49,6 +63,13 @@ class PeopleHandlerTest {
         assertEquals(actor.nationId, world.getGeneralById(free.id)!!.nationId)
         assertEquals(actor.id, world.listRetainers().single().masterGeneralId)
         assertEquals(result, handler.handle(PeopleInput.EMPLOY, actor.id, args, "employ-811", 42))
+        val joinedEvents = world.consumeDirtyState().gameEvents
+        assertEquals(listOf(EventKind.RENOWN_EVENT, EventKind.PEOPLE_JOINED, EventKind.RETAINER_JOINED),
+            joinedEvents.map { it.kind })
+        val joined = joinedEvents.single { it.kind == EventKind.PEOPLE_JOINED }
+        assertEquals(AudienceTarget.Self(actor.id), joined.audience)
+        assertEquals(AudienceTarget.Self(free.id), joinedEvents.single { it.kind == EventKind.RETAINER_JOINED }.audience)
+        assertEquals(EventRef.General(free.id), joined.refs[RefRole.PERSON])
         assertEquals(1, world.listRetainers().size)
     }
 

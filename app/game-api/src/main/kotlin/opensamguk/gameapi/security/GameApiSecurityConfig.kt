@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *
  * Public (no identity needed): the lobby map preview, the health probe, the const/global-menu reads,
  * and — during the F2 transition — the existing read controllers that still accept `?generalId=`
- * (auction/betting/mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
+ * (mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
  * web/game Wave 2 can migrate incrementally; the proxy injects the Bearer where it has one.
  *
  * Identity-required: the possession + my-* endpoints, which resolve the caller's general from the
@@ -44,10 +44,12 @@ class GameApiSecurityConfig {
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
                     // Phase 4X-A 가신·부곡 읽기 — 본인/같은 국가만(spec v3 F4). 등록하지 않으면 anyRequest permitAll 로 공개된다.
                     .requestMatchers("/api/my-retinue", "/api/generals/*/retinue").authenticated()
+                    .requestMatchers("/api/events").authenticated()
                     // Phase 4X-B 작전 읽기 — 국가 내부 정보(타국 403).
                     .requestMatchers("/api/operations", "/api/operations/*").authenticated()
                     // Phase 4X-C 출병 계획·리플레이 읽기 — 본인/공격국·수비국만(타국 403).
                     .requestMatchers("/api/battlefields", "/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
+                    .requestMatchers(HttpMethod.POST, "/api/battles/*/*/join-ticket").authenticated()
                     .requestMatchers("/api/general/claim").authenticated()
                     .requestMatchers("/api/generals/claimable").authenticated()
                     .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()

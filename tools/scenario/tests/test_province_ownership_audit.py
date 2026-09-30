@@ -163,7 +163,7 @@ class ProvinceOwnershipAuditTest(unittest.TestCase):
         )
         scenarios = {
             code: runtime_scenario_catalog(json.loads(
-                (ROOT / f"infra/src/main/resources/scenario/scenario_{code}.json").read_text(encoding="utf-8")
+                (ROOT / f"data/archive/scenarios/scenario_{code}.json").read_text(encoding="utf-8")
             ))
             for code in raw["activeScenarioCodes"]
         }

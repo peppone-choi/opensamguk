@@ -39,9 +39,9 @@ internal const val LOCAL_SANITIZED_AGGREGATE_FIXTURE_CONFIG_SCHEMA_VERSION = "cq
 internal const val LOCAL_SANITIZED_AGGREGATE_FIXTURE_KIND = "local-sanitized-aggregate-surrogate"
 private const val PAYLOAD_BYTE_SEMANTICS = "selected-loader-fields-postgres-text-bytes.v1"
 private const val LOADER_INPUT_INVENTORY_SCHEMA_VERSION = "cqrs-loader-input-inventory.v2"
-private const val SCENARIO_CODE = "scenario_1010"
+private const val SCENARIO_CODE = "scenario_990002"
 private const val BASELINE_FIXED_INSTANT = "0184-01-01T00:00:00Z"
-private const val BASELINE_FIXED_SERVER_ID = "opensamguk_baseline_1010"
+private const val BASELINE_FIXED_SERVER_ID = "opensamguk_baseline"
 private const val FIXED_HOT_LOG_ROWS = 256
 private const val LOG_PAYLOAD_CHARACTERS = 192
 private const val MAX_PRODUCTION_PAYLOAD_BYTES = 1024 * 1024
@@ -197,7 +197,7 @@ object CqrsBaselineMain {
         val handled = lifecycle.runTick(runTime)
         val tickDurationMs = elapsedMillis(tickStartedAt)
         check(handled.isNotEmpty()) { "The representative tick must handle the seeded due generals" }
-        check(handled.all { it.definition.key == "휴식" }) { "Scenario seed fixture must resolve only 휴식" }
+        check(handled.all { it.definition?.key == "휴식" }) { "Scenario seed fixture must resolve only 휴식" }
 
         val heapBeforeGc = HeapSnapshot.read()
         val rssBeforeGc = residentSetBytes()
@@ -380,7 +380,6 @@ object CqrsBaselineMain {
         val generalHistory = state.meta["generalHistory"] as? Map<*, *>
         val globalLogs = state.meta["globalLogs"] as? List<*>
         val statisticRows = state.meta["statisticRows"] as? List<*>
-        val activeUniqueAuctionItems = state.meta["activeUniqueAuctionItems"] as? List<*>
         val storedUniqueItemCounts = state.meta["storedUniqueItemCounts"] as? Map<*, *>
         val inheritancePoints = state.meta["inheritancePoints"] as? Map<*, *>
         val archivedNationSource = snapshot.serverId?.let { serverId ->
@@ -400,8 +399,6 @@ object CqrsBaselineMain {
                 .withRetainedItems(globalLogs?.count { (it as? Map<*, *>)?.get("category") == "ACTION" }?.toLong() ?: 0L),
             "systemHistoryLogs" to LoaderInputObservation.aggregate(jdbc, "systemHistoryLogs")
                 .withRetainedItems(globalLogs?.count { (it as? Map<*, *>)?.get("category") == "HISTORY" }?.toLong() ?: 0L),
-            "activeUniqueAuctionItems" to LoaderInputObservation.aggregate(jdbc, "activeUniqueAuctionItems")
-                .withRetainedItems(activeUniqueAuctionItems?.size?.toLong() ?: 0L),
             "storedUniqueItemNamespaces" to LoaderInputObservation.aggregate(jdbc, "storedUniqueItemNamespaces")
                 .withRetainedItems(storedUniqueItemCounts?.size?.toLong() ?: 0L),
             "gameEnv" to LoaderInputObservation.aggregate(jdbc, "gameEnv").withRetainedItems(scalarCount(
@@ -560,7 +557,7 @@ private data class BaselineRunConfig(
                 ProductionShapeFixtureConfig.read(Path.of(configPath).toAbsolutePath().normalize(), profile)
             }
             require(productionShapeFixture == null || productionShapeFixture.isLocalSanitizedAggregateSurrogate) {
-                "sanitized production-shape capture is blocked: scenario_1010 seed proxy cannot materialize an approved sanitized shape; " +
+                "sanitized production-shape capture is blocked: scenario seed proxy cannot materialize an approved sanitized shape; " +
                     "use --validate-fixture-config until a deterministic sanitized materializer or approved sanitized restore exists"
             }
             val baseRows = productionShapeFixture?.baseRows
@@ -983,12 +980,6 @@ private object LoaderInputObservation {
             "SELECT category, year, month, text FROM log_entry WHERE scope = 'SYSTEM' AND category = 'HISTORY' ORDER BY id DESC",
             listOf("category", "year", "month", "text"),
             listOf("text"),
-        ),
-        LoaderInputObservationDefinition(
-            "activeUniqueAuctionItems",
-            "SELECT target FROM ng_auction WHERE type = 'uniqueItem' AND finished = false ORDER BY id ASC",
-            listOf("target"),
-            listOf("target"),
         ),
         LoaderInputObservationDefinition(
             "storedUniqueItemNamespaces",

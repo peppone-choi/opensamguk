@@ -1,6 +1,5 @@
 package opensamguk.gameapi.read
 
-import opensamguk.common.constants.GameConst
 
 /**
  * F4 — shared READ-only state-text / permission projection helper (the tiny Tier-0 the F4 read
@@ -142,29 +141,6 @@ object F4StateText {
         }
         return out
     }
-
-    /**
-     * 사령부 명령 팔레트의 카테고리 → 명령 코드 목록. PHP `GameConst::$availableChiefCommand`
-     * (GameConstBase.php:378-415) byte-for-byte. ChiefCenter `commandList`(=`getChiefCommandTable`)의
-     * 정본 순서/카테고리 원천 — 컨트롤러가 각 코드를 CommandRegistry로 풀어 표시 메타를 만든다.
-     */
-    val CHIEF_COMMAND_TABLE: List<Pair<String, List<String>>> =
-        GameConst.availableChiefCommand.map { (category, commands) -> category to commands }
-
-    /**
-     * 토너먼트 type → display text. Verbatim from `b_tournament.php` switch
-     * (`전력전`/`통솔전`/`일기토`/`설전`); tnmt_type is the legacy `convertTournamentType` int.
-     */
-    fun tournamentTypeText(tnmtType: Int): String = when (tnmtType) {
-        0 -> "전력전"
-        1 -> "통솔전"
-        2 -> "일기토"
-        3 -> "설전"
-        else -> "전력전"
-    }
-
-    /** The 4 ranking-type labels rendered on the tournament/betting bracket page (verbatim, fixed order). */
-    val RANKING_TYPES: List<String> = listOf("전력전", "통솔전", "일기토", "설전")
 
     /**
      * 역사 PHP `getHonor($experience)` 비교를 보존한 동결 회귀(ADR-LITE-042; 현재 제품 정본 아님) — 경험치 구간별 명성 한글명.

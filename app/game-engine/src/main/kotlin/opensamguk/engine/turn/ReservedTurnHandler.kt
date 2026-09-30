@@ -165,6 +165,8 @@ class ReservedTurnHandler(
      * the ruler's own `officer_level=1` demotion and delegate succession. Default = no-op (no heir).
      */
     private val nextRuler: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
+    /** Imperial succession is independent of, and ordered before, national ruler succession. */
+    private val onGeneralDeath: (generalId: Int, env: LifecycleEnv) -> Unit = { _, _ -> },
     /**
      * Dying-message provider (`General.php:573-580` → `TextDecoration\DyingMessage`). The RNG-selected
      * variant is wired by the G1 gate; the default is the byte-exact PHP `$defaultMessage`
@@ -199,46 +201,46 @@ class ReservedTurnHandler(
      * SAME recorder — P2 Risk #4 single-dirty-source).
      */
     val recorder: ChangeRecorder = ChangeRecorder(),
-    private val hwihaDeploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
+    private val deploymentContext: Pair<opensamguk.logic.world.StrategicTopologySnapshot, opensamguk.logic.world.LandMarchMetricSnapshot>? = null,
     /** Pinned commandery geography for `action.scout`; null outside a Han HWIHA world (the input then rejects). */
-    private val hwihaVisionContext: opensamguk.engine.campaign.VisionContext? = null,
+    private val visionContext: opensamguk.engine.campaign.VisionContext? = null,
     /** HWIHA 강공 격자에 쓰는 핀된 省 칸 색인. 없으면 공성 입력은 상태 없음으로 거절된다. */
-    private val hwihaProvinceCells: opensamguk.logic.world.ProvinceCellIndex? = null,
+    private val provinceCells: opensamguk.logic.world.ProvinceCellIndex? = null,
     /** 전쟁 결과 → 명망 사건 경계(기본 무동작, 기록 스트림 병합 때 연결). */
-    private val hwihaWarOutcomes: opensamguk.engine.campaign.WarOutcomeListener = opensamguk.engine.campaign.WarOutcomeListener.NONE,
+    private val warOutcomes: opensamguk.engine.campaign.WarOutcomeListener = opensamguk.engine.campaign.WarOutcomeListener.NONE,
     private val marchReactions: opensamguk.engine.campaign.MarchReactionPolicy = opensamguk.engine.campaign.MarchReactionPolicy.NON_BLOCKING,
     private val battlefieldCatalog: () -> opensamguk.logic.world.BattlefieldCatalog = opensamguk.infra.seed.HistoricalBattlefieldCatalog::load,
     private val battlefieldCityAnchors: () -> Map<Int, opensamguk.logic.world.StrategicNodeRef> = opensamguk.infra.seed.HistoricalBattlefieldCatalog::cityAnchors,
     /** 휘하 내정 입력(배치·방침·공사)의 지리·원장·수치. 기본값은 지리·향당·행군 없이 규칙만 쓴다. */
-    val hwihaDomesticContext: opensamguk.engine.campaign.DomesticContext = opensamguk.engine.campaign.DomesticContext(),
+    val domesticContext: opensamguk.engine.campaign.DomesticContext = opensamguk.engine.campaign.DomesticContext(),
 ) {
 
-    private val hwihaCatalog by lazy { InputCatalog.load() }
-    val courtHandler by lazy { opensamguk.engine.campaign.CourtHandler(world, recorder, hwihaDomesticContext) }
-    val domesticTurn by lazy { opensamguk.engine.campaign.DomesticTurn(world, recorder, hwihaDomesticContext) }
-    private val domesticHandler by lazy { opensamguk.engine.campaign.DomesticHandler(world, recorder, hwihaDomesticContext) }
+    private val inputCatalog by lazy { InputCatalog.load() }
+    val courtHandler by lazy { opensamguk.engine.campaign.CourtHandler(world, recorder, domesticContext) }
+    val domesticTurn by lazy { opensamguk.engine.campaign.DomesticTurn(world, recorder, domesticContext) }
+    private val domesticHandler by lazy { opensamguk.engine.campaign.DomesticHandler(world, recorder, domesticContext) }
     private val deployHandler by lazy { opensamguk.engine.campaign.DeployHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
+        deploymentContext?.first, deploymentContext?.second) }
     private val enlistmentHandler by lazy { EnlistmentHandler(world, recorder, hiddenSeed, actionRngFactory) }
-    private val scoutHandler by lazy { opensamguk.engine.campaign.ScoutHandler(world, recorder, hwihaVisionContext) }
+    private val scoutHandler by lazy { opensamguk.engine.campaign.ScoutHandler(world, recorder, visionContext) }
     private val siegeHandler by lazy { opensamguk.engine.campaign.SiegeHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, hwihaProvinceCells, hwihaWarOutcomes) }
+        deploymentContext?.first, deploymentContext?.second, provinceCells, warOutcomes) }
     private val travelHandler by lazy { opensamguk.engine.campaign.TravelHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second, marchReactions, hwihaWarOutcomes) }
-    private val fieldHandler by lazy { opensamguk.engine.campaign.FieldHandler(world, recorder, hwihaDomesticContext) }
-    private val cityMilitaryHandler by lazy { opensamguk.engine.campaign.CityMilitaryHandler(world, recorder, hwihaDomesticContext) }
-    private val personalHandler by lazy { opensamguk.engine.campaign.PersonalHandler(world, recorder, hwihaDomesticContext) }
-    private val retireHandler by lazy { opensamguk.engine.campaign.RetireHandler(world, recorder, hwihaDomesticContext) }
+        deploymentContext?.first, deploymentContext?.second, marchReactions, warOutcomes) }
+    private val fieldHandler by lazy { opensamguk.engine.campaign.FieldHandler(world, recorder, domesticContext) }
+    private val cityMilitaryHandler by lazy { opensamguk.engine.campaign.CityMilitaryHandler(world, recorder, domesticContext) }
+    private val personalHandler by lazy { opensamguk.engine.campaign.PersonalHandler(world, recorder, domesticContext) }
+    private val retireHandler by lazy { opensamguk.engine.campaign.RetireHandler(world, recorder, domesticContext) }
     private val peopleHandler by lazy { opensamguk.engine.campaign.PeopleHandler(world, recorder,
-        hwihaDomesticContext, hiddenSeed) }
+        domesticContext, hiddenSeed) }
     private val politicalHandler by lazy { opensamguk.engine.campaign.PoliticalHandler(world, recorder,
-        hwihaDomesticContext) }
+        domesticContext) }
     private val transferHandler by lazy { opensamguk.engine.campaign.TransferHandler(world, recorder,
-        hwihaDomesticContext) }
+        domesticContext) }
     private val directActionHandler by lazy { opensamguk.engine.campaign.DirectActionHandler(world, recorder,
-        hwihaDomesticContext) }
+        domesticContext) }
     private val musterHandler by lazy { opensamguk.engine.campaign.MusterHandler(world, recorder,
-        hwihaDeploymentContext?.first, hwihaDeploymentContext?.second) }
+        deploymentContext?.first, deploymentContext?.second) }
 
     /** Outcome of resolving one general's reserved turn (for the lifecycle/test to inspect). */
     data class HandledTurn(
@@ -267,14 +269,14 @@ class ReservedTurnHandler(
         val autorunMode: Boolean = false,
         val requestId: String? = null,
         val reservedActionCode: String? = null,
-        val hwihaOutcome: TurnOutcome? = null,
+        val inputOutcome: TurnOutcome? = null,
     ) {
         init {
-            require((definition == null) == (hwihaOutcome != null)) {
+            require((definition == null) == (inputOutcome != null)) {
                 "exactly one legacy definition or HWIHA outcome required"
             }
-            require(hwihaOutcome == null || !fellBack) { "HWIHA never falls back to legacy rest" }
-            require(hwihaOutcome != TurnOutcome.NoAction || requestId == null) { "An absent input cannot have a request result" }
+            require(inputOutcome == null || !fellBack) { "HWIHA never falls back to legacy rest" }
+            require(inputOutcome != TurnOutcome.NoAction || requestId == null) { "An absent input cannot have a request result" }
         }
     }
 
@@ -305,7 +307,7 @@ class ReservedTurnHandler(
         if (world.ruleProfile == RuleProfile.HWIHA || '.' in reserved.actionCode) {
             if (world.ruleProfile == RuleProfile.HWIHA && opensamguk.engine.campaign.PersonalTurn.hasNoInput(reserved)) {
                 return HandledTurn(generalId, null, false, null, emptyList(), emptyMap(),
-                    reservedActionCode = reserved.actionCode, hwihaOutcome = TurnOutcome.NoAction)
+                    reservedActionCode = reserved.actionCode, inputOutcome = TurnOutcome.NoAction)
             }
             var applied: TurnOutcome? = null
             val handlers = mutableMapOf(
@@ -320,24 +322,24 @@ class ReservedTurnHandler(
                 },
             )
             for (enlistId in opensamguk.logic.input.EnlistmentInput.INPUT_IDS - EnlistmentHandler.INPUT_ID) {
-                if (hwihaCatalog[enlistId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[enlistId]?.deliveryState?.hasHandler == true) {
                     handlers[enlistId] = InputHandler {
                         applied = enlistmentHandler.handle(generalId, reserved.argJson, year, month, enlistId)
                     }
                 }
             }
             for (inputId in opensamguk.logic.domestic.DomesticInput.INPUT_IDS) {
-                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[inputId]?.deliveryState?.hasHandler == true) {
                     handlers[inputId] = InputHandler { applied = domesticHandler.rejectPersonalReservation(inputId) }
                 }
             }
             for (inputId in opensamguk.logic.input.CourtInput.INPUT_IDS) {
-                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[inputId]?.deliveryState?.hasHandler == true) {
                     handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
                 }
             }
             for (inputId in opensamguk.logic.input.StratagemInput.INPUT_IDS) {
-                if (hwihaCatalog[inputId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[inputId]?.deliveryState?.hasHandler == true) {
                     handlers[inputId] = InputHandler { applied = courtHandler.rejectPersonalReservation(generalId, inputId) }
                 }
             }
@@ -351,8 +353,8 @@ class ReservedTurnHandler(
             handlers[opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID] = InputHandler {
                 val inputId = opensamguk.logic.input.RoadFortSiegeInput.INPUT_ID
                 val fortId = opensamguk.logic.input.RoadFortSiegeInput.parse(reserved.argJson)
-                val topology = hwihaDeploymentContext?.first
-                val metrics = hwihaDeploymentContext?.second
+                val topology = deploymentContext?.first
+                val metrics = deploymentContext?.second
                 applied = if (fortId == null || topology == null || metrics == null)
                     TurnOutcome.Rejected(inputId, "INVALID_INPUT", "점령할 보루를 골라 주세요.")
                 else {
@@ -372,7 +374,7 @@ class ReservedTurnHandler(
                 }
             }
             for (fieldId in opensamguk.logic.domestic.FieldInput.INPUT_IDS) {
-                if (hwihaCatalog[fieldId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[fieldId]?.deliveryState?.hasHandler == true) {
                     handlers[fieldId] = InputHandler {
                         applied = fieldHandler.handle(fieldId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
@@ -380,7 +382,7 @@ class ReservedTurnHandler(
                 }
             }
             for (militaryId in opensamguk.logic.input.MilitaryInput.CITY_INPUT_IDS) {
-                if (hwihaCatalog[militaryId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[militaryId]?.deliveryState?.hasHandler == true) {
                     handlers[militaryId] = InputHandler {
                         applied = cityMilitaryHandler.handle(militaryId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
@@ -388,21 +390,21 @@ class ReservedTurnHandler(
                 }
             }
             for (personalId in opensamguk.logic.input.PersonalInput.FIELD_IDS) {
-                if (hwihaCatalog[personalId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[personalId]?.deliveryState?.hasHandler == true) {
                     handlers[personalId] = InputHandler {
                         applied = personalHandler.handle(personalId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }
             }
-            if (hwihaCatalog[opensamguk.logic.input.RetireInput.INPUT_ID]?.deliveryState?.hasHandler == true) {
+            if (inputCatalog[opensamguk.logic.input.RetireInput.INPUT_ID]?.deliveryState?.hasHandler == true) {
                 handlers[opensamguk.logic.input.RetireInput.INPUT_ID] = InputHandler {
                     applied = retireHandler.handle(generalId, reserved.argJson, reserved.requestId,
                         reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                 }
             }
             for (peopleId in opensamguk.logic.input.PeopleInput.INPUT_IDS) {
-                if (hwihaCatalog[peopleId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[peopleId]?.deliveryState?.hasHandler == true) {
                     handlers[peopleId] = InputHandler {
                         applied = peopleHandler.handle(peopleId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
@@ -410,7 +412,7 @@ class ReservedTurnHandler(
                 }
             }
             for (politicalId in opensamguk.logic.input.PoliticalRules.SUPPORTED_IDS) {
-                if (hwihaCatalog[politicalId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[politicalId]?.deliveryState?.hasHandler == true) {
                     handlers[politicalId] = InputHandler {
                         applied = politicalHandler.handle(politicalId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
@@ -418,7 +420,7 @@ class ReservedTurnHandler(
                 }
             }
             for (transferId in opensamguk.logic.input.TransferInput.INPUT_IDS) {
-                if (hwihaCatalog[transferId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[transferId]?.deliveryState?.hasHandler == true) {
                     handlers[transferId] = InputHandler {
                         applied = transferHandler.handle(transferId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
@@ -426,20 +428,20 @@ class ReservedTurnHandler(
                 }
             }
             for (directId in opensamguk.logic.input.DirectInput.INPUT_IDS) {
-                if (hwihaCatalog[directId]?.deliveryState?.hasHandler == true) {
+                if (inputCatalog[directId]?.deliveryState?.hasHandler == true) {
                     handlers[directId] = InputHandler {
                         applied = directActionHandler.handle(directId, generalId, reserved.argJson, reserved.requestId,
                             reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                     }
                 }
             }
-            if (hwihaCatalog[opensamguk.logic.input.MilitaryInput.MUSTER]?.deliveryState?.hasHandler == true) {
+            if (inputCatalog[opensamguk.logic.input.MilitaryInput.MUSTER]?.deliveryState?.hasHandler == true) {
                 handlers[opensamguk.logic.input.MilitaryInput.MUSTER] = InputHandler {
                     applied = musterHandler.handle(generalId, reserved.argJson, reserved.requestId,
                         reserved.reservationOwnerUserId, npcSelected = !reserved.rowExists)
                 }
             }
-            val inputs = InputRegistry(hwihaCatalog, handlers)
+            val inputs = InputRegistry(inputCatalog, handlers)
             val outcome = when (val resolution = inputs.resolve(world.ruleProfile, reserved.actionCode)) {
                 is InputResolution.Rejected -> TurnOutcome.Rejected(
                     reserved.actionCode, resolution.reason.name, resolution.reason.message)
@@ -457,7 +459,7 @@ class ReservedTurnHandler(
             }
             return HandledTurn(generalId, null, false, (outcome as? TurnOutcome.Rejected)?.reason,
                 emptyList(), emptyMap(), requestId = reserved.requestId,
-                reservedActionCode = reserved.actionCode, hwihaOutcome = outcome)
+                reservedActionCode = reserved.actionCode, inputOutcome = outcome)
         }
         val cityId = general.cityId
         val nationId = general.nationId
@@ -1342,6 +1344,9 @@ class ReservedTurnHandler(
      */
     private fun kill(general: TurnGeneral, env: LifecycleEnv) {
         val generalId = general.id
+
+        // A failing imperial transition aborts this kill before national succession and tombstone.
+        onGeneralDeath(generalId, env)
 
         // 군주였으면 유지 이음 — officer_level==12 → nextRuler() then setVar('officer_level', 1) (:554-558).
         if (general.officerLevel == 12) {
@@ -2481,8 +2486,6 @@ class ReservedTurnHandler(
                 if (code != null && isUniqueItem(code, uniqueCatalog)) occupied[code] = (occupied[code] ?: 0) + 1
             }
         }
-        val auctionItems = world.getState().meta["activeUniqueAuctionItems"] as? Iterable<*>
-        auctionItems?.forEach { code -> code?.toString()?.let { occupied[it] = (occupied[it] ?: 0) + 1 } }
         val stored = world.getState().meta["storedUniqueItemCounts"] as? Map<*, *>
         stored?.forEach { (code, count) ->
             val key = code?.toString() ?: return@forEach

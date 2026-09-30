@@ -13,14 +13,10 @@ import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.world.WorldActionContext
 import opensamguk.infra.read.ArchiveHistoryReader
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
 import opensamguk.infra.read.StatisticSnapshotReader
 import opensamguk.logic.actions.GeneralActionDraft
 import opensamguk.logic.actions.GeneralActionResolveContext
 import opensamguk.logic.actions.founding.CheHaesan
-import opensamguk.logic.auction.AuctionType
-import opensamguk.logic.auction.registerNeutralAuctions
 import opensamguk.logic.event.EventDispatcher
 import opensamguk.logic.event.EventTarget
 import opensamguk.logic.stats.GeneralActionPipeline
@@ -30,7 +26,6 @@ import opensamguk.logic.world.ActiveWorldMap
 import opensamguk.logic.world.DiplomacyRow
 import opensamguk.logic.world.FrontCity
 import opensamguk.logic.world.PowerKv
-import opensamguk.logic.world.checkEmperior
 import opensamguk.logic.world.PostNationPowerInput
 import opensamguk.logic.world.PostFrontResult
 import opensamguk.logic.world.PowerCity
@@ -55,8 +50,6 @@ class MonthlyPostUpdateHook(
     private val world: InMemoryTurnWorld,
     private val recorder: ChangeRecorder,
     private val pipeline: GeneralActionPipeline,
-    private val auctionRepository: AuctionRepository? = null,
-    private val auctionBidRepository: AuctionBidRepository? = null,
     private val eventDispatcher: EventDispatcher? = null,
     private val archiveHistoryReader: ArchiveHistoryReader? = null,
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
@@ -198,33 +191,13 @@ class MonthlyPostUpdateHook(
         val startYear = (state.meta["startYear"] as? Number)?.toInt() ?: 0
         val isUnited = (state.meta["isunited"] as? Int ?: 0) != 0
 
-        val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
-        val checkEmperiorContext = WorldActionContext(
-            env = mutableMapOf(
-                "year" to year,
-                "month" to state.currentMonth,
-                "phase" to state.currentPhase,
-                "cityConst" to cityConst,
-                WorldActionContext.ENV_EVENT_DISPATCHER to eventDispatcher,
-            ),
-            world = world,
-            recorder = recorder,
-            pipeline = pipeline,
-            auctionRepository = auctionRepository,
-            auctionBidRepository = auctionBidRepository,
-            archiveHistoryReader = archiveHistoryReader,
-            statisticSnapshotReader = statisticSnapshotReader,
-        )
-
         postUpdateMonthlyTail(
             year = year,
             startYear = startYear,
             rng = monthlyRng,
             checkWander = { rng -> checkWander(rng, year, state.currentMonth) },
             updateGeneralNumber = { updateGeneralNumber() },
-            registerAuction = { rng -> registerAuction(rng) },
             setNationFront = { setNationFronts() },
-            checkEmperior = { checkEmperior(checkEmperiorContext) },
             isUnited = isUnited,
         )
 
@@ -334,8 +307,6 @@ class MonthlyPostUpdateHook(
                     world = world,
                     recorder = recorder,
                     pipeline = pipeline,
-                    auctionRepository = auctionRepository,
-                    auctionBidRepository = auctionBidRepository,
                     archiveHistoryReader = archiveHistoryReader,
                     statisticSnapshotReader = statisticSnapshotReader,
                 )
@@ -369,27 +340,6 @@ class MonthlyPostUpdateHook(
         }
     }
 
-    private fun registerAuction(rng: RandUtil) {
-        val active = auctionRepository?.findByFinishedFalse().orEmpty()
-        val neutralBuyRiceCount = active.count { it.hostGeneralId == 0 && it.type == AuctionType.BUY_RICE }
-        val neutralSellRiceCount = active.count { it.hostGeneralId == 0 && it.type == AuctionType.SELL_RICE }
-        val targetGenerals = world.listGenerals().filter { it.npcState < 2 }
-        val avgGold = targetGenerals.map { it.gold }.average().takeUnless { it.isNaN() }
-        val avgRice = targetGenerals.map { it.rice }.average().takeUnless { it.isNaN() }
-        val result = registerNeutralAuctions(
-            avgGold = avgGold,
-            avgRice = avgRice,
-            neutralBuyRiceCount = neutralBuyRiceCount,
-            neutralSellRiceCount = neutralSellRiceCount,
-            rng = rng,
-            now = Instant.now(),
-            turnTermMinutes = turnTerm(),
-        )
-        for (opened in result.opened) {
-            recorder.recordAuctionUpsert(id = null, columns = opened.info.toArray())
-        }
-    }
-
     private fun setNationFronts(): List<PostFrontResult> {
         val state = world.getState()
         val cityConst = ActiveWorldMap.requireVariant(state.config, state.meta, state.worldMapVariant)
@@ -416,9 +366,6 @@ class MonthlyPostUpdateHook(
         (world.getState().meta["startYear"] as? Number)?.toInt()
             ?: (world.getState().meta["startyear"] as? Number)?.toInt()
             ?: world.getState().currentYear
-
-    private fun turnTerm(): Int =
-        (world.getState().meta["turnterm"] as? Number)?.toInt() ?: (world.getState().tickSeconds / 60)
 
     private fun turnTimeHm(turnTime: Instant): String {
         val value = turnTime.toString()

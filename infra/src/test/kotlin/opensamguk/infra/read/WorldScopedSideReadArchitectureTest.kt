@@ -28,16 +28,12 @@ class WorldScopedSideReadArchitectureTest {
             .map { repositoryRoot.resolve(it) }
             .joinToString("\n") { Files.readString(it) }
 
+        // 부팅 id 할당자 시드(message.findMaxId)는 월드 범위여야 한다. #917 A2 전에는 경매 저장소가 이 검사를 대신 짊어졌다.
         assertTrue(sources.contains("""fun findMaxId(@Param("worldId") worldId: Int)"""))
         assertTrue(
             Regex(
-                """fun findHighestBidsByAuctionIds\(\s*@Param\("worldId"\) worldId: Int,""",
+                """fun findByWorldIdAndIdAndNationId\(\s*@Param\("worldId"\) worldId: Int,""",
             ).containsMatchIn(sources),
-        )
-        assertTrue(
-            sources.contains(
-                """fun aggregateTotalAmountByBetting(@Param("worldId") worldId: Int)""",
-            ),
         )
         assertTrue(sources.contains("findByWorldIdAndIdAndNationId"))
         assertTrue(sources.contains("findByWorldIdAndTable"))
@@ -47,9 +43,7 @@ class WorldScopedSideReadArchitectureTest {
     private companion object {
         val repositoryRoot: Path = Path.of("src/main/kotlin/opensamguk/infra")
         val repositorySources = listOf(
-            "read/AuctionRepository.kt",
-            "read/AuctionBidRepository.kt",
-            "read/BettingRepository.kt",
+            "read/MessageRepository.kt",
             "read/BoardPostRepository.kt",
             "read/GameKvRepository.kt",
             "read/InheritanceRepository.kt",

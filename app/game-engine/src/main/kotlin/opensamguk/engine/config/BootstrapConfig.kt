@@ -3,6 +3,8 @@ package opensamguk.engine.config
 import opensamguk.engine.boot.SeedBootstrap
 import opensamguk.engine.boot.WorldSnapshotLoader
 import opensamguk.engine.turn.InMemoryTurnWorld
+import opensamguk.infra.persistence.GameEventOrdinalRepository
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,7 +14,7 @@ import org.springframework.jdbc.core.JdbcTemplate
 /**
  * F1b — the missing boot wiring: the `@Bean InMemoryTurnWorld` that every consumer
  * (`EngineEventConfig.monthlyPostUpdateHook` / `monthlyPipeline`, `TurnRunService`,
- * `ReservedTurnHandler`, `AiTurnAdapter`, the auction/betting handlers, …) injects but which did NOT
+ * `ReservedTurnHandler`, `AiTurnAdapter`, the betting handlers, …) injects but which did NOT
  * exist in production — only tests hand-built a `WorldSnapshot`. This bean closes that gap by loading
  * the snapshot from the seeded DB at construction time.
  *
@@ -72,6 +74,11 @@ class BootstrapConfig {
 
     @Bean
     @Lazy
-    fun inMemoryTurnWorld(loader: WorldSnapshotLoader): InMemoryTurnWorld =
-        InMemoryTurnWorld(loader.buildSnapshot())
+    fun inMemoryTurnWorld(loader: WorldSnapshotLoader, jdbc: NamedParameterJdbcTemplate): InMemoryTurnWorld {
+        val snapshot = loader.buildSnapshot()
+        val ordinalRepository = GameEventOrdinalRepository(jdbc)
+        return InMemoryTurnWorld(snapshot, lastCommittedEventOrdinal = { turn ->
+            ordinalRepository.maxCommitted(snapshot.worldId.value, turn)
+        })
+    }
 }

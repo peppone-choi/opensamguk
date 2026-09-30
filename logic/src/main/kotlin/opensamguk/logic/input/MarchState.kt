@@ -27,6 +27,6 @@ data class MarchState(
             val checkpoint = MarchCheckpoint.read(value.filterKeys { it in MarchCheckpoint.fields }, topology, metrics)
             return MarchState(assignment, checkpoint.path, checkpoint.cursor, checkpoint.lastAdvancedAt, checkpoint.stop)
         }
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA march metadata")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid march metadata")
     }
 }

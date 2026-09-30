@@ -2,6 +2,11 @@ package opensamguk.engine.campaign
 
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
+import opensamguk.logic.record.AudienceTarget
+import opensamguk.logic.record.EventKey
+import opensamguk.logic.record.EventKind
+import opensamguk.logic.record.EventRef
+import opensamguk.logic.record.RefRole
 import opensamguk.logic.renown.RenownEventSource
 import opensamguk.logic.world.*
 
@@ -63,6 +68,18 @@ class MusterHandler(private val world: InMemoryTurnWorld, private val recorder: 
         recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(latest), PerTurnOverlay.toLogicGeneral(stamped))
         world.applyGeneralDirtyFree(stamped)
         RenownEventRecorder(world, recorder).record(actorId, RenownEventSource.DIRECT_MILITARY_ACTION)
+        val turn = world.getState()
+        val cityId = world.cityOfLandNode(ready.destination)
+        val eventRefs = mutableMapOf<RefRole, EventRef>(RefRole.ACTOR to EventRef.General(actorId))
+        if (cityId != null) eventRefs[RefRole.CITY] = EventRef.City(cityId)
+        world.recordEvent(
+            kind = EventKind.MUSTER_ORDERED,
+            audience = AudienceTarget.Self(actorId),
+            eventKey = EventKey.derive("military.musterOrdered", world.worldId.value.toString(),
+                turn.currentYear.toString(), turn.currentMonth.toString(), turn.currentPhase.toString(),
+                actorId.toString(), turnToken),
+            refs = eventRefs,
+        )
         Records.general(world, actorId, RecordKind.MUSTER_ORDERED,
             "지휘 중인 군단에 현재 省으로 집결하도록 명했습니다.",
             mapOf("destination" to ready.destination.canonicalKey,

@@ -7,6 +7,8 @@ import opensamguk.logic.domain.Nation
 import opensamguk.logic.domain.NationTurn
 import opensamguk.logic.world.StrategicNodeRef
 import opensamguk.logic.inheritance.InheritanceResultRow
+import opensamguk.logic.imperial.ImperialWorldCodec
+import opensamguk.logic.record.EventTurn
 import opensamguk.infra.seed.ScenarioImporter
 import opensamguk.common.world.WorldId
 import org.postgresql.util.PGobject
@@ -48,6 +50,8 @@ open class JdbcFlushExecutor(
     private val jdbc: NamedParameterJdbcTemplate,
     private val transactionTemplate: TransactionTemplate,
 ) {
+    private val gameEventWriter = GameEventWriteRepository(jdbc)
+    private val gameEventOrdinals = GameEventOrdinalRepository(jdbc)
     /** Records the op sequence of the most recent [flush] (instrumentation for the IT). */
     private val lastOps = mutableListOf<FlushExecOp>()
 
@@ -60,6 +64,9 @@ open class JdbcFlushExecutor(
             lastOps.clear()
             check(payload.worldStateUpdate["id"] == payload.worldId.value) {
                 "FlushPayload worldStateUpdate.id must equal worldId=${payload.worldId.value}"
+            }
+            check(payload.gameEvents.all { it.worldId == payload.worldId.value }) {
+                "FlushPayload gameEvents must belong to worldId=${payload.worldId.value}"
             }
 
             val (preArchiveLogs, regularLogs) = payload.logEntries.partition { it.flushBeforeArchive }
@@ -76,10 +83,6 @@ open class JdbcFlushExecutor(
             if (isUnificationFlush) {
                 if (payload.statisticInserts.isNotEmpty()) statisticInsertMany(payload.worldId, payload.statisticInserts)
                 if (nationHistoryLogs.isNotEmpty()) logEntryCreateMany(payload.worldId, nationHistoryLogs)
-                if (payload.auctionUpserts.isNotEmpty()) auctionUpsertMany(payload.worldId, payload.auctionUpserts)
-                if (payload.auctionBidInserts.isNotEmpty()) {
-                    auctionBidInsertMany(payload.worldId, payload.auctionBidInserts)
-                }
                 if (payload.eventInserts.isNotEmpty()) eventInsertMany(payload.worldId, payload.eventInserts)
                 if (payload.eventDeletes.isNotEmpty()) eventDeleteMany(payload.worldId, payload.eventDeletes)
                 if (earlierMessages.isNotEmpty()) messageCreateMany(payload.worldId, earlierMessages)
@@ -192,18 +195,6 @@ open class JdbcFlushExecutor(
                 rankDataNationSync(payload.worldId, payload.rankNationSync)
             }
 
-            // 8b. auction channel (T0.7): ng_auction UPSERT (open INSERT / extend-finish UPDATE) then
-            //     ng_auction_bid INSERT (INSERT-only — outbid rows are NEVER deleted, research §3).
-            if (!isUnificationFlush && payload.auctionUpserts.isNotEmpty()) {
-                auctionUpsertMany(payload.worldId, payload.auctionUpserts)
-            }
-            if (!isUnificationFlush && payload.auctionBidInserts.isNotEmpty()) {
-                auctionBidInsertMany(payload.worldId, payload.auctionBidInserts)
-            }
-            if (payload.bettingInserts.isNotEmpty()) {
-                // W0-8: PHP insertUpdate 패러티 — 동일 (general,betting,type) 재베팅은 amount 누적 UPSERT.
-                bettingUpsertMany(payload.worldId, payload.bettingInserts)
-            }
             if (payload.profileIconUpdates.isNotEmpty()) {
                 // OPENSAM-94: general.picture/image_server 전용 컬럼 UPDATE (owner/npc 재-단언 predicate).
                 profileIconUpdateMany(payload.worldId, payload.profileIconUpdates)
@@ -308,6 +299,28 @@ open class JdbcFlushExecutor(
             if (!isUnificationFlush && regularLogs.isNotEmpty()) {
                 logEntryCreateMany(payload.worldId, regularLogs)
             }
+            if (payload.gameEvents.isNotEmpty()) {
+                // Production bootstraps the in-memory counter, but a cold world can also be
+                // constructed directly (replay, tests, or a recovered process). Reconcile its
+                // proposed ordinal with committed rows inside this flush transaction before the
+                // unique order constraint is reached. The event key still decides semantic retry.
+                val highWaterByTurn = mutableMapOf<EventTurn, Int>()
+                var inserted = 0
+                for (event in payload.gameEvents) {
+                    val at = event.occurredAt
+                    val turn = EventTurn(at.year, at.month, at.phase)
+                    val highWater = highWaterByTurn.getOrPut(turn) {
+                        gameEventOrdinals.maxCommitted(payload.worldId.value, turn) ?: -1
+                    }
+                    val ordinal = if (at.ordinal <= highWater) Math.addExact(highWater, 1) else at.ordinal
+                    val normalized = if (ordinal == at.ordinal) event else event.copy(occurredAt = at.copy(ordinal = ordinal))
+                    if (gameEventWriter.insert(normalized)) {
+                        inserted++
+                        highWaterByTurn[turn] = ordinal
+                    }
+                }
+                if (inserted > 0) lastOps.add(FlushExecOp("game_event", FlushVerb.CREATE_MANY, inserted))
+            }
 
             // 10. KV writes (nation_env int-ns + game_kv string-ns, delete-on-null) + reserved_turns
             //     flush (ring write via ReservedTurnRepository, recorded here for contract-order
@@ -386,7 +399,7 @@ open class JdbcFlushExecutor(
             }
 
             // 14. v2 도시 원장 (OPENSAM-150 R1) — v2_city_ledger 멱등 UPSERT. v1 payload에서는 리스트가
-            //     비어 있어 이 분기가 미진입하고 SQL이 0건이다(P6 betting 채널 선례). v1 델타와 같은
+            //     비어 있어 이 분기가 미진입하고 SQL이 0건이다. v1 델타와 같은
             //     transactionTemplate 블록 안이므로 한 커밋에 함께 반영된다.
             if (payload.cityLedgerV2Upserts.isNotEmpty()) {
                 cityLedgerV2UpsertMany(payload.worldId, payload.cityLedgerV2Upserts)
@@ -552,6 +565,7 @@ open class JdbcFlushExecutor(
         params.addValue("status", worldState["status"] as? String)
         params.addValue("tick_seconds", (worldState["tick_seconds"] as? Number)?.toInt())
         params.addValue("config", (worldState["config"] as? Map<*, *>)?.let(MetaJson::encode))
+        params.addValue("catch_up", (worldState["catch_up"] as? Map<*, *>)?.let(MetaJson::encode))
         params.addValue("start_time", worldState["start_time"]?.toString())
         // lastTurnTime 영속화 — WorldSnapshotLoader 가 부팅 시 meta['lastTurnTime'] 을 1순위로 읽는데
         // 이 키를 쓰는 경로가 없어서 매 엔진 재기동마다 start_time 폴백 → MonthBoundaryDriver 가
@@ -565,6 +579,12 @@ open class JdbcFlushExecutor(
         params.addValue("max_general_id", (worldState["max_general_id"] as? Number)?.toInt() ?: 0)
         // Phase 4X-A 고수위 — 키가 있을 때만 meta 에 병합한다(행 0 세계의 meta 바이트 동일, spec v3 P1).
         val extraMeta = buildString {
+            if ("imperial_world" in worldState) {
+                val imperial = requireNotNull(ImperialWorldCodec.read(
+                    mapOf(ImperialWorldCodec.META_KEY to worldState["imperial_world"])))
+                params.addValue("imperial_world", MetaJson.encode(ImperialWorldCodec.write(imperial)))
+                append(" || jsonb_build_object('${ImperialWorldCodec.META_KEY}', CAST(:imperial_world AS jsonb))")
+            }
             (worldState["max_retainer_id"] as? Number)?.let {
                 params.addValue("max_retainer_id", it.toInt())
                 append(" || jsonb_build_object('maxRetainerId', CAST(:max_retainer_id AS INTEGER))")
@@ -604,6 +624,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    world_version = world_version + 1,
@@ -626,6 +647,7 @@ open class JdbcFlushExecutor(
                    status = COALESCE(:status, status),
                    tick_seconds = COALESCE(:tick_seconds, tick_seconds),
                    config = COALESCE(CAST(:config AS jsonb), config),
+                   catch_up = COALESCE(CAST(:catch_up AS jsonb), catch_up),
                    start_time = COALESCE(CAST(:start_time AS timestamptz), start_time),
                    isunited = :isunited,
                    meta = meta || jsonb_build_object(
@@ -1422,7 +1444,7 @@ open class JdbcFlushExecutor(
     /**
      * Flush the KV write-set (`KVStorage.php` delete-on-null). A [KvWrite] now carries its target
      * `table`: `nation_env` (int namespace = nation id) routes to the V3 table; every string namespace
-     * (`game_env`, `betting`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
+     * (`game_env`, `inheritance_{id}`, …) routes to the V7 `game_kv` table keyed by the
      * `table` discriminator. A `null` value DELETEs the row; a non-null value UPSERTs the
      * [MetaJson]-encoded jsonb (bare int for `next_execute_*`, object for `turn_last_{officer_level}`,
      * etc.). Every value is encoded here, matching `KVStorage::setDBValue`'s unconditional
@@ -1540,121 +1562,13 @@ open class JdbcFlushExecutor(
         lastOps.add(FlushExecOp("log_entry", FlushVerb.CREATE_MANY, logs.size))
     }
 
-    // --- step 8b: auction channel (T0.7) -------------------------------------------------------
-
-    /**
-     * UPSERT the `ng_auction` rows. An INSERT (open) carries [AuctionUpsertRow.allocatedId] (the
-     * pre-assigned in-memory id, so bids reference it before flush); an UPDATE (extend/finish/shrink)
-     * carries [AuctionUpsertRow.id]. `type`/`req_resource` bind through `CAST(... AS ng_auction_*)`,
-     * `open_date`/`close_date` through `CAST(... AS timestamptz)`, `detail` is a raw json String.
-     */
-    private fun auctionUpsertMany(worldId: WorldId, rows: List<AuctionUpsertRow>) {
-        for (r in rows) {
-            val c = r.columns
-            val src = MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("type", c["type"])
-                .addValue("finished", c["finished"])
-                .addValue("target", c["target"])
-                .addValue("host_general_id", c["host_general_id"])
-                .addValue("req_resource", c["req_resource"])
-                .addValue("open_date", c["open_date"]?.toString())
-                .addValue("close_date", c["close_date"]?.toString())
-                .addValue("detail", jsonb(c["detail"] as? String))
-            if (r.id == null) {
-                src.addValue("id", r.allocatedId)
-                val affected = jdbc.update(
-                    """
-                    INSERT INTO ng_auction
-                        (world_id, id, type, finished, target, host_general_id, req_resource,
-                         open_date, close_date, detail)
-                    VALUES (:world_id, :id, CAST(:type AS ng_auction_type), :finished, :target, :host_general_id,
-                            CAST(:req_resource AS ng_auction_resource), CAST(:open_date AS timestamptz),
-                            CAST(:close_date AS timestamptz), :detail)
-                    """.trimIndent(),
-                    src,
-                )
-                check(affected == 1) { "ng_auction INSERT affected $affected rows; expected exactly 1" }
-            } else {
-                src.addValue("id", r.id)
-                val affected = jdbc.update(
-                    """
-                    UPDATE ng_auction SET type = CAST(:type AS ng_auction_type), finished = :finished, target = :target,
-                        host_general_id = :host_general_id, req_resource = CAST(:req_resource AS ng_auction_resource),
-                        open_date = CAST(:open_date AS timestamptz), close_date = CAST(:close_date AS timestamptz), detail = :detail
-                     WHERE world_id = :world_id AND id = :id
-                    """.trimIndent(),
-                    src,
-                )
-                check(affected == 1) { "ng_auction UPDATE affected $affected rows; expected exactly 1" }
-            }
-        }
-        lastOps.add(FlushExecOp("ng_auction", FlushVerb.UPSERT, rows.size))
-    }
-
-    /** INSERT the `ng_auction_bid` rows (INSERT-only; outbid rows persist). `aux` is a raw json String. */
-    private fun auctionBidInsertMany(worldId: WorldId, rows: List<AuctionBidInsertRow>) {
-        val batch: Array<SqlParameterSource> = rows.map { r ->
-            val c = r.columns
-            MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("auction_id", c["auction_id"])
-                .addValue("owner", c["owner"])
-                .addValue("general_id", c["general_id"])
-                .addValue("amount", c["amount"])
-                .addValue("date", c["date"]?.toString())
-                .addValue("aux", jsonb(c["aux"] as? String))
-        }.toTypedArray()
-        jdbc.batchUpdate(
-            """
-            INSERT INTO ng_auction_bid (world_id, auction_id, owner, general_id, amount, date, aux)
-            VALUES (:world_id, :auction_id, :owner, :general_id, :amount, CAST(:date AS timestamptz), :aux)
-            """.trimIndent(),
-            batch,
-        )
-        lastOps.add(FlushExecOp("ng_auction_bid", FlushVerb.CREATE_MANY, rows.size))
-    }
-
-    /**
-     * `ng_betting` UPSERT (P6 베팅 — W0-8에서 INSERT 전용 → upsert로 확장, P0-07 flush 측).
-     *
-     * 역사 PHP 기준 (ADR-LITE-042; 현재 제품 정본 아님) Betting::bet(Betting.php:160-164)은
-     * `insertUpdate('ng_betting', row, ['amount' => sqleval('amount + %i', $amount)])` —
-     * UNIQUE(general_id, betting_id, betting_type)(V7, PHP by_general 인덱스 동일) 충돌 시
-     * amount만 누적하고 user_id 등 나머지 컬럼은 기존 행을 유지한다. 동일 키 재베팅이 행을
-     * 중복 적재하던 INSERT-only 결함의 정본 경로. (검증 체인 포팅은 W1-C PlaceBetHandler 소관.)
-     */
-    private fun bettingUpsertMany(worldId: WorldId, rows: List<BettingInsertRow>) {
-        val batch: Array<SqlParameterSource> = rows.map { r ->
-            val c = r.columns
-            MapSqlParameterSource()
-                .addValue("world_id", worldId.value)
-                .addValue("betting_id", c["betting_id"])
-                .addValue("general_id", c["general_id"])
-                .addValue("user_id", c["user_id"])
-                .addValue("betting_type", c["betting_type"])
-                .addValue("amount", c["amount"])
-        }.toTypedArray()
-        jdbc.batchUpdate(
-            """
-            INSERT INTO ng_betting (world_id, betting_id, general_id, user_id, betting_type, amount)
-            VALUES (:world_id, :betting_id, :general_id, :user_id, :betting_type, :amount)
-            ON CONFLICT (world_id, general_id, betting_id, betting_type)
-                DO UPDATE SET amount = ng_betting.amount + EXCLUDED.amount
-            """.trimIndent(),
-            batch,
-        )
-        lastOps.add(FlushExecOp("ng_betting", FlushVerb.UPSERT, rows.size))
-    }
-
     /**
      * OPENSAM-150 (R1) — v2 도시 원장 `v2_city_ledger` 멱등 UPSERT (설계안 §2.1).
      *
      * `gold`/`rice`/`garrison`은 누적 델타가 아니라 **엔진이 계산한 절대 상태**라 `DO UPDATE SET`이
-     * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전). betting 채널이 amount를
-     * `+=` 누적하는 것과 의도적으로 다르며, 그쪽은 PHP `insertUpdate` 패러티가 이유다.
+     * 덮어쓴다 — 같은 payload를 재적용해도 결과가 같다(재시작·리플레이 안전).
      *
-     * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_v2`) — 대신 v1
+     * v1 스택은 이 테이블을 마이그레이션하지 않는다(0A-c 분리 location `db/migration_sandbox`) — 대신 v1
      * payload가 이 채널을 채우지 않아 호출 자체가 없다.
      */
     private fun cityLedgerV2UpsertMany(worldId: WorldId, rows: List<CityLedgerV2UpsertRow>) {
@@ -2996,8 +2910,7 @@ data class FlushPayload(
     val oldGeneralSnapshots: List<OldGeneralArchiveRow> = emptyList(),
     // --- B1 장수생성 foundation: 신규 장수 INSERT (step-3 createMany) ---
     // 새로 만든 장수 행 + 30개 general_turn(휴식) + 37개 rank_data(value 0). 컬럼맵 운반체
-    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(betting/board/auction
-    // INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
+    // ([GeneralCreateRow])라 infra가 엔진 TurnGeneral 모양에 결합되지 않는다(board INSERT-row와 동일). 엔진 측 created-set(world DirtyState.createdGenerals)이 이 슬롯을 채운다.
     val createdGenerals: List<GeneralCreateRow> = emptyList(),
     val generalAccessLogUpserts: List<GeneralAccessLogWriteRow> = emptyList(),
     val generalAccessLogDeletes: List<Int> = emptyList(),
@@ -3022,9 +2935,6 @@ data class FlushPayload(
     // --- W5d 외교 서신: diplomacy_letter INSERT(발송) + UPDATE(회수/파기/대체) ---
     val diplomacyLetterInserts: List<DiplomacyLetterInsertRow> = emptyList(), // step-8f diplomacy_letter INSERT
     val diplomacyLetterUpdates: LinkedHashMap<Int, LinkedHashMap<String, Any?>> = LinkedHashMap(), // step-8f UPDATE
-    val auctionUpserts: List<AuctionUpsertRow> = emptyList(),         // step-8b ng_auction UPSERT (T0.7)
-    val auctionBidInserts: List<AuctionBidInsertRow> = emptyList(),   // step-8b ng_auction_bid INSERT (T0.7)
-    val bettingInserts: List<BettingInsertRow> = emptyList(),         // step-8b ng_betting INSERT (P6)
     // OPENSAM-94 — 프로필 아이콘 typed sync: general.picture/image_server 전용 컬럼 UPDATE. generalUpdate
     // SET 절이 이 두 표시-컬럼을 방출하지 않으므로(officer_city #17류 누락) 전용 채널로 영속한다.
     val profileIconUpdates: List<ProfileIconUpdateRow> = emptyList(), // step-8b general portrait UPDATE (OPENSAM-94)
@@ -3085,6 +2995,8 @@ data class FlushPayload(
     val waterControlWrites: WaterControlWriteBatch = WaterControlWriteBatch(),
     val provinceControlWrites: ProvinceControlWriteBatch = ProvinceControlWriteBatch(),
     val generalPositionWrites: GeneralPositionWriteBatch = GeneralPositionWriteBatch(),
+    /** Canonical structured events share the world-state flush transaction. */
+    val gameEvents: List<opensamguk.logic.record.GameEvent> = emptyList(),
 )
 
 data class GeneralTurnPullRow(
@@ -3181,17 +3093,6 @@ data class OldGeneralArchiveRow(
     val pendingHistory: List<String>? = null,
 )
 
-/** One `ng_auction` UPSERT (T0.7). `id` non-null → UPDATE; null → INSERT with `allocatedId`. */
-data class AuctionUpsertRow(val id: Int?, val allocatedId: Int?, val columns: Map<String, Any?>)
-
-/** One `ng_auction_bid` INSERT (T0.7, INSERT-only). */
-data class AuctionBidInsertRow(val columns: Map<String, Any?>)
-
-/**
- * One `ng_betting` UPSERT (P6 betting intake). W0-8: INSERT 전용 → PHP `insertUpdate` 패러티의
- * amount-누적 UPSERT (UNIQUE(general_id,betting_id,betting_type) 충돌 시 amount += EXCLUDED.amount).
- */
-data class BettingInsertRow(val columns: Map<String, Any?>)
 
 /**
  * OPENSAM-150 (R1) — `v2_city_ledger` 한 행의 멱등 UPSERT. `columns`는 `city_id`/`gold`/`rice`/
@@ -3226,7 +3127,7 @@ data class InitialGeneralTurnRow(
 /**
  * `diplomacy_letter` INSERT 한 건 (W5d 외교 서신 발송, INSERT 전용). `id`는 recorder가 선할당한
  * letterNo(= PHP `insertId()`)를 명시적으로 싣는다(in-memory 단조 id가 flushed SERIAL과 일치 —
- * message/auction open INSERT 패턴). `columns`는 byte-faithful diplomacy_letter 컬럼 맵.
+ * message INSERT 선할당 패턴). `columns`는 byte-faithful diplomacy_letter 컬럼 맵.
  */
 data class DiplomacyLetterInsertRow(val id: Int, val columns: Map<String, Any?>)
 
@@ -3321,7 +3222,7 @@ data class DiplomacyUpdate(
  *
  *  - `table == "nation_env"` → the V3 int-namespace store (`namespace` is the nation id as a
  *    decimal string; values: bare int for `next_execute_*`, object for `turn_last_{officer_level}`).
- *  - any other `table` (`game_env`/`betting`/`inheritance_{id}`/…) → the V7 string-namespace
+ *  - any other `table` (`game_env`/`inheritance_{id}`/…) → the V7 string-namespace
  *    `game_kv` store keyed by `(table, namespace, key)`.
  *
  * Every non-null `value` is [MetaJson]-encoded at flush, matching PHP `Json::encode`.

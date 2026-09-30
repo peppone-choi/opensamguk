@@ -28,7 +28,7 @@ internal fun ownedHwihaGeneral(generals: GeneralReadRepository, generalId: Int, 
 }
 
 /** 휘하 조회 공통 월드 문 — 처리 월드가 아니면 `UNAVAILABLE`, 휘하 규칙이 아니면 `WRONG_RULE_PROFILE`, 통과면 null. */
-internal fun hwihaGate(worlds: WorldStateReadRepository, actor: GeneralReadEntity): String? {
+internal fun campaignReadGate(worlds: WorldStateReadRepository, actor: GeneralReadEntity): String? {
     val world = worlds.findProcessWorld() ?: return "UNAVAILABLE"
     if (actor.worldId != world.id) return "UNAVAILABLE"
     if (runCatching { opensamguk.logic.world.WorldFormat.require(world.config, world.meta) }.isFailure) return "UNSUPPORTED_WORLD_FORMAT"
@@ -218,7 +218,7 @@ class CampReader(
     // ── 공용 ───────────────────────────────────────────────────────────────
     private fun owned(generalId: Int, userId: Long): GeneralReadEntity = ownedHwihaGeneral(generals, generalId, userId)
 
-    private fun gate(actor: GeneralReadEntity): String? = hwihaGate(worlds, actor)
+    private fun gate(actor: GeneralReadEntity): String? = campaignReadGate(worlds, actor)
 
     private fun renownOf(general: GeneralReadEntity): Int? =
         try { PersonPolicyState.read(general.meta)?.renownCapacity } catch (_: IllegalArgumentException) { null }

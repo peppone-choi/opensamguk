@@ -16,7 +16,7 @@ export function useRuleProfile(supplied?: string | null) {
         return () => { active = false; };
     }, [supplied]);
     const value = supplied === undefined ? loaded : supplied;
-    return value === 'SAMMO' || value === 'HWIHA' ? value : null;
+    return value === 'HWIHA' ? value : null;
 }
 
 export default function EnlistmentForm({ inputId = 'action.enlist', generalId, turnIdx, unavailable, onToast, onClose, onReserved }: {

@@ -48,12 +48,12 @@ data class ReactionOrder(
     companion object {
         private val fields = setOf("orderId", "ownerGeneralId", "commanderGeneralId", "nationId", "since")
         fun read(raw: Any?): ReactionOrder {
-            val value = raw as? Map<*, *> ?: throw IllegalArgumentException("Invalid HWIHA reaction order")
-            require(value.keys == fields) { "Invalid HWIHA reaction order fields" }
+            val value = raw as? Map<*, *> ?: throw IllegalArgumentException("Invalid reaction order")
+            require(value.keys == fields) { "Invalid reaction order fields" }
             return ReactionOrder(value["orderId"] as? String ?: bad(), value["ownerGeneralId"] as? Int ?: bad(),
                 value["commanderGeneralId"] as? Int ?: bad(), value["nationId"] as? Int ?: bad(), Phase.read(value["since"]))
         }
-        private fun bad(): Nothing = throw IllegalArgumentException("Invalid HWIHA reaction order")
+        private fun bad(): Nothing = throw IllegalArgumentException("Invalid reaction order")
     }
 }
 
@@ -134,6 +134,6 @@ sealed interface MarchReactions {
             return if (raw.keys == fields && lists.all { it.isEmpty() }) Presence.EMPTY else Presence.PENDING
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA march reaction state")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid march reaction state")
     }
 }

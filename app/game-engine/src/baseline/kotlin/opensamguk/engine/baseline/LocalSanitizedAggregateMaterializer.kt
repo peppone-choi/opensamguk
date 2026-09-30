@@ -206,7 +206,6 @@ internal class LocalSanitizedAggregateMaterializer(
             "statistics",
             "nationHistoryLogs",
             "generalHistoryLogs",
-            "activeUniqueAuctionItems",
             "storedUniqueItemNamespaces",
             "gameEnv",
             "nationEnv",

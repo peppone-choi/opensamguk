@@ -1,6 +1,9 @@
 package opensamguk.engine.boot
 
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
+import opensamguk.infra.persistence.MetaJson
+import java.time.Instant
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.TurnDiplomacy
@@ -16,6 +19,8 @@ import org.testcontainers.DockerClientFactory
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNull
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class WorldSnapshotLoaderWorldScopeIT {
@@ -52,6 +57,18 @@ class WorldSnapshotLoaderWorldScopeIT {
     }
 
     @Test
+    fun `cold boot restores catch-up only for the world with a stored plan`() {
+        assertNull(loader(WorldId(1)).buildSnapshot().state.catchUp, "existing NULL world is inactive")
+        assertNull(loader(WorldId(2)).buildSnapshot().state.catchUp)
+        val now = Instant.parse("2026-09-27T00:00:00Z")
+        val plan = TurnCatchUp.start(now.minusSeconds(72000), now).switchMultiplier(4, now)
+        jdbc.update("UPDATE world_state SET catch_up = ?::jsonb WHERE id = 1", MetaJson.encode(plan.toMeta()))
+
+        assertEquals(plan, loader(WorldId(1)).buildSnapshot().state.catchUp)
+        assertNull(loader(WorldId(2)).buildSnapshot().state.catchUp)
+    }
+
+    @Test
     fun `cold boot reload keeps each world owned cohort isolated with identical local ids`() {
         val first = loader(WorldId(1)).buildSnapshot()
         val second = loader(WorldId(2)).buildSnapshot()
@@ -60,8 +77,9 @@ class WorldSnapshotLoaderWorldScopeIT {
         assertEquals("two", second.state.meta["world_marker"])
         assertEquals(1, first.state.meta["serverCount"])
         assertEquals(2, second.state.meta["serverCount"])
-        assertEquals(listOf("one-item"), first.state.meta["activeUniqueAuctionItems"])
-        assertEquals(listOf("two-item"), second.state.meta["activeUniqueAuctionItems"])
+        // #917 A2: 경매 스냅숏 meta 는 은퇴했다(옛 로더는 행이 없어도 빈 목록을 심었다).
+        assertFalse(first.state.meta.containsKey("activeUniqueAuctionItems"))
+        assertFalse(second.state.meta.containsKey("activeUniqueAuctionItems"))
         assertEquals(mapOf("scope" to 1), first.state.meta["storedUniqueItemCounts"])
         assertEquals(mapOf("scope" to 2), second.state.meta["storedUniqueItemCounts"])
         assertEquals(mapOf(100 to 1200.0), first.state.meta["inheritancePrevious"])
@@ -179,15 +197,6 @@ class WorldSnapshotLoaderWorldScopeIT {
             VALUES
               (1, 1, 'shared-server', 10, '{}'::jsonb),
               (2, 1, 'shared-server', 11, '{}'::jsonb)
-            """.trimIndent(),
-        )
-        jdbc.update(
-            """
-            INSERT INTO ng_auction
-                (world_id, id, type, finished, target, host_general_id, req_resource, open_date, close_date)
-            VALUES
-              (1, 1, 'uniqueItem', false, 'one-item', 30, 'inheritPoint', now(), now() + interval '1 day'),
-              (2, 1, 'uniqueItem', false, 'two-item', 30, 'inheritPoint', now(), now() + interval '1 day')
             """.trimIndent(),
         )
         jdbc.update(

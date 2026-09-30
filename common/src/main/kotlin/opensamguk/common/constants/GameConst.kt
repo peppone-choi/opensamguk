@@ -312,7 +312,6 @@ object GameConst {
     const val maxAvailableWarSettingCnt = 10
     const val incAvailableWarSettingCnt = 2
 
-    const val minGoldRequiredWhenBetting = 500
 
     const val minMonthToAllowInheritItem = 4
     const val inheritBornSpecialPoint = 6000
@@ -605,13 +604,6 @@ object GameConst {
             "united", 5000,
             true,
             listOf("MergeInheritPointRank"),
-        ),
-        // 국가 강약 베팅 개시 (선택적 — 시나리오별 조건으로 대체 가능)
-        listOf(
-            "month", 3000,
-            listOf("DateRelative", "==", 1, 1),  // 게임 시작 1년 후
-            listOf("OpenNationBetting"),
-            listOf("DeleteEvent"),
         ),
     )
 

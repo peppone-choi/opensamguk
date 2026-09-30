@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "requestId": "713deefa-245e-48cd-bd6f-7f6d4eb96a62",
+  "worldId": 1,
+  "status": "REJECTED",
+  "generalId": null,
+  "error": {
+    "code": "HISTORICAL_PERSON_UNAVAILABLE",
+    "message": "다른 계정이 먼저 이 인물을 선택했습니다."
+  }
+}

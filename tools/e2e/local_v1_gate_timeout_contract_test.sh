@@ -390,79 +390,23 @@ run_failure_cleanup_contracts() {
 
 run_failure_cleanup_contracts
 
-run_operational_fail_closed_case() {
-  local label="$1"
-  local cadence="$2"
-  local output="$tmp_dir/${label}.log"
-
-  if [[ -n "$cadence" ]]; then
-    export SCENARIO_QA_TURNTERM="$cadence"
-  else
-    unset SCENARIO_QA_TURNTERM
-  fi
-
+run_retired_operational_case() {
+  local output="$tmp_dir/retired-operational.log"
+  local capture_file="$tmp_dir/retired-operational-capture.txt"
   if OPENSAMGUK_WORLD_ID=1 \
     JWT_PRIVATE_KEY=contract-test-private-key \
     JWT_PUBLIC_KEY=contract-test-public-key \
     E2E_OPERATIONAL_SMOKE=true \
-    E2E_ARTIFACT_DIR="$tmp_dir/${label}-artifacts" \
+    SCENARIO_QA_TURNTERM=1 \
+    E2E_OPERATIONAL_CAPTURE_FILE="$capture_file" \
     "$gate" >"$output" 2>&1; then
-    fail "$label operational smoke unexpectedly started without the required one-minute cadence"
+    fail 'retired operational smoke unexpectedly started'
   fi
-  if ! grep -Fq 'SCENARIO_QA_TURNTERM=1' "$output"; then
-    fail "$label did not explain the one-minute cadence fail-closed contract"
-  fi
+  grep -Fq 'E2E_OPERATIONAL_SMOKE is retired' "$output" || fail 'retired mode rejection lacks explanation'
+  [[ ! -e "$capture_file" ]] || fail 'retired mode reached Playwright'
 }
 
-run_operational_case() {
-  local capture_file="$tmp_dir/operational-env.txt"
-  local timeout_capture_file="$tmp_dir/operational-timeout.txt"
-
-  export SCENARIO_QA_TURNTERM=1
-  export E2E_OPERATIONAL_CAPTURE_FILE="$capture_file"
-  export E2E_TIMEOUT_CAPTURE_FILE="$timeout_capture_file"
-  unset E2E_TEST_TIMEOUT_MS
-  OPENSAMGUK_WORLD_ID=1 \
-  JWT_PRIVATE_KEY=contract-test-private-key \
-  JWT_PUBLIC_KEY=contract-test-public-key \
-  E2E_OPERATIONAL_SMOKE=true \
-  E2E_ARTIFACT_DIR="$tmp_dir/operational-artifacts" \
-  "$gate"
-
-  [[ -f "$capture_file" ]] || fail "operational smoke did not invoke test:e2e"
-  [[ "$(<"$capture_file")" == "true|1" ]] || {
-    fail "operational smoke did not pass the opt-in and cadence to Playwright"
-  }
-  [[ "$(<"$timeout_capture_file")" == "600000" ]] || {
-    fail "operational smoke timeout was $(<"$timeout_capture_file"), expected 600000"
-  }
-  unset E2E_OPERATIONAL_CAPTURE_FILE E2E_TIMEOUT_CAPTURE_FILE
-}
-
-run_operational_timeout_override_case() {
-  local timeout_capture_file="$tmp_dir/operational-timeout-override.txt"
-
-  export SCENARIO_QA_TURNTERM=1
-  export E2E_TIMEOUT_CAPTURE_FILE="$timeout_capture_file"
-  OPENSAMGUK_WORLD_ID=1 \
-  JWT_PRIVATE_KEY=contract-test-private-key \
-  JWT_PUBLIC_KEY=contract-test-public-key \
-  E2E_OPERATIONAL_SMOKE=true \
-  E2E_TEST_TIMEOUT_MS=710000 \
-  E2E_ARTIFACT_DIR="$tmp_dir/operational-override-artifacts" \
-  "$gate"
-
-  [[ "$(<"$timeout_capture_file")" == "710000" ]] || {
-    fail "operational timeout override was $(<"$timeout_capture_file"), expected 710000"
-  }
-  unset E2E_TIMEOUT_CAPTURE_FILE
-}
-
-run_operational_fail_closed_case missing ""
-run_operational_fail_closed_case wrong-value 2
-run_operational_case
-run_operational_timeout_override_case
-unset SCENARIO_QA_TURNTERM
+run_retired_operational_case
 
 printf 'local_v1_gate timeout contract: PASS\n'
 
@@ -472,7 +416,7 @@ export E2E_DOCKER_CAPTURE_FILE="$tmp_dir/runner-isolation-docker.txt"
 export E2E_ARGS_CAPTURE_FILE="$tmp_dir/runner-args.txt"
 export E2E_TIMEOUT_CAPTURE_FILE="$tmp_dir/runner-timeout.txt"
 OPENSAMGUK_WORLD_ID=1 JWT_PRIVATE_KEY=fixture JWT_PUBLIC_KEY=fixture \
- E2E_TEST_SPEC=e2e/v1-core-live.spec.ts E2E_ARTIFACT_DIR="$runner_artifacts" "$gate"
+ E2E_TEST_SPEC=e2e/campaign-core-live.spec.ts E2E_ARTIFACT_DIR="$runner_artifacts" "$gate"
 python3 - "$runner_artifacts" <<'PYTEST'
 import json, pathlib, sys
 root=pathlib.Path(sys.argv[1])
@@ -481,12 +425,12 @@ services=json.loads((root/(project+'-containers.json')).read_text())['services']
 assert set(services)==set('postgres redis gateway-api board-api game-api game-engine web-gateway web-game nginx'.split())
 assert all(v=={'container_name':project+'-'+k} for k,v in services.items())
 PYTEST
-[[ "$(tail -n 1 "$E2E_ARGS_CAPTURE_FILE")" == 'e2e/v1-core-live.spec.ts' ]] || fail 'spec not passed as single argument'
+[[ "$(tail -n 1 "$E2E_ARGS_CAPTURE_FILE")" == 'e2e/campaign-core-live.spec.ts' ]] || fail 'spec not passed as single argument'
 [[ "$(wc -l < "$E2E_ARGS_CAPTURE_FILE" | tr -d ' ')" == 4 ]] || fail 'spec arguments split or expanded'
 grep -Fq 'ps -q postgres' "$E2E_DOCKER_CAPTURE_FILE" || fail 'postgres health not project scoped'
 grep -Fq 'ps -q redis' "$E2E_DOCKER_CAPTURE_FILE" || fail 'redis health not project scoped'
 if grep -Eq 'inspect .*opensamguk-(postgres|redis)' "$E2E_DOCKER_CAPTURE_FILE"; then fail 'fixed container health remains'; fi
-for bad_spec in '--help' '../e2e/v1-core-live.spec.ts' 'e2e/missing.spec.ts' 'e2e/v1-core-live.spec.ts --workers=99' 'e2e/$(touch injected).spec.ts'; do
+for bad_spec in '--help' '../e2e/campaign-core-live.spec.ts' 'e2e/missing.spec.ts' 'e2e/campaign-core-live.spec.ts --workers=99' 'e2e/$(touch injected).spec.ts'; do
   if OPENSAMGUK_WORLD_ID=1 JWT_PRIVATE_KEY=fixture JWT_PUBLIC_KEY=fixture E2E_TEST_SPEC="$bad_spec" \
     E2E_ARTIFACT_DIR="$tmp_dir/invalid-spec" "$gate" >"$tmp_dir/invalid-spec.log" 2>&1; then
     fail 'unsafe or nonexistent spec accepted'

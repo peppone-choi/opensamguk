@@ -3,6 +3,7 @@ package opensamguk.engine.boot
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.world.WorldId
+import opensamguk.common.turn.TurnCatchUp
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.GeneralAccessLog
 import opensamguk.engine.turn.GeneralItems
@@ -120,7 +121,6 @@ class WorldSnapshotLoader(
         val activeGame = resolveActiveGame(loadedState.meta)
         val activeServerId = activeGame?.serverId
         val serverCount = loadServerCount()
-        val activeUniqueAuctionsById = loadActiveUniqueAuctionItems()
         val storedUniqueItemCounts = loadStoredUniqueItemCounts()
         val inheritancePoints = loadInheritancePoints()
         val inheritancePrevious = inheritancePoints.mapValues { (_, values) ->
@@ -141,8 +141,6 @@ class WorldSnapshotLoader(
                     activeGame.map?.let { this["map_theme"] = it }
                 }
                 this["serverCount"] = serverCount
-                this["activeUniqueAuctionItems"] = activeUniqueAuctionsById.values.toList()
-                this["activeUniqueAuctionItemsById"] = LinkedHashMap(activeUniqueAuctionsById)
                 this["storedUniqueItemCounts"] = storedUniqueItemCounts
                 this["inheritancePoints"] = inheritancePoints
                 this["inheritancePrevious"] = inheritancePrevious
@@ -380,7 +378,7 @@ class WorldSnapshotLoader(
 
     private fun loadWorldState(): TurnWorldState {
         val rows = jdbc.query(
-            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time, world_version, writer_epoch FROM world_state WHERE id = ?",
+            "SELECT id, current_year, current_month, current_phase, tick_seconds, isunited, status, meta, config, start_time, world_version, writer_epoch, catch_up FROM world_state WHERE id = ?",
             { rs, _ ->
                 val meta = LinkedHashMap(MetaJson.decode(rs.getString("meta")))
                 val config = LinkedHashMap(MetaJson.decode(rs.getString("config")))
@@ -419,6 +417,7 @@ class WorldSnapshotLoader(
                     config = config,
                     worldVersion = rs.getLong("world_version"),
                     writerEpoch = rs.getLong("writer_epoch"),
+                    catchUp = TurnCatchUp.fromMeta(MetaJson.decode(rs.getString("catch_up"))),
                 )
             },
             worldId.value,
@@ -508,23 +507,6 @@ class WorldSnapshotLoader(
         Int::class.java,
         worldId.value,
     ) ?: 0
-
-    private fun loadActiveUniqueAuctionItems(): Map<Int, String?> {
-        val auctions = LinkedHashMap<Int, String?>()
-        jdbc.query(
-            """
-            SELECT id, target
-              FROM ng_auction
-             WHERE world_id = ?
-               AND type = 'uniqueItem'
-               AND finished = false
-             ORDER BY id ASC
-            """.trimIndent(),
-            { rs -> auctions[rs.getInt("id")] = rs.getString("target") },
-            worldId.value,
-        )
-        return auctions
-    }
 
     private fun loadStoredUniqueItemCounts(): Map<String, Int> {
         val counts = LinkedHashMap<String, Int>()

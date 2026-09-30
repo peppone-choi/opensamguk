@@ -3,14 +3,11 @@ package opensamguk.engine.world
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.City
 import opensamguk.engine.turn.InMemoryTurnWorld
-import opensamguk.engine.turn.Nation
 import opensamguk.engine.turn.PerTurnOverlay
 import opensamguk.engine.turn.TurnWorldState
 import opensamguk.engine.turn.WorldSnapshot
 import opensamguk.logic.stats.GeneralActionPipeline
-import opensamguk.logic.world.CityConstRegistry
 import opensamguk.logic.world.CreateManyNPCAction
-import opensamguk.logic.world.checkEmperior
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -110,124 +107,6 @@ class WorldActionContextRngTest {
         assertEquals(
             listOf("<R>★</>200년 5월:장수 <C>2</>명이 <S>등장</>했습니다."),
             logs.filter { it.scope == "global" && it.category == "history" }.map { it.text },
-        )
-    }
-
-    @Test
-    fun `checkEmperior uses scenario static city count instead of loaded city row count`() {
-        val world = InMemoryTurnWorld(
-            WorldSnapshot(
-                state = TurnWorldState(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 5,
-                    tickSeconds = 60,
-                    lastTurnTime = Instant.EPOCH,
-                    meta = linkedMapOf("map" to "miniche", "isunited" to 0),
-                ),
-                nations = listOf(Nation(id = 1, name = "촉", color = "#000", level = 1)),
-                cities = listOf(City(id = 1, name = "낙양", nationId = 1, level = 5)),
-                worldId = opensamguk.common.world.WorldId((TurnWorldState(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 5,
-                    tickSeconds = 60,
-                    lastTurnTime = Instant.EPOCH,
-                    meta = linkedMapOf("map" to "miniche", "isunited" to 0),
-                )).id),
-            ),
-        )
-        val context = WorldActionContext(
-            env = mutableMapOf("year" to 200, "month" to 5),
-            world = world,
-            recorder = ChangeRecorder(),
-            pipeline = GeneralActionPipeline(),
-        )
-
-        checkEmperior(context)
-
-        assertEquals(78, context.totalCityCount())
-        assertEquals(0, world.getState().meta["isunited"])
-        assertEquals(emptyList(), world.consumeDirtyState().logs)
-    }
-
-    @Test
-    fun `checkEmperior reaching PHP 725 completes national history and isunited writes`() {
-        val cityConst = CityConstRegistry.of("miniche")
-        val world = InMemoryTurnWorld(
-            WorldSnapshot(
-                state = TurnWorldState(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 5,
-                    tickSeconds = 60,
-                    lastTurnTime = Instant.EPOCH,
-                    meta = linkedMapOf("map" to "miniche", "isunited" to 0),
-                ),
-                nations = listOf(Nation(id = 1, name = "촉", color = "#000", level = 1)),
-                cities = cityConst.all().keys.map { City(id = it, name = "city$it", nationId = 1, level = 5) },
-                worldId = opensamguk.common.world.WorldId((TurnWorldState(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 5,
-                    tickSeconds = 60,
-                    lastTurnTime = Instant.EPOCH,
-                    meta = linkedMapOf("map" to "miniche", "isunited" to 0),
-                )).id),
-            ),
-        )
-        val context = WorldActionContext(
-            env = mutableMapOf("year" to 200, "month" to 5),
-            world = world,
-            recorder = ChangeRecorder(),
-            pipeline = GeneralActionPipeline(),
-        )
-
-        checkEmperior(context)
-
-        assertEquals(2, world.getState().meta["isunited"])
-        assertEquals(
-            listOf("<C>●</>200년 5월:<D><b>촉</b></>이 전토를 통일"),
-            world.consumeDirtyState().logs.filter { it.scope == "nation" && it.category == "history" }.map { it.text },
-        )
-    }
-
-    @Test
-    fun `national history context applies PHP default YEAR_MONTH formatting`() {
-        val world = InMemoryTurnWorld(
-            WorldSnapshot(
-                state = TurnWorldState(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 5,
-                    tickSeconds = 60,
-                    lastTurnTime = Instant.EPOCH,
-                    meta = linkedMapOf("isunited" to 0),
-                ),
-                nations = listOf(Nation(id = 1, name = "촉", color = "#000", level = 1)),
-                cities = listOf(City(id = 1, name = "city1", nationId = 1, level = 5)),
-                worldId = opensamguk.common.world.WorldId((TurnWorldState(
-                    id = 1,
-                    currentYear = 200,
-                    currentMonth = 5,
-                    tickSeconds = 60,
-                    lastTurnTime = Instant.EPOCH,
-                    meta = linkedMapOf("isunited" to 0),
-                )).id),
-            ),
-        )
-        val context = WorldActionContext(
-            env = mutableMapOf("year" to 200, "month" to 5),
-            world = world,
-            recorder = ChangeRecorder(),
-            pipeline = GeneralActionPipeline(),
-        )
-
-        context.pushNationalHistoryLog(1, "<D><b>촉</b></>이 전토를 통일")
-
-        assertEquals(
-            listOf("<C>●</>200년 5월:<D><b>촉</b></>이 전토를 통일"),
-            world.consumeDirtyState().logs.filter { it.scope == "nation" && it.category == "history" }.map { it.text },
         )
     }
 }

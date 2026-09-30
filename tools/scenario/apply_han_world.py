@@ -38,8 +38,8 @@ import pathlib
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-SCEN = ROOT / "infra/src/main/resources/scenario"
-HAN_MAP = ROOT / "infra/src/main/resources/map/han.json"
+SCEN = ROOT / "data/archive/scenarios"
+SOURCE_CITY_MAP = ROOT / "infra/src/main/resources/map/han.json"
 HAN_V3_MAP = ROOT / "infra/src/main/resources/map/han-world-v3.json"
 HAN_V3_MANIFEST = ROOT / "data/map/han-world-v3-manifest-v1.json"
 HAN_TILES = ROOT / "data/map/han-tiles.json"
@@ -212,7 +212,7 @@ def load_world(map_name: str = "han") -> tuple[dict[str, list[int]], dict[str, i
     cities = (
         _load_verified_v3_world()["cities"]
         if map_name == "han-world-v3"
-        else json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
+        else json.loads(SOURCE_CITY_MAP.read_text(encoding="utf-8"))["cities"]
     )
     by_jun: dict[str, list[int]] = {}
     seat_of: dict[str, int] = {}
@@ -419,7 +419,7 @@ def main() -> int:
     ap.add_argument("--map", choices=("han-world-v3",))
     args = ap.parse_args()
 
-    inputs = [HAN_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE]
+    inputs = [SOURCE_CITY_MAP, HAN_TILES, CHE_TO_JUN, OWNERSHIP, PALETTE]
     if args.map == "han-world-v3":
         inputs += [HAN_V3_MAP, HAN_V3_MANIFEST, ROUTE_SELECTION, ROUTE_MIGRATION, ROUTE_CANDIDATES]
     for path in inputs:
@@ -430,7 +430,7 @@ def main() -> int:
     by_jun, id_of, seat_of = load_world(args.map or "han")
     city_id_migration = None
     if args.map == "han-world-v3":
-        old_cities = json.loads(HAN_MAP.read_text(encoding="utf-8"))["cities"]
+        old_cities = json.loads(SOURCE_CITY_MAP.read_text(encoding="utf-8"))["cities"]
         new_cities = _load_verified_v3_world()["cities"]
         candidates = json.loads(ROUTE_CANDIDATES.read_text(encoding="utf-8"))["candidates"]
         migration_rows = json.loads(ROUTE_MIGRATION.read_text(encoding="utf-8"))["rows"]

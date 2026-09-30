@@ -7,10 +7,6 @@ import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.common.wire.TurnDaemonCommand
 import opensamguk.common.wire.TurnDaemonCommandEnvelope
 import opensamguk.common.wire.TurnDaemonCommandResult
-import opensamguk.engine.auction.AuctionBidHandler
-import opensamguk.engine.auction.AuctionFinalizeHandler
-import opensamguk.engine.auction.AuctionOpenHandler
-import opensamguk.engine.betting.PlaceBetHandler
 import opensamguk.engine.intake.BoardHandler
 import opensamguk.engine.intake.AccountCommandHandler
 import opensamguk.engine.intake.AdminGeneralModerationHandler
@@ -36,12 +32,9 @@ import opensamguk.engine.intake.VotePollState
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
-import opensamguk.engine.v2.V2CityLedgerStore
-import opensamguk.engine.v2.V2CityTransportHandler
-import opensamguk.engine.v2.V2GarrisonRecruitHandler
-import opensamguk.infra.read.AuctionBidRepository
-import opensamguk.infra.read.AuctionRepository
-import opensamguk.infra.read.BettingRepository
+import opensamguk.engine.city.CityLedgerStore
+import opensamguk.engine.city.CityTransportHandler
+import opensamguk.engine.city.GarrisonRecruitHandler
 import opensamguk.infra.read.BoardPostRepository
 import opensamguk.infra.read.ContactReader
 import opensamguk.infra.read.DiplomacyLetterRepository
@@ -51,8 +44,6 @@ import opensamguk.infra.read.VotePollRepository
 import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.engine.turn.KvKey
-import opensamguk.logic.betting.BettingInfo
-import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
 import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.command.CommandSchemaCatalog
@@ -66,9 +57,8 @@ import java.time.format.DateTimeParseException
  *
  * **P6 keystone seam.** Before this, [opensamguk.engine.redis.RedisCommandStream.readCommands]'s
  * result was DISCARDED in [TurnRunService.runTick] (the inline comment admitted the dispatcher was
- * "assembled by the consuming P3 waves" and never built), so every command-intake feature — auction
- * bids/finalize, and the P6/P7 commands that follow — was inert. This dispatcher routes each drained
- * command to the handler that owns its type.
+ * "assembled by the consuming P3 waves" and never built), so every P6/P7 command-intake feature was
+ * inert. This dispatcher routes each drained command to the handler that owns its type.
  *
  * **Partial by design (incremental P6 build).** Only the command types with a built engine handler
  * are routed; everything else returns `null` = "no engine handler wired yet". That covers two
@@ -88,13 +78,11 @@ import java.time.format.DateTimeParseException
 class TurnDaemonCommandDispatcher(
     private val world: InMemoryTurnWorld,
     recorder: ChangeRecorder,
-    auctionRepository: AuctionRepository,
-    auctionBidRepository: AuctionBidRepository,
     boardPostRepository: BoardPostRepository,
     /**
      * vote_poll/vote 설문 상태 read seam (F4 Wave 투표). VoteCast/closeOldVote 게이트가 PHP Vote.php의
      * cast 가드(설문 존재/만료/선택수/이미 투표)를 충실히 재현하려면 설문 행을 read 해야 한다. null이면
-     * VoteHandler는 기본 stub(항상 "설문 없음")로 동작한다(board/auction read-repo와 동일 주입 패턴).
+     * VoteHandler는 기본 stub(항상 "설문 없음")로 동작한다(board read-repo와 동일 주입 패턴).
      */
     private val votePollRepository: VotePollRepository? = null,
     /**
@@ -110,35 +98,28 @@ class TurnDaemonCommandDispatcher(
      * W6a 메시지 연락처/장수 read seam. null이면 [MessageHandler]가 stub-empty(연락처 없음)로 동작한다.
      */
     contactReader: ContactReader? = null,
-    /**
-     * P0-07 베팅 마스터 read seam — game_kv(table='betting'). null이면 [PlaceBetHandler]가
-     * stub('해당 베팅이 없습니다')로 동작한다(다른 read-repo 주입 패턴과 동일).
-     */
+    /** game_kv read seam(game_env·user 등). null이면 해당 핸들러가 stub 으로 동작한다. */
     gameKvRepository: GameKvRepository? = null,
     /**
-     * P0-07 ng_betting 누적 합 read seam — PHP Betting.php:135의 user별 sum. null이면 누적 0 가정.
-     */
-    bettingRepository: BettingRepository? = null,
-    /**
-     * P0-07 유산포인트 read seam — `inheritance_{userID}` `previous[0]`(PHP Betting.php:133,142).
-     * null이면 PlaceBetHandler 기본(world meta `inheritancePrevious` 스냅샷)으로 폴백.
+     * 유산포인트 read seam — `inheritance_{userID}` `previous[0]`.
+     * null이면 world meta `inheritancePrevious` 스냅샷으로 폴백.
      */
     inheritanceRepository: InheritanceRepository? = null,
     processNationCommand: ProcessNationCommand? = null,
     raiseInvader: (RaiseInvaderSpec) -> Int = { 0 },
     /**
      * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
-     * `dispatch`가 [V2GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
+     * `dispatch`가 [GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
-    v2CityLedger: V2CityLedgerStore? = null,
+    v2CityLedger: CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
-    hwihaCourtHandler: opensamguk.engine.campaign.CourtHandler? = null,
+    courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
 ) {
     /**
-     * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142 / Auction.php:300) — game_kv
+     * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
      * (table='inheritance', namespace='inheritance_{owner}', key='previous') 라이브 read.
-     * [PlaceBetHandler]와 [AuctionBidHandler]가 동일 seam 을 공유한다(바퀴 20 정본).
+     * 유산 초기화가 이 seam 을 쓴다(바퀴 20 정본).
      */
     private val persistedPreviousPointReader: (Int) -> Double = inheritanceRepository?.let { repo ->
         { ownerId: Int ->
@@ -190,31 +171,6 @@ class TurnDaemonCommandDispatcher(
             ?.mapNotNull { (it as? Number)?.toInt() }
             ?: persistedLastStatResetReader(ownerId)
     }
-
-    private val auctionBid = AuctionBidHandler(
-        world, recorder, auctionRepository, auctionBidRepository,
-        previousPointReader = previousPointReader,
-    )
-    private val auctionFinalize = AuctionFinalizeHandler(world, recorder, auctionRepository, auctionBidRepository)
-
-    private val placeBet = PlaceBetHandler(
-        world, recorder,
-        // PHP `bettingStor->getValue("id_{n}")`(Betting.php:42-44) — BettingController.loadRawBettingInfo와
-        // 동일하게 table='betting' 전 행을 맵 디코드해 id 일치 행을 찾는다(key 레이아웃 비의존).
-        bettingInfoReader = gameKvRepository?.let { repo ->
-            { bettingId: Int ->
-                repo.findByTable("betting").firstNotNullOfOrNull { row ->
-                    runCatching { jsonDecode(row.value) }.getOrNull()
-                        ?.let { BettingInfo.fromKvMap(it) }
-                        ?.takeIf { it.id == bettingId }
-                }
-            }
-        } ?: { null },
-        prevBetAmountDbReader = bettingRepository?.let { repo ->
-            { bettingId: Int, userId: Int -> repo.sumAmountByBettingIdAndUserId(bettingId, userId).toInt() }
-        } ?: { _, _ -> 0 },
-        previousPointReader = previousPointReader,
-    )
 
     // ── F4 Wave C2 (slice A) — single-actor intake handlers (per-run, world+recorder) ──────────────
     private val nationFinance = NationFinanceSetterHandler(world, recorder)
@@ -308,9 +264,6 @@ class TurnDaemonCommandDispatcher(
         raiseInvader = raiseInvader,
     )
 
-    // ── W6c 경매 개설 핸들러 (AuctionBidHandler와 동일 read repo 주입) ──
-    private val auctionOpen = AuctionOpenHandler(world, recorder, auctionRepository, auctionBidRepository)
-
     // ── W5d 외교 서신 핸들러 (ng_diplomacy read seam은 nullable) ──
     private val diplomacyLetter = DiplomacyLetterHandler(world, recorder, diplomacyLetterRepository)
     private val personnel = PersonnelHandler(world, recorder)
@@ -331,7 +284,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
-    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.campaign.CourtHandler(world, recorder)
+    private val court = courtHandler ?: opensamguk.engine.campaign.CourtHandler(world, recorder)
 
     // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
     private val profileIconSync = ProfileIconSyncHandler(world, recorder)
@@ -339,8 +292,8 @@ class TurnDaemonCommandDispatcher(
     private val adminWorldSettings = AdminWorldSettingsHandler(world, recorder)
 
     // ── OPENSAM-153 (v2 R4) — 도시병사 보충 핸들러 (원장 없으면 null, dispatch에서 fail-closed deny) ──
-    private val v2GarrisonRecruit = v2CityLedger?.let { V2GarrisonRecruitHandler(world, recorder, it) }
-    private val v2CityTransport = v2CityLedger?.let { V2CityTransportHandler(world, recorder, it) }
+    private val v2GarrisonRecruit = v2CityLedger?.let { GarrisonRecruitHandler(world, recorder, it) }
+    private val v2CityTransport = v2CityLedger?.let { CityTransportHandler(world, recorder, it) }
 
     /**
      * Dispatch one command to its handler.
@@ -358,11 +311,8 @@ class TurnDaemonCommandDispatcher(
         sentAt: Instant,
         executionAt: Instant,
     ): TurnDaemonCommandResult? = when (command) {
-        is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
+        is TurnDaemonCommand.ImmediateInput -> court.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
-        is TurnDaemonCommand.AuctionBid -> auctionBid.handle(command)
-        is TurnDaemonCommand.AuctionFinalize -> auctionFinalize.handle(command)
-        is TurnDaemonCommand.PlaceBet -> placeBet.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)
         is TurnDaemonCommand.SetScoutMsg -> nationFinance.handleSetScoutMsg(command)
@@ -419,10 +369,6 @@ class TurnDaemonCommandDispatcher(
         is TurnDaemonCommand.AcceptDiplomaticMessage -> diplomaticMessage.handleAccept(command)
         is TurnDaemonCommand.DeclineDiplomaticMessage -> diplomaticMessage.handleDecline(command)
         is TurnDaemonCommand.AcceptRaiseInvaderMessage -> raiseInvaderMessage.handle(command)
-        // ── W6c 경매 개설 바인딩 ──
-        is TurnDaemonCommand.AuctionOpenBuyRice -> auctionOpen.handleBuyRice(command)
-        is TurnDaemonCommand.AuctionOpenSellRice -> auctionOpen.handleSellRice(command)
-        is TurnDaemonCommand.AuctionOpenUnique -> auctionOpen.handleUnique(command)
         // ── W5d 외교 서신 바인딩 ──
         is TurnDaemonCommand.DiploSendLetter -> diplomacyLetter.handleSend(command)
         is TurnDaemonCommand.DiploRollbackLetter -> diplomacyLetter.handleRollback(command)
@@ -447,20 +393,20 @@ class TurnDaemonCommandDispatcher(
         // ── OPENSAM-153 (v2 R4) — 도시병사 보충. 원장 없음 = fail-closed deny (null 반환 금지: null이면
         //    FE result-poll이 RESOLVED를 영영 못 보고 PENDING에 갇힌다). ──
         is CityGarrisonRecruit -> if (!world.isGeneralAtCity(command.generalId)) {
-            V2GarrisonRecruitHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
+            GarrisonRecruitHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
         } else v2PrecheckFailure(command)?.let {
-            V2GarrisonRecruitHandler.rejected(command, it.reason, it.code)
+            GarrisonRecruitHandler.rejected(command, it.reason, it.code)
         } ?: expirationFailure(command.expiresAt, executionAt)?.let {
-            V2GarrisonRecruitHandler.rejected(command, it.reason, it.code)
-        } ?: (v2GarrisonRecruit?.handle(command) ?: V2GarrisonRecruitHandler.unavailable(command))
+            GarrisonRecruitHandler.rejected(command, it.reason, it.code)
+        } ?: (v2GarrisonRecruit?.handle(command) ?: GarrisonRecruitHandler.unavailable(command))
         // ── OPENSAM-154 (v2 R5) — 도시 자원 수송. 같은 fail-closed 규약. ──
         is CityTransport -> if (!world.isGeneralAtCity(command.generalId)) {
-            V2CityTransportHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
+            CityTransportHandler.rejected(command, "전장에서 귀환한 뒤 도시 명령을 실행할 수 있습니다.", "BATTLEFIELD_LOCATION")
         } else v2PrecheckFailure(command)?.let {
-            V2CityTransportHandler.rejected(command, it.reason, it.code)
+            CityTransportHandler.rejected(command, it.reason, it.code)
         } ?: expirationFailure(command.expiresAt, executionAt)?.let {
-            V2CityTransportHandler.rejected(command, it.reason, it.code)
-        } ?: (v2CityTransport?.handle(command) ?: V2CityTransportHandler.unavailable(command))
+            CityTransportHandler.rejected(command, it.reason, it.code)
+        } ?: (v2CityTransport?.handle(command) ?: CityTransportHandler.unavailable(command))
         else -> null
     }
 

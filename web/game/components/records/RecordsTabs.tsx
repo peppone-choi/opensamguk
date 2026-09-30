@@ -12,12 +12,8 @@ export interface RecordsTab {
 
 const RANKING_TABS: readonly RecordsTab[] = [
     { label: '명장 순위', href: '/game/rankings/best-generals' },
-    { label: '황제 정보', href: '/game/rankings/emperor' },
     { label: '장수 일람', href: '/game/rankings/generals' },
     { label: '세력 순위', href: '/game/rankings/kingdoms' },
-    { label: 'NPC 일람', href: '/game/rankings/npcs' },
-    { label: '명예의 전당', href: '/game/rankings/hall-of-fame' },
-    { label: '접속 통계', href: '/game/rankings/traffic' },
 ];
 
 /** 기록 탭 목록(정적). */
