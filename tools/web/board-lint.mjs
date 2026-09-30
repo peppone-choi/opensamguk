@@ -287,22 +287,42 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
   try { ({ chromium } = webRequire('@playwright/test')); } catch {
     throw new Error('@playwright/test 를 web/game 에서 찾지 못했다. 먼저: pnpm -C web install --frozen-lockfile --filter @opensamguk/web-game...');
   }
-  const browser = await chromium.launch({ channel, headless: true });
+  const launch = () => chromium.launch({ channel, headless: true });
+  let browser = await launch();
   const results = [];
+  const lintOne = async (file, size) => {
+    const context = await browser.newContext({ viewport: { width: Math.max(size.width, 320), height: Math.max(size.height, 320) } });
+    try {
+      const page = await context.newPage();
+      await page.route('**/*', (route) => (route.request().url().startsWith('file:') ? route.continue() : route.abort()));
+      await page.goto(pathToFileURL(file).href, { waitUntil: 'load' });
+      return await page.evaluate(lintInPage, { forbidden: FORBIDDEN, minTarget: 44 });
+    } finally {
+      await context.close().catch(() => {});
+    }
+  };
   try {
     for (const file of files) {
       const html = fs.readFileSync(file, 'utf8');
       const size = previewSize(html) ?? { width: 1440, height: 1000 };
-      const context = await browser.newContext({ viewport: { width: Math.max(size.width, 320), height: Math.max(size.height, 320) } });
-      const page = await context.newPage();
-      await page.route('**/*', (route) => (route.request().url().startsWith('file:') ? route.continue() : route.abort()));
-      await page.goto(pathToFileURL(file).href, { waitUntil: 'load' });
-      const r = await page.evaluate(lintInPage, { forbidden: FORBIDDEN, minTarget: 44 });
-      results.push({ board: path.relative(ROOT, file).startsWith('..') ? file : path.relative(ROOT, file), name: path.basename(file), preview: size, ...r });
-      await context.close();
+      const base = { board: path.relative(ROOT, file).startsWith('..') ? file : path.relative(ROOT, file), name: path.basename(file), preview: size };
+      // 헤드리스 Chrome 이 도중에 닫힐 수 있다(2026-09-30 에는 다른 세션의 넓은 패턴 pkill 이 죽였다). 한 번 다시 띄워 재고,
+      // 그래도 안 되면 오류로 남기고 넘어간다(오류가 있으면 종료 코드 1).
+      let r = null; let lastError = null;
+      for (let attempt = 0; attempt < 2 && !r; attempt++) {
+        try { r = await lintOne(file, size); } catch (e) {
+          lastError = e;
+          if (!/closed|crash|disconnected/i.test(String(e.message))) break;
+          console.error(`브라우저가 닫혔다(${base.name}) — 다시 띄운다`);
+          await browser.close().catch(() => {});
+          browser = await launch();
+        }
+      }
+      if (r) results.push({ ...base, ...r });
+      else results.push({ ...base, error: String(lastError?.message ?? lastError).slice(0, 300), size: { w: 0, h: 0 }, targets: 0, counts: Object.fromEntries(KEYS.map((k) => [k, 0])), smallInline: 0, underLayer: 0, innerCropped: 0, words: {}, samples: {} });
     }
   } finally {
-    await browser.close();
+    await browser.close().catch(() => {});
   }
   return results;
 }
@@ -312,7 +332,7 @@ export function toMarkdown(results) {
   const allWords = {};
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
-  const rows = results.map((r) => `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} |`);
+  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} |`);
   const kinds = {};
   for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
   const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
@@ -336,7 +356,9 @@ async function main() {
   if (opts.json) fs.writeFileSync(opts.json, JSON.stringify({ at: new Date().toISOString(), forbidden: FORBIDDEN, results }, null, 2));
   if (opts.md) fs.writeFileSync(opts.md, md);
   console.log(md);
-  const failing = results.filter((r) => opts.failOn.some((k) => r.counts[k] > 0));
+  const errored = results.filter((r) => r.error);
+  if (errored.length) console.error(`검사하지 못한 보드 ${errored.length}장: ${errored.map((r) => r.name).join(', ')}`);
+  const failing = results.filter((r) => r.error || opts.failOn.some((k) => r.counts[k] > 0));
   if (failing.length) {
     console.error(`--fail-on ${opts.failOn.join(',')}: ${failing.length}장이 걸렸다 — ${failing.map((r) => r.name).join(', ')}`);
     process.exit(1);

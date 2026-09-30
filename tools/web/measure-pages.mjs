@@ -590,7 +590,8 @@ export async function run(opts) {
   const results = [];
   try {
     for (const pagePath of opts.pages) for (const profile of opts.profiles) for (const throttle of opts.throttles) for (let i = 0; i < opts.repeat; i++) {
-      // 기계가 버거우면(스왑 · 부하) 헤드리스 Chrome 이 측정 중 닫힌다. 한 번만 다시 띄워 재고, 그래도 안 되면 오류 행으로 남긴다.
+      // 헤드리스 Chrome 이 측정 중 닫힐 수 있다(2026-09-30 에는 다른 세션의 넓은 패턴 pkill 이 죽였다). 한 번만 다시 띄워 재고,
+      // 그래도 안 되면 오류 행으로 남긴다.
       let out = null; let lastError = null;
       for (let attempt = 0; attempt < 2 && !out; attempt++) {
         try {
