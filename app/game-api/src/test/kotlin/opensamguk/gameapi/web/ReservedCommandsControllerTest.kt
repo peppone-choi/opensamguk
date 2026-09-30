@@ -25,7 +25,7 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders
 /**
  * F2 Wave 6 slice test for [ReservedCommandsController] — MockMvc standalone over a mocked
  * [GeneralTurnReadRepository] + [GeneralResolver]. Asserts the ring-slot shape
- * `{turnIdx, action, brief, arg}`, ordering, the no-id empty contract, and the Task 4 403.
+ * `{turnIdx, action, brief, arg}`, ordering, anonymous rejection, and ownership rejection.
  */
 class ReservedCommandsControllerTest {
 
@@ -68,6 +68,7 @@ class ReservedCommandsControllerTest {
     fun resetFixtures() {
         clearAuth()
         reset(resolver, reservedTurns, world, generals)
+        `when`(resolver.resolveGeneralId(7L)).thenReturn(10)
     }
 
     @AfterEach
@@ -85,7 +86,7 @@ class ReservedCommandsControllerTest {
             ),
         )
 
-        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.generalId").value(10))
@@ -105,18 +106,16 @@ class ReservedCommandsControllerTest {
             ),
         )
 
-        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.slots[0].action").value("che_견문"))
             .andExpect(jsonPath("$.slots[0].brief").value("견문"))
     }
 
     @Test
-    fun `no resolvable id returns an empty result-false ring`() {
+    fun `anonymous caller cannot read reserved commands`() {
         mockMvc().perform(get("/api/reserved-commands"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.result").value(false))
-            .andExpect(jsonPath("$.slots.length()").value(0))
+            .andExpect(status().isUnauthorized)
     }
 
     @Test
@@ -150,7 +149,7 @@ class ReservedCommandsControllerTest {
         `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
 
         // cutTurn(09:30,60분)=09:00 == cutTurn(09:00,60분)=09:00 → 월 전진 없음(PHP :74-81).
-        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.turnTime").value("2026-06-10 09:30:00"))
             .andExpect(jsonPath("$.turnTerm").value(60))
@@ -176,7 +175,7 @@ class ReservedCommandsControllerTest {
         )
         `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
 
-        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.year").value(200))
             .andExpect(jsonPath("$.month").value(3))
@@ -197,7 +196,7 @@ class ReservedCommandsControllerTest {
         )
         `when`(reservedTurns.findByGeneralIdOrderByTurnIdxAsc(10)).thenReturn(emptyList())
 
-        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10"))
+        mockMvc().perform(get("/api/reserved-commands").param("generalId", "10").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.year").value(201))
             .andExpect(jsonPath("$.month").value(1))

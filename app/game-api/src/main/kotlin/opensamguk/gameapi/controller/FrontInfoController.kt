@@ -20,6 +20,7 @@ import opensamguk.gameapi.dto.NationPopulationGroup
 import opensamguk.gameapi.dto.NationTopChief
 import opensamguk.gameapi.dto.NationTypeInfo
 import opensamguk.gameapi.owner.GeneralResolver
+import opensamguk.gameapi.owner.resolveReadIdentity
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
 import opensamguk.gameapi.read.F4StateText
@@ -76,11 +77,8 @@ import kotlin.math.truncate
 /**
  * F2 Wave 1 — `GET /api/front-info` (spec §3): the per-refresh envelope the `/game` main screen renders.
  *
- * Identity resolution order (transition-friendly):
- *   1. the verified JWT principal (`@AuthenticationPrincipal userId`) → owned general via [GeneralResolver];
- *   2. else the legacy `?generalId=` query param (transition fallback per Task 6 — removed once web/game
- *      always carries the Bearer);
- *   3. else no character → `general.hasGeneral=false`, nation/city null.
+ * Identity comes only from the verified JWT principal and [GeneralResolver]. An optional generalId
+ * confirms the owned body; it never supplies identity. No character means hasGeneral=false.
  *
  * Public read (no auth required): an anonymous caller still gets `global` (the GameInfo header) and an
  * empty `general`, so the header renders before login. PHP-faithful gating fields
@@ -178,13 +176,11 @@ class FrontInfoController(
         @RequestParam(defaultValue = "0") lastWorldHistoryID: Int,
         request: HttpServletRequest,
     ): ResponseEntity<FrontInfoResponse> {
+        val resolved = resolveReadIdentity(resolver, userId, generalId)
         val serverId = request.cookies?.find { it.name == "sam_server" }?.value?.takeIf { it.isNotBlank() }
         val global = buildGlobal(serverId)
 
-        // resolve the caller's general: principal first, then the ?generalId= transition fallback.
-        val resolved = userId?.let { resolver.resolve(it) }
-        val general: GeneralReadEntity? = resolved?.general
-            ?: generalId?.let { generals.findById(it).orElse(null) }
+        val general = resolved?.general
 
         if (general == null) {
             return ResponseEntity.ok(

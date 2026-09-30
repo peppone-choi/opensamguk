@@ -16,13 +16,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * [JwtVerifyFilter] runs before the username/password filter and sets a verified-userId principal when
  * a valid Bearer token is present.
  *
- * Public (no identity needed): the lobby map preview, the health probe, the const/global-menu reads,
- * and — during the F2 transition — the existing read controllers that still accept `?generalId=`
- * (mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
- * web/game Wave 2 can migrate incrementally; the proxy injects the Bearer where it has one.
- *
- * Identity-required: the possession + my-* endpoints, which resolve the caller's general from the
- * verified principal and have no `?generalId=` fallback.
+ * Public statics (lobby, const, map and front header) omit private identity when no JWT is verified.
+ * Controllers enforce ownership before private data reads; route authentication is required for
+ * possession, my-* views, reserved orders and nation finances.
  *
  * CSRF is disabled (stateless token API, no cookies on this origin).
  */
@@ -40,6 +36,8 @@ class GameApiSecurityConfig {
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
+                    // Reserved orders and internal finances always require a verified account.
+                    .requestMatchers("/api/reserved-commands", "/api/nation/*/finance").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
                     // Phase 4X-A 가신·부곡 읽기 — 본인/같은 국가만(spec v3 F4). 등록하지 않으면 anyRequest permitAll 로 공개된다.

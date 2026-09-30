@@ -82,8 +82,10 @@ class NationFinanceController(
         @PathVariable id: Int,
         @AuthenticationPrincipal userId: Long?,
     ): ResponseEntity<NationFinanceResponse> {
-        val resolved = userId?.let { resolver.resolve(it) }
-        val officerLevel = resolved?.officerLevel ?: 0
+        if (userId == null || userId <= 0) return ResponseEntity.status(401).build()
+        val resolved = resolver.resolve(userId) ?: return ResponseEntity.status(403).build()
+        if (resolved.nationId <= 0 || resolved.nationId != id) return ResponseEntity.status(403).build()
+        val officerLevel = resolved.officerLevel
         val w = world.findAll().firstOrNull()
         val warSetting = NationFinanceWarSettingCnt(
             // NF-P0-C — nation_env KV `available_war_setting_cnt`(데몬 SetBlockWar write). 부재 시 null(날조 금지).
@@ -107,7 +109,7 @@ class NationFinanceController(
         val meta = nation.meta
         fun metaInt(key: String) = (meta[key] as? Number)?.toInt()
 
-        val editable = resolved != null && resolved.nationId == id && resolved.officerLevel >= 5
+        val editable = resolved.officerLevel >= 5
 
         // ── 수입/지출 LIVE 산정(PHP v_nationStratFinan.php:76-115) ──────────────────────────────────
         // 현재 계약은 rate=100 what-if LIVE 산정을 IncomeTick.kt의 검증된 결정식으로 재사용한다.

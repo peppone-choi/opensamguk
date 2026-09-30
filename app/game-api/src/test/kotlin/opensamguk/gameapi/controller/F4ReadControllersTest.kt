@@ -435,6 +435,11 @@ class F4ReadControllersTest {
             .andExpect(jsonPath("$.diplomacyList.2.3").value(2))
     }
 
+    private fun ownedFinanceGeneral(nationId: Int) {
+        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
+        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "순욱", nationId = nationId, officerLevel = 0)))
+    }
+
     // ── GET /api/nation/{id}/finance (W0-2 P0-51 중첩 구조 + P0-53 read 키 정합 + editable gate) ──────
     @Test
     fun `nation finance emits the legacy nested staticValues shape`() {
@@ -513,9 +518,10 @@ class F4ReadControllersTest {
 
     @Test
     fun `nation finance missing nation returns result-false zeroed shape`() {
+        ownedFinanceGeneral(99)
         `when`(nations.findById(99)).thenReturn(Optional.empty())
 
-        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper)).perform(get("/api/nation/99/finance"))
+        mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper)).perform(get("/api/nation/99/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(false))
             .andExpect(jsonPath("$.gold").value(0))
@@ -525,6 +531,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `nation finance nationsList assembles diplomacy state self-7 row-state and missing-통상`() {
+        ownedFinanceGeneral(1)
         // PHP v_nationStratFinan.php:45-72 — 전 국가 표: 자국 state=7/term=null, 타국은 diplomacy WHERE me=id
         // 행(state/term), 행 부재 시 통상(2). cityCnt = city GROUP BY nation.
         `when`(nations.findById(1)).thenReturn(Optional.of(nationP(1, "위", level = 7, power = 100, capital = 5, type = "che_위")))
@@ -544,7 +551,7 @@ class F4ReadControllersTest {
         `when`(cities.countByNationId(3)).thenReturn(0L)
 
         mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper))
-            .perform(get("/api/nation/1/finance"))
+            .perform(get("/api/nation/1/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             // 자국(1): state=7, term=null, cityCnt=2, gennum=meta.
@@ -567,6 +574,7 @@ class F4ReadControllersTest {
 
     @Test
     fun `nation finance outcome sums getBill over npc-not-5 dedications`() {
+        ownedFinanceGeneral(1)
         // PHP getOutcome(100, SELECT dedication WHERE nation=id AND npc!=5). npc=5 장수는 지출 제외.
         `when`(nations.findById(1)).thenReturn(Optional.of(nationP(1, "위", level = 7, type = "che_위")))
         `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
@@ -580,7 +588,7 @@ class F4ReadControllersTest {
         val expected = getOutcome(100.0, listOf(1000.0, 2000.0)) // npc=5(9000) 제외
 
         mvc(NationFinanceController(nations, resolver, world, nationEnv, cities, generals, diplomacy, objectMapper))
-            .perform(get("/api/nation/1/finance"))
+            .perform(get("/api/nation/1/finance").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.outcome").value(expected))
     }
@@ -745,10 +753,11 @@ class F4ReadControllersTest {
 
     // ── GET /api/board (empty + 회의실/기밀실 title + secret gate) ──────────────────────────────────
     @Test
-    fun `board public 회의실 returns empty articles with verbatim title`() {
-        `when`(boardPosts.findByIsSecretOrderByCreatedAtDescIdDesc(false)).thenReturn(emptyList())
+    fun `board nation 회의실 returns empty articles with verbatim title`() {
+        ownedFinanceGeneral(1)
+        `when`(boardPosts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(1, false)).thenReturn(emptyList())
 
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=false"))
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=false").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.secret").value(false))
@@ -758,13 +767,10 @@ class F4ReadControllersTest {
     }
 
     @Test
-    fun `board 기밀실 blocked for anonymous with INFO reason`() {
-        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world)).perform(get("/api/board?secret=true"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.secret").value(true))
-            .andExpect(jsonPath("$.title").value("기밀실"))
-            .andExpect(jsonPath("$.articles.length()").value(0))
-            .andExpect(jsonPath("$.blockedReason").value("권한이 부족합니다. 수뇌부가 아닙니다."))
+    fun `board 기밀실 rejects anonymous caller`() {
+        mvc(BoardController(boardPosts, boardComments, resolver, generals, polls, votes, boardReads, world))
+            .perform(get("/api/board?secret=true"))
+            .andExpect(status().isUnauthorized)
     }
 
     @Test

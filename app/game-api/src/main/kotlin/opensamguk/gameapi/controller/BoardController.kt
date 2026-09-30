@@ -33,11 +33,9 @@ import java.time.Instant
  * (`{result:true, articles:[]}`), never 500, no fabrication. Title is verbatim 회의실(secret=false) /
  * 기밀실(secret=true).
  *
- * checkSecretPermission gate: the 기밀실 (secret=true) requires permission >= 2 (수뇌). When a verified
- * principal is present and lacks it, the response sets `blockedReason` (rendered as INFO, not error)
- * and returns empty articles. An anonymous caller asking for the secret board is also blocked. The
- * public 회의실 (secret=false) is open. Posts are scoped to the caller's nation when resolvable;
- * otherwise the global tier list (still empty in the seed).
+ * Both boards are internal to the verified caller's positive nation. Anonymous callers are rejected,
+ * nationless callers cannot fall back to a global query, and secret boards require chief permission.
+ * Optional nationId only confirms the caller's nation; it never selects another nation's posts.
  *
  * ADR-LITE-049 14 확장: 글 종류(kind)·표결 요약(vote_poll/vote 읽기)·기밀실 열람 기록(board_post_read)·
  * 작성자/댓글 초상(현재 general 행)·회의실 참여 스택(국가 플레이어 장수, 최근 한 순 활동 여부).
@@ -56,43 +54,26 @@ class BoardController(
     private val worldStates: WorldStateReadRepository,
     private val nowProvider: () -> Instant = Instant::now,
 ) {
-    /** Verbatim 권한 차단 string for the 기밀실 (수뇌 only) gate. */
-    private val secretBlockedReason = "권한이 부족합니다. 수뇌부가 아닙니다."
-
     @GetMapping
     fun board(
         @RequestParam(name = "secret", defaultValue = "false") secret: Boolean,
         @AuthenticationPrincipal userId: Long?,
+        @RequestParam(name = "nationId", required = false) requestedNationId: Int?,
     ): ResponseEntity<BoardResponse> {
-        val resolved = userId?.let { resolver.resolve(it) }
+        if (userId == null || userId <= 0) return ResponseEntity.status(401).build()
+        val resolved = resolver.resolve(userId) ?: return ResponseEntity.status(403).build()
+        val nationId = resolved.nationId
+        if (nationId <= 0 || (requestedNationId != null && requestedNationId != nationId)) {
+            return ResponseEntity.status(403).build()
+        }
+        if (secret && resolved.permission < 2) return ResponseEntity.status(403).build()
         val title = F4StateText.boardTitle(secret)
-        val myPermission = resolved?.permission ?: -1
-        if (secret) {
-            val allowed = resolved != null && resolved.permission >= 2
-            if (!allowed) {
-                return ResponseEntity.ok(
-                    BoardResponse(
-                        result = true,
-                        secret = true,
-                        title = title,
-                        articles = emptyList(),
-                        blockedReason = secretBlockedReason,
-                        myGeneralId = resolved?.general?.id,
-                        myPermission = myPermission,
-                    ),
-                )
-            }
-        }
-        val nationId = resolved?.nationId ?: 0
-        val nationLevel = resolved?.nationLevel ?: 0
-        val postRows = if (nationId != 0) {
-            posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(nationId, secret)
-        } else {
-            posts.findByIsSecretOrderByCreatedAtDescIdDesc(secret)
-        }
+        val myPermission = resolved.permission
+        val nationLevel = resolved.nationLevel
+        val postRows = posts.findByNationIdAndIsSecretOrderByCreatedAtDescIdDesc(nationId, secret)
         // 국가 장수 — 초상·직책·참여 스택·수뇌부 정원의 단일 원천(한 번만 읽는다).
         val nationGenerals: List<GeneralReadEntity> =
-            if (nationId != 0) generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId) else emptyList()
+            generals.findByNationIdOrderByOfficerLevelDescIdAsc(nationId)
         val byId = HashMap<Int, GeneralReadEntity>(nationGenerals.associateBy { it.id })
         fun personOf(id: Int): BoardPerson? {
             val g = byId[id] ?: generals.findById(id).orElse(null)?.also { byId[id] = it } ?: return null
@@ -111,7 +92,7 @@ class BoardController(
         } else {
             emptyMap()
         }
-        val myId = resolved?.general?.id
+        val myId = resolved.general.id
 
         val articles = postRows.map { p ->
             val commentRows = comments.findByPostIdOrderByCreatedAtAscIdAsc(p.id).map { c ->
