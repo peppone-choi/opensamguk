@@ -55,7 +55,7 @@ object AiPolicyRegistry {
 
     fun validate(catalog: InputCatalog) {
         val byPolicy = catalog.entries.groupBy { it.aiPolicyId }
-        require(byPolicy.values.all { it.size == 1 }) { "duplicate aiPolicyId in hwiha input catalog" }
+        require(byPolicy.values.all { it.size == 1 }) { "duplicate aiPolicyId in input catalog" }
         require(byPolicy.keys == bindings.keys) {
             "unregistered aiPolicyId: ${byPolicy.keys - bindings.keys}; stale aiPolicyId: ${bindings.keys - byPolicy.keys}"
         }

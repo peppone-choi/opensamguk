@@ -22,10 +22,8 @@ if [[ -n "${E2E_TEST_SPEC:-}" ]]; then
   playwright_args+=("$E2E_TEST_SPEC")
 fi
 
-operational_smoke="${E2E_OPERATIONAL_SMOKE:-false}"
-qa_turnterm="${SCENARIO_QA_TURNTERM:-}"
-if [[ "$operational_smoke" == "true" && "$qa_turnterm" != "1" ]]; then
-  echo "E2E_OPERATIONAL_SMOKE=true requires SCENARIO_QA_TURNTERM=1 (60-second local QA cadence)" >&2
+if [[ "${E2E_OPERATIONAL_SMOKE:-false}" == "true" ]]; then
+  echo "E2E_OPERATIONAL_SMOKE is retired with the Sammo-only smoke; use the campaign E2E lane" >&2
   exit 2
 fi
 
@@ -489,8 +487,6 @@ pnpm --dir web/game exec playwright install chromium >"$artifact_dir/playwright-
 
 if [[ -n "${E2E_TEST_TIMEOUT_MS:-}" ]]; then
   playwright_timeout_ms="$E2E_TEST_TIMEOUT_MS"
-elif [[ "$operational_smoke" == "true" ]]; then
-  playwright_timeout_ms=600000
 else
   playwright_timeout_ms=420000
 fi
@@ -506,8 +502,6 @@ E2E_GAME_ENGINE_HEALTH_URL="http://localhost:${game_engine_port}/actuator/health
 E2E_PLAYWRIGHT_JSON="$artifact_dir/playwright-results.json" \
 E2E_PLAYWRIGHT_OUTPUT_DIR="$artifact_dir/playwright-output" \
 E2E_TEST_TIMEOUT_MS="$playwright_timeout_ms" \
-E2E_OPERATIONAL_SMOKE="$operational_smoke" \
-SCENARIO_QA_TURNTERM="$qa_turnterm" \
 pnpm "${playwright_args[@]}" >"$artifact_dir/playwright.log" 2>&1 || {
   playwright_exit=$?
   capture_startup_failure || echo "browser failure diagnostics unavailable" >&2

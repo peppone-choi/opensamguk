@@ -33,7 +33,7 @@ class LiteHashDrbgIntFloatTest {
         repeat(50) { assertTrue(rng.nextInt(1L) in 0L..1L) }
     }
     @Test fun `nextInt accepts a draw of exactly max (inclusive upper bound)`() {
-        // deterministic golden row from a known block: TS oracle pins nextInt(0x99) -> 0x99
+        // deterministic boundary row from a known block: nextInt(0x99) -> 0x99
         val o = fx["intInclusiveMax"]!!.jsonObject
         val max = o["max"]!!.jsonPrimitive.long
         val draw = LiteHashDrbg("inclusiveMax").nextInt(max)

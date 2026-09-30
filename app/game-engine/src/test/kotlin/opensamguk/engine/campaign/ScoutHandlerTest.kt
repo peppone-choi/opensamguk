@@ -122,11 +122,11 @@ class ScoutHandlerTest {
         val world = world()
         val handler = ReservedTurnHandler(world = world, registry = opensamguk.logic.actions.CommandRegistry(
             opensamguk.logic.stats.GeneralActionPipeline()), hiddenSeed = "seed", startYear = 184,
-            hwihaVisionContext = context)
+            visionContext = context)
         val turn = handler.handle(1, opensamguk.infra.persistence.ReservedTurnRepository.ReservedTurn(
             actionCode = ScoutInputCodec.INPUT_ID, argJson = args(geo.nextId), requestId = "r-1", reservationOwnerUserId = 42),
             190, 3, "00:00")
-        assertEquals(TurnOutcome.Applied(ScoutInputCodec.INPUT_ID), turn.hwihaOutcome)
+        assertEquals(TurnOutcome.Applied(ScoutInputCodec.INPUT_ID), turn.inputOutcome)
         assertNotNull(ScoutReports.read(world.getGeneralById(1)!!.meta))
     }
 }

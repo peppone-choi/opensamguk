@@ -9,7 +9,7 @@ import java.time.Instant
 /**
  * Composite key for a KV write — `(table, namespace, key)` (T0.3). `table == "nation_env"` is the
  * V3 int-namespace store (`namespace` = the nation id as a decimal string); any other `table`
- * (`game_env`/`betting`/`inheritance_{id}`/…) is the V7 string-namespace `game_kv` store. Keyed as a
+ * (`game_env`/`inheritance_{id}`/…) is the V7 string-namespace `game_kv` store. Keyed as a
  * data class so the recorder's dirty map dedups last-write-wins per logical key (KVStorage.php
  * semantics) while preserving insertion order in a LinkedHashMap.
  */
@@ -65,15 +65,9 @@ data class MessageInvalidate(
  */
 data class DiplomacyLetterInsert(val allocatedId: Int, val columns: Map<String, Any?>)
 
-/**
- * An `ng_betting` write intent (P6 betting intake). `columns` mirrors `NgBettingEntity` fields:
- * betting_id, general_id, user_id, betting_type, amount. W0-8: flush 측은 PHP `insertUpdate`
- * 패러티의 UPSERT — UNIQUE(general_id,betting_id,betting_type) 충돌(동일 키 재베팅) 시 amount 누적.
- */
-data class BettingInsert(val columns: Map<String, Any?>)
 
 /**
- * OPENSAM-150 (R1) — `v2_city_ledger` UPSERT 의도 (v2 도시 원장 채널, betting 채널과 동일 패턴).
+ * OPENSAM-150 (R1) — `v2_city_ledger` UPSERT 의도 (v2 도시 원장 채널).
  * `columns`는 `city_id`/`gold`/`rice`/`garrison`을 미러링하며 **절대값**(누적 델타가 아니다) —
  * flush는 `(world_id, city_id)` 충돌 시 세 값을 덮어쓰는 **멱등 UPSERT**라 재시작 재실행이 안전하다.
  * 이 컬렉션이 비면 `DatabaseHooks`가 빈 리스트를 싣고 v2 flush step이 미진입한다 ⇒ v1 경로 SQL 0.
@@ -185,7 +179,7 @@ data class DirtyState(
      *  - [nationTurnDirty]: reserved nation-command rows to (re)write (step-3 createMany / step-7).
      *  - [kvDirty]: `(table, namespace, key)` → json | `null`-deletes (step-10; delete-on-null,
      *    KVStorage.php). Keyed by [KvKey] so the int-ns `nation_env` AND the string-ns
-     *    `game_env`/`betting`/`inheritance_{id}` writes share one channel (T0.3).
+     *    `game_env`/`inheritance_{id}` writes share one channel (T0.3).
      */
     val rankDirty: Map<Int, Map<RankColumn, RankDelta>> = emptyMap(),
     val nationTurnDirty: List<NationTurn> = emptyList(),
@@ -236,8 +230,6 @@ data class DirtyState(
      * 키별 LinkedHashMap, 컬럼별 last-write-wins, 삽입 순서 보존(diplomacyUpdateDirty와 동일 형태).
      */
     val votePollUpdates: Map<Int, Map<String, Any?>> = emptyMap(),
-    /** [bettingInserts]: the ng_betting INSERT intents (P6 betting intake, INSERT-only). */
-    val bettingInserts: List<BettingInsert> = emptyList(),
     /** [inheritanceKvWrites]: the inheritance-channel KV writes (T0.8). */
     val inheritanceKvWrites: List<KvWrite> = emptyList(),
     /** [inheritanceLogInserts]: the inheritance_log INSERT intents (T0.8). */

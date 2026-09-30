@@ -35,7 +35,7 @@ data class SpatialSupplyCity(
 @Component
 class SpatialSupplyProvider(
     private val objectMapper: ObjectMapper,
-    @Value("\${HAN_MAP_FILE:data/map/han-tiles.json}") private val mapPath: String,
+    @Value("\${MAP_TILES_FILE:data/map/han-tiles.json}") private val mapPath: String,
     @Value("\${HAN_SCENARIO_PROVINCE_OWNERSHIP_FILE:data/map/han-scenario-province-ownership-v1.json}")
     private val ownershipPath: String,
     private val policyLoader: SupplyDisconnectionPolicyLoader? = null,

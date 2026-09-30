@@ -139,7 +139,7 @@ def render_gallery(output_dir: Path, *, scale: int = 3) -> None:
     for scenario in ownership["scenarios"]:
         code = scenario["scenarioCode"]
         source = json.loads(
-            (ROOT / f"infra/src/main/resources/scenario/scenario_{code}.json").read_text(encoding="utf-8")
+            (ROOT / f"data/archive/scenarios/scenario_{code}.json").read_text(encoding="utf-8")
         )
         colors = {index: row[1] for index, row in enumerate(source["nation"], start=1)}
         rows = tuple(_assignment(row) for row in scenario["assignments"])

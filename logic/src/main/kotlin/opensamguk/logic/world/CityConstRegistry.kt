@@ -415,7 +415,7 @@ private val historicalWorlds: Map<WorldMapVariant, CityConstVariant> by lazy {
 }
 
 object CityConstRegistry {
-    fun hanWorld(variant: WorldMapVariant): CityConstVariant = historicalWorlds.getValue(variant)
+    fun forVariant(variant: WorldMapVariant): CityConstVariant = historicalWorlds.getValue(variant)
 
     const val DEFAULT_MAP_NAME = "che"
 

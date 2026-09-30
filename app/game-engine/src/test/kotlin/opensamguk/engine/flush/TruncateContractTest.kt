@@ -45,6 +45,13 @@ class TruncateContractTest {
     }
 
     @Test
+    fun `retired V7 economy tables are absent from the reset contract`() {
+        for (table in listOf("ng_auction_bid", "ng_auction", "ng_betting")) {
+            assertFalse(table in TruncateContract.TRUNCATED, "$table was dropped by V69")
+        }
+    }
+
+    @Test
     fun `SURVIVE and TRUNCATED are disjoint`() {
         assertTrue((TruncateContract.SURVIVE intersect TruncateContract.TRUNCATED).isEmpty())
     }

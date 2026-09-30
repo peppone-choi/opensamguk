@@ -45,6 +45,6 @@ data class TravelState(
                 (value["assignmentIdAtStart"] as? String ?: invalid()).ifEmpty { null })
         }
 
-        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA direct travel metadata")
+        private fun invalid(): Nothing = throw IllegalArgumentException("Invalid direct travel metadata")
     }
 }

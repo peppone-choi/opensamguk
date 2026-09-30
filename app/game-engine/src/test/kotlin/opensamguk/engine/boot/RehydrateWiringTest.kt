@@ -7,11 +7,11 @@ import kotlin.test.assertTrue
 /**
  * OPENSAM-149 D1 tripwire — the REAL restart-survivor seam.
  *
- * The P6 gate item 4 ("restart-rehydrate lossless") names the survivor pools: the betting pool, the
- * polymorphic message pool, and the id allocators that must not restart from zero (the auction+bid
- * pool it also named was retired in #917 A2). `RehydrateService` was the P6-era design for that, but
+ * The P6 gate item 4 ("restart-rehydrate lossless") names the polymorphic message pool and the
+ * id allocators that must not restart from zero. The auction and betting pools were retired in #917.
+ * `RehydrateService` was the P6-era design for that, but
  * the daemon settled on a different one and the service was never wired — it was deleted in #917 A2:
- * the pools are served from the injected repositories on demand
+ * the message pool is served from the injected repository on demand
  * (`MessageRepository.findByWorldIdAndMailboxAndValidUntilAfter` is the `valid_until > now` predicate),
  * and the allocators are seeded from the DB in `DaemonLoopConfig.turnRunService`. A boot-time memory
  * copy on top of that would create a SECOND source of truth for the same rows.
@@ -81,20 +81,18 @@ class RehydrateWiringTest {
     }
 
     @Test
-    fun `the survivor pools are served from injected repositories, not a boot-time memory copy`() {
+    fun `the message pool is served from its injected repository`() {
         val source = turnRunServiceBody()
 
         val missing = listOf(
             "messageRepository: MessageRepository",
-            "bettingRepository: opensamguk.infra.read.BettingRepository",
         ).filterNot { source.contains(it) }
 
         assertTrue(
             missing.isEmpty(),
-            "POOL SOURCE LOST: DaemonLoopConfig.turnRunService no longer injects $missing. These " +
-                "repositories ARE the restart-survivor path for the message / betting " +
-                "pools the P6 gate item 4 names — they are read on demand instead of copied into memory " +
-                "at boot. If a pool moved to a boot-time memory copy, that copy is now the thing to " +
+            "POOL SOURCE LOST: DaemonLoopConfig.turnRunService no longer injects $missing. The " +
+                "repository is the restart-survivor path for the message pool: rows are read on demand. " +
+                "If the pool moves to a boot-time memory copy, that copy is the thing to " +
                 "guard (OPENSAM-149 D1).",
         )
     }

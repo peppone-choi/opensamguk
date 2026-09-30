@@ -84,5 +84,5 @@ object RoadFortState {
             })
     }
 
-    private fun invalid(): Nothing = throw IllegalArgumentException("Invalid HWIHA road fort state")
+    private fun invalid(): Nothing = throw IllegalArgumentException("Invalid road fort state")
 }

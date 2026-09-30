@@ -8,7 +8,7 @@ import opensamguk.logic.input.WorldRuleProfile
  * Decoded, position-resolved model of the two committed scenario resources used by the A-minimal
  * scenario-seed importer (F1a):
  *
- *  - `scenario/scenario_1010.json` — VERBATIM copy of `legacy/devsam-core/hwe/scenario/scenario_1010.json`
+ *  - Historical scenario fixtures are stored in `data/archive/scenarios/`.
  *    (frozen historical baseline (ADR-LITE-042; not current product authority)). Positional tuples decoded by the index maps below.
  *  - `scenario/cities_1010.json` — the 24-city A-minimal subset transcribed from `CityConstBase::$initCity`
  *    (== `common` `CityConst.cheInitCity`), already x100-scaled (see [ScenarioCity]).
@@ -66,7 +66,7 @@ object ScenarioJson {
     private const val N_SCALE = 7
     private const val N_CITIES = 8
 
-    /** Decode `scenario_1010.json` into the position-resolved [Scenario] model. */
+    /** Decode a scenario JSON document into the position-resolved [Scenario] model. */
     fun loadScenario(json: String): Scenario {
         val root = MetaJson.decode(json)
         val title = strOrNull(root["title"]) ?: ""

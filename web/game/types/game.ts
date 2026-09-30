@@ -190,46 +190,6 @@ export interface GameCommand {
   args: CommandArg[];
 }
 
-// ── F2 Wave 5 — server-driven command catalog (api.availableCommands) ─────────
-// Mirrors legacy CommandItem (CommandSelectForm.vue / GetCommandTable):
-//   value=command key, simpleName=display, title=tooltip, compensation=-1/0/+1 stat tag,
-//   possible=executable-now, reqArg=needs an argument form. argType drives which modal sub-form opens.
-// game-api may not emit `argType` yet — when absent we infer it from the command key (ARG_TYPE_BY_KEY).
-export type CommandArgType = 'city' | 'general' | 'nation' | 'amount' | 'founding' | 'recruit';
-
-export interface AvailableCommand {
-  value: string;
-  simpleName: string;
-  title: string;
-  compensation: number;
-  possible: boolean;
-  reqArg: boolean;
-  info?: string;
-  argType?: CommandArgType;
-  canonicalId?: string;
-  normalizedIntentId?: string | null;
-  layer?: string;
-  sourceRing?: string;
-  authorityPolicyId?: string;
-  adapterPolicy?: string;
-  parityStatus?: string;
-  contractStatus?: string;
-  deliveryState?: string;
-}
-
-export interface AvailableCommandCategory {
-  category: string;
-  values: AvailableCommand[];
-}
-
-// game-api response is intentionally loose (W5 endpoint may ship a flat list OR the legacy
-// category-grouped `commandTable`). CommandModal normalizes both shapes.
-export interface AvailableCommandsResponse {
-  result?: boolean;
-  commandTable?: AvailableCommandCategory[];
-  commands?: AvailableCommand[];
-}
-
 export interface MyPageData {
   general: General;
   nation: Nation;
@@ -747,7 +707,6 @@ export interface NationFinanceResponse {
   nationsList?: NationFinanceNationItem[];
 }
 
-// ── page 7 · 사령부 (GET /api/nation/chief-reserved) ──────────────────────────
 // ── page 4 · 회의실 / 기밀실 (GET /api/board?secret=) ─────────────────────────
 // Mirrors j_board_get_articles.php. Labels 회의실/기밀실/등록/댓글 달기 verbatim.
 // Permission gates render as INFO (not error): '국가에 소속되어있지 않습니다.' /

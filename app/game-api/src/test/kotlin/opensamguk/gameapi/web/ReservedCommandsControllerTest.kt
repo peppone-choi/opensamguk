@@ -159,7 +159,7 @@ class ReservedCommandsControllerTest {
             .andExpect(jsonPath("$.turnPhase").value(2))
             .andExpect(jsonPath("$.turnPhaseText").value("중순"))
             .andExpect(jsonPath("$.date").isNotEmpty)
-            // autorun_limit — general.aux 원천 부재(§2 BLOCKED, ChiefReservedResponse 동일) → 미노출.
+            // autorun_limit — general.aux 원천 부재(§2 BLOCKED, 원천 부재) → 미노출.
             .andExpect(jsonPath("$.autorunLimit").doesNotExist())
     }
 

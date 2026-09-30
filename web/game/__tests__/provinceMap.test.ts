@@ -519,7 +519,7 @@ describe('province identity map', () => {
       height: number;
       cities: { id: number; name: string; level: number; x: number; y: number; meta: { ju: string; jun: string } }[];
     };
-    const scenarioDirectory = resolve(process.cwd(), '../../infra/src/main/resources/scenario');
+    const scenarioDirectory = resolve(process.cwd(), '../../data/archive/scenarios');
     const scenarioFiles = readdirSync(scenarioDirectory)
       .filter((name) => /^scenario_(1010|1020|1021|1030|1031|1040|1041|1050|1060|1070|1080|1090|1100|1110|1120)\.json$/.test(name))
       .sort();

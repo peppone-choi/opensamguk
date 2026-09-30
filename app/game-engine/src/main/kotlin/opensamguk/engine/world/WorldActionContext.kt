@@ -14,31 +14,23 @@ import opensamguk.engine.turn.KvKey
 import opensamguk.engine.turn.LogEntryDraft
 import opensamguk.engine.turn.Nation as EngineNation
 import opensamguk.engine.turn.PerTurnOverlay
-import opensamguk.engine.v2.V2AttritionCity
-import opensamguk.engine.v2.V2AttritionResult
-import opensamguk.engine.v2.V2CityGarrisonAttritionContext
-import opensamguk.engine.v2.V2CityIncomeContext
-import opensamguk.engine.v2.V2CityIncomeNation
-import opensamguk.engine.v2.V2CityIncomeResult
-import opensamguk.engine.v2.V2CityLedgerEntry
-import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.city.AttritionCity
+import opensamguk.engine.city.AttritionResult
+import opensamguk.engine.city.CityGarrisonAttritionContext
+import opensamguk.engine.city.CityIncomeContext
+import opensamguk.engine.city.CityIncomeNation
+import opensamguk.engine.city.CityIncomeResult
+import opensamguk.engine.city.CityLedgerEntry
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.turn.RankColumn
-import opensamguk.engine.turn.RankDelta
 import opensamguk.engine.turn.Retainer
 import opensamguk.engine.turn.TurnDiplomacy
 import opensamguk.engine.turn.TurnGeneral
 import opensamguk.engine.turn.Troop
 import opensamguk.engine.turn.toTurnGeneral
-import opensamguk.infra.persistence.MetaJson
 import opensamguk.infra.read.ArchiveHistoryReader
-import opensamguk.infra.read.BettingRepository
 import opensamguk.infra.read.GameKvRepository
-import opensamguk.infra.read.InheritanceRepository
 import opensamguk.infra.read.StatisticSnapshotReader
-import opensamguk.logic.betting.BettingInfo
-import opensamguk.logic.betting.BettingItem
-import opensamguk.logic.betting.BettingWorldView
-import opensamguk.logic.betting.GeneralForBetting
 import opensamguk.logic.domain.City as LogicCity
 import opensamguk.logic.domain.Diplomacy as LogicDiplomacy
 import opensamguk.logic.domain.General as LogicGeneral
@@ -52,16 +44,11 @@ import opensamguk.logic.retainer.RetainerRules
 import opensamguk.logic.event.DeleteEventContext
 import opensamguk.logic.event.EventActionContext
 import opensamguk.logic.event.EventStore
-import opensamguk.logic.event.FinishNationBettingContext
 import opensamguk.logic.event.LightActionWorld
-import opensamguk.logic.event.NationBettingCandidate
-import opensamguk.logic.event.OpenNationBettingContext
-import opensamguk.logic.message.MessageTarget
 import opensamguk.logic.stats.GeneralActionPipeline
 import opensamguk.logic.tick.ServerClock
 import opensamguk.logic.traits.NationTypeRegistry
 import opensamguk.logic.util.phpRound
-import opensamguk.logic.util.jsonDecode
 import opensamguk.logic.util.jsonDecodeAny
 import java.time.Duration
 import java.time.ZoneId
@@ -129,19 +116,17 @@ class WorldActionContext(
     private val archiveHistoryReader: ArchiveHistoryReader? = null,
     private val statisticSnapshotReader: StatisticSnapshotReader? = null,
     private val gameKvRepository: GameKvRepository? = null,
-    private val bettingRepository: BettingRepository? = null,
-    private val inheritanceRepository: InheritanceRepository? = null,
     private val ambientPhpRandom: PhpMt19937 = PhpMt19937.ambient(),
     private val lockGame: () -> Boolean = { false },
     private val unlockGame: () -> Unit = {},
     private val spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
     // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼진 프로덕션에서는 null이고, 그 상태에서
     // V2ProcessCityIncome leaf가 돌면 fail-closed로 죽는다(무음 no-op이면 수입이 통째로 사라진다).
-    private val v2CityLedger: V2CityLedgerStore? = null,
+    private val v2CityLedger: CityLedgerStore? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
-    V2CityIncomeContext,
-    V2CityGarrisonAttritionContext,
+    CityIncomeContext,
+    CityGarrisonAttritionContext,
     ProcessWarIncomeContext,
     RandomizeCityTradeRateContext,
     ProcessSemiAnnualContext,
@@ -155,8 +140,6 @@ class WorldActionContext(
     UnblockScoutWorldView,
     RaiseInvaderContext,
     InvaderEndingContext,
-    OpenNationBettingContext,
-    FinishNationBettingContext,
     ScenarioStartEventContext,
     LightActionWorld {
 
@@ -412,28 +395,28 @@ class WorldActionContext(
         world.pushLog(logDraft("global", "history", result.globalHistory))
     }
 
-    // ── V2CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
+    // ── CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
 
-    private fun requireV2Ledger(): V2CityLedgerStore = v2CityLedger
+    private fun requireV2Ledger(): CityLedgerStore = v2CityLedger
         ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 V2ProcessCityIncome 이 디스패치됐다")
 
-    override fun v2CityIncomeNations(resource: String): List<V2CityIncomeNation> {
+    override fun v2CityIncomeNations(resource: String): List<CityIncomeNation> {
         val ledger = requireV2Ledger().entries(world.worldId)
         // 국가/도시/장수 스냅샷은 v1 [incomeNations]를 **그대로** 재사용한다(세율 rate_tmp, npcState!=5 제외,
         // officerCntByCity 집계까지 동일해야 하므로 두 벌로 갈라 두지 않는다).
         return incomeNations().map { n ->
-            V2CityIncomeNation(
+            CityIncomeNation(
                 nation = n,
                 generalCityIds = n.generals.mapNotNull { g -> world.getGeneralById(g.id)?.let { g.id to it.cityId } }.toMap(),
                 ledger = n.cities.associate { c ->
-                    val e = ledger[c.id] ?: V2CityLedgerEntry.EMPTY
+                    val e = ledger[c.id] ?: CityLedgerEntry.EMPTY
                     c.id to (if (resource == "gold") e.gold else e.rice)
                 },
             )
         }
     }
 
-    override fun applyV2CityIncome(result: V2CityIncomeResult) {
+    override fun applyV2CityIncome(result: CityIncomeResult) {
         val resource = result.resource
         val store = requireV2Ledger()
         // v1과 달리 nation.gold/rice 는 건드리지 않는다 — v2에서 수입은 도시 원장에만 들어간다.
@@ -461,27 +444,27 @@ class WorldActionContext(
         world.pushLog(logDraft("global", "history", result.globalHistory))
     }
 
-    // ── V2CityGarrisonAttritionContext (OPENSAM-152) ───────────────────────────────────────────
+    // ── CityGarrisonAttritionContext (OPENSAM-152) ───────────────────────────────────────────
 
     override fun attritionMonth(): Int = resolveMonth()
 
     /** 묘섭의 "등록 장수" 대응 — 월드에 살아 있는 장수 수(NPC 포함, 전 국가 합산). */
     override fun activeGeneralCount(): Int = world.listGenerals().size
 
-    override fun attritionCities(): List<V2AttritionCity> {
+    override fun attritionCities(): List<AttritionCity> {
         val ledger = requireV2Ledger().entries(world.worldId)
         return world.listCities().sortedBy { it.id }.map {
-            V2AttritionCity(
+            AttritionCity(
                 cityId = it.id,
                 name = it.name,
                 nationId = it.nationId,
                 state = it.state,
-                garrison = (ledger[it.id] ?: V2CityLedgerEntry.EMPTY).garrison,
+                garrison = (ledger[it.id] ?: CityLedgerEntry.EMPTY).garrison,
             )
         }
     }
 
-    override fun applyV2Attrition(result: V2AttritionResult) {
+    override fun applyV2Attrition(result: AttritionResult) {
         val store = requireV2Ledger()
         for (o in result.outcomes) {
             val delta = o.after - o.before
@@ -851,182 +834,6 @@ class WorldActionContext(
             recorder.recordGeneralCreate(world, general, initialTurns)
             world.createTroop(Troop(id = generalId, nationId = nationId, name = general.name))
         }
-    }
-
-    override fun nationBettingCandidates(): List<NationBettingCandidate> =
-        world.listNations().map { nation ->
-            val generalCount = world.listGenerals().count { it.nationId == nation.id }
-            val cityCount = world.listCities().count { it.nationId == nation.id }
-            NationBettingCandidate(
-                nationId = nation.id,
-                name = nation.name,
-                power = nation.power,
-                generalCount = generalCount,
-                cityCount = cityCount,
-                aux = linkedMapOf(
-                    "nation" to nation.id,
-                    "name" to nation.name,
-                    "color" to nation.color,
-                    "level" to nation.level,
-                    "type" to nation.typeCode,
-                    "capital" to (nation.capitalCityId ?: 0),
-                    "gennum" to generalCount,
-                    "power" to nation.power,
-                    "city_cnt" to cityCount,
-                ),
-            )
-        }
-
-    override fun nextBettingId(): Int {
-        val pending = (recorder.kvDirty()[KvKey("game_env", "game_env", "last_betting_id")] as? Number)?.toInt()
-        val persisted = gameKvRepository?.findByTable("game_env")?.firstNotNullOfOrNull { row ->
-            if (row.namespace == "game_env" && row.key == "last_betting_id") {
-                (runCatching { jsonDecodeAny(row.value) }.getOrNull() as? Number)?.toInt()
-            } else {
-                null
-            }
-        }
-        val next = maxOf(pending ?: 0, persisted ?: 0) + 1
-        recorder.recordKv("game_env", "game_env", "last_betting_id", next)
-        return next
-    }
-
-    override fun saveBettingInfo(info: BettingInfo) {
-        recorder.recordKv("betting", "betting", "id_${info.id}", info.toKvMap())
-    }
-
-    override fun scheduleNationBettingFinish(bettingId: Int, nationCnt: Int) {
-        val store = env[DeleteEventContext.ENV_KEY] as? EventStore
-            ?: error("OpenNationBetting requires the live EventStore")
-        store.insertRaw(
-            targetCode = "destroy_nation",
-            priority = 1000,
-            conditionJson = kotlinx.serialization.json.Json.parseToJsonElement(
-                """["RemainNation","<=",$nationCnt]""",
-            ),
-            actionJson = kotlinx.serialization.json.Json.parseToJsonElement(
-                """[["FinishNationBetting",$bettingId],["DeleteEvent"]]""",
-            ),
-        )
-    }
-
-    override fun placeNationBettingBonus(bettingId: Int, amount: Int) {
-        recorder.recordBettingInsert(
-            linkedMapOf(
-                "betting_id" to bettingId,
-                "general_id" to 0,
-                "user_id" to null,
-                "betting_type" to "[-1]",
-                "amount" to amount,
-            ),
-        )
-    }
-
-    override fun notifyNationBettingOpened(name: String) {
-        val text = "새로운 $name 내기가 열렸습니다. 천통국 베팅란을 확인해주세요."
-        world.listGenerals()
-            .filter { it.npcState <= 1 }
-            .forEach { general ->
-                markNewMessage(general)
-                val nation = world.getNationById(general.nationId)
-                val dest = MessageTarget(
-                    generalId = general.id,
-                    generalName = general.name,
-                    nationId = general.nationId,
-                    nationName = nation?.name ?: "재야",
-                    color = nation?.color ?: "#000000",
-                    icon = general.meta["picture"]?.toString() ?: "",
-                )
-                val body = MetaJson.encode(
-                    linkedMapOf(
-                        "src" to MessageTarget.buildSystemTarget().toArray(),
-                        "dest" to dest.toArray(),
-                        "text" to text,
-                        "option" to linkedMapOf<String, Any?>(),
-                    ),
-                )
-                recorder.recordMessageInsert(
-                    mailbox = general.id,
-                    type = "private",
-                    srcId = 0,
-                    destId = general.id,
-                    time = world.getState().lastTurnTime.atZone(SEOUL_ZONE).format(PHP_DATETIME_FORMAT),
-                    validUntil = "9999-12-31 00:00:00",
-                    bodyJson = body,
-                )
-            }
-    }
-
-    override fun loadBettingInfo(bettingId: Int): BettingInfo? {
-        val pending = recorder.kvDirty()[KvKey("betting", "betting", "id_$bettingId")] as? Map<*, *>
-        if (pending != null) {
-            @Suppress("UNCHECKED_CAST")
-            return BettingInfo.fromKvMap(pending as Map<String, Any?>)
-        }
-        return gameKvRepository?.findByTable("betting")?.firstNotNullOfOrNull { row ->
-            runCatching { jsonDecode(row.value) }.getOrNull()
-                ?.let(BettingInfo::fromKvMap)
-                ?.takeIf { it.id == bettingId }
-        }
-    }
-
-    override fun aliveNationIds(): List<Int> =
-        world.listNations().filter { it.level > 0 }.map { it.id }
-
-    override fun loadBettingItems(bettingId: Int): List<BettingItem> =
-        bettingRepository?.findByBettingId(bettingId).orEmpty().map { row ->
-            BettingItem(
-                rowId = row.id,
-                bettingId = row.bettingId,
-                generalId = row.generalId,
-                userId = row.userId,
-                bettingType = row.bettingType,
-                amount = row.amount,
-            )
-        }
-
-    override fun generalsById(ids: List<Int>): Map<Int, GeneralForBetting> =
-        ids.mapNotNull { id ->
-            world.getGeneralById(id)?.let { general ->
-                id to GeneralForBetting(id, general.npcState, general.name)
-            }
-        }.toMap()
-
-    override fun addGeneralGold(generalId: Int, amount: Int) {
-        val before = world.getGeneralById(generalId) ?: return
-        val after = before.copy(gold = before.gold + amount)
-        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(before), PerTurnOverlay.toLogicGeneral(after))
-        world.updateGeneral(after)
-    }
-
-    override fun increaseRankData(generalId: Int, type: String, amount: Double) {
-        val column = RankColumn.byColumn(type) ?: return
-        recorder.recordRankIncrease(generalId, column, phpRound(amount))
-    }
-
-    override fun getRankVar(generalId: Int, type: String, default: Int): Int =
-        world.getGeneralById(generalId)?.let { effectiveRankValue(it, type) } ?: default
-
-    override fun increaseInheritancePointRaw(userId: Int, amount: Double): Double {
-        val pending = recorder.effectiveInheritancePoint(userId, "previous")?.first
-        val persisted = inheritanceRepository
-            ?.findByTableAndNamespaceAndKey("inheritance", "inheritance_$userId", "previous")
-            ?.let { row ->
-                ((runCatching { jsonDecodeAny(row.value) }.getOrNull() as? List<*>)?.getOrNull(0) as? Number)
-                    ?.toDouble()
-            }
-        val next = (pending ?: persisted ?: 0.0) + amount
-        recorder.recordInheritancePointSet(userId, "previous", next, null)
-        return next
-    }
-
-    override fun pushUserLogs(userId: Int, lines: List<String>, type: String) {
-        lines.forEach { recorder.recordInheritanceLog(userId, it, type) }
-    }
-
-    override fun pushGeneralActionLog(generalId: Int, msg: String) {
-        val nationId = world.getGeneralById(generalId)?.nationId
-        world.pushLog(logDraft("general", "action", msg, generalId = generalId, nationId = nationId))
     }
 
     // ── DisasterWorldView ──────────────────────────────────────────────────────────────────────
@@ -1437,25 +1244,6 @@ class WorldActionContext(
     // setIsunited(value): InvaderEndingContext 시그니처.
     override fun setIsunited(value: Int) = world.setIsunited(value)
 
-    private fun effectiveRankValue(general: TurnGeneral, type: String): Int {
-        val base = (general.meta[type] as? Number)?.toInt() ?: 0
-        val column = RankColumn.byColumn(type) ?: return base
-        return when (val delta = recorder.rankDeltas(general.id)[column]) {
-            is RankDelta.Increment -> base + delta.value
-            is RankDelta.Set -> delta.value
-            null -> base
-        }
-    }
-
-    private fun markNewMessage(general: TurnGeneral) {
-        if ((general.meta["newmsg"] as? Number)?.toInt() == 1) return
-        val nextMeta = LinkedHashMap(general.meta)
-        nextMeta["newmsg"] = 1
-        val next = general.copy(meta = nextMeta)
-        recorder.diffGeneral(PerTurnOverlay.toLogicGeneral(general), PerTurnOverlay.toLogicGeneral(next))
-        world.updateGeneral(next)
-    }
-
     /** `$gameStor->refreshLimit = $gameStor->refreshLimit * factor`(php:65). meta 즉시 반영 —
      *  game_env refreshLimit 컬럼 flush/boot-load 는 isunited 와 동일 클래스의 별도 갭(LEDGER 백로그:
      *  game_env KV write seam 부재). [InMemoryTurnWorld.multiplyRefreshLimit] 참조. */
@@ -1625,25 +1413,3 @@ class WorldActionContext(
 private fun List<Int>.averageIntOrZero(): Double = if (isEmpty()) 0.0 else average()
 
 private fun List<Double>.averageDoubleOrZero(): Double = if (isEmpty()) 0.0 else average()
-
-private fun BettingInfo.toKvMap(): Map<String, Any?> =
-    linkedMapOf(
-        "id" to id,
-        "type" to type,
-        "name" to name,
-        "finished" to finished,
-        "selectCnt" to selectCnt,
-        "isExclusive" to isExclusive,
-        "reqInheritancePoint" to reqInheritancePoint,
-        "openYearMonth" to openYearMonth,
-        "closeYearMonth" to closeYearMonth,
-        "candidates" to candidates.mapKeys { it.key.toString() }.mapValues { (_, item) ->
-            linkedMapOf(
-                "title" to item.title,
-                "info" to item.info,
-                "isHtml" to item.isHtml,
-                "aux" to item.aux,
-            )
-        },
-        "winner" to winner,
-    )
