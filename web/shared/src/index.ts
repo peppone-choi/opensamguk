@@ -148,6 +148,7 @@ export {
 export {
   formatCompactMapTooltipMeta,
   isOwnedNationVisual,
+  UNOWNED_NATION_NAME,
   type CompactMapTooltipMetaInput,
 } from './nationVisual';
 export {

@@ -1355,9 +1355,9 @@ describe('shared WorldMapCanvas viewport interaction', () => {
     expect(onCountyHover).toHaveBeenLastCalledWith(
       expect.objectContaining({
         nationId: 0,
-        nationName: '미소유',
+        nationName: '무주',
         nationColor: undefined,
-        displayedOwnerNationName: '미소유',
+        displayedOwnerNationName: '무주',
       }),
       expect.any(Object),
     );

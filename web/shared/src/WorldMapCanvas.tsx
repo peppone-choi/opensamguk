@@ -52,7 +52,7 @@ import {
   type AdministrativeLayer,
   type AdministrativeOwnershipData,
 } from './provinceMap';
-import { isOwnedNationVisual } from './nationVisual';
+import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { countyGlossForJurisdiction } from './iso/countyNameGloss';
 import {
   buildStrategicMapScene, validStrategicBinding, validatedWaterControls, waterControlLabel,
@@ -2513,7 +2513,7 @@ export function WorldMapCanvas({
     const jurisdictionCommanderyMismatch = jurisdictionOwner != null && commanderyOwner != null
       && jurisdictionOwner.nationId !== commanderyOwner.nationId;
     const ownerName = (owner: { nationId: number; nationName?: string } | undefined) => (
-      owner ? (owner.nationName ?? (owner.nationId === 0 ? '미소유' : `세력 ${owner.nationId}`)) : undefined
+      owner ? (owner.nationName ?? (owner.nationId === 0 ? UNOWNED_NATION_NAME : `세력 ${owner.nationId}`)) : undefined
     );
     return {
       provinceId,

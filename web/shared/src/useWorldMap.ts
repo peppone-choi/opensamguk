@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { isOwnedNationVisual } from './nationVisual';
+import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
 import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
@@ -62,7 +62,6 @@ export type WorldMapState<P extends WorldMapPreview> =
     } | undefined;
   };
 
-const NEUTRAL_NAME = '공백지';
 
 export function worldTerrainUrl(baseTilesSha256: string | null, serverId?: string): string {
   const server = serverId ? `server=${encodeURIComponent(serverId)}&` : '';
@@ -84,7 +83,7 @@ export function buildWorldCities(preview: WorldMapPreview, badges = cityBadgesBy
       ...city,
       // 지도 이름표는 縣 이름만 — 동명이지 구분 郡 은 commanderyName 으로 따로 간다.
       mapLabel: city.name,
-      nationName: owned ? nation?.name : NEUTRAL_NAME,
+      nationName: owned ? nation?.name : UNOWNED_NATION_NAME,
       nationColor: owned ? nation?.color : undefined,
       cityBadges: (badges.get(city.id) ?? []).filter((badge) => badge.kind !== 'event'),
       interactive: true,
