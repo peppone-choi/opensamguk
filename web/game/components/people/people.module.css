@@ -73,3 +73,11 @@
 .empty { font-size: 13px; color: var(--text-2); margin: 0; padding: 16px 12px; }
 .captives { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .dispose { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+
+/* ---- 화면 조립(PeopleScreen) ---- */
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.peopleScreen { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; }
+.peopleScreenMobile { display: flex; flex-direction: column; gap: 8px; }
+.peopleColumns { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.peopleMain { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
+.peopleAside { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
