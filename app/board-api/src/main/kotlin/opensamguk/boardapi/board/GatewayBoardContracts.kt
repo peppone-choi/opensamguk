@@ -5,14 +5,21 @@ import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.time.Instant
 
-enum class GatewayBoardCategory {
-    NOTICE,
-    FREE,
-    SUGGESTION,
-    // ADR-LITE-049 13 — 전략·공략 / 서버 이야기 / 창작·일지 (V54)
-    STRATEGY,
-    SERVER,
-    CREATIVE,
+/** 기존 JSON category 문자열을 유지하는 동적 게시판 키. 존재/쓰기 권한은 DB 정의가 판정한다. */
+data class GatewayBoardCategory @com.fasterxml.jackson.annotation.JsonCreator(mode = com.fasterxml.jackson.annotation.JsonCreator.Mode.DELEGATING) constructor(
+    @get:com.fasterxml.jackson.annotation.JsonValue val name: String,
+) {
+    init { require(name.matches(Regex("[A-Z][A-Z0-9_]{0,31}"))) { "게시판 키가 올바르지 않습니다." } }
+
+    companion object {
+        val NOTICE = GatewayBoardCategory("NOTICE")
+        val FREE = GatewayBoardCategory("FREE")
+        val SUGGESTION = GatewayBoardCategory("SUGGESTION")
+        val STRATEGY = GatewayBoardCategory("STRATEGY")
+        val SERVER = GatewayBoardCategory("SERVER")
+        val CREATIVE = GatewayBoardCategory("CREATIVE")
+        @JvmStatic fun valueOf(value: String) = GatewayBoardCategory(value)
+    }
 }
 
 /** 목록 정렬 — latest(고정 글 우선·최신), popular(최근 7일 조회+댓글×5 가중), mine(내 글). */
@@ -55,6 +62,12 @@ data class GatewayBoardReportResponse(
 data class GatewayBoardCategoryCount(
     val category: GatewayBoardCategory,
     val count: Long,
+    val boardId: Long,
+    val key: String,
+    val name: String,
+    val sortOrder: Int,
+    val writable: Boolean,
+    val createdAt: Instant,
 )
 
 enum class GatewayBoardContentFormat {
@@ -141,4 +154,23 @@ data class GatewayBoardPageResponse(
     val size: Int,
     val totalElements: Long,
     val totalPages: Int,
+)
+
+
+data class CreateGatewayBoardDefinitionRequest(
+    @field:NotBlank @field:Size(max = 32) val key: String,
+    @field:NotBlank @field:Size(max = 80) val name: String,
+    val sortOrder: Int = 0,
+    val writable: Boolean = true,
+)
+
+data class UpdateGatewayBoardDefinitionRequest(
+    @field:Size(min = 1, max = 80) val name: String? = null,
+    val sortOrder: Int? = null,
+    val writable: Boolean? = null,
+)
+
+data class GatewayBoardDefinitionResponse(
+    val boardId: Long, val key: String, val name: String, val sortOrder: Int,
+    val writable: Boolean, val createdAt: Instant,
 )
