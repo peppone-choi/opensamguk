@@ -6,12 +6,14 @@ import opensamguk.common.constants.GameConst
 import opensamguk.gameapi.dto.ServerBasicInfoResponse
 import opensamguk.gameapi.dto.ServerGameInfo
 import opensamguk.gameapi.dto.ServerMeInfo
+import opensamguk.gameapi.dto.TurnLoopInfo
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
+import opensamguk.gameapi.read.TurnLoopHealth
 import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
@@ -50,10 +52,13 @@ class ServerBasicInfoController(
             ServerMeInfo(name = r.general.name, picture = r.general.picture, imageServer = r.general.imageServer)
         }
 
-        return ResponseEntity.ok(ServerBasicInfoResponse(game = game, me = me))
+        return ResponseEntity.ok().header("Cache-Control", "no-store")
+            .body(ServerBasicInfoResponse(game = game, me = me))
     }
 
     private fun buildGame(w: WorldStateReadEntity): ServerGameInfo {
+        val observedAt = Instant.now()
+        val turnLoop = TurnLoopHealth.observe(w, observedAt)
         val config = w.config
         // 표시 제목 우선순위: 시드된 config/meta title → scenario 리소스 read-time 해석(라이브 폴백) → 코드.
         val scenario = (config["title"] ?: w.meta["title"])?.toString()?.takeIf { it.isNotBlank() }
@@ -98,8 +103,13 @@ class ServerBasicInfoController(
                 w.catchUp,
                 (w.meta["lastTurnTime"] as? String)?.let { runCatching { Instant.parse(it) }.getOrNull() },
                 w.tickSeconds,
-                Instant.now(),
+                observedAt,
             ),
+            lastTurnAt = turnLoop.lastTurnAt,
+            nextTurnAt = turnLoop.nextTurnAt,
+            serverTime = observedAt.toString(),
+            lastTickExecutedAt = turnLoop.lastTickExecutedAt,
+            turnLoop = TurnLoopInfo(turnLoop.state, turnLoop.staleSeconds),
         )
     }
 

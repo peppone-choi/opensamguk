@@ -18,6 +18,7 @@ from pathlib import Path
 from external_health_contract import (
     MAX_BODY_BYTES, MISSED_SCHEDULE_SECONDS, classify_http, classify_peer_runs, parse_time, transition,
 )
+from production_ops_contract import deployment_failure_streak
 
 URLS = {
     "origin": "https://sam.peppone.dev/health",
@@ -36,6 +37,16 @@ MESSAGES = {
     "peer_invalid_run": "상대 감시기 실행 상태 이상",
     "peer_api_unavailable": "감시 실행 이력 조회 실패",
     "state_unavailable": "이전 감시 상태를 읽지 못함",
+    "deploy_consecutive_failures": "공유 스택 배포가 두 번 이상 연속 실패했습니다",
+    "deployment_history_unavailable": "배포 실행 이력 조회 실패",
+    "maintenance_orphaned": "생산 작업 잠금이 없는데 maintenance가 drained입니다. 의도한 창인지 확인이 필요합니다",
+    "maintenance_unavailable": "유지보수 상태 조회 실패",
+    "ops_monitor_not_started": "VM 운영 감시기 일정 실행 없음",
+    "ops_monitor_schedule_missing": "VM 운영 감시기 일정 누락·지연",
+    "ops_monitor_cancelled": "VM 운영 감시기 실행 취소",
+    "ops_monitor_failed": "VM 운영 감시기 실행 실패",
+    "ops_monitor_invalid_run": "VM 운영 감시기 실행 상태 이상",
+    "ops_monitor_api_unavailable": "VM 운영 감시기 실행 이력 조회 실패",
 }
 
 
@@ -118,6 +129,10 @@ def public_get(url: str) -> tuple[int | None, bytes | None, str | None]:
 def peer_result(mode: str, now: datetime, run_id: int) -> str | None:
     peer_mode = "watchdog" if mode == "probe" else "probe"
     peer = WORKFLOWS[peer_mode]
+    return scheduled_workflow_result(peer, peer_mode, now, run_id)
+
+
+def scheduled_workflow_result(peer: str, peer_mode: str, now: datetime, run_id: int) -> str | None:
     try:
         runs = github_api(f"/repos/{repository()}/actions/workflows/{peer}/runs?event=schedule&per_page=20")["workflow_runs"]
         if not isinstance(runs, list):
@@ -140,6 +155,23 @@ def peer_result(mode: str, now: datetime, run_id: int) -> str | None:
         return finding
     except (KeyError, ValueError, OSError, http.client.HTTPException, urllib.error.URLError, TimeoutError):
         return "peer_api_unavailable"
+
+
+def operations_heartbeat_result(now: datetime, run_id: int) -> str | None:
+    finding = scheduled_workflow_result("production-ops-monitor.yml", "ops", now, run_id)
+    return finding.replace("peer_", "ops_monitor_", 1) if finding else None
+
+
+def deployment_result() -> str | None:
+    try:
+        runs = github_api(f"/repos/{repository()}/actions/workflows/deploy.yml/runs?branch=main&status=completed&per_page=100")["workflow_runs"]
+        if not isinstance(runs, list):
+            raise ValueError()
+        streak = deployment_failure_streak(runs)
+        print(f"deployment consecutive failures: {streak}")
+        return "deploy_consecutive_failures" if streak >= 2 else None
+    except (KeyError, ValueError, OSError, http.client.HTTPException):
+        return "deployment_history_unavailable"
 
 
 def read_previous(path: Path) -> tuple[list[str], bool, bool]:
@@ -197,16 +229,23 @@ def deliver(body: dict) -> bool:
         print("::warning::existing alert webhook is not configured; alert NOT delivered")
         return False
     data = json.dumps(body, ensure_ascii=False, separators=(",", ":")).encode()
+    failure = "unknown"
     for attempt in range(3):
         try:
             request = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
             with urllib.request.urlopen(request, timeout=10):
                 return True
-        except Exception:
-            # Exception 문자열에 webhook URL이 섞일 수 있으므로 절대 출력하지 않는다.
-            if attempt < 2:
-                time.sleep(2 * (attempt + 1))
-    print("::error::alert dispatch failed; alert NOT delivered")
+        except urllib.error.HTTPError as error:
+            failure = f"HTTP {error.code}"
+            error.close()
+            if 400 <= error.code < 500 and error.code != 429:
+                break
+        except Exception as error:
+            # 예외 문자열에는 웹훅 URL이 섞일 수 있다. 타입 이름만 출력한다.
+            failure = type(error).__name__
+        if attempt < 2:
+            time.sleep(2 * (attempt + 1))
+    print(f"::error::alert dispatch failed ({failure}); alert NOT delivered")
     return False
 
 
@@ -228,6 +267,9 @@ def execute(mode: str, current_run_id: int) -> int:
             code = classify_http(endpoint, status, response, transport, now)
             if code:
                 findings.append(code)
+        for finding in (deployment_result(), operations_heartbeat_result(now, current_run_id)):
+            if finding:
+                findings.append(finding)
     peer = peer_result(mode, now, current_run_id)
     if peer:
         findings.append(peer)

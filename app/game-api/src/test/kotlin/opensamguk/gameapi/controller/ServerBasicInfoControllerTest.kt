@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
 import org.springframework.test.web.servlet.request.RequestPostProcessor
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.header
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import java.time.Instant
 import java.util.Optional
@@ -81,7 +82,8 @@ class ServerBasicInfoControllerTest {
         `when`(world.findById(0)).thenReturn(Optional.of(WorldStateReadEntity(
             id = 0, scenarioCode = "scenario_1010", currentYear = 200, currentMonth = 3,
             tickSeconds = 3600,
-            meta = mapOf("lastTurnTime" to next.minusSeconds(3600).toString()),
+            meta = mapOf("lastTurnTime" to next.minusSeconds(3600).toString(),
+                         "lastTickExecutedAt" to now.minusSeconds(10).toString()),
             catchUp = plan.toMeta(),
         )))
 
@@ -90,6 +92,11 @@ class ServerBasicInfoControllerTest {
             .andExpect(jsonPath("$.game.catchUp.active").value(true))
             .andExpect(jsonPath("$.game.catchUp.multiplier").value(2))
             .andExpect(jsonPath("$.game.catchUp.initialBacklogSeconds").value(72000))
+            .andExpect(jsonPath("$.game.lastTurnAt").value(next.minusSeconds(3600).toString()))
+            .andExpect(jsonPath("$.game.nextTurnAt").value(next.toString()))
+            .andExpect(jsonPath("$.game.lastTickExecutedAt").value(now.minusSeconds(10).toString()))
+            .andExpect(jsonPath("$.game.turnLoop.state").value("CATCHING_UP"))
+            .andExpect(header().string("Cache-Control", "no-store"))
     }
 
     @Test

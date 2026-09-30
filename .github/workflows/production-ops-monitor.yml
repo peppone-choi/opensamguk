@@ -1,0 +1,52 @@
+name: Production Ops Monitor
+
+on:
+  schedule:
+    - cron: '4-59/5 * * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: production-ops-monitor
+  cancel-in-progress: false
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  monitor:
+    if: github.ref == 'refs/heads/main'
+    runs-on: [self-hosted, Linux, X64, gcp-prod]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find previous secret-free state
+        id: previous
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 tools/ops/production_ops_monitor.py find-state
+      - name: Download previous state
+        if: steps.previous.outputs.run_id != ''
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: external-health-state-ops
+          path: previous-state
+          run-id: ${{ steps.previous.outputs.run_id }}
+          github-token: ${{ github.token }}
+      - name: Read maintenance and alert without releasing it
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PREVIOUS_STATE_EXPECTED: ${{ steps.previous.outputs.run_id != '' }}
+          STATE_LOOKUP_ERROR: ${{ steps.previous.outcome == 'failure' || steps.previous.outputs.lookup_error == 'true' }}
+          DAEMON_ALERT_WEBHOOK_URL: ${{ secrets.DAEMON_ALERT_WEBHOOK_URL }}
+        run: python3 tools/ops/production_ops_monitor.py execute
+      - name: Save secret-free state
+        if: always() && hashFiles('current-state/monitor-state.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: external-health-state-ops
+          path: current-state/monitor-state.json
+          retention-days: 7
+          if-no-files-found: error

@@ -99,6 +99,8 @@ class V65GameEventMigrationTest {
                 assertTrue(error.mostSpecificCause.message?.contains(constraint) == true,
                     "expected $constraint, got ${error.mostSpecificCause.message}")
             }
+            // R-01: engine writer emits this valid domain event, but the historical V65 CHECK rejects it.
+            rejectedBy("game_event_public_ck") { insert("7".repeat(64), 4, "PUBLIC", "WORLD", "server.catchUpFinished", state = "PUBLISHED") }
             rejectedBy("game_event_key_uq") { insert(keyA, 4, "PUBLIC", "WORLD", "yuedan.announced", state = "PUBLISHED") }
             rejectedBy("game_event_order_uq") { insert("d".repeat(64), 0, "PUBLIC", "WORLD", "yuedan.announced", state = "PUBLISHED") }
             rejectedBy("game_event_public_ck") { insert("e".repeat(64), 4, "PUBLIC", "WORLD", "income.monthly", state = "PUBLISHED") }

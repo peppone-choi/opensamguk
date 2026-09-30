@@ -10,6 +10,7 @@ import tempfile
 import unittest
 import urllib.error
 from contextlib import redirect_stdout
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from unittest.mock import patch
 
@@ -18,11 +19,18 @@ import external_health_run as runner  # noqa: E402
 
 
 def responses(broken=False):
+    last_turn = datetime.now(timezone.utc) - timedelta(minutes=5)
+    game = {"game": {"status": "OPEN", "year": 190, "month": 1, "turnPhase": 1, "turnTerm": 10,
+                     "lastTurnAt": last_turn.isoformat(),
+                     "lastTickExecutedAt": last_turn.isoformat(),
+                     "serverTime": datetime.now(timezone.utc).isoformat(),
+                     "nextTurnAt": (last_turn + timedelta(minutes=10)).isoformat(),
+                     "turnLoop": {"state": "RUNNING", "staleSeconds": 300}}, "me": None}
     return {
         runner.URLS["origin"]: (200, b'{"status":"up","nginx":"ok"}', None),
         runner.URLS["gateway"]: (200, b'{"status":"UP","app":"web-gateway"}', None),
         runner.URLS["game_api"]: (502, b"", None) if broken else
-        (200, b'{"game":{"status":"OPEN","year":190,"month":1,"turnPhase":1,"turnTerm":10},"me":null}', None),
+        (200, json.dumps(game).encode(), None),
     }
 
 
@@ -48,6 +56,8 @@ class ExecuteTest(unittest.TestCase):
         with patch.dict(os.environ, self.env, clear=True), \
                 patch.object(runner, "public_get", side_effect=lambda url: reply[url]), \
                 patch.object(runner, "peer_result", return_value=None), \
+                patch.object(runner, "deployment_result", return_value=None), \
+                patch.object(runner, "operations_heartbeat_result", return_value=None), \
                 patch.object(runner, "deliver", return_value=delivered) as send, \
                 redirect_stdout(output):
             status = runner.execute("probe", 200)
@@ -104,6 +114,8 @@ class ExecuteTest(unittest.TestCase):
         with patch.dict(os.environ, env, clear=True), \
                 patch.object(runner, "public_get", side_effect=lambda url: reply[url]), \
                 patch.object(runner, "peer_result", return_value=None), \
+                patch.object(runner, "deployment_result", return_value=None), \
+                patch.object(runner, "operations_heartbeat_result", return_value=None), \
                 patch.object(runner, "deliver", return_value=True) as send, \
                 redirect_stdout(io.StringIO()):
             self.assertEqual(0, runner.execute("probe", 200))
@@ -165,6 +177,18 @@ class ArtifactTest(unittest.TestCase):
 
 
 class SecretSafetyTest(unittest.TestCase):
+    def test_http_failure_prints_only_status_code(self):
+        output = io.StringIO()
+        secret_url = "https://webhook.invalid/secret-sentinel"
+        with patch.dict(os.environ, {"DAEMON_ALERT_WEBHOOK_URL": secret_url}), \
+                patch.object(runner.urllib.request, "urlopen",
+                             side_effect=urllib.error.HTTPError(secret_url, 404, "secret-sentinel", {}, None)) as send, \
+                redirect_stdout(output):
+            self.assertFalse(runner.deliver({"content": "test"}))
+        self.assertEqual(1, send.call_count)
+        self.assertIn("HTTP 404", output.getvalue())
+        self.assertNotIn("secret-sentinel", output.getvalue())
+
     def test_webhook_failure_does_not_print_exception_or_url(self):
         output = io.StringIO()
         with patch.dict(os.environ, {"DAEMON_ALERT_WEBHOOK_URL": "https://webhook.invalid/secret-sentinel"}), \

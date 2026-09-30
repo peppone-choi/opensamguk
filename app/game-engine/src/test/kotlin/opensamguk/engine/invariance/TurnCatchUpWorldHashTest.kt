@@ -23,5 +23,8 @@ class TurnCatchUpWorldHashTest {
         assertEquals(baseline, WorldStateBaseline.sha256(world))
         world.setCatchUp(world.getState().catchUp?.copy(active = false))
         assertEquals(baseline, WorldStateBaseline.sha256(world))
+        world.setGameEnvValue("lastTickExecutedAt", now.toString())
+        assertEquals(baseline, WorldStateBaseline.sha256(world),
+                     "성공 턴 벽시계는 기존 게임 상태 정규화에서 제외된다")
     }
 }

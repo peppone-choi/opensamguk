@@ -11,6 +11,7 @@ ENDPOINTS = ("origin", "gateway", "game_api")
 SCHEDULE_SECONDS = 300
 MISSED_SCHEDULE_SECONDS = SCHEDULE_SECONDS * 3
 MAX_BODY_BYTES = 65536
+MAX_HEALTHY_TURN_AGE_SECONDS = 25 * 60 * 60
 
 
 def parse_time(value: Any) -> datetime | None:
@@ -69,18 +70,43 @@ def classify_http(
     if not (game["year"] > 0 and 1 <= game["month"] <= 12 and 1 <= game["turnPhase"] <= 3
             and game["turnTerm"] >= 0):
         return "game_api_invalid_response"
-    # 이 필드는 현행 공개 배포에는 없다. 존재할 때만 정지 판정을 한다.
-    turn_time = game.get("lastTurnTime")
-    if turn_time is None or game["status"] != "OPEN" or game["turnTerm"] == 0:
-        return None
-    last_turn = parse_time(turn_time)
-    if last_turn is None:
+    turn_loop = game.get("turnLoop")
+    if not isinstance(turn_loop, dict) or turn_loop.get("state") not in {"RUNNING", "CATCHING_UP", "WAITING", "PAUSED", "STALLED"}:
         return "game_api_invalid_response"
-    age = (now - last_turn).total_seconds()
+    if "staleSeconds" not in turn_loop or any(key not in game for key in (
+            "serverTime", "lastTurnAt", "nextTurnAt", "lastTickExecutedAt")):
+        return "game_api_invalid_response"
+    stale_seconds = turn_loop.get("staleSeconds")
+    if stale_seconds is not None and (type(stale_seconds) is not int or stale_seconds < 0):
+        return "game_api_invalid_response"
+    turn_time = game.get("lastTurnAt")
+    next_time = game.get("nextTurnAt")
+    executed_time = game.get("lastTickExecutedAt")
+    server_time = parse_time(game.get("serverTime"))
+    if server_time is None or abs((now - server_time).total_seconds()) > SCHEDULE_SECONDS:
+        return "game_api_invalid_response"
+    if (turn_time is not None and parse_time(turn_time) is None
+            or next_time is not None and parse_time(next_time) is None
+            or executed_time is not None and parse_time(executed_time) is None):
+        return "game_api_invalid_response"
+    if game["status"] != "OPEN" or game["turnTerm"] == 0:
+        return None if turn_loop["state"] == "PAUSED" else "game_api_invalid_response"
+    if turn_loop["state"] == "STALLED":
+        return "turn_stalled"
+    if turn_loop["state"] == "WAITING":
+        next_turn = parse_time(next_time)
+        return None if executed_time is None and next_turn is not None and next_turn > now else "game_api_invalid_response"
+    executed = parse_time(executed_time)
+    if executed is None or stale_seconds is None or turn_loop["state"] == "PAUSED":
+        return "game_api_invalid_response"
+    age = (now - executed).total_seconds()
     if age < -SCHEDULE_SECONDS:
         return "game_api_invalid_response"
-    if age > 3 * game["turnTerm"] * 60:
+    if age > min(3 * game["turnTerm"] * 60, MAX_HEALTHY_TURN_AGE_SECONDS):
         return "turn_stalled"
+    catch_up = game.get("catchUp")
+    if turn_loop["state"] == "CATCHING_UP" and (not isinstance(catch_up, dict) or catch_up.get("active") is not True):
+        return "game_api_invalid_response"
     return None
 
 

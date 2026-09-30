@@ -27,6 +27,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.dao.DataAccessException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
@@ -57,6 +58,42 @@ class JdbcFlushExecutorIT {
     private lateinit var dataSource: DataSource
     private lateinit var jdbc: NamedParameterJdbcTemplate
     private lateinit var executor: JdbcFlushExecutor
+
+    @Test
+    fun `successful world tick wall time is atomic and intake flush cannot refresh it`() {
+        val original = jdbc.queryForMap(
+            "SELECT meta::text AS meta, current_year, current_month, current_phase, isunited FROM world_state WHERE id = 1",
+            MapSqlParameterSource())
+        fun wallTime(): String? = jdbc.queryForObject(
+            "SELECT meta->>'lastTickExecutedAt' FROM world_state WHERE id = 1",
+            MapSqlParameterSource(), String::class.java)
+        fun tickPayload(failing: Boolean = false) = testFlushPayload(
+            worldId = WorldId(1),
+            worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1,
+                                          "world_tick_execution" to true),
+            logEntries = if (failing) listOf(LogRow(
+                scope = "INVALID_SCOPE", category = "HISTORY", text = "rollback fixture",
+                year = 190, month = 1, generalId = null, nationId = null, meta = linkedMapOf(),
+            )) else emptyList(),
+        )
+        try {
+            jdbc.update("UPDATE world_state SET meta = jsonb_build_object('lastTickExecutedAt', '2000-01-01T00:00:00Z') WHERE id = 1",
+                        MapSqlParameterSource())
+            assertFailsWith<DataAccessException> { executor.flush(tickPayload(failing = true)) }
+            assertEquals("2000-01-01T00:00:00Z", wallTime(), "후속 INSERT 실패가 벽시계 UPDATE도 롤백한다")
+            val before = Instant.now()
+            executor.flush(tickPayload())
+            val committed = wallTime()!!
+            assertEquals(false, Instant.parse(committed).isBefore(before.minusSeconds(1)))
+            executor.flush(testFlushPayload(worldId = WorldId(1),
+                worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1)))
+            assertEquals(committed, wallTime(), "일반 flush는 정지된 세계 턴을 정상으로 위장하지 않는다")
+        } finally {
+            jdbc.update("UPDATE world_state SET meta=CAST(:meta AS jsonb), current_year=:current_year, " +
+                        "current_month=:current_month, current_phase=:current_phase, isunited=:isunited WHERE id=1",
+                        MapSqlParameterSource(original))
+        }
+    }
 
     @Test
     fun `imperial death state survives selective world meta flush and cold decode`() {
