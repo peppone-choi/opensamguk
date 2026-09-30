@@ -1,0 +1,26 @@
+/* 요청 카드 — 보드 v31system request_card(): 초상 30 × 42 · 종류 칩 · 보낸 사람 · 기한 · 무엇 · 거절 결과 · [거절 | 수락] 44. */
+.card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md, 4px);
+  color: var(--text);
+}
+.head { display: flex; gap: 10px; padding: 10px 12px; min-width: 0; }
+.portrait { flex: 0 0 auto; width: 30px; height: 42px; object-fit: cover; border-radius: 2px; }
+.body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1 1 auto; }
+.line { display: flex; align-items: center; gap: 6px; min-width: 0; flex-wrap: wrap; }
+.who { font-family: var(--font-serif); font-weight: 700; font-size: 14px; min-width: 0; overflow-wrap: anywhere; }
+.due { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--muted); white-space: nowrap; }
+.what { font-size: 13px; overflow-wrap: anywhere; }
+.consequence { font-size: 12px; color: var(--rust-2); }
+.answers { display: flex; gap: 6px; padding: 0 12px 10px; }
+.answers > * { flex: 1 1 0; min-width: 0; }
+.answer { min-height: var(--row-h, 44px); }
+.done { display: flex; justify-content: flex-end; padding: 0 12px 10px; }
+.foot { padding: 0 12px 10px; font-size: 13px; }
+
+/* 좁은 폭(서랍 380): 기한은 둘째 줄로 내린다. */
+.compact .due { margin-left: 0; flex-basis: 100%; }
