@@ -1,6 +1,8 @@
 // 탑다운 지도 렌더러: 조각 받기 → 지형 층(WebGL2), 이름표 · 깃발 · 1칸 거점 · 내 위치(2D 겹층).
 // 그릴 일이 있을 때만 그린다(가만히 있으면 프레임 0).
 import { chunksForRect, chunkKey, ChunkLoader } from './chunks';
+import { isOwnedNationVisual } from '../../nationVisual';
+import { planChunks } from './streaming';
 import { viewLevel, visibleCellRect, cellToScreen } from './camera';
 import { FootprintIndex, hitTest, type HitResult, type SpriteHit } from './hitTest';
 import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
@@ -291,16 +293,16 @@ export class TopdownRenderer {
     const rect = visibleCellRect(this.camera, this.viewport, manifest.shape);
     const wanted = chunksForRect(rect, manifest.chunkSize, manifest.shape, 1);
     const visible = new Set(chunksForRect(rect, manifest.chunkSize, manifest.shape, 0).map((c) => chunkKey(c.cx, c.cy)));
-    for (const { cx, cy } of wanted) {
-      const key = chunkKey(cx, cy);
-      const data = this.loader!.peek(cx, cy);
-      if (data) {
-        if (this.uploaded.get(key) !== data) {
-          this.terrain!.putChunk(cx, cy, data);
-          this.uploaded.set(key, data);
-        }
-        continue;
-      }
+    const plan = planChunks(wanted, {
+      peek: (cx, cy) => this.loader!.peek(cx, cy),
+      onGpu: (cx, cy) => this.terrain!.hasChunk(cx, cy),
+      uploaded: (key) => this.uploaded.get(key),
+    });
+    for (const { cx, cy, key, data } of plan.upload) {
+      this.terrain!.putChunk(cx, cy, data);
+      this.uploaded.set(key, data);
+    }
+    for (const { cx, cy } of plan.request) {
       this.loader!.request(cx, cy).then(() => this.requestFrame(), () => undefined);
     }
     this.terrain!.touch(visible);
@@ -334,8 +336,9 @@ export class TopdownRenderer {
     if (level === 'county') {
       for (const city of places.cities) {
         if (!city.site || !inView(city.cell[0], city.cell[1], 2) || !this.sites) continue;
-        const nation = this.nationById.get(this.nationOfProvince[city.provinceIndex] ?? 0);
-        const sprite = this.cached(`site|${city.site}|${nation?.id ?? 0}`, () => drawSite(this.sites!, city.site!, nation?.color ?? null));
+        const nation = this.ownedNation(city.provinceIndex);
+        const colour = nation?.color ?? null;
+        const sprite = this.cached(`site|${city.site}|${colour ?? 'none'}`, () => drawSite(this.sites!, city.site!, colour));
         const at = cellToScreen({ col: city.cell[0], row: city.cell[1] }, cam, this.viewport);
         ctx.drawImage(sprite, at.x, at.y, cam.zoom, cam.zoom);
       }
@@ -345,9 +348,10 @@ export class TopdownRenderer {
         if (level === 'commandery' && !city.isSeat && city.level !== 3) continue;
         const fp = city.footprint;
         if (!inView(fp.originCol, fp.originRow, 4)) continue;
-        const nation = this.nationById.get(this.nationOfProvince[city.provinceIndex] ?? 0);
+        const nation = this.ownedNation(city.provinceIndex);
         if (!nation) continue;
-        const flag = this.cached(`flag|fringe|${nation.id}`, () => drawFlag(this.flags!, 'fringe', nation.color, [...nation.name][0] ?? '', FLAG_PX / 16, LABEL_FONT));
+        const letter = [...nation.name][0] ?? '';
+        const flag = this.cached(`flag|fringe|${nation.color}|${letter}`, () => drawFlag(this.flags!, 'fringe', nation.color, letter, FLAG_PX / 16, LABEL_FONT));
         const corner = cellToScreen({ col: fp.originCol, row: fp.originRow }, cam, this.viewport);
         const x = corner.x - FLAG_PX * 0.08;
         const y = corner.y - FLAG_PX * 0.72;
@@ -373,6 +377,12 @@ export class TopdownRenderer {
       sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
     }
     this.sprites = sprites;
+  }
+
+  /** 지붕 색과 같은 규칙: id > 0이고 #rrggbb 색인 세력만 깃발 · 거점에 칠한다. */
+  private ownedNation(provinceIndex: number): WorldNation | null {
+    const nation = this.nationById.get(this.nationOfProvince[provinceIndex] ?? 0);
+    return nation && isOwnedNationVisual(nation.id, nation.color) ? nation : null;
   }
 
   private cached(key: string, make: () => OffscreenCanvas): OffscreenCanvas {

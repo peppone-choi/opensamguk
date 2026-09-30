@@ -246,6 +246,14 @@ export function TopdownMap(props: TopdownMapProps) {
     g.raf = requestAnimationFrame(glide);
   };
 
+  // 취소(스크롤 가로채기 · 시스템 제스처)는 누르기로 치지 않는다: 손가락만 지우고 끝낸다
+  const onPointerCancel = (event: React.PointerEvent<HTMLDivElement>) => {
+    pointers.current.delete(event.pointerId);
+    gesture.current.inertia.stop();
+    const cam = cameraRef.current;
+    if (cam && pointers.current.size === 0) apply({ center: cam.center, zoom: nearestStop(cam.zoom, zoomStops(viewportRef.current, shape)) });
+  };
+
   const onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
     const action = keyAction(event.key);
     const cam = cameraRef.current;
@@ -278,7 +286,7 @@ export function TopdownMap(props: TopdownMapProps) {
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
+      onPointerCancel={onPointerCancel}
       onKeyDown={onKeyDown}
     >
       <canvas ref={glRef} style={fill} />
