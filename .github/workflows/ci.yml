@@ -617,6 +617,9 @@ jobs:
           # 브라우저만 받는다(7s). 러너에 Chrome 이 깔려 있어 공유 라이브러리가 있다 — --with-deps 의 apt 는 5분이 넘었다.
           corepack pnpm exec playwright install chromium
           if [ "${{ matrix.app }}" = game ]; then ready=http://127.0.0.1:3001/game/smoke-ready; else ready=http://127.0.0.1:3000/smoke-ready; fi
+          # 게이트웨이 앱 tsconfig 는 e2e 를 뺀다 — Docker 빌드엔 web/game 이 없어 parity 상대 경로가 TS2307 로 깨진다.
+          # 그래서 e2e 타입 검사는 여기서 따로 한다(Playwright 는 타입을 검사하지 않는다).
+          if [ "${{ matrix.app }}" = gateway ]; then corepack pnpm exec tsc --noEmit -p tsconfig.e2e.json; fi
           corepack pnpm start > "$RUNNER_TEMP/next-start.log" 2>&1 &
           for _ in $(seq 1 90); do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$ready" || true)
