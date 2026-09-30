@@ -635,7 +635,9 @@
 }
 
 /* ---- 사유 시트(ReasonSheet) 넓힌 내용 — 데스크톱 폭 320 ---- */
-.os-reason__tip--rich { max-width: 320px; width: max-content; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; border-color: var(--bronze-dim); }
+/* hidden 이 이겨야 한다 — display 를 주면 숨긴 시트가 모바일 화면 아래에 떠서 누르기를 가로챈다(e2e 로 잡음). */
+.os-reason__tip[hidden] { display: none !important; }
+.os-reason__tip--rich { max-width: 320px; width: max-content; padding: 10px 12px; border-color: var(--bronze-dim); }
 .os-reason__tip:not([hidden]) { display: flex; flex-direction: column; gap: 6px; }
 .os-reason__title { font-size: 13px; font-weight: 700; color: var(--rust-2); }
 .os-reason__body { font-size: 12px; line-height: 1.5; color: var(--text-2); }
