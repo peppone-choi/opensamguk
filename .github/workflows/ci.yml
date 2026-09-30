@@ -595,6 +595,11 @@ jobs:
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         run: corepack pnpm test
+      # 2026-09-30 K10: 화면 품질 도구(tools/web)의 적색 프로브. 새 잡을 만들면 필수 검사 목록을 고쳐야 하므로
+      # web/game 의 @playwright/test 가 설치된 이 행에 붙인다. 브라우저는 러너 이미지의 시스템 Chrome 이다.
+      - name: Test web quality tools (tools/web)
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: node --test tools/web/measure-pages.test.mjs tools/web/board-lint.test.mjs
       # 2026-09-30: 데스크톱 · 모바일은 같은 게임이다(ADR-LITE-049 2026-09-26 개정 — 화면은 데스크톱 · 모바일
       # e2e 를 모두 요구한다). 백엔드 없이 도는 spec 만 web/game/e2e/smoke/ 에 두고(합성 자료는 page.route 로
       # 가로챈다) 위에서 만든 빌드를 next start 로 띄워 desktop · mobile 두 Playwright 프로젝트로 돌린다.
@@ -667,6 +672,12 @@ jobs:
         run: python3 -m unittest discover -s tools/ci -p 'test_web_copy_lint.py'
       - name: Check player-facing web copy
         run: python3 tools/ci/web_copy_lint.py
+      # 모바일도 같은 게임(ADR-LITE-049 09-26 개정): title 전용 정보 · 네이티브 disabled · 흐리기 비활성 ·
+      # 세 단(768 · 1200) 밖 브레이크포인트를 늘리지 못하게 막는 래칫. 고치면 기준선을 같은 변경에서 낮춘다.
+      - name: Test web UI lint
+        run: python3 -m unittest discover -s tools/ci -p 'test_web_ui_lint.py'
+      - name: Check web UI mobile parity ratchet
+        run: python3 tools/ci/web_ui_lint.py
       - name: Check active turn profile defaults
         run: python3 -m unittest discover -s tools/ci -p 'test_default_turn_profile.py'
       - name: Check reserved game server IDs
