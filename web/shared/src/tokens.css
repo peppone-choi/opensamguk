@@ -103,6 +103,41 @@
   --transition-fast: 150ms ease;
   --transition-base: 250ms ease;
   --motion-turn: 300ms;
+
+  /* ---- v3.1 틀 치수 · 화면 폭 · 층 · 떠 있는 것의 그림자 ----
+     정본: docs/design/ui-v3/v31system.py(LAYOUT · BP · Z · SHADOW), 보드 V31SystemTokens · V31SystemShell.
+     화면 폭은 3단뿐이다: 모바일 < 768 ≤ 태블릿 < 1200 ≤ 데스크톱. @media 안에서는 CSS 변수를 못 쓰므로
+     미디어 조건은 breakpoints.ts(BREAKPOINTS · MEDIA)를 쓰고, 아래 --bp-* 는 같은 값을 적어 둔 참고값이다. */
+  --bp-tablet: 768px;
+  --bp-desktop: 1200px;
+  --header-h: 48px;
+  --header-h-mobile: 56px;
+  --rail-w: 56px;
+  --tabbar-h: 64px;
+  --turns-w: 336px;
+  --turns-w-tablet: 288px;
+  --flow-w: 576px;
+  --flow-w-tablet: 480px;
+  --flow-list-w: 240px;
+  --flow-args-w: 336px;
+  --drawer-w: 400px;
+  --drawer-w-tablet: 360px;
+  --sheet-peek: 124px;
+  --card-float-w: 320px;
+  --row-h: 44px;
+  --row-h-comfy: 52px;
+  --z-map: 0;
+  --z-map-mark: 10;
+  --z-map-ctrl: 20;
+  --z-float: 30;
+  --z-drawer: 40;
+  --z-sheet: 50;
+  --z-dialog: 60;
+  --z-toast: 70;
+  --shadow-float: 0 10px 28px rgba(0, 0, 0, 0.5);
+  --shadow-pop: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --shadow-sheet: 0 -12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-dialog: 0 24px 64px rgba(0, 0, 0, 0.6);
 }
 
 @media (prefers-reduced-motion: reduce) {
