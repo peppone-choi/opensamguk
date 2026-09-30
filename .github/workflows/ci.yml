@@ -586,6 +586,31 @@ jobs:
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         run: corepack pnpm test
+      # 2026-09-30: 데스크톱 · 모바일은 같은 게임이다(ADR-LITE-049 2026-09-26 개정 — 화면은 데스크톱 · 모바일
+      # e2e 를 모두 요구한다). 백엔드 없이 도는 spec 만 web/game/e2e/smoke/ 에 두고(합성 자료는 page.route 로
+      # 가로챈다) 위에서 만든 빌드를 next start 로 띄워 desktop · mobile 두 Playwright 프로젝트로 돌린다.
+      # 실스택 spec(e2e/ 바로 아래)은 유주 증거 잡이 돈다. smoke 가 비면 Playwright 가 「No tests found」로 실패한다.
+      - name: Smoke e2e web/game (desktop · mobile)
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        working-directory: web/game
+        env:
+          E2E_GAME_URL: http://127.0.0.1:3001
+        run: |
+          corepack pnpm exec playwright install --with-deps chromium
+          corepack pnpm start > "$RUNNER_TEMP/next-start.log" 2>&1 &
+          for _ in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3001/game/smoke-ready || true)
+            [ "$code" != "000" ] && break
+            sleep 1
+          done
+          corepack pnpm exec playwright test e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+      - name: Upload smoke e2e results
+        if: failure() && matrix.app == 'game' && needs.changes.outputs.web == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-game-smoke-e2e
+          path: web/game/test-results
+          retention-days: 7
 
   # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.
   # 위 web 잡은 build 만 돌고, web/game·web/gateway 의 vitest include 는 각 앱 디렉터리
