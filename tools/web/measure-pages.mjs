@@ -389,24 +389,31 @@ return JSON.stringify({ tool: 'tools/web/measure-pages.mjs --print-snippet', mod
 
 // ---- 한 번 적재 ----
 
-async function measureOnce({ browser, cdpMode, opts, AxeBuilder, pagePath, profile, throttle, runIndex }) {
+async function measureOnce(args) {
+  const { browser, cdpMode } = args;
+  const context = cdpMode ? browser.contexts()[0] : await browser.newContext(PROFILES[args.profile]);
+  const page = await context.newPage();
+  try {
+    return await measureInPage({ ...args, context, page });
+  } catch (e) {
+    // 사용자 브라우저(CDP)에 우리 탭을 남기지 않는다 — 어느 단계에서 실패해도 우리 탭만 닫는다.
+    await page.close().catch(() => {});
+    if (!cdpMode) await context.close().catch(() => {});
+    throw e;
+  }
+}
+
+async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, throttle, runIndex, context, page }) {
   const url = `${opts.base}${pagePath}`;
   const prof = PROFILES[profile];
-  let context; let page;
-  if (cdpMode) {
-    context = browser.contexts()[0];
-    page = await context.newPage();
-  } else {
-    context = await browser.newContext(prof);
-    page = await context.newPage();
-  }
   const cdp = await context.newCDPSession(page);
   await cdp.send('Network.enable');
   if (cdpMode) {
     // 사용자의 브라우저: 캐시만 끄고 화면 크기 · 터치 · UA 를 이 탭에만 흉내 낸다.
     await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
     await cdp.send('Emulation.setDeviceMetricsOverride', { width: prof.viewport.width, height: prof.viewport.height, deviceScaleFactor: prof.deviceScaleFactor, mobile: prof.isMobile });
-    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: prof.hasTouch, maxTouchPoints: prof.hasTouch ? 5 : 0 });
+    // 끌 때 maxTouchPoints 0 을 보내면 Chrome 이 「1–16」으로 거부한다 — 끌 때는 enabled 만 보낸다.
+    await cdp.send('Emulation.setTouchEmulationEnabled', prof.hasTouch ? { enabled: true, maxTouchPoints: 5 } : { enabled: false });
     if (prof.userAgent) await cdp.send('Network.setUserAgentOverride', { userAgent: prof.userAgent });
   } else {
     await cdp.send('Network.setCacheDisabled', { cacheDisabled: false });

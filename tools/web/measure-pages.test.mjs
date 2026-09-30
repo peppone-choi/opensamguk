@@ -12,6 +12,7 @@ import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { defaultOptions, duplicateTransfers, inPageSnippet, run, slugOf } from './measure-pages.mjs';
 import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process';
 
 const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
@@ -109,4 +110,31 @@ test('탭 안 스니펫: 같은 배치 검사를 CDP 없이 낸다', async () =>
     assert.ok(r.network.sameUrlRepeated.some((d) => d.url === '/big.bin' && d.count === 2), JSON.stringify(r.network.sameUrlRepeated));
     assert.ok(r.network.transferBytes > 400_000, `전송 ${r.network.transferBytes}`);
   } finally { await browser.close(); }
+});
+
+// CDP 모드(사용자가 로그인해 둔 Chrome 에 붙기): 데스크톱 · 모바일 모두 재고, 끝나면 그 브라우저의 탭 수가 그대로여야 한다.
+// 2026-09-30 데스크톱 행이 터치 끄기에서 실패하고 빈 탭 10개를 사용자 브라우저에 남긴 사고의 적색 프로브다.
+test('CDP 모드: 데스크톱 · 모바일을 재고 우리 탭을 남기지 않는다', async () => {
+  const port = 9300 + Math.floor(Math.random() * 500);
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'k10-cdp-'));
+  const chromePath = process.env.CHROME_PATH
+    || (process.platform === 'darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : 'google-chrome');
+  const proc = spawn(chromePath, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${dataDir}`, '--no-first-run', 'about:blank'], { stdio: 'ignore' });
+  const pages = async () => (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).filter((t) => t.type === 'page').length;
+  try {
+    let ready = false;
+    for (let i = 0; i < 100 && !ready; i++) {
+      try { await fetch(`http://127.0.0.1:${port}/json/version`); ready = true; } catch { await new Promise((r) => setTimeout(r, 200)); }
+    }
+    assert.ok(ready, 'Chrome 디버그 포트가 뜨지 않았다');
+    const before = await pages();
+    const rows = await run(defaultOptions({ base, pages: ['/good'], profiles: ['desktop', 'mobile'], throttles: ['none'], out: outDir, cdpUrl: `http://127.0.0.1:${port}`, axe: false }));
+    assert.deepEqual(rows.map((r) => r.error ?? null), [null, null], JSON.stringify(rows.map((r) => r.error)));
+    assert.equal(await pages(), before, '우리 탭이 남았다');
+  } finally {
+    const exited = new Promise((r) => { if (proc.exitCode !== null) r(); else proc.once('exit', r); });
+    proc.kill();
+    await Promise.race([exited, new Promise((r) => setTimeout(r, 5000))]);
+    fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  }
 });
