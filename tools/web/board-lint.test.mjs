@@ -28,6 +28,8 @@ ${body}
 const BAD = board(`
 <button type="button" class="btn">확인</button>
 <button type="button" class="btn sm">작게</button>
+<button type="button" class="btn" disabled style="opacity:.5">꺼진 단추</button>
+<style>@media (max-width: 999px){.btn{letter-spacing:0}}</style>
 <div style="position:relative;height:50px"><button type="button" class="btn" style="width:120px">덮인 단추</button><div style="position:absolute;inset:0"></div></div>
 <div style="position:relative;height:50px"><button type="button" class="btn" style="width:120px">딤 아래 단추</button><div class="scrim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div></div>
 <div style="position:relative;height:50px"><button type="button" class="mk" style="width:44px;height:44px;cursor:pointer">표식</button><div class="sheet" style="position:absolute;inset:0"><span>시트</span></div></div>
@@ -70,7 +72,7 @@ test('심은 위반을 정확히 센다(적색) · 깨끗한 보드는 0', async
   const [bad, good] = await lintBoards(boardFiles([dir]));
   assert.deepEqual(bad.size, { w: 390, h: 1200 }); // 높이를 넉넉히 — 꽉 차면 flex 가 단추를 줄여 small 이 흔들린다
   // 투명 상자에 덮인 단추는 small 이 아니라 covered 다(무엇이 덮었는지 함께)
-  assert.deepEqual(bad.counts, { small: 1, fake: 1, title: 1, hover: 1, emoji: 1, words: 3, hanja: 2, clipped: 1, covered: 2, placeholder: 1, logo: 1 }, JSON.stringify(bad.samples, null, 1));
+  assert.deepEqual(bad.counts, { small: 1, fake: 1, title: 1, hover: 1, disabledAttr: 1, dimmed: 1, breakpoint: 1, emoji: 1, words: 3, hanja: 2, clipped: 1, covered: 2, placeholder: 1, logo: 1 }, JSON.stringify(bad.samples, null, 1));
   assert.deepEqual(bad.words, { 휘하: 1, 군량: 1, 'N년 N월(순 없음)': 1 });
   // 한자는 hj 밖의 縣 · 陳留 두 덩이 — hj 안 陽城 · skip 안 縣 · 취소선은 세지 않는다
   assert.deepEqual(bad.samples.hanja.map((x) => x.text), ['縣', '陳留']);

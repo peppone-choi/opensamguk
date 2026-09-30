@@ -124,7 +124,8 @@ test('CDP 모드: 데스크톱 · 모바일을 재고 우리 탭을 남기지 �
   const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), 'k10-cdp-'));
   const chromePath = process.env.CHROME_PATH
     || (process.platform === 'darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : 'google-chrome');
-  const proc = spawn(chromePath, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${dataDir}`, '--no-first-run', 'about:blank'], { stdio: 'ignore' });
+  // 자기 프로세스 그룹으로 띄운다 — 끝낼 때 이 Chrome 과 그 자식만 끈다(남의 프로세스는 건드리지 않는다).
+  const proc = spawn(chromePath, ['--headless=new', `--remote-debugging-port=${port}`, `--user-data-dir=${dataDir}`, '--no-first-run', 'about:blank'], { stdio: 'ignore', detached: true });
   const pages = async () => (await (await fetch(`http://127.0.0.1:${port}/json/list`)).json()).filter((t) => t.type === 'page').length;
   try {
     let ready = false;
@@ -138,8 +139,14 @@ test('CDP 모드: 데스크톱 · 모바일을 재고 우리 탭을 남기지 �
     assert.equal(await pages(), before, '우리 탭이 남았다');
   } finally {
     const exited = new Promise((r) => { if (proc.exitCode !== null) r(); else proc.once('exit', r); });
-    proc.kill();
-    await Promise.race([exited, new Promise((r) => setTimeout(r, 5000))]);
-    fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+    try { process.kill(-proc.pid, 'SIGTERM'); } catch { proc.kill(); }
+    await Promise.race([exited, new Promise((r) => setTimeout(r, 10_000))]);
+    // 리눅스 Chrome 은 자식이 본 프로세스보다 늦게 끝나며 프로필에 쓴다(2026-09-30 CI ENOTEMPTY). 넉넉히 다시 지우고,
+    // 끝내 못 지워도 이 테스트가 보는 것(측정 · 탭 수)과 무관하니 경고만 남긴다 — 임시 폴더는 OS 가 치운다.
+    try {
+      fs.rmSync(dataDir, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
+    } catch (e) {
+      console.warn(`임시 프로필을 못 지웠다(무시): ${e.code ?? e.message}`);
+    }
   }
 });

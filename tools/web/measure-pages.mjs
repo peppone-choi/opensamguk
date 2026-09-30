@@ -518,14 +518,16 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
 
   const tag = `${slugOf(pagePath)}-${profile}-${throttle}${runIndex > 0 ? `-r${runIndex + 1}` : ''}`;
   fs.mkdirSync(opts.out, { recursive: true });
-  await page.screenshot({ path: path.join(opts.out, `${tag}-viewport.png`) });
+  // 캡처는 증거일 뿐이다 — 부하가 높아 시간이 넘어도 측정값은 살리고 실패를 기록한다.
+  const screenshotErrors = [];
+  await page.screenshot({ path: path.join(opts.out, `${tag}-viewport.png`), timeout: 60_000 }).catch((e) => screenshotErrors.push(`viewport: ${String(e.message).split('\n')[0].slice(0, 120)}`));
 
   let map = null;
   if (geo) {
     const root = await page.$(opts.mapSelector);
     if (root) {
       await root.scrollIntoViewIfNeeded();
-      await root.screenshot({ path: path.join(opts.out, `${tag}-map.png`) }).catch(() => {});
+      await root.screenshot({ path: path.join(opts.out, `${tag}-map.png`), timeout: 60_000 }).catch((e) => screenshotErrors.push(`map: ${String(e.message).split('\n')[0].slice(0, 120)}`));
     }
     map = { geometry: geo, hitTest: await page.evaluate(mapHitTest, opts.mapSelector) };
     phase('screenshot');
@@ -573,7 +575,7 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
   const result = {
     tool: 'tools/web/measure-pages.mjs', url, pagePath, profile, throttle, run: runIndex + 1, cdpMode, at: new Date().toISOString(),
     ...metrics, firstMapDrawMs, networkSettledMs: settledMs, loadObservedMs: loadAt, lastMapState: lastState,
-    ...network, map, layout, axe, consoleErrors: consoleErrors.slice(0, 20), consoleErrorCount: consoleErrors.length, checks, phasesMs: phases,
+    ...network, map, layout, axe, consoleErrors: consoleErrors.slice(0, 20), consoleErrorCount: consoleErrors.length, checks, phasesMs: phases, screenshotErrors,
     host: { ...hostBefore, loadavg1After: Math.round(os.loadavg()[0] * 10) / 10 },
   };
   fs.writeFileSync(path.join(opts.out, `${tag}.json`), JSON.stringify(result, null, 2));

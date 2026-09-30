@@ -10,7 +10,10 @@
 //           누를 영역」(09-18 BRIEF 의 .btn.sm 보조 예외는 폐기). 누를 영역 = 가운데에서 훑은 elementFromPoint 적중 범위
 //           (문장 속 링크는 WCAG 2.5.8 예외라 따로 센다. 보드 밖으로 잘린 것은 small 이 아니라 clipped 다)
 //   fake    누르는 모양(cursor:pointer)인데 진짜 button · a · label · input 이 아닌 것 — BRIEF 「버튼은 진짜 <button>」
-//   title   title 속성에만 있는 정보 — V3System 「호버 · title 로만 보이는 정보는 두지 않는다」
+//   title   title 속성 전부 — 제품 tools/ci/web_ui_lint.py title_attr 와 같은 기준(표본 onlyInTitle = 정보가 title 에만 있음)
+//   disabledAttr 네이티브 disabled — web_ui_lint native_disabled(탭을 삼켜 사유 시트가 안 열린다, aria-disabled 로)
+//   dimmed  흐린 비활성(계산된 opacity < 1) — web_ui_lint dimmed_disabled · V3System 「흐리게 하지 않는다」
+//   breakpoint 세 단(768 · 1200) 밖의 @media 폭 조건 — web_ui_lint adhoc_breakpoint
 //   hover   :hover 로 display · visibility · opacity 를 드러내는 CSS 규칙(추정)
 //   emoji   이모지 — BRIEF 「이모지 금지」 (▲▼ 같은 글자 기호는 세지 않는다)
 //   words   V3System 「쓰지 않는 말」 표의 말(한자 칸은 hanja 가 센다). 취소선을 그은 글자(그 표 자체)는 세지 않는다
@@ -34,7 +37,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const webRequire = createRequire(path.join(ROOT, 'web/game/package.json'));
 
-export const KEYS = ['small', 'fake', 'title', 'hover', 'emoji', 'words', 'hanja', 'clipped', 'covered', 'placeholder', 'logo'];
+export const KEYS = ['small', 'fake', 'title', 'hover', 'disabledAttr', 'dimmed', 'breakpoint', 'emoji', 'words', 'hanja', 'clipped', 'covered', 'placeholder', 'logo'];
 
 // V3System 「쓰지 않는 말」(docs/design/ui-v3/boards_v3_shell.py WORDS). 표가 바뀌면 board-lint.test.mjs 가 깨진다.
 // 「전(錢)」의 「전」 · 「곡(穀)」의 「곡」은 한 글자라 다른 말과 겹친다 — 한자만 센다.
@@ -62,6 +65,9 @@ export const FORBIDDEN = [
   { word: '삭턴', use: '쓰지 않는다', re: '삭턴' },
   { word: '벌점', use: '쓰지 않는다', re: '벌점' },
   // 시스템 3.1.4 V31SystemIndex 「날짜」: 달마다 하는 일(월단평 등)만 순 없이 적어도 된다 — 알려진 것은 월단평뿐이라 그것만 뺀다.
+  // 제품 web_copy_lint retired_term 에만 있던 말(2026-09-30 맞춤). 숙련전환 · 군량매매는 숙련 · 군량이 이미 센다.
+  { word: '세율', use: '쓰지 않는다(web_copy_lint)', re: '세율' },
+  { word: '빙의', use: '쓰지 않는다(web_copy_lint)', re: '빙의' },
   { word: 'N년 N월(순 없음)', use: '200년 3월 중순', re: '\\d+\\s*년\\s*\\d+\\s*월(?!\\s*(?:[상중하]순|월단평))' },
 ];
 
@@ -269,13 +275,42 @@ function lintInPage({ forbidden, minTarget }) {
   // 로고 한 번(시스템 3.1.4 「로고 한 번」): 한 화면에 워드마크(img alt="오픈삼국")는 하나. 둘째부터 결함으로 센다.
   const logos = [...root.querySelectorAll('img[alt="오픈삼국"]')].filter(rendered).map((el) => { const r = el.getBoundingClientRect(); return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top - rr.top) }; });
 
+  // title: 제품 web_ui_lint title_attr 와 같은 기준 — 보이는 글자와 같아도 title= 은 모두 센다(터치에선 안 보인다).
+  // 표본의 onlyInTitle 은 그 정보가 title 에만 있는지(더 나쁜 경우)를 알린다.
   const titleOnly = [];
   for (const el of root.querySelectorAll('[title]')) {
     const t = (el.getAttribute('title') || '').trim();
     if (!t) continue;
     const seen = `${el.innerText || ''} ${el.getAttribute('aria-label') || ''} ${el.getAttribute('alt') || ''}`;
-    if (!seen.includes(t)) titleOnly.push({ ...describe(el), title: t.slice(0, 60) });
+    titleOnly.push({ ...describe(el), title: t.slice(0, 60), onlyInTitle: !seen.includes(t) });
   }
+
+  // 비활성(제품 web_ui_lint native_disabled · dimmed_disabled): 네이티브 disabled 는 탭을 삼켜 사유가 안 열린다 — aria-disabled 로.
+  // 비활성은 흐리지 않고 점선 + 사유(V3System 「흐리게 하지 않는다」) — 계산된 opacity 가 1 보다 작으면 센다.
+  const disabledAttr = [...root.querySelectorAll('[disabled]')].filter(rendered).map(describe);
+  const dimmed = [];
+  for (const el of root.querySelectorAll('[disabled],[aria-disabled="true"]')) {
+    if (!rendered(el)) continue;
+    let op = 1;
+    for (let e = el; e && e !== root; e = e.parentElement) op *= Number(getComputedStyle(e).opacity);
+    if (op < 0.999) dimmed.push({ ...describe(el), opacity: Math.round(op * 100) / 100 });
+  }
+  // 화면 폭(제품 web_ui_lint adhoc_breakpoint): @media 폭 조건은 세 단(768 · 1200, 767.98 · 1199.98)만. em · rem 은 늘 센다.
+  const ALLOWED_WIDTHS = new Set(['768', '1200', '767.98', '1199.98']);
+  const breakpoints = [];
+  const WIDTH = /\((?:max|min)-width\s*:\s*([\d.]+)(px|em|rem)\s*\)|\(\s*width\s*[<>]=?\s*([\d.]+)(px|em|rem)\s*\)|\(\s*([\d.]+)(px|em|rem)\s*[<>]=?\s*width\b/g;
+  const walkMedia = (rules) => {
+    for (const rule of rules) {
+      if (rule instanceof CSSMediaRule) {
+        for (const m of rule.conditionText.matchAll(WIDTH)) {
+          const v = m[1] ?? m[3] ?? m[5]; const u = m[2] ?? m[4] ?? m[6];
+          if (u !== 'px' || !ALLOWED_WIDTHS.has(v)) breakpoints.push(rule.conditionText.slice(0, 80));
+        }
+      }
+      if (rule.cssRules) walkMedia(rule.cssRules);
+    }
+  };
+  for (const sheet of document.styleSheets) { try { walkMedia(sheet.cssRules); } catch { /* 바깥 글꼴 시트 */ } }
 
   const hover = [];
   const walk = (rules) => {
@@ -295,6 +330,7 @@ function lintInPage({ forbidden, minTarget }) {
     targets: real.size + fake.length,
     counts: {
       small: small.length, fake: fake.length, title: titleOnly.length, hover: hover.length,
+      disabledAttr: disabledAttr.length, dimmed: dimmed.length, breakpoint: breakpoints.length,
       emoji: emoji.length, words: Object.values(words).reduce((a, b) => a + b, 0), hanja: hanja.length, clipped: clipped.length, covered: covered.length, placeholder: placeholder.length, logo: Math.max(0, logos.length - 1),
     },
     smallInline: smallInline.length,
@@ -306,6 +342,7 @@ function lintInPage({ forbidden, minTarget }) {
     words,
     samples: {
       small: small.slice(0, 25), fake: fake.slice(0, 15).map(describe), title: titleOnly.slice(0, 15), hover: hover.slice(0, 10),
+      disabledAttr: disabledAttr.slice(0, 10), dimmed: dimmed.slice(0, 10), breakpoint: breakpoints.slice(0, 10),
       emoji: emoji.slice(0, 15), words: wordSamples, hanja: hanja.slice(0, 20), clipped: clipped.slice(0, 15), covered: covered.slice(0, 20), underLayer: underLayer.slice(0, 10), placeholder: placeholder.slice(0, 10), logo: logos,
     },
   };
@@ -361,7 +398,7 @@ export function toMarkdown(results) {
   const allWords = {};
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
-  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} |`);
+  const rows = results.map((r) => r.error ? `| ${r.name} | 검사 실패: ${r.error.replace(/\|/g, '/')} |` : `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.disabledAttr} | ${r.counts.dimmed} | ${r.counts.breakpoint} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.hanja} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} | ${r.counts.placeholder} | ${r.counts.logo} |`);
   const kinds = {};
   for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
   const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
@@ -369,10 +406,10 @@ export function toMarkdown(results) {
     '# 설계 보드 일관성 검사 — tools/web/board-lint.mjs', '',
     `- 보드 ${results.length}장. 기준: V3System(44px · 호버/title 전용 금지 · 쓰지 않는 말), 09-18 BRIEF(진짜 button · 이모지 금지 · 고정 크기에서 잘림).`,
     '- 「N년 N월(순 없음)」은 V3System 「년 월(표기) → 200년 3월 중순」의 해석이다.', '',
-    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 속성 | hover 드러냄 | 네이티브 disabled | 흐린 비활성 | 세 단 밖 폭 | 이모지 | 금지어 | 금지어 내역 | 한자(hj 밖) | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) | 그림 자리 표시 | 로고 중복 |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.disabledAttr} | ${total.dimmed} | ${total.breakpoint} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.hanja} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} | ${total.placeholder} | ${total.logo} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
   ].join('\n');
 }
 
