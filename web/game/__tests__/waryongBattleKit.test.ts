@@ -6,6 +6,7 @@ import { join, resolve } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { boardClassification, composeBoard, parseBattleKit, type KitJson } from '../../shared/src/battle/battleBoard';
+import { paletteRamp, parseUnitKit, UNITS_PER_SIDE, unitSpriteRgba } from '../../shared/src/battle/battleUnits';
 
 const KIT_ID = '2c8a1a5';
 const GAME = resolve(__dirname, '../public/battle/waryong', KIT_ID);
@@ -57,5 +58,28 @@ describe('와룡전 전장 조각 키트', () => {
         expect(different).toEqual([]);
         const hashMismatch = kit.boardInfo.filter((info) => sha256(Buffer.from(boardClassification(kit, info.id), 'ascii')) !== info.terrainSha256).map((i) => i.id);
         expect(hashMismatch).toEqual([]);
+    });
+
+    it('유닛: 빨강 틀에 원작 파랑 네 색(3 · 8 · 1 · 12)을 칠하면 원작 파랑 편과 99% 이상 같다', () => {
+        const json = JSON.parse(readFileSync(join(GAME, 'kit.json'), 'utf8')) as KitJson;
+        const units = parseUnitKit(json.palette.rgb, {
+            units: arrayBuffer(gunzipSync(readFileSync(join(GAME, 'units.bin.gz')))),
+            roles: arrayBuffer(gunzipSync(readFileSync(join(GAME, 'unit-roles.bin.gz')))),
+        });
+        const blue = paletteRamp(units.palette, 3, 8, 1, 12);
+        let opaque = 0;
+        let different = 0;
+        for (let u = 0; u < UNITS_PER_SIDE; u += 1) {
+            if (u >= 76 && u < 84) continue; // 한 조각짜리(작은 깃발 · 화살 · 잔해)는 두 편 그림이 다르다
+            const painted = unitSpriteRgba(units, u, blue);
+            const original = unitSpriteRgba(units, u, null, 'blue');
+            for (let i = 0; i < painted.length; i += 4) {
+                if (!painted[i + 3] && !original[i + 3]) continue;
+                opaque += 1;
+                if (painted[i] !== original[i] || painted[i + 1] !== original[i + 1] || painted[i + 2] !== original[i + 2] || painted[i + 3] !== original[i + 3]) different += 1;
+            }
+        }
+        expect(opaque).toBeGreaterThan(10_000);
+        expect(different / opaque).toBeLessThan(0.01);
     });
 });

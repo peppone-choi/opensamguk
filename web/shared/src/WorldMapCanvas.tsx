@@ -1886,6 +1886,7 @@ export function WorldMapCanvas({
   const viewRef = useRef<IsoView | null>(null);
   const userModifiedViewRef = useRef(false);
   const initialFocusAppliedRef = useRef(false);
+  const appliedFocusCellRef = useRef<{ col: number; row: number } | null>(null);
   const sizeRef = useRef({ width: 0, height: 0, dpr: 1 });
   const hitRef = useRef<CityHitBox[]>([]);
   const dragRef = useRef(new Map<number, { x: number; y: number }>());
@@ -2181,6 +2182,7 @@ export function WorldMapCanvas({
     viewRef.current = null;
     userModifiedViewRef.current = false;
     initialFocusAppliedRef.current = false;
+    appliedFocusCellRef.current = null;
     manualAdministrativeLayerRef.current = false;
   }, [loadedTiles, mapCode]);
 
@@ -2210,6 +2212,9 @@ export function WorldMapCanvas({
       ? (administrativeLayer === 'COMMANDERY' ? 'COMMANDERY' : 'COUNTY')
       : mapLod(2 * view.scale * (loadedTiles?._meta.resolutionScale ?? 1) / sizeRef.current.dpr);
     canvas.dataset.mapLod = selectedLod === 'JU' && !juLayerRef.current ? 'COMMANDERY' : selectedLod;
+    // 카메라가 비추는 가운데 칸 — 「조작된다」 · 초점 검증(e2e)이 그림 없이 읽는다.
+    const [viewCenterCol, viewCenterRow] = screenToCell(canvas.width / 2, canvas.height / 2, view);
+    canvas.dataset.viewCenter = `${viewCenterCol.toFixed(1)},${viewCenterRow.toFixed(1)}`;
     hitRef.current = drawScene(
       canvas,
       terrain,
@@ -2330,8 +2335,13 @@ export function WorldMapCanvas({
         && previousSize.width === canvas.width
         && previousSize.height === canvas.height
         && previousSize.dpr === dpr;
+      // 省 지도는 첫 그림 뒤에 온다 — 그때 초점 城 이 제 치소 칸으로 옮겨 가면(투영 좌표와 최대 210칸 차이),
+      // 사용자가 아직 화면을 움직이지 않았을 때만 초점을 한 번 더 맞춘다. 같은 칸이면(폴링) 다시 맞추지 않는다.
+      const appliedFocus = appliedFocusCellRef.current;
+      const focusCellMoved = appliedFocus !== null && currentPosition !== undefined
+        && (appliedFocus.col !== currentPosition.col || appliedFocus.row !== currentPosition.row);
       const shouldApplyFirstCurrentFocus = !userModifiedViewRef.current
-        && !initialFocusAppliedRef.current
+        && (!initialFocusAppliedRef.current || focusCellMoved)
         && currentPosition !== undefined;
       let viewChanged = true;
       if (sameViewport && !shouldApplyFirstCurrentFocus) {
@@ -2369,7 +2379,10 @@ export function WorldMapCanvas({
           currentPosition,
           initialFocus,
         );
-        if (currentPosition !== undefined) initialFocusAppliedRef.current = true;
+        if (currentPosition !== undefined) {
+          initialFocusAppliedRef.current = true;
+          appliedFocusCellRef.current = { col: currentPosition.col, row: currentPosition.row };
+        }
       }
       if (viewChanged) onViewChange?.(viewRef.current);
       const nextLod = mapLod(2 * viewRef.current.scale * (loadedTiles._meta.resolutionScale ?? 1) / dpr);

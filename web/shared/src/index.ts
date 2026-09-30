@@ -38,7 +38,8 @@ export {
   type PortraitResolver,
   type PortraitVariant,
 } from './portraitResolver';
-export { ReasonTooltip, type ReasonTooltipProps } from './ReasonTooltip';
+export { ReasonSheet, ReasonTooltip, type ReasonSheetProps, type ReasonTooltipProps } from './ReasonTooltip';
+export * from './parts';
 export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
 export { Slot, type SlotProps, type SlotState } from './Slot';
 export { StatRow, type StatRowProps } from './StatRow';
@@ -212,3 +213,4 @@ export {
 } from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+export { RECORD_KIND_SECTION, RECORD_SECTION_LABEL, RECORD_SECTION_ORDER, recordSection, type RecordSection } from './recordSections';
