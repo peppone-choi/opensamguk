@@ -2,8 +2,8 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import SiegePage from '@/app/game/(campaign)/siege/page';
-import OrdersPage from '@/app/game/(campaign)/orders/page';
+import SiegePage from '@/app/game/(campaign)/corps/siege/page';
+import OrdersPage from '@/app/game/(campaign)/court/OrdersPanel';
 
 const mock = vi.hoisted(() => ({
     campaignSieges: vi.fn(), roadForts: vi.fn(), campaignRetinue: vi.fn(), warehouses: vi.fn(),
@@ -13,7 +13,7 @@ const mock = vi.hoisted(() => ({
 vi.mock('@/components/GameShell', () => ({ default: ({ children }: { children: ReactNode }) => <div>{children}</div> }));
 vi.mock('@/components/command/CourtForm', () => ({ default: () => <div>발령 폼</div> }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({
-    generalId: 9, isCampaignWorld: true, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
+    generalId: 9, frontInfo: { global: { year: 190, month: 1, turnPhase: 1 } }, refresh: mock.refresh,
 }) }));
 vi.mock('@/lib/api', () => ({ api: {
     campaignSieges: mock.campaignSieges, roadForts: mock.roadForts,
