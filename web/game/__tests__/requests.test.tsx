@@ -1,5 +1,5 @@
 // 받은 요청 — 모델(서버 값만) · 응답 뒤 같은 읽기를 쓰는 곳이 모두 다시 읽는지 · 요청 카드 모양(보드 request_card).
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { configure, act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { IncomingRequests } from '../components/requests/IncomingRequests';
 import { RequestCard } from '../components/requests/RequestCard';
@@ -7,6 +7,10 @@ import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
 import { fromConsents, fromDispatches, phaseLabel, requestKey } from '../lib/requests';
 
+// jsdom에서 부품 · 목록을 그리고 가짜 서버 응답을 기다린다 — CI · 로컬 병렬 부하에서 기본 1초 대기 창 · 5초 한도가 모자란다
+// (부하 평균 557에서 「찾을 수 없음」으로 재현, 응답을 1.2초 늦추면 같은 실패가 나고 창을 5초로 늘리면 통과 — 2026-10-01).
+configure({ asyncUtilTimeout: 5000 });
+vi.setConfig({ testTimeout: 20_000 });
 vi.mock('../lib/api', () => ({
     api: { dispatchPending: vi.fn(), politicalConsentOptions: vi.fn(), courtDispatchReply: vi.fn(), courtPoliticalConsent: vi.fn() },
 }));

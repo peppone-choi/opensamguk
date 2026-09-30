@@ -1,10 +1,14 @@
 // 서신(P-Q02) — 방향 표식 · 볼 수 없음 ≠ 빈 목록 · NPC는 보이되 서버 대기로 막힘 · 개인 서신 보내기 · 지우기 확인 · 재야 세력 탭 없음.
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { MailScreen } from '../components/mail/MailScreen';
 import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
 
+// jsdom에서 부품 · 목록을 그리고 가짜 서버 응답을 기다린다 — CI · 로컬 병렬 부하에서 기본 1초 대기 창 · 5초 한도가 모자란다
+// (부하 평균 557에서 「찾을 수 없음」으로 재현, 응답을 1.2초 늦추면 같은 실패가 나고 창을 5초로 늘리면 통과 — 2026-10-01).
+configure({ asyncUtilTimeout: 5000 });
+vi.setConfig({ testTimeout: 20_000 });
 vi.mock('../lib/api', () => ({
     api: {
         mailboxRecent: vi.fn(), mailboxOld: vi.fn(), generalsList: vi.fn(), dispatchPending: vi.fn(), politicalConsentOptions: vi.fn(),
