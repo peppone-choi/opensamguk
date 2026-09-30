@@ -6,7 +6,7 @@ import { useWorldMap, type WorldMapPreview } from '../useWorldMap';
 const mocks = vi.hoisted(() => ({ order: [] as string[], province: vi.fn(), fetch: vi.fn() }));
 vi.mock('../provinceMap', async () => {
   const actual = await vi.importActual<typeof import('../provinceMap')>('../provinceMap');
-  return { ...actual, loadProvinceIdentityMap: mocks.province };
+  return { ...actual, loadSharedProvinceIdentityMap: mocks.province };
 });
 const SHA = 'a'.repeat(64);
 const preview: WorldMapPreview = {
@@ -38,12 +38,23 @@ beforeEach(() => {
 });
 
 describe('useWorldMap common served board', () => {
-  it('loads preview, pinned terrain, provinces, then Ju and centers the 城 marker', async () => {
+  it('loads preview, then pinned terrain, provinces and Ju together, and centers the 城 marker', async () => {
     const loadPreview = vi.fn(async () => { mocks.order.push('preview'); return preview; });
+    let releaseTerrain!: () => void;
+    const terrainHeld = new Promise<void>((resolve) => { releaseTerrain = resolve; });
+    const fetchTerrainOrJu = mocks.fetch.getMockImplementation()!;
+    mocks.fetch.mockImplementation(async (url: string) => {
+      const response = fetchTerrainOrJu(url);
+      if (url.includes('/terrain?')) await terrainHeld;
+      return response;
+    });
     const { result } = renderHook(() => useWorldMap({ loadPreview }));
+    // 지형이 오기 전에 省 지도와 州 색인도 이미 청했다 — 앞 응답을 기다리며 줄 서지 않는다.
+    await waitFor(() => expect(mocks.order).toEqual(['preview', 'terrain', 'provinces', 'ju']));
+    releaseTerrain();
     await waitFor(() => expect(result.current.kind).toBe('ready'));
     if (result.current.kind !== 'ready') throw new Error('not ready');
-    expect(mocks.order).toEqual(['preview', 'terrain', 'provinces', 'ju']);
+    expect(mocks.province).toHaveBeenCalledWith(expect.stringContaining('/map/provinces?'), SHA);
     expect(mocks.fetch.mock.calls[0][0]).toContain(`baseTilesSha256=${SHA}`);
     expect(result.current.tilesSha256).toBe(SHA);
     expect(result.current.tiles.parentRegions?.[0].ju).toBe('사예');

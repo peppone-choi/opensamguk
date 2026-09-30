@@ -245,20 +245,30 @@ async function createProvinceBitmap(blob: Blob): Promise<ImageBitmap> {
   }
 }
 
+/** 받지 못한 것(연결 실패·HTTP 오류) — 다음에 다시 받아 본다. 받은 뒤의 계약 위반은 다시 받아도 같다. */
+export class ProvinceIdentityFetchError extends Error {}
+
 export async function loadProvinceIdentityMap(url: string): Promise<ProvinceIdentityMap> {
-  const response = await fetch(url);
-  if (!response.ok) throw new Error(`province map fetch failed: ${response.status}`);
+  const response = await fetch(url).catch((error: unknown) => {
+    throw new ProvinceIdentityFetchError(error instanceof Error ? error.message : 'province map fetch failed');
+  });
+  if (!response.ok) throw new ProvinceIdentityFetchError(`province map fetch failed: ${response.status}`);
+  // 머리만 보고 버릴 때는 본문을 끊는다 — 안 끊으면 브라우저가 버릴 본문을 끝까지 받는다(09-30 운영 24.7MB × 2).
+  const reject = (message: string): never => {
+    void response.body?.cancel().catch(() => undefined);
+    throw new Error(message);
+  };
   const contentType = response.headers.get('content-type');
   if (contentType == null || !/^image\/png(?:\s*;.*)?$/i.test(contentType)) {
-    throw new Error(`Province identity Content-Type must be image/png, received ${contentType ?? 'missing'}`);
+    reject(`Province identity Content-Type must be image/png, received ${contentType ?? 'missing'}`);
   }
   const contentLength = response.headers.get('content-length');
   if (contentLength != null) {
-    if (!/^\d+$/.test(contentLength)) throw new Error('Province identity Content-Length is invalid');
+    if (!/^\d+$/.test(contentLength)) reject('Province identity Content-Length is invalid');
     const declaredLength = Number(contentLength);
-    if (!Number.isSafeInteger(declaredLength)) throw new Error('Province identity Content-Length is invalid');
+    if (!Number.isSafeInteger(declaredLength)) reject('Province identity Content-Length is invalid');
     if (declaredLength > MAX_PROVINCE_PNG_BYTES) {
-      throw new Error(`Province identity Content-Length exceeds ${MAX_PROVINCE_PNG_BYTES} byte limit`);
+      reject(`Province identity Content-Length exceeds ${MAX_PROVINCE_PNG_BYTES} byte limit`);
     }
   }
   const pngBuffer = await response.arrayBuffer();
@@ -290,6 +300,32 @@ export async function loadProvinceIdentityMap(url: string): Promise<ProvinceIden
   } finally {
     bitmap.close();
   }
+}
+
+/**
+* 省 지도는 화면이 몇 번 붙고 떨어져도 한 번만 받는다 — 지도 훅과 지도판이 같은 주소를 따로 부르던
+* 중복(09-30 운영 24.7MB × 2)을 여기서 합친다. 받은 것과 계약 위반은 담아 두고, 받지 못한 것만 다음에
+* 다시 받는다. `version` 은 지형 지문이다 — 지형이 바뀌면 省 지도도 새로 받는다. 지문을 모르는 쪽은 담긴 것을 쓴다.
+*/
+const sharedProvinceMaps = new Map<string, { version: string | undefined; map: Promise<ProvinceIdentityMap> }>();
+
+export function loadSharedProvinceIdentityMap(url: string, version?: string): Promise<ProvinceIdentityMap> {
+  const cached = sharedProvinceMaps.get(url);
+  if (cached && (version === undefined || cached.version === undefined || cached.version === version)) {
+    if (version !== undefined) cached.version = version;
+    return cached.map;
+  }
+  const entry = { version, map: loadProvinceIdentityMap(url) };
+  sharedProvinceMaps.set(url, entry);
+  entry.map.catch((error: unknown) => {
+    if (error instanceof ProvinceIdentityFetchError && sharedProvinceMaps.get(url) === entry) sharedProvinceMaps.delete(url);
+  });
+  return entry.map;
+}
+
+/** 테스트끼리 담아 둔 省 지도를 나눠 쓰지 않게 비운다. */
+export function resetSharedProvinceIdentityMaps(): void {
+  sharedProvinceMaps.clear();
 }
 
 function assertImageShape(rgba: Uint8ClampedArray, width: number, height: number) {

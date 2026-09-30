@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { isOwnedNationVisual } from './nationVisual';
-import { loadProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
+import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
 import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
@@ -221,23 +221,25 @@ export function useWorldMap<P extends WorldMapPreview>({
         return;
       }
       const terrainUrl = worldTerrainUrl(base, serverId);
-      const response = await fetch(terrainUrl, { signal: controller.signal });
+      // 지형 · 省 지도 · 州 색인은 서로의 응답을 기다리지 않는다 — 한꺼번에 청하고 다 온 뒤에 맞춘다.
+      // A missing PNG only disables overlays; a missing Ju index only hides the 州 level.
+      const juAddress = juUrlForTerrain(terrainUrl);
+      const [response, provinceMap, juIndex] = await Promise.all([
+        fetch(terrainUrl, { signal: controller.signal }),
+        loadSharedProvinceIdentityMap(worldProvincesUrl(serverId), base ?? undefined).catch(() => null),
+        juAddress
+          ? fetch(juAddress, { signal: controller.signal })
+            .then(async (juResponse) => (juResponse.ok ? await juResponse.json() as JuIndexResponse : null))
+            .catch(() => null)
+          : Promise.resolve(null),
+      ]);
       if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
       const hash = parseTerrainEtagHash(response.headers.get('etag'));
       const tiles = (await response.json()) as WorldTiles;
-      // Province identity is loaded before the optional Ju index. A missing PNG only disables overlays.
-      const provinceMap = await loadProvinceIdentityMap(worldProvincesUrl(serverId)).catch(() => null);
       if (controller.signal.aborted) return;
-      const juAddress = juUrlForTerrain(terrainUrl);
-      if (juAddress && tiles.parentRegions) {
-        try {
-          const juResponse = await fetch(juAddress, { signal: controller.signal });
-          if (juResponse.ok) {
-            const assigned = verifiedJuByParent(await juResponse.json() as JuIndexResponse,
-              hash, tiles.parentRegions.length);
-            if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));
-          }
-        } catch { if (controller.signal.aborted) return; }
+      if (juIndex && tiles.parentRegions) {
+        const assigned = verifiedJuByParent(juIndex, hash, tiles.parentRegions.length);
+        if (assigned) tiles.parentRegions = tiles.parentRegions.map((parent, index) => ({ ...parent, ju: assigned[index] }));
       }
       if (controller.signal.aborted) return;
       if (base) terrainCache.current = { base, scope: cacheScope, serverId, tiles, hash, provinceMap };
