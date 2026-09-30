@@ -227,6 +227,8 @@ function lintInPage({ forbidden, minTarget }) {
       emoji: emoji.length, words: Object.values(words).reduce((a, b) => a + b, 0), clipped: clipped.length,
     },
     smallInline: smallInline.length,
+    // 종류별 합계는 표본(상한 25)이 아니라 전체에서 센다: 「요소.클래스 높이」 → 개수
+    smallByKind: small.reduce((m, x) => { const k = `${x.el} ${Math.min(x.w, x.h)}px`; m[k] = (m[k] ?? 0) + 1; return m; }, {}),
     innerCropped,
     lintSkipBlocks: root.querySelectorAll('[data-lint="skip"]').length,
     words,
@@ -268,6 +270,9 @@ export function toMarkdown(results) {
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
   const rows = results.map((r) => `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.clipped} | ${r.innerCropped} |`);
+  const kinds = {};
+  for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
+  const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
   return [
     '# 설계 보드 일관성 검사 — tools/web/board-lint.mjs', '',
     `- 보드 ${results.length}장. 기준: V3System(44px · 호버/title 전용 금지 · 쓰지 않는 말), 09-18 BRIEF(진짜 button · 이모지 금지 · 고정 크기에서 잘림).`,
@@ -275,7 +280,7 @@ export function toMarkdown(results) {
     '| 보드 | 크기 | 누를 것 | 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 뿌리 밖 잘림 | 안쪽 자름(참고) |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} |`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} |`, '', `44 미만 종류(요소.클래스 짧은 변): ${topKinds}`, '',
   ].join('\n');
 }
 
