@@ -20,6 +20,8 @@
 # python3 v31system.py → project/V31System*.dc.html
 import os
 
+V31_VERSION = '3.1.1'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 첫 잠금 초안
+
 from v3common import *  # noqa: F401,F403 — CSS · V3CSS · sec · kv · icon · IC · cat · CATS · res · RES · LOGO …
 from v3common import CSS, V3CSS, IC, P, LOGO, LOGO_M, apply_terms, icon, sec, kv, cat, CATS, res
 try:  # 관직 한글 표기(K8). names.py 가 옛 판이면(다른 worktree 로 이 파일만 복사했을 때) 같은 표를 여기서 쓴다.
@@ -54,8 +56,8 @@ LAYOUT = {  # 틀 치수(px)
 Z = [('--z-map', 0, '지도 캔버스'), ('--z-map-mark', 10, '지도 표지 · 이름표 · 내 위치(맨 위)'), ('--z-map-ctrl', 20, '지도 위 단추 · 고르기 띠 · 작은 지도'),
      ('--z-float', 30, '떠 있는 카드(선택 · 내 장수 · 계절)'), ('--z-drawer', 40, '서랍(지난 순 · 도움말 · 서신)'), ('--z-sheet', 50, '하단 시트 · 사유 말풍선'),
      ('--z-dialog', 60, '대화상자 · 가림막'), ('--z-toast', 70, '알림 토스트')]
-SHADOW = [('떠 있는 카드', '0 10px 28px rgba(0,0,0,.5)'), ('말풍선', '0 10px 30px rgba(0,0,0,.55)'),
-          ('하단 시트', '0 -12px 32px rgba(0,0,0,.55)'), ('대화상자', '0 24px 64px rgba(0,0,0,.6)')]
+SHADOW = [('--shadow-float', '떠 있는 카드', '0 10px 28px rgba(0,0,0,.5)'), ('--shadow-pop', '말풍선', '0 10px 30px rgba(0,0,0,.55)'),
+          ('--shadow-sheet', '하단 시트', '0 -12px 32px rgba(0,0,0,.55)'), ('--shadow-dialog', '대화상자', '0 24px 64px rgba(0,0,0,.6)')]
 NATION = {'조조': '#4f7fbf', '원소': '#b0569a', '유표': '#4f9e8a', '무주': '#5a625c'}  # 예시(유저가 고른다) — v3map.F 와 같다
 
 V31CSS = '''
@@ -146,6 +148,11 @@ IC.update({
     'season': '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
     'unplug': '<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5M3 3l18 18"/>',
     'crown': '<path d="M3 18h18M4 16l-1-9 5 4 4-7 4 7 5-4-1 9z"/>',
+    'play': '<path d="M7 4l13 8-13 8z"/>',
+    'pause': '<path d="M7 4v16M17 4v16"/>',
+    'skipb': '<path d="M6 5v14M19 5l-10 7 10 7z"/>',
+    'skipf': '<path d="M18 5v14M5 5l10 7-10 7z"/>',
+    'logout': '<path d="M10 4H4v16h6M15 8l4 4-4 4M9 12h10"/>',
 })
 
 
@@ -512,7 +519,8 @@ TURN_WORD = {'done': '실행됨', 'res': '예약', 'warn': '예약 · 경고', '
 
 def turn_strip(cur=4, n=12, cols=6, gap=4, cell_w=None):
     """순 띠(TurnStrip) — 칸 = 순 번호 · 날짜 · 명령 이름(또는 빈 순). 데스크톱 2줄 × 6칸, 모바일은 가로로 밀리는 한 줄(cell_w 고정).
-    누르면 그 순을 고른다: 빈 순 = 새로 예약, 찬 순 = 바꾸기 · 비우기 · 당기기 · 밀기. 끌기 없이 탭으로 다 된다."""
+    누르면 그 순을 고른다: 빈 순 = 새로 예약, 찬 순 = 바꾸기 · 비우기 · 앞 순으로 · 뒤 순으로(그 한 순만). 끌기 없이 탭으로 다 된다.
+    「당기기 · 밀기」는 12순 전체를 한 칸 옮기는 단추로 12순 열에 따로 둔다(K0 Q6 — 둘 다 둔다)."""
     cells = ''
     for no, d, t, c, st in TURNS[:n]:
         lab = f'{no:02d}순 {d} {t} — {c + " " if c else ""}{TURN_WORD[st]}'
@@ -530,7 +538,17 @@ def turn_caption(cur=4):
             f'<span class="t2">{d} · <span class="mono">{t}</span></span>{what}</div>')
 
 
-CMD_CATS = ['전체', '내정', '군사', '이동', '인물', '개인', '나라', '물자']  # K6 안 — 정본은 입력 원장 kind · phase 에서 K6 가 정한다
+CMD_CATS = ['전체', '내정', '군사', '이동', '인물', '개인', '나라', '물자']  # K6 설계서 §2.1 — 정본은 K6
+CMD_MAP = {  # 분류 → 입력(원장 GENERAL_ACTION 43개 전부, K6 §2.1). 보드 예시는 이 표를 따른다.
+    '내정': ['action.farm', 'action.commerce', 'action.fortify', 'action.repairWall', 'action.security', 'action.settle', 'action.selectResidents', 'action.tour'],
+    '군사': ['action.conscript', 'action.raiseVolunteers', 'action.train', 'action.boostMorale', 'action.demobilize', 'action.muster', 'action.deploy',
+             'action.scout', 'action.assault', 'action.demandSurrender', 'action.siegeRoadFort'],
+    '이동': ['action.move', 'action.forcedMarch', 'action.return'],
+    '인물': ['action.search', 'action.employ', 'action.persuadeCaptive'],
+    '개인': ['action.travel', 'action.selfTrain', 'action.recuperate', 'action.retire', 'action.convertProficiency'],
+    '나라': ['action.enlist', 'action.resign', 'action.rise', 'action.independence', 'action.foundState', 'action.abdicate', 'action.oath', 'action.dissolve'],
+    '물자': ['action.gift', 'action.donate', 'action.tradeGrain', 'action.tradeEquipment', 'action.transport'],
+}
 
 
 def cat_tabs(on='이동', drafts=('군사',), style='', scroll=False):
@@ -743,7 +761,10 @@ PARTS = [
     ('셸', 'PageHead', '페이지 머리 + 하위 탭', '56 · 모바일 탭 60', '묶음 이름 · 하위 화면 · 행동', 'SectionHeader', 'K3'),
     ('셸', 'NoticeBand', '알림 띠(P-W05)', '44 · 모바일 72', '따라잡기 · 턴 정지 · 점검 예고 · 첫걸음 달성', '새로', 'K3'),
     ('셸', 'HelpDrawer', '도움말 서랍 자리', '400 · 태블릿 360 · 모바일 724', '?help= · 모달 아님 · 지도 648', '새로', 'K3 자리 · K7 내용'),
-    ('셸', 'MailDrawer', '서신 서랍 자리', '도움말 서랍과 같은 자리', '받은 · 보낸 · 쓰기(PeoplePicker)', 'MessagePanel', 'K3 자리 · K6 내용'),
+    ('셸', 'MailDrawer', '서신 서랍 자리', '도움말 서랍과 같은 자리', '탭 개인 · 세력 · 전체 · 요청, 받음/보냄은 카드 방향 표식, 쓰기 = PeoplePicker', 'MessagePanel', 'K3 자리 · K6 내용'),
+    ('셸', 'RequestCard', '요청 카드', '패널 폭 · 행 60+', '서신 서랍 「요청」 · 조정 「받은 요청」 띠 · 지난 순 서랍 공용', '새로', 'K4 · K6'),
+    ('셸', 'GatewayHeader', '게이트웨이 머리줄', '48 · 모바일 56 + 메뉴 시트', '로그인 후 · 로그인 전(로그인/회원가입 하나) · 지도 위 투명', '새로', 'K3 · K5'),
+    ('셸', 'EntryHeader', '입장 머리줄(레일 없음)', '48 · 모바일 56', '서버 · 기수 · 날짜 · 로비로 · 도움말', '새로', 'K3 · K5'),
     ('셸', 'SeasonChip', '계절 칩 → 패널', '칩 44 · 패널 400 · 모바일 시트', '소식 점 · 서버 대기', '새로', 'K3 자리 · K8 내용'),
     ('기본', 'Button', '단추', '44', '주 · 기본 · 위험 · 작게(44)', 'Button', 'K3'),
     ('기본', 'InputAction', '입력 단추', '44', 'AVAILABLE · BLOCKED(사유) · NOT_DELIVERED(준비 중) · 행 없음(안 그림)', '새로', 'K3'),
@@ -758,25 +779,28 @@ PARTS = [
     ('기본', 'BottomSheet', '하단 시트', '살짝 124 · 반 · 가득', '손잡이 + 닫기 단추', '새로', 'K3'),
     ('기본', 'Toast', '알림 토스트', '48', '성공 4초 · 실패는 닫을 때까지 · 되돌리기', '새로', 'K3'),
     ('기본', 'DataTable', '표 → 카드', '행 44', '모바일 카드, 정렬 · 거르기 유지', 'Table', 'K3'),
+    ('기본', 'StepForm', '걸음 입력', '걸음 표시 60 + 아래 고정 줄 64', '걸음 사이 값 유지 · 끝난 걸음 눌러 돌아가기', '새로', 'K3 · K5'),
+    ('기본', 'TimeBar', '시간 막대', '데스크톱 88 · 모바일 2줄', '다시 보기(속도 · 사건 표식) · 실시간(지금으로)', '새로', 'K3 · K5 · K6'),
     ('기본', 'Portrait', '초상', '24–48 · 핀 48 원형', '없으면 첫 글자 판', 'Portrait', 'K3'),
     ('상태', 'StatusView', '상태(P-X01)', '영역 · 전체 화면', 'loading · empty · error · denied · wait-read · wait-input · stale · not-found · maintenance', 'EmptyState', 'K3'),
     ('명령 흐름', 'CommandFlow', '이번 순에 할 일', '576 · 태블릿 480 · 모바일 가득 시트', '모달 아님 · Esc · URL 에 명령 · 순 · 대상', '새로', 'K3 모양 · K6 동작'),
-    ('명령 흐름', 'TurnStrip', '순 띠', '2 × 6 칸 44 · 모바일 한 줄 96', '실행됨 · 예약 · 경고 · 빈 순 · 고름', 'Slot', 'K3'),
+    ('명령 흐름', 'TurnStrip', '순 띠', '2 × 6 칸 44 · 모바일 한 줄 96', '실행됨 · 예약 · 경고 · 빈 순 · 고름 · 찬 순 = 바꾸기 · 비우기 · 앞 순으로 · 뒤 순으로', 'Slot', 'K3'),
     ('명령 흐름', 'CommandList', '명령 목록', '240 · 행 44', '분류 8 · 찾기(초성 · 옛 이름) · 가능 · 불가 · 준비 중 · 적는 중', '새로', 'K3 · K6'),
     ('명령 흐름', 'CommandArgs', '인자 패널', '336', '머리(이름 · 순) · 도움말 띠 · 칸 · 미리보기 · 예약', '새로', 'K3 · K6'),
     ('명령 흐름', 'HelpStrip', '도움말 띠', '44', '설명 · 잘 되면 · 안 되면 · 초안', '새로', 'K3 자리 · K7 내용'),
     ('명령 흐름', 'PlaceField', '장소 칸', '44 + 44', '값 · 지도에서 고르기 · 고르는 중', '새로', 'K3'),
     ('명령 흐름', 'PersonField', '사람 칸', '44', '값 · PeoplePicker 열기', '새로', 'K3'),
     ('지도', 'MapTargetPicker', '지도 대상 고르기', '고르기 띠 52 · 표지 44', 'place · jurisdiction(주 · 군국) · corps · multi-county', '새로', 'K3 · K2'),
-    ('지도', 'TargetCandidateList', '후보 목록', '336 · 행 44–52', '내 영지 · 이웃 · 전체 · 가능만 · 가까운 순', '새로', 'K3'),
+    ('지도', 'TargetCandidateList', '후보 목록', '336 · 행 44–52', '가능 · 불가(사유)를 같이 보인다 · 묶음 내 영지 · 이웃 · 전체 · 「가능만」 토글 기본 꺼짐 · 가까운 순', '새로', 'K3'),
     ('지도', 'MyLocationMarker', '내 위치 표지', '핀 48 × 62', '성 안 · 성 밖 · 군단과 함께 · 이동 중', '새로', 'K3 · K2'),
     ('지도', 'MyLocationEdge', '화면 밖 화살표', '44 × 52', '네 방향 · 거리', '새로', 'K3 · K2'),
     ('지도', 'MyGeneralCard', '내 장수 카드', '320 · 모바일 시트', '', '새로', 'K3'),
     ('지도', 'MapViewBar', '보기 단추', '왼쪽 아래 세로 줄 44', '주 · 군 · 현 → + − → 내 위치로', '새로', 'K2'),
     ('지도', 'MapLayerPanel', '레이어', '떠 있는 패널 · 모바일 시트', '경계 · 이름 · 보급선 · 시야 · 부대 경로', '새로', 'K2'),
     ('지도', 'MapSelectionCard', '선택 카드', '320 · 모바일 알약 → 시트', '성 · 현 · 관(MapPassCard) · 부대', '새로', 'K2'),
+    ('지도', 'MapMinimap', '작은 지도', '176 × 153 · 데스크톱 오른쪽 아래', '州 개관 그림 + 보는 곳 사각형 + 내 위치 점 · 누르면 그리로', '새로', 'K2'),
     ('지도', 'MapLabel', '이름표', '주 18 · 군 15 + 치소 13 · 현 15', '겹치면 등급 → 인구 순으로 숨김', '새로', 'K2'),
-    ('사람', 'PeoplePicker', '사람 고르기', '380 · 모바일 가득 시트', '묶음 4 · 초성 찾기 · 빈 · 찾기 없음 · 실패', '새로', 'K3'),
+    ('사람', 'PeoplePicker', '사람 고르기', '380 · 모바일 가득 시트', '한 명 · 여러 명 · 묶음 4 · 초성 찾기 · 빈 · 찾기 없음 · 실패', '새로', 'K3'),
     ('사람', 'PersonRow', '사람 한 줄', '56–60', '사람 칩 · 국가색 점 · 시야 밖 · 불가 사유', '새로', 'K3'),
 ]
 
@@ -793,6 +817,128 @@ RULES = [
     ('빗금', '빗금 = 미정찰(시야 밖). 고를 수 없음은 빗금이 아니라 적갈 점선.'),
     ('표기', '縣 → 현 · 郡 → 군 · 城 → 성 · 省 → 구역 · 금 · 쌀 · 부(府) · 소속. 관직은 names.office_ko.'),
 ]
+
+
+# ------------------------------------------------------------------ 게이트웨이 · 입장 셸(K5 요청)
+GW_MENU = ['로비', '커뮤니티', '계정', '관리']
+
+
+def gw_topbar(state='in', on='로비', admin=True, transparent=False):
+    """게이트웨이 머리줄(GatewayHeader) 48 — 로고 · 공개 알파 · 메뉴(로비 · 커뮤니티 · 계정 · 관리는 운영자만) · 별명 · 로그아웃.
+    state = in(로그인 뒤) | login(로그인 화면 — 「회원가입」 하나) | join(가입 화면 — 「로그인」 하나). transparent = 지도 위에 뜨는 변형."""
+    bg = ('background:rgba(12,15,14,.74);border-bottom:1px solid rgba(61,71,64,.7)' if transparent
+          else 'background:linear-gradient(180deg,#232a26,#1b201d);border-bottom:1px solid #3d4740')
+    if state == 'in':
+        nav = ('<nav aria-label="게이트웨이 메뉴" style="display:flex;gap:2px">' + ''.join(
+            f'<a href="#" class="btn sm" aria-current="{"page" if m == on else "false"}" style="{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if m == on else "background:transparent"}">{m}</a>'
+            for m in GW_MENU if admin or m != '관리') + '</nav>')
+        right = f'<span class="t2" style="font-size:13px">[별명]</span>{btn("로그아웃", "sm", "logout", style="background:transparent")}'
+    else:
+        nav = ''
+        right = btn('회원가입' if state == 'login' else '로그인', 'sm', href='#')
+    return (f'<header style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 8px 0 16px;{bg};position:relative;z-index:2">'
+            f'{LOGO}<span class="chip info">공개 알파</span>{nav}<div style="margin-left:auto;display:flex;align-items:center;gap:8px">{right}</div></header>')
+
+
+def gw_mtop(transparent=False):
+    bg = 'background:rgba(12,15,14,.74)' if transparent else 'background:#1b201d;border-bottom:1px solid #3d4740'
+    return (f'<header style="height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 0 12px;{bg};position:relative;z-index:2">'
+            f'<div style="display:flex;align-items:center;gap:8px">{LOGO_M}<span class="chip info">공개 알파</span></div>'
+            f'<button type="button" class="btn sm" aria-haspopup="dialog" style="background:rgba(20,24,22,.9)">{icon("menu", 18)}메뉴</button></header>')
+
+
+def gw_menu_sheet(admin=True):
+    rows = ''.join(opt(m, '', '', sel=(m == '로비'), h=52) for m in GW_MENU if admin or m != '관리')
+    return sheet('메뉴', f'<div style="padding:0 16px 8px" class="t2">[별명] · 로그인함</div><div role="listbox" aria-label="게이트웨이 메뉴" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{rows}</div>',
+                 height=380, foot=btn('로그아웃', '', 'logout', style='flex:1'))
+
+
+def entry_topbar(server='pep', gen='1기', date='200년 3월 중순'):
+    """입장 머리줄(EntryHeader) 48 — 레일 없음(장수가 생긴 뒤에만 메뉴가 뜻이 있다)."""
+    return (f'<header style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 8px 0 16px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">'
+            f'{LOGO}<span class="serif" style="font-size:17px;font-weight:900">{server}</span>{chip(gen)}{chip(date)}'
+            f'<div style="margin-left:auto;display:flex;gap:6px">{btn("로비로", "sm", "lobby", href="#")}{ibtn("help", "이 화면 도움말")}</div></header>')
+
+
+def entry_mtop(title, back='로비'):
+    return (f'<header style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 8px 0 4px;border-bottom:1px solid #3d4740;background:#1b201d">'
+            f'<a href="#" class="ibtn" aria-label="{back}로 돌아가기" style="border:0;background:transparent">{icon("back")}</a>'
+            f'<span class="serif" style="font-size:17px;font-weight:900;flex:1">{title}</span>{ibtn("help", "이 화면 도움말")}</header>')
+
+
+# ------------------------------------------------------------------ 걸음 입력(StepForm) — 걸음 표시 + 아래 고정 「이전 · 다음」. 걸음 사이 값 유지.
+def step_bar(steps, cur):
+    out = ''
+    for i, t in enumerate(steps, 1):
+        st = 'done' if i < cur else ('now' if i == cur else 'todo')
+        col = {'done': '#8fa77a', 'now': '#d3b064', 'todo': '#5a625c'}[st]
+        mark = icon('check', 14, '#8fa77a') if st == 'done' else f'<span class="mono">{i}</span>'
+        out += (f'<button type="button" aria-current="{"step" if st == "now" else "false"}" {"aria-disabled=true" if st == "todo" else ""} '
+                f'style="flex:1 1 0;min-width:0;height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font:inherit;background:transparent;border:0;border-top:3px solid {col};color:{"#ece6d8" if st != "todo" else "#8a8477"};cursor:pointer">'
+                f'<span style="display:flex;align-items:center;gap:4px;font-size:12px;font-weight:{700 if st == "now" else 500}">{mark}{t}</span></button>')
+    return f'<nav aria-label="걸음" style="display:flex;gap:4px;padding:8px 12px;border-bottom:1px solid #2c342f;flex-shrink:0">{out}</nav>'
+
+
+def step_foot(prev='이전', nxt='다음', nxt_attrs=''):
+    return (f'<div style="height:64px;flex-shrink:0;display:flex;gap:8px;padding:10px 12px;background:#1b201d;border-top:1px solid #3d4740">'
+            f'{btn(prev, "", "prev", style="flex:1")}{btn(nxt, "primary", style="flex:2", attrs=nxt_attrs)}</div>')
+
+
+# ------------------------------------------------------------------ 시간 막대(TimeBar) — 다시 보기(P-H03)와 실시간 전투(P-C05)가 같이 쓴다
+TB_EVENTS = [(12, '#8fa77a', '부딪힘'), (31, '#7aa7c7', '계책'), (37, '#d3b064', '일기토'), (58, '#e08a7c', '성문'), (74, '#d3b064', '일기토')]
+
+
+def time_bar(mode='replay', mobile=False, pos=37):
+    """mode = replay(처음 ~ 끝, 속도 · 이전/다음 사건) | live(지금까지만, 「지금으로」). 막대 위 사건 표식은 누르면 그 순간으로."""
+    b = 'background:rgba(20,24,22,.92)'
+    marks = ''.join(f'<button type="button" aria-label="{t} — {p}% 지점으로" style="position:absolute;left:{p}%;top:0;width:44px;height:44px;margin-left:-22px;padding:0;border:0;background:transparent;cursor:pointer">'
+                    f'<i style="position:absolute;left:19px;top:8px;width:6px;height:12px;background:{c}"></i></button>'
+                    for p, c, t in (TB_EVENTS if mode == 'replay' else [e for e in TB_EVENTS if e[0] <= pos]))
+    end = 100 if mode == 'replay' else pos
+    track = (f'<div role="slider" aria-label="시간" aria-valuenow="{pos}" aria-valuemin="0" aria-valuemax="100" style="position:relative;flex:1;min-width:0;height:44px">'
+             f'<i style="position:absolute;left:0;right:{100 - end}%;top:26px;height:6px;background:#3d4740"></i>'
+             f'<i style="position:absolute;left:0;width:{pos}%;top:26px;height:6px;background:#d3b064"></i>{marks}'
+             f'<i style="position:absolute;left:{pos}%;top:20px;width:18px;height:18px;margin-left:-9px;background:#ffd36d;border:2px solid #0c0f0e"></i></div>')
+    now = ('<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;min-width:0"><span class="mono bz">지금</span>'
+           '<span class="t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">우리 선봉 하후돈이 적 좌익과 일기토</span></div>')
+    if mode == 'replay':
+        ctl = (f'{ibtn("skipb", "이전 사건", style=b)}<button type="button" class="ibtn" aria-label="정지" style="background:#d3b064;color:#161410;border-color:#9c7f3f">{icon("pause", 20, "#161410")}</button>'
+               f'{ibtn("skipf", "다음 사건", style=b)}')
+        tail = f'{seg(["0.5×", "1×", "2×"], "1×", "빠르기")}{btn("결과", "sm")}'
+        clock = '<span class="mono t2" style="font-size:12px;white-space:nowrap">1:32 / 4:10</span>'
+    else:
+        ctl = f'<span class="chip rust" style="height:28px;gap:6px"><i class="dot" style="background:#e08a7c"></i>실시간</span>'
+        tail = btn('지금으로', 'sm')
+        clock = '<span class="mono t2" style="font-size:12px;white-space:nowrap">1:32 지남</span>'
+    if mobile:
+        return (f'<div style="display:flex;flex-direction:column;gap:4px;padding:6px 12px;background:#1b201d;border-top:1px solid #3d4740;border-bottom:1px solid #3d4740">'
+                f'{now}<div style="display:flex;align-items:center;gap:8px">{track}{clock}</div>'
+                f'<div style="display:flex;align-items:center;gap:6px">{ctl}<span style="margin-left:auto;display:flex;gap:6px">{tail}</span></div></div>')
+    return (f'<div aria-label="시간 막대" style="height:96px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:0 16px;background:#1b201d;border:1px solid #3d4740">'
+            f'{now}<div style="display:flex;align-items:center;gap:10px">{ctl}{track}{clock}{tail}</div></div>')
+
+
+# ------------------------------------------------------------------ 사람 여러 명 고르기
+def person_row_multi(key, name, kind, aff, where, on=False, h=56):
+    nat = '원소' if '원소' in aff else ('유표' if '유표' in aff else '조조')
+    kchip = chip('사람', 'info') if kind == '사람' else ''
+    wh = f'자리 {where}' if where != '—' else '자리 모름(시야 밖)'
+    box = f'<i style="width:20px;height:20px;flex-shrink:0;border:1px solid {"#9c7f3f" if on else "#5a625c"};background:{"#d3b064" if on else "#141816"};display:inline-flex;align-items:center;justify-content:center">{icon("check", 14, "#161410") if on else ""}</i>'
+    return (f'<button type="button" role="option" class="opt" aria-selected="{"true" if on else "false"}" style="min-height:{h}px">{box}'
+            f'{portrait(key, name, 30, 42)}<span style="display:flex;flex-direction:column;min-width:0;gap:2px">'
+            f'<span style="display:flex;align-items:center;gap:6px"><span class="nm">{name}</span>{kchip}</span>'
+            f'<span class="sub" style="display:flex;align-items:center;gap:5px"><i class="dot" style="background:{NATION[nat]}"></i>{aff} · {wh}</span></span></button>')
+
+
+def people_picker_multi(chosen=('순욱', '허저', '이전'), mobile=False):
+    """사람 고르기 — 여러 명(운영 조치 · 알림 등). 누를 때마다 넣고 뺀다. 위에 고른 수와 칩(빼기 44)."""
+    chips = ''.join(f'<span class="chip bronze" style="height:44px;gap:4px;padding:0 0 0 10px">{n}'
+                    f'<button type="button" aria-label="{n} 빼기" style="width:44px;height:44px;border:0;background:transparent;color:#d3b064;display:inline-flex;align-items:center;justify-content:center;padding:0">{icon("close", 14)}</button></span>' for n in chosen)
+    head = (f'<div style="padding:10px 12px 0;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:center;gap:8px">'
+            f'<span class="t2" style="font-size:12px">고른 사람 <b class="bz">{len(chosen)}</b></span>{btn("모두 풀기", "sm", style="margin-left:auto;background:transparent")}</div>'
+            f'<div style="display:flex;gap:6px;flex-wrap:wrap">{chips}</div>{search("이름 · 초성으로 찾기")}{seg(PGROUPS, "전체", "묶음", style="overflow:hidden")}</div>')
+    rows = ''.join(person_row_multi(k, n, kd, a, w, on=(n in chosen)) for k, n, kd, a, g, w in PEOPLE[:6 if mobile else 7])
+    return f'{head}<div role="listbox" aria-multiselectable="true" aria-label="사람 목록" style="display:flex;flex-direction:column;margin-top:8px;border-top:1px solid #2c342f">{rows}</div>'
 
 
 # ================================================================== 보드
@@ -944,7 +1090,7 @@ def board_tokens():
                         ('모바일', '0 – 767 · 하단 탭 · 시트 · 카드'), ('--bp-tablet 768', '768 – 1199 · 좁은 레일 · 1열 · 명령 흐름 480'),
                         ('--bp-desktop 1200', '1200 이상 · 레일 · 옆 패널 · 명령 흐름 576')])
           + '<span class="note">CSS 는 <span class="mono">@media (min-width: 768px)</span> · <span class="mono">(min-width: 1200px)</span> 두 개만. JS 는 web/shared 의 <span class="mono">BREAKPOINTS</span> 한 곳에서.</span></div>')
-    shadows = ''.join(f'<li><b>{n}</b> <span class="mono muted">{v}</span></li>' for n, v in SHADOW)
+    shadows = ''.join(f'<li><b>{n}</b> <span class="mono bz">{t}</span> <span class="mono muted">{v}</span></li>' for t, n, v in SHADOW)
     rules = ('<ul class="ul" style="padding:4px 12px">'
              '<li><b>모서리 0</b> — 각진 판. 예외: 내 위치 핀(원형 초상), 군단 표지.</li>'
              '<li><b>포커스</b> — 3px <span class="mono">#ffd36d</span> 링. 지우지 않는다.</li>'
@@ -977,13 +1123,13 @@ def board_index():
             body += item(*it)
         return f'<section class="panel" style="flex:1 1 0;min-width:0">{sec(title, sub)}<div style="padding:0 12px 8px">{body}</div></section>'
 
-    a, b, c = PARTS[:16], PARTS[16:30], PARTS[30:]
+    a, b, c = PARTS[:16], PARTS[16:32], PARTS[32:]
     rl = ''.join(f'<li><b>{n}</b> — {d}</li>' for n, d in RULES)
     body = (f'<main style="flex-grow:1;min-width:0;display:flex;gap:12px;padding:12px;overflow:hidden">'
             + col(a, '부품 1', '설계 레인은 이 id 로 부른다') + col(b, '부품 2', '담당 = 모양 · 내용')
             + f'<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px">{col(c, "부품 3", "지금 짝 = web/shared 에 있는 부품")}'
             f'<section class="panel">{sec("구현 규칙", "K10 일관성 검사가 센다")}<ul class="ul" style="padding:0 12px">{rl}</ul></section></div></main>')
-    page31('V31SystemIndex.dc.html', '시스템 v3.1 — 부품 목록 · 규칙', shell_desk('시스템 v3.1 — 부품 목록', 'war', body))
+    page31('V31SystemIndex.dc.html', '시스템 v3.1 — 부품 목록 · 규칙', shell_desk('시스템 v3.1 — 부품 목록', 'war', body), h=1360)
 
 
 def board_nav():
@@ -1042,8 +1188,8 @@ def board_parts():
     dlg = dialog('02순 예약을 비울까요?', '<div style="padding:12px 16px" class="t2">02순 「훈련」을 지웁니다. 지운 순은 빈 순이 됩니다. 이미 실행된 순은 지울 수 없습니다.</div>',
                  btn('취소') + btn('비우기', 'danger', 'clear'), w=424)
     strip = (f'<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">{turn_strip(2, 8, 4)}{turn_caption(2)}'
-             f'<div style="display:flex;gap:6px;flex-wrap:wrap">{btn("바꾸기", "sm", "swap")}{btn("비우기", "sm", "clear")}{btn("당기기", "sm", "prev")}{btn("밀기", "sm", "next")}</div>'
-             f'<span class="note">찬 순을 누르면 그 명령이 인자 패널에 열린다. 실행된 순(이끼)은 보기만.</span></div>')
+             f'<div style="display:flex;gap:6px;flex-wrap:wrap">{btn("바꾸기", "sm", "swap")}{btn("비우기", "sm", "clear")}{btn("앞 순으로", "sm", "prev")}{btn("뒤 순으로", "sm", "next")}</div>'
+             f'<span class="note">찬 순을 누르면 그 명령이 인자 패널에 열린다. 앞 · 뒤 순으로 = 그 한 순만 옮긴다. 12순 전체를 한 칸 옮기는 「당기기 · 밀기」는 12순 열에 따로. 실행된 순(이끼)은 보기만.</span></div>')
     card = (f'<div style="border:1px solid #3d4740;background:#141816;padding:10px;display:flex;gap:10px">{portrait("heojeo", "허저", 44, 62)}'
             f'<div style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1"><span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-size:15px;font-weight:700">허저</span>{chip("내 부", "bronze")}</span>'
             f'<span class="mono t2" style="font-size:11.5px">통 — · 무 — · 지 — · 정 — · 매 —</span><span class="muted" style="font-size:11.5px">자리 장사현 · 호위</span></div></div>')
@@ -1133,7 +1279,6 @@ def board_command():
            + cmd_row('이동', '다른 구역으로', 'ok', sel=True, draft=True, input_id='action.move')
            + cmd_row('강행', '빨리 · 사기가 준다', 'ok', input_id='action.forcedMarch')
            + cmd_row('귀환', '귀환 성으로', 'no', '귀환 성 없음', input_id='action.return')
-           + cmd_row('집합', '군단을 한 곳에', 'ok', input_id='action.muster')
            + f'</div><ul class="ul" style="padding:10px 12px;margin-top:auto">'
            f'<li>명령을 바꿔도 적던 값은 명령마다 남는다(분류 탭의 점).</li><li>같은 종류 값은 이어받는다 — 이동 · 강행 · 출병의 갈 곳.</li>'
            f'<li>예약하면 닫지 않고 다음 빈 순으로 간다.</li></ul></div>')
@@ -1244,7 +1389,7 @@ def board_mcommand():
     rows = (cmd_row('농지개간', '내정 · 쌀 생산', 'ok', h=52) + cmd_row('징병', '군사 · 성 안에서', 'no', '성 밖', h=52)
             + cmd_row('출병', '군사 · 군단을 이끌고', 'ok', draft=True, h=52) + cmd_row('이동', '이동 · 다른 구역으로', 'ok', h=52)
             + cmd_row('귀환', '이동 · 귀환 성으로', 'no', '귀환 성 없음', h=52) + cmd_row('인재탐색', '인물 · 새 인물 찾기', 'ok', h=52)
-            + cmd_row('헌납', '인물 · 부에 바친다', 'wait', h=52) + cmd_row('단련', '개인 · 능력 기르기', 'ok', h=52))
+            + cmd_row('헌납', '물자 · 부에 바친다', 'wait', h=52) + cmd_row('단련', '개인 · 능력 기르기', 'ok', h=52))
     strip = f'<div style="padding:4px 12px 8px;border-bottom:1px solid #2c342f;overflow:hidden">{turn_strip(4, 12, gap=4, cell_w=96)}</div>'
     body = (f'{strip}<div style="padding:8px 12px 0">{search("명령 찾기 · 초성 · 옛 이름")}</div>'
             f'<div style="padding:8px 12px">{cat_tabs("전체", ("군사",), scroll=True)}</div>'
@@ -1453,9 +1598,109 @@ def board_mmarker():
     page31('V31SystemMMarker.dc.html', '시스템 v3.1 — 내 위치 표지(모바일)', main, w=390, h=844)
 
 
+def board_gateway():
+    login_panel = (f'<section class="panel" aria-label="로그인 — 내용은 K5 P-G02" style="position:absolute;left:64px;top:120px;width:400px;background:rgba(27,32,29,.96);box-shadow:0 10px 28px rgba(0,0,0,.5)">'
+                   f'{sec("[P-G02 로그인 — 내용 K5]", "지도 위에 뜨는 패널")}<div style="padding:12px;display:flex;flex-direction:column;gap:10px">'
+                   f'{field("계정명", inp("", "계정명"))}{field("비밀번호", inp("", "비밀번호"))}{btn("로그인", "primary", style="width:100%")}</div></section>')
+    variants = (f'<section class="panel" style="position:absolute;left:12px;right:12px;bottom:12px;background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5)">'
+                f'{sec("게이트웨이 머리줄 — 세 모양", "로그인 뒤 · 로그인 화면 · 가입 화면")}<div style="padding:10px 12px;display:flex;flex-direction:column;gap:10px">'
+                f'<span class="muted" style="font-size:11px">로그인 뒤(로비 · 운영자)</span>{gw_topbar("in", "로비", True)}'
+                f'<span class="muted" style="font-size:11px">로그인 뒤(일반) — 관리 없음</span>{gw_topbar("in", "커뮤니티", False)}'
+                f'<span class="muted" style="font-size:11px">가입 화면 — 「로그인」 하나</span>{gw_topbar("join")}'
+                f'<span class="note">하단 탭 · 레일 없음. 로그인 · 가입 화면은 지도 한 장이 배경이고 머리줄이 그 위에 투명하게 뜬다(위). 게임 안으로 들어가면 게임 셸(머리줄 48 + 레일).</span></div></section>')
+    body = (f'<div style="position:absolute;inset:0">{mapimg("hero", 1440, 1000, "中原 — 로그인 배경 지도(군 보기)")}</div>'
+            + gw_topbar('login', transparent=True) + f'<div style="flex-grow:1;position:relative">{login_panel}{variants}</div>')
+    page31('V31SystemGateway.dc.html', '시스템 v3.1 — 게이트웨이 셸(데스크톱)', body)
+
+
+def board_mgateway():
+    main = (f'<div style="position:absolute;left:0;top:0;width:390px;height:480px">{mapimg("hero_m", 390, 480, "낙양 — 로그인 배경 지도")}</div>'
+            f'{gw_mtop(transparent=True)}<main style="flex-grow:1;position:relative"><div class="scrim"></div>{gw_menu_sheet()}</main>')
+    page31('V31SystemMGateway.dc.html', '시스템 v3.1 — 게이트웨이 셸 · 메뉴 시트(모바일)', main, w=390, h=844)
+
+
+def board_entry():
+    def col(w, t, sub, inner):
+        return f'<section class="panel" style="width:{w}px;flex-shrink:0">{sec(t, sub)}<div style="flex-grow:1;display:flex;flex-direction:column;min-height:0">{inner}</div></section>'
+    map_ = (f'<div style="position:relative;height:420px;overflow:hidden;margin:12px;border:1px solid #3d4740">{mapimg("jun", 840, 480, "영천 일대 — 군 보기", -80, -30)}'
+            f'<div class="dim"></div>{mk(240, 190, "sel", "양적현")}{mk(420, 170, "ok", "장사현")}</div>'
+            f'<span class="note" style="padding:0 12px">장소를 고르는 칸 = 지도 대상 고르기(MapTargetPicker) + 주 · 군 목록.</span>')
+    mid = (f'<div style="padding:12px;display:flex;flex-direction:column;gap:10px">{help_strip("[장수 만들기 도움말 — K7]")}'
+           f'{field("이름", inp("[이름]"))}<span class="note">능력 · 주의 · 개성 칸 — 내용 K5 P-E02</span></div>')
+    right = (f'<div style="padding:12px;display:flex;flex-direction:column;gap:10px;flex-grow:1">'
+             f'<div style="border:1px dashed #3d4740;height:260px;display:flex;align-items:center;justify-content:center" class="muted">[미리보기 카드 — K5]</div>'
+             f'<div style="margin-top:auto">{btn("만들고 들어가기", "primary", style="width:100%", attrs="data-guide=tutorial.createGeneral")}</div></div>')
+    main = (f'<main style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">'
+            + col(600, '본관 현', '지도 대상 고르기', map_) + col(420, '이름 · 능력 · 주의 · 개성', '', mid) + col(372, '미리보기', '', right) + '</main>')
+    page31('V31SystemEntry.dc.html', '시스템 v3.1 — 입장 셸(데스크톱, 레일 없음)', entry_topbar() + main)
+
+
+def board_mstep():
+    rows = ''.join(f'<div style="height:52px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #2c342f"><span style="width:56px;font-size:13px">{n}</span>'
+                   f'<button type="button" class="ibtn" aria-label="{n} 낮추기">−</button><span class="mono" style="width:44px;text-align:center;font-size:15px">60</span>'
+                   f'<button type="button" class="ibtn" aria-label="{n} 올리기">+</button><span class="muted" style="font-size:11px;margin-left:auto">20 – 85</span></div>'
+                   for n in ['통솔', '무력', '지력', '정치', '매력'])
+    body = (f'<main style="height:788px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden">'
+            f'{step_bar(["본관", "능력", "주의 · 개성", "확인"], 2)}'
+            f'<div style="flex-grow:1;padding:12px;display:flex;flex-direction:column;gap:10px;overflow:hidden">'
+            f'{field("이름", inp("[이름]"), "[미정]자까지")}<span class="t2" style="font-size:12px">다섯 능력 · 합 <b class="bz mono">300</b> / 300</span>'
+            f'<div style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{rows}</div>'
+            f'<span class="note">걸음 사이를 오가도 적은 값은 남는다. 끝난 걸음(이끼)은 눌러서 돌아간다.</span></div>'
+            f'{step_foot("이전", "다음")}</main>')
+    page31('V31SystemMStep.dc.html', '시스템 v3.1 — 걸음 입력(모바일, 입장 셸)', entry_mtop('장수 만들기') + body, w=390, h=844)
+
+
+def board_timebar():
+    field_ = (f'<div style="position:relative;width:560px;height:560px;flex-shrink:0;border:1px solid #3d4740;overflow:hidden">'
+              f'{pic("", 560, 560, "전장 판 832 × 832(64칸 × 13px) — 원작 전장 판 export 대기(K0)")}</div>')
+    side = lambda t: f'<section class="panel" style="flex:1 1 0;min-width:0">{sec(t, "내용 K5 · K6")}<div class="muted" style="padding:12px;font-size:12px">[6자리 · 사건 목록]</div></section>'  # noqa: E731
+    main = (f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">'
+            + pagehead('리플레이 — 격자', None, None, btn('도움말', '', 'help'))
+            + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{side("우리 측")}{field_}{side("상대 · 사건")}</div>'
+            f'<div style="padding:0 12px;display:flex;flex-direction:column;gap:6px"><span class="muted" style="font-size:11px">다시 보기(P-H03) — 속도 · 이전/다음 사건 · 사건 표식 누르면 그 순간</span>{time_bar("replay")}'
+            f'<span class="muted" style="font-size:11px">실시간 전투(P-C05) — 지나간 데까지만 돌려 보기 · 「지금으로」</span>{time_bar("live")}</div><div style="height:12px"></div></main>')
+    page31('V31SystemTimeBar.dc.html', '시스템 v3.1 — 시간 막대(데스크톱)', shell_desk('기록', 'records', main))
+
+
+def board_mtimebar():
+    main = (f'<main style="height:724px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;position:relative">'
+            f'<div style="padding:8px 16px;display:flex;justify-content:center">{pic("", 358, 358, "전장 판 — 원작 export 대기(K0) · 끌기 · 핀치 · + −")}</div>'
+            f'{time_bar("replay", mobile=True)}'
+            f'<section class="sheet" aria-label="전투 자세히" style="bottom:0;height:124px"><div class="grip"></div>'
+            f'<div style="padding:4px 12px">{seg(["우리", "상대", "사건", "결과"], "사건", "보기")}</div></section></main>')
+    page31('V31SystemMTimeBar.dc.html', '시스템 v3.1 — 시간 막대(모바일)', shell_mob(main, 'records', '리플레이', '기록'), w=390, h=844)
+
+
+def board_peoplemulti():
+    dlg = (f'<section class="dlg" role="dialog" aria-modal="true" aria-label="인물 조치 — 여러 명" style="position:absolute;left:24px;top:24px;width:760px;height:880px">'
+           f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 16px;border-bottom:1px solid #2c342f">'
+           f'<span class="serif" style="font-size:17px;font-weight:900">인물 조치 — 여러 명</span>{ibtn("close", "닫기", style="border:0;background:transparent")}</div>'
+           f'<div style="display:flex;flex-grow:1;min-height:0"><div style="width:420px;flex-shrink:0;display:flex;flex-direction:column;border-right:1px solid #2c342f">{people_picker_multi()}</div>'
+           f'<div style="flex:1;min-width:0;padding:12px 16px;display:flex;flex-direction:column;gap:12px">'
+           f'{field("조치", inp("[조치 — K5 P-A03]", ic="tools"), "엔진에서 실제로 되는 조치만")}'
+           f'{field("알림 문장", "<div class=\"inp area\">[알림 문장]</div>")}</div></div>'
+           f'<div style="padding:12px 16px;display:flex;gap:8px;justify-content:flex-end;border-top:1px solid #2c342f">{btn("취소")}{btn("3명에게 하기", "primary")}</div></section>')
+    note = (f'<section class="panel" style="position:absolute;left:808px;top:24px;width:560px">{sec("여러 명 고르기 규칙", "PeoplePicker multi")}'
+            f'<ul class="ul" style="padding:4px 12px"><li><b>누를 때마다 넣고 뺀다</b> — 행 앞 체크, 위에 고른 수와 칩(빼기 44).</li>'
+            f'<li><b>묶음 · 찾기는 한 명 고르기와 같다</b> — 내 부 · 소속 세력 · 다른 세력 군주 · 전체, 초성 찾기.</li>'
+            f'<li><b>고를 수 없는 사람</b> — 체크 대신 점선 사유 꼬리표(한 명 모드와 같음).</li>'
+            f'<li><b>제출 단추에 수</b> — 「3명에게 하기」. 0명이면 비활성 + 사유 「먼저 사람을 고르세요」.</li>'
+            f'<li><b>모바일</b> — 가득 시트, 아래 고정 줄에 고른 수 + 제출.</li></ul></section>')
+    main = f'<main style="flex-grow:1;position:relative;min-width:0;overflow:hidden;background:#101412">{dlg}{note}</main>'
+    page31('V31SystemPeopleMulti.dc.html', '시스템 v3.1 — 사람 여러 명 고르기(데스크톱)', shell_desk('게임 관리', 'war', main))
+
+
+def board_mpeoplemulti():
+    foot = f'<span class="t2" style="font-size:12px;align-self:center;flex:1">고른 사람 <b class="bz">3</b></span>' + btn('3명에게 하기', 'primary')
+    main = (f'<main style="position:relative;width:390px;height:844px;overflow:hidden;background:#0c0f0e"><div class="scrim"></div>'
+            f'{sheet("사람 고르기 — 여러 명", people_picker_multi(mobile=True), top=24, foot=foot)}</main>')
+    page31('V31SystemMPeopleMulti.dc.html', '시스템 v3.1 — 사람 여러 명 고르기(모바일)', main, w=390, h=844)
+
+
 BOARDS = [board_index, board_nav, board_shell, board_tokens, board_parts, board_mparts, board_page, board_mpage, board_command, board_mcommand,
           board_mcommandargs, board_mappick, board_mmappick, board_mapmodes, board_marker, board_mmarker, board_people, board_mpeople,
-          board_states, board_mstates, board_mnotfound, board_banner, board_mbanner, board_mmaint, board_season, board_mseason]
+          board_states, board_mstates, board_mnotfound, board_banner, board_mbanner, board_mmaint, board_season, board_mseason,
+          board_gateway, board_mgateway, board_entry, board_mstep, board_timebar, board_mtimebar, board_peoplemulti, board_mpeoplemulti]
 
 if __name__ == '__main__':
     import glob
@@ -1463,4 +1708,4 @@ if __name__ == '__main__':
         os.remove(f)
     for b in BOARDS:
         b()
-    print(f'ok v31system — {len(BOARDS)} boards' + ('' if HAVE_ASSETS else ' (v31assets 없음: 그림 자리 표시)'))
+    print(f'ok v31system {V31_VERSION} — {len(BOARDS)} boards' + ('' if HAVE_ASSETS else ' (v31assets 없음: 그림 자리 표시)'))
