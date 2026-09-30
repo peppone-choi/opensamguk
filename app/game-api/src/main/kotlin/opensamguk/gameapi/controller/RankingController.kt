@@ -1,33 +1,16 @@
 package opensamguk.gameapi.controller
 
 import opensamguk.gameapi.dto.BestGeneral
-import opensamguk.gameapi.dto.EmperorDetail
-import opensamguk.gameapi.dto.EmperorRecord
-import opensamguk.gameapi.dto.GeneralRank
-import opensamguk.gameapi.dto.HallRecord
 import opensamguk.gameapi.dto.KingdomRank
 import opensamguk.gameapi.dto.KingdomRoster
-import opensamguk.gameapi.dto.NpcGeneral
-import opensamguk.gameapi.dto.TrafficSummary
 import opensamguk.gameapi.rank.RankReadService
-import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
-import org.springframework.web.server.ResponseStatusException
 
 /**
- * F3 — `GET /api/rankings/...` read API (spec `2026-06-02-F3-rankings-spec.md`).
- *
- * Eight ranking endpoints the `web/game` `/game/rankings` pages consume through the same-origin
- * `/api/game` proxy. Public read: `GameApiSecurityConfig` ends in `.anyRequest().permitAll()`, so these
- * paths need no auth — an anonymous visitor must see every board (esp. npcs/traffic). Do NOT add a
- * `.authenticated()` matcher for the rankings paths.
- *
- * Computed boards are pure projections of live read rows ([RankReadService]). Historical boards read only
- * persisted `hall`/`world_state`/`statistic` data and leave missing source fields empty/zero.
+ * 기존 화면이 쓰는 인물·세력 순위 조회. 화면 대체 후 은퇴하며 공개 읽기 정책을 유지한다.
  */
 @RestController
 @RequestMapping("/api/rankings")
@@ -38,10 +21,6 @@ class RankingController(
     @GetMapping("/best-generals")
     fun bestGenerals(): ResponseEntity<List<BestGeneral>> =
         ResponseEntity.ok(rankReadService.bestGenerals())
-
-    @GetMapping("/generals")
-    fun generals(): ResponseEntity<List<GeneralRank>> =
-        ResponseEntity.ok(rankReadService.generals())
 
     @GetMapping("/kingdoms")
     fun kingdoms(): ResponseEntity<List<KingdomRank>> =
@@ -54,27 +33,4 @@ class RankingController(
     @GetMapping("/kingdom-roster")
     fun kingdomRoster(): ResponseEntity<KingdomRoster> =
         ResponseEntity.ok(rankReadService.kingdomRoster())
-
-    @GetMapping("/npcs")
-    fun npcs(): ResponseEntity<List<NpcGeneral>> =
-        ResponseEntity.ok(rankReadService.npcs())
-
-    @GetMapping("/hall-of-fame")
-    fun hallOfFame(): ResponseEntity<List<HallRecord>> =
-        ResponseEntity.ok(rankReadService.hallOfFame())
-
-    @GetMapping("/traffic")
-    fun traffic(): ResponseEntity<TrafficSummary> =
-        ResponseEntity.ok(rankReadService.traffic())
-
-    @GetMapping("/emperor")
-    fun emperor(): ResponseEntity<List<EmperorRecord>> =
-        ResponseEntity.ok(rankReadService.emperor())
-
-    @GetMapping("/emperor/{id}")
-    fun emperorDetail(@PathVariable id: Int): ResponseEntity<EmperorDetail> =
-        ResponseEntity.ok(
-            rankReadService.emperorDetail(id)
-                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "황제 기록을 찾을 수 없습니다."),
-        )
 }

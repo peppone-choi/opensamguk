@@ -7,7 +7,6 @@ import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.gameapi.controller.BoardController
 import opensamguk.gameapi.controller.FrontInfoController
-import opensamguk.gameapi.controller.NationFinanceController
 import opensamguk.gameapi.controller.WorldMapController
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.BoardCommentReadRepository
@@ -16,7 +15,6 @@ import opensamguk.gameapi.read.BoardPostReadLogRepository
 import opensamguk.gameapi.read.BoardPostReadRepository
 import opensamguk.gameapi.read.CityReadEntity
 import opensamguk.gameapi.read.CityReadRepository
-import opensamguk.gameapi.read.DiplomacyReadRepository
 import opensamguk.gameapi.read.GeneralReadEntity
 import opensamguk.gameapi.read.GeneralReadRepository
 import opensamguk.gameapi.read.GeneralTurnReadEntity
@@ -86,7 +84,6 @@ class ReadIdentitySecurityChainTest {
         @Bean open fun turns(): GeneralTurnReadRepository = mock(GeneralTurnReadRepository::class.java)
         @Bean open fun feeds(): LogFeedReadRepository = mock(LogFeedReadRepository::class.java)
         @Bean open fun env(): NationEnvReadRepository = mock(NationEnvReadRepository::class.java)
-        @Bean open fun diplomacy(): DiplomacyReadRepository = mock(DiplomacyReadRepository::class.java)
         @Bean open fun posts(): BoardPostReadRepository = mock(BoardPostReadRepository::class.java)
         @Bean open fun comments(): BoardCommentReadRepository = mock(BoardCommentReadRepository::class.java)
         @Bean open fun reads(): BoardPostReadLogRepository = mock(BoardPostReadLogRepository::class.java)
@@ -103,9 +100,6 @@ class ReadIdentitySecurityChainTest {
         @Bean open fun reserved(resolver: GeneralResolver, turns: GeneralTurnReadRepository, world: WorldStateReadRepository,
             generals: GeneralReadRepository) = ReservedCommandsController(resolver, turns, world, generals,
                 CommandRegistry(GeneralActionPipeline()))
-        @Bean open fun finance(nations: NationReadRepository, resolver: GeneralResolver, world: WorldStateReadRepository,
-            env: NationEnvReadRepository, cities: CityReadRepository, generals: GeneralReadRepository, diplomacy: DiplomacyReadRepository) =
-            NationFinanceController(nations, resolver, world, env, cities, generals, diplomacy, ObjectMapper())
         @Bean open fun board(posts: BoardPostReadRepository, comments: BoardCommentReadRepository, resolver: GeneralResolver,
             generals: GeneralReadRepository, polls: VotePollReadRepository, votes: VoteReadRepository,
             reads: BoardPostReadLogRepository, world: WorldStateReadRepository) =
@@ -206,27 +200,18 @@ class ReadIdentitySecurityChainTest {
     }
 
     @Test
-    fun `private reserved and finance endpoints require JWT and owned general or nation`() {
-        for (path in listOf("/api/reserved-commands?generalId=101", "/api/nation/1/finance")) {
-            mvc.perform(get(path)).andExpect(status().isForbidden)
-            mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isForbidden)
-            mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
-        }
+    fun `reserved orders require JWT and owned general`() {
+        val path = "/api/reserved-commands?generalId=101"
+        mvc.perform(get(path)).andExpect(status().isForbidden)
+        mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isForbidden)
+        mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
         mvc.perform(get("/api/reserved-commands?generalId=202").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isForbidden)
-        mvc.perform(get("/api/nation/2/finance").header("Authorization", "Bearer ${token()}"))
-            .andExpect(status().isForbidden).andExpect(jsonPath("$.gold").doesNotExist())
-        verifyNoInteractions(turns, nations, world)
+        verifyNoInteractions(turns, world)
         `when`(turns.findByGeneralIdOrderByTurnIdxAsc(101)).thenReturn(listOf(GeneralTurnReadEntity(
             id = 1, generalId = 101, turnIdx = 0, actionCode = "Move", arg = mapOf("destCityID" to 5))))
-        mvc.perform(get("/api/reserved-commands?generalId=101").header("Authorization", "Bearer ${token()}"))
+        mvc.perform(get(path).header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(jsonPath("$.slots[0].arg.destCityID").value(5))
-        mvc.perform(get("/api/nation/1/finance").header("Authorization", "Bearer ${token()}"))
-            .andExpect(status().isOk).andExpect(jsonPath("$.gold").value(321)).andExpect(jsonPath("$.rice").value(654))
-            .andExpect(jsonPath("$.editable").value(false))
-        resolve(nationId = 0)
-        mvc.perform(get("/api/nation/1/finance").header("Authorization", "Bearer ${token()}"))
-            .andExpect(status().isForbidden)
     }
 
     @Test

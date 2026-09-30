@@ -17,8 +17,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * a valid Bearer token is present.
  *
  * Public statics (lobby, const, map and front header) omit private identity when no JWT is verified.
- * Controllers enforce ownership before private data reads; route authentication is required for
- * possession, my-* views, reserved orders and nation finances.
+ * Controllers enforce ownership before private data reads; my-* views and reserved orders also
+ * require route authentication.
  *
  * CSRF is disabled (stateless token API, no cookies on this origin).
  */
@@ -36,21 +36,16 @@ class GameApiSecurityConfig {
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
-                    // Reserved orders and internal finances always require a verified account.
-                    .requestMatchers("/api/reserved-commands", "/api/nation/*/finance").authenticated()
+                    // Reserved orders always require a verified account.
+                    .requestMatchers("/api/reserved-commands").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
-                    .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
-                    // Phase 4X-A 가신·부곡 읽기 — 본인/같은 국가만(spec v3 F4). 등록하지 않으면 anyRequest permitAll 로 공개된다.
-                    .requestMatchers("/api/my-retinue", "/api/generals/*/retinue").authenticated()
+                    .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/events").authenticated()
                     // Phase 4X-B 작전 읽기 — 국가 내부 정보(타국 403).
                     .requestMatchers("/api/operations", "/api/operations/*").authenticated()
                     // Phase 4X-C 출병 계획·리플레이 읽기 — 본인/공격국·수비국만(타국 403).
-                    .requestMatchers("/api/battlefields", "/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
+                    .requestMatchers("/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/battles/*/*/join-ticket").authenticated()
-                    .requestMatchers("/api/general/claim").authenticated()
-                    .requestMatchers("/api/generals/claimable").authenticated()
-                    .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()
                     .requestMatchers("/api/v2/commands/**").authenticated()
                     .requestMatchers("/api/v2/garrison-recruit", "/api/v2/city-transport").authenticated()
                     .requestMatchers("/api/command/v2GarrisonRecruit", "/api/command/v2CityTransport").authenticated()
