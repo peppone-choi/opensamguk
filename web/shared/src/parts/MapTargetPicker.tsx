@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ReasonTooltip } from '../ReasonTooltip';
+import { PartIcon } from './PartIcon';
 import type { TargetCandidate, TargetKind, TargetMarkerState } from './types';
 
 // ---------------------------------------------------------------- 상태(지도 층 · 목록 · 띠가 함께 쓴다)
@@ -109,7 +110,7 @@ export interface PickBarProps {
 export function PickBar({ title, hint, counts, onCancel, onShowList, done }: PickBarProps) {
   return (
     <div className="os-pickbar" role="region" aria-label={title}>
-      <span className="os-pickbar__mark" aria-hidden="true" />
+      <span className="os-pickbar__mark"><PartIcon name="target" /></span>
       <span className="os-pickbar__text">
         <span className="os-pickbar__title">{title}</span>
         <span className="os-pickbar__sub">{`${hint} · 가능 ${counts.available} · 불가 ${counts.blocked}`}</span>

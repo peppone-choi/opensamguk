@@ -57,7 +57,12 @@ export type StatusKind = 'loading' | 'empty' | 'error' | 'denied' | 'waiting' | 
 
 // ---------------------------------------------------------------- 지도 대상 고르기(MapTargetPicker)
 
-/** 고르는 대상 종류. 보드 MapPick · MapModes. */
+/**
+ * 고르는 대상 종류(보드 MapPick · MapModes).
+ * - `place` 가는 곳 한 칸 — 성 · 현 · 구역 목적지(이동 · 출병 · 수송 …)
+ * - `jurisdiction` 관할 경계 — 주 · 군국(지방 관직 임명, 군 첩보 …)
+ * - `corps` 군단 · `multi-county` 여러 현(고른 순서 번호)
+ */
 export type TargetKind = 'place' | 'jurisdiction' | 'corps' | 'multi-county';
 
 /**
@@ -69,7 +74,8 @@ export interface TargetCandidate {
   readonly targetId: string;
   readonly provinceId?: string;
   readonly cityId?: string;
-  readonly cell: { readonly col: number; readonly row: number };
+  /** 지도 칸. 없으면(U-01 보강 전 옵션) 지도 표지 없이 목록에만 나온다. */
+  readonly cell?: { readonly col: number; readonly row: number };
   readonly available: boolean;
   readonly reasonCode?: string;
   readonly reason?: string;
@@ -96,16 +102,19 @@ export type PeopleGroup = 'mine' | 'nation' | 'rulers' | 'all';
 export interface PersonOption {
   readonly generalId: number;
   readonly name: string;
-  /** 사람 장수면 「사람」 칩. NPC 는 칩 없음. */
-  readonly isHuman: boolean;
+  /** 사람 장수면 「사람」 칩. false · 없음(서버가 안 줌) = 칩 없음. */
+  readonly isHuman?: boolean;
   /** 초상 — 공용 Portrait(`picture` · `imageServer`)로 그린다. 없으면 첫 글자 판. */
   readonly picture?: string | null;
   readonly imageServer?: number | null;
-  /** 소속. 재야는 null. */
-  readonly nation: { readonly id: number; readonly name: string; readonly color: string } | null;
-  /** 자리(예: 「양적현」). null 이면 「자리 모름(시야 밖)」. */
-  readonly location: string | null;
-  /** 이 사람이 드는 묶음('all' 은 넣지 않아도 된다). */
+  /**
+   * 소속. null = 재야(「재야」 로 그린다). 없음(undefined) = 서버가 안 줌 → 소속 조각을 그리지 않는다.
+   * null 과 undefined 를 섞지 않는다 — 모르는 것을 「재야」 라고 말하게 된다.
+   */
+  readonly nation?: { readonly id: number; readonly name: string; readonly color: string } | null;
+  /** 자리(예: 「양적현」). null = 「자리 모름(시야 밖)」. 없음(undefined) = 서버가 안 줌 → 자리 조각을 그리지 않는다. */
+  readonly location?: string | null;
+  /** 이 사람이 드는 묶음('all' 은 넣지 않아도 된다). 모르면 [] 로 두고 PeoplePicker `groups` 에서 그 탭을 끈다. */
   readonly groups: readonly Exclude<PeopleGroup, 'all'>[];
   /** 고를 수 없으면 사유(행 전체가 사유를 여는 단추가 된다). */
   readonly blockedReason?: string;
