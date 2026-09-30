@@ -514,8 +514,8 @@ class F4ReadControllersTest {
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.troops.length()").value(0))
-            // 익명 호출자 → myGeneralId/permission 0(멤버십/뮤테이션 게이팅 기준, Direction A).
-            .andExpect(jsonPath("$.myGeneralId").value(0))
+            // 인증된 본인 장수 id를 유지하고 일반 장수 permission=0을 반환한다.
+            .andExpect(jsonPath("$.myGeneralId").value(10))
             .andExpect(jsonPath("$.permission").value(0))
     }
 
