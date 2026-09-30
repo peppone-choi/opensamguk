@@ -4,7 +4,8 @@
 // (옛 DomesticPanels 는 available=false 자리를 사유 없이 뺐다 — 설계서 P-T01).
 
 import type { TargetCandidate } from '@opensamguk/ui';
-import type { Blocked, PlacementCard, PostOption, Posts } from './campaign-reads';
+import { CAMPAIGN_RESOURCE_LABELS, type Blocked, type CodeLabel, type CountyWorks, type GamePhase, type PlacementCard, type Policies, type PostOption, type Posts, type Stock, type Works } from './campaign-reads';
+import { TURN_PHASE_LABELS } from './format';
 
 /** 서버가 사유 없이 불가를 줬을 때 — 사유를 짓지 않는다(K3 InputAction MISSING_REASON 과 같은 글자). */
 export const MISSING_REASON = '사유를 받지 못했습니다';
@@ -117,4 +118,199 @@ export function placementBody(card: Pick<PlacementCard, 'cardId' | 'provinceId'>
         body.provinceId = card.provinceId;
     }
     return { body };
+}
+
+// ── 방침 ─────────────────────────────────────────────────────────────
+
+/** 서버 Phase → 「200년 3월 중순」. 순이 1–3 밖이면 순을 뺀다. */
+export function phaseText(p: GamePhase): string {
+    const phase = TURN_PHASE_LABELS[p.phase - 1];
+    return phase ? `${p.year}년 ${p.month}월 ${phase}` : `${p.year}년 ${p.month}월`;
+}
+
+/** 지금 방침이 어디서 왔는가(`PolicySource`). 모르는 값이면 칩을 그리지 않는다. */
+export const POLICY_SOURCE_LABEL: Readonly<Record<string, string>> = { COMMANDERY: '군 방침', COUNTY: '현 방침', DEFAULT: '기본' };
+
+/** 거두기(`policy.set` policy "NONE", 서버 `DomesticInputs.NONE`). */
+export const POLICY_WITHDRAW = 'NONE';
+
+export type PolicyScope = 'COUNTY' | 'COMMANDERY' | 'CORPS';
+
+export interface PolicyRow {
+    readonly scope: PolicyScope;
+    /** 현 id · 군 id · 군단 명령 id — 입력 몸통의 대상. */
+    readonly targetId: string;
+    readonly name: string;
+    /** 둘째 줄(현이면 군 이름, 군이면 현 수, 군단이면 지휘관). */
+    readonly sub: string | null;
+    /** 현령 — 「빈자리」 · 「이름」 · 「이름(부임 중)」. 현 줄만. */
+    readonly seat: string | null;
+    /** 지금 효력 있는 방침 이름. 없으면 null(「없음」). */
+    readonly now: string | null;
+    readonly source: string | null;
+    readonly since: string | null;
+    /** 다음 턴부터 바뀔 방침(거두기면 「거두기」). */
+    readonly pending: string | null;
+    readonly lastApplied: string | null;
+    /** 지금 건 방침이 있는가 — 「방침 거두기」 선택지를 보일지. */
+    readonly hasActive: boolean;
+    readonly settable: boolean;
+    readonly blocked: Blocked | null;
+}
+
+const pendingText = (p: { policy: string | null; label: string | null } | null) =>
+    p ? (p.policy == null ? '거두기' : p.label ?? p.policy) : null;
+
+export function countyPolicyRows(p: Policies): PolicyRow[] {
+    return p.counties.map((c) => ({
+        scope: 'COUNTY',
+        targetId: String(c.countyId),
+        name: c.name,
+        sub: c.commanderyName,
+        seat: c.seat ? (c.seat.placed ? c.seat.name : `${c.seat.name}(부임 중)`) : '빈자리',
+        now: c.effective?.label ?? c.active?.label ?? null,
+        source: c.effective ? POLICY_SOURCE_LABEL[c.effective.source] ?? null : null,
+        since: c.active?.since ? phaseText(c.active.since) : null,
+        pending: pendingText(c.pending),
+        lastApplied: c.lastApplied ? `${phaseText(c.lastApplied.at)} · ${c.lastApplied.label}` : null,
+        hasActive: c.active != null,
+        settable: c.settable,
+        blocked: c.blocked,
+    }));
+}
+
+export function commanderyPolicyRows(p: Policies): PolicyRow[] {
+    return (p.commanderies ?? []).map((c) => ({
+        scope: 'COMMANDERY',
+        targetId: c.commanderyId,
+        name: c.name ?? '이름 없는 군',
+        sub: `현 ${c.countyIds.length}곳`,
+        seat: null,
+        now: c.active?.label ?? null,
+        source: null,
+        since: c.active?.since ? phaseText(c.active.since) : null,
+        pending: pendingText(c.pending),
+        lastApplied: null,
+        hasActive: c.active != null,
+        settable: c.settable,
+        blocked: c.blocked,
+    }));
+}
+
+export function corpsPolicyRows(p: Policies): PolicyRow[] {
+    return p.corps.map((c) => ({
+        scope: 'CORPS',
+        targetId: c.orderId,
+        name: c.commanderName ? `${c.commanderName} 군단` : '군단',
+        sub: null,
+        seat: null,
+        now: c.active?.label ?? null,
+        source: null,
+        since: null,
+        pending: pendingText(c.pending),
+        lastApplied: null,
+        hasActive: c.active != null,
+        settable: c.settable,
+        blocked: c.blocked,
+    }));
+}
+
+/** 방침 선택지 — 현 · 군은 countyOptions, 군단은 corpsOptions. 건 방침이 있으면 끝에 「방침 거두기」. */
+export function policyOptions(p: Policies, row: PolicyRow): CodeLabel[] {
+    const base = row.scope === 'CORPS' ? p.corpsOptions : p.countyOptions;
+    return row.hasActive ? [...base, { code: POLICY_WITHDRAW, label: '방침 거두기' }] : [...base];
+}
+
+/** 입력 몸통(`POST /api/commands/policy/set`) — 서버 parsePolicy 가 받는 필드 셋 그대로. */
+export function policyBody(row: Pick<PolicyRow, 'scope' | 'targetId'>, policy: string): Readonly<Record<string, unknown>> {
+    if (row.scope === 'COUNTY') return { scope: 'COUNTY', countyId: Number(row.targetId), policy };
+    if (row.scope === 'COMMANDERY') return { scope: 'COMMANDERY', commanderyId: row.targetId, policy };
+    return { scope: 'CORPS', orderId: row.targetId, policy };
+}
+
+// ── 공사 ─────────────────────────────────────────────────────────────
+
+/** 자원 칩 글자(0 은 뺀다) — 「금 300 · 목재 120」. */
+export function stockChips(stock: Stock | null | undefined): string[] {
+    if (!stock) return [];
+    return CAMPAIGN_RESOURCE_LABELS.filter(({ key }) => stock[key] > 0).map(({ key, label }) => `${label} ${stock[key]}`);
+}
+
+/**
+ * 멈춘 사유. 서버가 모르는 멈춤 코드는 원문(영문 코드)을 그대로 돌려준다(`DomesticReader.stopText` else) —
+ * 코드처럼 보이면 「멈춤(사유 준비 중)」(설계서 P-T01).
+ */
+export function stopText(text: string | null | undefined): string | null {
+    if (!text) return null;
+    return /^[A-Z][A-Z0-9_]*$/.test(text.trim()) ? '멈춤(사유 준비 중)' : text;
+}
+
+/** 성방(완공되면 「성방 허물기」 자리) — 서버 DomesticWork.FORTIFICATION. */
+export const FORTIFICATION = 'FORTIFICATION';
+
+export interface WorkRow {
+    readonly countyId: number;
+    readonly name: string;
+    readonly commanderyName: string | null;
+    readonly active: {
+        readonly label: string;
+        readonly percent: number;
+        readonly remainingPhases: number;
+        readonly stop: string | null;
+        readonly nextBoundary: boolean;
+        readonly remainingCost: string[];
+    } | null;
+    /** 완공 칩 — 「창고 · 200년 3월 상순」. */
+    readonly completed: string[];
+    readonly hasFortification: boolean;
+    readonly warehouse: string[];
+    readonly startableCount: number;
+}
+
+export function workRows(works: Works): WorkRow[] {
+    return works.counties.map((c) => ({
+        countyId: c.countyId,
+        name: c.name,
+        commanderyName: c.commanderyName,
+        active: c.active ? {
+            label: c.active.label,
+            percent: Math.max(0, Math.min(100, c.active.percent)),
+            remainingPhases: c.active.remainingPhases,
+            stop: stopText(c.active.stopReasonText),
+            nextBoundary: c.active.startsAtNextBoundary,
+            remainingCost: stockChips(c.active.remainingCost),
+        } : null,
+        completed: c.completed.map((w) => (w.completedAt ? `${w.label} · ${phaseText(w.completedAt)}` : w.label)),
+        hasFortification: c.completed.some((w) => w.work === FORTIFICATION),
+        warehouse: stockChips(c.warehouse),
+        startableCount: c.startable.filter((w) => w.available).length,
+    }));
+}
+
+export interface WorkChoice {
+    readonly work: string;
+    readonly label: string;
+    readonly available: boolean;
+    readonly reason: string | null;
+    readonly code: string | null;
+    readonly cost: string[];
+    readonly phases: number;
+}
+
+/** 공사 선택지 — 비용 · 예상 순 · 불가 사유를 카드에 보인다(옛 화면은 title 에만 있었다). */
+export function workChoices(county: CountyWorks): WorkChoice[] {
+    return county.startable.map((w) => ({
+        work: w.work,
+        label: w.label,
+        available: w.available,
+        reason: w.available ? null : w.blocked?.reason?.trim() || MISSING_REASON,
+        code: w.available ? null : w.blocked?.code ?? null,
+        cost: stockChips(w.cost),
+        phases: w.estimatedPhases,
+    }));
+}
+
+/** 입력 몸통(`POST /api/commands/work/start`) — 도로 · 보루는 화면이 고른 접경 · 칸(extra)을 더한다. */
+export function workBody(countyId: number, work: string, extra?: Readonly<Record<string, unknown>> | null): Readonly<Record<string, unknown>> {
+    return { countyId, work, ...(extra ?? {}) };
 }

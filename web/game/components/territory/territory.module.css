@@ -12,6 +12,21 @@
 .row { display: flex; align-items: center; gap: 10px; min-height: 64px; padding: 6px 12px; border-bottom: 1px solid var(--line); }
 .rowText { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
 
+/* ---- 방침 ---- */
+.policy { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.policyHead { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 12px 0; }
+
+/* ---- 공사 ---- */
+.works { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.workRow { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.workRow > :global(.os-ia), .workRow > :global(.os-button) { align-self: flex-start; }
+.progress { display: flex; flex-direction: column; gap: 4px; }
+.bar { position: relative; height: 6px; background: var(--inset); }
+.bar > i { position: absolute; inset: 0 auto 0 0; background: var(--moss-2); }
+.bar[data-stopped] > i { background: var(--rust); }
+.warn { font-size: 12px; color: var(--rust-2); }
+.reduce { display: flex; flex-direction: column; gap: 4px; }
+
 /* ---- 시트(데스크톱 오른쪽 겹침 480 · 모바일 하단 시트 — 틀은 화면이 준다) ---- */
 .sheet { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
 .sheetTitle { margin: 0; padding: 0 12px; font-size: 16px; font-weight: 800; }

@@ -393,11 +393,32 @@ export interface Posts {
 export interface CountyPolicy {
     readonly countyId: number;
     readonly name: string;
+    /** 서버 `CountyPolicyDto.commanderyId`(군 방침과 잇는다). */
+    readonly commanderyId?: string | null;
     readonly commanderyName: string | null;
-    readonly active: { policy: string; label: string } | null;
+    readonly active: { policy: string; label: string; since?: GamePhase } | null;
     readonly pending: { policy: string | null; label: string | null } | null;
+    /** source: COMMANDERY(군 방침) · COUNTY(현 방침) · DEFAULT(빈자리 기본) — `PolicySource`. */
     readonly effective: { policy: string; label: string; source: string } | null;
     readonly seat: { generalId: number; name: string; placed: boolean } | null;
+    /** 지난 순 경계에 실제로 적용된 방침. result 는 서버 내부 코드라 화면 글자로 쓰지 않는다. */
+    readonly lastApplied?: { at: GamePhase; policy: string; label: string; seat: string; result: string } | null;
+    readonly settable: boolean;
+    readonly blocked: Blocked | null;
+}
+/** 서버 `Phase` — 년 · 월 · 순(1 상순 · 2 중순 · 3 하순). */
+export interface GamePhase {
+    readonly year: number;
+    readonly month: number;
+    readonly phase: number;
+}
+/** 군 방침(`policy.set` scope COMMANDERY) — 서버는 받는데 옛 화면에 UI 가 없었다(설계서 P-T01). */
+export interface CommanderyPolicy {
+    readonly commanderyId: string;
+    readonly name: string | null;
+    readonly countyIds: readonly number[];
+    readonly active: { policy: string; label: string; since?: GamePhase } | null;
+    readonly pending: { policy: string | null; label: string | null } | null;
     readonly settable: boolean;
     readonly blocked: Blocked | null;
 }
@@ -406,7 +427,10 @@ export interface Policies {
     readonly countyOptions: readonly CodeLabel[];
     readonly corpsOptions: readonly CodeLabel[];
     readonly defaultPolicy: CodeLabel | null;
+    /** 설계 수치가 잠정이면 서버가 상태 글자를 준다 — 화면은 「잠정」 칩만 붙인다. */
+    readonly provisional?: string | null;
     readonly counties: readonly CountyPolicy[];
+    readonly commanderies?: readonly CommanderyPolicy[];
     readonly corps: readonly { orderId: string; commanderName: string | null; active: { policy: string; label: string } | null; pending: { policy: string | null; label: string | null } | null; settable: boolean; blocked: Blocked | null }[];
 }
 export interface CountyWorks {
@@ -420,10 +444,12 @@ export interface CountyWorks {
         work: string; label: string; percent: number; remainingPhases: number;
         remainingCost: Stock; stopReasonText: string | null; startsAtNextBoundary: boolean;
     } | null;
-    readonly completed: readonly { work: string; label: string; edgeId: string | null }[];
+    readonly completed: readonly { work: string; label: string; edgeId: string | null; completedAt?: GamePhase }[];
     readonly startable: readonly { work: string; label: string; available: boolean; blocked: Blocked | null; cost: Stock; estimatedPhases: number }[];
 }
 export interface Works {
     readonly status: ReadStatus;
+    /** 설계 수치가 잠정이면 서버가 상태 글자를 준다 — 화면은 「잠정」 칩만 붙인다. */
+    readonly provisional?: string | null;
     readonly counties: readonly CountyWorks[];
 }
