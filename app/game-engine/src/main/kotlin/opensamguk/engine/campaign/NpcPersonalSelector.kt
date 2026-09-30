@@ -8,6 +8,33 @@ import opensamguk.logic.input.*
 internal class NpcPersonalSelector(private val context: DomesticContext,
     private val design: PersonalDesign = PersonalDesign.CANON,
     private val catalog: InputCatalog = InputCatalog.load()) {
+    fun select(observation: NpcObservation, actorId: Int, reserved: ReservedTurn): ReservedTurn {
+        if (observation.actor.id != actorId || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
+            design.status != PersonalDesign.CONFIRMED) return reserved
+        val actor = observation.actor
+        if (!NpcDeploySelector.isUnowned(actor.userId) || actor.npcState < 2 ||
+            observation.heldByAnotherGeneral || CorpsOrder.META_KEY in actor.meta) return reserved
+        val state = observation.domestic ?: return reserved
+        fun eligible(request: PersonalRequest) =
+            catalog[request.inputId]?.deliveryState?.hasHandler == true &&
+                PersonalRules.assess(request, state) is PersonalAssessment.Eligible
+        val heal = PersonalRequest(actorId, PersonalInput.RECUPERATE)
+        if (eligible(heal)) return order(heal)
+        val train = TrainingStat.entries.filter { eligible(PersonalRequest(actorId,
+            PersonalInput.SELF_TRAIN, it)) }.minWithOrNull(compareBy({ stat ->
+                when (stat) {
+                    TrainingStat.LEADERSHIP -> actor.stats.leadership
+                    TrainingStat.STRENGTH -> actor.stats.strength
+                    TrainingStat.INTELLIGENCE -> actor.stats.intelligence
+                    TrainingStat.POLITICS -> actor.stats.politics
+                    TrainingStat.CHARM -> actor.stats.charm
+                }
+            }, { it.ordinal }))
+        if (train != null) return order(PersonalRequest(actorId, PersonalInput.SELF_TRAIN, train))
+        val travel = PersonalRequest(actorId, PersonalInput.TRAVEL)
+        return if (eligible(travel)) order(travel) else reserved
+    }
+
     fun select(world: InMemoryTurnWorld, actorId: Int, reserved: ReservedTurn): ReservedTurn {
         if (world.ruleProfile != RuleProfile.HWIHA || reserved.rowExists || !PersonalTurn.hasNoInput(reserved) ||
             design.status != PersonalDesign.CONFIRMED) return reserved
