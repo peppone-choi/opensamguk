@@ -2,7 +2,7 @@ name: C1 서신 권한 회귀 검증
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
     paths:
       - app/game-api/src/main/kotlin/opensamguk/gameapi/controller/MailboxController.kt
       - app/game-api/src/main/kotlin/opensamguk/gameapi/security/GameApiSecurityConfig.kt
