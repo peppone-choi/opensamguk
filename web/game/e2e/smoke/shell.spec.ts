@@ -41,6 +41,9 @@ test('화면 규칙 도우미가 어긴 것을 실제로 찾는다', { tag: [BOT
 // ---- v3.1 셸 하나(2026-10-01 셸 통합) ----------------------------------------------------------------
 // 합성 로그인 · front-info 로 부 · 월단평을 연다(백엔드 없음 — 게임 읽기는 503, 턴 루프 읽기는 404 → 「운영 상태 확인 중」).
 async function openShell(page: import('@playwright/test').Page, path = '/game/retinue/yuedan') {
+  // 서버를 알아야 셸이 턴 루프를 읽는다(운영은 경로에 서버가 있다) — 쿠키로 서버를 준다.
+  const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
+  await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
   await page.route((url) => url.pathname === '/api/auth/me', (r) => r.fulfill({ json: { user: { id: 1, username: 'qa', nickname: 'qa', role: 'USER' } } }));
   await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
     result: true,
