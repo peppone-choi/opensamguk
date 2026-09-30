@@ -43,3 +43,7 @@ reset hook은 명시 server/world binding과 완료 시각을 검증하고 미�
 연결 순서는 #1088 common Result/collector/source(C8) main→#1073 최신 main rebase 후 ServerBasicInfo/HealthCheck/TurnLoopHealth·ops 수신(C8)→C10 session이 같은 Result를 한 번 결합이다. #1073 producer에 branch 코드를 복사하지 않는다. runTick/JDBC marker 심볼 lease는 C0에 반환했고 C2 후속 typed row/동일 transaction/commit 이후 dispatch 소유다.
 
 추가 회귀는 common10/cache10/HTTP3/engine status8로 지정31건이며 새 head 원격 실행 전 통과로 계산하지 않는다. 실제 StatusController.status gate 읽기를 false로 제거하는 CI mutation을 준비했다. 기존 full engine test 뒤 mutant별 출력 디렉터리에서 지정 테스트 실패를 요구하고 원본 byte 복원 뒤 테스트 성공/skip0을 확인한다. baseline XML·골든·정규화·skip gate는 유지한다. mutation summary와 mutant/restored XML을7일 보존하며 실행 증거 전 red/green을 주장하지 않는다.
+
+## PR #1088 리뷰 반영
+
+공개 UNKNOWN 조회는 구간 시작 시각이 바뀔 때만 캐시를 갱신한다. 수집 응답은 참조 대신 reset epoch를 확인해 저장하므로 수집 중 최초 만료 조회가 구간을 기록해도 CURRENT 복구를 버리지 않는다. reset 중 응답 폐기는 유지한다. 부팅 UNKNOWN 반복 조회와 최초 만료 조회가 수집 안에 들어오는 회귀를 추가했다.

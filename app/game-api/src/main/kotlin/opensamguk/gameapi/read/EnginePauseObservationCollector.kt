@@ -107,9 +107,12 @@ class EnginePauseObservationCollector(
                 (before.resetCompletedAt == null || it.sourceObservedAt > before.resetCompletedAt) &&
                 (before.observation == null || it.sourceObservedAt >= before.observation.sourceObservedAt)
         }
-        // A reset or another collector update during HTTP makes the old response unusable.
-        val since = if (valid != null) null else unknownStartedAt(before, now)
-        cache.compareAndSet(before, before.copy(observation = valid, unknownSince = since))
+        // Public projections may update UNKNOWN timing during HTTP; only invalidation rejects the response.
+        cache.updateAndGet { entry ->
+            if (entry.epoch != before.epoch) entry
+            else entry.copy(observation = valid,
+                unknownSince = if (valid != null) null else unknownStartedAt(entry, now))
+        }
     }
 
     internal fun snapshot(): TurnDaemonObservation? = cache.get().observation
@@ -122,7 +125,7 @@ class EnginePauseObservationCollector(
             settings.maxAge, lastTickExecutedAt, nextTurnAt, tickSeconds, catchUpActive, resetCompletedAt = entry.resetCompletedAt)
         if (initial.state != TurnDaemonProjection.State.UNKNOWN) return initial
         val since = unknownStartedAt(entry, serverTime)
-        cache.compareAndSet(entry, entry.copy(unknownSince = since))
+        if (since != entry.unknownSince) cache.compareAndSet(entry, entry.copy(unknownSince = since))
         return TurnDaemonProjection.observe(settings.serverId, settings.worldId, serverTime, entry.observation,
             settings.maxAge, lastTickExecutedAt, nextTurnAt, tickSeconds, catchUpActive, since, entry.resetCompletedAt)
     }

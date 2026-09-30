@@ -73,6 +73,44 @@ class EnginePauseObservationCollectorTest {
     }
 
     @Test
+    fun `public unknown reads during initial collection do not discard recovery`() {
+        lateinit var collector: EnginePauseObservationCollector
+        collector = EnginePauseObservationCollector(settings, EnginePauseSource {
+            repeat(5) { assertNull(collector.project(now, now, null, 300, false).paused) }
+            current
+        }, clock)
+        collector.collectOnce()
+        assertEquals(current, collector.snapshot())
+        assertEquals(true, collector.project(now, now, null, 300, false).paused)
+        assertNull(collector.project(now, now, null, 300, false).unknownSince)
+    }
+
+    @Test
+    fun `first public expiry read during collection does not discard recovery`() {
+        val time = MutableClock(now)
+        lateinit var collector: EnginePauseObservationCollector
+        var candidate = current
+        var readDuringCollection = false
+        collector = EnginePauseObservationCollector(settings, EnginePauseSource {
+            if (readDuringCollection) {
+                val expired = collector.project(time.instant(), time.instant(), null, 300, false)
+                assertEquals(now.plusSeconds(14), expired.unknownSince)
+                assertNull(expired.paused)
+            }
+            candidate
+        }, time)
+        collector.collectOnce()
+        time.time = now.plusSeconds(20)
+        candidate = current.copy(sourceObservedAt = time.instant(), receivedAt = time.instant(), paused = false)
+        readDuringCollection = true
+        collector.collectOnce()
+        assertEquals(candidate, collector.snapshot())
+        val recovered = collector.project(time.instant(), time.instant(), time.instant().plusSeconds(300), 300, false)
+        assertTrue(recovered.healthy)
+        assertNull(recovered.unknownSince)
+    }
+
+    @Test
     fun `source captured before reset completion stays unavailable`() {
         val collector = EnginePauseObservationCollector(settings, EnginePauseSource { current }, clock)
         collector.collectOnce()
