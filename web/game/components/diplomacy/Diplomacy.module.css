@@ -20,6 +20,21 @@
 .proposals :global(.os-button) { min-height: var(--row-h, 44px); }
 .box { display: grid; gap: 6px; }
 .pairs { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.sub { font-size: 12px; font-weight: 400; color: var(--muted); margin: 0; }
+.notice { margin: 0; padding: 8px 10px; font-size: 13px; border: 1px solid var(--line); border-left: 3px solid var(--info, var(--bronze)); background: var(--inset); }
+.box > .more { justify-self: start; }
+/* 세력 × 세력 표 — 칸이 많으면 표 안에서 가로로 민다(화면은 넘치지 않는다). */
+.matrixWrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); }
+.matrixWrap:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.matrix { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.matrix th, .matrix td { padding: 6px 8px; border: 1px solid var(--line); text-align: center; }
+.matrix th { font-weight: 700; background: var(--panel); }
+.matrix th[scope='row'] { text-align: left; }
+.matrix tr[data-mine] th, .matrix tr[data-mine] td { background: var(--inset); }
+.matrix td[data-self] { color: var(--muted); }
+.matrix td[data-kind='war'], .matrix td[data-kind='declared'] { color: var(--rust-2); font-weight: 700; }
+.matrix td[data-kind='nonAggression'] { color: var(--moss-2); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
 
 @media (max-width: 767.98px) {
   .panel { width: 100%; border-left: 0; }

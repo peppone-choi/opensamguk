@@ -112,6 +112,13 @@ describe('외교 서신', () => {
         const tabs = await screen.findByRole('tablist', { name: '서신 묶음' });
         expect(within(tabs).getAllByRole('tab').map((t) => t.textContent)).toEqual(['개인', '세력', '전체', '외교', '요청']);
         unmount();
+        vi.mocked(api.mailboxRecent).mockClear();
+        const { unmount: unmount2 } = render(<MailScreen me={{ generalId: 1, nationId: 0 }} tabs={['diplomacy']} />);
+        // 재야가 외교 칸만 열면 개인 서신으로 떨어지지 않고, 아무 서신함도 읽지 않는다.
+        expect(screen.getByText('소속 세력이 없어 외교 서신이 없습니다')).toBeInTheDocument();
+        expect(screen.queryByRole('list')).toBeNull();
+        expect(api.mailboxRecent).not.toHaveBeenCalled();
+        unmount2();
         render(<MailScreen me={{ generalId: 1, nationId: 0 }} tabs={['private', 'diplomacy']} />);
         expect(await screen.findByRole('list', { name: '개인 서신' })).toBeInTheDocument();
         expect(screen.queryByRole('tablist')).toBeNull(); // 개인 하나만 남아 탭 줄이 없다

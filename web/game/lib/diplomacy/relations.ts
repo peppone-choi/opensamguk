@@ -34,9 +34,21 @@ export interface OthersAtWar {
     readonly relation: 'war' | 'declared';
 }
 
+/** 세력 × 세력 표(옛 「외교 현황」 행렬) — 행 세력이 열 세력을 보는 관계. 같은 세력 = self, 서버가 안 준 칸 = null. */
+export interface RelationMatrix {
+    readonly nations: readonly { readonly id: number; readonly name: string; readonly color: string }[];
+    readonly cells: Readonly<Record<number, Readonly<Record<number, RelationKind | 'self' | null>>>>;
+}
+
 export type RelationsView =
     | { readonly state: 'stateless' }
-    | { readonly state: 'ready'; readonly me: { readonly id: number; readonly name: string }; readonly rows: readonly NationRelationRow[]; readonly othersAtWar: readonly OthersAtWar[] };
+    | {
+        readonly state: 'ready';
+        readonly me: { readonly id: number; readonly name: string };
+        readonly rows: readonly NationRelationRow[];
+        readonly othersAtWar: readonly OthersAtWar[];
+        readonly matrix: RelationMatrix;
+    };
 
 export function toRelations(res: DiplomacyConflictResponse): RelationsView {
     const meId = res.myNationID;
@@ -60,7 +72,29 @@ export function toRelations(res: DiplomacyConflictResponse): RelationsView {
             }
         }
     }
-    return { state: 'ready', me: { id: meId, name: mine.name }, rows, othersAtWar };
+    const cells: Record<number, Record<number, RelationKind | 'self' | null>> = {};
+    for (const a of res.nations) {
+        cells[a.nation] = {};
+        for (const b of res.nations) {
+            const code = res.diplomacyList[a.nation]?.[b.nation];
+            cells[a.nation][b.nation] = a.nation === b.nation ? 'self' : code === undefined ? null : relationOf(code);
+        }
+    }
+    const matrix: RelationMatrix = { nations: res.nations.map((n) => ({ id: n.nation, name: n.name, color: n.color })), cells };
+    return { state: 'ready', me: { id: meId, name: mine.name }, rows, othersAtWar, matrix };
+}
+
+/**
+ * 표 칸 글자 — 우리 세력이 낀 칸은 관계 이름을 다 보이고, 다른 두 세력 사이는 교전 · 선포만 보인다(서버가 나머지를 가린다 —
+ * 옛 화면 neutralStateCharMap 과 같은 규칙). 좁은 표라 짧게 쓴다.
+ */
+export const RELATION_SHORT: Readonly<Record<RelationKind, string>> = {
+    war: '교전', declared: '선포', none: '관계 없음', nonAggression: '불가침', unknown: '모름',
+};
+export function matrixCellText(kind: RelationKind | 'self' | null, involvesMe: boolean): string {
+    if (kind === 'self' || kind === null) return '';
+    if (!involvesMe && kind !== 'war' && kind !== 'declared') return '';
+    return RELATION_SHORT[kind];
 }
 
 /** 제의 5종 — 관계에 맞는 것만 행에 둔다. 원장에서 모두 PLANNED(단추는 「준비 중」). */
