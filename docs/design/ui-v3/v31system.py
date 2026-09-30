@@ -19,8 +19,9 @@
 #
 # python3 v31system.py → project/V31System*.dc.html
 import os
+import re
 
-V31_VERSION = '3.1.1'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 첫 잠금 초안
+V31_VERSION = '3.1.2'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813
 
 from v3common import *  # noqa: F401,F403 — CSS · V3CSS · sec · kv · icon · IC · cat · CATS · res · RES · LOGO …
 from v3common import CSS, V3CSS, IC, P, LOGO, LOGO_M, apply_terms, icon, sec, kv, cat, CATS, res
@@ -126,6 +127,11 @@ V31CSS = '''
 .ul li b{color:#ece6d8;font-weight:700}
 .mono{font-family:'JetBrains Mono',ui-monospace,Menlo,monospace}
 .hstrip{min-height:44px;display:flex;align-items:center;gap:8px;padding:0 4px 0 10px;background:#141816;border:1px solid #2c342f;font-size:12px;color:#b9b2a3}
+.hj{font-family:inherit;font-size:10px;font-weight:400;color:#8a8477;margin-left:3px;text-decoration:none}
+.mk{z-index:12}.mlab{pointer-events:none;z-index:11}.dim,.scrim-soft{pointer-events:none}
+.pickbar{pointer-events:none;z-index:20}.pickbar button,.pickbar a{pointer-events:auto}
+.mtabs{position:relative}.mtabs::after{content:'';position:absolute;right:0;top:0;bottom:0;width:36px;background:linear-gradient(90deg,rgba(12,15,14,0),#0c0f0e);pointer-events:none}
+.req{border:1px solid #3d4740;background:#141816;display:flex;flex-direction:column}
 .cal{display:flex;gap:1px}.cal i{flex:1 1 0;height:18px;background:#232a26;display:block}.cal i.past{background:#3d4740}.cal i.now{background:#ffd36d}
 '''
 
@@ -306,7 +312,8 @@ def subtabs(tabs, on):
 
 
 def mtabs_row(tabs, on):
-    return ('<nav aria-label="하위 화면" style="height:60px;flex-shrink:0;display:flex;gap:6px;padding:8px 12px;overflow:hidden;border-bottom:1px solid #2c342f">'
+    """모바일 하위 화면 탭 — 가로로 밀리는 한 줄. 넘치면 끝을 흐리고(더 있음 표시), 고른 탭이 보이도록 줄을 밀어 둔다."""
+    return ('<nav aria-label="하위 화면" class="mtabs" style="height:60px;flex-shrink:0;display:flex;gap:6px;padding:8px 12px;overflow:hidden;border-bottom:1px solid #2c342f">'
             + ''.join(f'<a href="#" class="btn sm" aria-current="{"page" if t == on else "false"}" style="flex-shrink:0;'
                       f'{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if t == on else ""}">{t}</a>' for t in tabs)
             + '</nav>')
@@ -494,7 +501,7 @@ BANDS = {
     'catch': ('catch', 'clock', '#d3b064', '<b>따라잡는 중</b> — 서버가 멈췄던 동안 밀린 순을 2배 빠르기로 돌립니다. 다 따라잡는 때 <span class="mono">21:40</span>', '자세히'),
     'stop': ('stop', 'alert', '#e08a7c', '<b>턴이 멈췄습니다</b> — 마지막 순 3월 중순 <span class="mono">21:40</span>. 운영진이 살피는 중입니다. 예약은 그대로 남습니다', '상태 보기'),
     'notice': ('notice', 'tools', '#7aa7c7', '<b>점검 예정</b> — 오늘 <span class="mono">22:00</span>부터 [미정]분. 그동안 턴이 돌지 않습니다', '공지 보기'),
-    'tutorial': ('tutorial', 'check', '#7aa7c7', '<b>첫걸음 3 / 8 달성</b> — 첫 발령을 마쳤습니다. 다음: 첫 공사', '다음 보기'),
+    'tutorial': ('tutorial', 'check', '#7aa7c7', '<b>첫걸음 4 / 8</b> — 첫 발령을 마쳤습니다. 다음: 첫 공사', '다음 보기'),  # 수 = 마친 걸음 수(머리줄 칩과 같다)
 }
 BAND_ORDER = '점검 중(전체 화면) > 턴 정지 > 따라잡기 > 점검 예고 > 첫걸음 달성(6초 뒤 접힘)'
 
@@ -609,12 +616,12 @@ def cand_row(name, sub, dist_, state='ok', reason='', sel=False, here=False, h=4
 def pick_bar(title, sub, right=0, mobile=False, done=''):
     """고르기 띠 — 무엇을 고르는지 · 후보 수 · 그만(Esc). 지도 맨 위(--z-map-ctrl)."""
     if mobile:
-        return (f'<div style="position:absolute;left:8px;right:8px;top:8px;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;min-height:56px;'
+        return (f'<div class="pickbar" style="position:absolute;left:8px;right:8px;top:8px;display:flex;align-items:center;gap:6px;padding:0 4px 0 10px;min-height:56px;'
                 f'background:rgba(27,32,29,.97);border:1px solid #ffd36d">{icon("target", 18, "#ffd36d")}'
                 f'<span style="display:flex;flex-direction:column;min-width:0;flex:1"><span class="serif" style="font-weight:900;font-size:14px">{title}</span>'
                 f'<span class="muted" style="font-size:11px">{sub}</span></span>'
                 f'<button type="button" class="btn sm">{icon("list", 16)}목록</button><button type="button" class="ibtn" aria-label="그만 고르기" style="border:0;background:transparent">{icon("close")}</button></div>')
-    return (f'<div style="position:absolute;left:12px;right:{12 + right}px;top:12px;display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;min-height:52px;'
+    return (f'<div class="pickbar" style="position:absolute;left:12px;right:{12 + right}px;top:12px;display:flex;align-items:center;gap:8px;padding:0 6px 0 12px;min-height:52px;'
             f'background:rgba(27,32,29,.97);border:1px solid #ffd36d">{icon("target", 20, "#ffd36d")}'
             f'<span style="display:flex;flex-direction:column;min-width:0"><span class="serif" style="font-weight:900;font-size:15px">{title}</span>'
             f'<span class="muted" style="font-size:11.5px">{sub}</span></span><span style="margin-left:auto;display:flex;gap:6px">{done}'
@@ -752,6 +759,53 @@ def season_panel(mobile=False):
             f'<span class="serif" style="font-size:16px;font-weight:900">계절 — 봄</span>{ibtn("close", "닫기", style="border:0;background:transparent")}</div>{body}</section>')
 
 
+# ------------------------------------------------------------------ 같은 읽기 지명 · 명령 이름 · 부 이름 줄 · 요청 카드
+def twin(name, hanja):
+    """같은 읽기 지명 구별(K0 규칙): 한 화면에 같은 읽기가 함께 나올 때만 이름 뒤 작은 한자(class hj — K10 표기 검사가 건너뛴다)."""
+    return f'{name}<span class="hj" lang="zh-Hant">{hanja}</span>'
+
+
+def places(pairs):
+    """[(한글, 한자)] → 같은 한글 읽기가 둘 이상인 것만 한자를 붙인 HTML 목록. 예: 양성현(陽城) · 양성현(襄城), 양주(揚州) · 양주(涼州)."""
+    from collections import Counter
+    count = Counter(k for k, _ in pairs)
+    return [twin(k, h) if count[k] > 1 else k for k, h in pairs]
+
+
+# 원장 displayName 이 옛 말인 입력의 화면 이름(K0 추천, 사용자 이름 승인 대기). 원장이 바뀌면 이 표를 지운다.
+CMD_RENAME = {'action.convertProficiency': '병종 바꿔 익히기', 'action.tradeGrain': '쌀 사고팔기'}
+CARD_RENAME = {'군량 습격': '보급 습격'}
+
+
+def cmd_label(input_id, catalog_name=''):
+    """명령 이름. 옛 말(숙련전환 · 군량매매)은 새 이름 + 「이름 승인 대기」 칩."""
+    if input_id in CMD_RENAME:
+        return f'{CMD_RENAME[input_id]} {chip("이름 승인 대기", "info")}'
+    return catalog_name
+
+
+def bu_line(text='하후돈의 [부 이름]', sub=''):
+    """모바일 묶음 첫 화면의 첫 줄(44) — 머리줄은 로고 + 계절 칩 그대로 두고, 여기에 내 부의 지금 이름(me.buName)."""
+    return (f'<div style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f">'
+            f'<h2 class="serif" style="margin:0;font-size:18px;font-weight:900">{text}</h2>{f"<span class=muted style=font-size:12px>{sub}</span>" if sub else ""}</div>')
+
+
+def request_card(kind, who_key, who, what, due, consequence='', state='wait', compact=False, input_id='court.dispatchReply'):
+    """요청 카드(RequestCard) — 서신 서랍 「요청」 · 조정 「받은 요청」 띠 · 지난 순 서랍 공용(K4 · K6 합의, K6 초안 모양).
+    초상 30 × 42 · 종류 칩(청동) · 보낸 사람 · 한 줄 무엇 · 응답 기한 · 거절 결과(적갈 한 줄) · [거절 | 수락] 44. 응답 뒤엔 「수락함」 칩."""
+    head = (f'<div style="display:flex;gap:10px;padding:10px 12px">{portrait(who_key, who, 30, 42)}<div style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">'
+            f'<div style="display:flex;align-items:center;gap:6px">{chip(kind, "bronze")}<span class="serif" style="font-weight:700;font-size:14px">{who}</span>'
+            f'<span class="mono muted" style="font-size:11px;margin-left:auto;white-space:nowrap">{due}</span></div>'
+            f'<span style="font-size:13px">{what}</span>'
+            f'{f"<span class=rs style=font-size:12px>거절하면 — {consequence}</span>" if consequence and not compact else ""}</div></div>')
+    if state == 'done':
+        foot = f'<div style="padding:0 12px 10px;display:flex;justify-content:flex-end">{chip("수락함", "moss")}</div>'
+    else:
+        foot = (f'<div style="display:flex;gap:6px;padding:0 12px 10px">{btn("거절", "danger", style="flex:1", attrs=f"data-input-id={input_id}")}'
+                f'{btn("수락", "primary", style="flex:1", attrs=f"data-input-id={input_id}")}</div>')
+    return f'<article class="req" aria-label="{kind} — {who}">{head}{foot}</article>'
+
+
 # ------------------------------------------------------------------ 부품 목록(id) — 설계 레인은 이 id 로 부른다. 코드 이름 = 제품 React 부품 이름.
 # (묶음, id, 한글 이름, 크기 · 자리, 상태 · 변형, 제품의 지금 짝, 담당)
 PARTS = [
@@ -762,7 +816,7 @@ PARTS = [
     ('셸', 'NoticeBand', '알림 띠(P-W05)', '44 · 모바일 72', '따라잡기 · 턴 정지 · 점검 예고 · 첫걸음 달성', '새로', 'K3'),
     ('셸', 'HelpDrawer', '도움말 서랍 자리', '400 · 태블릿 360 · 모바일 724', '?help= · 모달 아님 · 지도 648', '새로', 'K3 자리 · K7 내용'),
     ('셸', 'MailDrawer', '서신 서랍 자리', '도움말 서랍과 같은 자리', '탭 개인 · 세력 · 전체 · 요청, 받음/보냄은 카드 방향 표식, 쓰기 = PeoplePicker', 'MessagePanel', 'K3 자리 · K6 내용'),
-    ('셸', 'RequestCard', '요청 카드', '패널 폭 · 행 60+', '서신 서랍 「요청」 · 조정 「받은 요청」 띠 · 지난 순 서랍 공용', '새로', 'K4 · K6'),
+    ('셸', 'RequestCard', '요청 카드', '패널 폭 · 초상 30 × 42 · 단추 44', '종류 · 보낸 사람 · 무엇 · 기한 · 거절 결과 · 거절/수락 · 응답 뒤 「수락함」 — request_card()', '새로', 'K3 모양 · K4 · K6'),
     ('셸', 'GatewayHeader', '게이트웨이 머리줄', '48 · 모바일 56 + 메뉴 시트', '로그인 후 · 로그인 전(로그인/회원가입 하나) · 지도 위 투명', '새로', 'K3 · K5'),
     ('셸', 'EntryHeader', '입장 머리줄(레일 없음)', '48 · 모바일 56', '서버 · 기수 · 날짜 · 로비로 · 도움말', '새로', 'K3 · K5'),
     ('셸', 'SeasonChip', '계절 칩 → 패널', '칩 44 · 패널 400 · 모바일 시트', '소식 점 · 서버 대기', '새로', 'K3 자리 · K8 내용'),
@@ -780,7 +834,7 @@ PARTS = [
     ('기본', 'Toast', '알림 토스트', '48', '성공 4초 · 실패는 닫을 때까지 · 되돌리기', '새로', 'K3'),
     ('기본', 'DataTable', '표 → 카드', '행 44', '모바일 카드, 정렬 · 거르기 유지', 'Table', 'K3'),
     ('기본', 'StepForm', '걸음 입력', '걸음 표시 60 + 아래 고정 줄 64', '걸음 사이 값 유지 · 끝난 걸음 눌러 돌아가기', '새로', 'K3 · K5'),
-    ('기본', 'TimeBar', '시간 막대', '데스크톱 88 · 모바일 2줄', '다시 보기(속도 · 사건 표식) · 실시간(지금으로)', '새로', 'K3 · K5 · K6'),
+    ('기본', 'TimeBar', '시간 막대', '데스크톱 1줄 · 모바일 2줄 · 사건 표식 44(겹치면 다음 줄)', '다시 보기(속도 · 사건 표식) · 실시간(지금으로) · 「지금」 문장 인자', '새로', 'K3 · K5 · K6'),
     ('기본', 'Portrait', '초상', '24–48 · 핀 48 원형', '없으면 첫 글자 판', 'Portrait', 'K3'),
     ('상태', 'StatusView', '상태(P-X01)', '영역 · 전체 화면', 'loading · empty · error · denied · wait-read · wait-input · stale · not-found · maintenance', 'EmptyState', 'K3'),
     ('명령 흐름', 'CommandFlow', '이번 순에 할 일', '576 · 태블릿 480 · 모바일 가득 시트', '모달 아님 · Esc · URL 에 명령 · 순 · 대상', '새로', 'K3 모양 · K6 동작'),
@@ -798,14 +852,15 @@ PARTS = [
     ('지도', 'MapViewBar', '보기 단추', '왼쪽 아래 세로 줄 44', '주 · 군 · 현 → + − → 내 위치로', '새로', 'K2'),
     ('지도', 'MapLayerPanel', '레이어', '떠 있는 패널 · 모바일 시트', '경계 · 이름 · 보급선 · 시야 · 부대 경로', '새로', 'K2'),
     ('지도', 'MapSelectionCard', '선택 카드', '320 · 모바일 알약 → 시트', '성 · 현 · 관(MapPassCard) · 부대', '새로', 'K2'),
-    ('지도', 'MapMinimap', '작은 지도', '176 × 153 · 데스크톱 오른쪽 아래', '州 개관 그림 + 보는 곳 사각형 + 내 위치 점 · 누르면 그리로', '새로', 'K2'),
+    ('지도', 'MapMinimap', '작은 지도', '176 × 153 · 데스크톱 오른쪽 아래', '주 개관 그림 + 보는 곳 사각형 + 내 위치 점 · 누르면 그리로', '새로', 'K2'),
     ('지도', 'MapLabel', '이름표', '주 18 · 군 15 + 치소 13 · 현 15', '겹치면 등급 → 인구 순으로 숨김', '새로', 'K2'),
     ('사람', 'PeoplePicker', '사람 고르기', '380 · 모바일 가득 시트', '한 명 · 여러 명 · 묶음 4 · 초성 찾기 · 빈 · 찾기 없음 · 실패', '새로', 'K3'),
     ('사람', 'PersonRow', '사람 한 줄', '56–60', '사람 칩 · 국가색 점 · 시야 밖 · 불가 사유', '새로', 'K3'),
 ]
 
 RULES = [
-    ('누르는 것 44', '단추 · 탭 · 표지 · 행 · 칩 단추. 작은 단추도 높이 44.'),
+    ('누르는 것 44', '보이는 크기와 상관없이 누를 영역 44 이상 — 단추 · 탭 · 표지 · 행 · 칩 단추 · 사건 표식. 09-18 지침의 「작은 단추 보조용 예외」는 폐기(K0).'),
+    ('덮지 않기', '지도 표식은 --z 맨 위. 띠 · 어둡게 · 이름표 · 점선 · 손잡이 같은 장식은 누르기를 먹지 않는다(pointer-events:none).'),
     ('호버 · title 금지', '정보는 누르면 열린다. 비활성은 aria-disabled(네이티브 disabled 금지).'),
     ('단추 안 단추 금지', '불가 행은 행 전체가 사유를 여는 단추, 사유는 점선 꼬리표.'),
     ('입력 상태는 서버가', 'AVAILABLE 보통 · BLOCKED 점선 + 사유 · NOT_DELIVERED 점선 + 「준비 중」 · 원장 행 없음 = 그리지 않음. 코드에 박지 않는다.'),
@@ -815,7 +870,11 @@ RULES = [
     ('수치', '설계에서 정하지 않은 값은 [미정]. 서버 원장 값은 서버가 준 대로.'),
     ('국가색', '경계 띠 · 깃발 · 성 지붕 · 1칸 거점 · 내 위치 링에만. 지형을 색으로 덮지 않는다.'),
     ('빗금', '빗금 = 미정찰(시야 밖). 고를 수 없음은 빗금이 아니라 적갈 점선.'),
-    ('표기', '縣 → 현 · 郡 → 군 · 城 → 성 · 省 → 구역 · 금 · 쌀 · 부(府) · 소속. 관직은 names.office_ko.'),
+    ('표기', '縣 → 현 · 郡 → 군 · 城 → 성 · 省 → 구역 · 금 · 쌀 · 부(府) · 소속. 관직은 names.office_ko. 옛 명령 이름은 cmd_label(새 이름 + 「이름 승인 대기」).'),
+    ('같은 읽기 지명', '한 화면에 같은 읽기가 함께 나올 때만 이름 뒤 작은 한자 — twin() · places(), class hj(검사 제외). 예: 양성현 陽城 · 襄城, 양주 揚州 · 涼州.'),
+    ('날짜', '200년 3월 중순. 달마다 하는 일(월단평 등)만 「200년 3월 월단평」처럼 순 없이 적어도 된다.'),
+    ('서랍이 열리면', '지도 위 비모달 서랍(지난 순)이 열리면 지도 보기 단추는 서랍 오른쪽 가장자리 + 12 로 옮긴다.'),
+    ('모바일 하위 탭', '가로로 밀리는 한 줄 — 넘치면 끝을 흐리고, 고른 탭이 보이게 밀어 둔다. 묶음 첫 화면은 머리줄 로고 + 계절 칩, 첫 줄에 부 이름(bu_line).'),
 ]
 
 
@@ -886,21 +945,43 @@ def step_foot(prev='이전', nxt='다음', nxt_attrs=''):
 
 # ------------------------------------------------------------------ 시간 막대(TimeBar) — 다시 보기(P-H03)와 실시간 전투(P-C05)가 같이 쓴다
 TB_EVENTS = [(12, '#8fa77a', '부딪힘'), (31, '#7aa7c7', '계책'), (37, '#d3b064', '일기토'), (58, '#e08a7c', '성문'), (74, '#d3b064', '일기토')]
+TB_NOW = '우리 선봉 하후돈이 적 좌익과 일기토'
 
 
-def time_bar(mode='replay', mobile=False, pos=37):
-    """mode = replay(처음 ~ 끝, 속도 · 이전/다음 사건) | live(지금까지만, 「지금으로」). 막대 위 사건 표식은 누르면 그 순간으로."""
+def tb_rows(events, track_px):
+    """사건 표식의 줄 — 누를 영역 44 가 겹치면 다음 줄로 내린다(K10). [(pos%, 색, 이름, 줄)]"""
+    rows_last: list[float] = []
+    out = []
+    for p, c, t in sorted(events):
+        x = track_px * p / 100
+        row = next((r for r, last in enumerate(rows_last) if x - last >= 44), len(rows_last))
+        if row == len(rows_last):
+            rows_last.append(x)
+        else:
+            rows_last[row] = x
+        out.append((p, c, t, row))
+    return out, max(1, len(rows_last))
+
+
+def time_bar(mode='replay', mobile=False, pos=37, now_text=TB_NOW, events=None, track_px=None):
+    """시간 막대(TimeBar). mode = replay(처음 ~ 끝, 속도 · 이전/다음 사건) | live(지나간 데까지만, 「지금으로」).
+    사건 표식은 누르면 그 순간으로 — 누를 영역 44, 겹치면 다음 줄. 손잡이 · 막대 그림은 누르기를 먹지 않는다."""
     b = 'background:rgba(20,24,22,.92)'
-    marks = ''.join(f'<button type="button" aria-label="{t} — {p}% 지점으로" style="position:absolute;left:{p}%;top:0;width:44px;height:44px;margin-left:-22px;padding:0;border:0;background:transparent;cursor:pointer">'
-                    f'<i style="position:absolute;left:19px;top:8px;width:6px;height:12px;background:{c}"></i></button>'
-                    for p, c, t in (TB_EVENTS if mode == 'replay' else [e for e in TB_EVENTS if e[0] <= pos]))
+    evs = [e for e in (events or TB_EVENTS) if mode == 'replay' or e[0] <= pos]
+    track_px = track_px or (270 if mobile else 820)
+    placed, nrows = tb_rows(evs, track_px)
+    height = 44 * nrows + 14
+    line_y = 44 * nrows + 2
+    marks = ''.join(f'<button type="button" aria-label="{t} — {p}% 지점으로" style="position:absolute;left:{p}%;top:{44 * r}px;width:44px;height:44px;margin-left:-22px;padding:0;border:0;background:transparent;cursor:pointer;z-index:2">'
+                    f'<i style="position:absolute;left:19px;top:{30 - 0}px;width:6px;height:12px;background:{c}"></i></button>'
+                    for p, c, t, r in placed)
     end = 100 if mode == 'replay' else pos
-    track = (f'<div role="slider" aria-label="시간" aria-valuenow="{pos}" aria-valuemin="0" aria-valuemax="100" style="position:relative;flex:1;min-width:0;height:44px">'
-             f'<i style="position:absolute;left:0;right:{100 - end}%;top:26px;height:6px;background:#3d4740"></i>'
-             f'<i style="position:absolute;left:0;width:{pos}%;top:26px;height:6px;background:#d3b064"></i>{marks}'
-             f'<i style="position:absolute;left:{pos}%;top:20px;width:18px;height:18px;margin-left:-9px;background:#ffd36d;border:2px solid #0c0f0e"></i></div>')
-    now = ('<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;min-width:0"><span class="mono bz">지금</span>'
-           '<span class="t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">우리 선봉 하후돈이 적 좌익과 일기토</span></div>')
+    track = (f'<div role="slider" aria-label="시간" aria-valuenow="{pos}" aria-valuemin="0" aria-valuemax="100" style="position:relative;flex:1;min-width:0;height:{height}px">'
+             f'<i style="position:absolute;left:0;right:{100 - end}%;top:{line_y}px;height:6px;background:#3d4740;pointer-events:none"></i>'
+             f'<i style="position:absolute;left:0;width:{pos}%;top:{line_y}px;height:6px;background:#d3b064;pointer-events:none"></i>{marks}'
+             f'<i style="position:absolute;left:{pos}%;top:{line_y - 6}px;width:18px;height:18px;margin-left:-9px;background:#ffd36d;border:2px solid #0c0f0e;pointer-events:none"></i></div>')
+    now = (f'<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;min-width:0"><span class="mono bz">지금</span>'
+           f'<span class="t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{now_text}</span></div>')
     if mode == 'replay':
         ctl = (f'{ibtn("skipb", "이전 사건", style=b)}<button type="button" class="ibtn" aria-label="정지" style="background:#d3b064;color:#161410;border-color:#9c7f3f">{icon("pause", 20, "#161410")}</button>'
                f'{ibtn("skipf", "다음 사건", style=b)}')
@@ -912,10 +993,10 @@ def time_bar(mode='replay', mobile=False, pos=37):
         clock = '<span class="mono t2" style="font-size:12px;white-space:nowrap">1:32 지남</span>'
     if mobile:
         return (f'<div style="display:flex;flex-direction:column;gap:4px;padding:6px 12px;background:#1b201d;border-top:1px solid #3d4740;border-bottom:1px solid #3d4740">'
-                f'{now}<div style="display:flex;align-items:center;gap:8px">{track}{clock}</div>'
+                f'{now}<div style="display:flex;align-items:flex-end;gap:8px">{track}{clock}</div>'
                 f'<div style="display:flex;align-items:center;gap:6px">{ctl}<span style="margin-left:auto;display:flex;gap:6px">{tail}</span></div></div>')
-    return (f'<div aria-label="시간 막대" style="height:96px;flex-shrink:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:0 16px;background:#1b201d;border:1px solid #3d4740">'
-            f'{now}<div style="display:flex;align-items:center;gap:10px">{ctl}{track}{clock}{tail}</div></div>')
+    return (f'<div aria-label="시간 막대" style="flex-shrink:0;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 16px;background:#1b201d;border:1px solid #3d4740">'
+            f'{now}<div style="display:flex;align-items:flex-end;gap:10px">{ctl}{track}{clock}{tail}</div></div>')
 
 
 # ------------------------------------------------------------------ 사람 여러 명 고르기
@@ -972,11 +1053,15 @@ CANDS.sort(key=lambda c: int(dist(c[0])[:-1]))
 PICK = '영양현'
 
 
-def _desk_marks(ox=0, oy=0, sel=PICK):
+def _desk_marks(ox=0, oy=0, sel=PICK, w=1048, h=952, top_pad=76):
+    """화면 안(가장자리 · 고르기 띠 밑 제외)에 드는 후보만 그린다 — 밖의 후보는 「화면 밖 후보」로 센다."""
     out = ''
     for n, sub, st, r in CANDS:
         x, y = DESK_PX(*CELLS[n])
-        out += mk(x - ox, y - oy, 'sel' if n == sel else st, n, 'no' if st == 'no' else '')
+        x, y = x - ox, y - oy
+        if x < 30 or x > w - 30 or y < top_pad + 22 or y > h - 30:
+            continue
+        out += mk(x, y, 'sel' if n == sel else st, n, 'no' if st == 'no' else '')
     return out
 
 
@@ -1021,7 +1106,8 @@ def board_shell():
             '<li><b>올려도 되는 것</b> — 떠 있는 단추(44) · 고르기 띠 · 작은 지도(176) · 선택 · 내 장수 · 계절 카드(폭 400 이하) · 지난 순 서랍(누를 때만).</li>'
             '<li><b>옆으로 여는 것</b> — 명령 흐름(12순 열 자리를 576 으로, 지도 808) · 도움말 · 서신 서랍(지도와 12순 사이 400, 지도 648). 지도를 다 덮는 창은 없다.</li>'
             '<li><b>지도 위 자리</b> — 위 왼쪽: 보는 곳 이름 · 고르기 띠. 위 오른쪽: 레이어 · 범례. 왼쪽 아래: 보기 단추(주 · 군 · 현 · + · − · 내 위치로). 오른쪽 아래: 작은 지도.</li>'
-            '<li><b>지형은 덮지 않는다</b> — 국가색은 경계 · 깃발 · 성 지붕 · 내 위치 링만. 고르는 중에는 후보 밖을 어둡게(α .42).</li></ul>')
+            '<li><b>지형은 덮지 않는다</b> — 국가색은 경계 · 깃발 · 성 지붕 · 내 위치 링만. 고르는 중에는 후보 밖을 어둡게(α .42).</li>'
+            '<li><b>서랍이 열리면</b> — 지도 위 지난 순 서랍이 열리면 보기 단추는 서랍 오른쪽 + 12 로 옮긴다(보드 Drawers).</li></ul>')
     order = ''.join(f'<li><b>{n}</b> <span class="muted">{sub}</span></li>' for n, sub in [
         ('작전실', '지도 · 명령 목록 12순 · 지난 순'), ('부', '레일 · 탭 이름은 「부」. 페이지 머리는 내 부의 지금 이름(me.buName — 막부 · 군부 …, 확정 전 [부 이름])'),
         ('계책 · 영지 · 군단 · 조정 · 기록', '6묶음의 나머지'), ('광장', '회의실 · 기밀실 · 서신 · 커뮤니티'), ('도움말 · 관리', '레일 아래쪽. 관리는 권한자만')])
@@ -1124,7 +1210,8 @@ def board_index():
         return f'<section class="panel" style="flex:1 1 0;min-width:0">{sec(title, sub)}<div style="padding:0 12px 8px">{body}</div></section>'
 
     a, b, c = PARTS[:16], PARTS[16:32], PARTS[32:]
-    rl = ''.join(f'<li><b>{n}</b> — {d}</li>' for n, d in RULES)
+    han = re.compile('[\u3400-\u9fff\uf900-\ufaff]')
+    rl = ''.join(f'<li{" data-lint=skip" if han.search(d) else ""}><b>{n}</b> — {d}</li>' for n, d in RULES)  # 표기 규칙 설명은 검사 제외
     body = (f'<main style="flex-grow:1;min-width:0;display:flex;gap:12px;padding:12px;overflow:hidden">'
             + col(a, '부품 1', '설계 레인은 이 id 로 부른다') + col(b, '부품 2', '담당 = 모양 · 내용')
             + f'<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:12px">{col(c, "부품 3", "지금 짝 = web/shared 에 있는 부품")}'
@@ -1211,7 +1298,7 @@ def board_mparts():
         f'<span class="muted" style="font-size:11.5px">자리 {w} · {role}</span></div></div>'
         for k, n, w, role in [('heojeo', '허저', '장사현', '호위'), ('ijeon', '이전', '장사현', '[자리 없음]')])
     main = (f'<main style="height:724px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column">'
-            f'{mtabs_row(["편성 · 결속", "인물 일람", "월단평", "포로 · 등용"], "편성 · 결속")}'
+            f'{bu_line("하후돈의 [부 이름]")}{mtabs_row(["편성 · 결속", "인물 일람", "월단평", "포로 · 등용"], "편성 · 결속")}'
             f'<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{cards}</div><div class="scrim"></div>'
             + sheet('허저를 어디에 둘까요?',
                     f'<div style="padding:0 16px 8px" class="t2">호위 자리를 비우고 새 자리로 옮깁니다. 적용은 다음 카드 순부터입니다.</div>'
@@ -1221,7 +1308,7 @@ def board_mparts():
                     + opt('양적현 수비', '이전이 있음', why_tag('자리 참'), no=True, h=52) + '</div>',
                     height=420, foot=btn('취소', style='flex:1') + btn('여기에 둔다', 'primary', style='flex:1', attrs='data-input-id="placement.assign"'))
             + '</main>')
-    page31('V31SystemMParts.dc.html', '시스템 v3.1 — 모바일 부품(카드 · 하단 시트)', shell_mob(main, 'retinue', '[부 이름]', '전체 메뉴'), w=390, h=844)
+    page31('V31SystemMParts.dc.html', '시스템 v3.1 — 모바일 묶음 첫 화면(부 이름 줄 · 카드 · 하단 시트)', shell_mob(main, 'retinue'), w=390, h=844)
 
 
 def board_page():
@@ -1266,7 +1353,7 @@ def board_command():
     px, py = DESK_PX(*CELLS[PICK]); px -= OX
     mapst = (f'<main aria-label="지도 — 갈 곳 고르는 중" style="position:relative;width:{MW}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
              f'{mapimg("desk", 1048, 952, "영천 일대 지도 — 현 보기", -OX, 0)}<div class="dim"></div>'
-             f'{path_line(hx, hy, px, py, MW, 952, dist(PICK) + " · [미정]순")}{_desk_marks(OX)}{me_marker(hx, hy - 22, "in", tag=False)}'
+             f'{path_line(hx, hy, px, py, MW, 952, dist(PICK) + " · [미정]순")}{_desk_marks(OX, w=MW)}{me_marker(hx, hy - 22, "in", tag=False)}'
              f'{pick_bar("갈 곳 고르기 — 이동 · 04순", "지도를 누르거나 오른쪽 목록에서 · 가능 7 · 불가 3")}{view_bar()}</main>')
     head = (f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 4px 0 16px;border-bottom:1px solid #3d4740;background:linear-gradient(180deg,#232a26,#1b201d)">'
             f'<span class="serif" style="font-size:18px;font-weight:900">이번 순에 할 일</span><span class="muted" style="font-size:12px">하후돈 · 양적현</span>'
@@ -1305,11 +1392,7 @@ def board_mappick():
     others = ''.join(mlab(n, DESK_PX(*CELLS[n])[0], DESK_PX(*CELLS[n])[1] + 26) for n in ['위씨현', '언릉현'])
     sx, sy = DESK_PX(*CELLS['허현'])
     popr = pop('허현 — 이동으로 갈 수 없는 곳입니다', '이동은 이 곳으로 갈 수 없습니다.', '군단을 이끌고 가려면 출병을 쓰세요.', '이동',
-               f'left:{sx - 170}px;top:{sy + 56}px')
-    confirm = (f'<section class="panel" aria-label="고른 곳" style="position:absolute;left:{px + 36}px;top:{py - 40}px;width:300px;background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5);border-color:#ffd36d">'
-               f'<div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f"><span class="serif" style="font-size:16px;font-weight:900">{PICK}</span>{chip("영천군")}{ok_chip()}</div>'
-               f'<div style="padding:8px 12px" class="t2">내 위치(양적현)에서 {dist(PICK)} · 걸리는 순 [미정]</div>'
-               f'<div style="display:flex;gap:6px;padding:0 8px 8px">{btn("이곳으로 정하기", "primary", style="flex:1")}{btn("다시 고르기")}</div></section>')
+               f'left:{sx - 152}px;top:{sy - 200}px')  # 누른 표식 위쪽 — 다른 후보를 덮지 않는 자리
     legend = (f'<div style="position:absolute;right:12px;top:12px;width:210px;padding:8px 10px;background:rgba(27,32,29,.95);border:1px solid #3d4740;display:flex;flex-direction:column;gap:6px;font-size:12px">'
               f'<span class="muted" style="font-size:11px">표지</span>'
               + ''.join(f'<span style="display:flex;align-items:center;gap:8px"><i style="width:18px;height:18px;flex-shrink:0;display:inline-block;{s}"></i>{t}</span>' for s, t in [
@@ -1319,12 +1402,17 @@ def board_mappick():
               + '</div>')
     mapst = (f'<main aria-label="지도 — 갈 곳 고르는 중" style="position:relative;width:1048px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
              f'{mapimg("desk", 1048, 952, "영천 일대 지도 — 현 보기")}<div class="dim"></div>{others}{path_line(hx, hy, px, py, 1048, 952, dist(PICK))}{_desk_marks(0, 0)}'
-             f'{me_marker(hx, hy - 22, "in", tag=False)}{popr}{confirm}{pick_bar("갈 곳 고르기 — 이동 · 04순", "후보가 아닌 곳은 흐리게 · 가능 7 · 불가 3", right=222)}{legend}{view_bar()}</main>')
+             f'{me_marker(hx, hy - 22, "in", tag=False)}{popr}{pick_bar("갈 곳 고르기 — 이동 · 04순", "후보가 아닌 곳은 흐리게 · 가능 7 · 불가 3", right=222)}{legend}{view_bar()}</main>')
     rows = ''.join(cand_row(n, sub, dist(n), st, r, sel=(n == PICK), h=52) for n, sub, st, r in CANDS)
     side = (f'<aside aria-label="갈 곳 목록" style="width:336px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #3d4740">'
             f'{sec("갈 곳 — 목록", "지도와 같은 후보 · 같은 사유")}<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px">{search("현 이름 · 초성")}'
             f'{seg(["내 영지", "이웃", "전체"], "전체", "후보 묶음")}<div style="display:flex;gap:12px">{checkbox("가능한 곳만")}{checkbox("가까운 순", True)}</div></div>'
-            f'<div role="listbox" aria-label="갈 곳 후보" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{rows}</div></aside>')
+            f'<div role="listbox" aria-label="갈 곳 후보" style="display:flex;flex-direction:column;border-top:1px solid #2c342f">{rows}</div>'
+            f'<div style="margin-top:auto;padding:10px 12px;border-top:1px solid #9c7f3f;background:#232a26;display:flex;flex-direction:column;gap:8px">'
+            f'<div style="display:flex;align-items:center;gap:8px"><span class="serif" style="font-size:16px;font-weight:900">{PICK}</span>{chip("영천군")}{ok_chip()}'
+            f'<span class="mono muted" style="font-size:11px;margin-left:auto">{dist(PICK)} · [미정]순</span></div>'
+            f'<div style="display:flex;gap:6px">{btn("이곳으로 정하기", "primary", style="flex:1")}{btn("다시 고르기")}</div></div></aside>')
+    # 고른 곳 확인은 지도 위에 띄우지 않고 목록 아래에 둔다 — 떠 있는 카드가 이웃 후보를 덮는다(K10).
     page31('V31SystemMapPick.dc.html', '시스템 v3.1 — 지도 대상 고르기(데스크톱)', shell_desk('작전실', 'war', mapst + side))
 
 
@@ -1364,23 +1452,24 @@ def board_mapmodes():
 
 
 def board_mmappick():
-    hx, hy = MOB_PX(*CELLS[HERE])
+    OY = -120  # 고른 곳 · 불가 표식이 시트 · 고르기 띠에 가리지 않게 지도를 올려 둔다(실제 화면은 고를 때 지도를 그렇게 옮긴다)
+    P = lambda n: (MOB_PX(*CELLS[n])[0], MOB_PX(*CELLS[n])[1] + OY)  # noqa: E731
+    hx, hy = P(HERE)
     marks = ''
-    for n in ['밀현', '영양현', '마피영']:
+    for n in ['영양현', '마피영']:
         st = next(c[2] for c in CANDS if c[0] == n)
-        x, y = MOB_PX(*CELLS[n])
+        x, y = P(n)
         marks += mk(x, y, 'sel' if n == PICK else st, n, 'no' if st == 'no' else '')
-    off = (f'<button type="button" style="position:absolute;right:8px;top:300px;min-height:44px;padding:0 10px;display:flex;align-items:center;gap:6px;font:inherit;font-size:12px;'
-           f'color:#ece6d8;background:rgba(27,32,29,.95);border:1px solid #8fa77a">화면 밖 후보 7 {icon("next", 16)}</button>')
-    mx, my = MOB_PX(*CELLS['마피영'])
-    popr = pop('마피영 — 이동으로 갈 수 없는 곳입니다', '이동은 이 곳으로 갈 수 없습니다.', '', '이동', f'left:12px;top:{my - 176}px;width:280px')
-    conf = (f'<section class="sheet" aria-label="고른 곳" style="bottom:0;height:176px"><div class="grip"></div>'
-            f'<div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 12px"><span class="serif" style="font-size:17px;font-weight:900">{PICK}</span>'
+    off = (f'<button type="button" style="position:absolute;right:8px;top:220px;min-height:44px;padding:0 10px;display:flex;align-items:center;gap:6px;font:inherit;font-size:12px;'
+           f'color:#ece6d8;background:rgba(27,32,29,.95);border:1px solid #8fa77a">화면 밖 후보 8 {icon("next", 16)}</button>')
+    mx, my = P('마피영')
+    popr = pop('마피영 — 이동으로 갈 수 없는 곳입니다', '이동은 이 곳으로 갈 수 없습니다.', '', '이동', f'left:12px;top:{my - 196}px;width:260px')
+    conf = (f'<section class="sheet" aria-label="고른 곳" style="bottom:0;height:150px"><div class="grip"></div>'
+            f'<div style="height:40px;display:flex;align-items:center;gap:8px;padding:0 12px"><span class="serif" style="font-size:17px;font-weight:900">{PICK}</span>'
             f'{chip("영천군")}{ok_chip()}<span class="mono muted" style="font-size:11px;margin-left:auto">{dist(PICK)} · [미정]순</span></div>'
-            f'<div style="padding:0 12px" class="t2">04순 · 4월 중순 00:40에 옮깁니다.</div>'
-            f'<div style="padding:10px 12px;display:flex;gap:8px">{btn("이곳으로 정하기", "primary", style="flex:1")}{btn("다시 고르기")}</div></section>')
+            f'<div style="padding:4px 12px 10px;display:flex;gap:8px">{btn("이곳으로 정하기", "primary", style="flex:1")}{btn("다시 고르기")}</div></section>')
     main = (f'<main aria-label="지도 — 갈 곳 고르는 중" style="position:relative;width:390px;height:844px;overflow:hidden">'
-            f'{mapimg("mob", 390, 844, "양적 일대 지도 — 현 보기")}<div class="dim"></div>{path_line(hx, hy, *MOB_PX(*CELLS[PICK]), 390, 844, dist(PICK))}{marks}'
+            f'{mapimg("mob", 390, 844, "양적 일대 지도 — 현 보기", 0, OY)}<div class="dim"></div>{path_line(hx, hy, *P(PICK), 390, 844, dist(PICK))}{marks}'
             f'{me_marker(hx, hy - 22, "in", tag=False)}{popr}{pick_bar("갈 곳 고르기 — 이동", "04순 · 가능 7 · 불가 3", mobile=True)}{off}{conf}</main>')
     page31('V31SystemMMapPick.dc.html', '시스템 v3.1 — 지도 대상 고르기(모바일)', main, w=390, h=844)
 
@@ -1568,18 +1657,18 @@ def board_marker():
            + cell('이동 중 — 지금 칸에 핀 + 갈 곳까지 점선', path_line(150, 118, 270, 180, 300, 200) + me_marker(150, 118, 'move', dest='영양현'), left=-(sx - 150), top=-(sy - 118))
            + '</div>')
     lod = ('<div style="display:flex;gap:12px">'
-           + cell('州 보기 — 핀 크기 그대로(화면 48)', me_marker(150, 110, 'in', tag=False), 220, 180, 'prov', -120, -40)
-           + cell('郡 보기 — 이름표가 핀을 피한다', me_marker(110, 100, 'in', tag=False) + '<span class="mlab big" style="left:170px;top:120px">영천군</span>', 220, 180, 'jun', 0, -20)
+           + cell('주 보기 — 핀 크기 그대로(화면 48)', me_marker(150, 110, 'in', tag=False), 220, 180, 'prov', -120, -40)
+           + cell('군 보기 — 이름표가 핀을 피한다', me_marker(110, 100, 'in', tag=False) + '<span class="mlab big" style="left:170px;top:120px">영천군</span>', 220, 180, 'jun', 0, -20)
            + cell('화면 밖 — 가장자리 화살표', me_edge('right', 60, '28칸'), 220, 180, 'jun', -400, -200) + '</div>')
     rules = ('<ul class="ul" style="padding:4px 12px">'
              '<li><b>모양</b> — 내 장수 초상(원형 48) + 국가색 링 3 + 금색 테 + 핀 끝. 핀 끝이 실제 자리.</li>'
-             '<li><b>자리</b> — 성 안 · 성 밖 · 군단과 함께 · 이동 중. 城 id 가 아니라 장수의 실제 자리(계약판 U-04).</li>'
-             '<li><b>언제나 보인다</b> — 州 · 郡 · 縣 같은 화면 크기. 이름표 · 성 · 깃발보다 위. 이름표가 핀을 피한다.</li>'
+             '<li><b>자리</b> — 성 안 · 성 밖 · 군단과 함께 · 이동 중. 성 id 가 아니라 장수의 실제 자리(계약판 U-04).</li>'
+             '<li><b>언제나 보인다</b> — 주 · 군 · 현 모든 보기에서 같은 화면 크기. 이름표 · 성 · 깃발보다 위. 이름표가 핀을 피한다.</li>'
              '<li><b>화면 밖</b> — 그 방향 가장자리에 「내 위치」 화살표(44 × 52) + 거리.</li>'
              '<li><b>누르면</b> — 내 장수 카드. 대상 고르는 중에는 표지만 보이고 고르기를 막지 않는다.</li>'
              '<li><b>「내 위치로」</b> — 보기 단추 맨 아래. 키보드 Home.</li></ul>')
     main_ = (f'<main style="flex-grow:1;min-width:0;display:flex;gap:12px;padding:12px;overflow:hidden">'
-             f'<section class="panel" style="width:640px;flex-shrink:0">{sec("자리 4가지", "縣 보기 16px/칸")}<div style="padding:12px">{st4}</div></section>'
+             f'<section class="panel" style="width:640px;flex-shrink:0">{sec("자리 4가지", "현 보기 16px/칸")}<div style="padding:12px">{st4}</div></section>'
              f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">'
              f'<section class="panel">{sec("보기 수준 · 화면 밖", "")}<div style="padding:12px">{lod}</div></section>'
              f'<section class="panel" style="flex:1">{sec("규칙", "K2 와 맞춤")}{rules}<div style="padding:8px 12px">{me_card("in", "양적현", "영천군")}</div></section></div></main>')
@@ -1608,7 +1697,7 @@ def board_gateway():
                 f'<span class="muted" style="font-size:11px">로그인 뒤(일반) — 관리 없음</span>{gw_topbar("in", "커뮤니티", False)}'
                 f'<span class="muted" style="font-size:11px">가입 화면 — 「로그인」 하나</span>{gw_topbar("join")}'
                 f'<span class="note">하단 탭 · 레일 없음. 로그인 · 가입 화면은 지도 한 장이 배경이고 머리줄이 그 위에 투명하게 뜬다(위). 게임 안으로 들어가면 게임 셸(머리줄 48 + 레일).</span></div></section>')
-    body = (f'<div style="position:absolute;inset:0">{mapimg("hero", 1440, 1000, "中原 — 로그인 배경 지도(군 보기)")}</div>'
+    body = (f'<div style="position:absolute;inset:0">{mapimg("hero", 1440, 1000, "중원 — 로그인 배경 지도(군 보기)")}</div>'
             + gw_topbar('login', transparent=True) + f'<div style="flex-grow:1;position:relative">{login_panel}{variants}</div>')
     page31('V31SystemGateway.dc.html', '시스템 v3.1 — 게이트웨이 셸(데스크톱)', body)
 
@@ -1651,8 +1740,11 @@ def board_mstep():
 
 
 def board_timebar():
-    field_ = (f'<div style="position:relative;width:560px;height:560px;flex-shrink:0;border:1px solid #3d4740;overflow:hidden">'
-              f'{pic("", 560, 560, "전장 판 832 × 832(64칸 × 13px) — 원작 전장 판 export 대기(K0)")}</div>')
+    src = MAP.get('battle_siege', '')
+    field_ = (f'<div style="position:relative;width:700px;height:560px;flex-shrink:0;border:1px solid #3d4740;overflow:hidden;background:#0c0f0e;display:flex;align-items:center;justify-content:center">'
+              + (f'<img src="{src}" alt="전장 — 원작 040판 성새(아이소)" style="width:700px;height:358px;display:block;image-rendering:pixelated">' if src
+                 else pic('', 700, 358, '전장 — 원작 전장 판(아이소) export'))
+              + '</div>')
     side = lambda t: f'<section class="panel" style="flex:1 1 0;min-width:0">{sec(t, "내용 K5 · K6")}<div class="muted" style="padding:12px;font-size:12px">[6자리 · 사건 목록]</div></section>'  # noqa: E731
     main = (f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column;overflow:hidden">'
             + pagehead('리플레이 — 격자', None, None, btn('도움말', '', 'help'))
@@ -1664,7 +1756,9 @@ def board_timebar():
 
 def board_mtimebar():
     main = (f'<main style="height:724px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;position:relative">'
-            f'<div style="padding:8px 16px;display:flex;justify-content:center">{pic("", 358, 358, "전장 판 — 원작 export 대기(K0) · 끌기 · 핀치 · + −")}</div>'
+            f'<div style="padding:8px 16px;display:flex;justify-content:center">'
+            + (f'<img src="{MAP["battle_field"]}" alt="전장 — 원작 192판 야전(아이소) · 끌기 · 핀치 · + −" style="width:358px;height:190px;display:block;image-rendering:pixelated">' if MAP.get('battle_field')
+               else pic('', 358, 190, '전장 — 원작 전장 판(아이소) export')) + '</div>'
             f'{time_bar("replay", mobile=True)}'
             f'<section class="sheet" aria-label="전투 자세히" style="bottom:0;height:124px"><div class="grip"></div>'
             f'<div style="padding:4px 12px">{seg(["우리", "상대", "사건", "결과"], "사건", "보기")}</div></section></main>')
@@ -1697,10 +1791,46 @@ def board_mpeoplemulti():
     page31('V31SystemMPeopleMulti.dc.html', '시스템 v3.1 — 사람 여러 명 고르기(모바일)', main, w=390, h=844)
 
 
+def board_drawers():
+    """비모달 서랍 둘 — 지도 위 「지난 순」 서랍(왼쪽, 지도 단추가 서랍 오른쪽 + 12 로 옮긴다)과 머리줄 서신 서랍(지도와 12순 사이 400, 「요청」 탭).
+    같은 읽기 지명(양성현 陽城 · 襄城)이 한 화면에 함께 나오는 예도 여기 둔다."""
+    MW, DW = 648, 320
+    hx, hy = DESK_PX(*CELLS[HERE])
+    ys = places([('양성현', '陽城'), ('양성현', '襄城')])
+    feed = ''.join(
+        f'<div style="padding:10px 12px;border-bottom:1px solid #2c342f;display:flex;flex-direction:column;gap:5px"><div style="display:flex;gap:6px">{cat(c)}{chip(st, tone) if st else ""}</div>'
+        f'<span class="serif" style="font-size:13px;font-weight:700">{t}</span><span class="t2" style="font-size:12px;line-height:1.45">{d}</span></div>'
+        for c, st, tone, t, d in [
+            ('개인 행적', '실행됨', 'moss', '농지개간 · 장사현', '3월 중순 21:40 — 농지개간을 마쳤습니다.'),
+            ('천하 정세', '', '', f'{ys[0]} · {ys[1]}', '두 현에 같은 이름이 있어 뒤에 작은 한자를 붙였습니다(한 화면에 함께 나올 때만).'),
+            ('전장 보고', '', '', '조우 전투 · 영천 북쪽 구릉', '아군이 물러났습니다.'),
+            ('조정 공문', '응답 대기', 'bronze', '발령 도착 · 주공 조조', '관도 방면 군단장으로 발령했습니다.')])
+    left = (f'<section class="panel" aria-label="지난 순" style="position:absolute;left:0;top:0;bottom:0;width:{DW}px;background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5);z-index:3">'
+            f'<div style="height:44px;display:flex;align-items:center;justify-content:space-between;padding:0 4px 0 12px;border-bottom:1px solid #2c342f">'
+            f'<span class="serif" style="font-size:15px;font-weight:900">지난 순 <span class="muted" style="font-size:11px;font-weight:400">200년 3월 상순 – 중순</span></span>{ibtn("close", "서랍 닫기", style="border:0;background:transparent")}</div>{feed}'
+            f'<a href="#" style="margin-top:auto;height:48px;display:flex;align-items:center;justify-content:center;border-top:1px solid #2c342f;font-size:13px">기록 전체 보기 →</a></section>')
+    mapst = (f'<main aria-label="지도" style="position:relative;width:{MW}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
+             f'{mapimg("desk", 1048, 952, "영천 일대 지도 — 현 보기", 238, 0)}{me_marker(hx + 238, hy - 22, "in", tag=False)}{left}'  # 서랍이 열리면 내 위치가 서랍 밖에 오도록 지도를 민다
+             f'{view_bar(style=f"left:{DW + 12}px;bottom:12px")}</main>')
+    tabs = seg([('개인', 3), ('세력', 1), ('전체', None), ('요청', 2)], '요청', '서신 묶음', style='padding:8px 12px')
+    cards = (request_card('발령', 'jojo', '조조', '관도 방면 군단장으로 가라', '4월 상순까지', '발령이 취소되고 결속이 준다 [미정]')
+             + request_card('정치 동의', 'sunuk', '순욱', '결의를 맺자는 제안', '4월 중순까지', '', input_id='court.politicalConsent')
+             + request_card('발령', 'jojo', '조조', '장사현 수비', '3월 상순', state='done', compact=True))
+    mail = (f'<aside aria-label="서신 서랍" style="width:400px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #9c7f3f;z-index:4">'
+            f'<div style="height:52px;display:flex;align-items:center;gap:8px;padding:0 4px 0 16px;border-bottom:1px solid #3d4740"><span class="serif" style="font-size:17px;font-weight:900">서신</span>'
+            f'{btn("쓰기", "sm", "mail", style="margin-left:auto")}{ibtn("close", "서랍 닫기", style="border:0;background:transparent")}</div>{tabs}'
+            f'<div style="padding:0 12px 12px;display:flex;flex-direction:column;gap:8px">{cards}</div>'
+            f'<span class="note" style="padding:0 12px">받음/보냄은 카드 방향 표식. 외교 서신은 조정 › 외교.</span></aside>')
+    aside = (f'<aside aria-label="명령 목록 12순" style="width:336px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #3d4740">'
+             f'{sec("명령 목록 12순", "직접 행동 · 한 순에 하나")}<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{turn_strip(2, 6, 3)}{turn_caption(2)}'
+             f'<div style="display:flex;gap:6px">{btn("당기기", "sm", "prev")}{btn("밀기", "sm", "next")}<span class="muted" style="font-size:11px;align-self:center">12순 전체를 한 칸</span></div></div></aside>')
+    page31('V31SystemDrawers.dc.html', '시스템 v3.1 — 비모달 서랍(지난 순 · 서신 요청)', shell_desk('작전실', 'war', mapst + mail + aside))
+
+
 BOARDS = [board_index, board_nav, board_shell, board_tokens, board_parts, board_mparts, board_page, board_mpage, board_command, board_mcommand,
           board_mcommandargs, board_mappick, board_mmappick, board_mapmodes, board_marker, board_mmarker, board_people, board_mpeople,
           board_states, board_mstates, board_mnotfound, board_banner, board_mbanner, board_mmaint, board_season, board_mseason,
-          board_gateway, board_mgateway, board_entry, board_mstep, board_timebar, board_mtimebar, board_peoplemulti, board_mpeoplemulti]
+          board_gateway, board_mgateway, board_entry, board_mstep, board_timebar, board_mtimebar, board_peoplemulti, board_mpeoplemulti, board_drawers]
 
 if __name__ == '__main__':
     import glob
