@@ -69,3 +69,37 @@ describe('값 경계', () => {
         expect(kept({ id: 3, kind: 'roadFort.captured', section: 'WORLD', occurredAt: at, refs: { ROAD_FORT: fort, TO_NATION: 1 }, facts: {} })).toBe(expected);
     });
 });
+
+// 실제 보루 ID 는 RoadFort.siteId(edgeId, row, col) = "$edgeId@$row,$col"(logic/.../input/RoadFortState.kt:29, C0 07:55 「실제 보루 ID 계약 정정」).
+// edge 부분만 안정 문법 · 128자 한도, 좌표는 음 아닌 정규 십진 · Kotlin Int 범위. 전체 길이에는 한도를 걸지 않는다.
+describe('보루 site ID(edge@row,col)', () => {
+    const fort = (id: unknown) => kept({ id: 3, kind: 'roadFort.captured', section: 'WORLD', occurredAt: at, refs: { ROAD_FORT: id, TO_NATION: 1 }, facts: {} });
+    // han-land-roads-v1.json 의 실제 도로 edge(4,252개 모두 안정 문법 안)에서 가운데 것과 가장 긴 것(112자).
+    const realEdge = 'land-boundary:5:419355:43696';
+    const longestEdge = 'land-boundary:46:SUB-JURISDICTION-PARENT-0097-SEAT-bfcd2758df5246:SUB-JURISDICTION-PARENT-0097-SEAT-e4ac85458411';
+
+    it('실측 최장 edge 는 112자다(표본이 바뀌면 이 시험이 알린다)', () => {
+        expect(longestEdge).toHaveLength(112);
+    });
+
+    it.each([
+        ['단순 site', 'edge@1,2'],
+        ['좌표 0', 'edge@0,0'],
+        ['실제 edge site', `${realEdge}@12,34`],
+        ['최장 112자 edge + 좌표', `${longestEdge}@431,1187`],
+        ['edge 128자 + Int 최대 좌표(전체 150자)', `${'a'.repeat(128)}@2147483647,2147483647`],
+        ['@ 없는 안정 ID', 'fort-hulao'],
+    ] as const)('남는다: %s', (_label, id) => {
+        expect(fort(id)).toBe(true);
+    });
+
+    it.each([
+        ['음수', 'a@-1,2'], ['앞자리 0', 'a@01,2'], ['부호 +', 'a@+1,2'], ['공백', 'a@1, 2'], ['끝 공백', 'a@1,2 '],
+        ['@ 두 개', 'a@1,2@3'], ['col 없음', 'a@1'], ['좌표 셋', 'a@1,2,3'], ['빈 row', 'a@,2'], ['빈 col', 'a@1,'],
+        ['row Int 초과', 'a@2147483648,0'], ['col Int 초과', 'a@0,2147483648'], ['아주 긴 수', 'a@99999999999999999999,0'],
+        ['빈 edge', '@1,2'], ['edge 앞 글자 기호', '-a@1,2'], ['edge 129자', `${'a'.repeat(129)}@1,2`], ['edge 안 쉼표', 'a,b@1,2'],
+        ['끝 줄바꿈', 'a@1,2\n'], ['숫자 값', 12],
+    ] as const)('버린다: %s', (_label, id) => {
+        expect(fort(id)).toBe(false);
+    });
+});

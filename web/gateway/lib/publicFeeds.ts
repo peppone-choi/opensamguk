@@ -79,14 +79,26 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isInt = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value);
 const positive = (value: unknown): value is number => isInt(value) && value > 0;
 const nonNegative = (value: unknown): value is number => isInt(value) && value >= 0;
-const ROAD_FORT_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+/** 도로 edge 안정 ID. 128자 한도는 edge 부분에만 건다(실측 4,252개 모두 이 안, 최장 112자). */
+const ROAD_EDGE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+/** 서버 보루 ID = RoadFort.siteId(edgeId, row, col) = "$edgeId@$row,$col"(RoadFortState.kt). 좌표는 음 아닌 정규 십진. */
+const ROAD_FORT_SITE_ID = /^([A-Za-z0-9][A-Za-z0-9_.:-]{0,127})@(0|[1-9][0-9]*),(0|[1-9][0-9]*)$/;
+const KOTLIN_INT_MAX = 2147483647;
+const intCoord = (digits: string) => Number(digits) <= KOTLIN_INT_MAX;
+
+function roadFortId(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    if (ROAD_EDGE_ID.test(value)) return true; // @ 없는 안정 ID
+    const site = ROAD_FORT_SITE_ID.exec(value);
+    return site !== null && intCoord(site[2]) && intCoord(site[3]);
+}
 
 type RefCheck = (value: unknown) => boolean;
 const REF_TYPES: Readonly<Record<string, RefCheck>> = {
     CITY: positive,
     FROM_NATION: nonNegative,
     TO_NATION: nonNegative,
-    ROAD_FORT: (value) => typeof value === 'string' && ROAD_FORT_ID.test(value),
+    ROAD_FORT: roadFortId,
 };
 
 /** 천하 정세 사건 종류별 필수 · 선택 역할(서버 EventKind WORLD 절 · C0 인계 표). */
