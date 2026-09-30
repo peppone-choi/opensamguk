@@ -1,12 +1,12 @@
 'use client';
 
 import { useLayoutEffect, useRef, useState, type RefObject } from 'react';
-import { Chip, Portrait } from '@opensamguk/ui';
+import { Chip, Portrait, Seg } from '@opensamguk/ui';
 import { RETINUE_FILTER_LABEL, RETINUE_SORT_LABEL, type RetinueFilter, type RetinueRow, type RetinueSort } from '@/lib/retinue-view';
 import styles from './retinue.module.css';
 
-const SORTS = Object.keys(RETINUE_SORT_LABEL) as RetinueSort[];
-const FILTERS = Object.keys(RETINUE_FILTER_LABEL) as RetinueFilter[];
+const SORTS = (Object.keys(RETINUE_SORT_LABEL) as RetinueSort[]).map((value) => ({ value, label: RETINUE_SORT_LABEL[value] }));
+const FILTERS = (Object.keys(RETINUE_FILTER_LABEL) as RetinueFilter[]).map((value) => ({ value, label: RETINUE_FILTER_LABEL[value] }));
 const TONE = { moss: 'moss', rust: 'rust', neutral: 'neutral' } as const;
 
 /** 결속 칩 글자 — 「향당 · 패국 초현」. 본관 현을 못 풀었으면 이름만. */
@@ -80,36 +80,12 @@ export function RetinueList({ rows, sort, onSortChange, selectedId = null, onSel
                         value={search.query}
                         onChange={(e) => search.onQueryChange(e.target.value)}
                     />
-                    <div className="os-seg os-seg--scroll" role="radiogroup" aria-label="거르기">
-                        {FILTERS.map((f) => (
-                            <button
-                                key={f}
-                                type="button"
-                                role="radio"
-                                aria-checked={f === search.filter}
-                                className={['os-seg__item', f === search.filter ? 'os-seg__item--on' : ''].filter(Boolean).join(' ')}
-                                onClick={() => search.onFilterChange(f)}
-                            >
-                                {RETINUE_FILTER_LABEL[f]}
-                            </button>
-                        ))}
-                    </div>
+                    <Seg label="거르기" options={FILTERS} value={search.filter} onChange={search.onFilterChange} scroll />
                     <span className={styles.muted} role="status">{`${search.total}명 중 ${rows.length}`}</span>
                 </div>
             ) : null}
-            <div className={`os-seg os-seg--scroll ${styles.sort}`} role="radiogroup" aria-label="정렬">
-                {SORTS.map((s) => (
-                    <button
-                        key={s}
-                        type="button"
-                        role="radio"
-                        aria-checked={s === sort}
-                        className={['os-seg__item', s === sort ? 'os-seg__item--on' : ''].filter(Boolean).join(' ')}
-                        onClick={() => onSortChange(s)}
-                    >
-                        {RETINUE_SORT_LABEL[s]}
-                    </button>
-                ))}
+            <div className={styles.sort}>
+                <Seg label="정렬" options={SORTS} value={sort} onChange={onSortChange} scroll />
             </div>
             <div ref={rowsRef} role="listbox" aria-label="부의 인물" className={styles.rows}>
                 {rows.map((row) => {
