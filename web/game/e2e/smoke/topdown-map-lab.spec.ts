@@ -1,7 +1,7 @@
 // 탑다운 지도 엔진(기능 플래그 뒤 /map-lab) — 합성 키트 · 굽기(e2e/fixtures/topdown, 원작 그림 없음)를
 // page.route로 대 준다. 백엔드 없이 돈다(e2e/smoke 규칙: @both = 데스크톱 · 모바일 두 프로필, @mobile-only).
 // 「그려졌다」(스크린샷 화소)와 「조작된다」(상태 속성 · 누르기 결과)를 따로 본다.
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
@@ -13,7 +13,12 @@ const GREEN = [40, 160, 60];
 async function serveFixture(page: Page) {
   await page.route((url) => url.pathname.startsWith('/e2e-topdown/'), async (route) => {
     const path = new URL(route.request().url()).pathname.replace(/^\/e2e-topdown\//, '');
-    const body = readFileSync(join(FIXTURE, path));
+    const file = join(FIXTURE, path);
+    if (!existsSync(file)) {
+      await route.fulfill({ status: 404, body: '' });
+      return;
+    }
+    const body = readFileSync(file);
     const type = path.endsWith('.png') ? 'image/png' : path.endsWith('.json') ? 'application/json' : 'application/octet-stream';
     await route.fulfill({ status: 200, body, contentType: type });
   });
@@ -110,6 +115,18 @@ test.describe('탑다운 지도 시험 화면', () => {
     await minimap.click({ position: { x: 4, y: 4 } }); // 지도 왼쪽 위 끝으로
     await expect.poll(async () => Number((await map.getAttribute('data-map-center'))!.split(',')[0])).toBeLessThan(400);
     expect(mini.width).toBeGreaterThanOrEqual(44);
+  });
+
+  test('부대 표지를 누르면 그 부대가 잡힌다', { tag: '@both' }, async ({ page }) => {
+    await serveFixture(page);
+    await page.goto('/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1522,936&z=16');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await page.waitForTimeout(300);
+    const box = (await map.boundingBox())!;
+    // 시험 부대 c1은 칸 (1522, 936) — 화면 가운데 + 반 칸
+    await page.mouse.click(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8);
+    await expect(page.getByTestId('map-lab-hit')).toContainText('corps c1');
   });
 
   test('모바일: 탭으로 고르고 누를 것은 44px 이상', { tag: '@mobile-only' }, async ({ page }) => {
