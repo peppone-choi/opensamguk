@@ -1,5 +1,6 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
 export { BREAKPOINTS, MEDIA, viewportClass, type ViewportClass } from './breakpoints';
+export { useViewportClass } from './useViewportClass';
 export * from './strategicMap';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
@@ -38,7 +39,8 @@ export {
   type PortraitResolver,
   type PortraitVariant,
 } from './portraitResolver';
-export { ReasonTooltip, type ReasonTooltipProps } from './ReasonTooltip';
+export { ReasonSheet, ReasonTooltip, type ReasonSheetProps, type ReasonTooltipProps } from './ReasonTooltip';
+export * from './parts';
 export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
 export { Slot, type SlotProps, type SlotState } from './Slot';
 export { StatRow, type StatRowProps } from './StatRow';
@@ -204,6 +206,7 @@ export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
+export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
   buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,

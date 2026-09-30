@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { UNOWNED_NATION_NAME, isOwnedNationVisual } from './nationVisual';
 import { loadSharedProvinceIdentityMap, type ProvinceIdentityMap } from './provinceMap';
+import { rememberProvinceNames } from './provinceNames';
 import { buildCanonicalMarkerPositions, parseTerrainEtagHash } from './WorldMapCanvas';
 import { juUrlForTerrain, verifiedJuByParent, type JuIndexResponse } from './iso/juLod';
 import { validStrategicBinding, type StrategicTopologyBinding } from './strategicMap';
@@ -245,6 +246,8 @@ export function useWorldMap<P extends WorldMapPreview>({
       if (!response.ok) throw new Error(`지형을 받지 못했습니다(${response.status})`);
       const hash = parseTerrainEtagHash(response.headers.get('etag'));
       const tiles = (await response.json()) as WorldTiles;
+      // 구역 이름은 지형과 같이 온다 — 이름만 필요한 화면(영지 등)이 지형을 새로 받지 않게 적어 둔다.
+      rememberProvinceNames(tiles, hash);
       if (controller.signal.aborted) return;
       if (juIndex && tiles.parentRegions) {
         const assigned = verifiedJuByParent(juIndex, hash, tiles.parentRegions.length);

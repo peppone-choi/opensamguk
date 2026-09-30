@@ -11,6 +11,8 @@ import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitma
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
 import { drawMyLocation, myLocationHitRect, type MyLocation } from './myLocation';
+import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker, type Heading } from './corps';
+import { createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
 import { TerrainLayer } from './gl/terrainLayer';
@@ -39,9 +41,11 @@ export interface MapLayers {
   countyLines: boolean;
   commanderyLines: boolean;
   cityNames: boolean;
+  /** 「부대 경로」: 남은 행군 경로. */
+  corpsRoutes: boolean;
 }
 
-export const DEFAULT_LAYERS: MapLayers = { provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true };
+export const DEFAULT_LAYERS: MapLayers = { provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true };
 
 const BACKGROUND: [number, number, number] = [12 / 255, 15 / 255, 14 / 255];
 const AVAILABLE: [number, number, number] = [0x8f / 255, 0xa7 / 255, 0x7a / 255];
@@ -66,6 +70,13 @@ export class TopdownRenderer {
   private footprintIndex: FootprintIndex | null = null;
   private sites: SpriteSheet | null = null;
   private flags: SpriteSheet | null = null;
+  private markers: SpriteSheet | null = null;
+  private corps: readonly CorpsMarker[] = [];
+  private readonly corpsArt: CorpsArt = createKitCorpsArt({
+    sheets: () => ({ markers: this.markers, flags: this.flags }),
+    cached: (key, make) => this.cached(key, make),
+    font: LABEL_FONT,
+  });
   private readonly spriteCache = new Map<string, OffscreenCanvas>();
   private readonly uploaded = new Map<string, ChunkData>();
   private world: WorldState | null = null;
@@ -167,9 +178,11 @@ export class TopdownRenderer {
     const sprites = Promise.all([
       loadSheet(kitUrl('sites.png'), kitUrl('sites-roles.png')),
       loadSheet(kitUrl('flags.png'), kitUrl('flags-roles.png')),
-    ]).then(([sites, flags]) => {
+      loadSheet(kitUrl('markers.png'), kitUrl('markers-roles.png')).catch(() => null),
+    ]).then(([sites, flags, markers]) => {
       this.sites = sites;
       this.flags = flags;
+      this.markers = markers;
       this.requestFrame();
     });
     await Promise.all([mips, overview, places, sprites]);
@@ -202,6 +215,12 @@ export class TopdownRenderer {
       if (o.provinceIndex >= 0 && o.provinceIndex < this.nationOfProvince.length) this.nationOfProvince[o.provinceIndex] = o.nationId;
     }
     this.terrain.setProvinceTable(table.width, table.height, table.bytes, table.nationPalette);
+    this.requestFrame();
+  }
+
+  /** 부대 표지(K2-08). 빈 배열이면 지운다. */
+  setCorps(corps: readonly CorpsMarker[]): void {
+    this.corps = corps;
     this.requestFrame();
   }
 
@@ -388,10 +407,25 @@ export class TopdownRenderer {
         sprites.push({ kind: 'flag', id: String(city.id), rect: { x, y, width: FLAG_PX, height: FLAG_PX }, z: 1 });
       }
     }
+    const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
+    if (level !== 'ju') {
+      const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
+      const placed = this.corps
+        .filter((marker) => inView(marker.cell.col, marker.cell.row, 40))
+        .map((marker) => ({ marker, place: corpsPlacement(marker, cam.zoom, toScreen) }));
+      // 경로를 모두 먼저 그려 다른 부대 표지를 덮지 않게 한다
+      if (this.layers.corpsRoutes) for (const { marker, place } of placed) this.corpsArt.drawRoute(ctx, marker, place.route);
+      for (const { marker, place } of placed) {
+        if (marker.heading) this.corpsArt.drawBody(ctx, marker as CorpsMarker & { heading: Heading }, place.body);
+        this.corpsArt.drawFlag(ctx, marker, place.flag);
+        sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: CORPS_HIT_Z });
+        corpsBoxes.push(place.body, place.flag);
+      }
+    }
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden })) {
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: corpsBoxes })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';
