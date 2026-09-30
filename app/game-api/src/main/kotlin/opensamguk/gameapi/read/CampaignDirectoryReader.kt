@@ -3,6 +3,8 @@ package opensamguk.gameapi.read
 import opensamguk.gameapi.dto.*
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.logic.content.PersonBondState
+import opensamguk.logic.domestic.DomesticPerson
+import opensamguk.logic.domestic.DomesticRules
 import opensamguk.logic.economy.CountyWarehouse
 import opensamguk.logic.economy.Resources
 import opensamguk.logic.input.Aptitude
@@ -46,7 +48,7 @@ class CampaignDirectoryReader(
     private val worlds: WorldStateReadRepository,
     private val generals: GeneralReadRepository,
     private val nations: NationReadRepository,
-    private val cities: CityReadRepository,
+    private val artifacts: ActiveWorldArtifactResolver,
     private val retainers: RetainerReadRepository,
     private val owners: GeneralResolver,
 ) {
@@ -130,7 +132,7 @@ class CampaignDirectoryReader(
         if (actor.nationId <= 0) return CampaignNationSummary("NO_NATION")
         val nation = frame.nations.singleOrNull { it.id == actor.nationId }
             ?: return CampaignNationSummary("UNAVAILABLE")
-        val counties = cities.findAll()
+        val counties = administrativeCounties(frame.worldId) ?: return CampaignNationSummary("UNAVAILABLE")
         val units = retainers.allBugoks()
         checkWorld(frame.worldId, counties.map { it.worldId } + units.map { it.worldId })
         return summary(frame, nation, counties, units)
@@ -139,11 +141,18 @@ class CampaignDirectoryReader(
     /** No player query parameter can select or impersonate an administrator. */
     fun adminNations(): AdminNationDirectory {
         val frame = frame() ?: return AdminNationDirectory("UNAVAILABLE")
-        val counties = cities.findAll()
+        val counties = administrativeCounties(frame.worldId) ?: return AdminNationDirectory("UNAVAILABLE")
         val units = retainers.allBugoks()
         checkWorld(frame.worldId, counties.map { it.worldId } + units.map { it.worldId })
         val rows = frame.nations.filter { it.id > 0 }.sortedBy { it.id }.map { summary(frame, it, counties, units) }
         return AdminNationDirectory(if (rows.any { it.status != "READY" }) "PARTIAL" else "READY", rows)
+    }
+
+    private fun administrativeCounties(worldId: Int): List<CityReadEntity>? {
+        val selected = artifacts.resolve() ?: return null
+        checkWorld(worldId, listOf(selected.world.id) + selected.cities.map { it.worldId })
+        val admin = selected.artifacts?.projection?.administrativeCountyIds ?: return null
+        return selected.cities.filter { it.id in admin }
     }
 
     private fun summary(frame: Frame, nation: NationReadEntity, counties: List<CityReadEntity>,
@@ -154,16 +163,21 @@ class CampaignDirectoryReader(
         val nationalUnits = units.filter { it.masterGeneralId in masters }
         val stock = runCatching {
             owned.fold(Resources()) { total, city ->
-                val row = requireNotNull(CountyWarehouse.read(city.meta, city.id)) { "County warehouse unavailable" }
-                total.credit(row.stock)
+                val row = CountyWarehouse.read(city.meta, city.id)
+                if (row == null) total else total.credit(row.stock)
             }
         }.getOrNull()
         val cityTroops = runCatching { owned.sumOf {
             CityMilitaryState.read(it.meta, it.defense.coerceAtLeast(0)).troops.toLong()
         } }.getOrNull()
         val bugokTroops = nationalUnits.takeIf { all -> all.all { it.troops >= 0 } }?.sumOf { it.troops.toLong() }
-        val lord = frame.people.filter { it.nationId == nation.id && runCatching { LordStatus.read(it.meta) }.getOrNull() == true }
-            .singleOrNull()
+        // Ruler selection only consumes nation, office and LordStatus; spatial state is not needed.
+        val rulerId = runCatching { DomesticRules.rulerOf(nation.id, frame.people.map { g ->
+            DomesticPerson(g.id, g.name, g.nationId, (g.userId?.toLongOrNull() ?: 0) > 0, g.npcState,
+                g.officerLevel, g.leadership, g.strength, g.intel, g.politics, g.charm,
+                node = null, inBattle = false, meta = g.meta)
+        })?.id }.getOrNull()
+        val lord = frame.people.singleOrNull { it.id == rulerId }
         return CampaignNationSummary(if (stock == null || cityTroops == null || bugokTroops == null) "PARTIAL" else "READY",
             SummaryNation(nation.id, nation.name, nation.color),
             lord?.let { SummaryLord(it.id, it.name, DirectoryPortrait(it.picture, it.imageServer)) },
