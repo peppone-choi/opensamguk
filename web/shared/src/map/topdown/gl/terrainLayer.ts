@@ -35,6 +35,9 @@ uniform usampler2DArray uChunks;
 uniform usampler2D uOverview;
 uniform int uOverviewBlock;
 uniform int uHasOverview;
+uniform int uHasMips;
+uniform int uHasProvTable;
+uniform int uHasAdmin;
 uniform int uForceOverview;
 uniform usampler2D uKitIndex;
 uniform int uAtlasColumns;
@@ -75,11 +78,13 @@ uvec3 cellData(ivec2 cell) {
 }
 
 uvec4 provinceRow(uint province) {
+  if (uHasProvTable == 0) return uvec4(0u);
   int p = int(province);
   return texelFetch(uProvTable, ivec2(p % TABLE_WIDTH, p / TABLE_WIDTH), 0);
 }
 
 uvec4 adminRow(uint province) {
+  if (uHasAdmin == 0) return uvec4(0u);
   int p = int(province);
   return texelFetch(uAdmin, ivec2(p % TABLE_WIDTH, p / TABLE_WIDTH), 0);
 }
@@ -91,7 +96,8 @@ vec3 nationColor(uint slot, int shade) {
 vec3 tileColor(uint tile, vec2 f, uint slot, float devicePerCell) {
   int t = int(tile);
   ivec2 origin = ivec2(t % uAtlasColumns, t / uAtlasColumns);
-  if (devicePerCell >= 12.0) {
+  // 밉이 아직 안 왔으면 16px 원본으로 그린다(작게 보일 때도 색은 맞다)
+  if (devicePerCell >= 12.0 || uHasMips == 0) {
     uint v = texelFetch(uKitIndex, origin * 16 + ivec2(floor(f * 16.0)), 0).r;
     uint role = v >> 4u;
     if (role > 0u && slot > 0u) return nationColor(slot, int(role) - 1);
@@ -169,14 +175,15 @@ void main() {
 const UNIFORMS = [
   'uViewport', 'uDpr', 'uCenter', 'uZoom', 'uMapSize', 'uChunkSize', 'uChunkTable', 'uChunks', 'uOverview',
   'uOverviewBlock', 'uHasOverview', 'uForceOverview', 'uKitIndex', 'uAtlasColumns', 'uMip8', 'uMip4', 'uMip2',
-  'uMip1', 'uPalette', 'uProvTable', 'uNationPalette', 'uAdmin', 'uBandPx', 'uAdminLines', 'uPickMode',
+  'uMip1', 'uHasMips', 'uHasProvTable', 'uHasAdmin', 'uPalette', 'uProvTable', 'uNationPalette', 'uAdmin', 'uBandPx', 'uAdminLines', 'uPickMode',
   'uBackground', 'uAvailableColor', 'uUnavailableColor', 'uSelectedColor',
 ] as const;
 
 export interface KitTextures {
   /** kit-index.png decoded: value = palette index + 16 × role. */
   index: { width: number; height: number; data: Uint8Array };
-  mips: Record<8 | 4 | 2 | 1, TexImageSource | { width: number; height: number; data: Uint8Array }>;
+  /** 나중에 setMips로 줘도 된다(첫 그림에는 필요 없다). */
+  mips?: Record<8 | 4 | 2 | 1, TexImageSource | { width: number; height: number; data: Uint8Array }>;
   /** 16 × RGBA day palette. */
   palette: Uint8Array;
   atlasColumns: number;
@@ -223,6 +230,7 @@ export class TerrainLayer {
   private nationPalette: WebGLTexture | null = null;
   private admin: WebGLTexture | null = null;
   private clock = 0;
+  private dummy: { uint: WebGLTexture; colour: WebGLTexture } | null = null;
 
   constructor(gl: WebGL2RenderingContext, readonly shape: MapShape, readonly chunkSize: number, capacity = 64) {
     this.gl = gl;
@@ -243,9 +251,13 @@ export class TerrainLayer {
   setKit(kit: KitTextures): void {
     const gl = this.gl;
     this.kitIndex = createIntegerTexture(gl, 'R8UI', kit.index.width, kit.index.height, kit.index.data);
-    for (const size of [8, 4, 2, 1] as const) this.mips[size] = createColorTexture(gl, kit.mips[size]);
     this.palette = createColorTexture(gl, { width: 16, height: 1, data: kit.palette });
     this.atlasColumns = kit.atlasColumns;
+    if (kit.mips) this.setMips(kit.mips);
+  }
+
+  setMips(mips: KitTextures['mips'] & object): void {
+    for (const size of [8, 4, 2, 1] as const) this.mips[size] = createColorTexture(this.gl, mips[size]);
   }
 
   setOverview(cols: number, rows: number, block: number, data: ChunkData): void {
@@ -344,8 +356,19 @@ export class TerrainLayer {
     return slot;
   }
 
+  /** 첫 그림에 필요한 것: 키트 색인과 팔레트뿐. 밉 · 개관 · 구역 표 · 행정 표는 오는 대로 쓴다. */
   ready(): boolean {
-    return this.kitIndex !== null && this.provinceTable !== null && this.admin !== null;
+    return this.kitIndex !== null && this.palette !== null;
+  }
+
+  private placeholders(): { uint: WebGLTexture; colour: WebGLTexture } {
+    if (!this.dummy) {
+      this.dummy = {
+        uint: createIntegerTexture(this.gl, 'RGBA8UI', 1, 1, new Uint8Array(4)),
+        colour: createColorTexture(this.gl, { width: 1, height: 1, data: new Uint8Array(4) }),
+      };
+    }
+    return this.dummy;
   }
 
   draw(cam: Camera, viewport: Viewport, options: TerrainDrawOptions): void {
@@ -363,6 +386,11 @@ export class TerrainLayer {
     gl.uniform1i(u.uChunkSize, this.chunkSize);
     gl.uniform1i(u.uOverviewBlock, this.overviewBlock);
     gl.uniform1i(u.uHasOverview, this.overview ? 1 : 0);
+    const hasMips = [8, 4, 2, 1].every((size) => this.mips[size]);
+    gl.uniform1i(u.uHasMips, hasMips ? 1 : 0);
+    gl.uniform1i(u.uHasProvTable, this.provinceTable && this.nationPalette ? 1 : 0);
+    gl.uniform1i(u.uHasAdmin, this.admin ? 1 : 0);
+    const { uint, colour } = this.placeholders();
     gl.uniform1i(u.uForceOverview, options.forceOverview && this.overview ? 1 : 0);
     gl.uniform1i(u.uAtlasColumns, this.atlasColumns);
     gl.uniform1f(u.uBandPx, options.bandPx);
@@ -377,14 +405,14 @@ export class TerrainLayer {
       ['uChunks', gl.TEXTURE_2D_ARRAY, this.chunkArray],
       ['uOverview', gl.TEXTURE_2D, this.overview ?? this.chunkTable],
       ['uKitIndex', gl.TEXTURE_2D, this.kitIndex],
-      ['uMip8', gl.TEXTURE_2D, this.mips[8]],
-      ['uMip4', gl.TEXTURE_2D, this.mips[4]],
-      ['uMip2', gl.TEXTURE_2D, this.mips[2]],
-      ['uMip1', gl.TEXTURE_2D, this.mips[1]],
+      ['uMip8', gl.TEXTURE_2D, this.mips[8] ?? colour],
+      ['uMip4', gl.TEXTURE_2D, this.mips[4] ?? colour],
+      ['uMip2', gl.TEXTURE_2D, this.mips[2] ?? colour],
+      ['uMip1', gl.TEXTURE_2D, this.mips[1] ?? colour],
       ['uPalette', gl.TEXTURE_2D, this.palette],
-      ['uProvTable', gl.TEXTURE_2D, this.provinceTable],
-      ['uNationPalette', gl.TEXTURE_2D, this.nationPalette],
-      ['uAdmin', gl.TEXTURE_2D, this.admin],
+      ['uProvTable', gl.TEXTURE_2D, this.provinceTable ?? uint],
+      ['uNationPalette', gl.TEXTURE_2D, this.nationPalette ?? colour],
+      ['uAdmin', gl.TEXTURE_2D, this.admin ?? uint],
     ];
     bind.forEach(([name, target, texture], unit) => {
       bindTexture(gl, unit, target, texture);
@@ -396,7 +424,7 @@ export class TerrainLayer {
   dispose(): void {
     const gl = this.gl;
     for (const texture of [this.chunkTable, this.chunkArray, this.overview, this.kitIndex, this.palette,
-      this.provinceTable, this.nationPalette, this.admin, ...Object.values(this.mips)]) {
+      this.provinceTable, this.nationPalette, this.admin, this.dummy?.uint ?? null, this.dummy?.colour ?? null, ...Object.values(this.mips)]) {
       if (texture) gl.deleteTexture(texture);
     }
     gl.deleteVertexArray(this.vao);
