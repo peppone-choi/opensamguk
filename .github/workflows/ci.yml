@@ -586,6 +586,11 @@ jobs:
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         run: corepack pnpm test
+      # 2026-09-30 K10: 화면 품질 도구(tools/web)의 적색 프로브. 새 잡을 만들면 필수 검사 목록을 고쳐야 하므로
+      # web/game 의 @playwright/test 가 설치된 이 행에 붙인다. 브라우저는 러너 이미지의 시스템 Chrome 이다.
+      - name: Test web quality tools (tools/web)
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        run: node --test tools/web/measure-pages.test.mjs tools/web/board-lint.test.mjs
 
   # web/shared(@opensamguk/ui)의 vitest 는 2026-09-21 까지 어느 잡에서도 돌지 않았다.
   # 위 web 잡은 build 만 돌고, web/game·web/gateway 의 vitest include 는 각 앱 디렉터리

@@ -6,7 +6,8 @@
 // 폴더를 주면 그 안의 *.dc.html 을 모두 본다. 아무것도 안 주면 docs/design/ui-v3/project 다.
 // 보드를 헤드리스 Chrome 으로 그린 뒤(바깥 요청은 막는다 — 글꼴 · support.js · /_blob 그림 없이) 센다:
 //
-//   small   누를 것 중 44px 미만 — V3System 「누르는 것은 모두 44px 이상」, 09-18 BRIEF 「터치 대상 ≥44px」
+//   small   누를 영역이 44px 미만인 것 — V3System 「누르는 것은 모두 44px 이상」, 2026-09-30 K0 결정 「보이는 크기가 아니라
+//           누를 영역」(09-18 BRIEF 의 .btn.sm 보조 예외는 폐기). 누를 영역 = 가운데에서 훑은 elementFromPoint 적중 범위
 //           (문장 속 링크는 WCAG 2.5.8 예외라 따로 센다. 보드 밖으로 잘린 것은 small 이 아니라 clipped 다)
 //   fake    누르는 모양(cursor:pointer)인데 진짜 button · a · label · input 이 아닌 것 — BRIEF 「버튼은 진짜 <button>」
 //   title   title 속성에만 있는 정보 — V3System 「호버 · title 로만 보이는 정보는 두지 않는다」
@@ -137,6 +138,25 @@ function lintInPage({ forbidden, minTarget }) {
     if (p && p !== root && getComputedStyle(p).cursor === 'pointer') continue; // 바깥쪽 하나만
     fake.push(el);
   }
+  // 누를 영역(2026-09-30 K0 결정: 보이는 크기가 아니라 누를 영역 44 이상). 가운데에서 바깥으로 1px 씩 훑어
+  // elementFromPoint 가 그 요소(또는 그 안쪽)를 돌려주는 폭 · 높이를 잰다 — 패딩 · ::before 확장은 들어가고, 다른 요소가 덮은 곳은 빠진다.
+  const hitArea = (el) => {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const mine = (x, y) => {
+      if (x < 0 || y < 0 || x >= innerWidth || y >= innerHeight) return false;
+      const h = document.elementFromPoint(x, y);
+      return !!h && (h === el || el.contains(h));
+    };
+    // 보이는 상자가 44 이상이면 가운데와 ±21px 네 점만 본다(겹친 투명 상자가 덮었는지).
+    const half = minTarget / 2 - 1;
+    if (r.width >= minTarget && r.height >= minTarget && [[0, 0], [-half, 0], [half, 0], [0, -half], [0, half]].every(([dx, dy]) => mine(cx + dx, cy + dy))) {
+      return { w: r.width, h: r.height, covered: false };
+    }
+    if (!mine(cx, cy)) return { w: 0, h: 0, covered: true };
+    const reach = (dx, dy) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
+    return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1, covered: false };
+  };
   const small = []; const smallInline = []; const clipped = []; const clippedCtl = [];
   for (const el of [...real, ...fake]) {
     const r = el.getBoundingClientRect();
@@ -145,12 +165,13 @@ function lintInPage({ forbidden, minTarget }) {
       clippedCtl.push(el);
       continue;
     }
-    let w = r.width, h = r.height;
+    const hit = hitArea(el);
+    let w = hit.w, h = hit.h;
     const label = el.tagName !== 'LABEL' && el.id ? root.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
-    if (label) { const lr = label.getBoundingClientRect(); w = Math.max(w, lr.width); h = Math.max(h, lr.height); }
+    if (label) { const lh = hitArea(label); w = Math.max(w, lh.w); h = Math.max(h, lh.h); }
     if (w >= minTarget && h >= minTarget) continue;
     const inline = el.tagName === 'A' && getComputedStyle(el).display === 'inline' && (el.parentElement?.innerText || '').trim().length > (el.innerText || '').trim().length + 1;
-    (inline ? smallInline : small).push(describe(el));
+    (inline ? smallInline : small).push({ ...describe(el), hitW: w, hitH: h, ...(hit.covered ? { covered: true } : {}) });
   }
 
   // 글자 조각 모으기: 보이는 글자(취소선 조상 제외) + 읽히는 속성
@@ -228,7 +249,7 @@ function lintInPage({ forbidden, minTarget }) {
     },
     smallInline: smallInline.length,
     // 종류별 합계는 표본(상한 25)이 아니라 전체에서 센다: 「요소.클래스 높이」 → 개수
-    smallByKind: small.reduce((m, x) => { const k = `${x.el} ${Math.min(x.w, x.h)}px`; m[k] = (m[k] ?? 0) + 1; return m; }, {}),
+    smallByKind: small.reduce((m, x) => { const k = `${x.el} 누를 영역 ${Math.min(x.hitW, x.hitH)}px${x.covered ? '(덮임)' : ''}`; m[k] = (m[k] ?? 0) + 1; return m; }, {}),
     innerCropped,
     lintSkipBlocks: root.querySelectorAll('[data-lint="skip"]').length,
     words,
@@ -280,7 +301,7 @@ export function toMarkdown(results) {
     '| 보드 | 크기 | 누를 것 | 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 뿌리 밖 잘림 | 안쪽 자름(참고) |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} |`, '', `44 미만 종류(요소.클래스 짧은 변): ${topKinds}`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
   ].join('\n');
 }
 
