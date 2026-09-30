@@ -19,7 +19,7 @@ vi.mock('@/lib/campaign-session', () => ({
   useGameSession: vi.fn(),
 }));
 
-vi.mock('@/app/game/(campaign)/war-room/page', () => ({
+vi.mock('@/components/campaign/WarRoomPage', () => ({
   default: () => <div data-testid="campaign-war-room" />,
 }));
 
