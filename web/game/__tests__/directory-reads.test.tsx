@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
-import { campaignReadNotice } from '../components/campaign/GameStates';
+import { campaignPartialNotice, campaignReadNotice } from '../components/campaign/GameStates';
 import { api } from '../lib/api';
 import { countiesPath, peoplePath, usePeopleList, type DirectoryPerson } from '../lib/directory-reads';
 
@@ -56,4 +56,29 @@ test('첫 쪽 실패는 빈 목록과 다르게 알린다', async () => {
 test('옛 형식 월드는 빈 목록이 아니라 알림으로 보인다', () => {
     expect(campaignReadNotice({ loading: false, error: null }, 'UNSUPPORTED_WORLD_FORMAT')).toBe('이 서버는 지금 게임 규칙과 맞지 않습니다.');
     expect(campaignReadNotice({ loading: false, error: null }, 'READY')).toBeNull();
+});
+
+test('재야 · 장수 없음은 빈 칸이 아니라 알림으로 보인다(세 조회의 서버 상태값)', () => {
+    const idle = { loading: false, error: null };
+    expect(campaignReadNotice(idle, 'NO_NATION')).toBe('소속이 없어 세력 정보가 없습니다. 출사하거나 거병하면 보입니다.');
+    expect(campaignReadNotice(idle, 'NO_GENERAL')).toBe('이 서버에 장수가 없습니다.');
+    // PARTIAL 은 받은 값을 가리지 않는다 — 곁에 한 줄만.
+    expect(campaignReadNotice(idle, 'PARTIAL')).toBeNull();
+    expect(campaignPartialNotice('PARTIAL')).toBe('일부 값을 읽지 못했습니다 — 읽은 것만 보입니다.');
+    expect(campaignPartialNotice('READY')).toBeNull();
+});
+
+test('범위가 바뀌면 다시 받는 동안 이전 범위 목록을 비운다', async () => {
+    let resolveNation: (v: unknown) => void = () => {};
+    vi.mocked(api.people)
+        .mockResolvedValueOnce({ status: 'READY', people: [person(1), person(2)], nextCursor: null })
+        .mockReturnValueOnce(new Promise((r) => { resolveNation = r; }) as never);
+    const { result, rerender } = renderHook(({ scope }) => usePeopleList({ scope, q: '', limit: 50 }),
+        { initialProps: { scope: 'ALL' as 'ALL' | 'NATION' } });
+    await waitFor(() => expect(result.current.people).toHaveLength(2));
+    rerender({ scope: 'NATION' });
+    await waitFor(() => expect(result.current.loading).toBe(true));
+    expect(result.current.people).toHaveLength(0);
+    act(() => resolveNation({ status: 'READY', people: [person(3)], nextCursor: null }));
+    await waitFor(() => expect(result.current.people.map((p) => p.generalId)).toEqual([3]));
 });

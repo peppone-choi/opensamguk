@@ -11,6 +11,15 @@ import { api } from './api';
 import { useGameSession } from './campaign-session';
 import type { ReadStatus, Stamp, Stock } from './campaign-reads';
 
+/**
+ * 세 조회가 실제로 주는 상태(`CampaignDirectoryReader` · `CountyDirectoryReader`):
+ * - `NO_GENERAL` — 이 계정에 장수가 없다(`/api/people`)
+ * - `NO_NATION` — 재야라 세력 요약 · 현 목록이 없다(`/api/nation/summary` · `/api/counties`)
+ * - `PARTIAL` — 받은 값은 맞지만 일부(창고 · 병력 · FULL 현의 세입)를 못 읽었다. 받은 것은 그대로 보인다.
+ * `campaignReadNotice` 가 앞의 둘을, `campaignPartialNotice` 가 PARTIAL 을 알린다 — 빈 칸으로 두지 않는다.
+ */
+export type DirectoryStatus = ReadStatus | 'NO_GENERAL' | 'NO_NATION' | 'PARTIAL';
+
 // ── 인물 일람 (`GET /api/people?scope=&q=&sort=ID&cursor=&limit=`) ─────────────────────
 export type PeopleScope = 'ALL' | 'NATION' | 'RETINUE';
 
@@ -55,7 +64,7 @@ export interface DirectoryPerson {
     readonly bonds: readonly DirectoryBond[] | null;
 }
 export interface PeoplePage {
-    readonly status: ReadStatus;
+    readonly status: DirectoryStatus;
     readonly people: readonly DirectoryPerson[];
     readonly nextCursor: string | null;
 }
@@ -81,7 +90,7 @@ export interface SummaryLord {
     readonly portrait: DirectoryPortrait;
 }
 export interface NationSummary {
-    readonly status: ReadStatus;
+    readonly status: DirectoryStatus;
     readonly nation: SummaryNation | null;
     readonly lord: SummaryLord | null;
     readonly capitalCityId: number | null;
@@ -108,7 +117,7 @@ export interface CountyDirectoryRow {
     readonly income: CountyIncome | null;
 }
 export interface CountyDirectory {
-    readonly status: ReadStatus;
+    readonly status: DirectoryStatus;
     readonly scope: CountyScope | string;
     readonly commandery: { readonly id: string; readonly name: string } | null;
     readonly period: 'GAME_MONTH' | string;
@@ -121,7 +130,7 @@ export interface CountyDirectory {
 // ── 인물 일람 훅 — 커서를 이어 받는다 ────────────────────────────────────────────
 export interface PeopleList {
     readonly people: readonly DirectoryPerson[];
-    readonly status: ReadStatus | null;
+    readonly status: DirectoryStatus | null;
     readonly loading: boolean;
     /** 첫 쪽을 못 받은 오류. 빈 목록과 다르게 보인다. */
     readonly error: string | null;
@@ -139,7 +148,7 @@ export interface PeopleList {
 export function usePeopleList(query: PeopleQuery): PeopleList {
     const { generalId } = useGameSession();
     const [people, setPeople] = useState<readonly DirectoryPerson[]>([]);
-    const [status, setStatus] = useState<ReadStatus | null>(null);
+    const [status, setStatus] = useState<DirectoryStatus | null>(null);
     const [cursor, setCursor] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -155,6 +164,8 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
         }
         const controller = new AbortController();
         inflight.current = controller;
+        // 범위 · 찾기가 바뀌면 이전 범위 목록을 비운다 — 불러오는 동안 다른 범위의 인물이 보이지 않게.
+        setPeople([]); setStatus(null); setCursor(null);
         setLoading(true); setError(null); setMoreError(null);
         api.people(query, null, controller.signal)
             .then((page) => {
@@ -168,6 +179,9 @@ export function usePeopleList(query: PeopleQuery): PeopleList {
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- key 가 query 를 대신한다
     }, [generalId, key]);
+
+    // 화면을 떠나면 진행 중인 「더 보기」 요청도 끊는다.
+    useEffect(() => () => inflight.current?.abort(), []);
 
     const loadMore = useCallback(() => {
         if (cursor == null || loading) return;
