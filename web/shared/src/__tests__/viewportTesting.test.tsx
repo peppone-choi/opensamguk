@@ -31,6 +31,37 @@ describe('installViewport — 조건마다 답하는 matchMedia 흉내', () => {
     expect(screen.getByTestId('v')).toHaveTextContent('desktop');
   });
 
+  it('값이 뒤집힌 쿼리에만 { matches, media } 이벤트를 보낸다 — 같은 단 안의 폭 변화는 조용하다', () => {
+    const viewport = installViewport(1300);
+    restore = viewport.restore;
+    const desktop = window.matchMedia(MEDIA.desktop);
+    const mobile = window.matchMedia(MEDIA.mobile);
+    const seen: Array<{ media: string; matches: boolean }> = [];
+    const fn = (event: MediaQueryListEvent) => seen.push({ media: event.media, matches: event.matches });
+    desktop.addEventListener('change', fn);
+    mobile.addEventListener('change', fn);
+    viewport.resize(1440); // 여전히 desktop — 아무도 뒤집히지 않는다
+    expect(seen).toEqual([]);
+    viewport.resize(390); // desktop 꺼짐 · mobile 켜짐
+    expect(seen).toEqual([{ media: MEDIA.desktop, matches: false }, { media: MEDIA.mobile, matches: true }]);
+  });
+
+  it('리스너는 그 쿼리에만 붙는다 — 다른 쿼리만 뒤집히면 불리지 않고, 뗀 뒤로는 알리지 않는다', () => {
+    const viewport = installViewport(390);
+    restore = viewport.restore;
+    const desktop = window.matchMedia(MEDIA.desktop);
+    let count = 0;
+    const fn = () => { count += 1; };
+    desktop.addEventListener('change', fn);
+    viewport.resize(1000); // mobile → tablet: desktop 은 그대로 거짓
+    expect(count).toBe(0);
+    viewport.resize(1440); // desktop 켜짐
+    expect(count).toBe(1);
+    desktop.removeEventListener('change', fn);
+    viewport.resize(390);
+    expect(count).toBe(1);
+  });
+
   it('함정 재현: 모든 쿼리에 같은 값을 주는 흉내는 null 에 머문다(그래서 이 도우미를 쓴다)', () => {
     const original = window.matchMedia;
     window.matchMedia = ((q: string) => ({ matches: true, media: q, addEventListener: () => {}, removeEventListener: () => {} })) as unknown as typeof window.matchMedia;

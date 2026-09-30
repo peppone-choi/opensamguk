@@ -6,34 +6,46 @@ import { BREAKPOINTS } from './breakpoints';
  * 훅이 null(「재기 전」)에 머물러 null 이면 기본 배치로 두는 화면이 그대로 멈추고(K4 발견), 늘 true 면 늘 mobile 이다.
  *
  *   const viewport = installViewport(390);  // mobile
- *   act(() => viewport.resize(1440));       // desktop — 구독자에게 change 를 알린다
+ *   act(() => viewport.resize(1440));       // desktop — 값이 뒤집힌 쿼리의 구독자에게만 { matches, media } 를 알린다
  *   viewport.restore();
+ *
+ * matchMedia 만 흉내 낸다 — `window.innerWidth` · `resize` 이벤트는 바꾸지 않는다(그것을 읽는 부품은 따로 흉내 낸다).
  */
 export function installViewport(width: number): { readonly resize: (next: number) => void; readonly restore: () => void } {
+  type Listener = (event: MediaQueryListEvent) => void;
+  interface Query { readonly media: string; last: boolean; readonly listeners: Set<Listener> }
   let current = width;
-  const listeners = new Set<() => void>();
+  const queries: Query[] = [];
   const original = window.matchMedia;
-  window.matchMedia = ((query: string) => {
-    const matches = () => mediaMatches(query, current);
+  window.matchMedia = ((media: string) => {
+    // 쿼리(MQL)마다 리스너 · 직전 값을 따로 둔다 — 값이 뒤집힌 쿼리에만 알린다(실제 브라우저와 같다).
+    const query: Query = { media, last: mediaMatches(media, current), listeners: new Set() };
+    queries.push(query);
     return {
-      get matches() { return matches(); },
-      media: query,
+      get matches() { return mediaMatches(media, current); },
+      media,
       onchange: null,
-      addEventListener: (_type: string, fn: () => void) => listeners.add(fn),
-      removeEventListener: (_type: string, fn: () => void) => listeners.delete(fn),
-      addListener: (fn: () => void) => listeners.add(fn),
-      removeListener: (fn: () => void) => listeners.delete(fn),
+      addEventListener: (_type: string, fn: Listener) => query.listeners.add(fn),
+      removeEventListener: (_type: string, fn: Listener) => query.listeners.delete(fn),
+      addListener: (fn: Listener) => query.listeners.add(fn),
+      removeListener: (fn: Listener) => query.listeners.delete(fn),
       dispatchEvent: () => false,
     } as unknown as MediaQueryList;
   }) as typeof window.matchMedia;
   return {
     resize(next: number) {
       current = next;
-      for (const fn of [...listeners]) fn();
+      for (const query of queries) {
+        const matches = mediaMatches(query.media, current);
+        if (matches === query.last) continue;
+        query.last = matches;
+        const event = { matches, media: query.media } as MediaQueryListEvent;
+        for (const fn of [...query.listeners]) fn(event);
+      }
     },
     restore() {
       window.matchMedia = original;
-      listeners.clear();
+      queries.length = 0;
     },
   };
 }
