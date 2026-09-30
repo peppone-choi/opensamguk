@@ -38,8 +38,9 @@
 .summary > li { display: flex; align-items: center; gap: 8px; min-height: 40px; border-bottom: 1px solid var(--line); font-size: 13px; }
 
 /* ---- 화면 조립(CountyScreen) ---- */
-.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; }
-.screenMobile { display: flex; flex-direction: column; gap: 8px; }
+/* 본문 여백은 화면 몫 — 셸 본문(.body)은 여백이 없다. 보드 desk_main 12 · mob_main 10/12. */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
 .columns { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .colState { width: 440px; flex-shrink: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; }
 .colRule { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; }

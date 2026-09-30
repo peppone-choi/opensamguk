@@ -52,8 +52,9 @@
 
 /* ---- 화면 조립(TerritoryScreen) ---- */
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; }
-.screenMobile { display: flex; flex-direction: column; gap: 8px; }
+/* 본문 여백은 화면 몫 — 셸 본문(.body)은 여백이 없다. 보드 desk_main 12 · mob_main 10/12. */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
+.screenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
 .band { min-height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 14px; padding: 0 16px; border-bottom: 1px solid var(--line); background: var(--panel); flex-wrap: wrap; }
 .bandLink { margin-left: auto; display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; color: var(--bronze); }
 .columns { flex: 1; min-height: 0; display: flex; gap: 12px; }

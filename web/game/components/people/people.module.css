@@ -76,12 +76,13 @@
 
 /* ---- 화면 조립(PeopleScreen) ---- */
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.peopleScreen { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; }
-.peopleScreenMobile { display: flex; flex-direction: column; gap: 8px; }
+/* 본문 여백은 화면 몫 — 셸 본문(.body)은 여백이 없다. 보드 desk_main 12 · mob_main 10/12. */
+.peopleScreen { display: flex; flex-direction: column; gap: 8px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
+.peopleScreenMobile { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
 .peopleColumns { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .peopleMain { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
 .peopleAside { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
-.personScreen { display: flex; gap: 12px; min-height: 0; height: 100%; }
+.personScreen { display: flex; gap: 12px; min-height: 0; height: 100%; padding: 12px; box-sizing: border-box; }
 .personGrid { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; overflow-y: auto; }
 .personGrid > :global(.os-panel) { padding: 10px; }
 .peopleScreenMobile .personGrid { grid-template-columns: minmax(0, 1fr); }
