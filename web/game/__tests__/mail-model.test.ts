@@ -1,6 +1,7 @@
 // 서신 데이터 층 — 방향 · 지우기 표식 · 받는 사람(NPC 포함, 서버 대기 사유) · 보이는 글자 수.
 import { describe, expect, it } from 'vitest';
-import { latestReceivedId, mailboxIdOf, toMailItems, type RecentMailRow } from '@/lib/mail/mail-model';
+import { toDiplomacyWrite } from '@/lib/mail/diplomacy';
+import { DIPLOMACY_MASK_TEXT, latestReceivedId, mailboxIdOf, toMailItems, type RecentMailRow } from '@/lib/mail/mail-model';
 import { NPC_MAIL_WAITING, toRecipientOptions } from '@/lib/mail/recipients';
 import { isBlank, visibleLength } from '@/lib/mail/text';
 import type { PublicGeneral } from '@/types/game';
@@ -37,6 +38,60 @@ describe('서신 목록 모델', () => {
         expect(mailboxIdOf('national', { generalId: 1, nationId: 0 })).toBeNull();
         expect(mailboxIdOf('national', me)).toBe(9003);
         expect(mailboxIdOf('public', me)).toBe(9999);
+    });
+});
+
+describe('외교 서신', () => {
+    const env = (diplomacy: RecentMailRow[]) => ({ private: [], public: [], national: [], diplomacy, sequence: 0 });
+    // 외교 서신의 받는 쪽은 장수 없이 세력만 온다(엔진 MsgTarget(0, "", 세력)).
+    const nationOnly = (nation_id: number, nation: string) => ({ id: 0, name: '', nation_id, nation, color: '#654321' });
+
+    it('보낸 세력이 우리 세력이면 「보냄」 — 내가 아닌 외교권자가 보내도, 받는 세력 이름은 dest 에서', () => {
+        const items = toMailItems(env([
+            row({ id: 40, msgType: 'diplomacy', src: who(7, 3), dest: nationOnly(5, '[원소]') }),
+            row({ id: 41, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]') }),
+        ]), 'diplomacy', me);
+        expect(items.map((i) => i.direction)).toEqual(['sent', 'received']);
+        expect(items[0].to).toBeNull();
+        expect(items[0].toNation).toEqual({ id: 5, name: '[원소]', color: '#654321' });
+        expect(latestReceivedId(items)).toBe(41);
+        expect(mailboxIdOf('diplomacy', me)).toBe(9003);
+        expect(mailboxIdOf('diplomacy', { generalId: 1, nationId: 0 })).toBeNull();
+    });
+
+    it('서버가 가린 행(권한 < 3)은 hidden — 지운 서신 · 답한 제의와 가른다', () => {
+        const items = toMailItems(env([
+            row({ id: 50, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: DIPLOMACY_MASK_TEXT, option: { invalid: true } }),
+            row({ id: 51, msgType: 'diplomacy', src: who(1, 3), dest: nationOnly(5, '[원소]'), text: '삭제된 메시지입니다.', option: { invalid: true } }),
+            row({ id: 52, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '불가침을 청합니다', option: { action: 'no_aggression', used: true, invalid: true } }),
+            row({ id: 53, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '종전합시다', option: { action: 'stop_war' } }),
+            row({ id: 54, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: '모르는 제의', option: { action: 'che_모름' } }),
+        ]), 'diplomacy', me);
+        expect(items.map((i) => [i.id, i.hidden, i.html != null, i.proposal])).toEqual([
+            [50, true, false, null],
+            [51, false, false, null],
+            [52, false, true, { kind: 'no_aggression', handled: true }],
+            [53, false, true, { kind: 'stop_war', handled: false }],
+            [54, false, true, null],
+        ]);
+        // 같은 글자라도 개인 서신은 가린 행이 아니다(서버도 외교 칸에만 가린다).
+        const priv = toMailItems({ private: [row({ id: 55, text: DIPLOMACY_MASK_TEXT, option: { invalid: true } })], public: [], national: [], sequence: 0 }, 'private', me);
+        expect(priv[0].hidden).toBe(false);
+    });
+
+    it('외교권자(flags 4)만 쓴다 · 받는 세력은 우리 세력 · 재야를 뺀 세력 서신함', () => {
+        const list = { nation: [
+            { mailbox: 9000, name: '재야', color: '#000000', general: [[9, '떠돌이', 0]] as [number, string, number][] },
+            { mailbox: 9003, name: '[세력]', color: '#111', general: [[1, '나', 4], [7, '군주', 5]] as [number, string, number][] },
+            { mailbox: 9006, name: '나라', color: '#222', general: [[8, '상대', 1]] as [number, string, number][] },
+            { mailbox: 9005, name: '가라', color: '#333', general: [] as [number, string, number][] },
+        ] };
+        expect(toDiplomacyWrite(list, me)).toEqual({ canWrite: true, targets: [
+            { nationId: 5, mailbox: 9005, name: '가라' }, { nationId: 6, mailbox: 9006, name: '나라' },
+        ] });
+        expect(toDiplomacyWrite(list, { generalId: 7, nationId: 3 }).canWrite).toBe(true);
+        expect(toDiplomacyWrite(list, { generalId: 8, nationId: 6 }).canWrite).toBe(false);
+        expect(toDiplomacyWrite(list, { generalId: 9, nationId: 0 }).canWrite).toBe(false);
     });
 });
 

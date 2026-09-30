@@ -2,21 +2,26 @@
 
 // 서신(P-Q02) — 탭 개인 · 세력 · 전체 · 요청, 목록 · 읽기 · 쓰기. K6 설계서 §3.8, 보드 V31K6Mail · MMail · MailDrawer.
 // 데스크톱: 왼쪽 목록 360 | 가운데 읽기 | 오른쪽 쓰기 400. 모바일: 목록 → 읽기 → 쓰기(한 화면씩). 서랍(drawer)은 목록 + 짧은 쓰기.
-// 재야는 세력 탭을 그리지 않는다. 요청 탭은 받은 요청(발령 응답 · 정치 동의) — 순을 쓰지 않고 그 자리에서 응답한다.
+// 재야는 세력 · 외교 탭을 그리지 않는다. 요청 탭은 받은 요청(발령 응답 · 정치 동의) — 순을 쓰지 않고 그 자리에서 응답한다.
+// 외교 서신(diplomacy)은 외교 화면(P-K02)의 칸이다: 외교 화면은 tabs={['diplomacy']}로 같은 부품을 쓴다(탭 줄 없이).
 import { useState } from 'react';
 import { ConfirmDialog, StatusView } from '@opensamguk/ui';
 import { IncomingRequests } from '@/components/requests/IncomingRequests';
 import { MAIL_SCOPE_LABEL, MAIL_SCOPES, type MailItem, type MailScope } from '@/lib/mail/mail-model';
 import { deleteMail, useMailbox, type MailMe, type MailOutcome } from '@/lib/mail/use-mail';
 import type { UseRequests } from '@/lib/requests';
-import { MailCard, counterpartName, mailTime } from './MailCard';
+import { DIPLOMACY_HIDDEN, MailCard, counterpartName, mailTime } from './MailCard';
 import { MailCompose } from './MailCompose';
 import styles from './Mail.module.css';
 
 export type MailTab = MailScope | 'requests';
 
+export const DEFAULT_MAIL_TABS: readonly MailTab[] = [...MAIL_SCOPES, 'requests'];
+
 export interface MailScreenProps {
     readonly me: MailMe;
+    /** 보일 탭(순서대로). 기본 = 개인 · 세력 · 전체 · 요청. 재야면 세력 · 외교는 빠진다. 하나뿐이면 탭 줄을 그리지 않는다. */
+    readonly tabs?: readonly MailTab[];
     readonly initialTab?: MailTab;
     readonly initialRecipientId?: number | null;
     /** 머리줄 배지와 같은 받은 요청 읽기(있으면 다시 읽지 않는다). */
@@ -25,9 +30,9 @@ export interface MailScreenProps {
     readonly variant?: 'page' | 'drawer';
 }
 
-export function MailScreen({ me, initialTab = 'private', initialRecipientId = null, requests, variant = 'page' }: MailScreenProps) {
-    const tabs: MailTab[] = [...MAIL_SCOPES.filter((s) => s !== 'national' || me.nationId > 0), 'requests'];
-    const [tab, setTab] = useState<MailTab>(tabs.includes(initialTab) ? initialTab : 'private');
+export function MailScreen({ me, tabs: wanted = DEFAULT_MAIL_TABS, initialTab, initialRecipientId = null, requests, variant = 'page' }: MailScreenProps) {
+    const tabs = wanted.filter((t) => (t !== 'national' && t !== 'diplomacy') || me.nationId > 0);
+    const [tab, setTab] = useState<MailTab>(initialTab && tabs.includes(initialTab) ? initialTab : tabs[0] ?? 'private');
     const [screen, setScreen] = useState<'list' | 'read' | 'write'>(initialRecipientId != null ? 'write' : 'list');
     const [openId, setOpenId] = useState<number | null>(null);
     const [confirm, setConfirm] = useState<MailItem | null>(null);
@@ -37,6 +42,8 @@ export function MailScreen({ me, initialTab = 'private', initialRecipientId = nu
     const box = useMailbox(tab === 'requests' ? null : me, scope);
     const items = box.load.state === 'ready' ? box.load.items : [];
     const open = items.find((it) => it.id === openId) ?? null;
+    // 외교 서신을 볼 권한이 없으면 서버가 모든 행을 가린다 — 목록 대신 한 줄(§3.7).
+    const allHidden = scope === 'diplomacy' && items.length > 0 && items.every((it) => it.hidden);
 
     const remove = async (item: MailItem) => {
         setConfirm(null); setBusyId(item.id); setNotice(null);
@@ -62,7 +69,8 @@ export function MailScreen({ me, initialTab = 'private', initialRecipientId = nu
             {box.load.state === 'ready' && items.length === 0 ? (
                 <StatusView kind="empty" title="서신이 없습니다" body="「서신 쓰기」로 먼저 보내 보세요." />
             ) : null}
-            {items.length > 0 ? (
+            {allHidden ? <StatusView kind="denied" title={DIPLOMACY_HIDDEN} howTo="군주가 되거나 외교권을 받으면 읽을 수 있습니다." /> : null}
+            {items.length > 0 && !allHidden ? (
                 <ul className={styles.rows} aria-label={`${MAIL_SCOPE_LABEL[scope]} 서신`}>
                     {items.map((it) => (
                         <li key={it.id}>
@@ -78,14 +86,14 @@ export function MailScreen({ me, initialTab = 'private', initialRecipientId = nu
                                     <span className={`os-chip ${it.direction === 'sent' ? 'os-chip--info' : 'os-chip--moss'}`}>{it.direction === 'sent' ? '보냄' : '받음'}</span>
                                     <span className={styles.rowWho}>{counterpartName(it)}</span>
                                     <span className={styles.rowTime}>{mailTime(it.time)}</span>
-                                    <span className={styles.rowPreview}>{it.html == null ? '지운 서신입니다' : previewText(it.html)}</span>
+                                    <span className={styles.rowPreview}>{it.hidden ? DIPLOMACY_HIDDEN : it.html == null ? '지운 서신입니다' : previewText(it.html)}</span>
                                 </button>
                             )}
                         </li>
                     ))}
                 </ul>
             ) : null}
-            {box.load.state === 'ready' && items.length > 0 ? (
+            {box.load.state === 'ready' && items.length > 0 && !allHidden ? (
                 <div className={styles.older}>
                     {box.older === 'end' ? <p className={styles.muted}>더 이전 서신이 없습니다</p> : (
                         <button type="button" className="os-button os-button--ghost os-button--block" aria-busy={box.older === 'loading' || undefined} onClick={() => void box.loadOlder()}>
@@ -100,15 +108,17 @@ export function MailScreen({ me, initialTab = 'private', initialRecipientId = nu
 
     return (
         <section className={styles.mail} data-variant={variant} data-screen={screen} aria-label="서신" data-testid="mail-screen">
-            <div className={styles.tabs} role="tablist" aria-label="서신 묶음">
-                {tabs.map((t) => (
+            <div className={styles.tabs} role={tabs.length > 1 ? 'tablist' : undefined} aria-label={tabs.length > 1 ? '서신 묶음' : undefined}>
+                {tabs.length > 1 ? tabs.map((t) => (
                     <button key={t} type="button" role="tab" aria-selected={t === tab} className={styles.tab}
                         onClick={() => { setTab(t); setOpenId(null); setScreen('list'); setNotice(null); }}>
                         {t === 'requests' ? `요청${requests && requests.waiting > 0 ? ` ${requests.waiting}` : ''}` : MAIL_SCOPE_LABEL[t]}
                     </button>
-                ))}
+                )) : null}
                 {tab !== 'requests' ? (
-                    <button type="button" className={`os-button os-button--primary ${styles.writeButton}`} onClick={() => setScreen('write')}>서신 쓰기</button>
+                    <button type="button" className={`os-button os-button--primary ${styles.writeButton}`} onClick={() => setScreen('write')}>
+                        {tab === 'diplomacy' ? '외교 서신 쓰기' : '서신 쓰기'}
+                    </button>
                 ) : null}
             </div>
             {notice ? <p className={styles.outcome} data-kind={notice.kind} role={notice.kind === 'error' ? 'alert' : 'status'}>{notice.text}</p> : null}

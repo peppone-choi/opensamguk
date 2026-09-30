@@ -46,6 +46,17 @@
 .compose { display: grid; gap: 10px; }
 .composeTitle { margin: 0; font-size: 15px; }
 .recipient { display: grid; gap: 6px; }
+/* 외교 서신 받는 세력 — 명령 흐름 후보 목록과 같은 모양(행 44 · 고른 행 이끼색 · 표식 원). */
+.nations { display: grid; gap: 4px; max-height: 264px; overflow-y: auto; }
+.nationOption {
+  display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: center; gap: 8px;
+  min-height: var(--row-h, 44px); padding: 6px 10px; text-align: left;
+  font: inherit; font-size: 14px; color: var(--text); background: var(--inset); border: 1px solid var(--line-2); cursor: pointer;
+}
+.nationOption[aria-selected='true'] { border-color: var(--moss); box-shadow: inset 0 0 0 1px var(--moss); }
+.nationOption:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.mark { width: 14px; height: 14px; border: 1px solid var(--line-2); border-radius: 50%; }
+.nationOption[aria-selected='true'] .mark { background: var(--moss); border-color: var(--moss-2); }
 .label { margin: 0; font-size: 13px; }
 .send { min-height: var(--row-h, 44px); }
 .outcome { margin: 4px 12px; font-size: 13px; }
