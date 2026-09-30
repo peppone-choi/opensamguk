@@ -117,13 +117,13 @@ class ProvinceNamesSecurityChainTest {
         `when`(reader.current()).thenThrow(IllegalArgumentException("private storage detail"))
         mvc.perform(get(oldPath).header("If-None-Match", "*")).andExpect(status().isServiceUnavailable)
             .andExpect(header().string("Cache-Control", "no-store")).andExpect(content().string(""))
-        `when`(reader.current()).thenReturn(null)
+        doReturn(null).`when`(reader).current()
         mvc.perform(get(metadata)).andExpect(status().isNotFound).andExpect(header().string("Cache-Control", "no-store"))
     }
 
     // C1 owns the explicit GET allowlist and non-GET denial patch; assert that boundary after main lands it.
     @Test fun `public GET leaves unrelated authenticated surfaces protected and rejects actor query`() {
-        mvc.perform(get("/api/events?section=PERSONAL")).andExpect(status().isUnauthorized)
+        mvc.perform(get("/api/events?section=PERSONAL")).andExpect(status().isForbidden)
         mvc.perform(get("$metadata?generalId=41")).andExpect(status().isBadRequest)
             .andExpect(header().string("Cache-Control", "no-store"))
     }

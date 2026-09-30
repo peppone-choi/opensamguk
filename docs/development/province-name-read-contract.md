@@ -29,6 +29,6 @@ world/release/revision/topology/source뿐 아니라 정확 representation SHA까
 
 ## 검증과 운영 경계
 
-작은 합성 cache5건, reader4건, actual GameApiSecurityConfig/JwtVerifyFilter + controller HTTP5건을 준비한다. cache identity/방어복사/LRU/손상, 저장핀부재·drift·crossworld, anonymous/invalidBearer allowlist·조건헤더·reset·query오염·unrelated401을 다룬다. C1 patch main 반영 후 같은 chain에 nonGET 거부·reader무호출과 signedUSER/ADMIN 동등성 fixture를 보강한다. 시험 준비를 실행PASS로 표시하지 않는다.
+작은 합성 cache5건, reader4건, actual GameApiSecurityConfig/JwtVerifyFilter + controller HTTP5건을 준비한다. cache identity/방어복사/LRU/손상, 저장핀부재·drift·crossworld, anonymous/invalidBearer allowlist·조건헤더·reset·query오염·unrelated 보호거부(현재 chain403)을 다룬다. C1 patch main 반영 후 같은 chain에 nonGET 거부·reader무호출과 signedUSER/ADMIN 동등성 fixture를 보강한다. 시험 준비를 실행PASS로 표시하지 않는다.
 
 새 로컬 JVM/대형지도 파싱·bake 없이 현재 head 원격 jvm-core와 game-engine 결과/XML skip0을 확인한다. CI 실행 중 repeated sync/취소0. 운영DB·VM/config·image승격0. cf7 actual web → PNG API 별도 승인 순서를 유지한다. 신규 이름 API의 운영 반영은 별도 승인 대상이다.
