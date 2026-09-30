@@ -1,0 +1,24 @@
+/* 현 상세(P-T02) 본문 부품 — 치수는 승인 보드 V31K4County · V31K4MCounty 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); margin: 0; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.link { display: inline-flex; align-items: center; min-height: 44px; font-size: 12px; color: var(--bronze); }
+.block { display: flex; flex-direction: column; gap: 8px; }
+
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; min-height: 88px; padding: 12px 16px; border-bottom: 1px solid var(--line); }
+.name { margin: 0; font-size: 24px; font-weight: 900; }
+.headActions { margin-left: auto; display: flex; gap: 8px; }
+.swatch { width: 8px; height: 8px; display: inline-block; margin-right: 5px; }
+
+.specialties { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.specialty { display: flex; align-items: center; gap: 10px; min-height: 40px; border-bottom: 1px solid var(--line); }
+.specialty > :nth-child(2) { margin-left: auto; }
+
+.kv { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.kv > :first-child { width: 48px; flex-shrink: 0; }
+.actions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+
+@media (max-width: 767.98px) {
+  .head { min-height: 0; }
+  .headActions { margin-left: 0; }
+}
