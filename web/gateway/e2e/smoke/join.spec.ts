@@ -1,7 +1,7 @@
 // P-G03 가입(게이트웨이) — 데스크톱 · 모바일 같은 흐름 스모크(@both). 백엔드 없이 돈다(지도 미리보기는 page.route).
 // 게이트웨이 틀(K3): web/gateway/playwright.config.ts 의 desktop · mobile 프로젝트, baseURL = E2E_GATEWAY_URL.
 import { expect, test, type Page } from '@playwright/test';
-import { BOTH, expectNoHorizontalOverflow, titleOnlyInfo } from '../../../game/e2e/support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, titleOnlyInfo } from '../../../game/e2e/support/parity';
 import { smallHitAreas } from '../support/hitArea';
 
 async function open(page: Page) {
@@ -22,6 +22,18 @@ test.describe('P-G03 가입 — 데스크톱 · 모바일 같은 흐름', () => 
     await expectNoHorizontalOverflow(page);
     expect(await smallHitAreas(page, 'main')).toEqual([]);
     expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
+  });
+
+  test('지도 띠 빈 곳은 지도가 받는다(계정 안내가 지도를 덮지 않는다)', { tag: BOTH }, async ({ page }, testInfo) => {
+    await open(page);
+    // 모바일: 위 240 지도 띠의 머리줄 아래. 데스크톱: 계정 안내와 가입 패널 사이 가운데.
+    // (모바일 캡처에서 로그인 전용 소개 규칙이 계정 안내를 지도 띠 위로 띄워 지도 · 조작 단추를 덮었다.)
+    const point = isMobile(testInfo) ? { x: 195, y: 120 } : { x: 690, y: 450 };
+    const onMap = await page.evaluate(({ x, y }) => {
+      const hit = document.elementFromPoint(x, y);
+      return !!hit && !!hit.closest('.gw31-join__map');
+    }, point);
+    expect(onMap, `(${point.x}, ${point.y}) 는 지도 층이어야 한다`).toBe(true);
   });
 
   test('가입 폼: 비밀번호가 다르면 확인 칸 아래 오류 · 표시는 두 칸을 함께', { tag: BOTH }, async ({ page }) => {

@@ -188,7 +188,7 @@
     column-gap: 12px;
     row-gap: 12px;
   }
-  .gw31-intro { grid-column: 1; grid-row: 1; align-self: start; }
+  .gw31-login .gw31-intro { grid-column: 1; grid-row: 1; align-self: start; }
   .gw31-login__card { grid-column: 3; grid-row: 1; align-self: start; }
   .gw31-login__to-status { display: none; }
   .gw31-login__status { grid-column: 1 / 3; grid-row: 3; display: flex; flex-direction: column; gap: 12px; align-self: end; }
@@ -208,9 +208,11 @@
 @media (max-width: 1199.98px) {
   .gw31-login__map { position: relative; height: 480px; overflow: hidden; }
   .gw31-login__stage { margin-top: -40px; display: flex; flex-direction: column; gap: 12px; padding: 0 0 0; }
+  /* (로그인만) 소개 묶음은 지도 띠 아래쪽에 겹쳐 뜬다 — .gw31-login 으로 묶는다. 묶지 않으면 가입의 계정 안내까지 지도 띠 위로 떠
+     지도와 조작 단추를 덮는다(가입 모바일 캡처). */
   /* 소개 묶음은 지도 띠 아래쪽에 겹쳐 뜬다 — 무대(stage, 지도 띠 아래 -40 에서 시작) 위쪽 끝에 밑변을 붙인다.
      높이가 글 길이에 따라 달라도 로그인 시트를 덮지 않는다(스모크: top 고정값이 무대 기준이라 시트 · 칩을 덮었다). */
-  .gw31-intro {
+  .gw31-login .gw31-intro {
     position: absolute;
     left: 12px;
     right: 12px;
@@ -221,9 +223,9 @@
     max-width: 520px;
     background: rgba(12, 15, 14, 0.72);
   }
-  .gw31-intro__wordmark { width: 220px; }
-  .gw31-intro__title { font-size: 18px; }
-  .gw31-intro__lead { font-size: 12.5px; }
+  .gw31-login .gw31-intro__wordmark { width: 220px; }
+  .gw31-login .gw31-intro__title { font-size: 18px; }
+  .gw31-login .gw31-intro__lead { font-size: 12.5px; }
   .gw31-login__card { border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55); }
   .gw31-login__status { display: flex; flex-direction: column; gap: 12px; padding: 0 12px; }
   .gw31-login__panels { display: flex; flex-direction: column; gap: 12px; }
@@ -238,10 +240,10 @@
 /* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다(보드 V31K5MLogin).
    소개 문장은 공개 알파 문구(U5) 초안이라 초안 칩과 함께 모바일에서 뺀다. */
 @media (max-width: 767.98px) {
-  .gw31-intro { padding: 8px 10px; right: auto; }
-  .gw31-intro__wordmark { width: 180px; }
-  .gw31-intro__title { font-size: 16px; }
-  .gw31-intro__lead, .gw31-intro__draft { display: none; }
+  .gw31-login .gw31-intro { padding: 8px 10px; right: auto; }
+  .gw31-login .gw31-intro__wordmark { width: 180px; }
+  .gw31-login .gw31-intro__title { font-size: 16px; }
+  .gw31-login .gw31-intro__lead, .gw31-login .gw31-intro__draft { display: none; }
 }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-login__card, .gw31-login__status, .gw31-login__notices, .gw31-login__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
@@ -298,8 +300,9 @@
   .gw31-join__card { order: 1; margin-top: -24px; border-width: 1px 0 0; }
   .gw31-join__foot { order: 3; border-top: 1px solid var(--line); }
   .gw31-join .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
+  /* 레이어 묶음은 지도판이 inline display:flex 를 준다 — !important 없이는 숨지 않는다(모바일 캡처에서 남아 있었다). */
   .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
-  .gw31-join .map-preview--backdrop .map-btn-stack { display: none; }
+  .gw31-join .map-preview--backdrop .map-btn-stack { display: none !important; }
 }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-join__card, .gw31-join__intro, .gw31-join__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
