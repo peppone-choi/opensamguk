@@ -216,12 +216,12 @@ export function useCampaignRead<T>(
     load: (generalId: number, signal: AbortSignal) => Promise<T>,
     deps: readonly unknown[] = [],
 ): Read<T> {
-    const { generalId, isCampaignWorld, frontInfo } = useGameSession();
+    const { generalId, frontInfo } = useGameSession();
     const [state, setState] = useState<Read<T>>({ data: null, error: null, loading: true });
     const turnKey = frontInfo ? `${frontInfo.global.year}-${frontInfo.global.month}-${frontInfo.global.turnPhase ?? ''}` : '';
 
     useEffect(() => {
-        if (generalId == null || !isCampaignWorld) {
+        if (generalId == null) {
             setState({ data: null, error: null, loading: false });
             return;
         }
@@ -235,7 +235,7 @@ export function useCampaignRead<T>(
             });
         return () => controller.abort();
         // eslint-disable-next-line react-hooks/exhaustive-deps -- load 는 호출부의 인라인 화살표다
-    }, [generalId, isCampaignWorld, turnKey, ...deps]);
+    }, [generalId, turnKey, ...deps]);
 
     return state;
 }

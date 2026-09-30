@@ -11,12 +11,11 @@ import { useGameSession } from '@/lib/campaign-session';
  * 출병 명령(배치), 발령(조정 결정), 계책 손패(계책). 방침·공사는 입력이 아직 없어 싣지 않는다.
  */
 export default function StandingBar() {
-    const { isCampaignWorld, generalId } = useGameSession();
+    const { generalId } = useGameSession();
     const deploy = useCampaignRead((id) => api.deployOptions(id));
     const dispatches = useCampaignRead((id) => api.dispatchPending(id));
     const hand = useCampaignRead((id, signal) => api.stratagemHand(id, signal));
 
-    if (!isCampaignWorld) return null;
     const open = (dispatches.data?.dispatches ?? []).filter((d) => d.status === 'PENDING');
     // 나에게 온 발령만 내가 응답한다. 내가 낸 발령은 상대의 응답을 기다린다.
     const toMe = open.filter((d) => d.targetId === generalId).length;
@@ -25,9 +24,9 @@ export default function StandingBar() {
     const cards = hand.data?.status === 'READY' ? hand.data.cards.length : null;
 
     const items: { key: string; label: string; slug: string }[] = [
-        { key: 'deploy', label: order ? `출병 ${order.stop ? `· ${order.stop === 'ENCOUNTER' ? '조우로 멈춤' : order.stop}` : '행군 중'}` : '출병 없음', slug: 'posts' },
-        { key: 'dispatch', label: pending ? `발령 진행 ${pending}` : '발령 없음', slug: 'orders' },
-        { key: 'hand', label: cards == null ? '계책 덱 —' : `계책 덱 · 손패 ${cards}장`, slug: 'hand' },
+        { key: 'deploy', label: order ? `출병 ${order.stop ? `· ${order.stop === 'ENCOUNTER' ? '조우로 멈춤' : order.stop}` : '행군 중'}` : '출병 없음', slug: 'territory' },
+        { key: 'dispatch', label: pending ? `발령 진행 ${pending}` : '발령 없음', slug: 'court?tab=orders' },
+        { key: 'hand', label: cards == null ? '계책 덱 —' : `계책 덱 · 손패 ${cards}장`, slug: 'stratagem' },
     ];
 
     return (
