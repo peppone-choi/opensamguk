@@ -25,6 +25,8 @@ export type ReasonTooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children
   readonly block?: boolean;
   /** 「도움말 — …」을 누를 때. 없으면 `?help=<id>` 링크로 간다. */
   readonly onHelp?: (topicId: string) => void;
+  /** 처음 그려질 때 열린 채로(예: 제출이 서버에서 거절된 직후 — K6). 닫는 법은 같다. */
+  readonly defaultOpen?: boolean;
 };
 
 type DescribedChild = ReactElement<{ 'aria-describedby'?: string }>;
@@ -44,6 +46,7 @@ export function ReasonTooltip({
   recoveryDraft = false,
   helpTopic,
   onHelp,
+  defaultOpen = false,
   children,
   block = false,
   className = '',
@@ -55,7 +58,7 @@ export function ReasonTooltip({
   const root = useRef<HTMLSpanElement>(null);
   const tip = useRef<HTMLSpanElement>(null);
   const closer = useRef<HTMLButtonElement>(null);
-  const [pinned, setPinned] = useState(false);
+  const [pinned, setPinned] = useState(defaultOpen);
   const [previewed, setPreviewed] = useState(false);
   const open = pinned || previewed;
 
