@@ -57,7 +57,8 @@ class TroopController(
 
         val cityName = cities.findAll().associate { it.id to it.name }
         val rows = troopRows.map { t ->
-            val members = generals.findByTroopIdOrderByOfficerLevelDescIdAsc(t.troopLeader).map { g ->
+            val members = generals.findByTroopIdOrderByOfficerLevelDescIdAsc(t.troopLeader)
+                .filter { it.nationId == nationId }.map { g ->
                 TroopMember(
                     generalId = g.id,
                     name = g.name,
@@ -69,7 +70,7 @@ class TroopController(
             }
             // 부대장 행(roster 멤버) → 없으면 직접 조회로 폴백. 헤더 도시/턴/색상은 부대장 장수에서 취한다.
             val leader = members.firstOrNull { it.generalId == t.troopLeader }
-            val leaderEntity = generals.findById(t.troopLeader).orElse(null)
+            val leaderEntity = generals.findById(t.troopLeader).orElse(null)?.takeIf { it.nationId == nationId }
             val leaderName = leader?.name ?: leaderEntity?.name ?: ""
             val leaderCityName = leader?.cityName
                 ?: leaderEntity?.let { if (it.cityId == 0) "" else (cityName[it.cityId] ?: "") }

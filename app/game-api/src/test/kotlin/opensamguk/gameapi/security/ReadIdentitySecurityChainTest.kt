@@ -284,13 +284,15 @@ class ReadIdentitySecurityChainTest {
         val leader = GeneralReadEntity(id = 101, nationId = 1, cityId = 1, crew = 555,
             turnTime = Instant.parse("2026-09-30T01:02:03Z"))
         `when`(generals.findById(101)).thenReturn(Optional.of(leader))
-        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(101)).thenReturn(listOf(leader))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(101)).thenReturn(listOf(leader,
+            GeneralReadEntity(id = 202, nationId = 2, cityId = 5, crew = 999)))
         `when`(cities.findAll()).thenReturn(listOf(CityReadEntity(id = 1, name = "본국 도시", nationId = 1)))
         for (confirm in listOf(false, true)) {
             val request = get("/api/troops").header("Authorization", "Bearer ${token()}")
                 .also { if (confirm) it.param("nationId", "1") }
             mvc.perform(request).andExpect(status().isOk)
                 .andExpect(jsonPath("$.troops.length()").value(1)).andExpect(jsonPath("$.troops[0].nation").value(1))
+                .andExpect(jsonPath("$.troops[0].members.length()").value(1))
                 .andExpect(jsonPath("$.troops[0].members[0].crew").value(555))
                 .andExpect(jsonPath("$.troops[0].members[0].cityName").value("본국 도시"))
                 .andExpect(jsonPath("$.troops[0].turnTime").value("2026-09-30 10:02:03"))
