@@ -7,6 +7,7 @@
 - `.github/workflows/build-web-game-image.yml`은 수동 실행만 가능하며 GitHub-hosted `ubuntu-24.04`에서 동작한다. 준비 PR의 push/CI는 발급을 실행하지 않는다.
 - 현재 승인 검토용 빌드 소스는 `cf7a1968993e41a98940031c60683129e9ae919a` 하나다. 다른 SHA는 전체 40자리여도 거절한다. 소스 후보를 바꾸려면 발급 도구의 소스·Dockerfile 핀과 검토 근거를 먼저 갱신한다.
 - 발급 workflow와 도구는 별도 `github.workflow_sha`에서 받는다. `issuer_sha`는 발급 코드, `source_sha`는 이미지 코드다. 둘이 같은 SHA일 필요는 없다.
+- 필수 입력 `expected_issuer_sha`는 승인된 발급 코드의 lowercase full40이며 기본값이 없다. checkout 없는 contents:read admission job에서 `github.workflow_sha`와 정확히 대조하고 cf7 source도 검사한다. 성공한 admission의 두 SHA만 image job이 소비한다. admission 실패 시 checkout/login/build와 packages:write image job은 실행되지 않는다.
 - Dockerfile은 `docker/web-game.Dockerfile`, SHA256 `e122a4e0f079a97ba470c088a8569e29a7ab9a2c67bb941200b5fb17245103bd`다. 깨끗한 추적 파일만 가진 소스 checkout에서 빌드하며 비템플릿 `.env*`, ignored/untracked 파일, symlink는 거절한다. 실제 환경 파일 내용은 읽거나 출력하지 않는다.
 - 공개 빌드 인자는 `ASSET_PREFIX=/game`, `GATEWAY_WEB_URL=http://web-gateway:3000`, `NEXT_PUBLIC_GATEWAY_URL=`로 고정한다. 기존 정상 빌드의 `/game`과 Dockerfile 기본 gateway 값을 명시한 것이다. 운영 컨테이너의 실제 환경값 확인을 대신하지 않는다.
 - 이 소스에는 `NEXT_PUBLIC_TOPDOWN_SCREENS`와 전용 battle flag reader가 없다. `NEXT_PUBLIC_MAP_RENDERER`를 전달하지 않으며 production 빌드의 lab 진입은 꺼진다. runtime `NODE_ENV=production`과 관련 public flag의 부재/빈값을 이미지 config에서 확인한다. lab 404 및 제품 동작은 실제 이미지 발급 후 별도 검증한다.
@@ -19,6 +20,10 @@
 기존 `deploy.yml`은 이 workflow/tools 변경의 main 병합에도 자동 반응한다. 준비 PR은 draft로 유지하며, 정상 PR CI와 독립 검토 이후 C0가 자동 운영 경로에 대한 대상 승인을 확인하기 전 ready/merge하지 않는다. 이 준비로 기존 배포 trigger나 운영 제어를 변경하지 않는다.
 
 최초 수동 실행에는 workflow가 default branch에 등록되어 있어야 한다([GitHub workflow_dispatch 규칙](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#workflow_dispatch)). 새 draft 브랜치만으로 바로 발급할 수 있다고 가정하지 않는다. C0는 main 편입에 따르는 기존 자동 배포와 최초 발급을 각각 승인된 경로로 준비해야 한다. 이 전제가 해결되기 전에는 발급 실행 가능 상태가 아니다.
+
+현재 등록 검토안은 승인된 좁은 GitHub 상태변경 창에서 기존 Build+Deploy와 Main CI Alert의 상태를 기록·정지·복원하며 정상 CI를 유지하는 것이다. 이미 queued/running/blocked 실행이 있거나 idle 확인이 불가능하면 등록을 중단한다. disable이 기존 실행을 취소한다고 가정하지 않는다. 등록·main 편입·상태복원은 별도 외부 승인 대상이며 현재 실행한 절차가 아니다.
+
+Dispatch ref는 branch/tag 이름으로 검토한다. raw SHA ref 수용은 미확인이다. 새 issuer tag는 승인된 create-only/nonmoving 대상으로 검토하며 기존 다른 target의 tag를 이동·덮어쓰기하지 않는다. 태그 생성과 dispatch/publish는 현재 승인되지 않았다. 독립 리뷰·현재 CI를 통과한 새 issuer40을 승인 카드에 고정하고, 실제 실행이 그 SHA와 다르면 admission이 거절한다.
 
 성공 artifact의 `candidate.json`과 Actions summary에서 다음을 확인한다.
 
@@ -45,3 +50,5 @@ Buildx v0.37.2와 action 전체 SHA를 고정한다. Dockerfile의 base tag는 �
 저장소 루트에서 `python3 -m unittest discover -s tools/ci -p 'test_web_game_image.py' -v`로 fake command 양성·음성 검증을 수행한다. 실제 Docker build, registry publish, 운영 서비스 제어는 이 테스트에 포함되지 않는다. 정상 CI의 tools/ci unittest discovery가 같은 테스트를 실행한다.
 
 발급 이후 C8가 registry/platform·복원 pull·서비스 단독 제어를 검토하고, K10이 실제 lab 차단과 제품 화면을 확인한다. #1070/#1101을 포함한 웹 단독 pep 승격 및 동작 증거가 먼저이며 PNG API는 후속 별도 대상 승인이다. API·engine·scenario·DB·공유 배포·운영 알림은 이 발급 경로의 실행 대상에 없다.
+
+C8 실행 핀은 source40@linux/amd64 platform manifest digest다. index는 provenance 보존용, config digest는 실행 manifest가 아니다. 후보 tag와 C8의 web-game-source40@digest가 실제 pull 및 Config.Image에서 호환되는지는 실발급 후 별도 승인된 GitHub-hosted probe로 확인한다. 현재 source/합성 검증이나 Compose config만으로 실 pull 성공을 판정하지 않는다.

@@ -2,8 +2,10 @@ import base64
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import tempfile
+import subprocess
 import unittest
 
 import yaml
@@ -256,15 +258,27 @@ class WorkflowBoundaryTest(unittest.TestCase):
         workflow = yaml.load(WORKFLOW.read_text(), Loader=yaml.BaseLoader)
         self.assertEqual(set(workflow["on"]), {"workflow_dispatch"})
         inputs = workflow["on"]["workflow_dispatch"]["inputs"]
-        self.assertEqual(set(inputs), {"source_sha"})
+        self.assertEqual(set(inputs), {"source_sha", "expected_issuer_sha"})
+        self.assertEqual(inputs["expected_issuer_sha"]["required"], "true")
+        self.assertNotIn("default", inputs["expected_issuer_sha"])
         self.assertEqual(inputs["source_sha"]["default"], issuer.SOURCE)
         self.assertEqual(workflow["permissions"], {"contents": "read"})
-        self.assertEqual(set(workflow["jobs"]), {"image"})
+        self.assertEqual(set(workflow["jobs"]), {"admit", "image"})
+        admission = workflow["jobs"]["admit"]
+        self.assertEqual(admission["runs-on"], "ubuntu-24.04")
+        self.assertEqual(admission["permissions"], {"contents": "read"})
+        self.assertEqual(len(admission["steps"]), 1)
+        self.assertNotIn("uses", admission["steps"][0])
+        self.assertNotIn("${{", admission["steps"][0]["run"])
+        self.assertNotRegex(admission["steps"][0]["run"], r"(?i)\b(docker|checkout|curl|gh|ssh|sudo)\b")
         job = workflow["jobs"]["image"]
         self.assertEqual(job["runs-on"], "ubuntu-24.04")
         self.assertEqual(job["permissions"], {"contents": "read", "packages": "write"})
         self.assertNotIn("environment", job)
-        self.assertNotIn("needs", job)
+        self.assertEqual(job["needs"], "admit")
+        self.assertNotIn("if", job)
+        self.assertEqual(job["env"], {"SOURCE_SHA": "${{ needs.admit.outputs.source_sha }}",
+                                      "ISSUER_SHA": "${{ needs.admit.outputs.issuer_sha }}"})
         allowed = {
             "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
             "docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f",
@@ -283,14 +297,68 @@ class WorkflowBoundaryTest(unittest.TestCase):
         checkouts = [step for step in steps if step.get("uses", "").startswith("actions/checkout@")]
         self.assertEqual([step["with"]["path"] for step in checkouts], ["issuer", "source"])
         self.assertTrue(all(step["with"]["persist-credentials"] == "false" for step in checkouts))
-        self.assertEqual(checkouts[0]["with"]["ref"], "${{ github.workflow_sha }}")
-        self.assertEqual(checkouts[1]["with"]["ref"], "${{ inputs.source_sha }}")
+        self.assertEqual(checkouts[0]["with"]["ref"], "${{ needs.admit.outputs.issuer_sha }}")
+        self.assertEqual(checkouts[1]["with"]["ref"], "${{ needs.admit.outputs.source_sha }}")
         self.assertEqual(steps[1]["run"].split()[2], "validate-input")
         upload = steps[-1]
         self.assertNotIn("if", upload)
         self.assertEqual(upload["with"]["if-no-files-found"], "error")
         self.assertEqual(set(upload["with"]["path"].split()),
                          {"plan.json", "evidence/candidate.json", "evidence/build-metadata.json"})
+
+    def run_admission(self, expected, actual, source=issuer.SOURCE):
+        workflow = yaml.load(WORKFLOW.read_text(), Loader=yaml.BaseLoader)
+        guard = workflow["jobs"]["admit"]["steps"][0]
+        self.assertEqual(guard["env"], {
+            "EXPECTED_ISSUER_SHA": "${{ inputs.expected_issuer_sha }}",
+            "ACTUAL_ISSUER_SHA": "${{ github.workflow_sha }}",
+            "SOURCE_SHA": "${{ inputs.source_sha }}",
+        })
+        with tempfile.TemporaryDirectory() as temp:
+            output = Path(temp) / "outputs"
+            env = {**os.environ, "EXPECTED_ISSUER_SHA": expected, "ACTUAL_ISSUER_SHA": actual,
+                   "SOURCE_SHA": source, "GITHUB_OUTPUT": str(output)}
+            result = subprocess.run(["bash", "-e", "-o", "pipefail", "-c", guard["run"]],
+                                    env=env, text=True, capture_output=True)
+            outputs = output.read_text() if output.exists() else ""
+            # Model the declared successful needs dependency, never invoke real actions/Docker.
+            downstream = ["checkout", "login", "build/publish"] if result.returncode == 0 else []
+            return result, outputs, downstream
+
+    def test_approved_issuer_admission_outputs_bind_both_checkouts(self):
+        result, outputs, downstream = self.run_admission("f" * 40, "f" * 40)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(outputs, "issuer_sha=" + "f" * 40 + "\nsource_sha=" + issuer.SOURCE + "\n")
+        self.assertEqual(downstream, ["checkout", "login", "build/publish"])
+
+    def test_wrong_full40_issuer_never_reaches_checkout_login_publish(self):
+        result, outputs, downstream = self.run_admission("e" * 40, "f" * 40)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("differs from approved issuer", result.stderr)
+        self.assertEqual(outputs, "")
+        self.assertEqual(downstream, [])
+
+    def test_missing_short_alias_uppercase_and_injected_issuer_rejected(self):
+        for expected in ("", "abc123", "main", "F" * 40, "f" * 40 + ";echo injected"):
+            with self.subTest(expected=expected):
+                result, outputs, downstream = self.run_admission(expected, "f" * 40)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("lowercase full40", result.stderr)
+                self.assertEqual(outputs, "")
+                self.assertEqual(downstream, [])
+
+    def test_invalid_actual_workflow_sha_rejected(self):
+        result, outputs, downstream = self.run_admission("f" * 40, "main")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(outputs, "")
+        self.assertEqual(downstream, [])
+
+    def test_source_admission_rejects_before_package_write_job(self):
+        result, outputs, downstream = self.run_admission("f" * 40, "f" * 40, "a" * 40)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("outside the reviewed cf7 candidate", result.stderr)
+        self.assertEqual(outputs, "")
+        self.assertEqual(downstream, [])
 
 
 if __name__ == "__main__":
