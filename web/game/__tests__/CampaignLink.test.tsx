@@ -25,9 +25,9 @@ afterEach(() => { session.serverId = undefined; });
 
 describe('CampaignLink', () => {
     it('does not prefetch the server-less address before the server is known', () => {
-        render(<CampaignLink slug="yuedan">월단평</CampaignLink>);
+        render(<CampaignLink slug="retinue/yuedan">월단평</CampaignLink>);
         const link = screen.getByRole('link', { name: '월단평' });
-        expect(link.getAttribute('href')).toBe('/game/yuedan');
+        expect(link.getAttribute('href')).toBe('/game/retinue/yuedan');
         expect(link.getAttribute('data-prefetch')).toBe('false');
     });
 
@@ -53,7 +53,7 @@ describe('GameShell tabs (mobile preview requests)', () => {
         const links = [...screen.getByRole('navigation', { name: '입력 여섯 가지' }).querySelectorAll('a'),
             screen.getByRole('link', { name: '← 작전실' })];
         for (const a of links) {
-            expect(a.getAttribute('href'), a.textContent ?? '').toMatch(/^\/game\/pep\//);
+            expect(a.getAttribute('href'), a.textContent ?? '').toMatch(/^\/game\/pep(\/|$)/);
             expect(a.getAttribute('data-prefetch')).toBe('undefined');
         }
     });

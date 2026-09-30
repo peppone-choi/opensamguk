@@ -25,9 +25,9 @@ export default function StandingBar() {
     const cards = hand.data?.status === 'READY' ? hand.data.cards.length : null;
 
     const items: { key: string; label: string; slug: string }[] = [
-        { key: 'deploy', label: order ? `출병 ${order.stop ? `· ${order.stop === 'ENCOUNTER' ? '조우로 멈춤' : order.stop}` : '행군 중'}` : '출병 없음', slug: 'posts' },
-        { key: 'dispatch', label: pending ? `발령 진행 ${pending}` : '발령 없음', slug: 'orders' },
-        { key: 'hand', label: cards == null ? '계책 덱 —' : `계책 덱 · 손패 ${cards}장`, slug: 'hand' },
+        { key: 'deploy', label: order ? `출병 ${order.stop ? `· ${order.stop === 'ENCOUNTER' ? '조우로 멈춤' : order.stop}` : '행군 중'}` : '출병 없음', slug: 'territory' },
+        { key: 'dispatch', label: pending ? `발령 진행 ${pending}` : '발령 없음', slug: 'court?tab=orders' },
+        { key: 'hand', label: cards == null ? '계책 덱 —' : `계책 덱 · 손패 ${cards}장`, slug: 'stratagem' },
     ];
 
     return (
