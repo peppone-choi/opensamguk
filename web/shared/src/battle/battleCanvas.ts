@@ -24,13 +24,25 @@ async function fetchBytes(url: string): Promise<ArrayBuffer> {
 
 const join = (base: string, file: string) => `${base.replace(/\/+$/, '')}/${file}`;
 
+const kitJsons = new Map<string, Promise<KitJson>>();
+
+/** kit.json once per base URL (the board and the unit loaders share it). */
+function loadKitJson(baseUrl: string): Promise<KitJson> {
+  const known = kitJsons.get(baseUrl);
+  if (known) return known;
+  const load = fetchBytes(join(baseUrl, 'kit.json')).then((bytes) => JSON.parse(new TextDecoder().decode(bytes)) as KitJson);
+  kitJsons.set(baseUrl, load);
+  load.catch(() => kitJsons.delete(baseUrl));
+  return load;
+}
+
 /** Fetches the kit once per base URL (about 0.3 MB). */
 export function loadBattleKit(baseUrl: string): Promise<BattleKit> {
   const known = kits.get(baseUrl);
   if (known) return known;
   const load = (async () => {
     const [json, pieces, records, boards] = await Promise.all([
-      fetchBytes(join(baseUrl, 'kit.json')).then((bytes) => JSON.parse(new TextDecoder().decode(bytes)) as KitJson),
+      loadKitJson(baseUrl),
       fetchBytes(join(baseUrl, 'pieces.bin.gz')),
       fetchBytes(join(baseUrl, 'records.bin')),
       fetchBytes(join(baseUrl, 'boards.bin.gz')),
@@ -82,7 +94,7 @@ export function loadUnitKit(baseUrl: string): Promise<UnitKit> {
   if (known) return known;
   const load = (async () => {
     const [json, units, roles] = await Promise.all([
-      fetchBytes(join(baseUrl, 'kit.json')).then((bytes) => JSON.parse(new TextDecoder().decode(bytes)) as KitJson),
+      loadKitJson(baseUrl),
       fetchBytes(join(baseUrl, 'units.bin.gz')),
       fetchBytes(join(baseUrl, 'unit-roles.bin.gz')),
     ]);
