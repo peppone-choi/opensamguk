@@ -173,6 +173,12 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
       'position',(SELECT row_to_json(p) FROM general_spatial_position p WHERE p.world_id=g.world_id AND p.general_id=g.id))
       FROM general g WHERE g.world_id=${worldId} AND g.id=${generalId}),
     'warehouses', (SELECT json_agg(json_build_object('id',id,'stock',meta->'countyWarehouse')) FROM city WHERE world_id=${worldId} AND nation_id=${nationId}),
+    'lastBattles', (SELECT json_agg(json_build_object('generalId',id,'encounterId',meta->'lastBattle'->>'encounterId',
+      'replayHash',meta->'lastBattle'->>'replayHash')) FROM general WHERE world_id=${worldId} AND meta ? 'lastBattle'),
+    'activeEncounterIds', (SELECT json_agg(DISTINCT meta->'corpsEncounter'->>'encounterId')
+      FROM general WHERE world_id=${worldId} AND meta ? 'corpsEncounter'),
+    'disbandedEncounterIds', (SELECT json_agg(DISTINCT meta->'refs'->>'encounterId')
+      FROM log_entry WHERE world_id=${worldId} AND event_kind='encounter.disbanded'),
     'monthly', (SELECT json_object_agg(key,value) FROM game_kv WHERE world_id=${worldId} AND "table"='game_env' AND namespace='game_env'
       AND key IN ('countyIncomeMonth','salaryMonth','renownAssessmentStamp','renownRanking')));`);
   await testInfo.attach('db-hwiha-slice', { body: db, contentType: 'application/json' });
