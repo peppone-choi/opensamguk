@@ -206,6 +206,7 @@ export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';
+export { provinceNameOf, rememberProvinceNames, resetProvinceNames, useProvinceName } from './provinceNames';
 export {
   WORLD_MAP_CODE, worldTerrainUrl, worldProvincesUrl, useWorldMap,
   buildWorldCities, buildMarkerPositions, buildCommanderies, buildProvinceCenters, buildLegend,
@@ -214,4 +215,8 @@ export {
 } from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+export {
+  PHASE_LABELS, formatGameDate, hasFinalConsonant, withParticle, worldEventSentence,
+  type EventNames, type GameEvent, type GameEventPage, type GameEventSection, type GameEventTime,
+} from './gameEvents';
 export { RECORD_KIND_SECTION, RECORD_SECTION_LABEL, RECORD_SECTION_ORDER, recordSection, type RecordSection } from './recordSections';
