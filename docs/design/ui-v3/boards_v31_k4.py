@@ -681,7 +681,8 @@ def territory():
             f'<span><span class="serif" style="font-weight:700">장사현 · 둔전</span> <span class="muted" style="font-size:12px">[값]% · [n]순 남음</span></span>'
             f'<div class="g-bar"><i style="width:55%"></i></div><span class="rs" style="font-size:11.5px">자재 부족 — 멈춤. 목재가 이어진 창고에 닿으면 저절로 이어 갑니다.</span></div>'
             f'<div style="padding:8px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #2c342f">'
-            f'<span class="serif" style="font-weight:700">양적현</span>{chip("성방 완공", "moss")}<span style="margin-left:auto">{input_btn("성방 낮추기", "NOT_DELIVERED", input_id="work.reduce")}</span></div>'
+            f'<span class="serif" style="font-weight:700">양적현</span>{chip("성방 완공", "moss")}<span style="margin-left:auto">{input_btn("성방 허물기", "NOT_DELIVERED", input_id="work.reduce")}</span></div>'
+            f'<div style="padding:0 12px 8px;border-bottom:1px solid #2c342f">{note("완공된 성방을 없애고 방비 · 성벽을 각 500 낮춥니다(0 아래로는 안 내려감).")}</div>'
             f'<div style="padding:8px 12px 6px;display:flex;align-items:center;gap:8px"><span class="serif" style="font-weight:900">새 공사 — 양적현</span>{note("비용 · 기간은 서버 값")}</div>'
             f'{grid}<div style="padding:8px 12px">{help_strip("도로 · 보루는 지도에서 접경 · 길목을 고릅니다.")}</div>'
             f'<div style="padding:0 12px 10px;display:flex;align-items:center;gap:8px">{chip("시설 분기 — 준비 중(3층)", "info")}</div></section>')
@@ -697,7 +698,7 @@ def mterritory():
              f'<div class="g-bar"><i style="width:55%"></i></div><span class="rs" style="font-size:11.5px">자재 부족 — 멈춤</span>{link("창고망에서 보기 →")}</div>'
              f'<div style="border:1px solid #3d4740;background:#141816;padding:10px;display:flex;flex-direction:column;gap:8px">'
              f'<div style="display:flex;align-items:center;gap:8px"><span class="serif" style="font-weight:700">양적현</span>{chip("성방 완공", "moss")}</div>'
-             f'{input_btn("성방 낮추기", "NOT_DELIVERED", input_id="work.reduce")}</div>'
+             f'{input_btn("성방 허물기", "NOT_DELIVERED", input_id="work.reduce")}{note("완공된 성방을 없애고 방비 · 성벽을 각 500 낮춥니다(0 아래로는 안 내려감).")}</div>'
              f'<div style="border:1px dashed #3d4740;padding:10px;display:flex;flex-direction:column;gap:6px"><span class="serif" style="font-weight:900">새 공사 — 양적현</span>'
              f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">'
              + ''.join(f'<button type="button" class="btn sm" data-input-id="work.start"{" aria-disabled=\"true\" style=\"border-style:dashed;color:#8a8477\"" if n == "성방" else ""}>{n}</button>' for n in WORKS9)
@@ -877,8 +878,11 @@ def supply():
            f'{btn("지도에서 보기 — 보급선 켜고", "", "war", href="#")}</div>')
     right = (f'<div style="width:400px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">{panel("끊긴 곳 1", "", cut)}'
              f'<section class="panel" style="height:230px">{sec("녹봉 · 부대 유지비", "다음 달(4월)")}{state_waiting("지급 전망 — 준비 중", "녹봉 · 유지비는 카드가 있는 곳의 망에서 나갑니다. 못 받을 사람 · 부대 목록은 서버가 아직 주지 않습니다(K4-14).", pad=8)}</section>'
-             f'<section class="panel" style="flex:1">{sec("수송", "망 밖 · 급한 집중")}<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
-             f'{note("창고 사이 수송 명령은 아직 입력이 정해지지 않았습니다.")}{chip("준비 중", "info")}</div></section></div>')
+             f'<section class="panel" style="flex:1">{sec("물자조달", "직접 행동 · 명령 목록 12순")}<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
+             f'{note("하후돈이 선 현의 창고에서 이웃한 우리 현 창고로 한 자원을 옮깁니다. 그 순에 바로 옮겨집니다. 한 번에 [값]까지.", "t2")}'
+             f'{input_btn("물자조달 — 명령 목록에 넣기", "AVAILABLE", input_id="action.transport", style="width:100%")}'
+             f'<div style="display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid #2c342f">{chip("호위 · 지연 수송 — 서버 대기 · 규칙 없음", "info")}</div>'
+             f'{note("망 밖 원조 · 고립지 구출처럼 멀리 호위해 보내는 수송은 아직 규칙이 없습니다.")}</div></section></div>')
     head = pagehead('영지', TER_TABS, '창고망 · 보급', btn('도움말', '', 'help'))
     page31('V31K4Supply.dc.html', 'K4 P-T04 창고망 · 보급 — 데스크톱', shell_desk('영지', 'territory', desk_main(head, left + right)))
 
@@ -890,7 +894,8 @@ def msupply():
                     f'<span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:700">{n}</span>{chip(k, t)}</span>'
                     f'<span class="mono t2" style="font-size:11.5px">금 {v[0]} · 쌀 {v[1]} · 철 {v[2]} · 목재 {v[3]} · 말 {v[4]}</span></div>' for n, k, t, v, f in WH)
     inner = f'{tot}{seg(["창고 5", "끊긴 곳 1", "위험"], "창고 5", "보기")}{cards}'
-    page31('V31K4MSupply.dc.html', 'K4 P-T04 창고망 · 보급 — 모바일', shell_mob(mob_main(inner, TER_TABS, '창고망 · 보급'), 'territory', '창고망 · 보급', '영지'), w=390, h=844)
+    foot = input_btn('물자조달 — 이웃 현 창고로', 'AVAILABLE', input_id='action.transport', style='flex:1')
+    page31('V31K4MSupply.dc.html', 'K4 P-T04 창고망 · 보급 — 모바일', shell_mob(mob_main(inner, TER_TABS, '창고망 · 보급', foot=foot), 'territory', '창고망 · 보급', '영지'), w=390, h=844)
 
 
 # ================================================================== 군단 — P-C02 공성
