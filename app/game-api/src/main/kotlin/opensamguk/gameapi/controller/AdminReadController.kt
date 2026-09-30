@@ -55,7 +55,7 @@ import java.math.RoundingMode
  *
  * (라우트 레벨 hasRole 게이트 대신 컨트롤러 내부 게이트를 쓰는 이유: game-api JwtVerifyFilter가 모든
  * 인증 요청에 ROLE_USER만 부여하고 role 클레임을 권한으로 승격하지 않기에 — 기존 SecurityConfig/Filter를
- * 건드리지 않고 자기완결적으로 게이트하려고 verifier의 role 클레임을 직접 읽는다. NpcPolicyController의
+ * 건드리지 않고 자기완결적으로 게이트하려고 verifier의 role 클레임을 직접 읽는다. 기존 정책 API의
  * 컨트롤러-내부 permission 게이트와 동형.)
  */
 @RestController

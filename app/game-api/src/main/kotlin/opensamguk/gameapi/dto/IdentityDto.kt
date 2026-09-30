@@ -109,7 +109,7 @@ data class FrontGlobalInfo(
     // 214('lastVoteID')·231('lastVote' = VoteInfo->toArray()) ───────────────────────────────────────
     // PHP는 game_env.lastVote(마지막 설문 id)로 vote KV에서 VoteInfo를 읽고, endDate가 지났으면 null로
     // 둔다. opensamguk은 game_env.lastVote write가 없는 대신 설문 정본이 vote_poll 테이블이므로
-    // (VoteController와 동일 원천 — countOpenPolls 주석의 기존 대체 규약) 최신 폴 행에서 채운다. 실원천.
+    // 최신 폴 행에서 채운다.
     /** 마지막 설문 id(PHP `lastVoteID`). vote_poll 최신 행 id. 폴 0행이면 null. */
     val lastVoteID: Int? = null,
     /** 진행중인 마지막 설문(PHP `lastVote` = VoteInfo->toArray()). 만료/종료 시 null(PHP 동일). */
@@ -137,7 +137,7 @@ data class AutorunUserInfo(
 /**
  * W0-2(P1-002) — PHP `VoteInfo`(sammo/DTO/VoteInfo.php:5-20) → `toArray()` 동형:
  * `{id, title, multipleOptions, opener, startDate, endDate, options}`.
- * opensamguk 원천은 vote_poll 행(VoteController와 동일): startDate/endDate는 PHP 'Y-m-d H:i:s'
+ * opensamguk 원천은 vote_poll 행: startDate/endDate는 PHP 'Y-m-d H:i:s'
  * 문자열 규약([opensamguk.gameapi.read.TurnTimeFormatter.full] 슬라이스), options는 삽입순 텍스트
  * (PHP `array_values` — VoteController optionTexts와 동식).
  */
@@ -658,57 +658,6 @@ data class MyCitiesResponse(
     val cities: List<MyCitySummary>,
 )
 
-data class MyBossGeneralSummary(
-    val generalId: Int,
-    val name: String,
-    val npcState: Int,
-    val cityId: Int,
-    val cityName: String?,
-    val officerCityId: Int,
-    val officerLevel: Int,
-    val officerLevelText: String,
-    val leadership: Int,
-    val strength: Int,
-    val intel: Int,
-    val politics: Int,
-    val charm: Int,
-    val permissionRole: String,
-    val canBeAppointed: Boolean,
-    val canBeKicked: Boolean,
-    val canBeAmbassador: Boolean,
-    val canBeAuditor: Boolean,
-)
-
-data class MyBossOfficerSlot(
-    val officerLevel: Int,
-    val officerLevelText: String,
-    val slotType: String,
-    val cityId: Int? = null,
-    val cityName: String? = null,
-    val locked: Boolean,
-    val assignedGeneralId: Int? = null,
-    val assignedName: String? = null,
-    val assignedNpcState: Int? = null,
-)
-
-data class MyBossResponse(
-    val result: Boolean,
-    val nationId: Int,
-    val hasBoss: Boolean,
-    val bossGeneralId: Int?,
-    val bossName: String?,
-    val bossOfficerLevel: Int?,
-    val nationName: String? = null,
-    val nationLevel: Int = 0,
-    val myGeneralId: Int? = null,
-    val myOfficerLevel: Int = 0,
-    val myPermission: Int = 0,
-    val canManagePersonnel: Boolean = false,
-    val roster: List<MyBossGeneralSummary> = emptyList(),
-    val chiefSlots: List<MyBossOfficerSlot> = emptyList(),
-    val citySlots: List<MyBossOfficerSlot> = emptyList(),
-)
-
 /**
  * GET /api/my-nation-detail — the caller's nation (PHP `hwe/b_myKingdomInfo.php` 세력정보, fid 22).
  *
@@ -787,29 +736,4 @@ data class MyNationCityRef(
     val isCapital: Boolean,
 )
 
-// ── global-menu (§4 server-driven typed union) ───────────────────────────────
-
-/**
- * Server-driven menu union (GlobalMenu.php parity). `type` discriminates: "item" | "split" | "multi"
- * | "line". Optional fields are present per type; the client filters via condShowVar/condHighlightVar
- * against globalInfo (see spec §4 filterMenu).
- */
-data class MenuNode(
-    val type: String,
-    val name: String? = null,
-    val url: String? = null,
-    val newTab: Boolean? = null,
-    val funcCall: String? = null,
-    val icon: String? = null,
-    val condHighlightVar: String? = null,
-    val condShowVar: String? = null,
-    val main: MenuNode? = null,
-    val subMenu: List<MenuNode>? = null,
-)
-
-data class GlobalMenuResponse(
-    val result: Boolean,
-    val version: Int,
-    val menu: List<MenuNode>,
-)
 // 구 GameConstResponse(/api/const)는 W3 GetConstController/GetConstResponse(superset)로 이관·삭제됨.
