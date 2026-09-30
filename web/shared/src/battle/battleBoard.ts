@@ -80,6 +80,8 @@ export interface ComposedBoard {
   indices: Uint8Array;
   /** r · side + c of the cell whose piece is on top at that pixel, −1 where nothing is drawn. */
   cellOf: Int16Array;
+  /** Layer of that piece (with `cellOf`, its place in the original draw order — units are depth-tested against it). */
+  layerOf: Uint8Array;
   /** Record id per cell after overrides. */
   grid: Uint8Array;
 }
@@ -90,6 +92,7 @@ export function pieceOrigin(layout: BattleKitLayout, r: number, c: number, layer
 }
 
 let drawOrderCache: { side: number; order: Int32Array } | null = null;
+let drawRankCache: { side: number; rank: Int32Array } | null = null;
 
 /** Cells back to front: sorted by (r − c, r + c) as the original list builder does. */
 export function drawOrder(side: number): Int32Array {
@@ -100,6 +103,16 @@ export function drawOrder(side: number): Int32Array {
   const order = Int32Array.from(cells, (cell) => cell[2]);
   drawOrderCache = { side, order };
   return order;
+}
+
+/** Inverse of drawOrder: rank[r · side + c] = position of that cell within a layer pass. */
+export function drawRank(side: number): Int32Array {
+  if (drawRankCache?.side === side) return drawRankCache.rank;
+  const order = drawOrder(side);
+  const rank = new Int32Array(order.length);
+  for (let i = 0; i < order.length; i += 1) rank[order[i]] = i;
+  drawRankCache = { side, rank };
+  return rank;
 }
 
 function boardGrid(kit: BattleKit, boardId: number, overrides?: ReadonlyMap<string, number>): Uint8Array {
@@ -126,6 +139,7 @@ function paint(kit: BattleKit, tileset: number, grid: Uint8Array, out: ComposedB
   for (let y = rect.y0; y < rect.y1; y += 1) {
     out.indices.fill(empty, y * out.width + rect.x0, y * out.width + rect.x1);
     out.cellOf.fill(-1, y * out.width + rect.x0, y * out.width + rect.x1);
+    out.layerOf.fill(0, y * out.width + rect.x0, y * out.width + rect.x1);
   }
   for (let layer = 0; layer < layers; layer += 1) {
     for (let i = 0; i < order.length; i += 1) {
@@ -151,6 +165,7 @@ function paint(kit: BattleKit, tileset: number, grid: Uint8Array, out: ComposedB
           if (value === empty) continue;
           out.indices[row + px] = value;
           out.cellOf[row + px] = cell;
+          out.layerOf[row + px] = layer;
         }
       }
     }
@@ -168,6 +183,7 @@ export function composeBoard(kit: BattleKit, boardId: number, overrides?: Readon
     height,
     indices: new Uint8Array(width * height),
     cellOf: new Int16Array(width * height),
+    layerOf: new Uint8Array(width * height),
     grid: boardGrid(kit, boardId, overrides),
   };
   paint(kit, info.tileset, board.grid, board, { x0: 0, y0: 0, x1: width, y1: height });
@@ -249,6 +265,14 @@ export interface BoardView { scale: number; offsetX: number; offsetY: number }
 export function fitView(board: { width: number; height: number }, viewport: { width: number; height: number }): BoardView {
   const scale = Math.min(viewport.width / board.width, viewport.height / board.height);
   return { scale, offsetX: (viewport.width - board.width * scale) / 2, offsetY: (viewport.height - board.height * scale) / 2 };
+}
+
+/** Default battle zoom: twice the original pixels (사용자 승인 2026-09-30, 분대 표기 B안). */
+export const BATTLE_DEFAULT_SCALE = 2;
+
+/** A view at `scale` with board point (x, y) (board px) in the viewport centre. */
+export function centerView(point: { x: number; y: number }, viewport: { width: number; height: number }, scale = BATTLE_DEFAULT_SCALE): BoardView {
+  return { scale, offsetX: viewport.width / 2 - point.x * scale, offsetY: viewport.height / 2 - point.y * scale };
 }
 
 /** Top layer that draws something for a record, 0 when only the ground piece exists. */
