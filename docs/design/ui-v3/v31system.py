@@ -21,7 +21,7 @@
 import os
 import re
 
-V31_VERSION = '3.1.3'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5
+V31_VERSION = '3.1.4'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5 · 3.1.3 = d6912a10e
 
 from v3common import *  # noqa: F401,F403 — CSS · V3CSS · sec · kv · icon · IC · cat · CATS · res · RES · LOGO …
 from v3common import CSS, V3CSS, IC, P, LOGO, LOGO_M, apply_terms, icon, sec, kv, cat, CATS, res
@@ -882,6 +882,7 @@ RULES = [
     ('국가색', '경계 띠 · 깃발 · 성 지붕 · 1칸 거점 · 내 위치 링에만. 지형을 색으로 덮지 않는다.'),
     ('빗금', '빗금 = 미정찰(시야 밖). 고를 수 없음은 빗금이 아니라 적갈 점선.'),
     ('표기', '縣 → 현 · 郡 → 군 · 城 → 성 · 省 → 구역 · 금 · 쌀 · 부(府) · 소속. 관직은 names.office_ko. 옛 명령 이름은 cmd_label(새 이름 + 「이름 승인 대기」).'),
+    ('로고 한 번', '한 화면에 워드마크는 한 번. 큰 워드마크가 있는 로그인 · 가입(데스크톱 · 모바일)은 머리줄 로고를 빼고 「공개 알파」 칩만(gw_topbar/gw_mtop logo_on=False). 로비 · 계정 · 커뮤니티 · 게임 안은 머리줄 로고 그대로.'),
     ('같은 읽기 지명', '한 화면에 같은 읽기가 함께 나올 때만 이름 뒤 작은 한자 — twin() · places(), class hj(검사 제외). 예: 양성현 陽城 · 襄城, 양주 揚州 · 涼州.'),
     ('날짜', '200년 3월 중순. 달마다 하는 일(월단평 등)만 「200년 3월 월단평」처럼 순 없이 적어도 된다.'),
     ('서랍이 열리면', '지도 위 비모달 서랍(지난 순)이 열리면 지도 보기 단추는 서랍 오른쪽 가장자리 + 12 로 옮긴다.'),
@@ -893,7 +894,7 @@ RULES = [
 GW_MENU = ['로비', '커뮤니티', '계정', '관리']
 
 
-def gw_topbar(state='in', on='로비', admin=True, transparent=False):
+def gw_topbar(state='in', on='로비', admin=True, transparent=False, logo_on=True):
     """게이트웨이 머리줄(GatewayHeader) 48 — 로고 · 공개 알파 · 메뉴(로비 · 커뮤니티 · 계정 · 관리는 운영자만) · 별명 · 로그아웃.
     state = in(로그인 뒤) | login(로그인 화면 — 「회원가입」 하나) | join(가입 화면 — 「로그인」 하나). transparent = 지도 위에 뜨는 변형."""
     bg = ('background:rgba(12,15,14,.74);border-bottom:1px solid rgba(61,71,64,.7)' if transparent
@@ -907,13 +908,13 @@ def gw_topbar(state='in', on='로비', admin=True, transparent=False):
         nav = ''
         right = btn('회원가입' if state == 'login' else '로그인', 'sm', href='#')
     return (f'<header style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 8px 0 16px;{bg};position:relative;z-index:2">'
-            f'{logo(28)}<span class="chip info">공개 알파</span>{nav}<div style="margin-left:auto;display:flex;align-items:center;gap:8px">{right}</div></header>')
+            f'{logo(28) if logo_on else ""}<span class="chip info">공개 알파</span>{nav}<div style="margin-left:auto;display:flex;align-items:center;gap:8px">{right}</div></header>')
 
 
-def gw_mtop(transparent=False):
+def gw_mtop(transparent=False, logo_on=True):
     bg = 'background:rgba(12,15,14,.74)' if transparent else 'background:#1b201d;border-bottom:1px solid #3d4740'
     return (f'<header style="height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 8px 0 12px;{bg};position:relative;z-index:2">'
-            f'<div style="display:flex;align-items:center;gap:8px">{logo(24)}<span class="chip info">공개 알파</span></div>'
+            f'<div style="display:flex;align-items:center;gap:8px">{logo(24) if logo_on else ""}<span class="chip info">공개 알파</span></div>'
             f'<button type="button" class="btn sm" aria-haspopup="dialog" style="background:rgba(20,24,22,.9)">{icon("menu", 18)}메뉴</button></header>')
 
 
@@ -1709,13 +1710,13 @@ def board_gateway():
                 f'<span class="muted" style="font-size:11px">가입 화면 — 「로그인」 하나</span>{gw_topbar("join")}'
                 f'<span class="note">하단 탭 · 레일 없음. 로그인 · 가입 화면은 지도 한 장이 배경이고 머리줄이 그 위에 투명하게 뜬다(위). 게임 안으로 들어가면 게임 셸(머리줄 48 + 레일).</span></div></section>')
     body = (f'<div style="position:absolute;inset:0">{mapimg("hero", 1440, 1000, "중원 — 로그인 배경 지도(군 보기)")}</div>'
-            + gw_topbar('login', transparent=True) + f'<div style="flex-grow:1;position:relative">{login_panel}{variants}</div>')
+            + gw_topbar('login', transparent=True, logo_on=False) + f'<div style="flex-grow:1;position:relative">{login_panel}{variants}</div>')
     page31('V31SystemGateway.dc.html', '시스템 v3.1 — 게이트웨이 셸(데스크톱)', body)
 
 
 def board_mgateway():
     main = (f'<div style="position:absolute;left:0;top:0;width:390px;height:480px">{mapimg("hero_m", 390, 480, "낙양 — 로그인 배경 지도")}</div>'
-            f'{gw_mtop(transparent=True)}<main style="flex-grow:1;position:relative"><div class="scrim"></div>{gw_menu_sheet()}</main>')
+            f'{gw_mtop(transparent=True, logo_on=False)}<main style="flex-grow:1;position:relative"><div class="scrim"></div>{gw_menu_sheet()}</main>')
     page31('V31SystemMGateway.dc.html', '시스템 v3.1 — 게이트웨이 셸 · 메뉴 시트(모바일)', main, w=390, h=844)
 
 
