@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import { PartIcon } from './PartIcon';
+import { Seg } from './Seg';
 import type { TimeBarEvent, TimeBarMode, TimeBarSpeed } from './types';
 
 type Common = {
@@ -166,20 +167,8 @@ export function TimeBar(props: TimeBarProps) {
     );
     const tail = (
       <span className="os-timebar__tail">
-        <span className="os-seg os-timebar__speed" role="radiogroup" aria-label="빠르기">
-          {SPEEDS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              role="radio"
-              aria-checked={s === props.speed}
-              className={['os-seg__item', s === props.speed ? 'os-seg__item--on' : ''].filter(Boolean).join(' ')}
-              onClick={() => props.onSpeed(s)}
-            >
-              {`${s}×`}
-            </button>
-          ))}
-        </span>
+        <Seg label="빠르기" className="os-timebar__speed" options={SPEEDS.map((sp) => ({ value: sp, label: `${sp}×` }))}
+          value={props.speed} onChange={props.onSpeed} />
         {props.onResult ? <button type="button" className="os-button os-button--ghost os-timebar__btn" onClick={props.onResult}>결과</button> : null}
       </span>
     );

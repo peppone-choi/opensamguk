@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Portrait } from '../Portrait';
 import { ReasonTooltip } from '../ReasonTooltip';
 import { matchesKoreanName } from './koreanSearch';
+import { Seg } from './Seg';
 import { StatusView } from './StatusView';
 import type { PeopleGroup, PersonOption } from './types';
 
@@ -128,20 +129,10 @@ export function PeoplePicker(props: PeoplePickerProps) {
           value={query}
           onChange={(event) => setQuery(event.target.value)}
         />
-        {tabs.length > 1 ? <div className="os-seg os-seg--scroll" role="radiogroup" aria-label="묶음">
-          {tabs.map((g) => (
-            <button
-              key={g}
-              type="button"
-              role="radio"
-              aria-checked={g === group}
-              className={['os-seg__item', g === group ? 'os-seg__item--on' : ''].filter(Boolean).join(' ')}
-              onClick={() => setGroup(g)}
-            >
-              {PEOPLE_GROUP_LABEL[g]} <span className="os-seg__n">{load.state === 'ready' ? counts[g] : '—'}</span>
-            </button>
-          ))}
-        </div> : null}
+        {tabs.length > 1 ? (
+          <Seg label="묶음" options={tabs.map((g) => ({ value: g, label: PEOPLE_GROUP_LABEL[g], count: load.state === 'ready' ? counts[g] : null }))}
+            value={group} onChange={setGroup} scroll />
+        ) : null}
       </div>
       {body}
     </div>

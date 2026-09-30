@@ -27,4 +27,5 @@ export {
 export { PEOPLE_GROUP_LABEL, PeoplePicker, type PeoplePickerProps } from './PeoplePicker';
 export { TimeBar, formatClock, layoutEventRows, type TimeBarProps } from './TimeBar';
 export { PART_ICON_SOURCE, PartIcon, type PartIconName } from './PartIcon';
+export { Seg, type SegOption, type SegProps } from './Seg';
 export { choseongOf, matchesKoreanName } from './koreanSearch';
