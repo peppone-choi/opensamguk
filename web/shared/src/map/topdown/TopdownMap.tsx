@@ -74,21 +74,29 @@ export function TopdownMap(props: TopdownMapProps) {
     const gl = glRef.current;
     const overlay = overlayRef.current;
     if (!gl || !overlay) return undefined;
+    let cancelled = false;
+    setStatus({ kind: 'loading' });
+    setPicture(null);
     let renderer: TopdownRenderer;
     try {
       renderer = new TopdownRenderer(gl, overlay);
     } catch {
       setStatus({ kind: 'unsupported' });
       // WebGL2가 없으면 천하 그림 한 장만 보인다(장소는 목록 · 검색으로 고른다)
-      loadOverviewPicture(source.bakeUrl, source.kitUrl).then(setPicture, () => undefined);
-      return undefined;
+      loadOverviewPicture(source.bakeUrl, source.kitUrl).then((next) => { if (!cancelled) setPicture(next); }, () => undefined);
+      return () => {
+        cancelled = true;
+      };
     }
     rendererRef.current = renderer;
-    let cancelled = false;
+    const fail = (error: unknown) => {
+      if (!cancelled) setStatus({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
+    };
     renderer.load(source).then(() => {
       if (cancelled) return;
       setStatus({ kind: 'ready' });
-      renderer.complete.then(() => { if (!cancelled) setPicture(renderer.overviewPicture()); }, () => undefined);
+      // 뒤로 미룬 자료(밉 · 개관 · 장소 · 그림 판)가 실패하면 지형이 보여도 오류로 알린다
+      renderer.complete.then(() => { if (!cancelled) setPicture(renderer.overviewPicture()); }, fail);
       if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
       callbacks.current.onReady?.({
         setLevel: (level) => {
@@ -104,9 +112,7 @@ export function TopdownMap(props: TopdownMapProps) {
           apply({ center: cell, zoom: zoom ?? cam?.zoom ?? 16 });
         },
       });
-    }, (error: unknown) => {
-      if (!cancelled) setStatus({ kind: 'error', message: error instanceof Error ? error.message : String(error) });
-    });
+    }, fail);
     return () => {
       cancelled = true;
       renderer.dispose();

@@ -133,12 +133,13 @@ export class TopdownRenderer {
         this.startRest = null;
         this.loadRest(source, manifest).then(resolve, reject);
       };
-      window.setTimeout(() => this.startRest?.(), 1500);
+      this.restTimer = window.setTimeout(() => this.startRest?.(), 1500);
     });
     this.requestFrame();
   }
 
   private startRest: (() => void) | null = null;
+  private restTimer = 0;
 
   private async loadRest(source: TopdownSource, manifest: BakeManifest): Promise<void> {
     const kitUrl = (file: string) => joinUrl(source.kitUrl, file);
@@ -281,6 +282,8 @@ export class TopdownRenderer {
   dispose(): void {
     if (this.scheduled) cancelAnimationFrame(this.scheduled);
     this.scheduled = 0;
+    window.clearTimeout(this.restTimer);
+    this.startRest = null;
     this.terrain?.dispose();
     this.terrain = null;
   }
