@@ -1,0 +1,200 @@
+// 명령 흐름(P-W02) — 설계서 §2.1 상태 유지 규칙이 화면에서 지켜지는지.
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { beforeEach, expect, test, vi } from 'vitest';
+import CommandFlow from '../components/command-flow/CommandFlow';
+import { api } from '../lib/api';
+import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
+
+vi.mock('../lib/api', () => ({
+    api: {
+        reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(),
+        fieldOptions: vi.fn(), personalOptions: vi.fn(), peopleOptions: vi.fn(),
+    },
+}));
+vi.mock('../lib/commandSubmit', () => ({ submitCommandAndAwaitResult: vi.fn() }));
+
+const ring = (filled: number[]) => ({
+    result: true, generalId: 1,
+    slots: filled.map((turnIdx) => ({ turnIdx, action: 'action.farm', brief: '', arg: {} })),
+});
+
+beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(api.reservedCommands).mockResolvedValue(ring([0, 1]) as never);
+    vi.mocked(api.travelOptions).mockImplementation(async (inputId) => ({
+        inputId, available: true,
+        destinations: [
+            { provinceId: 'P-1', name: '영천', available: true },
+            { provinceId: 'P-2', name: '양적', available: inputId === 'action.move', reason: '강행으로는 갈 수 없습니다' },
+        ],
+    }));
+    vi.mocked(api.fieldOptions).mockResolvedValue({ inputId: 'action.farm', available: true, countyName: '허현' });
+    vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => { await submit(); return { status: 'reserved' } as never; });
+});
+
+// 역할 · 이름 조회는 jsdom에서 비싸다 — 명령 행은 data-input-id, 후보는 칸(data-arg-key) 안에서만 찾는다.
+const flow = () => screen.getByTestId('command-flow');
+const pressedSlot = () => flow().querySelector('[data-turn-idx][aria-pressed="true"]');
+const cmd = (inputId: string) => {
+    const el = flow().querySelector(`ul button[data-input-id="${inputId}"]`);
+    if (!el) throw new Error(`명령 행 없음: ${inputId}`);
+    return el as HTMLElement;
+};
+/** 제출 단추(InputAction) — 상태 속성으로 찾고, 글자는 따로 확인한다. */
+const submitButton = () => waitFor(() => {
+    const el = flow().querySelector('[data-input-status]');
+    if (!el) throw new Error('제출 단추 없음');
+    return el as HTMLElement;
+});
+const slotButton = (label: string) => flow().querySelector(`[aria-label="${label}"]`);
+const place = async (name: RegExp, selected?: boolean) => {
+    const field = await waitFor(() => {
+        const el = flow().querySelector('[data-arg-key="destinationProvinceId"]');
+        if (!el) throw new Error('목적지 칸 없음');
+        return el as HTMLElement;
+    });
+    return within(field).findByRole('option', selected === undefined ? { name } : { name, selected });
+};
+
+test('열면 다음 빈 순을 고르고, 채운 순은 명령 이름으로 보인다', async () => {
+    render(<CommandFlow generalId={1} onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    expect(slotButton('01순 — 농지개간')).not.toBeNull();
+    expect(slotButton('03순 — 빈 순')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('명령을 바꿔도 초안이 남고, 같은 종류 목적지는 이어받는다', async () => {
+    render(<CommandFlow generalId={1} onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()).not.toBeNull());
+    fireEvent.click(cmd('action.move'));
+    fireEvent.click(await place(/영천/));
+    fireEvent.click(cmd('action.farm'));
+    expect(await screen.findByText('일어나는 곳: 허현')).toBeInTheDocument();
+    fireEvent.click(cmd('action.forcedMarch'));
+    expect(await screen.findByText(/이어받았습니다/)).toBeInTheDocument();
+    expect(await place(/영천/, true)).toBeInTheDocument();
+});
+
+test('이어받은 곳이 새 명령에서 안 되면 비우고 한 줄 알린다', async () => {
+    render(<CommandFlow generalId={1} onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()).not.toBeNull());
+    fireEvent.click(cmd('action.move'));
+    fireEvent.click(await place(/양적/));
+    fireEvent.click(cmd('action.forcedMarch'));
+    expect(await screen.findByText(/고를 수 없는 곳이라 비웠습니다/)).toBeInTheDocument();
+});
+
+test('빈 칸이면 보내지 않고 알린다 · 채우면 지금 순에 예약하고 다음 빈 순으로 간다', async () => {
+    render(<CommandFlow generalId={1} onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(cmd('action.move'));
+    const submit = await submitButton();
+    expect(submit).toHaveTextContent('03순에 예약');
+    expect(submit).toHaveAttribute('data-input-id', 'action.move');
+    fireEvent.click(submit);
+    expect(await screen.findByText('「어디로」을 고르세요.')).toBeInTheDocument();
+    expect(api.command).not.toHaveBeenCalled();
+
+    fireEvent.click(await place(/영천/));
+    vi.mocked(api.reservedCommands).mockResolvedValue(ring([0, 1, 2]) as never);
+    fireEvent.click(await submitButton());
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.move', { destinationProvinceId: 'P-1' }, 1, 2));
+    expect(await screen.findByText('「이동」 — 03순에 예약했습니다.')).toBeInTheDocument();
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('3'));
+    // 닫히지 않고 초안이 남는다.
+    expect(await place(/영천/, true)).toBeInTheDocument();
+});
+
+test('채운 순에 예약하면 바꾸기를 한 번 묻는다', async () => {
+    render(<CommandFlow generalId={1} initialSlot={0} initialInputId="action.farm" onClose={vi.fn()} />);
+    expect(await screen.findByTestId('slot-reserved')).toHaveTextContent('01순 지금 예약: 농지개간');
+    const submit = await submitButton();
+    expect(submit).toHaveTextContent('01순에 예약');
+    fireEvent.click(submit);
+    expect(await screen.findByText('01순을 바꿉니다')).toBeInTheDocument();
+    expect(api.command).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: '바꾸기' }));
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.farm', {}, 1, 0));
+});
+
+test('준비 중 명령은 목록에 남고, 서버를 부르지 않으며 예약 단추가 「준비 중」이다', async () => {
+    render(<CommandFlow generalId={1} onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()).not.toBeNull());
+    const row = cmd('action.retire');
+    expect(within(row).getByText('준비 중')).toBeInTheDocument();
+    fireEvent.click(row);
+    expect(await screen.findByText('아직 열리지 않은 명령입니다')).toBeInTheDocument();
+    expect(api.personalOptions).not.toHaveBeenCalled();
+    const submit = await submitButton();
+    expect(submit).toHaveTextContent('03순에 예약');
+    expect(submit).toHaveAttribute('aria-disabled', 'true');
+    expect(submit).toHaveAttribute('data-input-status', 'NOT_DELIVERED');
+});
+
+test('옵션이 막으면 서버 사유를 그대로 보인다', async () => {
+    vi.mocked(api.fieldOptions).mockResolvedValue({ inputId: 'action.farm', available: false, code: 'OUTSIDE_CITY', reason: '성 밖에 있습니다' });
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    await waitFor(async () => expect(await submitButton()).toHaveAttribute('data-input-status', 'BLOCKED'));
+    expect(flow().querySelector('[data-reason-code="OUTSIDE_CITY"]')).not.toBeNull();
+    expect(screen.getAllByText('성 밖에 있습니다').length).toBeGreaterThan(0);
+});
+
+test('서버가 제출을 거절하면 그 code · reason으로 막고 닫지 않는다 — 칸이나 순을 바꾸면 풀린다', async () => {
+    vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => {
+        await submit();
+        return { status: 'rejected', reason: '전투 중이라 새 명령을 받지 않습니다', code: 'BATTLE_LOCKED' } as never;
+    });
+    const onClose = vi.fn();
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={onClose} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(await submitButton());
+    await waitFor(async () => expect(await submitButton()).toHaveAttribute('data-input-status', 'BLOCKED'));
+    const sheet = flow().querySelector('[data-reason-code="BATTLE_LOCKED"]') as HTMLElement;
+    expect(sheet).not.toBeNull();
+    // 거절되면 사유 시트가 열린 채로 뜬다(누르지 않아도).
+    expect(within(sheet).getByRole('dialog')).toHaveTextContent('전투 중이라 새 명령을 받지 않습니다');
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(slotButton('04순 — 빈 순')!);
+    await waitFor(async () => expect(await submitButton()).toHaveAttribute('data-input-status', 'AVAILABLE'));
+});
+
+test('옵션을 읽는 중에도 단추는 누를 수 있다 — 인자 없는 명령은 보내고, 인자가 필요하면 기다리라고 한다', async () => {
+    vi.mocked(api.fieldOptions).mockReturnValue(new Promise(() => {}));
+    vi.mocked(api.travelOptions).mockReturnValue(new Promise(() => {}));
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    expect(await submitButton()).toHaveAttribute('data-input-status', 'AVAILABLE');
+    fireEvent.click(await submitButton());
+    await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.farm', {}, 1, 2));
+
+    vi.mocked(api.command).mockClear();
+    fireEvent.click(cmd('action.move'));
+    expect(await submitButton()).toHaveAttribute('data-input-status', 'AVAILABLE');
+    fireEvent.click(await submitButton());
+    expect(await screen.findByText('선택지를 불러오는 중입니다 — 잠시 뒤 다시 눌러 주세요.')).toBeInTheDocument();
+    expect(api.command).not.toHaveBeenCalled();
+});
+
+test('Esc로 닫는다 — 보내는 중에는 닫지 않는다', async () => {
+    const onClose = vi.fn();
+    let release: () => void = () => {};
+    vi.mocked(submitCommandAndAwaitResult).mockImplementation(() => new Promise((r) => { release = () => r({ status: 'reserved' } as never); }));
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={onClose} />);
+    await waitFor(() => expect(pressedSlot()?.getAttribute('data-turn-idx')).toBe('2'));
+    fireEvent.click(await submitButton());
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).not.toHaveBeenCalled();
+    release();
+    await screen.findByText(/예약했습니다/);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+});
+
+test('「여기로 명령」 — 받은 장소를 받는 명령이 위로 오고, 처음 고른 명령이 그 장소를 이어받는다', async () => {
+    render(<CommandFlow generalId={1} initialTarget={{ kind: 'province', id: 'P-1' }} onClose={vi.fn()} />);
+    await waitFor(() => expect(pressedSlot()).not.toBeNull());
+    const rows = within(screen.getByRole('list', { name: '명령' })).getAllByRole('button');
+    expect(rows.slice(0, 3).map((r) => r.getAttribute('data-input-id'))).toEqual(['action.deploy', 'action.move', 'action.forcedMarch']);
+    fireEvent.click(rows[1]);
+    expect(await place(/영천/, true)).toBeInTheDocument();
+});
