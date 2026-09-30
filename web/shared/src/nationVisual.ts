@@ -1,3 +1,6 @@
+/** 주인 없는 땅 · 城 의 이름 — 승인된 v3.1 범례 · 선택 카드 표기(「공백지」 · 「미소유」를 이것 하나로). */
+export const UNOWNED_NATION_NAME = '무주';
+
 export function isOwnedNationVisual(
   nationId: unknown,
   nationColor: unknown,
