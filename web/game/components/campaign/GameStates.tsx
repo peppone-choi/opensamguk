@@ -8,7 +8,6 @@ export function campaignBlockReason(session: GameSession): string | null {
     if (session.loading) return '장수 정보를 불러오는 중입니다.';
     if (session.error) return `장수 정보를 불러오지 못했습니다 — ${session.error}`;
     if (session.generalId == null) return '이 서버에 장수가 없습니다. 장수를 만든 뒤에 열 수 있습니다.';
-    if (!session.isCampaignWorld) return '이 서버는 휘하 규칙이 아닙니다. 휘하 규칙 서버에서만 쓰는 화면입니다.';
     return null;
 }
 

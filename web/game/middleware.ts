@@ -64,6 +64,13 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'war-room',
   'yuedan',
   'world-log',
+  'stratagem',
+  'territory',
+  'corps',
+  'records',
+  'council',
+  'mail',
+  'help',
 ]);
 
 function isPublicServerId(serverId: string): boolean {
@@ -111,8 +118,13 @@ function legacyRedirect(req: NextRequest): NextResponse | null {
   if (!target) return null;
   const url = req.nextUrl.clone();
   url.pathname = `/game${inPath ? `/${serverId}` : ''}${target.path ? `/${target.path}` : ''}`;
-  if (target.dropQuery) url.searchParams.delete(target.dropQuery);
+  applyTargetQuery(url.searchParams, target);
   return NextResponse.redirect(url, 308);
+}
+
+function applyTargetQuery(params: URLSearchParams, target: { readonly dropQuery?: string; readonly addQuery?: string }): void {
+  if (target.dropQuery) params.delete(target.dropQuery);
+  if (target.addQuery) for (const [key, value] of new URLSearchParams(target.addQuery)) params.set(key, value);
 }
 
 export function middleware(req: NextRequest) {
@@ -133,9 +145,13 @@ export function middleware(req: NextRequest) {
   if (oldServerless || oldServerPath) {
     const pathServerId = oldServerPath ? segments[2] : undefined;
     const serverId = pathServerId ?? configuredServerId();
-    const slug = segments.slice(oldServerPath ? 4 : 3).filter(Boolean).join('/') || 'war-room';
+    // 옛 휘하 slug 도 308 표를 거쳐 한 번에 넘긴다(`/game/hwiha/war-room` → `/game/…/war-room` → `/game/…` 두 번 금지).
+    const oldSlug = segments.slice(oldServerPath ? 4 : 3).filter(Boolean);
+    const target = legacyTarget(oldSlug, searchParams);
+    const slug = target ? target.path : oldSlug.join('/');
     const targetUrl = req.nextUrl.clone();
-    targetUrl.pathname = `/game/${serverId ? `${serverId}/` : ''}${slug}`;
+    targetUrl.pathname = `/game${serverId ? `/${serverId}` : ''}${slug ? `/${slug}` : ''}`;
+    if (target) applyTargetQuery(targetUrl.searchParams, target);
     if (serverId) targetUrl.searchParams.delete('server');
     const res = NextResponse.redirect(targetUrl, 308);
     if (serverId && serverId === configuredServerId()) setServerCookie(res, serverId);
