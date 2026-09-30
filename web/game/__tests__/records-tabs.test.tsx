@@ -13,7 +13,7 @@ describe('RecordsTabs', () => {
             '월단평', '연감', '월드 기록', '랭킹',
         ]);
         expect(recordsTabs().map((t) => t.href)).toEqual([
-            '/game/yuedan', '/game/history', '/game/world-log', '/game/rankings',
+            '/game/retinue/yuedan', '/game/history', '/game/world-log', '/game/rankings',
         ]);
     });
 

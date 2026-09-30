@@ -231,6 +231,13 @@ const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'war-room',
     'yuedan',
     'world-log',
+    'stratagem',
+    'territory',
+    'corps',
+    'records',
+    'council',
+    'mail',
+    'help',
 ]);
 const AUTORUN_OPTIONS = [
     ['develop', '내정'],

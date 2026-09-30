@@ -11,6 +11,9 @@ import { MEDIA, type ViewportClass } from './breakpoints';
  *
  * 쓰는 규칙: **배치 차이는 CSS 미디어 쿼리가 먼저다.** 이 훅은 구조(부품 트리)가 달라야 할 때만 쓴다 — 예: 데스크톱은
  * 옆 열 패널, 모바일은 하단 시트처럼 다른 부품을 그릴 때. 크기 · 여백 · 줄바꿈 차이는 CSS 로 한다.
+ *
+ * 시험에서는 `installViewport(폭)`(viewportTesting.ts)을 쓴다 — 모든 쿼리에 같은 값을 주는 matchMedia 흉내는 실제 폭과
+ * 무관하다(늘 false 면 null 에 머물고, 늘 true 면 늘 mobile).
  */
 export function useViewportClass(): ViewportClass | null {
   const [viewport, setViewport] = useState<ViewportClass | null>(null);
