@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
+  boardClassification,
   cellPolygon,
   cellToScreen,
   composeBoard,
+  terrainSha256,
   drawOrder,
   fitView,
   parseBattleKit,
@@ -105,6 +107,17 @@ describe('전장 판 조립', () => {
     const poly = cellPolygon(k, board, 0, 0, view);
     expect(poly).toHaveLength(4);
     expect(poly[1].x - poly[3].x).toBeCloseTo(32 * view.scale, 9);
+  });
+
+  it('판 분류는 행 우선 글자열이고 해시는 그 ASCII의 SHA-256', async () => {
+    const k = kit();
+    k.recordClass = ['PFWR'];
+    const rows = boardClassification(k, 0);
+    expect(rows).toHaveLength(SIDE * SIDE);
+    expect(rows[1 * SIDE + 2]).toBe('W'); // (1,2) = 기록 2
+    expect(rows.replaceAll('F', '')).toBe('W');
+    const { createHash } = await import('node:crypto');
+    expect(await terrainSha256(k, 0)).toBe(createHash('sha256').update(rows, 'ascii').digest('hex'));
   });
 
   it('형식이 어긋나면 거절한다', () => {

@@ -20,6 +20,7 @@ export interface BattleKitBoard {
   tileset: number;
   layoutSha256: string;
   composedSha256: string;
+  terrainSha256?: string;
 }
 
 export interface BattleKit {
@@ -31,6 +32,8 @@ export interface BattleKit {
   /** [board][r][c] record id. */
   boards: Uint8Array;
   boardInfo: BattleKitBoard[];
+  /** Per tileset, 256 terrain letters P/F/M/R/W — the server catalog's rule (absent in older kits). */
+  recordClass?: string[];
   /** 16 day-palette colours. */
   palette: [number, number, number][];
 }
@@ -41,6 +44,7 @@ export interface KitJson {
   layout: BattleKitLayout;
   palette: { rgb: [number, number, number][] };
   boards: BattleKitBoard[];
+  recordClass?: string[];
 }
 
 export function parseBattleKit(json: KitJson, files: { pieces: ArrayBuffer; records: ArrayBuffer; boards: ArrayBuffer }): BattleKit {
@@ -59,6 +63,7 @@ export function parseBattleKit(json: KitJson, files: { pieces: ArrayBuffer; reco
     records: new Uint8Array(files.records),
     boards: new Uint8Array(files.boards),
     boardInfo: json.boards,
+    recordClass: json.recordClass,
     palette: json.palette.rgb,
   };
 }
@@ -209,6 +214,25 @@ export function boardRgba(kit: BattleKit, board: ComposedBoard, rect = { x: 0, y
     }
   }
   return out;
+}
+
+/**
+ * The board's 4096 terrain letters in row-major order (r, then c) — equal to the server catalog's
+ * terrainRows joined. Ticket comparison is not wired yet (C2 decides what the ticket pins).
+ */
+export function boardClassification(kit: BattleKit, boardId: number): string {
+  if (!kit.recordClass) throw new Error('battle kit has no recordClass');
+  const { side } = kit.layout;
+  const classes = kit.recordClass[kit.boardInfo[boardId].tileset];
+  let out = '';
+  for (let i = boardId * side * side; i < (boardId + 1) * side * side; i += 1) out += classes[kit.boards[i]];
+  return out;
+}
+
+/** SHA-256 (lower-case hex) of the classification's ASCII bytes — the kit's `terrainSha256`. */
+export async function terrainSha256(kit: BattleKit, boardId: number): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(boardClassification(kit, boardId)));
+  return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
 
 // ── 보기 · 도우미(보는 창 기준). scale = 판 원본 px에 곱하는 배율, offset = 화면 CSS px.
