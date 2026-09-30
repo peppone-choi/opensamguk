@@ -8,6 +8,7 @@ import opensamguk.gameapi.city.GarrisonRecruitController
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 import opensamguk.common.world.WorldId
 import opensamguk.gameapi.config.GameApiProcessWorld
@@ -21,6 +22,9 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.core.env.SystemEnvironmentPropertySource
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo
+import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -79,6 +83,40 @@ class ProductionShapeBeanGateIT {
 
     @Test
     fun `production context registers no v2 bean`() = context.assertNoV2Beans()
+
+    @Test
+    fun `retired endpoints are absent while campaign reads and queue shift remain registered`() {
+        val mapping = context.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping::class.java)
+        val paths = mapping.handlerMethods.keys.flatMap { it.patternValues }.toSet()
+        val retired = setOf(
+            "/api/global-menu", "/api/inherit-point", "/api/instant-action/{code}",
+            "/api/nation/{id}/finance", "/api/nation/npc-policy",
+            "/api/generals/claimable", "/api/general/claim", "/api/my-retinue",
+            "/api/generals/{id}/retinue", "/api/select-pool", "/api/select-pool/refresh",
+            "/api/simulate-battle", "/api/votes", "/api/votes/{id}", "/api/battlefields",
+            "/api/rankings/generals", "/api/rankings/npcs", "/api/rankings/hall-of-fame",
+            "/api/rankings/traffic", "/api/rankings/emperor", "/api/rankings/emperor/{id}",
+            "/api/my-boss",
+        )
+        fun assertRetiredPathsAbsent() {
+            val current = mapping.handlerMethods.keys.flatMap { it.patternValues }.toSet()
+            assertEquals(emptySet(), current.intersect(retired), "은퇴한 API 등록")
+        }
+        assertRetiredPathsAbsent()
+        val active = setOf("/api/retinue", "/api/command/push", "/api/battles/replays/{id}", "/api/city/{id}", "/api/generals")
+        assertTrue(paths.containsAll(active), "유지해야 할 API 누락: ${active - paths}")
+
+        // 실제 Boot 경로표에 폐기 경로를 잠시 복원해 같은 검사로 적색을 확인한다.
+        val probe = RequestMappingInfo.paths("/api/global-menu").methods(RequestMethod.GET).build()
+        mapping.registerMapping(probe, Any(), Any::class.java.getMethod("toString"))
+        try {
+            val failure = assertFailsWith<AssertionError> { assertRetiredPathsAbsent() }
+            assertTrue(failure.message.orEmpty().contains("/api/global-menu"))
+        } finally {
+            mapping.unregisterMapping(probe)
+        }
+        assertRetiredPathsAbsent()
+    }
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")

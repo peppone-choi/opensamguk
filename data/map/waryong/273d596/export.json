@@ -1,0 +1,86 @@
+{
+  "artifactId": "waryong-map-kit",
+  "files": {
+    "data/map/waryong/273d596/catalog.json": {
+      "bytes": 76446,
+      "sha256": "134effbdb95e72b0ec6008a80706947ee584f84b4dfcef1dacdfc88dc7d1d6ff",
+      "source": "waryong/map/catalog.json"
+    },
+    "data/map/waryong/273d596/synth-stats.json.gz": {
+      "bytes": 373184,
+      "sha256": "c9b22629b9b14a8663f4171540efc867a6e34762b4a5f80aca88374791c1539c",
+      "source": "waryong/map/synth-stats.json.gz"
+    },
+    "web/game/public/map/waryong/273d596/flags-roles.png": {
+      "bytes": 128,
+      "sha256": "b7b086f5be618b457c9419f6dd08e2d3f84c23acbb695e576db1ebe2fec62c58",
+      "source": "waryong/map/flags-roles.png"
+    },
+    "web/game/public/map/waryong/273d596/flags.png": {
+      "bytes": 287,
+      "sha256": "d29619010c5de2608817d58a6423f49d17278a83b8b840fcf6b0ad876a260533",
+      "source": "waryong/map/flags.png"
+    },
+    "web/game/public/map/waryong/273d596/kit-index.png": {
+      "bytes": 53915,
+      "sha256": "a7928575ed52491f5236f00ebb069eae7e6404c4d95efd0194c00d40a3585644",
+      "source": "waryong/map/kit-index.png"
+    },
+    "web/game/public/map/waryong/273d596/kit-mip1.png": {
+      "bytes": 2221,
+      "sha256": "e3348872498fe1dded47bbe019be0fc5b3730aea6268733dfceace9a68478712",
+      "source": "waryong/map/kit-mip1.png"
+    },
+    "web/game/public/map/waryong/273d596/kit-mip2.png": {
+      "bytes": 8322,
+      "sha256": "002c3c545623b9588908b5d9907b47cb9385ec0121d141898ce15e1cd9e522be",
+      "source": "waryong/map/kit-mip2.png"
+    },
+    "web/game/public/map/waryong/273d596/kit-mip4.png": {
+      "bytes": 25948,
+      "sha256": "44d709498edfc3f924868e8d949c9a67c63aa177b7f14f532b5bce52463bc884",
+      "source": "waryong/map/kit-mip4.png"
+    },
+    "web/game/public/map/waryong/273d596/kit-mip8.png": {
+      "bytes": 58043,
+      "sha256": "c8948bb1b031deae8c60f92eaff71c3846087c72df060ad2c47ebe847cb3f02e",
+      "source": "waryong/map/kit-mip8.png"
+    },
+    "web/game/public/map/waryong/273d596/markers-roles.png": {
+      "bytes": 2207,
+      "sha256": "4496602fc0434794affcc5ffc7acde144708df0ced2bad19df44b2f638ec572f",
+      "source": "waryong/map/markers-roles.png"
+    },
+    "web/game/public/map/waryong/273d596/markers.png": {
+      "bytes": 16831,
+      "sha256": "1e9d4c2152883883d46ef8da1dbff9b28e98410e68be9833150316773b9396f9",
+      "source": "waryong/map/markers.png"
+    },
+    "web/game/public/map/waryong/273d596/palettes.json": {
+      "bytes": 1633,
+      "sha256": "36d21e13c9ac17c3ce1c6fcf0fd7449d9f2460c93aafb5eccea11fffc366e5e3",
+      "source": "waryong/map/palettes.json"
+    },
+    "web/game/public/map/waryong/273d596/sites-roles.png": {
+      "bytes": 204,
+      "sha256": "285d6608dd4fc8aaf8fc15ed0a296e0ca180b8f04c67176707b839b3f8e1fdbf",
+      "source": "waryong/map/sites-roles.png"
+    },
+    "web/game/public/map/waryong/273d596/sites.png": {
+      "bytes": 917,
+      "sha256": "98aed534f1e2fc6e2c72e3d84408cf55c00ddc3c9b30cdf920e1d1d8cbb14d36",
+      "source": "waryong/map/sites.png"
+    }
+  },
+  "kitId": "273d596",
+  "mirrors": [
+    "web/game/public/map/waryong/273d596",
+    "web/gateway/public/map/waryong/273d596"
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "directory": "waryong/map/",
+    "mergeCommit": "273d596318ca3de398d41f0b601889626dc03d55",
+    "repository": "peppone-choi/opensamguk-images"
+  }
+}

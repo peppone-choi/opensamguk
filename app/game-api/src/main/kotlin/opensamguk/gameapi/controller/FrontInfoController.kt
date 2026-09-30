@@ -166,7 +166,7 @@ class FrontInfoController(
     private fun isPublicServerId(serverId: String): Boolean =
         canonicalPublicServerIdPattern.matches(serverId) && serverId !in reservedPublicServerIds
 
-    /** nation_env(namespace = nationId, key) jsonb 디코드 — 부재/파싱실패 시 null(loop49 NationFinanceController 동일 패턴; loop51 빼기에서 공유 reader로 수렴 예정). */
+    /** nation_env(namespace = nationId, key) jsonb 디코드 — 부재/파싱실패 시 null. */
     private fun nationEnvNode(nid: Int, key: String): JsonNode? =
         nationEnv.findByNamespaceAndKey(nid, key)?.let { runCatching { objectMapper.readTree(it.value) }.getOrNull() }
 
@@ -760,7 +760,7 @@ class FrontInfoController(
     /**
      * W0-2(P1-002) — vote_poll 행 → PHP `VoteInfo->toArray()` 동형(FrontLastVote).
      * startDate/endDate는 PHP 'Y-m-d H:i:s' 문자열 규약(TurnTimeFormatter.full 슬라이스),
-     * options는 삽입순 텍스트(PHP array_values — VoteController optionTexts와 동식).
+     * options는 삽입순 텍스트(PHP array_values 규칙).
      */
     private fun toFrontLastVote(p: VotePollReadEntity): FrontLastVote = FrontLastVote(
         id = p.id,

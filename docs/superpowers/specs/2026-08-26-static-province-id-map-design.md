@@ -60,11 +60,13 @@ The generator validates:
 
 The generator records counts where terrain water/land classification differs from political coverage, but does not use terrain to rewrite or reject the political identity grid.
 
-The metadata sidecar records schema version, dimensions, source SHA-256, PNG SHA-256, province count, commandery count, and the bit layout. Re-running the generator with unchanged input must produce byte-identical PNG and metadata content, except that metadata contains no timestamp or machine-specific path.
+2026-09-30 K1-01 개정: PNG는 `IHDR` · 단일 `IDAT` · `IEND` 세 청크만 가지며, 비인터레이스 RGB8과 행 필터 0을 유지한다. `IDAT`는 zlib level 9로 압축한다. 실제 지도 파일은 브라우저 로더의 16MiB 상한보다 작아야 한다.
+
+메타데이터는 스키마·크기·입력 `sourceSha256` · 푼 RGB 행의 `pixelRowsSha256` · 실제 PNG 바이트의 `pngSha256` · 계층별 개수·비트 배치를 기록한다. `pixelRowsSha256`은 행 순서대로 이어 붙인 RGB 바이트(필터 바이트·행 패딩 없음)의 SHA-256이다. 같은 입력의 결정론은 푼 픽셀 행과 계층 식별자로 검증한다. zlib 구현에 따라 압축 스트림이 달라도 픽셀과 입력 지문이 같으면 유효하다. `pngSha256`은 배포 파일의 무결성과 정확한 바이트 ETag를 검증하며 타임스탬프·머신 경로는 기록하지 않는다.
 
 ### Artifact policy
 
-`han-tiles.json` remains the committed source artifact. The generated PNG and metadata are deployment/build outputs, not hand-edited source and not Git-tracked inputs. The build/deployment path runs the deterministic generator before packaging the game API image. A check mode compares fresh output hashes with packaged output and fails on drift.
+`han-tiles.json` remains the committed source artifact. The generated PNG and metadata are deployment/build outputs, not hand-edited source and not Git-tracked inputs. The build/deployment path runs the generator before packaging the game API image. 검사 모드는 배포 PNG를 풀어 입력의 픽셀·계층과 대조하고, 입력·픽셀 지문 및 실제 PNG 바이트 해시를 검증한다.
 
 This preserves the existing CHGIS isolation rule: no original shapefile or intermediate geographic dataset is added to Git. The task will revise ADR-LITE-044 only as needed to name the generated province image as a derived deployment surface, without promoting it to a new source of truth.
 
@@ -129,7 +131,8 @@ Wheel zoom stays centered on the pointer by preserving the cell under the cursor
 
 - hand-authored tiny RLE fixture produces literal RGB identity values;
 - decode round-trip reproduces both owner arrays exactly;
-- same input yields byte-identical PNG and metadata;
+- 같은 입력의 푼 RGB 행·계층 식별자가 같고, 다른 유효 deflate 스트림도 같은 픽셀이면 검사에 통과한다;
+- 실제 지도 PNG가 16MiB 미만이고 `IHDR` · 단일 `IDAT` · `IEND` 계약을 지킨다;
 - overflow, malformed RLE, sea/land mismatch, and lossy-output requests fail;
 - check mode detects a stale packaged artifact.
 
