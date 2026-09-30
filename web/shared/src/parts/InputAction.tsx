@@ -19,6 +19,7 @@ export interface InputActionProps {
   /** 사유 시트 머리 · 「이렇게 하면 됩니다」 · 도움말 고리(K7). 서버 reason 은 availability 에서 온다. */
   readonly reasonTitle?: string;
   readonly recovery?: string;
+  readonly recoveryDraft?: boolean;
   readonly helpTopic?: HelpTopicRef;
   readonly onHelp?: (topicId: string) => void;
   readonly className?: string;
@@ -44,6 +45,7 @@ export function InputAction({
   busy = false,
   reasonTitle,
   recovery,
+  recoveryDraft,
   helpTopic,
   onHelp,
   className = '',
@@ -75,6 +77,7 @@ export function InputAction({
       code={availability.code}
       inputId={inputId}
       recovery={blocked ? recovery : undefined}
+      recoveryDraft={recoveryDraft}
       helpTopic={helpTopic}
       onHelp={onHelp}
       block={block}
