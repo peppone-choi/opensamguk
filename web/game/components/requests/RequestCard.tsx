@@ -9,7 +9,8 @@ import type { ReactNode } from 'react';
 import { InputAction, Portrait, type InputAvailability } from '@opensamguk/ui';
 import styles from './RequestCard.module.css';
 
-export type RequestCardState = 'waiting' | 'accepted' | 'refused' | 'expired';
+/** cancelled = 무효로 취소됨(발령). expired = 기한이 지나 끝남(원군 요청처럼 무응답이 만료인 요청 — K8). */
+export type RequestCardState = 'waiting' | 'accepted' | 'refused' | 'cancelled' | 'expired';
 
 export interface RequestCardAnswer {
     /** 원장 inputId — 단추의 data-input-id. */
@@ -52,6 +53,7 @@ export interface RequestCardProps {
 const DONE: Record<Exclude<RequestCardState, 'waiting'>, { label: string; tone: string }> = {
     accepted: { label: '수락함', tone: 'os-chip--moss' },
     refused: { label: '거절함', tone: 'os-chip--rust' },
+    cancelled: { label: '취소됨', tone: '' },
     expired: { label: '기한 지남', tone: '' },
 };
 
