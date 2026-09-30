@@ -4,7 +4,7 @@ import {
   cellPolygon,
   cellToScreen,
   composeBoard,
-  terrainSha256,
+  terrainInputSha256,
   drawOrder,
   fitView,
   parseBattleKit,
@@ -117,7 +117,7 @@ describe('전장 판 조립', () => {
     expect(rows[1 * SIDE + 2]).toBe('W'); // (1,2) = 기록 2
     expect(rows.replaceAll('F', '')).toBe('W');
     const { createHash } = await import('node:crypto');
-    expect(await terrainSha256(k, 0)).toBe(createHash('sha256').update(rows, 'ascii').digest('hex'));
+    expect(await terrainInputSha256(k, 0)).toBe(createHash('sha256').update(rows, 'ascii').digest('hex'));
   });
 
   it('형식이 어긋나면 거절한다', () => {

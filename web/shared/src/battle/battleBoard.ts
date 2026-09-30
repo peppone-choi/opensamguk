@@ -20,6 +20,10 @@ export interface BattleKitBoard {
   tileset: number;
   layoutSha256: string;
   composedSha256: string;
+  /**
+   * Per-board classification hash (kit field name). It is what the server SNAPSHOT calls
+   * `terrainInputSha256` — not the world terrain pin that the ticket root calls `terrainSha256`.
+   */
   terrainSha256?: string;
 }
 
@@ -229,8 +233,11 @@ export function boardClassification(kit: BattleKit, boardId: number): string {
   return out;
 }
 
-/** SHA-256 (lower-case hex) of the classification's ASCII bytes — the kit's `terrainSha256`. */
-export async function terrainSha256(kit: BattleKit, boardId: number): Promise<string> {
+/**
+ * SHA-256 (lower-case hex) of the classification's ASCII bytes. Compare with the battle SNAPSHOT's
+ * `terrainInputSha256` (계약판 K2-REF-08); the kit stores it per board as `boards[].terrainSha256`.
+ */
+export async function terrainInputSha256(kit: BattleKit, boardId: number): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(boardClassification(kit, boardId)));
   return Array.from(new Uint8Array(digest), (b) => b.toString(16).padStart(2, '0')).join('');
 }
