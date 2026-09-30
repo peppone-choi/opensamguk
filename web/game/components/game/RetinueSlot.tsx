@@ -4,6 +4,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import type { RetinueResponse } from '@/types/game';
+import { ReasonTooltip } from '@opensamguk/ui';
 
 type Props = { readonly generalId: number | null; readonly href: string };
 
@@ -23,9 +24,11 @@ export default function RetinueSlot({ generalId, href }: Props) {
     if (state.kind !== 'ok') {
         const reason = state.kind === 'loading' ? '불러오는 중' : '휘하 정보를 불러오지 못했습니다';
         return (
-            <button type="button" className="os-button os-button--ghost os-button--sm subject-target-retinue" disabled aria-disabled="true" title={reason} data-reason={reason}>
-                휘하
-            </button>
+            <ReasonTooltip reason={reason}>
+                <button type="button" className="os-button os-button--ghost os-button--sm subject-target-retinue" aria-disabled="true" data-reason={reason}>
+                    휘하
+                </button>
+            </ReasonTooltip>
         );
     }
     const counts = state;

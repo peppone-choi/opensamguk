@@ -17,7 +17,9 @@ describe('shared UI foundation', () => {
     expect(brand).toHaveAttribute('src', '/logo-wordmark.png');
     expect(brand).toHaveAttribute('width', '86');
     expect(brand).toHaveAttribute('height', '32');
-    expect(screen.getByRole('button', { name: '확인' })).toBeDisabled();
+    // 비활성도 누를 수 있게 aria-disabled 로 두고, 누르면 사유가 열린다(ADR-LITE-049 (7)).
+    expect(screen.getByRole('button', { name: '확인' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: '확인' })).toHaveAccessibleDescription('테스트');
     expect(screen.getByRole('button', { name: '확인' })).toHaveAttribute('type', 'button');
   });
 
@@ -70,8 +72,10 @@ describe('shared UI foundation', () => {
       />,
     );
 
-    expect(screen.getByRole('dialog', { name: '삭제 확인' })).toHaveFocus();
+    const dialog = screen.getByRole('dialog', { name: '삭제 확인' });
+    expect(dialog).toContainElement(document.activeElement as HTMLElement);
     fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: '취소' }));
     expect(onCancel).not.toHaveBeenCalled();
   });
 });
