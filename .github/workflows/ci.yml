@@ -1015,6 +1015,21 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
+  # yuzhou-w1-attempt 는 매트릭스 잡이라 잡 단위 if 로만 건너뛰면 안 된다(tools/ci/test_ci_workflow.py).
+  # 이 모음 잡이 always() 로 결과를 받아 판정한다. #1026 밖에서는 건너뜀(skipped)을 그대로 통과시킨다.
+  yuzhou-w1:
+    if: always()
+    needs: yuzhou-w1-attempt
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Judge W1 attempts
+        env:
+          RESULT: ${{ needs.yuzhou-w1-attempt.result }}
+        run: |
+          echo "yuzhou-w1-attempt: $RESULT"
+          [ "$RESULT" != failure ] && [ "$RESULT" != cancelled ]
+
   yuzhou-w1-compare:
     if: github.event_name == 'pull_request' && github.event.pull_request.number == 1026 && needs.yuzhou-w1-attempt.result == 'success'
     needs: [yuzhou-pin-main, yuzhou-w1-attempt]
