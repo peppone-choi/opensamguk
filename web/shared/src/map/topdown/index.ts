@@ -105,3 +105,12 @@ export {
   type WorldState,
 } from './renderer';
 export { parsePlaces, type PlaceCity, type PlacesData, type SiteKind } from './places';
+export { MapMinimap, MINIMAP_SIZE, type MapMinimapProps } from './MapMinimap';
+export {
+  drawMyLocation,
+  myLocationHitRect,
+  placeMyLocation,
+  type EdgePlacement,
+  type MyLocation,
+  type MyLocationState,
+} from './myLocation';

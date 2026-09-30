@@ -7,10 +7,11 @@ import { layoutLabels, type LabelCandidate, type LabelKind } from './labels';
 import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitmap } from './loaders';
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
+import { drawMyLocation, myLocationHitRect, type MyLocation } from './myLocation';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
 import { TerrainLayer, type KitTextures } from './gl/terrainLayer';
-import type { BakeManifest, Camera, ChunkData, MapShape, ViewLevel, Viewport } from './types';
+import { NO_TILE, type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
 
 export interface TopdownSource {
   /** Directory holding manifest.json, grid/ and places.json.gz. */
@@ -73,6 +74,11 @@ export class TopdownRenderer {
   private frames = 0;
   private lastFrameMs = 0;
   private sprites: SpriteHit[] = [];
+  private me: MyLocation | null = null;
+  private overview: ChunkData | null = null;
+  private overviewSize = { cols: 0, rows: 0 };
+  private mip1: Uint8ClampedArray | null = null;
+  private overviewImage: OffscreenCanvas | null = null;
   private readonly measureCache = new Map<string, { width: number; height: number }>();
 
   constructor(private readonly glCanvas: HTMLCanvasElement, private readonly overlayCanvas: HTMLCanvasElement) {
@@ -104,6 +110,9 @@ export class TopdownRenderer {
     const terrain = new TerrainLayer(this.gl, shape, manifest.chunkSize);
     terrain.setKit(kit);
     terrain.setOverview(manifest.overview.cols, manifest.overview.rows, manifest.overview.block, overview);
+    this.overview = overview;
+    this.overviewSize = { cols: manifest.overview.cols, rows: manifest.overview.rows };
+    this.mip1 = bitmapPixels(mip1);
     const places = parsePlaces(placesRaw);
     const admin = adminTexels(places);
     terrain.setAdmin(admin.width, admin.height, admin.data);
@@ -156,6 +165,40 @@ export class TopdownRenderer {
     }
     this.terrain.setProvinceTable(table.width, table.height, table.bytes, table.nationPalette);
     this.requestFrame();
+  }
+
+  /** 내 위치 표지(M2-11). null이면 지운다. */
+  setMe(me: MyLocation | null): void {
+    this.me = me;
+    this.requestFrame();
+  }
+
+  /**
+   * Whole-map picture for the minimap: one pixel per overview entry, coloured by the tile's 1-px mip.
+   * Built once from data already loaded (no extra requests).
+   */
+  overviewPicture(): OffscreenCanvas | null {
+    if (this.overviewImage) return this.overviewImage;
+    const overview = this.overview;
+    const mip1 = this.mip1;
+    if (!overview || !mip1) return null;
+    const { cols, rows } = this.overviewSize;
+    const image = new ImageData(cols, rows);
+    const atlasColumns = 32;
+    for (let i = 0; i < cols * rows; i += 1) {
+      const tile = overview.tiles[i];
+      const at = i * 4;
+      if (tile === NO_TILE) {
+        image.data.set([12, 15, 14, 255], at);
+        continue;
+      }
+      const src = ((Math.floor(tile / atlasColumns)) * atlasColumns + (tile % atlasColumns)) * 4;
+      image.data.set([mip1[src], mip1[src + 1], mip1[src + 2], 255], at);
+    }
+    const canvas = new OffscreenCanvas(cols, rows);
+    canvas.getContext('2d')!.putImageData(image, 0, 0);
+    this.overviewImage = canvas;
+    return canvas;
   }
 
   setLayers(layers: MapLayers): void {
@@ -325,6 +368,10 @@ export class TopdownRenderer {
         ctx.fillText(label.text, label.x + label.width / 2, label.y + label.height / 2 + 1);
       }
     }
+    if (this.me) {
+      const placement = drawMyLocation(ctx, this.me, (cell) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport), this.viewport);
+      sprites.push({ kind: 'me', id: 'me', rect: myLocationHitRect(placement), z: 10 });
+    }
     this.sprites = sprites;
   }
 
@@ -336,6 +383,13 @@ export class TopdownRenderer {
     }
     return canvas;
   }
+}
+
+function bitmapPixels(bitmap: ImageBitmap): Uint8ClampedArray {
+  const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
+  ctx.drawImage(bitmap, 0, 0);
+  return ctx.getImageData(0, 0, bitmap.width, bitmap.height).data;
 }
 
 async function loadSheet(rgbaUrl: string, rolesUrl: string): Promise<SpriteSheet> {

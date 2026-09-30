@@ -1,10 +1,11 @@
-// 탑다운 지도 엔진(기능 플래그 뒤 /map-lab) — 합성 키트 · 굽기(e2e/fixtures/topdown, 원작 그림 없음)로
-// 「그려졌다」와 「조작된다」를 따로 본다. 데스크톱과 모바일(390×844, 터치)에서 같은 흐름.
+// 탑다운 지도 엔진(기능 플래그 뒤 /map-lab) — 합성 키트 · 굽기(e2e/fixtures/topdown, 원작 그림 없음)를
+// page.route로 대 준다. 백엔드 없이 돈다(e2e/smoke 규칙: @both = 데스크톱 · 모바일 두 프로필, @mobile-only).
+// 「그려졌다」(스크린샷 화소)와 「조작된다」(상태 속성 · 누르기 결과)를 따로 본다.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 
-const FIXTURE = join(__dirname, 'fixtures', 'topdown');
+const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
 const LAB = '/map-lab?bake=/e2e-topdown/bake&kit=/e2e-topdown/kit&c=1408,896&z=16';
 const RED = [200, 40, 40];
 const GREEN = [40, 160, 60];
@@ -19,8 +20,7 @@ async function serveFixture(page: Page) {
 }
 
 /** Colour at a point of the map box, read from a real screenshot (the WebGL buffer is not preserved). */
-async function colourAt(page: Page, x: number, y: number): Promise<number[]> {
-  const map = page.locator('[data-map-renderer="topdown"]');
+async function colourAt(page: Page, map: Locator, x: number, y: number): Promise<number[]> {
   const shot = await map.screenshot();
   const box = (await map.boundingBox())!;
   return page.evaluate(async ({ png, x, y, width }) => {
@@ -47,21 +47,21 @@ async function openLab(page: Page) {
   return map;
 }
 
-test.describe('탑다운 지도 시험 화면 — 데스크톱', () => {
-  test.use({ viewport: { width: 1280, height: 800 } });
+const zoomOf = async (map: Locator) => Number(await map.getAttribute('data-map-zoom'));
 
-  test('그려진다: 타일 색 · 캔버스가 맨 위', async ({ page }) => {
+test.describe('탑다운 지도 시험 화면', () => {
+  test('그려진다: 타일 색 · 가운데가 지도 캔버스', { tag: '@both' }, async ({ page }) => {
     const map = await openLab(page);
     const box = (await map.boundingBox())!;
     const cx = box.width / 2;
     const cy = box.height / 2;
-    near(await colourAt(page, cx - 40, cy), RED); // 칸 1405.5 → 조각 (5,3) 왼쪽 반
-    near(await colourAt(page, cx + 40, cy), GREEN); // 칸 1410.5 → 오른쪽 반
+    near(await colourAt(page, map, cx - 24, cy), RED); // 칸 1406.5 → 조각 (5,3) 왼쪽 반
+    near(await colourAt(page, map, cx + 24, cy), GREEN); // 칸 1409.5 → 오른쪽 반
     const top = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, { x: box.x + cx, y: box.y + cy });
     expect(top).toBe('CANVAS');
   });
 
-  test('조작된다: 휠 · 끌기 · 누르기 · 키보드', async ({ page }) => {
+  test('조작된다: 휠 · 끌기 · 누르기 · 키보드', { tag: '@both' }, async ({ page }) => {
     const map = await openLab(page);
     const box = (await map.boundingBox())!;
     const cx = box.x + box.width / 2;
@@ -69,46 +69,57 @@ test.describe('탑다운 지도 시험 화면 — 데스크톱', () => {
     await page.mouse.move(cx, cy);
     await page.mouse.wheel(0, 200);
     await expect(map).not.toHaveAttribute('data-map-zoom', '16.000');
-    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBe(8); // 멈추면 가까운 멈춤 자리
+    await expect.poll(() => zoomOf(map)).toBe(8); // 멈추면 가까운 멈춤 자리
     const before = await map.getAttribute('data-map-center');
     await page.mouse.move(cx, cy);
     await page.mouse.down();
-    await page.mouse.move(cx - 120, cy - 60, { steps: 6 });
+    await page.mouse.move(cx - 60, cy - 40, { steps: 6 });
     await page.mouse.up();
     await expect(map).not.toHaveAttribute('data-map-center', before!);
-    await page.mouse.click(cx, cy);
+    await page.mouse.click(cx + 20, cy + 20);
     await expect(page.getByTestId('map-lab-hit')).toContainText('province');
     await map.focus();
-    const zoomBefore = Number(await map.getAttribute('data-map-zoom'));
+    const zoomBefore = await zoomOf(map);
     await page.keyboard.press('+');
-    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom'))).toBeGreaterThan(zoomBefore);
+    await expect.poll(() => zoomOf(map)).toBeGreaterThan(zoomBefore);
   });
 
-  test('보기 수준 단추: 주 · 군 · 현', async ({ page }) => {
+  test('보기 수준 단추: 주 · 군 · 현', { tag: '@both' }, async ({ page }) => {
     const map = await openLab(page);
-    await page.getByRole('button', { name: '주' }).click();
+    await page.getByRole('button', { name: '주', exact: true }).click();
     await expect(map).toHaveAttribute('data-map-level', 'ju');
-    await page.getByRole('button', { name: '군' }).click();
+    await page.getByRole('button', { name: '군', exact: true }).click();
     await expect(map).toHaveAttribute('data-map-level', 'commandery');
     await expect(map).toHaveAttribute('data-map-zoom', '4.000');
-    await page.getByRole('button', { name: '현' }).click();
+    await page.getByRole('button', { name: '현', exact: true }).click();
     await expect(map).toHaveAttribute('data-map-zoom', '16.000');
   });
-});
 
-test.describe('탑다운 지도 시험 화면 — 모바일', () => {
-  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  test('내 위치로 · 내 위치 표지 누르기 · 작은 지도', { tag: '@both' }, async ({ page }) => {
+    const map = await openLab(page);
+    await page.getByRole('button', { name: '내 위치로' }).click();
+    await expect(map).toHaveAttribute('data-map-center', '1505.0,933.0');
+    const box = (await map.boundingBox())!;
+    // 핀 머리는 칸 가운데(화면 가운데 + 반 칸) 위 약 31px
+    await page.mouse.click(box.x + box.width / 2 + 8, box.y + box.height / 2 + 8 - 31);
+    await expect(page.getByTestId('map-lab-hit')).toContainText('me');
+    const minimap = page.getByRole('button', { name: /작은 지도/ });
+    await expect(minimap).toBeVisible();
+    const mini = (await minimap.boundingBox())!;
+    await minimap.click({ position: { x: 4, y: 4 } }); // 지도 왼쪽 위 끝으로
+    await expect.poll(async () => Number((await map.getAttribute('data-map-center'))!.split(',')[0])).toBeLessThan(400);
+    expect(mini.width).toBeGreaterThanOrEqual(44);
+  });
 
-  test('그려지고 탭으로 고른다', async ({ page }) => {
+  test('모바일: 탭으로 고르고 누를 것은 44px 이상', { tag: '@mobile-only' }, async ({ page }) => {
     const map = await openLab(page);
     const box = (await map.boundingBox())!;
-    near(await colourAt(page, box.width / 2 - 24, box.height / 2), RED);
-    near(await colourAt(page, box.width / 2 + 24, box.height / 2), GREEN);
     expect(await map.evaluate((el) => getComputedStyle(el).touchAction)).toBe('none');
     await page.touchscreen.tap(box.x + box.width / 2 + 24, box.y + box.height / 2);
     await expect(page.getByTestId('map-lab-hit')).toContainText('province 1');
-    const plus = page.getByRole('button', { name: '+' });
-    const size = (await plus.boundingBox())!;
-    expect(Math.min(size.width, size.height)).toBeGreaterThanOrEqual(44);
+    for (const name of ['+', '−', '주', '군', '현', '내 위치로']) {
+      const size = (await page.getByRole('button', { name, exact: true }).boundingBox())!;
+      expect(Math.min(size.width, size.height), name).toBeGreaterThanOrEqual(44);
+    }
   });
 });

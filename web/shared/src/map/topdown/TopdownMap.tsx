@@ -7,6 +7,8 @@ import { clampCamera, fitZoom, levelZoom, nearestStop, stepStop, viewLevel, zoom
 import { Inertia, keyAction, keyPanCells, panBy, pinch, wheelZoomFactor } from './input';
 import { DEFAULT_LAYERS, TopdownRenderer, type MapLayers, type TopdownSource, type WorldState } from './renderer';
 import type { HitResult } from './hitTest';
+import { MapMinimap } from './MapMinimap';
+import type { MyLocation } from './myLocation';
 import { HAN_MAP_SHAPE, type Camera, type CellPoint, type ViewLevel, type Viewport } from './types';
 
 export interface TopdownMapHandle {
@@ -19,6 +21,10 @@ export interface TopdownMapProps {
   source: TopdownSource;
   world?: WorldState;
   layers?: MapLayers;
+  /** 내 위치 표지(M2-11). */
+  me?: MyLocation | null;
+  /** 오른쪽 아래 작은 지도(K3 v3.1 MapMinimap). */
+  minimap?: boolean;
   /** 'fit' shows the whole map (州 보기); otherwise centre and zoom (CSS px per cell). */
   initialView?: 'fit' | { center: CellPoint; zoom: number };
   onSelect?: (hit: HitResult) => void;
@@ -36,7 +42,7 @@ const SETTLE_MS = 150;
 const TAP_SLOP_PX = 6;
 
 export function TopdownMap(props: TopdownMapProps) {
-  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady } = props;
+  const { source, world, layers = DEFAULT_LAYERS, initialView = 'fit', onSelect, onViewChange, onReady, me = null, minimap = false } = props;
   const boxRef = useRef<HTMLDivElement>(null);
   const glRef = useRef<HTMLCanvasElement>(null);
   const overlayRef = useRef<HTMLCanvasElement>(null);
@@ -44,6 +50,7 @@ export function TopdownMap(props: TopdownMapProps) {
   const cameraRef = useRef<Camera | null>(null);
   const viewportRef = useRef<Viewport>({ width: 0, height: 0, dpr: 1 });
   const [status, setStatus] = useState<Status>({ kind: 'loading' });
+  const [picture, setPicture] = useState<OffscreenCanvas | null>(null);
   const [debug, setDebug] = useState<{ zoom: number; level: ViewLevel; col: number; row: number }>();
   const callbacks = useRef({ onSelect, onViewChange, onReady });
   callbacks.current = { onSelect, onViewChange, onReady };
@@ -78,6 +85,7 @@ export function TopdownMap(props: TopdownMapProps) {
     renderer.load(source).then(() => {
       if (cancelled) return;
       setStatus({ kind: 'ready' });
+      setPicture(renderer.overviewPicture());
       if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
       callbacks.current.onReady?.({
         setLevel: (level) => {
@@ -110,6 +118,10 @@ export function TopdownMap(props: TopdownMapProps) {
   useEffect(() => {
     rendererRef.current?.setLayers(layers);
   }, [layers, status.kind]);
+
+  useEffect(() => {
+    rendererRef.current?.setMe(me);
+  }, [me, status.kind]);
 
   // 크기 · 기기 픽셀 비율
   useEffect(() => {
@@ -280,6 +292,19 @@ export function TopdownMap(props: TopdownMapProps) {
         <p role="alert" style={{ position: 'absolute', inset: 'auto 16px 16px 16px', margin: 0, color: '#e08a7c' }}>
           지도를 불러오지 못했습니다. {status.message}
         </p>
+      )}
+      {minimap && picture && (
+        <div style={{ position: 'absolute', right: 12, bottom: 12, zIndex: 20 }}>
+          <MapMinimap
+            picture={picture}
+            shape={shape}
+            camera={cameraRef.current}
+            viewport={viewportRef.current}
+            me={me?.cell ?? null}
+            meColor={me?.nationColor ?? null}
+            onJump={(cell) => apply({ center: cell, zoom: cameraRef.current?.zoom ?? 16 })}
+          />
+        </div>
       )}
       {props.children}
     </div>
