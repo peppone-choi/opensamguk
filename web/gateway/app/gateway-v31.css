@@ -312,6 +312,8 @@
 .gw31-lobby__side { display: flex; flex-direction: column; gap: 10px; }
 .gw31-foot-notes { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.6; color: var(--text-2); }
 .gw31-foot-notes .is-warn { color: var(--rust-2); }
+/* 로비 각주 초안 칩 — 로그인 소개의 .gw31-intro__draft 를 빌리지 않는다(그 규칙은 모바일에서 숨긴다). */
+.gw31-lobby__draft { display: flex; }
 
 .gw31-card { display: flex; flex-direction: column; }
 .gw31-card__body { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 16px; padding: 12px 14px; }
@@ -328,8 +330,11 @@
 .gw31-card__none { font-size: 13px; color: var(--text-2); min-height: 20px; }
 .gw31-card__action { margin-top: auto; width: 100%; justify-content: center; }
 .gw31-card__toggle { border-width: 1px 0 0; width: 100%; }
-.gw31-card__status { display: grid; grid-template-columns: minmax(0, 1fr) 320px 400px; gap: 12px; padding: 12px; border-top: 1px solid var(--line); }
-.gw31-card__map { min-width: 0; }
+/* 펼친 현황: 지도는 한 줄을 다 쓰고(높이 360), 세력 현황 · 천하 정세는 그 아래 나란히. 세 칸을 한 줄에 두면 지도가 150px 로 눌렸다(캡처). */
+.gw31-card__status { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px; border-top: 1px solid var(--line); }
+.gw31-card__map { grid-column: 1 / -1; min-width: 0; }
+.gw31-card__map .map-preview { max-width: none; }
+.gw31-card__map .map-preview-canvas { aspect-ratio: auto; height: 360px; }
 
 .gw31-practice { display: flex; align-items: center; gap: 16px; padding: 12px 14px; border-color: var(--info-dim); }
 .gw31-practice__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
@@ -346,6 +351,7 @@
 }
 @media (max-width: 767.98px) {
   .gw31-card__body { grid-template-columns: minmax(0, 1fr); }
+  .gw31-card__map .map-preview-canvas { height: 280px; }
   .gw31-practice { flex-direction: column; align-items: stretch; }
   .gw31-lobby__filters { margin: 0 -12px; padding: 0 12px; }
 }

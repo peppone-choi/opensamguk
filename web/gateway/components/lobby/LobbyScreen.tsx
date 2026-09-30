@@ -79,7 +79,7 @@ export default function LobbyScreen({ servers, registry }: {
                             <li key={note.text} className={note.warn ? 'is-warn' : undefined} data-copy-status="draft">{note.text}</li>
                         ))}
                     </ul>
-                    <span className="gw31-intro__draft"><Chip tone="info">문구 초안 — 공개 알파 문구와 함께 승인</Chip></span>
+                    <span className="gw31-lobby__draft"><Chip tone="info">문구 초안 — 공개 알파 문구와 함께 승인</Chip></span>
                 </aside>
             </main>
         </div>

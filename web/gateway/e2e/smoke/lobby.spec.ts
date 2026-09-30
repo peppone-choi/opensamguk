@@ -35,6 +35,8 @@ test.describe('P-G04 로비 — 데스크톱 · 모바일 같은 흐름', () => 
     const uni = page.getByRole('article', { name: '통일 서버' });
     await expect(uni.getByText('마감')).toBeVisible();
     await expect(uni.getByRole('button', { name: '장수 만들기' })).toHaveAttribute('aria-disabled', 'true');
+    // 각주 초안 칩은 모바일에서도 보인다(로그인 소개의 초안 칩 규칙을 빌려 모바일에서 숨던 것을 막는다).
+    await expect(page.getByText('문구 초안 — 공개 알파 문구와 함께 승인')).toBeVisible();
     await expectNoHorizontalOverflow(page);
     expect(await smallHitAreas(page, 'body')).toEqual([]);
     expect(await titleOnlyInfo(page), 'title 전용 정보 금지').toEqual([]);
