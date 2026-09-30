@@ -632,7 +632,7 @@ def board_battlejoin():
              f'<section class="panel">{sec("상대 — 보이는 만큼", "")}<div style="padding:8px 12px">'
              + fieldrow('[적] 선봉', '기병 추정') + fieldrow('[적] 중앙', '병력 [값]') + fieldrow('나머지', '안개 속', cls='muted') + '</div></section>'
              f'<section class="panel">{sec("전장", "티켓에 고정")}<div style="padding:8px 12px">'
-             + fieldrow('판', '야전 판 · [값]번') + fieldrow('날씨 · 밤 · 계절', '서버 대기', cls='muted') + fieldrow('목표', '서버 대기', cls='muted')
+             + fieldrow('판', '야전 판 · [값]번') + fieldrow('날씨 · 밤 · 계절', chip('서버 대기', 'info')) + fieldrow('목표', chip('서버 대기', 'info'))
              + fieldrow('길이', '5분 · 3,000틱') + '</div></section>'
              f'<section class="panel" style="flex-grow:1">{sec("안내", "")}<ul class="ul" style="padding:4px 12px">'
              '<li><b>자리</b> — 기본은 주장 중앙, 무력 높은 장수 선봉, 나머지 통솔 순 좌익 → 우익 → 좌비 → 우비.</li>'
