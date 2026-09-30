@@ -144,14 +144,14 @@ def board_login():
              f'<h2 class="serif" style="margin:0;font-size:30px;font-weight:900;line-height:1.3">한 명의 장수에서 천하까지.</h2>'
              f'<p class="t2" style="margin:0;font-size:14px;line-height:1.6">{LOGIN_COPY}</p><span style="display:flex">{draft_chip()}</span></div>')
     nat = floatp('세력 현황', 'pep 1기 · 세력 5', nat_rows(h=40), 'left:32px;top:668px;width:320px')
-    wl = floatp('천하 정세', '공개 사건 · 최근', world_rows(5, 44)
+    wl = floatp('천하 정세', '공개 사건 · 최근', world_rows(4, 44)
                 + '<a href="#" style="display:flex;align-items:center;min-height:44px;padding:0 12px;font-size:12px">더 보기 — 로그인하면 기록에서</a>', 'left:364px;top:668px;width:460px')
     nt = floatp('공지', '3건', notice_rows(), 'right:32px;top:560px;width:380px')
     chips = f'<div style="position:absolute;left:32px;top:612px">{server_chips()}</div>'
     cap = '<span class="chip" style="position:absolute;left:364px;top:618px;height:32px;background:rgba(20,24,22,.92);font-size:12px">pep 1기 · 200년 3월 중순 · 군 보기</span>'
     foot = f'<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(12,15,14,.8)">{policy_links("height:44px")}</div>'
     body = (f'<main aria-label="로그인 — 서버 현황 지도" style="position:relative;width:{W}px;height:{H}px;overflow:hidden">'
-            f'{mapimg("hero", W, H, "中原 일대 지도 — pep 1기의 지금 판도(군 보기)")}{over(gw_topbar("login", transparent=True, logo_on=False))}'
+            f'{mapimg("hero", W, H, "중원 일대 지도 — pep 1기의 지금 판도(군 보기)")}{over(gw_topbar("login", transparent=True, logo_on=False))}'
             f'{intro}{login_card()}{map_ctrl("left:32px;top:420px")}{chips}{cap}{nat}{wl}{nt}{foot}</main>')
     page31('V31K5Login.dc.html', 'K5 P-G02 로그인 — 지도가 주인공(데스크톱)', body)
 
@@ -165,7 +165,7 @@ def board_login_empty():
     wait = (f'<section class="panel" aria-label="서버 상태 예시" style="position:absolute;left:32px;top:420px;width:520px;background:rgba(27,32,29,.96)">{sec("서버가 있을 때 지도 위 상태 칩", "K3-03 · K10-01")}'
             f'<div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap">{chip("점검 중", "rust")}{chip("준비 중 — 10월 3일 20:00 열림", "info")}{chip("턴 멈춤", "rust")}'
             f'{chip("따라잡는 중 · 2배속", "bronze")}</div></section>')
-    body = (f'<main style="position:relative;width:{W}px;height:{H}px;overflow:hidden">{mapimg("hero", W, H, "中原 일대 기본 지형 — 세력 없음")}'
+    body = (f'<main style="position:relative;width:{W}px;height:{H}px;overflow:hidden">{mapimg("hero", W, H, "중원 일대 기본 지형 — 세력 없음")}'
             f'{over(gw_topbar("login", transparent=True, logo_on=False))}{note}{wait}{login_card("계정명이나 비밀번호가 맞지 않습니다.")}{empty}{nt}</main>')
     page31('V31K5LoginEmpty.dc.html', 'K5 P-G02 로그인 — 서버 0 · 로그인 거절 · 서버 상태 칩', body)
 
@@ -219,7 +219,7 @@ def board_join():
             f'<div style="padding:12px 16px 14px;display:flex;flex-direction:column;gap:10px">{join_fields()}{btn("회원가입", "primary", style="width:100%")}'
             f'<a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">이미 계정이 있으신가요? 로그인</a></div></section>')
     foot = f'<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(12,15,14,.8)">{policy_links("height:44px")}</div>'
-    body = (f'<main style="position:relative;width:{W}px;height:{H}px;overflow:hidden">{mapimg("hero", W, H, "中原 일대 지도 — 배경")}'
+    body = (f'<main style="position:relative;width:{W}px;height:{H}px;overflow:hidden">{mapimg("hero", W, H, "중원 일대 지도 — 배경")}'
             f'{over(gw_topbar("join", transparent=True, logo_on=False))}{intro}{card}{foot}</main>')
     page31('V31K5Join.dc.html', 'K5 P-G03 가입 — 비밀번호 확인 오류(데스크톱)', body)
 
@@ -605,7 +605,7 @@ def board_admin_server():
                  f'{field("한 순 길이(분)", seg(["1", "2", "5", "10", "20", "30", "60", "120"], "10", "한 순 길이"))}</div>'
                  f'{field("시나리오", SCN_LIST)}'
                  f'{checkbox("시나리오 자동 시드", True)}'
-                 f'<span class="muted" style="font-size:11.5px;line-height:1.5">뺀 칸(삼모): 시간 동기화 · NPC 상성 · 확장 NPC · 장수 임의 생성 · NPC 빙의 · 이미지 표기 · 휴식 턴 시 장수 턴 · 자동 행동 유효 시간 · 임관 모드 · 토너먼트 자동 시작 · 오픈 예약 · 가오픈 예약</span></div>',
+                 f'<span class="muted" data-lint="skip" style="font-size:11.5px;line-height:1.5">뺀 칸(삼모): 시간 동기화 · NPC 상성 · 확장 NPC · 장수 임의 생성 · NPC 빙의 · 이미지 표기 · 휴식 턴 시 장수 턴 · 자동 행동 유효 시간 · 임관 모드 · 토너먼트 자동 시작 · 오픈 예약 · 가오픈 예약</span></div>',
                  f'{btn("취소")}{btn("리셋 실행", "danger")}', w=560, style='position:absolute;left:calc(50% - 280px);top:40px')
     body = ver + gset + f'<div class="scrim"></div>{dlg}'
     page31('V31K5AdminServer.dc.html', 'K5 P-G09 운영 콘솔 — 서버(리셋 대화상자 · 새 폼)', console('서버', body))
@@ -668,7 +668,7 @@ def board_admin_boards():
 
 def board_madmin():
     tabs = ('<div role="group" aria-label="운영 콘솔 — 옆으로 밀어 보기" style="height:60px;flex-shrink:0;display:flex;gap:6px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid #2c342f">'
-            + ''.join(f'<button type="button" class="btn sm" aria-pressed="{"true" if t == "개요" else "false"}" style="flex-shrink:0;{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if t == "개요" else ""}">{t}</button>' for t, r in CONSOLE_TABS)
+            + ''.join(f'<button type="button" class="btn sm" aria-pressed="{"true" if t == "개요" else "false"}" style="flex-shrink:0;min-width:44px;{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if t == "개요" else ""}">{t}</button>' for t, r in CONSOLE_TABS)
             + '</div>')
     cards = ''.join(f'<article class="panel" style="flex-shrink:0"><div style="padding:10px 12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;gap:6px;align-items:center">'
                     f'<b class="serif" style="font-size:16px">{n}</b>{chip(g, "bronze")}{chip(skew, "rust") if skew else ""}</div><span class="t2" style="font-size:12px">{sc} · engine <span class="mono">{e}</span></span>'
@@ -796,7 +796,11 @@ def board_entry_states():
 # ------------------------------------------------------------------ P-E02 장수 생성
 STATS = [('통솔', 70), ('무력', 65), ('지력', 55), ('정치', 50), ('매력', 40)]  # 합 280 → 20 남음(예시)
 IDEO = ['왕도', '패도', '아도', '할거', '명리', '예교']
+# 개성 이름은 선택 정책 원장의 표시명(officer-catalog displayNameKo)을 그대로 받는다. RENOWN 「명성」은 이름 규칙이 막는 삼모 능력치가 아니라
+# 원장 · 생성 계약이 정한 개성이라 그 칩만 검사에서 뺀다(K0 판정 2026-09-30). 대체어 여부는 계약판 §2i K5-COPY-01(C7 · C4 검토).
 TRAIT = ['규율', '수전', '명성', '논객', '책사', '일기']
+LEDGER_NAMES = {'명성'}
+LINT_SKIP = ' data-lint="skip"'
 HOME_OK = ['영양현', '장사현', '영음현', '번창현', '양성현']
 
 
@@ -809,8 +813,9 @@ def stat_rows(h=52):
 
 
 def pick_grid(label, items, on, help_=''):
-    b = ''.join(f'<button type="button" aria-pressed="{"true" if t == on else "false"}" class="btn" style="{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if t == on else ""}">{t}</button>' for t in items)
-    return field(label, f'<div role="group" aria-label="{label}" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px">{b}</div>', help_)
+    b = ''.join(f'<button type="button" aria-pressed="{"true" if t == on else "false"}" class="btn"{LINT_SKIP if t in LEDGER_NAMES else ""} style="{"background:#d3b064;color:#161410;border-color:#9c7f3f;font-weight:700" if t == on else ""}">{t}</button>' for t in items)
+    note = '<!-- 개성 이름 = 선택 정책 원장 표시명(displayNameKo) 그대로. 명성은 원장 이름이라 검사 제외(K0 2026-09-30) -->' if set(items) & LEDGER_NAMES else ''
+    return field(label, f'<div role="group" aria-label="{label}" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px">{note}{b}</div>', help_)
 
 
 def preview_card(name='[이름]', key='', home='허현'):
@@ -820,7 +825,7 @@ def preview_card(name='[이름]', key='', home='허현'):
     face = portrait(key, name, 148, 210) if key else pic('', 148, 210, '계정 초상 — 없으면 기본 실루엣')
     return (f'<div style="padding:12px;display:grid;grid-template-columns:148px minmax(0,1fr);gap:12px">{face}'
             f'<div style="display:flex;flex-direction:column;gap:4px;min-width:0"><span class="serif" style="font-size:20px;font-weight:900">{name}</span>'
-            f'<div style="display:flex;gap:4px;flex-wrap:wrap">{chip("향당 · " + home, "bronze")}{chip("왕도")}{chip("규율")}</div>{st}</div></div>'
+            f'<div style="display:flex;gap:4px;flex-wrap:wrap">{chip("향당 · " + home, "bronze")}{chip("주의 · 왕도")}{chip("개성 · 규율")}</div>{st}</div></div>'
             f'<div style="padding:0 12px 8px;display:flex;gap:4px;flex-wrap:wrap">{chip(f"장 {a[0]}", "bronze")}{chip(f"리 {a[1]}")}{chip(f"사 {a[2]}")}{chip(f"사자 {a[3]}")}'
             f'<span class="muted" style="font-size:11px;align-self:center">적성 — 능력에서 계산</span></div>'
             f'<div style="padding:0 12px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">{kv("명망", "30", "bz")}{kv("신분", "재야")}{kv("시작", home + "의 성")}</div>'
@@ -833,6 +838,8 @@ def board_create():
     for n in EMAP_CITIES + ['마피영']:
         x, y = dpx(n, s)
         x = min(max(x, 24), 552)
+        if not 22 <= y <= 524 - 22:  # 누를 영역 44가 지도 상자에 다 들어오는 표식만(K10 3.1.4 검사 — 신정현이 위 끝에서 2px 잘렸다)
+            continue
         kind = 'sel' if n == '허현' else ('no' if n == '마피영' else 'ok')
         marks += mk(x, y, kind, n, 'no' if kind == 'no' else '')
     mapw = (f'<div style="position:relative;width:576px;height:524px;overflow:hidden;flex-shrink:0">{mapimg("desk", 576, 524, "영천 일대 지도 — 본관 현 고르기")}'
@@ -906,6 +913,7 @@ def board_create_pending():
 
 
 # ------------------------------------------------------------------ P-E03 역사 인물
+# 인물 이름은 한글만 보인다(K0 2026-09-30). 한자 칸은 같은 읽기 인물이 한 화면에 함께 나올 때 twin() 으로만 쓴다 — 지금 목록엔 없다.
 HIST = [('hahoudon', '하후돈', '夏侯惇', '조조 소속', '패국 초현', 'ok', True), ('jojo', '조조', '曹操', '조조 · 주공', '패국 초현', 'lord', False),
         ('sunuk', '순욱', '荀彧', '조조 소속', '영천군 영음현', 'taken', False), ('heojeo', '허저', '許褚', '재야', '초국 초현', 'ok', False),
         ('ijeon', '이전', '李典', '조조 소속', '산양군 거야현', 'ok', False), ('join', '조인', '曹仁', '조조 소속', '패국 초현', 'ok', False),
@@ -918,7 +926,7 @@ def hist_card(k, n, h, aff, home, st, sel, mobile=False):
     dis = ' aria-disabled="true" aria-haspopup="dialog"' if st in ('taken', 'late') else ''
     return (f'<button type="button" role="option" aria-selected="{"true" if sel else "false"}"{dis} class="opt" style="min-height:{104 if mobile else 128}px;align-items:flex-start;padding:8px;'
             f'border:1px solid {"#d3b064" if sel else "#2c342f"};background:{"rgba(211,176,100,.08)" if sel else "#1b201d"}">{portrait(k, n, 64 if mobile else 74, 90 if mobile else 105)}'
-            f'<span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="display:flex;gap:6px;align-items:baseline"><span class="nm">{n}</span><span class="muted" style="font-size:11px">{h}</span></span>'
+            f'<span style="display:flex;flex-direction:column;gap:3px;min-width:0"><span style="display:flex;gap:6px;align-items:baseline"><span class="nm">{n}</span></span>'
             f'<span class="sub">{aff}</span><span class="sub">본관 {home}</span><span class="mono muted" style="font-size:11px">{stats}</span><span>{chipx}</span></span></button>')
 
 
@@ -929,7 +937,7 @@ def board_historical():
     grid = ''.join(hist_card(*h) for h in HIST)
     center = (f'<section class="panel" style="flex:1;min-width:0">{sec("등장한 인물", "1,000명 중 9 · 더 보기")}<div role="listbox" aria-label="역사 인물" style="padding:10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">{grid}</div>'
               f'<div style="padding:0 10px 10px">{btn("더 보기", style="width:100%")}</div></section>')
-    right = (f'<section class="panel" style="width:400px;flex-shrink:0">{sec("하후돈", "夏侯惇 · 고름")}<div style="padding:10px 12px 0">{help_strip("시나리오에 등장한 인물 가운데 비어 있는 한 명을 내 장수로 삼습니다.", draft=True)}</div>'
+    right = (f'<section class="panel" style="width:400px;flex-shrink:0">{sec("하후돈", "고름")}<div style="padding:10px 12px 0">{help_strip("시나리오에 등장한 인물 가운데 비어 있는 한 명을 내 장수로 삼습니다.", draft=True)}</div>'
              f'<div style="padding:12px;display:grid;grid-template-columns:148px minmax(0,1fr);gap:12px">{portrait("hahoudon", "하후돈", 148, 210)}<div style="display:flex;flex-direction:column;gap:4px">'
              f'<span style="display:flex;gap:4px;flex-wrap:wrap">{chip("조조 소속")}{chip("유일", "bronze")}</span>'
              + ''.join(f'<div style="display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:1px solid #2c342f"><span class="t2">{x}</span><span class="mono">{DASH}</span></div>' for x in ['통솔', '무력', '지력', '정치', '매력'])
@@ -950,7 +958,7 @@ def board_mhistorical():
 
 def board_mhistorical_sheet():
     lst = ''.join(hist_card(*h, mobile=True) for h in HIST[:3])
-    detail = sheet('하후돈 夏侯惇', f'<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">{help_strip("비어 있는 역사 인물 한 명을 내 장수로 삼습니다.", draft=True)}'
+    detail = sheet('하후돈', f'<div style="padding:0 16px;display:flex;flex-direction:column;gap:8px">{help_strip("비어 있는 역사 인물 한 명을 내 장수로 삼습니다.", draft=True)}'
                    f'<div style="display:flex;gap:10px">{portrait("hahoudon", "하후돈", 92, 130)}<div style="display:flex;flex-direction:column;gap:4px;flex:1">{chip("조조 소속")}'
                    f'<span class="mono muted" style="font-size:12px">통 {DASH} · 무 {DASH} · 지 {DASH} · 정 {DASH} · 매 {DASH}</span>{kv("결속", "혈연 · 향당 — 조조 · 조인")}{kv("시작 위치", "진류군 [현]")}</div></div></div>',
                    top=300, foot=btn('이 인물로 시작', 'primary', style='flex:1', attrs='data-guide="tutorial.createGeneral"'))
@@ -1048,14 +1056,17 @@ def ev_rows(events, sel_first=False, h=52, mobile=False):
     out, last = '', None
     for d, c, t, a, sel in events:
         if d != last:
-            out += (f'<div style="height:32px;display:flex;align-items:center;padding:0 12px;background:#141816;border-bottom:1px solid #2c342f">'
+            out += (f'<div role="listitem" style="height:32px;display:flex;align-items:center;padding:0 12px;background:#141816;border-bottom:1px solid #2c342f">'
                     f'<span class="mono bz" style="font-size:12px">{d}</span></div>')
             last = d
         act = ev_action(a, mobile)
-        out += (f'<button type="button" role="option" class="opt" aria-selected="{"true" if sel else "false"}" style="min-height:{h}px;gap:10px">{cat(c)}'
-                f'<span style="font-size:13px;min-width:0;white-space:{"normal" if mobile else "nowrap"};overflow:hidden;text-overflow:ellipsis;line-height:1.4">{t}</span>'
-                f'<span class="end">{act}</span></button>')
-    return f'<div role="listbox" aria-label="기록" style="display:flex;flex-direction:column">{out}</div>'
+        # 줄 단추(고르면 상세) 안에 「응답하기」 · 「다시 보기」 링크를 넣지 않는다 — 누를 것 안의 누를 것(K10 3.1.4 검사). 줄 옆에 따로 둔다.
+        hl = 'background:rgba(211,176,100,.10);box-shadow:inset 3px 0 0 #d3b064;' if sel else ''
+        end = f'<span style="display:flex;align-items:center;padding:0 12px 0 4px;flex-shrink:0">{act}</span>' if act else ''
+        out += (f'<div role="listitem" style="display:flex;align-items:stretch;border-bottom:1px solid #2c342f;{hl}">'
+                f'<button type="button" class="opt" aria-current="{"true" if sel else "false"}" style="flex:1;min-width:0;min-height:{h}px;gap:10px;border-bottom:0">{cat(c)}'
+                f'<span style="font-size:13px;min-width:0;white-space:{"normal" if mobile else "nowrap"};overflow:hidden;text-overflow:ellipsis;line-height:1.4">{t}</span></button>{end}</div>')
+    return f'<div role="list" aria-label="기록" style="display:flex;flex-direction:column">{out}</div>'
 
 
 def rec_filters(on='전체', mobile=False):
@@ -1125,7 +1136,7 @@ def board_mrecords():
 def board_mrecords_sheet():
     det = sheet('천하 정세 · 200년 3월 중순', f'{place_panel(MW, 200)}<div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px"><span style="font-size:14px">허현의 소유 세력이 원소에서 조조로 바뀌었습니다.</span>'
                 f'<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px">{kv("현", "허현")}{kv("이전", "원소")}{kv("지금", "조조", "bz")}</div></div>',
-                top=240, bottom=64, foot=f'{btn("현 상세", "", "territory", style="flex:1", href="#")}{btn("조조 세력", "", "court", style="flex:1", href="#")}')
+                top=209, bottom=64, foot=f'{btn("현 상세", "", "territory", style="flex:1", href="#")}{btn("조조 세력", "", "court", style="flex:1", href="#")}')
     main = f'<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column">{mtabs_row(REC_TABS, "기록 5분류")}{ev_rows(EVENTS[:6], h=60, mobile=True)}</div>'
     body = mtop31() + main + '<div class="dim"></div>' + det + tabbar31('records')
     page31('V31K5MRecordsSheet.dc.html', 'K5 P-H01 기록 — 모바일 고른 기록 시트(지도)', body, w=MW, h=MH)
@@ -1180,10 +1191,10 @@ def board_yearbook():
 
 
 def board_myearbook():
-    labs = ''.join(mlab(n, round(x * 358 / 820), round(y * 312 / 714), dim=False) for n, x, y in PROV_LAB)
+    labs = ''.join(mlab(n, round(x * 358 / 820), round(y * 280 / 714), dim=False) for n, x, y in PROV_LAB)
     main = (f'<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:8px">{mtabs_row(REC_TABS, "연감")}'
             f'<div style="display:flex;gap:6px;align-items:center;padding:0 12px">{btn("199년", "sm", "prev")}<b class="serif" style="font-size:17px;flex:1;text-align:center">200년</b>{btn_off("201년", "아직 안 끝남")}</div>'
-            f'<div style="position:relative;width:358px;height:312px;margin:0 16px;overflow:hidden;border:1px solid #3d4740">{mapimg("prov", 358, 312, "200년 말 판도")}{labs}</div>'
+            f'<div style="position:relative;width:358px;height:280px;margin:0 16px;overflow:hidden;border:1px solid #3d4740">{mapimg("prov", 358, 280, "200년 말 판도")}{labs}</div>'
             f'<section class="panel" style="margin:0 12px">{sec("연말 판도")}{terr_table(False)}</section></div>')
     page31('V31K5MYearbook.dc.html', 'K5 P-H02 연감 — 모바일', shell_mob(main, 'records'), w=MW, h=MH)
 
@@ -1322,7 +1333,7 @@ def board_council():
 
 
 def board_council_secret():
-    popx = (f'<section class="panel" role="dialog" aria-label="열람한 사람" style="position:absolute;left:560px;top:190px;width:300px;background:#1b201d;border-color:#9c7f3f;box-shadow:0 10px 30px rgba(0,0,0,.55)">'
+    popx = (f'<section class="panel" role="dialog" aria-label="열람한 사람" style="position:absolute;right:13px;top:157px;width:300px;z-index:5;background:#1b201d;border-color:#9c7f3f;box-shadow:0 10px 30px rgba(0,0,0,.55)">'
             f'{sec("열람한 사람", "3 / 5")}<ul class="ul" style="padding:4px 12px 8px">'
             + ''.join(f'<li style="display:flex;gap:8px;align-items:center;min-height:44px">{n}<span class="mono muted" style="font-size:11px;margin-left:auto">{t}</span></li>'
                       for n, t in [('조조', '09.30 23:40'), ('순욱', '10.01 00:05'), ('하후돈', '10.01 00:12')]) + '</ul></section>')
@@ -1366,7 +1377,7 @@ def board_game_admin():
     rows = [[f'<b>{n}</b>', chip('NPC'), '—', '조조 소속', '<span class="mono">21:40</span>', s1, s2] for n, s1, s2 in [('허저', '훈련', '빈 순'), ('이전', '징병', '훈련')]]
     right = (f'<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">{action_groups()}'
              f'<section class="panel">{sec("고른 인물", "2명")}<div style="padding:4px 8px 8px">{tbl(["인물", "사람/NPC", "차단", "소속", "다음 개인 턴", "1순", "2순"], rows)}</div></section>'
-             f'<span class="muted" style="font-size:11.5px">뺀 조치(삼모): 무한삭턴 · 숙련 10000 이벤트 · 하야입력 · 방랑해산 · 「NPC유저」 구분. 조치 API는 K5-13(서버 대기).</span></div>')
+             f'<span class="muted" data-lint="skip" style="font-size:11.5px">뺀 조치(삼모): 무한삭턴 · 숙련 10000 이벤트 · 하야입력 · 방랑해산 · 「NPC유저」 구분. 조치 API는 K5-13(서버 대기).</span></div>')
     page31('V31K5GameAdmin.dc.html', 'K5 P-A03 게임 관리 — 인물 조치', ga_shell(f'<div style="flex:1;display:flex;gap:12px;padding:12px;min-height:0;overflow:hidden">{left}{right}</div>'))
 
 
@@ -1374,7 +1385,7 @@ def board_game_admin_nations():
     hd = tbl(['세력', '현', '소속 인물', '수도 창고 금', '수도 창고 쌀', '병력', '호구'], [])
     main = (f'<div style="flex:1;display:flex;flex-direction:column;gap:10px;padding:12px;min-height:0"><section class="panel" style="flex:1">'
             f'{sec("세력 개요", "열 머리를 눌러 정렬")}<div style="padding:4px 8px">{hd}</div>'
-            f'{state_waiting("세력 개요를 준비하고 있습니다", "삼모 일제정보(국력 · 기술 · 숙련 · 농업 …)를 대신할 운영자 읽기(K5-13)가 오면 이 표가 채워집니다.")}</section>'
+            f'{state_waiting("세력 개요를 준비하고 있습니다", "운영자용 세력 읽기(K5-13)가 오면 이 표가 채워집니다.")}</section>'
             f'<span class="muted" style="font-size:11.5px">뺀 열(삼모): 국력 · 기술 · 전략 · 평금 · 평쌀 · 평통 · 평무 · 평지 · 평Lv · 보숙~차숙 · 농업 · 상업 · 치안 · 성벽 · 수비</span></div>')
     page31('V31K5GameAdminNations.dc.html', 'K5 P-A03 게임 관리 — 세력 개요(서버 대기)', ga_shell(main, '세력 개요'))
 
