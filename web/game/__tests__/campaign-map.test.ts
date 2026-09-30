@@ -41,12 +41,12 @@ const tiles = {
 } as unknown as WorldTiles;
 
 describe('campaign-map builders', () => {
-    it('keeps only nations with a real colour as owners; others read as 공백지', () => {
+    it('keeps only nations with a real colour as owners; others read as 무주', () => {
         const cities = buildCampaignCities(preview());
         const byId = new Map(cities.map((c) => [c.id, c]));
         expect(byId.get(10)?.nationColor).toBe('#c9a656');
         expect(byId.get(10)?.mapLabel).toBe('양적현');
-        expect(byId.get(30)?.nationName).toBe('공백지');
+        expect(byId.get(30)?.nationName).toBe('무주');
         expect(byId.get(30)?.nationColor).toBeUndefined();
         expect(byId.get(31)?.nationColor).toBeUndefined();
     });

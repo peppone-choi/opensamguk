@@ -1,0 +1,261 @@
+/* ============================================================================
+   게이트웨이 v3.1 화면(2026-09-30 전체 승인 — K5 설계서 §1 · §2, 보드 V31K5*).
+   토큰은 @opensamguk/ui tokens.css(야전 사령부 팔레트)를 쓰고, 이 파일은 게이트웨이 새 화면의 배치만 정한다.
+   규칙: 누르는 것 44 이상 · 각진 모서리 · 세력색은 깃발에만 · 화면 폭 3단(모바일 < 768 ≤ 태블릿 < 1200 ≤ 데스크톱, web/shared breakpoints — K3 #1087 래칫).
+   공용 .os-button 은 36(작은 것 28)이라 새 화면의 단추는 .gw31-btn 으로 44를 맞춘다.
+   ========================================================================== */
+
+.gw31-btn,
+.os-button.gw31-btn { min-height: 44px; min-width: 44px; }
+
+.gw31-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 12.5px;
+  color: var(--bronze);
+}
+
+/* ---- 머리줄(데스크톱 48 · 모바일 56) ---- */
+.gw31-head {
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 8px 0 16px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--line-2);
+}
+.gw31-head__left, .gw31-head__right { display: flex; align-items: center; gap: 10px; }
+.gw31-head__brand { display: inline-flex; align-items: center; min-height: 44px; }
+.gw31-head--overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 20;
+  background: linear-gradient(to bottom, rgba(12, 15, 14, 0.82), rgba(12, 15, 14, 0));
+  border-bottom: 0;
+}
+@media (max-width: 767.98px) { .gw31-head { height: 56px; } }
+
+/* ---- 정책 링크 ---- */
+.gw31-policy { display: flex; justify-content: center; gap: 4px; font-size: 12px; }
+.gw31-policy a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--text-2);
+}
+
+/* ---- 패널 안 상태 줄 ---- */
+.gw31-state {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.gw31-state--error { color: var(--rust-2); }
+.gw31-state__spin { width: 16px; height: 16px; }
+.gw31-state__retry { margin-left: auto; }
+
+/* ---- 떠 있는 패널 ---- */
+.gw31-panel { background: rgba(27, 32, 29, 0.95); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.gw31-panel__foot { padding: 0 12px; border-top: 1px solid var(--line); width: 100%; box-sizing: border-box; }
+.gw31-imperial { margin: 0; padding: 6px 12px; font-size: 12.5px; color: var(--bronze); border-bottom: 1px solid var(--line); }
+
+.gw31-nations { list-style: none; margin: 0; padding: 0; }
+.gw31-nations__row {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+.gw31-nations__name { display: flex; gap: 6px; align-items: center; white-space: nowrap; overflow: hidden; }
+.gw31-nations__stat { text-align: right; color: var(--text-2); }
+
+.gw31-events { list-style: none; margin: 0; padding: 0; }
+.gw31-events__row {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  min-height: 44px;
+  padding: 8px 12px;
+  box-sizing: border-box;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+}
+.gw31-events__date { flex-shrink: 0; color: var(--bronze); font-size: 11.5px; white-space: nowrap; }
+.gw31-events__text { color: var(--text-2); line-height: 1.5; }
+
+/* ---- 서버 고르기 칩 ---- */
+.gw31-chips { display: flex; gap: 6px; flex-wrap: nowrap; overflow-x: auto; }
+.gw31-chip-btn { flex-shrink: 0; gap: 6px; background: rgba(20, 24, 22, 0.92); }
+.gw31-chip-btn.is-on { background: var(--bronze); color: var(--ink); border-color: var(--bronze-dim); font-weight: 700; }
+.gw31-chip-btn.is-on .gw31-chip-btn__gen { background: var(--ink); color: var(--bronze); }
+
+/* ---- 공지(NoticeBoard) 줄 44 ---- */
+.notice-board__row { min-height: 44px; }
+.notice-board__more { width: 100%; border-width: 1px 0 0; }
+
+/* ---- 폼 ---- */
+.gw31-form { display: flex; flex-direction: column; gap: 10px; }
+.gw31-field { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--text-2); }
+.gw31-field input {
+  min-height: 44px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--inset);
+  border: 1px solid var(--line-2);
+  border-radius: 0;
+}
+.gw31-field input:focus-visible { outline: var(--focus-ring); outline-offset: 1px; }
+.gw31-field__row { display: flex; gap: 6px; }
+.gw31-field__row input { flex: 1; min-width: 0; }
+.gw31-alert {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--rust-2);
+  background: rgba(201, 107, 93, 0.12);
+  border: 1px solid var(--rust);
+}
+
+/* ============================================================================
+   P-G02 로그인 — 지도가 주인공
+   ========================================================================== */
+.gw31-login { position: relative; min-height: 100dvh; background: var(--bg); color: var(--text); }
+.gw31-login__map { position: fixed; inset: 0; z-index: 0; }
+.gw31-login__terrain { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 45%, #2a3a30 0%, #16201a 55%, var(--bg) 100%); }
+.gw31-login__caption { height: 32px; flex-shrink: 0; background: rgba(20, 24, 22, 0.92); font-size: 12px; }
+
+/* 배경 지도: 틀 비율(삼모 che 700/500)을 풀고 칸 크기대로 채운다(설계서 MP13). */
+.map-preview--backdrop { position: absolute; inset: 0; max-width: none; background: var(--bg); }
+.map-preview--backdrop .map-preview-canvas { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; border: 0; border-radius: 0; }
+.map-preview--backdrop .map-preview-ph { position: absolute; inset: 0; aspect-ratio: auto; border: 0; border-radius: 0; background: var(--bg); gap: 10px; flex-direction: column; }
+.map-preview-ph__why { display: block; font-size: 12px; color: var(--muted); }
+/* 이름 토글: 옛 ::after 「 켜기 / 끄기」를 붙이지 않는다 — 단추 이름은 「이름」, 눌림(aria-pressed) = 이름이 보임. */
+.map-toggle-cityname::after,
+.map-toggle-cityname.active::after { content: none; }
+/* 옛 .map-btn-stack 은 right · bottom 0 이다 — 배경 지도에서 left · top 을 주면 상자가 늘어나 단추가 끝으로 밀리고
+   빈 상자가 지도 한 줄을 덮는다(실제 pep 캡처에서 로그인 패널 밑으로 들어갔다). 두 값을 푼다. */
+.map-preview--backdrop .map-btn-stack { right: auto; bottom: auto; text-align: left; }
+.map-preview--backdrop .os-iso-map__controls button,
+.map-preview--backdrop .os-iso-map__administrative-layers button,
+.map-preview--backdrop .map-toggle-cityname { min-width: 44px; min-height: 44px; }
+
+/* 지도 위 층은 빈 곳의 누르기 · 끌기 · 휠을 지도로 흘린다 — 떠 있는 패널만 받는다(겹친 투명 상자가 조작을 먹은 전례). */
+.gw31-login__stage { position: relative; z-index: 10; pointer-events: none; }
+.gw31-login__stage > * { pointer-events: auto; }
+.gw31-login__status { pointer-events: none; }
+.gw31-login__status > * { pointer-events: auto; }
+.gw31-login .gw31-head--overlay { z-index: 20; }
+
+.gw31-intro { display: flex; flex-direction: column; gap: 12px; padding: 22px 24px; background: rgba(12, 15, 14, 0.78); }
+.gw31-intro__wordmark { width: 420px; max-width: 100%; height: auto; }
+.gw31-intro__title { margin: 0; font-size: 30px; font-weight: 900; line-height: 1.3; }
+.gw31-intro__lead { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
+.gw31-intro__draft { display: flex; }
+
+.gw31-login__card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(27, 32, 29, 0.97); border-color: var(--bronze-dim); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.gw31-login__card:focus { outline: none; }
+.gw31-login__title { margin: 0; font-size: 22px; font-weight: 900; }
+.gw31-login__chiprow { display: flex; align-items: center; gap: 12px; }
+.gw31-login__chiprow .gw31-state { background: rgba(20, 24, 22, 0.92); }
+
+/* ---- 데스크톱(≥ 1200): 지도는 화면 전체 배경, 패널은 네 귀퉁이 ---- */
+@media (min-width: 1200px) {
+  .gw31-login__stage {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 80px 32px 0;
+    display: grid;
+    grid-template-columns: 520px minmax(0, 1fr) 380px;
+    grid-template-rows: auto 1fr auto auto;
+    column-gap: 12px;
+    row-gap: 12px;
+  }
+  .gw31-intro { grid-column: 1; grid-row: 1; align-self: start; }
+  .gw31-login__card { grid-column: 3; grid-row: 1; align-self: start; }
+  .gw31-login__to-status { display: none; }
+  .gw31-login__status { grid-column: 1 / 3; grid-row: 3; display: flex; flex-direction: column; gap: 12px; align-self: end; }
+  .gw31-login__panels { display: flex; gap: 12px; align-items: flex-end; }
+  .gw31-login__nations { width: 320px; flex-shrink: 0; }
+  .gw31-login__events { width: 460px; flex-shrink: 1; min-width: 0; }
+  .gw31-login__notices { grid-column: 3; grid-row: 3; align-self: end; }
+  .gw31-login__foot { grid-column: 1 / -1; grid-row: 4; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
+  /* 지도 조작은 소개 판 오른쪽 빈 칸에(가려지지 않게) */
+  .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
+  .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
+  .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
+  .map-preview--backdrop .map-preview-tooltip--pinned { left: 568px; top: 240px; }
+}
+
+/* ---- 태블릿 · 모바일(< 1200): 위 지도 띠 + 로그인 시트 + 아래로 서버 현황 ---- */
+@media (max-width: 1199.98px) {
+  .gw31-login__map { position: relative; height: 480px; overflow: hidden; }
+  .gw31-login__stage { margin-top: -40px; display: flex; flex-direction: column; gap: 12px; padding: 0 0 0; }
+  /* 소개 묶음은 지도 띠 아래쪽에 겹쳐 뜬다 — 무대(stage, 지도 띠 아래 -40 에서 시작) 위쪽 끝에 밑변을 붙인다.
+     높이가 글 길이에 따라 달라도 로그인 시트를 덮지 않는다(스모크: top 고정값이 무대 기준이라 시트 · 칩을 덮었다). */
+  .gw31-intro {
+    position: absolute;
+    left: 12px;
+    right: 12px;
+    top: 0;
+    transform: translateY(calc(-100% - 8px));
+    padding: 10px 12px;
+    gap: 6px;
+    max-width: 520px;
+    background: rgba(12, 15, 14, 0.72);
+  }
+  .gw31-intro__wordmark { width: 220px; }
+  .gw31-intro__title { font-size: 18px; }
+  .gw31-intro__lead { font-size: 12.5px; }
+  .gw31-login__card { border-width: 1px 0 0; box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55); }
+  .gw31-login__status { display: flex; flex-direction: column; gap: 12px; padding: 0 12px; }
+  .gw31-login__panels { display: flex; flex-direction: column; gap: 12px; }
+  .gw31-login__notices { margin: 0 12px; }
+  .gw31-login__foot { border-top: 1px solid var(--line); }
+  .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
+  .map-preview--backdrop .os-iso-map__administrative-layers { left: auto !important; right: 60px !important; top: 64px !important; }
+  .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
+  .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
+  .gw31-login__chiprow { flex-wrap: wrap; }
+}
+/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다(보드 V31K5MLogin).
+   소개 문장은 공개 알파 문구(U5) 초안이라 초안 칩과 함께 모바일에서 뺀다. */
+@media (max-width: 767.98px) {
+  .gw31-intro { padding: 8px 10px; right: auto; }
+  .gw31-intro__wordmark { width: 180px; }
+  .gw31-intro__title { font-size: 16px; }
+  .gw31-intro__lead, .gw31-intro__draft { display: none; }
+}
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .gw31-login__card, .gw31-login__status, .gw31-login__notices, .gw31-login__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
+}
+
+/* ============================================================================
+   P-G10 · P-G11 정책 문서 — 본문 960 가운데(데스크톱), 모바일은 본문만
+   ========================================================================== */
+.gw31-page { min-height: 100dvh; display: flex; flex-direction: column; background: var(--bg); color: var(--text); }
+.gw31-doc { flex: 1; width: min(960px, 100%); margin: 0 auto; box-sizing: border-box; padding: 32px 16px 48px; display: flex; flex-direction: column; gap: 20px; }
+.gw31-doc__title { margin: 0; font-size: 28px; font-weight: 900; }
+.gw31-doc__waiting { display: flex; gap: 10px; align-items: center; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line-2); }
+.gw31-doc__waiting p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-2); }
+.gw31-doc__h2 { margin: 0 0 8px; font-size: 16px; font-weight: 700; }
+.gw31-doc__toc { margin: 0; padding-left: 20px; color: var(--text-2); font-size: 14px; line-height: 2; }
+.gw31-page__foot { border-top: 1px solid var(--line); }
+@media (max-width: 767.98px) { .gw31-doc { padding: 20px 16px 32px; } .gw31-doc__waiting { flex-direction: column; align-items: flex-start; } }
