@@ -74,7 +74,7 @@ describe('값 경계', () => {
 // edge 부분만 안정 문법 · 128자 한도, 좌표는 음 아닌 정규 십진 · Kotlin Int 범위. 전체 길이에는 한도를 걸지 않는다.
 describe('보루 site ID(edge@row,col)', () => {
     const fort = (id: unknown) => kept({ id: 3, kind: 'roadFort.captured', section: 'WORLD', occurredAt: at, refs: { ROAD_FORT: id, TO_NATION: 1 }, facts: {} });
-    // han-land-roads-v1.json 의 실제 도로 edge(4,252개 모두 안정 문법 안)에서 가운데 것과 가장 긴 것(112자).
+    // han-land-roads-v1.json edges[].id(4,241개 · 모두 안정 문법 안)에서 고른 것 하나와 가장 긴 것(112자). historicalCorridors[] id 11개는 보루 edge 가 아니다.
     const realEdge = 'land-boundary:5:419355:43696';
     const longestEdge = 'land-boundary:46:SUB-JURISDICTION-PARENT-0097-SEAT-bfcd2758df5246:SUB-JURISDICTION-PARENT-0097-SEAT-e4ac85458411';
 

@@ -79,7 +79,7 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isInt = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value);
 const positive = (value: unknown): value is number => isInt(value) && value > 0;
 const nonNegative = (value: unknown): value is number => isInt(value) && value >= 0;
-/** 도로 edge 안정 ID. 128자 한도는 edge 부분에만 건다(실측 4,252개 모두 이 안, 최장 112자). */
+/** 도로 edge 안정 ID. 128자 한도는 edge 부분에만 건다(han-land-roads-v1.json edges[] 4,241개 모두 이 안, 최장 112자). */
 const ROAD_EDGE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
 /** 서버 보루 ID = RoadFort.siteId(edgeId, row, col) = "$edgeId@$row,$col"(RoadFortState.kt). 좌표는 음 아닌 정규 십진. */
 const ROAD_FORT_SITE_ID = /^([A-Za-z0-9][A-Za-z0-9_.:-]{0,127})@(0|[1-9][0-9]*),(0|[1-9][0-9]*)$/;
