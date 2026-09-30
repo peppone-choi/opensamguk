@@ -64,3 +64,12 @@
 @media (max-width: 767.98px) {
   .stateGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* ---- 포로 · 등용(P-R05) ---- */
+.talent { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+.talentHead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 12px; }
+.talentList { display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+.talentRow.talentRow { min-height: 72px; }
+.empty { font-size: 13px; color: var(--text-2); margin: 0; padding: 16px 12px; }
+.captives { display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+.dispose { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
