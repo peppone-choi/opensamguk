@@ -116,6 +116,33 @@ export function sortRetinue(rows: readonly RetinueRow[], sort: RetinueSort): Ret
     return [...rows].sort(cmp[sort]);
 }
 
+export type RetinueFilter = 'all' | 'unplaced' | 'bonded' | 'risk';
+export const RETINUE_FILTER_LABEL: Readonly<Record<RetinueFilter, string>> = {
+    all: '전체',
+    unplaced: '미배치',
+    bonded: '결속 있음',
+    risk: '이탈 위험',
+};
+
+/**
+ * 거르기(설계서 P-R01 「많음」 — 자리 · 결속 · 이탈 위험) + 이름 찾기(글자 · 초성, `matchesKoreanName`).
+ * 「미배치」는 배치 원장에 지금 자리도 다음 자리도 없는 줄이다. 원본 순서를 지킨다.
+ */
+export function filterRetinue(
+    rows: readonly RetinueRow[],
+    filter: RetinueFilter,
+    query: string,
+    matches: (name: string, query: string) => boolean,
+): RetinueRow[] {
+    const keep: Record<RetinueFilter, (r: RetinueRow) => boolean> = {
+        all: () => true,
+        unplaced: (r) => r.post.active == null && r.post.pending == null,
+        bonded: (r) => r.bonds.length > 0,
+        risk: (r) => r.departureOrder != null,
+    };
+    return rows.filter((r) => keep[filter](r) && matches(r.name, query));
+}
+
 export interface UnitRow {
     readonly id: number;
     readonly name: string;

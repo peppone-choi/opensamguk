@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest';
 import type { PersonCard, PlacementCard, Posts, Retinue, UnitCard, Yuedan } from '../lib/campaign-reads';
-import { buName, loyaltyTone, renownBand, retinueRows, sortRetinue, unitRows } from '../lib/retinue-view';
+import { buName, filterRetinue, loyaltyTone, renownBand, retinueRows, sortRetinue, unitRows } from '../lib/retinue-view';
 
 const person = (id: number, over: Partial<PersonCard> = {}): PersonCard => ({
     retainerId: id, generalId: 100 + id, name: `인물${id}`, picture: null, imageServer: 0, loyalty: 60,
@@ -71,4 +71,24 @@ test('명망 띠 — 부 조회 값 먼저, 없으면 월단평 본인 값, 막�
         .toEqual({ renown: 30, costSum: 36, overCapacity: false, ratio: 1 });
     expect(renownBand(null, yuedan)).toEqual({ renown: 30, costSum: 36, overCapacity: true, ratio: 1 });
     expect(renownBand(null, null)).toEqual({ renown: null, costSum: null, overCapacity: false, ratio: null });
+});
+
+test('거르기 — 미배치는 지금 · 다음 자리가 모두 없는 줄, 찾기는 넘겨준 맞춤 함수로', () => {
+    const rows = retinueRows(retinue([
+        person(1, { name: '허저', bonds: [{ kind: 'HYANGDANG', label: '향당', nativeCountyName: '패국 초현', sameAsLord: true }] }),
+        person(2, { name: '이전' }),
+        person(3, { name: '무명 공조', departureOrder: 1 }),
+    ]), posts([
+        card(1, { active: { post: 'MAGISTRATE', postLabel: '현령', target: { label: '장사현' }, state: 'ARRIVED' } }),
+        card(2, { pending: { post: 'CORPS_COMMANDER', postLabel: '군단장', target: { label: null } } }),
+        card(3),
+    ]));
+    const any = () => true;
+    const ids = (f: Parameters<typeof filterRetinue>[1], q = '', m: (n: string, q: string) => boolean = any) =>
+        filterRetinue(rows, f, q, m).map((r) => r.retainerId);
+    expect(ids('all')).toEqual([1, 2, 3]);
+    expect(ids('unplaced')).toEqual([3]);
+    expect(ids('bonded')).toEqual([1]);
+    expect(ids('risk')).toEqual([3]);
+    expect(ids('all', '허', (n, q) => n.includes(q))).toEqual([1]);
 });
