@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import { Modal, StatusView, useViewportClass } from '@opensamguk/ui';
+import { Modal, StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
 import { IncomingRequests } from '@/components/requests/IncomingRequests';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
@@ -136,7 +136,7 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
         const d = DECISIONS.find((x) => x.inputId === sheet.inputId)!;
         sheetBody = (
             <CourtChoiceSheet inputId={d.inputId} title={d.title} choices={courtChoices(court[d.inputId] ?? null)} busy={busy}
-                onSubmit={(args) => generalId != null && void run(() => api.courtLegacy(d.inputId, generalId, args as Record<string, string | number>), `${d.title} — 접수했습니다. 다음 개인 턴에 처리합니다.`)}
+                onSubmit={(args) => generalId != null && void run(() => api.courtLegacy(d.inputId, generalId, args as Record<string, string | number>), `${withParticle(d.title, '을/를')} 접수했습니다 — 다음 개인 턴에 처리합니다.`)}
                 onCancel={() => setSheet(null)} />
         );
     } else if (sheet?.kind === 'requests') {

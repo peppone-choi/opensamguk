@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
-import { Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
+import { Modal, Seg, StatusView, useProvinceName, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead, type CountyWorks, type Read } from '@/lib/campaign-reads';
@@ -31,7 +31,7 @@ export interface TerritoryScreenProps {
     readonly hrefs: { readonly supply: string; readonly court: string };
     /** 도로 · 보루 인자 고르기를 지도(K2)로 바꿀 때 — 없으면 K3 후보 목록(RoadPicker)으로 고른다. */
     readonly extraFor?: (county: CountyWorks, work: string) => WorkExtra | null;
-    /** 구역 한글 이름(지도 구역 기록). 못 풀면 null → 「이름 모를 구역」. */
+    /** 구역 한글 이름 — 넘기지 않으면 공용 useProvinceName(지도 캐시). 못 풀면 「이름 모를 구역」. */
     readonly provinceName?: (provinceId: string) => string | null;
 }
 
@@ -49,6 +49,8 @@ function panelState<T extends { status: string }>(read: Read<T>, title: string, 
  * 칸마다 따로 읽고 따로 실패한다(한 칸 실패가 다른 칸을 가리지 않는다). 시트는 화면 안 Modal, 제출 결과는 한 줄 알림.
  */
 export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScreenProps) {
+    // 구역 한글 이름 — 지도 훅이 이미 받은 지형에서만(K1 #1106). 없으면 undefined → 「이름 모를 구역」. 정식은 K4-21.
+    const cachedName = useProvinceName();
     const { generalId } = useGameSession();
     const viewport = useViewportClass();
     // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
@@ -91,7 +93,7 @@ export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScre
 
     const faces = new Map((retinue.data?.people ?? []).map((p) => [p.retainerId, { picture: p.picture, imageServer: p.imageServer }]));
     const roadMode = roads.data?.roadMode === true;
-    const name = provinceName ?? (() => null);
+    const name = provinceName ?? ((id: string) => cachedName(id) ?? null);
     const pickExtra = (county: CountyWorks) => (work: string): WorkExtra | null => {
         const road = work === 'ROAD';
         if (!roadMode || !roads.data || (!road && work !== FORTIFICATION)) return null;

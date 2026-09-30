@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Chip, InputAction, StatusView, type InputAvailability } from '@opensamguk/ui';
+import { Chip, InputAction, StatusView, withParticle, type InputAvailability } from '@opensamguk/ui';
 import { CAMPAIGN_RESOURCE_LABELS, type Stock } from '@/lib/campaign-reads';
 import { WAREHOUSE_KIND_LABEL, cutRows, stockCell, stockLine, type WarehouseRow } from '@/lib/supply-view';
 import styles from './territory.module.css';
@@ -108,7 +108,7 @@ export function CutPanel({ rows, mapHref }: { readonly rows: readonly WarehouseR
                         <span className="os-serif" style={{ fontWeight: 700 }}>{r.name}</span>
                         <Chip tone="rust">끊김</Chip>
                     </span>
-                    <span className={styles.muted}>{`${r.name}은(는) 수도와 끊겨 제 창고만 씁니다.`}</span>
+                    <span className={styles.muted}>{`${withParticle(r.name, '은/는')} 수도와 끊겨 제 창고만 씁니다.`}</span>
                     <span className={styles.chips} data-waiting="cut-reason">
                         <span className={styles.muted}>끊긴 까닭</span>
                         <Chip tone="info">준비 중</Chip>
@@ -144,7 +144,7 @@ export interface TransportPanelProps {
 export function TransportPanel({ generalName, availability, onTransport }: TransportPanelProps) {
     return (
         <div className={styles.transport}>
-            <p className={styles.note}>{`${generalName}이(가) 선 현의 창고에서 이웃한 우리 현 창고로 한 자원을 옮깁니다. 그 순에 바로 옮겨집니다.`}</p>
+            <p className={styles.note}>{`${withParticle(generalName, '이/가')} 선 현의 창고에서 이웃한 우리 현 창고로 한 자원을 옮깁니다. 그 순에 바로 옮겨집니다.`}</p>
             <InputAction inputId="action.transport" availability={availability} label="물자조달 — 명령 목록에 넣기" onAct={onTransport} block />
             <span className={styles.chips} data-waiting="escort-transport">
                 <Chip tone="info">호위 · 지연 수송 — 규칙 없음</Chip>

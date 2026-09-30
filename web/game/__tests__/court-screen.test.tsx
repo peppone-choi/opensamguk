@@ -48,7 +48,7 @@ test('데스크톱 — 받은 요청 띠(대기만) · 내린 발령 · 조정 �
     fireEvent.click(within(sheet).getByRole('option', { name: '진류현' }));
     fireEvent.click(within(sheet).getByRole('button', { name: '이대로 접수' }));
     await waitFor(() => expect(vi.mocked(api.courtLegacy)).toHaveBeenCalledWith('court.moveCapital', 7, { cityId: 41 }));
-    expect(await screen.findByText('천도 — 접수했습니다. 다음 개인 턴에 처리합니다.')).toBeInTheDocument();
+    expect(await screen.findByText('천도를 접수했습니다 — 다음 개인 턴에 처리합니다.')).toBeInTheDocument();
 });
 
 test('새 발령 — 사람을 고르면 그 사람 기준 현 후보를 다시 받아 보낸다', async () => {

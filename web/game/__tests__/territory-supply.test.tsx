@@ -45,7 +45,7 @@ test('모바일 창고 카드 — 본망 합계 카드와 끊김 칩', () => {
 test('끊긴 곳 — 까닭은 준비 중 · 지도 고리, 없으면 「모든 창고가 수도와 이어져 있습니다」', () => {
     const { rerender } = render(<CutPanel rows={rows} mapHref={(id) => `/game/pep?layer=supply&focus=${id}`} />);
     const [cut] = within(screen.getByRole('list', { name: '끊긴 곳' })).getAllByRole('listitem');
-    expect(cut).toHaveTextContent('윤씨현은(는) 수도와 끊겨 제 창고만 씁니다.');
+    expect(cut).toHaveTextContent('윤씨현은 수도와 끊겨 제 창고만 씁니다.');
     expect(cut.querySelector('[data-waiting="cut-reason"]')).toHaveTextContent('준비 중');
     expect(within(cut).getByRole('link')).toHaveAttribute('href', '/game/pep?layer=supply&focus=9');
     rerender(<CutPanel rows={rows.filter((r) => r.connected)} />);

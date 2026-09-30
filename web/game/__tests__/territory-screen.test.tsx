@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
 import { setViewport } from './helpers/viewport';
+import { rememberProvinceNames } from '@opensamguk/ui';
 import { TerritoryScreen } from '../components/territory/TerritoryScreen';
 import { api } from '../lib/api';
 
@@ -74,4 +75,18 @@ test('모바일 — 배치 · 방침 · 공사 세그먼트', async () => {
     expect(await screen.findByText('배치할 NPC 인물이 없습니다(사람 장수는 발령).')).toBeInTheDocument();
     fireEvent.click(within(seg).getByRole('radio', { name: '공사' }));
     expect(await screen.findByRole('button', { name: '새 공사' })).toBeInTheDocument();
+});
+
+test('구역 이름 prop 을 안 넘기면 공용 지도 캐시(useProvinceName)에서 읽는다', async () => {
+    rememberProvinceNames({ provinceRecords: [{ id: 'p-yang', displayName: '양성 북' }, { id: 'p-xu', displayName: '허현 서' }] } as never, null);
+    vi.mocked(api.roadForts).mockResolvedValue({ status: 'READY', roadMode: true, forts: [], gates: [
+        { edgeId: 'edge-yang-xu', fromProvinceId: 'p-yang', toProvinceId: 'p-xu', active: false, buildable: true, historicalRouteIds: [], fortCells: [] },
+    ] } as never);
+    vi.mocked(api.campaignWorks).mockResolvedValue({ status: 'READY', counties: [{ countyId: 129, provinceId: null, provinceIds: ['p-yang'], name: '양성현', commanderyName: '영천군',
+        warehouse: null, active: null, completed: [], startable: [{ work: 'ROAD', label: '도로', available: true, blocked: null, cost: zero, estimatedPhases: 9 }] }] } as never);
+    render(<TerritoryScreen hrefs={hrefs} />);
+    fireEvent.click(await within(screen.getByRole('region', { name: '공사' })).findByRole('button', { name: '새 공사' }));
+    const sheet = await screen.findByRole('region', { name: '양성현 새 공사' });
+    fireEvent.click(within(sheet).getByRole('option', { name: /도로/ }));
+    expect(within(sheet).getByRole('option', { name: /양성 북 ↔ 허현 서 접경/ })).toBeInTheDocument();
 });

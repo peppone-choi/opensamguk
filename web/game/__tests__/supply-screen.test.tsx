@@ -25,7 +25,7 @@ test('데스크톱 — 재고 표 · 끊긴 곳 · 녹봉 대기 · 물자조달
     render(<SupplyScreen hrefs={hrefs} />);
     const table = await screen.findByRole('region', { name: '창고별 재고' });
     expect(within(table).getAllByRole('row')[1]).toHaveTextContent('허현수도900');
-    expect(screen.getByRole('region', { name: '끊긴 곳' })).toHaveTextContent('윤씨현은(는) 수도와 끊겨 제 창고만 씁니다.');
+    expect(screen.getByRole('region', { name: '끊긴 곳' })).toHaveTextContent('윤씨현은 수도와 끊겨 제 창고만 씁니다.');
     expect(screen.getByText('지급 전망 — 준비 중')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '물자조달 — 명령 목록에 넣기' }));
     expect(push).toHaveBeenCalledWith(hrefs.transport);
