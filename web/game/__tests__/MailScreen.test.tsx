@@ -126,7 +126,11 @@ describe('외교 서신', () => {
     });
 
     test('모든 행이 가려졌으면(권한 없음) 목록 대신 「군주 · 외교권자만 봅니다」, 쓰기도 막는다', async () => {
-        withDiplomacy([{ id: 60, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '(외교 메시지입니다)', option: { invalid: true }, time: now }]);
+        withDiplomacy([
+            { id: 60, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '(외교 메시지입니다)', option: { invalid: true }, time: now },
+            // 답한 제의도 서버가 가린다(used 를 보지 않는다) — 이 행 때문에 「한 줄」 안내가 깨지면 안 된다.
+            { id: 59, msgType: 'diplomacy', src: other(8, '상대'), dest: nationOnly(3, '[세력]'), text: '(외교 메시지입니다)', option: { action: 'stop_war', used: true, invalid: true }, time: now },
+        ]);
         vi.mocked(api.contacts).mockResolvedValue(contacts(0) as never);
         render(<MailScreen me={me} tabs={['diplomacy']} />);
         expect(await screen.findByText('외교 서신은 군주 · 외교권자만 봅니다')).toBeInTheDocument();
@@ -134,6 +138,7 @@ describe('외교 서신', () => {
         const compose = await screen.findByRole('region', { name: '외교 서신 쓰기' });
         expect(await within(compose).findByText('외교 서신은 군주 · 외교권자만 씁니다')).toBeInTheDocument();
         expect(within(compose).queryByRole('button', { name: '보내기' })).toBeNull();
+        expect(screen.queryByText('(외교 메시지입니다)')).toBeNull();
         await waitFor(() => expect(api.commands.readLatestMessage).toHaveBeenCalledWith({ type: 'diplomacy', msgID: 60 }, 1));
     });
 

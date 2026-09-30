@@ -74,6 +74,11 @@ describe('외교 서신', () => {
             [53, false, true, { kind: 'stop_war', handled: false }],
             [54, false, true, null],
         ]);
+        // 서버 가림은 used 를 보지 않는다 — 권한 없는 사람이 받은 답한 제의(used + invalid)도 가린 행이고, 제의 종류도 보이지 않는다.
+        const [maskedHandled] = toMailItems(env([
+            row({ id: 56, msgType: 'diplomacy', src: who(8, 5), dest: nationOnly(3, '[세력]'), text: DIPLOMACY_MASK_TEXT, option: { action: 'no_aggression', used: true, invalid: true } }),
+        ]), 'diplomacy', me);
+        expect(maskedHandled).toMatchObject({ hidden: true, html: null, proposal: null });
         // 같은 글자라도 개인 서신은 가린 행이 아니다(서버도 외교 칸에만 가린다).
         const priv = toMailItems({ private: [row({ id: 55, text: DIPLOMACY_MASK_TEXT, option: { invalid: true } })], public: [], national: [], sequence: 0 }, 'private', me);
         expect(priv[0].hidden).toBe(false);

@@ -1,8 +1,7 @@
 /* 서신(P-Q02) — 보드 V31K6Mail · MMail · MailDrawer. 목록 360 | 읽기 | 쓰기 400, 모바일은 한 화면씩. */
 .mail { display: flex; flex-direction: column; min-height: 0; color: var(--text); }
-/* 누를 영역 44(v3.1 규칙) — 공용 단추 기본(36)과 공용 서식 편집기 도구(굵게 · 기울임 · 취소선 · 글자색)를 이 화면 안에서 맞춘다.
-   편집기는 게시판도 같이 쓰므로 공용 CSS 는 건드리지 않는다(스모크에서 22 · 28 로 잡힘, 2026-10-01). */
-.mail :global(.os-button) { min-height: var(--row-h, 44px); }
+/* 누를 영역 44(v3.1 규칙) — 공용 서식 편집기 도구(굵게 · 기울임 · 취소선 · 글자색)를 이 화면 안에서 맞춘다.
+   공용 편집기 44 는 #1118 — 병합되면 아래 세 줄을 지운다(스모크에서 22 · 28 로 잡힘, 2026-10-01). */
 .mail :global(.rich-text-editor__toolbar) { flex-wrap: wrap; gap: 4px; }
 .mail :global(.rich-text-editor__toolbar button) { min-height: var(--row-h, 44px); min-width: var(--row-h, 44px); }
 .mail :global(.rich-text-editor__color input) { width: var(--row-h, 44px); min-height: var(--row-h, 44px); }
