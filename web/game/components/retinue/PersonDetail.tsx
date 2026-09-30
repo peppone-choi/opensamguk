@@ -18,10 +18,11 @@ export interface PersonDetailProps {
     /** 인물 상세 화면(P-R03) 고리. */
     readonly detailLink?: ReactNode;
     /**
-     * 사람 장수 카드인가(계약판 K4-18 `posts.cards[].isHuman`). 서버가 주기 전엔 undefined → 「서버 대기」 한 줄.
-     * true 면 배치 대신 조정 발령(P-K01) 고리를 보인다. 이름 · id 로 짐작하지 않는다.
+     * 사람 장수 카드인가(계약판 K4-18 `posts.cards[].isHuman: boolean | null`). 필드가 없거나(undefined) 서버가 인물을
+     * 못 풀었으면(null — NPC 확정 아님) 「서버 대기」 한 줄. true 면 배치 대신 조정 발령(P-K01) 고리.
+     * false · 이름 · id 로 짐작하지 않는다 — 서버 blocked 사유는 배치 단추가 그대로 보인다.
      */
-    readonly isHuman?: boolean;
+    readonly isHuman?: boolean | null;
     /** 조정 발령 화면 주소(사람 미리 채움). */
     readonly dispatchHref?: string;
 }
@@ -63,7 +64,7 @@ export function PersonDetail({ row, assign, onAssign, detailLink, isHuman, dispa
                 <Chip tone="info">준비 중</Chip>
                 <span className={styles.muted}>이 인물이 부를 떠나면 기여한 계책 카드도 덱에서 빠집니다.</span>
             </div>
-            {isHuman === undefined ? (
+            {isHuman == null ? (
                 <div className={styles.field} data-waiting="human-flag">
                     <Chip tone="info">준비 중</Chip>
                     <span className={styles.muted}>사람 장수는 조정에서 발령합니다. 이 인물이 사람 장수인지는 아직 서버가 알려 주지 않습니다.</span>
