@@ -9,6 +9,8 @@ const LAB = '/parts-lab';
 async function open(page: Page) {
   await page.goto(LAB, { waitUntil: 'domcontentloaded' });
   await expect(page.getByRole('heading', { name: '공용 부품 미리보기' })).toBeVisible({ timeout: 60_000 });
+  // SSR 제목은 수화 전에 보인다 — 리스너가 붙은 뒤에 누른다.
+  await expect(page.locator('main[data-hydrated="true"]')).toBeVisible();
 }
 
 /** 보이는 누를 것 가운데 44 × 44 보다 작은 것(보이는 크기와 상관없이 누를 영역 기준). */

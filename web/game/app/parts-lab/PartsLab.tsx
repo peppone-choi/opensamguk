@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   InputAction,
   PeoplePicker,
@@ -61,9 +61,12 @@ export default function PartsLab() {
   const [pos, setPos] = useState(92_000);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<TimeBarSpeed>(1);
+  // 수화가 끝나 창 키 리스너(Esc)까지 붙은 뒤에만 시험이 누른다 — SSR 제목이 먼저 보여 경합했다(CI 1회 흔들림).
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => setHydrated(true), []);
 
   return (
-    <main className="parts-lab">
+    <main className="parts-lab" data-hydrated={hydrated ? 'true' : undefined}>
       <header className="parts-lab__head">
         <h1 className="parts-lab__title">공용 부품 미리보기</h1>
         <output className="parts-lab__log" data-testid="lab-log">{log}</output>
