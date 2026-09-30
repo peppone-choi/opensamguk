@@ -58,6 +58,20 @@ class CiWorkflowContractTest(unittest.TestCase):
                        if step.get("if") != skip and gate not in str(step.get("if", ""))]
             self.assertEqual([], ungated, f"{name}: steps without the {output} path gate")
 
+    def test_contracts_map_steps_are_path_gated_and_ops_steps_are_not(self) -> None:
+        # 지도 단계는 map 판정으로 건너뛰고, app/ 파일을 읽는 운영·CI 도구 단계는 contracts 가 돌면 늘 돈다.
+        outputs = self.workflow["jobs"]["changes"]["outputs"]
+        self.assertIn("map", outputs)
+        steps = {step.get("name", ""): str(step.get("if", "")) for step in self.workflow["jobs"]["contracts"]["steps"]}
+        gate = "needs.changes.outputs.map == 'true'"
+        for name in ("Verify Han map data contract tests", "Verify Han territory disconnection ledger",
+                     "Verify han-tiles coupled artifacts (batch, names every stale artifact)",
+                     "Verify scenario data contract tests", "Verify frontier county materialization"):
+            self.assertIn(gate, steps[name], name)
+        for name in ("Verify JWT rollout contract", "Verify CI path and shard tooling",
+                     "Verify game server recovery behavioral guards"):
+            self.assertNotIn(gate, steps[name], name)
+
 
 if __name__ == "__main__":
     unittest.main()

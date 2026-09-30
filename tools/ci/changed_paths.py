@@ -21,6 +21,40 @@ CITY_INFRASTRUCTURE = {
     "tools/ci/check_city_shards.py",
     "tools/ci/test_check_city_shards.py",
 }
+OUTPUT_KEYS = ("jvm", "contracts", "map", "map_slow", "external_places", "web", "city")
+# Every path the Han map/scenario gates read (contracts map steps, map-slow-tests). Measured
+# 2026-09-30 by tracing open/scandir/subprocess of each step on a clean checkout, plus a static
+# pass for stat-only reads. No map gate reads app/, logic/, gradle files, or common/ and infra/
+# outside these entries, so a Kotlin-only PR skips ~15 minutes of map checks. Every tools/**/*.py
+# also counts (test_check_han_tiles_coupled.py rglobs them); other tools/ files only in the
+# directories below (e.g. tools/ci/naming_lint_baseline.json is not a map input). Add the path
+# here when a gate starts reading a new file; unknown top-level paths still run everything.
+MAP_INPUTS = (
+    "data/",
+    ".github/workflows/ci.yml",
+    "tools/map/",
+    "tools/scenario/",
+    "tools/sim/",
+    "tools/corpus/",
+    "tools/e2e/fixtures/",
+    "common/src/main/kotlin/opensamguk/common/constants/",
+    "infra/src/main/resources/map/",
+    "infra/src/main/resources/campaign/",
+    "infra/src/main/resources/scenario/",
+    "infra/src/main/kotlin/opensamguk/infra/seed/",
+    "infra/src/test/kotlin/opensamguk/infra/seed/",
+    "web/game/public/map/",
+    "web/gateway/public/map/",
+    "web/shared/src/iso/countyNameGloss.generated.ts",
+    "docs/superpowers/research/2026-09-17-march-tempo-baseline.md",
+    "docs/superpowers/research/2026-09-17-siege-supply-baseline.md",
+    ".ai/research/2026-08-24-namu-places-crosscheck.md",
+)
+# Non-map contracts steps that read files outside the JVM/tools prefixes.
+CONTRACT_INPUTS = MAP_INPUTS + (
+    "web/gateway/app/admin/page.tsx",        # Verify JWT rollout contract
+    "docs/admin/game-server-recovery.md",   # Verify game server recovery behavioral guards
+)
 
 
 def city_patterns(path: Path = CITY_PATHS) -> dict[str, list[str]]:
@@ -50,8 +84,12 @@ def changed_files(base: str, head: str) -> list[str]:
     return [name.decode() for name in output.split(b"\0") if name]
 
 
+def is_map_input(path: str) -> bool:
+    return path.startswith(MAP_INPUTS) or (path.startswith("tools/") and path.endswith(".py"))
+
+
 def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool]:
-    outputs = {key: False for key in ("jvm", "contracts", "map_slow", "external_places", "web", "city")}
+    outputs = dict.fromkeys(OUTPUT_KEYS, False)
     city_globs = patterns["data"] + patterns["code"]
     for path in paths:
         if path in CITY_INFRASTRUCTURE or any(fnmatch.fnmatchcase(path, glob) for glob in city_globs):
@@ -59,7 +97,11 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
         if path.startswith(("data/", "tools/", ".github/", "common/", "logic/", "infra/", "app/")) or (
             path.endswith(".gradle.kts") or path.startswith("gradle/") or path in ("gradlew", "gradlew.bat")
         ):
-            outputs["jvm"] = outputs["contracts"] = outputs["map_slow"] = True
+            outputs["jvm"] = outputs["contracts"] = True
+        if path.startswith(CONTRACT_INPUTS):
+            outputs["contracts"] = True
+        if is_map_input(path):
+            outputs["map"] = outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
         if path.startswith(("web/", "data/", "infra/src/main/resources/map/", ".github/")):
@@ -69,7 +111,7 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
                                 "common/", "logic/", "infra/", "app/")) and path not in (
                                     "README.md", "AGENTS.md", "CLAUDE.md", "LICENSE"
                                 ):
-            outputs["jvm"] = outputs["contracts"] = outputs["map_slow"] = outputs["web"] = True
+            outputs.update(jvm=True, contracts=True, map=True, map_slow=True, web=True)
     return outputs
 
 
@@ -87,7 +129,7 @@ def main() -> None:
         outputs = classify(paths, patterns)
     else:
         paths = []
-        outputs = dict.fromkeys(("jvm", "contracts", "map_slow", "external_places", "web", "city"), True)
+        outputs = dict.fromkeys(OUTPUT_KEYS, True)
     print(f"changed files: {len(paths)}; " + ", ".join(f"{key}={value}" for key, value in outputs.items()))
     if target := os.environ.get("GITHUB_OUTPUT"):
         with open(target, "a", encoding="utf-8") as stream:
