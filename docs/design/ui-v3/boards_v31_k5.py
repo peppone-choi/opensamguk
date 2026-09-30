@@ -12,7 +12,8 @@ W, H = 1440, 1000
 MW, MH = 390, 844
 
 # 게이트웨이 · 입장 셸 · 걸음 입력 · 시간 막대 · 사람 여러 명 고르기는 v31system 3.1.1(K3, K5 요청)의 gw_topbar · gw_mtop · entry_topbar · entry_mtop · step_bar · step_foot · time_bar · people_picker_multi 를 쓴다.
-assert getattr(_S, "V31_VERSION", "3.1.0") >= "3.1.1", "v31system 3.1.1 이상이 필요하다(K5 부품 5개)"
+assert getattr(_S, "V31_VERSION", "3.1.0") >= "3.1.4", "v31system 3.1.4 이상이 필요하다(K5 부품 5개 · time_bar now_text · gw_topbar logo_on)"
+# 로그인 · 가입(데스크톱 · 모바일)은 머리줄 로고를 끄고(logo_on=False) 히어로 워드마크만 둔다. 로비 · 계정 · 커뮤니티 · 정책 · 게임 안은 머리줄 로고 그대로(K0 결정).
 
 # ------------------------------------------------------------------ 예시 자료(현행 화면에 나오는 종류의 값 · 설계 미정은 [미정])
 NATS = [('조조', NATION['조조'], 9, 41, True), ('원소', NATION['원소'], 14, 52, False), ('유표', NATION['유표'], 8, 27, False),
@@ -150,7 +151,7 @@ def board_login():
     cap = '<span class="chip" style="position:absolute;left:364px;top:618px;height:32px;background:rgba(20,24,22,.92);font-size:12px">pep 1기 · 200년 3월 중순 · 군 보기</span>'
     foot = f'<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(12,15,14,.8)">{policy_links("height:44px")}</div>'
     body = (f'<main aria-label="로그인 — 서버 현황 지도" style="position:relative;width:{W}px;height:{H}px;overflow:hidden">'
-            f'{mapimg("hero", W, H, "中原 일대 지도 — pep 1기의 지금 판도(군 보기)")}{over(gw_topbar("login", transparent=True))}'
+            f'{mapimg("hero", W, H, "中原 일대 지도 — pep 1기의 지금 판도(군 보기)")}{over(gw_topbar("login", transparent=True, logo_on=False))}'
             f'{intro}{login_card()}{map_ctrl("left:32px;top:420px")}{chips}{cap}{nat}{wl}{nt}{foot}</main>')
     page31('V31K5Login.dc.html', 'K5 P-G02 로그인 — 지도가 주인공(데스크톱)', body)
 
@@ -159,18 +160,19 @@ def board_login_empty():
     empty = (f'<section class="panel" aria-label="서버 현황" style="position:absolute;left:32px;top:612px;width:560px;height:320px;background:rgba(27,32,29,.96)">'
              f'{sec("서버 현황", "서버 0")}{state_empty("지금 열린 서버가 없습니다", "새 서버가 열리면 이 자리에 지도 · 세력 · 천하 정세가 보입니다. 공지를 확인하세요.")}</section>')
     nt = floatp('공지', '3건', notice_rows(open_first=False), 'right:32px;top:560px;width:380px')
-    note = '<span class="chip info" style="position:absolute;left:32px;top:80px;height:32px;font-size:12px">서버가 없으면 지도는 세력 없는 기본 지형(설계 층 export)</span>'
-    wait = (f'<section class="panel" aria-label="서버 상태 예시" style="position:absolute;left:32px;top:136px;width:520px;background:rgba(27,32,29,.96)">{sec("서버가 있을 때 지도 위 상태 칩", "K3-03 · K10-01")}'
+    note = (f'<div style="position:absolute;left:32px;top:80px;width:520px;padding:18px 24px;background:rgba(12,15,14,.78);display:flex;flex-direction:column;gap:10px">{wordmark(360)}'
+            f'<span style="display:flex">{chip("서버가 없으면 지도는 세력 없는 기본 지형(설계 층 export)", "info")}</span></div>')
+    wait = (f'<section class="panel" aria-label="서버 상태 예시" style="position:absolute;left:32px;top:420px;width:520px;background:rgba(27,32,29,.96)">{sec("서버가 있을 때 지도 위 상태 칩", "K3-03 · K10-01")}'
             f'<div style="padding:10px 12px;display:flex;gap:6px;flex-wrap:wrap">{chip("점검 중", "rust")}{chip("준비 중 — 10월 3일 20:00 열림", "info")}{chip("턴 멈춤", "rust")}'
             f'{chip("따라잡는 중 · 2배속", "bronze")}</div></section>')
     body = (f'<main style="position:relative;width:{W}px;height:{H}px;overflow:hidden">{mapimg("hero", W, H, "中原 일대 기본 지형 — 세력 없음")}'
-            f'{over(gw_topbar("login", transparent=True))}{note}{wait}{login_card("계정명이나 비밀번호가 맞지 않습니다.")}{empty}{nt}</main>')
+            f'{over(gw_topbar("login", transparent=True, logo_on=False))}{note}{wait}{login_card("계정명이나 비밀번호가 맞지 않습니다.")}{empty}{nt}</main>')
     page31('V31K5LoginEmpty.dc.html', 'K5 P-G02 로그인 — 서버 0 · 로그인 거절 · 서버 상태 칩', body)
 
 
 def board_mlogin():
     top = (f'<div style="position:relative;height:480px;flex-shrink:0;overflow:hidden">{mapimg("hero_m", MW, 480, "낙양 일대 지도 — pep 1기 판도")}'
-           f'{over(gw_mtop(transparent=True))}<div style="position:absolute;left:12px;top:292px;padding:6px 10px;background:rgba(12,15,14,.72)">{wordmark(220)}</div>'
+           f'{over(gw_mtop(transparent=True, logo_on=False))}<div style="position:absolute;left:12px;top:292px;padding:6px 10px;background:rgba(12,15,14,.72)">{wordmark(220)}</div>'
            f'<span class="chip" style="position:absolute;left:12px;top:392px;height:32px;background:rgba(20,24,22,.94);font-size:12px">pep 1기 · 3월 중순 · 세력 5</span>'
            f'<div style="position:absolute;right:8px;top:64px;display:flex;flex-direction:column;gap:2px">'
            f'<button type="button" class="ibtn" aria-label="확대" style="background:rgba(20,24,22,.92);font-size:20px">+</button>'
@@ -184,7 +186,7 @@ def board_mlogin():
 
 
 def board_mlogin_scroll():
-    body = (f'{gw_mtop()}<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:12px;padding:12px">'
+    body = (f'{gw_mtop(logo_on=False)}<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column;gap:12px;padding:12px">'
             f'<div style="overflow:hidden">{server_chips("flex-wrap:nowrap")}</div>'
             f'<section class="panel">{sec("세력 현황", "pep 1기 · 세력 5")}{nat_rows(h=44)}</section>'
             f'<section class="panel">{sec("천하 정세", "공개 사건")}{world_rows(3, 56)}</section>'
@@ -218,12 +220,13 @@ def board_join():
             f'<a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">이미 계정이 있으신가요? 로그인</a></div></section>')
     foot = f'<div style="position:absolute;left:0;right:0;bottom:0;background:rgba(12,15,14,.8)">{policy_links("height:44px")}</div>'
     body = (f'<main style="position:relative;width:{W}px;height:{H}px;overflow:hidden">{mapimg("hero", W, H, "中原 일대 지도 — 배경")}'
-            f'{over(gw_topbar("join", transparent=True))}{intro}{card}{foot}</main>')
+            f'{over(gw_topbar("join", transparent=True, logo_on=False))}{intro}{card}{foot}</main>')
     page31('V31K5Join.dc.html', 'K5 P-G03 가입 — 비밀번호 확인 오류(데스크톱)', body)
 
 
 def board_mjoin():
-    body = (f'{gw_mtop()}<div style="position:relative;height:96px;flex-shrink:0;overflow:hidden">{mapimg("hero_m", MW, 480, "낙양 일대 지도 — 띠", top=-200)}</div>'
+    body = (f'{gw_mtop(logo_on=False)}<div style="position:relative;height:96px;flex-shrink:0;overflow:hidden">{mapimg("hero_m", MW, 480, "낙양 일대 지도 — 띠", top=-200)}'
+            f'<div style="position:absolute;left:12px;top:10px;padding:4px 8px;background:rgba(12,15,14,.72)">{wordmark(190)}</div></div>'
             f'<div style="padding:10px 16px;display:flex;flex-direction:column;gap:8px;flex-grow:1;overflow:hidden">'
             f'<h1 class="serif" style="margin:0;font-size:20px;font-weight:900">회원 가입</h1>{join_fields()}{btn("회원가입", "primary", style="width:100%")}'
             f'<a href="#" style="font-size:12.5px;min-height:44px;display:inline-flex;align-items:center">이미 계정이 있으신가요? 로그인</a></div>')
@@ -1200,6 +1203,11 @@ BATTLE_EV = [('0:00', '개전 — 참가 대기 60초가 끝났다'), ('0:42', '
              ('2:40', '중앙 하후돈이 나가 AI가 부곡을 맡았다'), ('3:55', '상대가 후퇴했다'), ('4:10', '끝 — 우리 승리')]
 
 
+# 시간 막대 사건 표식(전체 4:10 = 250초 기준 %) — BATTLE_EV 와 같은 사건.
+RP_EVENTS = [(17, '#8fa77a', '부딪힘'), (29, '#d3b064', '돌격'), (37, '#d3b064', '일기토'), (64, '#7aa7c7', 'AI가 맡음'), (94, '#e08a7c', '후퇴')]
+RP_NOW = '우리 선봉 허저와 상대 선봉 안량이 일기토'
+
+
 def squad_rows(rows, side='우리'):
     out = ''
     for (k, n, ctl), slot in zip(rows, SLOTS6):
@@ -1237,12 +1245,12 @@ def board_replay():
     head_actions = f'{chip("200년 3월 중순")}{chip("야전")}{chip("상대 후퇴 — 우리 승리", "moss")}'
     main = (f'<div style="flex:1;min-width:0;display:flex;flex-direction:column">{pagehead("다시 보기 — 장사현 인근 야전", None, None, head_actions)}'
             f'<div style="flex:1;display:flex;gap:12px;padding:12px 12px 0;min-height:0">{left}<div style="width:768px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">{field_box(768)}{result_panel()}</div>{right}</div>'
-            f'<div style="padding:0 12px 12px">{time_bar("replay")}</div></div>')
+            f'<div style="padding:0 12px 12px">{time_bar("replay", pos=37, now_text=RP_NOW, events=RP_EVENTS)}</div></div>')
     page31('V31K5Replay.dc.html', 'K5 P-H03 리플레이 — 전장 판 자리 · 6자리 · 사건 · 시간 막대', shell_desk('기록', 'records', main))
 
 
 def board_mreplay():
-    main = (f'<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column">{field_box(390, label="장사현 인근 · 야전")}{time_bar("replay", mobile=True)}'
+    main = (f'<div style="flex-grow:1;overflow:hidden;display:flex;flex-direction:column">{field_box(390, label="장사현 인근 · 야전")}{time_bar("replay", mobile=True, pos=37, now_text=RP_NOW, events=RP_EVENTS)}'
             f'<div style="padding:8px 12px">{seg(["우리", "상대", "사건", "결과"], "우리", "보기")}</div>{squad_rows(OURS[:4])}</div>')
     page31('V31K5MReplay.dc.html', 'K5 P-H03 리플레이 — 모바일', mtop31('다시 보기', back='기록') + main + tabbar31('records'), w=MW, h=MH)
 
