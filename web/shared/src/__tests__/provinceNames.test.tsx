@@ -28,6 +28,8 @@ const tiles = {
       kind: 'COUNTY', parentRegionId: 'R1', cityIndex: null, geometryBasis: 'test', confidence: 'test' },
   ],
 } as unknown as WorldTiles;
+// 지도 훅의 effect 는 loadPreview 가 바뀌면 다시 돈다 — 실제 화면처럼 고정 함수를 넘긴다.
+const loadPreview = async () => preview;
 
 beforeEach(() => {
   mocks.fetch.mockReset().mockImplementation(async (url: string) => {
@@ -49,12 +51,15 @@ describe('구역 이름(useProvinceName)', () => {
 
   it('지도 훅이 지형을 받으면 이미 붙어 있던 화면도 이름을 얻는다(id · 번호)', async () => {
     const names = renderHook(() => useProvinceName());
+    const pinned = renderHook(() => useProvinceName(SHA));
     expect(names.result.current('HAN-P-0002')).toBeUndefined();
-    const map = renderHook(() => useWorldMap({ loadPreview: async () => preview }));
+    const map = renderHook(() => useWorldMap({ loadPreview }));
     await waitFor(() => expect(map.result.current.kind).toBe('ready'));
     expect(names.result.current('HAN-P-0002')).toBe('양적');
     expect(names.result.current('HAN-P-0001')).toBe('영천 북부');
-    expect(names.result.current(1)).toBe('양적');
+    // 번호는 판마다 다르다 — 지문을 준 쪽만 번호로 찾는다.
+    expect(names.result.current(1)).toBeUndefined();
+    expect(pinned.result.current(1)).toBe('양적');
     // 지형 요청은 지도 훅의 한 번뿐이다.
     expect(mocks.fetch.mock.calls.filter(([url]) => String(url).includes('/terrain?'))).toHaveLength(1);
   });
@@ -62,10 +67,58 @@ describe('구역 이름(useProvinceName)', () => {
   it('모르는 id · 번호는 지어내지 않는다', () => {
     act(() => rememberProvinceNames(tiles, SHA));
     expect(provinceNameOf('HAN-P-9999')).toBeUndefined();
-    expect(provinceNameOf(2)).toBeUndefined();
-    expect(provinceNameOf(-1)).toBeUndefined();
-    expect(provinceNameOf(0.5)).toBeUndefined();
+    expect(provinceNameOf(2, SHA)).toBeUndefined();
+    expect(provinceNameOf(-1, SHA)).toBeUndefined();
+    expect(provinceNameOf(0.5, SHA)).toBeUndefined();
     expect(provinceNameOf(null)).toBeUndefined();
     expect(provinceNameOf(undefined)).toBeUndefined();
+  });
+
+  it('지문이 다른 판의 이름은 주지 않는다 — 서버를 바꿔도 다른 판 이름을 빌려 오지 않는다', () => {
+    const OTHER = 'e'.repeat(64);
+    const otherTiles = { ...tiles, provinceRecords: [
+      { ...tiles.provinceRecords![1], id: 'HAN-P-0002', displayName: '다른 판 양적' },
+      { ...tiles.provinceRecords![0], id: 'HAN-P-0777', displayName: '다른 판에만' },
+    ] } as WorldTiles;
+    act(() => rememberProvinceNames(tiles, SHA));
+    act(() => rememberProvinceNames(otherTiles, OTHER));
+    // 지문을 주면 그 판의 이름표만 본다.
+    expect(provinceNameOf('HAN-P-0002', SHA)).toBe('양적');
+    expect(provinceNameOf('HAN-P-0002', OTHER)).toBe('다른 판 양적');
+    expect(provinceNameOf(0, SHA)).toBe('영천 북부');
+    expect(provinceNameOf(0, OTHER)).toBe('다른 판 양적');
+    expect(provinceNameOf('HAN-P-0777', SHA)).toBeUndefined();
+    // 받은 적 없는 지문은 모른다.
+    expect(provinceNameOf('HAN-P-0002', 'f'.repeat(64))).toBeUndefined();
+    // 지문을 모르면 가장 최근에 받은 판에서 id 로만 찾는다.
+    expect(provinceNameOf('HAN-P-0777')).toBe('다른 판에만');
+  });
+
+  it('취소된 요청(서버 교체)의 지형은 이름표에 적지 않는다', async () => {
+    let releaseFirst!: () => void;
+    const firstHeld = new Promise<void>((resolve) => { releaseFirst = resolve; });
+    const firstTiles = { ...tiles, provinceRecords: [
+      { ...tiles.provinceRecords![0], id: 'HAN-P-0999', displayName: '옛 서버에만' },
+    ] } as WorldTiles;
+    let terrainCalls = 0;
+    mocks.fetch.mockImplementation(async (url: string) => {
+      if (url.includes('/terrain?')) {
+        terrainCalls += 1;
+        if (terrainCalls === 1) {
+          await firstHeld;
+          return { ok: true, headers: { get: () => `"sha256-${'1'.repeat(64)}"` }, json: async () => structuredClone(firstTiles) };
+        }
+        return { ok: true, headers: { get: () => `"sha256-${SHA}"` }, json: async () => structuredClone(tiles) };
+      }
+      return { ok: false, json: async () => null };
+    });
+    const { rerender, result } = renderHook(({ serverId }) => useWorldMap({ loadPreview, serverId }),
+      { initialProps: { serverId: 'old' } });
+    await waitFor(() => expect(terrainCalls).toBe(1));
+    rerender({ serverId: 'new' });
+    await waitFor(() => expect(result.current.kind).toBe('ready'));
+    await act(async () => { releaseFirst(); await Promise.resolve(); await Promise.resolve(); });
+    expect(provinceNameOf('HAN-P-0999')).toBeUndefined();
+    expect(provinceNameOf('HAN-P-0002')).toBe('양적');
   });
 });
