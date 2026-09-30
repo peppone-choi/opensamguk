@@ -46,6 +46,32 @@ class WebUiLintTest(unittest.TestCase):
         self.assertEqual(counts["native_disabled"], 2)
         self.assertEqual([f.rsplit(":", 1)[1] for f in findings["native_disabled"]], ["<button>", "<input>"])
 
+    def test_expression_variables_named_disabled_or_title_are_not_attributes(self):
+        # 리뷰 지적(#1087): {disabled || busy} 의 변수는 속성이 아니다. 권장 수정 aria-disabled 는 0 건이어야 한다.
+        self.write("web/gateway/components/F.tsx",
+                   'export const F = ({ disabled, busy, title }) => (<>\n'
+                   '  <button aria-disabled={disabled || busy} onClick={() => go(a >= b)}>a</button>\n'
+                   '  <button disabled={disabled || busy} type="submit">b</button>\n'
+                   '  <p>{title}</p>{disabled && <em>x</em>}{disabled ? 1 : 2}\n'
+                   '  <label>좌우<input disabled={x >= 1} /></label>\n'
+                   '  <button onClick={() => setI((i) => i + 1)} title={i >= n ? "끝" : undefined}>c</button>\n'
+                   '</>);\nconst t: Array<string> = []; const disabled = a<b;\n')
+        counts, findings = scan(self.root)
+        self.assertEqual(counts["native_disabled"], 2)
+        self.assertEqual(findings["native_disabled"], ["web/gateway/components/F.tsx:3:<button>", "web/gateway/components/F.tsx:5:<input>"])
+        self.assertEqual(findings["title_attr"], ["web/gateway/components/F.tsx:6:<button>"])
+
+    def test_disabled_inside_not_is_active_state(self):
+        self.write("web/game/app/globals.css", "button:not(:disabled):hover { opacity: .8 }\n.a:not([aria-disabled='true']) { opacity: 1 }\n")
+        counts, _ = scan(self.root)
+        self.assertEqual(counts["dimmed_disabled"], 0)
+
+    def test_range_syntax_and_em_widths_are_counted(self):
+        self.write("web/game/app/a.css", "@media (width >= 900px) { a{} }\n@media (768px <= width) { b{} }\n"
+                   "@media (width >= 1200px) { c{} }\n@media (max-width: 48em) { d{} }\n")
+        counts, findings = scan(self.root)
+        self.assertEqual(sorted(f.rsplit(":", 1)[1] for f in findings["adhoc_breakpoint"]), ["48em", "900px"])
+
     def test_dimmed_disabled_css(self):
         self.write("web/game/app/globals.css",
                    "button:disabled { opacity: .5 }\n.x[aria-disabled='true'] { opacity: 0.4; }\n"

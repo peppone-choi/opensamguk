@@ -8,7 +8,10 @@
 - dimmed_disabled: a CSS `:disabled` / `[aria-disabled]` rule that fades the control with opacity.
   Unavailable controls keep full contrast with a dashed border and a reason (rule (7)).
 - adhoc_breakpoint: a width media condition other than the three bands in web/shared/src/breakpoints.ts
-  (768 · 1200, and 767.98 · 1199.98 for the upper edges).
+  (768 · 1200, and 767.98 · 1199.98 for the upper edges) — `(max|min)-width`, range syntax `(width >= N)`, and any em/rem width.
+
+JSX attributes are read by walking each intrinsic opening tag, so a variable named `disabled` or `title` inside an
+expression (`aria-disabled={disabled || busy}`) is not an attribute. Selectors inside `:not(...)` are ignored.
 
 Counts only go down: a new violation fails, and a fix must lower the baseline in the same change.
 Comments are skipped (web_copy_lint.strip_comments); tests, e2e and generated files are skipped.
@@ -36,15 +39,19 @@ TEST_NAME = re.compile(r"\.(?:test|spec)\.tsx?$")
 KINDS = ("title_attr", "native_disabled", "dimmed_disabled", "adhoc_breakpoint")
 ALLOWED_WIDTHS = {"768", "1200", "767.98", "1199.98"}
 
-JSX_ATTR = {
-    "title_attr": re.compile(r"(?<![-\w.])title\s*="),
-    "native_disabled": re.compile(r"(?<![-\w.])disabled(?=\s*(?:=|/?>|\s))"),
-}
-DIMMED = re.compile(r"(?::disabled|\[aria-disabled[^\]]*\])[^{};]*\{[^}]*\bopacity\s*:", re.S)
-WIDTH = re.compile(r"\((?:max|min)-width\s*:\s*([\d.]+)px\s*\)")
+JSX_ATTR_KINDS = {"title": "title_attr", "disabled": "native_disabled"}
+CSS_RULE = re.compile(r"([^{}]+)\{([^{}]*)\}")
+NOT_GROUP = re.compile(r":not\((?:[^()]|\([^()]*\))*\)")
+DISABLED_SELECTOR = re.compile(r":disabled|\[aria-disabled")
+# 폭 조건: (max|min)-width: N 단위, 범위 문법 (width >= N) · (N <= width). px 는 세 단 값만 허용, em · rem 은 늘 센다.
+WIDTH = re.compile(r"\((?:max|min)-width\s*:\s*([\d.]+)(px|em|rem)\s*\)"
+                   r"|\(\s*width\s*[<>]=?\s*([\d.]+)(px|em|rem)\s*\)"
+                   r"|\(\s*([\d.]+)(px|em|rem)\s*[<>]=?\s*width\b")
 MEDIA_BLOCK = re.compile(r"@media[^{]*")
 MATCH_MEDIA = re.compile(r"""matchMedia\(\s*(['"`])(.*?)\1""", re.S)
 TAG_OPEN = re.compile(r"<([A-Za-z][\w.]*)")
+ATTR_NAME = re.compile(r"[A-Za-z_$][-\w:.$]*")
+IDENT_TAIL = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_$)]")
 
 
 def source_files(root: Path):
@@ -67,15 +74,89 @@ def strip_css_comments(text: str) -> str:
     return re.sub(r"/\*.*?\*/", lambda m: "".join("\n" if ch == "\n" else " " for ch in m.group()), text, flags=re.S)
 
 
-def enclosing_tag(code: str, index: int) -> str | None:
-    """Name of the JSX tag whose attribute list contains `index`, or None if the attribute is outside a tag."""
-    start = code.rfind("<", 0, index)
-    if start == -1:
-        return None
-    if ">" in code[start:index].replace("=>", "").replace("->", ""):
-        return None
+def skip_braces(code: str, i: int) -> int:
+    """code[i] == '{' — 짝이 맞는 '}' 다음 자리. 문자열 · 템플릿(${} 중첩)은 건너뛴다."""
+    depth, n = 0, len(code)
+    while i < n:
+        c = code[i]
+        if c in "\"'":
+            j = i + 1
+            while j < n and code[j] != c and code[j] != "\n":
+                j += 2 if code[j] == "\\" else 1
+            i = j + 1
+            continue
+        if c == "`":
+            j = i + 1
+            while j < n and code[j] != "`":
+                if code[j] == "\\":
+                    j += 2
+                elif code.startswith("${", j):
+                    j = skip_braces(code, j + 1)
+                else:
+                    j += 1
+            i = j + 1
+            continue
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                return i + 1
+        i += 1
+    return n
+
+
+def jsx_attributes(code: str, start: int) -> tuple[str, list[tuple[str, int]]] | None:
+    """code[start] == '<' 인 JSX 여는 태그의 (이름, [(속성 이름, 자리)]). 속성 값 · {…} 식 · 펼침은 건너뛴다.
+    태그가 아니거나 읽을 수 없으면 None — 식 안의 변수 이름을 속성으로 세지 않는다."""
+    if start > 0 and code[start - 1] in IDENT_TAIL:
+        return None  # 제네릭 Array<T> · 비교 a<b (한글 글 바로 뒤 <select> 는 태그다)
     match = TAG_OPEN.match(code, start)
-    return match.group(1) if match else None
+    if not match:
+        return None
+    name, i, n, attrs = match.group(1), match.end(), len(code), []
+    while i < n:
+        c = code[i]
+        if c.isspace():
+            i += 1
+        elif c == ">" or code.startswith("/>", i):
+            return name, attrs
+        elif c == "{":
+            i = skip_braces(code, i)
+        else:
+            attr = ATTR_NAME.match(code, i)
+            if not attr:
+                return None
+            attrs.append((attr.group(), i))
+            j = attr.end()
+            while j < n and code[j].isspace():
+                j += 1
+            if j < n and code[j] == "=":
+                j += 1
+                while j < n and code[j].isspace():
+                    j += 1
+                if j < n and code[j] in "\"'":
+                    end = code.find(code[j], j + 1)
+                    if end == -1:
+                        return None
+                    i = end + 1
+                elif j < n and code[j] == "{":
+                    i = skip_braces(code, j)
+                else:
+                    return None
+            else:
+                i = j
+    return None
+
+
+def widths(text: str) -> list[str]:
+    """폭 조건 가운데 세 단 밖의 것(「900px」 · 「48em」)."""
+    out = []
+    for m in WIDTH.finditer(text):
+        value, unit = next((m.group(k), m.group(k + 1)) for k in (1, 3, 5) if m.group(k))
+        if unit != "px" or value not in ALLOWED_WIDTHS:
+            out.append(f"{value}{unit}")
+    return out
 
 
 def line_of(text: str, index: int) -> int:
@@ -95,28 +176,33 @@ def scan(root: Path) -> tuple[Counter, dict[str, list[str]]]:
         raw = path.read_text(encoding="utf-8", errors="replace")
         if path.suffix in STYLE_SUFFIXES:
             css = strip_css_comments(raw)
-            for match in DIMMED.finditer(css):
-                add("dimmed_disabled", relative, css, match.start(), match.group().split("{", 1)[0].strip())
+            for rule in CSS_RULE.finditer(css):
+                selector = NOT_GROUP.sub("", rule.group(1))
+                if DISABLED_SELECTOR.search(selector) and re.search(r"\bopacity\s*:", rule.group(2)):
+                    add("dimmed_disabled", relative, css, rule.start() + len(rule.group(1)) - len(rule.group(1).lstrip()),
+                        " ".join(rule.group(1).split())[:60])
             for block in MEDIA_BLOCK.finditer(css):
-                for width in WIDTH.finditer(block.group()):
-                    if width.group(1) not in ALLOWED_WIDTHS:
-                        add("adhoc_breakpoint", relative, css, block.start(), f"{width.group(1)}px")
+                for width in widths(block.group()):
+                    add("adhoc_breakpoint", relative, css, block.start(), width)
             continue
         code = strip_comments(raw)
         if path.suffix == ".tsx":
-            for kind, pattern in JSX_ATTR.items():
-                for match in pattern.finditer(code):
-                    tag = enclosing_tag(code, match.start())
-                    if tag and tag[0].islower() and "." not in tag:
-                        add(kind, relative, code, match.start(), f"<{tag}>")
+            for tag_open in TAG_OPEN.finditer(code):
+                parsed = jsx_attributes(code, tag_open.start())
+                if not parsed:
+                    continue
+                tag, attrs = parsed
+                if not tag[0].islower() or "." in tag:
+                    continue  # 컴포넌트 prop(<Panel title> · <Button disabled>)은 세지 않는다
+                for attr, at in attrs:
+                    if attr in JSX_ATTR_KINDS:
+                        add(JSX_ATTR_KINDS[attr], relative, code, at, f"<{tag}>")
         for call in MATCH_MEDIA.finditer(code):
-            for width in WIDTH.finditer(call.group(2)):
-                if width.group(1) not in ALLOWED_WIDTHS:
-                    add("adhoc_breakpoint", relative, code, call.start(), f"matchMedia {width.group(1)}px")
+            for width in widths(call.group(2)):
+                add("adhoc_breakpoint", relative, code, call.start(), f"matchMedia {width}")
         for block in re.finditer(r"@media[^{`'\"]*", code):
-            for width in WIDTH.finditer(block.group()):
-                if width.group(1) not in ALLOWED_WIDTHS:
-                    add("adhoc_breakpoint", relative, code, block.start(), f"{width.group(1)}px")
+            for width in widths(block.group()):
+                add("adhoc_breakpoint", relative, code, block.start(), width)
     return counts, findings
 
 
