@@ -2,7 +2,7 @@
 // 그릴 일이 있을 때만 그린다(가만히 있으면 프레임 0).
 import { chunksForRect, chunkKey, ChunkLoader } from './chunks';
 import { isOwnedNationVisual } from '../../nationVisual';
-import { planChunks } from './streaming';
+import { chunksToStream, planChunks } from './streaming';
 import { bitmapPixels, overviewPixels, pixelsToCanvas } from './overviewPicture';
 import { viewLevel, visibleCellRect, cellToScreen } from './camera';
 import { FootprintIndex, hitTest, type HitResult, type SpriteHit } from './hitTest';
@@ -314,8 +314,8 @@ export class TopdownRenderer {
 
   private streamChunks(manifest: BakeManifest): void {
     const rect = visibleCellRect(this.camera, this.viewport, manifest.shape);
-    const wanted = chunksForRect(rect, manifest.chunkSize, manifest.shape, 1);
-    const visible = new Set(chunksForRect(rect, manifest.chunkSize, manifest.shape, 0).map((c) => chunkKey(c.cx, c.cy)));
+    const { wanted, visible: shown } = chunksToStream(rect, manifest.chunkSize, manifest.shape, (cx, cy) => this.loader!.peek(cx, cy) !== undefined);
+    const visible = new Set(shown.map((c) => chunkKey(c.cx, c.cy)));
     const plan = planChunks(wanted, {
       peek: (cx, cy) => this.loader!.peek(cx, cy),
       onGpu: (cx, cy) => this.terrain!.hasChunk(cx, cy),
