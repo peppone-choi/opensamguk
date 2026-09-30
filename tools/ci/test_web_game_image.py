@@ -7,6 +7,8 @@ from pathlib import Path
 import tempfile
 import subprocess
 import unittest
+import sys
+from unittest import mock
 
 import yaml
 
@@ -15,6 +17,57 @@ import web_game_image as issuer
 
 ROOT = Path(__file__).resolve().parents[2]
 WORKFLOW = ROOT / ".github/workflows/build-web-game-image.yml"
+
+# Exact cf7 bytes. Never read the moving checkout Dockerfile or patch its expected hash.
+CF7_DOCKERFILE = """# web/game (:3001) — Next.js standalone (game client). NEXT_PUBLIC_* are inlined at BUILD time.
+FROM node:22-alpine AS build
+WORKDIR /src
+RUN npm install -g pnpm@10.33.0
+# pnpm-workspace.yaml MUST be copied with the manifest+lock so the install honors
+# `onlyBuiltDependencies` (sharp/unrs-resolver) — pnpm 10 blocks dep build scripts by default and
+# would otherwise leave the natives unbuilt (next build then fails).
+COPY web/package.json web/pnpm-lock.yaml web/pnpm-workspace.yaml web/
+COPY web/gateway/package.json web/gateway/
+COPY web/game/package.json web/game/
+COPY web/shared/package.json web/shared/
+WORKDIR /src/web
+RUN pnpm install --frozen-lockfile --filter @opensamguk/web-game...
+COPY web/shared/ /src/web/shared/
+COPY web/game/ /src/web/game/
+RUN pnpm --dir shared verify:topology game
+WORKDIR /src/web/game
+# Next.js rewrites are captured during build, including server-only proxy destinations.
+ARG GATEWAY_WEB_URL=http://web-gateway:3000
+ENV GATEWAY_WEB_URL=$GATEWAY_WEB_URL
+ARG NEXT_PUBLIC_GATEWAY_URL=
+ENV NEXT_PUBLIC_GATEWAY_URL=$NEXT_PUBLIC_GATEWAY_URL
+# 공유 도메인 에셋 충돌 방지 — prod는 ASSET_PREFIX=/game(next.config assetPrefix가 빌드타임에 읽음).
+# 미설정(로컬) 시 기본 /_next. assetPrefix는 에셋 URL만 바꿈(라우트/ api 경로 불변).
+ARG ASSET_PREFIX=
+ENV ASSET_PREFIX=$ASSET_PREFIX
+RUN pnpm build
+
+FROM node:22-alpine AS run
+WORKDIR /app
+ENV NODE_ENV=production
+ENV PORT=3001
+COPY --from=build /src/web/game/.next/standalone ./
+COPY --from=build /src/web/game/.next/static ./game/.next/static
+COPY --from=build /src/web/game/public ./game/public
+EXPOSE 3001
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 exec node game/server.js"]
+""".encode("utf-8")
+
+SOURCE_INPUTS = (issuer.DOCKERFILE, ".dockerignore", "web/package.json", "web/pnpm-lock.yaml",
+                 "web/pnpm-workspace.yaml", "web/game/package.json", "web/gateway/package.json",
+                 "web/shared/package.json", "web/game/next.config.mjs")
+
+
+def write_source_fixture(root):
+    for name in SOURCE_INPUTS:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(CF7_DOCKERFILE if name == issuer.DOCKERFILE else (ROOT / name).read_bytes())
 
 
 def fixtures():
@@ -43,7 +96,7 @@ def fixtures():
             "vcs": {"revision": issuer.SOURCE, "source": issuer.SOURCE_URL + ".git",
                     "localdir:context": ".", "localdir:dockerfile": "docker"},
             "source": {"infos": [{"filename": issuer.PROVENANCE_DOCKERFILE,
-                                  "data": base64.b64encode((ROOT / issuer.DOCKERFILE).read_bytes()).decode()}]},
+                                  "data": base64.b64encode(CF7_DOCKERFILE).decode()}]},
         }},
     }}
     image = {"architecture": "amd64", "os": "linux", "config": {
@@ -90,12 +143,7 @@ class ImageCandidateTest(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name) / "source"
-        for name in (issuer.DOCKERFILE, ".dockerignore", "web/package.json", "web/pnpm-lock.yaml",
-                     "web/pnpm-workspace.yaml", "web/game/package.json", "web/gateway/package.json",
-                     "web/shared/package.json", "web/game/next.config.mjs"):
-            path = self.root / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes((ROOT / name).read_bytes())
+        write_source_fixture(self.root)
         self.fake = FakeCommands()
         self.plan = issuer.make_plan(self.root, issuer.SOURCE, "f" * 40, "123", "1", self.fake)
         self.output = Path(self.temp.name) / "evidence"
@@ -128,6 +176,24 @@ class ImageCandidateTest(unittest.TestCase):
         self.assertEqual(env["BUILDX_GIT_CHECK_DIRTY"], "true")
         inspections = [call[0][4] for call in self.fake.calls if call[0][:4] == ["docker", "buildx", "imagetools", "inspect"]]
         self.assertTrue(all(ref.startswith(issuer.REPOSITORY + "@sha256:") for ref in inspections))
+
+    def test_fixture_is_pinned_and_independent_of_moving_checkout_dockerfile(self):
+        self.assertEqual(hashlib.sha256(CF7_DOCKERFILE).hexdigest(), issuer.DOCKERFILE_SHA256)
+        future = Path(self.temp.name) / "future-checkout"
+        for name in SOURCE_INPUTS:
+            path = future / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes((self.root / name).read_bytes())
+        (future / issuer.DOCKERFILE).write_bytes(b"FROM a-different-future-base\n")
+        with mock.patch.object(sys.modules[__name__], "ROOT", future):
+            source = Path(self.temp.name) / "independent-fixture"
+            write_source_fixture(source)
+            fake = FakeCommands()
+            plan = issuer.make_plan(source, issuer.SOURCE, "f" * 40, "123", "1", fake)
+            self.assertEqual(set(plan["source_pins_sha256"]), set(SOURCE_INPUTS))
+            self.assertEqual(plan["source_pins_sha256"][issuer.DOCKERFILE], issuer.DOCKERFILE_SHA256)
+            evidence = issuer.issue(source, plan, self.output, fake)
+            self.assertEqual(evidence["status"], "VERIFIED_CANDIDATE")
 
     def test_source_input_rejects_short_alias_and_other_full40(self):
         for value in ("cf7a196", "main", "a" * 40, issuer.SOURCE.upper(), issuer.SOURCE + ";echo injected"):
@@ -254,8 +320,20 @@ class ImageCandidateTest(unittest.TestCase):
 
 
 class WorkflowBoundaryTest(unittest.TestCase):
+    def assert_no_failure_masking(self, workflow):
+        for name, job in workflow["jobs"].items():
+            self.assertNotIn("continue-on-error", job, f"{name} job must propagate failures")
+            for index, step in enumerate(job["steps"]):
+                self.assertNotIn("continue-on-error", step, f"{name} step {index} must propagate failures")
+        self.assertNotIn("if", workflow["jobs"]["admit"]["steps"][0], "guard cannot be skipped")
+
+    def test_admission_and_image_failures_cannot_be_masked(self):
+        workflow = yaml.load(WORKFLOW.read_text(), Loader=yaml.BaseLoader)
+        self.assert_no_failure_masking(workflow)
+
     def test_only_manual_github_hosted_image_job_with_pinned_actions(self):
         workflow = yaml.load(WORKFLOW.read_text(), Loader=yaml.BaseLoader)
+        self.assert_no_failure_masking(workflow)
         self.assertEqual(set(workflow["on"]), {"workflow_dispatch"})
         inputs = workflow["on"]["workflow_dispatch"]["inputs"]
         self.assertEqual(set(inputs), {"source_sha", "expected_issuer_sha"})
@@ -308,6 +386,7 @@ class WorkflowBoundaryTest(unittest.TestCase):
 
     def run_admission(self, expected, actual, source=issuer.SOURCE):
         workflow = yaml.load(WORKFLOW.read_text(), Loader=yaml.BaseLoader)
+        self.assert_no_failure_masking(workflow)
         guard = workflow["jobs"]["admit"]["steps"][0]
         self.assertEqual(guard["env"], {
             "EXPECTED_ISSUER_SHA": "${{ inputs.expected_issuer_sha }}",

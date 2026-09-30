@@ -23,7 +23,9 @@
 
 현재 등록 검토안은 승인된 좁은 GitHub 상태변경 창에서 기존 Build+Deploy와 Main CI Alert의 상태를 기록·정지·복원하며 정상 CI를 유지하는 것이다. 이미 queued/running/blocked 실행이 있거나 idle 확인이 불가능하면 등록을 중단한다. disable이 기존 실행을 취소한다고 가정하지 않는다. 등록·main 편입·상태복원은 별도 외부 승인 대상이며 현재 실행한 절차가 아니다.
 
-Dispatch ref는 branch/tag 이름으로 검토한다. raw SHA ref 수용은 미확인이다. 새 issuer tag는 승인된 create-only/nonmoving 대상으로 검토하며 기존 다른 target의 tag를 이동·덮어쓰기하지 않는다. 태그 생성과 dispatch/publish는 현재 승인되지 않았다. 독립 리뷰·현재 CI를 통과한 새 issuer40을 승인 카드에 고정하고, 실제 실행이 그 SHA와 다르면 admission이 거절한다.
+Dispatch ref는 branch/tag 이름으로 검토한다. raw SHA ref 수용은 미확인이다. 새 issuer tag는 승인된 create-only/nonmoving 대상으로 검토하며 기존 다른 target의 tag를 이동·덮어쓰기하지 않는다. 태그 생성과 dispatch/publish는 현재 승인되지 않았다. 독립 리뷰·현재 CI를 통과한 새 issuer40을 승인 카드에 고정한다. 이 guard를 포함한 workflow에서는 입력한 기대값과 실행 SHA가 다르면 admission이 거절해 오발송을 방지한다.
+
+expected_issuer_sha 비교는 승인 권한을 증명하지 않는다. ref와 기대값을 같은 dispatch 권한자가 선택하며 guard 코드도 실행 파일 안에 있다. 검토받지 않은 SHA를 기대값으로 함께 입력하거나 guard가 없는 사본을 실행하는 경우를 차단하지 못한다. 실제 실행 권한은 저장소 dispatch 권한으로 관리하고, C0/K0의 대상 승인·독립 리뷰는 별도 운영 절차로 확인한다. main에 포함된 커밋만 허용하는 compare API 검사는 선택적 보강 제안이며 현재 구현·추가 승인 관문이 아니다.
 
 성공 artifact의 `candidate.json`과 Actions summary에서 다음을 확인한다.
 
