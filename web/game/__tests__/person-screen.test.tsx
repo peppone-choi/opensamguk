@@ -17,7 +17,7 @@ vi.mock('../lib/api', () => ({
 }));
 
 const hrefs = { myRetinue: '/game/pep/retinue', records: (id: number) => `/game/pep/records?generalId=${id}`,
-    letter: (id: number) => `/game/pep/letters/new?to=${id}`, people: '/game/pep/retinue/people' };
+    letter: (id: number) => `/game/pep/letters/new?to=${id}`, people: '/game/pep/retinue/people', dispatch: (id: number) => `/game/pep/court?dispatch=${id}` };
 beforeEach(() => {
     vi.clearAllMocks();
     window.matchMedia = ((query: string) => ({ matches: false, media: query, onchange: null, addListener() {}, removeListener() {},
@@ -56,4 +56,12 @@ test('내 부 밖 인물 — 짐작해 채우지 않고 서버 대기 + 인물 �
     render(<PersonScreen generalId={555} hrefs={hrefs} />);
     expect(await screen.findByText('이 인물의 카드 — 준비 중')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '인물 일람' })).toHaveAttribute('href', '/game/pep/retinue/people');
+});
+
+test('내 부의 사람 장수(K4-18 true) — 배치 단추 대신 「발령은 조정에서 →」', async () => {
+    vi.mocked(api.campaignPosts).mockResolvedValue({ status: 'READY', cards: [{ cardId: 1, generalId: 101, name: '허저', relation: 'L', provinceId: 'p', placeable: false,
+        blocked: { code: 'HUMAN_CARD', reason: '사람 장수는 조정에서 발령합니다.' }, active: null, pending: null, isHuman: true }], posts: [] } as never);
+    render(<PersonScreen generalId={101} hrefs={hrefs} />);
+    expect(await screen.findByRole('link', { name: '발령은 조정에서 →' })).toHaveAttribute('href', '/game/pep/court?dispatch=101');
+    expect(screen.queryByRole('button', { name: /자리에 배치/ })).toBeNull();
 });

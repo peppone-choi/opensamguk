@@ -22,6 +22,8 @@ export interface PersonScreenProps {
         readonly records: (generalId: number) => string;
         readonly letter: (generalId: number) => string;
         readonly people: string;
+        /** 조정 발령(사람 미리 채움) — 내 부의 사람 장수일 때. */
+        readonly dispatch: (generalId: number) => string;
     };
 }
 
@@ -74,7 +76,8 @@ export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
 
     const actions = (
         <PersonActions relation={relation}
-            hrefs={{ myRetinue: hrefs.myRetinue, records: hrefs.records(generalId), letter: hrefs.letter(generalId) }}
+            hrefs={{ myRetinue: hrefs.myRetinue, records: hrefs.records(generalId), letter: hrefs.letter(generalId),
+                dispatch: mine?.isHuman === true ? hrefs.dispatch(generalId) : undefined }}
             placement={mine && mine.isHuman !== true ? {
                 availability: availabilityOf('placement.assign', {
                     options: mine.post.placeable == null ? null : { available: mine.post.placeable, code: mine.post.blocked?.code, reason: mine.post.blocked?.reason },

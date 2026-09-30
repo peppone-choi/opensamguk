@@ -47,6 +47,8 @@ export interface PersonActionsProps {
         readonly records?: string;
         readonly letter?: string;
         readonly employ?: string;
+        /** 내 부의 사람 장수(K4-18 true) — 배치 대신 조정 발령(P-K01). */
+        readonly dispatch?: string;
     };
     /** 내 부 인물 — 배치(placement.assign). */
     readonly placement?: { readonly availability: InputAvailability | null; readonly onAct: () => void };
@@ -68,7 +70,8 @@ export function PersonActions({ relation, hrefs, placement, employ, onEmploy }: 
                     case 'letter':
                         return hrefs.letter ? <Link key={kind} href={hrefs.letter} className="os-button os-button--block">서신 쓰기</Link> : null;
                     case 'placement':
-                        return placement ? <InputAction key={kind} inputId="placement.assign" availability={placement.availability} label="자리에 배치" onAct={placement.onAct} block /> : null;
+                        if (placement) return <InputAction key={kind} inputId="placement.assign" availability={placement.availability} label="자리에 배치" onAct={placement.onAct} block />;
+                        return hrefs.dispatch ? <Link key={kind} href={hrefs.dispatch} className="os-button os-button--primary os-button--block">발령은 조정에서 →</Link> : null;
                     case 'employ':
                         return employ !== undefined ? (
                             <InputAction key={kind} inputId="action.employ" availability={employ} label="이 사람을 등용 — 명령 목록에 넣기" onAct={() => onEmploy?.()} block />
