@@ -276,6 +276,14 @@ jobs:
       - name: Verify game server recovery behavioral guards
         if: '!cancelled()'
         run: python3 tools/ops/test_game_server_recovery.py
+      - name: Verify PEP cold capture and QA provenance guards
+        if: '!cancelled()'
+        run: |
+          python3 tools/ops/test_pep_application_drill.py
+          python3 tools/ops/test_pep_authenticated_read.py
+          python3 tools/ops/test_pep_cold_capture_operator.py
+          python3 tools/ops/test_pep_qa_provenance.py
+          python3 tools/ops/test_pep_qa_final_gate.py
       - name: Verify main CI red/recovery alert decisions
         if: '!cancelled()'
         run: python3 tools/ops/test_main_ci_alert.py

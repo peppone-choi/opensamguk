@@ -226,7 +226,7 @@ def _verify_policy(inputs: MaterializerInputs, policy: JsonObject, candidate: Js
     }
     candidate_inputs = obj(obj(candidate, "provenance"), "inputs")
     for label, path in (("administrativeCatalog", inputs.catalog), ("administrativePlaceOverlay", inputs.overlay),
-                        ("legacyTileMap", inputs.tiles), ("legacyHanMap", inputs.han)):
+                        ("sourceTileMap", inputs.tiles), ("sourceCityMap", inputs.han)):
         actual = _verify_hash(f"candidate {label}", obj(candidate_inputs, label), path)
         hashes[label] = actual
     return {"generator": "tools/scenario/materialize_han_route_node_selection.py", "inputs": {

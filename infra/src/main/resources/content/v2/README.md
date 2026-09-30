@@ -1,6 +1,6 @@
 # `content/v2` — v2 전용 read-only 콘텐츠 카탈로그
 
-OPENSAM-35 (0A-d) 산출물. 로더는 `infra/src/main/kotlin/opensamguk/infra/v2/V2ContentCatalog.kt`.
+OPENSAM-35 (0A-d) 산출물. 로더는 `infra/src/main/kotlin/opensamguk/infra/content/ContentCatalog.kt`.
 근거 문서: `docs/loops/opensam-35-v2-0a-2026-08-08/s3a-content-v2-loader.md`.
 
 ## 1. 왜 리포 루트 `content/`가 아니라 `infra/src/main/resources/content/v2/`인가
@@ -21,7 +21,7 @@ S1의 교훈(재귀 스캔)이 여기서도 유효하다. v1 로더 두 개가 �
 
 ⇒ **형제 경로여야 한다.** 이 디렉터리를 `scenario/`나 `db/migration/` 밑으로 옮기지 마라.
 
-단, `V2ContentCatalog` 자신은 재귀하지 않는다(패턴에 `**`가 없다). 하위 디렉터리에 넣은
+단, `ContentCatalog` 자신은 재귀하지 않는다(패턴에 `**`가 없다). 하위 디렉터리에 넣은
 파일은 **조용히 무시된다** — 콘텐츠는 이 디렉터리 직속에 둔다.
 
 ## 3. 규약

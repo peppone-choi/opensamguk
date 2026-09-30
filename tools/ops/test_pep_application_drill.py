@@ -160,6 +160,21 @@ class ApplicationDrillTests(unittest.TestCase):
         self.assertEqual((self.bundle / 'manifest.json').read_bytes(), before)
         self.assertFalse(any(a[:2] == ['image', 'pull'] for a in self.docker.calls))
 
+    def test_authenticated_probe_runs_against_isolated_services_before_cleanup(self):
+        calls = []
+        def probe(**context):
+            calls.append(context)
+            self.assertIn(('container', context['postgres']), self.docker.objects)
+            self.assertIn(('container', context['redis']), self.docker.objects)
+            self.assertIn(('container', 'pep-drill-abcdefgh-game-engine'), self.docker.objects)
+            self.assertEqual(context['source'].api_env['OPENSAMGUK_WORLD_ID'], '7')
+            return {'source': 'isolated', 'checks': {'login': True}}
+        proof = self.prove(authenticated_probe=probe)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(proof.authenticated_read, {'source': 'isolated', 'checks': {'login': True}})
+        self.assertTrue(proof.cleanup['success'])
+        self.assertFalse(self.docker.objects)
+
     def test_candidate_rejects_tags_missing_images_and_source_forgery_before_create(self):
         for candidate in ['latest', 'sha256:bad', 123]:
             with self.subTest(candidate=candidate), self.assertRaises(base.RecoveryError):

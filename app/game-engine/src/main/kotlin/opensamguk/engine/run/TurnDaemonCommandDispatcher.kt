@@ -32,7 +32,7 @@ import opensamguk.engine.intake.VotePollState
 import opensamguk.engine.turn.ChangeRecorder
 import opensamguk.engine.turn.InMemoryTurnWorld
 import opensamguk.engine.turn.ProcessNationCommand
-import opensamguk.engine.v2.V2CityLedgerStore
+import opensamguk.engine.city.CityLedgerStore
 import opensamguk.engine.v2.V2CityTransportHandler
 import opensamguk.engine.v2.V2GarrisonRecruitHandler
 import opensamguk.infra.read.BoardPostRepository
@@ -111,10 +111,10 @@ class TurnDaemonCommandDispatcher(
      * OPENSAM-153 (v2 R4) — v2 도시 원장. null이면(v2 샌드박스 게이트 off) [v2GarrisonRecruit]도 null이고
      * `dispatch`가 [V2GarrisonRecruitHandler.unavailable]로 fail-closed deny한다(v1 동작 불변).
      */
-    v2CityLedger: V2CityLedgerStore? = null,
+    v2CityLedger: CityLedgerStore? = null,
     private val clock: Clock = Clock.systemUTC(),
     /** HWIHA 조정·내정 즉시 입력 핸들러. 개인 턴 핸들러와 같은 인스턴스(같은 내정 문맥)를 쓰도록 주입한다. */
-    hwihaCourtHandler: opensamguk.engine.campaign.CourtHandler? = null,
+    courtHandler: opensamguk.engine.campaign.CourtHandler? = null,
 ) {
     /**
      * PHP `inheritStor->getValue('previous')[0]`(Betting.php:133,142) — game_kv
@@ -284,7 +284,7 @@ class TurnDaemonCommandDispatcher(
 
     // ── B2 장수빙의 핸들러 ──
     private val claimNpc = ClaimNpcHandler(world, recorder)
-    private val hwihaCourt = hwihaCourtHandler ?: opensamguk.engine.campaign.CourtHandler(world, recorder)
+    private val court = courtHandler ?: opensamguk.engine.campaign.CourtHandler(world, recorder)
 
     // ── OPENSAM-94 프로필 아이콘 typed sync 핸들러 (eligibility 재평가 + owner/npc predicate) ──
     private val profileIconSync = ProfileIconSyncHandler(world, recorder)
@@ -311,7 +311,7 @@ class TurnDaemonCommandDispatcher(
         sentAt: Instant,
         executionAt: Instant,
     ): TurnDaemonCommandResult? = when (command) {
-        is TurnDaemonCommand.ImmediateInput -> hwihaCourt.handle(command)
+        is TurnDaemonCommand.ImmediateInput -> court.handle(command)
         is TurnDaemonCommand.ClaimNpc -> claimNpc.handle(command)
         // ── F4 Wave C2 (slice A) intake bindings ──
         is TurnDaemonCommand.SetNotice -> nationFinance.handleSetNotice(command)

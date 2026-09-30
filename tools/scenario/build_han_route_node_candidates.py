@@ -215,7 +215,7 @@ def build_document(
 ) -> JsonObject:
     paths = {
         "administrativeCatalog": catalog_path, "administrativePlaceOverlay": overlay_path,
-        "legacyTileMap": tiles_path, "legacyHanMap": han_path,
+        "sourceTileMap": tiles_path, "sourceCityMap": han_path,
     }
     scenario_catalog = build_scenario_catalog(scenario_dir)
     document = build_candidates(

@@ -1,5 +1,8 @@
 package opensamguk.engine.v2
 
+import opensamguk.engine.city.CityLedgerEntry
+import opensamguk.engine.city.CityLedgerStore
+
 import opensamguk.common.wire.CityTransport
 import opensamguk.common.wire.CommandLifecycleResult
 import opensamguk.engine.turn.ChangeRecorder
@@ -44,11 +47,11 @@ class V2CityTransportRulesTest {
         }
     }
 
-    private val full = V2CityLedgerEntry(gold = 100_000, rice = 100_000, garrison = 100_000)
+    private val full = CityLedgerEntry(gold = 100_000, rice = 100_000, garrison = 100_000)
 
     private fun decide(
         gold: Long = 0, rice: Long = 0, garrison: Int = 0,
-        hop: Int? = 1, crew: Int = 2000, from: V2CityLedgerEntry = full,
+        hop: Int? = 1, crew: Int = 2000, from: CityLedgerEntry = full,
     ) = transportDecision(gold, rice, garrison, hop, crew, from)
 
     // ── transportDecision — 순수 함수 ────────────────────────────────────────────────────────
@@ -100,7 +103,7 @@ class V2CityTransportRulesTest {
 
     @Test
     fun `출발 도시 잔액이 모자라면 자원별 사유로 deny`() {
-        val poor = V2CityLedgerEntry(gold = 10, rice = 10, garrison = 10)
+        val poor = CityLedgerEntry(gold = 10, rice = 10, garrison = 10)
         assertEquals(V2TransportDecision.Denied("도시의 금이 부족합니다."), decide(gold = 11, from = poor))
         assertEquals(V2TransportDecision.Denied("도시의 병량이 부족합니다."), decide(rice = 11, from = poor))
         assertEquals(V2TransportDecision.Denied("도시의 병사가 부족합니다."), decide(garrison = 11, from = poor))
@@ -118,7 +121,7 @@ class V2CityTransportRulesTest {
     private val t0 = Instant.parse("0200-01-01T00:00:00Z")
     private lateinit var lastWorld: InMemoryTurnWorld
     private lateinit var lastRecorder: ChangeRecorder
-    private lateinit var lastLedger: V2CityLedgerStore
+    private lateinit var lastLedger: CityLedgerStore
 
     /** `CityConst.path`에서 실제로 인접한 두 도시 id — 골든 잠금 값이라 테스트가 지어내지 않는다. */
     private fun adjacentPair(): Pair<Int, Int> {
@@ -158,7 +161,7 @@ class V2CityTransportRulesTest {
                 worldId = opensamguk.common.world.WorldId(1),
             ),
         )
-        val ledger = V2CityLedgerStore(Mockito.mock(NamedParameterJdbcTemplate::class.java))
+        val ledger = CityLedgerStore(Mockito.mock(NamedParameterJdbcTemplate::class.java))
         val recorder = ChangeRecorder()
         lastWorld = world; lastRecorder = recorder; lastLedger = ledger
         return V2CityTransportHandler(world, recorder, ledger, loadTopology)
@@ -178,8 +181,8 @@ class V2CityTransportRulesTest {
         )
         assertTrue(result.ok, reasonOf(result) ?: "")
 
-        assertEquals(V2CityLedgerEntry(9_000, 4_500, 2_700), lastLedger.entry(lastWorld.worldId, a))
-        assertEquals(V2CityLedgerEntry(1_000, 500, 300), lastLedger.entry(lastWorld.worldId, b))
+        assertEquals(CityLedgerEntry(9_000, 4_500, 2_700), lastLedger.entry(lastWorld.worldId, a))
+        assertEquals(CityLedgerEntry(1_000, 500, 300), lastLedger.entry(lastWorld.worldId, b))
         // 두 도시의 upsert 가 **같은** recorder 에 있다 = 같은 flush 트랜잭션.
         assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
         // 장수는 이동하지 않는다(묘섭 :366).
@@ -222,12 +225,12 @@ class V2CityTransportRulesTest {
         if (variant == WorldMapVariant.V3_1447_MAP4) {
             assertFalse(result.ok)
             assertEquals("ROUTE_REQUIRES_MULTI_TURN", (result as CommandLifecycleResult).code)
-            assertEquals(V2CityLedgerEntry(1000, 1000, 1000), lastLedger.entry(lastWorld.worldId, 273))
+            assertEquals(CityLedgerEntry(1000, 1000, 1000), lastLedger.entry(lastWorld.worldId, 273))
             assertTrue(lastRecorder.cityLedgerV2Upserts().isEmpty())
         } else {
             assertTrue(result.ok, reasonOf(result))
-            assertEquals(V2CityLedgerEntry(900, 800, 700), lastLedger.entry(lastWorld.worldId, 273))
-            assertEquals(V2CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
+            assertEquals(CityLedgerEntry(900, 800, 700), lastLedger.entry(lastWorld.worldId, 273))
+            assertEquals(CityLedgerEntry(100, 200, 300), lastLedger.entry(lastWorld.worldId, 781))
             assertEquals(2, lastRecorder.cityLedgerV2Upserts().size)
         }
         assertEquals(273, lastWorld.getGeneralById(10)?.cityId)

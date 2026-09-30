@@ -37,7 +37,7 @@ import java.time.Instant
  *    마이크로초 꼬리는 표시 전용이라 절단, TURNTIME_FULL 규약과 통일).
  *  - `autorunLimit`: [§2 BLOCKED — W3_PLAN §2 general.aux 컬럼 부재, P1-004/P1-020] PHP는
  *    `general.aux.autorun_limit`(:71-72,91)인데 opensamguk엔 aux read 원천이 없다 → null(날조 금지).
- *    ChiefReservedResponse.autorunLimit과 동일 격리.
+ *    원천이 없는 자동실행 제한과 동일하게 격리.
  *
  * Identity: the verified JWT principal resolves the caller's own general; the `?generalId=` query
  * param is the F2 transition fallback, gated OFF (403) when it does not match the principal's owned

@@ -114,7 +114,6 @@ export default function TurnList({ generalId, nationId, refreshKey, isCampaignWo
                 <CommandModal
                     ruleProfile="HWIHA"
                     generalId={generalId}
-                    nationId={nationId}
                     turnIdx={editTurnIdx}
                     onClose={() => setEditTurnIdx(null)}
                     onToast={onToast}

@@ -47,14 +47,14 @@ class ReservedTurnRejectionTest {
         val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
             aiHook = { _, _ -> error("no legacy rest or AI") })
         val absent = handler.handle(1, ReservedTurn("휴식", "{}", rowExists = false), 200, 1, "00:00")
-        assertEquals(TurnOutcome.NoAction, absent.hwihaOutcome)
+        assertEquals(TurnOutcome.NoAction, absent.inputOutcome)
         assertNull(absent.denyReason); assertFalse(absent.fellBack)
         assertEquals(before, world.getGeneralById(1)); assertFalse(handler.recorder.isDirty)
         assertFailsWith<IllegalArgumentException> { absent.copy(requestId = "fabricated") }
         for (reserved in listOf(ReservedTurn("휴식", "{}"),
             ReservedTurn("휴식", "{}", requestId = "explicit", rowExists = false),
             ReservedTurn("action.enlist", "{}", rowExists = false))) {
-            assertIs<TurnOutcome.Rejected>(handler.handle(1, reserved, 200, 1, "00:00").hwihaOutcome)
+            assertIs<TurnOutcome.Rejected>(handler.handle(1, reserved, 200, 1, "00:00").inputOutcome)
         }
     }
 
@@ -66,7 +66,7 @@ class ReservedTurnRejectionTest {
         val result = handler.handle(1, ReservedTurn("stratagem.play", "{}", requestId = "request"), 200, 1, "00:00")
         assertNull(result.definition)
         assertFalse(result.fellBack)
-        assertEquals("NOT_DELIVERED", assertIs<TurnOutcome.Rejected>(result.hwihaOutcome).code)
+        assertEquals("NOT_DELIVERED", assertIs<TurnOutcome.Rejected>(result.inputOutcome).code)
         assertEquals(opensamguk.logic.input.InputRejection.NOT_DELIVERED.message, result.denyReason)
         assertEquals(before, world.getGeneralById(1))
         assertFalse(handler.recorder.isDirty)
@@ -79,7 +79,7 @@ class ReservedTurnRejectionTest {
             val handler = ReservedTurnHandler(world, CommandRegistry(GeneralActionPipeline()), "00", 184,
                 aiHook = { _, _ -> error("legacy AI") }, actionRngFactory = { error("court RNG") })
             val result = handler.handle(1, ReservedTurn(input, "{}"), 200, 1, "00:00")
-            assertEquals("INVALID_INPUT_CHANNEL", assertIs<TurnOutcome.Rejected>(result.hwihaOutcome).code)
+            assertEquals("INVALID_INPUT_CHANNEL", assertIs<TurnOutcome.Rejected>(result.inputOutcome).code)
             assertEquals(before, world.getGeneralById(1))
             assertFalse(handler.recorder.isDirty)
             assertNull(result.definition)
@@ -123,7 +123,7 @@ class ReservedTurnRejectionTest {
                 reservedActionOf = { ReservedTurn("stratagem.play", "{}", requestId = "blocked-request") })
             val result = lifecycle.runTick(Instant.EPOCH.plusSeconds(1)).single()
             assertFalse(result.fellBack)
-            assertNotNull(result.hwihaOutcome)
+            assertNotNull(result.inputOutcome)
             assertEquals("blocked-request", result.requestId)
             assertEquals("stratagem.play", result.reservedActionCode)
             assertEquals(original.copy(turnTime = Instant.EPOCH.plusSeconds(interval.toLong()),

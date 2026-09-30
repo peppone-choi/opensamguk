@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import opensamguk.gameapi.owner.GeneralOwnerEntity
 import opensamguk.gameapi.owner.GeneralOwnerRepository
 import opensamguk.gameapi.owner.GeneralResolver
-import opensamguk.gameapi.precheck.CommandPrecheckService
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.gameapi.read.BoardCommentReadRepository
 import opensamguk.gameapi.read.BoardPostReadLogRepository
@@ -28,8 +27,6 @@ import opensamguk.gameapi.read.InheritanceLogReadRepository
 import opensamguk.gameapi.read.NationReadEntity
 import opensamguk.gameapi.read.NationEnvReadRepository
 import opensamguk.gameapi.read.NationReadRepository
-import opensamguk.gameapi.read.NationTurnReadEntity
-import opensamguk.gameapi.read.NationTurnReadRepository
 import opensamguk.gameapi.read.SecretPermissionReader
 import opensamguk.gameapi.read.TroopReadEntity
 import opensamguk.gameapi.read.TroopReadRepository
@@ -39,14 +36,9 @@ import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.infra.entity.NationEnvEntity
-import opensamguk.logic.actions.CommandRegistry
-import opensamguk.logic.actions.GeneralActionDefinition
 import opensamguk.logic.domestic.getOutcome
-import opensamguk.logic.stats.GeneralActionPipeline
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.BeforeEach
-import org.mockito.ArgumentMatchers.anyInt
-import org.mockito.ArgumentMatchers.anyList
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.anyString
@@ -74,9 +66,9 @@ import java.util.Optional
  * 2026-06-03-F4-action-pages-spec.md). No Spring context, no Testcontainers — every repo is a mock.
  *
  * Coverage: the non-trivial real-data shapes (generals public projection, diplomacy letters state text,
- * conflict matrix, nation finance editable gate, chief-reserved post grid, inherit cost+stat clamp,
+ * conflict matrix, nation finance editable gate, inherit cost+stat clamp,
  * vote tally + myVote) AND the empty/graceful defaults for the seed-empty tables (tournament state-0,
- * board, votes, troops, history) + the permission gates (board 기밀실, chief/npc/inherit identity).
+ * board, votes, troops, history) + the permission gates (board 기밀실, npc/inherit identity).
  */
 class F4ReadControllersTest {
     @BeforeEach
@@ -90,7 +82,6 @@ class F4ReadControllersTest {
     private val resolver = fixtureGeneralResolver(owners, generals, nations)
     private val letters = mock(DiplomacyLetterReadRepository::class.java)
     private val diplomacy = mock(DiplomacyReadRepository::class.java)
-    private val nationTurns = mock(NationTurnReadRepository::class.java)
     private val gameKv = mock(GameKvReadRepository::class.java)
     private val inheritLogs = mock(InheritanceLogReadRepository::class.java)
     private val boardPosts = mock(BoardPostReadRepository::class.java)
@@ -102,18 +93,9 @@ class F4ReadControllersTest {
     private val troops = mock(TroopReadRepository::class.java)
     private val history = mock(HistoryReadRepository::class.java)
     private val world = mock(WorldStateReadRepository::class.java)
-    // ChiefCenter 명령 팔레트는 REAL CommandRegistry로 구동(실제 :logic 정의 key/name/argsSchema 사용).
-    private val commandRegistry = CommandRegistry(GeneralActionPipeline())
-    // precheck mock — 스텁 미설정 시 precheckAll이 null 반환(액터 상태 없음) → 레지스트리-only 폴백
-    // (possible=true). 명령 팔레트 카테고리/이름/reqArg 검증에는 이 폴백 동작으로 충분하다.
-    private val precheck = mock(CommandPrecheckService::class.java)
     private val objectMapper = ObjectMapper()
     // nation_env(V3) read mock — 스텁 미설정 시 findByNamespaceAndKey가 null 반환 → nationMsg/scoutMsg/remain null(기존 BLOCKED 동작 보존).
     private val nationEnv = mock(NationEnvReadRepository::class.java)
-
-    /** ChiefCenterController 8-인자 생성 헬퍼(B1 precheck 배선 후 시그니처). */
-    private fun chiefCenterController() =
-        ChiefCenterController(resolver, nationTurns, generals, nations, world, troops, commandRegistry, precheck)
 
     private fun mvc(vararg controllers: Any): MockMvc =
         MockMvcBuilders.standaloneSetup(*controllers)
@@ -601,124 +583,6 @@ class F4ReadControllersTest {
             .perform(get("/api/nation/1/finance"))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.outcome").value(expected))
-    }
-
-    // ── GET /api/nation/chief-reserved (8 posts, reserved turns by level) ────────────────────────────
-    @Test
-    fun `chief reserved returns 8 posts with reserved turns grouped by officer level`() {
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
-        // 액터 상태 없음 → precheckAll null → 명령 팔레트는 레지스트리-only 폴백(possible=true).
-        `when`(precheck.precheckAll(anyInt(), anyList<GeneralActionDefinition>())).thenReturn(null)
-        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
-        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "조조", nationId = 1, officerLevel = 12)))
-        `when`(nations.findById(1)).thenReturn(Optional.of(nation(1, "위", level = 7)))
-        `when`(generals.findByNationIdOrderByOfficerLevelDescIdAsc(1)).thenReturn(
-            listOf(gen(10, "조조", nationId = 1, officerLevel = 12)),
-        )
-        `when`(nationTurns.findByNationIdOrderByOfficerLevelDescTurnIdxAsc(1)).thenReturn(
-            listOf(
-                NationTurnReadEntity(
-                    id = 1, nationId = 1, officerLevel = 12, turnIdx = 0,
-                    actionCode = "che_증축", arg = linkedMapOf("destCityID" to 5), brief = "증축",
-                ),
-            ),
-        )
-        `when`(world.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, currentYear = 200, currentMonth = 3, tickSeconds = 3600)),
-        )
-        `when`(troops.findByNationOrderByTroopLeaderAsc(1)).thenReturn(
-            listOf(TroopReadEntity(troopLeader = 10, nation = 1, name = "선봉대")),
-        )
-
-        mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved").with(principal(7L)))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.nationId").value(1))
-            // W3 — 호출자 식별 + 국가 컨텍스트 + 게임 시각.
-            .andExpect(jsonPath("$.myGeneralId").value(10))
-            .andExpect(jsonPath("$.myOfficerLevel").value(12))
-            .andExpect(jsonPath("$.nationName").value("위"))
-            .andExpect(jsonPath("$.nationLevel").value(7))
-            .andExpect(jsonPath("$.year").value(200))
-            .andExpect(jsonPath("$.month").value(3))
-            .andExpect(jsonPath("$.turnTerm").value(60)) // 3600/60
-            .andExpect(jsonPath("$.isChief").value(true)) // officer_level 12 > 4
-            // posts grid (8 칸, 보강 필드).
-            .andExpect(jsonPath("$.posts.length()").value(8))
-            .andExpect(jsonPath("$.posts[0].officerLevel").value(12))
-            .andExpect(jsonPath("$.posts[0].title").value("군주"))
-            .andExpect(jsonPath("$.posts[0].name").value("조조")) // W3 — 직책 보유 장수 이름
-            .andExpect(jsonPath("$.posts[0].npcType").value(0)) // W3 — npc_state 기본 0(PC)
-            .andExpect(jsonPath("$.posts[0].officerLevelText").value("황제")) // 국가 레벨 7 + lv12
-            .andExpect(jsonPath("$.posts[0].reservedTurns.length()").value(1))
-            .andExpect(jsonPath("$.posts[0].reservedTurns[0].actionCode").value("che_증축"))
-            .andExpect(jsonPath("$.posts[0].reservedTurns[0].arg.destCityID").value(5)) // W3 — 누락됐던 arg
-            // 공석 칸(lv5)은 보유 장수 null.
-            .andExpect(jsonPath("$.posts[7].officerLevel").value(5))
-            .andExpect(jsonPath("$.posts[7].name").doesNotExist())
-            .andExpect(jsonPath("$.posts[7].officerLevelText").value("사도")) // 국가 레벨 7 + lv5 → code 705
-            .andExpect(jsonPath("$.posts[7].reservedTurns.length()").value(0))
-            // W3 — 부대 목록(troop_leader → name).
-            .andExpect(jsonPath("$.troopList.10").value("선봉대"))
-            // W3 — 사령부 명령 팔레트(6 카테고리, GameConst availableChiefCommand 순서).
-            .andExpect(jsonPath("$.commandList.length()").value(6))
-            .andExpect(jsonPath("$.commandList[0].category").value("휴식"))
-            .andExpect(jsonPath("$.commandList[0].values[0].canonicalId").value("chief.rest"))
-            .andExpect(jsonPath("$.commandList[0].values[0].normalizedIntentId").doesNotExist())
-            .andExpect(jsonPath("$.commandList[0].values[0].layer").value("CHIEF_RING"))
-            .andExpect(jsonPath("$.commandList[0].values[0].sourceRing").value("NATION_TURN"))
-            .andExpect(jsonPath("$.commandList[0].values[0].authorityPolicyId").value("LEGACY_OFFICER_LEVEL"))
-            .andExpect(jsonPath("$.commandList[0].values[0].adapterPolicy").value("PRESERVE"))
-            .andExpect(jsonPath("$.commandList[0].values[0].parityStatus").value("LOCKED"))
-            .andExpect(jsonPath("$.commandList[0].values[0].contractStatus").value("FINAL"))
-            .andExpect(jsonPath("$.commandList[0].values[0].deliveryState").value("DOMAIN_READY"))
-            .andExpect(jsonPath("$.commandList[1].category").value("인사"))
-            .andExpect(jsonPath("$.commandList[1].values[0].value").value("che_발령"))
-            .andExpect(jsonPath("$.commandList[1].values[0].simpleName").value("발령"))
-            .andExpect(jsonPath("$.commandList[1].values[0].reqArg").value(true)) // 발령 = destGeneralID/destCityID
-            // B1 — possible은 실제 precheck 결과. precheck mock이 null 반환(액터 상태 없음) → 레지스트리-only
-            // 폴백으로 possible=true, deny reason 없음.
-            .andExpect(jsonPath("$.commandList[1].values[0].possible").value(true))
-            .andExpect(jsonPath("$.commandList[1].values[0].reason").doesNotExist())
-            // BLOCKED(§2): autorun_limit 원천 부재 → null(직렬화 생략).
-            .andExpect(jsonPath("$.autorunLimit").doesNotExist())
-    }
-
-    @Test
-    fun `chief reserved for 재야 caller returns 8 empty posts with neutral nation`() {
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("ruleProfile" to "SAMMO")))
-        `when`(owners.findByUserId(7L)).thenReturn(GeneralOwnerEntity(generalId = 10L, userId = 7L, claimedAt = Instant.EPOCH))
-        `when`(generals.findById(10)).thenReturn(Optional.of(gen(10, "방랑", nationId = 0, officerLevel = 0)))
-        `when`(world.findAll()).thenReturn(
-            listOf(WorldStateReadEntity(id = 1, currentYear = 200, currentMonth = 1, tickSeconds = 3600)),
-        )
-
-        mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved").with(principal(7L)))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.result").value(true))
-            .andExpect(jsonPath("$.nationId").value(0))
-            .andExpect(jsonPath("$.nationName").value("재야"))
-            .andExpect(jsonPath("$.nationLevel").value(0))
-            .andExpect(jsonPath("$.isChief").value(false)) // officer_level 0 not > 4
-            .andExpect(jsonPath("$.posts.length()").value(8))
-            .andExpect(jsonPath("$.posts[0].name").doesNotExist())
-            .andExpect(jsonPath("$.posts[0].reservedTurns.length()").value(0))
-            .andExpect(jsonPath("$.troopList.length()").value(0))
-            // 명령 팔레트는 국가 무관 정적 카테고리이므로 항상 6개.
-            .andExpect(jsonPath("$.commandList.length()").value(6))
-    }
-
-    @Test
-    fun `chief reserved 401 for anonymous caller`() {
-        mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved"))
-            .andExpect(status().isUnauthorized)
-    }
-
-    @Test
-    fun `chief legacy command palette is not a hwiha product endpoint`() {
-        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(config = mapOf("worldFormat" to "GENERAL_RETAINER_CAMPAIGN")))
-        mvc(chiefCenterController()).perform(get("/api/nation/chief-reserved").with(principal(7L)))
-            .andExpect(status().isNotFound)
     }
 
     // ── GET /api/nation/npc-policy (default + current, permission gate) ──────────────────────────────
