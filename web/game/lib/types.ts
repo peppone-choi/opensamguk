@@ -601,6 +601,8 @@ export interface IntakeQueued {
 export interface IntakeDenied {
   status: 'BLOCKED' | 'UNKNOWN';
   reason: string;
+  /** 입장 거절 코드(AdmissionDenied `code`) — 원장 failureReasons 코드. 화면 글자로 쓰지 않는다. */
+  code?: string | null;
   /** 단건 precheck deny의 제약명(BlockedResponse.constraintName). */
   constraintName?: string | null;
   /** bulk(BulkBlockedResponse): 부분 실패 지점. */
