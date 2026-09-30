@@ -30,7 +30,15 @@ function demoWorld(provinceCount: number): WorldState {
   return { nations, occupancy };
 }
 
-export default function MapLab({ bakeUrl, kitUrl, view }: { bakeUrl: string; kitUrl: string; view: string }) {
+function initialView(view: string, center?: string, zoom?: string) {
+  const [col, row] = (center ?? '').split(',').map(Number);
+  if (Number.isFinite(col) && Number.isFinite(row)) return { center: { col, row }, zoom: Number(zoom) || 16 };
+  return VIEWS[view] ?? VIEWS.luoyang;
+}
+
+export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
+  bakeUrl: string; kitUrl: string; view: string; center?: string; zoom?: string;
+}) {
   const [handle, setHandle] = useState<TopdownMapHandle | null>(null);
   const [hit, setHit] = useState<HitResult | null>(null);
   const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true });
@@ -60,7 +68,7 @@ export default function MapLab({ bakeUrl, kitUrl, view }: { bakeUrl: string; kit
         source={source}
         world={world}
         layers={layers}
-        initialView={VIEWS[view] ?? VIEWS.luoyang}
+        initialView={initialView(view, center, zoom)}
         onReady={setHandle}
         onSelect={setHit}
         style={{ flex: 1, minHeight: 0 }}

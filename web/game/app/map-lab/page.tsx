@@ -16,6 +16,8 @@ export default async function MapLabPage({ searchParams }: { searchParams: Promi
       bakeUrl={params.bake ?? '/map/topdown-lab/bake'}
       kitUrl={params.kit ?? '/map/topdown-lab/kit'}
       view={params.view ?? 'luoyang'}
+      center={params.c}
+      zoom={params.z}
     />
   );
 }
