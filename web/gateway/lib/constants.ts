@@ -1,6 +1,6 @@
-// 게이트웨이 verbatim 한글 라벨 + 상수 (F0 패러티 스펙 §3~§6 기준).
-// 렌더되는 텍스트는 레거시(devsam/core)와 동결 회귀 — 마케팅 카피 등 임의 문구 금지.
-// 예외: BRAND는 의도적 리브랜딩(devsam "삼국지 모의전투 HiDCHe" → "오픈삼국") — 사용자 결정 divergence.
+// 게이트웨이 한글 라벨 + 상수. 화면 문구는 v3.1 설계(2026-09-30 전체 승인, K5 설계서 §2)를 따른다 — 쉬운 말.
+// 로그인 · 가입 오류는 설계서 LG12 · J11 의 쉬운 말로 바꿨다. 서버가 보낸 거절 문장은 받은 그대로 보인다.
+// 삼모 원문(LOBBY_LABELS · LOBBY_FOOTNOTES)은 로비 재구현(P-G04)에서 바꾼다.
 
 export const BRAND = '오픈삼국';
 
@@ -30,14 +30,12 @@ export const AUTH_LABELS = {
     logout: '로 그 아 웃',
     toJoin: '계정이 없으신가요? 회원가입',
     toLogin: '이미 계정이 있으신가요? 로그인',
-    // 검증/에러 (verbatim, login.ts/join.ts/AuthService)
-    emptyUsername: '유저명을 입력해주세요',
-    emptyPassword: '비밀번호를 입력해주세요',
+    // 검증/에러 — 설계서 LG12 쉬운 말. 서버 거절 문장(AuthService)은 받은 그대로 보인다.
+    emptyUsername: '계정명을 입력하세요',
+    emptyPassword: '비밀번호를 입력하세요',
     emptyNickname: '별명을 입력해주세요',
-    loginFail: '아이디나 비밀번호가 올바르지 않습니다.',
-    loginForbidden: '현재는 로그인이 금지되어있습니다!',
+    loginFail: '계정명이나 비밀번호가 맞지 않습니다.',
     passwordMismatch: '비밀번호가 일치하지 않습니다',
-    registerSuccess: '회원 등록되었습니다.',
     // 가입 필드 제약 (AuthDto.kt; backend = grand truth)
     usernameRule: '3~50자',
     nicknameRule: '2~20자, 다른 유저와 겹칠 수 없음',
@@ -47,7 +45,7 @@ export const AUTH_LABELS = {
     passwordTooShort: (n: number) => `비밀번호는 적어도 ${n}글자 이상이어야 합니다`,
 } as const;
 
-// 푸터 링크 (legacy index.php) — F0에선 inert placeholder
+// 바닥 정책 링크 이름(가입 화면이 아직 쓴다 — 가입 재구현 P-G03 에서 PolicyLinks 로 바꾼다).
 export const FOOTER_LINKS = ['개인정보처리방침', '이용약관'] as const;
 
 export const LOBBY_LABELS = {
