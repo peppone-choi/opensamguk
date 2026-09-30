@@ -4,6 +4,7 @@
 // 옛 화면의 「결속 사건」 ≠ 서버 「결속」). 대조: __tests__/yuedan-view.test.ts 가 RenownEvents.kt 를 읽어 맞춘다.
 
 import type { RenownPendingEvent, RenownReason, Retinue, YuedanRow } from './campaign-reads';
+import { plainGlyphs } from './plain-glyphs';
 
 export const RENOWN_RISING = ['전공', '치적', '관직', '결속'] as const;
 export const RENOWN_FALLING = ['패전', '배신', '실정', '발령 거절'] as const;
@@ -17,9 +18,9 @@ export function stampLabel(stamp: string | null | undefined): string | null {
     return month >= 1 && month <= 12 ? `${Number(m[1])}년 ${month}월` : null;
 }
 
-/** 서버 원인 라벨의 한자 지명 글자를 쉬운 말로(「縣 점령」 → 「현 점령」). 다른 글자는 그대로. */
+/** 서버 원인 라벨의 한자 행정 단위를 쉬운 말로(「縣 점령」 → 「현 점령」) — 표는 lib/plain-glyphs.ts 한 곳. */
 export function plainLabel(label: string): string {
-    return label.replace(/\u7E23/g, '현'); // U+7E23 = 縣(한자 lint 가 소스 글자로 세지 않게 이스케이프)
+    return plainGlyphs(label);
 }
 
 export type ReasonTone = 'moss' | 'rust' | 'neutral';
