@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Chip, Modal, StatusView } from '@opensamguk/ui';
+import { Chip, Modal, StatusView, useViewportClass } from '@opensamguk/ui';
 import { AptitudeCells, StatCells } from '@/components/retinue/StatCells';
 import { PlacementSheet } from '@/components/territory/PlacementParts';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
@@ -11,7 +11,6 @@ import { useGameSession } from '@/lib/campaign-session';
 import { availabilityOf } from '@/lib/input-availability';
 import { stateCells } from '@/lib/person-view';
 import { retinueRows } from '@/lib/retinue-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { PersonActions, PersonHero, PersonStateGrid, PersonWaitingPanels } from './PersonParts';
 import styles from './people.module.css';
 
@@ -33,7 +32,9 @@ export interface PersonScreenProps {
  */
 export function PersonScreen({ generalId, hrefs }: PersonScreenProps) {
     const { frontInfo, generalId: me } = useGameSession();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [reload, setReload] = useState(0);
     const [placing, setPlacing] = useState(false);
     const [busy, setBusy] = useState(false);

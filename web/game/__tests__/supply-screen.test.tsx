@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { SupplyScreen } from '../components/territory/SupplyScreen';
 import { api } from '../lib/api';
 
@@ -13,10 +14,7 @@ vi.mock('../lib/api', () => ({ api: { warehouses: vi.fn() } }));
 
 const zero = { money: 0, grain: 0, iron: 0, timber: 0, horses: 0 };
 const hrefs = { transport: '/game/pep?do=action.transport', map: (id: number) => `/game/pep?layer=supply&focus=${id}` };
-function setMobile(matches: boolean) {
-    window.matchMedia = ((query: string) => ({ matches, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
-}
+const setMobile = (on: boolean) => setViewport(on ? 'mobile' : 'desktop');
 beforeEach(() => { vi.clearAllMocks(); setMobile(false); nation = { id: 1, name: '조조' }; });
 
 test('데스크톱 — 재고 표 · 끊긴 곳 · 녹봉 대기 · 물자조달(명령 흐름으로)', async () => {

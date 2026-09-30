@@ -2,13 +2,12 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { StatusView } from '@opensamguk/ui';
+import { StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { availabilityOf } from '@/lib/input-availability';
 import { fortRows, siegeRows } from '@/lib/siege-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { FortOrders, SiegeDetail, SiegeList, SiegeOrders, fortKey, siegeKey } from './SiegeParts';
 import styles from './siege.module.css';
 
@@ -30,7 +29,9 @@ export interface SiegeScreenProps {
  */
 export function SiegeScreen({ hrefs }: SiegeScreenProps) {
     const router = useRouter();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [reload, setReload] = useState(0);
     const [selected, setSelected] = useState<string | null>(null);
     const sieges = useCampaignRead((id, s) => api.campaignSieges(id, s), [reload]);

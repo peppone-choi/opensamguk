@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { CaptivesScreen } from '../components/people/CaptivesScreen';
 import { api } from '../lib/api';
 
@@ -9,10 +10,7 @@ vi.mock('../lib/campaign-session', () => ({ useGameSession: () => ({ generalId: 
 vi.mock('../lib/api', () => ({ api: { peopleOptions: vi.fn(), campaignRetinue: vi.fn(), campaignYuedan: vi.fn() } }));
 
 const hrefs = { flowBase: '/game/pep', yuedan: '/game/pep/retinue/yuedan' };
-function setMobile(matches: boolean) {
-    window.matchMedia = ((query: string) => ({ matches, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
-}
+const setMobile = (on: boolean) => setViewport(on ? 'mobile' : 'desktop');
 beforeEach(() => {
     vi.clearAllMocks();
     setMobile(false);

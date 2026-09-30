@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { CountyScreen } from '../components/county/CountyScreen';
 import { api } from '../lib/api';
 
@@ -21,8 +22,7 @@ const hrefs = { records: '/game/pep/records?cityId=2', flow: (i: string, t: stri
 beforeEach(() => {
     vi.clearAllMocks();
     cityHere = 2;
-    window.matchMedia = ((query: string) => ({ matches: false, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
+    setViewport('desktop');
     vi.mocked(api.campaignCounty).mockResolvedValue({ status: 'READY', cityId: 2, name: '양적현', specialties: [{ resource: 'IRON', label: '철', monthly: 0, ledgerMonthly: 12 }] } as never);
     vi.mocked(api.warehouses).mockResolvedValue({ status: 'READY', warehouses: [{ cityId: 2, name: '양적현', commanderyName: null, isCapital: false, supplied: false, stock: { ...zero, money: 50 } }] } as never);
     vi.mocked(api.campaignPolicies).mockResolvedValue({ status: 'READY', countyOptions: [{ code: 'FARM', label: '농업' }], corpsOptions: [], defaultPolicy: null, corps: [],

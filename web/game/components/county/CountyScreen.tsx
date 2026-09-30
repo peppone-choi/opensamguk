@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Modal, ReasonTooltip, Seg, StatusView } from '@opensamguk/ui';
+import { Modal, ReasonTooltip, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { PlacementSheet } from '@/components/territory/PlacementParts';
 import { PolicySheet } from '@/components/territory/PolicyParts';
@@ -14,7 +14,6 @@ import { flowCommand } from '@/lib/command-flow/catalog';
 import { COUNTY_WAITING, specialtyRows, specialtyZeroReason } from '@/lib/county-view';
 import { availabilityOf } from '@/lib/input-availability';
 import { countyPolicyRows } from '@/lib/territory-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { CountyGovernance, CountyHeader, CountyRecordsLink, CountySpecialties, CountyStock, HereActions } from './CountyParts';
 import styles from './county.module.css';
 
@@ -46,7 +45,9 @@ export interface CountyScreenProps {
 export function CountyScreen({ cityId, hrefs }: CountyScreenProps) {
     const { frontInfo, generalId } = useGameSession();
     const router = useRouter();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [reload, setReload] = useState(0);
     const [tab, setTab] = useState<MobileTab>('state');
     const [sheet, setSheet] = useState<Sheet | null>(null);

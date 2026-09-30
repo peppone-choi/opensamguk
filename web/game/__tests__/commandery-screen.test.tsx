@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { CommanderyScreen } from '../components/county/CommanderyScreen';
 import { api } from '../lib/api';
 
@@ -21,8 +22,7 @@ const policies = (withCommandery: boolean) => ({ status: 'READY', countyOptions:
 
 beforeEach(() => {
     vi.clearAllMocks();
-    window.matchMedia = ((query: string) => ({ matches: false, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
+    setViewport('desktop');
     vi.mocked(api.counties).mockImplementation(async (_g: number, scope: string) => dir(scope) as never);
     vi.mocked(api.campaignWorks).mockResolvedValue({ status: 'READY', counties: [] } as never);
     vi.mocked(api.warehouses).mockResolvedValue({ status: 'READY', warehouses: [] } as never);

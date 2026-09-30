@@ -2,14 +2,13 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Seg, StatusView } from '@opensamguk/ui';
+import { Seg, StatusView, useViewportClass } from '@opensamguk/ui';
 import { RenownBand } from '@/components/retinue/RenownBand';
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { availabilityOf } from '@/lib/input-availability';
 import { employQuery } from '@/lib/person-view';
 import { renownBand } from '@/lib/retinue-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { CaptivePanel, TalentPanel } from './CaptivesParts';
 import styles from './people.module.css';
 
@@ -28,7 +27,9 @@ export interface CaptivesScreenProps {
  */
 export function CaptivesScreen({ hrefs }: CaptivesScreenProps) {
     const router = useRouter();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [view, setView] = useState<'talent' | 'captive'>('talent');
     const [reload, setReload] = useState(0);
     const employ = useCampaignRead((id) => api.peopleOptions('action.employ', id), [reload]);

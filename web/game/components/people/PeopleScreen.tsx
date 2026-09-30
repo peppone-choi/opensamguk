@@ -2,12 +2,11 @@
 
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
-import { StatusView } from '@opensamguk/ui';
+import { StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { PEOPLE_PAGE_LIMIT, usePeopleList, type PeopleScope } from '@/lib/directory-reads';
 import { useGameSession } from '@/lib/campaign-session';
 import { peopleRows } from '@/lib/people-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { PeopleCards } from './PeopleCards';
 import { PeopleFilterBar } from './PeopleFilterBar';
 import { PeopleMore } from './PeopleMore';
@@ -33,7 +32,9 @@ export interface PeopleScreenProps {
  * 서버 ID 순 그대로(화면 재정렬 금지 — K4-20). 첫 쪽 실패는 빈 것과 다른 모양(다시 시도), 다음 쪽 실패는 받은 목록을 둔다.
  */
 export function PeopleScreen({ initialScope, hrefs, cityName }: PeopleScreenProps) {
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [scope, setScope] = useState<PeopleScope>(initialScope);
     const [query, setQuery] = useState('');
     const [attempt, setAttempt] = useState(0);

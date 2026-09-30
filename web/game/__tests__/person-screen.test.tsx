@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { PersonScreen } from '../components/people/PersonScreen';
 import { api } from '../lib/api';
 
@@ -20,8 +21,7 @@ const hrefs = { myRetinue: '/game/pep/retinue', records: (id: number) => `/game/
     letter: (id: number) => `/game/pep/letters/new?to=${id}`, people: '/game/pep/retinue/people', dispatch: (id: number) => `/game/pep/court?dispatch=${id}` };
 beforeEach(() => {
     vi.clearAllMocks();
-    window.matchMedia = ((query: string) => ({ matches: false, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
+    setViewport('desktop');
     vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 30, costSum: 10, overCapacity: false, units: [], people: [
         { retainerId: 1, generalId: 101, name: '허저', picture: null, imageServer: 0, loyalty: 90, roleLabel: null, taskLabel: null,
             stats: { leadership: 70, strength: 95, intel: 30, politics: 20, charm: 40 }, cost: 12, aptitudes: null, bonds: [], departureOrder: null, locationCityId: null },

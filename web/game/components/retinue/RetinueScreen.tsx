@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemo, useState } from 'react';
-import { InputAction, Modal, Seg, StatusView, matchesKoreanName } from '@opensamguk/ui';
+import { InputAction, matchesKoreanName, Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { PlacementSheet } from '@/components/territory/PlacementParts';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
@@ -21,7 +21,6 @@ import {
     type RetinueRow,
     type RetinueSort,
 } from '@/lib/retinue-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { BondPanel } from './BondPanel';
 import { PersonDetail } from './PersonDetail';
 import { RenownBand } from './RenownBand';
@@ -49,7 +48,9 @@ type MobileView = 'people' | 'units' | 'bonds';
 export function RetinueScreen({ hrefs }: { readonly hrefs: RetinueScreenHrefs }) {
     const { frontInfo, generalId } = useGameSession();
     const router = useRouter();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [reload, setReload] = useState(0);
     const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal), [reload]);
     const posts = useCampaignRead((id, signal) => api.campaignPosts(id, signal), [reload]);

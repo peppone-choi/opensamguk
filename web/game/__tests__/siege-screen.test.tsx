@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { SiegeScreen } from '../components/siege/SiegeScreen';
 import { api } from '../lib/api';
 
@@ -14,10 +15,7 @@ const siege = (over: Record<string, unknown> = {}) => ({
     countySupplied: true, besiegerTroops: 2000, besiegerFed: true, canAct: true, surrenderDemandAccepted: false, timeline: [], ...over,
 });
 const hrefs = { flow: (i: string, t: string) => `/game/pep?do=${i}&target=${t}`, corps: '/game/pep/corps' };
-function setMobile(matches: boolean) {
-    window.matchMedia = ((query: string) => ({ matches, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
-}
+const setMobile = (on: boolean) => setViewport(on ? 'mobile' : 'desktop');
 beforeEach(() => {
     vi.clearAllMocks();
     setMobile(false);

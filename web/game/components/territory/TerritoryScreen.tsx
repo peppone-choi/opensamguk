@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
-import { Modal, Seg, StatusView } from '@opensamguk/ui';
+import { Modal, Seg, StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { CAMPAIGN_RESOURCE_LABELS, useCampaignRead, type CountyWorks, type Read } from '@/lib/campaign-reads';
@@ -11,7 +11,6 @@ import { availabilityOf } from '@/lib/input-availability';
 import { connectedTotal, stockLine, warehouseRows } from '@/lib/supply-view';
 import { candidateBody, fortCandidates, roadCandidates } from '@/lib/road-candidates';
 import { FORTIFICATION, placementRows, type PolicyRow, type WorkRow } from '@/lib/territory-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { PlacementList, PlacementSheet } from './PlacementParts';
 import { PolicyPanel, PolicySheet } from './PolicyParts';
 import { RoadPicker } from './RoadPicker';
@@ -51,7 +50,9 @@ function panelState<T extends { status: string }>(read: Read<T>, title: string, 
  */
 export function TerritoryScreen({ hrefs, extraFor, provinceName }: TerritoryScreenProps) {
     const { generalId } = useGameSession();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [reload, setReload] = useState(0);
     const again = () => setReload((n) => n + 1);
     const posts = useCampaignRead((id, s) => api.campaignPosts(id, s), [reload]);

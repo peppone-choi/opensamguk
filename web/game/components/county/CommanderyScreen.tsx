@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Modal, StatusView } from '@opensamguk/ui';
+import { Modal, StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { PolicySheet } from '@/components/territory/PolicyParts';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
@@ -11,7 +11,6 @@ import { useGameSession } from '@/lib/campaign-session';
 import { commanderyRows, commanderySummary, sortCommandery, type CommanderySort } from '@/lib/commandery-view';
 import { availabilityOf } from '@/lib/input-availability';
 import { commanderyPolicyRows } from '@/lib/territory-view';
-import { useIsMobile } from '@/lib/use-viewport';
 import { CommanderyHeader, CommanderyPolicyCard, CommanderySummaryCard, CommanderyTable, type CommanderyScope } from './CommanderyParts';
 import styles from './county.module.css';
 
@@ -32,7 +31,9 @@ export interface CommanderyScreenProps {
 export function CommanderyScreen({ commanderyId, initialScope = 'COMMANDERY', hrefs }: CommanderyScreenProps) {
     const { generalId } = useGameSession();
     const router = useRouter();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [scope, setScope] = useState<CommanderyScope>(initialScope);
     const [sort, setSort] = useState<CommanderySort>('name');
     const [reload, setReload] = useState(0);

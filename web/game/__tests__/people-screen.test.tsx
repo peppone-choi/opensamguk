@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { PeopleScreen } from '../components/people/PeopleScreen';
 import { api } from '../lib/api';
 import type { DirectoryPerson } from '../lib/directory-reads';
@@ -15,8 +16,7 @@ const hrefs = { person: (id: number) => `/game/pep/retinue/people/${id}`, letter
 
 beforeEach(() => {
     vi.clearAllMocks();
-    window.matchMedia = ((query: string) => ({ matches: false, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
+    setViewport('desktop');
 });
 
 test('표 + 미리보기, 범위를 바꾸면 그 범위로 다시 읽는다', async () => {

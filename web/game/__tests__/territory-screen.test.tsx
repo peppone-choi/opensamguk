@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, expect, test, vi } from 'vitest';
+import { setViewport } from './helpers/viewport';
 import { TerritoryScreen } from '../components/territory/TerritoryScreen';
 import { api } from '../lib/api';
 
@@ -12,10 +13,7 @@ vi.mock('../lib/api', () => ({
 
 const zero = { money: 0, grain: 0, iron: 0, timber: 0, horses: 0 };
 const hrefs = { supply: '/game/pep/territory/supply', court: '/game/pep/court' };
-function setMobile(matches: boolean) {
-    window.matchMedia = ((query: string) => ({ matches, media: query, onchange: null, addListener() {}, removeListener() {},
-        addEventListener() {}, removeEventListener() {}, dispatchEvent: () => false })) as unknown as typeof window.matchMedia;
-}
+const setMobile = (on: boolean) => setViewport(on ? 'mobile' : 'desktop');
 
 beforeEach(() => {
     vi.clearAllMocks();

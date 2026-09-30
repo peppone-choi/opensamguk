@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Seg, StatusView } from '@opensamguk/ui';
+import { Seg, StatusView, useViewportClass } from '@opensamguk/ui';
 import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { useGameSession } from '@/lib/campaign-session';
-import { useIsMobile } from '@/lib/use-viewport';
 import { departureRows, stampLabel } from '@/lib/yuedan-view';
 import { DepartureOrder, MyRenown, Ranking, RenownPaths } from './YuedanParts';
 import styles from './yuedan.module.css';
@@ -17,7 +16,9 @@ import styles from './yuedan.module.css';
  */
 export function YuedanScreen({ retinueHref }: { readonly retinueHref: string }) {
     const { generalId } = useGameSession();
-    const mobile = useIsMobile();
+    const viewport = useViewportClass();
+    // 구조가 다른 것은 모바일뿐 — 태블릿은 데스크톱 구조에 CSS 로 줄인다. 재기 전(null)은 뼈대.
+    const mobile = viewport === null ? null : viewport === 'mobile';
     const [reload, setReload] = useState(0);
     const [view, setView] = useState<'rank' | 'departure'>('rank');
     const yuedan = useCampaignRead((id, signal) => api.campaignYuedan(id, signal), [reload]);
