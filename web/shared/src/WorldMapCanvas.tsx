@@ -1602,10 +1602,15 @@ function drawScene(
     const radius = cityMarkerRadius(level, dpr) * markerZoom;
     const style = architectureForJu(city.regionName);
     const owned = isOwnedNationVisual(city.nationId, city.nationColor);
-    context.save();
     // 당겨 보는 배율에서는 城 을 성내에 꽉 맞춘다 — 깃발·별·이름표·집기 상자도 이 자리를 따른다.
     const fit = cityFootprintMarkerBox(city.level, city.col, city.row,
       footprintSpans(scene.cities).get(city.id) ?? 1, view);
+    // 화면 밖 城 은 건너뛴다 — 城 그림 · 깃발 · 배지 · 이름표 · 「내 위치」 어느 것도 이 여유 밖으로 나가지 않는다.
+    // 縣 수준에서 1428개를 프레임마다 다 그리면 끌기 한 번 그리기가 16ms 를 넘었다(09-30, 지도 칸 1048×952).
+    const reach = Math.max(fit.width, fit.footprintWidth, 120 * dpr);
+    if (Math.max(x, fit.x + fit.width) + reach < 0 || Math.min(x, fit.x) - reach > width
+      || Math.max(y, fit.baseY) + reach < 0 || Math.min(y, fit.y) - reach > height) continue;
+    context.save();
     const pixelLod = fit.width < 3 * dpr;
     // 그림은 화면 안에서 그림으로 그릴 城 만 청한다 — 점으로 그리거나 화면 밖이면 받지 않는다.
     const wantsSprites = !pixelLod && fit.x < width && fit.x + fit.width > 0 && fit.y < height && fit.baseY > 0;

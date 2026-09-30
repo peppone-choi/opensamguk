@@ -1840,6 +1840,30 @@ describe('shared WorldMapCanvas viewport interaction', () => {
       expect(lastFrame()).toContain('fillText:내 위치');
     });
 
+    it('skips 城 that are wholly off screen', () => {
+      countingImage();
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={wideTiles(40)}
+          provinceMap={null}
+          cities={[
+            { ...CHE_OVERLAYS_FIXTURE[0], id: 1, name: '가까운현', x: 40, y: 40, state: 0 },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 2, name: '먼현', x: 360, y: 360, state: 0 },
+          ]}
+          currentCityId={1}
+          initialFocus="current-city-close"
+          sourceSize={{ width: 400, height: 400 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      // 당겨 본 자리에서 먼 城 은 화면 수백 px 밖이다 — 그리지도, 이름을 달지도 않는다.
+      expect(Number(canvas.dataset.citySprites) + Number(canvas.dataset.cityPixels)).toBe(1);
+      const names = lastFrameLabels(canvas).map(({ value }) => value);
+      expect(names).toContain('가까운현');
+      expect(names).not.toContain('먼현');
+    });
+
     it('bakes each terrain cell in the same colour as terrainColorFor', () => {
       countingImage();
       const terrain = ['0123', '4567', '89 x', '5'];
