@@ -16,12 +16,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * [JwtVerifyFilter] runs before the username/password filter and sets a verified-userId principal when
  * a valid Bearer token is present.
  *
- * Public (no identity needed): the lobby map preview, the health probe, the const/global-menu reads,
+ * Public (no identity needed): the lobby map preview, the health probe, the const read,
  * and — during the F2 transition — the existing read controllers that still accept `?generalId=`
  * (diplomacy/command/sse/front-info). Those keep working unauthenticated so
  * web/game Wave 2 can migrate incrementally; the proxy injects the Bearer where it has one.
  *
- * Identity-required: the possession + my-* endpoints, which resolve the caller's general from the
+ * Identity-required: the my-* endpoints, which resolve the caller's general from the
  * verified principal and have no `?generalId=` fallback.
  *
  * CSRF is disabled (stateless token API, no cookies on this origin).
@@ -43,18 +43,13 @@ class GameApiSecurityConfig {
                     // Mailbox IDs and single-message IDs must never make private correspondence public.
                     .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
-                    .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
-                    // Phase 4X-A 가신·부곡 읽기 — 본인/같은 국가만(spec v3 F4). 등록하지 않으면 anyRequest permitAll 로 공개된다.
-                    .requestMatchers("/api/my-retinue", "/api/generals/*/retinue").authenticated()
+                    .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()
                     .requestMatchers("/api/events").authenticated()
                     // Phase 4X-B 작전 읽기 — 국가 내부 정보(타국 403).
                     .requestMatchers("/api/operations", "/api/operations/*").authenticated()
                     // Phase 4X-C 출병 계획·리플레이 읽기 — 본인/공격국·수비국만(타국 403).
-                    .requestMatchers("/api/battlefields", "/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
+                    .requestMatchers("/api/my-battle-plans", "/api/battles/replays", "/api/battles/replays/*").authenticated()
                     .requestMatchers(HttpMethod.POST, "/api/battles/*/*/join-ticket").authenticated()
-                    .requestMatchers("/api/general/claim").authenticated()
-                    .requestMatchers("/api/generals/claimable").authenticated()
-                    .requestMatchers("/api/select-pool", "/api/select-pool/**").authenticated()
                     .requestMatchers("/api/v2/commands/**").authenticated()
                     .requestMatchers("/api/v2/garrison-recruit", "/api/v2/city-transport").authenticated()
                     .requestMatchers("/api/command/v2GarrisonRecruit", "/api/command/v2CityTransport").authenticated()
