@@ -1,0 +1,42 @@
+{
+  "artifactId": "waryong-battle-kit-export",
+  "files": {
+    "boards.bin.gz": {
+      "bytes": 202569,
+      "sha256": "ff01ca31cada88165eea6d1a2abf3457f8738212969a61a2267367c993e44b11",
+      "source": "waryong/battle/kit/boards.bin.gz"
+    },
+    "kit.json": {
+      "bytes": 61713,
+      "sha256": "64dc86fa3e9eab7c81e1b1ca8cd5b5f9bc4c389e9a396070fe226f455cf7e5eb",
+      "source": "waryong/battle/kit/kit.json"
+    },
+    "pieces.bin.gz": {
+      "bytes": 39545,
+      "sha256": "98f1f6c69f226a3fcd5ed2cee89c066eb65314da0e7c5c64f852246aa9d159a4",
+      "source": "waryong/battle/kit/pieces.bin.gz"
+    },
+    "records.bin": {
+      "bytes": 6144,
+      "sha256": "2ad1562d6861db92da75a90267a569908a784731e912ba74da0ecf628eb756c3",
+      "source": "waryong/battle/kit/records.bin"
+    },
+    "unit-roles.bin.gz": {
+      "bytes": 1608,
+      "sha256": "b3319d12287775d826f41141661e288aa8c57e54b84761bd643905a7f138cfd7",
+      "source": "waryong/battle/kit/unit-roles.bin.gz"
+    },
+    "units.bin.gz": {
+      "bytes": 14082,
+      "sha256": "c9bb38ca763de4b5c000da9633ed64dc006e6b4f25960f243c7be2343edcc3c7",
+      "source": "waryong/battle/kit/units.bin.gz"
+    }
+  },
+  "kitId": "2c8a1a5",
+  "schemaVersion": 1,
+  "source": {
+    "directory": "waryong/battle/kit/",
+    "mergeCommit": "2c8a1a526c65ad4b4a7ee1fee47392c302f0b157",
+    "repository": "peppone-choi/opensamguk-images"
+  }
+}
