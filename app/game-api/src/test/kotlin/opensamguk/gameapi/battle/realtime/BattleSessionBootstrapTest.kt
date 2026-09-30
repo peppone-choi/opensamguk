@@ -48,7 +48,7 @@ class BattleSessionBootstrapTest {
         timer.fire()
         assertEquals(1, assertIs<BattleTickAttempt.Advanced>(results.last()).state.tick)
         assertEquals(1, store.session.currentTick)
-        assertEquals(1L, store.session.latestEventSeq)
+        assertEquals(2L, store.session.latestEventSeq)
         cadence.close()
     }
 
@@ -109,6 +109,7 @@ class BattleSessionBootstrapTest {
         var startAllowed = false
         var maxTicks = Int.MAX_VALUE
         private var log = emptyList<BattleEventRecord>()
+        private val transitions = mutableMapOf<String, Long>()
         override fun claimEpoch(worldId: WorldId, battleId: String, owner: String,
                                 leaseMillis: Long): BattleSessionHead? {
             claims++
@@ -133,7 +134,18 @@ class BattleSessionBootstrapTest {
         override fun ticket(worldId: WorldId, battleId: String) = frozen
         override fun head(worldId: WorldId, battleId: String) = session
         override fun admit(command: BattleCommandRecord): CommandAdmission = error("unused")
-        override fun appendTransition(transition: BattleTransition): Long? = error("unused")
+        override fun appendTransition(transition: BattleTransition): Long? {
+            transitions[transition.transitionId]?.let { return it }
+            if (session.phase != BattleSessionPhase.RUNNING || session.currentTick != transition.tick ||
+                session.sessionEpoch != transition.sessionEpoch || session.leaseOwner != transition.leaseOwner)
+                return null
+            val seq = session.latestEventSeq + 1
+            log = log + BattleEventRecord(seq, transition.sessionEpoch, transition.tick,
+                transition.effectiveTick, transition.type, transition.payloadJson, transition.payloadSha256)
+            transitions[transition.transitionId] = seq
+            session = session.copy(latestEventSeq = seq)
+            return seq
+        }
         override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
                                  sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
             if (session.currentTick != expectedTick || session.latestEventSeq != expectedEventSeq)
