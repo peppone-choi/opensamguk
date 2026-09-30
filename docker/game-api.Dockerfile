@@ -61,5 +61,7 @@ COPY data/curated/han/route-node-migration-v1.json /app/data/curated/han/route-n
 COPY data/curated/han/water-topology-adjudications-v1.json /app/data/curated/han/water-topology-adjudications-v1.json
 COPY --from=build /src/build/generated-map/ /app/data/map/
 ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom"
+# Immutable topdown bundles are supplied by an approved read-only runtime mount.
+RUN mkdir -p /app/data/map/topdown
 EXPOSE 8081
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/app.jar"]
