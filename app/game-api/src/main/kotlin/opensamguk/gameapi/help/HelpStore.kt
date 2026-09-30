@@ -75,7 +75,7 @@ class HelpStore private constructor(
         val input = catalog.entries.singleOrNull { it.helpTopicId == topic.id }
         HelpTopicSummary(
             topic.id, topic.title, topic.reviewState, topicGroups.getValue(topic.id),
-            input?.inputId, input?.kind?.name, topic.sections.explanation,
+            input?.inputId, input?.kind?.name, topic.sections.explanation.substringBefore("\n\n").trim(),
         )
     }.sortedWith(compareBy<HelpTopicSummary> { it.group.ordinal }.thenBy { it.id })
 

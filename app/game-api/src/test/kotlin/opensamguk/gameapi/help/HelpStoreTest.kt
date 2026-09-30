@@ -83,6 +83,18 @@ class HelpStoreTest {
     }
 
     @Test
+    fun `topic list excerpt stops after the first paragraph`() {
+        val modified = changeExtraTopic("concepts.createGeneral") { row ->
+            val sections = row.getValue("sections").jsonObject
+            JsonObject(row + ("sections" to JsonObject(sections +
+                ("explanation" to JsonPrimitive("첫 문단입니다.\n\n뒤 문단입니다.")))))
+        }
+        val store = HelpStore.parse(modified, reasons, catalog, resource("topic-registry-registered.json"))
+        val summary = store.topicSummaries.single { it.id == "concepts.createGeneral" }
+        assertEquals("첫 문단입니다.", summary.excerpt)
+    }
+
+    @Test
     fun `unregistered or mismatched extra topic fails closed`() {
         val extra = withExtraTopics()
         assertFailsWith<IllegalArgumentException> { HelpStore.parse(extra, reasons, catalog) }
