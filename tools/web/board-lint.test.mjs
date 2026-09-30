@@ -8,6 +8,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { execFileSync } from 'node:child_process';
 import { FORBIDDEN, KEYS, boardFiles, lintBoards, toMarkdown } from './board-lint.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -106,4 +107,24 @@ test('금지어 목록이 V3System 원본을 빠짐없이 덮는다', () => {
   }
   const missing = samples.filter((t) => !FORBIDDEN.some((f) => new RegExp(f.re, 'u').test(t)));
   assert.deepEqual(missing, [], `FORBIDDEN 에 없는 말: ${missing.join(', ')}`);
+});
+
+test('--help 는 머리 주석 끝(종료 코드 규칙)까지 보인다', () => {
+  const out = execFileSync(process.execPath, [path.join(ROOT, 'tools/web/board-lint.mjs'), '--help'], { encoding: 'utf8' });
+  for (const want of ['placeholder', 'logo', 'clipped', '종료 코드 1']) assert.ok(out.includes(want), `도움말에 「${want}」가 없다`);
+  const lines = fs.readFileSync(path.join(ROOT, 'tools/web/board-lint.mjs'), 'utf8').split('\n');
+  assert.equal(out.trimEnd(), lines.slice(0, lines.findIndex((l) => l.startsWith('import '))).join('\n').trimEnd());
+});
+
+// 미리보기 크기가 뿌리보다 작아도(뿌리가 검사 화면 밖으로 나가도) 화면 밖 누를 것을 「덮임」으로 잘못 세지 않는다.
+test('미리보기가 뿌리보다 작아도 덮임 오탐이 없다', async () => {
+  const tall = board(`<div style="height:900px"></div><button type="button" class="btn">아래 단추</button>`)
+    .replace('"height":1200', '"height":300');
+  const f = path.join(dir, 'Tall.dc.html');
+  fs.writeFileSync(f, tall);
+  try {
+    const [r] = await lintBoards([f]);
+    assert.equal(r.counts.covered, 0, JSON.stringify(r.samples.covered));
+    assert.equal(r.counts.small, 0, JSON.stringify(r.samples.small));
+  } finally { fs.rmSync(f, { force: true }); }
 });

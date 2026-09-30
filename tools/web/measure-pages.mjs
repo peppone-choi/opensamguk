@@ -24,6 +24,12 @@ import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath } from 'node:url';
 
+// 도움말은 머리 주석 전체다(고정 줄 수로 자르면 설명이 중간에서 끊긴다) — 첫 import 줄 앞까지.
+function helpText() {
+  const lines = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n');
+  return lines.slice(0, lines.findIndex((l) => l.startsWith('import '))).join('\n');
+}
+
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const webRequire = createRequire(path.join(ROOT, 'web/game/package.json'));
 
@@ -76,7 +82,7 @@ function parseArgs(argv) {
     else if (a === '--channel') opts.channel = next();
     else if (a === '--cdp-url') opts.cdpUrl = next();
     else if (a === '--print-snippet') { console.log(inPageSnippet()); process.exit(0); }
-    else if (a === '-h' || a === '--help') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(0, 20).join('\n')); process.exit(0); }
+    else if (a === '-h' || a === '--help') { console.log(helpText()); process.exit(0); }
     else throw new Error(`모르는 인자: ${a}`);
   }
   if (!opts.out) throw new Error('--out <dir> 가 필요하다');
@@ -618,6 +624,8 @@ export async function run(opts) {
   const AxeBuilder = axeMod.default ?? axeMod.AxeBuilder ?? axeMod;
   const cdpMode = !!opts.cdpUrl;
   const launch = () => (cdpMode ? chromium.connectOverCDP(opts.cdpUrl) : chromium.launch({ channel: opts.channel, headless: true }));
+  // 결과 폴더는 측정 전에 만든다 — 모든 측정이 goto 전에 실패해도 오류 행이 든 summary 를 남겨야 한다.
+  fs.mkdirSync(opts.out, { recursive: true });
   let browser = await launch();
   const results = [];
   try {

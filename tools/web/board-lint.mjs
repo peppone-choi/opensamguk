@@ -26,13 +26,21 @@
 //   clipped 보드 뿌리(고정 크기, overflow hidden) 밖으로 나가 잘린 글자 · 누를 것 — BRIEF 「내용이 넘치면 잘린다」
 //           (지도 SVG 글자 · 화면 읽기 전용 글자 · 안쪽 상자가 일부러 자른 줄은 빼고, 마지막 것은 innerCropped 로 센다)
 //
-// 보드의 설계 설명 글(주석)은 조상에 data-lint="skip" 을 달면 words · emoji 에서 빠진다(크기 검사는 그대로).
+// 보드의 설계 설명 글(주석)은 조상에 data-lint="skip" 을 달면 words · hanja · emoji · placeholder 에서 빠진다(크기 검사는 그대로).
+// 누를 영역 · 덮임은 elementFromPoint 로 재므로 보드 뿌리가 검사 화면 안에 들어와야 한다 — 미리보기 크기가 뿌리보다 작으면
+// 검사 화면을 뿌리 크기까지 넓힌다.
 //
 // 보고용 도구다. --fail-on 에 적은 항목이 한 보드라도 0 이 아니면 종료 코드 1 이다.
 import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+
+// 도움말은 머리 주석 전체다(고정 줄 수로 자르면 설명이 중간에서 끊긴다) — 첫 import 줄 앞까지.
+function helpText() {
+  const lines = fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n');
+  return lines.slice(0, lines.findIndex((l) => l.startsWith('import '))).join('\n');
+}
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const webRequire = createRequire(path.join(ROOT, 'web/game/package.json'));
@@ -80,7 +88,7 @@ function parseArgs(argv) {
     else if (a === '--md') opts.md = next();
     else if (a === '--fail-on') opts.failOn = next().split(',').map((s) => s.trim()).filter(Boolean);
     else if (a === '--channel') opts.channel = next();
-    else if (a === '-h' || a === '--help') { console.log(fs.readFileSync(fileURLToPath(import.meta.url), 'utf8').split('\n').slice(0, 22).join('\n')); process.exit(0); }
+    else if (a === '-h' || a === '--help') { console.log(helpText()); process.exit(0); }
     else if (a.startsWith('--')) throw new Error(`모르는 인자: ${a}`);
     else opts.paths.push(a);
   }
@@ -362,6 +370,16 @@ export async function lintBoards(files, { channel = 'chrome' } = {}) {
       const page = await context.newPage();
       await page.route('**/*', (route) => (route.request().url().startsWith('file:') ? route.continue() : route.abort()));
       await page.goto(pathToFileURL(file).href, { waitUntil: 'load' });
+      // 누를 영역 · 덮임은 elementFromPoint 로 재서 뿌리가 검사 화면 안에 있어야 한다. 미리보기 크기가 없거나 뿌리보다 작으면
+      // 화면을 뿌리 크기까지 넓힌다(아니면 화면 밖 누를 것이 「덮임」으로 잘못 잡힌다).
+      const rootSize = await page.evaluate(() => {
+        const r = (document.querySelector('x-dc > div') || document.body).getBoundingClientRect();
+        return { w: Math.ceil(r.right), h: Math.ceil(r.bottom) };
+      });
+      const vp = page.viewportSize();
+      if (rootSize.w > vp.width || rootSize.h > vp.height) {
+        await page.setViewportSize({ width: Math.max(vp.width, rootSize.w), height: Math.max(vp.height, rootSize.h) });
+      }
       return await page.evaluate(lintInPage, { forbidden: FORBIDDEN, minTarget: 44 });
     } finally {
       await context.close().catch(() => {});

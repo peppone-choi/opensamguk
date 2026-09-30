@@ -12,7 +12,8 @@ import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { defaultOptions, duplicateTransfers, inPageSnippet, run, slugOf } from './measure-pages.mjs';
 import { createRequire } from 'node:module';
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
 
@@ -149,4 +150,24 @@ test('CDP 모드: 데스크톱 · 모바일을 재고 우리 탭을 남기지 �
       console.warn(`임시 프로필을 못 지웠다(무시): ${e.code ?? e.message}`);
     }
   }
+});
+
+test('--help 는 머리 주석 끝까지 보인다', () => {
+  const out = execFileSync(process.execPath, [fileURLToPath(new URL('./measure-pages.mjs', import.meta.url)), '--help'], { encoding: 'utf8' });
+  // 머리 주석(첫 import 앞) 전체와 같아야 한다 — 고정 줄 수로 자르면 주석이 늘 때 조용히 잘린다.
+  const lines = fs.readFileSync(fileURLToPath(new URL('./measure-pages.mjs', import.meta.url)), 'utf8').split('\n');
+  assert.equal(out.trimEnd(), lines.slice(0, lines.findIndex((l) => l.startsWith('import '))).join('\n').trimEnd());
+});
+
+// 모든 측정이 goto 에서 실패해도(없는 폴더에) 오류 행과 summary 가 남아야 한다 — 전에는 summary 쓰기가 ENOENT 로 죽었다.
+test('첫 goto 가 실패해도 오류 행과 summary 를 남긴다', async () => {
+  const dead = http.createServer();
+  await new Promise((r) => dead.listen(0, '127.0.0.1', r));
+  const port = dead.address().port;
+  await new Promise((r) => dead.close(r)); // 닫힌 포트 — 연결 거부
+  const out = path.join(outDir, 'nested', 'fresh');
+  const rows = await run(defaultOptions({ base: `http://127.0.0.1:${port}`, pages: ['/nothing'], profiles: ['desktop'], throttles: ['none'], out, axe: false, timeoutMs: 15_000 }));
+  assert.equal(rows.length, 1);
+  assert.ok(rows[0].error, '오류 행이어야 한다');
+  assert.ok(fs.existsSync(path.join(out, 'summary.json')), 'summary.json 이 없다');
 });
