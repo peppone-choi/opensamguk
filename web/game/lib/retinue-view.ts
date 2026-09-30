@@ -55,6 +55,8 @@ export interface RetinueRow {
     readonly aptitudes: Aptitudes | null;
     readonly post: PostView;
     readonly troops: number;
+    /** 사람 장수 카드(K4-18). 부 조회 값 먼저, 없으면 배치 조회 값. null · undefined = 모름(「준비 중」, 추정 금지). */
+    readonly isHuman: boolean | null | undefined;
 }
 
 function placeLabel(label: string, target: { label?: string | null } | null | undefined): string {
@@ -95,6 +97,7 @@ export function retinueRows(retinue: Retinue, posts: Posts | null): RetinueRow[]
         aptitudes: p.aptitudes,
         post: postView(byCard.get(p.retainerId), postsLoaded),
         troops: troopsOf(p.retainerId, retinue.units),
+        isHuman: p.isHuman ?? byCard.get(p.retainerId)?.isHuman,
     }));
 }
 

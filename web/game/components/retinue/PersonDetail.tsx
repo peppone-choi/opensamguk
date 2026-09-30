@@ -17,13 +17,7 @@ export interface PersonDetailProps {
     readonly onAssign: () => void;
     /** 인물 상세 화면(P-R03) 고리. */
     readonly detailLink?: ReactNode;
-    /**
-     * 사람 장수 카드인가(계약판 K4-18 `posts.cards[].isHuman: boolean | null`). 필드가 없거나(undefined) 서버가 인물을
-     * 못 풀었으면(null — NPC 확정 아님) 「서버 대기」 한 줄. true 면 배치 대신 조정 발령(P-K01) 고리.
-     * false · 이름 · id 로 짐작하지 않는다 — 서버 blocked 사유는 배치 단추가 그대로 보인다.
-     */
-    readonly isHuman?: boolean | null;
-    /** 조정 발령 화면 주소(사람 미리 채움). */
+    /** 조정 발령 화면 주소(사람 미리 채움). 사람 장수 판정은 row.isHuman(K4-18)에서 읽는다. */
     readonly dispatchHref?: string;
 }
 
@@ -31,7 +25,12 @@ export interface PersonDetailProps {
  * 가운데 인물 상세(보드 V31K4Retinue det) — 초상 · 충성 · 코스트 · 5능력 · 적성 넷 · 결속 · 자리 · 계책 기여(준비 중) · 단추 줄.
  * 서버가 안 주는 칸(보물 · 경험 · 녹봉 · 생몰 · 유일/공용)은 그리지 않는다. 내보내기 · 보물 부착은 원장 행이 생기기 전엔 없다(Q2).
  */
-export function PersonDetail({ row, assign, onAssign, detailLink, isHuman, dispatchHref }: PersonDetailProps) {
+/**
+ * 사람 장수 판정(K4-18 `isHuman: boolean | null`): 없음 · null(인물 미해결 — NPC 확정 아님) = 「서버 대기」 한 줄,
+ * true = 배치 대신 조정 발령 고리, false = 배치 단추(서버 blocked · placeable 그대로). 이름 · id 로 짐작하지 않는다.
+ */
+export function PersonDetail({ row, assign, onAssign, detailLink, dispatchHref }: PersonDetailProps) {
+    const isHuman = row.isHuman;
     return (
         <article className={styles.detail} aria-label={`${row.name} 인물 카드`}>
             <div className={styles.detailHead}>

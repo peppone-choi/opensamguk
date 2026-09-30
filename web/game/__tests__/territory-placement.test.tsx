@@ -86,3 +86,15 @@ test('배치 시트 — 현령 → 현 고르기(맡은 현은 사유) → 「�
     fireEvent.click(screen.getByRole('button', { name: '이 자리로' }));
     expect(onSubmit).toHaveBeenCalledWith({ cardId: 1, post: 'MAGISTRATE', countyId: 129 });
 });
+
+test('사람 장수 카드(K4-18 true)는 「바꾸기」 대신 조정 발령 고리, null 은 추정하지 않고 서버 사유 그대로', () => {
+    const rows = placementRows({ ...posts, cards: [card(5, { name: '순욱', isHuman: true }), card(6, { name: '미상', isHuman: null, placeable: false,
+        blocked: { code: 'HUMAN_CARD', reason: '사람 장수는 조정에서 발령합니다.' } })] });
+    render(<PlacementList rows={rows} courtHref="/game/pep/court" onChange={() => {}}
+        availabilityOf={(r) => r.placeable ? { inputId: 'placement.assign', status: 'AVAILABLE' } : { inputId: 'placement.assign', status: 'BLOCKED', reason: r.blocked?.reason }} />);
+    const [human, unknown] = screen.getAllByRole('listitem');
+    expect(within(human).getByRole('link', { name: '조정에서 발령 →' })).toHaveAttribute('href', '/game/pep/court');
+    expect(within(human).queryByRole('button', { name: /바꾸기/ })).toBeNull();
+    expect(within(unknown).getByRole('button', { name: /바꾸기/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(unknown).toHaveTextContent('사람 장수는 조정에서 발령합니다.');
+});

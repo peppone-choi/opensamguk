@@ -122,6 +122,11 @@ export interface PersonCard {
     readonly bonds: readonly Bond[];
     readonly departureOrder: number | null;
     readonly locationCityId: number | null;
+    /**
+     * 사람 장수 카드인가(계약판 K4-18 — `posts.cards[].isHuman` 과 같은 원천 · 같은 뜻). true 계정 소유 · false 소유 없음 ·
+     * null 인물 미해결(NPC 확정 아님). 서버 반영 전에는 키가 없다(undefined) — null 과 같이 「준비 중」.
+     */
+    readonly isHuman?: boolean | null;
 }
 export interface UnitCard {
     readonly id: number;
@@ -377,6 +382,8 @@ export interface PlacementCard {
     readonly blocked: Blocked | null;
     readonly active: { post: string; postLabel: string; target: { label?: string | null }; state: string } | null;
     readonly pending: { post: string; postLabel: string; target: { label?: string | null } } | null;
+    /** 사람 장수 카드인가(K4-18, `retinue.people[].isHuman` 과 같다). null · 없음 = 모름. */
+    readonly isHuman?: boolean | null;
 }
 export interface PostOption {
     readonly post: string;

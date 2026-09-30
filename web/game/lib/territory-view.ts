@@ -34,6 +34,8 @@ export interface PlacementRow {
     readonly pending: string | null;
     readonly placeable: boolean;
     readonly blocked: Blocked | null;
+    /** 사람 장수 카드(K4-18). true 면 배치 대신 조정 발령. null · undefined = 모름(서버 사유 그대로). */
+    readonly isHuman: boolean | null | undefined;
 }
 
 export function placementRows(posts: Posts): PlacementRow[] {
@@ -46,6 +48,7 @@ export function placementRows(posts: Posts): PlacementRow[] {
         pending: c.pending ? placeLabel(postKindLabel({ post: c.pending.post, label: c.pending.postLabel }), c.pending.target) : null,
         placeable: c.placeable,
         blocked: c.blocked,
+        isHuman: c.isHuman,
     }));
 }
 

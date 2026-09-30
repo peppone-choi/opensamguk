@@ -51,13 +51,17 @@ export function PlacementList({ rows, availabilityOf, onChange, portraitOf, cour
                                         {r.pending ? <Chip tone="bronze">{`대기 — 다음 턴부터 ${r.pending}`}</Chip> : null}
                                     </span>
                                 </span>
-                                <InputAction
-                                    inputId="placement.assign"
-                                    availability={availabilityOf(r)}
-                                    label="바꾸기"
-                                    variant="ghost"
-                                    onAct={() => onChange(r)}
-                                />
+                                {r.isHuman === true && courtHref ? (
+                                    <Link href={courtHref} className="os-button os-button--ghost">조정에서 발령 →</Link>
+                                ) : (
+                                    <InputAction
+                                        inputId="placement.assign"
+                                        availability={availabilityOf(r)}
+                                        label="바꾸기"
+                                        variant="ghost"
+                                        onAct={() => onChange(r)}
+                                    />
+                                )}
                             </li>
                         );
                     })}

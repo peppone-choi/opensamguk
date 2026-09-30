@@ -76,17 +76,17 @@ test('사람 장수 구분 — 서버가 안 주면 「준비 중」 한 줄, �
     expect(container.querySelector('[data-waiting="human-flag"]')).toHaveTextContent('준비 중');
     expect(screen.getByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
 
-    rerender(<PersonDetail row={rows[0]} assign={avail} onAssign={() => {}} isHuman dispatchHref="/game/pep/court?dispatch=101" />);
+    rerender(<PersonDetail row={{ ...rows[0], isHuman: true }} assign={avail} onAssign={() => {}} dispatchHref="/game/pep/court?dispatch=101" />);
     expect(container.querySelector('[data-waiting="human-flag"]')).toBeNull();
     expect(screen.queryByRole('button', { name: '자리에 배치' })).toBeNull();
     expect(screen.getByRole('link', { name: '발령은 조정에서 →' })).toHaveAttribute('href', '/game/pep/court?dispatch=101');
 
     // K4-18: null = 서버가 인물을 못 풀었다(NPC 확정 아님) — 필드 없음과 같이 「준비 중」, 배치 단추는 서버 사유 그대로.
-    rerender(<PersonDetail row={rows[0]} assign={avail} onAssign={() => {}} isHuman={null} />);
+    rerender(<PersonDetail row={{ ...rows[0], isHuman: null }} assign={avail} onAssign={() => {}} />);
     expect(container.querySelector('[data-waiting="human-flag"]')).toHaveTextContent('준비 중');
     expect(screen.getByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
 
-    rerender(<PersonDetail row={rows[0]} assign={avail} onAssign={() => {}} isHuman={false} />);
+    rerender(<PersonDetail row={{ ...rows[0], isHuman: false }} assign={avail} onAssign={() => {}} />);
     expect(container.querySelector('[data-waiting="human-flag"]')).toBeNull();
     expect(screen.getByRole('button', { name: '자리에 배치' })).toBeInTheDocument();
 });

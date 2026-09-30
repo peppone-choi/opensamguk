@@ -92,3 +92,10 @@ test('거르기 — 미배치는 지금 · 다음 자리가 모두 없는 줄, �
     expect(ids('risk')).toEqual([3]);
     expect(ids('all', '허', (n, q) => n.includes(q))).toEqual([1]);
 });
+
+test('사람 장수 표지(K4-18) — 부 조회 값 먼저, 없으면 배치 조회 값, 둘 다 없으면 undefined(짓지 않는다)', () => {
+    const rows = retinueRows(retinue([person(1, { isHuman: true }), person(2), person(3, { isHuman: null })]),
+        posts([card(1, { isHuman: false }), card(2, { isHuman: false }), card(3)]));
+    expect(rows.map((r) => r.isHuman)).toEqual([true, false, undefined]);
+    expect(retinueRows(retinue([person(4)]), null)[0].isHuman).toBeUndefined();
+});
