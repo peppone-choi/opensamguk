@@ -5,35 +5,10 @@ import type { ReactNode } from 'react';
 import { Chip, InputAction, Portrait, type InputAvailability } from '@opensamguk/ui';
 import type { RetinueRow } from '@/lib/retinue-view';
 import { bondText, postText } from './RetinueList';
+import { AptitudeCells, StatCells } from './StatCells';
 import styles from './retinue.module.css';
 
-const STATS = [
-    ['통솔', 'leadership'],
-    ['무력', 'strength'],
-    ['지력', 'intel'],
-    ['정치', 'politics'],
-    ['매력', 'charm'],
-] as const;
-const APTITUDES = [
-    ['장 · 군단', 'command'],
-    ['리 · 내정', 'administration'],
-    ['사 · 계책', 'strategy'],
-    ['사자 · 외교', 'envoy'],
-] as const;
 const TONE = { moss: 'moss', rust: 'rust', neutral: 'neutral' } as const;
-
-function Cells({ label, items }: { readonly label: string; readonly items: ReadonlyArray<readonly [string, number | null]> }) {
-    return (
-        <div className={styles.cells} role="group" aria-label={label} style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
-            {items.map(([k, v]) => (
-                <div key={k} className={`os-inset ${styles.cell}`}>
-                    <span className={styles.cellKey}>{k}</span>
-                    <span className="os-mono">{v ?? '—'}</span>
-                </div>
-            ))}
-        </div>
-    );
-}
 
 export interface PersonDetailProps {
     readonly row: RetinueRow;
@@ -56,8 +31,6 @@ export interface PersonDetailProps {
  * 서버가 안 주는 칸(보물 · 경험 · 녹봉 · 생몰 · 유일/공용)은 그리지 않는다. 내보내기 · 보물 부착은 원장 행이 생기기 전엔 없다(Q2).
  */
 export function PersonDetail({ row, assign, onAssign, detailLink, isHuman, dispatchHref }: PersonDetailProps) {
-    const s = row.stats;
-    const a = row.aptitudes;
     return (
         <article className={styles.detail} aria-label={`${row.name} 인물 카드`}>
             <div className={styles.detailHead}>
@@ -69,8 +42,8 @@ export function PersonDetail({ row, assign, onAssign, detailLink, isHuman, dispa
                         <Chip>{`코스트 ${row.cost ?? '—'}`}</Chip>
                         {row.departureOrder != null ? <Chip tone="rust">{`이탈 판정 ${row.departureOrder}번째`}</Chip> : null}
                     </div>
-                    <Cells label="능력" items={STATS.map(([k, f]) => [k, s ? s[f] : null] as const)} />
-                    <Cells label="역할 적성" items={APTITUDES.map(([k, f]) => [k, a ? a[f] : null] as const)} />
+                    <StatCells stats={row.stats} />
+                    <AptitudeCells aptitudes={row.aptitudes} />
                     <div className={styles.field}>
                         <span className={styles.label}>결속</span>
                         <div className={styles.chips}>
