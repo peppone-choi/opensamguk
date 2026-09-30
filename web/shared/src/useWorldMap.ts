@@ -19,6 +19,8 @@ export interface WorldMapPreview {
   nations: { id: number; name: string; color: string }[];
   strategicTopology?: StrategicTopologyBinding | null;
   provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+  /** Immutable topdown bake id, only when the server's bake matches the active world (game-api MapPreviewResponse). */
+  topdownBakeId?: string;
   jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
   commanderyControl?: { commanderyId: string; nationId: number }[];
 }

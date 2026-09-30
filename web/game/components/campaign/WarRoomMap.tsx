@@ -2,12 +2,14 @@
 
 import { useMemo, useState } from 'react';
 import { Chip, WorldMapCanvas, Panel, SectionHeader, cityBadgeLabel, type CommanderyVisibility, type IsoCityOverlay } from '@opensamguk/ui';
+import { topdownScreensEnabled, topdownSourceFor } from '@opensamguk/ui/map/topdown';
 import { commanderyOfCity } from '@/lib/campaign-fog';
 import { CAMPAIGN_MAP_CODE, CAMPAIGN_PROVINCES_URL, useCampaignWorldMap } from '@/lib/campaign-map';
 import { buildVisibleCorps } from '@/lib/map-corps';
 import type { Corps, Sieges, Works } from '@/lib/campaign-reads';
 import { CommanderyNavigator } from './CommanderyNavigator';
 import { Empty } from './GameStates';
+import WarRoomTopdownMap from './WarRoomTopdownMap';
 
 export interface WarRoomMapProps {
     readonly refreshKey?: unknown;
@@ -38,6 +40,9 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
     const focusCityId = focus && home && focus.no === home.no ? homeCityId : focus?.focusCityId ?? null;
     const corpsOverlay = useMemo(() => ready ? buildVisibleCorps(corps, visibility, ready.provinceCenter) : [],
         [corps, ready, visibility]);
+    // 새 지도는 교체 스위치가 켜져 있고 서버가 bakeId를 줄 때만(둘 중 하나라도 없으면 옛 지도 그대로)
+    const bakeId = ready?.preview.topdownBakeId;
+    const topdown = useMemo(() => (topdownScreensEnabled() ? topdownSourceFor(bakeId) : null), [bakeId]);
 
     return <Panel style={{ padding: 12 }}>
         <SectionHeader title="천하 형세" sub="구역 단위 · 보이는 만큼만" />
@@ -46,7 +51,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
         {map.kind === 'unsupported' ? <Empty>{`이 서버의 지도(${map.mapCode})는 휘하 지도(${CAMPAIGN_MAP_CODE})가 아닙니다.`}</Empty> : null}
         {ready && focus ? <>
             <div style={{ position: 'relative', marginTop: 8 }}>
-                <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
+                {topdown ? <WarRoomTopdownMap source={topdown} preview={ready.preview} homeCityId={homeCityId}
+                    focusCityId={focusCityId} ariaLabel={`천하 형세 — ${focus.name}`} /> : <WorldMapCanvas key={focus.no} mapCode={CAMPAIGN_MAP_CODE} tiles={ready.tiles}
                     tilesSha256={ready.tilesSha256} provinceMap={ready.provinceMap ?? undefined}
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
@@ -56,7 +62,7 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     showCellGrid showCityFootprint commanderyVisibility={visibility} fogMode="dim"
                     politicalStyle="tint" ariaLabel={`천하 형세 — ${focus.name}`}
                     onCityHover={(city, point) => setHover(city && point ? { city, x: point.x, y: point.y } : null)}
-                    style={{ width: '100%', height: 560 }} />
+                    style={{ width: '100%', height: 560 }} />}
                 {hover && <div role="status" style={{ position: 'absolute', zIndex: 3, pointerEvents: 'none',
                     left: hover.x + 12, top: hover.y + 12, padding: '5px 7px', background: 'rgba(12,15,14,0.9)',
                     color: '#fff', fontSize: 12 }}>

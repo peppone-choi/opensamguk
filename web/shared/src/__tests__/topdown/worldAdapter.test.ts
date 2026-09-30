@@ -43,8 +43,8 @@ describe('원천 · 스위치', () => {
   });
 
   it('제품 화면 스위치는 시험 화면 플래그와 다르다', () => {
-    expect(topdownScreensEnabled({ NEXT_PUBLIC_TOPDOWN_SCREENS: '1' })).toBe(true);
-    expect(topdownScreensEnabled({ NEXT_PUBLIC_MAP_RENDERER: 'topdown' })).toBe(false);
-    expect(topdownScreensEnabled({})).toBe(false);
+    expect(topdownScreensEnabled('1')).toBe(true);
+    expect(topdownScreensEnabled('topdown')).toBe(false);
+    expect(topdownScreensEnabled(undefined)).toBe(false);
   });
 });

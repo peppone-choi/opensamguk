@@ -1,0 +1,149 @@
+// 작전실 새 지도(탑다운) — 제품 화면 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1) 빌드에서만 돈다(*.topdown-screen.spec.ts).
+// 서버 preview가 topdownBakeId를 주면 새 지도, 안 주면 옛 지도 그대로다. 합성 bake · 키트(e2e/fixtures/topdown, 원작 그림 없음)를
+// bake 주소(/api/game/api/map/topdown/<id>/…)와 승인 키트 주소(/map/waryong/273d596/…)에 page.route로 대 준다.
+// 「그려졌다」(상태 · 가운데 요소)와 「조작된다」(휠 · 누르기)를 따로 본다.
+import { deflateSync } from 'node:zlib';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { expect, test, type Page } from '@playwright/test';
+import { BOTH } from '../support/parity';
+
+const FIXTURE = join(__dirname, '..', 'fixtures', 'topdown');
+const BAKE_ID = 'a'.repeat(64);
+const COLS = 60;
+const ROWS = 60;
+
+/** 합성 bake의 城 1(발자국 1399,899 · 3칸)과 같은 id · 이름. 구역 2개(합성 bake provinceCount). */
+function preview(withBake: boolean) {
+  return {
+    mapCode: 'han-world-v3', width: 700, height: 610,
+    cities: [{ id: 1, name: '선무', level: 8, nationId: 1, state: 0, supply: true, x: 116, y: 101,
+      isCommanderySeat: true, commanderyName: '하남윤', provinceId: 1 }],
+    nations: [{ id: 1, name: '위', color: '#b03a2e' }],
+    provinceOccupancy: [
+      { provinceRecordId: 'A', provinceIndex: 0, nationId: 1 },
+      { provinceRecordId: 'B', provinceIndex: 1, nationId: 0 },
+    ],
+    ...(withBake ? { topdownBakeId: BAKE_ID } : {}),
+  };
+}
+const TILES = {
+  _meta: { cols: COLS, rows: ROWS, year: 200, terrainLegend: { 0: 'SEA', 1: 'PLAIN' } },
+  terrain: Array.from({ length: ROWS }, () => '1'.repeat(COLS)),
+  owner: [[0, COLS * ROWS]],
+  juns: [{ name: '하남윤', nameCh: '河南尹', seat: 0, col: 10, row: 10 }],
+  provinceRecords: [
+    { id: 'A', displayName: '북현', nameCh: '北', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
+      parentRegionId: 'P1', cityIndex: null, geometryBasis: 'smoke', confidence: 'smoke' },
+    { id: 'B', displayName: '선무현', nameCh: '鮮無', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
+      parentRegionId: 'P1', cityIndex: 0, geometryBasis: 'smoke', confidence: 'smoke' },
+  ],
+  parentRegions: [{ id: 'P1', displayName: '하남윤', nameCh: '河南尹', administrativeSystem: 'HAN_COMMANDERY' }],
+  adjacency: { county: [], commandery: [] },
+  regions: [],
+  cities: [{ id: '1', name: '선무', nameCh: '鮮無', level: 8, kind: 'COUNTY', seat: true, col: 10, row: 10, lat: 0, lon: 0 }],
+};
+
+const CRC_TABLE = Array.from({ length: 256 }, (_, n) => {
+  let c = n;
+  for (let k = 0; k < 8; k += 1) c = (c & 1) ? 0xedb88320 ^ (c >>> 1) : c >>> 1;
+  return c >>> 0;
+});
+function crc32(bytes: Buffer): number {
+  let c = 0xffffffff;
+  for (const byte of bytes) c = CRC_TABLE[(c ^ byte) & 0xff] ^ (c >>> 8);
+  return (c ^ 0xffffffff) >>> 0;
+}
+function chunk(type: string, data: Buffer): Buffer {
+  const body = Buffer.concat([Buffer.from(type, 'ascii'), data]);
+  const length = Buffer.alloc(4); length.writeUInt32BE(data.length);
+  const crc = Buffer.alloc(4); crc.writeUInt32BE(crc32(body));
+  return Buffer.concat([length, body, crc]);
+}
+/** 옛 지도용 省 식별 PNG: 위 절반 省 0, 아래 절반 省 1. */
+function provincePng(): Buffer {
+  const stride = 1 + COLS * 3;
+  const raw = Buffer.alloc(ROWS * stride);
+  for (let row = 0; row < ROWS; row += 1) {
+    const code = (1 << 12) | ((row < 30 ? 0 : 1) + 1);
+    for (let col = 0; col < COLS; col += 1) {
+      const offset = row * stride + 1 + col * 3;
+      raw[offset] = (code >> 16) & 0xff; raw[offset + 1] = (code >> 8) & 0xff; raw[offset + 2] = code & 0xff;
+    }
+  }
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(COLS, 0); header.writeUInt32BE(ROWS, 4); header[8] = 8; header[9] = 2;
+  return Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', header), chunk('IDAT', deflateSync(raw)), chunk('IEND', Buffer.alloc(0))]);
+}
+
+const contentType = (path: string) => (path.endsWith('.png') ? 'image/png' : path.endsWith('.json') ? 'application/json' : 'application/octet-stream');
+
+async function serve(page: Page, withBake: boolean) {
+  const png = provincePng();
+  await page.route((url) => url.pathname.startsWith('/map/waryong/273d596/'), async (route) => {
+    const file = new URL(route.request().url()).pathname.replace('/map/waryong/273d596/', '');
+    try {
+      await route.fulfill({ status: 200, body: readFileSync(join(FIXTURE, 'kit', file)), contentType: contentType(file) });
+    } catch {
+      await route.fulfill({ status: 404, body: '' });
+    }
+  });
+  await page.route('**/api/**', async (route) => {
+    const url = new URL(route.request().url());
+    const bake = url.pathname.indexOf(`/api/map/topdown/${BAKE_ID}/`);
+    if (bake >= 0) {
+      const file = url.pathname.slice(bake + `/api/map/topdown/${BAKE_ID}/`.length);
+      try {
+        return await route.fulfill({ status: 200, body: readFileSync(join(FIXTURE, 'bake', file)), contentType: contentType(file) });
+      } catch {
+        return route.fulfill({ status: 404, body: '' });
+      }
+    }
+    if (url.pathname === '/api/auth/me') {
+      return route.fulfill({ json: { user: { id: 1, username: 'smoke', email: null, nickname: '스모크', role: 'USER' } } });
+    }
+    if (url.pathname.endsWith('/api/const')) {
+      return route.fulfill({ json: { result: true, mapName: 'han-world-v3', mapWidth: 700, mapHeight: 610, maxTurn: 12 } });
+    }
+    if (url.pathname.endsWith('/api/map/preview')) return route.fulfill({ json: preview(withBake) });
+    if (url.pathname.endsWith('/api/map/terrain')) return route.fulfill({ json: TILES });
+    if (url.pathname.endsWith('/api/map/provinces')) return route.fulfill({ status: 200, contentType: 'image/png', body: png });
+    return route.fulfill({ status: 503, json: { error: 'smoke' } });
+  });
+}
+
+test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
+  test('서버가 bakeId를 주면 새 지도: 그려지고 휠 · 누르기가 된다', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, true);
+    await page.goto('/game/war-room');
+    const map = page.locator('[data-map-renderer="topdown"]');
+    await expect(map).toHaveAttribute('data-map-status', 'ready', { timeout: 60_000 });
+    await expect(page.locator('.os-iso-map__canvas')).toHaveCount(0);
+    await expect(page.getByRole('alert').filter({ hasText: '세력 색을 칠하지 못했습니다' })).toHaveCount(0);
+    await map.scrollIntoViewIfNeeded();
+    const box = (await map.boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    const top = await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      return el ? `${el.tagName}:${Boolean(el.closest('[data-map-renderer="topdown"]'))}` : null;
+    }, { x: cx, y: cy });
+    expect(top).toBe('CANVAS:true');
+    // 초점 = 합성 城 1(선무) 발자국 가운데 — 누르면 그 城이 잡힌다
+    await expect.poll(async () => map.getAttribute('data-map-center'), { timeout: 15_000 }).toBe('1400.5,900.5');
+    await page.mouse.click(cx, cy);
+    await expect(page.getByTestId('war-room-picked')).toContainText('선무');
+    const before = Number(await map.getAttribute('data-map-zoom'));
+    await page.mouse.move(cx, cy);
+    await page.mouse.wheel(0, -400);
+    await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(before);
+  });
+
+  test('bakeId가 없으면 옛 지도 그대로', { tag: [BOTH] }, async ({ page }) => {
+    await serve(page, false);
+    await page.goto('/game/war-room');
+    await expect(page.locator('.os-iso-map__canvas').first()).toBeVisible({ timeout: 60_000 });
+    await expect(page.locator('[data-map-renderer="topdown"]')).toHaveCount(0);
+  });
+});

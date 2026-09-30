@@ -332,6 +332,8 @@ export interface MapPreviewResponse {
   cities: MapPreviewCity[];
   nations: MapPreviewNation[];
   provinceOccupancy?: { provinceRecordId: string; provinceIndex: number; nationId: number }[];
+  /** 탑다운 지도 bake id — 서버 bake가 지금 세계와 맞을 때만 온다(제품 화면 교체 스위치와 함께 쓴다). */
+  topdownBakeId?: string;
   jurisdictionOwnership?: { jurisdictionId: string; nationId: number }[];
   commanderyControl?: { commanderyId: string; nationId: number }[];
   /** 사료로 확인한 뱃길(城 id 쌍 + 근거). 없는 맵이면 생략된다(MapPreviewDto.seaRoutes). */

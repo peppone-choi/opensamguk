@@ -137,3 +137,4 @@ export {
   type TopdownPreview,
   type WorldFromPreview,
 } from './worldAdapter';
+export { cityCell, loadBakePlaces } from './bakePlaces';

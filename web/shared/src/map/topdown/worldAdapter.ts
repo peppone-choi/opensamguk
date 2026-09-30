@@ -47,7 +47,10 @@ export function topdownSourceFor(bakeId: string | null | undefined, serverId?: s
   return { bakeUrl: `/api/game/api/map/topdown/${bakeId}${query}`, kitUrl: TOPDOWN_KIT_URL };
 }
 
-/** Product-screen switch. Separate from NEXT_PUBLIC_MAP_RENDERER (lab pages and the CI smoke build turn that one on). */
-export function topdownScreensEnabled(env: Record<string, string | undefined> = process.env): boolean {
-  return env.NEXT_PUBLIC_TOPDOWN_SCREENS === '1';
+/**
+ * Product-screen switch. Separate from NEXT_PUBLIC_MAP_RENDERER (lab pages and the CI smoke build turn that one on).
+ * Read as a literal `process.env.NEXT_PUBLIC_…` so Next inlines it into client bundles.
+ */
+export function topdownScreensEnabled(value: string | undefined = process.env.NEXT_PUBLIC_TOPDOWN_SCREENS): boolean {
+  return value === '1';
 }

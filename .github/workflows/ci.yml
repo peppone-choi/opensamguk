@@ -575,8 +575,9 @@ jobs:
         working-directory: web/${{ matrix.app }}
         # 시험 화면 두 장(/map-lab · /parts-lab)을 여는 플래그 — smoke e2e 가 그 화면을 연다. 빌드 때 박힌다.
         # 2026-10-01 git grep: 두 플래그를 읽는 곳은 app/map-lab/page.tsx · app/parts-lab/page.tsx 뿐이라 제품 화면은
-        # 이 빌드와 운영 빌드가 같다. 이 플래그가 제품 화면을 바꾸게 되면 smoke 를 기본 빌드 · 플래그 빌드 두 번 돌려야 한다
-        # (제품 화면 전환은 다른 이름의 플래그를 쓴다).
+        # 이 빌드와 운영 빌드가 같다. 제품 화면을 새 지도로 바꾸는 스위치는 다른 이름(NEXT_PUBLIC_TOPDOWN_SCREENS)이고,
+        # 아래 「Smoke e2e web/game topdown screens」 단계가 그 스위치를 켠 두 번째 빌드(.next-topdown-screens)로
+        # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 기존 smoke 는 운영과 같은 이 기본 빌드로 돈다.
         env:
           NEXT_PUBLIC_MAP_RENDERER: topdown
           NEXT_PUBLIC_PARTS_LAB: '1'
@@ -627,6 +628,32 @@ jobs:
             sleep 1
           done
           corepack pnpm exec playwright test e2e/smoke || { tail -n 80 "$RUNNER_TEMP/next-start.log"; exit 1; }
+      # 2026-10-01 K2: 제품 화면 새 지도 교체 스위치(NEXT_PUBLIC_TOPDOWN_SCREENS=1)를 켠 두 번째 빌드.
+      # 새 잡을 만들지 않고 이 잡(필수 체크 `web (game)`) 안의 단계로 둔다 — 잡 단위 if 는 필수 체크를 잃은 전례가 있다.
+      # 기본 빌드(.next)를 덮지 않게 NEXT_DIST_DIR 로 옆 폴더에 굽고, 다른 포트로 띄워
+      # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 새 화면 spec 이 없으면 빌드 없이 초록으로 끝낸다.
+      - name: Smoke e2e web/game topdown screens (switch build, desktop · mobile)
+        if: "!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'"
+        working-directory: web/game
+        env:
+          NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
+          NEXT_DIST_DIR: .next-topdown-screens
+          E2E_GAME_URL: http://127.0.0.1:3002
+        run: |
+          shopt -s nullglob
+          specs=(e2e/topdown-screens/*.topdown-screen.spec.ts)
+          if [ ${#specs[@]} -eq 0 ]; then echo "새 화면 spec 없음 — 스위치 빌드를 건너뛴다"; exit 0; fi
+          start=$(date +%s)
+          corepack pnpm build
+          echo "스위치 빌드 $(( $(date +%s) - start ))s"
+          corepack pnpm exec next start -p 3002 > "$RUNNER_TEMP/next-start-screens.log" 2>&1 &
+          for _ in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3002/game/smoke-ready || true)
+            [ "$code" != "000" ] && break
+            sleep 1
+          done
+          corepack pnpm exec playwright test "${specs[@]}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
+          echo "스위치 단계 전체 $(( $(date +%s) - start ))s"
       - name: Upload smoke e2e results
         if: failure() && needs.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4
