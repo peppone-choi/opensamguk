@@ -27,9 +27,9 @@ export const CORPS_HIT_Z = 5;
 export const CORPS_MIN_HIT_PX = 44;
 export const CORPS_FLAG_PX = 32;
 
-/** Body size on screen: one cell, but never smaller than 24px so the heading stays readable. */
+/** Body size on screen: the original 16 px map marker at a whole scale (2× below 48 px/cell, 3× from there). */
 export function corpsMarkerSize(zoom: number): number {
-  return Math.max(24, Math.min(zoom, 48));
+  return zoom >= 48 ? 48 : 32;
 }
 
 /** Heading from the first route step (4-neighbour dominant axis); null when there is no route. */

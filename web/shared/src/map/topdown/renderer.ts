@@ -407,6 +407,7 @@ export class TopdownRenderer {
         sprites.push({ kind: 'flag', id: String(city.id), rect: { x, y, width: FLAG_PX, height: FLAG_PX }, z: 1 });
       }
     }
+    const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
     if (level !== 'ju') {
       const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
       const placed = this.corps
@@ -418,12 +419,13 @@ export class TopdownRenderer {
         if (marker.heading) this.corpsArt.drawBody(ctx, marker as CorpsMarker & { heading: Heading }, place.body);
         this.corpsArt.drawFlag(ctx, marker, place.flag);
         sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: CORPS_HIT_Z });
+        corpsBoxes.push(place.body, place.flag);
       }
     }
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden })) {
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: corpsBoxes })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';

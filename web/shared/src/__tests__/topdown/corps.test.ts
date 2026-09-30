@@ -27,16 +27,17 @@ describe('부대 표지', () => {
     expect(headingOf({ col: 1, row: 1 }, [{ col: 1, row: 1 }])).toBeNull();
   });
 
-  it('표지는 한 칸 크기지만 24px보다 작지 않고 48px를 넘지 않는다', () => {
-    expect(corpsMarkerSize(4)).toBe(24);
+  it('몸통은 원작 16px 표지의 정수 배: 48px/칸 아래 2배, 그 위 3배', () => {
+    expect(corpsMarkerSize(4)).toBe(32);
     expect(corpsMarkerSize(32)).toBe(32);
+    expect(corpsMarkerSize(48)).toBe(48);
     expect(corpsMarkerSize(64)).toBe(48);
   });
 
   it('자리: 몸통은 칸 가운데, 깃발은 몸통 왼쪽 위, 누를 영역은 둘을 덮고 44px 이상', () => {
     const place = corpsPlacement(marker(), 4, toScreen);
     expect(place.at).toEqual({ x: 100, y: 100 });
-    expect(place.body).toEqual({ x: 88, y: 88, width: 24, height: 24 });
+    expect(place.body).toEqual({ x: 84, y: 84, width: 32, height: 32 });
     expect(place.flag.y + place.flag.height).toBeGreaterThan(place.body.y);
     expect(place.flag.x).toBeLessThan(place.body.x);
     for (const r of [place.body, place.flag]) {

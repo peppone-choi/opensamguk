@@ -37,7 +37,11 @@ export function createKitCorpsArt({ sheets, cached, font }: KitCorpsArtDeps): Co
       const art = cached(`corps|body|${marker.heading}|${marker.nationColor}`, () =>
         drawSheetCell(markers, HEADING_FRAME[marker.heading], marker.nationColor),
       );
+      // 원작 16px 표지를 정수 배로 늘리니 이웃 화소를 섞지 않는다
+      const smoothing = ctx.imageSmoothingEnabled;
+      ctx.imageSmoothingEnabled = false;
       ctx.drawImage(art, rect.x, rect.y, rect.width, rect.height);
+      ctx.imageSmoothingEnabled = smoothing;
     },
     drawFlag(ctx, marker, rect) {
       const { flags } = sheets();
