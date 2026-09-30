@@ -6,7 +6,8 @@
 //   외교 서신은 세력끼리 주고받으므로 보낸 세력이 우리 세력이면 「보냄」이다.
 // - 엔진의 지우기 표식 행(text = 'req_del_msg')은 서신이 아니므로 뺀다. 지운 서신(option.invalid)은 「지운 서신입니다」.
 // - 외교 서신은 서버가 권한(< 3)으로 가린다: 본문 '(외교 메시지입니다)' + option.invalid(MailboxController.applyDiplomacyMask).
-//   가린 행은 지운 서신과 다르다 — hidden. 수락 · 거절을 끝낸 제의는 option.used(DiplomaticMessageHandler)라 본문이 남는다.
+//   가린 행은 지운 서신과 다르다 — hidden. 서버 가림은 option.used를 보지 않으므로 답한 제의(used + invalid)도 가려질 수 있다.
+//   가린 행은 본문도 제의 종류도 보이지 않는다. 가리지 않은 답한 제의는 본문이 남는다(DiplomaticMessageHandler — used + invalid).
 import { isMessageDeletable, MAILBOX_NATIONAL_BASE, MAILBOX_PUBLIC } from '../mailbox';
 import type { MailboxMessage } from '../../types/game';
 
@@ -100,8 +101,8 @@ export function toMailItems(env: RecentMailEnvelope, scope: MailScope, me: { gen
         const option = row.option ?? {};
         const diplomacy = scope === 'diplomacy';
         const used = diplomacy && truthy(option.used);
-        const hidden = diplomacy && truthy(option.invalid) && !used && row.text === DIPLOMACY_MASK_TEXT;
-        const action = diplomacy && typeof option.action === 'string' && PROPOSALS.includes(option.action) ? option.action as DiplomacyProposal : null;
+        const hidden = diplomacy && truthy(option.invalid) && row.text === DIPLOMACY_MASK_TEXT;
+        const action = diplomacy && !hidden && typeof option.action === 'string' && PROPOSALS.includes(option.action) ? option.action as DiplomacyProposal : null;
         const mine = diplomacy ? from?.nation?.id === me.nationId && me.nationId > 0 : from?.generalId === me.generalId;
         const legacy: MailboxMessage = {
             id: row.id, mailbox, type: scope, src: row.src?.id ?? 0, dest: row.dest?.id ?? 0, time: row.time,
@@ -114,7 +115,7 @@ export function toMailItems(env: RecentMailEnvelope, scope: MailScope, me: { gen
             from,
             to: party(row.dest),
             toNation: row.dest && row.dest.nation_id > 0 ? { id: row.dest.nation_id, name: row.dest.nation, color: row.dest.color } : null,
-            html: used ? row.text : truthy(option.invalid) ? null : row.text,
+            html: hidden ? null : used ? row.text : truthy(option.invalid) ? null : row.text,
             time: row.time,
             deletable: isMessageDeletable(legacy, me.generalId, now),
             hidden,
