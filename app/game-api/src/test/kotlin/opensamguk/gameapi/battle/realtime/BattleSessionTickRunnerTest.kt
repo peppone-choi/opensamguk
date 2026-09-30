@@ -46,7 +46,8 @@ class BattleSessionTickRunnerTest {
         }
         val checkpoint = assertNotNull(store.snapshot)
         assertEquals(50, checkpoint.tick)
-        assertEquals(0L, checkpoint.eventSeq)
+        assertEquals(50L, checkpoint.eventSeq)
+        assertEquals(50, store.log.count { it.type == "AI_ORDERS" })
         val expected = TacticalBattle.step(assertNotNull(last).state).state
         val resumed = assertIs<BattleTickAttempt.Advanced>(runner(store).tick())
         assertEquals(51, resumed.state.tick)
@@ -68,9 +69,9 @@ class BattleSessionTickRunnerTest {
         assertEquals(0, store.session.currentTick)
         val advanced = assertIs<BattleTickAttempt.Advanced>(actor.tick())
         assertEquals(1, advanced.state.tick)
-        assertEquals(3L, advanced.eventSeq)
+        assertEquals(4L, advanced.eventSeq)
         val direct = TacticalBattle.step(initial().copy(humanSides = setOf(BattleSide.ATTACKER)),
-            listOf(TacticalCommand(0, 3, BattleSide.ATTACKER, null, BattleOrder.CHARGE))).state
+            listOf(TacticalCommand(0, 4, BattleSide.ATTACKER, null, BattleOrder.CHARGE))).state
         assertEquals(TacticalBattle.stateHash(direct), TacticalBattle.stateHash(advanced.state))
     }
 
@@ -129,6 +130,7 @@ class BattleSessionTickRunnerTest {
         var log = mutableListOf<BattleEventRecord>()
         var snapshot: BattleCheckpoint? = null
         var injectOnce: BattleEventRecord? = null
+        val transitions = mutableMapOf<String, Long>()
         var staleHeadOnce: BattleSessionHead? = null
         var advanced = false
         override fun create(ticket: FrozenBattleTicket) = false
@@ -144,12 +146,24 @@ class BattleSessionTickRunnerTest {
                                 sessionEpoch: Long, leaseMillis: Long) = false
         override fun startRun(worldId: WorldId, battleId: String, owner: String, sessionEpoch: Long) = false
         override fun admit(command: BattleCommandRecord): CommandAdmission = error("unused")
-        override fun appendTransition(transition: BattleTransition): Long? = null
+        override fun appendTransition(transition: BattleTransition): Long? {
+            transitions[transition.transitionId]?.let { return it }
+            if (session.phase != BattleSessionPhase.RUNNING || session.currentTick != transition.tick ||
+                session.sessionEpoch != transition.sessionEpoch || session.leaseOwner != transition.leaseOwner)
+                return null
+            val seq = session.latestEventSeq + 1
+            log += BattleEventRecord(seq, transition.sessionEpoch, transition.tick,
+                transition.effectiveTick, transition.type, transition.payloadJson, transition.payloadSha256)
+            transitions[transition.transitionId] = seq
+            session = session.copy(latestEventSeq = seq)
+            return seq
+        }
         override fun advanceTick(worldId: WorldId, battleId: String, owner: String,
                                  sessionEpoch: Long, expectedTick: Int, expectedEventSeq: Long): Boolean {
             injectOnce?.let { event ->
-                log += event
-                session = session.copy(latestEventSeq = event.eventSeq)
+                val inserted = event.copy(eventSeq = session.latestEventSeq + 1)
+                log += inserted
+                session = session.copy(latestEventSeq = inserted.eventSeq)
                 injectOnce = null
             }
             if (session.currentTick != expectedTick || session.latestEventSeq != expectedEventSeq ||

@@ -1,11 +1,16 @@
 package opensamguk.gameapi.battle.realtime
 
 import java.security.MessageDigest
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import opensamguk.common.world.WorldId
 import opensamguk.infra.battle.realtime.BattleCheckpoint
 import opensamguk.infra.battle.realtime.BattleSessionPhase
 import opensamguk.infra.battle.realtime.BattleSessionStore
+import opensamguk.infra.battle.realtime.BattleTransition
 import opensamguk.infra.battle.realtime.FrozenBattleTicket
+import opensamguk.logic.battle.realtime.TacticalBattle
 import opensamguk.logic.battle.realtime.TacticalRules
 import opensamguk.logic.battle.realtime.TacticalState
 import opensamguk.logic.battle.realtime.TacticalStateCodec
@@ -43,7 +48,7 @@ class BattleSessionTickRunner(
             head.latestEventSeq) ?: return BattleTickAttempt.Contended
         val tail = store.eventsAfter(worldId, battleId, base.consumedEventSeq)
         val current = BattleEventTimeline.replay(base.state, base.consumedEventSeq, tail,
-            head.currentTick)
+            head.currentTick, requireAutomaticOrders = true)
         if (head.phase == BattleSessionPhase.RESOLVING) {
             require(current.state.outcome != null) { "resolving session lacks terminal state" }
             cached = current
@@ -56,9 +61,29 @@ class BattleSessionTickRunner(
             cached = current
             return BattleTickAttempt.Resolved(current.state, current.consumedEventSeq)
         }
+        val aiPayload = buildJsonObject {
+            put("schemaVersion", 1)
+            put("orders", buildJsonArray {
+                TacticalBattle.automaticOrders(current.state).forEach { order ->
+                    add(buildJsonObject {
+                        put("side", order.side.name)
+                        put("slot", order.slot.name)
+                        put("order", order.order.name)
+                        put("rally", order.rally.name)
+                    })
+                }
+            })
+        }.toString()
+        if (store.appendTransition(BattleTransition(worldId, battleId, epoch, owner,
+                "ai-orders-${head.currentTick}", "AI_ORDERS", null, head.currentTick,
+                head.currentTick + 1, aiPayload, sha(aiPayload))) == null) {
+            cached = null
+            return BattleTickAttempt.Contended
+        }
+        val nextTail = store.eventsAfter(worldId, battleId, current.consumedEventSeq)
         val next = BattleEventTimeline.replay(current.state, current.consumedEventSeq,
-            tail.filter { it.eventSeq > current.consumedEventSeq }, head.currentTick + 1)
-        val observedSeq = tail.lastOrNull()?.eventSeq ?: base.consumedEventSeq
+            nextTail, head.currentTick + 1, requireAutomaticOrders = true)
+        val observedSeq = nextTail.lastOrNull()?.eventSeq ?: current.consumedEventSeq
         if (observedSeq < head.latestEventSeq || next.consumedEventSeq != observedSeq ||
             !(if (next.state.outcome != null)
                 store.advanceResolvedTick(worldId, battleId, owner, epoch, head.currentTick, observedSeq)

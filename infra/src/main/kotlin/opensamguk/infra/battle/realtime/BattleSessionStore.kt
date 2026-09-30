@@ -128,7 +128,7 @@ data class BattleTransition(
     init {
         require(sessionEpoch > 0 && leaseOwner.isNotBlank() && transitionId.isNotBlank())
         require(transitionId.length <= 128 && type in setOf("HUMAN_JOIN", "HUMAN_LEFT", "AI_TAKEOVER",
-            "DEPLOYMENT_SET", "SESSION_STARTED", "GATE_OPENED", "GATE_CLOSED"))
+            "DEPLOYMENT_SET", "SESSION_STARTED", "GATE_OPENED", "GATE_CLOSED", "AI_ORDERS"))
         require(tick >= 0 && effectiveTick >= tick)
         require(payloadSha256.matches(Regex("[0-9a-f]{64}")))
     }

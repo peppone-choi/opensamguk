@@ -30,6 +30,23 @@ class BattleEventTimelineTest {
         .digest(json.toByteArray(Charsets.UTF_8)).joinToString("") { "%02x".format(it) }
 
     @Test
+    fun `durable automatic orders drive replay and altered decisions fail closed`() {
+        val orders = """{"schemaVersion":1,"orders":[{"side":"ATTACKER","slot":"CENTER","order":"FORMATION","rally":"CENTER"},{"side":"DEFENDER","slot":"CENTER","order":"FORMATION","rally":"CENTER"}]}"""
+        val recorded = event(1, 0, 1, "AI_ORDERS", orders)
+        val replayed = BattleEventTimeline.replay(initial(), 0, listOf(recorded), 1)
+        assertEquals(TacticalBattle.stateHash(TacticalBattle.step(initial()).state), replayed.stateHash)
+        assertEquals(1L, replayed.consumedEventSeq)
+
+        val altered = orders.replace("\"order\":\"FORMATION\"", "\"order\":\"CHARGE\"")
+        assertFailsWith<IllegalArgumentException> {
+            BattleEventTimeline.replay(initial(), 0, listOf(event(1, 0, 1, "AI_ORDERS", altered)), 1)
+        }
+        assertFailsWith<IllegalArgumentException> {
+            BattleEventTimeline.replay(initial(), 0, emptyList(), 1, requireAutomaticOrders = true)
+        }
+    }
+
+    @Test
     fun `ordered control and commands replay across checkpoint to same hash`() {
         val join = event(1, 0, 0, "HUMAN_JOIN", """{"schemaVersion":1,"side":"ATTACKER"}""")
         val started = event(2, 0, 0, "SESSION_STARTED", """{"schemaVersion":1,"kind":"SESSION_STARTED"}""")
