@@ -13,7 +13,7 @@ export default defineConfig({
     test: {
         environment: 'jsdom',
         setupFiles: ['./vitest.setup.ts'],
-        // Playwright 스모크(e2e/)는 vitest 가 돌리지 않는다 — playwright.config.ts(K3 게이트웨이 틀)가 돌린다.
+        // e2e/ 는 Playwright spec 이다(*.spec.ts 라 vitest 기본 규칙이 집는다).
         exclude: [...configDefaults.exclude, 'e2e/**'],
     },
 });
