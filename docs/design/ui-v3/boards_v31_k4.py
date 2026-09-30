@@ -37,14 +37,8 @@ def desk_main(head, body, pad=True):
             f'<div style="flex-grow:1;min-height:0;display:flex;gap:12px;{p}overflow:hidden">{body}</div></main>')
 
 
-def mob_first_line(title, sub=''):
-    """모바일 묶음 첫 화면의 페이지 첫 줄(K0 판정 2026-09-30) — 부 이름 = me.buName. K3 가 부품으로 정하면 그것으로 바꾼다."""
-    return (f'<div style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 12px;border-bottom:1px solid #2c342f">'
-            f'<h2 class="serif" style="margin:0;font-size:19px;font-weight:900;white-space:nowrap">{title}</h2>{f"<span class=muted style=font-size:11.5px>{sub}</span>" if sub else ""}</div>')
-
-
 def mob_main(inner, tabs=None, on=None, h=724, foot='', first=''):
-    t = (mob_first_line(first) if first else '') + (mtabs_row(tabs, on) if tabs else '')
+    t = (bu_line(first) if first else '') + (mtabs_row(tabs, on) if tabs else '')
     f = (f'<div style="position:absolute;left:0;right:0;bottom:0;min-height:64px;display:flex;gap:8px;padding:10px 12px;background:#1b201d;'
          f'border-top:1px solid #3d4740">{foot}</div>') if foot else ''
     return (f'<main style="height:{h}px;flex-shrink:0;position:relative;overflow:hidden;display:flex;flex-direction:column">{t}'
@@ -157,7 +151,7 @@ def map_btn(ic, label, style=''):
 
 def place_band(t='영천군 · 예주', sub='현 보기 · 보이는 곳 이름'):
     """위 왼쪽: 보는 곳 이름(고르기 모드에선 고르기 띠가 이 자리를 쓴다)."""
-    return (f'<div style="position:absolute;left:56px;top:12px;min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(20,24,22,.92);'
+    return (f'<div style="position:absolute;left:56px;top:12px;min-height:44px;display:flex;align-items:center;gap:8px;padding:0 12px;background:rgba(20,24,22,.92);pointer-events:none;'
             f'border:1px solid #3d4740"><span class="serif" style="font-size:15px;font-weight:900">{t}</span><span class="muted" style="font-size:11px">{sub}</span></div>')
 
 
@@ -166,11 +160,11 @@ def minimap(right=12, bottom=12):
     img = (f'<img src="{src}" alt="천하 개관 — 지금 보는 곳 표시" style="width:176px;height:153px;display:block">' if src
            else '<div style="width:176px;height:153px;background:#1b2a22"></div>')
     return (f'<div style="position:absolute;right:{right}px;bottom:{bottom}px;width:176px;height:153px;border:1px solid #3d4740;overflow:hidden">{img}'
-            f'<span style="position:absolute;left:94px;top:64px;width:14px;height:12px;border:2px solid #ffd36d"></span></div>')
+            f'<span style="position:absolute;left:94px;top:64px;width:14px;height:12px;border:2px solid #ffd36d;pointer-events:none"></span></div>')
 
 
 def sel_box(x, y):
-    return f'<span aria-hidden="true" style="position:absolute;left:{x - 20}px;top:{y - 20}px;width:40px;height:40px;border:2px solid #ffd36d;box-shadow:0 0 0 2px rgba(12,15,14,.8)"></span>'
+    return f'<span aria-hidden="true" style="position:absolute;left:{x - 20}px;top:{y - 20}px;width:40px;height:40px;border:2px solid #ffd36d;box-shadow:0 0 0 2px rgba(12,15,14,.8);pointer-events:none"></span>'
 
 
 def sel_card(style):
@@ -204,15 +198,21 @@ def turns_aside(h_slot=52):
             f'{btn("당기기", "", attrs="aria-label=\"12순 전체를 한 칸 앞으로\"")}{btn("밀기", "", attrs="aria-label=\"12순 전체를 한 칸 뒤로\"")}</div></aside>')
 
 
+def me_under_drawer(top=320):
+    """서랍(380)이 내 위치 핀을 덮으면 서랍 오른쪽 가장자리에 「내 위치」 화살표(화면 밖과 같은 부품). 누르면 서랍을 두고 지도를 옮긴다."""
+    edge = me_edge('left', top).replace('position:absolute;left:4px;', 'position:absolute;left:4px;pointer-events:auto;', 1)
+    return f'<div style="position:absolute;left:380px;top:0;bottom:0;width:64px;z-index:41;pointer-events:none">{edge}</div>'
+
+
 def warroom_map(drawer=''):
     mx, my = DESK_PX(*CELLS['양적현'])
     sx, sy = DESK_PX(*CELLS['장사현'])
     ctrl = (f'<div style="position:absolute;right:12px;top:12px;display:flex;gap:6px">{map_btn("layers", "지도 레이어")}{map_btn("legend", "범례")}</div>')
     card = '' if drawer else sel_card('left:690px;top:120px')
     return (f'<div aria-label="지도" role="region" style="position:relative;width:{W_MAP}px;height:{H_MAP}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
-            f'{mapimg("desk", W_MAP, H_MAP, "영천 일대 지도 — 현 보기")}{desk_labels()}{sel_box(sx, sy)}{me_marker(mx, my, "in")}'
+            f'{mapimg("desk", W_MAP, H_MAP, "영천 일대 지도 — 현 보기")}{desk_labels()}{sel_box(sx, sy)}{"" if drawer and mx < 380 else me_marker(mx, my, "in")}'
             f'{place_band() if not drawer else ""}{ctrl}{layer_fail() if not drawer else ""}{drawer_handle() if not drawer else ""}'
-            f'{view_bar("현", "left:392px;bottom:12px" if drawer else "left:12px;bottom:12px")}{minimap()}{card}{drawer}</div>')  # 서랍(380, 비모달)이 열리면 보기 단추를 서랍 오른쪽 + 12로(K0 판정)
+            f'{view_bar("현", "left:392px;bottom:12px" if drawer else "left:12px;bottom:12px")}{minimap()}{card}{drawer}{me_under_drawer() if drawer else ""}</div>')  # 서랍(380, 비모달)이 열리면 보기 단추를 서랍 오른쪽 + 12로(K0 판정)
 
 
 # ================================================================== P-W01 작전실
@@ -262,18 +262,15 @@ def feed_item(c, st, title, text, action=''):
             f'<span class="serif" style="font-size:13px;font-weight:700">{title}</span><span class="t2" style="font-size:12px;line-height:1.45">{text}</span>{action}</div>')
 
 
-def request_card():
-    return (f'<div style="margin-top:4px;padding:10px;background:#141816;border:1px solid #9c7f3f;display:flex;flex-direction:column;gap:8px">'
-            f'<div style="display:flex;gap:10px">{portrait("jojo", "조조", 34, 48)}<div style="display:flex;flex-direction:column;gap:2px;min-width:0">'
-            f'<span class="serif" style="font-size:14px;font-weight:900">진류 방면 군단장으로 부임하라</span>'
-            f'<span class="muted" style="font-size:11px">주공 조조 · 기한 [미정] · 지나면 수락 · 순을 쓰지 않음</span></div></div>'
-            f'<div style="display:flex;gap:6px">{input_btn("수락", "AVAILABLE", input_id="court.dispatchReply", style="flex:1")}'
-            f'{input_btn("거절", "AVAILABLE", input_id="court.dispatchReply", kind="danger", style="flex:1")}</div>'
-            f'{link("조정에서 모두 보기 →", "min-height:44px")}</div>')
+def feed_request():
+    """지난 순 서랍의 요청 카드 — K3 request_card()(서신 서랍 · 조정 「받은 요청」과 같은 부품) + 조정 연결."""
+    return (f'<div style="margin-top:4px;border:1px solid #9c7f3f;background:#141816">'
+            f'{request_card("발령", "jojo", "주공 조조", "진류 방면 군단장으로 부임하라", "기한 [미정]", "충성 · 명망이 깎입니다", compact=True)}'
+            f'<div style="padding:0 12px">{link("조정에서 모두 보기 →")}</div></div>')
 
 
 FEED = (feed_item('개인 행적', ('무효', 'rust'), '등용 · 3월 상순', '대상이 같은 구역에 없어 무효가 되었습니다. 비용은 들지 않았습니다.', why('왜?'))
-        + feed_item('조정 공문', ('응답 대기', 'bronze'), '발령 도착 · 주공 조조', '관도 방면 군단장 발령이 왔습니다.', request_card())
+        + feed_item('조정 공문', ('응답 대기', 'bronze'), '발령 도착 · 주공 조조', '관도 방면 군단장 발령이 왔습니다.', feed_request())
         + feed_item('전장 보고', None, '행군 · 하후돈 군단', '군단이 움직였습니다.', chip('누가 · 어디 · 리플레이 — 준비 중', 'info'))
         + feed_item('부 · 세력', None, '이탈 판정 순서', '무명 인물 1명이 이탈 판정 1순위입니다.', link('월단평 열기 →'))
         + feed_item('천하 정세', None, '점령 · 진류현', '원소가 진류현을 차지했습니다.'))
@@ -293,7 +290,7 @@ def drawer_body(mobile=False):
 
 @board
 def drawer():
-    dr = (f'<section aria-label="지난 순" style="position:absolute;left:0;top:0;bottom:0;width:380px;display:flex;flex-direction:column;background:rgba(27,32,29,.98);'
+    dr = (f'<section aria-label="지난 순" style="position:absolute;left:0;top:0;bottom:0;width:380px;z-index:40;display:flex;flex-direction:column;background:rgba(27,32,29,.98);'
           f'border-right:1px solid #9c7f3f;box-shadow:10px 0 28px rgba(0,0,0,.5)">'
           f'<div style="height:48px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 4px 0 12px;border-bottom:1px solid #2c342f">'
           f'<span class="serif" style="font-size:16px;font-weight:900">지난 순</span><span class="muted mono" style="font-size:11px">200년 3월 상순 – 중순</span>'
@@ -315,7 +312,7 @@ def mdrawer():
 
 # ================================================================== 부(府) — P-R01~R05
 def renown_band(over=True, empty=False):
-    warn = chip('상한 초과 — 다음 월단평(4월 상순)에 충성 낮은 인물부터 이탈 판정', 'rust') if over else chip('상한 안', 'moss')
+    warn = chip('상한 초과 — 다음 월단평(4월)에 충성 낮은 인물부터 이탈 판정', 'rust') if over else chip('상한 안', 'moss')
     cnt = '인물 0 · 부대 0' if empty else '인물 3 · 부대 2'
     return (f'<div style="min-height:56px;flex-shrink:0;display:flex;align-items:center;gap:16px;padding:0 16px;border-bottom:1px solid #2c342f;background:#141816">'
             f'<span class="t2" style="font-size:12px">명망</span><span class="mono bz" style="font-size:18px;font-weight:700">[미정]</span>'
@@ -557,7 +554,7 @@ def yuedan():
             ['3', '유표', nat('유표'), '[값]', '—'], ['…', '', '', '', ''],
             [f'<span class="mono">[순위]</span>', '<span class="serif" style="font-weight:700">하후돈</span> ' + chip('나', 'bronze'), nat('조조'), '[값]', chip('전공 [값]', 'moss')],
             ['[순위]', '만총', nat('조조'), '[값]', chip('발령 거절 [값]', 'rust')]]
-    left = (f'<section class="panel" style="flex:1;min-width:0">{sec("200년 3월 월단평", "매월 상순 발표 · 순위는 공개")}'
+    left = (f'<section class="panel" style="flex:1;min-width:0">{sec("200년 3월 월단평", "매달 발표 · 순위는 공개")}'
             f'<div style="padding:0 12px">{tbl(["순위", "장수", "세력", "명망", "이번 달 사유"], rank, "font-size:12.5px")}</div>'
             f'<div style="padding:8px 12px">{btn("내 순위로", "sm", "war")}</div>'
             f'<div style="margin-top:auto;padding:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;border-top:1px solid #2c342f">'
@@ -569,7 +566,7 @@ def yuedan():
                   for i, (k, n, b, l, t) in enumerate([('', '무명 공조', '결속 없음 · 공용', '충성 낮음', 'rust'), ('ijeon', '이전', '향당', '보통', ''),
                                                         ('heojeo', '허저', '향당', '높음', 'moss')], 1))
     right = (f'<div style="width:440px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">'
-             f'<section class="panel">{sec("내 명망", "매월 상순 갱신")}<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">'
+             f'<section class="panel">{sec("내 명망", "매달 갱신")}<div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">'
              f'<div style="display:flex;align-items:baseline;gap:10px"><span class="mono bz" style="font-size:34px;font-weight:700">[미정]</span>{chip("코스트 초과 — 이탈 판정 대상", "rust")}</div>'
              f'<div style="display:flex;justify-content:space-between;font-size:12px"><span class="t2">부 코스트 합 / 코스트 상한</span><span class="mono">[값] / [미정]</span></div>'
              f'<div class="g-bar"><i style="width:86%"></i></div>{note("명망이 곧 거느릴 수 있는 부 코스트의 상한입니다.")}'
@@ -589,7 +586,7 @@ def myuedan():
     cards = ''.join(f'<div style="border:1px solid #3d4740;background:#141816;padding:8px 10px;display:flex;align-items:center;gap:10px;min-height:56px">'
                     f'<span class="mono muted" style="width:44px">{r}</span>{name_block(n, "")}{nat(a)}<span class="mono">{v}</span></div>'
                     for r, n, a, v in [('1', '조조', '조조', '[값]'), ('2', '원소', '원소', '[값]'), ('[순위]', '하후돈 · 나', '조조', '[값]')])
-    inner = f'{me}{seg(["순위", "이탈 순서"], "순위", "보기")}{cards}{note("매월 상순 발표 · 순위는 공개, 사유는 본인만")}'
+    inner = f'{me}{seg(["순위", "이탈 순서"], "순위", "보기")}{cards}{note("매달 발표 · 순위는 공개, 사유는 본인만")}'
     page31('V31K4MYuedan.dc.html', 'K4 P-R04 월단평 — 모바일', shell_mob(mob_main(inner, RET_TABS, '월단평'), 'retinue', '월단평', BU), w=390, h=844)
 
 
@@ -806,12 +803,10 @@ COUNTIES17 = [('양적현', '—', '[기본]', '', '시장수운', ['군 치소'
               ('정릉현', '[무명]', '권농', '', '—', []), ('무양현', '[무명]', '징발', '', '—', ['민심 위험']), ('언현', '[무명]', '권농', '', '—', [])]
 
 
-def same_name(n):
-    """같은 읽기 지명(양성현 陽城 / 襄城)이 한 화면에 함께 나올 때만 이름 뒤 작은 한자. K3 3.1.2 hj 헬퍼로 바꿀 자리."""
-    if ' ' in n:
-        ko, han = n.split(' ', 1)
-        return f'{ko}<span class="muted" lang="zh-Hant" style="font-size:10px;font-weight:400;margin-left:3px">{han}</span>'
-    return n
+def county_names(rows):
+    """한 화면에 함께 나오는 현 이름 — 같은 읽기가 둘 이상일 때만 작은 한자(K3 places · twin)."""
+    pairs = [tuple(n.split(' ', 1)) if ' ' in n else (n, '') for n, *_ in rows]
+    return places(pairs)
 
 
 def warn_chips(ws):
@@ -821,8 +816,9 @@ def warn_chips(ws):
 
 @board
 def commandery():
-    rows = [[f'<span class="serif" style="font-weight:700">{same_name(n)}</span>', g if g not in ('빈자리',) else f'<span class="rs">{g}</span>', p]
-            + ['[값]'] * 7 + [w, warn_chips(ws)] for n, g, p, k, w, ws in COUNTIES17]
+    shown = county_names(COUNTIES17)
+    rows = [[f'<span class="serif" style="font-weight:700">{shown[i]}</span>', g if g not in ('빈자리',) else f'<span class="rs">{g}</span>', p]
+            + ['[값]'] * 7 + [w, warn_chips(ws)] for i, (n, g, p, k, w, ws) in enumerate(COUNTIES17)]
     rows.append([f'<span class="muted">외 2현 — 신급현 · 번창현</span>'] + [''] * 11)
     table = tbl(['현', '현령', '방침', '호구', '전답', '시장', '치안', '민심', '방비', '성벽', '공사', '경고'], rows, 'font-size:11.5px')
     left = f'<section class="panel" style="flex:1;min-width:0">{sec("영천군 · 현 17", "행을 누르면 현 상세 · 현령 앉히기")}<div style="padding:0 8px;overflow:hidden">{table}</div></section>'
@@ -850,9 +846,9 @@ def mcommandery():
             + ''.join(f'<button type="button" class="opt" style="min-height:44px;padding:0"><span class="t2" style="font-size:12px;width:96px">{a}</span><span style="font-size:12px">{b}</span></button>'
                       for a, b in [('빈 현령', '4 / 17'), ('민심 위험', '무양현'), ('적 군단 · 고립', '양성현 외 3')]) + '</div>')
     cards = ''.join(f'<a href="#" style="border:1px solid #3d4740;background:#141816;padding:8px 10px;display:flex;flex-direction:column;gap:4px;color:#ece6d8;min-height:64px">'
-                    f'<span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:700">{same_name(n)}</span>{warn_chips(ws)}</span>'
+                    f'<span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:700">{county_names(COUNTIES17[:4])[i]}</span>{warn_chips(ws)}</span>'
                     f'<span class="muted" style="font-size:11.5px">현령 {g} · 방침 {p} · 호구 [값] · 민심 [값] · 방비 [값]</span></a>'
-                    for n, g, p, k, w, ws in COUNTIES17[:4])
+                    for i, (n, g, p, k, w, ws) in enumerate(COUNTIES17[:4]))
     inner = f'{summ}{seg(["이 군", "우리 세력 전체"], "이 군", "범위")}{cards}'
     foot = input_btn('군 방침', 'BLOCKED', '군주만', input_id='policy.set', kind='', style='flex:1')
     page31('V31K4MCommandery.dc.html', 'K4 P-T03 군 내정 현황 — 모바일',
@@ -880,7 +876,7 @@ def supply():
            f'<div style="display:flex;align-items:center;gap:6px"><span class="t2" style="font-size:12px">끊긴 까닭</span>{chip("준비 중", "info")}{note("적 군단 · 수역 봉쇄 · 소유 변경 · 계절 길 닫힘 중 무엇인지는 서버가 곧 줍니다(K4-06).")}</div>'
            f'{btn("지도에서 보기 — 보급선 켜고", "", "war", href="#")}</div>')
     right = (f'<div style="width:400px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">{panel("끊긴 곳 1", "", cut)}'
-             f'<section class="panel" style="height:230px">{sec("녹봉 · 부대 유지비", "다음 월 경계(상순)")}{state_waiting("지급 전망 — 준비 중", "녹봉 · 유지비는 카드가 있는 곳의 망에서 나갑니다. 못 받을 사람 · 부대 목록은 서버가 아직 주지 않습니다(K4-14).", pad=8)}</section>'
+             f'<section class="panel" style="height:230px">{sec("녹봉 · 부대 유지비", "다음 달(4월)")}{state_waiting("지급 전망 — 준비 중", "녹봉 · 유지비는 카드가 있는 곳의 망에서 나갑니다. 못 받을 사람 · 부대 목록은 서버가 아직 주지 않습니다(K4-14).", pad=8)}</section>'
              f'<section class="panel" style="flex:1">{sec("수송", "망 밖 · 급한 집중")}<div style="padding:10px 12px;display:flex;flex-direction:column;gap:8px">'
              f'{note("창고 사이 수송 명령은 아직 입력이 정해지지 않았습니다.")}{chip("준비 중", "info")}</div></section></div>')
     head = pagehead('영지', TER_TABS, '창고망 · 보급', btn('도움말', '', 'help'))
@@ -950,10 +946,7 @@ def court_card(title, sub, body, style=''):
 def court():
     req = (f'<div style="flex-shrink:0;display:flex;gap:12px;padding:12px 12px 0">'
            f'<section class="panel" style="flex:1.4;border-color:#9c7f3f">{sec("받은 요청", "응답은 명령 목록 순을 쓰지 않는다")}'
-           f'<div style="display:flex;gap:12px;padding:10px 12px">{portrait("jojo", "조조", 44, 62)}<div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:0">'
-           f'<span class="serif" style="font-size:16px;font-weight:900">진류 방면 군단장으로 부임하라</span>'
-           f'<span class="muted" style="font-size:12px">발령 · 주공 조조 → 하후돈 · 기한 [미정] — 지나면 수락으로 봅니다 · 거절하면 충성 · 명망이 깎입니다</span></div>'
-           f'<div style="display:flex;gap:8px;align-items:center">{input_btn("수락", "AVAILABLE", input_id="court.dispatchReply")}{input_btn("거절", "AVAILABLE", input_id="court.dispatchReply", kind="danger")}</div></div></section>'
+           f'{request_card("발령", "jojo", "주공 조조", "진류 방면 군단장으로 부임하라", "기한 [미정] · 지나면 수락", "충성 · 명망이 깎입니다")}</section>'
            f'<section class="panel" style="flex:1">{sec("정치 동의", "선양 · 결의 제안")}{state_empty("답할 제안이 없습니다", "누가 선양 · 결의를 제안하면 여기와 지난 순 서랍에 카드가 뜹니다.", pad=8)}</section></div>')
     disp = court_card('발령', '사람 장수를 자리에 보낸다',
                       state_denied('발령은 주공만 할 수 있습니다', '주공이 되려면 거병하거나 독립해야 합니다. 주공이 되면 내 부의 사람 장수에게 발령을 냅니다.', '발령', pad=12),
@@ -985,9 +978,7 @@ def mcourt():
                     f'{name_block(n, sub)}{chip(why_ or "가능", "moss" if not why_ else "bronze")}</a>')
         return (f'<button type="button" class="opt" aria-disabled="true" aria-haspopup="dialog" style="min-height:60px">'
                 f'<span style="display:flex;flex-direction:column;min-width:0;flex:1"><span class="nm">{n}</span><span class="sub">{sub}</span></span><span class="end">{why_tag(why_)}</span></button>')
-    lst = (f'<div style="border:1px solid #9c7f3f;background:#141816;padding:10px 12px;display:flex;flex-direction:column;gap:6px">'
-           f'<span class="serif" style="font-weight:900">받은 요청 — 발령</span><span class="muted" style="font-size:11.5px">주공 조조 · 진류 방면 군단장 · 기한 [미정]</span>'
-           f'<div style="display:flex;gap:8px">{input_btn("수락", "AVAILABLE", input_id="court.dispatchReply", style="flex:1")}{input_btn("거절", "AVAILABLE", input_id="court.dispatchReply", kind="danger", style="flex:1")}</div></div>'
+    lst = (f'<div style="border:1px solid #9c7f3f;background:#141816">{request_card("발령", "jojo", "주공 조조", "진류 방면 군단장", "기한 [미정]", compact=True)}</div>'
            + crow('정치 동의', '선양 · 결의 제안에 답한다', 'on', '없음')
            + crow('발령', '사람 장수를 자리에 보낸다', 'off', '주공만') + crow('포상 · 몰수', '상사 · 봉록', 'off', '주공만')
            + crow('천도 · 현 포기', '수도를 옮긴다 · 현을 버린다', 'off', '군주만'))
