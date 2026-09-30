@@ -43,6 +43,8 @@ MAP_INPUTS = (
     "infra/src/main/resources/scenario/",
     "infra/src/main/kotlin/opensamguk/infra/seed/",
     "infra/src/test/kotlin/opensamguk/infra/seed/",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/read/TopdownMapArtifacts.kt",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/controller/TopdownMapController.kt",
     "web/game/public/map/",
     "web/gateway/public/map/",
     "web/shared/src/iso/countyNameGloss.generated.ts",
