@@ -74,3 +74,48 @@
     min-height: 0;
     overflow: auto;
 }
+
+/*
+ * 좁은 화면(768 미만)에서는 한 줄 56에 「← 작전실」·제목·탭 여섯·칩 셋이 들어가지 않아 탭이 칩 밑에
+ * 깔렸다(보이지도 눌리지도 않음). 탭만 둘째 줄로 내리고, 그 줄 안에서 옆으로 민다. 첫 줄이 모자라면
+ * 칩 묶음이 제 줄로 내려간다. 넓은 화면 모양은 그대로다.
+ */
+@media (max-width: 767.98px) {
+    .head {
+        height: auto;
+        min-height: 56px;
+        flex-wrap: wrap;
+        padding: 6px 12px 0;
+        row-gap: 0;
+        column-gap: 8px;
+    }
+
+    .left {
+        display: contents;
+    }
+
+    .title {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .right {
+        min-height: 44px;
+        margin-left: auto;
+    }
+
+    .tabs {
+        order: 3;
+        flex: 0 0 calc(100% + 24px);
+        min-width: 0;
+        margin: 0 -12px;
+        padding: 0 12px;
+        overscroll-behavior-x: contain;
+    }
+
+    .tab {
+        flex-shrink: 0;
+    }
+}
