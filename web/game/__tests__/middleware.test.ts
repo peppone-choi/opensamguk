@@ -82,7 +82,7 @@ describe('game middleware server path selection', () => {
     });
   });
 
-  it.each(['war-room', 'retinue', 'hand', 'posts', 'orders', 'supply', 'siege', 'court', 'yuedan'])(
+  it.each(['retinue', 'retinue/yuedan', 'stratagem', 'territory', 'territory/supply', 'corps/siege', 'court'])(
     'serves the campaign %s route under the server ID',
     (slug) => {
       middleware(makeRequest(`/game/pep/${slug}`));
@@ -107,12 +107,13 @@ describe('game middleware server path selection', () => {
 
     nextServerMocks.redirect.mockClear();
     middleware(makeRequest('/game/hwiha'));
-    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/war-room');
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep');
 
     nextServerMocks.redirect.mockClear();
     middleware(makeRequest('/game/pep/hwiha/siege?county=7'));
     expect(nextServerMocks.redirect).toHaveBeenCalledTimes(1);
-    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/siege');
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/pep/corps/siege');
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).searchParams.get('county')).toBe('7');
     expect((nextServerMocks.redirect.mock.calls[0][1] as number)).toBe(308);
   });
 
@@ -120,7 +121,8 @@ describe('game middleware server path selection', () => {
     delete process.env.SERVER_ID;
     middleware(makeRequest('/game/hwiha/war-room'));
     expect(nextServerMocks.redirect).toHaveBeenCalledTimes(1);
-    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game/war-room');
+    // 옛 휘하 slug 도 308 표를 거쳐 한 번에 — /game/war-room 을 한 번 더 거치지 않는다.
+    expect((nextServerMocks.redirect.mock.calls[0][0] as URL).pathname).toBe('/game');
     expect((nextServerMocks.redirect.mock.calls[0][1] as number)).toBe(308);
   });
 
