@@ -1,0 +1,121 @@
+/* 도움말 · 첫걸음(K7) — 설계 보드 V31K7*(2026-09-30 승인). 색 · 간격은 web/shared/src/tokens.css 토큰만 쓴다.
+   누를 것은 모두 44 이상(--touch-target), 호버 전용 정보 없음. */
+
+.panel { display: flex; flex-direction: column; min-height: 0; height: 100%; background: var(--panel); color: var(--text); }
+.head { height: 56px; flex-shrink: 0; display: flex; align-items: center; gap: 4px; padding: 0 4px 0 16px; border-bottom: 1px solid var(--line); }
+.head.hasBack { padding-left: 4px; }
+.title { font-family: var(--font-serif); font-size: 17px; font-weight: 900; margin: 0; }
+.iconBtn { width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; background: transparent; border: 0; color: var(--text); cursor: pointer; flex-shrink: 0; }
+.iconBtn:focus-visible, .btn:focus-visible, .row:focus-visible, .seg button:focus-visible, .link:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+.headEnd { margin-left: auto; display: flex; }
+.searchRow { flex-shrink: 0; padding: 8px 12px; }
+.searchLabel { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.search { min-height: 44px; width: 100%; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--inset); box-shadow: inset 0 0 0 1px var(--line-2); }
+.search:focus-within { box-shadow: inset 0 0 0 3px var(--focus); }
+.search input { flex: 1; min-width: 0; height: 44px; background: transparent; border: 0; color: var(--text); font: inherit; font-size: 14px; outline: none; }
+.hint { font-size: 12px; color: var(--rust-2); padding: 4px 2px 0; }
+.tabs { flex-shrink: 0; padding: 0 12px 8px; }
+.seg { display: flex; gap: 2px; }
+.seg button { min-width: 44px; height: 44px; padding: 0 12px; font: inherit; font-size: 13px; color: var(--text); background: var(--inset); border: 1px solid var(--line-2); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.seg button[aria-pressed='true'], .seg button[aria-selected='true'] { background: var(--bronze); color: var(--ink); border-color: var(--bronze-dim); font-weight: 700; }
+.seg .n { font-size: 11px; opacity: .8; }
+.body { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.ghead { min-height: 30px; flex-shrink: 0; display: flex; align-items: center; gap: 8px; padding: 0 12px; background: var(--inset); border-bottom: 1px solid var(--line); }
+.ghead b { font-family: var(--font-serif); font-size: 13px; color: var(--bronze); }
+.ghead span { margin-left: auto; font-size: 11px; color: var(--muted); }
+.list { display: flex; flex-direction: column; border-top: 1px solid var(--line); margin: 0; padding: 0; list-style: none; }
+.row { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 10px; padding: 4px 12px; font: inherit; text-align: left; color: var(--text); background: transparent; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.row.current { background: rgba(211, 176, 100, .08); box-shadow: inset 3px 0 0 var(--bronze); }
+.rowMain { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
+.rowName { font-family: var(--font-serif); font-weight: 700; font-size: 15px; white-space: nowrap; }
+.rowSub { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rowEnd { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.chip { display: inline-flex; align-items: center; height: 20px; padding: 0 7px; font-size: 11px; font-weight: 500; border: 1px solid var(--line-2); color: var(--text-2); background: var(--inset); white-space: nowrap; }
+.chip.info { color: var(--info); border-color: var(--info-dim); }
+.chip.rust { color: var(--rust-2); border-color: var(--rust); }
+.chip.moss { color: var(--moss-2); border-color: var(--moss); }
+.chip.bronze { color: var(--bronze); border-color: var(--bronze-dim); }
+.btn { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 12px; font: inherit; font-size: 13px; color: var(--text); background: var(--raised); border: 1px solid var(--line-2); cursor: pointer; white-space: nowrap; text-decoration: none; }
+.btn.primary { background: linear-gradient(180deg, #e2c37a, #c9a656); color: var(--ink); font-weight: 700; border-color: var(--bronze-dim); }
+.btn.ghost { background: transparent; }
+.btn.wide { width: 100%; }
+.btn[aria-disabled='true'] { background: transparent; color: var(--muted); border-style: dashed; }
+.link { min-height: 44px; display: inline-flex; align-items: center; font-size: 12.5px; color: var(--bronze); background: transparent; border: 0; padding: 0; cursor: pointer; font: inherit; }
+.more { padding: 6px 12px; }
+.content { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.content > * { flex-shrink: 0; }
+.topicHead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.topicTitle { margin: 0; font-family: var(--font-serif); font-size: 20px; font-weight: 900; }
+.note { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+.warn { font-size: 12px; color: var(--rust-2); line-height: 1.5; }
+.para { display: flex; flex-direction: column; gap: 2px; }
+.label { font-size: 11px; font-weight: 700; color: var(--muted); }
+.text { font-size: 13px; line-height: 1.5; color: var(--text-2); }
+.pair { display: flex; gap: 8px; }
+.pair > div { flex: 1 1 0; min-width: 0; padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; }
+.ok { border: 1px solid var(--moss-2); }
+.ok b { font-size: 11.5px; color: var(--moss-2); }
+.no { border: 1px solid var(--rust-2); }
+.no b { font-size: 11.5px; color: var(--rust-2); }
+.pair span { font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.rules { background: var(--inset); border: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 3px; margin: 0; }
+.rules div { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; align-items: baseline; min-height: 22px; }
+.rules dt { font-size: 11.5px; color: var(--muted); }
+.rules dd { margin: 0; font-size: 12.5px; line-height: 1.45; }
+.res { display: inline-flex; align-items: center; gap: 4px; margin-right: 8px; white-space: nowrap; }
+.res i { width: 10px; height: 10px; display: inline-block; border: 1px solid rgba(0, 0, 0, .45); }
+.fails { display: flex; flex-direction: column; }
+.failRow { min-height: 44px; width: 100%; display: flex; align-items: center; gap: 8px; padding: 4px 12px; font: inherit; font-size: 12.5px; text-align: left; color: var(--text); background: transparent; border: 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.failRow.hi { background: rgba(201, 107, 93, .10); box-shadow: inset 3px 0 0 var(--rust); }
+.foot { margin-top: auto; flex-shrink: 0; padding: 8px 12px 12px; border-top: 1px solid var(--line); }
+.state { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 16px; text-align: center; }
+.state strong { font-family: var(--font-serif); font-size: 16px; font-weight: 900; }
+.state p { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--text-2); max-width: 340px; }
+.skel { display: block; height: 12px; background: var(--raised); margin: 8px 12px; }
+.strip { min-height: 44px; display: flex; align-items: center; gap: 8px; padding: 0 4px 0 10px; background: var(--inset); border: 1px solid var(--line); font-size: 12px; color: var(--text-2); }
+.strip > span { flex: 1; min-width: 0; }
+.stripMore { padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; border: 1px solid var(--line); border-top: 0; font-size: 12px; line-height: 1.45; }
+.recovery { background: var(--inset); border: 1px solid var(--line); padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+.recovery b { font-size: 12px; color: var(--bronze); display: flex; justify-content: space-between; align-items: center; }
+
+/* 첫걸음 */
+.bar { display: flex; flex-direction: column; gap: 6px; }
+.barTop { display: flex; align-items: center; gap: 8px; }
+.barTop strong { font-family: var(--font-serif); font-size: 15px; font-weight: 900; }
+.barTop .count { margin-left: auto; font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--bronze); }
+.cells { display: flex; gap: 3px; }
+.cells i { flex: 1 1 0; height: 12px; display: block; background: var(--line); }
+.cells i.done { background: var(--bronze); }
+.cells i.now { background: transparent; border: 2px solid var(--bronze); }
+.card { border: 1px solid var(--bronze); background: rgba(211, 176, 100, .06); padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 6px; }
+.cardTop { display: flex; align-items: center; gap: 8px; }
+.cardTop h3 { margin: 0; font-family: var(--font-serif); font-size: 16px; font-weight: 900; }
+.cardTop > :last-child { margin-left: auto; }
+.how { margin: 0; padding: 0; list-style: none; }
+.how li { font-size: 12.5px; line-height: 1.45; padding: 1px 0; }
+.how li b { font-family: var(--font-mono); color: var(--bronze); margin-right: 4px; }
+.status { font-size: 12.5px; line-height: 1.45; display: flex; gap: 6px; align-items: flex-start; }
+.status.moss { color: var(--moss-2); }
+.status.info { color: var(--info); }
+.status.muted { color: var(--text-2); }
+.cardBtns { display: flex; gap: 6px; }
+.cardBtns > :first-child { flex: 1; }
+.stepNo { font-family: var(--font-mono); font-size: 12px; width: 16px; color: var(--muted); }
+.stepNo.now { color: var(--bronze); }
+.locked { color: var(--muted); }
+.expand { padding: 0 12px 8px 38px; font-size: 12px; color: var(--text-2); }
+
+/* 목표 표시 — 테두리는 누르기를 먹지 않는다. 누를 수 있는 것은 카드뿐. */
+.ring { position: fixed; border: 2px solid var(--bronze); box-shadow: 0 0 0 2px rgba(12, 15, 14, .85); pointer-events: none; z-index: 45; }
+.coach { position: fixed; z-index: 46; width: 300px; max-width: calc(100vw - 16px); background: rgba(27, 32, 29, .98); border: 1px solid var(--bronze); box-shadow: 0 10px 28px rgba(0, 0, 0, .55); padding: 10px 4px 4px 12px; display: flex; flex-direction: column; gap: 6px; }
+.coach b { font-size: 12px; color: var(--bronze); }
+.coach p { margin: 0; font-size: 13px; line-height: 1.5; padding-right: 8px; }
+.coachBtns { display: flex; gap: 6px; justify-content: flex-end; }
+@media (prefers-reduced-motion: no-preference) {
+    .ring { animation: ringIn 200ms ease-out; }
+}
+@keyframes ringIn { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 767px) {
+    .coach { left: 8px !important; right: 8px; width: auto; }
+    .pair { flex-direction: column; }
+}
