@@ -13,6 +13,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.RequestParam
 
 /**
  * F4 — `GET /api/troops` (부대 편성, spec page 6). READ-only.
@@ -22,8 +23,8 @@ import org.springframework.web.bind.annotation.RestController
  * generals (generals whose `troop_id` == the leader id), with city name and crew per member and the
  * `(N명)` member count for the list header.
  *
- * Public read, scoped to the caller's nation when a verified principal resolves; otherwise every troop
- * (still empty in the seed). game-api ONLY (§7) — troop ops are intake, deferred past F4.
+ * Internal nation read. Verified principal resolves the owned general's positive nation; anonymous,
+ * nationless and foreign nation requests cannot fall back to an all-troop query.
  */
 @RestController
 @RequestMapping("/api/troops")
@@ -35,18 +36,19 @@ class TroopController(
 ) {
 
     @GetMapping
-    fun list(@AuthenticationPrincipal userId: Long?): ResponseEntity<TroopsResponse> {
-        // 호출자 빙의 장수 + permission(레거시 myGeneralID/myPermission). 멤버십·뮤테이션 게이팅의 기준.
-        val resolved = userId?.let { resolver.resolve(it) }
-        val myGeneralId = resolved?.general?.id ?: 0
-        val permission = resolved?.permission ?: 0
-        val nationId = resolved?.nationId ?: 0
-
-        val troopRows = if (nationId != 0) {
-            troops.findByNationOrderByTroopLeaderAsc(nationId)
-        } else {
-            troops.findAll().sortedBy { it.troopLeader }
+    fun list(
+        @AuthenticationPrincipal userId: Long?,
+        @RequestParam(name = "nationId", required = false) requestedNationId: Int?,
+    ): ResponseEntity<TroopsResponse> {
+        if (userId == null || userId <= 0) return ResponseEntity.status(401).build()
+        val resolved = resolver.resolve(userId) ?: return ResponseEntity.status(403).build()
+        val nationId = resolved.nationId
+        if (nationId <= 0 || (requestedNationId != null && requestedNationId != nationId)) {
+            return ResponseEntity.status(403).build()
         }
+        val myGeneralId = resolved.general.id
+        val permission = resolved.permission
+        val troopRows = troops.findByNationOrderByTroopLeaderAsc(nationId)
         if (troopRows.isEmpty()) {
             return ResponseEntity.ok(
                 TroopsResponse(result = true, troops = emptyList(), myGeneralId = myGeneralId, permission = permission),

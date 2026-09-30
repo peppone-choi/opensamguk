@@ -506,10 +506,11 @@ class F4ReadControllersTest {
 
     // ── GET /api/troops (empty when no rows) ─────────────────────────────────────────────────────────
     @Test
-    fun `troops returns empty list when troop table has no rows`() {
-        `when`(troops.findAll()).thenReturn(emptyList())
+    fun `troops returns empty list when own nation troop table has no rows`() {
+        ownedBoardGeneral(1)
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1)).thenReturn(emptyList())
 
-        mvc(TroopController(troops, generals, cities, resolver)).perform(get("/api/troops"))
+        mvc(TroopController(troops, generals, cities, resolver)).perform(get("/api/troops").with(principal(7L)))
             .andExpect(status().isOk)
             .andExpect(jsonPath("$.result").value(true))
             .andExpect(jsonPath("$.troops.length()").value(0))

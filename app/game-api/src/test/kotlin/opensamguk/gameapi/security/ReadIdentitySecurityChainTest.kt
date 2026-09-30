@@ -8,6 +8,7 @@ import opensamguk.common.auth.GatewayJwtClaims
 import opensamguk.gameapi.controller.BoardController
 import opensamguk.gameapi.controller.FrontInfoController
 import opensamguk.gameapi.controller.WorldMapController
+import opensamguk.gameapi.controller.TroopController
 import opensamguk.gameapi.owner.GeneralResolver
 import opensamguk.gameapi.read.BoardCommentReadRepository
 import opensamguk.gameapi.read.BoardPostReadEntity
@@ -26,6 +27,7 @@ import opensamguk.gameapi.read.NationReadRepository
 import opensamguk.gameapi.read.RankDataReadRepository
 import opensamguk.gameapi.read.ScenarioTitleResolver
 import opensamguk.gameapi.read.TroopReadRepository
+import opensamguk.gameapi.read.TroopReadEntity
 import opensamguk.gameapi.read.VotePollReadRepository
 import opensamguk.gameapi.read.VoteReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
@@ -58,6 +60,7 @@ import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.servlet.config.annotation.EnableWebMvc
+import java.time.Instant
 import java.util.Date
 import java.util.Optional
 
@@ -100,6 +103,8 @@ class ReadIdentitySecurityChainTest {
         @Bean open fun reserved(resolver: GeneralResolver, turns: GeneralTurnReadRepository, world: WorldStateReadRepository,
             generals: GeneralReadRepository) = ReservedCommandsController(resolver, turns, world, generals,
                 PrecheckBeans().commandRegistry(GeneralActionPipeline()))
+        @Bean open fun troopList(troops: TroopReadRepository, generals: GeneralReadRepository,
+            cities: CityReadRepository, resolver: GeneralResolver) = TroopController(troops, generals, cities, resolver)
         @Bean open fun board(posts: BoardPostReadRepository, comments: BoardCommentReadRepository, resolver: GeneralResolver,
             generals: GeneralReadRepository, polls: VotePollReadRepository, votes: VoteReadRepository,
             reads: BoardPostReadLogRepository, world: WorldStateReadRepository) =
@@ -112,13 +117,14 @@ class ReadIdentitySecurityChainTest {
     @Autowired lateinit var generals: GeneralReadRepository
     @Autowired lateinit var nations: NationReadRepository
     @Autowired lateinit var cities: CityReadRepository
+    @Autowired lateinit var troops: TroopReadRepository
     @Autowired lateinit var turns: GeneralTurnReadRepository
     @Autowired lateinit var posts: BoardPostReadRepository
     private lateinit var mvc: MockMvc
 
     @BeforeEach
     fun setup() {
-        reset(resolver, world, generals, nations, cities, turns, posts)
+        reset(resolver, world, generals, nations, cities, turns, posts, troops)
         mvc = MockMvcBuilders.webAppContextSetup(context).apply<DefaultMockMvcBuilder>(springSecurity()).build()
         resolve()
         `when`(nations.findById(1)).thenReturn(Optional.of(NationReadEntity(id = 1, name = "본국", gold = 321,
@@ -248,6 +254,42 @@ class ReadIdentitySecurityChainTest {
             id = 3, nationId = 1, isSecret = true, title = "본국 기밀")))
         mvc.perform(get("/api/board?secret=true").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isOk).andExpect(jsonPath("$.articles[0].title").value("본국 기밀"))
+    }
+
+    @Test
+    fun `troops reject anonymous unresolved nationless and foreign nation without global fallback`() {
+        mvc.perform(get("/api/troops")).andExpect(status().isUnauthorized)
+        mvc.perform(get("/api/troops").header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
+        mvc.perform(get("/api/troops").header("Authorization", "Bearer ${token(8)}"))
+            .andExpect(status().isForbidden)
+        mvc.perform(get("/api/troops?nationId=2").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isForbidden)
+        resolve(nationId = 0)
+        mvc.perform(get("/api/troops").header("Authorization", "Bearer ${token()}"))
+            .andExpect(status().isForbidden)
+        verifyNoInteractions(troops, generals, cities)
+    }
+
+    @Test
+    fun `same nation troops reveal only owned nation member crew location and leader time`() {
+        `when`(troops.findAll()).thenReturn(listOf(TroopReadEntity(troopLeader = 202, nation = 2, name = "타국 부대")))
+        `when`(troops.findByNationOrderByTroopLeaderAsc(1))
+            .thenReturn(listOf(TroopReadEntity(troopLeader = 101, nation = 1, name = "본국 부대")))
+        val leader = GeneralReadEntity(id = 101, nationId = 1, cityId = 1, crew = 555,
+            turnTime = Instant.parse("2026-09-30T01:02:03Z"))
+        `when`(generals.findById(101)).thenReturn(Optional.of(leader))
+        `when`(generals.findByTroopIdOrderByOfficerLevelDescIdAsc(101)).thenReturn(listOf(leader))
+        `when`(cities.findAll()).thenReturn(listOf(CityReadEntity(id = 1, name = "본국 도시", nationId = 1)))
+        for (confirm in listOf(false, true)) {
+            val request = get("/api/troops").header("Authorization", "Bearer ${token()}")
+                .also { if (confirm) it.param("nationId", "1") }
+            mvc.perform(request).andExpect(status().isOk)
+                .andExpect(jsonPath("$.troops.length()").value(1)).andExpect(jsonPath("$.troops[0].nation").value(1))
+                .andExpect(jsonPath("$.troops[0].members[0].crew").value(555))
+                .andExpect(jsonPath("$.troops[0].members[0].cityName").value("본국 도시"))
+                .andExpect(jsonPath("$.troops[0].turnTime").value("2026-09-30 10:02:03"))
+        }
+        verify(troops, never()).findAll()
     }
 
     companion object {
