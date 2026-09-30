@@ -6,7 +6,7 @@ import opensamguk.gameapi.command.CanonicalCommandController
 import opensamguk.gameapi.command.CityCommandPrecheckService
 
 import opensamguk.gameapi.owner.GeneralResolver
-import opensamguk.gameapi.controller.InstantActionController.IntakeAcceptedResponse
+import opensamguk.gameapi.dto.IntakeAcceptedResponse
 import opensamguk.gameapi.reserve.CommandReserveService
 import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.command.CommandSchemaCatalog
