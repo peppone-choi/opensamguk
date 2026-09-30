@@ -147,6 +147,12 @@
 .map-preview--backdrop .map-preview-canvas { position: absolute; inset: 0; aspect-ratio: auto; height: 100%; border: 0; border-radius: 0; }
 .map-preview--backdrop .map-preview-ph { position: absolute; inset: 0; aspect-ratio: auto; border: 0; border-radius: 0; background: var(--bg); gap: 10px; flex-direction: column; }
 .map-preview-ph__why { display: block; font-size: 12px; color: var(--muted); }
+/* 이름 토글: 옛 ::after 「 켜기 / 끄기」를 붙이지 않는다 — 단추 이름은 「이름」, 눌림(aria-pressed) = 이름이 보임. */
+.map-toggle-cityname::after,
+.map-toggle-cityname.active::after { content: none; }
+/* 옛 .map-btn-stack 은 right · bottom 0 이다 — 배경 지도에서 left · top 을 주면 상자가 늘어나 단추가 끝으로 밀리고
+   빈 상자가 지도 한 줄을 덮는다(실제 pep 캡처에서 로그인 패널 밑으로 들어갔다). 두 값을 푼다. */
+.map-preview--backdrop .map-btn-stack { right: auto; bottom: auto; text-align: left; }
 .map-preview--backdrop .os-iso-map__controls button,
 .map-preview--backdrop .os-iso-map__administrative-layers button,
 .map-preview--backdrop .map-toggle-cityname { min-width: 44px; min-height: 44px; }
@@ -225,9 +231,17 @@
   .gw31-login__foot { border-top: 1px solid var(--line); }
   .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
   .map-preview--backdrop .os-iso-map__administrative-layers { left: auto !important; right: 60px !important; top: 64px !important; }
-  .map-preview--backdrop .map-btn-stack { position: absolute; right: 8px; top: 164px; }
+  .map-preview--backdrop .map-btn-stack { position: absolute; left: auto; right: 8px; top: 164px; }
   .map-preview--backdrop .map-preview-tooltip--pinned { left: 12px; top: 64px; }
   .gw31-login__chiprow { flex-wrap: wrap; }
+}
+/* 모바일은 지도 띠(480)가 소개 묶음에 거의 다 가렸다(실제 pep 캡처) — 워드마크와 제목만 지도 위에 둔다(보드 V31K5MLogin).
+   소개 문장은 공개 알파 문구(U5) 초안이라 초안 칩과 함께 모바일에서 뺀다. */
+@media (max-width: 767.98px) {
+  .gw31-intro { padding: 8px 10px; right: auto; }
+  .gw31-intro__wordmark { width: 180px; }
+  .gw31-intro__title { font-size: 16px; }
+  .gw31-intro__lead, .gw31-intro__draft { display: none; }
 }
 @media (min-width: 768px) and (max-width: 1199.98px) {
   .gw31-login__card, .gw31-login__status, .gw31-login__notices, .gw31-login__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
