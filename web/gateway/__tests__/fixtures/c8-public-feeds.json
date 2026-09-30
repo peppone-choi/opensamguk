@@ -1,0 +1,2688 @@
+{
+  "mainSha": "60ba8df6063e3e7beb2e98f132cd3b8e54cb17a9",
+  "fixtureStatus": "PREPARED_NOT_RUN_AGAINST_PRODUCTION",
+  "allIdsAndSentinels": "synthetic; no network or database targets",
+  "ownership": "C8 audit evidence only; K5 owns route/test adoption",
+  "strictGatewayProposal": "C0 clarification: reconstruction/drop-only is an allowed gateway implementation when no private/raw/unknown fields survive and every emitted item has required refs, valid types and normal shape. Whole-page 502 is optional defense, not a mandatory existing permission policy. 64 KiB and 5 s are proposals, not fixed acceptance values.",
+  "proposedBodyLimitBytes": 65536,
+  "proposedTimeoutMs": 5000,
+  "cases": [
+    {
+      "id": "events-valid-county.ownerChanged",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "outputEventKeys": [
+          "id",
+          "kind",
+          "section",
+          "occurredAt",
+          "refs",
+          "facts"
+        ],
+        "preserveRefs": {
+          "CITY": 1,
+          "FROM_NATION": 0,
+          "TO_NATION": 2
+        },
+        "facts": {},
+        "noRawExtras": true
+      }
+    },
+    {
+      "id": "events-valid-roadFort.captured",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "roadFort.captured",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "ROAD_FORT": "rf-1",
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "outputEventKeys": [
+          "id",
+          "kind",
+          "section",
+          "occurredAt",
+          "refs",
+          "facts"
+        ],
+        "preserveRefs": {
+          "ROAD_FORT": "rf-1",
+          "TO_NATION": 2
+        },
+        "facts": {},
+        "noRawExtras": true
+      }
+    },
+    {
+      "id": "events-valid-yuedan.announced",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "yuedan.announced",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {},
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "outputEventKeys": [
+          "id",
+          "kind",
+          "section",
+          "occurredAt",
+          "refs",
+          "facts"
+        ],
+        "preserveRefs": {},
+        "facts": {},
+        "noRawExtras": true
+      }
+    },
+    {
+      "id": "events-valid-server.catchUpFinished",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "server.catchUpFinished",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {},
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "outputEventKeys": [
+          "id",
+          "kind",
+          "section",
+          "occurredAt",
+          "refs",
+          "facts"
+        ],
+        "preserveRefs": {},
+        "facts": {},
+        "noRawExtras": true
+      }
+    },
+    {
+      "id": "events-private-renown.event",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "renown.event",
+              "section": "PERSONAL",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "ACTOR": 1
+              },
+              "facts": {
+                "MONEY": 1
+              }
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-private-people.searched",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "people.searched",
+              "section": "RETINUE_NATION",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "ACTOR": 1
+              },
+              "facts": {
+                "MONEY": 1
+              }
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-private-income.monthly",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "income.monthly",
+              "section": "RETINUE_NATION",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "ACTOR": 1
+              },
+              "facts": {
+                "MONEY": 1
+              }
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-private-court.dispatchReceived",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "court.dispatchReceived",
+              "section": "COURT",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "ACTOR": 1
+              },
+              "facts": {
+                "MONEY": 1
+              }
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-private-march.corps",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "march.corps",
+              "section": "BATTLE",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "ACTOR": 1
+              },
+              "facts": {
+                "MONEY": 1
+              }
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-unknown-kind",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "unknown.synthetic",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-prototype-kind",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "__proto__",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-false-world-private-kind",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "income.monthly",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-extra-private-role",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2,
+                "ACTOR": 1
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": [
+                {
+                  "id": 1,
+                  "kind": "county.ownerChanged",
+                  "section": "WORLD",
+                  "occurredAt": {
+                    "year": 200,
+                    "month": 3,
+                    "phase": 2,
+                    "ordinal": 0
+                  },
+                  "refs": {
+                    "CITY": 1,
+                    "FROM_NATION": 0,
+                    "TO_NATION": 2
+                  },
+                  "facts": {}
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Only known public shape/allowed typed required refs survive. Unknown extra fields/facts never pass. Strict whole-page rejection optional."
+      }
+    },
+    {
+      "id": "events-extra-unknown-role",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2,
+                "ACCOUNT_ID": 1
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": [
+                {
+                  "id": 1,
+                  "kind": "county.ownerChanged",
+                  "section": "WORLD",
+                  "occurredAt": {
+                    "year": 200,
+                    "month": 3,
+                    "phase": 2,
+                    "ordinal": 0
+                  },
+                  "refs": {
+                    "CITY": 1,
+                    "FROM_NATION": 0,
+                    "TO_NATION": 2
+                  },
+                  "facts": {}
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Only known public shape/allowed typed required refs survive. Unknown extra fields/facts never pass. Strict whole-page rejection optional."
+      }
+    },
+    {
+      "id": "events-raw-object-ref",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": {
+                  "id": 1,
+                  "userId": "SYNTHETIC_PRIVATE_SENTINEL"
+                },
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-missing-required-ref",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-zero-city",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 0,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-negative-nation",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": -1
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-string-nation",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": "2"
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-private-facts",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {
+                "MONEY": 1
+              }
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": [
+                {
+                  "id": 1,
+                  "kind": "county.ownerChanged",
+                  "section": "WORLD",
+                  "occurredAt": {
+                    "year": 200,
+                    "month": 3,
+                    "phase": 2,
+                    "ordinal": 0
+                  },
+                  "refs": {
+                    "CITY": 1,
+                    "FROM_NATION": 0,
+                    "TO_NATION": 2
+                  },
+                  "facts": {}
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Only known public shape/allowed typed required refs survive. Unknown extra fields/facts never pass. Strict whole-page rejection optional."
+      }
+    },
+    {
+      "id": "events-invalid-date",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 13,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-unsafe-js-id",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 9007199254740992,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ],
+        "requiredInvariant": "No invalid/private event is emitted; dropping an item is allowed."
+      }
+    },
+    {
+      "id": "events-private-raw-field",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {},
+              "userId": "SYNTHETIC_PRIVATE_SENTINEL"
+            }
+          ],
+          "nextCursor": null
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": [
+                {
+                  "id": 1,
+                  "kind": "county.ownerChanged",
+                  "section": "WORLD",
+                  "occurredAt": {
+                    "year": 200,
+                    "month": 3,
+                    "phase": 2,
+                    "ordinal": 0
+                  },
+                  "refs": {
+                    "CITY": 1,
+                    "FROM_NATION": 0,
+                    "TO_NATION": 2
+                  },
+                  "facts": {}
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Only known public shape/allowed typed required refs survive. Unknown extra fields/facts never pass. Strict whole-page rejection optional."
+      }
+    },
+    {
+      "id": "events-invalid-top-level",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "rows": [],
+          "message": "SYNTHETIC_PRIVATE_SENTINEL"
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "events-extra-top-level",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null,
+          "account": "SYNTHETIC_PRIVATE_SENTINEL"
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": [
+                {
+                  "id": 1,
+                  "kind": "county.ownerChanged",
+                  "section": "WORLD",
+                  "occurredAt": {
+                    "year": 200,
+                    "month": 3,
+                    "phase": 2,
+                    "ordinal": 0
+                  },
+                  "refs": {
+                    "CITY": 1,
+                    "FROM_NATION": 0,
+                    "TO_NATION": 2
+                  },
+                  "facts": {}
+                }
+              ]
+            }
+          },
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "events": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Only known public shape/allowed typed required refs survive. Unknown extra fields/facts never pass. Strict whole-page rejection optional."
+      }
+    },
+    {
+      "id": "events-over-requested-limit",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "events": [
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            },
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            },
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            },
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            },
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            },
+            {
+              "id": 1,
+              "kind": "county.ownerChanged",
+              "section": "WORLD",
+              "occurredAt": {
+                "year": 200,
+                "month": 3,
+                "phase": 2,
+                "ordinal": 0
+              },
+              "refs": {
+                "CITY": 1,
+                "FROM_NATION": 0,
+                "TO_NATION": 2
+              },
+              "facts": {}
+            }
+          ],
+          "nextCursor": null
+        },
+        "requestedLimit": 5
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-valid-ready",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "outputBadgeKeys": [
+          "lineCode",
+          "lineName",
+          "emperorCityId"
+        ],
+        "noRawExtras": true
+      }
+    },
+    {
+      "id": "imperial-valid-null-city",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "WATER_ZONE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": null,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "outputBadgeKeys": [
+          "lineCode",
+          "lineName",
+          "emperorCityId"
+        ],
+        "emperorCityId": null
+      }
+    },
+    {
+      "id": "imperial-valid-NOT_SEEDED",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "NOT_SEEDED",
+          "badges": []
+        }
+      },
+      "expected": {
+        "status": 200,
+        "cacheControl": "public, max-age=30",
+        "body": {
+          "status": "NOT_SEEDED",
+          "badges": []
+        }
+      }
+    },
+    {
+      "id": "imperial-valid-STATE_UNAVAILABLE",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 409,
+        "contentType": "application/json",
+        "body": {
+          "status": "STATE_UNAVAILABLE",
+          "badges": []
+        }
+      },
+      "expected": {
+        "status": 409,
+        "cacheControl": "no-store",
+        "body": {
+          "status": "STATE_UNAVAILABLE",
+          "badges": []
+        }
+      }
+    },
+    {
+      "id": "imperial-unknown-status",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "UNKNOWN",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-unknown-node-kind",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "PRIVATE_NODE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "READY",
+              "badges": [
+                {
+                  "lineCode": "han",
+                  "lineName": "합성 계통",
+                  "emperorCityId": 1
+                }
+              ]
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Gateway 3-field reconstruction must omit all raw/unused/unknown fields. Full upstream schema rejection is optional where an unused field is not emitted."
+      }
+    },
+    {
+      "id": "imperial-missing-null-city",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "READY",
+              "badges": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Do not emit malformed public badge fields."
+      }
+    },
+    {
+      "id": "imperial-string-city",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": "1",
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "READY",
+              "badges": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Do not emit malformed public badge fields."
+      }
+    },
+    {
+      "id": "imperial-zero-city",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 0,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "READY",
+              "badges": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Do not emit malformed public badge fields."
+      }
+    },
+    {
+      "id": "imperial-raw-private-field",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null,
+              "sealedLetter": "SYNTHETIC_PRIVATE_SENTINEL"
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "READY",
+              "badges": [
+                {
+                  "lineCode": "han",
+                  "lineName": "합성 계통",
+                  "emperorCityId": 1
+                }
+              ]
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Gateway 3-field reconstruction must omit all raw/unused/unknown fields. Full upstream schema rejection is optional where an unused field is not emitted."
+      }
+    },
+    {
+      "id": "imperial-extra-top-level",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ],
+          "allegiances": "SYNTHETIC_PRIVATE_SENTINEL"
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "READY",
+              "badges": [
+                {
+                  "lineCode": "han",
+                  "lineName": "합성 계통",
+                  "emperorCityId": 1
+                }
+              ]
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Gateway 3-field reconstruction must omit all raw/unused/unknown fields. Full upstream schema rejection is optional where an unused field is not emitted."
+      }
+    },
+    {
+      "id": "imperial-invalid-pair-409-READY",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 409,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-invalid-pair-409-NOT_SEEDED",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 409,
+        "contentType": "application/json",
+        "body": {
+          "status": "NOT_SEEDED",
+          "badges": []
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-invalid-pair-200-STATE_UNAVAILABLE",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "STATE_UNAVAILABLE",
+          "badges": []
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-invalid-pair-201-READY",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 201,
+        "contentType": "application/json",
+        "body": {
+          "status": "READY",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-invalid-pair-206-NOT_SEEDED",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 206,
+        "contentType": "application/json",
+        "body": {
+          "status": "NOT_SEEDED",
+          "badges": []
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "imperial-unseeded-nonempty",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "body": {
+          "status": "NOT_SEEDED",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 200,
+            "cacheControl": "public, max-age=30",
+            "body": {
+              "status": "NOT_SEEDED",
+              "badges": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Non-READY badges are never emitted; preserve the exact HTTP/status pair."
+      }
+    },
+    {
+      "id": "imperial-unavailable-nonempty",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 409,
+        "contentType": "application/json",
+        "body": {
+          "status": "STATE_UNAVAILABLE",
+          "badges": [
+            {
+              "lineCode": "han",
+              "lineName": "합성 계통",
+              "emperorGeneralId": 1,
+              "emperorNodeKind": "LAND_PROVINCE",
+              "emperorNodeId": "p-1",
+              "emperorCityId": 1,
+              "courtCityId": null
+            }
+          ]
+        }
+      },
+      "expected": {
+        "allowedOutcomes": [
+          {
+            "status": 409,
+            "cacheControl": "no-store",
+            "body": {
+              "status": "STATE_UNAVAILABLE",
+              "badges": []
+            }
+          },
+          {
+            "status": 502,
+            "cacheControl": "no-store",
+            "safeConstantErrorOnly": true
+          }
+        ],
+        "requiredInvariant": "Non-READY badges are never emitted; preserve the exact HTTP/status pair."
+      }
+    },
+    {
+      "id": "server-events-error-301",
+      "route": "server-events",
+      "upstream": {
+        "status": 301,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-302",
+      "route": "server-events",
+      "upstream": {
+        "status": 302,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-307",
+      "route": "server-events",
+      "upstream": {
+        "status": 307,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-308",
+      "route": "server-events",
+      "upstream": {
+        "status": 308,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-400",
+      "route": "server-events",
+      "upstream": {
+        "status": 400,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 400,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-401",
+      "route": "server-events",
+      "upstream": {
+        "status": 401,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 401,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-403",
+      "route": "server-events",
+      "upstream": {
+        "status": 403,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 403,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-404",
+      "route": "server-events",
+      "upstream": {
+        "status": 404,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 404,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-429",
+      "route": "server-events",
+      "upstream": {
+        "status": 429,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 429,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-500",
+      "route": "server-events",
+      "upstream": {
+        "status": 500,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-error-503",
+      "route": "server-events",
+      "upstream": {
+        "status": 503,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-events-non-json",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "text/html",
+        "body": "SYNTHETIC_PRIVATE_SENTINEL"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-events-oversize",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "bodyGenerator": {
+          "bytes": 65537,
+          "fill": "x"
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-events-timeout",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "failure": "timeout"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-events-body-read-failure",
+      "route": "server-events",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "failure": "stream-error"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-events-transport-identity",
+      "route": "server-events",
+      "incoming": {
+        "query": {
+          "generalId": "1",
+          "userId": "1",
+          "nationId": "2",
+          "token": "SYNTHETIC_PRIVATE_SENTINEL",
+          "before": "opaque"
+        },
+        "cookie": "SYNTHETIC_PRIVATE_SENTINEL",
+        "authorization": "Bearer SYNTHETIC_PRIVATE_SENTINEL"
+      },
+      "expected": {
+        "fetchCredentials": "omit",
+        "fetchRedirect": "error_or_manual_reject",
+        "fetchHeadersMustExclude": [
+          "cookie",
+          "authorization"
+        ],
+        "upstreamQueryKeys": [
+          "limit"
+        ],
+        "origin": "registered expectedGameApiUrl only"
+      }
+    },
+    {
+      "id": "server-events-unregistered-origin",
+      "route": "server-events",
+      "incoming": {
+        "ids": [
+          "nope",
+          "pep.evil.invalid",
+          "../pep",
+          "http://169.254.169.254"
+        ]
+      },
+      "expected": {
+        "status": 404,
+        "cacheControl": "no-store",
+        "fetchCalls": 0
+      }
+    },
+    {
+      "id": "server-imperial-error-301",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 301,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-302",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 302,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-307",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 307,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-308",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 308,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        },
+        "location": "https://untrusted.invalid/private"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-400",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 400,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-401",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 401,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-403",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 403,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-404",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 404,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-429",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 429,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-500",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 500,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-error-503",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 503,
+        "contentType": "application/json",
+        "body": {
+          "error": "SYNTHETIC_PRIVATE_SENTINEL",
+          "userId": 1
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true,
+        "mustNotContain": [
+          "SYNTHETIC_PRIVATE_SENTINEL"
+        ]
+      }
+    },
+    {
+      "id": "server-imperial-non-json",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "text/html",
+        "body": "SYNTHETIC_PRIVATE_SENTINEL"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-imperial-oversize",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "bodyGenerator": {
+          "bytes": 65537,
+          "fill": "x"
+        }
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-imperial-timeout",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "failure": "timeout"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-imperial-body-read-failure",
+      "route": "server-imperial",
+      "upstream": {
+        "status": 200,
+        "contentType": "application/json",
+        "failure": "stream-error"
+      },
+      "expected": {
+        "status": 502,
+        "cacheControl": "no-store",
+        "safeConstantErrorOnly": true
+      }
+    },
+    {
+      "id": "server-imperial-transport-identity",
+      "route": "server-imperial",
+      "incoming": {
+        "query": {
+          "generalId": "1",
+          "userId": "1",
+          "nationId": "2",
+          "token": "SYNTHETIC_PRIVATE_SENTINEL",
+          "before": "opaque"
+        },
+        "cookie": "SYNTHETIC_PRIVATE_SENTINEL",
+        "authorization": "Bearer SYNTHETIC_PRIVATE_SENTINEL"
+      },
+      "expected": {
+        "fetchCredentials": "omit",
+        "fetchRedirect": "error_or_manual_reject",
+        "fetchHeadersMustExclude": [
+          "cookie",
+          "authorization"
+        ],
+        "upstreamQueryKeys": [],
+        "origin": "registered expectedGameApiUrl only"
+      }
+    },
+    {
+      "id": "server-imperial-unregistered-origin",
+      "route": "server-imperial",
+      "incoming": {
+        "ids": [
+          "nope",
+          "pep.evil.invalid",
+          "../pep",
+          "http://169.254.169.254"
+        ]
+      },
+      "expected": {
+        "status": 404,
+        "cacheControl": "no-store",
+        "fetchCalls": 0
+      }
+    }
+  ]
+}
