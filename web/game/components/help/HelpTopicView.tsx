@@ -7,7 +7,8 @@ import { useFailureHelp, useHelpContext, useHelpTopic, type Load } from '@/hooks
 import type { HelpTopic, InputContract } from '@/lib/help';
 import { KIND_LABEL, SCOPE_LABEL, helpText, inputName, targetLabel, timingLabel, whoLabel } from '@/lib/help-labels';
 import type { HelpView } from '@/lib/help-route';
-import { Chip, CostLine, DraftChip, Icon, PlannedChip, Skeleton, StateBlock } from './HelpBits';
+import { StatusView } from '@opensamguk/ui';
+import { Chip, CostLine, DraftChip, Icon, PlannedChip } from './HelpBits';
 import { LoadFailure } from './HelpStates';
 import s from './Help.module.css';
 
@@ -152,7 +153,7 @@ export function topicViewOf(topicId: string): HelpView {
 }
 
 function Loaded<T>({ load, retry, children }: { load: Load<T>; retry: () => void; children: (data: T) => React.ReactNode }) {
-    if (load.status === 'idle' || load.status === 'loading') return <Skeleton rows={6} />;
+    if (load.status === 'idle' || load.status === 'loading') return <StatusView kind="loading" rows={6} />;
     if (load.status === 'error') return <LoadFailure kind={load.kind} retry={retry} />;
     return <>{children(load.data)}</>;
 }
@@ -193,8 +194,4 @@ export function FailureView({ reason, inputId, onNavigate }: { reason: string; i
             )}
         </Loaded>
     );
-}
-
-export function NotFoundTopic() {
-    return <StateBlock title="이 도움말을 찾을 수 없습니다" body="주소가 바뀌었거나 없어진 도움말입니다." />;
 }

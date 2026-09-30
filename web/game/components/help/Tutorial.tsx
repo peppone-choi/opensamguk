@@ -7,7 +7,8 @@ import { useHelpTopic, type Load } from '@/hooks/useHelp';
 import type { ObjectiveProgress, TutorialProgressResponse } from '@/lib/help';
 import { helpText } from '@/lib/help-labels';
 import { TUTORIAL_STEPS, stepById, type TutorialStep } from '@/lib/tutorial-steps';
-import { Chip, Icon, Skeleton, StateBlock } from './HelpBits';
+import { StatusView } from '@opensamguk/ui';
+import { Chip, Icon } from './HelpBits';
 import { LoadFailure } from './HelpStates';
 import s from './Help.module.css';
 
@@ -132,17 +133,17 @@ export function TutorialView({ practice, progress, onGo, onHelpObjective, onTry,
     onHelpObjective?: (o: ObjectiveProgress) => void; onTry?: () => void; onHide?: () => void; fold?: boolean; retry?: () => void;
 }) {
     if (!practice) return <TutorialGuide onTry={onTry} />;
-    if (progress.status === 'idle' || progress.status === 'loading') return <Skeleton rows={5} />;
+    if (progress.status === 'idle' || progress.status === 'loading') return <StatusView kind="loading" rows={5} />;
     if (progress.status === 'error') {
-        if (progress.kind === 'AUTH') return <StateBlock title="로그인하면 첫걸음을 이어 갑니다" body="진행은 계정마다 서버에 남습니다." />;
+        if (progress.kind === 'AUTH') return <StatusView kind="denied" title="로그인하면 첫걸음을 이어 갑니다" howTo="진행은 계정마다 서버에 남습니다. 다시 로그인하면 이어집니다." />;
         if (progress.kind === 'NOT_FOUND') {
             // 튜토리얼 진척 API(계약판 K7-02)가 아직 없다 — 보드의 「서버 대기」.
-            return <StateBlock title="첫걸음 진행은 서버 준비 중입니다" body="준비되면 이 자리에 여덟 걸음과 지금 할 일이 보입니다." />;
+            return <StatusView kind="waiting" title="첫걸음 진행은 서버 준비 중입니다" body="준비되면 이 자리에 여덟 걸음과 지금 할 일이 보입니다." />;
         }
-        return <LoadFailure kind={progress.kind} retry={retry} />;
+        return <LoadFailure kind={progress.kind} retry={retry ?? (() => undefined)} />;
     }
     const data = progress.data;
-    if (data.objectives.length === 0) return <StateBlock title="첫걸음을 준비 중입니다" />;
+    if (data.objectives.length === 0) return <StatusView kind="waiting" title="첫걸음을 준비 중입니다" />;
     const done = tutorialDone(data);
     const cur = currentObjective(data);
     const finished = done === data.objectives.length;
@@ -151,7 +152,9 @@ export function TutorialView({ practice, progress, onGo, onHelpObjective, onTry,
             <div className={s.content}>
                 <TutorialBar done={done} cur={cur?.order ?? null} />
                 {cur ? <TutorialStepCard objective={cur} onGo={onGo} onHelp={onHelpObjective} /> : null}
-                {finished ? <StateBlock title="첫걸음을 마쳤습니다" body="연습 서버의 장수는 본 서버로 넘어가지 않습니다." /> : null}
+                {finished ? (
+                    <div className={s.recovery} role="status"><b>첫걸음을 마쳤습니다</b><span className={s.text}>연습 서버의 장수는 본 서버로 넘어가지 않습니다.</span></div>
+                ) : null}
             </div>
             <TutorialStepList objectives={data.objectives} fold={fold} />
             {onHide ? (

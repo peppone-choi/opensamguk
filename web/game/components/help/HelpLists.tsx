@@ -7,7 +7,8 @@ import { KIND_LABEL, helpText, inputName } from '@/lib/help-labels';
 import type { HelpIndexEntry } from '@/lib/help-index';
 import type { HelpView } from '@/lib/help-route';
 import { SCREEN_LABEL, generalActionGroups, kindGroups, screenGroups, type HelpScreen } from '@/lib/help-screens';
-import { Chip, DraftChip, PlannedChip, Skeleton, StateBlock } from './HelpBits';
+import { StatusView } from '@opensamguk/ui';
+import { Chip, DraftChip, PlannedChip } from './HelpBits';
 import { LoadFailure } from './HelpStates';
 import { topicViewOf } from './HelpTopicView';
 import s from './Help.module.css';
@@ -65,8 +66,8 @@ export function HelpHome({ screen, onNavigate, tutorialCard }: { screen: HelpScr
                     {rows.map((e) => <TopicRow key={e.inputId} entry={e} explain onOpen={() => onNavigate({ kind: 'input', inputId: e.inputId })} />)}
                 </ul>
             ) : (
-                <StateBlock title="이 화면에서 따로 하는 일은 없습니다" body="분류에서 골라 보세요."
-                    action={<button type="button" className={s.btn} onClick={() => onNavigate({ kind: 'browse' })}>분류로 찾기</button>} />
+                <StatusView kind="empty" title="이 화면에서 따로 하는 일은 없습니다" body="분류에서 골라 보세요."
+                    actions={<button type="button" className={s.btn} onClick={() => onNavigate({ kind: 'browse' })}>분류로 찾기</button>} />
             )}
             {current && !all && current.entries.length > rows.length ? (
                 <div className={s.more}>
@@ -75,7 +76,7 @@ export function HelpHome({ screen, onNavigate, tutorialCard }: { screen: HelpScr
             ) : null}
             <Group label="개념" sub="부 · 소속 · 순 · 명망 · 보급 …" />
             {/* 개념 주제는 아직 없다(계약판 K7-07, 도움말 저장소가 원장 밖 주제를 받게 된 뒤). */}
-            <StateBlock title="개념 도움말은 준비 중입니다" body="지금은 명령마다 설명이 있습니다. 부 · 소속 · 순 같은 말의 풀이는 곧 이 자리에 들어옵니다." />
+            <StatusView kind="waiting" title="개념 도움말은 준비 중입니다" body="지금은 명령마다 설명이 있습니다. 부 · 소속 · 순 같은 말의 풀이는 곧 이 자리에 들어옵니다." />
         </>
     );
 }
@@ -111,15 +112,15 @@ export function HelpBrowse({ onNavigate }: { onNavigate: (v: HelpView) => void }
 const SECTION_WORD: Record<string, string> = { title: '제목', explanation: '설명', example: '예' };
 
 export function HelpSearchResults({ raw, composing, onNavigate }: { raw: string; composing: boolean; onNavigate: (v: HelpView) => void }) {
-    const { state, short } = useHelpSearch(raw, composing);
+    const { state, short, retry } = useHelpSearch(raw, composing);
     if (short) return <p className={s.hint} role="status" style={{ padding: '0 14px' }}>두 글자 이상 적어 주세요.</p>;
-    if (state.status === 'idle' || state.status === 'loading') return <Skeleton rows={4} />;
-    if (state.status === 'error') return <LoadFailure kind={state.kind} />;
+    if (state.status === 'idle' || state.status === 'loading') return <StatusView kind="loading" rows={4} />;
+    if (state.status === 'error') return <LoadFailure kind={state.kind} retry={retry} />;
     const { hits, query } = state.data;
     if (hits.length === 0) {
         return (
-            <StateBlock title={`"${query}"에 맞는 도움말이 없습니다`} body="다른 말로 찾거나 분류에서 골라 보세요. 예: 출병 · 징병 · 발령"
-                action={<button type="button" className={s.btn} onClick={() => onNavigate({ kind: 'browse' })}>분류로 찾기</button>} />
+            <StatusView kind="empty" title={`"${query}"에 맞는 도움말이 없습니다`} body="다른 말로 찾거나 분류에서 골라 보세요. 예: 출병 · 징병 · 발령"
+                actions={<button type="button" className={s.btn} onClick={() => onNavigate({ kind: 'browse' })}>분류로 찾기</button>} />
         );
     }
     return (

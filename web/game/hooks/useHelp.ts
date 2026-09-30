@@ -13,6 +13,7 @@ import {
     type HelpTopicResponse,
     type TutorialProgressResponse,
 } from '@/lib/help';
+import type { ReasonContent } from '@opensamguk/ui';
 import { subscribeCommandSettled } from '@/lib/commandResultEvents';
 import { helpText, inputName } from '@/lib/help-labels';
 import { formatHelpView } from '@/lib/help-route';
@@ -68,6 +69,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
  */
 export function useHelpSearch(raw: string, composing: boolean) {
     const [state, setState] = useState<Load<HelpSearchResponse>>({ status: 'idle' });
+    const [tick, setTick] = useState(0);
     const q = searchQuery(raw);
     const short = !q && raw.trim().length > 0 && raw.trim().length < 2;
     useEffect(() => {
@@ -91,8 +93,8 @@ export function useHelpSearch(raw: string, composing: boolean) {
             clearTimeout(timer);
             controller.abort();
         };
-    }, [q, composing]);
-    return { state, query: q, short };
+    }, [q, composing, tick]);
+    return { state, query: q, short, retry: useCallback(() => setTick((t) => t + 1), []) };
 }
 
 /**
@@ -153,11 +155,7 @@ export function useTutorialProgress(enabled: boolean) {
  * 시트는 먼저 열고 `recovery` 는 읽히면 채운다. 사유가 원장에 없거나(400 · 404) 읽기에 실패하면 `recovery` 를 비운다
  * (사유 문장은 시트가 서버가 준 그대로 보인다). 코드 · 입력 id 는 화면 글자로 쓰지 않는다.
  */
-export function useReasonHelp(code: string | null | undefined, inputId?: string | null): {
-    readonly recovery?: string;
-    readonly recoveryDraft: boolean;
-    readonly helpTopic?: { readonly id: string; readonly title: string };
-} {
+export function useReasonHelp(code: string | null | undefined, inputId?: string | null): Pick<ReasonContent, 'recovery' | 'recoveryDraft' | 'helpTopic'> {
     const [load] = useFailureHelp(code, inputId);
     useEffect(() => {
         if (load.status === 'error' && (load.kind === 'NOT_FOUND' || load.kind === 'BAD_QUERY')) {

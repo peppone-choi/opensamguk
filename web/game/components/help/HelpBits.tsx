@@ -18,25 +18,6 @@ export function PlannedChip({ deliveryState }: { deliveryState: string | undefin
     return deliveryState === 'PLANNED' ? <Chip tone="rust">준비 중</Chip> : null;
 }
 
-/** 로딩 — 높이를 고정한 막대(흔들림 없음). */
-export function Skeleton({ rows = 3 }: { rows?: number }) {
-    return (
-        <div aria-busy="true" aria-label="불러오는 중">
-            {Array.from({ length: rows }, (_, i) => <span key={i} className={s.skel} style={{ width: `${80 - (i % 3) * 18}%` }} />)}
-        </div>
-    );
-}
-
-export function StateBlock({ title, body, action }: { title: string; body?: string; action?: ReactNode }) {
-    return (
-        <div className={s.state} role="status">
-            <strong>{title}</strong>
-            {body ? <p>{body}</p> : null}
-            {action}
-        </div>
-    );
-}
-
 const RES_COLOR: Record<string, string> = { money: '#e6c35c', grain: '#e2dcc3', iron: '#8fa0ad', timber: '#a5744a', horses: '#9c7bb0' };
 
 /** 비용 다섯 칸 — 0 = 들지 않음, null = 상황에 따라(무료가 아니다). 색만으로 가르지 않고 글자와 함께. */
