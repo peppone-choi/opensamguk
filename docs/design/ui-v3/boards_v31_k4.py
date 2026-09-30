@@ -212,7 +212,7 @@ def warroom_map(drawer=''):
     return (f'<div aria-label="지도" role="region" style="position:relative;width:{W_MAP}px;height:{H_MAP}px;flex-shrink:0;overflow:hidden;background:#0c0f0e">'
             f'{mapimg("desk", W_MAP, H_MAP, "영천 일대 지도 — 현 보기")}{desk_labels()}{sel_box(sx, sy)}{me_marker(mx, my, "in")}'
             f'{place_band() if not drawer else ""}{ctrl}{layer_fail() if not drawer else ""}{drawer_handle() if not drawer else ""}'
-            f'{view_bar("현", "left:12px;bottom:12px")}{minimap()}{card}{drawer}</div>')
+            f'{view_bar("현", "left:392px;bottom:12px" if drawer else "left:12px;bottom:12px")}{minimap()}{card}{drawer}</div>')  # 서랍(380, 비모달)이 열리면 보기 단추를 서랍 오른쪽 + 12로(K0 판정)
 
 
 # ================================================================== P-W01 작전실
@@ -806,6 +806,14 @@ COUNTIES17 = [('양적현', '—', '[기본]', '', '시장수운', ['군 치소'
               ('정릉현', '[무명]', '권농', '', '—', []), ('무양현', '[무명]', '징발', '', '—', ['민심 위험']), ('언현', '[무명]', '권농', '', '—', [])]
 
 
+def same_name(n):
+    """같은 읽기 지명(양성현 陽城 / 襄城)이 한 화면에 함께 나올 때만 이름 뒤 작은 한자. K3 3.1.2 hj 헬퍼로 바꿀 자리."""
+    if ' ' in n:
+        ko, han = n.split(' ', 1)
+        return f'{ko}<span class="muted" lang="zh-Hant" style="font-size:10px;font-weight:400;margin-left:3px">{han}</span>'
+    return n
+
+
 def warn_chips(ws):
     tone = {'군 치소': 'bronze', '수도': 'bronze'}
     return ''.join(chip(w, tone.get(w, 'rust')) for w in ws) or '—'
@@ -813,7 +821,7 @@ def warn_chips(ws):
 
 @board
 def commandery():
-    rows = [[f'<span class="serif" style="font-weight:700">{n}</span>', g if g not in ('빈자리',) else f'<span class="rs">{g}</span>', p]
+    rows = [[f'<span class="serif" style="font-weight:700">{same_name(n)}</span>', g if g not in ('빈자리',) else f'<span class="rs">{g}</span>', p]
             + ['[값]'] * 7 + [w, warn_chips(ws)] for n, g, p, k, w, ws in COUNTIES17]
     rows.append([f'<span class="muted">외 2현 — 신급현 · 번창현</span>'] + [''] * 11)
     table = tbl(['현', '현령', '방침', '호구', '전답', '시장', '치안', '민심', '방비', '성벽', '공사', '경고'], rows, 'font-size:11.5px')
@@ -842,7 +850,7 @@ def mcommandery():
             + ''.join(f'<button type="button" class="opt" style="min-height:44px;padding:0"><span class="t2" style="font-size:12px;width:96px">{a}</span><span style="font-size:12px">{b}</span></button>'
                       for a, b in [('빈 현령', '4 / 17'), ('민심 위험', '무양현'), ('적 군단 · 고립', '양성현 외 3')]) + '</div>')
     cards = ''.join(f'<a href="#" style="border:1px solid #3d4740;background:#141816;padding:8px 10px;display:flex;flex-direction:column;gap:4px;color:#ece6d8;min-height:64px">'
-                    f'<span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:700">{n}</span>{warn_chips(ws)}</span>'
+                    f'<span style="display:flex;align-items:center;gap:6px"><span class="serif" style="font-weight:700">{same_name(n)}</span>{warn_chips(ws)}</span>'
                     f'<span class="muted" style="font-size:11.5px">현령 {g} · 방침 {p} · 호구 [값] · 민심 [값] · 방비 [값]</span></a>'
                     for n, g, p, k, w, ws in COUNTIES17[:4])
     inner = f'{summ}{seg(["이 군", "우리 세력 전체"], "이 군", "범위")}{cards}'
