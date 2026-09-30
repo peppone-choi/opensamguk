@@ -1,7 +1,7 @@
 package opensamguk.gameapi.read
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import opensamguk.gameapi.controller.RetinueController
+import opensamguk.common.constants.UnitCatalog
 import opensamguk.gameapi.dto.*
 import opensamguk.infra.seed.CountyProductionJson
 import opensamguk.logic.economy.CountyIncome
@@ -211,7 +211,16 @@ class CampReader(
                 locationCityId = person?.cityId,
             )
         }
-        val units = retainers.bugoksOf(actor.id).map(RetinueController::bugokDto)
+        val units = retainers.bugoksOf(actor.id).map { bugok ->
+            RetinueBugokDto(
+                id = bugok.id, name = bugok.name, troops = bugok.troops, crewTypeId = bugok.crewTypeId,
+                crewTypeName = if (bugok.crewTypeId >= 1000) UnitCatalog.byId(bugok.crewTypeId)?.name ?: "-" else "-",
+                training = bugok.training, morale = bugok.morale, fatigue = bugok.fatigue,
+                provisions = bugok.provisions,
+                provisionMonths = RetainerRules.provisionMonths(bugok.provisions, bugok.troops),
+                commanderRetainerId = bugok.commanderRetainerId,
+            )
+        }
         return CampRetinueResponse("READY", renown, costSum, over, rows, units)
     }
 

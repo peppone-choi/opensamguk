@@ -21,6 +21,7 @@ import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextInitializer
 import org.springframework.context.ConfigurableApplicationContext
 import org.springframework.core.env.SystemEnvironmentPropertySource
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.ContextConfiguration
 import org.springframework.test.context.DynamicPropertyRegistry
@@ -79,6 +80,25 @@ class ProductionShapeBeanGateIT {
 
     @Test
     fun `production context registers no v2 bean`() = context.assertNoV2Beans()
+
+    @Test
+    fun `retired endpoints are absent while campaign reads and queue shift remain registered`() {
+        val mapping = context.getBean("requestMappingHandlerMapping", RequestMappingHandlerMapping::class.java)
+        val paths = mapping.handlerMethods.keys.flatMap { it.patternValues }.toSet()
+        val retired = setOf(
+            "/api/global-menu", "/api/inherit-point", "/api/instant-action/{code}",
+            "/api/nation/{id}/finance", "/api/nation/npc-policy",
+            "/api/generals/claimable", "/api/general/claim", "/api/my-retinue",
+            "/api/generals/{id}/retinue", "/api/select-pool", "/api/select-pool/refresh",
+            "/api/simulate-battle", "/api/votes", "/api/votes/{id}", "/api/battlefields",
+            "/api/rankings/generals", "/api/rankings/npcs", "/api/rankings/hall-of-fame",
+            "/api/rankings/traffic", "/api/rankings/emperor", "/api/rankings/emperor/{id}",
+            "/api/my-boss",
+        )
+        assertEquals(emptySet(), paths.intersect(retired), "은퇴한 API 등록")
+        val active = setOf("/api/retinue", "/api/command/push", "/api/battles/replays/{id}", "/api/city/{id}", "/api/generals")
+        assertTrue(paths.containsAll(active), "유지해야 할 API 누락: ${active - paths}")
+    }
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
