@@ -33,8 +33,9 @@ class Scenario3190SeedTest {
             val general = scenario.generals.single { it.name == declaration.general }
             val action = importer.deferredGeneralAction(general)
             assertEquals("RegNPC", action.first())
-            assertEquals(27, action.size)
+            assertEquals(28, action.size)
             assertEquals("ⓝ${declaration.master}", action[26])
+            assertEquals(general.personPolicy?.toMetaValue(), action[27])
         }
         assertEquals(scenario.generals.filter { it.nationId > 0 && it.lord != true }.map { it.name }.toSet(),
             scenario.retainers.map { it.general }.toSet())

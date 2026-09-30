@@ -8,6 +8,7 @@ import opensamguk.logic.renown.RenownRules
 internal object ScenarioPersonPolicies {
     private const val RTK14_190_SOURCE = "rtk14-wikiwiki:190.1"
     private const val RTK14_190_REVISION = "sha256:5f511438e36bd5b673370928365c8cef78d464a7683ec78105280d310e4a68fd"
+    private const val RTK14_OFFICER_ID_BASE = 10000
     private val statKeys = listOf("leadership", "strength", "intelligence", "politics", "charm")
     private val tupleIndices = listOf(5, 6, 7, 14, 15)
     private val fields = setOf("name", "statSourceId", "statSourceRevision", "officerId", "acceptsEnlistment", "stats")
@@ -15,7 +16,7 @@ internal object ScenarioPersonPolicies {
     data class Declaration(val state: PersonPolicyState, val stats: List<Int>) {
         fun bind(general: ScenarioGeneral): PersonPolicyState {
             require(stats == explicitStats(general)) { "Declared five stats disagree with scenario person ${general.name}" }
-            require(general.officerNumber == null || general.officerNumber == state.officerId) { "Scenario officer identity mismatch" }
+            require(matchesOfficerNumber(general, state)) { "Scenario officer identity mismatch" }
             return state
         }
     }
@@ -51,9 +52,9 @@ internal object ScenarioPersonPolicies {
         requireApprovedSource(state)
         require(state.renownCapacity == RenownRules.INITIAL_CAPACITY) { "Seed capacity must use the new-person policy" }
         explicitStats(general)
-        require(general.officerNumber == null || general.officerNumber == state.officerId) { "Scenario officer identity mismatch" }
+        require(matchesOfficerNumber(general, state)) { "Scenario officer identity mismatch" }
         if (state.statSourceId == RTK14_190_SOURCE) {
-            require(general.picture?.toIntOrNull() == state.officerId) {
+            require(scenarioOfficerId(general.picture) == state.officerId) {
                 "Historical person policy must match its stable officer picture id"
             }
         }
@@ -65,6 +66,12 @@ internal object ScenarioPersonPolicies {
             "Scenario defaults or changed stats cannot supply person policy"
         }
         return raw
+    }
+    private fun matchesOfficerNumber(general: ScenarioGeneral, state: PersonPolicyState): Boolean {
+        val number = general.officerNumber ?: return true
+        return if (state.statSourceId == RTK14_190_SOURCE) {
+            number in 1..1000 && RTK14_OFFICER_ID_BASE + number == state.officerId
+        } else number == state.officerId
     }
     private fun requireApprovedSource(state: PersonPolicyState) {
         val synthetic = state.statSourceId.startsWith("synthetic-qa:") &&

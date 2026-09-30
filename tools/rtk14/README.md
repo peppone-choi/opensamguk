@@ -2,6 +2,13 @@
 
 `build_rtk14_stats.py` joins the private workbook/source JSON to runtime scenarios.
 Generated source data and enriched scenarios stay local and must not be committed.
+For `scenario_3190.json`, materialization preserves the 280 reviewed pilot policies
+and adds the same **provisional** enlistment policy to each RTK14 officer added to
+the roster. It rejects stat or identity drift in a reviewed policy and requires
+exactly one explicit policy per stable officer ID in the 1,000-row output.
+Deferred appearance events carry that explicit policy into the eventual general
+metadata beside the existing retainer declaration. This does not force a retainer
+card if its lord has died or allegiance has changed by the appearance turn.
 Run the regression suite with:
 
 ```sh

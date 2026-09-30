@@ -542,6 +542,45 @@ class Rtk14StatsBuilderTest(unittest.TestCase):
         self.assertEqual({"activeGenerals": expected}, enriched["seedContract"])
         self.assertEqual(expected, audit["activeGeneralContract"])
 
+    def test_3190_materialization_carries_explicit_policy_to_every_officer(self):
+        rtk = b._source_rows_to_rtk(source_rows())
+        for candidates in rtk.values():
+            for source in candidates:
+                source["portraitId"] = 10000 + source["number"]
+        scenario = {
+            "startYear": 190,
+            "worldFormat": "GENERAL_RETAINER_CAMPAIGN",
+            "general": [legacy_tuple("장수1", 31, 32, 33, 101, 169)],
+            "personPolicies": [{
+                "name": "장수1", "statSourceId": b.RTK14_190_SOURCE_ID,
+                "statSourceRevision": b.RTK14_190_SOURCE_REVISION,
+                "officerId": 10001, "acceptsEnlistment": True,
+                "stats": {"leadership": 31, "strength": 32, "intelligence": 33, "politics": 34, "charm": 35},
+            }],
+        }
+
+        full, audit = b.enrich_scenario(scenario, rtk, scenario_identity="scenario_3190.json")
+        self.assertEqual(1000, audit["finalRosterRows"])
+        self.assertEqual(999, audit["addedRows"])
+        self.assertEqual(1000, len(full["personPolicies"]))
+        self.assertEqual(1000, len({row["officerId"] for row in full["personPolicies"]}))
+        self.assertEqual(1000, len({row["name"] for row in full["personPolicies"]}))
+        self.assertEqual({"leadership": 32, "strength": 33, "intelligence": 34,
+                          "politics": 35, "charm": 36}, full["personPolicies"][1]["stats"])
+        second, second_audit = b.enrich_scenario(full, rtk, scenario_identity="scenario_3190.json")
+        self.assertEqual(0, second_audit["addedRows"])
+        self.assertEqual(full["personPolicies"], second["personPolicies"])
+
+        drift = copy.deepcopy(scenario)
+        drift["personPolicies"][0]["stats"]["politics"] = 99
+        with self.assertRaisesRegex(ValueError, "reviewed policy drift"):
+            b.enrich_scenario(drift, rtk, scenario_identity="scenario_3190.json")
+
+        missing = copy.deepcopy(scenario)
+        missing["personPolicies"] = []
+        with self.assertRaisesRegex(ValueError, "reviewed officer .* lacks a declared policy"):
+            b.enrich_scenario(missing, rtk, scenario_identity="scenario_3190.json")
+
     def test_manual_override_preserves_runtime_first_three_stats_without_source_id(self):
         rtk = b._source_rows_to_rtk(source_rows())
         scenario = {"startYear": 220, "general": [legacy_tuple("유약", leadership=67, strength=63, intel=61, birth=206, death=260)], "general_ex": []}

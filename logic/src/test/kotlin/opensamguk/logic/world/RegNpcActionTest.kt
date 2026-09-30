@@ -3,6 +3,7 @@ package opensamguk.logic.world
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonObject
 import opensamguk.common.rng.LiteHashDrbg
 import opensamguk.common.rng.RandUtil
 import opensamguk.logic.domain.City
@@ -355,6 +356,30 @@ class RegNpcActionTest {
         factory.create(RawAction("RegNPC", args)).run(context)
 
         assertEquals(1, context.staged.size)
+        assertEquals(listOf(1 to "주공"), context.stagedRetainers)
+    }
+
+    @Test
+    fun `deferred officer preserves explicit person policy beside retainer declaration`() {
+        val factory = WorldActions.register(EventActionFactory())
+        val args = rtkRegNpcTuple(appearanceYear = 190).toMutableList<JsonElement>()
+        while (args.size < 25) args += JsonNull
+        args += JsonPrimitive("주공")
+        args += buildJsonObject {
+            put("renownCapacity", JsonPrimitive(30))
+            put("acceptsEnlistment", JsonPrimitive(true))
+            put("statSourceId", JsonPrimitive("rtk14-wikiwiki:190.1"))
+            put("statSourceRevision", JsonPrimitive("revision"))
+            put("officerId", JsonPrimitive(10001))
+        }
+        val context = FakeContext(year = 190, month = 1)
+
+        factory.create(RawAction("RegNPC", args)).run(context)
+
+        val policy = context.staged.single().rtkMetadata["personPolicy"] as Map<*, *>
+        assertEquals(30, policy["renownCapacity"])
+        assertEquals(true, policy["acceptsEnlistment"])
+        assertEquals(10001, policy["officerId"])
         assertEquals(listOf(1 to "주공"), context.stagedRetainers)
     }
 
