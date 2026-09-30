@@ -237,7 +237,7 @@
 .sheetLayer {
     position: fixed;
     inset: 0;
-    z-index: 60;
+    z-index: var(--z-sheet);
 }
 
 .scrim {
@@ -340,7 +340,7 @@
     .drawer {
         position: fixed;
         inset: 56px 0 0;
-        z-index: 55;
+        z-index: var(--z-drawer);
         width: auto;
         border-left: 0;
     }
@@ -349,7 +349,8 @@
         display: flex;
         position: sticky;
         bottom: 0;
-        z-index: 50;
+        /* 떠 있는 층(--z-float 30) — 서랍(40) · 시트(50) · 대화 상자(60)가 탭 막대를 가린다(보드 「시트가 아래 탭 막대를 가린다」). */
+        z-index: var(--z-float);
         flex-shrink: 0;
         padding-bottom: env(safe-area-inset-bottom, 0px);
         border-top: 1px solid var(--line-2);

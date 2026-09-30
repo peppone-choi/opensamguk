@@ -106,6 +106,25 @@ test('셸: 모바일 「전체」 시트는 모든 묶음을 연다', { tag: ['@
   await expect(sheet).toBeHidden();
 });
 
+test('셸: 모바일 하단 탭은 시트(--z-sheet) 아래 층 — 시트 아래쪽 제출 단추 가운데가 단추 자신', { tag: ['@mobile-only'] }, async ({ page }) => {
+  await openShell(page);
+  // 레인 화면이 쓰는 하단 시트와 같은 층 · 자리(K6 명령 흐름이 잡은 경우) — 탭 막대 위에 제출 단추가 온다.
+  await page.evaluate(() => {
+    const sheet = document.createElement('section');
+    sheet.setAttribute('role', 'dialog');
+    sheet.setAttribute('aria-label', '층 확인 시트');
+    sheet.style.cssText = 'position:fixed;left:0;right:0;bottom:0;height:240px;z-index:var(--z-sheet);background:var(--panel);display:flex;align-items:flex-end;padding:8px';
+    const submit = document.createElement('button');
+    submit.type = 'button';
+    submit.textContent = '예약';
+    submit.style.cssText = 'width:100%;height:44px';
+    sheet.append(submit);
+    // 화면 본문 안(DOM 에서 탭 막대보다 앞) — 같은 z 면 뒤에 오는 탭 막대가 이긴다. 층 토큰으로만 풀려야 한다.
+    document.querySelector('main[aria-label="게임 콘텐츠"]')!.append(sheet);
+  });
+  expect(await coveredIn(page, '[aria-label="층 확인 시트"]')).toEqual([]);
+});
+
 test('옮긴 캠페인 화면의 옛 주소는 새 주소로 한 번에 308', { tag: [BOTH] }, async ({ page }) => {
   const cases: Array<[string, string]> = [
     ['/game/yuedan', '/game/retinue/yuedan'], ['/game/hand', '/game/stratagem'], ['/game/posts', '/game/territory'],
