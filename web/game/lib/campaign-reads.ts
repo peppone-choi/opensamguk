@@ -443,6 +443,8 @@ export interface CountyWorks {
     readonly active: {
         work: string; label: string; percent: number; remainingPhases: number;
         remainingCost: Stock; stopReasonText: string | null; startsAtNextBoundary: boolean;
+        /** 멈춤 코드(서버 `ActiveWorkDto.stopReason`, 예: INSUFFICIENT_STOCK). 화면 글자로 쓰지 않고 판정에만. */
+        stopReason?: string | null;
     } | null;
     readonly completed: readonly { work: string; label: string; edgeId: string | null; completedAt?: GamePhase }[];
     readonly startable: readonly { work: string; label: string; available: boolean; blocked: Blocked | null; cost: Stock; estimatedPhases: number }[];

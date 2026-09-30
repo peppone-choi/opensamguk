@@ -22,3 +22,17 @@
   .head { min-height: 0; }
   .headActions { margin-left: 0; }
 }
+
+/* ---- 군 내정 현황(P-T03) ---- */
+.sub { margin: 0; font-size: 13px; font-weight: 700; color: var(--text-2); }
+.tableHead { display: flex; flex-direction: column; gap: 6px; }
+.tr td { height: 44px; }
+.rowLink { display: inline-flex; align-items: center; min-height: 44px; color: var(--text); font-weight: 700; }
+.cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.card {
+  display: flex; flex-direction: column; gap: 4px; min-height: 72px; padding: 8px 10px;
+  color: var(--text); background: var(--panel); border: 1px solid var(--line-2); text-decoration: none;
+}
+.card:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.summary { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.summary > li { display: flex; align-items: center; gap: 8px; min-height: 40px; border-bottom: 1px solid var(--line); font-size: 13px; }
