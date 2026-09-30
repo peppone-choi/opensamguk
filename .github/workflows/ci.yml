@@ -405,6 +405,18 @@ jobs:
             app/game-api/build/test-results/test/
           retention-days: 3
 
+      - name: Preserve C8 transaction and public-event approval evidence
+        if: always() && hashFiles('infra/src/test/kotlin/opensamguk/infra/persistence/CatchUpFinishedMigrationTest.kt') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: c8-transaction-public-event-xml-attempt-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            infra/build/test-results/test/TEST-opensamguk.infra.persistence.JdbcFlushExecutorIT.xml
+            infra/build/test-results/test/TEST-opensamguk.infra.persistence.V65GameEventMigrationTest.xml
+            infra/build/test-results/test/TEST-opensamguk.infra.persistence.CatchUpFinishedMigrationTest.xml
+
   game-engine:
     needs: changes
     if: needs.changes.outputs.jvm == 'true'

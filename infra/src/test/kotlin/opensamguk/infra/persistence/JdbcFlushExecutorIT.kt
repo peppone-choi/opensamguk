@@ -28,14 +28,17 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.dao.DataAccessException
+import org.springframework.dao.TransientDataAccessResourceException
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate
 import org.springframework.jdbc.datasource.DataSourceTransactionManager
 import org.springframework.jdbc.datasource.DriverManagerDataSource
 import org.springframework.transaction.support.TransactionTemplate
+import org.springframework.transaction.support.TransactionCallback
 import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 
@@ -67,22 +70,27 @@ class JdbcFlushExecutorIT {
         fun wallTime(): String? = jdbc.queryForObject(
             "SELECT meta->>'lastTickExecutedAt' FROM world_state WHERE id = 1",
             MapSqlParameterSource(), String::class.java)
-        fun tickPayload(failing: Boolean = false) = testFlushPayload(
+        val tickPayload = testFlushPayload(
             worldId = WorldId(1),
             worldStateUpdate = linkedMapOf("id" to 1, "current_year" to 190, "current_month" to 1,
                                           "world_tick_execution" to true),
-            logEntries = if (failing) listOf(LogRow(
-                scope = "INVALID_SCOPE", category = "HISTORY", text = "rollback fixture",
-                year = 190, month = 1, generalId = null, nationId = null, meta = linkedMapOf(),
-            )) else emptyList(),
         )
+        val failOnce = AtomicBoolean(true)
+        val transaction = object : TransactionTemplate(DataSourceTransactionManager(dataSource)) {
+            override fun <T : Any?> execute(action: TransactionCallback<T>): T? = super.execute {
+                val value = action.doInTransaction(it)
+                if (failOnce.getAndSet(false)) throw TransientDataAccessResourceException("transient rollback fixture")
+                value
+            }
+        }
+        val retryingExecutor = JdbcFlushExecutor(jdbc, transaction)
         try {
             jdbc.update("UPDATE world_state SET meta = jsonb_build_object('lastTickExecutedAt', '2000-01-01T00:00:00Z') WHERE id = 1",
                         MapSqlParameterSource())
-            assertFailsWith<DataAccessException> { executor.flush(tickPayload(failing = true)) }
-            assertEquals("2000-01-01T00:00:00Z", wallTime(), "후속 INSERT 실패가 벽시계 UPDATE도 롤백한다")
+            assertFailsWith<DataAccessException> { retryingExecutor.flush(tickPayload) }
+            assertEquals("2000-01-01T00:00:00Z", wallTime(), "commit 전 일시 오류가 벽시계 UPDATE도 롤백한다")
             val before = Instant.now()
-            executor.flush(tickPayload())
+            retryingExecutor.flush(tickPayload)
             val committed = wallTime()!!
             assertEquals(false, Instant.parse(committed).isBefore(before.minusSeconds(1)))
             executor.flush(testFlushPayload(worldId = WorldId(1),
