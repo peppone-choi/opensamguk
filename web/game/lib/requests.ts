@@ -13,7 +13,8 @@ import { availabilityOf, type InputAvailability } from './input-availability';
 import type { DispatchPendingItem, DispatchPendingResponse, Phase, PoliticalConsentOption } from './types';
 
 export type RequestKind = 'dispatch' | 'politicalConsent';
-export type RequestState = 'waiting' | 'accepted' | 'refused' | 'expired';
+/** cancelled = 발령이 무효가 되어 벌점 없이 취소됨(엔진 CANCELLED). 기한이 지나면 엔진이 자동 수락하므로 「기한 지남」은 발령에 없다. */
+export type RequestState = 'waiting' | 'accepted' | 'refused' | 'cancelled';
 
 export interface IncomingRequest {
     /** 화면 안에서 고유한 키(`dispatch:<id>` · `consent:<inputId>:<issuer>`). */
@@ -52,10 +53,13 @@ export function phaseLabel(p: Phase): string {
 }
 
 const DISPATCH_STATE: Record<DispatchPendingItem['status'], RequestState> = {
-    PENDING: 'waiting', ACCEPTED: 'accepted', REFUSED: 'refused', CANCELLED: 'expired',
+    PENDING: 'waiting', ACCEPTED: 'accepted', REFUSED: 'refused', CANCELLED: 'cancelled',
 };
 
-/** 나에게 온 발령만 요청이다(내가 낸 발령은 조정 화면의 「발령 현황」). */
+/**
+ * 나에게 온 발령만 요청이다(내가 낸 발령은 조정 화면의 「발령 현황」).
+ * result=false(STATE_UNAVAILABLE · WRONG_RULE_PROFILE — HTTP 200)는 읽기 실패다 — 빈 목록이 아니므로 useRequests가 실패로 친다.
+ */
 export function fromDispatches(res: DispatchPendingResponse, me: number): IncomingRequest[] {
     if (!res.result) return [];
     return res.dispatches.filter((d) => d.targetId === me).map((d) => {
@@ -70,9 +74,11 @@ export function fromDispatches(res: DispatchPendingResponse, me: number): Incomi
             due: `${phaseLabel(d.dueAt)}까지 · 넘기면 수락`,
             consequence: '충성과 명망이 줄어듭니다',
             state,
+            // 막힘 사유는 서버 문자열(K6-20 currentFailureReason)만 그대로 쓴다 — 없거나 null(서버 반영 전 · 옛 응답)이면 코드만
+            // 넘기고 사유 문장은 지어내지 않는다(InputAction이 「사유를 받지 못했습니다」). 문자열은 가공하지 않는다(문구는 C1 · C7).
             availability: state !== 'waiting' ? null : availabilityOf('court.dispatchReply', {
                 options: d.currentFailure
-                    ? { available: false, code: d.currentFailure, reason: '지금 관계나 목적지 조건으로 응답할 수 없습니다' }
+                    ? { available: false, code: d.currentFailure, ...(d.currentFailureReason ? { reason: d.currentFailureReason } : {}) }
                     : null,
             }),
             ref: { dispatchId: d.dispatchId },
@@ -164,15 +170,18 @@ export function useRequests(generalId: number | null, refreshKey = 0): UseReques
         let alive = true;
         Promise.allSettled([api.dispatchPending(generalId), api.politicalConsentOptions(generalId)]).then(([d, c]) => {
             if (!alive) return;
-            if (d.status === 'rejected' && c.status === 'rejected') {
+            // 발령 대기 읽기는 실패를 HTTP 200 + result=false로도 준다 — 그것도 실패다(빈 목록으로 보이면 안 된다).
+            const dispatchOk = d.status === 'fulfilled' && d.value.result !== false;
+            const consentOk = c.status === 'fulfilled';
+            if (!dispatchOk && !consentOk) {
                 setLoad({ state: 'error', message: '받은 요청을 불러오지 못했습니다' });
                 return;
             }
             const requests = [
-                ...(d.status === 'fulfilled' ? fromDispatches(d.value, generalId) : []),
-                ...(c.status === 'fulfilled' ? fromConsents(c.value) : []),
+                ...(dispatchOk ? fromDispatches(d.value, generalId) : []),
+                ...(consentOk ? fromConsents(c.value) : []),
             ];
-            setLoad({ state: 'ready', requests, partial: d.status === 'rejected' || c.status === 'rejected' });
+            setLoad({ state: 'ready', requests, partial: !dispatchOk || !consentOk });
         });
         return () => { alive = false; };
     }, [generalId, refreshKey, seq]);

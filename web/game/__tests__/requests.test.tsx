@@ -45,9 +45,29 @@ describe('요청 모델', () => {
 
     it('응답 조건이 깨졌으면 서버 코드로 막고, 끝난 요청은 단추가 없다', () => {
         const [blocked] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailure: 'NOT_DIRECT_RETAINER' })] }, 1);
-        expect(blocked.availability).toMatchObject({ status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER' });
+        // 서버는 코드만 준다 — 사유 문장을 지어 붙이지 않는다(InputAction이 「사유를 받지 못했습니다」).
+        expect(blocked.availability).toEqual({ inputId: 'court.dispatchReply', status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER' });
         const [done] = fromDispatches({ result: true, dispatches: [dispatch({ status: 'REFUSED' })] }, 1);
         expect(done).toMatchObject({ state: 'refused', availability: null });
+    });
+
+    it('서버가 막힘 사유 문자열(K6-20 currentFailureReason)을 주면 그대로 쓰고, null이면 코드만(옛 응답과 같다)', () => {
+        const reason = '직속 부하가 아니라 이 발령에 답할 수 없습니다.';
+        const [withReason] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: reason })] }, 1);
+        expect(withReason.availability).toEqual({ inputId: 'court.dispatchReply', status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER', reason });
+        const [nullReason] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: null })] }, 1);
+        expect(nullReason.availability).toEqual({ inputId: 'court.dispatchReply', status: 'BLOCKED', code: 'NOT_DIRECT_RETAINER' });
+        // 사유만 있고 코드가 없으면 막지 않는다(막힘은 서버 코드로만 판정).
+        const [reasonOnly] = fromDispatches({ result: true, dispatches: [dispatch({ currentFailureReason: reason })] }, 1);
+        expect(reasonOnly.availability?.status).toBe('AVAILABLE');
+    });
+
+    it('취소된 발령(엔진 CANCELLED — 무효, 벌점 없음)은 「취소됨」 — 기한이 지나면 엔진이 자동 수락하므로 「기한 지남」이 아니다', () => {
+        const [cancelled] = fromDispatches({ result: true, dispatches: [dispatch({ status: 'CANCELLED' })] }, 1);
+        expect(cancelled).toMatchObject({ state: 'cancelled', availability: null });
+        render(<RequestCard kind="발령" from={{ name: '[주공]' }} what="허현으로" state={cancelled.state} />);
+        expect(screen.getByText('취소됨')).toBeInTheDocument();
+        expect(screen.queryByText('기한 지남')).toBeNull();
     });
 
     it('정치 동의 — 서버 가능 여부 · 사유 그대로, 거절 결과는 지어내지 않는다', () => {
@@ -115,6 +135,18 @@ describe('받은 요청 목록', () => {
         expect(screen.queryByRole('article', { name: /결의 동의/ })).toBeNull();
         rerender(<IncomingRequests generalId={1} onlyKey={requestKey({ kind: 'dispatch', dispatchId: 'D-9' })} compact />);
         expect(await screen.findByText('이 요청은 목록에 없습니다')).toBeInTheDocument();
+    });
+
+    it('발령 대기 읽기가 result=false(HTTP 200)로 실패하면 빈 목록이 아니라 일부 실패 · 전체 실패로 보인다', async () => {
+        vi.mocked(api.dispatchPending).mockResolvedValue({ result: false, code: 'STATE_UNAVAILABLE', dispatches: [] });
+        const { unmount } = render(<IncomingRequests generalId={1} />);
+        expect(await screen.findByText('받은 요청 일부를 불러오지 못했습니다.')).toBeInTheDocument();
+        expect(screen.getByRole('article', { name: '결의 동의 — [의형]' })).toBeInTheDocument();
+        unmount();
+        vi.mocked(api.politicalConsentOptions).mockRejectedValue(new Error('x'));
+        render(<IncomingRequests generalId={1} />);
+        expect(await screen.findByText('받은 요청을 불러오지 못했습니다')).toBeInTheDocument();
+        expect(screen.queryByText('응답할 요청이 없습니다')).toBeNull();
     });
 
     it('두 읽기가 모두 실패하면 빈 목록과 다른 모양(다시 시도)', async () => {
