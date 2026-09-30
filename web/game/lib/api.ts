@@ -492,6 +492,8 @@ export const api = {
 
     // World map snapshot (F2 Wave 4 MapViewer) — same endpoint the gateway lobby MapPreview consumes.
     mapPreview: (signal?: AbortSignal) => get<MapPreviewResponse>('/api/map/preview', signal),
+    // 황제 소재지(docs/design/imperial-presence-api.md). 409 STATE_UNAVAILABLE 도 본문이 있어 get() 대신 응답을 그대로 넘긴다 — 해석은 lib/imperial.ts.
+    imperialPresenceResponse: (signal?: AbortSignal) => fetchGame('/api/imperial/presence', { cache: 'no-store', signal }),
     strategicTopology: (knownTopologyHash?: string, signal?: AbortSignal) =>
         get<import('@opensamguk/ui').StrategicMapResponse>(`/api/map/strategic-topology${knownTopologyHash ? `?knownTopologyHash=${encodeURIComponent(knownTopologyHash)}` : ''}`, signal),
     // In-game world map (W9) — fog 포함(spyList/shownByGeneralList/myCity/myNation). 좌표는 없으므로
