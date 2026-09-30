@@ -1,0 +1,41 @@
+/* 외교(P-K02) 오른쪽 칸 568 — 보드 V31K6Diplomacy · MDiplomacy. */
+.panel { display: flex; flex-direction: column; width: 568px; max-width: 100%; min-height: 0; background: var(--panel); color: var(--text); border-left: 1px solid var(--line); }
+.tabs { display: flex; gap: 4px; padding: 0 8px; border-bottom: 1px solid var(--line); overflow-x: auto; }
+.tab {
+  flex: 0 0 auto; min-height: var(--row-h, 44px); min-width: var(--row-h, 44px); padding: 0 12px; border: 0; border-bottom: 2px solid transparent;
+  background: transparent; color: var(--muted); font: inherit; cursor: pointer;
+}
+.tab[aria-selected='true'] { color: var(--text); border-bottom-color: var(--bronze); font-weight: 700; }
+.tab:focus-visible { outline: var(--focus-ring); outline-offset: -2px; }
+.body { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px; overflow-y: auto; min-height: 0; }
+.head { margin: 0; font-size: 14px; font-weight: 700; }
+.rows { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.row { border: 1px solid var(--line); border-radius: 3px; background: var(--inset); padding: 6px 10px; display: grid; gap: 6px; }
+.rowHead { display: flex; align-items: center; gap: 8px; min-height: var(--row-h, 44px); }
+.flag { width: 10px; height: 24px; border-radius: 2px; display: inline-block; flex: 0 0 auto; }
+.name { font-weight: 700; font-size: 14px; min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
+.more { min-height: var(--row-h, 44px); flex: 0 0 auto; }
+.counties { margin: 0; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.proposals { display: flex; flex-wrap: wrap; gap: 6px; }
+.proposals :global(.os-button) { min-height: var(--row-h, 44px); }
+.box { display: grid; gap: 6px; }
+.pairs { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; font-size: 13px; }
+.sub { font-size: 12px; font-weight: 400; color: var(--muted); margin: 0; }
+.notice { margin: 0; padding: 8px 10px; font-size: 13px; border: 1px solid var(--line); border-left: 3px solid var(--info, var(--bronze)); background: var(--inset); }
+.box > .more { justify-self: start; }
+/* 세력 × 세력 표 — 칸이 많으면 표 안에서 가로로 민다(화면은 넘치지 않는다). */
+.matrixWrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--line); }
+.matrixWrap:focus-visible { outline: var(--focus-ring); outline-offset: 2px; }
+.matrix { border-collapse: collapse; font-size: 12px; white-space: nowrap; }
+.matrix th, .matrix td { padding: 6px 8px; border: 1px solid var(--line); text-align: center; }
+.matrix th { font-weight: 700; background: var(--panel); }
+.matrix th[scope='row'] { text-align: left; }
+.matrix tr[data-mine] th, .matrix tr[data-mine] td { background: var(--inset); }
+.matrix td[data-self] { color: var(--muted); }
+.matrix td[data-kind='war'], .matrix td[data-kind='declared'] { color: var(--rust-2); font-weight: 700; }
+.matrix td[data-kind='nonAggression'] { color: var(--moss-2); }
+.dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: middle; }
+
+@media (max-width: 767.98px) {
+  .panel { width: 100%; border-left: 0; }
+}
