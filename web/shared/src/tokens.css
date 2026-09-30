@@ -813,7 +813,8 @@
 .os-glyph--help::before { content: '?'; position: absolute; inset: 8%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; border: 1.5px solid currentColor; border-radius: 50%; }
 
 @media (max-width: 767.98px) {
-  .os-reason__tip--rich { width: auto; max-width: none; min-height: 124px; }
+  /* 기존 모바일 시트 여백(오른쪽 76 = 닫기 단추 자리)을 되살린다 — 위 --rich 여백이 뒤에 와서 덮는다. */
+  .os-reason__tip--rich { width: auto; max-width: none; min-height: 124px; padding: 18px 76px calc(18px + env(safe-area-inset-bottom, 0px)) 16px; }
   .os-pickbar { min-height: 56px; padding: 0 4px 0 10px; gap: 6px; }
   .os-pickbar__title { font-size: 14px; }
   .os-pickbar__sub { font-size: 11px; }

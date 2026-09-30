@@ -63,6 +63,13 @@ test.describe('공용 부품 미리보기', () => {
     const vp = page.viewportSize()!;
     expect(Math.round(box.y + box.height)).toBe(vp.height);
     expect(Math.round(box.width)).toBe(vp.width);
+    // 닫기 단추(시트 오른쪽 아래)가 시트 내용을 덮지 않는다
+    const close = (await page.getByRole('button', { name: '닫기' }).boundingBox())!;
+    for (const part of await sheet.locator('.os-reason__title, .os-reason__body, .os-reason__recovery, .os-reason__help').all()) {
+      const r = (await part.boundingBox())!;
+      const overlap = r.x < close.x + close.width && close.x < r.x + r.width && r.y < close.y + close.height && close.y < r.y + r.height;
+      expect(overlap, `닫기 단추가 ${await part.getAttribute('class')} 를 덮는다`).toBe(false);
+    }
   });
 
   test('지도 대상 고르기: 표지와 목록이 같은 상태, 띠는 표지를 덮지 않는다', { tag: BOTH }, async ({ page }) => {
