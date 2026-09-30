@@ -420,13 +420,101 @@ BATTLES = [('야전', '영천 북쪽 구릉 · 양적현 부근', '조조 ↔ [�
            ('야전', '허현 남쪽', '[적 세력] ↔ 조조', '—', 'auto', '자동 진행됨 · 사람 참가 없음')]
 
 
-def field_ph(w, h, sub='64 × 64 칸 전장'):
-    return (f'<div role="img" aria-label="전투 판 자리 — 그림 방식 사용자 답 대기" style="width:{w}px;height:{h}px;flex-shrink:0;border:1px dashed #5a625c;background:#141816;'
-            f'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;padding:12px">'
-            f'<span class="serif" style="font-size:16px;font-weight:900">전투 판 자리</span><span class="t2" style="font-size:12.5px">{sub} · 원작 214판 중 하나</span>'
-            f'<span class="muted" style="font-size:11.5px;line-height:1.5;max-width:420px">그림 방식(아이소 · 탑다운)은 사용자 답을 기다린다(K0). 분대 표지 · 선택 테두리 · 집결점 · 성문 표지는 이 자리 위에 얹는다.</span></div>')
+# ------------------------------------------------------------------ 아이소 전투 판(2026-09-30 사용자 결정: 전투는 원작처럼 아이소, 전략 지도는 탑다운)
+# 그림: MAP['battle_field'](원작 192판 · 야전 능선, 1024×544) · MAP['battle_siege'](원작 040판 · 성벽 · 성문 · 강 · 다리, 1024×524).
+# 원작 투영: 칸 (r, c) → x = (r + c)·16, y = (r − c)·8(원본 해상도). 이 그림은 절반 크기라 x = (r + c)·8, y = (r − c)·4 + 왼쪽 꼭짓점 높이.
+# (0,0) = 왼쪽 꼭짓점, (63,0) = 아래, (0,63) = 위, (63,63) = 오른쪽. 칸 자리는 그림을 보고 맞춘 예시다.
+ISO = {'field': ('battle_field', 1024, 544, 8, 283, '야전 판 — 능선'), 'siege': ('battle_siege', 1024, 524, 8, 268, '성새 판 — 성벽 · 성문 · 강 · 다리')}
+SIDE_COLOR = {'me': NATION['조조'], 'enemy': NATION['원소']}
 
 
+def iso_px(kind, r, c, s=1.0, ox=0, oy=0):
+    _, _, _, x0, y0, _ = ISO[kind]
+    return int(((r + c) * 8 + x0 + 8) * s + ox), int(((r - c) * 4 + y0) * s + oy)
+
+
+def diamond(x, y, s, stroke, dash='', fill='none', width=2, grow=2.0):
+    hw, hh = 8 * s * grow, 4 * s * grow
+    d = f' stroke-dasharray="{dash}"' if dash else ''
+    return f'<polygon points="{x - hw:.0f},{y:.0f} {x:.0f},{y - hh:.0f} {x + hw:.0f},{y:.0f} {x:.0f},{y + hh:.0f}" stroke="{stroke}" stroke-width="{width}"{d} fill="{fill}"></polygon>'
+
+
+def unit_btn(x, y, ch, side, label, ai=False, sel=False, est=False):
+    """분대 표지(44 누름) — 제비꼬리 깃발 + 장수 첫 글자(K2 깃발 규칙). 표지 발끝이 칸 자리."""
+    col = SIDE_COLOR[side]
+    badge = ('<span style="position:absolute;right:-6px;top:-6px;height:16px;padding:0 3px;font-size:10px;font-weight:700;line-height:16px;color:#161410;background:#b9b2a3">AI</span>'
+             if ai else '')
+    dash = ' stroke-dasharray="3 2"' if est else ''
+    flag = (f'<svg width="30" height="26" viewBox="0 0 30 26" aria-hidden="true" style="display:block"><path d="M3 1v24" stroke="#1b201d" stroke-width="2"></path>'
+            f'<path d="M4 2h24l-6 7 6 7H4z" fill="{col}" stroke="{"#ffd36d" if sel else "#0c0f0e"}" stroke-width="{2 if sel else 1}"{dash}></path>'
+            f'<text x="13" y="13" text-anchor="middle" font-family="Noto Serif KR,serif" font-weight="900" font-size="11" fill="#fff">{ch}</text></svg>')
+    return (f'<button type="button" aria-label="{label}" aria-pressed="{"true" if sel else "false"}" style="position:absolute;left:{x - 22}px;top:{y - 40}px;width:44px;height:44px;padding:0;'
+            f'border:0;background:transparent;cursor:pointer;display:flex;align-items:flex-end;justify-content:center">{flag}{badge}</button>')
+
+
+def unit_dot(x, y, side, sel=False):
+    return (f'<span aria-hidden="true" style="position:absolute;left:{x - 5}px;top:{y - 5}px;width:10px;height:10px;transform:rotate(45deg);'
+            f'background:{SIDE_COLOR[side]};border:{"2px solid #ffd36d" if sel else "1px solid #0c0f0e"}"></span>')
+
+
+def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=False, fog=None, extra=''):
+    """아이소 판 한 장 — 보는 창(vw × vh) 안에 그림을 s 배로 놓고 ox · oy 만큼 민다. units = (r, c, 글자, 편, 이름표, ai, sel, est),
+    marks = (r, c, kind, 글) — kind: sel(고른 분대 칸) · rally(집결점) · target(목표). small = 판 전체 보기(표지는 점, 누르지 않음)."""
+    key, W, H, _, _, alt = ISO[kind]
+    img = mapimg(key, int(W * s), int(H * s), f'{alt}(원작 아이소 그림)', ox, oy)
+    svg = ''
+    labs = ''
+    for r, c, mkind, txt in marks:
+        x, y = iso_px(kind, r, c, s, ox, oy)
+        if mkind == 'sel':
+            svg += diamond(x, y, s, '#ffd36d', width=3)
+        elif mkind == 'rally':
+            svg += diamond(x, y, s, '#ffd36d', dash='5 4', fill='rgba(255,211,109,.18)')
+            labs += (f'<button type="button" aria-label="집결점 {txt}" style="position:absolute;left:{x - 22}px;top:{y - 22}px;width:44px;height:44px;padding:0;border:0;background:transparent;'
+                     f'cursor:pointer;display:flex;align-items:center;justify-content:center"><span class="mono" style="min-width:20px;height:20px;padding:0 4px;font-size:11px;font-weight:700;line-height:20px;'
+                     f'color:#161410;background:#ffd36d">{txt}</span></button>')
+        elif mkind == 'target':
+            svg += diamond(x, y, s, '#e08a7c', dash='5 4', fill='rgba(201,107,93,.16)', width=3)
+    ulay = ''
+    for r, c, ch, side, label, ai, sel, est in units:
+        x, y = iso_px(kind, r, c, s, ox, oy)
+        ulay += unit_dot(x, y, side, sel) if small else unit_btn(x, y, ch, side, label, ai, sel, est)
+    if gate and not small:
+        gr, gc, gtxt = gate
+        x, y = iso_px(kind, gr, gc, s, ox, oy)
+        ulay += (f'<button type="button" aria-haspopup="dialog" style="position:absolute;left:{x - 40}px;top:{y + 6}px;height:44px;padding:0 10px;display:flex;align-items:center;gap:6px;'
+                 f'font:inherit;font-size:12px;font-weight:700;color:#ece6d8;background:rgba(27,32,29,.94);border:1px solid #d3b064;cursor:pointer">성문 · {gtxt}</button>')
+    fogl = ''
+    if fog:
+        fogl = (f'<svg width="{vw}" height="{vh}" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true">'
+                f'<defs><pattern id="fg{kind}{vw}" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="10" fill="rgba(12,15,14,.62)"></rect></pattern></defs>'
+                f'<polygon points="{fog}" fill="url(#fg{kind}{vw})"></polygon></svg>')
+    over = f'<svg width="{vw}" height="{vh}" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true">{svg}</svg>' if svg else ''
+    return (f'<div role="application" aria-label="{alt} — 전투 판" style="position:relative;width:{vw}px;height:{vh}px;flex-shrink:0;overflow:hidden;background:#0c0f0e;border:1px solid #3d4740">'
+            f'{img}{fogl}{over}{ulay}{labs}{extra}</div>')
+
+
+def board_zoom(style='right:10px;bottom:10px'):
+    b = 'background:rgba(20,24,22,.92)'
+    return (f'<div style="position:absolute;{style};display:flex;flex-direction:column;gap:2px"><button type="button" class="ibtn" aria-label="판 확대" style="{b};font-size:20px">+</button>'
+            f'<button type="button" class="ibtn" aria-label="판 축소" style="{b};font-size:20px">−</button><button type="button" class="ibtn" aria-label="판 전체 보기" style="{b};font-size:11px">전체</button></div>')
+
+
+def board_mini(kind, w, sx, sy, sw, sh, units=()):
+    """작은 판(판 전체) + 지금 보는 창 테두리."""
+    key, W, H, _, _, alt = ISO[kind]
+    s = w / W
+    h = int(H * s)
+    dots = ''.join(unit_dot(*iso_px(kind, r, c, s), side) for r, c, ch, side, *_ in units)
+    return (f'<div style="position:absolute;right:10px;top:10px;width:{w}px;height:{h}px;border:1px solid #3d4740;background:#0c0f0e;overflow:hidden">'
+            f'{mapimg(key, w, h, "판 전체")}{dots}<span style="position:absolute;left:{int(sx * s)}px;top:{int(sy * s)}px;width:{int(sw * s)}px;height:{int(sh * s)}px;border:2px solid #ffd36d"></span></div>')
+
+
+# 야전(영천 북쪽 구릉) 예시 칸 — 우리(조조)는 왼쪽 아래 풀밭, 적은 오른쪽 높은 평지.
+FIELD_UNITS = [(34, 15, '허', 'me', '선봉 허저 — 조작 나', False, True, False), (34, 6, '하', 'me', '중앙 하후돈 — 조작 나', False, False, False),
+               (25, 10, '이', 'me', '좌익 이전 — 조작 AI', True, False, False), (37, 32, '적', 'enemy', '[적] 선봉 — 기병', False, False, False),
+               (44, 40, '?', 'enemy', '[적] 분대 — 추정', False, False, True)]
+FIELD_FOG = None
 def battle_row(kind, where, sides, seat, st, stxt):
     act = {'join': btn('입장', 'primary', attrs='data-guide="tutorial.battle"'), 'live': btn('입장'), 'apply': btn('결과 보기'),
            'auto': btn('리플레이', href='#')}[st]
@@ -502,8 +590,22 @@ def board_battlejoin():
              '<li><b>자리</b> — 기본은 주장 중앙, 무력 높은 장수 선봉, 나머지 통솔 순 좌익 → 우익 → 좌비 → 우비.</li>'
              '<li><b>맞바꾸기</b> — 한 자리를 누르고 다른 자리를 누른다. 끌기 없다.</li>'
              '<li><b>안 들어오면</b> — 0:00 에 AI 가 맡는다. 진행 중에 들어오면 다음 틱에 넘겨받는다.</li></ul></section></div>')
-    body = top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{field_ph(700, 700)}</div>{right}</div>'
+    body = top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px">{join_board()}</div>{right}</div>'
     page31('V31K6BattleJoin.dc.html', 'K6 전투 참가 대기 · 배치(데스크톱)', shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
+
+
+def join_board():
+    s, ox, oy = 1.25, -60, -20
+    units = [u for u in FIELD_UNITS if u[3] == 'me'] + [(37, 32, '?', 'enemy', '[적] 선봉 — 추정', False, False, True)]
+    chips = ''
+    for r, c, pos in [(34, 15, '선봉'), (34, 6, '중앙'), (25, 10, '좌익')]:
+        x, y = iso_px('field', r, c, s, ox, oy)
+        chips += f'<span class="chip bronze" style="position:absolute;left:{x - 20}px;top:{y + 6}px;background:rgba(20,24,22,.94)">{pos}</span>'
+    note = ('<div style="position:absolute;left:10px;bottom:10px;max-width:420px;padding:8px 10px;background:rgba(27,32,29,.94);border:1px solid #3d4740;font-size:12px;line-height:1.5" class="t2">'
+            '자리 카드나 판의 깃발을 눌러 고르고, 다른 자리를 눌러 맞바꾼다. 상대는 안개 속 — 보이는 것만 점선 깃발로.</div>')
+    return iso_board('field', 728, 660, s, ox, oy, units, [(34, 15, 'sel', '')], extra=chips + note + board_zoom())
+
+
 
 
 def board_mbattlejoin():
@@ -511,7 +613,7 @@ def board_mbattlejoin():
     inner = (f'<div style="height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #9c7f3f;background:rgba(211,176,100,.08)">'
              f'<span class="mono bz" style="font-size:24px;font-weight:700">0:42</span><span class="t2" style="font-size:12px;flex:1">야전 · 영천 북쪽 · 참가 대기</span>'
              f'{btn("입장", "primary", attrs="data-guide=\"tutorial.battle\"")}</div>'
-             f'<div style="padding:8px">{field_ph(374, 220, "64 × 64 칸 · 두 손가락 확대")}</div>'
+             f'<div style="padding:8px;position:relative">{iso_board("field", 374, 199, 374 / 1024, 0, 0, [u for u in FIELD_UNITS if u[3] == "me"], small=True)}<span class="note" style="display:block;padding-top:4px">판 전체 · 두 손가락으로 확대 · 칸은 탭한 뒤 확대해서 고른다</span></div>'
              f'<div style="padding:0 8px;display:grid;grid-template-columns:1fr 1fr;gap:6px">{seats}</div>'
              f'<div style="padding:8px 12px"><span class="note">나머지 두 자리(우익 · 우비)는 아래로 밀어 본다. 누른 두 자리를 맞바꾼다.</span></div>')
     page31('V31K6MBattleJoin.dc.html', 'K6 전투 참가 대기(모바일)', shell_mob(mmain(inner), 'menu', '전투', '전투 목록', tabs=True), w=MW, h=MH)
@@ -542,6 +644,13 @@ def squad(pos, key, name, ctrl, now, sel=False, note=''):
             f'<span class="t2" style="font-size:11px">병력 [값] · 사기 [값] · {now}</span>{f"<span class=rs style=font-size:11px>{note}</span>" if note else ""}</span></button>')
 
 
+def live_board():
+    s, ox, oy = 1.35, -215, 0
+    marks = [(34, 15, 'sel', ''), (35, 23, 'rally', '1'), (37, 32, 'target', '')]
+    mini = board_mini('field', 200, 215 / s, 0, 736 / s, 740 / s, FIELD_UNITS)
+    return iso_board('field', 736, 740, s, ox, oy, FIELD_UNITS, marks, extra=mini + board_zoom())
+
+
 def board_battlelive():
     top = (f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #3d4740;background:#1b201d">'
            f'<span class="mono bz" style="font-size:24px;font-weight:700">3:12</span><span class="muted" style="font-size:12px">남음 · 틱 [값] / 3,000</span>'
@@ -561,22 +670,34 @@ def board_battlelive():
              f'<section class="panel">{sec("다른 상태", "")}<div style="padding:8px;display:flex;flex-direction:column;gap:6px">'
              f'{warnbox("연결이 끊겼습니다 — 다시 잇는 중. 그동안 AI 가 맡습니다.")}{infobox("다시 이음 — 받지 못한 사건을 이어 받았습니다.")}</div></section></div>')
     body = (top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}'
-            f'<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{field_ph(712, 712)}</div>{right}</div>' + cmdbar())
+            f'<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{live_board()}</div>{right}</div>' + cmdbar())
     page31('V31K6BattleLive.dc.html', 'K6 실시간 전투(데스크톱)', shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
 
 
+SIEGE_UNITS = [(28, 52, '하', 'me', '중앙 하후돈 — 조작 나, 성 안', False, True, False), (27, 57, '이', 'me', '좌익 이전 — 조작 AI', True, False, False),
+               (32, 32, '적', 'enemy', '[적] 분대 — 다리 앞', False, False, False), (30, 23, '적', 'enemy', '[적] 분대 — 길 위', False, False, False)]
+
+
 def board_mbattlelive():
-    sq = ''.join(f'<button type="button" aria-pressed="{"true" if i == 0 else "false"}" style="flex:1 1 0;height:52px;padding:0;font:inherit;font-size:11px;color:#ece6d8;'
-                 f'background:{"rgba(211,176,100,.14)" if i == 0 else "#141816"};border:{"2px solid #ffd36d" if i == 0 else "1px solid #3d4740"};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">'
+    sq = ''.join(f'<button type="button" aria-pressed="{"true" if i == 1 else "false"}" style="flex:1 1 0;height:52px;padding:0;font:inherit;font-size:11px;color:#ece6d8;'
+                 f'background:{"rgba(211,176,100,.14)" if i == 1 else "#141816"};border:{"2px solid #ffd36d" if i == 1 else "1px solid #3d4740"};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">'
                  f'<span class="serif" style="font-weight:700;font-size:13px">{n or "—"}</span><span class="muted">{p}</span></button>'
                  for i, (p, k, n, *_rest) in enumerate(SEATS))
+    fs = 374 / 1024
+    zs, zox, zoy = 1.1, -440, -100
+    # 판 전체 위의 「지금 확대 창이 보는 곳」 — 확대 창(374 × 200, 1.1배)의 원본 범위를 판 전체 배율로
+    rx, ry, rw, rh = (-zox / zs) * fs, (-zoy / zs) * fs, (374 / zs) * fs, (200 / zs) * fs
+    full = iso_board('siege', 374, 191, fs, 0, 0, SIEGE_UNITS, small=True,
+                     extra=f'<span style="position:absolute;left:{rx:.0f}px;top:{ry:.0f}px;width:{rw:.0f}px;height:{rh:.0f}px;border:2px solid #ffd36d"></span>')
+    zoom = iso_board('siege', 374, 200, zs, zox, zoy, SIEGE_UNITS, [(28, 52, 'sel', '')], gate=(31, 42, '닫힘'))
     inner = (f'<div style="height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #3d4740">'
-             f'<span class="mono bz" style="font-size:20px;font-weight:700">3:12</span><span class="t2" style="font-size:12px;flex:1">적 선봉이 좌익에 닿았다</span>{chip("AI 1", "")}</div>'
-             f'<div style="padding:6px 8px 4px">{field_ph(374, 440, "끌기 · 두 손가락 확대")}</div>'
-             f'<div style="display:flex;gap:4px;padding:0 8px 4px">{sq}</div>'
-             f'<div style="padding:0 8px"><span class="t2" style="font-size:12px">선봉 허저 · 돌격 중 · <span class="ms">명령 받음</span></span></div>'
+             f'<span class="mono bz" style="font-size:20px;font-weight:700">3:12</span><span class="t2" style="font-size:12px;flex:1">성새전 · 장사현 수비 · 적이 다리 앞에</span>{chip("AI 1", "")}</div>'
+             f'<div style="padding:6px 8px 0">{full}</div>'
+             f'<div style="padding:4px 8px 0;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:11px">누른 자리 확대 — 깃발 · 칸 · 성문을 눌러 고른다</span>{zoom}</div>'
+             f'<div style="display:flex;gap:4px;padding:6px 8px 4px">{sq}</div>'
+             f'<div style="padding:0 8px"><span class="t2" style="font-size:12px">중앙 하후돈 · 성 안 · <span class="ms">명령 받음</span> · 성문은 수비만 연다</span></div>'
              + cmdbar(mobile=True))
-    page31('V31K6MBattleLive.dc.html', 'K6 실시간 전투(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
+    page31('V31K6MBattleLive.dc.html', 'K6 실시간 전투 — 성새전(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
 
 def board_duel():
@@ -590,7 +711,7 @@ def board_duel():
             f'<ul class="ul"><li>이기면 우리 쪽 사기 오름, 지면 내림(원장 값).</li><li>진행은 서버가 판정하고 연출만 보인다 — 도중 조작은 없다.</li>'
             f'<li>답하지 않으면 AI 가 원장 기준(무력 차이)으로 답한다.</li></ul></div>')
     foot = btn('거절', style='flex:1') + btn('받는다', 'primary', style='flex:1')
-    inner = f'<div style="padding:6px 8px">{field_ph(374, 300, "싸우는 중")}</div><div class="scrim"></div>{sheet("일기토 신청", body, top=150, foot=foot)}'
+    inner = f'<div style="padding:6px 8px">{iso_board("field", 374, 199, 374 / 1024, 0, 0, FIELD_UNITS, small=True)}</div><div class="scrim"></div>{sheet("일기토 신청", body, top=150, foot=foot)}'
     page31('V31K6Duel.dc.html', 'K6 일기토 신청 받음(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
 
