@@ -205,20 +205,40 @@ function layoutChecks(minTarget) {
   };
   const SEL = 'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=link],[role=tab],[role=checkbox],[role=radio],[role=switch],[role=menuitem],[role=option],[tabindex]:not([tabindex="-1"])';
   const targets = [...document.querySelectorAll(SEL)].filter(shown);
-  const small = []; const smallInline = [];
+  // 누를 영역(2026-09-30 K0 결정: 보이는 크기가 아니라 누를 영역 44). 화면 안의 요소는 가운데에서 바깥으로
+  // elementFromPoint 를 훑어 재고(패딩 · ::before 확장 포함, 덮인 곳 제외), 화면 밖 요소는 상자 크기로 잰다(rectOnly).
+  let rectOnly = 0;
+  const hitArea = (el) => {
+    const r = el.getBoundingClientRect();
+    const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    if (cx < 0 || cy < 0 || cx >= vw || cy >= vh) { rectOnly += 1; return { w: r.width, h: r.height }; }
+    const mine = (x, y) => {
+      if (x < 0 || y < 0 || x >= vw || y >= vh) return false;
+      const h = document.elementFromPoint(x, y);
+      return !!h && (h === el || el.contains(h));
+    };
+    const half = minTarget / 2 - 1;
+    if (r.width >= minTarget && r.height >= minTarget && [[0, 0], [-half, 0], [half, 0], [0, -half], [0, half]].every(([dx, dy]) => mine(cx + dx, cy + dy))) return { w: r.width, h: r.height };
+    if (!mine(cx, cy)) { const top = document.elementFromPoint(cx, cy); return { w: 0, h: 0, covered: true, by: top ? describe(top).el : null }; }
+    const reach = (dx, dy) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
+    return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1 };
+  };
+  const small = []; const smallInline = []; const covered = [];
   for (const el of targets) {
-    let r = el.getBoundingClientRect();
+    let r = hitArea(el);
+    // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니라 따로 센다(열린 모달이면 맞고, 아니면 겹친 투명 상자 사고).
+    if (r.covered) { covered.push({ ...describe(el), by: r.by }); continue; }
     // 라벨로 감싸거나 for 로 이은 입력은 라벨까지가 누르는 자리다.
     const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
     if (label) {
-      const lr = label.getBoundingClientRect();
-      r = { width: Math.max(r.width, lr.width), height: Math.max(r.height, lr.height) };
-    }
+      const lr = hitArea(label);
+      r = { width: Math.max(r.w, lr.w), height: Math.max(r.h, lr.h) };
+    } else r = { width: r.w, height: r.h };
     if (r.width >= minTarget && r.height >= minTarget) continue;
     const cs = getComputedStyle(el);
     // WCAG 2.5.8 문장 속 링크 예외: inline 표시 + 부모 글자가 링크 글자보다 길다.
     const inline = el.tagName === 'A' && cs.display === 'inline' && (el.parentElement?.innerText || '').trim().length > (el.innerText || '').trim().length + 1;
-    (inline ? smallInline : small).push(describe(el));
+    (inline ? smallInline : small).push({ ...describe(el), hitW: Math.round(r.width), hitH: Math.round(r.height) });
   }
   const titleOnly = [];
   for (const el of document.querySelectorAll('body [title]')) {
@@ -261,6 +281,10 @@ function layoutChecks(minTarget) {
     targets: targets.length,
     smallTargets: small.length,
     smallTargetsInline: smallInline.length,
+    smallTargetsRule: '누를 영역(elementFromPoint 훑기) 44 — 화면 밖 요소는 상자 크기(rectOnly)',
+    targetsMeasuredByRectOnly: rectOnly,
+    coveredTargets: covered.length,
+    coveredTargetSamples: covered.slice(0, 15),
     smallTargetSamples: small.slice(0, 20),
     titleOnly: titleOnly.length,
     titleOnlySamples: titleOnly.slice(0, 20),
@@ -512,7 +536,7 @@ async function measureOnce({ browser, cdpMode, opts, AxeBuilder, pagePath, profi
     { id: 'console-errors-0', source: '§0 검증 「콘솔 오류 0」', applies: true, pass: consoleErrors.length === 0, value: consoleErrors.length },
     { id: 'network-failures-0', source: '§0 검증 「네트워크 실패 0」', applies: true, pass: network.failedCount === 0, value: network.failedCount },
     { id: 'axe-critical-0', source: 'web/game/e2e/a11y-smoke.spec.ts', applies: !!axe && !axe.error, pass: axe?.byImpact?.critical === 0, value: axe?.byImpact?.critical ?? null },
-    { id: 'touch-target-44', source: 'V3System 「누르는 것은 모두 44px 이상」(문장 속 링크 제외)', applies: true, pass: layout.smallTargets === 0, value: layout.smallTargets },
+    { id: 'touch-target-44', source: 'V3System 「누르는 것은 모두 44px 이상」 + 2026-09-30 K0 「누를 영역 기준」(문장 속 링크 제외)', applies: true, pass: layout.smallTargets === 0, value: layout.smallTargets },
     { id: 'no-title-only-info', source: '§0 「호버 전용 표시 금지」 — title 에만 있는 정보', applies: true, pass: layout.titleOnly === 0, value: layout.titleOnly },
   ];
 
@@ -537,7 +561,7 @@ export function summaryRow({ tag, result: r }) {
     fcpMs: r.fcpMs, lcpMs: r.lcpMs, firstMapDrawMs: r.firstMapDrawMs, settledMs: r.networkSettledMs, cls: r.cls,
     requests: r.requests, MB: Number(mb(r.transferBytes)), duplicates: r.duplicates.count, duplicateExtraMB: Number(mb(r.duplicates.extraBytes)),
     uncompressed: r.uncompressed.count, failed: r.failedCount, consoleErrors: r.consoleErrorCount,
-    overflowPx: r.layout.horizontalOverflowPx, smallTargets: r.layout.smallTargets, titleOnly: r.layout.titleOnly, textUnder12px: r.layout.textUnder12px,
+    overflowPx: r.layout.horizontalOverflowPx, smallTargets: r.layout.smallTargets, coveredTargets: r.layout.coveredTargets, titleOnly: r.layout.titleOnly, textUnder12px: r.layout.textUnder12px,
     axe: r.axe && !r.axe.error ? r.axe.byImpact : null, axeNodes: r.axe && !r.axe.error ? r.axe.nodes : null,
     mapFirstViewportPct: r.map?.geometry?.firstViewportVisiblePct ?? null, mapHitCanvas: r.map?.hitTest?.isCanvas ?? null,
     wheelChangedMap: r.map?.probe?.wheelChangedMap ?? null, failedChecks: r.checks.filter((c) => c.applies && !c.pass).map((c) => c.id),

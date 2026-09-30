@@ -29,6 +29,8 @@ const BAD = board(`
 <button type="button" class="btn">확인</button>
 <button type="button" class="btn sm">작게</button>
 <div style="position:relative;height:50px"><button type="button" class="btn" style="width:120px">덮인 단추</button><div style="position:absolute;inset:0"></div></div>
+<div style="position:relative;height:50px"><button type="button" class="btn" style="width:120px">딤 아래 단추</button><div class="scrim" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div></div>
+<div style="position:relative;height:50px"><button type="button" class="mk" style="width:44px;height:44px;cursor:pointer">표식</button><div class="sheet" style="position:absolute;inset:0"><span>시트</span></div></div>
 <span class="btn">가짜 단추</span>
 <span title="여기에만 있는 정보">?</span>
 <div class="has">올리면<span class="tip">드러남</span></div>
@@ -65,11 +67,14 @@ test('폴더에서는 *.dc.html 만 고른다', () => {
 test('심은 위반을 정확히 센다(적색) · 깨끗한 보드는 0', async () => {
   const [bad, good] = await lintBoards(boardFiles([dir]));
   assert.deepEqual(bad.size, { w: 390, h: 844 });
-  // small 2 = .btn.sm 32px + 투명 상자에 덮인 단추(보이는 상자는 44 이상이어도 덮이면 0)
-  assert.deepEqual(bad.counts, { small: 2, fake: 1, title: 1, hover: 1, emoji: 1, words: 4, clipped: 1 }, JSON.stringify(bad.samples, null, 1));
+  // 투명 상자에 덮인 단추는 small 이 아니라 covered 다(무엇이 덮었는지 함께)
+  assert.deepEqual(bad.counts, { small: 1, fake: 1, title: 1, hover: 1, emoji: 1, words: 4, clipped: 1, covered: 2 }, JSON.stringify(bad.samples, null, 1));
   assert.deepEqual(bad.words, { 휘하: 1, 縣: 1, 군량: 1, 'N년 N월(순 없음)': 1 });
   assert.equal(bad.samples.small[0].h, 32);
-  assert.ok(bad.samples.small.some((x) => x.text === '덮인 단추' && x.covered), JSON.stringify(bad.samples.small));
+  // 층 없이 덮인 단추와, 시트 아래여도 지도 표식은 결함. 딤 아래 단추는 정상(underLayer).
+  assert.deepEqual(bad.samples.covered.map((x) => [x.text, x.layer ?? null]), [['덮인 단추', null], ['표식', '시트']]);
+  assert.equal(bad.underLayer, 1);
+  assert.equal(bad.samples.underLayer[0].layer, '딤');
   assert.equal(bad.innerCropped, 1); // 순 띠의 2순
   assert.equal(bad.lintSkipBlocks, 1);
   assert.deepEqual(good.counts, Object.fromEntries(KEYS.map((k) => [k, 0])), JSON.stringify(good.samples, null, 1));

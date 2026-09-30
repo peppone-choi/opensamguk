@@ -14,6 +14,8 @@
 //   hover   :hover 로 display · visibility · opacity 를 드러내는 CSS 규칙(추정)
 //   emoji   이모지 — BRIEF 「이모지 금지」 (▲▼ 같은 글자 기호는 세지 않는다)
 //   words   V3System 「쓰지 않는 말」 표의 말. 취소선을 그은 글자(그 표 자체)는 세지 않는다
+//   covered 가운데가 다른 요소에 덮인 누를 것 — 결함(겹친 투명 상자 · 장식이 조작을 먹는 부류, 2026-09-30 K0 판정).
+//           열린 층(대화상자 · 시트 · 딤 · 떠 있는 카드) 아래 덮인 것은 정상이라 underLayer 로 따로 센다. 지도 표식 .mk 는 층 아래여도 결함
 //   clipped 보드 뿌리(고정 크기, overflow hidden) 밖으로 나가 잘린 글자 · 누를 것 — BRIEF 「내용이 넘치면 잘린다」
 //           (지도 SVG 글자 · 화면 읽기 전용 글자 · 안쪽 상자가 일부러 자른 줄은 빼고, 마지막 것은 innerCropped 로 센다)
 //
@@ -28,7 +30,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const webRequire = createRequire(path.join(ROOT, 'web/game/package.json'));
 
-export const KEYS = ['small', 'fake', 'title', 'hover', 'emoji', 'words', 'clipped'];
+export const KEYS = ['small', 'fake', 'title', 'hover', 'emoji', 'words', 'clipped', 'covered'];
 
 // V3System 「쓰지 않는 말」(docs/design/ui-v3/boards_v3_shell.py WORDS). 표가 바뀌면 board-lint.test.mjs 가 깨진다.
 // 「전(錢)」의 「전」 · 「곡(穀)」의 「곡」은 한 글자라 다른 말과 겹친다 — 한자만 센다.
@@ -153,11 +155,19 @@ function lintInPage({ forbidden, minTarget }) {
     if (r.width >= minTarget && r.height >= minTarget && [[0, 0], [-half, 0], [half, 0], [0, -half], [0, half]].every(([dx, dy]) => mine(cx + dx, cy + dy))) {
       return { w: r.width, h: r.height, covered: false };
     }
-    if (!mine(cx, cy)) return { w: 0, h: 0, covered: true };
+    if (!mine(cx, cy)) return { w: 0, h: 0, covered: true, top: document.elementFromPoint(cx, cy) };
     const reach = (dx, dy) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
     return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1, covered: false };
   };
-  const small = []; const smallInline = []; const clipped = []; const clippedCtl = [];
+  // 열린 층(2026-09-30 K0 판정): 대화상자 · 하단 시트 · 딤이 열린 보드에서 그 아래가 덮인 것은 정상이다.
+  const LAYER = '[role=dialog],[role=alertdialog],[aria-modal="true"],dialog[open],.sheet,.scrim,.dim,.pop';
+  const layerKind = (l) => (l.matches('.scrim,.dim') ? '딤' : l.matches('.sheet') ? '시트' : l.matches('.pop') ? '떠 있는 카드' : '대화상자');
+  const pathOf = (node) => {
+    const parts = [];
+    for (let e = node; e && e !== root && parts.length < 3; e = e.parentElement) parts.unshift(describe(e).el);
+    return parts.join(' > ');
+  };
+  const small = []; const smallInline = []; const clipped = []; const clippedCtl = []; const covered = []; const underLayer = [];
   for (const el of [...real, ...fake]) {
     const r = el.getBoundingClientRect();
     if (outside(r)) {
@@ -166,12 +176,23 @@ function lintInPage({ forbidden, minTarget }) {
       continue;
     }
     const hit = hitArea(el);
+    // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니다. 모달 · 시트가 열린 상태를 그린 보드라면 뒤가 덮이는 것이 맞다
+    // (겹친 투명 상자가 입력을 먹는 사고일 수도 있다) — 무엇이 덮었는지와 함께 참고로 따로 센다.
+    if (hit.covered) {
+      const top = hit.top;
+      const layer = top ? top.closest(LAYER) : null;
+      const under = layer && !layer.contains(el) ? layerKind(layer) : null;
+      const item = { ...describe(el), by: top ? pathOf(top) : null, byText: top ? describe(top).text : null, ...(under ? { layer: under } : {}) };
+      // 지도 표식(.mk)은 층 아래여도 결함이다(K0 판정) — 고를 표식이 가려지면 고를 수 없다.
+      if (under && !el.classList.contains('mk')) underLayer.push(item); else covered.push(item);
+      continue;
+    }
     let w = hit.w, h = hit.h;
     const label = el.tagName !== 'LABEL' && el.id ? root.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
     if (label) { const lh = hitArea(label); w = Math.max(w, lh.w); h = Math.max(h, lh.h); }
     if (w >= minTarget && h >= minTarget) continue;
     const inline = el.tagName === 'A' && getComputedStyle(el).display === 'inline' && (el.parentElement?.innerText || '').trim().length > (el.innerText || '').trim().length + 1;
-    (inline ? smallInline : small).push({ ...describe(el), hitW: w, hitH: h, ...(hit.covered ? { covered: true } : {}) });
+    (inline ? smallInline : small).push({ ...describe(el), hitW: w, hitH: h });
   }
 
   // 글자 조각 모으기: 보이는 글자(취소선 조상 제외) + 읽히는 속성
@@ -245,17 +266,18 @@ function lintInPage({ forbidden, minTarget }) {
     targets: real.size + fake.length,
     counts: {
       small: small.length, fake: fake.length, title: titleOnly.length, hover: hover.length,
-      emoji: emoji.length, words: Object.values(words).reduce((a, b) => a + b, 0), clipped: clipped.length,
+      emoji: emoji.length, words: Object.values(words).reduce((a, b) => a + b, 0), clipped: clipped.length, covered: covered.length,
     },
     smallInline: smallInline.length,
+    underLayer: underLayer.length,
     // 종류별 합계는 표본(상한 25)이 아니라 전체에서 센다: 「요소.클래스 높이」 → 개수
-    smallByKind: small.reduce((m, x) => { const k = `${x.el} 누를 영역 ${Math.min(x.hitW, x.hitH)}px${x.covered ? '(덮임)' : ''}`; m[k] = (m[k] ?? 0) + 1; return m; }, {}),
+    smallByKind: small.reduce((m, x) => { const k = `${x.el} 누를 영역 ${Math.min(x.hitW, x.hitH)}px`; m[k] = (m[k] ?? 0) + 1; return m; }, {}),
     innerCropped,
     lintSkipBlocks: root.querySelectorAll('[data-lint="skip"]').length,
     words,
     samples: {
       small: small.slice(0, 25), fake: fake.slice(0, 15).map(describe), title: titleOnly.slice(0, 15), hover: hover.slice(0, 10),
-      emoji: emoji.slice(0, 15), words: wordSamples, clipped: clipped.slice(0, 15),
+      emoji: emoji.slice(0, 15), words: wordSamples, clipped: clipped.slice(0, 15), covered: covered.slice(0, 20), underLayer: underLayer.slice(0, 10),
     },
   };
 }
@@ -290,7 +312,7 @@ export function toMarkdown(results) {
   const allWords = {};
   for (const r of results) for (const [w, n] of Object.entries(r.words)) allWords[w] = (allWords[w] ?? 0) + n;
   const fmtWords = (ws) => Object.entries(ws).sort((a, b) => b[1] - a[1]).map(([w, n]) => `${w} ${n}`).join(' · ') || '—';
-  const rows = results.map((r) => `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.clipped} | ${r.innerCropped} |`);
+  const rows = results.map((r) => `| ${r.name} | ${r.size.w}×${r.size.h} | ${r.targets} | ${r.counts.small}${r.smallInline ? ` (+문장 속 링크 ${r.smallInline})` : ''} | ${r.counts.fake} | ${r.counts.title} | ${r.counts.hover} | ${r.counts.emoji} | ${r.counts.words} | ${fmtWords(r.words)} | ${r.counts.clipped} | ${r.innerCropped} | ${r.counts.covered} | ${r.underLayer} |`);
   const kinds = {};
   for (const r of results) for (const [k, n] of Object.entries(r.smallByKind ?? {})) kinds[k] = (kinds[k] ?? 0) + n;
   const topKinds = Object.entries(kinds).sort((a, b) => b[1] - a[1]).slice(0, 12).map(([k, n]) => `\`${k}\` ${n}`).join(' · ') || '—';
@@ -298,10 +320,10 @@ export function toMarkdown(results) {
     '# 설계 보드 일관성 검사 — tools/web/board-lint.mjs', '',
     `- 보드 ${results.length}장. 기준: V3System(44px · 호버/title 전용 금지 · 쓰지 않는 말), 09-18 BRIEF(진짜 button · 이모지 금지 · 고정 크기에서 잘림).`,
     '- 「N년 N월(순 없음)」은 V3System 「년 월(표기) → 200년 3월 중순」의 해석이다.', '',
-    '| 보드 | 크기 | 누를 것 | 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 뿌리 밖 잘림 | 안쪽 자름(참고) |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| 보드 | 크기 | 누를 것 | 누를 영역 44 미만 | 가짜 누를 것 | title 전용 | hover 드러냄 | 이모지 | 금지어 | 금지어 내역 | 뿌리 밖 잘림 | 안쪽 자름(참고) | 덮인 누를 것 | 열린 층 아래(정상) |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
     ...rows,
-    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
+    `| **합계** | | ${results.reduce((a, r) => a + r.targets, 0)} | ${total.small} | ${total.fake} | ${total.title} | ${total.hover} | ${total.emoji} | ${total.words} | ${fmtWords(allWords)} | ${total.clipped} | ${results.reduce((a, r) => a + r.innerCropped, 0)} | ${total.covered} | ${results.reduce((a, r) => a + r.underLayer, 0)} |`, '', `누를 영역 44 미만 종류: ${topKinds}`, '',
   ].join('\n');
 }
 
