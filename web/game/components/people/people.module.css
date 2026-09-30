@@ -81,3 +81,13 @@
 .peopleColumns { flex: 1; min-height: 0; display: flex; gap: 12px; }
 .peopleMain { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; overflow-y: auto; }
 .peopleAside { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
+.personScreen { display: flex; gap: 12px; min-height: 0; height: 100%; }
+.personGrid { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-content: start; overflow-y: auto; }
+.personGrid > :global(.os-panel) { padding: 10px; }
+.peopleScreenMobile .personGrid { grid-template-columns: minmax(0, 1fr); }
+.okLine { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--moss-2); }
+.errLine { grid-column: 1 / -1; margin: 0; font-size: 12.5px; color: var(--rust-2); }
+.sheetRight { justify-content: flex-end; align-items: stretch; }
+.sheetRight > :global(.os-modal) { width: 480px; max-width: 100%; height: 100%; max-height: none; overflow-y: auto; }
+.sheetBottom { align-items: flex-end; }
+.sheetBottom > :global(.os-modal) { width: 100%; max-height: 80vh; overflow-y: auto; }
