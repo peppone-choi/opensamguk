@@ -51,7 +51,8 @@ export default function WarRoomMap({ refreshKey = 0, homeCityId, visibility, onS
                     provinceUrl={ready.provinceMap ? undefined : CAMPAIGN_PROVINCES_URL}
                     corps={corpsOverlay} cities={ready.cities} administrativeOwnership={ready.administrativeOwnership}
                     sourceSize={ready.sourceSize} markerPositions={ready.markerPositions}
-                    currentCityId={focusCityId ?? undefined} initialFocus="current-commandery"
+                    currentCityId={homeCityId ?? undefined} cameraFocusCityId={focusCityId ?? undefined}
+                    initialFocus="current-commandery"
                     showCellGrid showCityFootprint commanderyVisibility={visibility} fogMode="dim"
                     politicalStyle="tint" ariaLabel={`천하 형세 — ${focus.name}`}
                     onCityHover={(city, point) => setHover(city && point ? { city, x: point.x, y: point.y } : null)}

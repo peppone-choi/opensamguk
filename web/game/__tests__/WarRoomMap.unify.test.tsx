@@ -18,7 +18,8 @@ vi.mock('@/lib/campaign-map', () => ({ CAMPAIGN_MAP_CODE: 'han-world-v3', CAMPAI
     provinceCenter: (id: string) => id === 'P1' ? { col: 10, row: 20 } : undefined,
     markerPositions: new Map([[7, { col: 384, row: 334 }]]),
     cities: [{ id: 7, name: '甲縣', commanderyName: '甲郡', mapLabel: '甲縣', level: 5, nationId: 1, x: 350, y: 305 }],
-    commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 }],
+    commanderies: [{ no: 1, name: '甲郡', col: 384, row: 334, focusCityId: 7 },
+      { no: 2, name: '乙郡', col: 420, row: 334, focusCityId: 8 }],
     sourceSize: { width: 700, height: 610 }, legend: [], administrativeOwnership: undefined }; } }));
 import WarRoomMap from '@/components/campaign/WarRoomMap';
 
@@ -37,5 +38,19 @@ describe('WarRoomMap unified map props', () => {
     expect(mocks.props?.corps).toMatchObject([{ id: 'c1', stale: true, col: 10, row: 20 }]);
     fireEvent.click(screen.getByRole('button', { name: '城 얹기' }));
     expect(screen.getByRole('status')).toHaveTextContent('甲郡 甲縣');
+  });
+
+  it('keeps 「내 위치」 on the home 城 while the camera visits another 郡', () => {
+    render(<WarRoomMap homeCityId={7} visibility={null} />);
+    expect(mocks.props).toMatchObject({ currentCityId: 7, cameraFocusCityId: 7 });
+    fireEvent.click(screen.getByRole('button', { name: /乙郡/ }));
+    // 다른 郡 으로 옮겨 보아도 표지는 내 城 에 남고, 카메라만 그 郡 치소로 간다.
+    expect(mocks.props).toMatchObject({ currentCityId: 7, cameraFocusCityId: 8 });
+  });
+
+  it('draws no 「내 위치」 when the home 城 is unknown', () => {
+    render(<WarRoomMap homeCityId={null} visibility={null} />);
+    expect(mocks.props?.currentCityId).toBeUndefined();
+    expect(mocks.props?.cameraFocusCityId).toBe(7);
   });
 });
