@@ -465,7 +465,39 @@ def unit_dot(x, y, side, sel=False):
             f'background:{SIDE_COLOR[side]};border:{"2px solid #ffd36d" if sel else "1px solid #0c0f0e"}"></span>')
 
 
-def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=False, fog=None, extra=''):
+# ------------------------------------------------------------------ B안 — 원작 유닛 그림 + 머리 위 작은 깃발(K0 추천, 사용자 선택 대기)
+# MAP['units'] = 원작 recolor 시트에서 자른 한 장(5열 × 2행, 칸 32×32, 투명): 열 = 장수 기마 · 기병 · 궁병 · 보병 · 깃발, 행 = 조조 · 원소.
+# 그림 id 가 아직 없으면 칸 크기 점선 자리 표시로 그린다.
+UNIT_COL = {'general': 0, 'cav': 1, 'archer': 2, 'inf': 3, 'flag': 4}
+UNIT_NAME = {'general': '장수 기마', 'cav': '기병', 'archer': '궁병', 'inf': '보병', 'flag': '깃발'}
+UNIT_ROW = {'me': 0, 'enemy': 1}
+
+
+def unit_sprite(kind, side, k=1):
+    w = 32 * k
+    src = MAP.get('units', '')
+    if not src:
+        return (f'<span aria-hidden="true" style="display:block;width:{w}px;height:{w}px;border:1px dashed {SIDE_COLOR[side]};font-size:9px;line-height:1.1;'
+                f'color:#ece6d8;background:rgba(12,15,14,.55);text-align:center;padding-top:8px">{UNIT_NAME[kind]}</span>')
+    return (f'<span aria-hidden="true" style="display:block;width:{w}px;height:{w}px;overflow:hidden;position:relative">'
+            f'<img src="{src}" alt="" style="position:absolute;left:{-UNIT_COL[kind] * w}px;top:{-UNIT_ROW[side] * w}px;width:{160 * k}px;height:{64 * k}px;max-width:none;image-rendering:pixelated"></span>')
+
+
+def unit_sprite_btn(x, y, kind, ch, side, label, ai=False, sel=False, est=False):
+    """원작 유닛 그림(발끝 = 칸 자리) + 머리 위 작은 깃발(장수 첫 글자 · 세력색). 누름 상자 44 × 52."""
+    col = SIDE_COLOR[side]
+    dash = ' stroke-dasharray="2 2"' if est else ''
+    flag = (f'<svg width="20" height="14" viewBox="0 0 20 14" aria-hidden="true" style="display:block"><path d="M2 0v14" stroke="#1b201d" stroke-width="1.5"></path>'
+            f'<path d="M3 1h15l-4 5 4 5H3z" fill="{col}" stroke="{"#ffd36d" if sel else "#0c0f0e"}" stroke-width="{1.5 if sel else 1}"{dash}></path>'
+            f'<text x="9" y="9" text-anchor="middle" font-family="Noto Serif KR,serif" font-weight="900" font-size="8" fill="#fff">{ch}</text></svg>')
+    body = unit_sprite(kind, side) if kind else '<span aria-hidden="true" style="display:block;width:32px;height:32px"></span>'
+    badge = ('<span style="position:absolute;right:-4px;top:-4px;height:14px;padding:0 3px;font-size:9px;font-weight:700;line-height:14px;color:#161410;background:#b9b2a3">AI</span>'
+             if ai else '')
+    return (f'<button type="button" aria-label="{label}" aria-pressed="{"true" if sel else "false"}" style="position:absolute;left:{x - 22}px;top:{y - 52}px;width:44px;height:52px;padding:0;'
+            f'border:0;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:1px">{flag}{body}{badge}</button>')
+
+
+def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=False, fog=None, extra='', sprite_kind=None):
     """아이소 판 한 장 — 보는 창(vw × vh) 안에 그림을 s 배로 놓고 ox · oy 만큼 민다. units = (r, c, 글자, 편, 이름표, ai, sel, est),
     marks = (r, c, kind, 글) — kind: sel(고른 분대 칸) · rally(집결점) · target(목표). small = 판 전체 보기(표지는 점, 누르지 않음)."""
     key, W, H, _, _, alt = ISO[kind]
@@ -488,7 +520,9 @@ def iso_board(kind, vw, vh, s, ox, oy, units=(), marks=(), gate=None, small=Fals
         x, y = iso_px(kind, r, c, s, ox, oy)
         if small:
             ulay += unit_dot(x, y, side, sel)
-        elif 22 <= x <= vw - 23 and 40 <= y <= vh - 5:  # 누름 상자(44)가 보는 창 안에 다 들어올 때만 — 창 밖 분대는 작은 판 · 가장자리로 본다
+        elif sprite_kind and 22 <= x <= vw - 23 and 52 <= y <= vh - 5:
+            ulay += unit_sprite_btn(x, y, sprite_kind.get(label), ch, side, label, ai, sel, est)
+        elif not sprite_kind and 22 <= x <= vw - 23 and 40 <= y <= vh - 5:  # 누름 상자(44)가 보는 창 안에 다 들어올 때만 — 창 밖 분대는 작은 판 · 가장자리로 본다
             ulay += unit_btn(x, y, ch, side, label, ai, sel, est)
     if gate and not small:
         gr, gc, gtxt = gate
@@ -709,6 +743,62 @@ def board_mbattlelive():
              f'<div style="padding:0 8px"><span class="t2" style="font-size:12px">중앙 하후돈 · 성 안 · <span class="ms">명령 받음</span> · 성문은 수비만 연다</span></div>'
              + cmdbar(mobile=True))
     page31('V31K6MBattleLive.dc.html', 'K6 실시간 전투 — 성새전(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
+
+
+FIELD_KIND = {'선봉 허저 — 조작 나': 'inf', '중앙 하후돈 — 조작 나': 'general', '좌익 이전 — 조작 AI': 'archer', '[적] 선봉 — 기병': 'cav', '[적] 분대 — 추정': None}
+SIEGE_KIND = {'중앙 하후돈 — 조작 나, 성 안': 'general', '좌익 이전 — 조작 AI': 'archer', '[적] 분대 — 다리 앞': 'inf', '[적] 분대 — 길 위': 'cav'}
+
+
+def live_board_units():
+    s, ox, oy = 2.0, -560, -330  # 절반 그림의 2배 = 원작 1:1 — 유닛 32px 가 원작 크기로 보인다
+    marks = [(34, 15, 'sel', ''), (35, 23, 'rally', '1'), (37, 32, 'target', '')]
+    mini = board_mini('field', 200, -ox / s, -oy / s, 736 / s, 740 / s, FIELD_UNITS)
+    tag = ('<span class="chip bronze" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">B안 — 원작 유닛 그림 + 머리 위 깃발 · 원작 1:1</span>')
+    return iso_board('field', 736, 740, s, ox, oy, FIELD_UNITS, marks, extra=mini + board_zoom() + tag, sprite_kind=FIELD_KIND)
+
+
+def board_battlelive_units():
+    top = (f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #3d4740;background:#1b201d">'
+           f'<span class="mono bz" style="font-size:24px;font-weight:700">3:12</span><span class="muted" style="font-size:12px">남음 · 틱 [값] / 3,000</span>'
+           f'{chip("야전 · 영천 북쪽 구릉")}{chip("분대 표기 B안 — 사용자 선택 대기", "info")}'
+           f'<span style="margin-left:auto;display:flex;gap:6px">{btn("전체에게", "sm")}{btn("나가기 — AI 에게 맡긴다", "sm")}</span></div>')
+    squads = (squad('선봉', 'heojeo', '허저', '나', '돌격 중 · 보병', sel=True) + squad('중앙', 'hahoudon', '하후돈', '나', '대형 · 장수 기마')
+              + squad('좌익', 'ijeon', '이전', 'AI', '후퇴 우선 · 궁병', note='사기 100 아래 — 명령을 받지 않는다'))
+    left = (f'<section class="panel" style="width:300px;flex-shrink:0">{sec("우리 분대", "숫자키 1–6 · 누르면 고른다")}'
+            f'<div style="padding:8px;display:flex;flex-direction:column;gap:6px">{squads}'
+            f'<div style="border:1px dashed #3d4740;padding:8px 10px;font-size:12px" class="muted">좌비 · 우익 · 우비 — 빈 자리</div></div></section>')
+    compare = ('<ul class="ul" style="padding:4px 12px">'
+               '<li><b>A안(깃발)</b> — 전략 지도 · 리플레이와 같은 표기. 세력 · 장수가 한눈에. 병종은 분대 카드 글자로.</li>'
+               '<li><b>B안(원작 유닛)</b> — 원작 그림 그대로, 세력색은 역할층으로 칠함(원본 대조 99.1%). 병종이 그림으로 보인다.</li>'
+               '<li><b>B안 한계</b> — 보병은 몇 픽셀이라 숲 위에서 구분이 약하다 → 머리 위 작은 깃발(장수 첫 글자)로 보완.</li></ul>')
+    right = (f'<div style="width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;min-height:0">'
+             f'<section class="panel">{sec("A안 · B안", "사용자 선택 — K0 추천 B")}{compare}</section>'
+             f'<section class="panel" style="flex-grow:1;min-height:0">{sec("사건", "")}<ul class="ul" style="padding:4px 12px">'
+             f'<li><span class="mono muted">3:12</span> 적 선봉이 좌익에 닿았다</li><li><span class="mono muted">3:20</span> <b>명령 받음</b> — 허저 돌격</li>'
+             f'<li><span class="mono muted">3:31</span> <span class="rs">명령 거절</span> — 이전 공격: 사기가 낮아 물러나는 중</li></ul></section></div>')
+    body = (top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}'
+            f'<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{live_board_units()}</div>{right}</div>' + cmdbar())
+    page31('V31K6BattleLiveUnits.dc.html', 'K6 실시간 전투 — B안 원작 유닛(데스크톱)', shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
+
+
+def board_mbattlelive_units():
+    sq = ''.join(f'<button type="button" aria-pressed="{"true" if i == 1 else "false"}" style="flex:1 1 0;height:52px;padding:0;font:inherit;font-size:11px;color:#ece6d8;'
+                 f'background:{"rgba(211,176,100,.14)" if i == 1 else "#141816"};border:{"2px solid #ffd36d" if i == 1 else "1px solid #3d4740"};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px">'
+                 f'<span class="serif" style="font-weight:700;font-size:13px">{n or "—"}</span><span class="muted">{p}</span></button>'
+                 for i, (p, k, n, *_rest) in enumerate(SEATS))
+    fs = 374 / 1024
+    zs, zox, zoy = 2.0, -1013, -250
+    rx, ry, rw, rh = (-zox / zs) * fs, (-zoy / zs) * fs, (374 / zs) * fs, (300 / zs) * fs
+    full = iso_board('siege', 374, 191, fs, 0, 0, SIEGE_UNITS, small=True,
+                     extra=f'<span style="position:absolute;left:{rx:.0f}px;top:{ry:.0f}px;width:{rw:.0f}px;height:{rh:.0f}px;border:2px solid #ffd36d"></span>')
+    zoom = iso_board('siege', 374, 300, zs, zox, zoy, SIEGE_UNITS, [(28, 52, 'sel', '')], gate=(31, 42, '닫힘'), sprite_kind=SIEGE_KIND)
+    inner = (f'<div style="height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #3d4740">'
+             f'<span class="mono bz" style="font-size:20px;font-weight:700">3:12</span><span class="t2" style="font-size:12px;flex:1">성새전 · 장사현 수비</span>{chip("B안", "info")}</div>'
+             f'<div style="padding:6px 8px 0">{full}</div>'
+             f'<div style="padding:4px 8px 0;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:11px">누른 자리 확대 · 원작 1:1 — 유닛 · 칸 · 성문을 눌러 고른다</span>{zoom}</div>'
+             f'<div style="display:flex;gap:4px;padding:6px 8px 4px">{sq}</div>'
+             + cmdbar(mobile=True))
+    page31('V31K6MBattleLiveUnits.dc.html', 'K6 실시간 전투 — B안 원작 유닛(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
 
 def board_duel():
@@ -987,7 +1077,7 @@ def board_inputreach():
 BOARDS = [board_command, board_command_edit, board_mcommand, board_mcommandargs, board_mpick,
           board_hand, board_mhand, board_stratagem, board_mstratagem,
           board_corps, board_mcorps,
-          board_battles, board_mbattles, board_battlejoin, board_mbattlejoin, board_battlelive, board_mbattlelive, board_duel, board_battleresult,
+          board_battles, board_mbattles, board_battlejoin, board_mbattlejoin, board_battlelive, board_mbattlelive, board_battlelive_units, board_mbattlelive_units, board_duel, board_battleresult,
           board_intel, board_mintel, board_diplomacy, board_mdiplomacy,
           board_mail, board_mmail, board_maildrawer, board_inputreach]
 
