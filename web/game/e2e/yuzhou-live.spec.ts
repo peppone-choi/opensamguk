@@ -150,9 +150,14 @@ test('HWIHA 豫州 player flow, NPC war, monthly boundary and nine live screens'
     yuedan: [`/api/yuedan?generalId=${generalId}`],
   };
   const cdp = await context.newCDPSession(page);
+  // v3.1 새 경로(2026-10-01 셸 통합). 첨부 이름(screen-<키>)은 증거 수집과 맞추려고 옛 키 그대로 둔다.
+  const route: Record<string, string> = {
+    court: 'court', hand: 'stratagem', orders: 'court?tab=orders', posts: 'territory', retinue: 'retinue',
+    siege: 'corps/siege', supply: 'territory/supply', 'war-room': '', yuedan: 'retinue/yuedan',
+  };
   for (const screen of screens) {
-    await page.goto(`${gameUrl}/game/${screen}`);
-    await expect(page.locator('nav[aria-label="입력 여섯 가지"]')).toBeVisible();
+    await page.goto(`${gameUrl}/game${route[screen] ? `/${route[screen]}` : ''}`);
+    await expect(page.locator('nav[aria-label="게임 메뉴"]:visible')).toBeVisible();
     await expect(page.locator('body')).toContainText(generalName, { timeout: 120_000 });
     await expect(page.locator('body')).not.toContainText('불러오는 중입니다', { timeout: 120_000 });
     // Playwright's screenshot stability wait can stall on the live map's continuous rendering.
