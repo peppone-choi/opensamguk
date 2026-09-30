@@ -49,6 +49,10 @@ interface GatewayBoardDefinitionRepository : JpaRepository<GatewayBoardDefinitio
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select b from GatewayBoardDefinitionEntity b where b.key = :key")
     fun lockForPost(@Param("key") key: String): GatewayBoardDefinitionEntity?
+
+    @Lock(LockModeType.PESSIMISTIC_READ)
+    @Query("select b from GatewayBoardDefinitionEntity b where b.id = :id")
+    fun lockReadById(@Param("id") id: Long): GatewayBoardDefinitionEntity?
 }
 
 @Service
@@ -69,6 +73,18 @@ class GatewayBoardDefinitionService(
     fun requireWritable(category: GatewayBoardCategory) {
         val definition = definitions.lockForPost(category.name) ?: throw GatewayBoardNotFoundException()
         if (!definition.writable) throw GatewayBoardForbiddenException("이 게시판은 읽기만 허용합니다.")
+    }
+
+    /** 원본이 readonly이면 다른 게시판으로 옮기는 수정도 거절한다. 삭제와 같은 id 순서로 잠근다. */
+    @Transactional
+    fun requireWritableForUpdate(source: GatewayBoardCategory, target: GatewayBoardCategory) {
+        val ids = listOf(source, target).distinct().map {
+            requireNotNull((definitions.findByKey(it.name) ?: throw GatewayBoardNotFoundException()).id)
+        }.sorted()
+        for (id in ids) {
+            val definition = definitions.lockReadById(id) ?: throw GatewayBoardNotFoundException()
+            if (!definition.writable) throw GatewayBoardForbiddenException("이 게시판은 읽기만 허용합니다.")
+        }
     }
 
     @Transactional

@@ -94,6 +94,9 @@ class GatewayBoardDefinitionSecurityTest {
             .content("""{"category":"NEW","title":"새 글","content":"본문"}"""))
             .andExpect(status().isForbidden)
         val postId = posts.findByCategory(GatewayBoardCategory("NEW"), org.springframework.data.domain.PageRequest.of(0, 20)).content.single().id
+        mvc.perform(patch("/board/posts/$postId").with(user(member)).contentType(MediaType.APPLICATION_JSON)
+            .content("""{"category":"FREE","title":"다른 게시판으로 수정","content":"본문"}"""))
+            .andExpect(status().isForbidden)
         mvc.perform(post("/board/posts/$postId/comments").with(user(member)).contentType(MediaType.APPLICATION_JSON)
             .content("""{"content":"댓글"}""")).andExpect(status().isForbidden)
     }

@@ -222,7 +222,7 @@ class GatewayBoardService(
             throw GatewayBoardConflictException("삭제된 게시글은 수정할 수 없습니다.")
         }
         val category = requireNotNull(request.category) { "category는 필수입니다." }
-        definitions.requireWritable(category)
+        definitions.requireWritableForUpdate(post.category, category)
         if (category == GatewayBoardCategory.NOTICE && !principal.isAdmin()) {
             throw GatewayBoardForbiddenException("공지글은 관리자만 작성할 수 있습니다.")
         }
