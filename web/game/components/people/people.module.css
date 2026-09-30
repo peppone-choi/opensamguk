@@ -1,0 +1,47 @@
+/* 인물 일람(P-R02) 본문 부품 — 치수는 승인 보드 V31K4People · V31K4MPeople 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); }
+.warn { font-size: 12px; color: var(--rust-2); }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.grow { flex: 1; min-width: 0; }
+
+/* ---- 거르기 줄 ---- */
+.filter { display: flex; align-items: center; gap: 8px; padding: 10px 12px; flex-wrap: nowrap; }
+.filterMobile { display: flex; flex-direction: column; gap: 8px; }
+.filterRow { display: flex; gap: 6px; align-items: center; }
+.search { width: 240px; min-height: 44px; }
+.filterMobile .search { width: 100%; }
+.count { margin-left: auto; white-space: nowrap; }
+
+/* ---- 표 ---- */
+.table tbody tr[data-me] td { background: rgba(211, 176, 100, 0.08); }
+.table tbody tr[data-selected] td { box-shadow: inset 0 1px 0 var(--bronze), inset 0 -1px 0 var(--bronze); }
+.pick {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 4px;
+  font: inherit; color: var(--text); background: transparent; border: 0; cursor: pointer; text-align: left;
+}
+.pick:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.nation { display: inline-flex; align-items: center; gap: 5px; }
+.swatch { width: 8px; height: 8px; display: inline-block; flex-shrink: 0; }
+.more { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 8px 12px; border-top: 1px solid var(--line); }
+
+/* ---- 모바일 카드 ---- */
+.cards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.card {
+  display: flex; gap: 10px; align-items: center; min-height: 80px; padding: 8px 10px;
+  color: var(--text); background: var(--panel); border: 1px solid var(--line-2); text-decoration: none;
+}
+.card[data-me] { border-color: var(--bronze-dim); }
+.card:focus-visible { outline: var(--focus-ring); outline-offset: -3px; }
+.cardText { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+.cardName { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 700; }
+.cardSub { display: flex; gap: 4px; align-items: center; font-size: 11.5px; color: var(--muted); min-width: 0; }
+.cardStats { font-size: 11.5px; color: var(--text-2); }
+
+/* ---- 미리보기 ---- */
+.preview { display: flex; flex-direction: column; min-height: 0; height: 100%; }
+.previewHead { display: flex; gap: 12px; padding: 12px; }
+.previewText { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.previewName { margin: 0; font-size: 18px; font-weight: 900; }
+.previewBlock { padding: 0 12px 10px; }
+.previewActions { margin-top: auto; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
