@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { HELP_INDEX } from '../lib/help-index';
 import { __resetHelpCache, helpApi, helpErrorKind, searchQuery } from '../lib/help';
-import { costValue, helpText, inputName, timingLabel, whoLabel } from '../lib/help-labels';
+import { APPROVED_RENAMES, HANJA_READINGS, OLD_WORDS, RENAMED_INPUTS, costValue, helpText, inputName, timingLabel, whoLabel } from '../lib/help-labels';
 import { formatHelpView, parseHelpView, type HelpView } from '../lib/help-route';
 import { generalActionGroups, screenGroups, screenInputIds, type HelpScreen } from '../lib/help-screens';
 import { TUTORIAL_STEPS } from '../lib/tutorial-steps';
@@ -36,17 +36,36 @@ test('help index matches the input catalog row for row (kind · phase · name)',
     }
 });
 
-test('approved new names replace the old command names', () => {
+test('approved new names replace the old command names, with the particle fitted to the new ending', () => {
     expect(inputName('action.convertProficiency')).toBe('병종 바꿔 익히기');
     expect(inputName('action.tradeGrain')).toBe('쌀 사고팔기');
-    expect(helpText('군량 습격으로 군량매매와 숙련전환을 막는다 · 군량')).toBe('보급 습격으로 쌀 사고팔기와 병종 바꿔 익히기를 막는다 · 쌀');
+    expect(helpText('숙련전환을 선택하고 군량매매을 고른다')).toBe('병종 바꿔 익히기를 선택하고 쌀 사고팔기를 고른다');
+    expect(helpText('숙련전환이 끝나면')).toBe('병종 바꿔 익히기가 끝나면');
+    expect(helpText('인접한 郡國의 제한된 정보 · 같은 州 안')).toBe('인접한 군국의 제한된 정보 · 같은 주 안');
     expect(helpText('출사 결과가 확정되면')).toBe('출사 결과가 확정되면');
-    expect(helpText('숙련전환이 끝나면 군량으로 군량매매를 한다')).toBe('병종 바꿔 익히기가 끝나면 쌀로 쌀 사고팔기를 한다');
-    expect(helpText('군량과 금')).toBe('쌀과 금');
-    expect(helpText('군량 습격은')).toBe('보급 습격은');
-    expect(helpText('인접한 郡國의 제한된 정보')).toBe('인접한 군국의 제한된 정보');
-    expect(helpText('다른 省으로')).toBe('다른 구역으로');
-    expect(helpText('縣이')).toBe('현이');
+});
+
+// ── 치환표는 임시다 — 원문(C7)이 고쳐지면 빨개져 표를 지우게 한다 ─────────────────────
+const helpSource = readFileSync(resolve(ROOT, 'data/help/topics.json'), 'utf-8') + readFileSync(resolve(ROOT, 'data/help/failure-reasons.json'), 'utf-8');
+
+test.each(OLD_WORDS.map(([from]) => [from]))('help source still carries 「%s」 — otherwise delete that row from help-labels.ts (K7-COPY-06/07)', (from) => {
+    expect(helpSource.includes(from), `도움말 원문에 「${from}」이 더 없다 — web/game/lib/help-labels.ts 치환표에서 이 줄을 지워라`).toBe(true);
+});
+
+test('the table only holds approved command names and single-meaning hanja readings — no context-dependent words', () => {
+    const approved = new Map([['숙련전환', '병종 바꿔 익히기'], ['군량매매', '쌀 사고팔기']]);
+    for (const [from, to] of APPROVED_RENAMES) expect(approved.get(from)).toBe(to);
+    for (const [from, to] of HANJA_READINGS) {
+        expect(from).toMatch(/^[\u4e00-\u9fff]+$/);
+        expect(to).toMatch(/^[가-힣]+$/);
+    }
+    expect(OLD_WORDS.map(([from]) => from)).not.toContain('휘하');
+});
+
+test.each(Object.entries(RENAMED_INPUTS))('input %s still has the old catalog name — otherwise delete it from RENAMED_INPUTS', (inputId, name) => {
+    const row = catalog.inputs.find((r) => r.inputId === inputId)!;
+    const titles = new Map(topics.topics.map((t) => [t.id, t.title]));
+    expect(row.displayName ?? titles.get(row.helpTopicId), `원장 · 주제가 이미 「${name}」이다 — RENAMED_INPUTS 에서 지워라`).not.toBe(name);
 });
 
 test('every catalog input sits on exactly one screen, and the war room holds every direct action by phase', () => {

@@ -88,20 +88,23 @@ export const RENAMED_INPUTS: Readonly<Record<string, string>> = {
     'action.tradeGrain': '쌀 사고팔기',
 };
 
-/** 도움말 원문 속 옛 이름 → 새 이름. 긴 말부터 바꾼다. */
-const OLD_WORDS: readonly (readonly [string, string])[] = [
+/**
+ * 도움말 원문(C7 소유, 초안) 속 옛 말을 화면에서만 바꾸는 임시 치환표 — 원문 교체는 C7(계약판 K7-COPY-06 · 07).
+ * 들어갈 수 있는 것은 두 가지뿐이다(K0 2026-10-01):
+ *  ① 2026-09-30 승인된 새 명령 이름(원문에 옛 이름이 남은 것만)
+ *  ② 뜻이 하나뿐인 행정 한자 표기의 한글 읽기(설계 v3 규칙 한글 우선)
+ * 「휘하 → 부」처럼 문맥에 따라 뜻이 갈리는 말은 기계로 바꾸지 않는다.
+ * 원문에서 옛 말이 사라지면 __tests__/help-lib.test.ts 가 이 표의 그 줄을 지우라고 빨개진다.
+ */
+export const APPROVED_RENAMES: readonly (readonly [string, string])[] = [
     ['숙련전환', '병종 바꿔 익히기'],
     ['군량매매', '쌀 사고팔기'],
-    ['군량 습격', '보급 습격'],
-    ['군량', '쌀'],
-    // 한글 우선 표기(설계 v3 규칙: 縣 → 현 · 郡 → 군 · 城 → 성 · 省 → 구역). 원문은 U5 검수에서 고친다.
+];
+export const HANJA_READINGS: readonly (readonly [string, string])[] = [
     ['郡國', '군국'],
     ['州', '주'],
-    ['郡', '군'],
-    ['縣', '현'],
-    ['城', '성'],
-    ['省', '구역'],
 ];
+export const OLD_WORDS: readonly (readonly [string, string])[] = [...APPROVED_RENAMES, ...HANJA_READINGS];
 
 /** 끝 글자에 받침이 있는지(한글이 아니면 없다고 본다). 받침이 ㄹ이면 'ㄹ'. */
 function coda(word: string): 'none' | 'rieul' | 'other' {
