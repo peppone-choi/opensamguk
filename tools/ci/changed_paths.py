@@ -43,6 +43,8 @@ MAP_INPUTS = (
     "infra/src/main/resources/scenario/",
     "infra/src/main/kotlin/opensamguk/infra/seed/",
     "infra/src/test/kotlin/opensamguk/infra/seed/",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/read/TopdownMapArtifacts.kt",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/controller/TopdownMapController.kt",
     "web/game/public/map/",
     "web/gateway/public/map/",
     "web/shared/src/iso/countyNameGloss.generated.ts",
@@ -104,7 +106,7 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
             outputs["map"] = outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
-        if path.startswith(("web/", "data/", "infra/src/main/resources/map/", ".github/")):
+        if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/")):
             outputs["web"] = True
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",
