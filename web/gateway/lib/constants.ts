@@ -33,20 +33,29 @@ export const AUTH_LABELS = {
     // 검증/에러 — 설계서 LG12 쉬운 말. 서버 거절 문장(AuthService)은 받은 그대로 보인다.
     emptyUsername: '계정명을 입력하세요',
     emptyPassword: '비밀번호를 입력하세요',
-    emptyNickname: '별명을 입력해주세요',
+    emptyNickname: '별명을 입력하세요',
     loginFail: '계정명이나 비밀번호가 맞지 않습니다.',
-    passwordMismatch: '비밀번호가 일치하지 않습니다',
-    // 가입 필드 제약 (AuthDto.kt; backend = grand truth)
-    usernameRule: '3~50자',
-    nicknameRule: '2~20자, 다른 유저와 겹칠 수 없음',
-    passwordRule: '6자 이상',
-    usernameTooShort: (n: number) => `${n}글자 이상 입력하셔야 합니다`,
-    usernameTooLong: (n: number) => `${n}자를 넘을 수 없습니다`,
-    passwordTooShort: (n: number) => `비밀번호는 적어도 ${n}글자 이상이어야 합니다`,
+    passwordMismatch: '비밀번호가 서로 다릅니다.',
+    // 가입 칸 오류 — 설계서 J11 쉬운 말. 별명은 별명 문구로 따로 쓴다(계정명 문구를 빌려 쓰지 않는다).
+    usernameTooShort: (n: number) => `계정명은 ${n}자 이상이어야 합니다`,
+    usernameTooLong: (n: number) => `계정명은 ${n}자를 넘을 수 없습니다`,
+    passwordTooShort: (n: number) => `비밀번호는 ${n}자 이상이어야 합니다`,
+    nicknameTooShort: (n: number) => `별명은 ${n}자 이상이어야 합니다`,
+    nicknameTooLong: (n: number) => `별명은 ${n}자를 넘을 수 없습니다`,
 } as const;
 
-// 바닥 정책 링크 이름(가입 화면이 아직 쓴다 — 가입 재구현 P-G03 에서 PolicyLinks 로 바꾼다).
-export const FOOTER_LINKS = ['개인정보처리방침', '이용약관'] as const;
+// 가입 칸 제약(gateway-api AuthDto.kt — 서버가 최종 판정) · 입력칸 아래 도움말.
+export const JOIN_RULES = {
+    usernameMin: 3,
+    usernameMax: 50,
+    passwordMin: 6,
+    nicknameMin: 2,
+    nicknameMax: 20,
+    usernameHelp: '3~50자',
+    passwordHelp: '6자 이상',
+    nicknameHelp: '2~20자, 다른 사람과 겹칠 수 없습니다.',
+} as const;
+
 
 export const LOBBY_LABELS = {
     // 상단바(ADR-LITE-049)

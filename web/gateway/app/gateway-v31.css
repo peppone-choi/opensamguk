@@ -259,3 +259,53 @@
 .gw31-doc__toc { margin: 0; padding-left: 20px; color: var(--text-2); font-size: 14px; line-height: 2; }
 .gw31-page__foot { border-top: 1px solid var(--line); }
 @media (max-width: 767.98px) { .gw31-doc { padding: 20px 16px 32px; } .gw31-doc__waiting { flex-direction: column; align-items: flex-start; } }
+
+/* ============================================================================
+   P-G03 가입 — 로그인과 같은 지도 배경, 소개 + 가입 패널만
+   ========================================================================== */
+.gw31-join { position: relative; min-height: 100dvh; background: var(--bg); color: var(--text); }
+.gw31-join__map { position: fixed; inset: 0; z-index: 0; }
+.gw31-join__stage { position: relative; z-index: 10; pointer-events: none; }
+.gw31-join__stage > * { pointer-events: auto; }
+.gw31-join__warn { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--rust-2); }
+.gw31-join__note { margin: 0; padding: 8px 10px; font-size: 12.5px; line-height: 1.5; color: var(--info); background: rgba(122, 167, 199, 0.12); border: 1px solid var(--info-dim); }
+.gw31-join__card { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; background: rgba(27, 32, 29, 0.97); border-color: var(--bronze-dim); box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5); }
+.gw31-field__help { font-size: 11.5px; color: var(--muted); }
+.gw31-field__error { font-size: 12px; color: var(--rust-2); }
+.gw31-field input.is-bad { border-color: var(--rust); }
+.gw31-field__label { display: inline-flex; gap: 6px; align-items: center; }
+
+@media (min-width: 1200px) {
+  .gw31-join__stage {
+    min-height: 100dvh;
+    box-sizing: border-box;
+    padding: 80px 32px 0;
+    display: grid;
+    grid-template-columns: 520px minmax(0, 1fr) 420px;
+    grid-template-rows: auto 1fr auto;
+    column-gap: 12px;
+  }
+  .gw31-join__intro { grid-column: 1; grid-row: 1; align-self: start; }
+  .gw31-join__intro .gw31-intro__wordmark { width: 360px; }
+  .gw31-join__card { grid-column: 3; grid-row: 1 / 3; align-self: start; margin-bottom: 24px; }
+  .gw31-join__foot { grid-column: 1 / -1; grid-row: 3; margin: 0 -32px; background: rgba(12, 15, 14, 0.8); }
+}
+@media (max-width: 1199.98px) {
+  .gw31-join__map { position: relative; height: 240px; overflow: hidden; }
+  .gw31-join__stage { display: flex; flex-direction: column; gap: 12px; }
+  .gw31-join__intro { order: 2; margin: 0 12px; }
+  .gw31-join__intro .gw31-intro__wordmark { width: 190px; }
+  .gw31-join__card { order: 1; margin-top: -24px; border-width: 1px 0 0; }
+  .gw31-join__foot { order: 3; border-top: 1px solid var(--line); }
+  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: auto !important; right: 8px !important; top: 64px !important; bottom: auto !important; }
+  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers,
+  .gw31-join .map-preview--backdrop .map-btn-stack { display: none; }
+}
+@media (min-width: 768px) and (max-width: 1199.98px) {
+  .gw31-join__card, .gw31-join__intro, .gw31-join__foot { width: min(640px, 100%); margin-left: auto; margin-right: auto; box-sizing: border-box; }
+}
+@media (min-width: 1200px) {
+  .gw31-join .map-preview--backdrop .os-iso-map__controls { left: 568px !important; top: 80px !important; bottom: auto !important; }
+  .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
+  .gw31-join .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
+}
