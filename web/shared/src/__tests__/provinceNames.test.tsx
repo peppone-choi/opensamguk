@@ -101,12 +101,17 @@ describe('구역 이름(useProvinceName)', () => {
       { ...tiles.provinceRecords![0], id: 'HAN-P-0999', displayName: '옛 서버에만' },
     ] } as WorldTiles;
     let terrainCalls = 0;
+    let firstTilesRead = false;
     mocks.fetch.mockImplementation(async (url: string) => {
       if (url.includes('/terrain?')) {
         terrainCalls += 1;
         if (terrainCalls === 1) {
           await firstHeld;
-          return { ok: true, headers: { get: () => `"sha256-${'1'.repeat(64)}"` }, json: async () => structuredClone(firstTiles) };
+          return {
+            ok: true,
+            headers: { get: () => `"sha256-${'1'.repeat(64)}"` },
+            json: async () => { firstTilesRead = true; return structuredClone(firstTiles); },
+          };
         }
         return { ok: true, headers: { get: () => `"sha256-${SHA}"` }, json: async () => structuredClone(tiles) };
       }
@@ -117,7 +122,11 @@ describe('구역 이름(useProvinceName)', () => {
     await waitFor(() => expect(terrainCalls).toBe(1));
     rerender({ serverId: 'new' });
     await waitFor(() => expect(result.current.kind).toBe('ready'));
-    await act(async () => { releaseFirst(); await Promise.resolve(); await Promise.resolve(); });
+    act(() => { releaseFirst(); });
+    // 옛 요청이 지형을 읽는 데까지 갔는지 본다 — 가지도 않았는데 초록이면 공허한 시험이다.
+    await waitFor(() => expect(firstTilesRead).toBe(true));
+    // abort 검사 · 등록은 json() 뒤 마이크로태스크에서 돈다. 몇 번 도는지 세지 않고 매크로태스크 경계 하나로 다 흘려 보낸다.
+    await act(async () => { await new Promise((resolve) => setTimeout(resolve, 0)); });
     expect(provinceNameOf('HAN-P-0999')).toBeUndefined();
     expect(provinceNameOf('HAN-P-0002')).toBe('양적');
   });
