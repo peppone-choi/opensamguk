@@ -22,6 +22,8 @@ export interface InputActionProps {
   readonly recoveryDraft?: boolean;
   readonly helpTopic?: HelpTopicRef;
   readonly onHelp?: (topicId: string) => void;
+  /** BLOCKED · NOT_DELIVERED 로 처음 그려질 때 사유 시트를 연 채로(제출이 서버에서 거절된 직후 — K6). */
+  readonly reasonDefaultOpen?: boolean;
   readonly className?: string;
 }
 
@@ -48,6 +50,7 @@ export function InputAction({
   recoveryDraft,
   helpTopic,
   onHelp,
+  reasonDefaultOpen = false,
   className = '',
 }: InputActionProps) {
   if (!availability) return null;
@@ -80,6 +83,7 @@ export function InputAction({
       recoveryDraft={recoveryDraft}
       helpTopic={helpTopic}
       onHelp={onHelp}
+      defaultOpen={reasonDefaultOpen}
       block={block}
       className={['os-ia', className].filter(Boolean).join(' ')}
     >

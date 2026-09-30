@@ -103,7 +103,7 @@ export function PeoplePicker(props: PeoplePickerProps) {
         {props.multiple ? (
           <div className="os-people__chosen">
             <span className="os-people__count">고른 사람 <b>{props.selected.length}</b></span>
-            <button type="button" className="os-button os-button--ghost os-people__clear" onClick={() => props.onChange([])} disabled={undefined}>
+            <button type="button" className="os-button os-button--ghost os-people__clear" onClick={() => props.onChange([])}>
               모두 풀기
             </button>
             <div className="os-people__chips">
