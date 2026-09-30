@@ -57,7 +57,11 @@ async function openShell(page: import('@playwright/test').Page, path = '/game/re
   await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
 }
 
-/** 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」과 같은 방법 — elementFromPoint). */
+/**
+ * 누를 것의 가운데를 다른 상자가 덮는지(K10 「덮임」과 같은 방법 — elementFromPoint).
+ * 로컬은 `next start`(운영 빌드)로 돌린다 — `next dev` 의 개발 표시기(NEXTJS-PORTAL)가 레일 「도움말」 · 탭 「작전실」 자리를
+ * 덮어 빨개진다(devIndicators 를 끄면 초록, K6 확인). CI 는 next start 라 해당 없다.
+ */
 async function coveredIn(page: import('@playwright/test').Page, selector: string): Promise<string[]> {
   return page.locator(selector).first().evaluate((root) => {
     const out: string[] = [];
