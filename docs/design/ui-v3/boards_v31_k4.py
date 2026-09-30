@@ -379,7 +379,7 @@ def retinue():
            f'{help_strip("등용과 인재탐색은 명령 목록 12순에 넣는 직접 행동입니다.")}'
            f'<div style="display:flex;gap:8px">{input_btn("등용 — 명령 목록에 넣기", "AVAILABLE", input_id="action.employ", style="flex:1")}'
            f'{input_btn("인재탐색", "AVAILABLE", input_id="action.search", kind="")}</div></div></section>')
-    det = (f'<section class="panel" style="flex:1;min-width:0">{sec("허저 許褚", "인물 카드 · 내 부 · NPC")}'
+    det = (f'<section class="panel" style="flex:1;min-width:0">{sec("허저", "인물 카드 · 내 부 · NPC")}'
            f'<div style="display:grid;grid-template-columns:168px minmax(0,1fr);gap:14px;padding:12px">{portrait("heojeo", "허저", 168, 238)}'
            f'<div style="display:flex;flex-direction:column;gap:10px;min-width:0">'
            f'<div style="display:flex;gap:6px;flex-wrap:wrap">{chip("유일", "bronze")}{chip("충성 높음", "moss")}{chip("코스트 [미정]")}</div>'
@@ -509,7 +509,7 @@ def mpeople():
 def person():
     hero = (f'<section class="panel" style="width:360px;flex-shrink:0">'
             f'<div style="padding:12px;display:flex;justify-content:center">{portrait("sunuk", "순욱", 240, 340)}</div>'
-            f'<div style="padding:0 16px 10px;display:flex;flex-direction:column;gap:8px"><span class="serif" style="font-size:24px;font-weight:900">순욱 <span class="muted" style="font-size:14px;font-weight:700">荀彧</span></span>'
+            f'<div style="padding:0 16px 10px;display:flex;flex-direction:column;gap:8px"><span class="serif" style="font-size:24px;font-weight:900">순욱</span>'
             f'<div style="display:flex;gap:6px;flex-wrap:wrap">{chip("사람", "info")}{chip("조조 소속")}{chip("유일", "bronze")}{chip("나이 [값]")}</div>'
             f'{note("같은 세력의 사람 장수 — 충성 · 코스트 · 녹봉은 내 부 인물만 보입니다.")}</div>'
             f'<div style="margin-top:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;border-top:1px solid #2c342f">'
@@ -535,7 +535,7 @@ def person():
 @board
 def mperson():
     hero = (f'<div style="height:200px;flex-shrink:0;border:1px solid #9c7f3f">{portrait("heojeo", "허저", 364, 198)}</div>')
-    inner = (f'{hero}<div style="display:flex;align-items:baseline;gap:8px"><span class="serif" style="font-size:22px;font-weight:900">허저</span><span class="muted">許褚</span></div>'
+    inner = (f'{hero}<div style="display:flex;align-items:baseline;gap:8px"><span class="serif" style="font-size:22px;font-weight:900">허저</span></div>'
              f'<div style="display:flex;gap:6px;flex-wrap:wrap">{chip("내 부")}{chip("유일", "bronze")}{chip("충성 높음", "moss")}{chip("코스트 [미정]")}</div>'
              f'{stat_grid()}{apt_grid()}<div style="display:flex;gap:6px">{chip("향당 · 초현", "bronze")}{chip("계책 기여 — 준비 중", "info")}</div>')
     foot = f'{input_btn("자리에 배치", "AVAILABLE", input_id="placement.assign", style="flex:1")}{input_btn("내보내기", "NOT_DELIVERED")}'
@@ -709,7 +709,7 @@ def mterritory():
 # ------------------------------------------------------------------ P-T02 현 상세
 def county_head(name, han, chips_, right=''):
     return (f'<div style="min-height:72px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid #2c342f;background:#141816">'
-            f'<span class="serif" style="font-size:24px;font-weight:900">{name}</span><span class="muted serif" style="font-size:14px">{han}</span>'
+            f'<span class="serif" style="font-size:24px;font-weight:900">{name}</span>'  # 한자는 같은 읽기가 함께 나올 때만(twin) — 머리도 같다(K0 3.1.4)
             f'<div style="display:flex;gap:6px;flex-wrap:wrap">{chips_}</div><div style="margin-left:auto;display:flex;gap:8px">{right}'
             f'{btn("다른 현 보기", "", "search")}{btn("지도에서 보기", "", "war", href="#")}</div></div>')
 
@@ -911,7 +911,7 @@ def siege():
            f'<div style="padding:10px 12px">{note("군단이 적 성에 닿으면 여기에 나옵니다. 성 이름을 누르면 오른쪽에 형편이 보입니다.")}</div></section>')
     tl = ''.join(row(f'<span class="mono muted" style="font-size:11px;width:84px">{a}</span><span style="font-size:12.5px">{b}</span>', 44)
                  for a, b in [('2월 하순', '포위 시작'), ('3월 상순', '성 안 쌀 ▼ · 사기 [값]'), ('3월 중순', '성 안 쌀 ▼ · 수비 [값]')])
-    mid = (f'<section class="panel" style="flex:1;min-width:0">{sec("진류현 陳留", "원소 → 수비 · 보이는 만큼만 · 마지막 첩보 1순 전")}'
+    mid = (f'<section class="panel" style="flex:1;min-width:0">{sec("진류현", "원소 → 수비 · 보이는 만큼만 · 마지막 첩보 1순 전")}'
            f'<div style="padding:10px 12px">{vista("castle_chenliu", 590, 220, 768, 768, -90, -250, "진류현 성 — 특 B안 11칸")}</div>'
            f'<div style="padding:0 12px 10px">{siege_kv()}</div>'
            f'<div style="padding:8px 12px;display:flex;align-items:center;gap:8px;border-top:1px solid #2c342f"><span class="t2" style="font-size:12px">포위군 보급</span>'
@@ -1033,6 +1033,10 @@ def check(path):
     import re
     if re.search('[\U0001F300-\U0001FAFF☀-➿]', s):
         errs.append('이모지')
+    vis = re.sub(r'<span class="hj"[^>]*>[^<]*</span>', '', re.sub(r'<script.*?</script>', '', s.split('<body>', 1)[-1], flags=re.S))
+    han = re.findall(r'[\u4e00-\u9fff]+', re.sub(r'<[^>]+>', ' ', vis))
+    if han:
+        errs.append(f'hj 밖 한자 {han[:3]} — 같은 읽기가 함께 나올 때만 twin()')
     for bad in ('휘하', '군량', '국고', '자금', '縣 ', '郡 ', '城 ', '年', '月 '):
         body = s.split('<body>', 1)[-1]
         if bad in body:
