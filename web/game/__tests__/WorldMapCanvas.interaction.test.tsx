@@ -8,6 +8,7 @@ import {
   initialView,
   provinceAtScreenPoint,
   screenToCell,
+  terrainColorFor,
   type IsoView,
   type ProvinceIdentityMap,
 } from '@opensamguk/ui';
@@ -1837,6 +1838,28 @@ describe('shared WorldMapCanvas viewport interaction', () => {
       fireEvent.click(screen.getByRole('button', { name: '군급 도시 레이어' }));
       // 郡 층에는 郡治(낙양) 표지만 있다 — 내 城(언사)이 없어도 제 郡 표지에 「내 위치」가 남는다.
       expect(lastFrame()).toContain('fillText:내 위치');
+    });
+
+    it('bakes each terrain cell in the same colour as terrainColorFor', () => {
+      countingImage();
+      const terrain = ['0123', '4567', '89 x', '5'];
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={{ ...CHE_TILES_FIXTURE, _meta: { ...CHE_TILES_FIXTURE._meta, cols: 4, rows: 4 }, terrain,
+            owner: [[0, 16]], seatOwner: [[0, 16]] }}
+          provinceMap={null}
+          cities={[]}
+          sourceSize={{ width: 200, height: 120 }}
+        />,
+      );
+      const baked = [...records.values()].flatMap((record) => record.putImages).find((pixels) => pixels.length === 4 * 4 * 4);
+      expect(baked).toBeDefined();
+      const expected = terrain.flatMap((row) => Array.from({ length: 4 }, (_, col) => {
+        const color = terrainColorFor(row[col]);
+        return [1, 3, 5].map((at) => Number.parseInt(color.slice(at, at + 2), 16)).concat(255);
+      })).flat();
+      expect(Array.from(baked!)).toEqual(expected);
     });
 
     it('draws the self-location marker above every 城 name', () => {

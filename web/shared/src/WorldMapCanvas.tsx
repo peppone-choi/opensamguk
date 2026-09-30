@@ -379,6 +379,12 @@ export function terrainColorFor(value: number | string): string {
   return TERRAIN[Number(value)] ?? TERRAIN[0];
 }
 
+const TERRAIN_RGB = TERRAIN.map((color) => [
+  Number.parseInt(color.slice(1, 3), 16),
+  Number.parseInt(color.slice(3, 5), 16),
+  Number.parseInt(color.slice(5, 7), 16),
+] as const);
+
 const NEUTRAL_COLOR = '#555555';
 const CASTLE_FILL = '#8b8172';
 const CASTLE_STROKE = '#f3dfb0';
@@ -962,15 +968,19 @@ function bakeTerrain(tiles: WorldTiles): HTMLCanvasElement | null {
   const context = canvas.getContext('2d');
   if (!context) return null;
   const image = context.createImageData(tiles._meta.cols, tiles._meta.rows);
+  // 칸마다 색 문자열을 풀면 3072×2676 판에서 첫 그림 전에 수 초가 든다(09-30 실측) — 색은 미리 풀어 둔다.
+  // terrainColorFor 와 같은 규칙: 숫자 한 자면 그 색, 그 밖(빈칸 · 없음)은 0번 색.
+  const data = image.data;
   for (let row = 0; row < tiles._meta.rows; row += 1) {
     const terrainRow = tiles.terrain[row] ?? '';
     for (let col = 0; col < tiles._meta.cols; col += 1) {
-      const color = terrainColorFor(terrainRow[col]);
+      const digit = terrainRow.charCodeAt(col) - 48;
+      const rgb = TERRAIN_RGB[digit >= 0 && digit < TERRAIN_RGB.length ? digit : 0];
       const offset = (row * tiles._meta.cols + col) * 4;
-      image.data[offset] = Number.parseInt(color.slice(1, 3), 16);
-      image.data[offset + 1] = Number.parseInt(color.slice(3, 5), 16);
-      image.data[offset + 2] = Number.parseInt(color.slice(5, 7), 16);
-      image.data[offset + 3] = 255;
+      data[offset] = rgb[0];
+      data[offset + 1] = rgb[1];
+      data[offset + 2] = rgb[2];
+      data[offset + 3] = 255;
     }
   }
   context.putImageData(image, 0, 0);
