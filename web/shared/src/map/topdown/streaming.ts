@@ -15,10 +15,13 @@ export interface ChunkUploadState {
 export interface ChunkPlan {
   upload: { cx: number; cy: number; key: string; data: ChunkData }[];
   request: ChunkCoord[];
+  /** More chunks were ready than `limit`; ask for another frame. */
+  more: boolean;
 }
 
-export function planChunks(wanted: readonly ChunkCoord[], state: ChunkUploadState): ChunkPlan {
-  const plan: ChunkPlan = { upload: [], request: [] };
+/** `wanted` is nearest first, so a `limit` keeps the visible centre first. */
+export function planChunks(wanted: readonly ChunkCoord[], state: ChunkUploadState, limit = Infinity): ChunkPlan {
+  const plan: ChunkPlan = { upload: [], request: [], more: false };
   for (const { cx, cy } of wanted) {
     const key = chunkKey(cx, cy);
     const data = state.peek(cx, cy);
@@ -26,7 +29,10 @@ export function planChunks(wanted: readonly ChunkCoord[], state: ChunkUploadStat
       plan.request.push({ cx, cy });
       continue;
     }
-    if (!state.onGpu(cx, cy) || state.uploaded(key) !== data) plan.upload.push({ cx, cy, key, data });
+    if (!state.onGpu(cx, cy) || state.uploaded(key) !== data) {
+      if (plan.upload.length < limit) plan.upload.push({ cx, cy, key, data });
+      else plan.more = true;
+    }
   }
   return plan;
 }

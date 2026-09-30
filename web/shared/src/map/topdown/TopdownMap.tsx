@@ -85,7 +85,7 @@ export function TopdownMap(props: TopdownMapProps) {
     renderer.load(source).then(() => {
       if (cancelled) return;
       setStatus({ kind: 'ready' });
-      setPicture(renderer.overviewPicture());
+      renderer.complete.then(() => { if (!cancelled) setPicture(renderer.overviewPicture()); }, () => undefined);
       if (cameraRef.current) renderer.setView(cameraRef.current, viewportRef.current);
       callbacks.current.onReady?.({
         setLevel: (level) => {

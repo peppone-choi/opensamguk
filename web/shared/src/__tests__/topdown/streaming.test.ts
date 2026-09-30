@@ -28,6 +28,14 @@ describe('조각 올리기 계획', () => {
     expect(plan.upload.map((u) => u.key)).toEqual(['2_3']);
   });
 
+  it('한 프레임에 올릴 수를 넘으면 앞(가까운) 조각부터 올리고 다음 프레임을 부탁한다', () => {
+    const coords = [0, 1, 2, 3, 4, 5].map((cx) => ({ cx, cy: 0 }));
+    const plan = planChunks(coords, { peek: () => data(), onGpu: () => false, uploaded: () => undefined }, 4);
+    expect(plan.upload.map((u) => u.cx)).toEqual([0, 1, 2, 3]);
+    expect(plan.more).toBe(true);
+    expect(planChunks(coords.slice(0, 4), { peek: () => data(), onGpu: () => false, uploaded: () => undefined }, 4).more).toBe(false);
+  });
+
   it('로더가 새로 받은 자료(다른 객체)는 다시 올린다', () => {
     const plan = planChunks([{ cx: 0, cy: 0 }], { peek: () => data(), onGpu: () => true, uploaded: () => data() });
     expect(plan.upload).toHaveLength(1);

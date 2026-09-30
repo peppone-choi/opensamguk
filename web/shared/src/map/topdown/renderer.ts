@@ -12,7 +12,7 @@ import { buildProvinceTable, type VisionState } from './provinceTable';
 import { drawMyLocation, myLocationHitRect, type MyLocation } from './myLocation';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
-import { TerrainLayer, type KitTextures } from './gl/terrainLayer';
+import { TerrainLayer } from './gl/terrainLayer';
 import { NO_TILE, type BakeManifest, type Camera, type ChunkData, type MapShape, type ViewLevel, type Viewport } from './types';
 
 export interface TopdownSource {
@@ -49,6 +49,8 @@ const SELECTED: [number, number, number] = [0xff / 255, 0xd3 / 255, 0x6d / 255];
 const BAND_PX: Record<ViewLevel, number> = { county: 3, commandery: 4, ju: 5 };
 const LABEL_FONT = "'Noto Serif KR Variable', 'Noto Serif KR', 'Nanum Myeongjo', serif";
 const FLAG_PX = 32;
+/** 조각 올리기(인터리브 + texSubImage3D)는 프레임당 이만큼만. */
+const MAX_UPLOADS_PER_FRAME = 4;
 
 export interface RendererStats { chunkFetches: number; chunksOnGpu: number; frames: number; lastFrameMs: number }
 
@@ -92,37 +94,27 @@ export class TopdownRenderer {
     this.overlay = overlay;
   }
 
+  /** Resolves when everything behind the first frame (mips, overview, places, sprites) has arrived. */
+  complete: Promise<void> = Promise.resolve();
+
+  /**
+   * 첫 그림에 필요한 것만 기다린다: 매니페스트 · 키트 색인 · 팔레트(그다음 프레임이 보이는 조각을 받는다).
+   * 밉 · 개관 · places · 스프라이트는 뒤에서 받아 오는 대로 얹는다(첫 화면 요청 수를 줄인다).
+   */
   async load(source: TopdownSource): Promise<void> {
     const manifest = await fetchJson<BakeManifest>(joinUrl(source.bakeUrl, 'manifest.json'));
     if (manifest.schemaVersion !== 1 || manifest.artifactId !== 'topdown-bake') throw new Error('unsupported bake manifest');
     const shape: MapShape = manifest.shape;
-    const [index, mip8, mip4, mip2, mip1, palettes, overview, placesRaw] = await Promise.all([
+    const [index, palettes] = await Promise.all([
       decodeGreyPng(joinUrl(source.kitUrl, 'kit-index.png')),
-      loadBitmap(joinUrl(source.kitUrl, 'kit-mip8.png')),
-      loadBitmap(joinUrl(source.kitUrl, 'kit-mip4.png')),
-      loadBitmap(joinUrl(source.kitUrl, 'kit-mip2.png')),
-      loadBitmap(joinUrl(source.kitUrl, 'kit-mip1.png')),
       fetchJson<{ dayBank: number; banks: number[][][] }>(joinUrl(source.kitUrl, 'palettes.json')),
-      fetchOverview(source.bakeUrl, manifest),
-      fetchJson<unknown>(joinUrl(source.bakeUrl, manifest.places.file)),
     ]);
     const palette = new Uint8Array(16 * 4);
     palettes.banks[palettes.dayBank].forEach(([r, g, b], i) => palette.set([r, g, b, 255], i * 4));
-    const kit: KitTextures = { index, mips: { 8: mip8, 4: mip4, 2: mip2, 1: mip1 }, palette, atlasColumns: index.width / 16 };
     const terrain = new TerrainLayer(this.gl, shape, manifest.chunkSize);
-    terrain.setKit(kit);
-    terrain.setOverview(manifest.overview.cols, manifest.overview.rows, manifest.overview.block, overview);
-    this.overview = overview;
-    this.overviewSize = { cols: manifest.overview.cols, rows: manifest.overview.rows };
-    this.mip1 = bitmapPixels(mip1);
-    const places = parsePlaces(placesRaw);
-    const admin = adminTexels(places);
-    terrain.setAdmin(admin.width, admin.height, admin.data);
+    terrain.setKit({ index, palette, atlasColumns: index.width / 16 });
     this.terrain = terrain;
     this.manifest = manifest;
-    this.places = places;
-    this.labels = labelCandidates(places);
-    this.footprintIndex = new FootprintIndex(footprints(places));
     this.loader = new ChunkLoader({
       manifest,
       fetchChunk: (entry) => fetchBytes(joinUrl(source.bakeUrl, entry.file!)),
@@ -130,13 +122,53 @@ export class TopdownRenderer {
         this.uploaded.delete(key);
       },
     });
-    [this.sites, this.flags] = await Promise.all([
-      loadSheet(joinUrl(source.kitUrl, 'sites.png'), joinUrl(source.kitUrl, 'sites-roles.png')),
-      loadSheet(joinUrl(source.kitUrl, 'flags.png'), joinUrl(source.kitUrl, 'flags-roles.png')),
-    ]);
-    if (this.world) this.setWorld(this.world);
-    else this.setWorld({ occupancy: [], nations: [] });
+    // 나머지는 보이는 조각이 도착한 뒤 받는다(같은 연결을 먼저 차지하지 않게). 州 보기거나 1.5초가 지나면 바로.
+    this.complete = new Promise<void>((resolve, reject) => {
+      let started = false;
+      this.startRest = () => {
+        if (started) return;
+        started = true;
+        this.startRest = null;
+        this.loadRest(source, manifest).then(resolve, reject);
+      };
+      window.setTimeout(() => this.startRest?.(), 1500);
+    });
     this.requestFrame();
+  }
+
+  private startRest: (() => void) | null = null;
+
+  private async loadRest(source: TopdownSource, manifest: BakeManifest): Promise<void> {
+    const kitUrl = (file: string) => joinUrl(source.kitUrl, file);
+    const mips = Promise.all([8, 4, 2, 1].map((size) => loadBitmap(kitUrl(`kit-mip${size}.png`)))).then(([m8, m4, m2, m1]) => {
+      this.terrain?.setMips({ 8: m8, 4: m4, 2: m2, 1: m1 });
+      this.mip1 = bitmapPixels(m1);
+      this.requestFrame();
+    });
+    const overview = fetchOverview(source.bakeUrl, manifest).then((data) => {
+      this.terrain?.setOverview(manifest.overview.cols, manifest.overview.rows, manifest.overview.block, data);
+      this.overview = data;
+      this.overviewSize = { cols: manifest.overview.cols, rows: manifest.overview.rows };
+      this.requestFrame();
+    });
+    const places = fetchJson<unknown>(joinUrl(source.bakeUrl, manifest.places.file)).then((raw) => {
+      const data = parsePlaces(raw);
+      const admin = adminTexels(data);
+      this.terrain?.setAdmin(admin.width, admin.height, admin.data);
+      this.places = data;
+      this.labels = labelCandidates(data);
+      this.footprintIndex = new FootprintIndex(footprints(data));
+      this.setWorld(this.world ?? { occupancy: [], nations: [] });
+    });
+    const sprites = Promise.all([
+      loadSheet(kitUrl('sites.png'), kitUrl('sites-roles.png')),
+      loadSheet(kitUrl('flags.png'), kitUrl('flags-roles.png')),
+    ]).then(([sites, flags]) => {
+      this.sites = sites;
+      this.flags = flags;
+      this.requestFrame();
+    });
+    await Promise.all([mips, overview, places, sprites]);
   }
 
   get shape(): MapShape | null {
@@ -273,6 +305,7 @@ export class TopdownRenderer {
     if (!terrain || !manifest || !this.loader) return;
     const level = viewLevel(this.camera.zoom);
     if (level !== 'ju') this.streamChunks(manifest);
+    if (this.startRest && (level === 'ju' || this.visibleChunksReady(manifest))) this.startRest();
     terrain.draw(this.camera, this.viewport, {
       forceOverview: level === 'ju',
       bandPx: BAND_PX[level],
@@ -297,15 +330,21 @@ export class TopdownRenderer {
       peek: (cx, cy) => this.loader!.peek(cx, cy),
       onGpu: (cx, cy) => this.terrain!.hasChunk(cx, cy),
       uploaded: (key) => this.uploaded.get(key),
-    });
+    }, MAX_UPLOADS_PER_FRAME);
     for (const { cx, cy, key, data } of plan.upload) {
       this.terrain!.putChunk(cx, cy, data);
       this.uploaded.set(key, data);
     }
+    if (plan.more) this.requestFrame(); // 한 프레임에 몰아 올리지 않는다(첫 끌기 튐)
     for (const { cx, cy } of plan.request) {
       this.loader!.request(cx, cy).then(() => this.requestFrame(), () => undefined);
     }
     this.terrain!.touch(visible);
+  }
+
+  private visibleChunksReady(manifest: BakeManifest): boolean {
+    const rect = visibleCellRect(this.camera, this.viewport, manifest.shape);
+    return chunksForRect(rect, manifest.chunkSize, manifest.shape, 0).every(({ cx, cy }) => this.loader!.peek(cx, cy) !== undefined);
   }
 
   private measure = (text: string, fontPx: number, bold: boolean): { width: number; height: number } => {
