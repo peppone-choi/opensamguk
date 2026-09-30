@@ -312,3 +312,99 @@
   .gw31-join .map-preview--backdrop .os-iso-map__administrative-layers { left: 624px !important; top: 80px !important; }
   .gw31-join .map-preview--backdrop .map-btn-stack { position: absolute; left: 568px; top: 184px; }
 }
+
+/* ============================================================================
+   게이트웨이 셸 — 로그인 뒤 머리줄(데스크톱 메뉴 · 모바일 「메뉴」 → 하단 시트)
+   ========================================================================== */
+.gw31-member__nav { display: flex; gap: 2px; margin-left: 8px; }
+.gw31-member__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  font-size: 13.5px;
+  color: var(--text-2);
+}
+.gw31-member__link[aria-current='page'] { color: var(--bronze); box-shadow: inset 0 -2px 0 var(--bronze); }
+.gw31-member__name { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+.gw31-member__menu { display: none; }
+.gw31-scrim { position: fixed; inset: 0; z-index: 40; background: rgba(8, 10, 9, 0.55); }
+.gw31-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 41;
+  display: flex;
+  flex-direction: column;
+  padding: 8px 12px 16px;
+  background: var(--panel);
+  border-top: 1px solid var(--bronze-dim);
+  box-shadow: 0 -12px 32px rgba(0, 0, 0, 0.55);
+}
+.gw31-sheet__head { display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.gw31-sheet__title { font-size: 17px; font-weight: 900; }
+.gw31-sheet__link { display: flex; align-items: center; min-height: 48px; padding: 0 8px; border-bottom: 1px solid var(--line); color: var(--text); font-size: 15px; }
+.gw31-sheet__link[aria-current='page'] { color: var(--bronze); }
+.gw31-sheet__logout { margin-top: 12px; }
+@media (max-width: 767.98px) {
+  .gw31-member__nav, .gw31-member__name, .gw31-member__logout { display: none; }
+  .gw31-member__menu { display: inline-flex; }
+  .gw31-member .gw31-head__left .os-chip { display: none; }
+}
+
+/* ============================================================================
+   P-G04 로비 — 서버 카드 · 첫걸음 카드 · 공지와 각주
+   ========================================================================== */
+.gw31-lobby { width: min(1416px, 100%); margin: 0 auto; box-sizing: border-box; padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.gw31-lobby__main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.gw31-lobby__head { display: flex; flex-direction: column; gap: 2px; }
+.gw31-lobby__title { margin: 0; font-size: 24px; font-weight: 900; }
+.gw31-lobby__list { display: flex; flex-direction: column; gap: 12px; }
+.gw31-lobby__side { display: flex; flex-direction: column; gap: 10px; }
+.gw31-foot-notes { margin: 0; padding: 0 0 0 16px; font-size: 12px; line-height: 1.6; color: var(--text-2); }
+.gw31-foot-notes .is-warn { color: var(--rust-2); }
+/* 로비 각주 초안 칩 — 로그인 소개의 .gw31-intro__draft 를 빌리지 않는다(그 규칙은 모바일에서 숨긴다). */
+.gw31-lobby__draft { display: flex; }
+
+.gw31-card { display: flex; flex-direction: column; }
+.gw31-card__body { display: grid; grid-template-columns: minmax(0, 1fr) 236px; gap: 16px; padding: 12px 14px; }
+.gw31-card__info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.gw31-card__titlerow { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.gw31-card__title { margin: 0; font-size: 18px; font-weight: 900; }
+.gw31-card__line { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-2); }
+.gw31-card__line--muted { color: var(--muted); font-size: 12.5px; }
+.gw31-card__line--bad { color: var(--rust-2); }
+.gw31-card__scenario { color: var(--bronze); }
+.gw31-card__side { display: flex; flex-direction: column; gap: 6px; }
+.gw31-card__label { font-size: 11.5px; color: var(--muted); }
+.gw31-card__me { display: flex; gap: 8px; align-items: center; }
+.gw31-card__none { font-size: 13px; color: var(--text-2); min-height: 20px; }
+.gw31-card__action { margin-top: auto; width: 100%; justify-content: center; }
+.gw31-card__toggle { border-width: 1px 0 0; width: 100%; }
+/* 펼친 현황: 지도는 한 줄을 다 쓰고(높이 360), 세력 현황 · 천하 정세는 그 아래 나란히. 세 칸을 한 줄에 두면 지도가 150px 로 눌렸다(캡처). */
+.gw31-card__status { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; padding: 12px; border-top: 1px solid var(--line); }
+.gw31-card__map { grid-column: 1 / -1; min-width: 0; }
+.gw31-card__map .map-preview { max-width: none; }
+.gw31-card__map .map-preview-canvas { aspect-ratio: auto; height: 360px; }
+
+.gw31-practice { display: flex; align-items: center; gap: 16px; padding: 12px 14px; border-color: var(--info-dim); }
+.gw31-practice__text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.gw31-practice__title { margin: 0; font-size: 16px; font-weight: 900; }
+.gw31-practice__state { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-2); flex-shrink: 0; }
+
+@media (min-width: 1200px) {
+  .gw31-lobby { flex-direction: row; align-items: flex-start; }
+  .gw31-lobby__main { flex: 1; }
+  .gw31-lobby__side { width: 320px; flex-shrink: 0; }
+}
+@media (max-width: 1199.98px) {
+  .gw31-card__status { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 767.98px) {
+  .gw31-card__body { grid-template-columns: minmax(0, 1fr); }
+  .gw31-card__map .map-preview-canvas { height: 280px; }
+  .gw31-practice { flex-direction: column; align-items: stretch; }
+  .gw31-lobby__filters { margin: 0 -12px; padding: 0 12px; }
+}
