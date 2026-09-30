@@ -105,6 +105,14 @@ class CampaignDirectoryReaderTest {
         assertEquals("PARTIAL", out.status); assertNull(out.stockTotal); assertNull(out.troops?.city)
     }
 
+    @Test fun `an old body retaining user id cannot impersonate the resolved live character`() {
+        setup()
+        `when`(owners.resolveGeneralId(41)).thenReturn(null)
+        assertFailsWith<CampForbidden> { reader.nationSummary(1, 41) }
+        assertEquals("NO_GENERAL", reader.people(41, "ALL", "", "ID", null, 50).status)
+        verifyNoInteractions(generals, worlds, nations, cities, retainers)
+    }
+
     @Test fun `ownership denial precedes private queries and foreign world data fail closed`() {
         setup()
         assertFailsWith<CampForbidden> { reader.nationSummary(4, 41) }

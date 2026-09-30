@@ -123,6 +123,7 @@ class CampaignDirectoryReader(
     }
 
     fun nationSummary(generalId: Int, userId: Long): CampaignNationSummary {
+        if (owners.resolveGeneralId(userId) != generalId) throw CampForbidden()
         val actor = ownedHwihaGeneral(generals, generalId, userId)
         val frame = frame() ?: return CampaignNationSummary("UNAVAILABLE")
         checkWorld(frame.worldId, listOf(actor.worldId))

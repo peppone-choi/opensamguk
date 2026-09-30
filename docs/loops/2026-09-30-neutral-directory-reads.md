@@ -19,7 +19,7 @@
 
 ## 응답·보호
 
-개인 신원은 JWT principal이다. people의 임의 generalId query는 신원 선택에 쓰지 않는다. nation/summary의 generalId는 본인 소유인지 먼저 검사한다. 인증 없음/무효 401, 타인 장수 또는 일반 계정의 관리자 읽기 403, 성공 no-store. 플레이어와 관리자 응답 DTO에는 ruleProfile, 경험/계급/삭턴/개인 병력 등 기존 규칙 필드를 싣지 않는다. 읽기만 하며 운영 write 또는 migration이 없다.
+개인 신원은 JWT principal이다. people의 임의 generalId query는 신원 선택에 쓰지 않는다. nation/summary의 generalId는 GeneralResolver가 확정한 현행 플레이 가능 장수와 일치하고 실제 user_id도 본인인지 먼저 검사한다. 과거 장수 행에 user_id가 남았다는 이유로 읽기 권한을 주지 않는다. 인증 없음/무효 401, 타인 장수 또는 일반 계정의 관리자 읽기 403, 성공 no-store. 플레이어와 관리자 응답 DTO에는 ruleProfile, 경험/계급/삭턴/개인 병력 등 기존 규칙 필드를 싣지 않는다. 읽기만 하며 운영 write 또는 migration이 없다.
 
 ## 후속
 
