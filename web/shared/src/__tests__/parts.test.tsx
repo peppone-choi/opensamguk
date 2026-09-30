@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ReasonSheet } from '../ReasonTooltip';
+import { ICON_NAMES } from '../icons';
 import {
   InputAction,
   MISSING_REASON,
@@ -380,10 +381,11 @@ describe('TimeBar', () => {
   });
 });
 
-describe('PartIcon 대체 표', () => {
-  it('정본이 아닌 아이콘은 모두 표 한 곳에서 대체로 표시된다', () => {
-    const substitutes = Object.entries(PART_ICON_SOURCE).filter(([, s]) => !('sprite' in s) || s.substitute).map(([n]) => n).sort();
-    expect(substitutes).toEqual(['alert', 'back', 'clock', 'copy', 'help', 'list', 'lock', 'next', 'pause', 'play', 'prev', 'target', 'unplug']);
+describe('PartIcon 스프라이트 표', () => {
+  it('모든 부품 아이콘이 공용 스프라이트의 정본 이름을 가리킨다(대체 0건)', () => {
+    for (const [name, sprite] of Object.entries(PART_ICON_SOURCE)) {
+      expect(ICON_NAMES, `${name} → ${sprite}`).toContain(sprite);
+    }
   });
 });
 
