@@ -50,7 +50,8 @@ class GatewayBoardDefinitionSecurityTest {
     private fun create(key: String): Long {
         val result = mvc.perform(post("/board/admin/boards").with(user(admin))
             .contentType(MediaType.APPLICATION_JSON).content("""{"key":"$key","name":"새 게시판"}"""))
-            .andExpect(status().isCreated).andExpect(jsonPath("$.key").value(key)).andReturn()
+            .andExpect(status().isCreated).andExpect(jsonPath("$.key").value(key))
+            .andExpect(jsonPath("$.writable").value(true)).andReturn()
         return json.readTree(result.response.contentAsString)["boardId"].asLong()
     }
 
@@ -133,6 +134,12 @@ class GatewayBoardDefinitionSecurityTest {
         mvc.perform(post("/board/posts").with(user(member)).contentType(MediaType.APPLICATION_JSON)
             .content("""{"category":"UNKNOWN","title":"글","content":"본문"}"""))
             .andExpect(status().isNotFound)
+        mvc.perform(post("/board/admin/boards").with(user(admin)).contentType(MediaType.APPLICATION_JSON)
+            .content("""{"key":"READ_ONLY","name":"읽기 전용","writable":false}"""))
+            .andExpect(status().isCreated).andExpect(jsonPath("$.writable").value(false))
+        mvc.perform(post("/board/posts").with(user(member)).contentType(MediaType.APPLICATION_JSON)
+            .content("""{"category":"READ_ONLY","title":"글","content":"본문"}"""))
+            .andExpect(status().isForbidden)
         val id = create("EMPTY")
         mvc.perform(delete("/board/admin/boards/$id").with(user(admin))).andExpect(status().isNoContent)
     }

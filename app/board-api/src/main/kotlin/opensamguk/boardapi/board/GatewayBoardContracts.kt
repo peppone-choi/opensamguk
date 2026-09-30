@@ -161,7 +161,8 @@ data class CreateGatewayBoardDefinitionRequest(
     @field:NotBlank @field:Size(max = 32) val key: String,
     @field:NotBlank @field:Size(max = 80) val name: String,
     val sortOrder: Int = 0,
-    val writable: Boolean = true,
+    // Apply omitted defaults explicitly at the service boundary; the mapper may supply JVM primitive defaults.
+    val writable: Boolean? = null,
 )
 
 data class UpdateGatewayBoardDefinitionRequest(

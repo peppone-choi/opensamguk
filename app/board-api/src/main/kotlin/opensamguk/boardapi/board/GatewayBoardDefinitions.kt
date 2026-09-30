@@ -94,7 +94,7 @@ class GatewayBoardDefinitionService(
         val name = request.name.trim()
         require(name.isNotEmpty() && name.length <= 80) { "게시판 이름이 올바르지 않습니다." }
         try {
-            return response(definitions.saveAndFlush(GatewayBoardDefinitionEntity(key, name, request.sortOrder, request.writable)))
+            return response(definitions.saveAndFlush(GatewayBoardDefinitionEntity(key, name, request.sortOrder, request.writable ?: true)))
         } catch (_: DataIntegrityViolationException) {
             throw GatewayBoardConflictException("이미 사용 중인 게시판 키입니다.")
         }
