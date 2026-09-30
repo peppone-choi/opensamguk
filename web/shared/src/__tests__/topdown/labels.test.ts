@@ -124,3 +124,16 @@ describe('겹침 · 화면 밖', () => {
     expect(edge[0].x).toBeLessThan(0);
   });
 });
+
+describe('부대 표지 피하기', () => {
+  it('부대 몸통 · 깃발 상자에 닿는 이름은 빼고, 떨어진 이름은 둔다', () => {
+    const cam: Camera = { center: { col: 100, row: 100 }, zoom: 16 };
+    const near = candidate('가까운縣', 'county', 100, 100);
+    const far = candidate('먼縣', 'county', 110, 104);
+    const free = layoutLabels([near, far], cam, viewport, measure);
+    expect(free.map((l) => l.id).sort()).toEqual(['가까운縣', '먼縣']);
+    const box = free.find((l) => l.id === '가까운縣')!;
+    const placed = layoutLabels([near, far], cam, viewport, measure, { avoid: [{ x: box.x + 4, y: box.y + 2, width: 8, height: 8 }] });
+    expect(placed.map((l) => l.id)).toEqual(['먼縣']);
+  });
+});
