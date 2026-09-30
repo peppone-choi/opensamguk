@@ -37,7 +37,7 @@ export default function CommandList({ commands, category, query, selected, onCat
                     </button>
                 ))}
             </div>
-            <label htmlFor={searchId} className="os-sr-only">명령 찾기</label>
+            <label htmlFor={searchId} className="sr-only">명령 찾기</label>
             <input
                 id={searchId}
                 className={`os-inset ${styles.search}`}

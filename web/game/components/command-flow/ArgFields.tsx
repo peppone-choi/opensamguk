@@ -168,7 +168,7 @@ function AmountField({ field, draft, missing, onChange, amountMax }: ArgFieldPro
     return (
         <Frame field={field} missing={missing}>
             <div className={styles.amount}>
-                <label htmlFor={id} className="os-sr-only">{field.label}</label>
+                <label htmlFor={id} className="sr-only">{field.label}</label>
                 <input
                     id={id} type="number" inputMode="numeric" min={1} max={max ?? undefined}
                     className={`os-inset ${styles.amountInput}`}
