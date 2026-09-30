@@ -18,7 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  *
  * Public (no identity needed): the lobby map preview, the health probe, the const/global-menu reads,
  * and — during the F2 transition — the existing read controllers that still accept `?generalId=`
- * (mailbox/diplomacy/command/sse/front-info). Those keep working unauthenticated so
+ * (diplomacy/command/sse/front-info). Those keep working unauthenticated so
  * web/game Wave 2 can migrate incrementally; the proxy injects the Bearer where it has one.
  *
  * Identity-required: the possession + my-* endpoints, which resolve the caller's general from the
@@ -40,6 +40,8 @@ class GameApiSecurityConfig {
             .authorizeHttpRequests { auth ->
                 auth
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
+                    // Mailbox IDs and single-message IDs must never make private correspondence public.
+                    .requestMatchers("/api/mailbox/**", "/api/messages/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-boss", "/api/my-nation-detail").authenticated()
                     // Phase 4X-A 가신·부곡 읽기 — 본인/같은 국가만(spec v3 F4). 등록하지 않으면 anyRequest permitAll 로 공개된다.
