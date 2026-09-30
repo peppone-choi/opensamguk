@@ -225,7 +225,7 @@ object HotColdCatalog {
         "app/game-engine/src/main/kotlin/opensamguk/engine/redis",
         "app/game-engine/src/main/kotlin/opensamguk/engine/run",
         "app/game-engine/src/main/kotlin/opensamguk/engine/turn",
-        "app/game-engine/src/main/kotlin/opensamguk/engine/v2",
+        "app/game-engine/src/main/kotlin/opensamguk/engine/sandbox",
         "app/game-engine/src/main/kotlin/opensamguk/engine/city",
         "app/game-engine/src/main/kotlin/opensamguk/engine/war",
         "app/game-engine/src/main/kotlin/opensamguk/engine/world",

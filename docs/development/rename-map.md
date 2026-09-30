@@ -1662,6 +1662,51 @@ web/game/lib/hwiha-reads.ts
 
 `HotColdCatalog`의 원본 경로와 `DaemonWriteGuard`의 바이트코드 검사 경로에 `engine/city`를 추가했다. Spring 빈 이름 `v2CityLedgerStore`, `v2_city_ledger` 표와 명령 코드 값은 이번 Kotlin 코드 타입 개명에서 유지한다. 저장·배포 계약 개명 단계에서 함께 갱신한다.
 
+## 도시 처리 엔진 코드 이름
+
+| 이전 | 새 이름 | 범위 |
+| --- | --- | --- |
+| `engine.v2.V2CityGarrisonAttrition*`·`V2Attrition*` | `engine.city.CityGarrisonAttrition*`·`Attrition*` | 재난 뒤 도시 병사 감소 처리 |
+| `engine.v2.V2ProcessCityIncome*`·`V2CityIncome*`·`V2CityLedgerDelta` | `engine.city.ProcessCityIncome*`·`CityIncome*`·`CityLedgerDelta` | 도시 세입 처리 |
+| `engine.v2.V2GarrisonRecruitHandler`·`V2RecruitDecision` | `engine.city.GarrisonRecruitHandler`·`RecruitDecision` | 모병 |
+| `engine.v2.V2CityTransportHandler`·`V2TransportDecision` | `engine.city.CityTransportHandler`·`TransportDecision` | 자원 수송 |
+| `engine.v2.V2WorldActions` | `engine.world.CityWorldActions` | 도시 사건 등록기 |
+
+사건 액션 이름 `V2CityGarrisonAttrition`·`V2ProcessCityIncome`, 명령 코드와 DB 객체 이름은 저장·통신 식별자 계약이므로 유지했다. 원래 함수명에 붙은 `v2` 접두사만 제거했다.
+
+### game-api 도시·명령 샌드박스 코드 이름 (2026-09-30)
+
+| 이전 이름 | 현재 이름 | 범위 |
+|---|---|---|
+| `gameapi.v2.V2CanonicalCommandController` | `gameapi.command.CanonicalCommandController` | 코드 타입·파일·패키지 |
+| `gameapi.v2.V2CommandPrecheckService` | `gameapi.command.CityCommandPrecheckService` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2CityLedgerReadController` | `gameapi.city.CityLedgerReadController` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2CityTransportController` | `gameapi.city.CityTransportController` | 코드 타입·파일·패키지·Spring 빈 |
+| `gameapi.v2.V2GarrisonRecruitController` | `gameapi.city.GarrisonRecruitController` | 코드 타입·파일·패키지·Spring 빈 |
+| `V2CommandIntakeResponse`/`V2CommandArgumentParser` | `CommandIntakeResponse`/`CommandArgumentParser` | 코드 타입 |
+| `validateLegacyV2Arguments`/`legacyError` | `validateCommandArguments`/`commandError` | 코드 함수 |
+
+`/api/v2/*` 경로, `v2CityTransport`·`v2GarrisonRecruit` 명령 ID, `v2.enabled`·`v2-sandbox` 설정은 저장·통신 계약이므로 이 코드 이름 PR에서는 유지한다. 저장 식별자 개명 단계에서 함께 바꾼다.
+
+## 샌드박스 설정·콘텐츠 경로 (2026-09-30)
+
+| 이전 이름 | 중립 이름 | 범위 |
+| --- | --- | --- |
+| `v2.enabled`·`V2_ENABLED` | `sandbox.enabled`·`SANDBOX_ENABLED` | 두 서버의 빈 등록 게이트 |
+| `v2-sandbox` | `sandbox` | Spring 프로필·Compose 이름 |
+| `V2_*` | `SANDBOX_*` | 샌드박스 Compose 치환 변수 |
+| `content/v2` | `content/catalog` | 콘텐츠 카탈로그 classpath |
+| `db/migration_v2` | `db/migration_sandbox` | 샌드박스 Flyway location |
+| `V2SandboxConfiguration` | `SandboxConfiguration` | 엔진·API 설정 타입 |
+
+샌드박스의 데이터베이스·볼륨 이름은 새 네임스페이스를 사용한다. 기존 실행 스택의 데이터를 자동 이전하지 않으며, 동결 지도 릴리스와 과거 Flyway 버전 `V901`의 파일 내용은 유지한다.
+
+## 샌드박스 테스트 이름 (2026-09-30)
+
+엔진·API·게이트웨이의 `.../v2/V2*Test.kt` 및 `V2*IT.kt`는 `.../sandbox/*Test.kt` 및 `*IT.kt`로 옮겼다. 명령 매퍼 테스트는 `gameapi.reserve.command.CommandWireMapperTest`, 역사적 Flyway V2 brief 검사는 `BriefMigrationTest`로 개명했다. 테스트용 `V900`과 과거 `V901`의 Flyway 버전 번호 및 원본 SQL 바이트는 유지한다.
+
+이름 lint의 제품 경로·패키지 잔여는 0건이다. `web/gateway/app/hwiha` 두 경로는 옛 URL을 308로 보내야 하므로 정확한 경로만 예외로 기록했다.
+
 ### Redis 스트림 네임스페이스 (2026-09-30)
 
 | 이전 저장 키 접두사 | 현재 접두사 | 근거 |

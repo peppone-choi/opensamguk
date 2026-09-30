@@ -1,5 +1,6 @@
 package opensamguk.gameapi.web
 
+
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.core.type.TypeReference
 import opensamguk.common.wire.CommandLifecycleResult
@@ -26,8 +27,8 @@ import opensamguk.logic.command.CommandAvailability
 import opensamguk.logic.input.InputCatalog
 import opensamguk.logic.input.InputRejection
 import opensamguk.logic.input.RuleProfile
-import opensamguk.gameapi.v2.legacyError
-import opensamguk.gameapi.v2.validateLegacyV2Arguments
+import opensamguk.gameapi.command.commandError
+import opensamguk.gameapi.command.validateCommandArguments
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.redis.core.StringRedisTemplate
 import org.springframework.http.HttpStatus
@@ -138,8 +139,8 @@ class CommandController(
             if (userId == null || userId <= 0 || userId > Int.MAX_VALUE.toLong()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build()
             }
-            val availability = validateLegacyV2Arguments(code, argJson)
-            if (availability !is CommandAvailability.Available) return availability.legacyError(code)
+            val availability = validateCommandArguments(code, argJson)
+            if (availability !is CommandAvailability.Available) return availability.commandError(code)
             val reserved = reserve.reserveForOwner(generalId, code, turnIdx, argJson, userId.toInt())
             return ResponseEntity.status(HttpStatus.ACCEPTED).body(
                 ReservedResponse(status = "AVAILABLE", requestId = reserved.requestId, turnIdx = reserved.turnIdx),

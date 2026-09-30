@@ -16,13 +16,13 @@ class ContentCatalogTest {
     private val fixture = ContentCatalog(FIXTURE_LOCATION)
 
     @Test
-    fun `loads active metadata as the typed v2 catalog contract`() {
+    fun `loads active metadata as the typed catalog contract`() {
         val metadata = fixture.load("active")
 
         assertEquals(1, metadata.schemaVersion)
         assertEquals("active", metadata.id)
         assertEquals(ContentStatus.ACTIVE, metadata.status)
-        assertEquals("v2-catalog-fixture/scenario/cities.json", metadata.source)
+        assertEquals("catalog-fixture/scenario/cities.json", metadata.source)
         assertEquals("2dc5ec3c107b828044d331acaa3a294a4de3e53915474000566143f1b959c9ee", metadata.sha256)
         assertEquals(2, metadata.cityCount)
         assertEquals(1, metadata.scenarioOwnedCityCount)
@@ -32,21 +32,21 @@ class ContentCatalogTest {
     fun `rejects candidate metadata instead of loading it`() {
         val error = assertFailsWith<IllegalArgumentException> { fixture.load("candidate") }
 
-        assertEquals("v2 content 'candidate' is CANDIDATE and cannot be loaded", error.message)
+        assertEquals("catalog content 'candidate' is CANDIDATE and cannot be loaded", error.message)
     }
 
     @Test
     fun `rejects excluded metadata instead of loading it`() {
         val error = assertFailsWith<IllegalArgumentException> { fixture.load("excluded") }
 
-        assertEquals("v2 content 'excluded' is EXCLUDED and cannot be loaded", error.message)
+        assertEquals("catalog content 'excluded' is EXCLUDED and cannot be loaded", error.message)
     }
 
     @Test
     fun `rejects budget-only metadata instead of loading it`() {
         val error = assertFailsWith<IllegalArgumentException> { fixture.load("budget-only") }
 
-        assertEquals("v2 content 'budget-only' is BUDGET_ONLY and cannot be loaded", error.message)
+        assertEquals("catalog content 'budget-only' is BUDGET_ONLY and cannot be loaded", error.message)
     }
 
     @Test
@@ -54,22 +54,22 @@ class ContentCatalogTest {
         val missingField = assertFailsWith<IllegalArgumentException> { fixture.load("malformed") }
         val unknownStatus = assertFailsWith<IllegalArgumentException> { fixture.load("unknown-status") }
 
-        assertEquals("v2 content metadata must contain exactly the approved root keys", missingField.message)
-        assertEquals("unknown v2 content status: DRAFT", unknownStatus.message)
+        assertEquals("catalog content metadata must contain exactly the approved root keys", missingField.message)
+        assertEquals("unknown catalog content status: DRAFT", unknownStatus.message)
     }
 
     @Test
     fun `rejects metadata with an extra copied cities payload`() {
         val error = assertFailsWith<IllegalArgumentException> { fixture.load("cities-payload") }
 
-        assertEquals("v2 content metadata must contain exactly the approved root keys", error.message)
+        assertEquals("catalog content metadata must contain exactly the approved root keys", error.message)
     }
 
     @Test
     fun `rejects duplicate metadata keys before the last status can satisfy the active contract`() {
         val error = assertFailsWith<IllegalArgumentException> { fixture.load("duplicate-status") }
 
-        assertEquals("v2 content metadata must not contain duplicate keys: status", error.message)
+        assertEquals("catalog content metadata must not contain duplicate keys: status", error.message)
     }
 
     @Test
@@ -86,7 +86,7 @@ class ContentCatalogTest {
                     ContentCatalog(FIXTURE_LOCATION).load("active")
                 }
 
-                assertEquals("v2 content metadata is ambiguous: active", error.message)
+                assertEquals("catalog content metadata is ambiguous: active", error.message)
             } finally {
                 Thread.currentThread().contextClassLoader = originalClassLoader
             }
@@ -100,13 +100,13 @@ class ContentCatalogTest {
         )
         assertTrue(
             ContentCatalogTest::class.java.classLoader
-                .getResource("v2-catalog-fixture/content/v2-decoy/decoy.json") != null,
+                .getResource("catalog-fixture/content/catalog-decoy/decoy.json") != null,
         )
 
         val traversal = assertFailsWith<IllegalArgumentException> { fixture.load("../candidate") }
 
-        assertEquals("v2 content id is invalid: ../candidate", traversal.message)
-        assertNull(fixture.read("../v2-decoy/decoy.json"))
+        assertEquals("catalog content id is invalid: ../candidate", traversal.message)
+        assertNull(fixture.read("../catalog-decoy/decoy.json"))
         assertNull(fixture.read("deep.json"))
         assertNull(fixture.read("decoy.json"))
         assertTrue("deep.json" !in fixture.names())
@@ -143,11 +143,11 @@ class ContentCatalogTest {
             assertTrue(needle !in text, "${classFile.path} constant pool references forbidden type $needle")
         }
         assertTrue("org/springframework/core/io/support/PathMatchingResourcePatternResolver" in text)
-        assertTrue("content/v2" in text)
+        assertTrue("content/catalog" in text)
     }
 
     private companion object {
-        const val FIXTURE_LOCATION = "v2-catalog-fixture/content/v2"
-        const val DUPLICATE_CLASSPATH_ROOT = "v2-catalog-duplicate-classpath/"
+        const val FIXTURE_LOCATION = "catalog-fixture/content/catalog"
+        const val DUPLICATE_CLASSPATH_ROOT = "catalog-duplicate-classpath/"
     }
 }
