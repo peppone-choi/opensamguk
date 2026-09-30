@@ -1,6 +1,7 @@
 // 부대 표지(K2-08 그리는 쪽): 자리 · 층 · 누를 영역 · 그리기 인터페이스까지.
 // 표지가 어떻게 생겼는지(원작 표지 · 깃발 · 선 모양)는 corpsArt.ts 한 곳에서만 정한다.
 // 깃발/유닛 · 표식 모양 승인 묶음이 정해지면 그 파일만 바꾼다.
+import type { UnitType } from '../../battle/battleUnits';
 import type { CellPoint, ScreenPoint } from './types';
 
 export type Heading = 'left' | 'right' | 'up' | 'down';
@@ -14,6 +15,8 @@ export interface CorpsMarker {
   heading: Heading | null;
   /** Remaining route cells (drawn as the 「부대 경로」 layer). */
   route?: readonly CellPoint[];
+  /** Which original unit sprite to draw (분대 표기 B안); the general's own black-horse sprite when absent. */
+  unitType?: UnitType;
 }
 
 export interface Rect { x: number; y: number; width: number; height: number }
@@ -27,9 +30,9 @@ export const CORPS_HIT_Z = 5;
 export const CORPS_MIN_HIT_PX = 44;
 export const CORPS_FLAG_PX = 32;
 
-/** Body size on screen: one cell, but never smaller than 24px so the heading stays readable. */
+/** Body size on screen: the original 32 px unit sprite at a whole scale (1× below 32 px/cell, 2× from there). */
 export function corpsMarkerSize(zoom: number): number {
-  return Math.max(24, Math.min(zoom, 48));
+  return zoom >= 32 ? 64 : 32;
 }
 
 /** Heading from the first route step (4-neighbour dominant axis); null when there is no route. */
@@ -46,7 +49,7 @@ export function headingOf(cell: CellPoint, route?: readonly CellPoint[]): Headin
 export interface CorpsPlacement {
   /** Screen point of the cell centre. */
   at: ScreenPoint;
-  /** Direction body (drawn only while moving). */
+  /** Body (the unit sprite, or the direction marker while the unit kit is not loaded). */
   body: Rect;
   /** Leader flag, planted at the body's upper left. */
   flag: Rect;
@@ -85,7 +88,7 @@ function touchRect(rect: Rect): Rect {
  */
 export interface CorpsArt {
   drawRoute(ctx: CanvasRenderingContext2D, marker: CorpsMarker, points: readonly ScreenPoint[]): void;
-  /** Called only while moving (`marker.heading` is set). */
-  drawBody(ctx: CanvasRenderingContext2D, marker: CorpsMarker & { heading: Heading }, rect: Rect): void;
+  /** Called for every marker; `marker.heading` is null when it stands still. */
+  drawBody(ctx: CanvasRenderingContext2D, marker: CorpsMarker, rect: Rect): void;
   drawFlag(ctx: CanvasRenderingContext2D, marker: CorpsMarker, rect: Rect): void;
 }

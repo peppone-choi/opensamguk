@@ -11,7 +11,9 @@ import { decodeGreyPng, fetchBytes, fetchJson, fetchOverview, joinUrl, loadBitma
 import { adminTexels, footprints, labelCandidates, parsePlaces, type PlacesData } from './places';
 import { buildProvinceTable, type VisionState } from './provinceTable';
 import { drawMyLocation, myLocationHitRect, type MyLocation } from './myLocation';
-import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker, type Heading } from './corps';
+import { CORPS_HIT_Z, corpsPlacement, type CorpsArt, type CorpsMarker } from './corps';
+import { loadUnitKit } from '../../battle/battleCanvas';
+import type { UnitKit } from '../../battle/battleUnits';
 import { createKitCorpsArt } from './corpsArt';
 import { drawFlag, drawSite, sheetFrom, type SpriteSheet } from './sprites';
 import { createGl } from './gl/glUtil';
@@ -23,6 +25,8 @@ export interface TopdownSource {
   bakeUrl: string;
   /** Directory holding the kit export (kit-index.png, kit-mip*.png, palettes.json, sites/flags sheets). */
   kitUrl: string;
+  /** Battle kit export whose original unit sprites draw corps (분대 표기 B안); absent → the map marker art. */
+  unitsUrl?: string;
 }
 
 export interface WorldNation { id: number; name: string; color: string }
@@ -72,8 +76,10 @@ export class TopdownRenderer {
   private flags: SpriteSheet | null = null;
   private markers: SpriteSheet | null = null;
   private corps: readonly CorpsMarker[] = [];
+  private units: UnitKit | null = null;
   private readonly corpsArt: CorpsArt = createKitCorpsArt({
     sheets: () => ({ markers: this.markers, flags: this.flags }),
+    units: () => this.units,
     cached: (key, make) => this.cached(key, make),
     font: LABEL_FONT,
   });
@@ -185,7 +191,11 @@ export class TopdownRenderer {
       this.markers = markers;
       this.requestFrame();
     });
-    await Promise.all([mips, overview, places, sprites]);
+    // 부대 유닛 그림(B안)은 없어도 지도는 선다: 못 받으면 표지 그림으로 둔다
+    const units = source.unitsUrl
+      ? loadUnitKit(source.unitsUrl).then((kit) => { this.units = kit; this.requestFrame(); }, () => undefined)
+      : Promise.resolve();
+    await Promise.all([mips, overview, places, sprites, units]);
   }
 
   get shape(): MapShape | null {
@@ -407,6 +417,7 @@ export class TopdownRenderer {
         sprites.push({ kind: 'flag', id: String(city.id), rect: { x, y, width: FLAG_PX, height: FLAG_PX }, z: 1 });
       }
     }
+    const corpsBoxes: { x: number; y: number; width: number; height: number }[] = [];
     if (level !== 'ju') {
       const toScreen = (cell: { col: number; row: number }) => cellToScreen({ col: cell.col + 0.5, row: cell.row + 0.5 }, cam, this.viewport);
       const placed = this.corps
@@ -415,15 +426,16 @@ export class TopdownRenderer {
       // 경로를 모두 먼저 그려 다른 부대 표지를 덮지 않게 한다
       if (this.layers.corpsRoutes) for (const { marker, place } of placed) this.corpsArt.drawRoute(ctx, marker, place.route);
       for (const { marker, place } of placed) {
-        if (marker.heading) this.corpsArt.drawBody(ctx, marker as CorpsMarker & { heading: Heading }, place.body);
+        this.corpsArt.drawBody(ctx, marker, place.body);
         this.corpsArt.drawFlag(ctx, marker, place.flag);
         sprites.push({ kind: 'corps', id: marker.id, rect: place.hit, z: CORPS_HIT_Z });
+        corpsBoxes.push(place.body, place.flag);
       }
     }
     if (this.layers.cityNames || level === 'ju') {
       const hidden = new Set<LabelKind>(this.layers.cityNames ? [] : ['county', 'commanderySeat', 'pass', 'ferry']);
       const candidates = this.labels.filter((l) => l.kind === 'ju' || l.kind === 'commandery' || inView(l.anchor.col, l.anchor.row, 8));
-      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden })) {
+      for (const label of layoutLabels(candidates, cam, this.viewport, this.measure, { hidden, avoid: corpsBoxes })) {
         ctx.fillStyle = 'rgba(12,15,14,0.72)';
         ctx.fillRect(label.x, label.y, label.width, label.height);
         ctx.fillStyle = '#f5ecd6';

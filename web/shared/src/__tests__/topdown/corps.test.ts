@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { CORPS_MIN_HIT_PX, corpsMarkerSize, corpsPlacement, headingOf, type CorpsMarker } from '../../map/topdown/corps';
-import { createKitCorpsArt } from '../../map/topdown/corpsArt';
+import { createKitCorpsArt, FACING_OF_HEADING } from '../../map/topdown/corpsArt';
+import type { UnitKit } from '../../battle/battleUnits';
 
 const toScreen = (cell: { col: number; row: number }) => ({ x: cell.col * 10, y: cell.row * 10 });
 const marker = (extra: Partial<CorpsMarker> = {}): CorpsMarker => ({
@@ -27,16 +28,17 @@ describe('부대 표지', () => {
     expect(headingOf({ col: 1, row: 1 }, [{ col: 1, row: 1 }])).toBeNull();
   });
 
-  it('표지는 한 칸 크기지만 24px보다 작지 않고 48px를 넘지 않는다', () => {
-    expect(corpsMarkerSize(4)).toBe(24);
-    expect(corpsMarkerSize(32)).toBe(32);
-    expect(corpsMarkerSize(64)).toBe(48);
+  it('몸통은 원작 32px 유닛을 정수 배율로: 32px/칸 아래 1배, 그 위 2배', () => {
+    expect(corpsMarkerSize(4)).toBe(32);
+    expect(corpsMarkerSize(16)).toBe(32);
+    expect(corpsMarkerSize(32)).toBe(64);
+    expect(corpsMarkerSize(64)).toBe(64);
   });
 
   it('자리: 몸통은 칸 가운데, 깃발은 몸통 왼쪽 위, 누를 영역은 둘을 덮고 44px 이상', () => {
     const place = corpsPlacement(marker(), 4, toScreen);
     expect(place.at).toEqual({ x: 100, y: 100 });
-    expect(place.body).toEqual({ x: 88, y: 88, width: 24, height: 24 });
+    expect(place.body).toEqual({ x: 84, y: 84, width: 32, height: 32 });
     expect(place.flag.y + place.flag.height).toBeGreaterThan(place.body.y);
     expect(place.flag.x).toBeLessThan(place.body.x);
     for (const r of [place.body, place.flag]) {
@@ -72,5 +74,25 @@ describe('부대 표지', () => {
     expect(stroke).not.toHaveBeenCalled();
     art.drawRoute(ctx, marker(), [{ x: 0, y: 0 }, { x: 5, y: 5 }]);
     expect(stroke).toHaveBeenCalledOnce();
+  });
+
+  it('유닛 키트가 있으면 원작 유닛(대장 기본) · 방향 그림, 멈추면 SW', () => {
+    const drawImage = vi.fn();
+    const ctx = { drawImage, imageSmoothingEnabled: true } as unknown as CanvasRenderingContext2D;
+    const keys: string[] = [];
+    const sentinel = {} as OffscreenCanvas;
+    const kit = {} as UnitKit;
+    const art = createKitCorpsArt({ sheets: () => ({ markers: null, flags: null }), units: () => kit, cached: (key) => { keys.push(key); return sentinel; }, font: 'serif' });
+    const rect = { x: 1, y: 2, width: 32, height: 32 };
+    art.drawBody(ctx, marker({ heading: 'right' }), rect);
+    art.drawBody(ctx, marker(), rect);
+    art.drawBody(ctx, marker({ heading: 'up', unitType: 'archer', nationColor: '#c0392b' }), rect);
+    expect(keys).toEqual(['corps|unit|4|#3366cc', 'corps|unit|0|#3366cc', 'corps|unit|38|#c0392b']);
+    expect(drawImage).toHaveBeenCalledTimes(3);
+    expect(drawImage).toHaveBeenCalledWith(sentinel, 1, 2, 32, 32);
+  });
+
+  it('지도 방향 → 원작 방향: 왼 SW · 위 NW · 오른 NE · 아래 SE', () => {
+    expect(FACING_OF_HEADING).toEqual({ left: 'sw', up: 'nw', right: 'ne', down: 'se' });
   });
 });

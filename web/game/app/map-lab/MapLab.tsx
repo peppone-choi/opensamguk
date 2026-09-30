@@ -16,7 +16,7 @@ import {
 const CORPS: CorpsMarker[] = [
   { id: 'c1', cell: { col: 1522, row: 936 }, nationColor: '#b0569a', leaderName: '안량', heading: 'right',
     route: [{ col: 1526, row: 936 }, { col: 1530, row: 938 }, { col: 1536, row: 938 }] },
-  { id: 'c2', cell: { col: 1492, row: 944 }, nationColor: '#4f7fbf', leaderName: '하후연', heading: null },
+  { id: 'c2', cell: { col: 1492, row: 944 }, nationColor: '#4f7fbf', leaderName: '하후연', heading: null, unitType: 'lightCavalry' },
 ];
 
 const ME: MyLocation = { cell: { col: 1505, row: 933 }, state: 'IN_CITY', nationColor: '#4f7fbf', portrait: null, name: '하후돈' };
@@ -60,7 +60,8 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
   const [pick, setPick] = useState(false);
   const [showMe, setShowMe] = useState(true);
   const world = useMemo(() => demoWorld(1608, pick), [pick]);
-  const source = useMemo(() => ({ bakeUrl, kitUrl }), [bakeUrl, kitUrl]);
+  // 부대 유닛 그림(B안)은 앱이 싣는 전장 키트 export에서 받는다
+  const source = useMemo(() => ({ bakeUrl, kitUrl, unitsUrl: '/battle/waryong/2c8a1a5' }), [bakeUrl, kitUrl]);
   const toggle = (key: keyof MapLayers) => setLayers((current) => ({ ...current, [key]: !current[key] }));
   return (
     <main style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#0c0f0e', color: '#ece6d8' }}>
