@@ -1,5 +1,6 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
 export { BREAKPOINTS, MEDIA, viewportClass, type ViewportClass } from './breakpoints';
+export { useViewportClass } from './useViewportClass';
 export * from './strategicMap';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
