@@ -204,3 +204,7 @@ export {
 } from './useWorldMap';
 export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
+export {
+  PHASE_LABELS, formatGameDate, hasFinalConsonant, withParticle, worldEventSentence,
+  type EventNames, type GameEvent, type GameEventPage, type GameEventSection, type GameEventTime,
+} from './gameEvents';
