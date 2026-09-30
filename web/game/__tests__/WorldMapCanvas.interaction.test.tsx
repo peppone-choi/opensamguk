@@ -8,6 +8,7 @@ import {
   initialView,
   provinceAtScreenPoint,
   screenToCell,
+  terrainColorFor,
   type IsoView,
   type ProvinceIdentityMap,
 } from '@opensamguk/ui';
@@ -145,6 +146,7 @@ function recordFor(canvas: HTMLCanvasElement): CanvasRecord {
     },
     fillText: (value: string, x: number, y: number) => {
       fillTexts.push(value);
+      operations.push(`fillText:${value}`);
       fillTextCalls.push({
         value,
         font: context.font,
@@ -985,41 +987,47 @@ describe('shared WorldMapCanvas viewport interaction', () => {
   it('redraws only on the approved slow self-location phase in normal motion', () => {
     vi.useFakeTimers();
     const intervals: number[] = [];
-    const nativeSetInterval = window.setInterval.bind(window);
-    vi.spyOn(window, 'setInterval').mockImplementation(((handler: TimerHandler, timeout?: number) => {
+    // 가짜 setInterval 을 vi.spyOn 으로 감싸지 않는다 — 전역 restoreAllMocks 가 useRealTimers 뒤에
+    // 스파이의 원래 값(가짜)을 되살려, 뒤 테스트의 rAF · waitFor 폴링이 멈춘다. 손으로 끼우고 되돌린다.
+    const fakeSetInterval = window.setInterval;
+    window.setInterval = ((handler: TimerHandler, timeout?: number) => {
       intervals.push(timeout ?? 0);
-      return nativeSetInterval(handler, timeout);
-    }) as typeof window.setInterval);
-    vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addListener: vi.fn(),
-      removeListener: vi.fn(),
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-      dispatchEvent: vi.fn(),
-    }));
-    render(
-      <WorldMapCanvas
-        mapCode="che"
-        tiles={CHE_TILES_FIXTURE}
-        provinceMap={null}
-        cities={[{ ...CHE_OVERLAYS_FIXTURE[0], nationId: 0, nationColor: undefined }]}
-        currentCityId={11}
-        sourceSize={{ width: 200, height: 120 }}
-      />,
-    );
+      return fakeSetInterval(handler, timeout);
+    }) as typeof window.setInterval;
+    try {
+      vi.spyOn(window, 'matchMedia').mockImplementation((query) => ({
+        matches: false,
+        media: query,
+        onchange: null,
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      }));
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={CHE_TILES_FIXTURE}
+          provinceMap={null}
+          cities={[{ ...CHE_OVERLAYS_FIXTURE[0], nationId: 0, nationColor: undefined }]}
+          currentCityId={11}
+          sourceSize={{ width: 200, height: 120 }}
+        />,
+      );
 
-    expect(intervals).toContain(1_200);
-    expect(intervals).not.toContain(500);
-    const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
-    const main = recordFor(canvas);
-    const initialFrames = main.operations.filter((operation) => operation === 'clearRect').length;
+      expect(intervals).toContain(1_200);
+      expect(intervals).not.toContain(500);
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      const main = recordFor(canvas);
+      const initialFrames = main.operations.filter((operation) => operation === 'clearRect').length;
 
-    act(() => vi.advanceTimersByTime(1_200));
+      act(() => vi.advanceTimersByTime(1_200));
 
-    expect(main.operations.filter((operation) => operation === 'clearRect')).toHaveLength(initialFrames + 1);
+      expect(main.operations.filter((operation) => operation === 'clearRect')).toHaveLength(initialFrames + 1);
+    } finally {
+      window.setInterval = fakeSetInterval;
+    }
   });
 
   it('changes the view for zoom controls and pointer panning', () => {
@@ -1347,9 +1355,9 @@ describe('shared WorldMapCanvas viewport interaction', () => {
     expect(onCountyHover).toHaveBeenLastCalledWith(
       expect.objectContaining({
         nationId: 0,
-        nationName: '미소유',
+        nationName: '무주',
         nationColor: undefined,
-        displayedOwnerNationName: '미소유',
+        displayedOwnerNationName: '무주',
       }),
       expect.any(Object),
     );
@@ -1622,5 +1630,283 @@ describe('shared WorldMapCanvas viewport interaction', () => {
       expect.objectContaining(CHE_OVERLAYS_FIXTURE[0]),
       { pointerType: 'keyboard' },
     );
+  });
+  describe('M1 — 필요한 그림만 받고 이름표는 겹치지 않는다', () => {
+    /** src 를 받는 순간 불러진 것으로 치는 그림 — 몇 장을 청했는지 센다. */
+    function countingImage() {
+      const requested: string[] = [];
+      class CountingImage {
+        onload: (() => void) | null = null;
+        onerror: (() => void) | null = null;
+        width = 64;
+        height = 64;
+        private value = '';
+        set src(next: string) {
+          this.value = next;
+          requested.push(next);
+          queueMicrotask(() => this.onload?.());
+        }
+        get src() { return this.value; }
+      }
+      vi.stubGlobal('Image', CountingImage);
+      return { requested, CountingImage };
+    }
+
+    /** 칸이 많은 판 — 맞춤 배율에서 城 이 모두 점으로 그려진다(운영 로그인 첫 화면과 같다). */
+    function wideTiles(cells: number) {
+      return {
+        ...CHE_TILES_FIXTURE,
+        _meta: { ...CHE_TILES_FIXTURE._meta, cols: cells, rows: cells },
+        terrain: Array.from({ length: cells }, () => '1'.repeat(cells)),
+        owner: [[0, cells * cells]] as [number, number][],
+        seatOwner: [[0, cells * cells]] as [number, number][],
+        juns: [],
+        cities: [],
+      };
+    }
+
+    /** 마지막 그리기의 이름표 상자(화면 px). 하니스의 measureText 는 글자당 12px 이다. */
+    function lastFrameLabels(canvas: HTMLCanvasElement) {
+      const main = recordFor(canvas);
+      const frameStart = main.operations.lastIndexOf('clearRect');
+      const texts = main.operations.slice(frameStart)
+        .filter((operation) => operation.startsWith('fillText:')).length;
+      return main.fillTextCalls.slice(main.fillTextCalls.length - texts).map((call) => {
+        const size = Number.parseFloat(call.font.match(/([\d.]+)px/)?.[1] ?? '0');
+        const half = (call.value.length * 12 + 4 * 2) / 2;
+        return { ...call, box: { x0: call.x - half, x1: call.x + half, y0: call.y - size - 4, y1: call.y + size * 0.25 + 4 } };
+      });
+    }
+
+    function overlaps(boxes: { x0: number; x1: number; y0: number; y1: number }[]) {
+      return boxes.some((a, i) => boxes.some((b, j) => i < j
+        && a.x0 < b.x1 && a.x1 > b.x0 && a.y0 < b.y1 && a.y1 > b.y0));
+    }
+
+    it('asks for no 城 picture while every 城 is drawn as a point', async () => {
+      const { requested } = countingImage();
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={wideTiles(400)}
+          provinceMap={null}
+          cities={CHE_OVERLAYS_FIXTURE.map((city, index) => ({ ...city, x: 100 + index * 150, y: 200 }))}
+          sourceSize={{ width: 400, height: 400 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      await act(async () => { await Promise.resolve(); });
+      expect(canvas.dataset.cityPixels).toBe('2');
+      expect(requested).toEqual([]);
+    });
+
+    it('asks only for the picture each on-screen 城 needs and reuses it after a remount', async () => {
+      const { requested } = countingImage();
+      const cities = [
+        { ...CHE_OVERLAYS_FIXTURE[0], id: 1, level: 11, isCapital: false, state: 0 },
+        { ...CHE_OVERLAYS_FIXTURE[1], id: 2, level: 5, state: 0 },
+        { ...CHE_OVERLAYS_FIXTURE[0], id: 3, level: 9, x: 100, y: 60, isCapital: true, state: 6 },
+      ];
+      const view = () => (
+        <WorldMapCanvas mapCode="che" tiles={CHE_TILES_FIXTURE} provinceMap={null} cities={cities}
+          sourceSize={{ width: 200, height: 120 }} />
+      );
+      const first = render(view());
+      const canvas = () => screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      await waitFor(() => expect(canvas().dataset.citySprites).toBe('3'));
+      await waitFor(() => expect(recordFor(canvas()).drawImages.filter((source) => (
+        (source as { src?: string }).src?.includes('/city/'))).length).toBeGreaterThanOrEqual(3), { timeout: 5_000 });
+      // 城 셋에 그림 셋(등급마다 그릴 폭에 맞는 한 장) + 사건 배지 한 장. 예전에는 붙을 때마다 388장이었다.
+      expect(requested.filter((src) => src.includes('/city/'))).toHaveLength(3);
+      expect(requested.filter((src) => src.includes('/status/'))).toEqual([expect.stringMatching(/state-6\.png$/)]);
+      const askedOnce = requested.length;
+
+      first.unmount();
+      records.clear();
+      render(view());
+      await waitFor(() => expect(canvas().dataset.citySprites).toBe('3'));
+      // 다시 붙어도 받은 그림을 그대로 쓴다 — 첫 그리기부터 그림이다.
+      expect(requested).toHaveLength(askedOnce);
+      expect(recordFor(canvas()).drawImages.some((source) => (source as { src?: string }).src?.includes('/city/')))
+        .toBe(true);
+    });
+
+    it('labels only 郡治 by 郡 name and capitals at the 郡 level', () => {
+      countingImage();
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={wideTiles(40)}
+          provinceMap={null}
+          cities={[
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 1, name: '평범현', x: 100, y: 100, isCapital: false },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 2, name: '치소현', x: 300, y: 300, isCapital: false,
+              isCommanderySeat: true, commanderyName: '하남윤' },
+            { ...CHE_OVERLAYS_FIXTURE[0], id: 3, name: '도읍', x: 200, y: 330, isCapital: true, state: 0 },
+          ]}
+          sourceSize={{ width: 400, height: 400 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      expect(canvas.dataset.mapLod).toBe('COMMANDERY');
+      const labels = lastFrameLabels(canvas).map(({ value }) => value);
+      expect(labels).toContain('하남윤');
+      expect(labels).toContain('도읍');
+      expect(labels).not.toContain('평범현');
+      expect(labels).not.toContain('치소현');
+    });
+
+    it('keeps the stronger 縣 name when names would overlap at the 縣 level', () => {
+      countingImage();
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={CHE_TILES_FIXTURE}
+          provinceMap={null}
+          cities={[
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 1, name: '가나다현', x: 100, y: 60, isCapital: false },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 2, name: '라마바현', x: 100, y: 60, isCapital: false },
+            { ...CHE_OVERLAYS_FIXTURE[0], id: 3, name: '수도현', x: 100, y: 60, isCapital: true, state: 0 },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 4, name: '사아자현', x: 100, y: 60, isCapital: false },
+          ]}
+          sourceSize={{ width: 200, height: 120 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      expect(canvas.dataset.mapLod).toBe('COUNTY');
+      const labels = lastFrameLabels(canvas);
+      expect(labels.map(({ value }) => value)).toContain('수도현');
+      expect(labels.length).toBeLessThan(4);
+      expect(overlaps(labels.map(({ box }) => box))).toBe(false);
+      expect(canvas.dataset.cityLabels).toBe(String(labels.length));
+    });
+
+    it('keeps 「내 위치」 on its own 郡 marker when the 郡 layer shows only the seat', () => {
+      countingImage();
+      const tiles = {
+        ...CHE_TILES_FIXTURE,
+        parentRegions: [
+          { id: 'P1', displayName: '사예', nameCh: '司隸', administrativeSystem: 'HAN_COMMANDERY' },
+          { id: 'P2', displayName: '예주', nameCh: '豫州', administrativeSystem: 'HAN_COMMANDERY' },
+        ],
+        provinceRecords: [
+          { id: 'A', displayName: '낙양현', nameCh: '甲', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
+            parentRegionId: 'P1', cityIndex: 0, geometryBasis: 'fixture', confidence: 'high', jurisdictionId: 'J1' },
+          { id: 'B', displayName: '허현', nameCh: '乙', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
+            parentRegionId: 'P2', cityIndex: 1, geometryBasis: 'fixture', confidence: 'high', jurisdictionId: 'J2' },
+          { id: 'C', displayName: '언사현', nameCh: '丙', administrativeSystem: 'HAN_COMMANDERY', kind: 'COUNTY',
+            parentRegionId: 'P1', cityIndex: null, geometryBasis: 'fixture', confidence: 'high', jurisdictionId: 'J3' },
+        ],
+        jurisdictionRecords: [
+          { id: 'J1', displayName: '낙양현', nameCh: '雒陽', kind: 'COUNTY', commanderyId: 'P1', seatPlaceId: 'A', provinceIds: ['A'] },
+          { id: 'J2', displayName: '허현', nameCh: '許', kind: 'COUNTY', commanderyId: 'P2', seatPlaceId: 'B', provinceIds: ['B'] },
+          { id: 'J3', displayName: '언사현', nameCh: '偃師', kind: 'COUNTY', commanderyId: 'P1', seatPlaceId: 'C', provinceIds: ['C'] },
+        ],
+      };
+      render(
+        <WorldMapCanvas
+          mapCode="han"
+          tiles={tiles}
+          provinceMap={{
+            ...PROVINCE_MAP,
+            provinces: new Int16Array([
+              -1, 0, 0, -1,
+              -1, 2, 1, -1,
+              -1, -1, -1, 1,
+            ]),
+            commanderies: new Int16Array([
+              -1, 0, 0, -1,
+              -1, 0, 1, -1,
+              -1, -1, -1, 1,
+            ]),
+          }}
+          cities={[
+            { ...CHE_OVERLAYS_FIXTURE[0], id: 11, provinceId: 0, state: 0 },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 22, provinceId: 1 },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 33, name: '언사', provinceId: 2 },
+          ]}
+          currentCityId={33}
+          sourceSize={{ width: 200, height: 120 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'han 2D 지도' }) as HTMLCanvasElement;
+      const lastFrame = () => {
+        const main = recordFor(canvas);
+        return main.operations.slice(main.operations.lastIndexOf('clearRect'));
+      };
+      expect(lastFrame()).toContain('fillText:내 위치');
+      fireEvent.click(screen.getByRole('button', { name: '군급 도시 레이어' }));
+      // 郡 층에는 郡治(낙양) 표지만 있다 — 내 城(언사)이 없어도 제 郡 표지에 「내 위치」가 남는다.
+      expect(lastFrame()).toContain('fillText:내 위치');
+    });
+
+    it('skips 城 that are wholly off screen', () => {
+      countingImage();
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={wideTiles(40)}
+          provinceMap={null}
+          cities={[
+            { ...CHE_OVERLAYS_FIXTURE[0], id: 1, name: '가까운현', x: 40, y: 40, state: 0 },
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 2, name: '먼현', x: 360, y: 360, state: 0 },
+          ]}
+          currentCityId={1}
+          initialFocus="current-city-close"
+          sourceSize={{ width: 400, height: 400 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      // 당겨 본 자리에서 먼 城 은 화면 수백 px 밖이다 — 그리지도, 이름을 달지도 않는다.
+      expect(Number(canvas.dataset.citySprites) + Number(canvas.dataset.cityPixels)).toBe(1);
+      const names = lastFrameLabels(canvas).map(({ value }) => value);
+      expect(names).toContain('가까운현');
+      expect(names).not.toContain('먼현');
+    });
+
+    it('bakes each terrain cell in the same colour as terrainColorFor', () => {
+      countingImage();
+      const terrain = ['0123', '4567', '89 x', '5'];
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={{ ...CHE_TILES_FIXTURE, _meta: { ...CHE_TILES_FIXTURE._meta, cols: 4, rows: 4 }, terrain,
+            owner: [[0, 16]], seatOwner: [[0, 16]] }}
+          provinceMap={null}
+          cities={[]}
+          sourceSize={{ width: 200, height: 120 }}
+        />,
+      );
+      const baked = [...records.values()].flatMap((record) => record.putImages).find((pixels) => pixels.length === 4 * 4 * 4);
+      expect(baked).toBeDefined();
+      const expected = terrain.flatMap((row) => Array.from({ length: 4 }, (_, col) => {
+        const color = terrainColorFor(row[col]);
+        return [1, 3, 5].map((at) => Number.parseInt(color.slice(at, at + 2), 16)).concat(255);
+      })).flat();
+      expect(Array.from(baked!)).toEqual(expected);
+    });
+
+    it('draws the self-location marker above every 城 name', () => {
+      countingImage();
+      render(
+        <WorldMapCanvas
+          mapCode="che"
+          tiles={CHE_TILES_FIXTURE}
+          provinceMap={null}
+          cities={[
+            { ...CHE_OVERLAYS_FIXTURE[1], id: 22, x: 100, y: 60 },
+            { ...CHE_OVERLAYS_FIXTURE[0], id: 11, x: 100, y: 40, state: 0 },
+          ]}
+          currentCityId={22}
+          sourceSize={{ width: 200, height: 120 }}
+        />,
+      );
+      const canvas = screen.getByRole('img', { name: 'che 2D 지도' }) as HTMLCanvasElement;
+      const main = recordFor(canvas);
+      const frame = main.operations.slice(main.operations.lastIndexOf('clearRect'));
+      const names = frame.filter((operation) => operation.startsWith('fillText:') && operation !== 'fillText:내 위치');
+      expect(names.length).toBeGreaterThan(0);
+      expect(frame.indexOf('fillText:내 위치')).toBeGreaterThan(frame.lastIndexOf(names.at(-1)!));
+    });
   });
 });
