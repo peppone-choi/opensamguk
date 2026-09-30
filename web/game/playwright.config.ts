@@ -36,7 +36,9 @@ export default defineConfig({
     ignoreHTTPSErrors: false,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
-    video: 'retain-on-failure',
+    // 로컬은 영상을 끈다 — Playwright 1.52 의 ffmpeg(서명 없는 x86_64)를 macOS 26 이 죽여(exit 137 · spawn -88) 모든 시험이
+    // 시작부터 실패한다. 다시 받아도 같은 파일이다(2026-10-01 확인). CI(리눅스)는 실패 영상을 남긴다.
+    video: process.env.CI ? 'retain-on-failure' : 'off',
   },
   projects: [
     { name: 'desktop', grepInvert: /@mobile-only/, use: channel },
