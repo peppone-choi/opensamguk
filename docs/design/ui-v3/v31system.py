@@ -21,7 +21,7 @@
 import os
 import re
 
-V31_VERSION = '3.1.4'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5 · 3.1.3 = d6912a10e
+V31_VERSION = '3.1.5'  # 부품이 바뀌면 올린다(K0 가 레인에 다시 복사하라고 알린다). 3.1.0 = 9ab706722 · 3.1.1 = 0ce715813 · 3.1.2 = ddfc414d5 · 3.1.3 = d6912a10e · 3.1.4 = a3d35db35
 
 from v3common import *  # noqa: F401,F403 — CSS · V3CSS · sec · kv · icon · IC · cat · CATS · res · RES · LOGO …
 from v3common import CSS, V3CSS, IC, P, LOGO, LOGO_M, apply_terms, icon, sec, kv, cat, CATS, res
@@ -129,7 +129,8 @@ V31CSS = '''
 .band{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 6px 0 16px;font-size:13px;flex-shrink:0;border-bottom:1px solid #3d4740}
 .band.catch{background:rgba(211,176,100,.12);border-bottom-color:#9c7f3f}
 .band.stop{background:rgba(201,107,93,.16);border-bottom-color:#c96b5d}
-.band.notice,.band.tutorial{background:rgba(122,167,199,.12);border-bottom-color:#4b6d87}
+.band.notice,.band.tutorial,.band.paused,.band.waiting{background:rgba(122,167,199,.12);border-bottom-color:#4b6d87}
+.band.unknown{background:rgba(185,178,163,.08);border-bottom-color:#5a625c}
 .toast{display:flex;align-items:center;gap:10px;min-height:48px;padding:0 6px 0 14px;background:#232a26;border:1px solid #3d4740;box-shadow:0 10px 30px rgba(0,0,0,.5);font-size:13px}
 .toast.ok{border-color:#697e58}.toast.bad{border-color:#c96b5d}
 .note{font-size:12px;line-height:1.55;color:#b9b2a3}
@@ -165,6 +166,8 @@ IC.update({
     'season': '<circle cx="12" cy="12" r="4"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M5 19l2-2M17 7l2-2"/>',
     'unplug': '<path d="M9 7V3M15 7V3M7 7h10v4a5 5 0 0 1-10 0z"/><path d="M12 16v5M3 3l18 18"/>',
     'crown': '<path d="M3 18h18M4 16l-1-9 5 4 4-7 4 7 5-4-1 9z"/>',
+    'pausec': '<circle cx="12" cy="12" r="9"/><path d="M10 8v8M14 8v8"/>',
+    'question': '<circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.6 2.4c-.7.3-1.1.9-1.1 1.6v.6M12 17v.6"/>',
     'play': '<path d="M7 4l13 8-13 8z"/>',
     'pause': '<path d="M7 4v16M17 4v16"/>',
     'skipb': '<path d="M6 5v14M19 5l-10 7 10 7z"/>',
@@ -277,9 +280,10 @@ def season_chip(label='봄 · 200년 3월 중순', dot=False, pressed=False):
             f'{icon("season", 16, "#d3b064")}<span>{label}</span>{d}</button>')
 
 
-def topbar31(title, practice=False, season_dot=False, season_open=False, tablet=False):
+def topbar31(title, practice=False, season_dot=False, season_open=False, tablet=False, turn_state='RUNNING'):
     """머리줄 48. 누르는 것은 모두 44. 첫걸음 칩은 연습 서버에서만(K0 결정) — 본 서버는 도움말 서랍의 안내판."""
-    nxt = '' if tablet else '<span class="chip">다음 개인 턴 21:40</span>'
+    clock = turn_clock(turn_state)
+    nxt = '' if tablet else (f'<span class="chip">다음 개인 턴 {clock}</span>' if clock else '<span class="chip">다음 개인 턴 21:40</span>')
     tut = ('<span class="chip info">연습 서버</span><a href="#" class="hchip" style="border-color:#4b6d87;color:#7aa7c7" data-guide="tutorial.chip">첫걸음 3 / 8</a>'
            if practice else '')
     return (f'<header style="height:48px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 8px 0 16px;border-bottom:1px solid #3d4740;'
@@ -300,8 +304,8 @@ def mtop31(title=None, back=None, season_dot=False):
             f'<button type="button" class="ibtn" aria-label="이 화면 도움말">{icon("help")}</button></div></header>')
 
 
-def shell_desk(title, on, main, band_html='', practice=False, season_dot=False, season_open=False):
-    return (topbar31(title, practice, season_dot, season_open) + band_html
+def shell_desk(title, on, main, band_html='', practice=False, season_dot=False, season_open=False, turn_state='RUNNING'):
+    return (topbar31(title, practice, season_dot, season_open, turn_state=turn_state) + band_html
             + f'<div style="flex-grow:1;display:flex;min-height:0;position:relative">{rail31(on)}{main}</div>')
 
 
@@ -509,12 +513,36 @@ def state_notfound(pad=16):
 
 # ------------------------------------------------------------------ 알림 띠(P-W05, NoticeBand) — 머리줄 바로 아래 한 줄, 한 번에 하나
 BANDS = {
+    # 턴 루프 공개 상태(계약판 K10-01 · 01f turnLoop.state)별 띠. 시각 · 배속은 서버가 준 값만 쓰고, 기기 시계로 다시 계산하지 않는다.
     'catch': ('catch', 'clock', '#d3b064', '<b>따라잡는 중</b> — 서버가 멈췄던 동안 밀린 순을 2배 빠르기로 돌립니다. 다 따라잡는 때 <span class="mono">21:40</span>', '자세히'),
-    'stop': ('stop', 'alert', '#e08a7c', '<b>턴이 멈췄습니다</b> — 마지막 순 3월 중순 <span class="mono">21:40</span>. 운영진이 살피는 중입니다. 예약은 그대로 남습니다', '상태 보기'),
+    'stop': ('stop', 'alert', '#e08a7c', '<b>턴이 멈췄습니다</b> — 마지막 순 3월 중순, 멈춘 지 <span class="mono">42분</span>. 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
+    'paused': ('paused', 'pausec', '#7aa7c7', '<b>턴이 멈춰 있습니다</b> — 멈춘 까닭은 아직 알 수 없습니다. 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
+    'paused_admin': ('paused', 'pausec', '#7aa7c7', '<b>운영진이 턴을 잠시 멈췄습니다</b> — 걸어 둔 예약은 그대로 남습니다', '공지 보기'),
+    'unknown': ('unknown', 'question', '#b9b2a3', '<b>운영 상태 확인 중</b> — 지금은 턴이 도는지 확인할 수 없습니다. 다음 턴 시각은 확인될 때까지 보이지 않습니다', '다시 확인'),
+    'waiting': ('waiting', 'clock', '#7aa7c7', '<b>첫 순 전입니다</b> — 첫 순은 <span class="mono">10월 3일 20:00</span>에 시작합니다', '공지 보기'),
     'notice': ('notice', 'tools', '#7aa7c7', '<b>점검 예정</b> — 오늘 <span class="mono">22:00</span>부터 [미정]분. 그동안 턴이 돌지 않습니다', '공지 보기'),
     'tutorial': ('tutorial', 'check', '#7aa7c7', '<b>첫걸음 4 / 8</b> — 첫 발령을 마쳤습니다. 다음: 첫 공사', '다음 보기'),  # 수 = 마친 걸음 수(머리줄 칩과 같다)
 }
-BAND_ORDER = '점검 중(전체 화면) > 턴 정지 > 따라잡기 > 점검 예고 > 첫걸음 달성(6초 뒤 접힘)'
+BAND_ORDER = '점검 중(전체 화면) > 턴 멈춤 > 턴 멈춰 있음 > 운영 상태 확인 중 > 따라잡기 > 점검 예고 > 첫 순 전 > 첫걸음 달성(6초 뒤 접힘)'
+
+# 턴 루프 상태 → 셸이 보이는 것(K10-01f 수신 합의안). 시각 칸: 'time' = 서버 시각 그대로, '미정' · '확인 중' = 시각을 짐작해 보이지 않는다.
+TURN_LOOP_UI = [
+    # (state, pausedReason, 띠, 머리줄 「다음 개인 턴」, 순 띠 · 12순 시각, 비고)
+    ('RUNNING', '—', '없음', 'time', 'time', ''),
+    ('CATCHING_UP', '—', 'catch', 'time', 'time', '배속 · 다 따라잡는 때는 catchUp 그대로, etaAt 이 없으면 「확인 중」'),
+    ('WAITING', '—', 'waiting', 'time', 'time', '첫 순 시각 = nextTurnAt(예정 시각이지 추정이 아님)'),
+    ('PAUSED', 'MAINTENANCE + maintenance ACTIVE', '전체 화면 「점검 중」', '미정', '미정', 'PAUSED 만으로 점검이라 짐작하지 않는다'),
+    ('PAUSED', 'ADMIN', 'paused_admin', '미정', '미정', ''),
+    ('PAUSED', 'null · UNKNOWN', 'paused', '미정', '미정', '까닭을 지어내지 않는다'),
+    ('STALLED', '—', 'stop', '미정', '미정', '멈춘 지 n분 = staleSeconds(서버). 「운영진이 살피는 중」처럼 확인 못 한 말은 쓰지 않는다'),
+    ('UNKNOWN', 'null', 'unknown', '확인 중', '확인 중', 'STALLED · PAUSED 로 짐작하지 않는다. 경보 띠 색(적갈)을 쓰지 않는다'),
+    ('(모르는 값)', '—', 'unknown', '확인 중', '확인 중', '새 상태 값이 오면 UNKNOWN 으로 받는다'),
+]
+
+
+def turn_clock(state):
+    """머리줄 「다음 개인 턴」 · 12순 시각 칸에 보일 것. RUNNING · CATCHING_UP · WAITING 만 서버 시각을 보인다."""
+    return {'RUNNING': None, 'CATCHING_UP': None, 'WAITING': None, 'PAUSED': '미정', 'STALLED': '미정'}.get(state, '확인 중')
 
 
 def band(kind, mobile=False):
@@ -549,11 +577,14 @@ def turn_strip(cur=4, n=12, cols=6, gap=4, cell_w=None):
     return f'<div role="group" aria-label="순 띠 — 몇 번째 순에 넣을지" style="{lay}">{cells}</div>'
 
 
-def turn_caption(cur=4):
+def turn_caption(cur=4, turn_state='RUNNING'):
+    """고른 순 한 줄. 날짜(게임 달력)는 늘 보이고, 벽시계 시각은 turn_clock(turn_state) 가 None 일 때만 보인다."""
     no, d, t, c, st = TURNS[cur - 1]
     what = f'<span class="serif" style="font-weight:700">{c}</span> {chip(TURN_WORD[st], "bronze")}' if c else chip('빈 순')
+    clock = turn_clock(turn_state)
+    tt = f'<span class="mono">{t}</span>' if clock is None else f'<span class="muted">{clock}</span>'
     return (f'<div style="display:flex;align-items:center;gap:8px;font-size:13px"><span class="mono bz" style="font-weight:700">{no:02d}순</span>'
-            f'<span class="t2">{d} · <span class="mono">{t}</span></span>{what}</div>')
+            f'<span class="t2">{d} · {tt}</span>{what}</div>')
 
 
 CMD_CATS = ['전체', '내정', '군사', '이동', '인물', '개인', '나라', '물자']  # K6 설계서 §2.1 — 정본은 K6
@@ -883,6 +914,7 @@ RULES = [
     ('빗금', '빗금 = 미정찰(시야 밖). 고를 수 없음은 빗금이 아니라 적갈 점선.'),
     ('표기', '縣 → 현 · 郡 → 군 · 城 → 성 · 省 → 구역 · 금 · 쌀 · 부(府) · 소속. 관직은 names.office_ko. 옛 명령 이름은 cmd_label(새 이름 + 「이름 승인 대기」).'),
     ('로고 한 번', '한 화면에 워드마크는 한 번. 큰 워드마크가 있는 로그인 · 가입(데스크톱 · 모바일)은 머리줄 로고를 빼고 「공개 알파」 칩만(gw_topbar/gw_mtop logo_on=False). 로비 · 계정 · 커뮤니티 · 게임 안은 머리줄 로고 그대로.'),
+    ('턴 시각은 서버 값만', '다음 턴 · 따라잡는 때 · 멈춘 시간은 서버 공개 응답 값만. RUNNING · CATCHING_UP · WAITING 에서만 시각을 보이고, PAUSED · STALLED 는 「미정」, UNKNOWN(과 모르는 값)은 「확인 중」 — 짐작한 시각을 보이지 않는다(TURN_LOOP_UI).'),
     ('같은 읽기 지명', '한 화면에 같은 읽기가 함께 나올 때만 이름 뒤 작은 한자 — twin() · places(), class hj(검사 제외). 예: 양성현 陽城 · 襄城, 양주 揚州 · 涼州.'),
     ('날짜', '200년 3월 중순. 달마다 하는 일(월단평 등)만 「200년 3월 월단평」처럼 순 없이 적어도 된다.'),
     ('서랍이 열리면', '지도 위 비모달 서랍(지난 순)이 열리면 지도 보기 단추는 서랍 오른쪽 가장자리 + 12 로 옮긴다.'),
@@ -1605,17 +1637,24 @@ def board_mnotfound():
 
 
 def board_banner():
+    """P-W05 알림 띠 — 지금 띠는 UNKNOWN(운영 상태 확인 중). 머리줄 「다음 개인 턴」 · 12순 시각도 「확인 중」. 상태별 표는 TURN_LOOP_UI."""
     hx, hy = DESK_PX(*CELLS[HERE])
+    rows = ''.join(f'<tr><td class="mono bz" style="height:30px">{st}</td><td class="t2" style="height:30px;white-space:normal">{rs}</td>'
+                   f'<td style="height:30px">{b}</td><td class="mono" style="height:30px">{h}</td><td class="mono" style="height:30px">{c}</td>'
+                   f'<td class="muted" style="height:30px;white-space:normal;font-size:11px">{n}</td></tr>' for st, rs, b, h, c, n in TURN_LOOP_UI)
+    table = (f'<table class="table" style="font-size:11.5px"><thead><tr><th>turnLoop.state</th><th>pausedReason</th><th>띠</th><th>다음 개인 턴</th><th>12순 시각</th><th>규칙</th></tr></thead>'
+             f'<tbody>{rows}</tbody></table>')
     mapst = (f'<main style="position:relative;flex-grow:1;min-width:0;overflow:hidden;background:#0c0f0e">{mapimg("desk", 1048, 908, "영천 일대 지도")}'
              f'{me_marker(hx, hy - 22, "in")}'
-             f'<section class="panel" style="position:absolute;left:100px;top:420px;width:860px;background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5)">'
+             f'<section class="panel" style="position:absolute;left:84px;top:40px;width:940px;background:rgba(27,32,29,.97);box-shadow:0 10px 28px rgba(0,0,0,.5)">'
              f'{sec("알림 띠 — 한 번에 하나, 머리줄 바로 아래", "우선: " + BAND_ORDER)}'
-             f'<div style="display:flex;flex-direction:column;gap:8px;padding:10px 12px">{band("stop")}{band("notice")}{band("tutorial")}'
-             f'<span class="note">띠는 닫지 않는다 — 상태가 풀리면 저절로 사라진다(첫걸음 달성만 6초 뒤 접힘). 따라잡기는 배속과 다 따라잡는 때를 늘 같이 보인다. '
-             f'턴 시각 · 상태는 서버 공개 응답(계약판 K10-01)에서.</span></div></section>{view_bar()}</main>')
+             f'<div style="display:flex;flex-direction:column;gap:6px;padding:10px 12px">{band("stop")}{band("paused")}{band("catch")}{band("waiting")}{band("notice")}'
+             f'<div style="padding:6px 0">{table}</div>'
+             f'<span class="note">띠는 닫지 않는다 — 상태가 풀리면 저절로 사라진다(첫걸음 달성만 6초 뒤 접힘). 시각 · 배속 · 멈춘 시간은 서버 공개 응답(K10-01 · 01f)의 값만 쓰고 기기 시계로 다시 재지 않는다. '
+             f'관측이 없거나 낡으면(UNKNOWN) 멈춤 · 정지로 짐작하지 않고 「확인 중」으로 둔다.</span></div></section>{view_bar()}</main>')
     aside = (f'<aside aria-label="명령 목록 12순" style="width:336px;flex-shrink:0;display:flex;flex-direction:column;background:#1b201d;border-left:1px solid #3d4740">'
-             f'{sec("명령 목록 12순", "직접 행동 · 한 순에 하나")}<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{turn_strip(2, 6, 3)}{turn_caption(2)}</div></aside>')
-    page31('V31SystemBanner.dc.html', '시스템 v3.1 — 공통 알림 띠(P-W05 데스크톱)', shell_desk('작전실', 'war', mapst + aside, band('catch')))
+             f'{sec("명령 목록 12순", "직접 행동 · 한 순에 하나")}<div style="padding:12px;display:flex;flex-direction:column;gap:8px">{turn_strip(2, 6, 3)}{turn_caption(2, "UNKNOWN")}</div></aside>')
+    page31('V31SystemBanner.dc.html', '시스템 v3.1 — 공통 알림 띠(P-W05 데스크톱)', shell_desk('작전실', 'war', mapst + aside, band('unknown'), turn_state='UNKNOWN'))
 
 
 def board_mbanner():
@@ -1624,9 +1663,9 @@ def board_mbanner():
     main = (f'<main style="position:relative;width:390px;height:{H}px;flex-shrink:0;overflow:hidden">{mapimg("mob", 390, 844, "양적 일대 지도", 0, -60)}'
             f'{me_marker(hx, hy - 82, "in", tag=False)}'
             f'<section class="sheet" aria-label="명령 목록 12순" style="bottom:0;height:124px"><div class="grip"></div>'
-            f'<div style="padding:4px 12px;display:flex;flex-direction:column;gap:6px">{turn_caption(2)}'
+            f'<div style="padding:4px 12px;display:flex;flex-direction:column;gap:6px">{turn_caption(2, "UNKNOWN")}'
             f'<div style="display:flex;gap:8px">{btn("이번 순에 할 일", "primary", style="flex:1")}{btn("12순", "", "up")}</div></div></section></main>')
-    page31('V31SystemMBanner.dc.html', '시스템 v3.1 — 공통 알림 띠(P-W05 모바일)', mtop31() + band('catch', mobile=True) + main + tabbar31('war'), w=390, h=844)
+    page31('V31SystemMBanner.dc.html', '시스템 v3.1 — 공통 알림 띠(P-W05 모바일, 운영 상태 확인 중)', mtop31() + band('unknown', mobile=True) + main + tabbar31('war'), w=390, h=844)
 
 
 def board_mmaint():
