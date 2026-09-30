@@ -48,5 +48,7 @@ export function campaignReadNotice(read: { loading: boolean; error: string | nul
     if (read.error) return `불러오지 못했습니다 — ${read.error}`;
     if (status === 'WRONG_RULE_PROFILE') return '휘하 규칙 서버가 아닙니다.';
     if (status === 'UNAVAILABLE') return '저장된 값을 읽을 수 없습니다.';
+    // 옛 형식 월드 — 빈 목록(「없습니다」)으로 보이면 안 된다(K4 감사: 창고 · 수하가 비어 보였다).
+    if (status === 'UNSUPPORTED_WORLD_FORMAT') return '이 서버는 지금 게임 규칙과 맞지 않습니다.';
     return null;
 }
