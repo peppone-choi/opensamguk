@@ -15,6 +15,8 @@ export const PEOPLE_GROUP_LABEL: Record<PeopleGroup, string> = {
   all: '전체',
 };
 const GROUP_ORDER: readonly PeopleGroup[] = ['mine', 'nation', 'rulers', 'all'];
+/** 불러오는 중 · 실패 때의 빈 목록 — 매 렌더 새 배열이면 useMemo 가 매번 다시 돈다. */
+const NO_PEOPLE: readonly PersonOption[] = [];
 
 type Load =
   | { readonly state: 'loading' }
@@ -50,7 +52,7 @@ export function PeoplePicker(props: PeoplePickerProps) {
   const [picked, setGroup] = useState<PeopleGroup>(initialGroup);
   const group = tabs.includes(picked) ? picked : (tabs[0] ?? 'all');
   const [query, setQuery] = useState('');
-  const people = load.state === 'ready' ? load.people : [];
+  const people = load.state === 'ready' ? load.people : NO_PEOPLE;
 
   const counts = useMemo(() => {
     const out: Record<PeopleGroup, number> = { mine: 0, nation: 0, rulers: 0, all: people.length };
@@ -177,7 +179,6 @@ function PersonRow({ person: p, selected, multiple, onPick }: {
             role="option"
             aria-selected="false"
             aria-disabled="true"
-            aria-haspopup="dialog"
             aria-describedby={describedBy}
             className="os-opt os-opt--no os-people__row"
             data-general-id={p.generalId}
