@@ -206,7 +206,10 @@ sys.exit(0)
                 self.assertEqual(7, config["retention-days"])
                 self.assertEqual("error", config["if-no-files-found"])
         self.assertIn("${{ matrix.app }}", smoke_upload["with"]["name"])
-        self.assertIn("matrix.app == 'game'", topdown_upload["if"])
+        # 스위치 단계는 web (game) · web (gateway) 두 필수 체크에서 돈다(2026-10-01 K2) — 올리는 이름 · 폴더가 앱마다 갈린다.
+        self.assertIn("${{ matrix.app }}", topdown_upload["with"]["name"])
+        self.assertNotIn("matrix.app == 'game'", topdown_upload["if"])
+        self.assertNotEqual(self.phase_dir(self.topdown, "game"), self.phase_dir(self.topdown, "gateway"))
 
     def test_execution_gates_and_required_matrix_are_preserved(self) -> None:
         job = self.workflow["jobs"]["web"]
@@ -216,7 +219,7 @@ sys.exit(0)
         self.assertNotIn("continue-on-error", self.smoke)
         self.assertNotIn("continue-on-error", self.topdown)
         self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.smoke["if"])
-        self.assertEqual("!cancelled() && matrix.app == 'game' && needs.changes.outputs.web == 'true'", self.topdown["if"])
+        self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.topdown["if"])
         for phase in (self.smoke, self.topdown):
             self.assertIn('exit 1;', phase["run"])
         discover = self.workflow["jobs"]["contracts"]["steps"]
