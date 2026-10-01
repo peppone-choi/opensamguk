@@ -54,6 +54,13 @@ const RESERVED_PATH_SERVER_IDS = new Set([
   'war-room',
   'yuedan',
   'world-log',
+  'stratagem',
+  'territory',
+  'corps',
+  'records',
+  'council',
+  'mail',
+  'help',
 ]);
 const SERVER_COOKIE = 'sam_server';
 

@@ -1,7 +1,7 @@
 'use client';
 // 기록 화면 사이를 오가는 탭. 휘하 제품의 부서 메뉴를 그대로 따른다.
 import { usePathname } from 'next/navigation';
-import { resolveDeptHref } from '../DeptNav';
+import { resolveDeptHref } from '@/lib/deptHref';
 import { DEPT_GROUPS } from '../../lib/dept-menu-config';
 import { normalizeGamePathname, useServerId } from '../../lib/serverGameUrl';
 
