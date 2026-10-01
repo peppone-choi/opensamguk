@@ -203,9 +203,10 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
             </button>
           ))}
           {pending.map((row) => (
-            <div key={row.id} data-pending-layer={row.id} style={{ minHeight: 44, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '0 14px', color: 'var(--muted)' }}>
-              <span>{row.label}</span>
-              <span style={{ fontSize: 12 }}>서버 대기 · {row.contract}</span>
+            // 좁은 판(모바일 작전실 열 135)에서는 「서버 대기」가 아랫줄로 내려간다 — 이름이 한 글자씩 접히지 않게
+            <div key={row.id} data-pending-layer={row.id} style={{ minHeight: 44, display: 'flex', flexWrap: 'wrap', alignItems: 'center', alignContent: 'center', justifyContent: 'space-between', columnGap: 8, rowGap: 2, padding: '6px 14px', color: 'var(--muted)' }}>
+              <span style={{ whiteSpace: 'nowrap' }}>{row.label}</span>
+              <span style={{ fontSize: 12, whiteSpace: 'nowrap' }}>서버 대기 · {row.contract}</span>
             </div>
           ))}
         </section>
