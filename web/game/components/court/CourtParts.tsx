@@ -80,6 +80,8 @@ export interface DispatchSheetProps {
     readonly onTargetChange: (generalId: number | null) => void;
     /** 고른 사람 기준의 현 후보(dispatch-options?targetGeneralId=). 받는 중이면 null. */
     readonly counties: readonly TargetCandidate[] | null;
+    /** Failed or denied candidate reads replace the list and its empty message. */
+    readonly countiesState?: ReactNode;
     readonly busy: boolean;
     readonly onSubmit: (args: { readonly targetGeneralId: number; readonly countyId: number }) => void;
     readonly onCancel: () => void;
@@ -88,9 +90,9 @@ export interface DispatchSheetProps {
 }
 
 /** 새 발령 시트 — 사람 고르기(내 부 사람 장수) → 현(지도 대상 고르기 · 목록, 불가는 사유) → 「이 현으로 발령」. */
-export function DispatchSheet({ people, target, onTargetChange, counties, busy, onSubmit, onCancel, help, mapSlot }: DispatchSheetProps) {
+export function DispatchSheet({ people, target, onTargetChange, counties, countiesState, busy, onSubmit, onCancel, help, mapSlot }: DispatchSheetProps) {
     const picker = useTargetPicker({ kind: 'place', candidates: counties ?? [], onCancel });
-    const county = picker.selected[0] ?? null;
+    const county = countiesState ? null : counties?.find((c) => c.targetId === picker.selected[0] && c.available)?.targetId ?? null;
     const missing = target == null ? '발령할 사람을 고르세요.' : county == null ? '발령할 현을 고르세요.' : null;
     return (
         <section className={styles.sheet} aria-label="새 발령" data-input-id="court.dispatch">
@@ -103,12 +105,12 @@ export function DispatchSheet({ people, target, onTargetChange, counties, busy, 
                 label="발령할 사람"
             />
             {target != null ? (
-                counties ? (
+                countiesState ?? (counties ? (
                     <div className={styles.targets}>
                         {mapSlot ? mapSlot(picker) : null}
                         <TargetCandidateList picker={picker} candidates={counties} label="발령할 현" />
                     </div>
-                ) : <p className={styles.muted} role="status">현 후보를 불러오는 중…</p>
+                ) : <p className={styles.muted} role="status">현 후보를 불러오는 중…</p>)
             ) : null}
             <div className={styles.actions}>
                 <button type="button" className="os-button os-button--ghost" onClick={onCancel}>그만두기</button>

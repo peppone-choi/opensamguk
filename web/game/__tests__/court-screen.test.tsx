@@ -70,6 +70,84 @@ test('새 발령 — 사람을 고르면 그 사람 기준 현 후보를 다시 
     await waitFor(() => expect(vi.mocked(api.courtDispatch)).toHaveBeenCalledWith(7, { targetGeneralId: 21, countyId: 129 }));
 });
 
+test.each(['503: Service Unavailable', 'Failed to fetch'])('사람별 현 조회 %s — 실패 안내 후 같은 사람으로 재시도해 접수', async (message) => {
+    const dispatchOptions = vi.mocked(api.dispatchOptions);
+    const initial = { result: true, targets: [{ generalId: 21, label: '순욱' }], counties: [] };
+    dispatchOptions.mockImplementation(async (_g, target) => {
+        if (target == null) return initial;
+        throw new TypeError(message);
+    });
+    vi.mocked(api.courtDispatch).mockResolvedValue({ status: 'AVAILABLE' } as never);
+    render(<CourtScreen hrefs={hrefs} />);
+    fireEvent.click(await screen.findByRole('button', { name: '새 발령' }));
+    fireEvent.click(await screen.findByRole('option', { name: /순욱/ }));
+    const sheet = screen.getByRole('dialog', { name: '새 발령' });
+    expect(await within(sheet).findByText('현 후보를 불러오지 못했습니다')).toBeInTheDocument();
+    expect(sheet).not.toHaveTextContent('이 묶음에 후보가 없습니다');
+    expect(sheet).not.toHaveTextContent(message);
+    expect(within(sheet).queryByRole('listbox', { name: '발령할 현' })).toBeNull();
+    expect(within(sheet).getByRole('button', { name: '이 현으로 발령' })).toHaveAttribute('aria-disabled', 'true');
+    expect(api.courtDispatch).not.toHaveBeenCalled();
+    dispatchOptions.mockImplementation(async (_g, target) => target == null ? initial
+        : { ...initial, counties: [{ countyId: 129, label: '양성현', available: true }] });
+    fireEvent.click(within(sheet).getByRole('button', { name: '다시 시도' }));
+    const counties = await within(sheet).findByRole('listbox', { name: '발령할 현' });
+    expect(within(sheet).getByRole('option', { name: /순욱/ })).toHaveAttribute('aria-selected', 'true');
+    expect(dispatchOptions.mock.calls.filter((args) => args[1] === 21)).toHaveLength(2);
+    fireEvent.click(within(counties).getByRole('option', { name: /양성현/ }));
+    fireEvent.click(within(sheet).getByRole('button', { name: '이 현으로 발령' }));
+    await waitFor(() => expect(api.courtDispatch).toHaveBeenCalledWith(7, { targetGeneralId: 21, countyId: 129 }));
+});
+
+test.each(['직접 거느린 장수가 아닙니다.', null])('사람별 현 조회 거절 — 서버 사유 %s를 빈 후보와 구분', async (reason) => {
+    vi.mocked(api.dispatchOptions).mockImplementation(async (_g, target) => target == null
+        ? { result: true, targets: [{ generalId: 21, label: '순욱' }], counties: [] }
+        : { result: false, code: 'NOT_DIRECT_RETAINER', reason, targets: [], counties: [] });
+    render(<CourtScreen hrefs={hrefs} />);
+    fireEvent.click(await screen.findByRole('button', { name: '새 발령' }));
+    fireEvent.click(await screen.findByRole('option', { name: /순욱/ }));
+    const sheet = screen.getByRole('dialog', { name: '새 발령' });
+    expect(await within(sheet).findByText(reason ?? '이 사람에게 발령할 수 없습니다.')).toBeInTheDocument();
+    expect(sheet).not.toHaveTextContent('이 묶음에 후보가 없습니다');
+    expect(within(sheet).getByRole('button', { name: '이 현으로 발령' })).toHaveAttribute('aria-disabled', 'true');
+    expect(within(sheet).getByRole('button', { name: '다시 시도' })).toBeInTheDocument();
+});
+
+test('사람별 현 조회가 정상 빈 목록일 때만 빈 후보 안내', async () => {
+    vi.mocked(api.dispatchOptions).mockResolvedValue({ result: true, targets: [{ generalId: 21, label: '순욱' }], counties: [] });
+    render(<CourtScreen hrefs={hrefs} />);
+    fireEvent.click(await screen.findByRole('button', { name: '새 발령' }));
+    fireEvent.click(await screen.findByRole('option', { name: /순욱/ }));
+    const sheet = screen.getByRole('dialog', { name: '새 발령' });
+    expect(await within(sheet).findByText('이 묶음에 후보가 없습니다')).toBeInTheDocument();
+    expect(within(sheet).queryByRole('button', { name: '다시 시도' })).toBeNull();
+    expect(within(sheet).getByRole('button', { name: '이 현으로 발령' })).toHaveAttribute('aria-disabled', 'true');
+});
+
+test('현 조회 중 사람을 바꾸면 이전 사람의 늦은 응답으로 후보를 표시하지 않는다', async () => {
+    let finishFirst!: (value: Awaited<ReturnType<typeof api.dispatchOptions>>) => void;
+    const first = new Promise<Awaited<ReturnType<typeof api.dispatchOptions>>>((resolve) => { finishFirst = resolve; });
+    const targets = [{ generalId: 21, label: '순욱' }, { generalId: 22, label: '순유' }];
+    vi.mocked(api.dispatchOptions).mockImplementation(async (_g, target) => target == null
+        ? { result: true, targets, counties: [] }
+        : target === 21 ? first : { result: true, targets, counties: [{ countyId: 130, label: '허현', available: true }] });
+    render(<CourtScreen hrefs={hrefs} />);
+    fireEvent.click(await screen.findByRole('button', { name: '새 발령' }));
+    fireEvent.click(await screen.findByRole('option', { name: /순욱/ }));
+    const sheet = screen.getByRole('dialog', { name: '새 발령' });
+    expect(await within(sheet).findByText('현 후보를 불러오는 중…')).toBeInTheDocument();
+    expect(within(sheet).queryByRole('listbox', { name: '발령할 현' })).toBeNull();
+    expect(within(sheet).getByRole('button', { name: '이 현으로 발령' })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(within(sheet).getByRole('option', { name: /순유/ }));
+    expect(await within(sheet).findByRole('option', { name: /허현/ })).toBeInTheDocument();
+    finishFirst({ result: true, targets, counties: [{ countyId: 129, label: '양성현', available: true }] });
+    await first;
+    await waitFor(() => {
+        expect(within(sheet).getByRole('option', { name: /허현/ })).toBeInTheDocument();
+        expect(within(sheet).queryByRole('option', { name: /양성현/ })).toBeNull();
+    });
+});
+
 test('모바일 — 조정 결정 목록(받은 요청 대기 수 · 원장 행 없는 것은 없음), 누르면 받은 요청 시트', async () => {
     viewport?.restore();
     viewport = installViewport(390);

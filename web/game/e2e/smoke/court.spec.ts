@@ -148,3 +148,46 @@ test('네트워크 실패 — 원문 없이 한국어 안내와 다시 시도', 
   await expect(reward).not.toContainText('Failed to fetch');
   await expect(reward).not.toContainText('상사할 직속 인물 카드가 없습니다.');
 });
+
+for (const failure of ['http', 'network', 'denied'] as const) {
+  test(`사람별 현 조회 ${failure} — 빈 후보 대신 안내, 같은 사람으로 재시도와 접수`, { tag: [BOTH] }, async ({ page }, info) => {
+    const targets = [{ generalId: 21, label: '순욱' }];
+    await serveCampaign(page, { ...table,
+      '/api/commands/dispatch-options': { result: true, targets, counties: [] },
+      '/api/commands/court/dispatch': { status: 'AVAILABLE' },
+    });
+    let attempts = 0;
+    await page.route((url) => url.pathname === '/api/game/api/commands/dispatch-options' && url.searchParams.has('targetGeneralId'), async (route) => {
+      expect(new URL(route.request().url()).searchParams.get('targetGeneralId')).toBe('21');
+      attempts += 1;
+      if (attempts === 1) {
+        if (failure === 'network') await route.abort('failed');
+        else if (failure === 'http') await route.fulfill({ status: 503, json: { reason: 'Service Unavailable' } });
+        else await route.fulfill({ json: { result: false, code: 'NOT_DIRECT_RETAINER', reason: '직접 거느린 장수가 아닙니다.', targets: [], counties: [] } });
+      } else await route.fulfill({ json: { result: true, targets, counties: [{ countyId: 129, label: '양성현', available: true }] } });
+    });
+    await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
+    if (isMobile(info)) {
+      await press(page.getByRole('list', { name: '조정 결정' }).getByRole('listitem').filter({ hasText: '내 부 사람 장수를' }).getByRole('button'), info);
+    }
+    await press(page.getByRole('button', { name: '새 발령' }), info);
+    const sheet = page.getByRole('dialog', { name: '새 발령' });
+    await press(sheet.getByRole('option', { name: /순욱/ }), info);
+    await expect(sheet).toContainText(failure === 'denied' ? '직접 거느린 장수가 아닙니다.' : '현 후보를 불러오지 못했습니다');
+    await expect(sheet).not.toContainText('이 묶음에 후보가 없습니다');
+    await expect(sheet).not.toContainText('Service Unavailable');
+    await expect(sheet.getByRole('listbox', { name: '발령할 현' })).toHaveCount(0);
+    await expect(sheet.getByRole('button', { name: '이 현으로 발령' })).toHaveAttribute('aria-disabled', 'true');
+    await expectNoHorizontalOverflow(page);
+    expect(await titleOnlyInfo(page, '[role="dialog"]')).toEqual([]);
+    if (isMobile(info)) expect(await smallTouchTargets(page, '[role="dialog"]')).toEqual([]);
+    await press(sheet.getByRole('button', { name: '다시 시도' }), info);
+    await expect(sheet.getByRole('option', { name: /순욱/ })).toHaveAttribute('aria-selected', 'true');
+    await press(sheet.getByRole('option', { name: /양성현/ }), info);
+    expect(attempts).toBe(2);
+    const request = page.waitForRequest((r) => r.method() === 'POST' && r.url().includes('/commands/court/dispatch'));
+    await press(sheet.getByRole('button', { name: '이 현으로 발령' }), info);
+    expect((await request).postDataJSON()).toEqual({ targetGeneralId: 21, countyId: 129 });
+    await expect(page.getByText('발령을 접수했습니다 — 주공의 다음 개인 턴에 처리합니다.')).toBeVisible();
+  });
+}

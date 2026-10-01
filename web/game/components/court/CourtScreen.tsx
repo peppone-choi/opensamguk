@@ -104,7 +104,11 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const [busy, setBusy] = useState(false);
     const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null);
     const [target, setTarget] = useState<number | null>(null);
-    const [targetOptions, setTargetOptions] = useState<DispatchOptionsResponse | null>(null);
+    const [targetReload, setTargetReload] = useState(0);
+    const [targetRead, setTargetRead] = useState<{
+        generalId: number; target: number; reload: number;
+        data: DispatchOptionsResponse | null; error: string | null;
+    } | null>(null);
     const requests = useRequests(generalId, reload);
     const pending = useCampaignRead((id) => api.dispatchPending(id), [reload]);
     const options = useCampaignRead((id) => api.dispatchOptions(id), [reload]);
@@ -113,12 +117,15 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const capital = useCapitalName(frontInfo?.nation?.capitalCityId ?? null);
 
     useEffect(() => {
-        if (generalId == null || target == null) { setTargetOptions(null); return; }
+        if (generalId == null || target == null) { setTargetRead(null); return; }
         let live = true;
-        setTargetOptions(null);
-        api.dispatchOptions(generalId, target).then((o) => { if (live) setTargetOptions(o); }).catch(() => { if (live) setTargetOptions({ result: false, targets: [], counties: [] }); });
+        setTargetRead(null);
+        const source = { generalId, target, reload: targetReload };
+        api.dispatchOptions(generalId, target)
+            .then((data) => { if (live) setTargetRead({ ...source, data, error: null }); })
+            .catch((error: unknown) => { if (live) setTargetRead({ ...source, data: null, error: error instanceof Error ? error.message : '' }); });
         return () => { live = false; };
-    }, [generalId, target]);
+    }, [generalId, target, targetReload]);
 
     const done = useCallback((out: IntakeOutcome, ok: string) => {
         if (isIntakeQueued(out)) { setNotice({ tone: 'ok', text: ok }); setSheet(null); setTarget(null); setReload((n) => n + 1); }
@@ -175,9 +182,22 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     let sheetLabel = '조정 입력';
     if (sheet?.kind === 'dispatch') {
         sheetLabel = '새 발령';
+        // Only the current person's current attempt may supply candidates.
+        const current = targetRead?.generalId === generalId && targetRead?.target === target && targetRead?.reload === targetReload ? targetRead : null;
+        const targetOptions = current?.data;
+        const retryTarget = () => setTargetReload((n) => n + 1);
+        const countiesState = current == null ? null : current.error != null ? (
+            <StatusView kind="error" title="현 후보를 불러오지 못했습니다" errorCode={current.error.match(/^\d{3}\b/)?.[0]} onRetry={retryTarget} />
+        ) : targetOptions?.result === false ? (
+            <div>
+                <StatusView kind="denied" title={targetOptions.reason?.trim() || '이 사람에게 발령할 수 없습니다.'}
+                    howTo="직접 거느린 장수인지 확인하거나 다른 사람을 고르세요." />
+                <button type="button" className="os-button os-button--ghost" onClick={retryTarget}>다시 시도</button>
+            </div>
+        ) : null;
         sheetBody = (
             <DispatchSheet people={options.data ? people : null} target={target} onTargetChange={setTarget}
-                counties={target == null ? null : targetOptions ? dispatchCounties(targetOptions) : null} busy={busy}
+                counties={target != null && targetOptions?.result === true ? dispatchCounties(targetOptions) : null} countiesState={countiesState} busy={busy}
                 onSubmit={(args) => generalId != null && void run(() => api.courtDispatch(generalId, args), DISPATCH_QUEUED_TEXT)}
                 onCancel={closeSheet} />
         );
