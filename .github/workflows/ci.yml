@@ -667,9 +667,14 @@ jobs:
       # e2e/topdown-screens/*.topdown-screen.spec.ts 만 돈다. 새 화면 spec 이 없으면 빌드 없이 초록으로 끝낸다.
       # game 은 작전실, gateway 는 로그인 미리보기(로그인 없이 열리는 배경 지도)다. gateway e2e 타입은 위 smoke 단계가 이미 본다.
       - name: Smoke e2e web/${{ matrix.app }} topdown screens (switch build, desktop · mobile)
+        id: switch_smoke
         if: "!cancelled() && needs.changes.outputs.web == 'true'"
         working-directory: web/${{ matrix.app }}
         env:
+          E2E_PLAYWRIGHT_OUTPUT_DIR: test-results/topdown-screens/playwright-output
+          K2_CI_EVIDENCE: ${{ github.workspace }}/web/${{ matrix.app }}/test-results/topdown-screens/phase.json
+          K2_PR_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+          K2_PR_BASE: ${{ github.event.pull_request.base.sha || '' }}
           NEXT_PUBLIC_TOPDOWN_SCREENS: '1'
           NEXT_DIST_DIR: .next-topdown-screens
           E2E_GAME_URL: http://127.0.0.1:3002
@@ -677,12 +682,66 @@ jobs:
           # 게이트웨이는 위 smoke 단계와 같은 합성 서버 목록으로 뜬다(비밀값 아님). game 은 이 값을 읽지 않는다.
           SERVER_REGISTRY_JSON: '[{"id":"pep","name":"pep","generation":1},{"id":"uni","name":"통일 서버","generation":3}]'
         run: |
+          mkdir -p test-results/topdown-screens
+          python3 - <<'PYMETA'
+          import json, os, subprocess
+          from pathlib import Path
+          git = lambda *args: subprocess.check_output(['git', *args], text=True).strip()
+          def build_id(dist):
+              path = Path(dist) / 'BUILD_ID'
+              return path.read_text().strip() if path.exists() else None
+          json.dump({'started': True, 'buildExecuted': False, 'buildExit': None, 'testsExecuted': False,
+                     'testExit': None, 'exit': None, 'outcome': 'running',
+                     'checkoutSha': git('rev-parse', 'HEAD'), 'checkoutTree': git('rev-parse', 'HEAD^{tree}'),
+                     'prHead': os.environ['K2_PR_HEAD'], 'prBase': os.environ['K2_PR_BASE'],
+                     'run': os.environ['GITHUB_RUN_ID'], 'attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+                     'app': '${{ matrix.app }}',
+                     'off': {'dist': '.next', 'buildId': build_id('.next'),
+                             'buildFlag': 'unset in normal build; OFF behavior asserted with bakeId'},
+                     'on': {'dist': os.environ['NEXT_DIST_DIR'], 'buildId': None,
+                            'buildFlag': os.environ['NEXT_PUBLIC_TOPDOWN_SCREENS']}},
+                    open(os.environ['K2_CI_EVIDENCE'], 'w'), indent=2)
+          PYMETA
+          finish() {
+            rc=$?
+            python3 - "$rc" <<'PYMETA'
+          import json, os, sys
+          path = os.environ['K2_CI_EVIDENCE']
+          data = json.load(open(path)); data['exit'] = int(sys.argv[1])
+          data['outcome'] = 'failure' if data['exit'] else ('success' if data['testsExecuted'] else 'not-run')
+          json.dump(data, open(path, 'w'), indent=2)
+          PYMETA
+            exit "$rc"
+          }
+          trap finish EXIT
           shopt -s nullglob
           specs=(e2e/topdown-screens/*.topdown-screen.spec.ts)
           if [ ${#specs[@]} -eq 0 ]; then echo "새 화면 spec 없음 — 스위치 빌드를 건너뛴다"; exit 0; fi
           if [ "${{ matrix.app }}" = game ]; then ready=http://127.0.0.1:3002/game/smoke-ready; else ready=http://127.0.0.1:3002/smoke-ready; fi
           start=$(date +%s)
+          python3 - <<'PYMETA'
+          import json, os
+          path = os.environ['K2_CI_EVIDENCE']; data = json.load(open(path)); data['buildExecuted'] = True
+          json.dump(data, open(path, 'w'), indent=2)
+          PYMETA
+          set +e
           corepack pnpm build
+          build_rc=$?
+          set -e
+          python3 - "$build_rc" <<'PYMETA'
+          import json, os, sys
+          path = os.environ['K2_CI_EVIDENCE']; data = json.load(open(path)); data['buildExit'] = int(sys.argv[1])
+          json.dump(data, open(path, 'w'), indent=2)
+          PYMETA
+          [ "$build_rc" -eq 0 ] || exit "$build_rc"
+          python3 - <<'PYMETA'
+          import json, os
+          from pathlib import Path
+          path = os.environ['K2_CI_EVIDENCE']; data = json.load(open(path))
+          data['buildExecuted'] = True
+          data['on']['buildId'] = (Path(os.environ['NEXT_DIST_DIR']) / 'BUILD_ID').read_text().strip()
+          json.dump(data, open(path, 'w'), indent=2)
+          PYMETA
           echo "스위치 빌드 $(( $(date +%s) - start ))s"
           corepack pnpm exec next start -p 3002 > "$RUNNER_TEMP/next-start-screens.log" 2>&1 &
           for _ in $(seq 1 90); do
@@ -690,8 +749,46 @@ jobs:
             [ "$code" != "000" ] && break
             sleep 1
           done
-          corepack pnpm exec playwright test "${specs[@]}" || { tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit 1; }
+          python3 - <<'PYMETA'
+          import json, os
+          path = os.environ['K2_CI_EVIDENCE']; data = json.load(open(path)); data['testsExecuted'] = True
+          json.dump(data, open(path, 'w'), indent=2)
+          PYMETA
+          set +e
+          corepack pnpm exec playwright test "${specs[@]}"
+          test_rc=$?
+          set -e
+          python3 - "$test_rc" <<'PYMETA'
+          import json, os, sys
+          path = os.environ['K2_CI_EVIDENCE']; data = json.load(open(path)); data['testExit'] = int(sys.argv[1])
+          json.dump(data, open(path, 'w'), indent=2)
+          PYMETA
+          if [ "$test_rc" -ne 0 ]; then tail -n 80 "$RUNNER_TEMP/next-start-screens.log"; exit "$test_rc"; fi
           echo "스위치 단계 전체 $(( $(date +%s) - start ))s"
+      - name: Record topdown switch phase outcome
+        if: always() && needs.changes.outputs.web == 'true'
+        working-directory: web/${{ matrix.app }}
+        env:
+          SWITCH_OUTCOME: ${{ steps.switch_smoke.outcome }}
+          SWITCH_CONCLUSION: ${{ steps.switch_smoke.conclusion }}
+        run: |
+          mkdir -p test-results/topdown-screens
+          python3 - <<'PYMETA'
+          import json, os
+          from pathlib import Path
+          path = Path('test-results/topdown-screens/phase.json')
+          data = json.loads(path.read_text()) if path.exists() else {
+              'started': False, 'buildExecuted': False, 'testsExecuted': False, 'testExit': None, 'exit': None}
+          data.update(stepOutcome=os.environ['SWITCH_OUTCOME'], stepConclusion=os.environ['SWITCH_CONCLUSION'])
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PYMETA
+      - name: Upload topdown switch evidence
+        if: always() && needs.changes.outputs.web == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-${{ matrix.app }}-topdown-screens-attempt-${{ github.run_attempt }}
+          path: web/${{ matrix.app }}/test-results/topdown-screens
+          retention-days: 7
       - name: Upload smoke e2e results
         if: failure() && needs.changes.outputs.web == 'true'
         uses: actions/upload-artifact@v4

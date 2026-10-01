@@ -9,6 +9,11 @@
 from __future__ import annotations
 
 import unittest
+import copy
+import json
+import os
+import subprocess
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -27,6 +32,23 @@ def matrix_jobs_with_job_level_if(workflow: dict) -> list[str]:
         name for name, job in jobs.items()
         if "matrix" in (job.get("strategy") or {}) and "if" in job and name not in aggregated
     )
+
+
+def switch_evidence_violations(workflow: dict) -> list[str]:
+    steps = workflow['jobs']['web']['steps']
+    switch = next(step for step in steps if step.get('id') == 'switch_smoke')
+    upload = next(step for step in steps if step.get('name') == 'Upload topdown switch evidence')
+    violations = []
+    output = switch['env'].get('E2E_PLAYWRIGHT_OUTPUT_DIR', '')
+    if not output.startswith('test-results/topdown-screens/'):
+        violations.append('switch overwrites normal smoke output')
+    if 'always()' not in upload.get('if', ''):
+        violations.append('successful or failed evidence is lost')
+    if upload['with']['path'] != 'web/${{ matrix.app }}/test-results/topdown-screens':
+        violations.append('switch artifact includes another phase')
+    if '${{ matrix.app }}' not in upload['with']['name'] or '${{ github.run_attempt }}' not in upload['with']['name']:
+        violations.append('artifact app/attempt collision')
+    return violations
 
 
 class CiWorkflowContractTest(unittest.TestCase):
@@ -71,6 +93,67 @@ class CiWorkflowContractTest(unittest.TestCase):
         for name in ("Verify JWT rollout contract", "Verify CI path and shard tooling",
                      "Verify game server recovery behavioral guards"):
             self.assertNotIn(gate, steps[name], name)
+
+    def test_switch_evidence_survives_success_and_failure_without_overwriting_smoke(self) -> None:
+        self.assertEqual([], switch_evidence_violations(self.workflow))
+        self.assertEqual(20, self.workflow['jobs']['web']['timeout-minutes'])
+
+    def test_switch_evidence_detector_rejects_lost_success_and_shared_output(self) -> None:
+        probe = copy.deepcopy(self.workflow)
+        for step in probe['jobs']['web']['steps']:
+            if step.get('id') == 'switch_smoke':
+                step['env']['E2E_PLAYWRIGHT_OUTPUT_DIR'] = 'test-results/playwright-output'
+            if step.get('name') == 'Upload topdown switch evidence':
+                step['if'] = "failure() && needs.changes.outputs.web == 'true'"
+        self.assertEqual(['switch overwrites normal smoke output', 'successful or failed evidence is lost'],
+                         switch_evidence_violations(probe))
+
+    def test_switch_shell_preserves_real_exit_and_distinguishes_unexecuted_tests(self) -> None:
+        # Execute the real phase shell with inert tools; no build, browser or server is launched.
+        step = next(step for step in self.workflow['jobs']['web']['steps'] if step.get('id') == 'switch_smoke')
+        script = step['run'].replace('${{ matrix.app }}', 'gateway')
+        cases = [(False, 0, 0, 0, False, False, None, None, 'not-run'),
+                 (True, 23, 0, 23, True, False, 23, None, 'failure'),
+                 (True, 0, 17, 17, True, True, 0, 17, 'failure'),
+                 (True, 0, 0, 0, True, True, 0, 0, 'success')]
+        for spec, build_rc, test_rc, exit_rc, built, tested, build_exit, test_exit, outcome in cases:
+            with self.subTest(spec=spec, build_rc=build_rc, test_rc=test_rc), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                tools = root / 'bin'; tools.mkdir()
+                (root / '.next').mkdir(); (root / '.next/BUILD_ID').write_text('off-pinned')
+                (root / 'e2e/topdown-screens').mkdir(parents=True)
+                if spec:
+                    (root / 'e2e/topdown-screens/normal.topdown-screen.spec.ts').touch()
+                fake = {
+                    'git': '#!/bin/sh\nprintf pinned-checkout',
+                    'curl': '#!/bin/sh\nprintf 200',
+                    'corepack': '''#!/bin/sh
+if [ "$2" = build ]; then
+  [ "$FAKE_BUILD_EXIT" = 0 ] || exit "$FAKE_BUILD_EXIT"
+  mkdir -p "$NEXT_DIST_DIR"; printf on-pinned > "$NEXT_DIST_DIR/BUILD_ID"
+elif [ "$3" = playwright ]; then
+  exit "$FAKE_TEST_EXIT"
+fi
+''',
+                }
+                for name, source in fake.items():
+                    path = tools / name; path.write_text(source); path.chmod(0o755)
+                phase = root / 'test-results/topdown-screens/phase.json'
+                env = {**os.environ, 'PATH': str(tools) + os.pathsep + os.environ['PATH'],
+                       'K2_CI_EVIDENCE': str(phase), 'K2_PR_HEAD': 'head', 'K2_PR_BASE': 'base',
+                       'GITHUB_RUN_ID': '1', 'GITHUB_RUN_ATTEMPT': '2', 'NEXT_DIST_DIR': '.next-topdown-screens',
+                       'NEXT_PUBLIC_TOPDOWN_SCREENS': '1', 'RUNNER_TEMP': str(root),
+                       'FAKE_BUILD_EXIT': str(build_rc), 'FAKE_TEST_EXIT': str(test_rc)}
+                result = subprocess.run(['bash', '-e', '-o', 'pipefail', '-c', script], cwd=root, env=env,
+                                        capture_output=True, text=True, timeout=10)
+                self.assertEqual(exit_rc, result.returncode, result.stderr)
+                data = json.loads(phase.read_text())
+                self.assertEqual((built, tested, build_exit, test_exit, exit_rc, outcome),
+                                 (data['buildExecuted'], data['testsExecuted'], data['buildExit'],
+                                  data['testExit'], data['exit'], data['outcome']))
+                self.assertEqual('off-pinned', data['off']['buildId'])
+                if tested:
+                    self.assertEqual('on-pinned', data['on']['buildId'])
 
 
 if __name__ == "__main__":
