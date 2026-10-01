@@ -28,7 +28,6 @@ import opensamguk.logic.battle.realtime.RallyPoint
 import opensamguk.logic.battle.realtime.Retinue
 import opensamguk.logic.battle.realtime.TacticalBattle
 import opensamguk.logic.battle.realtime.UnitKind
-import org.mockito.ArgumentCaptor
 import org.mockito.Mockito.*
 
 class BattleWebSocketProtocolTest {
@@ -45,6 +44,7 @@ class BattleWebSocketProtocolTest {
     private val tickets = mock(BattleJoinTicketService::class.java)
     private val generals = mock(GeneralResolver::class.java)
     private val mapper = ObjectMapper().registerModule(JavaTimeModule())
+    private val admitted = mutableListOf<BattleCommandRecord>()
     private val protocol = BattleWebSocketProtocol(tickets, generals, store, frozen,
         BattleSessionCoordinator(store), mapper)
 
@@ -66,11 +66,12 @@ class BattleWebSocketProtocolTest {
             humanSides = setOf(BattleSide.ATTACKER)))
         doAnswer { call ->
             val command = call.getArgument<BattleCommandRecord>(0)
+            admitted += command
             val reason = command.preflightReasonCode
             CommandAdmission.Receipt(BattleCommandReceipt(command.clientCommandId,
                 if (reason == null) BattleCommandVerdict.ACCEPTED else BattleCommandVerdict.REJECTED,
                 reason, 0, if (reason == null) 1 else null, if (reason == null) 1 else null, 3))
-        }.`when`(store).admit(any(BattleCommandRecord::class.java))
+        }.`when`(store).admit(anyRecord())
     }
 
     @Test
@@ -93,20 +94,19 @@ class BattleWebSocketProtocolTest {
         val denied = mapper.readTree(protocol.command(identity,
             command("foreign", 801, BattleOrder.CHARGE, RallyPoint.HOME)))
         assertEquals("UNAUTHORIZED", denied["reasonCode"].asText())
-        val captured = ArgumentCaptor.forClass(BattleCommandRecord::class.java)
-        verify(store, times(19)).admit(captured.capture())
-        assertTrue(captured.allValues.take(18).all { it.preflightReasonCode == null &&
+        assertEquals(19, admitted.size)
+        assertTrue(admitted.take(18).all { it.preflightReasonCode == null &&
             it.intentJson.contains("\"slot\":\"CENTER\"") && it.mappedAtTick == 0 &&
             it.mappedAtEventSeq == 0L })
-        assertEquals("UNAUTHORIZED", captured.allValues.last().preflightReasonCode)
-        assertTrue(captured.allValues.last().intentJson.contains("\"slot\":null"))
+        assertEquals("UNAUTHORIZED", admitted.last().preflightReasonCode)
+        assertTrue(admitted.last().intentJson.contains("\"slot\":null"))
     }
 
     @Test
     fun `idempotency conflict reports verified authority revision rather than request value`() {
         arrange()
         doReturn(CommandAdmission.IdempotencyConflict).`when`(store)
-            .admit(any(BattleCommandRecord::class.java))
+            .admit(anyRecord())
         val request = command("same-id", 701, BattleOrder.DEFEND, RallyPoint.CENTER)
             .replace("\"expectedAuthorityRevision\":3", "\"expectedAuthorityRevision\":999")
         val ack = mapper.readTree(protocol.command(identity, request))
@@ -116,6 +116,12 @@ class BattleWebSocketProtocolTest {
 
     private fun command(id: String, retinueId: Int, order: BattleOrder, rally: RallyPoint) =
         """{"schemaVersion":1,"t":"COMMAND","clientCommandId":"$id","expectedEpoch":1,"expectedAuthorityRevision":3,"issuedTick":0,"scope":{"retinueId":$retinueId},"intentType":"${order.name}","intentPayload":{"rally":"${rally.name}"}}"""
+
+    private fun anyRecord(): BattleCommandRecord {
+        any(BattleCommandRecord::class.java)
+        return BattleCommandRecord(world, "battle-1", 1, "matcher", "a".repeat(64),
+            1, 1, 0, "ATTACKER", "{}")
+    }
 
     private fun sha(text: String): String = MessageDigest.getInstance("SHA-256")
         .digest(text.toByteArray()).joinToString("") { "%02x".format(it) }
