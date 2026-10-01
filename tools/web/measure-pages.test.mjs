@@ -59,6 +59,16 @@ setTimeout(() => fetch('/late.bin', { cache: 'no-store' }).then((r) => r.arrayBu
 setTimeout(() => fetch('/slow.bin', { cache: 'no-store' }).then((r) => r.arrayBuffer()).catch(() => {}), 2500);
 </script></body></html>`;
 
+// 첫 그림 뒤 받기 시작한 요청을 1초 뒤 AbortController 로 끊는다 — 취소는 받는 중이 아니다(적재 창을 붙잡지 않는다).
+const CANCEL = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>끊는 요청</title></head><body style="margin:0">
+<div class="os-iso-map" style="width:600px;height:400px"><canvas width="600" height="400"></canvas></div>
+<script>
+const g = document.querySelector('canvas').getContext('2d'); g.fillStyle = '#486'; g.fillRect(0, 0, 600, 400);
+setTimeout(() => { const ac = new AbortController();
+  fetch('/slow.bin', { cache: 'no-store', signal: ac.signal }).then((r) => r.arrayBuffer()).catch(() => {});
+  setTimeout(() => ac.abort(), 1000); }, 2500);
+</script></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -68,6 +78,7 @@ before(async () => {
     if (req.url === '/good') return send(200, 'text/html; charset=utf-8', GOOD);
     if (req.url === '/lazy') return send(200, 'text/html; charset=utf-8', LAZY);
     if (req.url === '/late') return send(200, 'text/html; charset=utf-8', LATE);
+    if (req.url === '/cancel') return send(200, 'text/html; charset=utf-8', CANCEL);
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
@@ -245,4 +256,18 @@ test('첫 그림 뒤 요청을 적재 창에 넣고, 받는 중인 요청은 주
   assert.equal(typeof r.postDrawSettle.lateRequests, 'number');
   const slow = (r.pendingList ?? []).find((x) => x.url === '/slow.bin');
   assert.ok(slow && slow.partialBytes > 0, `받는 중인 /slow.bin 이 주소 · 바이트로 남지 않았다: ${JSON.stringify(r.pendingList)}`);
+});
+
+// 취소된 요청이 「받는 중」으로 남으면 조용한 시간을 끝내 못 채워 상한까지 기다리고, pending 이 취소를 덜 온 자원으로 적는다
+// (2026-10-01 리뷰 지적: loadingFailed 가 canceled 를 아무것도 적지 않았다).
+test('취소된 요청은 받는 중이 아니다: 적재 창을 붙잡지 않고 pending 에도 없다', async () => {
+  const out = path.join(outDir, 'cancel');
+  const [row] = await run(defaultOptions({ base, pages: ['/cancel'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, settleQuietMs: 3000, settleMaxMs: 20000 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'cancel-desktop-none.json'), 'utf8'));
+  assert.equal(r.postDrawSettle?.hitMax, false, `취소된 요청이 적재 창을 상한까지 붙잡았다: ${JSON.stringify(r.postDrawSettle)}`);
+  assert.ok(!(r.pendingList ?? []).some((x) => x.url === '/slow.bin'), `취소된 요청이 받는 중으로 남았다: ${JSON.stringify(r.pendingList)}`);
+  assert.equal(r.pending, 0);
+  assert.ok(r.canceledCount >= 1, `취소 수 ${r.canceledCount}`);
+  assert.equal(r.failedCount, 0);
 });

@@ -18,7 +18,8 @@
 // - 남의 서버에 반복 요청하지 않는다. pep 도 필요한 만큼만 잰다: 한 번 실행 = 페이지 × 프로필 × 망 × repeat 번 적재.
 // - 적재 창: 첫 그림(지도 없는 화면은 지도 대기가 끝난 때) 뒤 망이 --settle-quiet-ms(3초) 동안 조용할 때까지, 최대
 //   --settle-max-ms(30초). 첫 그림 뒤에 오는 요청(省 PNG 등)도 적재 수치에 든다. 끝까지 받는 중인 요청은 pending 목록에
-//   주소 · 그때까지 받은 바이트로 적는다(EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다).
+//   주소 · 그때까지 받은 바이트로 적는다(EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다). 취소된 요청은
+//   실패도 받는 중도 아니다 — canceledCount 로만 센다.
 // - 측정을 못 한 행(오류 행)이 하나라도 있으면 종료 코드 1 이다. 기준(checks)이 걸린 것은 실패가 아니다(측정 도구다).
 //   요청한 경로와 다른 곳에 닿거나(로그인 풀림 → /login 등) 문서 응답이 4xx · 5xx 이면 그 행은 오류 행이다(`*-wrong-page.png` 만 남긴다).
 // - 기준(checks)은 문서에 있는 것만 쓴다. 문서가 크기를 정하지 않은 「큰 자원」 같은 것은 문턱 없이 전부 적는다.
@@ -130,19 +131,21 @@ function summarizeNetwork(requests, originOf) {
   const failed = http.filter((r) => r.failed || (r.status && r.status >= 400));
   const dups = duplicateTransfers(http);
   const short = (u) => (originOf(u) ? u.replace(/^https?:\/\/[^/]+/, '') : u).slice(0, 140);
+  const receiving = (r) => r.bytes === undefined && !r.failed && !r.canceled; // 행 끝에 아직 받는 중(취소 · 실패 제외)
   return {
     requests: requests.length,
     httpRequests: http.length,
     transferBytes: sum(requests),
-    pending: http.filter((r) => r.bytes === undefined && !r.failed).length,
+    pending: http.filter(receiving).length,
     // 행이 끝날 때까지 받는 중이던 요청 — 개수만 적으면 큰 자원(省 PNG 24.7MB 등)이 바이트 0 으로 사라진다.
-    pendingList: http.filter((r) => r.bytes === undefined && !r.failed).slice(0, 15).map((r) => ({ url: short(r.url), type: r.type ?? null, partialBytes: r.partial ?? 0 })),
-    pendingPartialBytes: http.filter((r) => r.bytes === undefined && !r.failed).reduce((a, r) => a + (r.partial ?? 0), 0),
+    pendingList: http.filter(receiving).slice(0, 15).map((r) => ({ url: short(r.url), type: r.type ?? null, partialBytes: r.partial ?? 0 })),
+    pendingPartialBytes: http.filter(receiving).reduce((a, r) => a + (r.partial ?? 0), 0),
     byType,
     duplicates: { count: dups.length, extraBytes: dups.reduce((a, g) => a + g.bytes - g.bytes / g.count, 0), list: dups.slice(0, 15).map((g) => ({ ...g, url: short(g.url) })) },
     uncompressed: { count: uncompressed.length, bytes: sum(uncompressed), list: uncompressed.sort((a, b) => b.bytes - a.bytes).slice(0, 10).map((r) => ({ url: short(r.url), bytes: r.bytes, mime: r.mime })) },
     failed: failed.slice(0, 20).map((r) => ({ url: short(r.url), status: r.status ?? null, error: r.failed ?? null })),
     failedCount: failed.length,
+    canceledCount: http.filter((r) => r.canceled && r.bytes === undefined).length,
     top10: [...http].sort((a, b) => (b.bytes || 0) - (a.bytes || 0)).slice(0, 10).map((r) => ({ url: short(r.url), bytes: r.bytes, status: r.status, enc: r.enc })),
   };
 }
@@ -482,7 +485,8 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
   });
   cdp.on('Network.dataReceived', (e) => { const r = reqs.get(e.requestId); if (r) r.partial = (r.partial ?? 0) + (e.encodedDataLength || 0); });
   cdp.on('Network.loadingFinished', (e) => { const r = reqs.get(e.requestId); if (r) { r.bytes = e.encodedDataLength; r.t1 = e.timestamp; } });
-  cdp.on('Network.loadingFailed', (e) => { const r = reqs.get(e.requestId); if (r && !e.canceled) r.failed = e.errorText; });
+  // 취소(AbortController · 바뀐 이미지 src · prefetch 중단)는 실패도 받는 중도 아니다 — 따로 표시해 실패 수 · 받는 중 · 적재 창 대기에서 뺀다.
+  cdp.on('Network.loadingFailed', (e) => { const r = reqs.get(e.requestId); if (!r) return; if (e.canceled) r.canceled = true; else r.failed = e.errorText; });
 
   const consoleErrors = [];
   page.on('console', (m) => { if (m.type() === 'error') consoleErrors.push(m.text().slice(0, 300)); });
@@ -518,7 +522,7 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
   // 채우면 끝, settleMaxMs 를 넘기면 그때 받는 중인 것을 pending 으로 남긴다. 끝나지 않는 흐름은 기다리지 않는다.
   const drawEnd = Date.now();
   const streaming = (r) => r.type === 'EventSource' || r.type === 'WebSocket' || /event-stream/.test(r.mime || '');
-  const inFlight = () => [...reqs.values()].some((r) => /^https?:/.test(r.url) && r.bytes === undefined && !r.failed && !streaming(r));
+  const inFlight = () => [...reqs.values()].some((r) => /^https?:/.test(r.url) && r.bytes === undefined && !r.failed && !r.canceled && !streaming(r));
   let seen = reqs.size; let quietSince = Date.now(); let settleHitMax = true;
   while (Date.now() - drawEnd < opts.settleMaxMs) {
     await page.waitForTimeout(250);
