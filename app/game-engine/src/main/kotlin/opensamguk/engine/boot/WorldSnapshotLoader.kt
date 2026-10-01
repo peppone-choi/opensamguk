@@ -1,5 +1,7 @@
 package opensamguk.engine.boot
 
+import opensamguk.logic.council.CurrentRulerBinding
+
 import opensamguk.common.constants.GameUnitConst
 import opensamguk.common.constants.ScenarioLifecycleMeta
 import opensamguk.common.world.WorldId
@@ -445,8 +447,10 @@ class WorldSnapshotLoader(
         "SELECT id, name, color, capital_city_id, gold, rice, tech, power, level, type_code, meta " +
             "FROM nation WHERE world_id = ? ORDER BY id ASC",
         { rs, _ ->
+        val meta = MetaJson.decode(rs.getString("meta"))
         Nation(
             id = rs.getInt("id"),
+            chiefGeneralId = CurrentRulerBinding.read(meta)?.generalId,
             name = rs.getString("name"),
             color = rs.getString("color"),
             capitalCityId = rs.getObject("capital_city_id") as? Int,
@@ -456,7 +460,7 @@ class WorldSnapshotLoader(
             power = rs.getInt("power"),
             level = rs.getInt("level"),
             typeCode = rs.getString("type_code"),
-            meta = MetaJson.decode(rs.getString("meta")),
+            meta = meta,
         )
         }, worldId.value)
 

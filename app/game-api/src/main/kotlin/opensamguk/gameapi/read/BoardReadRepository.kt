@@ -111,6 +111,7 @@ interface BoardPostReadRawRepository : SpringDataRepository<BoardPostReadEntity,
     ): List<BoardPostReadEntity>
     fun findByWorldIdAndIsSecretOrderByCreatedAtDescIdDesc(worldId: Int, isSecret: Boolean): List<BoardPostReadEntity>
     fun findByWorldIdAndId(worldId: Int, id: Int): BoardPostReadEntity?
+    fun findByWorldIdAndNationIdAndId(worldId: Int, nationId: Int, id: Int): BoardPostReadEntity?
     fun findByWorldIdAndOperationIdInOrderByIdDesc(worldId: Int, operationIds: Collection<Int>): List<BoardPostReadEntity>
 }
 
@@ -129,6 +130,11 @@ class BoardPostReadRepository(
 
     fun findById(id: Int): java.util.Optional<BoardPostReadEntity> =
         java.util.Optional.ofNullable(raw.findByWorldIdAndId(worldId.value, id))
+
+    fun councilArticle(nationId: Int, id: Int): BoardPostReadEntity? {
+        require(nationId > 0 && id > 0)
+        return raw.findByWorldIdAndNationIdAndId(worldId.value, nationId, id)
+    }
 
     fun councilPage(nationId: Int, secret: Boolean, kinds: Collection<String>, beforeTime: Instant?,
                     beforeId: Int?, limit: Int): List<BoardPostReadEntity> {

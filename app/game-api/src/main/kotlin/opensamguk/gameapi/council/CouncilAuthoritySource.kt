@@ -16,6 +16,9 @@ data class CouncilAuthority(
     val noticeWriters: Set<Int>,
     val roles: Map<Int, String>,
     val complete: Boolean,
+    val rulerGeneralId: Int? = null,
+    val rulerRevision: String? = null,
+    val designationRevision: String? = null,
 ) {
     init {
         require(readers.all { it > 0 } && writers.all { it > 0 } && noticeWriters.all { it > 0 })
@@ -29,3 +32,11 @@ data class CouncilAuthority(
 }
 
 class CouncilReadFailure(val status: Int, val code: String, val explanation: String) : RuntimeException(explanation)
+
+/** 응답 DTO가 아니라 같은 트랜잭션에서 접수와 읽기가 공유하는 내부 사실이다. */
+data class CouncilSession(
+    val actor: GeneralReadEntity,
+    val world: WorldStateReadEntity?,
+    val people: List<GeneralReadEntity>,
+    val authority: CouncilAuthority,
+)
