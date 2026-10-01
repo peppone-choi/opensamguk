@@ -3,6 +3,21 @@ package opensamguk.common.wire
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+@Serializable
+data class CreationCustomChoice(
+    val name: String,
+    val nativeCountyId: Int,
+    val leadership: Int,
+    val strength: Int,
+    val intel: Int,
+    val politics: Int,
+    val charm: Int,
+    val ideologyId: String,
+    val traitId: String,
+    val picture: String? = null,
+    val imageServer: Int = 0,
+)
+
 /**
  * Faithful port of the `TurnDaemonCommand` discriminated union (`turnDaemon/types.ts:43-186`).
  *
@@ -459,6 +474,20 @@ sealed class TurnDaemonCommand {
         val inheritBonusStat: List<Int>? = null,
     ) : TurnDaemonCommand() {
         override val type: String get() = "makeGeneral"
+    }
+
+    /** Account-scoped creation receipt maps its public UUID to the envelope's internal request ID. */
+    @Serializable
+    @SerialName("createGeneral")
+    data class CreateGeneral(
+        val accountId: Int,
+        val worldId: Int,
+        val clientRequestId: String,
+        val choiceKind: String,
+        val custom: CreationCustomChoice? = null,
+        val historicalGeneralId: Int? = null,
+    ) : TurnDaemonCommand() {
+        override val type: String get() = "createGeneral"
     }
 
     @Serializable
