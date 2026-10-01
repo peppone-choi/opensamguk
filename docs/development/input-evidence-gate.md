@@ -1,6 +1,6 @@
 # 입력 배달 증거 게이트 (E10)
 
-`data/commands/input-catalog.json`의 v5 행은 D21 첫걸음 **설명**을 위한 `firstStepsExplanationStepId`·`firstStepsExplanationNaReason`과 `evidence`를 가진다. 단계 값은 여덟 `tutorial.*` 글 ID, `UNMAPPED`(K7 화면 대응 확인 전), `N/A`(설명 밖임을 확인) 중 하나다. `N/A`에는 비어 있지 않은 사유가 필요하고, 나머지는 사유가 `null`이다. v4 `tutorialObjectiveId`·`tutorialNaReason`은 진척 판정용 폐기 필드다. 런타임 파서는 v4의 `HELP_READY` 이하 행만 `UNMAPPED`로 읽어 전환할 수 있고, v5 행에서 폐기 필드를 거절한다. 동결 v5 원본의 74행은 전부 `UNMAPPED`이며, 이후 신규 행을 더해도 확인 전에는 설명 준비를 주장하지 않는다.
+`data/commands/input-catalog.json`의 v5 행은 D21 첫걸음 **설명**을 위한 `firstStepsExplanationStepId`·`firstStepsExplanationNaReason`과 `evidence`를 가진다. 단계 값은 여덟 `tutorial.*` 글 ID, `UNMAPPED`(K7 화면 대응 확인 전), `N/A`(설명 밖임을 확인) 중 하나다. `N/A`에는 비어 있지 않은 사유가 필요하고, 나머지는 사유가 `null`이다. 모든 `N/A` 선언은 배달 단계와 단계별 증거 유무에 관계없이 아래 제외 원장의 동일 입력·사유, `CONFIRMED` 상태, 출처를 검사한다. v4 `tutorialObjectiveId`·`tutorialNaReason`은 진척 판정용 폐기 필드다. 런타임 파서는 v4의 `HELP_READY` 이하 행만 `UNMAPPED`로 읽어 전환할 수 있고, v5 행에서 폐기 필드를 거절한다. 동결 v5 원본의 74행은 전부 `UNMAPPED`이며, 이후 신규 행을 더해도 확인 전에는 설명 준비를 주장하지 않는다.
 
 ## 동결 기준선과 부채
 

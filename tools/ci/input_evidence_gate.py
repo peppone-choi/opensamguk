@@ -160,6 +160,8 @@ def validate(catalog: dict, baseline: dict, root: Path) -> list[dict[str, str]]:
             raise ValueError(f"firstStepsExplanationNaReason must match N/A: {input_id}")
         if reason == "E9_PENDING_U3":
             raise ValueError(f"retired tutorial pending reason: {input_id}")
+        if step == "N/A":
+            _confirmed_exclusion(row, root)
         evidence = row.get("evidence")
         if not isinstance(evidence, dict) or any(stage not in PROOF_ROLES for stage in evidence):
             raise ValueError(f"invalid evidence map: {input_id}")

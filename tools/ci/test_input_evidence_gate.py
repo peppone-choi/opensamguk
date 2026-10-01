@@ -126,6 +126,51 @@ class InputEvidenceGateTest(unittest.TestCase):
         }]}))
         self.assertEqual("tutorial-na", _proof(row, "TUTORIAL_READY", reference, self.root))
 
+    def test_low_stage_na_requires_confirmed_exclusion_without_tutorial_evidence(self):
+        row = self.row("action.enlist")
+        row["firstStepsExplanationStepId"] = "N/A"
+        row["firstStepsExplanationNaReason"] = "NOT_IN_FIRST_STEPS_EXPLANATION"
+        self.assertEqual("HANDLER_READY", row["deliveryState"])
+        self.assertEqual({}, row["evidence"])
+        with self.assertRaisesRegex(ValueError, "exclusion ledger missing"):
+            validate(self.catalog, self.baseline, self.root)
+        ledger = self.write("data/help/first-steps-exclusions-v1.json",
+                            json.dumps({"schemaVersion": 1, "entries": []}))
+        with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
+            validate(self.catalog, self.baseline, self.root)
+        entry = {
+            "inputId": "action.enlist", "status": "CONFIRMED",
+            "reason": row["firstStepsExplanationNaReason"],
+            "source": "docs/development/first-steps-map.md#first-steps-exclusion",
+        }
+        source = self.write("docs/development/first-steps-map.md",
+                            "first-steps-exclusion action.enlist")
+        for overrides, error in [
+            ({"inputId": "action.farm"}, "N/A is not confirmed"),
+            ({"status": "DRAFT"}, "N/A is not confirmed"),
+            ({"reason": "UNCONFIRMED_EXCLUSION"}, "N/A is not confirmed"),
+            ({"source": None}, "N/A needs source"),
+            ({"source": "docs/development/../first-steps-map.md#first-steps-exclusion"},
+             "unsafe first-steps N/A source"),
+            ({"source": "docs/development/missing.md#first-steps-exclusion"},
+             "source missing input and anchor"),
+        ]:
+            with self.subTest(overrides=overrides):
+                ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry | overrides]}))
+                with self.assertRaisesRegex(ValueError, error):
+                    validate(self.catalog, self.baseline, self.root)
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry, entry]}))
+        with self.assertRaisesRegex(ValueError, "N/A is not confirmed"):
+            validate(self.catalog, self.baseline, self.root)
+        ledger.write_text(json.dumps({"schemaVersion": 1, "entries": [entry]}))
+        for content in ["first-steps-exclusion", "action.enlist"]:
+            with self.subTest(content=content):
+                source.write_text(content)
+                with self.assertRaisesRegex(ValueError, "source missing input and anchor"):
+                    validate(self.catalog, self.baseline, self.root)
+        source.write_text("first-steps-exclusion action.enlist")
+        self.assertEqual(45, len(validate(self.catalog, self.baseline, self.root)))
+
     def test_existing_row_cannot_claim_a_higher_state_without_evidence(self):
         self.row("action.enlist")["deliveryState"] = "UI_READY"
         with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):
