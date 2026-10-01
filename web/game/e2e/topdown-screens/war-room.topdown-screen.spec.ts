@@ -240,7 +240,8 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     const mapBox = (await map.boundingBox())!;
     expect(panelBox.x, '레이어 판이 지도 왼쪽 끝을 넘었다').toBeGreaterThanOrEqual(mapBox.x - 1);
     expect(panelBox.x + panelBox.width, '레이어 판이 지도 오른쪽 끝을 넘었다').toBeLessThanOrEqual(mapBox.x + mapBox.width + 1);
-    // 열린 판의 줄은 다른 지도 조작에 가리지 않는다(모바일 좁은 열에서 왼쪽 아래 보기 단추가 판 위에 올라탄 적이 있다)
+    // 열린 판의 줄은 다른 지도 조작에 가리지 않는다(모바일 좁은 열에서 왼쪽 아래 보기 단추가 판 위에 올라탄 적이 있다).
+    // 보기 단추는 줄의 왼쪽만 덮어 가운데 한 점으로는 못 잡는다 — 왼쪽 · 가운데 · 오른쪽 세 점을 본다
     const rows = layersPanel.getByRole('button');
     const rowCount = await rows.count();
     expect(rowCount).toBeGreaterThanOrEqual(5);
@@ -249,10 +250,20 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
       await row.evaluate((node) => node.scrollIntoView({ block: 'center', inline: 'center' }));
       const hit = await row.evaluate((node) => {
         const rect = node.getBoundingClientRect();
-        const top = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
-        return top && (top === node || node.contains(top)) ? null : (top?.getAttribute('aria-label') ?? top?.textContent ?? top?.tagName ?? 'none');
+        for (const x of [rect.x + 6, rect.x + rect.width / 2, rect.right - 6]) {
+          const top = document.elementFromPoint(x, rect.y + rect.height / 2);
+          if (!(top && (top === node || node.contains(top)))) return `${Math.round(x - rect.x)}px: ${top?.getAttribute('aria-label') ?? top?.textContent ?? top?.tagName ?? 'none'}`;
+        }
+        return null;
       });
       expect(hit, `레이어 판 줄 ${i}(${await row.textContent()})를 가린 것`).toBeNull();
+    }
+    // 서버 대기 줄의 이름은 한 줄이다(좁은 판에서 「보/급/선」 한 글자씩 접힌 적이 있다)
+    const pendingNames = layersPanel.locator('[data-pending-layer] > span:first-child');
+    expect(await pendingNames.count()).toBe(3);
+    for (const name of await pendingNames.all()) {
+      const nameBox = (await name.boundingBox())!;
+      expect(nameBox.height, `서버 대기 줄 이름 「${await name.textContent()}」이 여러 줄로 접혔다`).toBeLessThan(30);
     }
     const commanderyLines = layersPanel.getByRole('button', { name: /군 경계/ });
     await expect(commanderyLines).toHaveAttribute('aria-pressed', 'false');
