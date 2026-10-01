@@ -235,13 +235,17 @@ function layoutChecks(minTarget) {
   };
   const SEL = 'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=link],[role=tab],[role=checkbox],[role=radio],[role=switch],[role=menuitem],[role=option],[tabindex]:not([tabindex="-1"])';
   const targets = [...document.querySelectorAll(SEL)].filter(shown);
-  // 누를 영역(2026-09-30 K0 결정: 보이는 크기가 아니라 누를 영역 44). 화면 안의 요소는 가운데에서 바깥으로
-  // elementFromPoint 를 훑어 재고(패딩 · ::before 확장 포함, 덮인 곳 제외), 화면 밖 요소는 상자 크기로 잰다(rectOnly).
+  // 누를 영역(2026-09-30 K0 결정: 보이는 크기가 아니라 누를 영역 44). 가운데에서 바깥으로 elementFromPoint 를 훑어
+  // 잰다(패딩 · ::before 확장 포함, 덮인 곳 제외). 화면 밖 요소는 화면 가운데로 들여서 잰다(2026-10-02 — 전에는 상자 크기만
+  // 재서 아래쪽 덮임 · 겹침을 못 봤다). 들여도 화면에 못 들어오는 것(스크롤할 수 없는 자리)만 상자 크기로 잰다(rectOnly).
   let rectOnly = 0;
-  const hitArea = (el) => {
+  const hitArea = (el, centered = false) => {
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    if (cx < 0 || cy < 0 || cx >= vw || cy >= vh) { rectOnly += 1; return { w: r.width, h: r.height }; }
+    if (cx < 0 || cy < 0 || cx >= vw || cy >= vh) {
+      if (!centered) return whenCentered(el, () => hitArea(el, true));
+      rectOnly += 1; return { w: r.width, h: r.height };
+    }
     const mine = (x, y) => {
       if (x < 0 || y < 0 || x >= vw || y >= vh) return false;
       const h = document.elementFromPoint(x, y);
@@ -273,14 +277,14 @@ function layoutChecks(minTarget) {
     // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니라 따로 센다(열린 모달이면 맞고, 아니면 겹친 투명 상자 사고).
     // 가운데로 스크롤해도 덮여 있을 때만 덮임이다. 스크롤하면 맞는 것은 그 위치에서 잰 누를 영역으로 44 를 본다.
     if (r.covered) {
-      const again = whenCentered(el, () => hitArea(el));
+      const again = whenCentered(el, () => hitArea(el, true));
       if (again.covered) { covered.push({ ...describe(el), by: again.by }); continue; }
       coveredFirstViewOnly.push({ ...describe(el), by: r.by });
       r = again;
     } else if (r.w < minTarget || r.h < minTarget) {
       // 가운데는 맞지만 가장자리가 고정 탭 · 머리줄에 걸려 누를 영역이 짧게 잡힌 경우도 가운데로 스크롤해 다시 잰다
       // (2026-10-02 외교 「천하 지도 보기」 104×29 — 상자는 44, 아래 15px 가 아래 탭에 걸림). 더 큰 쪽을 쓴다.
-      const again = whenCentered(el, () => hitArea(el));
+      const again = whenCentered(el, () => hitArea(el, true));
       if (!again.covered && again.w * again.h > r.w * r.h) {
         if (again.w >= minTarget && again.h >= minTarget) smallFirstViewOnly.push({ ...describe(el), hitW: Math.round(r.w), hitH: Math.round(r.h) });
         r = again;
@@ -362,7 +366,7 @@ function layoutChecks(minTarget) {
     targets: targets.length,
     smallTargets: small.length,
     smallTargetsInline: smallInline.length,
-    smallTargetsRule: '누를 영역(elementFromPoint 훑기) 44 — 화면 밖 요소는 상자 크기(rectOnly)',
+    smallTargetsRule: '누를 영역(elementFromPoint 훑기) 44 — 화면 밖 요소는 가운데로 들여서 잼, 들일 수 없는 것만 상자 크기(rectOnly)',
     targetsMeasuredByRectOnly: rectOnly,
     coveredTargets: covered.length,
     coveredTargetSamples: covered.slice(0, 15),

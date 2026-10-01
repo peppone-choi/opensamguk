@@ -85,6 +85,21 @@ const COVER = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta 
 <nav style="position:fixed;left:0;right:0;bottom:0;height:64px;background:#222" aria-label="아래 탭"><a href="/good" style="display:inline-block;width:64px;height:64px;color:#fff">탭</a></nav>
 </body></html>`;
 
+// 첫 화면 아래: 투명 상자에 덮인 단추(결함)와, 상자는 30×30 이지만 ::before 로 누를 영역을 44 로 넓힌 단추(결함 아님).
+// 예전에는 화면 밖을 상자 크기로만 재서 앞의 것을 못 보고 뒤의 것을 44 미만으로 셌다.
+const BELOW = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>아래쪽</title>
+<style>.ext{position:relative;width:30px;height:30px;padding:0;border:0}.ext::before{content:'';position:absolute;inset:-7px}</style></head>
+<body style="margin:0"><main style="padding:16px">
+<div style="height:1400px"></div>
+<div style="position:relative;width:200px;height:48px">
+  <button type="button" style="width:200px;height:48px">아래 덮인 단추</button>
+  <div style="position:absolute;inset:0"></div>
+</div>
+<div style="height:60px"></div>
+<button type="button" class="ext">넓힌</button>
+<div style="height:1400px"></div>
+</main></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -96,6 +111,7 @@ before(async () => {
     if (req.url === '/late') return send(200, 'text/html; charset=utf-8', LATE);
     if (req.url === '/cancel') return send(200, 'text/html; charset=utf-8', CANCEL);
     if (req.url === '/cover') return send(200, 'text/html; charset=utf-8', COVER);
+    if (req.url === '/below') return send(200, 'text/html; charset=utf-8', BELOW);
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
@@ -309,4 +325,16 @@ test('덮임 · 44: 스크롤하면 빠져나오는 고정 탭 밑 · 가장자�
   assert.equal(r.layout.smallTargets, 0, JSON.stringify(r.layout.smallTargetSamples));
   assert.equal(r.layout.smallAtFirstViewOnly, 1, JSON.stringify(r.layout.smallAtFirstViewOnlySamples));
   assert.equal(r.layout.smallAtFirstViewOnlySamples[0].text, '걸친 단추');
+});
+
+// 화면 밖 요소도 가운데로 들여서 누를 영역 · 덮임을 잰다(2026-10-02 K0: K5 hitArea.ts 대조 — 전에는 상자 크기만).
+test('화면 밖: 아래쪽 덮임을 잡고, ::before 로 넓힌 누를 영역은 44 로 잰다', async () => {
+  const out = path.join(outDir, 'below');
+  const [row] = await run(defaultOptions({ base, pages: ['/below'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'below-desktop-none.json'), 'utf8'));
+  assert.equal(r.layout.coveredTargets, 1, JSON.stringify(r.layout.coveredTargetSamples));
+  assert.equal(r.layout.coveredTargetSamples[0].text, '아래 덮인 단추');
+  assert.equal(r.layout.smallTargets, 0, JSON.stringify(r.layout.smallTargetSamples));
+  assert.equal(r.layout.targetsMeasuredByRectOnly, 0);
 });
