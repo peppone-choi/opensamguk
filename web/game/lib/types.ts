@@ -703,6 +703,8 @@ export interface DispatchPendingItem {
     issuerLabel?: string | null; targetLabel?: string | null; countyLabel?: string | null;
     issuedAt: Phase; dueAt: Phase;
     status: 'PENDING' | 'ACCEPTED' | 'REFUSED' | 'CANCELLED'; currentFailure?: string | null;
+    /** 계약판 K6-20 — 서버의 currentFailure 메시지 그대로. 서버 반영 전 · 옛 응답엔 없다(null 과 같이 본다). */
+    currentFailureReason?: string | null;
 }
 export interface DispatchPendingResponse {
     result: boolean; code?: string | null; now?: Phase | null;
