@@ -1,7 +1,10 @@
+import * as matchers from '@testing-library/jest-dom/matchers';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MapPreviewProps } from '@/components/MapPreview';
+
+expect.extend(matchers);
 
 const mocks = vi.hoisted(() => ({
     user: { id: 1, username: 'hahoudon', nickname: '원양', role: 'USER', email: null, picture: null, imageServer: 0 } as Record<string, unknown>,
@@ -95,7 +98,7 @@ describe('P-G04 로비 — 화면', () => {
 
         await waitFor(() => expect(within(card('통일 서버')).getByText('모집 중')).toBeInTheDocument());
         expect(within(card('통일 서버')).getByText('따라잡는 중 · 2배속')).toBeInTheDocument();
-        expect(within(card('통일 서버')).getByRole('link', { name: '장수 만들기' })).toHaveAttribute('href', expect.stringContaining('join'));
+        expect(within(card('통일 서버')).getByRole('link', { name: '장수 만들기' })).toHaveAttribute('href', '/game/uni');
 
         await waitFor(() => expect(within(card('s2')).getByText('마감')).toBeInTheDocument());
         const full = within(card('s2')).getByRole('button', { name: '장수 만들기' });

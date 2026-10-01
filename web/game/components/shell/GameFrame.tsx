@@ -28,7 +28,7 @@ import { ShellIcon, type ShellIconName } from './ShellIcon';
 import styles from './shell.module.css';
 
 /** 입장 흐름 — 레일 · 하단 탭 없이 머리줄만(보드 EntryHeader). */
-const ENTRY_PATHS: ReadonlySet<string> = new Set(['join', 'register']);
+const ENTRY_PATHS: ReadonlySet<string> = new Set(['join', 'register', 'create']);
 
 /** 달 → 계절 — 정본은 lib/season.ts(서버 확정값 world-event-values.json 과 같은 경계). 셸 시험 · 부르는 곳을 위해 다시 내보낸다. */
 export { seasonOf };
@@ -53,7 +53,8 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const { frontInfo, serverId } = session;
   const rest = normalizeGamePathname(pathname, serverId).replace(/^\/game\/?/, '');
   const located = locateScreen(rest, search?.toString() ?? '');
-  const entry = ENTRY_PATHS.has(rest.split('/')[0] ?? '');
+  const entry = ENTRY_PATHS.has(rest.split('/')[0] ?? '')
+    || (rest === '' && frontInfo?.general.hasGeneral === false);
   // 머리줄이 여는 층은 한 번에 하나 — 모바일 「전체」 시트 · 계절 패널 · 도움말 서랍(?help=)이 함께 열리지 않는다.
   const [open, setOpen] = useState<'menu' | 'season' | null>(null);
   const viewport = useViewportClass();
