@@ -78,6 +78,38 @@ async function mapOnTop(page: Page, at: { x: number; y: number }) {
   }, at);
 }
 
+/** 카메라가 멈출 때까지(휠 멈춤 자리 · 끌기) 기다린다 — 가운데 칸 · 확대가 300ms 동안 그대로면 멈춘 것이다. */
+async function settled(map: Locator) {
+  const read = async () => `${await map.getAttribute('data-map-center')}@${await map.getAttribute('data-map-zoom')}`;
+  let last = await read();
+  await expect.poll(async () => {
+    const now = await read();
+    const same = now === last;
+    last = now;
+    return same;
+  }, { timeout: 15_000, intervals: [300] }).toBe(true);
+}
+
+/**
+ * 城을 화면 점 `to`(지도가 드러난 곳)로 끌어 온다. 확대하며 화면 끝에 맞추느라 城이 패널 밑(「이름」 단추 등)으로 밀릴 수 있다.
+ * `to`에서 끌기 시작하니 손가락이 패널 위로 지나가도 지도가 붙잡는다. 놓기 전에 100ms 넘게 멈춰 관성을 0으로 둔다.
+ */
+async function bringCity(page: Page, map: Locator, to: { x: number; y: number }) {
+  for (let tries = 0; tries < 4; tries += 1) {
+    const at = await screenOf(map, CITY);
+    const dx = to.x - at.x;
+    const dy = to.y - at.y;
+    if (Math.hypot(dx, dy) < 4) return at;
+    await page.mouse.move(to.x, to.y);
+    await page.mouse.down();
+    await page.mouse.move(to.x + dx, to.y + dy, { steps: 12 });
+    await page.waitForTimeout(150);
+    await page.mouse.up();
+    await settled(map);
+  }
+  return screenOf(map, CITY);
+}
+
 test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () => {
   test('서버가 bakeId를 주면 새 지도: 천하 보기로 그려지고 휠 · 누르기 · 끌기 · 이름 단추가 된다', { tag: [BOTH] }, async ({ page }) => {
     const asked = await serve(page, true);
@@ -90,20 +122,25 @@ test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () 
     // 옛 지도판 자료(지형 JSON · 省 그림)는 받지 않는다
     expect(asked.filter((path) => /\/api\/game\/api\/map\/(terrain|provinces)/.test(path))).toEqual([]);
 
-    // 조작됨 ① 합성 城이 그려진 곳은 패널에 가리지 않고 지도가 맨 위다 — 거기서 휠을 굴리면 그 자리를 붙든 채 확대된다
+    // 조작됨 ① 합성 城이 그려진 곳(P0)은 패널에 가리지 않고 지도가 맨 위다 — 거기서 한 칸씩 굴리면 멈출 때마다 한 멈춤 자리씩 올라간다
+    // (휴대폰 폭 맞춤 0.127 에서 한 칸이 맞춤으로 되돌아가던 결함을 여기서 본다). 한 칸마다 城을 P0 로 다시 끌어 온다.
     let city = await screenOf(map, CITY);
-    expect(await mapOnTop(page, city), `城 자리(${Math.round(city.x)},${Math.round(city.y)})가 가려졌다`).toBe('CANVAS:true');
+    const p0 = { x: city.x, y: city.y };
+    expect(await mapOnTop(page, p0), `城 자리(${Math.round(p0.x)},${Math.round(p0.y)})가 가려졌다`).toBe('CANVAS:true');
     const before = city.zoom;
     for (let step = 0; step < 16 && city.zoom < 6; step += 1) {
-      await page.mouse.move(city.x, city.y);
+      await page.mouse.move(p0.x, p0.y);
       await page.mouse.wheel(0, -400);
-      await expect.poll(async () => Number(await map.getAttribute('data-map-zoom')), { timeout: 10_000 }).toBeGreaterThan(city.zoom);
-      city = await screenOf(map, CITY);
+      await settled(map);
+      const zoom = Number(await map.getAttribute('data-map-zoom'));
+      expect(zoom, `${step + 1}번째 칸이 확대되지 않았다(${city.zoom} → ${zoom})`).toBeGreaterThan(city.zoom);
+      city = await bringCity(page, map, p0);
     }
     expect(city.zoom).toBeGreaterThan(before);
     expect(city.zoom, '휠로 郡 보기까지 확대되지 않았다').toBeGreaterThanOrEqual(6);
 
     // 조작됨 ② 城을 누르면 옛 지도판과 같은 이름표(이름 · 세력)
+    expect(Math.hypot(city.x - p0.x, city.y - p0.y), '城을 P0 로 끌어 오지 못했다').toBeLessThan(4);
     expect(await mapOnTop(page, city)).toBe('CANVAS:true');
     await page.mouse.click(city.x, city.y);
     const tip = page.locator('.map-preview-tooltip');
