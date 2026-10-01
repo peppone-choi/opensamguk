@@ -107,6 +107,16 @@ export {
 export { parsePlaces, type PlaceCity, type PlacesData, type SiteKind } from './places';
 export { MapMinimap, MINIMAP_SIZE, type MapMinimapProps } from './MapMinimap';
 export {
+  LegendSwatch,
+  MAP_LAYER_ROWS,
+  MapLayerButtons,
+  MapViewBar,
+  type MapLayerButtonsProps,
+  type MapLayerKey,
+  type MapViewBarProps,
+  type PendingLayer,
+} from './MapControls';
+export {
   drawMyLocation,
   myLocationHitRect,
   placeMyLocation,
