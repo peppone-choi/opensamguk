@@ -206,6 +206,7 @@ export {
 } from './iso/marker';
 export { buildJuLayer, juUrlForTerrain, mapLod, verifiedJuByParent, JU_NAMES,
   type JuIndexResponse, type JuLayer, type MapLod } from './iso/juLod';
+export { juDisplayName, juHanja } from './map/juDisplay';
 export { ARCHITECTURE_BY_JU, architectureForJu, type RegionalArchitecture } from './iso/regionalArchitecture';
 export { cityBadgeAssetKey, cityBadgeLabel, citySnapshotBadges, drawCityBadgeLayer, type IsoCityBadge } from './iso/cityBadgeLayer';
 export { cityBadgesById, WORK_BADGE_LABELS, type WorkBadgeCode } from './worldCityBadges';

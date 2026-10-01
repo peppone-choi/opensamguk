@@ -6,6 +6,7 @@
 // 지도 상태(카메라 · 층)는 TopdownMap 이 갖는다. 이 부품은 handle 로 움직이고 layers 를 바꿀 뿐이다. 자리는 화면 틀이 정한다.
 import { useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
 import { Icon } from '../../Icon';
+import { ReasonTooltip } from '../../ReasonTooltip';
 import type { MapLayers } from './renderer';
 import type { TopdownMapHandle } from './TopdownMap';
 import type { ViewLevel } from './types';
@@ -32,7 +33,6 @@ export interface MapViewBarProps {
 
 /** 보기 단추 — 주 · 군 · 현(라디오, 위아래 화살표), 확대 · 축소, 내 위치로. */
 export function MapViewBar({ handle, level, onMyLocation, myLocationReason = '내 장수 자리를 아직 모릅니다', style }: MapViewBarProps) {
-  const reasonId = `${useId()}-why`;
   const pick = (next: ViewLevel) => handle?.setLevel(next);
   const current = LEVELS.findIndex((entry) => entry.value === level);
   // 고른 칸만 Tab 순서에 든다. 아무것도 안 골랐으면 첫 칸.
@@ -46,6 +46,18 @@ export function MapViewBar({ handle, level, onMyLocation, myLocationReason = '�
     pick(next.value);
     (event.currentTarget.querySelector(`[data-level="${next.value}"]`) as HTMLButtonElement | null)?.focus();
   };
+  const myLocationButton = (
+    <button
+      type="button"
+      className={onMyLocation ? 'os-button' : 'os-button os-button--disabled'}
+      aria-label="내 위치로(Home)"
+      aria-disabled={onMyLocation ? undefined : true}
+      style={BUTTON}
+      onClick={onMyLocation}
+    >
+      <Icon name="war-room" size={20} />
+    </button>
+  );
   return (
     <div data-map-control="view-bar" style={{ display: 'flex', flexDirection: 'column', gap: 8, ...style }}>
       <div role="radiogroup" aria-label="보기 수준" onKeyDown={onKey} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -73,18 +85,7 @@ export function MapViewBar({ handle, level, onMyLocation, myLocationReason = '�
         <button type="button" className="os-button" aria-label="확대" style={{ ...BUTTON, fontSize: 20 }} onClick={() => handle?.zoomStep(1)}>+</button>
         <button type="button" className="os-button" aria-label="축소" style={{ ...BUTTON, fontSize: 20 }} onClick={() => handle?.zoomStep(-1)}>−</button>
       </div>
-      <button
-        type="button"
-        className="os-button"
-        aria-label="내 위치로(Home)"
-        aria-disabled={onMyLocation ? undefined : true}
-        aria-describedby={onMyLocation ? undefined : reasonId}
-        style={BUTTON}
-        onClick={onMyLocation}
-      >
-        <Icon name="war-room" size={20} />
-      </button>
-      {onMyLocation ? null : <span id={reasonId} hidden>{myLocationReason}</span>}
+      {onMyLocation ? myLocationButton : <ReasonTooltip reason={myLocationReason}>{myLocationButton}</ReasonTooltip>}
     </div>
   );
 }

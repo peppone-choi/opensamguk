@@ -4,17 +4,18 @@
 // 서버가 지금 주는 것은 황제 소재지(GET /api/imperial/presence)뿐이다. 그 칸만 실제 값으로 그린다.
 //  - 세력과 황실 · 조서 · 인장 · 조정 방침: 관찰자 투영 읽기(계약판 K8-10, C6)가 오기 전까지 서버 대기 A(영역 전체 waiting).
 //  - 칭제: 규칙 설계가 없다(K8-15, 등급 D) — 자리 한 칸만 둔다(설계서 P-K11 「지금 할 수 있는 것」).
-//  - 섭정 · 조정을 지키는 세력 · 조정 상태는 소재지 응답에 없다 — 그리지 않는다(짐작 금지).
-// 이름은 화면이 가진 자료로만 푼다(기록 화면과 같은 규칙, lib/records-names): 城은 지도 미리보기, 인물은 내 장수뿐(그 밖은 「어느 인물」),
-// 구역은 이번 접속에서 지도를 받았을 때만. 지도 미리보기는 황제가 있을 때만 받는다.
+//  - 섭정 · 조정을 지키는 세력 · 조정 상태는 소재지 응답에 없다 — 값을 짓지 않고 「준비 중」 줄로 둔다(서버 대기 K8-10).
+//    보드에 있는 칸을 조용히 빼면 나중에 빠진 것을 아무도 모른다(K0 2026-10-01).
+//  - 황통 카드의 지도 조각(왕관 표식)은 지도 층 · crown 아이콘(#1142)이 오면 붙인다 — 그때까지 「준비 중」 칸.
+// 황제 이름은 서버가 준 `emperorName`(K8-16, #1150) — 없으면 「이름 없음」. 城은 지도 미리보기(황제가 있을 때만 받는다),
+// 구역은 이번 접속에서 지도를 받았을 때만 안다(K4-21 대기).
 
 import { KV, Panel, SectionHeader, StatusView, useProvinceName } from '@opensamguk/ui';
 import { emperorWhere, useImperialPresence, type ImperialBadge } from '@/lib/imperial';
-import { useGameSession } from '@/lib/campaign-session';
 import { useRecordNames, type RecordNames } from '@/lib/records-names';
 import styles from './imperial.module.css';
 
-const UNKNOWN_PERSON = '어느 인물';
+const NO_NAME = '이름 없음';
 const UNKNOWN_CITY = '어느 성';
 const CHECKING = '확인 중';
 
@@ -54,31 +55,39 @@ export default function ImperialScreen() {
 
 /** 황통 카드들 — 이 컴포넌트가 그려질 때만(황제가 있을 때만) 이름을 받는다. */
 function Lines({ badges }: { readonly badges: readonly ImperialBadge[] }) {
-    const session = useGameSession();
-    const general = session.frontInfo?.general ?? null;
-    const names = useRecordNames(session.generalId ?? null, general?.name ?? null);
+    const names = useRecordNames(null, null); // 城 이름만 쓴다
     const provinceName = useProvinceName();
     return (
         <div className={styles.lines}>
             {badges.map((badge) => (
                 <Panel key={badge.lineCode} className={styles.line} aria-label={`황통 — ${badge.lineName}`}>
                     <SectionHeader title={`황통 — ${badge.lineName}`} sub="황통은 여럿일 수 있습니다" />
-                    <KV
-                        className={styles.facts}
-                        items={[
-                            { k: '황제', v: personName(names, badge.emperorGeneralId) },
-                            { k: '있는 곳', v: placeText(names, provinceName, badge) },
-                            { k: '조정', v: badge.courtCityId === null ? '정하지 않음' : cityName(names, badge.courtCityId) },
-                        ]}
-                    />
+                    <div className={styles.lineBody}>
+                        <div className={styles.mapSlot} data-server-wait="map-layer · crown">
+                            <span>지도 표식</span>
+                            <span className={styles.wait}>준비 중</span>
+                        </div>
+                        <KV
+                            className={styles.facts}
+                            items={[
+                                { k: '황제', v: badge.emperorName ?? NO_NAME },
+                                { k: '있는 곳', v: placeText(names, provinceName, badge) },
+                                { k: '조정', v: badge.courtCityId === null ? '정하지 않음' : cityName(names, badge.courtCityId) },
+                                { k: '섭정', v: <Waiting row="K8-10" /> },
+                                { k: '조정을 지키는 세력', v: <Waiting row="K8-10" /> },
+                                { k: '조정 상태', v: <Waiting row="K8-10" /> },
+                            ]}
+                        />
+                    </div>
                 </Panel>
             ))}
         </div>
     );
 }
 
-function personName(names: RecordNames, generalId: number): string {
-    return names.general?.(generalId) ?? UNKNOWN_PERSON;
+/** 서버가 아직 주지 않는 칸 — 값을 짓지 않고 「준비 중」. 어느 계약판 행을 기다리는지 data-server-wait 에 단다. */
+function Waiting({ row }: { readonly row: string }) {
+    return <span className={styles.wait} data-server-wait={row}>준비 중</span>;
 }
 
 function cityName(names: RecordNames, cityId: number): string {

@@ -102,6 +102,7 @@ export default function PartsLab() {
           <div className="parts-lab__box"><StatusView kind="error" title="창고망을 불러오지 못했습니다" errorCode="E-7F3A" onRetry={() => setLog('다시 시도')} /></div>
           <div className="parts-lab__box"><StatusView kind="denied" title="발령은 주공만 할 수 있습니다" howTo="주공이 되려면 거병하거나 독립해야 합니다." helpTopic={{ id: 'topic:dispatch', title: '발령' }} onHelp={(id) => setLog(`도움말 ${id}`)} /></div>
           <div className="parts-lab__box"><StatusView kind="waiting" title="외교 관계를 아직 볼 수 없습니다" /></div>
+          <div className="parts-lab__box"><StatusView kind="unavailable" title="통행 정보 없음" onReload={() => setLog('다시 읽기')} /></div>
           <div className="parts-lab__box"><StatusView kind="stale" lastReceived="3월 중순 21:40" onReconnect={() => setLog('다시 잇기')} /></div>
           <div className="parts-lab__box"><StatusView kind="not-found" /></div>
           <div className="parts-lab__box"><StatusView kind="maintenance" /></div>

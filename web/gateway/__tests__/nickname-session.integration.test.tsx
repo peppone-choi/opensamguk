@@ -75,7 +75,7 @@ describe('nickname session integration', () => {
     expect(brandLink).toHaveAttribute('href', '/lobby');
     expect(within(brandLink).getByRole('img', { name: '오픈삼국' })).toHaveAttribute(
       'src',
-      '/logo-wordmark.png',
+      '/logo-wordmark-sm.png',
     );
   });
 
