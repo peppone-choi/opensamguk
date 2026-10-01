@@ -72,7 +72,7 @@ export default function WarRoomPage() {
     };
 
     return (
-        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false}>
+        <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false} bleed>
             <div
                 style={{
                     padding: 12,

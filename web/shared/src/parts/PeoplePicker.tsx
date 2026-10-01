@@ -162,7 +162,7 @@ function PersonRow({ person: p, selected, multiple, onPick }: {
         {sub ? (
           <span className="os-opt__sub">
             {p.nation ? <i className="os-opt__nation" style={{ background: p.nation.color }} aria-hidden="true" /> : null}
-            {sub}
+            <span className="os-opt__sub-text">{sub}</span>
           </span>
         ) : null}
       </span>

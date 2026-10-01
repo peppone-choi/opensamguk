@@ -5,8 +5,6 @@
     flex-direction: column;
     gap: 12px;
     min-width: 0;
-    /* 셸 .body 여백 대기(K3 #1133) — 병합되면 지운다(안 지우면 두 번). */
-    padding: 12px;
 }
 
 .lines {
@@ -51,7 +49,6 @@
 @media (max-width: 767.98px) {
     .screen {
         gap: 10px;
-        padding: 10px 12px;
     }
 
     .lines {
