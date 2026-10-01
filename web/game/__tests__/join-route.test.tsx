@@ -1,199 +1,52 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { ReactNode } from 'react';
+import * as matchers from '@testing-library/jest-dom/matchers';
+import { render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import JoinPage from '@/app/game/join/page';
-
-const replaceMock = vi.hoisted(() => vi.fn());
-const pushMock = vi.hoisted(() => vi.fn());
-const refreshMock = vi.hoisted(() => vi.fn());
-const frontInfoState = vi.hoisted(() => ({ hasGeneral: true }));
-const apiMocks = vi.hoisted(() => ({
-    join: vi.fn(),
-    joinForm: vi.fn(),
-    mapPreview: vi.fn(),
-    commandResult: vi.fn(),
-}));
-
-vi.mock('next/navigation', () => ({
-    useRouter: () => ({
-        push: pushMock,
-        replace: replaceMock,
-        refresh: refreshMock,
-        prefetch: vi.fn(),
-        back: vi.fn(),
-    }),
-}));
-
-vi.mock('@/components/Shell', () => ({
-    default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
-}));
-
-vi.mock('@/hooks/useFrontInfo', () => ({
-    useFrontInfo: () => ({
-        frontInfo: {
-            result: true,
-            global: { serverId: 's1' },
-            general: { hasGeneral: frontInfoState.hasGeneral, name: '코덱스', generalId: 77 },
-        },
-        constData: null,
-        menu: [],
-        loading: false,
-        error: null,
-        refreshKey: 0,
-        refresh: vi.fn(),
-    }),
-}));
-
-vi.mock('@/lib/api', () => ({
-    api: {
-        mapPreview: apiMocks.mapPreview,
-        join: apiMocks.join,
-        joinForm: apiMocks.joinForm,
-        commandResult: apiMocks.commandResult,
-    },
-}));
-
-describe('JoinPage route guard', () => {
-    beforeEach(() => {
-        replaceMock.mockReset();
-        pushMock.mockReset();
-        refreshMock.mockReset();
-        apiMocks.join.mockReset();
-        apiMocks.commandResult.mockReset();
-        apiMocks.joinForm.mockReset().mockResolvedValue({
-            result: true,
-            member: {
-                name: '페포네',
-                picture: 'custom.jpg',
-                imageServer: 0,
-                canUsePicture: true,
-            },
-            turnTermMinutes: 60,
-            cities: [{ id: 10, name: '낙양', region: '사예' }],
-            availableSpecialWar: {
-                che_귀병: { title: '귀병', info: '계략 특기' },
-            },
-            geniusRemaining: 5,
-        });
-        apiMocks.mapPreview.mockReset().mockResolvedValue({ nations: [] });
-        frontInfoState.hasGeneral = true;
-    });
-
-    it('이미 등록된 장수가 있으면 장수 등록 폼에서 현재 서버 게임으로 바로 입장한다', async () => {
-        render(<JoinPage />);
-
-        await waitFor(() => {
-            expect(replaceMock).toHaveBeenCalledWith('/game/s1');
-        });
-        expect(pushMock).not.toHaveBeenCalledWith('/lobby');
-    });
-
-    it('정치와 매력을 포함한 다섯 능력치를 합계 275로 제출한다', async () => {
-        frontInfoState.hasGeneral = false;
-        apiMocks.join.mockResolvedValue({ status: 'BLOCKED', reason: '테스트 종료' });
-        render(<JoinPage />);
-
-        fireEvent.change(screen.getByRole('textbox'), { target: { value: '조조' } });
-        const sliders = screen.getAllByRole('slider');
-        expect(sliders).toHaveLength(5);
-        fireEvent.change(sliders[3], { target: { value: '60' } });
-        fireEvent.change(sliders[4], { target: { value: '50' } });
-        fireEvent.click(screen.getByRole('button', { name: '장수 생성' }));
-
-        await waitFor(() => {
-            expect(apiMocks.join).toHaveBeenCalledWith(expect.objectContaining({
-                leadership: 55,
-                strength: 55,
-                intel: 55,
-                politics: 60,
-                charm: 50,
-            }));
-        });
-    });
-
-    it('장수명은 계정명으로 자동 채워지지 않고 지운 뒤에도 복원되지 않는다', async () => {
-        frontInfoState.hasGeneral = false;
-        render(<JoinPage />);
-
-        const nameInput = await screen.findByRole('textbox') as HTMLInputElement;
-        expect(nameInput.value).toBe('');
-        fireEvent.change(nameInput, { target: { value: '새장수' } });
-        fireEvent.change(nameInput, { target: { value: '' } });
-        expect(nameInput.value).toBe('');
-    });
-
-    it('전체 랜덤형은 다섯 능력치를 범위 내에서 합계 275로 재분배한다', async () => {
-        frontInfoState.hasGeneral = false;
-        render(<JoinPage />);
-
-        fireEvent.click(await screen.findByRole('button', { name: '전체 랜덤형' }));
-        const values = screen.getAllByRole('spinbutton').map((input) => Number((input as HTMLInputElement).value));
-
-        expect(values).toHaveLength(5);
-        expect(values.reduce((sum, value) => sum + value, 0)).toBe(275);
-        values.forEach((value) => expect(value).toBeGreaterThanOrEqual(15));
-        values.forEach((value) => expect(value).toBeLessThanOrEqual(80));
-    });
-
-    it('장수 생성은 턴 완료가 아니라 엔진 command result 완료를 기다린다', async () => {
-        frontInfoState.hasGeneral = false;
-        apiMocks.join.mockResolvedValue({ status: 'AVAILABLE', requestId: 'join-1' });
-        apiMocks.commandResult
-            .mockResolvedValueOnce({ status: 'PENDING', requestId: 'join-1' })
-            .mockResolvedValue({ status: 'RESOLVED', requestId: 'join-1', ok: true, type: 'makeGeneral', result: { generalId: 1001 } });
-        const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => undefined);
-        render(<JoinPage />);
-
-        fireEvent.change(await screen.findByRole('textbox'), { target: { value: '조조' } });
-        fireEvent.click(screen.getByRole('button', { name: '장수 생성' }));
-
-        await waitFor(() => expect(pushMock).toHaveBeenCalled());
-        expect(apiMocks.commandResult).toHaveBeenCalledWith('join-1');
-        alertMock.mockRestore();
-    });
-
-    it('공개 map preview의 임관 권유문은 안전한 서식만 렌더한다', async () => {
-        frontInfoState.hasGeneral = false;
-        apiMocks.mapPreview.mockResolvedValue({
-            nations: [
-                {
-                    id: 1,
-                    name: '위',
-                    color: '#3355aa',
-                    scoutMsg: '<p onclick="alert(1)"><strong>천하</strong><img src=x onerror=alert(1)></p>',
-                },
-            ],
-        });
-
-        render(<JoinPage />);
-
-        expect(await screen.findByText('천하')).toBeInTheDocument();
-        expect(screen.getByText('천하').closest('strong')).toHaveTextContent('천하');
-        const scoutMessage = screen.getByText('천하').closest('div');
-        expect(scoutMessage).not.toBeNull();
-        expect(scoutMessage?.querySelector('img')).toBeNull();
-        expect(scoutMessage?.querySelector('[onclick]')).toBeNull();
-        expect(scoutMessage?.querySelector('[onerror]')).toBeNull();
-        expect(scoutMessage?.innerHTML).not.toContain('onerror');
-    });
-
-    it('계정 초상을 전달하고 삼모 유산 선택은 제품에서 제공하지 않는다', async () => {
-        frontInfoState.hasGeneral = false;
-        apiMocks.join.mockResolvedValue({ status: 'BLOCKED', reason: '테스트 종료' });
-        render(<JoinPage />);
-
-        fireEvent.change(screen.getByRole('textbox'), { target: { value: '조조' } });
-        await waitFor(() => {
-            expect(screen.getByRole('img', { name: '전콘' })).toHaveAttribute('src', expect.stringContaining('/custom.jpg'));
-        });
-        expect(screen.queryByText('유산 포인트 사용')).not.toBeInTheDocument();
-        expect(screen.getByRole('checkbox', { name: '사용' })).toBeEnabled();
-        fireEvent.click(screen.getByRole('button', { name: '장수 생성' }));
-
-        await waitFor(() => {
-            expect(apiMocks.join).toHaveBeenCalledWith(expect.objectContaining({ pic: true }));
-        });
-        const args = apiMocks.join.mock.calls[0]?.[0] as Record<string, unknown>;
-        expect(Object.keys(args).filter((key) => key.startsWith('inherit'))).toEqual([]);
-    });
+import EnlistPage from '@/app/game/join/page';
+import { useGameSession, type GameSession } from '@/lib/campaign-session';
+expect.extend(matchers);
+const mocks = vi.hoisted(() => ({ replace: vi.fn(), read: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
+vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
+vi.mock('@/hooks/useHelp', () => ({ useOpenHelp: () => vi.fn() }));
+vi.mock('@/components/enlist/EnlistScreen', () => ({ default: ({ generalId }: { generalId: number }) => {
+  mocks.read(generalId); return <div data-testid="enlist-screen">출사 후보</div>;
+} }));
+function session(generalId: number | null, nationId = 0, serverId: string | undefined = 'pep') {
+  vi.mocked(useGameSession).mockReturnValue({ loading: false, error: null,
+    frontInfo: { general: { nationId } }, generalId, serverId, refresh: vi.fn(), gameDate: '' } as unknown as GameSession);
+}
+beforeEach(() => vi.clearAllMocks());
+describe('E04 real join route', () => {
+  it('returns a player without a general to the entry without reading enlist options', async () => {
+    session(null); render(<EnlistPage />);
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/game/pep'));
+    expect(mocks.read).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('enlist-screen')).toBeNull();
+  });
+  it('returns an affiliated player to the war room without reading enlist options', async () => {
+    session(7, 1); render(<EnlistPage />);
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/game/pep'));
+    expect(mocks.read).not.toHaveBeenCalled();
+  });
+  it('opens the actual enlist screen only for a free general', () => {
+    session(7); render(<EnlistPage />);
+    expect(screen.getByTestId('enlist-screen')).toBeVisible();
+    expect(mocks.read).toHaveBeenCalledWith(7);
+    expect(mocks.replace).not.toHaveBeenCalled();
+  });
+  it('keeps a serverless route serverless', async () => {
+    session(null);
+    vi.mocked(useGameSession).mockReturnValue({ ...useGameSession(), serverId: undefined });
+    render(<EnlistPage />);
+    await waitFor(() => expect(mocks.replace).toHaveBeenCalledWith('/game'));
+  });
+  it('does not expose a raw server error or redirect on an uncertain session', () => {
+    session(7);
+    vi.mocked(useGameSession).mockReturnValue({ ...useGameSession(), error: '500 Internal Server Error' });
+    render(<EnlistPage />);
+    expect(screen.getByText('장수 정보를 불러오지 못했습니다.')).toBeVisible();
+    expect(screen.queryByText('500 Internal Server Error')).toBeNull();
+    expect(mocks.replace).not.toHaveBeenCalled();
+    expect(mocks.read).not.toHaveBeenCalled();
+  });
 });

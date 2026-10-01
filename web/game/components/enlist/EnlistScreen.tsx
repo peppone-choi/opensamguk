@@ -16,7 +16,7 @@ const ALL = ['all'] as const;
 type Mode = EnlistOption['mode'];
 type Load = { kind: 'loading' } | { kind: 'ready'; data: EnlistmentOptionsResponse } | { kind: 'error'; error: Error };
 
-/** E04 approved board; the route transition remains with the K5/C0 entry handoff. */
+/** E04 approved board; connected through the guarded K5 join route. */
 export default function EnlistScreen({ generalId, onRefresh, onHelp }: {
   readonly generalId: number;
   readonly onRefresh: () => void;
