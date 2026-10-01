@@ -69,6 +69,8 @@ def _confirmed_exclusion(row: dict, root: Path) -> None:
     entries = [item for item in document["entries"] if item.get("inputId") == row["inputId"]]
     if len(entries) != 1 or entries[0].get("status") != "CONFIRMED" or entries[0].get("reason") != row["firstStepsExplanationNaReason"]:
         raise ValueError(f"first-steps N/A is not confirmed: {row['inputId']}")
+    if row["firstStepsExplanationNaReason"] == "INPUT_PLANNED" and row["deliveryState"] != "PLANNED":
+        raise ValueError(f"first-steps INPUT_PLANNED requires PLANNED deliveryState: {row['inputId']}")
     source = entries[0].get("source")
     if not isinstance(source, str) or "#" not in source:
         raise ValueError(f"first-steps N/A needs source: {row['inputId']}")

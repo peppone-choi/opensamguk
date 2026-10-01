@@ -1,6 +1,6 @@
 # 첫걸음 설명 제외 입력 67건
 
-C0가 확정한 D21 첫걸음 8단계 설명 대응표의 제외 근거다. 입력 조작을 설명하는 여덟 글의 범위만 판단하며, 서버 핸들러 부재·화면 미구현·도움말 검수 완료를 추론하지 않는다. 출처는 메타 `reports/opensamguk/tasks/2026-10-01-c0-d21-explanation-reasons.json`과 K7의 `2026-10-01-codex-K7-d21-explanation-delta.json`이다. `INPUT_PLANNED`는 제품 카탈로그의 플레이어 전달 단계 의미다.
+C0가 확정한 D21 첫걸음 8단계 설명 대응표의 제외 근거다. 입력 조작을 설명하는 여덟 글의 범위만 판단하며, 서버 핸들러 부재·화면 미구현·도움말 검수 완료를 추론하지 않는다. 출처는 메타 `reports/opensamguk/tasks/2026-10-01-c0-d21-explanation-reasons.json`과 K7의 `2026-10-01-codex-K7-d21-explanation-delta.json`이다. `INPUT_PLANNED`는 제품 카탈로그의 플레이어 전달 단계 의미다. 이 사유는 `deliveryState: PLANNED`인 동안만 유효하며 단계가 올라가기 전에 K7 설명 대응을 다시 확정해야 한다.
 
 <a id="first-steps-exclusion-action-scout"></a>
 ### 첩보 (`action.scout`)

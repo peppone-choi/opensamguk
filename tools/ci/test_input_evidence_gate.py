@@ -202,6 +202,21 @@ class InputEvidenceGateTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "source missing input and anchor"):
             validate(self.catalog, self.baseline, self.root)
 
+    def test_planned_exclusion_cannot_outlive_its_delivery_state(self):
+        row = self.row("stratagem.rumor")
+        self.assertEqual("INPUT_PLANNED", row["firstStepsExplanationNaReason"])
+        self.assertEqual("PLANNED", row["deliveryState"])
+        self.write("logic/src/main/kotlin/opensamguk/logic/input/DomainProbe.kt",
+                   "stratagem.rumor domain rule")
+        row["deliveryState"] = "DOMAIN_READY"
+        row["evidence"] = {"DOMAIN_READY": [
+            "domain-rule:logic/src/main/kotlin/opensamguk/logic/input/DomainProbe.kt#stratagem.rumor"
+        ]}
+        with self.assertRaisesRegex(ValueError, "INPUT_PLANNED requires PLANNED"):
+            validate(self.catalog, self.baseline, self.root)
+        with self.assertRaisesRegex(ValueError, "INPUT_PLANNED requires PLANNED"):
+            _proof(row, "TUTORIAL_READY", "tutorial-na:INPUT_PLANNED", self.root)
+
     def test_existing_row_cannot_claim_a_higher_state_without_evidence(self):
         self.row("action.enlist")["deliveryState"] = "UI_READY"
         with self.assertRaisesRegex(ValueError, "declared state differs from evidence"):

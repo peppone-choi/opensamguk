@@ -6,6 +6,8 @@
 
 `data/commands/input-delivery-baseline-v3.json`은 v3의 **pinned 74개** 상태를 고정한다(PLANNED 29, HANDLER_READY 13, UI_READY 32). 이 74개는 총 행 수의 상한이 아니다. 새 입력이 등록되면 현재 카탈로그의 전체 행을 검증하되 pinned ID와 기준 상태를 보존한다. SHA-256을 `tools/ci/input_evidence_gate.py`에 고정하여 기준선 재생성을 거절한다. 기존 45개 READY 행에는 이전 단계의 단계별 증거가 아직 없으며, `data/commands/input-evidence-debt-v1.json`에 각각 기록한다. 이 상태를 임의로 내리거나 증거 없이 `VERIFIED`로 간주하지 않는다. 기존 상태까지 소급 증명하면 부채 목록을 같은 변경에서 갱신한다.
 
+`INPUT_PLANNED`로 첫걸음 설명에서 제외한 행은 `deliveryState: PLANNED`일 때만 유효하다. 도메인·핸들러 등 다음 단계의 증거를 붙여 승격하기 전에 K7과 설명 연결 또는 다른 확정 제외 사유를 재판정한다. 게이트는 이후 단계에 남은 `INPUT_PLANNED`와 이를 `tutorial-na:INPUT_PLANNED` 완료 증거로 사용하는 시도를 거절한다.
+
 ## 승격 방법
 
 신규 행은 `PLANNED`부터, 기존 행은 동결된 상태부터 연속된 다음 단계의 증거가 있어야 올라간다. `deliveryState`는 이 증거로 계산된 최고 단계와 같아야 한다. 단계 하나를 건너뛰거나 선언만 올리면 CI가 실패한다.
