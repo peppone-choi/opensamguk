@@ -47,7 +47,10 @@ test('E01 no-general entry and E02/E03 waiting pages have no loop or 404 @both',
   await expect(page).toHaveURL(/\/game$/);
   await expect(page.getByTestId('game-entry-screen')).toBeVisible();
   await expect(page.getByRole('navigation', { name: '게임 메뉴' })).toHaveCount(0);
-  await expect(page.getByRole('link', { name: '로비로', exact: true })).toBeVisible();
+  const lobbyLink = page.getByRole('region', { name: '게임 입구', exact: true })
+    .getByRole('link', { name: '로비로', exact: true });
+  await expect(lobbyLink).toBeVisible();
+  await expect(lobbyLink).toHaveAttribute('href', '/lobby');
   for (const [label, anchor, path] of [
     ['생성 화면 보기', 'creation-waiting', '/game/create'],
     ['역사 인물 화면 보기', 'historical-waiting', '/game/create/historical'],
