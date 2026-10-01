@@ -34,6 +34,16 @@ describe('부재 대비 모델', () => {
         ]);
         expect(toAbsence({ ...policies, status: 'WRONG_RULE_PROFILE' }, 1)).toEqual({ state: 'unreadable', status: 'WRONG_RULE_PROFILE' });
     });
+
+    it('방침이 없는 군단에는 현 기본 방침을 붙이지 않는다(군단엔 기본 방침이 없다) — 「방침 없음」', () => {
+        const v = toAbsence({ ...policies, corps: [{ ...policies.corps[0], active: null, pending: null }], counties: [] }, 1);
+        if (v.state !== 'ready') throw new Error('ready');
+        expect(v.rows[0]).toMatchObject({ kind: 'corps', policy: null, pending: null });
+        render(<BattleHub absence={{ state: 'ready', view: v, onRetry: vi.fn() }} />);
+        const row = within(screen.getByRole('list', { name: '없을 때 싸우는 것' })).getByRole('listitem');
+        expect(row).toHaveTextContent('[나] 군단방침 없음');
+        expect(row).not.toHaveTextContent('수비');
+    });
 });
 
 describe('전투 · 부재 대비 화면', () => {

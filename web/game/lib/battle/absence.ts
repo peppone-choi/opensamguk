@@ -1,14 +1,16 @@
-// P-C04 reads my corps policies and counties I personally govern from /api/policies.
-// placed=false means a directly assigned general; placed=true means a retainer card.
-// SeatDto has no controller id, so retainer-governed counties cannot be attributed to their owner here.
-// Active battles and campaign-to-realtime battle tickets are not available yet.
+// 전투 · 부재 대비(P-C04) — 내가 없을 때 무엇이 싸우는지. `/api/policies`만 읽는다. K6 설계서 §3.5.
+// - 내 출전 군단의 방침(지금 · 다음 순부터). 군단엔 기본 방침이 없다 — active 가 없으면 반응(요격 · 회피)에 들지 않는다
+//   (엔진 ReactionInventory). `defaultPolicy`는 현 기본 방침이라 군단 행에 붙이지 않는다.
+// - 내가 직접 맡은 현: seat.placed=false 가 발령된 장수 본인, placed=true 는 수하 카드(자리 사람 = 카드 인물).
+//   SeatDto 에 자리 주인(controller) id 가 없어 수하에게 맡긴 현은 여기서 내 것으로 가를 수 없다.
+// - 전투 목록(K6-11 `/api/battles/active`)과 캠페인 → 실시간 전투 티켓 배선은 아직 없다(원장 CONTRACT:CAMPAIGN_BATTLE_PRODUCER).
 import type { Policies } from '../campaign-reads';
 
 export interface AbsenceRow {
     readonly key: string;
     readonly kind: 'corps' | 'county';
     readonly name: string;
-    /** 지금 방침 이름 — 없으면 기본 방침 이름, 그것도 없으면 null. */
+    /** 지금 방침 이름. 현은 없으면 현 기본 방침 이름, 군단은 없으면 null(「방침 없음」). */
     readonly policy: string | null;
     /** 다음 순부터 바뀌는 방침. */
     readonly pending: string | null;
@@ -27,7 +29,7 @@ export function toAbsence(p: Policies, me: number): AbsenceView {
         key: `corps:${c.orderId}`,
         kind: 'corps',
         name: `${c.commanderName ?? '내'} 군단`,
-        policy: c.active?.label ?? fallback,
+        policy: c.active?.label ?? null,
         pending: c.pending?.label ?? null,
         settable: c.settable,
         blocked: c.blocked?.reason ?? null,
