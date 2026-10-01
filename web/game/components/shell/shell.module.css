@@ -64,11 +64,6 @@
     background: var(--raised);
 }
 
-.seasonChip:focus-visible {
-    outline: 2px solid var(--focus);
-    outline-offset: 1px;
-}
-
 .seasonGlyph {
     color: var(--bronze);
     flex-shrink: 0;
@@ -95,7 +90,7 @@
     overflow: auto;
     background: var(--panel);
     border: 1px solid var(--bronze-dim);
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+    box-shadow: var(--shadow-float);
 }
 
 .iconButton {
@@ -113,6 +108,7 @@
 }
 
 .iconButton:focus-visible,
+.seasonChip:focus-visible,
 .who:focus-visible,
 .railItem:focus-visible,
 .tab:focus-visible,

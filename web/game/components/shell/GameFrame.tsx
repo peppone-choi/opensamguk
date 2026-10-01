@@ -57,10 +57,12 @@ function Frame({ children }: { readonly children: ReactNode }) {
   const [open, setOpen] = useState<'menu' | 'season' | null>(null);
   const viewport = useViewportClass();
   const seasonChip = useRef<HTMLButtonElement>(null);
+  // 닫기 단추 · Esc · 모바일 덮개는 초점을 칩으로 돌린다. 데스크톱 바깥 누름은 돌리지 않는다 — 누른 입력칸 · 단추가 초점을 지킨다.
   const closeSeason = useCallback(() => {
     setOpen(null);
-    window.setTimeout(() => seasonChip.current?.focus(), 0); // 닫히면 초점을 칩으로 돌린다
+    window.setTimeout(() => seasonChip.current?.focus(), 0);
   }, []);
+  const dismissSeason = useCallback(() => setOpen(null), []);
 
   // 턴 SSE 는 앱 전역에 하나 — 신호를 화면 구독자(useTurnRefresh)에게 나눠 준다(OPENSAM-196).
   const onTurn = useCallback(() => deliverTurnCompleted(), []);
@@ -127,7 +129,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
           {!entry && hasGeneral ? <Chip tone="bronze" className={styles.wide}>{`명망 ${renown ?? '—'}`}</Chip> : null}
         </span>
         {open === 'season' && viewport !== 'mobile' ? (
-          <SeasonPopover chip={seasonChip} month={month} phase={frontInfo?.global.turnPhase} onClose={closeSeason} />
+          <SeasonPopover chip={seasonChip} month={month} phase={frontInfo?.global.turnPhase} onClose={closeSeason} onDismiss={dismissSeason} />
         ) : null}
       </header>
       {!entry ? <NoticeBand band={view?.band ?? null} onRecheck={recheck} /> : null}
@@ -233,26 +235,24 @@ type SeasonProps = {
  * 계절 패널 — 데스크톱 · 태블릿(≥ 768). 머리줄 아래 떠 있는 패널 400(--z-float 「떠 있는 카드」, 비모달).
  * 투명 덮개를 깔지 않는다(지도 휠 · 끌기를 먹는다) — 바깥 누름은 document pointerdown 으로 본다(패널 · 칩 안은 뺀다).
  */
-function SeasonPopover({ chip, month, phase, onClose }: SeasonProps & { readonly chip: RefObject<HTMLButtonElement | null> }) {
+function SeasonPopover({ chip, month, phase, onClose, onDismiss }: SeasonProps & {
+  readonly chip: RefObject<HTMLButtonElement | null>;
+  /** 바깥 누름 — 닫기만 하고 초점은 누른 곳에 둔다. */
+  readonly onDismiss: () => void;
+}) {
   const panel = useRef<HTMLElement>(null);
+  useEscape(onClose);
   useEffect(() => {
     const onDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
       if (!target || panel.current?.contains(target) || chip.current?.contains(target)) return;
-      onClose();
+      onDismiss();
     };
     document.addEventListener('pointerdown', onDown);
     return () => document.removeEventListener('pointerdown', onDown);
-  }, [chip, onClose]);
+  }, [chip, onDismiss]);
   return (
-    <section
-      ref={panel}
-      id={SEASON_DIALOG_ID}
-      className={styles.seasonPop}
-      role="dialog"
-      aria-labelledby={SEASON_TITLE_ID}
-      onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}
-    >
+    <section ref={panel} id={SEASON_DIALOG_ID} className={styles.seasonPop} role="dialog" aria-labelledby={SEASON_TITLE_ID}>
       <SeasonPanel month={month} phase={phase} onClose={onClose} titleId={SEASON_TITLE_ID} />
     </section>
   );
@@ -260,6 +260,7 @@ function SeasonPopover({ chip, month, phase, onClose }: SeasonProps & { readonly
 
 /** 계절 패널 — 모바일(< 768). 「전체」 메뉴와 같은 하단 시트 층(--z-sheet, 탭 막대를 가린다). */
 function SeasonSheet({ month, phase, onClose }: SeasonProps) {
+  useEscape(onClose);
   return (
     <div className={styles.sheetLayer}>
       <button type="button" className={styles.scrim} aria-label="계절 닫기" onClick={onClose} />
@@ -268,12 +269,22 @@ function SeasonSheet({ month, phase, onClose }: SeasonProps) {
         className={styles.sheet}
         role="dialog"
         aria-labelledby={SEASON_TITLE_ID}
-        onKeyDown={(event) => { if (event.key === 'Escape') onClose(); }}
       >
         <SeasonPanel month={month} phase={phase} onClose={onClose} titleId={SEASON_TITLE_ID} />
       </section>
     </div>
   );
+}
+
+/** 열려 있는 동안 Esc 로 닫는다 — 패널 안 초점 못 받는 곳(달력 · 글자)을 눌러 초점이 body 로 빠져도 듣는다. */
+function useEscape(onClose: () => void) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
 }
 
 /** 계절 칩 그림(보드 IC.season) — 글자와 함께 쓰는 장식이라 읽지 않는다. */

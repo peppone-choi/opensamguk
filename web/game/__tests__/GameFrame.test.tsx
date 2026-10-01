@@ -179,6 +179,49 @@ describe('GameFrame — 계절 칩', () => {
         }
     });
 
+    it('바깥 누름은 누른 곳의 초점을 지킨다(칩으로 되돌리지 않는다), 닫기 · Esc 는 칩으로 되돌린다', async () => {
+        const vp = installViewport(1440);
+        try {
+            render(<GameFrame><label>쓰기<input /></label></GameFrame>);
+            await act(async () => { await Promise.resolve(); });
+            const chip = screen.getByRole('button', { name: chipName });
+            const input = screen.getByRole('textbox', { name: '쓰기' });
+            vi.useFakeTimers();
+            fireEvent.click(chip);
+            fireEvent.pointerDown(input); // 바깥 누름 → 닫힘, 그다음 mousedown 기본 동작이 입력칸에 초점
+            input.focus();
+            act(() => { vi.runAllTimers(); });
+            expect(screen.queryByRole('dialog')).toBeNull();
+            expect(input).toHaveFocus();
+            fireEvent.click(chip);
+            fireEvent.keyDown(screen.getByRole('dialog', { name: '계절 — 봄' }), { key: 'Escape' });
+            act(() => { vi.runAllTimers(); });
+            expect(chip).toHaveFocus();
+            vi.useRealTimers();
+        } finally {
+            vi.useRealTimers();
+            vp.restore();
+        }
+    });
+
+    it('패널 안 초점 못 받는 곳을 눌러 초점이 빠져도 Esc 가 듣는다(데스크톱 · 모바일)', async () => {
+        for (const width of [1440, 390]) {
+            const vp = installViewport(width);
+            try {
+                const view = await renderFrame();
+                fireEvent.click(screen.getByRole('button', { name: chipName }));
+                const dialog = screen.getByRole('dialog', { name: '계절 — 봄' });
+                fireEvent.pointerDown(within(dialog).getByRole('img'));
+                (document.activeElement as HTMLElement | null)?.blur();
+                fireEvent.keyDown(document.body, { key: 'Escape' });
+                expect(screen.queryByRole('dialog', { name: '계절 — 봄' }), `${width}`).toBeNull();
+                view.unmount();
+            } finally {
+                vp.restore();
+            }
+        }
+    });
+
     it('모바일은 하단 시트 + 덮개, 「전체」 메뉴와 동시에 열리지 않는다', async () => {
         const vp = installViewport(390);
         try {

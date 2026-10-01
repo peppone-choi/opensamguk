@@ -197,14 +197,37 @@ test('셸: 계절 패널이 조작된다 — 닫기 · Esc · 바깥 누름으�
   await expect(dialog).toBeHidden();
   await expect(chip).toBeFocused();
 
+  // 패널 안 초점 못 받는 곳(달력)을 눌러도 닫히지 않고, 그 뒤 Esc 가 듣는다.
   await press(chip, testInfo);
   await expect(dialog).toBeVisible();
-  if (isMobile(testInfo)) await page.touchscreen.tap(195, 120); // 시트 위 덮개
-  else {
-    const heading = (await page.getByRole('heading', { level: 2, name: '월단평' }).boundingBox())!;
-    await page.mouse.click(heading.x + heading.width / 2, heading.y + heading.height / 2);
-  }
+  await press(dialog.getByRole('img', { name: /^1년 36순 달력/ }), testInfo);
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
+  await expect(chip).toBeFocused();
+
+  await press(chip, testInfo);
+  await expect(dialog).toBeVisible();
+  if (isMobile(testInfo)) {
+    await page.touchscreen.tap(195, 120); // 시트 위 덮개(모달) — 닫고 초점은 칩으로
+    await expect(dialog).toBeHidden();
+    await expect(chip).toBeFocused();
+  } else {
+    // 바깥 누름(비모달) — 닫고, 누른 입력칸이 초점을 지킨다(칩으로 빼앗지 않는다).
+    await page.evaluate(() => {
+      const input = document.createElement('input');
+      input.setAttribute('aria-label', '시험 입력칸');
+      input.style.cssText = 'width:200px;height:44px';
+      document.querySelector('main[aria-label="게임 콘텐츠"]')!.prepend(input);
+    });
+    const input = page.getByRole('textbox', { name: '시험 입력칸' });
+    await input.click();
+    await expect(dialog).toBeHidden();
+    await page.waitForTimeout(100); // 닫힌 뒤 예약된 초점 이동이 있으면 여기서 돈다
+    await expect(input).toBeFocused();
+    await page.keyboard.type('가');
+    await expect(input).toHaveValue('가');
+  }
   await expect(chip).toHaveAttribute('aria-expanded', 'false');
 });
 
