@@ -24,6 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  * Identity-required: the my-* endpoints, which resolve the caller's general from the
  * verified principal and have no `?generalId=` fallback.
  *
+ * Method-limited public: exact province-name paths allow GET and deny every other method.
+ *
  * CSRF is disabled (stateless token API, no cookies on this origin).
  */
 @Configuration
@@ -40,6 +42,9 @@ class GameApiSecurityConfig {
             .exceptionHandling { it.authenticationEntryPoint(AuthRequiredAuthenticationEntryPoint()) }
             .authorizeHttpRequests { auth ->
                 auth
+                    // K4-21: 공개 이름표는 이 두 경로의 GET만 허용한다.
+                    .requestMatchers(HttpMethod.GET, "/api/map/provinces/names", "/api/map/provinces/names/v1").permitAll()
+                    .requestMatchers("/api/map/provinces/names", "/api/map/provinces/names/v1").denyAll()
                     .requestMatchers(HttpMethod.POST, "/api/command/**").authenticated()
                     // ── identity-required (resolve caller's general from the verified principal) ──
                     .requestMatchers("/api/my-page", "/api/my-generals", "/api/my-cities", "/api/my-nation-detail").authenticated()

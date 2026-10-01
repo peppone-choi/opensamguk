@@ -22,8 +22,9 @@ class AdminCampaignDirectoryController(
     @GetMapping("/api/admin/people")
     fun people(@RequestHeader(value = "Authorization", required = false) authorization: String?,
                @RequestParam(defaultValue = "") q: String, @RequestParam(defaultValue = "ID") sort: String,
-               @RequestParam(required = false) cursor: String?, @RequestParam(defaultValue = "50") limit: Int): ResponseEntity<Any> =
-        guarded(authorization) { reader.adminPeople(q, sort, cursor, limit) }
+               @RequestParam(required = false) cursor: String?, @RequestParam(defaultValue = "50") limit: Int,
+               @RequestParam(defaultValue = "ASC") direction: String): ResponseEntity<Any> =
+        guarded(authorization) { reader.adminPeople(q, sort, cursor, limit, direction) }
 
     private fun guarded(authorization: String?, read: () -> Any): ResponseEntity<Any> {
         val token = authorization?.takeIf { it.startsWith("Bearer ") }?.substring(7)?.takeIf { it.isNotBlank() }

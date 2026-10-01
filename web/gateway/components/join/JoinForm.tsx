@@ -115,7 +115,7 @@ export default function JoinForm() {
                     <input {...inputProps('password', { type: passwordType, autoComplete: 'new-password' })} required />
                     <button
                         type="button"
-                        className="os-button os-button--ghost gw31-btn"
+                        className="os-button os-button--ghost"
                         aria-pressed={showPassword}
                         aria-controls="join-password join-passwordConfirm"
                         onClick={() => setShowPassword((v) => !v)}
@@ -129,9 +129,9 @@ export default function JoinForm() {
             {field('email', <span className="gw31-field__label">{AUTH_LABELS.email}<Chip>선택</Chip></span>, <input {...inputProps('email', { type: 'email', autoComplete: 'email' })} />)}
             {error?.field === 'server' && <div className="gw31-alert" role="alert">{error.message}</div>}
             {submitting || !hydrated ? (
-                <Button type="submit" variant="primary" block className="gw31-btn" disabled reason={submitting ? '가입하는 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.registerBtn}</Button>
+                <Button type="submit" variant="primary" block disabled reason={submitting ? '가입하는 중입니다' : '화면을 준비하는 중입니다'}>{AUTH_LABELS.registerBtn}</Button>
             ) : (
-                <Button type="submit" variant="primary" block className="gw31-btn">{AUTH_LABELS.registerBtn}</Button>
+                <Button type="submit" variant="primary" block>{AUTH_LABELS.registerBtn}</Button>
             )}
             <Link href="/login" className="gw31-link">{AUTH_LABELS.toLogin}</Link>
         </form>
