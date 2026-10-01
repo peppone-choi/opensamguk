@@ -16,6 +16,10 @@ test.describe('P-G03 가입 — 데스크톱 · 모바일 같은 흐름', () => 
   test('그려진다: 계정 안내 · 가입 패널 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }) => {
     await open(page);
     await expect(page.getByRole('region', { name: '계정 안내' })).toBeVisible();
+    // 계정 안내 · 경고 두 문장은 승인됐다(D18) — 데스크톱 · 모바일 모두 보이고, 초안 칩은 없다.
+    await expect(page.getByText('계정은 한 번 만들면 계속 씁니다. 서버가 새로 시작하면 장수만 다시 만듭니다.')).toBeVisible();
+    await expect(page.getByText('한 사람이 계정 여러 개를 쓰거나 남의 턴을 대신 넣으면 이용이 막힐 수 있습니다.')).toBeVisible();
+    await expect(page.getByText(/문구 초안/)).toHaveCount(0);
     await expect(page.getByText('선택', { exact: true })).toBeVisible();
     await expect(page.getByRole('navigation', { name: '정책' }).getByRole('link', { name: '개인정보처리방침' })).toHaveAttribute('href', '/privacy');
     await expect(page.getByAltText('오픈삼국')).toHaveCount(1);

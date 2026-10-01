@@ -46,6 +46,8 @@ test('E01 no-general entry and E02/E03 waiting pages have no loop or 404 @both',
   expect(response?.status()).toBe(200);
   await expect(page).toHaveURL(/\/game$/);
   await expect(page.getByTestId('game-entry-screen')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '게임 메뉴' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: '로비로', exact: true })).toBeVisible();
   for (const [label, anchor, path] of [
     ['생성 화면 보기', 'creation-waiting', '/game/create'],
     ['역사 인물 화면 보기', 'historical-waiting', '/game/create/historical'],
@@ -53,9 +55,12 @@ test('E01 no-general entry and E02/E03 waiting pages have no loop or 404 @both',
     await press(page.getByRole('link', { name: label }), info);
     await expect(page).toHaveURL(new RegExp(`${path}$`));
     await expect(page.getByTestId(anchor)).toBeVisible();
+    await expect(page.getByRole('navigation', { name: '게임 메뉴' })).toHaveCount(0);
     await expect(page.getByRole('textbox')).toHaveCount(0);
     await press(page.getByRole('link', { name: '입구로' }), info);
     await expect(page.getByTestId('game-entry-screen')).toBeVisible();
+    await expect(page).toHaveURL(/\/game$/);
+    await expect(page.getByRole('navigation', { name: '게임 메뉴' })).toHaveCount(0);
   }
   await expectNoHorizontalOverflow(page);
   expect(await smallTouchTargets(page, '[data-testid="game-entry-screen"]')).toEqual([]);
@@ -65,6 +70,7 @@ test('E04 candidate reason and 202 to reservation result use the real input anch
   const api = await serveEntry(page, 'free');
   await page.goto('/game/join');
   await expect(page.getByTestId('enlist-screen')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '게임 메뉴' })).toHaveCount(0);
   await press(page.getByRole('option', { name: /원소/ }), info);
   await expect(page.getByRole('dialog')).toBeVisible();
   await expect(page.getByRole('dialog')).toContainText('해당 주공의 명망 수용량이 부족합니다.');
