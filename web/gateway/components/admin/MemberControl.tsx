@@ -1,84 +1,25 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import ConfirmModal from '@/components/ConfirmModal';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, Chip, ConfirmDialog, Modal, Panel, SectionHeader, Seg } from '@opensamguk/ui';
+import StateLine from '@/components/status/StateLine';
+import {
+    BlockDialog,
+    TempPasswordDialog,
+    fullDate,
+    memberState,
+    type AdminUserDto,
+    type AdminUserListResponse,
+    type MemberState,
+    type UserCommandResult,
+} from './memberParts';
 
-// B2f 운영 콘솔 「회원」 탭 — legacy `admin_member.ts` + `admin_userlist.php` 패러티.
-// 루트DB(gateway 공유) 유저 관리. 게임 내 general 아님 → gateway-api AdminController 소비.
-//   GET  /admin/users                  → 목록 + 서버 + 가입/로그인 허용 플래그 (B2a)
-//   POST /admin/system/{allow_*}       → 가입/로그인 전역 토글 (B2b)
-//   POST /admin/users/scrub/{deleted|old} → 계정 정리 (B2c). scrub_icon은 CDN 운용이라 N/A.
-//   POST /admin/users/{id}/{action}    → 단일 명령(강제탈퇴/암호변경/차단/해제/별도권한) (B2d)
-//   POST /admin/ban-email              → 이메일 영구차단 (B2e)
-// 라벨/등급매핑/프롬프트 문자열은 legacy verbatim. 등급: 0차단/1일반/4특별/5부운영자/6운영자.
-
-// ===== 백엔드 DTO 미러 (app/gateway-api .../dto/AdminDto.kt) =====
-interface AdminUserDto {
-    id: number;
-    username: string;
-    email: string | null;
-    authType: string | null;
-    grade: number | null;
-    gradeLabel: string;
-    blockUntil: string | null;
-    nickname: string | null;
-    icon: string | null;
-    joinDate: string | null;
-    lastLoginAt: string | null;
-    deleteAfter: string | null;
-    generalNamesByServer: Record<string, string>;
-}
-interface AdminUserListResponse {
-    users: AdminUserDto[];
-    servers: string[];
-    allowJoin: boolean;
-    allowLogin: boolean;
-}
-interface SystemFlagResponse {
-    allowJoin: boolean;
-    allowLogin: boolean;
-}
-interface ScrubResult {
-    affected: number;
-}
-interface UserCommandResult {
-    result: boolean;
-    reason?: string | null;
-    detail?: string | null;
-}
-interface BanEmailResult {
-    result: boolean;
-    reason: string;
-}
-
-// 동결된 역사 admin_member.ts convUserGrade 참고(ADR-LITE-042; 현재 제품 정본 아님). 매핑에 없는 등급은 숫자 문자열로 표기.
-const USER_GRADE_MAP: Record<number, string> = {
-    0: '차단',
-    1: '일반',
-    4: '특별',
-    5: '부운영자',
-    6: '운영자',
-};
-function convUserGrade(grade: number | null, fallbackLabel: string): string {
-    // BE가 grade를 못 채우면(role 합성) gradeLabel을 그대로 사용한다.
-    if (grade === null) return fallbackLabel;
-    return grade in USER_GRADE_MAP ? USER_GRADE_MAP[grade] : grade.toString();
-}
-
-// legacy shortDate: 'YY-MM-DD …'에서 앞 2자리(세기) 제거 후 공백→줄바꿈. 빈 값은 '-'.
-function shortDate(date: string | null): string {
-    if (!date) return '-';
-    return date.substring(2);
-}
-
-/** 인증 프록시 GET — JSON 파싱. 비-2xx면 throw. */
 async function getJson<T>(path: string): Promise<T> {
     const res = await fetch(`/api/proxy/${path}`, { cache: 'no-store' });
     if (!res.ok) throw new Error(`요청 실패 (${res.status})`);
     return (await res.json()) as T;
 }
-
-/** 인증 프록시 POST(JSON body) — JSON 파싱. 비-2xx여도 본문(reason 등)을 그대로 반환. */
+/** 비-2xx 여도 본문(reason 등)을 그대로 돌려준다. */
 async function postJson<T>(path: string, body?: unknown): Promise<T> {
     const res = await fetch(`/api/proxy/${path}`, {
         method: 'POST',
@@ -88,411 +29,249 @@ async function postJson<T>(path: string, body?: unknown): Promise<T> {
     return (await res.json()) as T;
 }
 
-// 단일 명령 → AdminController 경로/바디 매핑. legacy j_set_userlist.php action 대응.
-const USER_ACTION_PATH: Record<string, string> = {
-    delete: 'delete',
-    reset_pw: 'reset_pw',
-    block: 'block',
-    unblock: 'unblock',
-    set_userlevel: 'set_userlevel',
-};
+type Confirm = { title: string; message: string; label: string; danger?: boolean; run: () => Promise<void> };
+type Action = 'reset_pw' | 'block' | 'unblock' | 'ban_email' | 'delete';
+const STATE_FILTERS = ['전체', '일반', '운영자', '차단'] as const;
+type StateFilter = (typeof STATE_FILTERS)[number];
+const BUSY = '처리 중입니다';
 
-/** Y/N 라디오 토글 — legacy radios_allow_join / radios_allow_login. 변경 시 BE 토글 후 동기화. */
-function AllowToggle({
-    label,
-    name,
-    value,
-    disabled,
-    onChange,
-}: {
-    label: string;
-    name: string;
-    value: boolean;
-    disabled: boolean;
-    onChange: (next: boolean) => void;
-}) {
+function StateChip({ state, user }: { readonly state: MemberState; readonly user: AdminUserDto }) {
+    if (state === '차단') return <Chip tone="rust">차단{user.blockUntil ? ` · ${fullDate(user.blockUntil)}까지` : ''}</Chip>;
+    if (state === '운영자') return <Chip tone="bronze">운영자</Chip>;
+    return <Chip>일반</Chip>;
+}
+
+/**
+ * 회원(설계서 §3.4 U1–U40, 보드 V31K5AdminMembers · MAdminMembers). 기능은 옛 화면(legacy admin_member)대로 옮기고
+ * 문구 · 등급은 바꿨다: 「특별 · 부운영자」 등급과 「별도 권한」은 뺐다(역할이 USER/ADMIN 뿐이라 효과가 없다).
+ * 모든 조치는 쉬운 말 확인을 거치고, 임시 비밀번호는 결과 창에서만 보인다.
+ */
+export default function MemberControl() {
+    const [data, setData] = useState<AdminUserListResponse | null>(null);
+    const [error, setError] = useState(false);
+    const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+    const [busy, setBusy] = useState(false);
+    const [confirm, setConfirm] = useState<Confirm | null>(null);
+    const [acting, setActing] = useState<AdminUserDto | null>(null);
+    const [blocking, setBlocking] = useState<AdminUserDto | null>(null);
+    const [tempPassword, setTempPassword] = useState<{ username: string; detail: string } | null>(null);
+    const [query, setQuery] = useState('');
+    const [filter, setFilter] = useState<StateFilter>('전체');
+
+    const reload = useCallback(async () => {
+        setError(false);
+        try {
+            setData(await getJson<AdminUserListResponse>('admin/users'));
+        } catch {
+            setError(true);
+        }
+    }, []);
+    useEffect(() => { void reload(); }, [reload]);
+
+    const run = async (work: () => Promise<void>) => {
+        setBusy(true);
+        setNotice(null);
+        try {
+            await work();
+        } finally {
+            setBusy(false);
+            setConfirm(null);
+            setBlocking(null);
+        }
+    };
+
+    const setFlag = (scope: 'allow_join' | 'allow_login', next: boolean) => {
+        const name = scope === 'allow_join' ? '새 가입' : '로그인';
+        const apply = () => run(async () => {
+            try {
+                const res = await postJson<{ allowJoin: boolean; allowLogin: boolean }>(`admin/system/${scope}`, { value: next });
+                setData((prev) => (prev ? { ...prev, allowJoin: res.allowJoin, allowLogin: res.allowLogin } : prev));
+                setNotice({ ok: true, text: `${name}을 ${next ? '받습니다' : '막았습니다'}.` });
+            } catch {
+                setNotice({ ok: false, text: '설정을 바꾸지 못했습니다.' });
+            }
+        });
+        // 끌 때(막을 때)만 확인을 받는다(설계서 U1–U2).
+        if (next) void apply();
+        else setConfirm({ title: `${name} 막기`, message: `${name}을 막습니다. 다시 「받음」으로 바꾸기 전까지 막힙니다. 계속할까요?`, label: '막기', danger: true, run: apply });
+    };
+
+    const scrub = (scope: 'deleted' | 'old', label: string) => setConfirm({
+        title: '계정 정리',
+        message: `${label}을 진행합니다. 지운 계정은 되돌릴 수 없습니다. 계속할까요?`,
+        label: '정리',
+        danger: true,
+        run: () => run(async () => {
+            try {
+                const res = await postJson<{ affected: number }>(`admin/users/scrub/${scope}`);
+                setNotice({ ok: true, text: `${res.affected ?? 0}건을 정리했습니다.` });
+                await reload();
+            } catch {
+                setNotice({ ok: false, text: '계정 정리에 실패했습니다.' });
+            }
+        }),
+    });
+
+    const command = (user: AdminUserDto, path: 'delete' | 'reset_pw' | 'block' | 'unblock', param?: number) => run(async () => {
+        try {
+            const res = await postJson<UserCommandResult>(`admin/users/${user.id}/${path}`, param !== undefined ? { param } : {});
+            if (!res.result) {
+                setNotice({ ok: false, text: res.reason ?? '처리하지 못했습니다.' });
+                return;
+            }
+            if (path === 'reset_pw' && res.detail) setTempPassword({ username: user.username, detail: res.detail });
+            else setNotice({ ok: true, text: `${user.username} — 처리했습니다.` });
+            await reload();
+        } catch {
+            setNotice({ ok: false, text: '조치를 실행하지 못했습니다.' });
+        }
+    });
+
+    const choose = (user: AdminUserDto, action: Action) => {
+        setActing(null);
+        if (action === 'block') { setBlocking(user); return; }
+        if (action === 'reset_pw') {
+            setConfirm({ title: '임시 비밀번호 발급', message: `${user.username} 계정에 임시 비밀번호를 발급합니다. 지금 비밀번호는 쓸 수 없게 됩니다. 계속할까요?`, label: '발급', run: () => command(user, 'reset_pw') });
+        } else if (action === 'unblock') {
+            setConfirm({ title: '차단 풀기', message: `${user.username} 계정의 차단을 풉니다. 계속할까요?`, label: '차단 풀기', run: () => command(user, 'unblock') });
+        } else if (action === 'delete') {
+            setConfirm({ title: '강제 탈퇴', message: `${user.username} 계정을 강제로 탈퇴시킵니다. 되돌릴 수 없습니다. 계속할까요?`, label: '강제 탈퇴', danger: true, run: () => command(user, 'delete') });
+        } else if (action === 'ban_email' && user.email) {
+            const email = user.email;
+            setConfirm({
+                title: '이메일 영구 차단',
+                message: `${email} 이메일을 영구 차단합니다. 계속할까요?`,
+                label: '영구 차단',
+                danger: true,
+                run: () => run(async () => {
+                    try {
+                        const res = await postJson<{ result: boolean; reason: string }>('admin/ban-email', { email });
+                        setNotice(res.result ? { ok: true, text: `${email} — 영구 차단했습니다.` } : { ok: false, text: res.reason ?? '처리하지 못했습니다.' });
+                    } catch {
+                        setNotice({ ok: false, text: '영구 차단에 실패했습니다.' });
+                    }
+                }),
+            });
+        }
+    };
+
+    const users = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return (data?.users ?? []).filter((u) => (filter === '전체' || memberState(u) === filter)
+            && (!q || u.username.toLowerCase().includes(q) || (u.nickname ?? '').toLowerCase().includes(q)));
+    }, [data, query, filter]);
+
+    if (error) return <StateLine kind="error" title="회원 목록을 불러오지 못했습니다" onRetry={() => void reload()} />;
+    if (!data) return <StateLine kind="loading" title="회원 목록을 불러오는 중" />;
+
+    const flag = (scope: 'allow_join' | 'allow_login', label: string, value: boolean) => (
+        <div className="admin31-row">
+            <span className="gw31-field__label">{label}</span>
+            <Seg label={label} options={[{ value: 'on', label: '받음' }, { value: 'off', label: '막음' }]} value={value ? 'on' : 'off'} onChange={(v) => { if (!busy && (v === 'on') !== value) setFlag(scope, v === 'on'); }} />
+        </div>
+    );
+
     return (
-        <div className="member-allow">
-            <span className="member-allow-label">{label}</span>
-            <div className="member-radio-group" role="radiogroup" aria-label={label}>
-                <label className={`member-radio${value ? ' active' : ''}`}>
-                    <input
-                        type="radio"
-                        name={name}
-                        checked={value}
-                        disabled={disabled}
-                        onChange={() => onChange(true)}
-                    />
-                    Y
-                </label>
-                <label className={`member-radio${!value ? ' active' : ''}`}>
-                    <input
-                        type="radio"
-                        name={name}
-                        checked={!value}
-                        disabled={disabled}
-                        onChange={() => onChange(false)}
-                    />
-                    N
-                </label>
-            </div>
+        <div className="admin31-stack">
+            <Panel className="admin31-panel" aria-label="가입 · 로그인 · 계정 정리">
+                <SectionHeader as="h2" title="가입 · 로그인" />
+                <div className="admin31-body">
+                    <div className="admin31-row admin31-row--spread">
+                        {flag('allow_join', '새 가입 받기', data.allowJoin)}
+                        {flag('allow_login', '로그인 받기', data.allowLogin)}
+                    </div>
+                    <div className="admin31-row">
+                        {busy ? <Button variant="danger" disabled reason={BUSY}>탈퇴 계정 정리(1개월+)</Button> : <Button variant="danger" onClick={() => scrub('deleted', '탈퇴 계정 정리(1개월+)')}>탈퇴 계정 정리(1개월+)</Button>}
+                        {busy ? <Button variant="danger" disabled reason={BUSY}>오래된 계정 정리(6개월+)</Button> : <Button variant="danger" onClick={() => scrub('old', '오래된 계정 정리(6개월+)')}>오래된 계정 정리(6개월+)</Button>}
+                    </div>
+                    {notice && <p className={notice.ok ? 'admin31-result' : 'gw31-alert'} role={notice.ok ? 'status' : 'alert'}>{notice.text}</p>}
+                </div>
+            </Panel>
+            <Panel className="admin31-panel" aria-label="회원 목록">
+                <SectionHeader as="h2" title="회원 목록" sub={`${users.length} / ${data.users.length}명`} />
+                <div className="admin31-body">
+                    <div className="admin31-row">
+                        <input type="search" className="os-input admin31-search" aria-label="계정명 · 별명으로 찾기" placeholder="계정명 · 별명으로 찾기" value={query} onChange={(e) => setQuery(e.target.value)} />
+                        <Seg label="상태 거르기" options={STATE_FILTERS.map((f) => ({ value: f, label: f }))} value={filter} onChange={setFilter} scroll />
+                    </div>
+                    {users.length === 0 ? (
+                        <StateLine kind="empty" title={data.users.length === 0 ? '회원이 없습니다.' : '조건에 맞는 회원이 없습니다.'} />
+                    ) : (
+                        <table className="admin31-table">
+                            <thead>
+                                <tr>
+                                    <th>번호</th><th>계정명</th><th>이메일</th><th>상태</th><th>별명</th><th>초상</th><th>서버별 장수</th>
+                                    <th>가입일</th><th>최근 로그인</th><th>탈퇴 예정</th><th><span className="sr-only">조치</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {users.map((u) => {
+                                    const generals = Object.entries(u.generalNamesByServer ?? {}).filter(([, name]) => name);
+                                    return (
+                                        <tr key={u.id}>
+                                            <td data-label="번호" className="os-num">{u.id}</td>
+                                            <td data-label="계정명"><b>{u.username}</b></td>
+                                            <td data-label="이메일">{u.email ?? '-'}{u.authType && <small className="admin31-code">{u.authType}</small>}</td>
+                                            <td data-label="상태"><StateChip state={memberState(u)} user={u} /></td>
+                                            <td data-label="별명">{u.nickname ?? '-'}</td>
+                                            <td data-label="초상">{u.icon ? <img className="admin31-face" src={u.icon} width={32} height={32} alt="" /> : '-'}</td>
+                                            <td data-label="서버별 장수">
+                                                {generals.length > 0 ? generals.map(([srv, name]) => <span key={srv} className="admin31-code">{srv} · {name}</span>) : <Chip tone="info">서버 대기</Chip>}
+                                            </td>
+                                            <td data-label="가입일" className="os-num">{fullDate(u.joinDate)}</td>
+                                            <td data-label="최근 로그인" className="os-num">{fullDate(u.lastLoginAt)}</td>
+                                            <td data-label="탈퇴 예정" className="os-num">{fullDate(u.deleteAfter)}</td>
+                                            <td>
+                                                {busy ? <Button size="sm" disabled reason={BUSY}>조치</Button> : <Button size="sm" onClick={() => setActing(u)}>조치</Button>}
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </tbody>
+                        </table>
+                    )}
+                    <p className="gw31-card__line gw31-card__line--muted">「특별 · 부운영자」 등급과 「별도 권한」은 뺐습니다(역할이 일반 · 운영자뿐이라 효과가 없습니다). 서버별 장수는 원천이 비어 있습니다(K5-14 서버 대기).</p>
+                </div>
+            </Panel>
+            {acting && <ActionSheet user={acting} onClose={() => setActing(null)} onChoose={(a) => choose(acting, a)} />}
+            {blocking && <BlockDialog username={blocking.username} busy={busy} onCancel={() => setBlocking(null)} onConfirm={(days) => void command(blocking, 'block', days)} />}
+            {tempPassword && <TempPasswordDialog username={tempPassword.username} detail={tempPassword.detail} onClose={() => setTempPassword(null)} />}
+            <ConfirmDialog
+                open={confirm !== null}
+                title={confirm?.title ?? ''}
+                message={confirm?.message ?? ''}
+                confirmLabel={confirm?.label}
+                danger={confirm?.danger}
+                busy={busy}
+                onCancel={() => setConfirm(null)}
+                onConfirm={() => void confirm?.run()}
+            />
         </div>
     );
 }
 
-/** 「회원」 탭 — 가입/로그인 토글 + 계정정리 + 회원 테이블 + 행당 명령. */
-export default function MemberControl() {
-    const [data, setData] = useState<AdminUserListResponse | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [toggling, setToggling] = useState(false);
-    const [notice, setNotice] = useState<string | null>(null);
-    // 비가역 명령(강제탈퇴/차단/영구차단)은 ConfirmModal로 한 번 더 확인.
-    const [confirm, setConfirm] = useState<{
-        title: string;
-        message: React.ReactNode;
-        run: () => Promise<void>;
-        danger?: boolean;
-    } | null>(null);
-    const [busy, setBusy] = useState(false);
-
-    const reload = useCallback(async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const res = await getJson<AdminUserListResponse>('admin/users');
-            setData(res);
-        } catch {
-            setError('회원 목록을 불러오지 못했습니다.');
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        void reload();
-    }, [reload]);
-
-    // B2b 가입/로그인 전역 허용 토글.
-    async function toggleSystem(scope: 'allow_join' | 'allow_login', next: boolean) {
-        setToggling(true);
-        setNotice(null);
-        try {
-            const res = await postJson<SystemFlagResponse>(`admin/system/${scope}`, { value: next });
-            setData((prev) =>
-                prev ? { ...prev, allowJoin: res.allowJoin, allowLogin: res.allowLogin } : prev,
-            );
-        } catch {
-            setNotice('설정 변경에 실패했습니다.');
-        } finally {
-            setToggling(false);
-        }
-    }
-
-    // B2c 계정 정리(탈퇴/미접속). legacy scrub_deleted / scrub_old_user. affected 건수 알림.
-    function scrub(scope: 'deleted' | 'old', label: string) {
-        setConfirm({
-            title: '계정 정리',
-            message: `${label}을 진행합니다. 계속할까요?`,
-            run: async () => {
-                try {
-                    const res = await postJson<ScrubResult>(`admin/users/scrub/${scope}`);
-                    setNotice(`${res.affected ?? 0}건이 처리되었습니다.`);
-                    await reload();
-                } catch {
-                    setNotice('계정 정리에 실패했습니다.');
-                }
-            },
-        });
-    }
-
-    // B2d 단일 명령. legacy changeUserStatus. block/set_userlevel은 prompt로 param 수집.
-    function userCommand(user: AdminUserDto, action: keyof typeof USER_ACTION_PATH) {
-        let param: number | undefined;
-
-        if (action === 'set_userlevel') {
-            const raw = window.prompt(
-                '원하는 등급을 입력해주세요.(1:일반, 4:특별, 5:부운영자, 6:운영자)',
-                '1',
-            );
-            if (raw === null) return;
-            param = parseInt(raw, 10);
-            if (Number.isNaN(param) || param < 1 || param > 6) {
-                window.alert('올바르지 않습니다.');
-                return;
-            }
-        }
-
-        if (action === 'block') {
-            const raw = window.prompt('블록 기간을 입력해주세요. <= 0은 반영구(50년)입니다.', '7');
-            if (raw === null) return;
-            param = parseInt(raw, 10);
-            if (Number.isNaN(param)) param = 7;
-        }
-
-        // legacy 확인 문구: `{유저명}에 대해서 {action}{, param}을 진행합니다.`
-        const paramText = param !== undefined && param ? `, ${param}` : '';
-        const danger = action === 'delete' || action === 'block';
-        setConfirm({
-            title: '회원 명령',
-            danger,
-            message: `${user.username}에 대해서 ${action}${paramText}을 진행합니다.`,
-            run: async () => {
-                try {
-                    const res = await postJson<UserCommandResult>(
-                        `admin/users/${user.id}/${USER_ACTION_PATH[action]}`,
-                        param !== undefined ? { param } : {},
-                    );
-                    if (!res.result) {
-                        setNotice(res.reason ?? '실패했습니다.');
-                        return;
-                    }
-                    // reset_pw는 임시 비밀번호 안내(detail)를 그대로 노출(legacy `:210`).
-                    setNotice(res.detail ? `완료되었습니다: ${res.detail}` : '완료되었습니다.');
-                    await reload();
-                } catch {
-                    setNotice('명령 실행에 실패했습니다.');
-                }
-            },
-        });
-    }
-
-    // B2e 이메일 영구차단. legacy banEmailAddress.
-    function banEmail(user: AdminUserDto) {
-        const email = user.email;
-        if (!email) {
-            setNotice('이메일이 없는 유저입니다.');
-            return;
-        }
-        setConfirm({
-            title: '이메일 영구차단',
-            danger: true,
-            message: `${email}에 대해서 영구차단을 진행합니다. 계속할까요?`,
-            run: async () => {
-                try {
-                    const res = await postJson<BanEmailResult>('admin/ban-email', { email });
-                    setNotice(res.result ? '완료되었습니다.' : (res.reason ?? '실패했습니다.'));
-                } catch {
-                    setNotice('영구차단에 실패했습니다.');
-                }
-            },
-        });
-    }
-
-    if (loading) {
-        return (
-            <div className="center-inline">
-                <div className="spinner" />
-            </div>
-        );
-    }
-    if (error || !data) {
-        return <p className="deploy-result fail">{error ?? '데이터가 없습니다.'}</p>;
-    }
-
+/** 조치 목록(보드: 데스크톱은 떠 있는 패널, 모바일은 하단 시트). 이메일이 없으면 영구 차단은 사유와 함께 잠긴다. */
+function ActionSheet({ user, onClose, onChoose }: {
+    readonly user: AdminUserDto;
+    readonly onClose: () => void;
+    readonly onChoose: (action: Action) => void;
+}) {
+    const state = memberState(user);
+    const row = (action: Action, name: string, sub: string, block?: string) => (block
+        ? <Button key={action} className="os-opt admin31-action" disabled reason={block}><span className="os-opt__text"><span className="os-opt__name">{name}</span><span className="os-opt__sub">{block}</span></span></Button>
+        : <button key={action} type="button" className="os-opt admin31-action" onClick={() => onChoose(action)}><span className="os-opt__text"><span className="os-opt__name">{name}</span>{sub && <span className="os-opt__sub">{sub}</span>}</span></button>);
     return (
-        <div className="member-control">
-            {/* 상단 컨트롤: 가입/로그인 토글 + 계정 정리 버튼군 (legacy card-body). */}
-            <div className="member-toolbar">
-                <AllowToggle
-                    label="가입 허용"
-                    name="allow_join"
-                    value={data.allowJoin}
-                    disabled={toggling}
-                    onChange={(next) => toggleSystem('allow_join', next)}
-                />
-                <AllowToggle
-                    label="로그인 허용"
-                    name="allow_login"
-                    value={data.allowLogin}
-                    disabled={toggling}
-                    onChange={(next) => toggleSystem('allow_login', next)}
-                />
-                <div className="member-scrub">
-                    <button
-                        type="button"
-                        className="btn-ghost"
-                        onClick={() => scrub('deleted', '탈퇴 계정 정리(1개월+)')}
-                    >
-                        탈퇴 계정 정리(1개월+)
-                    </button>
-                    <button
-                        type="button"
-                        className="btn-ghost"
-                        onClick={() => scrub('old', '오래된 계정 정리(6개월+)')}
-                    >
-                        오래된 계정 정리(6개월+)
-                    </button>
+        <Modal ariaLabel={`${user.username} 조치`} className="admin31-dialog" overlayClassName="admin31-dialog-overlay" onClose={onClose}>
+            <div className="admin31-dialog__body">
+                <h2 className="admin31-dialog__title os-serif">{user.username} 조치</h2>
+                <div className="admin31-actions" role="group" aria-label="조치">
+                    {row('reset_pw', '임시 비밀번호 발급', '결과 창에서 복사한다')}
+                    {state === '차단' ? row('unblock', '차단 풀기', '') : row('block', '차단', '일수를 정한다 — 0 이하는 영구')}
+                    {row('ban_email', '이메일 영구 차단', '', user.email ? undefined : '이메일이 없는 계정입니다')}
+                    {row('delete', '강제 탈퇴', '되돌릴 수 없다')}
                 </div>
+                <div className="admin31-dialog__actions"><Button onClick={onClose}>닫기</Button></div>
             </div>
-
-            {notice && <p className="member-notice">{notice}</p>}
-
-            <h3 className="lobby-section-title">회원 목록</h3>
-            <div className="game-table-wrap">
-                <table className="game-table member-table">
-                    <thead>
-                        <tr>
-                            <th scope="col">코드</th>
-                            <th scope="col">유저명</th>
-                            <th scope="col">EMAIL</th>
-                            <th scope="col">등급</th>
-                            <th scope="col">닉네임</th>
-                            <th scope="col">전콘</th>
-                            <th scope="col">장수명</th>
-                            <th scope="col">
-                                가입
-                                <br />
-                                일자
-                            </th>
-                            <th scope="col">
-                                최근
-                                <br />
-                                로그인
-                            </th>
-                            <th scope="col">
-                                탈퇴
-                                <br />
-                                신청
-                            </th>
-                            <th scope="col">명령</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {data.users.map((user) => (
-                            <tr key={user.id}>
-                                <th scope="row">{user.id}</th>
-                                <td>{user.username}</td>
-                                <td className="member-small">
-                                    {/* legacy emailFunc: '@'를 줄바꿈으로. */}
-                                    {(user.email ?? '-').split('@').map((part, i, arr) => (
-                                        <span key={i}>
-                                            {part}
-                                            {i < arr.length - 1 ? '@' : ''}
-                                            {i < arr.length - 1 && <br />}
-                                        </span>
-                                    ))}
-                                    <br />({user.authType ?? '-'})
-                                </td>
-                                <td>
-                                    {convUserGrade(user.grade, user.gradeLabel)}
-                                    {/* 차단 등급(0)이면 차단 만료일 보조 표기. */}
-                                    {user.blockUntil && (
-                                        <p className="member-small member-block-until">
-                                            {shortDate(user.blockUntil)}
-                                        </p>
-                                    )}
-                                </td>
-                                <td>{user.nickname ?? '-'}</td>
-                                <td>
-                                    {user.icon ? (
-                                        // eslint-disable-next-line @next/next/no-img-element
-                                        <img
-                                            className="member-icon"
-                                            src={user.icon}
-                                            width={64}
-                                            height={64}
-                                            alt=""
-                                        />
-                                    ) : (
-                                        '-'
-                                    )}
-                                </td>
-                                <td className="member-small">
-                                    {/* 장수명(서버별) — 루트DB엔 general이 없어 항상 비어있음(BE 주석). */}
-                                    {data.servers.length === 0
-                                        ? '-'
-                                        : data.servers.map((srv) => (
-                                              <span key={srv} className="member-general">
-                                                  {user.generalNamesByServer[srv] ?? ''}
-                                              </span>
-                                          ))}
-                                </td>
-                                <td className="member-small">{shortDate(user.joinDate)}</td>
-                                <td className="member-small">{shortDate(user.lastLoginAt)}</td>
-                                <td className="member-small">{shortDate(user.deleteAfter)}</td>
-                                <td>
-                                    <div className="member-cmd-group" role="group">
-                                        <button
-                                            type="button"
-                                            className="btn-danger member-cmd-btn"
-                                            onClick={() => userCommand(user, 'delete')}
-                                        >
-                                            강제
-                                            <br />
-                                            탈퇴
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn-ghost member-cmd-btn"
-                                            onClick={() => userCommand(user, 'reset_pw')}
-                                        >
-                                            암호
-                                            <br />
-                                            변경
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn-ghost member-cmd-btn member-cmd-warn"
-                                            onClick={() => userCommand(user, 'block')}
-                                        >
-                                            유저
-                                            <br />
-                                            차단
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn-ghost member-cmd-btn"
-                                            onClick={() => userCommand(user, 'unblock')}
-                                        >
-                                            차단
-                                            <br />
-                                            해제
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn-danger member-cmd-btn"
-                                            onClick={() => banEmail(user)}
-                                        >
-                                            영구
-                                            <br />
-                                            차단
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className="btn-primary member-cmd-btn"
-                                            onClick={() => userCommand(user, 'set_userlevel')}
-                                        >
-                                            별도
-                                            <br />
-                                            권한
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            <ConfirmModal
-                open={confirm !== null}
-                title={confirm?.title ?? ''}
-                danger={confirm?.danger}
-                busy={busy}
-                message={confirm?.message ?? ''}
-                onConfirm={async () => {
-                    if (!confirm) return;
-                    setBusy(true);
-                    try {
-                        await confirm.run();
-                    } finally {
-                        setBusy(false);
-                        setConfirm(null);
-                    }
-                }}
-                onCancel={() => setConfirm(null)}
-            />
-        </div>
+        </Modal>
     );
 }
