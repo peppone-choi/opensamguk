@@ -18,21 +18,14 @@ internal class NpcPeopleSelector(private val context: DomesticContext,
         val deployed = try { DeploymentState.read(actor.meta)?.corps.orEmpty() }
             catch (_: IllegalArgumentException) { return reserved }
         if (deployed.isNotEmpty()) return reserved
-        val state = observation.domestic ?: return reserved
-        val here = state.person(actorId)?.node ?: return reserved
-        val people = state.peopleAt(here)
-        fun eligible(inputId: String, targetId: Int?) =
-            catalog[inputId]?.deliveryState?.hasHandler == true &&
-                PeopleRules.assess(PeopleRequest(actorId, inputId, targetId), state) is PeopleAssessment.Eligible
-        val captive = people.firstOrNull { target ->
-            (target.meta["captive"] as? Map<*, *>)?.get("captorGeneralId") == actorId &&
-                eligible(PeopleInput.PERSUADE_CAPTIVE, target.id)
-        }
-        if (captive != null) return order(PeopleInput.PERSUADE_CAPTIVE, actorId, captive.id)
-        val known = try { TalentDiscovery.read(actor.meta) } catch (_: IllegalArgumentException) { return reserved }
-        val recruit = people.firstOrNull { it.id in known && eligible(PeopleInput.EMPLOY, it.id) }
-        if (recruit != null) return order(PeopleInput.EMPLOY, actorId, recruit.id)
-        if (eligible(PeopleInput.SEARCH, null)) return order(PeopleInput.SEARCH, actorId, null)
+        val actions = observation.peopleActions ?: return reserved
+        fun delivered(inputId: String) = catalog[inputId]?.deliveryState?.hasHandler == true
+        val captive = actions.captiveIds.firstOrNull()
+        if (captive != null && delivered(PeopleInput.PERSUADE_CAPTIVE))
+            return order(PeopleInput.PERSUADE_CAPTIVE, actorId, captive)
+        val recruit = actions.recruitIds.firstOrNull()
+        if (recruit != null && delivered(PeopleInput.EMPLOY)) return order(PeopleInput.EMPLOY, actorId, recruit)
+        if (actions.canSearch && delivered(PeopleInput.SEARCH)) return order(PeopleInput.SEARCH, actorId, null)
         return reserved
     }
 

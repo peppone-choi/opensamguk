@@ -71,7 +71,7 @@ class CanonicalCommandController(
             ?: return response(commandId, parsed)
         val checked = contextualPrecheck.precheck(generalId, available)
         if (checked !is CommandAvailability.Available) return response(commandId, checked)
-        val reserved = reserve.reserveV2(generalId, schema, checked.args, Math.toIntExact(userId!!))
+        val reserved = reserve.reserveCanonicalCommand(generalId, schema, checked.args, Math.toIntExact(userId!!))
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(
             CommandIntakeResponse(
                 status = "ACCEPTED",

@@ -18,7 +18,7 @@ import kotlinx.serialization.Serializable
  *
  * ## 왜 이름에 `V2` 접두사가 없는가
  *
- * `V2NamingConventionGuardTest`는 `V2`로 시작하는 클래스 선언이 `opensamguk.*.v2.*` 패키지 안에 있을 것을
+ * `NamingConventionGuardTest`는 `V2`로 시작하는 클래스 선언이 `opensamguk.*.v2.*` 패키지 안에 있을 것을
  * 요구한다(그 가드는 소스 텍스트 스캔이라 주석 속 선언 형태도 위반으로 세므로, 이 KDoc은 그 패턴을 피해 적는다).
  * 그런데 sealed 서브클래스는 **부모와 같은 패키지**(`opensamguk.common.wire`)여야 하므로 `.v2` 패키지로
  * 옮길 수 없다 — 두 규칙이 정면으로 충돌한다. 접두사를 떼어 명명 가드를 지키고, v2 소속은 (a) 이 KDoc,
