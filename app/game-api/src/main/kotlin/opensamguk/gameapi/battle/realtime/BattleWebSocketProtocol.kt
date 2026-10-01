@@ -100,7 +100,7 @@ class BattleWebSocketProtocol(
             is CommandAdmission.Receipt -> admission.value
             CommandAdmission.IdempotencyConflict -> BattleCommandReceipt(clientId,
                 opensamguk.infra.battle.realtime.BattleCommandVerdict.REJECTED,
-                "IDEMPOTENCY_CONFLICT", view.head.currentTick, null, null, revision)
+                "IDEMPOTENCY_CONFLICT", view.head.currentTick, null, null, identity.authorityRevision)
         }
         return mapper.writeValueAsString(BattleSocketAck(
             battleId = identity.battleId, sessionEpoch = identity.sessionEpoch,

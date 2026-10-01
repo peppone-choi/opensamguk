@@ -102,6 +102,18 @@ class BattleWebSocketProtocolTest {
         assertTrue(captured.allValues.last().intentJson.contains("\"slot\":null"))
     }
 
+    @Test
+    fun `idempotency conflict reports verified authority revision rather than request value`() {
+        arrange()
+        doReturn(CommandAdmission.IdempotencyConflict).`when`(store)
+            .admit(any(BattleCommandRecord::class.java))
+        val request = command("same-id", 701, BattleOrder.DEFEND, RallyPoint.CENTER)
+            .replace("\"expectedAuthorityRevision\":3", "\"expectedAuthorityRevision\":999")
+        val ack = mapper.readTree(protocol.command(identity, request))
+        assertEquals("IDEMPOTENCY_CONFLICT", ack["reasonCode"].asText())
+        assertEquals(3, ack["currentAuthorityRevision"].asInt())
+    }
+
     private fun command(id: String, retinueId: Int, order: BattleOrder, rally: RallyPoint) =
         """{"schemaVersion":1,"t":"COMMAND","clientCommandId":"$id","expectedEpoch":1,"expectedAuthorityRevision":3,"issuedTick":0,"scope":{"retinueId":$retinueId},"intentType":"${order.name}","intentPayload":{"rally":"${rally.name}"}}"""
 

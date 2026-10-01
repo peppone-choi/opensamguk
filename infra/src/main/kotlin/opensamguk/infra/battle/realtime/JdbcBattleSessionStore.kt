@@ -201,9 +201,9 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             SELECT side, authority_revision FROM battle_participant
              WHERE world_id = :world_id AND battle_id = :battle_id AND participant_id = :participant_id
         """.trimIndent(), params) { rs, _ -> rs.getString("side") to rs.getLong("authority_revision") }.firstOrNull()
-        if (authority == null) return@execute CommandAdmission.Receipt(
-            BattleCommandReceipt(command.clientCommandId, BattleCommandVerdict.REJECTED,
-                "UNAUTHORIZED", head.currentTick, null, null, 0))
+        // No participant row means the signed identity has ceased to exist; do not emit a
+        // non-durable ACK that could later be mistaken for an idempotent receipt.
+        if (authority == null) throw SecurityException("battle participant unavailable")
         val reason = when {
             authority.first != command.side -> "UNAUTHORIZED"
             authority.second != command.expectedAuthorityRevision -> "STALE_AUTHORITY"
