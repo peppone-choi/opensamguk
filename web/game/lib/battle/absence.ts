@@ -1,7 +1,7 @@
-// 전투 · 부재 대비(P-C04) — 내가 없을 때 무엇이 싸우는지. `/api/policies`만 읽는다. K6 설계서 §3.5.
-// - 내 출전 군단의 방침(지금 · 다음 순부터), 내가 맡은 현(배치 자리 — seat)의 방침.
-// - 전투 목록(K6-11 `/api/battles/active`)은 서버에 없고, 캠페인 → 실시간 전투 티켓 배선도 아직 없다
-//   (원장 CONTRACT:CAMPAIGN_BATTLE_PRODUCER) — 화면은 「전투가 열리지 않음(서버 준비 중)」으로 떨어진다.
+// P-C04 reads my corps policies and counties I personally govern from /api/policies.
+// placed=false means a directly assigned general; placed=true means a retainer card.
+// SeatDto has no controller id, so retainer-governed counties cannot be attributed to their owner here.
+// Active battles and campaign-to-realtime battle tickets are not available yet.
 import type { Policies } from '../campaign-reads';
 
 export interface AbsenceRow {
@@ -32,7 +32,7 @@ export function toAbsence(p: Policies, me: number): AbsenceView {
         settable: c.settable,
         blocked: c.blocked?.reason ?? null,
     }));
-    const counties: AbsenceRow[] = p.counties.filter((c) => c.seat?.generalId === me && c.seat.placed).map((c) => ({
+    const counties: AbsenceRow[] = p.counties.filter((c) => c.seat?.generalId === me && !c.seat.placed).map((c) => ({
         key: `county:${c.countyId}`,
         kind: 'county',
         name: c.name,

@@ -26,7 +26,11 @@ async function serve(page: Page, policies: 'ok' | 'fail') {
             return json(route, 200, {
                 status: 'READY', countyOptions: [], corpsOptions: [], defaultPolicy: { code: 'DEFEND', label: '수비' },
                 corps: [{ orderId: 'O-1', commanderName: '하후돈', active: { policy: 'INTERCEPT', label: '요격' }, pending: { policy: 'EVADE', label: '회피' }, settable: true, blocked: null }],
-                counties: [{ countyId: 30, name: '허현', commanderyName: '영천군', active: null, pending: null, effective: { policy: 'DEFEND', label: '수비', source: 'DEFAULT' }, seat: { generalId: 7, name: '하후돈', placed: true }, settable: true }],
+                counties: [
+                    { countyId: 30, name: '허현', commanderyName: '영천군', active: null, pending: null, effective: { policy: 'DEFEND', label: '수비', source: 'DEFAULT' }, seat: { generalId: 7, name: '하후돈', placed: false }, settable: true, blocked: null },
+                    { countyId: 31, name: '양적현', commanderyName: '영천군', active: null, pending: null, effective: null, seat: { generalId: 8, name: '수하', placed: true }, settable: true, blocked: null },
+                    { countyId: 32, name: '장사현', commanderyName: '영천군', active: null, pending: null, effective: null, seat: { generalId: 9, name: '다른 장수', placed: false }, settable: false, blocked: null },
+                ],
             });
         }
         return json(route, 503, {});
@@ -54,6 +58,10 @@ test.describe('전투 · 부재 대비', () => {
         await expect(rows).toContainText('하후돈 군단');
         await expect(rows).toContainText('다음 순부터 회피');
         await expect(rows).toContainText('허현');
+        await expect(rows).toContainText('직접 맡은 현');
+        await expect(rows.getByRole('listitem')).toHaveCount(2);
+        await expect(rows).not.toContainText('양적현');
+        await expect(rows).not.toContainText('장사현');
         expect(await smallTouchTargets(page, HUB)).toEqual([]);
         expect(await titleOnlyInfo(page, HUB)).toEqual([]);
         expect(await page.locator(`${HUB} :disabled`).count()).toBe(0);

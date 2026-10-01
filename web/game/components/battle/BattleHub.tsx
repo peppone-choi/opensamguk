@@ -28,6 +28,7 @@ export function BattleHub({ absence, onOpenPolicy, onOpenStratagem }: BattleHubP
             <aside className={styles.absence} aria-label="부재 대비">
                 <h2 className={styles.head}>부재 대비</h2>
                 <p className={styles.note}>{ABSENCE_NOTE}</p>
+                <p className={styles.muted}>현은 내가 직접 맡은 현만 보입니다. 수하에게 맡긴 현은 아직 보이지 않습니다.</p>
                 <AbsenceList absence={absence} />
                 <div className={styles.links}>
                     {onOpenPolicy ? <button type="button" className="os-button" onClick={onOpenPolicy}>방침 고치기</button> : null}
@@ -49,12 +50,12 @@ function AbsenceList({ absence }: { absence: AbsenceLoad }) {
         return <StatusView kind="error" title="이 서버에서는 방침을 읽을 수 없습니다" errorCode={absence.view.status} onRetry={absence.onRetry} />;
     }
     const rows = absence.view.rows;
-    if (rows.length === 0) return <StatusView kind="empty" title="맡긴 군단 · 현이 없습니다" body="출병하거나 현에 배치되면 없을 때 누가 어떻게 싸우는지 여기 보입니다." />;
+    if (rows.length === 0) return <StatusView kind="empty" title="출전 군단 · 직접 맡은 현이 없습니다" body="출병하거나 발령받은 현에 부임하면 방침이 여기 보입니다." />;
     return (
         <ul className={styles.rows} aria-label="없을 때 싸우는 것">
             {rows.map((r) => (
                 <li key={r.key} className={styles.row}>
-                    <span className="os-chip">{r.kind === 'corps' ? '군단' : '맡은 현'}</span>
+                    <span className="os-chip">{r.kind === 'corps' ? '군단' : '직접 맡은 현'}</span>
                     <span className={styles.name}>{r.name}</span>
                     <span className={styles.policy}>
                         {r.policy ?? '방침 없음'}
