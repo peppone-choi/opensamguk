@@ -42,8 +42,8 @@ export default function AdminOverview({ onNavigate, onVersion }: {
     readonly onVersion?: (version: VersionResponse) => void;
 }) {
     const [version, setVersion] = useState<VersionResponse | null | undefined>(undefined);
-    const [deploy, setDeploy] = useState<Record<string, DeployStatus | null>>({});
-    const [daemon, setDaemon] = useState<Record<string, DaemonStatus | null>>({});
+    const [deploy, setDeploy] = useState<Record<string, DeployStatus | null | undefined>>({});
+    const [daemon, setDaemon] = useState<Record<string, DaemonStatus | null | undefined>>({});
     const [titles, setTitles] = useState<Record<string, string>>({});
     const [attempt, setAttempt] = useState(0);
 
@@ -82,6 +82,17 @@ export default function AdminOverview({ onNavigate, onVersion }: {
     }, [attempt, onVersion]);
 
     const retry = () => setAttempt((n) => n + 1);
+    // 한 서버만 다시 읽는다(보드 V31K5Admin — 조회 실패 줄의 「다시 시도」).
+    const retryServer = async (id: string) => {
+        setDeploy((prev) => ({ ...prev, [id]: undefined }));
+        setDaemon((prev) => ({ ...prev, [id]: undefined }));
+        const [d, t] = await Promise.all([
+            getJson<DeployStatus>(`admin/deploy/status?serverId=${encodeURIComponent(id)}`).catch(() => null),
+            getJson<DaemonStatus>(`admin/turn-daemon/status?serverId=${encodeURIComponent(id)}`).catch(() => null),
+        ]);
+        setDeploy((prev) => ({ ...prev, [id]: d }));
+        setDaemon((prev) => ({ ...prev, [id]: t }));
+    };
     return (
         <div className="admin31-stack">
             <Panel className="admin31-panel" aria-label="게이트웨이">
@@ -137,7 +148,9 @@ export default function AdminOverview({ onNavigate, onVersion }: {
                                             </td>
                                             <td data-label="턴"><TurnChip daemon={daemon[s.id]} /></td>
                                             <td>
-                                                <a className="os-button os-button--ghost os-button--sm" href={resolveServerGamePath(undefined, s.id, GAME_URL, 'admin')}>게임 관리</a>
+                                                {daemon[s.id] === null
+                                                    ? <button type="button" className="os-button os-button--ghost os-button--sm" onClick={() => void retryServer(s.id)}>다시 시도</button>
+                                                    : <a className="os-button os-button--ghost os-button--sm" href={resolveServerGamePath(undefined, s.id, GAME_URL, 'admin')}>게임 관리</a>}
                                             </td>
                                         </tr>
                                     );

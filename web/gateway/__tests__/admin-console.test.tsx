@@ -81,6 +81,22 @@ describe('P-G09 운영 콘솔', () => {
         expect(screen.queryByText(/동결중|가동중|데몬/)).toBeNull();
     });
 
+    it('개요: 조회 실패 줄은 「게임 관리」 대신 「다시 시도」로 그 서버만 다시 읽는다', async () => {
+        let failing = true;
+        const base = fetchFake();
+        vi.stubGlobal('fetch', vi.fn(async (input: RequestInfo | URL, init?: RequestInit) => (
+            failing && String(input).includes('turn-daemon/status?serverId=uni') ? json({}, 502) : base(input, init))));
+        render(<AdminPage />);
+        const table = await screen.findByRole('table');
+        const uni = () => within(table).getAllByRole('row')[2];
+        await waitFor(() => expect(within(uni()).getByText('조회 실패')).toBeInTheDocument());
+        expect(within(uni()).queryByRole('link', { name: '게임 관리' })).toBeNull();
+        failing = false;
+        fireEvent.click(within(uni()).getByRole('button', { name: '다시 시도' }));
+        expect(await within(uni()).findByText('턴 멈춤')).toBeInTheDocument();
+        expect(within(uni()).getByRole('link', { name: '게임 관리' })).toBeInTheDocument();
+    });
+
     it('턴: 멈추기는 확인을 거치고, 이미 멈춘 서버는 사유와 함께 잠긴다', async () => {
         render(<AdminPage />);
         await screen.findByRole('table');
