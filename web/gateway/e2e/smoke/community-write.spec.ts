@@ -57,7 +57,7 @@ test.describe('P-G08 커뮤니티 글쓰기 — 데스크톱 · 모바일 같은
   test('쓰던 글을 버릴 때는 확인을 받는다', { tag: BOTH }, async ({ page }) => {
     await open(page, '/board/write');
     await page.getByLabel('제목').fill('쓰다 만 글');
-    await page.getByRole('button', { name: '취소' }).click();
+    await page.getByRole('button', { name: '취소', exact: true }).click();
     const dialog = page.getByRole('dialog', { name: '쓰던 글 버리기' });
     await expect(dialog).toContainText('지금까지 쓴 내용이 사라집니다.');
     await dialog.getByRole('button', { name: '계속 쓰기' }).click();
