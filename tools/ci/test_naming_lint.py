@@ -70,7 +70,7 @@ class NamingLintTest(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "immutable file changed"):
             load_allowlist(allowlist, self.root)
 
-    def test_ratchet_fails_on_increase_and_requests_lower_baseline(self):
+    def test_ratchet_fails_on_increase_and_notes_lower_baseline(self):
         baseline = {kind: 0 for kind in KINDS}
         counts, _ = scan(self.root, {})
         self.assertTrue(all(message.startswith("OK") for message in check(counts, baseline)))
@@ -78,16 +78,17 @@ class NamingLintTest(unittest.TestCase):
         counts, _ = scan(self.root, {})
         self.assertIn("FAIL product_identifier", "\n".join(check(counts, baseline)))
         baseline["product_identifier"] = 2
-        self.assertIn("LOWER product_identifier", "\n".join(check(counts, baseline)))
+        # 기준선보다 적으면 실패가 아니라 안내(NOTE) — 내리기는 따로 래칫 PR(tools/ci/ratchet.py)
+        self.assertIn("NOTE product_identifier", "\n".join(check(counts, baseline)))
 
-    def test_lower_count_fails_cli_until_baseline_is_updated(self):
+    def test_lower_count_passes_cli_with_a_note(self):
         baseline = self.write("baseline.json", json.dumps({kind: 1 for kind in KINDS}))
         allowlist = self.write("allowlist.json", '{"paths": []}')
         result = subprocess.run([sys.executable, str(Path(__file__).with_name("naming_lint.py")),
                                  "--root", str(self.root), "--baseline", str(baseline),
                                  "--allowlist", str(allowlist)], capture_output=True, text=True)
-        self.assertEqual(result.returncode, 1)
-        self.assertIn("LOWER retired_reference", result.stdout)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("NOTE retired_reference", result.stdout)
 
 
 if __name__ == "__main__":

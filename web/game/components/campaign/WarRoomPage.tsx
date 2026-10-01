@@ -11,13 +11,18 @@ import CountyPanel from '@/components/campaign/CountyPanel';
 import GeneralRoster from '@/components/campaign/GeneralRoster';
 import LastTurnPanel from '@/components/campaign/LastTurnPanel';
 import StandingBar from '@/components/campaign/StandingBar';
-import TurnList from '@/components/campaign/TurnList';
 import WarRoomMap from '@/components/campaign/WarRoomMap';
+import CommandFlow from '@/components/command-flow/CommandFlow';
+import { CommandFlowHost } from '@/components/command-flow/CommandFlowHost';
+import { TurnSlots } from '@/components/turn-slots/TurnSlots';
 import { useToast } from '@/hooks/useToast';
 import { api } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
 import { reserveScout } from '@/lib/campaign-scout';
 import { useGameSession } from '@/lib/campaign-session';
+import { useFlowQuery } from '@/lib/command-flow/use-flow-query';
+import { useTurnSlots } from '@/lib/turn-slots';
+import styles from './WarRoomPage.module.css';
 
 /**
  * 작전실 — 시안 WarRoom(메인).
@@ -33,6 +38,9 @@ export default function WarRoomPage() {
     const { frontInfo, generalId, refresh } = session;
     const { toasts, show, remove } = useToast();
     const [refreshKey, setRefreshKey] = useState(0);
+    // 명령 흐름(P-W02, K6) — 주소 ?do · slot · target 이 있으면 12순 열 자리를 흐름이 차지한다(설계서 §2.1).
+    const flow = useFlowQuery();
+    const turnSlots = useTurnSlots(generalId, refreshKey);
     const bump = () => {
         setRefreshKey((k) => k + 1);
         refresh();
@@ -74,13 +82,9 @@ export default function WarRoomPage() {
     return (
         <GameShell title="작전실" tab={null} showBack={false} requiresHwiha={false} bleed>
             <div
-                style={{
-                    padding: 12,
-                    display: 'grid',
-                    gridTemplateColumns: 'minmax(0, 1fr) 420px',
-                    gap: 12,
-                    alignItems: 'start',
-                }}
+                className={styles.layout}
+                data-flow-open={flow.query.open || undefined}
+                data-testid="war-room-layout"
             >
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     {/* 안개는 서버 시야 투영(군국 단위)만 따른다. */}
@@ -121,16 +125,32 @@ export default function WarRoomPage() {
                     ) : null}
                 </div>
 
-                {generalId != null && frontInfo ? (
+                {generalId != null && frontInfo && flow.query.open ? (
+                    <CommandFlowHost>
+                        <CommandFlow
+                            generalId={generalId}
+                            generalName={frontInfo.general.name}
+                            initialInputId={flow.query.inputId}
+                            initialSlot={flow.query.slot}
+                            initialTarget={flow.query.target}
+                            refreshKey={refreshKey}
+                            onClose={flow.closeFlow}
+                            onLocationChange={flow.syncFlow}
+                            onReserved={bump}
+                        />
+                    </CommandFlowHost>
+                ) : generalId != null && frontInfo ? (
                     <div style={{ display: 'grid', gap: 12, alignContent: 'start' }}>
                     <GeneralRoster />
-                    <TurnList
-                        generalId={generalId}
-                        nationId={frontInfo.general.nationId}
-                        refreshKey={refreshKey}
-                        onToast={show}
-                        onReserved={bump}
-                    />
+                    <Panel style={{ padding: 0 }}>
+                        <h2 style={{ margin: 0, padding: '8px 12px', fontSize: 14, borderBottom: '1px solid var(--line)' }}>명령 목록 12순 — 직접 행동 · 한 순에 하나</h2>
+                        <TurnSlots
+                            mode="column"
+                            load={turnSlots.load}
+                            onSelect={(turnIdx) => flow.openFlow({ slot: turnIdx })}
+                            onRetry={turnSlots.reload}
+                        />
+                    </Panel>
                     </div>
                 ) : (
                     <Panel style={{ padding: 12 }}>
