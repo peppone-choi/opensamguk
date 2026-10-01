@@ -251,6 +251,12 @@ async function openMailbox(page: Page): Promise<void> {
   await expect(page.getByRole('heading', { name: '서신', exact: true })).toBeVisible();
 }
 
+async function openDiplomacyLetters(page: Page): Promise<void> {
+  await page.goto(new URL('/game/global-diplomacy', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: '외교', exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: '외교 서신' }).click();
+}
+
 function disposableMessageText(): string {
   return `e2e-mailbox-delete-${Date.now()}-${Math.floor(Math.random() * 1_000_000)}`;
 }
@@ -352,13 +358,26 @@ test('Given a configured live denial fixture, when delete resolves denied, the r
     return;
   }
 
-  await openMailbox(page);
-  if (fixture.scope !== 'private') {
-    await page.getByRole('tab', { name: fixture.scope === 'national' ? '세력' : fixture.scope === 'public' ? '전체' : '외교' }).click();
+  let card: Locator;
+  /** 거절되면 그대로 남아야 할 것 — 서신 화면은 목록 행, 외교 서신 칸은 카드. */
+  let kept: Locator;
+  if (fixture.scope === 'diplomacy') {
+    // 외교 서신은 서신 화면이 아니라 외교 화면(P-K02, /game/global-diplomacy)의 「외교 서신」 칸에 있다.
+    // 그 칸은 좁은 서신 부품(서랍 판)이라 목록 행 대신 카드가 바로 보이고, 지우기 · 확인 대화는 같다.
+    await openDiplomacyLetters(page);
+    card = page.getByRole('article').filter({ has: page.getByText(fixture.text, { exact: true }) });
+    await expect(card, 'configured diplomacy denial fixture card').toHaveCount(1);
+    kept = card;
+  } else {
+    await openMailbox(page);
+    if (fixture.scope !== 'private') {
+      await page.getByRole('tab', { name: fixture.scope === 'national' ? '세력' : '전체' }).click();
+    }
+    const row = mailboxRow(page, fixture.text);
+    await expect(row, 'configured denial fixture row').toHaveCount(1);
+    card = await openCard(page, fixture.text);
+    kept = row;
   }
-  const row = mailboxRow(page, fixture.text);
-  await expect(row, 'configured denial fixture row').toHaveCount(1);
-  const card = await openCard(page, fixture.text);
   const deleteButton = card.getByRole('button', { name: '지우기' });
   await expect(deleteButton, 'configured denial fixture must be frontend-deletable').toBeVisible();
 
@@ -378,5 +397,5 @@ test('Given a configured live denial fixture, when delete resolves denied, the r
   expect(terminal.reason, 'denial reason').toBe(fixture.reason);
 
   await expect(page.getByText(fixture.reason, { exact: true })).toBeVisible({ timeout: commandTimeoutMs });
-  await expect(row, 'denied delete keeps the message row').toHaveCount(1);
+  await expect(kept, 'denied delete keeps the message row').toHaveCount(1);
 });
