@@ -100,10 +100,7 @@ export const APPROVED_RENAMES: readonly (readonly [string, string])[] = [
     ['숙련전환', '병종 바꿔 익히기'],
     ['군량매매', '쌀 사고팔기'],
 ];
-export const HANJA_READINGS: readonly (readonly [string, string])[] = [
-    ['郡國', '군국'],
-    ['州', '주'],
-];
+export const HANJA_READINGS: readonly (readonly [string, string])[] = [];
 export const OLD_WORDS: readonly (readonly [string, string])[] = [...APPROVED_RENAMES, ...HANJA_READINGS];
 
 /** 끝 글자에 받침이 있는지(한글이 아니면 없다고 본다). 받침이 ㄹ이면 'ㄹ'. */

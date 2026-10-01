@@ -1,5 +1,12 @@
 package opensamguk.gameapi.help
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import opensamguk.logic.input.InputCatalog
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -43,7 +50,7 @@ class HelpStoreTest {
     @Test
     fun `human prose must declare a known review state`() {
         val missing = topics.replaceFirst("\"reviewState\": \"DRAFT\",", "")
-        assertFailsWith<NoSuchElementException> { HelpStore.parse(missing, reasons, catalog) }
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(missing, reasons, catalog) }
         val unknown = reasons.replaceFirst("\"reviewState\": \"DRAFT\"", "\"reviewState\": \"UNKNOWN\"")
         assertFailsWith<IllegalArgumentException> { HelpStore.parse(topics, unknown, catalog) }
     }
@@ -60,6 +67,62 @@ class HelpStoreTest {
     }
 
     @Test
+    fun `registered concepts and tutorial topics appear in the typed topic list`() {
+        val store = HelpStore.parse(withExtraTopics(), reasons, catalog, resource("topic-registry-registered.json"))
+        assertEquals(76, store.topicSummaries.size)
+        val input = store.topicSummaries.first { it.id == "commands.action.enlist" }
+        assertEquals(HelpTopicGroup.INPUT, input.group)
+        assertEquals("action.enlist", input.inputId)
+        assertEquals("GENERAL_ACTION", input.inputKind)
+        val concept = store.topicSummaries.first { it.id == "concepts.createGeneral" }
+        assertEquals(HelpTopicGroup.CONCEPT, concept.group)
+        assertEquals(null, concept.inputId)
+        assertEquals(null, concept.inputKind)
+        assertEquals(HelpTopicGroup.TUTORIAL, store.topicSummaries.first { it.id == "tutorial.createGeneral" }.group)
+        assertTrue(store.topicSummariesEtag.startsWith('"') && store.topicSummariesEtag.endsWith('"'))
+    }
+
+    @Test
+    fun `topic list excerpt stops after the first paragraph`() {
+        val modified = changeExtraTopic("concepts.createGeneral") { row ->
+            val sections = row.getValue("sections").jsonObject
+            JsonObject(row + ("sections" to JsonObject(sections +
+                ("explanation" to JsonPrimitive("첫 문단입니다.\n\n뒤 문단입니다.")))))
+        }
+        val store = HelpStore.parse(modified, reasons, catalog, resource("topic-registry-registered.json"))
+        val summary = store.topicSummaries.single { it.id == "concepts.createGeneral" }
+        assertEquals("첫 문단입니다.", summary.excerpt)
+    }
+
+    @Test
+    fun `unregistered or mismatched extra topic fails closed`() {
+        val extra = withExtraTopics()
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(extra, reasons, catalog) }
+        val registry = resource("topic-registry-registered.json")
+        val wrongGroup = registry.replace("\"group\": \"CONCEPT\"", "\"group\": \"TUTORIAL\"")
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(extra, reasons, catalog, wrongGroup) }
+        val arbitrary = registry.replace("concepts.createGeneral", "concepts.arbitrary")
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(extra, reasons, catalog, arbitrary) }
+        val unknownType = registry.replace("\"CONCEPT\"", "\"INPUT\"")
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(extra, reasons, catalog, unknownType) }
+        val badId = registry.replace("concepts.createGeneral", "concepts../createGeneral")
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(extra, reasons, catalog, badId) }
+    }
+
+    @Test
+    fun `extra topic rejects unknown fields and broken related links`() {
+        val registry = resource("topic-registry-registered.json")
+        val unknownField = changeExtraTopic("concepts.createGeneral") { row ->
+            JsonObject(row + ("unreviewed" to JsonPrimitive(true)))
+        }
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(unknownField, reasons, catalog, registry) }
+        val badLink = changeExtraTopic("tutorial.createGeneral") { row ->
+            JsonObject(row + ("relatedTopicIds" to JsonArray(listOf(JsonPrimitive("concepts.unknown")))))
+        }
+        assertFailsWith<IllegalArgumentException> { HelpStore.parse(badLink, reasons, catalog, registry) }
+    }
+
+    @Test
     fun `human help sections do not duplicate catalog numeric rules`() {
         val store = HelpStore.parse(topics, reasons, catalog)
         store.topics.values.forEach { topic ->
@@ -72,4 +135,19 @@ class HelpStoreTest {
     }
 
     private fun resource(name: String): String = checkNotNull(javaClass.classLoader.getResource("help/$name")).readText()
+
+    private fun withExtraTopics(): String {
+        val root = Json.parseToJsonElement(topics).jsonObject
+        val extra = Json.parseToJsonElement(resource("extra-topics.json")).jsonArray
+        return JsonObject(root + ("topics" to JsonArray(root.getValue("topics").jsonArray + extra))).toString()
+    }
+
+    private fun changeExtraTopic(id: String, change: (JsonObject) -> JsonObject): String {
+        val root = Json.parseToJsonElement(withExtraTopics()).jsonObject
+        val rows = root.getValue("topics").jsonArray.map { item ->
+            val row = item.jsonObject
+            if (row.getValue("id").jsonPrimitive.content == id) change(row) else item
+        }
+        return JsonObject(root + ("topics" to JsonArray(rows))).toString()
+    }
 }

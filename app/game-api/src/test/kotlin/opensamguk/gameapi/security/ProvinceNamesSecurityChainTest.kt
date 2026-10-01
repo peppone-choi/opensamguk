@@ -123,7 +123,9 @@ class ProvinceNamesSecurityChainTest {
 
     // The exact GET/non-GET matcher is on main; the real-reader suite also checks denial before data access.
     @Test fun `public GET leaves unrelated authenticated surfaces protected and rejects actor query`() {
-        mvc.perform(get("/api/events?section=PERSONAL")).andExpect(status().isForbidden)
+        mvc.perform(get("/api/events?section=PERSONAL")).andExpect(status().isUnauthorized)
+            .andExpect(content().json("""{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}""", true))
+        verifyNoInteractions(reader)
         mvc.perform(get("$metadata?generalId=41")).andExpect(status().isBadRequest)
             .andExpect(header().string("Cache-Control", "no-store"))
     }
