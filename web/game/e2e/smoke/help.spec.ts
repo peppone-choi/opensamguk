@@ -73,10 +73,14 @@ test.describe('도움말', () => {
         await expect(panel.getByText('서버가 준비 중이라 도움말도 잠시 쉽니다')).toBeVisible();
     });
 
-    test('첫걸음 탭 — 본 서버는 안내판', { tag: [BOTH] }, async ({ page }) => {
-        const panel = await open(page, 'start');
-        await expect(panel.getByText('본 서버에서는 숫자 칩이 없습니다. 여덟 걸음을 어디서 하는지 안내만 합니다.')).toBeVisible();
+    test('첫걸음 탭 — 8단계 설명만, 진행 기록 · 진척 요청 없음(D21)', { tag: [BOTH] }, async ({ page }) => {
+        const log: string[] = [];
+        const panel = await open(page, 'start', { log });
         await expect(panel.getByRole('tab', { name: '첫걸음' })).toHaveAttribute('aria-selected', 'true');
+        await expect(panel.getByRole('list', { name: '첫걸음 8단계' }).getByRole('heading', { level: 3 })).toHaveText([
+            '1단계 · 가입', '2단계 · 장수 생성', '3단계 · 출사', '4단계 · 발령', '5단계 · 공사', '6단계 · 등용', '7단계 · 행군', '8단계 · 전투']);
+        await expect(panel.getByText('실시간으로 전투에 참가하는 화면은 아직 준비 중입니다.')).toBeVisible();
+        expect(log.filter((l) => l.includes('tutorial'))).toEqual([]);
     });
 
     test('모바일: 누를 것은 모두 44 이상 · 가운데를 누르면 그 단추', { tag: [MOBILE_ONLY] }, async ({ page }, info) => {
@@ -95,6 +99,12 @@ test.describe('도움말', () => {
 // ---- 셸 도움말 서랍(`?help=`, components/shell/HelpDrawer) ----------------------------------------------------------
 // 셸 스모크(shell.spec.ts)와 같은 합성 로그인 · front-info 로 부 · 월단평을 열고, 머리줄 「?」로 서랍을 연다.
 async function openShellWithHelp(page: Page, path = '/game/retinue/yuedan') {
+    await shellRoutes(page);
+    await page.goto(path, { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
+}
+
+async function shellRoutes(page: Page) {
     const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
     await page.context().addCookies([{ name: 'sam_server', value: 'pep', url: baseURL }]);
     await serveHelpApi(page);
@@ -106,8 +116,6 @@ async function openShellWithHelp(page: Page, path = '/game/retinue/yuedan') {
         nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
     } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
-    await page.goto(path, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
 }
 
 /** 누를 것의 가운데를 다른 상자가 덮는지(셸 스모크 · K10 「덮임」과 같은 방법 — elementFromPoint). */
@@ -299,3 +307,44 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
     await expect.poll(async () => (await canvasHash(page)).hash).not.toBe(beforeDrag);
     await expect(drawer).toBeVisible(); // 지도 조작이 서랍을 닫지 않는다
 });
+
+// ---- 첫걸음 바로가기(D21) — 서랍에서 실제 화면으로 간다 ------------------------------------------------------------
+const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
+    ['create', /\/game\/(pep\/)?join$/, '입장'],
+    ['enlist', /\/game(\/pep)?$/, '작전실'],
+    ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
+    ['work', /\/game\/(pep\/)?territory$/, '영지'],
+    ['employ', /\/game(\/pep)?$/, '작전실'],
+    ['march', /\/game(\/pep)?$/, '작전실'],
+    ['battle', /\/game\/(pep\/)?battle-center$/, '군단'],
+];
+
+test.describe('첫걸음 바로가기', () => {
+    test('서랍 「첫걸음」 — 44 · 덮임 0 · 넘침 0, 가입은 게이트웨이 회원 가입 주소', { tag: [BOTH] }, async ({ page }) => {
+        await openShellWithHelp(page, '/game/retinue/yuedan?help=start');
+        const drawer = page.locator(DRAWER);
+        await expect(drawer.getByRole('list', { name: '첫걸음 8단계' })).toBeVisible();
+        expect(await smallTouchTargets(page, DRAWER)).toEqual([]);
+        expect(await coveredIn(page, DRAWER)).toEqual([]);
+        expect(await titleOnlyInfo(page, DRAWER)).toEqual([]);
+        await expectNoHorizontalOverflow(page);
+        // 가입은 게임 앱 밖(게이트웨이 /join) — 이 스모크에는 게이트웨이가 없어 주소만 본다(페이지 존재는 help-lib 시험).
+        await expect(drawer.locator('[data-first-step-go="register"]')).toHaveAttribute('href', /\/join$/);
+    });
+
+    test('바로가기 7개가 실제 화면으로 간다(문서 404 없음 · 셸이 그 화면을 안다)', { tag: [BOTH] }, async ({ page }, info) => {
+        await shellRoutes(page);
+        for (const [key, url, group] of FIRST_STEP_TARGETS) {
+            await page.goto('/game/retinue/yuedan?help=start', { waitUntil: 'domcontentloaded' });
+            const go = page.locator(DRAWER).locator(`[data-first-step-go="${key}"]`);
+            await expect(go, key).toBeVisible({ timeout: 60_000 });
+            await press(go, info);
+            await expect(page, key).toHaveURL(url);
+            await expect(page.locator('header h1'), key).toHaveText(group);
+            await expect(page.getByText('This page could not be found'), key).toHaveCount(0);
+            await expect(page.locator(DRAWER), key).toHaveCount(0); // 다른 화면으로 가면 서랍은 닫힌다
+            if (key === 'create') await expect(page.getByRole('heading', { level: 1, name: '장수 생성' })).toBeVisible();
+        }
+    });
+});
+

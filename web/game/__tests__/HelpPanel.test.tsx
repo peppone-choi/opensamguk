@@ -5,11 +5,12 @@ import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { HelpPanel } from '../components/help/HelpPanel';
 import { InputHelpStrip, TopicHelpStrip } from '../components/help/HelpStrip';
 import { useReasonHelp } from '../hooks/useHelp';
-import { CoachMark, TutorialView } from '../components/help/Tutorial';
-import { __resetHelpCache, type TutorialProgressResponse } from '../lib/help';
+import { __resetHelpCache } from '../lib/help';
 import type { HelpView } from '../lib/help-route';
 
 // useReasonHelp 는 서랍을 여는 onHelp(useOpenHelp → next/navigation)를 같이 돌려준다 — 앱 라우터 밖이라 흉내 낸다.
+// 첫걸음 바로가기는 셸 세션의 서버로 주소를 만든다(CampaignLink).
+vi.mock('@/lib/campaign-session', () => ({ useGameSession: () => ({ serverId: 'pep' }) }));
 vi.mock('next/navigation', () => ({
     usePathname: () => '/game/pep',
     useSearchParams: () => new URLSearchParams(''),
@@ -50,7 +51,7 @@ afterEach(() => {
 
 function panel(view: HelpView, extra: Partial<Parameters<typeof HelpPanel>[0]> = {}) {
     const onNavigate = vi.fn();
-    render(<HelpPanel view={view} onNavigate={onNavigate} screen="enlist" practice={false} variant="drawer" onClose={vi.fn()} {...extra} />);
+    render(<HelpPanel view={view} onNavigate={onNavigate} screen="enlist" variant="drawer" onClose={vi.fn()} {...extra} />);
     return onNavigate;
 }
 
@@ -157,51 +158,28 @@ test('an unknown reason leaves recovery empty (sheet still shows the server sent
     expect(JSON.parse(screen.getByTestId('probe').textContent!)).toEqual({ recoveryDraft: false, helpTopic: { id: 'input:action.enlist!MYSTERY', title: '출사' } });
 });
 
-const progress: TutorialProgressResponse = fixture('tutorial-progress-start');
-
-test('tutorial: practice world shows the bar, the current step and locked steps; completion is only what the server says', () => {
-    render(<TutorialView practice progress={{ status: 'ready', data: progress }} />);
-    expect(screen.getByRole('img', { name: '첫걸음 1 / 8 완료, 지금 2단계' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: '2단계 · 장수 생성' })).toBeInTheDocument();
-    expect(screen.getAllByText('잠김')).toHaveLength(6);
-    fireEvent.click(screen.getAllByRole('button', { name: /첫 전투/ })[0]);
-    expect(screen.getByText('앞 단계를 마치면 열립니다.')).toBeInTheDocument();
-});
-
-test('tutorial: main server shows the guide, missing API shows server wait, 401 asks to log in', () => {
-    const { rerender } = render(<TutorialView practice={false} progress={{ status: 'idle' }} />);
-    expect(screen.getByText('본 서버에서는 숫자 칩이 없습니다. 여덟 걸음을 어디서 하는지 안내만 합니다.')).toBeInTheDocument();
-    rerender(<TutorialView practice progress={{ status: 'error', kind: 'NOT_FOUND', message: '' }} />);
-    expect(screen.getByText('첫걸음 진행은 서버 준비 중입니다')).toBeInTheDocument();
-    rerender(<TutorialView practice progress={{ status: 'error', kind: 'AUTH', message: '' }} />);
-    expect(screen.getByText('로그인하면 첫걸음을 이어 갑니다')).toBeInTheDocument();
-});
-
-test('coach mark rings the target and describes it; with no target only the card shows with 「그 화면으로」', async () => {
-    const current = progress.objectives.find((o) => o.id === 'tutorial.createGeneral')!;
-    // jsdom 은 배치를 계산하지 않는다 — 대상의 자리만 준다. 테두리가 누르기를 먹지 않는지는 e2e(elementFromPoint)가 본다.
-    const rect = { top: 100, left: 40, width: 200, height: 44, right: 240, bottom: 144, x: 40, y: 100, toJSON: () => ({}) };
-    const spyRects = vi.spyOn(HTMLElement.prototype, 'getClientRects').mockReturnValue([rect] as unknown as DOMRectList);
-    const spyBox = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue(rect as DOMRect);
-    const { rerender } = render(
-        <div>
-            <button type="button" data-guide="tutorial.createGeneral">만들고 들어가기</button>
-            <CoachMark objective={current} onHide={vi.fn()} />
-        </div>,
-    );
-    const ring = await waitFor(() => {
-        const el = document.querySelector('[data-coach-ring]') as HTMLElement | null;
-        expect(el).not.toBeNull();
-        return el!;
+test('first steps (D21): eight steps to read — what · where · how, 「준비 중」 where it is not built, and a 44px shortcut to each real screen', () => {
+    const onNavigate = panel({ kind: 'start' });
+    const list = screen.getByRole('list', { name: '첫걸음 8단계' });
+    const steps = within(list).getAllByRole('heading', { level: 3 }).map((h) => h.textContent);
+    expect(steps).toEqual(['1단계 · 가입', '2단계 · 장수 생성', '3단계 · 출사', '4단계 · 발령', '5단계 · 공사', '6단계 · 등용', '7단계 · 행군', '8단계 · 전투']);
+    // 진행 기록 · 완료 표시 · 잠김이 없다 — 설명만
+    expect(document.body.textContent).not.toMatch(/완료|잠김|\d\s*\/\s*8|연습 서버/);
+    const battle = list.querySelector('[data-first-step="battle"]') as HTMLElement;
+    expect(within(battle).getByText('일부 준비 중')).toBeInTheDocument();
+    expect(within(battle).getByText('실시간으로 전투에 참가하는 화면은 아직 준비 중입니다.')).toBeInTheDocument();
+    const hrefs = Object.fromEntries([...list.querySelectorAll<HTMLAnchorElement>('[data-first-step-go]')].map((a) => [a.dataset.firstStepGo, a.getAttribute('href')]));
+    expect(hrefs).toEqual({
+        register: '/join',
+        create: '/game/pep/join',
+        enlist: '/game/pep',
+        dispatch: '/game/pep/court?tab=orders',
+        work: '/game/pep/territory',
+        employ: '/game/pep',
+        march: '/game/pep',
+        battle: '/game/pep/battle-center',
     });
-    expect(ring).toHaveAttribute('aria-hidden', 'true');
-    expect(ring.style.top).toBe('94px');
-    expect(ring.style.width).toBe('212px');
-    expect(screen.getByRole('button', { name: '만들고 들어가기' })).toHaveAttribute('aria-describedby', 'k7-coach');
-    expect(screen.getByRole('region', { name: '첫걸음 안내' })).toHaveTextContent('첫걸음 · 2단계 — 장수 생성');
-    spyRects.mockRestore();
-    spyBox.mockRestore();
-    rerender(<div><CoachMark objective={current} onGo={vi.fn()} /></div>);
-    expect(document.querySelector('[data-coach-ring]')).toBeNull();
-    expect(screen.getByRole('button', { name: '그 화면으로' })).toBeInTheDocument();
+    expect(onNavigate).not.toHaveBeenCalled();
+    // 진척 API 를 부르지 않는다(D21)
+    expect(fetchMock.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('tutorial'))).toEqual([]);
 });

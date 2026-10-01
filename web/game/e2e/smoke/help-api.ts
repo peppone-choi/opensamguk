@@ -16,7 +16,6 @@ interface Reason { code: string; reviewState: string; explanation: string; recov
 const catalog: Row[] = read('data/commands/input-catalog.json').inputs;
 const topics: Topic[] = read('data/help/topics.json').topics;
 const reasons: Reason[] = read('data/help/failure-reasons.json').reasons;
-export const progressFixture = read('docs/development/fixtures/help-tutorial/tutorial-progress-start.json');
 
 const topicById = new Map(topics.map((t) => [t.id, t]));
 const rowById = new Map(catalog.map((r) => [r.inputId, r]));
@@ -39,7 +38,7 @@ export async function serveHelpApi(page: Page, options: HelpApiOptions = {}) {
     await page.route('**/api/game/**', async (route) => {
         const url = new URL(route.request().url());
         const path = url.pathname.replace(/^\/api\/game/, '');
-        if (options.onlyHelp && !path.startsWith('/api/help/') && path !== '/api/tutorial/progress') return route.fallback();
+        if (options.onlyHelp && !path.startsWith('/api/help/')) return route.fallback();
         options.log?.push(`${path}${url.search}`);
         if (path.startsWith('/api/help/') && options.forceStatus) return err(route, options.forceStatus.status, options.forceStatus.code);
         if (path.startsWith('/api/help/topics/')) {
@@ -77,7 +76,6 @@ export async function serveHelpApi(page: Page, options: HelpApiOptions = {}) {
             return json(route, 200, { schemaVersion: 1, reason: code, reviewState: help.reviewState, explanation: ctx?.explanation ?? help.explanation,
                 recoveryAdvice: ctx?.recoveryAdvice ?? help.recoveryAdvice, relatedTopicIds: related });
         }
-        if (path === '/api/tutorial/progress') return json(route, 200, progressFixture);
         // 셸이 부르는 그 밖의 읽기 — 이 스모크의 대상이 아니다.
         return json(route, 404, {});
     });

@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import { HELP_INDEX } from '../lib/help-index';
@@ -6,7 +7,7 @@ import { __resetHelpCache, helpApi, helpErrorKind, searchQuery } from '../lib/he
 import { APPROVED_RENAMES, HANJA_READINGS, OLD_WORDS, RENAMED_INPUTS, costValue, helpText, inputName, timingLabel, whoLabel } from '../lib/help-labels';
 import { formatHelpView, parseHelpView, type HelpView } from '../lib/help-route';
 import { generalActionGroups, helpScreenOf, screenGroups, screenInputIds, type HelpScreen } from '../lib/help-screens';
-import { TUTORIAL_STEPS } from '../lib/tutorial-steps';
+import { FIRST_STEPS } from '../lib/first-steps';
 
 const ROOT = resolve(__dirname, '../../..');
 const read = (p: string) => JSON.parse(readFileSync(resolve(ROOT, p), 'utf-8'));
@@ -84,9 +85,62 @@ test('every catalog input sits on exactly one screen, and the war room holds eve
     expect(screenGroups('other')).toEqual([]);
 });
 
-test('tutorial steps follow the contract fixture ids and order', () => {
-    const fixture = read('docs/development/fixtures/help-tutorial/tutorial-progress-start.json');
-    expect(TUTORIAL_STEPS.map((s) => [s.id, s.order])).toEqual(fixture.objectives.map((o: { id: string; order: number }) => [o.id, o.order]));
+// ── 첫걸음(D21 — 설명만) ─────────────────────────────────────────────────────
+test('first steps are the eight approved steps in order: 가입 → 생성 → 출사 → 발령 → 공사 → 등용 → 행군 → 전투', () => {
+    expect(FIRST_STEPS.map((st) => [st.order, st.name])).toEqual([
+        [1, '가입'], [2, '장수 생성'], [3, '출사'], [4, '발령'], [5, '공사'], [6, '등용'], [7, '행군'], [8, '전투'],
+    ]);
+    for (const st of FIRST_STEPS) {
+        expect(st.what.length, st.key).toBeGreaterThan(0);
+        expect(st.how.length, st.key).toBeGreaterThanOrEqual(1);
+        expect(st.how.length, st.key).toBeLessThanOrEqual(3);
+    }
+    // 아직 없는 것은 지어내지 않고 「준비 중」 — 실시간 전투 참가 · 포로 등용
+    expect(FIRST_STEPS.filter((st) => st.pending).map((st) => st.key)).toEqual(['employ', 'battle']);
+});
+
+/** 셸 주소 조각 → 그 화면 페이지 파일(app/game 아래, 캠페인 묶음 포함). 없는 화면 바로가기는 404 다. */
+function pageFileFor(slug: string): string | null {
+    const path = slug.split('?')[0];
+    const candidates = path === '' ? ['app/game/page.tsx'] : [`app/game/${path}/page.tsx`, `app/game/(campaign)/${path}/page.tsx`];
+    return candidates.find((c) => existsSync(resolve(ROOT, 'web/game', c))) ?? null;
+}
+
+test('every shortcut opens a screen that exists — game pages under app/game, sign-up on the gateway', () => {
+    for (const st of FIRST_STEPS) {
+        if (st.go.kind === 'game') expect(pageFileFor(st.go.slug), `${st.key} → ${st.go.slug}`).not.toBeNull();
+        else {
+            expect(st.go.href.endsWith('/join'), st.key).toBe(true);
+            expect(existsSync(resolve(ROOT, 'web/gateway/app/join/page.tsx'))).toBe(true);
+        }
+    }
+});
+
+/** 버튼 이름을 조합해 그리는 곳 — 원문에 문자 그대로 없다(`${이름} 예약`). */
+const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: string }> = {
+    '인재탐색 예약': { file: 'web/game/components/command/PeopleForm.tsx', marker: '} 예약`', base: '인재탐색' },
+    '등용 예약': { file: 'web/game/components/command/PeopleForm.tsx', marker: '} 예약`', base: '등용' },
+};
+
+test('every quoted control name in 「어디서」·「어떻게」 exists in the real screens (no invented labels)', () => {
+    const quoted = new Set(FIRST_STEPS.flatMap((st) => [st.where, ...st.how]).flatMap((line) => [...line.matchAll(/「([^」]+)」/g)].map((m) => m[1])));
+    expect(quoted.size).toBeGreaterThan(15);
+    const missing: string[] = [];
+    for (const label of quoted) {
+        const composed = COMPOSED_LABELS[label];
+        if (composed) {
+            const src = readFileSync(resolve(ROOT, composed.file), 'utf-8');
+            if (!src.includes(composed.marker) || !src.includes(composed.base)) missing.push(label);
+            continue;
+        }
+        try {
+            execFileSync('git', ['grep', '-q', '-F', label, '--', 'web/game/app', 'web/game/components', 'web/gateway/app', 'web/gateway/components',
+                ':!web/game/components/help/*', ':!**/__tests__/**', ':!**/*.test.*'], { cwd: ROOT });
+        } catch {
+            missing.push(label);
+        }
+    }
+    expect(missing).toEqual([]);
 });
 
 // ── 오류 · 캐시 · 검색 ──────────────────────────────────────────────────────

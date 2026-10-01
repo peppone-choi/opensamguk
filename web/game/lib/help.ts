@@ -1,11 +1,10 @@
-// 도움말 · 튜토리얼 읽기 — game-api `/api/help/**` 4종과 `/api/tutorial/progress`.
+// 도움말 읽기 — game-api `/api/help/**` 4종. 튜토리얼 진척 API(`/api/tutorial/progress`)는 쓰지 않는다(D21 — 첫걸음은 설명만).
 // 계약: docs/development/help-tutorial-api-contract.md. 응답 필드는 계약 그대로 옮긴다.
 //
 // - 도움말은 로그인 없이 읽힌다. 휘하 규칙 월드에서만 답하고, 월드가 없으면 503 `WORLD_UNAVAILABLE`,
 //   다른 규칙이면 404 `WORLD_PROFILE_UNAVAILABLE` 이다. 화면은 상태를 가르므로 오류 코드를 버리지 않는다.
 // - 사람 글은 지금 전부 `reviewState: DRAFT`(초안)다. 화면은 「초안」을 보인다.
 // - 식별자(inputId · helpTopicId · 사유 코드 · 목표 id)는 화면에 쓰지 않는다. 제목 · 설명만 보인다.
-// - 튜토리얼 완료는 서버가 확정한 사건으로만 바뀐다. 화면이 누름으로 완료를 칠하지 않는다.
 import { fetchGame } from './api';
 
 export type ReviewState = 'DRAFT' | 'APPROVED';
@@ -95,27 +94,6 @@ export interface FailureHelpResponse {
     readonly explanation: string;
     readonly recoveryAdvice: string;
     readonly relatedTopicIds: readonly string[];
-}
-
-export type ObjectiveStatus = 'LOCKED' | 'CURRENT' | 'COMPLETED';
-
-export interface ObjectiveProgress {
-    readonly id: string;
-    readonly title: string;
-    readonly order: number;
-    readonly scope: 'ACCOUNT' | 'GENERAL';
-    readonly prerequisites: readonly string[];
-    readonly status: ObjectiveStatus;
-    readonly completedAt: string | null;
-    readonly helpTopicId: string | null;
-}
-
-export interface TutorialProgressResponse {
-    readonly schemaVersion: 1;
-    readonly worldId: number;
-    readonly accountId: string;
-    readonly generalId: number | null;
-    readonly objectives: readonly ObjectiveProgress[];
 }
 
 // ── 오류 — 상태와 서버 코드를 보존한다 ─────────────────────────────────────────
@@ -209,5 +187,4 @@ export const helpApi = {
         cached<FailureHelpResponse>(`/api/help/failures/${enc(reason)}${inputId ? `?inputId=${enc(inputId)}` : ''}`),
     search: (query: string, limit = SEARCH_LIMIT, signal?: AbortSignal) =>
         read<HelpSearchResponse>(`/api/help/search?q=${enc(query)}&limit=${Math.min(Math.max(limit, 1), SEARCH_LIMIT_MAX)}`, signal),
-    tutorialProgress: (signal?: AbortSignal) => read<TutorialProgressResponse>('/api/tutorial/progress', signal),
 };
