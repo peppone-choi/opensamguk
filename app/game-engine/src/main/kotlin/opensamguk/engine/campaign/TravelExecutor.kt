@@ -1,5 +1,6 @@
 package opensamguk.engine.campaign
 
+import opensamguk.engine.siege.RoadFortPassage
 import opensamguk.engine.turn.*
 import opensamguk.logic.input.*
 import opensamguk.logic.world.*
@@ -66,7 +67,9 @@ class TravelExecutor(
             return reject(TravelFailure.STATE_UNAVAILABLE)
         val position = positions.stateFor(actorId) ?: return reject(TravelFailure.POSITION_UNAVAILABLE)
         if (position.battlefield != null) return reject(TravelFailure.BATTLE_PENDING)
-        val edges = try { LandPassageState.read(world.getState().meta, topology) }
+        val edges = try { LandPassageState.read(world.getState().meta, topology)?.let {
+            RoadFortPassage.forNation(world, it, checkNotNull(world.getGeneralById(actorId)).nationId)
+        } }
             catch (_: IllegalArgumentException) { null } ?: return reject(TravelFailure.STATE_UNAVAILABLE)
         val movement = when (val result = LandMarchProgress.advance(topology, metrics, edges, path, cursor,
             position.node, 1, budgetMm, entryAt)) {
@@ -109,8 +112,15 @@ class TravelExecutor(
             catch (_: IllegalArgumentException) { return ReadState.Failed(TravelFailure.STATE_UNAVAILABLE) }
         val deployments = DeploymentExecutor(world, recorder, topology, metrics).projection()
             ?: return ReadState.Failed(TravelFailure.STATE_UNAVAILABLE)
+        val hostile = world.listDiplomacy().filter { it.state == 0 }.mapNotNull { relation ->
+            when (actor.nationId) {
+                relation.fromNationId -> relation.toNationId
+                relation.toNationId -> relation.fromNationId
+                else -> null
+            }
+        }.toSet()
         return ReadState.Ready(order, assignment?.dispatchId, TravelSnapshot(world.ruleProfile, true, position.node,
-            position.battlefield != null, deployments.deployed.any { it.commanderGeneralId == actorId }))
+            position.battlefield != null, deployments.deployed.any { it.commanderGeneralId == actorId }, hostile))
     }
 
     private fun reject(reason: TravelFailure) = TravelExecution.Rejected(reason)

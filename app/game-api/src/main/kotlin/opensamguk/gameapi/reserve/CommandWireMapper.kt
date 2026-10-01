@@ -128,7 +128,7 @@ object CommandWireMapper {
         //     밖이다 — 추가 금지.
     )
 
-    val v2IntakeCodes: Set<String> = intakeCodes.filterTo(linkedSetOf()) { it.startsWith("v2") }
+    val sandboxIntakeCodes: Set<String> = intakeCodes.filterTo(linkedSetOf()) { it.startsWith("v2") }
 
     /**
      * F4 C3 사령(chief) 커맨드 12종 — **턴-예약(turn-reserved) `che_*`이므로 의도적으로 [intakeCodes]에
@@ -152,7 +152,7 @@ object CommandWireMapper {
     /** True when [code] is an immediate-intake command (typed-publish, NOT general_turn reserve). */
     fun isIntakeCommand(code: String): Boolean = code in intakeCodes
 
-    fun toV2Command(
+    fun toCanonicalCommand(
         schema: CommandSchema,
         args: CommandArgs,
         generalId: Int,

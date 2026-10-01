@@ -55,7 +55,7 @@ private const val SECURITY_EXCLUDES =
  * including the current infra content and gate packages, so a new bean cannot silently bypass the gate merely because nobody added it to this test's type
  * list. `allowFactoryBeanInit = false` resolves types without creating beans.
  */
-internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
+internal fun ApplicationContext.sandboxPackageBeans(): Map<String, String> =
     beanDefinitionNames.mapNotNull { name ->
         val type = runCatching { getType(name, false) }.getOrNull()?.name ?: return@mapNotNull null
         if (SandboxGate.isGatedTypeName(type)) name to type else null
@@ -65,17 +65,17 @@ internal fun ApplicationContext.v2PackageBeans(): Map<String, String> =
  * OPENSAM-184 — the **approved v2 bean allowlist**, the single place where a v2 bean is granted the right to
  * exist inside the 0A-b gate.
  *
- * Before this ticket the positive control compared [ApplicationContext.v2PackageBeans] keys to a literal
+ * Before this ticket the positive control compared [ApplicationContext.sandboxPackageBeans] keys to a literal
  * `setOf(...)` written inline in the assertion. That was equivalent to this list, but it made every legitimate
  * new v2 bean (OPENSAM-150 R2's city ledger being the first) look like a test edit rather than an allowlist
  * entry, and it hid the decision inside an assertion message. The property being defended is unchanged: a v2
  * bean that nobody put here still fails the gate. Adding a name is a deliberate, reviewable one-line edit —
  * that review IS the control, so never widen this to a prefix, a pattern, or a package sweep.
  *
- * The production-context side ([assertNoV2Beans]) is NOT relaxed by this list: outside the gate the expected
+ * The production-context side ([assertNoSandboxBeans]) is NOT relaxed by this list: outside the gate the expected
  * v2 bean set is empty, allowlist or not.
  */
-internal val APPROVED_V2_BEAN_NAMES: Set<String> = setOf(
+internal val APPROVED_SANDBOX_BEAN_NAMES: Set<String> = setOf(
     "sandboxConfiguration",
     "sandboxMarker",
     "contentCatalog",
@@ -85,12 +85,12 @@ internal val APPROVED_V2_BEAN_NAMES: Set<String> = setOf(
     "cityLedgerStore",
 )
 
-internal fun ApplicationContext.assertNoV2Beans() {
+internal fun ApplicationContext.assertNoSandboxBeans() {
     assertEquals(0, getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
     assertEquals(0, getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
     assertEquals(0, getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
     assertEquals(0, getBeansOfType(CityLedgerStore::class.java).size, "CityLedgerStore beans")
-    assertEquals(emptyMap(), v2PackageBeans(), "sandbox feature beans")
+    assertEquals(emptyMap(), sandboxPackageBeans(), "sandbox feature beans")
 }
 
 private fun postgresProps(
@@ -131,11 +131,11 @@ class ProductionShapeBeanGateIT {
     @Autowired lateinit var dataSource: DataSource
 
     @Test
-    fun `production context registers no v2 bean`() = context.assertNoV2Beans()
+    fun `production context registers no v2 bean`() = context.assertNoSandboxBeans()
 
     @Test
     fun `production context resolves application default Flyway location and excludes V900`() {
-        assertEquals(V1_FLYWAY_LOCATION, context.environment.getProperty("spring.flyway.locations"))
+        assertEquals(PRODUCTION_FLYWAY_LOCATION, context.environment.getProperty("spring.flyway.locations"))
         FlywayIsolationAssertions(flyway, dataSource).assertV1DefaultRuntime()
     }
 
@@ -155,7 +155,7 @@ class PropertyOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
-    fun `property alone registers no v2 bean`() = context.assertNoV2Beans()
+    fun `property alone registers no v2 bean`() = context.assertNoSandboxBeans()
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
@@ -174,7 +174,7 @@ class ProfileOnlyBeanGateIT {
     @Autowired lateinit var context: ApplicationContext
 
     @Test
-    fun `profile alone registers no v2 bean`() = context.assertNoV2Beans()
+    fun `profile alone registers no v2 bean`() = context.assertNoSandboxBeans()
 
     companion object {
         @Container @JvmStatic val postgres = PostgreSQLContainer("postgres:16-alpine")
@@ -212,10 +212,10 @@ class BothConditionsBeanGateIT {
         assertEquals(1, context.getBeansOfType(SandboxMarker::class.java).size, "SandboxMarker beans")
         assertEquals(1, context.getBeansOfType(ContentCatalog::class.java).size, "ContentCatalog beans")
         assertEquals(1, context.getBeansOfType(CityCatalogAdapter::class.java).size, "CityCatalogAdapter beans")
-        val byPackage = context.v2PackageBeans()
+        val byPackage = context.sandboxPackageBeans()
         assertEquals(
             emptySet(),
-            byPackage.keys - APPROVED_V2_BEAN_NAMES,
+            byPackage.keys - APPROVED_SANDBOX_BEAN_NAMES,
             "v2 package beans outside APPROVED_V2_BEAN_NAMES — add the name there deliberately or drop the " +
                 "bean; all v2 beans: $byPackage",
         )
@@ -226,7 +226,7 @@ class BothConditionsBeanGateIT {
         assertTrue(SandboxGate.PROFILE in context.environment.activeProfiles)
         assertEquals("true", context.environment.getProperty(SandboxGate.PROPERTY))
         assertEquals(SANDBOX_FLYWAY_LOCATIONS, context.environment.getProperty("spring.flyway.locations"))
-        FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertV2SandboxRuntime()
+        FlywayIsolationAssertions(flyway, dataSource, v1CatalogBaseline).assertSandboxRuntime()
     }
 
     companion object {
@@ -257,11 +257,11 @@ class BeanAllowlistSelfCheckTest {
     @Test
     fun `allowlist names concrete v2 beans and never widens to a pattern`() {
         assertTrue(
-            APPROVED_V2_BEAN_NAMES.isNotEmpty(),
+            APPROVED_SANDBOX_BEAN_NAMES.isNotEmpty(),
             "an empty APPROVED_V2_BEAN_NAMES makes the ④ subset assertion vacuous",
         )
         val beanName = Regex("^[a-z][A-Za-z0-9]*$")
-        for (name in APPROVED_V2_BEAN_NAMES) {
+        for (name in APPROVED_SANDBOX_BEAN_NAMES) {
             assertTrue(
                 beanName.matches(name),
                 "APPROVED_V2_BEAN_NAMES must hold literal bean names, not wildcards/prefixes/packages: '$name'",
