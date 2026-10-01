@@ -35,7 +35,6 @@
   .side { width: auto; }
 }
 @media (max-width: 767.98px) {
-  .deck { padding: 8px; }
   .main { flex-direction: column-reverse; }
   .zones { flex-direction: column; gap: 0; }
   .zone { border-radius: 0; }
