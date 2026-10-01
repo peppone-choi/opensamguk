@@ -11,7 +11,7 @@ import kotlin.test.fail
  */
 class NamingConventionGuardTest {
 
-    /** `class V2X` / `object V2X` / `interface V2X`: only declarations with an uppercase letter after `V2`; `V26__` is excluded. */
+    /** `class VersionPrefixedType` / `object VersionPrefixedType` / `interface VersionPrefixedType`: only declarations with an uppercase letter after `V2`; `V26__` is excluded. */
     private val declaration = Regex("""\b(class|object|interface)\s+(V2[A-Z]\w*)""")
 
     private val scannedRoots = listOf(

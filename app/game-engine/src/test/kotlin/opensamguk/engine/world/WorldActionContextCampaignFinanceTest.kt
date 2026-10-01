@@ -12,7 +12,7 @@ import opensamguk.logic.world.*
  * 같은 이벤트 안의 비재정 부분(도시 성장, 전투 사상자 정산)은 남는다. 두 프로파일을 같이 검사한다 —
  * SAMMO 쪽이 함께 죽으면 동결 회귀가 깨진 것이다.
  */
-class WorldActionContextHwihaFinanceTest {
+class WorldActionContextCampaignFinanceTest {
     private fun world(profile: String): InMemoryTurnWorld {
         val hash = "b".repeat(64)
         return InMemoryTurnWorld(

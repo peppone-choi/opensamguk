@@ -430,6 +430,10 @@ describe('PartIcon 스프라이트 표', () => {
       expect(ICON_NAMES, `${name} → ${sprite}`).toContain(sprite);
     }
   });
+
+  it('이름이 다른 매핑은 고정한다 — 스프라이트에 prev · next(꺾쇠)가 따로 있어도 부품 prev · next 는 사건 건너뛰기다', () => {
+    expect(PART_ICON_SOURCE).toMatchObject({ back: 'chevron-left', prev: 'skip-back', next: 'skip-forward' });
+  });
 });
 
 describe('Seg — 나눔 선택', () => {
