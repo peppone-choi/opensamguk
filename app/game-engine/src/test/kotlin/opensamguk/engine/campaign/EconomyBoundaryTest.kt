@@ -211,10 +211,46 @@ class EconomyBoundaryTest {
         assertTrue(world.consumeDirtyState().gameEvents.none { it.kind == EventKind.REWARD_RECEIVED })
         fun bondEvents() = RenownEvents.entries(world.getGeneralById(2)!!.meta).filter { it.kind == RenownEventKind.BOND_EVENT }
         assertEquals(listOf(RenownEventSource.REWARD), bondEvents().map { it.source })
-        assertEquals(RewardExecutor.Failure.INSUFFICIENT_STOCK, RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 5000)))
+        assertEquals("REWARD_OVER_CAP", RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 5000))?.name)
         assertNull(RewardExecutor(world, recorder).reward(RewardRequest(1, 4, 100)))
         assertEquals(1, bondEvents().size, "one bond event a month")
         assertEquals(RewardExecutor.Failure.CARD_UNAVAILABLE, RewardExecutor(world, recorder).reward(RewardRequest(2, 4, 100)))
+
+        val poorWorld = realm(capitalMoney = 50, card = card)
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(poorWorld, ChangeRecorder(), emptySet())
+        assertEquals(RewardExecutor.Failure.INSUFFICIENT_STOCK,
+            RewardExecutor(poorWorld, ChangeRecorder()).reward(RewardRequest(1, 4, 100)))
+    }
+
+    @Test fun `reward cap uses loyalty at execution and keeps the loyalty 100 receipt`() {
+        val card = Retainer(4, 1, RetainerRules.ORIGIN_EXISTING, 2, "G2", RetainerRules.RELATION_LIEUTENANT, loyalty = 95)
+        val world = realm(capitalMoney = 2000, card = card)
+        PhaseBoundary(fixture.topology, fixture.metrics, fixture.cells).recomputeSupply(world, ChangeRecorder(), emptySet())
+        val executor = RewardExecutor(world, ChangeRecorder())
+        val originalMeta = world.getGeneralById(2)!!.meta
+
+        assertEquals("REWARD_OVER_CAP", executor.reward(RewardRequest(1, 4, 501), "too-much")?.name)
+        assertEquals(2000L, money(world, capital))
+        assertEquals(95, world.getRetainerById(4)!!.loyalty)
+        assertEquals(originalMeta, world.getGeneralById(2)!!.meta)
+        assertTrue(world.consumeDirtyState().gameEvents.none { it.kind == EventKind.REWARD_RECEIVED })
+
+        assertNull(executor.reward(RewardRequest(1, 4, 500), "up-to-100"))
+        assertEquals(1500L, money(world, capital))
+        assertEquals(100, world.getRetainerById(4)!!.loyalty)
+        assertEquals(1, RewardHistory.read(world.getGeneralById(2)!!.meta)?.count)
+        assertEquals(1, world.consumeDirtyState().gameEvents.count { it.kind == EventKind.REWARD_RECEIVED })
+
+        assertEquals("REWARD_OVER_CAP", executor.reward(RewardRequest(1, 4, 150), "still-too-much")?.name)
+        assertNull(executor.reward(RewardRequest(1, 4, 100), "record-at-100"))
+        assertEquals(1400L, money(world, capital))
+        assertEquals(100, world.getRetainerById(4)!!.loyalty)
+        assertEquals(2, RewardHistory.read(world.getGeneralById(2)!!.meta)?.count)
+        assertEquals(1, world.consumeDirtyState().gameEvents.count { it.kind == EventKind.REWARD_RECEIVED })
+        assertEquals(1, RenownEvents.entries(world.getGeneralById(2)!!.meta).count { it.source == RenownEventSource.REWARD })
+
+        assertNull(executor.reward(RewardRequest(1, 4, 500), "up-to-100"), "same reward ID is an idempotent retry")
+        assertEquals(1400L, money(world, capital))
     }
 
     @Test fun `NPC lord rotates direct cards with one affordable reward per turn and month`() {
