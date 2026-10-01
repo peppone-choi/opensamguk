@@ -113,7 +113,7 @@ describe('GameFrame — v3.1 셸 하나', () => {
         fireEvent.click(screen.getByRole('button', { name: '전체' }));
         const sheet = screen.getByRole('dialog', { name: '전체 메뉴' });
         expect(within(sheet).getByRole('link', { name: '월단평' })).toHaveAttribute('href', '/game/pep/retinue/yuedan');
-        expect(within(sheet).getByText('역정보').closest('[aria-disabled]')).toHaveTextContent('준비 중');
+        expect(within(sheet).getByText('포로 · 등용').closest('[aria-disabled]')).toHaveTextContent('준비 중');
         expect(within(sheet).getByRole('link', { name: '도움말' })).toHaveAttribute('href', '?help=home');
         fireEvent.keyDown(sheet, { key: 'Escape' });
         expect(screen.queryByRole('dialog', { name: '전체 메뉴' })).toBeNull();

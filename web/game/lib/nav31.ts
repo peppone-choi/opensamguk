@@ -38,7 +38,7 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'stratagem', label: '계책', screens: [
       { label: '계책 덱', path: 'stratagem', built: true },
-      { label: '역정보', path: 'stratagem/counter-intel', built: false },
+      { label: '역정보', path: 'stratagem/counter-intel', built: true },
     ],
   },
   {
