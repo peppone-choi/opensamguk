@@ -119,9 +119,11 @@ class ProvinceNamesMatcherSecurityChainTest {
     @Test
     fun `existing identity required routes remain protected`() {
         for (path in listOf("/api/events", "/api/operations")) {
-            mvc.perform(get(path)).andExpect(status().isForbidden)
+            mvc.perform(get(path)).andExpect(status().isUnauthorized)
+                .andExpect(content().json(AUTH_REQUIRED_BODY, true))
             mvc.perform(get(path).header("Authorization", "Bearer invalid"))
-                .andExpect(status().isForbidden)
+                .andExpect(status().isUnauthorized)
+                .andExpect(content().json(AUTH_REQUIRED_BODY, true))
             mvc.perform(get(path).header("Authorization", "Bearer ${token("USER")}"))
                 .andExpect(status().isOk).andExpect(content().string("protected"))
         }
@@ -140,6 +142,7 @@ class ProvinceNamesMatcherSecurityChainTest {
     }
 
     companion object {
+        private const val AUTH_REQUIRED_BODY = """{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}"""
         private val PATHS = listOf("/api/map/provinces/names", "/api/map/provinces/names/v1")
         private const val PUBLIC_BODY = "{\"names\":[{\"provinceId\":\"fixture-id\",\"displayName\":\"시험현\"}]}"
         private const val JWT_FIXTURE = "Y2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWUtY2hhbmdlbWU="
