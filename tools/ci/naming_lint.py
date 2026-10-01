@@ -18,7 +18,7 @@ BASELINE = Path(__file__).with_name("naming_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("naming_lint_allowlist.json")
 SOURCE_ROOTS = ("common", "logic", "infra", "app", "web", "tools")
 SOURCE_SUFFIXES = {".kt", ".kts", ".java", ".ts", ".tsx", ".js", ".mjs", ".py", ".php", ".sh", ".sql", ".json", ".yml", ".yaml"}
-SKIP_DIRS = {".git", ".gradle", ".next", "build", "dist", "node_modules", "__pycache__", "coverage"}
+SKIP_DIRS = {".git", ".next-topdown-screens", ".gradle", ".next", "build", "dist", "node_modules", "__pycache__", "coverage"}
 PATTERNS = {
     # Product identifiers are ASCII; Unicode word boundaries differ between Python releases.
     "product_identifier": re.compile(r"\b(?:Hwiha|hwiha|V2|v2)[A-Z][A-Za-z0-9_]*\b", re.ASCII),

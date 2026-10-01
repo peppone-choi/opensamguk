@@ -23,7 +23,7 @@ BASELINE = Path(__file__).with_name("web_copy_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("web_copy_lint_allowlist.json")
 SOURCE_ROOTS = ("web/game", "web/gateway", "web/shared")
 SOURCE_SUFFIXES = {".ts", ".tsx"}
-SKIP_DIRS = {".git", ".next", "build", "dist", "node_modules", "coverage", "public",
+SKIP_DIRS = {".git", ".next-topdown-screens", ".next", "build", "dist", "node_modules", "coverage", "public",
              "__tests__", "e2e", "test-results", "playwright-report"}
 TEST_NAME = re.compile(r"\.(?:test|spec)\.tsx?$")
 PATTERNS = {
