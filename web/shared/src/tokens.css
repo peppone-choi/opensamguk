@@ -543,6 +543,21 @@
 .os-reason--block > :first-child { flex: 1 1 auto; }
 .os-reason__backdrop,
 .os-reason__close { display: none; }
+.os-reason__actions { display: flex; align-items: center; justify-content: space-between; }
+.os-reason__close:not([hidden]) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 8px;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border: 0;
+}
 .os-reason__tip {
   position: absolute;
   left: 0;

@@ -143,27 +143,31 @@ export function ReasonTooltip({
             <span>{recovery}</span>
           </span>
         ) : null}
-        {helpTopic ? (
-          <a
-            className="os-reason__help"
-            href={help.href(helpTopic.id)}
-            onClick={(event) => {
-              if (onHelp) {
-                event.preventDefault();
-                onHelp(helpTopic.id);
-                close();
-              } else if (help.open && isPlainClick(event)) {
-                event.preventDefault();
-                help.open(helpTopic.id);
-                close();
-              }
-            }}
-          >
-            도움말 — {helpTopic.title} →
-          </a>
+        {(pinned || helpTopic) ? (
+          <span className="os-reason__actions">
+            {helpTopic ? (
+              <a
+                className="os-reason__help"
+                href={help.href(helpTopic.id)}
+                onClick={(event) => {
+                  if (onHelp) {
+                    event.preventDefault();
+                    onHelp(helpTopic.id);
+                    close();
+                  } else if (help.open && isPlainClick(event)) {
+                    event.preventDefault();
+                    help.open(helpTopic.id);
+                    close();
+                  }
+                }}
+              >
+                도움말 — {helpTopic.title} →
+              </a>
+            ) : null}
+            <button ref={closer} type="button" className="os-reason__close" hidden={!pinned} onClick={close}>닫기</button>
+          </span>
         ) : null}
       </span>
-      <button ref={closer} type="button" className="os-reason__close" hidden={!pinned} onClick={close}>닫기</button>
     </span>
   );
 }
