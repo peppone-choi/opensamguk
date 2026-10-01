@@ -24,12 +24,16 @@
     min-width: 0;
 }
 
-/* 보드 grid2(440, 왼쪽, 오른쪽) — 왼쪽 관할 · 계약, 오른쪽 상세 · 받은 제안. */
+/* 보드 grid2(오른쪽 폭, 왼쪽, 오른쪽) — 왼쪽(관할 · 계약)이 나머지, 오른쪽 열이 고정 폭(지방 관직 440 · 봉신 420). */
 .split {
     display: grid;
-    grid-template-columns: minmax(0, 440px) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
     gap: 12px;
     align-items: start;
+}
+
+.splitVassals {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 420px);
 }
 
 .col {
@@ -68,7 +72,8 @@
 }
 
 @media (max-width: 1199.98px) {
-    .split {
+    .split,
+    .splitVassals {
         grid-template-columns: minmax(0, 1fr);
     }
 }

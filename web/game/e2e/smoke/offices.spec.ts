@@ -54,7 +54,8 @@ test.describe('관직 · 봉신', () => {
         if (isMobile(testInfo)) expect(Math.round(right!.x)).toBe(Math.round(left!.x)); // 한 열
         else {
             expect(Math.round(right!.y)).toBe(Math.round(left!.y)); // 두 열 — 나란히
-            expect(Math.round(left!.width)).toBe(440);
+            expect(Math.round(right!.width)).toBe(440); // 보드 grid2(440, …) — 오른쪽 열이 440, 왼쪽이 나머지
+            expect(left!.width).toBeGreaterThan(right!.width);
         }
     });
 

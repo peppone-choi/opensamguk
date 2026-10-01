@@ -90,7 +90,7 @@ function LocalOffices() {
 /** 봉신 — 봉신 계약 목록 · 받은 봉신 제안 · 받은 원군 요청(보드 V31K8Vassals · MVassalSide). */
 function Vassals() {
     return (
-        <div className={styles.split}>
+        <div className={`${styles.split} ${styles.splitVassals}`}>
             <Panel className={styles.box} aria-label="봉신 계약">
                 <SectionHeader title="봉신 계약" sub="같은 세력의 봉신 주공" />
                 <Waiting row="K8-04" title="아직 없습니다" body="봉신 계약 — 봉토 · 상납 · 원군 · 자치 · 외교권 — 은 서버가 아직 주지 않습니다." />
