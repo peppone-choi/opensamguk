@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { StatusView } from '@opensamguk/ui';
 import EnlistScreen from '@/components/enlist/EnlistScreen';
-import { useOpenHelp } from '@/hooks/useHelp';
+import { useOpenHelp } from '@/hooks/useOpenHelp';
 import { useGameSession } from '@/lib/campaign-session';
 import { resolveServerGamePath } from '@/lib/serverGameUrl';
 

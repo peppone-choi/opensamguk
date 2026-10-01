@@ -7,7 +7,7 @@ expect.extend(matchers);
 const mocks = vi.hoisted(() => ({ replace: vi.fn(), read: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: mocks.replace }) }));
 vi.mock('@/lib/campaign-session', () => ({ useGameSession: vi.fn() }));
-vi.mock('@/hooks/useHelp', () => ({ useOpenHelp: () => vi.fn() }));
+vi.mock('@/hooks/useOpenHelp', () => ({ useOpenHelp: () => vi.fn() }));
 vi.mock('@/components/enlist/EnlistScreen', () => ({ default: ({ generalId }: { generalId: number }) => {
   mocks.read(generalId); return <div data-testid="enlist-screen">출사 후보</div>;
 } }));
