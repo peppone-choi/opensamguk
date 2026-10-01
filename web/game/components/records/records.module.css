@@ -191,13 +191,6 @@
     overflow: hidden;
 }
 
-/* 공용 지도판의 확대 · 레이어 단추는 기본 크기가 32 높이다 — 이 칸 안에서만 누를 영역 44 로 맞춘다(모바일 캡처에서 찾음). */
-.map :global(.os-iso-map__controls) button,
-.map :global(.os-iso-map__administrative-layers) button {
-    min-width: 44px;
-    min-height: 44px;
-}
-
 .mapEmpty {
     display: flex;
     align-items: center;
