@@ -100,6 +100,25 @@ class JdbcBattleHandoffIntakeIT {
     }
 
     @Test
+    fun `bad pinned battlefield rows never create a ticket session or result`() {
+        val original = ticket("intake-bad-board", "cause-bad-board", entityKey = "general:15")
+        val poisonedPayload = original.payloadJson.replace(
+            Regex("\"terrainRowsSha256\":\"[0-9a-f]{64}\""),
+            "\"terrainRowsSha256\":\"${"0".repeat(64)}\"")
+        require(poisonedPayload != original.payloadJson)
+        val poisoned = original.copy(payloadJson = poisonedPayload,
+            payloadSha256 = sha(poisonedPayload.toByteArray(Charsets.UTF_8)))
+        assertTrue(tx.execute { writer.writeWithinFlush(CampaignBattleHandoffRow("cause-bad-board",
+            poisoned, listOf(CampaignBattleLockRow("general:15", 3)))) }!!)
+
+        intake().scan(world)
+
+        assertEquals(0, count("battle_ticket", poisoned.battleId))
+        assertEquals(0, count("battle_session", poisoned.battleId))
+        assertEquals(0, count("battle_result_outbox", poisoned.battleId))
+    }
+
+    @Test
     fun `two collectors and restart converge on one ticket and one session`() {
         val row = ticket("intake-race", "cause-race", entityKey = "general:8")
         assertTrue(tx.execute { writer.writeWithinFlush(CampaignBattleHandoffRow("cause-race", row,
