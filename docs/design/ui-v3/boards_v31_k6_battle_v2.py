@@ -1,4 +1,5 @@
-# 캔버스 v3.1 · K6 전투 보드 개정 초안(ADR-LITE-049 개정 대기) — 사용자 결정 D-BATTLE 2C · 1A 반영.
+# 캔버스 v3.1 · K6 전투 보드 개정(D24, ADR-LITE-049 2026-10-01 개정 — 사용자 승인) — 사용자 결정 D-BATTLE 2C · 1A 반영.
+# D24 세부: 많을 때 축소하면 깃발 + 숫자로 묶기 · 판에서 고르기 = 두 점 누르기 + 데스크톱 마우스 끌기(모바일은 두 점) · 시작 배율 늘 원작 2배.
 # 2C: 참전 군단의 모든 부곡이 동시에 출전한다(6 · 12자리 상한 없음, 수를 이유로 예비대 · 탈락 없음).
 # 1A: 장수는 자기 군단의 부곡만 지휘한다(위임 없음) — 이 화면이 고르고 명령하는 것은 「내 군단 부곡」뿐이다.
 # 승인 보드(V31K6BattleJoin · BattleLive · BattleLiveUnits · M*)의 「우리 쪽 여섯 자리」 · 「숫자키 1–6」 · 「두 자리 맞바꾸기」를
@@ -112,7 +113,7 @@ def board_join():
     note = ('<div style="position:absolute;left:10px;bottom:10px;max-width:440px;padding:8px 10px;background:rgba(27,32,29,.94);border:1px solid #3d4740;font-size:12px;line-height:1.55" class="t2">'
             '<b class="bz">허저 · 호위 1</b>을 골랐다 — 초록 점선(배치 구역) 안의 칸을 누르면 그리로 옮긴다. 내 부곡이 있는 칸이면 둘을 맞바꾼다. '
             '구역 밖 · 다른 군단 부곡은 누를 수 없다(누르면 사유).</div>')
-    tag = '<span class="chip info" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">개정 초안 — 6자리 대신 부곡 전부(2C)</span>'
+    tag = '<span class="chip info" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">D24 — 6자리 대신 부곡 전부(2C)</span>'
     board = iso_board('field', 728, 660, s, ox, oy, units, marks, extra=zone_overlay('field', s, ox, oy, 22, 40, 2, 18, 728, 660) + note + tag + board_zoom(),
                       sprite_kind=kinds, sprite_k=1)
     right = (f'<div style="width:288px;flex-shrink:0;display:flex;flex-direction:column;gap:12px">{enemy_wait()}'
@@ -125,7 +126,7 @@ def board_join():
              '<li><b>기본 배치</b> — 서버가 정한 자리. 안 고치거나 안 들어오면 0:00 에 그대로 선다.</li>'
              '<li><b>다른 군단</b> — 같은 편이어도 그 장수의 부곡은 옮기지 못한다.</li></ul></section></div>')
     body = top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}<div style="flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:8px">{board}</div>{right}</div>'
-    page31('V31K6v2BattleJoin.dc.html', 'K6 전투 참가 대기 · 배치 — 개정 초안 2C(데스크톱)',
+    page31('V31K6v2BattleJoin.dc.html', 'K6 전투 참가 대기 · 배치 — D24 개정(데스크톱)',
            shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
 
 
@@ -153,7 +154,7 @@ def board_live():
     chosen = {'허저 · 호위 1', '허저 · 호위 2', '허저 · 호위 기병', '하후돈 · 본대 궁'}
     top = (f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #3d4740;background:#1b201d">'
            f'<span class="mono bz" style="font-size:24px;font-weight:700">3:12</span><span class="muted" style="font-size:12px">남음 · 틱 [값] / 3,000</span>'
-           f'{chip("야전 · 영천 북쪽 구릉")}{chip("개정 초안 2C", "info")}<span class="t2" style="font-size:12.5px">방금 — 허저 호위 1 돌격 받음</span>'
+           f'{chip("야전 · 영천 북쪽 구릉")}{chip("D24 · 부곡 전부", "info")}<span class="t2" style="font-size:12.5px">방금 — 허저 호위 1 돌격 받음</span>'
            f'<span style="margin-left:auto;display:flex;gap:6px">{btn("판에서 고르기", "sm")}{btn("나가기 — AI 에게 맡긴다", "sm")}</span></div>')
     rows = ''
     for key, gname, role, items in GROUPS:
@@ -162,13 +163,15 @@ def board_live():
         rows += ''.join(bugok_row(gname, b, k, n, w, checked=f'{gname} · {b}' in chosen) for b, k, _r, _c, n, w in items)
     left = (f'<section class="panel" style="width:320px;flex-shrink:0;display:flex;flex-direction:column;min-height:0">{sec("내 군단 부곡 9", "여럿 고르기 · 장수 머리로 묶음 고르기")}'
             f'{select_bar(len(chosen), 9)}<div role="group" aria-label="내 군단 부곡" style="padding:6px 8px;display:flex;flex-direction:column;gap:4px;overflow:hidden">{rows}</div></section>')
-    s, ox, oy = 2.0, -470, -500
+    s = B_S   # 원작 2배 — 시작 배율은 부곡 수와 상관없이 늘 2배(D24). 넓게 보기는 「−」 · 「전체」
+    cx, cy = iso_px('field', 34, 10, s)
+    ox, oy = 368 - cx, 380 - cy
     units, kinds = all_units()
     units = pick(units, chosen)
-    marks = [(34, 15, 'sel', ''), (33, 13, 'sel', ''), (36, 14, 'sel', ''), (36, 5, 'sel', ''), (36, 22, 'rally', '1')]
+    marks = [(34, 15, 'sel', ''), (33, 13, 'sel', ''), (36, 14, 'sel', ''), (36, 5, 'sel', ''), (38, 10, 'rally', '1')]
     mini = board_mini('field', 200, -ox / s, -oy / s, 736 / s, 740 / s, units)
-    tag = ('<span class="chip bronze" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">원작 유닛 · 원작 1배 — 부곡이 많아 「+」로 2배</span>')
-    board = iso_board('field', 736, 740, s, ox, oy, units, marks, extra=mini + board_zoom() + tag, sprite_kind=kinds, sprite_k=1)
+    tag = ('<span class="chip bronze" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">원작 유닛 · 원작 2배로 시작 — 「−」 · 「전체」로 넓게</span>')
+    board = iso_board('field', 736, 740, s, ox, oy, units, marks, extra=mini + board_zoom() + tag, sprite_kind=kinds, sprite_k=2)
     log = ''.join(f'<li><span class="mono muted">{t}</span> {x}</li>' for t, x in [
         ('3:12', '<b>명령 받음</b> — 허저 부곡 3 · 하후돈 본대 궁 돌격, 틱 [값]부터'), ('3:20', '<span class="rs">명령 거절</span> — 이전 궁 1: 사기가 낮아 물러나는 중'),
         ('3:31', '계책 「간파」 공개 — 적 계책 무효'), ('3:40', '하후돈 본대 대형')])
@@ -180,7 +183,7 @@ def board_live():
              f'<span class="muted" style="font-size:11.5px;line-height:1.5">AI 가 맡는 동안 목록 머리와 판 깃발에 「AI」가 붙는다. 들어오면 다음 틱에 넘겨받는다.</span></div></section></div>')
     body = (top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}'
             f'<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{board}</div>{right}</div>' + cmdbar_v2(len(chosen)))
-    page31('V31K6v2BattleLive.dc.html', 'K6 실시간 전투 — 개정 초안 2C 여러 개 고르기(데스크톱)',
+    page31('V31K6v2BattleLive.dc.html', 'K6 실시간 전투 — D24 개정 여러 개 고르기(데스크톱)',
            shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
 
 
@@ -188,7 +191,7 @@ def board_live():
 def board_live_many():
     top = (f'<div style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid #3d4740;background:#1b201d">'
            f'<span class="mono bz" style="font-size:24px;font-weight:700">2:05</span><span class="muted" style="font-size:12px">남음 · 틱 [값] / 3,000</span>'
-           f'{chip("야전 · 영천 북쪽 구릉")}{chip("개정 초안 2C — 부곡 34", "info")}'
+           f'{chip("야전 · 영천 북쪽 구릉")}{chip("D24 — 부곡 34", "info")}'
            f'<span style="margin-left:auto;display:flex;gap:6px">{btn("판에서 고르기", "sm")}{btn("나가기 — AI 에게 맡긴다", "sm")}</span></div>')
     heads = ''
     for i, (key, gname, role, n, summary) in enumerate(MANY):
@@ -198,7 +201,8 @@ def board_live_many():
             heads += f'<div class="muted" style="font-size:11.5px;padding:4px 8px">… 허저 부곡 3개 더 — 목록은 굴려 본다</div>'
     left = (f'<section class="panel" style="width:320px;flex-shrink:0;display:flex;flex-direction:column;min-height:0">{sec("내 군단 부곡 34", "장수 6명 · 묶음은 접어 둔다")}'
             f'{select_bar(9, 34)}<div role="group" aria-label="내 군단 부곡" style="padding:6px 8px;display:flex;flex-direction:column;gap:4px;overflow:hidden">{heads}</div></section>')
-    # 넓게 보기(배치 구역 전체가 한 창에) — 가까이 모인 부곡은 깃발 하나 + 숫자. 「+」로 다가가면 하나씩 갈라진다.
+    # 「−」로 넓게 본 상태(배치 구역 전체가 한 창에) — 시작은 늘 2배이고, 묶음(깃발 하나 + 숫자)은 축소했을 때만 나타난다(D24).
+    # 「+」 · 묶음 누르기로 다가가면 하나씩 갈라진다.
     s = 1.6
     cx, cy = iso_px('field', 31, 10, s)
     ox, oy = 368 - cx, 370 - cy
@@ -212,12 +216,14 @@ def board_live_many():
                 f'<text x="13" y="13" text-anchor="middle" font-family="Noto Serif KR,serif" font-weight="900" font-size="11" fill="#fff">{ch}</text></svg>'
                 f'<span class="mono" style="position:absolute;right:-2px;top:6px;min-width:18px;height:16px;padding:0 3px;font-size:10px;font-weight:700;line-height:16px;color:#161410;background:{"#ffd36d" if sel else "#ece6d8"}">{n}</span></button>')
     note = ('<div style="position:absolute;left:10px;bottom:10px;max-width:460px;padding:8px 10px;background:rgba(27,32,29,.94);border:1px solid #3d4740;font-size:12px;line-height:1.55" class="t2">'
-            '넓게 보기(배치 구역 전체) — 가까이 모인 부곡은 깃발 하나와 숫자로 묶는다. 묶음을 누르면 그 자리로 다가가 하나씩 갈라진다(유닛 그림). '
+            '「−」로 넓게 본 상태 — 시작은 늘 원작 2배다. 축소하면 가까이 모인 부곡을 깃발 하나와 숫자로 묶고, 묶음을 누르면 그 자리로 다가가 하나씩 갈라진다(유닛 그림). '
             '목록 · 「판에서 고르기」로 여럿을 한 번에 고른다.</div>')
-    board = iso_board('field', 736, 740, s, ox, oy, (), extra=zone_overlay('field', s, ox, oy, 22, 40, 0, 18, 736, 740) + lay + note + board_zoom())
+    tag = '<span class="chip" style="position:absolute;left:10px;top:10px;background:rgba(20,24,22,.94)">「−」로 넓게 본 상태 · 묶음은 축소했을 때만</span>'
+    board = iso_board('field', 736, 740, s, ox, oy, (), extra=zone_overlay('field', s, ox, oy, 22, 40, 0, 18, 736, 740) + lay + note + tag + board_zoom())
     right = (f'<div style="width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:12px;min-height:0">'
-             f'<section class="panel">{sec("판에서 고르기", "터치 · 마우스 같음")}<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px">'
-             f'<span class="t2" style="font-size:12px;line-height:1.55">「판에서 고르기」를 켜고 두 점을 누르면 그 사이 칸의 내 부곡을 모두 고른다. 끌기 · 우클릭 · 키 조합 없이 된다.</span>'
+             f'<section class="panel">{sec("판에서 고르기", "데스크톱 · 모바일")}<div style="padding:8px 12px;display:flex;flex-direction:column;gap:6px">'
+             f'<span class="t2" style="font-size:12px;line-height:1.55"><b>데스크톱</b> — 마우스로 판을 끌어 사각형 안의 내 부곡을 고른다. 「판에서 고르기」를 켜고 두 점을 눌러도 된다.</span>'
+             f'<span class="t2" style="font-size:12px;line-height:1.55"><b>모바일</b> — 「판에서 고르기」를 켜고 두 점을 누른다(끌기는 판 움직이기).</span>'
              f'<span class="muted" style="font-size:11.5px">데스크톱은 Shift · Ctrl 누르고 목록 · 깃발을 눌러 더하기도 된다(보조).</span></div></section>'
              f'{enemy_wait()}'
              f'<section class="panel" style="flex-grow:1;min-height:0">{sec("사건", "부곡이 많으면 장수별로 묶음")}<ul class="ul" style="padding:4px 12px">'
@@ -225,7 +231,7 @@ def board_live_many():
              f'<li><span class="mono muted">2:20</span> <span class="rs">명령 거절</span> — 이전 부곡 1: 사기가 낮아 물러나는 중</li></ul></section></div>')
     body = (top + f'<div style="flex-grow:1;display:flex;gap:12px;padding:12px;min-height:0">{left}'
             f'<div style="flex:1 1 0;min-width:0;display:flex;justify-content:center">{board}</div>{right}</div>' + cmdbar_v2(9))
-    page31('V31K6v2BattleLiveMany.dc.html', 'K6 실시간 전투 — 개정 초안 2C 부곡 수십 개(데스크톱)',
+    page31('V31K6v2BattleLiveMany.dc.html', 'K6 실시간 전투 — D24 개정 부곡 수십 개(데스크톱)',
            shell_desk('전투', 'corps', f'<main style="flex-grow:1;min-width:0;display:flex;flex-direction:column">{body}</main>'))
 
 
@@ -252,7 +258,7 @@ def board_mjoin():
              f'<div style="padding:6px 8px 0">{full}</div>'
              f'<div style="padding:4px 8px 0;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:11px">누른 자리 확대 — 초록 점선 안 칸을 누르면 옮긴다 · 내 부곡 칸이면 맞바꾼다</span>{zoom}</div>'
              f'<div role="listbox" aria-label="내 군단 부곡" style="padding:6px 8px;display:flex;flex-direction:column;gap:4px">{rows}</div>')
-    page31('V31K6v2MBattleJoin.dc.html', 'K6 전투 참가 대기 · 배치 — 개정 초안 2C(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
+    page31('V31K6v2MBattleJoin.dc.html', 'K6 전투 참가 대기 · 배치 — D24 개정(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
 
 def board_mlive():
@@ -275,7 +281,7 @@ def board_mlive():
              f'<div style="padding:6px 8px 0">{full}</div>'
              f'<div style="padding:4px 8px 0;display:flex;flex-direction:column;gap:2px"><span class="muted" style="font-size:11px">누른 자리 확대 — 깃발을 눌러 더하거나 뺀다</span>{zoom}</div>'
              f'<div style="padding:6px 8px">{selbar}</div>' + cmdbar_v2(4, mobile=True))
-    page31('V31K6v2MBattleLive.dc.html', 'K6 실시간 전투 — 개정 초안 2C(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
+    page31('V31K6v2MBattleLive.dc.html', 'K6 실시간 전투 — D24 개정(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
 
 def board_mlive_sheet():
@@ -294,7 +300,7 @@ def board_mlive_sheet():
     units, _k = all_units()
     inner = (f'<div style="padding:6px 8px">{iso_board("field", 374, 199, fs, 0, 0, pick(units, chosen), small=True)}</div>'
              f'<div class="scrim"></div>{sheet("부곡 고르기", body, top=96, foot=foot)}')
-    page31('V31K6v2MBattleLiveSheet.dc.html', 'K6 실시간 전투 — 개정 초안 2C 부곡 고르기 시트(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
+    page31('V31K6v2MBattleLiveSheet.dc.html', 'K6 실시간 전투 — D24 개정 부곡 고르기 시트(모바일)', mtop31('전투', '전투 목록') + mmain(inner, h=788), w=MW, h=MH)
 
 
 BOARDS_V2 = [board_join, board_live, board_live_many, board_mjoin, board_mlive, board_mlive_sheet]
