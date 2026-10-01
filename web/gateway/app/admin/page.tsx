@@ -101,18 +101,6 @@ interface ServerResetOptions {
     scenarioCode: string;
     scenarioSeedEnabled: boolean;
     turnTerm: string;
-    sync: string;
-    fiction: string;
-    extend: string;
-    blockGeneralCreate: string;
-    npcMode: string;
-    showImgLevel: string;
-    autorunUserOptions: string[];
-    autorunUserMinutes: string;
-    joinMode: string;
-    tournamentTrig: string;
-    reserveOpen: string;
-    preReserveOpen: string;
 }
 
 // B1e 게임 설정 — world_state.config 에서 읽고 PATCH로 수정 가능한 항목.
@@ -225,35 +213,6 @@ const RESERVED_PUBLIC_SERVER_IDS = new Set([
     'mail',
     'help',
 ]);
-const AUTORUN_OPTIONS = [
-    ['develop', '내정'],
-    ['warp', '순간이동'],
-    ['recruit', '징병'],
-    ['recruit_high', '모병'],
-    ['train', '훈사'],
-    ['battle', '출병'],
-    ['chief', '기본 사령턴'],
-] as const;
-const AUTORUN_MINUTES = [
-    ['0', '꺼짐'],
-    ['43200', '항상'],
-    ['10', '10분'],
-    ['20', '20분'],
-    ['30', '30분'],
-    ['60', '1시간'],
-    ['120', '2시간'],
-    ['180', '3시간'],
-    ['240', '4시간'],
-    ['360', '6시간'],
-    ['480', '8시간'],
-    ['600', '10시간'],
-    ['720', '12시간'],
-    ['1440', '24시간'],
-    ['2160', '36시간'],
-    ['2880', '48시간'],
-    ['3600', '60시간'],
-    ['4320', '72시간'],
-] as const;
 
 function lifecycleProgressLabel(status: ServerLifecycleOperationStatus): string {
     if (status === 'recovery_required') return '복구 확인 중';
@@ -549,18 +508,6 @@ function ServerLifecycleControl({
         scenarioCode: defaultScenario,
         scenarioSeedEnabled: true,
         turnTerm: '60',
-        sync: '1',
-        fiction: '1',
-        extend: '1',
-        blockGeneralCreate: '0',
-        npcMode: '0',
-        showImgLevel: '3',
-        autorunUserOptions: ['develop', 'warp', 'recruit', 'recruit_high', 'train', 'battle', 'chief'],
-        autorunUserMinutes: '1440',
-        joinMode: 'full',
-        tournamentTrig: '1',
-        reserveOpen: '',
-        preReserveOpen: '',
     });
 
     useEffect(() => {
@@ -576,15 +523,6 @@ function ServerLifecycleControl({
 
     function setReset<K extends keyof ServerResetOptions>(key: K, value: ServerResetOptions[K]) {
         setResetOptions((prev) => ({ ...prev, [key]: value }));
-    }
-
-    function toggleAutorun(option: string, checked: boolean) {
-        setResetOptions((prev) => ({
-            ...prev,
-            autorunUserOptions: checked
-                ? Array.from(new Set([...prev.autorunUserOptions, option]))
-                : prev.autorunUserOptions.filter((item) => item !== option),
-        }));
     }
 
     async function runDelete() {
@@ -668,6 +606,9 @@ function ServerLifecycleControl({
         }
     }
 
+    // 리셋 칸은 휘하 엔진이 실제로 읽는 넷만(설계서 §3.4 S39 · S40 · S42 · S54). 삼모 install.php 칸(S41 · S43–S53)은 뺐다 —
+    // 엔진이 읽지 않거나(시간 동기화 · 자동 행동 · 임관 모드) 은퇴했거나(빙의 · 토너먼트) 결정과 어긋난다(정사/연의 월드 분리 금지).
+    // 서버 검사는 뺀 칸이 없어도 받는다(DeployService.validateResetServer — 모든 칸이 선택).
     const resetForm = (
         <div className="server-reset-grid">
             <label className="field">
@@ -681,7 +622,7 @@ function ServerLifecycleControl({
                 />
             </label>
             <label className="field">
-                <span>턴 시간(분)</span>
+                <span>한 순 길이(분)</span>
                 <select
                     value={resetOptions.turnTerm}
                     disabled={busy}
@@ -695,14 +636,7 @@ function ServerLifecycleControl({
                 </select>
             </label>
             <label className="field">
-                <span>시간 동기화</span>
-                <select value={resetOptions.sync} disabled={busy} onChange={(e) => setReset('sync', e.target.value)}>
-                    <option value="1">Y</option>
-                    <option value="0">N</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>시나리오 선택</span>
+                <span>시나리오</span>
                 <select
                     value={resetOptions.scenarioCode}
                     disabled={busy}
@@ -714,135 +648,6 @@ function ServerLifecycleControl({
                         </option>
                     ))}
                 </select>
-            </label>
-            <label className="field">
-                <span>NPC 상성</span>
-                <select
-                    value={resetOptions.fiction}
-                    disabled={busy}
-                    onChange={(e) => setReset('fiction', e.target.value)}
-                >
-                    <option value="0">연의</option>
-                    <option value="1">가상</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>확장 NPC</span>
-                <select
-                    value={resetOptions.extend}
-                    disabled={busy}
-                    onChange={(e) => setReset('extend', e.target.value)}
-                >
-                    <option value="1">포함</option>
-                    <option value="0">미포함</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>장수 임의 생성</span>
-                <select
-                    value={resetOptions.blockGeneralCreate}
-                    disabled={busy}
-                    onChange={(e) => setReset('blockGeneralCreate', e.target.value)}
-                >
-                    <option value="0">가능</option>
-                    <option value="2">장수명무작위</option>
-                    <option value="1">불가</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>NPC 빙의</span>
-                <select
-                    value={resetOptions.npcMode}
-                    disabled={busy}
-                    onChange={(e) => setReset('npcMode', e.target.value)}
-                >
-                    <option value="1">가능</option>
-                    <option value="0">불가</option>
-                    <option value="2">선택 생성 가능</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>이미지 표기</span>
-                <select
-                    value={resetOptions.showImgLevel}
-                    disabled={busy}
-                    onChange={(e) => setReset('showImgLevel', e.target.value)}
-                >
-                    <option value="0">안함</option>
-                    <option value="1">전콘</option>
-                    <option value="2">전콘, 병종</option>
-                    <option value="3">전콘, 병종, NPC</option>
-                </select>
-            </label>
-            <fieldset className="field reset-wide">
-                <legend>휴식 턴 시 장수 턴</legend>
-                <div className="reset-checks">
-                    {AUTORUN_OPTIONS.map(([value, label]) => (
-                        <label key={value} className="env-toggle">
-                            <input
-                                type="checkbox"
-                                checked={resetOptions.autorunUserOptions.includes(value)}
-                                disabled={busy}
-                                onChange={(e) => toggleAutorun(value, e.target.checked)}
-                            />
-                            {label}
-                        </label>
-                    ))}
-                </div>
-            </fieldset>
-            <label className="field">
-                <span>자동 행동 유효 시간</span>
-                <select
-                    value={resetOptions.autorunUserMinutes}
-                    disabled={busy}
-                    onChange={(e) => setReset('autorunUserMinutes', e.target.value)}
-                >
-                    {AUTORUN_MINUTES.map(([value, label]) => (
-                        <option key={value} value={value}>
-                            {label}
-                        </option>
-                    ))}
-                </select>
-            </label>
-            <label className="field">
-                <span>임관 모드</span>
-                <select
-                    value={resetOptions.joinMode}
-                    disabled={busy}
-                    onChange={(e) => setReset('joinMode', e.target.value)}
-                >
-                    <option value="full">일반</option>
-                    <option value="onlyRandom">랜덤 임관</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>토너먼트 자동 시작</span>
-                <select
-                    value={resetOptions.tournamentTrig}
-                    disabled={busy}
-                    onChange={(e) => setReset('tournamentTrig', e.target.value)}
-                >
-                    <option value="0">수동</option>
-                    <option value="1">자동</option>
-                </select>
-            </label>
-            <label className="field">
-                <span>오픈 예약</span>
-                <input
-                    value={resetOptions.reserveOpen}
-                    disabled={busy}
-                    placeholder="YYYY-MM-DD hh:mm"
-                    onChange={(e) => setReset('reserveOpen', e.target.value)}
-                />
-            </label>
-            <label className="field">
-                <span>가오픈 예약</span>
-                <input
-                    value={resetOptions.preReserveOpen}
-                    disabled={busy}
-                    placeholder="YYYY-MM-DD hh:mm"
-                    onChange={(e) => setReset('preReserveOpen', e.target.value)}
-                />
             </label>
             <label className="env-toggle server-create-toggle">
                 <input
@@ -884,7 +689,7 @@ function ServerLifecycleControl({
                 confirmLabel="리셋 실행"
                 message={
                     <>
-                        <p className="deploy-note">PHP 리셋 화면 항목 기준으로 서버를 다시 초기화합니다.</p>
+                        <p className="deploy-note">이 서버를 아래 설정으로 처음부터 다시 시작합니다. 되돌릴 수 없습니다.</p>
                         {resetForm}
                     </>
                 }

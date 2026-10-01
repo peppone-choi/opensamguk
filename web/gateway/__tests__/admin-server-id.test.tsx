@@ -240,6 +240,29 @@ describe('admin server ID validation', () => {
         expect(screen.queryByText('JWT_SECRET')).not.toBeInTheDocument();
     });
 
+    it('resets with only the four fields the engine reads (설계서 §3.4 S41 · S43–S53 removed)', async () => {
+        const fetchFake = serverFetch((path) => {
+            if (path === '/api/proxy/admin/servers/pep/reset') {
+                return Promise.resolve(response(lifecycleResponse('pending', '요청이 접수되었습니다.'), 202));
+            }
+            return Promise.resolve(new Response(null, { status: 404 }));
+        });
+        vi.stubGlobal('fetch', fetchFake);
+        await openServerControl();
+        fireEvent.click(screen.getByRole('button', { name: '리셋' }));
+        for (const gone of ['시간 동기화', 'NPC 상성', '확장 NPC', '장수 임의 생성', 'NPC 빙의', '이미지 표기', '휴식 턴 시 장수 턴', '자동 행동 유효 시간', '임관 모드', '토너먼트 자동 시작', '오픈 예약', '가오픈 예약', '턴 시간(분)']) {
+            expect(screen.queryByText(gone)).toBeNull();
+        }
+        expect(screen.getByText('한 순 길이(분)')).toBeInTheDocument();
+        expect(screen.getByText('이 서버를 아래 설정으로 처음부터 다시 시작합니다. 되돌릴 수 없습니다.')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: '리셋 실행' }));
+        await waitFor(() => expect(fetchFake.mock.calls.some(([path]) => String(path) === '/api/proxy/admin/servers/pep/reset')).toBe(true));
+        const [, init] = fetchFake.mock.calls.find(([path]) => String(path) === '/api/proxy/admin/servers/pep/reset')!;
+        const body = JSON.parse(String((init as RequestInit).body)) as Record<string, unknown>;
+        expect(Object.keys(body).filter((key) => key !== 'operationId').sort()).toEqual(['confirm', 'generation', 'scenarioCode', 'scenarioSeedEnabled', 'turnTerm']);
+        expect(body).toMatchObject({ confirm: 'RESET pep', scenarioCode: 'scenario_1010', scenarioSeedEnabled: true, turnTerm: '60' });
+    });
+
     it('renders a pending reset as processing and never as completed', async () => {
         vi.stubGlobal('fetch', serverFetch((path) => {
             if (path === '/api/proxy/admin/servers/pep/reset') {
