@@ -71,7 +71,7 @@ class CampaignDirectoryReader(
     fun people(userId: Long, scope: String, query: String, sort: String, cursor: String?, limit: Int): PeoplePage {
         validatePage(scope, query, sort, limit)
         val id = owners.resolveGeneralId(userId) ?: return PeoplePage("NO_GENERAL")
-        val actor = ownedHwihaGeneral(generals, id, userId)
+        val actor = ownedCampaignGeneral(generals, id, userId)
         val frame = frame() ?: return PeoplePage("UNAVAILABLE")
         checkWorld(frame.worldId, listOf(actor.worldId))
         return page(frame, actor, scope, query.trim(), cursor, limit, admin = false)
@@ -126,7 +126,7 @@ class CampaignDirectoryReader(
 
     fun nationSummary(generalId: Int, userId: Long): CampaignNationSummary {
         if (owners.resolveGeneralId(userId) != generalId) throw CampForbidden()
-        val actor = ownedHwihaGeneral(generals, generalId, userId)
+        val actor = ownedCampaignGeneral(generals, generalId, userId)
         val frame = frame() ?: return CampaignNationSummary("UNAVAILABLE")
         checkWorld(frame.worldId, listOf(actor.worldId))
         if (actor.nationId <= 0) return CampaignNationSummary("NO_NATION")

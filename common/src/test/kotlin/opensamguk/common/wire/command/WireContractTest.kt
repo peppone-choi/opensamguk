@@ -21,8 +21,8 @@ class WireContractTest {
         val original = commandResultEnvelope(worldId = WorldId(101))
 
         // When
-        val encoded = encodeV2CommandResultEnvelope(original)
-        val decoded = decodeV2CommandResultEnvelope(encoded)
+        val encoded = encodeCommandResultEnvelope(original)
+        val decoded = decodeCommandResultEnvelope(encoded)
 
         // Then
         assertEquals(original, decoded)
@@ -38,8 +38,8 @@ class WireContractTest {
         val original = turnEventEnvelope(worldId = WorldId(202))
 
         // When
-        val encoded = encodeV2TurnEventEnvelope(original)
-        val decoded = decodeV2TurnEventEnvelope(encoded)
+        val encoded = encodeTurnEventEnvelope(original)
+        val decoded = decodeTurnEventEnvelope(encoded)
 
         // Then
         assertEquals(original, decoded)
@@ -52,41 +52,41 @@ class WireContractTest {
     @Test
     fun `command result decoder rejects an unsupported schema version`() {
         // Given
-        val encoded = encodeV2CommandResultEnvelope(commandResultEnvelope(worldId = WorldId(101)))
+        val encoded = encodeCommandResultEnvelope(commandResultEnvelope(worldId = WorldId(101)))
         val unsupported = withSchemaVersion(encoded, 2)
 
         // When / Then
-        assertFails { decodeV2CommandResultEnvelope(unsupported) }
+        assertFails { decodeCommandResultEnvelope(unsupported) }
     }
 
     @Test
     fun `command result decoder rejects a missing schema version`() {
         // Given
-        val encoded = encodeV2CommandResultEnvelope(commandResultEnvelope(worldId = WorldId(101)))
+        val encoded = encodeCommandResultEnvelope(commandResultEnvelope(worldId = WorldId(101)))
         val missingVersion = withoutSchemaVersion(encoded)
 
         // When / Then
-        assertFails { decodeV2CommandResultEnvelope(missingVersion) }
+        assertFails { decodeCommandResultEnvelope(missingVersion) }
     }
 
     @Test
     fun `turn event decoder rejects an unsupported schema version`() {
         // Given
-        val encoded = encodeV2TurnEventEnvelope(turnEventEnvelope(worldId = WorldId(202)))
+        val encoded = encodeTurnEventEnvelope(turnEventEnvelope(worldId = WorldId(202)))
         val unsupported = withSchemaVersion(encoded, 2)
 
         // When / Then
-        assertFails { decodeV2TurnEventEnvelope(unsupported) }
+        assertFails { decodeTurnEventEnvelope(unsupported) }
     }
 
     @Test
     fun `turn event decoder rejects a missing schema version`() {
         // Given
-        val encoded = encodeV2TurnEventEnvelope(turnEventEnvelope(worldId = WorldId(202)))
+        val encoded = encodeTurnEventEnvelope(turnEventEnvelope(worldId = WorldId(202)))
         val missingVersion = withoutSchemaVersion(encoded)
 
         // When / Then
-        assertFails { decodeV2TurnEventEnvelope(missingVersion) }
+        assertFails { decodeTurnEventEnvelope(missingVersion) }
     }
 
     @Test
@@ -96,11 +96,11 @@ class WireContractTest {
         val turnWorldId = WorldId(202)
 
         // When
-        val decodedCommand = decodeV2CommandResultEnvelope(
-            encodeV2CommandResultEnvelope(commandResultEnvelope(worldId = commandWorldId)),
+        val decodedCommand = decodeCommandResultEnvelope(
+            encodeCommandResultEnvelope(commandResultEnvelope(worldId = commandWorldId)),
         )
-        val decodedTurn = decodeV2TurnEventEnvelope(
-            encodeV2TurnEventEnvelope(turnEventEnvelope(worldId = turnWorldId)),
+        val decodedTurn = decodeTurnEventEnvelope(
+            encodeTurnEventEnvelope(turnEventEnvelope(worldId = turnWorldId)),
         )
 
         // Then
