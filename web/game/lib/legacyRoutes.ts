@@ -43,7 +43,8 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   { from: 'supply', to: 'territory/supply', ready: true },
   // 군단
   { from: 'siege', to: 'corps/siege', ready: true },
-  { from: 'battle-center', to: 'corps/battle', ready: false },
+  // 옛 감찰부 — 전투 · 부재 대비(P-C04, #1141)가 들어와 켠다. 장수 기록은 기록 5분류(P-H01)로 간다(K9).
+  { from: 'battle-center', to: 'corps/battle', ready: true },
   // 조정
   // 조정 결정(발령 · 포상)은 조정 화면의 첫 탭이다(v3.1 보드 COURT_TABS 「발령 · 포상 · 조정 결정」).
   { from: 'orders', to: 'court', ready: true, query: 'tab=orders' },

@@ -13,7 +13,7 @@ export default function BattleReplayPage() {
             <div className="page-content">
                 <PageHead title="리플레이" />
                 {Number.isFinite(id) && id > 0 ? (
-                    <BattleReplayPlayer id={id} battleCenterHref="../battle-center" operationHref="../my-nation#operations" />
+                    <BattleReplayPlayer id={id} recordsHref="../records" operationHref="../my-nation#operations" />
                 ) : (
                     <p className="text-muted">리플레이 번호가 없습니다.</p>
                 )}
