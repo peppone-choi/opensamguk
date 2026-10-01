@@ -3,7 +3,8 @@ import { expect, test, type APIRequestContext, type APIResponse, type Locator, t
 const gatewayUrl = process.env.E2E_GATEWAY_URL ?? 'http://localhost:3000';
 const gameUrl = process.env.E2E_GAME_URL ?? 'http://localhost:3001';
 const commandTimeoutMs = Number(process.env.E2E_COMMAND_TIMEOUT_MS ?? 30_000);
-const deleteConfirmation = '삭제하시겠습니까?';
+// 서신 화면(P-Q02)은 브라우저 confirm 대신 확인 대화(K3 ConfirmDialog)로 한 번 묻는다.
+const deleteConfirmTitle = '이 서신을 지웁니다';
 
 type JsonRecord = Record<string, unknown>;
 type MailboxCredentials = {
@@ -15,10 +16,6 @@ type DenialFixture = {
   readonly text: string;
   readonly reason: string;
   readonly scope: MailboxScope;
-};
-type DialogObservation = {
-  readonly type: string;
-  readonly message: string;
 };
 type JsonResponse = Pick<APIResponse, 'text'> | Pick<Response, 'text'>;
 
@@ -195,18 +192,21 @@ async function createDisposableSelfMessage(page: Page, generalId: number, text: 
   return requirePositiveInteger(terminalResult(terminal, 'sendMessage terminal'), 'msgID', 'sendMessage terminal.result');
 }
 
+/** 목록 한 줄(행 단추) — 미리 보기에 본문 글자가 그대로 보인다. 지우면 「지운 서신입니다」로 바뀌어 0 줄이 된다. */
 function mailboxRow(page: Page, text: string): Locator {
-  return page.locator('.game-card').filter({ has: page.getByText(text, { exact: true }) });
+  return page.getByRole('listitem').filter({ has: page.getByText(text, { exact: true }) });
 }
 
-function nextDialog(page: Page, action: 'accept' | 'dismiss'): Promise<DialogObservation> {
-  return new Promise((resolve, reject) => {
-    page.once('dialog', (dialog) => {
-      const observation: DialogObservation = { type: dialog.type(), message: dialog.message() };
-      const close = action === 'accept' ? dialog.accept() : dialog.dismiss();
-      void close.then(() => resolve(observation), reject);
-    });
-  });
+/** 행을 눌러 가운데 읽기 칸에 연 카드 — 「지우기」는 여기 있다(내가 보낸 5분 안의 서신만). */
+async function openCard(page: Page, text: string): Promise<Locator> {
+  await mailboxRow(page, text).getByRole('button').first().click();
+  const card = page.getByRole('article').filter({ has: page.getByText(text, { exact: true }) });
+  await expect(card).toHaveCount(1);
+  return card;
+}
+
+function confirmDialog(page: Page): Locator {
+  return page.getByRole('dialog', { name: deleteConfirmTitle });
 }
 
 function isDeleteCommandResponse(response: Response): boolean {
@@ -248,7 +248,13 @@ function waitForBrowserTerminalResult(page: Page, requestId: string): Promise<Js
 
 async function openMailbox(page: Page): Promise<void> {
   await page.goto(new URL('/game/mailbox', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
-  await expect(page.getByRole('heading', { name: '메일함' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '서신', exact: true })).toBeVisible();
+}
+
+async function openDiplomacyLetters(page: Page): Promise<void> {
+  await page.goto(new URL('/game/global-diplomacy', gameUrl).toString(), { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { name: '외교', exact: true })).toBeVisible();
+  await page.getByRole('tab', { name: '외교 서신' }).click();
 }
 
 function disposableMessageText(): string {
@@ -282,7 +288,8 @@ test('Given an authenticated disposable general, when canceling then confirming 
 
   const row = mailboxRow(page, text);
   await expect(row, 'new private fixture message').toHaveCount(1);
-  const deleteButton = row.getByRole('button', { name: '삭제' });
+  const card = await openCard(page, text);
+  const deleteButton = card.getByRole('button', { name: '지우기' });
   await expect(deleteButton).toBeVisible();
 
   const cancelledRequests: string[] = [];
@@ -293,10 +300,10 @@ test('Given an authenticated disposable general, when canceling then confirming 
   };
   page.on('request', recordCancelledDelete);
   try {
-    const dismissed = nextDialog(page, 'dismiss');
     await deleteButton.click();
-    const dialog = await dismissed;
-    expect(dialog).toEqual({ type: 'confirm', message: deleteConfirmation });
+    await expect(confirmDialog(page)).toBeVisible();
+    await confirmDialog(page).getByRole('button', { name: '그대로 두기' }).click();
+    await expect(confirmDialog(page)).toHaveCount(0);
     expect(cancelledRequests, 'confirm dismissal must not submit deleteMessage').toEqual([]);
   } finally {
     page.off('request', recordCancelledDelete);
@@ -304,9 +311,8 @@ test('Given an authenticated disposable general, when canceling then confirming 
   await expect(row, 'cancelled message remains visible').toHaveCount(1);
 
   const deleteResponse = page.waitForResponse(isDeleteCommandResponse);
-  const accepted = nextDialog(page, 'accept');
   await deleteButton.click();
-  expect(await accepted).toEqual({ type: 'confirm', message: deleteConfirmation });
+  await confirmDialog(page).getByRole('button', { name: '지우기' }).click();
 
   const intakeResponse = await deleteResponse;
   expect(intakeResponse.status(), 'deleteMessage intake response').toBe(202);
@@ -326,7 +332,7 @@ test('Given an authenticated disposable general, when canceling then confirming 
 
   const mailboxReload = await reloadedMailbox;
   expect(mailboxReload.status(), 'post-delete mailbox reload response').toBe(200);
-  await expect(page.getByText('서신을 삭제했습니다.', { exact: true })).toBeVisible({ timeout: commandTimeoutMs });
+  await expect(page.getByText('서신을 지웠습니다', { exact: true })).toBeVisible({ timeout: commandTimeoutMs });
   await expect(row, 'successful terminal result reload removes the message row').toHaveCount(0, { timeout: commandTimeoutMs });
 });
 
@@ -352,19 +358,32 @@ test('Given a configured live denial fixture, when delete resolves denied, the r
     return;
   }
 
-  await openMailbox(page);
-  if (fixture.scope !== 'private') {
-    await page.getByRole('button', { name: fixture.scope === 'national' ? '국가' : fixture.scope === 'public' ? '전체' : '외교' }).click();
+  let card: Locator;
+  /** 거절되면 그대로 남아야 할 것 — 서신 화면은 목록 행, 외교 서신 칸은 카드. */
+  let kept: Locator;
+  if (fixture.scope === 'diplomacy') {
+    // 외교 서신은 서신 화면이 아니라 외교 화면(P-K02, /game/global-diplomacy)의 「외교 서신」 칸에 있다.
+    // 그 칸은 좁은 서신 부품(서랍 판)이라 목록 행 대신 카드가 바로 보이고, 지우기 · 확인 대화는 같다.
+    await openDiplomacyLetters(page);
+    card = page.getByRole('article').filter({ has: page.getByText(fixture.text, { exact: true }) });
+    await expect(card, 'configured diplomacy denial fixture card').toHaveCount(1);
+    kept = card;
+  } else {
+    await openMailbox(page);
+    if (fixture.scope !== 'private') {
+      await page.getByRole('tab', { name: fixture.scope === 'national' ? '세력' : '전체' }).click();
+    }
+    const row = mailboxRow(page, fixture.text);
+    await expect(row, 'configured denial fixture row').toHaveCount(1);
+    card = await openCard(page, fixture.text);
+    kept = row;
   }
-  const row = mailboxRow(page, fixture.text);
-  await expect(row, 'configured denial fixture row').toHaveCount(1);
-  const deleteButton = row.getByRole('button', { name: '삭제' });
+  const deleteButton = card.getByRole('button', { name: '지우기' });
   await expect(deleteButton, 'configured denial fixture must be frontend-deletable').toBeVisible();
 
   const deleteResponse = page.waitForResponse(isDeleteCommandResponse);
-  const accepted = nextDialog(page, 'accept');
   await deleteButton.click();
-  expect(await accepted).toEqual({ type: 'confirm', message: deleteConfirmation });
+  await confirmDialog(page).getByRole('button', { name: '지우기' }).click();
 
   const intakeResponse = await deleteResponse;
   expect(intakeResponse.status(), 'denial deleteMessage intake response').toBe(202);
@@ -378,5 +397,5 @@ test('Given a configured live denial fixture, when delete resolves denied, the r
   expect(terminal.reason, 'denial reason').toBe(fixture.reason);
 
   await expect(page.getByText(fixture.reason, { exact: true })).toBeVisible({ timeout: commandTimeoutMs });
-  await expect(row, 'denied delete keeps the message row').toHaveCount(1);
+  await expect(kept, 'denied delete keeps the message row').toHaveCount(1);
 });
