@@ -104,6 +104,15 @@
     min-width: 0;
 }
 
+/* 13주 아래 단추 줄(보드: 위 선 · 여백 10/12). 단추 높이 44는 os-button 이 준다. */
+.foot {
+    margin-top: auto;
+    display: flex;
+    gap: 8px;
+    padding: 10px 12px;
+    border-top: 1px solid var(--line);
+}
+
 @media (max-width: 1199.98px) {
     .screen {
         grid-template-columns: minmax(0, 1fr);

@@ -2,7 +2,7 @@
 // 두 프로필(@both): 기록 하위 탭에서 천하 형세가 지금 화면 · 13주 격자 · 통일 조건 두 칸 · 서버 대기(K8-13 · K8-15) ·
 // 누를 영역 44 · title 0 · disabled 0 · 넘침 0 · 배치(데스크톱 오른쪽 열 560 · 13주 4열, 모바일 조건이 13주보다 위 · 3열).
 import { expect, test, type Page, type Route } from '@playwright/test';
-import { BOTH, expectNoHorizontalOverflow, isMobile, smallTouchTargets, titleOnlyInfo } from '../support/parity';
+import { BOTH, expectNoHorizontalOverflow, isMobile, press, smallTouchTargets, titleOnlyInfo } from '../support/parity';
 
 const API = '/api/game/api';
 
@@ -56,4 +56,17 @@ test('천하 형세 골격: 13주 · 통일 조건 · 서버 대기 · 규칙 ·
         expect(new Set(tileBoxes.slice(0, 4)).size).toBe(1); // 한 줄에 넷
         expect(tileBoxes[4]).toBeGreaterThan(tileBoxes[0]);
     }
+});
+
+test('지도에서 보기 — 주 경계: 사유가 있는 비활성, 누르면 「지도 주소 준비 중」 시트', { tag: [BOTH] }, async ({ page }, testInfo) => {
+    await open(page);
+    const button = page.getByRole('region', { name: '13주' }).getByRole('button', { name: /지도에서 보기 — 주 경계/ });
+    await expect(button).toHaveAttribute('aria-disabled', 'true');
+    await press(button, testInfo);
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toContainText('지도 주소 준비 중');
+    await expect(sheet).toContainText('주 경계 보기로 바로 여는 주소가 아직 없습니다');
+    await expect(page).toHaveURL(/\/game\/records\/unification$/); // 다른 곳으로 가지 않는다
+    expect(await smallTouchTargets(page, MAIN)).toEqual([]);
+    expect(await page.locator(`${MAIN} :disabled`).count()).toBe(0);
 });

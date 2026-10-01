@@ -1,5 +1,5 @@
 // 천하 형세(P-H04) 골격 — 13주 격자(지도 州 층과 같은 이름표), 통일 조건 두 칸(새 규칙), 서버 대기 칸마다 계약판 행.
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { JU_NAMES, juDisplayName } from '@opensamguk/ui';
 import { describe, expect, it } from 'vitest';
 import UnificationScreen from '@/components/unification/UnificationScreen';
@@ -36,6 +36,20 @@ describe('UnificationScreen', () => {
             const region = screen.getByRole('region', { name });
             expect(region.querySelector('[data-server-wait="K8-13"] .os-status--waiting')).not.toBeNull();
         }
-        expect(container.querySelectorAll('a, button')).toHaveLength(0); // 누를 것이 없다(고를 자료가 없다)
+        // 누를 것은 지도 단추 하나뿐이다(고를 자료가 없어 세력 · 내 몫에는 없다).
+        expect(Array.from(container.querySelectorAll('a, button')).map((el) => el.textContent)).toEqual(['지도에서 보기 — 주 경계']);
+    });
+
+    it('지도에서 보기 — 주 경계: 보드 그대로 두고 사유가 있는 비활성(네이티브 disabled 아님), 누르면 「지도 주소 준비 중」', () => {
+        render(<UnificationScreen />);
+        const zhou = screen.getByRole('region', { name: '13주' });
+        const button = within(zhou).getByRole('button', { name: /지도에서 보기 — 주 경계/ });
+        expect(button).toHaveAttribute('aria-disabled', 'true');
+        expect(button).not.toBeDisabled();
+        expect(button).not.toHaveAttribute('href');
+        fireEvent.click(button);
+        const sheet = screen.getByRole('dialog');
+        expect(sheet).toHaveTextContent('지도 주소 준비 중');
+        expect(sheet).toHaveTextContent('주 경계 보기로 바로 여는 주소가 아직 없습니다');
     });
 });
