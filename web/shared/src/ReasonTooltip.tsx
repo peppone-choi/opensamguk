@@ -13,7 +13,7 @@ import {
   type ReactElement,
   type ReactNode,
 } from 'react';
-import { useHelpHref, type HelpHref } from './helpLink';
+import { isPlainClick, useHelpLink, type HelpHref } from './helpLink';
 import type { ReasonContent } from './parts/types';
 
 export type ReasonTooltipProps = Omit<HTMLAttributes<HTMLSpanElement>, 'children' | 'title'> & ReasonContent & {
@@ -97,7 +97,7 @@ export function ReasonTooltip({
   } else child = children;
 
   const rich = reasonOpensDialog({ title, recovery, helpTopic });
-  const toHelp = useHelpHref(helpHref);
+  const help = useHelpLink(helpHref);
 
   return (
     <span
@@ -146,12 +146,17 @@ export function ReasonTooltip({
         {helpTopic ? (
           <a
             className="os-reason__help"
-            href={toHelp(helpTopic.id)}
+            href={help.href(helpTopic.id)}
             onClick={(event) => {
-              if (!onHelp) return;
-              event.preventDefault();
-              onHelp(helpTopic.id);
-              close();
+              if (onHelp) {
+                event.preventDefault();
+                onHelp(helpTopic.id);
+                close();
+              } else if (help.open && isPlainClick(event)) {
+                event.preventDefault();
+                help.open(helpTopic.id);
+                close();
+              }
             }}
           >
             도움말 — {helpTopic.title} →

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { useHelpHref, type HelpHref } from '../helpLink';
+import { isPlainClick, useHelpLink, type HelpHref } from '../helpLink';
 import { PartIcon, type PartIconName } from './PartIcon';
 import type { HelpTopicRef, StatusKind } from './types';
 
@@ -55,7 +55,7 @@ const ICON: Record<Exclude<StatusKind, 'loading'>, { readonly name: PartIconName
 export function StatusView(props: StatusViewProps) {
   const { scope = 'region', className = '' } = props;
   const root = ['os-status', `os-status--${props.kind}`, scope === 'page' ? 'os-status--page' : '', className].filter(Boolean).join(' ');
-  const toHelp = useHelpHref(props.kind === 'denied' ? props.helpHref : undefined);
+  const help = useHelpLink(props.kind === 'denied' ? props.helpHref : undefined);
 
   if (props.kind === 'loading') return <Loading className={root} rows={props.rows ?? 3} delayMs={props.delayMs ?? 300} />;
 
@@ -87,8 +87,10 @@ export function StatusView(props: StatusViewProps) {
         actions = (
           <a
             className="os-button os-button--ghost os-status__action"
-            href={toHelp(topic.id)}
-            onClick={(event) => { if (onHelp) { event.preventDefault(); onHelp(topic.id); } }}
+            href={help.href(topic.id)}
+            onClick={(event) => {
+              if (onHelp) { event.preventDefault(); onHelp(topic.id); } else if (help.open && isPlainClick(event)) { event.preventDefault(); help.open(topic.id); }
+            }}
           >
             도움말 — {topic.title}
           </a>
