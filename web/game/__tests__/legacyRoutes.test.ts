@@ -52,7 +52,7 @@ describe('legacy route table', () => {
   it('finds real pages through route groups (the guard below is not vacuous)', () => {
     expect(pageExists('retinue')).toBe(true);
     expect(pageExists('battle-replay/[id]')).toBe(true);
-    expect(pageExists('records')).toBe(false);
+    expect(pageExists('records/yearbook')).toBe(false);
   });
 
   it('turns a line on only when its new page exists and its first segment is a reserved route name', () => {
@@ -109,6 +109,8 @@ describe('lines turned on by the shell integration', () => {
     { from: 'supply', to: 'territory/supply' },
     { from: 'siege', to: 'corps/siege' },
     { from: 'orders', to: 'court', query: 'tab=orders' },
+    // K5 기록 5분류(P-H01) — 옛 「전황」은 기록의 천하 정세로(설계서 §5.1 WL1).
+    { from: 'world-log', to: 'records' },
   ];
 
   it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {

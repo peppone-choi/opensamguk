@@ -50,7 +50,7 @@ export const LEGACY_ROUTES: readonly LegacyRoute[] = [
   { from: 'global-diplomacy', to: 'court/diplomacy', ready: false },
   { from: 'my-nation', to: 'court/realm', ready: false },
   // 기록
-  { from: 'world-log', to: 'records', ready: false },
+  { from: 'world-log', to: 'records', ready: true },
   { from: 'history', to: 'records/yearbook', ready: false },
   { from: 'rankings/kingdoms', to: 'records/yearbook', ready: false },
   { from: 'battle-replay', to: 'records/replay', ready: false, keepRest: true },

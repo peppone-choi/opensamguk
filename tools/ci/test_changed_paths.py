@@ -85,6 +85,19 @@ class ChangedPathsTest(unittest.TestCase):
             with self.subTest(path=path):
                 self.assertTrue(classify([path], self.patterns)["web"])
 
+    def test_server_sources_read_by_web_tests_run_the_web_job(self):
+        # web/shared 의 종류 표 시험이 EventKind.kt 와 엔진 쓰기 위치를 읽는다 — 서버만 바꾼 PR 에서 바로 빨개져야 한다.
+        for path in ("logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
+                     "app/game-engine/src/main/kotlin/opensamguk/engine/siege/RoadFortSiegeService.kt"):
+            with self.subTest(path=path):
+                self.assertTrue((ROOT / path).is_file(), path)
+                self.assertTrue(classify([path], self.patterns)["web"])
+        for path in ("logic/src/main/kotlin/opensamguk/logic/record/GameEvent.kt",
+                     "app/game-api/src/main/kotlin/opensamguk/gameapi/read/EventFeedReader.kt",
+                     "app/game-engine/src/test/kotlin/opensamguk/engine/status/StatusControllerTest.kt"):
+            with self.subTest(path=path):
+                self.assertFalse(classify([path], self.patterns)["web"])
+
     def test_unknown_top_level_path_runs_everything_heavy(self):
         result = classify(["docker/game-api.Dockerfile"], self.patterns)
         self.assertTrue(all(result[key] for key in ("jvm", "contracts", "map", "map_slow", "web")))
