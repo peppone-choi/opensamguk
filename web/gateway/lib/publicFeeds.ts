@@ -79,14 +79,34 @@ const isRecord = (value: unknown): value is Record<string, unknown> => typeof va
 const isInt = (value: unknown): value is number => typeof value === 'number' && Number.isSafeInteger(value);
 const positive = (value: unknown): value is number => isInt(value) && value > 0;
 const nonNegative = (value: unknown): value is number => isInt(value) && value >= 0;
-const ROAD_FORT_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+// 보루 참조 계약(C8 2026-10-01 · meta reports/opensamguk/tasks/2026-10-01-c8-roadfort-ref-contract.md).
+// 서버 보루 ID 는 RoadFort.siteId(edgeId, row, col) = "$edgeId@$row,$col"(RoadFortState.kt), legacy 안정 ID 도 그대로 받는다.
+/** legacy 보루 ID · 도로 edge ID(서버 isStableKey). 128자 한도는 이 부분에만 건다. */
+const ROAD_STABLE_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/;
+/** site 좌표 한 칸: 문자열 전체가 0 또는 앞자리 0 없는 10자리 이하 십진(유니코드 숫자 · 부호 · 소수 · 지수 거절). */
+const ROAD_FORT_CELL = /^(0|[1-9][0-9]{0,9})$/;
+const KOTLIN_INT_MAX = 2147483647;
+/** edge 128 + '@' + 10 + ',' + 10. 구성 한도에서 이미 따라 나오는 값이라, 이 검사는 긴 입력을 split 전에 끊는 몫이다. */
+const ROAD_FORT_SITE_MAX_LENGTH = 150;
+const roadFortCell = (part: string) => ROAD_FORT_CELL.test(part) && Number(part) <= KOTLIN_INT_MAX;
+
+/** ROAD_FORT 전용 검사. 판정만 하고 원문을 고치지 않는다(trim · 치환 · parseInt 없음). 공용 ref 검사는 넓히지 않는다. */
+function roadFortId(value: unknown): boolean {
+    if (typeof value !== 'string') return false;
+    if (ROAD_STABLE_ID.test(value)) return true;
+    if (value.length > ROAD_FORT_SITE_MAX_LENGTH) return false;
+    const [edge, cells, ...extraAt] = value.split('@');
+    if (extraAt.length > 0 || cells === undefined || !ROAD_STABLE_ID.test(edge)) return false;
+    const [row, col, ...extraComma] = cells.split(',');
+    return extraComma.length === 0 && col !== undefined && roadFortCell(row) && roadFortCell(col);
+}
 
 type RefCheck = (value: unknown) => boolean;
 const REF_TYPES: Readonly<Record<string, RefCheck>> = {
     CITY: positive,
     FROM_NATION: nonNegative,
     TO_NATION: nonNegative,
-    ROAD_FORT: (value) => typeof value === 'string' && ROAD_FORT_ID.test(value),
+    ROAD_FORT: roadFortId,
 };
 
 /** 천하 정세 사건 종류별 필수 · 선택 역할(서버 EventKind WORLD 절 · C0 인계 표). */
