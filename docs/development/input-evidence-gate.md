@@ -1,6 +1,6 @@
 # 입력 배달 증거 게이트 (E10)
 
-`data/commands/input-catalog.json`의 v4 행은 `tutorialNaReason`과 `evidence`를 가진다. `tutorialObjectiveId`가 `N/A`이면 비어 있지 않은 이유가 필요하고, 그 외에는 `tutorialNaReason: null`이다. 현재 `E9_PENDING_U3`은 튜토리얼 연계 결정을 기다리는 표식으로서 `TUTORIAL_READY`의 증거가 아니다.
+`data/commands/input-catalog.json`의 v5 행은 D21 첫걸음 **설명**을 위한 `firstStepsExplanationStepId`·`firstStepsExplanationNaReason`과 `evidence`를 가진다. 단계 값은 여덟 `tutorial.*` 글 ID, `UNMAPPED`(K7 화면 대응 확인 전), `N/A`(설명 밖임을 확인) 중 하나다. `N/A`에는 비어 있지 않은 사유가 필요하고, 나머지는 사유가 `null`이다. v4 `tutorialObjectiveId`·`tutorialNaReason`은 진척 판정용 폐기 필드다. 런타임 파서는 v4의 `HELP_READY` 이하 행만 `UNMAPPED`로 읽어 전환할 수 있고, v5 행에서 폐기 필드를 거절한다. 현재 카탈로그 74행은 전부 `UNMAPPED`이며, 어느 행도 설명 준비를 주장하지 않는다.
 
 ## 동결 기준선과 부채
 
@@ -21,6 +21,6 @@
 }
 ```
 
-각 참조는 `역할:저장소 상대경로#앵커` 형식이다. 게이트는 파일 존재, 역할별 허용 경로, 앵커와 입력 ID를 검사한다. 단계별 역할은 `domain-rule`, `handler-test`, `ui-e2e`, `ai-selector`와 `ai-test` 양쪽, `help-topic`, `tutorial-step` 또는 `tutorial-na`, `replay-test`, `campaign-test`다. `help-topic`은 해당 토픽 ID와 `reviewState: APPROVED`도 요구한다. 튜토리얼이 정말 해당하지 않는다는 결정이 나면 `tutorialNaReason`에 확정 사유를 쓰고 `tutorial-na:<사유>`를 증거로 연결한다. E9 대기 표식은 허용하지 않는다.
+각 참조는 `역할:저장소 상대경로#앵커` 형식이다. 게이트는 파일 존재, 역할별 허용 경로, 앵커와 입력 ID를 검사한다. 단계별 역할은 `domain-rule`, `handler-test`, `ui-e2e`, `ai-selector`와 `ai-test` 양쪽, `help-topic`, `tutorial-step` **및** `tutorial-shortcut`(연결 입력) 또는 `tutorial-na`(해당 없음), `replay-test`, `campaign-test`다. `help-topic`은 해당 토픽 ID와 `reviewState: APPROVED`도 요구한다. 연결된 첫걸음은 `tutorial-step:data/help/topics.json#tutorial.<step>`의 승인된 글과 `tutorial-shortcut:web/game/e2e/<test>#tutorial.<step>`의 실제 화면 검증이 모두 필요하다. 해당 없음은 `firstStepsExplanationNaReason`에 확정 사유를 쓰고 `tutorial-na:<사유>`로 연결한다. 이때 `data/help/first-steps-exclusions-v1.json`에 같은 입력·사유의 `CONFIRMED` 행과 입력 ID/앵커를 포함하는 제품 설명 근거가 있어야 한다(현재 확정 0행). `UNMAPPED`와 옛 `E9_PENDING_U3`은 `TUTORIAL_READY`나 그 뒤 `VERIFIED`의 증거가 아니다.
 
-검사는 `python3 tools/ci/input_evidence_gate.py` 또는 `python3 -m unittest discover -s tools/ci -p 'test_*.py'`로 실행한다. CI의 `contracts` 작업이 후자를 실행한다. 원장 파서는 v4 필드 형식과 중복 키를 검사하고, `AiPolicyRegistry`는 AI_READY 이상인 행에 실제 selector 바인딩을 요구한다.
+검사는 `python3 tools/ci/input_evidence_gate.py` 또는 `python3 -m unittest discover -s tools/ci -p 'test_*.py'`로 실행한다. CI의 `contracts` 작업이 후자를 실행한다. 원장 파서는 v5 필드 형식과 중복 키를 검사하고, `AiPolicyRegistry`는 AI_READY 이상인 행에 실제 selector 바인딩을 요구한다.
