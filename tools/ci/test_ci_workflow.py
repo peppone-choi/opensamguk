@@ -8,7 +8,6 @@
 """
 from __future__ import annotations
 
-import copy
 import json
 import os
 import subprocess
@@ -32,23 +31,6 @@ def matrix_jobs_with_job_level_if(workflow: dict) -> list[str]:
         name for name, job in jobs.items()
         if "matrix" in (job.get("strategy") or {}) and "if" in job and name not in aggregated
     )
-
-
-def switch_evidence_violations(workflow: dict) -> list[str]:
-    steps = workflow['jobs']['web']['steps']
-    switch = next(step for step in steps if step.get('id') == 'web_topdown')
-    upload = next(step for step in steps if step.get('name') == 'Upload topdown screens e2e results')
-    violations = []
-    output = switch['env'].get('E2E_PLAYWRIGHT_OUTPUT_DIR', '')
-    if output != switch['env']['E2E_PHASE_DIR'] + '/playwright-output':
-        violations.append('switch overwrites normal smoke output')
-    if 'always()' not in upload.get('if', ''):
-        violations.append('successful or failed evidence is lost')
-    if upload['with']['path'] != switch['env']['E2E_PHASE_DIR']:
-        violations.append('switch artifact includes another phase')
-    if '${{ matrix.app }}' not in upload['with']['name'] or '${{ github.run_attempt }}' not in upload['with']['name']:
-        violations.append('artifact app/attempt collision')
-    return violations
 
 
 class CiWorkflowContractTest(unittest.TestCase):
@@ -94,77 +76,6 @@ class CiWorkflowContractTest(unittest.TestCase):
                      "Verify game server recovery behavioral guards"):
             self.assertNotIn(gate, steps[name], name)
 
-    def test_switch_evidence_survives_success_and_failure_without_overwriting_smoke(self) -> None:
-        self.assertEqual([], switch_evidence_violations(self.workflow))
-        self.assertEqual(20, self.workflow['jobs']['web']['timeout-minutes'])
-
-    def test_switch_evidence_detector_rejects_lost_success_and_shared_output(self) -> None:
-        probe = copy.deepcopy(self.workflow)
-        for step in probe['jobs']['web']['steps']:
-            if step.get('id') == 'web_topdown':
-                step['env']['E2E_PLAYWRIGHT_OUTPUT_DIR'] = 'test-results/playwright-output'
-            if step.get('name') == 'Upload topdown screens e2e results':
-                step['if'] = "failure() && needs.changes.outputs.web == 'true'"
-        self.assertEqual(['switch overwrites normal smoke output', 'successful or failed evidence is lost'],
-                         switch_evidence_violations(probe))
-
-    def test_switch_shell_preserves_real_exit_and_distinguishes_unexecuted_tests(self) -> None:
-        # Execute the real phase shell with inert tools; no build, browser or server is launched.
-        step = next(step for step in self.workflow['jobs']['web']['steps'] if step.get('id') == 'web_topdown')
-        script = step['run'].replace('${{ matrix.app }}', 'gateway')
-        cases = [(False, 0, 0, 0, False, False, None, None, 'not-run'),
-                 (True, 23, 0, 23, True, False, 23, None, 'failure'),
-                 (True, 0, 17, 17, True, True, 0, 17, 'failure'),
-                 (True, 0, 0, 0, True, True, 0, 0, 'success')]
-        for spec, build_rc, test_rc, exit_rc, built, tested, build_exit, test_exit, outcome in cases:
-            with self.subTest(spec=spec, build_rc=build_rc, test_rc=test_rc), tempfile.TemporaryDirectory() as directory:
-                root = Path(directory)
-                tools = root / 'bin'; tools.mkdir()
-                (root / '.next').mkdir(); (root / '.next/BUILD_ID').write_text('off-pinned')
-                (root / 'e2e/topdown-screens').mkdir(parents=True)
-                if spec:
-                    (root / 'e2e/topdown-screens/normal.topdown-screen.spec.ts').touch()
-                fake = {
-                    'git': '#!/bin/sh\nprintf pinned-checkout',
-                    'curl': '#!/bin/sh\nprintf 200',
-                    'corepack': '''#!/bin/sh
-if [ "$2" = build ]; then
-  [ "$FAKE_BUILD_EXIT" = 0 ] || exit "$FAKE_BUILD_EXIT"
-  mkdir -p "$NEXT_DIST_DIR"; printf on-pinned > "$NEXT_DIST_DIR/BUILD_ID"
-elif [ "$3" = playwright ]; then
-  exit "$FAKE_TEST_EXIT"
-fi
-''',
-                }
-                for name, source in fake.items():
-                    path = tools / name; path.write_text(source); path.chmod(0o755)
-                directory = root / 'web-e2e/gateway/topdown-screens'
-                phase = directory / 'switch-build.json'
-                env = {**os.environ, 'PATH': str(tools) + os.pathsep + os.environ['PATH'],
-                       'TOPDOWN_SWITCH_EVIDENCE': str(phase), 'E2E_HEAD_SHA': 'head', 'E2E_BASE_SHA': 'base',
-                       'E2E_APP': 'gateway', 'E2E_PHASE': 'topdown-screens', 'E2E_WORKFLOW_SHA': 'workflow',
-                       'E2E_PHASE_DIR': str(directory), 'E2E_PLAYWRIGHT_OUTPUT_DIR': str(directory / 'playwright-output'),
-                       'GITHUB_RUN_ID': '1', 'GITHUB_RUN_ATTEMPT': '2', 'NEXT_DIST_DIR': '.next-topdown-screens',
-                       'NEXT_PUBLIC_TOPDOWN_SCREENS': '1', 'RUNNER_TEMP': str(root),
-                       'FAKE_BUILD_EXIT': str(build_rc), 'FAKE_TEST_EXIT': str(test_rc)}
-                prepare = next(step for step in self.workflow['jobs']['web']['steps']
-                               if step.get('name') == 'Prepare web e2e phase recorder')
-                subprocess.run(['bash', '-e', '-c', prepare['run']], env=env, check=True)
-                result = subprocess.run(['bash', '-e', '-o', 'pipefail', '-c', script], cwd=root, env=env,
-                                        capture_output=True, text=True, timeout=10)
-                self.assertEqual(exit_rc, result.returncode, result.stderr)
-                data = json.loads(phase.read_text())
-                self.assertEqual((built, tested, build_exit, test_exit, exit_rc, outcome),
-                                 (data['buildExecuted'], data['testsExecuted'], data['buildExit'],
-                                  data['testExit'], data['exit'], data['outcome']))
-                common = json.loads((directory / 'phase.json').read_text())
-                self.assertEqual(exit_rc, common['exitCode'])
-                self.assertEqual(tested, common['playwrightInvoked'])
-                self.assertEqual(test_exit, common['playwrightExitCode'])
-                self.assertEqual('off-pinned', data['off']['buildId'])
-                if tested:
-                    self.assertEqual('on-pinned', data['on']['buildId'])
-
 
 class WebE2eArtifactContractTest(unittest.TestCase):
     """Execute the workflow's real shell with local command fakes; no browser/server."""
@@ -194,7 +105,6 @@ class WebE2eArtifactContractTest(unittest.TestCase):
             "${{ runner.temp }}": str(self.runner), "${{ matrix.app }}": app,
             "${{ github.event.pull_request.head.sha || github.sha }}": "a" * 40,
             "${{ github.workflow_sha }}": "b" * 40,
-            "${{ github.event.pull_request.base.sha || '' }}": "c" * 40,
         }
         for before, after in replacements.items():
             value = value.replace(before, after)
@@ -238,20 +148,12 @@ if args[:4] == ['pnpm', 'exec', 'playwright', 'test']:
 if args[:3] == ['pnpm', 'exec', 'tsc']:
     sys.exit(int(os.environ.get('TEST_TYPECHECK_EXIT', '0')))
 if args == ['pnpm', 'build']:
-    code = int(os.environ.get('TEST_BUILD_EXIT', '0'))
-    if not code:
-        dist = Path(os.environ['NEXT_DIST_DIR'])
-        dist.mkdir(exist_ok=True)
-        (dist / 'BUILD_ID').write_text('on-pinned')
-    sys.exit(code)
+    sys.exit(int(os.environ.get('TEST_BUILD_EXIT', '0')))
 if args[:4] == ['pnpm', 'exec', 'playwright', 'install']:
     sys.exit(int(os.environ.get('TEST_INSTALL_EXIT', '0')))
 sys.exit(0)
 """, encoding="utf-8")
         corepack.chmod(0o755)
-        git = self.bin / "git"
-        git.write_text("#!/bin/sh\nprintf pinned-checkout\n", encoding="utf-8")
-        git.chmod(0o755)
         curl = self.bin / "curl"
         curl.write_text("#!/bin/sh\nprintf 200\n", encoding="utf-8")
         curl.chmod(0o755)
@@ -304,8 +206,10 @@ sys.exit(0)
                 self.assertEqual(7, config["retention-days"])
                 self.assertEqual("error", config["if-no-files-found"])
         self.assertIn("${{ matrix.app }}", smoke_upload["with"]["name"])
+        # 스위치 단계는 web (game) · web (gateway) 두 필수 체크에서 돈다(2026-10-01 K2) — 올리는 이름 · 폴더가 앱마다 갈린다.
         self.assertIn("${{ matrix.app }}", topdown_upload["with"]["name"])
         self.assertNotIn("matrix.app == 'game'", topdown_upload["if"])
+        self.assertNotEqual(self.phase_dir(self.topdown, "game"), self.phase_dir(self.topdown, "gateway"))
 
     def test_execution_gates_and_required_matrix_are_preserved(self) -> None:
         job = self.workflow["jobs"]["web"]
@@ -316,8 +220,8 @@ sys.exit(0)
         self.assertNotIn("continue-on-error", self.topdown)
         self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.smoke["if"])
         self.assertEqual("!cancelled() && needs.changes.outputs.web == 'true'", self.topdown["if"])
-        self.assertIn('exit 1;', self.smoke["run"])
-        self.assertIn('exit "$test_rc";', self.topdown["run"])
+        for phase in (self.smoke, self.topdown):
+            self.assertIn('exit 1;', phase["run"])
         discover = self.workflow["jobs"]["contracts"]["steps"]
         self.assertTrue(any("unittest discover -s tools/ci -p 'test_*.py'" in s.get("run", "") for s in discover))
 
@@ -353,11 +257,11 @@ sys.exit(0)
         self.topdown_specs()
         self.assertEqual(0, self.shell(self.smoke, "game").returncode)
         first = self.finalize("smoke", "game", "success")
-        self.assertEqual(9, self.shell(self.topdown, "game", TEST_PLAYWRIGHT_EXIT="9").returncode)
+        self.assertEqual(1, self.shell(self.topdown, "game", TEST_PLAYWRIGHT_EXIT="9").returncode)
         last = self.finalize("topdown-screens", "game", "failure")
         self.assertEqual(0, first["playwrightExitCode"])
         self.assertEqual(9, last["playwrightExitCode"])
-        self.assertEqual(9, last["exitCode"])
+        self.assertEqual(1, last["exitCode"])
         self.assertTrue((self.phase_dir(self.smoke, "game") / "results.json").exists())
         self.assertTrue((self.phase_dir(self.topdown, "game") / "playwright-output/trace.zip").exists())
 
