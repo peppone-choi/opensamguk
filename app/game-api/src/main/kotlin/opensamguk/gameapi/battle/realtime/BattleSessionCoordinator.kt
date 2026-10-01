@@ -38,6 +38,10 @@ data class BattleCommandInput(
     val slot: FormationSlot?,
     val order: BattleOrder,
     val rally: RallyPoint,
+    val retinueId: Int? = null,
+    val preflightReasonCode: String? = null,
+    val mappedAtTick: Int? = null,
+    val mappedAtEventSeq: Long? = null,
 )
 
 data class BattleRecovery(
@@ -66,12 +70,21 @@ class BattleSessionCoordinator(private val store: BattleSessionStore) {
             put("order", input.order.name)
             put("rally", input.rally.name)
         }.toString()
+        val request = if (input.retinueId == null) intent else buildJsonObject {
+            put("schemaVersion", 1)
+            put("side", input.side.name)
+            put("retinueId", input.retinueId)
+            put("order", input.order.name)
+            put("rally", input.rally.name)
+        }.toString()
         return store.admit(BattleCommandRecord(
             worldId = input.worldId, battleId = input.battleId, participantId = input.participantId,
             clientCommandId = input.clientCommandId, intentSha256 = sha256(intent),
             expectedEpoch = input.expectedEpoch,
             expectedAuthorityRevision = input.expectedAuthorityRevision,
             issuedTick = input.issuedTick, side = input.side.name, intentJson = intent,
+            requestSha256 = sha256(request), preflightReasonCode = input.preflightReasonCode,
+            mappedAtTick = input.mappedAtTick, mappedAtEventSeq = input.mappedAtEventSeq,
         ))
     }
 

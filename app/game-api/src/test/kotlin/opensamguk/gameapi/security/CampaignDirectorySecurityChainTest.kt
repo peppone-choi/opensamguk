@@ -51,6 +51,9 @@ class CampaignDirectorySecurityChainTest {
     }
 
     @Test fun `actual JWT chain denies anonymous invalid and ordinary-user administrator reads`() {
+        mvc.perform(get("/api/battles/active?generalId=7")).andExpect(status().isUnauthorized)
+        mvc.perform(get("/api/battles/active?generalId=7").header("Authorization", "Bearer invalid"))
+            .andExpect(status().isUnauthorized)
         for (path in listOf("/api/people", "/api/nation/summary?generalId=1", "/api/admin/nations", "/api/admin/people")) {
             mvc.perform(get(path)).andExpect(status().isUnauthorized)
             mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)

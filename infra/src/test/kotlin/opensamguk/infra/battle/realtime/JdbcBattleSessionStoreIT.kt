@@ -82,7 +82,8 @@ class JdbcBattleSessionStoreIT {
         assertFalse(store.advanceTick(world, ticket.battleId, "actor-a", firstEpoch.sessionEpoch, 0, 2))
         assertTrue((store.admit(command) as CommandAdmission.Receipt).value.replayed)
         assertEquals(CommandAdmission.IdempotencyConflict,
-            store.admit(command.copy(intentJson = "{}", intentSha256 = sha("{}"))))
+            store.admit(command.copy(intentJson = "{}", intentSha256 = sha("{}"),
+                requestSha256 = sha("{}"))))
         val raced = (store.admit(command.copy(clientCommandId = "cmd-race", issuedTick = 1))
             as CommandAdmission.Receipt).value
         assertEquals(3L, raced.eventSeq)
@@ -131,6 +132,40 @@ class JdbcBattleSessionStoreIT {
         assertEquals(BattleSessionPhase.APPLIED, store.head(world, ticket.battleId)?.phase)
         assertEquals(5, store.eventsAfter(world, ticket.battleId, 0).size)
         assertTrue((store.admit(command) as CommandAdmission.Receipt).value.replayed)
+    }
+
+    @Test
+    fun `retinue wire identity replays receipt after slot mapping changes and rejected scope stays durable`() {
+        val now = Instant.now()
+        val payload = """{"schemaVersion":1,"battleId":"scope-it"}"""
+        val ticket = FrozenBattleTicket(world, "scope-it", payload, sha(payload), "a".repeat(64),
+            "b".repeat(64), "c".repeat(64), 23, 7, 5,
+            now.minusSeconds(5), now.plusSeconds(300),
+            listOf(FrozenBattleParticipant(1, 49, 14, "ATTACKER", 6)))
+        assertTrue(store.create(ticket))
+        val epoch = assertNotNull(store.claimEpoch(world, ticket.battleId, "actor-scope", 30_000))
+        assertTrue(store.startRun(world, ticket.battleId, "actor-scope", epoch.sessionEpoch))
+        val center = """{"schemaVersion":1,"side":"ATTACKER","slot":"CENTER","order":"CHARGE","rally":"HOME"}"""
+        val wing = """{"schemaVersion":1,"side":"ATTACKER","slot":"LEFT_WING","order":"CHARGE","rally":"HOME"}"""
+        val wireSha = sha("retinue:77|CHARGE|HOME")
+        val command = BattleCommandRecord(world, ticket.battleId, 1, "scope-1", sha(center),
+            epoch.sessionEpoch, 6, 0, "ATTACKER", center, wireSha,
+            mappedAtTick = 0, mappedAtEventSeq = 1)
+        val accepted = (store.admit(command) as CommandAdmission.Receipt).value
+        assertEquals(BattleCommandVerdict.ACCEPTED, accepted.verdict)
+        assertEquals(2L, accepted.eventSeq)
+        val remapped = command.copy(intentJson = wing, intentSha256 = sha(wing),
+            mappedAtEventSeq = 2)
+        assertTrue((store.admit(remapped) as CommandAdmission.Receipt).value.replayed)
+        assertEquals(CommandAdmission.IdempotencyConflict,
+            store.admit(remapped.copy(requestSha256 = sha("retinue:78|CHARGE|HOME"))))
+        val denied = command.copy(clientCommandId = "scope-denied", preflightReasonCode = "UNAUTHORIZED",
+            mappedAtEventSeq = 2)
+        assertEquals("UNAUTHORIZED", (store.admit(denied) as CommandAdmission.Receipt).value.reasonCode)
+        assertTrue((store.admit(denied.copy(preflightReasonCode = null))
+            as CommandAdmission.Receipt).value.replayed)
+        val stale = command.copy(clientCommandId = "scope-stale", mappedAtEventSeq = 1)
+        assertEquals("STALE_TICK", (store.admit(stale) as CommandAdmission.Receipt).value.reasonCode)
     }
 
     @Test

@@ -22,7 +22,7 @@ class BattleWebSocketAdmissionTest {
     private val sessions = BattleWebSocketSessions(tickets, generals)
     private val admission = BattleWebSocketAdmission(tickets, GameApiProcessWorld(1), generals,
         "https://game.example", sessions)
-    private val handler = BattleWebSocketHandler(sessions)
+    private val handler = BattleWebSocketHandler(sessions, mock(BattleWebSocketProtocol::class.java))
     private val identity = BattleJoinIdentity("pep", WorldId(1), "battle-1", 42, 1, 7,
         "ATTACKER", 1, 3, Instant.parse("2026-09-29T00:01:00Z"))
 

@@ -60,7 +60,9 @@ class BattleWebSocketSessionsTest {
     fun `handler close callback releases its connection slot`() {
         val reservation = sessions.reserve(identity)
         val session = socket(reservation)
-        val handler = BattleWebSocketHandler(sessions)
+        val protocol = mock(BattleWebSocketProtocol::class.java)
+        `when`(protocol.snapshot(identity)).thenReturn("{}")
+        val handler = BattleWebSocketHandler(sessions, protocol)
         handler.afterConnectionEstablished(session)
         handler.afterConnectionClosed(session, CloseStatus.NORMAL)
         sessions.sweep()

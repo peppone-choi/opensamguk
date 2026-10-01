@@ -72,12 +72,21 @@ data class BattleCommandRecord(
     val issuedTick: Int,
     val side: String,
     val intentJson: String,
+    /** Stable wire intent identity; the resolved slot can change after this command is admitted. */
+    val requestSha256: String = intentSha256,
+    val preflightReasonCode: String? = null,
+    val mappedAtTick: Int? = null,
+    val mappedAtEventSeq: Long? = null,
 ) {
     init {
         require(participantId > 0 && clientCommandId.isNotBlank() && clientCommandId.length <= 128)
         require(intentSha256.matches(Regex("[0-9a-f]{64}")) && expectedEpoch >= 0)
         require(expectedAuthorityRevision >= 0 && issuedTick >= 0)
         require(side in setOf("ATTACKER", "DEFENDER"))
+        require(requestSha256.matches(Regex("[0-9a-f]{64}")))
+        require(preflightReasonCode == null || preflightReasonCode in setOf("UNAUTHORIZED", "STALE_TICK"))
+        require((mappedAtTick == null) == (mappedAtEventSeq == null))
+        require(mappedAtTick == null || (mappedAtTick >= 0 && mappedAtEventSeq!! >= 0))
     }
 }
 

@@ -185,7 +185,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             .addValue("intent_sha", command.intentSha256)
             .addValue("intent", command.intentJson)
         val existing = readReceipt(params)
-        if (existing != null) return@execute if (existing.first == command.intentSha256)
+        if (existing != null) return@execute if (existing.first == command.requestSha256)
             CommandAdmission.Receipt(existing.second.copy(replayed = true)) else CommandAdmission.IdempotencyConflict
         val head = db.query("""
             SELECT phase, session_epoch, current_tick, latest_event_seq, latest_snapshot_seq,
@@ -195,7 +195,7 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             ?: error("battle not found")
         // Another admission may have committed while this transaction waited for the session row.
         val afterLock = readReceipt(params)
-        if (afterLock != null) return@execute if (afterLock.first == command.intentSha256)
+        if (afterLock != null) return@execute if (afterLock.first == command.requestSha256)
             CommandAdmission.Receipt(afterLock.second.copy(replayed = true)) else CommandAdmission.IdempotencyConflict
         val authority = db.query("""
             SELECT side, authority_revision FROM battle_participant
@@ -213,6 +213,10 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
             head.currentTick >= TacticalRules.CANON.battleTicks -> "SESSION_CLOSED"
             command.issuedTick > head.currentTick ||
                 head.currentTick - command.issuedTick > TacticalRules.CANON.commandIssuedTickMaxLag -> "STALE_TICK"
+            command.mappedAtTick != null &&
+                (head.currentTick != command.mappedAtTick ||
+                    head.latestEventSeq != command.mappedAtEventSeq) -> "STALE_TICK"
+            command.preflightReasonCode != null -> command.preflightReasonCode
             else -> null
         }
         val eventSeq = if (reason == null) head.latestEventSeq + 1 else null
@@ -240,7 +244,8 @@ class JdbcBattleSessionStore(jdbc: NamedParameterJdbcTemplate, dataSource: DataS
                 effective_tick, event_seq, authority_revision)
             VALUES (:world_id, :battle_id, :participant_id, :client_command_id, :intent_sha,
                 :verdict, :reason, :server_tick, :effective_tick, :event_seq, :authority_revision)
-        """.trimIndent(), params.addValue("verdict", receipt.verdict.name)
+        """.trimIndent(), params.addValue("intent_sha", command.requestSha256)
+            .addValue("verdict", receipt.verdict.name)
             .addValue("reason", receipt.reasonCode).addValue("server_tick", receipt.serverTick)
             .addValue("effective_tick", receipt.effectiveTick)
             .addValue("event_seq", receipt.eventSeq)
