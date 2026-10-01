@@ -14,7 +14,11 @@ import {
 } from '@opensamguk/ui';
 import { useCallback, useEffect, useState } from 'react';
 
-const LS_HIDE_CITYNAME = 'sam.hideMapCityName';
+// 레이어 「이름」 켜고 끄기(설계서 MP5). 옛 삼모 키(sam.hideMapCityName)는 쓰지 않는다.
+const LS_HIDE_NAMES = 'opensamguk.map.hideNames';
+/** 주인 없는 城 — 공용 지도는 「공백지」라 적는다. 화면은 v3 범례 말 「무주」로 보인다(설계서 MP7). */
+const NEUTRAL_LABEL = '무주';
+const SHARED_NEUTRAL_NAME = '공백지';
 interface MapCity {
     id: number;
     name: string;
@@ -69,6 +73,11 @@ export interface MapPreviewProps {
     live?: boolean;
     showMe?: 0 | 1;
     refreshKey?: number;
+    /** `backdrop` = 로그인 · 가입의 화면 전체 배경(캡션은 화면이 따로 그린다). 기본 `panel`. */
+    variant?: 'panel' | 'backdrop';
+    /** 받은 미리보기를 옆 패널(세력 현황 · 천하 정세 이름 풀이)과 나눈다 — 같은 자료를 두 번 부르지 않는다. */
+    onPreview?: (data: MapData) => void;
+    onPreviewError?: () => void;
 }
 
 export function seasonOf(month: number): string {
@@ -87,11 +96,23 @@ export default function MapPreview({
     live: _live,
     showMe: _showMe,
     refreshKey = 0,
+    variant = 'panel',
+    onPreview,
+    onPreviewError,
 }: MapPreviewProps = {}) {
     const loadPreview = useCallback(async (signal: AbortSignal): Promise<MapData> => {
-        const response = await fetch(`/api/server-map/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal });
-        if (!response.ok) throw new Error(String(response.status));
-        return response.json() as Promise<MapData>;
+        try {
+            const response = await fetch(`/api/server-map/${encodeURIComponent(serverId)}`, { cache: 'no-store', signal });
+            if (!response.ok) throw new Error(String(response.status));
+            const data = (await response.json()) as MapData;
+            if (!signal.aborted) onPreview?.(data);
+            return data;
+        } catch (error) {
+            if (!signal.aborted) onPreviewError?.();
+            throw error;
+        }
+        // onPreview · onPreviewError 는 부르는 쪽이 useCallback 으로 고정한다 — 바뀔 때마다 다시 부르지 않게 의존에서 뺀다.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [serverId]);
     const map = useWorldMap({ loadPreview, mapData, serverId, refreshKey });
     const ready = map.kind === 'ready' ? map : null;
@@ -101,8 +122,14 @@ export default function MapPreview({
     const [hover, setHover] = useState<{ city: IsoCityOverlay; x: number; y: number } | null>(null);
 
     useEffect(() => {
-        setHideCityName(window.localStorage.getItem(LS_HIDE_CITYNAME) === 'yes');
+        try {
+            setHideCityName(window.localStorage.getItem(LS_HIDE_NAMES) === 'yes');
+        } catch {
+            /* 저장소를 못 읽으면(사생활 창 등) 이름을 보인다 */
+        }
     }, []);
+    const backdrop = variant === 'backdrop';
+    const rootClass = `map-preview${backdrop ? ' map-preview--backdrop' : ''}${hideCityName ? ' hide-cityname' : ''}`;
 
     const handlePickCity = useCallback((city: IsoCityOverlay) => setPicked(city), []);
     const handleHoverCity = useCallback((city: IsoCityOverlay | null, at?: { x: number; y: number }) => {
@@ -111,21 +138,28 @@ export default function MapPreview({
 
     if (map.kind === 'error' || map.kind === 'unsupported' || (data && data.cities.length === 0)) {
         return (
-            <div className="map-preview" aria-label="서버 지도 프리뷰">
-                <div className="map-preview-ph">{map.kind === 'unsupported' ? `지원하지 않는 지도 판: ${map.mapCode}` : '맵 프리뷰 (준비 중)'}</div>
+            <div className={rootClass} aria-label="서버 지도">
+                <div className="map-preview-ph" role="status">
+                    지도를 불러오지 못했습니다
+                    {map.kind === 'unsupported' && <span className="map-preview-ph__why">지원하지 않는 지도 판 — {map.mapCode}</span>}
+                </div>
             </div>
         );
     }
     if (!data) {
         return (
-            <div className="map-preview" aria-label="서버 지도 프리뷰">
-                <div className="map-preview-ph"><div className="spinner" /></div>
+            <div className={rootClass} aria-label="서버 지도">
+                <div className="map-preview-ph" role="status"><div className="spinner" aria-hidden="true" />지도를 불러오는 중</div>
             </div>
         );
     }
 
+    const shown = hover?.city ?? picked;
+    // 주인 없는 城은 「무주」. 공용 지도가 붙인 「공백지」도 같은 뜻이다.
+    const shownNation = shown?.nationName && shown.nationName !== SHARED_NEUTRAL_NAME ? shown.nationName : undefined;
+
     return (
-        <div className={`map-preview${hideCityName ? ' hide-cityname' : ''}`} aria-label="서버 지도 프리뷰">
+        <div className={rootClass} aria-label="서버 지도">
             <div className="map-preview-canvas">
                 <WorldMapCanvas
                     className="map-preview-han"
@@ -151,48 +185,50 @@ export default function MapPreview({
                 <div className="map-btn-stack">
                     <button
                         type="button"
-                        className={`map-toggle-cityname${hideCityName ? ' active' : ''}`}
-                        aria-pressed={hideCityName}
+                        className={`map-toggle-cityname${hideCityName ? '' : ' active'}`}
+                        aria-pressed={!hideCityName}
+                        aria-label="지도 이름 보이기"
                         onClick={() => {
                             setHideCityName((hidden) => {
-                                window.localStorage.setItem(LS_HIDE_CITYNAME, hidden ? 'no' : 'yes');
+                                try {
+                                    window.localStorage.setItem(LS_HIDE_NAMES, hidden ? 'no' : 'yes');
+                                } catch {
+                                    /* 저장하지 못해도 이번 화면에서는 바뀐다 */
+                                }
                                 return !hidden;
                             });
                         }}
                     >
-                        도시명 표기
+                        이름
                     </button>
                 </div>
                 {/* 얹으면 커서를 따라오고, 누르면 왼위에 붙는다(손가락에는 hover 가 없다). */}
-                {(hover ?? picked) && (
+                {shown && (
                     <div
                         className={`map-preview-tooltip${hover ? '' : ' map-preview-tooltip--pinned'}`}
                         role="status"
                         style={hover ? { left: hover.x + 14, top: hover.y + 14 } : undefined}
                     >
-                        <div className="map-preview-tooltip-name">{cityDisplayName((hover?.city ?? picked)!)}</div>
-                        {/* 주인이 없으면 국가 줄을 내지 않는다 — 공백지에 「재야」라고 적지 않는다(2026-09-10). */}
-                        {((hover?.city ?? picked)!.nationName || (hover?.city ?? picked)!.isCapital) && (
-                            <div className="map-preview-tooltip-meta">
-                                {isUprisingNation((hover?.city ?? picked)!.nationName) ? '봉기 세력 · ' : ''}
-                                {(hover?.city ?? picked)!.nationName ?? ''}
-                                {(hover?.city ?? picked)!.isCapital
-                                    ? `${(hover?.city ?? picked)!.nationName ? ' · ' : ''}수도`
-                                    : ''}
-                            </div>
-                        )}
-                        {((hover?.city ?? picked)!.cityBadges ?? []).map((badge, index) => (
+                        <div className="map-preview-tooltip-name">{cityDisplayName(shown)}</div>
+                        <div className="map-preview-tooltip-meta">
+                            {isUprisingNation(shownNation) ? '봉기 세력 · ' : ''}
+                            {shownNation ?? NEUTRAL_LABEL}
+                            {shown.isCapital ? ' · 수도' : ''}
+                        </div>
+                        {(shown.cityBadges ?? []).map((badge, index) => (
                             <div className="map-preview-tooltip-meta" key={`state-${index}`}>{cityBadgeLabel(badge)}</div>
                         ))}
-                        {(WATERWAY_SITE_ROLES[(hover?.city ?? picked)!.id] ?? []).map((feature) => (
+                        {(WATERWAY_SITE_ROLES[shown.id] ?? []).map((feature) => (
                             <div className="map-preview-tooltip-meta" key={feature}>{feature === 'port' ? '항구' : '나루'}</div>
                         ))}
                     </div>
                 )}
             </div>
-            <div className="map-preview-cap">
-                {`${serverName ?? data.serverName} · ${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`}
-            </div>
+            {!backdrop && (
+                <div className="map-preview-cap">
+                    {`${serverName ?? data.serverName} · ${data.year}년 ${data.month}월${data.turnPhaseText ? ` ${data.turnPhaseText}` : ''}`}
+                </div>
+            )}
         </div>
     );
 }

@@ -1,0 +1,278 @@
+/* 기록 5분류(P-H01) — 보드 V31K5Records · V31K5RecordsBattle · V31K5MRecords · V31K5MRecordsSheet · V31K5RecordsEmpty.
+   데스크톱: 가운데 목록 760 + 오른쪽 「고른 기록」(지도 · 자세히). 1200 미만: 목록만, 고른 기록은 하단 시트.
+   본문 여백은 셸(GameShell .body)이 준다 — 루트에 따로 두지 않는다(K0 2026-10-01). */
+
+.screen {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.list {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.tools {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.toolRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.kind {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12.5px;
+    color: var(--text-2);
+}
+
+.kindSelect {
+    min-height: 44px;
+    max-width: 100%;
+    padding: 0 10px;
+    background: var(--inset);
+    color: var(--text);
+    border: 1px solid var(--line-2);
+    font: inherit;
+    font-size: 13px;
+}
+
+.note {
+    margin: 0;
+    font-size: 11.5px;
+    line-height: 1.5;
+    color: var(--muted);
+}
+
+.band {
+    margin: 0 12px 8px;
+}
+
+.rows {
+    display: flex;
+    flex-direction: column;
+}
+
+.dateHead {
+    height: 32px;
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    background: var(--inset);
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--bronze);
+}
+
+.row {
+    display: flex;
+    align-items: stretch;
+    border-bottom: 1px solid var(--line);
+}
+
+.row[data-selected='true'] {
+    background: rgba(211, 176, 100, 0.1);
+    box-shadow: inset 3px 0 0 var(--bronze);
+}
+
+.rowButton {
+    flex: 1;
+    min-width: 0;
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px;
+    background: none;
+    border: 0;
+    color: var(--text);
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
+}
+
+.rowButton:focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: -2px;
+}
+
+.rowText {
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rowText[data-unknown='true'] {
+    color: var(--muted);
+}
+
+.rowEnd {
+    display: flex;
+    align-items: center;
+    padding: 0 12px 0 4px;
+    flex-shrink: 0;
+}
+
+.cat {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+    font-size: 11.5px;
+    color: var(--text-2);
+    white-space: nowrap;
+}
+
+.cat i {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: var(--cat);
+}
+
+.cat[data-section='PERSONAL'] { --cat: #d3b064; }
+.cat[data-section='RETINUE_NATION'] { --cat: #8fa77a; }
+.cat[data-section='COURT'] { --cat: #7aa7c7; }
+.cat[data-section='BATTLE'] { --cat: #c96b5d; }
+.cat[data-section='WORLD'] { --cat: #b9b2a3; }
+
+.more {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px 12px;
+}
+
+.detail {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.detailBody {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 12px;
+}
+
+.sentence {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.map {
+    position: relative;
+    height: 360px;
+    border-bottom: 1px solid var(--line);
+    overflow: hidden;
+}
+
+.mapEmpty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 16px;
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+}
+
+/* 하단 시트 — 셸의 메뉴 시트(shell.module.css)와 같은 층 · 모양. */
+.sheetLayer {
+    position: fixed;
+    inset: 0;
+    z-index: var(--z-sheet);
+}
+
+.scrim {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    border: 0;
+    padding: 0;
+    background: rgba(8, 10, 9, 0.62);
+}
+
+.sheet {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 85dvh;
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border-top: 1px solid var(--bronze-dim);
+}
+
+.sheetHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 4px 4px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.sheetTitle {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.sheetBody {
+    overflow: auto;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (max-width: 1199.98px) {
+    .screen {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 767.98px) {
+    .rowButton {
+        min-height: 60px;
+        flex-direction: column;
+        align-items: flex-start;
+        justify-content: center;
+        gap: 4px;
+        padding: 8px 12px;
+    }
+
+    .rowText {
+        white-space: normal;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    .map {
+        height: 200px;
+    }
+}

@@ -140,7 +140,7 @@ class CommandReserveService(
         verifiedProfile: opensamguk.logic.input.RuleProfile,
     ): ReserveResult = reserveInternal(generalId, actionCode, turnIdx, argJson, ownerUserId, verifiedProfile)
 
-    fun reserveV2(
+    fun reserveCanonicalCommand(
         generalId: Int,
         schema: CommandSchema,
         args: CommandArgs,
@@ -148,7 +148,7 @@ class CommandReserveService(
     ): ReserveResult {
         val requestId = requestIds()
         val acceptedAt = Instant.now(clock)
-        val command = CommandWireMapper.toV2Command(
+        val command = CommandWireMapper.toCanonicalCommand(
             schema = schema,
             args = args,
             generalId = generalId,
@@ -270,7 +270,7 @@ class CommandReserveService(
         } else argJson
         val requestId = requestIds()
         val acceptedAt = Instant.now(clock)
-        val v2Schema = opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode)
+        val commandSchema = opensamguk.logic.command.CommandSchemaCatalog.resolve(actionCode)
 
         // Model B — immediate daemon-command intake: publish the typed command, NO ring reservation.
         val intake = CommandWireMapper.toCommand(
@@ -279,7 +279,7 @@ class CommandReserveService(
             requestId,
             argJson,
             ownerUserId,
-            expiresAt = v2Schema?.let { acceptedAt.plus(it.expiry).toString() },
+            expiresAt = commandSchema?.let { acceptedAt.plus(it.expiry).toString() },
         )
         if (intake != null) {
             val envelope = TurnDaemonCommandEnvelope(

@@ -14,10 +14,25 @@ export function isMobile(testInfo: TestInfo): boolean {
   return testInfo.project.name === 'mobile';
 }
 
-/** 모바일은 탭, 데스크톱은 누르기. 같은 흐름 spec 이 조작 하나로 두 프로필을 다 돈다. */
+/**
+ * 모바일은 탭, 데스크톱은 누르기 — 화면 좌표로 누른다. 같은 흐름 spec 이 조작 하나로 두 프로필을 다 돈다.
+ * Playwright 의 click · tap 은 aria-disabled 를 「비활성」으로 보고 끝없이 기다리지만, v3.1 의 막힌 조작은 일부러 눌러서
+ * 사유를 여는 것이다. 누르기 전에 그 자리 맨 위가 그 요소인지 확인한다(다른 상자가 덮으면 빨개진다).
+ */
 export async function press(locator: Locator, testInfo: TestInfo): Promise<void> {
-  if (isMobile(testInfo)) await locator.tap();
-  else await locator.click();
+  await locator.scrollIntoViewIfNeeded();
+  const box = await locator.boundingBox();
+  expect(box, '누를 것이 보여야 한다').not.toBeNull();
+  const x = box!.x + box!.width / 2;
+  const y = box!.y + box!.height / 2;
+  const onTop = await locator.evaluate((el, [px, py]) => {
+    const hit = document.elementFromPoint(px, py);
+    return hit !== null && (hit === el || el.contains(hit));
+  }, [x, y] as const);
+  expect(onTop, '누를 자리 맨 위가 그 요소여야 한다(elementFromPoint)').toBe(true);
+  const page = locator.page();
+  if (isMobile(testInfo)) await page.touchscreen.tap(x, y);
+  else await page.mouse.click(x, y);
 }
 
 export async function expectNoHorizontalOverflow(page: Page): Promise<void> {

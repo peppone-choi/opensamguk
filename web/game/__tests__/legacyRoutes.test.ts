@@ -52,7 +52,7 @@ describe('legacy route table', () => {
   it('finds real pages through route groups (the guard below is not vacuous)', () => {
     expect(pageExists('retinue')).toBe(true);
     expect(pageExists('battle-replay/[id]')).toBe(true);
-    expect(pageExists('territory')).toBe(false);
+    expect(pageExists('records/yearbook')).toBe(false);
   });
 
   it('turns a line on only when its new page exists and its first segment is a reserved route name', () => {
@@ -68,7 +68,7 @@ describe('legacy route table', () => {
 
 describe('legacyTarget', () => {
   it('does nothing while a line is off', () => {
-    expect(legacyTarget(['war-room'], q())).toBeNull();
+    expect(legacyTarget(['map'], q())).toBeNull();
     expect(legacyTarget(['war-room'], q(), [{ from: 'war-room', to: '', ready: false }])).toBeNull();
   });
 
@@ -96,5 +96,28 @@ describe('legacyTarget', () => {
   it('ignores paths that are not in the table', () => {
     expect(legacyTarget(['retinue'], q(), ALL_READY)).toBeNull();
     expect(legacyTarget([], q(), ALL_READY)).toBeNull();
+  });
+});
+
+// 2026-10-01 셸 통합에서 켠 줄 — 옛 → 새 전부. 줄을 끄거나 목적지를 바꾸면 여기서 빨개진다(적색 확인).
+describe('lines turned on by the shell integration', () => {
+  const EXPECTED: ReadonlyArray<{ readonly from: string; readonly to: string; readonly query?: string }> = [
+    { from: 'war-room', to: '' },
+    { from: 'yuedan', to: 'retinue/yuedan' },
+    { from: 'hand', to: 'stratagem' },
+    { from: 'posts', to: 'territory' },
+    { from: 'supply', to: 'territory/supply' },
+    { from: 'siege', to: 'corps/siege' },
+    { from: 'orders', to: 'court', query: 'tab=orders' },
+    // K5 기록 5분류(P-H01) — 옛 「전황」은 기록의 천하 정세로(설계서 §5.1 WL1).
+    { from: 'world-log', to: 'records' },
+  ];
+
+  it.each(EXPECTED)('/$from → /$to', ({ from, to, query }) => {
+    expect(legacyTarget(from.split('/'), q())).toEqual(query ? { path: to, addQuery: query } : { path: to });
+  });
+
+  it('turns on exactly these lines and no others yet', () => {
+    expect(LEGACY_ROUTES.filter((route) => route.ready).map((route) => route.from).sort()).toEqual(EXPECTED.map(({ from }) => from).sort());
   });
 });

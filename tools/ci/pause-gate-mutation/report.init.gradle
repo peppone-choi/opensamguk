@@ -1,0 +1,11 @@
+gradle.afterProject { project ->
+    if (project.path == ':app:game-engine') {
+        def evidenceRoot = System.getProperty('opensamguk.pauseMutation.output')
+        if (!evidenceRoot) throw new GradleException('Missing pause mutation evidence directory')
+        project.tasks.named('test', Test).configure {
+            reports.junitXml.outputLocation.set(project.file(evidenceRoot + '/xml'))
+            reports.html.outputLocation.set(project.file(evidenceRoot + '/html'))
+            binaryResultsDirectory.set(project.file(evidenceRoot + '/binary'))
+        }
+    }
+}

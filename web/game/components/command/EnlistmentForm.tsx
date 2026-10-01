@@ -5,20 +5,6 @@ import { api } from '../../lib/api';
 import { submitCommandAndAwaitResult } from '../../lib/commandSubmit';
 import type { EnlistmentOptionsResponse } from '../../lib/types';
 
-export function useRuleProfile(supplied?: string | null) {
-    const [loaded, setLoaded] = useState<string | null>(null);
-    useEffect(() => {
-        if (supplied !== undefined) return;
-        let active = true;
-        Promise.resolve().then(() => api.frontInfo()).then(response => {
-            if (active) setLoaded(response.global.ruleProfile ?? null);
-        }).catch(() => { if (active) setLoaded(null); });
-        return () => { active = false; };
-    }, [supplied]);
-    const value = supplied === undefined ? loaded : supplied;
-    return value === 'HWIHA' ? value : null;
-}
-
 export default function EnlistmentForm({ inputId = 'action.enlist', generalId, turnIdx, unavailable, onToast, onClose, onReserved }: {
     inputId?: 'action.enlist' | 'action.randomEnlist' | 'action.targetEnlist';
     generalId: number; turnIdx: number; unavailable: boolean;

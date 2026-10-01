@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
  * - **세력 요약**은 본인 세력의 공개 사건([RecordKind.NATION_SUMMARY_KINDS])과 세계 공개 사건
  *   ([RecordKind.WORLD_SUMMARY_KINDS])만. 세력 내부 기록(월세입)은 싣지 않는다.
  *
- * 인증은 다른 휘하 조회와 같다([ownedHwihaGeneral]·[campaignReadGate]).
+ * 인증은 다른 휘하 조회와 같다([ownedCampaignGeneral]·[campaignReadGate]).
  */
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -31,7 +31,7 @@ class LastTurnsReader(
     private val objectMapper: ObjectMapper,
 ) {
     fun lastTurns(generalId: Int, userId: Long, limit: Int): LastTurnsResponse {
-        val actor = ownedHwihaGeneral(generals, generalId, userId)
+        val actor = ownedCampaignGeneral(generals, generalId, userId)
         campaignReadGate(worlds, actor)?.let { return LastTurnsResponse(it) }
         val world = worlds.findProcessWorld() ?: return LastTurnsResponse("UNAVAILABLE")
         val now = try { TurnStamp(world.currentYear, world.currentMonth, world.currentPhase) }

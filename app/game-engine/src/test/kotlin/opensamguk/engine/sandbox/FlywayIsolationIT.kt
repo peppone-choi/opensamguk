@@ -14,23 +14,23 @@ import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 import org.testcontainers.junit.jupiter.Testcontainers
 
-internal const val V1_FLYWAY_LOCATION = "classpath:db/migration"
-internal const val V2_FLYWAY_LOCATION = "classpath:db/migration_sandbox"
-internal const val SANDBOX_FLYWAY_LOCATIONS = "$V1_FLYWAY_LOCATION,$V2_FLYWAY_LOCATION"
+internal const val PRODUCTION_FLYWAY_LOCATION = "classpath:db/migration"
+internal const val SANDBOX_FLYWAY_LOCATION = "classpath:db/migration_sandbox"
+internal const val SANDBOX_FLYWAY_LOCATIONS = "$PRODUCTION_FLYWAY_LOCATION,$SANDBOX_FLYWAY_LOCATION"
 
 internal fun v1PersistentTableBaseline(dataSource: DataSource): Set<CatalogRelation> {
     Flyway.configure()
         .dataSource(dataSource)
-        .locations(V1_FLYWAY_LOCATION)
+        .locations(PRODUCTION_FLYWAY_LOCATION)
         .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
         .load()
         .migrate()
     return FlywayIsolationAssertions.persistentTableRelations(dataSource)
 }
 
-private fun v2SandboxFlyway(dataSource: DataSource): Flyway = Flyway.configure()
+private fun sandboxTestFlyway(dataSource: DataSource): Flyway = Flyway.configure()
     .dataSource(dataSource)
-    .locations(V1_FLYWAY_LOCATION, V2_FLYWAY_LOCATION)
+    .locations(PRODUCTION_FLYWAY_LOCATION, SANDBOX_FLYWAY_LOCATION)
     .configuration(mapOf("flyway.postgresql.transactional.lock" to "false"))
     .load()
 
@@ -41,14 +41,14 @@ class FlywayIsolationConstraintMutationIT {
     fun `runtime guard rejects an unscoped standalone unique index and accepts a scoped one`() {
         val sandbox = fixture
         val jdbc = JdbcTemplate(sandbox.dataSource)
-        sandbox.assertions().assertV2SandboxRuntime()
+        sandbox.assertions().assertSandboxRuntime()
 
         try {
             jdbc.execute("ALTER TABLE v2_sandbox_probe ADD COLUMN external_code integer NOT NULL DEFAULT 0")
             jdbc.execute("CREATE UNIQUE INDEX v2_sandbox_probe_external_code_unique ON v2_sandbox_probe (external_code)")
 
             val error = assertFailsWith<AssertionError> {
-                sandbox.assertions().assertV2SandboxRuntime()
+                sandbox.assertions().assertSandboxRuntime()
             }
             assertTrue(error.message.orEmpty().contains("world_id"))
 
@@ -57,20 +57,20 @@ class FlywayIsolationConstraintMutationIT {
                 "CREATE UNIQUE INDEX v2_sandbox_probe_world_external_code_unique " +
                     "ON v2_sandbox_probe (world_id, external_code)",
             )
-            sandbox.assertions().assertV2SandboxRuntime()
+            sandbox.assertions().assertSandboxRuntime()
         } finally {
             jdbc.execute("DROP INDEX IF EXISTS v2_sandbox_probe_external_code_unique")
             jdbc.execute("DROP INDEX IF EXISTS v2_sandbox_probe_world_external_code_unique")
             jdbc.execute("ALTER TABLE v2_sandbox_probe DROP COLUMN IF EXISTS external_code")
         }
-        sandbox.assertions().assertV2SandboxRuntime()
+        sandbox.assertions().assertSandboxRuntime()
     }
 
     @Test
     fun `runtime guard rejects a v2 foreign key when a same named decoy points at world state`() {
         val sandbox = fixture
         val jdbc = JdbcTemplate(sandbox.dataSource)
-        sandbox.assertions().assertV2SandboxRuntime()
+        sandbox.assertions().assertSandboxRuntime()
 
         try {
             jdbc.execute("ALTER TABLE v2_sandbox_probe DROP CONSTRAINT v2_sandbox_probe_world_id_fkey")
@@ -84,7 +84,7 @@ class FlywayIsolationConstraintMutationIT {
                     "FOREIGN KEY (world_id) REFERENCES nation(id)",
             )
             val error = assertFailsWith<AssertionError> {
-                sandbox.assertions().assertV2SandboxRuntime()
+                sandbox.assertions().assertSandboxRuntime()
             }
             assertTrue(error.message.orEmpty().contains("world_state.id"))
         } finally {
@@ -96,7 +96,7 @@ class FlywayIsolationConstraintMutationIT {
             jdbc.execute("ALTER TABLE nation DROP CONSTRAINT IF EXISTS v2_sandbox_probe_world_id_fkey")
             jdbc.execute("ALTER TABLE nation DROP CONSTRAINT IF EXISTS v2_foreign_key_wrong_target_id_key")
         }
-        sandbox.assertions().assertV2SandboxRuntime()
+        sandbox.assertions().assertSandboxRuntime()
     }
 
     @Test
@@ -122,14 +122,14 @@ class FlywayIsolationConstraintMutationIT {
                 "pg_class catalog diff must include the dynamic ordinary relation",
             )
             val error = assertFailsWith<AssertionError> {
-                sandbox.assertions().assertV2SandboxRuntime()
+                sandbox.assertions().assertSandboxRuntime()
             }
             assertTrue(error.message.orEmpty().contains("world_id"))
             assertTrue(error.message.orEmpty().contains("v2_catalog_dynamic_unscoped"))
         } finally {
             jdbc.execute("DROP TABLE IF EXISTS v2_catalog_dynamic_unscoped")
         }
-        sandbox.assertions().assertV2SandboxRuntime()
+        sandbox.assertions().assertSandboxRuntime()
     }
 
     @Test
@@ -158,7 +158,7 @@ class FlywayIsolationConstraintMutationIT {
                 "pg_class catalog diff must include the foreign relation",
             )
             val error = assertFailsWith<AssertionError> {
-                sandbox.assertions().assertV2SandboxRuntime()
+                sandbox.assertions().assertSandboxRuntime()
             }
             assertTrue(error.message.orEmpty().contains("world_id"))
             assertTrue(error.message.orEmpty().contains("v2_catalog_unscoped_foreign"))
@@ -166,7 +166,7 @@ class FlywayIsolationConstraintMutationIT {
             jdbc.execute("DROP FOREIGN TABLE IF EXISTS v2_catalog_unscoped_foreign")
             jdbc.execute("DROP SERVER IF EXISTS v2_catalog_foreign_server")
         }
-        sandbox.assertions().assertV2SandboxRuntime()
+        sandbox.assertions().assertSandboxRuntime()
     }
 
     private fun SandboxFixture.assertions(): FlywayIsolationAssertions =
@@ -184,7 +184,7 @@ class FlywayIsolationConstraintMutationIT {
         val fixture: SandboxFixture by lazy {
             val dataSource = DriverManagerDataSource(postgres.jdbcUrl, postgres.username, postgres.password)
             val v1CatalogBaseline = v1PersistentTableBaseline(dataSource)
-            val flyway = v2SandboxFlyway(dataSource)
+            val flyway = sandboxTestFlyway(dataSource)
             flyway.migrate()
             SandboxFixture(dataSource, flyway, v1CatalogBaseline)
         }
@@ -199,27 +199,27 @@ internal class FlywayIsolationAssertions(
     private val jdbc = JdbcTemplate(dataSource)
 
     fun assertV1DefaultRuntime() {
-        assertEquals(listOf(V1_FLYWAY_LOCATION), resolvedLocations(), "resolved v1 Flyway locations")
+        assertEquals(listOf(PRODUCTION_FLYWAY_LOCATION), resolvedLocations(), "resolved v1 Flyway locations")
         assertFalse(probeTableExists(), "v1 defaults must not discover db/migration_sandbox")
         assertEquals(0, appliedProbeMigrations(), "v1 Flyway history must not contain V900")
-        assertTrue(appliedV2Migrations().isEmpty(), "v1 Flyway must not apply any V900+ migration")
+        assertTrue(appliedSandboxMigrations().isEmpty(), "v1 Flyway must not apply any V900+ migration")
     }
 
-    fun assertV2SandboxRuntime() {
+    fun assertSandboxRuntime() {
         assertEquals(
-            listOf(V1_FLYWAY_LOCATION, V2_FLYWAY_LOCATION),
+            listOf(PRODUCTION_FLYWAY_LOCATION, SANDBOX_FLYWAY_LOCATION),
             resolvedLocations(),
             "resolved v2 sandbox Flyway locations",
         )
         assertTrue(probeTableExists(), "the explicit v2 sibling location must apply V900")
         assertEquals(1, appliedProbeMigrations(), "the test-only V900 probe must be applied once")
 
-        val appliedV2Migrations = appliedV2Migrations()
+        val appliedSandboxMigrations = appliedSandboxMigrations()
         assertTrue(
-            appliedV2Migrations.any { it.script == SANDBOX_PROBE_SCRIPT },
+            appliedSandboxMigrations.any { it.script == SANDBOX_PROBE_SCRIPT },
             "the applied V900 migration must be the test-only v2 sandbox probe",
         )
-        assertV2SourceConventions(appliedV2Migrations)
+        assertSandboxSourceConventions(appliedSandboxMigrations)
 
         val baseline = requireNotNull(v1CatalogBaseline) {
             "v2 runtime checks require a catalog snapshot taken after v1 and before v2 migration"
@@ -237,11 +237,11 @@ internal class FlywayIsolationAssertions(
 
     private fun resolvedLocations(): List<String> = flyway.configuration.locations.map { it.descriptor }
 
-    private fun appliedV2Migrations(): List<MigrationInfo> = flyway.info().applied().filter { migration ->
+    private fun appliedSandboxMigrations(): List<MigrationInfo> = flyway.info().applied().filter { migration ->
         migration.version?.toString()?.toIntOrNull()?.let { it >= MigrationConvention.MINIMUM_VERSION } == true
     }
 
-    private fun assertV2SourceConventions(appliedMigrations: List<MigrationInfo>) {
+    private fun assertSandboxSourceConventions(appliedMigrations: List<MigrationInfo>) {
         val violations = appliedMigrations.flatMap { migration ->
             val source = MigrationSources.sourceForAppliedScript(migration.script)
             MigrationConvention.validate(migration.script, source.readText()).map { violation ->

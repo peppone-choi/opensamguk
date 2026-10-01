@@ -107,7 +107,7 @@ export default function MyPage() {
             <InfoGrid rows={rows} />
           </GameCard>
         </div>
-        <a className="os-button os-button--primary" href={retinueHref}>휘하 편성</a>
+        <a className="os-button os-button--primary" href={retinueHref}>부 편성</a>
         <MyInfoLogPanel generalId={myPage.generalId} />
       </div>
     </Shell>

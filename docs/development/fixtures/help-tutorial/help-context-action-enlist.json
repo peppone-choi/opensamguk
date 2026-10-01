@@ -59,6 +59,10 @@
       "POLICY_UNAVAILABLE"
     ],
     "helpTopicId": "commands.action.enlist",
-    "tutorialObjectiveId": null
+    "firstStepsExplanation": {
+      "state": "UNMAPPED",
+      "stepId": null,
+      "naReason": null
+    }
   }
 }

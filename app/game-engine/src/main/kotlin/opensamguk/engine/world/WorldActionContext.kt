@@ -121,8 +121,8 @@ class WorldActionContext(
     private val unlockGame: () -> Unit = {},
     private val spatialSupplyNetworkProvider: () -> SpatialSupplyNetwork? = { null },
     // OPENSAM-151 — v2 도시 원장. v2 샌드박스 게이트가 꺼진 프로덕션에서는 null이고, 그 상태에서
-    // V2ProcessCityIncome leaf가 돌면 fail-closed로 죽는다(무음 no-op이면 수입이 통째로 사라진다).
-    private val v2CityLedger: CityLedgerStore? = null,
+    // ProcessCityIncomeAction leaf가 돌면 fail-closed로 죽는다(무음 no-op이면 수입이 통째로 사라진다).
+    private val cityLedger: CityLedgerStore? = null,
 ) : EventActionContext,
     ProcessIncomeContext,
     CityIncomeContext,
@@ -397,11 +397,11 @@ class WorldActionContext(
 
     // ── CityIncomeContext (OPENSAM-151) ──────────────────────────────────────────────────────
 
-    private fun requireV2Ledger(): CityLedgerStore = v2CityLedger
+    private fun requireCityLedger(): CityLedgerStore = cityLedger
         ?: error("v2 도시 원장 스토어가 없다 — v2 샌드박스 게이트 밖에서 V2ProcessCityIncome 이 디스패치됐다")
 
-    override fun v2CityIncomeNations(resource: String): List<CityIncomeNation> {
-        val ledger = requireV2Ledger().entries(world.worldId)
+    override fun cityIncomeNations(resource: String): List<CityIncomeNation> {
+        val ledger = requireCityLedger().entries(world.worldId)
         // 국가/도시/장수 스냅샷은 v1 [incomeNations]를 **그대로** 재사용한다(세율 rate_tmp, npcState!=5 제외,
         // officerCntByCity 집계까지 동일해야 하므로 두 벌로 갈라 두지 않는다).
         return incomeNations().map { n ->
@@ -416,9 +416,9 @@ class WorldActionContext(
         }
     }
 
-    override fun applyV2CityIncome(result: CityIncomeResult) {
+    override fun applyCityIncome(result: CityIncomeResult) {
         val resource = result.resource
-        val store = requireV2Ledger()
+        val store = requireCityLedger()
         // v1과 달리 nation.gold/rice 는 건드리지 않는다 — v2에서 수입은 도시 원장에만 들어간다.
         for (d in result.ledgerDeltas) {
             if (resource == "gold") {
@@ -452,7 +452,7 @@ class WorldActionContext(
     override fun activeGeneralCount(): Int = world.listGenerals().size
 
     override fun attritionCities(): List<AttritionCity> {
-        val ledger = requireV2Ledger().entries(world.worldId)
+        val ledger = requireCityLedger().entries(world.worldId)
         return world.listCities().sortedBy { it.id }.map {
             AttritionCity(
                 cityId = it.id,
@@ -464,8 +464,8 @@ class WorldActionContext(
         }
     }
 
-    override fun applyV2Attrition(result: AttritionResult) {
-        val store = requireV2Ledger()
+    override fun applyCityAttrition(result: AttritionResult) {
+        val store = requireCityLedger()
         for (o in result.outcomes) {
             val delta = o.after - o.before
             if (delta != 0) store.adjust(world.worldId, recorder, o.cityId, garrisonDelta = delta)

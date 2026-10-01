@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import {
   TopdownMap,
   type HitResult,
+  type CorpsMarker,
   type MapLayers,
   type MyLocation,
   type TopdownMapHandle,
@@ -11,6 +12,13 @@ import {
 } from '@opensamguk/ui/map/topdown';
 
 // 시험용 내 위치: 洛陽 성 안(실제 자료는 계약판 U-04)
+// 시험용 부대: 洛陽 동쪽에서 오른쪽으로 행군 중 하나, 멈춘 하나(실제 자료는 계약판 K2-08)
+const CORPS: CorpsMarker[] = [
+  { id: 'c1', cell: { col: 1522, row: 936 }, nationColor: '#b0569a', leaderName: '안량', heading: 'right',
+    route: [{ col: 1526, row: 936 }, { col: 1530, row: 938 }, { col: 1536, row: 938 }] },
+  { id: 'c2', cell: { col: 1492, row: 944 }, nationColor: '#4f7fbf', leaderName: '하후연', heading: null },
+];
+
 const ME: MyLocation = { cell: { col: 1505, row: 933 }, state: 'IN_CITY', nationColor: '#4f7fbf', portrait: null, name: '하후돈' };
 
 const VIEWS: Record<string, 'fit' | { center: { col: number; row: number }; zoom: number }> = {
@@ -48,7 +56,7 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
 }) {
   const [handle, setHandle] = useState<TopdownMapHandle | null>(null);
   const [hit, setHit] = useState<HitResult | null>(null);
-  const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true });
+  const [layers, setLayers] = useState<MapLayers>({ provinceLines: false, countyLines: false, commanderyLines: false, cityNames: true, corpsRoutes: true });
   const [pick, setPick] = useState(false);
   const [showMe, setShowMe] = useState(true);
   const world = useMemo(() => demoWorld(1608, pick), [pick]);
@@ -65,10 +73,10 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
         ))}
         <button type="button" style={{ minHeight: 44, minWidth: 44 }} onClick={() => handle?.zoomStep(1)}>+</button>
         <button type="button" style={{ minHeight: 44, minWidth: 44 }} onClick={() => handle?.zoomStep(-1)}>−</button>
-        {(['provinceLines', 'countyLines', 'commanderyLines', 'cityNames'] as const).map((key) => (
+        {(['provinceLines', 'countyLines', 'commanderyLines', 'cityNames', 'corpsRoutes'] as const).map((key) => (
           <label key={key} style={{ display: 'inline-flex', gap: 4, alignItems: 'center', minHeight: 44 }}>
             <input type="checkbox" checked={layers[key]} onChange={() => toggle(key)} />
-            {{ provinceLines: '구역 경계', countyLines: '현 경계', commanderyLines: '군 경계', cityNames: '도시 이름' }[key]}
+            {{ provinceLines: '구역 경계', countyLines: '현 경계', commanderyLines: '군 경계', cityNames: '도시 이름', corpsRoutes: '부대 경로' }[key]}
           </label>
         ))}
         <label style={{ display: 'inline-flex', gap: 4, alignItems: 'center', minHeight: 44 }}>
@@ -90,6 +98,7 @@ export default function MapLab({ bakeUrl, kitUrl, view, center, zoom }: {
         onReady={setHandle}
         onSelect={setHit}
         me={showMe ? ME : null}
+        corps={CORPS}
         minimap
         style={{ flex: 1, minHeight: 0 }}
       />

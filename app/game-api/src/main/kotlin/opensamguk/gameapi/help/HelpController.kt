@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -21,6 +22,16 @@ class HelpController(
     private val mapper: ObjectMapper,
 ) {
     private val store get() = provider.store
+
+    @GetMapping("/topics")
+    fun topics(@RequestHeader(value = "If-None-Match", required = false) ifNoneMatch: String?): ResponseEntity<Any> = inWorld {
+        val etag = store.topicSummariesEtag
+        if (ifNoneMatch?.split(',')?.any { it.trim() == etag } == true) {
+            ResponseEntity.status(HttpStatus.NOT_MODIFIED).eTag(etag).build<Any>()
+        } else {
+            ResponseEntity.ok().eTag(etag).body<Any>(mapOf("schemaVersion" to 1, "topics" to store.topicSummaries))
+        }
+    }
 
     @GetMapping("/topics/{topicId}")
     fun topic(@PathVariable topicId: String): ResponseEntity<Any> = inWorld {
@@ -79,7 +90,15 @@ class HelpController(
         "effectScope" to input.effectScope,
         "failureReasons" to input.failureReasons,
         "helpTopicId" to input.helpTopicId,
-        "tutorialObjectiveId" to input.tutorialObjectiveId.takeUnless { it == "N/A" },
+        "firstStepsExplanation" to mapOf(
+            "state" to when (input.firstStepsExplanationStepId) {
+                "UNMAPPED" -> "UNMAPPED"
+                "N/A" -> "NOT_APPLICABLE"
+                else -> "LINKED"
+            },
+            "stepId" to input.firstStepsExplanationStepId.takeUnless { it == "N/A" || it == "UNMAPPED" },
+            "naReason" to input.firstStepsExplanationNaReason,
+        ),
     )
 
     private fun inWorld(action: () -> ResponseEntity<Any>): ResponseEntity<Any> = when (worlds.processRuleProfile()) {
