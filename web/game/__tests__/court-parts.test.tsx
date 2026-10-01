@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
 import { CourtChoiceSheet, CourtDecisionList, DispatchSheet, IssuedDispatches, RewardPanel } from '../components/court/CourtParts';
-import { courtChoices, dispatchCounties, dispatchPeople, issuedDispatches, rewardMoney, stripIdSuffix } from '../lib/court-view';
+import { DISPATCH_BLOCKED_FALLBACK, courtChoices, dispatchCounties, dispatchPeople, issuedDispatches, rewardMoney, stripIdSuffix } from '../lib/court-view';
 import type { DispatchOptionsResponse, DispatchPendingResponse } from '../lib/types';
 
 const phase = { year: 200, month: 3, phase: 2 };
@@ -28,6 +28,7 @@ test('보기 모델 — 내린 발령만(받은 것은 K6 카드), 라벨 없으
         ['순욱', '양성현', '응답 대기', '200년 4월 상순'],
         ['이름 모를 장수', '이름 모를 현', '거절', null],
     ]);
+    expect(rows.map((r) => r.blocked)).toEqual([null, null]);
     expect(dispatchPeople(options)).toEqual([{ generalId: 21, name: '순욱', isHuman: true, groups: ['mine'] }]);
     expect(dispatchCounties(options).map((c) => [c.targetId, c.available, c.reason ?? null])).toEqual([['129', true, null], ['130', false, '이미 현령이 있습니다.']]);
     expect(stripIdSuffix('영천 군단 (42)')).toBe('영천 군단');
@@ -106,4 +107,22 @@ test('조정 명령 시트 · 모바일 목록 — 불가 선택지는 사유, �
     expect(rows[2]).toHaveTextContent('준비 중');
     fireEvent.click(within(rows[0]).getByRole('button'));
     expect(onOpen).toHaveBeenCalledTimes(1);
+});
+
+test('내린 발령이 응답 대기인데 막혔으면 — 서버 문장(currentFailureReason)을 그대로, 없으면 옛 문구, 대기가 아니면 없음', () => {
+    const base = pending.dispatches[0];
+    const rows = issuedDispatches({ ...pending, dispatches: [
+        { ...base, dispatchId: 'a', currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: '직속 부하가 아니라 이 발령을 받을 수 없습니다.' },
+        { ...base, dispatchId: 'b', currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: null },
+        { ...base, dispatchId: 'c', currentFailure: 'NOT_DIRECT_RETAINER' },
+        { ...base, dispatchId: 'd', currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: '   ' },
+        { ...base, dispatchId: 'e', status: 'REFUSED', currentFailure: 'NOT_DIRECT_RETAINER', currentFailureReason: '무시' },
+        { ...base, dispatchId: 'f', currentFailure: null, currentFailureReason: '무시' },
+    ] }, 7);
+    expect(rows.map((r) => r.blocked)).toEqual([
+        '직속 부하가 아니라 이 발령을 받을 수 없습니다.', DISPATCH_BLOCKED_FALLBACK, DISPATCH_BLOCKED_FALLBACK, DISPATCH_BLOCKED_FALLBACK, null, null,
+    ]);
+    render(<IssuedDispatches rows={rows.slice(0, 2)} queued={null} availability={null} onNew={() => {}} />);
+    expect(screen.getByRole('list', { name: '내린 발령' })).toHaveTextContent('직속 부하가 아니라 이 발령을 받을 수 없습니다.');
+    expect(screen.getByRole('list', { name: '내린 발령' })).toHaveTextContent(DISPATCH_BLOCKED_FALLBACK);
 });

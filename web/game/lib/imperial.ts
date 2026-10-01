@@ -18,6 +18,8 @@ export interface ImperialBadge {
     readonly lineCode: string;
     readonly lineName: string;
     readonly emperorGeneralId: number;
+    /** 같은 월드 장수 행의 지금 공개 이름. 빈 이름은 명시적 null — 계통명 등으로 채우지 않는다(계약판 K8-16, #1150). */
+    readonly emperorName: string | null;
     readonly emperorNodeKind: ImperialNodeKind;
     /** 황제가 실제로 선 구역(省) 또는 수역 id. 배지는 이 노드에 그린다. */
     readonly emperorNodeId: string;
@@ -56,10 +58,11 @@ function isIntOrNull(v: unknown): v is number | null {
 
 function parseBadge(v: unknown): ImperialBadge | null {
     if (!isRecord(v)) return null;
-    const { lineCode, lineName, emperorGeneralId, emperorNodeKind, emperorNodeId, emperorCityId, courtCityId } = v;
+    const { lineCode, lineName, emperorGeneralId, emperorName, emperorNodeKind, emperorNodeId, emperorCityId, courtCityId } = v;
     if (typeof lineCode !== 'string' || lineCode.length === 0) return null;
     if (typeof lineName !== 'string') return null;
     if (typeof emperorGeneralId !== 'number' || !Number.isInteger(emperorGeneralId)) return null;
+    if (!('emperorName' in v) || (emperorName !== null && typeof emperorName !== 'string')) return null;
     if (typeof emperorNodeKind !== 'string' || !NODE_KINDS.includes(emperorNodeKind as ImperialNodeKind)) return null;
     if (typeof emperorNodeId !== 'string' || emperorNodeId.length === 0) return null;
     // 계약은 null 을 「명시」한다 — 빠진 키를 null 로 채우지 않는다.
@@ -71,6 +74,7 @@ function parseBadge(v: unknown): ImperialBadge | null {
         lineCode,
         lineName,
         emperorGeneralId,
+        emperorName: emperorName === '' ? null : (emperorName as string | null),
         emperorNodeKind: emperorNodeKind as ImperialNodeKind,
         emperorNodeId,
         emperorCityId: emperorCityId as number | null,

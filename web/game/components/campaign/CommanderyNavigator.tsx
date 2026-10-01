@@ -25,13 +25,15 @@ export interface CommanderyNavigatorProps {
     onScout?: (no: number) => void;
     scoutPending?: boolean;
     overlayInfo?: boolean;
+    /** false 면 8방향 화살표 칸을 그리지 않는다 — 새 지도(탑다운)는 자유 끌기 · 「내 위치로」가 대신한다. 정보 줄(시야 · 첩보)은 남는다. */
+    arrows?: boolean;
 }
 
 export function CommanderyNavigator({ commanderies, focus, home, onFocus, visibility,
-    intelAge, scoutable, onScout, scoutPending, overlayInfo = false }: CommanderyNavigatorProps) {
+    intelAge, scoutable, onScout, scoutPending, overlayInfo = false, arrows = true }: CommanderyNavigatorProps) {
     const tier = visibility ? visibility.get(focus.no) ?? 'FOG' : null;
     return <>
-        <div style={{ position: 'absolute', right: 'var(--battlefield-control-right, 8px)', top: 8, display: 'grid',
+        {arrows ? <div style={{ position: 'absolute', right: 'var(--battlefield-control-right, 8px)', top: 8, display: 'grid',
             gridTemplateColumns: 'repeat(3, 44px)', gridTemplateRows: 'repeat(3, 44px)', gap: 2,
             background: 'rgba(12,15,14,0.72)', padding: 4, borderRadius: 4, zIndex: 2 }}>
             {ARROW_CELLS.map((cell) => {
@@ -46,7 +48,7 @@ export function CommanderyNavigator({ commanderies, focus, home, onFocus, visibi
                     disabled={!next} aria-label={next ? `${dir.label} — ${next.name}` : `${dir.label} — 지도 끝`}
                     title={next ? `${dir.label} — ${next.name}` : `${dir.label} — 지도 끝`}>{ARROW_GLYPH[dir.key]}</button>;
             })}
-        </div>
+        </div> : null}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: overlayInfo ? 4 : 10,
             flexWrap: 'wrap', ...(overlayInfo ? { position: 'absolute' as const, zIndex: 2, bottom: 8,
                 // 지도판 확대 · 축소 칸(왼쪽 아래 44px + 틈 8)을 비켜 선다 — 겹치면 축소 단추가 이 줄 밑에 깔린다

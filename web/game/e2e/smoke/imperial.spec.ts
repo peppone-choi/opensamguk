@@ -10,8 +10,8 @@ type Presence = { status: number; body: unknown };
 const READY = {
     status: 'READY',
     badges: [
-        { lineCode: 'han', lineName: '한', emperorGeneralId: 101, emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: '70930', emperorCityId: 12, courtCityId: 11 },
-        { lineCode: 'zhong', lineName: '중', emperorGeneralId: 102, emperorNodeKind: 'WATER_ZONE', emperorNodeId: 'w1', emperorCityId: null, courtCityId: null },
+        { lineCode: 'han', lineName: '한', emperorGeneralId: 101, emperorName: '유협', emperorNodeKind: 'LAND_PROVINCE', emperorNodeId: '70930', emperorCityId: 12, courtCityId: 11 },
+        { lineCode: 'zhong', lineName: '중', emperorGeneralId: 102, emperorName: null, emperorNodeKind: 'WATER_ZONE', emperorNodeId: 'w1', emperorCityId: null, courtCityId: null },
     ],
 };
 const NOT_SEEDED = { status: 'NOT_SEEDED', badges: [] };
@@ -73,13 +73,16 @@ test.describe('황실', () => {
         expect(calls.preview).toBe(0);
     });
 
-    test('그려짐: 황제가 있다 — 황통 카드(이름은 지도 미리보기) · 서버 대기 셋 · 칭제, 데스크톱은 대기 셋이 한 줄 · 모바일은 쌓인다', { tag: [BOTH] }, async ({ page }, testInfo) => {
+    test('그려짐: 황제가 있다 — 황통 카드(황제는 서버 이름 · 城은 지도 미리보기) · 서버 대기 줄 · 지도 표식 칸 · 대기 셋 · 칭제, 데스크톱은 대기 셋이 한 줄 · 모바일은 쌓인다', { tag: [BOTH] }, async ({ page }, testInfo) => {
         const calls = await open(page, [{ status: 200, body: READY }]);
         const han = page.getByRole('region', { name: '황통 — 한' });
-        await expect(han).toContainText('어느 인물');
+        await expect(han).toContainText('유협');
+        await expect(han.locator('[data-server-wait="K8-10"]')).toHaveCount(3); // 섭정 · 지키는 세력 · 조정 상태
+        await expect(han.getByText('지도 표식')).toBeVisible();
         await expect(han).toContainText('하남윤 낙양현 · 성 안');
         await expect(han).toContainText('영천군 허현');
         const zhong = page.getByRole('region', { name: '황통 — 중' });
+        await expect(zhong).toContainText('이름 없음');
         await expect(zhong).toContainText('물 위');
         await expect(zhong).toContainText('정하지 않음');
         const waits = ['세력과 황실', '조서', '인장 · 조정 방침'].map((name) => page.getByRole('heading', { name }));

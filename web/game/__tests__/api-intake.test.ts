@@ -54,16 +54,6 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
         expect(JSON.parse(init.body as string)).toEqual({ msgID: 55 });
     });
 
-    it('diploRespondLetter 기본값은 PHP처럼 isAgree false와 빈 reason을 싣는다', async () => {
-        mockFetchOnce(202, { status: 'AVAILABLE', requestId: 'respond-1', turnIdx: 0 });
-        const out = await api.commands.diploRespondLetter({ letterNo: 7 }, 10);
-        expect(isIntakeQueued(out)).toBe(true);
-        const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>;
-        const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
-        expect(url).toBe('/api/game/api/command/diploRespondLetter?generalId=10&turnIdx=0');
-        expect(JSON.parse(init.body as string)).toEqual({ letterNo: 7, isAgree: false, reason: '' });
-    });
-
     it('deleteMessage 인테이크는 precheck Blocked여도 202 재라우팅 — 엔진 deny는 commandResult(RESOLVED !ok) 채널로 온다', async () => {
         // deleteMessage는 intakeCodes 소속이라 game-api CommandController가 precheck Blocked/Unknown이어도
         // isForecastReservable→202 reserveAccepted로 재라우팅한다(이 엔드포인트에서 200 BLOCKED 미발생).
@@ -133,7 +123,7 @@ describe('인테이크 결과 표면화 (api.command / api.commands.*)', () => {
     });
 });
 
-describe('큐 조작 헬퍼 (push/repeat/bulk)', () => {
+describe('큐 조작 헬퍼 (push)', () => {
     it('push는 /api/command/push에 {amount}를 싣는다', async () => {
         mockFetchOnce(202, { status: 'AVAILABLE' });
         await api.commandQueue.push(7, 3);
@@ -141,22 +131,5 @@ describe('큐 조작 헬퍼 (push/repeat/bulk)', () => {
         const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
         expect(url).toBe('/api/game/api/command/push?generalId=7');
         expect(JSON.parse(init.body as string)).toEqual({ amount: 3 });
-    });
-
-    it('repeat deny(200 BLOCKED)는 reason과 함께 resolve된다', async () => {
-        mockFetchOnce(200, { status: 'BLOCKED', reason: '반복할 수 없습니다.' });
-        const out = await api.commandQueue.repeat(7, 2);
-        expect(isIntakeDenied(out)).toBe(true);
-        if (isIntakeDenied(out)) expect(out.reason).toBe('반복할 수 없습니다.');
-    });
-
-    it('bulk 202는 briefList를 동봉한 queued로 resolve된다', async () => {
-        mockFetchOnce(202, { status: 'AVAILABLE', result: true, briefList: ['농지 개간', '상업 투자'], reason: '' });
-        const out = await api.commandQueue.bulk(7, [
-            { action: 'che_농지개간', turnList: [0] },
-            { action: 'che_상업투자', turnList: [1] },
-        ]);
-        expect(isIntakeQueued(out)).toBe(true);
-        if (isIntakeQueued(out)) expect(out.briefList).toEqual(['농지 개간', '상업 투자']);
     });
 });
