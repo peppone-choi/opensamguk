@@ -12,6 +12,8 @@
 
 ## 기존 황실 모델과 접점
 
+칭제 생산자와 통일 소비자의 내부 최소 스냅숏, 독립 구현·통합 검증 순서는 [3층 런타임 통합 초안](layer3-runtime-integration.md#칭제-생산과-통일-소비의-최소-경계)에 분리했다. 공개 황제 위치 배지나 조정 보호 세력으로 칭제를 추정하지 않으며, 이 경계의 설계·순수 테스트는 시즌 하니스 완료를 선행조건으로 두지 않는다. 미결정 자격·효과를 승인된 규칙으로 바꾸지는 않는다.
+
 `docs/design/imperial-succession.md`와 `logic/.../imperial/ImperialWorldState.kt`는 국가 군주와 황제를 분리하고, 한 세계에 여러 `ACTIVE` 황통을 허용한다. `ImperialHouse.holderGeneralId`는 황제이고 `courtNationId`는 조정 보호 세력이다. 둘을 국가 군주 ID나 영토 점유자로 대입하지 않는다. `ImperialWorldCodec`는 `world_state.meta.imperialWorld` 스키마 1을 읽고 쓰며, 키 부재는 황실 미시드, 손상은 오류다. `ImperialTransition`에는 `requestId`, 황통 코드, `FOUNDATION` 등 전이 종류, 행위자, 연월, 사유가 있다.
 
 현행 `changeSovereign(..., FOUNDATION, ...)`는 **이미 houses 목록에 있는 비활성 황통**만 활성화한다. 새 황통을 목록에 더하는 생성 함수가 아니며, 동일 `requestId` 재호출은 예외다. 따라서 칭제 입력을 `FOUNDATION` 한 줄 호출로 구현할 수 없다. 신규 황통 생성, 또는 시드된 비활성 황통의 활성화 경로를 구분하고, 입력 접수·세계 상태 flush·전이 이력·사건을 원자적으로 지속해야 한다. 같은 입력/월 재시도의 처리 결과는 같은 상태와 단일 사건이어야 한다. `ImperialHouse.legitimacy`는 0–100의 필수값이라 초기값 또는 산식의 선택도 필요하다. 기존 `NationRank.peerageOf`는 규모만으로 `HWANGJE`를 주지 않는다. 황제 표시와 국가 작위·정통성 축의 연결 방식은 별도로 정해야 한다.
