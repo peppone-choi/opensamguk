@@ -57,16 +57,18 @@ input:focus, select:focus, textarea:focus {
 .rich-text-editor:focus-within { border-color: var(--gold); }
 .rich-text-editor__toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-xs);
   padding: var(--space-xs);
   border-bottom: 1px solid var(--border-subtle);
   background: var(--bg-card);
 }
-.rich-text-editor__toolbar button { padding: 0.25rem 0.5rem; font-size: var(--text-xs); }
+/* 누를 영역 44 × 44(v3.1 규칙 — 모바일도 같은 게임). 서신 · 게시판이 같이 쓴다. */
+.rich-text-editor__toolbar button { min-width: 44px; min-height: 44px; padding: 0 0.75rem; font-size: var(--text-xs); }
 .rich-text-editor__toolbar button[aria-pressed='true'] { background: var(--gold-dim); color: var(--text-primary); }
 .rich-text-editor__color { display: inline-flex; align-items: center; padding: 0; }
-.rich-text-editor__color input { width: 2rem; min-height: 1.75rem; padding: 0.125rem; }
+.rich-text-editor__color input { width: 44px; height: 44px; min-height: 44px; padding: 0.125rem; }
 .rich-text-editor__content {
   min-height: 8rem;
   padding: var(--space-sm);

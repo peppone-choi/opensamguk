@@ -25,7 +25,10 @@ export type InputTab = (typeof CAMPAIGN_INPUT_TABS)[number];
 export interface GameScreen {
     /** 시안 아트보드 파일 이름. 시안과 코드를 잇는 열쇠다. */
     readonly board: string;
-    /** URL 조각. `/game/<서버>/<slug>` — 기존 게임과 같은 인증 게이트·서버 선택을 쓴다. */
+    /**
+     * URL 조각. `/game/<서버>/<slug>` — 기존 게임과 같은 인증 게이트·서버 선택을 쓴다. v3.1 새 경로(NAV31)이고,
+     * '' 는 작전실(`/game/<서버>`)이다. 옛 조각은 lib/legacyRoutes.ts 의 308 로만 남는다.
+     */
     readonly slug: string;
     /** 시안 제목 그대로. */
     readonly title: string;
@@ -36,20 +39,20 @@ export interface GameScreen {
 }
 
 /** 작전실 — 허브. 다른 화면의 「← 작전실」이 여기로 돌아온다. */
-export const CAMPAIGN_HUB_SLUG = 'war-room';
+export const CAMPAIGN_HUB_SLUG = '';
 
 export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
-    { board: 'WarRoom', slug: 'war-room', title: '작전실', tab: null, onHub: false },
+    { board: 'WarRoom', slug: '', title: '작전실', tab: null, onHub: false },
     { board: 'Command', slug: 'command', title: '이번 순에 할 일', tab: null, onHub: true },
 
     // 장수 행동
-    { board: 'Yuedan', slug: 'yuedan', title: '월단평', tab: '장수 행동', onHub: true },
+    { board: 'Yuedan', slug: 'retinue/yuedan', title: '월단평', tab: '장수 행동', onHub: true },
     { board: 'Reveal', slug: 'reveal', title: '조우 공개 · 격자 리플레이', tab: '장수 행동', onHub: false },
 
     // 배치
-    { board: 'Posts', slug: 'posts', title: '배치 · 방침 · 공사', tab: '배치', onHub: true },
-    { board: 'Main', slug: 'retinue', title: '휘하 편성', tab: '배치', onHub: true },
-    { board: 'Supply', slug: 'supply', title: '보급망 · 창고', tab: '배치', onHub: true },
+    { board: 'Posts', slug: 'territory', title: '배치 · 방침 · 공사', tab: '배치', onHub: true },
+    { board: 'Main', slug: 'retinue', title: '부 편성', tab: '배치', onHub: true },
+    { board: 'Supply', slug: 'territory/supply', title: '보급망 · 창고', tab: '배치', onHub: true },
 
     // 방침
     { board: 'Commandery', slug: 'commandery', title: '군 내정 현황', tab: '방침', onHub: true },
@@ -58,16 +61,16 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
     { board: 'Plan', slug: 'plan', title: '전투 계획 봉인', tab: '방침', onHub: false },
 
     // 계책
-    { board: 'Hand', slug: 'hand', title: '계책 덱', tab: '계책', onHub: true },
+    { board: 'Hand', slug: 'stratagem', title: '계책 덱', tab: '계책', onHub: true },
 
     // 조정 결정
     // 탭 첫 화면은 실제 결정이 있는 발령이다(조정은 아직 틀만 있다).
-    { board: 'Orders', slug: 'orders', title: '발령 · 포상', tab: '조정 결정', onHub: true },
+    { board: 'Orders', slug: 'court?tab=orders', title: '발령 · 포상', tab: '조정 결정', onHub: true },
     { board: 'Court', slug: 'court', title: '조정 — 관직 · 외교 · 천도', tab: '조정 결정', onHub: true },
     { board: 'Unification', slug: 'unification', title: '천하 형세 — 통일 판정', tab: '조정 결정', onHub: false },
 
     // 맥락에서 들어가는 화면. 공성·포로는 시안이 탭을 켜 두었으므로(방침·장수 행동) 그대로 옮긴다.
-    { board: 'Siege', slug: 'siege', title: '공성', tab: '방침', onHub: false },
+    { board: 'Siege', slug: 'corps/siege', title: '공성', tab: '방침', onHub: false },
     { board: 'Captives', slug: 'captives', title: '포로 · 등용', tab: '장수 행동', onHub: false },
     { board: 'CommandMap', slug: 'command-map', title: '옛 명령 → 새 자리', tab: null, onHub: false },
     { board: 'MapLayers', slug: 'map-layers', title: '천하 지도 — 레이어', tab: null, onHub: false },
@@ -83,7 +86,8 @@ export const CAMPAIGN_SCREENS: readonly GameScreen[] = [
  */
 export function campaignHref(slug: string, serverId?: string): string {
     const child = slug;
-    return serverId ? resolveServerGamePath(undefined, serverId, '/game', child) : `/game/${child}`;
+    if (serverId) return resolveServerGamePath(undefined, serverId, '/game', child);
+    return child ? `/game/${child}` : '/game';
 }
 
 export function campaignScreenOf(slug: string): GameScreen | undefined {
@@ -95,15 +99,16 @@ export function campaignScreenOf(slug: string): GameScreen | undefined {
  * 가는 링크는 404 다. 페이지를 새로 만들면 여기에 더한다.
  */
 export const CAMPAIGN_BUILT_SLUGS: ReadonlySet<string> = new Set([
-    'war-room',
-    'yuedan',
-    'posts',
+    '',
+    'retinue/yuedan',
+    'territory',
     'retinue',
-    'supply',
-    'hand',
-    'orders',
+    'territory/supply',
+    'stratagem',
+    'court?tab=orders',
     'court',
-    'siege',
+    'corps/siege',
+    'records',
 ]);
 
 export function isCampaignBuilt(slug: string): boolean {

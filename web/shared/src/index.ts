@@ -1,6 +1,7 @@
 export { Brand, type BrandProps, type BrandSize } from './Brand';
 export { BREAKPOINTS, MEDIA, viewportClass, type ViewportClass } from './breakpoints';
 export { useViewportClass } from './useViewportClass';
+export { VIEWPORT_WIDTHS, installViewport, mediaMatches } from './viewportTesting';
 export * from './strategicMap';
 export { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
@@ -40,6 +41,7 @@ export {
   type PortraitVariant,
 } from './portraitResolver';
 export { ReasonSheet, ReasonTooltip, type ReasonSheetProps, type ReasonTooltipProps } from './ReasonTooltip';
+export { HelpLinkProvider, defaultHelpHref, isPlainClick, useHelpLink, type HelpHref, type HelpLink } from './helpLink';
 export * from './parts';
 export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
 export { Slot, type SlotProps, type SlotState } from './Slot';
@@ -217,6 +219,8 @@ export { isUprisingNation } from './iso/marker';
 export { WATERWAY_SITE_ROLES } from './iso/waterwaySiteRoles';
 export {
   PHASE_LABELS, formatGameDate, hasFinalConsonant, withParticle, worldEventSentence,
-  type EventNames, type GameEvent, type GameEventPage, type GameEventSection, type GameEventTime,
+  EVENT_KIND_COVERAGE, EVENT_KIND_LABEL, EVENT_FACT_LABEL, NOT_WRITTEN_NOTE, RENOWN_SOURCE_LABEL, REWARD_REASON_LABEL,
+  eventFactText, eventKindCoverage, eventKindLabel, eventSentence, numberWithObjectParticle,
+  type EventKindCoverage, type EventNames, type EventViewer, type GameEvent, type GameEventPage, type GameEventSection, type GameEventTime,
 } from './gameEvents';
 export { RECORD_KIND_SECTION, RECORD_SECTION_LABEL, RECORD_SECTION_ORDER, recordSection, type RecordSection } from './recordSections';
