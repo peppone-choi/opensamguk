@@ -253,11 +253,39 @@ function layoutChecks(minTarget) {
     const reach = (dx, dy) => { let d = 0; while (d < 64 && mine(cx + dx * (d + 1), cy + dy * (d + 1))) d += 1; return d; };
     return { w: reach(-1, 0) + reach(1, 0) + 1, h: reach(0, -1) + reach(0, 1) + 1 };
   };
-  const small = []; const smallInline = []; const covered = [];
+  // 첫 화면 위치에서 가려진 요소는 화면 가운데로 스크롤해 한 번 더 잰다(고정 아래 탭 · 머리줄 밑에 걸친 것은 스크롤하면
+  // 빠져나온다 — 2026-10-02 조정 「천도」 · 전투 단추 오탐). 잰 뒤 스크롤 위치를 모두 되돌린다.
+  const whenCentered = (el, fn) => {
+    const saved = [];
+    for (let p = el.parentElement; p; p = p.parentElement) saved.push([p, p.scrollTop, p.scrollLeft]);
+    const se = document.scrollingElement; const sx = se ? se.scrollLeft : 0; const sy = se ? se.scrollTop : 0;
+    try {
+      el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+      return fn();
+    } finally {
+      for (const [p, t, l] of saved) { p.scrollTop = t; p.scrollLeft = l; }
+      if (se) { se.scrollTop = sy; se.scrollLeft = sx; }
+    }
+  };
+  const small = []; const smallInline = []; const covered = []; const coveredFirstViewOnly = []; const smallFirstViewOnly = [];
   for (const el of targets) {
     let r = hitArea(el);
     // 가운데가 다른 요소에 덮인 것은 크기 문제가 아니라 따로 센다(열린 모달이면 맞고, 아니면 겹친 투명 상자 사고).
-    if (r.covered) { covered.push({ ...describe(el), by: r.by }); continue; }
+    // 가운데로 스크롤해도 덮여 있을 때만 덮임이다. 스크롤하면 맞는 것은 그 위치에서 잰 누를 영역으로 44 를 본다.
+    if (r.covered) {
+      const again = whenCentered(el, () => hitArea(el));
+      if (again.covered) { covered.push({ ...describe(el), by: again.by }); continue; }
+      coveredFirstViewOnly.push({ ...describe(el), by: r.by });
+      r = again;
+    } else if (r.w < minTarget || r.h < minTarget) {
+      // 가운데는 맞지만 가장자리가 고정 탭 · 머리줄에 걸려 누를 영역이 짧게 잡힌 경우도 가운데로 스크롤해 다시 잰다
+      // (2026-10-02 외교 「천하 지도 보기」 104×29 — 상자는 44, 아래 15px 가 아래 탭에 걸림). 더 큰 쪽을 쓴다.
+      const again = whenCentered(el, () => hitArea(el));
+      if (!again.covered && again.w * again.h > r.w * r.h) {
+        if (again.w >= minTarget && again.h >= minTarget) smallFirstViewOnly.push({ ...describe(el), hitW: Math.round(r.w), hitH: Math.round(r.h) });
+        r = again;
+      }
+    }
     // 라벨로 감싸거나 for 로 이은 입력은 라벨까지가 누르는 자리다.
     const label = el.closest('label') || (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
     if (label) {
@@ -338,6 +366,12 @@ function layoutChecks(minTarget) {
     targetsMeasuredByRectOnly: rectOnly,
     coveredTargets: covered.length,
     coveredTargetSamples: covered.slice(0, 15),
+    // 첫 화면 위치에서만 가려지고 가운데로 스크롤하면 맞는 것(결함 아님, 참고). 고정 아래 탭 · 머리줄 밑에 걸친 경우.
+    coveredAtFirstViewOnly: coveredFirstViewOnly.length,
+    coveredAtFirstViewOnlySamples: coveredFirstViewOnly.slice(0, 15),
+    // 첫 화면 위치에서만 44 미만(가장자리가 고정 탭 · 머리줄에 걸림)이고 가운데로 스크롤하면 44 이상인 것(결함 아님, 참고).
+    smallAtFirstViewOnly: smallFirstViewOnly.length,
+    smallAtFirstViewOnlySamples: smallFirstViewOnly.slice(0, 15),
     smallTargetSamples: small.slice(0, 20),
     titleOnly: titleOnly.length,
     titleOnlySamples: titleOnly.slice(0, 20),

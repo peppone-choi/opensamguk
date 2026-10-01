@@ -69,6 +69,22 @@ setTimeout(() => { const ac = new AbortController();
   setTimeout(() => ac.abort(), 1000); }, 2500);
 </script></body></html>`;
 
+// 덮임: 투명 상자에 덮인 단추(진짜 덮임 — 스크롤해도 덮임)와, 첫 화면에서 아래 고정 탭 밑에 걸친 단추(스크롤하면 빠져나옴).
+// 「걸친 단추」는 가운데(y 770)는 맞지만 아래 14px 가 탭(780–844)에 걸려 첫 화면에서는 누를 영역이 44 미만으로 잡힌다.
+const COVER = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>덮임</title></head>
+<body style="margin:0"><main style="padding:16px 16px 120px">
+<div style="position:relative;width:200px;height:48px;margin-top:80px">
+  <button type="button" style="width:200px;height:48px">덮인 단추</button>
+  <div style="position:absolute;inset:0;background:transparent"></div>
+</div>
+<div style="height:640px"></div>
+<button type="button" style="width:200px;height:48px">아래 탭 밑 단추</button>
+<div style="height:600px"></div>
+</main>
+<button type="button" style="position:absolute;left:220px;top:746px;width:150px;height:48px">걸친 단추</button>
+<nav style="position:fixed;left:0;right:0;bottom:0;height:64px;background:#222" aria-label="아래 탭"><a href="/good" style="display:inline-block;width:64px;height:64px;color:#fff">탭</a></nav>
+</body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -79,6 +95,7 @@ before(async () => {
     if (req.url === '/lazy') return send(200, 'text/html; charset=utf-8', LAZY);
     if (req.url === '/late') return send(200, 'text/html; charset=utf-8', LATE);
     if (req.url === '/cancel') return send(200, 'text/html; charset=utf-8', CANCEL);
+    if (req.url === '/cover') return send(200, 'text/html; charset=utf-8', COVER);
     if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
     if (req.url === '/slow.bin') {
       // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
@@ -275,4 +292,21 @@ test('취소된 요청은 받는 중이 아니다: 적재 창을 붙잡지 않�
   const c = (r.canceledList ?? []).find((x) => x.url === '/slow.bin');
   assert.ok(c && c.partialBytes > 0 && c.offeredBytes === 50_000_000, `취소 목록: ${JSON.stringify(r.canceledList)}`);
   assert.ok(r.canceledPartialBytes >= c.partialBytes && r.wireBytes >= r.transferBytes + c.partialBytes, `선 위 바이트 ${r.wireBytes} · 다 받은 ${r.transferBytes}`);
+});
+
+// 첫 화면에서 아래 고정 탭 밑에 걸친 단추는 덮임이 아니다(스크롤하면 맞는다). 투명 상자에 덮인 단추는 덮임이다.
+// (2026-10-02: 조정 「천도」 · 전투 단추가 첫 화면 위치만 보고 덮임으로 잡혔다.)
+test('덮임 · 44: 스크롤하면 빠져나오는 고정 탭 밑 · 가장자리 걸침은 세지 않고, 투명 상자 덮임은 센다', async () => {
+  const out = path.join(outDir, 'cover');
+  const [row] = await run(defaultOptions({ base, pages: ['/cover'], profiles: ['mobile'], throttles: ['none'], out, axe: false, probe: false, mapGraceMs: 0, settleQuietMs: 500 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'cover-mobile-none.json'), 'utf8'));
+  assert.equal(r.layout.coveredTargets, 1, JSON.stringify(r.layout.coveredTargetSamples));
+  assert.equal(r.layout.coveredTargetSamples[0].text, '덮인 단추');
+  assert.equal(r.layout.coveredAtFirstViewOnly, 1, JSON.stringify(r.layout.coveredAtFirstViewOnlySamples));
+  assert.equal(r.layout.coveredAtFirstViewOnlySamples[0].text, '아래 탭 밑 단추');
+  // 가장자리만 걸친 것도 스크롤하면 44 이상 — 44 미만으로 세지 않는다(10-02 외교 「천하 지도 보기」 104×29 오탐).
+  assert.equal(r.layout.smallTargets, 0, JSON.stringify(r.layout.smallTargetSamples));
+  assert.equal(r.layout.smallAtFirstViewOnly, 1, JSON.stringify(r.layout.smallAtFirstViewOnlySamples));
+  assert.equal(r.layout.smallAtFirstViewOnlySamples[0].text, '걸친 단추');
 });
