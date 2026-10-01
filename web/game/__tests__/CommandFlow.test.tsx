@@ -1,21 +1,34 @@
 // 명령 흐름(P-W02) — 설계서 §2.1 상태 유지 규칙이 화면에서 지켜지는지.
 import { configure, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { beforeEach, expect, test, vi } from 'vitest';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import CommandFlow from '../components/command-flow/CommandFlow';
 import { api } from '../lib/api';
 import { submitCommandAndAwaitResult } from '../lib/commandSubmit';
+import { __resetHelpCache } from '../lib/help';
 
 // jsdom에서 부품 · 목록을 그리고 가짜 서버 응답을 기다린다 — CI · 로컬 병렬 부하에서 기본 1초 대기 창 · 5초 한도가 모자란다
 // (부하 평균 557에서 「찾을 수 없음」으로 재현, 응답을 1.2초 늦추면 같은 실패가 나고 창을 5초로 늘리면 통과 — 2026-10-01).
 configure({ asyncUtilTimeout: 5000 });
 vi.setConfig({ testTimeout: 20_000 });
-vi.mock('../lib/api', () => ({
+// api 만 흉내 낸다 — 도움말 읽기(lib/help)는 진짜 fetchGame 으로 아래 fetch 흉내에 닿는다.
+vi.mock('../lib/api', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('../lib/api')>()),
     api: {
         reservedCommands: vi.fn(), command: vi.fn(), travelOptions: vi.fn(), deployOptions: vi.fn(),
         fieldOptions: vi.fn(), personalOptions: vi.fn(), peopleOptions: vi.fn(),
     },
 }));
 vi.mock('../lib/commandSubmit', () => ({ submitCommandAndAwaitResult: vi.fn() }));
+// 사유 시트의 도움말(K7 useReasonHelp)은 지금 주소 · 쿼리를 두고 서랍을 연다 — 라우터 흉내.
+const nav = vi.hoisted(() => ({ pathname: '/game/pep', search: 'do=action.farm' }));
+const router = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), back: vi.fn() }));
+vi.mock('next/navigation', () => ({
+    usePathname: () => nav.pathname,
+    useSearchParams: () => new URLSearchParams(nav.search),
+    useRouter: () => router,
+}));
+/** 도움말 실패 사유 응답(`/api/help/failures/<code>?inputId=…`). 없으면 원장에 없는 사유(404). */
+const failures = new Map<string, unknown>();
 
 const ring = (filled: number[]) => ({
     result: true, generalId: 1,
@@ -24,6 +37,14 @@ const ring = (filled: number[]) => ({
 
 beforeEach(() => {
     vi.clearAllMocks();
+    __resetHelpCache();
+    failures.clear();
+    const respond = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+        const m = /\/api\/game\/api\/help\/failures\/([^?]+)\?inputId=(.+)$/.exec(url);
+        const hit = m ? failures.get(`${decodeURIComponent(m[1])}@${decodeURIComponent(m[2])}`) : undefined;
+        return hit ? respond(200, hit) : respond(404, { error: { code: 'FAILURE_REASON_NOT_FOUND', message: '' } });
+    }));
     vi.mocked(api.reservedCommands).mockResolvedValue(ring([0, 1]) as never);
     vi.mocked(api.travelOptions).mockImplementation(async (inputId) => ({
         inputId, available: true,
@@ -143,6 +164,23 @@ test('옵션이 막으면 서버 사유를 그대로 보인다', async () => {
     expect(screen.getAllByText('성 밖에 있습니다').length).toBeGreaterThan(0);
 });
 
+test('막힌 예약 단추의 사유 시트 — 「이렇게 하면 됩니다」와 도움말(지금 주소 · 쿼리를 두고 서랍을 연다)', async () => {
+    vi.mocked(api.fieldOptions).mockResolvedValue({ inputId: 'action.farm', available: false, code: 'OUTSIDE_CITY', reason: '성 밖에 있습니다' });
+    failures.set('OUTSIDE_CITY@action.farm', {
+        schemaVersion: 1, reason: 'OUTSIDE_CITY', reviewState: 'DRAFT', explanation: '성 밖에 있습니다',
+        recoveryAdvice: '성 안으로 들어간 뒤 다시 예약하세요.', relatedTopicIds: [],
+    });
+    render(<CommandFlow generalId={1} initialInputId="action.farm" onClose={vi.fn()} />);
+    await waitFor(async () => expect(await submitButton()).toHaveAttribute('data-input-status', 'BLOCKED'));
+    fireEvent.click(await submitButton());
+    expect(await screen.findByText('성 안으로 들어간 뒤 다시 예약하세요.')).toBeInTheDocument();
+    const link = screen.getByRole('link', { name: /^도움말 — / });
+    const click = new MouseEvent('click', { bubbles: true, cancelable: true });
+    fireEvent(link, click);
+    expect(click.defaultPrevented).toBe(true); // 기본 링크(`?help=…`, 다른 쿼리를 지움) 대신
+    expect(router.push).toHaveBeenCalledWith('/game/pep?do=action.farm&help=input%3Aaction.farm%21OUTSIDE_CITY', { scroll: false });
+});
+
 test('서버가 제출을 거절하면 그 code · reason으로 막고 닫지 않는다 — 칸이나 순을 바꾸면 풀린다', async () => {
     vi.mocked(submitCommandAndAwaitResult).mockImplementation(async (submit) => {
         await submit();
@@ -225,3 +263,5 @@ test('출병 — 부곡과 목적지를 고르면 옛 출병 폼과 같은 인�
     fireEvent.click(await submitButton());
     await waitFor(() => expect(api.command).toHaveBeenCalledWith('action.deploy', { bugokIds: [7], destinationProvinceId: 'p1' }, 1, 2));
 });
+
+afterEach(() => { vi.unstubAllGlobals(); });

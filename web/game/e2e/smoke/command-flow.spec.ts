@@ -93,6 +93,12 @@ async function openFlow(page: Page, server: Server, query: string) {
     await expect(flow(page).locator('[data-turn-idx][aria-pressed="true"]')).toHaveCount(1);
 }
 
+/** 화면 글자 속 영어 낱말(3글자 이상) — 서버 원문 · 코드 · 입력 id 가 글자로 새면 걸린다(battle.spec 과 같은 기준). */
+async function englishWords(page: Page, root: string): Promise<string[]> {
+    const text = await page.locator(root).first().innerText();
+    return text.match(/[A-Za-z]{3,}/g) ?? [];
+}
+
 test.describe('명령 흐름', () => {
     test('작전실 12순 열에서 빈 순을 누르면 그 순으로 흐름이 열린다', async ({ page }) => {
         await serve(page, fresh());
@@ -106,12 +112,13 @@ test.describe('명령 흐름', () => {
         await expect(flow(page).getByRole('button', { name: '05순 — 빈 순' })).toHaveAttribute('aria-pressed', 'true');
     });
 
-    test('규칙: 누를 영역 44 · disabled 0 · title 0 · 가로 넘침 0', { tag: [BOTH] }, async ({ page }) => {
+    test('규칙: 누를 영역 44 · disabled 0 · title 0 · 가로 넘침 0 · 영어 원문 0', { tag: [BOTH] }, async ({ page }) => {
         await openFlow(page, fresh(), 'do=action.move');
         await expect(flow(page).getByRole('option', { name: /영천/ })).toBeVisible();
         expect(await smallTargetsInFlow(page)).toEqual([]);
         expect(await flow(page).locator('[disabled]').count()).toBe(0);
         expect(await titleOnlyInfo(page, '[data-testid="command-flow"]')).toEqual([]);
+        expect(await englishWords(page, '[data-testid="command-flow"]')).toEqual([]);
         await expectNoHorizontalOverflow(page);
     });
 

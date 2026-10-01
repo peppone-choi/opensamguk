@@ -3,6 +3,7 @@
 // 인자 패널 — 명령 머리(이름 · 순 칩) · 설명 · 칸들 · 미리 보기 · 제출.
 // 가능 · 불가 · 준비 중은 서버 옵션으로만 그린다(InputAction). 빈 칸은 누르면 알린다(클라이언트가 막지 않는다).
 import { InputAction, StatusView } from '@opensamguk/ui';
+import { useReasonHelp } from '@/hooks/useHelp';
 import type { FlowCommand } from '@/lib/command-flow/catalog';
 import type { ArgValue, Draft } from '@/lib/command-flow/flow-state';
 import { amountMax, type ArgField } from '@/lib/command-flow/options';
@@ -41,6 +42,9 @@ const slotNo = (turnIdx: number) => String(turnIdx + 1).padStart(2, '0');
 
 export default function ArgsPanel(props: ArgsPanelProps) {
     const { command, slot, options, draft, carried, dropped, missing, submitting, result, rejected, onArg, onSubmit, onBack, onRetry, onMapPick } = props;
+    const availability = command ? submitAvailability(command.inputId, options, rejected) : null;
+    // 사유 시트의 「이렇게 하면 됩니다」 · 도움말 고리 · 서랍 열기(K7 #1136). 훅이라 아래 빈 패널 반환보다 먼저 부른다.
+    const help = useReasonHelp(availability?.code ?? null, command?.inputId ?? null);
     if (!command) {
         return (
             <div className={styles.args}>
@@ -50,7 +54,6 @@ export default function ArgsPanel(props: ArgsPanelProps) {
     }
     const ready = options && options.state === 'READY' ? options : null;
     const fieldLabel = (key: string) => ready?.fields.find((f) => f.key === key)?.label ?? key;
-    const availability = submitAvailability(command.inputId, options, rejected);
 
     return (
         <div className={styles.args}>
@@ -121,6 +124,7 @@ export default function ArgsPanel(props: ArgsPanelProps) {
                     reasonTitle={rejected ? `${command.name} — 서버가 받지 않았습니다` : `${command.name} — 지금은 할 수 없습니다`}
                     onAct={onSubmit}
                     className={styles.submit}
+                    {...help}
                 />
             </div>
         </div>
