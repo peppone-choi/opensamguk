@@ -114,6 +114,10 @@ test.describe('서신', () => {
         await press(editor, testInfo);
         await page.keyboard.type('곧 가겠습니다');
         await expect(send).not.toHaveAttribute('aria-disabled', 'true');
+        // 모바일 하단 탭 막대(sticky)는 화면 맨 아래 끝을 덮는다 — 「보일 만큼만」 스크롤하면 단추가 막대 밑에 놓인다(셸에
+        // scroll-padding-bottom 이 없어서). 셸 scroll-padding 대기(K3) — 고쳐지면 이 줄을 지워 같은 결함을 다시 잡게 한다.
+        // 그동안은 사람처럼 단추를 화면 가운데로 올린 뒤 누른다.
+        await send.evaluate((el) => el.scrollIntoView({ block: 'center' }));
         await press(send, testInfo);
         await expect(compose.getByText('순욱에게 보냈습니다')).toBeVisible();
         expect(server.sent).toHaveLength(1);

@@ -1,51 +1,30 @@
 'use client';
 
 // 서신(P-Q02) — 개인 · 세력 · 전체 · 요청. K6 설계서 §3.8, 보드 V31K6Mail · MMail.
-// 셸(#1107) 전에는 `/game/mailbox` 가 휘하 세션 제공자 밖이라 장수 · 세력을 여기서 한 번 읽는다(옛 메일함과 같은 front-info).
-// 머리줄 서신 단추도 이 주소를 연다. 받은 요청은 한 읽기(useRequests)를 요청 탭 배지와 같이 쓴다.
-import { useEffect, useState } from 'react';
-import { StatusView } from '@opensamguk/ui';
-import PageHead from '@/components/PageHead';
-import Shell from '@/components/Shell';
+// 외교 서신은 외교 화면(P-K02)의 칸이다 — 이 화면에는 외교 탭이 없다. 머리줄 서신 단추도 이 주소를 연다.
+// 장수 · 세력은 셸(GameFrame)의 세션 한 읽기에서 받고, GameShell 이 광장 하위 탭 · 장수 없음 · 불러오는 중을 맡는다.
+// 받은 요청은 한 읽기(useRequests)를 요청 탭 배지와 같이 쓴다. 「새로고침」은 서신함과 받은 요청을 같이 다시 읽는다.
+import { useState } from 'react';
+import GameShell from '@/components/GameShell';
 import { MailScreen } from '@/components/mail/MailScreen';
-import { api } from '@/lib/api';
-import type { MailMe } from '@/lib/mail/use-mail';
+import { useGameSession } from '@/lib/campaign-session';
 import { useRequests } from '@/lib/requests';
-
-type MeLoad = { state: 'loading' } | { state: 'error' } | { state: 'none' } | { state: 'ready'; me: MailMe };
+import styles from './page.module.css';
 
 export default function MailPage() {
-    const [meLoad, setMeLoad] = useState<MeLoad>({ state: 'loading' });
-    const [seq, setSeq] = useState(0);
+    const session = useGameSession();
+    const general = session.frontInfo?.general ?? null;
     const [refreshKey, setRefreshKey] = useState(0);
-
-    useEffect(() => {
-        let alive = true;
-        setMeLoad({ state: 'loading' });
-        api.frontInfo()
-            .then((info) => {
-                if (!alive) return;
-                const g = info.general;
-                setMeLoad(g.hasGeneral && g.generalId != null ? { state: 'ready', me: { generalId: g.generalId, nationId: g.nationId } } : { state: 'none' });
-            })
-            .catch(() => { if (alive) setMeLoad({ state: 'error' }); });
-        return () => { alive = false; };
-    }, [seq]);
-
-    const requests = useRequests(meLoad.state === 'ready' ? meLoad.me.generalId : null, refreshKey);
+    const requests = useRequests(session.generalId, refreshKey);
 
     return (
-        <Shell>
-            <PageHead
-                title="서신"
-                actions={meLoad.state === 'ready' ? (
-                    <button type="button" className="os-button os-button--ghost" onClick={() => { setRefreshKey((k) => k + 1); requests.reload(); }}>새로고침</button>
-                ) : null}
-            />
-            {meLoad.state === 'loading' ? <StatusView kind="loading" rows={4} /> : null}
-            {meLoad.state === 'error' ? <StatusView kind="error" title="장수 정보를 불러오지 못했습니다" onRetry={() => setSeq((n) => n + 1)} /> : null}
-            {meLoad.state === 'none' ? <StatusView kind="empty" title="이 서버에 내 장수가 없습니다" body="장수를 만들면 서신을 주고받을 수 있습니다." /> : null}
-            {meLoad.state === 'ready' ? <MailScreen me={meLoad.me} requests={requests} refreshKey={refreshKey} /> : null}
-        </Shell>
+        <GameShell title="서신">
+            <div className={styles.toolbar}>
+                <button type="button" className="os-button os-button--ghost" onClick={() => setRefreshKey((k) => k + 1)}>새로고침</button>
+            </div>
+            {session.generalId != null && general ? (
+                <MailScreen me={{ generalId: session.generalId, nationId: general.nationId }} requests={requests} refreshKey={refreshKey} />
+            ) : null}
+        </GameShell>
     );
 }
