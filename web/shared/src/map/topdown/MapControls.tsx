@@ -139,7 +139,8 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
   };
   const base = useId();
   const groupRef = useRef<HTMLDivElement>(null);
-  // 판은 단추 오른쪽 끝에 맞춰 왼쪽으로 펼친다 — 지도 상자가 좁으면(모바일 작전실 열) 상자 왼쪽 끝을 넘지 않게 줄인다
+  // 판은 단추 오른쪽 끝에 맞춰 왼쪽으로 펼친다 — 지도 상자가 좁으면(모바일 작전실 열) 상자 왼쪽 끝을 넘지 않게 줄인다.
+  // 하한을 두지 않는다: 모바일 작전실 지도 열은 151이라 하한 160이 판을 상자 밖으로 25 밀었다(CI e2e, 10-01).
   const [panelWidth, setPanelWidth] = useState(280);
   useLayoutEffect(() => {
     if (!open) return;
@@ -147,7 +148,7 @@ export function MapLayerButtons({ layers, onLayersChange, pending = [], legend, 
     const holder = group?.offsetParent as HTMLElement | null | undefined;
     if (!group || !holder) return;
     const room = group.getBoundingClientRect().right - holder.getBoundingClientRect().left - 8;
-    if (room > 0) setPanelWidth(Math.max(160, Math.min(280, room)));
+    if (room > 0) setPanelWidth(Math.min(280, room));
   }, [open]);
   useEffect(() => {
     if (!open) return undefined;
