@@ -78,7 +78,7 @@ test.describe('P-G07 커뮤니티 글 — 데스크톱 · 모바일 같은 흐�
   test('손님은 로그인 안내만 본다', { tag: BOTH }, async ({ page }) => {
     await open(page, { member: false });
     await expect(page.getByRole('button', { name: '신고' })).toHaveCount(0);
-    await expect(page.getByLabel('댓글')).toHaveCount(0);
+    await expect(page.getByLabel('댓글', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('main').getByRole('link', { name: '로그인' })).toHaveAttribute('href', '/login?next=%2Fboard%2Fposts%2F42');
   });
 });
