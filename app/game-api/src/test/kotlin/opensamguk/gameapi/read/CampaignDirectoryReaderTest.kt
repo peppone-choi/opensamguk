@@ -69,7 +69,7 @@ class CampaignDirectoryReaderTest {
         assertEquals("LORD", out.people[0].role); assertEquals("RETAINER", out.people[1].role)
         assertEquals(1, out.people[1].lordGeneralId)
         for (person in out.people.drop(2)) {
-            assertNull(person.stats); assertNull(person.aptitudes); assertNull(person.locationCityId)
+            assertNotNull(person.stats); assertNotNull(person.aptitudes); assertNull(person.locationCityId)
             assertNull(person.bonds); assertNull(person.lordGeneralId); assertNull(person.role)
         }
         val admin = reader.adminPeople("타국", "ID", null, 50)
@@ -84,7 +84,7 @@ class CampaignDirectoryReaderTest {
         assertFailsWith<ResponseStatusException> { reader.people(41, "NATION", "", "ID", cursor, 2) }
         assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "주공", "ID", cursor, 2) }
         assertFailsWith<ResponseStatusException> { reader.adminPeople("", "ID", cursor, 2) }
-        assertFailsWith<ResponseStatusException> { PeopleCursor.decode(cursor, PeopleCursor.context(8, 1, "ALL", "")) }
+        assertFailsWith<ResponseStatusException> { PeopleCursor.decode(cursor, "different-world-context") }
         assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "ID", "!", 50) }
     }
 
@@ -94,6 +94,163 @@ class CampaignDirectoryReaderTest {
         assertEquals(listOf(1, 2), reader.people(41, "RETINUE", "", "ID", null, 50).people.map { it.generalId })
         assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "RENOWN", null, 50) }
         assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "ID", null, 101) }
+    }
+
+    private fun sortingFixture(): List<GeneralReadEntity> {
+        setup()
+        val rows = listOf(
+            GeneralReadEntity(id = 4, worldId = 7, name = "베타", nationId = 30, age = 10,
+                leadership = 90, strength = 80, intel = 70, politics = 60, charm = 50,
+                meta = mapOf(PersonPolicyState.META_KEY to policy)),
+            GeneralReadEntity(id = 2, worldId = 7, name = "알파", nationId = 20, age = 10,
+                leadership = 90, strength = 80, intel = 70, politics = 60, charm = 50,
+                meta = mapOf(PersonPolicyState.META_KEY to policy)),
+            GeneralReadEntity(id = 5, worldId = 7, name = "오메가", nationId = 0, age = -1),
+            GeneralReadEntity(id = 3, worldId = 7, name = "베타", nationId = 10, age = 30,
+                leadership = 40, strength = 50, intel = 60, politics = 70, charm = 80,
+                meta = mapOf(PersonPolicyState.META_KEY to policy)),
+            GeneralReadEntity(id = 1, worldId = 7, name = "감마", nationId = 10, age = 20,
+                leadership = 60, strength = 70, intel = 80, politics = 90, charm = 50,
+                meta = mapOf(PersonPolicyState.META_KEY to policy)),
+        )
+        `when`(generals.findAll()).thenReturn(rows)
+        `when`(nations.findAll()).thenReturn(listOf(
+            NationReadEntity(id = 30, worldId = 7, name = "나"),
+            NationReadEntity(id = 10, worldId = 7, name = "가"),
+            NationReadEntity(id = 20, worldId = 7, name = "나")))
+        return rows
+    }
+
+    @Test fun `all approved sort keys order the entire filter before keyset paging with fixed id ties`() {
+        sortingFixture()
+        // Literal orders include opposite stat ranks, equal-name and equal-affiliation rows, and nulls.
+        val orders = mapOf(
+            "ID" to (listOf(1, 2, 3, 4, 5) to listOf(5, 4, 3, 2, 1)),
+            "NAME" to (listOf(1, 3, 4, 2, 5) to listOf(5, 2, 3, 4, 1)),
+            "AFFILIATION" to (listOf(1, 3, 2, 4, 5) to listOf(2, 4, 1, 3, 5)),
+            "LEADERSHIP" to (listOf(3, 1, 2, 4, 5) to listOf(2, 4, 1, 3, 5)),
+            "STRENGTH" to (listOf(3, 1, 2, 4, 5) to listOf(2, 4, 1, 3, 5)),
+            "INTEL" to (listOf(3, 2, 4, 1, 5) to listOf(1, 2, 4, 3, 5)),
+            "POLITICS" to (listOf(2, 4, 3, 1, 5) to listOf(1, 3, 2, 4, 5)),
+            "CHARM" to (listOf(1, 2, 4, 3, 5) to listOf(3, 1, 2, 4, 5)),
+            "TOTAL" to (listOf(3, 1, 2, 4, 5) to listOf(1, 2, 4, 3, 5)),
+            "COMMAND" to (listOf(3, 1, 2, 4, 5) to listOf(2, 4, 1, 3, 5)),
+            "ADMINISTRATION" to (listOf(2, 4, 3, 1, 5) to listOf(1, 3, 2, 4, 5)),
+            "STRATEGY" to (listOf(3, 2, 4, 1, 5) to listOf(1, 2, 4, 3, 5)),
+            "ENVOY" to (listOf(2, 4, 1, 3, 5) to listOf(3, 1, 2, 4, 5)),
+            "AGE" to (listOf(2, 4, 1, 3, 5) to listOf(3, 1, 2, 4, 5)),
+        )
+        assertEquals(PeopleSort.entries.map { it.name }.toSet(), orders.keys)
+        for ((sort, expected) in orders) for ((direction, ids) in listOf("ASC" to expected.first, "DESC" to expected.second)) {
+            assertEquals(ids, reader.people(41, "ALL", "", sort, null, 100, direction).people.map { it.generalId }, "$sort $direction")
+            for (size in listOf(1, 2, 3)) {
+                val gathered = mutableListOf<Int>()
+                var cursor: String? = null
+                do {
+                    val page = reader.people(41, "ALL", "", sort, cursor, size, direction)
+                    gathered += page.people.map { it.generalId }
+                    cursor = page.nextCursor
+                    assertTrue(gathered.size <= 5, "cursor must make progress")
+                } while (cursor != null)
+                assertEquals(ids, gathered, "$sort $direction limit=$size")
+            }
+        }
+        assertEquals(listOf(1, 3), reader.people(41, "NATION", "", "NAME", null, 1).let { first ->
+            first.people + reader.people(41, "NATION", "", "NAME", first.nextCursor, 1).people
+        }.map { it.generalId })
+    }
+
+    @Test fun `public stats retain missing corrupt and negative data boundaries without widening private fields`() {
+        setup()
+        enemy.leadership = 91; enemy.strength = 82; enemy.intel = 73; enemy.politics = 64; enemy.charm = 55
+        val public = reader.people(41, "ALL", "타국", "ID", null, 50).people.single()
+        assertEquals(opensamguk.gameapi.dto.DirectoryStats(91, 82, 73, 64, 55), public.stats)
+        assertEquals(opensamguk.gameapi.dto.DirectoryAptitudes(87, 67, 71, 59), public.aptitudes)
+        assertNull(public.role); assertNull(public.locationCityId); assertNull(public.lordGeneralId); assertNull(public.bonds)
+        for (meta in listOf<Map<String, Any?>>(emptyMap(), mapOf(PersonPolicyState.META_KEY to "corrupt"))) {
+            enemy.meta = meta
+            val missing = reader.people(41, "ALL", "타국", "ID", null, 50).people.single()
+            assertNull(missing.stats); assertNull(missing.aptitudes)
+        }
+        enemy.meta = mapOf(PersonPolicyState.META_KEY to policy); enemy.charm = -1
+        assertNull(reader.people(41, "ALL", "타국", "TOTAL", null, 50).people.single().stats)
+    }
+
+    @Test fun `null sort values remain last with ascending id even when descending across a boundary`() {
+        val rows = sortingFixture()
+        val missing = GeneralReadEntity(id = 6, worldId = 7, name = "결손", nationId = 77, age = -2)
+        `when`(generals.findAll()).thenReturn(listOf(missing) + rows)
+        for (sort in listOf("AFFILIATION", "TOTAL", "COMMAND", "AGE")) for (direction in listOf("ASC", "DESC")) {
+            val first = reader.people(41, "ALL", "", sort, null, 5, direction)
+            assertEquals(5, first.people.last().generalId)
+            assertEquals(listOf(6), reader.people(41, "ALL", "", sort, first.nextCursor, 5, direction).people.map { it.generalId })
+        }
+    }
+
+    @Test fun `cursor binds sort direction query scope actor world and authority but allows another page size`() {
+        sortingFixture()
+        val cursor = assertNotNull(reader.people(41, "ALL", "", "NAME", null, 1).nextCursor)
+        assertEquals(listOf(3, 4, 2), reader.people(41, "ALL", "", "name", cursor, 3, "asc").people.map { it.generalId })
+        val denied = listOf<() -> Any>(
+            { reader.people(41, "ALL", "", "ID", cursor, 1) },
+            { reader.people(41, "ALL", "", "NAME", cursor, 1, "DESC") },
+            { reader.people(41, "ALL", "베타", "NAME", cursor, 1) },
+            { reader.people(41, "NATION", "", "NAME", cursor, 1) },
+            { reader.adminPeople("", "NAME", cursor, 1) },
+        )
+        for (call in denied) assertEquals(400, assertFailsWith<ResponseStatusException> { call() }.statusCode.value())
+        `when`(owners.resolveGeneralId(42)).thenReturn(4)
+        assertEquals(400, assertFailsWith<ResponseStatusException> { reader.people(42, "ALL", "", "NAME", cursor, 1) }.statusCode.value())
+        `when`(retainers.findAll()).thenReturn(emptyList())
+        assertEquals(400, assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", cursor, 1) }.statusCode.value())
+    }
+
+    @Test fun `changed ordering inputs membership or nation names require a fresh first page`() {
+        val rows = sortingFixture()
+        val cursor = assertNotNull(reader.people(41, "ALL", "", "NAME", null, 1).nextCursor)
+        rows.first().strength += 1
+        assertEquals(409, assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", cursor, 1) }.statusCode.value())
+        rows.first().strength -= 1
+        `when`(generals.findAll()).thenReturn(rows.drop(1))
+        assertEquals(409, assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", cursor, 1) }.statusCode.value())
+        `when`(generals.findAll()).thenReturn(rows + GeneralReadEntity(id = 99, worldId = 7, name = "신규"))
+        assertEquals(409, assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", cursor, 1) }.statusCode.value())
+        `when`(generals.findAll()).thenReturn(rows)
+        nations.findAll().first().name = "새 이름"
+        assertEquals(409, assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", cursor, 1) }.statusCode.value())
+        assertEquals("READY", reader.people(41, "ALL", "", "NAME", null, 1).status)
+    }
+
+    @Test fun `names use NFC root case normalization and initials across the entire filtered set`() {
+        sortingFixture()
+        assertEquals(listOf(3, 4), reader.people(41, "ALL", "ㅂㅌ", "NAME", null, 50).people.map { it.generalId })
+        val first = reader.people(41, "ALL", " 베타 ", "NAME", null, 1)
+        val decomposed = java.text.Normalizer.normalize("베타", java.text.Normalizer.Form.NFD)
+        assertEquals(listOf(4), reader.people(41, "ALL", decomposed, "NAME", first.nextCursor, 50).people.map { it.generalId })
+        assertTrue(reader.people(41, "ALL", "없는이름", "NAME", null, 50).people.isEmpty())
+        assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", null, 1, "SIDEWAYS") }
+    }
+
+    @Test fun `cursor rejects legacy malformed and forged anchor values`() {
+        sortingFixture()
+        val cursor = assertNotNull(reader.people(41, "ALL", "", "NAME", null, 1).nextCursor)
+        val bytes = java.util.Base64.getUrlDecoder().decode(cursor)
+        val parts = String(bytes, Charsets.UTF_8).split('|')
+        fun altered(part: Int, value: String): String = java.util.Base64.getUrlEncoder().withoutPadding()
+            .encodeToString(parts.mapIndexed { i, old -> if (i == part) value else old }.joinToString("|").toByteArray())
+        for (bad in listOf("!", "a".repeat(16385), altered(0, "1"), altered(3, "0"), altered(3, "999"), altered(4, "n:123"))) {
+            assertEquals(400, assertFailsWith<ResponseStatusException> { reader.people(41, "ALL", "", "NAME", bad, 1) }.statusCode.value())
+        }
+    }
+
+    @Test fun `total widens before addition and affiliation sort never uses nation id or private role`() {
+        val rows = sortingFixture()
+        rows.first().apply { leadership = Int.MAX_VALUE; strength = Int.MAX_VALUE; intel = Int.MAX_VALUE
+            politics = Int.MAX_VALUE; charm = Int.MAX_VALUE }
+        assertEquals(listOf(4, 1, 2, 3, 5), reader.people(41, "ALL", "", "TOTAL", null, 50, "DESC").people.map { it.generalId })
+        val page = reader.people(41, "ALL", "", "AFFILIATION", null, 50)
+        assertEquals(listOf(1, 3, 2, 4, 5), page.people.map { it.generalId })
+        assertNull(page.people.first { it.generalId == 4 }.role)
     }
 
     @Test fun `nation summary uses administrative counties and canonical ruler with several lords`() {
