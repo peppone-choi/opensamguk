@@ -102,8 +102,12 @@ class MailboxSecurityChainTest {
     fun `security chain blocks anonymous and invalid bearer before reading any mailbox`() {
         for (path in listOf("/api/mailbox/101", "/api/mailbox/101/unread", "/api/messages/1",
             "/api/mailbox/recent", "/api/mailbox/old?to=2&type=private")) {
-            mvc.perform(get(path)).andExpect(status().isForbidden)
-            mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isForbidden)
+            mvc.perform(get(path)).andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+                .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
+            mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
+                .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+                .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
         }
         verifyNoInteractions(messages, resolver)
     }
