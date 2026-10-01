@@ -21,6 +21,7 @@ import opensamguk.gameapi.read.WorldStateReadEntity
 import opensamguk.gameapi.read.WorldStateReadRepository
 import org.mockito.ArgumentMatchers.anyInt
 import opensamguk.infra.entity.NationEnvEntity
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.`when`
@@ -40,9 +41,11 @@ import java.util.Optional
 /**
  * F2 Wave 1 slice test for [FrontInfoController] — the §3 GameInfo + identity envelope. Asserts the
  * anonymous (no character) header-only shape, the resolved-general gating surface, and the `?generalId=`
- * transition fallback.
+ * owned-body confirmation.
  */
 class FrontInfoControllerTest {
+    @AfterEach
+    fun clearAuth() = SecurityContextHolder.clearContext()
 
     private val owners = mock(GeneralOwnerRepository::class.java)
     private val generals = mock(GeneralReadRepository::class.java)
@@ -505,21 +508,9 @@ class FrontInfoControllerTest {
     }
 
     @Test
-    fun `generalId query param resolves the general as a transition fallback`() {
-        seedWorld()
-        `when`(generals.findById(10)).thenReturn(
-            Optional.of(GeneralReadEntity(id = 10, name = "관우", nationId = 0, officerLevel = 1)),
-        )
-        `when`(logFeeds.findGeneralActionSince(10, 0, 16)).thenReturn(
-            listOf(WorldLogReadEntity(id = 77, year = 200, month = 3, text = "비공개 개인 기록")),
-        )
-
+    fun `anonymous generalId query cannot supply identity`() {
         mockMvc().perform(get("/api/front-info?generalId=10"))
-            .andExpect(status().isOk)
-            .andExpect(jsonPath("$.general.hasGeneral").value(true))
-            .andExpect(jsonPath("$.general.generalId").value(10))
-            .andExpect(jsonPath("$.general.permission").value(0)) // officer_level 1 → 일반
-            .andExpect(jsonPath("$.recentRecord.general[0]").doesNotExist())
+            .andExpect(status().isUnauthorized)
     }
 
     // ── W0-2(P1-002) lastVote / lastVoteID ───────────────────────────────────────────────────────────
