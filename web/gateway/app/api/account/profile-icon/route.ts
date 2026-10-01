@@ -43,23 +43,8 @@ export async function POST(req: Request) {
         }
     }
 
-    // 공유 전콘 선택(JSON selectShared) — 기존 경로 유지.
-    const body = await req.json().catch(() => null);
-    if (!body || !Object.prototype.hasOwnProperty.call(body, 'picture')) {
-        return NextResponse.json({ error: '전콘 파일명을 입력해주세요.' }, { status: 400 });
-    }
-    try {
-        const upstream = await fetch(ICON_URL, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${access}`, 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-        const text = await upstream.text();
-        if (!upstream.ok) return surface(upstream.status, text, '초상을 바꾸지 못했습니다.');
-        return new NextResponse(text, { status: 200, headers: { 'Content-Type': 'application/json' } });
-    } catch {
-        return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
-    }
+    // 삼모 공유 초상 파일명 저장(JSON selectShared)은 계정 화면에서 뺐다(설계서 §2.5 A22–A25) — 이 경로는 원본 올리기만 받는다.
+    return NextResponse.json({ error: '이미지 파일을 올려 주세요.' }, { status: 415 });
 }
 
 export async function DELETE() {
