@@ -2665,7 +2665,8 @@ export function WorldMapCanvas({
     <div
       ref={boxRef}
       className={`os-iso-map ${className}`.trim()}
-      style={{ position: 'relative', width: '100%', height: '100%', ...style }}
+      // 쌓임 맥락을 지도판 안에 가둔다 — 조작 층(--z-map-ctrl)이 바깥 툴팁 · 단추 · 레일과 겨루지 않게.
+      style={{ position: 'relative', width: '100%', height: '100%', isolation: 'isolate', ...style }}
     >
       <canvas
         ref={canvasRef}
@@ -2763,7 +2764,7 @@ export function WorldMapCanvas({
           ◇ {target.name}{target.current ? ' · 주둔' : ''}
         </button>)}
       </div>}
-      <div className="os-iso-map__controls" style={{ position: 'absolute', zIndex: MAP_CONTROL_LAYER, left: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+      <div className="os-iso-map__controls" style={{ position: 'absolute', zIndex: MAP_CONTROL_LAYER, left: 'var(--battlefield-left-clearance, 8px)', bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
         <button type="button" aria-label="지도 확대" style={MAP_CONTROL_BUTTON} onClick={() => zoomBy(1.4)}>+</button>
         <button type="button" aria-label="지도 축소" style={MAP_CONTROL_BUTTON} onClick={() => zoomBy(1 / 1.4)}>−</button>
       </div>
@@ -2775,7 +2776,7 @@ export function WorldMapCanvas({
           style={{
             position: 'absolute',
             zIndex: MAP_CONTROL_LAYER,
-            left: 8,
+            left: 'var(--battlefield-left-clearance, 8px)',
             top: 8,
             display: 'flex',
             gap: 4,

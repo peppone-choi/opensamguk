@@ -127,4 +127,15 @@ test('지도 위 단추(확대 · 축소 · 레이어)는 모두 44 × 44 이상
   expect(sizes.map((size) => size.name)).toEqual(expect.arrayContaining(['지도 확대', '지도 축소', '구역 레이어', '현급 도시 레이어', '군급 도시 레이어']));
   const small = sizes.filter((size) => size.width < 44 || size.height < 44);
   expect(small, JSON.stringify(sizes)).toEqual([]);
+  // 단추 가운데를 누르면 그 단추가 받는다(덮이지 않음), 조작 층은 지도판 안에서만 겨룬다(isolation)
+  const covered = await map.locator('button').evaluateAll((buttons) => buttons
+    .filter((button) => (button as HTMLElement).offsetParent !== null)
+    .filter((button) => {
+      const box = button.getBoundingClientRect();
+      const hit = document.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2);
+      return !(hit && (hit === button || button.contains(hit)));
+    })
+    .map((button) => button.getAttribute('aria-label') ?? ''));
+  expect(covered).toEqual([]);
+  expect(await map.evaluate((node) => getComputedStyle(node).isolation)).toBe('isolate');
 });
