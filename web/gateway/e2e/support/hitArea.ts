@@ -30,8 +30,8 @@ export async function smallHitAreas(page: Page, root: string): Promise<string[]>
           await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
           r = el.getBoundingClientRect();
         }
-        const cx = r.left + r.width / 2;
-        const cy = r.top + r.height / 2;
+        let cx = r.left + r.width / 2;
+        let cy = r.top + r.height / 2;
         if (cy < 0 || cy >= innerHeight || cx < 0 || cx >= innerWidth) continue;
         const mine = (x: number, yy: number) => {
           if (x < 0 || yy < 0 || x >= innerWidth || yy >= innerHeight) return false;
@@ -39,6 +39,14 @@ export async function smallHitAreas(page: Page, root: string): Promise<string[]>
           return !!hit && (hit === el || el.contains(hit));
         };
         const name = (el.getAttribute('aria-label') ?? el.textContent ?? '').trim().slice(0, 20);
+        if (!mine(cx, cy)) {
+          // 화면 안이어도 미는 줄(overflow)에 가려 있을 수 있다 — 한 번 들여 보고 다시 본다. 세로로 다 든 것은 nearest 라 세로로 움직이지 않는다.
+          el.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+          r = el.getBoundingClientRect();
+          cx = r.left + r.width / 2;
+          cy = r.top + r.height / 2;
+        }
         if (!mine(cx, cy)) {
           const top = document.elementFromPoint(cx, cy);
           // 화면에 붙박인 것(떠 있는 글쓰기 단추 등)은 스크롤하면 비켜난다 — 다음 화면에서 다시 잰다. 끝까지 덮이면 결함이다.
