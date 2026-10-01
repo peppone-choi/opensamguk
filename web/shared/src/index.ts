@@ -41,6 +41,7 @@ export {
   type PortraitVariant,
 } from './portraitResolver';
 export { ReasonSheet, ReasonTooltip, type ReasonSheetProps, type ReasonTooltipProps } from './ReasonTooltip';
+export { HelpLinkProvider, defaultHelpHref, isPlainClick, useHelpLink, type HelpHref, type HelpLink } from './helpLink';
 export * from './parts';
 export { SectionHeader, type SectionHeaderProps, type SectionTone } from './SectionHeader';
 export { Slot, type SlotProps, type SlotState } from './Slot';
