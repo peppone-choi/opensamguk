@@ -16,31 +16,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Isolation
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
-import java.nio.charset.StandardCharsets
-import java.security.MessageDigest
-import java.util.Base64
-
-/** A directory cursor binds its position to the process world, viewer and exact filter. It grants no access. */
-internal object PeopleCursor {
-    fun context(worldId: Int, viewerId: Int, scope: String, query: String): String =
-        MessageDigest.getInstance("SHA-256").digest("$worldId|$viewerId|$scope|$query".toByteArray(StandardCharsets.UTF_8))
-            .joinToString("") { "%02x".format(it) }
-
-    fun encode(context: String, lastId: Int): String = Base64.getUrlEncoder().withoutPadding()
-        .encodeToString("1|$context|$lastId".toByteArray(StandardCharsets.US_ASCII))
-
-    fun decode(value: String?, context: String): Int {
-        if (value == null) return 0
-        return try {
-            require(value.length in 1..160 && value.matches(Regex("[A-Za-z0-9_-]+")))
-            val parts = String(Base64.getUrlDecoder().decode(value), StandardCharsets.US_ASCII).split('|')
-            require(parts.size == 3 && parts[0] == "1" && parts[1] == context)
-            parts[2].toInt().also { require(it > 0) }
-        } catch (_: IllegalArgumentException) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid people cursor")
-        }
-    }
-}
 
 @Service
 @Transactional(readOnly = true, isolation = Isolation.REPEATABLE_READ)
@@ -68,47 +43,72 @@ class CampaignDirectoryReader(
         return Frame(world.id, people, countries, cards)
     }
 
-    fun people(userId: Long, scope: String, query: String, sort: String, cursor: String?, limit: Int): PeoplePage {
-        validatePage(scope, query, sort, limit)
+    fun people(userId: Long, scope: String, query: String, sort: String, cursor: String?, limit: Int, direction: String = "ASC"): PeoplePage {
+        val ordering = validatePage(scope, query, sort, limit, direction)
         val id = owners.resolveGeneralId(userId) ?: return PeoplePage("NO_GENERAL")
         val actor = ownedCampaignGeneral(generals, id, userId)
         val frame = frame() ?: return PeoplePage("UNAVAILABLE")
         checkWorld(frame.worldId, listOf(actor.worldId))
-        return page(frame, actor, scope, query.trim(), cursor, limit, admin = false)
+        return page(frame, actor, scope, PeopleNameSearch.normalize(query.trim()), cursor, limit, admin = false, ordering = ordering)
     }
 
     /** Called only after the controller verifies the ADMIN role. */
-    fun adminPeople(query: String, sort: String, cursor: String?, limit: Int): PeoplePage {
-        validatePage("ALL", query, sort, limit)
+    fun adminPeople(query: String, sort: String, cursor: String?, limit: Int, direction: String = "ASC"): PeoplePage {
+        val ordering = validatePage("ALL", query, sort, limit, direction)
         val frame = frame() ?: return PeoplePage("UNAVAILABLE")
-        return page(frame, null, "ALL", query.trim(), cursor, limit, admin = true)
+        return page(frame, null, "ALL", PeopleNameSearch.normalize(query.trim()), cursor, limit, admin = true, ordering = ordering)
     }
 
-    private fun validatePage(scope: String, query: String, sort: String, limit: Int) {
-        if (scope !in setOf("ALL", "NATION", "RETINUE") || sort != "ID" || query.length > 100 || limit !in 1..100)
+    private fun validatePage(scope: String, query: String, sort: String, limit: Int,
+                             direction: String): Pair<PeopleSort, PeopleDirection> {
+        if (scope !in setOf("ALL", "NATION", "RETINUE") || query.length > 100 || limit !in 1..100)
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid people filter")
+        return try {
+            PeopleSort.valueOf(sort.uppercase(java.util.Locale.ROOT)) to
+                PeopleDirection.valueOf(direction.uppercase(java.util.Locale.ROOT))
+        } catch (_: IllegalArgumentException) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid people ordering")
+        }
     }
 
     private fun page(frame: Frame, actor: GeneralReadEntity?, scope: String, query: String,
-                     cursor: String?, limit: Int, admin: Boolean): PeoplePage {
+                     cursor: String?, limit: Int, admin: Boolean,
+                     ordering: Pair<PeopleSort, PeopleDirection>): PeoplePage {
         val ownIds = actor?.let { self -> frame.cards.filter { it.masterGeneralId == self.id }
             .mapNotNull { it.generalId }.toSet() + self.id }.orEmpty()
-        val context = PeopleCursor.context(frame.worldId, actor?.id ?: 0, scope, query)
+        val (sort, direction) = ordering
+        val context = PeopleCursor.digest(listOf(frame.worldId.toString(), (actor?.id ?: 0).toString(),
+            admin.toString(), scope, query, sort.name, direction.name, (actor?.nationId ?: 0).toString(),
+            ownIds.sorted().joinToString(",")))
         val after = PeopleCursor.decode(cursor, context)
-        val hits = frame.people.asSequence().filter { it.id > after }
-            .filter { query.isEmpty() || it.name.contains(query, ignoreCase = true) }
+        val candidates = frame.people.asSequence()
+            .filter { PeopleNameSearch.matches(it.name, query) }
             .filter { when (scope) {
                 "NATION" -> actor != null && actor.nationId > 0 && it.nationId == actor.nationId
                 "RETINUE" -> it.id in ownIds
                 else -> true
-            } }.sortedBy { it.id }.take(limit + 1).toList()
-        val rows = hits.take(limit).map { person(frame, it, admin || it.id in ownIds) }
-        return PeoplePage("READY", rows, if (hits.size > limit) PeopleCursor.encode(context, rows.last().generalId) else null)
+            } }.map { PeopleDirectoryRow(person(frame, it, admin || it.id in ownIds), it.age.takeIf { age -> age >= 0 }) }
+            .toList()
+        val revision = PeopleCursor.revision(candidates)
+        if (after != null && after.revision != revision) PeopleCursor.changed()
+        val anchor = after?.let { position ->
+            candidates.singleOrNull { it.person.generalId == position.lastId }
+                ?.also { if (sort.key(it).wire() != position.key) PeopleCursor.invalid() }
+                ?: PeopleCursor.invalid()
+        }
+        val comparator = peopleComparator(sort, direction)
+        val hits = candidates.sortedWith(comparator).asSequence()
+            .filter { anchor == null || comparator.compare(it, anchor) > 0 }.take(limit + 1).toList()
+        val selected = hits.take(limit)
+        return PeoplePage("READY", selected.map { it.person }, if (hits.size > limit) {
+            val last = selected.last()
+            PeopleCursor.encode(context, revision, last.person.generalId, sort.key(last))
+        } else null)
     }
 
     private fun person(frame: Frame, g: GeneralReadEntity, full: Boolean): DirectoryPerson {
         val nation = frame.nations.singleOrNull { it.id == g.nationId && it.id > 0 }
-        val policy = if (full) runCatching { PersonPolicyState.read(g.meta) }.getOrNull() else null
+        val policy = runCatching { PersonPolicyState.read(g.meta) }.getOrNull()
         val stats = if (policy != null && listOf(g.leadership, g.strength, g.intel, g.politics, g.charm).all { it >= 0 })
             DirectoryStats(g.leadership, g.strength, g.intel, g.politics, g.charm) else null
         val aptitude = stats?.let { Aptitude.compute(Aptitude.Stats(it.leadership, it.strength, it.intel, it.politics, it.charm)) }

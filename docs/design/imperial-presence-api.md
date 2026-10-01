@@ -11,7 +11,7 @@ S6-2b는 황제의 **실제 공간 노드**를 지도 배지와 황실 화면에
 - `GET /api/imperial/presence`: 현재 활성 월드의 공개 황제 소재지 요약. 기존 `/api/map` compact tuple 또는 `/api/map/preview` 응답을 변경하지 않는다.
 - 월드에 `world_state.meta.imperialWorld`가 없으면 HTTP 200 `{"status":"NOT_SEEDED","badges":[]}`. 시드 부재를 황실 멸망이나 공위로 해석하지 않는다.
 - 시드가 있고 활성 황제의 장수 행과 공간 위치를 모두 확인했으면 HTTP 200 `{"status":"READY","badges":[…]}`. `badges`는 `lineCode` 오름차순이다. 공위·종결 계통은 배지가 없다.
-- 각 배지는 `lineCode`, `lineName`, `emperorGeneralId`, `emperorNodeKind`, `emperorNodeId`, `emperorCityId`, `courtCityId`를 가진다. 노드 종류는 `LAND_PROVINCE` 또는 `WATER_ZONE`이다. `emperorCityId`는 기준 城의 省과 위치 省이 같고 전장 밖일 때만 그 城 ID, 아니면 명시적 `null`이다. 조정 城이 미정이면 `courtCityId:null`을 명시한다. 임의 기본 위치를 보충하지 않는다.
+- 각 배지는 `lineCode`, `lineName`, `emperorGeneralId`, `emperorName`, `emperorNodeKind`, `emperorNodeId`, `emperorCityId`, `courtCityId`를 가진다. `emperorName`은 같은 읽기 트랜잭션에서 확인한 해당 월드 장수 행의 현재 공개 이름(`string|null`)이다. 빈 이름은 명시적 `null`이며 계통명이나 다른 월드의 장수 이름으로 채우지 않는다. 이름이 미정인 것만으로 `READY`를 다른 상태로 바꾸지 않는다. 복수 활성 황통은 각 배지의 황제 이름을 따로 제공한다. 노드 종류는 `LAND_PROVINCE` 또는 `WATER_ZONE`이다. `emperorCityId`는 기준 城의 省과 위치 省이 같고 전장 밖일 때만 그 城 ID, 아니면 명시적 `null`이다. 조정 城이 미정이면 `courtCityId:null`을 명시한다. 임의 기본 위치를 보충하지 않는다.
 - 손상된 황실 meta·지형 판본 또는 활성 황제의 장수·공간 위치 행 누락은 HTTP 409 `{"status":"STATE_UNAVAILABLE","badges":[]}`로 드러낸다. 프론트는 배지를 숨기며 재시도·오류 상태를 표시한다. 인증·시야 정책이 나중에 황제 위치를 제한하면 이 공개 범위의 변경은 별도 계약 검토가 필요하다.
 - 조서·밀지·사자·인장 보관자·경비·군량·세력별 호의는 이 응답에 포함하지 않는다. 궁정 상세·비공개 조서 화면은 별도 투영 API가 담당한다.
 
