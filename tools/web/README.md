@@ -27,7 +27,8 @@ node tools/web/measure-pages.mjs --out <dir> --base https://sam.peppone.dev \
   - 지도 첫 그림: 지도 뿌리(`--map-selector`, 기본 `.os-iso-map`) 안 캔버스 전부를 20×20 격자로 훑어 alpha>0 표본이 8개 이상인 시점(뿌리가 늦게 붙어도, 큰 캔버스에 작게 그려도 잡는다). 09-30은 첫 캔버스 81점 중 20점 초과였다.
   - 지도 뿌리를 기다리는 시간: 망이 잠잠해지고 load 가 지난 뒤 `--map-grace-ms`(기본 15초)까지. 지도 없는 화면은 행마다 이만큼 길어진다(요청은 늘지 않는다).
   - 적재 창: 첫 그림(지도 없는 화면은 지도 대기가 끝난 때) 뒤 망이 `--settle-quiet-ms`(기본 3초) 동안 조용할 때까지, 최대 `--settle-max-ms`(기본 30초). 첫 그림 뒤에 오는 요청(省 PNG 등)도 적재 수치에 든다. 09-30은 networkidle 뒤 0.5초에 닫아 첫 그림 뒤 요청을 놓칠 수 있었다.
-  - 행이 끝날 때까지 받는 중인 요청은 `pendingList`(주소 · 그때까지 받은 바이트)와 `pendingPartialBytes`로 남긴다. `transferBytes`에는 다 받은 것만 든다. EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다. 취소된 요청(AbortController · 바뀐 이미지 src · prefetch 중단)은 실패도 받는 중도 아니라 `canceledCount`로만 센다.
+  - 행이 끝날 때까지 받는 중인 요청은 `pendingList`(주소 · 그때까지 받은 바이트)와 `pendingPartialBytes`로 남긴다. `transferBytes`에는 다 받은 것만 든다. EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다. 취소된 요청(AbortController · 바뀐 이미지 src · prefetch 중단 · 「머리만 받고 끊기」)은 실패도 받는 중도 아니다. `canceledList`(주소 · 서버가 알린 크기 `offeredBytes` · 끊기 전 받은 바이트)와 `canceledPartialBytes`로 따로 남긴다.
+  - `wireBytes`: 실제로 선을 탄 바이트(다 받은 것 + 받는 중 · 취소된 것의 받은 만큼). summary 「선 위 MB」 열. 2026-10-01 운영 /login 은 provinces 를 요청해 `content-length` 24,666,640 B 를 받고 본문 0 B 에서 끊는다(省 레이어 꺼짐).
   - 전송 크기: CDP `encodedDataLength`의 합.
 - **실패를 0으로 삼키지 않는다.**
   - 측정을 못 한 행(오류 행)이 하나라도 있으면 CLI 종료 코드가 1이다. `checks`가 걸린 것은 실패가 아니다(측정 도구다).

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """브랜드 에셋 파생 빌더.
 
-마스터 하나(assets/brand/logo-master.png, 투명 배경 워드마크)에서 두 프런트엔드의
-런타임 에셋을 전부 재생성한다. 마스터를 교체했으면 이 스크립트만 다시 돌리면 된다.
+마스터 사본(assets/brand/logo-master.png, 투명 배경 워드마크)에서 두 프런트엔드의 인장 아이콘
+(icon · apple-icon · favicon)을 재생성한다. 워드마크는 만들지 않는다 — 아래 참고.
 
     python3 tools/assets/build_brand_assets.py
     python3 tools/assets/build_brand_assets.py --check   # 재생성 vs 디스크 바이트 비교, 드리프트면 비0 종료
@@ -11,7 +11,10 @@
     web/{gateway,game}/app/icon.png             네이티브 해상도 三國 인장 (Next App Router 자동 배선)
     web/{gateway,game}/app/apple-icon.png       180px 동일 (다운스케일)
     web/{gateway,game}/app/favicon.ico          16/32/48 멀티사이즈 (패딩을 줄인 별도 타일)
-    web/{gateway,game}/public/logo-wordmark.png 1200px 투명 워드마크
+
+워드마크(web/{gateway,game}/public/logo-wordmark{.webp,.png,-sm.png})는 이 빌더가 만들지 않는다 — 2026-10-01 사용자 결정 D22 로
+정본이 opensamguk-images(MIT)로 옮겨 갔고, 앱은 그 저장소 tools/assets/build_wordmark.py 의 export 사본만 둔다.
+이 빌더는 같은 마스터 사본에서 인장 아이콘만 만든다(인장 이전은 후속).
 
 인장 마크는 마스터 우측의 붉은 三國 낙관만 추출해 어두운 정사각 타일에 올린 것이다.
 워드마크 전체를 파비콘 크기로 줄이면 '오픈삼국' 네 글자와 부제가 뭉개지므로 인장을 쓴다.
@@ -139,18 +142,15 @@ def build() -> dict[Path, Image.Image | bytes]:
     icon_tile = build_seal_tile(master, PAD_RATIO_ICON)
     favicon_tile = build_seal_tile(master, PAD_RATIO_FAVICON)
     apple_icon = icon_tile.resize((180, 180), Image.LANCZOS)
-    wordmark = master.resize((1200, round(1200 * master.height / master.width)), Image.LANCZOS)
 
     outputs: dict[Path, Image.Image | bytes] = {}
     for app in APPS:
         app_dir = ROOT / "web" / app / "app"
-        public_dir = ROOT / "web" / app / "public"
         if not app_dir.is_dir():
             raise SystemExit(f"앱 디렉터리가 없다: {app_dir}")
         outputs[app_dir / "icon.png"] = icon_tile
         outputs[app_dir / "apple-icon.png"] = apple_icon
         outputs[app_dir / "favicon.ico"] = favicon_tile
-        outputs[public_dir / "logo-wordmark.png"] = wordmark
     return outputs
 
 

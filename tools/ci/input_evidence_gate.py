@@ -69,6 +69,8 @@ def _confirmed_exclusion(row: dict, root: Path) -> None:
     entries = [item for item in document["entries"] if item.get("inputId") == row["inputId"]]
     if len(entries) != 1 or entries[0].get("status") != "CONFIRMED" or entries[0].get("reason") != row["firstStepsExplanationNaReason"]:
         raise ValueError(f"first-steps N/A is not confirmed: {row['inputId']}")
+    if row["firstStepsExplanationNaReason"] == "INPUT_PLANNED" and row["deliveryState"] != "PLANNED":
+        raise ValueError(f"first-steps INPUT_PLANNED requires PLANNED deliveryState: {row['inputId']}")
     source = entries[0].get("source")
     if not isinstance(source, str) or "#" not in source:
         raise ValueError(f"first-steps N/A needs source: {row['inputId']}")
@@ -78,7 +80,13 @@ def _confirmed_exclusion(row: dict, root: Path) -> None:
         not path_text.startswith("docs/development/")):
         raise ValueError(f"unsafe first-steps N/A source: {row['inputId']}")
     path = root / relative
-    if not path.is_file() or anchor not in path.read_text(encoding="utf-8") or row["inputId"] not in path.read_text(encoding="utf-8"):
+    if not path.is_file():
+        raise ValueError(f"first-steps N/A source missing input and anchor: {row['inputId']}")
+    content = path.read_text(encoding="utf-8")
+    marker = f'<a id="{anchor}"></a>'
+    section = content.split(marker, 1)[1].split('<a id="first-steps-exclusion-', 1)[0] if marker in content else ""
+    heading = section.lstrip().splitlines()[0] if section.strip() else ""
+    if not heading.startswith("### ") or not heading.endswith(f"(`{row['inputId']}`)"):
         raise ValueError(f"first-steps N/A source missing input and anchor: {row['inputId']}")
 
 
