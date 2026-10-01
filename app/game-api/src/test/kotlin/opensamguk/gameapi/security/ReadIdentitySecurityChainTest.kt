@@ -54,6 +54,8 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
+import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.status
 import org.springframework.test.web.servlet.setup.DefaultMockMvcBuilder
@@ -243,7 +245,7 @@ class ReadIdentitySecurityChainTest {
     }
 
     @Test
-    fun `council rejects anonymous nationless foreign nation and unresolved account without global fallback`() {
+    fun `council rejects anonymous foreign nation and unresolved account without global fallback`() {
         for (path in listOf("/api/board", "/api/board?secret=true")) {
             mvc.perform(get(path)).andExpect(status().isUnauthorized)
             mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
@@ -251,12 +253,40 @@ class ReadIdentitySecurityChainTest {
             mvc.perform(get(path).param("nationId", "2").header("Authorization", "Bearer ${token()}"))
                 .andExpect(status().isForbidden)
         }
-        resolve(nationId = 0, officerLevel = 12)
-        for (secret in listOf(false, true)) {
-            mvc.perform(get("/api/board").param("secret", secret.toString()).header("Authorization", "Bearer ${token()}"))
-                .andExpect(status().isForbidden)
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `nationless council returns only INFO without downstream reads and cannot write`() {
+        for (nationId in listOf(0, -1)) {
+            resolve(nationId = nationId, officerLevel = 12)
+            for (secret in listOf(false, true)) {
+                val title = if (secret) "기밀실" else "회의실"
+                val expected = """{"result":true,"secret":$secret,"title":"$title","articles":[],"blockedReason":"소속 세력이 없어 회의실을 이용할 수 없습니다.","participants":[],"chiefCount":0,"myGeneralId":101,"myPermission":-1}"""
+                for (requestedNationId in listOf<String?>(null, nationId.toString())) {
+                    val req = get("/api/board").param("secret", secret.toString())
+                        .header("Authorization", "Bearer ${token()}")
+                    requestedNationId?.let { req.param("nationId", it) }
+                    mvc.perform(req).andExpect(status().isOk).andExpect(content().json(expected, true))
+                }
+            }
+            mvc.perform(post("/api/board").header("Authorization", "Bearer ${token()}"))
+                .andExpect(status().isMethodNotAllowed)
         }
-        verifyNoInteractions(posts)
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
+    }
+
+    @Test
+    fun `nationless foreign query remains forbidden before INFO and all downstream reads`() {
+        for (nationId in listOf(0, -1)) {
+            resolve(nationId = nationId, officerLevel = 12)
+            for (secret in listOf(false, true)) {
+                mvc.perform(get("/api/board").param("secret", secret.toString()).param("nationId", "2")
+                    .header("Authorization", "Bearer ${token()}"))
+                    .andExpect(status().isForbidden).andExpect(content().string(""))
+            }
+        }
+        verifyNoInteractions(posts, comments, reads, generals, world, polls, votes)
     }
 
     @Test

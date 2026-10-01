@@ -34,7 +34,8 @@ import java.time.Instant
  * 기밀실(secret=true).
  *
  * Both boards are internal to the verified caller's positive nation. Anonymous callers are rejected,
- * nationless callers cannot fall back to a global query. Same-nation callers without chief permission
+ * nationless callers receive an empty INFO response without falling back to a global query.
+ * Same-nation callers without chief permission
  * receive an empty secret board with an INFO reason, without reading board data.
  * Optional nationId only confirms the caller's nation; it never selects another nation's posts.
  *
@@ -64,10 +65,23 @@ class BoardController(
         if (userId == null || userId <= 0) return ResponseEntity.status(401).build()
         val resolved = resolver.resolve(userId) ?: return ResponseEntity.status(403).build()
         val nationId = resolved.nationId
-        if (nationId <= 0 || (requestedNationId != null && requestedNationId != nationId)) {
+        if (requestedNationId != null && requestedNationId != nationId) {
             return ResponseEntity.status(403).build()
         }
         val title = F4StateText.boardTitle(secret)
+        if (nationId <= 0) {
+            return ResponseEntity.ok(
+                BoardResponse(
+                    result = true,
+                    secret = secret,
+                    title = title,
+                    articles = emptyList(),
+                    blockedReason = "소속 세력이 없어 회의실을 이용할 수 없습니다.",
+                    myGeneralId = resolved.general.id,
+                    myPermission = -1,
+                ),
+            )
+        }
         val myPermission = resolved.permission
         if (secret && myPermission < 2) {
             return ResponseEntity.ok(
