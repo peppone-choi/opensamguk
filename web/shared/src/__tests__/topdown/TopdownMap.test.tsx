@@ -7,6 +7,8 @@ const fake = vi.hoisted(() => ({
   disposed: 0,
   places: null as null | { cities: { id: number; footprint: { originCol: number; originRow: number; span: number; innerSpan: number } }[] },
   selected: [] as (number | null)[],
+  pinAvoid: [] as (null | { col: number; row: number })[],
+  me: [] as unknown[],
 }));
 
 vi.mock('../../map/topdown/renderer', async (importOriginal) => {
@@ -18,6 +20,12 @@ vi.mock('../../map/topdown/renderer', async (importOriginal) => {
     }
     setSelectedCity(id: number | null) {
       fake.selected.push(id);
+    }
+    setPinAvoid(at: null | { col: number; row: number }) {
+      fake.pinAvoid.push(at);
+    }
+    setMe(me: unknown) {
+      fake.me.push(me);
     }
     constructor() {
       return new Proxy(this, { get: (target, key) => (key in target ? target[key as keyof FakeRenderer] : () => undefined) });
@@ -93,6 +101,20 @@ describe('TopdownMap 뒤로 미룬 자료', () => {
     expect(fake.selected).toContain(7);
     rerender(<TopdownMap source={source} selectedCityId={null} />);
     expect(fake.selected.at(-1)).toBeNull();
+  });
+
+  it('내 위치를 지도 위 DOM 층이 그리면(meOverlay) 캔버스는 핀을 그리지 않고, 이름표가 핀 끝 자리를 피한다', async () => {
+    fake.complete = Promise.resolve();
+    fake.pinAvoid = [];
+    fake.me = [];
+    const me = { cell: { col: 1400.5, row: 900.5 }, state: 'IN_CITY' as const, nationColor: null, portrait: null, name: '하후돈' };
+    const { container, rerender } = render(<TopdownMap source={source} me={me} meOverlay />);
+    await waitFor(() => expect(container.querySelector('[data-map-status]')!.getAttribute('data-map-status')).toBe('ready'));
+    expect(fake.me.at(-1)).toBeNull();
+    expect(fake.pinAvoid.at(-1)).toEqual({ col: 1400.5, row: 900.5 });
+    rerender(<TopdownMap source={source} me={me} />);
+    expect(fake.me.at(-1)).toBe(me);
+    expect(fake.pinAvoid.at(-1)).toBeNull();
   });
 
   it('다 받으면 준비 상태로 남는다', async () => {

@@ -130,3 +130,17 @@ export function drawMyLocation(
   }
   return placement;
 }
+
+/** 지도 위 DOM 핀(`MyLocationLayer`, 보드 me_marker)의 화면 크기. 핀 끝이 실제 자리, 머리는 그 위. */
+export const MY_LOCATION_PIN = { width: 48, height: 62, tagLeft: 52, tagTop: 10, tagHeight: 24, tagWidth: 104 } as const;
+
+/**
+ * 지도 이름표가 피할 핀 자리(화면 좌표). 핀 끝 `tip` 위로 48 × 62, 현 보기 꼬리표가 있으면 그 오른쪽 띠도.
+ * 보드 V31SystemMarker 「이름표가 핀을 피한다」 — 이름표 자리 잡기(`layoutLabels` avoid)가 이 상자에 걸린 이름표를 뺀다.
+ */
+export function myLocationPinBoxes(tip: ScreenPoint, withTag: boolean): { x: number; y: number; width: number; height: number }[] {
+  const pin = MY_LOCATION_PIN;
+  const head = { x: tip.x - pin.width / 2, y: tip.y - pin.height, width: pin.width, height: pin.height };
+  if (!withTag) return [head];
+  return [head, { x: head.x + pin.tagLeft, y: head.y + pin.tagTop, width: pin.tagWidth, height: pin.tagHeight }];
+}

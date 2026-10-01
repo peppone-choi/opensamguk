@@ -182,6 +182,8 @@ export function TopdownMap(props: TopdownMapProps) {
 
   useEffect(() => {
     rendererRef.current?.setMe(meOverlay ? null : me);
+    // DOM 핀이면 핀 끝 자리(연속 좌표, 화면 틀이 넘긴 그대로)를 이름표가 피한다
+    rendererRef.current?.setPinAvoid(meOverlay && me ? me.cell : null);
   }, [me, meOverlay, status.kind]);
 
   useEffect(() => {

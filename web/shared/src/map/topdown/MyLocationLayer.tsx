@@ -10,11 +10,11 @@ import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from
 import { Icon } from '../../Icon';
 import { usePortraitResolver } from '../../Portrait';
 import { cellToScreen } from './camera';
-import type { MyLocationState } from './myLocation';
+import { MY_LOCATION_PIN, type MyLocationState } from './myLocation';
 import type { Camera, CellPoint, ViewLevel } from './types';
 
-const PIN = 48;
-const PIN_H = 62;
+const PIN = MY_LOCATION_PIN.width;
+const PIN_H = MY_LOCATION_PIN.height;
 const EDGE_W = 44;
 const EDGE_H = 52;
 const GOLD = '#ffd36d';
