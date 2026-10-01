@@ -1,0 +1,161 @@
+/* 세력(P-K10) — 보드 V31K8Realm · RealmUnits · MRealm. */
+
+.screen {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    /* 셸 .body 여백 대기(K3 #1133) — 병합되면 지운다(안 지우면 두 번). */
+    padding: 12px;
+}
+
+.band {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    padding: 12px 16px;
+    min-width: 0;
+}
+
+.who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.names {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.name {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.sub {
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.facts {
+    grid-template-columns: repeat(5, auto minmax(0, max-content));
+    font-size: 13px;
+    gap: 4px 10px;
+}
+
+.facts dd {
+    margin-right: 10px;
+}
+
+.supply {
+    margin-left: auto;
+    min-height: 44px;
+}
+
+.notice {
+    flex-basis: 100%;
+    margin: 0;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.tabs {
+    align-self: flex-start;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.tabs > * {
+    min-height: 44px;
+    font-size: 13px;
+}
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.counties {
+    min-width: 0;
+}
+
+.counties .notice {
+    padding: 8px 12px 0;
+}
+
+.rows {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.row {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0 12px;
+    border-bottom: 1px solid var(--line);
+}
+
+.county {
+    font-family: var(--font-serif);
+    font-weight: 700;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.income {
+    margin-left: auto;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-2);
+    white-space: nowrap;
+}
+
+@media (max-width: 1199.98px) {
+    .facts {
+        grid-template-columns: repeat(3, auto minmax(0, max-content));
+    }
+}
+
+@media (max-width: 767.98px) {
+    .screen {
+        gap: 10px;
+        padding: 10px 12px;
+    }
+
+    .band {
+        padding: 10px 12px;
+    }
+
+    .facts {
+        flex-basis: 100%;
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .supply {
+        margin-left: 0;
+        flex-basis: 100%;
+        justify-content: center;
+    }
+
+    .tabs {
+        align-self: stretch;
+    }
+
+    .tabs > * {
+        flex: 1 0 auto;
+        justify-content: center;
+    }
+}
