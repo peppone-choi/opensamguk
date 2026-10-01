@@ -32,7 +32,7 @@ RESERVED = set('all admin1 admin2 admin5 admin7 admin8 auction battle-center bet
                'inherit join mailbox main map my my-boss my-cities my-generals my-nation nation '
                'nation-betting nation-finance npc-control rankings register select-pool simulator '
                'orders posts retinue siege supply tournament tournament-admin troop v2-lab vote '
-               'war-room world-log yuedan'.split())
+               'war-room world-log yuedan stratagem territory corps records council mail help'.split())
 LABEL = 'org.opensamguk.recovery'
 REDIS_CMD = ['redis-server', '--appendonly', 'yes', '--maxmemory', '256mb',
              '--maxmemory-policy', 'allkeys-lru']

@@ -13,6 +13,7 @@ build/
 # Node / Next.js
 node_modules/
 web/*/.next/
+web/*/.next-topdown-screens/
 web/*/out/
 .pnpm-store/
 # Env / OS

@@ -32,6 +32,7 @@ OUTPUT_KEYS = ("jvm", "contracts", "map", "map_slow", "external_places", "web", 
 MAP_INPUTS = (
     "data/",
     ".github/workflows/ci.yml",
+    ".github/workflows/map-artifact.yml",
     "tools/map/",
     "tools/scenario/",
     "tools/sim/",
@@ -43,6 +44,8 @@ MAP_INPUTS = (
     "infra/src/main/resources/scenario/",
     "infra/src/main/kotlin/opensamguk/infra/seed/",
     "infra/src/test/kotlin/opensamguk/infra/seed/",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/read/TopdownMapArtifacts.kt",
+    "app/game-api/src/main/kotlin/opensamguk/gameapi/controller/TopdownMapController.kt",
     "web/game/public/map/",
     "web/gateway/public/map/",
     "web/shared/src/iso/countyNameGloss.generated.ts",
@@ -84,6 +87,16 @@ def changed_files(base: str, head: str) -> list[str]:
     return [name.decode() for name in output.split(b"\0") if name]
 
 
+# Server sources that web tests read directly (a second axis against the screen's own tables):
+# web/shared recordSections.test.ts and gameEvents.test.ts parse EventKind.kt, and gameEvents.test.ts
+# scans the engine for `EventKind.X` writers. A server PR that starts writing a new kind must turn
+# web-shared red in that PR, not in the next front PR (#1126 review, 2026-10-01).
+WEB_SERVER_INPUTS = (
+    "logic/src/main/kotlin/opensamguk/logic/record/EventKind.kt",
+    "app/game-engine/src/main/kotlin/",
+)
+
+
 def is_map_input(path: str) -> bool:
     return path.startswith(MAP_INPUTS) or (path.startswith("tools/") and path.endswith(".py"))
 
@@ -104,7 +117,7 @@ def classify(paths: list[str], patterns: dict[str, list[str]]) -> dict[str, bool
             outputs["map"] = outputs["map_slow"] = True
         if path.startswith(("data/", "tools/map/", "tools/scenario/", ".github/")):
             outputs["external_places"] = True
-        if path.startswith(("web/", "data/", "infra/src/main/resources/map/", ".github/")):
+        if path.startswith(("web/", "tools/web/", "data/", "infra/src/main/resources/map/", ".github/") + WEB_SERVER_INPUTS):
             outputs["web"] = True
         # Unknown source/config paths run broad checks rather than silently passing.
         if not path.startswith(("docs/", "reports/", ".ai/", "web/", "data/", "tools/", ".github/",
