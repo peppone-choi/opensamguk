@@ -53,7 +53,7 @@ export const NAV31: readonly NavGroup[] = [
     key: 'corps', label: '군단', screens: [
       { label: '군단 · 세력 작전', path: 'corps', built: false },
       { label: '공성', path: 'corps/siege', built: true },
-      { label: '전투', path: 'corps/battle', built: true, current: 'battle-center' },
+      { label: '전투', path: 'corps/battle', built: true },
       { label: '시야 · 첩보', path: 'corps/intel', built: false },
     ],
   },

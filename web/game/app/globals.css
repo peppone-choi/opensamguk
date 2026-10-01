@@ -1972,7 +1972,7 @@ input:focus, select:focus, textarea:focus {
 .server-status__confirm { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 8px 10px; border: 1px dashed var(--rust); }
 .server-status__message { margin: 0; font-size: 12px; color: var(--info); }
 
-/* ===== Phase 4 웨이브 A — 정보·기록 화면 (05 천하 지도 · 06 도시 · 12 기록 · 감찰부 레일) ===== */
+/* ===== Phase 4 웨이브 A — 정보·기록 화면 (05 천하 지도 · 06 도시 · 12 기록) ===== */
 .shell-main > .page-wide { max-width: none; }
 .page-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; min-height: 44px; margin-bottom: 12px; }
 .page-head__title { font-family: var(--font-serif); font-size: 18px; font-weight: 900; margin: 0; color: var(--text); }
@@ -2079,24 +2079,6 @@ input:focus, select:focus, textarea:focus {
 .podium__value { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 16px; }
 .nation-list__cell { display: inline-flex; align-items: center; gap: 6px; }
 
-/* 감찰부 — 본문 1fr + 우측 레일 300(정렬 4종·대상 장수·기록 구획) */
-.bc-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
-.bc-main { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 14px; min-width: 0; }
-.bc-main > .record-panel + .record-panel { margin-top: 0; }
-.bc-rail { position: sticky; top: 0; display: flex; flex-direction: column; min-width: 0; }
-.bc-rail__form { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
-.bc-rail__field { display: grid; gap: 3px; font-size: 11px; color: var(--muted); }
-.bc-rail__field select { min-height: 32px; }
-.bc-rail__nav { display: flex; gap: 6px; padding: 0 12px 10px; }
-.bc-rail__nav > button { flex: 1; }
-.bc-rail__section { display: flex; justify-content: space-between; align-items: center; min-height: 36px; padding: 0 12px; border-top: 1px solid var(--line); font-size: 12px; color: var(--text-2); text-decoration: none; }
-.bc-rail__section:hover { background: var(--raised); text-decoration: none; color: var(--text); }
-.bc-log { max-height: 420px; overflow-y: auto; }
-.bc-log__row { padding: 8px 12px; border-bottom: 1px solid var(--line); font-size: 12px; line-height: 1.6; color: var(--text-2); }
-@media (max-width: 900px) {
-  .bc-layout { grid-template-columns: 1fr; }
-  .bc-rail { order: -1; position: static; }
-}
 
 /* ===== Phase 4 웨이브 B — 국가 운영 · 장수 · 광장 ===== */
 .page-head h1.page-head__title { font-size: 18px; margin: 0; }
@@ -2235,7 +2217,7 @@ input:focus, select:focus, textarea:focus {
 .subject-target-operation { text-decoration: none; }
 .subject-target-operation--empty { border-style: dashed; color: var(--muted); }
 
-/* ── Phase 4X-C 09 명령 봉인 / 10 리플레이 / 감찰부 리플레이 열 ── */
+/* ── Phase 4X-C 09 명령 봉인 / 10 리플레이 ── */
 .bp { display: grid; gap: 12px; margin: 12px 0; }
 .bp__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 12px; }
 .bp__countdown { color: var(--bronze); font-weight: 700; }
@@ -2283,9 +2265,6 @@ input:focus, select:focus, textarea:focus {
 .replay__rows dd { margin: 0; }
 .replay__hash { margin: 8px 12px 0; font-size: 11px; color: var(--muted); }
 .replay__links { display: flex; gap: 8px; padding: 8px 12px 0; }
-.replay-list__rows { list-style: none; margin: 0; padding: 0; }
-.replay-list__row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 12px; border-top: 1px solid var(--line); font-size: 12px; }
-.replay-list__none { border: 1px dashed var(--line-2); margin: 8px 12px; padding: 6px 8px; color: var(--muted); }
 .rcp-seal { margin-left: 6px; font-size: 10px; text-decoration: none; }
 .rcp-seal--sealed { border-style: solid; }
 .rcp-seal--autorun { border-style: dashed; color: var(--muted); }
