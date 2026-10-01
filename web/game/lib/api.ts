@@ -4,6 +4,7 @@
 // the proxy strips the /api/game segment and forwards /api/... verbatim.
 const BASE = '/api/game';
 
+import { countiesPath, peoplePath } from './directory-paths';
 import type {
     FrontInfoResponse,
     GameConstResponse,
@@ -299,7 +300,7 @@ export interface AdminGeneralModerationActionResponse {
 // __tests__/cookie-refresh-path-scope.test.ts) 서버 프록시는 재시도를 할 수 없다 — sam_refresh가
 // 실제로 도달하는 유일한 경로인 /api/auth/me를 여기서 호출해 재발급을 받고, 원 요청을 딱 1회만
 // 재시도한다. body는 이미 JSON.stringify된 문자열이라 두 번째 fetch에 그대로 재사용해도 안전하다.
-async function fetchGame(path: string, init?: RequestInit): Promise<Response> {
+export async function fetchGame(path: string, init?: RequestInit): Promise<Response> {
     const res = await fetch(`${BASE}${path}`, init);
     if (res.status !== 401) return res;
     const refreshed = await fetch('/api/auth/me', { cache: 'no-store' });
@@ -483,6 +484,13 @@ export const api = {
         get<import('./campaign-reads').Policies>(`/api/policies?generalId=${generalId}`, signal),
     campaignWorks: (generalId: number, signal?: AbortSignal) =>
         get<import('./campaign-reads').Works>(`/api/works?generalId=${generalId}`, signal),
+    /** 인물 일람 — 본인 계정으로 본다(`generalId` 없음). 시야 · 권한 밖 칸은 null. */
+    people: (query: import('./directory-reads').PeopleQuery, cursor: string | null, signal?: AbortSignal) =>
+        get<import('./directory-reads').PeoplePage>(peoplePath(query, cursor), signal),
+    nationSummary: (generalId: number, signal?: AbortSignal) =>
+        get<import('./directory-reads').NationSummary>(`/api/nation/summary?generalId=${generalId}`, signal),
+    counties: (generalId: number, scope: import('./directory-reads').CountyScope, commanderyId?: string | null, signal?: AbortSignal) =>
+        get<import('./directory-reads').CountyDirectory>(countiesPath(generalId, scope, commanderyId), signal),
     /** 배치·방침·공사 — 12순 슬롯을 쓰지 않는 지속 입력. 접수는 202, 거절은 200 BLOCKED. */
     campaignDomestic: (generalId: number, kind: 'placement' | 'policy' | 'work' | 'reduce', body: unknown) =>
         post<IntakeOutcome>(`/api/commands/${kind === 'reduce' ? 'work' : kind}/${{ placement: 'assign', policy: 'set', work: 'start', reduce: 'reduce' }[kind]}?generalId=${generalId}`, body),

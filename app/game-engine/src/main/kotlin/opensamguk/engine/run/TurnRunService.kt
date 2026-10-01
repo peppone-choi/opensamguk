@@ -53,6 +53,9 @@ data class TurnClockSnapshot(
     val tickSeconds: Int,
     val lastTurnTime: String,
     val nextRunTime: String,
+    /** Authoritative read identity, unavailable before the runtime world has loaded. */
+    val worldId: Int? = null,
+    val serverId: String? = null,
 )
 
 internal class LiveRemainNationEnv(
@@ -263,6 +266,8 @@ open class TurnRunService(
             tickSeconds = state.tickSeconds,
             lastTurnTime = state.lastTurnTime.toString(),
             nextRunTime = nextRunTime().toString(),
+            worldId = state.id,
+            serverId = state.serverId,
         )
     }
 

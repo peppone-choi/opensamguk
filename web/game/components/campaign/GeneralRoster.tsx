@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import { Chip, Panel, Portrait } from '@opensamguk/ui';
 import { api } from '@/lib/api';
 import { useCampaignRead, useRenown, type FiveStats, type PersonCard } from '@/lib/campaign-reads';
-import { campaignHref } from '@/lib/campaign-screens';
+import CampaignLink from './CampaignLink';
 import { useGameSession } from '@/lib/campaign-session';
 import { Empty, campaignReadNotice } from './GameStates';
 import styles from './GeneralRoster.module.css';
@@ -53,7 +52,7 @@ function StatBars({ stats }: { stats: Partial<FiveStats> | null | undefined }) {
  * 나는 `front-info`, 휘하 인물은 `GET /api/retinue`. 휘하 카드를 누르면 휘하 편성 상세로 간다.
  */
 export default function GeneralRoster() {
-    const { frontInfo, serverId, isCampaignWorld, generalId } = useGameSession();
+    const { frontInfo, generalId } = useGameSession();
     const renown = useRenown();
     const retinue = useCampaignRead((id, signal) => api.campaignRetinue(id, signal));
     const [sort, setSort] = useState<SortKey>('order');
@@ -80,7 +79,7 @@ export default function GeneralRoster() {
     const me = frontInfo?.general;
     if (!frontInfo || !me?.hasGeneral) return null;
     const units = retinue.data?.units ?? [];
-    const notice = isCampaignWorld ? campaignReadNotice(retinue, retinue.data?.status) : null;
+    const notice = campaignReadNotice(retinue, retinue.data?.status);
     const troopsOf = (p: PersonCard) => {
         const led = units.filter((u) => u.commanderRetainerId === p.retainerId);
         if (led.length === 0) return null;
@@ -124,17 +123,17 @@ export default function GeneralRoster() {
                     <StatBars stats={me} />
                     <div className={styles.foot}>
                         <span className="os-num">{`병력 ${fmt.format(me.crew)}`}</span>
-                        {isCampaignWorld ? <span className={styles.renown}>{`명망 ${renown ?? '—'}`}</span> : null}
+                        <span className={styles.renown}>{`명망 ${renown ?? '—'}`}</span>
                     </div>
                 </div>
             </div>
 
             {notice ? <Empty>{notice}</Empty> : null}
-            {!notice && isCampaignWorld && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
+            {!notice && people.length === 0 ? <Empty>거느린 인물이 없습니다.</Empty> : null}
             {people.map((p) => {
                 const troops = troopsOf(p);
                 return (
-                    <Link key={p.retainerId} href={`${campaignHref('retinue', serverId)}?person=${p.retainerId}`} className={styles.card}>
+                    <CampaignLink key={p.retainerId} slug="retinue" query={`?person=${p.retainerId}`} className={styles.card}>
                         <Portrait picture={p.picture} imageServer={p.imageServer} size="card-44" alt={`${p.name} 초상`} />
                         <div className={styles.body}>
                             <div className={styles.top}>
@@ -155,7 +154,7 @@ export default function GeneralRoster() {
                                 <span className={`os-num ${styles.cost}`}>{`코스트 ${p.cost ?? '—'}`}</span>
                             </div>
                         </div>
-                    </Link>
+                    </CampaignLink>
                 );
             })}
         </Panel>

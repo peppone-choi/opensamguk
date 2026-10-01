@@ -22,6 +22,8 @@ import opensamguk.logic.record.OccurredAt
 import opensamguk.logic.record.Publication
 import opensamguk.logic.record.PublicationState
 import opensamguk.logic.record.RefRole
+import opensamguk.logic.input.RoadFort
+import opensamguk.logic.input.RoadFortState
 import org.flywaydb.core.Flyway
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -39,8 +41,10 @@ import org.testcontainers.containers.PostgreSQLContainer
 import javax.sql.DataSource
 import java.time.Instant
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.HexFormat
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
+import kotlin.test.assertNull
 
 /**
  * Testcontainers IT for [JdbcFlushExecutor]. Brings up `postgres:16-alpine`, applies the Flyway
@@ -200,6 +204,96 @@ class JdbcFlushExecutorIT {
         }
         assertEquals(1, jdbc.queryForObject("SELECT current_phase FROM world_state WHERE id = 1",
             MapSqlParameterSource(), Int::class.java), "the failed event insert rolls back the world clock")
+    }
+
+    @Test
+    fun `road fort capture commits public event with owner state and rejects changed replay`() {
+        val worldId = WorldId(700)
+        val fort = RoadFort(RoadFort.siteId("edge-test", 0, 0), "edge-test", "province-test", 0, 0,
+            ownerNationId = 2, wall = 100, garrison = 0)
+        val captured = fort.copy(ownerNationId = 1, wall = 50)
+        val siteCoordinates = HexFormat.of().formatHex(fort.id.toByteArray(Charsets.UTF_8))
+            .chunked(128).toTypedArray()
+        val event = GameEvent(
+            worldId = worldId.value,
+            kind = EventKind.ROAD_FORT_CAPTURED,
+            occurredAt = OccurredAt(190, 1, 1, 0),
+            audience = AudienceTarget.Public,
+            publication = Publication(PublicationState.PUBLISHED),
+            eventKey = EventKey.derive(EventKind.ROAD_FORT_CAPTURED.code, "700", "190", "1", "1",
+                *siteCoordinates, "2", "1"),
+            refs = mapOf(RefRole.ROAD_FORT to EventRef.RoadFort(fort.id),
+                RefRole.FROM_NATION to EventRef.Nation(2), RefRole.TO_NATION to EventRef.Nation(1)),
+        )
+        val payload = testFlushPayload(worldId, mapOf("id" to worldId.value,
+            "current_year" to 190, "current_month" to 1, "current_phase" to 1)).copy(
+            gameEvents = listOf(event),
+            kvWrites = listOf(KvWrite("game_env", "game_env", RoadFortState.META_KEY,
+                RoadFortState.toMetaValue(listOf(captured)))),
+        )
+        fun eventCount(): Int = jdbc.queryForObject(
+            "SELECT count(*) FROM game_event WHERE world_id = :world_id",
+            mapOf("world_id" to worldId.value), Int::class.java)!!
+        fun coldFort(): RoadFort? = jdbc.queryForList(
+            """SELECT value::text AS value FROM game_kv WHERE world_id = :world_id
+                AND "table" = 'game_env' AND namespace = 'game_env' AND key = :key""",
+            mapOf("world_id" to worldId.value, "key" to RoadFortState.META_KEY), String::class.java,
+        ).singleOrNull()?.let { RoadFortState.read(mapOf(RoadFortState.META_KEY to MetaJson.decode(it))).single() }
+
+        try {
+            jdbc.update("INSERT INTO world_state (id, scenario_code, current_year, current_month, tick_seconds) " +
+                "VALUES (700, 'road-fort-capture', 190, 1, 3600)", MapSqlParameterSource())
+            assertFailsWith<NumberFormatException> {
+                executor.flush(payload.copy(kvWrites = payload.kvWrites +
+                    KvWrite("nation_env", "invalid", "fail-after-event", 1)))
+            }
+            assertEquals(0, eventCount(), "an error after event insert rolls back the public announcement")
+            assertNull(coldFort(), "an error after event insert also rolls back the owner change")
+
+            executor.flush(payload)
+            executor.flush(payload)
+            assertEquals(1, eventCount(), "retained payload replay keeps one capture")
+            assertEquals(captured, coldFort())
+            val coldEvent = jdbc.queryForMap(
+                """SELECT kind, section, audience, publication_state, refs::text AS refs,
+                    facts::text AS facts FROM game_event WHERE world_id = :world_id""",
+                mapOf("world_id" to worldId.value),
+            )
+            assertEquals(EventKind.ROAD_FORT_CAPTURED.code, coldEvent["kind"])
+            assertEquals("WORLD", coldEvent["section"])
+            assertEquals("PUBLIC", coldEvent["audience"])
+            assertEquals("PUBLISHED", coldEvent["publication_state"])
+            assertEquals(event.refs, opensamguk.logic.record.EventPayloadCodec.decodeRefs(coldEvent["refs"] as String))
+            assertEquals("{}", coldEvent["facts"])
+
+            assertFailsWith<IllegalStateException> {
+                executor.flush(payload.copy(gameEvents = listOf(event.copy(refs = event.refs +
+                    (RefRole.TO_NATION to EventRef.Nation(3))))))
+            }
+            assertEquals(1, eventCount())
+            assertEquals(captured, coldFort())
+
+            val recaptured = event.copy(
+                eventKey = EventKey.derive(EventKind.ROAD_FORT_CAPTURED.code, "700", "190", "1", "2",
+                    *siteCoordinates, "1", "2"),
+                occurredAt = OccurredAt(190, 1, 2, 0),
+                refs = mapOf(RefRole.ROAD_FORT to EventRef.RoadFort(fort.id),
+                    RefRole.FROM_NATION to EventRef.Nation(1), RefRole.TO_NATION to EventRef.Nation(2)),
+            )
+            executor.flush(payload.copy(
+                worldStateUpdate = mapOf("id" to worldId.value, "current_year" to 190,
+                    "current_month" to 1, "current_phase" to 2),
+                gameEvents = listOf(recaptured),
+                kvWrites = listOf(KvWrite("game_env", "game_env", RoadFortState.META_KEY,
+                    RoadFortState.toMetaValue(listOf(fort)))),
+            ))
+            assertEquals(2, eventCount(), "a later actual ownership transition has a different cause key")
+            assertEquals(fort, coldFort())
+        } finally {
+            jdbc.update("DELETE FROM game_event WHERE world_id = :world_id", mapOf("world_id" to worldId.value))
+            jdbc.update("DELETE FROM game_kv WHERE world_id = :world_id", mapOf("world_id" to worldId.value))
+            jdbc.update("DELETE FROM world_state WHERE id = :world_id", mapOf("world_id" to worldId.value))
+        }
     }
 
     @BeforeAll

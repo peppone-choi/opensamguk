@@ -8,7 +8,6 @@ export function campaignBlockReason(session: GameSession): string | null {
     if (session.loading) return '장수 정보를 불러오는 중입니다.';
     if (session.error) return `장수 정보를 불러오지 못했습니다 — ${session.error}`;
     if (session.generalId == null) return '이 서버에 장수가 없습니다. 장수를 만든 뒤에 열 수 있습니다.';
-    if (!session.isCampaignWorld) return '이 서버는 휘하 규칙이 아닙니다. 휘하 규칙 서버에서만 쓰는 화면입니다.';
     return null;
 }
 
@@ -48,5 +47,15 @@ export function campaignReadNotice(read: { loading: boolean; error: string | nul
     if (read.error) return `불러오지 못했습니다 — ${read.error}`;
     if (status === 'WRONG_RULE_PROFILE') return '휘하 규칙 서버가 아닙니다.';
     if (status === 'UNAVAILABLE') return '저장된 값을 읽을 수 없습니다.';
+    // 옛 형식 월드 — 빈 목록(「없습니다」)으로 보이면 안 된다(K4 감사: 창고 · 수하가 비어 보였다).
+    if (status === 'UNSUPPORTED_WORLD_FORMAT') return '이 서버는 지금 게임 규칙과 맞지 않습니다.';
+    // 인물 일람 · 세력 요약 · 현 목록(`directory-reads.ts`)의 상태 — 빈 칸으로 두지 않는다.
+    if (status === 'NO_GENERAL') return '이 서버에 장수가 없습니다.';
+    if (status === 'NO_NATION') return '소속이 없어 세력 정보가 없습니다. 출사하거나 거병하면 보입니다.';
     return null;
+}
+
+/** 받은 값은 보이되 일부를 못 읽었을 때 한 줄(`PARTIAL`). 받은 칸은 그대로 두고 이 줄을 곁에 보인다. */
+export function campaignPartialNotice(status?: string | null): string | null {
+    return status === 'PARTIAL' ? '일부 값을 읽지 못했습니다 — 읽은 것만 보입니다.' : null;
 }

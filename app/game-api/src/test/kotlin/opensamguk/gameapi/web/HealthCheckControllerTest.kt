@@ -64,4 +64,15 @@ class HealthCheckControllerTest {
         assertEquals(opensamguk.gameapi.read.TurnLoopHealth.State.PAUSED, response.body?.world?.turnLoop?.state)
     }
 
+    @Test
+    fun `disabled engine observation keeps recent OPEN world degraded`() {
+        healthyDependencies()
+        `when`(world.findProcessWorld()).thenReturn(WorldStateReadEntity(status = "OPEN", tickSeconds = 300,
+            meta = mapOf("lastTickExecutedAt" to Instant.now().minusSeconds(5).toString())))
+        val result = controller.health()
+        assertEquals(200, result.statusCode.value())
+        assertEquals("degraded", result.body?.status)
+        assertEquals(opensamguk.gameapi.read.TurnLoopHealth.State.UNKNOWN, result.body?.world?.turnLoop?.state)
+    }
+
 }

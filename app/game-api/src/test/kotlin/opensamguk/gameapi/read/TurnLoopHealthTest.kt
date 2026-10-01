@@ -88,4 +88,12 @@ class TurnLoopHealthTest {
         }
     }
 
+    @Test
+    fun `OPEN world without engine observation cannot be declared healthy`() {
+        val result = TurnLoopHealth.observe(world(now.minusSeconds(10)), now)
+        assertEquals(TurnLoopHealth.State.UNKNOWN, result.state)
+        assertFalse(result.healthy)
+        assertEquals(null, result.nextTurnAt)
+    }
+
 }
