@@ -121,8 +121,14 @@ describe('primitives', () => {
     const busy = screen.getByRole('button', { name: /징병/ });
     expect(busy).not.toBeDisabled();
     expect(busy).toHaveAttribute('aria-disabled', 'true');
+    expect(busy).toHaveAttribute('aria-busy', 'true'); // 처리 중 모양(tokens.css .os-tile[aria-busy]) 의 고리
     fireEvent.click(busy);
     expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('Tile 막힘(no · sealed)은 처리 중이 아니다 — aria-busy 를 달지 않는다', () => {
+    render(<Tile name="출병" state="no" reason="병사가 없습니다" />);
+    expect(screen.getByRole('button', { name: /출병/ })).not.toHaveAttribute('aria-busy');
   });
 
   it('PillTabs and NavItem expose selection state', () => {

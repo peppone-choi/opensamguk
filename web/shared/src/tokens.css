@@ -425,6 +425,9 @@
 .os-tile--ok:hover { border-color: var(--bronze); box-shadow: 0 0 0 1px rgba(211, 176, 100, 0.25); }
 .os-tile--need { border-color: var(--info-dim); }
 .os-tile--no, .os-tile--sealed { border-style: dashed; color: var(--muted); cursor: not-allowed; }
+/* 처리 중(aria-busy) — 막힘(점선 dashed)과 다른 점 테두리, 누름이 막혔으니 hover 테두리도 켜지 않는다. */
+.os-tile[aria-busy="true"] { border-style: dotted; border-color: var(--bronze-dim); cursor: progress; }
+.os-tile--ok[aria-busy="true"]:hover { border-color: var(--bronze-dim); box-shadow: none; }
 .os-tile__name { font-size: 13px; font-weight: 700; }
 .os-tile__cost { font-size: 11px; color: var(--muted); font-family: var(--font-mono); }
 .os-tile__reason { font-size: 11px; color: var(--text-2); }
