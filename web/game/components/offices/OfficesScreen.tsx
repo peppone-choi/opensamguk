@@ -48,7 +48,7 @@ export default function OfficesScreen() {
                     <Waiting
                         row="K8-05"
                         title="중앙 관직이 아직 없습니다"
-                        body="삼공 · 구경 · 상서 · 장군호는 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다."
+                        body="삼공 · 구경 · 상서 · 장군은 황실 조서를 받아들여야 생깁니다. 서버가 아직 주지 않습니다."
                     />
                 ) : null}
                 {tab === 'vassals' ? <Vassals /> : null}
