@@ -64,13 +64,13 @@ test('새 발령 시트 — 사람 → 현(불가는 사유) → 보낸다, 고�
     expect(onSubmit).toHaveBeenCalledWith({ targetGeneralId: 21, countyId: 129 });
 });
 
-test('포상 칸 — 비율 · 상한은 준비 중(프론트 상수 없음), 인물 · 금액을 골라야 접수, 몰수는 준비 중', () => {
+test('포상 칸 — 상사 규칙(서버 상수)은 보이고 쓸 수 있는 금은 준비 중, 인물 · 금액을 골라야 접수, 몰수는 준비 중', () => {
     const onReward = vi.fn();
     render(<RewardPanel targets={[{ retainerId: 3, name: '무명 공조', loyalty: 40, picture: null, imageServer: 0 }]}
         reward={{ inputId: 'court.reward', status: 'AVAILABLE' }} confiscate={{ inputId: 'court.confiscate', status: 'NOT_DELIVERED' }}
         busy={false} onReward={onReward} onConfiscate={() => {}} />);
-    expect(document.body).not.toHaveTextContent('100당');
-    expect(document.querySelector('[data-waiting="reward-rate"]')).toHaveTextContent('준비 중');
+    expect(document.body).toHaveTextContent('금 100당 충성 +1 · 한 번에 최대 +10');
+    expect(document.querySelector('[data-waiting="reward-usable"]')).toHaveTextContent('준비 중');
     expect(screen.getByRole('button', { name: '상사 — 접수' })).toHaveAttribute('aria-disabled', 'true');
     fireEvent.click(screen.getByRole('option', { name: /무명 공조/ }));
     fireEvent.change(screen.getByRole('textbox', { name: '상사 금액' }), { target: { value: '300' } });

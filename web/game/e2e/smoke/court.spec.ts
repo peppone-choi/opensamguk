@@ -78,7 +78,28 @@ test('받은 요청 · 막힌 결정 사유 · 44 · title 전용 · 넘침', { 
     await expect(page.getByRole('button', { name: /새 발령/ })).toHaveAttribute('aria-disabled', 'true');
   }
   expect(served.unknown.filter((u) => MINE.test(u))).toEqual([]);
+  // 서버 원문(영어)은 화면에 두지 않는다(K3 공용 규칙 — 코드는 StatusView 오류 번호에만).
+  expect(await page.getByRole('main', { name: '게임 콘텐츠' }).innerText()).not.toMatch(/[A-Za-z]{3,}/);
   await expectNoHorizontalOverflow(page);
   expect(await smallTouchTargets(page, 'main')).toEqual([]);
   expect(await titleOnlyInfo(page, 'main')).toEqual([]);
+});
+
+test('읽기 실패 — 빈 목록 · 「없습니다」 대신 한국어 오류, 서버 원문 0', { tag: [BOTH] }, async ({ page }, info) => {
+  // 부 인물 · 내린 발령 조회를 표에서 빼면 404 — 화면은 「없습니다」가 아니라 실패를 말해야 한다(리뷰 #1128).
+  const { '/api/retinue': _retinue, '/api/commands/dispatches': _pending, ...rest } = table;
+  await serveCampaign(page, rest);
+  await page.goto('/game/court', { waitUntil: 'domcontentloaded' });
+  await expect(page.getByRole('heading', { level: 2, name: '조정' })).toBeVisible({ timeout: 60_000 });
+  if (isMobile(info)) {
+    const list = page.getByRole('list', { name: '조정 결정' });
+    await press(list.getByRole('listitem').filter({ hasText: '직속 인물에게' }).getByRole('button'), info);
+    await expect(page.getByRole('dialog', { name: '포상' })).toContainText('부 인물을 불러오지 못했습니다');
+  } else {
+    await expect(page.getByRole('region', { name: '상사' })).toContainText('부 인물을 불러오지 못했습니다');
+    const dispatch = page.getByRole('region', { name: '발령' });
+    await expect(dispatch).toContainText('내린 발령을 불러오지 못했습니다');
+    await expect(dispatch).not.toContainText('내린 발령이 없습니다.');
+  }
+  expect(await page.locator('body').innerText()).not.toContain('Not Found');
 });

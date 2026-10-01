@@ -104,7 +104,28 @@ export function rewardTargets(retinue: Retinue | null): RewardTarget[] {
     return (retinue?.people ?? []).filter((p) => p.generalId != null).map((p) => ({ retainerId: p.retainerId, name: p.name, loyalty: p.loyalty, picture: p.picture, imageServer: p.imageServer }));
 }
 
-/** 금액 칸 검사 — 양의 정수만. 상한은 서버가 판정한다(K4-15 전까지 화면이 짓지 않는다). */
+/**
+ * 상사 규칙 — 서버 `CampaignBalance.REWARD_MONEY_PER_LOYALTY` · `REWARD_MAX_LOYALTY_GAIN`(logic/…/war/CampaignBalance.kt)과
+ * `RewardExecutor` 의 충성 상한 100. 서버는 오른 충성과 상관없이 **적은 금 전부**를 낸다 — 그래서 화면이 미리 알려야 한다.
+ * 계약판 K4-15(reward-options)가 오면 그 값으로 바꾼다. 서버 값과 같은지는 court-reward-rule 시험이 Kotlin 원문으로 잰다.
+ */
+export const REWARD_RULE = { moneyPerLoyalty: 100, maxGain: 10, loyaltyCap: 100 } as const;
+
+export interface RewardPreview {
+    /** 실제로 오를 충성. */
+    readonly gain: number;
+    /** 충성 없이 나가는 금(상한 · 100 미만 나머지 · 충성 100). */
+    readonly wasted: number;
+}
+
+/** 금액 · 지금 충성으로 상사 결과를 미리 잰다(서버 RewardExecutor 와 같은 셈). 100 미만이면 서버가 TOO_SMALL 로 거절한다(gain 0). */
+export function rewardPreview(money: number, loyalty: number): RewardPreview {
+    const raw = Math.min(Math.floor(money / REWARD_RULE.moneyPerLoyalty), REWARD_RULE.maxGain);
+    const gain = Math.max(0, Math.min(raw, REWARD_RULE.loyaltyCap - loyalty));
+    return { gain, wasted: money - gain * REWARD_RULE.moneyPerLoyalty };
+}
+
+/** 금액 칸 검사 — 양의 정수만. 창고 잔액은 서버가 판정한다(K4-15 전까지 화면이 짓지 않는다). */
 export function rewardMoney(raw: string): number | null {
     const t = raw.trim();
     if (!/^\d+$/.test(t)) return null;

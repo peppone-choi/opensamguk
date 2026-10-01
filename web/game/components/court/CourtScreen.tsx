@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { Modal, StatusView, useViewportClass, withParticle } from '@opensamguk/ui';
+import { campaignReadNotice } from '@/components/campaign/GameStates';
 import { IncomingRequests } from '@/components/requests/IncomingRequests';
 import { api, isIntakeDenied, isIntakeQueued } from '@/lib/api';
 import { useCampaignRead } from '@/lib/campaign-reads';
@@ -30,7 +31,22 @@ const DECISIONS: readonly { readonly inputId: DecisionId; readonly title: string
     { inputId: 'court.moveCapital', title: '천도', desc: '수도를 다른 우리 현으로 옮깁니다.' },
 ];
 
-type Sheet = { readonly kind: 'dispatch' } | { readonly kind: 'decision'; readonly inputId: DecisionId } | { readonly kind: 'requests' } | { readonly kind: 'reward' };
+type Sheet = { readonly kind: 'dispatch' } | { readonly kind: 'issued' } | { readonly kind: 'decision'; readonly inputId: DecisionId } | { readonly kind: 'requests' } | { readonly kind: 'reward' };
+
+/** 조정 명령 옵션을 못 받았을 때 — 가능하다고 보이지 않게(사유 시트로) 막는다. */
+const OPTIONS_FAILED = '가능 여부를 불러오지 못했습니다 — 다시 시도해 주세요.';
+
+/**
+ * 읽기 하나가 정상이 아니면 빈 목록 · 「없습니다」 대신 그릴 것 — 불러오는 중 · 실패(한국어 제목 + 오류 번호 + 다시 시도, 원문은 화면에 두지 않음) ·
+ * 서버 상태(옛 형식 월드 등). 정상이면 null — 그때만 목록과 빈 문구를 그린다.
+ */
+function readState(read: { readonly loading: boolean; readonly error: string | null; readonly data: unknown }, status: string | null | undefined,
+    title: string, onRetry: () => void): ReactNode {
+    if (read.loading && read.data == null) return <StatusView kind="loading" rows={2} />;
+    if (read.error) return <StatusView kind="error" title={title} errorCode={read.error.split(':')[0]} onRetry={onRetry} />;
+    const notice = campaignReadNotice({ loading: false, error: null }, status);
+    return notice ? <StatusView kind="waiting" title={notice} /> : null;
+}
 
 export interface CourtScreenProps {
     readonly hrefs: {
@@ -42,14 +58,15 @@ export interface CourtScreenProps {
 }
 
 function useCourtOptions(generalId: number | null, reload: number) {
-    const [opts, setOpts] = useState<Partial<Record<DecisionId, CourtActionOptions | null>>>({});
+    // 'failed' = 조회 실패 — null(대상 없음)과 섞지 않는다(실패를 「가능」으로 그리지 않게).
+    const [opts, setOpts] = useState<Partial<Record<DecisionId, CourtActionOptions | 'failed'>>>({});
     useEffect(() => {
         if (generalId == null) return;
         let live = true;
         for (const d of DECISIONS) {
             api.legacyCourtOptions(d.inputId, generalId)
                 .then((o) => { if (live) setOpts((prev) => ({ ...prev, [d.inputId]: o })); })
-                .catch(() => { if (live) setOpts((prev) => ({ ...prev, [d.inputId]: null })); });
+                .catch(() => { if (live) setOpts((prev) => ({ ...prev, [d.inputId]: 'failed' })); });
         }
         return () => { live = false; };
     }, [generalId, reload]);
@@ -91,7 +108,7 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
     const requests = useRequests(generalId, reload);
     const pending = useCampaignRead((id) => api.dispatchPending(id), [reload]);
     const options = useCampaignRead((id) => api.dispatchOptions(id), [reload]);
-    const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s));
+    const retinue = useCampaignRead((id, s) => api.campaignRetinue(id, s), [reload]);
     const court = useCourtOptions(generalId, reload);
     const capital = useCapitalName(frontInfo?.nation?.capitalCityId ?? null);
 
@@ -116,10 +133,17 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
 
     const verdict = (o: { result?: boolean; available?: boolean; code?: string | null; reason?: string | null } | null | undefined) =>
         o ? { available: o.available ?? o.result ?? false, code: o.code, reason: o.reason } : null;
-    const dispatchAvail = availabilityOf('court.dispatch', { options: options.loading ? 'loading' : verdict(options.data) });
+    const failed = { available: false, reason: OPTIONS_FAILED };
+    const retry = () => setReload((n) => n + 1);
+    const dispatchVerdict = options.error ? failed : verdict(options.data);
+    const dispatchAvail = availabilityOf('court.dispatch', { options: options.loading ? 'loading' : dispatchVerdict });
     const rewardAvail = availabilityOf('court.reward');
     const confiscateAvail = availabilityOf('court.confiscate');
-    const decisionAvail = (id: DecisionId) => availabilityOf(id, { options: court[id] === undefined ? 'loading' : verdict(court[id]) });
+    const decisionAvail = (id: DecisionId) => {
+        const o = court[id];
+        return availabilityOf(id, { options: o === undefined ? 'loading' : o === 'failed' ? failed : verdict(o) });
+    };
+    const choicesOf = (id: DecisionId) => { const o = court[id]; return courtChoices(o === undefined || o === 'failed' ? null : o); };
     const people = dispatchPeople(options.data);
     const issued = issuedDispatches(pending.data, generalId);
     const queued = pending.data?.queued || options.data?.queued ? DISPATCH_QUEUED_TEXT : null;
@@ -127,12 +151,14 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
 
     const dispatchCol = (
         <IssuedDispatches rows={issued} queued={queued} availability={dispatchAvail} onNew={() => setSheet({ kind: 'dispatch' })}
-            noPeople={!options.loading && people.length === 0} territoryHref={hrefs.territory} />
+            state={readState(pending, null, '내린 발령을 불러오지 못했습니다', retry)}
+            noPeople={dispatchVerdict?.available === true && people.length === 0} territoryHref={hrefs.territory} />
     );
     const rewardCol = (
         <RewardPanel targets={rewardTargets(retinue.data)} reward={rewardAvail} confiscate={confiscateAvail} busy={busy}
             onReward={(args) => generalId != null && void run(() => api.courtReward(generalId, args), '상사를 접수했습니다 — 다음 개인 턴에 처리합니다.')}
-            onConfiscate={() => {}} recordsHref={hrefs.records} />
+            onConfiscate={() => {}} recordsHref={hrefs.records}
+            state={readState(retinue, retinue.data?.status, '부 인물을 불러오지 못했습니다', retry)} />
     );
     const decisionsCol = (
         <div className={styles.col}>
@@ -159,10 +185,13 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
         const d = DECISIONS.find((x) => x.inputId === sheet.inputId)!;
         sheetLabel = d.title;
         sheetBody = (
-            <CourtChoiceSheet inputId={d.inputId} title={d.title} choices={courtChoices(court[d.inputId] ?? null)} busy={busy}
+            <CourtChoiceSheet inputId={d.inputId} title={d.title} choices={choicesOf(d.inputId)} busy={busy}
                 onSubmit={(args) => generalId != null && void run(() => api.courtLegacy(d.inputId, generalId, args as Record<string, string | number>), `${withParticle(d.title, '을/를')} 접수했습니다 — 다음 개인 턴에 처리합니다.`)}
                 onCancel={() => setSheet(null)} />
         );
+    } else if (sheet?.kind === 'issued') {
+        sheetLabel = '발령';
+        sheetBody = <><SheetHead title={sheetLabel} onClose={closeSheet} />{dispatchCol}</>;
     } else if (sheet?.kind === 'requests') {
         sheetLabel = '받은 요청';
         sheetBody = <><SheetHead title={sheetLabel} onClose={closeSheet} /><IncomingRequests generalId={generalId} source={requests} waitingOnly compact /></>;
@@ -178,7 +207,8 @@ export function CourtScreen({ hrefs }: CourtScreenProps) {
         const items: DecisionItem[] = [
             { inputId: 'court.dispatchReply', name: '받은 요청', desc: '발령 · 정치 동의에 답합니다', availability: availabilityOf('court.dispatchReply'),
                 waiting: requests.waiting || undefined, onOpen: () => setSheet({ kind: 'requests' }) },
-            { inputId: 'court.dispatch', name: '발령', desc: '내 부 사람 장수를 현으로 보냅니다', availability: dispatchAvail, onOpen: () => setSheet({ kind: 'dispatch' }) },
+            // 모바일도 내린 발령 목록을 본다(데스크톱 발령 칸과 같은 부품) — 「새 발령」은 그 안에서.
+            { inputId: 'court.dispatch', name: '발령', desc: '내 부 사람 장수를 현으로 보냅니다', availability: dispatchAvail, onOpen: () => setSheet({ kind: 'issued' }) },
             { inputId: 'court.reward', name: '포상', desc: '직속 인물에게 창고 금을 내립니다', availability: rewardAvail, onOpen: () => setSheet({ kind: 'reward' }) },
             { inputId: 'court.confiscate', name: '몰수', desc: '인물의 금을 거둡니다', availability: confiscateAvail, onOpen: () => {} },
             ...DECISIONS.map((d) => ({ inputId: d.inputId, name: d.title, desc: d.desc, availability: decisionAvail(d.inputId),

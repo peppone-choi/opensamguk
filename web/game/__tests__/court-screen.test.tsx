@@ -90,15 +90,94 @@ test('천도 칸에 지금 수도(지도 미리보기 이름), 못 받으면 「
     expect(await within(await screen.findByRole('region', { name: '천도' })).findByText('지금 수도 — 허현')).toBeInTheDocument();
 });
 
-test('상사 — 장수 카드만 대상, 인물 · 금액을 골라 retainerId 로 접수(프론트 비율 · 잔액 상한 없음)', async () => {
+test('상사 — 장수 카드만 대상, 인물 · 금액을 골라 retainerId 로 접수(창고 잔액 상한은 화면이 짓지 않음)', async () => {
     vi.mocked(api.courtReward).mockResolvedValue({ status: 'AVAILABLE' } as never);
     render(<CourtScreen hrefs={hrefs} />);
     const reward = await screen.findByRole('region', { name: '상사' });
     await waitFor(() => expect(within(reward).getByRole('option', { name: /문관/ })).toBeInTheDocument());
     expect(within(reward).queryByRole('option', { name: /무명 공조/ })).toBeNull();
-    expect(reward).not.toHaveTextContent('100당');
+    expect(reward.querySelector('[data-waiting="reward-usable"]')).toHaveTextContent('준비 중');
     fireEvent.click(within(reward).getByRole('option', { name: /문관/ }));
     fireEvent.change(within(reward).getByRole('textbox', { name: '상사 금액' }), { target: { value: '100' } });
     fireEvent.click(within(reward).getByRole('button', { name: '상사 — 접수' }));
     await waitFor(() => expect(vi.mocked(api.courtReward)).toHaveBeenCalledWith(7, { retainerId: 31, money: 100 }));
+});
+
+// ── 읽기가 정상이 아닐 때 — 빈 목록 · 「없습니다」로 보이면 안 된다(리뷰 #1128: 옛 OrdersPanel 의 campaignReadNotice 회귀) ──
+
+test('부 인물 읽기 실패 — 상사 칸은 한국어 오류 + 다시 시도, 빈 목록 · 「없습니다」 · 서버 원문 없음', async () => {
+    vi.mocked(api.campaignRetinue).mockRejectedValue(new Error('HTTP_502: Bad Gateway'));
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    expect(await within(reward).findByText('부 인물을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(within(reward).queryByRole('listbox')).toBeNull();
+    expect(reward).not.toHaveTextContent('없습니다');
+    expect(document.body).not.toHaveTextContent('Bad Gateway');
+    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'READY', renown: 1, costSum: 0, overCapacity: false, units: [], people: [] } as never);
+    fireEvent.click(within(reward).getByRole('button', { name: /다시/ }));
+    expect(await within(reward).findByText('상사할 직속 인물 카드가 없습니다.')).toBeInTheDocument();
+});
+
+test('옛 형식 월드(UNSUPPORTED_WORLD_FORMAT) — 상사 칸은 서버 상태 한 줄, 빈 목록이 아니다', async () => {
+    vi.mocked(api.campaignRetinue).mockResolvedValue({ status: 'UNSUPPORTED_WORLD_FORMAT', renown: 0, costSum: 0, overCapacity: false, units: [], people: [] } as never);
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    expect(await within(reward).findByText('이 서버는 지금 게임 규칙과 맞지 않습니다.')).toBeInTheDocument();
+    expect(within(reward).queryByRole('listbox')).toBeNull();
+    expect(reward).not.toHaveTextContent('상사할 직속 인물 카드가 없습니다.');
+});
+
+test('내린 발령 · 발령 옵션 읽기 실패 — 「내린 발령이 없습니다」 · 「사람 장수가 없습니다」를 그리지 않고 새 발령은 사유로 막힌다', async () => {
+    vi.mocked(api.dispatchPending).mockRejectedValue(new Error('HTTP_500: Internal Server Error'));
+    vi.mocked(api.dispatchOptions).mockRejectedValue(new Error('HTTP_500: Internal Server Error'));
+    render(<CourtScreen hrefs={hrefs} />);
+    const col = await screen.findByRole('region', { name: '발령' });
+    expect(await within(col).findByText('내린 발령을 불러오지 못했습니다')).toBeInTheDocument();
+    expect(col).not.toHaveTextContent('내린 발령이 없습니다.');
+    expect(col).not.toHaveTextContent('발령할 사람 장수가 없습니다');
+    await waitFor(() => expect(within(col).getByRole('button', { name: /새 발령/ })).toHaveAttribute('aria-disabled', 'true'));
+    expect(col).toHaveTextContent('가능 여부를 불러오지 못했습니다');
+});
+
+test('주공이 아니면(발령 옵션 result:false) — 「사람 장수가 없습니다」 안내를 붙이지 않는다', async () => {
+    vi.mocked(api.dispatchOptions).mockResolvedValue({ result: false, code: 'NOT_LORD', reason: '발령은 주공만 할 수 있습니다.', targets: [], counties: [] } as never);
+    render(<CourtScreen hrefs={hrefs} />);
+    const col = await screen.findByRole('region', { name: '발령' });
+    await waitFor(() => expect(col).toHaveTextContent('발령은 주공만 할 수 있습니다.'));
+    expect(col).not.toHaveTextContent('발령할 사람 장수가 없습니다');
+});
+
+test('조정 명령 옵션 읽기 실패 — 결정 단추를 「가능」으로 두지 않고 사유로 막는다', async () => {
+    vi.mocked(api.legacyCourtOptions).mockRejectedValue(new Error('HTTP_503: Service Unavailable'));
+    render(<CourtScreen hrefs={hrefs} />);
+    const capital = await screen.findByRole('region', { name: '천도' });
+    await waitFor(() => expect(within(capital).getByRole('button', { name: /천도/ })).toHaveAttribute('aria-disabled', 'true'));
+    expect(capital).toHaveTextContent('가능 여부를 불러오지 못했습니다');
+});
+
+test('상사 미리 보기 — 한 번 상한을 넘는 금은 충성 없이 나간다고 미리 알리고, 100 미만은 막는다', async () => {
+    render(<CourtScreen hrefs={hrefs} />);
+    const reward = await screen.findByRole('region', { name: '상사' });
+    expect(reward).toHaveTextContent('금 100당 충성 +1 · 한 번에 최대 +10');
+    fireEvent.click(await within(reward).findByRole('option', { name: /문관/ }));
+    const amount = within(reward).getByRole('textbox', { name: '상사 금액' });
+    fireEvent.change(amount, { target: { value: '5000' } });
+    expect(within(reward).getByRole('status', { name: '상사 미리 보기' })).toHaveTextContent('충성 +10 — 충성 없이 나가는 금 4,000');
+    fireEvent.change(amount, { target: { value: '50' } });
+    expect(within(reward).getByRole('button', { name: /상사 — 접수/ })).toHaveAttribute('aria-disabled', 'true');
+    expect(reward).toHaveTextContent('금 100 이상이어야 충성이 오릅니다.');
+});
+
+test('모바일 발령 — 시트에 내린 발령 목록(데스크톱과 같은 부품), 「새 발령」은 그 안에서', async () => {
+    viewport?.restore();
+    viewport = installViewport(390);
+    render(<CourtScreen hrefs={hrefs} />);
+    const list = await screen.findByRole('list', { name: '조정 결정' });
+    const item = within(list).getAllByRole('listitem').find((li) => li.textContent?.includes('내 부 사람 장수를'))!;
+    await waitFor(() => expect(within(item).getByRole('button')).not.toHaveAttribute('aria-disabled', 'true'));
+    fireEvent.click(within(item).getByRole('button'));
+    const sheet = await screen.findByRole('dialog', { name: '발령' });
+    expect(await within(sheet).findByRole('list', { name: '내린 발령' })).toHaveTextContent('순욱 → 허현');
+    fireEvent.click(within(sheet).getByRole('button', { name: '새 발령' }));
+    expect(await screen.findByRole('dialog', { name: '새 발령' })).toBeInTheDocument();
 });

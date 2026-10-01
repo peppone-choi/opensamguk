@@ -15,7 +15,7 @@ import {
     type TargetCandidate,
     type TargetPicker,
 } from '@opensamguk/ui';
-import { rewardMoney, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
+import { REWARD_RULE, rewardMoney, rewardPreview, type CourtChoice, type IssuedDispatchRow, type RewardTarget } from '@/lib/court-view';
 import styles from './court.module.css';
 
 /** 막힌 확인 단추 — 누르면 사유 시트(네이티브 disabled 금지). */
@@ -41,14 +41,16 @@ export interface IssuedDispatchesProps {
     /** 내 부에 사람 장수가 없을 때 — 「영지」 배치로 가는 고리. */
     readonly territoryHref?: string;
     readonly noPeople?: boolean;
+    /** 내린 발령 읽기가 정상이 아닐 때(불러오는 중 · 실패 · 서버 상태) 목록 · 「없습니다」 대신 그릴 것. */
+    readonly state?: ReactNode;
 }
 
 /** 발령 칸 — 내린 발령(대상 · 현 · 상태 · 응답 기한) + 「새 발령」(court.dispatch, 주공 아니면 점선 + 사유). */
-export function IssuedDispatches({ rows, queued, availability, onNew, territoryHref, noPeople = false }: IssuedDispatchesProps) {
+export function IssuedDispatches({ rows, queued, availability, onNew, territoryHref, noPeople = false, state }: IssuedDispatchesProps) {
     return (
         <div className={styles.col}>
             {queued ? <Chip tone="info">{queued}</Chip> : null}
-            {rows.length === 0 ? <p className={styles.muted}>내린 발령이 없습니다.</p> : (
+            {state ?? (rows.length === 0 ? <p className={styles.muted}>내린 발령이 없습니다.</p> : (
                 <ul className={styles.rows} aria-label="내린 발령">
                     {rows.map((r) => (
                         <li key={r.dispatchId} className={styles.row}>
@@ -60,7 +62,7 @@ export function IssuedDispatches({ rows, queued, availability, onNew, territoryH
                         </li>
                     ))}
                 </ul>
-            )}
+            ))}
             {noPeople ? (
                 <p className={styles.muted}>
                     발령할 사람 장수가 없습니다. NPC 인물은 배치로 옮깁니다.
@@ -132,27 +134,40 @@ export interface RewardPanelProps {
     readonly onConfiscate: () => void;
     /** 받은 포상 기록(기록 「조정 공문」 거르기, K5). */
     readonly recordsHref?: string;
+    /** 부 인물 읽기가 정상이 아닐 때(불러오는 중 · 실패 · 서버 상태) 대상 목록 대신 그릴 것. */
+    readonly state?: ReactNode;
 }
 
 /**
  * 포상 칸 — 상사(court.reward: 내 부 인물 · 금액), 몰수(court.confiscate, 원장 PLANNED), 봉록(읽기).
- * 금 100당 충성 · 상한 · 쓸 수 있는 금은 서버 값(계약판 K4-15) 전까지 「준비 중」 — 프론트 상수를 쓰지 않는다.
+ * 상사 규칙(금 100당 충성 +1 · 한 번 +10 · 충성 100)은 서버 상수 그대로 보이고, 고른 인물 · 금액으로 오를 충성과 충성 없이 나가는 금을
+ * 미리 보인다 — 서버는 적은 금 전부를 낸다. 쓸 수 있는 창고 금은 서버 값(계약판 K4-15) 전까지 「준비 중」.
  */
-export function RewardPanel({ targets, reward, confiscate, busy, onReward, onConfiscate, recordsHref }: RewardPanelProps) {
+export function RewardPanel({ targets, reward, confiscate, busy, onReward, onConfiscate, recordsHref, state }: RewardPanelProps) {
     const [who, setWho] = useState<number | null>(null);
     const [raw, setRaw] = useState('');
     const money = rewardMoney(raw);
     const ready = reward?.status === 'AVAILABLE';
-    const missing = who == null ? '상사할 인물을 고르세요.' : money == null ? '금액을 1 이상의 정수로 적으세요.' : null;
+    const target = targets.find((t) => t.retainerId === who) ?? null;
+    const preview = target && money != null ? rewardPreview(money, target.loyalty) : null;
+    const missing = who == null ? '상사할 인물을 고르세요.'
+        : money == null ? '금액을 1 이상의 정수로 적으세요.'
+        : target && target.loyalty >= REWARD_RULE.loyaltyCap ? `충성이 이미 ${REWARD_RULE.loyaltyCap}입니다 — 금만 나갑니다.`
+        : money < REWARD_RULE.moneyPerLoyalty ? `금 ${REWARD_RULE.moneyPerLoyalty} 이상이어야 충성이 오릅니다.`
+        : null;
+    const won = (n: number) => n.toLocaleString('ko-KR');
     return (
         <div className={styles.col}>
             <section className={styles.block} aria-label="상사" data-input-id="court.reward">
                 <h4 className={styles.sub}>상사 — 직속 인물에게 창고 금을 내립니다</h4>
-                <span className={styles.chips} data-waiting="reward-rate">
-                    <span className={styles.muted}>금 대비 충성 · 한 번 상한 · 쓸 수 있는 금</span>
+                <p className={styles.muted}>
+                    {`금 ${REWARD_RULE.moneyPerLoyalty}당 충성 +1 · 한 번에 최대 +${REWARD_RULE.maxGain} · 충성은 ${REWARD_RULE.loyaltyCap}까지. 적은 금은 충성이 덜 올라도 모두 나갑니다.`}
+                </p>
+                <span className={styles.chips} data-waiting="reward-usable">
+                    <span className={styles.muted}>쓸 수 있는 창고 금</span>
                     <Chip tone="info">준비 중</Chip>
                 </span>
-                {ready ? (
+                {ready && state ? state : ready && targets.length === 0 ? <p className={styles.muted}>상사할 직속 인물 카드가 없습니다.</p> : ready ? (
                     <>
                         <div role="listbox" aria-label="상사할 인물" className={styles.list}>
                             {targets.map((t) => {
@@ -171,6 +186,12 @@ export function RewardPanel({ targets, reward, confiscate, busy, onReward, onCon
                             <span className={styles.muted}>금액</span>
                             <input className="os-input" inputMode="numeric" value={raw} onChange={(e) => setRaw(e.target.value)} aria-label="상사 금액" />
                         </label>
+                        {preview && !missing ? (
+                            <p className={preview.wasted > 0 ? styles.warnLine : styles.muted} role="status" aria-label="상사 미리 보기">
+                                {`충성 +${preview.gain}`}
+                                {preview.wasted > 0 ? ` — 충성 없이 나가는 금 ${won(preview.wasted)}` : ''}
+                            </p>
+                        ) : null}
                         <div className={styles.actions}>
                             {missing ? <BlockedConfirm label="상사 — 접수" reason={missing} /> : (
                                 <button type="button" className="os-button os-button--primary" aria-busy={busy || undefined}
