@@ -48,6 +48,8 @@
 .recipient { display: grid; gap: 6px; }
 /* 받는 사람 목록을 아직 읽지 않았을 때(첫 초점 · 누름 전) — 사람 고르기의 「불러오는 중」 본문을 숨긴다(찾기 칸 · 묶음은 그대로). */
 .people[data-idle] :global(.os-people__head) ~ * { display: none; }
+/* 안내 한 줄은 사람 고르기 머리(찾기 칸 · 묶음)와 같은 안쪽 여백(좌우 12)에 맞춘다. */
+.peopleHint { margin: 8px 12px 0; color: var(--muted); font-size: 13px; }
 /* 외교 서신 받는 세력 — 명령 흐름 후보 목록과 같은 모양(행 44 · 고른 행 이끼색 · 표식 원). */
 .nations { display: grid; gap: 4px; max-height: 264px; overflow-y: auto; }
 .nationOption {

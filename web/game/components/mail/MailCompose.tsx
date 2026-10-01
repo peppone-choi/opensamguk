@@ -152,7 +152,7 @@ export function MailCompose({ me, scope, initialRecipientId = null, onSent }: Ma
                             onChange={setRecipientId}
                             label="받는 사람"
                         />
-                        {people.state === 'idle' ? <p className={styles.muted}>{PEOPLE_IDLE_HINT}</p> : null}
+                        {people.state === 'idle' ? <p className={styles.peopleHint}>{PEOPLE_IDLE_HINT}</p> : null}
                     </div>
                 </div>
             ) : (
