@@ -119,7 +119,7 @@ export default function RetinuePage() {
 
     return (
         <GameShell title="휘하 편성" tab="배치">
-            <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 420px', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12, minWidth: 0 }}>
                     <Panel style={{ padding: 12 }}>
                         <SectionHeader

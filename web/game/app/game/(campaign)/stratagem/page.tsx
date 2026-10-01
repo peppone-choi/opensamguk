@@ -25,7 +25,7 @@ export default function HandPage() {
 
     return (
         <GameShell title="계책 덱" tab="계책">
-            <div style={{ padding: 12, display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gap: 12 }}>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader
                         title="손패"

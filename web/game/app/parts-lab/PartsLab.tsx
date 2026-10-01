@@ -20,7 +20,7 @@ const CANDIDATES: TargetCandidate[] = [
   { targetKind: 'place', targetId: 'yy', name: '영양현', sub: '영천군', cell: { col: 11, row: 9 }, available: true, distanceCells: 1, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'sj', name: '신정현', sub: '하남윤', cell: { col: 9, row: 6 }, available: false, reasonCode: 'NO_ROUTE', reason: '갈 길이 없음', distanceCells: 2, groups: ['이웃'] },
   { targetKind: 'place', targetId: 'mi', name: '밀현', sub: '하남윤', cell: { col: 8, row: 5 }, available: true, distanceCells: 3, groups: ['이웃'] },
-  { targetKind: 'place', targetId: 'bc', name: '번창현', sub: '영천군', cell: { col: 13, row: 10 }, available: true, distanceCells: 3, groups: ['내 영지'] },
+  { targetKind: 'place', targetId: 'bc', name: '번창현', sub: '영천군 · 긴 설명 견본 — 목록 폭보다 길면 한 줄로 줄이고 끝에 말줄임표를 붙입니다', cell: { col: 13, row: 10 }, available: true, distanceCells: 3, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'mp', name: '마피영', sub: '영천군', cell: { col: 14, row: 12 }, available: false, reasonCode: 'INVALID_DESTINATION', reason: '갈 수 없는 곳', distanceCells: 4, groups: ['내 영지'] },
   { targetKind: 'place', targetId: 'yc', name: '양적현', sub: '영천군 · 지금 자리', cell: { col: 10, row: 9 }, available: false, reason: '지금 있는 곳입니다', distanceCells: 0, here: true, groups: ['내 영지'] },
 ];

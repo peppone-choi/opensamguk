@@ -51,7 +51,7 @@ export default function OrdersPage() {
     }
     return (
         <GameShell title="조정 결정 — 발령 · 포상" tab="조정 결정">
-            <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>
                 <Panel style={{ padding: 12 }}>
                     <SectionHeader title="발령" sub="받은 발령 · 내린 발령 · 새 발령" />
                     {generalId != null ? <CourtForm generalId={generalId} onReserved={refresh} /> : null}

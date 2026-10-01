@@ -51,7 +51,7 @@ function CourtPlan() {
     }, [capital]);
     return (
         <GameShell title="조정 구상 — 관직 · 외교 · 천도 입력 준비 중" tab="조정 결정">
-            <div style={{ padding: 12, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 12, alignItems: 'start' }}>
                 <div style={{ display: 'grid', gap: 12 }}>
                     {/* 관직은 둘로 나눈다(2026-09-23 사용자 결정). 지방 관직은 2층 임명·실효 지배,
                         중앙 관직은 황실 조서로만 주어지는 3층이다. */}

@@ -2,7 +2,7 @@
 // 데스크톱 · 모바일 두 프로필(@both)에서 v3.1 규칙을 본다: 누를 영역 44 · 네이티브 disabled · title 0 · 가로 넘침 0 ·
 // 비활성은 눌러서 사유가 열린다 · 지도 표지와 목록이 같은 상태 · 띠가 표지를 덮지 않는다.
 import { expect, test, type Page } from '@playwright/test';
-import { BOTH, MOBILE_ONLY, press } from '../support/parity';
+import { BOTH, MOBILE_ONLY, clippedWithoutEllipsis, isMobile, press } from '../support/parity';
 
 const LAB = '/parts-lab';
 
@@ -116,6 +116,15 @@ test.describe('공용 부품 미리보기', () => {
     await press(list.getByRole('option', { name: /영양현/ }), test.info());
     await expect(page.getByTestId('lab-multi')).toHaveText('bc,yy');
     await expect(list.getByRole('option', { name: /번창현/ })).toContainText('1');
+  });
+
+  test('후보 · 사람 목록의 긴 설명은 한 줄로 줄고 끝에 「…」 — 「…」 없이 잘린 글자 0', { tag: BOTH }, async ({ page }, testInfo) => {
+    await open(page);
+    const sub = page.getByRole('listbox', { name: '여러 현 후보' }).locator('.os-opt__sub-text', { hasText: '긴 설명 견본' });
+    const cut = await sub.evaluate((el) => ({ over: el.scrollWidth > el.clientWidth, overflow: getComputedStyle(el).textOverflow }));
+    expect(cut.overflow).toBe('ellipsis');
+    if (isMobile(testInfo)) expect(cut.over, '390 에서는 견본이 실제로 넘쳐야 측정이 뜻이 있다').toBe(true);
+    expect(await clippedWithoutEllipsis(page, 'main')).toEqual([]);
   });
 
   test('데스크톱: Esc 는 고르기를 그만둔다', { tag: '@desktop-only' }, async ({ page }) => {

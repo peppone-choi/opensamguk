@@ -714,10 +714,13 @@
 .os-opt__text { display: flex; flex-direction: column; min-width: 0; gap: 1px; }
 .os-opt__name-row { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .os-opt__name { font-family: var(--font-serif); font-weight: 700; font-size: 15px; white-space: nowrap; }
-.os-opt__sub { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.os-opt__sub { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; min-width: 0; }
+/* flex 상자는 「…」를 그리지 않는다 — 글자를 따로 감싼 span 이 줄인다(보드 .opt .sub 한 줄 말줄임). */
+.os-opt__sub-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .os-opt__end { margin-left: auto; display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
 .os-opt__dist { font-family: var(--font-mono, ui-monospace, monospace); font-size: 11px; color: var(--muted); }
-.os-opt__why { display: inline-flex; align-items: center; height: 24px; padding: 0 7px; font-size: 11.5px; color: var(--rust-2); border: 1px dashed var(--rust); white-space: nowrap; max-width: 14em; overflow: hidden; text-overflow: ellipsis; }
+/* inline-flex 는 「…」를 그리지 않는다 — inline-block + 줄 높이로 가운데를 맞춘다. 전체 사유는 행을 누르면 여는 사유 시트에 있다. */
+.os-opt__why { display: inline-block; height: 24px; line-height: 22px; padding: 0 7px; font-size: 11.5px; color: var(--rust-2); border: 1px dashed var(--rust); white-space: nowrap; max-width: 14em; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
 .os-opt__dot { width: 8px; height: 8px; flex-shrink: 0; display: inline-block; }
 .os-opt__dot--ok { background: var(--moss-2); }
 .os-opt__dot--here { background: var(--bronze); }
