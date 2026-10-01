@@ -20,6 +20,7 @@ import org.mockito.Mockito.*
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity
 import org.springframework.test.context.ContextConfiguration
@@ -27,6 +28,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension
 import org.springframework.test.context.web.WebAppConfiguration
 import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.*
 import org.springframework.test.web.servlet.setup.MockMvcBuilders
 import org.springframework.web.context.WebApplicationContext
@@ -105,9 +107,9 @@ class ProvinceNamesIntegrationSecurityChainTest {
         return mapper.readTree(result.contentAsByteArray)["representationPath"].asText()
     }
 
-    @Test fun `real selection and label projection serve identical bytes to anonymous invalid user and admin JWT`() {
+    @Test fun `real selection and label projection serve identical bytes to anonymous invalid refresh user and admin JWT`() {
         val path = path()
-        val auths = listOf(null, "Bearer invalid", "Bearer ${token("USER")}", "Bearer ${token("ADMIN")}")
+        val auths = identities()
         var bytes: ByteArray? = null
         var tag: String? = null
         for (auth in auths) {
@@ -165,10 +167,30 @@ class ProvinceNamesIntegrationSecurityChainTest {
         verifyNoInteractions(states, cities, pins, catalog)
     }
 
-    private fun token(role: String): String {
+    @Test fun `both real endpoints deny unsupported methods before world or artifact selection for every identity`() {
+        val immutablePath = path()
+        clearInvocations(states, cities, pins, catalog, bundle, topology)
+        for (path in listOf(metadata, immutablePath)) {
+            for (method in listOf(HttpMethod.HEAD, HttpMethod.OPTIONS, HttpMethod.POST,
+                HttpMethod.PUT, HttpMethod.PATCH, HttpMethod.DELETE)) {
+                for (auth in identities()) {
+                    val req = request(method, path).header("If-None-Match", "*")
+                    if (auth != null) req.header("Authorization", auth)
+                    mvc.perform(req).andExpect(status().isForbidden)
+                }
+            }
+        }
+        verifyNoInteractions(states, cities, pins, catalog, bundle, topology)
+    }
+
+    private fun identities(): List<String?> = listOf(null, "Bearer invalid",
+        "Bearer ${token("USER", GatewayJwtClaims.REFRESH_TOKEN)}",
+        "Bearer ${token("USER")}", "Bearer ${token("ADMIN")}")
+
+    private fun token(role: String, type: String = GatewayJwtClaims.ACCESS_TOKEN): String {
         val now = Date()
         return Jwts.builder().subject("41").issuedAt(now).expiration(Date(now.time + 60000))
-            .claim(GatewayJwtClaims.TOKEN_TYPE, GatewayJwtClaims.ACCESS_TOKEN).claim(GatewayJwtClaims.ROLE, role)
+            .claim(GatewayJwtClaims.TOKEN_TYPE, type).claim(GatewayJwtClaims.ROLE, role)
             .signWith(Keys.hmacShaKeyFor(Decoders.BASE64.decode(SECRET))).compact()
     }
 

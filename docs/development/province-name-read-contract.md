@@ -32,3 +32,9 @@ world/release/revision/topology/source뿐 아니라 정확 representation SHA까
 작은 합성 cache5건, reader4건, actual GameApiSecurityConfig/JwtVerifyFilter + controller HTTP5건, 실제reader/ActiveWorldArtifactResolver/controller/chain 결합4건을 준비한다. cache identity/방어복사/LRU/손상, 저장핀부재·drift·crossworld, anonymous/invalidBearer allowlist·조건헤더·reset·query오염·unrelated 보호거부(현재 chain403)을 다룬다. 실제결합4건은DB read repository와 immutable artifact catalog만작은합성fixture로대체한다. anonymous/invalid/signedUSER/ADMIN의동일본문·ETag, exact공개field와private sentinel제거, cachehit에서도저장핀2중검증/actualresolver호출, 빈핀의cold선택차단·drift503, actualworldreset409·missingworld404, query오염시world무조회를검증한다. 실PG/transaction격리/운영검증증거는아니다. C1 patch main 반영 후 같은 실제chain에 nonGET 거부·reader무호출을 보강한다. 시험 준비를 실행PASS로 표시하지 않는다.
 
 새 로컬 JVM/대형지도 파싱·bake 없이 현재 head 원격 jvm-core와 game-engine 결과/XML skip0을 확인한다. CI 실행 중 repeated sync/취소0. 운영DB·VM/config·image승격0. cf7 actual web → PNG API 별도 승인 순서를 유지한다. 신규 이름 API의 운영 반영은 별도 승인 대상이다.
+
+## main 보안 경계와 실제 reader 결합
+
+#1115의 exact 두 경로 GET 허용·그 외 method 거부가 main에 병합된 뒤 같은 main을 반영했다. 실제 reader/resolver/controller/JWT chain 시험에서 HEAD·OPTIONS·POST·PUT·PATCH·DELETE를 두 실제 경로(메타데이터와 전체 pin query가 있는 불변 URL)에 요청한다. 익명·잘못된 Bearer·refresh JWT·access USER·access ADMIN 모두 정확한 403이며, world/city/pin/catalog 및 artifact bytes 접근 0을 요구한다. GET은 이 다섯 신원에 같은 공개 DTO·ETag를 준다. 저장소 read와 immutable catalog는 fixture이며 실제 PostgreSQL 트랜잭션 실행 증거는 아니다.
+
+현재 main의 보안 설정은 인증 필수 `/api/events`의 익명 거절을 403으로 반환한다. 공통 401 entrypoint가 main에 들어오면 해당 인증 거절 시험은 그 정확한 401/오류 JSON에 맞춘다. 인증된 USER/ADMIN의 비GET 권한 거절 403 계약은 유지한다.

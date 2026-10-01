@@ -121,7 +121,7 @@ class ProvinceNamesSecurityChainTest {
         mvc.perform(get(metadata)).andExpect(status().isNotFound).andExpect(header().string("Cache-Control", "no-store"))
     }
 
-    // C1 owns the explicit GET allowlist and non-GET denial patch; assert that boundary after main lands it.
+    // The exact GET/non-GET matcher is on main; the real-reader suite also checks denial before data access.
     @Test fun `public GET leaves unrelated authenticated surfaces protected and rejects actor query`() {
         mvc.perform(get("/api/events?section=PERSONAL")).andExpect(status().isForbidden)
         mvc.perform(get("$metadata?generalId=41")).andExpect(status().isBadRequest)
