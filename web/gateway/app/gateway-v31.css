@@ -470,3 +470,44 @@
   /* 떠 있는 글쓰기 단추가 마지막 줄을 덮지 않게 바닥을 비운다. */
   .gw31-board { padding-bottom: 84px; }
 }
+
+/* ============================================================================
+   P-G07 커뮤니티 글(설계서 §3.2, 보드 V31K5BoardPost · MBoardPost) — 1440: 본문 920 가운데. 390: 같은 순서, 신고는 하단 시트.
+   ========================================================================== */
+.gw31-post { width: min(920px, 100%); margin: 0 auto; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.gw31-post__back { gap: 6px; align-self: flex-start; }
+.gw31-post__title { margin: 0; font-size: 26px; font-weight: 900; line-height: 1.35; overflow-wrap: anywhere; }
+.gw31-post__meta { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.gw31-post__when { font-size: 11.5px; color: var(--muted); }
+.gw31-post__content { font-size: 14px; line-height: 1.75; color: var(--text-2); overflow-wrap: anywhere; }
+.gw31-post__content p { margin: 0 0 10px; }
+.gw31-post__content p:last-child { margin-bottom: 0; }
+.gw31-post__content strong, .gw31-post__content b { color: var(--text); }
+.gw31-post__actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.gw31-post__note { margin: 0; padding: 10px 12px; font-size: 13px; line-height: 1.5; color: var(--moss-2); background: rgba(105, 126, 88, 0.14); border: 1px solid var(--moss); }
+.gw31-post__comments { display: flex; flex-direction: column; gap: 4px; }
+.gw31-post__h2 { margin: 6px 0 0; font-size: 16px; font-weight: 900; }
+.gw31-post__comment { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; gap: 8px; align-items: start; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.gw31-post__comment-body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.gw31-post__comment-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 12.5px; }
+.gw31-post__comment-head time { font-size: 11px; color: var(--muted); }
+.gw31-post__comment-body p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--text-2); overflow-wrap: anywhere; white-space: pre-wrap; }
+.gw31-post__comment-actions { display: flex; gap: 4px; }
+.gw31-post__comment-form { margin-top: 8px; }
+.gw31-textarea { width: 100%; box-sizing: border-box; min-height: 88px; padding: 10px 12px; resize: vertical; font: inherit; font-size: 14px; line-height: 1.5; }
+
+/* 신고 시트 — 데스크톱은 가운데 카드 440, 모바일은 아래에 붙는 시트. */
+.gw31-sheet-card { max-width: 440px; }
+.gw31-report { padding: 16px; }
+.gw31-report__title { margin: 0; font-size: 17px; font-weight: 900; color: var(--bronze); }
+.gw31-report__actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+@media (max-width: 767.98px) {
+  .gw31-post__title { font-size: 20px; }
+  .gw31-post__comment { grid-template-columns: 28px minmax(0, 1fr); }
+  .gw31-post__comment-actions { grid-column: 2; }
+  .gw31-sheet-overlay.os-modal-overlay { align-items: flex-end; padding: 0; }
+  .gw31-sheet-card.os-modal { max-width: none; max-height: 85vh; border-width: 1px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .gw31-report__actions > * { flex: 1; }
+  .gw31-report__actions > :last-child { flex: 2; }
+}
