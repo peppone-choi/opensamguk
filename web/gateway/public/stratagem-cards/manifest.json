@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "source": "opensamguk-images@894c0e0:exports/stratagem-cards",
+  "size": [
+    512,
+    768
+  ],
+  "cards": {
+    "FORTIFY": {
+      "id": "gyeonbyeok",
+      "name": "견벽",
+      "file": "gyeonbyeok.webp",
+      "sha256": "1787a483f5306e6d95584a461aea66829548059c7f8fa40b7ceefc6dfd869983"
+    },
+    "INSIGHT": {
+      "id": "ganpa",
+      "name": "간파",
+      "file": "ganpa.webp",
+      "sha256": "ef1b329ef7429c120b65f27923d446cab4d5cb69f85ed4e75eda596bfe8c14d9"
+    }
+  }
+}
