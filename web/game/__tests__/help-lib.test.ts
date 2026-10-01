@@ -99,7 +99,7 @@ test('first steps are the eight approved steps in order: 가입 → 생성 → �
         expect(st.how.length, st.key).toBeLessThanOrEqual(3);
     }
     // 아직 없는 것은 지어내지 않고 「준비 중」 — 실시간 전투 참가 · 포로 등용
-    expect(FIRST_STEPS.filter((st) => st.pending).map((st) => st.key)).toEqual(['employ', 'battle']);
+    expect(FIRST_STEPS.filter((st) => st.pending).map((st) => st.key)).toEqual(['create', 'employ', 'battle']);
 });
 
 /** 셸 주소 조각 → 그 화면 페이지 파일(app/game 아래, 캠페인 묶음 포함). 없는 화면 바로가기는 404 다. */
@@ -129,8 +129,8 @@ test('battle explanation opens the approved campaign hub and preserves the serve
 
 /** 버튼 이름을 조합해 그리는 곳 — 원문에 문자 그대로 없다(`${이름} 예약`). */
 const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: string }> = {
-    '인재탐색 예약': { file: 'web/game/components/command/PeopleForm.tsx', marker: '} 예약`', base: '인재탐색' },
-    '등용 예약': { file: 'web/game/components/command/PeopleForm.tsx', marker: '} 예약`', base: '등용' },
+    // 흐름 제출 단추 — `${순 번호}순에 예약`(ArgsPanel). 첫걸음 글은 「NN순에 예약」(NN = 순 번호)으로 쓴다.
+    'NN순에 예약': { file: 'web/game/components/command-flow/ArgsPanel.tsx', marker: '}순에 예약`', base: '순에 예약' },
 };
 
 /**
@@ -139,10 +139,11 @@ const COMPOSED_LABELS: Record<string, { file: string; marker: string; base: stri
  */
 const STEP_SOURCES: Record<string, readonly string[]> = {
     register: ['web/gateway/app', 'web/gateway/components'],
-    create: ['web/game/app/game/join', 'web/gateway/components/lobby'],
-    enlist: ['web/game/components/campaign/TurnList.tsx', 'web/game/components/CommandModal.tsx', 'web/game/components/command'],
-    employ: ['web/game/components/campaign/TurnList.tsx', 'web/game/components/CommandModal.tsx', 'web/game/components/command'],
-    march: ['web/game/components/campaign/TurnList.tsx', 'web/game/components/CommandModal.tsx', 'web/game/components/command'],
+    create: ['web/game/components/entry', 'web/game/app/game/create', 'web/gateway/components/lobby'],
+    // 작전실 명령 흐름(K6 #1125): 흐름 패널 · 12순 칸 · 명령 이름(catalog) · 인자 칸 이름(options)
+    enlist: ['web/game/components/enlist', 'web/game/app/game/join'],
+    employ: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
+    march: ['web/game/components/command-flow', 'web/game/components/turn-slots', 'web/game/lib/command-flow'],
     dispatch: ['web/game/components/court', 'web/game/components/requests'],
     work: ['web/game/components/campaign/DomesticPanels.tsx', 'web/game/app/game/(campaign)/territory'],
     battle: ['web/game/components/battle', 'web/game/lib/battle', 'web/game/app/game/(campaign)/corps/battle'],

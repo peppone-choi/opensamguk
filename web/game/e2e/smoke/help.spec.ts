@@ -105,7 +105,7 @@ async function openShellWithHelp(page: Page, path = '/game/retinue/yuedan') {
     await expect(page.getByRole('heading', { level: 2, name: '월단평' })).toBeVisible({ timeout: 60_000 });
 }
 
-async function shellRoutes(page: Page, options: { serverScoped?: boolean; hasGeneral?: boolean } = {}) {
+async function shellRoutes(page: Page, options: { serverScoped?: boolean; hasGeneral?: boolean; unaffiliated?: boolean } = {}) {
     const baseURL = test.info().project.use.baseURL ?? 'http://localhost:3001';
     // The normal smoke app has no SERVER_ID; only address assertions need a server cookie.
     await page.context().addCookies([{ name: 'sam_server', value: options.serverScoped === false ? '' : 'pep', url: baseURL,
@@ -115,8 +115,9 @@ async function shellRoutes(page: Page, options: { serverScoped?: boolean; hasGen
     await page.route((url) => url.pathname.endsWith('/front-info'), (r) => r.fulfill({ json: {
         result: true,
         global: { year: 200, month: 3, turnPhase: 1, turnPhaseText: '중순', ruleProfile: 'HWIHA', turnterm: 60, scenario: 's', scenarioText: 's', generalCount: 0, nationCount: 0, cityCount: 0, npcCount: 0 },
-        general: { hasGeneral: options.hasGeneral ?? true, generalId: 7, name: '하후돈', nationId: 1, officerLevel: 1, permission: 0, showSecret: false },
-        nation: { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
+        // unaffiliated = 재야(소속 없음) — 출사 화면(/join)은 소속이 있으면 작전실로 돌려보낸다.
+        general: { hasGeneral: options.hasGeneral ?? true, generalId: 7, name: '하후돈', nationId: options.unaffiliated ? 0 : 1, officerLevel: options.unaffiliated ? 0 : 1, permission: 0, showSecret: false },
+        nation: options.unaffiliated ? null : { id: 1, name: '조조', color: '#4f7fbf' }, city: null, recentRecord: {},
     } }));
     await page.route((url) => url.pathname.startsWith('/api/server-basic-info/'), (r) => r.fulfill({ status: 404, json: {} }));
 }
@@ -313,17 +314,17 @@ test('서랍이 열린 채 지도 — 데스크톱은 서랍이 옆에 서서 �
 
 // ---- 첫걸음 바로가기(D21) — 서랍에서 실제 화면으로 간다 ------------------------------------------------------------
 const FIRST_STEP_TARGETS: ReadonlyArray<readonly [string, RegExp, string]> = [
-    ['create', /\/game\/(pep\/)?join$/, '장수 생성'],
-    ['enlist', /\/game(\/pep)?$/, '작전실'],
+    ['create', /\/game\/(pep\/)?create$/, '내 장수를 만든다'],
+    ['enlist', /\/game\/(pep\/)?join$/, '섬길 주공을 고른다'],
     ['dispatch', /\/game\/(pep\/)?court\?tab=orders$/, '조정'],
     ['work', /\/game\/(pep\/)?territory$/, '배치 · 방침 · 공사'],
-    ['employ', /\/game(\/pep)?$/, '작전실'],
-    ['march', /\/game(\/pep)?$/, '작전실'],
+    ['employ', /\/game(\/pep)?\?do=action\.search$/, '작전실'],
+    ['march', /\/game(\/pep)?\?do=action\.deploy$/, '작전실'],
     ['battle', /\/game\/(pep\/)?corps\/battle$/, '전투 · 부재 대비'],
 ];
 
 async function followFirstStep(page: Page, info: import('@playwright/test').TestInfo, key: string, explanationId?: string, inputs = false) {
-    await shellRoutes(page, { serverScoped: false, hasGeneral: key !== 'create' });
+    await shellRoutes(page, { serverScoped: false, hasGeneral: key !== 'create', unaffiliated: key === 'enlist' });
     if (inputs) await shortcutInputs(page);
     await page.goto('/game/retinue/yuedan?help=start', { waitUntil: 'domcontentloaded' });
     const go = page.locator(DRAWER).locator(`[data-first-step-go="${key}"]`);
@@ -389,6 +390,8 @@ test.describe('첫걸음 바로가기', () => {
             await expect(page, key).toHaveURL(url);
             await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { name: title, exact: true }), key).toBeVisible();
             await expect(page.getByText('This page could not be found'), key).toHaveCount(0);
+            if (key === 'create') await expect(page.getByText('장수 만들기가 아직 열리지 않았습니다 — 서버 준비 중')).toBeVisible();
+            if (key === 'employ' || key === 'march') await expect(page.getByTestId('command-flow')).toBeVisible();
             if (key === 'battle') {
                 await expect(page.getByRole('region', { name: '내 전투', exact: true })).toContainText('전투가 열리지 않습니다(서버 준비 중)');
                 await expect(page.getByRole('heading', { name: '부재 대비', exact: true })).toBeVisible();
@@ -397,37 +400,50 @@ test.describe('첫걸음 바로가기', () => {
         });
     }
 
-    const personalInputs = [
-        ['enlist', 'tutorial.enlist', 'action.enlist', '출사', '출사 예약', { mode: 'GENERAL', targetId: 8 }],
-        ['march', 'tutorial.march', 'action.deploy', '출병', '출병 예약', { bugokIds: [7], destinationProvinceId: 'B' }],
-        ['march', 'tutorial.march', 'action.move', '이동', '이동 예약', { destinationProvinceId: 'B' }],
-        ['employ', 'tutorial.employ', 'action.search', '인재탐색', '인재탐색 예약', {}],
-        ['employ', 'tutorial.employ', 'action.employ', '등용', '등용 예약', { targetGeneralId: 8 }],
+    // 출사는 출사 화면(/join), 등용 · 행군은 작전실 명령 흐름(K6 #1125, `?do=`). 대역은 POST 를 접수하지 않는다(BLOCKED).
+    test('tutorial.enlist → action.enlist: 출사 화면에서 묶음 · 주공을 고르고 출사 예약', { tag: [BOTH] }, async ({ page }, info) => {
+        await followFirstStep(page, info, 'enlist', 'tutorial.enlist', true);
+        const screen = page.getByTestId('enlist-screen');
+        await expect(screen.getByRole('heading', { name: '섬길 주공을 고른다' })).toBeVisible();
+        await press(screen.getByRole('radiogroup', { name: '출사 후보 묶음' }).getByRole('radio', { name: /^장수/ }), info);
+        await press(screen.getByRole('option', { name: /검증용 주공/ }).first(), info);
+        const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/command/action.enlist');
+        await press(screen.getByRole('button', { name: '출사 예약', exact: true }), info);
+        const request = await sent;
+        expect(request.postDataJSON()).toEqual({ mode: 'GENERAL', targetId: 8 });
+        expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
+        expect(new URL(request.url()).searchParams.get('turnIdx')).toBe('0');
+        await expect(page.getByText(DENIED_SHORTCUT).first()).toBeVisible();
+    });
+
+    const flowInputs = [
+        // [단계, 설명 id, 입력, 바로가기가 연 입력, 고를 것, 보낼 본문]
+        ['march', 'tutorial.march', 'action.deploy', 'action.deploy', [/검증용 부곡/, /검증용 목적지/], { bugokIds: [7], destinationProvinceId: 'B' }],
+        ['march', 'tutorial.march', 'action.move', 'action.deploy', [/검증용 목적지/], { destinationProvinceId: 'B' }],
+        ['employ', 'tutorial.employ', 'action.search', 'action.search', [], {}],
+        ['employ', 'tutorial.employ', 'action.employ', 'action.search', [/검증용 인물/], { targetGeneralId: 8 }],
     ] as const;
-    for (const [key, explanationId, inputId, label, submitLabel, args] of personalInputs) {
-        test(`${explanationId} → ${inputId}: 실제 예약 입력을 고른다`, { tag: [BOTH] }, async ({ page }, info) => {
+    for (const [key, explanationId, inputId, opened, picks, args] of flowInputs) {
+        test(`${explanationId} → ${inputId}: 작전실 흐름에서 실제 예약 입력을 고른다`, { tag: [BOTH] }, async ({ page }, info) => {
             await followFirstStep(page, info, key, explanationId, true);
-            await expect(page.getByRole('heading', { name: '명령 목록 12순', exact: true })).toBeVisible();
-            await press(page.getByRole('button', { name: '+ 예약', exact: true }).first(), info);
-            const dialog = page.getByRole('dialog', { name: '명령', exact: true });
-            const action = dialog.getByRole('combobox', { name: '개인 행동', exact: true });
-            await action.selectOption({ label });
-            await expect(action).toHaveValue(inputId);
-            await expect(dialog.getByRole('heading', { name: label, exact: true })).toBeVisible();
-            if (inputId === 'action.enlist') await dialog.getByRole('combobox', { name: '출사 대상' }).selectOption('0');
-            if (inputId === 'action.deploy') {
-                await dialog.getByRole('checkbox', { name: '검증용 부곡 · 0명' }).check();
-                await dialog.getByRole('combobox', { name: '출병 목적지' }).selectOption('B');
+            const flow = page.getByTestId('command-flow');
+            await expect(flow).toBeVisible();
+            await expect(flow.getByRole('heading', { name: /이번 순에 할 일/ })).toBeVisible();
+            if (inputId !== opened) {
+                // 같은 단계의 다른 입력 — 「← 명령 목록」에서 고른다(첫걸음 「어떻게」와 같은 길).
+                await press(flow.getByRole('button', { name: '← 명령 목록', exact: true }), info);
+                await press(flow.getByRole('list', { name: '명령' }).locator(`[data-input-id="${inputId}"]`), info);
             }
-            if (inputId === 'action.move') await dialog.getByRole('combobox', { name: '목적 省' }).selectOption('B');
-            if (inputId === 'action.employ') await dialog.getByRole('combobox', { name: '대상 인물' }).selectOption('8');
+            for (const pick of picks) await press(flow.getByRole('option', { name: pick }).first(), info);
+            const submit = flow.locator(`[data-input-id="${inputId}"][data-input-status]`);
+            await expect(submit).toHaveText(/순에 예약$/);
             const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === `/api/game/api/command/${inputId}`);
-            await press(dialog.getByRole('button', { name: submitLabel, exact: true }), info);
+            await press(submit, info);
             const request = await sent;
             expect(request.postDataJSON()).toEqual(args);
             expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
             expect(new URL(request.url()).searchParams.get('turnIdx')).toBe('0');
-            await expect(dialog.getByRole('alert')).toHaveText(DENIED_SHORTCUT);
+            await expect(page.getByText(DENIED_SHORTCUT).first()).toBeVisible();
         });
     }
 

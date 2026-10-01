@@ -11,7 +11,7 @@ function Go({ step }: { step: FirstStep }) {
     const className = [s.btn, s.ghost, s.wide].join(' ');
     const body = <>{step.go.label}<Icon name="next" /></>;
     return step.go.kind === 'game'
-        ? <CampaignLink slug={step.go.slug} className={className} data-first-step-go={step.key}>{body}</CampaignLink>
+        ? <CampaignLink slug={step.go.slug} query={step.go.query} className={className} data-first-step-go={step.key}>{body}</CampaignLink>
         : <a href={step.go.href} className={className} data-first-step-go={step.key}>{body}</a>;
 }
 

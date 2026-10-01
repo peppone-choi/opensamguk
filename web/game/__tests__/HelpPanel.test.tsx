@@ -175,12 +175,12 @@ test('first steps (D21): eight steps to read — what · where · how, 「준비
     const hrefs = Object.fromEntries([...list.querySelectorAll<HTMLAnchorElement>('[data-first-step-go]')].map((a) => [a.dataset.firstStepGo, a.getAttribute('href')]));
     expect(hrefs).toEqual({
         register: '/join',
-        create: '/game/pep/join',
-        enlist: '/game/pep',
+        create: '/game/pep/create',
+        enlist: '/game/pep/join',
         dispatch: '/game/pep/court?tab=orders',
         work: '/game/pep/territory',
-        employ: '/game/pep',
-        march: '/game/pep',
+        employ: '/game/pep?do=action.search',
+        march: '/game/pep?do=action.deploy',
         battle: '/game/pep/corps/battle',
     });
     expect(onNavigate).not.toHaveBeenCalled();
