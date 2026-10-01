@@ -1,0 +1,63 @@
+/* 공성(P-C02) 본문 부품. 치수는 승인 보드 V31K4Siege · V31K4MSiege 그대로. 색은 공용 토큰만. */
+
+.muted { font-size: 12px; color: var(--muted); margin: 0; }
+.note { font-size: 12px; color: var(--muted); margin: 0; padding: 8px 12px; }
+.empty { font-size: 13px; color: var(--text-2); margin: 0; padding: 12px; }
+.okLine { margin: 0; font-size: 12.5px; color: var(--moss-2); }
+.errLine { margin: 0; padding: 0 12px; font-size: 12.5px; color: var(--rust-2); }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.stack { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.link { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; font-size: 12.5px; color: var(--bronze); }
+
+/* ---- 목록(보드 opt h=64) ---- */
+.list { list-style: none; margin: 0; padding: 0; }
+.opt {
+    width: 100%; min-height: 64px; display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+    background: none; border: 0; border-bottom: 1px solid var(--line); color: inherit; font: inherit; text-align: left; cursor: pointer;
+}
+.opt[aria-pressed='true'] { background: var(--inset); box-shadow: inset 3px 0 0 var(--bronze); }
+.optText { display: flex; flex-direction: column; gap: 4px; min-width: 0; flex: 1; }
+.optName { font-weight: 700; }
+
+/* ---- 형편 6칸(보드 siege_kv — 3열) ---- */
+.cells { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.cell { display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; background: var(--inset); border: 1px solid var(--line); }
+.cell dd { margin: 0; font-size: 14px; }
+.cell[data-warn] { border-color: var(--rust); }
+.cell[data-warn] dd { color: var(--rust-2); }
+
+/* ---- 포위 기록(보드 row h=44) ---- */
+.timeline { list-style: none; margin: 0; padding: 0; }
+.tlRow { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.tlWhen { flex-shrink: 0; width: 120px; font-size: 11px; color: var(--muted); }
+
+/* ---- 오른쪽 칸 ---- */
+.commands { display: flex; flex-direction: column; gap: 8px; padding: 10px 12px; }
+.bullets { margin: 0; padding: 8px 12px 10px 30px; display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; }
+
+/* ---- 화면 조립 ---- */
+/* 본문 가장자리 여백은 셸(GameShell .body — 데스크톱 12 · 모바일 10/12)이 준다. 여기서 또 주면 24 로 겹친다(#1133). */
+.screen { display: flex; flex-direction: column; gap: 12px; min-height: 0; height: 100%; box-sizing: border-box; }
+.columns { flex: 1; min-height: 0; display: flex; gap: 12px; }
+.colList { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; }
+.colMid { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.colRight { width: 360px; flex-shrink: 0; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.listHead { display: flex; align-items: baseline; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.listTitle { margin: 0; font-size: 14px; font-weight: 800; }
+
+/* 태블릿 — 데스크톱 구조를 줄인다(오른쪽 칸을 가운데 아래로). */
+@media (max-width: 1199.98px) {
+    .columns { flex-wrap: wrap; }
+    .colList { width: 300px; }
+    .colRight { width: 100%; }
+}
+
+/* ---- 모바일 ---- */
+.screenMobile { display: flex; flex-direction: column; gap: 8px; }
+.screenMobile .list { background: var(--panel); border: 1px solid var(--line-2); }
+.mHead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.mTitle { margin: 0; font-size: 18px; font-weight: 900; }
+.screenMobile .stack { padding: 0; }
+.screenMobile .note { padding: 0; }
+.footBar { flex-shrink: 0; display: flex; gap: 8px; padding: 8px 0; }
+.footBar > * { flex: 1; }
