@@ -34,8 +34,15 @@ export async function fetchJson<T>(url: string): Promise<T> {
   return JSON.parse(new TextDecoder().decode(await fetchBytes(url, { keep: true }))) as T;
 }
 
+/**
+ * `base` + `/` + `path`. A query on `base` (the game proxy picks the server with `?server=`) moves to the end,
+ * so every file of a bake keeps it.
+ */
 export function joinUrl(base: string, path: string): string {
-  return `${base.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`;
+  const q = base.indexOf('?');
+  const dir = q < 0 ? base : base.slice(0, q);
+  const query = q < 0 ? '' : base.slice(q);
+  return `${dir.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}${query}`;
 }
 
 /** L2 overview: same two-plane layout as a chunk, cols × rows. */

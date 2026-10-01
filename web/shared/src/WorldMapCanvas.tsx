@@ -60,6 +60,11 @@ import {
   type StrategicMapSnapshot, type StrategicMapRoute, type StrategicMapScene, type StrategicWaterControl,
 } from './strategicMap';
 
+/** 지도 위 단추는 누를 영역 44 × 44 이상(K3 규칙) — 화면마다 덮어쓰지 않게 지도판이 직접 준다. */
+const MAP_CONTROL_BUTTON = { minWidth: 44, minHeight: 44 } as const;
+/** 지도 위 조작 층(--z-map-ctrl) — 셸 탭 막대(--z-float)보다 올라가지 않는다. */
+const MAP_CONTROL_LAYER = 'var(--z-map-ctrl, 20)';
+
 export interface Jun {
   name: string;
   nameCh: string;
@@ -2660,7 +2665,8 @@ export function WorldMapCanvas({
     <div
       ref={boxRef}
       className={`os-iso-map ${className}`.trim()}
-      style={{ position: 'relative', width: '100%', height: '100%', ...style }}
+      // 쌓임 맥락을 지도판 안에 가둔다 — 조작 층(--z-map-ctrl)이 바깥 툴팁 · 단추 · 레일과 겨루지 않게.
+      style={{ position: 'relative', width: '100%', height: '100%', isolation: 'isolate', ...style }}
     >
       <canvas
         ref={canvasRef}
@@ -2725,13 +2731,13 @@ export function WorldMapCanvas({
         </p>
       )}
       {strategicScene && strategicControls && strategicTopology && (
-        <section aria-label="수역 정보" style={{ position: 'absolute', right: 8, bottom: 8, maxWidth: 'min(260px, 65%)',
+        <section aria-label="수역 정보" style={{ position: 'absolute', zIndex: MAP_CONTROL_LAYER, right: 8, bottom: 8, maxWidth: 'min(260px, 65%)',
           maxHeight: '45%', overflow: 'auto', padding: 6, background: 'rgba(20,24,30,0.92)', color: '#eef5ff', fontSize: 12 }}>
-          <button type="button" aria-label="수역 레이어" aria-pressed={showWater} onClick={() => setShowWater(value => !value)}>수역</button>
+          <button type="button" aria-label="수역 레이어" aria-pressed={showWater} style={MAP_CONTROL_BUTTON} onClick={() => setShowWater(value => !value)}>수역</button>
           <div>통행 가능 여부는 수송 조건을 포함한 서버 경로 판정에 따릅니다.</div>
           <ul style={{ paddingLeft: 16, margin: '4px 0' }}>
             {strategicScene.zones.map(shape => <li key={shape.zone.id}>
-              <button type="button" title={shape.zone.id} aria-pressed={inspectedWater === shape.zone.id} onClick={() => {
+              <button type="button" title={shape.zone.id} aria-pressed={inspectedWater === shape.zone.id} style={MAP_CONTROL_BUTTON} onClick={() => {
                 setInspectedWater(shape.zone.id);
                 const view = viewRef.current;
                 if (view) updateView(viewAt(sizeRef.current.width, sizeRef.current.height,
@@ -2751,16 +2757,16 @@ export function WorldMapCanvas({
             : '서버 경로가 현재 지도와 일치하지 않아 표시하지 않습니다.'}</p>}
         </section>
       )}
-      {projectedBattlefields.length > 0 && <div className="os-iso-map__battlefields" role="group" aria-label="전장 선택" style={{position:'absolute',right:'var(--battlefield-control-right, 8px)',top:8,display:'flex',flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'var(--battlefield-control-width, calc(100% - 16px))',gap:4}}>
+      {projectedBattlefields.length > 0 && <div className="os-iso-map__battlefields" role="group" aria-label="전장 선택" style={{position:'absolute',zIndex:MAP_CONTROL_LAYER,right:'var(--battlefield-control-right, 8px)',top:8,display:'flex',flexWrap:'wrap',justifyContent:'flex-end',maxWidth:'var(--battlefield-control-width, calc(100% - 16px))',gap:4}}>
         {projectedBattlefields.map(({target}) => <button key={target.id} type="button" aria-label={`${target.name} 전장 선택`} onClick={() => onBattlefieldActivate?.(target)}
           className="os-button os-button--ghost os-button--sm"
-          style={{background:'var(--panel, #24231f)',color:'var(--text, #e7dcc1)',border:'1px solid var(--line, #8e836a)',padding:'4px 8px'}}>
+          style={{...MAP_CONTROL_BUTTON,background:'var(--panel, #24231f)',color:'var(--text, #e7dcc1)',border:'1px solid var(--line, #8e836a)',padding:'4px 8px'}}>
           ◇ {target.name}{target.current ? ' · 주둔' : ''}
         </button>)}
       </div>}
-      <div className="os-iso-map__controls" style={{ position: 'absolute', left: 8, bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
-        <button type="button" aria-label="지도 확대" onClick={() => zoomBy(1.4)}>+</button>
-        <button type="button" aria-label="지도 축소" onClick={() => zoomBy(1 / 1.4)}>−</button>
+      <div className="os-iso-map__controls" style={{ position: 'absolute', zIndex: MAP_CONTROL_LAYER, left: 'var(--battlefield-left-clearance, 8px)', bottom: 8, display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <button type="button" aria-label="지도 확대" style={MAP_CONTROL_BUTTON} onClick={() => zoomBy(1.4)}>+</button>
+        <button type="button" aria-label="지도 축소" style={MAP_CONTROL_BUTTON} onClick={() => zoomBy(1 / 1.4)}>−</button>
       </div>
       {loadedTiles?.jurisdictionRecords?.length && loadedTiles.parentRegions?.length ? (
         <div
@@ -2769,7 +2775,8 @@ export function WorldMapCanvas({
           aria-label="도시 행정 레이어"
           style={{
             position: 'absolute',
-            left: 8,
+            zIndex: MAP_CONTROL_LAYER,
+            left: 'var(--battlefield-left-clearance, 8px)',
             top: 8,
             display: 'flex',
             gap: 4,
@@ -2782,6 +2789,7 @@ export function WorldMapCanvas({
           <button
             type="button"
             aria-label="구역 레이어"
+            style={MAP_CONTROL_BUTTON}
             aria-pressed={administrativeLayer === 'PROVINCE'}
             onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('PROVINCE'); render(); }}
           >
@@ -2790,6 +2798,7 @@ export function WorldMapCanvas({
           <button
             type="button"
             aria-label="현급 도시 레이어"
+            style={MAP_CONTROL_BUTTON}
             aria-pressed={administrativeLayer === 'JURISDICTION'}
             onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('JURISDICTION'); render(); }}
           >
@@ -2798,6 +2807,7 @@ export function WorldMapCanvas({
           <button
             type="button"
             aria-label="군급 도시 레이어"
+            style={MAP_CONTROL_BUTTON}
             aria-pressed={administrativeLayer === 'COMMANDERY'}
             onClick={() => { manualAdministrativeLayerRef.current = true; setAdministrativeLayer('COMMANDERY'); render(); }}
           >

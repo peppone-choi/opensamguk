@@ -33,7 +33,7 @@ BASELINE = Path(__file__).with_name("web_ui_lint_baseline.json")
 SOURCE_ROOTS = ("web/game", "web/gateway", "web/shared")
 CODE_SUFFIXES = {".ts", ".tsx"}
 STYLE_SUFFIXES = {".css", ".scss"}
-SKIP_DIRS = {".git", ".next", "build", "dist", "node_modules", "coverage", "public",
+SKIP_DIRS = {".git", ".next-topdown-screens", ".next", "build", "dist", "node_modules", "coverage", "public",
              "__tests__", "e2e", "test-results", "playwright-report"}
 TEST_NAME = re.compile(r"\.(?:test|spec)\.tsx?$")
 KINDS = ("title_attr", "native_disabled", "dimmed_disabled", "adhoc_breakpoint")
