@@ -2,6 +2,7 @@ package opensamguk.gateway.controller
 
 import jakarta.validation.Valid
 import opensamguk.gateway.dto.AuthResponse
+import opensamguk.gateway.dto.AuthPolicyResponse
 import opensamguk.gateway.dto.ChangeNicknameRequest
 import opensamguk.gateway.dto.ChangePasswordRequest
 import opensamguk.gateway.dto.DeleteAccountRequest
@@ -12,6 +13,7 @@ import opensamguk.gateway.dto.UserResponse
 import opensamguk.gateway.security.CustomUserDetails
 import opensamguk.gateway.service.AuthService
 import org.springframework.http.ResponseEntity
+import org.springframework.http.CacheControl
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.DeleteMapping
@@ -25,6 +27,10 @@ import org.springframework.web.bind.annotation.RestController
 class AuthController(
     private val authService: AuthService,
 ) {
+
+    @GetMapping("/policy")
+    fun policy(): ResponseEntity<AuthPolicyResponse> =
+        ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(authService.policy())
 
     @PostMapping("/register")
     fun register(@Valid @RequestBody request: RegisterRequest): ResponseEntity<AuthResponse> {
