@@ -21,6 +21,7 @@ const table = { '/api/front-info': frontInfo(), '/api/yuedan': yuedan, '/api/ret
 /** 이 화면이 부르는 조회 — 셸 자신의 조회는 셸 스모크 몫. */
 const MINE = /\/api\/(yuedan|retinue)/;
 
+/** 본문 왼쪽 여백 — 셸(GameShell .body)이 주는 12와 정확히 같다(화면 루트가 또 주면 24로 겹친다, #1133). */
 async function insetFromMain(page: Page, target: Locator): Promise<number> {
   const main = await page.getByRole('main', { name: '게임 콘텐츠' }).boundingBox();
   const box = await target.boundingBox();
@@ -76,7 +77,7 @@ test('순위 · 내 명망 · 경로 · 이탈 순서 — 겹침 · 잘림 · �
   if (isMobile(info)) {
     const list = page.getByRole('list', { name: '월단평 순위' });
     await expect(list).toContainText('사마의중달장군');
-    expect(await insetFromMain(page, list)).toBeGreaterThanOrEqual(12);
+    expect(await insetFromMain(page, list)).toBe(12);
     expect(await overlappingSiblings(list)).toBe(0);
     // 장수 이름이 두 줄로 꺾이지 않는다(높이 > 글자 크기 × 1.8) — 긴 세력 이름이 이름 칸을 좁히던 것.
     expect(await list.locator('li .os-serif').evaluateAll((els) => els
@@ -86,7 +87,7 @@ test('순위 · 내 명망 · 경로 · 이탈 순서 — 겹침 · 잘림 · �
     await expect(page.getByRole('list', { name: '이탈 판정 순서' })).toContainText('무명 공조');
   } else {
     await expect(page.getByRole('region', { name: '이탈 판정 순서' })).toContainText('무명 공조');
-    expect(await insetFromMain(page, page.getByRole('region', { name: '200년 3월 월단평' }))).toBeGreaterThanOrEqual(12);
+    expect(await insetFromMain(page, page.getByRole('region', { name: '200년 3월 월단평' }))).toBe(12);
     expect(await coveredIn(main)).toEqual([]);
   }
   expect(await clippedText(main)).toEqual([]);
