@@ -371,7 +371,9 @@ test.describe('로그인 배경 지도 새 지도(교체 스위치 빌드)', () 
         return { canvas: { x, y, width, height }, viewport: { width: innerWidth, height: innerHeight },
           candidates, hit: candidates.find((candidate) => candidate.exposed)?.at ?? null };
       });
-      await info.attach('off-input-surface', { body: Buffer.from(JSON.stringify(input, null, 2)), contentType: 'application/json' });
+      const inputPath = info.outputPath('off-input-surface.json');
+      writeFileSync(inputPath, JSON.stringify(input, null, 2));
+      await info.attach('off-input-surface', { path: inputPath, contentType: 'application/json' });
       const hit = input.hit;
       expect(hit, `OFF map input must be exposed: ${JSON.stringify(input)}`).not.toBeNull();
       await page.mouse.move(hit!.x, hit!.y);
