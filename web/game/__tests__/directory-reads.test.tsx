@@ -17,6 +17,10 @@ beforeEach(() => vi.clearAllMocks());
 test('인물 일람 주소는 서버가 받는 인자만 싣는다(정렬 ID, 빈 커서는 빼고)', () => {
     expect(peoplePath({ scope: 'NATION', q: '  순 ', limit: 50 }, null)).toBe('/api/people?scope=NATION&q=%EC%88%9C&sort=ID&limit=50');
     expect(peoplePath({ scope: 'ALL', q: '', limit: 50 }, 'c1')).toBe('/api/people?scope=ALL&q=&sort=ID&limit=50&cursor=c1');
+    // 정렬 키 · 방향(#1103) — 방향은 DESC 일 때만 싣는다(기본 ASC 는 옛 주소 모양 그대로).
+    expect(peoplePath({ scope: 'ALL', q: 'ㅎㅎ', limit: 50, sort: 'LEADERSHIP', direction: 'DESC' }, null))
+        .toBe('/api/people?scope=ALL&q=%E3%85%8E%E3%85%8E&sort=LEADERSHIP&limit=50&direction=DESC');
+    expect(peoplePath({ scope: 'ALL', q: '', limit: 50, sort: 'NAME', direction: 'ASC' }, null)).toBe('/api/people?scope=ALL&q=&sort=NAME&limit=50');
 });
 
 test('현 목록 주소 — 군 범위일 때만 군 id 를 싣는다', () => {
