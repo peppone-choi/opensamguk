@@ -2,21 +2,9 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { GATEWAY_API_URL } from '@/lib/server-api';
 import { ACCESS_COOKIE } from '@/lib/cookies';
+import { upstreamErrorResponse as surface } from '@/lib/upstreamError';
 
 const ICON_URL = `${GATEWAY_API_URL}/auth/account/profile-icon`;
-
-// gateway-api의 ApiError{message} → 프론트가 읽는 {error}로 변환(비-JSON이면 기본 메시지 유지).
-// 409 하루 1회, 400 디코더/모양, 413 크기 등 canonical 사유를 그대로 노출하되 상태코드는 보존한다.
-function surface(status: number, text: string, fallback: string): NextResponse {
-    let message = fallback;
-    try {
-        const j = JSON.parse(text);
-        if (typeof j?.message === 'string' && j.message) message = j.message;
-    } catch {
-        /* 비-JSON 업스트림 → 기본 메시지 */
-    }
-    return NextResponse.json({ error: message }, { status });
-}
 
 async function accessToken(): Promise<string | null> {
     return (await cookies()).get(ACCESS_COOKIE)?.value ?? null;
@@ -48,7 +36,7 @@ export async function POST(req: Request) {
                 body: forward,
             });
             const text = await upstream.text();
-            if (!upstream.ok) return surface(upstream.status, text, '전콘 업로드에 실패했습니다.');
+            if (!upstream.ok) return surface(upstream.status, text, '초상을 올리지 못했습니다.');
             return new NextResponse(text, { status: 200, headers: { 'Content-Type': 'application/json' } });
         } catch {
             return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
@@ -67,7 +55,7 @@ export async function POST(req: Request) {
             body: JSON.stringify(body),
         });
         const text = await upstream.text();
-        if (!upstream.ok) return surface(upstream.status, text, '전콘 변경에 실패했습니다.');
+        if (!upstream.ok) return surface(upstream.status, text, '초상을 바꾸지 못했습니다.');
         return new NextResponse(text, { status: 200, headers: { 'Content-Type': 'application/json' } });
     } catch {
         return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
@@ -83,7 +71,7 @@ export async function DELETE() {
             headers: { Authorization: `Bearer ${access}` },
         });
         if (upstream.ok) return NextResponse.json({ deleted: true });
-        return surface(upstream.status, await upstream.text(), '전콘 삭제에 실패했습니다.');
+        return surface(upstream.status, await upstream.text(), '초상을 지우지 못했습니다.');
     } catch {
         return NextResponse.json({ error: '게이트웨이에 연결할 수 없습니다.' }, { status: 502 });
     }

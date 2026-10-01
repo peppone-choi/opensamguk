@@ -120,6 +120,16 @@ describe('P-G02 로그인 — 폼', () => {
         fireEvent.click(screen.getByRole('button', { name: AUTH_LABELS.loginBtn }));
         await waitFor(() => expect(mocks.push).toHaveBeenCalledWith('/lobby'));
     });
+
+    it('탈퇴하고 넘어오면 「계정을 지웠습니다」 한 줄을 띄운다(설계서 §2.5 A31)', () => {
+        mocks.next.mockImplementation((key: string) => (key === 'notice' ? 'account-deleted' : null));
+        const { unmount } = render(<LoginPage />);
+        expect(screen.getByText('계정을 지웠습니다')).toHaveAttribute('role', 'status');
+        unmount();
+        mocks.next.mockImplementation(() => null);
+        render(<LoginPage />);
+        expect(screen.queryByText('계정을 지웠습니다')).not.toBeInTheDocument();
+    });
 });
 
 describe('P-G02 로그인 — 서버 현황 지도', () => {

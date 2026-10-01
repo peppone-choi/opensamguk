@@ -56,6 +56,9 @@ describe('nickname session integration', () => {
       if (url === '/api/account/nickname') {
         return new Response(JSON.stringify({ user: changedUser }), { status: 200 });
       }
+      if (url === '/api/account/representative') {
+        return new Response(JSON.stringify({ current: { generalId: null, name: null, worldId: null }, candidates: [] }), { status: 200 });
+      }
       if (url === '/api/auth/me') {
         meRequests += 1;
         return new Response(JSON.stringify({ user: meRequests === 1 ? originalUser : changedUser }), { status: 200 });
@@ -79,12 +82,12 @@ describe('nickname session integration', () => {
     );
   });
 
-  it('renders the refreshed nickname in the topbar after account mutation', async () => {
+  it('renders the refreshed nickname in the member header after account mutation', async () => {
     render(<AccountPage />);
     const topbar = await screen.findByRole('banner');
     expect(within(topbar).getByText('예전별명')).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText('닉네임'), { target: { value: '새별명' } });
-    fireEvent.click(screen.getByRole('button', { name: '닉네임 변경' }));
+    fireEvent.change(screen.getByLabelText('별명'), { target: { value: '새별명' } });
+    fireEvent.click(screen.getByRole('button', { name: '별명 바꾸기' }));
 
     await waitFor(() => expect(within(topbar).getByText('새별명')).toBeInTheDocument());
     expect(within(topbar).queryByText('예전별명')).toBeNull();

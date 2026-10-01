@@ -44,6 +44,9 @@ export const AUTH_LABELS = {
     nicknameTooLong: (n: number) => `별명은 ${n}자를 넘을 수 없습니다`,
 } as const;
 
+/** 탈퇴 뒤 로그인 화면이 「계정을 지웠습니다」를 띄우는 표지(설계서 §2.5 A31) — `/login?notice=…`. */
+export const ACCOUNT_DELETED_NOTICE = 'account-deleted';
+
 // 가입 칸 제약(gateway-api AuthDto.kt — 서버가 최종 판정) · 입력칸 아래 도움말.
 export const JOIN_RULES = {
     usernameMin: 3,
