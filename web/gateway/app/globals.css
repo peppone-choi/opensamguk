@@ -38,7 +38,8 @@ button {
     border-radius: var(--radius-sm);
     transition: var(--transition-fast);
 }
-button:hover {
+/* 옛 단추에만 — 공용 부품(os-*)은 제 hover 를 쓴다(고른 칸의 청동 바탕을 덮지 않게). */
+button:not([class*='os-']):hover {
     background: var(--bg-active);
 }
 button:focus-visible {
