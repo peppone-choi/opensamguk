@@ -70,14 +70,18 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
 
     const all = useMemo(() => (retinue.data ? retinueRows(retinue.data, posts.data) : []), [retinue.data, posts.data]);
     const rows = useMemo(() => sortRetinue(filterRetinue(all, filter, query, matchesKoreanName), sort), [all, filter, query, sort]);
-    const current = rows.find((r) => r.retainerId === selected) ?? rows[0] ?? null;
+    const picked = rows.find((r) => r.retainerId === selected) ?? null;
+    const current = picked ?? rows[0] ?? null;
     const units = retinue.data ? unitRows(retinue.data) : [];
     const band = renownBand(retinue.data, yuedan.data);
     const lord = frontInfo?.general.name ?? '';
     const search = availabilityOf('action.search');
     const employ = availabilityOf('action.employ');
+    // 배치 자리(/api/posts)를 읽는 중 · 못 읽었으면 「자리에 배치」를 가능으로 그리지 않는다 — 시트는 자리 목록이 있어야 열린다.
+    const postsNotice = posts.error ? '배치 자리를 불러오지 못했습니다.' : campaignReadNotice({ loading: false, error: null }, posts.data?.status);
     const assignOf = (r: RetinueRow) => availabilityOf('placement.assign', {
-        options: r.post.placeable == null ? null : { available: r.post.placeable, code: r.post.blocked?.code, reason: r.post.blocked?.reason },
+        options: postsNotice ? { available: false, reason: postsNotice }
+            : r.post.placeable == null ? null : { available: r.post.placeable, code: r.post.blocked?.code, reason: r.post.blocked?.reason },
     });
 
     const serverNotice = campaignReadNotice(retinue, retinue.data?.status);
@@ -110,7 +114,17 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
     }
     if (serverNotice) return <StatusView kind="waiting" title={serverNotice} />;
 
-    const noticeLine = notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null;
+    const noticeLine = (
+        <>
+            {notice ? <p className={notice.tone === 'ok' ? styles.okLine : styles.errLine} role="status">{notice.text}</p> : null}
+            {posts.error ? (
+                <p className={styles.errLine}>
+                    배치 자리를 불러오지 못했습니다 — 「자리에 배치」는 다시 읽은 뒤 쓸 수 있습니다.{' '}
+                    <button type="button" className="os-button os-button--sm" onClick={() => setReload((n) => n + 1)}>다시 시도</button>
+                </p>
+            ) : null}
+        </>
+    );
     const findButtons = (
         <>
             <InputAction inputId="action.search" availability={search} label="인재탐색" variant="ghost" onAct={() => router.push(hrefs.flow('action.search'))} />
@@ -136,7 +150,7 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
 
     const searchProps = { query, onQueryChange: setQuery, filter, onFilterChange: setFilter, total: all.length };
     const detail = current ? (
-        <PersonDetail row={current} assign={assignOf(current)} onAssign={() => setPlacing(current.retainerId)}
+        <PersonDetail row={current} assign={assignOf(current)} assignBusy={posts.loading && !posts.data} onAssign={() => setPlacing(current.retainerId)}
             dispatchHref={current.generalId != null ? hrefs.dispatch(current.generalId) : undefined}
             detailLink={current.generalId != null && hrefs.person ? <Link href={hrefs.person(current.generalId)} className="os-button os-button--block">인물 상세</Link> : null} />
     ) : null;
@@ -155,8 +169,8 @@ export function RetinueScreen({ hrefs, initialPerson = null }: {
                     ) : view === 'units' ? <UnitCards units={units} /> : <BondPanel rows={all} lordName={lord} />}
                 </div>
                 <div className={styles.footBar}>{findButtons}</div>
-                {selected != null && current && (current.generalId == null || !hrefs.person) && !placingCard ? (
-                    <Modal ariaLabel={`${current.name} 인물 카드`} onClose={() => setSelected(null)} overlayClassName={styles.sheetBottom}>
+                {picked && (picked.generalId == null || !hrefs.person) && !placingCard ? (
+                    <Modal ariaLabel={`${picked.name} 인물 카드`} onClose={() => setSelected(null)} overlayClassName={styles.sheetBottom}>
                         {/* 바깥 누르기만으로 닫히면 모바일에서 닫는 길이 안 보인다 — 머리에 닫기(44). */}
                         <div className={styles.sheetHead}>
                             <h3 className={styles.sheetTitle}>인물 카드</h3>

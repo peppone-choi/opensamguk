@@ -132,3 +132,44 @@ test('모바일 배치 — 인물 카드 시트에서 배치하면 접수 한 �
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('배치를 접수했습니다'));
     expect(screen.queryByRole('dialog')).toBeNull();
 });
+
+test('배치 자리 읽기 실패 — 「자리에 배치」는 가능으로 그리지 않고(사유), 다시 시도하면 시트를 열 수 있다', async () => {
+    vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저')]) as never);
+    vi.mocked(api.campaignPosts).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    render(<RetinueScreen hrefs={hrefs} />);
+    const detail = await screen.findByRole('region', { name: '고른 인물' });
+    const assign = await within(detail).findByRole('button', { name: /자리에 배치/ });
+    await waitFor(() => expect(assign).toHaveAttribute('aria-disabled', 'true'));
+    expect(detail).toHaveTextContent('배치 자리를 불러오지 못했습니다.');
+    expect(document.body).not.toHaveTextContent('Failed to fetch');
+    fireEvent.click(assign);
+    expect(screen.queryByRole('region', { name: '허저 배치' })).toBeNull();
+    vi.mocked(api.campaignPosts).mockResolvedValue(posts as never);
+    fireEvent.click(screen.getByRole('button', { name: '다시 시도' }));
+    await waitFor(() => expect(within(screen.getByRole('region', { name: '고른 인물' })).getByRole('button', { name: '자리에 배치' })).not.toHaveAttribute('aria-disabled', 'true'));
+    fireEvent.click(within(screen.getByRole('region', { name: '고른 인물' })).getByRole('button', { name: '자리에 배치' }));
+    expect(await screen.findByRole('region', { name: '허저 배치' })).toBeInTheDocument();
+});
+
+test('배치 자리를 읽는 중 — 「자리에 배치」를 눌러도 아무 일 없고, 읽은 뒤 시트가 저절로 열리지 않는다', async () => {
+    vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저')]) as never);
+    let resolvePosts: (v: unknown) => void = () => {};
+    vi.mocked(api.campaignPosts).mockReturnValueOnce(new Promise((r) => { resolvePosts = r; }) as never);
+    render(<RetinueScreen hrefs={hrefs} />);
+    const detail = await screen.findByRole('region', { name: '고른 인물' });
+    const assign = await within(detail).findByRole('button', { name: /자리에 배치/ });
+    expect(assign).toHaveAttribute('aria-busy', 'true');
+    fireEvent.click(assign);
+    resolvePosts(posts);
+    await waitFor(() => expect(within(screen.getByRole('region', { name: '고른 인물' })).getByRole('button', { name: '자리에 배치' })).not.toHaveAttribute('aria-busy'));
+    expect(screen.queryByRole('region', { name: '허저 배치' })).toBeNull();
+});
+
+test('모바일 ?person= 이 부에 없는 인물이면 — 다른 인물 카드를 열지 않는다', async () => {
+    setMobile(true);
+    vi.mocked(api.campaignRetinue).mockResolvedValue(retinue([person(1, '허저')]) as never);
+    const { person: _omit, ...noPerson } = hrefs;
+    render(<RetinueScreen hrefs={noPerson} initialPerson={999} />);
+    expect(await screen.findByRole('option', { name: /허저/ })).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+});

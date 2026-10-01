@@ -15,6 +15,8 @@ export interface PersonDetailProps {
     /** `placement.assign` 가능 여부 — 화면이 이 카드의 `/api/posts` 값으로 정해 넘긴다(행 없음 = null → 그리지 않음). */
     readonly assign: InputAvailability | null;
     readonly onAssign: () => void;
+    /** 배치 자리(/api/posts)를 읽는 중 — 누르기를 무시한다(읽은 뒤 시트가 저절로 열리지 않게). */
+    readonly assignBusy?: boolean;
     /** 인물 상세 화면(P-R03) 고리. */
     readonly detailLink?: ReactNode;
     /** 조정 발령 화면 주소(사람 미리 채움). 사람 장수 판정은 row.isHuman(K4-18)에서 읽는다. */
@@ -29,7 +31,7 @@ export interface PersonDetailProps {
  * 사람 장수 판정(K4-18 `isHuman: boolean | null`): 없음 · null(인물 미해결 — NPC 확정 아님) = 「서버 대기」 한 줄,
  * true = 배치 대신 조정 발령 고리, false = 배치 단추(서버 blocked · placeable 그대로). 이름 · id 로 짐작하지 않는다.
  */
-export function PersonDetail({ row, assign, onAssign, detailLink, dispatchHref }: PersonDetailProps) {
+export function PersonDetail({ row, assign, assignBusy = false, onAssign, detailLink, dispatchHref }: PersonDetailProps) {
     const isHuman = row.isHuman;
     return (
         <article className={styles.detail} aria-label={`${row.name} 인물 카드`}>
@@ -73,7 +75,7 @@ export function PersonDetail({ row, assign, onAssign, detailLink, dispatchHref }
                 {isHuman && dispatchHref ? (
                     <Link href={dispatchHref} className="os-button os-button--primary os-button--block">발령은 조정에서 →</Link>
                 ) : isHuman ? null : (
-                    <InputAction inputId="placement.assign" availability={assign} label="자리에 배치" onAct={onAssign} block />
+                    <InputAction inputId="placement.assign" availability={assign} label="자리에 배치" onAct={onAssign} busy={assignBusy} block />
                 )}
                 {detailLink}
             </div>
