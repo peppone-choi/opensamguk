@@ -232,8 +232,12 @@ class ReadIdentitySecurityChainTest {
     @Test
     fun `reserved orders require JWT and owned general`() {
         val path = "/api/reserved-commands?generalId=101"
-        mvc.perform(get(path)).andExpect(status().isForbidden)
-        mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isForbidden)
+        mvc.perform(get(path)).andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+            .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
+        mvc.perform(get(path).header("Authorization", "Bearer invalid")).andExpect(status().isUnauthorized)
+            .andExpect(jsonPath("$.error.code").value("AUTH_REQUIRED"))
+            .andExpect(jsonPath("$.error.message").value("로그인이 필요합니다."))
         mvc.perform(get(path).header("Authorization", "Bearer ${token(8)}")).andExpect(status().isForbidden)
         mvc.perform(get("/api/reserved-commands?generalId=202").header("Authorization", "Bearer ${token()}"))
             .andExpect(status().isForbidden)
