@@ -6,6 +6,7 @@ import opensamguk.gameapi.precheck.DispatchPrecheckService
 import opensamguk.gameapi.read.DomesticReader
 import opensamguk.gameapi.read.DomesticForbidden
 import opensamguk.logic.input.*
+import opensamguk.logic.war.CampaignBalance
 import org.springframework.stereotype.Service
 
 @Service
@@ -28,10 +29,19 @@ class CourtAdmission(private val precheck: DispatchPrecheckService,
                 val request = DispatchReplyInput.parse(actorId, raw) ?: invalid()
                 precheck.assessReply(request, ownerUserId.toLong()) to DispatchReplyInput.canonicalJson(request)
             }
-            // 상사: 카드 소유·창고 잔고는 결정권자의 턴에 엔진이 다시 본다(§4 — 조건이 안 맞으면 비용 없이 무효).
+            // 접수에서 현재 충성의 금 상한을 검사하고, 실행 시점의 충성·소유·잔고는 엔진이 다시 본다.
             RewardInput.INPUT_ID -> {
                 val request = RewardInput.parse(actorId, raw)
                     ?: throw AdmissionDenied("INVALID_REQUEST", "상사할 카드와 금을 확인해 주세요.")
+                val rewardReader = reader
+                    ?: throw AdmissionDenied("STATE_UNAVAILABLE", "상사할 카드의 상태를 확인할 수 없습니다.")
+                val loyalty = try { rewardReader.rewardLoyalty(actorId, ownerUserId.toLong(), request.retainerId) }
+                    catch (_: DomesticForbidden) { throw AdmissionDenied("FORBIDDEN", "자신의 장수만 상사를 내릴 수 있습니다.") }
+                    ?: throw AdmissionDenied("CARD_UNAVAILABLE", "직접 거느린 인물 카드에만 상사를 내릴 수 있습니다.")
+                if (request.money < CampaignBalance.REWARD_MONEY_PER_LOYALTY)
+                    throw AdmissionDenied("TOO_SMALL", "상사 금이 너무 적어 충성이 오르지 않습니다.")
+                if (request.money > RewardMoneyLimit.maximumFor(loyalty))
+                    throw AdmissionDenied("REWARD_OVER_CAP", "현재 충성에서 내릴 수 있는 상사 금을 넘었습니다.")
                 null to RewardInput.canonicalJson(request)
             }
             PoliticalConsent.COURT_INPUT_ID -> {
