@@ -227,6 +227,14 @@ test('셸: 계절 패널이 조작된다 — 닫기 · Esc · 바깥 누름으�
     await expect(input).toBeFocused();
     await page.keyboard.type('가');
     await expect(input).toHaveValue('가');
+    // 키보드로 밖의 입력칸에 간 뒤 Esc — 닫기만 하고 초점은 입력칸에 둔다.
+    await press(chip, testInfo);
+    await expect(dialog).toBeVisible();
+    await input.focus();
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeHidden();
+    await page.waitForTimeout(100);
+    await expect(input).toBeFocused();
   }
   await expect(chip).toHaveAttribute('aria-expanded', 'false');
 });

@@ -172,7 +172,7 @@ function Frame({ children }: { readonly children: ReactNode }) {
         </nav>
       ) : null}
       {open === 'menu' ? <MenuSheet current={located?.group.key ?? null} isAdmin={isAdmin} helpHref={helpHref} onClose={() => setOpen(null)} /> : null}
-      {open === 'season' && viewport === 'mobile' ? <SeasonSheet month={month} phase={frontInfo?.global.turnPhase} onClose={closeSeason} /> : null}
+      {open === 'season' && viewport === 'mobile' ? <SeasonSheet month={month} phase={frontInfo?.global.turnPhase} onClose={closeSeason} onDismiss={dismissSeason} /> : null}
     </div>
   );
 }
@@ -249,7 +249,7 @@ function SeasonPopover({ chip, month, phase, onClose, onDismiss }: SeasonProps &
   readonly onDismiss: () => void;
 }) {
   const panel = useRef<HTMLElement>(null);
-  useEscape(onClose);
+  useEscape(panel, onClose, onDismiss);
   useEffect(() => {
     const onDown = (event: PointerEvent) => {
       const target = event.target as Node | null;
@@ -267,12 +267,14 @@ function SeasonPopover({ chip, month, phase, onClose, onDismiss }: SeasonProps &
 }
 
 /** 계절 패널 — 모바일(< 768). 「전체」 메뉴와 같은 하단 시트 층(--z-sheet, 탭 막대를 가린다). */
-function SeasonSheet({ month, phase, onClose }: SeasonProps) {
-  useEscape(onClose);
+function SeasonSheet({ month, phase, onClose, onDismiss }: SeasonProps & { readonly onDismiss: () => void }) {
+  const sheet = useRef<HTMLElement>(null);
+  useEscape(sheet, onClose, onDismiss);
   return (
     <div className={styles.sheetLayer}>
       <button type="button" className={styles.scrim} aria-label="계절 닫기" onClick={onClose} />
       <section
+        ref={sheet}
         id={SEASON_DIALOG_ID}
         className={styles.sheet}
         role="dialog"
@@ -284,15 +286,22 @@ function SeasonSheet({ month, phase, onClose }: SeasonProps) {
   );
 }
 
-/** 열려 있는 동안 Esc 로 닫는다 — 패널 안 초점 못 받는 곳(달력 · 글자)을 눌러 초점이 body 로 빠져도 듣는다. */
-function useEscape(onClose: () => void) {
+/**
+ * 열려 있는 동안 Esc 로 닫는다 — 패널 안 초점 못 받는 곳(달력 · 글자)을 눌러 초점이 body 로 빠져도 듣는다.
+ * 초점이 패널 · 시트 밖 다른 누를 것 · 입력칸에 있으면(키보드로 나간 경우) 닫기만 하고 초점은 그대로 둔다.
+ * 한글 등 조합 중 Esc 는 조합 취소라 닫지 않는다.
+ */
+function useEscape(inside: RefObject<HTMLElement | null>, onClose: () => void, onDismiss: () => void) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Escape' || event.isComposing) return;
+      const active = document.activeElement;
+      const away = active !== null && active !== document.body && !inside.current?.contains(active);
+      (away ? onDismiss : onClose)();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [inside, onClose, onDismiss]);
 }
 
 /** 계절 칩 그림(보드 IC.season) — 글자와 함께 쓰는 장식이라 읽지 않는다. */

@@ -217,6 +217,27 @@ describe('GameFrame — 계절 칩', () => {
         }
     });
 
+    it('키보드로 패널 밖 입력칸에 간 뒤 Esc — 닫기만 하고 초점은 입력칸에, 한글 조합 중 Esc 는 닫지 않는다', async () => {
+        const vp = installViewport(1440);
+        try {
+            render(<GameFrame><label>쓰기<input /></label></GameFrame>);
+            await act(async () => { await Promise.resolve(); });
+            const input = screen.getByRole('textbox', { name: '쓰기' });
+            vi.useFakeTimers();
+            fireEvent.click(screen.getByRole('button', { name: chipName }));
+            input.focus(); // Tab 으로 패널 밖에 간 것(누름 없음)
+            fireEvent.keyDown(input, { key: 'Escape', isComposing: true }); // 조합 취소 — 패널은 그대로
+            expect(screen.getByRole('dialog', { name: '계절 — 봄' })).toBeInTheDocument();
+            fireEvent.keyDown(input, { key: 'Escape' });
+            act(() => { vi.runAllTimers(); });
+            expect(screen.queryByRole('dialog')).toBeNull();
+            expect(input).toHaveFocus();
+        } finally {
+            vi.useRealTimers();
+            vp.restore();
+        }
+    });
+
     it('패널 안 초점 못 받는 곳을 눌러 초점이 빠져도 Esc 가 듣는다(데스크톱 · 모바일)', async () => {
         for (const width of [1440, 390]) {
             const vp = installViewport(width);
