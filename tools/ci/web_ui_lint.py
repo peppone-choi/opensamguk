@@ -26,6 +26,8 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from lint_files import git_visible_files, is_visible
+
 from web_copy_lint import strip_comments
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -33,7 +35,7 @@ BASELINE = Path(__file__).with_name("web_ui_lint_baseline.json")
 SOURCE_ROOTS = ("web/game", "web/gateway", "web/shared")
 CODE_SUFFIXES = {".ts", ".tsx"}
 STYLE_SUFFIXES = {".css", ".scss"}
-SKIP_DIRS = {".git", ".next", "build", "dist", "node_modules", "coverage", "public",
+SKIP_DIRS = {".git", ".next-topdown-screens", ".next", "build", "dist", "node_modules", "coverage", "public",
              "__tests__", "e2e", "test-results", "playwright-report"}
 TEST_NAME = re.compile(r"\.(?:test|spec)\.tsx?$")
 KINDS = ("title_attr", "native_disabled", "dimmed_disabled", "adhoc_breakpoint")
@@ -55,6 +57,8 @@ IDENT_TAIL = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789
 
 
 def source_files(root: Path):
+    # git 이 무시하는 파일(로컬 e2e 결과 · 생성물)은 세지 않는다 — lint_files 참고. 비 git 트리는 전부 훑는다.
+    visible = git_visible_files(root)
     for source_root in SOURCE_ROOTS:
         base = root / source_root
         if not base.is_dir():
@@ -66,7 +70,7 @@ def source_files(root: Path):
                 suffix = path.suffix
                 if suffix not in CODE_SUFFIXES | STYLE_SUFFIXES or TEST_NAME.search(name) or name.endswith(".d.ts"):
                     continue
-                if path.is_file() and not path.is_symlink():
+                if path.is_file() and not path.is_symlink() and is_visible(path, root, visible):
                     yield path
 
 

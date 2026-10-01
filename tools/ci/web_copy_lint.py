@@ -16,12 +16,14 @@ import re
 from collections import Counter
 from pathlib import Path
 
+from lint_files import git_visible_files, is_visible
+
 ROOT = Path(__file__).resolve().parents[2]
 BASELINE = Path(__file__).with_name("web_copy_lint_baseline.json")
 ALLOWLIST = Path(__file__).with_name("web_copy_lint_allowlist.json")
 SOURCE_ROOTS = ("web/game", "web/gateway", "web/shared")
 SOURCE_SUFFIXES = {".ts", ".tsx"}
-SKIP_DIRS = {".git", ".next", "build", "dist", "node_modules", "coverage", "public",
+SKIP_DIRS = {".git", ".next-topdown-screens", ".next", "build", "dist", "node_modules", "coverage", "public",
              "__tests__", "e2e", "test-results", "playwright-report"}
 TEST_NAME = re.compile(r"\.(?:test|spec)\.tsx?$")
 PATTERNS = {
@@ -34,6 +36,8 @@ KINDS = tuple(PATTERNS)
 
 
 def source_files(root: Path):
+    # git 이 무시하는 파일(로컬 e2e 결과 · 생성물)은 세지 않는다 — lint_files 참고. 비 git 트리는 전부 훑는다.
+    visible = git_visible_files(root)
     for source_root in SOURCE_ROOTS:
         base = root / source_root
         if not base.is_dir():
@@ -43,7 +47,7 @@ def source_files(root: Path):
             for name in sorted(files):
                 path = Path(directory) / name
                 if (path.suffix in SOURCE_SUFFIXES and not TEST_NAME.search(name) and not name.endswith(".d.ts")
-                        and path.is_file() and not path.is_symlink()):
+                        and path.is_file() and not path.is_symlink() and is_visible(path, root, visible)):
                     yield path
 
 

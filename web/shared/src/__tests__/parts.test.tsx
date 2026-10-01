@@ -1,7 +1,9 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Modal } from '../Modal';
 import { ReasonSheet } from '../ReasonTooltip';
+import { ICON_NAMES } from '../icons';
 import {
   InputAction,
   MISSING_REASON,
@@ -68,6 +70,7 @@ describe('InputAction — 입력 4상태는 서버 값으로만', () => {
     const btn = screen.getByRole('button', { name: '발령' });
     expect(btn).toHaveAttribute('aria-disabled', 'true');
     expect(btn).toHaveAttribute('data-input-status', 'BLOCKED');
+    expect(btn).toHaveAttribute('aria-haspopup', 'dialog');
     expect(btn).toHaveAccessibleDescription(/주공만 할 수 있습니다/);
     expect(container.querySelector('.os-ia__why')).toHaveTextContent('주공만 할 수 있습니다');
     expect(container.querySelector('[data-reason-code="NOT_RULER"]')).not.toBeNull();
@@ -81,6 +84,29 @@ describe('InputAction — 입력 4상태는 서버 값으로만', () => {
     expect(within(sheet).getByText('초안')).toBeInTheDocument();
     fireEvent.click(within(sheet).getByRole('link', { name: '도움말 — 발령 →' }));
     expect(onHelp).toHaveBeenCalledWith('input:court.dispatch!NOT_RULER');
+  });
+
+  it('사유 한 줄뿐이면 누를 때 툴팁이 열리고, dialog 를 알리지 않는다(알린 팝업 = 실제 팝업)', () => {
+    render(<InputAction inputId="x" availability={{ inputId: 'x', status: 'BLOCKED', reason: '병력이 부족합니다' }} label="출진" onAct={vi.fn()} />);
+    const btn = screen.getByRole('button', { name: '출진' });
+    expect(btn).not.toHaveAttribute('aria-haspopup');
+    fireEvent.click(btn);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('병력이 부족합니다');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('NOT_DELIVERED 는 recovery 를 버리므로 그것만으로는 dialog 가 아니다 — 머리가 있으면 dialog', () => {
+    const { rerender } = render(
+      <InputAction inputId="work.reduce" availability={{ inputId: 'work.reduce', status: 'NOT_DELIVERED' }} label="성방 허물기" onAct={vi.fn()} recovery="쓰이지 않음" />,
+    );
+    expect(screen.getByRole('button', { name: '성방 허물기' })).not.toHaveAttribute('aria-haspopup');
+    rerender(
+      <InputAction inputId="work.reduce" availability={{ inputId: 'work.reduce', status: 'NOT_DELIVERED' }} label="성방 허물기" onAct={vi.fn()} reasonTitle="아직 준비 중입니다" />,
+    );
+    const btn = screen.getByRole('button', { name: '성방 허물기' });
+    expect(btn).toHaveAttribute('aria-haspopup', 'dialog');
+    fireEvent.click(btn);
+    expect(screen.getByRole('dialog', { name: '아직 준비 중입니다' })).toBeVisible();
   });
 
   it('BLOCKED 인데 서버 사유가 없으면 지어내지 않고 「사유를 받지 못했습니다」', () => {
@@ -105,6 +131,24 @@ describe('InputAction — 입력 4상태는 서버 값으로만', () => {
 });
 
 describe('ReasonSheet', () => {
+  it('대화 상자 안에서 열린 사유 시트의 Esc 는 시트만 닫는다 — 대화 상자는 다음 Esc 에 닫힌다', () => {
+    const onClose = vi.fn();
+    render(
+      <Modal ariaLabel="발령" onClose={onClose}>
+        <ReasonSheet reason="주공만 할 수 있습니다" title="발령은 주공만 할 수 있습니다.">
+          <button type="button" aria-disabled="true">발령</button>
+        </ReasonSheet>
+      </Modal>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: '발령' }));
+    const sheet = screen.getByRole('dialog', { name: '발령은 주공만 할 수 있습니다.' });
+    fireEvent.keyDown(sheet, { key: 'Escape' });
+    expect(screen.queryByRole('dialog', { name: '발령은 주공만 할 수 있습니다.' })).toBeNull();
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByRole('button', { name: '발령' }), { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
   it('함수 자식이면 사유 id 를 받아 원하는 요소에 붙인다', () => {
     render(<ReasonSheet reason="갈 길이 없음">{(id) => <button type="button" aria-describedby={id}>신정현</button>}</ReasonSheet>);
     expect(screen.getByRole('button', { name: '신정현' })).toHaveAccessibleDescription('갈 길이 없음');
@@ -380,10 +424,15 @@ describe('TimeBar', () => {
   });
 });
 
-describe('PartIcon 대체 표', () => {
-  it('정본이 아닌 아이콘은 모두 표 한 곳에서 대체로 표시된다', () => {
-    const substitutes = Object.entries(PART_ICON_SOURCE).filter(([, s]) => !('sprite' in s) || s.substitute).map(([n]) => n).sort();
-    expect(substitutes).toEqual(['alert', 'back', 'clock', 'copy', 'help', 'list', 'lock', 'next', 'pause', 'play', 'prev', 'target', 'unplug']);
+describe('PartIcon 스프라이트 표', () => {
+  it('모든 부품 아이콘이 공용 스프라이트의 정본 이름을 가리킨다(대체 0건)', () => {
+    for (const [name, sprite] of Object.entries(PART_ICON_SOURCE)) {
+      expect(ICON_NAMES, `${name} → ${sprite}`).toContain(sprite);
+    }
+  });
+
+  it('이름이 다른 매핑은 고정한다 — 스프라이트에 prev · next(꺾쇠)가 따로 있어도 부품 prev · next 는 사건 건너뛰기다', () => {
+    expect(PART_ICON_SOURCE).toMatchObject({ back: 'chevron-left', prev: 'skip-back', next: 'skip-forward' });
   });
 });
 
