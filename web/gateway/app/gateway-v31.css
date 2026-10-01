@@ -414,6 +414,7 @@
 .gw31-account__side { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .gw31-account__panel { min-width: 0; }
 .gw31-account__body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.gw31-account__body > .os-button, .gw31-account__body > .os-reason { align-self: flex-start; }
 .gw31-account__actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .gw31-account__pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px; }
 .gw31-account__result { margin: 0; font-size: 12.5px; line-height: 1.5; color: var(--moss-2); }
