@@ -41,10 +41,15 @@ async function open(page: Page) {
 }
 
 test.describe('P-G02 로그인 — 데스크톱 · 모바일 같은 흐름', () => {
-  test('그려진다: 소개 · 로그인 · 서버 현황 · 공지 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }) => {
+  test('그려진다: 소개 · 로그인 · 서버 현황 · 공지 · 정책, 가로 넘침 없음, 누를 영역 44', { tag: BOTH }, async ({ page }, testInfo) => {
     await open(page);
     await expect(page.getByRole('heading', { level: 1, name: '로그인' })).toBeVisible();
     await expect(page.getByRole('region', { name: '소개' })).toBeVisible();
+    // 소개 문장은 승인됐다(D18) — 초안 칩이 없다. 모바일 지도 띠에는 보드 V31K5MLogin 대로 워드마크 · 제목만 둔다.
+    const lead = page.getByText('장수 한 명으로 시작해 순마다 명령을 세우고, 전투가 열리면 직접 지휘한다.');
+    if (isMobile(testInfo)) await expect(lead).toBeHidden();
+    else await expect(lead).toBeVisible();
+    await expect(page.getByText(/문구 초안/)).toHaveCount(0);
     await expect(page.getByRole('region', { name: '세력 현황' })).toBeVisible();
     await expect(page.getByRole('region', { name: '천하 정세' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: '정책' }).getByRole('link', { name: '이용약관' })).toHaveAttribute('href', '/terms');

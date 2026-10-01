@@ -14,7 +14,7 @@ import WorldEventsPanel from '@/components/status/WorldEventsPanel';
 import { previewCaption, serverLabel } from '@/lib/serverStatus';
 import LoginForm from './LoginForm';
 
-/** 소개 문구 — 공개 알파 정책 문구(U5)와 함께 따로 승인한다(2026-09-30 전체 승인에서 빠진 글). 승인 전까지 초안 표시. */
+/** 소개 문구 — 승인됨 2026-10-01(D18). 지금 문장 그대로 쓴다. */
 const LOGIN_LEAD = '장수 한 명으로 시작해 순마다 명령을 세우고, 전투가 열리면 직접 지휘한다.';
 
 export type RegistryState = 'ok' | 'error';
@@ -72,8 +72,7 @@ export default function LoginScreen({ servers, registry }: {
                 <section className="gw31-intro" aria-label="소개">
                     <img className="gw31-intro__wordmark" src="/logo-wordmark.png" alt="오픈삼국" width={420} height={157} decoding="async" fetchPriority="high" />
                     <h2 className="gw31-intro__title os-serif">한 명의 장수에서 천하까지.</h2>
-                    <p className="gw31-intro__lead" data-copy-status="draft">{LOGIN_LEAD}</p>
-                    <span className="gw31-intro__draft"><Chip tone="info">문구 초안 — 공개 알파 문구와 함께 승인</Chip></span>
+                    <p className="gw31-intro__lead" data-copy-status="approved">{LOGIN_LEAD}</p>
                 </section>
                 <section className="os-panel os-panel--static gw31-login__card" id="login-form" aria-labelledby="login-title" tabIndex={-1}>
                     <h1 id="login-title" className="gw31-login__title os-serif">로그인</h1>

@@ -40,7 +40,7 @@ export function buildDeptGroups(): readonly DeptGroup[] {
     },
     {
       key: 'military', label: '군사', entries: [
-        route('휘하 편성', '/game/retinue'),
+        route('부 편성', '/game/retinue'),
         route('공성', '/game/corps/siege'),
         route('계책 덱', '/game/stratagem'),
       ],
