@@ -60,6 +60,9 @@ dependencies {
     testImplementation(libs.testcontainers.postgres)
     testImplementation(libs.testcontainers.junit)
     testImplementation("org.testcontainers:testcontainers:1.20.4")
+    testImplementation("org.flywaydb:flyway-core")
+    testRuntimeOnly(libs.flyway.postgres)
+    testRuntimeOnly("org.postgresql:postgresql")
 }
 
 tasks.test {
