@@ -48,19 +48,19 @@ data class TurnEventEnvelope(
     }
 }
 
-fun encodeV2CommandResultEnvelope(envelope: CommandResultEnvelope): String =
+fun encodeCommandResultEnvelope(envelope: CommandResultEnvelope): String =
     WireJson.encodeToString(CommandResultEnvelope.serializer(), envelope)
 
-fun decodeV2CommandResultEnvelope(payload: String): CommandResultEnvelope =
+fun decodeCommandResultEnvelope(payload: String): CommandResultEnvelope =
     WireJson.decodeFromJsonElement(
         CommandResultEnvelope.serializer(),
         parseVersionedEnvelope(payload, "v2 command-result"),
     )
 
-fun encodeV2TurnEventEnvelope(envelope: TurnEventEnvelope): String =
+fun encodeTurnEventEnvelope(envelope: TurnEventEnvelope): String =
     WireJson.encodeToString(TurnEventEnvelope.serializer(), envelope)
 
-fun decodeV2TurnEventEnvelope(payload: String): TurnEventEnvelope =
+fun decodeTurnEventEnvelope(payload: String): TurnEventEnvelope =
     WireJson.decodeFromJsonElement(
         TurnEventEnvelope.serializer(),
         parseVersionedEnvelope(payload, "v2 turn-event"),
