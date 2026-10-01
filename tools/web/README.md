@@ -23,15 +23,21 @@ node tools/web/measure-pages.mjs --out <dir> --base https://sam.peppone.dev \
 - 실행마다 새 브라우저 컨텍스트를 쓴다(콜드 캐시).
   - 프로필: `desktop`은 1440×900, `mobile`은 390×844 · DPR 3 · 터치.
   - 망: `broadband`는 50/10 Mbps · RTT 20ms다.
-- 지도 첫 그림과 전송 크기는 2026-09-30 M1 기준선과 같은 식이다. 그래서 전후 값을 바로 비교할 수 있다.
-  - 지도 첫 그림: `.os-iso-map` 캔버스 81점 중 20점 넘게 칠해진 시점.
+- **지도 첫 그림과 적재 창은 2026-10-01에 바뀌었다. 09-30 M1 기준선 값과 바로 비교하지 않는다.** 시각 기준(goto 호출)과 전송 크기 식만 같다.
+  - 지도 첫 그림: 지도 뿌리(`--map-selector`, 기본 `.os-iso-map`) 안 캔버스 전부를 20×20 격자로 훑어 alpha>0 표본이 8개 이상인 시점(뿌리가 늦게 붙어도, 큰 캔버스에 작게 그려도 잡는다). 09-30은 첫 캔버스 81점 중 20점 초과였다.
+  - 지도 뿌리를 기다리는 시간: 망이 잠잠해지고 load 가 지난 뒤 `--map-grace-ms`(기본 15초)까지. 지도 없는 화면은 행마다 이만큼 길어진다(요청은 늘지 않는다).
+  - 적재 창: 첫 그림(지도 없는 화면은 지도 대기가 끝난 때) 뒤 망이 `--settle-quiet-ms`(기본 3초) 동안 조용할 때까지, 최대 `--settle-max-ms`(기본 30초). 첫 그림 뒤에 오는 요청(省 PNG 등)도 적재 수치에 든다. 09-30은 networkidle 뒤 0.5초에 닫아 첫 그림 뒤 요청을 놓칠 수 있었다.
+  - 행이 끝날 때까지 받는 중인 요청은 `pendingList`(주소 · 그때까지 받은 바이트)와 `pendingPartialBytes`로 남긴다. `transferBytes`에는 다 받은 것만 든다. EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다.
   - 전송 크기: CDP `encodedDataLength`의 합.
+- **실패를 0으로 삼키지 않는다.**
+  - 측정을 못 한 행(오류 행)이 하나라도 있으면 CLI 종료 코드가 1이다. `checks`가 걸린 것은 실패가 아니다(측정 도구다).
+  - 요청한 화면이 아니면 오류 행이다: 최종 경로가 요청 경로와 다르거나(로그인이 풀려 `/login`으로 넘어감 등) 문서 응답이 4xx · 5xx. 이때는 `…-wrong-page.png` 캡처만 남긴다.
 - 결과 파일
   - `<화면>-<프로필>-<망>.json`: 전부 담는다.
-  - `…-viewport.png` · `…-map.png`: 캡처.
+  - `…-viewport.png` · `…-map.png`: 캡처. 요청한 화면이 아니면 `…-wrong-page.png`만.
   - `summary.md` · `summary.json`: 표.
 - 재는 것
-  - 시간: FCP · LCP · CLS, 지도 첫 그림, 망이 잠잠해진 시각.
+  - 시간: FCP · LCP · CLS, 지도 첫 그림, 망이 잠잠해진 시각, 첫 그림 뒤 기다린 시간(`postDrawSettle`: 기다린 ms · 상한에 닿았는지 · 첫 그림 뒤 요청 수).
   - 요청: 요청 수와 전송 크기(종류별), 같은 URL 중복 전송, 압축 안 한 글자 응답, 실패한 요청, 콘솔 오류.
   - 모바일 동작: 가로 넘침, 누를 영역 44px 미만(화면 밖 요소는 상자 크기, `targetsMeasuredByRectOnly`), 덮인 누를 것, title에만 있는 정보, `:hover`로 드러내는 CSS, 12px 미만 글자.
   - 접근성: axe(wcag2a · 2aa · 21a · 21aa, `e2e/a11y-smoke.spec.ts`와 같은 태그)의 영향도별 위반.
@@ -51,7 +57,7 @@ node tools/web/measure-pages.mjs --out <dir> --base https://sam.peppone.dev \
   - 콜드가 아니다. 캐시에서 온 것은 `cachedResources`로 따로 센다.
   - Resource Timing 버퍼(기본 250개)가 차면 `resourceBufferFull`이 참이고, 이때 요청 수는 하한이다.
   - axe는 돌리지 않는다. 사용자 화면에 바깥 스크립트를 넣지 않기 위해서다.
-- 운영 서버에는 필요한 만큼만 쓴다. 한 번 실행하면 화면 × 프로필 × 망 × `--repeat` 번 적재한다. `/login`은 적재 1번에 약 57 MB다(2026-09-30).
+- 운영 서버에는 필요한 만큼만 쓴다. 한 번 실행하면 화면 × 프로필 × 망 × `--repeat` 번 적재한다. `/login`은 적재 1번에 약 57 MB였고(2026-09-30), 10-01 운영 게이트웨이에서는 약 1.9 MB다.
 
 **시간 값 읽는 법**
 - 시간은 측정하는 기계의 CPU 경합에 흔들린다. 그래서 결과에 `host.loadavg1`과 CPU 수를 남긴다.

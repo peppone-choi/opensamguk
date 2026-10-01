@@ -49,6 +49,16 @@ setTimeout(() => { const g = document.querySelector('.os-iso-map canvas').getCon
   g.beginPath(); g.moveTo(300, 140); g.lineTo(390, 200); g.lineTo(300, 260); g.lineTo(210, 200); g.closePath(); g.fill(); }, 3000);
 </script></body></html>`;
 
+// 첫 그림 뒤에 오는 요청: 지도는 바로 그리고, 2.5초 뒤 /late.bin 을 받는다(networkidle 은 그 전에 이미 온다).
+// /slow.bin(같이 2.5초 뒤)은 탭이 닫힐 때까지 조금씩 계속 온다 — 행이 끝날 때 받는 중인 요청으로 주소 · 받은 바이트가 남아야 한다.
+const LATE = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>늦은 요청</title></head><body style="margin:0">
+<div class="os-iso-map" style="width:600px;height:400px"><canvas width="600" height="400"></canvas></div>
+<script>
+const g = document.querySelector('canvas').getContext('2d'); g.fillStyle = '#486'; g.fillRect(0, 0, 600, 400);
+setTimeout(() => fetch('/late.bin', { cache: 'no-store' }).then((r) => r.arrayBuffer()), 2500);
+setTimeout(() => fetch('/slow.bin', { cache: 'no-store' }).then((r) => r.arrayBuffer()).catch(() => {}), 2500);
+</script></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -57,6 +67,15 @@ before(async () => {
     if (req.url === '/bad') return send(200, 'text/html; charset=utf-8', BAD);
     if (req.url === '/good') return send(200, 'text/html; charset=utf-8', GOOD);
     if (req.url === '/lazy') return send(200, 'text/html; charset=utf-8', LAZY);
+    if (req.url === '/late') return send(200, 'text/html; charset=utf-8', LATE);
+    if (req.url === '/late.bin') return send(200, 'application/octet-stream', Buffer.alloc(150_000, 3));
+    if (req.url === '/slow.bin') {
+      // 0.2초마다 4KB, 연결이 끊길 때(탭 닫힘)까지 — 부하가 높아도 행이 끝나기 전에 끝나지 않는다(안전 상한 10분).
+      res.writeHead(200, { 'content-type': 'application/octet-stream', 'cache-control': 'no-store' });
+      let n = 0; const iv = setInterval(() => { res.write(Buffer.alloc(4096, 1)); if (++n >= 3000) { clearInterval(iv); res.end(); } }, 200);
+      req.on('close', () => clearInterval(iv));
+      return undefined;
+    }
     if (req.url === '/to-login') { res.writeHead(302, { location: '/good' }); return res.end(); }
     if (req.url === '/pic.png' || req.url === '/favicon.ico') return send(200, 'image/png', PNG_1PX);
     if (req.url === '/big.bin') return send(200, 'application/octet-stream', Buffer.alloc(200_000, 7));
@@ -211,4 +230,19 @@ test('요청한 화면이 아니면(넘어감 · 404) 오류 행이다', async (
   assert.match(rows[0].error ?? '', /요청한 화면이 아니다: \/to-login — \/good 로 넘어갔다/);
   assert.match(rows[1].error ?? '', /요청한 화면이 아니다: \/gone — 문서 응답 404/);
   assert.ok(fs.existsSync(path.join(out, 'to-login-desktop-none-wrong-page.png')), '넘어간 화면 캡처가 없다');
+});
+
+// 첫 그림 뒤 요청이 적재 창에 들어오고, 끝까지 받는 중인 요청은 주소 · 받은 바이트로 남는다(2026-10-01: 창이 networkidle
+// 직후 닫혀 첫 그림 뒤 provinces 요청을 놓쳤고, 받는 중인 요청은 개수만 남았다).
+test('첫 그림 뒤 요청을 적재 창에 넣고, 받는 중인 요청은 주소 · 바이트를 남긴다', async () => {
+  const out = path.join(outDir, 'late');
+  const [row] = await run(defaultOptions({ base, pages: ['/late'], profiles: ['desktop'], throttles: ['none'], out, axe: false, probe: false, settleQuietMs: 3000, settleMaxMs: 6000 }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  const r = JSON.parse(fs.readFileSync(path.join(out, 'late-desktop-none.json'), 'utf8'));
+  assert.ok(r.top10.some((x) => x.url === '/late.bin' && x.bytes > 100_000), `첫 그림 뒤 /late.bin 이 적재 창에 없다: ${JSON.stringify(r.top10.map((x) => x.url))}`);
+  // 받는 중인 요청이 있으니 조용한 3초를 못 채우고 상한(6초)까지 기다린다. 첫 그림 뒤 요청 수는 부하에 따라 달라 개수만 본다.
+  assert.equal(r.postDrawSettle?.hitMax, true, JSON.stringify(r.postDrawSettle));
+  assert.equal(typeof r.postDrawSettle.lateRequests, 'number');
+  const slow = (r.pendingList ?? []).find((x) => x.url === '/slow.bin');
+  assert.ok(slow && slow.partialBytes > 0, `받는 중인 /slow.bin 이 주소 · 바이트로 남지 않았다: ${JSON.stringify(r.pendingList)}`);
 });

@@ -8,6 +8,7 @@
 //   node tools/web/measure-pages.mjs --out <dir> [--base https://sam.peppone.dev]
 //        [--pages /login,/join,/board] [--profiles desktop,mobile] [--throttle none,broadband]
 //        [--repeat 1] [--no-axe] [--no-probe] [--map-selector .os-iso-map] [--cdp-url http://127.0.0.1:9222]
+//        [--map-grace-ms 15000] [--settle-quiet-ms 3000] [--settle-max-ms 30000]
 //   node tools/web/measure-pages.mjs --print-snippet   # 사용자 브라우저 탭 안에서 돌릴 JS(아래 inPageSnippet)
 //
 // - 실행마다 새 브라우저 컨텍스트(콜드 캐시)다. 시스템 Chrome(channel=chrome)을 쓴다 — 브라우저를 내려받지 않는다.
@@ -15,6 +16,9 @@
 //   이 도구는 계정을 만들거나 자격증명을 입력하지 않는다. 그 브라우저에서는 새 탭 하나만 열고 캐시를 끈 채
 //   재고 탭을 닫는다(쿠키는 그대로라 「콜드」는 HTTP 캐시만 뜻한다).
 // - 남의 서버에 반복 요청하지 않는다. pep 도 필요한 만큼만 잰다: 한 번 실행 = 페이지 × 프로필 × 망 × repeat 번 적재.
+// - 적재 창: 첫 그림(지도 없는 화면은 지도 대기가 끝난 때) 뒤 망이 --settle-quiet-ms(3초) 동안 조용할 때까지, 최대
+//   --settle-max-ms(30초). 첫 그림 뒤에 오는 요청(省 PNG 등)도 적재 수치에 든다. 끝까지 받는 중인 요청은 pending 목록에
+//   주소 · 그때까지 받은 바이트로 적는다(EventSource · WebSocket 같은 끝나지 않는 흐름은 기다리지 않는다).
 // - 측정을 못 한 행(오류 행)이 하나라도 있으면 종료 코드 1 이다. 기준(checks)이 걸린 것은 실패가 아니다(측정 도구다).
 //   요청한 경로와 다른 곳에 닿거나(로그인 풀림 → /login 등) 문서 응답이 4xx · 5xx 이면 그 행은 오류 행이다(`*-wrong-page.png` 만 남긴다).
 // - 기준(checks)은 문서에 있는 것만 쓴다. 문서가 크기를 정하지 않은 「큰 자원」 같은 것은 문턱 없이 전부 적는다.
@@ -64,7 +68,7 @@ const COMPRESSIBLE = /^(text\/|application\/(json|javascript|x-javascript|xml|.*
 function parseArgs(argv) {
   const opts = {
     base: 'https://sam.peppone.dev', pages: ['/login', '/join', '/board'], profiles: ['desktop', 'mobile'],
-    throttles: ['none'], repeat: 1, axe: true, probe: true, mapSelector: '.os-iso-map', timeoutMs: 90_000, mapGraceMs: 15_000,
+    throttles: ['none'], repeat: 1, axe: true, probe: true, mapSelector: '.os-iso-map', timeoutMs: 90_000, mapGraceMs: 15_000, settleQuietMs: 3_000, settleMaxMs: 30_000,
     channel: 'chrome', cdpUrl: null, out: null,
   };
   const list = (v) => v.split(',').map((s) => s.trim()).filter(Boolean);
@@ -82,6 +86,8 @@ function parseArgs(argv) {
     else if (a === '--map-selector') opts.mapSelector = next();
     else if (a === '--timeout-ms') opts.timeoutMs = Number(next());
     else if (a === '--map-grace-ms') opts.mapGraceMs = Number(next());
+    else if (a === '--settle-quiet-ms') opts.settleQuietMs = Number(next());
+    else if (a === '--settle-max-ms') opts.settleMaxMs = Number(next());
     else if (a === '--channel') opts.channel = next();
     else if (a === '--cdp-url') opts.cdpUrl = next();
     else if (a === '--print-snippet') { console.log(inPageSnippet()); process.exit(0); }
@@ -129,6 +135,9 @@ function summarizeNetwork(requests, originOf) {
     httpRequests: http.length,
     transferBytes: sum(requests),
     pending: http.filter((r) => r.bytes === undefined && !r.failed).length,
+    // 행이 끝날 때까지 받는 중이던 요청 — 개수만 적으면 큰 자원(省 PNG 24.7MB 등)이 바이트 0 으로 사라진다.
+    pendingList: http.filter((r) => r.bytes === undefined && !r.failed).slice(0, 15).map((r) => ({ url: short(r.url), type: r.type ?? null, partialBytes: r.partial ?? 0 })),
+    pendingPartialBytes: http.filter((r) => r.bytes === undefined && !r.failed).reduce((a, r) => a + (r.partial ?? 0), 0),
     byType,
     duplicates: { count: dups.length, extraBytes: dups.reduce((a, g) => a + g.bytes - g.bytes / g.count, 0), list: dups.slice(0, 15).map((g) => ({ ...g, url: short(g.url) })) },
     uncompressed: { count: uncompressed.length, bytes: sum(uncompressed), list: uncompressed.sort((a, b) => b.bytes - a.bytes).slice(0, 10).map((r) => ({ url: short(r.url), bytes: r.bytes, mime: r.mime })) },
@@ -462,7 +471,7 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
       const prev = reqs.get(e.requestId);
       reqs.set(`${e.requestId}#${prev.url}`, { ...prev, status: e.redirectResponse.status, bytes: prev.bytes ?? 0 });
     }
-    reqs.set(e.requestId, { url: e.request.url, type: e.type, t0: e.timestamp });
+    reqs.set(e.requestId, { url: e.request.url, type: e.type, t0: e.timestamp, startedAt: Date.now() });
   });
   cdp.on('Network.responseReceived', (e) => {
     const r = reqs.get(e.requestId); if (!r) return;
@@ -471,6 +480,7 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
     r.enc = h['content-encoding'] || h['Content-Encoding'] || '';
     r.fromCache = !!(e.response.fromDiskCache || e.response.fromServiceWorker);
   });
+  cdp.on('Network.dataReceived', (e) => { const r = reqs.get(e.requestId); if (r) r.partial = (r.partial ?? 0) + (e.encodedDataLength || 0); });
   cdp.on('Network.loadingFinished', (e) => { const r = reqs.get(e.requestId); if (r) { r.bytes = e.encodedDataLength; r.t1 = e.timestamp; } });
   cdp.on('Network.loadingFailed', (e) => { const r = reqs.get(e.requestId); if (r && !e.canceled) r.failed = e.errorText; });
 
@@ -503,7 +513,22 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
     await page.waitForTimeout(200);
   }
   await idle;
-  await page.waitForTimeout(500); // LCP 후보가 끝나도록
+  // 첫 그림 뒤 망이 다시 조용해질 때까지 본다 — networkidle 은 첫 그림 전에 한 번 오고 끝나서, 첫 그림 뒤 요청(K2 실측:
+  // provinces 가 5.8초)이 적재 창 밖으로 빠졌다(2026-10-01). 새 요청이 없고 받는 중인 요청도 없는 시간이 settleQuietMs 를
+  // 채우면 끝, settleMaxMs 를 넘기면 그때 받는 중인 것을 pending 으로 남긴다. 끝나지 않는 흐름은 기다리지 않는다.
+  const drawEnd = Date.now();
+  const streaming = (r) => r.type === 'EventSource' || r.type === 'WebSocket' || /event-stream/.test(r.mime || '');
+  const inFlight = () => [...reqs.values()].some((r) => /^https?:/.test(r.url) && r.bytes === undefined && !r.failed && !streaming(r));
+  let seen = reqs.size; let quietSince = Date.now(); let settleHitMax = true;
+  while (Date.now() - drawEnd < opts.settleMaxMs) {
+    await page.waitForTimeout(250);
+    if (reqs.size !== seen || inFlight()) { seen = reqs.size; quietSince = Date.now(); continue; }
+    if (Date.now() - quietSince >= opts.settleQuietMs) { settleHitMax = false; break; }
+  }
+  const postDrawSettle = {
+    waitedMs: Date.now() - drawEnd, quietMs: opts.settleQuietMs, maxMs: opts.settleMaxMs, hitMax: settleHitMax,
+    lateRequests: [...reqs.values()].filter((r) => /^https?:/.test(r.url) && r.startedAt >= drawEnd).length,
+  };
   const settledMs = idleAt ?? Date.now() - t0;
   const loadIds = new Set(reqs.keys()); // 적재 수치는 여기까지의 요청만 — 조작 탐침이 부른 요청은 따로 센다
   phase('load');
@@ -600,7 +625,7 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
 
   const result = {
     tool: 'tools/web/measure-pages.mjs', url, pagePath, profile, throttle, run: runIndex + 1, cdpMode, at: new Date().toISOString(),
-    ...metrics, firstMapDrawMs, networkSettledMs: settledMs, loadObservedMs: loadAt, lastMapState: lastState,
+    ...metrics, firstMapDrawMs, networkSettledMs: settledMs, loadObservedMs: loadAt, lastMapState: lastState, postDrawSettle,
     ...network, map, layout, axe, consoleErrors: consoleErrors.slice(0, 20), consoleErrorCount: consoleErrors.length, checks, phasesMs: phases, screenshotErrors,
     host: { ...hostBefore, loadavg1After: Math.round(os.loadavg()[0] * 10) / 10 },
   };
@@ -618,7 +643,7 @@ export function summaryRow({ tag, result: r }) {
     tag, page: r.pagePath, profile: r.profile, throttle: r.throttle, run: r.run, loadavg1: r.host.loadavg1, cpus: r.host.cpus,
     fcpMs: r.fcpMs, lcpMs: r.lcpMs, firstMapDrawMs: r.firstMapDrawMs, settledMs: r.networkSettledMs, cls: r.cls,
     requests: r.requests, MB: Number(mb(r.transferBytes)), duplicates: r.duplicates.count, duplicateExtraMB: Number(mb(r.duplicates.extraBytes)),
-    uncompressed: r.uncompressed.count, failed: r.failedCount, consoleErrors: r.consoleErrorCount,
+    uncompressed: r.uncompressed.count, failed: r.failedCount, pending: r.pending, pendingPartialMB: Number(mb(r.pendingPartialBytes ?? 0)), consoleErrors: r.consoleErrorCount,
     overflowPx: r.layout.horizontalOverflowPx, textCutRight: r.layout.textCutRight, smallTargets: r.layout.smallTargets, coveredTargets: r.layout.coveredTargets, titleOnly: r.layout.titleOnly, textUnder12px: r.layout.textUnder12px,
     axe: r.axe && !r.axe.error ? r.axe.byImpact : null, axeNodes: r.axe && !r.axe.error ? r.axe.nodes : null,
     mapFirstViewportPct: r.map?.geometry?.firstViewportVisiblePct ?? null, mapHitCanvas: r.map?.hitTest?.isCanvas ?? null,
@@ -627,10 +652,10 @@ export function summaryRow({ tag, result: r }) {
 }
 
 export function summaryMarkdown(rows, meta) {
-  const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 중복 | 무압축 | 실패 | 콘솔 오류 | 가로 넘침 | 오른쪽 잘린 글자 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
-  const sep = '|' + '---|'.repeat(20);
-  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.consoleErrors} | ${x.overflowPx} | ${x.textCutRight} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
-  return [`# 페이지 측정 — ${meta.base}`, '', `- 시각: ${meta.at} · 도구: tools/web/measure-pages.mjs · 브라우저: ${meta.browser}`, '- 시간 단위 ms. FCP · LCP 는 탐색 시작 기준, 지도 첫 그림 · 잠잠은 goto 호출 기준(M1 기준선과 같은 식).', `- 측정 기계 부하(1분 평균 / CPU 수): ${rows.filter((x) => !x.error).map((x) => `${x.loadavg1}`).join(' · ')} / ${rows.find((x) => !x.error)?.cpus ?? '—'} — 부하가 CPU 수보다 크게 높으면 시간 값은 상한으로 읽는다(요청 수 · 바이트는 영향 없음).`, '', head, sep, ...lines, ''].join('\n');
+  const head = '| 화면 | 프로필 | 망 | FCP | LCP | 지도 첫 그림 | 잠잠 | 요청 | MB | 중복 | 무압축 | 실패 | 끝까지 받는 중 | 콘솔 오류 | 가로 넘침 | 오른쪽 잘린 글자 | 44 미만 | title 전용 | 12px 미만 글자 | axe 치명·심각·보통·경미 | 걸린 기준 |';
+  const sep = '|' + '---|'.repeat(21);
+  const lines = rows.map((x) => x.error ? `| ${x.page} | ${x.profile} | ${x.throttle} | 측정 실패: ${x.error.replace(/\|/g, '/')} |` : `| ${x.page}${x.run > 1 ? ` (${x.run})` : ''} | ${x.profile} | ${x.throttle} | ${ms(x.fcpMs)} | ${ms(x.lcpMs)} | ${ms(x.firstMapDrawMs)} | ${ms(x.settledMs)} | ${x.requests} | ${x.MB} | ${x.duplicates}${x.duplicates ? ` (+${x.duplicateExtraMB} MB)` : ''} | ${x.uncompressed} | ${x.failed} | ${x.pending ? `${x.pending} (${x.pendingPartialMB} MB까지)` : 0} | ${x.consoleErrors} | ${x.overflowPx} | ${x.textCutRight} | ${x.smallTargets} | ${x.titleOnly} | ${x.textUnder12px} | ${x.axe ? `${x.axe.critical}·${x.axe.serious}·${x.axe.moderate}·${x.axe.minor}` : '—'} | ${x.failedChecks.join(', ') || '없음'} |`);
+  return [`# 페이지 측정 — ${meta.base}`, '', `- 시각: ${meta.at} · 도구: tools/web/measure-pages.mjs · 브라우저: ${meta.browser}`, '- 시간 단위 ms. FCP · LCP 는 탐색 시작 기준, 지도 첫 그림 · 잠잠은 goto 호출 기준(시각 기준만 M1 기준선과 같다). 첫 그림 판정과 적재 창은 2026-10-01에 바뀌어 09-30 값과 바로 비교하지 않는다.', `- 측정 기계 부하(1분 평균 / CPU 수): ${rows.filter((x) => !x.error).map((x) => `${x.loadavg1}`).join(' · ')} / ${rows.find((x) => !x.error)?.cpus ?? '—'} — 부하가 CPU 수보다 크게 높으면 시간 값은 상한으로 읽는다(요청 수 · 바이트는 영향 없음).`, '', head, sep, ...lines, ''].join('\n');
 }
 
 export function defaultOptions(overrides = {}) {
