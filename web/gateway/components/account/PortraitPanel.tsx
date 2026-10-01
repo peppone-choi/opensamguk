@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { Button, ConfirmDialog, Panel, Portrait, ReasonTooltip, SectionHeader } from '@opensamguk/ui';
 import { useAuth } from '@/lib/auth-context';
-import { deleteProfileIcon, uploadProfileIcon } from '@/lib/client';
+import { deleteProfileIcon, getCurrentUser, uploadProfileIcon } from '@/lib/client';
 import type { PortraitCrops } from '@/lib/portraitCrop';
 import PortraitCropEditor, { type CropEditorState } from './PortraitCropEditor';
 
@@ -53,7 +53,8 @@ export default function PortraitPanel() {
         setCrops(null);
         setSavedCrops(undefined);
         if (fileInput.current) fileInput.current.value = '';
-        await refresh();
+        // 인자 없는 refresh() 는 세션을 「불러오는 중」으로 돌려 AuthGate 가 화면을 통째로 내린다(결과 줄도 사라진다) — 서버 canonical 값을 넘긴다.
+        await refresh(updated);
     }, '초상을 올렸습니다.');
 
     const editSaved = () => run(async () => {
@@ -81,7 +82,9 @@ export default function PortraitPanel() {
         // 지우면 검증된 기본 실루엣으로 수렴한다 — 낡은 업로드 주소를 붙들지 않는다.
         setPicture('');
         setImgsvr(0);
-        await refresh();
+        // 지우기 응답엔 사용자가 없다 — 세션을 조용히 다시 읽어 넘긴다(위와 같은 이유로 인자 없는 refresh() 금지).
+        const me = await getCurrentUser().catch(() => null);
+        if (me) await refresh(me);
     }, '초상을 지웠습니다.');
 
     const uploadBlock: Reason | null = busy ? { reason: '처리 중입니다' }

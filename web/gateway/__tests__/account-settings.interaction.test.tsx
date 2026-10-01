@@ -187,6 +187,9 @@ describe('account settings interactions', () => {
         expect(init.headers).toBeUndefined();
         expect(await within(panel('초상')).findByRole('status')).toHaveTextContent('초상을 올렸습니다.');
         expect(screen.getByRole('img', { name: '지금 초상' })).toHaveAttribute('src', '/d_pic/a1b2c3d4.png');
+        // 인자 없는 refresh() 는 AuthGate 가 화면을 내려 결과 줄을 지운다(production 스모크에서 찾음) — 서버 canonical 사용자를 넘긴다.
+        expect(mocks.refresh).toHaveBeenCalledWith(expect.objectContaining({ picture: 'a1b2c3d4.png', imageServer: 1 }));
+        expect(mocks.refresh).not.toHaveBeenCalledWith();
     });
 
     it.each([
@@ -268,6 +271,8 @@ describe('account settings interactions', () => {
 
         await waitFor(() => expect(fetch).toHaveBeenCalledWith('/api/account/profile-icon', expect.objectContaining({ method: 'DELETE' })));
         expect(await within(panel('초상')).findByRole('status')).toHaveTextContent('초상을 지웠습니다.');
+        expect(fetch).toHaveBeenCalledWith('/api/auth/me', { cache: 'no-store' });
+        expect(mocks.refresh).not.toHaveBeenCalledWith();
         expect(screen.getByRole('img', { name: '지금 초상' })).toHaveAttribute('src', DEFAULT_PORTRAIT);
     });
 
