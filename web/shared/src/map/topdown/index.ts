@@ -113,6 +113,7 @@ export {
   MapViewBar,
   type MapLayerButtonsProps,
   type MapLayerKey,
+  type MapLayerPanel,
   type MapViewBarProps,
   type PendingLayer,
 } from './MapControls';

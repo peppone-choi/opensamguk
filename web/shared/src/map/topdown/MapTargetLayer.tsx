@@ -42,7 +42,7 @@ export interface MapTargetLayerProps {
   /** 지금 카메라(TopdownMap onViewChange). 아직 모르면 표지를 그리지 않는다. */
   readonly camera: Camera | null;
   readonly candidates: readonly TargetCandidate[];
-  readonly picker: Pick<TargetPicker, 'markerStateOf' | 'orderOf' | 'pick'>;
+  readonly picker: Pick<TargetPicker, 'markerStateOf' | 'orderOf' | 'pick' | 'multiple'>;
   /** 못 고르는 표지를 눌렀을 때 — 고르지 않고 이 후보를 넘긴다. */
   readonly onBlocked?: (candidate: TargetCandidate) => void;
   /** 점선이 시작하는 칸(내 자리). 없으면 점선을 긋지 않는다. */
@@ -108,7 +108,8 @@ export function MapTargetLayer({ camera, candidates, picker, onBlocked, from = n
       ) : null}
       {shown.map(({ candidate, at }) => {
         const state = picker.markerStateOf(candidate.targetId);
-        const order = picker.orderOf(candidate.targetId);
+        // 고른 차례 번호는 여러 곳 고르기에서만(보드 mk n) — 하나 고르기의 orderOf 는 늘 1 이다
+        const order = picker.multiple ? picker.orderOf(candidate.targetId) : null;
         const corps = candidate.targetKind === 'corps';
         return (
           <span key={candidate.targetId}>

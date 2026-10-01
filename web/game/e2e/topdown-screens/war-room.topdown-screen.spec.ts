@@ -231,6 +231,11 @@ test.describe('작전실 새 지도(교체 스위치 빌드)', () => {
     await page.getByRole('button', { name: '지도 레이어' }).click();
     const layersPanel = page.getByRole('region', { name: '지도 레이어' });
     await expect(layersPanel).toBeVisible();
+    // 판은 지도 상자 안에 펼친다(모바일 작전실 좁은 열에서 왼쪽이 잘린 적이 있다)
+    const panelBox = (await layersPanel.boundingBox())!;
+    const mapBox = (await map.boundingBox())!;
+    expect(panelBox.x, '레이어 판이 지도 왼쪽 끝을 넘었다').toBeGreaterThanOrEqual(mapBox.x - 1);
+    expect(panelBox.x + panelBox.width, '레이어 판이 지도 오른쪽 끝을 넘었다').toBeLessThanOrEqual(mapBox.x + mapBox.width + 1);
     const commanderyLines = layersPanel.getByRole('button', { name: /군 경계/ });
     await expect(commanderyLines).toHaveAttribute('aria-pressed', 'false');
     await commanderyLines.click();
