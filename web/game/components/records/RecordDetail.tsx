@@ -83,7 +83,7 @@ export default function RecordDetail({ event, names, viewer }: { readonly event:
       {cityId != null && cityName ? <RecordMap cityId={cityId} label={cityName} /> : null}
       <div className={styles.detailBody}>
         <p className={styles.sentence}>{sentence}</p>
-        {items.length > 0 ? <KV className={styles.kv} items={items} /> : null}
+        {items.length > 0 ? <KV items={items} /> : null}
         <div className={styles.actions}>
           {event.kind === 'court.dispatchReceived' ? <CampaignLink slug="court" query="?tab=orders" className="os-button os-button--sm os-button--primary">응답하기</CampaignLink> : null}
           {cityId != null ? <ScreenLink path="territory/county" label="현 상세" /> : null}
