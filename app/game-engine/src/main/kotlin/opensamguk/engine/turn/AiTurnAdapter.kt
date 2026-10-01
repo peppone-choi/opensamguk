@@ -198,6 +198,20 @@ class AiTurnAdapter(
     private val stateDeltas = ArrayList<AiStateDelta>()
     private val distanceListCache = AiDistanceListCache()
 
+    internal class PendingDeltasCheckpoint internal constructor(internal val owner: AiTurnAdapter)
+
+    /** Each general begins after the previous general's AI deltas have been drained. */
+    internal fun checkpointPendingDeltas(): PendingDeltasCheckpoint {
+        check(stateDeltas.isEmpty()) { "pending AI state deltas at general boundary" }
+        return PendingDeltasCheckpoint(this)
+    }
+
+    /** A failed general must not donate undrained AI deltas to the next general. */
+    internal fun restorePendingDeltas(checkpoint: PendingDeltasCheckpoint) {
+        require(checkpoint.owner === this) { "invalid AI delta checkpoint" }
+        stateDeltas.clear()
+    }
+
     private fun allDistanceByCityList(
         cityIds: List<Int>,
         cityConst: CityConstVariant = activeCityConst(),

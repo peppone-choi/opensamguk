@@ -30,6 +30,7 @@ import opensamguk.engine.turn.ProcessNationCommand
 import opensamguk.engine.turn.ReservedTurnHandler
 import opensamguk.engine.turn.RulerSuccessionHandler
 import opensamguk.engine.turn.TurnDaemonLifecycle
+import opensamguk.engine.turn.TurnUnitExecutor
 import opensamguk.infra.persistence.CommandInboxRepository
 import opensamguk.infra.persistence.CommandResultRepository
 import opensamguk.infra.persistence.JdbcFlushExecutor
@@ -527,6 +528,9 @@ class DaemonLoopConfig {
                     { generalId, reserved -> selector.select(world, generalId, reserved) }
                 select
             } else { _, reserved -> reserved },
+            unitExecutor = TurnUnitExecutor(world, recorder, eventStore),
+            battleOutcomePostFlush = battleOutcomePostFlush,
+            aiAdapter = ai,
             reservedActionOf = { generalId -> reservedTurnRepository.readReserved(world.worldId, generalId, 0) },
         )
 
