@@ -2,8 +2,8 @@
 // 페이지 품질 측정 — 첫 그림 · 요청 수 · 전송 크기 · 모바일 동작 · 접근성 위반 (K10, 2026-09-30).
 //
 // 2026-09-30 지도 M1 기준선(K0 스크래치 measure-login-map.cjs)을 저장소 도구로 옮기고 넓힌 것이다.
-// 지도 첫 그림 판정(캔버스 81점 표본 중 20점 넘게 칠해짐)과 전송 크기(CDP encodedDataLength 합)는
-// 그 스크립트와 같은 식이라 M1 전후 값을 그대로 비교할 수 있다.
+// 전송 크기(CDP encodedDataLength 합)는 그 스크립트와 같은 식이다. 지도 첫 그림 판정은 2026-10-01에 촘촘하게 바꿨다
+// (mapState 주석) — 09-30 기준선 시간과는 정의가 다르다. 늦게 붙는 지도는 망이 잠잠해진 뒤 --map-grace-ms(15초)까지 기다린다.
 //
 //   node tools/web/measure-pages.mjs --out <dir> [--base https://sam.peppone.dev]
 //        [--pages /login,/join,/board] [--profiles desktop,mobile] [--throttle none,broadband]
@@ -15,6 +15,7 @@
 //   이 도구는 계정을 만들거나 자격증명을 입력하지 않는다. 그 브라우저에서는 새 탭 하나만 열고 캐시를 끈 채
 //   재고 탭을 닫는다(쿠키는 그대로라 「콜드」는 HTTP 캐시만 뜻한다).
 // - 남의 서버에 반복 요청하지 않는다. pep 도 필요한 만큼만 잰다: 한 번 실행 = 페이지 × 프로필 × 망 × repeat 번 적재.
+// - 측정을 못 한 행(오류 행)이 하나라도 있으면 종료 코드 1 이다. 기준(checks)이 걸린 것은 실패가 아니다(측정 도구다).
 // - 기준(checks)은 문서에 있는 것만 쓴다. 문서가 크기를 정하지 않은 「큰 자원」 같은 것은 문턱 없이 전부 적는다.
 //
 // 의존성은 web/game 의 @playwright/test · @axe-core/playwright 다(없으면 설치 명령을 알려 주고 멈춘다).
@@ -62,7 +63,7 @@ const COMPRESSIBLE = /^(text\/|application\/(json|javascript|x-javascript|xml|.*
 function parseArgs(argv) {
   const opts = {
     base: 'https://sam.peppone.dev', pages: ['/login', '/join', '/board'], profiles: ['desktop', 'mobile'],
-    throttles: ['none'], repeat: 1, axe: true, probe: true, mapSelector: '.os-iso-map', timeoutMs: 90_000,
+    throttles: ['none'], repeat: 1, axe: true, probe: true, mapSelector: '.os-iso-map', timeoutMs: 90_000, mapGraceMs: 15_000,
     channel: 'chrome', cdpUrl: null, out: null,
   };
   const list = (v) => v.split(',').map((s) => s.trim()).filter(Boolean);
@@ -79,6 +80,7 @@ function parseArgs(argv) {
     else if (a === '--no-probe') opts.probe = false;
     else if (a === '--map-selector') opts.mapSelector = next();
     else if (a === '--timeout-ms') opts.timeoutMs = Number(next());
+    else if (a === '--map-grace-ms') opts.mapGraceMs = Number(next());
     else if (a === '--channel') opts.channel = next();
     else if (a === '--cdp-url') opts.cdpUrl = next();
     else if (a === '--print-snippet') { console.log(inPageSnippet()); process.exit(0); }
@@ -153,23 +155,26 @@ function initObservers() {
   } catch { /* 옵저버가 없는 브라우저 */ }
 }
 
-// M1 기준선과 같은 판정: 지도 뿌리 안 canvas 의 81점 표본 중 20점 넘게 알파 > 0 이면 첫 그림.
+// 첫 그림: 지도 뿌리 안 canvas 들 중 하나라도 20×20 표본 400점 중 8점(2 %) 이상 알파 > 0 이면 칠해졌다고 본다.
+// 2026-10-01 바꿈 — 09-30 M1 기준선은 첫 canvas 81점 중 20점 초과였다. v3.1 로그인처럼 바다가 CSS 배경이고 캔버스에
+// 가운데 마름모만 그리는 지도는 390 화면에서 그 문턱을 못 넘어 「안 그려짐」으로 잘못 읽혔다. 옛 값과 그대로 견주지 않는다.
 function mapState(selector) {
   const root = document.querySelector(selector);
-  const c = root ? root.querySelector('canvas') : null;
+  const canvases = root ? [...root.querySelectorAll('canvas')] : [];
+  const c = canvases[0] ?? null;
   let painted = false;
-  if (c && c.width > 0) {
+  for (const cv of canvases) {
+    if (!(cv.width > 0)) continue;
     try {
-      const g = c.getContext('2d');
-      if (g) {
-        const w = c.width, h = c.height; let n = 0;
-        for (let i = 1; i < 10; i++) for (let j = 1; j < 10; j++) {
-          const d = g.getImageData(Math.floor((w * i) / 10), Math.floor((h * j) / 10), 1, 1).data;
-          if (d[3] > 0) n++;
-        }
-        painted = n > 20;
-      } else { painted = true; }
-    } catch { painted = true; }
+      const g = cv.getContext('2d');
+      if (!g) { painted = true; break; } // WebGL 등 — 읽을 수 없으면 그려진 것으로 본다
+      const w = cv.width, h = cv.height; let n = 0;
+      for (let i = 0; i < 20; i++) for (let j = 0; j < 20; j++) {
+        const d = g.getImageData(Math.floor((w * (i + 0.5)) / 20), Math.floor((h * (j + 0.5)) / 20), 1, 1).data;
+        if (d[3] > 0) n++;
+      }
+      if (n >= 8) { painted = true; break; }
+    } catch { painted = true; break; }
   }
   const lod = document.querySelector('[data-map-lod]')?.dataset.mapLod ?? null;
   return { hasRoot: !!root, hasCanvas: !!c, painted, lod };
@@ -492,7 +497,8 @@ async function measureInPage({ cdpMode, opts, AxeBuilder, pagePath, profile, thr
     const st = await page.evaluate(mapState, opts.mapSelector).catch(() => null);
     lastState = st;
     if (st?.painted) { firstMapDrawMs = Date.now() - t0; break; }
-    if (idleAt !== null && loadAt !== null && st && !st.hasRoot) break;
+    // 지도가 없는 화면이면 망이 잠잠해지고 mapGraceMs 가 더 지나도 뿌리가 없을 때 그만 본다(늦게 붙는 지도를 기다린다).
+    if (idleAt !== null && loadAt !== null && st && !st.hasRoot && Date.now() - t0 > Math.max(idleAt, loadAt) + opts.mapGraceMs) break;
     await page.waitForTimeout(200);
   }
   await idle;
@@ -665,5 +671,13 @@ export async function run(opts) {
 }
 
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  run(parseArgs(process.argv.slice(2))).then(() => process.exit(0), (e) => { console.error(e); process.exit(1); });
+  // 측정을 못 한 행이 하나라도 있으면 실패다 — 오류 행을 남기고도 0 으로 끝나면 「잰 줄 알았는데 안 잰」 결과가 초록으로 읽힌다.
+  run(parseArgs(process.argv.slice(2))).then((rows) => {
+    const failed = rows.filter((r) => r.error);
+    if (failed.length) {
+      console.error(`측정 실패 ${failed.length}/${rows.length}: ${failed.map((r) => `${r.page} ${r.profile} ${r.throttle} — ${r.error}`).join(' | ')}`);
+      process.exit(1);
+    }
+    process.exit(0);
+  }, (e) => { console.error(e); process.exit(1); });
 }

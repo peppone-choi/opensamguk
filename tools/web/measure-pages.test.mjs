@@ -12,7 +12,7 @@ import path from 'node:path';
 import { after, before, test } from 'node:test';
 import { defaultOptions, duplicateTransfers, inPageSnippet, run, slugOf } from './measure-pages.mjs';
 import { createRequire } from 'node:module';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const PNG_1PX = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==', 'base64');
@@ -39,6 +39,16 @@ const GOOD = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta n
 <main><h1>깨끗한 화면</h1><button type="button" style="min-width:44px;min-height:44px">확인</button><img src="/pic.png" alt="표식"></main>
 </body></html>`;
 
+// 늦게 붙는 지도: 로드 2.5초 뒤 지도 뿌리가 생기고 3초 뒤 큰 캔버스 가운데 작은 마름모만 그린다(바다는 CSS 배경).
+const LAZY = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><title>늦은 지도</title></head><body style="margin:0;background:#16324d">
+<main><h1>늦은 지도</h1></main>
+<script>
+setTimeout(() => { const d = document.createElement('div'); d.className = 'os-iso-map'; d.style.cssText = 'width:600px;height:400px';
+  d.innerHTML = '<canvas width="600" height="400"></canvas>'; document.body.appendChild(d); }, 2500);
+setTimeout(() => { const g = document.querySelector('.os-iso-map canvas').getContext('2d'); g.fillStyle = '#6a8a4a';
+  g.beginPath(); g.moveTo(300, 140); g.lineTo(390, 200); g.lineTo(300, 260); g.lineTo(210, 200); g.closePath(); g.fill(); }, 3000);
+</script></body></html>`;
+
 let server; let base; let outDir;
 
 before(async () => {
@@ -46,6 +56,7 @@ before(async () => {
     const send = (status, type, body) => { res.writeHead(status, { 'content-type': type, 'cache-control': 'no-store' }); res.end(body); };
     if (req.url === '/bad') return send(200, 'text/html; charset=utf-8', BAD);
     if (req.url === '/good') return send(200, 'text/html; charset=utf-8', GOOD);
+    if (req.url === '/lazy') return send(200, 'text/html; charset=utf-8', LAZY);
     if (req.url === '/pic.png' || req.url === '/favicon.ico') return send(200, 'image/png', PNG_1PX);
     if (req.url === '/big.bin') return send(200, 'application/octet-stream', Buffer.alloc(200_000, 7));
     return send(404, 'text/plain', 'none');
@@ -170,4 +181,23 @@ test('첫 goto 가 실패해도 오류 행과 summary 를 남긴다', async () =
   assert.equal(rows.length, 1);
   assert.ok(rows[0].error, '오류 행이어야 한다');
   assert.ok(fs.existsSync(path.join(out, 'summary.json')), 'summary.json 이 없다');
+});
+
+// CLI 는 오류 행이 있으면 종료 코드 1 이다(2026-10-01: 전부 오류 행인데 0 으로 끝나 「잰 줄 알았는데 안 잰」 결과가 초록으로 보였다).
+test('CLI: 측정을 못 한 행이 있으면 종료 코드 1', async () => {
+  const dead = http.createServer();
+  await new Promise((r) => dead.listen(0, '127.0.0.1', r));
+  const port = dead.address().port;
+  await new Promise((r) => dead.close(r));
+  const res = spawnSync(process.execPath, [fileURLToPath(new URL('./measure-pages.mjs', import.meta.url)), '--base', `http://127.0.0.1:${port}`,
+    '--pages', '/x', '--profiles', 'desktop', '--throttle', 'none', '--no-axe', '--timeout-ms', '15000', '--out', path.join(outDir, 'cli-exit')], { encoding: 'utf8' });
+  assert.equal(res.status, 1, `종료 코드 ${res.status}\n${res.stderr}`);
+  assert.match(res.stderr, /측정 실패 1\/1/);
+});
+
+// 2026-10-01 pep v3.1 로그인에서 놓친 두 가지: 늦게 붙는 지도 뿌리, 큰 캔버스의 작은 그림(옛 81점 > 20 문턱 미달).
+test('늦게 붙고 작게 그리는 지도도 첫 그림을 잡는다', async () => {
+  const [row] = await run(defaultOptions({ base, pages: ['/lazy'], profiles: ['desktop'], throttles: ['none'], out: outDir, axe: false, probe: false }));
+  assert.ok(!row.error, `측정 실패: ${row.error}`);
+  assert.ok(row.firstMapDrawMs != null && row.firstMapDrawMs >= 3000, `지도 첫 그림 ${row.firstMapDrawMs}`);
 });
