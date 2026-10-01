@@ -574,32 +574,6 @@ input:focus, select:focus, textarea:focus {
   .gi-cell.gi-wide { grid-column: span 8; }
 }
 
-.main-status {
-  width: 100%;
-  max-width: min(100%, 1200px);
-  margin: 0 auto;
-  background: var(--bg-card);
-  border-bottom: 1px solid var(--border-subtle);
-}
-.main-status-row {
-  border-top: 1px solid var(--border-subtle);
-  padding: var(--space-sm) var(--space-md);
-  font-size: var(--text-sm);
-  line-height: 1.45;
-}
-.main-status-notice {
-  padding-left: 0;
-  padding-right: 0;
-}
-.main-status-notice-head {
-  padding: 0 var(--space-md);
-}
-.main-status-notice-body {
-  min-height: 1.45em;
-  padding: var(--space-xs) var(--space-md) 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
 
 .global-menu {
   display: grid;
@@ -1153,7 +1127,7 @@ input:focus, select:focus, textarea:focus {
   .main-record-world { grid-column: 1 / -1; }
 }
 
-/* Basic info cards (GeneralBasicCard / NationBasicCard) — verbatim labels, grid head/body rows. */
+/* Basic info cards (GeneralBasicCard) — verbatim labels, grid head/body rows. */
 .basic-card {
   border: 1px solid var(--border-subtle);
   border-radius: 0;
@@ -1181,9 +1155,6 @@ input:focus, select:focus, textarea:focus {
   font-size: var(--text-xs);
   text-align: center;
 }
-/* 성향 pros(cyan) / cons(magenta) — 레거시 NationBasicCard type 색상 그대로. */
-.bc-pros { color: var(--info); }
-.bc-cons { color: var(--rust); }
 /* 통솔보너스(+lbonus) — 레거시 cyan. */
 .bc-bonus { color: var(--moss-2); }
 .bc-penalty { color: var(--rust); }
@@ -1787,9 +1758,6 @@ input:focus, select:focus, textarea:focus {
 .subject-secondary-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 900px) { .subject-secondary-grid { grid-template-columns: 1fr 1fr; } }
 .subject-nation { display: flex; flex-direction: column; gap: 0; }
-.subject-nation .main-status { border: 1px solid var(--line); border-top: 0; background: var(--panel); padding: 6px 12px; }
-.main-status-row { font-size: 12px; color: var(--text-2); padding: 3px 0; }
-.main-status-notice-head { color: var(--muted); }
 
 /* ── 작전실 카드(도시·국가·장수) — ADR-LITE-049 03 아트보드 ──────────────────────────────
    낡은 `.basic-card`(국가색 전폭 헤더 + 2열 라벨/값)를 대체한다. 라벨·게이팅·표시 필드는 그대로다. */
@@ -1810,36 +1778,11 @@ input:focus, select:focus, textarea:focus {
   background: var(--inset);
   font-size: 12px;
 }
-.war-card__head--nation { border-bottom-color: var(--line-2); }
-.war-card__head--nation .war-card__title { color: inherit; }
-.war-card__head-right { margin-left: auto; font-size: 11px; white-space: nowrap; }
 .war-card__spacer { flex: 1; }
 .war-card__chip { height: 18px; font-size: 10px; }
-.war-card__empty { padding: 16px 12px; font-size: 12px; color: var(--muted); }
 
-/* 도시 8게이지 — 2열 */
-.war-card__gauges {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 3px 12px;
-  padding: 8px 10px;
-  align-content: start;
-}
-.war-card__gauges .os-gauge { gap: 2px; font-size: 11px; }
-/* 옆 열(국가 카드 + 접속/방침)이 더 길면 도시 카드가 늘어나는데, align-content:start 라
-   게이지 8개가 위로 몰리고 관직 줄까지 60px 가 텅 비었다 — 남는 높이를 게이지 줄에 나눈다. */
-.war-card--city .war-card__gauges { align-content: space-between; }
-.war-card__gauges .os-gauge__bar { height: 5px; }
-.war-card__gauge--textonly { align-self: start; }
-.war-card__officers { display: flex; border-top: 1px solid var(--line); font-size: 11px; }
-.war-card__officer { flex: 1; display: flex; justify-content: space-between; gap: 6px; padding: 5px 10px; min-width: 0; }
-.war-card__officer + .war-card__officer { border-left: 1px solid var(--line); }
-.war-card__none { color: var(--muted); }
-
-/* 라벨/값 격자 — 국가 3열 · 장수 5열 */
+/* 라벨/값 격자 — 장수 5열 */
 .war-card__facts { display: grid; gap: 3px 12px; padding: 6px 10px; font-size: 11px; align-content: start; }
-.war-card__facts--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .war-card__facts--5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 .war-card__fact { display: flex; justify-content: space-between; gap: 8px; min-width: 0; }
 .war-card__fact--wide { grid-column: span 2; }
@@ -1897,9 +1840,6 @@ input:focus, select:focus, textarea:focus {
   .war-card--general { grid-template-columns: 1fr; }
   .war-card__portrait { justify-self: center; }
 }
-@media (max-width: 900px) {
-  .war-card__facts--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
 
 .reserved-command-panel { border-radius: 0; display: flex; flex-direction: column; }
 .rcp-title { color: var(--text); text-align: left; padding: 0 12px; }
@@ -1947,7 +1887,6 @@ input:focus, select:focus, textarea:focus {
 .cmd-form { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 12px; }
 .cmd-back { margin: 10px 12px 0; align-self: flex-start; }
 .cmd-blocked { margin: 0 12px 12px; padding: 8px 10px; border: 1px solid var(--info-dim); color: var(--info); font-size: 12px; }
-.subject-target-retinue { margin-left: auto; }
 
 .game-bottom-item--disabled { color: var(--muted); border-top: 2px dashed var(--line-2); }
 .game-bottom-item--disabled .game-bottom-label { cursor: not-allowed; }
@@ -2171,8 +2110,6 @@ input:focus, select:focus, textarea:focus {
 .retinue__table td, .retinue__table th { white-space: nowrap; }
 .retinue__note { margin: 6px 12px 0; font-size: 11px; color: var(--muted); line-height: 1.5; }
 .retinue__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
-.subject-target-retinue { text-decoration: none; }
-.subject-target-retinue--empty { border-style: dashed; color: var(--muted); }
 
 /* ── Phase 4X-B 작전 (08 국가 운영 「작전 진행」, /game/my-nation#operations) ─────────────────── */
 .ops { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); gap: 12px; margin: 12px 0; }
@@ -2204,8 +2141,6 @@ input:focus, select:focus, textarea:focus {
 .ops__form { display: grid; gap: 8px; padding: 10px 12px; }
 .ops__form label { display: grid; gap: 2px; font-size: 11px; color: var(--muted); }
 .ops__message { margin: 4px 0 0; font-size: 12px; color: var(--bronze); grid-column: 1 / -1; }
-.subject-target-operation { text-decoration: none; }
-.subject-target-operation--empty { border-style: dashed; color: var(--muted); }
 
 /* ── Phase 4X-C 09 명령 봉인 / 10 리플레이 ── */
 .bp { display: grid; gap: 12px; margin: 12px 0; }
