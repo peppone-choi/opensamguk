@@ -6,11 +6,13 @@ import shutil
 import subprocess
 import tempfile
 import unittest
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from input_evidence_gate import (BASELINE, BASELINE_SHA256, CATALOG, ROOT, _proof,
                                  _ui_source_proof, check, validate, validate_ui_runtime,
-                                 ui_candidate_identity, ui_source_pins, RuntimeProofError)
+                                 ui_candidate_identity, ui_source_pins, RuntimeProofError, check_ui_runtime,
+                                 record_ui_start, validate_ui_start)
 
 
 class InputEvidenceGateTest(unittest.TestCase):
@@ -476,6 +478,20 @@ class UiRuntimeProofTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_ui_runtime([], self.phase, self.report, self.head, self.root, {})
 
+    def test_outside_smoke_static_proof_missing_from_actual_selector_is_rejected(self):
+        self.proofs[0]['path'] = 'web/game/e2e/input-delivery.spec.ts'
+        self.sources[self.proofs[0]['path']] = 'b' * 64
+        with self.assertRaisesRegex(ValueError, 'missing desktop/mobile'):
+            self.proof()
+
+    def test_new_ui_proof_cannot_use_skipped_web_or_missing_selected_case(self):
+        self.phase['workflowStepOutcome'] = 'skipped'
+        with self.assertRaises(ValueError): self.proof()
+        self.phase['workflowStepOutcome'] = 'success'
+        self.report['suites'][0]['specs'] = []
+        with self.assertRaisesRegex(ValueError, 'missing desktop/mobile'):
+            self.proof()
+
 
 class UiCandidateIdentityTest(unittest.TestCase):
     """실제 commit/merge 객체와 working 변조를 임시 Git 저장소에서 대조한다."""
@@ -542,6 +558,155 @@ class UiCandidateIdentityTest(unittest.TestCase):
         identity['actualCheckoutSha'] = self.git('rev-parse', 'HEAD')
         with self.assertRaisesRegex(RuntimeProofError, 'SOURCE_PIN_MISMATCH'):
             ui_source_pins({'spec.ts'}, identity, self.root)
+
+    def test_full_receipt_keeps_no_proofs_separate_and_preserves_smoke_failure(self):
+        paths = ('tools/ci/input_evidence_gate.py', 'tools/ci/ui_input_proof.mjs',
+                 'tools/ci/package.json', 'tools/ci/package-lock.json', str(CATALOG), str(BASELINE),
+                 'data/commands/input-evidence-debt-v1.json', 'data/help/first-steps-exclusions-v1.json',
+                 'docs/development/first-steps-exclusions-v1.md')
+        for relative in paths:
+            target = self.root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ROOT / relative, target)
+        self.git('add', *paths)
+        self.git('commit', '-qm', '도구와 실제 기준선')
+        base = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-qb', 'ci-candidate')
+        (self.root / 'case.txt').write_text('새 후보\n')
+        self.git('add', 'case.txt')
+        self.git('commit', '-qm', '검증 후보')
+        candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        self.git('merge', '--no-ff', '-qm', '검증 통합', 'ci-candidate')
+        context = self.context.copy()
+        context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        event = copy.deepcopy(self.event)
+        event['pull_request']['head']['sha'], event['pull_request']['base']['sha'] = candidate, base
+        runtime = UiRuntimeProofTest()
+        runtime.setUp()
+        phase = runtime.phase
+        phase.update(headSha=candidate, workflowSha=context['GITHUB_WORKFLOW_SHA'],
+                     workflow='CI', event='pull_request', repository='owner/repo')
+        report = runtime.report
+        report['config']['rootDir'] = str(self.root / 'web/game/e2e')
+        for name, document in [('event.json', event), ('phase.json', phase), ('results.json', report)]:
+            (self.root / name).write_text(json.dumps(document))
+        context['GITHUB_EVENT_PATH'] = str(self.root / 'event.json')
+        start, code = record_ui_start(self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, start)
+        phase['uiInputStart'] = start
+        generated = datetime.fromisoformat(start['generatedAt'])
+        phase['startedAt'] = (generated + timedelta(seconds=1)).isoformat()
+        phase['finishedAt'] = (generated + timedelta(seconds=2)).isoformat()
+        report['stats']['startTime'] = phase['startedAt']
+        (self.root / 'results.json').write_text(json.dumps(report))
+        (self.root / 'phase.json').write_text(json.dumps(phase))
+        receipt, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                         self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, receipt)
+        self.assertEqual(1, receipt['schemaVersion'])
+        self.assertEqual('NO_UI_PROOFS', receipt['status'])
+        self.assertEqual(candidate, receipt['candidateSha'])
+        self.assertEqual(context['GITHUB_SHA'], receipt['actualCheckoutSha'])
+        self.assertEqual(5, len(receipt['sourcePins']))
+        self.assertEqual([], receipt['proofs'])
+        original_catalog = (self.root / CATALOG).read_bytes()
+        dirty_catalog = json.loads(original_catalog)
+        dirty_catalog['inputs'][0]['displayName'] = '선택 오염'
+        (self.root / CATALOG).write_text(json.dumps(dirty_catalog))
+        rejected, code = record_ui_start(self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', rejected['status'])
+        self.assertIn('SOURCE_PIN_MISMATCH', rejected['reasons'])
+        rejected, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                          self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', rejected['status'])
+        (self.root / CATALOG).write_bytes(original_catalog)
+        phase['workflowStepOutcome'] = 'failure'
+        (self.root / 'phase.json').write_text(json.dumps(phase))
+        failed, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                        self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', failed['status'])
+        self.assertTrue(failed['reasons'])
+        unavailable, code = check_ui_runtime(self.root / 'missing-phase.json', self.root / 'results.json',
+                                             self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('UNAVAILABLE', unavailable['status'])
+        # 실제 catalog 모양의 새 UI 참조도 Git 후보/merge/working 및 두 프로젝트를 연결한다.
+        self.git('checkout', '-qb', 'ci-ui-proof')
+        catalog = json.loads((self.root / CATALOG).read_text())
+        row = next(item for item in catalog['inputs'] if item['inputId'] == 'court.reward')
+        row['deliveryState'] = 'UI_READY'
+        row['evidence'] = {'UI_READY': ['ui-e2e:web/game/e2e/smoke/court.spec.ts#court.reward']}
+        (self.root / CATALOG).write_text(json.dumps(catalog))
+        spec = self.root / 'web/game/e2e/smoke/court.spec.ts'
+        spec.parent.mkdir(parents=True)
+        spec.write_text(UiInputSourceProofTest.delivered(runtime.title))
+        self.git('add', str(CATALOG), 'web/game/e2e/smoke/court.spec.ts')
+        self.git('commit', '-qm', '합성 UI 증거 후보')
+        candidate = self.git('rev-parse', 'HEAD')
+        self.git('checkout', '-q', 'main')
+        base = self.git('rev-parse', 'HEAD')
+        self.git('merge', '--no-ff', '-qm', '합성 UI 증거 통합', 'ci-ui-proof')
+        context['GITHUB_SHA'] = self.git('rev-parse', 'HEAD')
+        event['pull_request']['head']['sha'], event['pull_request']['base']['sha'] = candidate, base
+        phase.update(headSha=candidate, workflowStepOutcome='success')
+        (self.root / 'event.json').write_text(json.dumps(event))
+        start, code = record_ui_start(self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, start)
+        phase['uiInputStart'] = start
+        generated = datetime.fromisoformat(start['generatedAt'])
+        phase['startedAt'] = (generated + timedelta(seconds=1)).isoformat()
+        phase['finishedAt'] = (generated + timedelta(seconds=2)).isoformat()
+        report['stats']['startTime'] = phase['startedAt']
+        (self.root / 'results.json').write_text(json.dumps(report))
+        (self.root / 'phase.json').write_text(json.dumps(phase))
+        verified, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                          self.root / 'event.json', self.root, context)
+        self.assertEqual(0, code, verified)
+        self.assertEqual('UI_RUNTIME_VERIFIED', verified['status'])
+        self.assertEqual(2, len(verified['proofs']))
+        report['suites'][0]['specs'] = []
+        (self.root / 'results.json').write_text(json.dumps(report))
+        missing, code = check_ui_runtime(self.root / 'phase.json', self.root / 'results.json',
+                                         self.root / 'event.json', self.root, context)
+        self.assertEqual(1, code)
+        self.assertEqual('FAILED', missing['status'])
+
+
+class UiStartRecordTest(unittest.TestCase):
+    def setUp(self):
+        self.identity = {'producer': {'runId': '123', 'runAttempt': '1', 'event': 'pull_request'},
+                         'candidateSha': 'a' * 40, 'actualCheckoutSha': 'b' * 40,
+                         'baseSha': 'c' * 40, 'checkoutParents': ['c' * 40, 'a' * 40]}
+        self.pins = [{'path': 'data/commands/input-catalog.json', 'candidateBlobSha256': 'd' * 64,
+                      'checkoutBlobSha256': 'd' * 64, 'workingSha256': 'd' * 64}]
+        self.proofs = [{'inputId': 'court.reward', 'cases': [{'title': '[court.reward] 상사'}]}]
+        self.start = dict(self.identity, schemaVersion=1, kind='ui-input-start', sourcePins=self.pins,
+                          selectedProofs=self.proofs, generatedAt='2026-10-02T00:00:00Z',
+                          status='STATIC_PROOF_VALID', reasons=[])
+
+    def test_same_start_identity_source_and_selected_cases_are_required(self):
+        validate_ui_start(self.start, self.identity, self.pins, self.proofs)
+        for field, replacement in [('candidateSha', 'e' * 40), ('actualCheckoutSha', 'e' * 40),
+                                    ('baseSha', 'e' * 40), ('checkoutParents', []),
+                                    ('sourcePins', []), ('selectedProofs', []), ('status', 'FAILED'), ('generatedAt', ''),
+                                    ('producer', {'runId': '124', 'runAttempt': '1', 'event': 'pull_request'})]:
+            changed = copy.deepcopy(self.start)
+            changed[field] = replacement
+            with self.subTest(field=field), self.assertRaises(RuntimeProofError):
+                validate_ui_start(changed, self.identity, self.pins, self.proofs)
+
+    def test_missing_start_and_other_attempt_or_event_fail(self):
+        with self.assertRaisesRegex(RuntimeProofError, 'UI_START_RECORD_MISSING'):
+            validate_ui_start(None, self.identity, self.pins, self.proofs)
+        for field, value in [('runAttempt', '2'), ('event', 'push')]:
+            changed = copy.deepcopy(self.start)
+            changed['producer'][field] = value
+            with self.subTest(field=field), self.assertRaises(RuntimeProofError):
+                validate_ui_start(changed, self.identity, self.pins, self.proofs)
 
 
 if __name__ == "__main__":

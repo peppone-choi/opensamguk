@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -490,19 +491,97 @@ def ui_source_pins(paths: set[str], identity: dict, root: Path) -> list[dict]:
     return pins
 
 
+def _selected_ui_sources(root: Path) -> tuple[list[dict], set[str]]:
+    """시작 producer와 완료 consumer의 단일 선택 정본."""
+    check(root)
+    proofs = []
+    paths = {str(CATALOG), "tools/ci/input_evidence_gate.py", "tools/ci/ui_input_proof.mjs",
+             "tools/ci/package.json", "tools/ci/package-lock.json"}
+    for row in _load(root / CATALOG)["inputs"]:
+        for reference in row.get("evidence", {}).get("UI_READY", []):
+            role, target = reference.split(":", 1)
+            if role != "ui-e2e":
+                raise RuntimeProofError("UI_PROOF_ROLE_MISMATCH")
+            path, anchor = target.split("#", 1)
+            proof = _ui_source_proof(row["inputId"], path, anchor, root)
+            proofs.append(proof)
+            paths.add(path)
+            paths.update(proof.get("helperSources", {}))
+    for proof in proofs:
+        proof["cases"].sort(key=lambda case: case["title"])
+        proof["helperSources"] = dict(sorted(proof.get("helperSources", {}).items()))
+    proofs.sort(key=lambda proof: (proof["inputId"], proof["path"]))
+    return proofs, paths
+
+
+def _ci_context(context: dict[str, str] | None) -> dict[str, str]:
+    names = ("GITHUB_WORKFLOW", "GITHUB_WORKFLOW_REF", "GITHUB_WORKFLOW_SHA", "GITHUB_RUN_ID",
+             "GITHUB_RUN_ATTEMPT", "GITHUB_EVENT_NAME", "GITHUB_REPOSITORY", "GITHUB_SHA", "GITHUB_EVENT_PATH")
+    return context if context is not None else {key: os.environ.get(key, "") for key in names}
+
+
+def _receipt() -> dict:
+    return {"schemaVersion": 1, "producer": {}, "candidateSha": None, "actualCheckoutSha": None,
+            "baseSha": None, "checkoutParents": [], "sourcePins": [], "proofs": [],
+            "status": "UNAVAILABLE", "reasons": []}
+
+
+def _original_identity(event_path: Path, context: dict[str, str], root: Path) -> dict:
+    if not context.get("GITHUB_EVENT_PATH") or Path(context["GITHUB_EVENT_PATH"]).resolve() != event_path.resolve():
+        raise RuntimeProofError("CI_EVENT_ORIGINAL_PATH_MISMATCH")
+    return ui_candidate_identity(_load(event_path), context, root)
+
+
+def record_ui_start(event_path: Path, root: Path = ROOT,
+                    context: dict[str, str] | None = None) -> tuple[dict, int]:
+    receipt = _receipt()
+    receipt.pop("proofs")
+    receipt["selectedProofs"] = []
+    receipt["generatedAt"] = datetime.now(timezone.utc).isoformat()
+    receipt["kind"] = "ui-input-start"
+    try:
+        identity = _original_identity(event_path, _ci_context(context), root)
+        receipt.update(identity)
+        proofs, paths = _selected_ui_sources(root)
+        receipt["sourcePins"] = ui_source_pins(paths, identity, root)
+        receipt["selectedProofs"] = proofs
+        receipt["status"] = "STATIC_PROOF_VALID"
+        receipt["generatedAt"] = datetime.now(timezone.utc).isoformat()
+        return receipt, 0
+    except RuntimeProofError as error:
+        receipt.update(status=error.status, reasons=[error.code])
+    except FileNotFoundError:
+        receipt.update(status="UNAVAILABLE", reasons=["UI_ARTIFACT_OR_SOURCE_MISSING"])
+    except (KeyError, TypeError, ValueError, OSError, AttributeError):
+        receipt.update(status="FAILED", reasons=["UI_START_RECORD_REJECTED"])
+    return receipt, 1
+
+
+def validate_ui_start(start: dict, identity: dict, pins: list[dict], proofs: list[dict]) -> None:
+    if not isinstance(start, dict):
+        raise RuntimeProofError("UI_START_RECORD_MISSING", "UNAVAILABLE")
+    if (start.get("schemaVersion") != 1 or start.get("kind") != "ui-input-start" or
+        start.get("status") != "STATIC_PROOF_VALID" or start.get("reasons") != []):
+        raise RuntimeProofError("UI_START_RECORD_INVALID")
+    if any(start.get(key) != identity[key] for key in identity):
+        raise RuntimeProofError("UI_START_IDENTITY_MISMATCH")
+    try:
+        generated = datetime.fromisoformat(start["generatedAt"])
+        if generated.tzinfo is None:
+            raise ValueError("timezone missing")
+    except (KeyError, TypeError, ValueError) as error:
+        raise RuntimeProofError("UI_START_TIME_INVALID") from error
+    if start.get("sourcePins") != pins or start.get("selectedProofs") != proofs:
+        raise RuntimeProofError("UI_START_SOURCE_OR_SELECTION_MISMATCH")
+
+
 def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
                      root: Path = ROOT, context: dict[str, str] | None = None) -> tuple[dict, int]:
     # 환경 전체를 읽거나 출력하지 않는다. CI 생산자에 필요한 공개 metadata만 선택한다.
-    names = ("GITHUB_WORKFLOW", "GITHUB_WORKFLOW_REF", "GITHUB_WORKFLOW_SHA", "GITHUB_RUN_ID",
-             "GITHUB_RUN_ATTEMPT", "GITHUB_EVENT_NAME", "GITHUB_REPOSITORY", "GITHUB_SHA", "GITHUB_EVENT_PATH")
-    context = context if context is not None else {key: os.environ.get(key, "") for key in names}
-    receipt = {"schemaVersion": 1, "producer": {}, "candidateSha": None, "actualCheckoutSha": None,
-               "baseSha": None, "checkoutParents": [], "sourcePins": [], "proofs": [],
-               "status": "UNAVAILABLE", "reasons": []}
+    context = _ci_context(context)
+    receipt = _receipt()
     try:
-        if not context.get("GITHUB_EVENT_PATH") or Path(context["GITHUB_EVENT_PATH"]).resolve() != event_path.resolve():
-            raise RuntimeProofError("CI_EVENT_ORIGINAL_PATH_MISMATCH")
-        identity = ui_candidate_identity(_load(event_path), context, root)
+        identity = _original_identity(event_path, context, root)
         receipt.update(identity)
         phase, report = _load(phase_path), _load(report_path)
         producer = identity["producer"]
@@ -510,22 +589,21 @@ def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
                (("runId", "runId"), ("runAttempt", "runAttempt"), ("workflowSha", "workflowSha"),
                 ("workflow", "workflow"), ("event", "event"), ("repository", "repository"))):
             raise RuntimeProofError("PHASE_PRODUCER_MISMATCH")
-        check(root)
-        proofs = []
-        for row in _load(root / CATALOG)["inputs"]:
-            for reference in row.get("evidence", {}).get("UI_READY", []):
-                role, target = reference.split(":", 1)
-                if role != "ui-e2e":
-                    raise RuntimeProofError("UI_PROOF_ROLE_MISMATCH")
-                path, anchor = target.split("#", 1)
-                proofs.append(_ui_source_proof(row["inputId"], path, anchor, root))
-        paths = {"tools/ci/input_evidence_gate.py", "tools/ci/ui_input_proof.mjs",
-                 "tools/ci/package.json", "tools/ci/package-lock.json"}
-        for proof in proofs:
-            paths.add(proof["path"])
-            paths.update(proof.get("helperSources", {}))
+        proofs, paths = _selected_ui_sources(root)
         pins = ui_source_pins(paths, identity, root)
         receipt["sourcePins"] = pins
+        validate_ui_start(phase.get("uiInputStart"), identity, pins, proofs)
+        try:
+            times = [datetime.fromisoformat(value) for value in (
+                phase["uiInputStart"]["generatedAt"], phase["startedAt"], report["stats"]["startTime"], phase["finishedAt"])]
+            generated, phase_started, playwright_started, phase_finished = times
+            # 기존 shell startedAt은 초 단위다. 그 필드만 같은 측정 정밀도로 비교한다.
+            phase_bound = generated.replace(microsecond=0) if phase_started.microsecond == 0 else generated
+            if (any(value.tzinfo is None for value in times) or phase_bound > phase_started or
+                max(generated, phase_started) > playwright_started or playwright_started > phase_finished):
+                raise ValueError("start/phase/report time mismatch")
+        except (KeyError, TypeError, ValueError) as error:
+            raise RuntimeProofError("UI_START_PHASE_TIME_MISMATCH") from error
         sources = {pin["path"]: pin["candidateBlobSha256"] for pin in pins}
         verified = validate_ui_runtime(proofs, phase, report, identity["candidateSha"], root, sources)
         receipt["status"] = "NO_UI_PROOFS" if verified["state"] == "NO_UI_PROOFS" else "UI_RUNTIME_VERIFIED"
@@ -545,13 +623,23 @@ def check_ui_runtime(phase_path: Path, report_path: Path, event_path: Path,
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--ui-runtime", action="store_true")
+    parser.add_argument("--ui-start", action="store_true")
     parser.add_argument("--phase", type=Path)
     parser.add_argument("--results", type=Path)
     parser.add_argument("--github-event", type=Path)
     parser.add_argument("--receipt", type=Path)
     arguments = parser.parse_args()
     try:
-        if arguments.ui_runtime:
+        if arguments.ui_runtime and arguments.ui_start:
+            raise ValueError("--ui-runtime and --ui-start are distinct stages")
+        if arguments.ui_start:
+            if not arguments.github_event or not arguments.receipt or arguments.phase or arguments.results:
+                raise ValueError("--ui-start requires only --github-event --receipt")
+            receipt, exit_code = record_ui_start(arguments.github_event)
+            arguments.receipt.write_text(json.dumps(receipt, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+            print(f"input UI start: {receipt['status']}; selected proofs={len(receipt['selectedProofs'])}; UI runtime not checked")
+            raise SystemExit(exit_code)
+        elif arguments.ui_runtime:
             if not all((arguments.phase, arguments.results, arguments.github_event, arguments.receipt)):
                 raise ValueError("--ui-runtime requires --phase --results --github-event --receipt")
             receipt, exit_code = check_ui_runtime(arguments.phase, arguments.results, arguments.github_event)

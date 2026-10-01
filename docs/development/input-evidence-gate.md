@@ -52,7 +52,16 @@ test('[action.farm] 농지 개간: 대상 고르고 보낸다', …)
 
 한 프로젝트만 실행, skip/fixme, 미실행, 결과 파일 부재, 다른 head의 성공은 완료 증거가 아니다. Playwright report·phase 기록·로그는 CI artifact와 메타 evidence에 보존한다. 정적 검사나 합성 report 회귀를 실제 브라우저 실행 PASS로 보고하지 않는다. 증거가 없는 기존 45개 부채와 pinned 74개 기준선은 이 제출 형식만으로 승격·탕감되지 않는다. 첫걸음 설명(D21)과 다른 proof role의 의미도 유지한다.
 
-실행 증거 진입점은 다음과 같다. CI 배선은 phase의 실제 workflow/run/attempt/event/repository metadata와 Git 객체를 함께 공급해야 한다.
+시험 시작 snapshot은 같은 도구의 선택 함수로 만든다. Playwright를 호출하기 전에 다음을 실행하고, 성공 JSON 전체를 phase의 `uiInputStart`에 넣는다. 별도 selector를 복제하지 않는다.
+
+```sh
+python3 tools/ci/input_evidence_gate.py --ui-start \
+  --github-event <GITHUB_EVENT_PATH> --receipt <ui-input-start.json>
+```
+
+시작 JSON은 `kind: ui-input-start`, `status: STATIC_PROOF_VALID`이며 실행 성공을 뜻하지 않는다. 생성 실패도 FAILED/UNAVAILABLE receipt와 nonzero다. 완료 검사는 시작 producer/run/attempt/event/candidate/checkout/base/parents, sourcePins와 선택 사례 전체를 재대조한다. 시작 기록 부재·변조·다른 선택 집합은 거절한다. 생성 snapshot/receipt를 제품 커밋에 넣지 않는다.
+
+실행 증거 진입점은 다음과 같다. CI 배선은 phase의 실제 workflow/run/attempt/event/repository metadata와 원본 시작 snapshot·Git 객체를 함께 공급해야 한다.
 
 ```sh
 python3 tools/ci/input_evidence_gate.py --ui-runtime \
@@ -60,7 +69,7 @@ python3 tools/ci/input_evidence_gate.py --ui-runtime \
   --github-event <GITHUB_EVENT_PATH> --receipt <ui-proof-receipt.json>
 ```
 
-`candidateSha`는 event 원본의 논리 PR head이며 `actualCheckoutSha`는 실제 runner git HEAD다. 기본 PR merge checkout을 유지하며, 실제 base와 merge 부모 `[base,candidate]`를 대조한다. sourcePins는 spec·상대 import helper·parser·route/args binding의 candidate Git blob, checkout Git blob, working SHA-256이 모두 같아야 한다. 필요한 Git 객체가 없거나 working 파일이 달라도 인증하지 않는다. producer는 현재 CI의 공개 metadata와 event/phase를 대조한다. 다른 head의 예전 실행은 같은 바이트라는 이유로 재사용하지 않는다.
+`candidateSha`는 event 원본의 논리 PR head이며 `actualCheckoutSha`는 실제 runner git HEAD다. 기본 PR merge checkout을 유지하며, 실제 base와 merge 부모 `[base,candidate]`를 대조한다. sourcePins는 **선택 원천 catalog**·spec·상대 import helper·parser·route/args binding의 candidate Git blob, checkout Git blob, working SHA-256이 모두 같아야 한다. catalog로 선택을 바꾸거나 필요한 Git 객체가 없거나 working 파일이 달라도 인증하지 않는다. producer는 현재 CI의 공개 metadata와 event/phase를 대조한다. 다른 head의 예전 실행은 같은 바이트라는 이유로 재사용하지 않는다.
 
 schemaVersion 1 receipt는 producer, candidateSha, actualCheckoutSha, baseSha, checkoutParents, sourcePins, proofs, status, reasons를 가진다. `UI_RUNTIME_VERIFIED`는 선택된 사례의 실제 desktop/mobile 성공이다. `NO_UI_PROOFS`는 선택한 증거가 없다는 뜻이며, 먼저 phase와 smoke report 실패를 확인한다. `FAILED`/`UNAVAILABLE`은 nonzero이며 실패 receipt도 남긴다. 재시도 성공/flaky는 확정 성공으로 바꾸지 않는다. 모든 입력의 검증 또는 게임 명령 실행 성공을 이 receipt 하나로 선언하지 않는다.
 
