@@ -944,16 +944,6 @@ input:focus, select:focus, textarea:focus {
     --battlefield-control-right: var(--battlefield-right-clearance);
     --battlefield-control-width: calc(100% - var(--battlefield-left-clearance) - var(--battlefield-right-clearance));
   }
-  .war-room .ib-map .battlefield-panel {
-    flex: 0 0 auto;
-    margin-left: var(--battlefield-left-clearance);
-    margin-right: var(--battlefield-right-clearance);
-    max-height: 45%;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    overflow-wrap: anywhere;
-    background: var(--stage-overlay-bg);
-  }
 
   .ib-map .map-viewer-canvas,
   .ib-map .map-viewer-ph { aspect-ratio: auto; flex: 1 1 auto; min-height: 0; }
