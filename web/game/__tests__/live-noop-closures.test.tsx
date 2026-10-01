@@ -13,10 +13,6 @@ vi.mock('next/navigation', () => ({
     redirect: apiMocks.redirect,
 }));
 
-vi.mock('@/components/Shell', () => ({
-    default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-}));
-
 vi.mock('@/components/GameCard', () => ({
     default: ({ children }: { children: React.ReactNode }) => <section>{children}</section>,
 }));
