@@ -32,6 +32,20 @@ class CreationAdmissionTest {
             CreationAdmission.historical(historical, state.copy(alreadyClaimed = true)))
     }
 
+    @Test fun historicalDeathYearDoesNotPreemptTheLiveCardAtTheStartOfThatYear() {
+        assertEquals(true, CreationAdmission.historicalAliveInYear(190,
+            mapOf("deadyear" to 190, "rtk14_death_year" to 190)))
+        assertEquals(false, CreationAdmission.historicalAliveInYear(191,
+            mapOf("deadyear" to 190, "rtk14_death_year" to 190)))
+        assertEquals(true, CreationAdmission.historicalAliveInYear(190,
+            mapOf("rtk14_death_year" to 190)))
+        assertEquals(false, CreationAdmission.historicalAliveInYear(191,
+            mapOf("rtk14_death_year" to 190)))
+        assertEquals(true, CreationAdmission.historicalAliveInYear(190, emptyMap()))
+        assertEquals(true, CreationAdmission.historicalAliveInYear(190,
+            mapOf("deadyear" to 190, "rtk14_death_year" to 189)))
+    }
+
     @Test fun worldAndPolicyChecksFailClosed() {
         val gate = CreationAdmission.Gate(1, 1, true, true, true, false, CreationKind.CUSTOM, true, true)
         assertNull(CreationAdmission.gate(gate, policy))

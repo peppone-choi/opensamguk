@@ -122,9 +122,7 @@ class CreationHandler(
                 appeared = (person.meta["rtk14_appearance_year"] as? Number)?.toInt()?.let {
                     it <= world.getState().currentYear
                 } ?: true,
-                alive = (person.meta["dead_year"] as? Number)?.toInt()?.let {
-                    world.getState().currentYear < it
-                } ?: true,
+                alive = CreationAdmission.historicalAliveInYear(world.getState().currentYear, person.meta),
                 alreadyClaimed = person.userId?.toLongOrNull()?.let { it > 0 } == true || person.npcState != 2,
                 affiliationSelectable = world.listRetainers().none { it.generalId == person.id },
                 locationValid = world.positionOf(person.id) != null,

@@ -201,9 +201,8 @@ class GeneralCreationService(
         val appearanceYear = (general.meta["rtk14_appearance_year"] as? Number)?.toInt()
         if (appearanceYear != null && appearanceYear > currentYear)
             throw CreationAdmissionException("HISTORICAL_PERSON_NOT_APPEARED")
-        val deathYear = (general.meta["dead_year"] as? Number)?.toInt()
         if (general.npcState != 2 || general.userId?.toLongOrNull()?.let { it > 0 } == true ||
-            (deathYear != null && currentYear >= deathYear) ||
+            !CreationAdmission.historicalAliveInYear(currentYear, general.meta) ||
             general.cityId <= 0 || !cities.existsById(general.cityId))
             throw CreationAdmissionException("HISTORICAL_PERSON_UNAVAILABLE")
         val bundle = artifacts.resolve()?.artifacts

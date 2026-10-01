@@ -44,6 +44,13 @@ object CreationAdmission {
         val alreadyClaimed: Boolean, val affiliationSelectable: Boolean,
         val locationValid: Boolean, val nativeCountyId: Int?)
 
+    /** A death year does not specify the month: the live world card remains selectable through that year. */
+    fun historicalAliveInYear(currentYear: Int, meta: Map<String, Any?>): Boolean {
+        val deathYear = (meta["deadyear"] as? Number)?.toInt()
+            ?: (meta["rtk14_death_year"] as? Number)?.toInt()
+        return deathYear == null || currentYear <= deathYear
+    }
+
     fun gate(gate: Gate, policy: CreationSelectionPolicy?): Failure? = when {
         gate.expectedWorldId != gate.routedWorldId -> Failure.WORLD_CHANGED
         policy == null || !gate.isHwiha -> Failure.CREATION_POLICY_UNAVAILABLE

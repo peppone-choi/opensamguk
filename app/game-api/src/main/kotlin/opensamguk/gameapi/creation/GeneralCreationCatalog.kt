@@ -20,6 +20,7 @@ import opensamguk.gameapi.read.SpatialStateReadRepository
 import opensamguk.gameapi.read.WorldStateReadRepository
 import opensamguk.gameapi.read.processRuleProfile
 import opensamguk.logic.creation.CreationNameRule
+import opensamguk.logic.creation.CreationAdmission
 import opensamguk.logic.creation.CreationKind
 import opensamguk.logic.creation.CreationSelectionPolicy
 import opensamguk.logic.input.NativeCountyLedger
@@ -125,9 +126,8 @@ class GeneralCreationCatalog(
             .map { person ->
                 val appearanceYear = (person.meta["rtk14_appearance_year"] as? Number)?.toInt()
                 val appeared = appearanceYear == null || appearanceYear <= world.currentYear
-                val deathYear = (person.meta["dead_year"] as? Number)?.toInt()
                 val taken = person.npcState < 2 || (person.userId?.toLongOrNull() ?: 0) > 0
-                val available = appeared && (deathYear == null || world.currentYear < deathYear) &&
+                val available = appeared && CreationAdmission.historicalAliveInYear(world.currentYear, person.meta) &&
                     person.npcState == 2 && !taken &&
                     person.cityId > 0 && person.id in positions && person.id !in bound && running
                 HistoricalCreationPersonDto(person.id, CreationNameRule.stripLegacyNpcMarker(person.name),
