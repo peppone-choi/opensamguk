@@ -453,19 +453,25 @@ test.describe('첫걸음 바로가기', () => {
             await expect(page).toHaveURL(/\/game\/(pep\/)?court\?tab=orders$/);
             await expect(page.getByRole('main', { name: '게임 콘텐츠' }).getByRole('heading', { name: '조정', exact: true })).toBeVisible();
             // 조정(P-K01): 데스크톱은 「받은 요청」 칸, 모바일은 「조정 결정」 목록의 「받은 요청」을 눌러 여는 시트.
-            if (isMobile(info)) await press(page.getByRole('list', { name: '조정 결정' }).getByRole('button').first(), info);
-            const band = isMobile(info) ? page.getByRole('dialog', { name: '받은 요청' }) : page.getByRole('region', { name: '받은 요청' });
-            const card = band.locator('article').filter({ hasText: '검증용 주공' });
-            await expect(card).toBeVisible();
+            const openCard = async () => {
+                if (isMobile(info)) await press(page.getByRole('list', { name: '조정 결정' }).getByRole('button').first(), info);
+                const band = isMobile(info) ? page.getByRole('dialog', { name: '받은 요청' }) : page.getByRole('region', { name: '받은 요청' });
+                const card = band.locator('article').filter({ hasText: '검증용 주공' });
+                await expect(card).toBeVisible();
+                return card;
+            };
             for (const [label, accept] of [['수락', true], ['거절', false]] as const) {
+                // 서버가 한 번 거절하면 그 요청 카드는 두 단추 모두 그 사유로 막힌다 — 단추마다 화면을 새로 연다.
+                if (!accept) await page.reload({ waitUntil: 'domcontentloaded' });
+                const card = await openCard();
                 const sent = page.waitForRequest((request) => request.method() === 'POST' && new URL(request.url()).pathname === '/api/game/api/commands/court/dispatchReply');
                 await press(card.getByRole('button', { name: label, exact: true }), info);
                 const request = await sent;
                 expect(request.postDataJSON()).toEqual({ dispatchId: 'shortcut-dispatch', accept });
                 expect(new URL(request.url()).searchParams.get('generalId')).toBe('7');
-                // 대역은 접수하지 않는다 — 누른 단추의 사유 시트가 그 사유로 열린다(실행했다고 말하지 않는다).
+                // 대역은 접수하지 않는다 — 누른 단추의 사유 시트가 그 사유로 열리고 두 단추가 막힌다(실행했다고 말하지 않는다).
                 await expect(page.getByText(DENIED_SHORTCUT).first()).toBeVisible();
-                await page.keyboard.press('Escape');
+                await expect(card.getByRole('button', { name: label, exact: true })).toHaveAttribute('data-input-status', 'BLOCKED');
             }
         } finally {
             // Keep read failures and runtime errors in the normal smoke log even if later phases replace artifacts.
