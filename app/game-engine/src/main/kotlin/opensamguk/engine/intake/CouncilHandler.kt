@@ -122,8 +122,13 @@ class CouncilHandler(
                 val existing = previous.singleOrNull { it.nationId == actor.nationId &&
                     it.targetGeneralId == targetId && it.revokedByRequestId == null }
                 val changed = if (request is CouncilRequest.GrantAccess) {
-                    if (existing != null) return result(command, true)
-                    previous + CouncilDesignation(command.requestId, actor.nationId, actor.id,
+                    if (existing?.issuerGeneralId == actor.id && existing.issuerRevision == proof.rulerRevision)
+                        return result(command, true)
+                    // 새 군주의 명시 재지정은 새 영수증이다. 자동 승계와 구분하여 과거 행을 보존한다.
+                    val history = if (existing == null) previous else previous.map {
+                        if (it.id == existing.id) it.copy(revokedByRequestId = command.requestId) else it
+                    }
+                    history + CouncilDesignation(command.requestId, actor.nationId, actor.id,
                         proof.rulerRevision, targetId, command.requestId)
                 } else {
                     if (existing == null) return result(command, true)

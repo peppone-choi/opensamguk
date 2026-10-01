@@ -75,5 +75,13 @@ class CouncilWorldAuthoritySourceTest {
         val history = CouncilDesignationCodec.decode(PersistedMetaJson.raw(world.getState().meta[CouncilDesignationCodec.META_KEY]))!!
         assertEquals(12, history.grants.single().targetGeneralId)
         assertNull(history.grants.single().revokedByRequestId)
+        // 자동 승계 정책은 미정이지만 새 군주의 명시적 재지정 요청은 별도 영수증이다.
+        assertTrue(handler.handle(input("grant-new", CouncilRequestCodec.GRANT_ACCESS,
+            CouncilRequest.GrantAccess(12, "grant-1"), 11, 8, "ruler-2")).ok)
+        assertEquals(setOf(11, 12), source.read(1).readers)
+        val updated = CouncilDesignationCodec.decode(PersistedMetaJson.raw(world.getState().meta[CouncilDesignationCodec.META_KEY]))!!
+        assertEquals(2, updated.grants.size)
+        assertEquals("grant-new", updated.grants.first { it.id == "grant-1" }.revokedByRequestId)
+        assertEquals("ruler-2", updated.grants.first { it.id == "grant-new" }.issuerRevision)
     }
 }
