@@ -4,6 +4,7 @@ import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.io.Decoders
 import io.jsonwebtoken.security.Keys
 import opensamguk.common.auth.GatewayJwtClaims
+import opensamguk.logic.command.CommandSchemaCatalog
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
@@ -149,6 +150,8 @@ class AuthRequiredSecurityChainTest {
         private const val AUTH_ERROR = """{"error":{"code":"AUTH_REQUIRED","message":"로그인이 필요합니다."}}"""
 
         // Every existing authenticated matcher group, including its exact and wildcard samples.
+        private val LEGACY_RECRUIT_PATH = "/api/command/" + CommandSchemaCatalog.garrisonRecruitSchema.legacyAliases.single()
+        private val LEGACY_TRANSPORT_PATH = "/api/command/" + CommandSchemaCatalog.cityTransportSchema.legacyAliases.single()
         private val PROTECTED = listOf(
             Route(HttpMethod.POST, "/api/command/bulk"),
             Route(HttpMethod.POST, "/api/command/nation/push"),
@@ -162,8 +165,8 @@ class AuthRequiredSecurityChainTest {
             Route(HttpMethod.GET, "/api/v2/commands/metadata"), Route(HttpMethod.POST, "/api/v2/commands/enqueue"),
             Route(HttpMethod.GET, "/api/v2/garrison-recruit"), Route(HttpMethod.POST, "/api/v2/garrison-recruit"),
             Route(HttpMethod.GET, "/api/v2/city-transport"), Route(HttpMethod.POST, "/api/v2/city-transport"),
-            Route(HttpMethod.GET, "/api/command/v2GarrisonRecruit"), Route(HttpMethod.POST, "/api/command/v2GarrisonRecruit"),
-            Route(HttpMethod.GET, "/api/command/v2CityTransport"), Route(HttpMethod.POST, "/api/command/v2CityTransport"),
+            Route(HttpMethod.GET, LEGACY_RECRUIT_PATH), Route(HttpMethod.POST, LEGACY_RECRUIT_PATH),
+            Route(HttpMethod.GET, LEGACY_TRANSPORT_PATH), Route(HttpMethod.POST, LEGACY_TRANSPORT_PATH),
         )
         private val PUBLIC = listOf(
             Route(HttpMethod.GET, "/actuator/health"), Route(HttpMethod.GET, "/api/const"),
