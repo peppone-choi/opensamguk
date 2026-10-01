@@ -60,11 +60,11 @@ export const NAV31: readonly NavGroup[] = [
   {
     key: 'court', label: '조정', screens: [
       { label: '발령 · 포상 · 조정 결정', path: 'court?tab=orders', built: true },
-      { label: '관직 · 봉신', path: 'court/offices', built: false },
+      { label: '관직 · 봉신', path: 'court/offices', built: true },
       { label: '외교', path: 'court/diplomacy', built: false, current: 'global-diplomacy' },
       { label: '참모 제안', path: 'court/proposals', built: false },
       { label: '황실', path: 'court/imperial', built: true },
-      { label: '세력', path: 'court/realm', built: false, current: 'my-nation' },
+      { label: '세력', path: 'court/realm', built: true },
     ],
   },
   {
